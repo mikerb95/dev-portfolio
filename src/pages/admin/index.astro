@@ -2,7 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
 import { projects, messages, finances, clients } from '../../db/schema'
-import { eq, sum } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 const [totalProjects] = await db.select({ count: projects.id }).from(projects).where(eq(projects.visible, true))
 const [unreadMessages] = await db.select({ count: messages.id }).from(messages).where(eq(messages.read, false))
