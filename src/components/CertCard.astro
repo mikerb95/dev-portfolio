@@ -1,0 +1,107 @@
+---
+interface Cert {
+  id: number
+  title: string
+  institution: string | null
+  description: string | null
+  skills: string | null
+  status: string | null
+  completedDate: Date | null
+  certificateUrl: string | null
+}
+
+interface Props {
+  cert: Cert
+}
+
+const { cert } = Astro.props
+
+const skills: string[] = cert.skills ? JSON.parse(cert.skills) : []
+
+const statusStyle: Record<string, string> = {
+  completado: 'text-emerald-400 bg-emerald-950',
+  en_curso: 'text-blue-400 bg-blue-950',
+  pausado: 'text-zinc-400 bg-zinc-800',
+}
+
+const statusLabel: Record<string, string> = {
+  completado: 'Completado',
+  en_curso: 'En curso',
+  pausado: 'Pausado',
+}
+
+const isImage = cert.certificateUrl && !cert.certificateUrl.startsWith('http')
+  || (cert.certificateUrl?.match(/\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i) ?? false)
+---
+
+<div class="border border-zinc-800 rounded-xl overflow-hidden bg-zinc-900/30 flex flex-col">
+  {cert.certificateUrl && isImage && (
+    <a
+      href={cert.certificateUrl}
+      target="_blank"
+      rel="noopener"
+      class="block overflow-hidden bg-zinc-800 border-b border-zinc-800 aspect-[16/9]"
+    >
+      <img
+        src={cert.certificateUrl}
+        alt={`Certificado: ${cert.title}`}
+        class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        loading="lazy"
+      />
+    </a>
+  )}
+
+  <div class="p-5 flex flex-col flex-1">
+    <div class="flex items-start justify-between gap-3 mb-2">
+      <h3 class="font-semibold text-zinc-100 leading-snug">{cert.title}</h3>
+      <span class={`text-xs px-2 py-0.5 rounded-sm font-medium shrink-0 ${statusStyle[cert.status ?? 'completado']}`}>
+        {statusLabel[cert.status ?? 'completado']}
+      </span>
+    </div>
+
+    {cert.institution && (
+      <p class="text-zinc-500 text-sm mb-2">{cert.institution}</p>
+    )}
+
+    {cert.description && (
+      <p class="text-zinc-400 text-sm leading-relaxed mb-3">{cert.description}</p>
+    )}
+
+    {skills.length > 0 && (
+      <div class="flex flex-wrap gap-1.5 mb-4 mt-auto pt-3">
+        {skills.map((s) => (
+          <span class="text-xs px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-sm">{s}</span>
+        ))}
+      </div>
+    )}
+
+    <div class="flex items-center justify-between mt-auto pt-3 border-t border-zinc-800">
+      {cert.completedDate ? (
+        <span class="text-xs text-zinc-600">
+          {cert.completedDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long' })}
+        </span>
+      ) : <span />}
+
+      {cert.certificateUrl && !isImage && (
+        <a
+          href={cert.certificateUrl}
+          target="_blank"
+          rel="noopener"
+          class="text-xs text-zinc-500 hover:text-zinc-200 transition-colors"
+        >
+          Ver certificado
+        </a>
+      )}
+      {cert.certificateUrl && isImage && (
+        <a
+          href={cert.certificateUrl}
+          target="_blank"
+          rel="noopener"
+          class="text-xs text-zinc-500 hover:text-zinc-200 transition-colors"
+        >
+          Ver imagen
+        </a>
+      )}
+    </div>
+  </div>
+</div>
