@@ -1,0 +1,37 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { clients } from '../../db/schema'
+import { desc } from 'drizzle-orm'
+
+const allClients = await db.select().from(clients).orderBy(desc(clients.createdAt))
+---
+
+<AdminLayout title="Clientes">
+  {allClients.length === 0 ? (
+    <p class="text-zinc-500">No hay clientes registrados todavía.</p>
+  ) : (
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-zinc-800 text-zinc-400 text-left">
+            <th class="pb-3 pr-4 font-medium">Nombre</th>
+            <th class="pb-3 pr-4 font-medium">Email</th>
+            <th class="pb-3 pr-4 font-medium">Empresa</th>
+            <th class="pb-3 font-medium">Notas</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800">
+          {allClients.map((c) => (
+            <tr class="text-zinc-300">
+              <td class="py-3 pr-4 font-medium text-white">{c.name}</td>
+              <td class="py-3 pr-4 text-zinc-400">{c.email ?? '—'}</td>
+              <td class="py-3 pr-4">{c.company ?? '—'}</td>
+              <td class="py-3 text-zinc-500 text-xs max-w-xs truncate">{c.notes ?? '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</AdminLayout>
