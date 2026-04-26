@@ -1,17 +1,47 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import ProjectCard from '../components/ProjectCard.astro'
+import { db } from '../db'
+import { projects } from '../db/schema'
+import { eq } from 'drizzle-orm'
 
+const visibleProjects = await db
+  .select()
+  .from(projects)
+  .where(eq(projects.visible, true))
+  .orderBy(projects.createdAt)
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout title="Portfolio">
+  <div class="max-w-5xl mx-auto px-6 py-20">
+    <header class="mb-16">
+      <h1 class="text-4xl font-bold mb-4">Hola, soy Mike</h1>
+      <p class="text-zinc-400 text-lg max-w-xl">
+        Desarrollador full-stack. Construyo productos web con foco en rendimiento y experiencia de usuario.
+      </p>
+      <a
+        href="/contact"
+        class="inline-block mt-6 px-5 py-2.5 bg-white text-zinc-900 rounded-lg font-medium hover:bg-zinc-100 transition-colors"
+      >
+        Contactar
+      </a>
+    </header>
+
+    {visibleProjects.length > 0 && (
+      <section>
+        <h2 class="text-xl font-semibold mb-6">Proyectos</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {visibleProjects.map((p) => (
+            <ProjectCard
+              slug={p.slug}
+              title={p.title}
+              description={p.description}
+              techStack={p.techStack}
+              screenshotUrl={p.screenshotUrl}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>
