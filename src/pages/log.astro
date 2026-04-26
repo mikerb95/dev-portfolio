@@ -3,55 +3,52 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 ---
 
 <BaseLayout
-  title="Engineering Log"
+  title="Engineering Log — CodeByMike"
   description="Registro de actividad de desarrollo en tiempo real. Commits, decisiones y métricas de trabajo profundo."
 >
-  <div class="max-w-3xl mx-auto px-6 py-16">
-    <a href="/" class="text-zinc-500 hover:text-white text-sm mb-10 inline-block">← Volver</a>
+  <div class="max-w-3xl mx-auto px-6 pt-36 pb-24">
+    <a href="/" class="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white text-sm mb-10 inline-block transition-colors">← Volver</a>
 
     <header class="mb-12">
-      <h1 class="text-3xl font-bold mb-3">Engineering Log</h1>
-      <p class="text-zinc-400 text-base max-w-lg leading-relaxed">
+      <h1 class="text-3xl font-bold mb-3 text-slate-900 dark:text-white">Engineering Log</h1>
+      <p class="text-slate-500 dark:text-slate-400 text-base max-w-lg leading-relaxed">
         Actividad de desarrollo extraída en tiempo real de GitHub.
         Cada commit es evidencia de trabajo real en curso.
       </p>
     </header>
 
-    <!-- Stats grid -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-12">
-      <div class="border border-zinc-800 rounded-lg px-4 py-4">
-        <p class="text-zinc-600 text-xs mb-2">Deep Work · 7 días</p>
-        <p class="text-2xl font-bold text-white" id="stat-week">—</p>
-        <p class="text-zinc-600 text-xs mt-1">horas de foco</p>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-4 bg-white/50 dark:bg-slate-900/20">
+        <p class="text-slate-400 dark:text-slate-600 text-xs mb-2">Deep Work · 7 días</p>
+        <p class="text-2xl font-bold text-slate-900 dark:text-white" id="stat-week">—</p>
+        <p class="text-slate-400 dark:text-slate-600 text-xs mt-1">horas de foco</p>
       </div>
-      <div class="border border-zinc-800 rounded-lg px-4 py-4">
-        <p class="text-zinc-600 text-xs mb-2">Deep Work · 30 días</p>
-        <p class="text-2xl font-bold text-white" id="stat-month">—</p>
-        <p class="text-zinc-600 text-xs mt-1">horas de foco</p>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-4 bg-white/50 dark:bg-slate-900/20">
+        <p class="text-slate-400 dark:text-slate-600 text-xs mb-2">Deep Work · 30 días</p>
+        <p class="text-2xl font-bold text-slate-900 dark:text-white" id="stat-month">—</p>
+        <p class="text-slate-400 dark:text-slate-600 text-xs mt-1">horas de foco</p>
       </div>
-      <div class="border border-zinc-800 rounded-lg px-4 py-4">
-        <p class="text-zinc-600 text-xs mb-2">Commits · 30 días</p>
-        <p class="text-2xl font-bold text-white" id="stat-commits">—</p>
-        <p class="text-zinc-600 text-xs mt-1">contribuciones</p>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-4 bg-white/50 dark:bg-slate-900/20">
+        <p class="text-slate-400 dark:text-slate-600 text-xs mb-2">Commits · 30 días</p>
+        <p class="text-2xl font-bold text-slate-900 dark:text-white" id="stat-commits">—</p>
+        <p class="text-slate-400 dark:text-slate-600 text-xs mt-1">contribuciones</p>
       </div>
-      <div class="border border-zinc-800 rounded-lg px-4 py-4">
-        <p class="text-zinc-600 text-xs mb-2">Racha activa</p>
-        <p class="text-2xl font-bold text-white" id="stat-streak">—</p>
-        <p class="text-zinc-600 text-xs mt-1">días consecutivos</p>
+      <div class="border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-4 bg-white/50 dark:bg-slate-900/20">
+        <p class="text-slate-400 dark:text-slate-600 text-xs mb-2">Racha activa</p>
+        <p class="text-2xl font-bold text-slate-900 dark:text-white" id="stat-streak">—</p>
+        <p class="text-slate-400 dark:text-slate-600 text-xs mt-1">días consecutivos</p>
       </div>
     </div>
 
-    <!-- Sparkline: últimos 14 días -->
-    <div class="mb-2 flex justify-between text-xs text-zinc-700" id="sparkline-labels"></div>
+    <div class="mb-2 flex justify-between text-xs text-slate-400 dark:text-slate-700" id="sparkline-labels"></div>
     <div class="flex items-end gap-1 h-12 mb-10" id="sparkline" aria-hidden="true"></div>
 
-    <!-- Feed completo -->
     <div id="log-feed" class="flex flex-col">
       {Array.from({ length: 8 }).map(() => (
-        <div class="py-3 flex gap-3 border-b border-zinc-800/50 animate-pulse">
-          <div class="w-20 h-3 bg-zinc-800 rounded mt-1 shrink-0"></div>
-          <div class="flex-1 h-3 bg-zinc-800/60 rounded"></div>
-          <div class="w-12 h-3 bg-zinc-800 rounded mt-1 shrink-0"></div>
+        <div class="py-3 flex gap-3 border-b border-slate-100 dark:border-slate-800/50 animate-pulse">
+          <div class="w-20 h-3 bg-slate-200 dark:bg-slate-800 rounded mt-1 shrink-0"></div>
+          <div class="flex-1 h-3 bg-slate-100 dark:bg-slate-800/60 rounded"></div>
+          <div class="w-12 h-3 bg-slate-200 dark:bg-slate-800 rounded mt-1 shrink-0"></div>
         </div>
       ))}
     </div>
@@ -92,16 +89,18 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     const bar = document.getElementById('sparkline')!
     const labels = document.getElementById('sparkline-labels')!
     const max = Math.max(...data, 1)
+    const isDark = document.documentElement.classList.contains('dark')
 
     bar.innerHTML = data
       .map((v) => {
         const pct = Math.round((v / max) * 100)
-        const color = v > 0 ? 'bg-zinc-400' : 'bg-zinc-800'
+        const color = v > 0
+          ? (isDark ? 'bg-slate-400' : 'bg-slate-500')
+          : (isDark ? 'bg-slate-800' : 'bg-slate-200')
         return `<div class="flex-1 ${color} rounded-sm" style="height:${Math.max(pct, 3)}%" title="${v} commits"></div>`
       })
       .join('')
 
-    // show first and last date labels
     const today = new Date()
     const start = new Date(today)
     start.setDate(start.getDate() - 13)
@@ -114,7 +113,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     const el = document.getElementById('log-feed')!
 
     if (!items.length) {
-      el.innerHTML = '<p class="text-zinc-600 text-sm py-6">Sin actividad reciente.</p>'
+      el.innerHTML = '<p class="text-slate-400 dark:text-slate-600 text-sm py-6">Sin actividad reciente.</p>'
       return
     }
 
@@ -132,22 +131,22 @@ import BaseLayout from '../layouts/BaseLayout.astro'
         const rows = commits
           .map((c) => {
             const leftBadge = c.type === 'pr_merged'
-              ? `<span class="text-purple-400 text-xs font-medium shrink-0 w-16 text-right">PR</span>`
-              : `<span class="font-mono text-zinc-600 text-xs shrink-0 w-16 text-right">${c.sha}</span>`
+              ? `<span class="text-purple-500 dark:text-purple-400 text-xs font-medium shrink-0 w-16 text-right">PR</span>`
+              : `<span class="font-mono text-slate-400 dark:text-slate-600 text-xs shrink-0 w-16 text-right">${c.sha}</span>`
 
             return `
-              <div class="py-2.5 flex items-baseline gap-4 group">
+              <div class="py-2.5 flex items-baseline gap-4">
                 ${leftBadge}
-                <span class="text-zinc-200 text-sm leading-snug flex-1">${escapeHtml(c.message)}</span>
-                <span class="text-zinc-500 text-xs shrink-0 hidden sm:inline">${c.repo}</span>
-                <span class="text-zinc-600 text-xs shrink-0">${relativeTime(c.timestamp)}</span>
+                <span class="text-slate-700 dark:text-slate-200 text-sm leading-snug flex-1">${escapeHtml(c.message)}</span>
+                <span class="text-slate-400 dark:text-slate-500 text-xs shrink-0 hidden sm:inline">${c.repo}</span>
+                <span class="text-slate-400 dark:text-slate-600 text-xs shrink-0">${relativeTime(c.timestamp)}</span>
               </div>`
           })
           .join('')
 
         return `
           <div class="mb-6">
-            <p class="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-3 capitalize border-b border-zinc-800/60 pb-2">${day}</p>
+            <p class="text-xs font-semibold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-3 capitalize border-b border-slate-100 dark:border-slate-800/60 pb-2">${day}</p>
             ${rows}
           </div>`
       })
@@ -169,7 +168,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
       renderFeed(data.feed)
     } catch {
       document.getElementById('log-feed')!.innerHTML =
-        '<p class="text-zinc-700 text-sm py-6">No se pudo cargar la actividad de GitHub.</p>'
+        '<p class="text-slate-400 dark:text-slate-700 text-sm py-6">No se pudo cargar la actividad de GitHub.</p>'
     }
   }
 
