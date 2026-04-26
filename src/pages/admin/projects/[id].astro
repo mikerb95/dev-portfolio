@@ -41,6 +41,7 @@ const [envVars, services, contacts, financeRows, allClients] = await Promise.all
   db.select().from(projectContacts).where(eq(projectContacts.projectId, projectId)),
   db.select().from(finances).where(eq(finances.projectId, projectId)).orderBy(desc(finances.createdAt)),
   db.select({ id: clients.id, name: clients.name }).from(clients),
+  db.select().from(projectAdrs).where(eq(projectAdrs.projectId, projectId)).orderBy(desc(projectAdrs.createdAt)),
 ])
 
 const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
