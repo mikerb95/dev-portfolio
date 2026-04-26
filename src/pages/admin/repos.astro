@@ -1,0 +1,80 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="Repositorios">
+  <p class="text-zinc-400 text-sm mb-6">
+    Selecciona qué repositorios de GitHub se muestran en tu portafolio público.
+  </p>
+  <div id="repos-list" class="flex flex-col gap-3">
+    <p class="text-zinc-500 text-sm">Cargando repositorios...</p>
+  </div>
+</AdminLayout>
+
+<script>
+  type Repo = {
+    slug: string
+    name: string
+    description: string | null
+    url: string
+    homepage: string | null
+    language: string | null
+    visible: boolean
+  }
+
+  async function loadRepos() {
+    const res = await fetch('/api/github/repos')
+    const repos: Repo[] = await res.json()
+    const list = document.getElementById('repos-list')!
+
+    list.innerHTML = repos
+      .map(
+        (r) => `
+      <div class="flex items-center justify-between p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="font-medium text-white">${r.name}</span>
+            ${r.language ? `<span class="text-xs text-zinc-500">${r.language}</span>` : ''}
+          </div>
+          ${r.description ? `<p class="text-sm text-zinc-400 truncate">${r.description}</p>` : ''}
+        </div>
+        <label class="flex items-center gap-2 shrink-0 ml-4 cursor-pointer">
+          <span class="text-sm text-zinc-400">${r.visible ? 'Visible' : 'Oculto'}</span>
+          <input
+            type="checkbox"
+            class="repo-toggle w-4 h-4 accent-emerald-400"
+            data-slug="${r.slug}"
+            data-name="${r.name}"
+            data-desc="${r.description ?? ''}"
+            data-url="${r.url}"
+            data-homepage="${r.homepage ?? ''}"
+            ${r.visible ? 'checked' : ''}
+          />
+        </label>
+      </div>
+    `
+      )
+      .join('')
+
+    list.querySelectorAll<HTMLInputElement>('.repo-toggle').forEach((cb) => {
+      cb.addEventListener('change', async () => {
+        const label = cb.previousElementSibling as HTMLSpanElement
+        await fetch('/api/github/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug: cb.dataset.slug,
+            visible: cb.checked,
+            title: cb.dataset.name,
+            description: cb.dataset.desc || null,
+            repoUrl: cb.dataset.url,
+            previewUrl: cb.dataset.homepage || null,
+          }),
+        })
+        label.textContent = cb.checked ? 'Visible' : 'Oculto'
+      })
+    })
+  }
+
+  loadRepos()
+</script>

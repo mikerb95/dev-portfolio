@@ -1,0 +1,17 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import MessagesList from '../../components/admin/MessagesList.astro'
+import { db } from '../../db'
+import { messages } from '../../db/schema'
+import { desc } from 'drizzle-orm'
+
+const allMessages = await db.select().from(messages).orderBy(desc(messages.createdAt))
+---
+
+<AdminLayout title="Mensajes">
+  {allMessages.length === 0 ? (
+    <p class="text-zinc-500">No hay mensajes todavía.</p>
+  ) : (
+    <MessagesList messages={allMessages} />
+  )}
+</AdminLayout>
