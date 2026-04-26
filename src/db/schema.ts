@@ -82,3 +82,22 @@ export const projectContacts = sqliteTable('project_contacts', {
   notes: text('notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
+
+export const briefings = sqliteTable('briefings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').references(() => clients.id),
+  projectId: integer('project_id').references(() => projects.id),
+  title: text('title').notNull(),
+  status: text('status', { enum: ['borrador', 'en_revision', 'aprobado', 'rechazado'] }).default('borrador'),
+  objective: text('objective'),
+  scope: text('scope'),
+  requirements: text('requirements'),
+  deliverables: text('deliverables'),
+  estimatedBudget: real('estimated_budget'),
+  agreedBudget: real('agreed_budget'),
+  estimatedHours: integer('estimated_hours'),
+  deadline: integer('deadline', { mode: 'timestamp' }),
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
