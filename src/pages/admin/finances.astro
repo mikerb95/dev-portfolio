@@ -1,0 +1,50 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import FinanceTable from '../../components/admin/FinanceTable.astro'
+import { db } from '../../db'
+import { finances, projects, clients } from '../../db/schema'
+import { desc, eq } from 'drizzle-orm'
+
+const rows = await db
+  .select({
+    id: finances.id,
+    description: finances.description,
+    amount: finances.amount,
+    status: finances.status,
+    dueDate: finances.dueDate,
+    projectTitle: projects.title,
+    clientName: clients.name,
+  })
+  .from(finances)
+  .leftJoin(projects, eq(finances.projectId, projects.id))
+  .leftJoin(clients, eq(finances.clientId, clients.id))
+  .orderBy(desc(finances.createdAt))
+
+const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
+const cobrado = rows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
+const pendiente = rows.filter((r) => r.status === 'pendiente').reduce((s, r) => s + r.amount, 0)
+const proyectado = rows.filter((r) => r.status === 'proyectado').reduce((s, r) => s + r.amount, 0)
+---
+
+<AdminLayout title="Finanzas">
+  <div class="flex gap-4 mb-8">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex-1">
+      <p class="text-zinc-400 text-xs mb-1">Cobrado</p>
+      <p class="text-emerald-400 text-xl font-bold">{fmt.format(cobrado)}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex-1">
+      <p class="text-zinc-400 text-xs mb-1">Pendiente</p>
+      <p class="text-amber-400 text-xl font-bold">{fmt.format(pendiente)}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex-1">
+      <p class="text-zinc-400 text-xs mb-1">Proyectado</p>
+      <p class="text-blue-400 text-xl font-bold">{fmt.format(proyectado)}</p>
+    </div>
+  </div>
+
+  {rows.length === 0 ? (
+    <p class="text-zinc-500">No hay registros financieros todavía.</p>
+  ) : (
+    <FinanceTable rows={rows} />
+  )}
+</AdminLayout>
