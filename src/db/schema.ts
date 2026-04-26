@@ -83,6 +83,21 @@ export const projectContacts = sqliteTable('project_contacts', {
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
+export const projectAdrs = sqliteTable('project_adrs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  status: text('status', { enum: ['propuesto', 'aceptado', 'deprecado', 'reemplazado'] }).default('aceptado'),
+  context: text('context').notNull(),
+  decision: text('decision').notNull(),
+  rationale: text('rationale').notNull(),
+  alternatives: text('alternatives'),
+  consequences: text('consequences'),
+  isPublic: integer('is_public', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
 export const briefings = sqliteTable('briefings', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   clientId: integer('client_id').references(() => clients.id),
