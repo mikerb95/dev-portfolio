@@ -1,0 +1,328 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { db } from '../../../db'
+import { briefings, clients, projects } from '../../../db/schema'
+import { eq } from 'drizzle-orm'
+
+const { id } = Astro.params
+
+const row = await db
+  .select({
+    id: briefings.id,
+    title: briefings.title,
+    status: briefings.status,
+    objective: briefings.objective,
+    scope: briefings.scope,
+    requirements: briefings.requirements,
+    deliverables: briefings.deliverables,
+    estimatedBudget: briefings.estimatedBudget,
+    agreedBudget: briefings.agreedBudget,
+    estimatedHours: briefings.estimatedHours,
+    deadline: briefings.deadline,
+    notes: briefings.notes,
+    clientId: briefings.clientId,
+    projectId: briefings.projectId,
+    clientName: clients.name,
+    projectTitle: projects.title,
+    createdAt: briefings.createdAt,
+    updatedAt: briefings.updatedAt,
+  })
+  .from(briefings)
+  .leftJoin(clients, eq(briefings.clientId, clients.id))
+  .leftJoin(projects, eq(briefings.projectId, projects.id))
+  .where(eq(briefings.id, Number(id)))
+  .get()
+
+if (!row) return Astro.redirect('/admin/briefings')
+
+const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients)
+const allProjects = await db.select({ id: projects.id, title: projects.title }).from(projects)
+
+const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
+
+const statusColor: Record<string, string> = {
+  borrador: 'bg-zinc-700 text-zinc-300',
+  en_revision: 'bg-blue-900 text-blue-300',
+  aprobado: 'bg-emerald-900 text-emerald-300',
+  rechazado: 'bg-red-900 text-red-400',
+}
+
+const statusLabel: Record<string, string> = {
+  borrador: 'Borrador',
+  en_revision: 'En revisión',
+  aprobado: 'Aprobado',
+  rechazado: 'Rechazado',
+}
+---
+
+<AdminLayout title={row.title}>
+  <div class="flex items-center gap-3 mb-6">
+    <a href="/admin/briefings" class="text-zinc-500 hover:text-white text-sm transition-colors">← Briefings</a>
+    <span class={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[row.status ?? 'borrador']}`}>
+      {statusLabel[row.status ?? 'borrador']}
+    </span>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-1">Cliente</p>
+      <p class="text-white font-medium">{row.clientName ?? '—'}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-1">Proyecto</p>
+      <p class="text-white font-medium">{row.projectTitle ?? '—'}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-1">Deadline</p>
+      <p class="text-white font-medium">{row.deadline ? new Date(row.deadline).toLocaleDateString('es-AR') : '—'}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-1">Presupuesto estimado</p>
+      <p class="text-zinc-300 font-medium">{row.estimatedBudget ? fmt.format(row.estimatedBudget) : '—'}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-1">Presupuesto acordado</p>
+      <p class="text-emerald-400 font-medium">{row.agreedBudget ? fmt.format(row.agreedBudget) : '—'}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-1">Horas estimadas</p>
+      <p class="text-white font-medium">{row.estimatedHours ? `${row.estimatedHours}h` : '—'}</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-2">Objetivo</p>
+      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.objective ?? '—'}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-2">Alcance</p>
+      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.scope ?? '—'}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-2">Requerimientos</p>
+      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.requirements ?? '—'}</p>
+    </div>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <p class="text-zinc-400 text-xs mb-2">Entregables</p>
+      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.deliverables ?? '—'}</p>
+    </div>
+  </div>
+
+  {row.notes && (
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
+      <p class="text-zinc-400 text-xs mb-2">Notas internas</p>
+      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.notes}</p>
+    </div>
+  )}
+
+  <div class="flex gap-3">
+    <button
+      id="btn-edit"
+      class="px-4 py-2 bg-white text-zinc-900 text-sm font-medium rounded-lg hover:bg-zinc-100 transition-colors"
+    >
+      Editar briefing
+    </button>
+    <button
+      id="btn-delete"
+      class="px-4 py-2 border border-red-800 text-red-500 text-sm rounded-lg hover:bg-red-950 transition-colors"
+    >
+      Eliminar
+    </button>
+  </div>
+
+  <dialog
+    id="modal"
+    class="bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-full max-w-2xl text-zinc-100 backdrop:bg-black/60"
+  >
+    <h2 class="text-lg font-semibold mb-5">Editar briefing</h2>
+    <form id="briefing-form" class="flex flex-col gap-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Título *</label>
+          <input
+            id="f-title"
+            type="text"
+            required
+            value={row.title}
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Estado</label>
+          <select
+            id="f-status"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          >
+            {['borrador', 'en_revision', 'aprobado', 'rechazado'].map((s) => (
+              <option value={s} selected={row.status === s}>{statusLabel[s]}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Deadline</label>
+          <input
+            id="f-deadline"
+            type="date"
+            value={row.deadline ? new Date(row.deadline).toISOString().split('T')[0] : ''}
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Cliente</label>
+          <select
+            id="f-client"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          >
+            <option value="">— Sin cliente —</option>
+            {allClients.map((c) => (
+              <option value={c.id} selected={row.clientId === c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Proyecto</label>
+          <select
+            id="f-project"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          >
+            <option value="">— Sin proyecto —</option>
+            {allProjects.map((p) => (
+              <option value={p.id} selected={row.projectId === p.id}>{p.title}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Presupuesto estimado (USD)</label>
+          <input
+            id="f-est-budget"
+            type="number"
+            min="0"
+            step="0.01"
+            value={row.estimatedBudget ?? ''}
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Presupuesto acordado (USD)</label>
+          <input
+            id="f-agreed-budget"
+            type="number"
+            min="0"
+            step="0.01"
+            value={row.agreedBudget ?? ''}
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Horas estimadas</label>
+          <input
+            id="f-hours"
+            type="number"
+            min="0"
+            value={row.estimatedHours ?? ''}
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Objetivo</label>
+        <textarea
+          id="f-objective"
+          rows="2"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+        >{row.objective ?? ''}</textarea>
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Alcance</label>
+        <textarea
+          id="f-scope"
+          rows="2"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+        >{row.scope ?? ''}</textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Requerimientos</label>
+          <textarea
+            id="f-requirements"
+            rows="3"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+          >{row.requirements ?? ''}</textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Entregables</label>
+          <textarea
+            id="f-deliverables"
+            rows="3"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+          >{row.deliverables ?? ''}</textarea>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Notas internas</label>
+        <textarea
+          id="f-notes"
+          rows="2"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+        >{row.notes ?? ''}</textarea>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-cancel"
+          class="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-white text-zinc-900 text-sm font-medium rounded-lg hover:bg-zinc-100 transition-colors"
+        >
+          Guardar cambios
+        </button>
+      </div>
+    </form>
+  </dialog>
+</AdminLayout>
+
+<script define:vars={{ briefingId: row.id }}>
+  const modal = document.getElementById('modal')
+
+  document.getElementById('btn-edit').addEventListener('click', () => modal.showModal())
+  document.getElementById('btn-cancel').addEventListener('click', () => modal.close())
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.close() })
+
+  document.getElementById('btn-delete').addEventListener('click', async () => {
+    if (!confirm('¿Eliminar este briefing? Esta acción no se puede deshacer.')) return
+    await fetch(`/api/admin/briefings/${briefingId}`, { method: 'DELETE' })
+    window.location.href = '/admin/briefings'
+  })
+
+  document.getElementById('briefing-form').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const val = (id) => document.getElementById(id).value
+    const payload = {
+      title: val('f-title'),
+      status: val('f-status'),
+      clientId: val('f-client') ? Number(val('f-client')) : null,
+      projectId: val('f-project') ? Number(val('f-project')) : null,
+      estimatedBudget: val('f-est-budget') ? Number(val('f-est-budget')) : null,
+      agreedBudget: val('f-agreed-budget') ? Number(val('f-agreed-budget')) : null,
+      estimatedHours: val('f-hours') ? Number(val('f-hours')) : null,
+      deadline: val('f-deadline') || null,
+      objective: val('f-objective') || null,
+      scope: val('f-scope') || null,
+      requirements: val('f-requirements') || null,
+      deliverables: val('f-deliverables') || null,
+      notes: val('f-notes') || null,
+    }
+    await fetch(`/api/admin/briefings/${briefingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    modal.close()
+    window.location.reload()
+  })
+</script>
