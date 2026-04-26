@@ -659,7 +659,7 @@ const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduc
 
 <script define:vars={{ projectId: project.id }}>
   // --- Tab logic ---
-  const tabs = ['info', 'services', 'envvars', 'contacts', 'finances']
+  const tabs = ['info', 'services', 'envvars', 'contacts', 'finances', 'adrs']
 
   function activateTab(key) {
     tabs.forEach((t) => {
