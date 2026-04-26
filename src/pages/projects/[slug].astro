@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import EvolutionTimeline from '../../components/EvolutionTimeline.astro'
 import { db } from '../../db'
-import { projects, clients } from '../../db/schema'
-import { eq } from 'drizzle-orm'
+import { projects, clients, educationMilestones } from '../../db/schema'
+import { eq, and } from 'drizzle-orm'
 
 const { slug } = Astro.params
 
@@ -16,9 +17,29 @@ if (!project || !project.visible) {
   return Astro.redirect('/404')
 }
 
-const client = project.clientId
-  ? await db.select().from(clients).where(eq(clients.id, project.clientId)).get()
-  : null
+const [client, milestones] = await Promise.all([
+  project.clientId
+    ? db.select().from(clients).where(eq(clients.id, project.clientId)).get()
+    : Promise.resolve(null),
+  db
+    .select({
+      id: educationMilestones.id,
+      title: educationMilestones.title,
+      institution: educationMilestones.institution,
+      description: educationMilestones.description,
+      skills: educationMilestones.skills,
+      status: educationMilestones.status,
+      startDate: educationMilestones.startDate,
+      completedDate: educationMilestones.completedDate,
+      certificateUrl: educationMilestones.certificateUrl,
+      projectId: educationMilestones.projectId,
+      projectTitle: projects.title,
+      projectSlug: projects.slug,
+    })
+    .from(educationMilestones)
+    .leftJoin(projects, eq(educationMilestones.projectId, projects.id))
+    .where(and(eq(educationMilestones.projectId, project.id), eq(educationMilestones.isPublic, true))),
+])
 
 const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
 ---
