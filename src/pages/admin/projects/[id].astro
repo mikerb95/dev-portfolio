@@ -35,7 +35,7 @@ const project = await db
 
 if (!project) return Astro.redirect('/admin/projects')
 
-const [envVars, services, contacts, financeRows, allClients] = await Promise.all([
+const [envVars, services, contacts, financeRows, allClients, adrs] = await Promise.all([
   db.select().from(projectEnvVars).where(eq(projectEnvVars.projectId, projectId)).orderBy(projectEnvVars.key),
   db.select().from(projectServices).where(eq(projectServices.projectId, projectId)).orderBy(projectServices.category),
   db.select().from(projectContacts).where(eq(projectContacts.projectId, projectId)),
@@ -65,6 +65,13 @@ const finStatusColors: Record<string, string> = {
   cobrado: 'text-emerald-400 bg-emerald-950',
   pendiente: 'text-amber-400 bg-amber-950',
   proyectado: 'text-blue-400 bg-blue-950',
+}
+
+const adrStatusColors: Record<string, string> = {
+  propuesto: 'text-amber-400 bg-amber-950',
+  aceptado: 'text-emerald-400 bg-emerald-950',
+  deprecado: 'text-zinc-400 bg-zinc-800',
+  reemplazado: 'text-red-400 bg-red-950',
 }
 
 const totalCobrado = financeRows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
