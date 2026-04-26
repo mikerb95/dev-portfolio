@@ -1,7 +1,7 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { db } from '../../../db'
-import { projects, clients, projectEnvVars, projectServices, projectContacts, finances } from '../../../db/schema'
+import { projects, clients, projectEnvVars, projectServices, projectContacts, finances, projectAdrs } from '../../../db/schema'
 import { eq, desc } from 'drizzle-orm'
 
 const { id } = Astro.params
