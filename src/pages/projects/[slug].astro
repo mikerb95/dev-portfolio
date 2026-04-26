@@ -114,5 +114,11 @@ const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
         </a>
       )}
     </div>
+
+    {milestones.length > 0 && (
+      <div class="mt-12 pt-10 border-t border-zinc-800">
+        <EvolutionTimeline milestones={milestones} />
+      </div>
+    )}
   </div>
 </BaseLayout>
