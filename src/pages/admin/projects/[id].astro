@@ -114,6 +114,7 @@ const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduc
         { key: 'envvars', label: `Variables de entorno${envVars.length ? ` (${envVars.length})` : ''}` },
         { key: 'contacts', label: `Contactos${contacts.length ? ` (${contacts.length})` : ''}` },
         { key: 'finances', label: `Finanzas${financeRows.length ? ` (${financeRows.length})` : ''}` },
+        { key: 'adrs', label: `The Why${adrs.length ? ` (${adrs.length})` : ''}` },
       ].map((t) => (
         <button
           class="tab-btn text-sm px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap"
