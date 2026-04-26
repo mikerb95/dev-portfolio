@@ -1,0 +1,37 @@
+---
+const links = [
+  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/repos', label: 'Repositorios' },
+  { href: '/admin/messages', label: 'Mensajes' },
+  { href: '/admin/clients', label: 'Clientes' },
+  { href: '/admin/finances', label: 'Finanzas' },
+]
+
+const current = Astro.url.pathname
+---
+
+<aside class="w-56 bg-zinc-900 border-r border-zinc-800 min-h-screen flex flex-col py-6 px-4 shrink-0">
+  <a href="/" class="text-sm text-zinc-400 hover:text-white mb-8 block">← Ver portafolio</a>
+  <nav class="flex flex-col gap-1">
+    {links.map((l) => (
+      <a
+        href={l.href}
+        class={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          current === l.href
+            ? 'bg-zinc-700 text-white'
+            : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+        }`}
+      >
+        {l.label}
+      </a>
+    ))}
+  </nav>
+  <div class="mt-auto">
+    <a
+      href="/api/auth/signout"
+      class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+    >
+      Cerrar sesión
+    </a>
+  </div>
+</aside>
