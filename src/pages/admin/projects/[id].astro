@@ -820,4 +820,43 @@ const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduc
 
     if (res.ok) location.reload()
   })
+
+  // --- Save ADR ---
+  document.getElementById('btn-save-adr')?.addEventListener('click', async () => {
+    const title = (document.getElementById('adr-title') as HTMLInputElement).value.trim()
+    const status = (document.getElementById('adr-status') as HTMLSelectElement).value
+    const isPublic = (document.getElementById('adr-public') as HTMLInputElement).checked
+    const context = (document.getElementById('adr-context') as HTMLTextAreaElement).value.trim()
+    const decision = (document.getElementById('adr-decision') as HTMLTextAreaElement).value.trim()
+    const rationale = (document.getElementById('adr-rationale') as HTMLTextAreaElement).value.trim()
+    const alternatives = (document.getElementById('adr-alternatives') as HTMLTextAreaElement).value.trim()
+    const consequences = (document.getElementById('adr-consequences') as HTMLTextAreaElement).value.trim()
+
+    if (!title || !context || !decision || !rationale) {
+      return alert('Título, contexto, decisión y justificación son requeridos')
+    }
+
+    const res = await fetch(`/api/admin/projects/${projectId}/adrs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title, status, isPublic, context, decision, rationale,
+        alternatives: alternatives || null,
+        consequences: consequences || null,
+      }),
+    })
+
+    if (res.ok) location.reload()
+  })
+
+  // --- Toggle ADR expand/collapse ---
+  document.querySelectorAll('.adr-toggle').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.adr-card')
+      const body = card?.querySelector('.adr-body')
+      const isHidden = body?.classList.contains('hidden')
+      body?.classList.toggle('hidden', !isHidden)
+      btn.textContent = isHidden ? 'colapsar' : 'expandir'
+    })
+  })
 </script>
