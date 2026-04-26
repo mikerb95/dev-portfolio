@@ -1,0 +1,352 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { educationMilestones, projects } from '../../db/schema'
+import { desc } from 'drizzle-orm'
+
+const certs = await db
+  .select()
+  .from(educationMilestones)
+  .orderBy(desc(educationMilestones.completedDate), desc(educationMilestones.createdAt))
+
+const allProjects = await db.select({ id: projects.id, title: projects.title }).from(projects)
+
+const statusStyle: Record<string, string> = {
+  completado: 'text-emerald-400 bg-emerald-950',
+  en_curso: 'text-blue-400 bg-blue-950',
+  pausado: 'text-zinc-400 bg-zinc-800',
+}
+---
+
+<AdminLayout title="Certificaciones">
+  <div class="flex items-center justify-between mb-6">
+    <p class="text-zinc-500 text-sm">{certs.length} registro{certs.length !== 1 ? 's' : ''}</p>
+    <button id="btn-new" class="text-sm px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-md transition-colors">
+      Nueva certificación
+    </button>
+  </div>
+
+  <!-- Modal -->
+  <dialog id="cert-modal" class="bg-zinc-950 border border-zinc-800 rounded-xl p-6 w-full max-w-2xl text-zinc-100 backdrop:bg-black/70">
+    <h2 id="modal-title" class="text-base font-semibold mb-5">Nueva certificación</h2>
+
+    <form id="cert-form" class="flex flex-col gap-4">
+      <input type="hidden" id="cert-id" />
+
+      <!-- Imagen -->
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Imagen del certificado</label>
+        <div class="flex gap-3 items-start">
+          <div class="flex-1">
+            <input
+              id="cert-image-url"
+              type="text"
+              placeholder="/assets/certs/nombre.png  o  https://..."
+              class="input-base w-full"
+            />
+            <p class="text-xs text-zinc-600 mt-1">Pega una URL o sube un archivo</p>
+          </div>
+          <label class="shrink-0 cursor-pointer">
+            <span class="text-xs px-3 py-2 border border-zinc-700 hover:bg-zinc-800 rounded-md transition-colors block">
+              Subir archivo
+            </span>
+            <input id="cert-file-input" type="file" accept="image/*" class="hidden" />
+          </label>
+        </div>
+        <!-- Preview -->
+        <div id="image-preview-wrap" class="hidden mt-3">
+          <img id="image-preview" src="" alt="" class="h-28 rounded-lg border border-zinc-700 object-cover" />
+          <button type="button" id="btn-clear-image" class="text-xs text-zinc-600 hover:text-red-400 mt-1 block">
+            Quitar imagen
+          </button>
+        </div>
+        <div id="upload-progress" class="hidden text-xs text-zinc-500 mt-1">Subiendo...</div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Título *</label>
+          <input id="cert-title" type="text" placeholder="AWS Solutions Architect" class="input-base w-full" required />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Institución</label>
+          <input id="cert-institution" type="text" placeholder="Amazon Web Services" class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Estado</label>
+          <select id="cert-status" class="input-base w-full">
+            <option value="completado">Completado</option>
+            <option value="en_curso">En curso</option>
+            <option value="pausado">Pausado</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Fecha de inicio</label>
+          <input id="cert-start" type="date" class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Fecha de finalización</label>
+          <input id="cert-completed" type="date" class="input-base w-full" />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Descripción</label>
+          <textarea id="cert-description" rows="2" class="input-base w-full resize-none"></textarea>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Habilidades (separadas por comas)</label>
+          <input id="cert-skills" type="text" placeholder="AWS, Cloud Architecture, IAM" class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Proyecto asociado</label>
+          <select id="cert-project" class="input-base w-full">
+            <option value="">Ninguno</option>
+            {allProjects.map((p) => <option value={p.id}>{p.title}</option>)}
+          </select>
+        </div>
+        <div class="flex items-center gap-2 pt-4">
+          <input id="cert-public" type="checkbox" checked class="w-4 h-4 accent-emerald-400" />
+          <label for="cert-public" class="text-xs text-zinc-400">Visible en portfolio público</label>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2 border-t border-zinc-800 mt-2">
+        <button type="button" id="btn-cancel" class="text-sm text-zinc-400 hover:text-white px-4 py-2">Cancelar</button>
+        <button type="submit" class="text-sm px-4 py-2 bg-white text-zinc-900 rounded-md font-medium hover:bg-zinc-100">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Tabla de certificaciones -->
+  {certs.length === 0 ? (
+    <p class="text-zinc-600 text-sm">No hay certificaciones. Agrega la primera.</p>
+  ) : (
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide text-left">
+            <th class="pb-3 pr-4 font-medium w-16"></th>
+            <th class="pb-3 pr-4 font-medium">Título</th>
+            <th class="pb-3 pr-4 font-medium">Institución</th>
+            <th class="pb-3 pr-4 font-medium">Habilidades</th>
+            <th class="pb-3 pr-4 font-medium">Estado</th>
+            <th class="pb-3 pr-4 font-medium">Fecha</th>
+            <th class="pb-3 pr-4 font-medium">Público</th>
+            <th class="pb-3 font-medium"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800/60">
+          {certs.map((c) => {
+            const skills: string[] = c.skills ? JSON.parse(c.skills) : []
+            return (
+              <tr
+                class="text-zinc-300 hover:bg-zinc-900/40 transition-colors cert-row"
+                data-cert={JSON.stringify({
+                  id: c.id,
+                  title: c.title,
+                  institution: c.institution,
+                  description: c.description,
+                  skills: skills,
+                  status: c.status,
+                  startDate: c.startDate?.toISOString().split('T')[0] ?? '',
+                  completedDate: c.completedDate?.toISOString().split('T')[0] ?? '',
+                  certificateUrl: c.certificateUrl,
+                  projectId: c.projectId,
+                  isPublic: c.isPublic,
+                })}
+              >
+                <td class="py-3 pr-4">
+                  {c.certificateUrl ? (
+                    <img
+                      src={c.certificateUrl}
+                      alt=""
+                      class="w-12 h-8 object-cover rounded border border-zinc-800"
+                      onerror="this.style.display='none'"
+                    />
+                  ) : (
+                    <div class="w-12 h-8 bg-zinc-800 rounded border border-zinc-800" />
+                  )}
+                </td>
+                <td class="py-3 pr-4 font-medium text-zinc-100">{c.title}</td>
+                <td class="py-3 pr-4 text-zinc-500">{c.institution ?? '—'}</td>
+                <td class="py-3 pr-4">
+                  <span class="text-zinc-600 text-xs">{skills.slice(0, 3).join(', ') || '—'}</span>
+                </td>
+                <td class="py-3 pr-4">
+                  <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${statusStyle[c.status ?? 'completado']}`}>
+                    {c.status ?? 'completado'}
+                  </span>
+                </td>
+                <td class="py-3 pr-4 text-zinc-500 text-xs">
+                  {c.completedDate?.toLocaleDateString('es-CO', { year: 'numeric', month: 'short' }) ?? '—'}
+                </td>
+                <td class="py-3 pr-4 text-xs text-zinc-600">{c.isPublic ? 'Sí' : 'No'}</td>
+                <td class="py-3 text-right">
+                  <button class="btn-delete text-xs text-zinc-600 hover:text-red-400 transition-colors" data-id={c.id}>
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+</AdminLayout>
+
+<style>
+  @reference "tailwindcss";
+  .input-base {
+    @apply px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-zinc-100 text-sm placeholder-zinc-600 focus:outline-none focus:border-zinc-500;
+  }
+</style>
+
+<script>
+  const modal = document.getElementById('cert-modal') as HTMLDialogElement
+  const form = document.getElementById('cert-form') as HTMLFormElement
+  const idInput = document.getElementById('cert-id') as HTMLInputElement
+  const titleEl = document.getElementById('modal-title')!
+  const imageUrlInput = document.getElementById('cert-image-url') as HTMLInputElement
+  const fileInput = document.getElementById('cert-file-input') as HTMLInputElement
+  const previewWrap = document.getElementById('image-preview-wrap')!
+  const previewImg = document.getElementById('image-preview') as HTMLImageElement
+  const uploadProgress = document.getElementById('upload-progress')!
+
+  function showPreview(url: string) {
+    previewImg.src = url
+    previewWrap.classList.remove('hidden')
+  }
+
+  function clearImage() {
+    imageUrlInput.value = ''
+    previewImg.src = ''
+    previewWrap.classList.add('hidden')
+    fileInput.value = ''
+  }
+
+  document.getElementById('btn-clear-image')?.addEventListener('click', clearImage)
+
+  imageUrlInput.addEventListener('input', () => {
+    const val = imageUrlInput.value.trim()
+    if (val) showPreview(val)
+    else previewWrap.classList.add('hidden')
+  })
+
+  // File upload
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0]
+    if (!file) return
+
+    uploadProgress.classList.remove('hidden')
+
+    const fd = new FormData()
+    fd.append('file', file)
+
+    try {
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok) {
+        imageUrlInput.value = data.url
+        showPreview(data.url)
+      } else {
+        alert(data.error ?? 'Error al subir imagen')
+      }
+    } catch {
+      alert('Error de red al subir imagen')
+    } finally {
+      uploadProgress.classList.add('hidden')
+    }
+  })
+
+  function openNew() {
+    titleEl.textContent = 'Nueva certificación'
+    idInput.value = ''
+    form.reset()
+    clearImage()
+    modal.showModal()
+  }
+
+  function openEdit(data: any) {
+    titleEl.textContent = 'Editar certificación'
+    idInput.value = data.id
+    ;(document.getElementById('cert-title') as HTMLInputElement).value = data.title ?? ''
+    ;(document.getElementById('cert-institution') as HTMLInputElement).value = data.institution ?? ''
+    ;(document.getElementById('cert-description') as HTMLTextAreaElement).value = data.description ?? ''
+    ;(document.getElementById('cert-skills') as HTMLInputElement).value = (data.skills ?? []).join(', ')
+    ;(document.getElementById('cert-status') as HTMLSelectElement).value = data.status ?? 'completado'
+    ;(document.getElementById('cert-start') as HTMLInputElement).value = data.startDate ?? ''
+    ;(document.getElementById('cert-completed') as HTMLInputElement).value = data.completedDate ?? ''
+    ;(document.getElementById('cert-project') as HTMLSelectElement).value = data.projectId ?? ''
+    ;(document.getElementById('cert-public') as HTMLInputElement).checked = data.isPublic !== false
+
+    if (data.certificateUrl) {
+      imageUrlInput.value = data.certificateUrl
+      showPreview(data.certificateUrl)
+    } else {
+      clearImage()
+    }
+
+    modal.showModal()
+  }
+
+  document.getElementById('btn-new')?.addEventListener('click', openNew)
+  document.getElementById('btn-cancel')?.addEventListener('click', () => modal.close())
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.close() })
+
+  // Click on row = edit
+  document.querySelectorAll<HTMLTableRowElement>('.cert-row').forEach((row) => {
+    row.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('.btn-delete')) return
+      openEdit(JSON.parse(row.dataset.cert!))
+    })
+    row.style.cursor = 'pointer'
+  })
+
+  // Delete
+  document.querySelectorAll<HTMLButtonElement>('.btn-delete').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Eliminar esta certificación')) return
+      const id = btn.dataset.id
+      await fetch(`/api/admin/certifications/${id}`, { method: 'DELETE' })
+      window.location.reload()
+    })
+  })
+
+  // Submit
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const id = idInput.value
+    const skillsRaw = (document.getElementById('cert-skills') as HTMLInputElement).value.trim()
+    const projectId = (document.getElementById('cert-project') as HTMLSelectElement).value
+
+    const payload = {
+      title: (document.getElementById('cert-title') as HTMLInputElement).value.trim(),
+      institution: (document.getElementById('cert-institution') as HTMLInputElement).value.trim() || null,
+      description: (document.getElementById('cert-description') as HTMLTextAreaElement).value.trim() || null,
+      skills: skillsRaw ? skillsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [],
+      status: (document.getElementById('cert-status') as HTMLSelectElement).value,
+      startDate: (document.getElementById('cert-start') as HTMLInputElement).value || null,
+      completedDate: (document.getElementById('cert-completed') as HTMLInputElement).value || null,
+      certificateUrl: imageUrlInput.value.trim() || null,
+      projectId: projectId ? Number(projectId) : null,
+      isPublic: (document.getElementById('cert-public') as HTMLInputElement).checked,
+    }
+
+    if (id) {
+      await fetch(`/api/admin/certifications/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+    } else {
+      await fetch('/api/admin/certifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+    }
+
+    modal.close()
+    window.location.reload()
+  })
+</script>
