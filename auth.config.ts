@@ -1,16 +1,22 @@
-import GitHub from '@auth/core/providers/github'
+import Credentials from '@auth/core/providers/credentials'
 import { defineConfig } from 'auth-astro'
 
 export default defineConfig({
   providers: [
-    GitHub({
-      clientId: import.meta.env.GITHUB_CLIENT_ID,
-      clientSecret: import.meta.env.GITHUB_CLIENT_SECRET,
+    Credentials({
+      credentials: {
+        username: { label: 'Usuario', type: 'text' },
+        password: { label: 'Contraseña', type: 'password' },
+      },
+      authorize(credentials) {
+        if (
+          credentials.username === process.env.DEV_USER &&
+          credentials.password === process.env.DEV_PASSWORD
+        ) {
+          return { id: '1', name: credentials.username as string }
+        }
+        return null
+      },
     }),
   ],
-  callbacks: {
-    async signIn({ profile }) {
-      return profile?.login === import.meta.env.GITHUB_ADMIN_USERNAME
-    },
-  },
 })
