@@ -98,6 +98,22 @@ export const projectAdrs = sqliteTable('project_adrs', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 })
 
+export const educationMilestones = sqliteTable('education_milestones', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  institution: text('institution'),
+  description: text('description'),
+  skills: text('skills'), // JSON array: ["TypeScript", "Drizzle ORM"]
+  status: text('status', { enum: ['en_curso', 'completado', 'pausado'] }).default('en_curso'),
+  startDate: integer('start_date', { mode: 'timestamp' }),
+  completedDate: integer('completed_date', { mode: 'timestamp' }),
+  certificateUrl: text('certificate_url'),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  isPublic: integer('is_public', { mode: 'boolean' }).default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
 export const briefings = sqliteTable('briefings', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   clientId: integer('client_id').references(() => clients.id),
