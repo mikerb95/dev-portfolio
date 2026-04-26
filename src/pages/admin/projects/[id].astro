@@ -1,0 +1,672 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { db } from '../../../db'
+import { projects, clients, projectEnvVars, projectServices, projectContacts, finances } from '../../../db/schema'
+import { eq, desc } from 'drizzle-orm'
+
+const { id } = Astro.params
+const projectId = Number(id)
+
+const project = await db
+  .select({
+    id: projects.id,
+    slug: projects.slug,
+    title: projects.title,
+    description: projects.description,
+    techStack: projects.techStack,
+    repoUrl: projects.repoUrl,
+    previewUrl: projects.previewUrl,
+    screenshotUrl: projects.screenshotUrl,
+    visible: projects.visible,
+    status: projects.status,
+    startDate: projects.startDate,
+    endDate: projects.endDate,
+    internalNotes: projects.internalNotes,
+    clientId: projects.clientId,
+    clientName: clients.name,
+    clientEmail: clients.email,
+    clientCompany: clients.company,
+    createdAt: projects.createdAt,
+  })
+  .from(projects)
+  .leftJoin(clients, eq(projects.clientId, clients.id))
+  .where(eq(projects.id, projectId))
+  .get()
+
+if (!project) return Astro.redirect('/admin/projects')
+
+const [envVars, services, contacts, financeRows, allClients] = await Promise.all([
+  db.select().from(projectEnvVars).where(eq(projectEnvVars.projectId, projectId)).orderBy(projectEnvVars.key),
+  db.select().from(projectServices).where(eq(projectServices.projectId, projectId)).orderBy(projectServices.category),
+  db.select().from(projectContacts).where(eq(projectContacts.projectId, projectId)),
+  db.select().from(finances).where(eq(finances.projectId, projectId)).orderBy(desc(finances.createdAt)),
+  db.select({ id: clients.id, name: clients.name }).from(clients),
+])
+
+const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
+const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+
+const statusColors: Record<string, string> = {
+  activo: 'text-emerald-400 bg-emerald-950',
+  pausado: 'text-amber-400 bg-amber-950',
+  completado: 'text-blue-400 bg-blue-950',
+  archivado: 'text-zinc-400 bg-zinc-800',
+}
+
+const categoryLabels: Record<string, string> = {
+  hosting: 'Hosting', database: 'Base de datos', auth: 'Autenticación',
+  cdn: 'CDN', email: 'Email', storage: 'Almacenamiento',
+  dns: 'DNS', monitoring: 'Monitoreo', payment: 'Pagos',
+  repository: 'Repositorio', other: 'Otro',
+}
+
+const finStatusColors: Record<string, string> = {
+  cobrado: 'text-emerald-400 bg-emerald-950',
+  pendiente: 'text-amber-400 bg-amber-950',
+  proyectado: 'text-blue-400 bg-blue-950',
+}
+
+const totalCobrado = financeRows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
+const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduce((s, r) => s + r.amount, 0)
+---
+
+<AdminLayout title={project.title}>
+  <!-- Header del proyecto -->
+  <div class="flex items-start justify-between mb-8 gap-4">
+    <div>
+      <div class="flex items-center gap-3 mb-1">
+        <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${statusColors[project.status ?? 'activo']}`}>
+          {project.status ?? 'activo'}
+        </span>
+        {project.visible && (
+          <span class="text-xs text-zinc-500">Visible en portfolio</span>
+        )}
+      </div>
+      <p class="text-zinc-600 font-mono text-xs mt-1">{project.slug}</p>
+      {project.description && <p class="text-zinc-400 text-sm mt-2 max-w-xl">{project.description}</p>}
+      <div class="flex gap-4 mt-3 text-xs text-zinc-500">
+        {project.startDate && <span>Inicio: {project.startDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
+        {project.endDate && <span>Fin: {project.endDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
+        {project.repoUrl && <a href={project.repoUrl} target="_blank" rel="noopener" class="hover:text-zinc-300 transition-colors">Repositorio</a>}
+        {project.previewUrl && <a href={project.previewUrl} target="_blank" rel="noopener" class="hover:text-zinc-300 transition-colors">Preview</a>}
+      </div>
+    </div>
+    <div class="flex gap-2 shrink-0">
+      <button id="btn-edit-project" class="text-xs px-3 py-1.5 border border-zinc-700 hover:bg-zinc-800 rounded-md transition-colors">Editar</button>
+      <button id="btn-delete-project" class="text-xs px-3 py-1.5 border border-red-900/50 text-red-400 hover:bg-red-950/30 rounded-md transition-colors">Eliminar</button>
+    </div>
+  </div>
+
+  <!-- Tabs de navegación -->
+  <div class="border-b border-zinc-800 mb-6">
+    <nav class="flex gap-0 -mb-px" id="tab-nav">
+      {[
+        { key: 'info', label: 'Información' },
+        { key: 'services', label: `Servicios${services.length ? ` (${services.length})` : ''}` },
+        { key: 'envvars', label: `Variables de entorno${envVars.length ? ` (${envVars.length})` : ''}` },
+        { key: 'contacts', label: `Contactos${contacts.length ? ` (${contacts.length})` : ''}` },
+        { key: 'finances', label: `Finanzas${financeRows.length ? ` (${financeRows.length})` : ''}` },
+      ].map((t) => (
+        <button
+          class="tab-btn text-sm px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap"
+          data-tab={t.key}
+        >
+          {t.label}
+        </button>
+      ))}
+    </nav>
+  </div>
+
+  <!-- Tab: Información -->
+  <div id="tab-info" class="tab-panel">
+    <!-- Editar proyecto form (oculto por defecto) -->
+    <div id="edit-project-form" class="hidden mb-6 border border-zinc-800 rounded-lg p-5 bg-zinc-900">
+      <h3 class="text-sm font-semibold text-zinc-300 mb-4">Editar proyecto</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Slug</label>
+          <input id="edit-slug" type="text" value={project.slug} class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Título</label>
+          <input id="edit-title" type="text" value={project.title} class="input-base w-full" />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Descripción</label>
+          <input id="edit-description" type="text" value={project.description ?? ''} class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Stack (separado por comas)</label>
+          <input id="edit-stack" type="text" value={stack.join(', ')} class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Estado</label>
+          <select id="edit-status" class="input-base w-full">
+            {['activo', 'pausado', 'completado', 'archivado'].map((s) => (
+              <option value={s} selected={project.status === s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Cliente</label>
+          <select id="edit-client" class="input-base w-full">
+            <option value="">Sin cliente</option>
+            {allClients.map((c) => <option value={c.id} selected={project.clientId === c.id}>{c.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Fecha inicio</label>
+          <input id="edit-start" type="date" value={project.startDate?.toISOString().split('T')[0] ?? ''} class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Fecha fin</label>
+          <input id="edit-end" type="date" value={project.endDate?.toISOString().split('T')[0] ?? ''} class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Repo URL</label>
+          <input id="edit-repo" type="url" value={project.repoUrl ?? ''} class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Preview URL</label>
+          <input id="edit-preview" type="url" value={project.previewUrl ?? ''} class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Screenshot URL</label>
+          <input id="edit-screenshot" type="url" value={project.screenshotUrl ?? ''} class="input-base w-full" />
+        </div>
+        <div class="flex items-center gap-2 pt-4">
+          <input id="edit-visible" type="checkbox" checked={project.visible ?? false} class="w-4 h-4 accent-emerald-400" />
+          <label for="edit-visible" class="text-xs text-zinc-400">Visible en portfolio público</label>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Notas internas</label>
+          <textarea id="edit-notes" rows="3" class="input-base w-full resize-none">{project.internalNotes ?? ''}</textarea>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button id="btn-save-edit" class="text-sm px-4 py-2 bg-white text-zinc-900 rounded-md font-medium hover:bg-zinc-100">Guardar cambios</button>
+        <button id="btn-cancel-edit" class="text-sm px-4 py-2 text-zinc-400 hover:text-white">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div class="space-y-4">
+        <div>
+          <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Stack tecnológico</p>
+          {stack.length > 0 ? (
+            <div class="flex flex-wrap gap-1.5">
+              {stack.map((t) => <span class="text-xs px-2 py-0.5 bg-zinc-800 text-zinc-300 rounded-sm">{t}</span>)}
+            </div>
+          ) : <p class="text-zinc-600 text-sm">—</p>}
+        </div>
+
+        {project.clientName && (
+          <div>
+            <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Cliente</p>
+            <p class="text-sm text-zinc-200">{project.clientName}</p>
+            {project.clientCompany && <p class="text-xs text-zinc-500">{project.clientCompany}</p>}
+            {project.clientEmail && <p class="text-xs text-zinc-500">{project.clientEmail}</p>}
+          </div>
+        )}
+      </div>
+
+      {project.internalNotes && (
+        <div>
+          <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Notas internas</p>
+          <p class="text-sm text-zinc-400 whitespace-pre-wrap">{project.internalNotes}</p>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <!-- Tab: Servicios -->
+  <div id="tab-services" class="tab-panel hidden">
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-xs text-zinc-500">{services.length} servicio{services.length !== 1 ? 's' : ''} registrado{services.length !== 1 ? 's' : ''}</p>
+      <button class="btn-add-row text-xs px-3 py-1.5 border border-zinc-700 hover:bg-zinc-800 rounded-md transition-colors" data-target="form-add-service">Agregar servicio</button>
+    </div>
+
+    <div id="form-add-service" class="hidden mb-4 border border-zinc-800 rounded-lg p-4 bg-zinc-900/50">
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Nombre *</label>
+          <input id="svc-name" type="text" placeholder="Vercel" class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Categoría *</label>
+          <select id="svc-category" class="input-base w-full">
+            {Object.entries(categoryLabels).map(([v, l]) => <option value={v}>{l}</option>)}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">URL del dashboard</label>
+          <input id="svc-url" type="url" placeholder="https://vercel.com/..." class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Usuario / cuenta</label>
+          <input id="svc-username" type="text" class="input-base w-full" />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Notas</label>
+          <input id="svc-notes" type="text" class="input-base w-full" />
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button id="btn-save-service" class="text-xs px-3 py-1.5 bg-white text-zinc-900 rounded-md font-medium">Guardar</button>
+        <button class="btn-cancel-row text-xs px-3 py-1.5 text-zinc-400 hover:text-white" data-target="form-add-service">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="services-table">
+      {services.length === 0 ? (
+        <p class="text-zinc-600 text-sm">No hay servicios registrados.</p>
+      ) : (
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-zinc-800 text-zinc-500 text-left text-xs uppercase tracking-wide">
+              <th class="pb-2 pr-4 font-medium">Nombre</th>
+              <th class="pb-2 pr-4 font-medium">Categoría</th>
+              <th class="pb-2 pr-4 font-medium">URL</th>
+              <th class="pb-2 pr-4 font-medium">Usuario</th>
+              <th class="pb-2 pr-4 font-medium">Notas</th>
+              <th class="pb-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody id="services-body" class="divide-y divide-zinc-800/60">
+            {services.map((s) => (
+              <tr class="text-zinc-300 service-row" data-id={s.id}>
+                <td class="py-2.5 pr-4 font-medium text-zinc-200">{s.name}</td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{categoryLabels[s.category] ?? s.category}</td>
+                <td class="py-2.5 pr-4">
+                  {s.url ? <a href={s.url} target="_blank" rel="noopener" class="text-zinc-400 hover:text-zinc-200 text-xs truncate max-w-[180px] block">{s.url}</a> : <span class="text-zinc-600">—</span>}
+                </td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{s.username ?? '—'}</td>
+                <td class="py-2.5 pr-4 text-zinc-600 text-xs max-w-[160px] truncate">{s.notes ?? '—'}</td>
+                <td class="py-2.5 text-right">
+                  <button class="btn-delete text-xs text-zinc-600 hover:text-red-400 transition-colors" data-resource="services" data-id={s.id}>Eliminar</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </div>
+
+  <!-- Tab: Variables de entorno -->
+  <div id="tab-envvars" class="tab-panel hidden">
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-xs text-zinc-500">{envVars.length} variable{envVars.length !== 1 ? 's' : ''}</p>
+      <button class="btn-add-row text-xs px-3 py-1.5 border border-zinc-700 hover:bg-zinc-800 rounded-md transition-colors" data-target="form-add-envvar">Agregar variable</button>
+    </div>
+
+    <div id="form-add-envvar" class="hidden mb-4 border border-zinc-800 rounded-lg p-4 bg-zinc-900/50">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Clave *</label>
+          <input id="env-key" type="text" placeholder="DATABASE_URL" class="input-base w-full font-mono" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Valor *</label>
+          <input id="env-value" type="text" placeholder="libsql://..." class="input-base w-full font-mono" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Entorno</label>
+          <select id="env-environment" class="input-base w-full">
+            <option value="all">Todos</option>
+            <option value="production">Production</option>
+            <option value="staging">Staging</option>
+            <option value="development">Development</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Descripción</label>
+          <input id="env-notes" type="text" class="input-base w-full" />
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button id="btn-save-envvar" class="text-xs px-3 py-1.5 bg-white text-zinc-900 rounded-md font-medium">Guardar</button>
+        <button class="btn-cancel-row text-xs px-3 py-1.5 text-zinc-400 hover:text-white" data-target="form-add-envvar">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="envvars-table">
+      {envVars.length === 0 ? (
+        <p class="text-zinc-600 text-sm">No hay variables de entorno registradas.</p>
+      ) : (
+        <table class="w-full text-sm font-mono">
+          <thead>
+            <tr class="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide text-left font-sans">
+              <th class="pb-2 pr-4 font-medium">Clave</th>
+              <th class="pb-2 pr-4 font-medium">Valor</th>
+              <th class="pb-2 pr-4 font-medium">Entorno</th>
+              <th class="pb-2 pr-4 font-medium">Descripción</th>
+              <th class="pb-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody id="envvars-body" class="divide-y divide-zinc-800/60">
+            {envVars.map((e) => (
+              <tr class="text-zinc-300 envvar-row" data-id={e.id}>
+                <td class="py-2.5 pr-4 text-zinc-200 text-xs">{e.key}</td>
+                <td class="py-2.5 pr-4 text-xs">
+                  <span class="env-value text-zinc-600 select-none">{'•'.repeat(Math.min(e.value.length, 24))}</span>
+                  <span class="env-value-real hidden text-zinc-400">{e.value}</span>
+                  <button class="btn-reveal font-sans text-zinc-600 hover:text-zinc-300 text-xs ml-2 transition-colors">mostrar</button>
+                </td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs font-sans">{e.environment ?? 'all'}</td>
+                <td class="py-2.5 pr-4 text-zinc-600 text-xs font-sans">{e.notes ?? '—'}</td>
+                <td class="py-2.5 text-right font-sans">
+                  <button class="btn-delete text-xs text-zinc-600 hover:text-red-400 transition-colors" data-resource="envvars" data-id={e.id}>Eliminar</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </div>
+
+  <!-- Tab: Contactos -->
+  <div id="tab-contacts" class="tab-panel hidden">
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-xs text-zinc-500">{contacts.length} contacto{contacts.length !== 1 ? 's' : ''}</p>
+      <button class="btn-add-row text-xs px-3 py-1.5 border border-zinc-700 hover:bg-zinc-800 rounded-md transition-colors" data-target="form-add-contact">Agregar contacto</button>
+    </div>
+
+    <div id="form-add-contact" class="hidden mb-4 border border-zinc-800 rounded-lg p-4 bg-zinc-900/50">
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Nombre *</label>
+          <input id="con-name" type="text" class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Rol</label>
+          <select id="con-role" class="input-base w-full">
+            {['cliente', 'pm', 'dev', 'qa', 'diseño', 'otro'].map((r) => <option value={r}>{r}</option>)}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Email</label>
+          <input id="con-email" type="email" class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Teléfono</label>
+          <input id="con-phone" type="tel" class="input-base w-full" />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Notas</label>
+          <input id="con-notes" type="text" class="input-base w-full" />
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button id="btn-save-contact" class="text-xs px-3 py-1.5 bg-white text-zinc-900 rounded-md font-medium">Guardar</button>
+        <button class="btn-cancel-row text-xs px-3 py-1.5 text-zinc-400 hover:text-white" data-target="form-add-contact">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="contacts-table">
+      {contacts.length === 0 ? (
+        <p class="text-zinc-600 text-sm">No hay contactos registrados.</p>
+      ) : (
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide text-left">
+              <th class="pb-2 pr-4 font-medium">Nombre</th>
+              <th class="pb-2 pr-4 font-medium">Rol</th>
+              <th class="pb-2 pr-4 font-medium">Email</th>
+              <th class="pb-2 pr-4 font-medium">Teléfono</th>
+              <th class="pb-2 pr-4 font-medium">Notas</th>
+              <th class="pb-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody id="contacts-body" class="divide-y divide-zinc-800/60">
+            {contacts.map((c) => (
+              <tr class="text-zinc-300 contact-row" data-id={c.id}>
+                <td class="py-2.5 pr-4 font-medium text-zinc-200">{c.name}</td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{c.role ?? '—'}</td>
+                <td class="py-2.5 pr-4 text-xs">
+                  {c.email ? <a href={`mailto:${c.email}`} class="text-zinc-400 hover:text-zinc-200">{c.email}</a> : <span class="text-zinc-600">—</span>}
+                </td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{c.phone ?? '—'}</td>
+                <td class="py-2.5 pr-4 text-zinc-600 text-xs">{c.notes ?? '—'}</td>
+                <td class="py-2.5 text-right">
+                  <button class="btn-delete text-xs text-zinc-600 hover:text-red-400 transition-colors" data-resource="contacts" data-id={c.id}>Eliminar</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </div>
+
+  <!-- Tab: Finanzas -->
+  <div id="tab-finances" class="tab-panel hidden">
+    {financeRows.length > 0 && (
+      <div class="flex gap-4 mb-6">
+        <div class="border border-zinc-800 rounded-lg px-4 py-3 flex-1">
+          <p class="text-zinc-500 text-xs mb-0.5">Cobrado</p>
+          <p class="text-emerald-400 font-semibold">{fmt.format(totalCobrado)}</p>
+        </div>
+        <div class="border border-zinc-800 rounded-lg px-4 py-3 flex-1">
+          <p class="text-zinc-500 text-xs mb-0.5">Pendiente</p>
+          <p class="text-amber-400 font-semibold">{fmt.format(totalPendiente)}</p>
+        </div>
+        <div class="border border-zinc-800 rounded-lg px-4 py-3 flex-1">
+          <p class="text-zinc-500 text-xs mb-0.5">Total</p>
+          <p class="text-zinc-200 font-semibold">{fmt.format(totalCobrado + totalPendiente)}</p>
+        </div>
+      </div>
+    )}
+
+    {financeRows.length === 0 ? (
+      <p class="text-zinc-600 text-sm">No hay registros financieros para este proyecto.</p>
+    ) : (
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide text-left">
+            <th class="pb-2 pr-4 font-medium">Descripción</th>
+            <th class="pb-2 pr-4 font-medium">Monto</th>
+            <th class="pb-2 pr-4 font-medium">Estado</th>
+            <th class="pb-2 font-medium">Vencimiento</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800/60">
+          {financeRows.map((f) => (
+            <tr class="text-zinc-300">
+              <td class="py-2.5 pr-4">{f.description ?? '—'}</td>
+              <td class="py-2.5 pr-4 font-mono text-xs">{fmt.format(f.amount)}</td>
+              <td class="py-2.5 pr-4">
+                <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${finStatusColors[f.status]}`}>{f.status}</span>
+              </td>
+              <td class="py-2.5 text-zinc-500 text-xs">
+                {f.dueDate ? f.dueDate.toLocaleDateString('es-CO') : '—'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+    <div class="mt-4">
+      <a href="/admin/finances" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Gestionar todas las finanzas</a>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  @reference "tailwindcss";
+  .input-base {
+    @apply px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-zinc-100 text-sm placeholder-zinc-600 focus:outline-none focus:border-zinc-500;
+  }
+  .tab-btn {
+    @apply text-zinc-500 border-transparent hover:text-zinc-300 hover:border-zinc-700;
+  }
+  .tab-btn.active {
+    @apply text-white border-white;
+  }
+</style>
+
+<script define:vars={{ projectId: project.id }}>
+  // --- Tab logic ---
+  const tabs = ['info', 'services', 'envvars', 'contacts', 'finances']
+
+  function activateTab(key) {
+    tabs.forEach((t) => {
+      const panel = document.getElementById(`tab-${t}`)
+      const btn = document.querySelector(`[data-tab="${t}"]`)
+      if (t === key) {
+        panel?.classList.remove('hidden')
+        btn?.classList.add('active')
+      } else {
+        panel?.classList.add('hidden')
+        btn?.classList.remove('active')
+      }
+    })
+    history.replaceState(null, '', `#${key}`)
+  }
+
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab))
+  })
+
+  const hash = location.hash.replace('#', '')
+  activateTab(tabs.includes(hash) ? hash : 'info')
+
+  // --- Add / Cancel form toggles ---
+  document.querySelectorAll('.btn-add-row').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.getElementById(btn.dataset.target)?.classList.remove('hidden')
+    })
+  })
+  document.querySelectorAll('.btn-cancel-row').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.getElementById(btn.dataset.target)?.classList.add('hidden')
+    })
+  })
+
+  // --- Delete buttons ---
+  document.querySelectorAll('.btn-delete').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Confirmar eliminación')) return
+      const resource = btn.dataset.resource
+      const id = Number(btn.dataset.id)
+      await fetch(`/api/admin/projects/${projectId}/${resource}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      btn.closest('tr')?.remove()
+    })
+  })
+
+  // --- Reveal env var values ---
+  document.querySelectorAll('.btn-reveal').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('tr')
+      const masked = row.querySelector('.env-value')
+      const real = row.querySelector('.env-value-real')
+      const isHidden = real.classList.contains('hidden')
+      masked.classList.toggle('hidden', isHidden)
+      real.classList.toggle('hidden', !isHidden)
+      btn.textContent = isHidden ? 'ocultar' : 'mostrar'
+    })
+  })
+
+  // --- Edit project form ---
+  document.getElementById('btn-edit-project')?.addEventListener('click', () => {
+    document.getElementById('edit-project-form')?.classList.remove('hidden')
+  })
+  document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
+    document.getElementById('edit-project-form')?.classList.add('hidden')
+  })
+
+  document.getElementById('btn-save-edit')?.addEventListener('click', async () => {
+    const stackRaw = document.getElementById('edit-stack').value.trim()
+    const techStack = stackRaw ? JSON.stringify(stackRaw.split(',').map((s) => s.trim()).filter(Boolean)) : null
+    const clientId = document.getElementById('edit-client').value
+
+    await fetch(`/api/admin/projects/${projectId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: document.getElementById('edit-slug').value.trim(),
+        title: document.getElementById('edit-title').value.trim(),
+        description: document.getElementById('edit-description').value.trim() || null,
+        techStack,
+        status: document.getElementById('edit-status').value,
+        clientId: clientId ? Number(clientId) : null,
+        startDate: document.getElementById('edit-start').value || null,
+        endDate: document.getElementById('edit-end').value || null,
+        repoUrl: document.getElementById('edit-repo').value.trim() || null,
+        previewUrl: document.getElementById('edit-preview').value.trim() || null,
+        screenshotUrl: document.getElementById('edit-screenshot').value.trim() || null,
+        visible: document.getElementById('edit-visible').checked,
+        internalNotes: document.getElementById('edit-notes').value.trim() || null,
+      }),
+    })
+    location.reload()
+  })
+
+  // --- Delete project ---
+  document.getElementById('btn-delete-project')?.addEventListener('click', async () => {
+    if (!confirm('Eliminar este proyecto y todos sus datos asociados. Esta acción no se puede deshacer.')) return
+    await fetch(`/api/admin/projects/${projectId}`, { method: 'DELETE' })
+    window.location.href = '/admin/projects'
+  })
+
+  // --- Save service ---
+  document.getElementById('btn-save-service')?.addEventListener('click', async () => {
+    const name = document.getElementById('svc-name').value.trim()
+    const category = document.getElementById('svc-category').value
+    const url = document.getElementById('svc-url').value.trim()
+    const username = document.getElementById('svc-username').value.trim()
+    const notes = document.getElementById('svc-notes').value.trim()
+
+    if (!name) return alert('El nombre es requerido')
+
+    const res = await fetch(`/api/admin/projects/${projectId}/services`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, category, url: url || null, username: username || null, notes: notes || null }),
+    })
+
+    if (res.ok) location.reload()
+  })
+
+  // --- Save env var ---
+  document.getElementById('btn-save-envvar')?.addEventListener('click', async () => {
+    const key = document.getElementById('env-key').value.trim()
+    const value = document.getElementById('env-value').value.trim()
+    const environment = document.getElementById('env-environment').value
+    const notes = document.getElementById('env-notes').value.trim()
+
+    if (!key || !value) return alert('Clave y valor son requeridos')
+
+    const res = await fetch(`/api/admin/projects/${projectId}/envvars`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value, environment, notes: notes || null }),
+    })
+
+    if (res.ok) location.reload()
+  })
+
+  // --- Save contact ---
+  document.getElementById('btn-save-contact')?.addEventListener('click', async () => {
+    const name = document.getElementById('con-name').value.trim()
+    const role = document.getElementById('con-role').value
+    const email = document.getElementById('con-email').value.trim()
+    const phone = document.getElementById('con-phone').value.trim()
+    const notes = document.getElementById('con-notes').value.trim()
+
+    if (!name) return alert('El nombre es requerido')
+
+    const res = await fetch(`/api/admin/projects/${projectId}/contacts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, role, email: email || null, phone: phone || null, notes: notes || null }),
+    })
+
+    if (res.ok) location.reload()
+  })
+</script>

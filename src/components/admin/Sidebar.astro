@@ -1,6 +1,7 @@
 ---
 const links = [
   { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/projects', label: 'Proyectos' },
   { href: '/admin/repos', label: 'Repositorios' },
   { href: '/admin/messages', label: 'Mensajes' },
   { href: '/admin/clients', label: 'Clientes' },
@@ -17,7 +18,7 @@ const current = Astro.url.pathname
       <a
         href={l.href}
         class={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-          current === l.href
+          (l.href === '/admin' ? current === '/admin' : current.startsWith(l.href))
             ? 'bg-zinc-700 text-white'
             : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
         }`}
