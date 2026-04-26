@@ -13,10 +13,10 @@ const stack: string[] = techStack ? JSON.parse(techStack) : []
 
 <a
   href={`/projects/${slug}`}
-  class="group block bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-600 transition-colors"
+  class="group block bg-white dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden hover:border-brand-500/50 dark:hover:border-brand-500/30 hover:shadow-md transition-all"
 >
   {screenshotUrl && (
-    <div class="aspect-video bg-zinc-800 overflow-hidden">
+    <div class="aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden">
       <img
         src={screenshotUrl}
         alt={title}
@@ -25,12 +25,12 @@ const stack: string[] = techStack ? JSON.parse(techStack) : []
     </div>
   )}
   <div class="p-5">
-    <h3 class="font-semibold text-white mb-1">{title}</h3>
-    {description && <p class="text-zinc-400 text-sm line-clamp-2 mb-3">{description}</p>}
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{title}</h3>
+    {description && <p class="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 mb-3">{description}</p>}
     {stack.length > 0 && (
       <div class="flex flex-wrap gap-1">
         {stack.map((t) => (
-          <span class="text-xs px-2 py-0.5 bg-zinc-800 text-zinc-300 rounded-full">{t}</span>
+          <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full">{t}</span>
         ))}
       </div>
     )}
