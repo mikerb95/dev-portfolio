@@ -1,7 +1,7 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
-import { projects, messages, finances, clients } from '../../db/schema'
+import { projects, messages, finances, clients, educationMilestones } from '../../db/schema'
 import { eq } from 'drizzle-orm'
 
 const [totalProjects] = await db.select({ count: projects.id }).from(projects).where(eq(projects.visible, true))
@@ -13,6 +13,13 @@ const cobrado = revenueRows.filter((r) => r.status === 'cobrado').reduce((s, r) 
 const pendiente = revenueRows.filter((r) => r.status === 'pendiente').reduce((s, r) => s + r.amount, 0)
 const proyectado = revenueRows.filter((r) => r.status === 'proyectado').reduce((s, r) => s + r.amount, 0)
 
+const milestoneRows = await db.select({ status: educationMilestones.status }).from(educationMilestones)
+const completados = milestoneRows.filter((m) => m.status === 'completado').length
+const enCurso = milestoneRows.filter((m) => m.status === 'en_curso').length
+const evolutionProgress = completados + enCurso > 0
+  ? `${Math.round((completados / (completados + enCurso)) * 100)}%`
+  : '—'
+
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
 
 const kpis = [
@@ -22,6 +29,7 @@ const kpis = [
   { label: 'Cobrado', value: fmt.format(cobrado), color: 'text-emerald-400' },
   { label: 'Pendiente', value: fmt.format(pendiente), color: 'text-amber-400' },
   { label: 'Proyectado', value: fmt.format(proyectado), color: 'text-blue-400' },
+  { label: 'Evolución', value: evolutionProgress, color: 'text-emerald-400' },
 ]
 ---
 
