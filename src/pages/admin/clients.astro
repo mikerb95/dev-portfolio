@@ -8,6 +8,16 @@ const allClients = await db.select().from(clients).orderBy(desc(clients.createdA
 ---
 
 <AdminLayout title="Clientes">
+  <div class="flex justify-between items-center mb-6">
+    <p class="text-zinc-400 text-sm">{allClients.length} cliente{allClients.length !== 1 ? 's' : ''}</p>
+    <button
+      id="btn-new"
+      class="px-4 py-2 bg-white text-zinc-900 text-sm font-medium rounded-lg hover:bg-zinc-100 transition-colors"
+    >
+      + Nuevo cliente
+    </button>
+  </div>
+
   {allClients.length === 0 ? (
     <p class="text-zinc-500">No hay clientes registrados todavía.</p>
   ) : (
@@ -18,7 +28,8 @@ const allClients = await db.select().from(clients).orderBy(desc(clients.createdA
             <th class="pb-3 pr-4 font-medium">Nombre</th>
             <th class="pb-3 pr-4 font-medium">Email</th>
             <th class="pb-3 pr-4 font-medium">Empresa</th>
-            <th class="pb-3 font-medium">Notas</th>
+            <th class="pb-3 pr-4 font-medium">Notas</th>
+            <th class="pb-3 font-medium"></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-zinc-800">
@@ -27,11 +38,142 @@ const allClients = await db.select().from(clients).orderBy(desc(clients.createdA
               <td class="py-3 pr-4 font-medium text-white">{c.name}</td>
               <td class="py-3 pr-4 text-zinc-400">{c.email ?? '—'}</td>
               <td class="py-3 pr-4">{c.company ?? '—'}</td>
-              <td class="py-3 text-zinc-500 text-xs max-w-xs truncate">{c.notes ?? '—'}</td>
+              <td class="py-3 pr-4 text-zinc-500 text-xs max-w-xs truncate">{c.notes ?? '—'}</td>
+              <td class="py-3 flex gap-2 justify-end">
+                <button
+                  class="text-xs text-zinc-400 hover:text-white transition-colors"
+                  data-edit={JSON.stringify(c)}
+                >
+                  Editar
+                </button>
+                <button
+                  class="text-xs text-red-500 hover:text-red-400 transition-colors"
+                  data-delete={c.id}
+                >
+                  Eliminar
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   )}
+
+  <dialog
+    id="modal"
+    class="bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-full max-w-lg text-zinc-100 backdrop:bg-black/60"
+  >
+    <h2 id="modal-title" class="text-lg font-semibold mb-5">Nuevo cliente</h2>
+    <form id="client-form" class="flex flex-col gap-4">
+      <input type="hidden" id="client-id" />
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Nombre *</label>
+        <input
+          id="f-name"
+          type="text"
+          required
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+        />
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Email</label>
+        <input
+          id="f-email"
+          type="email"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+        />
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Empresa</label>
+        <input
+          id="f-company"
+          type="text"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+        />
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Notas</label>
+        <textarea
+          id="f-notes"
+          rows="3"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+        ></textarea>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-cancel"
+          class="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-white text-zinc-900 text-sm font-medium rounded-lg hover:bg-zinc-100 transition-colors"
+        >
+          Guardar
+        </button>
+      </div>
+    </form>
+  </dialog>
 </AdminLayout>
+
+<script>
+  const modal = document.getElementById('modal') as HTMLDialogElement
+  const modalTitle = document.getElementById('modal-title')!
+  const form = document.getElementById('client-form') as HTMLFormElement
+  const idInput = document.getElementById('client-id') as HTMLInputElement
+
+  function openNew() {
+    modalTitle.textContent = 'Nuevo cliente'
+    idInput.value = ''
+    form.reset()
+    modal.showModal()
+  }
+
+  function openEdit(data: any) {
+    modalTitle.textContent = 'Editar cliente'
+    idInput.value = data.id
+    ;(document.getElementById('f-name') as HTMLInputElement).value = data.name ?? ''
+    ;(document.getElementById('f-email') as HTMLInputElement).value = data.email ?? ''
+    ;(document.getElementById('f-company') as HTMLInputElement).value = data.company ?? ''
+    ;(document.getElementById('f-notes') as HTMLTextAreaElement).value = data.notes ?? ''
+    modal.showModal()
+  }
+
+  document.getElementById('btn-new')!.addEventListener('click', openNew)
+  document.getElementById('btn-cancel')!.addEventListener('click', () => modal.close())
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.close() })
+
+  document.querySelectorAll('[data-edit]').forEach((btn) => {
+    btn.addEventListener('click', () => openEdit(JSON.parse((btn as HTMLElement).dataset.edit!)))
+  })
+
+  document.querySelectorAll('[data-delete]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Eliminar este cliente?')) return
+      const id = (btn as HTMLElement).dataset.delete
+      await fetch(`/api/admin/clients/${id}`, { method: 'DELETE' })
+      window.location.reload()
+    })
+  })
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const id = idInput.value
+    const payload = {
+      name: (document.getElementById('f-name') as HTMLInputElement).value,
+      email: (document.getElementById('f-email') as HTMLInputElement).value || null,
+      company: (document.getElementById('f-company') as HTMLInputElement).value || null,
+      notes: (document.getElementById('f-notes') as HTMLTextAreaElement).value || null,
+    }
+    if (id) {
+      await fetch(`/api/admin/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    } else {
+      await fetch('/api/admin/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    }
+    modal.close()
+    window.location.reload()
+  })
+</script>
