@@ -1,0 +1,58 @@
+---
+interface FinanceRow {
+  id: number
+  description?: string | null
+  amount: number
+  status: 'cobrado' | 'pendiente' | 'proyectado'
+  dueDate?: Date | null
+  projectTitle?: string | null
+  clientName?: string | null
+}
+
+interface Props {
+  rows: FinanceRow[]
+}
+
+const { rows } = Astro.props
+
+const statusColors: Record<string, string> = {
+  cobrado: 'bg-emerald-900/50 text-emerald-300',
+  pendiente: 'bg-amber-900/50 text-amber-300',
+  proyectado: 'bg-blue-900/50 text-blue-300',
+}
+
+const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
+---
+
+<div class="overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-zinc-800 text-zinc-400 text-left">
+        <th class="pb-3 pr-4 font-medium">Descripción</th>
+        <th class="pb-3 pr-4 font-medium">Proyecto</th>
+        <th class="pb-3 pr-4 font-medium">Cliente</th>
+        <th class="pb-3 pr-4 font-medium">Monto</th>
+        <th class="pb-3 pr-4 font-medium">Estado</th>
+        <th class="pb-3 font-medium">Vencimiento</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-zinc-800">
+      {rows.map((r) => (
+        <tr class="text-zinc-300">
+          <td class="py-3 pr-4">{r.description ?? '—'}</td>
+          <td class="py-3 pr-4">{r.projectTitle ?? '—'}</td>
+          <td class="py-3 pr-4">{r.clientName ?? '—'}</td>
+          <td class="py-3 pr-4 font-mono">{fmt.format(r.amount)}</td>
+          <td class="py-3 pr-4">
+            <span class={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}`}>
+              {r.status}
+            </span>
+          </td>
+          <td class="py-3 text-zinc-400">
+            {r.dueDate ? r.dueDate.toLocaleDateString('es-AR') : '—'}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
