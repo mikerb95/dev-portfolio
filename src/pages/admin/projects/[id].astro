@@ -500,6 +500,148 @@ const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduc
       <a href="/admin/finances" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Gestionar todas las finanzas</a>
     </div>
   </div>
+
+  <!-- Tab: The Why (ADRs) -->
+  <div id="tab-adrs" class="tab-panel hidden">
+    <div class="flex items-start justify-between mb-6">
+      <div>
+        <p class="text-sm text-zinc-400 max-w-xl">
+          Documenta las decisiones arquitectónicas de este proyecto: qué se eligió, por qué se eligió y qué alternativas se descartaron.
+          Los registros marcados como públicos aparecen en la página del proyecto en el portfolio.
+        </p>
+      </div>
+      <button class="btn-add-row shrink-0 text-xs px-3 py-1.5 border border-zinc-700 hover:bg-zinc-800 rounded-md transition-colors ml-6" data-target="form-add-adr">
+        Nueva decisión
+      </button>
+    </div>
+
+    <!-- Formulario nuevo ADR -->
+    <div id="form-add-adr" class="hidden mb-6 border border-zinc-800 rounded-lg p-5 bg-zinc-900/50">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Título de la decisión *</label>
+          <input id="adr-title" type="text" placeholder="Elección del framework frontend" class="input-base w-full" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Estado</label>
+          <select id="adr-status" class="input-base w-full">
+            <option value="aceptado">Aceptado</option>
+            <option value="propuesto">Propuesto</option>
+            <option value="deprecado">Deprecado</option>
+            <option value="reemplazado">Reemplazado</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2 pt-4">
+          <input id="adr-public" type="checkbox" class="w-4 h-4 accent-emerald-400" />
+          <label for="adr-public" class="text-xs text-zinc-400">Visible en portfolio público</label>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Contexto *</label>
+          <p class="text-xs text-zinc-600 mb-1">El problema o situación que obligó a tomar esta decisión.</p>
+          <textarea id="adr-context" rows="3" placeholder="La latencia de carga era crítica para el mercado objetivo. El equipo tenía experiencia en React pero no en Vue." class="input-base w-full resize-none"></textarea>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Decisión *</label>
+          <p class="text-xs text-zinc-600 mb-1">Qué se decidió hacer.</p>
+          <textarea id="adr-decision" rows="2" placeholder="Usar Next.js con App Router y React Server Components." class="input-base w-full resize-none"></textarea>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Justificación *</label>
+          <p class="text-xs text-zinc-600 mb-1">Por qué esta decisión es la correcta para este contexto específico.</p>
+          <textarea id="adr-rationale" rows="3" placeholder="Next.js ofrece SSR nativo que reduce el TTFB crítico para este mercado. Los RSC permiten reducir el JS enviado al cliente un 60% vs SPA pura." class="input-base w-full resize-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Alternativas consideradas</label>
+          <textarea id="adr-alternatives" rows="3" placeholder="Remix: descartado por menor madurez del ecosistema. SvelteKit: descartado por curva de aprendizaje del equipo." class="input-base w-full resize-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Consecuencias</label>
+          <textarea id="adr-consequences" rows="3" placeholder="Vendor lock-in con Vercel para despliegue óptimo. Bundle size mayor que Svelte pero asumible por el contexto." class="input-base w-full resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button id="btn-save-adr" class="text-xs px-3 py-1.5 bg-white text-zinc-900 rounded-md font-medium">Guardar decisión</button>
+        <button class="btn-cancel-row text-xs px-3 py-1.5 text-zinc-400 hover:text-white" data-target="form-add-adr">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Lista de ADRs -->
+    <div id="adrs-list" class="flex flex-col gap-4">
+      {adrs.length === 0 ? (
+        <p class="text-zinc-600 text-sm">No hay decisiones documentadas para este proyecto.</p>
+      ) : (
+        adrs.map((adr, i) => (
+          <div class="adr-card border border-zinc-800 rounded-lg overflow-hidden" data-id={adr.id}>
+            <!-- Header del ADR -->
+            <div class="flex items-center justify-between px-5 py-3 bg-zinc-900/50 border-b border-zinc-800">
+              <div class="flex items-center gap-3">
+                <span class="text-zinc-600 font-mono text-xs">ADR-{String(i + 1).padStart(3, '0')}</span>
+                <h3 class="font-medium text-zinc-100 text-sm">{adr.title}</h3>
+              </div>
+              <div class="flex items-center gap-3">
+                {adr.isPublic && (
+                  <span class="text-xs text-zinc-500">público</span>
+                )}
+                <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${adrStatusColors[adr.status ?? 'aceptado']}`}>
+                  {adr.status ?? 'aceptado'}
+                </span>
+                <button
+                  class="adr-toggle text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
+                  data-id={adr.id}
+                >
+                  expandir
+                </button>
+                <button
+                  class="btn-delete text-xs text-zinc-600 hover:text-red-400 transition-colors"
+                  data-resource="adrs"
+                  data-id={adr.id}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+
+            <!-- Cuerpo del ADR (colapsable) -->
+            <div class="adr-body hidden px-5 py-5">
+              <div class="grid grid-cols-1 gap-5">
+                <div>
+                  <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Contexto</p>
+                  <p class="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{adr.context}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Decisión</p>
+                  <p class="text-sm text-zinc-200 font-medium leading-relaxed whitespace-pre-wrap">{adr.decision}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Justificación</p>
+                  <p class="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{adr.rationale}</p>
+                </div>
+                {(adr.alternatives || adr.consequences) && (
+                  <div class="grid grid-cols-2 gap-5 pt-1 border-t border-zinc-800">
+                    {adr.alternatives && (
+                      <div>
+                        <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Alternativas descartadas</p>
+                        <p class="text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">{adr.alternatives}</p>
+                      </div>
+                    )}
+                    {adr.consequences && (
+                      <div>
+                        <p class="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">Consecuencias</p>
+                        <p class="text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">{adr.consequences}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p class="text-xs text-zinc-600">
+                  Registrado el {adr.createdAt?.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
 </AdminLayout>
 
 <style>
