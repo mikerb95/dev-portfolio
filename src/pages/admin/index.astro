@@ -1,0 +1,37 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { projects, messages, finances, clients } from '../../db/schema'
+import { eq, sum } from 'drizzle-orm'
+
+const [totalProjects] = await db.select({ count: projects.id }).from(projects).where(eq(projects.visible, true))
+const [unreadMessages] = await db.select({ count: messages.id }).from(messages).where(eq(messages.read, false))
+const [totalClients] = await db.select({ count: clients.id }).from(clients)
+
+const revenueRows = await db.select({ amount: finances.amount, status: finances.status }).from(finances)
+const cobrado = revenueRows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
+const pendiente = revenueRows.filter((r) => r.status === 'pendiente').reduce((s, r) => s + r.amount, 0)
+const proyectado = revenueRows.filter((r) => r.status === 'proyectado').reduce((s, r) => s + r.amount, 0)
+
+const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
+
+const kpis = [
+  { label: 'Proyectos visibles', value: totalProjects?.count ?? 0, color: 'text-white' },
+  { label: 'Mensajes sin leer', value: unreadMessages?.count ?? 0, color: 'text-blue-400' },
+  { label: 'Clientes', value: totalClients?.count ?? 0, color: 'text-white' },
+  { label: 'Cobrado', value: fmt.format(cobrado), color: 'text-emerald-400' },
+  { label: 'Pendiente', value: fmt.format(pendiente), color: 'text-amber-400' },
+  { label: 'Proyectado', value: fmt.format(proyectado), color: 'text-blue-400' },
+]
+---
+
+<AdminLayout title="Dashboard">
+  <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+    {kpis.map((k) => (
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+        <p class="text-zinc-400 text-sm mb-1">{k.label}</p>
+        <p class={`text-2xl font-bold ${k.color}`}>{k.value}</p>
+      </div>
+    ))}
+  </div>
+</AdminLayout>
