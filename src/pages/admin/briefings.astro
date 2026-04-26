@@ -1,0 +1,311 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { briefings, clients, projects } from '../../db/schema'
+import { desc, eq } from 'drizzle-orm'
+
+const rows = await db
+  .select({
+    id: briefings.id,
+    title: briefings.title,
+    status: briefings.status,
+    estimatedBudget: briefings.estimatedBudget,
+    agreedBudget: briefings.agreedBudget,
+    estimatedHours: briefings.estimatedHours,
+    deadline: briefings.deadline,
+    clientId: briefings.clientId,
+    projectId: briefings.projectId,
+    clientName: clients.name,
+    projectTitle: projects.title,
+    createdAt: briefings.createdAt,
+  })
+  .from(briefings)
+  .leftJoin(clients, eq(briefings.clientId, clients.id))
+  .leftJoin(projects, eq(briefings.projectId, projects.id))
+  .orderBy(desc(briefings.createdAt))
+
+const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients)
+const allProjects = await db.select({ id: projects.id, title: projects.title }).from(projects)
+
+const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
+
+const statusLabel: Record<string, string> = {
+  borrador: 'Borrador',
+  en_revision: 'En revisión',
+  aprobado: 'Aprobado',
+  rechazado: 'Rechazado',
+}
+
+const statusColor: Record<string, string> = {
+  borrador: 'bg-zinc-700 text-zinc-300',
+  en_revision: 'bg-blue-900 text-blue-300',
+  aprobado: 'bg-emerald-900 text-emerald-300',
+  rechazado: 'bg-red-900 text-red-400',
+}
+---
+
+<AdminLayout title="Briefings">
+  <div class="flex justify-between items-center mb-6">
+    <p class="text-zinc-400 text-sm">{rows.length} briefing{rows.length !== 1 ? 's' : ''}</p>
+    <button
+      id="btn-new"
+      class="px-4 py-2 bg-white text-zinc-900 text-sm font-medium rounded-lg hover:bg-zinc-100 transition-colors"
+    >
+      + Nuevo briefing
+    </button>
+  </div>
+
+  {rows.length === 0 ? (
+    <p class="text-zinc-500">No hay briefings registrados todavía.</p>
+  ) : (
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-zinc-800 text-zinc-400 text-left">
+            <th class="pb-3 pr-4 font-medium">Título</th>
+            <th class="pb-3 pr-4 font-medium">Estado</th>
+            <th class="pb-3 pr-4 font-medium">Cliente</th>
+            <th class="pb-3 pr-4 font-medium">Proyecto</th>
+            <th class="pb-3 pr-4 font-medium">Presupuesto</th>
+            <th class="pb-3 pr-4 font-medium">Deadline</th>
+            <th class="pb-3 font-medium"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800">
+          {rows.map((r) => (
+            <tr class="text-zinc-300">
+              <td class="py-3 pr-4 font-medium text-white">
+                <a href={`/admin/briefings/${r.id}`} class="hover:underline">{r.title}</a>
+              </td>
+              <td class="py-3 pr-4">
+                <span class={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[r.status ?? 'borrador']}`}>
+                  {statusLabel[r.status ?? 'borrador']}
+                </span>
+              </td>
+              <td class="py-3 pr-4 text-zinc-400">{r.clientName ?? '—'}</td>
+              <td class="py-3 pr-4 text-zinc-400">{r.projectTitle ?? '—'}</td>
+              <td class="py-3 pr-4">
+                {r.agreedBudget
+                  ? <span class="text-emerald-400">{fmt.format(r.agreedBudget)}</span>
+                  : r.estimatedBudget
+                    ? <span class="text-zinc-400">{fmt.format(r.estimatedBudget)}</span>
+                    : '—'}
+              </td>
+              <td class="py-3 pr-4 text-zinc-400">
+                {r.deadline ? new Date(r.deadline).toLocaleDateString('es-AR') : '—'}
+              </td>
+              <td class="py-3 flex gap-2 justify-end">
+                <a
+                  href={`/admin/briefings/${r.id}`}
+                  class="text-xs text-zinc-400 hover:text-white transition-colors"
+                >
+                  Ver
+                </a>
+                <button
+                  class="text-xs text-red-500 hover:text-red-400 transition-colors"
+                  data-delete={r.id}
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  <dialog
+    id="modal"
+    class="bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-full max-w-2xl text-zinc-100 backdrop:bg-black/60"
+  >
+    <h2 class="text-lg font-semibold mb-5">Nuevo briefing</h2>
+    <form id="briefing-form" class="flex flex-col gap-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Título *</label>
+          <input
+            id="f-title"
+            type="text"
+            required
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Estado</label>
+          <select
+            id="f-status"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          >
+            <option value="borrador">Borrador</option>
+            <option value="en_revision">En revisión</option>
+            <option value="aprobado">Aprobado</option>
+            <option value="rechazado">Rechazado</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Deadline</label>
+          <input
+            id="f-deadline"
+            type="date"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Cliente</label>
+          <select
+            id="f-client"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          >
+            <option value="">— Sin cliente —</option>
+            {allClients.map((c) => (
+              <option value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Proyecto</label>
+          <select
+            id="f-project"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          >
+            <option value="">— Sin proyecto —</option>
+            {allProjects.map((p) => (
+              <option value={p.id}>{p.title}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Presupuesto estimado (USD)</label>
+          <input
+            id="f-est-budget"
+            type="number"
+            min="0"
+            step="0.01"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Presupuesto acordado (USD)</label>
+          <input
+            id="f-agreed-budget"
+            type="number"
+            min="0"
+            step="0.01"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Horas estimadas</label>
+          <input
+            id="f-hours"
+            type="number"
+            min="0"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+          />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Objetivo</label>
+        <textarea
+          id="f-objective"
+          rows="2"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+        ></textarea>
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Alcance</label>
+        <textarea
+          id="f-scope"
+          rows="2"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+        ></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Requerimientos</label>
+          <textarea
+            id="f-requirements"
+            rows="3"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+          ></textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Entregables</label>
+          <textarea
+            id="f-deliverables"
+            rows="3"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+          ></textarea>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Notas internas</label>
+        <textarea
+          id="f-notes"
+          rows="2"
+          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+        ></textarea>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-cancel"
+          class="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-4 py-2 bg-white text-zinc-900 text-sm font-medium rounded-lg hover:bg-zinc-100 transition-colors"
+        >
+          Guardar
+        </button>
+      </div>
+    </form>
+  </dialog>
+</AdminLayout>
+
+<script>
+  const modal = document.getElementById('modal') as HTMLDialogElement
+
+  document.getElementById('btn-new')!.addEventListener('click', () => modal.showModal())
+  document.getElementById('btn-cancel')!.addEventListener('click', () => modal.close())
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.close() })
+
+  document.querySelectorAll('[data-delete]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Eliminar este briefing?')) return
+      const id = (btn as HTMLElement).dataset.delete
+      await fetch(`/api/admin/briefings/${id}`, { method: 'DELETE' })
+      window.location.reload()
+    })
+  })
+
+  document.getElementById('briefing-form')!.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const val = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value
+    const payload = {
+      title: val('f-title'),
+      status: val('f-status'),
+      clientId: val('f-client') ? Number(val('f-client')) : null,
+      projectId: val('f-project') ? Number(val('f-project')) : null,
+      estimatedBudget: val('f-est-budget') ? Number(val('f-est-budget')) : null,
+      agreedBudget: val('f-agreed-budget') ? Number(val('f-agreed-budget')) : null,
+      estimatedHours: val('f-hours') ? Number(val('f-hours')) : null,
+      deadline: val('f-deadline') || null,
+      objective: val('f-objective') || null,
+      scope: val('f-scope') || null,
+      requirements: val('f-requirements') || null,
+      deliverables: val('f-deliverables') || null,
+      notes: val('f-notes') || null,
+    }
+    await fetch('/api/admin/briefings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    modal.close()
+    window.location.reload()
+  })
+</script>
