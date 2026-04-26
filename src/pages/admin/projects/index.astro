@@ -1,0 +1,206 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { db } from '../../../db'
+import { projects, clients } from '../../../db/schema'
+import { desc, eq } from 'drizzle-orm'
+
+const rows = await db
+  .select({
+    id: projects.id,
+    slug: projects.slug,
+    title: projects.title,
+    status: projects.status,
+    techStack: projects.techStack,
+    startDate: projects.startDate,
+    endDate: projects.endDate,
+    visible: projects.visible,
+    clientName: clients.name,
+  })
+  .from(projects)
+  .leftJoin(clients, eq(projects.clientId, clients.id))
+  .orderBy(desc(projects.createdAt))
+
+const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients)
+
+const statusColors: Record<string, string> = {
+  activo: 'text-emerald-400 bg-emerald-950',
+  pausado: 'text-amber-400 bg-amber-950',
+  completado: 'text-blue-400 bg-blue-950',
+  archivado: 'text-zinc-400 bg-zinc-800',
+}
+---
+
+<AdminLayout title="Proyectos">
+  <div class="flex items-center justify-between mb-6">
+    <p class="text-zinc-500 text-sm">{rows.length} proyecto{rows.length !== 1 ? 's' : ''}</p>
+    <button
+      id="btn-new"
+      class="text-sm px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-md transition-colors"
+    >
+      Nuevo proyecto
+    </button>
+  </div>
+
+  <!-- Formulario nuevo proyecto -->
+  <div id="form-new" class="hidden mb-8 border border-zinc-800 rounded-lg p-5 bg-zinc-900">
+    <h2 class="text-sm font-semibold text-zinc-300 mb-4">Nuevo proyecto</h2>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Slug *</label>
+        <input id="new-slug" type="text" placeholder="mi-proyecto" class="input-base w-full" />
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Título *</label>
+        <input id="new-title" type="text" placeholder="Mi Proyecto" class="input-base w-full" />
+      </div>
+      <div class="col-span-2">
+        <label class="block text-xs text-zinc-400 mb-1">Descripción</label>
+        <input id="new-description" type="text" class="input-base w-full" />
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Stack (separado por comas)</label>
+        <input id="new-stack" type="text" placeholder="Next.js, Tailwind, Supabase" class="input-base w-full" />
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Cliente</label>
+        <select id="new-client" class="input-base w-full">
+          <option value="">Sin cliente</option>
+          {allClients.map((c) => <option value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Estado</label>
+        <select id="new-status" class="input-base w-full">
+          <option value="activo">Activo</option>
+          <option value="pausado">Pausado</option>
+          <option value="completado">Completado</option>
+          <option value="archivado">Archivado</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Fecha inicio</label>
+        <input id="new-start" type="date" class="input-base w-full" />
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Repo URL</label>
+        <input id="new-repo" type="url" class="input-base w-full" />
+      </div>
+      <div>
+        <label class="block text-xs text-zinc-400 mb-1">Preview URL</label>
+        <input id="new-preview" type="url" class="input-base w-full" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button id="btn-save-new" class="text-sm px-4 py-2 bg-white text-zinc-900 rounded-md font-medium hover:bg-zinc-100">Guardar</button>
+      <button id="btn-cancel-new" class="text-sm px-4 py-2 text-zinc-400 hover:text-white">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Tabla de proyectos -->
+  {rows.length === 0 ? (
+    <p class="text-zinc-500 text-sm">No hay proyectos. Crea el primero.</p>
+  ) : (
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-zinc-800 text-zinc-400 text-left">
+            <th class="pb-3 pr-4 font-medium">Proyecto</th>
+            <th class="pb-3 pr-4 font-medium">Cliente</th>
+            <th class="pb-3 pr-4 font-medium">Stack</th>
+            <th class="pb-3 pr-4 font-medium">Estado</th>
+            <th class="pb-3 pr-4 font-medium">Inicio</th>
+            <th class="pb-3 font-medium"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800/60">
+          {rows.map((p) => {
+            const stack: string[] = p.techStack ? JSON.parse(p.techStack) : []
+            return (
+              <tr class="text-zinc-300 hover:bg-zinc-900/50 transition-colors group">
+                <td class="py-3 pr-4">
+                  <span class="font-medium text-white">{p.title}</span>
+                  <span class="block text-xs text-zinc-600 font-mono">{p.slug}</span>
+                </td>
+                <td class="py-3 pr-4 text-zinc-400">{p.clientName ?? '—'}</td>
+                <td class="py-3 pr-4">
+                  <span class="text-zinc-500 text-xs">{stack.slice(0, 3).join(', ') || '—'}{stack.length > 3 ? ` +${stack.length - 3}` : ''}</span>
+                </td>
+                <td class="py-3 pr-4">
+                  <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${statusColors[p.status ?? 'activo']}`}>
+                    {p.status ?? 'activo'}
+                  </span>
+                </td>
+                <td class="py-3 pr-4 text-zinc-500 text-xs">
+                  {p.startDate ? p.startDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'short' }) : '—'}
+                </td>
+                <td class="py-3 text-right">
+                  <a
+                    href={`/admin/projects/${p.id}`}
+                    class="text-xs text-zinc-500 hover:text-white transition-colors"
+                  >
+                    Ver detalle
+                  </a>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+</AdminLayout>
+
+<style>
+  .input-base {
+    @apply px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-zinc-100 text-sm placeholder-zinc-600 focus:outline-none focus:border-zinc-500;
+  }
+</style>
+
+<script>
+  const btnNew = document.getElementById('btn-new')!
+  const formNew = document.getElementById('form-new')!
+  const btnCancel = document.getElementById('btn-cancel-new')!
+  const btnSave = document.getElementById('btn-save-new')!
+
+  btnNew.addEventListener('click', () => formNew.classList.remove('hidden'))
+  btnCancel.addEventListener('click', () => formNew.classList.add('hidden'))
+
+  btnSave.addEventListener('click', async () => {
+    const slug = (document.getElementById('new-slug') as HTMLInputElement).value.trim()
+    const title = (document.getElementById('new-title') as HTMLInputElement).value.trim()
+    const description = (document.getElementById('new-description') as HTMLInputElement).value.trim()
+    const stackRaw = (document.getElementById('new-stack') as HTMLInputElement).value.trim()
+    const clientId = (document.getElementById('new-client') as HTMLSelectElement).value
+    const status = (document.getElementById('new-status') as HTMLSelectElement).value
+    const startDate = (document.getElementById('new-start') as HTMLInputElement).value
+    const repoUrl = (document.getElementById('new-repo') as HTMLInputElement).value.trim()
+    const previewUrl = (document.getElementById('new-preview') as HTMLInputElement).value.trim()
+
+    if (!slug || !title) return alert('Slug y título son requeridos')
+
+    const techStack = stackRaw ? JSON.stringify(stackRaw.split(',').map((s) => s.trim()).filter(Boolean)) : null
+
+    const res = await fetch('/api/admin/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug, title,
+        description: description || null,
+        techStack,
+        repoUrl: repoUrl || null,
+        previewUrl: previewUrl || null,
+        clientId: clientId ? Number(clientId) : null,
+        status,
+        startDate: startDate || null,
+      }),
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      window.location.href = `/admin/projects/${data.id}`
+    } else {
+      const err = await res.json()
+      alert(err.error)
+    }
+  })
+</script>
