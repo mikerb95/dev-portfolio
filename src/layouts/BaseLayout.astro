@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css'
+import Navbar from '../components/Navbar.astro'
+import Footer from '../components/Footer.astro'
 
 interface Props {
   title: string
@@ -16,8 +18,29 @@ const { title, description = 'Senior Software Engineer especializado en escalabi
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+    <script is:inline>
+      (function () {
+        try {
+          var d = document.documentElement, c = d.classList;
+          c.remove('light', 'dark');
+          var e = localStorage.getItem('theme');
+          if (!e || e === 'system') {
+            var m = window.matchMedia('(prefers-color-scheme: dark)');
+            if (m.matches) { d.style.colorScheme = 'dark'; c.add('dark'); }
+            else { d.style.colorScheme = 'light'; c.add('light'); }
+          } else { c.add(e); d.style.colorScheme = e; }
+        } catch (_) {}
+      })();
+    </script>
   </head>
-  <body class="bg-zinc-950 text-zinc-100 min-h-screen">
-    <slot />
+  <body class="bg-white text-slate-900 antialiased dark:bg-[#0b0f14] dark:text-slate-100 flex flex-col min-h-screen">
+    <Navbar />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
   </body>
 </html>
