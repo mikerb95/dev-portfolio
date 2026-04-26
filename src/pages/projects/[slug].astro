@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { db } from '../../db'
+import { projects, clients } from '../../db/schema'
+import { eq } from 'drizzle-orm'
+
+const { slug } = Astro.params
+
+const project = await db
+  .select()
+  .from(projects)
+  .where(eq(projects.slug, slug!))
+  .get()
+
+if (!project || !project.visible) {
+  return Astro.redirect('/404')
+}
+
+const client = project.clientId
+  ? await db.select().from(clients).where(eq(clients.id, project.clientId)).get()
+  : null
+
+const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
+---
+
+<BaseLayout title={project.title} description={project.description ?? undefined}>
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <a href="/" class="text-zinc-500 hover:text-white text-sm mb-8 inline-block">← Volver</a>
+
+    <h1 class="text-3xl font-bold mb-3">{project.title}</h1>
+
+    {project.description && (
+      <p class="text-zinc-400 text-lg mb-8">{project.description}</p>
+    )}
+
+    {project.previewUrl && (
+      <div class="mb-8 rounded-xl overflow-hidden border border-zinc-800 aspect-video bg-zinc-900">
+        <iframe
+          src={project.previewUrl}
+          class="w-full h-full"
+          title={`Preview de ${project.title}`}
+          loading="lazy"
+        />
+      </div>
+    )}
+
+    {project.screenshotUrl && !project.previewUrl && (
+      <div class="mb-8 rounded-xl overflow-hidden border border-zinc-800">
+        <img src={project.screenshotUrl} alt={project.title} class="w-full" />
+      </div>
+    )}
+
+    <div class="grid sm:grid-cols-2 gap-6 mb-8">
+      {stack.length > 0 && (
+        <div>
+          <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-3">Stack</h2>
+          <div class="flex flex-wrap gap-2">
+            {stack.map((t) => (
+              <span class="px-2.5 py-1 bg-zinc-800 text-zinc-200 text-sm rounded-md">{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {client && (
+        <div>
+          <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-3">Cliente</h2>
+          <p class="text-white font-medium">{client.name}</p>
+          {client.company && <p class="text-zinc-400 text-sm">{client.company}</p>}
+        </div>
+      )}
+    </div>
+
+    <div class="flex gap-4">
+      {project.repoUrl && (
+        <a
+          href={project.repoUrl}
+          target="_blank"
+          rel="noopener"
+          class="px-4 py-2 border border-zinc-700 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
+        >
+          Ver repositorio
+        </a>
+      )}
+      {project.previewUrl && (
+        <a
+          href={project.previewUrl}
+          target="_blank"
+          rel="noopener"
+          class="px-4 py-2 bg-white text-zinc-900 rounded-lg text-sm font-medium hover:bg-zinc-100 transition-colors"
+        >
+          Ver en vivo
+        </a>
+      )}
+    </div>
+  </div>
+</BaseLayout>
