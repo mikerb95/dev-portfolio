@@ -18,68 +18,68 @@ const { cert } = Astro.props
 
 const skills: string[] = cert.skills ? JSON.parse(cert.skills) : []
 
-const statusStyle: Record<string, string> = {
-  completado: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20',
-  en_curso: 'text-brand-600 bg-brand-50 dark:text-brand-400 dark:bg-brand-900/20',
-  pausado: 'text-slate-500 bg-slate-100 dark:text-slate-400 dark:bg-slate-800',
+const statusConfig: Record<string, { label: string; dot: string; pill: string }> = {
+  completado: { label: 'Completado', dot: 'bg-lime', pill: 'bg-lime/10 text-lime border-lime/30' },
+  en_curso:   { label: 'En curso',   dot: 'bg-cyan pulse-dot', pill: 'bg-cyan/10 text-cyan border-cyan/30' },
+  pausado:    { label: 'Pausado',    dot: 'bg-ink-400', pill: 'bg-white/5 text-ink-200 border-white/10' },
 }
 
-const statusLabel: Record<string, string> = {
-  completado: 'Completado',
-  en_curso: 'En curso',
-  pausado: 'Pausado',
-}
+const cfg = statusConfig[cert.status ?? 'completado'] ?? statusConfig.completado
 
 const isImage = cert.certificateUrl && (
   !cert.certificateUrl.startsWith('http') ||
-  (cert.certificateUrl?.match(/\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i) ?? false)
+  Boolean(cert.certificateUrl?.match(/\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i))
 )
 ---
 
-<div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/30 flex flex-col hover:border-brand-500/40 dark:hover:border-brand-500/20 transition-colors">
+<div class="rounded-2xl glass lift overflow-hidden flex flex-col">
   {cert.certificateUrl && isImage && (
     <a
       href={cert.certificateUrl}
       target="_blank"
       rel="noopener"
-      class="block overflow-hidden bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800 aspect-[16/9]"
+      class="block overflow-hidden aspect-[16/9] relative"
     >
+      <div class="absolute inset-0 grid-bg opacity-30"></div>
       <img
         src={cert.certificateUrl}
         alt={`Certificado: ${cert.title}`}
-        class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        class="w-full h-full object-cover hover:scale-105 transition-transform duration-300 relative z-10"
         loading="lazy"
       />
     </a>
   )}
 
   <div class="p-5 flex flex-col flex-1">
-    <div class="flex items-start justify-between gap-3 mb-2">
-      <h3 class="font-semibold text-slate-900 dark:text-slate-100 leading-snug">{cert.title}</h3>
-      <span class={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${statusStyle[cert.status ?? 'completado']}`}>
-        {statusLabel[cert.status ?? 'completado']}
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <h3 class="text-[15px] font-medium text-ink-50 leading-snug">{cert.title}</h3>
+      <span class={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border shrink-0 ${cfg.pill}`}>
+        <span class={`w-1.5 h-1.5 rounded-full ${cfg.dot}`}></span>
+        {cfg.label}
       </span>
     </div>
 
     {cert.institution && (
-      <p class="text-slate-500 dark:text-slate-500 text-sm mb-2">{cert.institution}</p>
+      <p class="text-[12px] font-mono text-ink-300 mb-2">{cert.institution}</p>
     )}
 
     {cert.description && (
-      <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-3">{cert.description}</p>
+      <p class="text-[13px] text-ink-200 leading-relaxed mb-3">{cert.description}</p>
     )}
 
     {skills.length > 0 && (
-      <div class="flex flex-wrap gap-1.5 mb-4 mt-auto pt-3">
+      <div class="flex flex-wrap gap-1.5 mt-auto pt-3">
         {skills.map((s) => (
-          <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full">{s}</span>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border bg-ink-800 text-ink-200 border-ink-700">
+            {s}
+          </span>
         ))}
       </div>
     )}
 
-    <div class="flex items-center justify-between mt-auto pt-3 border-t border-slate-100 dark:border-slate-800">
+    <div class="flex items-center justify-between mt-4 pt-3 border-t border-white/5">
       {cert.completedDate ? (
-        <span class="text-xs text-slate-400 dark:text-slate-600">
+        <span class="text-[11px] font-mono text-ink-300">
           {cert.completedDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long' })}
         </span>
       ) : <span />}
@@ -89,9 +89,10 @@ const isImage = cert.certificateUrl && (
           href={cert.certificateUrl}
           target="_blank"
           rel="noopener"
-          class="text-xs text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+          class="text-[11px] font-mono text-cyan hover:underline flex items-center gap-1"
         >
-          Ver certificado →
+          Ver certificado
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
         </a>
       )}
       {cert.certificateUrl && isImage && (
@@ -99,9 +100,10 @@ const isImage = cert.certificateUrl && (
           href={cert.certificateUrl}
           target="_blank"
           rel="noopener"
-          class="text-xs text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+          class="text-[11px] font-mono text-cyan hover:underline flex items-center gap-1"
         >
-          Ver imagen →
+          Ver imagen
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
         </a>
       )}
     </div>
