@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import EvolutionTimeline from '../../components/EvolutionTimeline.astro'
 import { db } from '../../db'
 import { projects, clients, educationMilestones } from '../../db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -22,102 +21,125 @@ const [client, milestones] = await Promise.all([
     ? db.select().from(clients).where(eq(clients.id, project.clientId)).get()
     : Promise.resolve(null),
   db
-    .select({
-      id: educationMilestones.id,
-      title: educationMilestones.title,
-      institution: educationMilestones.institution,
-      description: educationMilestones.description,
-      skills: educationMilestones.skills,
-      status: educationMilestones.status,
-      startDate: educationMilestones.startDate,
-      completedDate: educationMilestones.completedDate,
-      certificateUrl: educationMilestones.certificateUrl,
-      projectId: educationMilestones.projectId,
-      projectTitle: projects.title,
-      projectSlug: projects.slug,
-    })
+    .select()
     .from(educationMilestones)
-    .leftJoin(projects, eq(educationMilestones.projectId, projects.id))
     .where(and(eq(educationMilestones.projectId, project.id), eq(educationMilestones.isPublic, true))),
 ])
 
 const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
+
+const statusColor: Record<string, string> = {
+  activo: 'text-cyan border-cyan/30 bg-cyan/10',
+  pausado: 'text-violet border-violet/30 bg-violet/10',
+  completado: 'text-lime border-lime/30 bg-lime/10',
+  archivado: 'text-ink-200 border-white/10 bg-white/5',
+}
 ---
 
-<BaseLayout title={project.title} description={project.description ?? undefined}>
-  <div class="max-w-3xl mx-auto px-6 py-16">
-    <a href="/" class="text-zinc-500 hover:text-white text-sm mb-8 inline-block">← Volver</a>
+<BaseLayout title={`${project.title} — CodeByMike`} description={project.description ?? undefined}>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
-    <h1 class="text-3xl font-bold mb-3">{project.title}</h1>
+    <!-- Back -->
+    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver
+    </a>
 
-    {project.description && (
-      <p class="text-zinc-400 text-lg mb-8">{project.description}</p>
-    )}
+    <!-- Header -->
+    <div class="mb-10">
+      {project.status && (
+        <span class={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border mb-4 ${statusColor[project.status] ?? statusColor.activo}`}>
+          {project.status}
+        </span>
+      )}
+      <h1 class="text-5xl md:text-7xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-4">{project.title}</h1>
+      {project.description && (
+        <p class="text-[18px] text-ink-100 leading-relaxed max-w-2xl">{project.description}</p>
+      )}
+    </div>
 
-    {project.previewUrl && (
-      <div class="mb-8 rounded-xl overflow-hidden border border-zinc-800 aspect-video bg-zinc-900">
-        <iframe
-          src={project.previewUrl}
-          class="w-full h-full"
-          title={`Preview de ${project.title}`}
-          loading="lazy"
-        />
+    <!-- Screenshot / Preview -->
+    {(project.screenshotUrl || project.previewUrl) && (
+      <div class="mb-10 rounded-2xl overflow-hidden border border-white/5 aspect-video bg-ink-900 relative">
+        <div class="absolute inset-0 grid-bg opacity-30"></div>
+        {project.screenshotUrl && (
+          <img src={project.screenshotUrl} alt={project.title} class="w-full h-full object-cover" />
+        )}
       </div>
     )}
 
-    {project.screenshotUrl && !project.previewUrl && (
-      <div class="mb-8 rounded-xl overflow-hidden border border-zinc-800">
-        <img src={project.screenshotUrl} alt={project.title} class="w-full" />
-      </div>
-    )}
-
-    <div class="grid sm:grid-cols-2 gap-6 mb-8">
+    <!-- Meta grid -->
+    <div class="grid md:grid-cols-3 gap-4 mb-10">
       {stack.length > 0 && (
-        <div>
-          <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-3">Stack</h2>
-          <div class="flex flex-wrap gap-2">
+        <div class="rounded-2xl glass p-6">
+          <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Stack tecnológico</div>
+          <div class="flex flex-wrap gap-1.5">
             {stack.map((t) => (
-              <span class="px-2.5 py-1 bg-zinc-800 text-zinc-200 text-sm rounded-md">{t}</span>
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
+                {t}
+              </span>
             ))}
           </div>
         </div>
       )}
 
       {client && (
-        <div>
-          <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-3">Cliente</h2>
-          <p class="text-white font-medium">{client.name}</p>
-          {client.company && <p class="text-zinc-400 text-sm">{client.company}</p>}
+        <div class="rounded-2xl glass p-6">
+          <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Cliente</div>
+          <div class="text-[15px] text-ink-50 font-medium">{client.name}</div>
+          {client.company && <div class="text-[12px] font-mono text-ink-300 mt-1">{client.company}</div>}
         </div>
       )}
+
+      <div class="rounded-2xl glass p-6">
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Links</div>
+        <div class="flex flex-col gap-2">
+          {project.repoUrl && (
+            <a
+              href={project.repoUrl}
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-2 text-[13px] text-ink-100 hover:text-cyan transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+              Repositorio ↗
+            </a>
+          )}
+          {project.previewUrl && (
+            <a
+              href={project.previewUrl}
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-2 text-[13px] text-cyan hover:underline"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+              Ver en vivo ↗
+            </a>
+          )}
+        </div>
+      </div>
     </div>
 
-    <div class="flex gap-4">
-      {project.repoUrl && (
-        <a
-          href={project.repoUrl}
-          target="_blank"
-          rel="noopener"
-          class="px-4 py-2 border border-zinc-700 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
-        >
-          Ver repositorio
-        </a>
-      )}
-      {project.previewUrl && (
-        <a
-          href={project.previewUrl}
-          target="_blank"
-          rel="noopener"
-          class="px-4 py-2 bg-white text-zinc-900 rounded-lg text-sm font-medium hover:bg-zinc-100 transition-colors"
-        >
-          Ver en vivo
-        </a>
-      )}
-    </div>
-
+    <!-- Milestones educativos -->
     {milestones.length > 0 && (
-      <div class="mt-12 pt-10 border-t border-zinc-800">
-        <EvolutionTimeline milestones={milestones} />
+      <div class="border-t border-white/5 pt-12">
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-8">
+          <span class="text-cyan">/education</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span>Hitos de aprendizaje</span>
+        </div>
+        <div class="space-y-4">
+          {milestones.map((m) => (
+            <div class="rounded-2xl glass p-5 flex items-start gap-4">
+              <div class={`w-2 h-2 rounded-full mt-2 shrink-0 ${m.status === 'completado' ? 'bg-lime' : m.status === 'en_curso' ? 'bg-cyan pulse-dot' : 'bg-ink-400'}`}></div>
+              <div>
+                <div class="text-[15px] text-ink-50 font-medium">{m.title}</div>
+                {m.institution && <div class="text-[12px] font-mono text-ink-300 mt-0.5">{m.institution}</div>}
+                {m.description && <p class="text-[13px] text-ink-200 leading-relaxed mt-2">{m.description}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )}
   </div>

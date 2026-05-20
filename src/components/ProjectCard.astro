@@ -13,24 +13,43 @@ const stack: string[] = techStack ? JSON.parse(techStack) : []
 
 <a
   href={`/projects/${slug}`}
-  class="group block bg-white dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden hover:border-brand-500/50 dark:hover:border-brand-500/30 hover:shadow-md transition-all"
+  class="group block rounded-2xl glass lift overflow-hidden"
 >
-  {screenshotUrl && (
-    <div class="aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden">
+  <!-- Visual region -->
+  <div class="relative h-[200px] overflow-hidden">
+    {screenshotUrl ? (
       <img
         src={screenshotUrl}
         alt={title}
-        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        loading="lazy"
       />
+    ) : (
+      <div class="absolute inset-0 grid-bg opacity-50"></div>
+    )}
+    <div class="absolute inset-0 bg-gradient-to-t from-ink-950/80 to-transparent"></div>
+    <!-- Hover overlay -->
+    <div class="absolute inset-x-0 bottom-0 p-4 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+      <div class="glass-strong rounded-xl px-3 py-2 flex items-center justify-between">
+        <span class="text-[11px] font-mono text-ink-100">{stack.slice(0,3).join(' · ')}{stack.length > 3 ? ` + ${stack.length - 3}` : ''}</span>
+        <span class="text-[11px] font-mono text-cyan flex items-center gap-1">
+          Ver proyecto
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+        </span>
+      </div>
     </div>
-  )}
-  <div class="p-5">
-    <h3 class="font-semibold text-slate-900 dark:text-white mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{title}</h3>
-    {description && <p class="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 mb-3">{description}</p>}
+  </div>
+
+  <!-- Footer -->
+  <div class="p-5 border-t border-white/5">
+    <h3 class="text-[18px] font-medium text-ink-50 tracking-tight group-hover:text-cyan transition-colors">{title}</h3>
+    {description && <p class="mt-2 text-[13px] text-ink-200 leading-relaxed line-clamp-2">{description}</p>}
     {stack.length > 0 && (
-      <div class="flex flex-wrap gap-1">
+      <div class="mt-4 flex flex-wrap gap-1.5">
         {stack.map((t) => (
-          <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full">{t}</span>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-ink-800 text-ink-200 border-ink-700">
+            {t}
+          </span>
         ))}
       </div>
     )}
