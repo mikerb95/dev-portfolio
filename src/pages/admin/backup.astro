@@ -1,0 +1,105 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="Backups">
+  <div class="mb-6">
+    <p class="text-zinc-400 text-sm">Backups automáticos diarios a las 3:00 AM (UTC). Los últimos 30 se muestran aquí.</p>
+  </div>
+
+  <div class="flex items-center justify-between mb-6">
+    <div id="backup-status" class="text-xs text-zinc-500 font-mono"></div>
+    <button
+      id="btn-backup"
+      class="text-sm px-4 py-2 bg-white text-zinc-900 rounded-md font-medium hover:bg-zinc-100 transition-colors"
+    >
+      Crear backup ahora
+    </button>
+  </div>
+
+  <div id="backup-list" class="space-y-2">
+    <p class="text-zinc-600 text-sm">Cargando backups...</p>
+  </div>
+</AdminLayout>
+
+<script>
+  const fmt = new Intl.DateTimeFormat('es-CO', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+
+  function fmtSize(bytes: number) {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+  }
+
+  async function loadBackups() {
+    const list = document.getElementById('backup-list')!
+    try {
+      const res = await fetch('/api/admin/backup')
+      const blobs = await res.json()
+
+      if (!blobs.length) {
+        list.innerHTML = '<p class="text-zinc-600 text-sm">No hay backups todavía.</p>'
+        return
+      }
+
+      list.innerHTML = `
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide text-left">
+              <th class="pb-2 pr-4 font-medium">Fecha</th>
+              <th class="pb-2 pr-4 font-medium">Tamaño</th>
+              <th class="pb-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-800/60">
+            ${blobs.map((b: { uploadedAt: string; size: number; url: string; pathname: string }) => `
+              <tr class="text-zinc-300">
+                <td class="py-2.5 pr-4 font-mono text-xs">${fmt.format(new Date(b.uploadedAt))}</td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs">${fmtSize(b.size)}</td>
+                <td class="py-2.5 text-right">
+                  <a
+                    href="${b.url}"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-xs text-zinc-500 hover:text-zinc-200 transition-colors"
+                  >Descargar</a>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `
+    } catch {
+      list.innerHTML = '<p class="text-red-400 text-sm">Error cargando backups.</p>'
+    }
+  }
+
+  document.getElementById('btn-backup')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-backup') as HTMLButtonElement
+    const status = document.getElementById('backup-status')!
+    btn.disabled = true
+    btn.textContent = 'Creando backup...'
+    status.textContent = ''
+
+    try {
+      const res = await fetch('/api/admin/backup', { method: 'PUT' })
+      const data = await res.json()
+      if (data.ok) {
+        status.textContent = `Backup creado — ${(data.size / 1024).toFixed(1)} KB`
+        await loadBackups()
+      } else {
+        status.textContent = 'Error al crear el backup'
+      }
+    } catch {
+      status.textContent = 'Error de conexión'
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Crear backup ahora'
+    }
+  })
+
+  loadBackups()
+</script>
