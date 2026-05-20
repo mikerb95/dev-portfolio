@@ -358,9 +358,9 @@ const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduc
               <tr class="text-zinc-300 envvar-row" data-id={e.id}>
                 <td class="py-2.5 pr-4 text-zinc-200 text-xs">{e.key}</td>
                 <td class="py-2.5 pr-4 text-xs">
-                  <span class="env-value text-zinc-600 select-none">{'•'.repeat(Math.min(e.value.length, 24))}</span>
-                  <span class="env-value-real hidden text-zinc-400">{e.value}</span>
-                  <button class="btn-reveal font-sans text-zinc-600 hover:text-zinc-300 text-xs ml-2 transition-colors">mostrar</button>
+                  <span class="env-masked text-zinc-600 select-none font-mono">{'•'.repeat(20)}</span>
+                  <span class="env-revealed hidden text-zinc-400 font-mono"></span>
+                  <button class="btn-reveal font-sans text-zinc-600 hover:text-zinc-300 text-xs ml-2 transition-colors" data-env-id={e.id}>mostrar</button>
                 </td>
                 <td class="py-2.5 pr-4 text-zinc-500 text-xs font-sans">{e.environment ?? 'all'}</td>
                 <td class="py-2.5 pr-4 text-zinc-600 text-xs font-sans">{e.notes ?? '—'}</td>
