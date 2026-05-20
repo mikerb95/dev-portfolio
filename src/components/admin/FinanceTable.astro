@@ -15,44 +15,38 @@ interface Props {
 
 const { rows } = Astro.props
 
-const statusColors: Record<string, string> = {
-  cobrado: 'bg-emerald-900/50 text-emerald-300',
-  pendiente: 'bg-amber-900/50 text-amber-300',
-  proyectado: 'bg-blue-900/50 text-blue-300',
+const statusPill: Record<string, string> = {
+  cobrado:    'bg-lime/10 text-lime border-lime/30',
+  pendiente:  'bg-ember/10 text-ember border-ember/30',
+  proyectado: 'bg-violet/10 text-violet border-violet/30',
 }
 
-const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
+const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 ---
 
-<div class="overflow-x-auto">
-  <table class="w-full text-sm">
-    <thead>
-      <tr class="border-b border-zinc-800 text-zinc-400 text-left">
-        <th class="pb-3 pr-4 font-medium">Descripción</th>
-        <th class="pb-3 pr-4 font-medium">Proyecto</th>
-        <th class="pb-3 pr-4 font-medium">Cliente</th>
-        <th class="pb-3 pr-4 font-medium">Monto</th>
-        <th class="pb-3 pr-4 font-medium">Estado</th>
-        <th class="pb-3 font-medium">Vencimiento</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-zinc-800">
-      {rows.map((r) => (
-        <tr class="text-zinc-300">
-          <td class="py-3 pr-4">{r.description ?? '—'}</td>
-          <td class="py-3 pr-4">{r.projectTitle ?? '—'}</td>
-          <td class="py-3 pr-4">{r.clientName ?? '—'}</td>
-          <td class="py-3 pr-4 font-mono">{fmt.format(r.amount)}</td>
-          <td class="py-3 pr-4">
-            <span class={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}`}>
-              {r.status}
-            </span>
-          </td>
-          <td class="py-3 text-zinc-400">
-            {r.dueDate ? r.dueDate.toLocaleDateString('es-AR') : '—'}
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
+<div class="rounded-2xl glass overflow-hidden">
+  <div class="grid grid-cols-[2fr_1.5fr_1.5fr_1fr_1fr_1fr] gap-4 px-5 py-3 border-b border-white/5 text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+    <span>Descripción</span><span>Proyecto</span><span>Cliente</span><span>Monto</span><span>Estado</span><span>Vencimiento</span>
+  </div>
+
+  {rows.length === 0 && (
+    <div class="px-5 py-10 text-center text-[12px] font-mono text-ink-300">No hay registros financieros.</div>
+  )}
+
+  {rows.map((r) => (
+    <div class="grid grid-cols-[2fr_1.5fr_1.5fr_1fr_1fr_1fr] gap-4 px-5 py-3.5 border-b border-white/[.03] hover:bg-white/[.02] items-center">
+      <div class="text-[13px] text-ink-50 truncate">{r.description ?? '—'}</div>
+      <div class="text-[12px] font-mono text-ink-200 truncate">{r.projectTitle ?? '—'}</div>
+      <div class="text-[12px] font-mono text-ink-200 truncate">{r.clientName ?? '—'}</div>
+      <div class="text-[13px] text-cyan font-mono">{fmt.format(r.amount)}</div>
+      <div>
+        <span class={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border ${statusPill[r.status]}`}>
+          {r.status}
+        </span>
+      </div>
+      <div class="text-[11px] font-mono text-ink-300">
+        {r.dueDate ? r.dueDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'}
+      </div>
+    </div>
+  ))}
 </div>
