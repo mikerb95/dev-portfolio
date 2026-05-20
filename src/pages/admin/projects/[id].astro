@@ -710,16 +710,43 @@ const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduc
     })
   })
 
-  // --- Reveal env var values ---
+  // --- Reveal env var values (fetch on demand, value never en DOM) ---
   document.querySelectorAll('.btn-reveal').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const row = btn.closest('tr')
-      const masked = row.querySelector('.env-value')
-      const real = row.querySelector('.env-value-real')
-      const isHidden = real.classList.contains('hidden')
-      masked.classList.toggle('hidden', isHidden)
-      real.classList.toggle('hidden', !isHidden)
-      btn.textContent = isHidden ? 'ocultar' : 'mostrar'
+      const masked = row.querySelector('.env-masked')
+      const revealed = row.querySelector('.env-revealed')
+      const isVisible = !revealed.classList.contains('hidden')
+
+      if (isVisible) {
+        revealed.classList.add('hidden')
+        masked.classList.remove('hidden')
+        btn.textContent = 'mostrar'
+        return
+      }
+
+      if (revealed.textContent) {
+        revealed.classList.remove('hidden')
+        masked.classList.add('hidden')
+        btn.textContent = 'ocultar'
+        return
+      }
+
+      btn.textContent = '...'
+      btn.disabled = true
+      try {
+        const res = await fetch(`/api/admin/projects/${projectId}/envvars?id=${btn.dataset.envId}`)
+        if (!res.ok) throw new Error('error')
+        const { value } = await res.json()
+        revealed.textContent = value
+        revealed.classList.remove('hidden')
+        masked.classList.add('hidden')
+        btn.textContent = 'ocultar'
+      } catch {
+        btn.textContent = 'error'
+      } finally {
+        btn.disabled = false
+      }
     })
   })
 
