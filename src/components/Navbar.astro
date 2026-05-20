@@ -2,107 +2,52 @@
 const currentPath = Astro.url.pathname
 
 const navLinks = [
-  { href: '/', label: 'Inicio' },
   { href: '/certifications', label: 'Certificaciones' },
   { href: '/log', label: 'Log' },
   { href: '/contact', label: 'Contacto' },
 ]
 ---
 
-<header class="pointer-events-none fixed top-3 left-0 right-0 z-50 px-4 md:px-6" aria-label="Barra de navegación">
-  <span id="top" class="absolute -top-24" aria-hidden="true"></span>
-  <div class="relative mx-auto max-w-5xl flex h-16 items-center justify-between rounded-xl border border-slate-200/70 dark:border-slate-800/70 bg-white/80 dark:bg-[#0c0e12]/80 backdrop-blur-xl shadow-[0_4px_16px_-4px_rgb(0_0_0/0.12)] ring-1 ring-slate-900/5 dark:ring-white/5 px-5 md:px-8 pointer-events-auto">
-
-    <a class="font-semibold tracking-tight text-lg flex items-center gap-2 select-none" href="/">
-      <span class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-sm shadow-inner">C</span>
-      <span class="hidden sm:inline text-slate-900 dark:text-white">CodeByMike</span>
+<header class="fixed top-4 inset-x-4 z-50 max-w-[1280px] mx-auto" aria-label="Navegación">
+  <div class="glass-strong rounded-full pl-5 pr-2 py-2 flex items-center justify-between">
+    <!-- Brand -->
+    <a href="/" class="flex items-center gap-3 select-none">
+      <div class="w-7 h-7 rounded-full bg-gradient-to-br from-cyan to-violet shadow-[0_0_18px_rgba(0,242,255,.5)]"></div>
+      <span class="font-mono text-[12px] tracking-[.2em] uppercase text-ink-50">
+        Code<span class="text-cyan">By</span>Mike
+      </span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-1 text-sm relative h-full">
+    <!-- Desktop nav -->
+    <nav class="hidden md:flex items-center gap-1 text-[12px] font-mono text-ink-100">
       {navLinks.map((link) => {
-        const isActive = link.href === '/'
-          ? currentPath === '/'
-          : currentPath.startsWith(link.href)
+        const isActive = currentPath.startsWith(link.href)
         return (
           <a
             href={link.href}
-            class={`relative rounded-md px-3 py-2 font-medium transition-colors hover:text-brand-600 dark:hover:text-brand-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 ${
-              isActive
-                ? 'text-brand-600 dark:text-brand-400'
-                : 'text-slate-600 dark:text-slate-300'
-            }`}
+            class={`px-3 py-2 rounded-full transition-colors hover:bg-white/5 ${isActive ? 'text-cyan' : 'text-ink-100'}`}
           >
             {link.label}
-            {isActive && (
-              <span class="absolute left-2 right-2 -bottom-1 h-[2px] rounded-full bg-gradient-to-r from-brand-400 to-brand-600" />
-            )}
           </a>
         )
       })}
-
-      <div class="h-6 w-px mx-2 bg-slate-300/60 dark:bg-slate-700/60" />
-
-      <button
-        id="theme-toggle"
-        aria-label="Cambiar tema"
-        class="inline-flex items-center justify-center w-9 h-9 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-slate-600 dark:text-slate-300"
-      >
-        <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-        </svg>
-        <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
-          <circle cx="12" cy="12" r="4"/>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-        </svg>
-      </button>
-
-      <a
-        href="/contact"
-        class="ml-2 inline-flex items-center gap-2 rounded-md bg-gradient-to-br from-brand-500 to-brand-600 text-white px-4 py-2 text-xs font-medium tracking-wide shadow hover:from-brand-600 hover:to-brand-700 focus:outline-none transition-all"
-      >
-        Contáctame
-      </a>
     </nav>
 
-    <div class="flex md:hidden items-center gap-2">
-      <button
-        id="theme-toggle-mobile"
-        aria-label="Cambiar tema"
-        class="inline-flex items-center justify-center w-9 h-9 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-slate-600 dark:text-slate-300"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-        </svg>
-      </button>
+    <!-- Right side -->
+    <div class="flex items-center gap-2">
+      <span class="hidden md:flex items-center gap-2 text-[11px] font-mono text-ink-200 pr-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
+        Disponible
+      </span>
       <a
         href="/contact"
-        class="inline-flex items-center justify-center rounded-md bg-gradient-to-br from-brand-500 to-brand-600 text-white px-3 py-1.5 text-xs font-medium shadow"
+        class="inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
       >
-        Contacto
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+        </svg>
+        Contáctame
       </a>
     </div>
   </div>
 </header>
-
-<script>
-  function applyThemeIcons() {
-    const isDark = document.documentElement.classList.contains('dark')
-    document.getElementById('icon-moon')?.classList.toggle('hidden', !isDark)
-    document.getElementById('icon-sun')?.classList.toggle('hidden', isDark)
-  }
-
-  function toggleTheme() {
-    const html = document.documentElement
-    const isDark = html.classList.contains('dark')
-    const next = isDark ? 'light' : 'dark'
-    html.classList.remove('light', 'dark')
-    html.classList.add(next)
-    html.style.colorScheme = next
-    localStorage.setItem('theme', next)
-    applyThemeIcons()
-  }
-
-  document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme)
-  document.getElementById('theme-toggle-mobile')?.addEventListener('click', toggleTheme)
-  applyThemeIcons()
-</script>
