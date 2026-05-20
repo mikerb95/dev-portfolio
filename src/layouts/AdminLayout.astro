@@ -14,13 +14,37 @@ const { title } = Astro.props
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title} — Admin</title>
+    <title>{title} — Admin · CodeByMike</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   </head>
-  <body class="bg-zinc-950 text-zinc-100 min-h-screen flex">
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen flex">
     <Sidebar />
-    <main class="flex-1 p-8 overflow-auto">
-      <h1 class="text-2xl font-bold mb-6">{title}</h1>
-      <slot />
-    </main>
+    <div class="flex-1 min-w-0 flex flex-col">
+      <!-- Topbar -->
+      <div class="px-8 pt-6 pb-5 flex items-center justify-between sticky top-0 z-30 bg-ink-950/80 backdrop-blur-xl border-b border-white/5">
+        <div>
+          <div class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-200">Studio / Workspace</div>
+          <h1 class="mt-1 text-2xl font-medium text-ink-50 tracking-tight">{title}</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-full glass text-[11px] font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
+            Sistema operativo
+          </div>
+          <a
+            href="/"
+            class="inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-white/[.03] text-ink-50 border border-white/10 hover:bg-white/[.06] transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            Ver sitio
+          </a>
+        </div>
+      </div>
+      <main class="flex-1 px-8 pb-12 pt-7 overflow-auto">
+        <slot />
+      </main>
+    </div>
   </body>
 </html>
