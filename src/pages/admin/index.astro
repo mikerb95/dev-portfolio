@@ -9,37 +9,157 @@ const [unreadMessages] = await db.select({ count: messages.id }).from(messages).
 const [totalClients] = await db.select({ count: clients.id }).from(clients)
 
 const revenueRows = await db.select({ amount: finances.amount, status: finances.status }).from(finances)
-const cobrado = revenueRows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
+const cobrado   = revenueRows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
 const pendiente = revenueRows.filter((r) => r.status === 'pendiente').reduce((s, r) => s + r.amount, 0)
-const proyectado = revenueRows.filter((r) => r.status === 'proyectado').reduce((s, r) => s + r.amount, 0)
+const proyectado= revenueRows.filter((r) => r.status === 'proyectado').reduce((s, r) => s + r.amount, 0)
 
 const milestoneRows = await db.select({ status: educationMilestones.status }).from(educationMilestones)
 const completados = milestoneRows.filter((m) => m.status === 'completado').length
-const enCurso = milestoneRows.filter((m) => m.status === 'en_curso').length
-const evolutionProgress = completados + enCurso > 0
-  ? `${Math.round((completados / (completados + enCurso)) * 100)}%`
-  : '—'
+const enCurso    = milestoneRows.filter((m) => m.status === 'en_curso').length
+const evolutionPct = completados + enCurso > 0
+  ? Math.round((completados / (completados + enCurso)) * 100)
+  : 0
 
-const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
+const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
-const kpis = [
-  { label: 'Proyectos visibles', value: totalProjects?.count ?? 0, color: 'text-white' },
-  { label: 'Mensajes sin leer', value: unreadMessages?.count ?? 0, color: 'text-blue-400' },
-  { label: 'Clientes', value: totalClients?.count ?? 0, color: 'text-white' },
-  { label: 'Cobrado', value: fmt.format(cobrado), color: 'text-emerald-400' },
-  { label: 'Pendiente', value: fmt.format(pendiente), color: 'text-amber-400' },
-  { label: 'Proyectado', value: fmt.format(proyectado), color: 'text-blue-400' },
-  { label: 'Evolución', value: evolutionProgress, color: 'text-emerald-400' },
-]
+const recentMessages = await db.select().from(messages).orderBy(messages.createdAt).limit(5)
+const activeProjects = await db.select().from(projects).where(eq(projects.visible, true)).limit(5)
 ---
 
 <AdminLayout title="Dashboard">
-  <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-    {kpis.map((k) => (
-      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-        <p class="text-zinc-400 text-sm mb-1">{k.label}</p>
-        <p class={`text-2xl font-bold ${k.color}`}>{k.value}</p>
+  <!-- KPI bento -->
+  <div class="grid grid-cols-12 gap-4 mb-6">
+
+    <!-- Cobrado — big tile -->
+    <div class="col-span-12 md:col-span-6 rounded-2xl glass p-6 relative overflow-hidden">
+      <div class="absolute inset-0 grid-bg opacity-30 pointer-events-none"></div>
+      <div class="relative">
+        <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Ingresos cobrados</div>
+        <div class="mt-3 text-[44px] font-medium tracking-[-.02em] text-ink-50">{fmt.format(cobrado)}</div>
+        <div class="mt-2 flex items-center gap-3 text-[11px] font-mono">
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border bg-lime/10 text-lime border-lime/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
+            cobrado
+          </span>
+          <span class="text-ink-300">{fmt.format(pendiente)} pendiente</span>
+          <span class="text-ink-300">{fmt.format(proyectado)} proyectado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI tiles -->
+    {[
+      { label: 'Proyectos visibles', value: String(totalProjects?.count ?? 0), sub: 'publicados', tone: 'cyan', icon: 'M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z M8 7v10 M12 7v10' },
+      { label: 'Mensajes sin leer', value: String(unreadMessages?.count ?? 0), sub: 'en bandeja', tone: 'violet', icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6' },
+      { label: 'Clientes', value: String(totalClients?.count ?? 0), sub: 'registrados', tone: 'ember', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7m-4 0a4 4 0 1 0 8 0 4 4 0 0 0-8 0' },
+    ].map((k) => (
+      <div class="col-span-12 sm:col-span-6 md:col-span-2 rounded-2xl glass p-5 flex flex-col justify-between min-h-[140px]">
+        <div class="flex items-center justify-between">
+          <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">{k.label}</div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-ink-200">
+            <path d={k.icon} />
+          </svg>
+        </div>
+        <div>
+          <div class={`text-3xl font-medium tracking-tight ${k.tone === 'cyan' ? 'text-cyan' : k.tone === 'violet' ? 'text-violet' : 'text-ember'}`}>{k.value}</div>
+          <div class="mt-1 text-[10px] font-mono text-ink-300">{k.sub}</div>
+        </div>
       </div>
     ))}
+  </div>
+
+  <!-- Evolution + proyectos recientes -->
+  <div class="grid grid-cols-12 gap-4 mb-6">
+
+    <!-- Evolution progress -->
+    <div class="col-span-12 md:col-span-4 rounded-2xl glass p-6">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1">Evolution Path</div>
+      <h3 class="text-lg font-medium text-ink-50 mb-4">Progreso de formación</h3>
+      <div class="flex items-baseline gap-3 mb-3">
+        <div class="text-[44px] font-medium tracking-tight text-cyan">{evolutionPct}%</div>
+        <div class="text-[11px] font-mono text-ink-300">{completados} completados · {enCurso} en curso</div>
+      </div>
+      <div class="h-2 rounded-full bg-white/5 overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-cyan to-violet rounded-full transition-all" style={`width:${evolutionPct}%`}></div>
+      </div>
+      <a href="/admin/education" class="mt-4 inline-flex items-center gap-1 text-[11px] font-mono text-cyan hover:underline">
+        Ver hitos
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+      </a>
+    </div>
+
+    <!-- Proyectos activos -->
+    <div class="col-span-12 md:col-span-8 rounded-2xl glass p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Proyectos</div>
+          <h3 class="mt-1 text-lg font-medium text-ink-50">Publicados en el portafolio</h3>
+        </div>
+        <a href="/admin/projects" class="inline-flex items-center gap-1 text-[11px] font-mono text-cyan hover:underline">
+          Ver todos ↗
+        </a>
+      </div>
+      <div class="space-y-2">
+        {activeProjects.length === 0 && (
+          <p class="text-[12px] font-mono text-ink-300 py-4">No hay proyectos visibles aún.</p>
+        )}
+        {activeProjects.map((p) => (
+          <div class="flex items-center gap-4 px-3 py-2.5 rounded-xl bg-white/[.02] border border-white/5">
+            <div class="flex-1 min-w-0">
+              <div class="text-[13px] text-ink-50 truncate">{p.title}</div>
+              {p.techStack && (
+                <div class="text-[10.5px] font-mono text-ink-300 truncate">
+                  {JSON.parse(p.techStack).slice(0,3).join(' · ')}
+                </div>
+              )}
+            </div>
+            <span class={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border ${
+              p.status === 'activo' ? 'bg-cyan/10 text-cyan border-cyan/30' :
+              p.status === 'completado' ? 'bg-lime/10 text-lime border-lime/30' :
+              p.status === 'pausado' ? 'bg-violet/10 text-violet border-violet/30' :
+              'bg-white/5 text-ink-200 border-white/10'
+            }`}>
+              {p.status}
+            </span>
+            <a href={`/admin/projects`} class="text-[11px] font-mono text-ink-300 hover:text-cyan">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes recientes -->
+  <div class="rounded-2xl glass p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Mensajes</div>
+        <h3 class="mt-1 text-lg font-medium text-ink-50">Recibidos recientemente</h3>
+      </div>
+      <a href="/admin/messages" class="inline-flex items-center gap-1 text-[11px] font-mono text-cyan hover:underline">
+        Ver todos ↗
+      </a>
+    </div>
+    {recentMessages.length === 0 && (
+      <p class="text-[12px] font-mono text-ink-300 py-4">No hay mensajes todavía.</p>
+    )}
+    <div class="space-y-2">
+      {recentMessages.map((m) => (
+        <div class={`flex items-start gap-4 px-4 py-3 rounded-xl border ${m.read ? 'border-white/5 bg-white/[.01]' : 'border-cyan/20 bg-cyan/[.03]'}`}>
+          <div class={`w-2 h-2 rounded-full mt-2 shrink-0 ${m.read ? 'bg-ink-600' : 'bg-cyan pulse-dot'}`}></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-baseline gap-3">
+              <span class="text-[13px] text-ink-50 font-medium">{m.name}</span>
+              <span class="text-[10.5px] font-mono text-ink-300">{m.email}</span>
+            </div>
+            {m.subject && <div class="text-[12px] text-ink-200 truncate">{m.subject}</div>}
+          </div>
+          <span class="text-[10px] font-mono text-ink-300 shrink-0">
+            {m.createdAt ? new Date(m.createdAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''}
+          </span>
+        </div>
+      ))}
+    </div>
   </div>
 </AdminLayout>
