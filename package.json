@@ -16,6 +16,7 @@
     "@auth/core": "^0.37.4",
     "@libsql/client": "^0.17.3",
     "@tailwindcss/vite": "^4.2.4",
+    "@vercel/blob": "^2.4.0",
     "astro": "^6.1.9",
     "auth-astro": "^4.2.0",
     "drizzle-orm": "^0.45.2",
