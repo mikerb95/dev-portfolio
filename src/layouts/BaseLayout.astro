@@ -20,25 +20,11 @@ const { title, description = 'Senior Software Engineer especializado en escalabi
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
-    <script is:inline>
-      (function () {
-        try {
-          var d = document.documentElement, c = d.classList;
-          c.remove('light', 'dark');
-          var e = localStorage.getItem('theme');
-          if (!e || e === 'system') {
-            var m = window.matchMedia('(prefers-color-scheme: dark)');
-            if (m.matches) { d.style.colorScheme = 'dark'; c.add('dark'); }
-            else { d.style.colorScheme = 'light'; c.add('light'); }
-          } else { c.add(e); d.style.colorScheme = e; }
-        } catch (_) {}
-      })();
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   </head>
-  <body class="bg-white text-slate-900 antialiased dark:bg-[#0b0f14] dark:text-slate-100 flex flex-col min-h-screen">
+  <body class="grain">
     <Navbar />
-    <main class="flex-1">
+    <main>
       <slot />
     </main>
     <Footer />
