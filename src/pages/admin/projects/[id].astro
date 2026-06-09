@@ -883,14 +883,14 @@ const pnl = projectPnL(project, financeRows, services, rates)
 
   // --- Save ADR ---
   document.getElementById('btn-save-adr')?.addEventListener('click', async () => {
-    const title = (document.getElementById('adr-title') as HTMLInputElement).value.trim()
-    const status = (document.getElementById('adr-status') as HTMLSelectElement).value
-    const isPublic = (document.getElementById('adr-public') as HTMLInputElement).checked
-    const context = (document.getElementById('adr-context') as HTMLTextAreaElement).value.trim()
-    const decision = (document.getElementById('adr-decision') as HTMLTextAreaElement).value.trim()
-    const rationale = (document.getElementById('adr-rationale') as HTMLTextAreaElement).value.trim()
-    const alternatives = (document.getElementById('adr-alternatives') as HTMLTextAreaElement).value.trim()
-    const consequences = (document.getElementById('adr-consequences') as HTMLTextAreaElement).value.trim()
+    const title = document.getElementById('adr-title').value.trim()
+    const status = document.getElementById('adr-status').value
+    const isPublic = document.getElementById('adr-public').checked
+    const context = document.getElementById('adr-context').value.trim()
+    const decision = document.getElementById('adr-decision').value.trim()
+    const rationale = document.getElementById('adr-rationale').value.trim()
+    const alternatives = document.getElementById('adr-alternatives').value.trim()
+    const consequences = document.getElementById('adr-consequences').value.trim()
 
     if (!title || !context || !decision || !rationale) {
       return alert('Título, contexto, decisión y justificación son requeridos')
