@@ -69,8 +69,6 @@ const projectPnls = projectsAll
 const completados = milestoneRows.filter((m) => m.status === 'completado').length
 const enCurso     = milestoneRows.filter((m) => m.status === 'en_curso').length
 const evolutionPct = completados + enCurso > 0 ? Math.round((completados / (completados + enCurso)) * 100) : 0
-
-const activeProjects = projectsAll.filter((p) => p.visible).slice(0, 5)
 ---
 
 <AdminLayout title="Dashboard">
