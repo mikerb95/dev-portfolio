@@ -27,7 +27,7 @@ const rows = await db
 const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients)
 const allProjects = await db.select({ id: projects.id, title: projects.title }).from(projects)
 
-const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
+const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' })
 
 const statusLabel: Record<string, string> = {
   borrador: 'Borrador',
@@ -92,7 +92,7 @@ const statusColor: Record<string, string> = {
                     : '—'}
               </td>
               <td class="py-3 pr-4 text-zinc-400">
-                {r.deadline ? new Date(r.deadline).toLocaleDateString('es-AR') : '—'}
+                {r.deadline ? new Date(r.deadline).toLocaleDateString('es-CO') : '—'}
               </td>
               <td class="py-3 flex gap-2 justify-end">
                 <a

@@ -139,8 +139,8 @@ const pnl = projectPnL(project, financeRows, services, rates)
   )}
 
   <!-- Tabs de navegación -->
-  <div class="border-b border-zinc-800 mb-6">
-    <nav class="flex gap-0 -mb-px" id="tab-nav">
+  <div class="border-b border-white/10 mb-6 overflow-x-auto no-scrollbar">
+    <nav class="flex gap-0 -mb-px min-w-max" id="tab-nav">
       {[
         { key: 'info', label: 'Información' },
         { key: 'services', label: `Servicios${services.length ? ` (${services.length})` : ''}` },
@@ -685,8 +685,11 @@ const pnl = projectPnL(project, financeRows, services, rates)
   .tab-btn {
     @apply text-zinc-500 border-transparent hover:text-zinc-300 hover:border-zinc-700;
   }
+  .tab-btn {
+    @apply text-zinc-400 border-transparent;
+  }
   .tab-btn.active {
-    @apply text-white border-white;
+    @apply text-cyan border-cyan;
   }
 </style>
 
