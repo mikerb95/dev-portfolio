@@ -1,0 +1,106 @@
+---
+// Tabla de costos responsive. Recibe filas con etiquetas ya formateadas (presentacional).
+export interface CostRow {
+  id: number
+  name: string
+  categoryLabel: string
+  provider: string | null
+  projectTitle: string | null
+  clientName: string | null
+  costLabel: string          // costo en moneda nativa, ej "$20.00 USD"
+  cycleLabel: string
+  monthlyUSDLabel: string    // equivalente mensual en USD o '—'
+  renewalLabel: string       // fecha o '—'
+  renewalState: 'overdue' | 'soon' | 'ok' | null
+  payerLabel: string
+  active: boolean
+  hasSecrets: boolean
+}
+
+const { rows } = Astro.props as { rows: CostRow[] }
+
+const renewalPill: Record<string, string> = {
+  overdue: 'bg-ember/15 text-ember border-ember/40',
+  soon: 'bg-violet/10 text-violet border-violet/30',
+  ok: 'text-ink-300 border-transparent',
+}
+---
+
+<div class="rounded-2xl glass overflow-hidden">
+  <!-- Cabecera (md+) -->
+  <div class="hidden md:grid grid-cols-[1.6fr_1fr_1fr_1fr_.9fr_1fr_auto] gap-4 px-5 py-3 border-b border-white/5 text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+    <span>Servicio</span><span>Proyecto</span><span>Costo</span><span>Mensual (USD)</span><span>Pago</span><span>Renueva</span><span></span>
+  </div>
+
+  {rows.length === 0 && (
+    <div class="px-5 py-10 text-center text-[12px] font-mono text-ink-300">No hay costos registrados.</div>
+  )}
+
+  {rows.map((r) => (
+    <Fragment>
+      <!-- Fila (md+) -->
+      <div class={`hidden md:grid grid-cols-[1.6fr_1fr_1fr_1fr_.9fr_1fr_auto] gap-4 px-5 py-3.5 border-b border-white/[.03] hover:bg-white/[.02] items-center ${r.active ? '' : 'opacity-45'}`}>
+        <div class="min-w-0">
+          <div class="text-[13px] text-ink-50 truncate flex items-center gap-2">
+            {r.name}
+            {r.hasSecrets && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan shrink-0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            )}
+          </div>
+          <div class="text-[10.5px] font-mono text-ink-300 truncate">{r.categoryLabel}{r.provider ? ` · ${r.provider}` : ''}</div>
+        </div>
+        <div class="text-[12px] font-mono text-ink-200 truncate">{r.projectTitle ?? r.clientName ?? '—'}</div>
+        <div class="text-[12.5px] text-ink-50 font-mono">{r.costLabel}<span class="text-ink-300 text-[10px]"> / {r.cycleLabel}</span></div>
+        <div class="text-[13px] text-cyan font-mono">{r.monthlyUSDLabel}</div>
+        <div class="text-[11px] font-mono text-ink-200 truncate">{r.payerLabel}</div>
+        <div>
+          {r.renewalState
+            ? <span class={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono border ${renewalPill[r.renewalState]}`}>{r.renewalState === 'overdue' ? '⚠ ' : ''}{r.renewalLabel}</span>
+            : <span class="text-[11px] font-mono text-ink-300">—</span>}
+        </div>
+        <div class="flex items-center gap-1.5 justify-end">
+          {r.hasSecrets && (
+            <button data-reveal={r.id} class="reveal-btn text-[10px] font-mono px-2 py-1 rounded-md border border-cyan/25 text-cyan hover:bg-cyan/10 transition-colors">revelar</button>
+          )}
+          <button data-edit={r.id} class="edit-btn text-ink-300 hover:text-cyan p-1" aria-label="Editar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button data-del={r.id} class="del-btn text-ink-300 hover:text-ember p-1" aria-label="Eliminar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjeta (móvil) -->
+      <div class={`md:hidden px-4 py-3.5 border-b border-white/[.04] space-y-2 ${r.active ? '' : 'opacity-45'}`}>
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-[13px] text-ink-50 flex items-center gap-2">
+              {r.name}
+              {r.hasSecrets && (
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan shrink-0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              )}
+            </div>
+            <div class="text-[10.5px] font-mono text-ink-300 truncate">{r.categoryLabel}{r.provider ? ` · ${r.provider}` : ''}{r.projectTitle ? ` · ${r.projectTitle}` : ''}</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-[13px] text-cyan font-mono">{r.monthlyUSDLabel}<span class="text-ink-300 text-[10px]">/mes</span></div>
+            <div class="text-[10.5px] font-mono text-ink-300">{r.costLabel} / {r.cycleLabel}</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-x-2 text-[10.5px] font-mono text-ink-300 min-w-0">
+            <span>{r.payerLabel}</span>
+            {r.renewalState && <span class={`text-ink-500`}>·</span>}
+            {r.renewalState && <span class={r.renewalState === 'overdue' ? 'text-ember' : r.renewalState === 'soon' ? 'text-violet' : ''}>{r.renewalState === 'overdue' ? '⚠ ' : 'renueva '}{r.renewalLabel}</span>}
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            {r.hasSecrets && <button data-reveal={r.id} class="reveal-btn text-[10px] font-mono px-2 py-1 rounded-md border border-cyan/25 text-cyan">revelar</button>}
+            <button data-edit={r.id} class="edit-btn text-ink-300 p-1" aria-label="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+            <button data-del={r.id} class="del-btn text-ink-300 p-1" aria-label="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </Fragment>
+  ))}
+</div>

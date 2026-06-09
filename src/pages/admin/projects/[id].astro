@@ -1,8 +1,10 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { db } from '../../../db'
-import { projects, clients, projectEnvVars, projectServices, projectContacts, finances, projectAdrs } from '../../../db/schema'
+import { projects, clients, projectEnvVars, projectServices, projectContacts, finances, projectAdrs, appSettings } from '../../../db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { parseRates, fmtUSD } from '../../../lib/money'
+import { projectPnL } from '../../../lib/pnl'
 
 const { id } = Astro.params
 const projectId = Number(id)
@@ -76,6 +78,10 @@ const adrStatusColors: Record<string, string> = {
 
 const totalCobrado = financeRows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
 const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduce((s, r) => s + r.amount, 0)
+
+const settingsRows = await db.select().from(appSettings)
+const rates = parseRates(settingsRows)
+const pnl = projectPnL(project, financeRows, services, rates)
 ---
 
 <AdminLayout title={project.title}>
@@ -104,6 +110,33 @@ const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduc
       <button id="btn-delete-project" class="text-xs px-3 py-1.5 border border-red-900/50 text-red-400 hover:bg-red-950/30 rounded-md transition-colors">Eliminar</button>
     </div>
   </div>
+
+  <!-- P&L del proyecto -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+    <div class="rounded-xl glass p-4">
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Ingresos cobrados</div>
+      <div class="mt-1.5 text-xl font-medium text-lime tracking-tight">{fmtUSD(pnl.ingresosCobrados)}</div>
+      {pnl.ingresosPendientes > 0 && <div class="mt-0.5 text-[10px] font-mono text-ink-300">{fmtUSD(pnl.ingresosPendientes)} pendiente</div>}
+    </div>
+    <div class="rounded-xl glass p-4">
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Costo infra / mes</div>
+      <div class="mt-1.5 text-xl font-medium text-cyan tracking-tight">{fmtUSD(pnl.costoMensualUSD, 2)}</div>
+      <div class="mt-0.5 text-[10px] font-mono text-ink-300">{fmtUSD(pnl.costoAnualUSD)} / año</div>
+    </div>
+    <div class="rounded-xl glass p-4">
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Costo acumulado</div>
+      <div class="mt-1.5 text-xl font-medium text-ink-50 tracking-tight">{fmtUSD(pnl.costoDesdeInicioUSD)}</div>
+      <div class="mt-0.5 text-[10px] font-mono text-ink-300">desde el inicio</div>
+    </div>
+    <div class="rounded-xl glass p-4">
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Margen estimado</div>
+      <div class={`mt-1.5 text-xl font-medium tracking-tight ${pnl.margenEstimado >= 0 ? 'text-lime' : 'text-ember'}`}>{fmtUSD(pnl.margenEstimado)}</div>
+      <div class="mt-0.5 text-[10px] font-mono text-ink-300">cobrado − acumulado</div>
+    </div>
+  </div>
+  {pnl.costosSinTasa > 0 && (
+    <p class="-mt-3 mb-5 text-[11px] font-mono text-ember">⚠ {pnl.costosSinTasa} costo(s) sin tasa de cambio configurada — no sumados. <a href="/admin/settings" class="underline">Ajustes</a></p>
+  )}
 
   <!-- Tabs de navegación -->
   <div class="border-b border-zinc-800 mb-6">

@@ -1,0 +1,465 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import CostTable from '../../components/admin/CostTable.astro'
+import type { CostRow } from '../../components/admin/CostTable.astro'
+import { db } from '../../db'
+import { projectServices, projects, clients, appSettings } from '../../db/schema'
+import { desc, eq } from 'drizzle-orm'
+import {
+  parseRates, monthlyEquivalent, toBaseUSD, fmtUSD, fmtMoney,
+  BILLING_CYCLE_LABELS, CURRENCIES,
+} from '../../lib/money'
+import {
+  CATEGORY_LABELS, PAYER_LABELS, PROVIDERS, SERVICE_CATEGORIES, PAYERS,
+} from '../../lib/services'
+
+const [raw, projectsList, clientsList, settingsRows] = await Promise.all([
+  db.select({
+    id: projectServices.id,
+    name: projectServices.name,
+    category: projectServices.category,
+    provider: projectServices.provider,
+    projectId: projectServices.projectId,
+    clientId: projectServices.clientId,
+    url: projectServices.url,
+    username: projectServices.username,
+    cost: projectServices.cost,
+    currency: projectServices.currency,
+    billingCycle: projectServices.billingCycle,
+    renewalDate: projectServices.renewalDate,
+    autoRenew: projectServices.autoRenew,
+    active: projectServices.active,
+    payer: projectServices.payer,
+    billedToClient: projectServices.billedToClient,
+    notes: projectServices.notes,
+    secrets: projectServices.secrets,
+    projectTitle: projects.title,
+    clientName: clients.name,
+  })
+    .from(projectServices)
+    .leftJoin(projects, eq(projectServices.projectId, projects.id))
+    .leftJoin(clients, eq(projectServices.clientId, clients.id))
+    .orderBy(desc(projectServices.active), projectServices.category),
+  db.select({ id: projects.id, title: projects.title }).from(projects).orderBy(projects.title),
+  db.select({ id: clients.id, name: clients.name }).from(clients).orderBy(clients.name),
+  db.select().from(appSettings),
+])
+
+const rates = parseRates(settingsRows)
+
+function renewalState(d: Date | null): 'overdue' | 'soon' | 'ok' | null {
+  if (!d) return null
+  const days = (d.getTime() - Date.now()) / 86_400_000
+  if (days < 0) return 'overdue'
+  if (days <= 30) return 'soon'
+  return 'ok'
+}
+const fmtDate = (d?: Date | null) =>
+  d ? d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'
+
+// Agregados y filas para la tabla
+let totalMonthlyUSD = 0
+let activeCount = 0
+let renewSoonCount = 0
+const byCategory = new Map<string, number>()
+const byPayer = new Map<string, number>()
+const usedCurrenciesNoRate = new Set<string>()
+const upcoming: { name: string; date: Date; state: 'overdue' | 'soon'; label: string }[] = []
+
+const tableRows: CostRow[] = raw.map((r) => {
+  const monthly = monthlyEquivalent(r.cost, r.billingCycle)
+  const monthlyUSD = toBaseUSD(monthly, r.currency ?? 'USD', rates)
+  if (r.cost != null && r.currency && r.currency !== 'USD' && monthlyUSD == null) {
+    usedCurrenciesNoRate.add(r.currency)
+  }
+  if (r.active) {
+    activeCount++
+    if (monthlyUSD != null) {
+      totalMonthlyUSD += monthlyUSD
+      byCategory.set(r.category, (byCategory.get(r.category) ?? 0) + monthlyUSD)
+      byPayer.set(r.payer ?? 'me', (byPayer.get(r.payer ?? 'me') ?? 0) + monthlyUSD)
+    }
+  }
+  const state = renewalState(r.renewalDate)
+  if (r.active && (state === 'soon' || state === 'overdue')) {
+    renewSoonCount++
+    upcoming.push({ name: r.name, date: r.renewalDate!, state, label: fmtDate(r.renewalDate) })
+  }
+  return {
+    id: r.id,
+    name: r.name,
+    categoryLabel: CATEGORY_LABELS[r.category as keyof typeof CATEGORY_LABELS] ?? r.category,
+    provider: r.provider,
+    projectTitle: r.projectTitle,
+    clientName: r.clientName,
+    costLabel: r.cost == null ? (r.billingCycle === 'free' ? 'Gratis' : '—') : fmtMoney(r.cost, r.currency ?? 'USD'),
+    cycleLabel: BILLING_CYCLE_LABELS[(r.billingCycle ?? 'monthly') as keyof typeof BILLING_CYCLE_LABELS],
+    monthlyUSDLabel: monthlyUSD == null ? '—' : fmtUSD(monthlyUSD, 2),
+    renewalLabel: fmtDate(r.renewalDate),
+    renewalState: state,
+    payerLabel: PAYER_LABELS[(r.payer ?? 'me') as keyof typeof PAYER_LABELS],
+    active: !!r.active,
+    hasSecrets: !!r.secrets,
+  }
+})
+
+upcoming.sort((a, b) => a.date.getTime() - b.date.getTime())
+const totalAnnualUSD = totalMonthlyUSD * 12
+
+// Datos seguros (sin secrets) para el formulario de edición
+const formData = raw.map((r) => ({
+  id: r.id,
+  name: r.name,
+  category: r.category,
+  provider: r.provider ?? '',
+  projectId: r.projectId ?? '',
+  clientId: r.clientId ?? '',
+  cost: r.cost ?? '',
+  currency: r.currency ?? 'USD',
+  billingCycle: r.billingCycle ?? 'monthly',
+  renewalDate: r.renewalDate ? new Date(r.renewalDate).toISOString().slice(0, 10) : '',
+  autoRenew: !!r.autoRenew,
+  active: !!r.active,
+  payer: r.payer ?? 'me',
+  billedToClient: r.billedToClient ?? '',
+  url: r.url ?? '',
+  username: r.username ?? '',
+  notes: r.notes ?? '',
+  hasSecrets: !!r.secrets,
+}))
+
+const categorySorted = [...byCategory.entries()].sort((a, b) => b[1] - a[1])
+const payerSorted = [...byPayer.entries()].sort((a, b) => b[1] - a[1])
+const missingRates = [...usedCurrenciesNoRate]
+---
+
+<AdminLayout title="Costos">
+  <div class="flex items-center justify-between gap-3 mb-6">
+    <p class="text-[12px] text-ink-200 max-w-xl">Costos de infraestructura y operación. Totales convertidos a USD base.</p>
+    <button id="btn-new" class="shrink-0 inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      Nuevo costo
+    </button>
+  </div>
+
+  {missingRates.length > 0 && (
+    <div class="mb-5 rounded-xl border border-ember/30 bg-ember/[.07] px-4 py-3 flex items-start gap-3">
+      <span class="text-ember text-sm">⚠</span>
+      <div class="text-[12px] text-ink-100">
+        Faltan tasas de cambio para: <span class="font-mono text-ember">{missingRates.join(', ')}</span>. Esos costos no se suman al total.
+        <a href="/admin/settings" class="text-cyan hover:underline ml-1">Configurar en Ajustes →</a>
+      </div>
+    </div>
+  )}
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Costo mensual</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-cyan tracking-tight">{fmtUSD(totalMonthlyUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">USD / mes</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Costo anual</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-ink-50 tracking-tight">{fmtUSD(totalAnnualUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">USD / año</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Servicios activos</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-violet tracking-tight">{activeCount}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">en uso</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Renovaciones ≤30d</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${renewSoonCount > 0 ? 'text-ember' : 'text-ink-50'}`}>{renewSoonCount}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">próximas</div>
+    </div>
+  </div>
+
+  <!-- Desgloses -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Por categoría</div>
+      {categorySorted.length === 0 && <p class="text-[12px] font-mono text-ink-300">Sin datos.</p>}
+      <div class="space-y-2">
+        {categorySorted.map(([cat, amt]) => (
+          <div class="flex items-center justify-between text-[12px]">
+            <span class="text-ink-100">{CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS] ?? cat}</span>
+            <span class="font-mono text-ink-50">{fmtUSD(amt, 2)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Por responsable de pago</div>
+      {payerSorted.length === 0 && <p class="text-[12px] font-mono text-ink-300">Sin datos.</p>}
+      <div class="space-y-2">
+        {payerSorted.map(([p, amt]) => (
+          <div class="flex items-center justify-between text-[12px]">
+            <span class="text-ink-100">{PAYER_LABELS[p as keyof typeof PAYER_LABELS] ?? p}</span>
+            <span class="font-mono text-ink-50">{fmtUSD(amt, 2)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Renovaciones próximas</div>
+      {upcoming.length === 0 && <p class="text-[12px] font-mono text-ink-300">Nada por renovar pronto.</p>}
+      <div class="space-y-2">
+        {upcoming.slice(0, 6).map((u) => (
+          <div class="flex items-center justify-between text-[12px]">
+            <span class="text-ink-100 truncate mr-2">{u.name}</span>
+            <span class={`font-mono shrink-0 ${u.state === 'overdue' ? 'text-ember' : 'text-violet'}`}>{u.state === 'overdue' ? '⚠ ' : ''}{u.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <CostTable rows={tableRows} />
+
+  <!-- Datos para el formulario (sin secretos) -->
+  <script type="application/json" id="costs-json" set:html={JSON.stringify(formData)}></script>
+
+  <!-- Slide-over: formulario -->
+  <div id="cost-overlay" class="fixed inset-0 z-[60] hidden">
+    <div id="cost-backdrop" class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
+    <div class="absolute inset-y-0 right-0 w-full max-w-md glass-strong border-l border-white/10 overflow-y-auto">
+      <form id="cost-form" class="p-5 md:p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="cost-form-title" class="text-lg font-medium text-ink-50">Nuevo costo</h2>
+          <button type="button" id="cost-close" class="text-ink-300 hover:text-ink-50 p-1" aria-label="Cerrar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <input type="hidden" id="f-id" />
+
+        <div>
+          <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Nombre *</label>
+          <input id="f-name" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Vercel Pro, Dominio .com…" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Categoría *</label>
+            <select id="f-category" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {SERVICE_CATEGORIES.map((c) => <option value={c}>{CATEGORY_LABELS[c]}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Proveedor</label>
+            <select id="f-provider" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              <option value="">—</option>
+              {PROVIDERS.map((p) => <option value={p}>{p}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Proyecto</label>
+            <select id="f-project" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              <option value="">— (a nivel cuenta)</option>
+              {projectsList.map((p) => <option value={p.id}>{p.title}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cliente</label>
+            <select id="f-client" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              <option value="">—</option>
+              {clientsList.map((c) => <option value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Costo</label>
+            <input id="f-cost" type="number" step="0.01" min="0" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="0.00" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Moneda</label>
+            <select id="f-currency" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {CURRENCIES.map((c) => <option value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Ciclo</label>
+            <select id="f-cycle" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {Object.entries(BILLING_CYCLE_LABELS).map(([v, l]) => <option value={v}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Renovación</label>
+            <input id="f-renewal" type="date" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cobrado al cliente</label>
+            <input id="f-billed" type="number" step="0.01" min="0" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="0.00" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Responsable de pago</label>
+          <select id="f-payer" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+            {PAYERS.map((p) => <option value={p}>{PAYER_LABELS[p]}</option>)}
+          </select>
+        </div>
+
+        <div class="flex items-center gap-5 pt-1">
+          <label class="flex items-center gap-2 text-[12px] text-ink-100"><input id="f-active" type="checkbox" class="w-4 h-4 accent-cyan" checked /> Activo</label>
+          <label class="flex items-center gap-2 text-[12px] text-ink-100"><input id="f-autorenew" type="checkbox" class="w-4 h-4 accent-cyan" checked /> Renovación automática</label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">URL panel</label>
+            <input id="f-url" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="https://…" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Usuario</label>
+            <input id="f-username" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+          </div>
+        </div>
+
+        <!-- Credenciales (cifradas) -->
+        <div class="rounded-xl border border-cyan/15 bg-cyan/[.03] p-3 space-y-3">
+          <div class="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-cyan">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Bóveda · credenciales cifradas
+          </div>
+          <p id="secret-hint" class="text-[10.5px] text-ink-300 hidden">Déjalo vacío para conservar las credenciales actuales.</p>
+          <div class="grid grid-cols-2 gap-3">
+            <input id="f-apikey" class="input-base w-full rounded-lg px-3 py-2 text-[13px] font-mono" placeholder="API key" autocomplete="off" />
+            <input id="f-token" class="input-base w-full rounded-lg px-3 py-2 text-[13px] font-mono" placeholder="Token" autocomplete="off" />
+          </div>
+          <input id="f-password" type="password" class="input-base w-full rounded-lg px-3 py-2 text-[13px] font-mono" placeholder="Contraseña" autocomplete="off" />
+          <textarea id="f-extra" rows="2" class="input-base w-full rounded-lg px-3 py-2 text-[13px] font-mono" placeholder="Notas/secretos extra"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Notas</label>
+          <textarea id="f-notes" rows="2" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea>
+        </div>
+
+        <div id="cost-error" class="hidden text-[12px] text-ember"></div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button type="submit" id="cost-save" class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors">Guardar</button>
+          <button type="button" id="cost-cancel" class="h-9 px-4 text-[13px] rounded-full border border-white/10 text-ink-200 hover:bg-white/5 transition-colors">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  type Row = Record<string, any>
+  const data: Row[] = JSON.parse(document.getElementById('costs-json')!.textContent || '[]')
+  const byId = new Map<number, Row>(data.map((r) => [r.id, r]))
+
+  const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T
+  const overlay = $('cost-overlay')
+  const errBox = $('cost-error')
+  const secretHint = $('secret-hint')
+  const fields = {
+    id: $('f-id'), name: $('f-name'), category: $('f-category') as unknown as HTMLSelectElement,
+    provider: $('f-provider') as unknown as HTMLSelectElement, project: $('f-project') as unknown as HTMLSelectElement,
+    client: $('f-client') as unknown as HTMLSelectElement, cost: $('f-cost'), currency: $('f-currency') as unknown as HTMLSelectElement,
+    cycle: $('f-cycle') as unknown as HTMLSelectElement, renewal: $('f-renewal'), billed: $('f-billed'),
+    payer: $('f-payer') as unknown as HTMLSelectElement, active: $('f-active'), autorenew: $('f-autorenew'),
+    url: $('f-url'), username: $('f-username'), notes: $('f-notes') as unknown as HTMLTextAreaElement,
+    apikey: $('f-apikey'), token: $('f-token'), password: $('f-password'), extra: $('f-extra') as unknown as HTMLTextAreaElement,
+  }
+
+  function open(row: Row | null) {
+    errBox.classList.add('hidden')
+    ;(fields.apikey as HTMLInputElement).value = ''
+    ;(fields.token as HTMLInputElement).value = ''
+    ;(fields.password as HTMLInputElement).value = ''
+    ;(fields.extra as HTMLTextAreaElement).value = ''
+    $('cost-form-title').textContent = row ? 'Editar costo' : 'Nuevo costo'
+    secretHint.classList.toggle('hidden', !(row && row.hasSecrets))
+    const v = (el: HTMLElement, val: any) => { (el as HTMLInputElement).value = val ?? '' }
+    v(fields.id, row?.id ?? '')
+    v(fields.name, row?.name ?? '')
+    fields.category.value = row?.category ?? 'hosting'
+    fields.provider.value = row?.provider ?? ''
+    fields.project.value = row?.projectId ?? ''
+    fields.client.value = row?.clientId ?? ''
+    v(fields.cost, row?.cost ?? '')
+    fields.currency.value = row?.currency ?? 'USD'
+    fields.cycle.value = row?.billingCycle ?? 'monthly'
+    v(fields.renewal, row?.renewalDate ?? '')
+    v(fields.billed, row?.billedToClient ?? '')
+    fields.payer.value = row?.payer ?? 'me'
+    ;(fields.active as HTMLInputElement).checked = row ? !!row.active : true
+    ;(fields.autorenew as HTMLInputElement).checked = row ? !!row.autoRenew : true
+    v(fields.url, row?.url ?? '')
+    v(fields.username, row?.username ?? '')
+    v(fields.notes, row?.notes ?? '')
+    overlay.classList.remove('hidden')
+  }
+  function close() { overlay.classList.add('hidden') }
+
+  $('btn-new').addEventListener('click', () => open(null))
+  $('cost-close').addEventListener('click', close)
+  $('cost-cancel').addEventListener('click', close)
+  $('cost-backdrop').addEventListener('click', close)
+
+  document.querySelectorAll<HTMLButtonElement>('.edit-btn').forEach((b) =>
+    b.addEventListener('click', () => open(byId.get(Number(b.dataset.edit)) ?? null)))
+
+  document.querySelectorAll<HTMLButtonElement>('.del-btn').forEach((b) =>
+    b.addEventListener('click', async () => {
+      if (!confirm('¿Eliminar este costo?')) return
+      await fetch('/api/admin/costs', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(b.dataset.del) }) })
+      location.reload()
+    }))
+
+  $('cost-form').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    errBox.classList.add('hidden')
+    const num = (el: HTMLInputElement) => el.value.trim() === '' ? null : Number(el.value)
+    const str = (el: HTMLInputElement | HTMLTextAreaElement) => el.value.trim() === '' ? null : el.value.trim()
+    const id = (fields.id as HTMLInputElement).value
+    const payload: Row = {
+      name: (fields.name as HTMLInputElement).value.trim(),
+      category: fields.category.value,
+      provider: fields.provider.value || null,
+      projectId: fields.project.value || null,
+      clientId: fields.client.value || null,
+      cost: num(fields.cost as HTMLInputElement),
+      currency: fields.currency.value,
+      billingCycle: fields.cycle.value,
+      renewalDate: str(fields.renewal as HTMLInputElement),
+      billedToClient: num(fields.billed as HTMLInputElement),
+      payer: fields.payer.value,
+      active: (fields.active as HTMLInputElement).checked,
+      autoRenew: (fields.autorenew as HTMLInputElement).checked,
+      url: str(fields.url as HTMLInputElement),
+      username: str(fields.username as HTMLInputElement),
+      notes: str(fields.notes as HTMLTextAreaElement),
+    }
+    // Secretos: solo enviar si el usuario escribió algo (preserva al editar)
+    const secrets: Row = {}
+    if (str(fields.apikey as HTMLInputElement)) secrets.apiKey = (fields.apikey as HTMLInputElement).value.trim()
+    if (str(fields.token as HTMLInputElement)) secrets.token = (fields.token as HTMLInputElement).value.trim()
+    if (str(fields.password as HTMLInputElement)) secrets.password = (fields.password as HTMLInputElement).value
+    if (str(fields.extra as HTMLTextAreaElement)) secrets.extra = (fields.extra as HTMLTextAreaElement).value.trim()
+    if (Object.keys(secrets).length) payload.secrets = secrets
+
+    if (!payload.name) { showErr('El nombre es requerido.'); return }
+    const method = id ? 'PUT' : 'POST'
+    if (id) payload.id = Number(id)
+    const res = await fetch('/api/admin/costs', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    if (!res.ok) { const j = await res.json().catch(() => ({})); showErr(j.error || 'Error al guardar.'); return }
+    location.reload()
+  })
+
+  function showErr(msg: string) { errBox.textContent = msg; errBox.classList.remove('hidden') }
+</script>
