@@ -50,10 +50,10 @@ const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
 const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
 const statusColors: Record<string, string> = {
-  activo: 'text-emerald-400 bg-emerald-950',
-  pausado: 'text-amber-400 bg-amber-950',
-  completado: 'text-blue-400 bg-blue-950',
-  archivado: 'text-zinc-400 bg-zinc-800',
+  activo: 'text-cyan bg-cyan/10 border border-cyan/30',
+  pausado: 'text-violet bg-violet/10 border border-violet/30',
+  completado: 'text-lime bg-lime/10 border border-lime/30',
+  archivado: 'text-ink-300 bg-white/5 border border-white/10',
 }
 
 const categoryLabels: Record<string, string> = {
@@ -64,16 +64,16 @@ const categoryLabels: Record<string, string> = {
 }
 
 const finStatusColors: Record<string, string> = {
-  cobrado: 'text-emerald-400 bg-emerald-950',
-  pendiente: 'text-amber-400 bg-amber-950',
-  proyectado: 'text-blue-400 bg-blue-950',
+  cobrado: 'text-lime bg-lime/10 border border-lime/30',
+  pendiente: 'text-ember bg-ember/10 border border-ember/30',
+  proyectado: 'text-violet bg-violet/10 border border-violet/30',
 }
 
 const adrStatusColors: Record<string, string> = {
-  propuesto: 'text-amber-400 bg-amber-950',
-  aceptado: 'text-emerald-400 bg-emerald-950',
-  deprecado: 'text-zinc-400 bg-zinc-800',
-  reemplazado: 'text-red-400 bg-red-950',
+  propuesto: 'text-violet bg-violet/10 border border-violet/30',
+  aceptado: 'text-lime bg-lime/10 border border-lime/30',
+  deprecado: 'text-ink-300 bg-white/5 border border-white/10',
+  reemplazado: 'text-ember bg-ember/10 border border-ember/30',
 }
 
 const totalCobrado = financeRows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
