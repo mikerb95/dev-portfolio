@@ -66,3 +66,12 @@ npx drizzle-kit migrate    # aplica a Turso (revisa el SQL antes)
 | `npm run preview` | Previsualiza el build |
 
 > Requiere Node ≥ 22.12.
+
+## Licencia
+
+**Software propietario — Todos los derechos reservados.**
+© 2026 Mike (@mikerb95) — codebymike.tech
+
+Este repositorio es público **solo** con fines de portafolio y demostración.
+No se concede ningún permiso de uso, copia, modificación, distribución ni
+reutilización del código. Ver [`LICENSE`](./LICENSE) para los términos completos.
