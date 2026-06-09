@@ -12,7 +12,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Defensa en profundidad: revalida la allowlist en cada request.
     // Si la sesión trae login (logins nuevos), se exige que esté autorizado.
-    const login = (session.user as { login?: string } | undefined)?.login
+    const login = (session?.user as { login?: string } | undefined)?.login
     if (login && !isAllowedLogin(login)) {
       return new Response('Forbidden', { status: 403 })
     }
