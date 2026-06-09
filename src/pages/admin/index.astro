@@ -1,15 +1,15 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
-import { projects, messages, finances, clients, educationMilestones, projectServices, appSettings } from '../../db/schema'
-import { eq, count, desc } from 'drizzle-orm'
+import { projects, messages, finances, clients, educationMilestones, projectServices, appSettings, interactions } from '../../db/schema'
+import { eq, count, desc, and, isNotNull } from 'drizzle-orm'
 import { parseRates, fmtUSD } from '../../lib/money'
 import { monthlyCostUSD, projectPnL, type FinanceLike, type ServiceLike } from '../../lib/pnl'
 
 const [
   visibleProjectsCount, unreadCount, clientsCount,
   allFinances, serviceRows, settingsRows, milestoneRows,
-  projectsAll, recentMessages,
+  projectsAll, recentMessages, pendientesRows,
 ] = await Promise.all([
   db.select({ c: count() }).from(projects).where(eq(projects.visible, true)),
   db.select({ c: count() }).from(messages).where(eq(messages.read, false)),
@@ -23,7 +23,11 @@ const [
   db.select({ status: educationMilestones.status }).from(educationMilestones),
   db.select({ id: projects.id, title: projects.title, status: projects.status, techStack: projects.techStack, startDate: projects.startDate, visible: projects.visible }).from(projects),
   db.select().from(messages).orderBy(desc(messages.createdAt)).limit(5),
+  db.select({ dueDate: interactions.dueDate }).from(interactions).where(and(eq(interactions.done, false), isNotNull(interactions.dueDate))),
 ])
+
+const overduePend = pendientesRows.filter((p) => p.dueDate && new Date(p.dueDate).getTime() < Date.now()).length
+const upcomingPend = pendientesRows.length - overduePend
 
 const totalProjects = visibleProjectsCount[0]?.c ?? 0
 const unreadMessages = unreadCount[0]?.c ?? 0

@@ -1,0 +1,327 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import InteractionTimeline from '../../components/admin/InteractionTimeline.astro'
+import type { TimelineRow } from '../../components/admin/InteractionTimeline.astro'
+import { db } from '../../db'
+import { interactions, projects, clients } from '../../db/schema'
+import { and, desc, eq, isNotNull } from 'drizzle-orm'
+import { INTERACTION_TYPES, TYPE_LABELS, TYPE_ICONS } from '../../lib/interactions'
+
+const params = Astro.url.searchParams
+const fType = params.get('type') || ''
+const fProject = params.get('project') || ''
+const fClient = params.get('client') || ''
+
+const conds = []
+if (fType && INTERACTION_TYPES.includes(fType as any)) conds.push(eq(interactions.type, fType as any))
+if (fProject) conds.push(eq(interactions.projectId, Number(fProject)))
+if (fClient) conds.push(eq(interactions.clientId, Number(fClient)))
+
+const baseSelect = {
+  id: interactions.id, type: interactions.type, title: interactions.title, body: interactions.body,
+  occurredAt: interactions.occurredAt, nextAction: interactions.nextAction, dueDate: interactions.dueDate,
+  done: interactions.done, doneAt: interactions.doneAt,
+  projectId: interactions.projectId, clientId: interactions.clientId,
+  projectTitle: projects.title, clientName: clients.name,
+}
+
+const [rowsRaw, pendientesRaw, projectsList, clientsList] = await Promise.all([
+  db.select(baseSelect).from(interactions)
+    .leftJoin(projects, eq(interactions.projectId, projects.id))
+    .leftJoin(clients, eq(interactions.clientId, clients.id))
+    .where(conds.length ? and(...conds) : undefined)
+    .orderBy(desc(interactions.occurredAt), desc(interactions.createdAt)),
+  db.select(baseSelect).from(interactions)
+    .leftJoin(projects, eq(interactions.projectId, projects.id))
+    .leftJoin(clients, eq(interactions.clientId, clients.id))
+    .where(and(eq(interactions.done, false), isNotNull(interactions.dueDate)))
+    .orderBy(interactions.dueDate),
+  db.select({ id: projects.id, title: projects.title }).from(projects).orderBy(projects.title),
+  db.select({ id: clients.id, name: clients.name }).from(clients).orderBy(clients.name),
+])
+
+const now = Date.now()
+const fmtDateTime = (d?: Date | null) =>
+  d ? new Date(d).toLocaleString('es-CO', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
+const fmtDate = (d?: Date | null) =>
+  d ? new Date(d).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: '2-digit' }) : null
+function dueState(d: Date | null, done: boolean): 'overdue' | 'soon' | 'ok' | null {
+  if (!d) return null
+  if (done) return 'ok'
+  const days = (new Date(d).getTime() - now) / 86_400_000
+  if (days < 0) return 'overdue'
+  if (days <= 7) return 'soon'
+  return 'ok'
+}
+
+const timelineRows: TimelineRow[] = rowsRaw.map((r) => ({
+  id: r.id,
+  type: r.type,
+  typeLabel: TYPE_LABELS[r.type as keyof typeof TYPE_LABELS] ?? r.type,
+  typeIcon: TYPE_ICONS[r.type as keyof typeof TYPE_ICONS] ?? TYPE_ICONS.other,
+  occurredLabel: fmtDateTime(r.occurredAt),
+  title: r.title,
+  body: r.body,
+  projectTitle: r.projectTitle,
+  clientName: r.clientName,
+  nextAction: r.nextAction,
+  dueLabel: fmtDate(r.dueDate),
+  dueState: dueState(r.dueDate, !!r.done),
+  done: !!r.done,
+}))
+
+const overdue = pendientesRaw.filter((p) => new Date(p.dueDate!).getTime() < now)
+const upcoming = pendientesRaw.filter((p) => new Date(p.dueDate!).getTime() >= now)
+
+// Datos para edición (form)
+function dtLocal(d?: Date | null): string {
+  if (!d) return ''
+  const x = new Date(d)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}T${p(x.getHours())}:${p(x.getMinutes())}`
+}
+const formData = rowsRaw.map((r) => ({
+  id: r.id, type: r.type, title: r.title, body: r.body ?? '',
+  projectId: r.projectId ?? '', clientId: r.clientId ?? '',
+  occurredAt: dtLocal(r.occurredAt), nextAction: r.nextAction ?? '',
+  dueDate: r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : '', done: !!r.done,
+}))
+
+const hasFilters = !!(fType || fProject || fClient)
+---
+
+<AdminLayout title="Seguimiento">
+  <div class="flex items-center justify-between gap-3 mb-5">
+    <p class="text-[12px] text-ink-200 max-w-xl">Bitácora de llamadas, reuniones y notas, con recordatorios y pendientes.</p>
+    <button id="btn-new" class="shrink-0 inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      Nueva interacción
+    </button>
+  </div>
+
+  <!-- Qué sigue -->
+  {(overdue.length > 0 || upcoming.length > 0) && (
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div class="rounded-2xl glass p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-[10px] font-mono uppercase tracking-[.22em] text-ember">Vencidos</span>
+          <span class="text-[10px] font-mono text-ink-300">({overdue.length})</span>
+        </div>
+        {overdue.length === 0 && <p class="text-[12px] font-mono text-ink-300">Nada vencido. 🎉</p>}
+        <div class="space-y-2">
+          {overdue.slice(0, 8).map((p) => (
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-ember/[.05] border border-ember/20 px-3 py-2">
+              <div class="min-w-0">
+                <div class="text-[12.5px] text-ink-50 truncate">{p.nextAction ?? p.title}</div>
+                <div class="text-[10px] font-mono text-ink-300 truncate">{p.projectTitle ?? p.clientName ?? p.title}</div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10.5px] font-mono text-ember">⚠ {fmtDate(p.dueDate)}</span>
+                <button data-done-int={p.id} data-done="0" class="done-int text-[10px] font-mono px-2 py-1 rounded-md border border-white/15 text-ink-200 hover:bg-white/5">hecho</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-[10px] font-mono uppercase tracking-[.22em] text-violet">Próximos</span>
+          <span class="text-[10px] font-mono text-ink-300">({upcoming.length})</span>
+        </div>
+        {upcoming.length === 0 && <p class="text-[12px] font-mono text-ink-300">Sin pendientes próximos.</p>}
+        <div class="space-y-2">
+          {upcoming.slice(0, 8).map((p) => (
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-white/[.02] border border-white/8 px-3 py-2">
+              <div class="min-w-0">
+                <div class="text-[12.5px] text-ink-50 truncate">{p.nextAction ?? p.title}</div>
+                <div class="text-[10px] font-mono text-ink-300 truncate">{p.projectTitle ?? p.clientName ?? p.title}</div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10.5px] font-mono text-violet">{fmtDate(p.dueDate)}</span>
+                <button data-done-int={p.id} data-done="0" class="done-int text-[10px] font-mono px-2 py-1 rounded-md border border-white/15 text-ink-200 hover:bg-white/5">hecho</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
+  <!-- Filtros -->
+  <form method="get" id="filter-form" class="flex flex-wrap items-center gap-2 mb-5">
+    <select name="type" class="input-base rounded-lg px-3 py-1.5 text-[12px]">
+      <option value="">Todos los tipos</option>
+      {INTERACTION_TYPES.map((t) => <option value={t} selected={fType === t}>{TYPE_LABELS[t]}</option>)}
+    </select>
+    <select name="project" class="input-base rounded-lg px-3 py-1.5 text-[12px]">
+      <option value="">Todos los proyectos</option>
+      {projectsList.map((p) => <option value={p.id} selected={fProject === String(p.id)}>{p.title}</option>)}
+    </select>
+    <select name="client" class="input-base rounded-lg px-3 py-1.5 text-[12px]">
+      <option value="">Todos los clientes</option>
+      {clientsList.map((c) => <option value={c.id} selected={fClient === String(c.id)}>{c.name}</option>)}
+    </select>
+    {hasFilters && <a href="/admin/seguimiento" class="text-[11px] font-mono text-cyan hover:underline px-2">limpiar</a>}
+  </form>
+
+  <InteractionTimeline rows={timelineRows} />
+
+  <script is:inline type="application/json" id="int-json" set:html={JSON.stringify(formData)}></script>
+
+  <!-- Slide-over: formulario -->
+  <div id="int-overlay" class="fixed inset-0 z-[60] hidden">
+    <div id="int-backdrop" class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
+    <div class="absolute inset-y-0 right-0 w-full max-w-md glass-strong border-l border-white/10 overflow-y-auto">
+      <form id="int-form" class="p-5 md:p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="int-form-title" class="text-lg font-medium text-ink-50">Nueva interacción</h2>
+          <button type="button" id="int-close" class="text-ink-300 hover:text-ink-50 p-1" aria-label="Cerrar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <input type="hidden" id="i-id" />
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Tipo</label>
+            <select id="i-type" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {INTERACTION_TYPES.map((t) => <option value={t}>{TYPE_LABELS[t]}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Fecha</label>
+            <input id="i-occurred" type="datetime-local" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Título *</label>
+          <input id="i-title" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Llamada de kickoff…" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Detalle / notas técnicas</label>
+          <textarea id="i-body" rows="4" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Proyecto</label>
+            <select id="i-project" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              <option value="">—</option>
+              {projectsList.map((p) => <option value={p.id}>{p.title}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cliente</label>
+            <select id="i-client" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              <option value="">—</option>
+              {clientsList.map((c) => <option value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-violet/15 bg-violet/[.03] p-3 space-y-3">
+          <div class="text-[11px] font-mono uppercase tracking-wider text-violet">Recordatorio / pendiente</div>
+          <div>
+            <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Próxima acción</label>
+            <input id="i-next" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Enviar cotización…" />
+          </div>
+          <div class="grid grid-cols-2 gap-3 items-end">
+            <div>
+              <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Vence</label>
+              <input id="i-due" type="date" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+            </div>
+            <label class="flex items-center gap-2 text-[12px] text-ink-100 pb-2"><input id="i-done" type="checkbox" class="w-4 h-4 accent-lime" /> Hecho</label>
+          </div>
+        </div>
+
+        <div id="int-error" class="hidden text-[12px] text-ember"></div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button type="submit" class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors">Guardar</button>
+          <button type="button" id="int-cancel" class="h-9 px-4 text-[13px] rounded-full border border-white/10 text-ink-200 hover:bg-white/5 transition-colors">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  type Row = Record<string, any>
+  const data: Row[] = JSON.parse(document.getElementById('int-json')!.textContent || '[]')
+  const byId = new Map<number, Row>(data.map((r) => [r.id, r]))
+  const $ = (id: string) => document.getElementById(id) as HTMLInputElement
+  const overlay = $('int-overlay')
+  const errBox = $('int-error')
+
+  function open(row: Row | null) {
+    errBox.classList.add('hidden')
+    $('int-form-title').textContent = row ? 'Editar interacción' : 'Nueva interacción'
+    const v = (id: string, val: any) => { $(id).value = val ?? '' }
+    $('i-id').value = row?.id ?? ''
+    ;($('i-type') as unknown as HTMLSelectElement).value = row?.type ?? 'note'
+    v('i-occurred', row?.occurredAt ?? '')
+    v('i-title', row?.title ?? '')
+    ;($('i-body') as unknown as HTMLTextAreaElement).value = row?.body ?? ''
+    ;($('i-project') as unknown as HTMLSelectElement).value = row?.projectId ?? ''
+    ;($('i-client') as unknown as HTMLSelectElement).value = row?.clientId ?? ''
+    v('i-next', row?.nextAction ?? '')
+    v('i-due', row?.dueDate ?? '')
+    $('i-done').checked = row ? !!row.done : false
+    overlay.classList.remove('hidden')
+  }
+  const close = () => overlay.classList.add('hidden')
+
+  $('btn-new').addEventListener('click', () => open(null))
+  $('int-close').addEventListener('click', close)
+  $('int-cancel').addEventListener('click', close)
+  $('int-backdrop').addEventListener('click', close)
+
+  document.querySelectorAll<HTMLButtonElement>('.edit-int').forEach((b) =>
+    b.addEventListener('click', () => open(byId.get(Number(b.dataset.editInt)) ?? null)))
+
+  document.querySelectorAll<HTMLButtonElement>('.del-int').forEach((b) =>
+    b.addEventListener('click', async () => {
+      if (!confirm('¿Eliminar esta interacción?')) return
+      await fetch('/api/admin/interactions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(b.dataset.delInt) }) })
+      location.reload()
+    }))
+
+  // Marcar hecho / deshacer (toggle)
+  document.querySelectorAll<HTMLButtonElement>('.done-int').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const id = Number(b.dataset.doneInt)
+      const next = b.dataset.done !== '1'
+      await fetch('/api/admin/interactions', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, done: next }) })
+      location.reload()
+    }))
+
+  $('int-form').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    errBox.classList.add('hidden')
+    const str = (id: string) => { const x = $(id).value.trim(); return x === '' ? null : x }
+    const id = $('i-id').value
+    const payload: Row = {
+      type: ($('i-type') as unknown as HTMLSelectElement).value,
+      occurredAt: str('i-occurred'),
+      title: $('i-title').value.trim(),
+      body: ($('i-body') as unknown as HTMLTextAreaElement).value.trim() || null,
+      projectId: ($('i-project') as unknown as HTMLSelectElement).value || null,
+      clientId: ($('i-client') as unknown as HTMLSelectElement).value || null,
+      nextAction: str('i-next'),
+      dueDate: str('i-due'),
+      done: $('i-done').checked,
+    }
+    if (!payload.title) { errBox.textContent = 'El título es requerido.'; errBox.classList.remove('hidden'); return }
+    const method = id ? 'PUT' : 'POST'
+    if (id) payload.id = Number(id)
+    const res = await fetch('/api/admin/interactions', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    if (!res.ok) { const j = await res.json().catch(() => ({})); errBox.textContent = j.error || 'Error al guardar.'; errBox.classList.remove('hidden'); return }
+    location.reload()
+  })
+
+  // Auto-submit de filtros
+  document.querySelectorAll<HTMLSelectElement>('#filter-form select').forEach((s) =>
+    s.addEventListener('change', () => (document.getElementById('filter-form') as HTMLFormElement).submit()))
+</script>
