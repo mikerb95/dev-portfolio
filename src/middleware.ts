@@ -6,7 +6,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url
   const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
 
-  if (isAdmin) {
+  if (isAdmin && !import.meta.env.DEV_AUTH_BYPASS) {
     const session = await getSession(context.request)
     if (!session) return context.redirect('/api/auth/signin')
 
