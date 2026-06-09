@@ -30,3 +30,18 @@ export function decrypt(stored: string): string {
 }
 
 export const isEncrypted = (v: string) => ENCRYPTED_RE.test(v)
+
+/** Cifra un objeto a un blob (JSON → AES-256-GCM). */
+export function encryptJson(obj: unknown): string {
+  return encrypt(JSON.stringify(obj ?? {}))
+}
+
+/** Descifra un blob a objeto. Devuelve {} si está vacío o es inválido. */
+export function decryptJson<T = Record<string, unknown>>(stored: string | null | undefined): T {
+  if (!stored) return {} as T
+  try {
+    return JSON.parse(decrypt(stored)) as T
+  } catch {
+    return {} as T
+  }
+}

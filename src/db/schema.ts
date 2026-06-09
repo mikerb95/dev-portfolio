@@ -150,3 +150,30 @@ export const briefings = sqliteTable('briefings', {
   createdAt: integer('created_at', { mode: 'timestamp' }),
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 })
+
+// Seguimiento: llamadas, reuniones, notas y pendientes (con recordatorios)
+export const interactions = sqliteTable('interactions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  type: text('type', {
+    enum: ['call', 'meeting', 'email', 'whatsapp', 'note', 'task', 'other'],
+  }).notNull().default('note'),
+  clientId: integer('client_id').references(() => clients.id, { onDelete: 'set null' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  title: text('title').notNull(),
+  body: text('body'), // detalle, notas, información técnica
+  occurredAt: integer('occurred_at', { mode: 'timestamp' }),
+  // Recordatorio / pendiente
+  nextAction: text('next_action'),
+  dueDate: integer('due_date', { mode: 'timestamp' }),
+  done: integer('done', { mode: 'boolean' }).default(false),
+  doneAt: integer('done_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+// Configuración clave-valor (tasas FX, moneda base, etc.)
+export const appSettings = sqliteTable('app_settings', {
+  key: text('key').primaryKey(),
+  value: text('value'),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
