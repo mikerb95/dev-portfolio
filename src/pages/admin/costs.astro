@@ -220,7 +220,7 @@ const missingRates = [...usedCurrenciesNoRate]
   <CostTable rows={tableRows} />
 
   <!-- Datos para el formulario (sin secretos) -->
-  <script type="application/json" id="costs-json" set:html={JSON.stringify(formData)}></script>
+  <script is:inline type="application/json" id="costs-json" set:html={JSON.stringify(formData)}></script>
 
   <!-- Slide-over: formulario -->
   <div id="cost-overlay" class="fixed inset-0 z-[60] hidden">
@@ -355,6 +355,25 @@ const missingRates = [...usedCurrenciesNoRate]
       </form>
     </div>
   </div>
+
+  <!-- Modal: revelar credenciales -->
+  <div id="reveal-overlay" class="fixed inset-0 z-[70] hidden">
+    <div id="reveal-backdrop" class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm rounded-2xl glass-strong border border-white/10 p-5">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="text-base font-medium text-ink-50 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-cyan"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Credenciales
+        </h3>
+        <button id="reveal-close" class="text-ink-300 hover:text-ink-50 p-1" aria-label="Cerrar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div id="reveal-name" class="text-[11px] font-mono text-ink-300 mb-3"></div>
+      <div id="reveal-body" class="space-y-2"></div>
+      <p class="mt-3 text-[10px] font-mono text-ink-300">Descifradas bajo demanda. No se almacenan en el navegador.</p>
+    </div>
+  </div>
 </AdminLayout>
 
 <script>
@@ -462,4 +481,41 @@ const missingRates = [...usedCurrenciesNoRate]
   })
 
   function showErr(msg: string) { errBox.textContent = msg; errBox.classList.remove('hidden') }
+
+  // --- Revelar credenciales (bajo demanda) ---
+  const revealOverlay = $('reveal-overlay')
+  const revealBody = $('reveal-body')
+  const revealName = $('reveal-name')
+  const SECRET_LABELS: Record<string, string> = { apiKey: 'API key', token: 'Token', password: 'Contraseña', extra: 'Extra' }
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c))
+
+  async function reveal(id: number) {
+    revealName.textContent = byId.get(id)?.name ?? ''
+    revealBody.innerHTML = '<div class="text-[12px] font-mono text-ink-300">Descifrando…</div>'
+    revealOverlay.classList.remove('hidden')
+    try {
+      const res = await fetch(`/api/admin/services/${id}/secrets`)
+      const j = await res.json()
+      if (!res.ok) { revealBody.innerHTML = `<div class="text-[12px] text-ember">${esc(j.error || 'No se pudo descifrar.')}</div>`; return }
+      const entries = Object.entries(j.secrets || {}).filter(([, v]) => v != null && String(v).trim() !== '')
+      if (!entries.length) { revealBody.innerHTML = '<div class="text-[12px] font-mono text-ink-300">Sin credenciales guardadas.</div>'; return }
+      revealBody.innerHTML = entries.map(([k, v]) => `
+        <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">${esc(SECRET_LABELS[k] || k)}</span>
+            <button class="copy-secret text-[10px] font-mono text-cyan hover:underline" data-val="${encodeURIComponent(String(v))}">copiar</button>
+          </div>
+          <div class="text-[12.5px] font-mono text-ink-50 break-all mt-0.5">${esc(String(v))}</div>
+        </div>`).join('')
+      revealBody.querySelectorAll<HTMLButtonElement>('.copy-secret').forEach((b) =>
+        b.addEventListener('click', () => navigator.clipboard?.writeText(decodeURIComponent(b.dataset.val || ''))))
+    } catch {
+      revealBody.innerHTML = '<div class="text-[12px] text-ember">Error de red.</div>'
+    }
+  }
+  function closeReveal() { revealOverlay.classList.add('hidden'); revealBody.innerHTML = '' }
+  $('reveal-close').addEventListener('click', closeReveal)
+  $('reveal-backdrop').addEventListener('click', closeReveal)
+  document.querySelectorAll<HTMLButtonElement>('.reveal-btn').forEach((b) =>
+    b.addEventListener('click', () => reveal(Number(b.dataset.reveal))))
 </script>
