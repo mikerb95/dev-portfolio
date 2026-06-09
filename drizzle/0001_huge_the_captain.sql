@@ -48,7 +48,7 @@ CREATE TABLE `__new_project_services` (
 	FOREIGN KEY (`client_id`) REFERENCES `clients`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-INSERT INTO `__new_project_services`("id", "project_id", "client_id", "name", "category", "provider", "url", "username", "cost", "currency", "billing_cycle", "renewal_date", "auto_renew", "active", "payer", "billed_to_client", "secrets", "notes", "created_at", "updated_at") SELECT "id", "project_id", "client_id", "name", "category", "provider", "url", "username", "cost", "currency", "billing_cycle", "renewal_date", "auto_renew", "active", "payer", "billed_to_client", "secrets", "notes", "created_at", "updated_at" FROM `project_services`;--> statement-breakpoint
+INSERT INTO `__new_project_services`("id", "project_id", "name", "category", "url", "username", "notes", "created_at") SELECT "id", "project_id", "name", "category", "url", "username", "notes", "created_at" FROM `project_services`;--> statement-breakpoint
 DROP TABLE `project_services`;--> statement-breakpoint
 ALTER TABLE `__new_project_services` RENAME TO `project_services`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;
