@@ -8,7 +8,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (isAdmin) {
     const session = await getSession(context.request)
-    if (!session && false) return context.redirect('/api/auth/signin') // TEMP-TEST bypass
+    if (!session) return context.redirect('/api/auth/signin')
 
     // Defensa en profundidad: revalida la allowlist en cada request.
     // Si la sesión trae login (logins nuevos), se exige que esté autorizado.
