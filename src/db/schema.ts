@@ -61,15 +61,33 @@ export const projectEnvVars = sqliteTable('project_env_vars', {
 
 export const projectServices = sqliteTable('project_services', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  // projectId nullable: permite costos a nivel cuenta (dominio/suscripción no atada a un proyecto)
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  clientId: integer('client_id').references(() => clients.id),
   name: text('name').notNull(),
   category: text('category', {
-    enum: ['hosting', 'database', 'auth', 'cdn', 'email', 'storage', 'dns', 'monitoring', 'payment', 'repository', 'other'],
+    enum: ['hosting', 'database', 'auth', 'cdn', 'email', 'storage', 'dns', 'domain', 'monitoring', 'payment', 'repository', 'other'],
   }).notNull(),
+  provider: text('provider'), // github, aws, azure, gcp, vercel, netlify, cloudflare, turso, ...
   url: text('url'),
   username: text('username'),
+  // Costos
+  cost: real('cost'),
+  currency: text('currency').default('USD'),
+  billingCycle: text('billing_cycle', {
+    enum: ['monthly', 'quarterly', 'annual', 'one_time', 'usage', 'free'],
+  }).default('monthly'),
+  renewalDate: integer('renewal_date', { mode: 'timestamp' }), // próxima renovación / expiración de dominio
+  autoRenew: integer('auto_renew', { mode: 'boolean' }).default(true),
+  active: integer('active', { mode: 'boolean' }).default(true),
+  // P&L
+  payer: text('payer', { enum: ['me', 'client_reimbursable', 'client_direct'] }).default('me'),
+  billedToClient: real('billed_to_client'), // lo que se le cobra al cliente por esta línea
+  // Bóveda: JSON cifrado AES-256-GCM con { apiKey?, token?, password?, extra? }
+  secrets: text('secrets'),
   notes: text('notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
 })
 
 export const projectContacts = sqliteTable('project_contacts', {
