@@ -1,10 +1,6 @@
 import GitHub from '@auth/core/providers/github'
 import { defineConfig } from 'auth-astro'
-
-const ALLOWED_GITHUB_LOGINS = (process.env.ALLOWED_GITHUB_LOGINS ?? 'mikerb95')
-  .split(',')
-  .map((s) => s.trim().toLowerCase())
-  .filter(Boolean)
+import { isAllowedLogin } from './src/lib/auth'
 
 export default defineConfig({
   providers: [
@@ -15,13 +11,16 @@ export default defineConfig({
   ],
   callbacks: {
     async signIn({ profile }) {
-      const login = (profile?.login as string | undefined)?.toLowerCase()
-      if (!login) return false
-      return ALLOWED_GITHUB_LOGINS.includes(login)
+      return isAllowedLogin(profile?.login as string | undefined)
+    },
+    async jwt({ token, profile }) {
+      if (profile?.login) token.login = (profile.login as string).toLowerCase()
+      return token
     },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        ;(session.user as { id?: string }).id = token.sub
+      if (session.user) {
+        if (token.sub) (session.user as { id?: string }).id = token.sub
+        if (token.login) (session.user as { login?: string }).login = token.login as string
       }
       return session
     },
