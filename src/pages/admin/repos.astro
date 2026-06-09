@@ -3,12 +3,14 @@ import AdminLayout from '../../layouts/AdminLayout.astro'
 ---
 
 <AdminLayout title="Repositorios">
-  <p class="text-zinc-400 text-sm mb-6">
-    Selecciona qué repositorios de GitHub se muestran en tu portafolio público.
+  <p class="text-[12px] text-ink-200 max-w-xl mb-5">
+    Selecciona qué repositorios de GitHub se muestran en tu portafolio público. El lenguaje y los topics se importan como stack.
   </p>
-  <div id="repos-list" class="flex flex-col gap-3">
-    <p class="text-zinc-500 text-sm">Cargando repositorios...</p>
+
+  <div id="repos-status" class="rounded-2xl glass px-5 py-8 text-center text-[12px] font-mono text-ink-300">
+    Cargando repositorios…
   </div>
+  <div id="repos-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 hidden"></div>
 </AdminLayout>
 
 <script>
@@ -19,61 +21,78 @@ import AdminLayout from '../../layouts/AdminLayout.astro'
     url: string
     homepage: string | null
     language: string | null
+    stars: number
+    topics: string[]
     visible: boolean
   }
 
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c))
+
   async function loadRepos() {
-    const res = await fetch('/api/github/repos')
-    const repos: Repo[] = await res.json()
+    const status = document.getElementById('repos-status')!
     const list = document.getElementById('repos-list')!
+    try {
+      const res = await fetch('/api/github/repos')
+      if (!res.ok) throw new Error('GitHub API')
+      const repos: Repo[] = await res.json()
+      if (!repos.length) { status.textContent = 'No se encontraron repositorios.'; return }
 
-    list.innerHTML = repos
-      .map(
-        (r) => `
-      <div class="flex items-center justify-between p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-        <div class="min-w-0">
-          <div class="flex items-center gap-2 mb-0.5">
-            <span class="font-medium text-white">${r.name}</span>
-            ${r.language ? `<span class="text-xs text-zinc-500">${r.language}</span>` : ''}
+      list.innerHTML = repos.map((r) => `
+        <div class="rounded-2xl glass p-4 flex flex-col gap-3">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[14px] font-medium text-ink-50 truncate">${esc(r.name)}</span>
+                ${r.language ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-cyan/10 text-cyan border border-cyan/20">${esc(r.language)}</span>` : ''}
+                ${r.stars > 0 ? `<span class="text-[10px] font-mono text-ink-300">★ ${r.stars}</span>` : ''}
+              </div>
+              ${r.description ? `<p class="text-[12px] text-ink-200 mt-1 line-clamp-2">${esc(r.description)}</p>` : '<p class="text-[12px] text-ink-400 mt-1 italic">Sin descripción</p>'}
+              ${r.topics?.length ? `<div class="flex flex-wrap gap-1 mt-2">${r.topics.slice(0, 4).map((t) => `<span class="text-[9.5px] font-mono px-1.5 py-0.5 rounded-full bg-white/5 text-ink-300 border border-white/8">${esc(t)}</span>`).join('')}</div>` : ''}
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" class="repo-toggle sr-only peer"
+                data-slug="${esc(r.slug)}" data-name="${esc(r.name)}" data-desc="${esc(r.description ?? '')}"
+                data-url="${esc(r.url)}" data-homepage="${esc(r.homepage ?? '')}" data-language="${esc(r.language ?? '')}"
+                data-topics="${esc((r.topics ?? []).join(','))}" ${r.visible ? 'checked' : ''} />
+              <div class="w-9 h-5 rounded-full bg-white/10 peer-checked:bg-cyan/70 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:after:translate-x-4"></div>
+            </label>
           </div>
-          ${r.description ? `<p class="text-sm text-zinc-400 truncate">${r.description}</p>` : ''}
+          <div class="flex items-center justify-between text-[10.5px] font-mono">
+            <a href="${esc(r.url)}" target="_blank" rel="noopener" class="text-ink-300 hover:text-cyan transition-colors">repo ↗</a>
+            <span class="repo-state ${r.visible ? 'text-cyan' : 'text-ink-400'}">${r.visible ? 'visible' : 'oculto'}</span>
+          </div>
         </div>
-        <label class="flex items-center gap-2 shrink-0 ml-4 cursor-pointer">
-          <span class="text-sm text-zinc-400">${r.visible ? 'Visible' : 'Oculto'}</span>
-          <input
-            type="checkbox"
-            class="repo-toggle w-4 h-4 accent-emerald-400"
-            data-slug="${r.slug}"
-            data-name="${r.name}"
-            data-desc="${r.description ?? ''}"
-            data-url="${r.url}"
-            data-homepage="${r.homepage ?? ''}"
-            ${r.visible ? 'checked' : ''}
-          />
-        </label>
-      </div>
-    `
-      )
-      .join('')
+      `).join('')
 
-    list.querySelectorAll<HTMLInputElement>('.repo-toggle').forEach((cb) => {
-      cb.addEventListener('change', async () => {
-        const label = cb.previousElementSibling as HTMLSpanElement
-        await fetch('/api/github/toggle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            slug: cb.dataset.slug,
-            visible: cb.checked,
-            title: cb.dataset.name,
-            description: cb.dataset.desc || null,
-            repoUrl: cb.dataset.url,
-            previewUrl: cb.dataset.homepage || null,
-          }),
+      status.classList.add('hidden')
+      list.classList.remove('hidden')
+
+      list.querySelectorAll<HTMLInputElement>('.repo-toggle').forEach((cb) => {
+        cb.addEventListener('change', async () => {
+          const stateEl = cb.closest('.glass')!.querySelector('.repo-state') as HTMLElement
+          stateEl.textContent = '…'
+          await fetch('/api/github/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slug: cb.dataset.slug,
+              visible: cb.checked,
+              title: cb.dataset.name,
+              description: cb.dataset.desc || null,
+              repoUrl: cb.dataset.url,
+              previewUrl: cb.dataset.homepage || null,
+              language: cb.dataset.language || null,
+              topics: cb.dataset.topics ? cb.dataset.topics.split(',').filter(Boolean) : [],
+            }),
+          })
+          stateEl.textContent = cb.checked ? 'visible' : 'oculto'
+          stateEl.className = `repo-state ${cb.checked ? 'text-cyan' : 'text-ink-400'}`
         })
-        label.textContent = cb.checked ? 'Visible' : 'Oculto'
       })
-    })
+    } catch {
+      status.textContent = 'Error al cargar repositorios. Verifica GITHUB_TOKEN.'
+      status.classList.add('text-ember')
+    }
   }
 
   loadRepos()

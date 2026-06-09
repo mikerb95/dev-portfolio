@@ -23,54 +23,54 @@ const rows = await db
 const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients)
 
 const statusColors: Record<string, string> = {
-  activo: 'text-emerald-400 bg-emerald-950',
-  pausado: 'text-amber-400 bg-amber-950',
-  completado: 'text-blue-400 bg-blue-950',
-  archivado: 'text-zinc-400 bg-zinc-800',
+  activo: 'text-cyan bg-cyan/10 border-cyan/30',
+  pausado: 'text-violet bg-violet/10 border-violet/30',
+  completado: 'text-lime bg-lime/10 border-lime/30',
+  archivado: 'text-ink-300 bg-white/5 border-white/10',
 }
+const fmtDate = (d?: Date | null) =>
+  d ? new Date(d).toLocaleDateString('es-CO', { year: 'numeric', month: 'short' }) : '—'
 ---
 
 <AdminLayout title="Proyectos">
-  <div class="flex items-center justify-between mb-6">
-    <p class="text-zinc-500 text-sm">{rows.length} proyecto{rows.length !== 1 ? 's' : ''}</p>
-    <button
-      id="btn-new"
-      class="text-sm px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-md transition-colors"
-    >
+  <div class="flex items-center justify-between gap-3 mb-6">
+    <p class="text-[12px] font-mono text-ink-300">{rows.length} proyecto{rows.length !== 1 ? 's' : ''}</p>
+    <button id="btn-new" class="shrink-0 inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
       Nuevo proyecto
     </button>
   </div>
 
   <!-- Formulario nuevo proyecto -->
-  <div id="form-new" class="hidden mb-8 border border-zinc-800 rounded-lg p-5 bg-zinc-900">
-    <h2 class="text-sm font-semibold text-zinc-300 mb-4">Nuevo proyecto</h2>
-    <div class="grid grid-cols-2 gap-3">
+  <div id="form-new" class="hidden mb-6 rounded-2xl glass p-5">
+    <h2 class="text-[13px] font-medium text-ink-100 mb-4">Nuevo proyecto</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div>
-        <label class="block text-xs text-zinc-400 mb-1">Slug *</label>
-        <input id="new-slug" type="text" placeholder="mi-proyecto" class="input-base w-full" />
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Slug *</label>
+        <input id="new-slug" type="text" placeholder="mi-proyecto" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
       </div>
       <div>
-        <label class="block text-xs text-zinc-400 mb-1">Título *</label>
-        <input id="new-title" type="text" placeholder="Mi Proyecto" class="input-base w-full" />
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Título *</label>
+        <input id="new-title" type="text" placeholder="Mi Proyecto" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
       </div>
-      <div class="col-span-2">
-        <label class="block text-xs text-zinc-400 mb-1">Descripción</label>
-        <input id="new-description" type="text" class="input-base w-full" />
-      </div>
-      <div>
-        <label class="block text-xs text-zinc-400 mb-1">Stack (separado por comas)</label>
-        <input id="new-stack" type="text" placeholder="Next.js, Tailwind, Supabase" class="input-base w-full" />
+      <div class="sm:col-span-2">
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Descripción</label>
+        <input id="new-description" type="text" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
       </div>
       <div>
-        <label class="block text-xs text-zinc-400 mb-1">Cliente</label>
-        <select id="new-client" class="input-base w-full">
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Stack (coma)</label>
+        <input id="new-stack" type="text" placeholder="Next.js, Tailwind, Supabase" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+      </div>
+      <div>
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cliente</label>
+        <select id="new-client" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
           <option value="">Sin cliente</option>
           {allClients.map((c) => <option value={c.id}>{c.name}</option>)}
         </select>
       </div>
       <div>
-        <label class="block text-xs text-zinc-400 mb-1">Estado</label>
-        <select id="new-status" class="input-base w-full">
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Estado</label>
+        <select id="new-status" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
           <option value="activo">Activo</option>
           <option value="pausado">Pausado</option>
           <option value="completado">Completado</option>
@@ -78,84 +78,65 @@ const statusColors: Record<string, string> = {
         </select>
       </div>
       <div>
-        <label class="block text-xs text-zinc-400 mb-1">Fecha inicio</label>
-        <input id="new-start" type="date" class="input-base w-full" />
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Fecha inicio</label>
+        <input id="new-start" type="date" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
       </div>
       <div>
-        <label class="block text-xs text-zinc-400 mb-1">Repo URL</label>
-        <input id="new-repo" type="url" class="input-base w-full" />
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Repo URL</label>
+        <input id="new-repo" type="url" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
       </div>
       <div>
-        <label class="block text-xs text-zinc-400 mb-1">Preview URL</label>
-        <input id="new-preview" type="url" class="input-base w-full" />
+        <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Preview URL</label>
+        <input id="new-preview" type="url" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
       </div>
     </div>
     <div class="flex gap-2 mt-4">
-      <button id="btn-save-new" class="text-sm px-4 py-2 bg-white text-zinc-900 rounded-md font-medium hover:bg-zinc-100">Guardar</button>
-      <button id="btn-cancel-new" class="text-sm px-4 py-2 text-zinc-400 hover:text-white">Cancelar</button>
+      <button id="btn-save-new" class="h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors">Guardar</button>
+      <button id="btn-cancel-new" class="h-9 px-4 text-[13px] rounded-full border border-white/10 text-ink-200 hover:bg-white/5 transition-colors">Cancelar</button>
     </div>
   </div>
 
-  <!-- Tabla de proyectos -->
   {rows.length === 0 ? (
-    <p class="text-zinc-500 text-sm">No hay proyectos. Crea el primero.</p>
+    <div class="rounded-2xl glass px-5 py-10 text-center text-[12px] font-mono text-ink-300">No hay proyectos. Crea el primero.</div>
   ) : (
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-zinc-800 text-zinc-400 text-left">
-            <th class="pb-3 pr-4 font-medium">Proyecto</th>
-            <th class="pb-3 pr-4 font-medium">Cliente</th>
-            <th class="pb-3 pr-4 font-medium">Stack</th>
-            <th class="pb-3 pr-4 font-medium">Estado</th>
-            <th class="pb-3 pr-4 font-medium">Inicio</th>
-            <th class="pb-3 font-medium"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-zinc-800/60">
-          {rows.map((p) => {
-            const stack: string[] = p.techStack ? JSON.parse(p.techStack) : []
-            return (
-              <tr class="text-zinc-300 hover:bg-zinc-900/50 transition-colors group">
-                <td class="py-3 pr-4">
-                  <span class="font-medium text-white">{p.title}</span>
-                  <span class="block text-xs text-zinc-600 font-mono">{p.slug}</span>
-                </td>
-                <td class="py-3 pr-4 text-zinc-400">{p.clientName ?? '—'}</td>
-                <td class="py-3 pr-4">
-                  <span class="text-zinc-500 text-xs">{stack.slice(0, 3).join(', ') || '—'}{stack.length > 3 ? ` +${stack.length - 3}` : ''}</span>
-                </td>
-                <td class="py-3 pr-4">
-                  <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${statusColors[p.status ?? 'activo']}`}>
-                    {p.status ?? 'activo'}
-                  </span>
-                </td>
-                <td class="py-3 pr-4 text-zinc-500 text-xs">
-                  {p.startDate ? p.startDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'short' }) : '—'}
-                </td>
-                <td class="py-3 text-right">
-                  <a
-                    href={`/admin/projects/${p.id}`}
-                    class="text-xs text-zinc-500 hover:text-white transition-colors"
-                  >
-                    Ver detalle
-                  </a>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+    <div class="rounded-2xl glass overflow-hidden">
+      <!-- Cabecera (md+) -->
+      <div class="hidden md:grid grid-cols-[2fr_1.3fr_1.5fr_1fr_.8fr_auto] gap-4 px-5 py-3 border-b border-white/5 text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+        <span>Proyecto</span><span>Cliente</span><span>Stack</span><span>Estado</span><span>Inicio</span><span></span>
+      </div>
+      {rows.map((p) => {
+        const stack: string[] = p.techStack ? JSON.parse(p.techStack) : []
+        const stackLabel = stack.slice(0, 3).join(', ') + (stack.length > 3 ? ` +${stack.length - 3}` : '')
+        return (
+          <Fragment>
+            <!-- Fila (md+) -->
+            <a href={`/admin/projects/${p.id}`} class="hidden md:grid grid-cols-[2fr_1.3fr_1.5fr_1fr_.8fr_auto] gap-4 px-5 py-3.5 border-b border-white/[.03] hover:bg-white/[.02] items-center">
+              <div class="min-w-0">
+                <span class="text-[13px] font-medium text-ink-50 truncate block">{p.title}</span>
+                <span class="text-[10px] text-ink-400 font-mono">{p.slug}</span>
+              </div>
+              <div class="text-[12px] font-mono text-ink-200 truncate">{p.clientName ?? '—'}</div>
+              <div class="text-[11px] font-mono text-ink-300 truncate">{stackLabel || '—'}</div>
+              <div>
+                <span class={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border ${statusColors[p.status ?? 'activo']}`}>{p.status ?? 'activo'}</span>
+              </div>
+              <div class="text-[11px] font-mono text-ink-300">{fmtDate(p.startDate)}</div>
+              <div class="text-ink-300"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></div>
+            </a>
+            <!-- Tarjeta (móvil) -->
+            <a href={`/admin/projects/${p.id}`} class="md:hidden flex items-center justify-between gap-3 px-4 py-3.5 border-b border-white/[.04]">
+              <div class="min-w-0">
+                <div class="text-[13px] font-medium text-ink-50 truncate">{p.title}</div>
+                <div class="text-[10.5px] font-mono text-ink-300 truncate">{p.clientName ? `${p.clientName} · ` : ''}{stackLabel || p.slug}</div>
+              </div>
+              <span class={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border ${statusColors[p.status ?? 'activo']}`}>{p.status ?? 'activo'}</span>
+            </a>
+          </Fragment>
+        )
+      })}
     </div>
   )}
 </AdminLayout>
-
-<style>
-  @reference "tailwindcss";
-  .input-base {
-    @apply px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-zinc-100 text-sm placeholder-zinc-600 focus:outline-none focus:border-zinc-500;
-  }
-</style>
 
 <script>
   const btnNew = document.getElementById('btn-new')!
@@ -163,7 +144,7 @@ const statusColors: Record<string, string> = {
   const btnCancel = document.getElementById('btn-cancel-new')!
   const btnSave = document.getElementById('btn-save-new')!
 
-  btnNew.addEventListener('click', () => formNew.classList.remove('hidden'))
+  btnNew.addEventListener('click', () => formNew.classList.toggle('hidden'))
   btnCancel.addEventListener('click', () => formNew.classList.add('hidden'))
 
   btnSave.addEventListener('click', async () => {

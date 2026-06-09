@@ -2,11 +2,13 @@
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import FinanceTable from '../../components/admin/FinanceTable.astro'
 import { db } from '../../db'
-import { finances, projects, clients } from '../../db/schema'
+import { finances, projects, clients, projectServices, appSettings } from '../../db/schema'
 import { desc, eq } from 'drizzle-orm'
+import { parseRates, fmtUSD } from '../../lib/money'
+import { monthlyCostUSD, type ServiceLike } from '../../lib/pnl'
 
-const rows = await db
-  .select({
+const [rows, serviceRows, settingsRows] = await Promise.all([
+  db.select({
     id: finances.id,
     description: finances.description,
     amount: finances.amount,
@@ -15,36 +17,42 @@ const rows = await db
     projectTitle: projects.title,
     clientName: clients.name,
   })
-  .from(finances)
-  .leftJoin(projects, eq(finances.projectId, projects.id))
-  .leftJoin(clients, eq(finances.clientId, clients.id))
-  .orderBy(desc(finances.createdAt))
+    .from(finances)
+    .leftJoin(projects, eq(finances.projectId, projects.id))
+    .leftJoin(clients, eq(finances.clientId, clients.id))
+    .orderBy(desc(finances.createdAt)),
+  db.select({ cost: projectServices.cost, currency: projectServices.currency, billingCycle: projectServices.billingCycle, active: projectServices.active }).from(projectServices),
+  db.select().from(appSettings),
+])
 
-const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' })
-const cobrado = rows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
-const pendiente = rows.filter((r) => r.status === 'pendiente').reduce((s, r) => s + r.amount, 0)
+const cobrado    = rows.filter((r) => r.status === 'cobrado').reduce((s, r) => s + r.amount, 0)
+const pendiente  = rows.filter((r) => r.status === 'pendiente').reduce((s, r) => s + r.amount, 0)
 const proyectado = rows.filter((r) => r.status === 'proyectado').reduce((s, r) => s + r.amount, 0)
+
+const rates = parseRates(settingsRows)
+const { total: costoMensualUSD } = monthlyCostUSD(serviceRows as ServiceLike[], rates)
+
+const cards = [
+  { label: 'Cobrado', value: cobrado, tone: 'text-lime' },
+  { label: 'Pendiente', value: pendiente, tone: 'text-ember' },
+  { label: 'Proyectado', value: proyectado, tone: 'text-violet' },
+]
 ---
 
-<AdminLayout title="Finanzas">
-  <div class="flex gap-4 mb-8">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex-1">
-      <p class="text-zinc-400 text-xs mb-1">Cobrado</p>
-      <p class="text-emerald-400 text-xl font-bold">{fmt.format(cobrado)}</p>
-    </div>
-    <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex-1">
-      <p class="text-zinc-400 text-xs mb-1">Pendiente</p>
-      <p class="text-amber-400 text-xl font-bold">{fmt.format(pendiente)}</p>
-    </div>
-    <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 flex-1">
-      <p class="text-zinc-400 text-xs mb-1">Proyectado</p>
-      <p class="text-blue-400 text-xl font-bold">{fmt.format(proyectado)}</p>
-    </div>
+<AdminLayout title="Ingresos">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+    {cards.map((c) => (
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">{c.label}</p>
+        <p class={`text-2xl font-medium tracking-tight ${c.tone}`}>{fmtUSD(c.value)}</p>
+      </div>
+    ))}
+    <a href="/admin/costs" class="rounded-2xl glass p-5 hover:bg-white/[.03] transition-colors">
+      <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Costo infra / mes</p>
+      <p class="text-2xl font-medium tracking-tight text-cyan">{fmtUSD(costoMensualUSD)}</p>
+      <p class="mt-1 text-[10px] font-mono text-cyan">ver costos →</p>
+    </a>
   </div>
 
-  {rows.length === 0 ? (
-    <p class="text-zinc-500">No hay registros financieros todavía.</p>
-  ) : (
-    <FinanceTable rows={rows} />
-  )}
+  <FinanceTable rows={rows} />
 </AdminLayout>

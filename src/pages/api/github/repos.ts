@@ -32,6 +32,8 @@ export const GET: APIRoute = async () => {
     url: r.html_url,
     homepage: r.homepage,
     language: r.language,
+    stars: r.stargazers_count ?? 0,
+    topics: r.topics ?? [],
     updatedAt: r.updated_at,
     visible: visibleMap[r.name] ?? false,
   }))
