@@ -17,6 +17,7 @@ const visibleProjects = await db
   description="Mike — Senior Software Engineer en Colombia (remoto). TypeScript, React, Next.js, Astro, Node.js y PostgreSQL. Productos escalables, arquitectura robusta y rendimiento obsesivo."
 >
   <script
+    is:inline
     slot="head"
     type="application/ld+json"
     set:html={JSON.stringify({
