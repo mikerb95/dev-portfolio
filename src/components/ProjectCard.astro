@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets'
+
 interface Props {
   slug: string
   title: string
@@ -18,11 +20,14 @@ const stack: string[] = techStack ? JSON.parse(techStack) : []
   <!-- Visual region -->
   <div class="relative h-[200px] overflow-hidden">
     {screenshotUrl ? (
-      <img
+      <Image
         src={screenshotUrl}
         alt={title}
+        width={800}
+        height={400}
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         loading="lazy"
+        decoding="async"
       />
     ) : (
       <div class="absolute inset-0 grid-bg opacity-50"></div>

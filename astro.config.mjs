@@ -9,7 +9,11 @@ import auth from 'auth-astro';
 export default defineConfig({
   site: 'https://codebymike.tech',
   output: 'server',
-  adapter: vercel(),
+  adapter: vercel({ imageService: true }),
+  image: {
+    // Autoriza optimizar imágenes remotas alojadas en Vercel Blob
+    remotePatterns: [{ protocol: 'https', hostname: '**.public.blob.vercel-storage.com' }],
+  },
   integrations: [auth()],
   vite: {
     plugins: [tailwindcss()]

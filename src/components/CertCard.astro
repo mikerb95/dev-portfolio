@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets'
+
 interface Cert {
   id: number
   title: string
@@ -41,11 +43,14 @@ const isImage = cert.certificateUrl && (
       class="block overflow-hidden aspect-[16/9] relative"
     >
       <div class="absolute inset-0 grid-bg opacity-30"></div>
-      <img
+      <Image
         src={cert.certificateUrl}
         alt={`Certificado: ${cert.title}`}
+        width={640}
+        height={360}
         class="w-full h-full object-cover hover:scale-105 transition-transform duration-300 relative z-10"
         loading="lazy"
+        decoding="async"
       />
     </a>
   )}
