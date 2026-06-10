@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+---
+
+<BaseLayout
+  title="404 — CodeByMike"
+  description="La página que buscas no existe o ya no está disponible."
+  noindex
+>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-40 pb-32 text-center">
+    <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300 mb-6">Error 404</div>
+    <h1 class="text-6xl md:text-8xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-6">
+      Página <span class="italic font-serif font-normal text-mask-cyan">no encontrada</span>
+    </h1>
+    <p class="text-[16px] md:text-[18px] text-ink-100 leading-relaxed max-w-xl mx-auto mb-10">
+      La ruta que intentas visitar no existe o el contenido ya no está disponible.
+    </p>
+    <a
+      href="/"
+      class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all shadow-glow"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver al inicio
+    </a>
+  </div>
+</BaseLayout>

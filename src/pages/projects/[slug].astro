@@ -13,7 +13,8 @@ const project = await db
   .get()
 
 if (!project || !project.visible) {
-  return Astro.redirect('/404')
+  // 404 real (no redirect): el adapter renderiza 404.astro con el status correcto
+  return new Response(null, { status: 404 })
 }
 
 const [client, milestones] = await Promise.all([
@@ -36,7 +37,26 @@ const statusColor: Record<string, string> = {
 }
 ---
 
-<BaseLayout title={`${project.title} — CodeByMike`} description={project.description ?? undefined}>
+<BaseLayout
+  title={`${project.title} — CodeByMike`}
+  description={project.description ?? undefined}
+  image={project.screenshotUrl ?? undefined}
+  type="article"
+>
+  <script
+    slot="head"
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'CreativeWork',
+      name: project.title,
+      description: project.description ?? undefined,
+      url: new URL(Astro.url.pathname, Astro.site).href,
+      image: project.screenshotUrl ?? undefined,
+      author: { '@type': 'Person', name: 'Mike', url: 'https://codebymike.tech' },
+      ...(stack.length > 0 ? { keywords: stack.join(', ') } : {}),
+    })}
+  />
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
     <!-- Back -->

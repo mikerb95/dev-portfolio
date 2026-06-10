@@ -12,7 +12,26 @@ const visibleProjects = await db
   .orderBy(projects.createdAt)
 ---
 
-<BaseLayout title="CodeByMike | Senior Software Engineer">
+<BaseLayout
+  title="CodeByMike | Mike — Senior Software Engineer"
+  description="Mike — Senior Software Engineer en Colombia (remoto). TypeScript, React, Next.js, Astro, Node.js y PostgreSQL. Productos escalables, arquitectura robusta y rendimiento obsesivo."
+>
+  <script
+    slot="head"
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: 'Mike',
+      alternateName: 'CodeByMike',
+      jobTitle: 'Senior Software Engineer',
+      url: 'https://codebymike.tech',
+      email: 'mailto:0368dev@gmail.com',
+      address: { '@type': 'PostalAddress', addressCountry: 'CO' },
+      knowsAbout: ['TypeScript', 'React', 'Next.js', 'Astro', 'Node.js', 'PostgreSQL'],
+      sameAs: ['https://github.com/mikerb95', 'https://www.linkedin.com/in/mdrb95/'],
+    })}
+  />
 
   <!-- ── Hero ── -->
   <section class="relative pt-28 pb-24 px-6 md:px-12 lg:px-20 overflow-hidden">

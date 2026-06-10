@@ -7,6 +7,7 @@ import auth from 'auth-astro';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://codebymike.tech',
   output: 'server',
   adapter: vercel(),
   integrations: [auth()],
