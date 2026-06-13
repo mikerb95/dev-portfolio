@@ -19,25 +19,26 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const res = await next()
+  const headers = new Headers(res.headers)
 
   if (isAdmin) {
-    res.headers.set('X-Frame-Options', 'DENY')
-    res.headers.set('X-Content-Type-Options', 'nosniff')
-    res.headers.set('Referrer-Policy', 'no-referrer')
-    res.headers.set('X-Robots-Tag', 'noindex, nofollow')
-    return res
+    headers.set('X-Frame-Options', 'DENY')
+    headers.set('X-Content-Type-Options', 'nosniff')
+    headers.set('Referrer-Policy', 'no-referrer')
+    headers.set('X-Robots-Tag', 'noindex, nofollow')
+    return new Response(res.body, { status: res.status, headers })
   }
 
   // Páginas públicas: headers de seguridad base + caché en el edge de Vercel.
   // s-maxage solo aplica a la CDN (no al navegador); SWR sirve la copia vieja
   // mientras revalida, así el contenido editado en /admin tarda ≤5 min en verse.
-  res.headers.set('X-Content-Type-Options', 'nosniff')
-  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  headers.set('X-Content-Type-Options', 'nosniff')
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
 
   const isPublicPage = !pathname.startsWith('/api') && context.request.method === 'GET'
-  if (isPublicPage && res.status === 200 && !res.headers.has('Cache-Control')) {
-    res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400')
+  if (isPublicPage && res.status === 200 && !headers.has('Cache-Control')) {
+    headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400')
   }
 
-  return res
+  return new Response(res.body, { status: res.status, headers })
 })
