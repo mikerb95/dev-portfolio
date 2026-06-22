@@ -1,0 +1,119 @@
+---
+interface Slide {
+  slug?: string
+  title: string
+  description?: string | null
+  screenshotUrl?: string | null
+}
+
+interface Props {
+  slides: Slide[]
+}
+
+const { slides } = Astro.props
+const normalizedSlides = slides.length > 0
+  ? slides
+  : [
+      {
+        title: 'Sí, puedes crear un presentador de diapositivas',
+        description: 'Este bloque ya funciona como slideshow y puede mostrar tus proyectos, imágenes o mensajes clave.',
+      },
+      {
+        title: 'Controles integrados',
+        description: 'Usa los botones para avanzar o retroceder entre diapositivas sin librerías externas.',
+      },
+      {
+        title: 'Fácil de personalizar',
+        description: 'Puedes reutilizar este componente para demos, onboarding o portfolios visuales.',
+      },
+    ]
+const totalSlides = normalizedSlides.length
+---
+
+{totalSlides > 0 && (
+  <div data-slideshow class="relative overflow-hidden rounded-2xl glass mb-8">
+    <div class="relative h-[260px] md:h-[320px]">
+      {normalizedSlides.map((slide, index) => (
+        <a
+          href={slide.slug ? `/projects/${slide.slug}` : '#proyectos'}
+          class:list={[
+            'absolute inset-0 block',
+            index === 0 ? '' : 'hidden',
+          ]}
+          data-slide
+        >
+          {slide.screenshotUrl ? (
+            <img
+              src={slide.screenshotUrl}
+              alt={slide.title}
+              class="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div class="h-full w-full grid-bg opacity-40"></div>
+          )}
+          <div class="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/30 to-transparent"></div>
+          <div class="absolute inset-x-0 bottom-0 p-6">
+            <p class="text-[11px] font-mono uppercase tracking-[.18em] text-cyan mb-2">Presentador de diapositivas</p>
+            <h3 class="text-2xl md:text-3xl font-medium tracking-tight text-ink-50">{slide.title}</h3>
+            {slide.description && (
+              <p class="mt-2 text-sm text-ink-100 max-w-2xl line-clamp-2">{slide.description}</p>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+
+    {totalSlides > 1 && (
+      <div class="absolute bottom-4 right-4 flex items-center gap-2">
+        <button
+          type="button"
+          data-prev
+          class="h-9 w-9 rounded-full border border-white/20 bg-ink-950/70 text-ink-50 hover:border-cyan/50 hover:text-cyan transition-colors"
+          aria-label="Diapositiva anterior"
+        >
+          ←
+        </button>
+        <button
+          type="button"
+          data-next
+          class="h-9 w-9 rounded-full border border-white/20 bg-ink-950/70 text-ink-50 hover:border-cyan/50 hover:text-cyan transition-colors"
+          aria-label="Diapositiva siguiente"
+        >
+          →
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
+{totalSlides > 1 && (
+  <script is:inline>
+    document.querySelectorAll('[data-slideshow]').forEach((slideshow) => {
+      const slides = Array.from(slideshow.querySelectorAll('[data-slide]'))
+      const prevButton = slideshow.querySelector('[data-prev]')
+      const nextButton = slideshow.querySelector('[data-next]')
+
+      if (!prevButton || !nextButton || slides.length < 2) return
+
+      let activeIndex = 0
+
+      const render = () => {
+        slides.forEach((slide, index) => {
+          slide.classList.toggle('hidden', index !== activeIndex)
+        })
+      }
+
+      prevButton.addEventListener('click', () => {
+        activeIndex = (activeIndex - 1 + slides.length) % slides.length
+        render()
+      })
+
+      nextButton.addEventListener('click', () => {
+        activeIndex = (activeIndex + 1) % slides.length
+        render()
+      })
+    })
+  </script>
+)}
