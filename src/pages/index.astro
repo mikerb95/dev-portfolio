@@ -255,7 +255,7 @@ const visibleProjects = await db
         <span>Trabajo seleccionado</span>
       </div>
       <h2 class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask max-w-2xl leading-[1] mb-12">
-        {visibleProjects.length > 0 ? 'Proyectos en producción.' : 'Presentador de diapositivas.'}
+        Proyectos en producción.
       </h2>
       <ProjectSlideshow slides={visibleProjects} />
       {visibleProjects.length > 0 && (

@@ -34,34 +34,54 @@ const totalSlides = normalizedSlides.length
   <div data-slideshow class="relative overflow-hidden rounded-2xl glass mb-8">
     <div class="relative h-[260px] md:h-[320px]">
       {normalizedSlides.map((slide, index) => (
-        <a
-          href={slide.slug ? `/projects/${slide.slug}` : '#proyectos'}
-          class:list={[
-            'absolute inset-0 block',
-            index === 0 ? '' : 'hidden',
-          ]}
-          data-slide
-        >
-          {slide.screenshotUrl ? (
-            <img
-              src={slide.screenshotUrl}
-              alt={slide.title}
-              class="h-full w-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <div class="h-full w-full grid-bg opacity-40"></div>
-          )}
-          <div class="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/30 to-transparent"></div>
-          <div class="absolute inset-x-0 bottom-0 p-6">
-            <p class="text-[11px] font-mono uppercase tracking-[.18em] text-cyan mb-2">Presentador de diapositivas</p>
-            <h3 class="text-2xl md:text-3xl font-medium tracking-tight text-ink-50">{slide.title}</h3>
-            {slide.description && (
-              <p class="mt-2 text-sm text-ink-100 max-w-2xl line-clamp-2">{slide.description}</p>
+        slide.slug ? (
+          <a
+            href={`/projects/${slide.slug}`}
+            class:list={[
+              'absolute inset-0 block',
+              index === 0 ? '' : 'hidden',
+            ]}
+            data-slide
+          >
+            {slide.screenshotUrl ? (
+              <img
+                src={slide.screenshotUrl}
+                alt={slide.title}
+                class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <div class="h-full w-full grid-bg opacity-40"></div>
             )}
+            <div class="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/30 to-transparent"></div>
+            <div class="absolute inset-x-0 bottom-0 p-6">
+              <p class="text-[11px] font-mono uppercase tracking-[.18em] text-cyan mb-2">Proyecto destacado</p>
+              <h3 class="text-2xl md:text-3xl font-medium tracking-tight text-ink-50">{slide.title}</h3>
+              {slide.description && (
+                <p class="mt-2 text-sm text-ink-100 max-w-2xl line-clamp-2">{slide.description}</p>
+              )}
+            </div>
+          </a>
+        ) : (
+          <div
+            class:list={[
+              'absolute inset-0 block',
+              index === 0 ? '' : 'hidden',
+            ]}
+            data-slide
+          >
+            <div class="h-full w-full grid-bg opacity-40"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-ink-950/85 via-ink-950/30 to-transparent"></div>
+            <div class="absolute inset-x-0 bottom-0 p-6">
+              <p class="text-[11px] font-mono uppercase tracking-[.18em] text-cyan mb-2">Presentador de diapositivas</p>
+              <h3 class="text-2xl md:text-3xl font-medium tracking-tight text-ink-50">{slide.title}</h3>
+              {slide.description && (
+                <p class="mt-2 text-sm text-ink-100 max-w-2xl line-clamp-2">{slide.description}</p>
+              )}
+            </div>
           </div>
-        </a>
+        )
       ))}
     </div>
 
