@@ -1,0 +1,710 @@
+---
+// ─────────────────────────────────────────────────────────────────────────────
+// IteracionesBoard — Tablero XP del proyecto DobleYo Café, re-skineado al tema
+// del portfolio (oscuro · glass · cyan/lime/violet).
+//
+// Datos: src/data/iteraciones.ts (snapshot del historial real de GitHub +
+// CHANGELOG de mikerb/dobleyo). Estructura y lógica idénticas al tablero
+// original; sólo cambia la piel para integrarse con CodeByMike.
+//
+// Todo el CSS va scoped bajo .dy-iter (is:global, porque el DOM lo crea el
+// script en runtime y los estilos scoped de Astro no alcanzarían esos nodos).
+// ─────────────────────────────────────────────────────────────────────────────
+import { PARES, COLUMNAS, ITERACIONES, COMMITS_POR_MES, REPO } from '../data/iteraciones'
+
+const iterData = { PARES, COLUMNAS, ITERACIONES, COMMITS_POR_MES, REPO }
+---
+
+<div class="dy-iter">
+
+  <script type="application/json" id="iterData" set:html={JSON.stringify(iterData)} />
+
+  <!-- ── Barra superior: descripción + toggle ── -->
+  <div class="iter-headbar">
+    <p class="iter-subtitle">Tablero XP reconstruido del historial real de GitHub y el CHANGELOG — cada historia con su Definition of Done, anclada a sus commits.</p>
+    <div class="dt-view-toggle" id="iterViewToggle" role="tablist" aria-label="Vista">
+      <button class="dt-view-btn dt-view-btn--on" data-view="board" type="button">Tablero</button>
+      <button class="dt-view-btn" data-view="charts" type="button">Gráficos</button>
+    </div>
+  </div>
+
+  <!-- ── Selector de iteración (timeline) ── -->
+  <div class="iter-tabs-wrap">
+    <button class="iter-tabs-arrow iter-tabs-arrow--left" id="iterTabsPrev" type="button" aria-label="Desplazar iteraciones a la izquierda" hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="iter-tabs" id="iterTabs" role="tablist" aria-label="Iteración"></div>
+    <button class="iter-tabs-arrow iter-tabs-arrow--right" id="iterTabsNext" type="button" aria-label="Desplazar iteraciones a la derecha" hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid" id="iterSummary" style="margin-bottom:16px"></div>
+
+  <!-- Barra de progreso -->
+  <div class="card" id="iterProgressCard" style="padding:16px 20px;margin-bottom:16px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px">
+      <div>
+        <h3 class="card-title" id="iterProgressTitle" style="margin:0"></h3>
+        <p style="font-size:12px;color:var(--muted);margin:3px 0 0;font-variant-numeric:tabular-nums" id="iterProgressMeta"></p>
+        <p style="font-size:12.5px;color:var(--color-text);margin:8px 0 0;line-height:1.5" id="iterProgressResumen"></p>
+        <a id="iterProgressGh" class="iter-gh-link" href="#" target="_blank" rel="noopener" hidden>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          <span id="iterProgressGhText">Ver commits en GitHub</span>
+        </a>
+      </div>
+      <span id="iterProgressPct" style="font-size:26px;font-weight:700;color:var(--color-primary);font-variant-numeric:tabular-nums;letter-spacing:-0.02em;line-height:1">0%</span>
+    </div>
+    <div class="iter-bar" id="iterBar"></div>
+    <div class="iter-bar__legend" id="iterBarLegend"></div>
+  </div>
+
+  <!-- Tablero kanban -->
+  <div class="iter-board" id="iterBoard"></div>
+
+  <!-- Gráficos -->
+  <div class="iter-charts" id="iterCharts" hidden>
+    <div class="card iter-chart">
+      <div class="iter-chart__head">
+        <div>
+          <h3 class="iter-chart__title">Actividad de commits</h3>
+          <p class="iter-chart__sub">Commits por mes en el historial real del repositorio.</p>
+        </div>
+        <div class="iter-chart__keys">
+          <span class="iter-key"><i class="iter-key__dot iter-key__dot--real"></i>Commits/mes</span>
+        </div>
+      </div>
+      <div class="iter-chart__canvas" id="iterActividad"></div>
+      <p class="iter-chart__foot" id="iterActividadFoot"></p>
+    </div>
+    <div class="card iter-chart">
+      <div class="iter-chart__head">
+        <div>
+          <h3 class="iter-chart__title">Commits por iteración</h3>
+          <p class="iter-chart__sub">Volumen de actividad de cada iteración con conteo conocido.</p>
+        </div>
+        <div class="iter-chart__keys">
+          <span class="iter-key"><i class="iter-key__dot iter-key__dot--done"></i>Commits</span>
+        </div>
+      </div>
+      <div class="iter-chart__canvas" id="iterVelocity"></div>
+      <p class="iter-chart__foot" id="iterVelocityAvg"></p>
+    </div>
+  </div>
+
+  <!-- Bibliografía XP -->
+  <div class="card xp-biblio" style="margin-top:24px">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Marco metodológico — XP &amp; Programación en Pareja con IA</h3>
+        <p class="card-subtitle">Referencias académicas que sustentan la adaptación de XP con un asistente de IA como par.</p>
+      </div>
+    </div>
+    <div class="xp-biblio__body">
+
+      <div class="xp-biblio__section">Fundamentos de Extreme Programming</div>
+      <ol class="xp-biblio__list">
+        <li>
+          Beck, K. (2000). <em>Extreme Programming Explained: Embrace Change.</em> Addison-Wesley.
+          <span class="xp-biblio__note">Obra fundacional de XP. Define iteraciones cortas, historias de usuario, pruebas de aceptación y programación en pares como prácticas centrales.</span>
+        </li>
+        <li>
+          Williams, L., Kessler, R. R., Cunningham, W., &amp; Jeffries, R. (2000). Strengthening the Case for Pair Programming. <em>IEEE Software, 17</em>(4), 19–25.
+          <a class="xp-biblio__link" href="https://dl.acm.org/doi/10.1109/52.854064" target="_blank" rel="noopener">doi:10.1109/52.854064</a>
+          <span class="xp-biblio__note">Estudio empírico seminal: código escrito en pares aprueba el 90 % de las pruebas de aceptación vs. 75 % en programación individual.</span>
+        </li>
+        <li>
+          Dybå, T., &amp; Dingsøyr, T. (2008). Empirical Studies of Agile Software Development: A Systematic Review. <em>Information and Software Technology, 50</em>(9–10), 833–859.
+          <span class="xp-biblio__note">Revisión sistemática de 36 estudios empíricos sobre métodos ágiles, incluyendo XP. Documenta la efectividad de sus prácticas en proyectos reales.</span>
+        </li>
+      </ol>
+
+      <div class="xp-biblio__section">Programación en Pareja Humano–IA</div>
+      <ol class="xp-biblio__list" start="4">
+        <li>
+          Imai, S., Yoshida, N., Imai, K., &amp; Shirafuji, S. (2022). Is GitHub Copilot a Substitute for Human Pair-programming? An Empirical Study. <em>Proceedings of the 44th International Conference on Software Engineering (ICSE-NIER).</em>
+          <span class="xp-biblio__note">Primer estudio comparativo entre pares humanos y Copilot como par. Concluye que la IA puede cumplir el rol de navegador en pares asimétricos de experiencia.</span>
+        </li>
+        <li>
+          Peng, S., Kalliamvakou, E., Cihon, P., &amp; Demirer, M. (2023). The Impact of AI on Developer Productivity: Evidence from GitHub Copilot. <em>arXiv preprint arXiv:2302.06590.</em>
+          <a class="xp-biblio__link" href="https://www.researchgate.net/publication/368473822_The_Impact_of_AI_on_Developer_Productivity_Evidence_from_GitHub_Copilot" target="_blank" rel="noopener">ResearchGate</a>
+          <span class="xp-biblio__note">Experimento controlado: GitHub Copilot aumentó la productividad individual en ~55 %, el mayor incremento documentado por herramienta de asistencia en desarrollo de software.</span>
+        </li>
+        <li>
+          Jiang, S., Wang, Y., &amp; Shi, Y. (2023). Is AI the Better Programming Partner? Human-Human Pair Programming vs. Human-AI Pair Programming. <em>Proceedings of the 2023 Conference on Learning at Scale.</em>
+          <a class="xp-biblio__link" href="https://www.cs.cmu.edu/~sherryw/assets/pubs/2023-pair.pdf" target="_blank" rel="noopener">PDF (CMU)</a>
+          <span class="xp-biblio__note">Compara directamente pares humano–humano con humano–IA. Encuentra que la IA es más eficaz como navegador para tareas de implementación, pero el par humano supera en diseño y depuración.</span>
+        </li>
+        <li>
+          Pinto, G., et al. (2024). The Impact of AI-Assisted Pair Programming on Student Motivation, Programming Anxiety, Collaborative Learning, and Programming Performance. <em>International Journal of STEM Education, 12</em>(1).
+          <a class="xp-biblio__link" href="https://stemeducationjournal.springeropen.com/articles/10.1186/s40594-025-00537-3" target="_blank" rel="noopener">SpringerOpen</a>
+          <span class="xp-biblio__note">Estudio cuasi-experimental con 234 estudiantes (GPT-3.5 en 2023, Claude 3 Opus en 2024). La programación en pareja asistida por IA redujo la ansiedad y mejoró el rendimiento respecto al trabajo individual.</span>
+        </li>
+        <li>
+          Siddiq, M. L., &amp; Santos, J. (2023). GitHub Copilot AI Pair Programmer: Asset or Liability? <em>Journal of Systems and Software, 203</em>, 111734.
+          <a class="xp-biblio__link" href="https://www.sciencedirect.com/science/article/abs/pii/S0164121223001292" target="_blank" rel="noopener">ScienceDirect</a>
+          <span class="xp-biblio__note">Evalúa calidad del código generado con Copilot. Concluye que es un activo para desarrolladores con experiencia y una responsabilidad para novatos, lo que refuerza la necesidad del rol de revisor humano en el par.</span>
+        </li>
+      </ol>
+
+      <div class="xp-biblio__note xp-biblio__context">
+        <strong>Nota metodológica:</strong> Este proyecto adapta la práctica de programación en pares de XP al contexto de un desarrollador individual asistido por Claude (Anthropic), actuando la IA como navegador: sugiere, cuestiona y revisa mientras el desarrollador humano conduce las decisiones de diseño y arquitectura. Esta modalidad está respaldada por los estudios [4], [6] y [7] de esta bibliografía.
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal de detalle de historia -->
+  <div class="modal" id="historiaModal" style="display:none">
+    <div class="modal-content" style="max-width:600px">
+      <div class="modal-header">
+        <div>
+          <span class="iter-card__id" id="hModalId"></span>
+          <h3 class="modal-title" id="hModalTitle" style="margin:4px 0 0"></h3>
+        </div>
+        <button class="shell-btn" id="hModalClose" aria-label="Cerrar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="xp-detail__historia" id="hModalHistoria"></p>
+        <div class="xp-detail__section">Definition of Done (DoD)</div>
+        <ul class="xp-detail__tests" id="hModalTests"></ul>
+        <div class="xp-detail__meta" id="hModalMeta"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style is:global>
+  /* ═══ Tablero XP (DobleYo) re-skineado al tema del portfolio ═══
+     Todo scoped bajo .dy-iter; el DOM se crea en runtime, por eso is:global. */
+  .dy-iter {
+    --color-primary: #00f2ff;
+    --color-accent:  #c9ff5b;
+    --color-text:    #e7e7ec;
+    --text-2:        #c4c4cc;
+    --violet:        #a78bff;
+    --paper:    rgba(255,255,255,.025);
+    --paper-2:  rgba(255,255,255,.04);
+    --rule:     rgba(255,255,255,.07);
+    --rule-2:   rgba(255,255,255,.14);
+    --muted:    #85858f;
+    --muted-2:  #4d4d5d;
+    --hover:    rgba(255,255,255,.05);
+    --active-bg: rgba(0,242,255,.10);
+    --ok:      #c9ff5b;
+    --info:    #00f2ff;
+    --danger:  #ff6b3d;
+    --radius:    16px;
+    --radius-sm: 12px;
+    color: var(--color-text);
+    font-family: var(--font-sans, "Inter Variable", system-ui, sans-serif);
+  }
+  .dy-iter *, .dy-iter *::before, .dy-iter *::after { box-sizing: border-box; }
+
+  /* Barra superior */
+  .dy-iter .iter-headbar { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+  .dy-iter .iter-subtitle { font-size:13px; color:var(--muted); max-width:580px; line-height:1.55; margin:0; }
+
+  /* Toggle tablero/gráficos */
+  .dy-iter .dt-view-toggle { display:inline-flex; background:var(--paper); border:1px solid var(--rule); border-radius:10px; padding:3px; }
+  .dy-iter .dt-view-btn { appearance:none; border:0; background:transparent; cursor:pointer; font:inherit; font-size:13px; font-weight:500; color:var(--text-2); padding:6px 14px; border-radius:7px; transition:background .12s,color .12s; }
+  .dy-iter .dt-view-btn:hover { background:var(--hover); color:var(--color-text); }
+  .dy-iter .dt-view-btn--on { background:var(--color-primary); color:#07070a; }
+
+  /* Selector de iteración (timeline) */
+  .dy-iter .iter-tabs-wrap { position:relative; margin-bottom:20px; }
+  .dy-iter .iter-tabs-arrow { position:absolute; top:0; bottom:12px; z-index:3; width:36px; appearance:none; cursor:pointer; display:grid; place-items:center; border:1px solid var(--rule); border-radius:10px; background:rgba(14,14,18,.7); color:var(--color-primary); backdrop-filter:blur(8px); transition:background .12s,color .12s,opacity .12s; }
+  .dy-iter .iter-tabs-arrow:hover { background:var(--hover); }
+  .dy-iter .iter-tabs-arrow[hidden] { display:none; }
+  .dy-iter .iter-tabs-arrow--left { left:0; }
+  .dy-iter .iter-tabs-arrow--right { right:0; }
+  .dy-iter .iter-tabs-wrap::before, .dy-iter .iter-tabs-wrap::after { content:""; position:absolute; top:0; bottom:12px; width:48px; z-index:2; pointer-events:none; opacity:0; transition:opacity .15s; }
+  .dy-iter .iter-tabs-wrap::before { left:36px; background:linear-gradient(to right, #07070a, transparent); }
+  .dy-iter .iter-tabs-wrap::after { right:36px; background:linear-gradient(to left, #07070a, transparent); }
+  .dy-iter .iter-tabs-wrap.has-prev::before { opacity:1; }
+  .dy-iter .iter-tabs-wrap.has-next::after { opacity:1; }
+  .dy-iter .iter-tabs-wrap.has-prev .iter-tabs { padding-left:60px; }
+  .dy-iter .iter-tabs-wrap.has-next .iter-tabs { padding-right:60px; }
+  .dy-iter .iter-tabs { display:flex; gap:10px; overflow-x:auto; padding:2px 2px 10px; scroll-snap-type:x proximity; scrollbar-width:thin; scroll-behavior:smooth; }
+  .dy-iter .iter-tabs::-webkit-scrollbar { height:8px; }
+  .dy-iter .iter-tabs::-webkit-scrollbar-thumb { background:var(--rule-2); border-radius:999px; }
+  .dy-iter .iter-tab { flex:0 0 auto; width:188px; scroll-snap-align:start; appearance:none; cursor:pointer; text-align:left; background:var(--paper); border:1px solid var(--rule); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:4px; transition:border-color .12s,box-shadow .12s,background .12s,transform .12s; position:relative; }
+  .dy-iter .iter-tab:hover { border-color:var(--rule-2); background:var(--hover); transform:translateY(-1px); }
+  .dy-iter .iter-tab__fase { font-size:9px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dy-iter .iter-tab__name { font-size:12.5px; font-weight:600; line-height:1.3; color:var(--color-text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.6em; }
+  .dy-iter .iter-tab__range { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; display:flex; align-items:center; gap:6px; }
+  .dy-iter .iter-tab__commits { margin-left:auto; font-size:10px; font-weight:600; color:var(--muted); background:var(--hover); border-radius:999px; padding:1px 7px; }
+  .dy-iter .iter-tab--on { background:var(--active-bg); border-color:var(--color-primary); box-shadow:0 0 0 1px rgba(0,242,255,.25), 0 8px 24px -16px rgba(0,242,255,.5); }
+  .dy-iter .iter-tab--on::before { content:""; position:absolute; left:10px; right:10px; top:-1px; height:3px; border-radius:0 0 3px 3px; background:var(--color-primary); }
+  .dy-iter .iter-tab--on .iter-tab__fase { color:var(--color-primary); }
+  .dy-iter .iter-tab--on .iter-tab__name { color:#9bfaff; }
+
+  /* KPIs */
+  .dy-iter .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:16px; }
+  .dy-iter .kpi-tile { position:relative; background:var(--paper); border:1px solid var(--rule); border-radius:16px; padding:16px 18px 16px 20px; overflow:hidden; backdrop-filter:blur(18px) saturate(140%); }
+  .dy-iter .kpi-tile::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--color-accent); }
+  .dy-iter .kpi-tile.success::before { background:var(--ok); }
+  .dy-iter .kpi-tile.info::before { background:var(--info); }
+  .dy-iter .kpi-tile.warning::before { background:var(--violet); }
+  .dy-iter .kpi-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:6px; }
+  .dy-iter .kpi-value { font-size:28px; font-weight:600; color:var(--color-text); line-height:1.1; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; }
+  .dy-iter .kpi-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+
+  /* Card */
+  .dy-iter .card { background:var(--paper); border:1px solid var(--rule); border-radius:16px; overflow:hidden; backdrop-filter:blur(18px) saturate(140%); }
+  .dy-iter .card-header { padding:14px 18px; border-bottom:1px solid var(--rule); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .dy-iter .card-title { font-size:14px; font-weight:600; color:var(--color-text); margin:0; }
+  .dy-iter .card-subtitle { font-size:12px; color:var(--muted); margin-top:2px; }
+
+  /* Barra de progreso */
+  .dy-iter .iter-bar { display:flex; height:10px; border-radius:999px; overflow:hidden; background:rgba(255,255,255,.06); }
+  .dy-iter .iter-bar__seg { height:100%; transition:width 0.4s ease; }
+  .dy-iter .iter-bar__legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--muted); }
+  .dy-iter .iter-bar__legend span { display:inline-flex; align-items:center; gap:6px; }
+  .dy-iter .iter-bar__legend i { width:9px; height:9px; border-radius:3px; display:inline-block; }
+
+  /* Tablero kanban */
+  .dy-iter .iter-board { display:grid; gap:14px; align-items:start; grid-template-columns:repeat(5, minmax(200px,1fr)); overflow-x:auto; padding-bottom:8px; }
+  @media (max-width:1200px) { .dy-iter .iter-board { grid-auto-flow:column; grid-auto-columns:72%; grid-template-columns:none; } }
+  .dy-iter .iter-col { background:rgba(255,255,255,.015); border:1px solid var(--rule); border-radius:16px; display:flex; flex-direction:column; min-height:120px; }
+  .dy-iter .iter-col__head { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--rule); }
+  .dy-iter .iter-col__dot { width:8px; height:8px; border-radius:999px; flex-shrink:0; }
+  .dy-iter .iter-col__name { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-2); }
+  .dy-iter .iter-col__count { margin-left:auto; font-size:11px; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; background:var(--paper); border:1px solid var(--rule); border-radius:999px; padding:1px 8px; }
+  .dy-iter .iter-col__body { padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .dy-iter .iter-col__empty { text-align:center; color:var(--muted-2); font-size:12px; padding:18px 8px; border:1px dashed var(--rule-2); border-radius:8px; }
+
+  /* Tarjeta de historia */
+  .dy-iter .iter-card { background:var(--paper-2); border:1px solid var(--rule); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; transition:border-color .12s,box-shadow .12s,transform .12s; }
+  .dy-iter .iter-card:hover { border-color:var(--rule-2); box-shadow:0 10px 28px -18px rgba(0,0,0,.8); transform:translateY(-1px); }
+  .dy-iter .iter-card__top { display:flex; align-items:center; gap:8px; }
+  .dy-iter .iter-card__id { font-family:var(--font-mono, ui-monospace, monospace); font-size:11px; font-weight:600; color:var(--muted); }
+  .dy-iter .iter-card__type { font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:2px 7px; border-radius:999px; }
+  .dy-iter .iter-card__type--historia { background:rgba(0,242,255,.12); color:var(--info); }
+  .dy-iter .iter-card__type--bug { background:rgba(255,107,61,.14); color:var(--danger); }
+  .dy-iter .iter-card__type--tarea { background:var(--hover); color:var(--muted); }
+  .dy-iter .iter-card__type--spike { background:rgba(167,139,255,.16); color:var(--violet); }
+  .dy-iter .iter-card__pts { margin-left:auto; font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--color-primary); background:var(--active-bg); border-radius:6px; padding:2px 8px; }
+  .dy-iter .iter-card__title { margin:0; font-size:13px; font-weight:600; line-height:1.35; color:var(--color-text); }
+  .dy-iter .iter-card__tags { display:flex; flex-wrap:wrap; gap:4px; }
+  .dy-iter .iter-tag { font-size:10.5px; color:var(--muted); background:var(--hover); border-radius:5px; padding:2px 6px; }
+  .dy-iter .iter-card__foot { display:flex; align-items:center; gap:8px; padding-top:8px; border-top:1px solid var(--rule); }
+  .dy-iter .iter-card__valor { font-size:10.5px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }
+  .dy-iter .iter-card__valor i { width:7px; height:7px; border-radius:999px; display:inline-block; background:currentColor; }
+  .dy-iter .iter-card__valor--alto { color:var(--danger); }
+  .dy-iter .iter-card__valor--medio { color:var(--color-accent); }
+  .dy-iter .iter-card__valor--bajo { color:var(--muted); }
+  .dy-iter .iter-card__pair { margin-left:auto; display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); }
+  .dy-iter .iter-avatar { width:22px; height:22px; border-radius:999px; color:#fff; display:grid; place-items:center; font-size:10px; font-weight:700; }
+  .dy-iter .iter-agente { font-size:10px; font-weight:600; color:var(--info); background:rgba(0,242,255,.12); border-radius:5px; padding:1px 6px; }
+
+  /* Checks de DoD en tarjeta */
+  .dy-iter .iter-card__tests { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:3px; }
+  .dy-iter .iter-card__test { display:flex; align-items:flex-start; gap:6px; font-size:11px; color:var(--muted); line-height:1.4; }
+  .dy-iter .iter-card__test-icon { flex-shrink:0; width:13px; height:13px; border-radius:3px; margin-top:1px; display:grid; place-items:center; font-size:9px; font-weight:700; }
+  .dy-iter .iter-card__test-icon--pass { background:rgba(201,255,91,.16); color:var(--ok); }
+  .dy-iter .iter-card__test-icon--fail { background:rgba(255,107,61,.16); color:var(--danger); }
+  .dy-iter .iter-card__test-icon--pend { background:var(--hover); color:var(--muted-2); border:1px solid var(--rule); }
+
+  /* Gráficos SVG */
+  .dy-iter .iter-charts { display:grid; gap:16px; grid-template-columns:1fr; margin-top:16px; }
+  @media (min-width:980px) { .dy-iter .iter-charts { grid-template-columns:1fr 1fr; } }
+  .dy-iter .iter-chart { padding:16px 18px; }
+  .dy-iter .iter-chart__head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .dy-iter .iter-chart__title { margin:0; font-size:14px; font-weight:600; color:var(--color-text); }
+  .dy-iter .iter-chart__sub { margin:3px 0 0; font-size:12px; color:var(--muted); }
+  .dy-iter .iter-chart__keys { display:flex; gap:14px; flex-wrap:wrap; }
+  .dy-iter .iter-key { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+  .dy-iter .iter-key__dot { width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .dy-iter .iter-key__dot--real { background:var(--info); }
+  .dy-iter .iter-key__dot--done { background:var(--ok); }
+  .dy-iter .iter-chart__canvas { width:100%; }
+  .dy-iter .iter-chart__canvas svg { display:block; width:100%; height:auto; }
+  .dy-iter .iter-chart__foot { margin:10px 0 0; font-size:12px; color:var(--muted); }
+  .dy-iter .iter-chart__foot b { color:var(--color-primary); font-weight:600; }
+
+  /* Enlace a GitHub */
+  .dy-iter .iter-gh-link { display:inline-flex; align-items:center; gap:6px; margin-top:10px; font-size:12px; font-weight:600; color:var(--color-primary); text-decoration:none; }
+  .dy-iter .iter-gh-link:hover { text-decoration:underline; }
+
+  /* Modal de detalle */
+  .dy-iter .modal { position:fixed; inset:0; z-index:80; background:rgba(7,7,10,.72); backdrop-filter:blur(6px); display:grid; place-items:center; padding:16px; }
+  .dy-iter .modal-content { background:#0e0e12; border-radius:16px; max-width:600px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 20px 60px -16px rgba(0,0,0,.85); border:1px solid var(--rule-2); }
+  .dy-iter .modal-header { padding:14px 20px; border-bottom:1px solid var(--rule); display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .dy-iter .modal-title { font-size:15px; font-weight:600; color:var(--color-text); margin:0; }
+  .dy-iter .modal-body { padding:20px; }
+  .dy-iter .shell-btn { appearance:none; cursor:pointer; display:inline-grid; place-items:center; width:32px; height:32px; border-radius:8px; border:1px solid var(--rule); background:transparent; color:var(--muted); flex-shrink:0; }
+  .dy-iter .shell-btn:hover { background:var(--hover); color:var(--color-text); }
+  .dy-iter .xp-detail__historia { font-size:13px; color:var(--text-2); line-height:1.6; background:var(--active-bg); padding:10px 14px; border-radius:12px; border-left:3px solid var(--color-accent); margin:0 0 16px; }
+  .dy-iter .xp-detail__section { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted-2); margin-bottom:10px; }
+  .dy-iter .xp-detail__tests { list-style:none; margin:0 0 16px; padding:0; display:flex; flex-direction:column; gap:6px; }
+  .dy-iter .xp-detail__test { display:flex; align-items:flex-start; gap:10px; padding:8px 12px; border-radius:12px; border:1px solid var(--rule); font-size:13px; line-height:1.5; color:var(--text-2); }
+  .dy-iter .xp-detail__test--pass { background:rgba(201,255,91,.07); border-color:rgba(201,255,91,.22); }
+  .dy-iter .xp-detail__test--fail { background:rgba(255,107,61,.07); border-color:rgba(255,107,61,.22); }
+  .dy-iter .xp-detail__test--pend { background:var(--paper); }
+  .dy-iter .xp-detail__meta { display:flex; flex-wrap:wrap; gap:12px; padding-top:14px; border-top:1px solid var(--rule); font-size:12px; color:var(--muted); }
+  .dy-iter .xp-detail__meta-label { font-weight:600; color:var(--color-primary); }
+
+  /* Bibliografía */
+  .dy-iter .xp-biblio__body { padding:20px; }
+  .dy-iter .xp-biblio__section { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted-2); margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--rule); }
+  .dy-iter .xp-biblio__section:first-child { margin-top:0; }
+  .dy-iter .xp-biblio__list { margin:0; padding-left:20px; display:flex; flex-direction:column; gap:14px; }
+  .dy-iter .xp-biblio__list li { font-size:13px; line-height:1.6; color:var(--text-2); }
+  .dy-iter .xp-biblio__list li::marker { color:var(--muted-2); }
+  .dy-iter .xp-biblio__link { display:inline-block; margin-left:6px; font-size:11px; color:var(--color-primary); text-decoration:none; font-weight:600; }
+  .dy-iter .xp-biblio__link:hover { text-decoration:underline; }
+  .dy-iter .xp-biblio__note { display:block; margin-top:4px; font-size:11.5px; color:var(--muted); line-height:1.5; }
+  .dy-iter .xp-biblio__context { margin-top:20px; padding:12px 14px; background:var(--active-bg); border-left:3px solid var(--color-accent); border-radius:12px; font-size:12.5px; color:var(--text-2); }
+  .dy-iter .xp-biblio__context strong { color:var(--color-primary); }
+</style>
+
+<script is:inline>
+(() => {
+  // Tablero XP — datos inyectados desde src/data/iteraciones.ts
+  const dataEl = document.getElementById('iterData');
+  if (!dataEl) return;
+  const DATA = JSON.parse(dataEl.textContent);
+  const { PARES, COLUMNAS, ITERACIONES, COMMITS_POR_MES, REPO } = DATA;
+
+  const ghUrl = (since, until) => `${REPO}/commits/main/?since=${since}&until=${until}`;
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const SVG_TAGS = new Set(['svg','g','path','line','rect','circle','polyline','text']);
+  const el = (tag, attrs = {}, ...kids) => {
+    const node = SVG_TAGS.has(tag) ? document.createElementNS(NS, tag) : document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    kids.forEach(k => node.appendChild(typeof k === 'string' ? document.createTextNode(k) : k));
+    return node;
+  };
+
+  let iterActual = ITERACIONES[0];
+
+  const tabsBox = document.getElementById('iterTabs');
+  const tabEls = ITERACIONES.map((it, idx) => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'iter-tab' + (idx === 0 ? ' iter-tab--on' : '');
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
+    tab.dataset.id = it.id;
+    tab.title = it.nombre;
+    tab.appendChild(el('span', { class: 'iter-tab__fase' }, it.fase));
+    tab.appendChild(el('span', { class: 'iter-tab__name' }, it.nombre));
+    const range = el('span', { class: 'iter-tab__range' }, it.rango);
+    if (it.commits != null) range.appendChild(el('span', { class: 'iter-tab__commits' }, `${it.commits} commits`));
+    tab.appendChild(range);
+    tab.addEventListener('click', () => selectIter(it.id));
+    tabsBox.appendChild(tab);
+    return tab;
+  });
+
+  function selectIter(id) {
+    iterActual = ITERACIONES.find(i => i.id === id) || ITERACIONES[0];
+    tabEls.forEach(t => {
+      const on = t.dataset.id === iterActual.id;
+      t.classList.toggle('iter-tab--on', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    render();
+  }
+
+  const tabsWrap = tabsBox.parentElement;
+  const prevBtn = document.getElementById('iterTabsPrev');
+  const nextBtn = document.getElementById('iterTabsNext');
+
+  function updateArrows() {
+    const max = tabsBox.scrollWidth - tabsBox.clientWidth;
+    const x = tabsBox.scrollLeft;
+    const hasPrev = x > 2;
+    const hasNext = x < max - 2;
+    prevBtn.hidden = !hasPrev;
+    nextBtn.hidden = !hasNext;
+    tabsWrap.classList.toggle('has-prev', hasPrev);
+    tabsWrap.classList.toggle('has-next', hasNext);
+  }
+  function scrollTabs(dir) {
+    const step = Math.max(tabsBox.clientWidth * 0.8, 220);
+    tabsBox.scrollBy({ left: dir * step, behavior: 'smooth' });
+  }
+  prevBtn.addEventListener('click', () => scrollTabs(-1));
+  nextBtn.addEventListener('click', () => scrollTabs(1));
+  tabsBox.addEventListener('scroll', updateArrows, { passive: true });
+  window.addEventListener('resize', updateArrows);
+  updateArrows();
+
+  document.getElementById('iterViewToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('.dt-view-btn');
+    if (!btn) return;
+    document.querySelectorAll('.dy-iter .dt-view-btn').forEach(b => b.classList.toggle('dt-view-btn--on', b === btn));
+    const charts = btn.dataset.view === 'charts';
+    document.getElementById('iterBoard').hidden = charts;
+    document.getElementById('iterProgressCard').hidden = charts;
+    document.getElementById('iterCharts').hidden = !charts;
+    if (charts) renderCharts();
+  });
+
+  function dodStats(h) {
+    const dod = h.flatMap(s => s.dod || []);
+    const total = dod.length;
+    const pass = dod.filter(d => d.estado === 'pass').length;
+    const fail = dod.filter(d => d.estado === 'fail').length;
+    const pend = total - pass - fail;
+    const pct = total ? Math.round((pass / total) * 100) : 0;
+    return { total, pass, fail, pend, pct };
+  }
+
+  function render() {
+    const h = iterActual.historias;
+    const aceptadas = h.filter(s => s.col === 'aceptada').length;
+    const enCurso = h.filter(s => s.col === 'desarrollo' || s.col === 'aceptacion').length;
+    const d = dodStats(h);
+
+    const summary = document.getElementById('iterSummary');
+    summary.innerHTML = '';
+    [
+      { label: 'Historias',  value: h.length,                 sub: `${aceptadas} aceptadas`, tone: '' },
+      { label: 'DoD',        value: `${d.pass}/${d.total}`,    sub: `${d.pend} pendientes`,   tone: 'info' },
+      { label: 'Completado', value: `${d.pct}%`,               sub: `${enCurso} en curso`,    tone: 'success' },
+      { label: 'Commits',    value: iterActual.commits != null ? iterActual.commits : '—', sub: iterActual.rango, tone: 'warning' },
+    ].forEach(k => {
+      const tile = document.createElement('div');
+      tile.className = `kpi-tile${k.tone ? ' ' + k.tone : ''}`;
+      tile.innerHTML = `<div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div><div class="kpi-sub">${k.sub}</div>`;
+      summary.appendChild(tile);
+    });
+
+    document.getElementById('iterProgressTitle').textContent = iterActual.nombre;
+    document.getElementById('iterProgressMeta').textContent =
+      `${iterActual.fase} · ${iterActual.rango} · ${d.pass} de ${d.total} criterios DoD cumplidos`;
+    document.getElementById('iterProgressResumen').textContent = iterActual.resumen || '';
+    document.getElementById('iterProgressPct').textContent = d.pct + '%';
+
+    const gh = document.getElementById('iterProgressGh');
+    gh.href = ghUrl(iterActual.ghSince, iterActual.ghUntil);
+    document.getElementById('iterProgressGhText').textContent =
+      iterActual.commits != null
+        ? `Ver ${iterActual.commits} commits de este periodo en GitHub`
+        : 'Ver commits de este periodo en GitHub';
+    gh.hidden = false;
+
+    const bar = document.getElementById('iterBar');
+    bar.innerHTML = '';
+    [
+      { color: 'var(--ok)',     v: d.pass },
+      { color: 'var(--danger)', v: d.fail },
+      { color: 'var(--info)',   v: d.pend },
+    ].forEach(s => {
+      if (s.v <= 0 || !d.total) return;
+      const seg = document.createElement('div');
+      seg.className = 'iter-bar__seg';
+      seg.style.background = s.color;
+      seg.style.width = (s.v / d.total * 100) + '%';
+      bar.appendChild(seg);
+    });
+    document.getElementById('iterBarLegend').innerHTML =
+      `<span><i style="background:var(--ok)"></i>Cumplidos ${d.pass}</span>` +
+      `<span><i style="background:var(--info)"></i>Pendientes ${d.pend}</span>` +
+      (d.fail ? `<span><i style="background:var(--danger)"></i>Fallidos ${d.fail}</span>` : '');
+
+    const board = document.getElementById('iterBoard');
+    board.innerHTML = '';
+    COLUMNAS.forEach(col => {
+      const items = h.filter(s => s.col === col.id);
+      const colEl = document.createElement('div');
+      colEl.className = 'iter-col';
+      const head = document.createElement('div');
+      head.className = 'iter-col__head';
+      head.appendChild(el('span', { class: 'iter-col__dot', style: `background:${col.color}` }));
+      head.appendChild(el('span', { class: 'iter-col__name' }, col.nombre));
+      head.appendChild(el('span', { class: 'iter-col__count' }, String(items.length)));
+      colEl.appendChild(head);
+      const body = document.createElement('div');
+      body.className = 'iter-col__body';
+      if (!items.length) {
+        body.appendChild(el('div', { class: 'iter-col__empty' }, 'Sin historias'));
+      } else {
+        items.forEach(s => body.appendChild(historiaCard(s)));
+      }
+      colEl.appendChild(body);
+      board.appendChild(colEl);
+    });
+  }
+
+  function historiaCard(s) {
+    const par = PARES[s.par] || { nombre: s.par, rol: '', color: '#888' };
+    const tipoLabel = { historia: 'Historia', bug: 'Bug', tarea: 'Tarea', spike: 'Spike' };
+    const valorLabel = { alto: 'Valor alto', medio: 'Valor medio', bajo: 'Valor bajo' };
+    const testIcon = { pass: '✓', fail: '✗', pend: '○' };
+    const dod = s.dod || [];
+    const pass = dod.filter(p => p.estado === 'pass').length;
+
+    const card = document.createElement('div');
+    card.className = 'iter-card';
+    card.style.cursor = 'pointer';
+
+    const top = document.createElement('div');
+    top.className = 'iter-card__top';
+    top.appendChild(el('span', { class: 'iter-card__id' }, s.id));
+    top.appendChild(el('span', { class: `iter-card__type iter-card__type--${s.tipo}` }, tipoLabel[s.tipo] || s.tipo));
+    if (dod.length) top.appendChild(el('span', { class: 'iter-card__pts' }, `${pass}/${dod.length} DoD`));
+    card.appendChild(top);
+
+    const title = document.createElement('p');
+    title.className = 'iter-card__title';
+    title.textContent = s.titulo;
+    card.appendChild(title);
+
+    if (s.tags && s.tags.length) {
+      const tags = document.createElement('div');
+      tags.className = 'iter-card__tags';
+      s.tags.forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'iter-tag';
+        span.textContent = '#' + t;
+        tags.appendChild(span);
+      });
+      card.appendChild(tags);
+    }
+
+    if (dod.length) {
+      const tests = document.createElement('ul');
+      tests.className = 'iter-card__tests';
+      dod.forEach(p => {
+        const li = document.createElement('li');
+        li.className = 'iter-card__test';
+        const icon = document.createElement('span');
+        icon.className = `iter-card__test-icon iter-card__test-icon--${p.estado}`;
+        icon.textContent = testIcon[p.estado] || '○';
+        li.appendChild(icon);
+        li.appendChild(document.createTextNode(p.texto));
+        tests.appendChild(li);
+      });
+      card.appendChild(tests);
+    }
+
+    const foot = document.createElement('div');
+    foot.className = 'iter-card__foot';
+
+    const valor = document.createElement('span');
+    valor.className = `iter-card__valor iter-card__valor--${s.valor}`;
+    valor.appendChild(document.createElement('i'));
+    valor.appendChild(document.createTextNode(valorLabel[s.valor] || s.valor));
+    foot.appendChild(valor);
+
+    if (s.agente) foot.appendChild(el('span', { class: 'iter-agente' }, s.agente));
+
+    const pair = document.createElement('span');
+    pair.className = 'iter-card__pair';
+    pair.title = `${par.nombre} — ${par.rol}`;
+    const avatar = document.createElement('span');
+    avatar.className = 'iter-avatar';
+    avatar.style.background = par.color;
+    avatar.textContent = s.par;
+    pair.appendChild(avatar);
+    foot.appendChild(pair);
+
+    card.appendChild(foot);
+    card.addEventListener('click', () => openHistoriaModal(s));
+    return card;
+  }
+
+  const historiaModal = document.getElementById('historiaModal');
+
+  function openHistoriaModal(s) {
+    const par = PARES[s.par] || { nombre: s.par, rol: '', color: '#888' };
+    const testIcon = { pass: '✓', fail: '✗', pend: '○' };
+    const colNombre = (COLUMNAS.find(c => c.id === s.col) || {}).nombre || s.col;
+
+    document.getElementById('hModalId').textContent = s.id;
+    document.getElementById('hModalTitle').textContent = s.titulo;
+    document.getElementById('hModalHistoria').textContent = s.titulo;
+
+    const testsList = document.getElementById('hModalTests');
+    testsList.innerHTML = '';
+    (s.dod || []).forEach(p => {
+      const li = document.createElement('li');
+      li.className = `xp-detail__test xp-detail__test--${p.estado}`;
+      const icon = document.createElement('span');
+      icon.className = `iter-card__test-icon iter-card__test-icon--${p.estado}`;
+      icon.textContent = testIcon[p.estado] || '○';
+      li.appendChild(icon);
+      li.appendChild(document.createTextNode(p.texto));
+      testsList.appendChild(li);
+    });
+
+    const fecha = s.fecha
+      ? new Date(s.fecha + 'T00:00:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
+      : iterActual.rango;
+    const meta = document.getElementById('hModalMeta');
+    meta.innerHTML = `
+      <span><span class="xp-detail__meta-label">Estado:</span> ${colNombre}</span>
+      <span><span class="xp-detail__meta-label">Fecha:</span> ${fecha}</span>
+      <span><span class="xp-detail__meta-label">Par:</span> <span style="display:inline-flex;align-items:center;gap:5px">
+        <span class="iter-avatar" style="background:${par.color};font-size:10px;width:18px;height:18px">${s.par}</span>
+        ${par.nombre} (${par.rol})
+      </span></span>
+      ${s.agente ? `<span><span class="xp-detail__meta-label">Navegador IA:</span> ${s.agente}</span>` : ''}
+      ${s.tags && s.tags.length ? `<span><span class="xp-detail__meta-label">Tags:</span> ${s.tags.map(t => '#' + t).join(' ')}</span>` : ''}
+      <span><span class="xp-detail__meta-label">Iteración:</span> ${iterActual.nombre}</span>
+      <span><a class="iter-gh-link" style="margin-top:0" href="${ghUrl(iterActual.ghSince, iterActual.ghUntil)}" target="_blank" rel="noopener">Ver commits del periodo en GitHub →</a></span>
+    `;
+
+    historiaModal.style.display = 'grid';
+  }
+  function closeHistoriaModal() { historiaModal.style.display = 'none'; }
+  document.getElementById('hModalClose').addEventListener('click', closeHistoriaModal);
+  historiaModal.addEventListener('click', e => { if (e.target === historiaModal) closeHistoriaModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && historiaModal.style.display !== 'none') closeHistoriaModal(); });
+
+  function renderCharts() { renderActividad(); renderVelocity(); }
+
+  function barChart(boxId, data, color, footFn) {
+    const W = 520, H = 260, pad = { t: 16, r: 16, b: 34, l: 40 };
+    const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+    const maxY = Math.max(1, ...data.map(d => d.v)) * 1.1;
+    const y = v => pad.t + (1 - v / maxY) * ch;
+    const band = cw / data.length, bw = Math.min(34, band * 0.6);
+
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Gráfico de barras' });
+    for (let i = 0; i <= 4; i++) {
+      const v = (maxY / 4) * i, yy = y(v);
+      svg.appendChild(el('line', { x1: pad.l, y1: yy, x2: W - pad.r, y2: yy, stroke: 'rgba(255,255,255,0.08)', 'stroke-width': '1' }));
+      svg.appendChild(el('text', { x: pad.l - 8, y: yy + 4, 'text-anchor': 'end', 'font-size': '10', fill: '#85858f' }, String(Math.round(v))));
+    }
+    data.forEach((dd, i) => {
+      const cx = pad.l + band * i + band / 2;
+      svg.appendChild(el('rect', { x: cx - bw / 2, y: y(dd.v), width: bw, height: pad.t + ch - y(dd.v), rx: '3', fill: color }));
+      svg.appendChild(el('text', { x: cx, y: H - 12, 'text-anchor': 'middle', 'font-size': '9.5', fill: '#85858f' }, dd.label));
+    });
+    const box = document.getElementById(boxId);
+    box.innerHTML = ''; box.appendChild(svg);
+    if (footFn) footFn();
+  }
+
+  function renderActividad() {
+    const data = COMMITS_POR_MES.map(m => ({ label: m.mes, v: m.commits }));
+    barChart('iterActividad', data, '#00f2ff', () => {
+      const total = COMMITS_POR_MES.reduce((a, m) => a + m.commits, 0);
+      document.getElementById('iterActividadFoot').innerHTML =
+        `Total histórico: <b>${total.toLocaleString('es-CO')} commits</b> en ${COMMITS_POR_MES.length} meses con actividad.`;
+    });
+  }
+
+  function renderVelocity() {
+    const conCommits = ITERACIONES.filter(i => i.commits != null).slice().reverse();
+    const data = conCommits.map(i => ({ label: i.id, v: i.commits }));
+    barChart('iterVelocity', data, '#c9ff5b', () => {
+      const avg = data.length ? Math.round(data.reduce((a, d) => a + d.v, 0) / data.length) : 0;
+      document.getElementById('iterVelocityAvg').innerHTML =
+        `Promedio: <b>${avg} commits</b> por iteración con conteo conocido (${data.length}).`;
+    });
+  }
+
+  render();
+})();
+</script>
