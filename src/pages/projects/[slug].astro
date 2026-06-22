@@ -158,6 +158,18 @@ const statusColor: Record<string, string> = {
       </div>
     </div>
 
+    <!-- Iteraciones XP (sólo DobleYo) -->
+    {showIteraciones && (
+      <div class="border-t border-white/5 pt-12 mb-4">
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-8">
+          <span class="text-cyan">/iteraciones</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span>Cómo se construyó · XP con IA</span>
+        </div>
+        <IteracionesBoard />
+      </div>
+    )}
+
     <!-- Milestones educativos -->
     {milestones.length > 0 && (
       <div class="border-t border-white/5 pt-12">
