@@ -8,7 +8,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (isAdmin) {
     const session = await getSession(context.request)
-    if (!session) return context.redirect('/api/auth/signin/github?callbackUrl=%2Fentrar')
+    if (!session) return context.redirect('/login?callbackUrl=%2Fentrar')
 
     // Defensa en profundidad: revalida la allowlist en cada request.
     // Si la sesión trae login (logins nuevos), se exige que esté autorizado.

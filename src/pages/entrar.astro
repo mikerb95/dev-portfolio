@@ -8,7 +8,7 @@ import { getSession } from 'auth-astro/server'
 // animación de "validando acceso" personalizada con la identidad real y
 // reenviamos a /admin. Si no hay sesión, alguien llegó directo: a login.
 const session = await getSession(Astro.request)
-if (!session) return Astro.redirect('/api/auth/signin/github?callbackUrl=%2Fentrar', 302)
+if (!session) return Astro.redirect('/login?callbackUrl=%2Fentrar', 302)
 
 // Nunca cachear ni indexar una pantalla de autenticación.
 Astro.response.headers.set('Cache-Control', 'private, no-store')
