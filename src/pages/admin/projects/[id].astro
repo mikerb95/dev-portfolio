@@ -103,6 +103,9 @@ const pnl = projectPnL(project, financeRows, services, rates)
         {project.endDate && <span>Fin: {project.endDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
         {project.repoUrl && <a href={project.repoUrl} target="_blank" rel="noopener" class="hover:text-zinc-300 transition-colors">Repositorio</a>}
         {project.previewUrl && <a href={project.previewUrl} target="_blank" rel="noopener" class="hover:text-zinc-300 transition-colors">Preview</a>}
+        {(project.slug.includes('dobleyo') || (project.repoUrl ?? '').includes('dobleyo')) && (
+          <a href={`/projects/${project.slug}#iteraciones`} target="_blank" rel="noopener" class="hover:text-cyan transition-colors text-cyan/70">Tablero iteraciones</a>
+        )}
       </div>
     </div>
     <div class="flex gap-2 shrink-0">
