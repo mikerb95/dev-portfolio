@@ -1,0 +1,37 @@
+---
+// Punto de entrada del login: inicia el OAuth de GitHub del lado del cliente.
+// Auth.js NO acepta un GET directo a /api/auth/signin/github (lanza UnknownAction);
+// el flujo correcto es un POST con token CSRF, que es justo lo que hace el helper
+// signIn() de auth-astro/client. Esta página solo orquesta esa llamada.
+const callbackUrl =
+  new URL(Astro.request.url).searchParams.get('callbackUrl') ?? '/entrar'
+Astro.response.headers.set('Cache-Control', 'private, no-store')
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirigiendo a GitHub… — CodeByMike</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- Sin JS: caemos a la página de signin de Auth.js (botón manual). -->
+    <noscript>
+      <meta
+        http-equiv="refresh"
+        content={`0;url=/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+      />
+    </noscript>
+  </head>
+  <body style="background:#07070a;color:#e7e7ec;font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0">
+    <p style="font-size:13px;opacity:.7">Redirigiendo a GitHub…</p>
+
+    <script>
+      import { signIn } from 'auth-astro/client'
+      const callbackUrl =
+        new URL(window.location.href).searchParams.get('callbackUrl') ?? '/entrar'
+      signIn('github', { callbackUrl })
+    </script>
+  </body>
+</html>
