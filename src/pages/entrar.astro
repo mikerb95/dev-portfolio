@@ -1,0 +1,333 @@
+---
+import '../styles/global.css'
+import { getSession } from 'auth-astro/server'
+
+// Interstitial de validación: es el callbackUrl del OAuth de GitHub.
+// Cuando GitHub devuelve al usuario, la sesión ya está creada y validada
+// (la allowlist se aplica en el callback de auth.config). Aquí mostramos una
+// animación de "validando acceso" personalizada con la identidad real y
+// reenviamos a /admin. Si no hay sesión, alguien llegó directo: a login.
+const session = await getSession(Astro.request)
+if (!session) return Astro.redirect('/api/auth/signin/github?callbackUrl=%2Fentrar', 302)
+
+// Nunca cachear ni indexar una pantalla de autenticación.
+Astro.response.headers.set('Cache-Control', 'private, no-store')
+
+const user = (session.user ?? {}) as { name?: string; image?: string; login?: string }
+const login = user.login ?? user.name ?? 'usuario'
+const avatar = user.image ?? ''
+const initials = (user.name ?? login)
+  .split(/\s+/)
+  .map((p) => p[0])
+  .filter(Boolean)
+  .slice(0, 2)
+  .join('')
+  .toUpperCase()
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validando acceso — CodeByMike</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#07070a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- Si no hay JS, igual avanzamos al panel. -->
+    <noscript><meta http-equiv="refresh" content="1;url=/admin" /></noscript>
+  </head>
+
+  <body class="grain bg-ink-950 text-ink-50">
+    <main class="auth-stage">
+      <!-- Resplandor ambiental detrás de la tarjeta -->
+      <div class="auth-aura" aria-hidden="true"></div>
+
+      <section class="auth-card glass-strong" role="status" aria-live="polite" aria-label="Validando acceso">
+        <!-- Avatar dentro del anillo de validación -->
+        <div class="auth-ring">
+          <div class="auth-ring-spin" aria-hidden="true"></div>
+          <div class="auth-ring-pulse" aria-hidden="true"></div>
+          <div class="auth-avatar">
+            {avatar
+              ? <img src={avatar} alt="" width="72" height="72" referrerpolicy="no-referrer" />
+              : <span class="auth-initials">{initials}</span>}
+            <!-- Check final, oculto hasta el último paso -->
+            <svg class="auth-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="auth-meta">
+          <span class="auth-kicker">/auth</span>
+          <h1 class="auth-title">Validando acceso</h1>
+          <p class="auth-handle">@{login}</p>
+        </div>
+
+        <!-- Pasos de validación (se activan en secuencia) -->
+        <ul class="auth-steps" id="auth-steps">
+          <li data-step><span class="dot"></span>Conexión segura con GitHub</li>
+          <li data-step><span class="dot"></span>Identidad verificada</li>
+          <li data-step><span class="dot"></span>Permisos de panel confirmados</li>
+          <li data-step><span class="dot"></span>Preparando el workspace</li>
+        </ul>
+
+        <!-- Barra de progreso -->
+        <div class="auth-bar" aria-hidden="true"><span id="auth-bar-fill"></span></div>
+      </section>
+    </main>
+
+    <style>
+      .auth-stage {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        overflow: hidden;
+      }
+      .auth-aura {
+        position: absolute;
+        width: 720px;
+        height: 720px;
+        max-width: 120vw;
+        max-height: 120vh;
+        border-radius: 50%;
+        background:
+          radial-gradient(closest-side, rgba(0, 242, 255, 0.16), rgba(0, 242, 255, 0) 70%),
+          radial-gradient(closest-side, rgba(167, 139, 255, 0.14), rgba(167, 139, 255, 0) 70%);
+        filter: blur(8px);
+        animation: auth-breathe 6s ease-in-out infinite;
+      }
+
+      .auth-card {
+        position: relative;
+        width: min(380px, 100%);
+        border-radius: 28px;
+        padding: 40px 32px 28px;
+        text-align: center;
+        box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        animation: auth-enter 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+
+      /* Anillo + avatar */
+      .auth-ring {
+        position: relative;
+        width: 104px;
+        height: 104px;
+        margin: 0 auto 22px;
+      }
+      .auth-ring-spin {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: conic-gradient(
+          from var(--a, 0deg),
+          rgba(0, 242, 255, 0) 0deg,
+          rgba(0, 242, 255, 0.9) 70deg,
+          rgba(167, 139, 255, 0.7) 150deg,
+          rgba(201, 255, 91, 0.5) 210deg,
+          rgba(0, 242, 255, 0) 320deg
+        );
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+        mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+        animation: spin 2.4s linear infinite;
+      }
+      .auth-ring-pulse {
+        position: absolute;
+        inset: -6px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 242, 255, 0.35);
+        animation: auth-pulse 2s ease-out infinite;
+      }
+      .auth-avatar {
+        position: absolute;
+        inset: 12px;
+        border-radius: 50%;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        background: #0e0e12;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .auth-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transform: scale(1.08);
+        animation: auth-fade 0.6s ease 0.15s forwards;
+      }
+      .auth-initials {
+        font-family: var(--font-mono);
+        font-size: 24px;
+        font-weight: 600;
+        color: #00f2ff;
+        letter-spacing: 0.04em;
+      }
+      .auth-check {
+        position: absolute;
+        width: 34px;
+        height: 34px;
+        color: #c9ff5b;
+        opacity: 0;
+        transform: scale(0.6);
+        background: rgba(7, 7, 10, 0.55);
+        border-radius: 50%;
+        padding: 4px;
+      }
+      .auth-avatar.done .auth-check {
+        animation: auth-pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+      }
+
+      .auth-meta { margin-bottom: 24px; }
+      .auth-kicker {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: #00f2ff;
+      }
+      .auth-title {
+        margin: 8px 0 4px;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        color: #e7e7ec;
+      }
+      .auth-handle {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: #85858f;
+      }
+
+      /* Pasos */
+      .auth-steps {
+        list-style: none;
+        margin: 0 0 24px;
+        padding: 0;
+        text-align: left;
+        display: grid;
+        gap: 11px;
+      }
+      .auth-steps li {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: #4d4d5d;
+        opacity: 0.5;
+        transform: translateX(-4px);
+        transition: color 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
+      }
+      .auth-steps .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #2e2e3a;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 0 rgba(0, 242, 255, 0);
+        transition: background 0.4s ease, box-shadow 0.4s ease;
+      }
+      .auth-steps li.active {
+        color: #c4c4cc;
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .auth-steps li.active .dot {
+        background: #00f2ff;
+        box-shadow: 0 0 12px 1px rgba(0, 242, 255, 0.6);
+      }
+      .auth-steps li.done {
+        color: #85858f;
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .auth-steps li.done .dot {
+        background: #c9ff5b;
+        box-shadow: 0 0 8px 0 rgba(201, 255, 91, 0.45);
+      }
+
+      /* Barra */
+      .auth-bar {
+        height: 2px;
+        border-radius: 99px;
+        background: rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+      .auth-bar span {
+        display: block;
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #00f2ff, #a78bff);
+        box-shadow: 0 0 14px rgba(0, 242, 255, 0.5);
+        transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @keyframes auth-enter {
+        from { opacity: 0; transform: translateY(12px) scale(0.985); filter: blur(6px); }
+        to { opacity: 1; transform: none; filter: none; }
+      }
+      @keyframes auth-breathe {
+        0%, 100% { transform: scale(1); opacity: 0.85; }
+        50% { transform: scale(1.06); opacity: 1; }
+      }
+      @keyframes auth-pulse {
+        0% { transform: scale(0.92); opacity: 0.7; }
+        100% { transform: scale(1.15); opacity: 0; }
+      }
+      @keyframes auth-fade {
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes auth-pop {
+        to { opacity: 1; transform: scale(1); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .auth-aura, .auth-ring-spin, .auth-ring-pulse, .auth-card,
+        .auth-avatar img, .auth-steps li, .auth-bar span { animation: none !important; transition: none !important; }
+        .auth-avatar img { opacity: 1; transform: none; }
+      }
+    </style>
+
+    <script>
+      const DEST = '/admin'
+      const steps = Array.from(document.querySelectorAll<HTMLLIElement>('#auth-steps [data-step]'))
+      const fill = document.getElementById('auth-bar-fill') as HTMLElement | null
+      const avatar = document.querySelector<HTMLElement>('.auth-avatar')
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+      function go() {
+        window.location.replace(DEST)
+      }
+
+      if (reduce) {
+        go()
+      } else {
+        const STEP_MS = 360
+        steps.forEach((li, i) => {
+          window.setTimeout(() => {
+            steps.forEach((s, j) => { if (j < i) { s.classList.remove('active'); s.classList.add('done') } })
+            li.classList.add('active')
+            if (fill) fill.style.width = `${Math.round(((i + 1) / steps.length) * 100)}%`
+          }, 220 + i * STEP_MS)
+        })
+
+        const total = 220 + steps.length * STEP_MS
+        window.setTimeout(() => {
+          steps.forEach((s) => { s.classList.remove('active'); s.classList.add('done') })
+          avatar?.classList.add('done')
+        }, total)
+
+        // Reenvío al panel tras la secuencia (con tope de seguridad).
+        window.setTimeout(go, total + 520)
+      }
+
+      // Failsafe: nunca dejar al usuario atascado aquí.
+      window.setTimeout(go, 4000)
+    </script>
+  </body>
+</html>
