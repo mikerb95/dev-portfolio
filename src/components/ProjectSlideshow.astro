@@ -48,7 +48,7 @@ const totalSlides = normalizedSlides.length
                 src={slide.screenshotUrl}
                 alt={slide.title}
                 class="h-full w-full object-cover"
-                loading="lazy"
+                loading={index === 0 ? 'eager' : 'lazy'}
                 decoding="async"
               />
             ) : (

@@ -258,19 +258,17 @@ const visibleProjects = await db
         Proyectos en producción.
       </h2>
       <ProjectSlideshow slides={visibleProjects} />
-      {visibleProjects.length > 0 && (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {visibleProjects.map((p) => (
-            <ProjectCard
-              slug={p.slug}
-              title={p.title}
-              description={p.description}
-              techStack={p.techStack}
-              screenshotUrl={p.screenshotUrl}
-            />
-          ))}
-        </div>
-      )}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {visibleProjects.map((p) => (
+          <ProjectCard
+            slug={p.slug}
+            title={p.title}
+            description={p.description}
+            techStack={p.techStack}
+            screenshotUrl={p.screenshotUrl}
+          />
+        ))}
+      </div>
     </div>
   </section>
 
