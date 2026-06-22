@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets'
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import IteracionesBoard from '../../components/IteracionesBoard.astro'
 import { db } from '../../db'
 import { projects, clients, educationMilestones } from '../../db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -29,6 +30,13 @@ const [client, milestones] = await Promise.all([
 ])
 
 const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
+
+// Tablero de iteraciones XP: sólo para el proyecto DobleYo Café.
+// Ajusta el slug aquí si en tu BD usas otro identificador.
+const showIteraciones =
+  project.slug === 'dobleyo' ||
+  project.slug.includes('dobleyo') ||
+  (project.repoUrl ?? '').includes('dobleyo')
 
 const statusColor: Record<string, string> = {
   activo: 'text-cyan border-cyan/30 bg-cyan/10',
