@@ -171,6 +171,24 @@ export const interactions = sqliteTable('interactions', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 })
 
+export const presentations = sqliteTable('presentations', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  shareToken: text('share_token').notNull().unique(),
+  currentSlide: integer('current_slide').default(0),
+  isActive: integer('is_active', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
+
+export const presentationSlides = sqliteTable('presentation_slides', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  presentationId: integer('presentation_id').notNull().references(() => presentations.id, { onDelete: 'cascade' }),
+  order: integer('order').notNull(),
+  url: text('url').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
+
 // Configuración clave-valor (tasas FX, moneda base, etc.)
 export const appSettings = sqliteTable('app_settings', {
   key: text('key').primaryKey(),
