@@ -1,0 +1,45 @@
+---
+import SlidesLayout from '../../layouts/SlidesLayout.astro';
+---
+
+<SlidesLayout title="Mi primera presentación">
+  <!-- Diapositiva 1 -->
+  <section>
+    <h1>🚀 Astro + Reveal.js</h1>
+    <p>Presentaciones directamente en tu código</p>
+  </section>
+
+  <!-- Diapositiva 2 -->
+  <section>
+    <h2>¿Por qué hacer esto?</h2>
+    <ul>
+      <li class="fragment">Está integrado en el portfolio</li>
+      <li class="fragment">Todo es Markdown/HTML estándar</li>
+      <li class="fragment">Puedes usar tus propios componentes de Astro</li>
+    </ul>
+  </section>
+
+  <!-- Diapositiva 3 (Vertical) -->
+  <section>
+    <section>
+      <h2>Diapositivas Verticales</h2>
+      <p>Presiona hacia abajo para ver el resto de la idea.</p>
+    </section>
+    <section>
+      <h3>Más profundidad</h3>
+      <p>Es una gran forma de organizar temas secundarios.</p>
+    </section>
+  </section>
+  
+  <!-- Diapositiva 4 -->
+  <section data-auto-animate>
+    <h2 data-id="title">Animaciones automáticas</h2>
+    <p>El framework puede inferir formas y colores nativamente.</p>
+  </section>
+
+  <section data-auto-animate>
+    <h1 data-id="title" style="color: cyan;">Animaciones automáticas</h1>
+    <p>Con solo agregar un mismo `data-id`.</p>
+  </section>
+
+</SlidesLayout>

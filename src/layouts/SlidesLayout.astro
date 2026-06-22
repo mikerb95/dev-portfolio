@@ -1,0 +1,88 @@
+---
+import '../styles/global.css';
+import 'reveal.js/dist/reveal.css';
+// En lugar de cargar el tema completo, lo estilizamos para que herede del portfolio
+// import 'reveal.js/dist/theme/night.css'; 
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="reveal h-screen bg-ink-950 text-ink-100">
+      <div class="slides">
+        <slot />
+      </div>
+    </div>
+    
+    <script>
+      import Reveal from 'reveal.js';
+      
+      // Inicializar Reveal.js en el cliente
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        center: true,
+        hash: true,
+        transition: 'slide' // Transiciones: none/fade/slide/convex/concave/zoom
+      });
+    </script>
+    
+    <style is:global>
+      /* Ajuste para que Reveal.js ocupe toda la pantalla correctamente en Astro */
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      /* Sobrescribir variables de Reveal.js para que use los estilos de la app */
+      .reveal {
+        font-family: inherit;
+        font-size: 40px;
+        font-weight: normal;
+        color: inherit;
+      }
+      
+      .reveal h1,
+      .reveal h2,
+      .reveal h3,
+      .reveal h4,
+      .reveal h5,
+      .reveal h6 {
+        font-family: 'Instrument Serif', serif;
+        font-weight: normal;
+        text-transform: none;
+        letter-spacing: normal;
+        color: #fff;
+        text-shadow: none;
+      }
+
+      .reveal h1 { font-size: 2.5em; }
+      .reveal h2 { font-size: 1.6em; }
+      .reveal h3 { font-size: 1.3em; }
+
+      .reveal section img {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+      }
+
+      /* Controles y progreso estilo del sitio */
+      .reveal .controls { color: var(--color-cyan, #00f2ff); }
+      .reveal .progress { color: var(--color-cyan, #00f2ff); }
+    </style>
+  </body>
+</html>
