@@ -1,0 +1,161 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro'
+import { db } from '../../../../db'
+import { projects, presentations, presentationSlides } from '../../../../db/schema'
+import { eq, asc, count } from 'drizzle-orm'
+
+const projectId = Number(Astro.params.id)
+if (!projectId) return Astro.redirect('/admin/projects')
+
+const [project] = await db.select({ id: projects.id, title: projects.title })
+  .from(projects)
+  .where(eq(projects.id, projectId))
+  .limit(1)
+
+if (!project) return Astro.redirect('/admin/projects')
+
+const presRows = await db
+  .select({
+    id: presentations.id,
+    title: presentations.title,
+    currentSlide: presentations.currentSlide,
+    isActive: presentations.isActive,
+    shareToken: presentations.shareToken,
+    slideCount: count(presentationSlides.id),
+  })
+  .from(presentations)
+  .leftJoin(presentationSlides, eq(presentationSlides.presentationId, presentations.id))
+  .where(eq(presentations.projectId, projectId))
+  .groupBy(presentations.id)
+  .orderBy(asc(presentations.id))
+
+const origin = Astro.url.origin
+---
+
+<AdminLayout title={`Slides · ${project.title}`}>
+  <div class="max-w-3xl mx-auto px-4 py-8 space-y-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <a href={`/admin/projects/${projectId}`} class="text-xs font-mono text-ink-300 hover:text-cyan transition-colors">
+          ← {project.title}
+        </a>
+        <h1 class="text-2xl font-serif text-ink-50 mt-1">Presentaciones</h1>
+      </div>
+      <button
+        id="btn-new"
+        class="px-4 py-2 rounded-lg bg-cyan/10 border border-cyan/20 text-cyan text-sm font-mono hover:bg-cyan/20 transition-colors"
+      >
+        + Nueva
+      </button>
+    </div>
+
+    <!-- Lista de presentaciones -->
+    {presRows.length === 0 ? (
+      <p class="text-ink-300 text-sm font-mono text-center py-12">Sin presentaciones aún.</p>
+    ) : (
+      <div class="space-y-3">
+        {presRows.map((p) => (
+          <div class="rounded-xl border border-white/5 bg-white/3 p-4 flex items-center gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="text-ink-50 font-medium truncate">{p.title}</div>
+              <div class="text-xs font-mono text-ink-300 mt-0.5">
+                {p.slideCount} slides · diapositiva {(p.currentSlide ?? 0) + 1}
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <a
+                href={`/admin/slides/${p.id}/control`}
+                class="px-3 py-1.5 rounded-lg bg-violet/10 border border-violet/20 text-violet text-xs font-mono hover:bg-violet/20 transition-colors"
+              >
+                Control
+              </a>
+              <a
+                href={`/admin/slides/${p.id}/present`}
+                target="_blank"
+                class="px-3 py-1.5 rounded-lg bg-cyan/10 border border-cyan/20 text-cyan text-xs font-mono hover:bg-cyan/20 transition-colors"
+              >
+                Proyectar ↗
+              </a>
+              <button
+                class="btn-upload px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-ink-200 text-xs font-mono hover:bg-white/10 transition-colors"
+                data-id={p.id}
+              >
+                + Slides
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+
+    <!-- Modal nueva presentación -->
+    <div id="modal-new" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      <div class="w-full max-w-sm rounded-2xl border border-white/10 bg-ink-900 p-6 space-y-4">
+        <h2 class="text-lg font-serif text-ink-50">Nueva presentación</h2>
+        <input
+          id="input-title"
+          type="text"
+          placeholder="Nombre de la presentación"
+          class="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-ink-100 text-sm placeholder:text-ink-400 focus:outline-none focus:border-cyan/40"
+        />
+        <div class="flex gap-2 justify-end">
+          <button id="btn-cancel" class="px-4 py-2 rounded-lg text-ink-300 text-sm hover:bg-white/5 transition-colors">Cancelar</button>
+          <button id="btn-create" class="px-4 py-2 rounded-lg bg-cyan/10 border border-cyan/20 text-cyan text-sm font-mono hover:bg-cyan/20 transition-colors">Crear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input file oculto para upload -->
+    <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" multiple class="hidden" />
+  </div>
+</AdminLayout>
+
+<script define:vars={{ projectId, origin }}>
+  const btnNew = document.getElementById('btn-new')
+  const modal = document.getElementById('modal-new')
+  const btnCancel = document.getElementById('btn-cancel')
+  const btnCreate = document.getElementById('btn-create')
+  const inputTitle = document.getElementById('input-title')
+  const fileInput = document.getElementById('file-input')
+
+  btnNew.addEventListener('click', () => {
+    modal.classList.remove('hidden')
+    inputTitle.focus()
+  })
+  btnCancel.addEventListener('click', () => modal.classList.add('hidden'))
+
+  btnCreate.addEventListener('click', async () => {
+    const title = inputTitle.value.trim()
+    if (!title) return
+    btnCreate.textContent = '...'
+    const res = await fetch('/api/slides/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId, title }),
+    })
+    if (res.ok) location.reload()
+  })
+
+  let activeUploadId = null
+
+  document.querySelectorAll('.btn-upload').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activeUploadId = btn.dataset.id
+      fileInput.click()
+    })
+  })
+
+  fileInput.addEventListener('change', async () => {
+    if (!fileInput.files?.length || !activeUploadId) return
+    const form = new FormData()
+    for (const f of fileInput.files) form.append('files', f)
+
+    const res = await fetch(`/api/slides/${activeUploadId}/upload`, {
+      method: 'POST',
+      body: form,
+    })
+    if (res.ok) location.reload()
+  })
+</script>
