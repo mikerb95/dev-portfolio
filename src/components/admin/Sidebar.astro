@@ -1,63 +1,133 @@
 ---
-const groups: { title: string; links: { href: string; icon: string; label: string }[] }[] = [
+const groups: {
+  title: string;
+  links: { href: string; icon: string; label: string }[];
+}[] = [
   {
-    title: 'Workspace',
+    title: "Workspace",
     links: [
-      { href: '/admin',          icon: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10', label: 'Dashboard' },
-      { href: '/admin/repos',    icon: 'M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4 M9 18c-4.51 2-5-2-7-2', label: 'Repositorios' },
+      {
+        href: "/admin",
+        icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
+        label: "Dashboard",
+      },
+      {
+        href: "/admin/repos",
+        icon: "M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4 M9 18c-4.51 2-5-2-7-2",
+        label: "Repositorios",
+      },
     ],
   },
   {
-    title: 'CRM',
+    title: "CRM",
     links: [
-      { href: '/admin/projects', icon: 'M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z M8 7v10 M12 7v10', label: 'Proyectos' },
-      { href: '/admin/clients',     icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75 M9 7m-4 0a4 4 0 1 0 8 0 4 4 0 0 0-8 0', label: 'Clientes' },
-      { href: '/admin/seguimiento', icon: 'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z', label: 'Seguimiento' },
-      { href: '/admin/messages',    icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6', label: 'Mensajes' },
-      { href: '/admin/briefings',   icon: 'M9 12h6 M9 16h6 M17 3H7a2 2 0 0 0-2 2v16l3-3 2 2 2-2 2 2 2-2 3 3V5a2 2 0 0 0-2-2z', label: 'Briefings' },
-      { href: '/admin/slides',      icon: 'M2 3h20v14H2z M8 21h8 M12 17v4', label: 'Presentaciones' },
+      {
+        href: "/admin/projects",
+        icon: "M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z M8 7v10 M12 7v10",
+        label: "Proyectos",
+      },
+      {
+        href: "/admin/clients",
+        icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75 M9 7m-4 0a4 4 0 1 0 8 0 4 4 0 0 0-8 0",
+        label: "Clientes",
+      },
+      {
+        href: "/admin/seguimiento",
+        icon: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z",
+        label: "Seguimiento",
+      },
+      {
+        href: "/admin/messages",
+        icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6",
+        label: "Mensajes",
+      },
+      {
+        href: "/admin/briefings",
+        icon: "M9 12h6 M9 16h6 M17 3H7a2 2 0 0 0-2 2v16l3-3 2 2 2-2 2 2 2-2 3 3V5a2 2 0 0 0-2-2z",
+        label: "Briefings",
+      },
+      {
+        href: "/admin/slides",
+        icon: "M2 3h20v14H2z M8 21h8 M12 17v4",
+        label: "Presentaciones",
+      },
     ],
   },
   {
-    title: 'Finanzas',
+    title: "Finanzas",
     links: [
-      { href: '/admin/finances', icon: 'M12 1v22 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', label: 'Ingresos' },
-      { href: '/admin/costs',    icon: 'M19 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z M3 10h18', label: 'Costos' },
+      {
+        href: "/admin/finances",
+        icon: "M12 1v22 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",
+        label: "Ingresos",
+      },
+      {
+        href: "/admin/costs",
+        icon: "M19 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z M3 10h18",
+        label: "Costos",
+      },
     ],
   },
   {
-    title: 'Perfil',
+    title: "Perfil",
     links: [
-      { href: '/admin/certifications', icon: 'M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M8.21 13.89L7 23l5-3 5 3-1.21-9.12', label: 'Certificaciones' },
-      { href: '/admin/education',      icon: 'M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c3 3 9 3 12 0v-5', label: 'Evolution Path' },
+      {
+        href: "/admin/certifications",
+        icon: "M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M8.21 13.89L7 23l5-3 5 3-1.21-9.12",
+        label: "Certificaciones",
+      },
+      {
+        href: "/admin/education",
+        icon: "M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c3 3 9 3 12 0v-5",
+        label: "Evolution Path",
+      },
     ],
   },
   {
-    title: 'Sistema',
+    title: "Sistema",
     links: [
-      { href: '/admin/backup',   icon: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M17 8l-5-5-5 5 M12 3v12', label: 'Backups' },
-      { href: '/admin/settings', icon: 'M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6', label: 'Ajustes' },
+      {
+        href: "/admin/backup",
+        icon: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M17 8l-5-5-5 5 M12 3v12",
+        label: "Backups",
+      },
+      {
+        href: "/admin/settings",
+        icon: "M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6",
+        label: "Ajustes",
+      },
     ],
   },
-]
+];
 
-const current = Astro.url.pathname
+const current = Astro.url.pathname;
 const isActive = (href: string) =>
-  href === '/admin' ? current === '/admin' : current.startsWith(href)
+  href === "/admin" ? current === "/admin" : current.startsWith(href);
 ---
 
 <aside
   class="fixed inset-y-0 left-0 z-50 w-[264px] -translate-x-full transition-transform duration-300 ease-out peer-checked:translate-x-0 lg:static lg:translate-x-0 lg:w-[240px] shrink-0 border-r border-white/5 bg-ink-900/95 lg:bg-ink-900/60 backdrop-blur-xl flex flex-col min-h-screen overflow-y-auto no-scrollbar"
 >
   <!-- Brand + cerrar (móvil) -->
-  <div class="px-5 py-5 flex items-center justify-between gap-3 border-b border-white/5 sticky top-0 bg-ink-900/95 lg:bg-transparent z-10">
+  <div
+    class="px-5 py-5 flex items-center justify-between gap-3 border-b border-white/5 sticky top-0 bg-ink-900/95 lg:bg-transparent z-10"
+  >
     <div class="flex items-center gap-3 min-w-0">
-      <div class="w-7 h-7 rounded-full bg-gradient-to-br from-cyan to-violet shadow-[0_0_18px_rgba(0,242,255,.5)] shrink-0"></div>
+      <div
+        class="w-7 h-7 rounded-full bg-gradient-to-br from-cyan to-violet shadow-[0_0_18px_rgba(0,242,255,.5)] shrink-0"
+      >
+      </div>
       <div class="min-w-0">
-        <div class="font-mono text-[12px] tracking-[.2em] uppercase leading-none text-ink-50">
+        <div
+          class="font-mono text-[12px] tracking-[.2em] uppercase leading-none text-ink-50"
+        >
           Code<span class="text-cyan">By</span>Mike
         </div>
-        <div class="text-[9.5px] font-mono uppercase tracking-[.2em] text-ink-300 mt-1">workspace</div>
+        <div
+          class="text-[9.5px] font-mono uppercase tracking-[.2em] text-ink-300 mt-1"
+        >
+          workspace
+        </div>
       </div>
     </div>
     <label
@@ -65,41 +135,73 @@ const isActive = (href: string) =>
       class="lg:hidden shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-ink-200 hover:bg-white/5 cursor-pointer transition-colors"
       aria-label="Cerrar menú"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg
+      >
     </label>
   </div>
 
   <!-- Nav agrupada -->
   <nav class="px-3 mt-3 flex-1 space-y-4">
-    {groups.map((g) => (
-      <div>
-        <div class="px-2 text-[10px] font-mono uppercase tracking-[.22em] text-ink-300 mb-1.5">{g.title}</div>
-        <div class="space-y-0.5">
-          {g.links.map((l) => (
-            <a
-              href={l.href}
-              class={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-colors ${
-                isActive(l.href)
-                  ? 'bg-cyan/10 text-cyan border border-cyan/20'
-                  : 'text-ink-100 hover:bg-white/5 border border-transparent'
-              }`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
-                <path d={l.icon} />
-              </svg>
-              {l.label}
-            </a>
-          ))}
+    {
+      groups.map((g) => (
+        <div>
+          <div class="px-2 text-[10px] font-mono uppercase tracking-[.22em] text-ink-300 mb-1.5">
+            {g.title}
+          </div>
+          <div class="space-y-0.5">
+            {g.links.map((l) => (
+              <a
+                href={l.href}
+                class={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-colors ${
+                  isActive(l.href)
+                    ? "bg-cyan/10 text-cyan border border-cyan/20"
+                    : "text-ink-100 hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="shrink-0"
+                >
+                  <path d={l.icon} />
+                </svg>
+                {l.label}
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
-    ))}
+      ))
+    }
   </nav>
 
   <!-- Footer -->
-  <div class="p-3 border-t border-white/5 sticky bottom-0 bg-ink-900/95 lg:bg-transparent">
+  <div
+    class="p-3 border-t border-white/5 sticky bottom-0 bg-ink-900/95 lg:bg-transparent"
+  >
     <div class="rounded-xl glass p-3 mb-3">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-cyan to-violet flex items-center justify-center text-ink-950 text-[12px] font-medium shrink-0">M</div>
+        <div
+          class="w-9 h-9 rounded-full bg-gradient-to-br from-cyan to-violet flex items-center justify-center text-ink-950 text-[12px] font-medium shrink-0"
+        >
+          M
+        </div>
         <div class="min-w-0">
           <div class="text-[12.5px] text-ink-50 truncate">Mike</div>
           <div class="text-[10px] font-mono text-ink-300 truncate">admin</div>
@@ -110,10 +212,20 @@ const isActive = (href: string) =>
       href="/api/auth/signout"
       class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-ink-200 hover:bg-white/5 transition-colors"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-        <polyline points="16 17 21 12 16 7"/>
-        <line x1="21" x2="9" y1="12" y2="12"/>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" x2="9" y1="12" y2="12"></line>
       </svg>
       Cerrar sesión
     </a>
