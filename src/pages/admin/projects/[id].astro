@@ -86,55 +86,88 @@ const pnl = projectPnL(project, financeRows, services, rates)
 
 <AdminLayout title={project.title}>
   <!-- Header del proyecto -->
-  <div class="flex items-start justify-between mb-8 gap-4">
-    <div>
-      <div class="flex items-center gap-3 mb-1">
-        <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${statusColors[project.status ?? 'activo']}`}>
-          {project.status ?? 'activo'}
-        </span>
-        {project.visible && (
-          <span class="text-xs text-zinc-500">Visible en portfolio</span>
+  <div class="rounded-xl border border-white/8 bg-white/[0.025] p-5 mb-6">
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2.5 mb-2.5 flex-wrap">
+          <span class={`text-xs px-2.5 py-1 rounded font-semibold tracking-wide ${statusColors[project.status ?? 'activo']}`}>
+            {project.status ?? 'activo'}
+          </span>
+          <span class="font-mono text-[10px] text-ink-300 tracking-[.2em] uppercase bg-white/5 px-2 py-1 rounded">{project.slug}</span>
+          {project.visible && (
+            <span class="text-xs text-zinc-500 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-lime/70 inline-block shadow-[0_0_6px_rgba(163,230,53,0.6)]"></span>
+              Visible en portfolio
+            </span>
+          )}
+        </div>
+        {project.description && (
+          <p class="text-zinc-300 text-sm leading-relaxed max-w-2xl mb-3">{project.description}</p>
         )}
+        <div class="flex flex-wrap gap-x-5 gap-y-1 text-xs text-zinc-500">
+          {project.startDate && (
+            <span class="flex items-center gap-1.5">
+              <span class="text-zinc-600">↦</span>
+              {project.startDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </span>
+          )}
+          {project.endDate && (
+            <span class="flex items-center gap-1.5">
+              <span class="text-zinc-600">↤</span>
+              {project.endDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </span>
+          )}
+          {project.repoUrl && (
+            <a href={project.repoUrl} target="_blank" rel="noopener" class="hover:text-zinc-200 transition-colors flex items-center gap-1">
+              <svg class="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              Repositorio
+            </a>
+          )}
+          {project.previewUrl && (
+            <a href={project.previewUrl} target="_blank" rel="noopener" class="hover:text-zinc-200 transition-colors flex items-center gap-1">
+              <svg class="w-3 h-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h12v12H2zM6 6l4 4M10 6H6v4"/></svg>
+              Preview
+            </a>
+          )}
+          {(project.slug.includes('dobleyo') || (project.repoUrl ?? '').includes('dobleyo')) && (
+            <a href={`/projects/${project.slug}#iteraciones`} target="_blank" rel="noopener" class="text-cyan/80 hover:text-cyan transition-colors flex items-center gap-1">
+              <svg class="w-3 h-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+              Tablero iteraciones
+            </a>
+          )}
+        </div>
       </div>
-      <p class="text-zinc-600 font-mono text-xs mt-1">{project.slug}</p>
-      {project.description && <p class="text-zinc-400 text-sm mt-2 max-w-xl">{project.description}</p>}
-      <div class="flex gap-4 mt-3 text-xs text-zinc-500">
-        {project.startDate && <span>Inicio: {project.startDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
-        {project.endDate && <span>Fin: {project.endDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
-        {project.repoUrl && <a href={project.repoUrl} target="_blank" rel="noopener" class="hover:text-zinc-300 transition-colors">Repositorio</a>}
-        {project.previewUrl && <a href={project.previewUrl} target="_blank" rel="noopener" class="hover:text-zinc-300 transition-colors">Preview</a>}
-        {(project.slug.includes('dobleyo') || (project.repoUrl ?? '').includes('dobleyo')) && (
-          <a href={`/projects/${project.slug}#iteraciones`} target="_blank" rel="noopener" class="hover:text-cyan transition-colors text-cyan/70">Tablero iteraciones</a>
-        )}
+      <div class="flex gap-2 shrink-0 pt-0.5">
+        <button id="btn-edit-project" class="text-xs px-3.5 py-1.5 border border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 rounded-lg transition-all text-zinc-300">Editar</button>
+        <button id="btn-delete-project" class="text-xs px-3.5 py-1.5 border border-red-900/40 text-red-400/80 hover:bg-red-950/30 hover:border-red-800/60 hover:text-red-400 rounded-lg transition-all">Eliminar</button>
       </div>
-    </div>
-    <div class="flex gap-2 shrink-0">
-      <button id="btn-edit-project" class="text-xs px-3 py-1.5 border border-zinc-700 hover:bg-zinc-800 rounded-md transition-colors">Editar</button>
-      <button id="btn-delete-project" class="text-xs px-3 py-1.5 border border-red-900/50 text-red-400 hover:bg-red-950/30 rounded-md transition-colors">Eliminar</button>
     </div>
   </div>
 
   <!-- P&L del proyecto -->
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-    <div class="rounded-xl glass p-4">
-      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Ingresos cobrados</div>
-      <div class="mt-1.5 text-xl font-medium text-lime tracking-tight">{fmtUSD(pnl.ingresosCobrados)}</div>
-      {pnl.ingresosPendientes > 0 && <div class="mt-0.5 text-[10px] font-mono text-ink-300">{fmtUSD(pnl.ingresosPendientes)} pendiente</div>}
+    <div class="rounded-xl glass p-4 border-t-2 border-lime/40 shadow-[0_4px_24px_-8px_rgba(163,230,53,0.08)]">
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 mb-3">Ingresos cobrados</div>
+      <div class="text-2xl font-semibold text-lime tracking-tight">{fmtUSD(pnl.ingresosCobrados)}</div>
+      {pnl.ingresosPendientes > 0
+        ? <div class="mt-1.5 text-[10px] font-mono text-amber-400/70">{fmtUSD(pnl.ingresosPendientes)} pendiente</div>
+        : <div class="mt-1.5 text-[10px] font-mono text-ink-300/50">—</div>
+      }
     </div>
-    <div class="rounded-xl glass p-4">
-      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Costo infra / mes</div>
-      <div class="mt-1.5 text-xl font-medium text-cyan tracking-tight">{fmtUSD(pnl.costoMensualUSD, 2)}</div>
-      <div class="mt-0.5 text-[10px] font-mono text-ink-300">{fmtUSD(pnl.costoAnualUSD)} / año</div>
+    <div class="rounded-xl glass p-4 border-t-2 border-cyan/40 shadow-[0_4px_24px_-8px_rgba(0,242,255,0.08)]">
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 mb-3">Costo infra / mes</div>
+      <div class="text-2xl font-semibold text-cyan tracking-tight">{fmtUSD(pnl.costoMensualUSD, 2)}</div>
+      <div class="mt-1.5 text-[10px] font-mono text-ink-300">{fmtUSD(pnl.costoAnualUSD)} / año</div>
     </div>
-    <div class="rounded-xl glass p-4">
-      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Costo acumulado</div>
-      <div class="mt-1.5 text-xl font-medium text-ink-50 tracking-tight">{fmtUSD(pnl.costoDesdeInicioUSD)}</div>
-      <div class="mt-0.5 text-[10px] font-mono text-ink-300">desde el inicio</div>
+    <div class="rounded-xl glass p-4 border-t-2 border-white/15">
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 mb-3">Costo acumulado</div>
+      <div class="text-2xl font-semibold text-ink-50 tracking-tight">{fmtUSD(pnl.costoDesdeInicioUSD)}</div>
+      <div class="mt-1.5 text-[10px] font-mono text-ink-300">desde el inicio</div>
     </div>
-    <div class="rounded-xl glass p-4">
-      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Margen estimado</div>
-      <div class={`mt-1.5 text-xl font-medium tracking-tight ${pnl.margenEstimado >= 0 ? 'text-lime' : 'text-ember'}`}>{fmtUSD(pnl.margenEstimado)}</div>
-      <div class="mt-0.5 text-[10px] font-mono text-ink-300">cobrado − acumulado</div>
+    <div class={`rounded-xl glass p-4 border-t-2 ${pnl.margenEstimado >= 0 ? 'border-lime/40 shadow-[0_4px_24px_-8px_rgba(163,230,53,0.08)]' : 'border-ember/40'}`}>
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 mb-3">Margen estimado</div>
+      <div class={`text-2xl font-semibold tracking-tight ${pnl.margenEstimado >= 0 ? 'text-lime' : 'text-ember'}`}>{fmtUSD(pnl.margenEstimado)}</div>
+      <div class="mt-1.5 text-[10px] font-mono text-ink-300">cobrado − acumulado</div>
     </div>
   </div>
   {pnl.costosSinTasa > 0 && (
@@ -153,7 +186,7 @@ const pnl = projectPnL(project, financeRows, services, rates)
         { key: 'adrs', label: `The Why${adrs.length ? ` (${adrs.length})` : ''}` },
       ].map((t) => (
         <button
-          class="tab-btn text-sm px-4 py-2.5 border-b-2 transition-colors whitespace-nowrap"
+          class="tab-btn text-sm px-4 py-2.5 border-b-2 transition-all whitespace-nowrap"
           data-tab={t.key}
         >
           {t.label}
@@ -235,30 +268,34 @@ const pnl = projectPnL(project, financeRows, services, rates)
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <div class="space-y-4">
+      <div class="space-y-5">
         <div>
-          <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Stack tecnológico</p>
+          <p class="text-[10px] font-mono text-zinc-500 uppercase tracking-[.18em] mb-2.5">Stack tecnológico</p>
           {stack.length > 0 ? (
             <div class="flex flex-wrap gap-1.5">
-              {stack.map((t) => <span class="text-xs px-2 py-0.5 bg-zinc-800 text-zinc-300 rounded-sm">{t}</span>)}
+              {stack.map((t) => (
+                <span class="text-xs px-2.5 py-1 bg-zinc-800/80 border border-zinc-700/60 text-zinc-300 rounded-md font-mono hover:border-zinc-500 hover:text-zinc-100 transition-colors cursor-default">
+                  {t}
+                </span>
+              ))}
             </div>
           ) : <p class="text-zinc-600 text-sm">—</p>}
         </div>
 
         {project.clientName && (
-          <div>
-            <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Cliente</p>
-            <p class="text-sm text-zinc-200">{project.clientName}</p>
-            {project.clientCompany && <p class="text-xs text-zinc-500">{project.clientCompany}</p>}
-            {project.clientEmail && <p class="text-xs text-zinc-500">{project.clientEmail}</p>}
+          <div class="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+            <p class="text-[10px] font-mono text-zinc-500 uppercase tracking-[.18em] mb-1.5">Cliente</p>
+            <p class="text-sm text-zinc-200 font-medium">{project.clientName}</p>
+            {project.clientCompany && <p class="text-xs text-zinc-500 mt-0.5">{project.clientCompany}</p>}
+            {project.clientEmail && <p class="text-xs text-zinc-500 font-mono mt-0.5">{project.clientEmail}</p>}
           </div>
         )}
       </div>
 
       {project.internalNotes && (
-        <div>
-          <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Notas internas</p>
-          <p class="text-sm text-zinc-400 whitespace-pre-wrap">{project.internalNotes}</p>
+        <div class="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+          <p class="text-[10px] font-mono text-zinc-500 uppercase tracking-[.18em] mb-2">Notas internas</p>
+          <p class="text-sm text-zinc-400 whitespace-pre-wrap leading-relaxed">{project.internalNotes}</p>
         </div>
       )}
     </div>
@@ -488,18 +525,18 @@ const pnl = projectPnL(project, financeRows, services, rates)
   <!-- Tab: Finanzas -->
   <div id="tab-finances" class="tab-panel hidden">
     {financeRows.length > 0 && (
-      <div class="flex gap-4 mb-6">
-        <div class="border border-zinc-800 rounded-lg px-4 py-3 flex-1">
-          <p class="text-zinc-500 text-xs mb-0.5">Cobrado</p>
-          <p class="text-emerald-400 font-semibold">{fmt.format(totalCobrado)}</p>
+      <div class="flex gap-3 mb-6">
+        <div class="border border-zinc-800 border-t-2 border-t-lime/40 rounded-xl px-4 py-3 flex-1 bg-white/[0.02]">
+          <p class="text-[10px] font-mono text-zinc-500 uppercase tracking-[.15em] mb-1.5">Cobrado</p>
+          <p class="text-lime font-semibold text-lg">{fmt.format(totalCobrado)}</p>
         </div>
-        <div class="border border-zinc-800 rounded-lg px-4 py-3 flex-1">
-          <p class="text-zinc-500 text-xs mb-0.5">Pendiente</p>
-          <p class="text-amber-400 font-semibold">{fmt.format(totalPendiente)}</p>
+        <div class="border border-zinc-800 border-t-2 border-t-amber-400/40 rounded-xl px-4 py-3 flex-1 bg-white/[0.02]">
+          <p class="text-[10px] font-mono text-zinc-500 uppercase tracking-[.15em] mb-1.5">Pendiente</p>
+          <p class="text-amber-400 font-semibold text-lg">{fmt.format(totalPendiente)}</p>
         </div>
-        <div class="border border-zinc-800 rounded-lg px-4 py-3 flex-1">
-          <p class="text-zinc-500 text-xs mb-0.5">Total</p>
-          <p class="text-zinc-200 font-semibold">{fmt.format(totalCobrado + totalPendiente)}</p>
+        <div class="border border-zinc-800 border-t-2 border-t-white/15 rounded-xl px-4 py-3 flex-1 bg-white/[0.02]">
+          <p class="text-[10px] font-mono text-zinc-500 uppercase tracking-[.15em] mb-1.5">Total</p>
+          <p class="text-zinc-100 font-semibold text-lg">{fmt.format(totalCobrado + totalPendiente)}</p>
         </div>
       </div>
     )}
