@@ -5,6 +5,8 @@ import { projects, clients, projectEnvVars, projectServices, projectContacts, fi
 import { eq, desc } from 'drizzle-orm'
 import { parseRates, fmtUSD } from '../../../lib/money'
 import { projectPnL } from '../../../lib/pnl'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 
 const { id } = Astro.params
 const projectId = Number(id)
@@ -82,6 +84,9 @@ const totalPendiente = financeRows.filter((r) => r.status === 'pendiente').reduc
 const settingsRows = await db.select().from(appSettings)
 const rates = parseRates(settingsRows)
 const pnl = projectPnL(project, financeRows, services, rates)
+
+const pptxPublicPath = `/docs/${project.slug}.pptx`
+const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug}.pptx`))
 ---
 
 <AdminLayout title={project.title}>
@@ -184,6 +189,7 @@ const pnl = projectPnL(project, financeRows, services, rates)
         { key: 'contacts', label: `Contactos${contacts.length ? ` (${contacts.length})` : ''}` },
         { key: 'finances', label: `Finanzas${financeRows.length ? ` (${financeRows.length})` : ''}` },
         { key: 'adrs', label: `The Why${adrs.length ? ` (${adrs.length})` : ''}` },
+        ...(hasPptx ? [{ key: 'deck', label: 'Presentación' }] : []),
       ].map((t) => (
         <button
           class="tab-btn text-sm px-4 py-2.5 border-b-2 transition-all whitespace-nowrap"
