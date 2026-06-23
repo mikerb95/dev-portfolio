@@ -609,7 +609,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
           id="deck-iframe"
           src={`https://view.officeapps.live.com/op/embed.aspx?src=https://codebymike.tech${pptxPublicPath}`}
           class="w-full h-full"
-          frameborder="0"
+          style="border:0"
           allowfullscreen
         />
         <div id="deck-loading" class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-zinc-950 pointer-events-none transition-opacity">
