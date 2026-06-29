@@ -1,0 +1,195 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { projectServices, projects } from '../../db/schema'
+import { eq, and } from 'drizzle-orm'
+import { domainAlertState, daysUntil, extractDomain } from '../../lib/domains'
+
+const rows = await db
+  .select({
+    id: projectServices.id,
+    name: projectServices.name,
+    provider: projectServices.provider,
+    url: projectServices.url,
+    renewalDate: projectServices.renewalDate,
+    autoRenew: projectServices.autoRenew,
+    active: projectServices.active,
+    projectTitle: projects.title,
+  })
+  .from(projectServices)
+  .leftJoin(projects, eq(projectServices.projectId, projects.id))
+  .where(eq(projectServices.category, 'domain'))
+  .orderBy(projectServices.renewalDate)
+
+const fmtDate = (d?: Date | null) =>
+  d ? d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+
+const items = rows
+  .map((r) => {
+    const state = r.active ? domainAlertState(r.renewalDate) : null
+    const days = r.renewalDate ? Math.round(daysUntil(r.renewalDate)) : null
+    return { ...r, state, days, domain: extractDomain(r.url) ?? extractDomain(r.name) }
+  })
+  .sort((a, b) => {
+    const av = a.renewalDate ? a.renewalDate.getTime() : Infinity
+    const bv = b.renewalDate ? b.renewalDate.getTime() : Infinity
+    return av - bv
+  })
+
+const overdue = items.filter((i) => i.state === 'overdue').length
+const critical = items.filter((i) => i.state === 'critical').length
+const soon = items.filter((i) => i.state === 'soon').length
+
+// Estado de configuración de los canales (solo presencia, sin exponer valores).
+const emailReady = !!(process.env.RESEND_API_KEY && process.env.ALERT_EMAIL_TO)
+const pushReady = !!process.env.NTFY_TOPIC
+
+const STATE_BADGE: Record<string, { cls: string; label: (d: number) => string }> = {
+  overdue: { cls: 'bg-ember/15 text-ember border-ember/30', label: (d) => `Vencido hace ${Math.abs(d)}d` },
+  critical: { cls: 'bg-ember/15 text-ember border-ember/30', label: (d) => `Vence en ${d}d` },
+  soon: { cls: 'bg-violet/15 text-violet border-violet/30', label: (d) => `Vence en ${d}d` },
+  ok: { cls: 'bg-lime/10 text-lime border-lime/30', label: (d) => `${d}d restantes` },
+}
+---
+
+<AdminLayout title="Dominios">
+  <div class="flex items-center justify-between gap-3 mb-6">
+    <p class="text-[12px] text-ink-200 max-w-xl">
+      Vencimiento de dominios. La fecha se descubre automáticamente vía RDAP al guardar un costo
+      de categoría <span class="font-mono text-cyan">Dominio</span>, o con el botón ↻ por fila.
+    </p>
+    <button id="btn-test" class="shrink-0 inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors">
+      Probar alerta ahora
+    </button>
+  </div>
+
+  <!-- Estado de canales -->
+  <div class="mb-5 flex flex-wrap gap-2 text-[11px] font-mono">
+    <span class={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${emailReady ? 'bg-lime/10 text-lime border-lime/30' : 'bg-white/5 text-ink-300 border-white/10'}`}>
+      <span class={`w-1.5 h-1.5 rounded-full ${emailReady ? 'bg-lime' : 'bg-ink-500'}`}></span>
+      Email {emailReady ? 'configurado' : 'sin configurar'}
+    </span>
+    <span class={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${pushReady ? 'bg-lime/10 text-lime border-lime/30' : 'bg-white/5 text-ink-300 border-white/10'}`}>
+      <span class={`w-1.5 h-1.5 rounded-full ${pushReady ? 'bg-lime' : 'bg-ink-500'}`}></span>
+      Push {pushReady ? 'configurado' : 'sin configurar'}
+    </span>
+    {(!emailReady || !pushReady) && (
+      <span class="text-ink-300">· El banner del panel funciona siempre; email/push requieren variables de entorno.</span>
+    )}
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-3 gap-3 md:gap-4 mb-6">
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Vencidos</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${overdue > 0 ? 'text-ember' : 'text-ink-50'}`}>{overdue}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Críticos ≤7d</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${critical > 0 ? 'text-ember' : 'text-ink-50'}`}>{critical}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Próximos ≤30d</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${soon > 0 ? 'text-violet' : 'text-ink-50'}`}>{soon}</div>
+    </div>
+  </div>
+
+  <!-- Lista -->
+  <div class="rounded-2xl glass overflow-hidden">
+    {items.length === 0 && (
+      <p class="text-[12px] font-mono text-ink-300 p-6">
+        No hay dominios registrados. Crea un costo con categoría <span class="text-cyan">Dominio</span> en
+        <a href="/admin/costs" class="text-cyan hover:underline">Costos</a>.
+      </p>
+    )}
+    <div class="divide-y divide-white/5">
+      {items.map((i) => (
+        <div class="flex items-center gap-4 px-4 md:px-5 py-3.5">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[13.5px] text-ink-50 truncate">{i.name}</span>
+              {!i.active && <span class="text-[10px] font-mono text-ink-400 border border-white/10 rounded px-1.5 py-0.5">inactivo</span>}
+              {!i.autoRenew && <span class="text-[10px] font-mono text-ember border border-ember/30 rounded px-1.5 py-0.5">sin auto-renovación</span>}
+            </div>
+            <div class="text-[10.5px] font-mono text-ink-300 mt-0.5 truncate">
+              {i.domain ?? '—'}{i.provider ? ` · ${i.provider}` : ''}{i.projectTitle ? ` · ${i.projectTitle}` : ''}
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-[12px] font-mono text-ink-100">{fmtDate(i.renewalDate)}</div>
+            {i.state && i.days != null && (
+              <span class={`mt-1 inline-block text-[10px] font-mono rounded-full border px-2 py-0.5 ${STATE_BADGE[i.state].cls}`}>
+                {STATE_BADGE[i.state].label(i.days)}
+              </span>
+            )}
+            {!i.renewalDate && <span class="mt-1 inline-block text-[10px] font-mono text-ink-400">sin fecha</span>}
+          </div>
+          <button
+            class="refresh-btn shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-ink-300 hover:text-cyan hover:bg-white/5 transition-colors"
+            data-id={i.id}
+            title="Actualizar fecha vía RDAP"
+            aria-label="Actualizar fecha vía RDAP"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] rounded-full px-4 py-2 text-[12.5px] font-mono glass-strong border border-white/10"></div>
+</AdminLayout>
+
+<script>
+  const $ = (id: string) => document.getElementById(id)!
+  const toast = $('toast')
+  let toastTimer: number | undefined
+  function showToast(msg: string, ok = true) {
+    toast.textContent = msg
+    toast.className = `fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] rounded-full px-4 py-2 text-[12.5px] font-mono glass-strong border ${ok ? 'border-cyan/30 text-cyan' : 'border-ember/30 text-ember'}`
+    if (toastTimer) clearTimeout(toastTimer)
+    toastTimer = window.setTimeout(() => toast.classList.add('hidden'), 3500)
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.refresh-btn').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const id = b.dataset.id
+      b.disabled = true
+      b.classList.add('animate-spin', 'opacity-50')
+      try {
+        const res = await fetch(`/api/admin/services/${id}/refresh-expiry`, { method: 'POST' })
+        const j = await res.json()
+        if (!res.ok) { showToast(j.error || 'No se pudo actualizar.', false); return }
+        showToast(`${j.domain}: ${new Date(j.renewalDate).toLocaleDateString('es-CO')}`)
+        setTimeout(() => location.reload(), 900)
+      } catch {
+        showToast('Error de red.', false)
+      } finally {
+        b.disabled = false
+        b.classList.remove('animate-spin', 'opacity-50')
+      }
+    }))
+
+  $('btn-test').addEventListener('click', async () => {
+    const btn = $('btn-test') as HTMLButtonElement
+    btn.disabled = true
+    btn.textContent = 'Enviando…'
+    try {
+      const res = await fetch('/api/cron/domain-check', { method: 'PUT' })
+      const j = await res.json()
+      if (!res.ok) { showToast(j.error || 'Falló el chequeo.', false); return }
+      if (j.notified === 0) { showToast('Sin dominios en alerta para notificar.'); return }
+      const sent = (j.results || []).filter((r: any) => r.ok).map((r: any) => r.channel)
+      const skipped = (j.results || []).filter((r: any) => r.skipped).map((r: any) => r.channel)
+      let msg = `Notificados ${j.notified}.`
+      if (sent.length) msg += ` Enviado por: ${sent.join(', ')}.`
+      if (skipped.length) msg += ` Sin configurar: ${skipped.join(', ')}.`
+      showToast(msg, sent.length > 0 || skipped.length === 2)
+    } catch {
+      showToast('Error de red.', false)
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Probar alerta ahora'
+    }
+  })
+</script>

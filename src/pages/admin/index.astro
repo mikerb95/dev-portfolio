@@ -5,11 +5,12 @@ import { projects, messages, finances, clients, educationMilestones, projectServ
 import { eq, count, desc, and, isNotNull } from 'drizzle-orm'
 import { parseRates, fmtUSD } from '../../lib/money'
 import { monthlyCostUSD, projectPnL, type FinanceLike, type ServiceLike } from '../../lib/pnl'
+import { domainAlertState, daysUntil } from '../../lib/domains'
 
 const [
   visibleProjectsCount, unreadCount, clientsCount,
   allFinances, serviceRows, settingsRows, milestoneRows,
-  projectsAll, recentMessages, pendientesRows,
+  projectsAll, recentMessages, pendientesRows, domainRows,
 ] = await Promise.all([
   db.select({ c: count() }).from(projects).where(eq(projects.visible, true)),
   db.select({ c: count() }).from(messages).where(eq(messages.read, false)),
@@ -24,10 +25,21 @@ const [
   db.select({ id: projects.id, title: projects.title, status: projects.status, techStack: projects.techStack, startDate: projects.startDate, visible: projects.visible }).from(projects),
   db.select().from(messages).orderBy(desc(messages.createdAt)).limit(5),
   db.select({ dueDate: interactions.dueDate }).from(interactions).where(and(eq(interactions.done, false), isNotNull(interactions.dueDate))),
+  db.select({ name: projectServices.name, renewalDate: projectServices.renewalDate })
+    .from(projectServices)
+    .where(and(eq(projectServices.category, 'domain'), eq(projectServices.active, true), isNotNull(projectServices.renewalDate))),
 ])
 
 const overduePend = pendientesRows.filter((p) => p.dueDate && new Date(p.dueDate).getTime() < Date.now()).length
 const upcomingPend = pendientesRows.length - overduePend
+
+// Alertas de vencimiento de dominio (≤30d o vencidos)
+const domainAlerts = domainRows
+  .map((d) => ({ name: d.name, date: d.renewalDate!, state: domainAlertState(d.renewalDate), days: Math.round(daysUntil(d.renewalDate!)) }))
+  .filter((d) => d.state && d.state !== 'ok')
+  .sort((a, b) => a.date.getTime() - b.date.getTime())
+const domainOverdue = domainAlerts.filter((d) => d.state === 'overdue').length
+const domainSoon = domainAlerts.length - domainOverdue
 
 const totalProjects = visibleProjectsCount[0]?.c ?? 0
 const unreadMessages = unreadCount[0]?.c ?? 0
@@ -135,6 +147,22 @@ const evolutionPct = completados + enCurso > 0 ? Math.round((completados / (comp
       <div class="mt-1 text-[10px] font-mono text-cyan">ver costos →</div>
     </a>
   </div>
+
+  {domainAlerts.length > 0 && (
+    <a href="/admin/domains" class={`flex items-center justify-between gap-3 rounded-2xl border px-5 py-3.5 mb-4 transition-colors ${domainOverdue > 0 ? 'border-ember/30 bg-ember/[.07] hover:bg-ember/[.12]' : 'border-violet/25 bg-violet/[.06] hover:bg-violet/[.1]'}`}>
+      <div class="flex items-center gap-3 min-w-0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class={`shrink-0 ${domainOverdue > 0 ? 'text-ember' : 'text-violet'}`}><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>
+        <div class="text-[13px] text-ink-100 min-w-0">
+          {domainOverdue > 0 && <span class="text-ember font-medium">{domainOverdue} dominio{domainOverdue === 1 ? '' : 's'} vencido{domainOverdue === 1 ? '' : 's'}</span>}
+          {domainOverdue > 0 && domainSoon > 0 && <span class="text-ink-400"> · </span>}
+          {domainSoon > 0 && <span class="text-violet">{domainSoon} por vencer ≤30d</span>}
+          <span class="text-ink-400 hidden sm:inline"> — </span>
+          <span class="text-ink-300 hidden sm:inline">{domainAlerts[0].name} {domainAlerts[0].state === 'overdue' ? `(vencido)` : `(${domainAlerts[0].days}d)`}</span>
+        </div>
+      </div>
+      <span class={`text-[11px] font-mono shrink-0 ${domainOverdue > 0 ? 'text-ember' : 'text-violet'}`}>Dominios →</span>
+    </a>
+  )}
 
   {(overduePend > 0 || upcomingPend > 0) && (
     <a href="/admin/seguimiento" class="flex items-center justify-between gap-3 rounded-2xl glass px-5 py-3.5 mb-6 hover:bg-white/[.03] transition-colors">

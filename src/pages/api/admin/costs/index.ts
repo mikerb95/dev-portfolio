@@ -3,6 +3,7 @@ import { db } from '../../../../db'
 import { projectServices } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { normalizeServiceInput, SERVICE_CATEGORIES } from '../../../../lib/services'
+import { fetchDomainExpiry } from '../../../../lib/domains'
 
 const isValidCategory = (c: unknown) => SERVICE_CATEGORIES.includes(c as any)
 
@@ -13,6 +14,11 @@ export const POST: APIRoute = async ({ request }) => {
   }
   try {
     const values = normalizeServiceInput(body)
+    // Dominio sin fecha manual: intenta descubrir la expiración real vía RDAP.
+    if (body.category === 'domain' && values.renewalDate == null) {
+      const expiry = await fetchDomainExpiry(body.url || body.name || '')
+      if (expiry) values.renewalDate = expiry
+    }
     const [row] = await db
       .insert(projectServices)
       .values({ ...(values as any), createdAt: new Date(), updatedAt: new Date() })
