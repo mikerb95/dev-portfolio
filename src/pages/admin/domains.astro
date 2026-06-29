@@ -2,7 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
 import { projectServices, projects } from '../../db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { domainAlertState, daysUntil, extractDomain } from '../../lib/domains'
 
 const rows = await db

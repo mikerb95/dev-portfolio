@@ -98,8 +98,8 @@ async function runCheck(force = false) {
   return { ok: true, total: alerts.length, notified: toNotify.length, results: [email, push] }
 }
 
-// Disparado por Vercel cron (Authorization: Bearer CRON_SECRET).
-export const POST: APIRoute = async ({ request }) => {
+// Disparado por Vercel cron, que invoca con GET y añade Authorization: Bearer CRON_SECRET.
+export const GET: APIRoute = async ({ request }) => {
   const auth = request.headers.get('authorization')
   if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
