@@ -112,8 +112,14 @@ export const POST: APIRoute = async ({ request }) => {
   }
 }
 
-// Disparo manual desde /admin/domains (protegido por sesión vía middleware). `force` envía aunque no haya empeorado.
-export const PUT: APIRoute = async () => {
+// Disparo manual desde /admin/domains. Esta ruta queda fuera del middleware de /api/admin,
+// así que validamos la sesión aquí mismo. `force` envía aunque no haya empeorado.
+export const PUT: APIRoute = async ({ request }) => {
+  const session = await getSession(request)
+  const login = (session?.user as { login?: string } | undefined)?.login
+  if (!session || (login && !isAllowedLogin(login))) {
+    return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
+  }
   try {
     return new Response(JSON.stringify(await runCheck(true)), { status: 200 })
   } catch (err) {
