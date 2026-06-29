@@ -2,8 +2,10 @@ import type { APIRoute } from 'astro'
 import { db } from '../../../db'
 import { projectServices, appSettings } from '../../../db/schema'
 import { and, eq, isNotNull } from 'drizzle-orm'
+import { getSession } from 'auth-astro/server'
 import { domainAlertState, daysUntil, type DomainAlertState } from '../../../lib/domains'
 import { sendEmail, sendPush } from '../../../lib/notify'
+import { isAllowedLogin } from '../../../lib/auth'
 
 const CRON_SECRET = import.meta.env.CRON_SECRET
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
