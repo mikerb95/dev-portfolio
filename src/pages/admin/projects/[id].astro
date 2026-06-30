@@ -1,10 +1,11 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { db } from '../../../db'
-import { projects, clients, projectEnvVars, projectServices, projectContacts, finances, projectAdrs, appSettings } from '../../../db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { projects, clients, projectEnvVars, projectServices, projectContacts, finances, projectAdrs, appSettings, monitors, monitorChecks, monitorIncidents } from '../../../db/schema'
+import { eq, desc, and, gte, isNull } from 'drizzle-orm'
 import { parseRates, fmtUSD } from '../../../lib/money'
 import { projectPnL } from '../../../lib/pnl'
+import { MONITOR_DOT, MONITOR_LABEL, type MonitorState } from '../../../lib/monitors'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
