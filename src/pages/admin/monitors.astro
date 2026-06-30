@@ -1,0 +1,285 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { monitors, monitorChecks, monitorIncidents, projects } from '../../db/schema'
+import { desc, eq, gte, isNull } from 'drizzle-orm'
+import { daysUntil, domainAlertState } from '../../lib/domains'
+import { MONITOR_DOT, MONITOR_LABEL, type MonitorState } from '../../lib/monitors'
+
+const DAY = 86_400_000
+
+const rows = await db
+  .select({
+    id: monitors.id,
+    name: monitors.name,
+    url: monitors.url,
+    active: monitors.active,
+    paused: monitors.paused,
+    lastStatus: monitors.lastStatus,
+    lastCheckedAt: monitors.lastCheckedAt,
+    lastResponseMs: monitors.lastResponseMs,
+    sslExpiresAt: monitors.sslExpiresAt,
+    projectTitle: projects.title,
+  })
+  .from(monitors)
+  .leftJoin(projects, eq(monitors.projectId, projects.id))
+  .orderBy(desc(monitors.createdAt))
+
+const since = new Date(Date.now() - 30 * DAY)
+const checks = await db
+  .select({ monitorId: monitorChecks.monitorId, at: monitorChecks.at, ok: monitorChecks.ok })
+  .from(monitorChecks)
+  .where(gte(monitorChecks.at, since))
+
+const openIncidents = await db
+  .select({ monitorId: monitorIncidents.monitorId, startedAt: monitorIncidents.startedAt, lastError: monitorIncidents.lastError })
+  .from(monitorIncidents)
+  .where(isNull(monitorIncidents.resolvedAt))
+const openByMonitor = new Map(openIncidents.map((i) => [i.monitorId, i]))
+
+const uptimePct = (mid: number, windowMs: number) => {
+  const from = Date.now() - windowMs
+  let ok = 0, total = 0
+  for (const c of checks) {
+    if (c.monitorId !== mid || !c.at || c.at.getTime() < from) continue
+    total++
+    if (c.ok) ok++
+  }
+  return total === 0 ? null : Math.round((ok / total) * 1000) / 10
+}
+
+const projectList = await db
+  .select({ id: projects.id, title: projects.title })
+  .from(projects)
+  .orderBy(desc(projects.createdAt))
+
+const items = rows.map((r) => {
+  const status: MonitorState = !r.active || r.paused ? 'unknown' : (r.lastStatus as MonitorState) ?? 'unknown'
+  const sslDays = r.sslExpiresAt ? Math.round(daysUntil(r.sslExpiresAt)) : null
+  const sslState = domainAlertState(r.sslExpiresAt)
+  return {
+    ...r,
+    status,
+    uptime30d: uptimePct(r.id, 30 * DAY),
+    uptime7d: uptimePct(r.id, 7 * DAY),
+    uptime24h: uptimePct(r.id, DAY),
+    sslDays,
+    sslState,
+    openIncident: openByMonitor.get(r.id) ?? null,
+  }
+})
+
+const down = items.filter((i) => i.status === 'down').length
+const degraded = items.filter((i) => i.status === 'degraded').length
+const up = items.filter((i) => i.status === 'up').length
+
+const emailReady = !!(process.env.RESEND_API_KEY && process.env.ALERT_EMAIL_TO)
+const pushReady = !!process.env.NTFY_TOPIC
+
+const fmtAgo = (d?: Date | null) => {
+  if (!d) return 'nunca'
+  const sec = Math.round((Date.now() - d.getTime()) / 1000)
+  if (sec < 60) return 'hace instantes'
+  if (sec < 3600) return `hace ${Math.round(sec / 60)}min`
+  if (sec < 86400) return `hace ${Math.round(sec / 3600)}h`
+  return `hace ${Math.round(sec / 86400)}d`
+}
+const upCls = (p: number | null) =>
+  p == null ? 'text-ink-400' : p >= 99.5 ? 'text-lime' : p >= 95 ? 'text-violet' : 'text-ember'
+---
+
+<AdminLayout title="Monitoreo">
+  <div class="flex items-center justify-between gap-3 mb-6">
+    <p class="text-[12px] text-ink-200 max-w-xl">
+      Estado de tus servicios. El sondeo lo dispara un cron externo
+      (<span class="font-mono text-cyan">cron-job.org</span>) que pega cada pocos minutos a
+      <span class="font-mono text-cyan">/api/cron/uptime-check</span>. Aquí ves uptime, latencia,
+      certificados SSL e incidentes.
+    </p>
+    <div class="flex gap-2 shrink-0">
+      <button id="btn-new" class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors">+ Monitor</button>
+      <button id="btn-run" class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-white/5 text-ink-100 border border-white/10 hover:bg-white/10 transition-colors">Chequear ahora</button>
+    </div>
+  </div>
+
+  <!-- Estado de canales -->
+  <div class="mb-5 flex flex-wrap gap-2 text-[11px] font-mono">
+    <span class={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${emailReady ? 'bg-lime/10 text-lime border-lime/30' : 'bg-white/5 text-ink-300 border-white/10'}`}>
+      <span class={`w-1.5 h-1.5 rounded-full ${emailReady ? 'bg-lime' : 'bg-ink-500'}`}></span>
+      Email {emailReady ? 'configurado' : 'sin configurar'}
+    </span>
+    <span class={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${pushReady ? 'bg-lime/10 text-lime border-lime/30' : 'bg-white/5 text-ink-300 border-white/10'}`}>
+      <span class={`w-1.5 h-1.5 rounded-full ${pushReady ? 'bg-lime' : 'bg-ink-500'}`}></span>
+      Push {pushReady ? 'configurado' : 'sin configurar'}
+    </span>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-3 gap-3 md:gap-4 mb-6">
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Caídos</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${down > 0 ? 'text-ember' : 'text-ink-50'}`}>{down}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Degradados</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${degraded > 0 ? 'text-violet' : 'text-ink-50'}`}>{degraded}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Operativos</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${up > 0 ? 'text-lime' : 'text-ink-50'}`}>{up}</div>
+    </div>
+  </div>
+
+  <!-- Formulario de alta (oculto) -->
+  <form id="form-new" class="hidden rounded-2xl glass p-5 mb-6 grid gap-3 md:grid-cols-2">
+    <label class="flex flex-col gap-1">
+      <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-200">Nombre</span>
+      <input name="name" required class="h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-[13px] text-ink-50 focus:border-cyan/40 outline-none" placeholder="API de producción" />
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-200">URL</span>
+      <input name="url" required type="url" class="h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-[13px] font-mono text-ink-50 focus:border-cyan/40 outline-none" placeholder="https://…" />
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-200">Proyecto (opcional)</span>
+      <select name="projectId" class="h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-[13px] text-ink-50 focus:border-cyan/40 outline-none">
+        <option value="">— Sin proyecto —</option>
+        {projectList.map((p) => <option value={p.id}>{p.title}</option>)}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-200">Status esperado</span>
+      <input name="expectedStatus" type="number" value="200" class="h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-[13px] font-mono text-ink-50 focus:border-cyan/40 outline-none" />
+    </label>
+    <label class="flex flex-col gap-1 md:col-span-2">
+      <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-200">Texto que debe contener (opcional)</span>
+      <input name="expectedText" class="h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-[13px] text-ink-50 focus:border-cyan/40 outline-none" placeholder="ej. el título de tu página, para detectar deploys rotos" />
+    </label>
+    <div class="md:col-span-2 flex gap-2 justify-end">
+      <button type="button" id="btn-cancel" class="h-9 px-4 text-[13px] rounded-full bg-white/5 text-ink-200 border border-white/10 hover:bg-white/10">Cancelar</button>
+      <button type="submit" class="h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25">Crear monitor</button>
+    </div>
+  </form>
+
+  <!-- Lista -->
+  <div class="rounded-2xl glass overflow-hidden">
+    {items.length === 0 && (
+      <p class="text-[12px] font-mono text-ink-300 p-6">
+        No hay monitores. Crea el primero con <span class="text-cyan">+ Monitor</span>.
+      </p>
+    )}
+    <div class="divide-y divide-white/5">
+      {items.map((i) => (
+        <div class="flex items-center gap-4 px-4 md:px-5 py-3.5">
+          <span class="text-base shrink-0" title={MONITOR_LABEL[i.status]}>{MONITOR_DOT[i.status]}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[13.5px] text-ink-50 truncate">{i.name}</span>
+              {i.paused && <span class="text-[10px] font-mono text-ink-400 border border-white/10 rounded px-1.5 py-0.5">pausado</span>}
+              {i.openIncident && <span class="text-[10px] font-mono text-ember border border-ember/30 rounded px-1.5 py-0.5">incidente abierto</span>}
+              {i.sslState && i.sslState !== 'ok' && i.sslDays != null && (
+                <span class="text-[10px] font-mono text-ember border border-ember/30 rounded px-1.5 py-0.5">
+                  SSL {i.sslDays < 0 ? `vencido` : `${i.sslDays}d`}
+                </span>
+              )}
+            </div>
+            <div class="text-[10.5px] font-mono text-ink-300 mt-0.5 truncate">
+              <a href={i.url} target="_blank" rel="noopener" class="hover:text-cyan">{i.url}</a>
+              {i.projectTitle ? ` · ${i.projectTitle}` : ''} · {fmtAgo(i.lastCheckedAt)}
+              {i.lastResponseMs != null ? ` · ${i.lastResponseMs}ms` : ''}
+            </div>
+          </div>
+          <div class="text-right shrink-0 hidden sm:block">
+            <div class={`text-[13px] font-mono ${upCls(i.uptime30d)}`}>{i.uptime30d == null ? '—' : `${i.uptime30d}%`}</div>
+            <div class="text-[9.5px] font-mono text-ink-400 uppercase tracking-wider">uptime 30d</div>
+          </div>
+          <button
+            class="pause-btn shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-ink-300 hover:text-violet hover:bg-white/5 transition-colors"
+            data-id={i.id} data-paused={i.paused ? '1' : '0'} title={i.paused ? 'Reanudar' : 'Pausar'} aria-label="Pausar/Reanudar"
+          >
+            {i.paused
+              ? <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              : <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>}
+          </button>
+          <button
+            class="del-btn shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-ink-300 hover:text-ember hover:bg-white/5 transition-colors"
+            data-id={i.id} data-name={i.name} title="Eliminar" aria-label="Eliminar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] rounded-full px-4 py-2 text-[12.5px] font-mono glass-strong border border-white/10"></div>
+</AdminLayout>
+
+<script>
+  const $ = (id: string) => document.getElementById(id)!
+  const toast = $('toast')
+  let toastTimer: number | undefined
+  function showToast(msg: string, ok = true) {
+    toast.textContent = msg
+    toast.className = `fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] rounded-full px-4 py-2 text-[12.5px] font-mono glass-strong border ${ok ? 'border-cyan/30 text-cyan' : 'border-ember/30 text-ember'}`
+    if (toastTimer) clearTimeout(toastTimer)
+    toastTimer = window.setTimeout(() => toast.classList.add('hidden'), 3500)
+  }
+
+  $('btn-new').addEventListener('click', () => $('form-new').classList.toggle('hidden'))
+  $('btn-cancel').addEventListener('click', () => $('form-new').classList.add('hidden'))
+
+  $('form-new').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const fd = new FormData(e.target as HTMLFormElement)
+    const payload: Record<string, unknown> = {
+      name: fd.get('name'),
+      url: fd.get('url'),
+      projectId: fd.get('projectId') ? Number(fd.get('projectId')) : null,
+      expectedStatus: fd.get('expectedStatus') ? Number(fd.get('expectedStatus')) : 200,
+      expectedText: fd.get('expectedText') || null,
+    }
+    try {
+      const res = await fetch('/api/admin/monitors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const j = await res.json()
+      if (!res.ok) { showToast(j.error || 'No se pudo crear.', false); return }
+      showToast('Monitor creado.')
+      setTimeout(() => location.reload(), 700)
+    } catch { showToast('Error de red.', false) }
+  })
+
+  document.querySelectorAll<HTMLButtonElement>('.pause-btn').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const paused = b.dataset.paused === '1'
+      try {
+        const res = await fetch(`/api/admin/monitors/${b.dataset.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paused: !paused }) })
+        if (!res.ok) { showToast('No se pudo actualizar.', false); return }
+        location.reload()
+      } catch { showToast('Error de red.', false) }
+    }))
+
+  document.querySelectorAll<HTMLButtonElement>('.del-btn').forEach((b) =>
+    b.addEventListener('click', async () => {
+      if (!confirm(`¿Eliminar el monitor "${b.dataset.name}"? Se borra su historial.`)) return
+      try {
+        const res = await fetch(`/api/admin/monitors/${b.dataset.id}`, { method: 'DELETE' })
+        if (!res.ok) { showToast('No se pudo eliminar.', false); return }
+        location.reload()
+      } catch { showToast('Error de red.', false) }
+    }))
+
+  $('btn-run').addEventListener('click', async () => {
+    const btn = $('btn-run') as HTMLButtonElement
+    btn.disabled = true
+    const prev = btn.textContent
+    btn.textContent = 'Chequeando…'
+    try {
+      const res = await fetch('/api/cron/uptime-check', { method: 'PUT' })
+      const j = await res.json()
+      if (!res.ok) { showToast(j.error || 'Falló el chequeo.', false); return }
+      showToast(`${j.monitors} monitor(es) revisados, ${j.events} evento(s).`)
+      setTimeout(() => location.reload(), 1000)
+    } catch { showToast('Error de red.', false) }
+    finally { btn.disabled = false; btn.textContent = prev }
+  })
+</script>
