@@ -229,6 +229,15 @@ const upCls = (p: number | null) =>
   $('btn-new').addEventListener('click', () => $('form-new').classList.toggle('hidden'))
   $('btn-cancel').addEventListener('click', () => $('form-new').classList.add('hidden'))
 
+  // Si llega ?project=ID (desde la ficha de proyecto), abre el formulario con ese proyecto seleccionado.
+  const presetProject = new URLSearchParams(location.search).get('project')
+  if (presetProject) {
+    $('form-new').classList.remove('hidden')
+    const sel = document.querySelector<HTMLSelectElement>('select[name="projectId"]')
+    if (sel) sel.value = presetProject
+    document.querySelector<HTMLInputElement>('input[name="name"]')?.focus()
+  }
+
   $('form-new').addEventListener('submit', async (e) => {
     e.preventDefault()
     const fd = new FormData(e.target as HTMLFormElement)

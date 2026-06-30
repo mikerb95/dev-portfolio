@@ -152,7 +152,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
               )}
             </a>
           ) : (
-            <a href="/admin/monitors" class="text-xs px-2.5 py-1 rounded font-medium tracking-wide text-ink-300 border border-dashed border-white/15 hover:text-cyan hover:border-cyan/30 transition-colors">
+            <a href={`/admin/monitors?project=${project.id}`} class="text-xs px-2.5 py-1 rounded font-medium tracking-wide text-ink-300 border border-dashed border-white/15 hover:text-cyan hover:border-cyan/30 transition-colors">
               + Monitorear
             </a>
           )}
