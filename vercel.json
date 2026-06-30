@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/domain-check",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/uptime-check",
+      "schedule": "0 7 * * *"
     }
   ]
 }
