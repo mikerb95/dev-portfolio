@@ -98,29 +98,22 @@ if (projectMonitors.length > 0) {
   const has = (s: MonitorState) => live.some((m) => (m.lastStatus as MonitorState) === s)
   const status: MonitorState = has('down') ? 'down' : has('degraded') ? 'degraded' : has('up') ? 'up' : 'unknown'
 
-  const ids = projectMonitors.map((m) => m.id)
+  const idSet = new Set(projectMonitors.map((m) => m.id))
   const since = new Date(Date.now() - 30 * 86_400_000)
-  const [checkRows, openInc] = await Promise.all([
-    db.select({ ok: monitorChecks.ok }).from(monitorChecks).where(gte(monitorChecks.at, since)),
-    db.select({ id: monitorIncidents.id }).from(monitorIncidents).where(isNull(monitorIncidents.resolvedAt)),
+  const [projChecks, openByProject] = await Promise.all([
+    db.select({ monitorId: monitorChecks.monitorId, ok: monitorChecks.ok }).from(monitorChecks).where(gte(monitorChecks.at, since)),
+    db
+      .select({ id: monitorIncidents.id })
+      .from(monitorIncidents)
+      .innerJoin(monitors, eq(monitorIncidents.monitorId, monitors.id))
+      .where(and(eq(monitors.projectId, projectId), isNull(monitorIncidents.resolvedAt))),
   ])
-  // checkRows trae todos los monitores; filtramos por los del proyecto vía join en memoria.
-  const idSet = new Set(ids)
-  const projChecks = await db
-    .select({ monitorId: monitorChecks.monitorId, ok: monitorChecks.ok })
-    .from(monitorChecks)
-    .where(gte(monitorChecks.at, since))
   let ok = 0, total = 0
   for (const c of projChecks) {
     if (!idSet.has(c.monitorId)) continue
     total++
     if (c.ok) ok++
   }
-  const openByProject = await db
-    .select({ id: monitorIncidents.id })
-    .from(monitorIncidents)
-    .innerJoin(monitors, eq(monitorIncidents.monitorId, monitors.id))
-    .where(and(eq(monitors.projectId, projectId), isNull(monitorIncidents.resolvedAt)))
 
   monitorHealth = {
     status,
@@ -144,6 +137,25 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
             {project.status ?? 'activo'}
           </span>
           <span class="font-mono text-[10px] text-ink-300 tracking-[.2em] uppercase bg-white/5 px-2 py-1 rounded">{project.slug}</span>
+          {monitorHealth ? (
+            <a
+              href="/admin/monitors"
+              title={`${MONITOR_LABEL[monitorHealth.status]} · ${monitorHealth.count} monitor${monitorHealth.count !== 1 ? 'es' : ''}${monitorHealth.openIncidents ? ` · ${monitorHealth.openIncidents} incidente(s) abierto(s)` : ''}`}
+              class="text-xs px-2.5 py-1 rounded font-semibold tracking-wide bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-1.5"
+            >
+              <span>{MONITOR_DOT[monitorHealth.status]}</span>
+              <span class="text-ink-100">{MONITOR_LABEL[monitorHealth.status]}</span>
+              {monitorHealth.uptime30d != null && (
+                <span class={`font-mono ${monitorHealth.uptime30d >= 99.5 ? 'text-lime' : monitorHealth.uptime30d >= 95 ? 'text-violet' : 'text-ember'}`}>
+                  {monitorHealth.uptime30d}%
+                </span>
+              )}
+            </a>
+          ) : (
+            <a href="/admin/monitors" class="text-xs px-2.5 py-1 rounded font-medium tracking-wide text-ink-300 border border-dashed border-white/15 hover:text-cyan hover:border-cyan/30 transition-colors">
+              + Monitorear
+            </a>
+          )}
           {project.visible && (
             <span class="text-xs text-zinc-500 flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-lime/70 inline-block shadow-[0_0_6px_rgba(163,230,53,0.6)]"></span>
