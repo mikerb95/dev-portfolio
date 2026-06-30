@@ -86,6 +86,50 @@ const settingsRows = await db.select().from(appSettings)
 const rates = parseRates(settingsRows)
 const pnl = projectPnL(project, financeRows, services, rates)
 
+// Resumen de observabilidad: estado agregado + uptime 30d de los monitores del proyecto.
+const projectMonitors = await db
+  .select({ id: monitors.id, active: monitors.active, paused: monitors.paused, lastStatus: monitors.lastStatus })
+  .from(monitors)
+  .where(eq(monitors.projectId, projectId))
+
+let monitorHealth: { status: MonitorState; count: number; uptime30d: number | null; openIncidents: number } | null = null
+if (projectMonitors.length > 0) {
+  const live = projectMonitors.filter((m) => m.active && !m.paused)
+  const has = (s: MonitorState) => live.some((m) => (m.lastStatus as MonitorState) === s)
+  const status: MonitorState = has('down') ? 'down' : has('degraded') ? 'degraded' : has('up') ? 'up' : 'unknown'
+
+  const ids = projectMonitors.map((m) => m.id)
+  const since = new Date(Date.now() - 30 * 86_400_000)
+  const [checkRows, openInc] = await Promise.all([
+    db.select({ ok: monitorChecks.ok }).from(monitorChecks).where(gte(monitorChecks.at, since)),
+    db.select({ id: monitorIncidents.id }).from(monitorIncidents).where(isNull(monitorIncidents.resolvedAt)),
+  ])
+  // checkRows trae todos los monitores; filtramos por los del proyecto vía join en memoria.
+  const idSet = new Set(ids)
+  const projChecks = await db
+    .select({ monitorId: monitorChecks.monitorId, ok: monitorChecks.ok })
+    .from(monitorChecks)
+    .where(gte(monitorChecks.at, since))
+  let ok = 0, total = 0
+  for (const c of projChecks) {
+    if (!idSet.has(c.monitorId)) continue
+    total++
+    if (c.ok) ok++
+  }
+  const openByProject = await db
+    .select({ id: monitorIncidents.id })
+    .from(monitorIncidents)
+    .innerJoin(monitors, eq(monitorIncidents.monitorId, monitors.id))
+    .where(and(eq(monitors.projectId, projectId), isNull(monitorIncidents.resolvedAt)))
+
+  monitorHealth = {
+    status,
+    count: projectMonitors.length,
+    uptime30d: total === 0 ? null : Math.round((ok / total) * 1000) / 10,
+    openIncidents: openByProject.length,
+  }
+}
+
 const pptxPublicPath = `/docs/${project.slug}.pptx`
 const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug}.pptx`))
 ---
