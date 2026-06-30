@@ -189,6 +189,59 @@ export const presentationSlides = sqliteTable('presentation_slides', {
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
+// Observabilidad: qué URL vigilar por proyecto. El sondeo lo dispara un cron
+// externo (cron-job.org) que pega a /api/cron/uptime-check con el CRON_SECRET.
+export const monitors = sqliteTable('monitors', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // projectId nullable: permite monitores sueltos (no atados a un proyecto).
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  method: text('method').default('GET'),
+  expectedStatus: integer('expected_status').default(200),
+  // Si está definido, la respuesta debe CONTENER este texto o se considera caída
+  // (detecta deploys rotos que devuelven 200 pero con la página equivocada).
+  expectedText: text('expected_text'),
+  // Por encima de este umbral (ms) la respuesta cuenta como "degradada" (amarillo).
+  latencyThresholdMs: integer('latency_threshold_ms').default(2000),
+  // Cadencia esperada en minutos (informativa; la frecuencia real la fija el cron externo).
+  intervalMin: integer('interval_min').default(5),
+  active: integer('active', { mode: 'boolean' }).default(true),
+  paused: integer('paused', { mode: 'boolean' }).default(false),
+  // Estado materializado del último chequeo (para pintar el badge sin recalcular).
+  lastStatus: text('last_status', { enum: ['up', 'degraded', 'down', 'unknown'] }).default('unknown'),
+  lastCheckedAt: integer('last_checked_at', { mode: 'timestamp' }),
+  lastResponseMs: integer('last_response_ms'),
+  // Expiración del certificado TLS (refrescada como máximo cada ~12h).
+  sslExpiresAt: integer('ssl_expires_at', { mode: 'timestamp' }),
+  sslCheckedAt: integer('ssl_checked_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+// Historial de sondeos. Se purga (>90 días) para no inflar Turso.
+export const monitorChecks = sqliteTable('monitor_checks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  monitorId: integer('monitor_id').notNull().references(() => monitors.id, { onDelete: 'cascade' }),
+  at: integer('at', { mode: 'timestamp' }).notNull(),
+  ok: integer('ok', { mode: 'boolean' }).notNull(),
+  statusCode: integer('status_code'),
+  responseMs: integer('response_ms'),
+  error: text('error'),
+})
+
+// Caídas agrupadas: del primer fallo al primer éxito posterior. Da el "informe de caídas".
+export const monitorIncidents = sqliteTable('monitor_incidents', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  monitorId: integer('monitor_id').notNull().references(() => monitors.id, { onDelete: 'cascade' }),
+  startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
+  resolvedAt: integer('resolved_at', { mode: 'timestamp' }),
+  cause: text('cause'),
+  lastError: text('last_error'),
+  durationSec: integer('duration_sec'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
+
 // Configuración clave-valor (tasas FX, moneda base, etc.)
 export const appSettings = sqliteTable('app_settings', {
   key: text('key').primaryKey(),
