@@ -23,9 +23,23 @@ import BaseLayout from '../layouts/BaseLayout.astro'
           En tiempo real
         </span>
       </div>
-      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-5">
-        Engineering Log.
-      </h1>
+      <div class="flex items-center gap-5 mb-5">
+        <span class="relative shrink-0">
+          <span class="absolute inset-0 rounded-full bg-cyan/20 blur-md" aria-hidden="true"></span>
+          <img
+            src="https://github.com/mikerb95.png"
+            alt="Mike (@mikerb95)"
+            width="64"
+            height="64"
+            loading="eager"
+            referrerpolicy="no-referrer"
+            class="relative w-16 h-16 rounded-full ring-1 ring-white/15 object-cover"
+          />
+        </span>
+        <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95]">
+          Engineering Log.
+        </h1>
+      </div>
       <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
         Actividad de desarrollo extraída en tiempo real de GitHub. Cada commit es evidencia de trabajo real en curso.
       </p>
