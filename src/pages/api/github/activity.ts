@@ -138,6 +138,7 @@ export const GET: APIRoute = async () => {
   const events: GitHubEvent[] = await res.json()
 
   const thirtyDaysAgo = Date.now() - 30 * 86_400_000
+  const sinceIso = new Date(thirtyDaysAgo).toISOString()
   const recentEvents = events.filter(
     (e) => new Date(e.created_at).getTime() >= thirtyDaysAgo
   )
@@ -146,22 +147,45 @@ export const GET: APIRoute = async () => {
   const seen = new Set<string>()
   const feed: FeedItem[] = []
 
-  for (const event of recentEvents) {
-    if (event.type === 'PushEvent') {
-      for (const commit of event.payload.commits ?? []) {
-        const firstLine = commit.message.split('\n')[0].trim()
-        if (isSkipped(firstLine) || seen.has(commit.sha)) continue
-        seen.add(commit.sha)
-        feed.push({
-          repo: event.repo.name.split('/')[1] ?? event.repo.name,
-          repoFull: event.repo.name,
-          message: firstLine,
-          sha: commit.sha.slice(0, 7),
-          timestamp: event.created_at,
-          type: 'commit',
-        })
-      }
+  // NOTE: GitHub's Events API no longer includes `payload.commits` in PushEvents
+  // (only ref/head/before), so the feed is rebuilt from the per-repo Commits API.
+  // Collect the repos the user pushed to recently, then fetch their commits.
+  const activeRepos = Array.from(
+    new Set(
+      recentEvents
+        .filter((e) => e.type === 'PushEvent')
+        .map((e) => e.repo.name)
+    )
+  )
+
+  const commitResults = await Promise.all(
+    activeRepos.map(async (repoFull) => {
+      const url =
+        `https://api.github.com/repos/${repoFull}/commits` +
+        `?author=${encodeURIComponent(username)}&since=${sinceIso}&per_page=100`
+      const r = await fetch(url, { headers })
+      if (!r.ok) return { repoFull, commits: [] as CommitApiItem[] }
+      return { repoFull, commits: (await r.json()) as CommitApiItem[] }
+    })
+  )
+
+  for (const { repoFull, commits } of commitResults) {
+    for (const c of commits) {
+      const firstLine = c.commit.message.split('\n')[0].trim()
+      if (isSkipped(firstLine) || seen.has(c.sha)) continue
+      seen.add(c.sha)
+      feed.push({
+        repo: repoFull.split('/')[1] ?? repoFull,
+        repoFull,
+        message: firstLine,
+        sha: c.sha.slice(0, 7),
+        timestamp: c.commit.author?.date ?? c.commit.committer?.date ?? '',
+        type: 'commit',
+      })
     }
+  }
+
+  for (const event of recentEvents) {
     if (
       event.type === 'PullRequestEvent' &&
       event.payload.action === 'closed' &&
