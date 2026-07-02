@@ -165,6 +165,44 @@ const upCls = (p: number | null) =>
     </div>
   </div>
 
+  <!-- Pruebas en vivo -->
+  <section class="rounded-2xl glass p-5 mb-6">
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+      <div>
+        <h2 class="text-[14px] font-medium text-ink-50 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="text-cyan"><path d="M9 2v6.5L4.2 17a2 2 0 0 0 1.8 3h12a2 2 0 0 0 1.8-3L15 8.5V2"/><path d="M8 2h8"/><path d="M7.5 13h9"/></svg>
+          Pruebas en vivo
+        </h2>
+        <p class="text-[11.5px] text-ink-300 mt-1 max-w-md">
+          Batería de diagnósticos contra un dominio: disponibilidad, TLS, DNS, cabeceras de seguridad, robots/sitemap y vencimiento del dominio.
+        </p>
+      </div>
+    </div>
+
+    <form id="form-diag" class="mt-4 flex gap-2 flex-wrap">
+      <input
+        id="diag-input" name="target" required
+        class="flex-1 min-w-[220px] h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-[13px] font-mono text-ink-50 focus:border-cyan/40 outline-none"
+        placeholder="codebymike.tech  ·  https://tu-proyecto.com"
+      />
+      <button id="diag-run" type="submit" class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors shrink-0">
+        Ejecutar pruebas
+      </button>
+    </form>
+
+    <!-- Resumen -->
+    <div id="diag-summary" class="hidden mt-4 flex items-center gap-3 text-[11px] font-mono">
+      <span class="text-ink-300" id="diag-target"></span>
+      <span class="inline-flex items-center gap-1.5 text-lime"><span class="w-1.5 h-1.5 rounded-full bg-lime"></span><span id="diag-pass">0</span></span>
+      <span class="inline-flex items-center gap-1.5 text-violet"><span class="w-1.5 h-1.5 rounded-full bg-violet"></span><span id="diag-warn">0</span></span>
+      <span class="inline-flex items-center gap-1.5 text-ember"><span class="w-1.5 h-1.5 rounded-full bg-ember"></span><span id="diag-fail">0</span></span>
+      <span class="text-ink-400" id="diag-progress"></span>
+    </div>
+
+    <!-- Resultados -->
+    <div id="diag-results" class="hidden mt-3 divide-y divide-white/5 rounded-xl border border-white/5 overflow-hidden"></div>
+  </section>
+
   <!-- Formulario de alta (oculto) -->
   <form id="form-new" class="hidden rounded-2xl glass p-5 mb-6 grid gap-3 md:grid-cols-2">
     <label class="flex flex-col gap-1">
@@ -236,6 +274,12 @@ const upCls = (p: number | null) =>
             <div class={`text-[13px] font-mono ${upCls(i.uptime30d)}`}>{i.uptime30d == null ? '—' : `${i.uptime30d}%`}</div>
             <div class="text-[9.5px] font-mono text-ink-400 uppercase tracking-wider">uptime 30d</div>
           </div>
+          <button
+            class="test-btn shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-ink-300 hover:text-cyan hover:bg-white/5 transition-colors"
+            data-url={i.url} title="Probar en vivo" aria-label="Probar en vivo"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6.5L4.2 17a2 2 0 0 0 1.8 3h12a2 2 0 0 0 1.8-3L15 8.5V2"/><path d="M8 2h8"/><path d="M7.5 13h9"/></svg>
+          </button>
           <button
             class="pause-btn shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg text-ink-300 hover:text-violet hover:bg-white/5 transition-colors"
             data-id={i.id} data-paused={i.paused ? '1' : '0'} title={i.paused ? 'Reanudar' : 'Pausar'} aria-label="Pausar/Reanudar"
