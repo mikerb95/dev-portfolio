@@ -12,6 +12,15 @@ interface GitHubEvent {
   created_at: string
 }
 
+interface CommitApiItem {
+  sha: string
+  commit: {
+    message: string
+    author?: { date?: string }
+    committer?: { date?: string }
+  }
+}
+
 export interface FeedItem {
   repo: string
   repoFull: string
