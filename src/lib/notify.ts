@@ -8,6 +8,20 @@ const env = (k: string): string | undefined =>
 
 export type NotifyResult = { channel: 'email' | 'push'; ok: boolean; skipped?: boolean; error?: string }
 
+/**
+ * Prepara un valor para un header HTTP. Los headers son ByteStrings (Latin-1):
+ * un emoji rompe `fetch` con un TypeError. Quitamos símbolos/emoji (≥ U+2000) y
+ * codificamos el resto UTF-8→latin1 para que el receptor (ntfy) lo lea como UTF-8
+ * y conserve los acentos.
+ */
+function headerSafe(s: string): string {
+  const stripped = Array.from(s)
+    .filter((ch) => (ch.codePointAt(0) ?? 0) < 0x2000)
+    .join('')
+    .trim()
+  return String.fromCharCode(...new TextEncoder().encode(stripped))
+}
+
 /** Envía un email vía la API REST de Resend. No-op si falta configuración. */
 export async function sendEmail(subject: string, text: string, html?: string): Promise<NotifyResult> {
   const apiKey = env('RESEND_API_KEY')
