@@ -46,7 +46,7 @@ export async function sendPush(title: string, message: string, opts?: { priority
   const topic = env('NTFY_TOPIC')
   if (!topic) return { channel: 'push', ok: false, skipped: true }
   const base = env('NTFY_SERVER') ?? 'https://ntfy.sh'
-  const headers: Record<string, string> = { Title: title }
+  const headers: Record<string, string> = { Title: headerSafe(title) }
   if (opts?.priority) headers.Priority = String(opts.priority)
   if (opts?.tags) headers.Tags = opts.tags
   if (opts?.click) headers.Click = opts.click
