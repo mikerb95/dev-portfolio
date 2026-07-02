@@ -8,33 +8,30 @@
 
 ## ✅ Configuración completada (jul 2 2026)
 
-1. **`ENCRYPTION_KEY`** — ya está en `.env` local y en Vercel (Production + Preview) con el
-   mismo valor (64 hex). ⚠️ No cambiarla una vez haya datos cifrados.
-   - Nota: al momento de agregarla no se pudo redesplegar (límite de 100 deploys/día del plan
-     free). Toma efecto con el **próximo deploy** exitoso.
-2. **OAuth GitHub** — `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` están en `.env` local y en
-   Vercel Production.
+1. **`ENCRYPTION_KEY`** — en `.env` local y en Vercel (Production + Preview), mismo valor (64 hex).
+   ⚠️ No cambiarla una vez haya datos cifrados. Confirmado activo en prod (el endpoint cron
+   responde 200, lo que prueba que las env vars ya cargan en las funciones).
+2. **OAuth GitHub** — `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` en `.env` local y Vercel Production.
    - [ ] (Opcional) limpiar `DEV_USER`/`DEV_PASSWORD` de `.env` y Vercel: sobran desde que se
      cambió al provider de GitHub.
 3. **Tasas de cambio** — cargadas en `app_settings`: `fx_COP_per_USD=3401.62`,
    `fx_EUR_per_USD=0.8783` (jul 2 2026). Actualizables desde `/admin/settings`.
+4. **`CRON_SECRET`** — generado, en `.env` local y Vercel Production. Verificado en prod
+   (200 con Bearer correcto, 401 sin header).
 
-## ⚠️ Pendiente real
-
-- [ ] Verificar en producción (tras el próximo deploy) que la bóveda cifra/revela credenciales
-  en `/admin/projects/[id]` y que los costos en COP suman al P&L en `/admin/costs`.
-- [ ] **Crear el job en cron-job.org** (única acción manual restante — necesita tu cuenta):
-  - URL: `https://codebymike.tech/api/cron/uptime-check` · método GET · cada 5 min.
-  - Header: `Authorization: Bearer <CRON_SECRET>` (el valor está en `.env`, línea `CRON_SECRET=`;
-    ya está también en Vercel Production).
-  - ⚠️ Funciona a partir del próximo deploy exitoso (hoy jul 2 se alcanzó el límite de
-    100 deploys/día del plan free; `ENCRYPTION_KEY` y `CRON_SECRET` entran con ese deploy).
-
-## ✅ Monitores (jul 2 2026)
+## ✅ Monitores (jul 2 2026) — funcionando en producción
 
 - 8 monitores dados de alta en `monitors`: los 7 proyectos (por `preview_url`) + codebymike.tech.
-- Motor verificado en local: `GET /api/cron/uptime-check` con Bearer → 8/8 `up`, latencias y
-  SSL registrados en `monitor_checks`.
+- Motor verificado end-to-end contra prod: `GET https://codebymike.tech/api/cron/uptime-check`
+  con Bearer → 8/8 `up`, latencias y SSL registrados en `monitor_checks`.
+- **Job de cron-job.org creado** ("Cron Job Monitor CodeByMike", cada 5 min).
+  - [ ] Confirmar en el EDIT del job que el header `Authorization: Bearer <CRON_SECRET>` quedó
+    guardado (si falta, el HISTORY mostrará 401 en rojo).
+
+## ⚠️ Pendiente real (menor)
+
+- [ ] Verificar en prod que la bóveda cifra/revela credenciales en `/admin/projects/[id]` y que
+  los costos en COP suman al P&L en `/admin/costs` (probar creando un servicio con secreto).
 
 ---
 
