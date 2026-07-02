@@ -1,41 +1,30 @@
 # Pendientes — Panel de Control CodeByMike
 
-> Estado al cierre de sesión (jun 2026): el **código de las 7 fases está completo, compila y
-> renderiza sin errores**. Lo que queda es **configuración de entorno** (secretos) que solo Mike
-> puede poner. La base de datos Turso está migrada y **vacía** (cero data dummy).
+> Estado (jul 2026): el **código de las 7 fases está completo** y la **configuración de entorno
+> ya quedó hecha** (ver historial abajo). La base Turso está migrada; ya tiene proyectos con
+> portadas y tasas FX cargadas.
 
 ---
 
-## ⚠️ Configuración pendiente (esto es lo que falta)
+## ✅ Configuración completada (jul 2 2026)
 
-### 1. `ENCRYPTION_KEY` — necesaria para la bóveda de credenciales y las env vars
-Llave de 32 bytes (64 hex) para cifrar/descifrar con AES‑256‑GCM. Sin ella, guardar/revelar
-credenciales devuelve *"Falta configurar ENCRYPTION_KEY…"*. Hoy **no está** en `.env` y **no hay
-datos cifrados** (0 filas), así que generar una ahora es seguro.
+1. **`ENCRYPTION_KEY`** — ya está en `.env` local y en Vercel (Production + Preview) con el
+   mismo valor (64 hex). ⚠️ No cambiarla una vez haya datos cifrados.
+   - Nota: al momento de agregarla no se pudo redesplegar (límite de 100 deploys/día del plan
+     free). Toma efecto con el **próximo deploy** exitoso.
+2. **OAuth GitHub** — `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` están en `.env` local y en
+   Vercel Production.
+   - [ ] (Opcional) limpiar `DEV_USER`/`DEV_PASSWORD` de `.env` y Vercel: sobran desde que se
+     cambió al provider de GitHub.
+3. **Tasas de cambio** — cargadas en `app_settings`: `fx_COP_per_USD=3401.62`,
+   `fx_EUR_per_USD=0.8783` (jul 2 2026). Actualizables desde `/admin/settings`.
 
-- [ ] Generar:
-  ```sh
-  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-  ```
-- [ ] Pegar el **mismo valor** en `.env` (local) y en Vercel (Environment Variables).
-- ⚠️ Local y prod comparten la **misma base Turso** → la llave debe ser idéntica en ambos.
-  Una vez que se cifren datos con ella, **no cambiarla** (volvería ilegible lo cifrado).
+## ⚠️ Pendiente real
 
-### 2. `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET` — login OAuth en local
-`auth.config.ts` los usa pero no están en `.env`. En producción probablemente ya están en Vercel
-(el sitio desplegado ya usa login de GitHub).
-
-- [ ] Crear/copiar una OAuth App en github.com/settings/developers y poner ambos en `.env`.
-- [ ] Confirmar que existen también en Vercel.
-- [ ] (Opcional) limpiar `DEV_USER`/`DEV_PASSWORD` del `.env`: sobran desde que se cambió al provider de GitHub.
-
-### 3. Tasas de cambio (opcional, no bloquea)
-- [ ] En `/admin/settings`, cargar `COP/USD` (y las que uses) para que los costos en otras monedas
-  se conviertan a USD. Sin esto, esos costos muestran "sin tasa" y no suman al total.
-
-### 4. Deploy
-- [ ] Push a `main` → Vercel despliega. Verificar `/admin`, `/admin/costs`, `/admin/seguimiento`,
-  `/admin/settings` en producción con tu login.
+- [ ] Verificar en producción (tras el próximo deploy) que la bóveda cifra/revela credenciales
+  en `/admin/projects/[id]` y que los costos en COP suman al P&L en `/admin/costs`.
+- [ ] Monitores: la tabla `monitors` está vacía y falta dar de alta el job en cron-job.org
+  (ver memoria de observabilidad). El motor ya existe.
 
 ---
 
