@@ -113,14 +113,40 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     const bar = document.getElementById('sparkline')!
     const labels = document.getElementById('sparkline-labels')!
     const max = Math.max(...data, 1)
+    const n = data.length
 
     bar.innerHTML = data
-      .map((v) => {
+      .map((v, i) => {
         const pct = Math.round((v / max) * 100)
         const color = v > 0 ? 'bg-cyan/60' : 'bg-white/5'
-        return `<div class="flex-1 ${color} rounded-sm transition-all" style="height:${Math.max(pct, 3)}%" title="${v} commits"></div>`
+        const d = new Date()
+        d.setDate(d.getDate() - (n - 1 - i))
+        const label = d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
+        return `<div class="flex-1 ${color} rounded-sm transition-all hover:bg-cyan cursor-default" style="height:${Math.max(pct, 3)}%" data-count="${v}" data-date="${label}"></div>`
       })
       .join('')
+
+    const tip = document.getElementById('sparkline-tip')!
+    const tipCount = document.getElementById('sparkline-tip-count')!
+    const tipDate = document.getElementById('sparkline-tip-date')!
+    const container = bar.parentElement!
+
+    bar.addEventListener('pointermove', (e) => {
+      const target = (e.target as HTMLElement).closest<HTMLElement>('[data-count]')
+      if (!target) {
+        tip.classList.add('hidden')
+        return
+      }
+      const count = Number(target.dataset.count)
+      tipCount.textContent = count === 1 ? '1 commit' : `${count} commits`
+      tipDate.textContent = target.dataset.date ?? ''
+      const cRect = container.getBoundingClientRect()
+      const bRect = target.getBoundingClientRect()
+      tip.style.left = `${bRect.left - cRect.left + bRect.width / 2}px`
+      tip.style.top = `${bRect.top - cRect.top - 8}px`
+      tip.classList.remove('hidden')
+    })
+    bar.addEventListener('pointerleave', () => tip.classList.add('hidden'))
 
     const today = new Date()
     const start = new Date(today)
