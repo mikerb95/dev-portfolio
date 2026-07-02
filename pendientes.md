@@ -23,8 +23,18 @@
 
 - [ ] Verificar en producción (tras el próximo deploy) que la bóveda cifra/revela credenciales
   en `/admin/projects/[id]` y que los costos en COP suman al P&L en `/admin/costs`.
-- [ ] Monitores: la tabla `monitors` está vacía y falta dar de alta el job en cron-job.org
-  (ver memoria de observabilidad). El motor ya existe.
+- [ ] **Crear el job en cron-job.org** (única acción manual restante — necesita tu cuenta):
+  - URL: `https://codebymike.tech/api/cron/uptime-check` · método GET · cada 5 min.
+  - Header: `Authorization: Bearer <CRON_SECRET>` (el valor está en `.env`, línea `CRON_SECRET=`;
+    ya está también en Vercel Production).
+  - ⚠️ Funciona a partir del próximo deploy exitoso (hoy jul 2 se alcanzó el límite de
+    100 deploys/día del plan free; `ENCRYPTION_KEY` y `CRON_SECRET` entran con ese deploy).
+
+## ✅ Monitores (jul 2 2026)
+
+- 8 monitores dados de alta en `monitors`: los 7 proyectos (por `preview_url`) + codebymike.tech.
+- Motor verificado en local: `GET /api/cron/uptime-check` con Bearer → 8/8 `up`, latencias y
+  SSL registrados en `monitor_checks`.
 
 ---
 
