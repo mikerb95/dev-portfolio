@@ -364,6 +364,128 @@ const upCls = (p: number | null) =>
       } catch { showToast('Error de red.', false) }
     }))
 
+  // ── Pruebas en vivo ────────────────────────────────────────────────────
+  type DiagStatus = 'pass' | 'warn' | 'fail' | 'info'
+  type DiagResult = { id: string; label: string; status: DiagStatus; summary: string; details?: string[]; ms: number }
+
+  const DIAG_META: Record<DiagStatus, { dot: string; text: string }> = {
+    pass: { dot: 'bg-lime', text: 'text-lime' },
+    warn: { dot: 'bg-violet', text: 'text-violet' },
+    fail: { dot: 'bg-ember', text: 'text-ember' },
+    info: { dot: 'bg-ink-500', text: 'text-ink-300' },
+  }
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!))
+
+  const diagInput = $('diag-input') as HTMLInputElement
+  const diagResults = $('diag-results')
+  const diagSummary = $('diag-summary')
+  let diagBusy = false
+  const counts = { pass: 0, warn: 0, fail: 0, info: 0 }
+
+  function renderResult(r: DiagResult) {
+    const m = DIAG_META[r.status]
+    const row = document.createElement('div')
+    row.className = 'px-4 py-3'
+    const details = r.details?.length
+      ? `<div class="mt-1.5 pl-4 space-y-0.5 text-[11px] font-mono text-ink-300">${r.details.map((d) => `<div class="truncate" title="${esc(d)}">${esc(d)}</div>`).join('')}</div>`
+      : ''
+    row.innerHTML = `
+      <div class="flex items-center gap-3">
+        <span class="w-2 h-2 rounded-full ${m.dot} shrink-0"></span>
+        <span class="text-[13px] text-ink-50 shrink-0">${esc(r.label)}</span>
+        <span class="text-[11.5px] font-mono ${m.text} truncate flex-1">${esc(r.summary)}</span>
+        <span class="text-[10px] font-mono text-ink-400 shrink-0">${r.ms}ms</span>
+      </div>${details}`
+    diagResults.appendChild(row)
+  }
+
+  function updateSummary(target: string | null, done: number, total: number) {
+    diagSummary.classList.remove('hidden')
+    if (target) $('diag-target').textContent = target
+    $('diag-pass').textContent = String(counts.pass)
+    $('diag-warn').textContent = String(counts.warn)
+    $('diag-fail').textContent = String(counts.fail)
+    $('diag-progress').textContent = done >= total ? `· ${total} pruebas` : `· ${done}/${total}…`
+  }
+
+  async function runDiagnostics(target: string) {
+    if (diagBusy) return
+    const value = target.trim()
+    if (!value) { diagInput.focus(); return }
+    diagBusy = true
+    counts.pass = counts.warn = counts.fail = counts.info = 0
+    diagResults.innerHTML = ''
+    diagResults.classList.remove('hidden')
+    const btn = $('diag-run') as HTMLButtonElement
+    btn.disabled = true
+    const prev = btn.textContent
+    btn.textContent = 'Ejecutando…'
+    let total = 8
+    let done = 0
+    updateSummary(value, 0, total)
+
+    try {
+      const res = await fetch('/api/admin/monitors/diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: value }),
+      })
+      if (!res.ok || !res.body) {
+        const j = await res.json().catch(() => ({}))
+        showToast(j.error || 'No se pudo ejecutar.', false)
+        return
+      }
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      for (;;) {
+        const { value: chunk, done: streamDone } = await reader.read()
+        if (streamDone) break
+        buf += decoder.decode(chunk, { stream: true })
+        let nl
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, nl).trim()
+          buf = buf.slice(nl + 1)
+          if (!line) continue
+          const msg = JSON.parse(line)
+          if (msg.type === 'start') {
+            total = msg.total
+            $('diag-target').textContent = msg.target?.url ?? value
+          } else if (msg.type === 'result') {
+            const r = msg.result as DiagResult
+            counts[r.status]++
+            done++
+            renderResult(r)
+            updateSummary(null, done, total)
+          } else if (msg.type === 'error') {
+            showToast(msg.error || 'Error en el diagnóstico.', false)
+          }
+        }
+      }
+      updateSummary(null, total, total)
+    } catch {
+      showToast('Error de red.', false)
+    } finally {
+      diagBusy = false
+      btn.disabled = false
+      btn.textContent = prev
+    }
+  }
+
+  $('form-diag').addEventListener('submit', (e) => {
+    e.preventDefault()
+    runDiagnostics(diagInput.value)
+  })
+
+  document.querySelectorAll<HTMLButtonElement>('.test-btn').forEach((b) =>
+    b.addEventListener('click', () => {
+      const url = b.dataset.url || ''
+      diagInput.value = url
+      document.getElementById('form-diag')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      runDiagnostics(url)
+    }))
+
   $('btn-run').addEventListener('click', async () => {
     const btn = $('btn-run') as HTMLButtonElement
     btn.disabled = true
