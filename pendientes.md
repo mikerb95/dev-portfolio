@@ -28,6 +28,20 @@
   - [ ] Confirmar en el EDIT del job que el header `Authorization: Bearer <CRON_SECRET>` quedó
     guardado (si falta, el HISTORY mostrará 401 en rojo).
 
+## ✅ Notificaciones push (jul 2 2026)
+
+- Canal **ntfy.sh** (gratis, sin features pagas). Topic secreto `NTFY_TOPIC` en `.env` local y
+  Vercel Production. El cron dispara push en cada transición (caída / recuperación / SSL).
+- **Bug corregido**: el header `Title` de ntfy llevaba emoji → `fetch` lanzaba TypeError y
+  `sendPush` lo tragaba en silencio (ninguna alerta llegaba nunca). Fix en `src/lib/notify.ts`
+  (`headerSafe()`): quita emoji del header y codifica UTF-8→latin1 para conservar acentos.
+- Verificado end-to-end en local (monitor de prueba → push entregado con título correcto).
+- [ ] **Acción tuya**: instalar la app **ntfy** en el celular y suscribirte al topic
+  `NTFY_TOPIC` (valor en `.env`). Sin suscribirte, las alertas se envían pero no las ves.
+- ⚠️ En prod las alertas empiezan a llegar tras el **próximo deploy** (que carga `NTFY_TOPIC`
+  y el fix de `notify.ts`). El push de este repo ya dispara ese deploy.
+- (Opcional) Email vía Resend: falta `RESEND_API_KEY` + `ALERT_EMAIL_TO` + verificar dominio.
+
 ## ⚠️ Pendiente real (menor)
 
 - [ ] Verificar en prod que la bóveda cifra/revela credenciales en `/admin/projects/[id]` y que
