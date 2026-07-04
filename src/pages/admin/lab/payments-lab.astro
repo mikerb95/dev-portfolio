@@ -67,11 +67,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
             <div class="rounded-lg border border-zinc-800/80 p-3 mb-2 text-xs">
               <div class="flex items-center gap-2 mb-1.5">
                 <span class="${e.ok ? 'text-emerald-400' : 'text-red-400'}">${e.ok ? '✓ PASÓ' : '✗ FALLÓ'}</span>
-                <span class="font-mono text-zinc-300">${e.kind}</span>
+                <span class="font-mono text-zinc-300">${esc(e.kind)}</span>
                 <span class="text-zinc-600 ml-auto font-mono">${e.ranAt ? fmt.format(new Date(e.ranAt)) : ''}</span>
               </div>
-              <div class="text-zinc-500">Esperado: <span class="text-zinc-400">${r.esperado ?? '—'}</span></div>
-              <div class="text-zinc-500">Observado: <span class="text-zinc-400 font-mono">${r.observado ?? '—'}</span></div>
+              <div class="text-zinc-500">Esperado: <span class="text-zinc-400">${esc(r.esperado ?? '—')}</span></div>
+              <div class="text-zinc-500">Observado: <span class="text-zinc-400 font-mono">${esc(r.observado ?? '—')}</span></div>
             </div>`
         }).join('')
       : '<p class="text-zinc-600 text-sm">Aún no hay experimentos. Lanza un ataque arriba.</p>'
@@ -90,10 +90,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
           return `
             <div class="rounded-lg border border-zinc-800/80 p-3 mb-2">
               <div class="flex flex-wrap items-center gap-2 text-xs">
-                <span class="font-mono text-zinc-300">${p.reference}</span>
-                <span class="inline-block px-2 py-0.5 rounded-md border ${STATUS_CHIP[p.status] ?? ''}">${p.status}</span>
-                <span class="text-zinc-400">${money(p.amountCents)} ${p.currency}</span>
-                <span class="text-zinc-600 font-mono">v${p.version} · ${p.provider}</span>
+                <span class="font-mono text-zinc-300">${esc(p.reference)}</span>
+                <span class="inline-block px-2 py-0.5 rounded-md border ${STATUS_CHIP[p.status] ?? ''}">${esc(p.status)}</span>
+                <span class="text-zinc-400">${money(p.amountCents)} ${esc(p.currency)}</span>
+                <span class="text-zinc-600 font-mono">v${p.version} · ${esc(p.provider)}</span>
                 <span class="text-zinc-600 ml-auto font-mono">${p.createdAt ? fmt.format(new Date(p.createdAt)) : ''}</span>
               </div>
               ${evs.length ? `
@@ -103,8 +103,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
                       ev.duplicate ? 'border-amber-500/30 text-amber-400' :
                       ev.outOfOrder ? 'border-red-500/30 text-red-400' :
                       'border-zinc-700 text-zinc-500'
-                    }" title="${ev.gatewayTxId ?? ''}">
-                      ${ev.eventStatus}${ev.duplicate ? ' ·dup' : ''}${ev.outOfOrder ? ' ·ooo' : ''}
+                    }" title="${esc(ev.gatewayTxId ?? '')}">
+                      ${esc(ev.eventStatus)}${ev.duplicate ? ' ·dup' : ''}${ev.outOfOrder ? ' ·ooo' : ''}${ev.amountMismatch ? ' ·$≠' : ''}
                     </span>`).join('')}
                 </div>` : ''}
             </div>`
@@ -129,8 +129,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
         box.className = `rounded-xl border p-4 mb-8 text-sm ${r.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'}`
         box.innerHTML = `
           <div class="font-medium mb-2 ${r.ok ? 'text-emerald-400' : 'text-red-400'}">${r.ok ? '✓ El sistema resistió el ataque' : '✗ El sistema NO resistió'} — ${r.kind}</div>
-          <div class="text-zinc-400 text-xs mb-1"><span class="text-zinc-500">Esperado:</span> ${r.esperado}</div>
-          <div class="text-zinc-400 text-xs font-mono"><span class="text-zinc-500 font-sans">Observado:</span> ${r.observado}</div>`
+          <div class="text-zinc-400 text-xs mb-1"><span class="text-zinc-500">Esperado:</span> ${esc(r.esperado)}</div>
+          <div class="text-zinc-400 text-xs font-mono"><span class="text-zinc-500 font-sans">Observado:</span> ${esc(r.observado)}</div>`
         await load()
       } catch (e) {
         box.className = 'rounded-xl border border-red-500/30 p-4 mb-8 text-sm text-red-400'

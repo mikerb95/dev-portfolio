@@ -1,0 +1,1 @@
+ALTER TABLE `payment_events` ADD `amount_mismatch` integer DEFAULT false NOT NULL;

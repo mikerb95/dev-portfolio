@@ -43,6 +43,13 @@
       "when": 1783180336285,
       "tag": "0005_tearful_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1783183745566,
+      "tag": "0006_organic_shinko_yamashiro",
+      "breakpoints": true
     }
   ]
 }

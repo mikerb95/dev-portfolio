@@ -50,6 +50,7 @@ beforeAll(async () => {
     payload text,
     duplicate integer NOT NULL DEFAULT 0,
     out_of_order integer NOT NULL DEFAULT 0,
+    amount_mismatch integer NOT NULL DEFAULT 0,
     received_at integer
   )`)
 })
@@ -165,6 +166,17 @@ describe('createPaymentIdempotent (contra BD en memoria)', () => {
     const a = await createPaymentIdempotent(checkoutInput(`k1-${crypto.randomUUID()}`))
     const b = await createPaymentIdempotent(checkoutInput(`k2-${crypto.randomUUID()}`))
     expect(a.payment.id).not.toBe(b.payment.id)
+  })
+
+  it('misma clave con OTRO monto es conflicto, nunca un replay silencioso', async () => {
+    const key = `conflict-${crypto.randomUUID()}`
+    const first = await createPaymentIdempotent(checkoutInput(key))
+    const evil = await createPaymentIdempotent({ ...checkoutInput(key), amountCents: 999_00 })
+    expect(first.conflict).toBeUndefined()
+    expect(evil.replayed).toBe(true)
+    expect(evil.conflict).toContain('otro monto')
+    // El pago original queda intacto con su monto correcto.
+    expect(evil.payment.amountCents).toBe(first.payment.amountCents)
   })
 })
 
