@@ -299,6 +299,8 @@ export const paymentEvents = sqliteTable('payment_events', {
   payload: text('payload'),
   duplicate: integer('duplicate', { mode: 'boolean' }).notNull().default(false),
   outOfOrder: integer('out_of_order', { mode: 'boolean' }).notNull().default(false),
+  // El monto/moneda del evento no coincide con el pago: NUNCA se aplica y se alerta.
+  amountMismatch: integer('amount_mismatch', { mode: 'boolean' }).notNull().default(false),
   receivedAt: integer('received_at', { mode: 'timestamp' }),
 })
 

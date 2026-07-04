@@ -140,15 +140,32 @@ function isUniqueViolation(e: unknown): boolean {
 }
 
 /**
- * Crea el pago o devuelve el existente si la clave de idempotencia ya se usó.
+ * Un replay solo es válido si pide LO MISMO: misma clave con otro monto/moneda
+ * es un conflicto (409), nunca un cobro silencioso por el valor equivocado.
+ */
+const replayConflict = (row: Payment, input: CheckoutInput): string | null => {
+  if (row.amountCents !== input.amountCents) {
+    return `la clave de idempotencia ya se usó con otro monto (${row.amountCents} ≠ ${input.amountCents})`
+  }
+  if (row.currency !== (input.currency ?? 'COP')) {
+    return `la clave de idempotencia ya se usó con otra moneda (${row.currency})`
+  }
+  return null
+}
+
+/**
+ * Crea el pago o devuelve el existente si la clave de idempotencia ya se usó
+ * con los MISMOS parámetros (conflict si difieren, como hace Stripe).
  * A prueba de carreras: si dos requests simultáneos pasan el SELECT previo,
  * el UNIQUE de BD detiene al segundo y se devuelve la fila del primero.
  */
 export async function createPaymentIdempotent(
   input: CheckoutInput,
-): Promise<{ payment: Payment; replayed: boolean }> {
+): Promise<{ payment: Payment; replayed: boolean; conflict?: string }> {
   const existing = await db.select().from(payments).where(eq(payments.idempotencyKey, input.idempotencyKey))
-  if (existing.length) return { payment: existing[0], replayed: true }
+  if (existing.length) {
+    return { payment: existing[0], replayed: true, conflict: replayConflict(existing[0], input) ?? undefined }
+  }
 
   try {
     const [row] = await db
@@ -174,7 +191,7 @@ export async function createPaymentIdempotent(
     // DrizzleQueryError con la causa original en `cause`: hay que mirar toda la cadena.
     if (isUniqueViolation(e)) {
       const [row] = await db.select().from(payments).where(eq(payments.idempotencyKey, input.idempotencyKey))
-      if (row) return { payment: row, replayed: true }
+      if (row) return { payment: row, replayed: true, conflict: replayConflict(row, input) ?? undefined }
     }
     throw e
   }
@@ -188,6 +205,9 @@ export type GatewayEvent = {
   reference: string
   gatewayTxId?: string | null
   status: PaymentStatus
+  /** Monto según la pasarela: si viene y NO coincide con el pago, el evento no se aplica. */
+  amountCents?: number | null
+  currency?: string | null
   payload?: unknown
 }
 
@@ -197,6 +217,7 @@ export type ApplyResult = {
   applied: boolean
   duplicate: boolean
   outOfOrder: boolean
+  amountMismatch?: boolean
   statusBefore?: PaymentStatus
   statusAfter?: PaymentStatus
   error?: string
@@ -212,6 +233,31 @@ const MAX_RETRIES = 5
 export async function applyGatewayEvent(evt: GatewayEvent): Promise<ApplyResult> {
   const [payment] = await db.select().from(payments).where(eq(payments.reference, evt.reference))
   if (!payment) return { ok: false, applied: false, duplicate: false, outOfOrder: false, error: `referencia desconocida: ${evt.reference}` }
+
+  // Verificación de valor: si la pasarela reporta monto/moneda y no coinciden
+  // con el pago, NUNCA se transiciona el estado. Se registra la evidencia y se alerta.
+  const amountMismatch =
+    (evt.amountCents != null && evt.amountCents !== payment.amountCents) ||
+    (evt.currency != null && evt.currency !== payment.currency)
+  if (amountMismatch) {
+    await db.insert(paymentEvents).values({
+      paymentId: payment.id,
+      provider: evt.provider,
+      type: evt.type,
+      gatewayTxId: evt.gatewayTxId ?? '',
+      eventStatus: evt.status,
+      payload: JSON.stringify({ esperado: { amountCents: payment.amountCents, currency: payment.currency }, recibido: { amountCents: evt.amountCents, currency: evt.currency } }),
+      amountMismatch: true,
+      receivedAt: new Date(),
+    })
+    // Alerta inmediata: discrepancia de monto es señal de manipulación o mala configuración.
+    await sendPush(
+      'Pago con monto que NO coincide',
+      `Ref ${payment.reference}: esperado ${payment.amountCents} ${payment.currency}, la pasarela reporta ${evt.amountCents} ${evt.currency ?? ''}. El estado NO se cambió.`,
+      { priority: 5, tags: 'rotating_light' },
+    ).catch(() => {})
+    return { ok: true, paymentId: payment.id, applied: false, duplicate: false, outOfOrder: false, amountMismatch: true, statusBefore: payment.status as PaymentStatus, statusAfter: payment.status as PaymentStatus }
+  }
 
   // Duplicado: mismo tx + mismo estado ya registrado y aplicado antes.
   const prior = await db
@@ -229,18 +275,22 @@ export async function applyGatewayEvent(evt: GatewayEvent): Promise<ApplyResult>
 
   let applied = false
   let outOfOrder = false
+  let logicalDuplicate = false
+  let exhausted = false
   let statusBefore = payment.status as PaymentStatus
   let statusAfter = statusBefore
 
   if (!isDuplicate) {
     // Reintentos por concurrencia optimista: si otro webhook ganó la carrera,
     // relee el estado y re-evalúa la transición contra el estado fresco.
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    let attempt = 0
+    for (; attempt < MAX_RETRIES; attempt++) {
       const [current] = await db.select().from(payments).where(eq(payments.id, payment.id))
       statusBefore = current.status as PaymentStatus
 
       if (statusBefore === evt.status) {
-        // Otro request ya aplicó este mismo estado: contamos como duplicado lógico.
+        // Otro request ya aplicó este mismo estado: duplicado lógico (carrera exacta).
+        logicalDuplicate = true
         statusAfter = statusBefore
         break
       }
@@ -267,6 +317,7 @@ export async function applyGatewayEvent(evt: GatewayEvent): Promise<ApplyResult>
       }
       // Conflicto de versión: otro proceso actualizó primero → reintentar.
     }
+    exhausted = attempt === MAX_RETRIES
   }
 
   await db.insert(paymentEvents).values({
@@ -276,10 +327,20 @@ export async function applyGatewayEvent(evt: GatewayEvent): Promise<ApplyResult>
     gatewayTxId: evt.gatewayTxId ?? '',
     eventStatus: evt.status,
     payload: evt.payload != null ? JSON.stringify(evt.payload).slice(0, 4000) : null,
-    duplicate: isDuplicate,
+    duplicate: isDuplicate || logicalDuplicate,
     outOfOrder,
     receivedAt: new Date(),
   })
 
-  return { ok: true, paymentId: payment.id, applied, duplicate: isDuplicate, outOfOrder, statusBefore, statusAfter }
+  return {
+    ok: true,
+    paymentId: payment.id,
+    applied,
+    duplicate: isDuplicate || logicalDuplicate,
+    outOfOrder,
+    statusBefore,
+    statusAfter,
+    // Conflicto persistente tras agotar reintentos: visible para monitoreo (no debería pasar).
+    error: exhausted ? 'conflicto de concurrencia persistente: transición no aplicada' : undefined,
+  }
 }
