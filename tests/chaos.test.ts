@@ -1,4 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// chaos.ts importa ../src/db (crea el cliente Turso al cargar). Estos tests
+// solo ejercen funciones puras, así que sustituimos db por un stub inerte.
+vi.mock('../src/db', () => ({ db: {} }))
+
 import {
   routeMatches,
   pickChaos,
