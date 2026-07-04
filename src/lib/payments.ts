@@ -130,6 +130,15 @@ export const isValidIdempotencyKey = (k: unknown): k is string =>
 
 export type Payment = typeof payments.$inferSelect
 
+/** Detecta violación de UNIQUE recorriendo la cadena de causas del error. */
+function isUniqueViolation(e: unknown): boolean {
+  for (let err = e, depth = 0; err && depth < 5; err = (err as { cause?: unknown }).cause, depth++) {
+    const { message, code } = err as { message?: string; code?: string }
+    if (/unique|constraint/i.test(message ?? '') || /CONSTRAINT/i.test(code ?? '')) return true
+  }
+  return false
+}
+
 /**
  * Crea el pago o devuelve el existente si la clave de idempotencia ya se usó.
  * A prueba de carreras: si dos requests simultáneos pasan el SELECT previo,
@@ -161,10 +170,9 @@ export async function createPaymentIdempotent(
     return { payment: row, replayed: false }
   } catch (e) {
     // Carrera perdida: otro request insertó la misma clave entre el SELECT y el INSERT.
-    // libsql reporta el UNIQUE en e.code (SQLITE_CONSTRAINT_UNIQUE), no siempre en el mensaje.
-    const msg = e instanceof Error ? e.message : ''
-    const code = (e as { code?: string })?.code ?? ''
-    if (/unique|constraint/i.test(msg) || /CONSTRAINT/i.test(code)) {
+    // Drizzle envuelve el error de libsql (código SQLITE_CONSTRAINT_UNIQUE) en
+    // DrizzleQueryError con la causa original en `cause`: hay que mirar toda la cadena.
+    if (isUniqueViolation(e)) {
       const [row] = await db.select().from(payments).where(eq(payments.idempotencyKey, input.idempotencyKey))
       if (row) return { payment: row, replayed: true }
     }
