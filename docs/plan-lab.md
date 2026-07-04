@@ -93,6 +93,11 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 > **Progreso**: Fase 0 ✅ (jul 3: 94 tests, 87% líneas en src/lib). Fase 1 ✅ (jul 4: workflow CI,
 > /api/health, ingest, tabla ci_runs, página /admin/lab/pipeline). Falta el secret VERCEL_TOKEN
 > en GitHub para habilitar el rollback automático (crear en vercel.com/account/tokens).
+> Fase 2 ✅ (jul 4: pasarela propia — /pay con checkout idempotente, webhook Wompi con verificación
+> de checksum, modo mock demo, máquina de estados con concurrencia optimista, panel
+> /admin/lab/payments-lab con 4 ataques en vivo, 18 tests contra BD en memoria; 112 tests totales).
+> Pendiente para pagos reales: crear cuenta Wompi sandbox y configurar WOMPI_PUBLIC_KEY,
+> WOMPI_INTEGRITY_SECRET y WOMPI_EVENTS_SECRET en Vercel (sin ellas opera en modo mock).
 
 ### Fase 1 — Pipeline CI/CD en vivo
 1. `.github/workflows/ci.yml`: push → `lint/typecheck (astro check)` → `vitest --coverage`
