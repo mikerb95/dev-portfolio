@@ -17,6 +17,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { payments, paymentEvents } from '../db/schema'
+import { sendPush } from './notify'
 
 export type PaymentStatus = 'created' | 'pending' | 'approved' | 'declined' | 'error' | 'voided'
 
