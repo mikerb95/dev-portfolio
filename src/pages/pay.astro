@@ -58,15 +58,21 @@ import BaseLayout from '../layouts/BaseLayout.astro'
   const btn = document.getElementById('btn-pay') as HTMLButtonElement
   const status = document.getElementById('status')!
 
-  document.querySelectorAll<HTMLButtonElement>('.preset').forEach((b) =>
-    b.addEventListener('click', () => { amountEl.value = b.dataset.cop! }),
-  )
-
-  // Una clave de idempotencia por INTENTO de pago: se genera al cargar y se
-  // renueva solo cuando el usuario cambia el monto (un nuevo intento real).
-  // Doble clic o reintentos de red reutilizan la misma clave → un solo cobro.
+  // Una clave de idempotencia por INTENTO de pago: se renueva ante CUALQUIER
+  // cambio de monto (tecleo o preset — ojo: asignar .value por JS no dispara
+  // eventos, hay que renovar en el click). Doble clic o reintentos de red
+  // reutilizan la misma clave → un solo cobro. Si la clave y el monto llegaran
+  // a divergir, el servidor responde 409 en vez de cobrar el valor viejo.
   let idempotencyKey = crypto.randomUUID()
-  amountEl.addEventListener('change', () => { idempotencyKey = crypto.randomUUID() })
+  const renewKey = () => { idempotencyKey = crypto.randomUUID() }
+
+  amountEl.addEventListener('input', renewKey)
+  document.querySelectorAll<HTMLButtonElement>('.preset').forEach((b) =>
+    b.addEventListener('click', () => {
+      amountEl.value = b.dataset.cop!
+      renewKey()
+    }),
+  )
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -104,6 +110,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
       status.textContent = result.status === 'approved'
         ? `✓ Pago aprobado (simulado) — ref ${data.payment.reference}`
         : `Pago ${result.status} — ref ${data.payment.reference}`
+      renewKey() // el intento terminó: el próximo pago es uno nuevo
     } catch (err) {
       status.textContent = err instanceof Error ? err.message : 'Error de conexión'
     } finally {

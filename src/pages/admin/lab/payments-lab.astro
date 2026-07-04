@@ -42,6 +42,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
 <script>
   const fmt = new Intl.DateTimeFormat('es-CO', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
   const money = (cents: number) => `$${(cents / 100).toLocaleString('es-CO')}`
+  // Escapa cualquier dato que venga de la API antes de meterlo en innerHTML.
+  const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 
   const STATUS_CHIP: Record<string, string> = {
     approved: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
