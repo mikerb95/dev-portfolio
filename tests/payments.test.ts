@@ -253,3 +253,34 @@ describe('applyGatewayEvent (webhooks contra BD en memoria)', () => {
     expect(r.statusAfter).toBe('approved')
   })
 })
+
+describe('caída de BD a mitad de transacción (rollback consistente)', () => {
+  it('una excepción antes del commit revierte TODO: sin estado a medias ni eventos huérfanos', async () => {
+    const { eq, sql } = await import('drizzle-orm')
+    const { payments, paymentEvents } = await import('../src/db/schema')
+    const { db } = (await import('../src/db')) as unknown as { db: any }
+
+    const p = (await createPaymentIdempotent(checkoutInput(`dbtx-${crypto.randomUUID()}`))).payment
+
+    let crashed = false
+    try {
+      await db.transaction(async (tx: any) => {
+        await tx.update(payments).set({ status: 'pending', version: p.version + 1 }).where(eq(payments.id, p.id))
+        await tx.insert(paymentEvents).values({
+          paymentId: p.id, provider: 'mock', type: 'transaction.updated', eventStatus: 'pending', receivedAt: new Date(),
+        })
+        throw new Error('CHAOS: conexión perdida a mitad de la transacción')
+      })
+    } catch (e) {
+      crashed = e instanceof Error && e.message.startsWith('CHAOS')
+    }
+
+    const [after] = await db.select().from(payments).where(eq(payments.id, p.id))
+    const [{ n }] = await db.select({ n: sql`count(*)` }).from(paymentEvents).where(eq(paymentEvents.paymentId, p.id))
+
+    expect(crashed).toBe(true)
+    expect(after.status).toBe('created') // NO quedó en 'pending'
+    expect(after.version).toBe(p.version) // la versión no avanzó
+    expect(Number(n)).toBe(0) // el evento del paso 2 se revirtió
+  })
+})
