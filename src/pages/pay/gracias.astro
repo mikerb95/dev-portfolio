@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+// Wompi redirige aquí tras el checkout con ?id=<transaction_id>.
+// El estado final llega por webhook; esta página es solo la confirmación visual.
+---
+
+<BaseLayout title="Gracias — CodeByMike" description="Confirmación de pago." noindex>
+  <div class="max-w-[640px] mx-auto px-6 pt-40 pb-24 text-center">
+    <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300 mb-6">Pago recibido</div>
+    <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] mb-6">
+      ¡<span class="italic font-serif font-normal text-mask-cyan">Gracias</span>!
+    </h1>
+    <p class="text-[15px] text-ink-100 leading-relaxed mb-10">
+      Tu pago está siendo procesado. Recibirás la confirmación de la pasarela;
+      el estado definitivo se registra automáticamente vía webhook.
+    </p>
+    <a href="/" class="inline-flex items-center h-12 px-6 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all shadow-glow">Volver al inicio</a>
+  </div>
+</BaseLayout>

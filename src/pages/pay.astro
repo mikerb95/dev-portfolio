@@ -1,0 +1,113 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+---
+
+<BaseLayout
+  title="Apoya mi trabajo — CodeByMike"
+  description="Donaciones y pagos de desarrollo con checkout seguro (Wompi)."
+  noindex
+>
+  <div class="max-w-[640px] mx-auto px-6 pt-36 pb-24">
+    <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300 mb-4">Pagos / Donaciones</div>
+    <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] mb-4">
+      Apoya mi <span class="italic font-serif font-normal text-mask-cyan">trabajo</span>
+    </h1>
+    <p class="text-[15px] text-ink-100 leading-relaxed mb-10">
+      Donaciones o pagos de desarrollo. Procesado de forma segura; el monto se firma
+      en el servidor y los reintentos nunca generan doble cobro.
+    </p>
+
+    <form id="pay-form" class="space-y-6">
+      <div>
+        <div class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Monto (COP)</div>
+        <div class="grid grid-cols-3 gap-2" id="presets">
+          <button type="button" data-cop="10000" class="preset h-11 rounded-xl border border-white/10 text-[14px] hover:border-cyan/40 transition-colors">$10.000</button>
+          <button type="button" data-cop="25000" class="preset h-11 rounded-xl border border-white/10 text-[14px] hover:border-cyan/40 transition-colors">$25.000</button>
+          <button type="button" data-cop="50000" class="preset h-11 rounded-xl border border-white/10 text-[14px] hover:border-cyan/40 transition-colors">$50.000</button>
+        </div>
+        <input
+          id="amount" type="number" min="1000" max="5000000" step="500" value="25000"
+          class="mt-3 w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-[14px] focus:border-cyan/50 focus:outline-none"
+          aria-label="Monto en pesos colombianos"
+        />
+      </div>
+
+      <div>
+        <label for="email" class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 block mb-2">Email (opcional)</label>
+        <input
+          id="email" type="email" placeholder="tu@email.com"
+          class="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-[14px] focus:border-cyan/50 focus:outline-none"
+        />
+      </div>
+
+      <button
+        id="btn-pay" type="submit"
+        class="w-full h-12 rounded-full bg-cyan text-ink-950 text-[15px] font-medium hover:brightness-110 transition-all shadow-glow disabled:opacity-60"
+      >
+        Pagar
+      </button>
+      <p id="status" class="text-[13px] text-ink-300 font-mono min-h-5" role="status"></p>
+    </form>
+  </div>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('pay-form') as HTMLFormElement
+  const amountEl = document.getElementById('amount') as HTMLInputElement
+  const emailEl = document.getElementById('email') as HTMLInputElement
+  const btn = document.getElementById('btn-pay') as HTMLButtonElement
+  const status = document.getElementById('status')!
+
+  document.querySelectorAll<HTMLButtonElement>('.preset').forEach((b) =>
+    b.addEventListener('click', () => { amountEl.value = b.dataset.cop! }),
+  )
+
+  // Una clave de idempotencia por INTENTO de pago: se genera al cargar y se
+  // renueva solo cuando el usuario cambia el monto (un nuevo intento real).
+  // Doble clic o reintentos de red reutilizan la misma clave → un solo cobro.
+  let idempotencyKey = crypto.randomUUID()
+  amountEl.addEventListener('change', () => { idempotencyKey = crypto.randomUUID() })
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    btn.disabled = true
+    status.textContent = 'Creando pago…'
+    try {
+      const amountCents = Math.round(Number(amountEl.value) * 100)
+      const res = await fetch('/api/payments/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountCents,
+          idempotencyKey,
+          payerEmail: emailEl.value || undefined,
+          description: 'Donación / pago dev — codebymike.tech',
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Error creando el pago')
+
+      if (data.checkout.provider === 'wompi') {
+        const qs = new URLSearchParams(data.checkout.params)
+        location.href = `${data.checkout.url}?${qs}`
+        return
+      }
+
+      // Modo demo (sin llaves Wompi): simula la pasarela por el mismo flujo de webhooks.
+      status.textContent = `Pago ${data.payment.reference} creado (demo). Confirmando…`
+      const confirm = await fetch(data.checkout.confirmUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reference: data.payment.reference }),
+      })
+      const result = await confirm.json()
+      status.textContent = result.status === 'approved'
+        ? `✓ Pago aprobado (simulado) — ref ${data.payment.reference}`
+        : `Pago ${result.status} — ref ${data.payment.reference}`
+    } catch (err) {
+      status.textContent = err instanceof Error ? err.message : 'Error de conexión'
+    } finally {
+      btn.disabled = false
+    }
+  })
+</script>

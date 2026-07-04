@@ -1,0 +1,52 @@
+import type { APIRoute } from 'astro'
+import { eq } from 'drizzle-orm'
+import { randomBytes } from 'node:crypto'
+import { db } from '../../../../db'
+import { payments } from '../../../../db/schema'
+import { applyGatewayEvent } from '../../../../lib/payments'
+
+// "Pasarela" simulada para el modo demo (sin llaves Wompi configuradas).
+// Emite la secuencia real de eventos (pending → approved/declined) por el
+// MISMO camino que un webhook, así la máquina de estados se ejerce igual.
+// Solo opera sobre pagos provider='mock': nunca toca pagos reales.
+
+const json = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+
+export const POST: APIRoute = async ({ request }) => {
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return json(400, { error: 'JSON inválido' })
+  }
+
+  const reference = typeof body.reference === 'string' ? body.reference : null
+  if (!reference) return json(400, { error: 'reference requerida' })
+
+  const [payment] = await db.select().from(payments).where(eq(payments.reference, reference))
+  if (!payment) return json(404, { error: 'pago no encontrado' })
+  if (payment.provider !== 'mock') return json(403, { error: 'solo pagos mock pueden simularse' })
+
+  const outcome = body.outcome === 'declined' ? 'declined' : 'approved'
+  const txId = `mock_tx_${randomBytes(6).toString('hex')}`
+
+  const pending = await applyGatewayEvent({
+    provider: 'mock',
+    type: 'transaction.updated',
+    reference,
+    gatewayTxId: txId,
+    status: 'pending',
+    payload: { simulated: true },
+  })
+  const final = await applyGatewayEvent({
+    provider: 'mock',
+    type: 'transaction.updated',
+    reference,
+    gatewayTxId: txId,
+    status: outcome,
+    payload: { simulated: true },
+  })
+
+  return json(200, { ok: true, status: final.statusAfter, steps: [pending, final] })
+}

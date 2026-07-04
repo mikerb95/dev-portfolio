@@ -1,0 +1,142 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="Payments Lab">
+  <div class="mb-6">
+    <p class="text-zinc-400 text-sm max-w-3xl">
+      Ataques controlados contra la pasarela de pagos (<a href="/pay" target="_blank" class="text-zinc-200 underline decoration-zinc-600 hover:decoration-zinc-300">/pay</a>)
+      para demostrar resiliencia: idempotencia, deduplicación de webhooks, orden de eventos y
+      concurrencia optimista. Cada corrida muestra <strong class="text-zinc-300">esperado vs. observado</strong> y queda en el historial.
+    </p>
+  </div>
+
+  <div class="grid gap-3 md:grid-cols-2 mb-8" id="attacks">
+    <button data-kind="double_click" class="attack text-left rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors p-4">
+      <div class="text-sm text-zinc-100 font-medium mb-1">🖱️ Doble clic en "pagar"</div>
+      <div class="text-xs text-zinc-500">2 checkouts concurrentes con la misma idempotency key → debe existir UN solo cobro.</div>
+    </button>
+    <button data-kind="duplicate_webhook" class="attack text-left rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors p-4">
+      <div class="text-sm text-zinc-100 font-medium mb-1">📨 Webhook duplicado</div>
+      <div class="text-xs text-zinc-500">El mismo evento "approved" llega 2 veces → la 2ª se marca duplicada, sin re-aplicar.</div>
+    </button>
+    <button data-kind="out_of_order" class="attack text-left rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors p-4">
+      <div class="text-sm text-zinc-100 font-medium mb-1">🔀 Webhooks fuera de orden</div>
+      <div class="text-xs text-zinc-500">"approved" llega ANTES que "pending" → el estado nunca retrocede de un terminal.</div>
+    </button>
+    <button data-kind="race_condition" class="attack text-left rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors p-4">
+      <div class="text-sm text-zinc-100 font-medium mb-1">⚡ Race condition</div>
+      <div class="text-xs text-zinc-500">"approved" y "declined" simultáneos → exactamente uno gana (concurrencia optimista).</div>
+    </button>
+  </div>
+
+  <div id="outcome" class="hidden rounded-xl border p-4 mb-8 text-sm"></div>
+
+  <h2 class="text-xs uppercase tracking-wide text-zinc-500 font-medium mb-3">Historial de experimentos</h2>
+  <div id="experiments" class="mb-8"><p class="text-zinc-600 text-sm">Cargando…</p></div>
+
+  <h2 class="text-xs uppercase tracking-wide text-zinc-500 font-medium mb-3">Pagos recientes</h2>
+  <div id="payments"><p class="text-zinc-600 text-sm">Cargando…</p></div>
+</AdminLayout>
+
+<script>
+  const fmt = new Intl.DateTimeFormat('es-CO', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  const money = (cents: number) => `$${(cents / 100).toLocaleString('es-CO')}`
+
+  const STATUS_CHIP: Record<string, string> = {
+    approved: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    declined: 'bg-red-500/10 text-red-400 border-red-500/20',
+    pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    created: 'bg-zinc-500/10 text-zinc-400 border-zinc-600/30',
+    error: 'bg-red-500/10 text-red-400 border-red-500/20',
+    voided: 'bg-zinc-500/10 text-zinc-400 border-zinc-600/30',
+  }
+
+  async function load() {
+    const res = await fetch('/api/admin/lab/payments')
+    const { payments, events, experiments } = await res.json()
+
+    const exps = document.getElementById('experiments')!
+    exps.innerHTML = experiments.length
+      ? experiments.map((e: any) => {
+          const r = JSON.parse(e.result ?? '{}')
+          return `
+            <div class="rounded-lg border border-zinc-800/80 p-3 mb-2 text-xs">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="${e.ok ? 'text-emerald-400' : 'text-red-400'}">${e.ok ? '✓ PASÓ' : '✗ FALLÓ'}</span>
+                <span class="font-mono text-zinc-300">${e.kind}</span>
+                <span class="text-zinc-600 ml-auto font-mono">${e.ranAt ? fmt.format(new Date(e.ranAt)) : ''}</span>
+              </div>
+              <div class="text-zinc-500">Esperado: <span class="text-zinc-400">${r.esperado ?? '—'}</span></div>
+              <div class="text-zinc-500">Observado: <span class="text-zinc-400 font-mono">${r.observado ?? '—'}</span></div>
+            </div>`
+        }).join('')
+      : '<p class="text-zinc-600 text-sm">Aún no hay experimentos. Lanza un ataque arriba.</p>'
+
+    const evByPayment = new Map<number, any[]>()
+    for (const ev of events) {
+      const list = evByPayment.get(ev.paymentId) ?? []
+      list.push(ev)
+      evByPayment.set(ev.paymentId, list)
+    }
+
+    const pays = document.getElementById('payments')!
+    pays.innerHTML = payments.length
+      ? payments.map((p: any) => {
+          const evs = (evByPayment.get(p.id) ?? []).slice().reverse()
+          return `
+            <div class="rounded-lg border border-zinc-800/80 p-3 mb-2">
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <span class="font-mono text-zinc-300">${p.reference}</span>
+                <span class="inline-block px-2 py-0.5 rounded-md border ${STATUS_CHIP[p.status] ?? ''}">${p.status}</span>
+                <span class="text-zinc-400">${money(p.amountCents)} ${p.currency}</span>
+                <span class="text-zinc-600 font-mono">v${p.version} · ${p.provider}</span>
+                <span class="text-zinc-600 ml-auto font-mono">${p.createdAt ? fmt.format(new Date(p.createdAt)) : ''}</span>
+              </div>
+              ${evs.length ? `
+                <div class="mt-2 flex flex-wrap gap-1.5">
+                  ${evs.map((ev: any) => `
+                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                      ev.duplicate ? 'border-amber-500/30 text-amber-400' :
+                      ev.outOfOrder ? 'border-red-500/30 text-red-400' :
+                      'border-zinc-700 text-zinc-500'
+                    }" title="${ev.gatewayTxId ?? ''}">
+                      ${ev.eventStatus}${ev.duplicate ? ' ·dup' : ''}${ev.outOfOrder ? ' ·ooo' : ''}
+                    </span>`).join('')}
+                </div>` : ''}
+            </div>`
+        }).join('')
+      : '<p class="text-zinc-600 text-sm">No hay pagos todavía. Prueba <a href="/pay" class="underline">/pay</a> o lanza un ataque.</p>'
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.attack').forEach((btn) =>
+    btn.addEventListener('click', async () => {
+      const box = document.getElementById('outcome')!
+      document.querySelectorAll<HTMLButtonElement>('.attack').forEach((b) => (b.disabled = true))
+      box.className = 'rounded-xl border border-zinc-700 p-4 mb-8 text-sm text-zinc-400'
+      box.textContent = 'Ejecutando ataque…'
+      try {
+        const res = await fetch('/api/admin/lab/payments/attack', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind: btn.dataset.kind }),
+        })
+        const r = await res.json()
+        if (!res.ok) throw new Error(r.error ?? 'error')
+        box.className = `rounded-xl border p-4 mb-8 text-sm ${r.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'}`
+        box.innerHTML = `
+          <div class="font-medium mb-2 ${r.ok ? 'text-emerald-400' : 'text-red-400'}">${r.ok ? '✓ El sistema resistió el ataque' : '✗ El sistema NO resistió'} — ${r.kind}</div>
+          <div class="text-zinc-400 text-xs mb-1"><span class="text-zinc-500">Esperado:</span> ${r.esperado}</div>
+          <div class="text-zinc-400 text-xs font-mono"><span class="text-zinc-500 font-sans">Observado:</span> ${r.observado}</div>`
+        await load()
+      } catch (e) {
+        box.className = 'rounded-xl border border-red-500/30 p-4 mb-8 text-sm text-red-400'
+        box.textContent = e instanceof Error ? e.message : 'Error ejecutando el ataque'
+      } finally {
+        document.querySelectorAll<HTMLButtonElement>('.attack').forEach((b) => (b.disabled = false))
+      }
+    }),
+  )
+
+  load()
+</script>

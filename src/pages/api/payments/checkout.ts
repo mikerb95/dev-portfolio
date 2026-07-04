@@ -1,0 +1,86 @@
+import type { APIRoute } from 'astro'
+import {
+  createPaymentIdempotent,
+  isValidIdempotencyKey,
+  wompiIntegritySignature,
+} from '../../../lib/payments'
+
+// Crea una intención de pago (donación/pago dev). Público: es el checkout.
+// La clave de idempotencia la genera el cliente (UUID) y es obligatoria:
+// reintentos y dobles clics devuelven el MISMO pago (HTTP 200 en vez de 201).
+
+const json = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  })
+
+const MIN_CENTS = 1_000_00 // $1.000 COP
+const MAX_CENTS = 5_000_000_00 // $5.000.000 COP
+
+export const POST: APIRoute = async ({ request, url }) => {
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return json(400, { error: 'JSON inválido' })
+  }
+
+  const amountCents = Number(body.amountCents)
+  if (!Number.isInteger(amountCents) || amountCents < MIN_CENTS || amountCents > MAX_CENTS) {
+    return json(400, { error: `amountCents debe ser un entero entre ${MIN_CENTS} y ${MAX_CENTS} (centavos de COP)` })
+  }
+  if (!isValidIdempotencyKey(body.idempotencyKey)) {
+    return json(400, { error: 'idempotencyKey requerida (8-128 chars: letras, números, ._-)' })
+  }
+  const email = typeof body.payerEmail === 'string' && body.payerEmail.includes('@') ? body.payerEmail.slice(0, 200) : null
+  const description = typeof body.description === 'string' ? body.description.slice(0, 300) : null
+
+  const wompiPublicKey = process.env.WOMPI_PUBLIC_KEY
+  const wompiIntegrity = process.env.WOMPI_INTEGRITY_SECRET
+  const provider: 'wompi' | 'mock' = wompiPublicKey && wompiIntegrity ? 'wompi' : 'mock'
+
+  const { payment, replayed } = await createPaymentIdempotent({
+    amountCents,
+    currency: 'COP',
+    description,
+    payerEmail: email,
+    idempotencyKey: body.idempotencyKey,
+    provider,
+  })
+
+  // El monto autoritativo es SIEMPRE el de la fila (en un replay puede diferir
+  // del body: nunca dejamos que un retry cambie el monto de un pago existente).
+  const checkout =
+    payment.provider === 'wompi' && wompiPublicKey && wompiIntegrity
+      ? {
+          provider: 'wompi' as const,
+          url: 'https://checkout.wompi.co/p/',
+          params: {
+            'public-key': wompiPublicKey,
+            currency: payment.currency,
+            'amount-in-cents': String(payment.amountCents),
+            reference: payment.reference,
+            'signature:integrity': wompiIntegritySignature(
+              payment.reference,
+              payment.amountCents,
+              payment.currency,
+              wompiIntegrity,
+            ),
+            'redirect-url': new URL('/pay/gracias', url.origin).toString(),
+          },
+        }
+      : { provider: 'mock' as const, confirmUrl: '/api/payments/mock/pay' }
+
+  return json(replayed ? 200 : 201, {
+    replayed,
+    payment: {
+      reference: payment.reference,
+      status: payment.status,
+      amountCents: payment.amountCents,
+      currency: payment.currency,
+      provider: payment.provider,
+    },
+    checkout,
+  })
+}

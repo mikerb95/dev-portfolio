@@ -260,6 +260,59 @@ export const ciRuns = sqliteTable('ci_runs', {
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
+// ── Pasarela de pagos (donaciones/pagos dev) ────────────────────────────────
+
+// Un pago = una intención de cobro. La clave de idempotencia es ÚNICA:
+// requests repetidos (doble clic, retry de red) devuelven la misma fila
+// en vez de crear un segundo cobro.
+export const payments = sqliteTable('payments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Referencia pública enviada a la pasarela (aparece en el checkout y los webhooks).
+  reference: text('reference').notNull().unique(),
+  idempotencyKey: text('idempotency_key').notNull().unique(),
+  description: text('description'),
+  amountCents: integer('amount_cents').notNull(),
+  currency: text('currency').notNull().default('COP'),
+  // Máquina de estados: created → pending → (approved | declined | error | voided).
+  // Los estados terminales nunca retroceden (webhooks fuera de orden se ignoran).
+  status: text('status', { enum: ['created', 'pending', 'approved', 'declined', 'error', 'voided'] })
+    .notNull()
+    .default('created'),
+  provider: text('provider', { enum: ['wompi', 'mock'] }).notNull().default('mock'),
+  gatewayTxId: text('gateway_tx_id'),
+  payerEmail: text('payer_email'),
+  // Concurrencia optimista: UPDATE … WHERE version = ?; si no afecta filas, reintentar.
+  version: integer('version').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+// Bitácora de TODOS los eventos de webhook recibidos, incluidos duplicados y
+// fuera de orden (marcados, no aplicados). Es la evidencia para la sustentación.
+export const paymentEvents = sqliteTable('payment_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  paymentId: integer('payment_id').notNull().references(() => payments.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull(),
+  type: text('type').notNull(),
+  gatewayTxId: text('gateway_tx_id'),
+  eventStatus: text('event_status'),
+  payload: text('payload'),
+  duplicate: integer('duplicate', { mode: 'boolean' }).notNull().default(false),
+  outOfOrder: integer('out_of_order', { mode: 'boolean' }).notNull().default(false),
+  receivedAt: integer('received_at', { mode: 'timestamp' }),
+})
+
+// Historial de experimentos del LAB (ataques de idempotencia, caos, etc.)
+// con resultado esperado vs. real — para mostrar el historial al jurado.
+export const labExperiments = sqliteTable('lab_experiments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  kind: text('kind').notNull(),
+  params: text('params'),
+  ok: integer('ok', { mode: 'boolean' }),
+  result: text('result'),
+  ranAt: integer('ran_at', { mode: 'timestamp' }),
+})
+
 // Configuración clave-valor (tasas FX, moneda base, etc.)
 export const appSettings = sqliteTable('app_settings', {
   key: text('key').primaryKey(),
