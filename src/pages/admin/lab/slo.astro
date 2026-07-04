@@ -1,0 +1,117 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="SLO / Error Budget">
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <p class="text-zinc-400 text-sm max-w-2xl">
+      Objetivo de nivel de servicio (SLO) y <strong class="text-zinc-300">presupuesto de error</strong> por monitor,
+      calculado sobre los chequeos reales de uptime — como hacen Google/Netflix. El budget es cuánta
+      caída te "permite" el objetivo antes de incumplirlo.
+    </p>
+    <div class="flex items-end gap-3">
+      <label class="text-xs">
+        <span class="text-zinc-500 block mb-1">Objetivo (%)</span>
+        <input id="objective" type="number" value="99.5" min="90" max="100" step="0.1"
+          class="w-24 h-9 px-2 rounded-lg bg-white/5 border border-white/10 text-sm font-mono" />
+      </label>
+      <label class="text-xs">
+        <span class="text-zinc-500 block mb-1">Ventana (días)</span>
+        <input id="days" type="number" value="30" min="1" max="90"
+          class="w-20 h-9 px-2 rounded-lg bg-white/5 border border-white/10 text-sm font-mono" />
+      </label>
+    </div>
+  </div>
+
+  <div id="cards" class="grid gap-4 sm:grid-cols-2"><p class="text-zinc-600 text-sm">Cargando…</p></div>
+</AdminLayout>
+
+<script>
+  const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
+
+  const HEALTH: Record<string, { bar: string; text: string; label: string }> = {
+    healthy: { bar: 'bg-emerald-500', text: 'text-emerald-400', label: 'Saludable' },
+    warning: { bar: 'bg-amber-500', text: 'text-amber-400', label: 'Atención' },
+    critical: { bar: 'bg-orange-500', text: 'text-orange-400', label: 'Crítico' },
+    exhausted: { bar: 'bg-red-500', text: 'text-red-400', label: 'Agotado' },
+  }
+
+  function fmtMin(min: number): string {
+    const sign = min < 0 ? '-' : ''
+    let m = Math.abs(Math.round(min))
+    const d = Math.floor(m / 1440); m -= d * 1440
+    const h = Math.floor(m / 60); m -= h * 60
+    const p: string[] = []
+    if (d) p.push(`${d}d`); if (h) p.push(`${h}h`); if (m || !p.length) p.push(`${m}m`)
+    return sign + p.join(' ')
+  }
+
+  async function load() {
+    const objective = (document.getElementById('objective') as HTMLInputElement).value
+    const days = (document.getElementById('days') as HTMLInputElement).value
+    const el = document.getElementById('cards')!
+    const { results } = await (await fetch(`/api/admin/lab/slo?objective=${objective}&days=${days}`)).json()
+
+    if (!results.length) {
+      el.innerHTML = '<p class="text-zinc-600 text-sm">No hay monitores. Crea uno en Monitoreo.</p>'
+      return
+    }
+
+    el.innerHTML = results.map((r: any) => {
+      const s = r.slo
+      const h = HEALTH[r.health] ?? HEALTH.healthy
+      const remaining = s.budgetRemainingPct ?? 100
+      const noData = s.totalChecks === 0
+      const sli = s.sliPct == null ? '—' : `${s.sliPct}%`
+      const met = s.meetsObjective
+      return `
+        <div class="rounded-xl border border-zinc-800 p-5">
+          <div class="flex items-start justify-between gap-2 mb-4">
+            <div class="min-w-0">
+              <div class="text-sm text-zinc-100 font-medium truncate">${esc(r.monitor.name)}</div>
+              <div class="text-[11px] text-zinc-600 font-mono truncate">${esc(r.monitor.url)}</div>
+            </div>
+            <span class="shrink-0 text-xs px-2 py-0.5 rounded-md border ${h.text} border-current/20">${h.label}</span>
+          </div>
+
+          ${noData ? '<p class="text-zinc-600 text-sm">Sin chequeos en la ventana.</p>' : `
+            <div class="flex items-baseline gap-2 mb-1">
+              <span class="text-3xl font-mono ${met ? 'text-emerald-400' : 'text-red-400'}">${sli}</span>
+              <span class="text-xs text-zinc-500">SLI · objetivo ${s.objectivePct}%</span>
+            </div>
+
+            <div class="mt-4 mb-1 flex justify-between text-[11px] text-zinc-500">
+              <span>Presupuesto de error</span>
+              <span class="font-mono ${h.text}">${remaining}% restante</span>
+            </div>
+            <div class="h-2.5 rounded-full bg-zinc-800 overflow-hidden">
+              <div class="h-full ${h.bar} transition-all" style="width:${Math.max(2, remaining)}%"></div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div class="text-[10px] text-zinc-600 uppercase tracking-wide">Restante</div>
+                <div class="text-sm font-mono ${h.text}">${fmtMin(s.remainingMinutes)}</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-zinc-600 uppercase tracking-wide">Presupuesto</div>
+                <div class="text-sm font-mono text-zinc-400">${fmtMin(s.budgetMinutes)}</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-zinc-600 uppercase tracking-wide">Burn rate</div>
+                <div class="text-sm font-mono ${s.burnRate > 1 ? 'text-red-400' : 'text-zinc-400'}">${s.burnRate ?? 0}×</div>
+              </div>
+            </div>
+            <div class="mt-3 text-[11px] text-zinc-600 font-mono">
+              ${s.okChecks}/${s.totalChecks} checks ok · ${s.failedChecks} fallidos
+            </div>
+          `}
+        </div>`
+    }).join('')
+  }
+
+  document.getElementById('objective')!.addEventListener('change', load)
+  document.getElementById('days')!.addEventListener('change', load)
+  load()
+</script>
