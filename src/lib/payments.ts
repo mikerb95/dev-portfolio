@@ -161,8 +161,10 @@ export async function createPaymentIdempotent(
     return { payment: row, replayed: false }
   } catch (e) {
     // Carrera perdida: otro request insertó la misma clave entre el SELECT y el INSERT.
+    // libsql reporta el UNIQUE en e.code (SQLITE_CONSTRAINT_UNIQUE), no siempre en el mensaje.
     const msg = e instanceof Error ? e.message : ''
-    if (/unique|constraint/i.test(msg)) {
+    const code = (e as { code?: string })?.code ?? ''
+    if (/unique|constraint/i.test(msg) || /CONSTRAINT/i.test(code)) {
       const [row] = await db.select().from(payments).where(eq(payments.idempotencyKey, input.idempotencyKey))
       if (row) return { payment: row, replayed: true }
     }
