@@ -242,6 +242,24 @@ export const monitorIncidents = sqliteTable('monitor_incidents', {
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
+// Runs del pipeline CI/CD (GitHub Actions reporta aquí vía POST /api/lab/ingest).
+export const ciRuns = sqliteTable('ci_runs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sha: text('sha').notNull(),
+  branch: text('branch'),
+  // ID del run en GitHub Actions, para enlazar a los logs.
+  runId: text('run_id'),
+  url: text('url'),
+  conclusion: text('conclusion', { enum: ['success', 'failure', 'rolled_back'] }).notNull(),
+  testsPassed: integer('tests_passed'),
+  testsFailed: integer('tests_failed'),
+  coveragePct: real('coverage_pct'),
+  durationMs: integer('duration_ms'),
+  // Resultado del health check post-deploy (null si el run no llegó a esa etapa).
+  healthOk: integer('health_ok', { mode: 'boolean' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
+
 // Configuración clave-valor (tasas FX, moneda base, etc.)
 export const appSettings = sqliteTable('app_settings', {
   key: text('key').primaryKey(),
