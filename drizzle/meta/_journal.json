@@ -50,6 +50,13 @@
       "when": 1783183745566,
       "tag": "0006_organic_shinko_yamashiro",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1783193589768,
+      "tag": "0007_hot_mordo",
+      "breakpoints": true
     }
   ]
 }
