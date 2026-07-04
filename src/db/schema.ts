@@ -304,6 +304,21 @@ export const paymentEvents = sqliteTable('payment_events', {
   receivedAt: integer('received_at', { mode: 'timestamp' }),
 })
 
+// Flags de chaos engineering: inyectan fallos reales en rutas específicas.
+// Cinturones de seguridad: TTL obligatorio (máx 15 min), rutas admin/auth
+// excluidas por código, kill-switch (PÁNICO) y fail-open si la lectura falla.
+export const chaosFlags = sqliteTable('chaos_flags', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  kind: text('kind', { enum: ['latency', 'error500', 'kill_service'] }).notNull(),
+  // Ruta exacta ("/api/health") o prefijo con comodín final ("/projects/*").
+  targetRoute: text('target_route').notNull(),
+  // Parámetro del fallo: ms de latencia para 'latency'.
+  param: integer('param'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
+
 // Historial de experimentos del LAB (ataques de idempotencia, caos, etc.)
 // con resultado esperado vs. real — para mostrar el historial al jurado.
 export const labExperiments = sqliteTable('lab_experiments', {
