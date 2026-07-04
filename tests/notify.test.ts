@@ -28,8 +28,8 @@ describe('headerSafe (bug del emoji en headers HTTP)', () => {
 describe('sendPush', () => {
   beforeEach(() => {
     vi.stubEnv('NTFY_TOPIC', 'test-topic')
-    vi.stubEnv('NTFY_SERVER', '')
-    vi.stubEnv('NTFY_TOKEN', '')
+    vi.stubEnv('NTFY_SERVER', undefined)
+    vi.stubEnv('NTFY_TOKEN', undefined)
   })
   afterEach(() => vi.unstubAllGlobals())
 

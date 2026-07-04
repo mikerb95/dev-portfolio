@@ -23,7 +23,7 @@ describe('probe', () => {
   })
 
   it('respeta expectedStatus personalizado', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => okResponse('', 204)))
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 204 })))
     const r = await probe({ url: 'https://example.com', expectedStatus: 204 })
     expect(r.state).toBe('up')
   })
