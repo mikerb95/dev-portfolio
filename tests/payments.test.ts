@@ -229,4 +229,27 @@ describe('applyGatewayEvent (webhooks contra BD en memoria)', () => {
     expect(r.ok).toBe(false)
     expect(r.error).toContain('referencia desconocida')
   })
+
+  it('monto que no coincide: el evento NO aprueba el pago', async () => {
+    const p = await seed() // amountCents = 2.500.000
+    const r = await applyGatewayEvent({ ...evt(p.reference, 'approved'), amountCents: 100 })
+    expect(r.amountMismatch).toBe(true)
+    expect(r.applied).toBe(false)
+    expect(r.statusAfter).toBe('created')
+  })
+
+  it('moneda que no coincide tampoco aplica', async () => {
+    const p = await seed()
+    const r = await applyGatewayEvent({ ...evt(p.reference, 'approved'), amountCents: p.amountCents, currency: 'USD' })
+    expect(r.amountMismatch).toBe(true)
+    expect(r.applied).toBe(false)
+  })
+
+  it('monto correcto explícito sí aplica', async () => {
+    const p = await seed()
+    const r = await applyGatewayEvent({ ...evt(p.reference, 'approved'), amountCents: p.amountCents, currency: 'COP' })
+    expect(r.amountMismatch).toBeFalsy()
+    expect(r.applied).toBe(true)
+    expect(r.statusAfter).toBe('approved')
+  })
 })
