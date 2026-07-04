@@ -1,0 +1,143 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="Chaos Engineering">
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <p class="text-zinc-400 text-sm max-w-2xl">
+      Inyecta fallos <strong class="text-zinc-300">reales</strong> en rutas específicas (500, 503, latencia)
+      y observa cómo el monitoreo los detecta y notifica. Cada flag expira solo (máx 15 min).
+      Las rutas <span class="font-mono text-zinc-300">/admin</span> y <span class="font-mono text-zinc-300">/api/auth</span> están
+      protegidas: el caos nunca te deja fuera del panel.
+    </p>
+    <button id="panic" class="shrink-0 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors">
+      🛑 PÁNICO — apagar todo
+    </button>
+  </div>
+
+  <div class="rounded-xl border border-zinc-800 p-4 mb-8">
+    <div class="text-xs uppercase tracking-wide text-zinc-500 font-medium mb-3">Nuevo flag de caos</div>
+    <form id="flag-form" class="grid gap-3 sm:grid-cols-4 items-end">
+      <label class="block text-xs">
+        <span class="text-zinc-500 block mb-1">Tipo de fallo</span>
+        <select id="kind" class="w-full h-10 px-2 rounded-lg bg-white/5 border border-white/10 text-sm">
+          <option value="error500">HTTP 500</option>
+          <option value="kill_service">Servicio caído (503)</option>
+          <option value="latency">Latencia extra</option>
+        </select>
+      </label>
+      <label class="block text-xs">
+        <span class="text-zinc-500 block mb-1">Ruta (ej. /projects o /projects/*)</span>
+        <input id="route" value="/projects" class="w-full h-10 px-3 rounded-lg bg-white/5 border border-white/10 text-sm font-mono" />
+      </label>
+      <label class="block text-xs" id="latency-wrap" hidden>
+        <span class="text-zinc-500 block mb-1">Latencia (ms)</span>
+        <input id="param" type="number" value="3000" min="100" max="10000" class="w-full h-10 px-3 rounded-lg bg-white/5 border border-white/10 text-sm" />
+      </label>
+      <label class="block text-xs">
+        <span class="text-zinc-500 block mb-1">Duración (min)</span>
+        <input id="ttl" type="number" value="5" min="1" max="15" class="w-full h-10 px-3 rounded-lg bg-white/5 border border-white/10 text-sm" />
+      </label>
+      <button type="submit" class="h-10 px-4 rounded-lg bg-white text-zinc-900 text-sm font-medium hover:bg-zinc-100 transition-colors sm:col-span-1">
+        Activar caos
+      </button>
+    </form>
+    <p id="flag-status" class="text-xs text-zinc-500 mt-2 min-h-4 font-mono"></p>
+  </div>
+
+  <div class="rounded-xl border border-zinc-800 p-4 mb-8">
+    <div class="flex items-center justify-between mb-2">
+      <div class="text-xs uppercase tracking-wide text-zinc-500 font-medium">💥 Caída de BD a mitad de transacción</div>
+      <button id="dbtx" class="px-3 py-1.5 rounded-lg border border-zinc-700 hover:border-zinc-500 text-sm transition-colors">Ejecutar experimento</button>
+    </div>
+    <p class="text-xs text-zinc-500">Aborta una transacción real de pago justo antes del commit y verifica que la BD queda consistente (rollback total, sin datos a medias).</p>
+    <div id="dbtx-result" class="hidden mt-3 rounded-lg border p-3 text-xs"></div>
+  </div>
+
+  <h2 class="text-xs uppercase tracking-wide text-zinc-500 font-medium mb-3">Flags</h2>
+  <div id="flags"><p class="text-zinc-600 text-sm">Cargando…</p></div>
+</AdminLayout>
+
+<script>
+  const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
+  const fmt = new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+  const KIND_LABEL: Record<string, string> = {
+    error500: 'HTTP 500', kill_service: 'Servicio caído (503)', latency: 'Latencia',
+  }
+
+  const kindSel = document.getElementById('kind') as HTMLSelectElement
+  const latencyWrap = document.getElementById('latency-wrap') as HTMLElement
+  kindSel.addEventListener('change', () => { latencyWrap.hidden = kindSel.value !== 'latency' })
+
+  async function loadFlags() {
+    const el = document.getElementById('flags')!
+    const rows = await (await fetch('/api/admin/lab/chaos')).json()
+    const now = Date.now()
+    if (!rows.length) {
+      el.innerHTML = '<p class="text-zinc-600 text-sm">Sin flags. Activa uno arriba.</p>'
+      return
+    }
+    el.innerHTML = rows.map((f: any) => {
+      const exp = new Date(f.expiresAt).getTime()
+      const live = f.active && exp > now
+      return `
+        <div class="flex items-center gap-3 rounded-lg border border-zinc-800/80 p-3 mb-2 text-sm ${live ? '' : 'opacity-50'}">
+          <span class="inline-block w-2 h-2 rounded-full ${live ? 'bg-red-500 animate-pulse' : 'bg-zinc-600'}"></span>
+          <span class="text-zinc-200">${esc(KIND_LABEL[f.kind] ?? f.kind)}</span>
+          <span class="font-mono text-xs text-zinc-400">${esc(f.targetRoute)}</span>
+          ${f.param ? `<span class="text-xs text-zinc-500">${f.param}ms</span>` : ''}
+          <span class="text-xs text-zinc-600 ml-auto font-mono">${live ? `expira ${fmt.format(exp)}` : 'inactivo'}</span>
+          ${live ? `<button data-id="${f.id}" class="off text-xs text-zinc-400 hover:text-red-400 transition-colors">apagar</button>` : ''}
+        </div>`
+    }).join('')
+    el.querySelectorAll<HTMLButtonElement>('.off').forEach((b) =>
+      b.addEventListener('click', async () => {
+        await fetch(`/api/admin/lab/chaos?id=${b.dataset.id}`, { method: 'DELETE' })
+        loadFlags()
+      }),
+    )
+  }
+
+  document.getElementById('flag-form')!.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const status = document.getElementById('flag-status')!
+    const body = {
+      kind: kindSel.value,
+      targetRoute: (document.getElementById('route') as HTMLInputElement).value,
+      param: Number((document.getElementById('param') as HTMLInputElement).value),
+      ttlSeconds: Number((document.getElementById('ttl') as HTMLInputElement).value) * 60,
+    }
+    const res = await fetch('/api/admin/lab/chaos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    })
+    const data = await res.json()
+    status.textContent = res.ok
+      ? `Caos activado en ${data.targetRoute} — abre esa ruta en otra pestaña para verlo fallar`
+      : `Error: ${data.error}`
+    status.className = `text-xs mt-2 min-h-4 font-mono ${res.ok ? 'text-red-400' : 'text-amber-400'}`
+    loadFlags()
+  })
+
+  document.getElementById('panic')!.addEventListener('click', async () => {
+    await fetch('/api/admin/lab/chaos', { method: 'DELETE' })
+    document.getElementById('flag-status')!.textContent = 'Todos los flags apagados.'
+    loadFlags()
+  })
+
+  document.getElementById('dbtx')!.addEventListener('click', async () => {
+    const box = document.getElementById('dbtx-result')!
+    box.className = 'mt-3 rounded-lg border border-zinc-700 p-3 text-xs text-zinc-400'
+    box.textContent = 'Ejecutando…'
+    const r = await (await fetch('/api/admin/lab/chaos/experiment', { method: 'POST' })).json()
+    box.className = `mt-3 rounded-lg border p-3 text-xs ${r.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'}`
+    box.innerHTML = `
+      <div class="font-medium mb-1 ${r.ok ? 'text-emerald-400' : 'text-red-400'}">${r.ok ? '✓ La BD quedó consistente tras la caída' : '✗ Inconsistencia detectada'}</div>
+      <div class="text-zinc-500">Esperado: <span class="text-zinc-400">${esc(r.esperado)}</span></div>
+      <div class="text-zinc-500">Observado: <span class="text-zinc-400 font-mono">${esc(r.observado)}</span></div>`
+  })
+
+  loadFlags()
+  setInterval(loadFlags, 5000)
+</script>
