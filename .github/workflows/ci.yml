@@ -1,0 +1,158 @@
+# Pipeline CI/CD: test + build en cada push/PR; en main, además espera el
+# deploy de Vercel (auto-deploy por integración git), lo verifica con
+# /api/health y hace rollback automático si la versión nueva no está sana.
+#
+# Secrets opcionales (el pipeline degrada con gracia si faltan):
+#   VERCEL_TOKEN      → habilita el rollback automático
+#   LAB_INGEST_TOKEN  → reporta métricas del run a /api/lab/ingest (panel LAB)
+#   NTFY_TOPIC        → push al teléfono cuando hay rollback
+# Variables opcionales (Settings → Variables):
+#   PROD_URL          → URL de producción (default https://codebymike.tech)
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: Test + Build
+    runs-on: ubuntu-latest
+    outputs:
+      coverage: ${{ steps.metrics.outputs.coverage }}
+      tests_passed: ${{ steps.metrics.outputs.tests_passed }}
+      tests_failed: ${{ steps.metrics.outputs.tests_failed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tests con cobertura
+        run: npx vitest run --coverage --reporter=default --reporter=json --outputFile=vitest-report.json
+
+      - name: Build
+        run: npm run build
+
+      - name: Extraer métricas
+        id: metrics
+        if: always()
+        run: |
+          COVERAGE=$(node -e "try{console.log(require('./coverage/coverage-summary.json').total.lines.pct)}catch{console.log('')}")
+          PASSED=$(node -e "try{console.log(require('./vitest-report.json').numPassedTests)}catch{console.log('')}")
+          FAILED=$(node -e "try{console.log(require('./vitest-report.json').numFailedTests)}catch{console.log('')}")
+          echo "coverage=$COVERAGE" >> "$GITHUB_OUTPUT"
+          echo "tests_passed=$PASSED" >> "$GITHUB_OUTPUT"
+          echo "tests_failed=$FAILED" >> "$GITHUB_OUTPUT"
+          echo "Cobertura: $COVERAGE% · Tests: $PASSED ok / $FAILED fallidos"
+
+  verify-production:
+    name: Verificar deploy + rollback
+    needs: quality
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+      VERCEL_ORG_ID: team_GwKd4hurNRGdWHhXUHiQ9HeM
+      VERCEL_PROJECT_ID: prj_vdfQibXACk3SvwYWEmKdEpZ4NaGh
+    steps:
+      - name: Esperar a que Vercel despliegue este commit
+        id: wait
+        run: |
+          echo "Esperando deploy de ${GITHUB_SHA} en ${PROD_URL} (máx 8 min)…"
+          for i in $(seq 1 48); do
+            SHA=$(curl -sf --max-time 10 "$PROD_URL/api/health" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).sha||'')}catch{console.log('')}})" || true)
+            if [ "$SHA" = "$GITHUB_SHA" ]; then
+              echo "Deploy activo tras $((i*10))s"
+              echo "deployed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "deployed=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::El deploy de este commit no apareció en 8 min; se omite la verificación."
+
+      - name: Health check post-deploy
+        id: health
+        if: steps.wait.outputs.deployed == 'true'
+        run: |
+          OK=0
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 15 "$PROD_URL/api/health" || echo 000)
+            echo "Check $i: HTTP $STATUS $(cat /tmp/health.json 2>/dev/null)"
+            if [ "$STATUS" = "200" ]; then OK=$((OK+1)); fi
+            sleep 5
+          done
+          if [ "$OK" -ge 2 ]; then
+            echo "healthy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "healthy=false" >> "$GITHUB_OUTPUT"
+            echo "::error::Health check falló ($OK/3 intentos sanos)"
+          fi
+
+      - name: Rollback automático
+        id: rollback
+        if: steps.wait.outputs.deployed == 'true' && steps.health.outputs.healthy == 'false'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::warning::Sin VERCEL_TOKEN: no se puede hacer rollback automático."
+            exit 0
+          fi
+          npx vercel@latest rollback --yes --token "$VERCEL_TOKEN"
+          echo "rolled_back=true" >> "$GITHUB_OUTPUT"
+
+      - name: Notificar rollback (ntfy)
+        if: steps.rollback.outputs.rolled_back == 'true'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          [ -z "$NTFY_TOPIC" ] && exit 0
+          curl -s -X POST "https://ntfy.sh/$NTFY_TOPIC" \
+            -H "Title: Rollback automatico ejecutado" \
+            -H "Priority: 5" -H "Tags: rotating_light" \
+            -d "El deploy ${GITHUB_SHA:0:7} fallo el health check y se revirtio a la version anterior. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Reportar run al panel LAB
+        if: always()
+        env:
+          LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
+        run: |
+          [ -z "$LAB_INGEST_TOKEN" ] && { echo "Sin LAB_INGEST_TOKEN: no se reporta."; exit 0; }
+          if [ "${{ steps.rollback.outputs.rolled_back }}" = "true" ]; then CONCLUSION=rolled_back;
+          elif [ "${{ steps.health.outputs.healthy }}" = "false" ]; then CONCLUSION=failure;
+          else CONCLUSION=success; fi
+          HEALTH=$([ "${{ steps.health.outputs.healthy }}" = "true" ] && echo true || echo false)
+          DURATION=$(( ($(date +%s) - $(date -d "${{ github.event.head_commit.timestamp }}" +%s)) * 1000 ))
+          curl -s -X POST "$PROD_URL/api/lab/ingest" \
+            -H "Authorization: Bearer $LAB_INGEST_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"kind\": \"ci_run\",
+              \"sha\": \"$GITHUB_SHA\",
+              \"branch\": \"${GITHUB_REF_NAME}\",
+              \"runId\": \"${{ github.run_id }}\",
+              \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"conclusion\": \"$CONCLUSION\",
+              \"testsPassed\": \"${{ needs.quality.outputs.tests_passed }}\",
+              \"testsFailed\": \"${{ needs.quality.outputs.tests_failed }}\",
+              \"coveragePct\": \"${{ needs.quality.outputs.coverage }}\",
+              \"durationMs\": \"$DURATION\",
+              \"healthOk\": $HEALTH
+            }"
+
+      - name: Fallar el job si el deploy quedó insano
+        if: steps.health.outputs.healthy == 'false'
+        run: exit 1

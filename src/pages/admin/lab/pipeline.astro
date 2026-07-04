@@ -1,0 +1,109 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+
+const REPO = 'mikerb95/dev-portfolio'
+const WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/ci.yml`
+---
+
+<AdminLayout title="Pipeline CI/CD">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-zinc-400 text-sm max-w-2xl">
+      Cada push a <span class="font-mono text-zinc-300">main</span> dispara test → build → deploy.
+      Tras el deploy, el pipeline verifica <span class="font-mono text-zinc-300">/api/health</span> en
+      producción y hace <strong class="text-zinc-200">rollback automático</strong> si la versión nueva no está sana.
+    </p>
+    <a href={WORKFLOW_URL} target="_blank" rel="noopener" class="shrink-0">
+      <img src={`${WORKFLOW_URL}/badge.svg`} alt="Estado del pipeline" height="20" />
+    </a>
+  </div>
+
+  <div id="runs" class="space-y-2">
+    <p class="text-zinc-600 text-sm">Cargando runs…</p>
+  </div>
+</AdminLayout>
+
+<script>
+  const REPO_URL = 'https://github.com/mikerb95/dev-portfolio'
+  const fmt = new Intl.DateTimeFormat('es-CO', {
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+
+  const CHIP: Record<string, string> = {
+    success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    failure: 'bg-red-500/10 text-red-400 border-red-500/20',
+    rolled_back: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  }
+  const LABEL: Record<string, string> = {
+    success: 'Éxito', failure: 'Falló', rolled_back: 'Rollback',
+  }
+
+  type Run = {
+    id: number; sha: string; branch: string | null; url: string | null
+    conclusion: string; testsPassed: number | null; testsFailed: number | null
+    coveragePct: number | null; durationMs: number | null
+    healthOk: boolean | null; createdAt: string | null
+  }
+
+  async function load() {
+    const el = document.getElementById('runs')!
+    try {
+      const res = await fetch('/api/admin/lab/ci-runs')
+      const runs: Run[] = await res.json()
+
+      if (!runs.length) {
+        el.innerHTML = `
+          <div class="rounded-xl border border-zinc-800 p-6 text-sm text-zinc-400 space-y-2">
+            <p class="text-zinc-200 font-medium">Aún no hay runs reportados.</p>
+            <p>El workflow ya está en el repo. Para que reporte aquí, configura en GitHub → Settings → Secrets:</p>
+            <ul class="list-disc pl-5 space-y-1 text-zinc-500">
+              <li><span class="font-mono text-zinc-300">LAB_INGEST_TOKEN</span> — el mismo valor que en Vercel (reporta métricas a este panel)</li>
+              <li><span class="font-mono text-zinc-300">VERCEL_TOKEN</span> — habilita el rollback automático</li>
+              <li><span class="font-mono text-zinc-300">NTFY_TOPIC</span> — push al teléfono si hay rollback</li>
+            </ul>
+          </div>`
+        return
+      }
+
+      el.innerHTML = `
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-zinc-800 text-zinc-500 text-xs uppercase tracking-wide text-left">
+              <th class="pb-2 pr-4 font-medium">Commit</th>
+              <th class="pb-2 pr-4 font-medium">Resultado</th>
+              <th class="pb-2 pr-4 font-medium">Tests</th>
+              <th class="pb-2 pr-4 font-medium">Cobertura</th>
+              <th class="pb-2 pr-4 font-medium">Health</th>
+              <th class="pb-2 pr-4 font-medium">Duración</th>
+              <th class="pb-2 font-medium">Fecha</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-800/60">
+            ${runs.map((r) => `
+              <tr class="text-zinc-300">
+                <td class="py-2.5 pr-4">
+                  <a href="${r.url ?? `${REPO_URL}/commit/${r.sha}`}" target="_blank" rel="noopener"
+                     class="font-mono text-xs text-zinc-400 hover:text-zinc-100 transition-colors">${r.sha.slice(0, 7)}</a>
+                  ${r.branch ? `<span class="ml-2 text-[10px] text-zinc-600 font-mono">${r.branch}</span>` : ''}
+                </td>
+                <td class="py-2.5 pr-4">
+                  <span class="inline-block px-2 py-0.5 rounded-md border text-xs ${CHIP[r.conclusion] ?? ''}">${LABEL[r.conclusion] ?? r.conclusion}</span>
+                </td>
+                <td class="py-2.5 pr-4 text-xs font-mono">
+                  ${r.testsPassed != null ? `<span class="text-emerald-400">${r.testsPassed} ✓</span>` : '—'}
+                  ${r.testsFailed ? `<span class="text-red-400 ml-1">${r.testsFailed} ✗</span>` : ''}
+                </td>
+                <td class="py-2.5 pr-4 text-xs font-mono">${r.coveragePct != null ? `${r.coveragePct}%` : '—'}</td>
+                <td class="py-2.5 pr-4 text-xs">${r.healthOk == null ? '—' : r.healthOk ? '🟢' : '🔴'}</td>
+                <td class="py-2.5 pr-4 text-xs text-zinc-500 font-mono">${r.durationMs != null ? `${Math.round(r.durationMs / 1000)}s` : '—'}</td>
+                <td class="py-2.5 text-xs text-zinc-500 font-mono">${r.createdAt ? fmt.format(new Date(r.createdAt)) : '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`
+    } catch {
+      el.innerHTML = '<p class="text-red-400 text-sm">Error cargando los runs.</p>'
+    }
+  }
+
+  load()
+</script>
