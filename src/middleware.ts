@@ -1,9 +1,17 @@
 import { defineMiddleware } from 'astro:middleware'
 import { getSession } from 'auth-astro/server'
 import { isAllowedLogin } from './lib/auth'
+import { maybeChaos } from './lib/chaos'
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url
+
+  // LAB · chaos engineering: fallos inyectados por flags con TTL (máx 15 min).
+  // Fail-open y con /admin, /api/admin y /api/auth excluidos por código:
+  // sin flags activos este camino cuesta una lectura cacheada cada ~5s.
+  const chaosResponse = await maybeChaos(pathname)
+  if (chaosResponse) return chaosResponse
+
   const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
 
   if (isAdmin) {
