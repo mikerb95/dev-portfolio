@@ -1,19 +1,38 @@
 import type { APIRoute } from 'astro'
 import { eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
+import { getSession } from 'auth-astro/server'
 import { db } from '../../../../db'
 import { payments } from '../../../../db/schema'
 import { applyGatewayEvent } from '../../../../lib/payments'
+import { isAllowedLogin } from '../../../../lib/auth'
+import { rateLimit, clientIp } from '../../../../lib/ratelimit'
 
 // "Pasarela" simulada para el modo demo (sin llaves Wompi configuradas).
 // Emite la secuencia real de eventos (pending → approved/declined) por el
 // MISMO camino que un webhook, así la máquina de estados se ejerce igual.
 // Solo opera sobre pagos provider='mock': nunca toca pagos reales.
+//
+// Gating: para que un tercero no pueda fabricar pagos "aprobados" en el panel,
+// simular requiere sesión admin O el flag explícito PAYMENTS_MOCK_ENABLED=true
+// (p. ej. durante la sustentación).
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 export const POST: APIRoute = async ({ request }) => {
+  if (!rateLimit(`mockpay:${clientIp(request)}`, 10, 60_000)) {
+    return json(429, { error: 'demasiados intentos, espera un minuto' })
+  }
+
+  if (process.env.PAYMENTS_MOCK_ENABLED !== 'true') {
+    const session = await getSession(request)
+    const login = (session?.user as { login?: string } | undefined)?.login
+    if (!session || (login && !isAllowedLogin(login))) {
+      return json(403, { error: 'simulación deshabilitada (requiere sesión admin o PAYMENTS_MOCK_ENABLED=true)' })
+    }
+  }
+
   let body: Record<string, unknown>
   try {
     body = await request.json()
