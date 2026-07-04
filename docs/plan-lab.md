@@ -90,6 +90,10 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 4. Meta: ≥80% cobertura en `src/lib/**` (el objetivo honesto es que mutation testing
    después lo valide).
 
+> **Progreso**: Fase 0 ✅ (jul 3: 94 tests, 87% líneas en src/lib). Fase 1 ✅ (jul 4: workflow CI,
+> /api/health, ingest, tabla ci_runs, página /admin/lab/pipeline). Falta el secret VERCEL_TOKEN
+> en GitHub para habilitar el rollback automático (crear en vercel.com/account/tokens).
+
 ### Fase 1 — Pipeline CI/CD en vivo
 1. `.github/workflows/ci.yml`: push → `lint/typecheck (astro check)` → `vitest --coverage`
    → build → deploy Vercel (CLI con `--prebuilt`) → **health check post-deploy**
