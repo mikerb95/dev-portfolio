@@ -1,13 +1,18 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { createHash } from 'node:crypto'
 
-// BD libsql EN MEMORIA en lugar de Turso: los tests ejercen el flujo real
-// (UNIQUE de idempotencia, UPDATE con version) sin tocar producción.
+// BD libsql local (archivo temporal) en lugar de Turso: los tests ejercen el
+// flujo real (UNIQUE de idempotencia, UPDATE con version, TRANSACCIONES) sin
+// tocar producción. Se usa archivo y no ':memory:' porque las transacciones de
+// libsql abren otra conexión y una BD en memoria no comparte tablas entre ellas.
 vi.mock('../src/db', async () => {
   const { createClient } = await import('@libsql/client')
   const { drizzle } = await import('drizzle-orm/libsql')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
   const schema = await import('../src/db/schema')
-  const client = createClient({ url: ':memory:' })
+  const file = join(tmpdir(), `payments-test-${process.pid}-${Date.now()}.db`)
+  const client = createClient({ url: `file:${file}` })
   return { db: drizzle(client, { schema }), __client: client }
 })
 
