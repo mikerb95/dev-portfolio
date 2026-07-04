@@ -14,7 +14,7 @@ export type NotifyResult = { channel: 'email' | 'push'; ok: boolean; skipped?: b
  * codificamos el resto UTF-8→latin1 para que el receptor (ntfy) lo lea como UTF-8
  * y conserve los acentos.
  */
-function headerSafe(s: string): string {
+export function headerSafe(s: string): string {
   const stripped = Array.from(s)
     .filter((ch) => (ch.codePointAt(0) ?? 0) < 0x2000)
     .join('')
