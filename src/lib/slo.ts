@@ -50,7 +50,6 @@ export function computeSlo(
   windowDays = 30,
   now: number = Date.now(),
 ): SloResult {
-  const windowMinutes = windowDays * 24 * 60
   const from = now - windowDays * 24 * 60 * MS_PER_MINUTE
 
   let total = 0
@@ -61,6 +60,21 @@ export function computeSlo(
     total++
     if (c.ok) ok++
   }
+
+  return computeSloFromCounts(ok, total, objectivePct, windowDays)
+}
+
+/**
+ * Variante sobre conteos ya agregados (p. ej. GROUP BY en SQL), para no tener
+ * que materializar cada check individual cuando la ventana es grande.
+ */
+export function computeSloFromCounts(
+  ok: number,
+  total: number,
+  objectivePct = 99.5,
+  windowDays = 30,
+): SloResult {
+  const windowMinutes = windowDays * 24 * 60
   const failed = total - ok
 
   // Fracción de error permitida por el objetivo (99.5% → 0.005).
