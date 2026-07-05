@@ -160,14 +160,22 @@ const tools: CaseStudy[] = [
             </div>
           </div>
 
-          <div class="grid md:grid-cols-2 gap-6 mb-8">
-            <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
-              <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-3">El problema</div>
-              <p class="text-[14px] text-ink-100 leading-relaxed">{t.problema}</p>
+          <div class="grid lg:grid-cols-[1fr_400px] gap-6 mb-8 items-start">
+            <div class="space-y-6">
+              <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-3">El problema</div>
+                <p class="text-[14px] text-ink-100 leading-relaxed">{t.problema}</p>
+              </div>
+              <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-3">La solución</div>
+                <p class="text-[14px] text-ink-100 leading-relaxed">{t.solucion}</p>
+              </div>
             </div>
-            <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
-              <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-3">La solución</div>
-              <p class="text-[14px] text-ink-100 leading-relaxed">{t.solucion}</p>
+            <div>
+              <ToolMock kind={t.mock} />
+              <p class="text-[10px] font-mono text-ink-300 mt-2 text-center">
+                Recreación del panel con datos ilustrativos — los datos reales no se publican.
+              </p>
             </div>
           </div>
 
