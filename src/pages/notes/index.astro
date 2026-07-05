@@ -6,7 +6,9 @@ const notes = (await getCollection('notes', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 )
 
-const fmtDate = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+// timeZone UTC: la fecha del frontmatter es un día calendario, no un instante;
+// sin esto, America/Bogota (-5) la retrocede al día anterior.
+const fmtDate = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 ---
 
 <BaseLayout

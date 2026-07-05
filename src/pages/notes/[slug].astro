@@ -10,7 +10,8 @@ if (!note || note.data.draft) {
 }
 
 const { Content } = await render(note)
-const fmtDate = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+// timeZone UTC: la fecha del frontmatter es un día calendario, no un instante.
+const fmtDate = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 ---
 
 <BaseLayout title={`${note.data.title} — CodeByMike`} description={note.data.description} type="article">
