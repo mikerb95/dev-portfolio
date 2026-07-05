@@ -1,0 +1,214 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+// Casos de estudio de las herramientas internas construidas sobre este mismo
+// sitio. Contenido 100% estático: describe arquitectura y decisiones, nunca
+// datos de clientes ni configuración real.
+
+type CaseStudy = {
+  num: string
+  title: string
+  tagline: string
+  problema: string
+  solucion: string
+  detalle: string[]
+  stack: string[]
+  live?: { href: string; label: string }
+}
+
+const tools: CaseStudy[] = [
+  {
+    num: '01',
+    title: 'Monitoreo, SLOs y error budgets',
+    tagline: 'Observabilidad estilo SRE, construida desde cero',
+    problema:
+      'Operar sitios de clientes sin saber si están caídos hasta que alguien avisa. Los servicios de uptime genéricos no detectan un deploy roto que responde 200 con la página equivocada.',
+    solucion:
+      'Un motor de checks propio: cada sondeo valida código HTTP, contenido esperado en la respuesta y umbral de latencia. Los fallos se agrupan en incidentes (del primer fallo al primer éxito) y sobre el historial se calculan SLOs y presupuestos de error al estilo Google SRE.',
+    detalle: [
+      'SLO por servicio con burn rate: no solo "cuánto cayó", sino a qué velocidad se consume el presupuesto de error.',
+      'Alertas push instantáneas al móvil vía ntfy cuando un servicio cae o se degrada.',
+      'Vigilancia de expiración de certificados TLS y de dominios.',
+      'Los datos alimentan la página pública de status: lo que ves ahí es lo mismo que veo yo.',
+    ],
+    stack: ['Astro API routes', 'Drizzle ORM', 'Turso', 'cron externo', 'ntfy'],
+    live: { href: '/status', label: 'Ver el status público en vivo' },
+  },
+  {
+    num: '02',
+    title: 'Costos y P&L por proyecto',
+    tagline: 'Saber qué cuesta operar cada cosa, al centavo',
+    problema:
+      'Hosting, dominios, base de datos, email: cada proyecto acumula servicios con facturación distinta. Sin registro, es imposible saber si un proyecto es rentable o cuánto cuesta mantenerlo al año.',
+    solucion:
+      'Un registro de servicios por proyecto (y a nivel de cuenta) con su costo y ciclo de facturación, cruzado con ingresos cobrados, pendientes y proyectados. El resultado es un P&L por proyecto: margen real, no intuición.',
+    detalle: [
+      'Normalización de ciclos de facturación (mensual, anual) a costo comparable.',
+      'Ingresos en tres estados — cobrado, pendiente, proyectado — para separar caja real de expectativa.',
+      'La lógica de P&L y manejo de dinero tiene su propia batería de tests unitarios.',
+    ],
+    stack: ['Drizzle ORM', 'Turso', 'Vitest'],
+  },
+  {
+    num: '03',
+    title: 'Portal de seguimiento para clientes',
+    tagline: 'Transparencia como práctica, no como promesa',
+    problema:
+      'El cliente que no sabe en qué va su proyecto pregunta por WhatsApp, y la respuesta se pierde. La confianza se erosiona en el silencio entre actualizaciones.',
+    solucion:
+      'Cada proyecto tiene una vista de seguimiento donde el cliente ve el avance sin pedirlo: hitos, interacciones y briefings. Las páginas públicas de proyecto muestran solo lo que está marcado como visible; el resto queda en el panel.',
+    detalle: [
+      'Registro de interacciones por cliente: qué se habló, qué se acordó, cuándo.',
+      'Briefings estructurados que documentan los requisitos antes de escribir código.',
+      'Control fino de visibilidad: cada dato decide si es público, del cliente o interno.',
+    ],
+    stack: ['Astro SSR', 'Drizzle ORM', 'auth con allowlist'],
+  },
+  {
+    num: '04',
+    title: 'Bóveda cifrada de credenciales',
+    tagline: 'Los secretos de los proyectos, nunca en texto plano',
+    problema:
+      'Las credenciales de cada proyecto (API keys, variables de entorno) suelen terminar en notas, chats o archivos sueltos: el peor lugar posible.',
+    solucion:
+      'Una bóveda dentro del panel que cifra cada valor con AES-256-GCM antes de tocar la base de datos. La clave de cifrado vive fuera de la BD, en el entorno del servidor: un volcado de la base de datos no expone ningún secreto.',
+    detalle: [
+      'Cifrado autenticado (GCM): un valor alterado no se descifra en silencio, falla.',
+      'Backups del panel que preservan el cifrado: los secretos viajan cifrados también en el respaldo.',
+      'La ruta /admin exige sesión con allowlist revalidada en cada request, en cada capa.',
+    ],
+    stack: ['AES-256-GCM', 'node:crypto', 'middleware Astro'],
+  },
+  {
+    num: '05',
+    title: 'CI/CD con health check y rollback',
+    tagline: 'Desplegar sin miedo porque el pipeline vigila',
+    problema:
+      'Un deploy que pasa los tests todavía puede romper producción. Si nadie mira en los minutos siguientes, el sitio queda caído hasta que alguien lo nota.',
+    solucion:
+      'El pipeline de GitHub Actions despliega, verifica la salud del sitio en vivo y, si el health check falla, revierte automáticamente al deploy anterior. Cada run reporta su resultado al panel, que guarda el historial: éxito, fallo o rollback.',
+    detalle: [
+      'Health check post-deploy contra el sitio real, no contra un mock.',
+      'Rollback automático sin intervención humana cuando la verificación falla.',
+      'Historial de runs en el panel con enlace directo a los logs de cada ejecución.',
+    ],
+    stack: ['GitHub Actions', 'Vercel', 'Vitest'],
+  },
+  {
+    num: '06',
+    title: 'Chaos engineering controlado',
+    tagline: 'Romper el sitio a propósito para confiar en las alertas',
+    problema:
+      '¿Cómo sabes que tu monitoreo detecta una caída si nunca has visto una? Confiar en alertas que jamás se han disparado es fe, no ingeniería.',
+    solucion:
+      'Un módulo de inyección de fallos activable desde el panel: latencia extra, errores 500 o servicio muerto, por ruta. Sirve para verificar de punta a punta que los monitores detectan, el incidente se registra y la alerta llega al móvil.',
+    detalle: [
+      'Fail-open por diseño: si el motor de caos falla, el request pasa limpio. El caos jamás puede volverse un incidente real.',
+      'TTL obligatorio en cada flag: ningún fallo inyectado sobrevive más de 15 minutos, ni por olvido.',
+      'El panel y la autenticación están excluidos por código: siempre hay un botón de pánico alcanzable.',
+    ],
+    stack: ['middleware Astro', 'flags en Turso con TTL'],
+  },
+]
+---
+
+<BaseLayout
+  title="Herramientas — CodeByMike"
+  description="Casos de estudio de las herramientas que construí para operar mis proyectos y clientes: monitoreo con SLOs, P&L por proyecto, bóveda cifrada, CI/CD con rollback y chaos engineering."
+>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+
+    <!-- Back -->
+    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver
+    </a>
+
+    <header class="mb-20">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/tools</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Herramientas a medida</span>
+      </div>
+      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-5">
+        Las herramientas con las<br/>que opero mis proyectos.
+      </h1>
+      <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
+        No uso estas herramientas porque estén de moda: las construí porque las necesitaba.
+        Monitoreo, finanzas, seguimiento de clientes, seguridad y despliegues — todo corre
+        sobre este mismo sitio. Cada caso de estudio cuenta el problema real que lo originó
+        y cómo lo resolví. La misma disciplina que aplico aquí es la que recibe cada cliente.
+      </p>
+    </header>
+
+    <div class="space-y-8">
+      {tools.map((t) => (
+        <article class="rounded-2xl glass p-8 md:p-10 lift">
+          <div class="flex items-start gap-6 mb-8">
+            <span class="font-serif italic text-4xl text-ink-300 leading-none select-none">{t.num}</span>
+            <div>
+              <h2 class="text-2xl md:text-3xl font-medium tracking-[-.02em] text-ink-50 mb-1.5">{t.title}</h2>
+              <p class="text-[13px] font-mono text-cyan">{t.tagline}</p>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
+              <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-3">El problema</div>
+              <p class="text-[14px] text-ink-100 leading-relaxed">{t.problema}</p>
+            </div>
+            <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
+              <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-3">La solución</div>
+              <p class="text-[14px] text-ink-100 leading-relaxed">{t.solucion}</p>
+            </div>
+          </div>
+
+          <div class="mb-8">
+            <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-4">En producción</div>
+            <ul class="space-y-2.5">
+              {t.detalle.map((d) => (
+                <li class="flex items-start gap-3 text-[14px] text-ink-100 leading-relaxed">
+                  <span class="w-1 h-1 rounded-full bg-cyan mt-2.5 shrink-0"></span>
+                  <span>{d}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5">
+            {t.stack.map((s) => (
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
+                {s}
+              </span>
+            ))}
+            {t.live && (
+              <a href={t.live.href} class="ml-auto inline-flex items-center gap-2 text-[13px] text-cyan hover:underline">
+                <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
+                {t.live.label} →
+              </a>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <!-- Cierre -->
+    <section class="mt-20 rounded-2xl glass p-8 md:p-10 text-center">
+      <p class="font-serif italic text-2xl md:text-3xl text-mask-cyan mb-4">
+        La herramienta que uso contigo es la que uso conmigo.
+      </p>
+      <p class="text-[14px] text-ink-100 max-w-xl mx-auto leading-relaxed mb-6">
+        Si trabajamos juntos, tu proyecto entra a este mismo sistema: monitoreo con SLOs,
+        seguimiento visible, credenciales cifradas y despliegues con red de seguridad.
+      </p>
+      <a
+        href="/contact"
+        class="inline-flex items-center gap-2 h-10 px-5 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
+      >
+        Hablemos de tu proyecto
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </section>
+
+  </div>
+</BaseLayout>
