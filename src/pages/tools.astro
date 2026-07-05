@@ -22,6 +22,7 @@ const tools: CaseStudy[] = [
   {
     num: '01',
     title: 'Monitoreo, SLOs y error budgets',
+    mock: 'monitors',
     tagline: 'Observabilidad estilo SRE, construida desde cero',
     problema:
       'Operar sitios de clientes sin saber si están caídos hasta que alguien avisa. Los servicios de uptime genéricos no detectan un deploy roto que responde 200 con la página equivocada.',
@@ -39,6 +40,7 @@ const tools: CaseStudy[] = [
   {
     num: '02',
     title: 'Costos y P&L por proyecto',
+    mock: 'pnl',
     tagline: 'Saber qué cuesta operar cada cosa, al centavo',
     problema:
       'Hosting, dominios, base de datos, email: cada proyecto acumula servicios con facturación distinta. Sin registro, es imposible saber si un proyecto es rentable o cuánto cuesta mantenerlo al año.',
@@ -54,6 +56,7 @@ const tools: CaseStudy[] = [
   {
     num: '03',
     title: 'Portal de seguimiento para clientes',
+    mock: 'seguimiento',
     tagline: 'Transparencia como práctica, no como promesa',
     problema:
       'El cliente que no sabe en qué va su proyecto pregunta por WhatsApp, y la respuesta se pierde. La confianza se erosiona en el silencio entre actualizaciones.',
@@ -69,6 +72,7 @@ const tools: CaseStudy[] = [
   {
     num: '04',
     title: 'Bóveda cifrada de credenciales',
+    mock: 'vault',
     tagline: 'Los secretos de los proyectos, nunca en texto plano',
     problema:
       'Las credenciales de cada proyecto (API keys, variables de entorno) suelen terminar en notas, chats o archivos sueltos: el peor lugar posible.',
@@ -84,6 +88,7 @@ const tools: CaseStudy[] = [
   {
     num: '05',
     title: 'CI/CD con health check y rollback',
+    mock: 'pipeline',
     tagline: 'Desplegar sin miedo porque el pipeline vigila',
     problema:
       'Un deploy que pasa los tests todavía puede romper producción. Si nadie mira en los minutos siguientes, el sitio queda caído hasta que alguien lo nota.',
@@ -99,6 +104,7 @@ const tools: CaseStudy[] = [
   {
     num: '06',
     title: 'Chaos engineering controlado',
+    mock: 'chaos',
     tagline: 'Romper el sitio a propósito para confiar en las alertas',
     problema:
       '¿Cómo sabes que tu monitoreo detecta una caída si nunca has visto una? Confiar en alertas que jamás se han disparado es fe, no ingeniería.',
