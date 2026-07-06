@@ -1,0 +1,220 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+// Página pública de seguridad. Documenta hallazgos reales de una auditoría
+// sobre este mismo repositorio, mapeados a OWASP Top 10, con el commit que
+// aplicó cada corrección. Contenido 100% estático y verificable en el
+// historial de git público.
+
+type Severity = 'alta' | 'media'
+
+type Finding = {
+  id: string
+  title: string
+  owasp: string
+  severity: Severity
+  file: string
+  problema: string
+  solucion: string
+  commit: string
+  date: string
+}
+
+const findings: Finding[] = [
+  {
+    id: 'upload-ext',
+    title: 'XSS almacenado vía extensión de archivo no validada',
+    owasp: 'A03:2021 · Injection',
+    severity: 'alta',
+    file: 'src/pages/api/admin/upload.ts',
+    problema:
+      'El endpoint de subida de certificados derivaba la extensión del archivo final del nombre enviado por el cliente, y solo validaba el MIME type declarado por el propio cliente (fácilmente falsificable). Un archivo subido como "foo.html" con Content-Type falso quedaba servido como HTML desde /assets/certs. SVG estaba además en la lista de tipos permitidos, y un SVG puede contener <script> ejecutable.',
+    solucion:
+      'La extensión ahora se deriva de un mapa fijo MIME → extensión, nunca del nombre del archivo. SVG se eliminó de los tipos permitidos.',
+    commit: 'd439054',
+    date: '2026-07-06',
+  },
+  {
+    id: 'contact-abuse',
+    title: 'Formulario de contacto sin límite de tasa ni validación',
+    owasp: 'A04:2021 · Insecure Design',
+    severity: 'media',
+    file: 'src/pages/api/contact.ts',
+    problema:
+      'El endpoint público de contacto aceptaba inserciones ilimitadas a la base de datos sin rate limit, sin validar formato de email ni longitud de campos, y un JSON malformado producía un error 500 sin manejar.',
+    solucion:
+      'Se aplicó el rate limiter ya existente en el proyecto (5 envíos/min por IP), validación de formato de email, límites de longitud por campo y manejo explícito de JSON inválido.',
+    commit: '779f4b0',
+    date: '2026-07-06',
+  },
+  {
+    id: 'legacy-session',
+    title: 'Sesiones sin claim de login evadían la allowlist',
+    owasp: 'A01:2021 · Broken Access Control',
+    severity: 'media',
+    file: 'src/middleware.ts',
+    problema:
+      'El middleware solo revalidaba la allowlist de GitHub cuando la sesión traía el claim "login". Una sesión sin ese claim pasaba el chequeo por defecto en vez de ser rechazada.',
+    solucion:
+      'El gate de admin ahora exige el claim en toda sesión: sin login válido en la allowlist, la respuesta es 403 sin excepción.',
+    commit: '14b08e2',
+    date: '2026-07-06',
+  },
+  {
+    id: 'missing-headers',
+    title: 'Faltaban CSP y HSTS en las respuestas',
+    owasp: 'A05:2021 · Security Misconfiguration',
+    severity: 'media',
+    file: 'src/middleware.ts',
+    problema:
+      'El middleware ya fijaba varios headers de seguridad (nosniff, Referrer-Policy, X-Frame-Options en admin) pero no incluía Content-Security-Policy ni Strict-Transport-Security en ninguna ruta.',
+    solucion:
+      'Se agregó CSP restrictiva (default-src self, frame-ancestors none) y HSTS con preload a todas las respuestas, públicas y de admin.',
+    commit: '32bcf0d',
+    date: '2026-07-06',
+  },
+]
+
+const good: { title: string; detail: string }[] = [
+  {
+    title: 'Webhooks de pago verificados',
+    detail:
+      'El receptor de eventos de Wompi verifica la firma HMAC antes de procesar cualquier evento, rechaza eventos con más de 6 horas de antigüedad (anti-replay) y valida que el monto/moneda coincidan con el pago esperado antes de aplicar una transición de estado.',
+  },
+  {
+    title: 'Secretos cifrados en reposo',
+    detail:
+      'La bóveda de credenciales cifra cada valor con AES-256-GCM (cifrado autenticado) antes de escribirlo en la base de datos. La clave vive solo en el entorno del servidor, nunca en la BD ni en los backups.',
+  },
+  {
+    title: 'Defensa en profundidad en /admin',
+    detail:
+      'La autorización se revalida contra la allowlist tanto en el callback de login como en el middleware, en cada request — no basta con haber iniciado sesión una vez.',
+  },
+  {
+    title: 'Consultas parametrizadas',
+    detail:
+      'Todo el acceso a datos pasa por Drizzle ORM con consultas parametrizadas; no hay interpolación de strings en SQL en ninguna ruta del proyecto.',
+  },
+]
+
+const severityCls: Record<Severity, string> = {
+  alta: 'text-ember border-ember/40 bg-ember/15',
+  media: 'text-ember/80 border-ember/25 bg-ember/10',
+}
+---
+
+<BaseLayout
+  title="Seguridad — CodeByMike"
+  description="Auditoría OWASP real sobre este mismo repositorio: hallazgos, severidad y el commit exacto que aplicó cada corrección."
+  image="/og-status.png"
+>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+
+    <!-- Back -->
+    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver
+    </a>
+
+    <header class="mb-12">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/security</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Auditoría OWASP</span>
+      </div>
+      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-5">
+        Seguridad,<br/>con evidencia.
+      </h1>
+      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
+        Una revisión real sobre el código de este sitio, mapeada a OWASP Top 10. Cada hallazgo
+        enlaza al commit exacto que lo corrigió — verificable en el historial público del repo,
+        no una promesa.
+      </p>
+    </header>
+
+    <!-- Hallazgos corregidos -->
+    <section class="mb-20">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
+        <span>Hallazgos corregidos · {findings.length}</span>
+      </div>
+
+      <div class="space-y-4">
+        {findings.map((f) => (
+          <div class="rounded-2xl glass p-6 lift">
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+              <h2 class="text-[15px] font-medium">{f.title}</h2>
+              <span class={`text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${severityCls[f.severity]}`}>
+                {f.severity}
+              </span>
+              <span class="text-[11px] font-mono text-cyan">{f.owasp}</span>
+              <span class="ml-auto text-[11px] font-mono text-ink-300">{f.file}</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+              <div class="rounded-xl bg-white/[.02] border border-white/5 p-4">
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-2">Problema</div>
+                <p class="text-[13px] text-ink-100 leading-relaxed">{f.problema}</p>
+              </div>
+              <div class="rounded-xl bg-white/[.02] border border-white/5 p-4">
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-2">Corrección</div>
+                <p class="text-[13px] text-ink-100 leading-relaxed">{f.solucion}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 text-[11px] font-mono text-ink-300">
+              <span>{f.date}</span>
+              <a
+                href={`https://github.com/mikerb95/portfolio/commit/${f.commit}`}
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-1.5 text-cyan hover:underline"
+              >
+                commit {f.commit} ↗
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Controles ya vigentes -->
+    <section class="mb-20">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span>Controles ya vigentes</span>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+        {good.map((g) => (
+          <div class="rounded-2xl glass p-6">
+            <h3 class="text-[14px] font-medium mb-2">{g.title}</h3>
+            <p class="text-[13px] text-ink-100 leading-relaxed">{g.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Metodología -->
+    <section class="rounded-2xl glass p-8">
+      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">Metodología</div>
+      <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
+        <p>
+          La revisión cubrió autenticación y control de acceso, subida de archivos, endpoints
+          públicos, manejo de secretos, webhooks de pago y headers de respuesta — el código
+          real de este repositorio, no un ejercicio teórico.
+        </p>
+        <p>
+          Cada hallazgo se clasificó contra <span class="text-ink-50">OWASP Top 10 (2021)</span>,
+          se corrigió en un commit dedicado y se verificó con la suite de tests y un build
+          completo antes de mergear.
+        </p>
+        <p>
+          Esta página se actualiza cada vez que una auditoría encuentra o corrige algo nuevo.
+          Lo que ves aquí es el estado real del código en producción.
+        </p>
+      </div>
+    </section>
+
+  </div>
+</BaseLayout>
