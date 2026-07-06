@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../../db'
 import { briefings, clients, projects } from '../../../../db/schema'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, isNull } from 'drizzle-orm'
 
 export const GET: APIRoute = async () => {
   const rows = await db
@@ -23,6 +23,7 @@ export const GET: APIRoute = async () => {
     .from(briefings)
     .leftJoin(clients, eq(briefings.clientId, clients.id))
     .leftJoin(projects, eq(briefings.projectId, projects.id))
+    .where(isNull(briefings.deletedAt))
     .orderBy(desc(briefings.createdAt))
 
   return new Response(JSON.stringify(rows), { status: 200 })
@@ -32,28 +33,25 @@ export const POST: APIRoute = async ({ request }) => {
   const body = await request.json()
   const {
     title, clientId, projectId, status, objective, scope,
-    requirements, deliverables, estimatedBudget, agreedBudget,
-    estimatedHours, deadline, notes,
+    estimatedBudget, agreedBudget, estimatedHours, deadline, notes,
   } = body
 
-  if (!title) {
+  if (!title || typeof title !== 'string' || !title.trim()) {
     return new Response(JSON.stringify({ error: 'title es requerido' }), { status: 400 })
   }
 
   const [row] = await db.insert(briefings).values({
-    title,
-    clientId: clientId ?? null,
-    projectId: projectId ?? null,
+    title: title.trim(),
+    clientId: clientId ? Number(clientId) : null,
+    projectId: projectId ? Number(projectId) : null,
     status: status ?? 'borrador',
-    objective: objective ?? null,
-    scope: scope ?? null,
-    requirements: requirements ?? null,
-    deliverables: deliverables ?? null,
-    estimatedBudget: estimatedBudget ?? null,
-    agreedBudget: agreedBudget ?? null,
-    estimatedHours: estimatedHours ?? null,
+    objective: objective || null,
+    scope: scope || null,
+    estimatedBudget: estimatedBudget != null ? Number(estimatedBudget) : null,
+    agreedBudget: agreedBudget != null ? Number(agreedBudget) : null,
+    estimatedHours: estimatedHours != null ? Number(estimatedHours) : null,
     deadline: deadline ? new Date(deadline) : null,
-    notes: notes ?? null,
+    notes: notes || null,
     createdAt: new Date(),
     updatedAt: new Date(),
   }).returning()
