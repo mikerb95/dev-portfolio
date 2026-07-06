@@ -28,11 +28,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const res = await next()
   const headers = new Headers(res.headers)
 
+  headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+
   if (isAdmin) {
     headers.set('X-Frame-Options', 'DENY')
     headers.set('X-Content-Type-Options', 'nosniff')
     headers.set('Referrer-Policy', 'no-referrer')
     headers.set('X-Robots-Tag', 'noindex, nofollow')
+    headers.set(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    )
     return new Response(res.body, { status: res.status, headers })
   }
 
@@ -41,6 +47,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // mientras revalida, así el contenido editado en /admin tarda ≤5 min en verse.
   headers.set('X-Content-Type-Options', 'nosniff')
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+  )
 
   const isPublicPage = !pathname.startsWith('/api') && context.request.method === 'GET'
   if (isPublicPage && res.status === 200 && !headers.has('Cache-Control')) {
