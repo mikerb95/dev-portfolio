@@ -4,7 +4,7 @@ import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
 
-const STATIC_PATHS = ['/', '/tools', '/status', '/notes', '/certifications', '/log', '/contact']
+const STATIC_PATHS = ['/', '/tools', '/status', '/notes', '/security', '/certifications', '/log', '/contact']
 
 export const GET: APIRoute = async ({ site }) => {
   const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')
