@@ -2,7 +2,13 @@ import type { APIRoute } from 'astro'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml']
+// SVG queda fuera: puede contener <script> y se serviría como HTML/XSS almacenado.
+const ALLOWED_EXT_BY_TYPE: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+}
 const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
 
 export const POST: APIRoute = async ({ request }) => {
