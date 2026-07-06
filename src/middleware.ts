@@ -19,9 +19,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!session) return context.redirect('/login?callbackUrl=%2Fentrar')
 
     // Defensa en profundidad: revalida la allowlist en cada request.
-    // Si la sesión trae login (logins nuevos), se exige que esté autorizado.
     const login = (session?.user as { login?: string } | undefined)?.login
-    if (login && !isAllowedLogin(login)) {
+    if (!isAllowedLogin(login)) {
       return new Response('Forbidden', { status: 403 })
     }
   }
