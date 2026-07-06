@@ -89,3 +89,36 @@ Verificación hecha: `npm run build` OK · tablas/columnas nuevas confirmadas en
 
 - [ ] `src/pages/admin/projects/[id].astro` (922 líneas): quedan grises `zinc-*` internos sin migrar
   a la paleta `ink-*` (son visualmente cercanos). Se migraron los badges de estado y los tabs.
+
+---
+
+## 📋 Panel de Briefings — plan en curso (jul 6 2026)
+
+Plan completo con comparación vs. Zoho en `docs/plan-briefings.md`. Orden de valor: **Fase 1 → 3 → 2 → 4 → 5**.
+
+### ✅ Fase 1 — Fundamentos (completada jul 6 2026)
+
+- `briefing_items` (checklist requerimiento/entregable/exclusión), `deletedAt` en `briefings`
+  (soft delete), `briefingId` en `interactions` (timeline). Migraciones `drizzle/0008`, `0009`.
+- Columnas viejas `requirements`/`deliverables` (texto plano) eliminadas — no había datos que migrar.
+- APIs actualizadas (`src/pages/api/admin/briefings/**`): soft delete, validación manual (sin zod,
+  el proyecto no lo usa en ningún lado más), nuevos endpoints `[id]/items` y `[id]/items/[itemId]`.
+- UI: checklist con tachado en `[id].astro` + sección de Actividad (timeline de `interactions`).
+- Verificado: `npm run build` OK + capa de datos probada directo contra Turso (insert, cascada,
+  soft-delete). **No verificado en navegador** — el login admin usa GitHub OAuth y no hay forma
+  de automatizarlo sin credenciales; falta que Mike lo pruebe manualmente en `/admin/briefings`.
+
+### ⏭️ Próxima sesión — Fase 3: Portal del cliente (mayor diferenciador)
+
+1. `shareToken` en `briefings` (mismo patrón que `presentations.shareToken`) + `sharedAt`,
+   `approvedAt`, `approvedByName`, `approvedByEmail`, `validUntil`.
+2. Página pública `/briefing/[token]` (branding tipo `/status`/slides): objetivo, alcance, ítems,
+   presupuesto, condiciones.
+3. Aprobación con firma ligera (nombre + email + checkbox + timestamp + IP) y comentarios del
+   cliente (`briefing_comments`).
+4. Eventos automáticos → timeline (`interactions.briefingId`) + push ntfy ("visto", "comentó",
+   "aprobó").
+5. Versionado (`briefing_versions`): snapshot al editar campos materiales tras estado `enviado`.
+
+### Después: Fase 2 (kanban+filtros+prioridad), Fase 4 (intake público + convertir a proyecto),
+Fase 5 (recordatorios cron + funnel de conversión). Detalle de cada una en `docs/plan-briefings.md`.
