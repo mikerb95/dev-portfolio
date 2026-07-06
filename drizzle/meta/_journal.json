@@ -57,6 +57,13 @@
       "when": 1783193589768,
       "tag": "0007_hot_mordo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1783348090688,
+      "tag": "0008_futuristic_xorn",
+      "breakpoints": true
     }
   ]
 }
