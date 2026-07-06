@@ -1,179 +1,250 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
-import { clients } from '../../db/schema'
-import { desc } from 'drizzle-orm'
+import { clients, projects, interactions } from '../../db/schema'
+import { desc, eq, sql } from 'drizzle-orm'
 
-const allClients = await db.select().from(clients).orderBy(desc(clients.createdAt))
+const rows = await db
+  .select({
+    id: clients.id,
+    name: clients.name,
+    email: clients.email,
+    company: clients.company,
+    notes: clients.notes,
+    createdAt: clients.createdAt,
+    projectCount: sql<number>`count(distinct ${projects.id})`,
+    lastContact: sql<number | null>`max(${interactions.occurredAt})`,
+  })
+  .from(clients)
+  .leftJoin(projects, eq(projects.clientId, clients.id))
+  .leftJoin(interactions, eq(interactions.clientId, clients.id))
+  .groupBy(clients.id)
+  .orderBy(desc(clients.createdAt))
+
+const fmtDate = (d: Date | number | null) =>
+  d ? new Date(typeof d === 'number' ? d * 1000 : d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : null
+
+const tableRows = rows.map((r) => ({
+  ...r,
+  createdAtLabel: fmtDate(r.createdAt),
+  lastContactLabel: fmtDate(r.lastContact),
+}))
+
+// Datos para el formulario de edición (solo campos editables)
+const formData = rows.map(({ id, name, email, company, notes }) => ({ id, name, email, company, notes }))
 ---
 
 <AdminLayout title="Clientes">
   <div class="flex justify-between items-center mb-6">
-    <p class="text-zinc-400 text-sm">{allClients.length} cliente{allClients.length !== 1 ? 's' : ''}</p>
+    <p class="text-ink-200 text-sm">{rows.length} cliente{rows.length !== 1 ? 's' : ''}</p>
     <button
       id="btn-new"
-      class="px-4 py-2 bg-white text-zinc-900 text-sm font-medium rounded-lg hover:bg-zinc-100 transition-colors"
+      class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors"
     >
-      + Nuevo cliente
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      Nuevo cliente
     </button>
   </div>
 
-  {allClients.length === 0 ? (
-    <p class="text-zinc-500">No hay clientes registrados todavía.</p>
+  {rows.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-200 mb-1">No hay clientes registrados todavía.</p>
+      <p class="text-ink-300 text-sm">Crea el primero para poder vincular proyectos, briefings, finanzas y seguimiento.</p>
+    </div>
   ) : (
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-zinc-800 text-zinc-400 text-left">
-            <th class="pb-3 pr-4 font-medium">Nombre</th>
-            <th class="pb-3 pr-4 font-medium">Email</th>
-            <th class="pb-3 pr-4 font-medium">Empresa</th>
-            <th class="pb-3 pr-4 font-medium">Notas</th>
-            <th class="pb-3 font-medium"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-zinc-800">
-          {allClients.map((c) => (
-            <tr class="text-zinc-300">
-              <td class="py-3 pr-4 font-medium text-white">{c.name}</td>
-              <td class="py-3 pr-4 text-zinc-400">{c.email ?? '—'}</td>
-              <td class="py-3 pr-4">{c.company ?? '—'}</td>
-              <td class="py-3 pr-4 text-zinc-500 text-xs max-w-xs truncate">{c.notes ?? '—'}</td>
-              <td class="py-3 flex gap-2 justify-end">
-                <button
-                  class="text-xs text-zinc-400 hover:text-white transition-colors"
-                  data-edit={JSON.stringify(c)}
-                >
-                  Editar
-                </button>
-                <button
-                  class="text-xs text-red-500 hover:text-red-400 transition-colors"
-                  data-delete={c.id}
-                >
-                  Eliminar
-                </button>
-              </td>
+    <div class="glass rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/5 text-ink-300 text-left text-[11px] font-mono uppercase tracking-wider">
+              <th class="px-4 py-3 font-medium">Cliente</th>
+              <th class="px-4 py-3 font-medium">Email</th>
+              <th class="px-4 py-3 font-medium">Proyectos</th>
+              <th class="px-4 py-3 font-medium">Últ. contacto</th>
+              <th class="px-4 py-3 font-medium">Alta</th>
+              <th class="px-4 py-3 font-medium"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {tableRows.map((c) => (
+              <tr class="text-ink-100 hover:bg-white/[.02] transition-colors">
+                <td class="px-4 py-3">
+                  <div class="font-medium text-ink-50">{c.name}</div>
+                  {c.company && <div class="text-[12px] text-ink-300">{c.company}</div>}
+                </td>
+                <td class="px-4 py-3 text-ink-200">
+                  {c.email ? <a href={`mailto:${c.email}`} class="hover:text-cyan transition-colors">{c.email}</a> : '—'}
+                </td>
+                <td class="px-4 py-3">
+                  {c.projectCount > 0 ? (
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan/10 text-cyan text-[12px] font-mono">{c.projectCount}</span>
+                  ) : (
+                    <span class="text-ink-400">—</span>
+                  )}
+                </td>
+                <td class="px-4 py-3 text-[12px]">
+                  {c.lastContactLabel ? (
+                    <a href={`/admin/seguimiento?client=${c.id}`} class="text-ink-200 hover:text-cyan transition-colors">{c.lastContactLabel}</a>
+                  ) : (
+                    <a href={`/admin/seguimiento?client=${c.id}`} class="text-ink-400 hover:text-cyan transition-colors">sin registro</a>
+                  )}
+                </td>
+                <td class="px-4 py-3 text-[12px] text-ink-300">{c.createdAtLabel ?? '—'}</td>
+                <td class="px-4 py-3">
+                  <div class="flex gap-3 justify-end">
+                    <button class="edit-client text-[12px] text-ink-200 hover:text-ink-50 transition-colors" data-id={c.id}>Editar</button>
+                    <button class="del-client text-[12px] text-ember/80 hover:text-ember transition-colors" data-id={c.id} data-name={c.name}>Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )}
 
-  <dialog
-    id="modal"
-    class="bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-full max-w-lg text-zinc-100 backdrop:bg-black/60"
-  >
-    <h2 id="modal-title" class="text-lg font-semibold mb-5">Nuevo cliente</h2>
-    <form id="client-form" class="flex flex-col gap-4">
-      <input type="hidden" id="client-id" />
-      <div>
-        <label class="block text-xs text-zinc-400 mb-1">Nombre *</label>
-        <input
-          id="f-name"
-          type="text"
-          required
-          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
-        />
-      </div>
-      <div>
-        <label class="block text-xs text-zinc-400 mb-1">Email</label>
-        <input
-          id="f-email"
-          type="email"
-          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
-        />
-      </div>
-      <div>
-        <label class="block text-xs text-zinc-400 mb-1">Empresa</label>
-        <input
-          id="f-company"
-          type="text"
-          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
-        />
-      </div>
-      <div>
-        <label class="block text-xs text-zinc-400 mb-1">Notas</label>
-        <textarea
-          id="f-notes"
-          rows="3"
-          class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
-        ></textarea>
-      </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          id="btn-cancel"
-          class="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          class="px-4 py-2 bg-white text-zinc-900 text-sm font-medium rounded-lg hover:bg-zinc-100 transition-colors"
-        >
-          Guardar
-        </button>
-      </div>
-    </form>
-  </dialog>
+  <script is:inline type="application/json" id="clients-json" set:html={JSON.stringify(formData).replaceAll('<', '\\u003c')}></script>
+
+  <!-- Slide-over: formulario de cliente -->
+  <div id="cl-overlay" class="fixed inset-0 z-[60] hidden">
+    <div id="cl-backdrop" class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
+    <div class="absolute inset-y-0 right-0 w-full max-w-md glass-strong border-l border-white/10 overflow-y-auto">
+      <form id="cl-form" class="p-5 md:p-6 space-y-4" novalidate>
+        <div class="flex items-center justify-between">
+          <h2 id="cl-form-title" class="text-lg font-medium text-ink-50">Nuevo cliente</h2>
+          <button type="button" id="cl-close" class="text-ink-300 hover:text-ink-50 p-1" aria-label="Cerrar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <input type="hidden" id="c-id" />
+
+        <div>
+          <label for="c-name" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Nombre *</label>
+          <input id="c-name" required maxlength="120" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Nombre del contacto o razón social" autocomplete="off" />
+        </div>
+
+        <div>
+          <label for="c-email" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Email</label>
+          <input id="c-email" type="email" maxlength="160" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="contacto@empresa.com" autocomplete="off" />
+        </div>
+
+        <div>
+          <label for="c-company" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Empresa</label>
+          <input id="c-company" maxlength="120" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Empresa u organización" autocomplete="off" />
+        </div>
+
+        <div>
+          <label for="c-notes" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Notas</label>
+          <textarea id="c-notes" rows="4" maxlength="2000" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Contexto, acuerdos, canal preferido…"></textarea>
+        </div>
+
+        <p class="text-[12px] text-ink-300">
+          Después de crearlo podrás vincularlo desde
+          <a href="/admin/projects" class="text-cyan hover:underline">proyectos</a>,
+          <a href="/admin/briefings" class="text-cyan hover:underline">briefings</a> y
+          <a href="/admin/seguimiento" class="text-cyan hover:underline">seguimiento</a>.
+        </p>
+
+        <div id="cl-error" class="hidden text-[12px] text-ember"></div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button type="submit" id="cl-save" class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors disabled:opacity-50 disabled:pointer-events-none">Guardar</button>
+          <button type="button" id="cl-cancel" class="h-9 px-4 text-[13px] rounded-full border border-white/10 text-ink-200 hover:bg-white/5 transition-colors">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </AdminLayout>
 
 <script>
-  const modal = document.getElementById('modal') as HTMLDialogElement
-  const modalTitle = document.getElementById('modal-title')!
-  const form = document.getElementById('client-form') as HTMLFormElement
-  const idInput = document.getElementById('client-id') as HTMLInputElement
+  type Row = Record<string, any>
+  const data: Row[] = JSON.parse(document.getElementById('clients-json')!.textContent || '[]')
+  const byId = new Map<number, Row>(data.map((r) => [r.id, r]))
+  const $ = (id: string) => document.getElementById(id) as HTMLInputElement
+  const overlay = $('cl-overlay')
+  const errBox = $('cl-error')
+  const saveBtn = $('cl-save') as unknown as HTMLButtonElement
 
-  function openNew() {
-    modalTitle.textContent = 'Nuevo cliente'
-    idInput.value = ''
-    form.reset()
-    modal.showModal()
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  function showError(msg: string) {
+    errBox.textContent = msg
+    errBox.classList.remove('hidden')
   }
 
-  function openEdit(data: any) {
-    modalTitle.textContent = 'Editar cliente'
-    idInput.value = data.id
-    ;(document.getElementById('f-name') as HTMLInputElement).value = data.name ?? ''
-    ;(document.getElementById('f-email') as HTMLInputElement).value = data.email ?? ''
-    ;(document.getElementById('f-company') as HTMLInputElement).value = data.company ?? ''
-    ;(document.getElementById('f-notes') as HTMLTextAreaElement).value = data.notes ?? ''
-    modal.showModal()
+  function open(row: Row | null) {
+    errBox.classList.add('hidden')
+    $('cl-form-title').textContent = row ? 'Editar cliente' : 'Nuevo cliente'
+    $('c-id').value = row?.id ?? ''
+    $('c-name').value = row?.name ?? ''
+    $('c-email').value = row?.email ?? ''
+    $('c-company').value = row?.company ?? ''
+    ;($('c-notes') as unknown as HTMLTextAreaElement).value = row?.notes ?? ''
+    overlay.classList.remove('hidden')
+    $('c-name').focus()
   }
+  const close = () => overlay.classList.add('hidden')
 
-  document.getElementById('btn-new')!.addEventListener('click', openNew)
-  document.getElementById('btn-cancel')!.addEventListener('click', () => modal.close())
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.close() })
-
-  document.querySelectorAll('[data-edit]').forEach((btn) => {
-    btn.addEventListener('click', () => openEdit(JSON.parse((btn as HTMLElement).dataset.edit!)))
+  $('btn-new')?.addEventListener('click', () => open(null))
+  $('cl-close').addEventListener('click', close)
+  $('cl-cancel').addEventListener('click', close)
+  $('cl-backdrop').addEventListener('click', close)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close()
   })
 
-  document.querySelectorAll('[data-delete]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('¿Eliminar este cliente?')) return
-      const id = (btn as HTMLElement).dataset.delete
-      await fetch(`/api/admin/clients/${id}`, { method: 'DELETE' })
-      window.location.reload()
-    })
-  })
+  document.querySelectorAll<HTMLButtonElement>('.edit-client').forEach((b) =>
+    b.addEventListener('click', () => open(byId.get(Number(b.dataset.id)) ?? null)))
 
-  form.addEventListener('submit', async (e) => {
+  document.querySelectorAll<HTMLButtonElement>('.del-client').forEach((b) =>
+    b.addEventListener('click', async () => {
+      if (!confirm(`¿Eliminar al cliente "${b.dataset.name}"?`)) return
+      const res = await fetch(`/api/admin/clients/${b.dataset.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        alert(j.error || 'No se pudo eliminar el cliente.')
+        return
+      }
+      location.reload()
+    }))
+
+  $('cl-form').addEventListener('submit', async (e) => {
     e.preventDefault()
-    const id = idInput.value
+    errBox.classList.add('hidden')
+
+    const name = $('c-name').value.trim()
+    const email = $('c-email').value.trim()
+    if (!name) { showError('El nombre es requerido.'); $('c-name').focus(); return }
+    if (email && !EMAIL_RE.test(email)) { showError('El email no tiene un formato válido.'); $('c-email').focus(); return }
+
+    const id = $('c-id').value
     const payload = {
-      name: (document.getElementById('f-name') as HTMLInputElement).value,
-      email: (document.getElementById('f-email') as HTMLInputElement).value || null,
-      company: (document.getElementById('f-company') as HTMLInputElement).value || null,
-      notes: (document.getElementById('f-notes') as HTMLTextAreaElement).value || null,
+      name,
+      email: email || null,
+      company: $('c-company').value.trim() || null,
+      notes: ($('c-notes') as unknown as HTMLTextAreaElement).value.trim() || null,
     }
-    if (id) {
-      await fetch(`/api/admin/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    } else {
-      await fetch('/api/admin/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+
+    saveBtn.disabled = true
+    saveBtn.textContent = 'Guardando…'
+    try {
+      const res = await fetch(id ? `/api/admin/clients/${id}` : '/api/admin/clients', {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        showError(j.error || 'Error al guardar. Intenta de nuevo.')
+        return
+      }
+      location.reload()
+    } catch {
+      showError('Error de red. Revisa tu conexión e intenta de nuevo.')
+    } finally {
+      saveBtn.disabled = false
+      saveBtn.textContent = 'Guardar'
     }
-    modal.close()
-    window.location.reload()
   })
 </script>
