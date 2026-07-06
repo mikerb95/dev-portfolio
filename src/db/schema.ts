@@ -170,6 +170,7 @@ export const interactions = sqliteTable('interactions', {
   }).notNull().default('note'),
   clientId: integer('client_id').references(() => clients.id, { onDelete: 'set null' }),
   projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  briefingId: integer('briefing_id').references(() => briefings.id, { onDelete: 'set null' }),
   title: text('title').notNull(),
   body: text('body'), // detalle, notas, información técnica
   occurredAt: integer('occurred_at', { mode: 'timestamp' }),
