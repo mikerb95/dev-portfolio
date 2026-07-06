@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ params }) => {
     .from(briefings)
     .leftJoin(clients, eq(briefings.clientId, clients.id))
     .leftJoin(projects, eq(briefings.projectId, projects.id))
-    .where(eq(briefings.id, id))
+    .where(and(eq(briefings.id, id), isNull(briefings.deletedAt)))
     .get()
 
   if (!row) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 })
@@ -40,24 +40,25 @@ export const PUT: APIRoute = async ({ params, request }) => {
   const body = await request.json()
   const {
     title, clientId, projectId, status, objective, scope,
-    requirements, deliverables, estimatedBudget, agreedBudget,
-    estimatedHours, deadline, notes,
+    estimatedBudget, agreedBudget, estimatedHours, deadline, notes,
   } = body
 
+  if (title !== undefined && (typeof title !== 'string' || !title.trim())) {
+    return new Response(JSON.stringify({ error: 'title no puede estar vacío' }), { status: 400 })
+  }
+
   await db.update(briefings).set({
-    ...(title !== undefined && { title }),
-    ...(clientId !== undefined && { clientId }),
-    ...(projectId !== undefined && { projectId }),
+    ...(title !== undefined && { title: title.trim() }),
+    ...(clientId !== undefined && { clientId: clientId ? Number(clientId) : null }),
+    ...(projectId !== undefined && { projectId: projectId ? Number(projectId) : null }),
     ...(status !== undefined && { status }),
-    ...(objective !== undefined && { objective }),
-    ...(scope !== undefined && { scope }),
-    ...(requirements !== undefined && { requirements }),
-    ...(deliverables !== undefined && { deliverables }),
-    ...(estimatedBudget !== undefined && { estimatedBudget }),
-    ...(agreedBudget !== undefined && { agreedBudget }),
-    ...(estimatedHours !== undefined && { estimatedHours }),
+    ...(objective !== undefined && { objective: objective || null }),
+    ...(scope !== undefined && { scope: scope || null }),
+    ...(estimatedBudget !== undefined && { estimatedBudget: estimatedBudget != null ? Number(estimatedBudget) : null }),
+    ...(agreedBudget !== undefined && { agreedBudget: agreedBudget != null ? Number(agreedBudget) : null }),
+    ...(estimatedHours !== undefined && { estimatedHours: estimatedHours != null ? Number(estimatedHours) : null }),
     ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
-    ...(notes !== undefined && { notes }),
+    ...(notes !== undefined && { notes: notes || null }),
     updatedAt: new Date(),
   }).where(eq(briefings.id, id))
 
@@ -66,6 +67,6 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
 export const DELETE: APIRoute = async ({ params }) => {
   const id = Number(params.id)
-  await db.delete(briefings).where(eq(briefings.id, id))
+  await db.update(briefings).set({ deletedAt: new Date() }).where(eq(briefings.id, id))
   return new Response(JSON.stringify({ ok: true }), { status: 200 })
 }
