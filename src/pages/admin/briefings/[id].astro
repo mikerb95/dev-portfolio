@@ -1,10 +1,12 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { db } from '../../../db'
-import { briefings, clients, projects } from '../../../db/schema'
-import { eq } from 'drizzle-orm'
+import { briefings, briefingItems, clients, interactions, projects } from '../../../db/schema'
+import { and, asc, desc, eq, isNull } from 'drizzle-orm'
+import { TYPE_LABELS } from '../../../lib/interactions'
 
 const { id } = Astro.params
+const briefingId = Number(id)
 
 const row = await db
   .select({
@@ -13,8 +15,6 @@ const row = await db
     status: briefings.status,
     objective: briefings.objective,
     scope: briefings.scope,
-    requirements: briefings.requirements,
-    deliverables: briefings.deliverables,
     estimatedBudget: briefings.estimatedBudget,
     agreedBudget: briefings.agreedBudget,
     estimatedHours: briefings.estimatedHours,
@@ -30,13 +30,32 @@ const row = await db
   .from(briefings)
   .leftJoin(clients, eq(briefings.clientId, clients.id))
   .leftJoin(projects, eq(briefings.projectId, projects.id))
-  .where(eq(briefings.id, Number(id)))
+  .where(and(eq(briefings.id, briefingId), isNull(briefings.deletedAt)))
   .get()
 
 if (!row) return Astro.redirect('/admin/briefings')
 
 const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients)
 const allProjects = await db.select({ id: projects.id, title: projects.title }).from(projects)
+
+const items = await db
+  .select()
+  .from(briefingItems)
+  .where(eq(briefingItems.briefingId, briefingId))
+  .orderBy(asc(briefingItems.kind), asc(briefingItems.sortOrder))
+
+const timeline = await db
+  .select()
+  .from(interactions)
+  .where(eq(interactions.briefingId, briefingId))
+  .orderBy(desc(interactions.occurredAt))
+
+const itemKindLabel: Record<string, string> = {
+  requerimiento: 'Requerimientos',
+  entregable: 'Entregables',
+  exclusion: 'Exclusiones',
+}
+const itemsByKind = (kind: string) => items.filter((i) => i.kind === kind)
 
 const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' })
 
