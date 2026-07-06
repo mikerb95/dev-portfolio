@@ -19,7 +19,8 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'No file provided' }), { status: 400 })
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  const ext = ALLOWED_EXT_BY_TYPE[file.type]
+  if (!ext) {
     return new Response(JSON.stringify({ error: 'Tipo de archivo no permitido' }), { status: 400 })
   }
 
@@ -27,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'Archivo demasiado grande (máx. 5 MB)' }), { status: 400 })
   }
 
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'png'
+  // Extensión derivada del MIME validado arriba, nunca del nombre que envía el cliente.
   const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
   const destDir = join(process.cwd(), 'public', 'assets', 'certs')
   const destPath = join(destDir, safeName)
