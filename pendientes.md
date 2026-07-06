@@ -122,3 +122,46 @@ Plan completo con comparación vs. Zoho en `docs/plan-briefings.md`. Orden de va
 
 ### Después: Fase 2 (kanban+filtros+prioridad), Fase 4 (intake público + convertir a proyecto),
 Fase 5 (recordatorios cron + funnel de conversión). Detalle de cada una en `docs/plan-briefings.md`.
+
+---
+
+## 🎞️ Presentaciones: quitar Microsoft, usar el reproductor nativo (elegido jul 6 2026)
+
+**Contexto:** el tab "Presentación" de `src/pages/admin/projects/[id].astro` (líneas ~640-678)
+previsualiza el `.pptx` embebiendo el visor de Office Online
+(`https://view.officeapps.live.com/op/embed.aspx?...`). Esto (a) depende de Microsoft y
+(b) lo rompe la CSP nueva del middleware (`default-src 'self'` sin `frame-src` bloquea el iframe;
+el spinner "Cargando presentación…" se queda girando para siempre).
+
+**Decisión:** reemplazarlo por el **reproductor de slides nativo que ya existe** (imágenes en
+Vercel Blob). Ese sistema ya está construido y la tabla `presentations` ya tiene `projectId`:
+- `presentations` / `presentation_slides` (schema.ts:184-200) — ya enlazan por proyecto.
+- `src/pages/admin/slides/[id]/present.astro` — modo proyector (renderiza `<img>` por slide). Ya existe.
+- `src/pages/admin/slides/[id]/control.astro` — control remoto con thumbnails. Ya existe.
+- `src/pages/api/slides/create.ts` — crea presentación para un `projectId`. Ya existe.
+- `src/pages/api/slides/[id]/upload.ts` — sube slides como PNG a Vercel Blob. Ya existe.
+- `src/pages/api/slides/[id]/state.ts` — sync del slide actual. Ya existe.
+
+**Trabajo a hacer** (solo cablear el tab; el back ya está):
+1. En `projects/[id].astro`, lado servidor: reemplazar la lógica `hasPptx`/`pptxPublicPath`
+   (busca `public/docs/{slug}.pptx`) por una consulta a `presentations` where `projectId = project.id`
+   + sus `presentation_slides`.
+2. Tab "Presentación":
+   - Si el proyecto **tiene** presentación: grilla de miniaturas (imágenes) + botones a
+     "Modo proyector" (`/admin/slides/{id}/present`) y "Control remoto" (`/admin/slides/{id}/control`),
+     + control para subir más slides (POST `/api/slides/{id}/upload`).
+   - Si **no** tiene: botón "Crear presentación" → POST `/api/slides/create` con `projectId` + título.
+3. **Borrar el `<iframe>` de Office Online** por completo → elimina Microsoft y arregla el break de CSP.
+
+**No hay que tocar la CSP:** ya permite las imágenes de Blob (`img-src 'self' data: https:`).
+
+**Nota de flujo:** el deck deja de ser un `.pptx`; se exporta cada slide como PNG
+(PowerPoint/Keynote/Google Slides → "Exportar como imágenes") y se sube desde el tab.
+Las presentaciones viejas en `.pptx` (`public/docs/*.pptx`) no migran solas: hay que recrearlas.
+Decisión abierta: ¿mantener el botón de descarga del `.pptx` si el archivo aún existe? (a definir).
+
+**Relacionado (misma sesión, revisión de seguridad OWASP):** la CSP se agregó en `src/middleware.ts`
+y su string está **duplicado** en la rama admin y la pública (candidato a extraer a una constante).
+Aparte, el `<link>` a Google Fonts en `AdminLayout.astro` también lo bloquea la CSP pero es
+cosmético (las fuentes se self-hostean vía `@fontsource` en `global.css`); se puede quitar el
+`<link>` externo. Ambos son menores, no urgentes.
