@@ -178,6 +178,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
+/* Tailwind v4 resetea margin:0 en todo elemento, lo que anula el centrado
+   nativo de <dialog> (margin:auto del UA) y lo deja pegado arriba-izquierda. */
+dialog { margin: auto; }
+
 /* Select in dark theme */
 select {
   background: #13131a;
