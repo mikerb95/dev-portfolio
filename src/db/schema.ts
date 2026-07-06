@@ -147,8 +147,19 @@ export const briefings = sqliteTable('briefings', {
   estimatedHours: integer('estimated_hours'),
   deadline: integer('deadline', { mode: 'timestamp' }),
   notes: text('notes'),
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }),
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+export const briefingItems = sqliteTable('briefing_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  briefingId: integer('briefing_id').notNull().references(() => briefings.id, { onDelete: 'cascade' }),
+  kind: text('kind', { enum: ['requerimiento', 'entregable', 'exclusion'] }).notNull(),
+  content: text('content').notNull(),
+  done: integer('done', { mode: 'boolean' }).default(false),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
 // Seguimiento: llamadas, reuniones, notas y pendientes (con recordatorios)
