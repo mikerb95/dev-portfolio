@@ -2,7 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
 import { briefings, clients, projects } from '../../db/schema'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, isNull } from 'drizzle-orm'
 
 const rows = await db
   .select({
@@ -22,6 +22,7 @@ const rows = await db
   .from(briefings)
   .leftJoin(clients, eq(briefings.clientId, clients.id))
   .leftJoin(projects, eq(briefings.projectId, projects.id))
+  .where(isNull(briefings.deletedAt))
   .orderBy(desc(briefings.createdAt))
 
 const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients)
