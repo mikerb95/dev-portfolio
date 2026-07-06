@@ -140,8 +140,6 @@ export const briefings = sqliteTable('briefings', {
   status: text('status', { enum: ['borrador', 'en_revision', 'aprobado', 'rechazado'] }).default('borrador'),
   objective: text('objective'),
   scope: text('scope'),
-  requirements: text('requirements'),
-  deliverables: text('deliverables'),
   estimatedBudget: real('estimated_budget'),
   agreedBudget: real('agreed_budget'),
   estimatedHours: integer('estimated_hours'),
