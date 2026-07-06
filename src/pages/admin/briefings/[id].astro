@@ -368,8 +368,6 @@ const statusLabel: Record<string, string> = {
       deadline: val('f-deadline') || null,
       objective: val('f-objective') || null,
       scope: val('f-scope') || null,
-      requirements: val('f-requirements') || null,
-      deliverables: val('f-deliverables') || null,
       notes: val('f-notes') || null,
     }
     await fetch(`/api/admin/briefings/${briefingId}`, {
@@ -379,5 +377,38 @@ const statusLabel: Record<string, string> = {
     })
     modal.close()
     window.location.reload()
+  })
+
+  document.querySelectorAll('[data-add-item]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const kind = btn.dataset.addItem
+      const content = prompt('Nuevo ítem:')
+      if (!content || !content.trim()) return
+      await fetch(`/api/admin/briefings/${briefingId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, content: content.trim() }),
+      })
+      window.location.reload()
+    })
+  })
+
+  document.querySelectorAll('[data-item-toggle]').forEach((checkbox) => {
+    checkbox.addEventListener('change', async () => {
+      const itemId = checkbox.dataset.itemToggle
+      await fetch(`/api/admin/briefings/${briefingId}/items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done: checkbox.checked }),
+      })
+    })
+  })
+
+  document.querySelectorAll('[data-item-delete]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const itemId = btn.dataset.itemDelete
+      await fetch(`/api/admin/briefings/${briefingId}/items/${itemId}`, { method: 'DELETE' })
+      window.location.reload()
+    })
   })
 </script>
