@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../../db'
-import { clients, projects } from '../../../../db/schema'
-import { desc, eq, count } from 'drizzle-orm'
+import { clients } from '../../../../db/schema'
+import { desc } from 'drizzle-orm'
+import { validateClient, json } from './_shared'
 
 export const GET: APIRoute = async () => {
   const rows = await db
@@ -16,24 +17,24 @@ export const GET: APIRoute = async () => {
     .from(clients)
     .orderBy(desc(clients.createdAt))
 
-  return new Response(JSON.stringify(rows), { status: 200 })
+  return json(rows)
 }
 
 export const POST: APIRoute = async ({ request }) => {
-  const body = await request.json()
-  const { name, email, company, notes } = body
-
-  if (!name) {
-    return new Response(JSON.stringify({ error: 'name es requerido' }), { status: 400 })
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return json({ error: 'JSON inválido' }, 400)
   }
 
+  const result = validateClient(body)
+  if ('error' in result) return json({ error: result.error }, 400)
+
   const [row] = await db.insert(clients).values({
-    name,
-    email: email ?? null,
-    company: company ?? null,
-    notes: notes ?? null,
+    ...result.data,
     createdAt: new Date(),
   }).returning()
 
-  return new Response(JSON.stringify(row), { status: 201 })
+  return json(row, 201)
 }
