@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../../../../db'
 import { briefings, clients, projects } from '../../../../../db/schema'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 
 export const GET: APIRoute = async ({ params }) => {
   const id = Number(params.id)
@@ -13,8 +13,6 @@ export const GET: APIRoute = async ({ params }) => {
       status: briefings.status,
       objective: briefings.objective,
       scope: briefings.scope,
-      requirements: briefings.requirements,
-      deliverables: briefings.deliverables,
       estimatedBudget: briefings.estimatedBudget,
       agreedBudget: briefings.agreedBudget,
       estimatedHours: briefings.estimatedHours,
