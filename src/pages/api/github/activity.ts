@@ -37,12 +37,9 @@ export interface DeepWorkStats {
   sessions: number
 }
 
-// Merge push events within 90-min gaps into sessions, +30 min per commit minimum
-function calcDeepWork(events: GitHubEvent[]): DeepWorkStats {
-  const pushTimes = events
-    .filter((e) => e.type === 'PushEvent')
-    .map((e) => new Date(e.created_at).getTime())
-    .sort((a, b) => a - b)
+// Merge commit timestamps within 90-min gaps into sessions, +30 min per commit minimum
+function calcDeepWork(commitTimes: number[]): DeepWorkStats {
+  const pushTimes = [...commitTimes].sort((a, b) => a - b)
 
   if (!pushTimes.length) return { weekHours: 0, monthHours: 0, sessions: 0 }
 
