@@ -216,8 +216,8 @@ export const GET: APIRoute = async () => {
 
   feed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
-  const deepWork = calcDeepWork(recentEvents)
-  const streak = calcStreak(recentEvents)
+  const deepWork = calcDeepWork(commitTimes)
+  const streak = calcStreak(commitTimes)
 
   // Commits per day for sparkline (last 14 days)
   const commitsByDay: Record<string, number> = {}
