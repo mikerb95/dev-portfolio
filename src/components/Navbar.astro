@@ -63,7 +63,7 @@ const navLinks = [
       </span>
       <a
         href="/login?callbackUrl=%2Fentrar"
-        class="inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-white/5 text-ink-100 hover:bg-white/10 transition-colors"
+        class="hidden md:inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-white/5 text-ink-100 hover:bg-white/10 transition-colors"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -84,7 +84,7 @@ const navLinks = [
       </a>
       <a
         href="/contact"
-        class="inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
+        class="hidden md:inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -101,6 +101,104 @@ const navLinks = [
         </svg>
         Contáctame
       </a>
+
+      <!-- Mobile menu button -->
+      <button
+        id="navbar-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="navbar-mobile-panel"
+        aria-label="Abrir menú"
+        class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/5 text-ink-100 hover:bg-white/10 transition-colors"
+      >
+        <svg
+          id="navbar-toggle-icon-open"
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+        <svg
+          id="navbar-toggle-icon-close"
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="hidden"
+        >
+          <path d="M18 6 6 18M6 6l12 12"></path>
+        </svg>
+      </button>
     </div>
   </div>
+
+  <!-- Mobile nav panel -->
+  <div
+    id="navbar-mobile-panel"
+    class="hidden md:hidden glass-strong rounded-3xl mt-2 p-3 flex flex-col gap-1"
+  >
+    {
+      navLinks.map((link) => {
+        const isActive = currentPath.startsWith(link.href);
+        return (
+          <a
+            href={link.href}
+            class={`px-4 py-2.5 rounded-full text-[13px] font-mono transition-colors hover:bg-white/5 ${isActive ? "text-cyan" : "text-ink-100"}`}
+          >
+            {link.label}
+          </a>
+        );
+      })
+    }
+    <div class="h-px bg-white/10 my-1"></div>
+    <a
+      href="/login?callbackUrl=%2Fentrar"
+      class="px-4 py-2.5 rounded-full text-[13px] font-mono text-ink-100 hover:bg-white/5 transition-colors"
+    >
+      Login
+    </a>
+    <a
+      href="/contact"
+      class="inline-flex items-center justify-center h-9 px-4 mt-1 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
+    >
+      Contáctame
+    </a>
+  </div>
 </header>
+
+<script>
+  const toggle = document.getElementById("navbar-toggle");
+  const panel = document.getElementById("navbar-mobile-panel");
+  const iconOpen = document.getElementById("navbar-toggle-icon-open");
+  const iconClose = document.getElementById("navbar-toggle-icon-close");
+
+  toggle?.addEventListener("click", () => {
+    const isOpen = panel?.classList.toggle("hidden") === false;
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    toggle.setAttribute("aria-label", isOpen ? "Cerrar menú" : "Abrir menú");
+    iconOpen?.classList.toggle("hidden", isOpen);
+    iconClose?.classList.toggle("hidden", !isOpen);
+  });
+
+  panel?.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      panel.classList.add("hidden");
+      toggle?.setAttribute("aria-expanded", "false");
+      toggle?.setAttribute("aria-label", "Abrir menú");
+      iconOpen?.classList.remove("hidden");
+      iconClose?.classList.add("hidden");
+    });
+  });
+</script>
