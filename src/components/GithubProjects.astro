@@ -111,9 +111,8 @@ const username = 'mikerb95'
     const grid = document.getElementById('github-grid')
     if (!grid) return
     applyHeaderText()
-    const username = grid.dataset.username
     try {
-      const res = await fetch(`https://api.github.com/users/${username}/repos?per_page=12&sort=updated`)
+      const res = await fetch('/api/github/public-repos')
       if (!res.ok) throw new Error('API error')
       const data: Repo[] = await res.json()
       if (!Array.isArray(data)) throw new Error('bad response')
