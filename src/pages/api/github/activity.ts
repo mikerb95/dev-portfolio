@@ -131,19 +131,43 @@ export const GET: APIRoute = async () => {
     'X-GitHub-Api-Version': '2022-11-28',
   }
 
-  const res = await fetch(
+  const thirtyDaysAgo = Date.now() - 30 * 86_400_000
+  const sinceIso = new Date(thirtyDaysAgo).toISOString()
+  const sinceDate = sinceIso.split('T')[0]
+
+  // NOTE: The Events API only returns the most recent ~100 events, which for an
+  // active user skews toward the last day or two and can silently drop entire
+  // repos/days from the 30-day window. Discover commits via the Search API
+  // instead, which queries the full history directly and isn't truncated the
+  // same way.
+  const searchItems: CommitSearchItem[] = []
+  let page = 1
+  let totalCount = Infinity
+  while (searchItems.length < totalCount && page <= 10) {
+    const searchUrl =
+      `https://api.github.com/search/commits?q=${encodeURIComponent(
+        `author:${username} author-date:>=${sinceDate}`
+      )}&sort=author-date&order=desc&per_page=100&page=${page}`
+    const r = await fetch(searchUrl, { headers })
+    if (!r.ok) break
+    const data = await r.json()
+    totalCount = data.total_count ?? searchItems.length
+    const items: CommitSearchItem[] = data.items ?? []
+    searchItems.push(...items)
+    if (items.length < 100) break
+    page++
+  }
+
+  const eventsRes = await fetch(
     `https://api.github.com/users/${username}/events?per_page=100`,
     { headers }
   )
 
-  if (!res.ok) {
-    return new Response(JSON.stringify({ error: 'GitHub API error', status: res.status }), { status: 502 })
+  if (!eventsRes.ok) {
+    return new Response(JSON.stringify({ error: 'GitHub API error', status: eventsRes.status }), { status: 502 })
   }
 
-  const events: GitHubEvent[] = await res.json()
-
-  const thirtyDaysAgo = Date.now() - 30 * 86_400_000
-  const sinceIso = new Date(thirtyDaysAgo).toISOString()
+  const events: GitHubEvent[] = await eventsRes.json()
   const recentEvents = events.filter(
     (e) => new Date(e.created_at).getTime() >= thirtyDaysAgo
   )
@@ -151,43 +175,22 @@ export const GET: APIRoute = async () => {
   // Build feed
   const seen = new Set<string>()
   const feed: FeedItem[] = []
+  const commitTimes: number[] = []
 
-  // NOTE: GitHub's Events API no longer includes `payload.commits` in PushEvents
-  // (only ref/head/before), so the feed is rebuilt from the per-repo Commits API.
-  // Collect the repos the user pushed to recently, then fetch their commits.
-  const activeRepos = Array.from(
-    new Set(
-      recentEvents
-        .filter((e) => e.type === 'PushEvent')
-        .map((e) => e.repo.name)
-    )
-  )
-
-  const commitResults = await Promise.all(
-    activeRepos.map(async (repoFull) => {
-      const url =
-        `https://api.github.com/repos/${repoFull}/commits` +
-        `?author=${encodeURIComponent(username)}&since=${sinceIso}&per_page=100`
-      const r = await fetch(url, { headers })
-      if (!r.ok) return { repoFull, commits: [] as CommitApiItem[] }
-      return { repoFull, commits: (await r.json()) as CommitApiItem[] }
+  for (const c of searchItems) {
+    const firstLine = c.commit.message.split('\n')[0].trim()
+    if (isSkipped(firstLine) || seen.has(c.sha)) continue
+    seen.add(c.sha)
+    const timestamp = c.commit.author?.date ?? c.commit.committer?.date ?? ''
+    if (timestamp) commitTimes.push(new Date(timestamp).getTime())
+    feed.push({
+      repo: c.repository.full_name.split('/')[1] ?? c.repository.full_name,
+      repoFull: c.repository.full_name,
+      message: firstLine,
+      sha: c.sha.slice(0, 7),
+      timestamp,
+      type: 'commit',
     })
-  )
-
-  for (const { repoFull, commits } of commitResults) {
-    for (const c of commits) {
-      const firstLine = c.commit.message.split('\n')[0].trim()
-      if (isSkipped(firstLine) || seen.has(c.sha)) continue
-      seen.add(c.sha)
-      feed.push({
-        repo: repoFull.split('/')[1] ?? repoFull,
-        repoFull,
-        message: firstLine,
-        sha: c.sha.slice(0, 7),
-        timestamp: c.commit.author?.date ?? c.commit.committer?.date ?? '',
-        type: 'commit',
-      })
-    }
   }
 
   for (const event of recentEvents) {
