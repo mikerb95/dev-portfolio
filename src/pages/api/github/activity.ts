@@ -82,14 +82,12 @@ function calcDeepWork(commitTimes: number[]): DeepWorkStats {
   }
 }
 
-function calcStreak(events: GitHubEvent[]): number {
+function calcStreak(commitTimes: number[]): number {
   const activeDays = new Set(
-    events
-      .filter((e) => e.type === 'PushEvent')
-      .map((e) => {
-        const d = new Date(e.created_at)
-        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-      })
+    commitTimes.map((t) => {
+      const d = new Date(t)
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    })
   )
 
   let streak = 0
