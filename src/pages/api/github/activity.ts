@@ -12,13 +12,14 @@ interface GitHubEvent {
   created_at: string
 }
 
-interface CommitApiItem {
+interface CommitSearchItem {
   sha: string
   commit: {
     message: string
     author?: { date?: string }
     committer?: { date?: string }
   }
+  repository: { full_name: string }
 }
 
 export interface FeedItem {
