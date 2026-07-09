@@ -1036,7 +1036,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
 
 <script define:vars={{ projectId: project.id }}>
   // --- Tab logic ---
-  const tabs = ['info', 'services', 'envvars', 'contacts', 'finances', 'adrs', 'deck'].filter(t => document.getElementById(`tab-${t}`))
+  const tabs = ['info', 'services', 'envvars', 'contacts', 'finances', 'observability', 'adrs', 'deck'].filter(t => document.getElementById(`tab-${t}`))
 
   function activateTab(key) {
     tabs.forEach((t) => {
