@@ -347,6 +347,19 @@ export const appSettings = sqliteTable('app_settings', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 })
 
+// Core Web Vitals medidos en el navegador de visitantes reales (RUM).
+// Alimenta el p75 público de /engineering. Sin PII: solo métrica, valor, la
+// ruta (sin query) y el tipo de navegación.
+export const webVitals = sqliteTable('web_vitals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  metric: text('metric', { enum: ['LCP', 'INP', 'CLS', 'FCP', 'TTFB'] }).notNull(),
+  value: real('value').notNull(),
+  rating: text('rating', { enum: ['good', 'needs-improvement', 'poor'] }),
+  path: text('path'),
+  navigationType: text('navigation_type'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
+
 // Sesiones de administrador por dispositivo. La estrategia de auth es JWT
 // (stateless), así que este registro lo mantiene el middleware para poder
 // listar los dispositivos con sesión abierta y cerrarlos remotamente.
