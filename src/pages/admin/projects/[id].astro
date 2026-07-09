@@ -1057,6 +1057,15 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
     btn.addEventListener('click', () => activateTab(btn.dataset.tab))
   })
 
+  // Enlaces internos (ej. badge de salud del header) que saltan a una pestaña.
+  document.querySelectorAll('[data-tab-link]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault()
+      const key = a.dataset.tabLink
+      if (tabs.includes(key)) activateTab(key)
+    })
+  })
+
   const hash = location.hash.replace('#', '')
   activateTab(tabs.includes(hash) ? hash : 'info')
 
