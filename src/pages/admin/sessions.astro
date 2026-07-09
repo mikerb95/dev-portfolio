@@ -91,7 +91,9 @@ const otherCount = items.filter((i) => !i.isCurrent).length
 
     <p class="text-[11px] text-ink-400 leading-relaxed px-1">
       Al cerrar una sesión, ese dispositivo pierde el acceso en su siguiente acción y debe volver a
-      iniciar sesión con GitHub. La comprobación se hace en cada request del panel.
+      iniciar sesión con GitHub. La comprobación se hace en cada request del panel. Las sesiones con
+      más de 24&nbsp;h de inactividad se cierran automáticamente, y cada dispositivo nuevo dispara
+      una notificación push.
     </p>
   </div>
 
