@@ -4,7 +4,7 @@ import { getSession } from 'auth-astro/server'
 import { isNull, desc } from 'drizzle-orm'
 import { db } from '../../db'
 import { adminSessions } from '../../db/schema'
-import { DEVICE_COOKIE, describeDevice } from '../../lib/device-sessions'
+import { DEVICE_COOKIE, describeDevice } from '../../lib/device-info'
 
 // Identidad de ESTA sesión, igual que la calcula el middleware.
 const session = await getSession(Astro.request)
