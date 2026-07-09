@@ -27,6 +27,37 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!isAllowedLogin(login)) {
       return new Response('Forbidden', { status: 403 })
     }
+
+    // Registro de dispositivo: identidad = `sid` del JWT si existe (sesiones
+    // nuevas), o cookie `device_id` como respaldo (sesiones previas). Si la
+    // sesión fue revocada desde el panel, se borra el JWT y se fuerza re-login.
+    const sid = (session as { sid?: string } | undefined)?.sid
+    let deviceCookie = context.cookies.get(DEVICE_COOKIE)?.value
+    if (!deviceCookie) {
+      deviceCookie = crypto.randomUUID()
+      context.cookies.set(DEVICE_COOKIE, deviceCookie, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: import.meta.env.PROD,
+        maxAge: 60 * 60 * 24 * 365,
+      })
+    }
+    const sessionId = sid ?? deviceCookie
+    try {
+      const { revoked } = await recordSession({
+        id: sessionId,
+        login,
+        userAgent: context.request.headers.get('user-agent'),
+        ip: clientIp(context.request.headers),
+      })
+      if (revoked) {
+        for (const name of AUTH_COOKIES) context.cookies.delete(name, { path: '/' })
+        return context.redirect('/entrar?revoked=1')
+      }
+    } catch {
+      // Fail-open: un fallo del registro de sesiones no debe tumbar el panel.
+    }
   }
 
   const res = await next()
