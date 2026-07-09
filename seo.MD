@@ -1,4 +1,62 @@
-# Auditoría SEO — Portfolio CodeByMike
+# SEO — Portfolio CodeByMike
+
+## Estado y plan de posicionamiento orgánico — 2026-07-09
+
+### ✅ Capa técnica completada (auditoría de junio + sesión de julio)
+
+Todo lo crítico de la auditoría de abajo ya está implementado y verificado en código:
+
+- Open Graph + Twitter Cards + imágenes OG (default, /status, /tools) en `BaseLayout.astro`
+- Canonical + `site` en config + `og:locale es_CO`
+- `robots.txt` + `sitemap.xml` dinámico (proyectos desde BD + notas) con `lastmod`
+- 404 real (`404.astro` + status 404 en `[slug]`, sin soft-404)
+- Fuentes self-hosted con variable fonts (`@fontsource-variable`)
+- Headers de seguridad globales (CSP, HSTS, nosniff, Referrer-Policy) y `X-Robots-Tag: noindex` en /admin
+- Cache SWR en el edge para todas las páginas públicas (`s-maxage=300, swr=86400`)
+- `imageService: true` en el adapter Vercel + `<Image>` en proyectos
+- JSON-LD: `WebSite` (layout), `Person` (home), `CreativeWork` (proyectos)
+- Description específica de la home con marca, ubicación y stack
+- Favicon SVG/ICO enlazados + `theme-color`
+
+**Añadido en esta sesión (2026-07-09):**
+
+- **JSON-LD `BlogPosting` + `BreadcrumbList`** en `/notes/[slug]` y breadcrumbs en `/projects/[slug]` — elegibilidad para rich results de artículos.
+- **`article:published_time` / `article:author`** vía prop `publishedTime` de `BaseLayout`.
+- **Feed RSS** en `/rss.xml` (notas, con categorías y `lastBuildDate`) + `<link rel="alternate">` en el head — señal de frescura para crawlers y agregadores.
+- **`site.webmanifest` + `apple-touch-icon.png` + icon-192/512** generados desde el favicon SVG.
+- **IndexNow**: clave publicada en `public/eec9c30b0348b882cba9349b7fb125f2.txt` + `npm run seo:indexnow` (`scripts/submit-indexnow.mjs`) — notifica a **Bing, Yandex, Seznam, Naver y Yep** al publicar contenido. Google no usa IndexNow; su canal es Search Console.
+- **`llms.txt`** — mapa del sitio para crawlers de IA (ChatGPT, Perplexity, Claude), un canal de descubrimiento creciente.
+- Fix de build: colisión de `const headers` en `middleware.ts` (renombrado a `reqHeaders` en el bloque de enforcement).
+
+### 🔴 Acciones manuales pendientes (requieren tus cuentas — son EL paso que falta para indexación)
+
+1. **Google Search Console** → <https://search.google.com/search-console>
+   - Añadir propiedad de dominio `codebymike.tech` (verificación por DNS TXT en el registrador; cubre www y subdominios).
+   - Enviar `https://codebymike.tech/sitemap.xml`.
+   - Pedir indexación manual de `/`, `/notes` y las 5 notas (Inspección de URLs → Solicitar indexación).
+2. **Bing Webmaster Tools** → <https://www.bing.com/webmasters> — con "Importar desde Google Search Console" es un clic. Bing alimenta también a DuckDuckGo, Ecosia y Yahoo.
+3. **Ejecutar `npm run seo:indexnow`** tras el deploy (y tras cada nota nueva) — cubre Bing/Yandex/Seznam/Naver.
+4. **Yandex Webmaster** (opcional) → <https://webmaster.yandex.com> si interesa ese mercado.
+5. Verificar en Vercel que `www.codebymike.tech` y `*.vercel.app` redirigen 308 al dominio canónico.
+
+### 📈 Plan de crecimiento orgánico (lo que realmente posiciona)
+
+La capa técnica ya no es el cuello de botella. Para "top de Google" el ranking lo deciden **contenido + enlaces + tiempo**:
+
+| # | Acción | Por qué | Cadencia |
+|---|--------|---------|----------|
+| 1 | **Publicar 1 nota técnica cada 1–2 semanas** apuntando a búsquedas long-tail en español ("monitoreo uptime con Astro", "SLO error budget ejemplo", "sesiones revocables JWT") | Hay poquísimo contenido técnico de calidad en español; es el nicho ganable | Continua |
+| 2 | **Distribuir cada nota**: LinkedIn, dev.to / Hashnode (con `rel=canonical` apuntando a codebymike.tech), comunidades (r/devsarg, forocoches dev, Discords de Astro/Vercel) | Backlinks + tráfico de referencia = señales de autoridad | Por nota |
+| 3 | **Backlinks de perfil**: URL del sitio en GitHub profile/repos README, LinkedIn, committers.top, dev.to, X | Enlaces fáciles y legítimos de dominios con autoridad | Una vez |
+| 4 | **Interlinking interno**: cada nota enlaza a proyectos/tools relacionados y viceversa | Distribuye PageRank interno y aumenta páginas/sesión | Por nota |
+| 5 | **Título home con keywords buscables** — ya incluye "Software Engineer"; considerar variante EN si apuntas a mercado remoto internacional (con `hreflang`) | La búsqueda de reclutadores es mayormente en inglés | Decisión |
+| 6 | **Medir**: Search Console (queries, impresiones, CTR) semanal el primer mes; PageSpeed Insights tras cada cambio grande; CrUX aparece ~28 días después del alta | Sin medición no hay iteración | Semanal |
+
+**Expectativa realista:** indexación completa en 1–2 semanas tras dar de alta Search Console; primeras impresiones por marca ("codebymike") en días; posicionamiento long-tail de las notas en 2–3 meses con publicación constante. El dominio es joven — la constancia pesa más que cualquier truco técnico.
+
+---
+
+# Auditoría SEO original — 2026-06-09
 
 **Fecha:** 2026-06-09
 **Stack:** Astro 6 (SSR, `output: 'server'`) + Vercel + Tailwind 4 + Turso/libSQL
