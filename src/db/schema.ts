@@ -346,3 +346,18 @@ export const appSettings = sqliteTable('app_settings', {
   value: text('value'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 })
+
+// Sesiones de administrador por dispositivo. La estrategia de auth es JWT
+// (stateless), así que este registro lo mantiene el middleware para poder
+// listar los dispositivos con sesión abierta y cerrarlos remotamente.
+// `id` es el `sid` firmado dentro del JWT cuando existe; si no, el valor de la
+// cookie `device_id` (best-effort para sesiones previas al despliegue).
+export const adminSessions = sqliteTable('admin_sessions', {
+  id: text('id').primaryKey(),
+  login: text('login'),
+  userAgent: text('user_agent'),
+  ip: text('ip'),
+  firstSeen: integer('first_seen', { mode: 'timestamp' }),
+  lastSeen: integer('last_seen', { mode: 'timestamp' }),
+  revokedAt: integer('revoked_at', { mode: 'timestamp' }),
+})
