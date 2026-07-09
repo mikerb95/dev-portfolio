@@ -78,6 +78,13 @@
       "when": 1783598579813,
       "tag": "0010_third_nextwave",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1783615832572,
+      "tag": "0011_demonic_doctor_faustus",
+      "breakpoints": true
     }
   ]
 }
