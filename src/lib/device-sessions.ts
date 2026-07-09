@@ -54,6 +54,13 @@ export async function recordSession(params: {
 
   if (existing?.revokedAt) return { revoked: true }
 
+  // Expiración por inactividad: si el dispositivo vuelve tras >24h sin
+  // actividad, la sesión se revoca aquí mismo aunque el cron no haya barrido.
+  if (existing?.lastSeen && now.getTime() - existing.lastSeen.getTime() > IDLE_EXPIRY_MS) {
+    await db.update(adminSessions).set({ revokedAt: now }).where(eq(adminSessions.id, params.id))
+    return { revoked: true }
+  }
+
   if (!existing) {
     await db.insert(adminSessions).values({
       id: params.id,
@@ -63,6 +70,13 @@ export async function recordSession(params: {
       firstSeen: now,
       lastSeen: now,
     })
+    // Alerta de seguridad: dispositivo nunca visto con sesión de admin.
+    // Best-effort: un fallo del push no debe bloquear el request.
+    await sendPush(
+      'Nueva sesión de admin',
+      `${describeDevice(params.userAgent)} · IP ${params.ip ?? 'desconocida'} · @${params.login ?? '?'}`,
+      { priority: 4, tags: 'key', click: `${SITE_URL}/admin/sessions` }
+    ).catch(() => {})
     return { revoked: false }
   }
 
