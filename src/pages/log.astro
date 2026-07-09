@@ -156,50 +156,95 @@ import BaseLayout from '../layouts/BaseLayout.astro'
       <span>Hoy</span>`
   }
 
+  function dayLabel(iso: string): string {
+    return new Date(iso).toLocaleDateString('es-CO', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    })
+  }
+
+  function rowHtml(c: FeedItem): string {
+    const leftBadge = c.type === 'pr_merged'
+      ? `<span class="text-violet text-[10px] font-mono shrink-0 w-14 text-right">PR</span>`
+      : `<span class="font-mono text-ink-300 text-[10.5px] shrink-0 w-14 text-right">${c.sha}</span>`
+
+    return `
+      <div class="flex items-baseline gap-4 px-5 py-3 border-b border-white/[.03] hover:bg-white/[.02]">
+        ${leftBadge}
+        <span class="text-ink-50 text-[13px] leading-snug flex-1">${escapeHtml(c.message)}</span>
+        <span class="text-ink-300 text-[10.5px] font-mono shrink-0 hidden sm:inline">${c.repo}</span>
+        <span class="text-ink-300 text-[10.5px] font-mono shrink-0">${relativeTime(c.timestamp)}</span>
+      </div>`
+  }
+
+  function dayHeaderHtml(day: string): string {
+    return `
+      <div class="px-5 py-2.5 border-b border-white/[.03] bg-white/[.01]">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 capitalize">${day}</span>
+      </div>`
+  }
+
+  const BATCH_SIZE = 60
+  let allItems: FeedItem[] = []
+  let cursor = 0
+  let lastDay = ''
+  let feedObserver: IntersectionObserver | null = null
+
+  function renderNextBatch() {
+    const el = document.getElementById('log-feed')!
+    const end = Math.min(cursor + BATCH_SIZE, allItems.length)
+    let html = ''
+    for (let i = cursor; i < end; i++) {
+      const c = allItems[i]
+      const day = dayLabel(c.timestamp)
+      if (day !== lastDay) {
+        html += dayHeaderHtml(day)
+        lastDay = day
+      }
+      html += rowHtml(c)
+    }
+    el.insertAdjacentHTML('beforeend', html)
+    cursor = end
+
+    if (cursor >= allItems.length) {
+      feedObserver?.disconnect()
+      feedObserver = null
+      const sentinel = document.getElementById('feed-sentinel')
+      sentinel?.remove()
+    }
+  }
+
   function renderFeed(items: FeedItem[]) {
     const el = document.getElementById('log-feed')!
+    allItems = items
+    cursor = 0
+    lastDay = ''
+    feedObserver?.disconnect()
+    feedObserver = null
 
     if (!items.length) {
       el.innerHTML = '<p class="px-5 py-10 text-center text-[12px] font-mono text-ink-300">Sin actividad reciente.</p>'
       return
     }
 
-    const groups: Record<string, FeedItem[]> = {}
-    for (const item of items) {
-      const day = new Date(item.timestamp).toLocaleDateString('es-CO', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      })
-      if (!groups[day]) groups[day] = []
-      groups[day].push(item)
+    el.innerHTML = ''
+    renderNextBatch()
+
+    // Infinite scroll: a sentinel just below the feed triggers the next batch
+    // whenever it scrolls into view, so thousands of commits never all mount at
+    // once.
+    if (cursor < allItems.length) {
+      const sentinel = document.createElement('div')
+      sentinel.id = 'feed-sentinel'
+      sentinel.className = 'h-10'
+      el.after(sentinel)
+      feedObserver = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) renderNextBatch()
+        },
+        { rootMargin: '600px 0px' }
+      )
+      feedObserver.observe(sentinel)
     }
-
-    el.innerHTML = Object.entries(groups)
-      .map(([day, commits]) => {
-        const rows = commits
-          .map((c) => {
-            const leftBadge = c.type === 'pr_merged'
-              ? `<span class="text-violet text-[10px] font-mono shrink-0 w-14 text-right">PR</span>`
-              : `<span class="font-mono text-ink-300 text-[10.5px] shrink-0 w-14 text-right">${c.sha}</span>`
-
-            return `
-              <div class="flex items-baseline gap-4 px-5 py-3 border-b border-white/[.03] hover:bg-white/[.02]">
-                ${leftBadge}
-                <span class="text-ink-50 text-[13px] leading-snug flex-1">${escapeHtml(c.message)}</span>
-                <span class="text-ink-300 text-[10.5px] font-mono shrink-0 hidden sm:inline">${c.repo}</span>
-                <span class="text-ink-300 text-[10.5px] font-mono shrink-0">${relativeTime(c.timestamp)}</span>
-              </div>`
-          })
-          .join('')
-
-        return `
-          <div>
-            <div class="px-5 py-2.5 border-b border-white/[.03] bg-white/[.01]">
-              <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 capitalize">${day}</span>
-            </div>
-            ${rows}
-          </div>`
-      })
-      .join('')
   }
 
   async function load() {
