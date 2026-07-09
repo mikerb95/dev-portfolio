@@ -1323,4 +1323,73 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
       btn.innerHTML = `<svg class="w-3 h-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1h4M1 1v4M15 1h-4M15 1v4M1 15h4M1 15v-4M15 15h-4M15 15v-4"/></svg> Modo proyector`
     }
   })
+
+  // --- Observabilidad: latencia en vivo (EKG), mismo trazo que /status ---
+  const EKG_W = 300, EKG_H = 56, EKG_PAD = 6
+
+  function ekgPath(series) {
+    if (!series || series.length < 2) return null
+    let min = Infinity, max = -Infinity
+    for (const v of series) { if (v < min) min = v; if (v > max) max = v }
+    const range = Math.max(max - min, 1)
+    const n = series.length
+    const dx = EKG_W / (n - 1)
+    let d = '', lastY = EKG_H / 2
+    for (let i = 0; i < n; i++) {
+      const x = i * dx
+      const y = EKG_PAD + (EKG_H - 2 * EKG_PAD) * (1 - (series[i] - min) / range)
+      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1) + ' '
+      lastY = y
+    }
+    return { d: d.trim(), lastY }
+  }
+
+  function ekgDraw(el, series) {
+    const trace = el.querySelector('.ekg-trace')
+    const glow = el.querySelector('.ekg-glow')
+    const cursor = el.querySelector('.ekg-cursor')
+    const empty = el.querySelector('.ekg-empty')
+    const p = ekgPath(series)
+    if (!p) {
+      trace?.setAttribute('d', '')
+      glow?.setAttribute('d', '')
+      if (empty) empty.style.display = 'flex'
+      return
+    }
+    if (empty) empty.style.display = 'none'
+    trace?.setAttribute('d', p.d)
+    glow?.setAttribute('d', p.d)
+    if (cursor) cursor.style.top = ((p.lastY / EKG_H) * 100).toFixed(2) + '%'
+    const id = el.getAttribute('data-monitor-id')
+    const now = document.querySelector(`.ekg-now[data-monitor-id="${id}"]`)
+    if (now) now.textContent = series[series.length - 1] + ' ms'
+  }
+
+  function ekgDrawAll(seriesById) {
+    document.querySelectorAll('.ekg').forEach((el) => {
+      const id = el.getAttribute('data-monitor-id')
+      let series = seriesById ? seriesById[id] : null
+      if (!series) {
+        try { series = JSON.parse(el.getAttribute('data-series') || '[]') } catch { series = [] }
+      }
+      ekgDraw(el, series)
+    })
+  }
+
+  if (document.querySelector('.ekg')) {
+    // Dibujo inicial con los datos incrustados por el servidor.
+    ekgDrawAll(null)
+    // Poll cada 30s contra el feed público (solo ms + ok por monitor activo).
+    const ekgRefresh = async () => {
+      try {
+        const res = await fetch('/api/status/latency', { headers: { Accept: 'application/json' } })
+        if (!res.ok) return
+        const { series } = await res.json()
+        const byId = {}
+        for (const id in series) byId[id] = (series[id] || []).map((p) => p.ms)
+        ekgDrawAll(byId)
+      } catch { /* red intermitente: reintenta en el próximo tick */ }
+    }
+    setInterval(ekgRefresh, 30_000)
+  }
 </script>
