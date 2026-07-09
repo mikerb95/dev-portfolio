@@ -1,0 +1,176 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+// Página estática: arquitectura del propio sitio. Un diagrama de capas y las
+// decisiones de diseño con su trade-off. Es lo que un ingeniero senior busca
+// —criterio de diseño, no solo features— y casi nadie muestra visualmente.
+
+type Layer = {
+  tag: string
+  title: string
+  nodes: { name: string; detail: string }[]
+}
+
+const layers: Layer[] = [
+  {
+    tag: 'Cliente',
+    title: 'Navegador del visitante',
+    nodes: [
+      { name: 'HTML SSR + islas', detail: 'Astro entrega HTML renderizado; JS solo donde hace falta.' },
+      { name: 'RUM web-vitals', detail: 'Mide LCP/INP/CLS reales y los envía por beacon.' },
+    ],
+  },
+  {
+    tag: 'Borde',
+    title: 'Vercel — Edge & Functions',
+    nodes: [
+      { name: 'CDN + caché', detail: 'Páginas públicas con s-maxage + stale-while-revalidate.' },
+      { name: 'Middleware', detail: 'Auth, allowlist, headers de seguridad (CSP/HSTS), chaos flags.' },
+      { name: 'SSR Functions', detail: 'Astro server output: rutas dinámicas y API en Node.' },
+    ],
+  },
+  {
+    tag: 'Aplicación',
+    title: 'Astro 6 (SSR) + Auth.js',
+    nodes: [
+      { name: 'Panel /admin', detail: 'CRM, costos/P&L, bóveda cifrada, monitores, LAB.' },
+      { name: 'API routes', detail: 'Endpoints REST tipados; validación en servidor.' },
+      { name: 'Auth JWT', detail: 'GitHub OAuth + allowlist; sesiones por dispositivo revocables.' },
+    ],
+  },
+  {
+    tag: 'Datos',
+    title: 'Turso (libSQL) + Drizzle ORM',
+    nodes: [
+      { name: 'Esquema tipado', detail: 'Drizzle: migraciones versionadas en git.' },
+      { name: 'Secretos AES-256-GCM', detail: 'Credenciales cifradas en reposo; reveladas bajo demanda.' },
+    ],
+  },
+]
+
+const externals: { name: string; role: string }[] = [
+  { name: 'cron-job.org', role: 'Dispara el motor de checks cada pocos minutos (el plan Hobby solo da 1 cron/día).' },
+  { name: 'ntfy.sh', role: 'Push al móvil: caídas, SSL por vencer, sesión de admin nueva.' },
+  { name: 'GitHub Actions', role: 'CI: tests + cobertura → registra cada run y habilita rollback.' },
+  { name: 'GitHub OAuth', role: 'Único proveedor de identidad para el panel.' },
+  { name: 'Resend', role: 'Email transaccional de alertas (canal secundario).' },
+]
+
+const decisions: { q: string; a: string }[] = [
+  {
+    q: 'SSR sobre estático puro',
+    a: 'El panel privado necesita datos en vivo y auth por request. Las páginas públicas se cachean en el edge, así que pago SSR solo donde aporta y sirvo el resto casi gratis.',
+  },
+  {
+    q: 'JWT stateless, no sesiones en BD',
+    a: 'Logins sin tocar la base de datos y cero infraestructura de sesión. El punto ciego —revocar— lo resolví con un sid firmado dentro del token y una tabla de dispositivos, sin abandonar el JWT.',
+  },
+  {
+    q: 'Turso/libSQL en vez de Postgres',
+    a: 'SQLite en el edge: latencia mínima, réplicas, y un modelo mental simple para un dominio que no necesita concurrencia masiva. Drizzle mantiene el esquema tipado y las migraciones en git.',
+  },
+  {
+    q: 'Cron externo en vez del de Vercel',
+    a: 'El plan Hobby limita a un cron diario, inútil para uptime. Un cron externo golpea un endpoint autenticado por token cada pocos minutos; el cron de Vercel queda de red de seguridad. La restricción de la plataforma fue el comienzo del diseño, no el final.',
+  },
+  {
+    q: 'Fail-open en todo lo secundario',
+    a: 'Telemetría, registro de sesiones y notificaciones nunca deben tumbar el flujo principal. Si un subsistema de observabilidad falla, degrada en silencio en vez de romper la experiencia.',
+  },
+]
+---
+
+<BaseLayout
+  title="Arquitectura — CodeByMike"
+  description="Cómo está construido este sitio: diagrama de capas de Astro SSR sobre Turso, con cron externo, RUM y notificaciones, y las decisiones de diseño detrás de cada pieza."
+  image="/og-default.png"
+>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver
+    </a>
+
+    <header class="mb-14">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/architecture</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Diseño de sistemas</span>
+      </div>
+      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-5">
+        Cómo está<br/>construido esto.
+      </h1>
+      <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
+        Este sitio no es una plantilla: es un sistema con un panel privado, monitoreo propio y
+        una pasarela de pagos. Aquí está su anatomía —capa por capa— y el porqué de cada decisión.
+      </p>
+    </header>
+
+    <!-- Diagrama de capas -->
+    <section class="mb-16">
+      <div class="space-y-3">
+        {layers.map((layer, i) => (
+          <div>
+            <div class="rounded-2xl glass p-5 md:p-6">
+              <div class="flex flex-col md:flex-row md:items-center gap-4">
+                <div class="md:w-40 shrink-0">
+                  <div class="text-[10px] font-mono uppercase tracking-[.2em] text-cyan mb-1">{layer.tag}</div>
+                  <div class="text-[14px] text-ink-50 font-medium leading-tight">{layer.title}</div>
+                </div>
+                <div class="flex-1 grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {layer.nodes.map((n) => (
+                    <div class="rounded-xl border border-white/5 bg-white/[.02] px-3.5 py-2.5">
+                      <div class="text-[12.5px] text-ink-50">{n.name}</div>
+                      <div class="text-[11px] text-ink-400 mt-0.5 leading-snug">{n.detail}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {i < layers.length - 1 && (
+              <div class="flex justify-center py-1.5" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-ink-500"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Servicios externos -->
+    <section class="mb-16">
+      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Servicios externos</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {externals.map((e) => (
+          <div class="rounded-2xl glass p-4">
+            <div class="text-[13px] text-ink-50 font-mono">{e.name}</div>
+            <div class="text-[11.5px] text-ink-400 mt-1.5 leading-relaxed">{e.role}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Decisiones de diseño -->
+    <section>
+      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Decisiones y trade-offs</h2>
+      <div class="space-y-3">
+        {decisions.map((d) => (
+          <div class="rounded-2xl glass p-5 md:p-6">
+            <div class="flex items-start gap-3">
+              <span class="text-cyan font-mono text-[13px] mt-0.5 shrink-0">→</span>
+              <div>
+                <div class="text-[15px] text-ink-50 font-medium mb-1.5">{d.q}</div>
+                <p class="text-[13px] text-ink-200 leading-relaxed">{d.a}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p class="text-[12px] text-ink-400 mt-8 leading-relaxed max-w-2xl">
+        Todo el código vive en un repositorio público como portafolio. Las decisiones aquí no son
+        teoría: cada una tiene su commit, sus tests y —cuando aplica— su hallazgo de seguridad
+        documentado en <a href="/security" class="text-cyan hover:underline">/security</a>.
+      </p>
+    </section>
+  </div>
+</BaseLayout>
