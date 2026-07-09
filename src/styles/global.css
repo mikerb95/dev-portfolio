@@ -100,6 +100,8 @@ body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smooth
 /* Gradient text mask */
 .text-mask,
 .text-mask-cyan {
+  /* background-image (no el shorthand `background`) para no
+     resetear background-clip a border-box. */
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -110,10 +112,10 @@ body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smooth
   margin-block: -0.12em;
 }
 .text-mask {
-  background: linear-gradient(180deg, #fff 0%, #fff 50%, #6b6b78 100%);
+  background-image: linear-gradient(180deg, #fff 0%, #fff 50%, #6b6b78 100%);
 }
 .text-mask-cyan {
-  background: linear-gradient(180deg, #9bfaff 0%, #00f2ff 60%, #007a82 100%);
+  background-image: linear-gradient(180deg, #9bfaff 0%, #00f2ff 60%, #007a82 100%);
 }
 
 /* Halo radial behind hero */
