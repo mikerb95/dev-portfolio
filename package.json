@@ -30,7 +30,8 @@
     "auth-astro": "^4.2.0",
     "drizzle-orm": "^0.45.2",
     "reveal.js": "^6.0.1",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.2.4",
+    "web-vitals": "^5.3.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.9",
