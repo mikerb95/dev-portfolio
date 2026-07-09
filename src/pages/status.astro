@@ -511,20 +511,71 @@ const healthLabel = {
       })
     }
 
+    function ago(ms) {
+      if (!ms) return '—'
+      const min = Math.round((Date.now() - ms) / 60_000)
+      if (min < 1) return 'hace <1 min'
+      if (min < 60) return `hace ${min} min`
+      const h = Math.floor(min / 60)
+      return h < 24 ? `hace ${h} h` : `hace ${Math.floor(h / 24)} d`
+    }
+
+    // Refresca badge de estado, "último check" y color del EKG sin recargar.
+    function applyStatus(statusById) {
+      if (!statusById) return
+      document.querySelectorAll('[data-card-id]').forEach((card) => {
+        const id = card.getAttribute('data-card-id')
+        const s = statusById[id]
+        if (!s) return
+
+        const info = statusBadge[s.status] ?? statusBadge.unknown
+        const dot = card.querySelector('.status-dot')
+        if (dot) {
+          dot.className = `status-dot w-1.5 h-1.5 rounded-full ${info.dot} ${s.status === 'up' ? '' : 'pulse-dot'}`
+        }
+        const label = card.querySelector('.status-label')
+        if (label) {
+          label.className = `status-label text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${info.cls}`
+          label.textContent = info.label
+        }
+        const checked = card.querySelector('.last-checked')
+        if (checked) {
+          checked.textContent = `último check ${ago(s.checkedAt)}`
+          checked.setAttribute('data-checked-at', s.checkedAt ?? '')
+        }
+
+        const ekg = card.querySelector('.ekg')
+        if (ekg) {
+          const color = ekgColor[s.status] ?? ekgColor.unknown
+          ekg.className = ekg.className.replace(/text-\S+/, color)
+        }
+      })
+    }
+
+    // Refresca los "hace X min" cada 30s aunque no haya nuevo poll de datos.
+    function tickAgo() {
+      document.querySelectorAll('.last-checked').forEach((el) => {
+        const at = Number(el.getAttribute('data-checked-at'))
+        if (at) el.textContent = `último check ${ago(at)}`
+      })
+    }
+
     // Dibujo inicial con los datos incrustados por el servidor.
     drawAll(null)
 
-    // Poll cada 30s: trae la latencia fresca y repinta.
+    // Poll cada 30s: trae latencia + estado frescos y repinta la card completa.
     async function refresh() {
       try {
         const res = await fetch('/api/status/latency', { headers: { Accept: 'application/json' } })
         if (!res.ok) return
-        const { series } = await res.json()
+        const { series, status } = await res.json()
         const byId = {}
         for (const id in series) byId[id] = (series[id] || []).map((p) => p.ms)
         drawAll(byId)
+        applyStatus(status)
       } catch { /* red intermitente: reintenta en el próximo tick */ }
     }
     setInterval(refresh, 30_000)
+    setInterval(tickAgo, 30_000)
   </script>
 </BaseLayout>
