@@ -186,6 +186,16 @@ function barColor(pct: number | null): string {
   return 'bg-ember'
 }
 
+// Badge de certificado TLS: días hasta la expiración, con color de alerta.
+function sslInfo(d: Date | null): { label: string; cls: string } | null {
+  if (!d) return null
+  const days = Math.round((d.getTime() - now) / DAY_MS)
+  if (days < 0) return { label: 'TLS vencido', cls: 'text-ember border-ember/40 bg-ember/15' }
+  if (days <= 14) return { label: `TLS · ${days} d`, cls: 'text-ember border-ember/30 bg-ember/10' }
+  if (days <= 30) return { label: `TLS · ${days} d`, cls: 'text-ember/80 border-ember/20 bg-ember/5' }
+  return { label: `TLS · ${days} d`, cls: 'text-lime/80 border-lime/20 bg-lime/5' }
+}
+
 // Color del trazo EKG según el estado actual del monitor.
 const ekgColor: Record<string, string> = {
   up: 'text-lime',
