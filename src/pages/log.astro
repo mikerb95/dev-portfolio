@@ -249,10 +249,23 @@ import BaseLayout from '../layouts/BaseLayout.astro'
   }
 
   const BATCH_SIZE = 60
+  const LOAD_DELAY_MS = 450
   let allItems: FeedItem[] = []
   let cursor = 0
   let lastDay = ''
+  let loading = false
   let feedObserver: IntersectionObserver | null = null
+
+  function hasMore() {
+    return cursor < allItems.length
+  }
+
+  // Show the bottom fade only while older commits remain; hide the loader once
+  // everything is mounted so the final rows stay fully readable.
+  function updateBottomUi() {
+    document.getElementById('feed-fade')?.classList.toggle('opacity-0', !hasMore())
+    if (!hasMore()) document.getElementById('feed-loader')?.classList.add('opacity-0')
+  }
 
   function renderNextBatch() {
     const el = document.getElementById('log-feed')!
@@ -270,12 +283,24 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     el.insertAdjacentHTML('beforeend', html)
     cursor = end
 
-    if (cursor >= allItems.length) {
+    if (!hasMore()) {
       feedObserver?.disconnect()
       feedObserver = null
-      const sentinel = document.getElementById('feed-sentinel')
-      sentinel?.remove()
+      document.getElementById('feed-sentinel')?.remove()
     }
+  }
+
+  // Reveal the loader, wait a beat so the "loading older data" animation is
+  // actually perceptible, then mount the next batch.
+  function loadMore() {
+    if (loading || !hasMore()) return
+    loading = true
+    document.getElementById('feed-loader')?.classList.remove('opacity-0')
+    setTimeout(() => {
+      renderNextBatch()
+      loading = false
+      updateBottomUi()
+    }, LOAD_DELAY_MS)
   }
 
   function renderFeed(items: FeedItem[]) {
@@ -283,28 +308,31 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     allItems = items
     cursor = 0
     lastDay = ''
+    loading = false
     feedObserver?.disconnect()
     feedObserver = null
 
     if (!items.length) {
       el.innerHTML = '<p class="px-5 py-10 text-center text-[12px] font-mono text-ink-300">Sin actividad reciente.</p>'
+      updateBottomUi()
       return
     }
 
     el.innerHTML = ''
     renderNextBatch()
+    updateBottomUi()
 
     // Infinite scroll: a sentinel just below the feed triggers the next batch
     // whenever it scrolls into view, so thousands of commits never all mount at
     // once.
-    if (cursor < allItems.length) {
+    if (hasMore()) {
       const sentinel = document.createElement('div')
       sentinel.id = 'feed-sentinel'
-      sentinel.className = 'h-10'
+      sentinel.className = 'h-2'
       el.after(sentinel)
       feedObserver = new IntersectionObserver(
         (entries) => {
-          if (entries.some((e) => e.isIntersecting)) renderNextBatch()
+          if (entries.some((e) => e.isIntersecting)) loadMore()
         },
         { rootMargin: '600px 0px' }
       )
