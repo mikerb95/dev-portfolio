@@ -7,6 +7,7 @@ import { probe, fetchSslExpiry } from '../../../lib/monitors'
 import { domainAlertState, daysUntil, type DomainAlertState } from '../../../lib/domains'
 import { sendEmail, sendPush } from '../../../lib/notify'
 import { isAllowedLogin } from '../../../lib/auth'
+import { sweepSessions } from '../../../lib/device-sessions'
 
 const CRON_SECRET = import.meta.env.CRON_SECRET
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
