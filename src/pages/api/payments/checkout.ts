@@ -23,7 +23,8 @@ const MAX_CENTS = 5_000_000_00 // $5.000.000 COP
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 export const POST: APIRoute = async ({ request, url }) => {
-  if (!rateLimit(`checkout:${clientIp(request)}`, 10, 60_000)) {
+  const { allowed } = await enforceLimit(`checkout:${clientIp(request)}`, { limit: 10, windowMs: 60_000 })
+  if (!allowed) {
     return json(429, { error: 'demasiados intentos, espera un minuto' })
   }
 

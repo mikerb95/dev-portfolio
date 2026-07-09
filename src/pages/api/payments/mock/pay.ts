@@ -6,7 +6,8 @@ import { db } from '../../../../db'
 import { payments } from '../../../../db/schema'
 import { applyGatewayEvent } from '../../../../lib/payments'
 import { isAllowedLogin } from '../../../../lib/auth'
-import { rateLimit, clientIp } from '../../../../lib/ratelimit'
+import { clientIp } from '../../../../lib/ratelimit'
+import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
 
 // "Pasarela" simulada para el modo demo (sin llaves Wompi configuradas).
 // Emite la secuencia real de eventos (pending → approved/declined) por el
