@@ -25,12 +25,83 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // hostiles según el clasificador de firmas; no bloquea. Síncrono y no-op para
   // el 99% del tráfico (regex/lookup en memoria); la escritura es fire-and-forget.
   // Ver docs/plan-security-observability.md.
-  observeRequest({
-    method: context.request.method,
-    path: pathname,
-    query: context.url.search.replace(/^\?/, ''),
-    headers: context.request.headers,
-  })
+  const method = context.request.method
+  const query = context.url.search.replace(/^\?/, '')
+  const headers = context.request.headers
+
+  observeRequest({ method, path: pathname, query, headers })
+
+  // Enforcement de seguridad (FASE 1). Todo el bloque es fail-open: cualquier
+  // fallo deja pasar el request (nunca tumbamos el sitio por el enforcement).
+  const ip = clientIp(headers)
+
+  // 1) Blocklist: una IP bloqueada (manual o auto) recibe 403 seco, sin pistas.
+  //    La lectura está cacheada 30s en memoria (isBlocked); la allowlist protege
+  //    al admin. Lista vacía hasta que la Fase 2 o el panel añadan bloqueos.
+  if (await isBlocked(ip)) {
+    recordEnforcementEvent({
+      category: 'blocklist',
+      severity: 'high',
+      ruleId: 'blocklist.hit',
+      action: 'blocked',
+      statusCode: 403,
+      method,
+      path: pathname,
+      query,
+      headers,
+    })
+    return new Response('Forbidden', { status: 403 })
+  }
+
+  // 2) Rate limit de dos capas (memoria → durable). Solo consulta Turso cuando
+  //    el contador local entra en la zona de peligro (deferUntil).
+  if (ip) {
+    // Endpoints de autenticación: objetivo típico de fuerza bruta. Un humano
+    // legítimo nunca hace 30 requests/min aquí → excederlo es sondeo.
+    if (isAuthPath(pathname)) {
+      const r = await enforceLimit(`auth:${ip}`, { limit: 30, windowMs: 60_000, deferUntil: 0.5 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'auth_probing',
+          severity: 'high',
+          ruleId: 'ratelimit.auth',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers,
+        })
+        return new Response(JSON.stringify({ error: 'demasiados intentos, espera un minuto' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+
+    // Paraguas global anti-scraping agresivo. Límite generoso para no rozar a
+    // usuarios reales; solo cuenta rutas dinámicas (no assets estáticos).
+    if (isRateLimitablePath(pathname)) {
+      const r = await enforceLimit(`ip:${ip}`, { limit: 600, windowMs: 60_000, deferUntil: 0.8 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'api_abuse',
+          severity: 'medium',
+          ruleId: 'ratelimit.global',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers,
+        })
+        return new Response(JSON.stringify({ error: 'demasiadas solicitudes' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+  }
 
   const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
 
