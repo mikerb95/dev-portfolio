@@ -4,6 +4,7 @@ import { isAllowedLogin } from './lib/auth'
 import { maybeChaos } from './lib/chaos'
 import { clientIp } from './lib/device-info'
 import { DEVICE_COOKIE, recordSession } from './lib/device-sessions'
+import { observeRequest } from './lib/security/sensor'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
 const AUTH_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
@@ -16,6 +17,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // sin flags activos este camino cuesta una lectura cacheada cada ~5s.
   const chaosResponse = await maybeChaos(pathname)
   if (chaosResponse) return chaosResponse
+
+  // Sensor de seguridad (micro-SIEM). FASE 0: solo observa y registra requests
+  // hostiles según el clasificador de firmas; no bloquea. Síncrono y no-op para
+  // el 99% del tráfico (regex/lookup en memoria); la escritura es fire-and-forget.
+  // Ver docs/plan-security-observability.md.
+  observeRequest({
+    method: context.request.method,
+    path: pathname,
+    query: context.url.search.replace(/^\?/, ''),
+    headers: context.request.headers,
+  })
 
   const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
 

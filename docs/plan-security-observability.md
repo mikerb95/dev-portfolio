@@ -148,10 +148,13 @@ del LAB: la suite de seguridad suma coverage real).
    `ip+ruleId` para que un scan de 500 rutas no haga 500 inserts — se acumula `hits`).
 3. Hook en `middleware.ts`: clasificar el request; si matchea, registrar. **Sin bloquear
    todavía** (fase de solo observación — igual que se despliega un WAF real: primero
-   `log`, luego `enforce`).
-4. Hook en `404.astro` (frontmatter server-side): todo 404 pasa por el clasificador —
-   aquí cae el 90% del ruido de scanners.
-5. Tests Vitest del clasificador (tabla de casos: ruta → categoría/severidad esperada).
+   `log`, luego `enforce`). El middleware ve TODAS las rutas (incluidas las que acaban en
+   404), así que un scanner de `/wp-login.php`, `/.env`, etc. ya queda registrado aquí —
+   no hace falta un hook aparte en `404.astro` (evita doble conteo). Un hook de 404 solo
+   añadiría valor para medir volumen de escaneo de rutas SIN firma; se deja para una fase
+   posterior si interesa esa métrica.
+4. Tests Vitest del clasificador y de la redacción (tabla de casos: ruta → categoría/
+   severidad esperada; IP → hash/máscara).
 
 **Criterio de salida**: eventos reales acumulándose en prod durante ≥ 72 h para tener
 datos antes de encender el enforcement (evita bloquear tráfico legítimo por una regla
