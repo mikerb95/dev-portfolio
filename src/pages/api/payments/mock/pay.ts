@@ -22,7 +22,8 @@ const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 export const POST: APIRoute = async ({ request }) => {
-  if (!rateLimit(`mockpay:${clientIp(request)}`, 10, 60_000)) {
+  const { allowed } = await enforceLimit(`mockpay:${clientIp(request)}`, { limit: 10, windowMs: 60_000 })
+  if (!allowed) {
     return json(429, { error: 'demasiados intentos, espera un minuto' })
   }
 

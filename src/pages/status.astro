@@ -25,6 +25,7 @@ const mons = await db
     lastStatus: monitors.lastStatus,
     lastCheckedAt: monitors.lastCheckedAt,
     lastResponseMs: monitors.lastResponseMs,
+    sslExpiresAt: monitors.sslExpiresAt,
   })
   .from(monitors)
   .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
