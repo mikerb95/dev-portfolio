@@ -135,12 +135,87 @@ export const GET: APIRoute = async () => {
   const sinceIso = new Date(thirtyDaysAgo).toISOString()
   const sinceDate = sinceIso.split('T')[0]
 
-  // NOTE: The Events API only returns the most recent ~100 events, which for an
-  // active user skews toward the last day or two and can silently drop entire
-  // repos/days from the 30-day window. Discover commits via the Search API
-  // instead, which queries the full history directly and isn't truncated the
-  // same way.
+  // The Search API (`search/commits`) is convenient but caps at 1000 results
+  // total (10 pages of 100). For an active author that silently drops the
+  // oldest commits of the month. To show *everything*, we enumerate the repos
+  // the user can push to and list each repo's commits directly via
+  // `/repos/{owner}/{repo}/commits`, which paginates without the 1000 cap.
+  // The Search API is still run afterwards as a supplement to catch commits
+  // authored in external repos the user doesn't own; results merge by SHA.
+
+  // 1) Discover repos touched within the window. Sorting by `pushed` descending
+  //    lets us stop as soon as we reach a repo that hasn't been pushed since
+  //    `thirtyDaysAgo` — everything after it is older too.
+  const activeRepos: Array<{ owner: string; name: string; full: string }> = []
+  let repoPage = 1
+  discover: while (repoPage <= 20) {
+    const rr = await fetch(
+      `https://api.github.com/user/repos?per_page=100&sort=pushed&direction=desc&affiliation=owner,collaborator,organization_member&page=${repoPage}`,
+      { headers }
+    )
+    if (!rr.ok) break
+    const list = await rr.json()
+    if (!Array.isArray(list) || list.length === 0) break
+    for (const repo of list) {
+      if (new Date(repo.pushed_at).getTime() < thirtyDaysAgo) break discover
+      activeRepos.push({
+        owner: repo.owner?.login ?? repo.full_name.split('/')[0],
+        name: repo.name,
+        full: repo.full_name,
+      })
+    }
+    if (list.length < 100) break
+    repoPage++
+  }
+
+  // 2) List every commit authored by the user in each active repo, since the
+  //    window start. Runs with bounded concurrency to stay well within the
+  //    authenticated rate limit while avoiding a slow fully-sequential crawl.
+  async function fetchRepoCommits(repo: {
+    owner: string
+    name: string
+    full: string
+  }): Promise<CommitSearchItem[]> {
+    const out: CommitSearchItem[] = []
+    let cp = 1
+    while (cp <= 20) {
+      const cr = await fetch(
+        `https://api.github.com/repos/${repo.owner}/${repo.name}/commits?author=${encodeURIComponent(
+          username
+        )}&since=${sinceIso}&per_page=100&page=${cp}`,
+        { headers }
+      )
+      if (!cr.ok) break
+      const cl = await cr.json()
+      if (!Array.isArray(cl) || cl.length === 0) break
+      for (const c of cl) {
+        out.push({
+          sha: c.sha,
+          commit: c.commit,
+          repository: { full_name: repo.full },
+        })
+      }
+      if (cl.length < 100) break
+      cp++
+    }
+    return out
+  }
+
   const searchItems: CommitSearchItem[] = []
+  const CONCURRENCY = 8
+  let repoIdx = 0
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, activeRepos.length) }, async () => {
+      while (repoIdx < activeRepos.length) {
+        const repo = activeRepos[repoIdx++]
+        const commits = await fetchRepoCommits(repo)
+        searchItems.push(...commits)
+      }
+    })
+  )
+
+  // 3) Supplement with the Search API for commits in external repos not covered
+  //    above (capped at 1000, but only used to fill gaps — dedup is by SHA).
   let page = 1
   let totalCount = Infinity
   while (searchItems.length < totalCount && page <= 10) {
@@ -233,7 +308,7 @@ export const GET: APIRoute = async () => {
 
   return new Response(
     JSON.stringify({
-      feed: feed.slice(0, 25),
+      feed,
       deepWork,
       streak,
       totalCommits: feed.filter((f) => f.type === 'commit').length,
