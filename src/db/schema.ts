@@ -441,7 +441,10 @@ export const blockedIps = sqliteTable('blocked_ips', {
   // Escalado por reincidencia: 1h → 24h → 7d. Nunca null (sin bloqueos eternos).
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   source: text('source', { enum: ['auto', 'manual'] }).notNull().default('auto'),
-})
+}, (t) => ({
+  // El middleware y el cron filtran bloqueos vigentes por expiración.
+  expiresIdx: index('blocked_ips_expires_idx').on(t.expiresAt),
+}))
 
 // Estado durable del rate limiter (sliding window por clave). Purga perezosa
 // en el cron. Complementa la primera capa en memoria de ratelimit.ts.

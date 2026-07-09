@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6143bf6d-b48f-4c2b-825a-b080b092ae44",
+  "id": "31d27da8-29e4-4980-b636-26a0de4e8d9d",
   "prevId": "f193f1b7-17e5-425e-b62c-b4ab461b4ba9",
   "tables": {
     "admin_sessions": {
@@ -149,7 +149,15 @@
           "default": "'auto'"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "blocked_ips_expires_idx": {
+          "name": "blocked_ips_expires_idx",
+          "columns": [
+            "expires_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -2559,7 +2567,29 @@
           "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "security_events_at_idx": {
+          "name": "security_events_at_idx",
+          "columns": [
+            "at"
+          ],
+          "isUnique": false
+        },
+        "security_events_ip_idx": {
+          "name": "security_events_ip_idx",
+          "columns": [
+            "ip"
+          ],
+          "isUnique": false
+        },
+        "security_events_ip_hash_idx": {
+          "name": "security_events_ip_hash_idx",
+          "columns": [
+            "ip_hash"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

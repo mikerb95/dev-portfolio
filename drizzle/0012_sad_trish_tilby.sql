@@ -8,6 +8,7 @@ CREATE TABLE `blocked_ips` (
 	`source` text DEFAULT 'auto' NOT NULL
 );
 --> statement-breakpoint
+CREATE INDEX `blocked_ips_expires_idx` ON `blocked_ips` (`expires_at`);--> statement-breakpoint
 CREATE TABLE `rate_limit_buckets` (
 	`key` text PRIMARY KEY NOT NULL,
 	`count` integer DEFAULT 0 NOT NULL,
@@ -45,6 +46,9 @@ CREATE TABLE `security_events` (
 	`hits` integer DEFAULT 1 NOT NULL
 );
 --> statement-breakpoint
+CREATE INDEX `security_events_at_idx` ON `security_events` (`at`);--> statement-breakpoint
+CREATE INDEX `security_events_ip_idx` ON `security_events` (`ip`);--> statement-breakpoint
+CREATE INDEX `security_events_ip_hash_idx` ON `security_events` (`ip_hash`);--> statement-breakpoint
 CREATE TABLE `security_rollups` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`bucket` text NOT NULL,
