@@ -111,8 +111,18 @@ const cards = mons.map((m) => {
     health: budgetHealth(slo),
     uptime90: total90 > 0 ? Math.round((ok90 / total90) * 1000) / 10 : null,
     avgMs30: total30 > 0 ? Math.round(sumMs30 / total30) : null,
+    p95Ms30: p95ByMonitor.get(m.id) ?? null,
+    ok30,
+    total30,
   }
 })
+
+// Uptime agregado global (30d): un solo número ancla para el encabezado.
+const globalOk30 = cards.reduce((s, c) => s + c.ok30, 0)
+const globalTotal30 = cards.reduce((s, c) => s + c.total30, 0)
+const globalUptime30 = globalTotal30 > 0
+  ? Math.round((globalOk30 / globalTotal30) * 1000) / 10
+  : null
 
 // Incidentes resueltos recientes: nombre, inicio y duración. Sin causa ni
 // mensajes de error (pueden contener detalle interno).
