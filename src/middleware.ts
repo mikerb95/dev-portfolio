@@ -27,13 +27,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Ver docs/plan-security-observability.md.
   const method = context.request.method
   const query = context.url.search.replace(/^\?/, '')
-  const headers = context.request.headers
+  const reqHeaders = context.request.headers
 
-  observeRequest({ method, path: pathname, query, headers })
+  observeRequest({ method, path: pathname, query, headers: reqHeaders })
 
   // Enforcement de seguridad (FASE 1). Todo el bloque es fail-open: cualquier
   // fallo deja pasar el request (nunca tumbamos el sitio por el enforcement).
-  const ip = clientIp(headers)
+  const ip = clientIp(reqHeaders)
 
   // 1) Blocklist: una IP bloqueada (manual o auto) recibe 403 seco, sin pistas.
   //    La lectura está cacheada 30s en memoria (isBlocked); la allowlist protege
@@ -48,7 +48,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       method,
       path: pathname,
       query,
-      headers,
+      headers: reqHeaders,
     })
     return new Response('Forbidden', { status: 403 })
   }
@@ -148,36 +148,36 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const res = await next()
-  const headers = new Headers(res.headers)
+  const resHeaders = new Headers(res.headers)
 
-  headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+  resHeaders.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
 
   if (isAdmin) {
-    headers.set('X-Frame-Options', 'DENY')
-    headers.set('X-Content-Type-Options', 'nosniff')
-    headers.set('Referrer-Policy', 'no-referrer')
-    headers.set('X-Robots-Tag', 'noindex, nofollow')
-    headers.set(
+    resHeaders.set('X-Frame-Options', 'DENY')
+    resHeaders.set('X-Content-Type-Options', 'nosniff')
+    resHeaders.set('Referrer-Policy', 'no-referrer')
+    resHeaders.set('X-Robots-Tag', 'noindex, nofollow')
+    resHeaders.set(
       'Content-Security-Policy',
       "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
-    return new Response(res.body, { status: res.status, headers })
+    return new Response(res.body, { status: res.status, headers: resHeaders })
   }
 
   // Páginas públicas: headers de seguridad base + caché en el edge de Vercel.
   // s-maxage solo aplica a la CDN (no al navegador); SWR sirve la copia vieja
   // mientras revalida, así el contenido editado en /admin tarda ≤5 min en verse.
-  headers.set('X-Content-Type-Options', 'nosniff')
-  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  headers.set(
+  resHeaders.set('X-Content-Type-Options', 'nosniff')
+  resHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  resHeaders.set(
     'Content-Security-Policy',
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
   )
 
   const isPublicPage = !pathname.startsWith('/api') && context.request.method === 'GET'
-  if (isPublicPage && res.status === 200 && !headers.has('Cache-Control')) {
-    headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400')
+  if (isPublicPage && res.status === 200 && !resHeaders.has('Cache-Control')) {
+    resHeaders.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400')
   }
 
-  return new Response(res.body, { status: res.status, headers })
+  return new Response(res.body, { status: res.status, headers: resHeaders })
 })
