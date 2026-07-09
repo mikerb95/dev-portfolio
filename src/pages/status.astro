@@ -63,6 +63,23 @@ const sloCutoff = new Date(now - SLO_DAYS * DAY_MS).toISOString().slice(0, 10)
 // Serie de latencia reciente por monitor para la mini-gráfica tipo EKG.
 const latencyByMonitor = await recentLatency(mons.map((m) => m.id))
 
+// p95 de latencia (30d) por monitor: nearest-rank vía window function.
+// La media esconde la cola; el p95 es lo que de verdad sienten los usuarios lentos.
+const p95Cutoff = Math.floor((now - SLO_DAYS * DAY_MS) / 1000)
+const p95Rows = await db.all<{ monitor_id: number; p95: number }>(sql`
+  select monitor_id, response_ms as p95 from (
+    select
+      monitor_id,
+      response_ms,
+      row_number() over (partition by monitor_id order by response_ms) as rn,
+      count(*) over (partition by monitor_id) as cnt
+    from monitor_checks
+    where at >= ${p95Cutoff} and response_ms is not null
+  )
+  where rn = max(1, cast(0.95 * cnt as integer) + (0.95 * cnt > cast(0.95 * cnt as integer)))
+`)
+const p95ByMonitor = new Map<number, number>(p95Rows.map((r) => [r.monitor_id, r.p95]))
+
 const cards = mons.map((m) => {
   const buckets = byMonitor.get(m.id) ?? new Map<string, Bucket>()
   const latency = (latencyByMonitor.get(m.id) ?? []).map((p) => p.ms)

@@ -736,6 +736,104 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
     </div>
   </div>
 
+  <!-- Tab: Observabilidad -->
+  <div id="tab-observability" class="tab-panel hidden">
+    {monitorCards.length === 0 ? (
+      <div class="rounded-2xl glass p-8 text-center">
+        <p class="text-sm text-ink-200 mb-1">Este proyecto no tiene monitores.</p>
+        <p class="text-xs text-ink-400 mb-4">Crea uno para registrar uptime, latencia, certificados SSL e incidentes.</p>
+        <a href={`/admin/monitors?project=${project.id}`} class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors">
+          + Crear monitor
+        </a>
+      </div>
+    ) : (
+      <div class="space-y-5">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <p class="text-xs text-ink-300">
+            {monitorCards.length} monitor{monitorCards.length !== 1 ? 'es' : ''} · datos medidos por tu propia infraestructura, cada pocos minutos.
+          </p>
+          <a href="/admin/monitors" class="text-xs text-ink-400 hover:text-cyan transition-colors">Gestionar monitores →</a>
+        </div>
+
+        {monitorCards.map((c) => (
+          <div class="rounded-2xl glass p-5">
+            <!-- Header del monitor -->
+            <div class="flex items-center gap-3 mb-4 flex-wrap">
+              <span class="text-base shrink-0" title={MONITOR_LABEL[c.status]}>{MONITOR_DOT[c.status]}</span>
+              <span class="text-sm text-ink-50 font-medium">{c.name}</span>
+              <span class={`text-[11px] font-medium ${ekgColor[c.status]}`}>{MONITOR_LABEL[c.status]}</span>
+              {c.openIncident && (
+                <span class="text-[10px] font-mono text-ember border border-ember/30 rounded px-1.5 py-0.5">incidente abierto</span>
+              )}
+              {c.sslState && c.sslState !== 'ok' && c.sslDays != null && (
+                <span class="text-[10px] font-mono text-ember border border-ember/30 rounded px-1.5 py-0.5">
+                  SSL {c.sslDays < 0 ? 'vencido' : `${c.sslDays}d`}
+                </span>
+              )}
+              <a href={c.url} target="_blank" rel="noopener" class="ml-auto text-[11px] font-mono text-ink-300 hover:text-cyan truncate max-w-[240px]">{c.url}</a>
+            </div>
+
+            <!-- Latencia en vivo (osciloscopio / EKG) -->
+            <div class="mb-5">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300">Latencia en vivo</span>
+                <span class="ekg-now font-mono text-[11px] text-ink-100 tabular-nums" data-monitor-id={c.id}>
+                  {c.lastResponseMs != null ? `${c.lastResponseMs} ms` : '—'}
+                </span>
+              </div>
+              <div class={`ekg relative h-14 rounded-lg overflow-hidden bg-black/30 ring-1 ring-white/5 ${ekgColor[c.status]}`}
+                   data-monitor-id={c.id}
+                   data-status={c.status}
+                   data-series={JSON.stringify(c.latency)}>
+                <svg class="w-full h-full block" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="28" x2="300" y2="28" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 4" opacity="0.15"></line>
+                  <path class="ekg-glow" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="0.35" vector-effect="non-scaling-stroke"></path>
+                  <path class="ekg-trace" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+                </svg>
+                <span class="ekg-cursor absolute right-0 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]" style="top:50%"></span>
+                <span class="ekg-empty absolute inset-0 hidden items-center justify-center text-[10px] font-mono text-ink-400">sin datos aún</span>
+              </div>
+            </div>
+
+            <!-- Métricas -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-[13px]">
+              <div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Uptime 24h</div>
+                <div class={`font-mono ${upCls(c.uptime24h)}`}>{c.uptime24h == null ? '—' : `${c.uptime24h}%`}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Uptime 7d</div>
+                <div class={`font-mono ${upCls(c.uptime7d)}`}>{c.uptime7d == null ? '—' : `${c.uptime7d}%`}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Uptime 30d</div>
+                <div class={`font-mono ${upCls(c.uptime30d)}`}>{c.uptime30d == null ? '—' : `${c.uptime30d}%`}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Latencia media</div>
+                <div class="font-mono text-ink-50">{c.avgMs30d == null ? '—' : `${c.avgMs30d} ms`}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Último check</div>
+                <div class="font-mono text-ink-50">{fmtAgo(c.lastCheckedAt)}</div>
+              </div>
+            </div>
+
+            {c.openIncident && (
+              <div class="mt-4 rounded-lg border border-ember/30 bg-ember/5 px-4 py-2.5 text-[12px]">
+                <span class="text-ember font-medium">Incidente abierto</span>
+                <span class="text-ink-300 font-mono text-[11px] ml-2">desde {fmtAgo(c.openIncident.startedAt)}</span>
+                {c.openIncident.lastError && (
+                  <p class="text-ink-300 font-mono text-[11px] mt-1 truncate" title={c.openIncident.lastError}>{c.openIncident.lastError}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
   <!-- Tab: Presentación (PPTX) -->
   {hasPptx && (
     <div id="tab-deck" class="tab-panel hidden">
