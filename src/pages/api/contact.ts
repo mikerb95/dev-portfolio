@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro'
 import { db } from '../../db'
 import { messages } from '../../db/schema'
-import { rateLimit, clientIp } from '../../lib/ratelimit'
+import { clientIp } from '../../lib/ratelimit'
+import { enforceLimit } from '../../lib/security/ratelimit-durable'
 import { sendPush } from '../../lib/notify'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
