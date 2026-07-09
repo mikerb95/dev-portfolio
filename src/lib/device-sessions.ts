@@ -9,9 +9,11 @@
 // dispositivo tiene su propio `sid`, y revocarlo no se puede eludir borrando la
 // cookie `device_id` porque la comprobación se hace contra el JWT.
 
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull, lt } from 'drizzle-orm'
 import { db } from '../db'
 import { adminSessions } from '../db/schema'
+import { describeDevice } from './device-info'
+import { sendPush } from './notify'
 
 // Re-export de los helpers puros para no romper los sitios que ya los importan.
 export { DEVICE_COOKIE, clientIp, describeDevice } from './device-info'
@@ -20,6 +22,16 @@ export { DEVICE_COOKIE, clientIp, describeDevice } from './device-info'
 // hacer un write en cada request. La lectura sí ocurre en cada request de admin
 // (barata en Turso) para que la revocación tenga efecto inmediato.
 const WRITE_THROTTLE_MS = 5 * 60 * 1000
+
+// Ventana de inactividad: una sesión sin actividad en 24h se revoca sola.
+// Se aplica en recordSession (efecto inmediato al volver el dispositivo) y en
+// el barrido del cron (mantiene la lista del panel al día).
+const IDLE_EXPIRY_MS = 24 * 60 * 60 * 1000
+
+// Las sesiones revocadas se conservan un tiempo (auditoría) y luego se purgan.
+const REVOKED_RETENTION_DAYS = 90
+
+const SITE_URL = process.env.AUTH_URL ?? 'https://codebymike.tech'
 
 export type RecordResult = { revoked: boolean }
 
