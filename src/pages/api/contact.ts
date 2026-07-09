@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { db } from '../../db'
 import { messages } from '../../db/schema'
 import { rateLimit, clientIp } from '../../lib/ratelimit'
+import { sendPush } from '../../lib/notify'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_LEN = { name: 200, email: 200, subject: 200, body: 5000 }
