@@ -43,5 +43,14 @@ export const POST: APIRoute = async ({ request }) => {
     createdAt: new Date(),
   })
 
+  // Notificación push al teléfono vía ntfy. No bloquea la respuesta ni la rompe
+  // si falla (sendPush ya captura errores y es no-op sin NTFY_TOPIC).
+  const preview = body.length > 140 ? `${body.slice(0, 140)}…` : body
+  await sendPush(
+    `Nuevo mensaje de ${name}`,
+    `${typeof subject === 'string' && subject ? `${subject}\n` : ''}${preview}\n— ${email}`,
+    { priority: 4, tags: 'envelope', click: 'https://codebymike.tech/admin/messages' },
+  ).catch(() => {})
+
   return json(201, { ok: true })
 }
