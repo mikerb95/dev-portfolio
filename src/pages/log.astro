@@ -371,8 +371,10 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     cursor = 0
     lastDay = ''
     loading = false
+    autoLoads = 0
     feedObserver?.disconnect()
     feedObserver = null
+    document.getElementById('feed-more')?.classList.add('hidden')
 
     if (!items.length) {
       el.innerHTML = '<p class="px-5 py-10 text-center text-[12px] font-mono text-ink-300">Sin actividad reciente.</p>'
