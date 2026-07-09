@@ -93,7 +93,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
           method,
           path: pathname,
           query,
-          headers,
+          headers: reqHeaders,
         })
         return new Response(JSON.stringify({ error: 'demasiadas solicitudes' }), {
           status: 429,
