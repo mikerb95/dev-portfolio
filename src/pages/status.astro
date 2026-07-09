@@ -457,7 +457,7 @@ const healthLabel = {
     }
   </style>
 
-  <script>
+  <script define:vars={{ statusBadge, ekgColor }}>
     const W = 300, H = 56, PAD = 6
 
     function pathFor(series) {
