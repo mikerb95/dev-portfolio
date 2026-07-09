@@ -297,11 +297,11 @@ const healthLabel = {
       {cards.map((c) => {
         const badge = statusBadge[c.lastStatus ?? 'unknown']
         return (
-          <div class="rounded-2xl glass p-6 lift">
+          <div class="rounded-2xl glass p-6 lift" data-card-id={c.id}>
             <div class="flex flex-wrap items-center gap-3 mb-5">
-              <span class={`w-1.5 h-1.5 rounded-full ${badge.dot} ${c.lastStatus === 'up' ? '' : 'pulse-dot'}`}></span>
+              <span class={`status-dot w-1.5 h-1.5 rounded-full ${badge.dot} ${c.lastStatus === 'up' ? '' : 'pulse-dot'}`}></span>
               <h2 class="text-[15px] font-medium">{c.name}</h2>
-              <span class={`text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${badge.cls}`}>
+              <span class={`status-label text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${badge.cls}`}>
                 {badge.label}
               </span>
               {(() => {
@@ -312,7 +312,7 @@ const healthLabel = {
                   </span>
                 )
               })()}
-              <span class="ml-auto text-[11px] font-mono text-ink-300">
+              <span class="last-checked ml-auto text-[11px] font-mono text-ink-300" data-checked-at={c.lastCheckedAt ? c.lastCheckedAt.getTime() : ''}>
                 último check {ago(c.lastCheckedAt)}
               </span>
             </div>
