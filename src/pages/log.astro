@@ -277,10 +277,12 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 
   const BATCH_SIZE = 60
   const LOAD_DELAY_MS = 450
+  const AUTO_LOAD_LIMIT = 5
   let allItems: FeedItem[] = []
   let cursor = 0
   let lastDay = ''
   let loading = false
+  let autoLoads = 0
   let feedObserver: IntersectionObserver | null = null
 
   function hasMore() {
@@ -317,17 +319,50 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     }
   }
 
+  // Pause auto-loading and ask the user before pulling in more of the older
+  // history. The observer is only disconnected (not dropped) so it can be
+  // re-attached to the same sentinel on resume.
+  function showLoadMorePrompt() {
+    feedObserver?.disconnect()
+    document.getElementById('feed-fade')?.classList.add('opacity-0')
+    document.getElementById('feed-loader')?.classList.add('opacity-0')
+    const el = document.getElementById('feed-more')!
+    document.getElementById('feed-more-count')!.textContent = String(cursor)
+    document.getElementById('feed-more-remaining')!.textContent = String(allItems.length - cursor)
+    el.classList.remove('hidden')
+  }
+
   // Reveal the loader, wait a beat so the "loading older data" animation is
-  // actually perceptible, then mount the next batch.
-  function loadMore() {
+  // actually perceptible, then mount the next batch. `auto` marks batches
+  // pulled in by the scroll observer, which are the ones we cap.
+  function loadMore(auto: boolean) {
     if (loading || !hasMore()) return
     loading = true
     document.getElementById('feed-loader')?.classList.remove('opacity-0')
     setTimeout(() => {
       renderNextBatch()
       loading = false
+      document.getElementById('feed-loader')?.classList.add('opacity-0')
       updateBottomUi()
+
+      if (auto && hasMore()) {
+        autoLoads++
+        if (autoLoads >= AUTO_LOAD_LIMIT) showLoadMorePrompt()
+      }
     }, LOAD_DELAY_MS)
+  }
+
+  // Resume after the user confirms: mount one batch straightaway, reset the
+  // auto-load budget and hand control back to the scroll observer.
+  function resumeLoadMore() {
+    document.getElementById('feed-more')!.classList.add('hidden')
+    autoLoads = 0
+    renderNextBatch()
+    updateBottomUi()
+    if (hasMore() && feedObserver) {
+      const sentinel = document.getElementById('feed-sentinel')
+      if (sentinel) feedObserver.observe(sentinel)
+    }
   }
 
   function renderFeed(items: FeedItem[]) {
