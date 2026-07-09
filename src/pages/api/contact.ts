@@ -12,7 +12,8 @@ const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status })
 
 export const POST: APIRoute = async ({ request }) => {
-  if (!rateLimit(`contact:${clientIp(request)}`, 5, 60_000)) {
+  const { allowed } = await enforceLimit(`contact:${clientIp(request)}`, { limit: 5, windowMs: 60_000 })
+  if (!allowed) {
     return json(429, { error: 'Demasiados intentos, intenta de nuevo en un minuto' })
   }
 

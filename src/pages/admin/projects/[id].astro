@@ -343,6 +343,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
         { key: 'envvars', label: `Variables de entorno${envVars.length ? ` (${envVars.length})` : ''}` },
         { key: 'contacts', label: `Contactos${contacts.length ? ` (${contacts.length})` : ''}` },
         { key: 'finances', label: `Finanzas${financeRows.length ? ` (${financeRows.length})` : ''}` },
+        { key: 'observability', label: `Observabilidad${monitorCards.length ? ` (${monitorCards.length})` : ''}` },
         { key: 'adrs', label: `The Why${adrs.length ? ` (${adrs.length})` : ''}` },
         ...(hasPptx ? [{ key: 'deck', label: 'Presentación' }] : []),
       ].map((t) => (
