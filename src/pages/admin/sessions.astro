@@ -1,0 +1,153 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { getSession } from 'auth-astro/server'
+import { isNull, desc } from 'drizzle-orm'
+import { db } from '../../db'
+import { adminSessions } from '../../db/schema'
+import { DEVICE_COOKIE, describeDevice } from '../../lib/device-sessions'
+
+// Identidad de ESTA sesión, igual que la calcula el middleware.
+const session = await getSession(Astro.request)
+const sid = (session as { sid?: string } | null)?.sid
+const currentId = sid ?? Astro.cookies.get(DEVICE_COOKIE)?.value ?? ''
+
+const rows = await db
+  .select()
+  .from(adminSessions)
+  .where(isNull(adminSessions.revokedAt))
+  .orderBy(desc(adminSessions.lastSeen))
+
+const items = rows.map((r) => ({
+  id: r.id,
+  device: describeDevice(r.userAgent),
+  ip: r.ip ?? '—',
+  firstSeen: r.firstSeen ? r.firstSeen.getTime() : null,
+  lastSeen: r.lastSeen ? r.lastSeen.getTime() : null,
+  isCurrent: r.id === currentId,
+}))
+const otherCount = items.filter((i) => !i.isCurrent).length
+---
+
+<AdminLayout title="Dispositivos">
+  <div class="max-w-2xl space-y-6">
+    <div class="rounded-2xl glass p-5 md:p-6">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-base font-medium text-ink-50">Dispositivos con sesión abierta</h2>
+          <p class="text-[12px] text-ink-300 mt-1">
+            Sesiones de administrador activas. Cierra remotamente cualquiera que no reconozcas.
+          </p>
+        </div>
+        {otherCount > 0 && (
+          <button
+            id="revoke-others"
+            data-current={currentId}
+            class="shrink-0 h-9 px-4 text-[13px] font-medium rounded-full bg-ember/10 text-ember border border-ember/30 hover:bg-ember/20 transition-colors"
+          >
+            Cerrar las demás ({otherCount})
+          </button>
+        )}
+      </div>
+
+      {items.length === 0 ? (
+        <p class="text-[13px] text-ink-300 py-6 text-center">No hay sesiones registradas todavía.</p>
+      ) : (
+        <div class="space-y-2" id="sessions-list">
+          {items.map((it) => (
+            <div
+              class="session-row flex items-center justify-between gap-4 py-3 px-3.5 rounded-xl border border-white/5 bg-white/[.02]"
+              data-id={it.id}
+            >
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] text-ink-50 truncate">{it.device}</span>
+                  {it.isCurrent && (
+                    <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider bg-cyan/10 text-cyan border border-cyan/30">
+                      este dispositivo
+                    </span>
+                  )}
+                </div>
+                <div class="text-[11px] font-mono text-ink-300 mt-1 truncate">
+                  <span>{it.ip}</span>
+                  <span class="mx-1.5 text-ink-500">·</span>
+                  <span class="rel-time" data-ts={it.lastSeen ?? ''}>activo hace poco</span>
+                </div>
+              </div>
+              {it.isCurrent ? (
+                <span class="shrink-0 text-[11px] font-mono text-ink-400">—</span>
+              ) : (
+                <button
+                  class="revoke-one shrink-0 h-8 px-3 text-[12px] font-medium rounded-full text-ink-200 border border-white/10 hover:border-ember/40 hover:text-ember transition-colors"
+                  data-id={it.id}
+                >
+                  Cerrar
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <p class="text-[11px] text-ink-400 leading-relaxed px-1">
+      Al cerrar una sesión, ese dispositivo pierde el acceso en su siguiente acción y debe volver a
+      iniciar sesión con GitHub. La comprobación se hace en cada request del panel.
+    </p>
+  </div>
+
+  <script>
+    const fmt = (ts: number) => {
+      const s = Math.max(0, Math.floor((Date.now() - ts) / 1000))
+      if (s < 60) return 'activo hace instantes'
+      const m = Math.floor(s / 60)
+      if (m < 60) return `activo hace ${m} min`
+      const h = Math.floor(m / 60)
+      if (h < 24) return `activo hace ${h} h`
+      const d = Math.floor(h / 24)
+      return `activo hace ${d} d`
+    }
+    document.querySelectorAll<HTMLElement>('.rel-time').forEach((el) => {
+      const ts = Number(el.dataset.ts)
+      if (ts) el.textContent = fmt(ts)
+    })
+
+    async function revoke(payload: Record<string, unknown>) {
+      const res = await fetch('/api/admin/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      return res.ok
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('.revoke-one').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true
+        btn.textContent = '…'
+        if (await revoke({ id: btn.dataset.id })) {
+          btn.closest('.session-row')?.remove()
+        } else {
+          btn.disabled = false
+          btn.textContent = 'Cerrar'
+        }
+      })
+    })
+
+    const others = document.getElementById('revoke-others') as HTMLButtonElement | null
+    others?.addEventListener('click', async () => {
+      if (!confirm('¿Cerrar la sesión en todos los demás dispositivos?')) return
+      others.disabled = true
+      if (await revoke({ others: true, currentId: others.dataset.current })) {
+        document
+          .querySelectorAll<HTMLElement>('.session-row')
+          .forEach((row) => {
+            if (!row.querySelector('.revoke-one')) return // conserva el actual
+            row.remove()
+          })
+        others.remove()
+      } else {
+        others.disabled = false
+      }
+    })
+  </script>
+</AdminLayout>
