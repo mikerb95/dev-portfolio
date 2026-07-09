@@ -341,4 +341,99 @@ const healthLabel = {
     </section>
 
   </div>
+
+  <style>
+    /* Barrido tipo osciloscopio: da sensación de "vivo" entre repintados. */
+    .ekg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
+      opacity: 0.06;
+      width: 40%;
+      animation: ekg-sweep 3.5s linear infinite;
+    }
+    @keyframes ekg-sweep {
+      0% { transform: translateX(-60%); }
+      100% { transform: translateX(300%); }
+    }
+    .ekg-trace, .ekg-glow { transition: d 0.6s ease; }
+    .ekg-cursor { transition: top 0.6s ease; }
+    @media (prefers-reduced-motion: reduce) {
+      .ekg::after { animation: none; }
+      .ekg-trace, .ekg-glow, .ekg-cursor { transition: none; }
+    }
+  </style>
+
+  <script>
+    const W = 300, H = 56, PAD = 6
+
+    function pathFor(series) {
+      if (!series || series.length < 2) return null
+      let min = Infinity, max = -Infinity
+      for (const v of series) { if (v < min) min = v; if (v > max) max = v }
+      const range = Math.max(max - min, 1)
+      const n = series.length
+      const dx = W / (n - 1)
+      let d = '', lastY = H / 2
+      for (let i = 0; i < n; i++) {
+        const x = i * dx
+        const y = PAD + (H - 2 * PAD) * (1 - (series[i] - min) / range)
+        d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1) + ' '
+        lastY = y
+      }
+      return { d: d.trim(), lastY }
+    }
+
+    function draw(el, series) {
+      const trace = el.querySelector('.ekg-trace')
+      const glow = el.querySelector('.ekg-glow')
+      const cursor = el.querySelector('.ekg-cursor')
+      const empty = el.querySelector('.ekg-empty')
+      const p = pathFor(series)
+      if (!p) {
+        trace?.setAttribute('d', '')
+        glow?.setAttribute('d', '')
+        if (empty) empty.style.display = 'flex'
+        return
+      }
+      if (empty) empty.style.display = 'none'
+      trace?.setAttribute('d', p.d)
+      glow?.setAttribute('d', p.d)
+      if (cursor) cursor.style.top = ((p.lastY / H) * 100).toFixed(2) + '%'
+
+      // Etiqueta de latencia actual (último punto).
+      const id = el.getAttribute('data-monitor-id')
+      const now = document.querySelector(`.ekg-now[data-monitor-id="${id}"]`)
+      if (now) now.textContent = series[series.length - 1] + ' ms'
+    }
+
+    function drawAll(seriesById) {
+      document.querySelectorAll('.ekg').forEach((el) => {
+        const id = el.getAttribute('data-monitor-id')
+        let series = seriesById ? seriesById[id] : null
+        if (!series) {
+          try { series = JSON.parse(el.getAttribute('data-series') || '[]') } catch { series = [] }
+        }
+        draw(el, series)
+      })
+    }
+
+    // Dibujo inicial con los datos incrustados por el servidor.
+    drawAll(null)
+
+    // Poll cada 30s: trae la latencia fresca y repinta.
+    async function refresh() {
+      try {
+        const res = await fetch('/api/status/latency', { headers: { Accept: 'application/json' } })
+        if (!res.ok) return
+        const { series } = await res.json()
+        const byId = {}
+        for (const id in series) byId[id] = (series[id] || []).map((p) => p.ms)
+        drawAll(byId)
+      } catch { /* red intermitente: reintenta en el próximo tick */ }
+    }
+    setInterval(refresh, 30_000)
+  </script>
 </BaseLayout>
