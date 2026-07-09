@@ -4,7 +4,8 @@ import {
   isValidIdempotencyKey,
   wompiIntegritySignature,
 } from '../../../lib/payments'
-import { rateLimit, clientIp } from '../../../lib/ratelimit'
+import { clientIp } from '../../../lib/ratelimit'
+import { enforceLimit } from '../../../lib/security/ratelimit-durable'
 
 // Crea una intención de pago (donación/pago dev). Público: es el checkout.
 // La clave de idempotencia la genera el cliente (UUID) y es obligatoria:

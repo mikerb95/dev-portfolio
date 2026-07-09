@@ -24,6 +24,7 @@ const {
   image = '/og-default.png',
   type = 'website',
   noindex = false,
+  publishedTime,
 } = Astro.props
 
 const canonical = new URL(Astro.url.pathname, site).href
