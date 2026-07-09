@@ -1,0 +1,32 @@
+---
+// Recolección de Core Web Vitals de usuarios reales (RUM). El script se
+// empaqueta con Vite y se sirve desde el propio origen (compatible con la CSP
+// `script-src 'self'`). Envía cada métrica con sendBeacon a /api/vitals, que no
+// bloquea la descarga de la página. Sin cookies ni PII.
+---
+
+<script>
+  import { onLCP, onINP, onCLS, onFCP, onTTFB, type Metric } from 'web-vitals'
+
+  function send(metric: Metric) {
+    const body = JSON.stringify({
+      metric: metric.name,
+      value: metric.value,
+      rating: metric.rating,
+      path: location.pathname,
+      navigationType: metric.navigationType,
+    })
+    // sendBeacon sobrevive a la descarga de la página; fetch keepalive es el respaldo.
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/vitals', new Blob([body], { type: 'application/json' }))
+    } else {
+      fetch('/api/vitals', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } })
+    }
+  }
+
+  onLCP(send)
+  onINP(send)
+  onCLS(send)
+  onFCP(send)
+  onTTFB(send)
+</script>
