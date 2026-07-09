@@ -97,6 +97,33 @@ import BaseLayout from '../layouts/BaseLayout.astro'
         </span>
       </div>
     </div>
+
+    <!-- Load-more gate: after a run of auto-loaded batches we pause and ask
+         before pulling in more of the older history, so an endless month of
+         commits doesn't scroll on forever unprompted. -->
+    <div id="feed-more" class="hidden mt-6">
+      <div class="rounded-2xl glass p-7 flex flex-col items-center text-center gap-4">
+        <div class="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+          Pausa de carga
+        </div>
+        <p class="text-[14.5px] text-ink-100 max-w-md leading-relaxed">
+          Ya recorriste <span id="feed-more-count" class="text-ink-50 font-medium">—</span> commits.
+          ¿Quieres cargar más actividad antigua?
+        </p>
+        <button
+          id="feed-more-btn"
+          type="button"
+          class="inline-flex items-center gap-2 h-10 px-5 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+          Cargar más actividad
+        </button>
+        <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+          <span id="feed-more-remaining">—</span> commits restantes
+        </div>
+      </div>
+    </div>
   </div>
 </BaseLayout>
 
