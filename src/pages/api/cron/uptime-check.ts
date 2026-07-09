@@ -124,6 +124,10 @@ async function runCheck() {
   const cutoff = new Date(now.getTime() - CHECK_RETENTION_DAYS * 86_400_000)
   await db.delete(monitorChecks).where(lt(monitorChecks.at, cutoff))
 
+  // 6b) Sesiones de admin: revoca inactivas (>24h) y purga revocadas viejas.
+  // Fail-open: un fallo aquí no debe tumbar el chequeo de monitores.
+  await sweepSessions(now).catch((e) => console.error('[uptime-check] sweepSessions', e))
+
   // 7) Notificar (solo transiciones, no cada sondeo).
   if (events.length === 0) {
     return { ok: true, monitors: rows.length, events: 0 }
