@@ -1032,6 +1032,27 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
     color: #00f2ff;
     border-color: #00f2ff;
   }
+  /* Barrido tipo osciloscopio: da sensación de "vivo" entre repintados. */
+  .ekg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
+    opacity: 0.06;
+    width: 40%;
+    animation: ekg-sweep 3.5s linear infinite;
+  }
+  @keyframes ekg-sweep {
+    0% { transform: translateX(-60%); }
+    100% { transform: translateX(300%); }
+  }
+  .ekg-trace, .ekg-glow { transition: d 0.6s ease; }
+  .ekg-cursor { transition: top 0.6s ease; }
+  @media (prefers-reduced-motion: reduce) {
+    .ekg::after { animation: none; }
+    .ekg-trace, .ekg-glow, .ekg-cursor { transition: none; }
+  }
 </style>
 
 <script define:vars={{ projectId: project.id }}>

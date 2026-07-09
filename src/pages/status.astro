@@ -141,6 +141,18 @@ const incidents = (
     .limit(10)
 ).filter((i) => publicIds.has(i.monitorId))
 
+// Incidentes ACTIVOS (sin resolver): lo primero que busca alguien al entrar.
+const activeIncidents = (
+  await db
+    .select({
+      monitorId: monitorIncidents.monitorId,
+      startedAt: monitorIncidents.startedAt,
+    })
+    .from(monitorIncidents)
+    .where(sql`${monitorIncidents.resolvedAt} is null`)
+    .orderBy(desc(monitorIncidents.startedAt))
+).filter((i) => publicIds.has(i.monitorId))
+
 const overall = cards.some((c) => c.lastStatus === 'down')
   ? 'down'
   : cards.some((c) => c.lastStatus === 'degraded')
