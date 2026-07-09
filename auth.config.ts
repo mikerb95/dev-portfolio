@@ -17,6 +17,9 @@ export default defineConfig({
       if (profile) {
         if (profile.login) token.login = (profile.login as string).toLowerCase()
         if (profile.avatar_url) token.picture = profile.avatar_url as string
+        // Id único por sesión/dispositivo: permite listar y revocar sesiones
+        // desde el panel. Va firmado dentro del JWT, así que no se puede eludir.
+        token.sid = crypto.randomUUID()
       }
       return token
     },
@@ -26,6 +29,7 @@ export default defineConfig({
         if (token.login) (session.user as { login?: string }).login = token.login as string
         if (token.picture) session.user.image = token.picture as string
       }
+      if (token.sid) (session as { sid?: string }).sid = token.sid as string
       return session
     },
   },
