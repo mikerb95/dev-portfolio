@@ -88,41 +88,136 @@ const settingsRows = await db.select().from(appSettings)
 const rates = parseRates(settingsRows)
 const pnl = projectPnL(project, financeRows, services, rates)
 
-// Resumen de observabilidad: estado agregado + uptime 30d de los monitores del proyecto.
+// Observabilidad: monitores del proyecto con uptime, latencia (EKG), SSL e incidentes.
+const DAY = 86_400_000
 const projectMonitors = await db
-  .select({ id: monitors.id, active: monitors.active, paused: monitors.paused, lastStatus: monitors.lastStatus })
+  .select({
+    id: monitors.id,
+    name: monitors.name,
+    url: monitors.url,
+    active: monitors.active,
+    paused: monitors.paused,
+    lastStatus: monitors.lastStatus,
+    lastCheckedAt: monitors.lastCheckedAt,
+    lastResponseMs: monitors.lastResponseMs,
+    sslExpiresAt: monitors.sslExpiresAt,
+  })
   .from(monitors)
   .where(eq(monitors.projectId, projectId))
+  .orderBy(monitors.name)
 
 let monitorHealth: { status: MonitorState; count: number; uptime30d: number | null; openIncidents: number } | null = null
-if (projectMonitors.length > 0) {
-  const live = projectMonitors.filter((m) => m.active && !m.paused)
-  const has = (s: MonitorState) => live.some((m) => (m.lastStatus as MonitorState) === s)
-  const status: MonitorState = has('down') ? 'down' : has('degraded') ? 'degraded' : has('up') ? 'up' : 'unknown'
+type MonitorCard = {
+  id: number
+  name: string
+  url: string
+  status: MonitorState
+  lastCheckedAt: Date | null
+  lastResponseMs: number | null
+  uptime24h: number | null
+  uptime7d: number | null
+  uptime30d: number | null
+  avgMs30d: number | null
+  sslDays: number | null
+  sslState: ReturnType<typeof domainAlertState>
+  openIncident: { startedAt: Date | null; lastError: string | null } | null
+  latency: number[]
+}
+let monitorCards: MonitorCard[] = []
 
+if (projectMonitors.length > 0) {
   const idSet = new Set(projectMonitors.map((m) => m.id))
-  const since = new Date(Date.now() - 30 * 86_400_000)
-  const [projChecks, openByProject] = await Promise.all([
-    db.select({ monitorId: monitorChecks.monitorId, ok: monitorChecks.ok }).from(monitorChecks).where(gte(monitorChecks.at, since)),
+  const since = new Date(Date.now() - 30 * DAY)
+  const [projChecks, openIncidents, latencyByMonitor] = await Promise.all([
     db
-      .select({ id: monitorIncidents.id })
+      .select({ monitorId: monitorChecks.monitorId, at: monitorChecks.at, ok: monitorChecks.ok, responseMs: monitorChecks.responseMs })
+      .from(monitorChecks)
+      .where(gte(monitorChecks.at, since)),
+    db
+      .select({ monitorId: monitorIncidents.monitorId, startedAt: monitorIncidents.startedAt, lastError: monitorIncidents.lastError })
       .from(monitorIncidents)
       .innerJoin(monitors, eq(monitorIncidents.monitorId, monitors.id))
       .where(and(eq(monitors.projectId, projectId), isNull(monitorIncidents.resolvedAt))),
+    recentLatency(projectMonitors.map((m) => m.id)),
   ])
+  const openByMonitor = new Map(openIncidents.map((i) => [i.monitorId, i]))
+
+  // Uptime (%) por monitor y ventana de tiempo.
+  const uptimePct = (mid: number, windowMs: number) => {
+    const from = Date.now() - windowMs
+    let ok = 0, total = 0
+    for (const c of projChecks) {
+      if (c.monitorId !== mid || !c.at || c.at.getTime() < from) continue
+      total++
+      if (c.ok) ok++
+    }
+    return total === 0 ? null : Math.round((ok / total) * 1000) / 10
+  }
+  // Latencia media (30d) por monitor.
+  const avgMs = (mid: number) => {
+    let sum = 0, n = 0
+    for (const c of projChecks) {
+      if (c.monitorId !== mid || c.responseMs == null) continue
+      sum += c.responseMs
+      n++
+    }
+    return n === 0 ? null : Math.round(sum / n)
+  }
+
+  monitorCards = projectMonitors.map((m) => {
+    const status: MonitorState = !m.active || m.paused ? 'unknown' : (m.lastStatus as MonitorState) ?? 'unknown'
+    return {
+      id: m.id,
+      name: m.name,
+      url: m.url,
+      status,
+      lastCheckedAt: m.lastCheckedAt,
+      lastResponseMs: m.lastResponseMs,
+      uptime24h: uptimePct(m.id, DAY),
+      uptime7d: uptimePct(m.id, 7 * DAY),
+      uptime30d: uptimePct(m.id, 30 * DAY),
+      avgMs30d: avgMs(m.id),
+      sslDays: m.sslExpiresAt ? Math.round(daysUntil(m.sslExpiresAt)) : null,
+      sslState: domainAlertState(m.sslExpiresAt),
+      openIncident: openByMonitor.get(m.id) ?? null,
+      latency: (latencyByMonitor.get(m.id) ?? []).map((p) => p.ms),
+    }
+  })
+
+  // Estado agregado + resumen para el badge del header.
+  const live = projectMonitors.filter((m) => m.active && !m.paused)
+  const has = (s: MonitorState) => live.some((m) => (m.lastStatus as MonitorState) === s)
+  const aggStatus: MonitorState = has('down') ? 'down' : has('degraded') ? 'degraded' : has('up') ? 'up' : 'unknown'
   let ok = 0, total = 0
   for (const c of projChecks) {
     if (!idSet.has(c.monitorId)) continue
     total++
     if (c.ok) ok++
   }
-
   monitorHealth = {
-    status,
+    status: aggStatus,
     count: projectMonitors.length,
     uptime30d: total === 0 ? null : Math.round((ok / total) * 1000) / 10,
-    openIncidents: openByProject.length,
+    openIncidents: openIncidents.length,
   }
+}
+
+// Color del trazo EKG según el estado actual del monitor.
+const ekgColor: Record<string, string> = {
+  up: 'text-lime',
+  degraded: 'text-violet',
+  down: 'text-ember',
+  unknown: 'text-ink-400',
+}
+const upCls = (p: number | null) =>
+  p == null ? 'text-ink-400' : p >= 99.5 ? 'text-lime' : p >= 95 ? 'text-violet' : 'text-ember'
+const fmtAgo = (d?: Date | null) => {
+  if (!d) return 'nunca'
+  const sec = Math.round((Date.now() - d.getTime()) / 1000)
+  if (sec < 60) return 'hace instantes'
+  if (sec < 3600) return `hace ${Math.round(sec / 60)}min`
+  if (sec < 86400) return `hace ${Math.round(sec / 3600)}h`
+  return `hace ${Math.round(sec / 86400)}d`
 }
 
 const pptxPublicPath = `/docs/${project.slug}.pptx`

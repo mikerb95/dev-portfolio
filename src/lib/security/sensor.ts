@@ -7,7 +7,7 @@
 // para calibrar las reglas y no bloquear tráfico legítimo por un falso positivo.
 
 import { clientIp } from '../device-info'
-import { classify, type Classification } from './classify'
+import { classify, type Classification, type Severity } from './classify'
 import { recordSecurityEvent } from './events'
 
 export type ObserveInput = {
@@ -61,4 +61,39 @@ export function observeRequest(
     // Fail-open.
   }
   return classification
+}
+
+export type EnforcementEvent = {
+  category: string
+  severity: Severity
+  ruleId: string
+  action: 'rate_limited' | 'blocked'
+  statusCode: number
+  method: string
+  path: string
+  query?: string
+  headers: Headers
+}
+
+/**
+ * Registra un evento de enforcement (bloqueo o rate limit) reutilizando la
+ * extracción de metadatos del request. Fire-and-forget, nunca lanza.
+ */
+export function recordEnforcementEvent(e: EnforcementEvent): void {
+  try {
+    void recordSecurityEvent({
+      classification: { category: e.category, severity: e.severity, ruleId: e.ruleId },
+      ip: clientIp(e.headers),
+      method: e.method,
+      path: e.path,
+      query: e.query ?? null,
+      userAgent: e.headers.get('user-agent'),
+      country: e.headers.get('x-vercel-ip-country'),
+      asn: e.headers.get('x-vercel-ip-as-number'),
+      statusCode: e.statusCode,
+      action: e.action,
+    })
+  } catch {
+    // Fail-open.
+  }
 }
