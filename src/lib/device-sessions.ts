@@ -13,38 +13,13 @@ import { eq } from 'drizzle-orm'
 import { db } from '../db'
 import { adminSessions } from '../db/schema'
 
-export const DEVICE_COOKIE = 'device_id'
+// Re-export de los helpers puros para no romper los sitios que ya los importan.
+export { DEVICE_COOKIE, clientIp, describeDevice } from './device-info'
+
 // Solo reescribimos `lastSeen` si el registro tiene más de este tiempo, para no
 // hacer un write en cada request. La lectura sí ocurre en cada request de admin
 // (barata en Turso) para que la revocación tenga efecto inmediato.
 const WRITE_THROTTLE_MS = 5 * 60 * 1000
-
-/** IP del cliente a partir de los headers de proxy de Vercel. */
-export function clientIp(headers: Headers): string | null {
-  const xff = headers.get('x-forwarded-for')
-  if (xff) return xff.split(',')[0]!.trim()
-  return headers.get('x-real-ip') || null
-}
-
-/** Etiqueta legible "Navegador · SO" a partir del User-Agent. */
-export function describeDevice(ua: string | null | undefined): string {
-  if (!ua) return 'Dispositivo desconocido'
-  const browser =
-    /Edg\//.test(ua) ? 'Edge'
-    : /OPR\/|Opera/.test(ua) ? 'Opera'
-    : /Chrome\//.test(ua) && !/Chromium/.test(ua) ? 'Chrome'
-    : /Firefox\//.test(ua) ? 'Firefox'
-    : /Safari\//.test(ua) && !/Chrome/.test(ua) ? 'Safari'
-    : 'Navegador'
-  const os =
-    /iPhone|iPad|iPod/.test(ua) ? 'iOS'
-    : /Android/.test(ua) ? 'Android'
-    : /Windows/.test(ua) ? 'Windows'
-    : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
-    : /Linux/.test(ua) ? 'Linux'
-    : 'SO desconocido'
-  return `${browser} · ${os}`
-}
 
 export type RecordResult = { revoked: boolean }
 
