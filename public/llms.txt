@@ -1,0 +1,18 @@
+# CodeByMike — Mike, Software Engineer
+
+> Portfolio y notas de ingeniería de Mike (@mikerb95). TypeScript, React,
+> Next.js, Astro, Node.js y PostgreSQL. Colombia · remoto.
+
+## Páginas principales
+
+- [Inicio](https://codebymike.tech/): perfil, proyectos y stack
+- [Notas de ingeniería](https://codebymike.tech/notes): artículos técnicos sobre observabilidad, SRE, arquitectura y rendimiento
+- [Herramientas](https://codebymike.tech/tools): herramientas construidas dentro del portfolio
+- [Estado](https://codebymike.tech/status): página de estado pública con monitores en vivo
+- [Certificaciones](https://codebymike.tech/certifications)
+- [Contacto](https://codebymike.tech/contact)
+
+## Feeds
+
+- [RSS de notas](https://codebymike.tech/rss.xml)
+- [Sitemap](https://codebymike.tech/sitemap.xml)

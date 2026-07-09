@@ -365,8 +365,11 @@ const healthLabel = {
                 <div class="font-mono text-ink-50">{c.uptime90 === null ? '—' : `${c.uptime90}%`}</div>
               </div>
               <div>
-                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Latencia media</div>
-                <div class="font-mono text-ink-50">{c.avgMs30 === null ? '—' : `${c.avgMs30} ms`}</div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Latencia media · p95</div>
+                <div class="font-mono text-ink-50">
+                  {c.avgMs30 === null ? '—' : `${c.avgMs30}`}
+                  <span class="text-ink-300"> · {c.p95Ms30 === null ? '—' : `${c.p95Ms30}`} ms</span>
+                </div>
               </div>
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Error budget</div>
