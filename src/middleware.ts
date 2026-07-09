@@ -70,7 +70,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
           method,
           path: pathname,
           query,
-          headers,
+          headers: reqHeaders,
         })
         return new Response(JSON.stringify({ error: 'demasiados intentos, espera un minuto' }), {
           status: 429,
