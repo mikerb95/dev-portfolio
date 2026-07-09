@@ -396,12 +396,14 @@ import BaseLayout from '../layouts/BaseLayout.astro'
       el.after(sentinel)
       feedObserver = new IntersectionObserver(
         (entries) => {
-          if (entries.some((e) => e.isIntersecting)) loadMore()
+          if (entries.some((e) => e.isIntersecting)) loadMore(true)
         },
         { rootMargin: '600px 0px' }
       )
       feedObserver.observe(sentinel)
     }
+
+    document.getElementById('feed-more-btn')?.addEventListener('click', resumeLoadMore, { once: false })
   }
 
   async function load() {
