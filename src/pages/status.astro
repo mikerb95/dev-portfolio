@@ -229,6 +229,28 @@ const healthLabel = {
               </span>
             </div>
 
+            <!-- Latencia en vivo (osciloscopio / EKG) -->
+            <div class="mb-5">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300">Latencia en vivo</span>
+                <span class="ekg-now font-mono text-[11px] text-ink-100 tabular-nums" data-monitor-id={c.id}>
+                  {c.lastResponseMs != null ? `${c.lastResponseMs} ms` : '—'}
+                </span>
+              </div>
+              <div class={`ekg relative h-14 rounded-lg overflow-hidden bg-black/30 ring-1 ring-white/5 ${ekgColor[c.lastStatus ?? 'unknown']}`}
+                   data-monitor-id={c.id}
+                   data-status={c.lastStatus ?? 'unknown'}
+                   data-series={JSON.stringify(c.latency)}>
+                <svg class="w-full h-full block" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="28" x2="300" y2="28" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 4" opacity="0.15"></line>
+                  <path class="ekg-glow" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="0.35" vector-effect="non-scaling-stroke"></path>
+                  <path class="ekg-trace" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+                </svg>
+                <span class="ekg-cursor absolute right-0 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]" style="top:50%"></span>
+                <span class="ekg-empty absolute inset-0 hidden items-center justify-center text-[10px] font-mono text-ink-400">sin datos aún</span>
+              </div>
+            </div>
+
             <!-- 90 días de uptime diario -->
             <div class="flex items-end gap-[2px] h-9 mb-2">
               {c.bars.map((b) => (
