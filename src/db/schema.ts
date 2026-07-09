@@ -374,3 +374,89 @@ export const adminSessions = sqliteTable('admin_sessions', {
   lastSeen: integer('last_seen', { mode: 'timestamp' }),
   revokedAt: integer('revoked_at', { mode: 'timestamp' }),
 })
+
+// ── Observabilidad de seguridad (micro-SIEM propio) ─────────────────────────
+// Sensor de superficie de ataque: el middleware y el 404 clasifican cada
+// request hostil y lo registran aquí. Ver docs/plan-security-observability.md.
+// Reglas: fail-open (registrar nunca bloquea el request), retención por capas
+// y agregación en el cron de rollup. Sin PII cruda en la vitrina pública: la
+// IP se enmascara/hashea al exponerla.
+
+// Evento crudo por request sospechoso. Se purga (>90 días) en el cron.
+export const securityEvents = sqliteTable('security_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  at: integer('at', { mode: 'timestamp' }).notNull(),
+  // IP real (la pone Vercel en x-forwarded-for; solo uso interno/admin).
+  ip: text('ip'),
+  // sha-256 truncado de la IP: identificador estable para la vitrina pública
+  // sin exponer la IP en claro.
+  ipHash: text('ip_hash'),
+  method: text('method'),
+  path: text('path').notNull(),
+  // query y user-agent truncados: acotan el tamaño de fila y evitan payloads.
+  query: text('query'),
+  userAgent: text('user_agent'),
+  country: text('country'),
+  asn: text('asn'),
+  // Categoría OWASP-alineada; la determina el clasificador (classify.ts).
+  category: text('category').notNull(),
+  severity: text('severity', { enum: ['low', 'medium', 'high', 'critical'] }).notNull(),
+  action: text('action', { enum: ['logged', 'rate_limited', 'blocked', 'honeypot'] })
+    .notNull()
+    .default('logged'),
+  statusCode: integer('status_code'),
+  // Qué regla del clasificador disparó (para calibrar reglas ruidosas).
+  ruleId: text('rule_id'),
+  // Ráfagas idénticas (mismo ip+regla en <1s) se colapsan en una fila con hits>1.
+  hits: integer('hits').notNull().default(1),
+})
+
+// Agregado horario/diario para dashboards, tendencias y baseline de anomalías.
+export const securityRollups = sqliteTable('security_rollups', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  bucket: text('bucket', { enum: ['hour', 'day'] }).notNull(),
+  at: integer('at', { mode: 'timestamp' }).notNull(),
+  category: text('category').notNull(),
+  count: integer('count').notNull().default(0),
+  uniqueIps: integer('unique_ips').notNull().default(0),
+  topPath: text('top_path'),
+  topCountry: text('top_country'),
+})
+
+// Lista de bloqueo con TTL OBLIGATORIO: ningún bloqueo es eterno por defecto.
+// El middleware la lee con cache en memoria; el cron la mantiene (auto-block
+// escalonado y purga de expirados).
+export const blockedIps = sqliteTable('blocked_ips', {
+  ip: text('ip').primaryKey(),
+  reason: text('reason'),
+  ruleId: text('rule_id'),
+  hits: integer('hits').notNull().default(1),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  // Escalado por reincidencia: 1h → 24h → 7d. Nunca null (sin bloqueos eternos).
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  source: text('source', { enum: ['auto', 'manual'] }).notNull().default('auto'),
+})
+
+// Estado durable del rate limiter (sliding window por clave). Purga perezosa
+// en el cron. Complementa la primera capa en memoria de ratelimit.ts.
+export const rateLimitBuckets = sqliteTable('rate_limit_buckets', {
+  key: text('key').primaryKey(),
+  count: integer('count').notNull().default(0),
+  resetAt: integer('reset_at', { mode: 'timestamp' }).notNull(),
+})
+
+// Hallazgos del detector de anomalías (para timeline y alertas). Estadística
+// simple y explicable (z-score sobre baseline de 30 días).
+export const securityAnomalies = sqliteTable('security_anomalies', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  at: integer('at', { mode: 'timestamp' }).notNull(),
+  kind: text('kind', {
+    enum: ['spike', 'new_pattern', 'geo_anomaly', 'auth_probing', 'error_burst'],
+  }).notNull(),
+  zScore: real('z_score'),
+  baseline: real('baseline'),
+  observed: real('observed'),
+  detail: text('detail'),
+  notified: integer('notified', { mode: 'boolean' }).notNull().default(false),
+  acknowledged: integer('acknowledged', { mode: 'boolean' }).notNull().default(false),
+})
