@@ -89,3 +89,19 @@ export async function recordSession(params: {
   }
   return { revoked: false }
 }
+
+/**
+ * Barrido para el cron: revoca sesiones con >24h de inactividad (para que
+ * desaparezcan del panel sin esperar a que el dispositivo vuelva) y purga las
+ * revocadas hace más de 90 días.
+ */
+export async function sweepSessions(now = new Date()): Promise<void> {
+  const idleCutoff = new Date(now.getTime() - IDLE_EXPIRY_MS)
+  await db
+    .update(adminSessions)
+    .set({ revokedAt: now })
+    .where(and(isNull(adminSessions.revokedAt), lt(adminSessions.lastSeen, idleCutoff)))
+
+  const purgeCutoff = new Date(now.getTime() - REVOKED_RETENTION_DAYS * 86_400_000)
+  await db.delete(adminSessions).where(lt(adminSessions.revokedAt, purgeCutoff))
+}
