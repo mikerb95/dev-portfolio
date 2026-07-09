@@ -11,13 +11,22 @@
 import { sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { securityEvents } from '../../db/schema'
-import type { Classification } from './classify'
+import type { Severity } from './classify'
 import { hashIp, truncate } from './redact'
 
 const IP_SALT = import.meta.env.SECURITY_IP_SALT as string | undefined
 
+// Más laxo que Classification: `category` es texto libre en el esquema, así que
+// el enforcement (bloqueos, rate limit) puede registrar categorías sintéticas
+// que no son firmas del clasificador (p.ej. 'blocklist', 'api_abuse').
+export type EventClassification = {
+  category: string
+  severity: Severity
+  ruleId: string
+}
+
 export type SecurityEventInput = {
-  classification: Classification
+  classification: EventClassification
   ip?: string | null
   method?: string
   path: string
