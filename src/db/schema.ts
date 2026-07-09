@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core'
 
 export const clients = sqliteTable('clients', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -409,7 +409,13 @@ export const securityEvents = sqliteTable('security_events', {
   ruleId: text('rule_id'),
   // Ráfagas idénticas (mismo ip+regla en <1s) se colapsan en una fila con hits>1.
   hits: integer('hits').notNull().default(1),
-})
+}, (t) => ({
+  // Rollup y purga por retención barren por tiempo; el panel filtra por IP;
+  // la vitrina cuenta IPs únicas por hash.
+  atIdx: index('security_events_at_idx').on(t.at),
+  ipIdx: index('security_events_ip_idx').on(t.ip),
+  ipHashIdx: index('security_events_ip_hash_idx').on(t.ipHash),
+}))
 
 // Agregado horario/diario para dashboards, tendencias y baseline de anomalías.
 export const securityRollups = sqliteTable('security_rollups', {
