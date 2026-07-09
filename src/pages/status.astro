@@ -417,12 +417,15 @@ const healthLabel = {
       <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
         <p>
           Un cron externo sondea cada servicio cada pocos minutos: código HTTP esperado,
-          contenido de la respuesta y latencia. Un 200 con la página equivocada también cuenta como caída.
+          contenido de la respuesta, latencia y certificado TLS. Un 200 con la página equivocada
+          también cuenta como caída.
         </p>
         <p>
           El <span class="text-ink-50">SLO</span> es {OBJECTIVE}% de disponibilidad en {SLO_DAYS} días.
           El <span class="text-ink-50">presupuesto de error</span> es el tiempo de caída que ese objetivo
-          permite; aquí se muestra cuánto queda.
+          permite; aquí se muestra cuánto queda. La latencia se reporta como media y
+          <span class="text-ink-50">p95</span> — el percentil que de verdad siente el usuario lento —,
+          nunca solo el promedio.
         </p>
         <p>
           Todo el sistema — motor de checks, incidentes, SLOs y alertas — es una herramienta
