@@ -1,0 +1,124 @@
+---
+// Popover de detalle técnico para las cards de /engineering.
+// El trigger (slot por defecto) y el panel (slot "panel") se renderizan
+// server-side con datos reales; el script solo controla visibilidad/posición.
+// Sin dependencias: el flip vertical se calcula con getBoundingClientRect.
+interface Props {
+  id: string
+  panelClass?: string
+}
+const { id, panelClass = '' } = Astro.props
+---
+
+<div class="card-pop relative" data-pop-id={id} tabindex="0" role="button" aria-describedby={`${id}-panel`}>
+  <slot />
+  <div
+    id={`${id}-panel`}
+    class={`card-pop-panel absolute left-0 top-[calc(100%+10px)] w-[min(360px,calc(100vw-2rem))] rounded-xl glass-strong p-4 text-[12px] leading-relaxed text-ink-100 opacity-0 invisible translate-y-1 transition-[opacity,transform] duration-150 ease-out z-30 ${panelClass}`}
+    role="tooltip"
+  >
+    <slot name="panel" />
+  </div>
+</div>
+
+<style>
+  .card-pop {
+    outline: none;
+  }
+  .card-pop-panel {
+    pointer-events: none;
+  }
+  .card-pop.is-open > .card-pop-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .card-pop.flip-up > .card-pop-panel {
+    top: auto;
+    bottom: calc(100% + 10px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card-pop-panel {
+      transition-property: opacity;
+      transform: none !important;
+    }
+  }
+</style>
+
+<script>
+  const OPEN_DELAY = 130
+  const CLOSE_DELAY = 200
+
+  const nodes = document.querySelectorAll<HTMLElement>('.card-pop')
+  const timers = new WeakMap<HTMLElement, number>()
+
+  function clearTimer(el: HTMLElement) {
+    const t = timers.get(el)
+    if (t) window.clearTimeout(t)
+  }
+
+  function positionPanel(el: HTMLElement) {
+    const panel = el.querySelector<HTMLElement>('.card-pop-panel')
+    if (!panel) return
+    el.classList.remove('flip-up')
+    const rect = el.getBoundingClientRect()
+    const panelH = panel.offsetHeight || 220
+    const spaceBelow = window.innerHeight - rect.bottom
+    if (spaceBelow < panelH + 20 && rect.top > panelH + 20) {
+      el.classList.add('flip-up')
+    }
+  }
+
+  function open(el: HTMLElement) {
+    clearTimer(el)
+    const t = window.setTimeout(() => {
+      positionPanel(el)
+      el.classList.add('is-open')
+    }, OPEN_DELAY)
+    timers.set(el, t)
+  }
+
+  function close(el: HTMLElement) {
+    clearTimer(el)
+    const t = window.setTimeout(() => {
+      el.classList.remove('is-open')
+    }, CLOSE_DELAY)
+    timers.set(el, t)
+  }
+
+  nodes.forEach((el) => {
+    el.addEventListener('mouseenter', () => open(el))
+    el.addEventListener('mouseleave', () => close(el))
+    el.addEventListener('focusin', () => {
+      clearTimer(el)
+      positionPanel(el)
+      el.classList.add('is-open')
+    })
+    el.addEventListener('focusout', (e) => {
+      if (!el.contains((e as FocusEvent).relatedTarget as Node)) close(el)
+    })
+    el.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Escape') {
+        el.classList.remove('is-open')
+        ;(el as HTMLElement).blur()
+      }
+    })
+    el.addEventListener('click', (e) => {
+      // Táctil: sin hover, el primer tap abre; un segundo tap sobre un link interno funciona normal.
+      if (!window.matchMedia('(hover: hover)').matches) {
+        if (!el.classList.contains('is-open')) {
+          e.preventDefault()
+          positionPanel(el)
+          el.classList.add('is-open')
+        }
+      }
+    })
+  })
+
+  document.addEventListener('click', (e) => {
+    nodes.forEach((el) => {
+      if (!el.contains(e.target as Node)) el.classList.remove('is-open')
+    })
+  })
+</script>
