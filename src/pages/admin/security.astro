@@ -1,0 +1,366 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { db } from '../../db'
+import { securityEvents, securityAnomalies } from '../../db/schema'
+import { THREAT_CATEGORY_LABELS } from '../../lib/security/classify'
+import { listActiveBlocks } from '../../lib/security/blocklist'
+
+// Panel privado de observabilidad de seguridad (micro-SIEM). Solo lectura +
+// gestión manual de la blocklist. Ver docs/plan-security-observability.md.
+
+const DAY = 86_400_000
+const now = Date.now()
+const d1 = new Date(now - DAY)
+const d7 = new Date(now - 7 * DAY)
+
+const n = (v: unknown): number => Number(v ?? 0)
+
+// Etiqueta legible por categoría (incluye las sintéticas del enforcement).
+const CAT_LABELS: Record<string, string> = {
+  ...THREAT_CATEGORY_LABELS,
+  blocklist: 'Bloqueo aplicado',
+  api_abuse: 'Abuso de API (rate limit)',
+  auth_probing: 'Sondeo de autenticación',
+}
+const catLabel = (c: string) => CAT_LABELS[c] ?? c
+
+const SEV_DOT: Record<string, string> = {
+  low: 'bg-ink-400',
+  medium: 'bg-amber-400',
+  high: 'bg-orange-500',
+  critical: 'bg-red-500',
+}
+
+const sumHits = sql<number>`coalesce(sum(${securityEvents.hits}), 0)`
+
+const [total24Row] = await db.select({ v: sumHits }).from(securityEvents).where(gte(securityEvents.at, d1))
+const [total7Row] = await db.select({ v: sumHits }).from(securityEvents).where(gte(securityEvents.at, d7))
+const total24 = n(total24Row?.v)
+const total7 = n(total7Row?.v)
+
+const byCat = await db
+  .select({ category: securityEvents.category, count: sumHits, ips: sql<number>`count(distinct ${securityEvents.ip})` })
+  .from(securityEvents)
+  .where(gte(securityEvents.at, d1))
+  .groupBy(securityEvents.category)
+  .orderBy(sql`2 desc`)
+
+const bySev = await db
+  .select({ severity: securityEvents.severity, count: sumHits })
+  .from(securityEvents)
+  .where(gte(securityEvents.at, d1))
+  .groupBy(securityEvents.severity)
+const sevCount = (s: string) => n(bySev.find((r) => r.severity === s)?.count)
+
+const topPaths = await db
+  .select({ path: securityEvents.path, count: sumHits })
+  .from(securityEvents)
+  .where(gte(securityEvents.at, d1))
+  .groupBy(securityEvents.path)
+  .orderBy(sql`2 desc`)
+  .limit(10)
+
+const topCountries = await db
+  .select({ country: securityEvents.country, count: sumHits })
+  .from(securityEvents)
+  .where(and(gte(securityEvents.at, d1), sql`${securityEvents.country} is not null`))
+  .groupBy(securityEvents.country)
+  .orderBy(sql`2 desc`)
+  .limit(8)
+
+const blocks = await listActiveBlocks(now)
+
+const anomalies = await db
+  .select()
+  .from(securityAnomalies)
+  .where(eq(securityAnomalies.acknowledged, false))
+  .orderBy(desc(securityAnomalies.at))
+  .limit(20)
+
+// Explorador con filtros (?cat=&sev=) sobre los últimos 7 días.
+const fCat = Astro.url.searchParams.get('cat') ?? ''
+const fSev = Astro.url.searchParams.get('sev') ?? ''
+const conds = [gte(securityEvents.at, d7)]
+if (fCat) conds.push(eq(securityEvents.category, fCat))
+if (fSev) conds.push(eq(securityEvents.severity, fSev as 'low' | 'medium' | 'high' | 'critical'))
+const recent = await db
+  .select()
+  .from(securityEvents)
+  .where(and(...conds))
+  .orderBy(desc(securityEvents.at))
+  .limit(60)
+
+const catMax = Math.max(1, ...byCat.map((c) => n(c.count)))
+const pathMax = Math.max(1, ...topPaths.map((p) => n(p.count)))
+const countryMax = Math.max(1, ...topCountries.map((c) => n(c.count)))
+
+const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec < 86400 ? `${Math.round(sec / 3600)}h` : `${Math.round(sec / 86400)}d`)
+---
+
+<AdminLayout title="Seguridad">
+  <div class="max-w-5xl space-y-6">
+    <p class="text-[12px] text-ink-300 -mt-1">
+      Observabilidad de la superficie de ataque: qué sondean, desde dónde y qué se ha
+      bloqueado. Ventana de tarjetas: últimas 24 h. Sin trigger del cron
+      <code class="text-ink-200">security-rollup</code> no hay auto-block ni anomalías.
+    </p>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="rounded-2xl glass p-4">
+        <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Eventos 24 h</div>
+        <div class="mt-1 text-2xl font-medium text-ink-50">{total24.toLocaleString('es')}</div>
+      </div>
+      <div class="rounded-2xl glass p-4">
+        <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Eventos 7 d</div>
+        <div class="mt-1 text-2xl font-medium text-ink-50">{total7.toLocaleString('es')}</div>
+      </div>
+      <div class="rounded-2xl glass p-4">
+        <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">IPs bloqueadas</div>
+        <div class="mt-1 text-2xl font-medium text-ink-50">{blocks.length}</div>
+      </div>
+      <div class="rounded-2xl glass p-4">
+        <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Críticos 24 h</div>
+        <div class="mt-1 text-2xl font-medium text-red-400">{sevCount('critical').toLocaleString('es')}</div>
+      </div>
+    </div>
+
+    <!-- Anomalías abiertas -->
+    {anomalies.length > 0 && (
+      <div class="rounded-2xl glass p-5 border border-amber-500/20">
+        <h2 class="text-base font-medium text-ink-50 mb-3">Anomalías abiertas ({anomalies.length})</h2>
+        <ul class="space-y-2">
+          {anomalies.map((a) => (
+            <li class="anomaly-row flex items-start justify-between gap-3 text-[13px]" data-id={a.id}>
+              <div class="min-w-0">
+                <span class="font-mono text-[11px] uppercase tracking-wider text-amber-300">{a.kind}</span>
+                <p class="text-ink-100">{a.detail}</p>
+              </div>
+              <button
+                class="ack-btn shrink-0 h-7 px-3 text-[12px] rounded-full bg-white/[.04] border border-white/10 text-ink-100 hover:bg-white/[.08] transition-colors"
+                data-id={a.id}
+              >Reconocer</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <!-- Categorías -->
+      <div class="rounded-2xl glass p-5">
+        <h2 class="text-base font-medium text-ink-50 mb-3">Categorías de ataque (24 h)</h2>
+        {byCat.length === 0 ? (
+          <p class="text-[13px] text-ink-400">Sin actividad hostil registrada.</p>
+        ) : (
+          <ul class="space-y-2.5">
+            {byCat.map((c) => (
+              <li>
+                <div class="flex items-center justify-between text-[12px] mb-1">
+                  <span class="text-ink-100">{catLabel(c.category)}</span>
+                  <span class="font-mono text-ink-300">{n(c.count)} · {n(c.ips)} IP</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-white/[.05] overflow-hidden">
+                  <div class="h-full rounded-full bg-cyan" style={`width:${(n(c.count) / catMax) * 100}%`}></div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <!-- Países -->
+      <div class="rounded-2xl glass p-5">
+        <h2 class="text-base font-medium text-ink-50 mb-3">Origen (24 h)</h2>
+        {topCountries.length === 0 ? (
+          <p class="text-[13px] text-ink-400">Sin datos de geolocalización (header de Vercel).</p>
+        ) : (
+          <ul class="space-y-2.5">
+            {topCountries.map((c) => (
+              <li>
+                <div class="flex items-center justify-between text-[12px] mb-1">
+                  <span class="text-ink-100 font-mono">{c.country}</span>
+                  <span class="font-mono text-ink-300">{n(c.count)}</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-white/[.05] overflow-hidden">
+                  <div class="h-full rounded-full bg-lime" style={`width:${(n(c.count) / countryMax) * 100}%`}></div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+
+    <!-- Rutas más atacadas -->
+    <div class="rounded-2xl glass p-5">
+      <h2 class="text-base font-medium text-ink-50 mb-3">Rutas más sondeadas (24 h)</h2>
+      {topPaths.length === 0 ? (
+        <p class="text-[13px] text-ink-400">Sin sondeos registrados.</p>
+      ) : (
+        <ul class="space-y-2">
+          {topPaths.map((p) => (
+            <li class="flex items-center gap-3 text-[12px]">
+              <span class="font-mono text-ink-200 truncate flex-1">{p.path}</span>
+              <div class="h-1.5 w-32 rounded-full bg-white/[.05] overflow-hidden shrink-0">
+                <div class="h-full rounded-full bg-orange-500" style={`width:${(n(p.count) / pathMax) * 100}%`}></div>
+              </div>
+              <span class="font-mono text-ink-300 w-10 text-right shrink-0">{n(p.count)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+
+    <!-- Blocklist -->
+    <div class="rounded-2xl glass p-5">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="text-base font-medium text-ink-50">IPs bloqueadas ({blocks.length})</h2>
+        <form id="block-form" class="flex items-center gap-2">
+          <input
+            id="block-ip"
+            type="text"
+            placeholder="IP a bloquear"
+            class="h-8 px-3 text-[12px] rounded-lg bg-white/[.03] border border-white/10 text-ink-50 font-mono w-40 focus:outline-none focus:border-cyan/50"
+          />
+          <button class="h-8 px-3 text-[12px] rounded-lg bg-cyan text-ink-950 font-medium hover:brightness-110 transition">Bloquear 24 h</button>
+        </form>
+      </div>
+      {blocks.length === 0 ? (
+        <p class="text-[13px] text-ink-400">Ninguna IP bloqueada ahora mismo.</p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-[12px]">
+            <thead>
+              <tr class="text-ink-400 text-left border-b border-white/5">
+                <th class="py-2 font-medium">IP</th><th class="py-2 font-medium">Motivo</th>
+                <th class="py-2 font-medium">Origen</th><th class="py-2 font-medium">Hits</th>
+                <th class="py-2 font-medium">Expira</th><th class="py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {blocks.map((b) => (
+                <tr class="block-row border-b border-white/[.03]" data-ip={b.ip}>
+                  <td class="py-2 font-mono text-ink-100">{b.ip}</td>
+                  <td class="py-2 text-ink-200">{b.reason}</td>
+                  <td class="py-2"><span class={`font-mono text-[11px] ${b.source === 'auto' ? 'text-cyan' : 'text-ink-300'}`}>{b.source}</span></td>
+                  <td class="py-2 font-mono text-ink-300">{b.hits}</td>
+                  <td class="py-2 font-mono text-ink-300">{b.expiresAt ? fmtTtl(Math.round((b.expiresAt.getTime() - now) / 1000)) : '—'}</td>
+                  <td class="py-2 text-right"><button class="unblock-btn h-7 px-3 text-[11px] rounded-full bg-white/[.04] border border-white/10 text-ink-100 hover:bg-white/[.08]" data-ip={b.ip}>Desbloquear</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    <!-- Explorador de eventos -->
+    <div class="rounded-2xl glass p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <h2 class="text-base font-medium text-ink-50">Eventos recientes (7 d)</h2>
+        <form method="get" class="flex items-center gap-2">
+          <select name="cat" class="h-8 px-2 text-[12px] rounded-lg bg-white/[.03] border border-white/10 text-ink-100">
+            <option value="">Toda categoría</option>
+            {[...new Set(byCat.map((c) => c.category))].map((c) => (
+              <option value={c} selected={c === fCat}>{catLabel(c)}</option>
+            ))}
+          </select>
+          <select name="sev" class="h-8 px-2 text-[12px] rounded-lg bg-white/[.03] border border-white/10 text-ink-100">
+            <option value="">Toda severidad</option>
+            {['low', 'medium', 'high', 'critical'].map((s) => (
+              <option value={s} selected={s === fSev}>{s}</option>
+            ))}
+          </select>
+          <button class="h-8 px-3 text-[12px] rounded-lg bg-white/[.06] border border-white/10 text-ink-100">Filtrar</button>
+        </form>
+      </div>
+      {recent.length === 0 ? (
+        <p class="text-[13px] text-ink-400">Sin eventos para el filtro seleccionado.</p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-[12px]">
+            <thead>
+              <tr class="text-ink-400 text-left border-b border-white/5">
+                <th class="py-2 font-medium">Cuándo</th><th class="py-2 font-medium">Sev</th>
+                <th class="py-2 font-medium">Categoría</th><th class="py-2 font-medium">Ruta</th>
+                <th class="py-2 font-medium">IP</th><th class="py-2 font-medium">País</th>
+                <th class="py-2 font-medium">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((e) => (
+                <tr class="border-b border-white/[.03]">
+                  <td class="py-2 font-mono text-ink-400 whitespace-nowrap"><span class="rel-time" data-ts={e.at ? e.at.getTime() : ''}></span></td>
+                  <td class="py-2"><span class={`inline-block w-2 h-2 rounded-full ${SEV_DOT[e.severity] ?? 'bg-ink-400'}`} title={e.severity}></span></td>
+                  <td class="py-2 text-ink-200">{catLabel(e.category)}</td>
+                  <td class="py-2 font-mono text-ink-100 max-w-[220px] truncate">{e.path}</td>
+                  <td class="py-2 font-mono text-ink-300">{e.ip ?? '—'}</td>
+                  <td class="py-2 font-mono text-ink-300">{e.country ?? '—'}</td>
+                  <td class="py-2 font-mono text-ink-400">{e.action}{e.hits > 1 ? ` ×${e.hits}` : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script>
+    const rel = (ts: number) => {
+      const s = Math.max(0, Math.floor((Date.now() - ts) / 1000))
+      if (s < 60) return `hace ${s}s`
+      const m = Math.floor(s / 60)
+      if (m < 60) return `hace ${m}min`
+      const h = Math.floor(m / 60)
+      if (h < 24) return `hace ${h}h`
+      return `hace ${Math.floor(h / 24)}d`
+    }
+    document.querySelectorAll<HTMLElement>('.rel-time').forEach((el) => {
+      const ts = Number(el.dataset.ts)
+      el.textContent = ts ? rel(ts) : '—'
+    })
+
+    async function post(payload: Record<string, unknown>) {
+      const res = await fetch('/api/admin/security', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      return res.ok
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('.unblock-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true
+        if (await post({ action: 'unblock', ip: btn.dataset.ip })) {
+          btn.closest('.block-row')?.remove()
+        } else btn.disabled = false
+      })
+    })
+
+    document.querySelectorAll<HTMLButtonElement>('.ack-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true
+        if (await post({ action: 'ack', id: Number(btn.dataset.id) })) {
+          btn.closest('.anomaly-row')?.remove()
+        } else btn.disabled = false
+      })
+    })
+
+    const bf = document.getElementById('block-form') as HTMLFormElement | null
+    bf?.addEventListener('submit', async (ev) => {
+      ev.preventDefault()
+      const input = document.getElementById('block-ip') as HTMLInputElement
+      const ip = input.value.trim()
+      if (!ip) return
+      if (await post({ action: 'block', ip, ttlSec: 86400, reason: 'bloqueo manual desde panel' })) {
+        location.reload()
+      } else {
+        input.classList.add('border-red-500')
+      }
+    })
+  </script>
+</AdminLayout>
