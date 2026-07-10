@@ -134,7 +134,9 @@ export async function hourlyBaselines(
   days = 30
 ): Promise<Map<string, number[]>> {
   const from = new Date(floorHour(now) - days * DAY_MS)
-  const before = new Date(floorHour(now)) // excluye la hora en curso
+  // Excluye la hora YA CERRADA que estamos evaluando (su rollup ya se escribió),
+  // para no meter la observación actual dentro de su propia baseline.
+  const before = new Date(floorHour(now) - HOUR_MS)
   const rows = await db
     .select({ category: securityRollups.category, count: securityRollups.count, at: securityRollups.at })
     .from(securityRollups)
@@ -158,7 +160,7 @@ export async function hourlyBaselines(
 /** Países vistos históricamente como top de un rollup (para geo-anomalías). */
 export async function knownCountries(now = Date.now(), days = 30): Promise<Set<string>> {
   const from = new Date(floorHour(now) - days * DAY_MS)
-  const before = new Date(floorHour(now))
+  const before = new Date(floorHour(now) - HOUR_MS) // excluye la hora evaluada
   const rows = await db
     .select({ c: securityRollups.topCountry })
     .from(securityRollups)
@@ -182,7 +184,7 @@ export async function currentTopPaths(now = Date.now(), limit = 20): Promise<{ p
 /** Rutas vistas como top histórico (baseline acotada para patrones nuevos). */
 export async function knownTopPaths(now = Date.now(), days = 30): Promise<Set<string>> {
   const from = new Date(floorHour(now) - days * DAY_MS)
-  const before = new Date(floorHour(now))
+  const before = new Date(floorHour(now) - HOUR_MS) // excluye la hora evaluada
   const rows = await db
     .select({ p: securityRollups.topPath })
     .from(securityRollups)
