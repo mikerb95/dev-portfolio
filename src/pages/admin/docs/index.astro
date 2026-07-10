@@ -1,0 +1,89 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DocsNav from '../../../components/admin/DocsNav.astro'
+import { REQUISITOS_FUNCIONALES, REQUISITOS_NO_FUNCIONALES, CASOS_DE_USO, ACTORES } from '../../../data/documentacion'
+import { ITERACIONES as ITER_PF } from '../../../data/iteraciones-portfolio'
+
+const rfTotal = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
+const rfImpl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
+const rnfTotal = REQUISITOS_NO_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
+const cuTotal = CASOS_DE_USO.length
+const historiasTotal = ITER_PF.flatMap((i) => i.historias).length
+
+const stack = [
+  { grupo: 'Framework', items: ['Astro 6 (SSR, adapter Vercel)', 'Tailwind CSS 4'] },
+  { grupo: 'Datos', items: ['Drizzle ORM', 'libSQL / Turso'] },
+  { grupo: 'Auth', items: ['Auth.js (auth-astro)', 'Proveedor GitHub OAuth'] },
+  { grupo: 'Almacenamiento', items: ['Vercel Blob (backups, screenshots)'] },
+  { grupo: 'Observabilidad', items: ['Cron externo (cron-job.org)', 'ntfy.sh (push)', 'Web Vitals (RUM)'] },
+  { grupo: 'Testing', items: ['Vitest + coverage v8'] },
+]
+
+const subpaginas = [
+  { href: '/admin/docs/requerimientos-funcionales', titulo: 'Requerimientos funcionales', desc: `${rfTotal} requerimientos en 7 módulos (${rfImpl} implementados).` },
+  { href: '/admin/docs/requerimientos-no-funcionales', titulo: 'Requerimientos no funcionales', desc: `${rnfTotal} requerimientos por categoría ISO/IEC 25010.` },
+  { href: '/admin/docs/casos-de-uso', titulo: 'Casos de uso', desc: `${ACTORES.length} actores, ${cuTotal} casos de uso con diagrama.` },
+  { href: '/admin/docs/casos-de-uso-extendidos', titulo: 'Casos de uso extendidos', desc: 'Flujo principal, alternos, excepciones y postcondiciones de los CU críticos.' },
+  { href: '/admin/docs/diagrama-secuencia', titulo: 'Diagrama de secuencia', desc: 'Login OAuth, chequeo de monitor, enforcement de seguridad y webhook de pagos.' },
+  { href: '/admin/docs/diagrama-componentes', titulo: 'Diagrama de componentes', desc: 'Despliegue: navegador → Vercel (Astro SSR + middleware) → Turso/Blob/GitHub/ntfy/cron.' },
+  { href: '/admin/docs/diagrama-clases', titulo: 'Diagrama de clases', desc: 'Entidades del dominio derivadas de src/db/schema.ts, agrupadas por módulo.' },
+  { href: '/admin/docs/kanban', titulo: 'Tablero kanban', desc: `${historiasTotal} historias en ${ITER_PF.length} iteraciones del propio proyecto.` },
+]
+---
+
+<AdminLayout title="Documentación">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-8">
+    <p class="text-[13px] text-ink-200 leading-relaxed">
+      Documentación de ingeniería del proyecto <strong class="text-ink-50">dev-portfolio</strong> (codebymike.tech):
+      requerimientos, casos de uso, diagramas UML y el tablero kanban del propio proyecto, con el mismo rigor
+      metodológico que el módulo <span class="font-mono text-cyan">/projects/dobleyo</span>. Todo el contenido vive
+      como datos tipados en <span class="font-mono text-cyan">src/data/documentacion.ts</span> y
+      <span class="font-mono text-cyan">src/data/iteraciones-portfolio.ts</span> — un cambio de requerimiento es un commit revisable, no un documento que se desincroniza.
+    </p>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
+    {[
+      { label: 'Req. funcionales', value: rfTotal, sub: `${rfImpl} implementados` },
+      { label: 'Req. no funcionales', value: rnfTotal, sub: 'ISO/IEC 25010' },
+      { label: 'Casos de uso', value: cuTotal, sub: `${ACTORES.length} actores` },
+      { label: 'Historias (kanban)', value: historiasTotal, sub: `${ITER_PF.length} iteraciones` },
+    ].map((k) => (
+      <div class="glass rounded-2xl p-4 border border-white/10">
+        <div class="text-[11px] font-mono uppercase tracking-wide text-ink-200">{k.label}</div>
+        <div class="text-2xl font-semibold text-ink-50 mt-1 tabular-nums">{k.value}</div>
+        <div class="text-[11px] text-ink-300 mt-0.5">{k.sub}</div>
+      </div>
+    ))}
+  </div>
+
+  <h2 class="text-sm font-semibold text-ink-50 mb-3">Mapa de la documentación</h2>
+  <div class="grid gap-3 sm:grid-cols-2 mb-10">
+    {subpaginas.map((s) => (
+      <a href={s.href} class="block rounded-xl border border-white/10 p-4 hover:bg-white/[.04] hover:border-white/20 transition-colors">
+        <div class="text-[13px] font-medium text-ink-50">{s.titulo}</div>
+        <div class="text-[12px] text-ink-200 mt-1 leading-relaxed">{s.desc}</div>
+      </a>
+    ))}
+  </div>
+
+  <h2 class="text-sm font-semibold text-ink-50 mb-3">Stack técnico</h2>
+  <div class="grid gap-3 sm:grid-cols-3 mb-10">
+    {stack.map((s) => (
+      <div class="rounded-xl border border-white/10 p-4">
+        <div class="text-[11px] font-mono uppercase tracking-wide text-violet mb-2">{s.grupo}</div>
+        <ul class="space-y-1">
+          {s.items.map((it) => <li class="text-[12.5px] text-ink-100">{it}</li>)}
+        </ul>
+      </div>
+    ))}
+  </div>
+
+  <h2 class="text-sm font-semibold text-ink-50 mb-3">Alcance del proyecto</h2>
+  <div class="rounded-xl border border-white/10 p-5 text-[12.5px] text-ink-100 leading-relaxed space-y-2">
+    <p><strong class="text-ink-50">Dentro de alcance:</strong> sitio público de portafolio, CRM interno (proyectos/clientes/seguimiento/briefings), finanzas y P&L por proyecto, observabilidad (monitoreo, SLO, notificaciones), un LAB de ingeniería (CI/CD con rollback, pagos idempotentes, chaos engineering) y un micro-SIEM propio (sensor, blocklist, rate limiting durable, detección de anomalías).</p>
+    <p><strong class="text-ink-50">Fuera de alcance (por ahora):</strong> multiusuario/roles (el panel es de un único administrador), pasarela de pagos en producción real (el LAB usa un proveedor mock además de Wompi), y SAST/mutation testing automatizados (planeados en el LAB, ver Fases 5–7 del plan).</p>
+  </div>
+</AdminLayout>

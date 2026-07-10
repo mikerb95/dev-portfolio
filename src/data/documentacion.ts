@@ -1,0 +1,316 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Documentación de ingeniería del portfolio (codebymike.tech / dev-portfolio).
+// Fuente de verdad para /admin/docs/*. Ver docs/plan-documentacion.md.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type Estado = 'implementado' | 'parcial' | 'planeado'
+export type Prioridad = 'alta' | 'media' | 'baja'
+
+export interface Requisito {
+  id: string
+  titulo: string
+  descripcion: string
+  prioridad: Prioridad
+  estado: Estado
+  origen?: string // dónde vive en el código (ruta, tabla, archivo)
+}
+
+export interface Modulo {
+  id: string
+  nombre: string
+  items: Requisito[]
+}
+
+// ── Requerimientos funcionales ──────────────────────────────────────────────
+export const REQUISITOS_FUNCIONALES: Modulo[] = [
+  {
+    id: 'publico',
+    nombre: 'Sitio público',
+    items: [
+      { id: 'RF-001', titulo: 'Listado de proyectos', descripcion: 'El visitante puede ver los proyectos marcados como visibles, con stack, descripción y enlaces.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/index.astro, ProjectCard.astro' },
+      { id: 'RF-002', titulo: 'Detalle de proyecto', descripcion: 'Página individual por proyecto con metadata estructurada (JSON-LD), breadcrumbs y pestaña de observabilidad si tiene monitor asociado.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/projects/[slug].astro' },
+      { id: 'RF-003', titulo: 'Formulario de contacto', descripcion: 'El visitante puede enviar un mensaje que queda asociado a un cliente (si el email coincide) y visible en el CRM.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/api/contact.ts' },
+      { id: 'RF-004', titulo: 'Página de estado del sistema', descripcion: 'Vista pública con uptime de 30 días, incidentes activos y latencia en tiempo real (EKG) por servicio monitoreado.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/status, src/pages/api/status' },
+      { id: 'RF-005', titulo: 'Vitrina de herramientas y notas', descripcion: 'Secciones públicas /tools y /notes con artículos técnicos y mocks de herramientas internas.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/tools, src/pages/notes' },
+      { id: 'RF-006', titulo: 'Certificaciones y evolución académica', descripcion: 'Listado público de certificaciones vigentes/expiradas y línea de tiempo de hitos educativos.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/certifications, EvolutionTimeline.astro' },
+      { id: 'RF-007', titulo: 'SEO técnico', descripcion: 'JSON-LD, sitemap, RSS, notificación IndexNow y manifest de PWA en cada publicación.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/rss.xml, scripts/indexnow' },
+      { id: 'RF-008', titulo: 'Demo read-only del panel admin', descripcion: 'Versión pública sin credenciales del panel admin con datos de ejemplo, para mostrar el producto a reclutadores.', prioridad: 'baja', estado: 'planeado' },
+    ],
+  },
+  {
+    id: 'auth',
+    nombre: 'Autenticación y sesiones',
+    items: [
+      { id: 'RF-101', titulo: 'Login con GitHub OAuth', descripcion: 'El administrador inicia sesión con su cuenta de GitHub; solo los logins en la allowlist obtienen acceso.', prioridad: 'alta', estado: 'implementado', origen: 'auth.config.ts, src/lib/auth.ts' },
+      { id: 'RF-102', titulo: 'Protección de rutas /admin', descripcion: 'Todas las rutas /admin y /api/admin exigen sesión válida; sin sesión, redirige a login.', prioridad: 'alta', estado: 'implementado', origen: 'src/middleware.ts' },
+      { id: 'RF-103', titulo: 'Gestión de dispositivos/sesiones', descripcion: 'El administrador ve las sesiones activas por dispositivo (IP, user-agent, última actividad) y puede revocarlas.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/sessions.astro, admin_sessions' },
+      { id: 'RF-104', titulo: 'Cierre de sesión', descripcion: 'El administrador puede cerrar su sesión desde cualquier página del panel.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/api/auth' },
+    ],
+  },
+  {
+    id: 'crm',
+    nombre: 'CRM (proyectos, clientes, seguimiento)',
+    items: [
+      { id: 'RF-201', titulo: 'Gestión de proyectos', descripcion: 'Alta, edición y archivo de proyectos con estado, fechas, stack, cliente asociado y visibilidad pública.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/projects, projects' },
+      { id: 'RF-202', titulo: 'Gestión de clientes', descripcion: 'Alta y edición de clientes con datos de contacto y notas internas.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/clients.astro, clients' },
+      { id: 'RF-203', titulo: 'Bandeja de mensajes', descripcion: 'El administrador ve, marca como leídos y responde mensajes recibidos por el formulario público.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/messages.astro, messages' },
+      { id: 'RF-204', titulo: 'Seguimiento comercial (interacciones)', descripcion: 'Registro de llamadas, reuniones, notas y tareas pendientes por cliente/proyecto, con recordatorios (nextAction/dueDate).', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/seguimiento.astro, interactions' },
+      { id: 'RF-205', titulo: 'Briefings de cliente', descripcion: 'Documento de alcance por proyecto con objetivo, presupuesto estimado/acordado, horas e ítems (requerimiento/entregable/exclusión).', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/briefings, briefings, briefing_items' },
+      { id: 'RF-206', titulo: 'Contactos por proyecto', descripcion: 'Registro de contactos (cliente, PM, dev, QA, diseño) asociados a un proyecto.', prioridad: 'baja', estado: 'implementado', origen: 'project_contacts' },
+      { id: 'RF-207', titulo: 'Decisiones de arquitectura (ADRs)', descripcion: 'Registro de decisiones técnicas por proyecto con contexto, decisión, justificación y alternativas consideradas; opcionalmente públicas.', prioridad: 'media', estado: 'implementado', origen: 'project_adrs' },
+      { id: 'RF-208', titulo: 'Presentaciones (slides) para cliente', descripcion: 'Creación de presentaciones ligadas a un proyecto con control remoto de avance de diapositivas en tiempo real.', prioridad: 'baja', estado: 'implementado', origen: 'src/pages/admin/slides, presentations' },
+    ],
+  },
+  {
+    id: 'finanzas',
+    nombre: 'Finanzas',
+    items: [
+      { id: 'RF-301', titulo: 'Registro de ingresos', descripcion: 'Alta de cobros por proyecto/cliente con estado (cobrado/pendiente/proyectado) y fecha de vencimiento.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/finances.astro, finances' },
+      { id: 'RF-302', titulo: 'Costos y P&L por proyecto', descripcion: 'Registro de costos de servicios (hosting, dominio, DB, etc.) con quién paga y cuánto se le factura al cliente, para calcular la rentabilidad real.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/costs.astro, project_services, src/lib/pnl.ts' },
+      { id: 'RF-303', titulo: 'Bóveda cifrada de credenciales', descripcion: 'Secrets de servicios (API keys, tokens) cifrados con AES-256-GCM en reposo, revelados on-demand vía fetch autenticado.', prioridad: 'alta', estado: 'implementado', origen: 'src/lib/crypto.ts, project_services.secrets' },
+      { id: 'RF-304', titulo: 'Variables de entorno por proyecto', descripcion: 'Registro cifrado de variables de entorno por ambiente (producción/staging/dev) para cada proyecto gestionado.', prioridad: 'media', estado: 'implementado', origen: 'project_env_vars' },
+      { id: 'RF-305', titulo: 'Alertas de vencimiento de dominios', descripcion: 'Descubrimiento automático de fecha de expiración vía RDAP y alerta por email/push antes del vencimiento.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/domains.astro, src/lib/domains.ts' },
+    ],
+  },
+  {
+    id: 'observabilidad',
+    nombre: 'Observabilidad',
+    items: [
+      { id: 'RF-401', titulo: 'Monitoreo de disponibilidad', descripcion: 'Checks HTTP periódicos (cron externo) por servicio, con umbral de latencia degradada y validación de contenido esperado.', prioridad: 'alta', estado: 'implementado', origen: 'monitors, src/pages/api/cron' },
+      { id: 'RF-402', titulo: 'Historial de incidentes', descripcion: 'Agrupación automática de caídas consecutivas (primer fallo → primer éxito) con causa y duración.', prioridad: 'alta', estado: 'implementado', origen: 'monitor_incidents' },
+      { id: 'RF-403', titulo: 'SLO / error budget', descripcion: 'Cálculo de SLI/SLO configurable (objetivo % y ventana en días) por monitor, con presupuesto de error restante.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/lab/slo.astro, src/lib/slo.ts' },
+      { id: 'RF-404', titulo: 'Notificaciones push', descripcion: 'Alertas push (ntfy.sh) ante caídas de monitores, vencimientos de dominio y anomalías de seguridad.', prioridad: 'media', estado: 'implementado', origen: 'src/lib/notify.ts' },
+      { id: 'RF-405', titulo: 'Web Vitals (RUM)', descripcion: 'Captura de Core Web Vitals de visitantes reales, sin PII, para calcular p75 públicos.', prioridad: 'baja', estado: 'implementado', origen: 'web_vitals, src/lib/vitals.ts' },
+      { id: 'RF-406', titulo: 'Certificados TLS', descripcion: 'Verificación periódica de expiración de certificado TLS por monitor con badge de alerta.', prioridad: 'baja', estado: 'implementado', origen: 'monitors.sslExpiresAt' },
+    ],
+  },
+  {
+    id: 'lab',
+    nombre: 'LAB (SENA)',
+    items: [
+      { id: 'RF-501', titulo: 'Pipeline CI/CD con rollback', descripcion: 'Registro de runs de CI (GitHub Actions) con tests, cobertura, health check post-deploy y rollback automático si falla.', prioridad: 'alta', estado: 'implementado', origen: 'ci_runs, src/pages/admin/lab/pipeline.astro' },
+      { id: 'RF-502', titulo: 'Pasarela de pagos con idempotencia', descripcion: 'Cobros con clave de idempotencia única, máquina de estados sin retrocesos y bitácora de eventos de webhook (incl. duplicados y fuera de orden).', prioridad: 'alta', estado: 'implementado', origen: 'payments, payment_events, src/lib/payments.ts' },
+      { id: 'RF-503', titulo: 'Chaos engineering', descripcion: 'Inyección de fallos reales (500, 503, latencia) por ruta con TTL obligatorio y kill-switch de pánico; /admin y /api/auth excluidos por código.', prioridad: 'media', estado: 'implementado', origen: 'chaos_flags, src/lib/chaos.ts' },
+      { id: 'RF-504', titulo: 'Historial de experimentos', descripcion: 'Bitácora de experimentos del LAB con resultado esperado vs. real, como evidencia para sustentación.', prioridad: 'baja', estado: 'implementado', origen: 'lab_experiments' },
+      { id: 'RF-505', titulo: 'Pruebas de carga (k6)', descripcion: 'Escenarios de carga automatizados contra endpoints críticos, integrados al pipeline.', prioridad: 'media', estado: 'planeado' },
+      { id: 'RF-506', titulo: 'SAST / accesibilidad automatizada', descripcion: 'Análisis estático de seguridad y auditoría de accesibilidad en cada PR.', prioridad: 'media', estado: 'planeado' },
+      { id: 'RF-507', titulo: 'Mutation testing', descripcion: 'Medición de calidad real de la suite de tests mediante mutantes.', prioridad: 'baja', estado: 'planeado' },
+    ],
+  },
+  {
+    id: 'seguridad',
+    nombre: 'Seguridad (micro-SIEM)',
+    items: [
+      { id: 'RF-601', titulo: 'Sensor de requests hostiles', descripcion: 'Clasificación de cada request por firmas conocidas (OWASP) de forma síncrona y no bloqueante en el middleware.', prioridad: 'alta', estado: 'implementado', origen: 'src/lib/security/sensor.ts, classify.ts' },
+      { id: 'RF-602', titulo: 'Blocklist de IPs', descripcion: 'Bloqueo (manual o automático) de IPs con TTL obligatorio y respuesta 403 seca; sin bloqueos eternos.', prioridad: 'alta', estado: 'implementado', origen: 'blocked_ips, src/lib/security/blocklist.ts' },
+      { id: 'RF-603', titulo: 'Rate limiting durable', descripcion: 'Límite de tasa por clave respaldado en base de datos, que sobrevive a redeploys (reemplaza la implementación en memoria).', prioridad: 'alta', estado: 'implementado', origen: 'rate_limit_buckets, src/lib/security/ratelimit-durable.ts' },
+      { id: 'RF-604', titulo: 'Agregación y rollups', descripcion: 'Agregados horarios/diarios de eventos de seguridad por categoría para tendencias y detección de anomalías.', prioridad: 'media', estado: 'implementado', origen: 'security_rollups' },
+      { id: 'RF-605', titulo: 'Detección de anomalías', descripcion: 'Detector estadístico (z-score sobre baseline de 30 días) de picos, patrones nuevos, anomalías geográficas y ráfagas de error.', prioridad: 'media', estado: 'parcial', origen: 'security_anomalies' },
+      { id: 'RF-606', titulo: 'Panel de seguridad consolidado', descripcion: 'Vista en /admin con eventos, anomalías y acciones de respuesta (bloquear IP, marcar revisado).', prioridad: 'media', estado: 'planeado' },
+    ],
+  },
+  {
+    id: 'sistema',
+    nombre: 'Sistema',
+    items: [
+      { id: 'RF-701', titulo: 'Backups automáticos', descripcion: 'Snapshot periódico de la base de datos subido a Vercel Blob vía cron, más creación manual desde el panel.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/backup.astro, src/pages/api/cron' },
+      { id: 'RF-702', titulo: 'Ajustes de la aplicación', descripcion: 'Configuración clave-valor (tasas de cambio, moneda base) editable desde el panel.', prioridad: 'baja', estado: 'implementado', origen: 'app_settings, src/pages/admin/settings.astro' },
+      { id: 'RF-703', titulo: 'Documentación de ingeniería', descripcion: 'Requerimientos, casos de uso, diagramas UML y kanban del propio proyecto, navegables desde /admin/docs.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/docs' },
+    ],
+  },
+]
+
+// ── Requerimientos no funcionales (categorías ISO/IEC 25010) ────────────────
+export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
+  {
+    id: 'seguridad-rnf',
+    nombre: 'Seguridad',
+    items: [
+      { id: 'RNF-01', titulo: 'Cifrado de secretos en reposo', descripcion: 'Todo secreto de servicio (API keys, tokens) se almacena cifrado con AES-256-GCM; nunca en texto plano en la base de datos.', prioridad: 'alta', estado: 'implementado', origen: 'src/lib/crypto.ts' },
+      { id: 'RNF-02', titulo: 'Autorización por allowlist', descripcion: 'Solo los logins de GitHub explícitamente permitidos obtienen sesión de administrador, sin excepción.', prioridad: 'alta', estado: 'implementado', origen: 'src/lib/auth.ts' },
+      { id: 'RNF-03', titulo: 'Fail-open en enforcement de seguridad', descripcion: 'Cualquier fallo en blocklist, rate limiting o sensor deja pasar el request; el enforcement nunca puede tumbar el sitio.', prioridad: 'alta', estado: 'implementado', origen: 'src/middleware.ts' },
+      { id: 'RNF-04', titulo: 'Sin bloqueos eternos', descripcion: 'Todo bloqueo de IP y todo chaos flag tiene TTL obligatorio; el sistema se autocorrige sin intervención manual.', prioridad: 'media', estado: 'implementado', origen: 'blocked_ips.expiresAt, chaos_flags.expiresAt' },
+      { id: 'RNF-05', titulo: 'Minimización de PII en la vitrina pública', descripcion: 'La IP se enmascara/hashea antes de exponerse fuera del panel admin; Web Vitals no capturan datos personales.', prioridad: 'media', estado: 'implementado', origen: 'security_events.ipHash' },
+    ],
+  },
+  {
+    id: 'confiabilidad',
+    nombre: 'Confiabilidad y disponibilidad',
+    items: [
+      { id: 'RNF-06', titulo: 'Idempotencia de pagos', descripcion: 'Un mismo idempotencyKey nunca genera dos cobros, incluso ante doble clic o reintento de red.', prioridad: 'alta', estado: 'implementado', origen: 'payments.idempotencyKey' },
+      { id: 'RNF-07', titulo: 'Máquina de estados sin retrocesos', descripcion: 'Los estados terminales de un pago (approved/declined/error/voided) nunca retroceden ante webhooks fuera de orden.', prioridad: 'alta', estado: 'implementado', origen: 'src/lib/payments.ts' },
+      { id: 'RNF-08', titulo: 'Rollback automático de deploy', descripcion: 'Si el health check post-deploy falla, el pipeline revierte automáticamente a la última versión saludable.', prioridad: 'alta', estado: 'implementado', origen: 'ci_runs.healthOk' },
+      { id: 'RNF-09', titulo: 'Objetivo de disponibilidad (SLO)', descripcion: 'Cada servicio monitoreado puede evaluarse contra un objetivo configurable (por defecto 99.5% en ventana de 30 días).', prioridad: 'media', estado: 'implementado', origen: 'src/lib/slo.ts' },
+      { id: 'RNF-10', titulo: 'Rate limiting resistente a redeploys', descripcion: 'El estado del limitador de tasa persiste en base de datos, no se resetea con cada despliegue.', prioridad: 'media', estado: 'implementado', origen: 'rate_limit_buckets' },
+    ],
+  },
+  {
+    id: 'rendimiento',
+    nombre: 'Eficiencia de desempeño',
+    items: [
+      { id: 'RNF-11', titulo: 'Latencia del sensor de seguridad', descripcion: 'La clasificación de cada request (regex/lookup en memoria) no debe añadir latencia perceptible; la escritura es fire-and-forget.', prioridad: 'alta', estado: 'implementado', origen: 'src/lib/security/sensor.ts' },
+      { id: 'RNF-12', titulo: 'Core Web Vitals dentro de "good"', descripcion: 'LCP, INP y CLS del sitio público deben mantenerse en la banda "good" según el p75 medido en producción.', prioridad: 'media', estado: 'parcial', origen: 'web_vitals' },
+      { id: 'RNF-13', titulo: 'Cache de lecturas frecuentes', descripcion: 'Blocklist y flags de chaos se leen con cache en memoria (30s) para no golpear la base de datos en cada request.', prioridad: 'media', estado: 'implementado', origen: 'src/lib/security/blocklist.ts' },
+    ],
+  },
+  {
+    id: 'mantenibilidad',
+    nombre: 'Mantenibilidad',
+    items: [
+      { id: 'RNF-14', titulo: 'Datos de documentación como código', descripcion: 'Requerimientos, casos de uso e iteraciones se definen en TypeScript tipado, no en documentos externos desincronizables.', prioridad: 'media', estado: 'implementado', origen: 'src/data/documentacion.ts' },
+      { id: 'RNF-15', titulo: 'Registro de decisiones de arquitectura', descripcion: 'Cada decisión técnica relevante por proyecto queda documentada con contexto, alternativas y consecuencias (ADR).', prioridad: 'media', estado: 'implementado', origen: 'project_adrs' },
+      { id: 'RNF-16', titulo: 'Retención y purga de datos operativos', descripcion: 'Los checks de monitoreo y eventos de seguridad crudos se purgan pasados 90 días para no inflar el almacenamiento.', prioridad: 'baja', estado: 'implementado', origen: 'monitor_checks, security_events' },
+    ],
+  },
+  {
+    id: 'usabilidad',
+    nombre: 'Usabilidad y accesibilidad',
+    items: [
+      { id: 'RNF-17', titulo: 'Panel operable desde móvil', descripcion: 'El panel admin y sus subpáginas son usables en viewport móvil (drawer de navegación colapsable).', prioridad: 'media', estado: 'implementado', origen: 'src/layouts/AdminLayout.astro' },
+      { id: 'RNF-18', titulo: 'Auditoría de accesibilidad automatizada', descripcion: 'Cada PR corre una auditoría automática de accesibilidad (axe/lighthouse) sobre las páginas públicas.', prioridad: 'media', estado: 'planeado' },
+    ],
+  },
+]
+
+// ── Actores ──────────────────────────────────────────────────────────────────
+export interface Actor {
+  id: string
+  nombre: string
+  descripcion: string
+}
+
+export const ACTORES: Actor[] = [
+  { id: 'visitante', nombre: 'Visitante público', descripcion: 'Cualquier persona que navega el sitio público sin autenticarse: recluta, cliente potencial, buscador.' },
+  { id: 'admin', nombre: 'Administrador (Mike)', descripcion: 'Único usuario con acceso al panel /admin, autenticado con GitHub OAuth vía allowlist.' },
+  { id: 'cliente', nombre: 'Cliente', descripcion: 'Persona de negocio de un proyecto gestionado; interactúa vía formulario de contacto o presentaciones compartidas.' },
+  { id: 'cron', nombre: 'Cron externo (cron-job.org / Vercel Cron)', descripcion: 'Disparador automático periódico que golpea endpoints de sondeo, backup y rollups.' },
+  { id: 'gateway', nombre: 'Pasarela de pagos (Wompi)', descripcion: 'Sistema externo que envía webhooks de eventos de pago.' },
+  { id: 'buscador', nombre: 'Buscador (Google/Bing)', descripcion: 'Rastreador que consume sitemap, RSS y recibe notificaciones IndexNow.' },
+]
+
+// ── Casos de uso ──────────────────────────────────────────────────────────────
+export interface CasoDeUso {
+  id: string
+  nombre: string
+  actor: string // id de ACTORES
+  rf: string[] // ids de requerimientos funcionales relacionados
+  resumen: string
+}
+
+export const CASOS_DE_USO: CasoDeUso[] = [
+  { id: 'CU-01', nombre: 'Explorar proyectos públicos', actor: 'visitante', rf: ['RF-001', 'RF-002'], resumen: 'El visitante navega el listado de proyectos y entra al detalle de uno.' },
+  { id: 'CU-02', nombre: 'Enviar mensaje de contacto', actor: 'visitante', rf: ['RF-003'], resumen: 'El visitante completa el formulario de contacto y el mensaje queda en la bandeja del CRM.' },
+  { id: 'CU-03', nombre: 'Consultar estado del sistema', actor: 'visitante', rf: ['RF-004'], resumen: 'El visitante revisa uptime, incidentes activos y latencia en tiempo real de los servicios.' },
+  { id: 'CU-04', nombre: 'Iniciar sesión como administrador', actor: 'admin', rf: ['RF-101', 'RF-102'], resumen: 'El administrador se autentica con GitHub y accede al panel si su login está en la allowlist.' },
+  { id: 'CU-05', nombre: 'Gestionar sesiones de dispositivo', actor: 'admin', rf: ['RF-103'], resumen: 'El administrador revisa dispositivos con sesión activa y revoca los que no reconoce.' },
+  { id: 'CU-06', nombre: 'Registrar y dar seguimiento a un proyecto', actor: 'admin', rf: ['RF-201', 'RF-204', 'RF-207'], resumen: 'El administrador crea un proyecto, registra interacciones de seguimiento y documenta decisiones de arquitectura.' },
+  { id: 'CU-07', nombre: 'Elaborar un briefing de cliente', actor: 'admin', rf: ['RF-205'], resumen: 'El administrador documenta objetivo, alcance, presupuesto e ítems de un proyecto antes de iniciarlo.' },
+  { id: 'CU-08', nombre: 'Registrar costos y calcular P&L', actor: 'admin', rf: ['RF-302', 'RF-303'], resumen: 'El administrador registra el costo de un servicio, quién lo paga y cuánto se factura al cliente.' },
+  { id: 'CU-09', nombre: 'Recibir alerta de monitor caído', actor: 'cron', rf: ['RF-401', 'RF-402', 'RF-404'], resumen: 'El cron externo dispara el chequeo, detecta una caída, abre un incidente y notifica por push.' },
+  { id: 'CU-10', nombre: 'Evaluar SLO de un servicio', actor: 'admin', rf: ['RF-403'], resumen: 'El administrador define objetivo y ventana, y consulta el presupuesto de error restante de un monitor.' },
+  { id: 'CU-11', nombre: 'Ejecutar backup manual', actor: 'admin', rf: ['RF-701'], resumen: 'El administrador dispara un backup de la base de datos hacia Blob storage desde el panel.' },
+  { id: 'CU-12', nombre: 'Procesar un pago con idempotencia', actor: 'gateway', rf: ['RF-502'], resumen: 'La pasarela envía un webhook de pago; el sistema aplica el evento respetando idempotencia y orden.' },
+  { id: 'CU-13', nombre: 'Inyectar un fallo de chaos engineering', actor: 'admin', rf: ['RF-503'], resumen: 'El administrador activa un flag de fallo temporal en una ruta y observa cómo el monitoreo lo detecta.' },
+  { id: 'CU-14', nombre: 'Bloquear una IP maliciosa', actor: 'admin', rf: ['RF-601', 'RF-602'], resumen: 'El sensor clasifica un request hostil; el administrador (o el auto-block) añade la IP a la blocklist con TTL.' },
+  { id: 'CU-15', nombre: 'Aplicar rate limiting durable', actor: 'admin', rf: ['RF-603'], resumen: 'Un cliente excede el límite de requests permitido; el sistema lo limita usando el estado persistido en base de datos.' },
+  { id: 'CU-16', nombre: 'Presentar un proyecto a un cliente', actor: 'cliente', rf: ['RF-208'], resumen: 'El administrador controla remotamente el avance de una presentación que el cliente ve en su navegador.' },
+  { id: 'CU-17', nombre: 'Indexar contenido nuevo en buscadores', actor: 'buscador', rf: ['RF-007'], resumen: 'Al publicar contenido, el sistema notifica vía IndexNow y actualiza el RSS/sitemap para acelerar la indexación.' },
+  { id: 'CU-18', nombre: 'Consultar documentación del proyecto', actor: 'admin', rf: ['RF-703'], resumen: 'El administrador navega /admin/docs para revisar requerimientos, casos de uso, diagramas y el kanban del propio portfolio.' },
+]
+
+// ── Casos de uso extendidos ───────────────────────────────────────────────────
+export interface CasoDeUsoExtendido {
+  id: string // referencia a CASOS_DE_USO
+  precondiciones: string[]
+  flujoPrincipal: string[]
+  flujosAlternos: { titulo: string; pasos: string[] }[]
+  excepciones: string[]
+  postcondiciones: string[]
+}
+
+export const CASOS_DE_USO_EXTENDIDOS: CasoDeUsoExtendido[] = [
+  {
+    id: 'CU-04',
+    precondiciones: ['El administrador tiene una cuenta de GitHub válida.', 'Su login está registrado en la allowlist de src/lib/auth.ts.'],
+    flujoPrincipal: [
+      'El administrador visita /admin sin sesión activa.',
+      'El middleware detecta ausencia de sesión y redirige a /api/auth/signin.',
+      'El administrador autoriza la app OAuth de GitHub.',
+      'Auth.js valida el login contra la allowlist.',
+      'Se emite un JWT de sesión y se registra el dispositivo en admin_sessions.',
+      'El administrador es redirigido al panel /admin.',
+    ],
+    flujosAlternos: [
+      { titulo: 'Login no autorizado', pasos: ['GitHub autentica correctamente pero el login no está en la allowlist.', 'Auth.js rechaza la sesión y muestra error de acceso denegado.'] },
+    ],
+    excepciones: ['GitHub OAuth no disponible: el login falla con mensaje de error genérico, sin exponer detalles internos.'],
+    postcondiciones: ['El administrador tiene una sesión JWT activa y un registro en admin_sessions con IP y user-agent.'],
+  },
+  {
+    id: 'CU-09',
+    precondiciones: ['Existe un monitor activo y no pausado en la tabla monitors.', 'El cron externo tiene configurado el CRON_SECRET válido.'],
+    flujoPrincipal: [
+      'El cron externo llama a /api/cron/uptime-check con el secreto.',
+      'El sistema itera los monitores activos y hace la petición HTTP configurada (método, texto esperado, umbral de latencia).',
+      'La respuesta falla (status inesperado, timeout o texto ausente).',
+      'Se inserta un monitor_check con ok=false.',
+      'Si es el primer fallo consecutivo, se abre un monitor_incidents con startedAt.',
+      'Se actualiza monitors.lastStatus a "down" y se dispara una notificación push (ntfy).',
+    ],
+    flujosAlternos: [
+      { titulo: 'Recuperación', pasos: ['Un chequeo posterior tiene éxito.', 'Se cierra el incidente abierto con resolvedAt y durationSec.', 'Se notifica la recuperación.'] },
+      { titulo: 'Degradación por latencia', pasos: ['La respuesta es exitosa pero supera latencyThresholdMs.', 'lastStatus pasa a "degraded" sin abrir incidente.'] },
+    ],
+    excepciones: ['El endpoint del monitor no responde en absoluto (timeout de red): se registra como fallo con error de timeout.'],
+    postcondiciones: ['El estado materializado del monitor refleja el último chequeo; el historial permite reconstruir el SLO.'],
+  },
+  {
+    id: 'CU-12',
+    precondiciones: ['Existe un payment en estado created o pending con un idempotencyKey único.'],
+    flujoPrincipal: [
+      'La pasarela (Wompi) envía un webhook con el resultado de la transacción.',
+      'El sistema busca el payment por reference/gatewayTxId.',
+      'Se registra el evento crudo en payment_events (incluyendo si es duplicado o fuera de orden).',
+      'Si el evento es válido y en orden, se aplica la transición de estado (created→pending→approved/declined).',
+      'Se responde 200 a la pasarela para confirmar recepción.',
+    ],
+    flujosAlternos: [
+      { titulo: 'Evento duplicado', pasos: ['El gatewayTxId ya fue procesado.', 'Se marca duplicate=true en payment_events.', 'No se modifica el estado del payment.'] },
+      { titulo: 'Evento fuera de orden', pasos: ['Llega un evento "pending" después de uno "approved".', 'Se marca outOfOrder=true.', 'El estado terminal previo se conserva (nunca retrocede).'] },
+    ],
+    excepciones: ['El monto del evento no coincide con el del payment: se marca amountMismatch=true y se genera una alerta; el evento nunca se aplica.'],
+    postcondiciones: ['El estado del payment refleja fielmente la transacción real, con bitácora completa auditable para sustentación.'],
+  },
+  {
+    id: 'CU-14',
+    precondiciones: ['El sensor de seguridad (sensor.ts) está observando requests entrantes.'],
+    flujoPrincipal: [
+      'Llega un request al middleware.',
+      'observeRequest clasifica el request contra las firmas conocidas (classify.ts).',
+      'Se detecta una firma de severidad alta/crítica (p. ej. intento de path traversal).',
+      'Se registra un security_events con category, severity y ruleId.',
+      'El cron de auto-block evalúa la reincidencia de esa IP y decide bloquearla con TTL escalonado (1h → 24h → 7d).',
+      'La IP queda en blocked_ips con expiresAt obligatorio.',
+    ],
+    flujosAlternos: [
+      { titulo: 'Bloqueo manual', pasos: ['El administrador revisa un evento en el panel y decide bloquear la IP manualmente.', 'Se inserta en blocked_ips con source=manual.'] },
+    ],
+    excepciones: ['La lectura de blocklist falla (timeout de DB): el middleware falla abierto y deja pasar el request (nunca bloquea por error interno).'],
+    postcondiciones: ['Requests posteriores de esa IP reciben 403 seco hasta que expire el bloqueo.'],
+  },
+  {
+    id: 'CU-18',
+    precondiciones: ['El administrador tiene sesión activa en /admin.'],
+    flujoPrincipal: [
+      'El administrador hace clic en "Documentación" en la sidebar.',
+      'Se muestra el hub /admin/docs con visión general, alcance y mapa de subpáginas.',
+      'El administrador navega a una subpágina (RF, RNF, CU, diagramas o kanban) usando DocsNav.',
+      'La página renderiza el contenido desde src/data/documentacion.ts o src/data/iteraciones-portfolio.ts.',
+    ],
+    flujosAlternos: [
+      { titulo: 'Consulta de diagrama', pasos: ['El administrador entra a una página de diagrama (secuencia/componentes/clases).', 'El navegador renderiza el diagrama Mermaid desde el texto embebido en la página.'] },
+    ],
+    excepciones: [],
+    postcondiciones: ['El administrador cuenta con la documentación de ingeniería completa del proyecto sin salir del panel.'],
+  },
+]
