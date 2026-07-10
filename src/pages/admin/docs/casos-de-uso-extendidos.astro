@@ -1,0 +1,100 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DocsNav from '../../../components/admin/DocsNav.astro'
+import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../../data/documentacion'
+---
+
+<AdminLayout title="Casos de uso extendidos">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-6">
+    <p class="text-[13px] text-ink-200 leading-relaxed">
+      Formato extendido (precondiciones, flujo principal, flujos alternos, excepciones y postcondiciones)
+      para los {CASOS_DE_USO_EXTENDIDOS.length} casos de uso más críticos del sistema: los que involucran
+      dinero, seguridad o estado que debe ser consistente ante fallos.
+    </p>
+  </div>
+
+  <div class="space-y-6">
+    {CASOS_DE_USO_EXTENDIDOS.map((ext) => {
+      const cu = CASOS_DE_USO.find((c) => c.id === ext.id)!
+      const actor = ACTORES.find((a) => a.id === cu.actor)
+      return (
+        <section class="rounded-xl border border-white/10 overflow-hidden">
+          <div class="px-4 py-3 border-b border-white/10 bg-white/[.02] flex items-center gap-2 flex-wrap">
+            <span class="font-mono text-[11px] text-ink-300">{cu.id}</span>
+            <h2 class="text-[13.5px] font-semibold text-ink-50">{cu.nombre}</h2>
+            <span class="text-[10.5px] font-medium px-2 py-0.5 rounded-full border bg-cyan/10 text-cyan border-cyan/30">
+              {actor?.nombre}
+            </span>
+          </div>
+          <div class="p-4 space-y-4">
+            <div>
+              <h3 class="text-[11px] font-semibold uppercase tracking-wide text-ink-300 mb-1.5">Precondiciones</h3>
+              <ul class="list-disc list-inside space-y-0.5">
+                {ext.precondiciones.map((p) => <li class="text-[12.5px] text-ink-100">{p}</li>)}
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="text-[11px] font-semibold uppercase tracking-wide text-ink-300 mb-1.5">Flujo principal</h3>
+              <ol class="space-y-1">
+                {ext.flujoPrincipal.map((p, i) => (
+                  <li class="text-[12.5px] text-ink-100 flex gap-2">
+                    <span class="font-mono text-[11px] text-cyan shrink-0">{i + 1}.</span>
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {ext.flujosAlternos.length > 0 && (
+              <div>
+                <h3 class="text-[11px] font-semibold uppercase tracking-wide text-ink-300 mb-1.5">Flujos alternos</h3>
+                <div class="space-y-2">
+                  {ext.flujosAlternos.map((alt) => (
+                    <div class="rounded-lg bg-violet/5 border border-violet/20 p-2.5">
+                      <div class="text-[12px] font-medium text-violet mb-1">{alt.titulo}</div>
+                      <ol class="space-y-0.5">
+                        {alt.pasos.map((p, i) => (
+                          <li class="text-[12px] text-ink-100 flex gap-2">
+                            <span class="font-mono text-[10.5px] text-violet shrink-0">{i + 1}.</span>
+                            <span>{p}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {ext.excepciones.length > 0 && (
+              <div>
+                <h3 class="text-[11px] font-semibold uppercase tracking-wide text-ink-300 mb-1.5">Excepciones</h3>
+                <ul class="space-y-1">
+                  {ext.excepciones.map((e) => (
+                    <li class="text-[12.5px] text-ember flex gap-2">
+                      <span class="shrink-0">⚠</span><span>{e}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div>
+              <h3 class="text-[11px] font-semibold uppercase tracking-wide text-ink-300 mb-1.5">Postcondiciones</h3>
+              <ul class="space-y-0.5">
+                {ext.postcondiciones.map((p) => (
+                  <li class="text-[12.5px] text-lime flex gap-2">
+                    <span class="shrink-0">✓</span><span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )
+    })}
+  </div>
+</AdminLayout>
