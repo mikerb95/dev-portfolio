@@ -247,7 +247,20 @@ evaluada no entre en su propia baseline.
    `high` agrupado por hora, resumen diario por email. Anti-fatiga: una anomalía
    abierta no re-alerta hasta que se reconozca o pasen 24 h.
 
-### Fase 4 — Panel privado `/admin/security` ~1–2 sesiones
+### Fase 4 — Panel privado `/admin/security` ✅ IMPLEMENTADA (2026-07-10)
+
+Entregado: página única `src/pages/admin/security.astro` (dashboard + explorador +
+blocklist en una vista, en vez de 4 sub-rutas) con KPIs (eventos 24h/7d, IPs bloqueadas,
+críticos), barras de categorías/países/rutas más atacadas (24h), anomalías abiertas con
+botón "Reconocer", tabla de IPs bloqueadas con desbloqueo y form de bloqueo manual, y
+explorador de eventos (7d) con filtros por categoría/severidad (query params, server-side).
+API de mutación `src/pages/api/admin/security.ts` (POST `block`/`unblock`/`ack`, protegida
+por el guard de `/api/admin`). Entrada "Seguridad" añadida al grupo Sistema del
+`Sidebar.astro`. Verificado: queries drizzle ejecutadas contra Turso (test de integración
+temporal, ya borrado), guard redirige 302 sin sesión tanto la página como la API. UI reusa
+los patrones de `sessions.astro`/`monitors.astro` (glass cards, fetch POST, rel-time).
+
+### Fase 4 (referencia original) — Panel privado `/admin/security` ~1–2 sesiones
 
 Nueva entrada en el sidebar (grupo Sistema, junto a Monitores):
 
