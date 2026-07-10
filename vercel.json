@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/indexnow",
       "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/cron/security-rollup",
+      "schedule": "0 * * * *"
     }
   ]
 }
