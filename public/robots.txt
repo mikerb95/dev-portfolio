@@ -1,5 +1,9 @@
 User-agent: *
 Disallow: /admin
 Disallow: /api
+# Rutas señuelo (honeypots): los crawlers legítimos las respetan; tocarlas es
+# señal de sondeo malicioso.
+Disallow: /wp-login.php
+Disallow: /admin.php
 
 Sitemap: https://codebymike.tech/sitemap.xml
