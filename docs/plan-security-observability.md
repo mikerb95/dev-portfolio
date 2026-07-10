@@ -276,7 +276,24 @@ Nueva entrada en el sidebar (grupo Sistema, junto a Monitores):
 Gráficas con el mismo enfoque server-rendered de `/status` (SVG/tablas, sin librerías
 cliente pesadas). Acciones de mutación con el mismo guard auth + CSRF de las APIs admin.
 
-### Fase 5 — Vitrina pública ~1 sesión
+### Fase 5 — Vitrina pública ✅ IMPLEMENTADA PARCIALMENTE (2026-07-10)
+
+Entregado: sección "Security Operations" añadida a `/security` (existente, no
+reemplazada — ya tenía hallazgos reales de auditoría OWASP con commits, que se
+conservaron intactos): KPIs (detectados 30d, bloqueos automáticos, categorías OWASP,
+overhead objetivo), desglose por categoría, origen geográfico, tendencia diaria (14d,
+barras SVG-less con CSS), diagrama de 4 capas y SLOs publicados como objetivos de
+diseño (no se afirma falsamente que son medidos en producción). Todas las queries
+agregadas, sin IPs crudas ni nombres de reglas ni lista de honeypots — verificado
+grepeando el HTML servido. Tarjeta de enlace añadida en `/status`. **Reajuste de
+OPSEC vs. el borrador original**: se cambió "top 5 rutas señuelo más atacadas" por
+"categoría más atacada" — listar rutas señuelo específicas contradice el principio de
+no revelar cuáles endpoints son honeypots. Bug encontrado y corregido en verificación
+visual: las barras de tendencia no renderizaban por falta de `h-full` en el contenedor
+flex (porcentaje de altura sin base de referencia). **Pendiente**: caso de estudio en
+`/tools` y artículo en `/notes` (contenido, no bloqueante — se puede añadir después).
+
+### Fase 5 (referencia original) — Vitrina pública ~1 sesión
 
 1. **`/security` (rediseño de la página existente)** → "Security Operations":
    - Contadores agregados: "N intentos de intrusión detectados y bloqueados este mes",

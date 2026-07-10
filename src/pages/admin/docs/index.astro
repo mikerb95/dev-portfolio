@@ -36,12 +36,25 @@ const subpaginas = [
 <AdminLayout title="Documentación">
   <DocsNav />
 
+  <h2 class="text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Introducción</h2>
   <div class="max-w-3xl mb-8">
     <p class="text-[13px] text-ink-200 leading-relaxed">
-      Documentación de ingeniería del proyecto <strong class="text-ink-50">dev-portfolio</strong> (codebymike.tech):
-      requerimientos, casos de uso, diagramas UML y el tablero kanban del propio proyecto. Todo el contenido vive
-      como datos tipados en <span class="font-mono text-cyan">src/data/documentacion.ts</span> y
-      <span class="font-mono text-cyan">src/data/iteraciones-portfolio.ts</span> — un cambio de requerimiento es un commit revisable, no un documento que se desincroniza.
+      Esta sección reúne la documentación de ingeniería del proyecto <strong class="text-ink-50">dev-portfolio</strong>
+      (codebymike.tech): requerimientos, casos de uso, diagramas UML y el tablero kanban del propio proyecto. Todo
+      el contenido vive como datos tipados en <span class="font-mono text-cyan">src/data/documentacion.ts</span> y
+      <span class="font-mono text-cyan">src/data/iteraciones-portfolio.ts</span> — un cambio de requerimiento es un
+      commit revisable, no un documento que se desincroniza del código.
+    </p>
+  </div>
+
+  <h2 class="text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Propósito</h2>
+  <div class="max-w-3xl mb-8">
+    <p class="text-[13px] text-ink-200 leading-relaxed">
+      El propósito de esta documentación es dejar trazabilidad formal del ciclo de vida del proyecto — desde el
+      requerimiento hasta la historia de usuario y su estado en el kanban — usando un formato reconocido de
+      ingeniería de software (requerimientos funcionales y no funcionales, casos de uso con flujo extendido,
+      diagramas UML de secuencia, componentes, clases y objetos). Sirve como evidencia para sustentación académica
+      y como referencia técnica real para el mantenimiento del sistema en producción.
     </p>
   </div>
 
