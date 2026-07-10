@@ -21,6 +21,7 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 | `/admin/docs/requerimientos-no-funcionales` | RNF por categoría ISO/IEC 25010, con métrica verificable | `src/data/documentacion.ts` |
 | `/admin/docs/casos-de-uso` | Actores + catálogo de CU + diagrama de casos de uso | `src/data/documentacion.ts` |
 | `/admin/docs/casos-de-uso-extendidos` | CU en formato extendido (pre/post, flujos, excepciones) | `src/data/documentacion.ts` |
+| `/admin/docs/historias-de-usuario` | Catálogo de historias XP ("Como... quiero... para..."), agrupadas por actor, con DoD | `src/data/iteraciones-portfolio.ts` (consolidado, no duplicado) |
 | `/admin/docs/diagrama-secuencia` | Secuencias: login OAuth, check de monitor→alerta, middleware de seguridad, contacto | Mermaid inline |
 | `/admin/docs/diagrama-componentes` | Componentes/despliegue: browser → Vercel (Astro SSR + middleware + APIs) → Turso/Blob/GitHub/ntfy/cron-job.org | Mermaid inline |
 | `/admin/docs/diagrama-clases` | Clases/entidades derivadas de `src/db/schema.ts` (CRM, observabilidad, seguridad, lab) | Mermaid inline |
