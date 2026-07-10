@@ -1,0 +1,89 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DocsNav from '../../../components/admin/DocsNav.astro'
+
+const componentes = `flowchart TB
+    subgraph Cliente["Navegador"]
+      B["Visitante / Administrador"]
+    end
+
+    subgraph Vercel["Vercel (Fluid Compute)"]
+      direction TB
+      MW["Middleware Astro<br/>(auth, chaos, sensor, blocklist, rate-limit)"]
+      SSR["Páginas SSR<br/>(público + /admin)"]
+      API["Rutas /api/*<br/>(admin, cron, payments, status, contact)"]
+      CRON_H["Handlers de cron<br/>(uptime-check, rollups, backup)"]
+    end
+
+    subgraph Datos["Persistencia"]
+      TURSO[("Turso / libSQL<br/>(Drizzle ORM)")]
+      BLOB[("Vercel Blob<br/>(backups, screenshots)")]
+    end
+
+    subgraph Externos["Servicios externos"]
+      GH["GitHub OAuth + API<br/>(login, repos)"]
+      CRONJOB["cron-job.org<br/>(disparador de sondeos)"]
+      NTFY["ntfy.sh<br/>(push)"]
+      WOMPI["Wompi<br/>(pasarela de pagos)"]
+      RDAP["RDAP<br/>(vencimiento de dominios)"]
+      SEARCH["Buscadores<br/>(IndexNow, RSS, sitemap)"]
+    end
+
+    B -->|HTTPS| MW
+    MW --> SSR
+    MW --> API
+    SSR --> TURSO
+    API --> TURSO
+    API --> BLOB
+    CRONJOB -->|POST + CRON_SECRET| CRON_H
+    CRON_H --> API
+    API -->|OAuth| GH
+    API -->|push| NTFY
+    API <-->|webhooks| WOMPI
+    API -->|lookup| RDAP
+    SSR -->|IndexNow ping| SEARCH
+`
+---
+
+<AdminLayout title="Diagrama de componentes">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-6">
+    <p class="text-[13px] text-ink-200 leading-relaxed">
+      Vista de despliegue: el navegador habla con Astro SSR en Vercel a través de un único middleware
+      que centraliza autenticación, chaos engineering y el enforcement de seguridad. Los cron externos
+      disparan el sondeo de monitores y los backups; los datos viven en Turso (libSQL) y Vercel Blob.
+    </p>
+  </div>
+
+  <div class="rounded-xl border border-white/10 p-4 overflow-x-auto">
+    <pre class="mermaid">{componentes}</pre>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mt-6">
+    <div class="rounded-xl border border-white/10 p-4">
+      <div class="text-[11px] font-mono uppercase tracking-wide text-violet mb-2">Middleware (src/middleware.ts)</div>
+      <p class="text-[12.5px] text-ink-100 leading-relaxed">
+        Único punto de entrada para chaos, sensor de seguridad, blocklist, rate limiting durable
+        y headers de seguridad (CSP, HSTS, X-Frame-Options en /admin). Todo el bloque de enforcement
+        es fail-open.
+      </p>
+    </div>
+    <div class="rounded-xl border border-white/10 p-4">
+      <div class="text-[11px] font-mono uppercase tracking-wide text-violet mb-2">Cron externo</div>
+      <p class="text-[12.5px] text-ink-100 leading-relaxed">
+        cron-job.org dispara los sondeos de uptime cada ~5 min; Vercel Cron dispara backups y rollups
+        de seguridad. Ninguno mantiene estado propio: todo el estado vive en Turso.
+      </p>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  import mermaid from 'mermaid'
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' })
+</script>
+
+<style>
+  .mermaid { display: flex; justify-content: center; }
+</style>
