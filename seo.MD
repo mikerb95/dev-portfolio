@@ -24,7 +24,7 @@ Todo lo crítico de la auditoría de abajo ya está implementado y verificado en
 - **`article:published_time` / `article:author`** vía prop `publishedTime` de `BaseLayout`.
 - **Feed RSS** en `/rss.xml` (notas, con categorías y `lastBuildDate`) + `<link rel="alternate">` en el head — señal de frescura para crawlers y agregadores.
 - **`site.webmanifest` + `apple-touch-icon.png` + icon-192/512** generados desde el favicon SVG.
-- **IndexNow**: clave publicada en `public/eec9c30b0348b882cba9349b7fb125f2.txt` + `npm run seo:indexnow` (`scripts/submit-indexnow.mjs`) — notifica a **Bing, Yandex, Seznam, Naver y Yep** al publicar contenido. Google no usa IndexNow; su canal es Search Console.
+- **IndexNow (automático)**: clave en `public/eec9c30b0348b882cba9349b7fb125f2.txt`, lógica en `src/lib/indexnow.ts` (con tests en `tests/indexnow.test.ts`). Se envía **solo, a diario** vía cron de Vercel `/api/cron/indexnow` (`30 8 * * *`, auth `CRON_SECRET`), que reenvía el sitemap a **Bing, Yandex, Seznam, Naver y Yep**. Disparo manual: `npm run seo:indexnow` o `PUT /api/cron/indexnow` (sesión admin). Google no usa IndexNow; su canal es Search Console.
 - **`llms.txt`** — mapa del sitio para crawlers de IA (ChatGPT, Perplexity, Claude), un canal de descubrimiento creciente.
 - Fix de build: colisión de `const headers` en `middleware.ts` (renombrado a `reqHeaders` en el bloque de enforcement).
 
@@ -35,7 +35,7 @@ Todo lo crítico de la auditoría de abajo ya está implementado y verificado en
    - Enviar `https://codebymike.tech/sitemap.xml`.
    - Pedir indexación manual de `/`, `/notes` y las 5 notas (Inspección de URLs → Solicitar indexación).
 2. **Bing Webmaster Tools** → <https://www.bing.com/webmasters> — con "Importar desde Google Search Console" es un clic. Bing alimenta también a DuckDuckGo, Ecosia y Yahoo.
-3. **Ejecutar `npm run seo:indexnow`** tras el deploy (y tras cada nota nueva) — cubre Bing/Yandex/Seznam/Naver.
+3. ~~Ejecutar `npm run seo:indexnow`~~ → **ya es automático** (cron diario `/api/cron/indexnow`). Solo asegúrate de que `CRON_SECRET` esté configurado en Vercel (ya lo está para los otros crons). Para publicar una nota y anunciarla al instante, `npm run seo:indexnow` sigue disponible.
 4. **Yandex Webmaster** (opcional) → <https://webmaster.yandex.com> si interesa ese mercado.
 5. Verificar en Vercel que `www.codebymike.tech` y `*.vercel.app` redirigen 308 al dominio canónico.
 
