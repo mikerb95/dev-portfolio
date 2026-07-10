@@ -4,7 +4,11 @@ import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
 
-const STATIC_PATHS = ['/', '/tools', '/status', '/notes', '/security', '/certifications', '/log', '/contact']
+// '/log' se excluye a propósito: es una página "viva" renderizada en cliente
+// (feed de GitHub en tiempo real), sin contenido indexable ni intención de
+// búsqueda. Lleva noindex en log.astro; mantenerla fuera del sitemap evita
+// anunciar thin content y diluir la calidad del sitio. Ver seo.MD (hallazgo #9).
+const STATIC_PATHS = ['/', '/tools', '/status', '/notes', '/security', '/certifications', '/contact']
 
 export const GET: APIRoute = async ({ site }) => {
   const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')
