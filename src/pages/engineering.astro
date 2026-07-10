@@ -1,13 +1,18 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import CardPopover from '../components/CardPopover.astro'
 import { db } from '../db'
-import { webVitals, ciRuns, monitorChecks, monitors } from '../db/schema'
+import { webVitals, ciRuns, monitorChecks, monitorIncidents, monitors } from '../db/schema'
 import { and, desc, eq, gte, sql } from 'drizzle-orm'
 import {
   p75,
+  percentile,
   rateVital,
+  ratingDistribution,
+  thresholdFraction,
   formatVital,
   VITAL_META,
+  THRESHOLDS,
   type VitalMetric,
   type VitalRating,
 } from '../lib/vitals'
@@ -18,37 +23,74 @@ export const prerender = false
 // - Core Web Vitals p75 de usuarios reales (RUM, tabla web_vitals).
 // - Resultado del pipeline CI real (tabla ci_runs): tests, cobertura, duración.
 // - Disponibilidad agregada de la infraestructura de monitoreo.
-// Nada de badges decorativos: cada número sale de datos de producción.
+// Nada de badges decorativos: cada número sale de datos de producción, y cada
+// card explica al hover/focus de dónde sale y contra qué se compara.
 
 const DAY_MS = 86_400_000
 const now = Date.now()
 const VITALS_DAYS = 30
 const vitalsSince = new Date(now - VITALS_DAYS * DAY_MS)
+const trendSince = new Date(now - 7 * DAY_MS)
 
 // ── Core Web Vitals (RUM) ────────────────────────────────────────────────
 const METRIC_ORDER: VitalMetric[] = ['LCP', 'INP', 'CLS', 'FCP', 'TTFB']
 const vitalRows = await db
-  .select({ metric: webVitals.metric, value: webVitals.value })
+  .select({ metric: webVitals.metric, value: webVitals.value, path: webVitals.path, createdAt: webVitals.createdAt })
   .from(webVitals)
   .where(gte(webVitals.createdAt, vitalsSince))
   .limit(20000)
 
-const byMetric = new Map<VitalMetric, number[]>()
+const byMetric = new Map<VitalMetric, { value: number; path: string | null; createdAt: Date | null }[]>()
 for (const r of vitalRows) {
   const arr = byMetric.get(r.metric) ?? []
-  arr.push(r.value)
+  arr.push(r)
   byMetric.set(r.metric, arr)
 }
+
 const vitals = METRIC_ORDER.map((m) => {
-  const values = byMetric.get(m) ?? []
+  const rows = byMetric.get(m) ?? []
+  const values = rows.map((r) => r.value)
   const v = p75(values)
+  const v50 = percentile(values, 0.5)
+  const v95 = percentile(values, 0.95)
+  const dist = ratingDistribution(m, values)
+
+  const recentValues = rows.filter((r) => r.createdAt && r.createdAt >= trendSince).map((r) => r.value)
+  const vRecent = p75(recentValues)
+  const trend = v != null && vRecent != null && recentValues.length >= 5 ? vRecent - v : null
+
+  // Peor ruta (mínimo 5 muestras para no señalar ruido).
+  const byPath = new Map<string, number[]>()
+  for (const r of rows) {
+    if (!r.path) continue
+    const arr = byPath.get(r.path) ?? []
+    arr.push(r.value)
+    byPath.set(r.path, arr)
+  }
+  let worstPath: { path: string; p75: number } | null = null
+  for (const [path, vals] of byPath) {
+    if (vals.length < 5) continue
+    const p = p75(vals)
+    if (p != null && (worstPath == null || p > worstPath.p75)) worstPath = { path, p75: p }
+  }
+
+  const [goodT, niT] = THRESHOLDS[m]
   return {
     metric: m,
     label: VITAL_META[m].label,
     p75: v,
+    p50: v50,
+    p95: v95,
     display: v === null ? '—' : formatVital(m, v),
     rating: (v === null ? null : rateVital(m, v)) as VitalRating | null,
     samples: values.length,
+    dist,
+    trend,
+    trendDisplay: trend == null ? null : formatVital(m, Math.abs(trend)),
+    worstPath,
+    goodThreshold: goodT,
+    niThreshold: niT,
+    thresholdPct: v == null ? null : Math.min(100, Math.round(thresholdFraction(m, v) * 100)),
   }
 })
 const totalSamples = vitalRows.length
@@ -64,6 +106,15 @@ const greenStreak = (() => {
   }
   return n
 })()
+const successCount = recentRuns.filter((r) => r.conclusion === 'success').length
+const successRate = recentRuns.length > 0 ? Math.round((successCount / recentRuns.length) * 100) : null
+const durationSeries = [...recentRuns].reverse().map((r) => ({ ms: r.durationMs, ok: r.conclusion === 'success' }))
+const maxDuration = Math.max(1, ...durationSeries.map((d) => d.ms ?? 0))
+const prevCoverage = recentRuns.filter((r) => r.coveragePct != null)[1]?.coveragePct ?? null
+const coverageDelta =
+  lastSuccess?.coveragePct != null && prevCoverage != null
+    ? Math.round(lastSuccess.coveragePct - prevCoverage)
+    : null
 
 // ── Disponibilidad agregada (90 días) ────────────────────────────────────
 const uptimeSince = new Date(now - 90 * DAY_MS)
@@ -80,6 +131,55 @@ const [monCount] = await db
   .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
 const uptime90 =
   uptimeAgg && uptimeAgg.total > 0 ? Math.round((uptimeAgg.ok / uptimeAgg.total) * 10000) / 100 : null
+
+// Desglose por monitor: uptime % y latencia media en la ventana de 90d.
+const perMonitor = await db
+  .select({
+    id: monitors.id,
+    name: monitors.name,
+    total: sql<number>`count(${monitorChecks.id})`,
+    ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
+    avgMs: sql<number>`coalesce(avg(${monitorChecks.responseMs}), 0)`,
+  })
+  .from(monitors)
+  .leftJoin(monitorChecks, and(eq(monitorChecks.monitorId, monitors.id), gte(monitorChecks.at, uptimeSince)))
+  .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
+  .groupBy(monitors.id)
+  .orderBy(monitors.name)
+
+const monitorRows = perMonitor.map((m) => ({
+  name: m.name,
+  uptime: m.total > 0 ? Math.round((m.ok / m.total) * 10000) / 100 : null,
+  avgMs: m.total > 0 ? Math.round(m.avgMs) : null,
+}))
+
+// Incidentes en la ventana: conteo y MTTR (solo los ya resueltos).
+const incidentRows = await db
+  .select({ startedAt: monitorIncidents.startedAt, resolvedAt: monitorIncidents.resolvedAt })
+  .from(monitorIncidents)
+  .where(gte(monitorIncidents.startedAt, uptimeSince))
+const resolvedIncidents = incidentRows.filter((i) => i.resolvedAt != null)
+const mttrMin =
+  resolvedIncidents.length > 0
+    ? Math.round(
+        resolvedIncidents.reduce((acc, i) => acc + (i.resolvedAt!.getTime() - i.startedAt.getTime()), 0) /
+          resolvedIncidents.length /
+          60000,
+      )
+    : null
+
+// Presupuesto de error traducido a tiempo: 90 días completos menos el % de uptime.
+const downtimeMin =
+  uptime90 != null ? Math.round(90 * 24 * 60 * (1 - uptime90 / 100)) : null
+const fmtDowntime = (min: number | null) => {
+  if (min == null) return '—'
+  if (min < 60) return `${min} min`
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return m > 0 ? `${h} h ${m} min` : `${h} h`
+}
+const checkCadenceMin =
+  monCount?.n && uptimeAgg?.total ? Math.round((90 * 24 * 60) / (uptimeAgg.total / monCount.n)) : null
 
 const fmtDuration = (ms: number | null) => {
   if (ms == null) return '—'
@@ -100,6 +200,14 @@ const ratingLabel: Record<VitalRating, string> = {
   good: 'Bueno',
   'needs-improvement': 'Mejorable',
   poor: 'Pobre',
+}
+
+const VITAL_EXPLAIN: Record<VitalMetric, string> = {
+  LCP: 'tiempo hasta que el elemento más grande del viewport termina de pintar.',
+  INP: 'latencia entre una interacción del usuario y el siguiente pintado en pantalla.',
+  CLS: 'cuánto se mueven los elementos visibles sin interacción del usuario.',
+  FCP: 'tiempo hasta el primer píxel de contenido visible.',
+  TTFB: 'tiempo desde la petición hasta el primer byte de respuesta del servidor.',
 }
 ---
 
@@ -127,6 +235,7 @@ const ratingLabel: Record<VitalRating, string> = {
         Cualquiera puede decir que su código es rápido, probado y confiable. Esta página lo
         <em>mide</em>: Web Vitals de visitantes reales, el resultado de mi pipeline de CI y la
         disponibilidad de mis servicios. Todo sale de datos de producción, en vivo.
+        <span class="text-ink-300">Pasa el cursor (o el foco) sobre cada tarjeta para ver el detalle.</span>
       </p>
     </header>
 
@@ -146,18 +255,87 @@ const ratingLabel: Record<VitalRating, string> = {
       ) : (
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {vitals.map((v) => (
-            <div class="rounded-2xl glass p-4">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-[12px] font-mono font-semibold text-ink-50">{v.metric}</span>
-                {v.rating && (
-                  <span class={`px-1.5 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border ${ratingCls[v.rating]}`}>
-                    {ratingLabel[v.rating]}
-                  </span>
-                )}
+            <CardPopover id={`vital-${v.metric}`}>
+              <div class="rounded-2xl glass p-4 cursor-default hover:border-cyan/25 transition-colors">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-[12px] font-mono font-semibold text-ink-50">{v.metric}</span>
+                  {v.rating && (
+                    <span class={`px-1.5 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border ${ratingCls[v.rating]}`}>
+                      {ratingLabel[v.rating]}
+                    </span>
+                  )}
+                </div>
+                <div class="text-2xl font-medium tracking-tight text-ink-50 tabular-nums">{v.display}</div>
+                <div class="text-[10px] text-ink-400 mt-1 leading-tight">{v.label}</div>
               </div>
-              <div class="text-2xl font-medium tracking-tight text-ink-50 tabular-nums">{v.display}</div>
-              <div class="text-[10px] text-ink-400 mt-1 leading-tight">{v.label}</div>
-            </div>
+              <Fragment slot="panel">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">{v.metric}</span>
+                  <span class="font-mono text-[10px] text-ink-400">{v.samples.toLocaleString('es-CO')} muestras</span>
+                </div>
+                <p class="text-ink-200 mb-3">{v.label} — {VITAL_EXPLAIN[v.metric]}</p>
+
+                {v.p75 != null && (
+                  <>
+                    <div class="mb-3">
+                      <div class="flex justify-between text-[10px] font-mono text-ink-400 mb-1">
+                        <span>0</span>
+                        <span>bueno ≤ {formatVital(v.metric, v.goodThreshold)}</span>
+                        <span>pobre &gt; {formatVital(v.metric, v.niThreshold)}</span>
+                      </div>
+                      <svg viewBox="0 0 300 14" class="w-full h-3.5" preserveAspectRatio="none">
+                        <rect x="0" y="4" width={`${(v.goodThreshold / v.niThreshold) * 100 * 0.82}`} height="6" rx="3" fill="var(--color-lime)" opacity="0.35" />
+                        <rect x={`${(v.goodThreshold / v.niThreshold) * 100 * 0.82}`} y="4" width={`${82 - (v.goodThreshold / v.niThreshold) * 100 * 0.82}`} height="6" rx="3" fill="var(--color-ember)" opacity="0.28" />
+                        <rect x="82" y="4" width="18" height="6" rx="3" fill="var(--color-ember)" opacity="0.45" />
+                        <circle cx={`${Math.min(98, (v.p75 / (v.niThreshold * 1.2)) * 100)}`} cy="7" r="4" fill="var(--color-cyan)" />
+                      </svg>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 mb-3 text-center">
+                      <div>
+                        <div class="font-mono tabular-nums text-ink-50">{formatVital(v.metric, v.p50 ?? 0)}</div>
+                        <div class="text-[9px] font-mono uppercase text-ink-400">p50</div>
+                      </div>
+                      <div>
+                        <div class="font-mono tabular-nums text-cyan">{v.display}</div>
+                        <div class="text-[9px] font-mono uppercase text-ink-400">p75</div>
+                      </div>
+                      <div>
+                        <div class="font-mono tabular-nums text-ink-50">{formatVital(v.metric, v.p95 ?? 0)}</div>
+                        <div class="text-[9px] font-mono uppercase text-ink-400">p95</div>
+                      </div>
+                    </div>
+
+                    <div class="flex gap-2 mb-3 h-1.5 rounded-full overflow-hidden">
+                      <div style={`width:${v.dist.good}%`} class="bg-lime/70" title={`${v.dist.good}% bueno`}></div>
+                      <div style={`width:${v.dist.needsImprovement}%`} class="bg-ember/50" title={`${v.dist.needsImprovement}% mejorable`}></div>
+                      <div style={`width:${v.dist.poor}%`} class="bg-ember/80" title={`${v.dist.poor}% pobre`}></div>
+                    </div>
+                    <div class="text-[10px] text-ink-400 mb-3">
+                      {v.dist.good}% bueno · {v.dist.needsImprovement}% mejorable · {v.dist.poor}% pobre
+                    </div>
+
+                    {v.trend != null && v.trendDisplay && (
+                      <div class="text-[11px] text-ink-300 mb-2">
+                        Últimos 7d: {v.trend < 0 ? '▼' : v.trend > 0 ? '▲' : '='} {v.trendDisplay} vs ventana de 30d
+                        <span class={v.trend < 0 ? 'text-lime' : v.trend > 0 ? 'text-ember' : 'text-ink-400'}>
+                          {' '}({v.trend < 0 ? 'mejora' : v.trend > 0 ? 'empeora' : 'estable'})
+                        </span>
+                      </div>
+                    )}
+
+                    {v.worstPath && (
+                      <div class="text-[11px] text-ink-300">
+                        Ruta más lenta: <span class="font-mono text-ink-100">{v.worstPath.path}</span> ({formatVital(v.metric, v.worstPath.p75)} p75)
+                      </div>
+                    )}
+                  </>
+                )}
+                <div class="text-[10px] text-ink-500 mt-3 pt-2 border-t border-white/5">
+                  Medido con la librería oficial <span class="font-mono">web-vitals</span> en el navegador de cada visitante. Sin cookies.
+                </div>
+              </Fragment>
+            </CardPopover>
           ))}
         </div>
       )}
@@ -165,44 +343,131 @@ const ratingLabel: Record<VitalRating, string> = {
 
     <!-- ── Pipeline CI + disponibilidad ── -->
     <section class="mb-14 grid md:grid-cols-2 gap-3">
-      <div class="rounded-2xl glass p-6">
-        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Último pipeline verde</h2>
-        {lastSuccess ? (
-          <div class="grid grid-cols-3 gap-4">
-            <div>
-              <div class="text-3xl font-medium text-lime tabular-nums">{lastSuccess.testsPassed ?? '—'}</div>
-              <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">tests ✓</div>
+      <CardPopover id="ci-pipeline">
+        <div class="rounded-2xl glass p-6 cursor-default hover:border-cyan/25 transition-colors">
+          <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Último pipeline verde</h2>
+          {lastSuccess ? (
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <div class="text-3xl font-medium text-lime tabular-nums">{lastSuccess.testsPassed ?? '—'}</div>
+                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">tests ✓</div>
+              </div>
+              <div>
+                <div class="text-3xl font-medium text-ink-50 tabular-nums">{lastSuccess.coveragePct != null ? `${Math.round(lastSuccess.coveragePct)}%` : '—'}</div>
+                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">cobertura</div>
+              </div>
+              <div>
+                <div class="text-3xl font-medium text-ink-50 tabular-nums">{fmtDuration(lastSuccess.durationMs)}</div>
+                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">duración</div>
+              </div>
+              <div class="col-span-3 pt-3 mt-1 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-ink-400">
+                <span>{greenStreak > 1 ? `${greenStreak} runs verdes seguidos` : 'último run'}</span>
+                <span>{lastSuccess.createdAt ? fmtDate.format(lastSuccess.createdAt) : ''}</span>
+              </div>
             </div>
-            <div>
-              <div class="text-3xl font-medium text-ink-50 tabular-nums">{lastSuccess.coveragePct != null ? `${Math.round(lastSuccess.coveragePct)}%` : '—'}</div>
-              <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">cobertura</div>
-            </div>
-            <div>
-              <div class="text-3xl font-medium text-ink-50 tabular-nums">{fmtDuration(lastSuccess.durationMs)}</div>
-              <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">duración</div>
-            </div>
-            <div class="col-span-3 pt-3 mt-1 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-ink-400">
-              <span>{greenStreak > 1 ? `${greenStreak} runs verdes seguidos` : 'último run'}</span>
-              <span>{lastSuccess.createdAt ? fmtDate.format(lastSuccess.createdAt) : ''}</span>
-            </div>
-          </div>
-        ) : (
-          <p class="text-[13px] text-ink-300 py-4">El pipeline aún no ha reportado ejecuciones. Se poblará con el próximo deploy.</p>
-        )}
-      </div>
-
-      <div class="rounded-2xl glass p-6 flex flex-col">
-        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Disponibilidad · 90 días</h2>
-        <div class="flex-1 flex items-center">
-          <div>
-            <div class="text-4xl font-medium tabular-nums text-lime">{uptime90 != null ? `${uptime90}%` : '—'}</div>
-            <div class="text-[11px] font-mono text-ink-400 mt-2">
-              {monCount?.n ?? 0} servicios monitoreados · {(uptimeAgg?.total ?? 0).toLocaleString('es-CO')} sondeos
-            </div>
-          </div>
+          ) : (
+            <p class="text-[13px] text-ink-300 py-4">El pipeline aún no ha reportado ejecuciones. Se poblará con el próximo deploy.</p>
+          )}
         </div>
-        <a href="/status" class="text-[11px] font-mono text-cyan hover:underline mt-3">Ver status en vivo →</a>
-      </div>
+        <Fragment slot="panel">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">Pipeline CI/CD</span>
+            {successRate != null && <span class="font-mono text-[10px] text-ink-400">{successRate}% éxito · últimos {recentRuns.length} runs</span>}
+          </div>
+          <p class="text-ink-200 mb-3">
+            Cada push corre la suite completa (Vitest) en GitHub Actions. Un fallo bloquea el merge; un éxito
+            dispara el deploy y un health check post-despliegue.
+          </p>
+
+          {durationSeries.length > 1 && (
+            <div class="mb-3">
+              <div class="text-[10px] font-mono uppercase text-ink-400 mb-1">Duración · últimos {durationSeries.length} runs</div>
+              <svg viewBox={`0 0 ${durationSeries.length * 14} 32`} class="w-full h-8" preserveAspectRatio="none">
+                {durationSeries.map((d, i) => {
+                  const h = d.ms != null ? Math.max(2, (d.ms / maxDuration) * 30) : 2
+                  return (
+                    <rect
+                      x={i * 14 + 2}
+                      y={32 - h}
+                      width="9"
+                      height={h}
+                      rx="1.5"
+                      fill={d.ok ? 'var(--color-lime)' : 'var(--color-ember)'}
+                      opacity={d.ok ? '0.7' : '0.85'}
+                    />
+                  )
+                })}
+              </svg>
+            </div>
+          )}
+
+          {coverageDelta != null && (
+            <div class="text-[11px] text-ink-300 mb-2">
+              Cobertura: {coverageDelta > 0 ? '+' : ''}{coverageDelta} pts vs el run exitoso anterior.
+            </div>
+          )}
+          {lastSuccess?.healthOk != null && (
+            <div class="text-[11px] text-ink-300 mb-2">
+              Health check post-deploy: <span class={lastSuccess.healthOk ? 'text-lime' : 'text-ember'}>{lastSuccess.healthOk ? 'OK' : 'falló'}</span>
+            </div>
+          )}
+          {lastSuccess?.sha && (
+            <div class="text-[11px] font-mono text-ink-300 mb-1">
+              commit <span class="text-ink-100">{lastSuccess.sha.slice(0, 7)}</span>
+            </div>
+          )}
+          {lastSuccess?.url && (
+            <a href={lastSuccess.url} target="_blank" rel="noopener" class="text-[11px] font-mono text-cyan hover:underline">
+              Ver run en GitHub Actions →
+            </a>
+          )}
+        </Fragment>
+      </CardPopover>
+
+      <CardPopover id="uptime">
+        <div class="rounded-2xl glass p-6 flex flex-col cursor-default hover:border-cyan/25 transition-colors">
+          <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Disponibilidad · 90 días</h2>
+          <div class="flex-1 flex items-center">
+            <div>
+              <div class="text-4xl font-medium tabular-nums text-lime">{uptime90 != null ? `${uptime90}%` : '—'}</div>
+              <div class="text-[11px] font-mono text-ink-400 mt-2">
+                {monCount?.n ?? 0} servicios monitoreados · {(uptimeAgg?.total ?? 0).toLocaleString('es-CO')} sondeos
+              </div>
+            </div>
+          </div>
+          <a href="/status" class="text-[11px] font-mono text-cyan hover:underline mt-3">Ver status en vivo →</a>
+        </div>
+        <Fragment slot="panel">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">Disponibilidad</span>
+            {checkCadenceMin != null && <span class="font-mono text-[10px] text-ink-400">~1 check cada {checkCadenceMin} min/servicio</span>}
+          </div>
+          <p class="text-ink-200 mb-2">
+            {uptime90 != null ? `${uptime90}%` : '—'} de sondeos exitosos equivale a <span class="text-ink-50 font-medium">{fmtDowntime(downtimeMin)}</span> de
+            indisponibilidad acumulada en 90 días.
+          </p>
+          {(incidentRows.length > 0 || mttrMin != null) && (
+            <div class="text-[11px] text-ink-300 mb-3">
+              {incidentRows.length} incidente{incidentRows.length === 1 ? '' : 's'} registrado{incidentRows.length === 1 ? '' : 's'}
+              {mttrMin != null && ` · MTTR ${mttrMin} min`}
+            </div>
+          )}
+          {monitorRows.length > 0 && (
+            <div class="space-y-1.5">
+              {monitorRows.map((m) => (
+                <div class="flex items-center gap-2 text-[11px]">
+                  <span class="font-mono text-ink-100 truncate flex-1">{m.name}</span>
+                  <div class="w-16 h-1 rounded-full bg-white/5 overflow-hidden shrink-0">
+                    <div class="h-full bg-lime/70" style={`width:${m.uptime ?? 0}%`}></div>
+                  </div>
+                  <span class="font-mono tabular-nums text-ink-400 w-12 text-right shrink-0">{m.uptime != null ? `${m.uptime}%` : '—'}</span>
+                  <span class="font-mono tabular-nums text-ink-500 w-14 text-right shrink-0">{m.avgMs != null ? `${m.avgMs}ms` : '—'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Fragment>
+      </CardPopover>
     </section>
 
     <!-- ── Verificable ── -->
