@@ -152,6 +152,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   resHeaders.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
 
+  // FASE 6: observabilidad continua de CSP (la política ya corre en modo
+  // ENFORCE, esto solo reporta lo que el navegador ya bloqueó) y bloqueo de
+  // permisos de navegador que este sitio no usa (portfolio + panel admin, sin
+  // cámara/micrófono/geolocalización/pagos vía Payment Request API, etc.).
+  resHeaders.set('Reporting-Endpoints', 'csp-endpoint="/api/security/csp-report"')
+  resHeaders.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()'
+  )
+  const CSP_REPORTING = ' report-to csp-endpoint; report-uri /api/security/csp-report;'
+
   if (isAdmin) {
     resHeaders.set('X-Frame-Options', 'DENY')
     resHeaders.set('X-Content-Type-Options', 'nosniff')
@@ -159,7 +170,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     resHeaders.set('X-Robots-Tag', 'noindex, nofollow')
     resHeaders.set(
       'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" +
+        CSP_REPORTING
     )
     return new Response(res.body, { status: res.status, headers: resHeaders })
   }
@@ -171,7 +183,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   resHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   resHeaders.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" +
+      CSP_REPORTING
   )
 
   const isPublicPage = !pathname.startsWith('/api') && context.request.method === 'GET'
