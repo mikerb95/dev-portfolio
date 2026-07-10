@@ -1,10 +1,74 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { db } from '../db'
+import { securityEvents, blockedIps } from '../db/schema'
+import { and, gte, sql } from 'drizzle-orm'
+import { THREAT_CATEGORY_LABELS } from '../lib/security/classify'
 
 // Página pública de seguridad. Documenta hallazgos reales de una auditoría
 // sobre este mismo repositorio, mapeados a OWASP Top 10, con el commit que
 // aplicó cada corrección. Contenido 100% estático y verificable en el
 // historial de git público.
+//
+// La sección "Security Operations" expone en vivo agregados del micro-SIEM
+// propio (docs/plan-security-observability.md). OPSEC deliberada: SOLO
+// agregados — nunca IPs completas, nunca nombres de reglas exactos, nunca se
+// revela cuáles rutas son endpoints señuelo. El filtrado ocurre aquí mismo, en
+// el servidor: esta página nunca lee ip/path crudos de security_events.
+
+const SECOPS_WINDOW_DAYS = 30
+const DAY_MS = 86_400_000
+const secOpsSince = new Date(Date.now() - SECOPS_WINDOW_DAYS * DAY_MS)
+
+const CAT_LABELS: Record<string, string> = {
+  ...THREAT_CATEGORY_LABELS,
+  blocklist: 'Reincidencia bloqueada',
+  api_abuse: 'Abuso de API (rate limit)',
+  auth_probing: 'Sondeo de autenticación',
+}
+
+const sumHits = sql<number>`coalesce(sum(${securityEvents.hits}), 0)`
+
+const [totalRow] = await db.select({ v: sumHits }).from(securityEvents).where(gte(securityEvents.at, secOpsSince))
+const totalDetected = Number(totalRow?.v ?? 0)
+
+const byCategory = await db
+  .select({ category: securityEvents.category, count: sumHits })
+  .from(securityEvents)
+  .where(gte(securityEvents.at, secOpsSince))
+  .groupBy(securityEvents.category)
+  .orderBy(sql`2 desc`)
+  .limit(8)
+const catMax = Math.max(1, ...byCategory.map((c) => Number(c.count)))
+
+const byCountry = await db
+  .select({ country: securityEvents.country, count: sumHits })
+  .from(securityEvents)
+  .where(and(gte(securityEvents.at, secOpsSince), sql`${securityEvents.country} is not null`))
+  .groupBy(securityEvents.country)
+  .orderBy(sql`2 desc`)
+  .limit(6)
+const countryMax = Math.max(1, ...byCountry.map((c) => Number(c.count)))
+
+const [blocksRow] = await db
+  .select({ n: sql<number>`count(*)` })
+  .from(blockedIps)
+  .where(and(gte(blockedIps.createdAt, secOpsSince), sql`${blockedIps.source} = 'auto'`))
+const autoBlocks30d = Number(blocksRow?.n ?? 0)
+
+// Tendencia: eventos por día (14 días), para el mini-gráfico de barras.
+const dayExpr = sql<string>`date(${securityEvents.at}, 'unixepoch')`
+const dailyRaw = await db
+  .select({ day: dayExpr, count: sumHits })
+  .from(securityEvents)
+  .where(gte(securityEvents.at, new Date(Date.now() - 14 * DAY_MS)))
+  .groupBy(dayExpr)
+const dailyMap = new Map(dailyRaw.map((r) => [r.day, Number(r.count)]))
+const trend = Array.from({ length: 14 }, (_, i) => {
+  const day = new Date(Date.now() - (13 - i) * DAY_MS).toISOString().slice(0, 10)
+  return { day, count: dailyMap.get(day) ?? 0 }
+})
+const trendMax = Math.max(1, ...trend.map((t) => t.count))
 
 type Severity = 'alta' | 'media'
 
@@ -132,6 +196,135 @@ const severityCls: Record<Severity, string> = {
         no una promesa.
       </p>
     </header>
+
+    <!-- Security Operations: micro-SIEM propio en vivo -->
+    <section class="mb-20">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
+        <span>Security Operations · en vivo</span>
+      </div>
+
+      <p class="text-[14px] text-ink-100 max-w-2xl leading-relaxed mb-8">
+        Este sitio corre su propio motor de <span class="text-ink-50">observabilidad de seguridad</span>
+        (un "micro-SIEM"): un clasificador de amenazas alineado con OWASP corre en el middleware de
+        cada request, endpoints señuelo confirman intención maliciosa, y un cron horario aplica
+        bloqueos temporales y detecta anomalías por estadística (z-score sobre una baseline de 30
+        días). Los números de abajo son agregados reales de los últimos {SECOPS_WINDOW_DAYS} días.
+      </p>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <div class="rounded-2xl glass p-5">
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Detectados (30d)</div>
+          <div class="mt-1.5 text-3xl font-medium text-ink-50 tabular-nums">{totalDetected.toLocaleString('es')}</div>
+        </div>
+        <div class="rounded-2xl glass p-5">
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Bloqueos automáticos</div>
+          <div class="mt-1.5 text-3xl font-medium text-cyan tabular-nums">{autoBlocks30d.toLocaleString('es')}</div>
+        </div>
+        <div class="rounded-2xl glass p-5">
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Categorías OWASP</div>
+          <div class="mt-1.5 text-3xl font-medium text-ink-50 tabular-nums">{byCategory.length}</div>
+        </div>
+        <div class="rounded-2xl glass p-5">
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Overhead p99</div>
+          <div class="mt-1.5 text-3xl font-medium text-lime tabular-nums">≤5ms</div>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <!-- Desglose OWASP -->
+        <div class="rounded-2xl glass p-6">
+          <h3 class="text-[13px] font-medium text-ink-50 mb-4">Desglose por categoría (OWASP)</h3>
+          {byCategory.length === 0 ? (
+            <p class="text-[13px] text-ink-400">Sin actividad hostil en la ventana.</p>
+          ) : (
+            <ul class="space-y-2.5">
+              {byCategory.map((c) => (
+                <li>
+                  <div class="flex items-center justify-between text-[12px] mb-1">
+                    <span class="text-ink-100">{CAT_LABELS[c.category] ?? c.category}</span>
+                    <span class="font-mono text-ink-300">{Number(c.count)}</span>
+                  </div>
+                  <div class="h-1.5 rounded-full bg-white/[.05] overflow-hidden">
+                    <div class="h-full rounded-full bg-cyan" style={`width:${(Number(c.count) / catMax) * 100}%`}></div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <!-- Origen geográfico -->
+        <div class="rounded-2xl glass p-6">
+          <h3 class="text-[13px] font-medium text-ink-50 mb-4">Origen geográfico</h3>
+          {byCountry.length === 0 ? (
+            <p class="text-[13px] text-ink-400">Sin datos de geolocalización en la ventana.</p>
+          ) : (
+            <ul class="space-y-2.5">
+              {byCountry.map((c) => (
+                <li>
+                  <div class="flex items-center justify-between text-[12px] mb-1">
+                    <span class="text-ink-100 font-mono">{c.country}</span>
+                    <span class="font-mono text-ink-300">{Number(c.count)}</span>
+                  </div>
+                  <div class="h-1.5 rounded-full bg-white/[.05] overflow-hidden">
+                    <div class="h-full rounded-full bg-lime" style={`width:${(Number(c.count) / countryMax) * 100}%`}></div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <!-- Tendencia 14 días -->
+      <div class="rounded-2xl glass p-6 mb-8">
+        <h3 class="text-[13px] font-medium text-ink-50 mb-4">Tendencia diaria (14 días)</h3>
+        <div class="flex items-end gap-1 h-20">
+          {trend.map((t) => (
+            <div class="flex-1 group relative">
+              <div
+                class="w-full rounded-t bg-cyan/60 hover:bg-cyan transition-colors"
+                style={`height:${Math.max(3, (t.count / trendMax) * 100)}%`}
+                title={`${t.day}: ${t.count} eventos`}
+              ></div>
+            </div>
+          ))}
+        </div>
+        <div class="flex justify-between text-[10px] font-mono text-ink-400 mt-2">
+          <span>{trend[0]?.day}</span>
+          <span>{trend[trend.length - 1]?.day}</span>
+        </div>
+      </div>
+
+      <!-- Cómo funciona -->
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="rounded-2xl glass p-6">
+          <h3 class="text-[13px] font-medium text-ink-50 mb-4">Cómo funciona (4 capas)</h3>
+          <ol class="space-y-3 text-[13px] text-ink-100 leading-relaxed">
+            <li><span class="text-cyan font-mono text-[11px] mr-2">01</span>Mitigación DDoS automática y firewall de la plataforma (Vercel).</li>
+            <li><span class="text-cyan font-mono text-[11px] mr-2">02</span>Clasificador propio en el middleware: firmas OWASP, rate limiting durable de dos capas, bloqueo por IP.</li>
+            <li><span class="text-cyan font-mono text-[11px] mr-2">03</span>Registro de cada evento hostil (con deduplicación de ráfagas) y endpoints señuelo que confirman intención maliciosa.</li>
+            <li><span class="text-cyan font-mono text-[11px] mr-2">04</span>Cron horario: agrega, detecta anomalías estadísticas, auto-bloquea reincidentes y alerta.</li>
+          </ol>
+        </div>
+        <div class="rounded-2xl glass p-6">
+          <h3 class="text-[13px] font-medium text-ink-50 mb-4">Objetivos de SLO del pipeline</h3>
+          <ul class="space-y-2.5 text-[13px] text-ink-100">
+            <li class="flex justify-between"><span>Overhead añadido por request (p99)</span><span class="font-mono text-lime">≤ 5 ms</span></li>
+            <li class="flex justify-between"><span>Detección → bloqueo automático</span><span class="font-mono text-lime">≤ 60 min</span></li>
+            <li class="flex justify-between"><span>Detección → alerta (crítico)</span><span class="font-mono text-lime">≤ 60 s</span></li>
+            <li class="flex justify-between"><span>Falsos positivos de bloqueo</span><span class="font-mono text-lime">&lt; 0.1%</span></li>
+            <li class="flex justify-between"><span>Retención de eventos crudos</span><span class="font-mono text-ink-200">90 días</span></li>
+          </ul>
+          <p class="text-[11px] text-ink-400 mt-4 leading-relaxed">
+            Por diseño, esta página nunca muestra IPs completas, nombres exactos de reglas de
+            detección ni cuáles rutas son endpoints señuelo — eso le daría el manual de juego a
+            un atacante.
+          </p>
+        </div>
+      </div>
+    </section>
 
     <!-- Hallazgos corregidos -->
     <section class="mb-20">
