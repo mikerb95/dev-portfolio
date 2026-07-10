@@ -1,0 +1,112 @@
+# Distribución automática de notas: cuando un push a main AÑADE un artículo en
+# src/content/notes/, lo publica en blogs/redes y avisa a los buscadores.
+# Todo degrada con gracia: cada plataforma se activa cuando añades sus secrets
+# (Settings → Secrets and variables → Actions). Sin secrets, no rompe nada.
+#
+# Secrets por plataforma (todos opcionales):
+#   dev.to      → DEVTO_API_KEY
+#   Hashnode    → HASHNODE_TOKEN, HASHNODE_PUBLICATION_ID
+#   X (Twitter) → X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET
+#   LinkedIn    → LINKEDIN_TOKEN, LINKEDIN_AUTHOR_URN
+#   Instagram   → IG_USER_ID, IG_ACCESS_TOKEN   (cuenta Business + imagen)
+#   Google      → GOOGLE_INDEXING_SA  (JSON de service account)
+#   Aviso       → NTFY_TOPIC  (push si alguna publicación falla)
+# IndexNow no necesita secret (la clave es pública por diseño).
+
+name: Distribuir nota
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/notes/**/*.md'
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'Ruta de la nota a distribuir (p. ej. src/content/notes/mi-nota.md)'
+        required: true
+
+concurrency:
+  group: distribute-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  distribute:
+    name: Publicar y notificar buscadores
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detectar notas nuevas
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            FILES="${{ github.event.inputs.note }}"
+          else
+            BEFORE="${{ github.event.before }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              BEFORE=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+            fi
+            if [ -n "$BEFORE" ]; then
+              FILES=$(git diff --name-only --diff-filter=A "$BEFORE" "$GITHUB_SHA" -- 'src/content/notes/**/*.md')
+            else
+              FILES=""
+            fi
+          fi
+          echo "Notas nuevas detectadas:"
+          echo "$FILES"
+          {
+            echo "files<<EOF"
+            echo "$FILES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.files != ''
+        with:
+          node-version: 22
+
+      - name: Publicar en blogs y redes
+        id: publish
+        if: steps.detect.outputs.files != ''
+        env:
+          NOTE_FILES: ${{ steps.detect.outputs.files }}
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
+          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+          LINKEDIN_TOKEN: ${{ secrets.LINKEDIN_TOKEN }}
+          LINKEDIN_AUTHOR_URN: ${{ secrets.LINKEDIN_AUTHOR_URN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: node scripts/social/distribute.mjs
+
+      - name: Avisar a IndexNow (Bing, Yandex…)
+        if: steps.detect.outputs.files != ''
+        run: |
+          PATHS=$(echo "${{ steps.detect.outputs.files }}" | sed -E 's#src/content/notes/(.*)\.md#/notes/\1#')
+          node scripts/submit-indexnow.mjs $PATHS
+
+      - name: Avisar a Google (Indexing API)
+        if: steps.detect.outputs.files != ''
+        env:
+          GOOGLE_INDEXING_SA: ${{ secrets.GOOGLE_INDEXING_SA }}
+        run: |
+          URLS=$(echo "${{ steps.detect.outputs.files }}" | sed -E 's#src/content/notes/(.*)\.md#https://codebymike.tech/notes/\1#')
+          node scripts/social/google-indexing.mjs $URLS
+
+      - name: Notificar si algo falló (ntfy)
+        if: steps.publish.outputs.had_error == 'true'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          [ -z "$NTFY_TOPIC" ] && exit 0
+          curl -s -X POST "https://ntfy.sh/$NTFY_TOPIC" \
+            -H "Title: Fallo al distribuir una nota" \
+            -H "Priority: 4" -H "Tags: warning" \
+            -d "Alguna plataforma rechazo la publicacion. Revisa el run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
