@@ -338,7 +338,7 @@ const healthLabel = {
                 <span class="ekg-empty absolute inset-0 hidden items-center justify-center text-[10px] font-mono text-ink-400">sin datos aún</span>
                 <span class="ekg-hover-line absolute top-0 bottom-0 w-px bg-white/25 hidden pointer-events-none"></span>
                 <span class="ekg-hover-dot absolute w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-current ring-2 ring-black/60 hidden pointer-events-none"></span>
-                <span class="ekg-tooltip absolute hidden -translate-x-1/2 -translate-y-full px-2 py-1 rounded-md bg-black/85 ring-1 ring-white/10 text-[10px] font-mono text-ink-50 whitespace-nowrap pointer-events-none z-10"></span>
+                <span class="ekg-tooltip absolute hidden top-1 -translate-x-1/2 px-2 py-1 rounded-md bg-black/85 ring-1 ring-white/10 text-[10px] font-mono text-ink-50 whitespace-nowrap pointer-events-none z-10"></span>
               </div>
             </div>
 
@@ -537,10 +537,9 @@ const healthLabel = {
         dot.style.left = (p.x * 100).toFixed(2) + '%'
         dot.style.top = (p.y * 100).toFixed(2) + '%'
         tip.textContent = `${p.value} ms`
-        // Mantiene la burbuja dentro del contenedor cerca de los bordes.
+        // Fija la burbuja cerca del borde superior y evita que se salga por los costados.
         const tipLeftPct = Math.min(92, Math.max(8, p.x * 100))
         tip.style.left = tipLeftPct + '%'
-        tip.style.top = Math.max(14, p.y * 100 - 4) + '%'
 
         line.classList.remove('hidden')
         dot.classList.remove('hidden')
