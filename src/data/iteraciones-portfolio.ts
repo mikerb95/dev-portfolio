@@ -211,7 +211,6 @@ export const ITERACIONES: Iteracion[] = [
           ok('Feed RSS y notificación IndexNow a buscadores en cada publicación (8 commits de IndexNow).'),
           ok('Web app manifest y apple-touch-icon para instalación como PWA.'),
         ],
-        tags2: [],
       },
       {
         id: 'PF-VS-03', titulo: 'Como visitante, quiero una vitrina pública de herramientas y notas técnicas del stack',
