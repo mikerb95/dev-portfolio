@@ -178,8 +178,16 @@ const fmtDowntime = (min: number | null) => {
   const m = min % 60
   return m > 0 ? `${h} h ${m} min` : `${h} h`
 }
+// Cadencia real de sondeo: se calcula sobre las últimas 24h (no sobre los 90 días
+// completos) porque no todos los monitores llevan la ventana entera activos, lo que
+// sesgaría el promedio hacia abajo.
+const cadenceSince = new Date(now - 24 * 60 * 60 * 1000)
+const [cadenceAgg] = await db
+  .select({ total: sql<number>`count(*)` })
+  .from(monitorChecks)
+  .where(gte(monitorChecks.at, cadenceSince))
 const checkCadenceMin =
-  monCount?.n && uptimeAgg?.total ? Math.round((90 * 24 * 60) / (uptimeAgg.total / monCount.n)) : null
+  monCount?.n && cadenceAgg?.total ? Math.round((24 * 60) / (cadenceAgg.total / monCount.n)) : null
 
 const fmtDuration = (ms: number | null) => {
   if (ms == null) return '—'
