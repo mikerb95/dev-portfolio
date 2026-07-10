@@ -1,0 +1,187 @@
+---
+import '../styles/global.css'
+import { getSession } from 'auth-astro/server'
+
+// Página terminal de logout: rompe el bucle logout → /login → signIn automático.
+// Si hay sesión, el script del cliente la destruye (POST a /api/auth/signout con
+// callbackUrl a esta misma página). Si no la hay, mostramos el estado final.
+// Nunca redirige a /login: entrar de nuevo es una acción explícita del usuario.
+const session = await getSession(Astro.request)
+const loggedIn = Boolean(session)
+
+// Nunca cachear ni indexar una pantalla de autenticación.
+Astro.response.headers.set('Cache-Control', 'private, no-store')
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{loggedIn ? 'Cerrando sesión' : 'Sesión cerrada'} — CodeByMike</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#07070a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+
+  <body class="grain bg-ink-950 text-ink-50">
+    <main class="auth-stage">
+      <div class="auth-aura" aria-hidden="true"></div>
+
+      <section class="auth-card glass-strong" role="status" aria-live="polite">
+        <div class="auth-icon" data-state={loggedIn ? 'closing' : 'closed'}>
+          {loggedIn ? (
+            <div class="auth-spin" aria-hidden="true"></div>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" x2="9" y1="12" y2="12"></line>
+            </svg>
+          )}
+        </div>
+
+        <div class="auth-meta">
+          <span class="auth-kicker">/auth</span>
+          <h1 class="auth-title">{loggedIn ? 'Cerrando sesión' : 'Sesión cerrada'}</h1>
+          <p class="auth-sub">
+            {loggedIn
+              ? 'Revocando el acceso al panel…'
+              : 'Tu sesión del panel terminó. Puedes cerrar esta pestaña.'}
+          </p>
+        </div>
+
+        {!loggedIn && (
+          <div class="auth-actions">
+            <a href="/" class="auth-btn">Ir al inicio</a>
+            <a href="/login" class="auth-btn auth-btn-ghost">Entrar de nuevo</a>
+          </div>
+        )}
+      </section>
+    </main>
+
+    <style>
+      .auth-stage {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        overflow: hidden;
+      }
+      .auth-aura {
+        position: absolute;
+        width: 720px;
+        height: 720px;
+        max-width: 120vw;
+        max-height: 120vh;
+        border-radius: 50%;
+        background:
+          radial-gradient(closest-side, rgba(0, 242, 255, 0.1), rgba(0, 242, 255, 0) 70%),
+          radial-gradient(closest-side, rgba(167, 139, 255, 0.1), rgba(167, 139, 255, 0) 70%);
+        filter: blur(8px);
+      }
+      .auth-card {
+        position: relative;
+        width: min(380px, 100%);
+        border-radius: 28px;
+        padding: 40px 32px 32px;
+        text-align: center;
+        box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        animation: auth-enter 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      .auth-icon {
+        position: relative;
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 22px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #0e0e12;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #c9ff5b;
+      }
+      .auth-icon svg {
+        width: 28px;
+        height: 28px;
+      }
+      .auth-spin {
+        position: absolute;
+        inset: -6px;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          rgba(0, 242, 255, 0) 0deg,
+          rgba(0, 242, 255, 0.9) 90deg,
+          rgba(0, 242, 255, 0) 300deg
+        );
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+        mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+        animation: spin 1.6s linear infinite;
+      }
+      .auth-kicker {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: #00f2ff;
+      }
+      .auth-title {
+        margin: 8px 0 6px;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        color: #e7e7ec;
+      }
+      .auth-sub {
+        font-size: 13px;
+        line-height: 1.5;
+        color: #85858f;
+      }
+      .auth-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 26px;
+      }
+      .auth-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 9px 18px;
+        border-radius: 12px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: #07070a;
+        background: #00f2ff;
+        transition: opacity 0.2s ease;
+      }
+      .auth-btn:hover { opacity: 0.85; }
+      .auth-btn-ghost {
+        color: #c4c4cc;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      @keyframes auth-enter {
+        from { opacity: 0; transform: translateY(12px) scale(0.985); filter: blur(6px); }
+        to { opacity: 1; transform: none; filter: none; }
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .auth-card, .auth-spin { animation: none !important; }
+      }
+    </style>
+
+    {loggedIn && (
+      <script>
+        import { signOut } from 'auth-astro/client'
+        // Destruye el JWT y vuelve a esta misma página (ya sin sesión), que
+        // renderiza el estado "Sesión cerrada". Sin redirección a /login no hay
+        // signIn automático y por tanto no hay bucle de re-login con GitHub.
+        signOut().catch(() => window.location.reload())
+      </script>
+    )}
+  </body>
+</html>
