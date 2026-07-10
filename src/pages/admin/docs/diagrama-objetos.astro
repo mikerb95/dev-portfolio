@@ -1,0 +1,154 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DocsNav from '../../../components/admin/DocsNav.astro'
+
+// Mermaid no tiene un tipo "object diagram" nativo; la convención para
+// representarlo es un classDiagram donde cada "clase" es en realidad una
+// instancia concreta (nombre : Clase) con sus valores de atributo reales,
+// tomada de un momento específico del sistema (una fotografía, no el modelo).
+const objetos1 = `classDiagram
+    class \`cliente1 : Client\` {
+      id = 7
+      name = "Café DobleYo"
+      email = "contacto@dobleyo.co"
+      company = "DobleYo Café"
+    }
+    class \`proyecto1 : Project\` {
+      id = 12
+      slug = "dobleyo"
+      title = "DobleYo ERP"
+      status = "activo"
+      visible = true
+      clientId = 7
+    }
+    class \`servicio1 : ProjectService\` {
+      id = 34
+      category = "hosting"
+      provider = "vercel"
+      cost = 20.00
+      billingCycle = "monthly"
+      payer = "client_reimbursable"
+      billedToClient = 25.00
+    }
+    class \`servicio2 : ProjectService\` {
+      id = 35
+      category = "domain"
+      provider = "namecheap"
+      renewalDate = "2026-11-02"
+      autoRenew = true
+    }
+    class \`monitor1 : Monitor\` {
+      id = 5
+      name = "DobleYo — home"
+      url = "https://dobleyo.co"
+      lastStatus = "up"
+      lastResponseMs = 184
+      sslExpiresAt = "2026-09-14"
+    }
+    class \`briefing1 : Briefing\` {
+      id = 3
+      title = "Rediseño ERP v2"
+      status = "aprobado"
+      agreedBudget = 1800.00
+      deadline = "2026-08-15"
+    }
+
+    \`cliente1 : Client\` "1" --> \`proyecto1 : Project\` : posee
+    \`proyecto1 : Project\` "1" --> \`servicio1 : ProjectService\` : consume
+    \`proyecto1 : Project\` "1" --> \`servicio2 : ProjectService\` : consume
+    \`proyecto1 : Project\` "1" --> \`monitor1 : Monitor\` : monitoreado por
+    \`proyecto1 : Project\` "1" --> \`briefing1 : Briefing\` : documentado en`
+
+const objetos2 = `classDiagram
+    class \`pago1 : Payment\` {
+      id = 210
+      reference = "PF-2026-0210"
+      idempotencyKey = "a1c9-...-77f2"
+      amountCents = 5000000
+      currency = "COP"
+      status = "approved"
+      provider = "wompi"
+      version = 2
+    }
+    class \`evento1 : PaymentEvent\` {
+      id = 501
+      type = "transaction.updated"
+      eventStatus = "PENDING"
+      duplicate = false
+      outOfOrder = false
+    }
+    class \`evento2 : PaymentEvent\` {
+      id = 502
+      type = "transaction.updated"
+      eventStatus = "APPROVED"
+      duplicate = false
+      outOfOrder = false
+    }
+    class \`evento3 : PaymentEvent\` {
+      id = 503
+      type = "transaction.updated"
+      eventStatus = "APPROVED"
+      duplicate = true
+    }
+    class \`ip1 : BlockedIp\` {
+      ip = "203.0.113.45"
+      reason = "sqli_probing"
+      source = "auto"
+      expiresAt = "+24h"
+    }
+    class \`anomalia1 : SecurityAnomaly\` {
+      id = 88
+      kind = "spike"
+      zScore = 4.2
+      baseline = 12
+      observed = 61
+      notified = true
+      acknowledged = false
+    }
+
+    \`pago1 : Payment\` "1" --> \`evento1 : PaymentEvent\` : primer evento
+    \`pago1 : Payment\` "1" --> \`evento2 : PaymentEvent\` : aplica estado final
+    \`pago1 : Payment\` "1" --> \`evento3 : PaymentEvent\` : descartado (duplicado)`
+---
+
+<AdminLayout title="Diagrama de objetos">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-6">
+    <p class="text-[13px] text-ink-200 leading-relaxed">
+      Instantáneas concretas del sistema en un momento dado (no el modelo, sino ejemplos reales de
+      instancias y sus relaciones), útiles para verificar que el diagrama de clases es coherente con
+      datos que efectivamente ocurren en producción.
+    </p>
+  </div>
+
+  <div class="space-y-10">
+    <section>
+      <h2 class="text-[13px] font-semibold text-ink-50 mb-0.5">Instantánea 1 — Proyecto DobleYo con sus servicios</h2>
+      <p class="text-[12px] text-ink-300 mb-3">Un cliente con un proyecto activo, dos costos asociados, un monitor y un briefing aprobado.</p>
+      <div class="rounded-xl border border-white/10 p-4 overflow-x-auto">
+        <pre class="mermaid">{objetos1}</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-[13px] font-semibold text-ink-50 mb-0.5">Instantánea 2 — Pago con evento duplicado + IP bloqueada</h2>
+      <p class="text-[12px] text-ink-300 mb-3">
+        Un pago aprobado cuya bitácora conserva el evento duplicado descartado (CU-12), junto a una IP
+        bloqueada automáticamente y la anomalía que la originó (CU-14).
+      </p>
+      <div class="rounded-xl border border-white/10 p-4 overflow-x-auto">
+        <pre class="mermaid">{objetos2}</pre>
+      </div>
+    </section>
+  </div>
+</AdminLayout>
+
+<script>
+  import mermaid from 'mermaid'
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' })
+</script>
+
+<style>
+  .mermaid { display: flex; justify-content: center; }
+</style>

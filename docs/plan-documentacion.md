@@ -24,6 +24,7 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 | `/admin/docs/diagrama-secuencia` | Secuencias: login OAuth, check de monitor→alerta, middleware de seguridad, contacto | Mermaid inline |
 | `/admin/docs/diagrama-componentes` | Componentes/despliegue: browser → Vercel (Astro SSR + middleware + APIs) → Turso/Blob/GitHub/ntfy/cron-job.org | Mermaid inline |
 | `/admin/docs/diagrama-clases` | Clases/entidades derivadas de `src/db/schema.ts` (CRM, observabilidad, seguridad, lab) | Mermaid inline |
+| `/admin/docs/diagrama-objetos` | Instantáneas concretas de instancias reales (proyecto+servicios, pago+eventos+IP bloqueada) | Mermaid inline |
 | `/admin/docs/kanban` | Tablero XP del proyecto portfolio (iteraciones reales del historial git) | `src/data/iteraciones-portfolio.ts` |
 
 ## 3. Decisiones de arquitectura
@@ -38,8 +39,12 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 - **Iteraciones ancladas al historial real**: rangos y conteos de commits salen
   de `git log` de `mikerb95/dev-portfolio` (abr: 80, may: 21, jun: 104,
   jul 1–5: 126, jul 6–9: 107). Cada historia lleva DoD inferido de lo entregado.
-- **Diagramas con Mermaid 11 (ESM por CDN, tema dark)**: texto versionable en el
-  repo, render en el cliente. Solo en páginas admin (sin costo en el sitio público).
+- **Diagramas con Mermaid 11 (dependencia npm, no CDN)**: el CSP de `/admin` es
+  `script-src 'self'`, así que `mermaid` se instaló como dependencia y se
+  importa localmente (`import mermaid from 'mermaid'`) en cada página de
+  diagrama; Vite lo bundlea con el resto del JS del sitio. Texto de los
+  diagramas versionable en el repo, render en el cliente, sin costo en el
+  sitio público (solo se carga en páginas admin).
 - **Navegación**: una sola entrada "Documentación" en la sidebar (grupo
   *Proyecto*); las subpáginas se navegan con `DocsNav.astro` (tabs horizontales
   con estado activo por ruta).
@@ -56,15 +61,16 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 
 ## 5. Checklist de la Fase 1 (esta entrega)
 
-- [x] Grupo "Proyecto" en `Sidebar.astro` con enlace a `/admin/docs`
-- [x] `DocsNav.astro` compartido entre las 9 subpáginas
-- [x] `documentacion.ts`: ~45 RF, ~18 RNF, 6 actores, ~18 CU, 6 CU extendidos
+- [x] Grupo "Documentación" en `Sidebar.astro` con enlace a `/admin/docs`
+- [x] `DocsNav.astro` compartido entre las 10 subpáginas
+- [x] `documentacion.ts`: ~45 RF, ~18 RNF, 6 actores, 18 CU, 6 CU extendidos
 - [x] Páginas de RF, RNF, CU y CU extendidos (render desde datos)
-- [x] 4 diagramas de secuencia, 1 de componentes, 3 de clases (Mermaid)
+- [x] 4 diagramas de secuencia, 1 de componentes, 3 de clases, 2 de objetos (Mermaid)
+- [x] `mermaid` instalado como dependencia npm (bundle local, respeta CSP `script-src 'self'`)
 - [x] `iteraciones-portfolio.ts` con 5 iteraciones e historias con DoD
 - [x] `IteracionesBoard` parametrizado (default DobleYo intacto)
 - [x] Página kanban montando el board con datos del portfolio
-- [x] Build de producción verde
+- [ ] Build de producción verificado (`npm run build`)
 
 ## 6. Fases futuras
 
