@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "seo:indexnow": "node scripts/submit-indexnow.mjs"
+    "seo:indexnow": "node scripts/submit-indexnow.mjs",
+    "og:generate": "node scripts/og/generate.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "^10.0.5",
@@ -38,6 +39,7 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.9",
     "drizzle-kit": "^0.31.10",
+    "playwright": "^1.61.1",
     "vitest": "^4.1.9"
   }
 }

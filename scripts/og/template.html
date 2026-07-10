@@ -1,0 +1,233 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face {
+    font-family: 'Inter';
+    src: url('__INTER_FONT__') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('__MONO_FONT__') format('woff2');
+    font-weight: 100 800;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Instrument Serif';
+    src: url('__SERIF_FONT__') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1200px;
+    height: 630px;
+    background: #050a0c;
+    overflow: hidden;
+  }
+
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(34, 211, 238, 0.16), transparent 60%),
+      #050a0c;
+  }
+
+  .dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .content {
+    position: relative;
+    height: 100%;
+    padding: 64px 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .kicker-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .kicker {
+    font-family: 'JetBrains Mono';
+    font-weight: 600;
+    font-size: 20px;
+    letter-spacing: 0.15em;
+    color: #22d3ee;
+  }
+
+  .kicker-sep {
+    width: 40px;
+    height: 1px;
+    background: rgba(255,255,255,0.25);
+  }
+
+  .kicker-label {
+    font-family: 'JetBrains Mono';
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+  }
+
+  .titles {
+    max-width: 900px;
+  }
+
+  .title-line1 {
+    font-family: 'Inter';
+    font-weight: 800;
+    font-size: 64px;
+    line-height: 1.08;
+    color: #f5f7f8;
+    letter-spacing: -0.02em;
+  }
+
+  .title-line2 {
+    font-family: 'Instrument Serif';
+    font-style: italic;
+    font-weight: 400;
+    font-size: 68px;
+    line-height: 1.15;
+    color: #22d3ee;
+  }
+
+  .bottom-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .description {
+    font-family: 'Inter';
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.62);
+    max-width: 620px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(163, 230, 53, 0.35);
+    background: rgba(163, 230, 53, 0.08);
+    font-family: 'JetBrains Mono';
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    color: #a3e635;
+    width: fit-content;
+  }
+
+  .badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #a3e635;
+  }
+
+  .ornament {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+  }
+
+  .wordmark {
+    font-family: 'JetBrains Mono';
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.55);
+  }
+  .wordmark span { color: #22d3ee; }
+
+  /* --- adornos --- */
+
+  .bars { display: flex; align-items: flex-end; gap: 5px; height: 64px; }
+  .bars .bar { width: 9px; background: #a3e635; border-radius: 2px; }
+  .bars .bar.alert { background: #f97373; }
+
+  .grid-orn { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .grid-orn .cell { width: 26px; height: 26px; border-radius: 6px; border: 1px solid rgba(34,211,238,0.35); background: rgba(34,211,238,0.08); }
+  .grid-orn .cell.fill { background: rgba(34,211,238,0.35); }
+
+  .arch { display: flex; align-items: center; gap: 10px; }
+  .arch .node { width: 40px; height: 30px; border-radius: 6px; border: 1px solid rgba(34,211,238,0.4); background: rgba(5,10,12,0.6); }
+  .arch .line { width: 18px; height: 1px; background: rgba(255,255,255,0.25); }
+
+  .prose-orn { display: flex; flex-direction: column; gap: 8px; width: 180px; }
+  .prose-orn .ln { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); }
+
+  .log-orn { display: flex; flex-direction: column; gap: 7px; font-family: 'JetBrains Mono'; font-size: 13px; }
+  .log-orn .row { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.4); }
+  .log-orn .sev { width: 6px; height: 6px; border-radius: 50%; }
+  .log-orn .sev.ok { background: #a3e635; }
+  .log-orn .sev.warn { background: #fbbf24; }
+  .log-orn .sev.crit { background: #f97373; }
+
+  .badges-orn { display: flex; gap: 12px; }
+  .badges-orn .seal { width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(163,230,53,0.5); display: flex; align-items: center; justify-content: center; }
+  .badges-orn .seal::after { content: ''; width: 14px; height: 14px; border-radius: 50%; background: #a3e635; opacity: 0.6; }
+
+  .commits-orn { display: flex; align-items: center; }
+  .commits-orn .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #22d3ee; background: #050a0c; }
+  .commits-orn .seg { width: 26px; height: 2px; background: rgba(34,211,238,0.4); }
+
+  .available-orn { display: flex; align-items: center; gap: 12px; }
+  .available-orn .pulse { width: 16px; height: 16px; border-radius: 50%; background: #a3e635; box-shadow: 0 0 0 8px rgba(163,230,53,0.15); }
+
+  .brand-orn { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .brand-orn .tag { font-family: 'JetBrains Mono'; font-size: 15px; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; }
+</style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="dots"></div>
+    <div class="content">
+      <div class="kicker-row">
+        <span class="kicker">__KICKER__</span>
+        <span class="kicker-sep"></span>
+        <span class="kicker-label">__KICKER_LABEL__</span>
+      </div>
+
+      <div class="titles">
+        <div class="title-line1">__TITLE_LINE1__</div>
+        <div class="title-line2">__TITLE_LINE2__</div>
+      </div>
+
+      <div class="bottom-row">
+        <div>
+          <div class="description">__DESCRIPTION__</div>
+          __BADGE__
+        </div>
+        <div class="ornament">
+          __ORNAMENT__
+          <div class="wordmark">CODE<span>BY</span>MIKE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
