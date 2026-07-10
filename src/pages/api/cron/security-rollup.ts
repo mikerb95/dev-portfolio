@@ -5,17 +5,47 @@ import { db } from '../../../db'
 import { securityEvents, rateLimitBuckets, blockedIps } from '../../../db/schema'
 import { runAutoBlock } from '../../../lib/security/autoblock'
 import { invalidateBlocklistCache } from '../../../lib/security/blocklist'
+import {
+  storeRollups,
+  hourlyBaselines,
+  knownCountries,
+  currentGeoTop,
+  currentTopPaths,
+  knownTopPaths,
+  floorHour,
+} from '../../../lib/security/rollup'
+import { detectSpikes, detectNewPatterns, detectGeoAnomalies, type Anomaly } from '../../../lib/security/anomaly'
+import { persistAnomalies } from '../../../lib/security/anomaly-store'
 import { isAllowedLogin } from '../../../lib/auth'
-import { sendPush } from '../../../lib/notify'
+import { sendEmail, sendPush } from '../../../lib/notify'
 
-// Cron de seguridad. FASE 2: ejecuta el auto-block y la purga por retención.
-// FASE 3 lo ampliará con rollups y detección de anomalías. Disparado por
-// cron-job.org (GET + Bearer CRON_SECRET), como el resto de crons del repo.
+// Cron de seguridad. Ejecuta, en orden: auto-block (Fase 2), purga por retención,
+// rollups horarios/diarios y detección de anomalías con alertas (Fase 3).
+// Disparado por cron-job.org (GET + Bearer CRON_SECRET), como el resto de crons.
 
 const CRON_SECRET = import.meta.env.CRON_SECRET
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
 const EVENT_RETENTION_DAYS = 90
+
+/** Detecta anomalías de la hora cerrada cruzando su agregado con la baseline. */
+async function detectAnomalies(now: number, hourAggs: { category: string; count: number }[]): Promise<Anomaly[]> {
+  const hourOfDay = new Date(floorHour(now) - 3_600_000).getUTCHours()
+  const [baselines, countriesKnown, geoTop, curPaths, pathsKnown] = await Promise.all([
+    hourlyBaselines(hourOfDay, now),
+    knownCountries(now),
+    currentGeoTop(now),
+    currentTopPaths(now),
+    knownTopPaths(now),
+  ])
+
+  const spikes = detectSpikes(
+    hourAggs.map((a) => ({ category: a.category, observed: a.count, baseline: baselines.get(a.category) ?? [] }))
+  )
+  const geo = detectGeoAnomalies(geoTop, countriesKnown)
+  const patterns = detectNewPatterns(curPaths, pathsKnown)
+  return [...spikes, ...geo, ...patterns]
+}
 
 async function runRollup() {
   const now = new Date()
@@ -28,12 +58,27 @@ async function runRollup() {
   await db.delete(rateLimitBuckets).where(lt(rateLimitBuckets.resetAt, now))
   invalidateBlocklistCache()
 
-  // 3) Purga de eventos crudos por retención.
+  // 3) Rollups horarios/diarios (materializados para dashboards y baseline).
+  const hourAggs = await storeRollups(now.getTime())
+
+  // 4) Detección de anomalías + persistencia con anti-fatiga.
+  let freshAnomalies: Anomaly[] = []
+  try {
+    const found = await detectAnomalies(now.getTime(), hourAggs)
+    freshAnomalies = await persistAnomalies(found, now)
+  } catch (e) {
+    // Fail-soft: un fallo del detector no debe abortar la purga ni el auto-block.
+    console.error('[security-rollup] anomalías', e)
+  }
+
+  // 5) Purga de eventos crudos por retención (después de rollups/anomalías, que
+  //    los leen).
   const cutoff = new Date(now.getTime() - EVENT_RETENTION_DAYS * 86_400_000)
   await db.delete(securityEvents).where(lt(securityEvents.at, cutoff))
 
-  // 4) Si el auto-block se topó (posible ataque distribuido), avisar: es señal
-  //    de que hace falta la capa 0 (WAF/Attack Mode), no llenar la tabla.
+  // 6) Alertas. El overflow del auto-block es crítico (posible ataque
+  //    distribuido → hace falta la capa 0 / WAF). Las anomalías nuevas se
+  //    agrupan en una sola notificación (anti-fatiga ya aplicado en persist).
   if (auto.overflow > 0) {
     await sendPush(
       'Auto-block al tope',
@@ -41,8 +86,26 @@ async function runRollup() {
       { priority: 5, tags: 'rotating_light', click: `${SITE_URL}/admin/security` }
     ).catch(() => {})
   }
+  if (freshAnomalies.length > 0) {
+    const lines = freshAnomalies.map((a) => `• ${a.detail}`)
+    const subject = `Anomalía de seguridad detectada (${freshAnomalies.length})`
+    await Promise.all([
+      sendPush(subject, lines.join('\n'), {
+        priority: 4,
+        tags: 'warning',
+        click: `${SITE_URL}/admin/security`,
+      }),
+      sendEmail(
+        subject,
+        `${subject}\n\n${lines.join('\n')}\n\nPanel: ${SITE_URL}/admin/security`,
+        `<h2 style="font-family:system-ui">Anomalías de seguridad</h2><ul style="font-family:system-ui;font-size:14px">${freshAnomalies
+          .map((a) => `<li>${a.detail}</li>`)
+          .join('')}</ul><p><a href="${SITE_URL}/admin/security">Abrir panel →</a></p>`
+      ),
+    ]).catch(() => {})
+  }
 
-  return { ok: true, ...auto }
+  return { ok: true, ...auto, anomalies: freshAnomalies.length }
 }
 
 // Disparo por cron-job.org / Vercel cron.
