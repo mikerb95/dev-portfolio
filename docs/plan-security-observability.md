@@ -310,19 +310,43 @@ flex (porcentaje de altura sin base de referencia). **Pendiente**: caso de estud
    que ya usas para mostrar conocimiento.
 4. OG image propia, identidad CodeByMike.
 
-### Fase 6 — Capa 0 (Vercel WAF free) + endurecimiento ~1 sesión
+### Fase 6 — Capa 0 (Vercel WAF free) + endurecimiento ✅ CÓDIGO IMPLEMENTADO (2026-07-10)
 
-1. Configurar en el dashboard de Vercel las 3 custom rules gratis (complemento, no
-   sustituto, del motor propio): p. ej. deny a paths `wp-*`/`.git` **excepto** los
-   honeypots propios, challenge a UAs ofensivas conocidas, rate limit de respaldo en
-   `/api/*`. Documentar que existen dos capas y por qué.
-2. Extender headers de seguridad al sitio público (hoy CSP solo cubre admin): CSP
-   report-only primero → los reportes (`report-to` apuntando a un endpoint propio
-   `/api/security/csp-report`) se registran como eventos `csp_violation` → tras 2
-   semanas limpias, enforce. Añadir `Permissions-Policy` y `X-Content-Type-Options`
-   globales.
-3. `security.txt` (RFC 9116) en `/.well-known/security.txt` con contacto de disclosure
-   — detalle pequeño que los técnicos reconocen al instante.
+**Corrección al borrador**: la auditoría mostró que la CSP ya corría en modo **enforce**
+(no report-only) tanto en `/admin` como en público desde antes de esta fase — el punto 2
+original ("CSP solo cubre admin") estaba desactualizado. Por eso NO se hizo la migración
+report-only→enforce (ya estaba en enforce); en su lugar se añadió **observabilidad
+continua** sobre una CSP que ya bloquea.
+
+Entregado (código, ya committeado):
+- `src/lib/security/csp-report.ts` (parser puro de los dos formatos de reporte: legacy
+  `application/csp-report` y Reporting API `application/reports+json`) + endpoint
+  `src/pages/api/security/csp-report.ts` (POST sin auth, con rate limit durable 20/min/IP,
+  registra `category='csp_violation'` vía `recordSecurityEvent`). Middleware: header
+  `Reporting-Endpoints` + directivas `report-to`/`report-uri` añadidas a la CSP existente
+  (pública y admin) — el navegador ya bloqueaba, ahora además avisa.
+- `Permissions-Policy` global (camera/microphone/geolocation/payment/usb/interest-cohort/
+  browsing-topics todos en `()`), en ambas ramas del middleware.
+- `/.well-known/security.txt` (RFC 9116): **ya existía**, completo y correcto (Contact,
+  Expires, Preferred-Languages, Canonical, Policy) — no se modificó.
+- Tests: `security-csp-report.test.ts` (280 totales verdes). Verificado e2e: headers
+  confirmados por curl en `/` (CSP con report-to/report-uri, Permissions-Policy,
+  Reporting-Endpoints), POST de prueba al endpoint → 204 + evento `csp_violation`
+  registrado con el `document-uri` y `blocked-uri` correctos. Datos de prueba limpiados.
+
+**Pendiente — acción manual en el dashboard de Vercel (no ejecutable desde el agente):**
+las 3 custom rules gratis del WAF. Con el motor propio ya cubriendo detección/bloqueo,
+estas reglas son un respaldo de plataforma (capa 0) para cuando el propio origen esté
+sobrecargado o el ataque sea volumétrico. Sugerencia concreta a configurar en
+Vercel → Project → Firewall:
+1. **Deny** a paths que matcheen patrones de CMS/secrets (`/wp-*`, `/.git/*`, `/.env*`)
+   — con excepción explícita de las rutas propias `/wp-login.php`, `/admin.php`,
+   `/api/v1/token` (son honeypots reales del proyecto, deben seguir respondiendo).
+2. **Challenge** (o Deny) a User-Agents que contengan `sqlmap|nikto|nuclei|masscan|nmap`
+   (mismo patrón que `classify.ts`, como defensa redundante antes de que el request
+   llegue a la función).
+3. **Rate limit** de respaldo en `/api/*` (p. ej. 300 req/10s por IP) — red de seguridad
+   por si el limiter durable propio fallara (fail-open) bajo un ataque muy agresivo.
 
 ---
 
