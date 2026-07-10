@@ -10,7 +10,7 @@ interface Props {
 const { id, panelClass = '' } = Astro.props
 ---
 
-<div class="card-pop relative" data-pop-id={id} tabindex="0" role="button" aria-describedby={`${id}-panel`}>
+<div class="card-pop relative" data-pop-id={id} tabindex="0" aria-describedby={`${id}-panel`}>
   <slot />
   <div
     id={`${id}-panel`}
