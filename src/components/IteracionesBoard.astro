@@ -10,9 +10,47 @@
 // Todo el CSS va scoped bajo .dy-iter (is:global, porque el DOM lo crea el
 // script en runtime y los estilos scoped de Astro no alcanzarían esos nodos).
 // ─────────────────────────────────────────────────────────────────────────────
-import { PARES, COLUMNAS, ITERACIONES, COMMITS_POR_MES, REPO } from '../data/iteraciones'
+import {
+  PARES as DY_PARES,
+  COLUMNAS as DY_COLUMNAS,
+  ITERACIONES as DY_ITERACIONES,
+  COMMITS_POR_MES as DY_COMMITS_POR_MES,
+  REPO as DY_REPO,
+  type Par,
+  type Columna,
+  type Iteracion,
+} from '../data/iteraciones'
 
-const iterData = { PARES, COLUMNAS, ITERACIONES, COMMITS_POR_MES, REPO }
+// Por defecto renderiza el tablero de DobleYo (uso original en /projects/[slug]);
+// con props se reutiliza el mismo motor para otros proyectos (p. ej. el kanban
+// del propio portfolio en /admin/docs/kanban).
+interface Props {
+  pares?: Record<string, Par>
+  columnas?: Columna[]
+  iteraciones?: Iteracion[]
+  commitsPorMes?: { mes: string; commits: number }[]
+  repo?: string
+  subtitle?: string
+  showBiblio?: boolean
+}
+
+const {
+  pares = DY_PARES,
+  columnas = DY_COLUMNAS,
+  iteraciones = DY_ITERACIONES,
+  commitsPorMes = DY_COMMITS_POR_MES,
+  repo = DY_REPO,
+  subtitle = 'Tablero XP reconstruido del historial real de GitHub y el CHANGELOG — cada historia con su Definition of Done, anclada a sus commits.',
+  showBiblio = true,
+} = Astro.props
+
+const iterData = {
+  PARES: pares,
+  COLUMNAS: columnas,
+  ITERACIONES: iteraciones,
+  COMMITS_POR_MES: commitsPorMes,
+  REPO: repo,
+}
 ---
 
 <div class="dy-iter">
