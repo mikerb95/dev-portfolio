@@ -40,6 +40,11 @@ const VALOR_DOT: Record<Historia['valor'], string> = {
   medio: 'bg-violet',
   bajo: 'bg-ink-300',
 }
+const VALOR_BORDER: Record<Historia['valor'], string> = {
+  alto: 'border-l-ember/50',
+  medio: 'border-l-violet/50',
+  bajo: 'border-l-white/10',
+}
 const COL_LABEL: Record<string, string> = {
   cola: 'Cola',
   iteracion: 'Planeada',
@@ -71,7 +76,7 @@ const totalAceptadas = TODAS.filter((h) => h.col === 'aceptada').length
         </h2>
         <div class="space-y-2">
           {historias.map((h) => (
-            <div class="rounded-xl border border-white/10 bg-white/[.025] p-3.5">
+            <div class={`rounded-xl border border-white/10 bg-white/[.025] p-3.5 border-l-2 ${VALOR_BORDER[h.valor]}`}>
               <div class="flex items-start justify-between gap-3 flex-wrap">
                 <div class="flex items-center gap-2 min-w-0 flex-wrap">
                   <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${VALOR_DOT[h.valor]}`} title={`Valor ${h.valor}`}></span>
