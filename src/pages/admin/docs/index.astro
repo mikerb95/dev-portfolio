@@ -65,7 +65,7 @@ const subpaginas = [
       { href: '/admin/docs/casos-de-uso', label: 'Casos de uso', value: cuTotal, sub: `${ACTORES.length} actores` },
       { href: '/admin/docs/kanban', label: 'Historias (kanban)', value: historiasTotal, sub: `${ITER_PF.length} iteraciones` },
     ].map((k) => (
-      <a href={k.href} class="glass rounded-2xl p-4 border border-white/10 hover:bg-white/[.04] hover:border-white/20 transition-colors block">
+      <a href={k.href} class="glass rounded-2xl p-4 border border-white/10 hover:bg-white/[.04] hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 transition-all block">
         <div class="text-[11px] font-mono uppercase tracking-wide text-ink-200">{k.label}</div>
         <div class="text-2xl font-semibold text-ink-50 mt-1 tabular-nums">{k.value}</div>
         <div class="text-[11px] text-ink-300 mt-0.5">{k.sub}</div>
@@ -76,7 +76,7 @@ const subpaginas = [
   <h2 class="text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Mapa de la documentación</h2>
   <div class="grid gap-3 sm:grid-cols-2 mb-10">
     {subpaginas.map((s) => (
-      <a href={s.href} class="block rounded-xl border border-white/10 bg-white/[.025] p-4 hover:bg-white/[.04] hover:border-white/20 transition-colors">
+      <a href={s.href} class="block rounded-xl border border-white/10 bg-white/[.025] p-4 hover:bg-white/[.04] hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 transition-all">
         <div class="text-[13px] font-medium text-ink-50">{s.titulo}</div>
         <div class="text-[12px] text-ink-200 mt-1 leading-relaxed">{s.desc}</div>
       </a>
