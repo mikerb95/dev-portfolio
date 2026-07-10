@@ -56,12 +56,12 @@ const componentes = `flowchart TB
     </p>
   </div>
 
-  <div class="rounded-xl border border-white/10 p-4 overflow-x-auto">
+  <div class="rounded-xl border border-white/10 bg-white/[.025] p-4 overflow-x-auto">
     <pre class="mermaid">{componentes}</pre>
   </div>
 
   <div class="grid gap-3 sm:grid-cols-2 mt-6">
-    <div class="rounded-xl border border-white/10 p-4">
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
       <div class="text-[11px] font-mono uppercase tracking-wide text-violet mb-2">Middleware (src/middleware.ts)</div>
       <p class="text-[12.5px] text-ink-100 leading-relaxed">
         Único punto de entrada para chaos, sensor de seguridad, blocklist, rate limiting durable
@@ -69,7 +69,7 @@ const componentes = `flowchart TB
         es fail-open.
       </p>
     </div>
-    <div class="rounded-xl border border-white/10 p-4">
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
       <div class="text-[11px] font-mono uppercase tracking-wide text-violet mb-2">Cron externo</div>
       <p class="text-[12.5px] text-ink-100 leading-relaxed">
         cron-job.org dispara los sondeos de uptime cada ~5 min; Vercel Cron dispara backups y rollups
