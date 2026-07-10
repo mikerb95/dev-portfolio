@@ -160,7 +160,17 @@ del LAB: la suite de seguridad suma coverage real).
 datos antes de encender el enforcement (evita bloquear tráfico legítimo por una regla
 mal calibrada).
 
-### Fase 1 — Rate limiting durable + enforcement ~1 sesión
+### Fase 1 — Rate limiting durable + enforcement ✅ IMPLEMENTADA (2026-07-09)
+
+Entregado: `ratelimit-durable.ts` (dos capas memoria→Turso, upsert atómico, fail-open
+150 ms), `blocklist.ts` (cache 30 s + allowlist + escalado de TTL 1h→24h→7d),
+`paths.ts` (helpers de rutas), enforcement en `middleware.ts` (blocklist 403 + auth
+limiter 30/min + paraguas global 600/min), y los 3 endpoints migrados a `enforceLimit`.
+`ratelimit.ts` recortado a solo `clientIp`. Tests: `security-ratelimit.test.ts` +
+`security-blocklist.test.ts`. Verificado e2e: IP bloqueada→403, IP normal→200, 6º POST a
+`/api/contact`→429. Nota: los límites reales quedaron algo más altos que el borrador de
+abajo (auth 30/min, global 600/min) para no rozar a usuarios reales; se recalibran con
+datos. El auto-block (que llena `blocked_ips`) es de la Fase 2.
 
 1. `src/lib/security/ratelimit-durable.ts`: sliding window sobre `rate_limit_buckets`
    (un `INSERT ... ON CONFLICT` atómico por check), con **cache de primer nivel en
