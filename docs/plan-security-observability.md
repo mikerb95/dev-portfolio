@@ -217,7 +217,19 @@ verdes). Verificado e2e: honeypot→200/401 falso, cron bloquea la IP (`source='
    que se maneja en capa 0).
 3. Panel de gestión manual: bloquear/desbloquear desde `/admin/security`.
 
-### Fase 3 — Cron de análisis, anomalías y alertas ~1–2 sesiones
+### Fase 3 — Cron de análisis, anomalías y alertas ✅ IMPLEMENTADA (2026-07-09)
+
+Entregado: `src/lib/security/anomaly.ts` (puro: `mean`/`stddev`/`zScore` + `detectSpikes`
+z>3 con mínimo absoluto, `detectNewPatterns`, `detectGeoAnomalies`), `rollup.ts`
+(`aggregateByCategory` puro + `storeRollups` horario/diario idempotente + baselines
+acotadas por hora-del-día, excluyendo la hora evaluada), `anomaly-store.ts` (persistencia
+con anti-fatiga: dedup por `kind` mientras haya una abierta < 24 h). El cron
+`security-rollup` ahora encadena auto-block → rollups → detección+persistencia → purga →
+alertas (push + email agrupado). Tests: `security-anomaly` + `security-rollup` (274
+totales verdes). Verificado e2e: baseline de 15 días + spike de 40 → 2 anomalías (spike
+z=47.6 sobre baseline 1.93, y new_pattern de `/search`), rollups horario/diario escritos,
+2º disparo → 0 anomalías (anti-fatiga). Nota: se corrigió un off-by-one para que la hora
+evaluada no entre en su propia baseline.
 
 1. `/api/cron/security-rollup` (vercel.json, cada hora + respaldo cron-job.org como los
    monitores): agrega la hora anterior a `security_rollups`, ejecuta auto-block, purga
