@@ -27,7 +27,7 @@ ${edgeLines}
   </div>
 
   <section class="mb-10">
-    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-3">Actores</h2>
+    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Actores</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {ACTORES.map((a) => (
         <div class="rounded-xl border border-white/10 bg-white/[.025] p-3.5">
@@ -39,14 +39,14 @@ ${edgeLines}
   </section>
 
   <section class="mb-10">
-    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-3">Diagrama de casos de uso</h2>
+    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Diagrama de casos de uso</h2>
     <div class="rounded-xl border border-white/10 bg-white/[.025] p-4 overflow-x-auto">
       <pre class="mermaid">{diagram}</pre>
     </div>
   </section>
 
   <section>
-    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-3">Catálogo</h2>
+    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Catálogo</h2>
     <div class="space-y-2">
       {CASOS_DE_USO.map((c) => {
         const actor = ACTORES.find((a) => a.id === c.actor)

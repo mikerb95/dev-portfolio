@@ -35,7 +35,7 @@ const total = REQUISITOS_NO_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
   <div class="space-y-8">
     {REQUISITOS_NO_FUNCIONALES.map((modulo) => (
       <section>
-        <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-3">{modulo.nombre}</h2>
+        <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">{modulo.nombre}</h2>
         <div class="space-y-2">
           {modulo.items.map((r) => (
             <div class="rounded-xl border border-white/10 bg-white/[.025] p-3.5 flex flex-col gap-1.5">
