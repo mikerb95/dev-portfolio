@@ -1,0 +1,164 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DocsNav from '../../../components/admin/DocsNav.astro'
+
+const diagramas = [
+  {
+    id: 'login',
+    titulo: 'Login del administrador (GitHub OAuth)',
+    desc: 'CU-04 · Autenticación con allowlist y registro de dispositivo.',
+    src: `sequenceDiagram
+    actor A as Administrador
+    participant M as Middleware
+    participant AJ as Auth.js
+    participant GH as GitHub OAuth
+    participant DB as Turso (admin_sessions)
+
+    A->>M: GET /admin (sin sesión)
+    M-->>A: 302 /api/auth/signin
+    A->>AJ: Iniciar login GitHub
+    AJ->>GH: Redirigir a autorización
+    GH-->>AJ: code de autorización
+    AJ->>GH: Intercambiar code por perfil
+    GH-->>AJ: perfil (login, email)
+    AJ->>AJ: Validar login contra allowlist
+    alt login no autorizado
+      AJ-->>A: Error de acceso denegado
+    else login autorizado
+      AJ->>AJ: Emitir JWT de sesión
+      AJ->>DB: INSERT/UPDATE admin_sessions (ip, user-agent)
+      AJ-->>A: 302 /admin (con cookie de sesión)
+    end`,
+  },
+  {
+    id: 'monitor',
+    titulo: 'Chequeo de monitor y apertura de incidente',
+    desc: 'CU-09 · Cron externo, sondeo HTTP y notificación push.',
+    src: `sequenceDiagram
+    participant C as Cron (cron-job.org)
+    participant API as /api/cron/uptime-check
+    participant SVC as Servicio monitoreado
+    participant DB as Turso
+    participant NTFY as ntfy.sh
+
+    C->>API: POST (CRON_SECRET)
+    API->>DB: SELECT monitors WHERE active AND NOT paused
+    loop por cada monitor
+      API->>SVC: Request (method, expectedText)
+      alt falla (status/timeout/texto ausente)
+        SVC-->>API: error o respuesta inesperada
+        API->>DB: INSERT monitor_checks (ok=false)
+        alt primer fallo consecutivo
+          API->>DB: INSERT monitor_incidents (startedAt)
+          API->>DB: UPDATE monitors SET lastStatus='down'
+          API->>NTFY: Push "Servicio caído"
+        end
+      else éxito
+        SVC-->>API: 200 OK
+        API->>DB: INSERT monitor_checks (ok=true, responseMs)
+        opt había incidente abierto
+          API->>DB: UPDATE monitor_incidents SET resolvedAt, durationSec
+          API->>NTFY: Push "Servicio recuperado"
+        end
+        API->>DB: UPDATE monitors SET lastStatus (up|degraded)
+      end
+    end`,
+  },
+  {
+    id: 'seguridad',
+    titulo: 'Enforcement de seguridad en el middleware',
+    desc: 'CU-14 · Sensor, blocklist y rate limiting durable, todo fail-open.',
+    src: `sequenceDiagram
+    actor U as Cliente HTTP
+    participant MW as Middleware
+    participant SENS as sensor.ts
+    participant BL as blocklist.ts
+    participant RL as ratelimit-durable.ts
+    participant DB as Turso
+
+    U->>MW: Request
+    MW->>SENS: observeRequest(method, path, query, headers)
+    SENS->>SENS: classify.ts (firmas OWASP)
+    SENS-->>DB: INSERT security_events (fire-and-forget)
+    MW->>BL: isBlocked(ip)
+    alt IP bloqueada
+      BL-->>MW: true (cache 30s)
+      MW-->>U: 403 seco
+    else IP no bloqueada
+      MW->>RL: enforceLimit(key)
+      RL->>DB: UPDATE rate_limit_buckets (sliding window)
+      alt límite excedido
+        RL-->>MW: rechazado
+        MW-->>U: 429 Too Many Requests
+      else dentro del límite
+        RL-->>MW: permitido
+        MW->>MW: next() (continúa a la ruta)
+        MW-->>U: Response normal
+      end
+    end
+    note over MW,DB: Cualquier fallo de BL/RL/SENS deja pasar el request (fail-open).`,
+  },
+  {
+    id: 'pagos',
+    titulo: 'Webhook de pago con idempotencia',
+    desc: 'CU-12 · Estados sin retroceso y bitácora completa de eventos.',
+    src: `sequenceDiagram
+    participant W as Pasarela (Wompi)
+    participant API as /api/payments/webhook
+    participant LIB as payments.ts
+    participant DB as Turso
+
+    W->>API: POST webhook (gatewayTxId, status, amount)
+    API->>DB: SELECT payments WHERE reference/gatewayTxId
+    API->>LIB: procesar evento
+    LIB->>DB: INSERT payment_events (crudo)
+    alt evento duplicado
+      LIB->>DB: UPDATE payment_events SET duplicate=true
+    else evento fuera de orden
+      LIB->>DB: UPDATE payment_events SET outOfOrder=true
+      note over LIB: Estado terminal previo se conserva
+    else monto no coincide
+      LIB->>DB: UPDATE payment_events SET amountMismatch=true
+      LIB-->>API: Alerta (no se aplica el evento)
+    else evento válido y en orden
+      LIB->>DB: UPDATE payments SET status=? WHERE version=?
+      alt UPDATE afectó 0 filas (conflicto de versión)
+        LIB->>DB: Reintentar con version actual
+      end
+    end
+    API-->>W: 200 OK`,
+  },
+]
+---
+
+<AdminLayout title="Diagrama de secuencia">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-6">
+    <p class="text-[13px] text-ink-200 leading-relaxed">
+      Cuatro secuencias representativas de los flujos más sensibles del sistema: autenticación,
+      observabilidad, enforcement de seguridad y procesamiento de pagos.
+    </p>
+  </div>
+
+  <div class="space-y-10">
+    {diagramas.map((d) => (
+      <section>
+        <h2 class="text-[13px] font-semibold text-ink-50 mb-0.5">{d.titulo}</h2>
+        <p class="text-[12px] text-ink-300 mb-3">{d.desc}</p>
+        <div class="rounded-xl border border-white/10 p-4 overflow-x-auto">
+          <pre class="mermaid">{d.src}</pre>
+        </div>
+      </section>
+    ))}
+  </div>
+</AdminLayout>
+
+<script>
+  import mermaid from 'mermaid'
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' })
+</script>
+
+<style>
+  .mermaid { display: flex; justify-content: center; }
+</style>
