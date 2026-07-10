@@ -26,6 +26,7 @@ Todo lo crítico de la auditoría de abajo ya está implementado y verificado en
 - **`site.webmanifest` + `apple-touch-icon.png` + icon-192/512** generados desde el favicon SVG.
 - **IndexNow (automático)**: clave en `public/eec9c30b0348b882cba9349b7fb125f2.txt`, lógica en `src/lib/indexnow.ts` (con tests en `tests/indexnow.test.ts`). Se envía **solo, a diario** vía cron de Vercel `/api/cron/indexnow` (`30 8 * * *`, auth `CRON_SECRET`), que reenvía el sitemap a **Bing, Yandex, Seznam, Naver y Yep**. Disparo manual: `npm run seo:indexnow` o `PUT /api/cron/indexnow` (sesión admin). Google no usa IndexNow; su canal es Search Console.
 - **`llms.txt`** — mapa del sitio para crawlers de IA (ChatGPT, Perplexity, Claude), un canal de descubrimiento creciente.
+- **Hallazgo #9 resuelto — thin content de `/log`**: la página es 100% client-side (feed de GitHub en tiempo real); un crawler solo veía encabezado + esqueletos de carga. Ahora lleva `noindex` y se excluyó de `STATIC_PATHS` en `sitemap.xml.ts`, así robots y sitemap quedan coherentes y no se anuncia thin content. `/status`, `/tools` y `/security` se verificaron server-rendered (indexables de verdad) y se dejan como están.
 - Fix de build: colisión de `const headers` en `middleware.ts` (renombrado a `reqHeaders` en el bloque de enforcement).
 
 ### 🔴 Acciones manuales pendientes (requieren tus cuentas — son EL paso que falta para indexación)
