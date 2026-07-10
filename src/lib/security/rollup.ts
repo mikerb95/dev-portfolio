@@ -166,6 +166,30 @@ export async function knownCountries(now = Date.now(), days = 30): Promise<Set<s
   return new Set(rows.map((r) => r.c).filter((c): c is string => !!c))
 }
 
+/** Rutas más sondeadas en la hora ya cerrada (para patrones nuevos). */
+export async function currentTopPaths(now = Date.now(), limit = 20): Promise<{ path: string; count: number }[]> {
+  const hourStart = floorHour(now) - HOUR_MS
+  const rows = await db
+    .select({ path: securityEvents.path, count: sql<number>`coalesce(sum(${securityEvents.hits}), 0)` })
+    .from(securityEvents)
+    .where(and(gte(securityEvents.at, new Date(hourStart)), lt(securityEvents.at, new Date(hourStart + HOUR_MS))))
+    .groupBy(securityEvents.path)
+    .orderBy(sql`2 desc`)
+    .limit(limit)
+  return rows.map((r) => ({ path: r.path, count: Number(r.count) }))
+}
+
+/** Rutas vistas como top histórico (baseline acotada para patrones nuevos). */
+export async function knownTopPaths(now = Date.now(), days = 30): Promise<Set<string>> {
+  const from = new Date(floorHour(now) - days * DAY_MS)
+  const before = new Date(floorHour(now))
+  const rows = await db
+    .select({ p: securityRollups.topPath })
+    .from(securityRollups)
+    .where(and(gte(securityRollups.at, from), lt(securityRollups.at, before), sql`${securityRollups.topPath} is not null`))
+  return new Set(rows.map((r) => r.p).filter((p): p is string => !!p))
+}
+
 /** Top de países por eventos high/critical en la hora ya cerrada (para geo). */
 export async function currentGeoTop(now = Date.now()): Promise<{ country: string; count: number }[]> {
   const hourStart = floorHour(now) - HOUR_MS
