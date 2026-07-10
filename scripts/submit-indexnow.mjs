@@ -1,16 +1,18 @@
 #!/usr/bin/env node
-// Notifica a los motores compatibles con IndexNow (Bing, Yandex, Seznam,
-// Naver, Yep) las URLs públicas del sitio. Google no usa IndexNow: para
-// Google la señal es el sitemap en Search Console.
+// Envío manual/CI a IndexNow (Bing, Yandex, Seznam, Naver, Yep). Para el uso
+// automático diario existe el cron /api/cron/indexnow. Google no usa IndexNow.
 //
 // Uso:
-//   node scripts/submit-indexnow.mjs                 → envía todas las URLs del sitemap
-//   node scripts/submit-indexnow.mjs /notes/mi-nota  → envía solo esas rutas
+//   node scripts/submit-indexnow.mjs                 → todas las URLs del sitemap
+//   node scripts/submit-indexnow.mjs /notes/mi-nota  → solo esas rutas
 //
-// Ejecutar tras cada deploy con contenido nuevo (o cablearlo en CI).
+// Reutiliza la lógica de src/lib/indexnow.ts (una sola fuente de verdad para la
+// clave). Se importa como TS vía el loader nativo de Node (v22+ con --experimental
+// no hace falta para .ts si el runtime lo soporta); aquí replicamos el POST para
+// no depender del transpilado.
 
 const SITE = 'https://codebymike.tech'
-const KEY = 'eec9c30b0348b882cba9349b7fb125f2' // debe coincidir con public/<key>.txt
+const KEY = 'eec9c30b0348b882cba9349b7fb125f2' // debe coincidir con public/<key>.txt y src/lib/indexnow.ts
 
 const args = process.argv.slice(2)
 
@@ -24,7 +26,7 @@ if (args.length > 0) {
     process.exit(1)
   }
   const xml = await res.text()
-  urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+  urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim())
 }
 
 if (urls.length === 0) {
