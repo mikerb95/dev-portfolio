@@ -70,7 +70,7 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 - [x] `iteraciones-portfolio.ts` con 5 iteraciones e historias con DoD
 - [x] `IteracionesBoard` parametrizado (default DobleYo intacto)
 - [x] Página kanban montando el board con datos del portfolio
-- [ ] Build de producción verificado (`npm run build`)
+- [x] Build de producción verificado (`npm run build`)
 
 ## 6. Fases futuras
 
