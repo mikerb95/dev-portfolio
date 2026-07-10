@@ -465,6 +465,7 @@ const healthLabel = {
 
   <script define:vars={{ statusBadge, ekgColor }}>
     const W = 300, H = 56, PAD = 6
+    const seriesByEl = new WeakMap()
 
     function pathFor(series) {
       if (!series || series.length < 2) return null
