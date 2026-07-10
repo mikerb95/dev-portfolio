@@ -1,0 +1,82 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import DocsNav from '../../../components/admin/DocsNav.astro'
+import { ACTORES, CASOS_DE_USO } from '../../../data/documentacion'
+
+// Diagrama de casos de uso en sintaxis flowchart (Mermaid no tiene un tipo
+// "usecase" oficial estable); actores como nodos redondeados, CU como cajas.
+const actorLines = ACTORES.map((a) => `  ${a.id}(["${a.nombre}"])`).join('\n')
+const cuLines = CASOS_DE_USO.map((c) => `  ${c.id}["${c.id}: ${c.nombre}"]`).join('\n')
+const edgeLines = CASOS_DE_USO.map((c) => `  ${c.actor} --> ${c.id}`).join('\n')
+
+const diagram = `flowchart LR
+${actorLines}
+${cuLines}
+${edgeLines}
+`
+---
+
+<AdminLayout title="Casos de uso">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-6">
+    <p class="text-[13px] text-ink-200 leading-relaxed">
+      {ACTORES.length} actores y {CASOS_DE_USO.length} casos de uso que cubren el ciclo completo del sistema:
+      desde la exploración pública hasta el enforcement de seguridad y el procesamiento de pagos.
+    </p>
+  </div>
+
+  <section class="mb-10">
+    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-3">Actores</h2>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {ACTORES.map((a) => (
+        <div class="rounded-xl border border-white/10 p-3.5">
+          <div class="text-[13px] font-medium text-ink-50">{a.nombre}</div>
+          <p class="text-[12px] text-ink-200 mt-1 leading-relaxed">{a.descripcion}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-3">Diagrama de casos de uso</h2>
+    <div class="rounded-xl border border-white/10 p-4 overflow-x-auto">
+      <pre class="mermaid">{diagram}</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-3">Catálogo</h2>
+    <div class="space-y-2">
+      {CASOS_DE_USO.map((c) => {
+        const actor = ACTORES.find((a) => a.id === c.actor)
+        return (
+          <div class="rounded-xl border border-white/10 p-3.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-mono text-[11px] text-ink-300">{c.id}</span>
+              <span class="text-[13px] font-medium text-ink-50">{c.nombre}</span>
+              <span class="text-[10.5px] font-medium px-2 py-0.5 rounded-full border bg-cyan/10 text-cyan border-cyan/30">
+                {actor?.nombre}
+              </span>
+            </div>
+            <p class="text-[12px] text-ink-200 mt-1.5">{c.resumen}</p>
+            <div class="flex gap-1.5 mt-2 flex-wrap">
+              {c.rf.map((id) => (
+                <span class="font-mono text-[10.5px] text-ink-300 bg-white/5 rounded px-1.5 py-0.5">{id}</span>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  </section>
+</AdminLayout>
+
+<script>
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' })
+</script>
+
+<style>
+  .mermaid { display: flex; justify-content: center; }
+</style>
