@@ -10,7 +10,7 @@ type CaseStudy = {
   num: string
   title: string
   tagline: string
-  mock: 'monitors' | 'pnl' | 'seguimiento' | 'vault' | 'pipeline' | 'chaos'
+  mock: 'monitors' | 'pnl' | 'seguimiento' | 'vault' | 'pipeline' | 'chaos' | 'security'
   problema: string
   solucion: string
   detalle: string[]
@@ -116,6 +116,24 @@ const tools: CaseStudy[] = [
       'El panel y la autenticación están excluidos por código: siempre hay un botón de pánico alcanzable.',
     ],
     stack: ['middleware Astro', 'flags en Turso con TTL'],
+  },
+  {
+    num: '07',
+    title: 'Observabilidad de seguridad (micro-SIEM propio)',
+    mock: 'security',
+    tagline: 'Saber quién intenta entrar, no solo esperar a que lo logre',
+    problema:
+      'Cualquier sitio con IP pública recibe sondeos automáticos desde el primer minuto: CMS ajenos, archivos de configuración, inyecciones en cada parámetro. La reacción normal es ignorar el ruido — pero esos 404 son la superficie de ataque real, y descartarlos es tirar una señal gratis.',
+    solucion:
+      'Un motor propio que corre en el middleware de cada request: un clasificador alineado con OWASP Top 10 detecta firmas de ataque, un rate limiter durable de dos capas y una lista de bloqueo frenan el abuso, endpoints señuelo confirman intención maliciosa, y un cron horario agrega eventos, detecta anomalías por estadística y aplica bloqueos automáticos escalonados.',
+    detalle: [
+      'Fail-open en cada capa: si el sensor de seguridad falla, el request pasa limpio — nunca puede tumbar el sitio que protege.',
+      'Detección de anomalías con z-score sobre una baseline de 30 días, no una caja negra: cada alerta se puede explicar con una frase.',
+      'Bloqueos con TTL obligatorio y escalado por reincidencia (1h → 24h → 7d), nunca eternos por defecto.',
+      'La vitrina pública muestra agregados reales con OPSEC deliberada: nunca IPs completas, nunca nombres de reglas, nunca qué rutas son señuelo.',
+    ],
+    stack: ['middleware Astro', 'Drizzle ORM', 'Turso', 'cron externo', 'estadística propia'],
+    live: { href: '/security', label: 'Ver Security Operations en vivo' },
   },
 ]
 ---

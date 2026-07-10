@@ -4,7 +4,7 @@
 // porque contiene información de clientes. Decorativo: aria-hidden.
 
 interface Props {
-  kind: 'monitors' | 'pnl' | 'seguimiento' | 'vault' | 'pipeline' | 'chaos'
+  kind: 'monitors' | 'pnl' | 'seguimiento' | 'vault' | 'pipeline' | 'chaos' | 'security'
 }
 const { kind } = Astro.props
 
@@ -47,6 +47,14 @@ const flags = [
   { k: 'Latencia extra', route: '/api/*', ttl: '09:41', on: true },
   { k: 'Error 500', route: '/tienda', ttl: '—', on: false },
 ]
+
+const secEvents = [
+  { cat: 'Búsqueda de secretos/config', sev: 'high', ip: '198.51.x.x', country: 'RU' },
+  { cat: 'Endpoint señuelo tocado', sev: 'critical', ip: '203.0.x.x', country: 'CN' },
+  { cat: 'Inyección (SQLi/XSS/cmd)', sev: 'high', ip: '192.0.x.x', country: 'BR' },
+  { cat: 'Reconocimiento de CMS', sev: 'medium', ip: '198.51.x.x', country: 'CO' },
+]
+const secSevDot: Record<string, string> = { low: 'bg-ink-400', medium: 'bg-amber-400', high: 'bg-orange-500', critical: 'bg-red-500' }
 ---
 
 <div
@@ -164,6 +172,33 @@ const flags = [
             ■ Pánico: apagar todo
           </span>
         </div>
+      </div>
+    )}
+
+    {kind === 'security' && (
+      <div class="space-y-2.5">
+        <div class="grid grid-cols-3 gap-2 mb-1">
+          <div class="rounded-lg bg-white/[.03] border border-white/5 px-3 py-2">
+            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">Detectados 30d</div>
+            <div class="text-[15px] font-mono text-ink-50">1.284</div>
+          </div>
+          <div class="rounded-lg bg-white/[.03] border border-white/5 px-3 py-2">
+            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">Auto-bloqueos</div>
+            <div class="text-[15px] font-mono text-cyan">37</div>
+          </div>
+          <div class="rounded-lg bg-white/[.03] border border-white/5 px-3 py-2">
+            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">Overhead p99</div>
+            <div class="text-[15px] font-mono text-lime">≤5ms</div>
+          </div>
+        </div>
+        {secEvents.map((e) => (
+          <div class="flex items-center gap-3 rounded-lg bg-white/[.03] border border-white/5 px-3 py-2.5 text-[12px]">
+            <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${secSevDot[e.sev]}`}></span>
+            <span class="text-ink-50 truncate">{e.cat}</span>
+            <span class="ml-auto font-mono text-[11px] text-ink-300 shrink-0">{e.ip}</span>
+            <span class="font-mono text-[10px] text-ink-400 shrink-0">{e.country}</span>
+          </div>
+        ))}
       </div>
     )}
   </div>
