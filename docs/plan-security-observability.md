@@ -190,7 +190,19 @@ datos. El auto-block (que llena `blocked_ips`) es de la Fase 2.
 < 0.1% de requests legítimos (medible: eventos `rate_limited` cuya IP luego navega
 normalmente).
 
-### Fase 2 — Honeypots + auto-block ~1 sesión
+### Fase 2 — Honeypots + auto-block ✅ IMPLEMENTADA (2026-07-09)
+
+Entregado: rutas señuelo `/wp-login.php`, `/admin.php`, `/api/v1/token`
+(`src/pages/…`, exportan `ALL`) que sirven contenido falso plausible tras un tarpit
+acotado 800–2000 ms (`src/lib/security/honeypot.ts`); no re-registran (el middleware ya
+lo hace vía `HONEYPOT_PATHS`). `src/lib/security/autoblock.ts` (`selectIpsToBlock` puro +
+`runAutoBlock`): honeypot→bloqueo inmediato, ráfaga high/critical ≥ umbral→bloqueo, con
+allowlist, tope de 500 y escalado de TTL. Cron `src/pages/api/cron/security-rollup.ts`
+(GET Bearer + PUT admin): auto-block + purga de bloqueos/buckets vencidos + eventos > 90 d
++ alerta push si overflow; registrado en `vercel.json` (`0 * * * *`). `robots.txt` con
+Disallow de señuelos. Tests: `security-autoblock` + `security-honeypot` (255 totales
+verdes). Verificado e2e: honeypot→200/401 falso, cron bloquea la IP (`source='auto'`, TTL
+3600 s), request posterior→403. **Pendiente operativo**: dar de alta el cron en cron-job.org.
 
 1. Endpoints trampa que ningún usuario legítimo toca: `/wp-login.php`, `/.env`,
    `/admin.php`, `/api/v1/token` (rutas Astro reales que responden 200 con contenido
