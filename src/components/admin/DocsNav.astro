@@ -1,0 +1,37 @@
+---
+const tabs = [
+  { href: '/admin/docs', label: 'Visión general' },
+  { href: '/admin/docs/requerimientos-funcionales', label: 'Req. funcionales' },
+  { href: '/admin/docs/requerimientos-no-funcionales', label: 'Req. no funcionales' },
+  { href: '/admin/docs/casos-de-uso', label: 'Casos de uso' },
+  { href: '/admin/docs/casos-de-uso-extendidos', label: 'CU extendidos' },
+  { href: '/admin/docs/diagrama-secuencia', label: 'Secuencia' },
+  { href: '/admin/docs/diagrama-componentes', label: 'Componentes' },
+  { href: '/admin/docs/diagrama-clases', label: 'Clases' },
+  { href: '/admin/docs/kanban', label: 'Kanban' },
+]
+
+const current = Astro.url.pathname
+const isActive = (href: string) =>
+  href === '/admin/docs' ? current === '/admin/docs' : current.startsWith(href)
+---
+
+<nav class="docs-nav mb-6 -mx-1 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar" aria-label="Subpáginas de documentación">
+  {tabs.map((t) => (
+    <a
+      href={t.href}
+      class={`shrink-0 px-3.5 py-1.5 rounded-full text-[12.5px] font-medium border transition-colors whitespace-nowrap ${
+        isActive(t.href)
+          ? 'bg-cyan/10 text-cyan border-cyan/30'
+          : 'text-ink-200 border-white/10 hover:bg-white/5 hover:text-ink-50'
+      }`}
+    >
+      {t.label}
+    </a>
+  ))}
+</nav>
+
+<style>
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+</style>
