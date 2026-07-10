@@ -200,3 +200,186 @@
 **Criterios de aceptación:**
 - Se listan los repos vinculados con nombre y URL.
 - Puedo acceder al repo directamente desde el panel.
+
+---
+
+## Administrador (Mike) — Observabilidad y operación
+
+### HU-18 — Monitorear la salud de mis servicios
+**Como** administrador,  
+**quiero** monitorear la disponibilidad y latencia de los servicios en producción,  
+**para** enterarme de caídas antes que mis clientes.
+
+**Criterios de aceptación:**
+- Un cron externo dispara checks HTTP periódicos por monitor (método, texto esperado, umbral de latencia).
+- El estado materializado (`up`/`degraded`/`down`) se actualiza tras cada chequeo.
+- Se puede pausar o desactivar un monitor sin borrar su historial.
+
+---
+
+### HU-19 — Ver historial de incidentes
+**Como** administrador,  
+**quiero** que las caídas consecutivas se agrupen automáticamente en incidentes,  
+**para** conocer cuánto duró cada caída sin reconstruirla manualmente del log crudo.
+
+**Criterios de aceptación:**
+- El primer chequeo fallido abre un incidente; el primer éxito posterior lo cierra con duración calculada.
+- Cada incidente registra causa y último error observado.
+
+---
+
+### HU-20 — Evaluar SLO y presupuesto de error
+**Como** administrador,  
+**quiero** definir un objetivo de disponibilidad (SLO) y ventana de tiempo por monitor,  
+**para** saber cuánto margen de caída me queda antes de incumplir el objetivo.
+
+**Criterios de aceptación:**
+- Objetivo (%) y ventana (días) son configurables desde la UI.
+- Se calcula el SLI real sobre los chequeos de la ventana y el presupuesto de error restante.
+
+---
+
+### HU-21 — Recibir notificaciones push de alertas
+**Como** administrador,  
+**quiero** recibir una notificación push cuando un servicio cae, un dominio está por vencer o se detecta una anomalía de seguridad,  
+**para** reaccionar sin tener que revisar el panel constantemente.
+
+**Criterios de aceptación:**
+- Las alertas llegan vía ntfy.sh al topic configurado.
+- Cubren: caída/recuperación de monitor, vencimiento próximo de dominio, anomalía de seguridad detectada.
+
+---
+
+### HU-22 — Gestionar vencimiento de dominios
+**Como** administrador,  
+**quiero** que el sistema descubra automáticamente la fecha de expiración de mis dominios,  
+**para** no perder uno por olvido de renovación.
+
+**Criterios de aceptación:**
+- La fecha se resuelve vía RDAP al guardar un costo de categoría "Dominio", o manualmente con un botón de refresco por fila.
+- Se muestra un badge de alerta cuando el vencimiento está próximo o vencido.
+
+---
+
+### HU-23 — Dar seguimiento comercial a clientes y proyectos
+**Como** administrador,  
+**quiero** registrar llamadas, reuniones, notas y tareas pendientes por cliente/proyecto,  
+**para** no perder el hilo de una negociación o un compromiso adquirido.
+
+**Criterios de aceptación:**
+- Una interacción puede vincularse a cliente, proyecto y/o briefing.
+- Se puede marcar una acción siguiente con fecha límite y marcarla como hecha.
+
+---
+
+### HU-24 — Presentar slides a un cliente con control remoto
+**Como** administrador,  
+**quiero** avanzar una presentación desde mi teléfono mientras el cliente la ve en su pantalla,  
+**para** dar demos sin depender de compartir pantalla en video llamada.
+
+**Criterios de aceptación:**
+- Cada presentación tiene un token de acceso propio para el cliente.
+- El avance de diapositiva se sincroniza en tiempo casi real entre control y vista de presentación.
+
+---
+
+## Visitantes del sitio público — Vitrina y SEO
+
+### HU-25 — Ver el estado en vivo de los servicios
+**Como** visitante,  
+**quiero** ver el uptime, los incidentes activos y la latencia en tiempo real de los servicios públicos,  
+**para** confiar en que el sitio (y quien lo construyó) toma en serio la operación en producción.
+
+**Criterios de aceptación:**
+- `/status` muestra uptime global de los últimos 30 días.
+- Se listan los incidentes activos, si los hay.
+- La latencia se anima en tiempo real (EKG) por servicio monitoreado.
+
+---
+
+### HU-26 — Encontrar el sitio en buscadores
+**Como** visitante que busca en Google,  
+**quiero** que el contenido del portafolio aparezca indexado y bien descrito,  
+**para** encontrarlo fácilmente sin conocer la URL exacta.
+
+**Criterios de aceptación:**
+- Cada proyecto expone JSON-LD y breadcrumbs estructurados.
+- Existe feed RSS y notificación IndexNow ante cada publicación nueva.
+- El sitio es instalable como PWA (manifest + iconos).
+
+---
+
+### HU-27 — Explorar herramientas y notas técnicas
+**Como** visitante técnico,  
+**quiero** ver una vitrina de herramientas internas y notas de ingeniería del stack,  
+**para** evaluar la profundidad técnica real detrás del portafolio.
+
+**Criterios de aceptación:**
+- `/tools` y `/notes` están publicadas con contenido curado (mínimo 5 artículos).
+- Cada nota/proyecto genera su propia imagen OG.
+
+---
+
+## Administrador (Mike) — Seguridad
+
+### HU-28 — Detectar requests hostiles sin frenar tráfico legítimo
+**Como** administrador,  
+**quiero** que el sistema observe y clasifique cada request sospechoso,  
+**para** tener visibilidad de ataques sin arriesgar falsos positivos que bloqueen visitantes reales.
+
+**Criterios de aceptación:**
+- Cada request se clasifica contra firmas conocidas (alineadas a OWASP) de forma síncrona y no bloqueante.
+- Los eventos quedan registrados con categoría, severidad y regla que los disparó.
+
+---
+
+### HU-29 — Bloquear IPs maliciosas y limitar su tasa de requests
+**Como** administrador,  
+**quiero** bloquear IPs reincidentes y aplicar un límite de tasa que no se resetee con cada despliegue,  
+**para** contener abuso sostenido sin depender de reiniciar el servicio.
+
+**Criterios de aceptación:**
+- Toda IP bloqueada tiene TTL obligatorio (nunca un bloqueo eterno).
+- El estado del rate limiter persiste en base de datos, no en memoria del proceso.
+- Cualquier fallo del enforcement deja pasar el request (fail-open): nunca tumba el sitio.
+
+---
+
+### HU-30 — Revisar anomalías de seguridad agregadas
+**Como** administrador,  
+**quiero** ver picos y patrones nuevos de tráfico hostil agregados en un panel,  
+**para** revisar la postura de seguridad periódicamente sin leer eventos crudos uno por uno.
+
+**Criterios de aceptación:**
+- Un detector estadístico (z-score sobre baseline de 30 días) marca spikes, patrones nuevos, anomalías geográficas y ráfagas de error.
+- Cada anomalía puede marcarse como notificada/reconocida.
+
+---
+
+## Administrador (Mike) — Documentación del proyecto
+
+### HU-31 — Consultar la documentación de ingeniería sin salir del panel
+**Como** administrador,  
+**quiero** navegar requerimientos, casos de uso, diagramas UML y el kanban del propio proyecto desde `/admin`,  
+**para** sustentar el trabajo (académica o comercialmente) sin mantener documentos externos desincronizados.
+
+**Criterios de aceptación:**
+- Existe una sección "Documentación" en la sidebar con 10 subpáginas navegables.
+- Todo el contenido se define como datos tipados en el repo (no en documentos sueltos).
+- El tablero kanban del propio portfolio reutiliza el mismo componente que el de DobleYo, sin duplicar lógica.
+
+---
+
+## Resumen
+
+| Grupo | Historias | Rango |
+|---|---|---|
+| Visitantes | 8 | HU-01 a HU-05, HU-25 a HU-27 |
+| Administrador — CRM y perfil | 12 | HU-06 a HU-17 |
+| Administrador — Observabilidad y operación | 7 | HU-18 a HU-24 |
+| Administrador — Seguridad | 3 | HU-28 a HU-30 |
+| Administrador — Documentación | 1 | HU-31 |
+| **Total** | **31** | HU-01 a HU-31 |
+
+Ver también el tablero XP con historias ancladas al historial real de commits en `/admin/docs/kanban`
+(datos en `src/data/iteraciones-portfolio.ts`).
