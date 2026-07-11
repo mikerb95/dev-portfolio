@@ -39,10 +39,12 @@
     "web-vitals": "^5.3.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "@types/qrcode": "^1.5.6",
     "@vitest/coverage-v8": "^4.1.9",
     "drizzle-kit": "^0.31.10",
     "playwright": "^1.61.1",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.9"
   }
 }
