@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro'
+import { getRoom } from '../../../../lib/fingerprint'
+
+const roomId = Astro.params.room!
+const room = await getRoom(roomId)
+
+if (!room) {
+  return new Response(null, { status: 404 })
+}
+---
+
+<BaseLayout title="Tu dispositivo — Laboratorio de Fingerprinting" description="Esto es lo que tu navegador reveló sin que hicieras nada." noindex>
+  <div class="max-w-[640px] mx-auto px-6 pt-20 pb-24">
+    <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-8">
+      <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
+      <span>Sala {roomId}</span>
+    </div>
+
+    <div id="consent-gate">
+      <h1 class="text-3xl font-medium tracking-[-.02em] text-mask mb-4">Antes de empezar</h1>
+      <p class="text-[14px] text-ink-100 leading-relaxed mb-6">
+        Al continuar, tu navegador va a compartir señales técnicas (canvas, GPU, fuentes, audio,
+        pantalla, comportamiento de mouse/teclado) con el tablero de esta sala, para demostrar cómo
+        funciona el fingerprinting. Nada se guarda tras cerrarse la sala (máx. 2 horas).
+      </p>
+      <button id="accept" class="w-full h-14 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium hover:bg-zinc-100 transition-colors">
+        Entiendo, continuar
+      </button>
+    </div>
+
+    <div id="result" class="hidden">
+      <h1 class="text-3xl font-medium tracking-[-.02em] text-mask mb-2">
+        Eres el <span id="label-num" class="text-cyan">#?</span>
+      </h1>
+      <p id="returning-note" class="hidden text-[13px] text-ember mb-4">
+        Este dispositivo ya había pasado por aquí — reconocido de nuevo sin cookies.
+      </p>
+      <p class="text-[14px] text-ink-100 leading-relaxed mb-8">
+        Esto es lo que tu navegador reveló, sin que dieras ningún permiso especial:
+      </p>
+
+      <div id="signals" class="space-y-3 mb-8"></div>
+
+      <div class="rounded-2xl glass p-5">
+        <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 mb-1">Unicidad estimada</div>
+        <div class="text-2xl font-medium text-mask tabular-nums"><span id="entropy-bits">?</span> bits</div>
+        <p class="text-[12px] text-ink-400 mt-2 leading-relaxed">
+          ≈ 1 en <span id="entropy-odds">?</span> dispositivos con esta misma combinación de señales.
+          Estimación educativa basada en pesos publicados por estudios de fingerprinting
+          (EFF Panopticlick / AmIUnique), no una medición poblacional en vivo.
+        </p>
+      </div>
+
+      <p class="text-[12px] font-mono text-ink-400 mt-6 text-center">
+        Mira el tablero en la pantalla principal — apareces ahí en vivo.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { collectFingerprint, startBehaviorTracking, type BehaviorSample } from '../../../../lib/fingerprint-client'
+
+  const roomId = location.pathname.split('/').filter(Boolean).pop()!
+
+  const acceptBtn = document.getElementById('accept') as HTMLButtonElement
+  const gate = document.getElementById('consent-gate')!
+  const result = document.getElementById('result')!
+
+  let getSnapshot: (() => BehaviorSample) | null = null
+  let deviceHash: string | null = null
+
+  acceptBtn.addEventListener('click', async () => {
+    acceptBtn.disabled = true
+    acceptBtn.textContent = 'Recolectando…'
+
+    const fp = await collectFingerprint()
+    deviceHash = fp.hash
+    getSnapshot = startBehaviorTracking()
+
+    const res = await fetch(`/api/lab/fp/${roomId}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: fp.hash, entropyBits: fp.entropyBits, signals: fp.signals }),
+    })
+    if (!res.ok) {
+      acceptBtn.textContent = 'Error, intenta de nuevo'
+      acceptBtn.disabled = false
+      return
+    }
+    const join = await res.json()
+
+    gate.classList.add('hidden')
+    result.classList.remove('hidden')
+    document.getElementById('label-num')!.textContent = `#${join.label}`
+    if (join.isReturning) document.getElementById('returning-note')!.classList.remove('hidden')
+
+    const list = document.getElementById('signals')!
+    for (const s of fp.signals) {
+      const row = document.createElement('div')
+      row.className = 'rounded-xl bg-white/[.02] border border-white/5 p-4'
+      row.innerHTML = `<div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">${s.label}</div><div class="text-[13px] text-ink-100 break-all">${s.value || '(vacío)'}</div>`
+      list.appendChild(row)
+    }
+    document.getElementById('entropy-bits')!.textContent = fp.entropyBits.toFixed(0)
+    document.getElementById('entropy-odds')!.textContent = Math.round(2 ** fp.entropyBits).toLocaleString('es')
+
+    setInterval(async () => {
+      if (!getSnapshot || !deviceHash) return
+      const behavior = getSnapshot()
+      await fetch(`/api/lab/fp/${roomId}/beat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hash: deviceHash, behavior }),
+      }).catch(() => {})
+    }, 4000)
+  })
+</script>
