@@ -88,6 +88,65 @@ const pend = (texto: string): CriterioDoD => ({ texto, estado: "pend" });
 export const ITERACIONES: Iteracion[] = [
   // ───────────────────────────────────────────────────────────────────────────
   {
+    id: "jul-envios",
+    fase: "Post-plan · Logística",
+    nombre: "Logística de envíos con Mipaquete.com y pago contraentrega (COD)",
+    rango: "11 jul 2026",
+    ghSince: "2026-07-11",
+    ghUntil: "2026-07-12",
+    commits: 26,
+    resumen:
+      "El despacho de pedidos era manual y sin registro. Se integró el agregador Mipaquete.com (cotización, guía, recogida y tracking) desde un panel nuevo, con notificación al cliente y actualización de estados vía webhook + polling. Se habilitó además pago contraentrega (COD) en el checkout con mitigaciones de fraude.",
+    historias: [
+      {
+        id: "DY-ENV-01",
+        titulo:
+          "Como administrador, quiero cotizar, generar guía y hacer seguimiento de envíos vía Mipaquete.com para no despachar pedidos a ciegas",
+        tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
+        fecha: "2026-07-11", tags: ["logistica", "envios", "mipaquete"],
+        dod: [
+          ok("Migración idempotente agrega shipments (guía, transportadora, tracking, recaudo COD, idempotencia por orden), shipment_events y dane_locations; registrada en run_all_migrations."),
+          ok("Cliente mipaquete.js (quoteShipping, createSending, getTracking, cancelSending, registerWebhook) con resolveDaneCode que nunca autoselecciona homónimos y computePackageFromOrder que reporta pesos faltantes sin fallar."),
+          ok("Router shipping.js con endpoints admin de cotización/generación/cancelación y webhook público que re-consulta la API autenticada en vez de confiar en el payload (\"trigger, don't trust\"); montado en server/index.js y api/index.js."),
+        ],
+      },
+      {
+        id: "DY-ENV-02",
+        titulo:
+          "Como administrador, quiero un panel de envíos con pendientes de despacho, envíos activos y recaudos COD sin conciliar",
+        tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
+        fecha: "2026-07-11", tags: ["admin", "envios", "ui"],
+        dod: [
+          ok("Página /admin/envios nueva con enlace en AdminLayout, cubriendo despacho, seguimiento y conciliación de recaudo."),
+          ok("sendShippingNotificationEmail avisa al cliente con guía, transportadora y aviso de recaudo cuando aplica."),
+        ],
+      },
+      {
+        id: "DY-ENV-03",
+        titulo:
+          "Como cliente, quiero pagar contraentrega (COD) en el checkout cuando compro en pesos colombianos",
+        tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
+        fecha: "2026-07-11", tags: ["checkout", "cod", "antifraude"],
+        dod: [
+          ok("Opción \"Contraentrega\" junto a Wompi en checkout.astro, visible solo en COP."),
+          ok("POST /api/orders acepta paymentMethod=cod validando celular colombiano; customer_orders no se altera (reutiliza payment_method='cod' + status='processing')."),
+          ok("codOrderLimiter y reglas antifraude: tope COD_MAX_TOTAL_COP, límite de pedidos COD abiertos y bloqueo por devoluciones previas."),
+        ],
+      },
+      {
+        id: "DY-ENV-04",
+        titulo:
+          "Spike: confirmar el código de paymentType de Mipaquete para contraentrega antes de salir a producción",
+        tipo: "spike", valor: "medio", col: "aceptacion", par: "MR", agente: "Claude",
+        fecha: "2026-07-11", tags: ["mipaquete", "cod", "pendiente"],
+        dod: [
+          pend("MIPAQUETE_PAYMENT_TYPE_COD usa 102 por default; el 101 documentado en el ejemplo oficial de Mipaquete corresponde a pago anticipado. Debe confirmarse en sandbox antes de producción (documentado en AGENTS.md)."),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────────
+  {
     id: "jun-erp",
     fase: "Post-plan · Evolución",
     nombre: "Rediseño del ERP, checkout e internacionalización",
