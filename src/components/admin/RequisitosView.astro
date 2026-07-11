@@ -1,0 +1,260 @@
+---
+import type { Modulo, Estado, Prioridad } from '../../data/documentacion'
+
+interface Props {
+  modulos: Modulo[]
+  intro: string
+  /** Prefijo del contador, p.ej. "requerimientos funcionales" */
+  unidad: string
+}
+
+const { modulos, intro, unidad } = Astro.props
+
+const items = modulos.flatMap((m) => m.items)
+const total = items.length
+const conteo: Record<Estado, number> = {
+  implementado: items.filter((r) => r.estado === 'implementado').length,
+  parcial: items.filter((r) => r.estado === 'parcial').length,
+  planeado: items.filter((r) => r.estado === 'planeado').length,
+}
+const pctImpl = Math.round((conteo.implementado / total) * 100)
+
+const ESTADO_META: Record<Estado, { label: string; dot: string; text: string; badge: string }> = {
+  implementado: { label: 'Implementado', dot: 'bg-lime', text: 'text-lime', badge: 'bg-lime/10 text-lime border-lime/25' },
+  parcial: { label: 'Parcial', dot: 'bg-violet', text: 'text-violet', badge: 'bg-violet/10 text-violet border-violet/25' },
+  planeado: { label: 'Planeado', dot: 'bg-ink-300', text: 'text-ink-200', badge: 'bg-white/[.04] text-ink-200 border-white/10' },
+}
+const PRIORIDAD_META: Record<Prioridad, { label: string; dot: string; text: string; bar: string }> = {
+  alta: { label: 'Prioridad alta', dot: 'bg-ember', text: 'text-ember', bar: 'before:bg-ember/60' },
+  media: { label: 'Prioridad media', dot: 'bg-violet', text: 'text-violet', bar: 'before:bg-violet/50' },
+  baja: { label: 'Prioridad baja', dot: 'bg-ink-300', text: 'text-ink-200', bar: 'before:bg-white/15' },
+}
+
+const estadoFiltros: { key: Estado | 'todos'; label: string; n: number }[] = [
+  { key: 'todos', label: 'Todos', n: total },
+  { key: 'implementado', label: 'Implementado', n: conteo.implementado },
+  { key: 'parcial', label: 'Parcial', n: conteo.parcial },
+  { key: 'planeado', label: 'Planeado', n: conteo.planeado },
+]
+const prioridadFiltros: { key: Prioridad | 'todas'; label: string }[] = [
+  { key: 'todas', label: 'Todas' },
+  { key: 'alta', label: 'Alta' },
+  { key: 'media', label: 'Media' },
+  { key: 'baja', label: 'Baja' },
+]
+---
+
+<div class="requisitos" data-total={total}>
+  <!-- Intro + estadísticas -->
+  <div class="mb-6">
+    <p class="max-w-3xl text-[14px] text-ink-100 leading-relaxed">{intro}</p>
+
+    <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      <div class="rounded-xl border border-white/10 bg-white/[.02] px-4 py-3">
+        <div class="text-2xl font-semibold text-ink-50 tabular-nums">{total}</div>
+        <div class="mt-0.5 text-[12px] text-ink-200">Total {unidad}</div>
+      </div>
+      <div class="rounded-xl border border-lime/20 bg-lime/[.04] px-4 py-3">
+        <div class="text-2xl font-semibold text-lime tabular-nums">{conteo.implementado}</div>
+        <div class="mt-0.5 text-[12px] text-ink-200">Implementados</div>
+      </div>
+      <div class="rounded-xl border border-violet/20 bg-violet/[.04] px-4 py-3">
+        <div class="text-2xl font-semibold text-violet tabular-nums">{conteo.parcial}</div>
+        <div class="mt-0.5 text-[12px] text-ink-200">Parciales</div>
+      </div>
+      <div class="rounded-xl border border-white/10 bg-white/[.02] px-4 py-3">
+        <div class="text-2xl font-semibold text-ink-100 tabular-nums">{conteo.planeado}</div>
+        <div class="mt-0.5 text-[12px] text-ink-200">Planeados</div>
+      </div>
+    </div>
+
+    <div class="mt-3 flex items-center gap-3">
+      <div class="h-2 flex-1 rounded-full bg-white/[.06] overflow-hidden">
+        <div class="h-full rounded-full bg-gradient-to-r from-lime/70 to-lime" style={`width:${pctImpl}%`}></div>
+      </div>
+      <span class="text-[12.5px] font-medium text-lime tabular-nums shrink-0">{pctImpl}% en producción</span>
+    </div>
+  </div>
+
+  <!-- Barra de herramientas -->
+  <div class="mb-7 rounded-2xl border border-white/10 bg-white/[.02] p-3 sm:p-4 flex flex-col gap-3">
+    <div class="relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-300" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input
+        type="search"
+        data-buscar
+        placeholder="Buscar por ID, título, descripción u origen…"
+        class="w-full h-10 pl-9 pr-3 rounded-lg bg-ink-900/60 border border-white/10 text-[14px] text-ink-50 placeholder:text-ink-300 focus:outline-none focus:border-cyan/40 focus:ring-1 focus:ring-cyan/20 transition-colors"
+        aria-label="Buscar requerimientos"
+      />
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-3">
+      <div class="flex items-center gap-2 flex-wrap" role="group" aria-label="Filtrar por estado">
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-300 mr-0.5">Estado</span>
+        {estadoFiltros.map((f, i) => (
+          <button
+            type="button"
+            data-filtro-estado={f.key}
+            aria-pressed={i === 0 ? 'true' : 'false'}
+            class="chip px-3 py-1.5 rounded-full text-[12.5px] font-medium border border-white/10 text-ink-200 hover:text-ink-50 hover:bg-white/5 transition-colors"
+          >
+            {f.label} <span class="opacity-60 tabular-nums">{f.n}</span>
+          </button>
+        ))}
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap" role="group" aria-label="Filtrar por prioridad">
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-300 mr-0.5">Prioridad</span>
+        {prioridadFiltros.map((f, i) => (
+          <button
+            type="button"
+            data-filtro-prioridad={f.key}
+            aria-pressed={i === 0 ? 'true' : 'false'}
+            class="chip px-3 py-1.5 rounded-full text-[12.5px] font-medium border border-white/10 text-ink-200 hover:text-ink-50 hover:bg-white/5 transition-colors"
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sin resultados -->
+  <p data-vacio class="hidden text-[14px] text-ink-200 py-10 text-center">
+    No hay requerimientos que coincidan con los filtros.
+  </p>
+
+  <!-- Módulos -->
+  <div class="space-y-9">
+    {modulos.map((modulo) => {
+      const nImpl = modulo.items.filter((r) => r.estado === 'implementado').length
+      return (
+        <section data-modulo class="scroll-mt-24">
+          <div class="flex items-center gap-3 mb-4">
+            <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan whitespace-nowrap">{modulo.nombre}</h2>
+            <span class="text-[11.5px] font-mono text-ink-300 shrink-0" data-modulo-conteo data-modulo-total={modulo.items.length}>
+              {nImpl}/{modulo.items.length}
+            </span>
+            <div class="h-px flex-1 bg-gradient-to-r from-cyan/20 to-transparent"></div>
+          </div>
+
+          <div class="grid gap-2.5 sm:grid-cols-2">
+            {modulo.items.map((r) => {
+              const p = PRIORIDAD_META[r.prioridad]
+              const e = ESTADO_META[r.estado]
+              return (
+                <article
+                  data-item
+                  data-estado={r.estado}
+                  data-prioridad={r.prioridad}
+                  data-text={`${r.id} ${r.titulo} ${r.descripcion} ${r.origen ?? ''}`.toLowerCase()}
+                  class={`group relative flex flex-col gap-2.5 rounded-xl border border-white/10 bg-white/[.025] p-4 pl-5 transition-colors hover:border-white/20 hover:bg-white/[.04] before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full ${p.bar}`}
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <span class="font-mono text-[12.5px] font-medium text-ink-300 shrink-0">{r.id}</span>
+                      <h3 class="text-[15px] font-semibold text-ink-50 leading-tight">{r.titulo}</h3>
+                    </div>
+                    <span class={`shrink-0 inline-flex items-center gap-1.5 text-[11.5px] font-medium px-2.5 py-1 rounded-full border ${e.badge}`}>
+                      <span class={`w-1.5 h-1.5 rounded-full ${e.dot}`}></span>
+                      {e.label}
+                    </span>
+                  </div>
+
+                  <p class="text-[13.5px] text-ink-100 leading-relaxed">{r.descripcion}</p>
+
+                  <div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-1">
+                    <span class={`inline-flex items-center gap-1.5 text-[12px] font-medium ${p.text}`}>
+                      <span class={`w-1.5 h-1.5 rounded-full ${p.dot}`}></span>
+                      {p.label}
+                    </span>
+                    {r.origen && (
+                      <span class="flex flex-wrap items-center gap-1.5">
+                        {r.origen.split(',').map((o) => (
+                          <code class="inline-flex items-center gap-1 text-[11.5px] font-mono text-ink-200 bg-ink-900/70 border border-white/[.07] rounded px-1.5 py-0.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-ink-300 shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                            {o.trim()}
+                          </code>
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+      )
+    })}
+  </div>
+</div>
+
+<style>
+  .requisitos .chip[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--color-cyan) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-cyan) 35%, transparent);
+    color: var(--color-cyan);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.requisitos').forEach((root) => {
+    const buscar = root.querySelector<HTMLInputElement>('[data-buscar]')
+    const items = Array.from(root.querySelectorAll<HTMLElement>('[data-item]'))
+    const modulos = Array.from(root.querySelectorAll<HTMLElement>('[data-modulo]'))
+    const vacio = root.querySelector<HTMLElement>('[data-vacio]')
+    const btnsEstado = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-filtro-estado]'))
+    const btnsPrioridad = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-filtro-prioridad]'))
+
+    let estado = 'todos'
+    let prioridad = 'todas'
+
+    const setActivo = (grupo: HTMLButtonElement[], activo: HTMLButtonElement) =>
+      grupo.forEach((b) => b.setAttribute('aria-pressed', String(b === activo)))
+
+    const aplicar = () => {
+      const q = (buscar?.value ?? '').trim().toLowerCase()
+      let visibles = 0
+
+      for (const it of items) {
+        const okEstado = estado === 'todos' || it.dataset.estado === estado
+        const okPrioridad = prioridad === 'todas' || it.dataset.prioridad === prioridad
+        const okTexto = !q || (it.dataset.text ?? '').includes(q)
+        const mostrar = okEstado && okPrioridad && okTexto
+        it.classList.toggle('hidden', !mostrar)
+        if (mostrar) visibles++
+      }
+
+      // Ocultar módulos sin coincidencias y actualizar su contador visible
+      for (const mod of modulos) {
+        const enModulo = Array.from(mod.querySelectorAll<HTMLElement>('[data-item]'))
+        const vistos = enModulo.filter((it) => !it.classList.contains('hidden')).length
+        mod.classList.toggle('hidden', vistos === 0)
+        const conteo = mod.querySelector<HTMLElement>('[data-modulo-conteo]')
+        if (conteo) {
+          const t = conteo.dataset.moduloTotal
+          conteo.textContent = vistos === Number(t) ? `${t}` : `${vistos}/${t}`
+        }
+      }
+
+      vacio?.classList.toggle('hidden', visibles > 0)
+    }
+
+    buscar?.addEventListener('input', aplicar)
+    btnsEstado.forEach((b) =>
+      b.addEventListener('click', () => {
+        estado = b.dataset.filtroEstado ?? 'todos'
+        setActivo(btnsEstado, b)
+        aplicar()
+      }),
+    )
+    btnsPrioridad.forEach((b) =>
+      b.addEventListener('click', () => {
+        prioridad = b.dataset.filtroPrioridad ?? 'todas'
+        setActivo(btnsPrioridad, b)
+        aplicar()
+      }),
+    )
+  })
+</script>
