@@ -81,11 +81,11 @@ const navLinks = [
             d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6.1 0-1.3-.5-2.4-1.3-3.2.1-.3.5-1.5-.1-3.2 0 0-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1c-.6 1.7-.2 2.9-.1 3.2A4.9 4.9 0 0 0 4 9.9c0 4.7 2.7 5.8 5.5 6.1-.6.5-1 1.4-1 2.8V21"
           ></path>
         </svg>
-        Login
+        <span class="hidden lg:inline">Login</span>
       </a>
       <a
         href="/contact"
-        class="hidden md:inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
+        class="inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -110,7 +110,7 @@ const navLinks = [
         aria-expanded="false"
         aria-controls="navbar-mobile-panel"
         aria-label="Abrir menú"
-        class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/5 text-ink-100 hover:bg-white/10 transition-colors"
+        class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/5 text-ink-100 hover:bg-white/10 transition-colors"
       >
         <svg
           id="navbar-toggle-icon-open"
@@ -148,7 +148,7 @@ const navLinks = [
   <!-- Mobile nav panel -->
   <div
     id="navbar-mobile-panel"
-    class="hidden md:hidden glass-strong rounded-3xl mt-2 p-3 flex flex-col gap-1"
+    class="hidden lg:hidden glass-strong rounded-3xl mt-2 p-3 flex flex-col gap-1"
   >
     {
       navLinks.map((link) => {
@@ -164,18 +164,12 @@ const navLinks = [
       })
     }
     <div class="h-px bg-white/10 my-1"></div>
-    <a
-      href="/login?callbackUrl=%2Fentrar"
-      class="px-4 py-2.5 rounded-full text-[13px] font-mono text-ink-100 hover:bg-white/5 transition-colors"
+    <span
+      class="flex items-center gap-2 px-4 py-2 text-[12px] font-mono text-ink-200"
     >
-      Login
-    </a>
-    <a
-      href="/contact"
-      class="inline-flex items-center justify-center h-9 px-4 mt-1 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
-    >
-      Contáctame
-    </a>
+      <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
+      Disponible
+    </span>
   </div>
 </header>
 
