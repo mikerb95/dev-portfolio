@@ -8,6 +8,7 @@ import { domainAlertState, daysUntil, type DomainAlertState } from '../../../lib
 import { sendEmail, sendPush } from '../../../lib/notify'
 import { isAllowedLogin } from '../../../lib/auth'
 import { sweepSessions } from '../../../lib/device-sessions'
+import { sweepFpRooms } from '../../../lib/fingerprint'
 
 const CRON_SECRET = import.meta.env.CRON_SECRET
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
@@ -127,6 +128,9 @@ async function runCheck() {
   // 6b) Sesiones de admin: revoca inactivas (>24h) y purga revocadas viejas.
   // Fail-open: un fallo aquí no debe tumbar el chequeo de monitores.
   await sweepSessions(now).catch((e) => console.error('[uptime-check] sweepSessions', e))
+
+  // 6c) Salas del LAB de fingerprinting: purga las vencidas (≤2h de vida).
+  await sweepFpRooms(now).catch((e) => console.error('[uptime-check] sweepFpRooms', e))
 
   // 7) Notificar (solo transiciones, no cada sondeo).
   if (events.length === 0) {
