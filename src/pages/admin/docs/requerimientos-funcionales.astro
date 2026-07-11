@@ -1,28 +1,8 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import DocsNav from '../../../components/admin/DocsNav.astro'
-import { REQUISITOS_FUNCIONALES, type Estado, type Prioridad } from '../../../data/documentacion'
-
-const ESTADO_BADGE: Record<Estado, string> = {
-  implementado: 'bg-lime/10 text-lime border-lime/30',
-  parcial: 'bg-violet/10 text-violet border-violet/30',
-  planeado: 'bg-ink-500/40 text-ink-200 border-white/10',
-}
-const ESTADO_LABEL: Record<Estado, string> = {
-  implementado: 'Implementado',
-  parcial: 'Parcial',
-  planeado: 'Planeado',
-}
-const PRIORIDAD_DOT: Record<Prioridad, string> = {
-  alta: 'bg-ember',
-  media: 'bg-violet',
-  baja: 'bg-ink-300',
-}
-const PRIORIDAD_BORDER: Record<Prioridad, string> = {
-  alta: 'border-l-ember/50',
-  media: 'border-l-violet/50',
-  baja: 'border-l-white/10',
-}
+import RequisitosView from '../../../components/admin/RequisitosView.astro'
+import { REQUISITOS_FUNCIONALES } from '../../../data/documentacion'
 
 const total = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const impl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
@@ -30,37 +10,9 @@ const impl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.esta
 
 <AdminLayout title="Requerimientos funcionales">
   <DocsNav />
-
-  <div class="max-w-3xl mb-6">
-    <p class="text-[13px] text-ink-200 leading-relaxed">
-      {total} requerimientos funcionales agrupados por módulo, con prioridad, estado real de implementación
-      y su origen en el código. {impl} de {total} ya están implementados en producción.
-    </p>
-  </div>
-
-  <div class="space-y-8">
-    {REQUISITOS_FUNCIONALES.map((modulo) => (
-      <section>
-        <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">{modulo.nombre}</h2>
-        <div class="space-y-2">
-          {modulo.items.map((r) => (
-            <div class={`rounded-xl border border-white/10 bg-white/[.025] p-3.5 flex flex-col gap-1.5 border-l-2 ${PRIORIDAD_BORDER[r.prioridad]}`}>
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORIDAD_DOT[r.prioridad]}`} title={`Prioridad ${r.prioridad}`}></span>
-                  <span class="font-mono text-[11px] text-ink-300 shrink-0">{r.id}</span>
-                  <span class="text-[13px] font-medium text-ink-50 truncate">{r.titulo}</span>
-                </div>
-                <span class={`shrink-0 text-[10.5px] font-medium px-2 py-0.5 rounded-full border ${ESTADO_BADGE[r.estado]}`}>
-                  {ESTADO_LABEL[r.estado]}
-                </span>
-              </div>
-              <p class="text-[12px] text-ink-200 leading-relaxed pl-[18px]">{r.descripcion}</p>
-              {r.origen && <p class="text-[11px] font-mono text-ink-300 pl-[18px]">{r.origen}</p>}
-            </div>
-          ))}
-        </div>
-      </section>
-    ))}
-  </div>
+  <RequisitosView
+    modulos={REQUISITOS_FUNCIONALES}
+    unidad="req. funcionales"
+    intro={`${total} requerimientos funcionales agrupados por módulo, con prioridad, estado real de implementación y su origen en el código. ${impl} de ${total} ya están implementados en producción. Filtra por estado o prioridad, o busca por ID, título o ruta.`}
+  />
 </AdminLayout>
