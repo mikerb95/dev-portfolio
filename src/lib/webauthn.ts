@@ -137,8 +137,9 @@ export async function listCredentials(login: string): Promise<StoredCredential[]
   return db.select().from(webauthnCredentials).where(eq(webauthnCredentials.login, login))
 }
 
-// hasCredentials() se consulta en el middleware en CADA request a /admin, así
-// que se cachea en memoria con TTL corto (mismo patrón que blocklist.ts).
+// hasCredentials() la consulta la página de login para decidir si mostrar el
+// botón de la llave; se cachea en memoria con TTL corto (mismo patrón que
+// blocklist.ts) para no pegarle a Turso en cada carga de /login.
 const CACHE_TTL_MS = 30_000
 const hasCredsCache = new Map<string, { value: boolean; fetchedAt: number }>()
 
@@ -146,7 +147,7 @@ export function invalidateCredentialsCache(login: string): void {
   hasCredsCache.delete(login)
 }
 
-/** ¿El login tiene al menos una llave registrada? Determina si el MFA aplica. */
+/** ¿El login tiene al menos una llave registrada? */
 export async function hasCredentials(login: string): Promise<boolean> {
   const cached = hasCredsCache.get(login)
   const now = Date.now()
@@ -161,8 +162,7 @@ export async function hasCredentials(login: string): Promise<boolean> {
     hasCredsCache.set(login, { value, fetchedAt: now })
     return value
   } catch {
-    // Fail-open: si Turso falla, no inventamos un requisito de MFA que nadie
-    // pueda cumplir y que tumbaría el panel entero.
+    // Fail-open: si Turso falla, no ocultamos el botón de GitHub por error.
     return false
   }
 }
