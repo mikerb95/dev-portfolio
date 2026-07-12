@@ -81,58 +81,43 @@ function takeChallenge(cookies: AstroCookies, kind: 'reg' | 'auth', login: strin
   }
 }
 
-// ── Cookie de MFA verificado (la que realmente abre /admin) ─────────────
-// Firmada con HMAC (no cifrada: no lleva secretos, solo la sentencia "este
-// sid pasó el step-up antes de expiresAt"). Atada al `sid` del JWT de la
-// sesión de GitHub, así que no es transferible entre sesiones/dispositivos:
-// robar la cookie de MFA sin la cookie de sesión de Auth.js no sirve de nada.
+// ── Proof firmado para el provider 'passkey' de Auth.js ─────────────────
+// finishPrimaryAuthentication() (más abajo) confirma la posesión de la llave
+// pero no crea sesión por sí sola — esa ceremonia FIDO2 vive fuera de Auth.js.
+// Empaquetamos el resultado en un proof firmado (HMAC, no cifrado: no lleva
+// secretos, solo "este login verificó su llave antes de expiresAt") y de vida
+// muy corta (30s) que el Credentials provider valida de forma síncrona en su
+// authorize(), sin repetir la criptografía FIDO2 ahí.
 
-const MFA_COOKIE = 'admin_mfa'
-const MFA_TTL_MS = 12 * 60 * 60 * 1000 // re-pedir la llave cada 12h
+const PROOF_TTL_MS = 30_000
 
-function mfaSecret(): string {
+function hmacSecret(): string {
   const s = process.env.AUTH_SECRET
-  if (!s) throw new Error('AUTH_SECRET no configurado (requerido por auth-astro y por el MFA)')
+  if (!s) throw new Error('AUTH_SECRET no configurado (requerido por auth-astro)')
   return s
 }
 
-function signMfaPayload(sid: string, expiresAtMs: number): string {
-  const payload = `${sid}.${expiresAtMs}`
-  const sig = createHmac('sha256', mfaSecret()).update(payload).digest('hex')
+/** Firma un proof de "este login verificó su llave" válido por PROOF_TTL_MS. */
+export function signPasskeyProof(login: string): string {
+  const expiresAtMs = Date.now() + PROOF_TTL_MS
+  const payload = `${login}.${expiresAtMs}`
+  const sig = createHmac('sha256', hmacSecret()).update(payload).digest('hex')
   return `${payload}.${sig}`
 }
 
-/** Marca el sid actual como verificado por MFA durante MFA_TTL_MS. */
-export function issueMfaCookie(cookies: AstroCookies, sid: string): void {
-  const expiresAtMs = Date.now() + MFA_TTL_MS
-  cookies.set(MFA_COOKIE, signMfaPayload(sid, expiresAtMs), {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: import.meta.env.PROD,
-    maxAge: MFA_TTL_MS / 1000,
-  })
-}
-
-/** ¿El sid actual ya pasó el step-up y sigue vigente? Verificación constant-time. */
-export function hasMfaCookie(cookies: AstroCookies, sid: string): boolean {
-  const raw = cookies.get(MFA_COOKIE)?.value
-  if (!raw) return false
-  const parts = raw.split('.')
-  if (parts.length !== 3) return false
-  const [cookieSid, expStr, sig] = parts
-  if (cookieSid !== sid) return false
+/** Verifica el proof (firma + vigencia) y devuelve el login, o null si no es válido. */
+export function verifyPasskeyProof(proof: string | undefined | null): string | null {
+  if (!proof) return null
+  const parts = proof.split('.')
+  if (parts.length !== 3) return null
+  const [login, expStr, sig] = parts
   const expiresAtMs = Number(expStr)
-  if (!Number.isFinite(expiresAtMs) || Date.now() > expiresAtMs) return false
-  const expected = createHmac('sha256', mfaSecret()).update(`${cookieSid}.${expStr}`).digest('hex')
+  if (!login || !Number.isFinite(expiresAtMs) || Date.now() > expiresAtMs) return null
+  const expected = createHmac('sha256', hmacSecret()).update(`${login}.${expStr}`).digest('hex')
   const a = Buffer.from(sig, 'hex')
   const b = Buffer.from(expected, 'hex')
-  if (a.length !== b.length) return false
-  return timingSafeEqual(a, b)
-}
-
-export function clearMfaCookie(cookies: AstroCookies): void {
-  cookies.delete(MFA_COOKIE, { path: '/' })
+  if (a.length !== b.length) return null
+  return timingSafeEqual(a, b) ? login : null
 }
 
 // ── CRUD de credenciales ──────────────────────────────────────────────────
