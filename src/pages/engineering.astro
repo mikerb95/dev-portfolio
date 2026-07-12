@@ -342,6 +342,10 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
                 <div class="text-[10px] text-ink-500 mt-3 pt-2 border-t border-white/5">
                   Medido con la librería oficial <span class="font-mono">web-vitals</span> en el navegador de cada visitante. Sin cookies.
                 </div>
+                <div class="live-strip flex items-center gap-1.5 text-[10px] font-mono text-ink-400 mt-2" data-live="vitals">
+                  <span class="live-dot"></span>
+                  <span class="live-text">Verificando en vivo…</span>
+                </div>
               </Fragment>
             </CardPopover>
           ))}
@@ -429,6 +433,10 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
               Ver run en GitHub Actions →
             </a>
           )}
+          <div class="live-strip flex items-center gap-1.5 text-[10px] font-mono text-ink-400 mt-3 pt-2 border-t border-white/5" data-live="ci">
+            <span class="live-dot"></span>
+            <span class="live-text">Verificando en vivo…</span>
+          </div>
         </Fragment>
       </CardPopover>
 
@@ -474,6 +482,10 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
               ))}
             </div>
           )}
+          <div class="live-strip flex items-center gap-1.5 text-[10px] font-mono text-ink-400 mt-3 pt-2 border-t border-white/5" data-live="uptime">
+            <span class="live-dot"></span>
+            <span class="live-text">Verificando en vivo…</span>
+          </div>
         </Fragment>
       </CardPopover>
     </section>
@@ -502,3 +514,154 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
     </section>
   </div>
 </BaseLayout>
+
+<style>
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-lime);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-lime) 60%, transparent);
+    animation: live-pulse 2s ease-out infinite;
+    flex-shrink: 0;
+  }
+  .live-strip.is-error .live-dot {
+    background: var(--color-ember);
+    animation: none;
+  }
+  @keyframes live-pulse {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-lime) 55%, transparent);
+    }
+    70% {
+      box-shadow: 0 0 0 5px transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  // Prueba de vida: al abrir cualquier popover, el navegador consulta
+  // /api/engineering/live y muestra cuándo llegó la última muestra/sondeo/run,
+  // con un tick por segundo. Así el visitante VE que los datos no están
+  // harcodeados: la consulta sale de su propio navegador contra la DB.
+  type LiveData = {
+    ts: number
+    vitals: { lastAt: number | null; lastMetric: string | null; count24h: number }
+    uptime: {
+      lastAt: number | null
+      lastOk: boolean | null
+      lastStatusCode: number | null
+      lastMs: number | null
+      lastName: string | null
+      count24h: number
+    }
+    ci: { lastAt: number | null; lastConclusion: string | null; lastSha: string | null }
+  }
+
+  let data: LiveData | null = null
+  let fetchedAt = 0
+  let inflight: Promise<void> | null = null
+  let ticker: number | null = null
+
+  const nf = new Intl.NumberFormat('es-CO')
+
+  function ago(ts: number | null): string {
+    if (ts == null) return '—'
+    const s = Math.max(0, Math.round((Date.now() - ts) / 1000))
+    if (s < 60) return `hace ${s} s`
+    const m = Math.floor(s / 60)
+    if (m < 60) return `hace ${m} min`
+    const h = Math.floor(m / 60)
+    return h < 48 ? `hace ${h} h` : `hace ${Math.floor(h / 24)} d`
+  }
+
+  function render() {
+    const strips = document.querySelectorAll<HTMLElement>('.live-strip')
+    strips.forEach((strip) => {
+      const text = strip.querySelector<HTMLElement>('.live-text')
+      if (!text) return
+      if (!data) return
+      strip.classList.remove('is-error')
+      const kind = strip.dataset.live
+      if (kind === 'vitals') {
+        const v = data.vitals
+        text.textContent =
+          v.lastAt == null
+            ? `Consulta en vivo ${ago(fetchedAt)} · sin muestras aún`
+            : `Consulta en vivo ${ago(fetchedAt)} · última muestra ${v.lastMetric} ${ago(v.lastAt)} · ${nf.format(v.count24h)} en 24 h`
+      } else if (kind === 'uptime') {
+        const u = data.uptime
+        text.textContent =
+          u.lastAt == null
+            ? `Consulta en vivo ${ago(fetchedAt)} · sin sondeos aún`
+            : `Consulta en vivo ${ago(fetchedAt)} · último sondeo ${ago(u.lastAt)} (${u.lastName ?? '?'} · ${u.lastStatusCode ?? '—'} · ${u.lastMs ?? '—'} ms) · ${nf.format(u.count24h)} en 24 h`
+      } else if (kind === 'ci') {
+        const c = data.ci
+        text.textContent =
+          c.lastAt == null
+            ? `Consulta en vivo ${ago(fetchedAt)} · sin runs aún`
+            : `Consulta en vivo ${ago(fetchedAt)} · último run ${ago(c.lastAt)} (${c.lastConclusion ?? '?'} · ${c.lastSha ?? ''})`
+      }
+    })
+  }
+
+  function markError() {
+    document.querySelectorAll<HTMLElement>('.live-strip').forEach((strip) => {
+      strip.classList.add('is-error')
+      const text = strip.querySelector<HTMLElement>('.live-text')
+      if (text) text.textContent = 'No se pudo verificar en vivo ahora mismo'
+    })
+  }
+
+  function refresh() {
+    // Reutiliza la respuesta durante 20s para no martillar la DB al pasear el cursor.
+    if (inflight) return inflight
+    if (data && Date.now() - fetchedAt < 20_000) return Promise.resolve()
+    inflight = fetch('/api/engineering/live', { headers: { Accept: 'application/json' } })
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status))
+        return r.json()
+      })
+      .then((json: LiveData) => {
+        data = json
+        fetchedAt = Date.now()
+        render()
+      })
+      .catch(() => markError())
+      .finally(() => {
+        inflight = null
+      })
+    return inflight
+  }
+
+  function startTicker() {
+    if (ticker != null) return
+    ticker = window.setInterval(() => {
+      const anyOpen = document.querySelector('.card-pop.is-open')
+      if (!anyOpen) {
+        if (ticker != null) window.clearInterval(ticker)
+        ticker = null
+        return
+      }
+      render()
+    }, 1000)
+  }
+
+  document.querySelectorAll<HTMLElement>('.card-pop').forEach((el) => {
+    const activate = () => {
+      refresh()
+      startTicker()
+    }
+    el.addEventListener('mouseenter', activate)
+    el.addEventListener('focusin', activate)
+    el.addEventListener('click', activate)
+  })
+</script>

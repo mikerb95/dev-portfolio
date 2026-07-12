@@ -469,3 +469,34 @@ export const securityAnomalies = sqliteTable('security_anomalies', {
   notified: integer('notified', { mode: 'boolean' }).notNull().default(false),
   acknowledged: integer('acknowledged', { mode: 'boolean' }).notNull().default(false),
 })
+
+// ── LAB · Fingerprinting (demo educativa) ───────────────────────────────────
+// Sala efímera: se crea con QR, expira sola (≤2h) y el cron la purga junto con
+// sus dispositivos. Nada de esto sobrevive a la demo — es el punto ético.
+
+export const fpRooms = sqliteTable('fp_rooms', {
+  id: text('id').primaryKey(), // slug corto, va en la URL del QR
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  expiresIdx: index('fp_rooms_expires_idx').on(t.expiresAt),
+}))
+
+export const fpDevices = sqliteTable('fp_devices', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  roomId: text('room_id').notNull().references(() => fpRooms.id, { onDelete: 'cascade' }),
+  // sha-256 del fingerprint combinado: identifica al dispositivo sin cookies.
+  deviceHash: text('device_hash').notNull(),
+  label: integer('label').notNull(), // "Dispositivo #N" dentro de la sala
+  ownFp: text('own_fp'), // JSON: señales del recolector propio (desglose educativo)
+  libFpHash: text('lib_fp_hash'), // hash de FingerprintJS, para contrastar precisión
+  entropyBits: real('entropy_bits'),
+  behaviorSig: text('behavior_sig'), // JSON: cadencia de tecleo, movimiento, orientación
+  // Veces que este mismo hash volvió a hacer join en la sala (el "wow": incógnito/borrar cookies no lo evade).
+  revisits: integer('revisits').notNull().default(0),
+  firstSeen: integer('first_seen', { mode: 'timestamp' }).notNull(),
+  lastSeen: integer('last_seen', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  roomIdx: index('fp_devices_room_idx').on(t.roomId),
+  hashIdx: index('fp_devices_hash_idx').on(t.deviceHash),
+}))

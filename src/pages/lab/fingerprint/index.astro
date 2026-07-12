@@ -1,0 +1,88 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+---
+
+<BaseLayout
+  title="Laboratorio de Fingerprinting — CodeByMike"
+  description="Demo educativa en vivo: cómo un sitio puede reconocer tu dispositivo sin cookies, solo con las señales que tu navegador expone."
+  image="/og-default.png"
+>
+  <div class="max-w-[900px] mx-auto px-6 md:px-12 pt-32 pb-24">
+    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver
+    </a>
+
+    <header class="mb-12">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/lab/fingerprint</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Demo en vivo</span>
+      </div>
+      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-5">
+        Sala de<br/>espejos.
+      </h1>
+      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
+        Un laboratorio de <strong class="text-ink-50">device fingerprinting</strong>: escanea el QR desde
+        tu celular, entra a la sala y observa cómo el tablero te reconoce solo por las señales que tu
+        navegador expone — sin cookies, sin login. Luego intenta escapar: abre incógnito o borra
+        cookies y vuelve a entrar. El punto de la demo es que te va a reconocer igual.
+      </p>
+    </header>
+
+    <section class="rounded-2xl glass p-6 mb-8">
+      <h2 class="text-[13px] font-medium text-ink-50 mb-3">Qué vamos a recolectar</h2>
+      <ul class="space-y-2 text-[13px] text-ink-100 leading-relaxed list-disc list-inside">
+        <li>Render de canvas 2D y GPU (WebGL vendor/renderer)</li>
+        <li>Huella de tu AudioContext</li>
+        <li>Fuentes instaladas, resolución y densidad de pantalla</li>
+        <li>Zona horaria, idioma, núcleos de CPU reportados</li>
+        <li>Patrones de movimiento de mouse y cadencia de tecleo (solo mientras estés en la sala)</li>
+      </ul>
+      <p class="text-[12px] text-ink-400 mt-4 leading-relaxed">
+        Nada de esto se guarda de forma permanente: cada sala vive un máximo de 2 horas y se purga
+        sola. No hay tracking fuera de esta demo ni se combina con ningún otro dato del sitio.
+      </p>
+    </section>
+
+    <section class="rounded-2xl glass p-6 mb-10">
+      <label class="flex items-start gap-3 text-[13px] text-ink-100 leading-relaxed cursor-pointer">
+        <input id="consent" type="checkbox" class="mt-1 accent-cyan" />
+        Entiendo qué se recolecta y para qué se usa esta demo (ver arriba), y quiero participar.
+      </label>
+    </section>
+
+    <button
+      id="create-room"
+      disabled
+      class="w-full h-14 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100 transition-colors"
+    >
+      Crear sala y generar QR
+    </button>
+    <p id="status" class="text-[12px] font-mono text-ink-400 mt-3 min-h-4"></p>
+  </div>
+</BaseLayout>
+
+<script>
+  const consent = document.getElementById('consent') as HTMLInputElement
+  const btn = document.getElementById('create-room') as HTMLButtonElement
+  const status = document.getElementById('status')!
+
+  consent.addEventListener('change', () => {
+    btn.disabled = !consent.checked
+  })
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true
+    status.textContent = 'Creando sala…'
+    try {
+      const res = await fetch('/api/lab/fp/room', { method: 'POST' })
+      if (!res.ok) throw new Error('no se pudo crear la sala')
+      const data = await res.json()
+      location.href = `/lab/fingerprint/${data.id}/board`
+    } catch {
+      status.textContent = 'Error creando la sala, intenta de nuevo.'
+      btn.disabled = false
+    }
+  })
+</script>

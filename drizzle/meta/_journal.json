@@ -92,6 +92,13 @@
       "when": 1783628475469,
       "tag": "0012_sad_trish_tilby",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1783797767675,
+      "tag": "0013_perpetual_talon",
+      "breakpoints": true
     }
   ]
 }
