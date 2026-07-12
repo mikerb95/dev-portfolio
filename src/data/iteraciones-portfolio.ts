@@ -332,7 +332,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-FP-02', titulo: 'Como visitante, quiero entender qué me delata: recolector propio contrastado con una librería y una capa de comportamiento',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-07-11', tags: ['fingerprint', 'híbrido', 'fase-6'],
+        fecha: '2026-07-11', tags: ['fingerprint', 'híbrido', 'fase-7'],
         dod: [
           ok('Recolector propio: canvas, WebGL, AudioContext, fuentes, pantalla, zona horaria, CPU/memoria, idiomas, touch y UA.'),
           ok('Segunda opinión con FingerprintJS (open source): su visitorId se muestra junto al hash propio en el tablero.'),
