@@ -233,37 +233,37 @@ export async function finishRegistration(
   return { ok: true }
 }
 
-// ── Autenticación (step-up: probar posesión) ──────────────────────────────
+// ── Autenticación (login passwordless: probar posesión de la llave) ──────
+// A diferencia del registro, aquí NO hay sesión de GitHub previa: no se
+// conoce el login de antemano. Se apoya en llaves discoverable (resident
+// key) — el navegador ofrece las credenciales guardadas para este rpID y el
+// usuario elige/toca la suya; el login se descubre a partir del id devuelto.
 
-export async function buildAuthenticationOptions(login: string, cookies: AstroCookies, requestUrl: string) {
+export async function buildPrimaryAuthenticationOptions(cookies: AstroCookies, requestUrl: string) {
   const { rpID } = rpConfig(requestUrl)
-  const existing = await listCredentials(login)
   const options = await generateAuthenticationOptions({
     rpID,
     userVerification: 'preferred',
-    allowCredentials: existing.map((c) => ({
-      id: c.id,
-      transports: c.transports ? (JSON.parse(c.transports) as AuthenticatorTransportFuture[]) : undefined,
-    })),
+    // Sin allowCredentials: el autenticador ofrece sus llaves discoverable
+    // para este rpID (flujo usernameless/passwordless).
   })
-  setChallenge(cookies, { challenge: options.challenge, login, kind: 'auth' })
+  setChallenge(cookies, { challenge: options.challenge, login: '', kind: 'auth' })
   return options
 }
 
-export async function finishAuthentication(
-  login: string,
+export async function finishPrimaryAuthentication(
   response: AuthenticationResponseJSON,
   cookies: AstroCookies,
   requestUrl: string
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; login: string } | { ok: false; error: string }> {
   const { rpID, origin } = rpConfig(requestUrl)
-  const expectedChallenge = takeChallenge(cookies, 'auth', login)
+  const expectedChallenge = takeChallenge(cookies, 'auth', '')
   if (!expectedChallenge) return { ok: false, error: 'challenge expirado o inválido, intenta de nuevo' }
 
   const [row] = await db
     .select()
     .from(webauthnCredentials)
-    .where(and(eq(webauthnCredentials.id, response.id), eq(webauthnCredentials.login, login)))
+    .where(eq(webauthnCredentials.id, response.id))
     .limit(1)
   if (!row) return { ok: false, error: 'llave no reconocida' }
 
@@ -285,7 +285,8 @@ export async function finishAuthentication(
     .update(webauthnCredentials)
     .set({ counter: verification.authenticationInfo.newCounter, lastUsedAt: new Date() })
     .where(eq(webauthnCredentials.id, row.id))
-  return { ok: true }
+
+  return { ok: true, login: row.login }
 }
 
 export async function deleteCredential(login: string, id: string): Promise<boolean> {
