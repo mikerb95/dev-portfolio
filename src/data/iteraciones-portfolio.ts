@@ -275,15 +275,49 @@ export const ITERACIONES: Iteracion[] = [
   },
   // ───────────────────────────────────────────────────────────────────────
   {
+    id: 'pf-ingenieria',
+    fase: 'Fase 6 · Panel de ingeniería',
+    nombre: 'Página pública de ingeniería con métricas verificables y prueba de vida',
+    rango: '9 – 11 jul 2026',
+    ghSince: '2026-07-09',
+    ghUntil: '2026-07-11',
+    commits: 20,
+    resumen:
+      'Panel público /engineering que reúne solo señales verificables de producción: Core Web Vitals p75 de usuarios reales (RUM), resultado del pipeline CI (tests, cobertura, duración) y disponibilidad agregada del monitoreo. Cada card explica al hover de dónde sale el número y contra qué umbral se compara —nada de badges decorativos. Se le suma una prueba de vida que consulta datos frescos desde el navegador para demostrar que nada está hardcodeado.',
+    historias: [
+      {
+        id: 'PF-EN-01', titulo: 'Como visitante técnico, quiero un panel público con métricas de ingeniería reales (Web Vitals, CI, disponibilidad)',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-09', tags: ['engineering', 'observabilidad', 'público', 'fase-6'],
+        dod: [
+          ok('/engineering muestra Core Web Vitals p75 de usuarios reales (RUM) con p50/p95, distribución de rating, tendencia 7d y peor ruta por métrica.'),
+          ok('Cards de pipeline CI (tests, cobertura, duración) y disponibilidad agregada, alimentadas de ci_runs y monitor_checks.'),
+          ok('CardPopover en cada métrica explica el origen del dato y el umbral contra el que se evalúa; página server-rendered con datos de producción.'),
+        ],
+      },
+      {
+        id: 'PF-EN-02', titulo: 'Como visitante técnico, quiero comprobar que las métricas de /engineering están vivas y no hardcodeadas',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['engineering', 'verificación', 'fase-6'],
+        dod: [
+          ok('Endpoint /api/engineering/live devuelve marcas de tiempo frescas (última muestra RUM, último sondeo, último run CI) más el reloj del servidor.'),
+          ok('Las cards consultan la prueba de vida al abrirse e indican en vivo la frescura; solo expone metadatos, nunca URLs internas ni configuración.'),
+          pend('Merge del PR #2 a main y despliegue a producción de la verificación en vivo.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
     id: 'pf-lab-fingerprint',
-    fase: 'Fase 6 · Lab educativo',
-    nombre: 'Laboratorio de fingerprinting en vivo y prueba de vida en /engineering',
+    fase: 'Fase 7 · Lab educativo',
+    nombre: 'Laboratorio de fingerprinting en vivo (Sala de espejos)',
     rango: '11 jul 2026',
     ghSince: '2026-07-11',
     ghUntil: '2026-07-11',
-    commits: 25,
+    commits: 21,
     resumen:
-      'Demo educativa de device fingerprinting: varios dispositivos entran a una sala por QR y un tablero en vivo los reconoce por las señales que expone el navegador —sin cookies ni login— demostrando que el incógnito no evade la re-identificación. Recolector propio contrastado con FingerprintJS, capa de comportamiento y cierre pedagógico sobre defensas. En el mismo sprint, las cards de /engineering ganan una prueba de vida que consulta datos frescos para demostrar que nada está hardcodeado. Entregado en la rama lab-fingerprinting (PR #2).',
+      'Demo educativa de device fingerprinting: varios dispositivos entran a una sala por QR y un tablero en vivo los reconoce por las señales que expone el navegador —sin cookies ni login— demostrando que el incógnito no evade la re-identificación. Recolector propio contrastado con FingerprintJS, capa de comportamiento y cierre pedagógico sobre defensas. Entregado en la rama lab-fingerprinting (PR #2).',
     historias: [
       {
         id: 'PF-FP-01', titulo: 'Como visitante, quiero escanear un QR y ver cómo un tablero reconoce mi dispositivo en vivo sin cookies',
