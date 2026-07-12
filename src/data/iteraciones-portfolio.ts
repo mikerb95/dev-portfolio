@@ -273,6 +273,61 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-lab-fingerprint',
+    fase: 'Fase 6 · Lab educativo',
+    nombre: 'Laboratorio de fingerprinting en vivo y prueba de vida en /engineering',
+    rango: '11 jul 2026',
+    ghSince: '2026-07-11',
+    ghUntil: '2026-07-11',
+    commits: 25,
+    resumen:
+      'Demo educativa de device fingerprinting: varios dispositivos entran a una sala por QR y un tablero en vivo los reconoce por las señales que expone el navegador —sin cookies ni login— demostrando que el incógnito no evade la re-identificación. Recolector propio contrastado con FingerprintJS, capa de comportamiento y cierre pedagógico sobre defensas. En el mismo sprint, las cards de /engineering ganan una prueba de vida que consulta datos frescos para demostrar que nada está hardcodeado. Entregado en la rama lab-fingerprinting (PR #2).',
+    historias: [
+      {
+        id: 'PF-FP-01', titulo: 'Como visitante, quiero escanear un QR y ver cómo un tablero reconoce mi dispositivo en vivo sin cookies',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['fingerprint', 'público', 'fase-6'],
+        dod: [
+          ok('Landing con consentimiento crea sala + QR; el tablero (/board) refleja los dispositivos por polling corto (Vercel no soporta WebSocket).'),
+          ok('Al reentrar en incógnito o borrar cookies, el contador de "revisitas" sube: mismo dispositivo re-identificado (validado por smoke test de API).'),
+          pend('Prueba end-to-end en navegador real del ciclo crear → escanear → revisita (canvas/WebGL/audio solo producen valores en un browser).'),
+        ],
+      },
+      {
+        id: 'PF-FP-02', titulo: 'Como visitante, quiero entender qué me delata: recolector propio contrastado con una librería y una capa de comportamiento',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['fingerprint', 'híbrido', 'fase-6'],
+        dod: [
+          ok('Recolector propio: canvas, WebGL, AudioContext, fuentes, pantalla, zona horaria, CPU/memoria, idiomas, touch y UA.'),
+          ok('Segunda opinión con FingerprintJS (open source): su visitorId se muestra junto al hash propio en el tablero.'),
+          ok('Entropía dinámica: cada señal bloqueada/vacía suma 0 bits; se declara como estimación educativa (EFF Panopticlick / AmIUnique), no medición poblacional.'),
+          ok('Capa de comportamiento: cadencia de tecleo, velocidad de mouse y giroscopio (con permiso iOS 13+).'),
+        ],
+      },
+      {
+        id: 'PF-FP-03', titulo: 'Como responsable del sitio, quiero que la demo sea ética y segura: efímera, consentida y con defensas anti-abuso',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['fingerprint', 'privacidad', 'seguridad', 'fase-6'],
+        dod: [
+          ok('Salas efímeras: TTL de 2h purgadas por el cron (sweepFpRooms), sin PII persistente; consentimiento explícito antes de recolectar.'),
+          ok('Rate limiting durable por endpoint (beat reescopado por dispositivo para eventos con muchos móviles tras una NAT).'),
+          ok('entropyBits acotado a 0–64 en servidor y valores escapados en el DOM (el UA es controlable).'),
+          ok('Cierre pedagógico: por qué el incógnito no protege y cómo defenderse (Tor, resistFingerprinting).'),
+        ],
+      },
+      {
+        id: 'PF-EN-01', titulo: 'Como visitante técnico, quiero comprobar que las métricas de /engineering son reales y no están hardcodeadas',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['engineering', 'observabilidad', 'fase-6'],
+        dod: [
+          ok('Endpoint /api/engineering/live devuelve marcas de tiempo frescas (última muestra RUM, último sondeo, último run CI) más el reloj del servidor.'),
+          ok('Las cards de /engineering consultan la prueba de vida al abrirse; solo expone metadatos de frescura, nunca URLs internas ni configuración.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
