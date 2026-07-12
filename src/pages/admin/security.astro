@@ -355,6 +355,37 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
       })
     })
 
+    document.querySelectorAll<HTMLButtonElement>('.bulk-block-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const ttlSec = Number(btn.dataset.bulkTtl)
+        const label = ttlSec === 604800 ? '1 semana' : '24 horas'
+        if (!confirm(`Se bloquearán TODAS las IPs con eventos de seguridad de los últimos 7 días (cualquier severidad) durante ${label}. Las IPs en la allowlist quedan a salvo. ¿Continuar?`)) return
+        const buttons = document.querySelectorAll<HTMLButtonElement>('.bulk-block-btn')
+        buttons.forEach((b) => (b.disabled = true))
+        try {
+          const res = await fetch('/api/admin/security', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'block-all', ttlSec }),
+          })
+          const data = await res.json().catch(() => ({}))
+          if (res.ok) {
+            const parts = [`${data.blocked} IP(s) bloqueada(s)`]
+            if (data.skipped) parts.push(`${data.skipped} ya bloqueada(s)`)
+            if (data.overflow) parts.push(`${data.overflow} sin bloquear por tope`)
+            alert(parts.join(' · '))
+            location.reload()
+          } else {
+            alert(data.error ?? 'Error en el bloqueo masivo')
+            buttons.forEach((b) => (b.disabled = false))
+          }
+        } catch {
+          alert('Error de red en el bloqueo masivo')
+          buttons.forEach((b) => (b.disabled = false))
+        }
+      })
+    })
+
     const bf = document.getElementById('block-form') as HTMLFormElement | null
     bf?.addEventListener('submit', async (ev) => {
       ev.preventDefault()
