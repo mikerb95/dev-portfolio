@@ -322,7 +322,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-FP-01', titulo: 'Como visitante, quiero escanear un QR y ver cómo un tablero reconoce mi dispositivo en vivo sin cookies',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-07-11', tags: ['fingerprint', 'público', 'fase-6'],
+        fecha: '2026-07-11', tags: ['fingerprint', 'público', 'fase-7'],
         dod: [
           ok('Landing con consentimiento crea sala + QR; el tablero (/board) refleja los dispositivos por polling corto (Vercel no soporta WebSocket).'),
           ok('Al reentrar en incógnito o borrar cookies, el contador de "revisitas" sube: mismo dispositivo re-identificado (validado por smoke test de API).'),
