@@ -27,7 +27,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const body = await request.json().catch(() => null)
   if (!body) return new Response(JSON.stringify({ error: 'JSON inválido' }), { status: 400 })
 
-  const result = await finishAuthentication(login!, body, cookies)
+  const result = await finishAuthentication(login!, body, cookies, request.url)
   if (!result.ok) {
     return new Response(JSON.stringify({ error: result.error }), { status: 400 })
   }
