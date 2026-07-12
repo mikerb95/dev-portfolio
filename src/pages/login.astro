@@ -36,7 +36,6 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       <section class="login-card glass-strong">
         <span class="login-kicker">/auth</span>
         <h1 class="login-title">Entrar al panel</h1>
-        <p class="login-sub">Elige cómo quieres identificarte. Cualquiera de las dos basta.</p>
 
         <div class="login-options">
           <button id="btn-github" class="login-btn login-btn-primary" type="button">
@@ -78,8 +77,7 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       .login-kicker {
         font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: #00f2ff;
       }
-      .login-title { margin: 8px 0 6px; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: #e7e7ec; }
-      .login-sub { font-size: 12.5px; color: #85858f; line-height: 1.5; margin-bottom: 26px; }
+      .login-title { margin: 8px 0 26px; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: #e7e7ec; }
 
       .login-options { display: grid; gap: 12px; }
       .login-btn {
