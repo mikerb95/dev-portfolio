@@ -19,7 +19,9 @@ export function isRateLimitablePath(pathname: string): boolean {
 export function isAuthPath(pathname: string): boolean {
   return (
     pathname.startsWith('/api/auth/') ||
-    pathname.startsWith('/api/auth-webauthn/') ||
+    // Step-up de WebAuthn (segundo factor): fuera de /api/auth/ a propósito,
+    // para no chocar con la ruta catch-all que auth-astro monta en /api/auth/*.
+    pathname.startsWith('/api/mfa/') ||
     pathname === '/login' ||
     pathname === '/entrar' ||
     pathname === '/entrar/verificar'
