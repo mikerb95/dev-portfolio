@@ -28,7 +28,10 @@ export const POST: APIRoute = async ({ params, request }) => {
   }
 
   const deviceHash = typeof body.hash === 'string' ? body.hash.slice(0, 128) : null
-  const entropyBits = typeof body.entropyBits === 'number' ? body.entropyBits : 0
+  // No confiamos en la entropía que reporta el cliente: la acotamos a un rango
+  // razonable (0–64 bits) antes de guardarla.
+  const rawBits = typeof body.entropyBits === 'number' && Number.isFinite(body.entropyBits) ? body.entropyBits : 0
+  const entropyBits = Math.max(0, Math.min(64, rawBits))
   const libFpHash = typeof body.libFpHash === 'string' ? body.libFpHash.slice(0, 128) : null
   const ownFp = Array.isArray(body.signals) ? body.signals : null
 
