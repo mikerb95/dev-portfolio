@@ -36,15 +36,14 @@ import { db } from '../db'
 import { webauthnCredentials } from '../db/schema'
 
 // ── Relying Party ────────────────────────────────────────────────────────
+// rpID/origin se derivan del Host real de cada request en vez de hardcodear
+// dominio o puerto: así funcionan igual en prod (codebymike.tech), preview
+// deployments de Vercel y `astro dev` en cualquier puerto libre. El origin
+// que manda el navegador en la ceremonia debe calzar exacto con este valor.
 
-const PROD_HOST = 'codebymike.tech'
-
-function rpConfig(): { rpID: string; rpName: string; origin: string } {
-  const override = process.env.WEBAUTHN_RP_ID
-  const isProd = import.meta.env.PROD
-  const rpID = override ?? (isProd ? PROD_HOST : 'localhost')
-  const origin = isProd ? `https://${rpID}` : `http://${rpID}:4321`
-  return { rpID, rpName: 'CodeByMike Admin', origin }
+function rpConfig(requestUrl: string): { rpID: string; rpName: string; origin: string } {
+  const url = new URL(requestUrl)
+  return { rpID: url.hostname, rpName: 'CodeByMike Admin', origin: url.origin }
 }
 
 // ── Cookies de ceremonia (challenge) ─────────────────────────────────────
@@ -184,8 +183,8 @@ export async function hasCredentials(login: string): Promise<boolean> {
 
 // ── Registro (alta de una llave nueva) ────────────────────────────────────
 
-export async function buildRegistrationOptions(login: string, cookies: AstroCookies) {
-  const { rpID, rpName } = rpConfig()
+export async function buildRegistrationOptions(login: string, cookies: AstroCookies, requestUrl: string) {
+  const { rpID, rpName } = rpConfig(requestUrl)
   const existing = await listCredentials(login)
   const options = await generateRegistrationOptions({
     rpName,
