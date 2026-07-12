@@ -353,6 +353,49 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-passwordless',
+    fase: 'Fase 8 · Login passwordless',
+    nombre: 'Login sin contraseña con llaves de seguridad (WebAuthn/FIDO2)',
+    rango: '11 – 12 jul 2026',
+    ghSince: '2026-07-11',
+    ghUntil: '2026-07-12',
+    commits: 20,
+    resumen:
+      'Segunda puerta de entrada a /admin, independiente de GitHub OAuth: llaves FIDO2 (YubiKey) como credenciales discoverable/resident. Registro de llaves gestionado desde /admin/passkeys (alta, nickname, revocación) y login usernameless que identifica la cuenta a partir de la llave tocada, con proof firmado de vida corta para que Auth.js emita la sesión.',
+    historias: [
+      {
+        id: 'PF-PL-01', titulo: 'Como administrador, quiero registrar y gestionar mis llaves de seguridad desde el panel',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['webauthn', 'passkey', 'fase-8'],
+        dod: [
+          ok('Tabla webauthnCredentials (credentialID, publicKey, counter, transports, nickname) con índice por login.'),
+          ok('/admin/passkeys lista, añade (con nickname) y revoca llaves; excludeCredentials evita re-registrar la misma llave física.'),
+          ok('API /api/admin/webauthn/{registration,credentials} protegida por el gate de sesión+allowlist existente.'),
+        ],
+      },
+      {
+        id: 'PF-PL-02', titulo: 'Como administrador, quiero entrar a /admin tocando mi llave, sin pasar por GitHub',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-12', tags: ['webauthn', 'passkey', 'auth', 'fase-8'],
+        dod: [
+          ok('Flujo usernameless (sin allowCredentials): el navegador ofrece las llaves discoverable del rpID y el login se descubre por el credentialID devuelto.'),
+          ok('Proof HMAC de 30s (signPasskeyProof/verifyPasskeyProof) conecta la ceremonia FIDO2 con el provider "passkey" de Auth.js, sin repetir la criptografía ahí.'),
+          ok('rpID/origin derivados del Host de cada request (prod, previews de Vercel y dev en cualquier puerto), no hardcodeados.'),
+        ],
+      },
+      {
+        id: 'PF-PL-03', titulo: 'Como administrador, quiero que el selector de llaves del navegador distinga cada YubiKey por su nombre',
+        tipo: 'bug', valor: 'medio', col: 'cola', par: 'MR', agente: 'Claude',
+        tags: ['webauthn', 'passkey', 'ux', 'pendiente'],
+        dod: [
+          pend('Detectado en uso real (2026-07-12): con 2+ llaves registradas, el diálogo nativo "Choose a passkey" de Chrome muestra "mikerb95 / USB security key" repetido para cada una, en vez del nickname (YubiKey 1, YubiKey 2) — porque userDisplayName se fija en generateRegistrationOptions con el login, no con un nombre por llave, y queda grabado en el hardware al registrar.'),
+          pend('Fix: pasar un userDisplayName distinto por llave (ej. incluir el nickname) en buildRegistrationOptions, y re-registrar las llaves existentes para que tomen el nuevo nombre — el cambio no aplica retroactivo a credenciales ya grabadas.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
