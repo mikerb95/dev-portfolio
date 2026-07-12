@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
   if (!session || !isAllowedLogin(login)) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 403 })
   }
-  const options = await buildRegistrationOptions(login!, cookies)
+  const options = await buildRegistrationOptions(login!, cookies, request.url)
   return new Response(JSON.stringify(options), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
