@@ -179,9 +179,7 @@ export async function blockAllAttackerIps(
     )
     .groupBy(securityEvents.ip)
 
-  const candidates = rows
-    .map((r) => r.ip)
-    .filter((ip): ip is string => !!ip && !isAllowlisted(ip))
+  const ips = rows.map((r) => r.ip).filter((ip): ip is string => !!ip)
 
   // Bloqueos activos: para excluirlos del recuento y para el tope.
   const active = await db
@@ -190,12 +188,11 @@ export async function blockAllAttackerIps(
     .where(sql`${blockedIps.expiresAt} > ${Math.floor(now.getTime() / 1000)}`)
   const alreadyBlocked = new Set(active.map((a) => a.ip))
 
-  const pending = candidates.filter((ip) => !alreadyBlocked.has(ip))
-  const skipped = candidates.length - pending.length
-
-  const capacity = Math.max(0, maxActiveBlocks - active.length)
-  const toApply = pending.slice(0, capacity)
-  const overflow = pending.length - toApply.length
+  const { toApply, candidates, skipped, overflow } = selectBulkBlockIps(ips, {
+    alreadyBlocked,
+    capacity: maxActiveBlocks - active.length,
+    allowlisted: isAllowlisted,
+  })
 
   let blocked = 0
   for (const ip of toApply) {
@@ -206,5 +203,5 @@ export async function blockAllAttackerIps(
     if (ok) blocked++
   }
 
-  return { candidates: candidates.length, blocked, skipped, overflow }
+  return { candidates, blocked, skipped, overflow }
 }
