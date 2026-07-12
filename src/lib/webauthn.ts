@@ -17,7 +17,7 @@
 //    fuera de /admin, porque se ejecuta ANTES de que la cookie de MFA exista.
 //    Cada handler valida la sesión de GitHub + allowlist por su cuenta.
 
-import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { eq, and } from 'drizzle-orm'
 import type { AstroCookies } from 'astro'
 import {
