@@ -124,6 +124,27 @@ function fontsSignal(): string {
   }
 }
 
+// Valores que significan "esta señal no aportó nada" → 0 bits de entropía.
+const ABSENT = new Set(['', '?', 'error', 'blocked', 'no-webgl', 'no-canvas', 'no-canvas-ctx'])
+function bitsFor(value: string, weight: number): number {
+  return ABSENT.has(value.trim()) ? 0 : weight
+}
+
+/**
+ * FingerprintJS (open source) como segunda opinión: su `visitorId` se compara
+ * contra nuestro hash propio. Si la librería no carga, no rompe la demo.
+ */
+async function libFingerprint(): Promise<string | null> {
+  try {
+    const FingerprintJS = (await import('@fingerprintjs/fingerprintjs')).default
+    const agent = await FingerprintJS.load()
+    const { visitorId } = await agent.get()
+    return visitorId
+  } catch {
+    return null
+  }
+}
+
 /** Recolecta las señales del dispositivo y calcula hash + entropía estimada. */
 export async function collectFingerprint(): Promise<FingerprintResult> {
   const nav = navigator as Navigator & { deviceMemory?: number }
@@ -135,26 +156,35 @@ export async function collectFingerprint(): Promise<FingerprintResult> {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
   const langs = nav.languages?.join(',') ?? nav.language
 
-  const signals: FingerprintSignal[] = [
-    { key: 'canvas', label: 'Render de canvas (2D)', value: canvas.slice(0, 40) + '…', bits: 6 },
-    { key: 'webgl', label: 'GPU (WebGL vendor/renderer)', value: webgl, bits: 5 },
-    { key: 'audio', label: 'Huella de AudioContext', value: audio, bits: 4 },
-    { key: 'fonts', label: `Fuentes instaladas (${fonts ? fonts.split(',').length : 0} detectadas)`, value: fonts.slice(0, 80), bits: 5 },
-    { key: 'screen', label: 'Resolución y densidad de pantalla', value: screenSig, bits: 4 },
-    { key: 'timezone', label: 'Zona horaria', value: tz, bits: 3 },
-    { key: 'hwConcurrency', label: 'Núcleos de CPU reportados', value: String(nav.hardwareConcurrency ?? '?'), bits: 2 },
-    { key: 'deviceMemory', label: 'Memoria reportada (GB)', value: String(nav.deviceMemory ?? '?'), bits: 1 },
-    { key: 'platform', label: 'Plataforma', value: nav.platform ?? '?', bits: 2 },
-    { key: 'languages', label: 'Idiomas', value: langs, bits: 2 },
-    { key: 'touch', label: 'Puntos de toque máximos', value: String(nav.maxTouchPoints ?? 0), bits: 1 },
-    { key: 'ua', label: 'User-Agent', value: nav.userAgent, bits: 3 },
+  // value = valor completo (entra al hash); display = recorte para la UI.
+  const raw: { key: string; label: string; value: string; display: string; weight: number }[] = [
+    { key: 'canvas', label: 'Render de canvas (2D)', value: canvas, display: canvas.slice(0, 40) + '…', weight: 6 },
+    { key: 'webgl', label: 'GPU (WebGL vendor/renderer)', value: webgl, display: webgl, weight: 5 },
+    { key: 'audio', label: 'Huella de AudioContext', value: audio, display: audio, weight: 4 },
+    { key: 'fonts', label: `Fuentes instaladas (${fonts ? fonts.split(',').length : 0} detectadas)`, value: fonts, display: fonts.slice(0, 80) || '(ninguna)', weight: 5 },
+    { key: 'screen', label: 'Resolución y densidad de pantalla', value: screenSig, display: screenSig, weight: 4 },
+    { key: 'timezone', label: 'Zona horaria', value: tz, display: tz, weight: 3 },
+    { key: 'hwConcurrency', label: 'Núcleos de CPU reportados', value: String(nav.hardwareConcurrency ?? '?'), display: String(nav.hardwareConcurrency ?? '?'), weight: 2 },
+    { key: 'deviceMemory', label: 'Memoria reportada (GB)', value: String(nav.deviceMemory ?? '?'), display: String(nav.deviceMemory ?? '?'), weight: 1 },
+    { key: 'platform', label: 'Plataforma', value: nav.platform ?? '?', display: nav.platform ?? '?', weight: 2 },
+    { key: 'languages', label: 'Idiomas', value: langs, display: langs, weight: 2 },
+    { key: 'touch', label: 'Puntos de toque máximos', value: String(nav.maxTouchPoints ?? 0), display: String(nav.maxTouchPoints ?? 0), weight: 1 },
+    { key: 'ua', label: 'User-Agent', value: nav.userAgent, display: nav.userAgent, weight: 3 },
   ]
 
+  const signals: FingerprintSignal[] = raw.map((s) => ({
+    key: s.key,
+    label: s.label,
+    value: s.value,
+    display: s.display,
+    bits: bitsFor(s.value, s.weight),
+  }))
+
   const combined = signals.map((s) => `${s.key}:${s.value}`).join('||')
-  const hash = await sha256Hex(combined)
+  const [hash, libFpHash] = await Promise.all([sha256Hex(combined), libFingerprint()])
   const entropyBits = signals.reduce((acc, s) => acc + s.bits, 0)
 
-  return { hash, signals, entropyBits }
+  return { hash, signals, entropyBits, libFpHash }
 }
 
 /** Instala listeners de comportamiento y devuelve un snapshot bajo demanda. */
