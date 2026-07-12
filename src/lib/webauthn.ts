@@ -32,7 +32,7 @@ import type {
   AuthenticatorTransportFuture,
   WebAuthnCredential,
 } from '@simplewebauthn/server'
-import { db } from './db'
+import { db } from '../db'
 import { webauthnCredentials } from '../db/schema'
 
 // ── Relying Party ────────────────────────────────────────────────────────
