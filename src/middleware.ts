@@ -8,7 +8,6 @@ import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
 import { isBlocked } from './lib/security/blocklist'
 import { enforceLimit } from './lib/security/ratelimit-durable'
 import { isAuthPath, isRateLimitablePath } from './lib/security/paths'
-import { hasCredentials, hasMfaCookie } from './lib/webauthn'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
 const AUTH_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
