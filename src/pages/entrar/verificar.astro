@@ -1,0 +1,202 @@
+---
+import '../../styles/global.css'
+import { getSession } from 'auth-astro/server'
+import { isAllowedLogin } from '../../lib/auth'
+import { hasCredentials } from '../../lib/webauthn'
+
+// Step-up: segundo factor con WebAuthn (YubiKey/passkey) tras el OAuth de
+// GitHub. Solo tiene sentido si ya hay una sesión de GitHub válida y el login
+// tiene llaves registradas; en cualquier otro caso, reenvía sin pedir nada.
+const session = await getSession(Astro.request)
+const login = (session?.user as { login?: string } | undefined)?.login
+if (!session || !isAllowedLogin(login)) return Astro.redirect('/login?callbackUrl=%2Fentrar', 302)
+
+const callbackUrl = new URL(Astro.request.url).searchParams.get('callbackUrl') ?? '/admin'
+
+if (!(await hasCredentials(login!))) return Astro.redirect(callbackUrl, 302)
+
+Astro.response.headers.set('Cache-Control', 'private, no-store')
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verificación en dos pasos — CodeByMike</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#07070a" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+
+  <body class="grain bg-ink-950 text-ink-50">
+    <main class="verify-stage">
+      <div class="verify-aura" aria-hidden="true"></div>
+
+      <section class="verify-card glass-strong">
+        <div class="verify-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+
+        <div class="verify-meta">
+          <span class="verify-kicker">/auth · segundo factor</span>
+          <h1 class="verify-title">Confirma con tu llave</h1>
+          <p class="verify-sub">
+            @{login} tiene el panel protegido con WebAuthn. Conecta o acerca tu
+            llave de seguridad y tócala cuando parpadee.
+          </p>
+        </div>
+
+        <button id="verify-btn" class="verify-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Usar mi llave de seguridad
+        </button>
+
+        <p id="verify-status" class="verify-status" role="status" aria-live="polite"></p>
+
+        <a href="/logout" class="verify-logout">No es tu dispositivo, cerrar sesión</a>
+      </section>
+    </main>
+
+    <style>
+      .verify-stage {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        overflow: hidden;
+      }
+      .verify-aura {
+        position: absolute;
+        width: 640px;
+        height: 640px;
+        max-width: 120vw;
+        max-height: 120vh;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(0, 242, 255, 0.14), rgba(0, 242, 255, 0) 70%);
+        filter: blur(8px);
+      }
+      .verify-card {
+        position: relative;
+        width: min(380px, 100%);
+        border-radius: 28px;
+        padding: 36px 32px 28px;
+        text-align: center;
+        box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .verify-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 18px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #00f2ff;
+        background: rgba(0, 242, 255, 0.08);
+        border: 1px solid rgba(0, 242, 255, 0.25);
+      }
+      .verify-meta { margin-bottom: 24px; }
+      .verify-kicker {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: #00f2ff;
+      }
+      .verify-title {
+        margin: 8px 0 10px;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        color: #e7e7ec;
+      }
+      .verify-sub {
+        font-size: 13px;
+        line-height: 1.55;
+        color: #85858f;
+      }
+      .verify-btn {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        height: 46px;
+        border-radius: 14px;
+        background: #00f2ff;
+        color: #07070a;
+        font-size: 13.5px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: opacity 0.2s ease, transform 0.15s ease;
+      }
+      .verify-btn:hover { opacity: 0.9; }
+      .verify-btn:active { transform: scale(0.98); }
+      .verify-btn:disabled { opacity: 0.5; cursor: default; }
+      .verify-status {
+        min-height: 18px;
+        margin: 14px 0 0;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: #85858f;
+      }
+      .verify-status.error { color: #ff6b6b; }
+      .verify-status.ok { color: #c9ff5b; }
+      .verify-logout {
+        display: inline-block;
+        margin-top: 18px;
+        font-size: 11.5px;
+        color: #4d4d5d;
+        text-decoration: none;
+      }
+      .verify-logout:hover { color: #85858f; }
+    </style>
+
+    <script define:vars={{ callbackUrl }}>
+      import('https://esm.sh/@simplewebauthn/browser@13.3.0').then(({ startAuthentication }) => {
+        const btn = document.getElementById('verify-btn')
+        const status = document.getElementById('verify-status')
+
+        const setStatus = (text, cls) => {
+          status.textContent = text
+          status.className = `verify-status ${cls ?? ''}`.trim()
+        }
+
+        async function run() {
+          btn.disabled = true
+          setStatus('Esperando tu llave…')
+          try {
+            const optRes = await fetch('/api/mfa/authentication/options', { method: 'POST' })
+            if (!optRes.ok) throw new Error((await optRes.json().catch(() => ({}))).error ?? 'no se pudo iniciar')
+            const options = await optRes.json()
+
+            const authResponse = await startAuthentication({ optionsJSON: options })
+
+            const verifyRes = await fetch('/api/mfa/authentication/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(authResponse),
+            })
+            const result = await verifyRes.json()
+            if (!verifyRes.ok || !result.ok) throw new Error(result.error ?? 'verificación fallida')
+
+            setStatus('Verificado, entrando…', 'ok')
+            window.location.replace(callbackUrl)
+          } catch (err) {
+            setStatus(err instanceof Error ? err.message : 'algo falló, intenta de nuevo', 'error')
+            btn.disabled = false
+          }
+        }
+
+        btn.addEventListener('click', run)
+        // Dispara automáticamente: si el navegador ya tiene la llave lista
+        // (p. ej. USB conectado), el usuario solo necesita tocarla.
+        run()
+      })
+    </script>
+  </body>
+</html>
