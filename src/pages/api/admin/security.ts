@@ -32,6 +32,13 @@ export const POST: APIRoute = async ({ request }) => {
     return json(200, { ok: true })
   }
 
+  if (action === 'block-all') {
+    const ttlSec = Number(body.ttlSec)
+    if (!BULK_TTLS.has(ttlSec)) return json(400, { error: 'ttlSec debe ser 86400 (24 h) o 604800 (1 semana)' })
+    const result = await blockAllAttackerIps(ttlSec)
+    return json(200, { ok: true, ...result })
+  }
+
   if (action === 'unblock') {
     const ip = typeof body.ip === 'string' ? body.ip.trim() : ''
     if (!ip) return json(400, { error: 'IP requerida' })
