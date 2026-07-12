@@ -223,7 +223,18 @@ export function startBehaviorTracking(): () => BehaviorSample {
 
   document.addEventListener('keydown', onKeydown)
   document.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('deviceorientation', onOrientation)
+
+  // iOS 13+ exige permiso explícito para `deviceorientation`, y debe pedirse
+  // desde un gesto del usuario. Esta función se llama en el click de consentir,
+  // así que el gesto sigue activo. Sin esto, en iPhone el giroscopio no dispara.
+  const DOE = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<'granted' | 'denied'> }
+  if (typeof DOE?.requestPermission === 'function') {
+    DOE.requestPermission()
+      .then((state) => { if (state === 'granted') window.addEventListener('deviceorientation', onOrientation) })
+      .catch(() => {})
+  } else {
+    window.addEventListener('deviceorientation', onOrientation)
+  }
 
   return () => {
     const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null)
