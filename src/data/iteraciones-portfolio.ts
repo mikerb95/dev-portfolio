@@ -343,7 +343,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-FP-03', titulo: 'Como responsable del sitio, quiero que la demo sea ética y segura: efímera, consentida y con defensas anti-abuso',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-07-11', tags: ['fingerprint', 'privacidad', 'seguridad', 'fase-6'],
+        fecha: '2026-07-11', tags: ['fingerprint', 'privacidad', 'seguridad', 'fase-7'],
         dod: [
           ok('Salas efímeras: TTL de 2h purgadas por el cron (sweepFpRooms), sin PII persistente; consentimiento explícito antes de recolectar.'),
           ok('Rate limiting durable por endpoint (beat reescopado por dispositivo para eventos con muchos móviles tras una NAT).'),
