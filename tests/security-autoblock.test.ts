@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('../src/db', () => ({ db: {} }))
 
-import { selectIpsToBlock, type IpCandidate } from '../src/lib/security/autoblock'
+import { selectIpsToBlock, selectBulkBlockIps, type IpCandidate } from '../src/lib/security/autoblock'
 
 const cand = (over: Partial<IpCandidate> = {}): IpCandidate => ({
   ip: '1.2.3.4',
