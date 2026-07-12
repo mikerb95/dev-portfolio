@@ -56,7 +56,6 @@ if (!page.url().endsWith('/admin')) throw new Error('FAIL: no debería redirigir
 await page.goto(`${BASE}/admin/passkeys`, { waitUntil: 'networkidle' })
 log(`2) GET /admin/passkeys → url=${page.url()}`)
 
-page.once('dialog', async (d) => { log(`   prompt nickname: "${d.message()}"`); await d.accept('YubiKey de prueba') })
 await page.click('#add-key-btn')
 await page.waitForLoadState('networkidle')
 await page.waitForTimeout(500)
