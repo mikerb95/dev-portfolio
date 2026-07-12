@@ -17,5 +17,11 @@ export function isRateLimitablePath(pathname: string): boolean {
 
 /** ¿Es una ruta de autenticación (objetivo típico de fuerza bruta)? */
 export function isAuthPath(pathname: string): boolean {
-  return pathname.startsWith('/api/auth/') || pathname === '/login' || pathname === '/entrar'
+  return (
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/auth-webauthn/') ||
+    pathname === '/login' ||
+    pathname === '/entrar' ||
+    pathname === '/entrar/verificar'
+  )
 }
