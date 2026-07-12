@@ -110,8 +110,10 @@ await cdp3.send('WebAuthn.addVirtualAuthenticator', {
 // Registrar la llave de nuevo en ESTE contexto (para tener el authenticator con la credencial real)
 await page3.goto(`${BASE}/admin/passkeys`, { waitUntil: 'networkidle' })
 page3.once('dialog', async (d) => await d.accept('YubiKey del step-up'))
-await page3.click('#add-key-btn')
-await page3.waitForLoadState('networkidle')
+await Promise.all([
+  page3.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }),
+  page3.click('#add-key-btn'),
+])
 await page3.waitForTimeout(500)
 
 // Nueva sesión (nuevo sid) en el MISMO browser context (mismo authenticator con la credencial)
