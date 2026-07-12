@@ -107,6 +107,23 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       import { signIn } from 'auth-astro/client'
       import { startAuthentication } from '@simplewebauthn/browser'
 
+      // signIn() de auth-astro decide la URL mirando `providerId === 'credentials'`
+      // literalmente, así que con nuestro provider 'passkey' postearía al endpoint
+      // equivocado (/signin/ en vez de /callback/, que es el que Auth.js espera
+      // para un provider tipo Credentials). Replicamos su lógica apuntando al
+      // endpoint correcto.
+      async function signInWithPasskey(proof: string, callbackUrl: string): Promise<void> {
+        const csrfRes = await fetch('/api/auth/csrf')
+        const { csrfToken } = await csrfRes.json()
+        const res = await fetch('/api/auth/callback/passkey', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Auth-Return-Redirect': '1' },
+          body: new URLSearchParams({ proof, csrfToken, callbackUrl }),
+        })
+        const data = await res.json()
+        window.location.href = data.url ?? callbackUrl
+      }
+
       const callbackUrl = new URL(window.location.href).searchParams.get('callbackUrl') ?? '/entrar'
       const status = document.getElementById('login-status') as HTMLElement
       const githubBtn = document.getElementById('btn-github') as HTMLButtonElement
@@ -116,7 +133,10 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       githubBtn.addEventListener('click', () => {
         githubBtn.disabled = true
         passkeyBtn.disabled = true
-        signIn('github', { callbackUrl })
+        // auth-astro/client re-exporta el tipo de opciones desde 'next-auth/react',
+        // que no está instalado (solo se usa como tipo, no en runtime): TS no puede
+        // resolverlo y ve el objeto de opciones como {}. Cast puntual, no afecta runtime.
+        signIn('github', { callbackUrl } as Parameters<typeof signIn>[1])
       })
 
       passkeyBtn.addEventListener('click', async () => {
@@ -141,7 +161,7 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
           if (!verifyRes.ok || !result.ok) throw new Error(result.error ?? 'no se pudo verificar la llave')
 
           status.textContent = 'Llave verificada, entrando…'
-          await signIn('passkey', { proof: result.proof, callbackUrl, redirect: true })
+          await signInWithPasskey(result.proof, callbackUrl)
         } catch (err) {
           status.classList.add('err')
           status.textContent = err instanceof Error ? err.message : 'algo falló con la llave'
