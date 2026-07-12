@@ -19,6 +19,7 @@ export const GET: APIRoute = async ({ params }) => {
       label: d.label,
       revisits: d.revisits,
       entropyBits: d.entropyBits,
+      libFpHash: d.libFpHash,
       ownFp: d.ownFp ? JSON.parse(d.ownFp) : null,
       behaviorSig: d.behaviorSig ? JSON.parse(d.behaviorSig) : null,
       firstSeen: d.firstSeen,
