@@ -383,7 +383,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
         </div>
         <Fragment slot="panel">
           <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">Pipeline CI/CD</span>
+            <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">Pipeline CI/CD</span>
             {successRate != null && <span class="font-mono text-[10px] text-ink-400">{successRate}% éxito · últimos {recentRuns.length} runs</span>}
           </div>
           <p class="text-ink-200 mb-3">
@@ -455,7 +455,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
         </div>
         <Fragment slot="panel">
           <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">Disponibilidad</span>
+            <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">Disponibilidad</span>
             {checkCadenceMin != null && <span class="font-mono text-[10px] text-ink-400">~1 check cada {checkCadenceMin} min/servicio</span>}
           </div>
           <p class="text-ink-200 mb-2">
