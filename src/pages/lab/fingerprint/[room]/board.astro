@@ -16,7 +16,7 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
 ---
 
 <BaseLayout title={`Tablero — Sala ${roomId}`} description="Tablero en vivo del laboratorio de fingerprinting." noindex>
-  <div id="fp-board" data-room={roomId} class="max-w-[1400px] mx-auto px-6 md:px-12 pt-16 pb-24">
+  <div id="fp-board" data-room={roomId} class="max-w-[1400px] mx-auto px-6 md:px-12 pt-28 md:pt-32 pb-24">
     <div class="grid lg:grid-cols-[300px_1fr] gap-8">
       <!-- QR + info -->
       <div class="lg:sticky lg:top-16 lg:self-start">
