@@ -135,15 +135,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // Fail-open: un fallo del registro de sesiones no debe tumbar el panel.
     }
 
-    // Segundo factor (WebAuthn / YubiKey). Solo aplica una vez que el login
-    // tiene al menos una llave registrada — así dar de alta la primera llave
-    // (en /admin/passkeys) nunca puede dejar a nadie fuera de su propio panel.
-    // hasCredentials() es fail-open (false ante error de Turso): un fallo de
-    // lectura nunca debe convertirse en un candado que nadie puede abrir.
-    if (login && (await hasCredentials(login)) && !hasMfaCookie(context.cookies, sessionId)) {
-      const dest = encodeURIComponent(pathname + context.url.search)
-      return context.redirect(`/entrar/verificar?callbackUrl=${dest}`)
-    }
+    // Nota: WebAuthn (llave de seguridad) es una puerta de entrada ALTERNATIVA
+    // a GitHub (ver /login y auth.config.ts), no un segundo factor obligatorio
+    // encima de GitHub — quien ya entró por cualquiera de las dos no vuelve a
+    // pasar por la otra.
   }
 
   const res = await next()
