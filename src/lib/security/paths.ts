@@ -18,12 +18,10 @@ export function isRateLimitablePath(pathname: string): boolean {
 /** ¿Es una ruta de autenticación (objetivo típico de fuerza bruta)? */
 export function isAuthPath(pathname: string): boolean {
   return (
+    // Cubre tanto el catch-all de auth-astro como el login passwordless de
+    // WebAuthn en /api/auth/webauthn/* (puerta de entrada alternativa a GitHub).
     pathname.startsWith('/api/auth/') ||
-    // Step-up de WebAuthn (segundo factor): fuera de /api/auth/ a propósito,
-    // para no chocar con la ruta catch-all que auth-astro monta en /api/auth/*.
-    pathname.startsWith('/api/mfa/') ||
     pathname === '/login' ||
-    pathname === '/entrar' ||
-    pathname === '/entrar/verificar'
+    pathname === '/entrar'
   )
 }
