@@ -2,7 +2,7 @@ import { chromium } from 'playwright'
 import { encode } from '@auth/core/jwt'
 import { createClient } from '@libsql/client'
 
-const BASE = 'http://localhost:4326'
+const BASE = 'http://localhost:4327'
 const secret = process.env.AUTH_SECRET
 const login = 'mikerb95'
 
