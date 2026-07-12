@@ -62,7 +62,11 @@ if (!room) {
 <script>
   import { collectFingerprint, startBehaviorTracking, type BehaviorSample } from '../../../../lib/fingerprint-client'
 
-  const roomId = location.pathname.split('/').filter(Boolean).pop()!
+  const root = document.getElementById('fp-root') as HTMLElement
+  const roomId = root.dataset.room!
+
+  const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 
   const acceptBtn = document.getElementById('accept') as HTMLButtonElement
   const gate = document.getElementById('consent-gate')!
@@ -82,7 +86,7 @@ if (!room) {
     const res = await fetch(`/api/lab/fp/${roomId}/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hash: fp.hash, entropyBits: fp.entropyBits, signals: fp.signals }),
+      body: JSON.stringify({ hash: fp.hash, entropyBits: fp.entropyBits, libFpHash: fp.libFpHash, signals: fp.signals }),
     })
     if (!res.ok) {
       acceptBtn.textContent = 'Error, intenta de nuevo'
@@ -100,20 +104,25 @@ if (!room) {
     for (const s of fp.signals) {
       const row = document.createElement('div')
       row.className = 'rounded-xl bg-white/[.02] border border-white/5 p-4'
-      row.innerHTML = `<div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">${s.label}</div><div class="text-[13px] text-ink-100 break-all">${s.value || '(vacío)'}</div>`
+      // esc() sobre display: el User-Agent es controlable por el usuario, no lo
+      // inyectamos crudo aunque solo pueda afectarse a sí mismo.
+      const dim = s.bits === 0 ? ' opacity-50' : ''
+      row.innerHTML = `<div class="flex items-center justify-between mb-1"><span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300">${esc(s.label)}</span><span class="text-[10px] font-mono text-ink-400">${s.bits} bit${s.bits === 1 ? '' : 's'}</span></div><div class="text-[13px] text-ink-100 break-all${dim}">${esc(s.display) || '(vacío)'}</div>`
       list.appendChild(row)
     }
     document.getElementById('entropy-bits')!.textContent = fp.entropyBits.toFixed(0)
     document.getElementById('entropy-odds')!.textContent = Math.round(2 ** fp.entropyBits).toLocaleString('es')
 
-    setInterval(async () => {
+    const beat = setInterval(async () => {
       if (!getSnapshot || !deviceHash) return
       const behavior = getSnapshot()
-      await fetch(`/api/lab/fp/${roomId}/beat`, {
+      const r = await fetch(`/api/lab/fp/${roomId}/beat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hash: deviceHash, behavior }),
-      }).catch(() => {})
+      }).catch(() => null)
+      // Si la sala expiró (404), no seguimos latiendo contra el vacío.
+      if (r && r.status === 404) clearInterval(beat)
     }, 4000)
   })
 </script>
