@@ -28,7 +28,11 @@ await context.addCookies([
 const page = await context.newPage()
 page.on('console', (msg) => log(`   [console.${msg.type()}] ${msg.text()}`))
 page.on('pageerror', (err) => log(`   [pageerror] ${err.message}`))
-page.on('dialog', async (d) => { log(`   [dialog:${d.type()}] ${d.message()}`); if (!d.message().includes('Nombre para')) await d.accept() })
+page.on('dialog', async (d) => {
+  log(`   [dialog:${d.type()}] ${d.message()}`)
+  if (d.type() === 'prompt') await d.accept('YubiKey de prueba')
+  else await d.accept()
+})
 const cdp = await context.newCDPSession(page)
 await cdp.send('WebAuthn.enable')
 const { authenticatorId } = await cdp.send('WebAuthn.addVirtualAuthenticator', {
