@@ -375,6 +375,32 @@ export const adminSessions = sqliteTable('admin_sessions', {
   revokedAt: integer('revoked_at', { mode: 'timestamp' }),
 })
 
+// Credenciales WebAuthn (passkeys / llaves de seguridad FIDO2 como YubiKey).
+// Segundo factor obligatorio para /admin una vez registrada la primera llave.
+// La identidad del usuario es su `login` de GitHub (el mismo de la allowlist);
+// no hay tabla de usuarios: una fila = una llave física registrada por ese login.
+export const webauthnCredentials = sqliteTable('webauthn_credentials', {
+  // credentialID en base64url (tal cual lo devuelve SimpleWebAuthn v13).
+  id: text('id').primaryKey(),
+  // A quién pertenece la llave: login de GitHub en minúsculas.
+  login: text('login').notNull(),
+  // Clave pública COSE en base64url (Uint8Array serializado).
+  publicKey: text('public_key').notNull(),
+  // Contador anti-clonación: debe crecer en cada uso o se rechaza (replay).
+  counter: integer('counter').notNull().default(0),
+  // Array JSON de transportes ("usb","nfc","internal","hybrid",…).
+  transports: text('transports'),
+  // 'singleDevice' (llave física, p. ej. YubiKey) o 'multiDevice' (passkey sincronizada).
+  deviceType: text('device_type'),
+  backedUp: integer('backed_up', { mode: 'boolean' }).notNull().default(false),
+  // Etiqueta legible que pone el usuario ("YubiKey azul", "Mac Touch ID").
+  nickname: text('nickname'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+}, (t) => ({
+  loginIdx: index('webauthn_credentials_login_idx').on(t.login),
+}))
+
 // ── Observabilidad de seguridad (micro-SIEM propio) ─────────────────────────
 // Sensor de superficie de ataque: el middleware y el 404 clasifican cada
 // request hostil y lo registran aquí. Ver docs/plan-security-observability.md.
