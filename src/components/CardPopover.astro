@@ -14,7 +14,7 @@ const { id, panelClass = '' } = Astro.props
   <slot />
   <div
     id={`${id}-panel`}
-    class={`card-pop-panel absolute left-0 top-[calc(100%+10px)] w-[min(360px,calc(100vw-2rem))] rounded-xl glass-strong p-4 text-[12px] leading-relaxed text-ink-100 opacity-0 invisible translate-y-1 transition-[opacity,transform] duration-150 ease-out z-30 ${panelClass}`}
+    class={`card-pop-panel absolute left-0 top-[calc(100%+10px)] w-[min(400px,calc(100vw-2rem))] rounded-xl p-4 text-[13px] leading-relaxed text-ink-100 opacity-0 invisible translate-y-1 transition-[opacity,transform] duration-150 ease-out z-30 ${panelClass}`}
     role="tooltip"
   >
     <slot name="panel" />
