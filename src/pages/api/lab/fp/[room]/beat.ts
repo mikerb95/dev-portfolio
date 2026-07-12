@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro'
 import { getRoom, recordBehavior } from '../../../../../lib/fingerprint'
-import { clientIp } from '../../../../../lib/device-info'
 import { enforceLimit } from '../../../../../lib/security/ratelimit-durable'
 
 const json = (status: number, body: unknown) =>
