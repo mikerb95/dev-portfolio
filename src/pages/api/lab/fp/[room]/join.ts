@@ -10,8 +10,11 @@ export const POST: APIRoute = async ({ params, request }) => {
   const roomId = params.room
   if (!roomId) return json(400, { error: 'sala requerida' })
 
+  // La demo se usa con muchos dispositivos en la misma wifi/evento (todos
+  // comparten la IP pública NAT), así que el límite por IP es holgado. El
+  // guardia real contra abuso es el límite de creación de salas (10/min).
   const ip = clientIp(request.headers) ?? 'unknown'
-  const decision = await enforceLimit(`fp:join:${ip}`, { limit: 30, windowMs: 60_000, deferUntil: 0.5 })
+  const decision = await enforceLimit(`fp:join:${ip}`, { limit: 100, windowMs: 60_000, deferUntil: 0.5 })
   if (!decision.allowed) return json(429, { error: 'demasiados intentos, espera un momento' })
 
   const room = await getRoom(roomId)
