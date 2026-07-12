@@ -324,7 +324,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
                     </div>
 
                     {v.trend != null && v.trendDisplay && (
-                      <div class="text-[11px] text-ink-300 mb-2">
+                      <div class="text-[12px] text-ink-300 mb-2">
                         Últimos 7d: {v.trend < 0 ? '▼' : v.trend > 0 ? '▲' : '='} {v.trendDisplay} vs ventana de 30d
                         <span class={v.trend < 0 ? 'text-lime' : v.trend > 0 ? 'text-ember' : 'text-ink-400'}>
                           {' '}({v.trend < 0 ? 'mejora' : v.trend > 0 ? 'empeora' : 'estable'})
