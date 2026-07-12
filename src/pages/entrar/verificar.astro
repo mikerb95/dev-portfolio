@@ -156,47 +156,51 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       .verify-logout:hover { color: #85858f; }
     </style>
 
-    <script define:vars={{ callbackUrl }}>
-      import('https://esm.sh/@simplewebauthn/browser@13.3.0').then(({ startAuthentication }) => {
-        const btn = document.getElementById('verify-btn')
-        const status = document.getElementById('verify-status')
+    <script>
+      // Import de npm normal: Astro/Vite lo empaqueta y sirve desde el mismo
+      // origen en el build, así respeta la CSP (script-src 'self'). Nada de
+      // CDNs externos aquí.
+      import { startAuthentication } from '@simplewebauthn/browser'
 
-        const setStatus = (text, cls) => {
-          status.textContent = text
-          status.className = `verify-status ${cls ?? ''}`.trim()
+      const callbackUrl = new URL(window.location.href).searchParams.get('callbackUrl') ?? '/admin'
+      const btn = document.getElementById('verify-btn') as HTMLButtonElement
+      const status = document.getElementById('verify-status') as HTMLParagraphElement
+
+      const setStatus = (text: string, cls?: string) => {
+        status.textContent = text
+        status.className = `verify-status ${cls ?? ''}`.trim()
+      }
+
+      async function run() {
+        btn.disabled = true
+        setStatus('Esperando tu llave…')
+        try {
+          const optRes = await fetch('/api/mfa/authentication/options', { method: 'POST' })
+          if (!optRes.ok) throw new Error((await optRes.json().catch(() => ({}))).error ?? 'no se pudo iniciar')
+          const options = await optRes.json()
+
+          const authResponse = await startAuthentication({ optionsJSON: options })
+
+          const verifyRes = await fetch('/api/mfa/authentication/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(authResponse),
+          })
+          const result = await verifyRes.json()
+          if (!verifyRes.ok || !result.ok) throw new Error(result.error ?? 'verificación fallida')
+
+          setStatus('Verificado, entrando…', 'ok')
+          window.location.replace(callbackUrl)
+        } catch (err) {
+          setStatus(err instanceof Error ? err.message : 'algo falló, intenta de nuevo', 'error')
+          btn.disabled = false
         }
+      }
 
-        async function run() {
-          btn.disabled = true
-          setStatus('Esperando tu llave…')
-          try {
-            const optRes = await fetch('/api/mfa/authentication/options', { method: 'POST' })
-            if (!optRes.ok) throw new Error((await optRes.json().catch(() => ({}))).error ?? 'no se pudo iniciar')
-            const options = await optRes.json()
-
-            const authResponse = await startAuthentication({ optionsJSON: options })
-
-            const verifyRes = await fetch('/api/mfa/authentication/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(authResponse),
-            })
-            const result = await verifyRes.json()
-            if (!verifyRes.ok || !result.ok) throw new Error(result.error ?? 'verificación fallida')
-
-            setStatus('Verificado, entrando…', 'ok')
-            window.location.replace(callbackUrl)
-          } catch (err) {
-            setStatus(err instanceof Error ? err.message : 'algo falló, intenta de nuevo', 'error')
-            btn.disabled = false
-          }
-        }
-
-        btn.addEventListener('click', run)
-        // Dispara automáticamente: si el navegador ya tiene la llave lista
-        // (p. ej. USB conectado), el usuario solo necesita tocarla.
-        run()
-      })
+      btn.addEventListener('click', run)
+      // Dispara automáticamente: si el navegador ya tiene la llave lista
+      // (p. ej. USB conectado), el usuario solo necesita tocarla.
+      run()
     </script>
   </body>
 </html>
