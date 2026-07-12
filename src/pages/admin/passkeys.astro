@@ -23,8 +23,8 @@ const items = rows.map((r) => ({
         <div>
           <h2 class="text-base font-medium text-ink-50">Llaves de seguridad (WebAuthn)</h2>
           <p class="text-[12px] text-ink-300 mt-1">
-            Segundo factor para /admin. Con al menos una llave registrada, entrar con GitHub ya no
-            basta: cada nueva sesión te pide tocar la llave antes de dejarte pasar.
+            Puerta de entrada alternativa a /admin. Con al menos una llave registrada, puedes elegir
+            en /login entrar con GitHub o tocar la llave — cualquiera de las dos basta por sí sola.
           </p>
         </div>
         <button
@@ -37,7 +37,7 @@ const items = rows.map((r) => ({
 
       {items.length === 0 ? (
         <p class="text-[13px] text-ink-300 py-6 text-center">
-          Sin llaves registradas todavía — el panel solo pide GitHub.
+          Sin llaves registradas todavía — por ahora solo puedes entrar con GitHub.
         </p>
       ) : (
         <div class="space-y-2" id="keys-list">
@@ -70,9 +70,8 @@ const items = rows.map((r) => ({
     </div>
 
     <p class="text-[11px] text-ink-400 leading-relaxed px-1">
-      Si quitas todas las llaves, el panel vuelve a pedir solo GitHub (el MFA se desactiva
-      automáticamente, nunca queda un candado sin llave). La verificación se re-pide cada 12&nbsp;h
-      por dispositivo.
+      Si quitas todas las llaves, /login deja de ofrecer esa opción y GitHub sigue siendo la única
+      puerta de entrada — nunca queda un candado sin llave.
     </p>
   </div>
 

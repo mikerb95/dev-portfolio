@@ -1,8 +1,11 @@
 ---
-// Punto de entrada del login: inicia el OAuth de GitHub del lado del cliente.
-// Auth.js NO acepta un GET directo a /api/auth/signin/github (lanza UnknownAction);
-// el flujo correcto es un POST con token CSRF, que es justo lo que hace el helper
-// signIn() de auth-astro/client. Esta página solo orquesta esa llamada.
+import '../styles/global.css'
+// Punto de entrada del login: dos puertas independientes, cualquiera basta.
+// - GitHub OAuth (como siempre): signIn() de auth-astro/client hace el POST
+//   con token CSRF que Auth.js exige (un GET directo a /api/auth/signin/github
+//   lanza UnknownAction).
+// - Llave de seguridad (passwordless): ceremonia WebAuthn contra
+//   /api/auth/webauthn/{options,verify} y luego signIn('passkey', { proof }).
 const callbackUrl =
   new URL(Astro.request.url).searchParams.get('callbackUrl') ?? '/entrar'
 Astro.response.headers.set('Cache-Control', 'private, no-store')
@@ -13,10 +16,11 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Redirigiendo a GitHub… — CodeByMike</title>
+    <title>Entrar — CodeByMike</title>
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#07070a" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <!-- Sin JS: caemos a la página de signin de Auth.js (botón manual). -->
+    <!-- Sin JS: caemos al signin de Auth.js con GitHub por defecto. -->
     <noscript>
       <meta
         http-equiv="refresh"
@@ -24,14 +28,128 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       />
     </noscript>
   </head>
-  <body style="background:#07070a;color:#e7e7ec;font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0">
-    <p style="font-size:13px;opacity:.7">Redirigiendo a GitHub…</p>
+
+  <body class="grain bg-ink-950 text-ink-50">
+    <main class="login-stage">
+      <div class="login-aura" aria-hidden="true"></div>
+
+      <section class="login-card glass-strong">
+        <span class="login-kicker">/auth</span>
+        <h1 class="login-title">Entrar al panel</h1>
+        <p class="login-sub">Elige cómo quieres identificarte. Cualquiera de las dos basta.</p>
+
+        <div class="login-options">
+          <button id="btn-github" class="login-btn login-btn-primary" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 5.02 3.26 9.28 7.77 10.78.57.1.78-.25.78-.55v-2.15c-3.16.7-3.83-1.35-3.83-1.35-.52-1.3-1.26-1.66-1.26-1.66-1.03-.7.08-.68.08-.68 1.14.08 1.74 1.18 1.74 1.18 1.02 1.73 2.67 1.23 3.32.95.1-.74.4-1.24.72-1.52-2.52-.29-5.17-1.26-5.17-5.6 0-1.24.44-2.25 1.17-3.04-.12-.29-.5-1.45.11-3.03 0 0 .96-.31 3.14 1.16a10.9 10.9 0 0 1 5.72 0c2.18-1.47 3.13-1.16 3.13-1.16.62 1.58.23 2.74.11 3.03.73.79 1.17 1.8 1.17 3.04 0 4.35-2.65 5.31-5.18 5.59.41.35.77 1.04.77 2.1v3.12c0 .3.2.66.79.55 4.5-1.5 7.76-5.76 7.76-10.78C23.02 5.24 18.27.5 12 .5z"/>
+            </svg>
+            Continuar con GitHub
+          </button>
+
+          <div class="login-or"><span>o</span></div>
+
+          <button id="btn-passkey" class="login-btn login-btn-ghost" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span id="passkey-label">Usar mi llave de seguridad</span>
+          </button>
+        </div>
+
+        <p id="login-status" class="login-status" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <style>
+      .login-stage { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; overflow: hidden; }
+      .login-aura {
+        position: absolute; width: 720px; height: 720px; max-width: 120vw; max-height: 120vh;
+        border-radius: 50%;
+        background:
+          radial-gradient(closest-side, rgba(0, 242, 255, 0.14), rgba(0, 242, 255, 0) 70%),
+          radial-gradient(closest-side, rgba(167, 139, 255, 0.12), rgba(167, 139, 255, 0) 70%);
+        filter: blur(8px);
+      }
+      .login-card {
+        position: relative; width: min(380px, 100%); border-radius: 28px; padding: 36px 30px 30px;
+        text-align: center;
+        box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+      .login-kicker {
+        font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: #00f2ff;
+      }
+      .login-title { margin: 8px 0 6px; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: #e7e7ec; }
+      .login-sub { font-size: 12.5px; color: #85858f; line-height: 1.5; margin-bottom: 26px; }
+
+      .login-options { display: grid; gap: 12px; }
+      .login-btn {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        height: 46px; border-radius: 14px; font-size: 13.5px; font-weight: 500;
+        cursor: pointer; transition: opacity 0.2s ease, border-color 0.2s ease;
+        font-family: inherit;
+      }
+      .login-btn:disabled { opacity: 0.5; cursor: default; }
+      .login-btn-primary { background: #e7e7ec; color: #0b0b0e; border: none; }
+      .login-btn-primary:hover:not(:disabled) { opacity: 0.92; }
+      .login-btn-ghost {
+        background: rgba(255,255,255,.03); color: #c4c4cc; border: 1px solid rgba(255,255,255,.1);
+      }
+      .login-btn-ghost:hover:not(:disabled) { border-color: rgba(0,242,255,.35); color: #e7e7ec; }
+
+      .login-or { display: flex; align-items: center; gap: 10px; color: #4d4d5d; font-size: 11px; font-family: var(--font-mono); }
+      .login-or::before, .login-or::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08); }
+
+      .login-status { margin-top: 18px; font-size: 12px; color: #85858f; min-height: 16px; }
+      .login-status.err { color: #ff8a65; }
+    </style>
 
     <script>
       import { signIn } from 'auth-astro/client'
-      const callbackUrl =
-        new URL(window.location.href).searchParams.get('callbackUrl') ?? '/entrar'
-      signIn('github', { callbackUrl })
+      import { startAuthentication } from '@simplewebauthn/browser'
+
+      const callbackUrl = new URL(window.location.href).searchParams.get('callbackUrl') ?? '/entrar'
+      const status = document.getElementById('login-status') as HTMLElement
+      const githubBtn = document.getElementById('btn-github') as HTMLButtonElement
+      const passkeyBtn = document.getElementById('btn-passkey') as HTMLButtonElement
+      const passkeyLabel = document.getElementById('passkey-label') as HTMLElement
+
+      githubBtn.addEventListener('click', () => {
+        githubBtn.disabled = true
+        passkeyBtn.disabled = true
+        signIn('github', { callbackUrl })
+      })
+
+      passkeyBtn.addEventListener('click', async () => {
+        githubBtn.disabled = true
+        passkeyBtn.disabled = true
+        status.classList.remove('err')
+        passkeyLabel.textContent = 'Esperando la llave…'
+        status.textContent = 'Toca tu llave de seguridad cuando parpadee.'
+        try {
+          const optRes = await fetch('/api/auth/webauthn/options', { method: 'POST' })
+          if (!optRes.ok) throw new Error('no se pudo iniciar la verificación')
+          const options = await optRes.json()
+
+          const authResponse = await startAuthentication({ optionsJSON: options })
+
+          const verifyRes = await fetch('/api/auth/webauthn/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(authResponse),
+          })
+          const result = await verifyRes.json()
+          if (!verifyRes.ok || !result.ok) throw new Error(result.error ?? 'no se pudo verificar la llave')
+
+          status.textContent = 'Llave verificada, entrando…'
+          await signIn('passkey', { proof: result.proof, callbackUrl, redirect: true })
+        } catch (err) {
+          status.classList.add('err')
+          status.textContent = err instanceof Error ? err.message : 'algo falló con la llave'
+          passkeyLabel.textContent = 'Usar mi llave de seguridad'
+          githubBtn.disabled = false
+          passkeyBtn.disabled = false
+        }
+      })
     </script>
   </body>
 </html>
