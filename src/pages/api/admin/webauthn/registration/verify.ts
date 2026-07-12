@@ -21,7 +21,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     login!,
     response as Parameters<typeof finishRegistration>[1],
     typeof nickname === 'string' ? nickname : undefined,
-    cookies
+    cookies,
+    request.url
   )
   if (!result.ok) {
     return new Response(JSON.stringify({ error: result.error }), { status: 400 })
