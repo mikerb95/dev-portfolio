@@ -1,21 +1,22 @@
-// WebAuthn (passkeys / llaves FIDO2 como YubiKey) como segundo factor del
-// panel admin. Se apoya en @simplewebauthn/server (estándar, sin costo).
+// WebAuthn (passkeys / llaves FIDO2 como YubiKey) como método de login
+// ALTERNATIVO al panel admin — no un segundo factor obligatorio encima de
+// GitHub. Se apoya en @simplewebauthn/server (estándar, sin costo).
 //
-// Modelo: la identidad SIGUE siendo el login de GitHub (allowlist en auth.ts).
-// WebAuthn no reemplaza el OAuth, lo refuerza: tras iniciar sesión con GitHub,
-// si el login ya tiene ≥1 llave registrada, el middleware exige además probar
-// posesión de esa llave (step-up) antes de dejar pasar a /admin. Mientras el
-// login no tenga ninguna llave registrada, el gate está apagado — así registrar
-// la primera llave nunca puede dejar a nadie fuera de su propio panel.
+// Modelo: dos puertas de entrada independientes, cualquiera basta por sí sola.
+//  - GitHub OAuth (allowlist en auth.ts): como siempre.
+//  - Llave de seguridad (passwordless, discoverable credential): la llave
+//    identifica al login por sí misma, sin pasar por GitHub. auth.config.ts
+//    la conecta como provider 'passkey' (Credentials) — la ceremonia FIDO2
+//    corre aquí, y el resultado se entrega a Auth.js como un proof firmado
+//    de vida corta para que emita una sesión real, igual que el OAuth.
 //
 // Dos ceremonias, dos superficies distintas:
 //  - Registro (alta de una llave nueva): vive bajo /api/admin/webauthn/*, así
-//    que hereda el gate de sesión+allowlist del middleware. Antes de la
-//    primera llave el gate de MFA todavía no aplica, así que también sirve
-//    para el alta inicial sin quedar bloqueado a medio camino.
-//  - Autenticación (probar posesión, step-up): vive bajo /api/auth/webauthn/*,
-//    fuera de /admin, porque se ejecuta ANTES de que la cookie de MFA exista.
-//    Cada handler valida la sesión de GitHub + allowlist por su cuenta.
+//    que hereda el gate de sesión+allowlist del middleware (hay que estar
+//    dentro del panel, vía GitHub, para dar de alta la primera llave).
+//  - Autenticación (login passwordless): vive bajo /api/auth/webauthn/*,
+//    fuera de /admin, porque se ejecuta SIN sesión previa — es la puerta de
+//    entrada alternativa, no una verificación posterior.
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { eq, and } from 'drizzle-orm'
