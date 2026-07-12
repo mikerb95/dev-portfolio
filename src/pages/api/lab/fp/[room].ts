@@ -19,6 +19,9 @@ export const GET: APIRoute = async ({ params }) => {
       label: d.label,
       revisits: d.revisits,
       entropyBits: d.entropyBits,
+      // Prefijo del hash propio (no el completo): suficiente para mostrar la
+      // "identidad" en el tablero y compararla con la de FingerprintJS.
+      idShort: d.deviceHash.slice(0, 12),
       libFpHash: d.libFpHash,
       ownFp: d.ownFp ? JSON.parse(d.ownFp) : null,
       behaviorSig: d.behaviorSig ? JSON.parse(d.behaviorSig) : null,
