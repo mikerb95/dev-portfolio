@@ -19,7 +19,7 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
   <div id="fp-board" data-room={roomId} class="max-w-[1400px] mx-auto px-6 md:px-12 pt-28 md:pt-32 pb-24">
     <div class="grid lg:grid-cols-[300px_1fr] gap-8">
       <!-- QR + info -->
-      <div class="lg:sticky lg:top-16 lg:self-start">
+      <div class="lg:sticky lg:top-28 lg:self-start">
         <div class="rounded-2xl glass p-6 text-center mb-4">
           <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-4">Escanea para entrar</div>
           <div class="bg-white rounded-xl p-3 [&_svg]:w-full [&_svg]:h-auto" set:html={qrSvg} />
