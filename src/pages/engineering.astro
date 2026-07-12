@@ -342,6 +342,10 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
                 <div class="text-[10px] text-ink-500 mt-3 pt-2 border-t border-white/5">
                   Medido con la librería oficial <span class="font-mono">web-vitals</span> en el navegador de cada visitante. Sin cookies.
                 </div>
+                <div class="live-strip flex items-center gap-1.5 text-[10px] font-mono text-ink-400 mt-2" data-live="vitals">
+                  <span class="live-dot"></span>
+                  <span class="live-text">Verificando en vivo…</span>
+                </div>
               </Fragment>
             </CardPopover>
           ))}
