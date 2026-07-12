@@ -92,68 +92,56 @@ if (!/falló|no reconocida|error/i.test(statusText || '')) {
   log(`   ⚠️ inesperado: se esperaba un mensaje de error, se vio: "${statusText}"`)
 }
 
-await browser.close()
+await context2.close()
 
-// 5) Ahora repetir el step-up pero en el MISMO contexto donde SÍ se registró la llave
-const browser2 = await chromium.launch()
-const context3 = await browser2.newContext()
-const { token: token3, sid: sid3 } = await mintCookie()
-await context3.addCookies([
-  { name: 'authjs.session-token', value: token3, domain: 'localhost', path: '/', httpOnly: true, sameSite: 'Lax' },
-])
-const page3 = await context3.newPage()
-const cdp3 = await context3.newCDPSession(page3)
-await cdp3.send('WebAuthn.enable')
-await cdp3.send('WebAuthn.addVirtualAuthenticator', {
-  options: { protocol: 'ctap2', transport: 'usb', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
-})
-// Registrar la llave de nuevo en ESTE contexto (para tener el authenticator con la credencial real)
-await page3.goto(`${BASE}/admin/passkeys`, { waitUntil: 'networkidle' })
-page3.once('dialog', async (d) => await d.accept('YubiKey del step-up'))
-await Promise.all([
-  page3.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }),
-  page3.click('#add-key-btn'),
-])
-await page3.waitForTimeout(500)
-
-// Nueva sesión (nuevo sid) en el MISMO browser context (mismo authenticator con la credencial)
+// 5) Step-up real: MISMO browser context/authenticator que registró la llave
+// (context, no context2) — nueva sesión (nuevo sid) del mismo login.
 const token4data = await mintCookie()
-await context3.addCookies([
+await context.addCookies([
   { name: 'authjs.session-token', value: token4data.token, domain: 'localhost', path: '/', httpOnly: true, sameSite: 'Lax' },
 ])
-resp = await page3.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
-log(`5) GET /admin (sid nuevo, MISMO authenticator con la llave real) → url tras redirect: ${page3.url()}`)
-if (!page3.url().includes('/entrar/verificar')) throw new Error('FAIL: esperaba redirect a verificar')
+resp = await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
+log(`5) GET /admin (sid nuevo, MISMO authenticator con la llave real) → url tras redirect: ${page.url()}`)
+if (!page.url().includes('/entrar/verificar')) throw new Error('FAIL: esperaba redirect a verificar')
 
-await page3.waitForTimeout(2000)
-log(`6) tras step-up automático → url final: ${page3.url()}`)
-if (!page3.url().endsWith('/admin')) {
-  const st = await page3.textContent('#verify-status').catch(() => null)
+await page.waitForTimeout(2000)
+log(`6) tras step-up automático → url final: ${page.url()}`)
+if (!page.url().endsWith('/admin')) {
+  const st = await page.textContent('#verify-status').catch(() => null)
   throw new Error(`FAIL: no volvió a /admin. status visible: "${st}"`)
 }
 log('✅ step-up con la llave real funcionó: entró a /admin tras tocar la YubiKey virtual')
 
 // 7) Revisitar /admin en la MISMA sesión: no debe volver a pedir la llave (cookie MFA de 12h)
-resp = await page3.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
-log(`7) segunda visita a /admin (misma sesión) → url=${page3.url()} (no debería pedir MFA de nuevo)`)
-if (!page3.url().endsWith('/admin')) throw new Error('FAIL: pidió MFA de nuevo en la misma sesión')
+resp = await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
+log(`7) segunda visita a /admin (misma sesión) → url=${page.url()} (no debería pedir MFA de nuevo)`)
+if (!page.url().endsWith('/admin')) throw new Error('FAIL: pidió MFA de nuevo en la misma sesión')
 
-// 8) Borrar la llave y confirmar que el MFA se apaga solo
-const delRes = await page3.evaluate(async () => {
+// 8) Borrar la llave (vía la propia página, ya con MFA pasado) y confirmar que
+// una visita POSTERIOR a /admin con OTRA sesión nueva ya no exige MFA.
+const delRes = await page.evaluate(async () => {
   const listRes = await fetch('/api/admin/webauthn/credentials')
   const items = await listRes.json()
-  const results = []
+  const out = []
   for (const it of items) {
     const r = await fetch('/api/admin/webauthn/credentials', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: it.id }),
     })
-    results.push([it.id, r.status])
+    out.push([it.id, r.status])
   }
-  return results
+  return out
 })
 log(`8) borradas todas las llaves: ${JSON.stringify(delRes)}`)
 
-await browser2.close()
+const token5 = await mintCookie()
+await context.addCookies([
+  { name: 'authjs.session-token', value: token5.token, domain: 'localhost', path: '/', httpOnly: true, sameSite: 'Lax' },
+])
+resp = await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
+log(`9) sesión NUEVA tras borrar todas las llaves → url=${page.url()} (MFA debe estar apagado de nuevo)`)
+if (!page.url().endsWith('/admin')) throw new Error('FAIL: el MFA debería haberse apagado al borrar la última llave')
+
+await browser.close()
 log('\n✅ TODOS LOS PASOS PASARON')
