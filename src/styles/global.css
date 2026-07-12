@@ -82,6 +82,10 @@ body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smooth
 @property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 @keyframes spin { to { --a: 360deg; } }
 
+/* Tinte sutil para alternar el fondo entre secciones (una sí, una no) sobre
+   el #07070a base. Mantiene el ritmo visual sin competir con las cards glass. */
+.section-tint { background-color: rgba(255,255,255,.018); }
+
 /* Glass */
 .glass {
   background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));

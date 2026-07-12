@@ -120,3 +120,72 @@ export async function runAutoBlock(now = new Date(), options?: AutoBlockOptions)
 
   return { candidates: candidates.length, blocked: toApply.length, overflow }
 }
+
+export type BulkBlockResult = { candidates: number; blocked: number; skipped: number; overflow: number }
+
+/** Ventana por defecto del bloqueo masivo: 7 días. */
+const BULK_WINDOW_MS = 7 * 24 * 60 * 60_000
+
+/**
+ * Bloqueo masivo manual desde el panel: bloquea TODAS las IPs con eventos de
+ * seguridad en la ventana (por defecto 7 d), sin importar la severidad. Es la
+ * respuesta "de golpe" a un ataque en curso.
+ *
+ * Salvaguardas (igual que el auto-block):
+ *  - Excluye eventos sintéticos de enforcement (category='blocklist'): son hits
+ *    de IPs ya bloqueadas, no ataques nuevos.
+ *  - Respeta allowlist (vía blockIp) y bloqueos ya vigentes (no re-cuenta).
+ *  - Respeta el tope de bloqueos activos (maxActiveBlocks); el resto = overflow.
+ *  - TTL fijo elegido por el operador (24 h o 1 semana), no escalonado.
+ */
+export async function blockAllAttackerIps(
+  ttlSec: number,
+  now = new Date(),
+  options?: { windowMs?: number; maxActiveBlocks?: number }
+): Promise<BulkBlockResult> {
+  const windowMs = options?.windowMs ?? BULK_WINDOW_MS
+  const maxActiveBlocks = options?.maxActiveBlocks ?? DEFAULTS.maxActiveBlocks
+  const since = new Date(now.getTime() - windowMs)
+
+  // IPs distintas con eventos en la ventana, excluyendo el ruido de enforcement.
+  const rows = await db
+    .select({ ip: securityEvents.ip })
+    .from(securityEvents)
+    .where(
+      and(
+        gte(securityEvents.at, since),
+        sql`${securityEvents.ip} is not null`,
+        sql`${securityEvents.category} <> 'blocklist'`
+      )
+    )
+    .groupBy(securityEvents.ip)
+
+  const candidates = rows
+    .map((r) => r.ip)
+    .filter((ip): ip is string => !!ip && !isAllowlisted(ip))
+
+  // Bloqueos activos: para excluirlos del recuento y para el tope.
+  const active = await db
+    .select({ ip: blockedIps.ip })
+    .from(blockedIps)
+    .where(sql`${blockedIps.expiresAt} > ${Math.floor(now.getTime() / 1000)}`)
+  const alreadyBlocked = new Set(active.map((a) => a.ip))
+
+  const pending = candidates.filter((ip) => !alreadyBlocked.has(ip))
+  const skipped = candidates.length - pending.length
+
+  const capacity = Math.max(0, maxActiveBlocks - active.length)
+  const toApply = pending.slice(0, capacity)
+  const overflow = pending.length - toApply.length
+
+  let blocked = 0
+  for (const ip of toApply) {
+    const ok = await blockIp(
+      { ip, reason: 'bloqueo masivo desde panel', ruleId: 'manual.block-all', ttlSec, source: 'manual' },
+      now
+    ).catch(() => false)
+    if (ok) blocked++
+  }
+
+  return { candidates: candidates.length, blocked, skipped, overflow }
+}
