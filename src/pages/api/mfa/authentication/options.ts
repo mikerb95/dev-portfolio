@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   if (!(await hasCredentials(login!))) {
     return new Response(JSON.stringify({ error: 'no hay llaves registradas para este login' }), { status: 400 })
   }
-  const options = await buildAuthenticationOptions(login!, cookies)
+  const options = await buildAuthenticationOptions(login!, cookies, request.url)
   return new Response(JSON.stringify(options), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
