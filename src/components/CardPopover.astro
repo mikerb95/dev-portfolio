@@ -14,7 +14,7 @@ const { id, panelClass = '' } = Astro.props
   <slot />
   <div
     id={`${id}-panel`}
-    class={`card-pop-panel absolute left-0 top-[calc(100%+10px)] w-[min(360px,calc(100vw-2rem))] rounded-xl glass-strong p-4 text-[12px] leading-relaxed text-ink-100 opacity-0 invisible translate-y-1 transition-[opacity,transform] duration-150 ease-out z-30 ${panelClass}`}
+    class={`card-pop-panel absolute left-0 top-[calc(100%+10px)] w-[min(400px,calc(100vw-2rem))] rounded-xl p-4 text-[13px] leading-relaxed text-ink-100 opacity-0 invisible translate-y-1 transition-[opacity,transform] duration-150 ease-out z-30 ${panelClass}`}
     role="tooltip"
   >
     <slot name="panel" />
@@ -27,6 +27,15 @@ const { id, panelClass = '' } = Astro.props
   }
   .card-pop-panel {
     pointer-events: none;
+    /* Fondo casi opaco a propósito: el panel se superpone a texto de la página
+       y con transparencia (glass) el contenido de atrás se cuela y estorba. */
+    background: rgba(12, 12, 17, 0.985);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 12px 48px rgba(0, 0, 0, 0.75),
+      0 1px 0 rgba(255, 255, 255, 0.05) inset;
   }
   .card-pop.is-open > .card-pop-panel {
     opacity: 1;

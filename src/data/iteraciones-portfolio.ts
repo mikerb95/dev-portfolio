@@ -273,11 +273,91 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-ingenieria',
+    fase: 'Fase 6 · Panel de ingeniería',
+    nombre: 'Página pública de ingeniería con métricas verificables y prueba de vida',
+    rango: '9 – 11 jul 2026',
+    ghSince: '2026-07-09',
+    ghUntil: '2026-07-11',
+    commits: 20,
+    resumen:
+      'Panel público /engineering que reúne solo señales verificables de producción: Core Web Vitals p75 de usuarios reales (RUM), resultado del pipeline CI (tests, cobertura, duración) y disponibilidad agregada del monitoreo. Cada card explica al hover de dónde sale el número y contra qué umbral se compara —nada de badges decorativos. Se le suma una prueba de vida que consulta datos frescos desde el navegador para demostrar que nada está hardcodeado.',
+    historias: [
+      {
+        id: 'PF-EN-01', titulo: 'Como visitante técnico, quiero un panel público con métricas de ingeniería reales (Web Vitals, CI, disponibilidad)',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-09', tags: ['engineering', 'observabilidad', 'público', 'fase-6'],
+        dod: [
+          ok('/engineering muestra Core Web Vitals p75 de usuarios reales (RUM) con p50/p95, distribución de rating, tendencia 7d y peor ruta por métrica.'),
+          ok('Cards de pipeline CI (tests, cobertura, duración) y disponibilidad agregada, alimentadas de ci_runs y monitor_checks.'),
+          ok('CardPopover en cada métrica explica el origen del dato y el umbral contra el que se evalúa; página server-rendered con datos de producción.'),
+        ],
+      },
+      {
+        id: 'PF-EN-02', titulo: 'Como visitante técnico, quiero comprobar que las métricas de /engineering están vivas y no hardcodeadas',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['engineering', 'verificación', 'fase-6'],
+        dod: [
+          ok('Endpoint /api/engineering/live devuelve marcas de tiempo frescas (última muestra RUM, último sondeo, último run CI) más el reloj del servidor.'),
+          ok('Las cards consultan la prueba de vida al abrirse e indican en vivo la frescura; solo expone metadatos, nunca URLs internas ni configuración.'),
+          pend('Merge del PR #2 a main y despliegue a producción de la verificación en vivo.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-lab-fingerprint',
+    fase: 'Fase 7 · Lab educativo',
+    nombre: 'Laboratorio de fingerprinting en vivo (Sala de espejos)',
+    rango: '11 jul 2026',
+    ghSince: '2026-07-11',
+    ghUntil: '2026-07-11',
+    commits: 21,
+    resumen:
+      'Demo educativa de device fingerprinting: varios dispositivos entran a una sala por QR y un tablero en vivo los reconoce por las señales que expone el navegador —sin cookies ni login— demostrando que el incógnito no evade la re-identificación. Recolector propio contrastado con FingerprintJS, capa de comportamiento y cierre pedagógico sobre defensas. Entregado en la rama lab-fingerprinting (PR #2).',
+    historias: [
+      {
+        id: 'PF-FP-01', titulo: 'Como visitante, quiero escanear un QR y ver cómo un tablero reconoce mi dispositivo en vivo sin cookies',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['fingerprint', 'público', 'fase-7'],
+        dod: [
+          ok('Landing con consentimiento crea sala + QR; el tablero (/board) refleja los dispositivos por polling corto (Vercel no soporta WebSocket).'),
+          ok('Al reentrar en incógnito o borrar cookies, el contador de "revisitas" sube: mismo dispositivo re-identificado (validado por smoke test de API).'),
+          pend('Prueba end-to-end en navegador real del ciclo crear → escanear → revisita (canvas/WebGL/audio solo producen valores en un browser).'),
+        ],
+      },
+      {
+        id: 'PF-FP-02', titulo: 'Como visitante, quiero entender qué me delata: recolector propio contrastado con una librería y una capa de comportamiento',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['fingerprint', 'híbrido', 'fase-7'],
+        dod: [
+          ok('Recolector propio: canvas, WebGL, AudioContext, fuentes, pantalla, zona horaria, CPU/memoria, idiomas, touch y UA.'),
+          ok('Segunda opinión con FingerprintJS (open source): su visitorId se muestra junto al hash propio en el tablero.'),
+          ok('Entropía dinámica: cada señal bloqueada/vacía suma 0 bits; se declara como estimación educativa (EFF Panopticlick / AmIUnique), no medición poblacional.'),
+          ok('Capa de comportamiento: cadencia de tecleo, velocidad de mouse y giroscopio (con permiso iOS 13+).'),
+        ],
+      },
+      {
+        id: 'PF-FP-03', titulo: 'Como responsable del sitio, quiero que la demo sea ética y segura: efímera, consentida y con defensas anti-abuso',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-11', tags: ['fingerprint', 'privacidad', 'seguridad', 'fase-7'],
+        dod: [
+          ok('Salas efímeras: TTL de 2h purgadas por el cron (sweepFpRooms), sin PII persistente; consentimiento explícito antes de recolectar.'),
+          ok('Rate limiting durable por endpoint (beat reescopado por dispositivo para eventos con muchos móviles tras una NAT).'),
+          ok('entropyBits acotado a 0–64 en servidor y valores escapados en el DOM (el UA es controlable).'),
+          ok('Cierre pedagógico: por qué el incógnito no protege y cómo defenderse (Tor, resistFingerprinting).'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 232 },
+  { mes: 'jul', commits: 257 },
 ]

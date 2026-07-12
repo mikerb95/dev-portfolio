@@ -278,15 +278,15 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
               </div>
               <Fragment slot="panel">
                 <div class="flex items-center justify-between mb-2">
-                  <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">{v.metric}</span>
-                  <span class="font-mono text-[10px] text-ink-400">{v.samples.toLocaleString('es-CO')} muestras</span>
+                  <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">{v.metric}</span>
+                  <span class="font-mono text-[11px] text-ink-400">{v.samples.toLocaleString('es-CO')} muestras</span>
                 </div>
                 <p class="text-ink-200 mb-3">{v.label} — {VITAL_EXPLAIN[v.metric]}</p>
 
                 {v.p75 != null && (
                   <>
                     <div class="mb-3">
-                      <div class="flex justify-between text-[10px] font-mono text-ink-400 mb-1">
+                      <div class="flex justify-between text-[11px] font-mono text-ink-400 mb-1">
                         <span>0</span>
                         <span>bueno ≤ {formatVital(v.metric, v.goodThreshold)}</span>
                         <span>pobre &gt; {formatVital(v.metric, v.niThreshold)}</span>
@@ -302,15 +302,15 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
                     <div class="grid grid-cols-3 gap-2 mb-3 text-center">
                       <div>
                         <div class="font-mono tabular-nums text-ink-50">{formatVital(v.metric, v.p50 ?? 0)}</div>
-                        <div class="text-[9px] font-mono uppercase text-ink-400">p50</div>
+                        <div class="text-[10px] font-mono uppercase text-ink-400">p50</div>
                       </div>
                       <div>
                         <div class="font-mono tabular-nums text-cyan">{v.display}</div>
-                        <div class="text-[9px] font-mono uppercase text-ink-400">p75</div>
+                        <div class="text-[10px] font-mono uppercase text-ink-400">p75</div>
                       </div>
                       <div>
                         <div class="font-mono tabular-nums text-ink-50">{formatVital(v.metric, v.p95 ?? 0)}</div>
-                        <div class="text-[9px] font-mono uppercase text-ink-400">p95</div>
+                        <div class="text-[10px] font-mono uppercase text-ink-400">p95</div>
                       </div>
                     </div>
 
@@ -319,12 +319,12 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
                       <div style={`width:${v.dist.needsImprovement}%`} class="bg-ember/50" title={`${v.dist.needsImprovement}% mejorable`}></div>
                       <div style={`width:${v.dist.poor}%`} class="bg-ember/80" title={`${v.dist.poor}% pobre`}></div>
                     </div>
-                    <div class="text-[10px] text-ink-400 mb-3">
+                    <div class="text-[11px] text-ink-400 mb-3">
                       {v.dist.good}% bueno · {v.dist.needsImprovement}% mejorable · {v.dist.poor}% pobre
                     </div>
 
                     {v.trend != null && v.trendDisplay && (
-                      <div class="text-[11px] text-ink-300 mb-2">
+                      <div class="text-[12px] text-ink-300 mb-2">
                         Últimos 7d: {v.trend < 0 ? '▼' : v.trend > 0 ? '▲' : '='} {v.trendDisplay} vs ventana de 30d
                         <span class={v.trend < 0 ? 'text-lime' : v.trend > 0 ? 'text-ember' : 'text-ink-400'}>
                           {' '}({v.trend < 0 ? 'mejora' : v.trend > 0 ? 'empeora' : 'estable'})
@@ -333,16 +333,16 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
                     )}
 
                     {v.worstPath && (
-                      <div class="text-[11px] text-ink-300">
+                      <div class="text-[12px] text-ink-300">
                         Ruta más lenta: <span class="font-mono text-ink-100">{v.worstPath.path}</span> ({formatVital(v.metric, v.worstPath.p75)} p75)
                       </div>
                     )}
                   </>
                 )}
-                <div class="text-[10px] text-ink-500 mt-3 pt-2 border-t border-white/5">
+                <div class="text-[11px] text-ink-500 mt-3 pt-2 border-t border-white/5">
                   Medido con la librería oficial <span class="font-mono">web-vitals</span> en el navegador de cada visitante. Sin cookies.
                 </div>
-                <div class="live-strip flex items-center gap-1.5 text-[10px] font-mono text-ink-400 mt-2" data-live="vitals">
+                <div class="live-strip flex items-center gap-1.5 text-[11px] font-mono text-ink-400 mt-2" data-live="vitals">
                   <span class="live-dot"></span>
                   <span class="live-text">Verificando en vivo…</span>
                 </div>
@@ -383,8 +383,8 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
         </div>
         <Fragment slot="panel">
           <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">Pipeline CI/CD</span>
-            {successRate != null && <span class="font-mono text-[10px] text-ink-400">{successRate}% éxito · últimos {recentRuns.length} runs</span>}
+            <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">Pipeline CI/CD</span>
+            {successRate != null && <span class="font-mono text-[11px] text-ink-400">{successRate}% éxito · últimos {recentRuns.length} runs</span>}
           </div>
           <p class="text-ink-200 mb-3">
             Cada push corre la suite completa (Vitest) en GitHub Actions. Un fallo bloquea el merge; un éxito
@@ -393,7 +393,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
 
           {durationSeries.length > 1 && (
             <div class="mb-3">
-              <div class="text-[10px] font-mono uppercase text-ink-400 mb-1">Duración · últimos {durationSeries.length} runs</div>
+              <div class="text-[11px] font-mono uppercase text-ink-400 mb-1">Duración · últimos {durationSeries.length} runs</div>
               <svg viewBox={`0 0 ${durationSeries.length * 14} 32`} class="w-full h-8" preserveAspectRatio="none">
                 {durationSeries.map((d, i) => {
                   const h = d.ms != null ? Math.max(2, (d.ms / maxDuration) * 30) : 2
@@ -414,26 +414,26 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
           )}
 
           {coverageDelta != null && (
-            <div class="text-[11px] text-ink-300 mb-2">
+            <div class="text-[12px] text-ink-300 mb-2">
               Cobertura: {coverageDelta > 0 ? '+' : ''}{coverageDelta} pts vs el run exitoso anterior.
             </div>
           )}
           {lastSuccess?.healthOk != null && (
-            <div class="text-[11px] text-ink-300 mb-2">
+            <div class="text-[12px] text-ink-300 mb-2">
               Health check post-deploy: <span class={lastSuccess.healthOk ? 'text-lime' : 'text-ember'}>{lastSuccess.healthOk ? 'OK' : 'falló'}</span>
             </div>
           )}
           {lastSuccess?.sha && (
-            <div class="text-[11px] font-mono text-ink-300 mb-1">
+            <div class="text-[12px] font-mono text-ink-300 mb-1">
               commit <span class="text-ink-100">{lastSuccess.sha.slice(0, 7)}</span>
             </div>
           )}
           {lastSuccess?.url && (
-            <a href={lastSuccess.url} target="_blank" rel="noopener" class="text-[11px] font-mono text-cyan hover:underline">
+            <a href={lastSuccess.url} target="_blank" rel="noopener" class="text-[12px] font-mono text-cyan hover:underline">
               Ver run en GitHub Actions →
             </a>
           )}
-          <div class="live-strip flex items-center gap-1.5 text-[10px] font-mono text-ink-400 mt-3 pt-2 border-t border-white/5" data-live="ci">
+          <div class="live-strip flex items-center gap-1.5 text-[11px] font-mono text-ink-400 mt-3 pt-2 border-t border-white/5" data-live="ci">
             <span class="live-dot"></span>
             <span class="live-text">Verificando en vivo…</span>
           </div>
@@ -455,15 +455,15 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
         </div>
         <Fragment slot="panel">
           <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">Disponibilidad</span>
-            {checkCadenceMin != null && <span class="font-mono text-[10px] text-ink-400">~1 check cada {checkCadenceMin} min/servicio</span>}
+            <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">Disponibilidad</span>
+            {checkCadenceMin != null && <span class="font-mono text-[11px] text-ink-400">~1 check cada {checkCadenceMin} min/servicio</span>}
           </div>
           <p class="text-ink-200 mb-2">
             {uptime90 != null ? `${uptime90}%` : '—'} de sondeos exitosos equivale a <span class="text-ink-50 font-medium">{fmtDowntime(downtimeMin)}</span> de
             indisponibilidad acumulada en 90 días.
           </p>
           {(incidentRows.length > 0 || mttrMin != null) && (
-            <div class="text-[11px] text-ink-300 mb-3">
+            <div class="text-[12px] text-ink-300 mb-3">
               {incidentRows.length} incidente{incidentRows.length === 1 ? '' : 's'} registrado{incidentRows.length === 1 ? '' : 's'}
               {mttrMin != null && ` · MTTR ${mttrMin} min`}
             </div>
@@ -471,7 +471,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
           {monitorRows.length > 0 && (
             <div class="space-y-1.5">
               {monitorRows.map((m) => (
-                <div class="flex items-center gap-2 text-[11px]">
+                <div class="flex items-center gap-2 text-[12px]">
                   <span class="font-mono text-ink-100 truncate flex-1">{m.name}</span>
                   <div class="w-16 h-1 rounded-full bg-white/5 overflow-hidden shrink-0">
                     <div class="h-full bg-lime/70" style={`width:${m.uptime ?? 0}%`}></div>
@@ -482,7 +482,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
               ))}
             </div>
           )}
-          <div class="live-strip flex items-center gap-1.5 text-[10px] font-mono text-ink-400 mt-3 pt-2 border-t border-white/5" data-live="uptime">
+          <div class="live-strip flex items-center gap-1.5 text-[11px] font-mono text-ink-400 mt-3 pt-2 border-t border-white/5" data-live="uptime">
             <span class="live-dot"></span>
             <span class="live-text">Verificando en vivo…</span>
           </div>
