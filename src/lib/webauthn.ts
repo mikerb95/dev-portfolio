@@ -302,9 +302,10 @@ export async function finishAuthentication(
 }
 
 export async function deleteCredential(login: string, id: string): Promise<boolean> {
-  const res = await db
+  const deleted = await db
     .delete(webauthnCredentials)
     .where(and(eq(webauthnCredentials.id, id), eq(webauthnCredentials.login, login)))
+    .returning({ id: webauthnCredentials.id })
   invalidateCredentialsCache(login)
-  return (res.rowsAffected ?? 0) > 0
+  return deleted.length > 0
 }
