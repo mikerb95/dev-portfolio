@@ -69,7 +69,7 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
 </BaseLayout>
 
 <script>
-  const roomId = location.pathname.split('/').filter(Boolean).slice(-2, -1)[0]!
+  const roomId = (document.getElementById('fp-board') as HTMLElement).dataset.room!
 
   const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
@@ -78,15 +78,86 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
     label: number
     revisits: number
     entropyBits: number | null
-    ownFp: { key: string; label: string; value: string; bits: number }[] | null
+    idShort: string
+    libFpHash: string | null
     behaviorSig: { avgKeyIntervalMs: number | null; avgMouseSpeed: number | null; tiltX: number | null } | null
     firstSeen: string
     lastSeen: string
   }
 
+  const container = document.getElementById('devices')!
+  const empty = document.getElementById('devices-empty')!
+  const expired = document.getElementById('board-expired')!
+  // Reconciliamos por label para no reconstruir todo el DOM en cada tick
+  // (evita el parpadeo y que se pierda el hover en el proyector).
+  const cards = new Map<number, HTMLElement>()
+  let stopped = false
+
+  function cardHtml(d: Device): string {
+    const b = d.behaviorSig
+    const behaviorLine = b
+      ? [
+          b.avgKeyIntervalMs != null ? `⌨ ${Math.round(b.avgKeyIntervalMs)}ms` : null,
+          b.avgMouseSpeed != null ? `🖱 ${b.avgMouseSpeed.toFixed(2)}px/ms` : null,
+          b.tiltX != null ? `📱 tilt ${Math.round(b.tiltX)}°` : null,
+        ].filter(Boolean).join(' · ') || 'sin datos de comportamiento aún'
+      : 'sin datos de comportamiento aún'
+    const revisitBadge = d.revisits > 0
+      ? `<span class="text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border text-ember border-ember/40 bg-ember/15">${d.revisits} revisita${d.revisits === 1 ? '' : 's'}</span>`
+      : ''
+    const libLine = d.libFpHash
+      ? `<div class="text-[11px] font-mono text-ink-400 mt-2">FingerprintJS: <span class="text-cyan">${esc(d.libFpHash.slice(0, 12))}</span></div>`
+      : ''
+    return `
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-[15px] font-medium text-mask">Dispositivo #${esc(d.label)}</span>
+        ${revisitBadge}
+      </div>
+      <div class="text-[11px] font-mono text-ink-400 mb-1">id propio: <span class="text-ink-200">${esc(d.idShort)}</span></div>
+      <div class="text-[12px] font-mono text-ink-300 mb-2">≈ ${d.entropyBits ?? '?'} bits de entropía</div>
+      <div class="text-[12px] text-ink-100">${esc(behaviorLine)}</div>
+      ${libLine}
+    `
+  }
+
+  function render(devices: Device[]) {
+    document.getElementById('device-count')!.textContent = String(devices.length)
+    empty.classList.toggle('hidden', devices.length > 0)
+
+    const seen = new Set<number>()
+    for (const d of devices) {
+      seen.add(d.label)
+      const html = cardHtml(d)
+      let card = cards.get(d.label)
+      if (!card) {
+        card = document.createElement('div')
+        card.className = 'rounded-2xl glass p-5 lift'
+        cards.set(d.label, card)
+        container.appendChild(card)
+      }
+      // Solo tocamos el DOM si el contenido cambió (firma en dataset).
+      if (card.dataset.sig !== html) {
+        card.innerHTML = html
+        card.dataset.sig = html
+      }
+    }
+    // Quita tarjetas de dispositivos que ya no están (no debería pasar en la
+    // vida de una sala, pero mantiene el DOM en sincronía).
+    for (const [label, card] of cards) {
+      if (!seen.has(label)) { card.remove(); cards.delete(label) }
+    }
+  }
+
   async function poll() {
+    if (stopped) return
     try {
       const res = await fetch(`/api/lab/fp/${roomId}`)
+      if (res.status === 404) {
+        // Sala expirada/purgada: paramos el polling y avisamos.
+        stopped = true
+        expired.classList.remove('hidden')
+        return
+      }
       if (!res.ok) return
       const data = await res.json()
       render(data.devices as Device[])
@@ -95,37 +166,9 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
     }
   }
 
-  function render(devices: Device[]) {
-    document.getElementById('device-count')!.textContent = String(devices.length)
-    const container = document.getElementById('devices')!
-    if (devices.length === 0) {
-      container.innerHTML = '<p class="text-ink-400 text-[13px]">Esperando dispositivos…</p>'
-      return
-    }
-    container.innerHTML = devices
-      .map((d) => {
-        const behavior = d.behaviorSig
-        const behaviorLine = behavior
-          ? [
-              behavior.avgKeyIntervalMs != null ? `⌨ ${Math.round(behavior.avgKeyIntervalMs)}ms` : null,
-              behavior.avgMouseSpeed != null ? `🖱 ${behavior.avgMouseSpeed.toFixed(2)}px/ms` : null,
-              behavior.tiltX != null ? `📱 tilt ${Math.round(behavior.tiltX)}°` : null,
-            ].filter(Boolean).join(' · ')
-          : 'sin datos de comportamiento aún'
-        return `
-          <div class="rounded-2xl glass p-5 lift">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-[15px] font-medium text-mask">Dispositivo #${esc(d.label)}</span>
-              ${d.revisits > 0 ? `<span class="text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border text-ember border-ember/40 bg-ember/15">${d.revisits} revisita${d.revisits === 1 ? '' : 's'}</span>` : ''}
-            </div>
-            <div class="text-[12px] font-mono text-ink-300 mb-2">≈ ${d.entropyBits ?? '?'} bits de entropía</div>
-            <div class="text-[12px] text-ink-100">${esc(behaviorLine)}</div>
-          </div>
-        `
-      })
-      .join('')
-  }
-
   poll()
-  setInterval(poll, 1500)
+  const timer = setInterval(() => {
+    if (stopped) { clearInterval(timer); return }
+    poll()
+  }, 1500)
 </script>
