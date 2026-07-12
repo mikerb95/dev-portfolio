@@ -16,12 +16,17 @@ function shortId(): string {
 export async function createRoom(): Promise<{ id: string; expiresAt: Date }> {
   const now = new Date()
   const expiresAt = new Date(now.getTime() + ROOM_TTL_MS)
-  let id = shortId()
-  // Colisión extremadamente improbable, pero si pasa reintenta una vez.
-  const [existing] = await db.select().from(fpRooms).where(eq(fpRooms.id, id)).limit(1)
-  if (existing) id = shortId()
-  await db.insert(fpRooms).values({ id, createdAt: now, expiresAt })
-  return { id, expiresAt }
+  // Colisión con 8 hex es ínfima, pero reintentamos verificando cada id nuevo
+  // para no arriesgar un error de clave primaria al insertar.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const id = shortId()
+    const [existing] = await db.select().from(fpRooms).where(eq(fpRooms.id, id)).limit(1)
+    if (!existing) {
+      await db.insert(fpRooms).values({ id, createdAt: now, expiresAt })
+      return { id, expiresAt }
+    }
+  }
+  throw new Error('no se pudo generar un id de sala único')
 }
 
 export async function getRoom(id: string) {
