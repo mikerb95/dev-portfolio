@@ -62,3 +62,54 @@ describe('selectIpsToBlock', () => {
     expect(out.map((d) => d.ip)).toEqual(['a', 'b'])
   })
 })
+
+describe('selectBulkBlockIps', () => {
+  const capacity = 500
+
+  it('bloquea todas las IPs sin importar la severidad', () => {
+    const out = selectBulkBlockIps(['1.1.1.1', '2.2.2.2', '3.3.3.3'], {
+      alreadyBlocked: new Set(),
+      capacity,
+    })
+    expect(out.toApply).toEqual(['1.1.1.1', '2.2.2.2', '3.3.3.3'])
+    expect(out.candidates).toBe(3)
+    expect(out.skipped).toBe(0)
+    expect(out.overflow).toBe(0)
+  })
+
+  it('salta las IPs ya bloqueadas (skipped)', () => {
+    const out = selectBulkBlockIps(['1.1.1.1', '2.2.2.2'], {
+      alreadyBlocked: new Set(['2.2.2.2']),
+      capacity,
+    })
+    expect(out.toApply).toEqual(['1.1.1.1'])
+    expect(out.skipped).toBe(1)
+  })
+
+  it('excluye la allowlist de los candidatos', () => {
+    const out = selectBulkBlockIps(['1.1.1.1', '10.0.0.1'], {
+      alreadyBlocked: new Set(),
+      capacity,
+      allowlisted: (ip) => ip === '10.0.0.1',
+    })
+    expect(out.toApply).toEqual(['1.1.1.1'])
+    expect(out.candidates).toBe(1)
+  })
+
+  it('respeta el tope y marca overflow', () => {
+    const out = selectBulkBlockIps(['a', 'b', 'c'], { alreadyBlocked: new Set(), capacity: 2 })
+    expect(out.toApply).toEqual(['a', 'b'])
+    expect(out.overflow).toBe(1)
+  })
+
+  it('capacity negativa (tope ya superado) no bloquea nada', () => {
+    const out = selectBulkBlockIps(['a', 'b'], { alreadyBlocked: new Set(), capacity: -3 })
+    expect(out.toApply).toHaveLength(0)
+    expect(out.overflow).toBe(2)
+  })
+
+  it('ignora IPs vacías', () => {
+    const out = selectBulkBlockIps(['', 'a'], { alreadyBlocked: new Set(), capacity })
+    expect(out.toApply).toEqual(['a'])
+  })
+})
