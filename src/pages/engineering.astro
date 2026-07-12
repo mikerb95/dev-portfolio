@@ -278,8 +278,8 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
               </div>
               <Fragment slot="panel">
                 <div class="flex items-center justify-between mb-2">
-                  <span class="font-mono text-[11px] uppercase tracking-wider text-ink-50">{v.metric}</span>
-                  <span class="font-mono text-[10px] text-ink-400">{v.samples.toLocaleString('es-CO')} muestras</span>
+                  <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">{v.metric}</span>
+                  <span class="font-mono text-[11px] text-ink-400">{v.samples.toLocaleString('es-CO')} muestras</span>
                 </div>
                 <p class="text-ink-200 mb-3">{v.label} — {VITAL_EXPLAIN[v.metric]}</p>
 
