@@ -333,13 +333,13 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
                     )}
 
                     {v.worstPath && (
-                      <div class="text-[11px] text-ink-300">
+                      <div class="text-[12px] text-ink-300">
                         Ruta más lenta: <span class="font-mono text-ink-100">{v.worstPath.path}</span> ({formatVital(v.metric, v.worstPath.p75)} p75)
                       </div>
                     )}
                   </>
                 )}
-                <div class="text-[10px] text-ink-500 mt-3 pt-2 border-t border-white/5">
+                <div class="text-[11px] text-ink-500 mt-3 pt-2 border-t border-white/5">
                   Medido con la librería oficial <span class="font-mono">web-vitals</span> en el navegador de cada visitante. Sin cookies.
                 </div>
                 <div class="live-strip flex items-center gap-1.5 text-[10px] font-mono text-ink-400 mt-2" data-live="vitals">
