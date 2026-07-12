@@ -209,9 +209,10 @@ export async function finishRegistration(
   login: string,
   response: RegistrationResponseJSON,
   nickname: string | undefined,
-  cookies: AstroCookies
+  cookies: AstroCookies,
+  requestUrl: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { rpID, origin } = rpConfig()
+  const { rpID, origin } = rpConfig(requestUrl)
   const expectedChallenge = takeChallenge(cookies, 'reg', login)
   if (!expectedChallenge) return { ok: false, error: 'challenge expirado o inválido, intenta de nuevo' }
 
@@ -248,8 +249,8 @@ export async function finishRegistration(
 
 // ── Autenticación (step-up: probar posesión) ──────────────────────────────
 
-export async function buildAuthenticationOptions(login: string, cookies: AstroCookies) {
-  const { rpID } = rpConfig()
+export async function buildAuthenticationOptions(login: string, cookies: AstroCookies, requestUrl: string) {
+  const { rpID } = rpConfig(requestUrl)
   const existing = await listCredentials(login)
   const options = await generateAuthenticationOptions({
     rpID,
@@ -266,9 +267,10 @@ export async function buildAuthenticationOptions(login: string, cookies: AstroCo
 export async function finishAuthentication(
   login: string,
   response: AuthenticationResponseJSON,
-  cookies: AstroCookies
+  cookies: AstroCookies,
+  requestUrl: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { rpID, origin } = rpConfig()
+  const { rpID, origin } = rpConfig(requestUrl)
   const expectedChallenge = takeChallenge(cookies, 'auth', login)
   if (!expectedChallenge) return { ok: false, error: 'challenge expirado o inválido, intenta de nuevo' }
 
