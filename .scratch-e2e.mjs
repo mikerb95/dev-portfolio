@@ -56,8 +56,10 @@ if (!page.url().endsWith('/admin')) throw new Error('FAIL: no debería redirigir
 await page.goto(`${BASE}/admin/passkeys`, { waitUntil: 'networkidle' })
 log(`2) GET /admin/passkeys → url=${page.url()}`)
 
-await page.click('#add-key-btn')
-await page.waitForLoadState('networkidle')
+await Promise.all([
+  page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }),
+  page.click('#add-key-btn'),
+])
 await page.waitForTimeout(500)
 const bodyText = await page.textContent('body')
 log(`3) tras registrar, ¿aparece "YubiKey de prueba"? ${bodyText.includes('YubiKey de prueba')}`)
