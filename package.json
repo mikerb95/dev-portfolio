@@ -27,6 +27,8 @@
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource/instrument-serif": "^5.2.8",
     "@libsql/client": "^0.17.3",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.2",
     "@tailwindcss/vite": "^4.2.4",
     "@vercel/blob": "^2.4.0",
     "astro": "^6.1.9",
