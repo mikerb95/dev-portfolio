@@ -120,18 +120,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // nuevas), o cookie `device_id` como respaldo (sesiones previas). Si la
     // sesión fue revocada desde el panel, se borra el JWT y se fuerza re-login.
     const sid = (session as { sid?: string } | undefined)?.sid
-    let deviceCookie = context.cookies.get(DEVICE_COOKIE)?.value
-    if (!deviceCookie) {
-      deviceCookie = crypto.randomUUID()
-      context.cookies.set(DEVICE_COOKIE, deviceCookie, {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: import.meta.env.PROD,
-        maxAge: 60 * 60 * 24 * 365,
-      })
-    }
-    const sessionId = sid ?? deviceCookie
+    const sessionId = resolveDeviceSessionId(sid, context.cookies)
     try {
       const { revoked } = await recordSession({
         id: sessionId,
@@ -145,6 +134,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
     } catch {
       // Fail-open: un fallo del registro de sesiones no debe tumbar el panel.
+    }
+
+    // Segundo factor (WebAuthn / YubiKey). Solo aplica una vez que el login
+    // tiene al menos una llave registrada — así dar de alta la primera llave
+    // (en /admin/passkeys) nunca puede dejar a nadie fuera de su propio panel.
+    // hasCredentials() es fail-open (false ante error de Turso): un fallo de
+    // lectura nunca debe convertirse en un candado que nadie puede abrir.
+    if (login && (await hasCredentials(login)) && !hasMfaCookie(context.cookies, sessionId)) {
+      const dest = encodeURIComponent(pathname + context.url.search)
+      return context.redirect(`/entrar/verificar?callbackUrl=${dest}`)
     }
   }
 
