@@ -3,6 +3,10 @@ import { eq, sql } from 'drizzle-orm'
 import { db } from '../../../db'
 import { securityAnomalies } from '../../../db/schema'
 import { blockIp, unblockIp, BLOCK_TTL_STEPS_SEC } from '../../../lib/security/blocklist'
+import { blockAllAttackerIps } from '../../../lib/security/autoblock'
+
+// TTLs permitidos para el bloqueo masivo: 24 h o 1 semana.
+const BULK_TTLS = new Set<number>([86_400, 604_800])
 
 // Mutaciones del panel de seguridad. Protegido por el middleware de /api/admin
 // (auth + allowlist), así que aquí no re-validamos sesión.
