@@ -126,6 +126,25 @@ export type BulkBlockResult = { candidates: number; blocked: number; skipped: nu
 /** Ventana por defecto del bloqueo masivo: 7 días. */
 const BULK_WINDOW_MS = 7 * 24 * 60 * 60_000
 
+export type BulkSelection = { toApply: string[]; candidates: number; skipped: number; overflow: number }
+
+/**
+ * Decisión pura del bloqueo masivo: de las IPs candidatas descarta las de la
+ * allowlist y las ya bloqueadas (skipped), y recorta al `capacity` disponible
+ * bajo el tope (el resto es overflow). Testeable sin tocar la DB.
+ */
+export function selectBulkBlockIps(
+  ips: string[],
+  opts: { alreadyBlocked: Set<string>; capacity: number; allowlisted?: (ip: string) => boolean }
+): BulkSelection {
+  const isAllowed = opts.allowlisted ?? (() => false)
+  const candidates = ips.filter((ip) => !!ip && !isAllowed(ip))
+  const pending = candidates.filter((ip) => !opts.alreadyBlocked.has(ip))
+  const skipped = candidates.length - pending.length
+  const toApply = pending.slice(0, Math.max(0, opts.capacity))
+  return { toApply, candidates: candidates.length, skipped, overflow: pending.length - toApply.length }
+}
+
 /**
  * Bloqueo masivo manual desde el panel: bloquea TODAS las IPs con eventos de
  * seguridad en la ventana (por defecto 7 d), sin importar la severidad. Es la
