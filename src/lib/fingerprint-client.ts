@@ -4,8 +4,12 @@
 // referencia tomados de estudios públicos de fingerprinting (EFF Panopticlick
 // y AmIUnique), NO una medición poblacional en vivo — se muestra así en la UI.
 
-export type FingerprintSignal = { key: string; label: string; value: string; bits: number }
-export type FingerprintResult = { hash: string; signals: FingerprintSignal[]; entropyBits: number }
+// `value` es el valor COMPLETO (se usa para el hash de identidad); `display`
+// es la versión recortada para pintar en la UI. `bits` es 0 cuando la señal no
+// aportó (error/blocked/vacío): así la entropía refleja lo que de verdad se
+// midió en ESTE dispositivo, no una constante fija.
+export type FingerprintSignal = { key: string; label: string; value: string; display: string; bits: number }
+export type FingerprintResult = { hash: string; signals: FingerprintSignal[]; entropyBits: number; libFpHash: string | null }
 
 export type BehaviorSample = {
   avgKeyIntervalMs: number | null
