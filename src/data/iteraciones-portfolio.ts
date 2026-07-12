@@ -351,15 +351,6 @@ export const ITERACIONES: Iteracion[] = [
           ok('Cierre pedagógico: por qué el incógnito no protege y cómo defenderse (Tor, resistFingerprinting).'),
         ],
       },
-      {
-        id: 'PF-EN-01', titulo: 'Como visitante técnico, quiero comprobar que las métricas de /engineering son reales y no están hardcodeadas',
-        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-07-11', tags: ['engineering', 'observabilidad', 'fase-6'],
-        dod: [
-          ok('Endpoint /api/engineering/live devuelve marcas de tiempo frescas (última muestra RUM, último sondeo, último run CI) más el reloj del servidor.'),
-          ok('Las cards de /engineering consultan la prueba de vida al abrirse; solo expone metadatos de frescura, nunca URLs internas ni configuración.'),
-        ],
-      },
     ],
   },
 ]
