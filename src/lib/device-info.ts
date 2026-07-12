@@ -1,7 +1,31 @@
 // Helpers puros (sin dependencias de DB) para el registro de dispositivos.
 // Separados de device-sessions.ts para poder testearlos sin abrir Turso.
 
+import type { AstroCookies } from 'astro'
+
 export const DEVICE_COOKIE = 'device_id'
+
+/**
+ * Identidad estable del dispositivo/sesión actual: el `sid` firmado en el JWT
+ * si existe, o si no la cookie `device_id` (creándola si falta). La usan el
+ * middleware (registro de sesiones) y el step-up de WebAuthn (para atar la
+ * cookie de MFA al mismo id), así que deben calcularla igual siempre.
+ */
+export function resolveDeviceSessionId(sid: string | null | undefined, cookies: AstroCookies): string {
+  if (sid) return sid
+  let deviceCookie = cookies.get(DEVICE_COOKIE)?.value
+  if (!deviceCookie) {
+    deviceCookie = crypto.randomUUID()
+    cookies.set(DEVICE_COOKIE, deviceCookie, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: import.meta.env.PROD,
+      maxAge: 60 * 60 * 24 * 365,
+    })
+  }
+  return deviceCookie
+}
 
 /** IP del cliente a partir de los headers de proxy de Vercel. */
 export function clientIp(headers: Headers): string | null {
