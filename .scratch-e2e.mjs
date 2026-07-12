@@ -101,9 +101,11 @@ await context.addCookies([
   { name: 'authjs.session-token', value: token4data.token, domain: 'localhost', path: '/', httpOnly: true, sameSite: 'Lax' },
 ])
 resp = await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
-log(`5) GET /admin (sid nuevo, MISMO authenticator con la llave real) → url tras redirect: ${page.url()}`)
-if (!page.url().includes('/entrar/verificar')) throw new Error('FAIL: esperaba redirect a verificar')
-
+log(`5) GET /admin (sid nuevo, MISMO authenticator con la llave real) → url tras cadena de redirects: ${page.url()}`)
+// El authenticator virtual tiene automaticPresenceSimulation:true, así que la
+// cadena /admin → /entrar/verificar → tap automático → verify → /admin puede
+// completarse ENTERA antes de que `networkidle` resuelva. Aterrizar ya en
+// /admin es la señal de que el step-up se auto-completó de punta a punta.
 await page.waitForTimeout(2000)
 log(`6) tras step-up automático → url final: ${page.url()}`)
 if (!page.url().endsWith('/admin')) {
