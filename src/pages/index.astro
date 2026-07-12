@@ -381,6 +381,82 @@ const visibleProjects = await db
     </div>
   </section>
 
+  <!-- ── Laboratorio ── -->
+  <section class="px-6 md:px-12 lg:px-20 py-24 border-t border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/05</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Laboratorio en vivo</span>
+      </div>
+
+      <div class="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-16 items-center">
+        <!-- Texto -->
+        <div>
+          <div class="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-[.18em] text-ember border border-ember/30 bg-ember/10 rounded-full px-3 py-1 mb-6">
+            <span class="w-1.5 h-1.5 rounded-full bg-ember pulse-dot"></span>
+            Demo interactiva · seguridad
+          </div>
+          <h2 class="font-sans text-4xl md:text-5xl font-medium tracking-[-.03em] text-mask max-w-xl leading-[1.02] mb-5">
+            Sala de espejos:<br/>te reconozco sin cookies.
+          </h2>
+          <p class="text-[15px] text-ink-100 leading-relaxed max-w-xl mb-4">
+            Construí un laboratorio de <strong class="text-ink-50">device fingerprinting</strong> para
+            hacer visible algo que casi nadie ve: tu navegador expone decenas de señales —canvas, GPU,
+            fuentes, audio— que juntas forman una huella casi única. Escaneas un QR, entras a una sala
+            y un tablero te identifica en vivo <strong class="text-ink-50">sin login y sin cookies</strong>.
+          </p>
+          <p class="text-[15px] text-ink-100 leading-relaxed max-w-xl mb-8">
+            ¿El objetivo? Que lo <em class="text-ink-50 not-italic font-medium">sientas</em>: entra en
+            incógnito, borra tus cookies y vuelve a entrar. Te reconoce igual. Y termina enseñándote
+            cómo defenderte. Un demo para explicar privacidad y rastreo sin diapositivas.
+          </p>
+          <div class="flex flex-wrap items-center gap-4">
+            <a href="/lab/fingerprint" class="inline-flex items-center gap-2 h-12 px-6 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium hover:bg-zinc-100 transition-colors">
+              Entrar al laboratorio
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+            <span class="text-[12px] font-mono text-ink-400">Efímero · sin PII · las salas se borran en 2h</span>
+          </div>
+        </div>
+
+        <!-- Puntos -->
+        <div class="grid gap-4">
+          {[
+            {
+              color: "text-cyan bg-cyan/10",
+              icon: `<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>`,
+              title: "Escanea y entra",
+              body: "Varios dispositivos se enlazan a la misma sala por un QR — como un aula o un evento en vivo.",
+            },
+            {
+              color: "text-ember bg-ember/10",
+              icon: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`,
+              title: "Te reconoce, no te loguea",
+              body: "Recolector propio contrastado con FingerprintJS. Si vuelves en incógnito, el contador de revisitas sube.",
+            },
+            {
+              color: "text-lime bg-lime/10",
+              icon: `<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>`,
+              title: "Aprende a defenderte",
+              body: "Cierra explicando por qué el incógnito no basta y qué sí funciona: Tor, resistFingerprinting y más.",
+            },
+          ].map((item) => (
+            <div class="rounded-2xl glass p-5 lift flex items-start gap-4">
+              <div class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.color}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={item.icon} />
+              </div>
+              <div>
+                <h3 class="text-[15px] font-medium text-ink-50 tracking-tight mb-1">{item.title}</h3>
+                <p class="text-[13px] text-ink-200 leading-relaxed">{item.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ── GitHub ── -->
   <GithubProjects />
 
