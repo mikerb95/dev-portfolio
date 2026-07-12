@@ -2,12 +2,13 @@ import { defineMiddleware } from 'astro:middleware'
 import { getSession } from 'auth-astro/server'
 import { isAllowedLogin } from './lib/auth'
 import { maybeChaos } from './lib/chaos'
-import { clientIp } from './lib/device-info'
-import { DEVICE_COOKIE, recordSession } from './lib/device-sessions'
+import { clientIp, resolveDeviceSessionId } from './lib/device-info'
+import { recordSession } from './lib/device-sessions'
 import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
 import { isBlocked } from './lib/security/blocklist'
 import { enforceLimit } from './lib/security/ratelimit-durable'
 import { isAuthPath, isRateLimitablePath } from './lib/security/paths'
+import { hasCredentials, hasMfaCookie } from './lib/webauthn'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
 const AUTH_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
