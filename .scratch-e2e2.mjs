@@ -77,9 +77,13 @@ if (!page.url().endsWith('/admin') && !page.url().includes('/entrar')) {
 }
 log('✅ login SOLO con la llave (sin GitHub) funcionó')
 
+// 3b) Esperar a que el interstitial /entrar termine su redirect client-side a /admin
+await page.waitForTimeout(1500)
+log(`5b) tras esperar el interstitial → url=${page.url()}`)
+
 // 4) Confirmar que la sesión resultante es real: /admin carga con la identidad correcta
-resp = await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
-log(`6) GET /admin tras login por llave → url=${page.url()} status=${resp.status()}`)
+await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
+log(`6) GET /admin tras login por llave → url=${page.url()}`)
 if (!page.url().endsWith('/admin')) throw new Error('FAIL: la sesión de passkey no dio acceso real a /admin')
 
 // 5) 🔍 probe: un authenticator SIN la credencial no debe poder entrar
