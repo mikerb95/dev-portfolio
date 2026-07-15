@@ -1,0 +1,108 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { createDemoToken, DEMO_COOKIE, DEMO_TTL_SEC } from '../lib/demo'
+import { demoAvailable } from '../db'
+
+// Entrada a la demo del panel. Si la demo no está configurada (sin base de
+// datos ficticia), la ruta no existe: mejor un 404 honesto que una demo rota.
+if (!demoAvailable) return new Response('Not found', { status: 404 })
+
+const secret = import.meta.env.AUTH_SECRET
+
+if (Astro.request.method === 'POST' && secret) {
+  Astro.cookies.set(DEMO_COOKIE, createDemoToken(secret), {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: import.meta.env.PROD,
+    maxAge: DEMO_TTL_SEC,
+  })
+  return Astro.redirect('/admin')
+}
+
+const incluye = [
+  'Costos e infraestructura con P&L multi-moneda y margen por proyecto.',
+  'Clientes, proyectos y su seguimiento (llamadas, reuniones, recordatorios).',
+  'Monitores de uptime, incidentes y el laboratorio de ingeniería.',
+  'Finanzas, briefings y certificaciones.',
+]
+
+const excluye = [
+  'Los datos son ficticios: salen de una base de datos aparte, no de la real.',
+  'Es de solo lectura: crear, editar y borrar están deshabilitados en el servidor.',
+  'La bóveda de credenciales, los backups y la gestión de sesiones quedan fuera.',
+]
+---
+
+<BaseLayout
+  title="Demo del panel — CodeByMike"
+  description="Explora el panel de control completo con datos ficticios: costos y P&L, clientes, proyectos, monitoreo y laboratorio de ingeniería. Sin registro."
+>
+  <div class="max-w-[720px] mx-auto px-6 md:px-12 pt-32 pb-24">
+
+    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver
+    </a>
+
+    <header class="mb-10">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/demo</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Panel de control</span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-medium tracking-[-.035em] text-mask leading-[1] mb-6">
+        Entra al panel<br/>sin registrarte.
+      </h1>
+      <p class="text-[15px] text-ink-100 leading-relaxed">
+        El panel que uso a diario para operar mis proyectos: costos, márgenes, clientes,
+        monitoreo y laboratorio. Esta demo te deja recorrerlo completo, con datos inventados
+        y sin tocar nada real.
+      </p>
+    </header>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-10">
+      <div class="rounded-2xl glass p-6">
+        <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">Qué vas a ver</div>
+        <ul class="space-y-2.5">
+          {incluye.map((i) => (
+            <li class="flex gap-2.5 text-[13px] text-ink-100 leading-relaxed">
+              <span class="text-lime shrink-0 mt-[3px]">·</span>{i}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="rounded-2xl glass p-6">
+        <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">Reglas del juego</div>
+        <ul class="space-y-2.5">
+          {excluye.map((i) => (
+            <li class="flex gap-2.5 text-[13px] text-ink-100 leading-relaxed">
+              <span class="text-cyan shrink-0 mt-[3px]">·</span>{i}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <form method="POST" class="rounded-2xl glass p-6 flex flex-wrap items-center gap-4">
+      <div class="min-w-0">
+        <div class="text-[13px] text-ink-50">El pase dura 2 horas</div>
+        <div class="text-[12px] text-ink-300 mt-0.5">Sin correo, sin cuenta, sin cookies de rastreo.</div>
+      </div>
+      <button
+        type="submit"
+        class="ml-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:bg-cyan/90 transition-colors"
+      >
+        Entrar a la demo
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+    </form>
+
+    <p class="text-[12px] text-ink-300 leading-relaxed mt-6">
+      ¿Buscas cómo está construido? El aislamiento de la demo no depende de esconder botones:
+      los datos salen de otra base de datos y el servidor rechaza cualquier método que no sea
+      de lectura. Lo cuento en <a href="/architecture" class="text-cyan hover:underline">/architecture</a>.
+    </p>
+
+  </div>
+</BaseLayout>

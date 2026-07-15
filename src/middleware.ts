@@ -8,9 +8,47 @@ import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
 import { isBlocked } from './lib/security/blocklist'
 import { enforceLimit } from './lib/security/ratelimit-durable'
 import { isAuthPath, isRateLimitablePath } from './lib/security/paths'
+import { DEMO_COOKIE, isDemoAllowedMethod, isDemoBlockedPath, verifyDemoToken } from './lib/demo'
+import { demoAvailable, runInDemoContext } from './db'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
 const AUTH_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
+
+const demoDenied = (motivo: string) =>
+  new Response(JSON.stringify({ error: motivo, demo: true }), {
+    status: 403,
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+/**
+ * Evalúa el pase de demo de un request sin sesión a /admin.
+ *  · `false`    → no hay pase válido; sigue el camino normal (redirect a login).
+ *  · `Response` → hay pase, pero este request no cabe en la demo (403).
+ *  · `true`     → demo concedida.
+ *
+ * El pase solo abre la puerta; lo que impide tocar datos reales es que las
+ * queries salen de otra base (ver src/db/index.ts). Si la demo no está
+ * configurada, esta función siempre dice `false` y el panel se comporta igual
+ * que antes de que existiera.
+ */
+function resolveDemoPass(
+  context: { cookies: { get: (name: string) => { value: string } | undefined } },
+  pathname: string,
+  method: string
+): Response | boolean {
+  if (!demoAvailable) return false
+
+  const token = context.cookies.get(DEMO_COOKIE)?.value
+  if (!verifyDemoToken(import.meta.env.AUTH_SECRET, token)) return false
+
+  if (!isDemoAllowedMethod(method)) {
+    return demoDenied('la demo es de solo lectura: esta acción está deshabilitada')
+  }
+  if (isDemoBlockedPath(pathname)) {
+    return demoDenied('esta sección no está disponible en la demo')
+  }
+  return true
+}
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url
@@ -113,47 +151,60 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isPrivateDeck = pathname === '/docs/presentacion'
   const isPrivate = isAdmin || isPrivateDeck
 
+  let demoMode = false
+
   if (isPrivate) {
     const session = await getSession(context.request)
+
     if (!session) {
-      // El deck vuelve a sí mismo tras el login; el panel pasa por /entrar.
-      const callbackUrl = isPrivateDeck ? encodeURIComponent(pathname) : '%2Fentrar'
-      return context.redirect(`/login?callbackUrl=${callbackUrl}`)
-    }
-
-    // Defensa en profundidad: revalida la allowlist en cada request.
-    const login = (session?.user as { login?: string } | undefined)?.login
-    if (!isAllowedLogin(login)) {
-      return new Response('Forbidden', { status: 403 })
-    }
-
-    // Registro de dispositivo: identidad = `sid` del JWT si existe (sesiones
-    // nuevas), o cookie `device_id` como respaldo (sesiones previas). Si la
-    // sesión fue revocada desde el panel, se borra el JWT y se fuerza re-login.
-    const sid = (session as { sid?: string } | undefined)?.sid
-    const sessionId = resolveDeviceSessionId(sid, context.cookies)
-    try {
-      const { revoked } = await recordSession({
-        id: sessionId,
-        login,
-        userAgent: context.request.headers.get('user-agent'),
-        ip: clientIp(context.request.headers),
-      })
-      if (revoked) {
-        for (const name of AUTH_COOKIES) context.cookies.delete(name, { path: '/' })
-        return context.redirect('/entrar?revoked=1')
+      // Sin sesión, el pase de demo es la única alternativa: datos ficticios y
+      // solo lectura. Nunca aplica al deck privado ni si ya hay sesión real.
+      const demo = isAdmin ? resolveDemoPass(context, pathname, method) : false
+      if (demo instanceof Response) return demo
+      if (!demo) {
+        // El deck vuelve a sí mismo tras el login; el panel pasa por /entrar.
+        const callbackUrl = isPrivateDeck ? encodeURIComponent(pathname) : '%2Fentrar'
+        return context.redirect(`/login?callbackUrl=${callbackUrl}`)
       }
-    } catch {
-      // Fail-open: un fallo del registro de sesiones no debe tumbar el panel.
-    }
+      demoMode = true
+      context.locals.demo = true
+    } else {
+      // Defensa en profundidad: revalida la allowlist en cada request.
+      const login = (session?.user as { login?: string } | undefined)?.login
+      if (!isAllowedLogin(login)) {
+        return new Response('Forbidden', { status: 403 })
+      }
 
-    // Nota: WebAuthn (llave de seguridad) es una puerta de entrada ALTERNATIVA
-    // a GitHub (ver /login y auth.config.ts), no un segundo factor obligatorio
-    // encima de GitHub — quien ya entró por cualquiera de las dos no vuelve a
-    // pasar por la otra.
+      // Registro de dispositivo: identidad = `sid` del JWT si existe (sesiones
+      // nuevas), o cookie `device_id` como respaldo (sesiones previas). Si la
+      // sesión fue revocada desde el panel, se borra el JWT y se fuerza re-login.
+      const sid = (session as { sid?: string } | undefined)?.sid
+      const sessionId = resolveDeviceSessionId(sid, context.cookies)
+      try {
+        const { revoked } = await recordSession({
+          id: sessionId,
+          login,
+          userAgent: context.request.headers.get('user-agent'),
+          ip: clientIp(context.request.headers),
+        })
+        if (revoked) {
+          for (const name of AUTH_COOKIES) context.cookies.delete(name, { path: '/' })
+          return context.redirect('/entrar?revoked=1')
+        }
+      } catch {
+        // Fail-open: un fallo del registro de sesiones no debe tumbar el panel.
+      }
+
+      // Nota: WebAuthn (llave de seguridad) es una puerta de entrada ALTERNATIVA
+      // a GitHub (ver /login y auth.config.ts), no un segundo factor obligatorio
+      // encima de GitHub — quien ya entró por cualquiera de las dos no vuelve a
+      // pasar por la otra.
+    }
   }
 
-  const res = await next()
+  // En demo, TODA lectura sale de la base ficticia: el contexto se propaga por
+  // async/await hasta cualquier query que dispare el render.
+  const res = demoMode ? await runInDemoContext(() => next()) : await next()
   const resHeaders = new Headers(res.headers)
 
   resHeaders.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')

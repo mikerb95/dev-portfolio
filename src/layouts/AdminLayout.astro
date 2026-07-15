@@ -7,6 +7,11 @@ interface Props {
 }
 
 const { title } = Astro.props
+
+// Modo demo: lo fija el middleware para requests con pase y sin sesión real.
+// El aviso y los botones ocultos son cortesía visual; lo que de verdad protege
+// es que los datos vienen de otra base y el servidor rechaza toda escritura.
+const isDemo = Astro.locals.demo === true
 ---
 
 <!doctype html>
@@ -50,10 +55,17 @@ const { title } = Astro.props
           </div>
         </div>
         <div class="flex items-center gap-2 md:gap-3 shrink-0">
-          <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full glass text-[11px] font-mono">
-            <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
-            Sistema operativo
-          </div>
+          {isDemo ? (
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan/30 bg-cyan/10 text-cyan text-[11px] font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
+              Modo demo · solo lectura
+            </div>
+          ) : (
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full glass text-[11px] font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
+              Sistema operativo
+            </div>
+          )}
           <a
             href="/"
             class="inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-white/[.03] text-ink-50 border border-white/10 hover:bg-white/[.06] transition-all"
@@ -64,6 +76,17 @@ const { title } = Astro.props
         </div>
       </div>
       <main class="flex-1 px-4 md:px-8 pb-12 pt-6 md:pt-7 lg:min-h-0 lg:overflow-y-auto">
+        {isDemo && (
+          <div class="mb-6 rounded-xl border border-cyan/25 bg-cyan/[.07] px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span class="text-[13px] text-ink-50">
+              Estás en la <span class="text-cyan font-medium">demo</span>: todos los datos son
+              ficticios y nada se puede modificar.
+            </span>
+            <a href="/architecture" class="text-[12px] text-cyan hover:underline ml-auto">
+              Cómo está aislada →
+            </a>
+          </div>
+        )}
         <slot />
       </main>
     </div>
