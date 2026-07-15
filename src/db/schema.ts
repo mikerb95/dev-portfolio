@@ -6,6 +6,12 @@ export const clients = sqliteTable('clients', {
   email: text('email'),
   company: text('company'),
   notes: text('notes'),
+  // Portal de clientes (ver docs/plan-portal-clientes.md). El acceso se habilita
+  // por cliente: tener ficha aquí no implica tener portal.
+  portalEnabled: integer('portal_enabled', { mode: 'boolean' }).notNull().default(false),
+  logoUrl: text('logo_url'),
+  // JSON: NIT/documento, dirección y demás datos que van en la factura.
+  billingInfo: text('billing_info'),
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
