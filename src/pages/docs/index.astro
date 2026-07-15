@@ -1,8 +1,8 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro'
-import DocsNav from '../../../components/admin/DocsNav.astro'
-import { REQUISITOS_FUNCIONALES, REQUISITOS_NO_FUNCIONALES, CASOS_DE_USO, ACTORES } from '../../../data/documentacion'
-import { ITERACIONES as ITER_PF } from '../../../data/iteraciones-portfolio'
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import DocsNav from '../../components/admin/DocsNav.astro'
+import { REQUISITOS_FUNCIONALES, REQUISITOS_NO_FUNCIONALES, CASOS_DE_USO, ACTORES } from '../../data/documentacion'
+import { ITERACIONES as ITER_PF } from '../../data/iteraciones-portfolio'
 
 const rfTotal = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const rfImpl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length

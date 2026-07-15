@@ -1,8 +1,8 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro'
-import DocsNav from '../../../components/admin/DocsNav.astro'
-import RequisitosView from '../../../components/admin/RequisitosView.astro'
-import { REQUISITOS_NO_FUNCIONALES } from '../../../data/documentacion'
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import DocsNav from '../../components/admin/DocsNav.astro'
+import RequisitosView from '../../components/admin/RequisitosView.astro'
+import { REQUISITOS_NO_FUNCIONALES } from '../../data/documentacion'
 
 const total = REQUISITOS_NO_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 ---

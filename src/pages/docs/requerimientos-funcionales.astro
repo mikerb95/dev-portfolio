@@ -1,8 +1,8 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro'
-import DocsNav from '../../../components/admin/DocsNav.astro'
-import RequisitosView from '../../../components/admin/RequisitosView.astro'
-import { REQUISITOS_FUNCIONALES } from '../../../data/documentacion'
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import DocsNav from '../../components/admin/DocsNav.astro'
+import RequisitosView from '../../components/admin/RequisitosView.astro'
+import { REQUISITOS_FUNCIONALES } from '../../data/documentacion'
 
 const total = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const impl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
