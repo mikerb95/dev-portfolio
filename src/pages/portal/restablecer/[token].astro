@@ -1,0 +1,121 @@
+---
+import PortalAuthLayout from '../../../layouts/PortalAuthLayout.astro'
+import { resolveToken } from '../../../lib/portal/invitations'
+
+const { token } = Astro.params
+const reset = await resolveToken(token)
+const valid = reset?.kind === 'reset'
+---
+
+{
+  !valid ? (
+    <PortalAuthLayout title="Este enlace ya no sirve">
+      <div class="glass rounded-2xl p-5">
+        <p class="text-[14px] leading-relaxed text-ink-100">
+          El enlace de restablecimiento caducó (duran 30 minutos), ya se usó, o fue reemplazado por uno más
+          reciente.
+        </p>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <a
+            href="/portal/olvide"
+            class="inline-flex items-center h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors"
+          >
+            Pedir uno nuevo
+          </a>
+          <a
+            href="/portal/login"
+            class="inline-flex items-center h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-50 text-[13px] hover:bg-white/[.06] transition-colors"
+          >
+            Ir al login
+          </a>
+        </div>
+      </div>
+    </PortalAuthLayout>
+  ) : (
+    <PortalAuthLayout title="Elige una contraseña nueva" subtitle={reset.email}>
+      <form id="form" class="space-y-4" novalidate>
+        <div>
+          <label for="password" class="block text-[12px] font-medium text-ink-100 mb-1.5">Contraseña nueva</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            autofocus
+            autocomplete="new-password"
+            class="input-base w-full"
+            placeholder="Mínimo 10 caracteres"
+          />
+          <p class="mt-1.5 text-[11px] text-ink-300">Al menos 10 caracteres, combinando letras y números.</p>
+        </div>
+
+        <div>
+          <label for="password2" class="block text-[12px] font-medium text-ink-100 mb-1.5">Repítela</label>
+          <input
+            type="password"
+            id="password2"
+            name="password2"
+            required
+            autocomplete="new-password"
+            class="input-base w-full"
+          />
+        </div>
+
+        <p id="error" class="hidden text-[13px] text-ember" role="alert" aria-live="polite" />
+
+        <button
+          type="submit"
+          id="submit"
+          class="w-full h-11 rounded-full bg-cyan text-ink-950 text-[14px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50"
+        >
+          Guardar y entrar
+        </button>
+      </form>
+
+      <p class="mt-6 text-[12px] leading-relaxed text-ink-300">
+        Al cambiarla, se cerrarán todas las sesiones abiertas en otros dispositivos.
+      </p>
+    </PortalAuthLayout>
+  )
+}
+
+<script define:vars={{ token }}>
+  const form = document.getElementById('form')
+  if (form) {
+    const errorEl = document.getElementById('error')
+    const submit = document.getElementById('submit')
+
+    const fail = (msg) => {
+      errorEl.textContent = msg
+      errorEl.classList.remove('hidden')
+      submit.disabled = false
+      submit.textContent = 'Guardar y entrar'
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      errorEl.classList.add('hidden')
+
+      const data = Object.fromEntries(new FormData(form))
+      if (data.password !== data.password2) return fail('Las dos contraseñas no coinciden.')
+
+      submit.disabled = true
+      submit.textContent = 'Guardando…'
+      try {
+        const res = await fetch(`/api/portal/restablecer/${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: data.password }),
+        })
+        const body = await res.json().catch(() => ({}))
+        if (res.ok && body.redirect) {
+          window.location.href = body.redirect
+          return
+        }
+        fail(body.error ?? 'No se pudo guardar la contraseña.')
+      } catch {
+        fail('Error de conexión. Inténtalo de nuevo.')
+      }
+    })
+  }
+</script>
