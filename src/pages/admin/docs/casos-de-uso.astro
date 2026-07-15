@@ -9,6 +9,9 @@ import { ACTORES, CASOS_DE_USO } from '../../../data/documentacion'
 // - Casos de uso como óvalos (forma "stadium") dentro de un subgraph que
 //   representa el límite del sistema.
 // - Asociaciones como líneas simples sin flecha (--- en vez de -->).
+// No forzar "direction TB" dentro del subgraph: Mermaid la ignora cuando
+// hay aristas externas cruzando el límite (el ranking de esas aristas gana),
+// y el resultado es una fila gigantesca e ilegible en vez de una columna.
 const actoresUsados = new Set(CASOS_DE_USO.map((c) => c.actor))
 const actorLines = ACTORES.filter((a) => actoresUsados.has(a.id))
   .map((a) => `  ${a.id}(["${a.nombre}"])`)
