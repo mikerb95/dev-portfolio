@@ -54,9 +54,14 @@ describe('portal · passwords', () => {
       // "café" con é precompuesta (NFC) vs. e + acento combinante (NFD): mismo
       // texto para el usuario, bytes distintos. Sin normalizar, un macOS y un
       // Windows podrían discrepar sobre si la contraseña es correcta.
-      const nfc = 'caféseguro1'
-      const nfd = 'caféseguro1'
-      expect(nfc).not.toBe(nfd)
+      // Las formas se construyen con normalize() en vez de escribirlas
+      // literales para que el test no dependa de bytes invisibles en este
+      // archivo: un formateador que los unificara lo dejaría en verde sin
+      // probar nada.
+      const nfc = 'café'.normalize('NFC') + 'seguro1'
+      const nfd = 'café'.normalize('NFD') + 'seguro1'
+      expect(nfd).not.toBe(nfc)
+
       const hash = await hashPassword(nfc)
       expect(await verifyPassword(nfd, hash)).toBe(true)
     })
