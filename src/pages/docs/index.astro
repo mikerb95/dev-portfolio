@@ -34,6 +34,7 @@ const subpaginas = [
 ---
 
 <BaseLayout title="Documentación">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
   <DocsNav />
 
   <h2 class="text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Introducción</h2>
@@ -99,5 +100,6 @@ const subpaginas = [
   <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 text-[14px] text-ink-100 leading-relaxed space-y-2">
     <p><strong class="text-ink-50">Dentro de alcance:</strong> sitio público de portafolio, CRM interno (proyectos/clientes/seguimiento/briefings), finanzas y P&L por proyecto, observabilidad (monitoreo, SLO, notificaciones), un LAB de ingeniería (CI/CD con rollback, pagos idempotentes, chaos engineering) y un micro-SIEM propio (sensor, blocklist, rate limiting durable, detección de anomalías).</p>
     <p><strong class="text-ink-50">Fuera de alcance (por ahora):</strong> multiusuario/roles (el panel es de un único administrador), pasarela de pagos en producción real (el LAB usa un proveedor mock además de Wompi), y SAST/mutation testing automatizados (planeados en el LAB, ver Fases 5–7 del plan).</p>
+  </div>
   </div>
 </BaseLayout>

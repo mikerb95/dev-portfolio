@@ -8,10 +8,12 @@ const total = REQUISITOS_NO_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 ---
 
 <BaseLayout title="Requerimientos no funcionales">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
   <DocsNav />
   <RequisitosView
     modulos={REQUISITOS_NO_FUNCIONALES}
     unidad="req. no funcionales"
     intro={`${total} requerimientos no funcionales agrupados por categoría de calidad (alineadas a ISO/IEC 25010): seguridad, confiabilidad/disponibilidad, eficiencia de desempeño, mantenibilidad y usabilidad/accesibilidad. Filtra por estado o prioridad, o busca por ID, título o ruta.`}
   />
+  </div>
 </BaseLayout>

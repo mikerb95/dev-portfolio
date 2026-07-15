@@ -9,10 +9,12 @@ const impl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.esta
 ---
 
 <BaseLayout title="Requerimientos funcionales">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
   <DocsNav />
   <RequisitosView
     modulos={REQUISITOS_FUNCIONALES}
     unidad="req. funcionales"
     intro={`${total} requerimientos funcionales agrupados por módulo, con prioridad, estado real de implementación y su origen en el código. ${impl} de ${total} ya están implementados en producción. Filtra por estado o prioridad, o busca por ID, título o ruta.`}
   />
+  </div>
 </BaseLayout>
