@@ -15,7 +15,9 @@
  * (la base real). El aislamiento de la demo depende de que sean bases distintas.
  */
 import { createClient } from '@libsql/client'
-import { readFileSync, readdirSync } from 'node:fs'
+import { drizzle } from 'drizzle-orm/libsql'
+import { migrate as drizzleMigrate } from 'drizzle-orm/libsql/migrator'
+import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -51,33 +53,28 @@ const sec = (ms) => Math.floor(ms / 1000)
 const daysAgo = (d) => sec(now - d * DAY)
 const daysAhead = (d) => sec(now + d * DAY)
 
-// ── Migraciones ─────────────────────────────────────────────────────────────
-async function migrate() {
-  const files = readdirSync(join(root, 'drizzle'))
-    .filter((f) => f.endsWith('.sql'))
-    .sort()
-
-  for (const file of files) {
-    const sql = readFileSync(join(root, 'drizzle', file), 'utf8')
-    // drizzle separa sentencias con este marcador.
-    const statements = sql
-      .split('--> statement-breakpoint')
-      .map((s) => s.trim())
-      .filter(Boolean)
-    for (const stmt of statements) {
-      try {
-        await db.execute(stmt)
-      } catch (e) {
-        // Re-ejecutar migraciones ya aplicadas es normal en un seed idempotente.
-        const msg = String(e.message || e)
-        if (!/already exists|duplicate column/i.test(msg)) {
-          console.error(`✗ ${file}: ${msg}`)
-          throw e
-        }
-      }
-    }
+// ── Esquema ─────────────────────────────────────────────────────────────────
+/**
+ * Deja la base como recién creada y aplica las migraciones con el migrador de
+ * drizzle (el mismo de producción), que lleva su propio registro de lo aplicado.
+ *
+ * Se arrasa en vez de migrar incremental a propósito: algunas migraciones
+ * incluyen pasos de datos que no toleran re-ejecución, y esta base es
+ * desechable por definición. La salvaguarda de arriba ya garantizó que no es
+ * la real.
+ */
+async function resetSchema() {
+  const { rows } = await db.execute(
+    `select name from sqlite_master where type='table' and name not like 'sqlite_%' and name not like 'libsql_%'`
+  )
+  if (rows.length) {
+    await db.execute('pragma foreign_keys = off')
+    for (const { name } of rows) await db.execute(`drop table if exists "${name}"`)
+    await db.execute('pragma foreign_keys = on')
   }
-  console.log(`✓ Migraciones aplicadas (${files.length} archivos)`)
+
+  await drizzleMigrate(drizzle(db), { migrationsFolder: join(root, 'drizzle') })
+  console.log(`✓ Esquema recreado y migrado (${rows.length} tablas previas eliminadas)`)
 }
 
 // ── Datos ficticios ─────────────────────────────────────────────────────────
@@ -133,15 +130,6 @@ const MONITORS = [
 ]
 
 async function seed() {
-  // Orden inverso a las FK.
-  for (const t of [
-    'monitor_checks', 'monitor_incidents', 'monitors', 'interactions', 'finances',
-    'project_services', 'project_env_vars', 'project_contacts', 'projects', 'clients',
-    'ci_runs', 'lab_experiments', 'app_settings',
-  ]) {
-    await db.execute(`delete from ${t}`)
-  }
-
   await db.batch(
     CLIENTS.map((c) => ({
       sql: 'insert into clients (name, email, company, notes, created_at) values (?, ?, ?, ?, ?)',
@@ -254,7 +242,7 @@ async function seed() {
               `${SERVICES.length} servicios · ${MONITORS.length} monitores · ${checks.length} checks`)
 }
 
-await migrate()
+await resetSchema()
 await seed()
 console.log(`✓ Demo lista en ${url.replace(/\/\/.*@/, '//')}`)
 db.close()

@@ -1,0 +1,147 @@
+---
+import PortalAuthLayout from '../../../layouts/PortalAuthLayout.astro'
+import { resolveToken } from '../../../lib/portal/invitations'
+
+const { token } = Astro.params
+const invitation = await resolveToken(token)
+---
+
+{
+  !invitation ? (
+    <PortalAuthLayout title="Este enlace ya no sirve">
+      <div class="glass rounded-2xl p-5">
+        <p class="text-[14px] leading-relaxed text-ink-100">
+          El enlace de invitación caducó, ya se usó, o fue reemplazado por uno más reciente.
+        </p>
+        <p class="mt-3 text-[13px] leading-relaxed text-ink-200">
+          Si ya definiste tu contraseña, entra directamente. Si no, pídeme una invitación nueva.
+        </p>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <a
+            href="/portal/login"
+            class="inline-flex items-center h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors"
+          >
+            Ir al login
+          </a>
+          <a
+            href="/contact"
+            class="inline-flex items-center h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-50 text-[13px] hover:bg-white/[.06] transition-colors"
+          >
+            Pedir una invitación
+          </a>
+        </div>
+      </div>
+    </PortalAuthLayout>
+  ) : (
+    <PortalAuthLayout
+      title="Define tu contraseña"
+      subtitle={`Estás activando el acceso de ${invitation.clientName}.`}
+    >
+      <form id="form" class="space-y-4" novalidate>
+        <div>
+          <label for="email" class="block text-[12px] font-medium text-ink-100 mb-1.5">Correo</label>
+          <input
+            type="email"
+            id="email"
+            value={invitation.email}
+            disabled
+            autocomplete="username"
+            class="input-base w-full opacity-60 cursor-not-allowed"
+          />
+        </div>
+
+        <div>
+          <label for="name" class="block text-[12px] font-medium text-ink-100 mb-1.5">Tu nombre</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={invitation.userName ?? ''}
+            required
+            autocomplete="name"
+            class="input-base w-full"
+            placeholder="Nombre y apellido"
+          />
+        </div>
+
+        <div>
+          <label for="password" class="block text-[12px] font-medium text-ink-100 mb-1.5">Contraseña</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            autocomplete="new-password"
+            class="input-base w-full"
+            placeholder="Mínimo 10 caracteres"
+          />
+          <p class="mt-1.5 text-[11px] text-ink-300">Al menos 10 caracteres, combinando letras y números.</p>
+        </div>
+
+        <div>
+          <label for="password2" class="block text-[12px] font-medium text-ink-100 mb-1.5">Repite la contraseña</label>
+          <input
+            type="password"
+            id="password2"
+            name="password2"
+            required
+            autocomplete="new-password"
+            class="input-base w-full"
+          />
+        </div>
+
+        <p id="error" class="hidden text-[13px] text-ember" role="alert" aria-live="polite" />
+
+        <button
+          type="submit"
+          id="submit"
+          class="w-full h-11 rounded-full bg-cyan text-ink-950 text-[14px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Activar mi acceso
+        </button>
+      </form>
+    </PortalAuthLayout>
+  )
+}
+
+<script define:vars={{ token }}>
+  const form = document.getElementById('form')
+  if (form) {
+    const errorEl = document.getElementById('error')
+    const submit = document.getElementById('submit')
+
+    const fail = (msg) => {
+      errorEl.textContent = msg
+      errorEl.classList.remove('hidden')
+      submit.disabled = false
+      submit.textContent = 'Activar mi acceso'
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      errorEl.classList.add('hidden')
+
+      const data = Object.fromEntries(new FormData(form))
+      // Comprobación en cliente por cortesía; el servidor la repite igual.
+      if (data.password !== data.password2) return fail('Las dos contraseñas no coinciden.')
+
+      submit.disabled = true
+      submit.textContent = 'Activando…'
+      try {
+        const res = await fetch(`/api/portal/invitacion/${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: data.name, password: data.password }),
+        })
+        const body = await res.json().catch(() => ({}))
+        if (res.ok && body.redirect) {
+          window.location.href = body.redirect
+          return
+        }
+        fail(body.error ?? 'No se pudo activar el acceso.')
+      } catch {
+        fail('Error de conexión. Inténtalo de nuevo.')
+      }
+    })
+  }
+</script>
