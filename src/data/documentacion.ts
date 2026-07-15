@@ -160,9 +160,9 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
     id: 'mantenibilidad',
     nombre: 'Mantenibilidad',
     items: [
-      { id: 'RNF-14', titulo: 'Datos de documentación como código', descripcion: 'Requerimientos, casos de uso e iteraciones se definen en TypeScript tipado, no en documentos externos desincronizables.', prioridad: 'media', estado: 'implementado', origen: 'src/data/documentacion.ts' },
-      { id: 'RNF-15', titulo: 'Registro de decisiones de arquitectura', descripcion: 'Cada decisión técnica relevante por proyecto queda documentada con contexto, alternativas y consecuencias (ADR).', prioridad: 'media', estado: 'implementado', origen: 'project_adrs' },
-      { id: 'RNF-16', titulo: 'Retención y purga de datos operativos', descripcion: 'Los checks de monitoreo y eventos de seguridad crudos se purgan pasados 90 días para no inflar el almacenamiento.', prioridad: 'baja', estado: 'implementado', origen: 'monitor_checks, security_events' },
+      { id: 'RNF-14', titulo: 'Datos de documentación como código', descripcion: 'Requerimientos, casos de uso e iteraciones se definen en TypeScript tipado, no en documentos externos desincronizables.', prioridad: 'media', estado: 'implementado', origen: 'src/data/documentacion.ts', verificacion: 'Verificado por el propio compilador: cualquier campo faltante o mal tipado rompe `astro check`.', relacionados: ['RF-703'] },
+      { id: 'RNF-15', titulo: 'Registro de decisiones de arquitectura', descripcion: 'Cada decisión técnica relevante por proyecto queda documentada con contexto, alternativas y consecuencias (ADR).', prioridad: 'media', estado: 'implementado', origen: 'project_adrs', verificacion: 'Revisión manual del ADR más reciente de un proyecto activo.', relacionados: ['RF-207'] },
+      { id: 'RNF-16', titulo: 'Retención y purga de datos operativos', descripcion: 'Los checks de monitoreo y eventos de seguridad crudos se purgan pasados 90 días para no inflar el almacenamiento.', prioridad: 'baja', estado: 'implementado', origen: 'monitor_checks, security_events', verificacion: 'Revisión del job de purga y del volumen de la tabla antes/después de su ejecución.', notas: 'Los rollups agregados (RF-604) sobreviven la purga; solo se elimina el detalle crudo, para conservar tendencias históricas sin el peso de cada evento individual.', relacionados: ['RF-604'] },
     ],
   },
   {
