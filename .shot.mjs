@@ -2,16 +2,32 @@ import { chromium } from 'playwright';
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
 const errs = [];
-p.on('console', m => m.type() === 'error' && errs.push(m.text()));
 p.on('pageerror', e => errs.push('PAGEERROR: ' + e.message));
-await p.goto('http://localhost:4321/docs/presentacion', { waitUntil: 'networkidle' });
-await p.waitForTimeout(1500);
-const slides = await p.evaluate(() => document.querySelectorAll('.slides > section').length);
-console.log('top-level slides:', slides);
-for (const [i, s] of [0, 2, 6, 9, 12].entries()) {
+
+// Slide de KPIs: avanzar los fragments para verla completa
+await p.goto('http://localhost:4321/docs/presentacion#/2', { waitUntil: 'networkidle' });
+await p.waitForTimeout(800);
+for (let i = 0; i < 4; i++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(300); }
+await p.screenshot({ path: 'shot-kpi.png' });
+
+for (const s of [0, 6, 11]) {
   await p.goto(`http://localhost:4321/docs/presentacion#/${s}`, { waitUntil: 'networkidle' });
-  await p.waitForTimeout(900);
-  await p.screenshot({ path: `slide-${s}.png` });
+  await p.waitForTimeout(800);
+  if (s === 11) for (let i = 0; i < 4; i++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(250); }
+  await p.screenshot({ path: `shot-${s}.png` });
 }
-console.log('errors:', errs.length ? errs : 'none');
+
+// Overflow: ¿alguna slide se sale del viewport?
+await p.goto('http://localhost:4321/docs/presentacion', { waitUntil: 'networkidle' });
+await p.waitForTimeout(600);
+const over = await p.evaluate(() => {
+  const out = [];
+  document.querySelectorAll('.slides section').forEach((s, i) => {
+    if (s.querySelector('section')) return;
+    if (s.scrollHeight > 700) out.push(`${i}: ${s.scrollHeight}px`);
+  });
+  return out;
+});
+console.log('slides que exceden 700px de alto:', over.length ? over : 'ninguna');
+console.log('errores:', errs.length ? errs : 'ninguno');
 await b.close();
