@@ -43,7 +43,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
       ].map((s) => (
         <div class="rounded-2xl glass p-5">
           <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">{s.label}</div>
-          <div class="text-3xl font-medium text-ink-50 tracking-tight" id={s.id}>—</div>
+          <div class="text-3xl font-medium text-ink-50 tracking-tight animate-pulse stat-value" id={s.id}>—</div>
           <div class="text-[10px] font-mono text-ink-300 mt-1">{s.unit}</div>
         </div>
       ))}
