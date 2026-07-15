@@ -1,0 +1,671 @@
+---
+// Deck de sustentación: resumen de /docs en formato presentación.
+// Las cifras salen de las mismas fuentes que las páginas de documentación,
+// así que no hay números escritos a mano que se desincronicen.
+import SlidesLayout from '../../layouts/SlidesLayout.astro'
+import {
+  REQUISITOS_FUNCIONALES,
+  REQUISITOS_NO_FUNCIONALES,
+  CASOS_DE_USO,
+  CASOS_DE_USO_EXTENDIDOS,
+  ACTORES,
+} from '../../data/documentacion'
+import { ITERACIONES } from '../../data/iteraciones-portfolio'
+
+const rf = REQUISITOS_FUNCIONALES.flatMap((m) => m.items)
+const rfTotal = rf.length
+const rfImpl = rf.filter((r) => r.estado === 'implementado').length
+const rnf = REQUISITOS_NO_FUNCIONALES.flatMap((m) => m.items)
+const rnfTotal = rnf.length
+const rnfImpl = rnf.filter((r) => r.estado === 'implementado').length
+const cuTotal = CASOS_DE_USO.length
+const historias = ITERACIONES.flatMap((i) => i.historias)
+const commitsTotal = ITERACIONES.reduce((a, i) => a + i.commits, 0)
+
+const nombreActor = (id: string) => ACTORES.find((a) => a.id === id)?.nombre ?? id
+
+const kpis = [
+  { valor: rfTotal, label: 'Req. funcionales', sub: `${rfImpl} implementados` },
+  { valor: rnfTotal, label: 'Req. no funcionales', sub: 'ISO/IEC 25010' },
+  { valor: cuTotal, label: 'Casos de uso', sub: `${ACTORES.length} actores` },
+  { valor: historias.length, label: 'Historias XP', sub: `${ITERACIONES.length} iteraciones` },
+]
+
+const stack = [
+  { grupo: 'Framework', items: ['Astro 6 (SSR, adapter Vercel)', 'Tailwind CSS 4'] },
+  { grupo: 'Datos', items: ['Drizzle ORM', 'libSQL / Turso'] },
+  { grupo: 'Auth', items: ['Auth.js (auth-astro)', 'GitHub OAuth + WebAuthn'] },
+  { grupo: 'Almacenamiento', items: ['Vercel Blob (backups, screenshots)'] },
+  { grupo: 'Observabilidad', items: ['Cron externo (cron-job.org)', 'ntfy.sh (push)', 'Web Vitals (RUM)'] },
+  { grupo: 'Testing', items: ['Vitest + coverage v8'] },
+]
+
+const decisiones = [
+  {
+    titulo: 'Datos como código',
+    detalle:
+      'RF, RNF y casos de uso viven tipados en src/data/documentacion.ts; las páginas solo renderizan. Cambiar un requerimiento es un commit revisable, no un documento que se desincroniza.',
+  },
+  {
+    titulo: 'Kanban sin duplicación',
+    detalle:
+      'IteracionesBoard se parametrizó con props, así /projects/dobleyo y /docs/kanban comparten el mismo motor de render con datos distintos.',
+  },
+  {
+    titulo: 'Iteraciones ancladas al historial real',
+    detalle:
+      `Los rangos y los ${commitsTotal} commits salen de git log del repositorio, no de una estimación. Cada historia lleva su DoD verificado.`,
+  },
+  {
+    titulo: 'Mermaid como dependencia, no CDN',
+    detalle:
+      'El CSP del panel es script-src \'self\', así que los diagramas se bundlean localmente. El texto queda versionado en el repo.',
+  },
+]
+
+const diagramas = [
+  { nombre: 'Secuencia', desc: 'Login OAuth, chequeo de monitor, enforcement de seguridad y webhook de pagos.' },
+  { nombre: 'Componentes', desc: 'Navegador → Vercel (Astro SSR + middleware) → Turso, Blob, GitHub, ntfy, cron.' },
+  { nombre: 'Clases', desc: 'Entidades del dominio derivadas de src/db/schema.ts, agrupadas por módulo.' },
+  { nombre: 'Objetos', desc: 'Instantáneas reales: proyecto con servicios, pago con evento duplicado, IP bloqueada.' },
+]
+
+const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
+  (ext) => CASOS_DE_USO.find((c) => c.id === ext.id)!,
+).filter(Boolean)
+---
+
+<SlidesLayout title="Documentación — dev-portfolio" light center={false}>
+  {/* ── Portada ─────────────────────────────────────────────── */}
+  <section class="deck-cover">
+    <div class="eyebrow">Documentación de ingeniería</div>
+    <h1>dev-portfolio</h1>
+    <p class="lede">
+      Requerimientos, casos de uso, diagramas UML y el tablero del propio proyecto —
+      un sistema en producción documentado con rigor formal.
+    </p>
+    <div class="cover-meta">
+      <span>codebymike.tech</span>
+      <span class="dot">·</span>
+      <span>Mike (@mikerb95)</span>
+    </div>
+  </section>
+
+  {/* ── Propósito ───────────────────────────────────────────── */}
+  <section>
+    <h2>Propósito</h2>
+    <p class="body">
+      Dejar <strong>trazabilidad formal del ciclo de vida</strong> — del requerimiento a la
+      historia de usuario y su estado en el kanban — usando formatos reconocidos de
+      ingeniería de software.
+    </p>
+    <div class="two-up">
+      <div class="panel">
+        <div class="panel-title">Evidencia académica</div>
+        <p>Requerimientos, casos de uso extendidos y diagramas UML para sustentación.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Referencia técnica real</div>
+        <p>Documenta un sistema vivo en producción, no un ejercicio de papel.</p>
+      </div>
+    </div>
+  </section>
+
+  {/* ── Números ─────────────────────────────────────────────── */}
+  <section>
+    <h2>El proyecto en números</h2>
+    <div class="kpi-row">
+      {kpis.map((k) => (
+        <div class="kpi fragment">
+          <div class="kpi-value">{k.valor}</div>
+          <div class="kpi-label">{k.label}</div>
+          <div class="kpi-sub">{k.sub}</div>
+        </div>
+      ))}
+    </div>
+    <p class="foot">
+      {commitsTotal} commits reales en {ITERACIONES.length} iteraciones · {rfImpl} de {rfTotal} RF
+      implementados · {rnfImpl} de {rnfTotal} RNF verificados
+    </p>
+  </section>
+
+  {/* ── Alcance ─────────────────────────────────────────────── */}
+  <section>
+    <h2>Alcance</h2>
+    <div class="two-up">
+      <div class="panel panel-in">
+        <div class="panel-title">Dentro</div>
+        <ul class="tight">
+          <li>Sitio público de portafolio</li>
+          <li>CRM interno (proyectos, clientes, briefings)</li>
+          <li>Finanzas y P&amp;L por proyecto</li>
+          <li>Observabilidad: monitoreo, SLO, alertas</li>
+          <li>LAB: CI/CD con rollback, pagos, chaos</li>
+          <li>Micro-SIEM: sensor, blocklist, rate limiting</li>
+        </ul>
+      </div>
+      <div class="panel panel-out">
+        <div class="panel-title">Fuera (por ahora)</div>
+        <ul class="tight">
+          <li>Multiusuario y roles — el panel es de un solo administrador</li>
+          <li>Pasarela de pagos en producción real</li>
+          <li>SAST y mutation testing automatizados</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {/* ── Stack ───────────────────────────────────────────────── */}
+  <section>
+    <h2>Stack técnico</h2>
+    <div class="grid-3">
+      {stack.map((s) => (
+        <div class="panel">
+          <div class="panel-title mono">{s.grupo}</div>
+          <ul class="tight">{s.items.map((i) => <li>{i}</li>)}</ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  {/* ── Actores ─────────────────────────────────────────────── */}
+  <section>
+    <h2>Actores</h2>
+    <p class="body">Tres humanos y tres sistemas externos interactúan con el portfolio.</p>
+    <div class="grid-3">
+      {ACTORES.map((a) => (
+        <div class="panel">
+          <div class="panel-title">{a.nombre}</div>
+          <p>{a.descripcion}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  {/* ── RF (con verticales por módulo) ──────────────────────── */}
+  <section>
+    <section>
+      <h2>Requerimientos funcionales</h2>
+      <p class="body">
+        {rfTotal} requerimientos en {REQUISITOS_FUNCIONALES.length} módulos. Cada uno declara
+        dónde vive en el código y cómo se verifica.
+      </p>
+      <div class="grid-4">
+        {REQUISITOS_FUNCIONALES.map((m) => (
+          <div class="panel compact">
+            <div class="panel-title">{m.nombre}</div>
+            <div class="count">
+              {m.items.filter((r) => r.estado === 'implementado').length}
+              <span class="count-of">/{m.items.length}</span>
+            </div>
+            <div class="count-sub">implementados</div>
+          </div>
+        ))}
+      </div>
+      <p class="hint">↓ Convenciones de identificación</p>
+    </section>
+    <section>
+      <h3>Convenciones de IDs</h3>
+      <ul class="tight mono-list">
+        <li><b>RF-0xx</b> público · <b>1xx</b> auth · <b>2xx</b> CRM · <b>3xx</b> finanzas</li>
+        <li><b>RF-4xx</b> observabilidad · <b>5xx</b> LAB · <b>6xx</b> seguridad · <b>7xx</b> sistema</li>
+        <li><b>RNF-nn</b> agrupados por categoría ISO/IEC 25010</li>
+        <li><b>CU-nn</b> con trazabilidad al RF que realizan</li>
+        <li><b>PF-&lt;iter&gt;-&lt;nn&gt;</b> historias del kanban</li>
+      </ul>
+    </section>
+  </section>
+
+  {/* ── RNF ─────────────────────────────────────────────────── */}
+  <section>
+    <section>
+      <h2>Requerimientos no funcionales</h2>
+      <p class="body">
+        {rnfTotal} requerimientos por categoría ISO/IEC 25010, cada uno con una
+        <strong> métrica verificable</strong> — no adjetivos.
+      </p>
+      <div class="grid-3">
+        {REQUISITOS_NO_FUNCIONALES.map((m) => (
+          <div class="panel compact">
+            <div class="panel-title">{m.nombre}</div>
+            <div class="count">{m.items.length}</div>
+            <div class="count-sub">requerimientos</div>
+          </div>
+        ))}
+      </div>
+      <p class="hint">↓ Los más representativos</p>
+    </section>
+    <section>
+      <h3>RNF representativos</h3>
+      <ul class="tight rnf-list">
+        {rnf.slice(0, 9).map((r) => (
+          <li>
+            <span class="tag mono">{r.id}</span>
+            <span class="rnf-t">{r.titulo}</span>
+            <span class={`estado estado-${r.estado}`}>{r.estado}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </section>
+
+  {/* ── Casos de uso ────────────────────────────────────────── */}
+  <section>
+    <section>
+      <h2>Casos de uso</h2>
+      <p class="body">
+        {cuTotal} casos de uso, cada uno trazado al RF que realiza y al actor que lo dispara.
+      </p>
+      <div class="grid-2">
+        {CASOS_DE_USO.slice(0, 10).map((c) => (
+          <div class="cu">
+            <span class="tag mono">{c.id}</span>
+            <span class="cu-n">{c.nombre}</span>
+            <span class="cu-a">{nombreActor(c.actor)}</span>
+          </div>
+        ))}
+      </div>
+      <p class="hint">↓ Formato extendido</p>
+    </section>
+    <section>
+      <h3>Casos de uso extendidos</h3>
+      <p class="body">
+        {CASOS_DE_USO_EXTENDIDOS.length} de los CU críticos están documentados con
+        precondiciones, flujo principal, flujos alternos, excepciones y postcondiciones.
+      </p>
+      <ul class="tight">
+        {cuDestacados.map((c) => (
+          <li><span class="tag mono">{c.id}</span> {c.nombre}</li>
+        ))}
+      </ul>
+    </section>
+  </section>
+
+  {/* ── Diagramas ───────────────────────────────────────────── */}
+  <section>
+    <h2>Diagramas UML</h2>
+    <p class="body">
+      Escritos en Mermaid, versionados en el repo, renderizados en el cliente.
+    </p>
+    <div class="grid-2">
+      {diagramas.map((d) => (
+        <div class="panel">
+          <div class="panel-title">{d.nombre}</div>
+          <p>{d.desc}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  {/* ── Iteraciones ─────────────────────────────────────────── */}
+  <section>
+    <h2>Iteraciones</h2>
+    <p class="body">
+      {ITERACIONES.length} fases derivadas del historial real de git — {commitsTotal} commits,
+      {' '}{historias.length} historias con su DoD.
+    </p>
+    <div class="timeline">
+      {ITERACIONES.map((it) => (
+        <div class="ti">
+          <div class="ti-fase">{it.fase}</div>
+          <div class="ti-nombre">{it.nombre}</div>
+          <div class="ti-meta">
+            <span class="mono">{it.rango}</span>
+            <span class="ti-commits">{it.commits} commits</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  {/* ── Decisiones ──────────────────────────────────────────── */}
+  <section>
+    <h2>Decisiones de arquitectura</h2>
+    <div class="grid-2">
+      {decisiones.map((d) => (
+        <div class="panel fragment">
+          <div class="panel-title">{d.titulo}</div>
+          <p>{d.detalle}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  {/* ── Cierre ──────────────────────────────────────────────── */}
+  <section class="deck-cover">
+    <div class="eyebrow">Documentación completa</div>
+    <h2 class="close-h">codebymike.tech/docs</h2>
+    <p class="lede">
+      {rfTotal} RF · {rnfTotal} RNF · {cuTotal} casos de uso · {historias.length} historias ·
+      {' '}{commitsTotal} commits
+    </p>
+    <div class="cover-meta">
+      <span>Todo el contenido vive como datos tipados en el repositorio</span>
+    </div>
+  </section>
+</SlidesLayout>
+
+<style is:global>
+  /* El deck usa el sistema del sitio (Inter / Instrument Serif / JetBrains Mono
+     y los acentos de la paleta) sobre el fondo claro que define SlidesLayout.
+     Reveal escala todo desde su font-size base, así que las medidas van en em. */
+  .reveal-light .slides section {
+    text-align: left;
+    padding: 0 1.4em;
+  }
+
+  .reveal-light h2 {
+    margin: 0 0 0.5em;
+    line-height: 1.1;
+  }
+  .reveal-light h3 {
+    margin: 0 0 0.6em;
+  }
+
+  .reveal-light .body {
+    font-size: 0.46em;
+    line-height: 1.55;
+    color: var(--slide-fg-muted);
+    max-width: 30em;
+    margin: 0 0 1.2em;
+  }
+  .reveal-light .body strong {
+    color: var(--slide-fg);
+    font-weight: 600;
+  }
+
+  .reveal-light .foot,
+  .reveal-light .hint {
+    font-size: 0.34em;
+    color: var(--slide-fg-muted);
+    margin-top: 1.4em;
+  }
+  .reveal-light .hint {
+    font-family: var(--font-mono, monospace);
+    opacity: 0.6;
+  }
+
+  /* Portada y cierre */
+  .reveal-light .deck-cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 78vh;
+  }
+  .reveal-light .eyebrow {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.32em;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--slide-accent);
+    margin-bottom: 1em;
+  }
+  .reveal-light .deck-cover h1 {
+    margin: 0 0 0.2em;
+    line-height: 1;
+  }
+  .reveal-light .close-h {
+    font-size: 2em;
+    margin: 0 0 0.25em;
+  }
+  .reveal-light .lede {
+    font-size: 0.44em;
+    line-height: 1.55;
+    color: var(--slide-fg-muted);
+    max-width: 26em;
+    margin: 0 0 1.6em;
+  }
+  .reveal-light .cover-meta {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.3em;
+    color: var(--slide-fg-muted);
+    display: flex;
+    gap: 0.8em;
+  }
+  .reveal-light .cover-meta .dot {
+    opacity: 0.5;
+  }
+
+  /* Rejillas */
+  .reveal-light .two-up {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5em;
+  }
+  .reveal-light .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4em;
+  }
+  .reveal-light .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4em;
+  }
+  .reveal-light .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4em;
+  }
+
+  /* Tarjeta base — equivalente claro de las cards del sitio */
+  .reveal-light .panel {
+    border: 1px solid var(--slide-line);
+    background: var(--slide-surface);
+    border-radius: 0.3em;
+    padding: 0.55em 0.6em;
+  }
+  .reveal-light .panel p {
+    font-size: 0.32em;
+    line-height: 1.5;
+    color: var(--slide-fg-muted);
+    margin: 0;
+  }
+  .reveal-light .panel-title {
+    font-size: 0.34em;
+    font-weight: 600;
+    color: var(--slide-fg);
+    margin-bottom: 0.5em;
+  }
+  .reveal-light .panel-title.mono {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.28em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--slide-violet);
+  }
+  .reveal-light .panel.compact {
+    padding: 0.5em 0.55em;
+  }
+  .reveal-light .panel-in {
+    border-left: 2px solid var(--slide-accent);
+  }
+  .reveal-light .panel-out {
+    border-left: 2px solid var(--slide-ember);
+  }
+
+  .reveal-light ul.tight {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .reveal-light ul.tight li {
+    font-size: 0.32em;
+    line-height: 1.5;
+    color: var(--slide-fg-muted);
+    padding: 0.16em 0;
+  }
+  .reveal-light ul.tight li b {
+    color: var(--slide-fg);
+    font-weight: 600;
+  }
+  .reveal-light ul.mono-list li {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.3em;
+  }
+
+  /* KPIs */
+  .reveal-light .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4em;
+  }
+  .reveal-light .kpi {
+    border: 1px solid var(--slide-line);
+    background: var(--slide-surface);
+    border-radius: 0.3em;
+    padding: 0.6em;
+  }
+  .reveal-light .kpi-value {
+    font-size: 1.15em;
+    font-weight: 600;
+    color: var(--slide-accent);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .reveal-light .kpi-label {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.26em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--slide-fg);
+    margin-top: 0.8em;
+  }
+  .reveal-light .kpi-sub {
+    font-size: 0.26em;
+    color: var(--slide-fg-muted);
+    margin-top: 0.3em;
+  }
+
+  .reveal-light .count {
+    font-size: 0.7em;
+    font-weight: 600;
+    color: var(--slide-accent);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .reveal-light .count-of {
+    color: var(--slide-fg-muted);
+    font-weight: 400;
+    font-size: 0.6em;
+  }
+  .reveal-light .count-sub {
+    font-size: 0.24em;
+    color: var(--slide-fg-muted);
+    margin-top: 0.4em;
+  }
+
+  /* Etiquetas de ID y estado */
+  .reveal-light .tag {
+    display: inline-block;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.85em;
+    color: var(--slide-accent);
+    background: var(--slide-accent-soft);
+    border-radius: 0.25em;
+    padding: 0.1em 0.4em;
+    margin-right: 0.5em;
+  }
+
+  .reveal-light .rnf-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    border-bottom: 1px solid var(--slide-line);
+    padding: 0.35em 0;
+  }
+  .reveal-light .rnf-t {
+    flex: 1;
+    color: var(--slide-fg);
+  }
+  .reveal-light .estado {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8em;
+    padding: 0.1em 0.45em;
+    border-radius: 99px;
+    border: 1px solid;
+  }
+  .reveal-light .estado-implementado {
+    color: #15803d;
+    border-color: rgba(21, 128, 61, 0.3);
+    background: rgba(21, 128, 61, 0.07);
+  }
+  .reveal-light .estado-parcial {
+    color: var(--slide-ember);
+    border-color: rgba(194, 65, 12, 0.3);
+    background: rgba(194, 65, 12, 0.07);
+  }
+  .reveal-light .estado-planeado {
+    color: var(--slide-fg-muted);
+    border-color: var(--slide-line);
+  }
+
+  /* Casos de uso */
+  .reveal-light .cu {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3em;
+    font-size: 0.3em;
+    border: 1px solid var(--slide-line);
+    background: var(--slide-surface);
+    border-radius: 0.3em;
+    padding: 0.55em 0.6em;
+  }
+  .reveal-light .cu-n {
+    flex: 1;
+    color: var(--slide-fg);
+  }
+  .reveal-light .cu-a {
+    color: var(--slide-fg-muted);
+    font-size: 0.85em;
+  }
+
+  /* Línea de tiempo de iteraciones */
+  .reveal-light .timeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4em;
+  }
+  .reveal-light .ti {
+    border-top: 2px solid var(--slide-accent);
+    background: var(--slide-surface);
+    border-radius: 0 0 0.3em 0.3em;
+    padding: 0.5em 0.55em 0.6em;
+  }
+  .reveal-light .ti-fase {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.24em;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--slide-accent);
+  }
+  .reveal-light .ti-nombre {
+    font-size: 0.28em;
+    line-height: 1.4;
+    color: var(--slide-fg);
+    margin: 0.5em 0;
+  }
+  .reveal-light .ti-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.24em;
+    color: var(--slide-fg-muted);
+  }
+  .reveal-light .ti-commits {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Móvil / pantallas angostas */
+  @media (max-width: 800px) {
+    .reveal-light .grid-3,
+    .reveal-light .grid-4,
+    .reveal-light .kpi-row,
+    .reveal-light .timeline {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .reveal-light .two-up,
+    .reveal-light .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
