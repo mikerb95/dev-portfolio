@@ -22,7 +22,7 @@ const isActive = (href: string) =>
   {tabs.map((t) => (
     <a
       href={t.href}
-      class={`shrink-0 px-3.5 py-1.5 rounded-full text-[12.5px] font-medium border transition-colors whitespace-nowrap ${
+      class={`shrink-0 px-3.5 py-1.5 rounded-full text-[14px] font-medium border transition-colors whitespace-nowrap ${
         isActive(t.href)
           ? 'bg-cyan/10 text-cyan border-cyan/30'
           : 'text-ink-200 border-white/10 hover:bg-white/5 hover:text-ink-50'

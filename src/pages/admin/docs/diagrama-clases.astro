@@ -219,7 +219,7 @@ const diagramas = [
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
-    <p class="text-[13px] text-ink-200 leading-relaxed">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Entidades del dominio derivadas directamente de <span class="font-mono text-cyan">src/db/schema.ts</span>,
       agrupadas por módulo para mantener cada diagrama legible.
     </p>
@@ -228,7 +228,7 @@ const diagramas = [
   <div class="space-y-10">
     {diagramas.map((d) => (
       <section>
-        <h2 class="text-[13px] font-semibold text-ink-50 mb-3">{d.titulo}</h2>
+        <h2 class="text-[14.5px] font-semibold text-ink-50 mb-3">{d.titulo}</h2>
         <div class="rounded-xl border border-white/15 bg-ink-800 p-4 overflow-x-auto">
           <pre class="mermaid">{d.src}</pre>
         </div>

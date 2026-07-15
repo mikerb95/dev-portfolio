@@ -49,7 +49,7 @@ const componentes = `flowchart TB
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
-    <p class="text-[13px] text-ink-200 leading-relaxed">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Vista de despliegue: el navegador habla con Astro SSR en Vercel a través de un único middleware
       que centraliza autenticación, chaos engineering y el enforcement de seguridad. Los cron externos
       disparan el sondeo de monitores y los backups; los datos viven en Turso (libSQL) y Vercel Blob.
@@ -62,16 +62,16 @@ const componentes = `flowchart TB
 
   <div class="grid gap-3 sm:grid-cols-2 mt-6">
     <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
-      <div class="text-[11px] font-mono uppercase tracking-wide text-violet mb-2">Middleware (src/middleware.ts)</div>
-      <p class="text-[12.5px] text-ink-100 leading-relaxed">
+      <div class="text-[12.5px] font-mono uppercase tracking-wide text-violet mb-2">Middleware (src/middleware.ts)</div>
+      <p class="text-[14px] text-ink-100 leading-relaxed">
         Único punto de entrada para chaos, sensor de seguridad, blocklist, rate limiting durable
         y headers de seguridad (CSP, HSTS, X-Frame-Options en /admin). Todo el bloque de enforcement
         es fail-open.
       </p>
     </div>
     <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
-      <div class="text-[11px] font-mono uppercase tracking-wide text-violet mb-2">Cron externo</div>
-      <p class="text-[12.5px] text-ink-100 leading-relaxed">
+      <div class="text-[12.5px] font-mono uppercase tracking-wide text-violet mb-2">Cron externo</div>
+      <p class="text-[14px] text-ink-100 leading-relaxed">
         cron-job.org dispara los sondeos de uptime cada ~5 min; Vercel Cron dispara backups y rollups
         de seguridad. Ninguno mantiene estado propio: todo el estado vive en Turso.
       </p>

@@ -30,49 +30,49 @@ ${edgeLines}
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
-    <p class="text-[13px] text-ink-200 leading-relaxed">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
       {ACTORES.length} actores y {CASOS_DE_USO.length} casos de uso que cubren el ciclo completo del sistema:
       desde la exploración pública hasta el enforcement de seguridad y el procesamiento de pagos.
     </p>
   </div>
 
   <section class="mb-10">
-    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Actores</h2>
+    <h2 class="text-[14.5px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Actores</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {ACTORES.map((a) => (
         <div class="rounded-xl border border-white/10 bg-white/[.025] p-3.5">
-          <div class="text-[13px] font-medium text-ink-50">{a.nombre}</div>
-          <p class="text-[12px] text-ink-200 mt-1 leading-relaxed">{a.descripcion}</p>
+          <div class="text-[14.5px] font-medium text-ink-50">{a.nombre}</div>
+          <p class="text-[13.5px] text-ink-200 mt-1 leading-relaxed">{a.descripcion}</p>
         </div>
       ))}
     </div>
   </section>
 
   <section class="mb-10">
-    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Diagrama de casos de uso</h2>
+    <h2 class="text-[14.5px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Diagrama de casos de uso</h2>
     <div class="rounded-xl border border-white/15 bg-ink-800 p-4 overflow-auto">
       <pre class="mermaid">{diagram}</pre>
     </div>
   </section>
 
   <section>
-    <h2 class="text-[13px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Catálogo</h2>
+    <h2 class="text-[14.5px] font-semibold uppercase tracking-wide text-cyan mb-4 pb-2 border-b border-cyan/15">Catálogo</h2>
     <div class="space-y-2">
       {CASOS_DE_USO.map((c) => {
         const actor = ACTORES.find((a) => a.id === c.actor)
         return (
           <div class="rounded-xl border border-white/10 bg-white/[.025] p-3.5">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-mono text-[11px] text-ink-300">{c.id}</span>
-              <span class="text-[13px] font-medium text-ink-50">{c.nombre}</span>
-              <span class="text-[10.5px] font-medium px-2 py-0.5 rounded-full border bg-cyan/10 text-cyan border-cyan/30">
+              <span class="font-mono text-[12.5px] text-ink-300">{c.id}</span>
+              <span class="text-[14.5px] font-medium text-ink-50">{c.nombre}</span>
+              <span class="text-[12px] font-medium px-2 py-0.5 rounded-full border bg-cyan/10 text-cyan border-cyan/30">
                 {actor?.nombre}
               </span>
             </div>
-            <p class="text-[12px] text-ink-200 mt-1.5">{c.resumen}</p>
+            <p class="text-[13.5px] text-ink-200 mt-1.5">{c.resumen}</p>
             <div class="flex gap-1.5 mt-2 flex-wrap">
               {c.rf.map((id) => (
-                <span class="font-mono text-[10.5px] text-ink-300 bg-white/5 rounded px-1.5 py-0.5">{id}</span>
+                <span class="font-mono text-[12px] text-ink-300 bg-white/5 rounded px-1.5 py-0.5">{id}</span>
               ))}
             </div>
           </div>

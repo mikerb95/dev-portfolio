@@ -8,7 +8,7 @@ import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../../data/do
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
-    <p class="text-[13px] text-ink-200 leading-relaxed">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Formato extendido (precondiciones, flujo principal, flujos alternos, excepciones y postcondiciones)
       para los {CASOS_DE_USO_EXTENDIDOS.length} casos de uso más críticos del sistema: los que involucran
       dinero, seguridad o estado que debe ser consistente ante fallos.
@@ -20,31 +20,31 @@ import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../../data/do
       const cu = CASOS_DE_USO.find((c) => c.id === ext.id)!
       const actor = ACTORES.find((a) => a.id === cu.actor)
       return (
-        <section class="rounded-xl border border-white/15 bg-white/[.05] overflow-hidden text-[12.5px] shadow-[0_2px_16px_-4px_rgba(0,0,0,.4)]">
+        <section class="rounded-xl border border-white/15 bg-white/[.05] overflow-hidden text-[14px] shadow-[0_2px_16px_-4px_rgba(0,0,0,.4)]">
           <table class="w-full border-collapse">
             <tbody>
               <tr>
-                <td class="w-[160px] bg-cyan/20 text-cyan font-semibold uppercase tracking-wide text-[11px] px-3 py-2 border border-white/[.14]">
+                <td class="w-[160px] bg-cyan/20 text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14]">
                   Caso de uso
                 </td>
                 <td class="bg-cyan/20 text-ink-50 font-semibold px-3 py-2 border border-white/[.14]">
-                  <span class="font-mono text-[11px] text-cyan mr-2">{cu.id}</span>
+                  <span class="font-mono text-[12.5px] text-cyan mr-2">{cu.id}</span>
                   {cu.nombre}
-                  <span class="ml-2 text-[10.5px] font-medium px-2 py-0.5 rounded-full border bg-white/5 text-ink-200 border-white/20 align-middle">
+                  <span class="ml-2 text-[12px] font-medium px-2 py-0.5 rounded-full border bg-white/5 text-ink-200 border-white/20 align-middle">
                     {actor?.nombre}
                   </span>
                 </td>
               </tr>
 
               <tr>
-                <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[11px] px-3 py-2 border border-white/[.14] align-top">
+                <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14] align-top">
                   Descripción
                 </td>
                 <td class="text-ink-100 px-3 py-2 border border-white/[.14] align-top">{cu.resumen}</td>
               </tr>
 
               <tr>
-                <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[11px] px-3 py-2 border border-white/[.14] align-top">
+                <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14] align-top">
                   Precondición
                 </td>
                 <td class="text-ink-100 px-3 py-2 border border-white/[.14] align-top">
@@ -53,19 +53,19 @@ import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../../data/do
               </tr>
 
               <tr>
-                <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[11px] px-3 py-2 border border-white/[.14] align-top">
+                <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14] align-top">
                   Secuencia normal
                 </td>
                 <td class="p-0 border border-white/[.14]">
                   <table class="w-full border-collapse">
                     <tbody>
                       <tr>
-                        <td class="w-[64px] bg-white/[.07] text-ink-300 font-semibold uppercase tracking-wide text-[10.5px] px-3 py-1.5 border border-white/[.14]">Paso</td>
-                        <td class="bg-white/[.07] text-ink-300 font-semibold uppercase tracking-wide text-[10.5px] px-3 py-1.5 border border-white/[.14]">Acción</td>
+                        <td class="w-[64px] bg-white/[.07] text-ink-300 font-semibold uppercase tracking-wide text-[12px] px-3 py-1.5 border border-white/[.14]">Paso</td>
+                        <td class="bg-white/[.07] text-ink-300 font-semibold uppercase tracking-wide text-[12px] px-3 py-1.5 border border-white/[.14]">Acción</td>
                       </tr>
                       {ext.flujoPrincipal.map((p, i) => (
                         <tr>
-                          <td class="text-cyan font-mono text-[11.5px] text-center px-3 py-1.5 border border-white/[.14]">{i + 1}</td>
+                          <td class="text-cyan font-mono text-[13px] text-center px-3 py-1.5 border border-white/[.14]">{i + 1}</td>
                           <td class="text-ink-100 px-3 py-1.5 border border-white/[.14]">{p}</td>
                         </tr>
                       ))}
@@ -76,18 +76,18 @@ import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../../data/do
 
               {ext.flujosAlternos.length > 0 && (
                 <tr>
-                  <td class="bg-violet/[.14] text-violet font-semibold uppercase tracking-wide text-[11px] px-3 py-2 border border-white/[.14] align-top">
+                  <td class="bg-violet/[.14] text-violet font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14] align-top">
                     Flujos alternos
                   </td>
                   <td class="text-ink-100 px-3 py-2 border border-white/[.14] align-top">
                     <div class="space-y-2">
                       {ext.flujosAlternos.map((alt) => (
                         <div>
-                          <div class="text-[12px] font-medium text-violet mb-1">{alt.titulo}</div>
+                          <div class="text-[13.5px] font-medium text-violet mb-1">{alt.titulo}</div>
                           <ol class="space-y-0.5">
                             {alt.pasos.map((p, i) => (
-                              <li class="text-[12px] text-ink-100 flex gap-2">
-                                <span class="font-mono text-[10.5px] text-violet shrink-0">{i + 1}.</span>
+                              <li class="text-[13.5px] text-ink-100 flex gap-2">
+                                <span class="font-mono text-[12px] text-violet shrink-0">{i + 1}.</span>
                                 <span>{p}</span>
                               </li>
                             ))}
@@ -100,7 +100,7 @@ import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../../data/do
               )}
 
               <tr>
-                <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[11px] px-3 py-2 border border-white/[.14] align-top">
+                <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14] align-top">
                   Postcondición
                 </td>
                 <td class="text-ink-100 px-3 py-2 border border-white/[.14] align-top">
@@ -110,19 +110,19 @@ import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../../data/do
 
               {ext.excepciones.length > 0 && (
                 <tr>
-                  <td class="bg-ember/[.16] text-ember font-semibold uppercase tracking-wide text-[11px] px-3 py-2 border border-white/[.14] align-top">
+                  <td class="bg-ember/[.16] text-ember font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14] align-top">
                     Excepciones
                   </td>
                   <td class="p-0 border border-white/[.14]">
                     <table class="w-full border-collapse">
                       <tbody>
                         <tr>
-                          <td class="w-[64px] bg-white/[.07] text-ink-300 font-semibold uppercase tracking-wide text-[10.5px] px-3 py-1.5 border border-white/[.14]">Paso</td>
-                          <td class="bg-white/[.07] text-ink-300 font-semibold uppercase tracking-wide text-[10.5px] px-3 py-1.5 border border-white/[.14]">Acción</td>
+                          <td class="w-[64px] bg-white/[.07] text-ink-300 font-semibold uppercase tracking-wide text-[12px] px-3 py-1.5 border border-white/[.14]">Paso</td>
+                          <td class="bg-white/[.07] text-ink-300 font-semibold uppercase tracking-wide text-[12px] px-3 py-1.5 border border-white/[.14]">Acción</td>
                         </tr>
                         {ext.excepciones.map((e, i) => (
                           <tr>
-                            <td class="text-ember font-mono text-[11.5px] text-center px-3 py-1.5 border border-white/[.14]">{i + 1}</td>
+                            <td class="text-ember font-mono text-[13px] text-center px-3 py-1.5 border border-white/[.14]">{i + 1}</td>
                             <td class="text-ink-100 px-3 py-1.5 border border-white/[.14]">{e}</td>
                           </tr>
                         ))}

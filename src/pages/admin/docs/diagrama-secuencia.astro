@@ -135,7 +135,7 @@ const diagramas = [
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
-    <p class="text-[13px] text-ink-200 leading-relaxed">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Cuatro secuencias representativas de los flujos más sensibles del sistema: autenticación,
       observabilidad, enforcement de seguridad y procesamiento de pagos.
     </p>
@@ -144,8 +144,8 @@ const diagramas = [
   <div class="space-y-10">
     {diagramas.map((d) => (
       <section>
-        <h2 class="text-[13px] font-semibold text-ink-50 mb-0.5">{d.titulo}</h2>
-        <p class="text-[12px] text-ink-300 mb-3">{d.desc}</p>
+        <h2 class="text-[14.5px] font-semibold text-ink-50 mb-0.5">{d.titulo}</h2>
+        <p class="text-[13.5px] text-ink-300 mb-3">{d.desc}</p>
         <div class="rounded-xl border border-white/15 bg-ink-800 p-4 overflow-x-auto">
           <pre class="mermaid">{d.src}</pre>
         </div>
