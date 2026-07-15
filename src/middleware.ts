@@ -105,9 +105,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
 
-  if (isAdmin) {
+  // El deck de sustentación tiene URL bajo /docs (la sección es pública) pero no
+  // es público: solo lo ve la sesión del administrador. Se trata como ruta
+  // privada tanto para el gate de sesión como para los headers de respuesta —
+  // en particular para que NO herede el `Cache-Control` público de más abajo,
+  // que haría que la CDN cachee el HTML y lo sirva a cualquiera.
+  const isPrivateDeck = pathname === '/docs/presentacion'
+  const isPrivate = isAdmin || isPrivateDeck
+
+  if (isPrivate) {
     const session = await getSession(context.request)
-    if (!session) return context.redirect('/login?callbackUrl=%2Fentrar')
+    if (!session) {
+      // El deck vuelve a sí mismo tras el login; el panel pasa por /entrar.
+      const callbackUrl = isPrivateDeck ? encodeURIComponent(pathname) : '%2Fentrar'
+      return context.redirect(`/login?callbackUrl=${callbackUrl}`)
+    }
 
     // Defensa en profundidad: revalida la allowlist en cada request.
     const login = (session?.user as { login?: string } | undefined)?.login
