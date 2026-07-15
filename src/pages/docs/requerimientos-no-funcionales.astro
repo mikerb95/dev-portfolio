@@ -1,17 +1,17 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 import RequisitosView from '../../components/admin/RequisitosView.astro'
 import { REQUISITOS_NO_FUNCIONALES } from '../../data/documentacion'
 
 const total = REQUISITOS_NO_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 ---
 
-<AdminLayout title="Requerimientos no funcionales">
+<BaseLayout title="Requerimientos no funcionales">
   <DocsNav />
   <RequisitosView
     modulos={REQUISITOS_NO_FUNCIONALES}
     unidad="req. no funcionales"
     intro={`${total} requerimientos no funcionales agrupados por categoría de calidad (alineadas a ISO/IEC 25010): seguridad, confiabilidad/disponibilidad, eficiencia de desempeño, mantenibilidad y usabilidad/accesibilidad. Filtra por estado o prioridad, o busca por ID, título o ruta.`}
   />
-</AdminLayout>
+</BaseLayout>

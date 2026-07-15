@@ -1,6 +1,6 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 import RequisitosView from '../../components/admin/RequisitosView.astro'
 import { REQUISITOS_FUNCIONALES } from '../../data/documentacion'
 
@@ -8,11 +8,11 @@ const total = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const impl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
 ---
 
-<AdminLayout title="Requerimientos funcionales">
+<BaseLayout title="Requerimientos funcionales">
   <DocsNav />
   <RequisitosView
     modulos={REQUISITOS_FUNCIONALES}
     unidad="req. funcionales"
     intro={`${total} requerimientos funcionales agrupados por módulo, con prioridad, estado real de implementación y su origen en el código. ${impl} de ${total} ya están implementados en producción. Filtra por estado o prioridad, o busca por ID, título o ruta.`}
   />
-</AdminLayout>
+</BaseLayout>

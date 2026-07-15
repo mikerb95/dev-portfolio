@@ -1,6 +1,6 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 import { ITERACIONES, type Historia } from '../../data/iteraciones-portfolio'
 
 // Las historias ya viven en formato XP ("Como X, quiero Y para Z") dentro del
@@ -56,7 +56,7 @@ const COL_LABEL: Record<string, string> = {
 const totalAceptadas = TODAS.filter((h) => h.col === 'aceptada').length
 ---
 
-<AdminLayout title="Historias de usuario">
+<BaseLayout title="Historias de usuario">
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
@@ -114,4 +114,4 @@ const totalAceptadas = TODAS.filter((h) => h.col === 'aceptada').length
       </section>
     ))}
   </div>
-</AdminLayout>
+</BaseLayout>

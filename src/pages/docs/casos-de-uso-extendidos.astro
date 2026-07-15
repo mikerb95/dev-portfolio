@@ -1,10 +1,10 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../data/documentacion'
 ---
 
-<AdminLayout title="Casos de uso extendidos">
+<BaseLayout title="Casos de uso extendidos">
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
@@ -137,4 +137,4 @@ import { CASOS_DE_USO, CASOS_DE_USO_EXTENDIDOS, ACTORES } from '../../data/docum
       )
     })}
   </div>
-</AdminLayout>
+</BaseLayout>

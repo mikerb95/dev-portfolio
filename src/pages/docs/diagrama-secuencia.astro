@@ -1,6 +1,6 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 
 const diagramas = [
   {
@@ -131,7 +131,7 @@ const diagramas = [
 ]
 ---
 
-<AdminLayout title="Diagrama de secuencia">
+<BaseLayout title="Diagrama de secuencia">
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
@@ -152,7 +152,7 @@ const diagramas = [
       </section>
     ))}
   </div>
-</AdminLayout>
+</BaseLayout>
 
 <script>
   import mermaid from 'mermaid'

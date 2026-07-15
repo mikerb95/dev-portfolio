@@ -1,6 +1,6 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 import { ACTORES, CASOS_DE_USO } from '../../data/documentacion'
 
 // Diagrama de casos de uso en sintaxis flowchart (Mermaid no tiene un tipo
@@ -28,7 +28,7 @@ ${edgeLines}
 `
 ---
 
-<AdminLayout title="Casos de uso">
+<BaseLayout title="Casos de uso">
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
@@ -82,7 +82,7 @@ ${edgeLines}
       })}
     </div>
   </section>
-</AdminLayout>
+</BaseLayout>
 
 <script>
   import mermaid from 'mermaid'

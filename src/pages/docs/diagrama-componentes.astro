@@ -1,6 +1,6 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 
 const componentes = `flowchart TB
     subgraph Cliente["Navegador"]
@@ -45,7 +45,7 @@ const componentes = `flowchart TB
 `
 ---
 
-<AdminLayout title="Diagrama de componentes">
+<BaseLayout title="Diagrama de componentes">
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
@@ -77,7 +77,7 @@ const componentes = `flowchart TB
       </p>
     </div>
   </div>
-</AdminLayout>
+</BaseLayout>
 
 <script>
   import mermaid from 'mermaid'

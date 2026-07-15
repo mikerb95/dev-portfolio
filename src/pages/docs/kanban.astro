@@ -1,11 +1,11 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 import IteracionesBoard from '../../components/IteracionesBoard.astro'
 import { PARES, COLUMNAS, ITERACIONES, COMMITS_POR_MES, REPO } from '../../data/iteraciones-portfolio'
 ---
 
-<AdminLayout title="Kanban — Documentación">
+<BaseLayout title="Kanban — Documentación">
   <DocsNav />
 
   <IteracionesBoard
@@ -17,4 +17,4 @@ import { PARES, COLUMNAS, ITERACIONES, COMMITS_POR_MES, REPO } from '../../data/
     subtitle="Tablero XP del propio proyecto dev-portfolio, reconstruido del historial real de GitHub — cada historia con su Definition of Done, anclada a sus commits."
     showBiblio={false}
   />
-</AdminLayout>
+</BaseLayout>

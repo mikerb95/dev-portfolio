@@ -1,6 +1,6 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro'
-import DocsNav from '../../components/admin/DocsNav.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
 
 // Mermaid no tiene un tipo "object diagram" nativo; la convención para
 // representarlo es un classDiagram donde cada "clase" es en realidad una
@@ -111,7 +111,7 @@ const objetos2 = `classDiagram
     \`pago1 : Payment\` "1" --> \`evento3 : PaymentEvent\` : descartado (duplicado)`
 ---
 
-<AdminLayout title="Diagrama de objetos">
+<BaseLayout title="Diagrama de objetos">
   <DocsNav />
 
   <div class="max-w-3xl mb-6">
@@ -142,7 +142,7 @@ const objetos2 = `classDiagram
       </div>
     </section>
   </div>
-</AdminLayout>
+</BaseLayout>
 
 <script>
   import mermaid from 'mermaid'
