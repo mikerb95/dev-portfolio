@@ -131,7 +131,7 @@ const visibleProjects = await db
         <div class="flex marquee-track gap-12 whitespace-nowrap text-[28px] md:text-[34px] font-serif italic text-ink-200/70">
           {[...Array(2)].map((_, k) => (
             <Fragment>
-              {["TypeScript", "React", "Next.js", "Astro", "Node.js", "PostgreSQL", "Tailwind", "Drizzle ORM", "Vercel", "Docker", "Redis", "tRPC", "AWS", "GCP", "Git", "CI/CD"].map((s, i) => (
+              {["TypeScript", "React", "Next.js", "Astro", "Node.js", "PostgreSQL", "Tailwind", "Drizzle ORM", "Vercel", "Docker", "Redis", "tRPC", "AWS", "GCP", "Git", "CI/CD", "WebAuthn", "Turso", "Playwright", "Vitest", "k6"].map((s, i) => (
                 <span class="flex items-center gap-12">
                   <span>{s}</span>
                   <span class="text-cyan/40 text-[14px] not-italic font-mono">/{String(i+1).padStart(2,"0")}</span>
