@@ -20,9 +20,9 @@ import BaseLayout from '../layouts/BaseLayout.astro'
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/log</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span class="flex items-center gap-2">
+        <span class="flex items-center gap-2" id="feed-status">
           <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-          En tiempo real
+          <span id="feed-status-text">Cargando actividad de GitHub…</span>
         </span>
       </div>
       <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
