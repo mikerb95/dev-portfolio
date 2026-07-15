@@ -111,9 +111,10 @@ body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smooth
   color: transparent;
   /* Expande la caja de pintado para que el clip no recorte
      ascendentes/descendentes (sobre todo la cursiva serif),
-     y compensa con margen negativo para no alterar el layout. */
+     y compensa arriba con margen negativo. No tocar margin-bottom:
+     rompería el mb-* de Tailwind aplicado en el mismo elemento. */
   padding-block: 0.12em;
-  margin-block: -0.12em;
+  margin-top: -0.12em;
 }
 .text-mask {
   background-image: linear-gradient(180deg, #fff 0%, #fff 50%, #6b6b78 100%);
