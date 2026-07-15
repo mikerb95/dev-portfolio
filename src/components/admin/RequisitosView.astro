@@ -341,8 +341,24 @@ const prioridadFiltros: { key: Prioridad | 'todas'; label: string }[] = [
     const modalPrioridadDot = modal?.querySelector<HTMLElement>('[data-modal-prioridad-dot]')
     const modalPrioridadLabel = modal?.querySelector<HTMLElement>('[data-modal-prioridad-label]')
     const modalOrigenWrap = modal?.querySelector<HTMLElement>('[data-modal-origen-wrap]')
+    const modalVerificacionWrap = modal?.querySelector<HTMLElement>('[data-modal-verificacion-wrap]')
+    const modalVerificacion = modal?.querySelector<HTMLElement>('[data-modal-verificacion]')
+    const modalNotasWrap = modal?.querySelector<HTMLElement>('[data-modal-notas-wrap]')
+    const modalNotas = modal?.querySelector<HTMLElement>('[data-modal-notas]')
+    const modalRelacionadosWrap = modal?.querySelector<HTMLElement>('[data-modal-relacionados-wrap]')
+    const modalRelacionados = modal?.querySelector<HTMLElement>('[data-modal-relacionados]')
     const modalClose = modal?.querySelector<HTMLElement>('[data-modal-close]')
     const modalBackdrop = modal?.querySelector<HTMLElement>('[data-modal-backdrop]')
+
+    const idPorTexto = new Map(items.map((it) => [it.dataset.id ?? '', it]))
+
+    const irARequisito = (id: string) => {
+      const destino = idPorTexto.get(id)
+      if (!destino) return
+      cerrarModal()
+      destino.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      window.setTimeout(() => abrirModal(destino), 300)
+    }
 
     let lastFocused: HTMLElement | null = null
 
