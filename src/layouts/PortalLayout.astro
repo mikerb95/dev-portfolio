@@ -1,0 +1,145 @@
+---
+// Layout del área autenticada del portal.
+//
+// La sesión la resuelve el middleware y la deja en locals: aquí no se vuelve a
+// consultar la base. Si alguien renderiza este layout sin sesión es un bug del
+// gate, no un caso a manejar — por eso el `!` es deliberado y no un `?.`
+// defensivo que enmascararía el fallo.
+import '../styles/global.css'
+import { unreadCount } from '../lib/portal/notifications'
+
+interface Props {
+  title: string
+  /** Slug de la sección activa para marcar la navegación. */
+  section?: 'inicio' | 'facturas' | 'mensajes' | 'documentos' | 'cuenta'
+}
+
+const { title, section } = Astro.props
+const { user, client } = Astro.locals.portal!
+
+const unread = await unreadCount(user.id)
+
+const NAV = [
+  { slug: 'inicio', label: 'Inicio', href: '/portal', roles: ['owner', 'member', 'billing'] },
+  { slug: 'facturas', label: 'Facturas', href: '/portal/facturas', roles: ['owner', 'member', 'billing'] },
+  // `billing` no ve mensajes ni documentos: quien lleva la contabilidad de la
+  // empresa cliente no tiene por qué leer las conversaciones técnicas ni los
+  // entregables. El menú lo refleja; los endpoints lo imponen.
+  { slug: 'mensajes', label: 'Mensajes', href: '/portal/mensajes', roles: ['owner', 'member'] },
+  { slug: 'documentos', label: 'Documentos', href: '/portal/documentos', roles: ['owner', 'member'] },
+] as const
+
+const nav = NAV.filter((item) => (item.roles as readonly string[]).includes(user.role))
+
+const initials = (user.name ?? user.email)
+  .split(/[\s@.]+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((s) => s[0]?.toUpperCase() ?? '')
+  .join('')
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} — Portal · CodeByMike</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#07070a" />
+  </head>
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen flex flex-col">
+    <header class="sticky top-0 z-40 bg-ink-950/85 backdrop-blur-xl border-b border-white/5">
+      <div class="max-w-[1100px] mx-auto px-4 md:px-6">
+        <div class="h-14 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <a href="/portal" class="flex items-center gap-2.5 min-w-0 group">
+              {client.logoUrl ? (
+                <img src={client.logoUrl} alt="" class="w-6 h-6 rounded object-contain shrink-0" />
+              ) : (
+                <span class="w-6 h-6 rounded bg-cyan/15 border border-cyan/25 text-cyan text-[10px] font-mono grid place-items-center shrink-0">
+                  {(client.company ?? client.name).slice(0, 2).toUpperCase()}
+                </span>
+              )}
+              <span class="text-[14px] font-medium text-ink-50 truncate group-hover:text-cyan transition-colors">
+                {client.company ?? client.name}
+              </span>
+            </a>
+          </div>
+
+          <div class="flex items-center gap-1.5 shrink-0">
+            <a
+              href="/portal/notificaciones"
+              class="relative w-9 h-9 grid place-items-center rounded-lg text-ink-100 hover:bg-white/[.06] transition-colors"
+              aria-label={unread > 0 ? `Notificaciones (${unread} sin leer)` : 'Notificaciones'}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+              {unread > 0 && (
+                <span class="absolute top-1 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-cyan text-ink-950 text-[9px] font-bold grid place-items-center">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </a>
+
+            <!-- Menú de cuenta (CSS-only: sin JS y sin cerrar mal en móvil) -->
+            <details class="relative group">
+              <summary class="list-none cursor-pointer w-9 h-9 grid place-items-center rounded-lg hover:bg-white/[.06] transition-colors">
+                <span class="w-7 h-7 rounded-full bg-white/[.06] border border-white/10 text-[10px] font-semibold text-ink-50 grid place-items-center">
+                  {initials}
+                </span>
+              </summary>
+              <div class="absolute right-0 mt-2 w-60 glass-strong rounded-xl p-1.5 shadow-xl">
+                <div class="px-3 py-2.5 border-b border-white/5 mb-1">
+                  <p class="text-[13px] font-medium text-ink-50 truncate">{user.name ?? 'Sin nombre'}</p>
+                  <p class="text-[11px] text-ink-300 truncate">{user.email}</p>
+                </div>
+                <a href="/portal/cuenta" class="block px-3 py-2 rounded-lg text-[13px] text-ink-100 hover:bg-white/[.06] transition-colors">
+                  Mi cuenta
+                </a>
+                <!--
+                  Cerrar sesión va por POST: con un GET, cualquier <img> en un
+                  correo o en otra web echaría al cliente de su portal (CSRF).
+                -->
+                <form method="POST" action="/api/portal/logout">
+                  <button type="submit" class="w-full text-left px-3 py-2 rounded-lg text-[13px] text-ink-100 hover:bg-white/[.06] transition-colors">
+                    Cerrar sesión
+                  </button>
+                </form>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <nav class="flex items-center gap-1 -mb-px overflow-x-auto no-scrollbar" aria-label="Secciones del portal">
+          {nav.map((item) => (
+            <a
+              href={item.href}
+              aria-current={section === item.slug ? 'page' : undefined}
+              class:list={[
+                'shrink-0 px-3 py-2.5 text-[13px] border-b-2 transition-colors',
+                section === item.slug
+                  ? 'border-cyan text-cyan font-medium'
+                  : 'border-transparent text-ink-200 hover:text-ink-50',
+              ]}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-[1100px] mx-auto px-4 md:px-6 py-7 md:py-9">
+      <h1 class="text-[22px] md:text-[26px] font-medium tracking-tight text-ink-50 mb-6">{title}</h1>
+      <slot />
+    </main>
+
+    <footer class="border-t border-white/5 mt-8">
+      <div class="max-w-[1100px] mx-auto px-4 md:px-6 py-5 flex flex-wrap items-center justify-between gap-2">
+        <p class="text-[11px] font-mono text-ink-300">CodeByMike · Portal de clientes</p>
+        <a href="/contact" class="text-[11px] text-ink-300 hover:text-cyan transition-colors">¿Necesitas ayuda?</a>
+      </div>
+    </footer>
+  </body>
+</html>

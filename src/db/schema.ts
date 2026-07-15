@@ -4,6 +4,10 @@ export const clients = sqliteTable('clients', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   email: text('email'),
+  // Teléfono en E.164 ('+573104641228'). Es la llave con la que un cobro de
+  // campo (/cobrar) se vincula solo a la ficha del cliente: se guarda siempre
+  // normalizado para que la comparación sea exacta (ver lib/phone.ts).
+  phone: text('phone'),
   company: text('company'),
   notes: text('notes'),
   // Portal de clientes (ver docs/plan-portal-clientes.md). El acceso se habilita
@@ -300,11 +304,30 @@ export const payments = sqliteTable('payments', {
   // Factura que este pago salda, si nació del portal de clientes. Null para los
   // pagos sueltos de /pay (la demo pública de la pasarela).
   invoiceId: integer('invoice_id'),
+  // ── Cobros de campo (/cobrar → WhatsApp → /c/[code]) ──────────────────────
+  // Un cobro NO es otra entidad: es un pago con estos campos. Todos nullables
+  // para que los pagos de /pay y del portal sigan intactos.
+  // Teléfono E.164 del pagador; es la llave del histórico en /mis-pagos.
+  payerPhone: text('payer_phone'),
+  // De dónde nació el pago. 'pay' = checkout público, 'cobro' = link de campo.
+  source: text('source', { enum: ['pay', 'cobro', 'portal'] }).notNull().default('pay'),
+  // Código corto y no adivinable del link (/c/AB3K9F). Solo en cobros.
+  shortCode: text('short_code').unique(),
+  // Vencimiento del link: pasado, no se generan checkouts nuevos (un pago ya
+  // iniciado sí puede aprobarse: el dinero entró antes). Null = sin vencimiento.
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+  // Vínculo suave con el CRM: si el teléfono coincidía con una ficha al crear
+  // el cobro. Nunca crea clientes; SET NULL si la ficha se borra.
+  clientId: integer('client_id').references(() => clients.id, { onDelete: 'set null' }),
   // Concurrencia optimista: UPDATE … WHERE version = ?; si no afecta filas, reintentar.
   version: integer('version').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }),
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
-})
+}, (t) => ({
+  // /mis-pagos barre el histórico por teléfono; /cobrar lista los pendientes.
+  phoneIdx: index('payments_phone_idx').on(t.payerPhone),
+  sourceIdx: index('payments_source_idx').on(t.source),
+}))
 
 // Bitácora de TODOS los eventos de webhook recibidos, incluidos duplicados y
 // fuera de orden (marcados, no aplicados). Es la evidencia para la sustentación.
