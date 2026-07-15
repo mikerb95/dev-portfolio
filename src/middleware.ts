@@ -203,7 +203,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   let demoMode = false
 
-  if (isPrivate) {
+  // Gate del admin. La condición NO es `isPrivate`: el portal también es
+  // privado, pero su auth ya se resolvió arriba y no debe pasar por Auth.js ni
+  // por la allowlist de GitHub — un cliente no tiene ni puede tener login de
+  // GitHub autorizado, así que este bloque lo expulsaría.
+  if (isAdmin || isPrivateDeck) {
     const session = await getSession(context.request)
 
     if (!session) {
