@@ -526,3 +526,244 @@ export const fpDevices = sqliteTable('fp_devices', {
   roomIdx: index('fp_devices_room_idx').on(t.roomId),
   hashIdx: index('fp_devices_hash_idx').on(t.deviceHash),
 }))
+
+// ── Portal de clientes ──────────────────────────────────────────────────────
+// Área autenticada donde cada cliente ve el estado de sus proyectos, sus
+// facturas, sus documentos y conversa conmigo. Ver docs/plan-portal-clientes.md.
+//
+// Regla que atraviesa TODAS estas tablas: el aislamiento entre clientes es por
+// `clientId`, y ese id SIEMPRE sale de la sesión (ver lib/portal/session.ts),
+// nunca de un parámetro de URL. Una query del portal sin filtro por clientId es
+// un bug de seguridad, no un descuido de estilo.
+
+// Usuarios del portal. Separada de `clients` (la empresa) porque una empresa
+// puede tener varias personas con acceso y distinto alcance.
+export const clientUsers = sqliteTable('client_users', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  // Identidad de login. UNIQUE global: un email = una persona = un cliente.
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  // scrypt$N$r$p$salt$hash — el formato lleva sus parámetros para poder
+  // endurecerlos luego sin invalidar los hashes viejos. Null mientras la
+  // invitación está pendiente (el usuario aún no eligió contraseña).
+  passwordHash: text('password_hash'),
+  // owner: todo + gestiona usuarios de su empresa.
+  // member: proyectos, mensajes y documentos; ve facturas pero no paga.
+  // billing: facturas y pagos; sin mensajes ni documentos técnicos.
+  role: text('role', { enum: ['owner', 'member', 'billing'] }).notNull().default('member'),
+  status: text('status', { enum: ['invited', 'active', 'disabled'] }).notNull().default('invited'),
+  // Bloqueo por fuerza bruta: se limpia con un login correcto.
+  failedAttempts: integer('failed_attempts').notNull().default(0),
+  lockedUntil: integer('locked_until', { mode: 'timestamp' }),
+  lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  clientIdx: index('client_users_client_idx').on(t.clientId),
+}))
+
+// Invitaciones y restablecimientos de contraseña: mismo mecanismo (token de un
+// solo uso enviado por email), distinto propósito. Solo se guarda el hash del
+// token: si me roban la base, no sirven para entrar.
+export const clientInvitations = sqliteTable('client_invitations', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  // Null para invitaciones a un email que aún no tiene fila en client_users.
+  clientUserId: integer('client_user_id').references(() => clientUsers.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  role: text('role', { enum: ['owner', 'member', 'billing'] }).notNull().default('member'),
+  kind: text('kind', { enum: ['invite', 'reset'] }).notNull().default('invite'),
+  tokenHash: text('token_hash').notNull().unique(),
+  // Quién invitó: login de admin ('mikerb95') o `user:<id>` si fue un owner.
+  invitedBy: text('invited_by'),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  acceptedAt: integer('accepted_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  emailIdx: index('client_invitations_email_idx').on(t.email),
+}))
+
+// Sesiones del portal. A diferencia del admin (JWT stateless + registro
+// paralelo), aquí la sesión ES la fila: token opaco cuyo hash vive en esta
+// tabla. Revocar una sesión tiene efecto inmediato y sin cookies que borrar.
+export const portalSessions = sqliteTable('portal_sessions', {
+  // sha-256 del token de la cookie. El token en claro solo existe en el navegador.
+  id: text('id').primaryKey(),
+  clientUserId: integer('client_user_id').notNull().references(() => clientUsers.id, { onDelete: 'cascade' }),
+  ip: text('ip'),
+  userAgent: text('user_agent'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  lastSeen: integer('last_seen', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  revokedAt: integer('revoked_at', { mode: 'timestamp' }),
+}, (t) => ({
+  userIdx: index('portal_sessions_user_idx').on(t.clientUserId),
+  expiresIdx: index('portal_sessions_expires_idx').on(t.expiresAt),
+}))
+
+// Auditoría de lo que hace el cliente dentro del portal. Es su propio registro
+// (lo ve el owner) y mi evidencia ante una disputa: quién descargó qué contrato
+// y cuándo, quién aprobó un entregable, quién inició un pago.
+export const portalAuditLog = sqliteTable('portal_audit_log', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  clientUserId: integer('client_user_id').references(() => clientUsers.id, { onDelete: 'set null' }),
+  action: text('action').notNull(), // 'login', 'document.download', 'invoice.pay', …
+  entity: text('entity'),
+  entityId: integer('entity_id'),
+  detail: text('detail'),
+  ip: text('ip'),
+  at: integer('at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  clientIdx: index('portal_audit_client_idx').on(t.clientId),
+  atIdx: index('portal_audit_at_idx').on(t.at),
+}))
+
+// Hitos del proyecto: la línea de tiempo que el cliente ve en su dashboard.
+// `visibleToClient` permite planear hitos internos antes de comprometerlos.
+export const projectMilestones = sqliteTable('project_milestones', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  status: text('status', { enum: ['pendiente', 'en_curso', 'completado'] }).notNull().default('pendiente'),
+  dueAt: integer('due_at', { mode: 'timestamp' }),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+  visibleToClient: integer('visible_to_client', { mode: 'boolean' }).notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  projectIdx: index('project_milestones_project_idx').on(t.projectId),
+}))
+
+// Factura formal. `finances` sigue siendo mi libro contable interno (incluye
+// proyecciones y costos); esto es el documento que el cliente ve y paga.
+export const invoices = sqliteTable('invoices', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  // Correlativo legible y estable: INV-2026-001. UNIQUE porque numerar dos
+  // veces igual es un problema contable, no un detalle cosmético.
+  number: text('number').notNull().unique(),
+  status: text('status', { enum: ['draft', 'sent', 'paid', 'overdue', 'void'] }).notNull().default('draft'),
+  currency: text('currency').notNull().default('COP'),
+  // Todo en centavos enteros: nunca float para dinero.
+  subtotalCents: integer('subtotal_cents').notNull().default(0),
+  taxCents: integer('tax_cents').notNull().default(0),
+  totalCents: integer('total_cents').notNull().default(0),
+  notes: text('notes'),
+  issuedAt: integer('issued_at', { mode: 'timestamp' }),
+  dueAt: integer('due_at', { mode: 'timestamp' }),
+  paidAt: integer('paid_at', { mode: 'timestamp' }),
+  // Pago que la saldó (el webhook de la pasarela cierra el círculo).
+  paymentId: integer('payment_id').references(() => payments.id, { onDelete: 'set null' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+}, (t) => ({
+  clientIdx: index('invoices_client_idx').on(t.clientId),
+  statusIdx: index('invoices_status_idx').on(t.status),
+}))
+
+export const invoiceItems = sqliteTable('invoice_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  invoiceId: integer('invoice_id').notNull().references(() => invoices.id, { onDelete: 'cascade' }),
+  description: text('description').notNull(),
+  quantity: real('quantity').notNull().default(1),
+  unitCents: integer('unit_cents').notNull().default(0),
+  totalCents: integer('total_cents').notNull().default(0),
+  sortOrder: integer('sort_order').notNull().default(0),
+}, (t) => ({
+  invoiceIdx: index('invoice_items_invoice_idx').on(t.invoiceId),
+}))
+
+// Hilos de conversación. Opcionalmente atados a un proyecto: un cliente con
+// tres proyectos no quiere una bandeja única donde todo se mezcla.
+export const portalThreads = sqliteTable('portal_threads', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  subject: text('subject').notNull(),
+  status: text('status', { enum: ['open', 'closed'] }).notNull().default('open'),
+  lastMessageAt: integer('last_message_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  clientIdx: index('portal_threads_client_idx').on(t.clientId),
+}))
+
+export const portalMessages = sqliteTable('portal_messages', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  threadId: integer('thread_id').notNull().references(() => portalThreads.id, { onDelete: 'cascade' }),
+  authorType: text('author_type', { enum: ['admin', 'client'] }).notNull(),
+  // Null cuando escribo yo (admin): mi identidad no vive en client_users.
+  authorUserId: integer('author_user_id').references(() => clientUsers.id, { onDelete: 'set null' }),
+  authorName: text('author_name'),
+  body: text('body').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  threadIdx: index('portal_messages_thread_idx').on(t.threadId),
+}))
+
+// Lecturas por usuario: con varios usuarios por empresa, "leído" no puede ser
+// una columna del mensaje — cada persona tiene su propio estado.
+export const portalMessageReads = sqliteTable('portal_message_reads', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  threadId: integer('thread_id').notNull().references(() => portalThreads.id, { onDelete: 'cascade' }),
+  clientUserId: integer('client_user_id').notNull().references(() => clientUsers.id, { onDelete: 'cascade' }),
+  lastReadAt: integer('last_read_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  threadUserIdx: index('portal_message_reads_thread_user_idx').on(t.threadId, t.clientUserId),
+}))
+
+// Documentos y entregables. El binario vive en Vercel Blob (privado); aquí solo
+// los metadatos y la llave. La descarga pasa siempre por un endpoint que valida
+// la sesión y el tenant antes de firmar una URL de vida corta.
+export const portalDocuments = sqliteTable('portal_documents', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  title: text('title').notNull(),
+  category: text('category', { enum: ['contrato', 'entregable', 'factura', 'acta', 'otro'] }).notNull().default('otro'),
+  blobUrl: text('blob_url').notNull(),
+  blobPathname: text('blob_pathname').notNull(),
+  mimeType: text('mime_type'),
+  sizeBytes: integer('size_bytes'),
+  // Versionado simple: subir una versión nueva encadena a la anterior por
+  // `supersedesId` y la vieja queda con `supersededAt` (historial, no borrado).
+  version: integer('version').notNull().default(1),
+  supersedesId: integer('supersedes_id'),
+  supersededAt: integer('superseded_at', { mode: 'timestamp' }),
+  uploadedBy: text('uploaded_by', { enum: ['admin', 'client'] }).notNull().default('admin'),
+  uploadedByUserId: integer('uploaded_by_user_id').references(() => clientUsers.id, { onDelete: 'set null' }),
+  visibleToClient: integer('visible_to_client', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  clientIdx: index('portal_documents_client_idx').on(t.clientId),
+}))
+
+// Centro de notificaciones in-app. Una fila por usuario destinatario (no por
+// evento): así "leído" y las preferencias son por persona.
+export const portalNotifications = sqliteTable('portal_notifications', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientUserId: integer('client_user_id').notNull().references(() => clientUsers.id, { onDelete: 'cascade' }),
+  type: text('type', { enum: ['invoice', 'message', 'milestone', 'incident', 'document', 'system'] }).notNull(),
+  title: text('title').notNull(),
+  body: text('body'),
+  href: text('href'),
+  readAt: integer('read_at', { mode: 'timestamp' }),
+  // Cuándo salió el email de esta notificación (null = solo in-app).
+  emailedAt: integer('emailed_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  userIdx: index('portal_notifications_user_idx').on(t.clientUserId),
+}))
+
+// Preferencias de email por usuario y tipo. Ausencia de fila = valor por
+// defecto (activo). Las facturas no son opt-out: son obligación contractual.
+export const portalNotificationPrefs = sqliteTable('portal_notification_prefs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientUserId: integer('client_user_id').notNull().references(() => clientUsers.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),
+  emailEnabled: integer('email_enabled', { mode: 'boolean' }).notNull().default(true),
+}, (t) => ({
+  userTypeIdx: index('portal_notification_prefs_user_type_idx').on(t.clientUserId, t.type),
+}))
