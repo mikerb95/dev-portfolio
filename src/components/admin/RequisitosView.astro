@@ -391,6 +391,32 @@ const prioridadFiltros: { key: Prioridad | 'todas'; label: string }[] = [
         }
       }
 
+      const verificacion = d.verificacion ?? ''
+      modalVerificacionWrap?.classList.toggle('hidden', !verificacion)
+      if (modalVerificacion) modalVerificacion.textContent = verificacion
+
+      const notas = d.notas ?? ''
+      modalNotasWrap?.classList.toggle('hidden', !notas)
+      if (modalNotas) modalNotas.textContent = notas
+
+      const relacionados = (d.relacionados ?? '').split(',').filter(Boolean)
+      modalRelacionadosWrap?.classList.toggle('hidden', relacionados.length === 0)
+      if (modalRelacionados) {
+        modalRelacionados.innerHTML = ''
+        for (const rid of relacionados) {
+          const disponible = idPorTexto.has(rid)
+          const btn = document.createElement('button')
+          btn.type = 'button'
+          btn.textContent = rid
+          btn.disabled = !disponible
+          btn.className = disponible
+            ? 'inline-flex items-center font-mono text-[12.5px] font-medium text-cyan bg-cyan/10 border border-cyan/25 rounded-full px-2.5 py-1 hover:bg-cyan/20 transition-colors cursor-pointer'
+            : 'inline-flex items-center font-mono text-[12.5px] font-medium text-ink-300 bg-white/[.03] border border-white/10 rounded-full px-2.5 py-1 cursor-default'
+          if (disponible) btn.addEventListener('click', () => irARequisito(rid))
+          modalRelacionados.appendChild(btn)
+        }
+      }
+
       lastFocused = document.activeElement as HTMLElement | null
       modal.classList.remove('hidden')
       modal.classList.add('flex')
