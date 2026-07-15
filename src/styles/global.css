@@ -189,6 +189,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
+/* Barra de scroll mínima (sidebar) */
+.sidebar-scrollbar { scrollbar-width: thin; scrollbar-color: #2a2a36 transparent; }
+.sidebar-scrollbar::-webkit-scrollbar { width: 5px; }
+.sidebar-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scrollbar::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 8px; }
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover { background: #3a3a48; }
+
 /* Tailwind v4 resetea margin:0 en todo elemento, lo que anula el centrado
    nativo de <dialog> (margin:auto del UA) y lo deja pegado arriba-izquierda. */
 dialog { margin: auto; }
