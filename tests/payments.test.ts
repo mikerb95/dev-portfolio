@@ -41,6 +41,7 @@ beforeAll(async () => {
     provider text NOT NULL DEFAULT 'mock',
     gateway_tx_id text,
     payer_email text,
+    invoice_id integer,
     version integer NOT NULL DEFAULT 0,
     created_at integer,
     updated_at integer

@@ -96,6 +96,31 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 2) Rate limit de dos capas (memoria → durable). Solo consulta Turso cuando
   //    el contador local entra en la zona de peligro (deferUntil).
   if (ip) {
+    // Credenciales del portal: límite propio, más estrecho que el de /api/auth.
+    // Allí el JWT y WebAuthn hacen varios roundtrips por login legítimo; aquí un
+    // login es UN POST. 10/min por IP no lo roza ni un cliente torpe, y le quita
+    // el oxígeno a un ataque de diccionario antes de que llegue a scrypt.
+    if (isPortalAuthPath(pathname) && method === 'POST') {
+      const r = await enforceLimit(`portal-auth:${ip}`, { limit: 10, windowMs: 60_000, deferUntil: 0.5 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'auth_probing',
+          severity: 'high',
+          ruleId: 'ratelimit.portal_auth',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers: reqHeaders,
+        })
+        return new Response(JSON.stringify({ error: 'Demasiados intentos. Espera un minuto.' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+
     // Endpoints de autenticación: objetivo típico de fuerza bruta. Un humano
     // legítimo nunca hace 30 requests/min aquí → excederlo es sondeo.
     if (isAuthPath(pathname)) {
@@ -151,7 +176,30 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // en particular para que NO herede el `Cache-Control` público de más abajo,
   // que haría que la CDN cachee el HTML y lo sirva a cualquiera.
   const isPrivateDeck = pathname === '/docs/presentacion'
-  const isPrivate = isAdmin || isPrivateDeck
+
+  // Portal de clientes: privado como /admin a efectos de headers (noindex, sin
+  // caché en la CDN), pero con una auth completamente distinta — ni comparte
+  // cookie con el admin ni pasa por Auth.js. Ver docs/plan-portal-clientes.md.
+  const isPortal = isPortalPath(pathname)
+  const isPrivate = isAdmin || isPrivateDeck || isPortal
+
+  if (isPortal && !isPortalPublicPath(pathname)) {
+    const portalSession = await getPortalSession(context)
+    if (!portalSession) {
+      // Las APIs reciben 401 (su cliente es fetch, no un navegador); las páginas
+      // van al login conservando el destino para volver tras autenticarse.
+      if (pathname.startsWith('/api/')) {
+        return new Response(JSON.stringify({ error: 'sesión requerida' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      const next = encodeURIComponent(pathname + context.url.search)
+      return context.redirect(`/portal/login?next=${next}`)
+    }
+    // Las páginas la leen de locals; el middleware ya pagó la consulta.
+    context.locals.portal = portalSession
+  }
 
   let demoMode = false
 
