@@ -1,0 +1,53 @@
+---
+// Layout de las pantallas sin sesión del portal (login, invitación, reset).
+// Deliberadamente sin Navbar ni Footer del sitio público: quien llega aquí va a
+// hacer una cosa concreta, y todo lo demás es ruido que invita a irse.
+import '../styles/global.css'
+
+interface Props {
+  title: string
+  subtitle?: string
+}
+
+const { title, subtitle } = Astro.props
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} — Portal · CodeByMike</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#07070a" />
+  </head>
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen flex flex-col">
+    <div class="halo pointer-events-none absolute inset-x-0 top-0 h-[420px]"></div>
+
+    <main class="flex-1 flex items-center justify-center px-4 py-12 relative">
+      <div class="w-full max-w-[400px]">
+        <a href="/" class="inline-flex items-center gap-2 mb-8 group">
+          <span class="text-[15px] font-semibold tracking-tight text-ink-50">CodeByMike</span>
+          <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 border border-white/10 rounded-full px-2 py-0.5 group-hover:border-cyan/30 group-hover:text-cyan transition-colors">
+            Portal
+          </span>
+        </a>
+
+        <h1 class="text-[26px] leading-tight font-medium tracking-tight text-ink-50">{title}</h1>
+        {subtitle && <p class="mt-2 text-[14px] leading-relaxed text-ink-200">{subtitle}</p>}
+
+        <div class="mt-7">
+          <slot />
+        </div>
+      </div>
+    </main>
+
+    <footer class="px-4 py-6 text-center">
+      <p class="text-[11px] font-mono text-ink-300">
+        Acceso privado para clientes ·
+        <a href="/" class="hover:text-cyan transition-colors">codebymike.tech</a>
+      </p>
+    </footer>
+  </body>
+</html>
