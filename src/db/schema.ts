@@ -297,6 +297,9 @@ export const payments = sqliteTable('payments', {
   provider: text('provider', { enum: ['wompi', 'mock'] }).notNull().default('mock'),
   gatewayTxId: text('gateway_tx_id'),
   payerEmail: text('payer_email'),
+  // Factura que este pago salda, si nació del portal de clientes. Null para los
+  // pagos sueltos de /pay (la demo pública de la pasarela).
+  invoiceId: integer('invoice_id'),
   // Concurrencia optimista: UPDATE … WHERE version = ?; si no afecta filas, reintentar.
   version: integer('version').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }),
