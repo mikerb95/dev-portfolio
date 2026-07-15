@@ -56,7 +56,7 @@ const componentes = `flowchart TB
     </p>
   </div>
 
-  <div class="rounded-xl border border-white/10 bg-white/[.025] p-4 overflow-x-auto">
+  <div class="rounded-xl border border-white/15 bg-ink-800 p-4 overflow-x-auto">
     <pre class="mermaid">{componentes}</pre>
   </div>
 
@@ -81,7 +81,24 @@ const componentes = `flowchart TB
 
 <script>
   import mermaid from 'mermaid'
-  mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' })
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    themeVariables: {
+      background: '#13131a',
+      primaryColor: '#1c1c26',
+      primaryTextColor: '#e7e7ec',
+      primaryBorderColor: '#6a6a7a',
+      lineColor: '#c4c4cc',
+      secondaryColor: '#171720',
+      tertiaryColor: '#0e0e12',
+      textColor: '#e7e7ec',
+      edgeLabelBackground: '#13131a',
+      clusterBkg: '#0e0e12',
+      clusterBorder: '#3a3a48',
+    },
+  })
 </script>
 
 <style>
