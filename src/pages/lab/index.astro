@@ -1,0 +1,345 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { db } from '../../db'
+import { ciRuns, labExperiments, payments, paymentEvents } from '../../db/schema'
+import { desc, gte, sql } from 'drizzle-orm'
+
+// Vitrina pública del LAB. Expone SOLO datos agregados o públicos por naturaleza
+// (el repo y sus GitHub Actions son públicos): corridas de CI, experimentos con
+// su veredicto, y contadores de la pasarela sandbox. Nunca payloads crudos,
+// URLs de preview, flags de chaos activos ni parámetros de experimentos.
+
+const DAY_MS = 86_400_000
+const now = Date.now()
+const since30 = new Date(now - 30 * DAY_MS)
+
+// ── Pipeline CI/CD ──────────────────────────────────────────────────────────
+const runs = await db
+  .select({
+    sha: ciRuns.sha,
+    branch: ciRuns.branch,
+    url: ciRuns.url,
+    conclusion: ciRuns.conclusion,
+    testsPassed: ciRuns.testsPassed,
+    testsFailed: ciRuns.testsFailed,
+    coveragePct: ciRuns.coveragePct,
+    durationMs: ciRuns.durationMs,
+    healthOk: ciRuns.healthOk,
+    createdAt: ciRuns.createdAt,
+  })
+  .from(ciRuns)
+  .orderBy(desc(ciRuns.createdAt))
+  .limit(15)
+
+const [ciAgg] = await db
+  .select({
+    total: sql<number>`count(*)`,
+    ok: sql<number>`coalesce(sum(${ciRuns.conclusion} = 'success'), 0)`,
+    avgMs: sql<number>`coalesce(avg(${ciRuns.durationMs}), 0)`,
+  })
+  .from(ciRuns)
+  .where(gte(ciRuns.createdAt, since30))
+
+const successRate30 = ciAgg.total > 0 ? Math.round((ciAgg.ok / ciAgg.total) * 1000) / 10 : null
+const lastCoverage = runs.find((r) => r.coveragePct != null)?.coveragePct ?? null
+
+// ── Experimentos (chaos + ataques a la pasarela) ────────────────────────────
+const experiments = await db
+  .select({
+    kind: labExperiments.kind,
+    ok: labExperiments.ok,
+    ranAt: labExperiments.ranAt,
+  })
+  .from(labExperiments)
+  .orderBy(desc(labExperiments.ranAt))
+  .limit(12)
+
+const [expAgg] = await db
+  .select({
+    total: sql<number>`count(*)`,
+    ok: sql<number>`coalesce(sum(${labExperiments.ok}), 0)`,
+  })
+  .from(labExperiments)
+
+// Etiquetas amigables por tipo de experimento; el detalle crudo se queda en el panel.
+const EXPERIMENT_LABELS: Record<string, string> = {
+  'chaos:db_fail_midtx': 'Caída de BD a mitad de una transacción de pago',
+  'payments:double_click': 'Doble clic en «pagar» (idempotencia concurrente)',
+  'payments:duplicate_webhook': 'Webhook duplicado (mismo evento dos veces)',
+  'payments:out_of_order': 'Webhooks fuera de orden (estado terminal primero)',
+  'payments:amount_mismatch': 'Webhook con monto adulterado',
+  'payments:bad_signature': 'Webhook con firma inválida',
+}
+const expLabel = (kind: string) => EXPERIMENT_LABELS[kind] ?? kind.replace(/[_:]/g, ' ')
+
+// ── Pasarela sandbox: agregados de resiliencia ──────────────────────────────
+const [payAgg] = await db
+  .select({
+    total: sql<number>`count(*)`,
+    approved: sql<number>`coalesce(sum(${payments.status} = 'approved'), 0)`,
+  })
+  .from(payments)
+
+const [evtAgg] = await db
+  .select({
+    total: sql<number>`count(*)`,
+    duplicates: sql<number>`coalesce(sum(${paymentEvents.duplicate}), 0)`,
+    outOfOrder: sql<number>`coalesce(sum(${paymentEvents.outOfOrder}), 0)`,
+    mismatches: sql<number>`coalesce(sum(${paymentEvents.amountMismatch}), 0)`,
+  })
+  .from(paymentEvents)
+
+const absorbed = evtAgg.duplicates + evtAgg.outOfOrder + evtAgg.mismatches
+
+// ── Presentación ────────────────────────────────────────────────────────────
+const fmtDate = new Intl.DateTimeFormat('es-CO', {
+  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  timeZone: 'America/Bogota',
+})
+
+const fmtDuration = (ms: number | null) => {
+  if (ms == null) return '—'
+  const s = Math.round(ms / 1000)
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`
+}
+
+const runBadge = {
+  success: { label: 'OK', cls: 'text-lime border-lime/30 bg-lime/10' },
+  failure: { label: 'Falló', cls: 'text-ember border-ember/40 bg-ember/15' },
+  rolled_back: { label: 'Rollback', cls: 'text-ember border-ember/30 bg-ember/10' },
+} as const
+
+const upcoming = [
+  { title: 'Load testing (k6)', desc: 'Latencia p50/p95/p99 bajo 100–1000 usuarios concurrentes contra un entorno de staging.' },
+  { title: 'SAST + accesibilidad', desc: 'Hallazgos de análisis estático (CodeQL, npm audit) y score a11y, con su ciclo abierto → resuelto.' },
+  { title: 'Mutation testing', desc: 'No solo cuánta cobertura hay, sino si los tests detectan de verdad cuando el código se rompe.' },
+]
+---
+
+<BaseLayout
+  title="Laboratorio — CodeByMike"
+  description="Laboratorio de ingeniería en vivo: pipeline CI/CD con rollback, chaos engineering, ataques controlados a la pasarela de pagos y sus resultados reales."
+>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+
+    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver
+    </a>
+
+    <header class="mb-12">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/lab</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Ingeniería verificable</span>
+      </div>
+      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
+        Laboratorio de<br/>ingeniería.
+      </h1>
+      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
+        Este sitio es también mi banco de pruebas: pipeline con rollback automático, chaos
+        engineering, ataques controlados contra mi propia pasarela de pagos. Lo que ves abajo
+        son los resultados reales, leídos de la misma base de datos que usa el sistema.
+      </p>
+    </header>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+      <div class="rounded-2xl glass p-5">
+        <div class={`font-mono text-[26px] leading-none tracking-tight ${successRate30 !== null && successRate30 >= 90 ? 'text-lime' : 'text-ember'}`}>
+          {successRate30 === null ? '—' : `${successRate30}%`}
+        </div>
+        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Pipelines exitosos · 30d</div>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <div class="font-mono text-[26px] leading-none tracking-tight text-ink-50">
+          {lastCoverage === null ? '—' : `${Math.round(lastCoverage * 10) / 10}%`}
+        </div>
+        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Cobertura de tests</div>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <div class={`font-mono text-[26px] leading-none tracking-tight ${expAgg.total > 0 && expAgg.ok === expAgg.total ? 'text-lime' : 'text-ink-50'}`}>
+          {expAgg.ok}/{expAgg.total}
+        </div>
+        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Experimentos superados</div>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <div class="font-mono text-[26px] leading-none tracking-tight text-cyan">{absorbed}</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Ataques absorbidos (pagos)</div>
+      </div>
+    </div>
+
+    <!-- Pipeline CI/CD -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
+        <span>Pipeline CI/CD · con health check y rollback automático</span>
+      </div>
+      <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
+        Cada push corre los tests y reporta el resultado aquí. Si el deploy pasa pero el health
+        check post-deploy falla, el pipeline revierte solo. El repositorio y sus Actions son
+        públicos: cada fila enlaza a los logs reales.
+      </p>
+      {runs.length === 0 ? (
+        <div class="rounded-2xl glass p-8">
+          <p class="text-[13px] font-mono text-ink-300">Aún no hay corridas registradas.</p>
+        </div>
+      ) : (
+        <div class="rounded-2xl glass divide-y divide-white/5 overflow-hidden">
+          {runs.map((r) => {
+            const badge = runBadge[r.conclusion] ?? runBadge.failure
+            return (
+              <div class="p-4 md:px-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+                <span class={`text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${badge.cls}`}>
+                  {badge.label}
+                </span>
+                <span class="font-mono text-[12px] text-ink-100">
+                  {r.url
+                    ? <a href={r.url} target="_blank" rel="noopener" class="hover:text-cyan transition-colors">{r.sha.slice(0, 7)} ↗</a>
+                    : r.sha.slice(0, 7)}
+                </span>
+                <span class="font-mono text-[11px] text-ink-300 hidden sm:inline">
+                  {r.testsPassed != null ? `${r.testsPassed} tests` : ''}
+                  {r.testsFailed ? ` · ${r.testsFailed} fallidos` : ''}
+                  {r.coveragePct != null ? ` · ${Math.round(r.coveragePct * 10) / 10}% cov` : ''}
+                </span>
+                <span class="ml-auto font-mono text-[11px] text-ink-300">
+                  {fmtDuration(r.durationMs)} · {r.createdAt ? fmtDate.format(r.createdAt) : '—'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
+
+    <!-- Experimentos -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
+        <span>Experimentos · chaos engineering y ataques controlados</span>
+      </div>
+      <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
+        Cada experimento define qué debería pasar (la defensa) y verifica qué pasó de verdad.
+        «Superado» significa que el sistema se defendió solo: sin pagos duplicados, sin estados
+        a medias, sin eventos huérfanos.
+      </p>
+      {experiments.length === 0 ? (
+        <div class="rounded-2xl glass p-8">
+          <p class="text-[13px] font-mono text-ink-300">Aún no hay experimentos registrados.</p>
+        </div>
+      ) : (
+        <div class="rounded-2xl glass divide-y divide-white/5">
+          {experiments.map((e) => (
+            <div class="p-4 md:px-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+              <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${e.ok ? 'bg-lime' : 'bg-ember'}`}></span>
+              <span class="text-ink-50">{expLabel(e.kind)}</span>
+              <span class={`text-[10px] font-mono uppercase tracking-[.15em] ${e.ok ? 'text-lime' : 'text-ember'}`}>
+                {e.ok ? 'superado' : 'falló'}
+              </span>
+              <span class="ml-auto font-mono text-[11px] text-ink-300">
+                {e.ranAt ? fmtDate.format(e.ranAt) : '—'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+
+    <!-- Pasarela sandbox -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
+        <span>Pasarela de pagos · sandbox</span>
+      </div>
+      <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
+        Pasarela propia con llaves de idempotencia, máquina de estados sin retrocesos y
+        verificación de firma en webhooks. Los contadores de abajo son eventos hostiles que
+        llegaron y fueron <span class="text-ink-50">detectados y neutralizados</span>, no aplicados.
+      </p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="rounded-2xl glass p-5">
+          <div class="font-mono text-[22px] leading-none text-ink-50">{payAgg.total}</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Pagos sandbox</div>
+        </div>
+        <div class="rounded-2xl glass p-5">
+          <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.duplicates}</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Webhooks duplicados ignorados</div>
+        </div>
+        <div class="rounded-2xl glass p-5">
+          <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.outOfOrder}</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Eventos fuera de orden contenidos</div>
+        </div>
+        <div class="rounded-2xl glass p-5">
+          <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.mismatches}</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Montos adulterados rechazados</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo interactiva + enlaces -->
+    <section class="grid md:grid-cols-3 gap-4 mb-16">
+      <a href="/lab/fingerprint" class="rounded-2xl glass p-6 lift group">
+        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Fingerprint de dispositivos</h3>
+        <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
+          Demo interactiva: abre una sala desde dos dispositivos y mira cómo se identifican
+          sin cookies ni login.
+        </p>
+        <span class="text-[13px] text-cyan group-hover:underline">Probar en vivo →</span>
+      </a>
+      <a href="/status" class="rounded-2xl glass p-6 lift group">
+        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Monitoreo y SLOs</h3>
+        <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
+          Uptime, latencia p95 y presupuesto de error medidos por el motor de checks propio.
+        </p>
+        <span class="text-[13px] text-cyan group-hover:underline">Ver /status →</span>
+      </a>
+      <a href="/security" class="rounded-2xl glass p-6 lift group">
+        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Security Operations</h3>
+        <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
+          Micro-SIEM propio: intentos de intrusión detectados y bloqueados, en agregado y en vivo.
+        </p>
+        <span class="text-[13px] text-cyan group-hover:underline">Ver /security →</span>
+      </a>
+    </section>
+
+    <!-- Próximamente -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
+        <span>En construcción</span>
+      </div>
+      <div class="grid md:grid-cols-3 gap-4">
+        {upcoming.map((u) => (
+          <div class="rounded-2xl border border-white/5 bg-white/[.02] p-6">
+            <h3 class="text-[14px] font-medium text-ink-200 mb-1.5">{u.title}</h3>
+            <p class="text-[12px] text-ink-400 leading-relaxed">{u.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Metodología -->
+    <section class="rounded-2xl glass p-8">
+      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">Cómo funciona esta página</div>
+      <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
+        <p>
+          Los datos no son capturas ni ejemplos: se leen en el servidor de la misma base
+          (Turso/libSQL) donde el pipeline, los experimentos y la pasarela escriben sus
+          resultados. Lo que falla también se muestra.
+        </p>
+        <p>
+          Los experimentos de chaos corren con cinturones de seguridad: TTL máximo de 15
+          minutos, rutas críticas excluidas por código y kill-switch. Todo el sistema es
+          <span class="text-ink-50">fail-open</span>: un fallo del laboratorio nunca tumba el sitio.
+        </p>
+        <p>
+          El detalle crudo (parámetros, payloads, flags activos) vive en el panel privado.
+          Aquí se publica el veredicto agregado — suficiente para verificar, sin regalar el
+          mapa interno.
+        </p>
+      </div>
+    </section>
+
+  </div>
+</BaseLayout>
