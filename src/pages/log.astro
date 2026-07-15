@@ -52,7 +52,11 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     <!-- Sparkline -->
     <div class="rounded-2xl glass p-5 mb-10 relative">
       <div class="flex justify-between text-[10px] font-mono text-ink-300 mb-3" id="sparkline-labels"></div>
-      <div class="flex items-end gap-1 h-12" id="sparkline"></div>
+      <div class="flex items-end gap-1 h-12" id="sparkline">
+        {Array.from({ length: 14 }).map(() => (
+          <div class="flex-1 bg-white/5 rounded-sm animate-pulse" style="height:35%"></div>
+        ))}
+      </div>
       <div
         id="sparkline-tip"
         class="pointer-events-none absolute z-20 hidden -translate-x-1/2 -translate-y-full rounded-lg border border-white/10 bg-black/90 px-2.5 py-1.5 text-center shadow-lg backdrop-blur"
