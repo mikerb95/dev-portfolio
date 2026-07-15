@@ -44,10 +44,10 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
     id: 'auth',
     nombre: 'Autenticación y sesiones',
     items: [
-      { id: 'RF-101', titulo: 'Login con GitHub OAuth', descripcion: 'El administrador inicia sesión con su cuenta de GitHub; solo los logins en la allowlist obtienen acceso.', prioridad: 'alta', estado: 'implementado', origen: 'auth.config.ts, src/lib/auth.ts' },
-      { id: 'RF-102', titulo: 'Protección de rutas /admin', descripcion: 'Todas las rutas /admin y /api/admin exigen sesión válida; sin sesión, redirige a login.', prioridad: 'alta', estado: 'implementado', origen: 'src/middleware.ts' },
-      { id: 'RF-103', titulo: 'Gestión de dispositivos/sesiones', descripcion: 'El administrador ve las sesiones activas por dispositivo (IP, user-agent, última actividad) y puede revocarlas.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/sessions.astro, admin_sessions' },
-      { id: 'RF-104', titulo: 'Cierre de sesión', descripcion: 'El administrador puede cerrar su sesión desde cualquier página del panel.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/api/auth' },
+      { id: 'RF-101', titulo: 'Login con GitHub OAuth', descripcion: 'El administrador inicia sesión con su cuenta de GitHub; solo los logins en la allowlist obtienen acceso.', prioridad: 'alta', estado: 'implementado', origen: 'auth.config.ts, src/lib/auth.ts', verificacion: 'Probado manualmente contra la cuenta real de GitHub; login fuera de la allowlist se verifica que sea rechazado.', notas: 'Fase reciente añadió login sin contraseña vía WebAuthn/FIDO2 como alternativa; la allowlist sigue siendo la única fuente de autorización.', relacionados: ['RF-102', 'RNF-02', 'CU-04'] },
+      { id: 'RF-102', titulo: 'Protección de rutas /admin', descripcion: 'Todas las rutas /admin y /api/admin exigen sesión válida; sin sesión, redirige a login.', prioridad: 'alta', estado: 'implementado', origen: 'src/middleware.ts', verificacion: 'Test de integración del middleware que golpea rutas /admin sin cookie de sesión y espera redirect.', relacionados: ['RF-101', 'RNF-02'] },
+      { id: 'RF-103', titulo: 'Gestión de dispositivos/sesiones', descripcion: 'El administrador ve las sesiones activas por dispositivo (IP, user-agent, última actividad) y puede revocarlas.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/sessions.astro, admin_sessions', verificacion: 'Revisión manual: revocar una sesión desde el panel y confirmar que ese dispositivo pierde acceso en el siguiente request.' },
+      { id: 'RF-104', titulo: 'Cierre de sesión', descripcion: 'El administrador puede cerrar su sesión desde cualquier página del panel.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/api/auth', verificacion: 'Revisión manual: logout limpia la cookie de sesión y la siguiente visita a /admin redirige a login.' },
     ],
   },
   {
