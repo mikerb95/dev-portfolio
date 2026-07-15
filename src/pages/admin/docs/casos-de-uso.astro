@@ -4,14 +4,24 @@ import DocsNav from '../../../components/admin/DocsNav.astro'
 import { ACTORES, CASOS_DE_USO } from '../../../data/documentacion'
 
 // Diagrama de casos de uso en sintaxis flowchart (Mermaid no tiene un tipo
-// "usecase" oficial estable); actores como nodos redondeados, CU como cajas.
-const actorLines = ACTORES.map((a) => `  ${a.id}(["${a.nombre}"])`).join('\n')
-const cuLines = CASOS_DE_USO.map((c) => `  ${c.id}["${c.id}: ${c.nombre}"]`).join('\n')
-const edgeLines = CASOS_DE_USO.map((c) => `  ${c.actor} --> ${c.id}`).join('\n')
+// "usecase" oficial estable). Se aproxima a la notación UML estándar:
+// - Actores fuera del límite del sistema, como nodos redondeados.
+// - Casos de uso como óvalos (forma "stadium") dentro de un subgraph que
+//   representa el límite del sistema.
+// - Asociaciones como líneas simples sin flecha (--- en vez de -->).
+const actoresUsados = new Set(CASOS_DE_USO.map((c) => c.actor))
+const actorLines = ACTORES.filter((a) => actoresUsados.has(a.id))
+  .map((a) => `  ${a.id}(["${a.nombre}"])`)
+  .join('\n')
+const cuLines = CASOS_DE_USO.map((c) => `    ${c.id}(["${c.id}: ${c.nombre}"])`).join('\n')
+const edgeLines = CASOS_DE_USO.map((c) => `  ${c.actor} --- ${c.id}`).join('\n')
 
 const diagram = `flowchart LR
 ${actorLines}
+  subgraph Sistema["Sistema · codebymike.tech"]
+    direction TB
 ${cuLines}
+  end
 ${edgeLines}
 `
 ---
