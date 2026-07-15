@@ -116,9 +116,9 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
     id: 'sistema',
     nombre: 'Sistema',
     items: [
-      { id: 'RF-701', titulo: 'Backups automáticos', descripcion: 'Snapshot periódico de la base de datos subido a Vercel Blob vía cron, más creación manual desde el panel.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/backup.astro, src/pages/api/cron' },
-      { id: 'RF-702', titulo: 'Ajustes de la aplicación', descripcion: 'Configuración clave-valor (tasas de cambio, moneda base) editable desde el panel.', prioridad: 'baja', estado: 'implementado', origen: 'app_settings, src/pages/admin/settings.astro' },
-      { id: 'RF-703', titulo: 'Documentación de ingeniería', descripcion: 'Requerimientos, casos de uso, diagramas UML y kanban del propio proyecto, navegables desde /admin/docs.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/docs' },
+      { id: 'RF-701', titulo: 'Backups automáticos', descripcion: 'Snapshot periódico de la base de datos subido a Vercel Blob vía cron, más creación manual desde el panel.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/backup.astro, src/pages/api/cron', verificacion: 'Revisión manual: descargar un backup generado y confirmar que el JSON contiene las tablas de negocio esperadas.', relacionados: ['CU-11'] },
+      { id: 'RF-702', titulo: 'Ajustes de la aplicación', descripcion: 'Configuración clave-valor (tasas de cambio, moneda base) editable desde el panel.', prioridad: 'baja', estado: 'implementado', origen: 'app_settings, src/pages/admin/settings.astro', verificacion: 'Revisión manual: cambiar una tasa y confirmar que el P&L (RF-302) la refleja.', relacionados: ['RF-302'] },
+      { id: 'RF-703', titulo: 'Documentación de ingeniería', descripcion: 'Requerimientos, casos de uso, diagramas UML y kanban del propio proyecto, navegables desde /admin/docs.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/docs', verificacion: 'Esta misma vista es la evidencia: los datos viven tipados en src/data/documentacion.ts.', relacionados: ['RNF-14', 'CU-18'] },
     ],
   },
 ]
