@@ -66,9 +66,8 @@ const EXPERIMENT_LABELS: Record<string, string> = {
   'chaos:db_fail_midtx': 'Caída de BD a mitad de una transacción de pago',
   'payments:double_click': 'Doble clic en «pagar» (idempotencia concurrente)',
   'payments:duplicate_webhook': 'Webhook duplicado (mismo evento dos veces)',
-  'payments:out_of_order': 'Webhooks fuera de orden (estado terminal primero)',
-  'payments:amount_mismatch': 'Webhook con monto adulterado',
-  'payments:bad_signature': 'Webhook con firma inválida',
+  'payments:out_of_order': 'Webhook tardío que intenta retroceder el estado',
+  'payments:race_condition': 'Aprobado y rechazado en carrera por el mismo pago',
 }
 const expLabel = (kind: string) => EXPERIMENT_LABELS[kind] ?? kind.replace(/[_:]/g, ' ')
 
@@ -198,11 +197,7 @@ const upcoming = [
                     ? <a href={r.url} target="_blank" rel="noopener" class="hover:text-cyan transition-colors">{r.sha.slice(0, 7)} ↗</a>
                     : r.sha.slice(0, 7)}
                 </span>
-                <span class="font-mono text-[11px] text-ink-300 hidden sm:inline">
-                  {r.testsPassed != null ? `${r.testsPassed} tests` : ''}
-                  {r.testsFailed ? ` · ${r.testsFailed} fallidos` : ''}
-                  {r.coveragePct != null ? ` · ${Math.round(r.coveragePct * 10) / 10}% cov` : ''}
-                </span>
+                <span class="font-mono text-[11px] text-ink-300 hidden sm:inline">{runMeta(r)}</span>
                 <span class="ml-auto font-mono text-[11px] text-ink-300">
                   {fmtDuration(r.durationMs)} · {r.createdAt ? fmtDate.format(r.createdAt) : '—'}
                 </span>
