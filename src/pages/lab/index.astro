@@ -44,15 +44,19 @@ const successRate30 = ciAgg.total > 0 ? Math.round((ciAgg.ok / ciAgg.total) * 10
 const lastCoverage = runs.find((r) => r.coveragePct != null)?.coveragePct ?? null
 
 // ── Experimentos (chaos + ataques a la pasarela) ────────────────────────────
+// Agrupado por tipo: un mismo experimento se corre muchas veces (13 corridas de
+// caída de BD ahogarían al resto en una lista cronológica). Lo que importa aquí
+// es qué defensas se probaron y si alguna vez fallaron.
 const experiments = await db
   .select({
     kind: labExperiments.kind,
-    ok: labExperiments.ok,
-    ranAt: labExperiments.ranAt,
+    runs: sql<number>`count(*)`,
+    ok: sql<number>`coalesce(sum(${labExperiments.ok}), 0)`,
+    lastRunAt: sql<number>`max(${labExperiments.ranAt})`,
   })
   .from(labExperiments)
-  .orderBy(desc(labExperiments.ranAt))
-  .limit(12)
+  .groupBy(labExperiments.kind)
+  .orderBy(desc(sql`max(${labExperiments.ranAt})`))
 
 const [expAgg] = await db
   .select({
@@ -236,18 +240,23 @@ const upcoming = [
         </div>
       ) : (
         <div class="rounded-2xl glass divide-y divide-white/5">
-          {experiments.map((e) => (
-            <div class="p-4 md:px-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
-              <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${e.ok ? 'bg-lime' : 'bg-ember'}`}></span>
-              <span class="text-ink-50">{expLabel(e.kind)}</span>
-              <span class={`text-[10px] font-mono uppercase tracking-[.15em] ${e.ok ? 'text-lime' : 'text-ember'}`}>
-                {e.ok ? 'superado' : 'falló'}
-              </span>
-              <span class="ml-auto font-mono text-[11px] text-ink-300">
-                {e.ranAt ? fmtDate.format(e.ranAt) : '—'}
-              </span>
-            </div>
-          ))}
+          {experiments.map((e) => {
+            const allOk = e.ok === e.runs
+            return (
+              <div class="p-4 md:px-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+                <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${allOk ? 'bg-lime' : 'bg-ember'}`}></span>
+                <span class="text-ink-50">{expLabel(e.kind)}</span>
+                <span class={`text-[10px] font-mono uppercase tracking-[.15em] ${allOk ? 'text-lime' : 'text-ember'}`}>
+                  {allOk
+                    ? `${e.runs} ${e.runs === 1 ? 'corrida' : 'corridas'} · superado`
+                    : `${e.ok}/${e.runs} superadas`}
+                </span>
+                <span class="ml-auto font-mono text-[11px] text-ink-300">
+                  última: {e.lastRunAt ? fmtDate.format(new Date(e.lastRunAt * 1000)) : '—'}
+                </span>
+              </div>
+            )
+          })}
         </div>
       )}
     </section>
