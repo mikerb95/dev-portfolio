@@ -102,6 +102,17 @@ const fmtDuration = (ms: number | null) => {
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`
 }
 
+// Resumen de una corrida en una línea; se arma aquí para no arrastrar los saltos
+// de línea del template al HTML.
+const runMeta = (r: (typeof runs)[number]) =>
+  [
+    r.testsPassed != null ? `${r.testsPassed} tests` : null,
+    r.testsFailed ? `${r.testsFailed} fallidos` : null,
+    r.coveragePct != null ? `${Math.round(r.coveragePct * 10) / 10}% cov` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
 const runBadge = {
   success: { label: 'OK', cls: 'text-lime border-lime/30 bg-lime/10' },
   failure: { label: 'Falló', cls: 'text-ember border-ember/40 bg-ember/15' },
