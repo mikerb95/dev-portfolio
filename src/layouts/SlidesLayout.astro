@@ -6,9 +6,13 @@ import "reveal.js/reveal.css";
 
 interface Props {
     title: string;
+    /** Tema claro: mismo tipo y acentos del sitio, sobre fondo blanco. */
+    light?: boolean;
+    /** Centrado vertical. Conviene apagarlo en decks con slides densas. */
+    center?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, light = false, center = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -18,8 +22,14 @@ const { title } = Astro.props;
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title}</title>
     </head>
-    <body>
-        <div class="reveal h-screen bg-ink-950 text-ink-100">
+    <body class={light ? "is-light" : ""}>
+        <div
+            class:list={[
+                "reveal h-screen",
+                light ? "reveal-light" : "bg-ink-950 text-ink-100",
+            ]}
+            data-center={String(center)}
+        >
             <div class="slides">
                 <slot />
             </div>
@@ -28,11 +38,12 @@ const { title } = Astro.props;
         <script>
             import Reveal from "reveal.js";
 
-            // Inicializar Reveal.js en el cliente
+            const root = document.querySelector<HTMLElement>(".reveal");
+
             Reveal.initialize({
                 controls: true,
                 progress: true,
-                center: true,
+                center: root?.dataset.center !== "false",
                 hash: true,
                 transition: "slide", // Transiciones: none/fade/slide/convex/concave/zoom
             });
@@ -93,6 +104,70 @@ const { title } = Astro.props;
             }
             .reveal .progress {
                 color: var(--color-cyan, #00f2ff);
+            }
+
+            /* ── Tema claro ──────────────────────────────────────────────
+               La escala `ink` del sitio va de claro (50) a oscuro (950) para
+               texto sobre fondo negro; aquí se usa al revés. Los acentos
+               puros (cyan #00f2ff, violet #a78bff) no alcanzan contraste AA
+               sobre blanco, así que el texto usa las variantes profundas y
+               los tonos brillantes quedan para rellenos y bordes. */
+            body.is-light {
+                background: #fbfbfd;
+            }
+
+            .reveal-light {
+                --slide-fg: #13131a;
+                --slide-fg-muted: #4d4d5d;
+                --slide-heading: #07070a;
+                --slide-accent: #007a82; /* cyan-deep: AA sobre blanco */
+                --slide-accent-soft: rgba(0, 242, 255, 0.09);
+                --slide-violet: #5b3fc4; /* violet oscurecido para texto */
+                --slide-ember: #c2410c; /* ember oscurecido para texto */
+                --slide-line: rgba(7, 7, 10, 0.1);
+                --slide-surface: rgba(7, 7, 10, 0.025);
+
+                background: #fbfbfd;
+                color: var(--slide-fg);
+                background-image: radial-gradient(
+                    rgba(7, 7, 10, 0.055) 1px,
+                    transparent 1px
+                );
+                background-size: 22px 22px;
+                background-position: -1px -1px;
+            }
+
+            .reveal-light h1,
+            .reveal-light h2,
+            .reveal-light h3,
+            .reveal-light h4,
+            .reveal-light h5,
+            .reveal-light h6 {
+                color: var(--slide-heading);
+            }
+
+            .reveal-light .controls {
+                color: var(--slide-accent);
+            }
+            .reveal-light .progress {
+                color: var(--slide-accent);
+            }
+            .reveal-light .progress span {
+                background: var(--slide-accent);
+            }
+
+            .reveal-light a {
+                color: var(--slide-accent);
+                text-decoration: none;
+                border-bottom: 1px solid var(--slide-accent-soft);
+            }
+            .reveal-light a:hover {
+                border-bottom-color: var(--slide-accent);
+            }
+
+            .reveal-light ::selection {
+                background: #00f2ff;
+                color: #07070a;
             }
         </style>
     </body>
