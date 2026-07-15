@@ -310,5 +310,82 @@ const prioridadFiltros: { key: Prioridad | 'todas'; label: string }[] = [
         aplicar()
       }),
     )
+
+    // ── Modal de detalle ──────────────────────────────────────────────────
+    const modal = root.querySelector<HTMLElement>('[data-modal]')
+    const modalId = modal?.querySelector<HTMLElement>('[data-modal-id]')
+    const modalTitulo = modal?.querySelector<HTMLElement>('[data-modal-titulo]')
+    const modalDescripcion = modal?.querySelector<HTMLElement>('[data-modal-descripcion]')
+    const modalEstado = modal?.querySelector<HTMLElement>('[data-modal-estado]')
+    const modalEstadoDot = modal?.querySelector<HTMLElement>('[data-modal-estado-dot]')
+    const modalEstadoLabel = modal?.querySelector<HTMLElement>('[data-modal-estado-label]')
+    const modalPrioridad = modal?.querySelector<HTMLElement>('[data-modal-prioridad]')
+    const modalPrioridadDot = modal?.querySelector<HTMLElement>('[data-modal-prioridad-dot]')
+    const modalPrioridadLabel = modal?.querySelector<HTMLElement>('[data-modal-prioridad-label]')
+    const modalOrigenWrap = modal?.querySelector<HTMLElement>('[data-modal-origen-wrap]')
+    const modalClose = modal?.querySelector<HTMLElement>('[data-modal-close]')
+    const modalBackdrop = modal?.querySelector<HTMLElement>('[data-modal-backdrop]')
+
+    let lastFocused: HTMLElement | null = null
+
+    const abrirModal = (it: HTMLElement) => {
+      if (!modal) return
+      const d = it.dataset
+
+      if (modalId) modalId.textContent = d.id ?? ''
+      if (modalTitulo) modalTitulo.textContent = d.titulo ?? ''
+      if (modalDescripcion) modalDescripcion.textContent = d.descripcion ?? ''
+
+      if (modalEstadoLabel) modalEstadoLabel.textContent = d.estadoLabel ?? ''
+      if (modalEstadoDot) modalEstadoDot.className = `w-1.5 h-1.5 rounded-full ${d.estadoDot ?? ''}`
+      if (modalEstado) modalEstado.className = `inline-flex items-center gap-1.5 text-[11.5px] font-medium px-2.5 py-1 rounded-full border ${d.estadoBadge ?? ''}`
+
+      if (modalPrioridadLabel) modalPrioridadLabel.textContent = d.prioridadLabel ?? ''
+      if (modalPrioridadDot) modalPrioridadDot.className = `w-1.5 h-1.5 rounded-full ${d.prioridadDot ?? ''}`
+      if (modalPrioridad) modalPrioridad.className = `inline-flex items-center gap-1.5 text-[12.5px] font-medium ${d.prioridadText ?? ''}`
+
+      if (modalOrigenWrap) {
+        modalOrigenWrap.innerHTML = ''
+        const origen = d.origen ?? ''
+        if (origen) {
+          for (const o of origen.split(',')) {
+            const code = document.createElement('code')
+            code.className = 'inline-flex items-center gap-1 text-[11.5px] font-mono text-ink-200 bg-ink-900/70 border border-white/[.07] rounded px-1.5 py-0.5'
+            code.textContent = o.trim()
+            modalOrigenWrap.appendChild(code)
+          }
+        }
+      }
+
+      lastFocused = document.activeElement as HTMLElement | null
+      modal.classList.remove('hidden')
+      modal.classList.add('flex')
+      document.body.classList.add('overflow-hidden')
+      modalClose?.focus()
+    }
+
+    const cerrarModal = () => {
+      if (!modal) return
+      modal.classList.add('hidden')
+      modal.classList.remove('flex')
+      document.body.classList.remove('overflow-hidden')
+      lastFocused?.focus()
+    }
+
+    items.forEach((it) => {
+      it.addEventListener('click', () => abrirModal(it))
+      it.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault()
+          abrirModal(it)
+        }
+      })
+    })
+
+    modalClose?.addEventListener('click', cerrarModal)
+    modalBackdrop?.addEventListener('click', cerrarModal)
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && modal && !modal.classList.contains('hidden')) cerrarModal()
+    })
   })
 </script>
