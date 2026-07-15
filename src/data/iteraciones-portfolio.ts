@@ -396,11 +396,98 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-docs-publicas',
+    fase: 'Fase 9 · Documentación pública',
+    nombre: 'Docs académicas fuera de /admin, trazabilidad de requisitos y deck de presentación',
+    rango: '13 – 14 jul 2026',
+    ghSince: '2026-07-13',
+    ghUntil: '2026-07-14',
+    commits: 45,
+    resumen:
+      'La documentación académica (casos de uso, diagramas UML, historias de usuario, requisitos, kanban) se mueve de /admin/docs a /docs para que sea accesible sin sesión, con DocsNav propio. Los requisitos ganan trazabilidad completa (verificación, notas, ítems relacionados) con modal de detalle. Se agrega un deck de presentación (reveal-like) que resume todo el proyecto para sustentación.',
+    historias: [
+      {
+        id: 'PF-DP-01', titulo: 'Como stakeholder académico, quiero navegar la documentación del proyecto sin necesitar sesión de administrador',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-14', tags: ['documentación', 'público', 'fase-9'],
+        dod: [
+          ok('Páginas de casos de uso, diagramas, historias de usuario, requisitos y kanban migradas de /admin/docs a /docs.'),
+          ok('DocsNav como componente de navegación propio, reemplazando AdminLayout en todas las vistas de documentación.'),
+          ok('Redirect catch-all de /admin/docs a /docs para no romper enlaces existentes.'),
+        ],
+      },
+      {
+        id: 'PF-DP-02', titulo: 'Como stakeholder académico, quiero ver cada requisito con su verificación, notas y requisitos relacionados',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-14', tags: ['requisitos', 'trazabilidad', 'fase-9'],
+        dod: [
+          ok('Interfaz Requisito ampliada con campos de verificación, notas técnicas e ítems relacionados.'),
+          ok('Modal de detalle por ítem en RequisitosView con atributos de datos para accesibilidad.'),
+          ok('Diagramas Mermaid (casos de uso, secuencia, clases, componentes) con tema propio y mejor contraste.'),
+        ],
+      },
+      {
+        id: 'PF-DP-03', titulo: 'Como stakeholder académico, quiero un deck de presentación que resuma el proyecto para la sustentación',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['presentación', 'fase-9'],
+        dod: [
+          ok('/docs/presentacion.astro consolida arquitectura, fases y decisiones clave del proyecto.'),
+          ok('Enlace al deck desde DocsNav y desde la documentación principal.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-lab-demo',
+    fase: 'Fase 10 · Lab de experimentos y demo pública',
+    nombre: 'Laboratorio de experimentos CI/CD y demo read-only del admin',
+    rango: '15 jul 2026',
+    ghSince: '2026-07-15',
+    ghUntil: '2026-07-15',
+    commits: 15,
+    resumen:
+      'Cierra la deuda de la Fase 4 (demo pública del admin, PF-VS-04): /demo entrega una sesión de solo lectura firmada, respaldada por una base de datos sembrada con datos ficticios (seed-demo.mjs), sin tocar producción. En paralelo, /lab expone en vivo los experimentos de CI/CD (runs, cobertura, conteos) enlazado desde tools y el footer.',
+    historias: [
+      {
+        id: 'PF-LD-01', titulo: 'Como visitante técnico, quiero ver un laboratorio con los experimentos de CI/CD y su resultado más reciente',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['lab', 'ci', 'público', 'fase-10'],
+        dod: [
+          ok('/lab lista experimentos con conteo de runs y fecha del último, alimentado por ci_runs.'),
+          ok('Enlace "Laboratorio" en footer y navbar, y desde el caso de estudio de tools.'),
+          ok('Ruta /lab añadida a STATIC_PATHS del sitemap.'),
+        ],
+      },
+      {
+        id: 'PF-LD-02', titulo: 'Como administrador, quiero una demo read-only del panel admin para mostrar a reclutadores sin exponer datos reales',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['demo', 'seguridad', 'fase-10'],
+        dod: [
+          ok('/demo firma un token de sesión de solo lectura y lo valida en middleware sin tocar Auth.js.'),
+          ok('Middleware bloquea cualquier método no-GET en modo demo y marca el flag demo en locals.'),
+          ok('scripts/seed-demo.mjs siembra clientes, proyectos, finanzas, monitores y CI runs ficticios en una base aislada.'),
+          ok('Tests de verificación de token demo y restricción de métodos.'),
+        ],
+      },
+      {
+        id: 'PF-LD-03', titulo: 'Como administrador, quiero que la presentación privada del deck no sea accesible desde la demo pública',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['seguridad', 'demo', 'fase-10'],
+        dod: [
+          ok('Middleware distingue isPrivate de isAdmin para aplicar headers de seguridad correctos.'),
+          ok('Acceso al deck de presentación restringido a sesión de administrador real, excluyendo la sesión demo.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 257 },
+  { mes: 'jul', commits: 317 },
 ]
