@@ -169,8 +169,8 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
     id: 'usabilidad',
     nombre: 'Usabilidad y accesibilidad',
     items: [
-      { id: 'RNF-17', titulo: 'Panel operable desde móvil', descripcion: 'El panel admin y sus subpáginas son usables en viewport móvil (drawer de navegación colapsable).', prioridad: 'media', estado: 'implementado', origen: 'src/layouts/AdminLayout.astro' },
-      { id: 'RNF-18', titulo: 'Auditoría de accesibilidad automatizada', descripcion: 'Cada PR corre una auditoría automática de accesibilidad (axe/lighthouse) sobre las páginas públicas.', prioridad: 'media', estado: 'planeado' },
+      { id: 'RNF-17', titulo: 'Panel operable desde móvil', descripcion: 'El panel admin y sus subpáginas son usables en viewport móvil (drawer de navegación colapsable).', prioridad: 'media', estado: 'implementado', origen: 'src/layouts/AdminLayout.astro', verificacion: 'Probado manualmente en viewport móvil real (el administrador opera el panel desde el celular para acciones rápidas).' },
+      { id: 'RNF-18', titulo: 'Auditoría de accesibilidad automatizada', descripcion: 'Cada PR corre una auditoría automática de accesibilidad (axe/lighthouse) sobre las páginas públicas.', prioridad: 'media', estado: 'planeado', notas: 'Fase 6 del plan LAB (docs/plan-lab.md), junto con SAST.', relacionados: ['RF-506'] },
     ],
   },
 ]
