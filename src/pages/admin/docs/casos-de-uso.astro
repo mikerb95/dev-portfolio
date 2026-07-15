@@ -19,7 +19,6 @@ const edgeLines = CASOS_DE_USO.map((c) => `  ${c.actor} --- ${c.id}`).join('\n')
 const diagram = `flowchart LR
 ${actorLines}
   subgraph Sistema["Sistema · codebymike.tech"]
-    direction TB
 ${cuLines}
   end
 ${edgeLines}
