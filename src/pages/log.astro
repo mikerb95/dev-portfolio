@@ -412,6 +412,15 @@ import BaseLayout from '../layouts/BaseLayout.astro'
     document.getElementById('feed-more-btn')?.addEventListener('click', resumeLoadMore, { once: false })
   }
 
+  function setFeedStatus(text: string, ok: boolean) {
+    document.getElementById('feed-status-text')!.textContent = text
+    document.getElementById('feed-status')!.querySelector('.pulse-dot')?.classList.toggle('bg-red-400', !ok)
+  }
+
+  function stopStatPulse() {
+    document.querySelectorAll('.stat-value').forEach((el) => el.classList.remove('animate-pulse'))
+  }
+
   async function load() {
     try {
       const res = await fetch('/api/github/activity')
@@ -422,10 +431,14 @@ import BaseLayout from '../layouts/BaseLayout.astro'
       document.getElementById('stat-month')!.textContent = `${data.deepWork.monthHours}h`
       document.getElementById('stat-commits')!.textContent = String(data.totalCommits)
       document.getElementById('stat-streak')!.textContent = `${data.streak}d`
+      stopStatPulse()
 
       renderSparkline(data.sparkline)
       renderFeed(data.feed)
+      setFeedStatus('En tiempo real', true)
     } catch {
+      stopStatPulse()
+      setFeedStatus('Error al conectar con GitHub', false)
       document.getElementById('log-feed')!.innerHTML =
         '<p class="px-5 py-10 text-center text-[12px] font-mono text-ink-300">No se pudo cargar la actividad de GitHub.</p>'
     }
