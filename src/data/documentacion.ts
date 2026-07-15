@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Documentación de ingeniería del portfolio (codebymike.tech / dev-portfolio).
-// Fuente de verdad para /admin/docs/*. Ver docs/plan-documentacion.md.
+// Fuente de verdad para /docs/*. Ver docs/plan-documentacion.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Estado = 'implementado' | 'parcial' | 'planeado'
@@ -118,7 +118,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
     items: [
       { id: 'RF-701', titulo: 'Backups automáticos', descripcion: 'Snapshot periódico de la base de datos subido a Vercel Blob vía cron, más creación manual desde el panel.', prioridad: 'alta', estado: 'implementado', origen: 'src/pages/admin/backup.astro, src/pages/api/cron', verificacion: 'Revisión manual: descargar un backup generado y confirmar que el JSON contiene las tablas de negocio esperadas.', relacionados: ['CU-11'] },
       { id: 'RF-702', titulo: 'Ajustes de la aplicación', descripcion: 'Configuración clave-valor (tasas de cambio, moneda base) editable desde el panel.', prioridad: 'baja', estado: 'implementado', origen: 'app_settings, src/pages/admin/settings.astro', verificacion: 'Revisión manual: cambiar una tasa y confirmar que el P&L (RF-302) la refleja.', relacionados: ['RF-302'] },
-      { id: 'RF-703', titulo: 'Documentación de ingeniería', descripcion: 'Requerimientos, casos de uso, diagramas UML y kanban del propio proyecto, navegables desde /admin/docs.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/docs', verificacion: 'Esta misma vista es la evidencia: los datos viven tipados en src/data/documentacion.ts.', relacionados: ['RNF-14', 'CU-18'] },
+      { id: 'RF-703', titulo: 'Documentación de ingeniería', descripcion: 'Requerimientos, casos de uso, diagramas UML y kanban del propio proyecto, navegables desde /docs.', prioridad: 'media', estado: 'implementado', origen: 'src/pages/docs', verificacion: 'Esta misma vista es la evidencia: los datos viven tipados en src/data/documentacion.ts.', relacionados: ['RNF-14', 'CU-18'] },
     ],
   },
 ]
@@ -218,7 +218,7 @@ export const CASOS_DE_USO: CasoDeUso[] = [
   { id: 'CU-15', nombre: 'Aplicar rate limiting durable', actor: 'admin', rf: ['RF-603'], resumen: 'Un cliente excede el límite de requests permitido; el sistema lo limita usando el estado persistido en base de datos.' },
   { id: 'CU-16', nombre: 'Presentar un proyecto a un cliente', actor: 'cliente', rf: ['RF-208'], resumen: 'El administrador controla remotamente el avance de una presentación que el cliente ve en su navegador.' },
   { id: 'CU-17', nombre: 'Indexar contenido nuevo en buscadores', actor: 'buscador', rf: ['RF-007'], resumen: 'Al publicar contenido, el sistema notifica vía IndexNow y actualiza el RSS/sitemap para acelerar la indexación.' },
-  { id: 'CU-18', nombre: 'Consultar documentación del proyecto', actor: 'admin', rf: ['RF-703'], resumen: 'El administrador navega /admin/docs para revisar requerimientos, casos de uso, diagramas y el kanban del propio portfolio.' },
+  { id: 'CU-18', nombre: 'Consultar documentación del proyecto', actor: 'admin', rf: ['RF-703'], resumen: 'El administrador navega /docs para revisar requerimientos, casos de uso, diagramas y el kanban del propio portfolio.' },
 ]
 
 // ── Casos de uso extendidos ───────────────────────────────────────────────────
@@ -306,7 +306,7 @@ export const CASOS_DE_USO_EXTENDIDOS: CasoDeUsoExtendido[] = [
     precondiciones: ['El administrador tiene sesión activa en /admin.'],
     flujoPrincipal: [
       'El administrador hace clic en "Documentación" en la sidebar.',
-      'Se muestra el hub /admin/docs con visión general, alcance y mapa de subpáginas.',
+      'Se muestra el hub /docs con visión general, alcance y mapa de subpáginas.',
       'El administrador navega a una subpágina (RF, RNF, CU, diagramas o kanban) usando DocsNav.',
       'La página renderiza el contenido desde src/data/documentacion.ts o src/data/iteraciones-portfolio.ts.',
     ],

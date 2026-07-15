@@ -3,29 +3,93 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 import { ACTORES, CASOS_DE_USO } from '../../data/documentacion'
 
-// Diagrama de casos de uso en sintaxis flowchart (Mermaid no tiene un tipo
-// "usecase" oficial estable). Se aproxima a la notación UML estándar:
-// - Actores fuera del límite del sistema, como nodos redondeados.
-// - Casos de uso como óvalos (forma "stadium") dentro de un subgraph que
-//   representa el límite del sistema.
-// - Asociaciones como líneas simples sin flecha (--- en vez de -->).
-// No forzar "direction TB" dentro del subgraph: Mermaid la ignora cuando
-// hay aristas externas cruzando el límite (el ranking de esas aristas gana),
-// y el resultado es una fila gigantesca e ilegible en vez de una columna.
-const actoresUsados = new Set(CASOS_DE_USO.map((c) => c.actor))
-const actorLines = ACTORES.filter((a) => actoresUsados.has(a.id))
-  .map((a) => `  ${a.id}(["${a.nombre}"])`)
-  .join('\n')
-const cuLines = CASOS_DE_USO.map((c) => `    ${c.id}(["${c.id}: ${c.nombre}"])`).join('\n')
-const edgeLines = CASOS_DE_USO.map((c) => `  ${c.actor} --- ${c.id}`).join('\n')
+// Diagrama de casos de uso dibujado a mano como SVG (no con Mermaid): la
+// notación UML exige actores como muñecos de palitos y casos de uso como
+// óvalos dentro de un rectángulo de "límite del sistema". Mermaid no tiene
+// un tipo "usecase" nativo y su layout automático (dagre) no deja controlar
+// bien la posición de figuras humanas, así que se calcula la posición de
+// cada elemento aquí mismo y se emite el SVG directo.
+const ROW_H = 76
+const GROUP_GAP = 18
+const ELLIPSE_RX = 150
+const ELLIPSE_RY = 30
+const ACTOR_X = 90
+const BOUNDARY_PAD = 24
+const BOUNDARY_X = 190
+const TITLE_H = 34
+const CU_CX = BOUNDARY_X + BOUNDARY_PAD + ELLIPSE_RX
 
-const diagram = `flowchart LR
-${actorLines}
-  subgraph Sistema["Sistema · codebymike.tech"]
-${cuLines}
-  end
-${edgeLines}
-`
+const actoresConCU = ACTORES.filter((a) => CASOS_DE_USO.some((c) => c.actor === a.id))
+
+const cuOrdenados: { cu: (typeof CASOS_DE_USO)[number]; actor: (typeof ACTORES)[number] }[] = []
+for (const actor of actoresConCU) {
+  for (const cu of CASOS_DE_USO.filter((c) => c.actor === actor.id)) {
+    cuOrdenados.push({ cu, actor })
+  }
+}
+
+let cursorY = TITLE_H + BOUNDARY_PAD + ELLIPSE_RY
+const rows: { id: string; label: string; cy: number; actorId: string }[] = []
+let prevActorId: string | null = null
+for (const { cu, actor } of cuOrdenados) {
+  if (prevActorId !== null && prevActorId !== actor.id) cursorY += GROUP_GAP
+  rows.push({ id: cu.id, label: `${cu.id}: ${cu.nombre}`, cy: cursorY, actorId: actor.id })
+  prevActorId = actor.id
+  cursorY += ROW_H
+}
+
+const actorPos = actoresConCU.map((actor) => {
+  const rs = rows.filter((r) => r.actorId === actor.id)
+  const cy = rs.reduce((s, r) => s + r.cy, 0) / rs.length
+  return { actor, cy }
+})
+
+const BOUNDARY_Y = TITLE_H
+const BOUNDARY_BOTTOM = rows[rows.length - 1].cy + ELLIPSE_RY + BOUNDARY_PAD
+const BOUNDARY_W = ELLIPSE_RX * 2 + BOUNDARY_PAD * 2
+const BOUNDARY_H = BOUNDARY_BOTTOM - BOUNDARY_Y
+const SVG_W = BOUNDARY_X + BOUNDARY_W + 20
+const SVG_H = BOUNDARY_BOTTOM + 10
+
+function actorFigure(cx: number, cy: number) {
+  return `
+    <circle cx="${cx}" cy="${cy - 26}" r="11" fill="none" stroke="#e7e7ec" stroke-width="2" />
+    <line x1="${cx}" y1="${cy - 15}" x2="${cx}" y2="${cy + 15}" stroke="#e7e7ec" stroke-width="2" />
+    <line x1="${cx - 16}" y1="${cy - 5}" x2="${cx + 16}" y2="${cy - 5}" stroke="#e7e7ec" stroke-width="2" />
+    <line x1="${cx}" y1="${cy + 15}" x2="${cx - 14}" y2="${cy + 34}" stroke="#e7e7ec" stroke-width="2" />
+    <line x1="${cx}" y1="${cy + 15}" x2="${cx + 14}" y2="${cy + 34}" stroke="#e7e7ec" stroke-width="2" />
+  `
+}
+
+function wrappedLabel(cx: number, cy: number, w: number, h: number, text: string, fontSize: number) {
+  return `<foreignObject x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font:${fontSize}px sans-serif;color:#e7e7ec;display:flex;align-items:center;justify-content:center;text-align:center;height:100%;line-height:1.25;">${text}</div>
+  </foreignObject>`
+}
+
+let diagramSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SVG_W}" height="${SVG_H}" viewBox="0 0 ${SVG_W} ${SVG_H}">`
+
+for (const { actor, cy } of actorPos) {
+  const rs = rows.filter((r) => r.actorId === actor.id)
+  for (const r of rs) {
+    diagramSvg += `<line x1="${ACTOR_X + 16}" y1="${cy}" x2="${CU_CX - ELLIPSE_RX}" y2="${r.cy}" stroke="#8a8a99" stroke-width="1.2" />`
+  }
+}
+
+diagramSvg += `<rect x="${BOUNDARY_X}" y="${BOUNDARY_Y}" width="${BOUNDARY_W}" height="${BOUNDARY_H}" fill="none" stroke="#8a8a99" stroke-width="1.5" />`
+diagramSvg += `<text x="${BOUNDARY_X + 10}" y="${BOUNDARY_Y + 20}" fill="#7de1e8" font-size="13" font-family="sans-serif">Sistema · codebymike.tech</text>`
+
+for (const r of rows) {
+  diagramSvg += `<ellipse cx="${CU_CX}" cy="${r.cy}" rx="${ELLIPSE_RX}" ry="${ELLIPSE_RY}" fill="#1c1c26" stroke="#c4c4cc" stroke-width="1.5" />`
+  diagramSvg += wrappedLabel(CU_CX, r.cy, ELLIPSE_RX * 2 - 20, ELLIPSE_RY * 2 - 8, r.label, 11.5)
+}
+
+for (const { actor, cy } of actorPos) {
+  diagramSvg += actorFigure(ACTOR_X, cy)
+  diagramSvg += wrappedLabel(ACTOR_X, cy + 52, 150, 30, actor.nombre, 11.5)
+}
+
+diagramSvg += `</svg>`
 ---
 
 <BaseLayout title="Casos de uso">
