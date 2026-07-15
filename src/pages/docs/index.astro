@@ -20,16 +20,16 @@ const stack = [
 ]
 
 const subpaginas = [
-  { href: '/admin/docs/requerimientos-funcionales', titulo: 'Requerimientos funcionales', desc: `${rfTotal} requerimientos en 7 módulos (${rfImpl} implementados).` },
-  { href: '/admin/docs/requerimientos-no-funcionales', titulo: 'Requerimientos no funcionales', desc: `${rnfTotal} requerimientos por categoría ISO/IEC 25010.` },
-  { href: '/admin/docs/casos-de-uso', titulo: 'Casos de uso', desc: `${ACTORES.length} actores, ${cuTotal} casos de uso con diagrama.` },
-  { href: '/admin/docs/casos-de-uso-extendidos', titulo: 'Casos de uso extendidos', desc: 'Flujo principal, alternos, excepciones y postcondiciones de los CU críticos.' },
-  { href: '/admin/docs/historias-de-usuario', titulo: 'Historias de usuario', desc: `${historiasTotal} historias en formato XP, agrupadas por actor, con su DoD.` },
-  { href: '/admin/docs/diagrama-secuencia', titulo: 'Diagrama de secuencia', desc: 'Login OAuth, chequeo de monitor, enforcement de seguridad y webhook de pagos.' },
-  { href: '/admin/docs/diagrama-componentes', titulo: 'Diagrama de componentes', desc: 'Despliegue: navegador → Vercel (Astro SSR + middleware) → Turso/Blob/GitHub/ntfy/cron.' },
-  { href: '/admin/docs/diagrama-clases', titulo: 'Diagrama de clases', desc: 'Entidades del dominio derivadas de src/db/schema.ts, agrupadas por módulo.' },
-  { href: '/admin/docs/diagrama-objetos', titulo: 'Diagrama de objetos', desc: 'Instantáneas concretas: proyecto con sus servicios, pago con evento duplicado, IP bloqueada.' },
-  { href: '/admin/docs/kanban', titulo: 'Tablero kanban', desc: `${historiasTotal} historias en ${ITER_PF.length} iteraciones del propio proyecto.` },
+  { href: '/docs/requerimientos-funcionales', titulo: 'Requerimientos funcionales', desc: `${rfTotal} requerimientos en 7 módulos (${rfImpl} implementados).` },
+  { href: '/docs/requerimientos-no-funcionales', titulo: 'Requerimientos no funcionales', desc: `${rnfTotal} requerimientos por categoría ISO/IEC 25010.` },
+  { href: '/docs/casos-de-uso', titulo: 'Casos de uso', desc: `${ACTORES.length} actores, ${cuTotal} casos de uso con diagrama.` },
+  { href: '/docs/casos-de-uso-extendidos', titulo: 'Casos de uso extendidos', desc: 'Flujo principal, alternos, excepciones y postcondiciones de los CU críticos.' },
+  { href: '/docs/historias-de-usuario', titulo: 'Historias de usuario', desc: `${historiasTotal} historias en formato XP, agrupadas por actor, con su DoD.` },
+  { href: '/docs/diagrama-secuencia', titulo: 'Diagrama de secuencia', desc: 'Login OAuth, chequeo de monitor, enforcement de seguridad y webhook de pagos.' },
+  { href: '/docs/diagrama-componentes', titulo: 'Diagrama de componentes', desc: 'Despliegue: navegador → Vercel (Astro SSR + middleware) → Turso/Blob/GitHub/ntfy/cron.' },
+  { href: '/docs/diagrama-clases', titulo: 'Diagrama de clases', desc: 'Entidades del dominio derivadas de src/db/schema.ts, agrupadas por módulo.' },
+  { href: '/docs/diagrama-objetos', titulo: 'Diagrama de objetos', desc: 'Instantáneas concretas: proyecto con sus servicios, pago con evento duplicado, IP bloqueada.' },
+  { href: '/docs/kanban', titulo: 'Tablero kanban', desc: `${historiasTotal} historias en ${ITER_PF.length} iteraciones del propio proyecto.` },
 ]
 ---
 
@@ -61,10 +61,10 @@ const subpaginas = [
 
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
     {[
-      { href: '/admin/docs/requerimientos-funcionales', label: 'Req. funcionales', value: rfTotal, sub: `${rfImpl} implementados` },
-      { href: '/admin/docs/requerimientos-no-funcionales', label: 'Req. no funcionales', value: rnfTotal, sub: 'ISO/IEC 25010' },
-      { href: '/admin/docs/casos-de-uso', label: 'Casos de uso', value: cuTotal, sub: `${ACTORES.length} actores` },
-      { href: '/admin/docs/kanban', label: 'Historias (kanban)', value: historiasTotal, sub: `${ITER_PF.length} iteraciones` },
+      { href: '/docs/requerimientos-funcionales', label: 'Req. funcionales', value: rfTotal, sub: `${rfImpl} implementados` },
+      { href: '/docs/requerimientos-no-funcionales', label: 'Req. no funcionales', value: rnfTotal, sub: 'ISO/IEC 25010' },
+      { href: '/docs/casos-de-uso', label: 'Casos de uso', value: cuTotal, sub: `${ACTORES.length} actores` },
+      { href: '/docs/kanban', label: 'Historias (kanban)', value: historiasTotal, sub: `${ITER_PF.length} iteraciones` },
     ].map((k) => (
       <a href={k.href} class="glass rounded-2xl p-4 border border-white/10 hover:bg-white/[.04] hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 transition-all block">
         <div class="text-[12.5px] font-mono uppercase tracking-wide text-ink-200">{k.label}</div>
