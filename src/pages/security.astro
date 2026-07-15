@@ -284,9 +284,13 @@ const severityCls: Record<Severity, string> = {
           {trend.map((t) => (
             <div class="flex-1 h-full group relative flex items-end">
               <div
+                class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-lg border border-cyan/30 bg-ink-950 px-2.5 py-1.5 text-[11px] font-mono text-ink-50 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-10"
+              >
+                <span class="text-ink-300">{t.day}:</span> <span class="text-cyan">{t.count}</span> eventos
+              </div>
+              <div
                 class="w-full rounded-t bg-cyan/60 hover:bg-cyan transition-colors"
                 style={`height:${Math.max(3, (t.count / trendMax) * 100)}%`}
-                title={`${t.day}: ${t.count} eventos`}
               ></div>
             </div>
           ))}
