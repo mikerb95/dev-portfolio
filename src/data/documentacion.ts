@@ -13,6 +13,9 @@ export interface Requisito {
   prioridad: Prioridad
   estado: Estado
   origen?: string // dónde vive en el código (ruta, tabla, archivo)
+  verificacion?: string // cómo se comprueba: test, revisión manual, monitor en prod...
+  notas?: string // notas técnicas, decisiones de diseño o riesgos conocidos
+  relacionados?: string[] // ids de otros RF/RNF/CU vinculados
 }
 
 export interface Modulo {
