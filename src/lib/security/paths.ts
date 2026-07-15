@@ -22,6 +22,23 @@ export function isAuthPath(pathname: string): boolean {
     // WebAuthn en /api/auth/webauthn/* (puerta de entrada alternativa a GitHub).
     pathname.startsWith('/api/auth/') ||
     pathname === '/login' ||
-    pathname === '/entrar'
+    pathname === '/entrar' ||
+    // Portal de clientes: mismo tratamiento que el login del admin. El bloqueo
+    // por cuenta (lib/portal/login.ts) es la otra capa; esta acota el volumen
+    // por IP antes de que llegue a tocar la base.
+    isPortalAuthPath(pathname)
+  )
+}
+
+/**
+ * Rutas de credenciales del portal. Separado de `isAuthPath` porque estas
+ * merecen además un límite propio, más estrecho, dentro del middleware.
+ */
+export function isPortalAuthPath(pathname: string): boolean {
+  return (
+    pathname === '/api/portal/login' ||
+    pathname === '/api/portal/reset' ||
+    pathname.startsWith('/api/portal/invitacion') ||
+    pathname.startsWith('/api/portal/restablecer')
   )
 }
