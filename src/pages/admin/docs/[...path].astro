@@ -1,0 +1,6 @@
+---
+// La documentación se movió a /docs (acceso público). Este catch-all conserva
+// los enlaces antiguos a /admin/docs/* con un redirect permanente.
+const { path } = Astro.params
+return Astro.redirect(`/docs${path ? `/${path}` : ''}`, 301)
+---
