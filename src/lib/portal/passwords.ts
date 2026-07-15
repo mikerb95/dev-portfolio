@@ -10,9 +10,6 @@
 // verificando (y se re-hashean al vuelo en el próximo login correcto).
 
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto'
-import { promisify } from 'node:util'
-
-const scrypt = promisify(scryptCb)
 
 // N=2^15 (32768) con r=8: ~32 MB por hash y ~100 ms de CPU. Suficiente para
 // hacer inviable un ataque de diccionario a gran escala y lo bastante barato
@@ -21,12 +18,17 @@ const PARAMS = { N: 32_768, r: 8, p: 1 } as const
 const KEY_LEN = 64
 const SALT_LEN = 16
 
-// `maxmem` por defecto (32 MB) se queda corto para N=2^15: hay que subirlo o
-// scrypt lanza. La fórmula del propio scrypt es 128*N*r; damos margen ×2.
-const maxmem = 256 * PARAMS.N * PARAMS.r
-
+// Promisificado a mano en vez de con util.promisify: los tipos de promisify
+// resuelven a la sobrecarga de 3 argumentos de scrypt y no dejan pasar las
+// opciones, que es justo donde viven N/r/p.
 const derive = (password: string, salt: Buffer, N: number, r: number, p: number): Promise<Buffer> =>
-  scrypt(password.normalize('NFKC'), salt, KEY_LEN, { N, r, p, maxmem: Math.max(maxmem, 256 * N * r) }) as Promise<Buffer>
+  new Promise((resolve, reject) => {
+    // `maxmem` por defecto (32 MB) se queda corto para N=2^15 y scrypt lanza.
+    // La fórmula del propio scrypt es 128*N*r; se da margen holgado.
+    scryptCb(password.normalize('NFKC'), salt, KEY_LEN, { N, r, p, maxmem: 256 * N * r }, (err, key) =>
+      err ? reject(err) : resolve(key)
+    )
+  })
 
 /** Requisitos mínimos de contraseña. Devuelve el motivo del rechazo o null. */
 export function passwordProblem(password: string): string | null {
