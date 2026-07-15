@@ -156,7 +156,37 @@ const diagramas = [
 
 <script>
   import mermaid from 'mermaid'
-  mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' })
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    themeVariables: {
+      background: '#13131a',
+      primaryColor: '#1c1c26',
+      primaryTextColor: '#e7e7ec',
+      primaryBorderColor: '#6a6a7a',
+      lineColor: '#c4c4cc',
+      secondaryColor: '#171720',
+      tertiaryColor: '#0e0e12',
+      textColor: '#e7e7ec',
+      edgeLabelBackground: '#13131a',
+      actorBkg: '#1c1c26',
+      actorBorder: '#6a6a7a',
+      actorTextColor: '#e7e7ec',
+      actorLineColor: '#85858f',
+      signalColor: '#c4c4cc',
+      signalTextColor: '#e7e7ec',
+      labelBoxBkgColor: '#1c1c26',
+      labelBoxBorderColor: '#6a6a7a',
+      labelTextColor: '#e7e7ec',
+      loopTextColor: '#e7e7ec',
+      noteBkgColor: '#24242f',
+      noteTextColor: '#e7e7ec',
+      noteBorderColor: '#6a6a7a',
+      activationBkgColor: '#24242f',
+      activationBorderColor: '#6a6a7a',
+    },
+  })
 </script>
 
 <style>
