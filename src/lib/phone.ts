@@ -32,10 +32,11 @@ const E164_RE = /^\+[1-9]\d{7,14}$/
 export function normalizePhone(raw: string | null | undefined, defaultCountry = DEFAULT_COUNTRY): string | null {
   if (typeof raw !== 'string') return null
 
-  // Se conserva solo el '+' inicial: un '+' en medio es basura, no un país.
-  let s = raw.trim().replace(/[\s()\-.]/g, '')
-  const hadPlus = s.startsWith('+')
-  s = s.replace(/\+/g, '')
+  // El '+' solo tiene sentido al inicio: uno en medio ('310+4641228') es basura,
+  // no un indicativo, y no se limpia silenciosamente.
+  const s0 = raw.trim().replace(/[\s()\-.]/g, '')
+  const hadPlus = s0.startsWith('+')
+  const s = hadPlus ? s0.slice(1) : s0
   if (!/^\d+$/.test(s)) return null
 
   // Prefijo internacional marcado: '00' equivale a '+'.

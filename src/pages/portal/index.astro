@@ -1,0 +1,189 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro'
+import MilestoneTimeline from '../../components/portal/MilestoneTimeline.astro'
+import HealthCard from '../../components/portal/HealthCard.astro'
+import {
+  clientProjects,
+  computeProgress,
+  projectHealth,
+  projectMilestonesFor,
+  PROJECT_STATUS_LABELS,
+} from '../../lib/portal/projects'
+import { clientInvoiceSummary } from '../../lib/portal/invoices'
+import { unreadThreadCount } from '../../lib/portal/threads'
+import { formatMoney } from '../../lib/portal/format'
+
+const { user, client } = Astro.locals.portal!
+
+const projects = await clientProjects(client.id)
+
+// El proyecto mostrado sale de ?p=, pero SOLO si está en la lista del cliente:
+// un id ajeno cae al primero suyo, nunca al proyecto de otro.
+const requested = Number(Astro.url.searchParams.get('p'))
+const current = projects.find((p) => p.id === requested) ?? projects[0] ?? null
+
+const [milestones, health, invoices, unreadThreads] = await Promise.all([
+  current ? projectMilestonesFor(client.id, current.id) : Promise.resolve([]),
+  current ? projectHealth(client.id, current.id) : Promise.resolve(null),
+  clientInvoiceSummary(client.id),
+  user.role === 'billing' ? Promise.resolve(0) : unreadThreadCount(client.id, user.id),
+])
+
+const progress = computeProgress(milestones)
+const firstName = (user.name ?? '').split(' ')[0]
+const canSeeMessages = user.role !== 'billing'
+---
+
+<PortalLayout title={firstName ? `Hola, ${firstName}` : 'Tu portal'} section="inicio">
+  {projects.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-100 mb-1">Todavía no hay proyectos publicados en tu portal.</p>
+      <p class="text-ink-300 text-sm">En cuanto empecemos, aquí verás el avance, los entregables y las facturas.</p>
+    </div>
+  ) : (
+    <>
+      <!-- Tarjetas resumen -->
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-7">
+        <a href="/portal/facturas" class="glass rounded-2xl p-4 lift block">
+          <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Por pagar</p>
+          <p class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
+            {invoices.dueCount === 0 ? (
+              <span class="text-lime">Al día</span>
+            ) : (
+              formatMoney(invoices.dueCents, invoices.currency)
+            )}
+          </p>
+          <p class="mt-0.5 text-[12px] text-ink-300">
+            {invoices.dueCount === 0
+              ? 'No tienes facturas pendientes'
+              : `${invoices.dueCount} factura${invoices.dueCount !== 1 ? 's' : ''} pendiente${invoices.dueCount !== 1 ? 's' : ''}`}
+            {invoices.overdueCount > 0 && <span class="text-ember"> · {invoices.overdueCount} vencida{invoices.overdueCount !== 1 ? 's' : ''}</span>}
+          </p>
+        </a>
+
+        {canSeeMessages && (
+          <a href="/portal/mensajes" class="glass rounded-2xl p-4 lift block">
+            <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Mensajes</p>
+            <p class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
+              {unreadThreads === 0 ? <span class="text-ink-200">Sin novedades</span> : `${unreadThreads} sin leer`}
+            </p>
+            <p class="mt-0.5 text-[12px] text-ink-300">
+              {unreadThreads === 0 ? 'Todo leído' : 'Tienes respuestas esperando'}
+            </p>
+          </a>
+        )}
+
+        <div class="glass rounded-2xl p-4">
+          <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Avance</p>
+          <p class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
+            {progress.total === 0 ? <span class="text-ink-200">—</span> : `${progress.pct}%`}
+          </p>
+          <p class="mt-0.5 text-[12px] text-ink-300">
+            {progress.total === 0
+              ? 'Sin hitos definidos aún'
+              : `${progress.done} de ${progress.total} hitos completados`}
+          </p>
+        </div>
+      </div>
+
+      <!-- Selector de proyecto: solo si hay más de uno -->
+      {projects.length > 1 && (
+        <div class="flex items-center gap-1.5 mb-5 overflow-x-auto no-scrollbar" role="tablist" aria-label="Proyectos">
+          {projects.map((p) => (
+            <a
+              href={`/portal?p=${p.id}`}
+              role="tab"
+              aria-selected={p.id === current!.id}
+              class:list={[
+                'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-[12px] border transition-colors',
+                p.id === current!.id
+                  ? 'bg-cyan/10 border-cyan/30 text-cyan'
+                  : 'bg-white/[.03] border-white/10 text-ink-200 hover:text-ink-50',
+              ]}
+            >
+              {p.title}
+            </a>
+          ))}
+        </div>
+      )}
+
+      {current && (
+        <div class="grid gap-5 lg:grid-cols-[1fr_320px] items-start">
+          <div class="glass rounded-2xl p-5 md:p-6">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-1">
+              <div class="min-w-0">
+                <h2 class="text-[18px] font-medium text-ink-50 tracking-tight">{current.title}</h2>
+                {current.description && (
+                  <p class="mt-1 text-[13px] leading-relaxed text-ink-200 max-w-[60ch]">{current.description}</p>
+                )}
+              </div>
+              <span
+                class:list={[
+                  'shrink-0 px-2.5 py-1 rounded-full text-[11px] font-mono border',
+                  current.status === 'activo'
+                    ? 'bg-lime/10 border-lime/25 text-lime'
+                    : current.status === 'pausado'
+                      ? 'bg-ember/10 border-ember/25 text-ember'
+                      : 'bg-white/[.04] border-white/10 text-ink-200',
+                ]}
+              >
+                {PROJECT_STATUS_LABELS[current.status ?? 'activo']}
+              </span>
+            </div>
+
+            {progress.total > 0 && (
+              <div class="mt-5">
+                <div class="flex items-baseline justify-between mb-2">
+                  <span class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Progreso</span>
+                  <span class="text-[12px] font-mono text-cyan">{progress.pct}%</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-white/[.06] overflow-hidden">
+                  <div class="h-full rounded-full bg-cyan transition-all" style={`width:${progress.pct}%`} />
+                </div>
+                {progress.next && (
+                  <p class="mt-2.5 text-[12px] text-ink-200">
+                    Siguiente: <span class="text-ink-50">{progress.next.title}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div class="mt-7">
+              <h3 class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-4">Línea de tiempo</h3>
+              <MilestoneTimeline milestones={milestones} />
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            {health && health.monitorCount > 0 && <HealthCard health={health} />}
+
+            {current.previewUrl && (
+              <a
+                href={current.previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="glass rounded-2xl p-4 block lift group"
+              >
+                <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Tu producto</p>
+                <p class="mt-1.5 text-[13px] text-cyan group-hover:underline break-all">{current.previewUrl}</p>
+              </a>
+            )}
+
+            {current.techStack && (
+              <div class="glass rounded-2xl p-4">
+                <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-2.5">Tecnología</p>
+                <div class="flex flex-wrap gap-1.5">
+                  {current.techStack.split(',').map((t) => (
+                    <span class="px-2 py-0.5 rounded-md bg-white/[.04] border border-white/[.06] text-[11px] font-mono text-ink-100">
+                      {t.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )}
+</PortalLayout>
