@@ -151,9 +151,9 @@ export const REQUISITOS_NO_FUNCIONALES: Modulo[] = [
     id: 'rendimiento',
     nombre: 'Eficiencia de desempeño',
     items: [
-      { id: 'RNF-11', titulo: 'Latencia del sensor de seguridad', descripcion: 'La clasificación de cada request (regex/lookup en memoria) no debe añadir latencia perceptible; la escritura es fire-and-forget.', prioridad: 'alta', estado: 'implementado', origen: 'src/lib/security/sensor.ts' },
-      { id: 'RNF-12', titulo: 'Core Web Vitals dentro de "good"', descripcion: 'LCP, INP y CLS del sitio público deben mantenerse en la banda "good" según el p75 medido en producción.', prioridad: 'media', estado: 'parcial', origen: 'web_vitals' },
-      { id: 'RNF-13', titulo: 'Cache de lecturas frecuentes', descripcion: 'Blocklist y flags de chaos se leen con cache en memoria (30s) para no golpear la base de datos en cada request.', prioridad: 'media', estado: 'implementado', origen: 'src/lib/security/blocklist.ts' },
+      { id: 'RNF-11', titulo: 'Latencia del sensor de seguridad', descripcion: 'La clasificación de cada request (regex/lookup en memoria) no debe añadir latencia perceptible; la escritura es fire-and-forget.', prioridad: 'alta', estado: 'implementado', origen: 'src/lib/security/sensor.ts', verificacion: 'Medición manual de tiempos de respuesta con y sin el sensor activo; sin diferencia perceptible.', relacionados: ['RF-601'] },
+      { id: 'RNF-12', titulo: 'Core Web Vitals dentro de "good"', descripcion: 'LCP, INP y CLS del sitio público deben mantenerse en la banda "good" según el p75 medido en producción.', prioridad: 'media', estado: 'parcial', origen: 'web_vitals', notas: 'La captura RUM (RF-405) ya está en producción; falta consolidar el p75 histórico como badge visible y accionar sobre páginas que no cumplan.', relacionados: ['RF-405'] },
+      { id: 'RNF-13', titulo: 'Cache de lecturas frecuentes', descripcion: 'Blocklist y flags de chaos se leen con cache en memoria (30s) para no golpear la base de datos en cada request.', prioridad: 'media', estado: 'implementado', origen: 'src/lib/security/blocklist.ts', verificacion: 'Revisión de logs de queries confirmando que no hay una consulta a blocklist por cada request.', relacionados: ['RF-602', 'RF-503'] },
     ],
   },
   {
