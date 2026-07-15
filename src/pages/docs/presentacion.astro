@@ -471,6 +471,12 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
   .reveal-light .panel.compact {
     padding: 0.5em 0.55em;
   }
+  /* Los nombres de módulo largos ("CRM (proyectos, clientes…)") ocupan dos
+     líneas; se reserva la altura para que las cifras queden en la misma
+     línea base en toda la fila. */
+  .reveal-light .panel.compact .panel-title {
+    min-height: 2.8em;
+  }
   .reveal-light .panel-in {
     border-left: 2px solid var(--slide-accent);
   }
