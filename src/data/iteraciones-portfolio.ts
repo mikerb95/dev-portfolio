@@ -223,9 +223,9 @@ export const ITERACIONES: Iteracion[] = [
       },
       {
         id: 'PF-VS-04', titulo: 'Como administrador, quiero una demo read-only del panel admin para mostrar a reclutadores',
-        tipo: 'spike', valor: 'bajo', col: 'iteracion', par: 'MR', agente: 'Claude',
-        tags: ['demo', 'pendiente'],
-        dod: [pend('Modo "solo lectura" del admin accesible sin credenciales, con datos de ejemplo.')],
+        tipo: 'spike', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['demo', 'fase-10'],
+        dod: [ok('Entregada en Fase 10 — ver PF-LD-02.')],
       },
     ],
   },
