@@ -169,7 +169,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   )
   const CSP_REPORTING = ' report-to csp-endpoint; report-uri /api/security/csp-report;'
 
-  if (isAdmin) {
+  if (isPrivate) {
     resHeaders.set('X-Frame-Options', 'DENY')
     resHeaders.set('X-Content-Type-Options', 'nosniff')
     resHeaders.set('Referrer-Policy', 'no-referrer')
