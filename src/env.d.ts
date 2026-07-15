@@ -6,5 +6,20 @@ declare namespace App {
      * mostrar el aviso y ocultar acciones. Ver src/lib/demo.ts.
      */
     demo?: boolean
+
+    /**
+     * Sesión del portal de clientes, resuelta por el middleware para todo
+     * request bajo /portal. Las páginas la leen de aquí en vez de volver a
+     * consultar la base: el middleware ya pagó ese coste y ya validó que el
+     * usuario esté activo y que su cliente tenga el portal habilitado.
+     *
+     * El tipo real es PortalSession (src/lib/portal/session.ts); aquí se
+     * declara estructuralmente para no arrastrar un import a un archivo global.
+     */
+    portal?: {
+      sessionId: string
+      user: { id: number; email: string; name: string | null; role: 'owner' | 'member' | 'billing' }
+      client: { id: number; name: string; company: string | null; logoUrl: string | null }
+    }
   }
 }

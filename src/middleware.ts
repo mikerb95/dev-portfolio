@@ -7,9 +7,11 @@ import { recordSession } from './lib/device-sessions'
 import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
 import { isBlocked } from './lib/security/blocklist'
 import { enforceLimit } from './lib/security/ratelimit-durable'
-import { isAuthPath, isRateLimitablePath } from './lib/security/paths'
+import { isAuthPath, isPortalAuthPath, isRateLimitablePath } from './lib/security/paths'
 import { DEMO_COOKIE, isDemoAllowedMethod, isDemoBlockedPath, verifyDemoToken } from './lib/demo'
 import { demoAvailable, runInDemoContext } from './db'
+import { getPortalSession } from './lib/portal/session'
+import { isPortalPath, isPortalPublicPath } from './lib/portal/paths'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
 const AUTH_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
