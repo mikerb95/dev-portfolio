@@ -148,7 +148,7 @@ async function seed() {
   await db.batch(
     CLIENTS.map((c) => ({
       sql: 'insert into clients (name, email, company, notes, created_at) values (?, ?, ?, ?, ?)',
-      args: [...c, daysAgo(400)],
+      args: [PREFIX + c[0], ...c.slice(1), daysAgo(400)],
     }))
   )
 
