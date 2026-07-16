@@ -5,6 +5,7 @@ import { historyForPhone } from '../lib/cobros-db'
 import { fmtCOP } from '../lib/cobros'
 import { formatPhone } from '../lib/phone'
 import { STATUS_LABELS, type PaymentStatus } from '../lib/payments-state'
+import { serverEnv } from '../lib/env'
 
 // Histórico de pagos del cliente. Dos modos:
 //  · Con el link firmado (?r=&t=): historial completo de ese teléfono.
@@ -15,7 +16,7 @@ const url = Astro.url
 const resolved = await resolvePhoneFromLink(
   url.searchParams.get('r'),
   url.searchParams.get('t'),
-  process.env.COBRO_HISTORY_SECRET,
+  serverEnv('COBRO_HISTORY_SECRET'),
 )
 
 const pagos = resolved.ok ? await historyForPhone(resolved.phone) : []

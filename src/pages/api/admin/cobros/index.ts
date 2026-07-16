@@ -7,6 +7,7 @@ import { isValidIdempotencyKey } from '../../../../lib/payments'
 import { clientIp } from '../../../../lib/ratelimit'
 import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
 import { recordSecurityEvent } from '../../../../lib/security/events'
+import { serverEnv } from '../../../../lib/env'
 
 // Crea y lista cobros de campo. Protegido por la sesión admin en el middleware
 // (ver src/middleware.ts): aquí ya no hay que revalidar quién eres.
@@ -35,7 +36,7 @@ export const POST: APIRoute = async ({ request, url }) => {
   const { allowed } = await enforceLimit(`cobros:${clientIp(request)}`, { limit: 20, windowMs: 3_600_000 })
   if (!allowed) return json(429, { error: 'demasiados cobros creados, espera un momento' })
 
-  const secret = process.env.COBRO_HISTORY_SECRET
+  const secret = serverEnv('COBRO_HISTORY_SECRET')
   if (!secret) {
     // Sin secreto no hay link de histórico. Se falla en vez de mandar un mensaje
     // con un link roto o, peor, un histórico sin credencial.
