@@ -65,8 +65,12 @@ export const POST: APIRoute = async ({ request }) => {
   // está registrado, y un fallo aquí no debe convertirse en un reintento
   // infinito de la pasarela.
   if (result.applied) {
-    if (result.statusAfter === 'approved') await settlePaymentByReference(String(tx.reference))
-    else if (result.statusAfter === 'voided') await unsettlePaymentByReference(String(tx.reference))
+    if (result.statusAfter === 'approved') {
+      await settlePaymentByReference(String(tx.reference))
+      // Cobro de campo: el aviso al celular es el único enterado (no hay
+      // factura ni portal detrás). No-op si el pago no es un cobro.
+      await notifyCobroPaid(String(tx.reference))
+    } else if (result.statusAfter === 'voided') await unsettlePaymentByReference(String(tx.reference))
   }
 
   // Referencia desconocida: 200 igualmente (puede ser de otro entorno/proyecto).
