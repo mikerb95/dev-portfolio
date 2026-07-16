@@ -163,17 +163,45 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
 
 ## 8. Fases de implementación
 
-| Fase | Contenido | Entregable verificable |
+| Fase | Contenido | Estado |
 |---|---|---|
-| 0 | Migración Drizzle (`payerPhone`, `source`, `shortCode`, `expiresAt`, `clientId` + índices) · `lib/phone.ts` + tests · `lib/cobros.ts` + tests (HMAC, shortCode, expiry, plantilla) | `npm test` verde con los nuevos unit tests |
-| 1 | Endpoints admin (crear/listar/anular/lookup-client) · matcher del middleware · evento interno `admin.void` | Crear y anular un cobro vía curl con cookie admin |
-| 2 | Página `/cobrar` (2 pasos + pendientes) | Flujo completo desde el celular hasta abrir WhatsApp |
-| 3 | `/c/[code]` + `POST /api/c/[code]/checkout` (estados vencido/anulado/pagado) | Pago mock end-to-end: cobrar → link → pagar → `approved` |
-| 4 | `/mis-pagos` (token + lookup enmascarado) | Historial visible con token; enmascarado sin él |
-| 5 | Hardening: rate limits, eventos SIEM, push ntfy en `approved`, `noindex`, OG básica de `/c/[code]` sin monto | Eventos visibles en `/admin/security`; push recibido |
-| 6 | Docs: actualizar `seo.MD`/roadmap si aplica, entrada en `/notes` opcional como caso de estudio | — |
+| 0 | Migración `0016` (`payerPhone`, `source`, `shortCode`, `expiresAt`, `clientId`, `clients.phone` + índices) · `lib/phone.ts` + 14 tests · `lib/cobros.ts` + 22 tests | ✅ |
+| 1 | Endpoints admin (crear/listar/anular/lookup-client) · matcher del middleware · evento `admin.void` · `cobros-db.ts` + 21 tests de integración | ✅ |
+| 2 | Página `/cobrar` (2 pasos + pendientes con reenviar/anular) | ✅ |
+| 3 | `/c/[code]` + `POST /api/c/[code]/checkout` (estados vencido/anulado/pagado verificados end-to-end) | ✅ |
+| 4 | `/mis-pagos` (token + lookup enmascarado) + 7 tests | ✅ |
+| 5 | Rate limits, eventos SIEM, push ntfy en `approved`, `noindex`, OG genérica | ✅ |
+| 6 | Docs / entrada en `/notes` como caso de estudio | pendiente (opcional) |
 
-Estimación: Fases 0–3 son el MVP usable en campo; 4–5 cierran el círculo del cliente.
+### Decisiones que aparecieron al implementar
+
+1. **`clients.phone` no existía**: el plan lo daba por hecho. Se añadió en la
+   misma migración (E.164, igual que `payments.payerPhone`), o el vínculo con el
+   CRM no tenía llave por la que comparar.
+2. **La máquina de estados se extrajo a `payments-state.ts`** (módulo puro).
+   `cobros.ts` necesita `isTerminal` y también corre en el navegador; importarla
+   desde `payments.ts` arrastraba la conexión a Turso al bundle del cliente.
+   `payments.ts` la re-exporta: ningún import existente cambió.
+3. **`cobros.ts` se partió en tres**: `cobros.ts` (puro, isomorfo),
+   `cobros-crypto.ts` (`node:crypto`, solo servidor) y `cobros-codes.ts` (el
+   alfabeto compartido, para que generador y validador no diverjan).
+4. **`lib/env.ts` (`serverEnv`)**: el repo mezcla `import.meta.env` y
+   `process.env`, que NO son equivalentes — el dev server carga el `.env` solo en
+   el primero y Vercel inyecta las variables solo en el segundo. Leer una sola
+   fuente daba el peor bug posible: funcionar en un entorno y fallar en el otro.
+5. **Cuarta vía de autorización en `/api/payments/mock/pay`**: presentar el
+   `shortCode` (comparado en tiempo constante). Sin ella, en modo mock el cliente
+   de campo no podía completar el pago — no tiene sesión admin ni factura.
+6. **`/cobrar` excluido de la demo pública** (`isDemoBlockedPath`): es la caja
+   registradora real, no una vitrina.
+
+### Pendiente para producción
+
+- Subir `COBRO_HISTORY_SECRET` a Vercel (`vercel env add`). Sin él,
+  `POST /api/admin/cobros` responde 503 y `/mis-pagos` no resuelve tokens: falla
+  cerrado, nunca degrada a acceso abierto.
+- Con `WOMPI_PUBLIC_KEY` / `WOMPI_INTEGRITY_SECRET` ausentes, la pasarela corre
+  en modo mock y `/cobrar` lo avisa en pantalla.
 
 ## 9. Casos borde contemplados
 
