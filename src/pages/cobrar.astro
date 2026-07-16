@@ -1,0 +1,442 @@
+---
+import '../styles/global.css'
+import { listCobros } from '../lib/cobros-db'
+import { fmtCOP, timeLeft } from '../lib/cobros'
+import { formatPhone } from '../lib/phone'
+import { STATUS_LABELS, type PaymentStatus } from '../lib/payments-state'
+
+// Cobro de campo, mobile-first. Ruta protegida por la sesión admin en el
+// middleware. Deliberadamente SIN el AdminLayout: esto se usa de pie, en la
+// calle y con una mano — la barra lateral del panel solo estorba.
+// Ver docs/plan-cobrar.md.
+
+const pendientes = await listCobros(15, true)
+const configurado = Boolean(process.env.COBRO_HISTORY_SECRET)
+const modoMock = !(process.env.WOMPI_PUBLIC_KEY && process.env.WOMPI_INTEGRITY_SECRET)
+
+const badge: Record<string, string> = {
+  created: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
+  pending: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
+}
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#09090b" />
+    <title>Cobrar — CodeByMike</title>
+  </head>
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen">
+    <div class="max-w-[520px] mx-auto px-5 pt-8 pb-32">
+      <header class="flex items-center justify-between mb-8">
+        <div>
+          <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300">Cobro rápido</div>
+          <h1 class="text-3xl font-medium tracking-[-.03em] mt-1">
+            Cobrar por <span class="italic font-serif font-normal text-mask-cyan">WhatsApp</span>
+          </h1>
+        </div>
+        <a href="/admin" class="text-[12px] font-mono text-ink-300 hover:text-cyan transition-colors">Panel →</a>
+      </header>
+
+      {!configurado && (
+        <div class="mb-6 p-4 rounded-xl border border-red-400/30 bg-red-400/10 text-[13px] text-red-200">
+          Falta <code class="font-mono">COBRO_HISTORY_SECRET</code> en el entorno: no se pueden crear cobros.
+        </div>
+      )}
+      {modoMock && (
+        <div class="mb-6 p-4 rounded-xl border border-amber-400/25 bg-amber-400/5 text-[13px] text-amber-200/90">
+          Modo demo: sin llaves de Wompi, el link simula el pago en vez de cobrar de verdad.
+        </div>
+      )}
+
+      <!-- ── Paso 1: configurar el cobro ─────────────────────────────── -->
+      <section id="step-form" data-step>
+        <form id="cobro-form" class="space-y-7">
+          <div>
+            <label for="amount" class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 block mb-3">
+              Monto
+            </label>
+            <div class="grid grid-cols-3 gap-2 mb-3">
+              <button type="button" data-cop="20000" class="preset h-12 rounded-xl border border-white/10 text-[14px] active:scale-95 transition-all">$20.000</button>
+              <button type="button" data-cop="50000" class="preset h-12 rounded-xl border border-white/10 text-[14px] active:scale-95 transition-all">$50.000</button>
+              <button type="button" data-cop="100000" class="preset h-12 rounded-xl border border-white/10 text-[14px] active:scale-95 transition-all">$100.000</button>
+            </div>
+            <!-- inputmode=numeric abre el teclado de números sin perder el
+                 formateo de miles que hacemos a mano en el script. -->
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-ink-300 pointer-events-none">$</span>
+              <input
+                id="amount" name="amount" type="text" inputmode="numeric" autocomplete="off"
+                placeholder="0" required
+                class="w-full h-16 pl-10 pr-4 rounded-xl bg-white/5 border border-white/10 text-2xl tabular-nums focus:border-cyan/50 focus:outline-none"
+                aria-describedby="amount-hint"
+              />
+            </div>
+            <p id="amount-hint" class="mt-2 text-[12px] text-ink-300 font-mono">Entre $1.000 y $5.000.000</p>
+          </div>
+
+          <div>
+            <label for="phone" class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 block mb-3">
+              WhatsApp del cliente
+            </label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] text-ink-300 font-mono pointer-events-none">+57</span>
+              <input
+                id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel"
+                placeholder="310 464 1228" required
+                class="w-full h-14 pl-14 pr-4 rounded-xl bg-white/5 border border-white/10 text-[16px] focus:border-cyan/50 focus:outline-none"
+                aria-describedby="phone-hint"
+              />
+            </div>
+            <p id="phone-hint" class="mt-2 text-[12px] font-mono text-ink-300 min-h-[1.25rem]" role="status" aria-live="polite">
+              Otro país: escribe el número con +
+            </p>
+          </div>
+
+          <div>
+            <label for="concept" class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 block mb-3">
+              Concepto <span class="text-ink-400 normal-case tracking-normal">(opcional)</span>
+            </label>
+            <input
+              id="concept" name="concept" type="text" maxlength="120" autocomplete="off"
+              placeholder="mantenimiento de portátil"
+              class="w-full h-14 px-4 rounded-xl bg-white/5 border border-white/10 text-[16px] focus:border-cyan/50 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <span class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 block mb-3">Vence en</span>
+            <div class="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Vencimiento del link">
+              <button type="button" data-expiry="24h" class="expiry h-11 rounded-xl border border-white/10 text-[13px] active:scale-95 transition-all">24 h</button>
+              <button type="button" data-expiry="72h" class="expiry h-11 rounded-xl border border-white/10 text-[13px] active:scale-95 transition-all">3 días</button>
+              <button type="button" data-expiry="7d" class="expiry h-11 rounded-xl border border-white/10 text-[13px] active:scale-95 transition-all">7 días</button>
+              <button type="button" data-expiry="never" class="expiry h-11 rounded-xl border border-white/10 text-[13px] active:scale-95 transition-all">Nunca</button>
+            </div>
+          </div>
+
+          <button
+            id="btn-confirm" type="submit" disabled={!configurado}
+            class="w-full h-14 rounded-full bg-cyan text-ink-950 text-[16px] font-medium active:scale-[.98] transition-all shadow-glow disabled:opacity-40"
+          >
+            Confirmar
+          </button>
+          <p id="form-error" class="text-[13px] text-red-300 font-mono min-h-5" role="alert"></p>
+        </form>
+
+        {pendientes.length > 0 && (
+          <section class="mt-12">
+            <h2 class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 mb-4">
+              Pendientes ({pendientes.length})
+            </h2>
+            <ul class="space-y-2">
+              {pendientes.map((c) => (
+                <li
+                  class="p-4 rounded-xl border border-white/10 bg-white/[.02]"
+                  data-pendiente data-reference={c.reference}
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="text-[17px] font-medium tabular-nums">{fmtCOP(c.amountCents)}</div>
+                      <div class="text-[13px] text-ink-300 truncate">
+                        {c.clientName ?? formatPhone(c.payerPhone)}
+                      </div>
+                      {c.description && (
+                        <div class="text-[12px] text-ink-400 truncate mt-.5">{c.description}</div>
+                      )}
+                    </div>
+                    <div class="text-right shrink-0">
+                      <span class={`inline-block px-2 py-.5 rounded-md border text-[11px] font-mono ${badge[c.status] ?? 'text-ink-300 bg-white/5 border-white/10'}`}>
+                        {STATUS_LABELS[c.status as PaymentStatus]}
+                      </span>
+                      <div class="text-[11px] font-mono text-ink-400 mt-1">{timeLeft(c.expiresAt)}</div>
+                    </div>
+                  </div>
+                  <div class="flex gap-2 mt-3">
+                    <button
+                      type="button" data-resend
+                      data-payload={JSON.stringify({
+                        phone: c.payerPhone,
+                        clientName: c.clientName,
+                        amountCents: c.amountCents,
+                        concept: c.description,
+                        shortCode: c.shortCode,
+                        expiresAt: c.expiresAt?.toISOString() ?? null,
+                      })}
+                      class="flex-1 h-10 rounded-lg border border-white/10 text-[13px] active:scale-95 transition-all"
+                    >
+                      Reenviar
+                    </button>
+                    <button
+                      type="button" data-void
+                      class="flex-1 h-10 rounded-lg border border-red-400/25 text-red-300 text-[13px] active:scale-95 transition-all"
+                    >
+                      Anular
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </section>
+
+      <!-- ── Paso 2: previsualizar y enviar ──────────────────────────── -->
+      <section id="step-preview" data-step hidden>
+        <div class="p-5 rounded-2xl border border-cyan/20 bg-cyan/[.03] mb-6">
+          <div class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 mb-1">Cobro creado</div>
+          <div id="preview-amount" class="text-4xl font-medium tabular-nums tracking-[-.02em]"></div>
+          <div id="preview-target" class="text-[14px] text-ink-100 mt-2"></div>
+          <div id="preview-meta" class="text-[12px] font-mono text-ink-400 mt-1"></div>
+        </div>
+
+        <label for="message" class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 block mb-3">
+          Mensaje
+        </label>
+        <textarea
+          id="message" rows="11"
+          class="w-full p-4 rounded-xl bg-white/5 border border-white/10 text-[14px] leading-relaxed focus:border-cyan/50 focus:outline-none resize-y"
+        ></textarea>
+        <p class="mt-2 text-[12px] text-ink-400">
+          Puedes editarlo: el monto y el link ya quedaron fijados en el cobro.
+        </p>
+
+        <div class="mt-6 space-y-3">
+          <a
+            id="btn-wa" href="#" target="_blank" rel="noopener"
+            class="w-full h-14 rounded-full bg-cyan text-ink-950 text-[16px] font-medium flex items-center justify-center gap-2 active:scale-[.98] transition-all shadow-glow"
+          >
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true">
+              <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4-.1-.5C10.1 9.1 9.6 8 9.4 7.5c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 .9-1 2.3s1 2.7 1.2 2.9c.1.2 2 3.1 4.9 4.3 2.4 1 2.9.8 3.4.8.5 0 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2" />
+            </svg>
+            Enviar por WhatsApp
+          </a>
+          <button
+            id="btn-copy" type="button"
+            class="w-full h-12 rounded-full border border-white/10 text-[14px] active:scale-[.98] transition-all"
+          >
+            Copiar mensaje
+          </button>
+          <button
+            id="btn-new" type="button"
+            class="w-full h-12 text-[14px] text-ink-300 active:scale-[.98] transition-all"
+          >
+            Nuevo cobro
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      import { buildWhatsAppMessage, fmtCOP } from '../lib/cobros-client'
+
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
+
+      const form = $<HTMLFormElement>('cobro-form')
+      const amountEl = $<HTMLInputElement>('amount')
+      const phoneEl = $<HTMLInputElement>('phone')
+      const conceptEl = $<HTMLInputElement>('concept')
+      const phoneHint = $<HTMLParagraphElement>('phone-hint')
+      const errorEl = $<HTMLParagraphElement>('form-error')
+      const btnConfirm = $<HTMLButtonElement>('btn-confirm')
+      const stepForm = $<HTMLElement>('step-form')
+      const stepPreview = $<HTMLElement>('step-preview')
+      const messageEl = $<HTMLTextAreaElement>('message')
+      const btnWa = $<HTMLAnchorElement>('btn-wa')
+
+      // ── Monto: se teclea en pesos, se envía en centavos ──────────────
+      const digits = (s: string) => s.replace(/\D/g, '')
+      const fmtThousands = (s: string) => (s ? Number(s).toLocaleString('es-CO') : '')
+
+      amountEl.addEventListener('input', () => {
+        amountEl.value = fmtThousands(digits(amountEl.value))
+        renewKey()
+      })
+
+      document.querySelectorAll<HTMLButtonElement>('.preset').forEach((b) =>
+        b.addEventListener('click', () => {
+          amountEl.value = fmtThousands(b.dataset.cop!)
+          // Asignar .value por JS no dispara 'input': hay que renovar a mano o
+          // el cobro saldría con la clave del monto anterior.
+          renewKey()
+        }),
+      )
+
+      // ── Vencimiento ─────────────────────────────────────────────────
+      let expiry = '72h'
+      const expiryBtns = document.querySelectorAll<HTMLButtonElement>('.expiry')
+      const paintExpiry = () =>
+        expiryBtns.forEach((b) =>
+          b.classList.toggle('!border-cyan/60', b.dataset.expiry === expiry),
+        )
+      expiryBtns.forEach((b) =>
+        b.addEventListener('click', () => {
+          expiry = b.dataset.expiry!
+          paintExpiry()
+        }),
+      )
+      paintExpiry()
+
+      // ── Idempotencia: una clave por INTENTO ─────────────────────────
+      let idempotencyKey = crypto.randomUUID()
+      const renewKey = () => { idempotencyKey = crypto.randomUUID() }
+      phoneEl.addEventListener('input', renewKey)
+
+      // ── Cliente del CRM en vivo (debounced) ─────────────────────────
+      let lookupTimer: ReturnType<typeof setTimeout>
+      let clientName: string | null = null
+
+      phoneEl.addEventListener('input', () => {
+        clearTimeout(lookupTimer)
+        clientName = null
+        phoneHint.textContent = ''
+        lookupTimer = setTimeout(async () => {
+          const raw = phoneEl.value.trim()
+          if (!raw) return
+          try {
+            const res = await fetch(`/api/admin/cobros/lookup-client?phone=${encodeURIComponent(raw)}`)
+            const data = await res.json()
+            if (!data.valid) {
+              phoneHint.textContent = 'Número incompleto'
+              phoneHint.className = 'mt-2 text-[12px] font-mono text-amber-300/80 min-h-[1.25rem]'
+              return
+            }
+            clientName = data.client?.name ?? null
+            phoneHint.textContent = clientName ? `✓ ${clientName}` : `${data.phoneFormatted} · sin ficha en el CRM`
+            phoneHint.className = clientName
+              ? 'mt-2 text-[12px] font-mono text-cyan min-h-[1.25rem]'
+              : 'mt-2 text-[12px] font-mono text-ink-300 min-h-[1.25rem]'
+          } catch {
+            // Sin red no se bloquea el cobro: el servidor revalida el teléfono.
+          }
+        }, 350)
+      })
+
+      // ── Paso 1 → 2 ──────────────────────────────────────────────────
+      const showStep = (step: 'form' | 'preview') => {
+        stepForm.hidden = step !== 'form'
+        stepPreview.hidden = step !== 'preview'
+        window.scrollTo({ top: 0 })
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        errorEl.textContent = ''
+        btnConfirm.disabled = true
+        btnConfirm.textContent = 'Creando…'
+        try {
+          const amountCents = Number(digits(amountEl.value)) * 100
+          const res = await fetch('/api/admin/cobros', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amountCents,
+              phone: phoneEl.value,
+              concept: conceptEl.value || undefined,
+              expiry,
+              idempotencyKey,
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.error ?? 'no se pudo crear el cobro')
+
+          $('preview-amount').textContent = fmtCOP(data.cobro.amountCents)
+          $('preview-target').textContent = data.client
+            ? `Para ${data.client.name}`
+            : `Para ${phoneEl.value.trim()}`
+          $('preview-meta').textContent = [
+            `/c/${data.cobro.shortCode}`,
+            data.cobro.expiresAt
+              ? `vence ${new Date(data.cobro.expiresAt).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+              : 'sin vencimiento',
+          ].join(' · ')
+
+          messageEl.value = data.mensaje
+          syncWaLink(data.waUrl, data.mensaje)
+          showStep('preview')
+        } catch (err) {
+          errorEl.textContent = err instanceof Error ? err.message : 'error de conexión'
+        } finally {
+          btnConfirm.disabled = false
+          btnConfirm.textContent = 'Confirmar'
+        }
+      })
+
+      // El link de wa.me lleva el texto dentro: si editas el mensaje hay que
+      // reconstruirlo, o se enviaría la versión original.
+      let waBase = ''
+      const syncWaLink = (waUrl: string, message: string) => {
+        waBase = waUrl.split('?')[0]
+        btnWa.href = `${waBase}?text=${encodeURIComponent(message)}`
+      }
+      messageEl.addEventListener('input', () => {
+        if (waBase) btnWa.href = `${waBase}?text=${encodeURIComponent(messageEl.value)}`
+      })
+
+      $('btn-copy').addEventListener('click', async () => {
+        const btn = $<HTMLButtonElement>('btn-copy')
+        try {
+          await navigator.clipboard.writeText(messageEl.value)
+          btn.textContent = '✓ Copiado'
+        } catch {
+          // Sin permiso de portapapeles: seleccionar es el plan B manual.
+          messageEl.select()
+          btn.textContent = 'Selecciona y copia'
+        }
+        setTimeout(() => { btn.textContent = 'Copiar mensaje' }, 2000)
+      })
+
+      $('btn-new').addEventListener('click', () => {
+        form.reset()
+        amountEl.value = ''
+        clientName = null
+        phoneHint.textContent = 'Otro país: escribe el número con +'
+        phoneHint.className = 'mt-2 text-[12px] font-mono text-ink-300 min-h-[1.25rem]'
+        expiry = '72h'
+        paintExpiry()
+        renewKey()
+        showStep('form')
+      })
+
+      // ── Pendientes: reenviar y anular ───────────────────────────────
+      document.querySelectorAll<HTMLLIElement>('[data-pendiente]').forEach((li) => {
+        const reference = li.dataset.reference!
+
+        li.querySelector<HTMLButtonElement>('[data-resend]')?.addEventListener('click', (e) => {
+          const payload = JSON.parse((e.currentTarget as HTMLElement).dataset.payload!)
+          // El histórico se reconstruye del lado del servidor solo al crear; para
+          // reenviar basta el link de pago, que es lo que el cliente necesita.
+          const msg = buildWhatsAppMessage({
+            clientName: payload.clientName,
+            amountCents: payload.amountCents,
+            concept: payload.concept,
+            payUrl: `${location.origin}/c/${payload.shortCode}`,
+            expiresAt: payload.expiresAt ? new Date(payload.expiresAt) : null,
+          })
+          window.open(`https://wa.me/${payload.phone.replace(/^\+/, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+        })
+
+        li.querySelector<HTMLButtonElement>('[data-void]')?.addEventListener('click', async (e) => {
+          if (!confirm('¿Anular este cobro? El link dejará de funcionar.')) return
+          const btn = e.currentTarget as HTMLButtonElement
+          btn.disabled = true
+          btn.textContent = 'Anulando…'
+          try {
+            const res = await fetch(`/api/admin/cobros/${encodeURIComponent(reference)}/void`, { method: 'POST' })
+            const data = await res.json()
+            if (data.applied) li.remove()
+            else {
+              btn.textContent = 'No se pudo'
+              alert(data.motivo ?? 'no se pudo anular')
+            }
+          } catch {
+            btn.disabled = false
+            btn.textContent = 'Anular'
+          }
+        })
+      })
+    </script>
+  </body>
+</html>
