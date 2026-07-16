@@ -230,7 +230,9 @@ const badge: Record<string, string> = {
     </div>
 
     <script>
-      import { buildWhatsAppMessage, fmtCOP } from '../lib/cobros-client'
+      // cobros.ts no importa node:crypto justamente para poder usarse aquí:
+      // reenviar un cobro regenera el mismo mensaje sin ir al servidor.
+      import { buildWhatsAppMessage, fmtCOP } from '../lib/cobros'
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 
