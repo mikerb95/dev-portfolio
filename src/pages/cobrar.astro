@@ -4,6 +4,7 @@ import { listCobros } from '../lib/cobros-db'
 import { fmtCOP, timeLeft } from '../lib/cobros'
 import { formatPhone } from '../lib/phone'
 import { STATUS_LABELS, type PaymentStatus } from '../lib/payments-state'
+import { serverEnv } from '../lib/env'
 
 // Cobro de campo, mobile-first. Ruta protegida por la sesión admin en el
 // middleware. Deliberadamente SIN el AdminLayout: esto se usa de pie, en la
@@ -11,8 +12,8 @@ import { STATUS_LABELS, type PaymentStatus } from '../lib/payments-state'
 // Ver docs/plan-cobrar.md.
 
 const pendientes = await listCobros(15, true)
-const configurado = Boolean(process.env.COBRO_HISTORY_SECRET)
-const modoMock = !(process.env.WOMPI_PUBLIC_KEY && process.env.WOMPI_INTEGRITY_SECRET)
+const configurado = Boolean(serverEnv('COBRO_HISTORY_SECRET'))
+const modoMock = !(serverEnv('WOMPI_PUBLIC_KEY') && serverEnv('WOMPI_INTEGRITY_SECRET'))
 
 const badge: Record<string, string> = {
   created: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
