@@ -57,6 +57,18 @@ export const POST: APIRoute = async ({ request }) => {
     payload: { event: event.event, transaction: { id: tx.id, status: tx.status, amount_in_cents: tx.amount_in_cents } },
   })
 
+  // Conciliación con el portal: si este pago salda una factura, marcarla y
+  // avisar al cliente. Solo cuando la transición se APLICÓ de verdad — un
+  // duplicado o un evento fuera de orden no debe disparar otro correo.
+  //
+  // Va después de responder al resto de la lógica y nunca lanza: el pago ya
+  // está registrado, y un fallo aquí no debe convertirse en un reintento
+  // infinito de la pasarela.
+  if (result.applied) {
+    if (result.statusAfter === 'approved') await settlePaymentByReference(String(tx.reference))
+    else if (result.statusAfter === 'voided') await unsettlePaymentByReference(String(tx.reference))
+  }
+
   // Referencia desconocida: 200 igualmente (puede ser de otro entorno/proyecto).
   return json(200, { ok: true, ...result })
 }
