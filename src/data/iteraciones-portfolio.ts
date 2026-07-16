@@ -483,11 +483,68 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-portal-clientes',
+    fase: 'Fase 11 · Portal de clientes',
+    nombre: 'Portal autenticado de clientes: facturación, cobros por WhatsApp y comunicación',
+    rango: '15 jul 2026',
+    ghSince: '2026-07-15',
+    ghUntil: '2026-07-15',
+    commits: 80,
+    resumen:
+      'Producto nuevo dentro del mismo proyecto: cada cliente entra a /portal con su propia sesión (separada de admin y de la demo) y ve el estado de sus proyectos, factura, paga y se comunica. Autenticación con invitación + contraseña (scrypt) y aislamiento de tenant por clientId derivado de sesión, nunca de la URL. Se suma un flujo de cobro conversacional: el admin genera un cobro desde /cobrar, se envía un enlace corto por WhatsApp, y el cliente paga sin cuenta. Cron diario de facturas vencidas con notificación automática. Documentado en docs/plan-portal-clientes.md.',
+    historias: [
+      {
+        id: 'PF-PC-01', titulo: 'Como cliente, quiero iniciar sesión en mi propio portal con invitación previa y recuperar mi contraseña si la olvido',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['portal', 'auth', 'fase-11'],
+        dod: [
+          ok('client_users, client_invitations y portal_sessions con hashing scrypt y sesiones opacas revocables (cookie portal_session, distinta de admin).'),
+          ok('APIs de login, logout, aceptar invitación y reset de contraseña, con rate limiting y logging al micro-SIEM.'),
+          ok('PortalAuthLayout para las pantallas de login, invitación y reset; requirePortalSession() como única puerta de entrada al tenant.'),
+          ok('Tests de hashing de contraseña, clasificación de rutas del portal y aislamiento entre tenants.'),
+        ],
+      },
+      {
+        id: 'PF-PC-02', titulo: 'Como cliente, quiero ver el estado de mis proyectos, salud del servicio y mis facturas en un panel propio',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['portal', 'dashboard', 'fase-11'],
+        dod: [
+          ok('Página de overview del proyecto con HealthCard (salud de monitores) y MilestoneTimeline (hitos con estado).'),
+          ok('Módulo invoices/invoice_items con CRUD completo, numeración correlativa y estados (draft/sent/paid/overdue/void).'),
+          ok('Centro de notificaciones in-app e hilos de mensajería (portal_threads/portal_messages) con conteo de no leídos.'),
+        ],
+      },
+      {
+        id: 'PF-PC-03', titulo: 'Como administrador, quiero cobrarle a un cliente por WhatsApp con un enlace de pago corto, sin que necesite cuenta',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['cobros', 'whatsapp', 'pagos', 'fase-11'],
+        dod: [
+          ok('Página /cobrar genera un cobro con código corto (alfabeto/crypto propios) y arma el mensaje de WhatsApp.'),
+          ok('/pagar simula el pago del cobro validando titularidad de la factura, reutilizando la máquina de estados de payments.'),
+          ok('Webhook de conciliación liquida o reversa el pago y actualiza la factura asociada.'),
+          ok('Cron diario (sweep) marca facturas vencidas y notifica al cliente automáticamente.'),
+          ok('Tests de cálculo de facturas, formato de dinero en COP y expiración de cobros.'),
+        ],
+      },
+      {
+        id: 'PF-PC-04', titulo: 'Como visitante de la demo, quiero explorar el portal de clientes sin poder pagar ni modificar nada real',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['demo', 'portal', 'fase-11'],
+        dod: [
+          ok('Rutas de pago bloqueadas explícitamente en modo demo, incluso con sesión de solo lectura válida.'),
+          ok('Enlace al portal/demo del panel P&L añadido al caso de estudio de tools y al login.'),
+          ok('README documenta el módulo de portal y cobros junto a demo y lab.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 317 },
+  { mes: 'jul', commits: 397 },
 ]
