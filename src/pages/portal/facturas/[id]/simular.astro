@@ -1,0 +1,100 @@
+---
+// Pasarela simulada: solo aparece cuando no hay llaves de Wompi configuradas
+// (desarrollo y demo). Imita el paso por el checkout para que el flujo del
+// portal se pueda recorrer entero —incluido el webhook y el correo de recibo—
+// sin mover dinero real.
+import PortalLayout from '../../../../layouts/PortalLayout.astro'
+import { clientInvoice, isPayable } from '../../../../lib/portal/invoices'
+import { formatMoney } from '../../../../lib/portal/format'
+
+const { client } = Astro.locals.portal!
+
+const id = Number(Astro.params.id)
+const result = Number.isInteger(id) ? await clientInvoice(client.id, id) : null
+if (!result) return Astro.rewrite('/404')
+
+const { invoice } = result
+if (!isPayable(invoice.status)) return Astro.redirect(`/portal/facturas/${id}`)
+
+const reference = Astro.url.searchParams.get('ref')
+if (!reference) return Astro.redirect(`/portal/facturas/${id}`)
+
+// Si hay pasarela real configurada, esta página no debería existir: quien llegue
+// aquí a mano se va al detalle de la factura.
+if (process.env.WOMPI_PUBLIC_KEY && process.env.WOMPI_INTEGRITY_SECRET) {
+  return Astro.redirect(`/portal/facturas/${id}`)
+}
+---
+
+<PortalLayout title="Pasarela de pago" section="facturas">
+  <div class="max-w-[420px] mx-auto">
+    <div class="mb-5 rounded-xl border border-ember/25 bg-ember/[.07] px-4 py-3">
+      <p class="text-[13px] text-ember font-medium">Entorno de prueba</p>
+      <p class="mt-0.5 text-[12px] leading-relaxed text-ink-200">
+        No hay pasarela real conectada. Este simulador recorre el mismo flujo (evento → webhook → factura saldada)
+        sin mover dinero.
+      </p>
+    </div>
+
+    <div class="glass rounded-2xl p-6">
+      <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Pagando</p>
+      <p class="mt-1 text-[15px] text-ink-50">Factura {invoice.number}</p>
+      <p class="mt-4 text-[30px] font-medium tracking-tight text-ink-50 font-mono">
+        {formatMoney(invoice.totalCents, invoice.currency)}
+      </p>
+      <p class="mt-1 text-[11px] font-mono text-ink-300">Ref. {reference}</p>
+
+      <div class="mt-6 space-y-2">
+        <button
+          id="approve"
+          class="w-full h-11 rounded-full bg-cyan text-ink-950 text-[14px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50"
+        >
+          Simular pago aprobado
+        </button>
+        <button
+          id="decline"
+          class="w-full h-10 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors disabled:opacity-50"
+        >
+          Simular pago rechazado
+        </button>
+      </div>
+
+      <p id="error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
+
+      <a href={`/portal/facturas/${id}`} class="block mt-5 text-center text-[12px] text-ink-300 hover:text-cyan transition-colors">
+        Cancelar y volver
+      </a>
+    </div>
+  </div>
+</PortalLayout>
+
+<script define:vars={{ reference, id }}>
+  const errorEl = document.getElementById('error')
+  const buttons = [document.getElementById('approve'), document.getElementById('decline')]
+
+  const simulate = async (outcome) => {
+    errorEl.classList.add('hidden')
+    buttons.forEach((b) => (b.disabled = true))
+    try {
+      const res = await fetch('/api/payments/mock/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reference, outcome }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (res.ok) {
+        window.location.href = `/portal/facturas/${id}${body.status === 'approved' ? '?pagada=1' : '?rechazada=1'}`
+        return
+      }
+      errorEl.textContent = body.error ?? 'No se pudo simular el pago.'
+      errorEl.classList.remove('hidden')
+    } catch {
+      errorEl.textContent = 'Error de conexión.'
+      errorEl.classList.remove('hidden')
+    }
+    buttons.forEach((b) => (b.disabled = false))
+  }
+
+  document.getElementById('approve').addEventListener('click', () => simulate('approved'))
+  document.getElementById('decline').addEventListener('click', () => simulate('declined'))
+</script>
