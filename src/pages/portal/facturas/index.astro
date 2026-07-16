@@ -8,6 +8,18 @@ const { client } = Astro.locals.portal!
 const [rows, summary] = await Promise.all([clientInvoices(client.id), clientInvoiceSummary(client.id)])
 const now = new Date()
 
+// Los cálculos van aquí y no en el template: el parser de Astro lee un `<`
+// dentro de una expresión `{…}` como la apertura de una etiqueta, así que una
+// comparación como `days <= 7` allí rompe el build.
+const tableRows = rows.map((inv) => {
+  const days = daysUntil(inv.dueAt, now)
+  return {
+    ...inv,
+    days,
+    dueSoon: inv.status === 'sent' && days !== null && days >= 0 && days <= 7,
+  }
+})
+
 const STATUS_STYLE: Record<string, string> = {
   sent: 'bg-cyan/10 text-cyan border-cyan/25',
   paid: 'bg-lime/10 text-lime border-lime/25',
