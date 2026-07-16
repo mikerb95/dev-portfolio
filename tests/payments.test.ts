@@ -42,6 +42,11 @@ beforeAll(async () => {
     gateway_tx_id text,
     payer_email text,
     invoice_id integer,
+    payer_phone text,
+    source text NOT NULL DEFAULT 'pay',
+    short_code text UNIQUE,
+    expires_at integer,
+    client_id integer,
     version integer NOT NULL DEFAULT 0,
     created_at integer,
     updated_at integer

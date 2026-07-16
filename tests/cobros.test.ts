@@ -156,8 +156,8 @@ describe('fmtCOP', () => {
     expect(fmtCOP(0)).toBe('$0')
   })
 
-  it('muestra decimales solo cuando existen', () => {
-    expect(fmtCOP(150_050)).toBe('$1.500,5')
+  it('muestra decimales solo cuando existen, con dos cifras', () => {
+    expect(fmtCOP(150_050)).toBe('$1.500,50')
   })
 })
 
