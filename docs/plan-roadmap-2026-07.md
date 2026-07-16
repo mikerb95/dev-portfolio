@@ -169,7 +169,37 @@ Aceptación: sin sesión GitHub se navega todo el panel con datos fake; ningún
 método de escritura pasa; el revelado de secretos está bloqueado; con sesión
 real todo sigue exactamente igual; e2e cubriendo los 3 puntos anteriores.
 
-## Etapa 4 — Playwright e2e
+## Etapa 4 — Playwright e2e ✅ IMPLEMENTADA (16 jul 2026)
+
+**Entregado**: `playwright.config.ts` + `e2e/` con 5 specs (36 tests):
+`public` (render sin errores + cabeceras + sitemap), `auth` (gate de /admin),
+`demo` (las tres garantías de aislamiento), `contact` y `payments` (escritura
+real + rate limit + idempotencia). Job `e2e` en `ci.yml` (instala Chromium,
+sube el reporte si falla). Scripts `test:e2e` / `test:e2e:ui` / `seed:demo`.
+
+**Decisiones que conviene recordar** (documentadas en los archivos):
+- **Bases desechables libsql en archivo** (`.e2e/`), nunca Turso: los e2e
+  escriben y no deben tocar datos reales ni gastar cuota. `scripts/seed-e2e.mjs`
+  las siembra en el arranque del `webServer` — **no** en `globalSetup`, porque
+  Playwright levanta el servidor ANTES de correr globalSetup.
+- La base "principal" se siembra con un **prefijo centinela** (`SEED_PREFIX` en
+  `seed-demo.mjs`, ahora parametrizable); el spec de la demo afirma que ese
+  prefijo NUNCA aparece en `/admin` → prueba el aislamiento de datos de verdad.
+- **`astro dev`, no `astro preview`**: el adaptador de Vercel no soporta preview.
+  El middleware (lo que estos tests verifican) corre igual en dev.
+- `e2e/fixtures.ts`: corta toda petición a hosts externos (sin esto `page.goto`
+  cuelga esperando fuentes de Google), filtra errores de consola de terceros, y
+  da a cada test una **IP `x-forwarded-for` aleatoria** para que los tests de
+  rate limit no se envenenen entre sí (el límite es por IP).
+- Peticiones autenticadas por `page.request`, no el fixture `request`: este
+  último vive en otro contexto y no lleva la cookie del pase.
+
+**Verificado**: 36/36 en frío con `CI=1` (dos veces). Nota: reutilizando el
+servidor local entre corridas seguidas los tests de rate limit pueden acumular
+estado en la base compartida; en CI y en arranque limpio se re-siembra, así que
+no aplica.
+
+### Diseño (referencia)
 
 **Objetivo**: cerrar la pirámide de testing (hoy: 280+ unit tests, 0 e2e) y
 proteger la demo recién construida. Playwright ya está en devDependencies.
