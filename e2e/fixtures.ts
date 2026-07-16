@@ -21,6 +21,25 @@ export const test = base.extend({
 export { expect }
 
 /**
+ * Recoge los errores de JavaScript y de consola de una página.
+ *
+ * Descarta los que vienen de hosts externos: esos los cortamos nosotros en el
+ * fixture, así que su fallo es esperado y no dice nada del sitio. Sin este
+ * filtro, todo test que mire la consola fallaría por nuestro propio bloqueo.
+ */
+export function recogerErrores(page: Page): string[] {
+  const errores: string[] = []
+  page.on('pageerror', (e) => errores.push(String(e)))
+  page.on('console', (m) => {
+    if (m.type() !== 'error') return
+    const url = m.location()?.url ?? ''
+    if (url && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(url)) return
+    errores.push(m.text())
+  })
+  return errores
+}
+
+/**
  * Entra a la demo como lo haría una persona: por el formulario de /demo.
  *
  * Devuelve el `page` ya dentro del panel. Ojo al usar peticiones sueltas
