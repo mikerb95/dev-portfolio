@@ -1,0 +1,173 @@
+---
+import PortalLayout from '../../../layouts/PortalLayout.astro'
+import { clientThreads } from '../../../lib/portal/threads'
+import { clientProjects } from '../../../lib/portal/projects'
+import { relativeTime } from '../../../lib/portal/format'
+
+const { user, client } = Astro.locals.portal!
+
+// `billing` no tiene acceso a la mensajería (ver el reparto de roles en el
+// layout). El menú ya no la muestra; esto cierra la puerta si alguien escribe
+// la URL a mano.
+if (user.role === 'billing') return Astro.redirect('/portal')
+
+const [threads, projects] = await Promise.all([clientThreads(client.id, user.id), clientProjects(client.id)])
+
+const preview = (body: string | null) =>
+  body ? (body.length > 100 ? `${body.replace(/\s+/g, ' ').slice(0, 100)}…` : body.replace(/\s+/g, ' ')) : ''
+
+const rows = threads.map((t) => ({ ...t, previewText: preview(t.lastBody) }))
+---
+
+<PortalLayout title="Mensajes" section="mensajes">
+  <div class="flex justify-between items-center mb-6 gap-3">
+    <p class="text-ink-200 text-sm">
+      {rows.length === 0 ? 'Sin conversaciones' : `${rows.length} conversación${rows.length !== 1 ? 'es' : ''}`}
+    </p>
+    <button
+      id="btn-new"
+      class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      Nueva consulta
+    </button>
+  </div>
+
+  {rows.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-100 mb-1">Todavía no hay conversaciones.</p>
+      <p class="text-ink-300 text-sm mb-5">
+        Escríbeme por aquí y queda todo registrado junto a tu proyecto, sin perderse en un chat.
+      </p>
+      <button
+        id="btn-new-empty"
+        class="inline-flex items-center h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors"
+      >
+        Escribir la primera
+      </button>
+    </div>
+  ) : (
+    <div class="glass rounded-2xl divide-y divide-white/5 overflow-hidden">
+      {rows.map((t) => (
+        <a href={`/portal/mensajes/${t.id}`} class="block px-4 py-4 hover:bg-white/[.02] transition-colors">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                {t.unread > 0 && <span class="w-1.5 h-1.5 rounded-full bg-cyan shrink-0" aria-label="Sin leer" />}
+                <h3 class:list={['text-[14px] truncate', t.unread > 0 ? 'text-ink-50 font-medium' : 'text-ink-100']}>
+                  {t.subject}
+                </h3>
+                {t.status === 'closed' && (
+                  <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-white/[.04] text-ink-300">
+                    Cerrada
+                  </span>
+                )}
+              </div>
+              {t.previewText && (
+                <p class="mt-1 text-[12.5px] text-ink-300 truncate">
+                  {t.lastAuthor === 'admin' ? 'Mike: ' : 'Tú: '}
+                  {t.previewText}
+                </p>
+              )}
+              {t.projectTitle && (
+                <p class="mt-1.5 text-[11px] font-mono text-ink-300">{t.projectTitle}</p>
+              )}
+            </div>
+            <div class="shrink-0 text-right">
+              <p class="text-[11px] font-mono text-ink-300">{relativeTime(t.lastMessageAt)}</p>
+              {t.unread > 0 && (
+                <span class="inline-block mt-1 px-1.5 py-0.5 rounded-full bg-cyan text-ink-950 text-[10px] font-bold">
+                  {t.unread}
+                </span>
+              )}
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+
+  <!-- Diálogo de nueva consulta -->
+  <dialog id="dlg" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">
+    <form id="form" class="glass-strong rounded-2xl p-5 w-[min(92vw,440px)] text-left">
+      <h2 class="text-[16px] font-medium text-ink-50 mb-4">Nueva consulta</h2>
+
+      <div class="space-y-3">
+        <div>
+          <label for="subject" class="block text-[12px] font-medium text-ink-100 mb-1.5">Asunto</label>
+          <input type="text" id="subject" name="subject" required maxlength="200" class="input-base w-full" placeholder="¿Sobre qué quieres hablar?" />
+        </div>
+
+        {projects.length > 0 && (
+          <div>
+            <label for="projectId" class="block text-[12px] font-medium text-ink-100 mb-1.5">Proyecto (opcional)</label>
+            <select id="projectId" name="projectId" class="input-base w-full">
+              <option value="">Sin proyecto concreto</option>
+              {projects.map((p) => <option value={p.id}>{p.title}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div>
+          <label for="body" class="block text-[12px] font-medium text-ink-100 mb-1.5">Mensaje</label>
+          <textarea id="body" name="body" required rows="5" maxlength="5000" class="input-base w-full resize-y" placeholder="Cuéntame…" />
+        </div>
+      </div>
+
+      <p id="error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="cancel" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" id="send" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+          Enviar
+        </button>
+      </div>
+    </form>
+  </dialog>
+</PortalLayout>
+
+<script>
+  const dlg = document.getElementById('dlg') as HTMLDialogElement
+  const form = document.getElementById('form') as HTMLFormElement
+  const errorEl = document.getElementById('error') as HTMLParagraphElement
+  const send = document.getElementById('send') as HTMLButtonElement
+
+  const open = () => {
+    errorEl.classList.add('hidden')
+    dlg.showModal()
+  }
+
+  document.getElementById('btn-new')?.addEventListener('click', open)
+  document.getElementById('btn-new-empty')?.addEventListener('click', open)
+  document.getElementById('cancel')?.addEventListener('click', () => dlg.close())
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    errorEl.classList.add('hidden')
+    send.disabled = true
+    send.textContent = 'Enviando…'
+
+    const data = Object.fromEntries(new FormData(form))
+    try {
+      const res = await fetch('/api/portal/mensajes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (res.ok && body.redirect) {
+        window.location.href = body.redirect
+        return
+      }
+      errorEl.textContent = body.error ?? 'No se pudo enviar el mensaje.'
+      errorEl.classList.remove('hidden')
+    } catch {
+      errorEl.textContent = 'Error de conexión. Inténtalo de nuevo.'
+      errorEl.classList.remove('hidden')
+    }
+    send.disabled = false
+    send.textContent = 'Enviar'
+  })
+</script>
