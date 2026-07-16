@@ -8,6 +8,7 @@ import { expiryDate, type ExpiryOption } from './cobros'
 import { newShortCode } from './cobros-crypto'
 import { createPaymentIdempotent, applyGatewayEvent, type Payment } from './payments'
 import { normalizePhone } from './phone'
+import { serverEnv } from './env'
 
 export type CreateCobroInput = {
   amountCents: number
@@ -60,7 +61,7 @@ async function assignShortCode(paymentId: number): Promise<string> {
  */
 export async function createCobro(input: CreateCobroInput): Promise<CreateCobroResult> {
   const provider: 'wompi' | 'mock' =
-    process.env.WOMPI_PUBLIC_KEY && process.env.WOMPI_INTEGRITY_SECRET ? 'wompi' : 'mock'
+    serverEnv('WOMPI_PUBLIC_KEY') && serverEnv('WOMPI_INTEGRITY_SECRET') ? 'wompi' : 'mock'
 
   const client = await findClientByPhone(input.phone)
 
