@@ -18,51 +18,19 @@ import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { payments, paymentEvents } from '../db/schema'
 import { sendPush } from './notify'
+import { canTransition, isTerminal, type PaymentStatus } from './payments-state'
 
-export type PaymentStatus = 'created' | 'pending' | 'approved' | 'declined' | 'error' | 'voided'
-
-export const PAYMENT_STATUSES: PaymentStatus[] = ['created', 'pending', 'approved', 'declined', 'error', 'voided']
-
-export const STATUS_LABELS: Record<PaymentStatus, string> = {
-  created: 'Creado',
-  pending: 'Pendiente',
-  approved: 'Aprobado',
-  declined: 'Rechazado',
-  error: 'Error',
-  voided: 'Anulado',
-}
-
-const TERMINAL: ReadonlySet<PaymentStatus> = new Set(['approved', 'declined', 'error', 'voided'])
-
-/** Transiciones legales de la máquina de estados. */
-const ALLOWED: Record<PaymentStatus, ReadonlySet<PaymentStatus>> = {
-  created: new Set(['pending', 'approved', 'declined', 'error', 'voided']),
-  pending: new Set(['approved', 'declined', 'error', 'voided']),
-  // Anulación post-aprobación (refund/void) es la única salida de un terminal.
-  approved: new Set(['voided']),
-  declined: new Set(),
-  error: new Set(),
-  voided: new Set(),
-}
-
-export const isTerminal = (s: PaymentStatus): boolean => TERMINAL.has(s)
-
-export const canTransition = (from: PaymentStatus, to: PaymentStatus): boolean =>
-  from !== to && ALLOWED[from].has(to)
-
-/** Mapea el estado que reporta la pasarela a nuestra máquina de estados. */
-export function normalizeGatewayStatus(raw: string | null | undefined): PaymentStatus | null {
-  const s = String(raw ?? '').toLowerCase()
-  const map: Record<string, PaymentStatus> = {
-    created: 'created',
-    pending: 'pending',
-    approved: 'approved',
-    declined: 'declined',
-    error: 'error',
-    voided: 'voided',
-  }
-  return map[s] ?? null
-}
+// La máquina de estados vive en payments-state.ts (módulo puro, sin BD) para
+// que libs de presentación y tests la usen sin abrir conexión. Se re-exporta
+// aquí: quien importe de 'payments' sigue viéndola como siempre.
+export {
+  PAYMENT_STATUSES,
+  STATUS_LABELS,
+  canTransition,
+  isTerminal,
+  normalizeGatewayStatus,
+  type PaymentStatus,
+} from './payments-state'
 
 // ── Firmas ──────────────────────────────────────────────────────────────────
 
