@@ -276,6 +276,35 @@ const upcoming = [
       )}
     </section>
 
+    <!-- Seguridad & accesibilidad -->
+    {hasFindings && (
+      <section class="mb-16">
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
+          <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
+          <span>Seguridad & accesibilidad · análisis automático</span>
+        </div>
+        <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
+          Análisis estático de dependencias y código, más accesibilidad sobre las páginas públicas,
+          en cada push. Lo que cuenta no es un scan verde sino el ciclo: cada hallazgo se sigue hasta
+          que queda <span class="text-ink-50">resuelto</span> o <span class="text-ink-50">aceptado a conciencia</span>.
+        </p>
+        <div class="grid grid-cols-3 gap-4 max-w-lg">
+          <div class="rounded-2xl glass p-5">
+            <div class={`font-mono text-[22px] leading-none ${findingsAgg.open > 0 ? 'text-ember' : 'text-lime'}`}>{findingsAgg.open}</div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Abiertos</div>
+          </div>
+          <div class="rounded-2xl glass p-5">
+            <div class="font-mono text-[22px] leading-none text-lime">{findingsAgg.resolved}</div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Resueltos</div>
+          </div>
+          <div class="rounded-2xl glass p-5">
+            <div class="font-mono text-[22px] leading-none text-cyan">{findingsAgg.accepted}</div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Aceptados</div>
+          </div>
+        </div>
+      </section>
+    )}
+
     <!-- Pasarela sandbox -->
     <section class="mb-16">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
