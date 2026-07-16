@@ -62,3 +62,37 @@ export const POST: APIRoute = async ({ request }) => {
 
   return json(201, { ok: true, id: row.id })
 }
+
+/**
+ * Ingesta de hallazgos de seguridad/accesibilidad. Acepta tres formas de payload
+ * (según lo que produzca cada job de CI):
+ *  · { kind, findings: [...] }          → hallazgos ya normalizados.
+ *  · { kind, source:'npm-audit', report } → salida cruda de `npm audit --json`.
+ *  · { kind, source:'axe', pageUrl, violations } → violaciones de axe-core.
+ *
+ * Si el lote trae `autoResolve:true` y un `source`, los hallazgos de esa fuente
+ * que no aparecieron en este lote se marcan resueltos (el scan ya no los ve).
+ */
+async function ingestSecurityFindings(body: Record<string, unknown>): Promise<Response> {
+  const runAt = new Date()
+  let normalized
+
+  if (body.source === 'npm-audit' && body.report) {
+    normalized = parseNpmAudit(body.report)
+  } else if (body.source === 'axe' && typeof body.pageUrl === 'string') {
+    normalized = parseAxeViolations(body.violations, body.pageUrl)
+  } else if (Array.isArray(body.findings)) {
+    normalized = body.findings.map(normalizeFinding).filter((f): f is NonNullable<typeof f> => f !== null)
+  } else {
+    return json(400, { error: 'payload de security_finding inválido' })
+  }
+
+  const summary = await ingestFindings(normalized)
+
+  let autoResolved = 0
+  if (body.autoResolve === true && typeof body.source === 'string') {
+    autoResolved = await autoResolveStale(body.source, runAt)
+  }
+
+  return json(201, { ok: true, ...summary, autoResolved })
+}
