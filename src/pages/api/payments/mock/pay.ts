@@ -21,7 +21,9 @@ import { invoices } from '../../../../db/schema'
 // simular requiere sesión admin, O el flag explícito PAYMENTS_MOCK_ENABLED=true
 // (p. ej. durante la sustentación), O una sesión del portal pagando una factura
 // SUYA — sin esa tercera vía, un cliente no podría completar el flujo de pago
-// mientras la pasarela no esté configurada.
+// mientras la pasarela no esté configurada. La cuarta vía es el cobro de campo:
+// quien presenta el código corto del link demuestra que lo recibió por WhatsApp,
+// igual que el cliente del portal demuestra ser dueño de su factura.
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
