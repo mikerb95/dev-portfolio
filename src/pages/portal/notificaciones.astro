@@ -1,0 +1,64 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro'
+import { listNotifications, markAllRead, NOTIFICATION_LABELS } from '../../lib/portal/notifications'
+import { relativeTime } from '../../lib/portal/format'
+
+const { user } = Astro.locals.portal!
+
+// Se leen ANTES de marcar: si no, la página se pintaría con todo ya leído y el
+// usuario no distinguiría qué era nuevo en esta visita.
+const notifications = await listNotifications(user.id)
+await markAllRead(user.id)
+
+const ICON_COLOR: Record<string, string> = {
+  invoice: 'text-lime bg-lime/10 border-lime/25',
+  message: 'text-cyan bg-cyan/10 border-cyan/25',
+  milestone: 'text-violet bg-violet/10 border-violet/25',
+  incident: 'text-ember bg-ember/10 border-ember/25',
+  document: 'text-cyan bg-cyan/10 border-cyan/25',
+  system: 'text-ink-200 bg-white/[.04] border-white/10',
+}
+---
+
+<PortalLayout title="Notificaciones">
+  {notifications.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-100 mb-1">No tienes notificaciones.</p>
+      <p class="text-ink-300 text-sm">Aquí te avisaré de facturas, respuestas, avances y entregables.</p>
+    </div>
+  ) : (
+    <div class="glass rounded-2xl divide-y divide-white/5 overflow-hidden">
+      {notifications.map((n) => {
+        const Wrapper = n.href ? 'a' : 'div'
+        return (
+          <Wrapper
+            href={n.href ?? undefined}
+            class:list={[
+              'flex items-start gap-3 px-4 py-3.5',
+              n.href && 'hover:bg-white/[.02] transition-colors',
+              !n.readAt && 'bg-cyan/[.03]',
+            ]}
+          >
+            <span class:list={['shrink-0 mt-0.5 w-7 h-7 rounded-lg border grid place-items-center', ICON_COLOR[n.type] ?? '']}>
+              <span class="w-1.5 h-1.5 rounded-full bg-current" />
+            </span>
+
+            <div class="min-w-0 flex-1">
+              <p class:list={['text-[13.5px]', n.readAt ? 'text-ink-100' : 'text-ink-50 font-medium']}>{n.title}</p>
+              {n.body && <p class="mt-0.5 text-[12.5px] leading-relaxed text-ink-300">{n.body}</p>}
+              <p class="mt-1 text-[11px] font-mono text-ink-300">
+                {NOTIFICATION_LABELS[n.type] ?? n.type} · {relativeTime(n.createdAt)}
+              </p>
+            </div>
+
+            {!n.readAt && <span class="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-cyan" aria-label="Nueva" />}
+          </Wrapper>
+        )
+      })}
+    </div>
+  )}
+
+  <p class="mt-5 text-[12px] text-ink-300">
+    ¿Demasiados correos? Ajusta qué avisos recibes en <a href="/portal/cuenta" class="text-cyan hover:underline">tu cuenta</a>.
+  </p>
+</PortalLayout>
