@@ -195,7 +195,7 @@ async function seed() {
         (name, url, project_id, last_status, last_response_ms, last_checked_at, ssl_expires_at,
          active, paused, created_at)
         values (?, ?, ?, ?, ?, ?, ?, 1, 0, ?)`,
-      args: [name, url, projectId, status, ms, sec(now - 120_000), daysAhead(60), daysAgo(120)],
+      args: [PREFIX + name, url, projectId, status, ms, sec(now - 120_000), daysAhead(60), daysAgo(120)],
     }))
   )
 
