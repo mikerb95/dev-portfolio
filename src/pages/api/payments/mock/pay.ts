@@ -77,5 +77,31 @@ export const POST: APIRoute = async (context) => {
     payload: { simulated: true },
   })
 
+  // Mismo cierre que el webhook real: si el pago salda una factura del portal,
+  // marcarla y avisar. Se pasa por aquí y no dentro de applyGatewayEvent para
+  // que la pasarela siga sin saber que las facturas existen.
+  if (final.applied && final.statusAfter === 'approved') await settlePaymentByReference(reference)
+
   return json(200, { ok: true, status: final.statusAfter, steps: [pending, final] })
+}
+
+/**
+ * ¿La sesión del portal (si la hay) es dueña de la factura que este pago salda?
+ *
+ * Es la condición que deja a un cliente completar su propio pago simulado sin
+ * abrir la simulación a cualquiera: sin factura detrás, o con una factura de
+ * otro cliente, la respuesta es no.
+ */
+async function ownsInvoiceOfPayment(context: APIContext, invoiceId: number | null): Promise<boolean> {
+  if (invoiceId == null) return false
+  const portal = await getPortalSession(context)
+  if (!portal) return false
+
+  const [invoice] = await db
+    .select({ clientId: invoices.clientId })
+    .from(invoices)
+    .where(eq(invoices.id, invoiceId))
+    .limit(1)
+
+  return invoice?.clientId === portal.client.id
 }
