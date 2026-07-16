@@ -107,7 +107,15 @@ describe('portal · facturación', () => {
     })
 
     it('no pierde precisión en importes grandes', () => {
-      expect(formatMoney(123_456_789, 'COP')).toMatch(/1\.234\.567/)
+      // 1.234.567 pesos exactos: ningún dígito se pierde ni se desplaza.
+      expect(formatMoney(123_456_700, 'COP')).toMatch(/1\.234\.567/)
+    })
+
+    it('redondea al peso los centavos sueltos en COP', () => {
+      // El peso no se usa con centavos, así que la vista redondea. Queda
+      // documentado aquí para que nadie lo lea como una pérdida de precisión:
+      // el importe guardado sigue siendo exacto en centavos.
+      expect(formatMoney(123_456_789, 'COP')).toMatch(/1\.234\.568/)
     })
 
     it('usa decimales para monedas que los tienen', () => {
