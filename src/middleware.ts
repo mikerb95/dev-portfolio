@@ -144,6 +144,29 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
     }
 
+    // Links de cobro: el código corto es su única protección. Un cliente abre
+    // su link un par de veces; 30/min solo lo roza quien está probando códigos.
+    if (isCobroLinkPath(pathname)) {
+      const r = await enforceLimit(`cobro-link:${ip}`, { limit: 30, windowMs: 60_000, deferUntil: 0.5 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'enumeration',
+          severity: 'high',
+          ruleId: 'ratelimit.cobro_link',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers: reqHeaders,
+        })
+        return new Response(JSON.stringify({ error: 'demasiadas solicitudes, espera un minuto' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+
     // Paraguas global anti-scraping agresivo. Límite generoso para no rozar a
     // usuarios reales; solo cuenta rutas dinámicas (no assets estáticos).
     if (isRateLimitablePath(pathname)) {
