@@ -1,0 +1,355 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro'
+import { listSessions } from '../../lib/portal/session'
+import { getPrefs, MANDATORY_TYPES, NOTIFICATION_LABELS } from '../../lib/portal/notifications'
+import { clientTeam } from '../../lib/portal/team'
+import { describeDevice } from '../../lib/device-info'
+import { formatDateTime, relativeTime } from '../../lib/portal/format'
+
+const { user, client, sessionId } = Astro.locals.portal!
+
+const [sessions, prefs, team] = await Promise.all([
+  listSessions(user.id),
+  getPrefs(user.id),
+  user.role === 'owner' ? clientTeam(client.id) : Promise.resolve([]),
+])
+
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'Administrador',
+  member: 'Miembro',
+  billing: 'Facturación',
+}
+
+const ROLE_HELP: Record<string, string> = {
+  owner: 'Acceso completo, incluida la gestión de usuarios.',
+  member: 'Proyectos, mensajes y documentos. Ve las facturas pero no puede pagarlas.',
+  billing: 'Solo facturas y pagos.',
+}
+
+const sessionRows = sessions.map((s) => ({
+  ...s,
+  device: describeDevice(s.userAgent),
+  isCurrent: s.id === sessionId,
+}))
+
+const prefRows = Object.entries(NOTIFICATION_LABELS).map(([type, label]) => ({
+  type,
+  label,
+  enabled: prefs[type] ?? true,
+  mandatory: MANDATORY_TYPES.has(type as 'invoice'),
+}))
+---
+
+<PortalLayout title="Mi cuenta" section="cuenta">
+  <div class="space-y-5 max-w-[720px]">
+    <!-- Perfil -->
+    <section class="glass rounded-2xl p-5">
+      <h2 class="text-[15px] font-medium text-ink-50 mb-4">Perfil</h2>
+      <form id="profile" class="space-y-3">
+        <div>
+          <label for="name" class="block text-[12px] font-medium text-ink-100 mb-1.5">Nombre</label>
+          <input type="text" id="name" name="name" value={user.name ?? ''} required maxlength="120" class="input-base w-full" />
+        </div>
+        <div>
+          <label for="email" class="block text-[12px] font-medium text-ink-100 mb-1.5">Correo</label>
+          <input type="email" id="email" value={user.email} disabled class="input-base w-full opacity-60 cursor-not-allowed" />
+          <p class="mt-1.5 text-[11px] text-ink-300">
+            El correo es tu identidad de acceso. Para cambiarlo, escríbeme.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button type="submit" id="save-profile" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+            Guardar
+          </button>
+          <p id="profile-msg" class="hidden text-[12px]" role="status" />
+        </div>
+      </form>
+    </section>
+
+    <!-- Contraseña -->
+    <section class="glass rounded-2xl p-5">
+      <h2 class="text-[15px] font-medium text-ink-50 mb-1">Contraseña</h2>
+      <p class="text-[12px] text-ink-300 mb-4">Al cambiarla se cerrarán tus sesiones en otros dispositivos.</p>
+      <form id="password" class="space-y-3">
+        <div>
+          <label for="current" class="block text-[12px] font-medium text-ink-100 mb-1.5">Contraseña actual</label>
+          <input type="password" id="current" name="current" required autocomplete="current-password" class="input-base w-full" />
+        </div>
+        <div>
+          <label for="next" class="block text-[12px] font-medium text-ink-100 mb-1.5">Contraseña nueva</label>
+          <input type="password" id="next" name="next" required autocomplete="new-password" class="input-base w-full" placeholder="Mínimo 10 caracteres" />
+        </div>
+        <div class="flex items-center gap-3">
+          <button type="submit" id="save-password" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+            Cambiar contraseña
+          </button>
+          <p id="password-msg" class="hidden text-[12px]" role="status" />
+        </div>
+      </form>
+    </section>
+
+    <!-- Preferencias de correo -->
+    <section class="glass rounded-2xl p-5">
+      <h2 class="text-[15px] font-medium text-ink-50 mb-1">Avisos por correo</h2>
+      <p class="text-[12px] text-ink-300 mb-4">Todo sigue apareciendo en el portal; esto solo controla el correo.</p>
+      <div class="space-y-2.5">
+        {prefRows.map((p) => (
+          <label class:list={['flex items-center justify-between gap-3 py-1', p.mandatory && 'opacity-60']}>
+            <span class="text-[13px] text-ink-100">
+              {p.label}
+              {p.mandatory && <span class="block text-[11px] text-ink-300">Siempre activo: es comunicación contractual.</span>}
+            </span>
+            <input
+              type="checkbox"
+              class="pref shrink-0 w-4 h-4 accent-cyan cursor-pointer disabled:cursor-not-allowed"
+              data-type={p.type}
+              checked={p.enabled}
+              disabled={p.mandatory}
+            />
+          </label>
+        ))}
+      </div>
+      <p id="pref-msg" class="hidden mt-3 text-[12px]" role="status" />
+    </section>
+
+    <!-- Equipo (solo owner) -->
+    {user.role === 'owner' && (
+      <section class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-[15px] font-medium text-ink-50">Equipo de {client.company ?? client.name}</h2>
+            <p class="text-[12px] text-ink-300">Personas con acceso al portal.</p>
+          </div>
+          <button id="btn-invite" class="shrink-0 h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors">
+            Invitar
+          </button>
+        </div>
+
+        <div class="divide-y divide-white/5">
+          {team.map((m) => (
+            <div class="flex items-center justify-between gap-3 py-3">
+              <div class="min-w-0">
+                <p class="text-[13px] text-ink-50 truncate">
+                  {m.name ?? m.email}
+                  {m.id === user.id && <span class="ml-1.5 text-[11px] text-ink-300">(tú)</span>}
+                </p>
+                <p class="text-[11px] text-ink-300 truncate">{m.email}</p>
+                <p class="text-[11px] font-mono text-ink-300 mt-0.5">
+                  {ROLE_LABELS[m.role]}
+                  {m.status === 'invited' && <span class="text-ember"> · invitación pendiente</span>}
+                  {m.status === 'disabled' && <span class="text-ink-300"> · desactivado</span>}
+                  {m.lastLoginAt && <span> · visto {relativeTime(m.lastLoginAt)}</span>}
+                </p>
+              </div>
+
+              {/*
+                El owner no puede desactivarse a sí mismo: dejaría a la empresa
+                sin nadie que gestione su acceso, y arreglarlo pasaría por mí.
+              */}
+              {m.id !== user.id && (
+                <button
+                  class="toggle-user shrink-0 h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-100 hover:bg-white/[.06] transition-colors"
+                  data-id={m.id}
+                  data-action={m.status === 'disabled' ? 'enable' : 'disable'}
+                >
+                  {m.status === 'disabled' ? 'Reactivar' : 'Desactivar'}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <p id="team-msg" class="hidden mt-3 text-[12px]" role="status" />
+      </section>
+    )}
+
+    <!-- Sesiones -->
+    <section class="glass rounded-2xl p-5">
+      <h2 class="text-[15px] font-medium text-ink-50 mb-1">Dispositivos conectados</h2>
+      <p class="text-[12px] text-ink-300 mb-4">Si no reconoces alguno, ciérralo y cambia tu contraseña.</p>
+      <div class="divide-y divide-white/5">
+        {sessionRows.map((s) => (
+          <div class="flex items-center justify-between gap-3 py-3">
+            <div class="min-w-0">
+              <p class="text-[13px] text-ink-50">
+                {s.device}
+                {s.isCurrent && <span class="ml-1.5 text-[11px] text-lime">· este dispositivo</span>}
+              </p>
+              <p class="text-[11px] font-mono text-ink-300">
+                {s.ip ?? 'IP desconocida'} · activo {relativeTime(s.lastSeen)} · desde {formatDateTime(s.createdAt)}
+              </p>
+            </div>
+            {!s.isCurrent && (
+              <button
+                class="revoke shrink-0 h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-100 hover:bg-ember/10 hover:border-ember/25 hover:text-ember transition-colors"
+                data-id={s.id}
+              >
+                Cerrar
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <p id="session-msg" class="hidden mt-3 text-[12px]" role="status" />
+    </section>
+  </div>
+
+  <dialog id="dlg-invite" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">
+    <form id="form-invite" class="glass-strong rounded-2xl p-5 w-[min(92vw,420px)] text-left">
+      <h2 class="text-[16px] font-medium text-ink-50 mb-4">Invitar a alguien de tu equipo</h2>
+      <div class="space-y-3">
+        <div>
+          <label for="inv-email" class="block text-[12px] font-medium text-ink-100 mb-1.5">Correo</label>
+          <input type="email" id="inv-email" name="email" required class="input-base w-full" placeholder="persona@empresa.com" />
+        </div>
+        <div>
+          <label for="inv-name" class="block text-[12px] font-medium text-ink-100 mb-1.5">Nombre (opcional)</label>
+          <input type="text" id="inv-name" name="name" maxlength="120" class="input-base w-full" />
+        </div>
+        <div>
+          <label for="inv-role" class="block text-[12px] font-medium text-ink-100 mb-1.5">Rol</label>
+          <select id="inv-role" name="role" class="input-base w-full">
+            <option value="member" selected>Miembro</option>
+            <option value="billing">Facturación</option>
+            <option value="owner">Administrador</option>
+          </select>
+          <p id="role-help" class="mt-1.5 text-[11px] text-ink-300">{ROLE_HELP.member}</p>
+        </div>
+      </div>
+      <p id="invite-error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="inv-cancel" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" id="inv-send" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+          Enviar invitación
+        </button>
+      </div>
+    </form>
+  </dialog>
+</PortalLayout>
+
+<script define:vars={{ roleHelp: ROLE_HELP }}>
+  const flash = (el, text, ok = true) => {
+    el.textContent = text
+    el.className = `mt-3 text-[12px] ${ok ? 'text-lime' : 'text-ember'}`
+    el.classList.remove('hidden')
+    setTimeout(() => el.classList.add('hidden'), 4000)
+  }
+
+  const post = async (url, body, method = 'POST') => {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    return { ok: res.ok, data: await res.json().catch(() => ({})) }
+  }
+
+  // Perfil
+  const profileForm = document.getElementById('profile')
+  profileForm.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = document.getElementById('save-profile')
+    btn.disabled = true
+    const { ok, data } = await post('/api/portal/cuenta/perfil', {
+      name: new FormData(profileForm).get('name'),
+    })
+    flash(document.getElementById('profile-msg'), ok ? 'Perfil actualizado.' : (data.error ?? 'No se pudo guardar.'), ok)
+    btn.disabled = false
+  })
+
+  // Contraseña
+  const passwordForm = document.getElementById('password')
+  passwordForm.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = document.getElementById('save-password')
+    btn.disabled = true
+    const fd = new FormData(passwordForm)
+    const { ok, data } = await post('/api/portal/cuenta/password', {
+      current: fd.get('current'),
+      next: fd.get('next'),
+    })
+    flash(
+      document.getElementById('password-msg'),
+      ok ? 'Contraseña cambiada. Las demás sesiones se cerraron.' : (data.error ?? 'No se pudo cambiar.'),
+      ok
+    )
+    if (ok) passwordForm.reset()
+    btn.disabled = false
+  })
+
+  // Preferencias
+  document.querySelectorAll('.pref').forEach((el) => {
+    el.addEventListener('change', async () => {
+      const { ok, data } = await post('/api/portal/cuenta/preferencias', {
+        type: el.dataset.type,
+        emailEnabled: el.checked,
+      })
+      if (!ok) {
+        el.checked = !el.checked // revertir: el servidor manda
+        flash(document.getElementById('pref-msg'), data.error ?? 'No se pudo guardar.', false)
+      } else {
+        flash(document.getElementById('pref-msg'), 'Preferencia guardada.')
+      }
+    })
+  })
+
+  // Sesiones
+  document.querySelectorAll('.revoke').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true
+      const { ok, data } = await post('/api/portal/cuenta/sesiones', { sessionId: btn.dataset.id }, 'DELETE')
+      if (ok) window.location.reload()
+      else {
+        flash(document.getElementById('session-msg'), data.error ?? 'No se pudo cerrar.', false)
+        btn.disabled = false
+      }
+    })
+  })
+
+  // Equipo
+  const dlg = document.getElementById('dlg-invite')
+  document.getElementById('btn-invite')?.addEventListener('click', () => dlg.showModal())
+  document.getElementById('inv-cancel')?.addEventListener('click', () => dlg.close())
+
+  document.getElementById('inv-role')?.addEventListener('change', (e) => {
+    document.getElementById('role-help').textContent = roleHelp[e.target.value] ?? ''
+  })
+
+  document.getElementById('form-invite')?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = document.getElementById('inv-send')
+    const errorEl = document.getElementById('invite-error')
+    errorEl.classList.add('hidden')
+    btn.disabled = true
+
+    const fd = new FormData(e.target)
+    const { ok, data } = await post('/api/portal/cuenta/equipo', {
+      email: fd.get('email'),
+      name: fd.get('name'),
+      role: fd.get('role'),
+    })
+    if (ok) window.location.reload()
+    else {
+      errorEl.textContent = data.error ?? 'No se pudo invitar.'
+      errorEl.classList.remove('hidden')
+      btn.disabled = false
+    }
+  })
+
+  document.querySelectorAll('.toggle-user').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true
+      const { ok, data } = await post(
+        '/api/portal/cuenta/equipo',
+        { userId: Number(btn.dataset.id), action: btn.dataset.action },
+        'PATCH'
+      )
+      if (ok) window.location.reload()
+      else {
+        flash(document.getElementById('team-msg'), data.error ?? 'No se pudo actualizar.', false)
+        btn.disabled = false
+      }
+    })
+  })
+</script>
