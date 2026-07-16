@@ -92,11 +92,38 @@ export async function clientDocument(clientId: number, documentId: number): Prom
 }
 
 /**
- * Firma una URL temporal para descargar el blob. El llamador YA debe haber
+ * Abre el contenido del blob para servirlo. El llamador YA debe haber
  * comprobado que el documento es del cliente: esta función no vuelve a mirar.
+ *
+ * Devuelve un stream y no una URL a propósito. La alternativa era firmar una
+ * URL temporal del blob y redirigir, pero eso pone en manos del navegador un
+ * enlace que funciona sin sesión durante su ventana de validez: reenviable,
+ * cacheable por un proxy y fuera de mi control una vez emitido. Sirviéndolo
+ * desde aquí, cada byte pasa por una petición autenticada y el nombre real del
+ * blob no sale nunca. El coste es ancho de banda de la función, asumible para
+ * archivos de ≤25 MB que se descargan de forma ocasional.
+ *
+ * Null si el blob ya no existe (fila huérfana).
  */
-export async function signedDownloadUrl(doc: PortalDocument): Promise<string> {
-  return presignUrl(doc.blobUrl, { expiresIn: SIGNED_URL_TTL_SEC })
+export async function openDocument(doc: PortalDocument): Promise<ReadableStream | null> {
+  const result = await get(doc.blobUrl, { access: 'private' })
+  return result?.stream ?? null
+}
+
+/** Nombre de archivo sugerido al navegador, derivado del título. */
+export function downloadFilename(doc: PortalDocument): string {
+  const ext = ALLOWED_MIME[doc.mimeType ?? ''] ?? 'bin'
+  // El título lo escribe una persona: puede traer barras, comillas o saltos de
+  // línea, y va dentro de una cabecera HTTP. Solo sobrevive lo inocuo.
+  const base =
+    doc.title
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-zA-Z0-9 ._-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .slice(0, 80) || 'documento'
+  return `${base}.${ext}`
 }
 
 /** Historial de versiones de un documento (de la más nueva a la más vieja). */
