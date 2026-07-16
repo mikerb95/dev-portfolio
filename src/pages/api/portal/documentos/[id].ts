@@ -8,9 +8,9 @@ import { clientIp } from '../../../../lib/device-info'
  * Descarga de un documento.
  *
  * El orden importa y es siempre el mismo: sesión → propiedad → auditoría →
- * firma. La URL del blob no sale nunca de aquí en claro; lo que recibe el
- * navegador es un 302 a una URL firmada que caduca en 5 minutos, así que
- * reenviar el enlace a un tercero no le sirve de gran cosa.
+ * contenido. El archivo se sirve desde aquí (ver openDocument): la URL del blob
+ * no sale nunca, así que no hay enlace que reenviar ni que un proxy pueda
+ * cachear y servir a otro.
  *
  * Un documento ajeno o inexistente da el MISMO 404: distinguirlos con un 403
  * confirmaría que ese id existe, que es justo lo que no quiero decirle a quien
