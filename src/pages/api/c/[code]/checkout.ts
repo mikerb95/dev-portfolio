@@ -4,6 +4,7 @@ import { findByShortCode } from '../../../../lib/cobros-db'
 import { wompiIntegritySignature, isTerminal, type PaymentStatus } from '../../../../lib/payments'
 import { clientIp } from '../../../../lib/ratelimit'
 import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
+import { serverEnv } from '../../../../lib/env'
 
 // Genera los parámetros firmados del checkout para un cobro existente.
 //
@@ -40,8 +41,8 @@ export const POST: APIRoute = async ({ params, request, url }) => {
     return json(410, { error: 'este link venció, pide uno nuevo', status: 'expired' })
   }
 
-  const wompiPublicKey = process.env.WOMPI_PUBLIC_KEY
-  const wompiIntegrity = process.env.WOMPI_INTEGRITY_SECRET
+  const wompiPublicKey = serverEnv('WOMPI_PUBLIC_KEY')
+  const wompiIntegrity = serverEnv('WOMPI_INTEGRITY_SECRET')
 
   if (payment.provider === 'wompi' && wompiPublicKey && wompiIntegrity) {
     return json(200, {
