@@ -22,8 +22,9 @@
 
 ## Orden de ejecución
 
-> **Estado (15 jul 2026)**: etapas 1, 2 y 3 ✅ implementadas y verificadas.
-> Siguiente: etapa 4 (Playwright e2e).
+> **Estado (16 jul 2026)**: etapas 1-4 ✅ implementadas y verificadas.
+> Siguiente: etapa 5 (LAB Fase 6 — SAST + a11y). Pendiente transversal: el
+> artículo de /notes sobre e2e (etapa 4).
 
 | # | Etapa | Tipo | Esfuerzo |
 |---|-------|------|----------|
