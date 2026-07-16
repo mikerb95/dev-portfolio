@@ -18,7 +18,7 @@ const isActive = (href: string) =>
   href === '/docs' ? current === '/docs' : current.startsWith(href)
 ---
 
-<nav class="docs-nav mb-6 -mx-1 flex gap-1.5 overflow-x-auto pb-1 no-scrollbar" aria-label="Subpáginas de documentación">
+<nav class="docs-nav mb-6 flex flex-wrap gap-1.5" aria-label="Subpáginas de documentación">
   {tabs.map((t) => (
     <a
       href={t.href}
