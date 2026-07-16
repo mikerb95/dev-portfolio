@@ -40,6 +40,19 @@ export function recogerErrores(page: Page): string[] {
 }
 
 /**
+ * Cabecera con una IP distinta para cada test.
+ *
+ * Los rate limits del sitio son por IP (`clientIp()` lee `x-forwarded-for`) y
+ * toda la suite sale de localhost, así que sin esto compartirían contador: el
+ * test que agota el límite a propósito haría fallar a los demás según el orden
+ * de ejecución. Cada test pide la suya y la reutiliza en todas sus peticiones.
+ */
+export function ipDePrueba(): Record<string, string> {
+  const octeto = () => 1 + Math.floor(Math.random() * 254)
+  return { 'x-forwarded-for': `10.${octeto()}.${octeto()}.${octeto()}` }
+}
+
+/**
  * Entra a la demo como lo haría una persona: por el formulario de /demo.
  *
  * Devuelve el `page` ya dentro del panel. Ojo al usar peticiones sueltas
