@@ -136,9 +136,11 @@ const runBadge = {
   rolled_back: { label: 'Rollback', cls: 'text-ember border-ember/30 bg-ember/10' },
 } as const
 
+// La tarjeta de SAST/a11y solo aparece en "En construcción" mientras no haya
+// hallazgos ingeridos; en cuanto CI reporte, arriba se muestra la sección real.
 const upcoming = [
   { title: 'Load testing (k6)', desc: 'Latencia p50/p95/p99 bajo 100–1000 usuarios concurrentes contra un entorno de staging.' },
-  { title: 'SAST + accesibilidad', desc: 'Hallazgos de análisis estático (CodeQL, npm audit) y score a11y, con su ciclo abierto → resuelto.' },
+  ...(hasFindings ? [] : [{ title: 'SAST + accesibilidad', desc: 'Hallazgos de análisis estático (CodeQL, npm audit) y score a11y, con su ciclo abierto → resuelto.' }]),
   { title: 'Mutation testing', desc: 'No solo cuánta cobertura hay, sino si los tests detectan de verdad cuando el código se rompe.' },
 ]
 ---
