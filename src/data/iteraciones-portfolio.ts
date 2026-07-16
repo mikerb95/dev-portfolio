@@ -540,11 +540,67 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-portal-gestion-qa',
+    fase: 'Fase 12 · Gestión del portal y QA end-to-end',
+    nombre: 'Administración del portal (equipo, facturas, hitos, documentos) y arnés de pruebas E2E',
+    rango: '15 jul 2026',
+    ghSince: '2026-07-15',
+    ghUntil: '2026-07-15',
+    commits: 78,
+    resumen:
+      'Segunda mitad del portal de clientes: el lado admin gana páginas dedicadas para activar clientes, invitar usuarios, gestionar facturas e hitos, y responder mensajes desde /admin/portal. El lado cliente suma cuenta (perfil, contraseña, sesiones, equipo), documentos (subida/descarga auditada, sin URLs firmadas expuestas) e historial de pagos por teléfono. Se integra checkout real con Wompi y notificaciones push al aprobarse un cobro. Se incorpora Playwright con bases de datos desechables por corrida para pruebas E2E de demo, aislamiento de tenant y páginas públicas.',
+    historias: [
+      {
+        id: 'PF-PG-01', titulo: 'Como administrador, quiero activar clientes en el portal, invitar usuarios y gestionar sus facturas e hitos desde /admin',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['portal', 'admin', 'fase-12'],
+        dod: [
+          ok('/admin/portal activa clientes, invita usuarios y lista su estado (invited/active/disabled).'),
+          ok('/admin/portal/facturas y /admin/portal/hitos con CRUD completo de invoices y milestones.'),
+          ok('/admin/portal/mensajes lista y responde hilos de conversación por cliente, con notificación al responder.'),
+          ok('Enlaces añadidos al sidebar de administración.'),
+        ],
+      },
+      {
+        id: 'PF-PG-02', titulo: 'Como cliente, quiero gestionar mi cuenta, mi equipo, mis documentos y ver mi historial de pagos',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['portal', 'cuenta', 'documentos', 'fase-12'],
+        dod: [
+          ok('/portal/cuenta con perfil, cambio de contraseña y gestión de sesiones activas.'),
+          ok('Gestión de equipo (invitar/roles) reutilizando client_invitations desde el propio cliente.'),
+          ok('/portal/documentos sube y descarga archivos vía stream autenticado (se descartó URL firmada por seguridad) con auditoría.'),
+          ok('/mis-pagos resuelve el historial por teléfono con enlace firmado y rate limiting.'),
+        ],
+      },
+      {
+        id: 'PF-PG-03', titulo: 'Como cliente, quiero pagar un cobro real por WhatsApp y recibir una notificación cuando se apruebe',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['pagos', 'wompi', 'notificaciones', 'fase-12'],
+        dod: [
+          ok('Checkout API en /api/c/[code]/checkout.ts integra Wompi para el cobro real, además del mock de pruebas.'),
+          ok('notifyCobroPaid envía alerta push al admin cuando un cobro se marca pagado.'),
+          ok('Rate limiting propio para las rutas de enlace de cobro (isCobroLinkPath).'),
+        ],
+      },
+      {
+        id: 'PF-PG-04', titulo: 'Como equipo de QA, quiero un arnés de pruebas end-to-end contra bases de datos desechables',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['testing', 'e2e', 'playwright', 'fase-12'],
+        dod: [
+          ok('Playwright configurado con fixtures propios y script para crear/sembrar bases de datos desechables por corrida.'),
+          ok('e2e/demo.spec.ts valida acceso y aislamiento de datos de la demo; suite de páginas públicas y headers de seguridad.'),
+          ok('webServer de Playwright siembra la base antes de levantar el servidor de pruebas.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 397 },
+  { mes: 'jul', commits: 475 },
 ]
