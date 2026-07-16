@@ -31,6 +31,16 @@ export function isAuthPath(pathname: string): boolean {
 }
 
 /**
+ * Links de cobro (/c/AB3K9F) y su checkout. El código corto es el único secreto
+ * que los protege, así que merecen un límite propio: sin él, el paraguas global
+ * (600/min) dejaría probar códigos a un ritmo cómodo. Con 30/min, recorrer un
+ * espacio de 31^6 toma milenios.
+ */
+export function isCobroLinkPath(pathname: string): boolean {
+  return pathname.startsWith('/c/') || pathname.startsWith('/api/c/')
+}
+
+/**
  * Rutas de credenciales del portal. Separado de `isAuthPath` porque estas
  * merecen además un límite propio, más estrecho, dentro del middleware.
  */
