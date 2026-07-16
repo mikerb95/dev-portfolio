@@ -4,6 +4,7 @@ import {
   normalizeGatewayStatus,
   verifyWompiEventSignature,
 } from '../../../lib/payments'
+import { settlePaymentByReference, unsettlePaymentByReference } from '../../../lib/portal/settlement'
 
 // Receptor de eventos de Wompi (transaction.updated). Verifica el checksum
 // firmado con WOMPI_EVENTS_SECRET antes de tocar nada.
