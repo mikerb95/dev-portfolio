@@ -32,8 +32,9 @@ export const GET: APIRoute = async (context) => {
   const doc = await clientDocument(session.client.id, id)
   if (!doc || !doc.visibleToClient) return new Response('No encontrado', { status: 404 })
 
-  // Se audita ANTES de firmar: si el registro fallara después de entregar la
-  // URL, tendría una descarga sin rastro. Al revés, como mucho sobra una línea.
+  // Se audita ANTES de servir: si el registro fallara después de entregar el
+  // archivo, tendría una descarga sin rastro. Al revés, como mucho sobra una
+  // línea en el log, que es el error barato de los dos.
   audit({
     clientId: session.client.id,
     clientUserId: session.user.id,
@@ -45,19 +46,26 @@ export const GET: APIRoute = async (context) => {
   })
 
   try {
-    const url = await signedDownloadUrl(doc)
-    return new Response(null, {
-      status: 302,
+    const stream = await openDocument(doc)
+    if (!stream) return new Response('El archivo ya no está disponible.', { status: 404 })
+
+    return new Response(stream, {
       headers: {
-        Location: url,
-        // La URL firmada caduca; que un proxy intermedio la cachee y la sirva
-        // luego a otro sería exactamente el agujero que se está evitando.
+        'Content-Type': doc.mimeType ?? 'application/octet-stream',
+        // `attachment` fuerza la descarga en vez de abrirlo en el navegador:
+        // un PDF o un HTML renderizado en mi dominio podría ejecutar cosas con
+        // mi origen. El filename va saneado (ver downloadFilename).
+        'Content-Disposition': `attachment; filename="${downloadFilename(doc)}"`,
+        ...(doc.sizeBytes ? { 'Content-Length': String(doc.sizeBytes) } : {}),
+        // Documento privado: ni la CDN de Vercel ni un proxy corporativo deben
+        // guardarlo y servírselo luego a otra sesión.
         'Cache-Control': 'no-store, private',
+        'X-Content-Type-Options': 'nosniff',
       },
     })
   } catch {
-    // El blob no existe o Blob está caído: no es culpa del cliente y no hay
-    // nada que pueda hacer, así que se le dice claro en vez de un 404 confuso.
+    // Blob caído o fila huérfana: no es culpa del cliente y no puede hacer
+    // nada, así que se le dice claro en vez de un 404 confuso.
     return new Response('El archivo no está disponible ahora mismo. Inténtalo en unos minutos.', { status: 503 })
   }
 }
