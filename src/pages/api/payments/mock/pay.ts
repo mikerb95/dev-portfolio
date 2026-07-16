@@ -8,6 +8,9 @@ import { applyGatewayEvent } from '../../../../lib/payments'
 import { isAllowedLogin } from '../../../../lib/auth'
 import { clientIp } from '../../../../lib/ratelimit'
 import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
+import { getPortalSession } from '../../../../lib/portal/session'
+import { settlePaymentByReference } from '../../../../lib/portal/settlement'
+import { invoices } from '../../../../db/schema'
 
 // "Pasarela" simulada para el modo demo (sin llaves Wompi configuradas).
 // Emite la secuencia real de eventos (pending → approved/declined) por el
@@ -15,24 +18,19 @@ import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
 // Solo opera sobre pagos provider='mock': nunca toca pagos reales.
 //
 // Gating: para que un tercero no pueda fabricar pagos "aprobados" en el panel,
-// simular requiere sesión admin O el flag explícito PAYMENTS_MOCK_ENABLED=true
-// (p. ej. durante la sustentación).
+// simular requiere sesión admin, O el flag explícito PAYMENTS_MOCK_ENABLED=true
+// (p. ej. durante la sustentación), O una sesión del portal pagando una factura
+// SUYA — sin esa tercera vía, un cliente no podría completar el flujo de pago
+// mientras la pasarela no esté configurada.
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
+  const { request } = context
   const { allowed } = await enforceLimit(`mockpay:${clientIp(request)}`, { limit: 10, windowMs: 60_000 })
   if (!allowed) {
     return json(429, { error: 'demasiados intentos, espera un minuto' })
-  }
-
-  if (process.env.PAYMENTS_MOCK_ENABLED !== 'true') {
-    const session = await getSession(request)
-    const login = (session?.user as { login?: string } | undefined)?.login
-    if (!session || (login && !isAllowedLogin(login))) {
-      return json(403, { error: 'simulación deshabilitada (requiere sesión admin o PAYMENTS_MOCK_ENABLED=true)' })
-    }
   }
 
   let body: Record<string, unknown>
@@ -48,6 +46,16 @@ export const POST: APIRoute = async ({ request }) => {
   const [payment] = await db.select().from(payments).where(eq(payments.reference, reference))
   if (!payment) return json(404, { error: 'pago no encontrado' })
   if (payment.provider !== 'mock') return json(403, { error: 'solo pagos mock pueden simularse' })
+
+  if (process.env.PAYMENTS_MOCK_ENABLED !== 'true') {
+    const session = await getSession(request)
+    const login = (session?.user as { login?: string } | undefined)?.login
+    const isAdmin = !!session && (!login || isAllowedLogin(login))
+
+    if (!isAdmin && !(await ownsInvoiceOfPayment(context, payment.invoiceId))) {
+      return json(403, { error: 'simulación deshabilitada (requiere sesión admin o PAYMENTS_MOCK_ENABLED=true)' })
+    }
+  }
 
   const outcome = body.outcome === 'declined' ? 'declined' : 'approved'
   const txId = `mock_tx_${randomBytes(6).toString('hex')}`
