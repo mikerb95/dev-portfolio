@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { clientDocument, signedDownloadUrl } from '../../../../lib/portal/documents'
+import { clientDocument, downloadFilename, openDocument } from '../../../../lib/portal/documents'
 import { requirePortalSession } from '../../../../lib/portal/session'
 import { audit } from '../../../../lib/portal/audit'
 import { clientIp } from '../../../../lib/device-info'
