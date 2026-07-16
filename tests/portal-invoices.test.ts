@@ -1,4 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// Este archivo solo ejerce las funciones puras (cálculo de totales y máquina de
+// estados). El módulo importa `db` al cargarse, así que se sustituye por un
+// doble vacío: sin esto, importar el módulo intentaría abrir una conexión a
+// Turso. El comportamiento contra base real se prueba en portal-isolation.test.ts.
+vi.mock('../src/db', () => ({ db: {} }))
+
 import { computeTotals, isImmutable, isPayable, lineTotal, INVOICE_STATUS_LABELS } from '../src/lib/portal/invoices'
 import { formatMoney, daysUntil } from '../src/lib/portal/format'
 
