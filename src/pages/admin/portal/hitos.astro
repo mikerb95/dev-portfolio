@@ -1,0 +1,223 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { db } from '../../../db'
+import { clients, projectMilestones, projects } from '../../../db/schema'
+import { desc, eq } from 'drizzle-orm'
+import { formatDate } from '../../../lib/portal/format'
+import { MILESTONE_LABELS } from '../../../lib/portal/projects'
+
+// Solo proyectos de clientes con portal: los hitos existen para que el cliente
+// los vea, así que en el resto no pintan nada.
+const projectRows = await db
+  .select({
+    id: projects.id,
+    title: projects.title,
+    clientId: projects.clientId,
+    clientName: clients.name,
+    company: clients.company,
+  })
+  .from(projects)
+  .innerJoin(clients, eq(projects.clientId, clients.id))
+  .where(eq(clients.portalEnabled, true))
+  .orderBy(desc(projects.startDate))
+
+const selected = Number(Astro.url.searchParams.get('p')) || projectRows[0]?.id || null
+
+const milestones = selected
+  ? await db
+      .select()
+      .from(projectMilestones)
+      .where(eq(projectMilestones.projectId, selected))
+      .orderBy(projectMilestones.sortOrder, projectMilestones.id)
+  : []
+
+const rows = milestones.map((m) => ({
+  ...m,
+  dueLabel: formatDate(m.dueAt),
+  dueInput: m.dueAt ? m.dueAt.toISOString().slice(0, 10) : '',
+}))
+---
+
+<AdminLayout title="Hitos del proyecto">
+  <div class="flex justify-between items-center mb-5 gap-3">
+    <a href="/admin/portal" class="text-[12px] text-ink-300 hover:text-cyan transition-colors">← Portal</a>
+    {selected && (
+      <button id="btn-new" class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        Nuevo hito
+      </button>
+    )}
+  </div>
+
+  {projectRows.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-200 mb-1">No hay proyectos de clientes con portal activo.</p>
+      <p class="text-ink-300 text-sm">
+        <a href="/admin/portal" class="text-cyan hover:underline">Activa el portal</a> de un cliente y asígnale un proyecto.
+      </p>
+    </div>
+  ) : (
+    <>
+      <div class="flex items-center gap-1.5 mb-5 overflow-x-auto no-scrollbar">
+        {projectRows.map((p) => (
+          <a
+            href={`/admin/portal/hitos?p=${p.id}`}
+            class:list={[
+              'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-[12px] border transition-colors',
+              p.id === selected ? 'bg-cyan/10 border-cyan/30 text-cyan' : 'bg-white/[.03] border-white/10 text-ink-200 hover:text-ink-50',
+            ]}
+          >
+            {p.title}
+            <span class="ml-1.5 text-[10px] text-ink-300">{p.company ?? p.clientName}</span>
+          </a>
+        ))}
+      </div>
+
+      {rows.length === 0 ? (
+        <div class="glass rounded-2xl p-10 text-center">
+          <p class="text-ink-200 mb-1">Este proyecto no tiene hitos.</p>
+          <p class="text-ink-300 text-sm">Añade el primero: es lo que el cliente ve como línea de tiempo.</p>
+        </div>
+      ) : (
+        <div class="glass rounded-2xl divide-y divide-white/5 overflow-hidden">
+          {rows.map((m) => (
+            <div class="px-4 py-3.5">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-[14px] text-ink-50">{m.title}</span>
+                    {!m.visibleToClient && (
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-ember/10 text-ember border border-ember/25">
+                        Interno
+                      </span>
+                    )}
+                  </div>
+                  {m.description && <p class="mt-1 text-[12.5px] text-ink-200 max-w-[70ch]">{m.description}</p>}
+                  <p class="mt-1 text-[11px] font-mono text-ink-300">
+                    {m.dueAt ? `Previsto: ${m.dueLabel}` : 'Sin fecha'}
+                    {m.completedAt && ` · Completado: ${formatDate(m.completedAt)}`}
+                  </p>
+                </div>
+
+                <div class="shrink-0 flex items-center gap-2">
+                  <select class="status input-base text-[12px] py-1 px-2" data-id={m.id}>
+                    {['pendiente', 'en_curso', 'completado'].map((s) => (
+                      <option value={s} selected={m.status === s}>{MILESTONE_LABELS[s]}</option>
+                    ))}
+                  </select>
+                  <button class="vis w-7 h-7 rounded-lg text-ink-300 hover:text-cyan hover:bg-white/[.06] transition-colors" data-id={m.id} data-visible={String(m.visibleToClient)} title={m.visibleToClient ? 'Ocultar al cliente' : 'Mostrar al cliente'}>
+                    {m.visibleToClient ? '👁' : '🚫'}
+                  </button>
+                  <button class="del w-7 h-7 rounded-lg text-ink-300 hover:text-ember hover:bg-white/[.06] transition-colors" data-id={m.id} title="Eliminar">
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  )}
+
+  <dialog id="dlg" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">
+    <form id="form" class="glass-strong rounded-2xl p-5 w-[min(92vw,440px)] text-left">
+      <h2 class="text-[16px] font-medium text-ink-50 mb-4">Nuevo hito</h2>
+      <div class="space-y-3">
+        <div>
+          <label for="title" class="block text-[12px] font-medium text-ink-100 mb-1.5">Título</label>
+          <input type="text" id="title" name="title" required maxlength="200" class="input-base w-full" placeholder="Diseño aprobado" />
+        </div>
+        <div>
+          <label for="description" class="block text-[12px] font-medium text-ink-100 mb-1.5">Descripción (opcional)</label>
+          <textarea id="description" name="description" rows="2" maxlength="1000" class="input-base w-full resize-y" />
+        </div>
+        <div>
+          <label for="dueAt" class="block text-[12px] font-medium text-ink-100 mb-1.5">Fecha prevista</label>
+          <input type="date" id="dueAt" name="dueAt" class="input-base w-full" />
+        </div>
+        <label class="flex items-center gap-2 text-[12px] text-ink-200 cursor-pointer">
+          <input type="checkbox" id="visibleToClient" checked class="w-3.5 h-3.5 accent-cyan" />
+          Visible para el cliente
+        </label>
+      </div>
+      <p id="error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="cancel" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" id="save" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+          Crear
+        </button>
+      </div>
+    </form>
+  </dialog>
+</AdminLayout>
+
+<script define:vars={{ projectId: selected }}>
+  const dlg = document.getElementById('dlg')
+  const errorEl = document.getElementById('error')
+
+  const api = async (method, body) => {
+    const res = await fetch('/api/admin/portal/hitos', {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (res.ok) return true
+    const data = await res.json().catch(() => ({}))
+    alert(data.error ?? 'No se pudo completar la acción.')
+    return false
+  }
+
+  document.getElementById('btn-new')?.addEventListener('click', () => {
+    errorEl.classList.add('hidden')
+    dlg.showModal()
+  })
+  document.getElementById('cancel')?.addEventListener('click', () => dlg.close())
+
+  document.getElementById('form')?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const save = document.getElementById('save')
+    save.disabled = true
+    const fd = new FormData(e.target)
+    const ok = await api('POST', {
+      projectId,
+      title: fd.get('title'),
+      description: fd.get('description'),
+      dueAt: fd.get('dueAt') || null,
+      visibleToClient: document.getElementById('visibleToClient').checked,
+    })
+    if (ok) window.location.reload()
+    else save.disabled = false
+  })
+
+  // Cambiar a "completado" avisa al cliente por correo: se confirma antes.
+  document.querySelectorAll('.status').forEach((sel) => {
+    const previous = sel.value
+    sel.addEventListener('change', async () => {
+      if (sel.value === 'completado' && !confirm('¿Marcar como completado? Se avisará al cliente por correo.')) {
+        sel.value = previous
+        return
+      }
+      const ok = await api('PATCH', { id: Number(sel.dataset.id), status: sel.value })
+      if (ok) window.location.reload()
+      else sel.value = previous
+    })
+  })
+
+  document.querySelectorAll('.vis').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const ok = await api('PATCH', { id: Number(btn.dataset.id), visibleToClient: btn.dataset.visible !== 'true' })
+      if (ok) window.location.reload()
+    })
+  })
+
+  document.querySelectorAll('.del').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Eliminar este hito?')) return
+      const ok = await api('DELETE', { id: Number(btn.dataset.id) })
+      if (ok) window.location.reload()
+    })
+  })
+</script>
