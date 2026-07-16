@@ -97,7 +97,39 @@ Pasos:
 Aceptación: `/lab` carga sin sesión con datos reales; sin fugas (grep);
 lighthouse a11y sin regresiones; link visible desde home/tools/footer.
 
-## Etapa 3 — Demo read-only del admin
+## Etapa 3 — Demo read-only del admin ✅ IMPLEMENTADA (15 jul 2026)
+
+**Entregado**: base Turso `portfolio-demo` creada y poblada con
+`scripts/seed-demo.mjs` (4 clientes, 4 proyectos, 8 servicios, 4 monitores con
+90 días de checks, incidente sembrado, corridas de CI y los 5 experimentos del
+LAB). `src/lib/demo.ts` (pase HMAC con TTL de 2h + listas de método/ruta, 12
+tests), proxy de BD con `AsyncLocalStorage` en `src/db/index.ts` (los 88 módulos
+que importan `db` no se tocaron), rama de demo en `src/middleware.ts`, página
+`/demo`, banner en `AdminLayout`, enlaces desde `/login` y `/tools`.
+
+**Hallazgo que cambió el diseño**: los endpoints que revelan la bóveda
+(`…/services/<id>/secrets`) y las variables de entorno (`…/projects/<id>/envvars`)
+son **GET**, así que "solo lectura" NO los habría detenido. Por eso la lista de
+bloqueo va por patrón y se testea explícitamente.
+
+**Verificado end-to-end**: 17 páginas del panel responden 200 con datos
+ficticios; 19 centinelas de datos reales (nombres de proyectos y servicios de la
+base real) buscados en 3.2 MB de HTML servido en modo demo → **cero fugas**;
+POST/PUT/PATCH/DELETE → 403; los 6 reveladores/rutas sensibles → 403; las
+páginas públicas siguen mostrando datos reales; flujo completo ejercido en
+Chromium (form → `/admin`, banner presente).
+
+**Notas de operación**:
+- El seed **arrasa y recrea** el esquema con el migrador de drizzle. Un runner
+  casero de migraciones no sirve: la migración 0009 lleva un paso de datos que
+  no tolera re-ejecución. Salvaguarda: aborta si `TURSO_DEMO_URL` es la base real.
+- Re-ejecutar `node scripts/seed-demo.mjs` tras cada migración nueva, o el
+  esquema de la demo queda desfasado.
+- Falta subir `TURSO_DEMO_URL` y `TURSO_DEMO_AUTH_TOKEN` a Vercel (Production):
+  sin ellas la demo simplemente no existe (`/demo` → 404) y el panel se comporta
+  como antes.
+
+### Diseño (referencia)
 
 **Objetivo**: que cualquiera explore el panel con datos ficticios y cero
 capacidad de escritura. El pendiente de mayor impacto (todo el trabajo del panel
