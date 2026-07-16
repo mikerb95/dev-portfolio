@@ -1,0 +1,116 @@
+---
+import PortalLayout from '../../../layouts/PortalLayout.astro'
+import { clientInvoices, clientInvoiceSummary, INVOICE_STATUS_LABELS, isPayable } from '../../../lib/portal/invoices'
+import { formatMoney, formatDate, daysUntil } from '../../../lib/portal/format'
+
+const { client } = Astro.locals.portal!
+
+const [rows, summary] = await Promise.all([clientInvoices(client.id), clientInvoiceSummary(client.id)])
+const now = new Date()
+
+const STATUS_STYLE: Record<string, string> = {
+  sent: 'bg-cyan/10 text-cyan border-cyan/25',
+  paid: 'bg-lime/10 text-lime border-lime/25',
+  overdue: 'bg-ember/10 text-ember border-ember/25',
+  void: 'bg-white/[.04] text-ink-300 border-white/10',
+}
+---
+
+<PortalLayout title="Facturas" section="facturas">
+  <div class="grid gap-3 sm:grid-cols-3 mb-7">
+    <div class="glass rounded-2xl p-4">
+      <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Pendiente de pago</p>
+      <p class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
+        {summary.dueCount === 0 ? <span class="text-lime">Al día</span> : formatMoney(summary.dueCents, summary.currency)}
+      </p>
+      <p class="mt-0.5 text-[12px] text-ink-300">
+        {summary.dueCount} factura{summary.dueCount !== 1 ? 's' : ''} abierta{summary.dueCount !== 1 ? 's' : ''}
+      </p>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Vencidas</p>
+      <p class:list={['mt-2 text-[24px] font-medium tracking-tight', summary.overdueCount > 0 ? 'text-ember' : 'text-ink-50']}>
+        {summary.overdueCount}
+      </p>
+      <p class="mt-0.5 text-[12px] text-ink-300">
+        {summary.overdueCount > 0 ? 'Requieren tu atención' : 'Ninguna vencida'}
+      </p>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Pagado en {now.getFullYear()}</p>
+      <p class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
+        {formatMoney(summary.paidThisYearCents, summary.currency)}
+      </p>
+      <p class="mt-0.5 text-[12px] text-ink-300">Total facturado y cobrado</p>
+    </div>
+  </div>
+
+  {rows.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-100 mb-1">Todavía no tienes facturas.</p>
+      <p class="text-ink-300 text-sm">Cuando emita la primera, aparecerá aquí y te avisaré por correo.</p>
+    </div>
+  ) : (
+    <div class="glass rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/5 text-ink-300 text-left text-[11px] font-mono uppercase tracking-wider">
+              <th class="px-4 py-3 font-medium">Factura</th>
+              <th class="px-4 py-3 font-medium">Concepto</th>
+              <th class="px-4 py-3 font-medium">Emitida</th>
+              <th class="px-4 py-3 font-medium">Vence</th>
+              <th class="px-4 py-3 font-medium text-right">Total</th>
+              <th class="px-4 py-3 font-medium">Estado</th>
+              <th class="px-4 py-3 font-medium" />
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {rows.map((inv) => {
+              const days = daysUntil(inv.dueAt, now)
+              return (
+                <tr class="text-ink-100 hover:bg-white/[.02] transition-colors">
+                  <td class="px-4 py-3">
+                    <a href={`/portal/facturas/${inv.id}`} class="font-mono text-[13px] text-ink-50 hover:text-cyan transition-colors">
+                      {inv.number}
+                    </a>
+                  </td>
+                  <td class="px-4 py-3 text-ink-200 text-[13px]">{inv.projectTitle ?? '—'}</td>
+                  <td class="px-4 py-3 text-ink-200 text-[13px]">{formatDate(inv.issuedAt)}</td>
+                  <td class="px-4 py-3 text-[13px]">
+                    <span class={inv.status === 'overdue' ? 'text-ember' : 'text-ink-200'}>{formatDate(inv.dueAt)}</span>
+                    {inv.status === 'sent' && days !== null && days >= 0 && days <= 7 && (
+                      <span class="block text-[11px] text-ink-300">en {days} día{days !== 1 ? 's' : ''}</span>
+                    )}
+                  </td>
+                  <td class="px-4 py-3 text-right font-mono text-[13px] text-ink-50">
+                    {formatMoney(inv.totalCents, inv.currency)}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class:list={['px-2 py-0.5 rounded-full border text-[11px] font-mono', STATUS_STYLE[inv.status] ?? '']}>
+                      {INVOICE_STATUS_LABELS[inv.status]}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    {isPayable(inv.status) ? (
+                      <a
+                        href={`/portal/facturas/${inv.id}`}
+                        class="inline-flex items-center h-7 px-3 rounded-full bg-cyan text-ink-950 text-[12px] font-semibold hover:bg-cyan-glow transition-colors"
+                      >
+                        Pagar
+                      </a>
+                    ) : (
+                      <a href={`/portal/facturas/${inv.id}`} class="text-[12px] text-ink-300 hover:text-cyan transition-colors">
+                        Ver
+                      </a>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+</PortalLayout>
