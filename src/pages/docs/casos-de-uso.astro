@@ -73,24 +73,27 @@ function wrappedLabel(cx: number, cy: number, w: number, h: number, text: string
 
 let diagramSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SVG_W}" height="${SVG_H}" viewBox="0 0 ${SVG_W} ${SVG_H}">`
 
-for (const { actor, cy } of actorPos) {
-  const rs = rows.filter((r) => r.actorId === actor.id)
-  for (const r of rs) {
-    diagramSvg += `<line x1="${ACTOR_X + 16}" y1="${cy}" x2="${CU_CX - ELLIPSE_RX}" y2="${r.cy}" stroke="#8a8a99" stroke-width="1.2" />`
+for (const { actorCy, rows } of bloques) {
+  for (const r of rows) {
+    diagramSvg += `<line x1="${ACTOR_X + 16}" y1="${actorCy}" x2="${CU_CX - ELLIPSE_RX}" y2="${r.cy}" stroke="#8a8a99" stroke-width="1.2" />`
   }
 }
 
-diagramSvg += `<rect x="${BOUNDARY_X}" y="${BOUNDARY_Y}" width="${BOUNDARY_W}" height="${BOUNDARY_H}" fill="none" stroke="#8a8a99" stroke-width="1.5" />`
-diagramSvg += `<text x="${BOUNDARY_X + 10}" y="${BOUNDARY_Y + 20}" fill="#7de1e8" font-size="13" font-family="sans-serif">Sistema · codebymike.tech</text>`
-
-for (const r of rows) {
-  diagramSvg += `<ellipse cx="${CU_CX}" cy="${r.cy}" rx="${ELLIPSE_RX}" ry="${ELLIPSE_RY}" fill="#1c1c26" stroke="#c4c4cc" stroke-width="1.5" />`
-  diagramSvg += wrappedLabel(CU_CX, r.cy, ELLIPSE_RX * 2 - 20, ELLIPSE_RY * 2 - 8, r.label, 11.5)
+for (const { actor, top: blockTop, height } of bloques) {
+  diagramSvg += `<rect x="${BOUNDARY_X}" y="${blockTop}" width="${BOUNDARY_W}" height="${height}" fill="none" stroke="#8a8a99" stroke-width="1.5" />`
+  diagramSvg += `<text x="${BOUNDARY_X + 10}" y="${blockTop + 20}" fill="#7de1e8" font-size="12" font-family="sans-serif">Sistema · codebymike.tech</text>`
 }
 
-for (const { actor, cy } of actorPos) {
-  diagramSvg += actorFigure(ACTOR_X, cy)
-  diagramSvg += wrappedLabel(ACTOR_X, cy + 52, 150, 30, actor.nombre, 11.5)
+for (const { rows } of bloques) {
+  for (const r of rows) {
+    diagramSvg += `<ellipse cx="${CU_CX}" cy="${r.cy}" rx="${ELLIPSE_RX}" ry="${ELLIPSE_RY}" fill="#1c1c26" stroke="#c4c4cc" stroke-width="1.5" />`
+    diagramSvg += wrappedLabel(CU_CX, r.cy, ELLIPSE_RX * 2 - 20, ELLIPSE_RY * 2 - 8, r.label, 11.5)
+  }
+}
+
+for (const { actor, actorCy } of bloques) {
+  diagramSvg += actorFigure(ACTOR_X, actorCy)
+  diagramSvg += wrappedLabel(ACTOR_X, actorCy + 52, 150, 30, actor.nombre, 11.5)
 }
 
 diagramSvg += `</svg>`
