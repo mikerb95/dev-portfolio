@@ -45,15 +45,19 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 
   webServer: {
-    command: 'npm run dev -- --port ' + PORT,
+    // La siembra va aquí y no en globalSetup a propósito: Playwright levanta el
+    // webServer ANTES de ejecutar globalSetup, así que sembrar allí llegaría
+    // tarde y el servidor arrancaría contra una base que no existe.
+    command: `node scripts/seed-e2e.mjs && npm run dev -- --port ${PORT}`,
     url: E2E.baseURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
     env: {
       TURSO_DATABASE_URL: E2E.mainDbUrl,
       TURSO_AUTH_TOKEN: '',
       TURSO_DEMO_URL: E2E.demoDbUrl,
       TURSO_DEMO_AUTH_TOKEN: '',
+      E2E_SENTINEL: E2E.sentinel,
       AUTH_SECRET: E2E.authSecret,
       // Sin allowlist real: ningún login de GitHub pasa el gate en los e2e.
       ALLOWED_GITHUB_LOGINS: 'nadie-e2e',
