@@ -52,6 +52,21 @@ certificaciones, monitores, seguridad y backups.
 - **Seguridad** (`/admin/security`): eventos del micro-SIEM, anomalías, blocklist con desbloqueo.
 - **Mobile-first**: drawer responsive, tablas que se vuelven tarjetas en móvil.
 
+## Demo del panel
+
+`/demo` deja recorrer `/admin` completo sin cuenta. El aislamiento no depende de
+esconder botones: los datos salen de una **base Turso distinta** (seleccionada
+por request con `AsyncLocalStorage`, ver `src/db/index.ts`), el middleware solo
+admite `GET`/`HEAD`, y las rutas que revelan credenciales o vuelcan datos están
+vetadas por patrón — incluidas las que son GET, como el revelado de la bóveda.
+
+```bash
+node scripts/seed-demo.mjs   # recrea el esquema y siembra los datos ficticios
+```
+
+Requiere `TURSO_DEMO_URL` y `TURSO_DEMO_AUTH_TOKEN`. Sin ellas la demo no existe
+y el panel se comporta exactamente como antes.
+
 ## Arquitectura (resumen)
 
 ```
