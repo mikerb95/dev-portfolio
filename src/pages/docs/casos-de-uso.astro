@@ -10,20 +10,28 @@ import { ACTORES, CASOS_DE_USO, REQUISITOS_FUNCIONALES } from '../../data/docume
 // bien la posición de figuras humanas, así que se calcula la posición de
 // cada elemento aquí mismo y se emite el SVG directo.
 //
-// Una caja de sistema POR ROL: cada actor tiene su propia caja con solo sus
-// casos de uso adentro (no una única caja compartida por los 6 actores).
+// Una caja por (módulo × actor): igual que un diagrama UML de libro, la caja
+// es el subsistema (lleva su nombre en una barra de título arriba) y a su
+// izquierda va el único actor que participa en esos casos de uso.
 const ROW_H = 76
 const ELLIPSE_RX = 150
 const ELLIPSE_RY = 30
 const ACTOR_X = 90
 const BOUNDARY_PAD = 24
 const BOUNDARY_X = 190
-const TITLE_H = 30
-const BLOCK_GAP = 50
+const TITLE_H = 28
+const BLOCK_GAP = 54
 const CU_CX = BOUNDARY_X + BOUNDARY_PAD + ELLIPSE_RX
 const BOUNDARY_W = ELLIPSE_RX * 2 + BOUNDARY_PAD * 2
 
-const actoresConCU = ACTORES.filter((a) => CASOS_DE_USO.some((c) => c.actor === a.id))
+// Cada CU apunta a requerimientos funcionales (RF-xxx); el módulo del primero
+// de ellos define a qué subsistema pertenece el caso de uso.
+const moduloPorRf = new Map<string, string>()
+for (const modulo of REQUISITOS_FUNCIONALES) {
+  for (const item of modulo.items) moduloPorRf.set(item.id, modulo.nombre)
+}
+const moduloDeCU = (cu: (typeof CASOS_DE_USO)[number]) =>
+  cu.rf.map((id) => moduloPorRf.get(id)).find(Boolean) ?? 'Sistema'
 
 interface Row {
   label: string
@@ -31,24 +39,36 @@ interface Row {
 }
 interface Bloque {
   actor: (typeof ACTORES)[number]
+  modulo: string
   top: number
   height: number
   rows: Row[]
   actorCy: number
 }
 
+// Agrupar por módulo y, dentro de cada módulo, por actor: un bloque por pareja.
+const grupos = new Map<string, (typeof CASOS_DE_USO)[number][]>()
+for (const cu of CASOS_DE_USO) {
+  const clave = `${moduloDeCU(cu)}||${cu.actor}`
+  const previos = grupos.get(clave)
+  if (previos) previos.push(cu)
+  else grupos.set(clave, [cu])
+}
+
 const bloques: Bloque[] = []
 let top = 0
-for (const actor of actoresConCU) {
-  const cus = CASOS_DE_USO.filter((c) => c.actor === actor.id)
+for (const [clave, cus] of grupos) {
+  const [modulo, actorId] = clave.split('||')
+  const actor = ACTORES.find((a) => a.id === actorId)
+  if (!actor) continue
   const rows: Row[] = cus.map((cu, i) => ({
     label: `${cu.id}: ${cu.nombre}`,
     cy: top + TITLE_H + BOUNDARY_PAD + ELLIPSE_RY + i * ROW_H,
   }))
   const bottom = rows[rows.length - 1].cy + ELLIPSE_RY + BOUNDARY_PAD
   const height = bottom - top
-  const actorCy = top + height / 2
-  bloques.push({ actor, top, height, rows, actorCy })
+  const actorCy = top + TITLE_H + (height - TITLE_H) / 2
+  bloques.push({ actor, modulo, top, height, rows, actorCy })
   top = bottom + BLOCK_GAP
 }
 
