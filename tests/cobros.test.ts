@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  newShortCode,
   isValidShortCode,
-  historyToken,
-  verifyHistoryToken,
-  phoneRef,
   expiryDate,
   isExpired,
   isValidExpiry,
@@ -13,6 +9,7 @@ import {
   maskAmount,
   buildWhatsAppMessage,
 } from '../src/lib/cobros'
+import { newShortCode, historyToken, verifyHistoryToken, phoneRef } from '../src/lib/cobros-crypto'
 
 const SECRET = 'secreto-de-prueba-no-usar-en-prod'
 const PHONE = '+573104641228'
