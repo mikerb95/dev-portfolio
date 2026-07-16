@@ -70,6 +70,10 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   /^\/(api\/)?admin\/sessions/,
   /^\/api\/admin\/webauthn/,
   /^\/api\/admin\/lab\/chaos/,
+  // Cobros de campo: herramienta operativa real (genera links de pago y expone
+  // teléfonos de clientes). La demo enseña el panel, no mi caja registradora.
+  /^\/cobrar/,
+  /^\/api\/admin\/cobros/,
 ]
 
 /** ¿La ruta está vetada en modo demo (aun siendo GET)? */
