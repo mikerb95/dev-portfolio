@@ -18,7 +18,7 @@ import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { payments, paymentEvents } from '../db/schema'
 import { sendPush } from './notify'
-import { canTransition, isTerminal, type PaymentStatus } from './payments-state'
+import { canTransition, type PaymentStatus } from './payments-state'
 
 // La máquina de estados vive en payments-state.ts (módulo puro, sin BD) para
 // que libs de presentación y tests la usen sin abrir conexión. Se re-exporta

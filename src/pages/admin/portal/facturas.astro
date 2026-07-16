@@ -1,0 +1,324 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { allInvoices, INVOICE_STATUS_LABELS, invoiceCountByStatus } from '../../../lib/portal/invoices'
+import { db } from '../../../db'
+import { clients, projects } from '../../../db/schema'
+import { eq } from 'drizzle-orm'
+import { formatMoney, formatDate } from '../../../lib/portal/format'
+
+const [rows, counts, clientRows, projectRows] = await Promise.all([
+  allInvoices(),
+  invoiceCountByStatus(),
+  db.select({ id: clients.id, name: clients.name, company: clients.company }).from(clients).where(eq(clients.portalEnabled, true)),
+  db.select({ id: projects.id, title: projects.title, clientId: projects.clientId }).from(projects),
+])
+
+const STATUS_STYLE: Record<string, string> = {
+  draft: 'bg-white/[.04] text-ink-300 border-white/10',
+  sent: 'bg-cyan/10 text-cyan border-cyan/25',
+  paid: 'bg-lime/10 text-lime border-lime/25',
+  overdue: 'bg-ember/10 text-ember border-ember/25',
+  void: 'bg-white/[.04] text-ink-300 border-white/10',
+}
+
+const pendingCents = rows.filter((r) => r.status === 'sent' || r.status === 'overdue').reduce((s, r) => s + r.totalCents, 0)
+const paidCents = rows.filter((r) => r.status === 'paid').reduce((s, r) => s + r.totalCents, 0)
+---
+
+<AdminLayout title="Facturas del portal">
+  <div class="grid gap-3 sm:grid-cols-3 mb-6">
+    <div class="glass rounded-2xl p-4">
+      <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Por cobrar</p>
+      <p class="mt-2 text-[22px] font-medium tracking-tight text-ink-50 font-mono">{formatMoney(pendingCents)}</p>
+      <p class="mt-0.5 text-[12px] text-ink-300">
+        {(counts.sent ?? 0) + (counts.overdue ?? 0)} factura(s)
+        {counts.overdue ? <span class="text-ember"> · {counts.overdue} vencida(s)</span> : null}
+      </p>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Cobrado</p>
+      <p class="mt-2 text-[22px] font-medium tracking-tight text-lime font-mono">{formatMoney(paidCents)}</p>
+      <p class="mt-0.5 text-[12px] text-ink-300">{counts.paid ?? 0} factura(s)</p>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Borradores</p>
+      <p class="mt-2 text-[22px] font-medium tracking-tight text-ink-50 font-mono">{counts.draft ?? 0}</p>
+      <p class="mt-0.5 text-[12px] text-ink-300">Sin emitir (el cliente no las ve)</p>
+    </div>
+  </div>
+
+  <div class="flex justify-between items-center mb-5 gap-3">
+    <a href="/admin/portal" class="text-[12px] text-ink-300 hover:text-cyan transition-colors">← Portal</a>
+    <button
+      id="btn-new"
+      class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors"
+      disabled={clientRows.length === 0}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      Nueva factura
+    </button>
+  </div>
+
+  {clientRows.length === 0 && (
+    <div class="mb-5 rounded-xl border border-ember/25 bg-ember/[.07] px-4 py-3 text-[13px] text-ink-200">
+      No hay clientes con portal activo. <a href="/admin/portal" class="text-cyan hover:underline">Activa el portal</a> de
+      alguno para poder facturarle.
+    </div>
+  )}
+
+  {rows.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-200">Todavía no hay facturas.</p>
+    </div>
+  ) : (
+    <div class="glass rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/5 text-ink-300 text-left text-[11px] font-mono uppercase tracking-wider">
+              <th class="px-4 py-3 font-medium">Nº</th>
+              <th class="px-4 py-3 font-medium">Cliente</th>
+              <th class="px-4 py-3 font-medium">Emitida</th>
+              <th class="px-4 py-3 font-medium">Vence</th>
+              <th class="px-4 py-3 font-medium text-right">Total</th>
+              <th class="px-4 py-3 font-medium">Estado</th>
+              <th class="px-4 py-3 font-medium" />
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {rows.map((inv) => (
+              <tr class="text-ink-100 hover:bg-white/[.02] transition-colors">
+                <td class="px-4 py-3 font-mono text-[13px] text-ink-50">{inv.number}</td>
+                <td class="px-4 py-3">
+                  <div class="text-[13px] text-ink-50">{inv.company ?? inv.clientName}</div>
+                  {inv.projectTitle && <div class="text-[11px] text-ink-300">{inv.projectTitle}</div>}
+                </td>
+                <td class="px-4 py-3 text-[13px] text-ink-200">{formatDate(inv.issuedAt)}</td>
+                <td class="px-4 py-3 text-[13px]">
+                  <span class={inv.status === 'overdue' ? 'text-ember' : 'text-ink-200'}>{formatDate(inv.dueAt)}</span>
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-[13px] text-ink-50">
+                  {formatMoney(inv.totalCents, inv.currency)}
+                </td>
+                <td class="px-4 py-3">
+                  <span class:list={['px-2 py-0.5 rounded-full border text-[11px] font-mono', STATUS_STYLE[inv.status]]}>
+                    {INVOICE_STATUS_LABELS[inv.status]}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  {inv.status === 'draft' && (
+                    <button class="issue h-7 px-3 rounded-full bg-cyan text-ink-950 text-[12px] font-semibold hover:bg-cyan-glow transition-colors" data-id={inv.id}>
+                      Emitir
+                    </button>
+                  )}
+                  {(inv.status === 'sent' || inv.status === 'overdue') && (
+                    <button class="void h-7 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-200 hover:text-ember hover:border-ember/25 transition-colors" data-id={inv.id}>
+                      Anular
+                    </button>
+                  )}
+                  {inv.status === 'paid' && inv.paymentReference && (
+                    <span class="text-[11px] font-mono text-ink-300">{inv.paymentReference}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+
+  <dialog id="dlg" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">
+    <form id="form" class="glass-strong rounded-2xl p-5 w-[min(94vw,620px)] max-h-[88vh] overflow-y-auto text-left">
+      <h2 class="text-[16px] font-medium text-ink-50 mb-4">Nueva factura</h2>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label for="clientId" class="block text-[12px] font-medium text-ink-100 mb-1.5">Cliente</label>
+          <select id="clientId" name="clientId" required class="input-base w-full">
+            {clientRows.map((c) => <option value={c.id}>{c.company ?? c.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label for="projectId" class="block text-[12px] font-medium text-ink-100 mb-1.5">Proyecto (opcional)</label>
+          <select id="projectId" name="projectId" class="input-base w-full">
+            <option value="">Sin proyecto</option>
+          </select>
+        </div>
+        <div>
+          <label for="dueAt" class="block text-[12px] font-medium text-ink-100 mb-1.5">Vence el</label>
+          <input type="date" id="dueAt" name="dueAt" class="input-base w-full" />
+        </div>
+        <div>
+          <label for="taxRate" class="block text-[12px] font-medium text-ink-100 mb-1.5">IVA</label>
+          <select id="taxRate" name="taxRate" class="input-base w-full">
+            <option value="0" selected>Sin IVA (0%)</option>
+            <option value="0.19">19%</option>
+            <option value="0.05">5%</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-[12px] font-medium text-ink-100 mb-2">Líneas</label>
+        <div id="items" class="space-y-2" />
+        <button type="button" id="add-item" class="mt-2 h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-100 hover:bg-white/[.06] transition-colors">
+          + Añadir línea
+        </button>
+      </div>
+
+      <div class="mt-4">
+        <label for="notes" class="block text-[12px] font-medium text-ink-100 mb-1.5">Notas (opcional)</label>
+        <textarea id="notes" name="notes" rows="2" maxlength="2000" class="input-base w-full resize-y" placeholder="Condiciones, datos de pago…" />
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-white/5 flex justify-between items-baseline">
+        <span class="text-[13px] text-ink-200">Total estimado</span>
+        <span id="total" class="font-mono text-[17px] text-cyan">$ 0</span>
+      </div>
+
+      <p id="error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="cancel" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" id="save" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+          Crear borrador
+        </button>
+      </div>
+    </form>
+  </dialog>
+</AdminLayout>
+
+<script define:vars={{ projectRows }}>
+  const dlg = document.getElementById('dlg')
+  const form = document.getElementById('form')
+  const itemsEl = document.getElementById('items')
+  const errorEl = document.getElementById('error')
+  const totalEl = document.getElementById('total')
+
+  const fmt = (cents) =>
+    new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(cents / 100)
+
+  // El total se recalcula en vivo solo como cortesía visual: el que vale es el
+  // que calcula el servidor desde las líneas (ver lib/portal/invoices.ts).
+  const recalc = () => {
+    let subtotal = 0
+    itemsEl.querySelectorAll('.item').forEach((row) => {
+      const qty = Number(row.querySelector('.qty').value) || 0
+      const price = Number(row.querySelector('.price').value) || 0
+      subtotal += Math.round(qty * Math.round(price * 100))
+    })
+    const tax = Number(document.getElementById('taxRate').value) || 0
+    totalEl.textContent = fmt(subtotal + Math.round(subtotal * tax))
+  }
+
+  const addItem = () => {
+    const row = document.createElement('div')
+    row.className = 'item grid grid-cols-[1fr_70px_110px_auto] gap-2 items-center'
+    row.innerHTML = `
+      <input type="text" class="desc input-base w-full text-[13px]" placeholder="Concepto" required />
+      <input type="number" class="qty input-base w-full text-[13px]" value="1" min="0.01" step="0.01" required />
+      <input type="number" class="price input-base w-full text-[13px]" placeholder="Precio" min="0" step="1" required />
+      <button type="button" class="del w-7 h-7 rounded-lg text-ink-300 hover:text-ember hover:bg-white/[.06] transition-colors">×</button>
+    `
+    row.querySelector('.del').addEventListener('click', () => {
+      row.remove()
+      recalc()
+    })
+    row.querySelectorAll('input').forEach((i) => i.addEventListener('input', recalc))
+    itemsEl.appendChild(row)
+  }
+
+  const syncProjects = () => {
+    const clientId = Number(document.getElementById('clientId').value)
+    const sel = document.getElementById('projectId')
+    sel.innerHTML = '<option value="">Sin proyecto</option>'
+    projectRows
+      .filter((p) => p.clientId === clientId)
+      .forEach((p) => {
+        const o = document.createElement('option')
+        o.value = p.id
+        o.textContent = p.title
+        sel.appendChild(o)
+      })
+  }
+
+  document.getElementById('btn-new')?.addEventListener('click', () => {
+    errorEl.classList.add('hidden')
+    itemsEl.innerHTML = ''
+    addItem()
+    syncProjects()
+    recalc()
+    dlg.showModal()
+  })
+
+  document.getElementById('cancel')?.addEventListener('click', () => dlg.close())
+  document.getElementById('add-item')?.addEventListener('click', addItem)
+  document.getElementById('clientId')?.addEventListener('change', syncProjects)
+  document.getElementById('taxRate')?.addEventListener('change', recalc)
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    errorEl.classList.add('hidden')
+    const save = document.getElementById('save')
+    save.disabled = true
+
+    const items = [...itemsEl.querySelectorAll('.item')].map((row) => ({
+      description: row.querySelector('.desc').value,
+      quantity: Number(row.querySelector('.qty').value),
+      unitPrice: Number(row.querySelector('.price').value),
+    }))
+
+    const fd = new FormData(form)
+    const res = await fetch('/api/admin/portal/facturas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clientId: Number(fd.get('clientId')),
+        projectId: fd.get('projectId') ? Number(fd.get('projectId')) : null,
+        dueAt: fd.get('dueAt') || null,
+        taxRate: Number(fd.get('taxRate')),
+        notes: fd.get('notes'),
+        items,
+      }),
+    })
+
+    if (res.ok) {
+      window.location.reload()
+      return
+    }
+    const body = await res.json().catch(() => ({}))
+    errorEl.textContent = body.error ?? 'No se pudo crear la factura.'
+    errorEl.classList.remove('hidden')
+    save.disabled = false
+  })
+
+  const patch = async (invoiceId, action) => {
+    const res = await fetch('/api/admin/portal/facturas', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoiceId, action }),
+    })
+    if (res.ok) window.location.reload()
+    else {
+      const body = await res.json().catch(() => ({}))
+      alert(body.error ?? 'No se pudo completar la acción.')
+    }
+  }
+
+  document.querySelectorAll('.issue').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // Emitir manda correo al cliente: no es una acción que quiera disparar
+      // por un clic accidental.
+      if (confirm('¿Emitir la factura y avisar al cliente por correo?')) patch(Number(btn.dataset.id), 'issue')
+    })
+  })
+
+  document.querySelectorAll('.void').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (confirm('¿Anular esta factura? El cliente la verá como anulada.')) patch(Number(btn.dataset.id), 'void')
+    })
+  })
+</script>
