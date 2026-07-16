@@ -1,0 +1,214 @@
+---
+import '../styles/global.css'
+import { resolvePhoneFromLink } from '../lib/mis-pagos'
+import { historyForPhone } from '../lib/cobros-db'
+import { fmtCOP } from '../lib/cobros'
+import { formatPhone, maskPhone } from '../lib/phone'
+import { STATUS_LABELS, type PaymentStatus } from '../lib/payments-state'
+
+// Histórico de pagos del cliente. Dos modos:
+//  · Con el link firmado (?r=&t=): historial completo de ese teléfono.
+//  · Sin él: formulario que consulta una vista enmascarada (ver la API).
+// Ver docs/plan-cobrar.md.
+
+const url = Astro.url
+const resolved = await resolvePhoneFromLink(
+  url.searchParams.get('r'),
+  url.searchParams.get('t'),
+  process.env.COBRO_HISTORY_SECRET,
+)
+
+const pagos = resolved.ok ? await historyForPhone(resolved.phone) : []
+const totalPagado = pagos
+  .filter((p) => p.status === 'approved')
+  .reduce((sum, p) => sum + p.amountCents, 0)
+
+// Con datos personales dentro, esta página no puede quedar en la CDN ni en el
+// caché del navegador de un locutorio.
+Astro.response.headers.set('Cache-Control', 'no-store, private')
+
+// Un link con token inválido no explica qué falló: decir "el token no coincide"
+// le confirmaría al que prueba que el identificador sí existe.
+const linkRoto = !resolved.ok && resolved.reason !== 'sin_params'
+
+const badge: Record<string, string> = {
+  approved: 'text-emerald-300 bg-emerald-400/10 border-emerald-400/20',
+  created: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
+  pending: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
+  declined: 'text-red-300 bg-red-400/10 border-red-400/20',
+  error: 'text-red-300 bg-red-400/10 border-red-400/20',
+  voided: 'text-ink-300 bg-white/5 border-white/10',
+}
+
+const fecha = (d: Date | null) =>
+  d?.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) ?? '—'
+
+const WHATSAPP = 'https://wa.me/573104641228'
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#09090b" />
+    <title>Mis pagos — CodeByMike</title>
+  </head>
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen">
+    <main class="max-w-[520px] mx-auto px-5 pt-12 pb-24">
+      <header class="mb-8">
+        <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300">CodeByMike</div>
+        <h1 class="text-3xl font-medium tracking-[-.03em] mt-1">
+          Mis <span class="italic font-serif font-normal text-mask-cyan">pagos</span>
+        </h1>
+      </header>
+
+      {resolved.ok ? (
+        <div>
+          <div class="flex items-baseline justify-between mb-6 pb-6 border-b border-white/10">
+            <div>
+              <div class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 mb-1">Total pagado</div>
+              <div class="text-3xl font-medium tabular-nums tracking-[-.02em]">{fmtCOP(totalPagado)}</div>
+            </div>
+            <div class="text-right text-[12px] font-mono text-ink-400">
+              {formatPhone(resolved.phone)}
+            </div>
+          </div>
+
+          {pagos.length === 0 ? (
+            <p class="text-[14px] text-ink-300 text-center py-12">
+              Todavía no hay pagos registrados con este número.
+            </p>
+          ) : (
+            <ul class="space-y-2">
+              {pagos.map((p) => (
+                <li class="p-4 rounded-xl border border-white/10 bg-white/[.02] flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="text-[17px] font-medium tabular-nums">{fmtCOP(p.amountCents)}</div>
+                    {p.description && <div class="text-[13px] text-ink-300 truncate">{p.description}</div>}
+                    <div class="text-[11px] font-mono text-ink-400 mt-1">
+                      {fecha(p.createdAt)} · {p.reference}
+                    </div>
+                  </div>
+                  <span class={`shrink-0 px-2 py-.5 rounded-md border text-[11px] font-mono ${badge[p.status] ?? 'text-ink-300 bg-white/5 border-white/10'}`}>
+                    {STATUS_LABELS[p.status as PaymentStatus]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p class="mt-10 text-[12px] text-ink-400 text-center leading-relaxed">
+            Este link es personal: no lo compartas.<br />
+            ¿Algo no cuadra? <a href={WHATSAPP} target="_blank" rel="noopener" class="text-cyan hover:underline">Escríbeme</a>.
+          </p>
+        </div>
+      ) : (
+        <div>
+          {linkRoto && (
+            <div class="mb-6 p-4 rounded-xl border border-amber-400/25 bg-amber-400/5 text-[13px] text-amber-200/90">
+              Este link no es válido o caducó. Consulta con tu número o pídeme uno nuevo.
+            </div>
+          )}
+
+          <p class="text-[14px] text-ink-100 leading-relaxed mb-8">
+            Consulta tus pagos con el número donde recibiste el cobro. Por privacidad
+            verás un resumen; el detalle completo está en el link que te envío por
+            WhatsApp con cada cobro.
+          </p>
+
+          <form id="lookup-form" class="space-y-4">
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] text-ink-300 font-mono pointer-events-none">+57</span>
+              <input
+                id="phone" type="tel" inputmode="tel" autocomplete="tel" required
+                placeholder="310 464 1228"
+                class="w-full h-14 pl-14 pr-4 rounded-xl bg-white/5 border border-white/10 text-[16px] focus:border-cyan/50 focus:outline-none"
+                aria-label="Tu número de celular"
+              />
+            </div>
+            <button
+              type="submit" id="btn-lookup"
+              class="w-full h-12 rounded-full bg-cyan text-ink-950 text-[15px] font-medium active:scale-[.98] transition-all shadow-glow disabled:opacity-60"
+            >
+              Consultar
+            </button>
+            <p id="status" class="text-[13px] text-center text-ink-300 font-mono min-h-5" role="status" aria-live="polite"></p>
+          </form>
+
+          <ul id="results" class="mt-8 space-y-2" hidden></ul>
+
+          <p id="cta" class="mt-8 text-[12px] text-ink-400 text-center leading-relaxed" hidden>
+            ¿Necesitas el detalle completo?
+            <a href={WHATSAPP} target="_blank" rel="noopener" class="text-cyan hover:underline">Pídeme tu link personal</a>.
+          </p>
+        </div>
+      )}
+    </main>
+
+    {!resolved.ok && (
+      <script>
+        const form = document.getElementById('lookup-form') as HTMLFormElement
+        const phoneEl = document.getElementById('phone') as HTMLInputElement
+        const btn = document.getElementById('btn-lookup') as HTMLButtonElement
+        const status = document.getElementById('status')!
+        const results = document.getElementById('results') as HTMLUListElement
+        const cta = document.getElementById('cta') as HTMLParagraphElement
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault()
+          btn.disabled = true
+          status.textContent = 'Consultando…'
+          results.hidden = true
+          try {
+            const res = await fetch('/api/mis-pagos/lookup', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phone: phoneEl.value }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error ?? 'no se pudo consultar')
+
+            results.innerHTML = ''
+            if (data.pagos.length === 0) {
+              status.textContent = 'No hay pagos registrados con ese número.'
+            } else {
+              status.textContent = ''
+              for (const p of data.pagos) {
+                const li = document.createElement('li')
+                li.className = 'p-4 rounded-xl border border-white/10 bg-white/[.02] flex items-center justify-between gap-3'
+                const fecha = p.fecha
+                  ? new Date(p.fecha).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '—'
+                // textContent en vez de innerHTML: los datos vienen del servidor,
+                // pero construir HTML a mano con valores es cómo empiezan los XSS.
+                const izq = document.createElement('div')
+                const monto = document.createElement('div')
+                monto.className = 'text-[17px] font-medium tabular-nums'
+                monto.textContent = p.monto
+                const f = document.createElement('div')
+                f.className = 'text-[11px] font-mono text-ink-400 mt-1'
+                f.textContent = fecha
+                izq.append(monto, f)
+
+                const estado = document.createElement('span')
+                estado.className = 'shrink-0 px-2 py-.5 rounded-md border border-white/10 bg-white/5 text-[11px] font-mono text-ink-300'
+                estado.textContent = p.estado
+
+                li.append(izq, estado)
+                results.appendChild(li)
+              }
+              results.hidden = false
+            }
+            cta.hidden = false
+          } catch (err) {
+            status.textContent = err instanceof Error ? err.message : 'error de conexión'
+          } finally {
+            btn.disabled = false
+          }
+        })
+      </script>
+    )}
+  </body>
+</html>
