@@ -4,12 +4,10 @@
 // Este módulo es solo-servidor.
 
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto'
+import { CODE_ALPHABET, CODE_LEN } from './cobros-codes'
 
-// Sin 0/O/1/I/L: el código se dicta por teléfono y se teclea a mano cuando el
-// link no se puede tocar. 31^6 ≈ 8.8e8 combinaciones; con rate limit en
-// /c/[code], adivinar uno es inviable. La unicidad la garantiza el UNIQUE de BD.
-export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-export const CODE_LEN = 6
+// 31^6 ≈ 8.8e8 combinaciones; con rate limit en /c/[code], adivinar un código
+// es inviable. La unicidad la garantiza el UNIQUE de BD, no la suerte.
 
 /** Código aleatorio con CSPRNG (randomInt, no Math.random). */
 export function newShortCode(len = CODE_LEN): string {
