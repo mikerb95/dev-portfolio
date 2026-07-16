@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, recogerErrores, test } from './fixtures'
 
 // Las páginas públicas renderizan de verdad en un navegador. Cubre lo que el
 // build no ve: una query que revienta en SSR, un script que falla, un layout
