@@ -1,0 +1,148 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="Seguridad & Accesibilidad">
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <p class="text-zinc-400 text-sm max-w-2xl">
+      Hallazgos de <strong class="text-zinc-300">análisis estático</strong> (npm audit, CodeQL) y
+      <strong class="text-zinc-300">accesibilidad</strong> (axe sobre las páginas públicas), reportados
+      por CI. Un hallazgo persiste entre corridas hasta que lo marcas <span class="text-emerald-400">resuelto</span>
+      o <span class="text-sky-400">aceptado</span> — la historia de "lo encontré y lo cerré", no un scan que se olvida.
+    </p>
+  </div>
+
+  <div id="summary" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6"></div>
+
+  <div class="mb-4 flex flex-wrap items-center gap-2 text-xs">
+    <span class="text-zinc-500">Filtrar:</span>
+    <button data-filter="all" class="filter px-2.5 py-1 rounded-md border border-zinc-700 text-zinc-300">Todos</button>
+    <button data-filter="open" class="filter px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-500">Abiertos</button>
+    <button data-filter="resolved" class="filter px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-500">Resueltos</button>
+    <button data-filter="accepted" class="filter px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-500">Aceptados</button>
+  </div>
+
+  <div id="findings" class="space-y-2">
+    <p class="text-zinc-600 text-sm">Cargando hallazgos…</p>
+  </div>
+</AdminLayout>
+
+<script>
+  type Finding = {
+    id: number; source: string; severity: string; title: string
+    description: string | null; route: string | null; ruleId: string | null
+    status: 'open' | 'resolved' | 'accepted'; note: string | null
+    firstSeenAt: string | null; lastSeenAt: string | null
+  }
+  type Summary = {
+    open: Record<string, number>; total: number; resolved: number; accepted: number
+  }
+
+  const esc = (v: unknown) =>
+    String(v ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
+
+  const SEV_CHIP: Record<string, string> = {
+    critical: 'bg-red-500/15 text-red-400 border-red-500/30',
+    high: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+    medium: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    low: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
+    info: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
+  }
+  const STATUS_CHIP: Record<string, string> = {
+    open: 'bg-red-500/10 text-red-400 border-red-500/20',
+    resolved: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    accepted: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+  }
+  const STATUS_LABEL: Record<string, string> = {
+    open: 'Abierto', resolved: 'Resuelto', accepted: 'Aceptado',
+  }
+  const fmt = new Intl.DateTimeFormat('es-CO', { month: 'short', day: 'numeric' })
+
+  let all: Finding[] = []
+  let filter = 'all'
+
+  function renderSummary(s: Summary) {
+    const cells: [string, number, string][] = [
+      ['Críticos', s.open.critical, 'text-red-400'],
+      ['Altos', s.open.high, 'text-orange-400'],
+      ['Medios', s.open.medium, 'text-amber-400'],
+      ['Resueltos', s.resolved, 'text-emerald-400'],
+      ['Aceptados', s.accepted, 'text-sky-400'],
+    ]
+    document.getElementById('summary')!.innerHTML = cells.map(([label, n, cls]) => `
+      <div class="rounded-xl border border-zinc-800 p-4">
+        <div class="font-mono text-2xl ${n > 0 ? cls : 'text-zinc-600'}">${n}</div>
+        <div class="text-[10px] uppercase tracking-wide text-zinc-500 mt-1">${label}</div>
+      </div>`).join('')
+  }
+
+  function renderFindings() {
+    const el = document.getElementById('findings')!
+    const rows = filter === 'all' ? all : all.filter((f) => f.status === filter)
+
+    if (!rows.length) {
+      el.innerHTML = `
+        <div class="rounded-xl border border-zinc-800 p-6 text-sm text-zinc-400 space-y-2">
+          <p class="text-zinc-200 font-medium">Sin hallazgos${filter !== 'all' ? ' en este filtro' : ''}.</p>
+          ${filter === 'all' ? `<p>Los reportan los workflows <span class="font-mono text-zinc-300">security.yml</span> y
+          <span class="font-mono text-zinc-300">a11y.yml</span>. Sin hallazgos = scan verde, no scan ausente.</p>` : ''}
+        </div>`
+      return
+    }
+
+    el.innerHTML = rows.map((f) => `
+      <div class="rounded-xl border border-zinc-800 p-4">
+        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+          <span class="px-2 py-0.5 rounded-md border text-[10px] uppercase tracking-wide ${SEV_CHIP[f.severity] ?? ''}">${esc(f.severity)}</span>
+          <span class="px-2 py-0.5 rounded-md border text-[10px] ${STATUS_CHIP[f.status]}">${STATUS_LABEL[f.status]}</span>
+          <span class="text-[10px] font-mono text-zinc-600">${esc(f.source)}</span>
+          ${f.route ? `<span class="text-[10px] font-mono text-zinc-500">${esc(f.route)}</span>` : ''}
+          <span class="ml-auto text-[10px] text-zinc-600">visto ${f.lastSeenAt ? fmt.format(new Date(f.lastSeenAt)) : '—'}</span>
+        </div>
+        <div class="text-sm text-zinc-200">${esc(f.title)}</div>
+        ${f.description ? `<div class="text-xs text-zinc-500 mt-1">${esc(f.description)}</div>` : ''}
+        ${f.note ? `<div class="text-xs text-zinc-400 mt-1.5 italic">Nota: ${esc(f.note)}</div>` : ''}
+        <div class="flex gap-2 mt-3">
+          ${f.status !== 'resolved' ? `<button data-act="resolved" data-id="${f.id}" class="act px-2.5 py-1 rounded-md bg-emerald-600/20 text-emerald-300 border border-emerald-600/30 text-xs hover:bg-emerald-600/30">Marcar resuelto</button>` : ''}
+          ${f.status !== 'accepted' ? `<button data-act="accepted" data-id="${f.id}" class="act px-2.5 py-1 rounded-md bg-sky-600/20 text-sky-300 border border-sky-600/30 text-xs hover:bg-sky-600/30">Aceptar riesgo</button>` : ''}
+          ${f.status !== 'open' ? `<button data-act="open" data-id="${f.id}" class="act px-2.5 py-1 rounded-md bg-zinc-700/40 text-zinc-300 border border-zinc-700 text-xs hover:bg-zinc-700/60">Reabrir</button>` : ''}
+        </div>
+      </div>`).join('')
+
+    el.querySelectorAll<HTMLButtonElement>('.act').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const status = b.dataset.act!
+        const note = status === 'open' ? null : prompt('Nota (opcional): ¿cómo se resolvió / por qué se acepta?') ?? null
+        b.disabled = true
+        await fetch('/api/admin/lab/security', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: Number(b.dataset.id), status, note }),
+        })
+        await load()
+      })
+    })
+  }
+
+  async function load() {
+    const res = await fetch('/api/admin/lab/security')
+    const { summary, findings } = await res.json()
+    all = findings
+    renderSummary(summary)
+    renderFindings()
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.filter').forEach((b) => {
+    b.addEventListener('click', () => {
+      filter = b.dataset.filter!
+      document.querySelectorAll<HTMLButtonElement>('.filter').forEach((x) => {
+        const on = x === b
+        x.className = `filter px-2.5 py-1 rounded-md border ${on ? 'border-zinc-700 text-zinc-300' : 'border-zinc-800 text-zinc-500'}`
+      })
+      renderFindings()
+    })
+  })
+
+  load()
+</script>

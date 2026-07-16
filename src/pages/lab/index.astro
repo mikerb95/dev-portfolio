@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { db } from '../../db'
-import { ciRuns, labExperiments, payments, paymentEvents } from '../../db/schema'
+import { ciRuns, labExperiments, payments, paymentEvents, securityFindings } from '../../db/schema'
 import { desc, gte, sql } from 'drizzle-orm'
 
 // Vitrina pública del LAB. Expone SOLO datos agregados o públicos por naturaleza
