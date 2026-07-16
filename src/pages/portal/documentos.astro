@@ -1,0 +1,197 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro'
+import { CATEGORY_LABELS, clientDocuments, MAX_UPLOAD_BYTES } from '../../lib/portal/documents'
+import { clientProjects } from '../../lib/portal/projects'
+import { formatBytes, formatDate } from '../../lib/portal/format'
+
+const { user, client } = Astro.locals.portal!
+
+if (user.role === 'billing') return Astro.redirect('/portal')
+
+const [docs, projects] = await Promise.all([clientDocuments(client.id), clientProjects(client.id)])
+
+const CATEGORY_STYLE: Record<string, string> = {
+  contrato: 'bg-violet/10 text-violet border-violet/25',
+  entregable: 'bg-cyan/10 text-cyan border-cyan/25',
+  factura: 'bg-lime/10 text-lime border-lime/25',
+  acta: 'bg-ember/10 text-ember border-ember/25',
+  otro: 'bg-white/[.04] text-ink-200 border-white/10',
+}
+
+const maxMb = MAX_UPLOAD_BYTES / 1024 / 1024
+---
+
+<PortalLayout title="Documentos" section="documentos">
+  <div class="flex justify-between items-center mb-6 gap-3">
+    <p class="text-ink-200 text-sm">
+      {docs.length === 0 ? 'Sin documentos' : `${docs.length} documento${docs.length !== 1 ? 's' : ''}`}
+    </p>
+    <button
+      id="btn-upload"
+      class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-white/[.03] border border-white/10 text-ink-50 hover:bg-white/[.06] transition-colors"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+      Subir documento
+    </button>
+  </div>
+
+  {docs.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-100 mb-1">Todavía no hay documentos compartidos.</p>
+      <p class="text-ink-300 text-sm">Aquí aparecerán contratos, entregables y actas, con su historial de versiones.</p>
+    </div>
+  ) : (
+    <div class="glass rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/5 text-ink-300 text-left text-[11px] font-mono uppercase tracking-wider">
+              <th class="px-4 py-3 font-medium">Documento</th>
+              <th class="px-4 py-3 font-medium">Categoría</th>
+              <th class="px-4 py-3 font-medium">Proyecto</th>
+              <th class="px-4 py-3 font-medium">Tamaño</th>
+              <th class="px-4 py-3 font-medium">Fecha</th>
+              <th class="px-4 py-3 font-medium" />
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {docs.map((d) => (
+              <tr class="text-ink-100 hover:bg-white/[.02] transition-colors">
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2">
+                    <span class="text-ink-50 text-[13px]">{d.title}</span>
+                    {d.version > 1 && (
+                      <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/[.06] text-ink-200">
+                        v{d.version}
+                      </span>
+                    )}
+                  </div>
+                  {d.uploadedBy === 'client' && (
+                    <p class="text-[11px] text-ink-300 mt-0.5">Subido por {d.uploaderName ?? 'tu equipo'}</p>
+                  )}
+                </td>
+                <td class="px-4 py-3">
+                  <span class:list={['px-2 py-0.5 rounded-full border text-[11px] font-mono', CATEGORY_STYLE[d.category] ?? '']}>
+                    {CATEGORY_LABELS[d.category]}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-ink-200 text-[13px]">{d.projectTitle ?? '—'}</td>
+                <td class="px-4 py-3 font-mono text-[12px] text-ink-200">{formatBytes(d.sizeBytes)}</td>
+                <td class="px-4 py-3 text-ink-200 text-[13px]">{formatDate(d.createdAt)}</td>
+                <td class="px-4 py-3 text-right">
+                  {/*
+                    Enlace a nuestro endpoint, nunca a la URL del blob: allí se
+                    valida la sesión y el tenant antes de firmar una URL de 5
+                    minutos. Poner el blob aquí lo haría compartible para siempre.
+                  */}
+                  <a
+                    href={`/api/portal/documentos/${d.id}`}
+                    class="inline-flex items-center gap-1.5 h-7 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-50 hover:bg-white/[.06] transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    Descargar
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+
+  <dialog id="dlg" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">
+    <form id="form" class="glass-strong rounded-2xl p-5 w-[min(92vw,440px)] text-left">
+      <h2 class="text-[16px] font-medium text-ink-50 mb-4">Subir documento</h2>
+
+      <div class="space-y-3">
+        <div>
+          <label for="title" class="block text-[12px] font-medium text-ink-100 mb-1.5">Título</label>
+          <input type="text" id="title" name="title" required maxlength="200" class="input-base w-full" placeholder="Contrato firmado" />
+        </div>
+
+        <div>
+          <label for="category" class="block text-[12px] font-medium text-ink-100 mb-1.5">Categoría</label>
+          <select id="category" name="category" class="input-base w-full">
+            <option value="contrato">Contrato</option>
+            <option value="entregable">Entregable</option>
+            <option value="acta">Acta</option>
+            <option value="otro" selected>Otro</option>
+          </select>
+        </div>
+
+        {projects.length > 0 && (
+          <div>
+            <label for="projectId" class="block text-[12px] font-medium text-ink-100 mb-1.5">Proyecto (opcional)</label>
+            <select id="projectId" name="projectId" class="input-base w-full">
+              <option value="">Sin proyecto concreto</option>
+              {projects.map((p) => <option value={p.id}>{p.title}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div>
+          <label for="file" class="block text-[12px] font-medium text-ink-100 mb-1.5">Archivo</label>
+          <input
+            type="file"
+            id="file"
+            name="file"
+            required
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+            class="input-base w-full text-[12px] file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-white/[.06] file:text-ink-50 file:text-[12px] file:cursor-pointer"
+          />
+          <p class="mt-1.5 text-[11px] text-ink-300">PDF, imágenes, Office, texto o ZIP. Máximo {maxMb} MB.</p>
+        </div>
+      </div>
+
+      <p id="error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="cancel" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" id="send" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+          Subir
+        </button>
+      </div>
+    </form>
+  </dialog>
+</PortalLayout>
+
+<script>
+  const dlg = document.getElementById('dlg') as HTMLDialogElement
+  const form = document.getElementById('form') as HTMLFormElement
+  const errorEl = document.getElementById('error') as HTMLParagraphElement
+  const send = document.getElementById('send') as HTMLButtonElement
+
+  document.getElementById('btn-upload')?.addEventListener('click', () => {
+    errorEl.classList.add('hidden')
+    dlg.showModal()
+  })
+  document.getElementById('cancel')?.addEventListener('click', () => dlg.close())
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    errorEl.classList.add('hidden')
+    send.disabled = true
+    send.textContent = 'Subiendo…'
+
+    try {
+      // FormData directo, sin JSON: el archivo va como multipart y el navegador
+      // pone el boundary correcto solo si no fijamos Content-Type a mano.
+      const res = await fetch('/api/portal/documentos', { method: 'POST', body: new FormData(form) })
+      const body = await res.json().catch(() => ({}))
+      if (res.ok) {
+        window.location.reload()
+        return
+      }
+      errorEl.textContent = body.error ?? 'No se pudo subir el documento.'
+      errorEl.classList.remove('hidden')
+    } catch {
+      errorEl.textContent = 'Error de conexión. Inténtalo de nuevo.'
+      errorEl.classList.remove('hidden')
+    }
+    send.disabled = false
+    send.textContent = 'Subir'
+  })
+</script>
