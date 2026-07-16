@@ -322,3 +322,5 @@ Cada artículo: mismo formato del content collection actual, OG image
 - [ ] App ntfy en el celular suscrita al topic.
 - [ ] Verificar bóveda/P&L COP en prod (pendientes.md).
 - [ ] (Opcional) limpiar `DEV_USER`/`DEV_PASSWORD` de env.
+- [ ] **`TURSO_DEMO_URL` + `TURSO_DEMO_AUTH_TOKEN` en Vercel (Production)** — ya
+      están en `.env` local; sin ellas la demo no existe en prod (etapa 3).
