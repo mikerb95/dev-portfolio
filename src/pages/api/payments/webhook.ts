@@ -5,6 +5,7 @@ import {
   verifyWompiEventSignature,
 } from '../../../lib/payments'
 import { settlePaymentByReference, unsettlePaymentByReference } from '../../../lib/portal/settlement'
+import { notifyCobroPaid } from '../../../lib/cobros-notify'
 
 // Receptor de eventos de Wompi (transaction.updated). Verifica el checksum
 // firmado con WOMPI_EVENTS_SECRET antes de tocar nada.
