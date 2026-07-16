@@ -34,7 +34,6 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
-  globalSetup: './e2e/global-setup.ts',
   timeout: 30_000,
 
   use: {
