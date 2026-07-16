@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro'
 import { timingSafeEqual } from 'node:crypto'
 import { db } from '../../../db'
 import { ciRuns } from '../../../db/schema'
+import { normalizeFinding, parseAxeViolations, parseNpmAudit } from '../../../lib/lab/findings'
+import { autoResolveStale, ingestFindings } from '../../../lib/lab/findings-store'
 
 // Recibe artefactos generados por CI (métricas de runs, y a futuro k6/ZAP/Stryker).
 // Autenticado por token de máquina (LAB_INGEST_TOKEN), no por sesión: lo llama
