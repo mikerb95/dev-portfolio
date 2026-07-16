@@ -68,6 +68,10 @@ const STATUS_STYLE: Record<string, string> = {
           <tbody class="divide-y divide-white/5">
             {rows.map((inv) => {
               const days = daysUntil(inv.dueAt, now)
+              // Se calcula aquí, en JS, y no dentro del template: el parser de
+              // Astro lee un `<` en una expresión JSX como la apertura de una
+              // etiqueta y rompe el build.
+              const dueSoon = inv.status === 'sent' && days !== null && days >= 0 && days <= 7
               return (
                 <tr class="text-ink-100 hover:bg-white/[.02] transition-colors">
                   <td class="px-4 py-3">
