@@ -1,0 +1,60 @@
+---
+// Salud del servicio del cliente, medida por mis propios monitores (los mismos
+// que alimentan /status). Es el dato que casi ningún proveedor le enseña a su
+// cliente, y por eso es el que más confianza construye: se muestra tal cual,
+// incluyendo cuando está en rojo.
+import type { ServiceHealth } from '../../lib/portal/projects'
+import { relativeTime } from '../../lib/portal/format'
+
+interface Props {
+  health: ServiceHealth
+}
+
+const { health } = Astro.props
+
+const STATUS = {
+  up: { label: 'Operativo', color: 'text-lime', dot: 'bg-lime', border: 'border-lime/25', bg: 'bg-lime/[.07]' },
+  degraded: { label: 'Degradado', color: 'text-ember', dot: 'bg-ember', border: 'border-ember/25', bg: 'bg-ember/[.07]' },
+  down: { label: 'Caído', color: 'text-ember', dot: 'bg-ember', border: 'border-ember/30', bg: 'bg-ember/[.10]' },
+  unknown: { label: 'Sin datos', color: 'text-ink-200', dot: 'bg-ink-300', border: 'border-white/10', bg: 'bg-white/[.02]' },
+} as const
+
+const s = STATUS[health.status]
+---
+
+<div class:list={['rounded-2xl border p-4', s.border, s.bg]}>
+  <div class="flex items-center justify-between gap-2">
+    <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Estado del servicio</p>
+    <span class:list={['inline-flex items-center gap-1.5 text-[11px] font-mono', s.color]}>
+      <span class:list={['w-1.5 h-1.5 rounded-full', s.dot, health.status === 'up' && 'pulse-dot']} />
+      {s.label}
+    </span>
+  </div>
+
+  <div class="mt-4 grid grid-cols-2 gap-3">
+    <div>
+      <p class="text-[20px] font-medium tracking-tight text-ink-50 font-mono">
+        {health.uptimePct === null ? '—' : `${health.uptimePct}%`}
+      </p>
+      <p class="text-[11px] text-ink-300">Uptime · 30 días</p>
+    </div>
+    <div>
+      <p class="text-[20px] font-medium tracking-tight text-ink-50 font-mono">
+        {health.avgLatencyMs === null ? '—' : `${health.avgLatencyMs}`}
+        {health.avgLatencyMs !== null && <span class="text-[12px] text-ink-300"> ms</span>}
+      </p>
+      <p class="text-[11px] text-ink-300">Respuesta media</p>
+    </div>
+  </div>
+
+  {health.openIncidents > 0 && (
+    <p class="mt-3 pt-3 border-t border-white/10 text-[12px] text-ember">
+      {health.openIncidents} incidente{health.openIncidents !== 1 ? 's' : ''} abierto{health.openIncidents !== 1 ? 's' : ''} · estoy en ello
+    </p>
+  )}
+
+  <p class="mt-3 pt-3 border-t border-white/10 text-[11px] font-mono text-ink-300">
+    {health.monitorCount} monitor{health.monitorCount !== 1 ? 'es' : ''} activo{health.monitorCount !== 1 ? 's' : ''}
+    {health.lastCheckedAt && ` · último chequeo ${relativeTime(health.lastCheckedAt)}`}
+  </p>
+</div>
