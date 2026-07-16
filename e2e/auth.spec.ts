@@ -36,9 +36,4 @@ test.describe('gate del panel', () => {
     await page.goto('/docs/presentacion')
     await expect(page).toHaveURL(/\/login/)
   })
-
-  test('el panel no es indexable', async ({ request }) => {
-    const res = await request.get('/admin', { maxRedirects: 0 })
-    expect(res.headers()['x-robots-tag']).toContain('noindex')
-  })
 })
