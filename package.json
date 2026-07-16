@@ -16,6 +16,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "seed:demo": "node scripts/seed-demo.mjs",
     "seo:indexnow": "node scripts/submit-indexnow.mjs",
     "og:generate": "node scripts/og/generate.mjs"
   },
