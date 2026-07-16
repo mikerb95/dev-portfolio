@@ -1,59 +1,16 @@
-// Cobros de campo: código corto del link, token del histórico y plantilla del
-// mensaje de WhatsApp. Puro (node:crypto) y testeable: sin BD ni red.
+// Cobros de campo: vencimiento, formato de dinero y plantilla del mensaje de
+// WhatsApp. Puro y SIN `node:crypto`: /cobrar importa estas funciones también
+// en el navegador para regenerar el mensaje al reenviar un cobro.
+// La parte criptográfica (código corto, tokens) vive en cobros-crypto.ts.
 // Ver docs/plan-cobrar.md.
 
-import { createHmac, randomInt, timingSafeEqual } from 'node:crypto'
 import { isTerminal, type PaymentStatus } from './payments-state'
+import { CODE_ALPHABET, CODE_LEN } from './cobros-codes'
 
-// ── Código corto del link ───────────────────────────────────────────────────
-
-// Sin 0/O/1/I/L: el código se dicta por teléfono y se teclea a mano cuando el
-// link no se puede tocar. 32^6 ≈ 1.07e9 combinaciones; con rate limit en
-// /c/[code], adivinar uno es inviable. La unicidad la garantiza el UNIQUE de BD.
-const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-const CODE_LEN = 6
-
-/** Código aleatorio con CSPRNG (randomInt, no Math.random). */
-export function newShortCode(len = CODE_LEN): string {
-  let out = ''
-  for (let i = 0; i < len; i++) out += ALPHABET[randomInt(ALPHABET.length)]
-  return out
-}
-
-const CODE_RE = new RegExp(`^[${ALPHABET}]{${CODE_LEN}}$`)
+const CODE_RE = new RegExp(`^[${CODE_ALPHABET}]{${CODE_LEN}}$`)
 
 /** Valida la forma del código antes de tocar la BD (filtra sondeos baratos). */
 export const isValidShortCode = (s: unknown): s is string => typeof s === 'string' && CODE_RE.test(s)
-
-// ── Token del histórico (/mis-pagos?t=) ─────────────────────────────────────
-
-/**
- * HMAC-SHA256(teléfono) truncado a 16 bytes. Prueba que quien abre el link lo
- * recibió de mí: un teléfono no es una credencial (cualquiera conoce números
- * ajenos), el token sí. 128 bits es de sobra contra fuerza bruta y cabe en un
- * mensaje de WhatsApp sin verse absurdo.
- */
-export function historyToken(phone: string, secret: string): string {
-  return createHmac('sha256', secret).update(`mis-pagos:${phone}`, 'utf8').digest('hex').slice(0, 32)
-}
-
-/** Comparación en tiempo constante: un `===` filtraría el token por timing. */
-export function verifyHistoryToken(phone: string, token: unknown, secret: string): boolean {
-  if (typeof token !== 'string') return false
-  const expected = historyToken(phone, secret)
-  const a = Buffer.from(expected, 'utf8')
-  const b = Buffer.from(token, 'utf8')
-  return a.length === b.length && timingSafeEqual(a, b)
-}
-
-/**
- * El token vive en la URL, así que el teléfono NO puede ir también en claro
- * (quedaría en historiales y logs). El link lleva un identificador opaco del
- * teléfono y el token; el servidor busca por este identificador.
- */
-export function phoneRef(phone: string, secret: string): string {
-  return createHmac('sha256', secret).update(`ref:${phone}`, 'utf8').digest('hex').slice(0, 16)
-}
 
 // ── Vencimiento ─────────────────────────────────────────────────────────────
 
@@ -115,7 +72,7 @@ export function fmtCOP(cents: number): string {
 }
 
 /**
- * Monto enmascarado para la vista sin token: '$ ***.500'. Conserva los últimos
+ * Monto enmascarado para la vista sin token: '$ •••.500'. Conserva los últimos
  * 3 dígitos para que el dueño reconozca su pago sin publicar el valor a un
  * tercero que solo tecleó un número de celular.
  */
@@ -132,7 +89,8 @@ export type MessageInput = {
   amountCents: number
   concept?: string | null
   payUrl: string
-  historyUrl: string
+  /** Link firmado del histórico. Ausente al reenviar: el cliente ya lo recibió. */
+  historyUrl?: string | null
   expiresAt: Date | null
 }
 
@@ -153,13 +111,16 @@ export function buildWhatsAppMessage(input: MessageInput): string {
         minute: '2-digit',
       })}.`
     : ''
+  const historial = input.historyUrl
+    ? `\n\nPuedes ver el historial de tus pagos aquí:\n${input.historyUrl}`
+    : ''
 
   return (
     `${saludo}\n\n` +
     `Te comparto el link para el pago de ${fmtCOP(input.amountCents)}${concepto}:\n` +
     `${input.payUrl}\n` +
-    `${vence}\n\n` +
-    `Puedes ver el historial de tus pagos aquí:\n${input.historyUrl}\n\n` +
+    `${vence}` +
+    `${historial}\n\n` +
     `Gracias,\nMike — CodeByMike`
   )
 }
