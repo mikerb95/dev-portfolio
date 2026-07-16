@@ -12,6 +12,8 @@ propio** sobre capas gratuitas.
 
 | Página | Qué demuestra |
 |---|---|
+| [/demo](https://codebymike.tech/demo) | **El panel completo con datos ficticios**, sin registro: costos y P&L, clientes, monitoreo. Solo lectura, sobre una base de datos aparte |
+| [/lab](https://codebymike.tech/lab) | Laboratorio: pipeline CI/CD con rollback, chaos engineering y ataques controlados a la pasarela, con resultados reales |
 | [/status](https://codebymike.tech/status) | Uptime real de 8 monitores propios (motor de checks + incidentes + SSL), SLOs y error budget |
 | [/security](https://codebymike.tech/security) | Micro-SIEM propio: intentos de intrusión detectados/bloqueados (agregados en vivo), arquitectura de 4 capas |
 | [/notes](https://codebymike.tech/notes) | Artículos técnicos: chaos engineering, SLOs, micro-SIEM, sesiones revocables, RAG… |
