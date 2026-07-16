@@ -1,18 +1,24 @@
 #!/usr/bin/env node
 /**
- * Puebla la base de la DEMO del panel con datos ficticios.
+ * Puebla una base con datos ficticios: la DEMO del panel, o las bases de los
+ * tests e2e.
  *
- *   node scripts/seed-demo.mjs
+ *   node scripts/seed-demo.mjs                    # → TURSO_DEMO_URL (la demo)
+ *   SEED_TARGET_URL=file:/tmp/x.db \
+ *   SEED_PREFIX='CENTINELA ' node scripts/seed-demo.mjs   # → otra base
  *
- * Lee TURSO_DEMO_URL / TURSO_DEMO_AUTH_TOKEN de .env. Aplica las migraciones de
- * drizzle/ y siembra clientes, proyectos, costos, finanzas, seguimiento,
- * monitores con 90 días de historial, corridas de CI y experimentos del LAB.
+ * Aplica las migraciones de drizzle/ y siembra clientes, proyectos, costos,
+ * finanzas, seguimiento, monitores con 90 días de historial, corridas de CI y
+ * experimentos del LAB.
  *
- * Es IDEMPOTENTE: vacía las tablas que siembra antes de insertar, así que se
- * puede correr las veces que haga falta.
+ * `SEED_PREFIX` antepone un texto a los nombres de clientes, proyectos y
+ * monitores. Los e2e lo usan para sembrar la base "real" de prueba con nombres
+ * marcados y así poder afirmar que la demo NUNCA los muestra.
  *
- * Salvaguarda: se niega a correr si la URL destino coincide con TURSO_DATABASE_URL
- * (la base real). El aislamiento de la demo depende de que sean bases distintas.
+ * Es IDEMPOTENTE: arrasa el esquema y lo recrea con el migrador de drizzle.
+ *
+ * Salvaguarda: se niega a correr contra TURSO_DATABASE_URL (la base real). El
+ * aislamiento de la demo depende de que sean bases distintas.
  */
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
