@@ -4,7 +4,8 @@
 import { and, desc, eq, inArray, isNotNull } from 'drizzle-orm'
 import { db } from '../db'
 import { clients, payments } from '../db/schema'
-import { newShortCode, expiryDate, type ExpiryOption } from './cobros'
+import { expiryDate, type ExpiryOption } from './cobros'
+import { newShortCode } from './cobros-crypto'
 import { createPaymentIdempotent, applyGatewayEvent, type Payment } from './payments'
 import { normalizePhone } from './phone'
 
