@@ -157,7 +157,7 @@ async function seed() {
       sql: `insert into projects
         (slug, title, description, tech_stack, status, client_id, visible, start_date, created_at, internal_notes)
         values (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
-      args: [slug, title, description, stack, status, clientId, daysAgo(startedDaysAgo), daysAgo(startedDaysAgo), 'Datos de demostración.'],
+      args: [slug, PREFIX + title, description, stack, status, clientId, daysAgo(startedDaysAgo), daysAgo(startedDaysAgo), 'Datos de demostración.'],
     }))
   )
 
