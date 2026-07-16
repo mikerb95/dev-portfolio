@@ -31,7 +31,7 @@
 | 1 | ✅ README renovado | mejora | ~1 h |
 | 2 | ✅ `/lab` público (vitrina del LAB) | feature | ~1 sesión |
 | 3 | ✅ Demo read-only del admin | feature grande | ~2-3 sesiones |
-| 4 | Playwright e2e | infra de calidad | ~1-2 sesiones |
+| 4 | ✅ Playwright e2e | infra de calidad | ~1-2 sesiones |
 | 5 | LAB Fase 6 — SAST + a11y | LAB | ~2-3 días |
 | 6 | LAB Fase 7 — Mutation + contratos | LAB | ~2 días |
 | 7 | LAB Fase 5 — Load testing k6 | LAB | ~2 días |
