@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 // El gate de /admin. Si algo de esto se pone verde por accidente, el panel
 // quedó abierto: son los tests que más importa que fallen ruidosamente.
