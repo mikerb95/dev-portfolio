@@ -10,6 +10,7 @@ import { clientIp } from '../../../../lib/ratelimit'
 import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
 import { getPortalSession } from '../../../../lib/portal/session'
 import { settlePaymentByReference } from '../../../../lib/portal/settlement'
+import { notifyCobroPaid } from '../../../../lib/cobros-notify'
 import { invoices } from '../../../../db/schema'
 
 // "Pasarela" simulada para el modo demo (sin llaves Wompi configuradas).
@@ -82,7 +83,10 @@ export const POST: APIRoute = async (context) => {
   // Mismo cierre que el webhook real: si el pago salda una factura del portal,
   // marcarla y avisar. Se pasa por aquí y no dentro de applyGatewayEvent para
   // que la pasarela siga sin saber que las facturas existen.
-  if (final.applied && final.statusAfter === 'approved') await settlePaymentByReference(reference)
+  if (final.applied && final.statusAfter === 'approved') {
+    await settlePaymentByReference(reference)
+    await notifyCobroPaid(reference)
+  }
 
   return json(200, { ok: true, status: final.statusAfter, steps: [pending, final] })
 }
