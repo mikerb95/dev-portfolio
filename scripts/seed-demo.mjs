@@ -29,25 +29,34 @@ import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
-const env = Object.fromEntries(
-  readFileSync(join(root, '.env'), 'utf8')
-    .split('\n')
-    .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
-    .map((l) => {
-      const i = l.indexOf('=')
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^["']|["']$/g, '')]
-    })
-)
+// El .env es opcional: en CI las bases de prueba llegan por SEED_TARGET_URL.
+let env = {}
+try {
+  env = Object.fromEntries(
+    readFileSync(join(root, '.env'), 'utf8')
+      .split('\n')
+      .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
+      .map((l) => {
+        const i = l.indexOf('=')
+        return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^["']|["']$/g, '')]
+      })
+  )
+} catch {
+  // Sin .env local; se usa solo el entorno.
+}
 
-const url = process.env.TURSO_DEMO_URL || env.TURSO_DEMO_URL
-const authToken = process.env.TURSO_DEMO_AUTH_TOKEN || env.TURSO_DEMO_AUTH_TOKEN
+const url = process.env.SEED_TARGET_URL || process.env.TURSO_DEMO_URL || env.TURSO_DEMO_URL
+const authToken =
+  process.env.SEED_TARGET_TOKEN || process.env.TURSO_DEMO_AUTH_TOKEN || env.TURSO_DEMO_AUTH_TOKEN
+const PREFIX = process.env.SEED_PREFIX || ''
 
 if (!url) {
-  console.error('✗ Falta TURSO_DEMO_URL (en .env o el entorno).')
+  console.error('✗ Falta TURSO_DEMO_URL (o SEED_TARGET_URL).')
   process.exit(1)
 }
-if (url === (process.env.TURSO_DATABASE_URL || env.TURSO_DATABASE_URL)) {
-  console.error('✗ TURSO_DEMO_URL apunta a la base REAL. Abortado.')
+const realUrl = process.env.TURSO_DATABASE_URL || env.TURSO_DATABASE_URL
+if (realUrl && url === realUrl) {
+  console.error('✗ El destino apunta a la base REAL. Abortado.')
   process.exit(1)
 }
 
