@@ -48,8 +48,6 @@ export const CATEGORY_LABELS: Record<string, string> = {
 
 export type Category = 'contrato' | 'entregable' | 'factura' | 'acta' | 'otro'
 
-/** URL firmada de vida corta: el tiempo justo para que el navegador descargue. */
-const SIGNED_URL_TTL_SEC = 300
 
 /**
  * Documentos vigentes del cliente. Excluye versiones superadas (están en el
