@@ -3,8 +3,7 @@
 // Ver docs/plan-cobrar.md.
 
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto'
-import { formatPhone } from './phone'
-import { isTerminal, type PaymentStatus } from './payments'
+import { isTerminal, type PaymentStatus } from './payments-state'
 
 // ── Código corto del link ───────────────────────────────────────────────────
 
