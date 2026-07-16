@@ -1,0 +1,291 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { db } from '../../../db'
+import { clients, clientUsers, invoices, portalThreads } from '../../../db/schema'
+import { count, desc, eq, sql } from 'drizzle-orm'
+import { emailConfigured } from '../../../lib/email'
+import { formatDate, relativeTime } from '../../../lib/portal/format'
+
+// Estado del portal por cliente: quién tiene acceso, quién lo usa y qué hay
+// pendiente. Es la vista desde la que doy de alta a un cliente nuevo.
+const rows = await db
+  .select({
+    id: clients.id,
+    name: clients.name,
+    company: clients.company,
+    email: clients.email,
+    portalEnabled: clients.portalEnabled,
+    createdAt: clients.createdAt,
+    userCount: sql<number>`(select count(*) from ${clientUsers} where ${clientUsers.clientId} = ${clients.id})`,
+    activeUsers: sql<number>`(select count(*) from ${clientUsers} where ${clientUsers.clientId} = ${clients.id} and ${clientUsers.status} = 'active')`,
+    lastLogin: sql<number | null>`(select max(${clientUsers.lastLoginAt}) from ${clientUsers} where ${clientUsers.clientId} = ${clients.id})`,
+    openInvoices: sql<number>`(select count(*) from ${invoices} where ${invoices.clientId} = ${clients.id} and ${invoices.status} in ('sent','overdue'))`,
+    openThreads: sql<number>`(select count(*) from ${portalThreads} where ${portalThreads.clientId} = ${clients.id} and ${portalThreads.status} = 'open')`,
+  })
+  .from(clients)
+  .orderBy(desc(clients.portalEnabled), desc(clients.createdAt))
+
+const enabled = rows.filter((r) => r.portalEnabled).length
+const mailReady = emailConfigured()
+
+const tableRows = rows.map((r) => ({
+  ...r,
+  lastLoginLabel: r.lastLogin ? relativeTime(new Date(r.lastLogin)) : null,
+  createdAtLabel: formatDate(r.createdAt),
+}))
+---
+
+<AdminLayout title="Portal de clientes">
+  {!mailReady && (
+    <div class="mb-6 rounded-xl border border-ember/25 bg-ember/[.07] px-4 py-3">
+      <p class="text-[13px] text-ember font-medium">Correo sin configurar</p>
+      <p class="mt-0.5 text-[12px] leading-relaxed text-ink-200">
+        Falta <code class="font-mono text-ink-100">RESEND_API_KEY</code>: las invitaciones no se enviarán por correo.
+        Puedes invitar igualmente y pasar el enlace a mano — se muestra al crear la invitación.
+      </p>
+    </div>
+  )}
+
+  <div class="flex justify-between items-center mb-6 gap-3">
+    <p class="text-ink-200 text-sm">
+      {enabled} de {rows.length} cliente{rows.length !== 1 ? 's' : ''} con portal activo
+    </p>
+    <div class="flex gap-2">
+      <a
+        href="/admin/portal/facturas"
+        class="inline-flex items-center h-9 px-4 text-[13px] font-medium rounded-full bg-white/[.03] border border-white/10 text-ink-50 hover:bg-white/[.06] transition-colors"
+      >
+        Facturas
+      </a>
+      <a
+        href="/admin/portal/mensajes"
+        class="inline-flex items-center h-9 px-4 text-[13px] font-medium rounded-full bg-white/[.03] border border-white/10 text-ink-50 hover:bg-white/[.06] transition-colors"
+      >
+        Bandeja
+      </a>
+    </div>
+  </div>
+
+  {rows.length === 0 ? (
+    <div class="glass rounded-2xl p-10 text-center">
+      <p class="text-ink-200 mb-1">No hay clientes registrados.</p>
+      <p class="text-ink-300 text-sm">
+        Crea uno en <a href="/admin/clients" class="text-cyan hover:underline">Clientes</a> y vuelve aquí para darle portal.
+      </p>
+    </div>
+  ) : (
+    <div class="glass rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/5 text-ink-300 text-left text-[11px] font-mono uppercase tracking-wider">
+              <th class="px-4 py-3 font-medium">Cliente</th>
+              <th class="px-4 py-3 font-medium">Portal</th>
+              <th class="px-4 py-3 font-medium">Usuarios</th>
+              <th class="px-4 py-3 font-medium">Últ. acceso</th>
+              <th class="px-4 py-3 font-medium">Pendiente</th>
+              <th class="px-4 py-3 font-medium" />
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {tableRows.map((c) => (
+              <tr class="text-ink-100 hover:bg-white/[.02] transition-colors">
+                <td class="px-4 py-3">
+                  <div class="font-medium text-ink-50">{c.company ?? c.name}</div>
+                  {c.email && <div class="text-[12px] text-ink-300">{c.email}</div>}
+                </td>
+                <td class="px-4 py-3">
+                  <button
+                    class="toggle inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-mono transition-colors"
+                    class:list={[
+                      c.portalEnabled
+                        ? 'bg-lime/10 border-lime/25 text-lime hover:bg-lime/20'
+                        : 'bg-white/[.04] border-white/10 text-ink-300 hover:bg-white/[.08]',
+                    ]}
+                    data-id={c.id}
+                    data-enabled={String(c.portalEnabled)}
+                  >
+                    <span class:list={['w-1.5 h-1.5 rounded-full', c.portalEnabled ? 'bg-lime' : 'bg-ink-300']} />
+                    {c.portalEnabled ? 'Activo' : 'Inactivo'}
+                  </button>
+                </td>
+                <td class="px-4 py-3 text-[13px]">
+                  {c.userCount === 0 ? (
+                    <span class="text-ink-300">Sin usuarios</span>
+                  ) : (
+                    <span class="text-ink-100">
+                      {c.activeUsers} activo{c.activeUsers !== 1 ? 's' : ''}
+                      {c.userCount > c.activeUsers && (
+                        <span class="text-ink-300"> · {c.userCount - c.activeUsers} pendiente(s)</span>
+                      )}
+                    </span>
+                  )}
+                </td>
+                <td class="px-4 py-3 text-[13px] text-ink-200">{c.lastLoginLabel ?? '—'}</td>
+                <td class="px-4 py-3 text-[13px]">
+                  <div class="flex gap-1.5">
+                    {c.openInvoices > 0 && (
+                      <span class="px-1.5 py-0.5 rounded bg-cyan/10 text-cyan text-[11px] font-mono">
+                        {c.openInvoices} fact.
+                      </span>
+                    )}
+                    {c.openThreads > 0 && (
+                      <span class="px-1.5 py-0.5 rounded bg-violet/10 text-violet text-[11px] font-mono">
+                        {c.openThreads} hilo(s)
+                      </span>
+                    )}
+                    {c.openInvoices === 0 && c.openThreads === 0 && <span class="text-ink-300">—</span>}
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <button
+                    class="invite h-7 px-3 rounded-full bg-cyan text-ink-950 text-[12px] font-semibold hover:bg-cyan-glow transition-colors"
+                    data-id={c.id}
+                    data-name={c.company ?? c.name}
+                    data-email={c.email ?? ''}
+                  >
+                    Invitar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+
+  <dialog id="dlg" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">
+    <form id="form" class="glass-strong rounded-2xl p-5 w-[min(92vw,440px)] text-left">
+      <h2 class="text-[16px] font-medium text-ink-50 mb-1">Invitar al portal</h2>
+      <p id="dlg-client" class="text-[12px] text-ink-300 mb-4" />
+
+      <input type="hidden" id="clientId" name="clientId" />
+
+      <div class="space-y-3">
+        <div>
+          <label for="email" class="block text-[12px] font-medium text-ink-100 mb-1.5">Correo</label>
+          <input type="email" id="email" name="email" required class="input-base w-full" placeholder="persona@empresa.com" />
+        </div>
+        <div>
+          <label for="name" class="block text-[12px] font-medium text-ink-100 mb-1.5">Nombre (opcional)</label>
+          <input type="text" id="name" name="name" maxlength="120" class="input-base w-full" />
+        </div>
+        <div>
+          <label for="role" class="block text-[12px] font-medium text-ink-100 mb-1.5">Rol</label>
+          <select id="role" name="role" class="input-base w-full">
+            <option value="owner" selected>Administrador — todo, incluida la gestión de su equipo</option>
+            <option value="member">Miembro — proyectos, mensajes y documentos</option>
+            <option value="billing">Facturación — solo facturas y pagos</option>
+          </select>
+        </div>
+      </div>
+
+      <p id="error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
+
+      <!-- Enlace de respaldo: se muestra siempre, no solo si el correo falla -->
+      <div id="result" class="hidden mt-4 rounded-xl border border-lime/25 bg-lime/[.07] p-3">
+        <p id="result-msg" class="text-[12px] text-lime font-medium" />
+        <p class="mt-2 text-[11px] text-ink-200">Enlace de invitación (72 h, un solo uso):</p>
+        <code id="result-url" class="mt-1 block text-[11px] font-mono text-ink-100 break-all bg-ink-950/50 rounded p-2" />
+        <button type="button" id="copy" class="mt-2 h-7 px-3 rounded-full bg-white/[.06] text-[11px] text-ink-50 hover:bg-white/[.1] transition-colors">
+          Copiar enlace
+        </button>
+      </div>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="close" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+          Cerrar
+        </button>
+        <button type="submit" id="send" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+          Enviar invitación
+        </button>
+      </div>
+    </form>
+  </dialog>
+</AdminLayout>
+
+<script>
+  const dlg = document.getElementById('dlg') as HTMLDialogElement
+  const form = document.getElementById('form') as HTMLFormElement
+  const errorEl = document.getElementById('error') as HTMLParagraphElement
+  const result = document.getElementById('result') as HTMLDivElement
+  const send = document.getElementById('send') as HTMLButtonElement
+
+  document.querySelectorAll('.invite').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const el = btn as HTMLButtonElement
+      ;(document.getElementById('clientId') as HTMLInputElement).value = el.dataset.id ?? ''
+      ;(document.getElementById('email') as HTMLInputElement).value = el.dataset.email ?? ''
+      document.getElementById('dlg-client')!.textContent = el.dataset.name ?? ''
+      errorEl.classList.add('hidden')
+      result.classList.add('hidden')
+      send.classList.remove('hidden')
+      dlg.showModal()
+    })
+  })
+
+  document.getElementById('close')?.addEventListener('click', () => {
+    dlg.close()
+    // Recargar solo si se invitó: el contador de usuarios cambió.
+    if (!result.classList.contains('hidden')) window.location.reload()
+  })
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    errorEl.classList.add('hidden')
+    send.disabled = true
+    send.textContent = 'Enviando…'
+
+    const data = Object.fromEntries(new FormData(form))
+    try {
+      const res = await fetch('/api/admin/portal/clientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, clientId: Number(data.clientId) }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (res.ok) {
+        document.getElementById('result-msg')!.textContent = body.emailSent
+          ? 'Invitación enviada por correo.'
+          : `Usuario creado, pero el correo NO salió (${body.emailError ?? 'motivo desconocido'}). Pasa el enlace a mano.`
+        document.getElementById('result-url')!.textContent = body.url
+        result.classList.remove('hidden')
+        send.classList.add('hidden')
+      } else {
+        errorEl.textContent = body.error ?? 'No se pudo invitar.'
+        errorEl.classList.remove('hidden')
+      }
+    } catch {
+      errorEl.textContent = 'Error de conexión.'
+      errorEl.classList.remove('hidden')
+    }
+    send.disabled = false
+    send.textContent = 'Enviar invitación'
+  })
+
+  document.getElementById('copy')?.addEventListener('click', async () => {
+    const url = document.getElementById('result-url')!.textContent ?? ''
+    await navigator.clipboard.writeText(url).catch(() => {})
+    const btn = document.getElementById('copy')!
+    btn.textContent = 'Copiado'
+    setTimeout(() => (btn.textContent = 'Copiar enlace'), 1500)
+  })
+
+  document.querySelectorAll('.toggle').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const el = btn as HTMLButtonElement
+      el.disabled = true
+      const res = await fetch('/api/admin/portal/clientes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: Number(el.dataset.id),
+          portalEnabled: el.dataset.enabled !== 'true',
+        }),
+      })
+      if (res.ok) window.location.reload()
+      else el.disabled = false
+    })
+  })
+</script>
