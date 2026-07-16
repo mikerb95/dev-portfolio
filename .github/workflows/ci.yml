@@ -57,6 +57,36 @@ jobs:
           echo "tests_failed=$FAILED" >> "$GITHUB_OUTPUT"
           echo "Cobertura: $COVERAGE% · Tests: $PASSED ok / $FAILED fallidos"
 
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Tests e2e
+        # Las bases son archivos libsql desechables que siembra el propio
+        # webServer (ver playwright.config.ts). No hace falta ningún secret.
+        run: npm run test:e2e
+
+      - name: Subir reporte si algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
   verify-production:
     name: Verificar deploy + rollback
     needs: quality
