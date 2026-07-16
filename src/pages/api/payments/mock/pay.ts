@@ -88,6 +88,19 @@ export const POST: APIRoute = async (context) => {
 }
 
 /**
+ * ¿Quien pide simular presenta el código corto de ESTE cobro? El código es un
+ * secreto de 6 chars que solo viaja en el WhatsApp del cliente, así que
+ * conocerlo equivale a haber recibido el link. Comparación en tiempo constante:
+ * un `===` permitiría adivinarlo carácter a carácter por timing.
+ */
+function provesCobroLink(given: unknown, payment: { source: string; shortCode: string | null }): boolean {
+  if (payment.source !== 'cobro' || !payment.shortCode || typeof given !== 'string') return false
+  const a = Buffer.from(payment.shortCode, 'utf8')
+  const b = Buffer.from(given, 'utf8')
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
+/**
  * ¿La sesión del portal (si la hay) es dueña de la factura que este pago salda?
  *
  * Es la condición que deja a un cliente completar su propio pago simulado sin
