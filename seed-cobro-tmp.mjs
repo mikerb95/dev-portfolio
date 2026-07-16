@@ -19,7 +19,7 @@ if (process.argv[2] === 'cleanup') {
   process.exit(0)
 }
 
-const codes = { activo: 'SMOKEA', vencido: 'SMOKEB', pagado: 'SMOKEC', anulado: 'SMOKED' }
+const codes = { activo: 'SMKEAA', vencido: 'SMKEBB', pagado: 'SMKECC', anulado: 'SMKEDD' }
 const now = Date.now()
 const rows = [
   ['smoke_act', codes.activo, 'created', now + 86400000],
