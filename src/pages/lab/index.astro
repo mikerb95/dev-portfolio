@@ -43,6 +43,19 @@ const [ciAgg] = await db
 const successRate30 = ciAgg.total > 0 ? Math.round((ciAgg.ok / ciAgg.total) * 1000) / 10 : null
 const lastCoverage = runs.find((r) => r.coveragePct != null)?.coveragePct ?? null
 
+// ── Hallazgos de seguridad/accesibilidad (agregados; sin título ni ruta) ────
+// Solo se publica el conteo por estado: cuántos hay abiertos vs. cerrados. El
+// detalle (qué es, dónde) vive en el panel — no le damos el mapa al atacante.
+const [findingsAgg] = await db
+  .select({
+    open: sql<number>`coalesce(sum(${securityFindings.status} = 'open'), 0)`,
+    resolved: sql<number>`coalesce(sum(${securityFindings.status} = 'resolved'), 0)`,
+    accepted: sql<number>`coalesce(sum(${securityFindings.status} = 'accepted'), 0)`,
+    total: sql<number>`count(*)`,
+  })
+  .from(securityFindings)
+const hasFindings = findingsAgg.total > 0
+
 // ── Experimentos (chaos + ataques a la pasarela) ────────────────────────────
 // Agrupado por tipo: un mismo experimento se corre muchas veces (13 corridas de
 // caída de BD ahogarían al resto en una lista cronológica). Lo que importa aquí
