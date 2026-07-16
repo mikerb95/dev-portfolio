@@ -168,7 +168,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
+  // `/cobrar` vive en la raíz (se teclea desde el celular en la calle) pero es
+  // panel: misma sesión, mismo trato que /admin. La ruta pública que genera es
+  // /c/[code], que no cae aquí. Ver docs/plan-cobrar.md.
+  const isAdmin =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/api/admin') ||
+    pathname === '/cobrar' ||
+    pathname.startsWith('/cobrar/')
 
   // El deck de sustentación tiene URL bajo /docs (la sección es pública) pero no
   // es público: solo lo ve la sesión del administrador. Se trata como ruta
