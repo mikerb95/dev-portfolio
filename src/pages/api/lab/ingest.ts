@@ -33,6 +33,8 @@ export const POST: APIRoute = async ({ request }) => {
     return json(400, { error: 'JSON inválido' })
   }
 
+  if (body.kind === 'security_finding') return ingestSecurityFindings(body)
+
   if (body.kind !== 'ci_run') return json(400, { error: `kind no soportado: ${body.kind}` })
 
   const sha = typeof body.sha === 'string' ? body.sha.slice(0, 40) : null
