@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env
 .env.production
 .env.example
+# Overrides locales (Astro/Vite los carga y pisan a .env): nunca al repo.
+.env.local
+.env.*.local
 
 # macOS-specific files
 .DS_Store
