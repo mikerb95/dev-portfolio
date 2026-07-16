@@ -1,11 +1,6 @@
 import type { APIRoute } from 'astro'
-import {
-  buildWhatsAppMessage,
-  historyToken,
-  phoneRef,
-  isValidExpiry,
-  DEFAULT_EXPIRY,
-} from '../../../../lib/cobros'
+import { buildWhatsAppMessage, isValidExpiry, DEFAULT_EXPIRY } from '../../../../lib/cobros'
+import { historyToken, phoneRef } from '../../../../lib/cobros-crypto'
 import { createCobro, listCobros } from '../../../../lib/cobros-db'
 import { normalizePhone, waLink } from '../../../../lib/phone'
 import { isValidIdempotencyKey } from '../../../../lib/payments'
