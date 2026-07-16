@@ -1,0 +1,151 @@
+---
+import '../../styles/global.css'
+import { isValidShortCode, isExpired, fmtCOP, timeLeft } from '../../lib/cobros'
+import { findByShortCode } from '../../lib/cobros-db'
+import { isTerminal, type PaymentStatus } from '../../lib/payments-state'
+
+// Link de pago que recibe el cliente por WhatsApp. Pública pero noindex: es un
+// cobro personal, no una página del sitio. Ver docs/plan-cobrar.md.
+
+const { code } = Astro.params
+
+// Se valida la FORMA antes de tocar la BD: un sondeo con basura no llega a
+// generar consulta. La respuesta es la misma que para un código inexistente,
+// así que tampoco revela cuáles existen.
+const payment = isValidShortCode(code) ? await findByShortCode(code) : null
+
+if (!payment) Astro.response.status = 404
+Astro.response.headers.set('Cache-Control', 'no-store')
+
+const vencido = payment ? isExpired(payment) : false
+const terminal = payment ? isTerminal(payment.status as PaymentStatus) : false
+const pagado = payment?.status === 'approved'
+const pagable = Boolean(payment) && !vencido && !terminal
+
+// El estado decide el mensaje: nunca se le dice "vencido" a un pago aprobado
+// ni se ofrece pagar algo que ya se pagó.
+const estado: { titulo: string; detalle: string } | null = !payment
+  ? { titulo: 'Cobro no encontrado', detalle: 'Este link no existe o ya no está disponible. Escríbeme por WhatsApp y te envío uno nuevo.' }
+  : pagado
+    ? { titulo: 'Este cobro ya fue pagado', detalle: `Recibido el ${payment.updatedAt?.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) ?? '—'}. Gracias.` }
+    : payment.status === 'voided'
+      ? { titulo: 'Cobro anulado', detalle: 'Este cobro fue anulado. Si crees que es un error, escríbeme por WhatsApp.' }
+      : terminal
+        ? { titulo: 'El pago no se completó', detalle: 'La transacción fue rechazada o falló. Pídeme un link nuevo para intentarlo otra vez.' }
+        : vencido
+          ? { titulo: 'Este link venció', detalle: 'Por seguridad los links de cobro caducan. Escríbeme y te envío uno nuevo al instante.' }
+          : null
+
+const WHATSAPP = 'https://wa.me/573104641228'
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#09090b" />
+    <title>Pago — CodeByMike</title>
+    <!-- OG deliberadamente genérica: WhatsApp cachea las previews de forma
+         agresiva y las muestra en el chat. Con el monto dentro, el valor
+         quedaría visible sin abrir el link y congelado aunque el cobro cambie. -->
+    <meta property="og:title" content="Pago seguro — CodeByMike" />
+    <meta property="og:description" content="Link de pago personal. Ábrelo para ver el detalle." />
+    <meta property="og:type" content="website" />
+  </head>
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen flex items-center">
+    <main class="w-full max-w-[440px] mx-auto px-5 py-12">
+      <div class="text-center mb-8">
+        <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300">CodeByMike</div>
+      </div>
+
+      {estado ? (
+        <div class="p-6 rounded-2xl border border-white/10 bg-white/[.02] text-center">
+          <h1 class="text-2xl font-medium tracking-[-.02em] mb-3">{estado.titulo}</h1>
+          <p class="text-[14px] text-ink-100 leading-relaxed mb-6">{estado.detalle}</p>
+          <a
+            href={WHATSAPP} target="_blank" rel="noopener"
+            class="inline-flex items-center justify-center h-11 px-6 rounded-full border border-white/10 text-[14px] hover:border-cyan/40 transition-colors"
+          >
+            Escribir por WhatsApp
+          </a>
+        </div>
+      ) : (
+        <div>
+          <div class="p-7 rounded-2xl border border-cyan/20 bg-cyan/[.03] text-center mb-6">
+            <div class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Total a pagar</div>
+            <div class="text-5xl font-medium tabular-nums tracking-[-.03em] mb-3">
+              {fmtCOP(payment!.amountCents)}
+            </div>
+            {payment!.description && (
+              <div class="text-[15px] text-ink-100">{payment!.description}</div>
+            )}
+            {payment!.expiresAt && (
+              <div class="text-[12px] font-mono text-ink-400 mt-3">{timeLeft(payment!.expiresAt)}</div>
+            )}
+          </div>
+
+          <button
+            id="btn-pay" type="button"
+            class="w-full h-14 rounded-full bg-cyan text-ink-950 text-[16px] font-medium active:scale-[.98] transition-all shadow-glow disabled:opacity-60"
+          >
+            Pagar
+          </button>
+          <p id="status" class="mt-4 text-[13px] text-center text-ink-300 font-mono min-h-5" role="status" aria-live="polite"></p>
+
+          <p class="mt-8 text-[12px] text-ink-400 text-center leading-relaxed">
+            Pago procesado por Wompi. El monto se firma en el servidor:
+            este link no puede alterarlo.
+          </p>
+        </div>
+      )}
+
+      <div class="mt-10 text-center">
+        <a href="/" class="text-[12px] font-mono text-ink-400 hover:text-cyan transition-colors">codebymike.tech</a>
+      </div>
+    </main>
+
+    {pagable && (
+      <script define:vars={{ code }}>
+        const btn = document.getElementById('btn-pay')
+        const status = document.getElementById('status')
+
+        btn.addEventListener('click', async () => {
+          btn.disabled = true
+          status.textContent = 'Abriendo la pasarela…'
+          try {
+            // El servidor firma el monto AHORA: nada del cobro viaja en el body.
+            const res = await fetch(`/api/c/${code}/checkout`, { method: 'POST' })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error ?? 'no se pudo iniciar el pago')
+
+            if (data.provider === 'wompi') {
+              location.href = `${data.url}?${new URLSearchParams(data.params)}`
+              return
+            }
+
+            // Modo demo (sin llaves): el mismo camino de webhooks que la real.
+            status.textContent = 'Confirmando el pago (demo)…'
+            const confirm = await fetch(data.confirmUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reference: data.reference, shortCode: code }),
+            })
+            const result = await confirm.json()
+            if (!confirm.ok) throw new Error(result.error ?? 'no se pudo confirmar')
+            if (result.status === 'approved') {
+              location.href = '/pay/gracias'
+              return
+            }
+            status.textContent = `El pago quedó en estado "${result.status}".`
+            btn.disabled = false
+          } catch (err) {
+            status.textContent = err instanceof Error ? err.message : 'error de conexión'
+            btn.disabled = false
+          }
+        })
+      </script>
+    )}
+  </body>
+</html>

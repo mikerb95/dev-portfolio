@@ -9,47 +9,51 @@ import { ACTORES, CASOS_DE_USO } from '../../data/documentacion'
 // un tipo "usecase" nativo y su layout automático (dagre) no deja controlar
 // bien la posición de figuras humanas, así que se calcula la posición de
 // cada elemento aquí mismo y se emite el SVG directo.
+//
+// Una caja de sistema POR ROL: cada actor tiene su propia caja con solo sus
+// casos de uso adentro (no una única caja compartida por los 6 actores).
 const ROW_H = 76
-const GROUP_GAP = 18
 const ELLIPSE_RX = 150
 const ELLIPSE_RY = 30
 const ACTOR_X = 90
 const BOUNDARY_PAD = 24
 const BOUNDARY_X = 190
-const TITLE_H = 34
+const TITLE_H = 30
+const BLOCK_GAP = 50
 const CU_CX = BOUNDARY_X + BOUNDARY_PAD + ELLIPSE_RX
+const BOUNDARY_W = ELLIPSE_RX * 2 + BOUNDARY_PAD * 2
 
 const actoresConCU = ACTORES.filter((a) => CASOS_DE_USO.some((c) => c.actor === a.id))
 
-const cuOrdenados: { cu: (typeof CASOS_DE_USO)[number]; actor: (typeof ACTORES)[number] }[] = []
+interface Row {
+  label: string
+  cy: number
+}
+interface Bloque {
+  actor: (typeof ACTORES)[number]
+  top: number
+  height: number
+  rows: Row[]
+  actorCy: number
+}
+
+const bloques: Bloque[] = []
+let top = 0
 for (const actor of actoresConCU) {
-  for (const cu of CASOS_DE_USO.filter((c) => c.actor === actor.id)) {
-    cuOrdenados.push({ cu, actor })
-  }
+  const cus = CASOS_DE_USO.filter((c) => c.actor === actor.id)
+  const rows: Row[] = cus.map((cu, i) => ({
+    label: `${cu.id}: ${cu.nombre}`,
+    cy: top + TITLE_H + BOUNDARY_PAD + ELLIPSE_RY + i * ROW_H,
+  }))
+  const bottom = rows[rows.length - 1].cy + ELLIPSE_RY + BOUNDARY_PAD
+  const height = bottom - top
+  const actorCy = top + height / 2
+  bloques.push({ actor, top, height, rows, actorCy })
+  top = bottom + BLOCK_GAP
 }
 
-let cursorY = TITLE_H + BOUNDARY_PAD + ELLIPSE_RY
-const rows: { id: string; label: string; cy: number; actorId: string }[] = []
-let prevActorId: string | null = null
-for (const { cu, actor } of cuOrdenados) {
-  if (prevActorId !== null && prevActorId !== actor.id) cursorY += GROUP_GAP
-  rows.push({ id: cu.id, label: `${cu.id}: ${cu.nombre}`, cy: cursorY, actorId: actor.id })
-  prevActorId = actor.id
-  cursorY += ROW_H
-}
-
-const actorPos = actoresConCU.map((actor) => {
-  const rs = rows.filter((r) => r.actorId === actor.id)
-  const cy = rs.reduce((s, r) => s + r.cy, 0) / rs.length
-  return { actor, cy }
-})
-
-const BOUNDARY_Y = TITLE_H
-const BOUNDARY_BOTTOM = rows[rows.length - 1].cy + ELLIPSE_RY + BOUNDARY_PAD
-const BOUNDARY_W = ELLIPSE_RX * 2 + BOUNDARY_PAD * 2
-const BOUNDARY_H = BOUNDARY_BOTTOM - BOUNDARY_Y
 const SVG_W = BOUNDARY_X + BOUNDARY_W + 20
-const SVG_H = BOUNDARY_BOTTOM + 10
+const SVG_H = top - BLOCK_GAP + 10
 
 function actorFigure(cx: number, cy: number) {
   return `
