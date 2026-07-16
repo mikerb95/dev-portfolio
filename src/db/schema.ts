@@ -280,6 +280,39 @@ export const ciRuns = sqliteTable('ci_runs', {
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
+// Hallazgos de seguridad y accesibilidad reportados por CI (npm audit, CodeQL,
+// axe…). Un hallazgo persiste entre corridas: se identifica por su `fingerprint`
+// (source+ruleId+route) para poder decir "este ya lo vi y lo resolví" en vez de
+// crear un duplicado cada vez que corre el scan. Reingerir uno abierto solo
+// refresca lastSeenAt; uno ya resuelto/aceptado conserva su estado.
+export const securityFindings = sqliteTable('security_findings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Clave de deduplicación estable: sha-256 de source|ruleId|route.
+  fingerprint: text('fingerprint').notNull().unique(),
+  source: text('source', {
+    enum: ['npm-audit', 'codeql', 'semgrep', 'snyk', 'zap', 'axe', 'lighthouse'],
+  }).notNull(),
+  severity: text('severity', {
+    enum: ['critical', 'high', 'medium', 'low', 'info'],
+  }).notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  // Ruta/paquete/archivo afectado según la fuente (URL para axe, paquete para npm-audit).
+  route: text('route'),
+  ruleId: text('rule_id'),
+  // Ciclo de vida del hallazgo. 'accepted' = riesgo asumido a conciencia (falso
+  // positivo o inarreglable), distinto de 'resolved' = arreglado.
+  status: text('status', { enum: ['open', 'resolved', 'accepted'] }).notNull().default('open'),
+  // Nota al marcar resuelto/aceptado: el "cómo" o el "por qué" para el jurado.
+  note: text('note'),
+  resolvedAt: integer('resolved_at', { mode: 'timestamp' }),
+  firstSeenAt: integer('first_seen_at', { mode: 'timestamp' }).notNull(),
+  lastSeenAt: integer('last_seen_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  statusIdx: index('security_findings_status_idx').on(t.status),
+  sourceIdx: index('security_findings_source_idx').on(t.source),
+}))
+
 // ── Pasarela de pagos (donaciones/pagos dev) ────────────────────────────────
 
 // Un pago = una intención de cobro. La clave de idempotencia es ÚNICA:
