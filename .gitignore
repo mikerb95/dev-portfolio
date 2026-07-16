@@ -27,3 +27,8 @@ pnpm-debug.log*
 
 # test coverage
 coverage/
+
+# e2e: bases desechables y reportes de Playwright
+.e2e/
+playwright-report/
+test-results/
