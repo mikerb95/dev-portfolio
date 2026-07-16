@@ -1,4 +1,4 @@
-import type { APIRoute } from 'astro'
+import type { APIContext, APIRoute } from 'astro'
 import { eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
 import { getSession } from 'auth-astro/server'
