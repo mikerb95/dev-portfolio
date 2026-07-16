@@ -17,9 +17,7 @@ const PAGINAS = [
 
 for (const { path, titulo } of PAGINAS) {
   test(`${path} renderiza sin errores`, async ({ page }) => {
-    const errores: string[] = []
-    page.on('pageerror', (e) => errores.push(String(e)))
-    page.on('console', (m) => m.type() === 'error' && errores.push(m.text()))
+    const errores = recogerErrores(page)
 
     const res = await page.goto(path)
     expect(res?.status(), `${path} no devolvió 200`).toBe(200)
