@@ -54,7 +54,7 @@ export const POST: APIRoute = async (context) => {
     const login = (session?.user as { login?: string } | undefined)?.login
     const isAdmin = !!session && (!login || isAllowedLogin(login))
 
-    if (!isAdmin && !(await ownsInvoiceOfPayment(context, payment.invoiceId))) {
+    if (!isAdmin && !provesCobroLink(body.shortCode, payment) && !(await ownsInvoiceOfPayment(context, payment.invoiceId))) {
       return json(403, { error: 'simulación deshabilitada (requiere sesión admin o PAYMENTS_MOCK_ENABLED=true)' })
     }
   }
