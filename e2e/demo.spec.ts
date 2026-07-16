@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { entrarALaDemo, expect, test } from './fixtures'
 import { E2E } from '../playwright.config'
 
 // Las tres garantías de la demo (ver src/lib/demo.ts):
@@ -6,13 +6,10 @@ import { E2E } from '../playwright.config'
 //  2. Solo lectura.
 //  3. Las rutas sensibles están vetadas aunque sean GET.
 // Cada una se verifica por separado: ninguna basta sola.
-
-/** Entra a la demo como lo haría una persona: por el formulario de /demo. */
-async function entrarALaDemo(page: import('@playwright/test').Page) {
-  await page.goto('/demo')
-  await page.click('button[type=submit]')
-  await page.waitForURL('**/admin')
-}
+//
+// Las peticiones van por `page.request` y no por el fixture `request`: este
+// último corre en otro contexto y no lleva la cookie del pase, con lo que los
+// 403 saldrían por falta de sesión y el test pasaría sin probar nada.
 
 test.describe('demo · acceso', () => {
   test('el formulario de /demo abre el panel', async ({ page }) => {
@@ -29,7 +26,7 @@ test.describe('demo · acceso', () => {
     await context.addCookies([
       {
         name: 'demo_session',
-        // Expira en el año 2100 y la firma es basura: debe rebotar igual.
+        // Caduca en 2100 y la firma es basura: debe rebotar igual.
         value: `4102444800.${'a'.repeat(64)}`,
         url: E2E.baseURL,
       },
@@ -37,13 +34,20 @@ test.describe('demo · acceso', () => {
     await page.goto('/admin')
     await expect(page).toHaveURL(/\/login/)
   })
+
+  test('el panel en demo tampoco es indexable', async ({ page }) => {
+    await entrarALaDemo(page)
+    const res = await page.request.get('/admin')
+    expect(res.status()).toBe(200)
+    expect(res.headers()['x-robots-tag']).toContain('noindex')
+  })
 })
 
 test.describe('demo · aislamiento de datos', () => {
-  test('el panel muestra datos ficticios, no los de la base principal', async ({ page }) => {
+  test('el panel muestra los datos ficticios', async ({ page }) => {
     await entrarALaDemo(page)
     await page.goto('/admin/clients')
-    await expect(page.locator('text=Cafetería Altiplano').first()).toBeVisible()
+    await expect(page.getByText('Cafetería Altiplano').first()).toBeVisible()
   })
 
   test('ningún dato de la base principal aparece en la demo', async ({ page }) => {
@@ -56,8 +60,8 @@ test.describe('demo · aislamiento de datos', () => {
     }
   })
 
-  test('las páginas públicas siguen leyendo la base principal, no la demo', async ({ page }) => {
-    // Aunque el visitante tenga pase de demo: fuera de /admin no aplica.
+  test('las páginas públicas leen la base principal, no la demo', async ({ page }) => {
+    // Aunque el visitante lleve pase: fuera de /admin la demo no aplica.
     await entrarALaDemo(page)
     await page.goto('/status')
     expect(await page.content()).toContain(E2E.sentinel)
@@ -65,32 +69,33 @@ test.describe('demo · aislamiento de datos', () => {
 })
 
 test.describe('demo · solo lectura', () => {
-  test('ningún método de escritura pasa', async ({ page, request }) => {
+  test('ningún método de escritura pasa', async ({ page }) => {
     await entrarALaDemo(page)
 
     for (const method of ['post', 'put', 'patch', 'delete'] as const) {
-      const res = await request[method]('/api/admin/clients', {
+      const res = await page.request[method]('/api/admin/clients', {
         data: { name: 'intruso' },
         maxRedirects: 0,
+        failOnStatusCode: false,
       })
       expect(res.status(), `${method.toUpperCase()} debería ser 403`).toBe(403)
     }
   })
 
-  test('los reveladores de credenciales están vetados (y son GET)', async ({ page, request }) => {
+  test('los reveladores de credenciales están vetados (y son GET)', async ({ page }) => {
     await entrarALaDemo(page)
 
     for (const path of ['/api/admin/services/1/secrets', '/api/admin/projects/1/envvars']) {
-      const res = await request.get(path, { maxRedirects: 0 })
+      const res = await page.request.get(path, { maxRedirects: 0, failOnStatusCode: false })
       expect(res.status(), `${path} debería ser 403`).toBe(403)
     }
   })
 
-  test('backup, passkeys, sesiones y chaos quedan fuera', async ({ page, request }) => {
+  test('backup, passkeys, sesiones y chaos quedan fuera', async ({ page }) => {
     await entrarALaDemo(page)
 
     for (const path of ['/admin/backup', '/admin/passkeys', '/admin/sessions', '/api/admin/lab/chaos']) {
-      const res = await request.get(path, { maxRedirects: 0 })
+      const res = await page.request.get(path, { maxRedirects: 0, failOnStatusCode: false })
       expect(res.status(), `${path} debería ser 403`).toBe(403)
     }
   })
