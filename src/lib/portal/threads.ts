@@ -9,7 +9,7 @@
 // El "leído" vive en portal_message_reads y no en el mensaje: con varios
 // usuarios por empresa, que Ana lo lea no significa que Beto lo haya leído.
 
-import { and, count, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, count, desc, eq, gt, inArray, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { clientUsers, portalMessageReads, portalMessages, portalThreads, projects } from '../../db/schema'
 
