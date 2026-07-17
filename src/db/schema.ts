@@ -665,6 +665,11 @@ export const portalSessions = sqliteTable('portal_sessions', {
   lastSeen: integer('last_seen', { mode: 'timestamp' }).notNull(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   revokedAt: integer('revoked_at', { mode: 'timestamp' }),
+  // "Ver como cliente" desde /admin/clients. Es un hecho de la sesión, no una
+  // cookie aparte: así la restricción de solo-lectura no depende de que un
+  // segundo cookie sobreviva exactamente lo mismo que el primero. Si es null,
+  // la sesión es del cliente de verdad, entrando por su cuenta.
+  impersonatedBy: text('impersonated_by'),
 }, (t) => ({
   userIdx: index('portal_sessions_user_idx').on(t.clientUserId),
   expiresIdx: index('portal_sessions_expires_idx').on(t.expiresAt),
