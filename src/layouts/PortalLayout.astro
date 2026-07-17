@@ -132,6 +132,21 @@ const initials = (user.name ?? user.email)
     </header>
 
     <main class="flex-1 w-full max-w-[1100px] mx-auto px-4 md:px-6 py-7 md:py-9">
+      {impersonatedBy && (
+        <div class="mb-6 rounded-xl border border-ember/30 bg-ember/[.08] px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span class="inline-flex items-center gap-1.5 text-[12px] font-mono text-ember">
+            <span class="w-1.5 h-1.5 rounded-full bg-ember pulse-dot"></span>
+            Viendo como cliente
+          </span>
+          <span class="text-[13px] text-ink-50">
+            Estás viendo el portal de <strong>{client.company ?? client.name}</strong> con datos reales, en solo
+            lectura. Nada de lo que hagas aquí se guarda ni se envía.
+          </span>
+          <form method="POST" action="/api/portal/logout" class="ml-auto shrink-0">
+            <button type="submit" class="text-[12px] text-ember hover:underline">Salir →</button>
+          </form>
+        </div>
+      )}
       {isDemo && (
         <div class="mb-6 rounded-xl border border-cyan/25 bg-cyan/[.07] px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
           <span class="inline-flex items-center gap-1.5 text-[12px] font-mono text-cyan">
