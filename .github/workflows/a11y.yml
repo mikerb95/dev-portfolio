@@ -44,7 +44,10 @@ jobs:
           LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
         run: |
           npm run dev -- --port 4321 &
-          npx wait-on http://localhost:4321 --timeout 60000
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4321 -o /dev/null && break
+            sleep 2
+          done
 
           if [ -z "$LAB_INGEST_TOKEN" ]; then
             echo "::warning::Sin LAB_INGEST_TOKEN: se escanea pero no se reporta al panel."
