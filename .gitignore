@@ -35,3 +35,4 @@ coverage/
 .e2e/
 playwright-report/
 test-results/
+.env.development.local.bak
