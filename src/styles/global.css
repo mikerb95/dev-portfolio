@@ -8,7 +8,7 @@
 
 @theme {
   /* Ink scale */
-  --color-ink-950: #07070a;
+  --color-ink-950: #121216;
   --color-ink-900: #0a0a0d;
   --color-ink-850: #0e0e12;
   --color-ink-800: #13131a;
@@ -42,7 +42,7 @@
 }
 
 /* Base */
-html, body { background: #121216; color: #e7e7ec; }
+html, body { background: var(--color-ink-950); color: #e7e7ec; }
 body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 ::selection { background: #00f2ff; color: #07070a; }
 
