@@ -297,8 +297,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // ruta resuelve su propia autorización (ver mock/pay.ts) contra la base que
   // le corresponda, sin pasar por aquí.
   if (!portalDemoMode && pathname === '/api/payments/mock/pay' && method === 'POST') {
-    const hasRealPortalSession = !!(await getPortalSession(context))
-    if (!hasRealPortalSession) {
+    const realPortalSession = await getPortalSession(context)
+
+    // "Ver como cliente" jamás debe alcanzar la pasarela, ni siquiera la
+    // simulada: el guard de más arriba solo cubre /api/portal/*, y esta ruta
+    // vive fuera de ese prefijo. Sin este corte, un admin impersonando
+    // colaría el único mutador que el resto del código sí bloquea.
+    if (realPortalSession?.impersonatedBy) {
+      return new Response(
+        JSON.stringify({ error: 'estás viendo este portal como el cliente: solo lectura' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!realPortalSession) {
       const demo = resolvePortalDemoPass(context, pathname, method)
       if (demo === true) portalDemoMode = true
       // Un Response (403) aquí no se corta en seco: mock/pay.ts tiene su
