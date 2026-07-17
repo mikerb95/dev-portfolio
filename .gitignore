@@ -35,5 +35,9 @@ coverage/
 .e2e/
 playwright-report/
 test-results/
+
+# mutation testing (Stryker)
+.stryker-tmp/
+reports/mutation/
 .env.development.local.bak
 .env*
