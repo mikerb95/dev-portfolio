@@ -77,6 +77,24 @@ const demoUnavailable = flash === 'demo-unavailable'
     El acceso al portal es por invitación. Si aún no tienes cuenta y crees que deberías,
     <a href="/contact" class="text-cyan hover:underline">escríbeme</a>.
   </p>
+
+  {demoUnavailable && (
+    <div class="mt-4 rounded-xl border border-ember/25 bg-ember/[.07] px-4 py-3 text-[12.5px] text-ink-200">
+      La demo no está disponible en este momento.
+    </div>
+  )}
+
+  {demoAvailable && (
+    <div class="mt-6 pt-5 border-t border-white/5">
+      <p class="text-[12px] text-ink-300 mb-2.5">¿Solo quieres ver cómo es el portal?</p>
+      <a
+        href="/api/portal/demo"
+        class="inline-flex items-center gap-2 h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-50 text-[13px] hover:bg-white/[.06] transition-colors"
+      >
+        Entrar a la demo pública
+      </a>
+    </div>
+  )}
 </PortalAuthLayout>
 
 <script>
