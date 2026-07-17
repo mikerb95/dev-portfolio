@@ -22,8 +22,9 @@
 
 ## Orden de ejecución
 
-> **Estado (17 jul 2026)**: etapas 1-5 ✅ implementadas y verificadas.
-> Siguiente: etapa 6 (LAB Fase 7 — mutation + contratos).
+> **Estado (17 jul 2026)**: etapas 1-6 ✅ implementadas y verificadas.
+> Siguiente: etapa 7 (LAB Fase 5 — k6, bloqueada por falta de target de
+> preview/staging estable — ver `VERCEL_TOKEN` en pendientes transversales).
 
 | # | Etapa | Tipo | Esfuerzo |
 |---|-------|------|----------|
