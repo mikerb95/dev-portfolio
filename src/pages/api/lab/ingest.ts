@@ -56,6 +56,7 @@ export const POST: APIRoute = async ({ request }) => {
       coveragePct: num(body.coveragePct),
       durationMs: num(body.durationMs),
       healthOk: typeof body.healthOk === 'boolean' ? body.healthOk : null,
+      mutationScore: num(body.mutationScore),
       createdAt: new Date(),
     })
     .returning({ id: ciRuns.id })
