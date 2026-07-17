@@ -29,6 +29,8 @@ export type AuditAction =
   | 'invoice.viewed'
   | 'invoice.pay_started'
   | 'message.sent'
+  | 'impersonate.start'
+  | 'impersonate.end'
 
 export function audit(params: {
   clientId: number
