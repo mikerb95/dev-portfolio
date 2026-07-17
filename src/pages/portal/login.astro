@@ -19,6 +19,7 @@ const MESSAGES: Record<string, string> = {
   'session-closed': 'Cerraste sesión correctamente.',
 }
 const flashMessage = flash ? MESSAGES[flash] : null
+const demoUnavailable = flash === 'demo-unavailable'
 ---
 
 <PortalAuthLayout title="Entra a tu portal" subtitle="Consulta el estado de tus proyectos, tus facturas y tus documentos.">
