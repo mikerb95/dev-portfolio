@@ -42,7 +42,9 @@ const perPage = []
 
 for (const path of PAGES) {
   try {
-    await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+    // /status puede tardar bastante en cargar (query pesada contra Turso);
+    // 60s da margen sin colgar el job si algo se cae de verdad.
+    await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze()
