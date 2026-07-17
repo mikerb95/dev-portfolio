@@ -121,6 +121,37 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
   </div>
 </BaseLayout>
 
+<style>
+  .how-it-works-modal {
+    padding: 0;
+    border: none;
+    background: transparent;
+    max-width: min(42rem, calc(100vw - 2rem));
+    margin: auto;
+  }
+  .how-it-works-modal::backdrop {
+    background: rgba(5, 5, 8, 0.75);
+    backdrop-filter: blur(4px);
+  }
+  .how-it-works-modal code {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.35rem;
+  }
+</style>
+
+<script>
+  const howItWorksBtn = document.getElementById('how-it-works-btn') as HTMLButtonElement
+  const howItWorksModal = document.getElementById('how-it-works-modal') as HTMLDialogElement
+  const howItWorksClose = document.getElementById('how-it-works-close') as HTMLButtonElement
+
+  howItWorksBtn.addEventListener('click', () => howItWorksModal.showModal())
+  howItWorksClose.addEventListener('click', () => howItWorksModal.close())
+  howItWorksModal.addEventListener('click', (e) => {
+    if (e.target === howItWorksModal) howItWorksModal.close()
+  })
+</script>
+
 <script>
   type DiagnosticStatus = 'pass' | 'warn' | 'fail' | 'info'
   type DiagnosticResult = {
