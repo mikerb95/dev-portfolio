@@ -704,7 +704,7 @@ const iterData = {
   function renderCharts() { renderActividad(); renderVelocity(); }
 
   function barChart(boxId, data, color, footFn) {
-    const W = 520, H = 260, pad = { t: 16, r: 16, b: 34, l: 40 };
+    const W = 520, H = 260, pad = { t: 16, r: 16, b: 76, l: 40 };
     const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
     const maxY = Math.max(1, ...data.map(d => d.v)) * 1.1;
     const y = v => pad.t + (1 - v / maxY) * ch;
@@ -719,7 +719,10 @@ const iterData = {
     data.forEach((dd, i) => {
       const cx = pad.l + band * i + band / 2;
       svg.appendChild(el('rect', { x: cx - bw / 2, y: y(dd.v), width: bw, height: pad.t + ch - y(dd.v), rx: '3', fill: color }));
-      svg.appendChild(el('text', { x: cx, y: H - 12, 'text-anchor': 'middle', 'font-size': '9.5', fill: '#85858f' }, dd.label));
+      svg.appendChild(el('text', {
+        x: cx, y: H - 10, 'text-anchor': 'end', 'font-size': '9.5', fill: '#85858f',
+        transform: `rotate(-60 ${cx} ${H - 10})`,
+      }, dd.label));
     });
     const box = document.getElementById(boxId);
     box.innerHTML = ''; box.appendChild(svg);
