@@ -171,7 +171,7 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
 | 3 | `/c/[code]` + `POST /api/c/[code]/checkout` (estados vencido/anulado/pagado verificados end-to-end) | ✅ |
 | 4 | `/mis-pagos` (token + lookup enmascarado) + 7 tests | ✅ |
 | 5 | Rate limits, eventos SIEM, push ntfy en `approved`, `noindex`, OG genérica | ✅ |
-| 6 | Docs / entrada en `/notes` como caso de estudio | pendiente (opcional) |
+| 6 | Entrada en `/notes` como caso de estudio (`cobrar-un-trabajo-de-campo-sin-api-de-whatsapp.md`) | ✅ |
 
 ### Decisiones que aparecieron al implementar
 
