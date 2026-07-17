@@ -38,12 +38,15 @@ export const CheckoutResponseSchema = z.object({
   checkout: z.union([
     z.object({
       provider: z.literal('wompi'),
-      publicKey: z.string(),
-      reference: z.string(),
-      amountInCents: z.number().int(),
-      currency: z.string(),
-      signatureIntegrity: z.string(),
-      'redirect-url': z.string(),
+      url: z.string(),
+      params: z.object({
+        'public-key': z.string(),
+        currency: z.string(),
+        'amount-in-cents': z.string(),
+        reference: z.string(),
+        'signature:integrity': z.string(),
+        'redirect-url': z.string(),
+      }),
     }),
     z.object({
       provider: z.literal('mock'),
