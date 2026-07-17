@@ -23,7 +23,21 @@ const TOKEN = process.env.LAB_INGEST_TOKEN
 
 // Páginas públicas representativas: home, listados y los dos formularios (los
 // formularios son donde más suele fallar la accesibilidad).
-const PAGES = ['/', '/lab', '/status', '/security', '/tools', '/notes', '/contact', '/pay']
+const PAGES = ['/', '/lab', '/status', '/security', '/tools', '/notes', '/contact', '/pay', '/portal/login']
+
+// Portal de clientes: son páginas privadas, así que no hay forma de llegar a
+// ellas sin sesión. En vez de dejarlas fuera del escaneo, se entra por la demo
+// pública (mismos datos ficticios que ve cualquier visitante de /tools) y se
+// escanean como una sesión más — es la única forma de cubrir el área
+// autenticada con este mismo escáner anónimo.
+const PORTAL_DEMO_PAGES = [
+  '/portal',
+  '/portal/facturas',
+  '/portal/mensajes',
+  '/portal/documentos',
+  '/portal/notificaciones',
+  '/portal/cuenta',
+]
 
 const browser = await chromium.launch()
 // axe-core/playwright exige un contexto explícito (falla con "please use
