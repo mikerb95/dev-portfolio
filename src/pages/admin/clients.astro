@@ -96,7 +96,16 @@ const formData = rows.map(({ id, name, email, company, notes }) => ({ id, name, 
                 </td>
                 <td class="px-4 py-3 text-[12px] text-ink-300">{c.createdAtLabel ?? '—'}</td>
                 <td class="px-4 py-3">
-                  <div class="flex gap-3 justify-end">
+                  <div class="flex gap-3 justify-end items-center">
+                    {c.portalEnabled && c.activePortalUsers > 0 && (
+                      <button
+                        class="view-as-client text-[12px] text-cyan hover:underline transition-colors"
+                        data-id={c.id}
+                        title="Entra al portal como este cliente (solo lectura, queda auditado)"
+                      >
+                        Ver como cliente
+                      </button>
+                    )}
                     <button class="edit-client text-[12px] text-ink-200 hover:text-ink-50 transition-colors" data-id={c.id}>Editar</button>
                     <button class="del-client text-[12px] text-ember/80 hover:text-ember transition-colors" data-id={c.id} data-name={c.name}>Eliminar</button>
                   </div>
