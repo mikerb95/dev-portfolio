@@ -271,6 +271,28 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.locals.portalDemo = portalDemoMode
   }
 
+  // El simulador de pago vive en /api/payments/*, FUERA del namespace del
+  // portal (isPortalPath no lo cubre): es infraestructura compartida con /pay.
+  // Aun así, es la única mutación que la demo del portal permite (ver
+  // lib/portal/demo.ts), así que un visitante de la demo que llega aquí para
+  // completar su pago de prueba necesita que ESTA petición también corra en
+  // contexto de demo — si no, buscaría el pago que acaba de crear en la base
+  // real (vacía para él) y fallaría con "pago no encontrado".
+  //
+  // Nunca pisa una sesión real: si ya hay sesión de portal o de admin, esta
+  // ruta resuelve su propia autorización (ver mock/pay.ts) contra la base que
+  // le corresponda, sin pasar por aquí.
+  if (!portalDemoMode && pathname === '/api/payments/mock/pay' && method === 'POST') {
+    const hasRealPortalSession = !!(await getPortalSession(context))
+    if (!hasRealPortalSession) {
+      const demo = resolvePortalDemoPass(context, pathname, method)
+      if (demo === true) portalDemoMode = true
+      // Un Response (403) aquí no se corta en seco: mock/pay.ts tiene su
+      // propia autorización (admin, o PAYMENTS_MOCK_ENABLED) y puede aceptar
+      // el request por una vía que no pasa por la demo del portal.
+    }
+  }
+
   let demoMode = false
 
   // Gate del admin. La condición NO es `isPrivate`: el portal también es
