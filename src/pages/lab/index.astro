@@ -354,6 +354,32 @@ const upcoming = [
       </div>
     </section>
 
+    <!-- Analizador de sitios -->
+    <section class="mb-16">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
+        <span>Analizador de sitios · abierto a cualquiera</span>
+      </div>
+      <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
+        Construido para mis compañeros de clase: pega cualquier dominio y obtén, en vivo,
+        12 pruebas — cabeceras de seguridad, certificado TLS, DNS, vencimiento del dominio,
+        robots.txt, sitemap.xml, metadatos SEO, rendimiento básico, accesibilidad heurística
+        y un reporte <span class="text-ink-50">Lighthouse real</span> vía la API de Google
+        PageSpeed Insights. Todo se lee de respuestas HTTP públicas — nada intrusivo — con
+        límite de 5 análisis por minuto por IP y protección anti-SSRF (rechaza IPs privadas
+        o de red interna) para que no se pueda usar como proxy hacia infraestructura ajena.
+      </p>
+      <a href="/lab/site-check" class="inline-flex rounded-2xl glass p-6 lift group max-w-sm">
+        <div>
+          <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Analizador de sitios</h3>
+          <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
+            Pega un dominio y mira las 12 pruebas correr en vivo, con streaming de resultados.
+          </p>
+          <span class="text-[13px] text-cyan group-hover:underline">Analizar un dominio →</span>
+        </div>
+      </a>
+    </section>
+
     <!-- Demo interactiva + enlaces -->
     <section class="grid md:grid-cols-3 gap-4 mb-16">
       <a href="/lab/fingerprint" class="rounded-2xl glass p-6 lift group">
@@ -363,14 +389,6 @@ const upcoming = [
           sin cookies ni login.
         </p>
         <span class="text-[13px] text-cyan group-hover:underline">Probar en vivo →</span>
-      </a>
-      <a href="/lab/site-check" class="rounded-2xl glass p-6 lift group">
-        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Analizador de sitios</h3>
-        <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
-          Pega cualquier dominio y obtén cabeceras de seguridad, TLS, SEO, rendimiento y
-          accesibilidad heurística — en vivo.
-        </p>
-        <span class="text-[13px] text-cyan group-hover:underline">Analizar un dominio →</span>
       </a>
       <a href="/status" class="rounded-2xl glass p-6 lift group">
         <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Monitoreo y SLOs</h3>
