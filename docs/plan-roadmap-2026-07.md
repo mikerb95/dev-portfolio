@@ -310,6 +310,30 @@ produjo **mutation score 87.2%** (fila real en `ci_runs`, sha `5df7ccb`,
 17 jul 2026), por encima del umbral `high` (80). Artículo de caso de estudio:
 `mutar-el-codigo-para-saber-si-mis-tests-sirven.md`.
 
+**Susto de aislamiento en dev, descartado tras investigar** (17 jul 2026): al
+verificar la tarjeta de mutation score en `/admin/lab/pipeline` con sesión demo,
+la API `/api/admin/lab/ci-runs` devolvió corridas reales de producción en vez de
+las 7 ficticias de la demo — parecía una fuga grave del aislamiento de la etapa 3.
+Investigación con `console.log` en `activeDb()` + consultas directas a ambas
+bases (bypaseando HTTP) confirmó: **la base demo está correctamente aislada y
+nunca se corrompió** (4 clientes ficticios, 7 ci_runs falsos, estable en todo
+momento); el síntoma era intermitente y desaparecía en arranques limpios del
+servidor. Causa real: **otra sesión de agente estaba trabajando en este mismo
+repo al mismo tiempo** (`ps aux` mostró su propio `astro dev --port 4331` y
+`playwright test e2e/portal.spec.ts` corriendo en paralelo), compartiendo el
+mismo checkout, el mismo `.env`/Turso demo, y el mismo directorio `.e2e/` —
+sus reseeds y HMR (por sus ediciones a `schema.ts`, `seed-demo.mjs`,
+`tools.astro`, etc.) contaminaron el proceso `astro dev` de larga duración que
+llevaba usándose para verificar TODAS las etapas de este roadmap.
+No es un riesgo de producción: Vercel no usa HMR, cada invocación serverless
+carga un único grafo de módulos inmutable por deploy.
+**Lección operativa**: si el `AsyncLocalStorage` de la demo alguna vez parece
+fallar en dev, reiniciar `astro dev` desde cero (nunca confiar en HMR) antes de
+sospechar del diseño, y verificar `ps aux` por sesiones concurrentes antes de
+gastar tiempo depurando. La suite e2e (bases sqlite locales por corrida, sin
+Turso) sigue siendo la fuente de verdad para esta garantía — reconfirmada 36/36
+en un arranque limpio antes de que la contención empezara.
+
 **Etapa 7 = LAB Fase 5 (k6)**
 - Según plan original (scripts en `lab/k6/`, tabla `load_test_runs`, ingesta
   `kind:'load_test'`, página admin, workflow manual con guard anti-prod).
