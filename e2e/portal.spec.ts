@@ -69,22 +69,16 @@ test.describe('portal · demo pública', () => {
   test('la única mutación permitida completa el pago de la factura de ejemplo', async ({ page }) => {
     await page.goto('/api/portal/demo')
 
-    // La factura 102 (segundo hito) es la que queda "sent" en el seed —
-    // pagarla y aprobarla debe dejarla en "paid" sin tocar nada más.
-    const pagar = await page.request.post('/api/portal/facturas/2/pagar')
-    expect(pagar.ok()).toBeTruthy()
-    const { redirect } = await pagar.json()
-    const ref = new URL(redirect, 'http://localhost').searchParams.get('ref')
-    expect(ref).toBeTruthy()
-
-    const mock = await page.request.post('/api/payments/mock/pay', {
-      data: { reference: ref, outcome: 'approved' },
-    })
-    expect(mock.ok()).toBeTruthy()
-    const body = await mock.json()
-    expect(body.status).toBe('approved')
-
+    // Por los botones reales, no por page.request: ese cliente HTTP de
+    // Playwright no reproduce fielmente los headers que pone un fetch() del
+    // navegador (en particular el Content-Type), y aquí eso SÍ importa — la
+    // protección CSRF de Astro decide por ese header.
     await page.goto('/portal/facturas/2')
+    await page.getByRole('button', { name: 'Pagar ahora' }).click()
+    await page.waitForURL(/\/simular\?ref=/)
+
+    await page.getByRole('button', { name: 'Simular pago aprobado' }).click()
+    await page.waitForURL(/\/portal\/facturas\/2\?pagada=1/)
     await expect(page.getByText('Factura pagada')).toBeVisible()
   })
 
