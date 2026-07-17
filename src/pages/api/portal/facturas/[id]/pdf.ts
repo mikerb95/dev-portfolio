@@ -36,7 +36,10 @@ export const GET: APIRoute = async (context) => {
     ip: clientIp(context.request.headers),
   })
 
-  return new Response(bytes, {
+  // Buffer.from y no el Uint8Array crudo: el tipo que devuelve pdf-lib no
+  // coincide exactamente con el BodyInit que espera Response en este target
+  // de TS, aunque en runtime ambos son el mismo ArrayBuffer.
+  return new Response(Buffer.from(bytes), {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${result.invoice.number}.pdf"`,
