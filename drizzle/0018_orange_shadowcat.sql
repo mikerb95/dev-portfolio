@@ -1,0 +1,1 @@
+ALTER TABLE `ci_runs` ADD `mutation_score` real;

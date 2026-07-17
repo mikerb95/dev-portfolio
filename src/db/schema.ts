@@ -277,6 +277,10 @@ export const ciRuns = sqliteTable('ci_runs', {
   durationMs: integer('duration_ms'),
   // Resultado del health check post-deploy (null si el run no llegó a esa etapa).
   healthOk: integer('health_ok', { mode: 'boolean' }),
+  // % de mutantes detectados por los tests (job semanal/manual de Stryker,
+  // null en las corridas normales de push). Cobertura dice "esta línea se
+  // ejecutó"; esto dice "si la rompo, ¿algún test se entera?".
+  mutationScore: real('mutation_score'),
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 

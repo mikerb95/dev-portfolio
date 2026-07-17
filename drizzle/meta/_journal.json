@@ -127,6 +127,13 @@
       "when": 1784226507195,
       "tag": "0017_early_zaran",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1784264298511,
+      "tag": "0018_orange_shadowcat",
+      "breakpoints": true
     }
   ]
 }
