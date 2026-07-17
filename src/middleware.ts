@@ -326,9 +326,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // En demo, TODA lectura sale de la base ficticia: el contexto se propaga por
-  // async/await hasta cualquier query que dispare el render.
-  const res = demoMode ? await runInDemoContext(() => next()) : await next()
+  // En demo (admin o portal), TODA lectura sale de la base ficticia: el
+  // contexto se propaga por async/await hasta cualquier query que dispare el
+  // render de la página o del endpoint.
+  const res = demoMode || portalDemoMode ? await runInDemoContext(() => next()) : await next()
   const resHeaders = new Headers(res.headers)
 
   resHeaders.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
