@@ -144,23 +144,43 @@ function wrappedLabel(cx: number, cy: number, w: number, h: number, text: string
 
 let diagramSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SVG_W}" height="${SVG_H}" viewBox="0 0 ${SVG_W} ${SVG_H}">`
 
-for (const { actorCy, rows } of bloques) {
-  for (const r of rows) {
-    diagramSvg += `<line x1="${ACTOR_X + 16}" y1="${actorCy}" x2="${CU_CX - ELLIPSE_RX}" y2="${r.cy}" stroke="#8a8a99" stroke-width="1.2" />`
+diagramSvg += `<defs>
+  <marker id="arrow-include" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L7,3 L0,6" fill="none" stroke="#00f2ff" stroke-width="1.4" />
+  </marker>
+  <marker id="arrow-extends" markerWidth="12" markerHeight="10" refX="9" refY="5" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#1c1c26" stroke="#a78bff" stroke-width="1.4" />
+  </marker>
+</defs>`
+
+for (const { actorCy, actorLineasY } of bloques) {
+  for (const y of actorLineasY) {
+    diagramSvg += `<line x1="${ACTOR_X + 16}" y1="${actorCy}" x2="${CU_CX - ELLIPSE_RX}" y2="${y}" stroke="#8a8a99" stroke-width="1.2" />`
   }
 }
 
-for (const { modulo, top: blockTop, height } of bloques) {
-  diagramSvg += `<rect x="${BOUNDARY_X}" y="${blockTop}" width="${BOUNDARY_W}" height="${height}" fill="none" stroke="#8a8a99" stroke-width="1.5" />`
-  diagramSvg += `<rect x="${BOUNDARY_X}" y="${blockTop}" width="${BOUNDARY_W}" height="${TITLE_H}" fill="#20202b" stroke="#8a8a99" stroke-width="1.5" />`
-  diagramSvg += `<text x="${BOUNDARY_X + BOUNDARY_W / 2}" y="${blockTop + TITLE_H / 2 + 4}" fill="#e7e7ec" font-size="12.5" font-weight="600" font-family="sans-serif" text-anchor="middle">${modulo}</text>`
+for (const { modulo, top: blockTop, height, width } of bloques) {
+  diagramSvg += `<rect x="${BOUNDARY_X}" y="${blockTop}" width="${width}" height="${height}" fill="none" stroke="#8a8a99" stroke-width="1.5" />`
+  diagramSvg += `<rect x="${BOUNDARY_X}" y="${blockTop}" width="${width}" height="${TITLE_H}" fill="#20202b" stroke="#8a8a99" stroke-width="1.5" />`
+  diagramSvg += `<text x="${BOUNDARY_X + width / 2}" y="${blockTop + TITLE_H / 2 + 4}" fill="#e7e7ec" font-size="12.5" font-weight="600" font-family="sans-serif" text-anchor="middle">${modulo}</text>`
 }
 
-for (const { rows } of bloques) {
-  for (const r of rows) {
-    diagramSvg += `<ellipse cx="${CU_CX}" cy="${r.cy}" rx="${ELLIPSE_RX}" ry="${ELLIPSE_RY}" fill="#1c1c26" stroke="#c4c4cc" stroke-width="1.5" />`
-    diagramSvg += wrappedLabel(CU_CX, r.cy, ELLIPSE_RX * 2 - 20, ELLIPSE_RY * 2 - 8, r.label, 11.5)
-  }
+for (const arco of arcos) {
+  const stroke = arco.tipo === 'include' ? '#00f2ff' : '#a78bff'
+  const marker = arco.tipo === 'include' ? 'url(#arrow-include)' : 'url(#arrow-extends)'
+  diagramSvg += `<line x1="${arco.x1}" y1="${arco.y1}" x2="${arco.x2}" y2="${arco.y2}" stroke="${stroke}" stroke-width="1.3" stroke-dasharray="5,4" marker-end="${marker}" />`
+  const mx = (arco.x1 + arco.x2) / 2
+  const my = (arco.y1 + arco.y2) / 2
+  const labelBg = arco.tipo === 'include' ? '#00f2ff' : '#a78bff'
+  const anchorDy = arco.x1 === arco.x2 ? 0 : -6
+  const anchorDx = arco.x1 === arco.x2 ? 14 : 0
+  diagramSvg += `<text x="${mx + anchorDx}" y="${my + anchorDy}" fill="${labelBg}" font-size="10.5" font-style="italic" font-family="sans-serif" text-anchor="middle">${arco.etiqueta}</text>`
+}
+
+for (const nodo of nodos) {
+  const isPrincipal = nodo.variante === 'principal'
+  diagramSvg += `<ellipse cx="${nodo.cx}" cy="${nodo.cy}" rx="${ELLIPSE_RX}" ry="${ELLIPSE_RY}" fill="${isPrincipal ? '#1c1c26' : '#20202b'}" stroke="${isPrincipal ? '#c4c4cc' : '#8a8a99'}" stroke-width="1.5" />`
+  diagramSvg += wrappedLabel(nodo.cx, nodo.cy, ELLIPSE_RX * 2 - 20, ELLIPSE_RY * 2 - 8, nodo.label, 11.5)
 }
 
 for (const { actor, actorCy } of bloques) {
