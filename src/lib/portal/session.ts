@@ -59,6 +59,8 @@ export async function createSession(params: {
   ip?: string | null
   userAgent?: string | null
   now?: Date
+  /** Login de admin: crea la sesión como "ver como cliente" (solo lectura). */
+  impersonatedBy?: string
 }): Promise<string> {
   const now = params.now ?? new Date()
   const token = randomBytes(32).toString('base64url')
@@ -70,6 +72,7 @@ export async function createSession(params: {
     createdAt: now,
     lastSeen: now,
     expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
+    impersonatedBy: params.impersonatedBy ?? null,
   })
   return token
 }
