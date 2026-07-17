@@ -192,8 +192,9 @@ for (const arco of arcos) {
   const labelX = vertical ? mx + 34 : mx
   const labelY = vertical ? my : my - 10
   const labelW = arco.etiqueta.length * 6.5 + 10
+  const etiquetaEscapada = arco.etiqueta.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   diagramSvg += `<rect x="${labelX - labelW / 2}" y="${labelY - 11}" width="${labelW}" height="15" fill="#101018" />`
-  diagramSvg += `<text x="${labelX}" y="${labelY}" fill="${labelColor}" font-size="10.5" font-style="italic" font-family="sans-serif" text-anchor="middle">${arco.etiqueta}</text>`
+  diagramSvg += `<text x="${labelX}" y="${labelY}" fill="${labelColor}" font-size="10.5" font-style="italic" font-family="sans-serif" text-anchor="middle">${etiquetaEscapada}</text>`
 }
 
 for (const { actor, actorCy } of bloques) {
