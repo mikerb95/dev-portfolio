@@ -218,7 +218,11 @@ export const CASOS_DE_USO: CasoDeUso[] = [
     { tipo: 'extends', nodo: { id: 'CU-04-X1', nombre: 'Rechazar login fuera de la allowlist' } },
   ] },
   { id: 'CU-05', nombre: 'Gestionar sesiones de dispositivo', actor: 'admin', rf: ['RF-103'], resumen: 'El administrador revisa dispositivos con sesión activa y revoca los que no reconoce.' },
-  { id: 'CU-06', nombre: 'Registrar y dar seguimiento a un proyecto', actor: 'admin', rf: ['RF-201', 'RF-204', 'RF-207'], resumen: 'El administrador crea un proyecto, registra interacciones de seguimiento y documenta decisiones de arquitectura.' },
+  { id: 'CU-06', nombre: 'Registrar y dar seguimiento a un proyecto', actor: 'admin', rf: ['RF-201', 'RF-204', 'RF-207'], resumen: 'El administrador crea un proyecto, registra interacciones de seguimiento y documenta decisiones de arquitectura.', relaciones: [
+    { tipo: 'include', nodo: { id: 'CU-06-N1', nombre: 'Registrar interacción de seguimiento' } },
+    { tipo: 'include', nodo: { id: 'CU-06-N2', nombre: 'Documentar decisión de arquitectura (ADR)' }, despues: 'CU-06-N1' },
+    { tipo: 'extends', nodo: { id: 'CU-06-X1', nombre: 'Publicar ADR en vitrina pública' } },
+  ] },
   { id: 'CU-07', nombre: 'Elaborar un briefing de cliente', actor: 'admin', rf: ['RF-205'], resumen: 'El administrador documenta objetivo, alcance, presupuesto e ítems de un proyecto antes de iniciarlo.' },
   { id: 'CU-08', nombre: 'Registrar costos y calcular P&L', actor: 'admin', rf: ['RF-302', 'RF-303'], resumen: 'El administrador registra el costo de un servicio, quién lo paga y cuánto se factura al cliente.' },
   { id: 'CU-09', nombre: 'Recibir alerta de monitor caído', actor: 'cron', rf: ['RF-401', 'RF-402', 'RF-404'], resumen: 'El cron externo dispara el chequeo, detecta una caída, abre un incidente y notifica por push.' },
