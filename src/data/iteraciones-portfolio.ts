@@ -596,11 +596,88 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-e2e-ci',
+    fase: 'Fase 13 · E2E en CI y saneamiento de entorno',
+    nombre: 'Playwright integrado al pipeline y unificación de variables de entorno',
+    rango: '15 – 16 jul 2026',
+    ghSince: '2026-07-15',
+    ghUntil: '2026-07-16',
+    commits: 27,
+    resumen:
+      'El arnés E2E de la Fase 12 pasa de correr en local a ser parte del pipeline: nuevo job de Playwright en ci.yml. Se resuelve la dispersión de acceso a variables de entorno (import.meta.env vs process.env según runtime) con un serverEnv() único, y se añaden pruebas de checkout con idempotencia y de formulario de contacto con rate limiting. Se documenta el hito en el roadmap.',
+    historias: [
+      {
+        id: 'PF-EC-01', titulo: 'Como equipo de QA, quiero que las pruebas E2E corran automáticamente en cada push, no solo en mi máquina',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-16', tags: ['e2e', 'ci', 'fase-13'],
+        dod: [
+          ok('Job de Playwright añadido a .github/workflows/ci.yml, corriendo contra base de datos desechable sembrada.'),
+          ok('Roadmap actualizado marcando el E2E de Playwright como completado, con siguientes pasos definidos.'),
+        ],
+      },
+      {
+        id: 'PF-EC-02', titulo: 'Como desarrollador, quiero un único punto de acceso a variables de entorno que funcione igual en Astro, scripts y tests',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-15', tags: ['entorno', 'refactor', 'fase-13'],
+        dod: [
+          ok('serverEnv() en src/lib/env.ts unifica el acceso a import.meta.env/process.env; checkout, cobros y mis-pagos migrados.'),
+          ok('.env.local y variantes locales (.bak incluido) excluidas de git para evitar fugas de credenciales de Wompi/Turso.'),
+          ok('Tests E2E de checkout (con idempotencia) y de formulario de contacto (validación y rate limiting) con IPs únicas por caso.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-sast-a11y',
+    fase: 'Fase 14 · SAST, dependencias y accesibilidad',
+    nombre: 'Escaneo de seguridad (CodeQL/npm audit) y accesibilidad (axe-core) integrados al LAB',
+    rango: '16 jul 2026',
+    ghSince: '2026-07-16',
+    ghUntil: '2026-07-16',
+    commits: 22,
+    resumen:
+      'Cierra dos fases pendientes del plan LAB (docs/plan-lab-fases-pendientes.md): análisis estático de código y dependencias (CodeQL + npm audit) y auditoría de accesibilidad (axe-core sobre las páginas públicas). Ambos alimentan una tabla común de security_findings con normalización, deduplicación y auto-resolución, expuesta en /admin/lab/security y resumida en /lab.',
+    historias: [
+      {
+        id: 'PF-SA-01', titulo: 'Como administrador, quiero que cada push escanee vulnerabilidades de dependencias y del propio código',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-16', tags: ['sast', 'seguridad', 'fase-14'],
+        dod: [
+          ok('.github/workflows/security.yml corre npm audit y CodeQL en cada push/PR.'),
+          ok('scripts/npm-audit-scan.mjs normaliza el reporte de npm audit para ingesta.'),
+          ok('security_findings agrega hallazgos por herramienta con severidad, estado y auto-resolución cuando el hallazgo desaparece.'),
+        ],
+      },
+      {
+        id: 'PF-SA-02', titulo: 'Como administrador, quiero saber si las páginas públicas cumplen accesibilidad básica (axe-core)',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-16', tags: ['a11y', 'fase-14'],
+        dod: [
+          ok('scripts/a11y-scan.mjs recorre páginas públicas con Playwright + @axe-core/playwright.'),
+          ok('.github/workflows/a11y.yml ejecuta el escaneo en CI y sube resultados al ingest.'),
+          ok('Umbrales de contraste de color ajustados tras los primeros hallazgos reales.'),
+        ],
+      },
+      {
+        id: 'PF-SA-03', titulo: 'Como visitante técnico, quiero ver en /lab si hay hallazgos abiertos de seguridad o accesibilidad',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-16', tags: ['lab', 'seguridad', 'a11y', 'fase-14'],
+        dod: [
+          ok('/admin/lab/security lista hallazgos con filtro por estado y acción de marcar resuelto (API GET/PATCH).'),
+          ok('/lab muestra card de seguridad y accesibilidad condicionada a que exista ingesta reciente, con conteo agregado por estado.'),
+          ok('Tests de procesamiento de hallazgos y transición de estados.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 475 },
+  { mes: 'jul', commits: 544 },
 ]
