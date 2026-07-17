@@ -10,7 +10,7 @@
 // red ni base de datos, así que es fácil de probar.
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
-import type { Invoice, InvoiceItem } from './invoices'
+import type { clientInvoice } from './invoices'
 import { formatMoney, formatDate } from './format'
 
 const INK = rgb(0.08, 0.08, 0.1)
@@ -18,10 +18,10 @@ const MUTED = rgb(0.45, 0.45, 0.48)
 const CYAN = rgb(0, 0.55, 0.6) // versión oscurecida del acento: en blanco sobre
 // fondo blanco, el cian de neón del sitio (#00f2ff) casi no tiene contraste.
 
-export type InvoicePdfInput = {
-  invoice: Invoice & { clientName: string; company: string | null; billingInfo: string | null; projectTitle: string | null }
-  items: InvoiceItem[]
-}
+// Reutiliza EXACTAMENTE la forma que devuelve clientInvoice(): así, si esa
+// consulta cambia qué columnas selecciona, este archivo no se desincroniza en
+// silencio con un `as` que oculte el desajuste.
+export type InvoicePdfInput = NonNullable<Awaited<ReturnType<typeof clientInvoice>>>
 
 /** Genera el PDF y devuelve sus bytes. No escribe nada: eso lo hace el llamador. */
 export async function generateInvoicePdf({ invoice, items }: InvoicePdfInput): Promise<Uint8Array> {
