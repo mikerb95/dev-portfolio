@@ -151,7 +151,7 @@ const runBadge = {
 const upcoming = [
   { title: 'Load testing (k6)', desc: 'Latencia p50/p95/p99 bajo 100–1000 usuarios concurrentes contra un entorno de staging.' },
   ...(hasFindings ? [] : [{ title: 'SAST + accesibilidad', desc: 'Hallazgos de análisis estático (CodeQL, npm audit) y score a11y, con su ciclo abierto → resuelto.' }]),
-  { title: 'Mutation testing', desc: 'No solo cuánta cobertura hay, sino si los tests detectan de verdad cuando el código se rompe.' },
+  ...(lastMutation ? [] : [{ title: 'Mutation testing', desc: 'No solo cuánta cobertura hay, sino si los tests detectan de verdad cuando el código se rompe.' }]),
 ]
 ---
 
