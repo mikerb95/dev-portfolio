@@ -285,11 +285,30 @@ habría visto sin ejecutar los scripts de verdad):
   `/admin/lab/security` según el plan original. Encender la tarjeta
   correspondiente en `/lab` público (agregados: "N hallazgos, M resueltos").
 
-**Etapa 6 = LAB Fase 7 (mutation + contratos)**
-- Stryker + `@stryker-mutator/vitest-runner` sobre `src/lib/**`; workflow
-  manual/semanal; score vía ingesta (reusar columna `mutationScore` de `ci_runs`
-  si el análisis lo confirma). Contratos Zod para ≥4 endpoints.
-- Encender mutation score en `/lab` público y en `/admin/lab/pipeline`.
+**Etapa 6 = LAB Fase 7 (mutation + contratos) ✅ IMPLEMENTADA (17 jul 2026)**
+
+**Entregado**: `stryker.config.json` (`mutate: src/lib/**/*.ts`, thresholds
+high80/low60/break50) + `src/lib/lab/mutation.ts` (parser puro del reporte de
+Stryker — el JSON no trae un score agregado, hay que calcularlo; `NoCoverage`
+cuenta como no detectado, `Ignored`/`CompileError` se excluyen) con tests
+propios. `scripts/mutation-scan.mjs` corre Stryker, lee el reporte real (sigue
+de largo aunque Stryker salga con exit≠0 por cruzar el umbral `break` — el
+score real importa más que el exit code) y reporta `kind:'ci_run'` con
+`mutationScore` al mismo mecanismo de ingesta que ya usa el pipeline normal.
+Workflow `mutation.yml` (`workflow_dispatch` + `schedule` domingos 08:00 UTC,
+nunca en push). Tarjeta de mutation score en `/admin/lab/pipeline` y en `/lab`
+público, con color por umbral (verde ≥80, ámbar ≥60, rojo debajo).
+
+Contratos: `src/lib/contracts.ts` con 4 esquemas Zod (health, payments
+checkout, status/latency, admin lab slo) + `tests/contracts.test.ts` — cada
+test llama al handler real (no un mock) y valida la respuesta real contra el
+esquema; el último test confirma que un campo renombrado (`ok` → `healthy`)
+rompe el esquema, no un test vacío que nunca falla.
+
+**Verificado con datos REALES**: corrida real de Stryker sobre `src/lib`
+produjo **mutation score 87.2%** (fila real en `ci_runs`, sha `5df7ccb`,
+17 jul 2026), por encima del umbral `high` (80). Artículo de caso de estudio:
+`mutar-el-codigo-para-saber-si-mis-tests-sirven.md`.
 
 **Etapa 7 = LAB Fase 5 (k6)**
 - Según plan original (scripts en `lab/k6/`, tabla `load_test_runs`, ingesta
