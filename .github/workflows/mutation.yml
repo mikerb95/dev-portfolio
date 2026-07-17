@@ -1,0 +1,50 @@
+# Mutation testing (Stryker) sobre src/lib. Deliberadamente NO corre en cada
+# push: mutar cada línea y re-ejecutar los tests contra cada mutante es lento
+# por diseño (miles de test-runs). Manual o semanal, nunca bloqueando un PR.
+#
+# Secrets opcionales (degrada con gracia):
+#   LAB_INGEST_TOKEN → habilita el reporte del score al panel LAB
+# Variables opcionales:
+#   PROD_URL → default https://codebymike.tech
+
+name: Mutation testing
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Domingos 08:00 UTC.
+    - cron: '0 8 * * 0'
+
+jobs:
+  mutation:
+    name: Stryker
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Correr Stryker y reportar al panel LAB
+        env:
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+          LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
+        run: |
+          if [ -z "$LAB_INGEST_TOKEN" ]; then
+            echo "::warning::Sin LAB_INGEST_TOKEN: corre pero no reporta al panel."
+            node scripts/mutation-scan.mjs
+          else
+            INGEST_URL="$PROD_URL/api/lab/ingest" node scripts/mutation-scan.mjs
+          fi
+        continue-on-error: true
+
+      - name: Subir el reporte HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          retention-days: 30
