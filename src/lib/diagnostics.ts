@@ -106,31 +106,35 @@ async function testReachability(t: DiagnosticTarget): Promise<Outcome> {
 }
 
 // ── HTML compartido para pruebas de SEO/rendimiento/accesibilidad ──────────
+// Cada prueba recibe un `getHtml` memoizado por invocación de diagnosticSuite(), para
+// evitar tanto requests duplicados como el compartir estado entre análisis concurrentes
+// de dominios distintos (una función serverless puede atender varias solicitudes a la vez).
 
 type HtmlSnapshot = { html: string; ttfb: number; bytes: number; contentType: string }
-let htmlCache: { url: string; promise: Promise<HtmlSnapshot | null> } | null = null
+type GetHtml = (t: DiagnosticTarget) => Promise<HtmlSnapshot | null>
 
-/** Descarga el HTML una sola vez por objetivo y lo comparte entre pruebas relacionadas. */
-function fetchHtml(t: DiagnosticTarget): Promise<HtmlSnapshot | null> {
-  if (htmlCache && htmlCache.url === t.url) return htmlCache.promise
-  const promise = (async () => {
-    try {
-      const started = Date.now()
-      const res = await fetchWithTimeout(t.url, { redirect: 'follow' })
-      const ttfb = Date.now() - started
-      const html = await res.text()
-      return { html, ttfb, bytes: html.length, contentType: res.headers.get('content-type') ?? '' }
-    } catch {
-      return null
-    }
-  })()
-  htmlCache = { url: t.url, promise }
-  return promise
+function makeHtmlFetcher(): GetHtml {
+  let cached: Promise<HtmlSnapshot | null> | null = null
+  return (t: DiagnosticTarget) => {
+    if (cached) return cached
+    cached = (async () => {
+      try {
+        const started = Date.now()
+        const res = await fetchWithTimeout(t.url, { redirect: 'follow' })
+        const ttfb = Date.now() - started
+        const html = await res.text()
+        return { html, ttfb, bytes: html.length, contentType: res.headers.get('content-type') ?? '' }
+      } catch {
+        return null
+      }
+    })()
+    return cached
+  }
 }
 
 /** Meta tags de SEO: title, description, canonical, Open Graph, lang. */
-async function testSeoMeta(t: DiagnosticTarget): Promise<Outcome> {
-  const snap = await fetchHtml(t)
+async function testSeoMeta(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outcome> {
+  const snap = await getHtml(t)
   if (!snap) return { status: 'fail', summary: 'No se pudo descargar el HTML' }
   const { html } = snap
   const title = html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim()
