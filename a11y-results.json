@@ -1,1 +1,2612 @@
-[]
+[
+  {
+    "pageUrl": "/",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.9pt (10.5px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.9pt (10.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10.5px] font-mono uppercase tracking-[.2em] text-ink-300\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"98:87\">Stack principal</div>",
+            "target": [
+              ".text-\\[10\\.5px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.9pt (10.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#04656c",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.95,
+                  "fontSize": "10.5pt (14px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-cyan/40 text-[14px] not-italic font-mono\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"137:79\">/01</span>",
+            "target": [
+              ".gap-12.flex[data-astro-source-loc=\"135:56\"]:nth-child(1) > .text-cyan\\/40.not-italic[data-astro-source-loc=\"137:79\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#04656c",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.95,
+                  "fontSize": "10.5pt (14px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-cyan/40 text-[14px] not-italic font-mono\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"137:79\">/02</span>",
+            "target": [
+              ".gap-12.flex[data-astro-source-loc=\"135:56\"]:nth-child(2) > .text-cyan\\/40.not-italic[data-astro-source-loc=\"137:79\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#04656c",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.95,
+                  "fontSize": "10.5pt (14px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-cyan/40 text-[14px] not-italic font-mono\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"137:79\">/03</span>",
+            "target": [
+              ".gap-12.flex[data-astro-source-loc=\"135:56\"]:nth-child(3) > .text-cyan\\/40.not-italic[data-astro-source-loc=\"137:79\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#04656c",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.95,
+                  "fontSize": "10.5pt (14px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-cyan/40 text-[14px] not-italic font-mono\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"137:79\">/04</span>",
+            "target": [
+              ".gap-12.flex[data-astro-source-loc=\"135:56\"]:nth-child(4) > .text-cyan\\/40.not-italic[data-astro-source-loc=\"137:79\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#04656c",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.95,
+                  "fontSize": "10.5pt (14px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-cyan/40 text-[14px] not-italic font-mono\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"137:79\">/05</span>",
+            "target": [
+              ".gap-12.flex[data-astro-source-loc=\"135:56\"]:nth-child(5) > .text-cyan\\/40.not-italic[data-astro-source-loc=\"137:79\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#04656c",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.95,
+                  "fontSize": "10.5pt (14px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-cyan/40 text-[14px] not-italic font-mono\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"137:79\">/06</span>",
+            "target": [
+              ".gap-12.flex[data-astro-source-loc=\"135:56\"]:nth-child(6) > .text-cyan\\/40.not-italic[data-astro-source-loc=\"137:79\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.95 (foreground color: #04656c, background color: #07070a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3a3a48",
+                  "bgColor": "#0c0c0f",
+                  "contrastRatio": 1.74,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<section class=\"section-tint px-6 md:px-12 lg:px-20 py-24 border-t border-white/5\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"385:86\">",
+                    "target": [
+                      "section[data-astro-source-loc=\"385:86\"]"
+                    ]
+                  },
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 1.74 (foreground color: #3a3a48, background color: #0c0c0f, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-[12px] font-mono text-ink-400\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/index.astro\" data-astro-source-loc=\"419:62\">Efímero · sin PII · las salas se borran en 2h</span>",
+            "target": [
+              ".text-ink-400"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.74 (foreground color: #3a3a48, background color: #0c0c0f, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"14:86\">Sitio</div>",
+            "target": [
+              "div[data-astro-source-loc=\"14:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"31:86\">Redes</div>",
+            "target": [
+              "div[data-astro-source-loc=\"31:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"38:86\">Contacto directo</div>",
+            "target": [
+              "div[data-astro-source-loc=\"38:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"46:11\">© 2026 CodeByMike · Colombia</span>",
+            "target": [
+              "span[data-astro-source-loc=\"46:11\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"47:11\">Astro · Tailwind · Drizzle ORM</span>",
+            "target": [
+              "span[data-astro-source-loc=\"47:11\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pageUrl": "/lab",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<a href=\"/\" class=\"inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/lab/index.astro\" data-astro-source-loc=\"154:157\">",
+            "target": [
+              ".mb-12.inline-flex[href=\"/\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3a3a48",
+                  "bgColor": "#0c0c0f",
+                  "contrastRatio": 1.74,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"rounded-2xl border border-white/5 bg-white/[.02] p-6\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/lab/index.astro\" data-astro-source-loc=\"373:77\">",
+                    "target": [
+                      ".bg-white\\/\\[\\.02\\].border-white\\/5.p-6:nth-child(1)"
+                    ]
+                  },
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 1.74 (foreground color: #3a3a48, background color: #0c0c0f, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p class=\"text-[12px] text-ink-400 leading-relaxed\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/lab/index.astro\" data-astro-source-loc=\"375:65\">Latencia p50/p95/p99 bajo 100–1000 usuarios concurrentes contra un entorno de staging.</p>",
+            "target": [
+              ".bg-white\\/\\[\\.02\\].border-white\\/5.p-6:nth-child(1) > .text-ink-400.leading-relaxed"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.74 (foreground color: #3a3a48, background color: #0c0c0f, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3a3a48",
+                  "bgColor": "#0c0c0f",
+                  "contrastRatio": 1.74,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"rounded-2xl border border-white/5 bg-white/[.02] p-6\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/lab/index.astro\" data-astro-source-loc=\"373:77\">",
+                    "target": [
+                      ".bg-white\\/\\[\\.02\\].border-white\\/5.p-6:nth-child(2)"
+                    ]
+                  },
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 1.74 (foreground color: #3a3a48, background color: #0c0c0f, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p class=\"text-[12px] text-ink-400 leading-relaxed\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/lab/index.astro\" data-astro-source-loc=\"375:65\">Hallazgos de análisis estático (CodeQL, npm audit) y score a11y, con su ciclo abierto → resuelto.</p>",
+            "target": [
+              ".bg-white\\/\\[\\.02\\].border-white\\/5.p-6:nth-child(2) > .text-ink-400.leading-relaxed"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.74 (foreground color: #3a3a48, background color: #0c0c0f, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3a3a48",
+                  "bgColor": "#0c0c0f",
+                  "contrastRatio": 1.74,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"rounded-2xl border border-white/5 bg-white/[.02] p-6\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/lab/index.astro\" data-astro-source-loc=\"373:77\">",
+                    "target": [
+                      ".bg-white\\/\\[\\.02\\].border-white\\/5.p-6:nth-child(3)"
+                    ]
+                  },
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 1.74 (foreground color: #3a3a48, background color: #0c0c0f, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p class=\"text-[12px] text-ink-400 leading-relaxed\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/lab/index.astro\" data-astro-source-loc=\"375:65\">No solo cuánta cobertura hay, sino si los tests detectan de verdad cuando el código se rompe.</p>",
+            "target": [
+              ".bg-white\\/\\[\\.02\\].border-white\\/5.p-6:nth-child(3) > .text-ink-400.leading-relaxed"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.74 (foreground color: #3a3a48, background color: #0c0c0f, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"14:86\">Sitio</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(2) > .tracking-\\[\\.2em\\].mb-3.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"31:86\">Redes</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(3) > .tracking-\\[\\.2em\\].mb-3.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"38:86\">Contacto directo</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(4) > .tracking-\\[\\.2em\\].mb-3.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"46:11\">© 2026 CodeByMike · Colombia</span>",
+            "target": [
+              ".mt-12 > span:nth-child(1)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"47:11\">Astro · Tailwind · Drizzle ORM</span>",
+            "target": [
+              ".mt-12 > span:nth-child(2)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pageUrl": "/status",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<a href=\"/\" class=\"inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12\" data-astro-cid-cubkmkfn=\"\">",
+            "target": [
+              ".mb-12.inline-flex[href=\"/\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-[11px] font-mono text-ink-300\" data-astro-cid-cubkmkfn=\"\">\nObjetivo SLO 99.5% · ventana 30 días\n</span>",
+            "target": [
+              ".justify-end > .text-\\[11px\\].text-ink-300.font-mono"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\">Sitio</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(2) > .mb-3.tracking-\\[\\.2em\\].uppercase"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\">Redes</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(3) > .mb-3.tracking-\\[\\.2em\\].uppercase"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\">Contacto directo</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(4) > .mb-3.tracking-\\[\\.2em\\].uppercase"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span>© 2026 CodeByMike · Colombia</span>",
+            "target": [
+              ".mt-12 > span:nth-child(1)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span>Astro · Tailwind · Drizzle ORM</span>",
+            "target": [
+              ".mt-12 > span:nth-child(2)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pageUrl": "/security",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<a href=\"/\" class=\"inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/security.astro\" data-astro-source-loc=\"179:157\">",
+            "target": [
+              ".mb-12.hover\\:text-cyan[href=\"/\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"14:86\">Sitio</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(2) > .mb-3.tracking-\\[\\.2em\\].text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"31:86\">Redes</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(3) > .mb-3.tracking-\\[\\.2em\\].text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"38:86\">Contacto directo</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(4) > .mb-3.tracking-\\[\\.2em\\].text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"46:11\">© 2026 CodeByMike · Colombia</span>",
+            "target": [
+              ".mt-12 > span:nth-child(1)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"47:11\">Astro · Tailwind · Drizzle ORM</span>",
+            "target": [
+              ".mt-12 > span:nth-child(2)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pageUrl": "/tools",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<a href=\"/\" class=\"inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/tools.astro\" data-astro-source-loc=\"152:157\">",
+            "target": [
+              ".mb-12"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#0e0e12",
+                  "contrastRatio": 2.32,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"flex items-center gap-2 px-4 py-2.5 border-b border-white/5 bg-ink-850\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"65:87\">",
+                    "target": [
+                      "article:nth-child(1) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"ml-3 text-[10px] font-mono text-ink-300 truncate\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"69:68\">\n/admin · datos ilustrativos\n</span>",
+            "target": [
+              "article:nth-child(1) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4 > .ml-3.truncate.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#0e0e12",
+                  "contrastRatio": 2.32,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"flex items-center gap-2 px-4 py-2.5 border-b border-white/5 bg-ink-850\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"65:87\">",
+                    "target": [
+                      "article:nth-child(2) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"ml-3 text-[10px] font-mono text-ink-300 truncate\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"69:68\">\n/admin · datos ilustrativos\n</span>",
+            "target": [
+              "article:nth-child(2) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4 > .ml-3.truncate.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#0e0e12",
+                  "contrastRatio": 2.32,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"flex items-center gap-2 px-4 py-2.5 border-b border-white/5 bg-ink-850\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"65:87\">",
+                    "target": [
+                      "article:nth-child(3) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"ml-3 text-[10px] font-mono text-ink-300 truncate\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"69:68\">\n/admin · datos ilustrativos\n</span>",
+            "target": [
+              "article:nth-child(3) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4 > .ml-3.truncate.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#0e0e12",
+                  "contrastRatio": 2.32,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"flex items-center gap-2 px-4 py-2.5 border-b border-white/5 bg-ink-850\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"65:87\">",
+                    "target": [
+                      "article:nth-child(4) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"ml-3 text-[10px] font-mono text-ink-300 truncate\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"69:68\">\n/admin · datos ilustrativos\n</span>",
+            "target": [
+              "article:nth-child(4) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4 > .ml-3.truncate.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#0e0e12",
+                  "contrastRatio": 2.32,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"flex items-center gap-2 px-4 py-2.5 border-b border-white/5 bg-ink-850\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"65:87\">",
+                    "target": [
+                      "article:nth-child(5) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"ml-3 text-[10px] font-mono text-ink-300 truncate\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"69:68\">\n/admin · datos ilustrativos\n</span>",
+            "target": [
+              "article:nth-child(5) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4 > .ml-3.truncate.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#0e0e12",
+                  "contrastRatio": 2.32,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"flex items-center gap-2 px-4 py-2.5 border-b border-white/5 bg-ink-850\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"65:87\">",
+                    "target": [
+                      "article:nth-child(6) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"ml-3 text-[10px] font-mono text-ink-300 truncate\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"69:68\">\n/admin · datos ilustrativos\n</span>",
+            "target": [
+              "article:nth-child(6) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4 > .ml-3.truncate.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#0e0e12",
+                  "contrastRatio": 2.32,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"flex items-center gap-2 px-4 py-2.5 border-b border-white/5 bg-ink-850\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"65:87\">",
+                    "target": [
+                      "article:nth-child(7) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"ml-3 text-[10px] font-mono text-ink-300 truncate\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/ToolMock.astro\" data-astro-source-loc=\"69:68\">\n/admin · datos ilustrativos\n</span>",
+            "target": [
+              "article:nth-child(7) > .lg\\:grid-cols-\\[1fr_400px\\].grid.gap-6 > div:nth-child(2) > .bg-ink-900\\/80.pointer-events-none.border-white\\/10 > .border-b.bg-ink-850.px-4 > .ml-3.truncate.text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.32 (foreground color: #4d4d5d, background color: #0e0e12, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"14:86\">Sitio</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(2) > .mb-3.tracking-\\[\\.2em\\].text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"31:86\">Redes</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(3) > .mb-3.tracking-\\[\\.2em\\].text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"38:86\">Contacto directo</div>",
+            "target": [
+              ".md\\:col-span-2:nth-child(4) > .mb-3.tracking-\\[\\.2em\\].text-\\[10px\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"46:11\">© 2026 CodeByMike · Colombia</span>",
+            "target": [
+              ".mt-12 > span:nth-child(1)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"47:11\">Astro · Tailwind · Drizzle ORM</span>",
+            "target": [
+              ".mt-12 > span:nth-child(2)"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pageUrl": "/notes",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<a href=\"/\" class=\"inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/notes/index.astro\" data-astro-source-loc=\"22:157\">",
+            "target": [
+              ".mb-12"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"14:86\">Sitio</div>",
+            "target": [
+              "div[data-astro-source-loc=\"14:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"31:86\">Redes</div>",
+            "target": [
+              "div[data-astro-source-loc=\"31:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"38:86\">Contacto directo</div>",
+            "target": [
+              "div[data-astro-source-loc=\"38:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"46:11\">© 2026 CodeByMike · Colombia</span>",
+            "target": [
+              "span[data-astro-source-loc=\"46:11\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"47:11\">Astro · Tailwind · Drizzle ORM</span>",
+            "target": [
+              "span[data-astro-source-loc=\"47:11\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "link-in-text-block",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2a",
+          "wcag141",
+          "TTv5",
+          "TT13.a",
+          "EN-301-549",
+          "EN-9.1.4.1",
+          "RGAAv4",
+          "RGAA-10.6.1"
+        ],
+        "description": "Ensure links are distinguished from surrounding text in a way that does not rely on color",
+        "help": "Links must be distinguishable without relying on color",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/link-in-text-block?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "link-in-text-block",
+                "data": {
+                  "messageKey": "fgContrast",
+                  "contrastRatio": 1.25,
+                  "requiredContrastRatio": 3,
+                  "nodeColor": "#00f2ff",
+                  "parentColor": "#c4c4cc"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<p class=\"text-[16px] text-ink-100 max-w-xl leading-relaxed\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/notes/index.astro\" data-astro-source-loc=\"36:68\">",
+                    "target": [
+                      ".text-\\[16px\\]"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "The link has insufficient color contrast of 1.25:1 with the surrounding text. (Minimum contrast is 3:1, link text: #00f2ff, surrounding text: #c4c4cc)"
+              },
+              {
+                "id": "link-in-text-block-style",
+                "data": null,
+                "relatedNodes": [
+                  {
+                    "html": "<p class=\"text-[16px] text-ink-100 max-w-xl leading-relaxed\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/notes/index.astro\" data-astro-source-loc=\"36:68\">",
+                    "target": [
+                      ".text-\\[16px\\]"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "The link has no styling (such as underline) to distinguish it from the surrounding text"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<a href=\"/tools\" class=\"text-cyan hover:underline\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/notes/index.astro\" data-astro-source-loc=\"37:86\">herramientas que construyo</a>",
+            "target": [
+              ".hover\\:underline"
+            ],
+            "failureSummary": "Fix any of the following:\n  The link has insufficient color contrast of 1.25:1 with the surrounding text. (Minimum contrast is 3:1, link text: #00f2ff, surrounding text: #c4c4cc)\n  The link has no styling (such as underline) to distinguish it from the surrounding text"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pageUrl": "/contact",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<a href=\"/\" class=\"inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/contact.astro\" data-astro-source-loc=\"13:157\">",
+            "target": [
+              ".mb-12"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"14:86\">Sitio</div>",
+            "target": [
+              "div[data-astro-source-loc=\"14:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"31:86\">Redes</div>",
+            "target": [
+              "div[data-astro-source-loc=\"31:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"38:86\">Contacto directo</div>",
+            "target": [
+              "div[data-astro-source-loc=\"38:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"46:11\">© 2026 CodeByMike · Colombia</span>",
+            "target": [
+              "span[data-astro-source-loc=\"46:11\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"47:11\">Astro · Tailwind · Drizzle ORM</span>",
+            "target": [
+              "span[data-astro-source-loc=\"47:11\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pageUrl": "/pay",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[11px] font-mono uppercase tracking-[.28em] text-ink-300 mb-4\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/pay.astro\" data-astro-source-loc=\"11:85\">Pagos / Donaciones</div>",
+            "target": [
+              ".tracking-\\[\\.28em\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/pay.astro\" data-astro-source-loc=\"22:88\">Monto (COP)</div>",
+            "target": [
+              "div[data-astro-source-loc=\"22:88\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<label for=\"email\" class=\"text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 block mb-2\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/pages/pay.astro\" data-astro-source-loc=\"36:108\">Email (opcional)</label>",
+            "target": [
+              "label"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"14:86\">Sitio</div>",
+            "target": [
+              "div[data-astro-source-loc=\"14:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"31:86\">Redes</div>",
+            "target": [
+              "div[data-astro-source-loc=\"31:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "7.5pt (10px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"38:86\">Contacto directo</div>",
+            "target": [
+              "div[data-astro-source-loc=\"38:86\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"46:11\">© 2026 CodeByMike · Colombia</span>",
+            "target": [
+              "span[data-astro-source-loc=\"46:11\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#4d4d5d",
+                  "bgColor": "#07070a",
+                  "contrastRatio": 2.42,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": null,
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<body class=\"grain\" data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/layouts/BaseLayout.astro\" data-astro-source-loc=\"82:23\">",
+                    "target": [
+                      "body"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span data-astro-source-file=\"/home/mike/dev/work/github.com/portfolio/src/components/Footer.astro\" data-astro-source-loc=\"47:11\">Astro · Tailwind · Drizzle ORM</span>",
+            "target": [
+              "span[data-astro-source-loc=\"47:11\"]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.42 (foreground color: #4d4d5d, background color: #07070a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  }
+]
