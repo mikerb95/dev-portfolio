@@ -254,10 +254,159 @@ async function seed() {
   ])
 
   console.log(`✓ Datos sembrados: ${CLIENTS.length} clientes · ${PROJECTS.length} proyectos · ` +
-              `${SERVICES.length} servicios · ${MONITORS.length} monitores · ${checks.length} checks`)
+              `${SERVICES.length} servicios · ${MONITORES.length ?? MONITORS.length} monitores · ${checks.length} checks`)
+}
+
+// ── Portal de clientes (demo pública) ───────────────────────────────────────
+// Solo el primer cliente (Cafetería Altiplano / Portal de pedidos Altiplano)
+// tiene el portal habilitado: ya trae finanzas y un monitor con 90 días de
+// historial, así que el dashboard del portal muestra números coherentes con
+// lo que se ve en el panel de admin durante el mismo recorrido.
+//
+// El usuario de la demo (PORTAL_DEMO_EMAIL) no tiene contraseña: el acceso es
+// por el pase anónimo de /api/portal/demo (ver lib/portal/demo.ts), que crea
+// la sesión directamente contra esta fila.
+async function seedPortalDemo() {
+  await db.execute({
+    sql: `update clients set portal_enabled = 1, billing_info = ? where id = 1`,
+    args: [JSON.stringify({ NIT: '900.123.456-7', Dirección: 'Cra 45 #12-30, Bogotá' })],
+  })
+
+  const {
+    rows: [{ id: demoUserId }],
+  } = await db.execute({
+    sql: `insert into client_users
+      (client_id, email, name, role, status, failed_attempts, created_at)
+      values (1, 'demo@codebymike.tech', 'Visitante demo', 'owner', 'active', 0, ?)
+      returning id`,
+    args: [daysAgo(30)],
+  })
+
+  await db.batch([
+    {
+      sql: `insert into project_milestones
+        (project_id, title, description, status, due_at, completed_at, visible_to_client, sort_order, created_at)
+        values (1, 'Descubrimiento y alcance', 'Entrevistas, requisitos y arquitectura del catálogo.', 'completado', ?, ?, 1, 0, ?)`,
+      args: [daysAgo(118), daysAgo(120), daysAgo(120)],
+    },
+    {
+      sql: `insert into project_milestones
+        (project_id, title, description, status, due_at, completed_at, visible_to_client, sort_order, created_at)
+        values (1, 'Diseño de interfaz', 'Sistema de diseño y pantallas del catálogo y checkout.', 'completado', ?, ?, 1, 1, ?)`,
+      args: [daysAgo(90), daysAgo(93), daysAgo(120)],
+    },
+    {
+      sql: `insert into project_milestones
+        (project_id, title, description, status, due_at, completed_at, visible_to_client, sort_order, created_at)
+        values (1, 'Catálogo y checkout', 'Desarrollo del núcleo transaccional y pagos.', 'en_curso', ?, null, 1, 2, ?)`,
+      args: [daysAhead(15), daysAgo(120)],
+    },
+    {
+      sql: `insert into project_milestones
+        (project_id, title, description, status, due_at, completed_at, visible_to_client, sort_order, created_at)
+        values (1, 'Zona de despacho norte', 'Ampliación de cobertura de entrega.', 'pendiente', ?, null, 1, 3, ?)`,
+      args: [daysAhead(45), daysAgo(120)],
+    },
+  ])
+
+  // Tres facturas: pagada, pendiente próxima a vencer y vencida — así el
+  // dashboard y la lista de facturas muestran los tres estados de una vez.
+  const invoiceSeeds = [
+    {
+      number: 'INV-2026-101',
+      status: 'paid',
+      subtotal: 450_000_00,
+      tax: 0,
+      issuedDaysAgo: 60,
+      dueDaysAgo: 45,
+      paidDaysAgo: 50,
+      notes: 'Anticipo del 50% del proyecto.',
+      items: [['Anticipo de proyecto (50%)', 1, 450_000_00]],
+    },
+    {
+      number: 'INV-2026-102',
+      status: 'sent',
+      subtotal: 320_000_00,
+      tax: 60_800_00,
+      issuedDaysAgo: 5,
+      dueDaysAhead: 9,
+      notes: 'Segundo hito: catálogo y checkout.',
+      items: [
+        ['Desarrollo de catálogo', 80, 3_000_00],
+        ['Integración de pagos', 20, 4_000_00],
+      ],
+    },
+    {
+      number: 'INV-2026-103',
+      status: 'overdue',
+      subtotal: 80_000_00,
+      tax: 15_200_00,
+      issuedDaysAgo: 40,
+      dueDaysAgo: 12,
+      notes: 'Horas de soporte adicional.',
+      items: [['Horas de soporte adicional', 20, 4_000_00]],
+    },
+  ]
+
+  for (const inv of invoiceSeeds) {
+    const total = inv.subtotal + inv.tax
+    const {
+      rows: [{ id: invoiceId }],
+    } = await db.execute({
+      sql: `insert into invoices
+        (client_id, project_id, number, status, currency, subtotal_cents, tax_cents, total_cents,
+         issued_at, due_at, paid_at, notes, created_at)
+        values (1, 1, ?, ?, 'COP', ?, ?, ?, ?, ?, ?, ?, ?)
+        returning id`,
+      args: [
+        inv.number,
+        inv.status,
+        inv.subtotal,
+        inv.tax,
+        total,
+        daysAgo(inv.issuedDaysAgo),
+        inv.dueDaysAgo != null ? daysAgo(inv.dueDaysAgo) : daysAhead(inv.dueDaysAhead),
+        inv.paidDaysAgo != null ? daysAgo(inv.paidDaysAgo) : null,
+        inv.notes,
+        daysAgo(inv.issuedDaysAgo),
+      ],
+    })
+
+    await db.batch(
+      inv.items.map(([description, quantity, unitCents], i) => ({
+        sql: `insert into invoice_items (invoice_id, description, quantity, unit_cents, total_cents, sort_order)
+              values (?, ?, ?, ?, ?, ?)`,
+        args: [invoiceId, description, quantity, unitCents, Math.round(quantity * unitCents), i],
+      }))
+    )
+  }
+
+  // Un hilo con una conversación ya resuelta: enseña cómo se ve el intercambio
+  // sin dejar la bandeja "esperando respuesta" en el primer vistazo del visitante.
+  const {
+    rows: [{ id: threadId }],
+  } = await db.execute({
+    sql: `insert into portal_threads (client_id, project_id, subject, status, last_message_at, created_at)
+          values (1, 1, 'Zona de despacho norte', 'open', ?, ?)`,
+    args: [daysAgo(2), daysAgo(6)],
+  })
+
+  await db.batch(
+    [
+      ['client', 'Visitante demo', '¿Podemos sumar la zona norte a las franjas de entrega antes de fin de mes?', 6],
+      ['admin', 'Mike', 'Sí, la agrego al siguiente sprint. Te aviso por aquí cuando quede en el catálogo.', 5],
+      ['client', 'Visitante demo', 'Perfecto, muchas gracias.', 2],
+    ].map(([authorType, authorName, body, ago], i) => ({
+      sql: `insert into portal_messages (thread_id, author_type, author_name, body, created_at) values (?, ?, ?, ?, ?)`,
+      args: [threadId, authorType, authorName, body, daysAgo(ago) + i], // +i evita empates de orden en el mismo segundo
+    }))
+  )
+
+  console.log(`✓ Portal demo: cliente 1 habilitado · usuario ${demoUserId} · ${invoiceSeeds.length} facturas · 1 hilo`)
 }
 
 await resetSchema()
 await seed()
+await seedPortalDemo()
 console.log(`✓ Demo lista en ${url.replace(/\/\/.*@/, '//')}`)
 db.close()
