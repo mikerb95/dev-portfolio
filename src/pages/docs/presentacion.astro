@@ -679,6 +679,20 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
     font-variant-numeric: tabular-nums;
   }
 
+  /* Video (HyperFrames) */
+  .reveal-light .video-frame {
+    border: 1px solid var(--slide-line);
+    background: var(--slide-surface);
+    border-radius: 0.3em;
+    padding: 0.4em;
+    max-width: 34em;
+  }
+  .reveal-light .video-frame video {
+    display: block;
+    width: 100%;
+    border-radius: 0.15em;
+  }
+
   /* Móvil / pantallas angostas */
   @media (max-width: 800px) {
     .reveal-light .grid-3,
