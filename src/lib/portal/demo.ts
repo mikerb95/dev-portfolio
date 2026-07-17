@@ -42,6 +42,9 @@ export const verifyPortalDemoToken = verifyDemoToken
 const MUTATION_ALLOWLIST: RegExp[] = [
   /^\/api\/portal\/facturas\/\d+\/pagar$/,
   /^\/api\/payments\/mock\/pay$/,
+  // Cerrar sesión no arriesga nada (revoca la propia fila de demo) y bloquearlo
+  // dejaría al visitante sin forma de salir salvo borrando la cookie a mano.
+  /^\/api\/portal\/logout$/,
 ]
 
 export function isPortalDemoAllowedMethod(method: string, pathname: string): boolean {
