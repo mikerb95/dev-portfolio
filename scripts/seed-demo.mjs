@@ -254,7 +254,7 @@ async function seed() {
   ])
 
   console.log(`✓ Datos sembrados: ${CLIENTS.length} clientes · ${PROJECTS.length} proyectos · ` +
-              `${SERVICES.length} servicios · ${MONITORES.length ?? MONITORS.length} monitores · ${checks.length} checks`)
+              `${SERVICES.length} servicios · ${MONITORS.length} monitores · ${checks.length} checks`)
 }
 
 // ── Portal de clientes (demo pública) ───────────────────────────────────────
