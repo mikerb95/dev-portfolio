@@ -228,6 +228,64 @@ async function testAccessibilityHeuristics(t: DiagnosticTarget, getHtml: GetHtml
   }
 }
 
+const PSI_TIMEOUT_MS = 28_000
+const PSI_CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'] as const
+
+/** Reporte Lighthouse real vía la API de Google PageSpeed Insights (requiere PSI_API_KEY). */
+async function testLighthouse(t: DiagnosticTarget): Promise<Outcome> {
+  const key = serverEnv('PSI_API_KEY')
+  if (!key) {
+    return {
+      status: 'info',
+      summary: 'No configurado (falta PSI_API_KEY)',
+      details: ['Requiere una clave gratuita de Google PageSpeed Insights para correr Lighthouse real.'],
+    }
+  }
+
+  const psiUrl = new URL('https://www.googleapis.com/pagespeedonline/v5/runPagespeed')
+  psiUrl.searchParams.set('url', t.url)
+  psiUrl.searchParams.set('key', key)
+  psiUrl.searchParams.set('strategy', 'mobile')
+  for (const c of PSI_CATEGORIES) psiUrl.searchParams.append('category', c)
+
+  const res = await fetchWithTimeout(psiUrl.toString(), { timeoutMs: PSI_TIMEOUT_MS })
+  if (!res.ok) {
+    drain(res)
+    return { status: 'fail', summary: `PageSpeed Insights respondió ${res.status}` }
+  }
+  const data = await res.json().catch(() => null)
+  const categories = data?.lighthouseResult?.categories
+  if (!categories) return { status: 'fail', summary: 'Respuesta de PageSpeed Insights sin datos de Lighthouse' }
+
+  const pct = (score: number | null | undefined) => (score == null ? null : Math.round(score * 100))
+  const scores = {
+    performance: pct(categories.performance?.score),
+    accessibility: pct(categories.accessibility?.score),
+    bestPractices: pct(categories['best-practices']?.score),
+    seo: pct(categories.seo?.score),
+  }
+
+  const audits = data.lighthouseResult?.audits ?? {}
+  const lcp = audits['largest-contentful-paint']?.displayValue
+  const cls = audits['cumulative-layout-shift']?.displayValue
+  const tbt = audits['total-blocking-time']?.displayValue
+
+  const perf = scores.performance ?? 0
+  const status: DiagnosticStatus = perf >= 90 ? 'pass' : perf >= 50 ? 'warn' : 'fail'
+
+  return {
+    status,
+    summary: `Rendimiento ${scores.performance ?? '—'} · Accesibilidad ${scores.accessibility ?? '—'} · SEO ${scores.seo ?? '—'}`,
+    details: [
+      `Rendimiento: ${scores.performance ?? '—'}/100`,
+      `Accesibilidad: ${scores.accessibility ?? '—'}/100`,
+      `Buenas prácticas: ${scores.bestPractices ?? '—'}/100`,
+      `SEO: ${scores.seo ?? '—'}/100`,
+      `LCP: ${lcp ?? '—'} · CLS: ${cls ?? '—'} · TBT: ${tbt ?? '—'}`,
+    ],
+  }
+}
+
 /** Certificado TLS: emisor, vigencia, protocolo y días restantes. */
 async function testTls(t: DiagnosticTarget): Promise<Outcome> {
   const u = new URL(t.url)
