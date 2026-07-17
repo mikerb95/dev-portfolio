@@ -170,22 +170,30 @@ for (const { modulo, top: blockTop, height, width } of bloques) {
   diagramSvg += `<text x="${BOUNDARY_X + width / 2}" y="${blockTop + TITLE_H / 2 + 4}" fill="#e7e7ec" font-size="12.5" font-weight="600" font-family="sans-serif" text-anchor="middle">${modulo}</text>`
 }
 
-for (const arco of arcos) {
-  const stroke = arco.tipo === 'include' ? '#00f2ff' : '#a78bff'
-  const marker = arco.tipo === 'include' ? 'url(#arrow-include)' : 'url(#arrow-extends)'
-  diagramSvg += `<line x1="${arco.x1}" y1="${arco.y1}" x2="${arco.x2}" y2="${arco.y2}" stroke="${stroke}" stroke-width="1.3" stroke-dasharray="5,4" marker-end="${marker}" />`
-  const mx = (arco.x1 + arco.x2) / 2
-  const my = (arco.y1 + arco.y2) / 2
-  const labelBg = arco.tipo === 'include' ? '#00f2ff' : '#a78bff'
-  const anchorDy = arco.x1 === arco.x2 ? 0 : -6
-  const anchorDx = arco.x1 === arco.x2 ? 14 : 0
-  diagramSvg += `<text x="${mx + anchorDx}" y="${my + anchorDy}" fill="${labelBg}" font-size="10.5" font-style="italic" font-family="sans-serif" text-anchor="middle">${arco.etiqueta}</text>`
-}
-
 for (const nodo of nodos) {
   const isPrincipal = nodo.variante === 'principal'
   diagramSvg += `<ellipse cx="${nodo.cx}" cy="${nodo.cy}" rx="${ELLIPSE_RX}" ry="${ELLIPSE_RY}" fill="${isPrincipal ? '#1c1c26' : '#20202b'}" stroke="${isPrincipal ? '#c4c4cc' : '#8a8a99'}" stroke-width="1.5" />`
   diagramSvg += wrappedLabel(nodo.cx, nodo.cy, ELLIPSE_RX * 2 - 20, ELLIPSE_RY * 2 - 8, nodo.label, 11.5)
+}
+
+for (const arco of arcos) {
+  const stroke = arco.tipo === 'include' ? '#00f2ff' : '#a78bff'
+  const marker = arco.tipo === 'include' ? 'url(#arrow-include)' : 'url(#arrow-extends)'
+  diagramSvg += `<line x1="${arco.x1}" y1="${arco.y1}" x2="${arco.x2}" y2="${arco.y2}" stroke="${stroke}" stroke-width="1.3" stroke-dasharray="5,4" marker-end="${marker}" />`
+}
+
+// Las etiquetas de los arcos van al final, por encima de óvalos y líneas,
+// con un fondo sólido detrás para que nunca queden tapadas ni ilegibles.
+for (const arco of arcos) {
+  const mx = (arco.x1 + arco.x2) / 2
+  const my = (arco.y1 + arco.y2) / 2
+  const labelColor = arco.tipo === 'include' ? '#00f2ff' : '#a78bff'
+  const vertical = arco.x1 === arco.x2
+  const labelX = vertical ? mx + 34 : mx
+  const labelY = vertical ? my : my - 10
+  const labelW = arco.etiqueta.length * 6.5 + 10
+  diagramSvg += `<rect x="${labelX - labelW / 2}" y="${labelY - 11}" width="${labelW}" height="15" fill="#101018" />`
+  diagramSvg += `<text x="${labelX}" y="${labelY}" fill="${labelColor}" font-size="10.5" font-style="italic" font-family="sans-serif" text-anchor="middle">${arco.etiqueta}</text>`
 }
 
 for (const { actor, actorCy } of bloques) {
