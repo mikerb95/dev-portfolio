@@ -266,6 +266,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
       const next = encodeURIComponent(pathname + context.url.search)
       return context.redirect(`/portal/login?next=${next}`)
     }
+
+    // "Ver como cliente" (ver /admin/clients): solo lectura, sin excepciones —
+    // ni siquiera el pago simulado que sí se permite en la demo pública. Aquí
+    // los datos SON reales; simular un pago o mandar un mensaje "de parte del
+    // cliente" sería confuso o dañino de verdad, no una demostración inocua.
+    // Se corta ANTES de tocar el endpoint: es la misma razón que el guard de
+    // demo, aplicada a datos que si se rompen, se rompen para siempre.
+    if (portalSession.impersonatedBy && method !== 'GET' && method !== 'HEAD') {
+      return new Response(
+        JSON.stringify({ error: 'estás viendo este portal como el cliente: solo lectura' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Las páginas la leen de locals; el middleware ya pagó la consulta.
     context.locals.portal = portalSession
     context.locals.portalDemo = portalDemoMode
