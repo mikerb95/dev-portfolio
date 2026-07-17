@@ -22,9 +22,8 @@
 
 ## Orden de ejecución
 
-> **Estado (16 jul 2026)**: etapas 1-4 ✅ implementadas y verificadas.
-> Siguiente: etapa 5 (LAB Fase 6 — SAST + a11y). Pendiente transversal: el
-> artículo de /notes sobre e2e (etapa 4).
+> **Estado (17 jul 2026)**: etapas 1-5 ✅ implementadas y verificadas.
+> Siguiente: etapa 6 (LAB Fase 7 — mutation + contratos).
 
 | # | Etapa | Tipo | Esfuerzo |
 |---|-------|------|----------|
