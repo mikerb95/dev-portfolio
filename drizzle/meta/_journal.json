@@ -134,6 +134,13 @@
       "when": 1784264298511,
       "tag": "0018_orange_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1784266678012,
+      "tag": "0019_previous_rawhide_kid",
+      "breakpoints": true
     }
   ]
 }
