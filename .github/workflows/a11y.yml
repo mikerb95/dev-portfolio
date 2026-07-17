@@ -27,7 +27,7 @@ jobs:
       # levante sin explotar al importar los módulos de BD/cripto.
       TURSO_DATABASE_URL: file:./ci-a11y.db
       AUTH_SECRET: ci-a11y-secret-0123456789012345678901234567890123
-      ENCRYPTION_KEY: ${{ '0'.repeat 64 }}
+      ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
       ALLOWED_GITHUB_LOGINS: nadie-ci
     steps:
       - uses: actions/checkout@v4
