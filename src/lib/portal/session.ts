@@ -41,6 +41,8 @@ export type PortalSession = {
     company: string | null
     logoUrl: string | null
   }
+  /** Login de admin si esta sesión es "ver como cliente"; null en una entrada real. */
+  impersonatedBy: string | null
 }
 
 const sha256 = (s: string): string => createHash('sha256').update(s).digest('hex')
