@@ -41,7 +41,10 @@ export function runInDemoContext<T>(fn: () => T): T {
 /** ¿Este request corre en modo demo? */
 export const inDemoContext = (): boolean => demoContext.getStore() === true
 
-const activeDb = () => (demoContext.getStore() && demoDb ? demoDb : realDb)
+const activeDb = () => {
+  console.log('[DIAG activeDb]', { store: demoContext.getStore(), hasDemoDb: !!demoDb, stack: new Error().stack?.split('\n')[2] })
+  return demoContext.getStore() && demoDb ? demoDb : realDb
+}
 
 /**
  * `db` resuelve su destino en cada acceso, no al importar. Los métodos se
