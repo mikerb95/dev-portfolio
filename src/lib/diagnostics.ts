@@ -5,6 +5,7 @@
 import tls from 'node:tls'
 import dns from 'node:dns/promises'
 import { fetchDomainExpiry, extractDomain, daysUntil } from './domains'
+import { serverEnv } from './env'
 
 export type DiagnosticStatus = 'pass' | 'warn' | 'fail' | 'info'
 
