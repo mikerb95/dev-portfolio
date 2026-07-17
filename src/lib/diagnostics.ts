@@ -185,8 +185,8 @@ async function testPerformance(t: DiagnosticTarget, getHtml: GetHtml): Promise<O
 const GENERIC_LINK_TEXT = /^(click here|leer m[aá]s|read more|aqu[ií]|here|more|m[aá]s)$/i
 
 /** Heurísticas de accesibilidad sobre el HTML estático (no reemplaza una auditoría con axe-core). */
-async function testAccessibilityHeuristics(t: DiagnosticTarget): Promise<Outcome> {
-  const snap = await fetchHtml(t)
+async function testAccessibilityHeuristics(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outcome> {
+  const snap = await getHtml(t)
   if (!snap) return { status: 'fail', summary: 'No se pudo analizar el HTML' }
   const { html } = snap
 
@@ -441,6 +441,7 @@ const toSingleString = (v: string | string[] | undefined): string | null =>
 
 /** Suite completa de pruebas para un objetivo. Cada entrada corre en paralelo. */
 export function diagnosticSuite(t: DiagnosticTarget): { id: string; label: string; run: () => Promise<DiagnosticResult> }[] {
+  const getHtml = makeHtmlFetcher()
   const defs: { id: string; label: string; fn: (t: DiagnosticTarget) => Promise<Outcome> }[] = [
     { id: 'reachability', label: 'Disponibilidad HTTP', fn: testReachability },
     { id: 'tls', label: 'Certificado TLS', fn: testTls },
@@ -450,6 +451,9 @@ export function diagnosticSuite(t: DiagnosticTarget): { id: string; label: strin
     { id: 'domain-expiry', label: 'Vencimiento del dominio', fn: testDomainExpiry },
     { id: 'robots', label: 'robots.txt', fn: testRobots },
     { id: 'sitemap', label: 'sitemap.xml', fn: testSitemap },
+    { id: 'seo-meta', label: 'Metadatos SEO', fn: (target) => testSeoMeta(target, getHtml) },
+    { id: 'performance', label: 'Rendimiento básico', fn: (target) => testPerformance(target, getHtml) },
+    { id: 'accessibility', label: 'Accesibilidad (heurística)', fn: (target) => testAccessibilityHeuristics(target, getHtml) },
   ]
   return defs.map((d) => ({ id: d.id, label: d.label, run: () => timed(d.id, d.label, () => d.fn(t)) }))
 }
