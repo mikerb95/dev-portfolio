@@ -16,6 +16,10 @@ const PUBLIC_EXACT = new Set([
   '/portal/olvide',
   '/api/portal/login',
   '/api/portal/reset',
+  // Entrada a la demo pública: el visitante no tiene sesión hasta que este
+  // endpoint se la crea (ver src/pages/api/portal/demo.ts). El propio endpoint
+  // valida que la demo esté disponible; aquí solo se le permite ser alcanzado.
+  '/api/portal/demo',
 ])
 
 const PUBLIC_PREFIXES = [
