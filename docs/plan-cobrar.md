@@ -197,11 +197,14 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
 
 ### Pendiente para producción
 
-- Subir `COBRO_HISTORY_SECRET` a Vercel (`vercel env add`). Sin él,
-  `POST /api/admin/cobros` responde 503 y `/mis-pagos` no resuelve tokens: falla
-  cerrado, nunca degrada a acceso abierto.
-- Con `WOMPI_PUBLIC_KEY` / `WOMPI_INTEGRITY_SECRET` ausentes, la pasarela corre
-  en modo mock y `/cobrar` lo avisa en pantalla.
+- ✅ `COBRO_HISTORY_SECRET` subido a Vercel Production (2026-07-16).
+- ✅ `WOMPI_PUBLIC_KEY`, `WOMPI_INTEGRITY_SECRET`, `WOMPI_EVENTS_SECRET` subidos a
+  Vercel Production (2026-07-16), copiados de `dobleyo/.env` — mismo comercio
+  Wompi para ambos proyectos, confirmado con el usuario. `WOMPI_PRIVATE_KEY` no
+  se copió: ningún endpoint de portfolio la lee.
+- **Falta un deploy** para que las cuatro variables surtan efecto (Vercel las
+  inyecta en build/runtime del deploy que sigue a su creación, no de forma
+  retroactiva a un deploy ya corriendo).
 
 ## 9. Casos borde contemplados
 

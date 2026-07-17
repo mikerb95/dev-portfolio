@@ -1,0 +1,65 @@
+# SAST: análisis estático de dependencias (npm audit) y código (CodeQL).
+#
+# npm audit reporta al panel LAB propio (kind: security_finding) — se ve en
+# /admin/lab/security y agregado en /lab público. CodeQL usa la integración
+# nativa de GitHub (gratis en repos públicos): sus hallazgos van directo a la
+# pestaña Security del repo, sin parseo propio.
+#
+# Secrets opcionales (degrada con gracia si faltan, igual que ci.yml):
+#   LAB_INGEST_TOKEN → habilita el reporte de npm audit al panel LAB
+# Variables opcionales:
+#   PROD_URL → default https://codebymike.tech
+
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Domingos 06:00 UTC: las vulnerabilidades de dependencias aparecen sin
+    # que nadie haga push (advisory nuevo sobre una versión ya instalada).
+    - cron: '0 6 * * 0'
+
+jobs:
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Auditar dependencias y reportar al panel LAB
+        env:
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+          LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
+        run: |
+          if [ -z "$LAB_INGEST_TOKEN" ]; then
+            echo "::warning::Sin LAB_INGEST_TOKEN: se audita pero no se reporta al panel."
+            node scripts/npm-audit-scan.mjs
+          else
+            INGEST_URL="$PROD_URL/api/lab/ingest" node scripts/npm-audit-scan.mjs
+          fi
+        # No falla el job por vulnerabilidades encontradas: el objetivo es
+        # que queden registradas y visibles, no bloquear el pipeline. El
+        # semáforo real vive en /admin/lab/security.
+        continue-on-error: true
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - uses: github/codeql-action/analyze@v3
