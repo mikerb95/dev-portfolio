@@ -152,6 +152,7 @@ export async function resolveSession(token: string | undefined | null, now = new
     sessionId: row.sessionId,
     user: { id: row.userId, email: row.email, name: row.name, role: row.role as PortalRole },
     client: { id: row.clientId, name: row.clientName, company: row.company, logoUrl: row.logoUrl },
+    impersonatedBy: row.impersonatedBy,
   }
 }
 
