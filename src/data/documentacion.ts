@@ -235,8 +235,13 @@ export const CASOS_DE_USO: CasoDeUso[] = [
     { tipo: 'extends', nodo: { id: 'CU-09-X2', nombre: 'Marcar degradación por latencia' } },
   ] },
   { id: 'CU-10', nombre: 'Evaluar SLO de un servicio', actor: 'admin', rf: ['RF-403'], resumen: 'El administrador define objetivo y ventana, y consulta el presupuesto de error restante de un monitor.' },
-  { id: 'CU-11', nombre: 'Ejecutar backup manual', actor: 'admin', rf: ['RF-701'], resumen: 'El administrador dispara un backup de la base de datos hacia Blob storage desde el panel.' },
-  { id: 'CU-12', nombre: 'Procesar un pago con idempotencia', actor: 'gateway', rf: ['RF-502'], resumen: 'La pasarela envía un webhook de pago; el sistema aplica el evento respetando idempotencia y orden.' },
+  { id: 'CU-11', nombre: 'Ejecutar backup manual', actor: 'admin', rf: ['RF-701'], resumen: 'El administrador dispara un backup de la base de datos hacia Blob storage desde el panel.', relaciones: [
+    { tipo: 'extends', nodo: { id: 'CU-11-X1', nombre: 'Backup automático por cron' } },
+  ] },
+  { id: 'CU-12', nombre: 'Procesar un pago con idempotencia', actor: 'gateway', rf: ['RF-502'], resumen: 'La pasarela envía un webhook de pago; el sistema aplica el evento respetando idempotencia y orden.', relaciones: [
+    { tipo: 'extends', nodo: { id: 'CU-12-X1', nombre: 'Registrar evento duplicado' } },
+    { tipo: 'extends', nodo: { id: 'CU-12-X2', nombre: 'Registrar evento fuera de orden' } },
+  ] },
   { id: 'CU-13', nombre: 'Inyectar un fallo de chaos engineering', actor: 'admin', rf: ['RF-503'], resumen: 'El administrador activa un flag de fallo temporal en una ruta y observa cómo el monitoreo lo detecta.' },
   { id: 'CU-14', nombre: 'Bloquear una IP maliciosa', actor: 'admin', rf: ['RF-601', 'RF-602'], resumen: 'El sensor clasifica un request hostil; el administrador (o el auto-block) añade la IP a la blocklist con TTL.' },
   { id: 'CU-15', nombre: 'Aplicar rate limiting durable', actor: 'admin', rf: ['RF-603'], resumen: 'Un cliente excede el límite de requests permitido; el sistema lo limita usando el estado persistido en base de datos.' },
