@@ -1,0 +1,67 @@
+# Accesibilidad (axe-core) sobre las páginas públicas del commit actual.
+#
+# Corre contra un servidor local (`astro dev` del código recién bajado, no
+# contra prod) y reporta los hallazgos al panel LAB en prod — mismo patrón que
+# "Reportar run al panel LAB" en ci.yml: el código bajo prueba es local, el
+# panel donde se ve el resultado es prod.
+#
+# Secrets opcionales (degrada con gracia):
+#   LAB_INGEST_TOKEN → habilita el reporte al panel LAB
+# Variables opcionales:
+#   PROD_URL → default https://codebymike.tech
+
+name: Accessibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  a11y:
+    name: axe-core
+    runs-on: ubuntu-latest
+    env:
+      # Config mínima para que `astro dev` arranque sin una Turso real: las
+      # páginas públicas escaneadas no requieren datos, solo que el servidor
+      # levante sin explotar al importar los módulos de BD/cripto.
+      TURSO_DATABASE_URL: file:./ci-a11y.db
+      AUTH_SECRET: ci-a11y-secret-0123456789012345678901234567890123
+      ENCRYPTION_KEY: ${{ '0'.repeat 64 }}
+      ALLOWED_GITHUB_LOGINS: nadie-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Levantar el servidor y correr axe
+        env:
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+          LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
+        run: |
+          npm run dev -- --port 4321 &
+          npx wait-on http://localhost:4321 --timeout 60000
+
+          if [ -z "$LAB_INGEST_TOKEN" ]; then
+            echo "::warning::Sin LAB_INGEST_TOKEN: se escanea pero no se reporta al panel."
+            BASE_URL=http://localhost:4321 node scripts/a11y-scan.mjs
+          else
+            BASE_URL=http://localhost:4321 \
+            INGEST_URL="$PROD_URL/api/lab/ingest" \
+            node scripts/a11y-scan.mjs
+          fi
+        # Igual que npm audit: se registra, no bloquea el pipeline. El
+        # semáforo real vive en /admin/lab/security.
+        continue-on-error: true
+
+      - name: Subir resultados como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-results
+          path: a11y-results.json
+          retention-days: 30
