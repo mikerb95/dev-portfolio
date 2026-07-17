@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
+import { eq, inArray, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { securityFindings } from '../../db/schema'
 import { fingerprint, type NormalizedFinding } from './findings'
@@ -16,13 +16,28 @@ export type IngestSummary = { inserted: number; updated: number }
  */
 export async function ingestFindings(findings: NormalizedFinding[]): Promise<IngestSummary> {
   const now = new Date()
+  const fingerprints = findings.map((f) => fingerprint(f.source, f.ruleId, f.route))
+
+  // Se consulta qué fingerprints ya existían ANTES del batch: `timestamp` guarda
+  // segundos (unix epoch), así que comparar el `firstSeenAt` devuelto contra
+  // `now` (con milisegundos) da falsos "updated" en cada insert nuevo.
+  const existing =
+    fingerprints.length > 0
+      ? await db
+          .select({ fingerprint: securityFindings.fingerprint })
+          .from(securityFindings)
+          .where(inArray(securityFindings.fingerprint, fingerprints))
+      : []
+  const existedBefore = new Set(existing.map((r) => r.fingerprint))
+
   let inserted = 0
   let updated = 0
 
-  for (const f of findings) {
-    const fp = fingerprint(f.source, f.ruleId, f.route)
+  for (let i = 0; i < findings.length; i++) {
+    const f = findings[i]
+    const fp = fingerprints[i]
 
-    const res = await db
+    await db
       .insert(securityFindings)
       .values({
         fingerprint: fp,
@@ -47,11 +62,9 @@ export async function ingestFindings(findings: NormalizedFinding[]): Promise<Ing
           description: f.description,
         },
       })
-      .returning({ firstSeenAt: securityFindings.firstSeenAt })
 
-    // firstSeenAt === now ⇒ fue un insert; si no, era una fila existente.
-    if (res[0]?.firstSeenAt?.getTime() === now.getTime()) inserted++
-    else updated++
+    if (existedBefore.has(fp)) updated++
+    else inserted++
   }
 
   return { inserted, updated }

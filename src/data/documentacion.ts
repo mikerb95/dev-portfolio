@@ -242,12 +242,23 @@ export const CASOS_DE_USO: CasoDeUso[] = [
     { tipo: 'extends', nodo: { id: 'CU-12-X1', nombre: 'Registrar evento duplicado' } },
     { tipo: 'extends', nodo: { id: 'CU-12-X2', nombre: 'Registrar evento fuera de orden' } },
   ] },
-  { id: 'CU-13', nombre: 'Inyectar un fallo de chaos engineering', actor: 'admin', rf: ['RF-503'], resumen: 'El administrador activa un flag de fallo temporal en una ruta y observa cómo el monitoreo lo detecta.' },
-  { id: 'CU-14', nombre: 'Bloquear una IP maliciosa', actor: 'admin', rf: ['RF-601', 'RF-602'], resumen: 'El sensor clasifica un request hostil; el administrador (o el auto-block) añade la IP a la blocklist con TTL.' },
+  { id: 'CU-13', nombre: 'Inyectar un fallo de chaos engineering', actor: 'admin', rf: ['RF-503'], resumen: 'El administrador activa un flag de fallo temporal en una ruta y observa cómo el monitoreo lo detecta.', relaciones: [
+    { tipo: 'include', nodo: { id: 'CU-13-N1', nombre: 'Aplicar fallo simulado en middleware' } },
+    { tipo: 'extends', nodo: { id: 'CU-13-X1', nombre: 'Desactivar todos los flags (botón de pánico)' } },
+  ] },
+  { id: 'CU-14', nombre: 'Bloquear una IP maliciosa', actor: 'admin', rf: ['RF-601', 'RF-602'], resumen: 'El sensor clasifica un request hostil; el administrador (o el auto-block) añade la IP a la blocklist con TTL.', relaciones: [
+    { tipo: 'include', nodo: { id: 'CU-14-N1', nombre: 'Registrar evento de seguridad' } },
+    { tipo: 'extends', nodo: { id: 'CU-14-X1', nombre: 'Bloquear IP manualmente' } },
+  ] },
   { id: 'CU-15', nombre: 'Aplicar rate limiting durable', actor: 'admin', rf: ['RF-603'], resumen: 'Un cliente excede el límite de requests permitido; el sistema lo limita usando el estado persistido en base de datos.' },
-  { id: 'CU-16', nombre: 'Presentar un proyecto a un cliente', actor: 'cliente', rf: ['RF-208'], resumen: 'El administrador controla remotamente el avance de una presentación que el cliente ve en su navegador.' },
+  { id: 'CU-16', nombre: 'Presentar un proyecto a un cliente', actor: 'cliente', rf: ['RF-208'], resumen: 'El administrador controla remotamente el avance de una presentación que el cliente ve en su navegador.', relaciones: [
+    { tipo: 'include', nodo: { id: 'CU-16-N1', nombre: 'Sincronizar slide vía polling' } },
+  ] },
   { id: 'CU-17', nombre: 'Indexar contenido nuevo en buscadores', actor: 'buscador', rf: ['RF-007'], resumen: 'Al publicar contenido, el sistema notifica vía IndexNow y actualiza el RSS/sitemap para acelerar la indexación.' },
-  { id: 'CU-18', nombre: 'Consultar documentación del proyecto', actor: 'admin', rf: ['RF-703'], resumen: 'El administrador navega /docs para revisar requerimientos, casos de uso, diagramas y el kanban del propio portfolio.' },
+  { id: 'CU-18', nombre: 'Consultar documentación del proyecto', actor: 'admin', rf: ['RF-703'], resumen: 'El administrador navega /docs para revisar requerimientos, casos de uso, diagramas y el kanban del propio portfolio.', relaciones: [
+    { tipo: 'include', nodo: { id: 'CU-18-N1', nombre: 'Navegar subpágina de documentación' } },
+    { tipo: 'extends', nodo: { id: 'CU-18-X1', nombre: 'Consultar diagrama Mermaid' } },
+  ] },
 ]
 
 // ── Casos de uso extendidos ───────────────────────────────────────────────────
