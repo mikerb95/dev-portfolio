@@ -413,8 +413,8 @@ function inspectTls(rawUrl: string): Promise<TlsInfo | null> {
       finish({
         validFrom: validFrom && !isNaN(validFrom.getTime()) ? validFrom : null,
         validTo: okTo ? validTo : null,
-        issuer: cert.issuer?.O ?? cert.issuer?.CN ?? null,
-        subject: cert.subject?.CN ?? null,
+        issuer: toSingleString(cert.issuer?.O) ?? toSingleString(cert.issuer?.CN) ?? null,
+        subject: toSingleString(cert.subject?.CN) ?? null,
         protocol,
         daysLeft: okTo ? Math.round(daysUntil(validTo)) : null,
       })
