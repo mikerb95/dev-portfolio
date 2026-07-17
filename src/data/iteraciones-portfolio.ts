@@ -815,5 +815,5 @@ export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 837 },
+  { mes: 'jul', commits: 838 },
 ]
