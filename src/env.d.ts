@@ -20,6 +20,7 @@ declare namespace App {
       sessionId: string
       user: { id: number; email: string; name: string | null; role: 'owner' | 'member' | 'billing' }
       client: { id: number; name: string; company: string | null; logoUrl: string | null }
+      impersonatedBy: string | null
     }
 
     /**
