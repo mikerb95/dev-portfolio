@@ -162,8 +162,8 @@ async function testSeoMeta(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outco
 }
 
 /** Rendimiento básico: TTFB, tamaño de respuesta y conteo de recursos enlazados. */
-async function testPerformance(t: DiagnosticTarget): Promise<Outcome> {
-  const snap = await fetchHtml(t)
+async function testPerformance(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outcome> {
+  const snap = await getHtml(t)
   if (!snap) return { status: 'fail', summary: 'No se pudo medir el rendimiento' }
   const { html, ttfb, bytes } = snap
   const scripts = (html.match(/<script[^>]+src=/gi) ?? []).length
