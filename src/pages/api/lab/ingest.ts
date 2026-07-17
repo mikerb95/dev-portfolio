@@ -13,7 +13,7 @@ const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 function tokenOk(request: Request): boolean {
-  const expected = process.env.LAB_INGEST_TOKEN
+  const expected = import.meta.env.LAB_INGEST_TOKEN
   if (!expected) return false
   const got = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? ''
   const a = Buffer.from(got)
