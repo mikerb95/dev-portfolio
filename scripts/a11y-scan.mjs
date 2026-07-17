@@ -54,7 +54,7 @@ let totalViolations = 0
 let blocking = 0
 const perPage = []
 
-for (const path of PAGES) {
+async function scanPage(path) {
   try {
     // /status puede tardar bastante en cargar (query pesada contra Turso);
     // 60s da margen sin colgar el job si algo se cae de verdad.

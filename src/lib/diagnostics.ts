@@ -512,6 +512,7 @@ export function diagnosticSuite(t: DiagnosticTarget): { id: string; label: strin
     { id: 'sitemap', label: 'sitemap.xml', fn: testSitemap },
     { id: 'seo-meta', label: 'Metadatos SEO', fn: (target) => testSeoMeta(target, getHtml) },
     { id: 'performance', label: 'Rendimiento básico', fn: (target) => testPerformance(target, getHtml) },
+    { id: 'lighthouse', label: 'Lighthouse (PageSpeed Insights)', fn: testLighthouse },
     { id: 'accessibility', label: 'Accesibilidad (heurística)', fn: (target) => testAccessibilityHeuristics(target, getHtml) },
   ]
   return defs.map((d) => ({ id: d.id, label: d.label, run: () => timed(d.id, d.label, () => d.fn(t)) }))
