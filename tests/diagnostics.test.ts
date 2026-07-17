@@ -36,11 +36,12 @@ const runTest = async (id: string) => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('diagnosticSuite (estructura)', () => {
-  it('expone las 8 pruebas con id y label', () => {
+  it('expone las 12 pruebas con id y label', () => {
     const ids = diagnosticSuite(target()).map((d) => d.id)
     expect(ids).toEqual([
       'reachability', 'tls', 'https-redirect', 'security-headers',
       'dns', 'domain-expiry', 'robots', 'sitemap',
+      'seo-meta', 'performance', 'lighthouse', 'accessibility',
     ])
   })
 })
