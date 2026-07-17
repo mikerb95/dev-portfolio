@@ -95,8 +95,27 @@ async function scanPage(path) {
   }
 }
 
+for (const path of PAGES) await scanPage(path)
+
+// Entrada a la demo del portal: un GET normal, las cookies quedan en el
+// `context` compartido y las siguientes navegaciones del mismo `page` ya
+// entran autenticadas. Si la demo no está configurada (falta TURSO_DEMO_URL),
+// el endpoint redirige de vuelta al login con `m=demo-unavailable`: se detecta
+// por la URL final y esas páginas se omiten en vez de escanear un login vacío
+// bajo cada nombre de ruta.
+await page.goto(`${BASE_URL}/api/portal/demo`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+const demoEntered = !page.url().includes('demo-unavailable')
+
+if (demoEntered) {
+  for (const path of PORTAL_DEMO_PAGES) await scanPage(path)
+} else {
+  console.log('  (demo del portal no configurada — se omiten sus páginas)')
+}
+
+const scanned = PAGES.length + (demoEntered ? PORTAL_DEMO_PAGES.length : 0)
+
 writeFileSync('a11y-results.json', JSON.stringify(perPage, null, 2))
 await browser.close()
 
-console.log(`\n${totalViolations} violaciones en ${PAGES.length} páginas (${blocking} bloqueantes).`)
+console.log(`\n${totalViolations} violaciones en ${scanned} páginas (${blocking} bloqueantes).`)
 process.exit(blocking > 0 ? 1 : 0)
