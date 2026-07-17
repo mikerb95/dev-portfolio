@@ -31,7 +31,7 @@
 | 2 | ✅ `/lab` público (vitrina del LAB) | feature | ~1 sesión |
 | 3 | ✅ Demo read-only del admin | feature grande | ~2-3 sesiones |
 | 4 | ✅ Playwright e2e | infra de calidad | ~1-2 sesiones |
-| 5 | LAB Fase 6 — SAST + a11y | LAB | ~2-3 días |
+| 5 | ✅ LAB Fase 6 — SAST + a11y | LAB | ~2-3 días |
 | 6 | LAB Fase 7 — Mutation + contratos | LAB | ~2 días |
 | 7 | LAB Fase 5 — Load testing k6 | LAB | ~2 días |
 | 8 | Remate vitrina seguridad | remate | ~1 h |
@@ -231,7 +231,50 @@ las 3 garantías de seguridad de la etapa 3.
 El detalle completo (entregables, tablas, workflows, criterios) ya está en
 `docs/plan-lab-fases-pendientes.md`. Aquí solo el orden nuevo y los ajustes:
 
-**Etapa 5 = LAB Fase 6 (SAST + a11y primero, DAST después)**
+**Etapa 5 = LAB Fase 6 (SAST + a11y) ✅ IMPLEMENTADA (17 jul 2026)**
+
+**Entregado**: tabla `security_findings` (fingerprint único por
+source|ruleId|route, dedup entre corridas), lógica pura en
+`src/lib/lab/findings.ts` (parsers de `npm audit --json` y violaciones axe,
+normalización de severidad, transiciones de estado — 15 tests) +
+`src/lib/lab/findings-store.ts` (upsert idempotente, auto-resolución de lo que
+ya no aparece). Ingesta ampliada (`kind:'security_finding'`, 3 formas de
+payload). Endpoint `GET/PATCH /api/admin/lab/security` + página
+`/admin/lab/security` (resumen por severidad, filtros, resolver/aceptar/reabrir
+con nota). Sección real en `/lab` público (agregados: abiertos/resueltos/
+aceptados) que reemplaza la tarjeta "próximamente" en cuanto hay datos.
+Scripts `scripts/npm-audit-scan.mjs` y `scripts/a11y-scan.mjs` (axe-core sobre
+Playwright, mismas 8 páginas públicas que los e2e). Workflows `security.yml`
+(npm audit semanal/push + CodeQL nativo) y `a11y.yml` (axe contra un servidor
+local del commit, reporta al panel LAB en prod).
+
+**Verificado con datos REALES, no fixtures**: `npm audit` sobre el repo
+encontró 15 paquetes vulnerables (8 critical/high) — ingeridos correctamente.
+El scan de axe encontró **9 violaciones reales** de contraste WCAG AA en las 8
+páginas públicas (ratios de 2.4-2.95 contra el mínimo 4.5:1, ej. `text-cyan/40`
+sobre fondo oscuro) — no artefactos del entorno de prueba. Ciclo completo
+resolver→reflejarse en `/lab` público probado end-to-end.
+
+**Bugs reales encontrados y corregidos al verificar en runtime** (ninguno se
+habría visto sin ejecutar los scripts de verdad):
+- `src/pages/api/lab/ingest.ts` usaba `process.env.LAB_INGEST_TOKEN`, que en
+  `astro dev` no está poblado (el resto del repo usa `import.meta.env` para
+  secretos llamados por servicios externos, p. ej. `CRON_SECRET`) — 401
+  perpetuo en dev. Corregido a `import.meta.env`.
+- `@axe-core/playwright` exige `browser.newContext()` explícito; con
+  `browser.newPage()` directo falla con "please use browser.newContext()".
+- El conteo `inserted`/`updated` de `ingestFindings` comparaba `Date` con
+  milisegundos contra un campo `timestamp` que Drizzle trunca a segundos —
+  casi siempre daba falsos "updated" en inserts nuevos. Corregido consultando
+  qué fingerprints ya existían ANTES del batch.
+- Encontré y borré un `.env.development.local` suelto (de una sesión de
+  `/verify` anterior) que redirigía `TURSO_DATABASE_URL` a un archivo temporal
+  inexistente — explicaba fallos de ingesta que parecían de auth.
+- ZAP/DAST (sub-fase 6b) **no se implementó**: sigue dependiendo de un preview
+  deployment estable, que no existe sin `VERCEL_TOKEN` (pendiente transversal).
+
+### Diseño (referencia)
+
 - Arrancar por lo gratis y rápido: `npm audit` parseado + **CodeQL** (repo
   público = gratis) + **axe-core sobre Playwright** (sinergia directa con la
   etapa 4: mismos specs, mismas páginas públicas).
