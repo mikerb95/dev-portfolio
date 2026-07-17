@@ -206,6 +206,14 @@ const upcoming = [
         <div class="font-mono text-[26px] leading-none tracking-tight text-cyan">{absorbed}</div>
         <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Ataques absorbidos (pagos)</div>
       </div>
+      {lastMutation && (
+        <div class="rounded-2xl glass p-5" title="% de mutantes detectados por los tests sobre src/lib — no solo qué línea se ejecutó, sino si algún test se entera cuando se rompe">
+          <div class={`font-mono text-[26px] leading-none tracking-tight ${lastMutation.mutationScore! >= 80 ? 'text-lime' : lastMutation.mutationScore! >= 60 ? 'text-cyan' : 'text-ember'}`}>
+            {Math.round(lastMutation.mutationScore! * 10) / 10}%
+          </div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Mutation score</div>
+        </div>
+      )}
     </div>
 
     <!-- Pipeline CI/CD -->
