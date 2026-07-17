@@ -30,6 +30,12 @@ test.describe('portal · gate', () => {
 })
 
 test.describe('portal · demo pública', () => {
+  // La demo es UNA base compartida por todos los workers (no se recrea por
+  // test, a diferencia del resto de la suite). El test de pago la MUTA
+  // (factura 2 pasa a 'paid'): en serie para que ningún otro test de este
+  // bloque la lea a mitad de esa transición.
+  test.describe.configure({ mode: 'serial' })
+
   test('el botón de /tools abre la demo sin credenciales', async ({ page }) => {
     await page.goto('/tools')
     await page.getByRole('link', { name: 'Probar el portal demo' }).click()
