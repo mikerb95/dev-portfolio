@@ -71,18 +71,32 @@ export const StatusLatencyResponseSchema = z.object({
   ts: z.number(),
 })
 
+// Refleja SloResult (src/lib/slo.ts) tal cual: los campos numéricos ausentes
+// solo pueden ser null cuando el propio type los declara `| null` (sin datos).
+const SloResultSchema = z.object({
+  objectivePct: z.number(),
+  windowDays: z.number(),
+  totalChecks: z.number(),
+  okChecks: z.number(),
+  failedChecks: z.number(),
+  sliPct: z.number().nullable(),
+  windowMinutes: z.number(),
+  budgetMinutes: z.number(),
+  spentMinutes: z.number(),
+  remainingMinutes: z.number(),
+  budgetConsumedPct: z.number().nullable(),
+  budgetRemainingPct: z.number().nullable(),
+  burnRate: z.number().nullable(),
+  meetsObjective: z.boolean(),
+})
+
 export const SloResponseSchema = z.object({
   objective: z.number(),
   days: z.number(),
   results: z.array(
     z.object({
       monitor: z.object({ id: z.number(), name: z.string(), url: z.string() }),
-      slo: z.object({
-        sliPct: z.number().nullable(),
-        meetsObjective: z.boolean(),
-        budgetRemainingPct: z.number().nullable(),
-        remainingMinutes: z.number().nullable(),
-      }),
+      slo: SloResultSchema,
       health: z.enum(['healthy', 'warning', 'critical', 'exhausted']),
     })
   ),
