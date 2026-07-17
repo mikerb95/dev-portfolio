@@ -12,6 +12,7 @@ import { DEMO_COOKIE, isDemoAllowedMethod, isDemoBlockedPath, verifyDemoToken } 
 import { demoAvailable, runInDemoContext } from './db'
 import { getPortalSession } from './lib/portal/session'
 import { isPortalPath, isPortalPublicPath } from './lib/portal/paths'
+import { PORTAL_DEMO_COOKIE, isPortalDemoAllowedMethod, verifyPortalDemoToken } from './lib/portal/demo'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
 const AUTH_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
