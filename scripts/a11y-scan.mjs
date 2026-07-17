@@ -26,9 +26,12 @@ const TOKEN = process.env.LAB_INGEST_TOKEN
 const PAGES = ['/', '/lab', '/status', '/security', '/tools', '/notes', '/contact', '/pay']
 
 const browser = await chromium.launch()
-const page = await browser.newPage()
+// axe-core/playwright exige un contexto explícito (falla con "please use
+// browser.newContext()" si se usa browser.newPage() directo).
+const context = await browser.newContext()
+const page = await context.newPage()
 // Sin salida a internet en CI/local: cortamos recursos de terceros para no colgar.
-await page.route(
+await context.route(
   (url) => !['localhost', '127.0.0.1'].includes(url.hostname),
   (route) => route.abort()
 )
