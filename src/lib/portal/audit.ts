@@ -93,4 +93,6 @@ export const ACTION_LABELS: Record<string, string> = {
   'invoice.viewed': 'Consultó una factura',
   'invoice.pay_started': 'Inició un pago',
   'message.sent': 'Envió un mensaje',
+  'impersonate.start': 'Un administrador entró como este cliente (solo lectura)',
+  'impersonate.end': 'El administrador salió de la vista de cliente',
 }
