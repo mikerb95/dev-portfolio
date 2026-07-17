@@ -214,7 +214,9 @@ export const CASOS_DE_USO: CasoDeUso[] = [
   { id: 'CU-01', nombre: 'Explorar proyectos públicos', actor: 'visitante', rf: ['RF-001', 'RF-002'], resumen: 'El visitante navega el listado de proyectos y entra al detalle de uno.' },
   { id: 'CU-02', nombre: 'Enviar mensaje de contacto', actor: 'visitante', rf: ['RF-003'], resumen: 'El visitante completa el formulario de contacto y el mensaje queda en la bandeja del CRM.' },
   { id: 'CU-03', nombre: 'Consultar estado del sistema', actor: 'visitante', rf: ['RF-004'], resumen: 'El visitante revisa uptime, incidentes activos y latencia en tiempo real de los servicios.' },
-  { id: 'CU-04', nombre: 'Iniciar sesión como administrador', actor: 'admin', rf: ['RF-101', 'RF-102'], resumen: 'El administrador se autentica con GitHub y accede al panel si su login está en la allowlist.' },
+  { id: 'CU-04', nombre: 'Iniciar sesión como administrador', actor: 'admin', rf: ['RF-101', 'RF-102'], resumen: 'El administrador se autentica con GitHub y accede al panel si su login está en la allowlist.', relaciones: [
+    { tipo: 'extends', nodo: { id: 'CU-04-X1', nombre: 'Rechazar login fuera de la allowlist' } },
+  ] },
   { id: 'CU-05', nombre: 'Gestionar sesiones de dispositivo', actor: 'admin', rf: ['RF-103'], resumen: 'El administrador revisa dispositivos con sesión activa y revoca los que no reconoce.' },
   { id: 'CU-06', nombre: 'Registrar y dar seguimiento a un proyecto', actor: 'admin', rf: ['RF-201', 'RF-204', 'RF-207'], resumen: 'El administrador crea un proyecto, registra interacciones de seguimiento y documenta decisiones de arquitectura.' },
   { id: 'CU-07', nombre: 'Elaborar un briefing de cliente', actor: 'admin', rf: ['RF-205'], resumen: 'El administrador documenta objetivo, alcance, presupuesto e ítems de un proyecto antes de iniciarlo.' },
