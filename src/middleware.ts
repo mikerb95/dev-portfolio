@@ -273,7 +273,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // cliente" sería confuso o dañino de verdad, no una demostración inocua.
     // Se corta ANTES de tocar el endpoint: es la misma razón que el guard de
     // demo, aplicada a datos que si se rompen, se rompen para siempre.
-    if (portalSession.impersonatedBy && method !== 'GET' && method !== 'HEAD') {
+    //
+    // La ÚNICA excepción es salir (POST /api/portal/logout): bloquearlo dejaría
+    // al admin atrapado en la vista de cliente sin más salida que borrar la
+    // cookie a mano. Salir no es una escritura sobre los datos del cliente —
+    // solo revoca la propia fila de sesión.
+    if (portalSession.impersonatedBy && method !== 'GET' && method !== 'HEAD' && pathname !== '/api/portal/logout') {
       return new Response(
         JSON.stringify({ error: 'estás viendo este portal como el cliente: solo lectura' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
