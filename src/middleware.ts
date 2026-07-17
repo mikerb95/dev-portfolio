@@ -53,6 +53,28 @@ function resolveDemoPass(
   return true
 }
 
+/**
+ * Igual que `resolveDemoPass`, pero para el pase de demo del PORTAL: cookie
+ * distinta, allowlist de mutación distinta (ver lib/portal/demo.ts). Nunca se
+ * consulta si ya hay una sesión real del portal — esta función solo se llama
+ * cuando `getPortalSession` ya dijo que no hay ninguna.
+ */
+function resolvePortalDemoPass(
+  context: { cookies: { get: (name: string) => { value: string } | undefined } },
+  pathname: string,
+  method: string
+): Response | boolean {
+  if (!demoAvailable) return false
+
+  const token = context.cookies.get(PORTAL_DEMO_COOKIE)?.value
+  if (!verifyPortalDemoToken(import.meta.env.AUTH_SECRET, token)) return false
+
+  if (!isPortalDemoAllowedMethod(method, pathname)) {
+    return demoDenied('la demo del portal es de solo lectura: esta acción está deshabilitada')
+  }
+  return true
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url
 
@@ -214,8 +236,24 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isPortal = isPortalPath(pathname)
   const isPrivate = isAdmin || isPrivateDeck || isPortal
 
+  let portalDemoMode = false
+
   if (isPortal && !isPortalPublicPath(pathname)) {
-    const portalSession = await getPortalSession(context)
+    // Sesión real PRIMERO, siempre contra la base real. Un pase de demo nunca
+    // debe poder pisar ni disfrazarse de sesión legítima.
+    let portalSession = await getPortalSession(context)
+
+    if (!portalSession) {
+      const demo = resolvePortalDemoPass(context, pathname, method)
+      if (demo instanceof Response) return demo
+      if (demo) {
+        // La sesión de demo (creada en /api/portal/demo) vive en la base de
+        // demo: hay que re-resolverla DENTRO de ese contexto para encontrarla.
+        portalSession = await runInDemoContext(() => getPortalSession(context))
+        portalDemoMode = true
+      }
+    }
+
     if (!portalSession) {
       // Las APIs reciben 401 (su cliente es fetch, no un navegador); las páginas
       // van al login conservando el destino para volver tras autenticarse.
@@ -230,6 +268,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
     // Las páginas la leen de locals; el middleware ya pagó la consulta.
     context.locals.portal = portalSession
+    context.locals.portalDemo = portalDemoMode
   }
 
   let demoMode = false
