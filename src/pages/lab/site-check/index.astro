@@ -1,0 +1,174 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+---
+
+<BaseLayout
+  title="Analizador de sitios — CodeByMike"
+  description="Pega cualquier dominio y obtén un análisis en vivo: cabeceras de seguridad, TLS, SEO, rendimiento y accesibilidad heurística."
+>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+
+    <a href="/lab" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Volver a /lab
+    </a>
+
+    <header class="mb-10">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/lab/site-check</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Analizador de sitios</span>
+      </div>
+      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
+        Analiza cualquier<br/>dominio.
+      </h1>
+      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
+        Pega una URL o dominio y obtén, en vivo, cabeceras de seguridad, certificado TLS,
+        DNS, SEO básico, rendimiento y una revisión heurística de accesibilidad. Todo se
+        lee de respuestas HTTP públicas del sitio — no es un escaneo intrusivo.
+      </p>
+      <p class="text-[12px] font-mono text-ink-300 mt-4">
+        Úsalo solo con sitios propios o donde tengas permiso para analizarlos. Límite: 5
+        análisis por minuto por IP.
+      </p>
+    </header>
+
+    <form id="site-check-form" class="rounded-2xl glass p-5 flex flex-col sm:flex-row gap-3 mb-10">
+      <input
+        id="site-check-input"
+        type="text"
+        inputmode="url"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="ejemplo.com"
+        required
+        class="flex-1 bg-transparent border border-white/10 rounded-xl px-4 py-3 text-[14px] text-ink-50 placeholder:text-ink-400 focus:outline-none focus:border-cyan/50 transition-colors"
+      />
+      <button
+        type="submit"
+        id="site-check-submit"
+        class="rounded-xl px-6 py-3 text-[13px] font-mono uppercase tracking-[.1em] bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Analizar
+      </button>
+    </form>
+
+    <div id="site-check-status" class="text-[13px] font-mono text-ink-300 mb-6"></div>
+
+    <div id="site-check-results" class="grid md:grid-cols-2 gap-4"></div>
+
+  </div>
+</BaseLayout>
+
+<script>
+  type DiagnosticStatus = 'pass' | 'warn' | 'fail' | 'info'
+  type DiagnosticResult = {
+    id: string
+    label: string
+    status: DiagnosticStatus
+    summary: string
+    details?: string[]
+    ms: number
+  }
+
+  const form = document.getElementById('site-check-form') as HTMLFormElement
+  const input = document.getElementById('site-check-input') as HTMLInputElement
+  const submit = document.getElementById('site-check-submit') as HTMLButtonElement
+  const statusEl = document.getElementById('site-check-status') as HTMLDivElement
+  const resultsEl = document.getElementById('site-check-results') as HTMLDivElement
+
+  const STATUS_STYLE: Record<DiagnosticStatus, { dot: string; text: string }> = {
+    pass: { dot: 'bg-lime', text: 'text-lime' },
+    warn: { dot: 'bg-amber-400', text: 'text-amber-400' },
+    fail: { dot: 'bg-ember', text: 'text-ember' },
+    info: { dot: 'bg-cyan', text: 'text-cyan' },
+  }
+
+  function renderResult(r: DiagnosticResult) {
+    const style = STATUS_STYLE[r.status] ?? STATUS_STYLE.info
+    const card = document.createElement('div')
+    card.className = 'rounded-2xl glass p-5'
+    card.innerHTML = `
+      <div class="flex items-center gap-2 mb-2">
+        <span class="w-1.5 h-1.5 rounded-full ${style.dot}"></span>
+        <h3 class="text-[13px] font-medium text-ink-50">${escapeHtml(r.label)}</h3>
+        <span class="ml-auto font-mono text-[10px] text-ink-400">${r.ms}ms</span>
+      </div>
+      <p class="text-[13px] ${style.text} mb-2">${escapeHtml(r.summary)}</p>
+      ${
+        r.details?.length
+          ? `<ul class="text-[11px] font-mono text-ink-300 space-y-1 leading-relaxed">${r.details
+              .map((d) => `<li>${escapeHtml(d)}</li>`)
+              .join('')}</ul>`
+          : ''
+      }
+    `
+    resultsEl.appendChild(card)
+  }
+
+  function escapeHtml(s: string) {
+    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const target = input.value.trim()
+    if (!target) return
+
+    submit.disabled = true
+    resultsEl.innerHTML = ''
+    statusEl.textContent = 'Analizando…'
+
+    try {
+      const res = await fetch('/api/lab/site-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target }),
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        statusEl.textContent = body?.error ?? `Error ${res.status}`
+        return
+      }
+      if (!res.body) {
+        statusEl.textContent = 'No se pudo leer la respuesta'
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      let total = 0
+      let done = 0
+
+      while (true) {
+        const { value, done: streamDone } = await reader.read()
+        if (streamDone) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n')
+        buf = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.trim()) continue
+          const msg = JSON.parse(line)
+          if (msg.type === 'start') {
+            total = msg.total
+            statusEl.textContent = `Analizando ${msg.target?.host ?? target}… 0/${total}`
+          } else if (msg.type === 'result') {
+            done++
+            statusEl.textContent = `Analizando… ${done}/${total}`
+            renderResult(msg.result)
+          } else if (msg.type === 'done') {
+            statusEl.textContent = `Listo · ${done}/${total} pruebas`
+          } else if (msg.type === 'error') {
+            statusEl.textContent = `Error: ${msg.error}`
+          }
+        }
+      }
+    } catch {
+      statusEl.textContent = 'Error de red al analizar el dominio'
+    } finally {
+      submit.disabled = false
+    }
+  })
+</script>
