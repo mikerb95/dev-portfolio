@@ -1,6 +1,7 @@
 ---
 import PortalAuthLayout from '../../layouts/PortalAuthLayout.astro'
 import { getPortalSession } from '../../lib/portal/session'
+import { demoAvailable } from '../../db'
 
 // Ya autenticado: no tiene sentido mostrar el formulario.
 if (await getPortalSession(Astro)) return Astro.redirect('/portal')
