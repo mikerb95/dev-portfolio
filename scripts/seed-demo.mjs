@@ -387,7 +387,8 @@ async function seedPortalDemo() {
     rows: [{ id: threadId }],
   } = await db.execute({
     sql: `insert into portal_threads (client_id, project_id, subject, status, last_message_at, created_at)
-          values (1, 1, 'Zona de despacho norte', 'open', ?, ?)`,
+          values (1, 1, 'Zona de despacho norte', 'open', ?, ?)
+          returning id`,
     args: [daysAgo(2), daysAgo(6)],
   })
 
