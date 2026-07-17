@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#0b0b10"/>
+  <circle cx="640" cy="360" r="72" fill="none" stroke="#007a82" stroke-width="4" opacity="0.6"/>
+  <path d="M615 322 L680 360 L615 398 Z" fill="#00f2ff"/>
+  <text x="640" y="470" text-anchor="middle" font-family="monospace" font-size="20" fill="#7a7a8a">
+    hyperframes-demo.mp4 — pendiente de render
+  </text>
+</svg>
