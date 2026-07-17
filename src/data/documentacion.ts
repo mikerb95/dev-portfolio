@@ -192,12 +192,22 @@ export const ACTORES: Actor[] = [
 ]
 
 // ── Casos de uso ──────────────────────────────────────────────────────────────
+export interface NodoRelacionadoCU {
+  id: string
+  nombre: string
+}
+export interface RelacionCU {
+  tipo: 'include' | 'extends'
+  nodo: NodoRelacionadoCU
+  despues?: string // id del nodo previo en la cadena de <<include>>; por defecto, el propio caso de uso
+}
 export interface CasoDeUso {
   id: string
   nombre: string
   actor: string // id de ACTORES
   rf: string[] // ids de requerimientos funcionales relacionados
   resumen: string
+  relaciones?: RelacionCU[] // <<include>>/<<extends>> hacia otros casos de uso o pasos compartidos
 }
 
 export const CASOS_DE_USO: CasoDeUso[] = [
