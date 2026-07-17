@@ -89,29 +89,34 @@ for (const [clave, cus] of grupos) {
 
     const relaciones = cu.relaciones ?? []
     const cadenaCx = new Map<string, number>([[cu.id, CU_CX]])
-    let extendCount = 0
-    let maxExtendCy = cy
 
-    for (const rel of relaciones) {
+    // Cadenas de <<include>>: se extienden en horizontal, a la misma altura del CU.
+    for (const rel of relaciones.filter((r) => r.tipo === 'include')) {
       const previoCx = cadenaCx.get(rel.despues ?? cu.id) ?? CU_CX
-
-      if (rel.tipo === 'include') {
-        const nodeCx = previoCx + ELLIPSE_RX * 2 + CHAIN_GAP
-        nodos.push({ cx: nodeCx, cy, label: rel.nodo.nombre, variante: 'relacionado' })
-        arcos.push({ x1: previoCx + ELLIPSE_RX, y1: cy, x2: nodeCx - ELLIPSE_RX, y2: cy, tipo: 'include', etiqueta: '<<include>>' })
-        cadenaCx.set(rel.nodo.id, nodeCx)
-        blockRight = Math.max(blockRight, nodeCx + ELLIPSE_RX)
-      } else {
-        extendCount += 1
-        const nodeCy = cy + extendCount * EXT_STEP
-        nodos.push({ cx: previoCx, cy: nodeCy, label: rel.nodo.nombre, variante: 'relacionado' })
-        arcos.push({ x1: previoCx, y1: nodeCy - ELLIPSE_RY, x2: previoCx, y2: cy + ELLIPSE_RY, tipo: 'extends', etiqueta: 'Extends' })
-        blockRight = Math.max(blockRight, previoCx + ELLIPSE_RX)
-        maxExtendCy = nodeCy
-      }
+      const nodeCx = previoCx + ELLIPSE_RX * 2 + CHAIN_GAP
+      nodos.push({ cx: nodeCx, cy, label: rel.nodo.nombre, variante: 'relacionado' })
+      arcos.push({ x1: previoCx + ELLIPSE_RX, y1: cy, x2: nodeCx - ELLIPSE_RX, y2: cy, tipo: 'include', etiqueta: '<<include>>' })
+      cadenaCx.set(rel.nodo.id, nodeCx)
+      blockRight = Math.max(blockRight, nodeCx + ELLIPSE_RX)
     }
 
-    cy = extendCount > 0 ? maxExtendCy + ELLIPSE_RY + BOUNDARY_PAD + ELLIPSE_RY : cy + ROW_H
+    // Extends: todos en una sola fila por debajo del CU, en abanico horizontal,
+    // para que ninguna flecha tenga que atravesar otro óvalo apilado encima.
+    const extendsRel = relaciones.filter((r) => r.tipo === 'extends')
+    let maxExtendCy = cy
+    if (extendsRel.length > 0) {
+      const rowCy = cy + EXT_STEP
+      extendsRel.forEach((rel, i) => {
+        const baseCx = cadenaCx.get(rel.despues ?? cu.id) ?? CU_CX
+        const nodeCx = baseCx + i * (ELLIPSE_RX * 2 + 40)
+        nodos.push({ cx: nodeCx, cy: rowCy, label: rel.nodo.nombre, variante: 'relacionado' })
+        arcos.push({ x1: nodeCx, y1: rowCy - ELLIPSE_RY, x2: baseCx, y2: cy + ELLIPSE_RY, tipo: 'extends', etiqueta: 'Extends' })
+        blockRight = Math.max(blockRight, nodeCx + ELLIPSE_RX)
+      })
+      maxExtendCy = rowCy
+    }
+
+    cy = extendsRel.length > 0 ? maxExtendCy + ELLIPSE_RY + BOUNDARY_PAD + ELLIPSE_RY : cy + ROW_H
   }
 
   const bottom = cy - ROW_H + ELLIPSE_RY + BOUNDARY_PAD
