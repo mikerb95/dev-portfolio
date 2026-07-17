@@ -21,5 +21,13 @@ declare namespace App {
       user: { id: number; email: string; name: string | null; role: 'owner' | 'member' | 'billing' }
       client: { id: number; name: string; company: string | null; logoUrl: string | null }
     }
+
+    /**
+     * La sesión del portal de arriba es la de demo pública (pase anónimo, base
+     * de datos de demo). El layout la usa para mostrar el aviso; lo que de
+     * verdad impide tocar datos reales es que las queries salen de otra base
+     * (ver src/lib/portal/demo.ts).
+     */
+    portalDemo?: boolean
   }
 }
