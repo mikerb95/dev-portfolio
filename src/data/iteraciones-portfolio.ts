@@ -673,11 +673,147 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-portal-demo',
+    fase: 'Fase 15 · Demo del portal de clientes',
+    nombre: 'Sembrado automático del portal demo y aviso de disponibilidad',
+    rango: '16 – 17 jul 2026',
+    ghSince: '2026-07-16',
+    ghUntil: '2026-07-17',
+    commits: 24,
+    resumen:
+      'La demo pública (Fase 10) se extiende al portal de clientes: seedPortalDemo puebla clientes, facturas y usuarios de portal ficticios, con un cron a las 4am que resiembra la base para que la demo nunca quede "usada" o inconsistente. El login, /tools y el propio PortalLayout avisan cuándo la demo está disponible, con un banner permanente y logout habilitado dentro de la sesión demo.',
+    historias: [
+      {
+        id: 'PF-PD-01', titulo: 'Como visitante, quiero explorar el portal de clientes de la demo con datos frescos, no con lo que dejó otro visitante',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-16', tags: ['demo', 'portal', 'fase-15'],
+        dod: [
+          ok('seedPortalDemo siembra clientes, facturas y client_users ficticios en la base demo, reusando scripts/seed-demo.mjs.'),
+          ok('Cron de Vercel resiembra el portal demo a las 4am todos los días (vercel.json).'),
+          ok('Endpoint público de demo añadido a las rutas accesibles sin sesión; pagos bloqueados también en el portal demo (middleware).'),
+        ],
+      },
+      {
+        id: 'PF-PD-02', titulo: 'Como visitante, quiero que se me avise claramente cuándo la demo del portal está disponible',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-17', tags: ['demo', 'portal', 'ux', 'fase-15'],
+        dod: [
+          ok('Banner de demo en PortalLayout y mensajes de disponibilidad en login y /tools.'),
+          ok('Flag demoAvailable/demoUnavailable propaga el estado real de la base demo a la UI.'),
+          ok('Tests de creación y validación del token de sesión demo del portal.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-lab-mutacion',
+    fase: 'Fase 16 · LAB Fase 7: mutation testing y contract testing',
+    nombre: 'Stryker (mutation score) y pruebas de contrato de API en el pipeline',
+    rango: '16 – 17 jul 2026',
+    ghSince: '2026-07-16',
+    ghUntil: '2026-07-17',
+    commits: 20,
+    resumen:
+      'Cierra la última fase pendiente del plan LAB (docs/plan-lab-fases-pendientes.md): mutation testing con Stryker sobre el código crítico y pruebas de contrato (zod) que fijan la forma de las respuestas de los endpoints clave. El resultado se resume como mutation score en /admin/lab y /lab, junto al resto de señales de CI.',
+    historias: [
+      {
+        id: 'PF-LM-01', titulo: 'Como administrador, quiero saber si mis tests realmente detectan bugs (mutation testing), no solo si pasan',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-17', tags: ['mutation', 'testing', 'fase-16'],
+        dod: [
+          ok('stryker.config.json configura mutation testing sobre los módulos críticos, con reporte HTML y concurrencia ajustada.'),
+          ok('.github/workflows corre Stryker y scripts/mutation-scan reporta el score al panel LAB (mutationScore en ci_runs).'),
+          ok('Pipeline y /lab muestran el mutation score cuando hay un resultado reciente disponible.'),
+        ],
+      },
+      {
+        id: 'PF-LM-02', titulo: 'Como administrador, quiero pruebas de contrato que fallen si un endpoint cambia su forma de respuesta sin querer',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-17', tags: ['contract-testing', 'fase-16'],
+        dod: [
+          ok('Esquemas zod (health, checkout, status/latencia, SLO) definen la forma esperada de cada respuesta.'),
+          ok('tests/contracts.test.ts valida los endpoints clave contra esos esquemas.'),
+          ok('Roadmap actualizado: etapas 1–6 marcadas como completadas.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-site-analyzer',
+    fase: 'Fase 17 · Analizador público de sitios',
+    nombre: 'Herramienta pública de diagnóstico SEO, performance, accesibilidad y seguridad TLS',
+    rango: '17 jul 2026',
+    ghSince: '2026-07-17',
+    ghUntil: '2026-07-17',
+    commits: 22,
+    resumen:
+      'Nueva herramienta en /lab: cualquier visitante pega una URL y recibe un diagnóstico en vivo (SEO, Core Web Vitals vía Lighthouse/PageSpeed, accesibilidad, certificado TLS) sin arriesgar el propio servidor — resolución de hostname y bloqueo de rangos privados antes de hacer el fetch (protección SSRF). El fetch del HTML se memoiza para que las distintas pruebas no dupliquen la petición al sitio analizado.',
+    historias: [
+      {
+        id: 'PF-SI-01', titulo: 'Como visitante, quiero analizar cualquier dominio público (SEO, performance, accesibilidad, TLS) desde el sitio',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-17', tags: ['diagnóstico', 'público', 'fase-17'],
+        dod: [
+          ok('Endpoint público de análisis de dominio con rate limiting propio.'),
+          ok('SSRF protegido: resolución de hostname y rechazo de IPs privadas/reservadas antes de solicitar el sitio.'),
+          ok('Fetch del HTML memoizado y reutilizado entre las pruebas de SEO, performance y accesibilidad para no golpear el sitio objetivo varias veces.'),
+          ok('Integración con Google PageSpeed Insights (Lighthouse) para las métricas de performance.'),
+        ],
+      },
+      {
+        id: 'PF-SI-02', titulo: 'Como visitante, quiero entender qué hace la herramienta y confiar en que no expone mi sitio a riesgos',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-17', tags: ['diagnóstico', 'ux', 'fase-17'],
+        dod: [
+          ok('Sección "site analyzer" en /lab con enlace desde /tools y modal "How it works" explicando el proceso.'),
+          ok('Nota técnica documentando cómo se analiza cualquier dominio sin poner en riesgo el propio servidor.'),
+          ok('Normalización de emisor/sujeto del certificado TLS para mostrarlo de forma legible.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-impersonacion-pdf',
+    fase: 'Fase 18 · Impersonación de soporte y facturas en PDF',
+    nombre: '"Ver como cliente" desde /admin y descarga de facturas en PDF',
+    rango: '17 jul 2026',
+    ghSince: '2026-07-17',
+    ghUntil: '2026-07-17',
+    commits: 11,
+    resumen:
+      'Para dar soporte sin pedirle la contraseña al cliente, el administrador puede entrar a su portal en modo "ver como cliente": sesión de solo lectura, marcada como impersonada, con aviso visible y logout que vuelve a /admin. En paralelo, cada factura del portal se puede descargar como PDF generado al vuelo con pdf-lib.',
+    historias: [
+      {
+        id: 'PF-IP-01', titulo: 'Como administrador, quiero ver el portal exactamente como lo ve un cliente, para dar soporte sin pedirle su clave',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-17', tags: ['impersonación', 'soporte', 'fase-18'],
+        dod: [
+          ok('Botón "Ver como cliente" en la lista de clientes con usuarios de portal activos.'),
+          ok('API de impersonación crea una portal_session marcada con impersonatedBy, visible en PortalLayout con aviso y logout que restaura la sesión admin.'),
+          ok('Modo impersonado restringido a solo lectura: bloquea pagos y cualquier acción de escritura; queda registrado en auditoría (impersonate.start/end).'),
+        ],
+      },
+      {
+        id: 'PF-IP-02', titulo: 'Como cliente, quiero descargar mi factura en PDF para mi contabilidad',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-17', tags: ['facturas', 'pdf', 'fase-18'],
+        dod: [
+          ok('/api/portal/facturas/[id]/pdf genera el PDF de la factura al vuelo con pdf-lib.'),
+          ok('Enlace de descarga de PDF añadido a cada factura en el portal del cliente.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 735 },
+  { mes: 'jul', commits: 837 },
 ]
