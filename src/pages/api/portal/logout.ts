@@ -14,9 +14,18 @@ export const POST: APIRoute = async (context) => {
     audit({
       clientId: session.client.id,
       clientUserId: session.user.id,
-      action: 'logout',
+      action: session.impersonatedBy ? 'impersonate.end' : 'logout',
+      detail: session.impersonatedBy ? `admin: ${session.impersonatedBy}` : null,
       ip: clientIp(context.request.headers),
     })
+    // Saliendo de "ver como cliente" se vuelve al panel de admin, no al login
+    // del portal: quien cierra esto es un administrador, no ese cliente. El
+    // destino sale de la sesión (nunca de un parámetro), así que no hay forma
+    // de convertir esto en un redirector abierto.
+    if (session.impersonatedBy) {
+      clearSessionCookie(context.cookies)
+      return context.redirect('/admin/clients')
+    }
   }
   clearSessionCookie(context.cookies)
   return context.redirect('/portal/login?m=session-closed')
