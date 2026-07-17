@@ -1,13 +1,13 @@
 {
-  "$schema": "/home/mike/dev/work/github.com/portfolio/node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
   "packageManager": "npm",
   "testRunner": "vitest",
-  "mutate": ["src/lib/money.ts", "src/lib/pnl.ts"],
-  "reporters": ["clear-text", "json"],
+  "mutate": ["src/lib/**/*.ts", "!src/lib/**/*.d.ts"],
+  "reporters": ["clear-text", "json", "progress"],
   "thresholds": { "high": 80, "low": 60, "break": 50 },
   "coverageAnalysis": "perTest",
   "tempDirName": ".stryker-tmp",
   "cleanTempDir": true,
-  "concurrency": 2,
+  "concurrency": 4,
   "timeoutMS": 15000
 }
