@@ -22,7 +22,8 @@ const BOUNDARY_X = 190
 const TITLE_H = 28
 const BLOCK_GAP = 54
 const CU_CX = BOUNDARY_X + BOUNDARY_PAD + ELLIPSE_RX
-const BOUNDARY_W = ELLIPSE_RX * 2 + BOUNDARY_PAD * 2
+const CHAIN_GAP = 64 // espacio horizontal entre óvalos encadenados por <<include>>
+const EXT_STEP = ELLIPSE_RY * 2 + 34 // paso vertical entre óvalos apilados por Extends
 
 // Cada CU apunta a requerimientos funcionales (RF-xxx); el módulo del primero
 // de ellos define a qué subsistema pertenece el caso de uso.
@@ -33,17 +34,28 @@ for (const modulo of REQUISITOS_FUNCIONALES) {
 const moduloDeCU = (cu: (typeof CASOS_DE_USO)[number]) =>
   cu.rf.map((id) => moduloPorRf.get(id)).find(Boolean) ?? 'Sistema'
 
-interface Row {
-  label: string
+interface NodoDiagrama {
+  cx: number
   cy: number
+  label: string
+  variante: 'principal' | 'relacionado'
+}
+interface Arco {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  tipo: 'include' | 'extends'
+  etiqueta: string
 }
 interface Bloque {
   actor: (typeof ACTORES)[number]
   modulo: string
   top: number
   height: number
-  rows: Row[]
+  width: number
   actorCy: number
+  actorLineasY: number[]
 }
 
 // Agrupar por módulo y, dentro de cada módulo, por actor: un bloque por pareja.
@@ -55,24 +67,63 @@ for (const cu of CASOS_DE_USO) {
   else grupos.set(clave, [cu])
 }
 
+const nodos: NodoDiagrama[] = []
+const arcos: Arco[] = []
 const bloques: Bloque[] = []
 let top = 0
+let svgMaxX = 0
+
 for (const [clave, cus] of grupos) {
   const [modulo, actorId] = clave.split('||')
   const actor = ACTORES.find((a) => a.id === actorId)
   if (!actor) continue
-  const rows: Row[] = cus.map((cu, i) => ({
-    label: `${cu.id}: ${cu.nombre}`,
-    cy: top + TITLE_H + BOUNDARY_PAD + ELLIPSE_RY + i * ROW_H,
-  }))
-  const bottom = rows[rows.length - 1].cy + ELLIPSE_RY + BOUNDARY_PAD
-  const height = bottom - top
-  const actorCy = top + TITLE_H + (height - TITLE_H) / 2
-  bloques.push({ actor, modulo, top, height, rows, actorCy })
+
+  const blockTop = top
+  const actorLineasY: number[] = []
+  let blockRight = CU_CX + ELLIPSE_RX
+  let cy = blockTop + TITLE_H + BOUNDARY_PAD + ELLIPSE_RY
+
+  for (const cu of cus) {
+    nodos.push({ cx: CU_CX, cy, label: `${cu.id}: ${cu.nombre}`, variante: 'principal' })
+    actorLineasY.push(cy)
+
+    const relaciones = cu.relaciones ?? []
+    const cadenaCx = new Map<string, number>([[cu.id, CU_CX]])
+    let extendCount = 0
+    let maxExtendCy = cy
+
+    for (const rel of relaciones) {
+      const previoCx = cadenaCx.get(rel.despues ?? cu.id) ?? CU_CX
+
+      if (rel.tipo === 'include') {
+        const nodeCx = previoCx + ELLIPSE_RX * 2 + CHAIN_GAP
+        nodos.push({ cx: nodeCx, cy, label: rel.nodo.nombre, variante: 'relacionado' })
+        arcos.push({ x1: previoCx + ELLIPSE_RX, y1: cy, x2: nodeCx - ELLIPSE_RX, y2: cy, tipo: 'include', etiqueta: '<<include>>' })
+        cadenaCx.set(rel.nodo.id, nodeCx)
+        blockRight = Math.max(blockRight, nodeCx + ELLIPSE_RX)
+      } else {
+        extendCount += 1
+        const nodeCy = cy + extendCount * EXT_STEP
+        nodos.push({ cx: previoCx, cy: nodeCy, label: rel.nodo.nombre, variante: 'relacionado' })
+        arcos.push({ x1: previoCx, y1: nodeCy - ELLIPSE_RY, x2: previoCx, y2: cy + ELLIPSE_RY, tipo: 'extends', etiqueta: 'Extends' })
+        blockRight = Math.max(blockRight, previoCx + ELLIPSE_RX)
+        maxExtendCy = nodeCy
+      }
+    }
+
+    cy = extendCount > 0 ? maxExtendCy + ELLIPSE_RY + BOUNDARY_PAD + ELLIPSE_RY : cy + ROW_H
+  }
+
+  const bottom = cy - ROW_H + ELLIPSE_RY + BOUNDARY_PAD
+  const height = bottom - blockTop
+  const width = blockRight - BOUNDARY_X
+  const actorCy = blockTop + TITLE_H + (height - TITLE_H) / 2
+  bloques.push({ actor, modulo, top: blockTop, height, width, actorCy, actorLineasY })
+  svgMaxX = Math.max(svgMaxX, blockRight)
   top = bottom + BLOCK_GAP
 }
 
-const SVG_W = BOUNDARY_X + BOUNDARY_W + 20
+const SVG_W = svgMaxX + 20
 const SVG_H = top - BLOCK_GAP + 10
 
 function actorFigure(cx: number, cy: number) {
