@@ -105,6 +105,124 @@ async function testReachability(t: DiagnosticTarget): Promise<Outcome> {
   }
 }
 
+// ── HTML compartido para pruebas de SEO/rendimiento/accesibilidad ──────────
+
+type HtmlSnapshot = { html: string; ttfb: number; bytes: number; contentType: string }
+let htmlCache: { url: string; promise: Promise<HtmlSnapshot | null> } | null = null
+
+/** Descarga el HTML una sola vez por objetivo y lo comparte entre pruebas relacionadas. */
+function fetchHtml(t: DiagnosticTarget): Promise<HtmlSnapshot | null> {
+  if (htmlCache && htmlCache.url === t.url) return htmlCache.promise
+  const promise = (async () => {
+    try {
+      const started = Date.now()
+      const res = await fetchWithTimeout(t.url, { redirect: 'follow' })
+      const ttfb = Date.now() - started
+      const html = await res.text()
+      return { html, ttfb, bytes: html.length, contentType: res.headers.get('content-type') ?? '' }
+    } catch {
+      return null
+    }
+  })()
+  htmlCache = { url: t.url, promise }
+  return promise
+}
+
+/** Meta tags de SEO: title, description, canonical, Open Graph, lang. */
+async function testSeoMeta(t: DiagnosticTarget): Promise<Outcome> {
+  const snap = await fetchHtml(t)
+  if (!snap) return { status: 'fail', summary: 'No se pudo descargar el HTML' }
+  const { html } = snap
+  const title = html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim()
+  const description = html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1]?.trim()
+  const canonical = html.match(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']*)["']/i)?.[1]?.trim()
+  const ogTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]*content=["']([^"']*)["']/i)?.[1]?.trim()
+  const lang = html.match(/<html[^>]+lang=["']([^"']*)["']/i)?.[1]?.trim()
+
+  const missing: string[] = []
+  if (!title) missing.push('title')
+  if (!description) missing.push('meta description')
+  if (!canonical) missing.push('canonical')
+
+  return {
+    status: missing.length === 0 ? 'pass' : missing.length >= 2 ? 'warn' : 'warn',
+    summary: missing.length === 0 ? 'title, description y canonical presentes' : `Falta: ${missing.join(', ')}`,
+    details: [
+      `Title: ${title ?? '—'}`,
+      `Description: ${description ?? '—'}`,
+      `Canonical: ${canonical ?? '—'}`,
+      `Open Graph title: ${ogTitle ?? '—'}`,
+      `lang: ${lang ?? '—'}`,
+    ],
+  }
+}
+
+/** Rendimiento básico: TTFB, tamaño de respuesta y conteo de recursos enlazados. */
+async function testPerformance(t: DiagnosticTarget): Promise<Outcome> {
+  const snap = await fetchHtml(t)
+  if (!snap) return { status: 'fail', summary: 'No se pudo medir el rendimiento' }
+  const { html, ttfb, bytes } = snap
+  const scripts = (html.match(/<script[^>]+src=/gi) ?? []).length
+  const styles = (html.match(/<link[^>]+rel=["']stylesheet["']/gi) ?? []).length
+  const images = (html.match(/<img\b/gi) ?? []).length
+  const status: DiagnosticStatus = ttfb > 3000 ? 'fail' : ttfb > 1500 ? 'warn' : 'pass'
+  return {
+    status,
+    summary: `TTFB ${ttfb}ms · ${(bytes / 1024).toFixed(1)}KB HTML`,
+    details: [
+      `Scripts enlazados: ${scripts}`,
+      `Hojas de estilo: ${styles}`,
+      `Imágenes: ${images}`,
+      `Tamaño del HTML: ${(bytes / 1024).toFixed(1)}KB`,
+    ],
+  }
+}
+
+const GENERIC_LINK_TEXT = /^(click here|leer m[aá]s|read more|aqu[ií]|here|more|m[aá]s)$/i
+
+/** Heurísticas de accesibilidad sobre el HTML estático (no reemplaza una auditoría con axe-core). */
+async function testAccessibilityHeuristics(t: DiagnosticTarget): Promise<Outcome> {
+  const snap = await fetchHtml(t)
+  if (!snap) return { status: 'fail', summary: 'No se pudo analizar el HTML' }
+  const { html } = snap
+
+  const lang = /<html[^>]+lang=["'][^"']+["']/i.test(html)
+
+  const imgs = html.match(/<img\b[^>]*>/gi) ?? []
+  const imgsWithoutAlt = imgs.filter((tag) => !/\balt\s*=/i.test(tag)).length
+
+  const inputs = html.match(/<(input|textarea)\b[^>]*>/gi) ?? []
+  const inputsWithoutLabel = inputs.filter((tag) => {
+    if (/type=["']hidden["']/i.test(tag)) return false
+    if (/aria-label\s*=/i.test(tag) || /aria-labelledby\s*=/i.test(tag)) return false
+    const id = tag.match(/\bid=["']([^"']+)["']/i)?.[1]
+    if (id && new RegExp(`<label[^>]+for=["']${id}["']`, 'i').test(html)) return false
+    return true
+  }).length
+
+  const h1Count = (html.match(/<h1\b/gi) ?? []).length
+
+  const linkTexts = [...html.matchAll(/<a\b[^>]*>([^<]*)<\/a>/gi)].map((m) => m[1].trim())
+  const genericLinks = linkTexts.filter((text) => GENERIC_LINK_TEXT.test(text)).length
+
+  const issues: string[] = []
+  if (!lang) issues.push('Falta atributo lang en <html>')
+  if (imgsWithoutAlt > 0) issues.push(`${imgsWithoutAlt} imagen(es) sin alt`)
+  if (inputsWithoutLabel > 0) issues.push(`${inputsWithoutLabel} campo(s) sin label/aria-label`)
+  if (h1Count === 0) issues.push('Sin <h1>')
+  if (h1Count > 1) issues.push(`${h1Count} etiquetas <h1> (debería haber una)`)
+  if (genericLinks > 0) issues.push(`${genericLinks} enlace(s) con texto genérico`)
+
+  return {
+    status: issues.length === 0 ? 'pass' : issues.length >= 3 ? 'fail' : 'warn',
+    summary:
+      issues.length === 0
+        ? 'Sin hallazgos heurísticos (no reemplaza una auditoría axe-core)'
+        : `${issues.length} hallazgo(s) heurístico(s)`,
+    details: [...issues, 'Chequeo heurístico sobre HTML estático — no reemplaza axe-core'],
+  }
+}
+
 /** Certificado TLS: emisor, vigencia, protocolo y días restantes. */
 async function testTls(t: DiagnosticTarget): Promise<Outcome> {
   const u = new URL(t.url)
