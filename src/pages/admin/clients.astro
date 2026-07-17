@@ -223,6 +223,17 @@ const formData = rows.map(({ id, name, email, company, notes }) => ({ id, name, 
       location.reload()
     }))
 
+  document.querySelectorAll<HTMLButtonElement>('.view-as-client').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const res = await fetch(`/api/admin/clients/${b.dataset.id}/impersonate`, { method: 'POST' })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(j.error || 'No se pudo entrar como este cliente.')
+        return
+      }
+      location.href = j.redirect
+    }))
+
   $('cl-form').addEventListener('submit', async (e) => {
     e.preventDefault()
     errBox.classList.add('hidden')
