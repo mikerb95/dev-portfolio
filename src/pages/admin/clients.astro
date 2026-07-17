@@ -1,7 +1,7 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
-import { clients, projects, interactions } from '../../db/schema'
+import { clients, clientUsers, projects, interactions } from '../../db/schema'
 import { desc, eq, sql } from 'drizzle-orm'
 
 const rows = await db
@@ -12,12 +12,17 @@ const rows = await db
     company: clients.company,
     notes: clients.notes,
     createdAt: clients.createdAt,
+    portalEnabled: clients.portalEnabled,
     projectCount: sql<number>`count(distinct ${projects.id})`,
     lastContact: sql<number | null>`max(${interactions.occurredAt})`,
+    // "Ver como cliente" solo tiene sentido si hay a quién ver: un cliente con
+    // portal activo pero sin ninguna invitación aceptada no tiene sesión que crear.
+    activePortalUsers: sql<number>`count(distinct case when ${clientUsers.status} = 'active' then ${clientUsers.id} end)`,
   })
   .from(clients)
   .leftJoin(projects, eq(projects.clientId, clients.id))
   .leftJoin(interactions, eq(interactions.clientId, clients.id))
+  .leftJoin(clientUsers, eq(clientUsers.clientId, clients.id))
   .groupBy(clients.id)
   .orderBy(desc(clients.createdAt))
 
