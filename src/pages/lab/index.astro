@@ -43,6 +43,16 @@ const [ciAgg] = await db
 const successRate30 = ciAgg.total > 0 ? Math.round((ciAgg.ok / ciAgg.total) * 1000) / 10 : null
 const lastCoverage = runs.find((r) => r.coveragePct != null)?.coveragePct ?? null
 
+// El mutation score se reporta como un ci_run más (mismo mecanismo), pero es
+// semanal/manual: buscarlo solo en los últimos 15 runs lo perdería casi
+// siempre entre pushes normales. Se busca aparte, sin ventana.
+const [lastMutation] = await db
+  .select({ mutationScore: ciRuns.mutationScore, createdAt: ciRuns.createdAt })
+  .from(ciRuns)
+  .where(sql`${ciRuns.mutationScore} is not null`)
+  .orderBy(desc(ciRuns.createdAt))
+  .limit(1)
+
 // ── Hallazgos de seguridad/accesibilidad (agregados; sin título ni ruta) ────
 // Solo se publica el conteo por estado: cuántos hay abiertos vs. cerrados. El
 // detalle (qué es, dónde) vive en el panel — no le damos el mapa al atacante.
