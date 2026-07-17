@@ -430,6 +430,9 @@ function inspectTls(rawUrl: string): Promise<TlsInfo | null> {
 const fmtDate = (d?: Date | null) =>
   d ? d.toISOString().slice(0, 10) : '—'
 
+const toSingleString = (v: string | string[] | undefined): string | null =>
+  Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
+
 // ── Orquestador ─────────────────────────────────────────────────────────────
 
 /** Suite completa de pruebas para un objetivo. Cada entrada corre en paralelo. */
