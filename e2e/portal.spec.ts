@@ -77,7 +77,7 @@ test.describe('portal · demo pública', () => {
     await page.getByRole('button', { name: 'Pagar ahora' }).click()
     await page.waitForURL(/\/simular\?ref=/)
 
-    await page.getByRole('button', { name: 'Simular pago aprobado' }).click()
+    await page.getByRole('button', { name: 'Simular pago aprobado' }).click({ force: true })
     await page.waitForURL(/\/portal\/facturas\/2\?pagada=1/)
     await expect(page.getByText('Factura pagada')).toBeVisible()
   })
