@@ -31,7 +31,68 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
         Úsalo solo con sitios propios o donde tengas permiso para analizarlos. Límite: 5
         análisis por minuto por IP.
       </p>
+      <button
+        id="how-it-works-btn"
+        type="button"
+        class="inline-flex items-center gap-2 mt-6 text-[12px] font-mono uppercase tracking-[.12em] text-ink-200 border border-white/10 rounded-full px-4 py-2 hover:text-cyan hover:border-cyan/30 transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        Cómo funciona
+      </button>
     </header>
+
+    <dialog id="how-it-works-modal" class="how-it-works-modal">
+      <div class="rounded-2xl glass p-0 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10 sticky top-0 bg-[#0b0b0e]/95 backdrop-blur">
+          <h2 class="text-[15px] font-medium text-ink-50">Cómo funciona el analizador</h2>
+          <button id="how-it-works-close" type="button" aria-label="Cerrar" class="ml-auto text-ink-300 hover:text-ink-50 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="px-6 py-6 space-y-8 text-[13px] text-ink-100 leading-relaxed">
+
+          <section>
+            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">Paso a paso</div>
+            <ol class="space-y-2 list-decimal list-inside marker:text-cyan marker:font-mono">
+              <li>Pegas una URL o dominio y das clic en <span class="text-ink-50">Analizar</span>.</li>
+              <li>El navegador hace un <code class="font-mono text-[12px] text-cyan">POST</code> a <code class="font-mono text-[12px] text-cyan">/api/lab/site-check</code>, protegido por un límite de 5 solicitudes por minuto por IP.</li>
+              <li>El servidor normaliza la URL y resuelve su DNS para verificar que <span class="text-ink-50">no apunte a una IP privada o interna</span> (127.0.0.1, 10.x, 169.254.x, etc.) — si apunta ahí, se rechaza antes de conectar.</li>
+              <li>Se lanzan las 12 pruebas <span class="text-ink-50">en paralelo</span>, cada una con su propio timeout, y los resultados se transmiten al navegador conforme van terminando (streaming NDJSON) — por eso las tarjetas aparecen una a una en vez de esperar todas juntas.</li>
+              <li>Nada se guarda: el análisis es efímero, vive solo en esa respuesta. No hay historial ni base de datos detrás.</li>
+            </ol>
+          </section>
+
+          <section>
+            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">Las 12 pruebas</div>
+            <ul class="space-y-2">
+              <li><span class="text-ink-50">Disponibilidad HTTP</span> — status, tiempo hasta la primera respuesta (TTFB), redirecciones.</li>
+              <li><span class="text-ink-50">Certificado TLS</span> — abre un socket TLS crudo (<code class="font-mono text-[12px]">node:tls</code>) y lee emisor, vigencia y protocolo.</li>
+              <li><span class="text-ink-50">Redirección a HTTPS</span> — verifica si la versión HTTP redirige a HTTPS.</li>
+              <li><span class="text-ink-50">Cabeceras de seguridad</span> — HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.</li>
+              <li><span class="text-ink-50">Registros DNS</span> — A, AAAA, CNAME, MX, NS, TXT vía <code class="font-mono text-[12px]">node:dns</code>.</li>
+              <li><span class="text-ink-50">Vencimiento del dominio</span> — consulta RDAP, sin API key.</li>
+              <li><span class="text-ink-50">robots.txt</span> y <span class="text-ink-50">sitemap.xml</span> — presencia y validez básica de formato.</li>
+              <li><span class="text-ink-50">Metadatos SEO</span> — title, meta description, canonical, Open Graph, atributo lang.</li>
+              <li><span class="text-ink-50">Rendimiento básico</span> — TTFB, peso del HTML, conteo de scripts/estilos/imágenes enlazados.</li>
+              <li><span class="text-ink-50">Accesibilidad (heurística)</span> — imágenes sin alt, campos sin label, jerarquía de encabezados, texto de enlaces genérico. Es un chequeo estático simple, <span class="text-ink-50">no reemplaza una auditoría axe-core real</span>.</li>
+              <li><span class="text-ink-50">Lighthouse (PageSpeed Insights)</span> — corre Lighthouse de verdad en los servidores de Google vía su API pública; rendimiento, accesibilidad, buenas prácticas y SEO con métricas reales (LCP, CLS, TBT).</li>
+            </ul>
+          </section>
+
+          <section>
+            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">Detalles técnicos</div>
+            <ul class="space-y-2">
+              <li><span class="text-ink-50">Sin navegador headless.</span> Todo corre con <code class="font-mono text-[12px]">fetch</code> + <code class="font-mono text-[12px]">node:tls</code> + <code class="font-mono text-[12px]">node:dns</code> — nada de Chromium/Playwright, por eso responde en segundos y cabe en el plan gratuito de Vercel.</li>
+              <li><span class="text-ink-50">Solo lectura pasiva.</span> Ninguna prueba modifica el sitio de destino ni intenta explotar nada — son las mismas respuestas HTTP que vería cualquier visitante o buscador.</li>
+              <li><span class="text-ink-50">Anti-SSRF.</span> La resolución DNS se valida contra rangos privados/loopback/link-local antes de cualquier conexión, para que el servidor no pueda usarse como proxy hacia redes internas.</li>
+              <li><span class="text-ink-50">Lighthouse real es opcional.</span> Depende de una clave de Google PageSpeed Insights configurada en el servidor; si falta, esa tarjeta simplemente indica que no está configurada.</li>
+            </ul>
+          </section>
+
+        </div>
+      </div>
+    </dialog>
 
     <form id="site-check-form" class="rounded-2xl glass p-5 flex flex-col sm:flex-row gap-3 mb-10">
       <input
