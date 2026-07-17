@@ -297,6 +297,30 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
     </div>
   </section>
 
+  {/* ── Video generado (HyperFrames) ───────────────────────────
+      Slide de prueba: estructura lista para un .mp4 generado offline
+      con HyperFrames (Puppeteer + FFmpeg, fuera del build de Vercel).
+      Mientras no exista el clip real, el poster SVG evita un <video>
+      roto en pantalla. ─────────────────────────────────────────── */}
+  <section>
+    <h2>Demo animada</h2>
+    <p class="body">
+      Clip generado offline con HyperFrames a partir de HTML/CSS versionado en
+      el repo — no corre en el runtime de Vercel, solo el `.mp4` resultante se
+      sube como asset estático.
+    </p>
+    <div class="video-frame">
+      <video
+        controls
+        preload="none"
+        poster="/videos/hyperframes-placeholder-poster.svg"
+      >
+        <source src="/videos/hyperframes-demo.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <p class="hint">↑ placeholder — pendiente de render con HyperFrames</p>
+  </section>
+
   {/* ── Iteraciones ─────────────────────────────────────────── */}
   <section>
     <h2>Iteraciones</h2>
