@@ -132,6 +132,19 @@ const initials = (user.name ?? user.email)
     </header>
 
     <main class="flex-1 w-full max-w-[1100px] mx-auto px-4 md:px-6 py-7 md:py-9">
+      {isDemo && (
+        <div class="mb-6 rounded-xl border border-cyan/25 bg-cyan/[.07] px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span class="inline-flex items-center gap-1.5 text-[12px] font-mono text-cyan">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
+            Demo pública
+          </span>
+          <span class="text-[13px] text-ink-50">
+            Estás viendo datos ficticios de un cliente inventado. Puedes pagar la factura de ejemplo con la
+            pasarela simulada; el resto es solo lectura.
+          </span>
+          <a href="/contact" class="text-[12px] text-cyan hover:underline ml-auto shrink-0">¿Quieres esto para tu proyecto? →</a>
+        </div>
+      )}
       <h1 class="text-[22px] md:text-[26px] font-medium tracking-tight text-ink-50 mb-6">{title}</h1>
       <slot />
     </main>
