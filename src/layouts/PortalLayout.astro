@@ -15,7 +15,7 @@ interface Props {
 }
 
 const { title, section } = Astro.props
-const { user, client } = Astro.locals.portal!
+const { user, client, impersonatedBy } = Astro.locals.portal!
 const isDemo = Astro.locals.portalDemo === true
 
 const unread = await unreadCount(user.id)
