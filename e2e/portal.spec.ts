@@ -72,7 +72,6 @@ test.describe('portal · demo pública', () => {
     // La factura 102 (segundo hito) es la que queda "sent" en el seed —
     // pagarla y aprobarla debe dejarla en "paid" sin tocar nada más.
     const pagar = await page.request.post('/api/portal/facturas/2/pagar')
-    if (!pagar.ok()) console.log('DEBUG status', pagar.status(), await pagar.text())
     expect(pagar.ok()).toBeTruthy()
     const { redirect } = await pagar.json()
     const ref = new URL(redirect, 'http://localhost').searchParams.get('ref')
