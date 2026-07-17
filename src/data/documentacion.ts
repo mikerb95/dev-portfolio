@@ -224,8 +224,16 @@ export const CASOS_DE_USO: CasoDeUso[] = [
     { tipo: 'extends', nodo: { id: 'CU-06-X1', nombre: 'Publicar ADR en vitrina pública' } },
   ] },
   { id: 'CU-07', nombre: 'Elaborar un briefing de cliente', actor: 'admin', rf: ['RF-205'], resumen: 'El administrador documenta objetivo, alcance, presupuesto e ítems de un proyecto antes de iniciarlo.' },
-  { id: 'CU-08', nombre: 'Registrar costos y calcular P&L', actor: 'admin', rf: ['RF-302', 'RF-303'], resumen: 'El administrador registra el costo de un servicio, quién lo paga y cuánto se factura al cliente.' },
-  { id: 'CU-09', nombre: 'Recibir alerta de monitor caído', actor: 'cron', rf: ['RF-401', 'RF-402', 'RF-404'], resumen: 'El cron externo dispara el chequeo, detecta una caída, abre un incidente y notifica por push.' },
+  { id: 'CU-08', nombre: 'Registrar costos y calcular P&L', actor: 'admin', rf: ['RF-302', 'RF-303'], resumen: 'El administrador registra el costo de un servicio, quién lo paga y cuánto se factura al cliente.', relaciones: [
+    { tipo: 'include', nodo: { id: 'CU-08-N1', nombre: 'Calcular P&L del proyecto' } },
+    { tipo: 'extends', nodo: { id: 'CU-08-X1', nombre: 'Excluir costo sin tasa de cambio' } },
+  ] },
+  { id: 'CU-09', nombre: 'Recibir alerta de monitor caído', actor: 'cron', rf: ['RF-401', 'RF-402', 'RF-404'], resumen: 'El cron externo dispara el chequeo, detecta una caída, abre un incidente y notifica por push.', relaciones: [
+    { tipo: 'include', nodo: { id: 'CU-09-N1', nombre: 'Abrir incidente' } },
+    { tipo: 'include', nodo: { id: 'CU-09-N2', nombre: 'Notificar caída por push' }, despues: 'CU-09-N1' },
+    { tipo: 'extends', nodo: { id: 'CU-09-X1', nombre: 'Cerrar incidente por recuperación' } },
+    { tipo: 'extends', nodo: { id: 'CU-09-X2', nombre: 'Marcar degradación por latencia' } },
+  ] },
   { id: 'CU-10', nombre: 'Evaluar SLO de un servicio', actor: 'admin', rf: ['RF-403'], resumen: 'El administrador define objetivo y ventana, y consulta el presupuesto de error restante de un monitor.' },
   { id: 'CU-11', nombre: 'Ejecutar backup manual', actor: 'admin', rf: ['RF-701'], resumen: 'El administrador dispara un backup de la base de datos hacia Blob storage desde el panel.' },
   { id: 'CU-12', nombre: 'Procesar un pago con idempotencia', actor: 'gateway', rf: ['RF-502'], resumen: 'La pasarela envía un webhook de pago; el sistema aplica el evento respetando idempotencia y orden.' },
