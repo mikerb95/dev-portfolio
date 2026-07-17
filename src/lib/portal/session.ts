@@ -114,6 +114,7 @@ export async function resolveSession(token: string | undefined | null, now = new
       expiresAt: portalSessions.expiresAt,
       revokedAt: portalSessions.revokedAt,
       lastSeen: portalSessions.lastSeen,
+      impersonatedBy: portalSessions.impersonatedBy,
       userId: clientUsers.id,
       email: clientUsers.email,
       name: clientUsers.name,
