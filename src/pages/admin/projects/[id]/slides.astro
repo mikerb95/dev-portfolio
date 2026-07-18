@@ -158,7 +158,7 @@ const origin = Astro.url.origin
     const form = new FormData()
     for (const f of fileInput.files) form.append('files', f)
 
-    const res = await fetch(`/api/slides/${activeUploadId}/upload`, {
+    const res = await fetch(`/api/admin/slides/${activeUploadId}/upload`, {
       method: 'POST',
       body: form,
     })
