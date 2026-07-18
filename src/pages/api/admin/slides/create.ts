@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
-import { db } from '../../../db'
-import { presentations } from '../../../db/schema'
+import { db } from '../../../../db'
+import { presentations } from '../../../../db/schema'
 import { randomBytes } from 'crypto'
 
 export const POST: APIRoute = async ({ request }) => {
