@@ -180,3 +180,32 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
 
   </div>
 </BaseLayout>
+
+<style>
+  /* Paleta de Platzi Conf (verde #0ae98a de su logo, más los acentos naranja/violeta
+     de su sitio) sustituyendo el cyan de CodeByMike, solo en esta página. Se
+     sobreescriben las custom properties del tema, así que las clases utilitarias
+     compartidas (text-cyan, bg-cyan, shadow-glow, etc.) heredan el color nuevo
+     sin duplicar componentes. */
+  .platzi-theme {
+    --color-cyan: #0ae98a;
+    --color-cyan-dim: #08c476;
+    --color-cyan-deep: #056b41;
+    --color-cyan-glow: #7cf5c4;
+    --shadow-glow: 0 0 0 1px rgba(10, 233, 138, .35), 0 0 32px -8px rgba(10, 233, 138, .5);
+    position: relative;
+    isolation: isolate;
+  }
+  .platzi-theme::before {
+    content: '';
+    position: absolute;
+    inset: -6% -10% auto -10%;
+    height: 640px;
+    background:
+      radial-gradient(55% 55% at 25% 0%, rgba(10, 233, 138, .16), transparent 70%),
+      radial-gradient(40% 40% at 92% 8%, rgba(76, 90, 255, .12), transparent 70%),
+      radial-gradient(35% 35% at 68% 28%, rgba(255, 107, 61, .09), transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+  }
+</style>
