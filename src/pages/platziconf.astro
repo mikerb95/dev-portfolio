@@ -1,0 +1,181 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { db } from '../db'
+import { monitors, monitorChecks } from '../db/schema'
+import { and, eq, gte, sql } from 'drizzle-orm'
+
+// Landing de una sola página para compartir por QR/link con gente que conozca en la
+// Platzi Conf (Bogotá, 2026-08-29). No entra al sitemap (STATIC_PATHS en
+// sitemap.xml.ts) ni se enlaza desde el home: se descubre solo por el link directo.
+// Ver docs/plan-platziconf.md.
+
+// Métricas en vivo: mismo agregado de 30d que /status, pero reducido a un par de
+// números — no se reimplementa el cálculo de SLO completo aquí.
+const SLO_DAYS = 30
+const since = new Date(Date.now() - SLO_DAYS * 86_400_000)
+
+const activeMonitors = await db
+  .select({ id: monitors.id })
+  .from(monitors)
+  .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
+
+const totals = await db
+  .select({
+    total: sql<number>`count(*)`,
+    ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
+  })
+  .from(monitorChecks)
+  .where(gte(monitorChecks.at, since))
+
+const globalUptime30 =
+  totals[0]?.total > 0 ? Math.round((totals[0].ok / totals[0].total) * 1000) / 10 : null
+
+const CASOS = [
+  {
+    href: '/notes/construyendo-un-micro-siem-para-mi-portfolio',
+    title: 'Construyendo un micro-SIEM para mi portfolio',
+    blurb: 'Motor propio que detecta, clasifica y bloquea tráfico hostil en tiempo real.',
+  },
+  {
+    href: '/notes/cobrar-un-trabajo-de-campo-sin-api-de-whatsapp',
+    title: 'Cobrar un trabajo de campo sin API de WhatsApp',
+    blurb: 'Pagos con idempotencia real y máquina de estados, sin pagar una API que no necesitaba.',
+  },
+  {
+    href: '/notes/chaos-engineering-que-no-puede-hacerte-dano',
+    title: 'Chaos engineering que no puede hacerte daño',
+    blurb: 'Inyectar fallos en producción de forma segura para probar que las alertas de verdad funcionan.',
+  },
+]
+
+const WA_MSG = encodeURIComponent('Hola Mike, nos vimos en la Platzi Conf 👋')
+const CALENDLY_URL = 'https://calendly.com/PLACEHOLDER'
+---
+
+<BaseLayout
+  title="Platzi Conf — CodeByMike"
+  description="Nos conocimos en la Platzi Conf. Te muestro algo de lo que sé — stack, ingeniería y proyectos reales corriendo en producción."
+  image="/og-default.png"
+>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+
+    <!-- Hero -->
+    <header class="mb-16">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/platziconf</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Bogotá · 29 ago 2026</span>
+      </div>
+      <h1 class="font-sans text-4xl md:text-6xl font-medium tracking-[-.03em] text-mask leading-[1.05] max-w-3xl mb-6">
+        Hola, nos conocimos en la Platzi Conf.
+      </h1>
+      <p class="text-[17px] md:text-[19px] text-ink-100 leading-relaxed max-w-2xl mb-4">
+        Me gustaría saber si puedo aportar a tu idea o proyecto. Te muestro algo de lo que sé —
+        sin diapositivas, con lo que tengo corriendo en producción ahora mismo.
+      </p>
+      <p class="text-[14px] text-ink-300 max-w-xl">
+        Soy Mike (<a href="https://github.com/mikerb95" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">@mikerb95</a>) —
+        <a href="https://codebymike.tech" class="hover:text-cyan transition-colors">codebymike.tech</a>
+      </p>
+    </header>
+
+    <!-- Qué hago -->
+    <section class="mb-14 max-w-2xl">
+      <p class="text-[15px] text-ink-100 leading-relaxed">
+        Construyo software full-stack de punta a punta: arquitectura, rendimiento y experiencia
+        de usuario, con la seguridad y la observabilidad como parte del diseño desde el primer
+        día, no como un parche al final. Este mismo sitio es el laboratorio: un micro-SIEM
+        propio, monitoreo con SLOs reales, pagos con idempotencia y una suite de chaos
+        engineering que inyecta fallos controlados para probar que las alertas de verdad
+        funcionan.
+      </p>
+    </section>
+
+    <!-- Stack técnico -->
+    <section class="mb-14">
+      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-4">Stack</div>
+      <div class="flex flex-wrap gap-2 mb-4">
+        {['Astro', 'TypeScript', 'Turso / libSQL', 'Drizzle', 'Auth.js', 'Tailwind', 'Vercel'].map((t) => (
+          <span class="px-3 py-1.5 rounded-full border border-white/10 bg-white/[.03] text-[12px] font-mono text-ink-100">
+            {t}
+          </span>
+        ))}
+      </div>
+      <p class="text-[13px] text-ink-300 max-w-xl leading-relaxed">
+        Y lo diferenciador: seguridad y observabilidad como desarrollo propio — micro-SIEM,
+        rate limiting durable, SLOs con presupuesto de error, chaos engineering fail-open.
+      </p>
+    </section>
+
+    <!-- Métricas en vivo -->
+    <section class="mb-14">
+      <div class="rounded-2xl glass p-6 flex flex-wrap items-center gap-8">
+        <div>
+          <div class={`font-mono text-[28px] leading-none tracking-tight ${globalUptime30 !== null && globalUptime30 >= 99.5 ? 'text-lime' : 'text-ember'}`}>
+            {globalUptime30 === null ? '—' : `${globalUptime30}%`}
+          </div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-1">
+            Uptime agregado · {SLO_DAYS}d
+          </div>
+        </div>
+        <div>
+          <div class="font-mono text-[28px] leading-none tracking-tight text-ink-50">
+            {activeMonitors.length}
+          </div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-1">
+            Servicios monitoreados
+          </div>
+        </div>
+        <a href="/status" class="ml-auto text-[13px] text-cyan hover:underline shrink-0">
+          Ver el detalle completo →
+        </a>
+      </div>
+    </section>
+
+    <!-- Casos de estudio -->
+    <section class="mb-16">
+      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Casos de estudio</div>
+      <div class="grid md:grid-cols-3 gap-4">
+        {CASOS.map((c) => (
+          <a href={c.href} class="rounded-2xl glass p-5 lift block">
+            <h3 class="text-[14px] font-medium text-ink-50 mb-2 leading-snug">{c.title}</h3>
+            <p class="text-[12px] text-ink-300 leading-relaxed">{c.blurb}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- CTA final -->
+    <section class="rounded-2xl glass border-grad p-7">
+      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Hablemos</div>
+      <div class="grid sm:grid-cols-3 gap-3">
+        <a
+          href={`https://wa.me/573104641228?text=${WA_MSG}`}
+          target="_blank" rel="noopener"
+          class="h-14 rounded-full bg-cyan text-ink-950 text-[14px] font-medium flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+        >
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor" aria-hidden="true">
+            <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4-.1-.5C10.1 9.1 9.6 8 9.4 7.5c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 .9-1 2.3s1 2.7 1.2 2.9c.1.2 2 3.1 4.9 4.3 2.4 1 2.9.8 3.4.8.5 0 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2" />
+          </svg>
+          WhatsApp
+        </a>
+        <a
+          href={CALENDLY_URL}
+          target="_blank" rel="noopener"
+          class="h-14 rounded-full border border-white/15 text-[14px] font-medium flex items-center justify-center gap-2 hover:border-cyan/50 hover:text-cyan transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Agendar llamada
+        </a>
+        <a
+          href="mailto:0368dev@gmail.com"
+          class="h-14 rounded-full border border-white/15 text-[14px] font-medium flex items-center justify-center gap-2 hover:border-cyan/50 hover:text-cyan transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          Email
+        </a>
+      </div>
+    </section>
+
+  </div>
+</BaseLayout>
