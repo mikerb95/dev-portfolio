@@ -1,0 +1,125 @@
+---
+import { db } from '../../db'
+import { presentations, presentationSlides } from '../../db/schema'
+import { eq, asc } from 'drizzle-orm'
+
+// Enlace que el cliente recibe para ver la presentación en su propio
+// navegador (CU-16). Público pero protegido solo por el shareToken —
+// mismo patrón que /c/[code]: no-store + noindex, sin sesión de ningún tipo.
+
+const { token } = Astro.params
+
+const [pres] = token
+  ? await db.select({ id: presentations.id, title: presentations.title })
+    .from(presentations)
+    .where(eq(presentations.shareToken, token))
+    .limit(1)
+  : []
+
+if (!pres) Astro.response.status = 404
+Astro.response.headers.set('Cache-Control', 'no-store')
+
+const slides = pres
+  ? await db.select({ url: presentationSlides.url })
+    .from(presentationSlides)
+    .where(eq(presentationSlides.presentationId, pres.id))
+    .orderBy(asc(presentationSlides.order))
+  : []
+---
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>{pres ? pres.title : 'Presentación no encontrada'}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: #050508; overflow: hidden; }
+    #stage {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #slide-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      transition: opacity 0.2s ease;
+    }
+    #slide-img.fade { opacity: 0; }
+    #counter {
+      position: fixed;
+      bottom: 16px;
+      right: 20px;
+      font-family: monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: .1em;
+    }
+    #no-slides {
+      color: rgba(255,255,255,0.3);
+      font-family: monospace;
+      font-size: 14px;
+      text-align: center;
+      padding: 0 24px;
+    }
+  </style>
+</head>
+<body>
+  {pres ? (
+    <>
+      <div id="stage">
+        {slides.length > 0
+          ? <img id="slide-img" src={slides[0].url} alt="Slide 1" />
+          : <span id="no-slides">Sin slides aún</span>
+        }
+      </div>
+      <div id="counter">1 / {slides.length}</div>
+
+      <script define:vars={{ token, initialSlides: slides.map(s => s.url) }}>
+        let urls = initialSlides
+        let current = 0
+        const img = document.getElementById('slide-img')
+        const counter = document.getElementById('counter')
+
+        function show(idx) {
+          if (!urls.length || !img) return
+          img.classList.add('fade')
+          setTimeout(() => {
+            img.src = urls[idx]
+            img.alt = `Slide ${idx + 1}`
+            img.classList.remove('fade')
+            counter.textContent = `${idx + 1} / ${urls.length}`
+          }, 180)
+        }
+
+        async function poll() {
+          try {
+            const res = await fetch(`/api/present/${token}/state`, { cache: 'no-store' })
+            if (!res.ok) return
+            const data = await res.json()
+
+            if (data.urls.length !== urls.length) {
+              urls = data.urls
+            }
+            if (data.slide !== current && urls.length) {
+              current = data.slide
+              show(current)
+            }
+          } catch {}
+        }
+
+        setInterval(poll, 800)
+      </script>
+    </>
+  ) : (
+    <div id="stage">
+      <span id="no-slides">Este enlace de presentación no existe o ya no está disponible.</span>
+    </div>
+  )}
+</body>
+</html>
