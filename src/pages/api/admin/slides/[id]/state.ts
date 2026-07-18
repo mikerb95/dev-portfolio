@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
-import { db } from '../../../../db'
-import { presentations, presentationSlides } from '../../../../db/schema'
+import { db } from '../../../../../db'
+import { presentations, presentationSlides } from '../../../../../db/schema'
 import { eq, asc } from 'drizzle-orm'
 
 export const GET: APIRoute = async ({ params }) => {

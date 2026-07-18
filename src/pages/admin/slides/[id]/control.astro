@@ -157,7 +157,7 @@ const initial = pres.currentSlide ?? 0
       if (idx < 0 || idx >= total) return
       current = idx
       updateUI(current)
-      await fetch(`/api/slides/${presId}/slide`, {
+      await fetch(`/api/admin/slides/${presId}/slide`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slide: current }),

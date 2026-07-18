@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
-import { db } from '../../../../db'
-import { presentations, presentationSlides } from '../../../../db/schema'
+import { db } from '../../../../../db'
+import { presentations, presentationSlides } from '../../../../../db/schema'
 import { eq, count } from 'drizzle-orm'
 import { put } from '@vercel/blob'
 
