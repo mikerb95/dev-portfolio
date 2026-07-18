@@ -136,7 +136,7 @@ const origin = Astro.url.origin
     const title = inputTitle.value.trim()
     if (!title) return
     btnCreate.textContent = '...'
-    const res = await fetch('/api/slides/create', {
+    const res = await fetch('/api/admin/slides/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ projectId, title }),
