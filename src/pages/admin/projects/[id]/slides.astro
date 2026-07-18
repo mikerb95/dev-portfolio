@@ -144,6 +144,16 @@ const origin = Astro.url.origin
     if (res.ok) location.reload()
   })
 
+  document.querySelectorAll('.btn-share').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const url = `${origin}/present/${btn.dataset.token}`
+      await navigator.clipboard.writeText(url)
+      const original = btn.textContent
+      btn.textContent = 'Copiado ✓'
+      setTimeout(() => { btn.textContent = original }, 1500)
+    })
+  })
+
   let activeUploadId = null
 
   document.querySelectorAll('.btn-upload').forEach((btn) => {
