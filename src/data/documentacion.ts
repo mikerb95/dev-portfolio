@@ -433,8 +433,8 @@ export const CASOS_DE_USO_EXTENDIDOS: CasoDeUsoExtendido[] = [
     flujoPrincipal: [
       'El administrador crea la presentación, que queda identificada con un token de acceso aleatorio y arranca en el primer slide.',
       'Sube las imágenes de los slides, asociadas a la presentación en orden.',
-      'Comparte con el cliente el enlace de vista, que este abre en su navegador en pantalla completa.',
-      'La vista del cliente consulta el estado actual de la presentación cada fracción de segundo (polling corto sobre HTTP).',
+      'Comparte con el cliente el enlace de vista (/present/[shareToken]), que este abre en su navegador en pantalla completa sin necesidad de ninguna sesión.',
+      'La vista del cliente consulta /api/present/[shareToken]/state cada fracción de segundo (polling corto sobre HTTP).',
       'El administrador controla el avance desde otra pestaña o su celular, avanzando o retrocediendo slides.',
       'Cada acción de control actualiza el slide actual persistido en base de datos.',
       'En el siguiente ciclo de polling, la vista del cliente detecta el cambio y hace la transición al nuevo slide.',
