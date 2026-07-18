@@ -86,7 +86,7 @@ const slides = await db.select({ url: presentationSlides.url })
 
     async function poll() {
       try {
-        const res = await fetch(`/api/slides/${presId}/state`, { cache: 'no-store' })
+        const res = await fetch(`/api/admin/slides/${presId}/state`, { cache: 'no-store' })
         if (!res.ok) return
         const data = await res.json()
 
