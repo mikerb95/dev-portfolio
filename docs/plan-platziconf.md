@@ -59,7 +59,7 @@
     `/cobrar` (ese crea un cobro real; aquí es solo abrir un chat).
   - Calendly: `<a href="https://calendly.com/PLACEHOLDER" target="_blank">` — placeholder
     a reemplazar por la URL real de tu cuenta de Calendly antes de publicar.
-  - Email: `mailto:0368dev@gmail.com` (mismo que `contact.astro`).
+  - Email: `mailto:mikedrb@proton.me` (mismo que `contact.astro`).
 - **Cache**: la deja el middleware por defecto (`public, s-maxage=300,
   stale-while-revalidate`) — no hace falta tocar nada por página, igual que `/status`.
 - **OG image**: reutilizar el patrón de `image="/og-status.png"` — generar un
