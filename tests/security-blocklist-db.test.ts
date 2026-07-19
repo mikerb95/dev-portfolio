@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest'
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
 
 // BD libsql local (archivo temporal), igual que payments/cobros-db: ejercita el
 // UNIQUE de blocked_ips y el onConflictDoUpdate del escalado real, sin tocar
