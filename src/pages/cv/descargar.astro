@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+---
+
+<BaseLayout
+  title="Preparando tu descarga — CodeByMike"
+  description="Tu descarga del CV está lista en un momento."
+  noindex={true}
+>
+  <div class="min-h-[70vh] flex items-center justify-center px-6">
+    <div class="max-w-sm w-full text-center">
+      <div class="mx-auto mb-6 w-10 h-10 rounded-full border-2 border-cyan/30 border-t-cyan animate-spin"></div>
+      <h1 class="text-xl font-medium text-mask mb-2">Preparando tu descarga…</h1>
+      <p id="status-text" class="text-[13px] text-ink-200 leading-relaxed mb-6">
+        Un momento, esto no debería tardar.
+      </p>
+      <p class="text-[11px] font-mono text-ink-300 leading-relaxed">
+        Esta página registra datos técnicos básicos con fines de seguridad y control de acceso.
+      </p>
+      <noscript>
+        <p class="text-[13px] text-ink-200 mt-4">
+          <a href="/api/cv/download?token=bypass-noscript" class="text-cyan hover:underline">Descargar el CV</a>
+        </p>
+      </noscript>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { collectFingerprint } from '../../lib/fingerprint-client'
+
+  const statusText = document.getElementById('status-text') as HTMLParagraphElement
+
+  async function go() {
+    let hash: string | null = null
+    let entropyBits = 0
+    let libFpHash: string | null = null
+    let signals: unknown = null
+
+    try {
+      const fp = await collectFingerprint()
+      hash = fp.hash
+      entropyBits = fp.entropyBits
+      libFpHash = fp.libFpHash
+      signals = fp.signals
+    } catch {
+      // seguimos sin señales: el endpoint de captura es fail-open.
+    }
+
+    let token = `bypass-${Date.now()}`
+    try {
+      const res = await fetch('/api/cv/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hash, entropyBits, libFpHash, signals }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (typeof data.token === 'string') token = data.token
+      }
+    } catch {
+      // red caída: seguimos con el token de bypass.
+    }
+
+    statusText.textContent = 'Listo, iniciando descarga…'
+    window.location.replace(`/api/cv/download?token=${encodeURIComponent(token)}`)
+  }
+
+  go()
+</script>
