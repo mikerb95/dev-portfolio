@@ -3,7 +3,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
 import { educationMilestones, educationLabProgress, projects } from '../../db/schema'
 import { eq, desc } from 'drizzle-orm'
-import { educationPaths, pathUrl, labUrl, labProgressKey } from '../../lib/education-paths'
+import { educationPaths, labProgressKey } from '../../lib/education-paths'
 
 const labProgressRows = await db
   .select({ labSlug: educationLabProgress.labSlug, completed: educationLabProgress.completed })
