@@ -228,8 +228,9 @@ camino inline: si el insert falla, el request continúa.
    plausible-pero-falso tras un delay aleatorio de 1–3 s — un *tarpit* suave — y
    registran `honeypot`/`critical`). Añadir `Disallow` de esas rutas en `robots.txt`
    (los crawlers legítimos las respetan; los atacantes no — filtro adicional).
-2. Auto-block escalonado (corre en el cron, no inline): IP con evento `honeypot` o ≥ N
-   eventos `high` en 10 min → insert en `blocked_ips` con TTL 1 h; reincidencia → 24 h
+2. Auto-block escalonado. El caso `honeypot` se bloquea **inline en el middleware**
+   (ver refuerzo 2026-07-19 arriba); la ráfaga de ≥ N eventos `high` en 10 min sigue
+   corriendo en el cron. Ambos → insert en `blocked_ips` con TTL 1 h; reincidencia → 24 h
    → 7 días. **Salvaguardas**: nunca auto-bloquear IPs de rangos de Vercel/cron-job.org
    ni la IP del admin (allowlist en `app_settings`); tope de 500 IPs bloqueadas
    simultáneas (si se excede, alerta en vez de bloquear — señal de ataque distribuido
