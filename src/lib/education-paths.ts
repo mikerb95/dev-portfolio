@@ -1,0 +1,440 @@
+// Contenido estático de las rutas de aprendizaje de opensecuritylab.com.ar
+// (sección "02 · Rutas de aprendizaje" de su home, escaneada el 2026-07-19).
+// Es contenido de un tercero, no propio: acá solo se referencia título,
+// duración, nivel y link de salida. El progreso (qué lab se completó) es lo
+// único que se persiste en BD, en educationLabProgress.
+
+export type EducationLab = {
+  slug: string
+  title: string
+  description: string
+  durationMin: number
+  level: 'Inicial' | 'Intermedio' | 'Avanzado'
+  tags: string[]
+  author: string
+}
+
+export type EducationPath = {
+  slug: string
+  order: number
+  title: string
+  tagline: string
+  topics: string[]
+  labs: EducationLab[]
+}
+
+const SOURCE_BASE = 'https://www.opensecuritylab.com.ar'
+
+export function pathUrl(pathSlug: string): string {
+  return `${SOURCE_BASE}/rutas/${pathSlug}`
+}
+
+export function labUrl(pathSlug: string, labSlug: string): string {
+  return `${SOURCE_BASE}/labs/${pathSlug}/${labSlug}`
+}
+
+export function labProgressKey(pathSlug: string, labSlug: string): string {
+  return `${pathSlug}/${labSlug}`
+}
+
+export const educationPaths: EducationPath[] = [
+  {
+    slug: 'linux-real',
+    order: 1,
+    title: 'Linux Real',
+    tagline: 'Linux no es la estética de una distro. Es cómo entendés sistemas.',
+    topics: [
+      'Filesystem y rutas',
+      'Usuarios y grupos',
+      'Permisos (rwx, octal)',
+      'Procesos y señales',
+      'Servicios y systemd',
+      'Logs con journalctl',
+      'Red desde el SO',
+      'Workflow de shell',
+      'Gestores de paquetes',
+      'Hardening básico',
+    ],
+    labs: [
+      {
+        slug: 'filesystem-real',
+        title: 'Filesystem real: /etc, /var/log y /proc sin memorizar',
+        description:
+          'Un recorrido práctico por las carpetas que más vas a tocar en Linux: configuración, logs, procesos, discos y rutas.',
+        durationMin: 25,
+        level: 'Inicial',
+        tags: ['linux', 'filesystem'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'permisos-usuarios-procesos',
+        title: 'Permisos, usuarios y procesos: la base real de Linux',
+        description: 'Quién sos, qué podés tocar y qué se está ejecutando: los tres ejes que explican casi todo en Linux.',
+        durationMin: 35,
+        level: 'Inicial',
+        tags: ['linux', 'permisos'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'permisos-en-octal',
+        title: 'Permisos en octal: leer 644 sin pensar',
+        description: 'Un lab quirúrgico: solo traducir entre rwx y los tres dígitos octales, hasta que salga automático.',
+        durationMin: 12,
+        level: 'Inicial',
+        tags: ['linux', 'permisos'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'systemd-y-journalctl',
+        title: 'systemd y journalctl: por qué un servicio no arranca',
+        description: 'Leer el estado real con systemctl y encontrar la causa en los logs con journalctl, sin reiniciar a ciegas.',
+        durationMin: 25,
+        level: 'Intermedio',
+        tags: ['linux', 'systemd'],
+        author: 'Valentín Torassa Colombero',
+      },
+    ],
+  },
+  {
+    slug: 'redes-internet',
+    order: 2,
+    title: 'Redes e Internet',
+    tagline: 'Una request no es magia.',
+    topics: ['TCP/IP', 'DNS', 'HTTP/HTTPS', 'TLS', 'Puertos', 'Routing', 'NAT', 'Firewalls', 'Proxies y VPNs', 'Latencia, timeouts y retries'],
+    labs: [
+      {
+        slug: 'una-request-no-es-magia',
+        title: 'Una request no es magia: DNS, TCP, HTTP y logs',
+        description: 'Qué pasa de verdad entre que escribís una URL y ves una respuesta, y dónde mirar cuando falla.',
+        durationMin: 30,
+        level: 'Inicial',
+        tags: ['redes', 'dns'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'status-codes-4xx-vs-5xx',
+        title: '4xx vs 5xx: ¿de quién es la culpa?',
+        description: 'Lab quirúrgico para decidir en un segundo si un error HTTP es culpa de la request o del servidor.',
+        durationMin: 12,
+        level: 'Inicial',
+        tags: ['redes', 'http'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'leer-un-cidr-sin-calculadora',
+        title: 'Leer un /24 sin calculadora',
+        description: 'Notación CIDR: cuántas IPs entran en un /24, /16 o /30, y por qué el prefijo es la clave.',
+        durationMin: 15,
+        level: 'Inicial',
+        tags: ['redes', 'cidr'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'dns-paso-a-paso',
+        title: 'DNS paso a paso: de un nombre a una IP',
+        description: "DNS responde en varios saltos: seguilo con dig y entendé por qué a veces 'funciona en mi máquina'.",
+        durationMin: 20,
+        level: 'Inicial',
+        tags: ['redes', 'dns'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'tls-sin-magia',
+        title: 'TLS sin magia: certificado, SNI, cadena y expiración',
+        description: 'Qué mira tu cliente cuando valida HTTPS: nombre del sitio, certificado, cadena de confianza y errores comunes.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['tls', 'https'],
+        author: 'Valentín Torassa Colombero',
+      },
+    ],
+  },
+  {
+    slug: 'backend-arquitectura',
+    order: 3,
+    title: 'Backend y Arquitectura',
+    tagline: 'No hay arquitectura gratis.',
+    topics: [
+      'APIs',
+      'Authn vs Authz',
+      'JWT y sesiones',
+      'IDOR',
+      'Colas y mensajería',
+      'Logs, métricas y traces',
+      'Monolitos',
+      'Microservicios',
+      'Event-driven',
+      'Arquitectura hexagonal',
+      'Consistencia y fallos',
+    ],
+    labs: [
+      {
+        slug: 'api-http-base',
+        title: 'API HTTP base: método, recurso, status y content-type',
+        description: 'Antes de JWT, roles o microservicios, una API es una conversación HTTP: el mapa mínimo para leerla y diseñarla.',
+        durationMin: 30,
+        level: 'Inicial',
+        tags: ['backend', 'http'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'jwt-no-es-autorizacion',
+        title: 'JWT no es autorización',
+        description: 'Un token válido dice quién sos, no qué podés hacer. La diferencia entre autenticación y autorización.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['backend', 'auth'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'idor-cambiar-un-id',
+        title: 'IDOR: el ataque de cambiar un número',
+        description: 'El bug de autorización más común: pedir el recurso de otro cambiando un id en la URL.',
+        durationMin: 15,
+        level: 'Intermedio',
+        tags: ['backend', 'idor'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'idempotencia-y-reintentos',
+        title: 'Idempotencia: por qué un reintento te cobra dos veces',
+        description: 'La red falla, el cliente reintenta, y el usuario termina con dos cobros: el problema es que el endpoint no es idempotente.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['backend', 'apis'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'nats-jetstream-subjects-streams-consumers',
+        title: 'NATS y JetStream: subjects, streams y consumers sin magia',
+        description: 'Publicar no es lo mismo que persistir: Core NATS, JetStream, wildcards, streams y consumers con un lab local.',
+        durationMin: 45,
+        level: 'Intermedio',
+        tags: ['backend', 'mensajeria'],
+        author: 'Sol Soletti',
+      },
+      {
+        slug: 'outbox-fallos-parciales',
+        title: 'Outbox: transacciones, eventos y fallos parciales',
+        description: 'Por qué guardar datos y publicar eventos no es una sola operación, y cómo el patrón outbox reduce duplicados y pérdidas.',
+        durationMin: 45,
+        level: 'Avanzado',
+        tags: ['backend', 'arquitectura'],
+        author: 'Valentín Torassa Colombero',
+      },
+    ],
+  },
+  {
+    slug: 'cloud-produccion',
+    order: 4,
+    title: 'Cloud y Producción',
+    tagline: 'Cloud no es magia: es identidad, red, APIs, logs, costos y fallos.',
+    topics: [
+      'AWS básico',
+      'IAM',
+      'S3',
+      'VPC',
+      'Security groups',
+      'Load balancers',
+      'CloudTrail',
+      'CloudWatch',
+      'Deployments y secretos',
+      'Mentalidad de incidentes',
+      'Costo y blast radius',
+    ],
+    labs: [
+      {
+        slug: 'aws-desde-cero',
+        title: 'AWS desde cero: región, ARN, CLI y credenciales falsas',
+        description: 'Mapa seguro para leer conceptos base de AWS sin publicar datos reales: regiones, cuentas, ARNs, perfiles y CLI.',
+        durationMin: 30,
+        level: 'Inicial',
+        tags: ['aws', 'cloud'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'cloudtrail-quien-hizo-que',
+        title: 'CloudTrail: quién hizo qué en AWS',
+        description: 'En la nube la identidad es el perímetro. CloudTrail registra cada acción de cada identidad para investigar un incidente.',
+        durationMin: 35,
+        level: 'Intermedio',
+        tags: ['cloud', 'aws'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'iam-deny-gana',
+        title: 'IAM: leer una policy antes de que te muerda',
+        description: 'Los permisos los decide una policy JSON: Effect, Action, Resource, y por qué un Deny le gana a cualquier Allow.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['cloud', 'aws'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 's3-bucket-publico-sin-querer',
+        title: 'S3: el bucket que quedó público sin querer',
+        description: 'La fuga de datos más común en la nube no es un hackeo: es un bucket mal configurado. Las cuatro capas que deciden si un objeto es público.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['cloud', 'aws'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'vpc-security-groups',
+        title: 'VPC y Security Groups: quién puede hablar con quién',
+        description: 'Modelo mental de red cloud sin levantar infraestructura real: subnets, rutas, security groups y reglas de entrada/salida.',
+        durationMin: 35,
+        level: 'Intermedio',
+        tags: ['aws', 'vpc'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'blast-radius-costo',
+        title: 'Blast radius y costo: game day con incidente sintético',
+        description: 'Pensar producción: qué se rompe, cuánto cuesta, cómo se limita el impacto y qué evidencia necesitás para decidir.',
+        durationMin: 45,
+        level: 'Avanzado',
+        tags: ['cloud', 'produccion'],
+        author: 'Valentín Torassa Colombero',
+      },
+    ],
+  },
+  {
+    slug: 'ciberseguridad',
+    order: 5,
+    title: 'Ciberseguridad Práctica',
+    tagline: 'Ciberseguridad es entender cómo fallan los sistemas.',
+    topics: [
+      'Seguridad web',
+      'OWASP API',
+      'Threat modeling',
+      'Hardening de Linux',
+      'Privesc en labs seguros',
+      'Reverse shells (defensivo)',
+      'Logs y detección',
+      'Writeups de vulnerabilidades',
+      'Divulgación responsable',
+    ],
+    labs: [
+      {
+        slug: 'xss-local-defensivo',
+        title: 'XSS local defensivo: source, sink y output encoding',
+        description: 'Un lab local para entender XSS sin tocar sitios ajenos: de dónde entra el dato y cómo cortarlo con APIs seguras.',
+        durationMin: 30,
+        level: 'Inicial',
+        tags: ['xss', 'web'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'docker-socket-to-host',
+        title: 'Docker socket to host: cuando el contenedor toca el sistema',
+        description: 'Montar /var/run/docker.sock dentro de un contenedor suele equivaler a entregar el host: por qué se rompe el aislamiento.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['ciberseguridad', 'docker'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'por-que-chmod-777',
+        title: 'Por qué chmod 777 es un problema, no una solución',
+        description: "Micro-lab: qué hace realmente 777, por qué 'lo arreglé con 777' suele abrir un agujero, y qué poner en su lugar.",
+        durationMin: 10,
+        level: 'Inicial',
+        tags: ['ciberseguridad', 'permisos'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'hashear-no-es-cifrar',
+        title: 'Hashear no es cifrar',
+        description: 'No confundir hash, encoding y cifrado: base64 se deshace, SHA-256 no.',
+        durationMin: 14,
+        level: 'Inicial',
+        tags: ['ciberseguridad', 'hashing'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'threat-modeling-app-chica',
+        title: 'Threat modeling de una app chica',
+        description: 'Con cuatro preguntas y un diagrama de flujo de datos, encontrás los riesgos reales de tu app antes de escribir una línea de defensa.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['ciberseguridad', 'threat-modeling'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'sql-injection-parametrizada',
+        title: 'SQL injection defensiva: queries parametrizadas',
+        description: 'Por qué concatenar input en SQL rompe el límite entre datos y código, y cómo lo corrigen las consultas parametrizadas.',
+        durationMin: 35,
+        level: 'Intermedio',
+        tags: ['sql', 'owasp'],
+        author: 'Valentín Torassa Colombero',
+      },
+    ],
+  },
+  {
+    slug: 'devsecops-agentes',
+    order: 6,
+    title: 'DevSecOps y Agentes',
+    tagline: 'Si tu agente tiene herramientas, también tiene superficie de ataque.',
+    topics: [
+      'Seguridad en CI/CD',
+      'GitHub Actions',
+      'Secret scanning',
+      'Seguridad en Docker',
+      'SBOM básico',
+      'Permisos de agentes',
+      'MCP y acceso a tools',
+      'Audit logs',
+      'Approval gates',
+      'Backups seguros',
+    ],
+    labs: [
+      {
+        slug: 'agente-no-deberia-tocar-archivos-a-ciegas',
+        title: 'Un agente no debería tocar archivos a ciegas',
+        description: 'Si tu agente de IA tiene herramientas, tiene permisos, y los permisos son superficie de ataque: allowlists, rutas denegadas y confirmación humana.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['devsecops', 'agentes'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'secret-scanning-token-al-repo',
+        title: 'Secret scanning: el token que se te escapó al repo',
+        description: 'Detectar un secret con escaneo automático, frenarlo antes del commit y qué hacer cuando ya se filtró.',
+        durationMin: 30,
+        level: 'Inicial',
+        tags: ['devsecops', 'secretos'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'github-actions-secrets-en-logs',
+        title: 'GitHub Actions: el secreto que terminó en los logs',
+        description: 'Cómo se escapan los secretos en CI (impresos, en un PR de un fork, o leídos por una acción de terceros) y cómo cerrar cada puerta.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['devsecops', 'ci-cd'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'sbom-basico',
+        title: 'SBOM básico: inventario de dependencias que sí sirve',
+        description: 'Qué es un SBOM, cuándo ayuda, qué no resuelve y cómo usarlo como evidencia de supply chain.',
+        durationMin: 30,
+        level: 'Intermedio',
+        tags: ['sbom', 'supply-chain'],
+        author: 'Valentín Torassa Colombero',
+      },
+      {
+        slug: 'docker-image-hardening',
+        title: 'Docker image hardening: non-root, capabilities y filesystem',
+        description: 'Controles prácticos para reducir daño si un contenedor se compromete: usuario no-root, capacidades mínimas y filesystem read-only.',
+        durationMin: 40,
+        level: 'Avanzado',
+        tags: ['docker', 'hardening'],
+        author: 'Valentín Torassa Colombero',
+      },
+    ],
+  },
+]
