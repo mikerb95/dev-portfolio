@@ -204,6 +204,25 @@ Disallow de señuelos. Tests: `security-autoblock` + `security-honeypot` (255 to
 verdes). Verificado e2e: honeypot→200/401 falso, cron bloquea la IP (`source='auto'`, TTL
 3600 s), request posterior→403. **Pendiente operativo**: dar de alta el cron en cron-job.org.
 
+**Refuerzo (2026-07-19) — bloqueo inline de honeypots:** el auto-block dependía
+únicamente del cron, que nunca se dio de alta en cron-job.org y además se removió de
+`vercel.json` (posible límite de crons del plan) → los honeypots tocados no se bloqueaban
+en la práctica: se veían hits repetidos de la misma IP en `/admin/security` sin bloqueo.
+Como un hit a ruta señuelo es intención inequívoca (cero falsos positivos), se movió ese
+caso a **bloqueo inline en `src/middleware.ts`**: `observeRequest` ya devuelve la
+clasificación de forma síncrona; si `category==='honeypot'`, el middleware llama a
+`blockIpEscalated` justo tras el check de blocklist. El request que dispara la trampa
+**sigue su curso y recibe el señuelo** (tarpit + HTML falso — no se delata la trampa en el
+primer contacto); a partir del siguiente request la IP cae en la blocklist (403). Se
+extrajo `blockIpEscalated` en `src/lib/security/blocklist.ts` (lee `hits` previos →
+`escalatedTtlSec` → `blockIp`), compartido por el inline y por `runAutoBlock` (un único
+punto de escalado, sin divergencia). El cron **sigue siendo backstop** para la ráfaga
+high/critical ≥ umbral, la purga de bloqueos vencidos y la detección de anomalías → dar de
+alta `GET /api/cron/security-rollup` (Bearer CRON_SECRET) en cron-job.org, cada ~15 min.
+Test nuevo con libSQL temporal: `tests/security-blocklist-db.test.ts` (escalado real sobre
+el `onConflictDoUpdate` de `blocked_ips` + veto vía `isBlocked`). Fail-open en todo el
+camino inline: si el insert falla, el request continúa.
+
 1. Endpoints trampa que ningún usuario legítimo toca: `/wp-login.php`, `/.env`,
    `/admin.php`, `/api/v1/token` (rutas Astro reales que responden 200 con contenido
    plausible-pero-falso tras un delay aleatorio de 1–3 s — un *tarpit* suave — y
