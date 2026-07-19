@@ -11,7 +11,7 @@ interface Props {
 }
 
 const { slug, title, description, techStack, screenshotUrl } = Astro.props
-const stack: string[] = techStack ? JSON.parse(techStack) : []
+const stack = parseTechStack(techStack)
 ---
 
 <a
