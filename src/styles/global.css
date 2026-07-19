@@ -53,10 +53,8 @@ body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smooth
 *::-webkit-scrollbar-thumb:hover { background: #3a3a48; }
 
 /* Blobs ambientales de fondo (cyan + lime), fijos detrás de todo el contenido en
-   cada página que usa BaseLayout — opacidad baja a propósito para no competir
-   con texto denso (tablas de /status, listados de /lab, etc.). El hero del home
-   conserva además su propio `.halo` (cyan + violeta), más intenso, como acento
-   específico de esa sección. */
+   cada página que usa BaseLayout. El hero del home conserva además su propio
+   `.halo` (cyan + violeta) como acento adicional específico de esa sección. */
 .site-blobs::after {
   content: "";
   position: fixed;
