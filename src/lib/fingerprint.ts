@@ -50,17 +50,41 @@ export async function joinDevice(params: {
   entropyBits: number
 }): Promise<JoinResult> {
   const now = new Date()
+
+  // Identidad primaria: el visitorId de FingerprintJS (libFpHash), que está
+  // diseñado para sobrevivir a incógnito y al borrado de cookies. Nuestro hash
+  // propio es el respaldo: es más frágil (canvas/audio/devicePixelRatio pueden
+  // variar entre sesiones y romper la igualdad exacta), así que si solo con él
+  // buscáramos, el mismo dispositivo en incógnito entraría como uno nuevo — que
+  // es justo lo que la demo quiere demostrar que NO debería pasar. Un match por
+  // deviceHash O por libFpHash reconoce la revisita aunque el hash propio baile.
+  const matchClause = params.libFpHash
+    ? or(eq(fpDevices.deviceHash, params.deviceHash), eq(fpDevices.libFpHash, params.libFpHash))
+    : eq(fpDevices.deviceHash, params.deviceHash)
+
+  // orderBy(label) para quedarnos siempre con el dispositivo más antiguo que
+  // coincide (su #N original), no con uno arbitrario si hubiera varios.
   const [existing] = await db
     .select()
     .from(fpDevices)
-    .where(and(eq(fpDevices.roomId, params.roomId), eq(fpDevices.deviceHash, params.deviceHash)))
+    .where(and(eq(fpDevices.roomId, params.roomId), matchClause))
+    .orderBy(fpDevices.label)
     .limit(1)
 
   if (existing) {
     const revisits = existing.revisits + 1
     await db
       .update(fpDevices)
-      .set({ revisits, lastSeen: now, entropyBits: params.entropyBits })
+      .set({
+        revisits,
+        lastSeen: now,
+        entropyBits: params.entropyBits,
+        // Refrescamos ambos anclajes al último valor visto: el ancla estable es
+        // libFpHash, pero guardar el deviceHash más reciente da mejor chance de
+        // reconocer la próxima visita por hash si FingerprintJS no cargara.
+        deviceHash: params.deviceHash,
+        libFpHash: params.libFpHash ?? existing.libFpHash,
+      })
       .where(eq(fpDevices.id, existing.id))
     return { label: existing.label, revisits, isReturning: true }
   }
