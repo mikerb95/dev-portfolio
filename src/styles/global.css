@@ -55,6 +55,15 @@ body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smooth
 /* Blobs ambientales de fondo (cyan + lime), fijos detrás de todo el contenido en
    cada página que usa BaseLayout. El hero del home conserva además su propio
    `.halo` (cyan + violeta) como acento adicional específico de esa sección. */
+.site-blobs {
+  /* body no forma su propio contexto de apilamiento por defecto: sin esto, el
+     z-index negativo del pseudo-elemento se resuelve contra el stacking
+     context raíz y termina pintándose debajo del propio fondo opaco del
+     body (que sí cuenta como contenido normal en ese contexto), no detrás
+     del contenido de la página como se pretende. */
+  position: relative;
+  isolation: isolate;
+}
 .site-blobs::after {
   content: "";
   position: fixed;
