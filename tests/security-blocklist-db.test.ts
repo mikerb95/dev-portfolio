@@ -77,8 +77,11 @@ describe('blockIpEscalated · escalado sobre la tabla real', () => {
   })
 
   it('una IP recién bloqueada queda vetada según isBlocked', async () => {
+    // isBlocked compara expires_at contra el reloj real, así que aquí bloqueamos
+    // con la hora real (no la fija de los otros casos) para que el TTL de 1h siga
+    // vigente al consultar.
     expect(await isBlocked(IP)).toBe(false)
-    await blockIpEscalated({ ip: IP, ruleId: 'honeypot.inline' }, now)
+    await blockIpEscalated({ ip: IP, ruleId: 'honeypot.inline' })
     expect(await isBlocked(IP)).toBe(true)
   })
 })
