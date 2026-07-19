@@ -358,6 +358,7 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
 
   {/* ── Cierre ──────────────────────────────────────────────── */}
   <section class="deck-cover">
+    <div class="cover-halo" aria-hidden="true"></div>
     <div class="eyebrow">Documentación completa</div>
     <h2 class="close-h">codebymike.tech/docs</h2>
     <p class="lede">
@@ -411,6 +412,23 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
   }
 
   /* Portada y cierre */
+  .reveal-light .deck-cover {
+    position: relative;
+  }
+  /* Halo radial detrás de portada/cierre, igual criterio que el .halo del
+     sitio (index.astro) pero contenido al slide y en tono claro. */
+  .reveal-light .cover-halo {
+    position: absolute;
+    inset: -15% -10% auto -10%;
+    height: 60%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      55% 60% at 22% 30%,
+      rgba(0, 242, 255, 0.14),
+      rgba(0, 242, 255, 0) 70%
+    );
+  }
   .reveal-light .eyebrow {
     font-family: var(--font-mono, monospace);
     font-size: 0.32em;
@@ -422,6 +440,16 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
   .reveal-light .deck-cover h1 {
     margin: 0 0 0.2em;
     line-height: 1;
+  }
+  /* Wordmark de marca: mismo patrón que Navbar/Footer del sitio (serif
+     itálica, "By" en el acento cyan) en vez de un h1 genérico. */
+  .reveal-light .brand-mark {
+    font-style: italic;
+    font-size: 3em;
+    letter-spacing: -0.01em;
+  }
+  .reveal-light .brand-by {
+    color: var(--slide-accent);
   }
   .reveal-light .close-h {
     font-size: 2em;
