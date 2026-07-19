@@ -15,7 +15,6 @@ vi.mock('../src/db', async () => {
   return { db: drizzle(client, { schema }), __client: client }
 })
 
-import { vi } from 'vitest'
 import { sql } from 'drizzle-orm'
 import { blockIpEscalated, isBlocked, invalidateBlocklistCache, BLOCK_TTL_STEPS_SEC } from '../src/lib/security/blocklist'
 import { db } from '../src/db'
