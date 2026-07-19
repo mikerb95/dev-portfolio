@@ -127,15 +127,15 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
     document.getElementById('device-count')!.textContent = String(devices.length)
     empty.classList.toggle('hidden', devices.length > 0)
 
-    const seen = new Set<number>()
+    const seen = new Set<string>()
     for (const d of devices) {
-      seen.add(d.label)
+      seen.add(d.idShort)
       const html = cardHtml(d)
-      let card = cards.get(d.label)
+      let card = cards.get(d.idShort)
       if (!card) {
         card = document.createElement('div')
         card.className = 'rounded-2xl glass p-5 lift'
-        cards.set(d.label, card)
+        cards.set(d.idShort, card)
         container.appendChild(card)
       }
       // Solo tocamos el DOM si el contenido cambió (firma en dataset).
@@ -146,8 +146,8 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
     }
     // Quita tarjetas de dispositivos que ya no están (no debería pasar en la
     // vida de una sala, pero mantiene el DOM en sincronía).
-    for (const [label, card] of cards) {
-      if (!seen.has(label)) { card.remove(); cards.delete(label) }
+    for (const [id, card] of cards) {
+      if (!seen.has(id)) { card.remove(); cards.delete(id) }
     }
   }
 
