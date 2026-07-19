@@ -3,7 +3,7 @@
 // corto y el cron lo purga (ver sweepFpRooms).
 
 import { randomBytes } from 'node:crypto'
-import { and, desc, eq, lt } from 'drizzle-orm'
+import { and, desc, eq, lt, or } from 'drizzle-orm'
 import { db } from '../db'
 import { fpDevices, fpRooms } from '../db/schema'
 
