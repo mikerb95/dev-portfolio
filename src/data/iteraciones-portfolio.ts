@@ -809,11 +809,151 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-platziconf-slides',
+    fase: 'Fase 19 · Charla Platzi Conf y presentaciones públicas',
+    nombre: 'Landing de la charla y presentaciones (slides) con estado en vivo',
+    rango: '18 jul 2026',
+    ghSince: '2026-07-18',
+    ghUntil: '2026-07-18',
+    commits: 16,
+    resumen:
+      'Landing propia para la charla en Platzi Conf con tema visual dedicado, y el módulo de slides (Fase 3) gana un endpoint público de estado de presentación y botón para compartir el enlace, dejando de depender de sesión admin para que la audiencia siga la charla en vivo.',
+    historias: [
+      {
+        id: 'PF-PZ-01', titulo: 'Como asistente a la charla, quiero una landing con la agenda y la forma de contactar al ponente',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-18', tags: ['platziconf', 'landing', 'fase-19'],
+        dod: [
+          ok('/platziconf con tema visual propio (platzi-theme) y CTA a Calendly.'),
+          ok('Fondo full-bleed consistente en pantallas anchas.'),
+        ],
+      },
+      {
+        id: 'PF-PZ-02', titulo: 'Como asistente, quiero ver el estado de la presentación (slide actual) sin tener sesión de administrador',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-18', tags: ['slides', 'público', 'fase-19'],
+        dod: [
+          ok('API de estado de presentación expuesta sin requerir sesión admin, consumida por la vista de presentación.'),
+          ok('Botón para copiar el enlace de la slide actual al portapapeles desde /admin/slides.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-pulido-visual',
+    fase: 'Fase 20 · Pulido visual y saneamiento de tech stack',
+    nombre: 'Fondo con profundidad (blobs), separación de navbar y parser único de tech stack',
+    rango: '18 jul 2026',
+    ghSince: '2026-07-18',
+    ghUntil: '2026-07-18',
+    commits: 15,
+    resumen:
+      'Retoque visual transversal: fondo con blobs degradados en BaseLayout para dar profundidad sin recargar el diseño, y un scrim detrás del navbar para separarlo del contenido al hacer scroll. En paralelo se resuelve una inconsistencia de datos: el tech stack de los proyectos se guardaba en formatos distintos (JSON vs texto plano) y cada vista lo parseaba a su manera; ahora hay un único parseTechStack reutilizado en ProjectCard y las páginas de detalle.',
+    historias: [
+      {
+        id: 'PF-PV-01', titulo: 'Como visitante, quiero una interfaz con más profundidad visual sin perder legibilidad',
+        tipo: 'historia', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-18', tags: ['ui', 'diseño', 'fase-20'],
+        dod: [
+          ok('Blobs de fondo degradados añadidos a BaseLayout con posicionamiento propio, sin interferir con el contenido.'),
+          ok('Scrim detrás del navbar para mantener contraste sobre contenido con scroll.'),
+        ],
+      },
+      {
+        id: 'PF-PV-02', titulo: 'Como desarrollador, quiero un único parser de tech stack para no repetir lógica de formato en cada vista de proyecto',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-18', tags: ['refactor', 'proyectos', 'fase-20'],
+        dod: [
+          ok('parseTechStack maneja tanto JSON como texto plano de forma tolerante.'),
+          ok('ProjectCard, index y [id].astro migrados al parser único, eliminando JSON.parse directo.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-cv-tracking',
+    fase: 'Fase 21 · Descarga de CV con huella y auditoría',
+    nombre: 'Descarga de CV con token de un solo uso, fingerprint y panel de estadísticas',
+    rango: '18 – 19 jul 2026',
+    ghSince: '2026-07-18',
+    ghUntil: '2026-07-19',
+    commits: 12,
+    resumen:
+      'Quién descarga el CV deja de ser invisible: /cv reutiliza el recolector de señales del lab de fingerprinting para capturar un hash de dispositivo antes de emitir un token de un solo uso (ventana de 5 min) que autoriza la descarga real. A diferencia de la demo efímera, aquí el registro es permanente (sin TTL) y las revisitas del mismo dispositivo se acumulan en vez de duplicar filas. /admin/lab/cv-downloads expone el historial completo al administrador.',
+    historias: [
+      {
+        id: 'PF-CV-01', titulo: 'Como visitante, quiero descargar el CV desde la página de contacto',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-18', tags: ['cv', 'público', 'fase-21'],
+        dod: [
+          ok('Enlace de descarga de CV añadido a la página de contacto.'),
+          ok('/api/cv/capture recibe las señales del dispositivo y emite un token de un solo uso; /api/cv/download lo valida antes de servir el archivo.'),
+        ],
+      },
+      {
+        id: 'PF-CV-02', titulo: 'Como administrador, quiero ver quién descargó mi CV y detectar revisitas del mismo dispositivo',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-19', tags: ['cv', 'admin', 'seguridad', 'fase-21'],
+        dod: [
+          ok('cv-downloads.ts reutiliza el deviceHash del recolector de fingerprinting; sin TTL, a diferencia de las salas de la demo.'),
+          ok('Revisitas del mismo deviceHash actualizan la fila existente (contador revisits) en vez de crear duplicados.'),
+          ok('/admin/lab/cv-downloads y su API listan el historial completo con IP, UA y referer.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-labs-educativos-seguridad',
+    fase: 'Fase 22 · Rutas de aprendizaje y bloqueo escalado de IPs',
+    nombre: 'Open Security Labs con progreso persistente, IP blocking escalado y fixes de revisitas en fingerprinting',
+    rango: '19 jul 2026',
+    ghSince: '2026-07-19',
+    ghUntil: '2026-07-19',
+    commits: 20,
+    resumen:
+      'Se suma una sección educativa nueva: rutas de aprendizaje ("Linux Real" y más) con labs cronometrados y progreso que el visitante puede marcar como completado, persistido en educationLabProgress. En paralelo, la capa de seguridad gana bloqueo escalado de IPs (TTL creciente por reincidencia: 1h → 24h → 7d) con enforcement inline para honeypots además del cron de auto-block, y se corrige un bug de fondo en el lab de fingerprinting: joinDevice no reconocía correctamente las revisitas de un mismo dispositivo cuando el hash de la librería de referencia (libFpHash) variaba entre visitas.',
+    historias: [
+      {
+        id: 'PF-LE-01', titulo: 'Como visitante, quiero seguir rutas de aprendizaje con labs cronometrados y marcar mi progreso',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-19', tags: ['educación', 'público', 'fase-22'],
+        dod: [
+          ok('educationPaths define rutas, temas y labs con duración y nivel (Inicial/Intermedio/Avanzado).'),
+          ok('Tabla educationLabProgress persiste qué labs completó cada visitante.'),
+          ok('API de progreso y toggle en /admin para gestionar el estado de cada lab.'),
+        ],
+      },
+      {
+        id: 'PF-LE-02', titulo: 'Como administrador, quiero que una IP reincidente reciba un bloqueo cada vez más largo, no siempre el mismo TTL',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-19', tags: ['seguridad', 'blocklist', 'fase-22'],
+        dod: [
+          ok('blockIpEscalated calcula TTL creciente (1h → 24h → 7d) según el historial de bloqueos previos de la IP.'),
+          ok('Honeypots tocados se bloquean inline desde el middleware, sin esperar al cron de auto-block.'),
+          ok('Tests unitarios de blockIpEscalated y de la lógica de TTL en isBlocked.'),
+        ],
+      },
+      {
+        id: 'PF-LE-03', titulo: 'Como visitante que revisita la sala de fingerprinting, quiero que el tablero me reconozca aunque el hash de la librería de referencia cambie',
+        tipo: 'bug', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-19', tags: ['fingerprint', 'bug', 'fase-22'],
+        dod: [
+          ok('joinDevice usa el ID único de dispositivo (no la etiqueta) para decidir si es una revisita, y ya no depende de que libFpHash coincida exactamente.'),
+          ok('Tests con distintos escenarios de libFpHash (coincide, cambia, ausente) validando que la revisita se reconoce igual.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 838 },
+  { mes: 'jul', commits: 901 },
 ]
