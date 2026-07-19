@@ -3,6 +3,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { db } from '../../../db'
 import { projects, clients } from '../../../db/schema'
 import { desc, eq } from 'drizzle-orm'
+import { parseTechStack } from '../../../lib/tech-stack'
 
 const rows = await db
   .select({
