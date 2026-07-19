@@ -199,7 +199,14 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
   .platzi-theme::before {
     content: '';
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    /* .platzi-theme está limitado a max-w-[1280px]: sin este "full-bleed" el
+       fondo se cortaría en los bordes del contenido en pantallas anchas en vez
+       de cubrir todo el viewport. */
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
     /* Base índigo/navy (estilo Platzi Conf, en vez del negro neutro del resto del
        sitio) que se desvanece a transparente en los bordes para no dejar un corte
        duro contra el navbar/footer, que no forman parte de esta página. */
