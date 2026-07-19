@@ -7,6 +7,12 @@ tags: [seguridad, observabilidad, sre]
 
 [El micro-SIEM de este sitio](/notes/construyendo-un-micro-siem-para-mi-portfolio) llevaba semanas detectando y clasificando tráfico hostil, pero se quedaba corto en la parte que más importa: actuar. Un scanner que tocaba un honeypot generaba un evento, el evento esperaba al cron de auto-block, y entre que el cron corría y decidía bloquear podían pasar minutos en los que la misma IP seguía golpeando el sitio sin fricción. Detectar sin bloquear es la mitad del trabajo.
 
+## El disparador que nunca se disparó
+
+Cuando fui a revisar por qué una misma IP aparecía tocando un endpoint señuelo varios días seguidos sin que nada la bloqueara, el diagnóstico fue más incómodo que "el cron llega tarde": el cron no llegaba nunca. El auto-block vivía enteramente dentro de una tarea programada que dependía de un disparador externo, y ese disparador jamás se había dado de alta — además, la entrada que lo habría ejecutado desde la plataforma se había caído en una edición previa. El motor de bloqueo estaba escrito, probado y desplegado, y no se ejecutaba una sola vez.
+
+Esa es la lección que me llevo, y no es sobre latencia: **una defensa que depende de un disparador externo que nadie activó no es una defensa lenta, es una defensa ausente.** El panel mostraba los eventos, las reglas clasificaban bien, los tests pasaban en verde — todo daba la sensación de un sistema que funcionaba, y ninguna de esas señales tocaba la única pregunta que importaba: *¿alguien está llamando a esto?* Un componente de seguridad que solo corre cuando algo externo lo invoca hereda la fiabilidad de ese algo externo, no la del código que escribiste. Por eso la parte más confiable de reaccionar — la señal sin ambigüedad — no podía seguir viviendo ahí.
+
 ## Un solo TTL no representa la realidad
 
 La primera versión del bloqueo usaba un TTL fijo: se bloqueaba una IP, y a la hora volvía a tener vía libre. Eso trata igual a un scanner que pasó una sola vez que a uno que vuelve cada semana religiosamente. La solución fue escalar el TTL con la reincidencia — 1 hora la primera vez, 24 horas la segunda, 7 días de ahí en adelante — leyendo el contador `hits` de la fila persistente en `blocked_ips`. La fila sobrevive aunque el bloqueo anterior haya expirado (solo el cron de purga la borra), así que ese contador es memoria real de cuántas veces ya se bloqueó esa IP, no un valor que se resetea solo.
