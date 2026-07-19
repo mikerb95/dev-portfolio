@@ -116,6 +116,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return new Response('Forbidden', { status: 403 })
   }
 
+  // 1.b) Honeypot inline. Tocar una ruta señuelo es intención inequívoca (cero
+  //      falsos positivos: nadie legítimo pide /wp-login.php). Bloqueamos la IP
+  //      aquí mismo en vez de esperar al cron de auto-block, que puede tardar
+  //      o no estar corriendo — así la defensa no depende de un disparador
+  //      externo. Este request SÍ sigue su curso y recibe el señuelo (tarpit +
+  //      HTML falso): no delatamos la trampa en el primer contacto; a partir de
+  //      la siguiente petición la IP cae en la blocklist (403 seco) para todo.
+  //      Fail-open: si el escalado/insert falla, el request continúa igual.
+  if (threat?.category === 'honeypot' && ip) {
+    await blockIpEscalated(
+      { ip, reason: 'honeypot tocado', ruleId: 'honeypot.inline', source: 'auto' }
+    ).catch(() => {})
+  }
+
   // 2) Rate limit de dos capas (memoria → durable). Solo consulta Turso cuando
   //    el contador local entra en la zona de peligro (deferUntil).
   if (ip) {
