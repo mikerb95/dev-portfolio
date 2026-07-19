@@ -4,7 +4,7 @@
 // permanente de quién descarga el CV, no una demo efímera.
 
 import { randomBytes } from 'node:crypto'
-import { and, desc, eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { cvDownloads } from '../db/schema'
 
