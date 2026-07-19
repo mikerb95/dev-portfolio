@@ -1,8 +1,6 @@
-// Contenido estático de las rutas de aprendizaje de opensecuritylab.com.ar
-// (sección "02 · Rutas de aprendizaje" de su home, escaneada el 2026-07-19).
-// Es contenido de un tercero, no propio: acá solo se referencia título,
-// duración, nivel y link de salida. El progreso (qué lab se completó) es lo
-// único que se persiste en BD, en educationLabProgress.
+// Contenido estático de las rutas de aprendizaje del Evolution Path. El
+// progreso (qué lab se completó) es lo único que se persiste en BD, en
+// educationLabProgress.
 
 export type EducationLab = {
   slug: string
@@ -11,7 +9,6 @@ export type EducationLab = {
   durationMin: number
   level: 'Inicial' | 'Intermedio' | 'Avanzado'
   tags: string[]
-  author: string
 }
 
 export type EducationPath = {
@@ -21,16 +18,6 @@ export type EducationPath = {
   tagline: string
   topics: string[]
   labs: EducationLab[]
-}
-
-const SOURCE_BASE = 'https://www.opensecuritylab.com.ar'
-
-export function pathUrl(pathSlug: string): string {
-  return `${SOURCE_BASE}/rutas/${pathSlug}`
-}
-
-export function labUrl(pathSlug: string, labSlug: string): string {
-  return `${SOURCE_BASE}/labs/${pathSlug}/${labSlug}`
 }
 
 export function labProgressKey(pathSlug: string, labSlug: string): string {
