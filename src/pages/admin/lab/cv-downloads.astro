@@ -1,0 +1,117 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="Descargas del CV">
+  <div class="mb-6">
+    <p class="text-zinc-400 text-sm max-w-2xl">
+      Quién ha descargado el CV desde <code class="text-zinc-300">/contact</code>: huella de dispositivo,
+      IP, navegador y fecha. Reusa el mismo recolector del lab de fingerprinting, pero aquí sí persiste
+      sin TTL — es el propósito del feature.
+    </p>
+  </div>
+
+  <div id="summary" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"></div>
+
+  <div id="rows" class="space-y-2">
+    <p class="text-zinc-600 text-sm">Cargando…</p>
+  </div>
+</AdminLayout>
+
+<script>
+  type Signal = { key: string; label: string; display: string; bits: number }
+  type Row = {
+    id: number
+    deviceHash: string
+    signals: string | null
+    libFpHash: string | null
+    entropyBits: number | null
+    ip: string | null
+    userAgent: string | null
+    referer: string | null
+    downloadToken: string
+    downloadedAt: string | null
+    revisits: number
+    createdAt: string
+  }
+
+  const esc = (v: unknown) =>
+    String(v ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
+
+  const fmt = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
+
+  function describeUa(ua: string | null): string {
+    if (!ua) return 'Desconocido'
+    const browser = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) && !/Chromium/.test(ua) ? 'Chrome'
+      : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) && !/Chrome/.test(ua) ? 'Safari' : 'Navegador'
+    const os = /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows'
+      : /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'SO desconocido'
+    return `${browser} · ${os}`
+  }
+
+  async function load() {
+    const res = await fetch('/api/admin/lab/cv-downloads')
+    const data = await res.json() as { downloads: Row[] }
+    const rows = data.downloads
+
+    const summaryEl = document.getElementById('summary')!
+    const total = rows.length
+    const completed = rows.filter((r) => r.downloadedAt).length
+    const returning = rows.filter((r) => r.revisits > 0).length
+    const last24h = rows.filter((r) => Date.now() - new Date(r.createdAt).getTime() < 86_400_000).length
+    summaryEl.innerHTML = [
+      { label: 'Total intentos', value: total },
+      { label: 'Descargas completadas', value: completed },
+      { label: 'Visitantes recurrentes', value: returning },
+      { label: 'Últimas 24h', value: last24h },
+    ].map((s) => `
+      <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+        <div class="text-[11px] uppercase tracking-wider text-zinc-500 mb-1">${esc(s.label)}</div>
+        <div class="text-2xl font-semibold text-zinc-100">${s.value}</div>
+      </div>
+    `).join('')
+
+    const rowsEl = document.getElementById('rows')!
+    if (!rows.length) {
+      rowsEl.innerHTML = '<p class="text-zinc-600 text-sm">Todavía no hay descargas registradas.</p>'
+      return
+    }
+
+    rowsEl.innerHTML = rows.map((r) => {
+      let signals: Signal[] = []
+      try { signals = r.signals ? JSON.parse(r.signals) : [] } catch { signals = [] }
+      const statusChip = r.downloadedAt
+        ? '<span class="px-2 py-0.5 rounded-md text-[11px] border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Descargado</span>'
+        : '<span class="px-2 py-0.5 rounded-md text-[11px] border bg-amber-500/10 text-amber-400 border-amber-500/20">Sin completar</span>'
+
+      return `
+        <details class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+          <summary class="cursor-pointer flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              ${statusChip}
+              <span class="text-zinc-200 text-sm">${esc(describeUa(r.userAgent))}</span>
+              ${r.revisits > 0 ? `<span class="text-[11px] text-zinc-500">· ${r.revisits} revisita(s)</span>` : ''}
+            </div>
+            <div class="flex items-center gap-4 text-[12px] text-zinc-500">
+              <span class="font-mono">${esc(r.ip ?? 'sin IP')}</span>
+              <span>${esc(fmt.format(new Date(r.createdAt)))}</span>
+            </div>
+          </summary>
+          <div class="mt-3 pt-3 border-t border-zinc-800 text-[12.5px] text-zinc-400 space-y-1">
+            <div><span class="text-zinc-500">Hash de dispositivo:</span> <span class="font-mono">${esc(r.deviceHash.slice(0, 24))}…</span></div>
+            <div><span class="text-zinc-500">Entropía estimada:</span> ${r.entropyBits ?? 0} bits</div>
+            <div><span class="text-zinc-500">Referer:</span> ${esc(r.referer ?? '(directo)')}</div>
+            ${signals.length ? `
+              <div class="grid sm:grid-cols-2 gap-x-6 gap-y-1 mt-2">
+                ${signals.map((s) => `<div><span class="text-zinc-500">${esc(s.label)}:</span> ${esc(s.display)}</div>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </details>
+      `
+    }).join('')
+  }
+
+  load()
+</script>
