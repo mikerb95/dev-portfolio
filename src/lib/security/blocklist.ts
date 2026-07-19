@@ -99,6 +99,28 @@ export async function blockIp(input: BlockInput, now = new Date()): Promise<bool
   return true
 }
 
+/**
+ * Bloquea una IP escalando el TTL según sus reincidencias previas (1h → 24h →
+ * 7d). Lee los `hits` de la fila persistente (aunque el bloqueo anterior haya
+ * expirado, la fila sobrevive hasta que el cron la purga) para elegir el
+ * escalón. Es la lógica que compartían el cron (auto-block) y el bloqueo inline
+ * de honeypots del middleware: un único punto para no divergir. Respeta la
+ * allowlist vía `blockIp`. Puede lanzar (la consulta/insert) → el llamador
+ * decide si lo traga (fail-open).
+ */
+export async function blockIpEscalated(
+  input: Omit<BlockInput, 'ttlSec'>,
+  now = new Date()
+): Promise<boolean> {
+  if (!input.ip || isAllowlisted(input.ip)) return false
+  const [prev] = await db
+    .select({ hits: blockedIps.hits })
+    .from(blockedIps)
+    .where(sql`${blockedIps.ip} = ${input.ip}`)
+    .limit(1)
+  return blockIp({ ...input, ttlSec: escalatedTtlSec(prev?.hits ?? 0) }, now)
+}
+
 /** Desbloquea una IP (borra la fila). Idempotente. */
 export async function unblockIp(ip: string): Promise<void> {
   await db.delete(blockedIps).where(sql`${blockedIps.ip} = ${ip}`)
