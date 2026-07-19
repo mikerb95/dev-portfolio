@@ -11,7 +11,7 @@
 import { and, gte, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { securityEvents, blockedIps } from '../../db/schema'
-import { blockIp, escalatedTtlSec, isAllowlisted } from './blocklist'
+import { blockIp, blockIpEscalated, isAllowlisted } from './blocklist'
 
 export type AutoBlockOptions = {
   /** Ventana (min) para contar honeypots. Un solo hit basta para bloquear. */
