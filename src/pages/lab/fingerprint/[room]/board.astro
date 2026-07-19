@@ -88,9 +88,12 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
   const container = document.getElementById('devices')!
   const empty = document.getElementById('devices-empty')!
   const expired = document.getElementById('board-expired')!
-  // Reconciliamos por label para no reconstruir todo el DOM en cada tick
-  // (evita el parpadeo y que se pierda el hover en el proyector).
-  const cards = new Map<number, HTMLElement>()
+  // Reconciliamos por idShort (único por dispositivo) para no reconstruir todo
+  // el DOM en cada tick (evita el parpadeo y que se pierda el hover en el
+  // proyector). No por label: bajo joins concurrentes el label (maxLabel+1, sin
+  // transacción) puede repetirse entre dos dispositivos distintos, y keyear por
+  // label haría que uno sobrescribiera al otro y desapareciera del tablero.
+  const cards = new Map<string, HTMLElement>()
   let stopped = false
 
   function cardHtml(d: Device): string {
