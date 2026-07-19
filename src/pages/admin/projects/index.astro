@@ -106,7 +106,7 @@ const fmtDate = (d?: Date | null) =>
         <span>Proyecto</span><span>Cliente</span><span>Stack</span><span>Estado</span><span>Inicio</span><span></span>
       </div>
       {rows.map((p) => {
-        const stack: string[] = p.techStack ? JSON.parse(p.techStack) : []
+        const stack = parseTechStack(p.techStack)
         const stackLabel = stack.slice(0, 3).join(', ') + (stack.length > 3 ? ` +${stack.length - 3}` : '')
         return (
           <Fragment>
