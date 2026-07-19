@@ -148,6 +148,13 @@
       "when": 1784439499701,
       "tag": "0020_smiling_nick_fury",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1784471779488,
+      "tag": "0021_serious_spectrum",
+      "breakpoints": true
     }
   ]
 }
