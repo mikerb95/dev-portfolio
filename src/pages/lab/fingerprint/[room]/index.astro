@@ -79,9 +79,14 @@ if (!room) {
     acceptBtn.disabled = true
     acceptBtn.textContent = 'Recolectando…'
 
+    // startBehaviorTracking pide el permiso de deviceorientation en iOS, que
+    // exige gesto de usuario activo. Debe llamarse ANTES de cualquier await
+    // (collectFingerprint espera audio + FingerprintJS): tras un await el gesto
+    // ya se consumió y iOS rechaza el prompt, dejando el giroscopio muerto.
+    getSnapshot = startBehaviorTracking()
+
     const fp = await collectFingerprint()
     deviceHash = fp.hash
-    getSnapshot = startBehaviorTracking()
 
     const res = await fetch(`/api/lab/fp/${roomId}/join`, {
       method: 'POST',
