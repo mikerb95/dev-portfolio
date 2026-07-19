@@ -39,8 +39,7 @@ export const POST: APIRoute = async ({ request }) => {
       referer: request.headers.get('referer'),
     })
     return json(200, { token })
-  } catch (e) {
-    console.error('cv/capture debug', e)
+  } catch {
     // Si la DB falla, igual dejamos pasar la descarga (fail-open) con un token
     // temporal que el endpoint de descarga acepta sin buscarlo en la tabla.
     return json(200, { token: `bypass-${randomToken()}` })
