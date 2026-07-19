@@ -95,6 +95,43 @@ describe('joinDevice', () => {
     expect(devices[0]!.entropyBits).toBe(11)
   })
 
+  it('reconoce la revisita por libFpHash aunque el hash propio cambie (incógnito)', async () => {
+    const { id } = await createRoom()
+    const first = await joinDevice({ roomId: id, deviceHash: 'hashNormal', ownFp: null, libFpHash: 'visitor-abc', entropyBits: 30 })
+    expect(first).toEqual({ label: 1, revisits: 0, isReturning: false })
+
+    // Segunda entrada en incógnito: canvas/audio bailan → hash propio distinto,
+    // pero FingerprintJS devuelve el mismo visitorId. Debe verse como revisita.
+    const second = await joinDevice({ roomId: id, deviceHash: 'hashIncognito', ownFp: null, libFpHash: 'visitor-abc', entropyBits: 28 })
+    expect(second).toEqual({ label: 1, revisits: 1, isReturning: true })
+
+    const devices = await listDevices(id)
+    expect(devices).toHaveLength(1)
+  })
+
+  it('sin libFpHash cae al match por deviceHash (FingerprintJS no cargó)', async () => {
+    const { id } = await createRoom()
+    await joinDevice({ roomId: id, deviceHash: 'hashX', ownFp: null, libFpHash: null, entropyBits: 15 })
+    const again = await joinDevice({ roomId: id, deviceHash: 'hashX', ownFp: null, libFpHash: null, entropyBits: 15 })
+    expect(again.isReturning).toBe(true)
+    expect(again.revisits).toBe(1)
+
+    // Distinto hash y sin libFpHash → no hay forma de reconocerlo: dispositivo nuevo.
+    const nuevo = await joinDevice({ roomId: id, deviceHash: 'hashY', ownFp: null, libFpHash: null, entropyBits: 15 })
+    expect(nuevo).toEqual({ label: 2, revisits: 0, isReturning: false })
+  })
+
+  it('un libFpHash null en la 2a visita no impide reconocer por deviceHash', async () => {
+    const { id } = await createRoom()
+    await joinDevice({ roomId: id, deviceHash: 'hashSame', ownFp: null, libFpHash: 'visitor-z', entropyBits: 20 })
+    // Mismo hash propio pero esta vez FingerprintJS falló (null): igual es revisita.
+    const again = await joinDevice({ roomId: id, deviceHash: 'hashSame', ownFp: null, libFpHash: null, entropyBits: 20 })
+    expect(again.isReturning).toBe(true)
+    // El libFpHash previo no se pisa con null.
+    const [d] = await listDevices(id)
+    expect(d!.libFpHash).toBe('visitor-z')
+  })
+
   it('el mismo hash en salas distintas es independiente', async () => {
     const r1 = await createRoom()
     const r2 = await createRoom()
