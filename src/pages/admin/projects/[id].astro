@@ -52,7 +52,7 @@ const [envVars, services, contacts, financeRows, allClients, adrs] = await Promi
   db.select().from(projectAdrs).where(eq(projectAdrs.projectId, projectId)).orderBy(desc(projectAdrs.createdAt)),
 ])
 
-const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
+const stack = parseTechStack(project.techStack)
 const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
 const statusColors: Record<string, string> = {
