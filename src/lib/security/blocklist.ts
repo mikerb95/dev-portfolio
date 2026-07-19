@@ -8,7 +8,7 @@
 //  - Escalado de reincidencia: 1h → 24h → 7d (lo aplica el cron en Fase 2).
 // Ver docs/plan-security-observability.md.
 
-import { and, gt, sql } from 'drizzle-orm'
+import { gt, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { blockedIps } from '../../db/schema'
 
