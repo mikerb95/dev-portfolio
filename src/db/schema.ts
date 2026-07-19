@@ -142,6 +142,20 @@ export const educationMilestones = sqliteTable('education_milestones', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 })
 
+// Progreso personal en las rutas de labs de opensecuritylab.com.ar (ver
+// src/lib/education-paths.ts para el contenido, que es estático porque vive
+// en un sitio externo). Solo se persiste qué labs se completaron; el resto
+// del contenido (título, duración, tags) no cambia por request.
+export const educationLabProgress = sqliteTable('education_lab_progress', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Formato "ruta-slug/lab-slug", ej. "linux-real/filesystem-real".
+  labSlug: text('lab_slug').notNull().unique(),
+  completed: integer('completed', { mode: 'boolean' }).notNull().default(false),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
 export const briefings = sqliteTable('briefings', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   clientId: integer('client_id').references(() => clients.id),
