@@ -68,7 +68,7 @@ describe('createRoom / getRoom', () => {
   it('getRoom trata una sala vencida como inexistente (aún no purgada)', async () => {
     const { id } = await createRoom()
     // Forzamos expiración en el pasado sin borrar la fila.
-    await client.execute(`UPDATE fp_rooms SET expires_at = ${Date.now() - 1000} WHERE id = '${id}'`)
+    await client.execute(`UPDATE fp_rooms SET expires_at = ${Math.floor(Date.now() / 1000) - 10} WHERE id = '${id}'`)
     expect(await getRoom(id)).toBeNull()
   })
 })
@@ -136,7 +136,7 @@ describe('sweepFpRooms', () => {
     const vigente = await createRoom()
     const vencida = await createRoom()
     await joinDevice({ roomId: vencida.id, deviceHash: 'h', ownFp: null, libFpHash: null, entropyBits: 5 })
-    await client.execute(`UPDATE fp_rooms SET expires_at = ${Date.now() - 1000} WHERE id = '${vencida.id}'`)
+    await client.execute(`UPDATE fp_rooms SET expires_at = ${Math.floor(Date.now() / 1000) - 10} WHERE id = '${vencida.id}'`)
 
     const purged = await sweepFpRooms()
     expect(purged).toBe(1)
