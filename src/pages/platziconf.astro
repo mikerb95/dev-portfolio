@@ -199,12 +199,15 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
   .platzi-theme::before {
     content: '';
     position: absolute;
-    inset: -6% -10% auto -10%;
-    height: 640px;
+    inset: 0;
+    /* Base índigo/navy (estilo Platzi Conf, en vez del negro neutro del resto del
+       sitio) que se desvanece a transparente en los bordes para no dejar un corte
+       duro contra el navbar/footer, que no forman parte de esta página. */
     background:
-      radial-gradient(55% 55% at 25% 0%, rgba(10, 233, 138, .16), transparent 70%),
-      radial-gradient(40% 40% at 92% 8%, rgba(76, 90, 255, .12), transparent 70%),
-      radial-gradient(35% 35% at 68% 28%, rgba(255, 107, 61, .09), transparent 70%);
+      radial-gradient(55% 45% at 22% 3%, rgba(10, 233, 138, .16), transparent 60%),
+      radial-gradient(40% 35% at 92% 6%, rgba(76, 90, 255, .13), transparent 65%),
+      radial-gradient(32% 28% at 66% 22%, rgba(255, 107, 61, .09), transparent 65%),
+      linear-gradient(180deg, transparent 0%, #100e1c 6%, #100e1c 94%, transparent 100%);
     pointer-events: none;
     z-index: -1;
   }
