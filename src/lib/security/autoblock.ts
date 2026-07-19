@@ -107,15 +107,9 @@ export async function runAutoBlock(now = new Date(), options?: AutoBlockOptions)
   const overflow = decisions.length - toApply.length
 
   for (const d of toApply) {
-    // Escalado: cuenta bloqueos previos de esa IP (fila persistente aunque
-    // haya expirado, hasta que el cron la purgue) para subir el TTL.
-    const [prev] = await db
-      .select({ hits: blockedIps.hits })
-      .from(blockedIps)
-      .where(sql`${blockedIps.ip} = ${d.ip}`)
-      .limit(1)
-    const ttlSec = escalatedTtlSec(prev?.hits ?? 0)
-    await blockIp({ ip: d.ip, reason: d.reason, ruleId: d.ruleId, ttlSec, source: 'auto' }, now).catch(() => {})
+    // Escalado de TTL por reincidencia compartido con el bloqueo inline de
+    // honeypots (ver blockIpEscalated). Fila persistente aunque haya expirado.
+    await blockIpEscalated({ ip: d.ip, reason: d.reason, ruleId: d.ruleId, source: 'auto' }, now).catch(() => {})
   }
 
   return { candidates: candidates.length, blocked: toApply.length, overflow }

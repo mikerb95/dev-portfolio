@@ -5,7 +5,7 @@ import { maybeChaos } from './lib/chaos'
 import { clientIp, resolveDeviceSessionId } from './lib/device-info'
 import { recordSession } from './lib/device-sessions'
 import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
-import { isBlocked } from './lib/security/blocklist'
+import { isBlocked, blockIpEscalated } from './lib/security/blocklist'
 import { enforceLimit } from './lib/security/ratelimit-durable'
 import { isAuthPath, isCobroLinkPath, isPortalAuthPath, isRateLimitablePath } from './lib/security/paths'
 import { DEMO_COOKIE, isDemoAllowedMethod, isDemoBlockedPath, verifyDemoToken } from './lib/demo'
@@ -92,7 +92,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const query = context.url.search.replace(/^\?/, '')
   const reqHeaders = context.request.headers
 
-  observeRequest({ method, path: pathname, query, headers: reqHeaders })
+  const threat = observeRequest({ method, path: pathname, query, headers: reqHeaders })
 
   // Enforcement de seguridad (FASE 1). Todo el bloque es fail-open: cualquier
   // fallo deja pasar el request (nunca tumbamos el sitio por el enforcement).
