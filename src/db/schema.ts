@@ -596,6 +596,29 @@ export const fpDevices = sqliteTable('fp_devices', {
   hashIdx: index('fp_devices_hash_idx').on(t.deviceHash),
 }))
 
+// ── Descargas de CV ──────────────────────────────────────────────────────────
+// Registro de control (sin TTL, a diferencia de fp_devices) de quién descarga
+// el CV desde /contact: mismo recolector de señales del lab de fingerprinting,
+// pero aquí sí persiste IP/UA — es el propósito del feature, no un efecto demo.
+export const cvDownloads = sqliteTable('cv_downloads', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  deviceHash: text('device_hash').notNull(),
+  signals: text('signals'), // JSON: mismo desglose que ownFp en fp_devices
+  libFpHash: text('lib_fp_hash'),
+  entropyBits: real('entropy_bits'),
+  ip: text('ip'),
+  userAgent: text('user_agent'),
+  referer: text('referer'),
+  downloadToken: text('download_token').notNull(),
+  downloadedAt: integer('downloaded_at', { mode: 'timestamp' }),
+  revisits: integer('revisits').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  hashIdx: index('cv_downloads_hash_idx').on(t.deviceHash),
+  tokenIdx: index('cv_downloads_token_idx').on(t.downloadToken),
+  createdIdx: index('cv_downloads_created_idx').on(t.createdAt),
+}))
+
 // ── Portal de clientes ──────────────────────────────────────────────────────
 // Área autenticada donde cada cliente ve el estado de sus proyectos, sus
 // facturas, sus documentos y conversa conmigo. Ver docs/plan-portal-clientes.md.
