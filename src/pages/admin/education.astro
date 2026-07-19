@@ -65,14 +65,11 @@ const progress = completados + enCurso > 0 ? Math.round((completados / (completa
       </div>
     </div>
 
-    <!-- Rutas de aprendizaje (opensecuritylab.com.ar) -->
+    <!-- Rutas de aprendizaje -->
     <div class="space-y-3">
       <div>
         <h2 class="text-white font-semibold">Rutas de aprendizaje</h2>
-        <p class="text-zinc-500 text-xs mt-0.5">
-          Labs prácticos de <a href="https://www.opensecuritylab.com.ar/" target="_blank" rel="noopener" class="text-blue-400 hover:underline">Open Security Labs</a>.
-          El progreso se guarda acá; el contenido vive en el sitio original.
-        </p>
+        <p class="text-zinc-500 text-xs mt-0.5">Labs prácticos por tema, con seguimiento de progreso.</p>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {educationPaths.map((path) => {
