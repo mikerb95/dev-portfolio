@@ -141,6 +141,13 @@
       "when": 1784266678012,
       "tag": "0019_previous_rawhide_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1784439499701,
+      "tag": "0020_smiling_nick_fury",
+      "breakpoints": true
     }
   ]
 }
