@@ -265,6 +265,30 @@ const progress = completados + enCurso > 0 ? Math.round((completados / (completa
 </AdminLayout>
 
 <script>
+  // Rutas de aprendizaje: toggle de progreso por lab
+  document.querySelectorAll('.lab-checkbox').forEach((checkbox) => {
+    checkbox.addEventListener('change', async (e) => {
+      const input = e.target as HTMLInputElement
+      const labSlug = input.dataset.labSlug
+      const completed = input.checked
+      const row = input.closest('.lab-row') as HTMLElement | null
+
+      const res = await fetch('/api/admin/education/lab-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ labSlug, completed }),
+      })
+
+      if (res.ok) {
+        window.location.reload()
+      } else {
+        input.checked = !completed
+        if (row) row.classList.add('opacity-50')
+        alert('Error al guardar el progreso')
+      }
+    })
+  })
+
   // Create
   document.getElementById('form-create')?.addEventListener('submit', async (e) => {
     e.preventDefault()
