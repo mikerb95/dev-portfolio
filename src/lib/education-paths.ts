@@ -51,7 +51,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 25,
         level: 'Inicial',
         tags: ['linux', 'filesystem'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'permisos-usuarios-procesos',
@@ -60,7 +59,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 35,
         level: 'Inicial',
         tags: ['linux', 'permisos'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'permisos-en-octal',
@@ -69,7 +67,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 12,
         level: 'Inicial',
         tags: ['linux', 'permisos'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'systemd-y-journalctl',
@@ -78,7 +75,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 25,
         level: 'Intermedio',
         tags: ['linux', 'systemd'],
-        author: 'Valentín Torassa Colombero',
       },
     ],
   },
@@ -96,7 +92,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Inicial',
         tags: ['redes', 'dns'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'status-codes-4xx-vs-5xx',
@@ -105,7 +100,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 12,
         level: 'Inicial',
         tags: ['redes', 'http'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'leer-un-cidr-sin-calculadora',
@@ -114,7 +108,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 15,
         level: 'Inicial',
         tags: ['redes', 'cidr'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'dns-paso-a-paso',
@@ -123,7 +116,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 20,
         level: 'Inicial',
         tags: ['redes', 'dns'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'tls-sin-magia',
@@ -132,7 +124,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['tls', 'https'],
-        author: 'Valentín Torassa Colombero',
       },
     ],
   },
@@ -162,7 +153,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Inicial',
         tags: ['backend', 'http'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'jwt-no-es-autorizacion',
@@ -171,7 +161,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['backend', 'auth'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'idor-cambiar-un-id',
@@ -180,7 +169,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 15,
         level: 'Intermedio',
         tags: ['backend', 'idor'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'idempotencia-y-reintentos',
@@ -189,7 +177,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['backend', 'apis'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'nats-jetstream-subjects-streams-consumers',
@@ -198,7 +185,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 45,
         level: 'Intermedio',
         tags: ['backend', 'mensajeria'],
-        author: 'Sol Soletti',
       },
       {
         slug: 'outbox-fallos-parciales',
@@ -207,7 +193,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 45,
         level: 'Avanzado',
         tags: ['backend', 'arquitectura'],
-        author: 'Valentín Torassa Colombero',
       },
     ],
   },
@@ -237,7 +222,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Inicial',
         tags: ['aws', 'cloud'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'cloudtrail-quien-hizo-que',
@@ -246,7 +230,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 35,
         level: 'Intermedio',
         tags: ['cloud', 'aws'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'iam-deny-gana',
@@ -255,7 +238,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['cloud', 'aws'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 's3-bucket-publico-sin-querer',
@@ -264,7 +246,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['cloud', 'aws'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'vpc-security-groups',
@@ -273,7 +254,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 35,
         level: 'Intermedio',
         tags: ['aws', 'vpc'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'blast-radius-costo',
@@ -282,7 +262,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 45,
         level: 'Avanzado',
         tags: ['cloud', 'produccion'],
-        author: 'Valentín Torassa Colombero',
       },
     ],
   },
@@ -310,7 +289,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Inicial',
         tags: ['xss', 'web'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'docker-socket-to-host',
@@ -319,7 +297,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['ciberseguridad', 'docker'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'por-que-chmod-777',
@@ -328,7 +305,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 10,
         level: 'Inicial',
         tags: ['ciberseguridad', 'permisos'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'hashear-no-es-cifrar',
@@ -337,7 +313,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 14,
         level: 'Inicial',
         tags: ['ciberseguridad', 'hashing'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'threat-modeling-app-chica',
@@ -346,7 +321,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['ciberseguridad', 'threat-modeling'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'sql-injection-parametrizada',
@@ -355,7 +329,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 35,
         level: 'Intermedio',
         tags: ['sql', 'owasp'],
-        author: 'Valentín Torassa Colombero',
       },
     ],
   },
@@ -384,7 +357,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['devsecops', 'agentes'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'secret-scanning-token-al-repo',
@@ -393,7 +365,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Inicial',
         tags: ['devsecops', 'secretos'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'github-actions-secrets-en-logs',
@@ -402,7 +373,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['devsecops', 'ci-cd'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'sbom-basico',
@@ -411,7 +381,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 30,
         level: 'Intermedio',
         tags: ['sbom', 'supply-chain'],
-        author: 'Valentín Torassa Colombero',
       },
       {
         slug: 'docker-image-hardening',
@@ -420,7 +389,6 @@ export const educationPaths: EducationPath[] = [
         durationMin: 40,
         level: 'Avanzado',
         tags: ['docker', 'hardening'],
-        author: 'Valentín Torassa Colombero',
       },
     ],
   },
