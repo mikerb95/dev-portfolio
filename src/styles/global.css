@@ -52,30 +52,11 @@ body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smooth
 *::-webkit-scrollbar-thumb { background: #24242f; border-radius: 8px; }
 *::-webkit-scrollbar-thumb:hover { background: #3a3a48; }
 
-/* Blobs ambientales de fondo (cyan + lime), fijos detrás de todo el contenido en
-   cada página que usa BaseLayout. El hero del home conserva además su propio
-   `.halo` (cyan + violeta) como acento adicional específico de esa sección. */
-.site-blobs {
-  /* body no forma su propio contexto de apilamiento por defecto: sin esto, el
-     z-index negativo del pseudo-elemento se resuelve contra el stacking
-     context raíz y termina pintándose debajo del propio fondo opaco del
-     body (que sí cuenta como contenido normal en ese contexto), no detrás
-     del contenido de la página como se pretende. */
-  position: relative;
-  isolation: isolate;
-}
-.site-blobs::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  background:
-    radial-gradient(55% 50% at 6% -4%, rgba(0,242,255,.26), transparent 68%),
-    radial-gradient(50% 46% at 98% 6%, rgba(201,255,91,.20), transparent 70%),
-    radial-gradient(48% 44% at 46% 102%, rgba(0,242,255,.14), transparent 70%);
-  filter: blur(30px);
-}
+/* Blobs ambientales de fondo (cyan + lime): ver componente AmbientBlobs.astro,
+   montado en BaseLayout, que reemplaza el ::after estático anterior por 3
+   capas independientes con desplazamiento sutil al hacer scroll. El hero del
+   home conserva además su propio `.halo` (cyan + violeta) como acento
+   adicional específico de esa sección. */
 
 /* Grain overlay */
 .grain::before {
