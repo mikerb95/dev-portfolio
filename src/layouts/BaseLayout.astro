@@ -80,7 +80,8 @@ const websiteJsonLd = JSON.stringify({
     <script is:inline type="application/ld+json" set:html={websiteJsonLd} />
     <slot name="head" />
   </head>
-  <body class="grain site-blobs">
+  <body class="grain">
+    <AmbientBlobs />
     <Navbar />
     <main>
       <slot />
