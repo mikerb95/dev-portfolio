@@ -43,7 +43,17 @@
 
 /* Base */
 html, body { background: var(--color-ink-950); color: #e7e7ec; }
-body { font-family: "Inter Variable", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: "Inter Variable", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* body no forma su propio stacking context por defecto: sin esto, el
+     z-index negativo de AmbientBlobs se resuelve contra el stacking context
+     raíz y termina pintándose detrás del propio fondo opaco del body (que sí
+     cuenta como contenido normal en ese contexto), no detrás del contenido
+     de la página como se pretende. */
+  position: relative;
+  isolation: isolate;
+}
 ::selection { background: #00f2ff; color: #07070a; }
 
 /* Scrollbars */
