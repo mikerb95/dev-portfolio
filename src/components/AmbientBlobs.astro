@@ -1,0 +1,81 @@
+---
+// Blobs ambientales de fondo (cyan + lime), fijos detrás de todo el contenido.
+// Cada blob es su propia capa (antes eran 3 gradientes en un solo ::after
+// estático) para poder moverlos de forma independiente al hacer scroll.
+// El desplazamiento combina varias ondas senoidales de frecuencia irracional
+// entre sí por blob: con eso el patrón no se repite en un ciclo corto y no se
+// percibe "mecánico" (a diferencia de una sola función lineal u oscilación
+// simple), sin necesitar una librería de ruido. Respeta prefers-reduced-motion.
+---
+
+<div class="ambient-blobs" aria-hidden="true">
+  <span class="blob blob-a"></span>
+  <span class="blob blob-b"></span>
+  <span class="blob blob-c"></span>
+</div>
+
+<style>
+  .ambient-blobs {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .blob {
+    position: absolute;
+    inset: 0;
+    filter: blur(30px);
+    will-change: transform;
+    transform: translate3d(var(--bx, 0), var(--by, 0), 0);
+    transition: transform 1.6s cubic-bezier(.22, .61, .36, 1);
+  }
+  .blob-a { background: radial-gradient(55% 50% at 6% -4%, rgba(0, 242, 255, .26), transparent 68%); }
+  .blob-b { background: radial-gradient(50% 46% at 98% 6%, rgba(201, 255, 91, .20), transparent 70%); }
+  .blob-c { background: radial-gradient(48% 44% at 46% 102%, rgba(0, 242, 255, .14), transparent 70%); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob { transition: none; transform: none; }
+  }
+</style>
+
+<script>
+  const blobs = Array.from(document.querySelectorAll<HTMLElement>('.ambient-blobs .blob'))
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (blobs.length && !reduceMotion) {
+    // Frecuencias y fases distintas (y mutuamente irracionales) por blob y por
+    // eje, para que el desplazamiento combinado parezca orgánico/aleatorio en
+    // vez de una oscilación mecánica perfectamente predecible.
+    const configs = [
+      { ampX: 26, ampY: 18, fx1: 0.0021, fx2: 0.0007, fy1: 0.0016, fy2: 0.0011, phase: 0 },
+      { ampX: 22, ampY: 24, fx1: 0.0013, fx2: 0.0009, fy1: 0.0023, fy2: 0.0006, phase: 2.1 },
+      { ampX: 20, ampY: 16, fx1: 0.0018, fx2: 0.0012, fy1: 0.0009, fy2: 0.0021, phase: 4.4 },
+    ]
+
+    let ticking = false
+
+    function update() {
+      ticking = false
+      const y = window.scrollY
+
+      blobs.forEach((blob, i) => {
+        const c = configs[i]
+        const dx = c.ampX * (Math.sin(y * c.fx1 + c.phase) * 0.6 + Math.sin(y * c.fx2 + c.phase * 1.7) * 0.4)
+        const dy = c.ampY * (Math.sin(y * c.fy1 + c.phase) * 0.6 + Math.cos(y * c.fy2 + c.phase * 1.3) * 0.4)
+        blob.style.setProperty('--bx', `${dx.toFixed(1)}px`)
+        blob.style.setProperty('--by', `${dy.toFixed(1)}px`)
+      })
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        ticking = true
+        requestAnimationFrame(update)
+      }
+    }
+
+    update()
+    addEventListener('scroll', onScroll, { passive: true })
+  }
+</script>
