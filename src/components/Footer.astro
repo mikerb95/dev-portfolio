@@ -3,43 +3,60 @@ const year = new Date().getFullYear()
 ---
 
 <footer class="px-6 md:px-12 lg:px-20 pt-16 pb-10 border-t border-white/5">
-  <div class="max-w-[1280px] mx-auto grid md:grid-cols-12 gap-6">
-    <div class="md:col-span-6">
+  <div class="max-w-[1280px] mx-auto grid md:grid-cols-12 gap-10">
+    <div class="md:col-span-4">
       <div class="font-serif italic text-5xl text-mask-cyan">CodeByMike</div>
       <p class="mt-3 text-[13px] text-ink-200 max-w-sm leading-relaxed">
         Software Engineer. Arquitectura escalable, rendimiento obsesivo y experiencias de usuario de clase mundial.
       </p>
     </div>
-    <div class="md:col-span-2">
-      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Sitio</div>
-      <ul class="space-y-1.5 text-[13px] text-ink-100">
-        <li><a href="/" class="hover:text-ink-50 transition-colors">Inicio</a></li>
-        <li><a href="/tools" class="hover:text-ink-50 transition-colors">Herramientas</a></li>
-        <li><a href="/engineering" class="hover:text-ink-50 transition-colors">Ingeniería</a></li>
-        <li><a href="/architecture" class="hover:text-ink-50 transition-colors">Arquitectura</a></li>
-        <li><a href="/docs" class="hover:text-ink-50 transition-colors">Documentación</a></li>
-        <li><a href="/certifications" class="hover:text-ink-50 transition-colors">Certificaciones</a></li>
-        <li><a href="/notes" class="hover:text-ink-50 transition-colors">Notas</a></li>
-        <li><a href="/security" class="hover:text-ink-50 transition-colors">Seguridad</a></li>
-        <li><a href="/lab" class="hover:text-ink-50 transition-colors">Laboratorio</a></li>
-        <li><a href="/log" class="hover:text-ink-50 transition-colors">Log</a></li>
-        <li><a href="/status" class="hover:text-ink-50 transition-colors">Status</a></li>
-        <li><a href="/contact" class="hover:text-ink-50 transition-colors">Contacto</a></li>
-      </ul>
-    </div>
-    <div class="md:col-span-2">
-      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Redes</div>
-      <ul class="space-y-1.5 text-[13px] text-ink-100">
-        <li><a href="https://github.com/mikerb95" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">GitHub ↗</a></li>
-        <li><a href="https://www.linkedin.com/in/mdrb95/" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">LinkedIn ↗</a></li>
-      </ul>
-    </div>
-    <div class="md:col-span-2">
-      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Contacto directo</div>
-      <ul class="space-y-1.5 text-[13px] text-ink-100">
-        <li><a href="mailto:mikedrb@proton.me" class="hover:text-cyan transition-colors">mikedrb@proton.me</a></li>
-        <li><a href="https://wa.me/573104641228" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">+57 310 464 1228</a></li>
-      </ul>
+    <div class="md:col-span-8 flex flex-wrap gap-x-8 gap-y-8">
+      <div class="min-w-[110px]">
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Sitio</div>
+        <ul class="space-y-1.5 text-[13px] text-ink-100">
+          <li><a href="/" class="hover:text-ink-50 transition-colors">Inicio</a></li>
+          <li><a href="/contact" class="hover:text-ink-50 transition-colors">Contacto</a></li>
+        </ul>
+      </div>
+      <div class="min-w-[130px]">
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Producto</div>
+        <ul class="space-y-1.5 text-[13px] text-ink-100">
+          <li><a href="/tools" class="hover:text-ink-50 transition-colors">Herramientas</a></li>
+          <li><a href="/notes" class="hover:text-ink-50 transition-colors">Notas</a></li>
+          <li><a href="/docs" class="hover:text-ink-50 transition-colors">Documentación</a></li>
+          <li><a href="/certifications" class="hover:text-ink-50 transition-colors">Certificaciones</a></li>
+        </ul>
+      </div>
+      <div class="min-w-[130px]">
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Ingeniería</div>
+        <ul class="space-y-1.5 text-[13px] text-ink-100">
+          <li><a href="/engineering" class="hover:text-ink-50 transition-colors">Ingeniería</a></li>
+          <li><a href="/architecture" class="hover:text-ink-50 transition-colors">Arquitectura</a></li>
+          <li><a href="/security" class="hover:text-ink-50 transition-colors">Seguridad</a></li>
+          <li><a href="/lab" class="hover:text-ink-50 transition-colors">Laboratorio</a></li>
+        </ul>
+      </div>
+      <div class="min-w-[100px]">
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Operación</div>
+        <ul class="space-y-1.5 text-[13px] text-ink-100">
+          <li><a href="/log" class="hover:text-ink-50 transition-colors">Log</a></li>
+          <li><a href="/status" class="hover:text-ink-50 transition-colors">Status</a></li>
+        </ul>
+      </div>
+      <div class="min-w-[110px]">
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Redes</div>
+        <ul class="space-y-1.5 text-[13px] text-ink-100">
+          <li><a href="https://github.com/mikerb95" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">GitHub ↗</a></li>
+          <li><a href="https://www.linkedin.com/in/mdrb95/" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">LinkedIn ↗</a></li>
+        </ul>
+      </div>
+      <div class="min-w-[160px]">
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Contacto directo</div>
+        <ul class="space-y-1.5 text-[13px] text-ink-100">
+          <li><a href="mailto:mikedrb@proton.me" class="hover:text-cyan transition-colors">mikedrb@proton.me</a></li>
+          <li><a href="https://wa.me/573104641228" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">+57 310 464 1228</a></li>
+        </ul>
+      </div>
     </div>
   </div>
   <div class="max-w-[1280px] mx-auto mt-12 pt-6 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-ink-300">
