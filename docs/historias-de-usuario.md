@@ -360,7 +360,7 @@
 
 ## Visitantes del sitio público — Descarga de CV y educación
 
-### HU-32 — Descargar el CV desde la página de contacto
+### HU-31 — Descargar el CV desde la página de contacto
 **Como** visitante,  
 **quiero** descargar el CV directamente desde `/contact`,  
 **para** conservar el perfil del desarrollador sin pedirlo por otro medio.
@@ -371,7 +371,7 @@
 
 ---
 
-### HU-33 — Seguir rutas de aprendizaje con labs cronometrados y marcar mi progreso
+### HU-32 — Seguir rutas de aprendizaje con labs cronometrados y marcar mi progreso
 **Como** visitante,  
 **quiero** avanzar por rutas de aprendizaje ("Linux Real" y otras) con labs cronometrados y marcar cada uno como completado,  
 **para** aprender de forma guiada y ver mi propio avance.
@@ -384,7 +384,7 @@
 
 ## Administrador (Mike) — Seguimiento de descargas del CV
 
-### HU-34 — Ver quién descargó mi CV y detectar revisitas del mismo dispositivo
+### HU-33 — Ver quién descargó mi CV y detectar revisitas del mismo dispositivo
 **Como** administrador,  
 **quiero** ver el historial completo de descargas de mi CV, con IP, user-agent y referer, y detectar cuándo el mismo dispositivo vuelve a descargarlo,  
 **para** entender quién se interesó en mi perfil sin depender de que dejen sus datos por otro medio.
@@ -398,7 +398,7 @@
 
 ## Administrador (Mike) — Documentación del proyecto
 
-### HU-31 — Consultar la documentación de ingeniería sin salir del panel
+### HU-34 — Consultar la documentación de ingeniería sin salir del panel
 **Como** administrador,  
 **quiero** navegar requerimientos, casos de uso, diagramas UML y el kanban del propio proyecto desde `/admin`,  
 **para** sustentar el trabajo (académica o comercialmente) sin mantener documentos externos desincronizados.
