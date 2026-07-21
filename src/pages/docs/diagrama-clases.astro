@@ -213,6 +213,23 @@ const diagramas = [
     SecurityEvent "*" --> "1" SecurityRollup : agrega
     SecurityRollup ..> SecurityAnomaly : detecta baseline`,
   },
+  {
+    id: 'cv-educacion',
+    titulo: 'CV y educación',
+    src: `classDiagram
+    class CvDownload {
+      +string deviceHash
+      +string downloadToken
+      +Date downloadedAt
+      +int revisits
+      +Date createdAt
+    }
+    class EducationLabProgress {
+      +string labSlug
+      +bool completed
+      +Date completedAt
+    }`,
+  },
 ]
 ---
 
