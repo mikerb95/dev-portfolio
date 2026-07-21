@@ -414,12 +414,13 @@
 
 | Grupo | Historias | Rango |
 |---|---|---|
-| Visitantes | 8 | HU-01 a HU-05, HU-25 a HU-27 |
+| Visitantes | 10 | HU-01 a HU-05, HU-25 a HU-27, HU-31 a HU-32 |
 | Administrador — CRM y perfil | 12 | HU-06 a HU-17 |
 | Administrador — Observabilidad y operación | 7 | HU-18 a HU-24 |
 | Administrador — Seguridad | 3 | HU-28 a HU-30 |
-| Administrador — Documentación | 1 | HU-31 |
-| **Total** | **31** | HU-01 a HU-31 |
+| Administrador — Seguimiento de descargas del CV | 1 | HU-33 |
+| Administrador — Documentación | 1 | HU-34 |
+| **Total** | **34** | HU-01 a HU-34 |
 
 Ver también el tablero XP con historias ancladas al historial real de commits en `/admin/docs/kanban`
 (datos en `src/data/iteraciones-portfolio.ts`).
