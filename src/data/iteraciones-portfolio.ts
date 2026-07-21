@@ -949,11 +949,45 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-ambient-blobs-footer',
+    fase: 'Fase 23 · Fondo ambiental y reorganización del footer',
+    nombre: 'AmbientBlobs con paralaje por scroll y footer reagrupado por categoría',
+    rango: '19 – 20 jul 2026',
+    ghSince: '2026-07-19',
+    ghUntil: '2026-07-20',
+    commits: 6,
+    resumen:
+      'El fondo decorativo (3 gradientes radiales en un único ::after estático) se reemplaza por AmbientBlobs.astro: cada blob es su propia capa, desplazada al hacer scroll combinando senoidales de frecuencia mutuamente irracional por blob/eje para que el movimiento no se perciba mecánico ni repita en un ciclo corto, sin librería de ruido externa. Respeta prefers-reduced-motion (sin transform ni transición). Ajuste posterior de position/isolation en el body para que el nuevo layering no rompa el stacking context del resto del sitio. El footer, que tenía 12 enlaces bajo un solo grupo "Sitio", se reagrupó en 5 categorías temáticas (Sitio, Producto, Ingeniería, Operación, Redes/Contacto) con flex-wrap en vez de grid fijo — más fácil de escanear y de extender sin romper el layout en columnas angostas.',
+    historias: [
+      {
+        id: 'PF-VIS-01', titulo: 'Como visitante, quiero un fondo ambiental que se sienta vivo al hacer scroll sin distraer del contenido',
+        tipo: 'historia', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-19', tags: ['diseño', 'público', 'fase-23'],
+        dod: [
+          ok('AmbientBlobs.astro reemplaza los gradientes estáticos de global.css; cada blob se mueve de forma independiente con paralaje por scroll.'),
+          ok('El desplazamiento combina ondas senoidales de frecuencia irracional por blob para evitar un patrón mecánico perceptible.'),
+          ok('prefers-reduced-motion desactiva transform y transición por completo.'),
+          ok('position/isolation en el body corrigen el stacking context tras integrar el componente en BaseLayout.'),
+        ],
+      },
+      {
+        id: 'PF-VIS-02', titulo: 'Como visitante, quiero encontrar rápido un enlace del footer sin escanear una sola lista larga',
+        tipo: 'historia', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-20', tags: ['diseño', 'accesibilidad', 'público', 'fase-23'],
+        dod: [
+          ok('Footer.astro reagrupa los 12 enlaces en 5 categorías (Sitio, Producto, Ingeniería, Operación, Redes, Contacto directo).'),
+          ok('Layout con flex-wrap reemplaza el grid de columnas fijas, evitando huecos vacíos en pantallas angostas.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 901 },
+  { mes: 'jul', commits: 939 },
 ]

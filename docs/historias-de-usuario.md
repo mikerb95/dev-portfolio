@@ -340,6 +340,8 @@
 
 **Criterios de aceptación:**
 - Toda IP bloqueada tiene TTL obligatorio (nunca un bloqueo eterno).
+- El TTL escala con la reincidencia (1 h → 24 h → 7 días) según el contador `hits` persistido, en vez de repetir siempre el mismo bloqueo corto.
+- Un request que toca un honeypot bloquea la IP **inline en el middleware** (sin esperar al cron de auto-block): el request que dispara la trampa recibe igual el señuelo, y desde el siguiente request esa IP ya cae en la blocklist.
 - El estado del rate limiter persiste en base de datos, no en memoria del proceso.
 - Cualquier fallo del enforcement deja pasar el request (fail-open): nunca tumba el sitio.
 
@@ -353,6 +355,44 @@
 **Criterios de aceptación:**
 - Un detector estadístico (z-score sobre baseline de 30 días) marca spikes, patrones nuevos, anomalías geográficas y ráfagas de error.
 - Cada anomalía puede marcarse como notificada/reconocida.
+
+---
+
+## Visitantes del sitio público — Descarga de CV y educación
+
+### HU-32 — Descargar el CV desde la página de contacto
+**Como** visitante,  
+**quiero** descargar el CV directamente desde `/contact`,  
+**para** conservar el perfil del desarrollador sin pedirlo por otro medio.
+
+**Criterios de aceptación:**
+- Un token de un solo uso (ventana de 5 min) autoriza cada descarga real; el token se emite tras capturar una huella de dispositivo con el mismo recolector del lab de fingerprinting.
+- La descarga funciona sin login ni fricción adicional visible para el visitante.
+
+---
+
+### HU-33 — Seguir rutas de aprendizaje con labs cronometrados y marcar mi progreso
+**Como** visitante,  
+**quiero** avanzar por rutas de aprendizaje ("Linux Real" y otras) con labs cronometrados y marcar cada uno como completado,  
+**para** aprender de forma guiada y ver mi propio avance.
+
+**Criterios de aceptación:**
+- Cada ruta define temas y labs con duración estimada y nivel (Inicial/Intermedio/Avanzado).
+- El progreso marcado persiste entre visitas (no se pierde al recargar o volver más tarde).
+
+---
+
+## Administrador (Mike) — Seguimiento de descargas del CV
+
+### HU-34 — Ver quién descargó mi CV y detectar revisitas del mismo dispositivo
+**Como** administrador,  
+**quiero** ver el historial completo de descargas de mi CV, con IP, user-agent y referer, y detectar cuándo el mismo dispositivo vuelve a descargarlo,  
+**para** entender quién se interesó en mi perfil sin depender de que dejen sus datos por otro medio.
+
+**Criterios de aceptación:**
+- El registro no tiene TTL (a diferencia de las salas de la demo de fingerprinting): es histórico permanente.
+- Una revisita del mismo dispositivo actualiza un contador en la fila existente en vez de crear una fila duplicada.
+- El panel admin lista el historial completo con los metadatos capturados.
 
 ---
 
