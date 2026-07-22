@@ -1,0 +1,525 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import PipelineMap from '../../components/docs/PipelineMap.astro'
+import TestAnatomy from '../../components/docs/TestAnatomy.astro'
+import { db } from '../../db'
+import { ciRuns, securityFindings } from '../../db/schema'
+import { desc, eq, isNotNull, sql } from 'drizzle-orm'
+import {
+  NIVELES,
+  PIRAMIDE,
+  DECISIONES,
+  GLOSARIO,
+  COMANDOS,
+  ARTICULOS,
+  PENDIENTES,
+  MUTANTES_ESTADO,
+  CUANDO_LABEL,
+  METRICAS_REFERENCIA as REF,
+  TOTAL_AUTOMATIZADOS,
+  type Cuando,
+} from '../../data/testing'
+
+// Las métricas salen del propio pipeline: ci.yml postea cada corrida a
+// /api/lab/ingest y de ahí a `ci_runs`. Leerlas aquí (patrón /status: query
+// agregada directa en SSR, cache s-maxage que ya pone el middleware) evita
+// tener números escritos a mano que se desincronizan. coverage/ está en
+// .gitignore, así que leer el JSON en build no es una opción.
+//
+// Fail-open: si la query falla o la tabla está vacía, se usan los valores de
+// referencia medidos a mano. Una página de documentación no puede caerse
+// porque falte una métrica.
+type Run = {
+  sha: string
+  conclusion: string
+  testsPassed: number | null
+  testsFailed: number | null
+  coveragePct: number | null
+  healthOk: boolean | null
+  url: string | null
+  createdAt: Date | null
+}
+
+let ultimoRun: Run | null = null
+let mutationScore: number | null = null
+let hallazgos: { severity: string; n: number }[] = []
+
+try {
+  const runs = await db
+    .select({
+      sha: ciRuns.sha,
+      conclusion: ciRuns.conclusion,
+      testsPassed: ciRuns.testsPassed,
+      testsFailed: ciRuns.testsFailed,
+      coveragePct: ciRuns.coveragePct,
+      healthOk: ciRuns.healthOk,
+      url: ciRuns.url,
+      createdAt: ciRuns.createdAt,
+    })
+    .from(ciRuns)
+    .where(eq(ciRuns.branch, 'main'))
+    .orderBy(desc(ciRuns.id))
+    .limit(1)
+  ultimoRun = runs[0] ?? null
+
+  // El mutation score solo lo trae la corrida semanal de Stryker, no las de push.
+  const mut = await db
+    .select({ score: ciRuns.mutationScore })
+    .from(ciRuns)
+    .where(isNotNull(ciRuns.mutationScore))
+    .orderBy(desc(ciRuns.id))
+    .limit(1)
+  mutationScore = mut[0]?.score ?? null
+
+  // Solo el conteo agregado por severidad. Nunca el detalle: /docs es público.
+  hallazgos = await db
+    .select({ severity: securityFindings.severity, n: sql<number>`count(*)` })
+    .from(securityFindings)
+    .where(eq(securityFindings.status, 'open'))
+    .groupBy(securityFindings.severity)
+} catch {
+  // Sin BD disponible la página se sirve igual con los valores de referencia.
+}
+
+const testsVivos = ultimoRun?.testsPassed ?? REF.tests
+const coberturaViva = ultimoRun?.coveragePct ?? REF.coberturaLineas
+const enVivo = ultimoRun !== null
+const hallazgosAbiertos = hallazgos.reduce((a, h) => a + h.n, 0)
+const criticos = hallazgos
+  .filter((h) => h.severity === 'critical' || h.severity === 'high')
+  .reduce((a, h) => a + h.n, 0)
+
+const fmt = (n: number) => n.toLocaleString('es-CO')
+const pct = (n: number) => `${Math.round(n * 10) / 10}%`
+
+const kpis = [
+  { valor: fmt(testsVivos), label: 'Tests unitarios', sub: `${REF.archivos} archivos, ${REF.suites} suites` },
+  { valor: String(REF.e2e), label: 'Tests e2e', sub: `${REF.e2eSpecs} specs con navegador real` },
+  { valor: pct(coberturaViva), label: 'Cobertura', sub: 'líneas de src/lib/**' },
+  { valor: mutationScore !== null ? pct(mutationScore) : '—', label: 'Mutation score', sub: mutationScore !== null ? 'mutantes detectados' : 'pendiente de corrida semanal' },
+  { valor: String(REF.niveles), label: 'Niveles de prueba', sub: '13 activos, 1 pendiente' },
+  {
+    valor: ultimoRun ? (ultimoRun.conclusion === 'success' ? 'OK' : ultimoRun.conclusion === 'rolled_back' ? 'ROLLBACK' : 'FALLO') : '—',
+    label: 'Último deploy',
+    sub: ultimoRun ? `${ultimoRun.sha.slice(0, 7)} en main` : 'sin corridas registradas',
+  },
+]
+
+// La pirámide se dibuja con anchos proporcionales al volumen real de cada
+// estrato, no con una imagen decorativa: la forma ES el dato.
+const maxTests = Math.max(...PIRAMIDE.map((p) => p.tests))
+const anchoDe = (n: number) => 34 + (n / maxTests) * 66
+
+const CUANDOS: Cuando[] = ['push', 'semanal', 'manual', 'continuo']
+
+const acentoDot: Record<string, string> = {
+  cyan: 'bg-cyan',
+  violet: 'bg-violet',
+  lime: 'bg-lime',
+  ember: 'bg-ember',
+}
+
+const secciones = [
+  { id: 'piramide', t: 'La pirámide' },
+  { id: 'pipeline', t: 'El pipeline' },
+  { id: 'anatomia', t: 'Anatomía de un test' },
+  { id: 'niveles', t: 'Los 14 niveles' },
+  { id: 'decisiones', t: 'Decisiones' },
+  { id: 'mutacion', t: 'Cobertura vs. mutación' },
+  { id: 'pendiente', t: 'Lo que falta' },
+  { id: 'correlo', t: 'Córrelo tú mismo' },
+  { id: 'glosario', t: 'Glosario' },
+]
+---
+
+<BaseLayout title="Testing">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+  <DocsNav />
+
+  {/* ── Hero ────────────────────────────────────────────────── */}
+  <div class="max-w-3xl mb-8">
+    <h1 class="text-2xl font-semibold text-ink-50 mb-3">¿Qué pasa cuando hago <span class="font-mono text-cyan text-xl">git push</span>?</h1>
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Este proyecto tiene <strong class="text-ink-50">{fmt(TOTAL_AUTOMATIZADOS)} pruebas automáticas</strong> repartidas
+      en <strong class="text-ink-50">{REF.niveles} niveles distintos</strong>. Ninguno sobra: cada uno responde una
+      pregunta que los demás no pueden responder. Esta página recorre todos, con los números reales del repositorio
+      y las decisiones de ingeniería que hay detrás de cada uno.
+    </p>
+    <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+      Se puede leer en dos profundidades: los bloques de arriba dan el mapa completo en unos diez minutos;
+      las secciones de decisiones y anatomía entran en el detalle.
+    </p>
+  </div>
+
+  <div class="grid gap-3 grid-cols-2 lg:grid-cols-6 mb-4">
+    {kpis.map((k) => (
+      <div class="glass rounded-2xl p-4 border border-white/10">
+        <div class="text-2xl font-semibold text-ink-50 tabular-nums">{k.valor}</div>
+        <div class="text-[12px] font-mono uppercase tracking-wide text-ink-200 mt-1">{k.label}</div>
+        <div class="text-[12px] text-ink-300 mt-0.5">{k.sub}</div>
+      </div>
+    ))}
+  </div>
+
+  <p class="text-[12.5px] text-ink-300 mb-10">
+    {enVivo ? (
+      <>
+        Cifras de la última corrida en <span class="font-mono">main</span>, leídas de la tabla{' '}
+        <span class="font-mono text-ink-200">ci_runs</span> que alimenta el propio pipeline.
+        {ultimoRun?.url && (
+          <> · <a href={ultimoRun.url} target="_blank" rel="noopener" class="text-cyan hover:underline">ver el run en GitHub Actions</a></>
+        )}
+      </>
+    ) : (
+      <>Sin corridas registradas todavía: se muestran los valores medidos a mano el {REF.fecha}.</>
+    )}
+  </p>
+
+  {/* ── Índice ──────────────────────────────────────────────── */}
+  <nav class="mb-12 flex flex-wrap gap-1.5" aria-label="Secciones de esta página">
+    {secciones.map((s) => (
+      <a href={`#${s.id}`} class="px-3 py-1 rounded-full text-[13px] text-ink-200 border border-white/10 hover:bg-white/5 hover:text-ink-50 transition-colors">
+        {s.t}
+      </a>
+    ))}
+  </nav>
+
+  {/* ── § 1 Pirámide ────────────────────────────────────────── */}
+  <h2 id="piramide" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">La pirámide de pruebas, con los números de este proyecto</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      La forma de la pirámide no es decorativa: cada estrato está dibujado en proporción al número real de tests
+      que tiene. Muchas pruebas baratas abajo, pocas y caras arriba. Cuando se invierte —muchos e2e y pocas
+      unitarias— la suite se vuelve lenta, frágil y nadie la corre.
+    </p>
+  </div>
+
+  <div class="mb-6 space-y-2">
+    {PIRAMIDE.map((p) => (
+      <div class="flex flex-col items-center">
+        <div
+          class="group relative rounded-lg border border-white/12 bg-white/[.03] hover:bg-cyan/[.07] hover:border-cyan/30 transition-colors px-4 py-3 text-center"
+          style={`width: ${anchoDe(p.tests)}%`}
+        >
+          <div class="flex items-center justify-center gap-2 flex-wrap">
+            <span class="text-[14px] font-medium text-ink-50">{p.nombre}</span>
+            <span class="font-mono text-[12.5px] text-cyan tabular-nums">{p.tests} tests</span>
+            <span class="font-mono text-[11.5px] text-ink-300">· {p.velocidad}</span>
+          </div>
+          <p class="text-[12.5px] text-ink-200 mt-1 leading-relaxed">{p.proposito}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-12">
+    <p class="text-[13.5px] text-ink-100 leading-relaxed">
+      <strong class="text-ink-50">Los otros 10 niveles no van en la pirámide, a propósito.</strong> SAST,
+      accesibilidad, chaos, monitoreo, carga y usabilidad no verifican <em>comportamiento</em>: verifican
+      propiedades del sistema (¿es seguro?, ¿es usable?, ¿aguanta?, ¿sigue vivo?). Meterlos en la pirámide
+      daría a entender que son «más tests», y llevaría a compararlos por volumen cuando lo que importa de ellos
+      es la cobertura de riesgo, no la cantidad.
+    </p>
+  </div>
+
+  {/* ── § 2 Pipeline ────────────────────────────────────────── */}
+  <h2 id="pipeline" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">El mapa del pipeline</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Seis etapas, desde el portátil hasta las tres de la madrugada del día siguiente. Cada una es clicable:
+      qué corre exactamente, cuánto tarda, qué la dispara y qué pasa si falla. Abajo se puede
+      <strong class="text-ink-50"> simular una corrida completa</strong> con tres desenlaces distintos —
+      el tercero, el rollback automático, es el que mejor explica por qué la verificación no termina en el merge.
+    </p>
+  </div>
+
+  <div class="mb-12">
+    <PipelineMap />
+  </div>
+
+  {/* ── § 3 Anatomía ────────────────────────────────────────── */}
+  <h2 id="anatomia" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Anatomía de un test</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Un test real del repositorio, disecado en capas. Es el patrón que siguen los {fmt(REF.tests)}:
+      <span class="font-mono text-[13px] text-cyan"> arrange</span> (preparar),
+      <span class="font-mono text-[13px] text-cyan"> act</span> (ejecutar),
+      <span class="font-mono text-[13px] text-cyan"> assert</span> (afirmar).
+      Conmuta las pestañas para ver qué líneas corresponden a cada capa.
+    </p>
+  </div>
+
+  <div class="mb-12">
+    <TestAnatomy />
+  </div>
+
+  {/* ── § 4 Niveles ─────────────────────────────────────────── */}
+  <h2 id="niveles" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Los {REF.niveles} niveles, uno por uno</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Cada ficha trae la pregunta que responde el nivel y —más importante— <strong class="text-ink-50">su punto
+      ciego</strong>. Ningún nivel es suficiente por sí solo; el conjunto funciona porque los puntos ciegos de
+      uno los cubre otro. Filtra por cuándo corre o por si bloquea el deploy.
+    </p>
+  </div>
+
+  <div class="flex flex-wrap gap-1.5 mb-5" data-filtros role="group" aria-label="Filtros de niveles">
+    <button type="button" class="filtro" data-filtro="todos" aria-pressed="true">Todos</button>
+    {CUANDOS.map((c) => (
+      <button type="button" class="filtro" data-filtro={c} aria-pressed="false">{CUANDO_LABEL[c]}</button>
+    ))}
+    <span class="w-px self-stretch bg-white/10 mx-1" aria-hidden="true"></span>
+    <button type="button" class="filtro" data-filtro="bloquea" aria-pressed="false">Bloquea el deploy</button>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mb-12" data-niveles>
+    {NIVELES.map((n) => (
+      <article
+        class="nivel rounded-xl border border-white/10 bg-white/[.025] p-4 hover:bg-white/[.045] hover:border-white/20 transition-colors"
+        data-cuando={n.cuando}
+        data-bloquea={String(n.bloquea)}
+      >
+        <div class="flex items-start gap-2.5">
+          <span class={`mt-[7px] shrink-0 w-2 h-2 rounded-full ${acentoDot[n.acento]} ${n.pendiente ? 'opacity-35' : ''}`} aria-hidden="true"></span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="font-mono text-[11.5px] text-ink-300 tabular-nums">{String(n.n).padStart(2, '0')}</span>
+              <h3 class="text-[14.5px] font-medium text-ink-50">{n.nombre}</h3>
+              {n.pendiente && <span class="font-mono text-[10.5px] uppercase tracking-wide text-ember border border-ember/30 bg-ember/[.08] rounded-full px-1.5 py-0.5">pendiente</span>}
+            </div>
+            <p class="text-[13.5px] text-ink-100 leading-relaxed mt-1.5">{n.pregunta}</p>
+
+            <dl class="mt-3 space-y-1 text-[12.5px]">
+              <div class="flex gap-2">
+                <dt class="text-ink-300 w-20 shrink-0">Herramienta</dt>
+                <dd class="text-ink-200">{n.herramienta}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="text-ink-300 w-20 shrink-0">Volumen</dt>
+                <dd class="text-ink-200">{n.volumen}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="text-ink-300 w-20 shrink-0">Vive en</dt>
+                <dd class="text-ink-200 font-mono text-[12px] break-words">{n.archivos}</dd>
+              </div>
+            </dl>
+
+            <p class="text-[12.5px] text-ink-200 leading-relaxed mt-3 pt-3 border-t border-white/8">
+              <span class="text-ink-300">Punto ciego:</span> {n.puntoCiego}
+            </p>
+
+            <div class="flex flex-wrap gap-1.5 mt-3">
+              <span class="font-mono text-[10.5px] uppercase tracking-wide text-ink-200 border border-white/12 rounded-full px-2 py-0.5">{CUANDO_LABEL[n.cuando]}</span>
+              {n.bloquea && <span class="font-mono text-[10.5px] uppercase tracking-wide text-ember border border-ember/30 bg-ember/[.08] rounded-full px-2 py-0.5">bloquea</span>}
+            </div>
+          </div>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  {/* ── § 5 Decisiones ──────────────────────────────────────── */}
+  <h2 id="decisiones" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">{DECISIONES.length} decisiones y el problema que las provocó</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Esta es la parte que no sale en ningún tutorial. Cada decisión aquí abajo salió de algo que se rompió,
+      se desincronizó o costó una tarde de depuración. El formato es siempre el mismo:
+      <strong class="text-ink-50"> síntoma → causa → decisión → dónde vive</strong>.
+    </p>
+  </div>
+
+  <div class="grid gap-3 lg:grid-cols-2 mb-12">
+    {DECISIONES.map((d) => (
+      <article class="rounded-xl border border-white/10 bg-white/[.025] p-4 hover:bg-white/[.04] transition-colors">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 rounded-full bg-violet shrink-0" aria-hidden="true"></span>
+          <h3 class="text-[14.5px] font-medium text-ink-50">{d.titulo}</h3>
+        </div>
+        <div class="space-y-2 text-[13px] leading-relaxed">
+          <p><span class="font-mono text-[11px] uppercase tracking-wide text-ember">Síntoma</span><br /><span class="text-ink-100">{d.sintoma}</span></p>
+          <p><span class="font-mono text-[11px] uppercase tracking-wide text-ink-300">Causa</span><br /><span class="text-ink-200">{d.causa}</span></p>
+          <p><span class="font-mono text-[11px] uppercase tracking-wide text-lime">Decisión</span><br /><span class="text-ink-100">{d.decision}</span></p>
+        </div>
+        <p class="font-mono text-[11.5px] text-ink-300 mt-3 pt-3 border-t border-white/8 break-words">{d.donde}</p>
+      </article>
+    ))}
+  </div>
+
+  {/* ── § 6 Cobertura vs mutación ───────────────────────────── */}
+  <h2 id="mutacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Cobertura vs. mutation score</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Es la distinción más útil de toda esta página y la que casi nadie hace. La cobertura mide qué líneas
+      <em> se ejecutaron</em>; el mutation score mide qué líneas <em>están defendidas</em>. No son lo mismo, y
+      confundirlas produce suites que dan un 90% de cobertura sin comprobar nada.
+    </p>
+  </div>
+
+  <div class="grid gap-3 lg:grid-cols-2 mb-6">
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <div class="text-[12.5px] font-mono uppercase tracking-wide text-ink-300 mb-2">Este test da 100% de cobertura</div>
+      <pre class="font-mono text-[12px] leading-relaxed text-ink-100 bg-ink-850 rounded-lg p-3 overflow-x-auto"><code>{`it('formatea el monto', () => {
+  formatCOP(1500000)   // se ejecuta…
+})                     // …pero no afirma NADA`}</code></pre>
+      <p class="text-[13px] text-ink-200 leading-relaxed mt-3">
+        La línea de <span class="font-mono text-[12px]">formatCOP</span> aparece como cubierta. El reporte de
+        cobertura está en verde. Y sin embargo, la función podría devolver cualquier cosa.
+      </p>
+    </div>
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <div class="text-[12.5px] font-mono uppercase tracking-wide text-lime mb-2">La mutación lo desenmascara</div>
+      <pre class="font-mono text-[12px] leading-relaxed text-ink-100 bg-ink-850 rounded-lg p-3 overflow-x-auto"><code>{`// Stryker cambia el separador…
+-  return \`$ \${miles} COP\`
++  return \`\${miles}\`
+
+// …vuelve a correr la suite: SIGUE VERDE
+// → mutante SURVIVED`}</code></pre>
+      <p class="text-[13px] text-ink-200 leading-relaxed mt-3">
+        Un mutante que sobrevive es la prueba de que esa línea no tiene a nadie vigilándola. Es exactamente el
+        caso que encontró Stryker en <span class="font-mono text-[12px]">money.ts</span>: cinco literales de
+        cadena sin un solo test que comprobara la etiqueta.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+    {MUTANTES_ESTADO.map((m) => (
+      <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+        <div class="flex items-center gap-2">
+          <span class={`w-2 h-2 rounded-full ${m.tono === 'ok' ? 'bg-lime' : 'bg-ember'}`} aria-hidden="true"></span>
+          <span class="font-mono text-[13px] text-ink-50">{m.estado}</span>
+        </div>
+        <p class="text-[12.5px] text-ink-200 leading-relaxed mt-2">{m.significado}</p>
+      </div>
+    ))}
+  </div>
+
+  <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-12">
+    <p class="text-[13.5px] text-ink-100 leading-relaxed">
+      <strong class="text-ink-50">Por qué esto no corre en cada push:</strong> Stryker genera un mutante por
+      cada operador, literal y condición de <span class="font-mono text-[13px]">src/lib/**</span>, y vuelve a
+      ejecutar la suite entera contra cada uno. Son miles de ejecuciones. Un pipeline de cuarenta minutos es un
+      pipeline que la gente aprende a saltarse, así que la mutación vive en su propio job semanal
+      (<span class="font-mono text-[13px]">mutation.yml</span>, domingos 08:00 UTC) y nunca bloquea un PR.
+    </p>
+  </div>
+
+  {/* ── § 7 Lo que falta ────────────────────────────────────── */}
+  <h2 id="pendiente" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Lo que todavía no está</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Ninguna suite de pruebas está terminada, y una que se presenta como completa está mintiendo o no se ha
+      mirado con suficiente atención. Estos son los huecos conocidos de esta, con el motivo por el que siguen
+      abiertos.
+    </p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mb-6">
+    {PENDIENTES.map((p) => (
+      <div class="rounded-xl border border-white/10 bg-white/[.02] p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-2 h-2 rounded-full bg-ember/60" aria-hidden="true"></span>
+          <h3 class="text-[14px] font-medium text-ink-50">{p.titulo}</h3>
+        </div>
+        <p class="text-[13px] text-ink-200 leading-relaxed">{p.detalle}</p>
+      </div>
+    ))}
+  </div>
+
+  {hallazgosAbiertos > 0 && (
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-12">
+      <p class="text-[13.5px] text-ink-100 leading-relaxed">
+        <strong class="text-ink-50">Hallazgos abiertos ahora mismo:</strong> {hallazgosAbiertos} sin resolver
+        reportados por los escáneres automáticos{criticos > 0 ? `, de los cuales ${criticos} son de severidad alta o crítica` : ''}.
+        Son hallazgos reales, no una demo: se deduplican por huella y conservan su estado entre corridas. El
+        detalle vive en el panel privado; aquí solo el agregado.
+      </p>
+    </div>
+  )}
+
+  {/* ── § 8 Córrelo ─────────────────────────────────────────── */}
+  <h2 id="correlo" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Córrelo tú mismo</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Todo lo de esta página se puede reproducir clonando el repositorio. Requiere
+      <span class="font-mono text-[13px] text-cyan"> Node ≥ 22.12</span> — con Node 20 el build de Astro se
+      rompe. Ningún comando de aquí necesita credenciales: las bases de prueba son archivos desechables.
+    </p>
+  </div>
+
+  <div class="rounded-xl border border-white/12 bg-ink-850 overflow-hidden mb-6">
+    {COMANDOS.map((c, i) => (
+      <div class={`flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 px-4 py-2.5 ${i > 0 ? 'border-t border-white/8' : ''}`}>
+        <code class="font-mono text-[12.5px] text-cyan shrink-0 sm:w-56">{c.cmd}</code>
+        <span class="text-[13px] text-ink-200 leading-relaxed">{c.desc}</span>
+      </div>
+    ))}
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mb-12">
+    {ARTICULOS.map((a) => (
+      <a href={`/notes/${a.slug}`} class="block rounded-xl border border-white/10 bg-white/[.025] p-4 hover:bg-white/[.04] hover:border-white/20 hover:-translate-y-0.5 transition-all">
+        <div class="text-[12px] font-mono uppercase tracking-wide text-violet mb-1.5">Artículo</div>
+        <div class="text-[14px] font-medium text-ink-50">{a.titulo}</div>
+        <p class="text-[13px] text-ink-200 mt-1 leading-relaxed">{a.desc}</p>
+      </a>
+    ))}
+  </div>
+
+  {/* ── § 9 Glosario ────────────────────────────────────────── */}
+  <h2 id="glosario" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Glosario</h2>
+  <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 mb-6">
+    {GLOSARIO.map((g) => (
+      <div class="border-b border-white/8 pb-3">
+        <dt class="text-[13.5px] font-medium text-ink-50">{g.termino}</dt>
+        <dd class="text-[13px] text-ink-200 leading-relaxed mt-0.5">{g.def}</dd>
+      </div>
+    ))}
+  </dl>
+  </div>
+</BaseLayout>
+
+<style>
+  .filtro {
+    font-size: 13px;
+    padding: 0.3rem 0.75rem;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-ink-200);
+    cursor: pointer;
+    transition: background 0.16s, color 0.16s, border-color 0.16s;
+  }
+  .filtro:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-ink-50); }
+  .filtro:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
+  .filtro[aria-pressed='true'] {
+    background: rgba(0, 242, 255, 0.1);
+    color: var(--color-cyan);
+    border-color: rgba(0, 242, 255, 0.3);
+  }
+  .nivel[hidden] { display: none; }
+</style>
+
+<script>
+  // Filtros de las fichas de nivel. Puro conmutar de `hidden`: las 14 fichas
+  // están en el DOM desde el servidor, así que sin JS se ven todas (que es el
+  // estado por defecto correcto).
+  const filtros = document.querySelector<HTMLElement>('[data-filtros]')
+  const grid = document.querySelector<HTMLElement>('[data-niveles]')
+
+  if (filtros && grid) {
+    const botones = [...filtros.querySelectorAll<HTMLButtonElement>('[data-filtro]')]
+    const fichas = [...grid.querySelectorAll<HTMLElement>('.nivel')]
+
+    const aplicar = (f: string) => {
+      for (const b of botones) b.setAttribute('aria-pressed', String(b.dataset.filtro === f))
+      for (const ficha of fichas) {
+        ficha.hidden =
+          f !== 'todos' &&
+          (f === 'bloquea' ? ficha.dataset.bloquea !== 'true' : ficha.dataset.cuando !== f)
+      }
+    }
+
+    for (const b of botones) b.addEventListener('click', () => aplicar(b.dataset.filtro!))
+  }
+</script>

@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 import { REQUISITOS_FUNCIONALES, REQUISITOS_NO_FUNCIONALES, CASOS_DE_USO, ACTORES } from '../../data/documentacion'
 import { ITERACIONES as ITER_PF } from '../../data/iteraciones-portfolio'
+import { METRICAS_REFERENCIA as TEST_REF, TOTAL_AUTOMATIZADOS } from '../../data/testing'
 
 const rfTotal = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const rfImpl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
@@ -16,7 +17,7 @@ const stack = [
   { grupo: 'Auth', items: ['Auth.js (auth-astro)', 'Proveedor GitHub OAuth'] },
   { grupo: 'Almacenamiento', items: ['Vercel Blob (backups, screenshots)'] },
   { grupo: 'Observabilidad', items: ['Cron externo (cron-job.org)', 'ntfy.sh (push)', 'Web Vitals (RUM)'] },
-  { grupo: 'Testing', items: ['Vitest + coverage v8'] },
+  { grupo: 'Testing', items: ['Vitest + coverage v8', 'Playwright (e2e)', 'Stryker (mutación)', 'CodeQL + axe-core'] },
 ]
 
 const subpaginas = [
@@ -30,6 +31,8 @@ const subpaginas = [
   { href: '/docs/diagrama-clases', titulo: 'Diagrama de clases', desc: 'Entidades del dominio derivadas de src/db/schema.ts, agrupadas por módulo.' },
   { href: '/docs/diagrama-objetos', titulo: 'Diagrama de objetos', desc: 'Instantáneas concretas: proyecto con sus servicios, pago con evento duplicado, IP bloqueada.' },
   { href: '/docs/kanban', titulo: 'Tablero kanban', desc: `${historiasTotal} historias en ${ITER_PF.length} iteraciones del propio proyecto.` },
+  { href: '/docs/testing', titulo: 'Testing', desc: `Guía interactiva de los ${TEST_REF.niveles} niveles de prueba y del pipeline completo, con simulación de una corrida.` },
+  { href: '/docs/usability-testing', titulo: 'Usability testing', desc: 'Metodología de validación con usuarios en 6 pasos, aplicada a un flujo real.' },
 ]
 ---
 
@@ -80,12 +83,13 @@ const subpaginas = [
     </p>
   </div>
 
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-10">
     {[
       { href: '/docs/requerimientos-funcionales', label: 'Req. funcionales', value: rfTotal, sub: `${rfImpl} implementados` },
       { href: '/docs/requerimientos-no-funcionales', label: 'Req. no funcionales', value: rnfTotal, sub: 'ISO/IEC 25010' },
       { href: '/docs/casos-de-uso', label: 'Casos de uso', value: cuTotal, sub: `${ACTORES.length} actores` },
       { href: '/docs/kanban', label: 'Historias (kanban)', value: historiasTotal, sub: `${ITER_PF.length} iteraciones` },
+      { href: '/docs/testing', label: 'Pruebas automáticas', value: TOTAL_AUTOMATIZADOS, sub: `${TEST_REF.niveles} niveles de prueba` },
     ].map((k) => (
       <a href={k.href} class="glass rounded-2xl p-4 border border-white/10 hover:bg-white/[.04] hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 transition-all block">
         <div class="text-[12.5px] font-mono uppercase tracking-wide text-ink-200">{k.label}</div>
@@ -120,7 +124,7 @@ const subpaginas = [
   <h2 class="text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Alcance del proyecto</h2>
   <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 text-[14px] text-ink-100 leading-relaxed space-y-2">
     <p><strong class="text-ink-50">Dentro de alcance:</strong> sitio público de portafolio, CRM interno (proyectos/clientes/seguimiento/briefings), finanzas y P&L por proyecto, observabilidad (monitoreo, SLO, notificaciones), un LAB de ingeniería (CI/CD con rollback, pagos idempotentes, chaos engineering) y un micro-SIEM propio (sensor, blocklist, rate limiting durable, detección de anomalías).</p>
-    <p><strong class="text-ink-50">Fuera de alcance (por ahora):</strong> multiusuario/roles (el panel es de un único administrador), pasarela de pagos en producción real (el LAB usa un proveedor mock además de Wompi), y SAST/mutation testing automatizados (planeados en el LAB, ver Fases 5–7 del plan).</p>
+    <p><strong class="text-ink-50">Fuera de alcance (por ahora):</strong> multiusuario/roles (el panel es de un único administrador), pasarela de pagos en producción real (el LAB usa un proveedor mock además de Wompi), y pruebas de carga automatizadas (k6, Fase 5 del plan del LAB; el resto de niveles de prueba —incluidos SAST y mutation testing— ya están operando, ver <a href="/docs/testing" class="text-cyan hover:underline">Testing</a>).</p>
   </div>
   </div>
 </BaseLayout>

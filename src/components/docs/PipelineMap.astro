@@ -1,0 +1,406 @@
+---
+// Mapa interactivo del pipeline: 6 etapas clicables + simulación de una
+// corrida con tres desenlaces.
+//
+// Todo el contenido está en el DOM desde el servidor (paneles y pasos de la
+// simulación incluidos); el script solo conmuta clases y atributos. Así la
+// página se lee entera sin JS, no hay innerHTML con datos de BD (CSP en
+// enforce) y axe puede recorrerla como cualquier otra.
+import { PIPELINE, ESCENARIOS } from '../../data/testing'
+---
+
+<div class="pipeline" data-pipeline>
+  {/* ── Fila de etapas ─────────────────────────────────────── */}
+  <div class="rail" role="list">
+    {PIPELINE.map((e, i) => (
+      <div class="rail-item" role="listitem">
+        {i > 0 && <span class="connector" aria-hidden="true"></span>}
+        <button
+          type="button"
+          class="stage"
+          data-stage={e.id}
+          aria-expanded="false"
+          aria-controls={`panel-${e.id}`}
+        >
+          <span class="stage-n">{String(i + 1).padStart(2, '0')}</span>
+          <span class="stage-name">{e.nombre}</span>
+          <span class="stage-sub">{e.subtitulo}</span>
+          <span class="stage-mark" aria-hidden="true"></span>
+        </button>
+      </div>
+    ))}
+  </div>
+
+  {/* ── Panel de detalle por etapa ─────────────────────────── */}
+  <div class="panels">
+    {PIPELINE.map((e) => (
+      <div class="panel" id={`panel-${e.id}`} data-panel={e.id} hidden>
+        <div class="panel-head">
+          <h3>{e.nombre} — {e.subtitulo}</h3>
+          <span class={`chip ${e.bloquea ? 'chip-block' : 'chip-soft'}`}>
+            {e.bloquea ? 'Bloquea el deploy' : 'No bloquea'}
+          </span>
+        </div>
+        <div class="panel-meta">
+          <div><span class="k">Lo dispara</span><span class="v">{e.dispara}</span></div>
+          <div><span class="k">Duración</span><span class="v">{e.duracion}</span></div>
+          <div><span class="k">Vive en</span><span class="v mono">{e.archivo}</span></div>
+        </div>
+        <ul class="panel-steps">
+          {e.pasos.map((p) => <li>{p}</li>)}
+        </ul>
+        <p class="panel-fail"><strong>Si falla:</strong> {e.siFalla}</p>
+      </div>
+    ))}
+  </div>
+
+  {/* ── Simulación ─────────────────────────────────────────── */}
+  <div class="sim">
+    <div class="sim-head">
+      <div>
+        <div class="sim-title">Simular una corrida</div>
+        <p class="sim-hint">Elige un desenlace y mira cómo recorre el pipeline etapa por etapa.</p>
+      </div>
+      <div class="sim-btns" role="group" aria-label="Escenarios de simulación">
+        {ESCENARIOS.map((s, i) => (
+          <button type="button" class="sim-btn" data-escenario={s.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+            {s.nombre}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {ESCENARIOS.map((s, i) => (
+      <div class="sim-body" data-sim={s.id} hidden={i !== 0}>
+        <p class="sim-resumen">{s.resumen}</p>
+        <ol class="sim-log">
+          {s.pasos.map((p) => (
+            <li class={`log-${p.estado}`} data-log-step={p.etapa} data-estado={p.estado}>
+              <span class="log-icon" aria-hidden="true"></span>
+              <span class="log-etapa">{PIPELINE.find((e) => e.id === p.etapa)?.nombre ?? p.etapa}</span>
+              <span class="log-txt">{p.texto}</span>
+            </li>
+          ))}
+        </ol>
+        <p class="sim-desenlace"><strong>Desenlace:</strong> {s.desenlace}</p>
+      </div>
+    ))}
+
+    <button type="button" class="sim-play" data-play>
+      <span class="play-icon" aria-hidden="true"></span>
+      <span data-play-label>Reproducir</span>
+    </button>
+  </div>
+</div>
+
+<style>
+  .pipeline { display: block; }
+
+  /* ── Rail de etapas ─────────────────────────────────────── */
+  .rail {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0;
+    margin-bottom: 1.25rem;
+  }
+  .rail-item { position: relative; display: flex; align-items: stretch; }
+  .connector {
+    position: absolute;
+    left: -0.5rem;
+    top: 1.6rem;
+    width: 1rem;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .stage {
+    flex: 1;
+    text-align: left;
+    padding: 0.85rem 0.75rem 1.4rem;
+    margin: 0 0.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.025);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.18s, border-color 0.18s, transform 0.18s;
+  }
+  .stage:hover { background: rgba(0, 242, 255, 0.06); border-color: rgba(0, 242, 255, 0.28); }
+  .stage:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
+  .stage[aria-expanded='true'] {
+    background: rgba(0, 242, 255, 0.08);
+    border-color: rgba(0, 242, 255, 0.42);
+  }
+  .stage-n {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--color-ink-300);
+  }
+  .stage-name { display: block; font-size: 14px; font-weight: 600; color: var(--color-ink-50); margin-top: 0.15rem; }
+  .stage-sub { display: block; font-size: 11.5px; line-height: 1.35; color: var(--color-ink-200); margin-top: 0.2rem; }
+
+  /* Marca de estado que pinta la simulación. */
+  .stage-mark {
+    position: absolute;
+    left: 0.75rem;
+    bottom: 0.6rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.12);
+    transition: background 0.25s, box-shadow 0.25s;
+  }
+  .stage[data-run='ok'] .stage-mark { background: var(--color-lime); box-shadow: 0 0 10px rgba(201, 255, 91, 0.55); }
+  .stage[data-run='fail'] .stage-mark { background: var(--color-ember); box-shadow: 0 0 10px rgba(255, 107, 61, 0.6); }
+  .stage[data-run='warn'] .stage-mark { background: #ffcc4d; box-shadow: 0 0 10px rgba(255, 204, 77, 0.5); }
+  .stage[data-run='skip'] .stage-mark { background: var(--color-ink-400); }
+  .stage[data-run] { border-color: rgba(255, 255, 255, 0.2); }
+  .stage[data-run='fail'] { border-color: rgba(255, 107, 61, 0.5); background: rgba(255, 107, 61, 0.07); }
+
+  /* ── Paneles ────────────────────────────────────────────── */
+  .panel {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 0.9rem;
+    padding: 1.1rem 1.2rem;
+    margin-bottom: 1.25rem;
+  }
+  .panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; justify-content: space-between; }
+  .panel-head h3 { font-size: 15px; font-weight: 600; color: var(--color-ink-50); }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 99px;
+    border: 1px solid;
+  }
+  .chip-block { color: var(--color-ember); border-color: rgba(255, 107, 61, 0.35); background: rgba(255, 107, 61, 0.08); }
+  .chip-soft { color: var(--color-ink-200); border-color: rgba(255, 255, 255, 0.14); }
+  .panel-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0.9rem 0;
+    padding: 0.75rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .panel-meta .k {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-violet);
+  }
+  .panel-meta .v { display: block; font-size: 13px; color: var(--color-ink-100); margin-top: 0.15rem; }
+  .panel-meta .mono { font-family: var(--font-mono); font-size: 12px; }
+  .panel-steps { display: grid; gap: 0.4rem; margin-bottom: 0.9rem; }
+  .panel-steps li {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--color-ink-100);
+    padding-left: 1.1rem;
+    position: relative;
+  }
+  .panel-steps li::before {
+    content: '';
+    position: absolute;
+    left: 0.15rem;
+    top: 0.55em;
+    width: 5px;
+    height: 5px;
+    border-radius: 99px;
+    background: var(--color-cyan);
+    opacity: 0.7;
+  }
+  .panel-fail { font-size: 13.5px; line-height: 1.6; color: var(--color-ink-200); }
+  .panel-fail strong { color: var(--color-ink-50); }
+
+  /* ── Simulación ─────────────────────────────────────────── */
+  .sim {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0.9rem;
+    padding: 1.1rem 1.2rem;
+  }
+  .sim-head { display: flex; flex-wrap: wrap; gap: 0.9rem; align-items: flex-start; justify-content: space-between; margin-bottom: 0.9rem; }
+  .sim-title { font-size: 14.5px; font-weight: 600; color: var(--color-ink-50); }
+  .sim-hint { font-size: 13px; color: var(--color-ink-200); margin-top: 0.15rem; }
+  .sim-btns { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .sim-btn {
+    font-size: 13px;
+    padding: 0.35rem 0.75rem;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--color-ink-200);
+    cursor: pointer;
+    transition: background 0.16s, color 0.16s, border-color 0.16s;
+  }
+  .sim-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-ink-50); }
+  .sim-btn:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
+  .sim-btn[aria-pressed='true'] {
+    background: rgba(0, 242, 255, 0.1);
+    color: var(--color-cyan);
+    border-color: rgba(0, 242, 255, 0.32);
+  }
+  .sim-resumen { font-size: 13.5px; color: var(--color-ink-100); margin-bottom: 0.75rem; }
+  .sim-log { display: grid; gap: 0.3rem; margin-bottom: 0.85rem; }
+  .sim-log li {
+    display: grid;
+    grid-template-columns: 1rem 5.5rem 1fr;
+    gap: 0.55rem;
+    align-items: baseline;
+    font-size: 13px;
+    line-height: 1.55;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.4rem;
+    background: rgba(255, 255, 255, 0.02);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .log-icon { width: 9px; height: 9px; border-radius: 99px; justify-self: center; }
+  .log-ok .log-icon { background: var(--color-lime); }
+  .log-fail .log-icon { background: var(--color-ember); }
+  .log-warn .log-icon { background: #ffcc4d; }
+  .log-skip .log-icon { background: var(--color-ink-400); }
+  .log-etapa { font-family: var(--font-mono); font-size: 11.5px; color: var(--color-ink-300); text-transform: uppercase; letter-spacing: 0.05em; }
+  .log-txt { color: var(--color-ink-100); }
+  .log-fail .log-txt { color: #ffb59a; }
+  .log-skip .log-txt { color: var(--color-ink-200); }
+
+  /* Durante la reproducción los pasos aún no alcanzados se atenúan. */
+  .sim[data-running] .sim-log li[data-pending] { opacity: 0.18; transform: translateY(2px); }
+
+  .sim-desenlace { font-size: 13.5px; line-height: 1.6; color: var(--color-ink-100); }
+  .sim-desenlace strong { color: var(--color-ink-50); }
+
+  .sim-play {
+    margin-top: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0.45rem 0.9rem;
+    border-radius: 0.6rem;
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    background: rgba(0, 242, 255, 0.08);
+    color: var(--color-cyan);
+    cursor: pointer;
+  }
+  .sim-play:hover { background: rgba(0, 242, 255, 0.14); }
+  .sim-play:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
+  .play-icon {
+    width: 0;
+    height: 0;
+    border-left: 7px solid currentColor;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+  }
+
+  @media (max-width: 900px) {
+    .rail { grid-template-columns: repeat(3, 1fr); gap: 0.5rem 0; }
+    .connector { display: none; }
+    .panel-meta { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .rail { grid-template-columns: repeat(2, 1fr); }
+    .sim-log li { grid-template-columns: 1rem 1fr; }
+    .log-etapa { grid-column: 2; }
+    .log-txt { grid-column: 2; }
+  }
+
+  /* Sin animación para quien la haya desactivado: los pasos aparecen todos. */
+  @media (prefers-reduced-motion: reduce) {
+    .sim-log li { transition: none; }
+    .sim[data-running] .sim-log li[data-pending] { opacity: 1; transform: none; }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-pipeline]')
+  if (root) {
+    const stages = [...root.querySelectorAll<HTMLButtonElement>('.stage')]
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')]
+    const sim = root.querySelector<HTMLElement>('.sim')!
+    const simBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-escenario]')]
+    const simBodies = [...root.querySelectorAll<HTMLElement>('[data-sim]')]
+    const play = root.querySelector<HTMLButtonElement>('[data-play]')!
+    const playLabel = root.querySelector<HTMLElement>('[data-play-label]')!
+
+    // ── Etapas: acordeón de una sola apertura ────────────────
+    const abrir = (id: string | null) => {
+      for (const s of stages) s.setAttribute('aria-expanded', String(s.dataset.stage === id))
+      for (const p of panels) p.hidden = p.dataset.panel !== id
+    }
+    for (const s of stages) {
+      s.addEventListener('click', () => {
+        const abierto = s.getAttribute('aria-expanded') === 'true'
+        abrir(abierto ? null : s.dataset.stage!)
+      })
+    }
+
+    // ── Escenarios ───────────────────────────────────────────
+    let timers: ReturnType<typeof setTimeout>[] = []
+    const parar = () => {
+      for (const t of timers) clearTimeout(t)
+      timers = []
+      delete sim.dataset.running
+      playLabel.textContent = 'Reproducir'
+    }
+
+    const activo = () => simBtns.find((b) => b.getAttribute('aria-pressed') === 'true')!.dataset.escenario!
+
+    const seleccionar = (id: string) => {
+      parar()
+      for (const b of simBtns) b.setAttribute('aria-pressed', String(b.dataset.escenario === id))
+      for (const body of simBodies) body.hidden = body.dataset.sim !== id
+      for (const s of stages) delete s.dataset.run
+      for (const li of root.querySelectorAll<HTMLElement>('.sim-log li')) delete li.dataset.pending
+    }
+    for (const b of simBtns) b.addEventListener('click', () => seleccionar(b.dataset.escenario!))
+
+    // ── Reproducción ─────────────────────────────────────────
+    // Con prefers-reduced-motion no se anima: se pinta el resultado final de
+    // golpe. La información es la misma; lo único que se pierde es el ritmo.
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    play.addEventListener('click', () => {
+      if (sim.dataset.running) return parar()
+
+      const body = simBodies.find((b) => b.dataset.sim === activo())!
+      const pasos = [...body.querySelectorAll<HTMLElement>('[data-log-step]')]
+      for (const s of stages) delete s.dataset.run
+
+      const pintar = (li: HTMLElement) => {
+        delete li.dataset.pending
+        const etapa = stages.find((s) => s.dataset.stage === li.dataset.logStep)
+        if (etapa) etapa.dataset.run = li.dataset.estado!
+      }
+
+      if (reduce) {
+        for (const li of pasos) pintar(li)
+        return
+      }
+
+      sim.dataset.running = 'true'
+      playLabel.textContent = 'Reiniciar'
+      for (const li of pasos) li.dataset.pending = 'true'
+
+      pasos.forEach((li, i) => {
+        timers.push(
+          setTimeout(() => {
+            pintar(li)
+            if (i === pasos.length - 1) {
+              delete sim.dataset.running
+              playLabel.textContent = 'Reproducir'
+            }
+          }, 650 * (i + 1)),
+        )
+      })
+    })
+  }
+</script>

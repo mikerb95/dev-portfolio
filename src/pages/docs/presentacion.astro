@@ -11,6 +11,12 @@ import {
   ACTORES,
 } from '../../data/documentacion'
 import { ITERACIONES } from '../../data/iteraciones-portfolio'
+import {
+  NIVELES,
+  PIPELINE,
+  METRICAS_REFERENCIA as TEST_REF,
+  TOTAL_AUTOMATIZADOS,
+} from '../../data/testing'
 
 const rf = REQUISITOS_FUNCIONALES.flatMap((m) => m.items)
 const rfTotal = rf.length
@@ -341,6 +347,59 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
         </div>
       ))}
     </div>
+  </section>
+
+  {/* ── Testing: el pipeline ────────────────────────────────── */}
+  <section>
+    <h2>Cómo se prueba</h2>
+    <p class="body">
+      {TOTAL_AUTOMATIZADOS} pruebas automáticas en {TEST_REF.niveles} niveles distintos.
+      Del portátil a producción, sin intervención humana.
+    </p>
+    <div class="timeline">
+      {PIPELINE.slice(0, 4).map((e, i) => (
+        <div class="ti fragment">
+          <div class="ti-fase">{String(i + 1).padStart(2, '0')} · {e.nombre}</div>
+          <div class="ti-nombre">{e.subtitulo}</div>
+          <div class="ti-meta"><span class="mono">{e.duracion}</span></div>
+        </div>
+      ))}
+    </div>
+    <p class="foot">
+      Y dos etapas más que casi nadie automatiza: <strong>verificación post-deploy con rollback</strong>
+      {' '}(3 health checks, revierte solo si fallan 2) y <strong>operación continua</strong> (8 monitores cada 5 min).
+    </p>
+  </section>
+
+  {/* ── Testing: los niveles ────────────────────────────────── */}
+  <section>
+    <h2>{TEST_REF.niveles} niveles, {TEST_REF.tests} tests</h2>
+    <div class="kpi-row">
+      <div class="kpi fragment">
+        <div class="kpi-value">{TEST_REF.tests}</div>
+        <div class="kpi-label">Unitarios + integración</div>
+        <div class="kpi-sub">Vitest, {TEST_REF.archivos} archivos</div>
+      </div>
+      <div class="kpi fragment">
+        <div class="kpi-value">{TEST_REF.e2e}</div>
+        <div class="kpi-label">End-to-end</div>
+        <div class="kpi-sub">Playwright, navegador real</div>
+      </div>
+      <div class="kpi fragment">
+        <div class="kpi-value">{TEST_REF.coberturaLineas}%</div>
+        <div class="kpi-label">Cobertura</div>
+        <div class="kpi-sub">líneas de src/lib</div>
+      </div>
+      <div class="kpi fragment">
+        <div class="kpi-value">{NIVELES.filter((n) => !n.pendiente).length}</div>
+        <div class="kpi-label">Niveles activos</div>
+        <div class="kpi-sub">1 pendiente (carga)</div>
+      </div>
+    </div>
+    <p class="foot">
+      Cobertura dice «esta línea se ejecutó». <strong>Mutation testing</strong> dice «si la rompo,
+      ¿algún test se entera?». Son preguntas distintas — detalle en /docs/testing.
+    </p>
   </section>
 
   {/* ── Decisiones ──────────────────────────────────────────── */}

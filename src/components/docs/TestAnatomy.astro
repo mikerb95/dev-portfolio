@@ -1,0 +1,134 @@
+---
+// Anatomía de un test real, con 4 capas conmutables sobre el mismo bloque de
+// código. Cada línea lleva su capa como data-attribute; el script solo cambia
+// qué capa está activa. Sin JS se ve el código completo y las 4 explicaciones.
+import { ANATOMIA_CODIGO, ANATOMIA_CAPAS, ANATOMIA_META } from '../../data/testing'
+---
+
+<div class="anatomy" data-anatomy>
+  <div class="anatomy-head">
+    <div>
+      <div class="file mono">{ANATOMIA_META.archivo}</div>
+      <div class="tname">it('{ANATOMIA_META.test}')</div>
+    </div>
+    <div class="capas" role="group" aria-label="Capas del test">
+      {ANATOMIA_CAPAS.map((c, i) => (
+        <button type="button" class="capa-btn" data-capa={c.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+          {c.nombre}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <div class="anatomy-body">
+    <pre class="code"><code>{ANATOMIA_CODIGO.map((l) => (
+      <span class="line" data-linea={l.capa ?? ''}><span class="ln" aria-hidden="true">{String(l.n).padStart(2, ' ')}</span>{l.txt}
+</span>
+    ))}</code></pre>
+
+    <div class="notas">
+      {ANATOMIA_CAPAS.map((c, i) => (
+        <div class="nota" data-nota={c.id} hidden={i !== 0}>
+          <div class="nota-kicker">{c.nombre}</div>
+          <h4>{c.titulo}</h4>
+          <p>{c.texto}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .anatomy {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0.9rem;
+    overflow: hidden;
+  }
+  .anatomy-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .file { font-size: 11.5px; color: var(--color-ink-300); }
+  .mono { font-family: var(--font-mono); }
+  .tname { font-family: var(--font-mono); font-size: 12.5px; color: var(--color-ink-50); margin-top: 0.2rem; }
+  .capas { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .capa-btn {
+    font-size: 12.5px;
+    padding: 0.3rem 0.7rem;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--color-ink-200);
+    cursor: pointer;
+    transition: background 0.16s, color 0.16s, border-color 0.16s;
+  }
+  .capa-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-ink-50); }
+  .capa-btn:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
+  .capa-btn[aria-pressed='true'] {
+    background: rgba(167, 139, 255, 0.12);
+    color: var(--color-violet);
+    border-color: rgba(167, 139, 255, 0.35);
+  }
+
+  .anatomy-body { display: grid; grid-template-columns: 1.35fr 1fr; }
+  .code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    padding: 1rem 0.5rem 1rem 0;
+    overflow-x: auto;
+    background: var(--color-ink-850);
+    margin: 0;
+  }
+  .line { display: block; padding: 0 0.75rem; transition: background 0.2s, opacity 0.2s; }
+  .ln { display: inline-block; width: 2rem; color: var(--color-ink-400); user-select: none; }
+
+  /* Con una capa activa, sus líneas se resaltan y el resto se atenúa. */
+  .anatomy[data-activa] .line { opacity: 0.34; }
+  .anatomy[data-activa='arrange'] .line[data-linea='arrange'],
+  .anatomy[data-activa='act'] .line[data-linea='act'],
+  .anatomy[data-activa='assert'] .line[data-linea='assert'] {
+    opacity: 1;
+    background: rgba(0, 242, 255, 0.07);
+  }
+  /* La capa "por qué importa" no señala líneas: las devuelve todas a foco. */
+  .anatomy[data-activa='porque'] .line { opacity: 1; }
+
+  .notas { padding: 1.1rem 1.2rem; }
+  .nota-kicker {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-violet);
+  }
+  .nota h4 { font-size: 14.5px; font-weight: 600; color: var(--color-ink-50); margin: 0.3rem 0 0.5rem; }
+  .nota p { font-size: 13.5px; line-height: 1.65; color: var(--color-ink-100); }
+
+  @media (max-width: 860px) {
+    .anatomy-body { grid-template-columns: 1fr; }
+    .notas { border-top: 1px solid rgba(255, 255, 255, 0.08); }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-anatomy]')
+  if (root) {
+    const btns = [...root.querySelectorAll<HTMLButtonElement>('[data-capa]')]
+    const notas = [...root.querySelectorAll<HTMLElement>('[data-nota]')]
+
+    const activar = (id: string) => {
+      root.dataset.activa = id
+      for (const b of btns) b.setAttribute('aria-pressed', String(b.dataset.capa === id))
+      for (const n of notas) n.hidden = n.dataset.nota !== id
+    }
+
+    for (const b of btns) b.addEventListener('click', () => activar(b.dataset.capa!))
+    activar('arrange')
+  }
+</script>
