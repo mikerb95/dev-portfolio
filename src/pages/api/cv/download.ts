@@ -1,9 +1,6 @@
 import type { APIRoute } from 'astro'
-import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { consumeDownloadToken } from '../../../lib/cv-downloads'
 
-const CV_PATH = fileURLToPath(new URL('../../../assets/cv/CV_Michael_Rodriguez_2026.pdf', import.meta.url))
 const CV_FILENAME = 'CV_Michael_Rodriguez_2026.pdf'
 
 export const GET: APIRoute = async ({ url }) => {
@@ -15,7 +12,14 @@ export const GET: APIRoute = async ({ url }) => {
   const ok = token.startsWith('bypass-') || (await consumeDownloadToken(token).catch(() => true))
   if (!ok) return new Response('enlace inválido o expirado', { status: 410 })
 
-  const pdf = await readFile(CV_PATH)
+  // El PDF vive en public/ y se sirve por fetch interno en vez de node:fs:
+  // el trazador de archivos de Vercel (@vercel/nft) no sigue rutas construidas
+  // en runtime vía import.meta.url, así que el binario nunca llegaba a la
+  // función serverless y el readFile fallaba con ENOENT en prod (nunca en dev).
+  const pdfRes = await fetch(new URL(`/cv/${CV_FILENAME}`, url.origin))
+  if (!pdfRes.ok) return new Response('CV no disponible por el momento', { status: 500 })
+  const pdf = await pdfRes.arrayBuffer()
+
   return new Response(pdf, {
     status: 200,
     headers: {
