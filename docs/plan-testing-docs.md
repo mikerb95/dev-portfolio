@@ -1,6 +1,7 @@
 # Plan — `/docs/testing`: guía visual interactiva del pipeline de pruebas
 
-> Estado: **propuesto** (jul 22 2026). Objetivo: una página dentro de
+> Estado: **implementado** (jul 22 2026) — Fases 1-5 completas, más las dos
+> diapositivas en el deck y el KPI en el índice de `/docs`. Objetivo: una página dentro de
 > `/docs` que explique **todo** el testing del proyecto a compañeros de
 > clase que no conocen el repo, con un recorrido visual e interactivo del
 > pipeline completo — desde `npm test` en el portátil hasta el rollback
@@ -38,7 +39,7 @@ correr la suite y leer los workflows).
 | 2 | Integración con BD real | Vitest + libSQL en archivo temporal | `tests/payments.test.ts`, `cobros-db.test.ts`, `security-blocklist-db.test.ts`, `portal-*` | ~70 de los 498 | igual que arriba |
 | 3 | Contratos de API | Vitest + Zod | `tests/contracts.test.ts` + `src/lib/contracts.ts` | 5 tests / 4 endpoints | `npm run test:contracts` y en CI |
 | 4 | End-to-end | Playwright (Chromium) | `e2e/*.spec.ts` (6 specs) | **45 tests** | job `e2e` en `ci.yml` |
-| 5 | Cobertura | `@vitest/coverage-v8` | `coverage/` (gitignored) | líneas **87.4%**, ramas 75.7%, funciones 75.3% sobre `src/lib/**` | con `--coverage` en CI |
+| 5 | Cobertura | `@vitest/coverage-v8` | `coverage/` (gitignored) | líneas **53.97%**, ramas 55.13%, funciones 52.76% sobre `src/lib/**` | con `--coverage` en CI |
 | 6 | Mutation testing | Stryker + runner de Vitest | `stryker.config.json` | umbrales high 80 / low 60 / break 50 | `mutation.yml`: manual + domingos 08:00 UTC |
 | 7 | SAST dependencias | `npm audit` → panel LAB | `scripts/npm-audit-scan.mjs` | hallazgos reales en `security_findings` | `security.yml`: push, PR y domingos 06:00 |
 | 8 | SAST código | CodeQL (`javascript-typescript`) | `security.yml` | pestaña Security de GitHub | push y PR |
@@ -80,8 +81,7 @@ decisión real, tomada por un motivo, documentada en los comentarios del repo:
    condicionó la arquitectura, no al revés.
 7. **Cobertura ≠ calidad; por eso hay mutation testing.** Cobertura dice
    «esta línea se ejecutó»; el mutation score dice «si la rompo, ¿algún test
-   se entera?». Con 87% de líneas cubiertas puede haber tests que no afirman
-   nada.
+   se entera?». Un porcentaje alto puede convivir con tests que no afirman nada.
 8. **Mutation testing NO corre en cada push, a propósito.** Mutar cada línea
    y re-ejecutar la suite contra cada mutante son miles de test-runs. Manual
    o semanal; nunca bloqueando un PR.

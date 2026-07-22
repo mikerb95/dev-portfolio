@@ -395,6 +395,18 @@ const secciones = [
     ))}
   </div>
 
+  <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-3">
+    <p class="text-[13.5px] text-ink-100 leading-relaxed">
+      <strong class="text-ink-50">Y sí, {pct(coberturaViva)} de cobertura no es una cifra de la que presumir.</strong>
+      Se mide sobre <span class="font-mono text-[13px]">src/lib/**</span> entero — {fmt(2164)} líneas — incluyendo
+      módulos que solo se ejecutan contra servicios externos (pasarela real, notificaciones, RDAP) y que no se
+      prueban con tests unitarios sino en el LAB y en producción. Inflarla sería trivial: bastaría con excluir
+      esos archivos del cálculo. Se deja el número completo porque un porcentaje maquillado no informa de nada, y
+      porque el dato que de verdad importa —si las líneas que sí se prueban están defendidas— lo da el mutation
+      score, no este.
+    </p>
+  </div>
+
   <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-12">
     <p class="text-[13.5px] text-ink-100 leading-relaxed">
       <strong class="text-ink-50">Por qué esto no corre en cada push:</strong> Stryker genera un mutante por
