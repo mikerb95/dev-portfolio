@@ -97,7 +97,7 @@ export const NIVELES: Nivel[] = [
     nombre: 'Cobertura de código',
     herramienta: '@vitest/coverage-v8',
     pregunta: '¿Qué parte del código no ejecuta ni una sola prueba?',
-    volumen: 'medida sobre src/lib/**',
+    volumen: '1168 de 2164 líneas de src/lib/**',
     archivos: 'vitest.config.ts → coverage/',
     cuando: 'push',
     bloquea: false,
@@ -501,7 +501,7 @@ export const DECISIONES: Decision[] = [
   {
     id: 'cobertura-no-basta',
     titulo: 'La cobertura miente, por eso hay mutación',
-    sintoma: '87% de líneas cubiertas no me decía si los tests comprobaban algo.',
+    sintoma: 'Un porcentaje de cobertura, sea alto o bajo, no me decía si los tests comprobaban algo.',
     causa: 'La cobertura mide ejecución, no verificación. Un test sin un solo `expect` cubre líneas igual.',
     decision: 'Stryker muta el código y vuelve a correr la suite contra cada mutante. Si un mutante sobrevive, hay una línea que ningún test defiende.',
     donde: 'stryker.config.json, src/lib/lab/mutation.ts',
@@ -703,7 +703,8 @@ export const GLOSARIO = [
 ]
 
 // Fallback de las métricas cuando la query a ci_runs no devuelve nada.
-// Medición real del 22 jul 2026 (npx vitest run --coverage).
+// Medición real del 22 jul 2026 (npx vitest run --coverage), idéntica a la que
+// reporta el pipeline: 1168/2164 líneas de src/lib/**.
 export const METRICAS_REFERENCIA = {
   fecha: '22 jul 2026',
   tests: 498,
@@ -711,9 +712,9 @@ export const METRICAS_REFERENCIA = {
   archivos: 38,
   e2e: 45,
   e2eSpecs: 6,
-  coberturaLineas: 87.4,
-  coberturaRamas: 75.7,
-  coberturaFunciones: 75.3,
+  coberturaLineas: 53.97,
+  coberturaRamas: 55.13,
+  coberturaFunciones: 52.76,
   niveles: NIVELES.length,
 }
 
