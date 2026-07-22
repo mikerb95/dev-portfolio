@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import { PRUEBA_USABILIDAD, PRUEBA_USABILIDAD_META } from '../../data/documentacion'
+---
+
+<BaseLayout title="Usability testing">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Metodología de prueba de validación con usuarios (6 pasos), aplicada a un flujo real del
+      sitio: <span class="text-ink-50 font-medium">{PRUEBA_USABILIDAD_META.flujo}</span>.
+      Implementación en <span class="font-mono text-[13px] text-cyan">{PRUEBA_USABILIDAD_META.origen}</span>.
+      La columna Evidencia queda pendiente de completar tras ejecutar la prueba con participantes reales.
+    </p>
+  </div>
+
+  <div class="rounded-xl border border-white/15 bg-white/[.05] overflow-hidden text-[14px] shadow-[0_2px_16px_-4px_rgba(0,0,0,.4)]">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr>
+          <td class="w-[150px] bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14]">Paso</td>
+          <td class="w-[220px] bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14]">Qué debe hacer</td>
+          <td class="bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14]">Ejemplo aplicado</td>
+          <td class="w-[180px] bg-cyan/[.14] text-cyan font-semibold uppercase tracking-wide text-[12.5px] px-3 py-2 border border-white/[.14]">Evidencia</td>
+        </tr>
+      </thead>
+      <tbody>
+        {PRUEBA_USABILIDAD.map((p) => (
+          <tr>
+            <td class="text-ink-50 font-medium px-3 py-2 border border-white/[.14] align-top">{p.paso}</td>
+            <td class="text-ink-100 px-3 py-2 border border-white/[.14] align-top">{p.queHacer}</td>
+            <td class="text-ink-100 px-3 py-2 border border-white/[.14] align-top">{p.ejemploAplicado}</td>
+            <td class="text-ink-300 text-[13px] px-3 py-2 border border-white/[.14] align-top">{p.evidencia ?? '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  </div>
+</BaseLayout>
