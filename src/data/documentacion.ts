@@ -451,3 +451,49 @@ export const CASOS_DE_USO_EXTENDIDOS: CasoDeUsoExtendido[] = [
     postcondiciones: ['El slide actual queda sincronizado entre el control del administrador y la vista del cliente mediante estado persistido, sin necesidad de una conexión en tiempo real (WebSockets).'],
   },
 ]
+
+// ── Prueba de validación de usabilidad ──────────────────────────────────────
+export interface PasoUsabilidad {
+  paso: string
+  queHacer: string
+  ejemploAplicado: string
+  evidencia?: string
+}
+
+export const PRUEBA_USABILIDAD_META = {
+  flujo: 'Descargar el CV desde /contact (HU-31)',
+  origen: 'src/pages/cv/descargar.astro, src/pages/api/cv/{capture,download}.ts',
+}
+
+export const PRUEBA_USABILIDAD: PasoUsabilidad[] = [
+  {
+    paso: '1. Definir necesidad',
+    queHacer: 'Expresar el problema real desde el usuario.',
+    ejemploAplicado: 'Un visitante quiere llevarse el CV del desarrollador sin pedirlo por correo o WhatsApp y sin crear cuenta.',
+  },
+  {
+    paso: '2. Crear escenario',
+    queHacer: 'Describir una tarea real de principio a fin.',
+    ejemploAplicado: 'Llegar a /contact, encontrar el botón "Descargar CV", hacer clic, esperar la pantalla de "Preparando tu descarga…" y terminar con el PDF guardado en su dispositivo.',
+  },
+  {
+    paso: '3. Elegir participantes',
+    queHacer: 'Seleccionar perfiles representativos.',
+    ejemploAplicado: 'Un reclutador con prisa (revisa muchos perfiles por día), alguien con bloqueador de anuncios/JS restringido, y alguien en un celular con conexión lenta.',
+  },
+  {
+    paso: '4. Establecer criterios',
+    queHacer: 'Definir éxito observable y medible.',
+    ejemploAplicado: 'Completa la descarga en menos de 10 segundos, sin dudar frente al botón, sin quedarse esperando indefinidamente en el spinner, y sin necesitar ayuda.',
+  },
+  {
+    paso: '5. Observar',
+    queHacer: 'Evitar enseñar el flujo; registrar dudas, errores y abandonos.',
+    ejemploAplicado: 'El reclutador duda un instante si "Descargar CV" abre el archivo o lo descarga; el participante con JS bloqueado ve el spinner girar sin avanzar y no encuentra el enlace alternativo.',
+  },
+  {
+    paso: '6. Analizar y decidir',
+    queHacer: 'Relacionar hallazgos con la necesidad y el riesgo.',
+    ejemploAplicado: 'El flujo funciona técnicamente (fail-open, incluso sin JS vía el enlace de <noscript>), pero la pantalla intermedia de "Preparando tu descarga…" genera duda porque no explica qué está pasando ni cuánto va a tardar. El enlace de <noscript> queda visualmente escondido detrás del spinner en vez de leerse como una acción alternativa.',
+  },
+]
