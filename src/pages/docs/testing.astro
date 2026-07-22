@@ -17,7 +17,6 @@ import {
   MUTANTES_ESTADO,
   CUANDO_LABEL,
   METRICAS_REFERENCIA as REF,
-  TOTAL_AUTOMATIZADOS,
   type Cuando,
 } from '../../data/testing'
 
@@ -83,6 +82,10 @@ try {
 }
 
 const testsVivos = ultimoRun?.testsPassed ?? REF.tests
+// El total del hero se deriva del mismo dato que los KPI: si la última corrida
+// registrada es vieja, ambos envejecen juntos en vez de contradecirse.
+const totalPruebas = testsVivos + REF.e2e
+const nivelesActivos = NIVELES.filter((n) => !n.pendiente).length
 const coberturaViva = ultimoRun?.coveragePct ?? REF.coberturaLineas
 const enVivo = ultimoRun !== null
 const hallazgosAbiertos = hallazgos.reduce((a, h) => a + h.n, 0)
@@ -98,7 +101,7 @@ const kpis = [
   { valor: String(REF.e2e), label: 'Tests e2e', sub: `${REF.e2eSpecs} specs con navegador real` },
   { valor: pct(coberturaViva), label: 'Cobertura', sub: 'líneas de src/lib/**' },
   { valor: mutationScore !== null ? pct(mutationScore) : '—', label: 'Mutation score', sub: mutationScore !== null ? 'mutantes detectados' : 'pendiente de corrida semanal' },
-  { valor: String(REF.niveles), label: 'Niveles de prueba', sub: '13 activos, 1 pendiente' },
+  { valor: String(REF.niveles), label: 'Niveles de prueba', sub: `${nivelesActivos} activos, ${REF.niveles - nivelesActivos} pendiente` },
   {
     valor: ultimoRun ? (ultimoRun.conclusion === 'success' ? 'OK' : ultimoRun.conclusion === 'rolled_back' ? 'ROLLBACK' : 'FALLO') : '—',
     label: 'Último deploy',
@@ -141,7 +144,7 @@ const secciones = [
   <div class="max-w-3xl mb-8">
     <h1 class="text-2xl font-semibold text-ink-50 mb-3">¿Qué pasa cuando hago <span class="font-mono text-cyan text-xl">git push</span>?</h1>
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
-      Este proyecto tiene <strong class="text-ink-50">{fmt(TOTAL_AUTOMATIZADOS)} pruebas automáticas</strong> repartidas
+      Este proyecto tiene <strong class="text-ink-50">{fmt(totalPruebas)} pruebas automáticas</strong> repartidas
       en <strong class="text-ink-50">{REF.niveles} niveles distintos</strong>. Ninguno sobra: cada uno responde una
       pregunta que los demás no pueden responder. Esta página recorre todos, con los números reales del repositorio
       y las decisiones de ingeniería que hay detrás de cada uno.
@@ -242,7 +245,7 @@ const secciones = [
   <h2 id="anatomia" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Anatomía de un test</h2>
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
-      Un test real del repositorio, disecado en capas. Es el patrón que siguen los {fmt(REF.tests)}:
+      Un test real del repositorio, disecado en capas. Es el patrón que siguen los {fmt(testsVivos)}:
       <span class="font-mono text-[13px] text-cyan"> arrange</span> (preparar),
       <span class="font-mono text-[13px] text-cyan"> act</span> (ejecutar),
       <span class="font-mono text-[13px] text-cyan"> assert</span> (afirmar).
