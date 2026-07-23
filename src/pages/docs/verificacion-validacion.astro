@@ -1,0 +1,229 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import { NIVELES, METRICAS_REFERENCIA as REF } from '../../data/testing'
+import { DEFINICIONES, CLASIFICACION, TRAZABILIDAD, GLOSARIO_VV, type TipoVV } from '../../data/vyv'
+
+// Cada nivel de /docs/testing se reclasifica aquí bajo V&V. No se inventan
+// niveles nuevos ni se duplican sus datos: se les añade una etiqueta y un
+// porqué, y se leen pregunta/herramienta/archivos directamente de NIVELES.
+const porId = new Map(NIVELES.map((n) => [n.id, n]))
+
+const filas = CLASIFICACION.map((c) => {
+  const nivel = porId.get(c.id)
+  if (!nivel) throw new Error(`vyv.ts referencia un id de nivel que no existe: ${c.id}`)
+  return { ...c, nivel }
+})
+
+const verificacion = filas.filter((f) => f.tipo === 'verificacion')
+const validacion = filas.filter((f) => f.tipo === 'validacion')
+
+const acentoTipo: Record<TipoVV, string> = { verificacion: 'bg-cyan', validacion: 'bg-lime' }
+
+const secciones = [
+  { id: 'marco', t: 'El marco' },
+  { id: 'verificacion', t: 'Verificación' },
+  { id: 'validacion', t: 'Validación' },
+  { id: 'frontera', t: 'La frontera' },
+  { id: 'trazabilidad', t: 'Trazabilidad' },
+  { id: 'glosario', t: 'Glosario' },
+]
+---
+
+<BaseLayout title="Verificación y validación">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+  <DocsNav />
+
+  {/* ── Hero ────────────────────────────────────────────────── */}
+  <div class="max-w-3xl mb-8">
+    <h1 class="text-2xl font-semibold text-ink-50 mb-3">¿Construimos el producto <span class="text-cyan">correctamente</span>, o construimos el producto <span class="text-lime">correcto</span>?</h1>
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      <span class="font-mono text-cyan">/docs/testing</span> ya documenta {REF.niveles} niveles de prueba con sus
+      métricas reales. Esta página no repite ese inventario: lo reclasifica bajo un marco distinto —verificación y
+      validación (IEEE 1012)— que responde una pregunta que el inventario técnico no hace explícita: de esos{' '}
+      {REF.niveles} niveles, ¿cuáles comprueban que el código cumple su propia especificación, y cuáles comprueban
+      que el sistema le sirve a alguien de verdad?
+    </p>
+  </div>
+
+  <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-10">
+    <div class="glass rounded-2xl p-4 border border-white/10">
+      <div class="text-2xl font-semibold text-ink-50 tabular-nums">{verificacion.length}</div>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-cyan mt-1">Verificación</div>
+      <div class="text-[12px] text-ink-300 mt-0.5">¿lo construimos bien?</div>
+    </div>
+    <div class="glass rounded-2xl p-4 border border-white/10">
+      <div class="text-2xl font-semibold text-ink-50 tabular-nums">{validacion.length}</div>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-lime mt-1">Validación</div>
+      <div class="text-[12px] text-ink-300 mt-0.5">¿construimos lo correcto?</div>
+    </div>
+    <div class="glass rounded-2xl p-4 border border-white/10">
+      <div class="text-2xl font-semibold text-ink-50 tabular-nums">{REF.niveles}</div>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-ink-200 mt-1">Niveles totales</div>
+      <div class="text-[12px] text-ink-300 mt-0.5">detalle en /docs/testing</div>
+    </div>
+    <div class="glass rounded-2xl p-4 border border-white/10">
+      <div class="text-2xl font-semibold text-ink-50 tabular-nums">{TRAZABILIDAD.length}</div>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-violet mt-1">Documentos ligados</div>
+      <div class="text-[12px] text-ink-300 mt-0.5">de casos de uso a testing</div>
+    </div>
+  </div>
+
+  {/* ── Índice ──────────────────────────────────────────────── */}
+  <nav class="mb-12 flex flex-wrap gap-1.5" aria-label="Secciones de esta página">
+    {secciones.map((s) => (
+      <a href={`#${s.id}`} class="px-3 py-1 rounded-full text-[13px] text-ink-200 border border-white/10 hover:bg-white/5 hover:text-ink-50 transition-colors">
+        {s.t}
+      </a>
+    ))}
+  </nav>
+
+  {/* ── § 1 El marco ────────────────────────────────────────── */}
+  <h2 id="marco" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">El marco: dos preguntas, no una</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      «Testing» suele tratarse como una sola actividad. IEEE 1012 la separa en dos porque tienen oráculos
+      distintos —la fuente de verdad contra la que se compara un resultado— y confundirlos hace que un pipeline
+      en verde se sienta como garantía de algo que nunca prometió.
+    </p>
+  </div>
+
+  <div class="grid gap-3 lg:grid-cols-2 mb-12">
+    {(['verificacion', 'validacion'] as TipoVV[]).map((t) => (
+      <div class="rounded-xl border border-white/10 bg-white/[.025] p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class={`w-2 h-2 rounded-full ${acentoTipo[t]}`} aria-hidden="true"></span>
+          <h3 class="text-[14.5px] font-medium text-ink-50">{DEFINICIONES[t].titulo}</h3>
+        </div>
+        <p class="text-[13.5px] text-ink-100 leading-relaxed italic mb-2">{DEFINICIONES[t].pregunta}</p>
+        <p class="text-[13px] text-ink-200 leading-relaxed">{DEFINICIONES[t].enfoque}</p>
+      </div>
+    ))}
+  </div>
+
+  {/* ── § 2 Verificación ────────────────────────────────────── */}
+  <h2 id="verificacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Verificación — {verificacion.length} niveles</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      La mayoría de los niveles de este repositorio son verificación, y tiene sentido que lo sean: son baratos,
+      automatizables y no dependen de conseguir a una persona real. El oráculo en todos estos casos lo escribió
+      alguien del equipo antes que el código.
+    </p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mb-12">
+    {verificacion.map((f) => (
+      <a href={`/docs/testing#niveles`} class="block rounded-xl border border-white/10 bg-white/[.025] p-4 hover:bg-white/[.045] hover:border-white/20 transition-colors">
+        <div class="flex items-baseline gap-2 flex-wrap mb-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan shrink-0" aria-hidden="true"></span>
+          <h3 class="text-[14px] font-medium text-ink-50">{f.nivel.nombre}</h3>
+          <span class="font-mono text-[11px] text-ink-300">· {f.nivel.herramienta}</span>
+        </div>
+        <p class="text-[12.5px] text-ink-200 leading-relaxed">{f.porque}</p>
+      </a>
+    ))}
+  </div>
+
+  {/* ── § 3 Validación ──────────────────────────────────────── */}
+  <h2 id="validacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Validación — {validacion.length} niveles</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Aquí el oráculo deja de ser un archivo del repositorio. En e2e es una persona simulada completando un
+      objetivo; en accesibilidad, alguien con lector de pantalla; en usabilidad, una persona real y nadie más.
+      Por eso son los niveles más caros de esta lista, y también los que más se parecen a lo que de verdad
+      importa: que el sistema le sirva a alguien.
+    </p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mb-6">
+    {validacion.map((f) => (
+      <a href={`/docs/testing#niveles`} class="block rounded-xl border border-white/10 bg-white/[.025] p-4 hover:bg-white/[.045] hover:border-white/20 transition-colors">
+        <div class="flex items-baseline gap-2 flex-wrap mb-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-lime shrink-0" aria-hidden="true"></span>
+          <h3 class="text-[14px] font-medium text-ink-50">{f.nivel.nombre}</h3>
+          <span class="font-mono text-[11px] text-ink-300">· {f.nivel.herramienta}</span>
+        </div>
+        <p class="text-[12.5px] text-ink-200 leading-relaxed">{f.porque}</p>
+      </a>
+    ))}
+  </div>
+
+  <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-12">
+    <p class="text-[13.5px] text-ink-100 leading-relaxed">
+      <strong class="text-ink-50">El desbalance es a propósito, no un hueco.</strong> {verificacion.length} niveles
+      de verificación contra {validacion.length} de validación no significa que la validación importe menos —
+      significa que cuesta más y no se puede automatizar del todo. De los {validacion.length}, solo usabilidad
+      exige a una persona real cada vez; e2e y accesibilidad usan proxies automatizados (un navegador sin ojos,
+      un escáner de reglas WCAG) que se acercan a la pregunta de validación sin necesitar a alguien en cada
+      corrida. Es el motivo por el que <a href="/docs/testing#pendiente" class="text-cyan hover:underline">la
+      evidencia de usabilidad con participantes reales</a> sigue siendo el hueco más honesto de todo el proyecto.
+    </p>
+  </div>
+
+  {/* ── § 4 La frontera ─────────────────────────────────────── */}
+  <h2 id="frontera" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">La frontera no siempre es limpia</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Tres casos de este repositorio muestran por qué la clasificación de arriba es una decisión, no un hecho
+      objetivo — y por qué conviene decirlo en vez de esconderlo.
+    </p>
+  </div>
+
+  <div class="grid gap-3 lg:grid-cols-3 mb-12">
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <h3 class="text-[13.5px] font-medium text-ink-50 mb-2">E2E: automatizado pero externo</h3>
+      <p class="text-[12.5px] text-ink-200 leading-relaxed">
+        Se ejecuta en CI como un test más —sin persona presente— pero lo que compara es un flujo completo contra
+        una expectativa de uso, no una función contra su firma. Se clasificó como validación por el oráculo que
+        usa, no por cómo se ejecuta.
+      </p>
+    </div>
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <h3 class="text-[13.5px] font-medium text-ink-50 mb-2">Accesibilidad: validación con proxy</h3>
+      <p class="text-[12.5px] text-ink-200 leading-relaxed">
+        axe-core corre en CI y verifica contra reglas WCAG, lo cual suena a verificación. Pero esas reglas existen
+        para aproximar una pregunta de validación (¿puede usarlo alguien con una discapacidad?) que ninguna
+        herramienta responde del todo — de ahí que cubra solo ~30-40% de los problemas reales.
+      </p>
+    </div>
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <h3 class="text-[13.5px] font-medium text-ink-50 mb-2">Requerimientos no funcionales: verificación disfrazada</h3>
+      <p class="text-[12.5px] text-ink-200 leading-relaxed">
+        ISO/IEC 25010 (ver <a href="/docs/requerimientos-no-funcionales" class="text-cyan hover:underline">requerimientos no funcionales</a>)
+        parece hablar de calidad para el usuario, pero cada atributo (tiempo de respuesta, tasa de errores) se
+        verifica contra un umbral fijado por ingeniería, no contra la observación directa de alguien usándolo.
+      </p>
+    </div>
+  </div>
+
+  {/* ── § 5 Trazabilidad ────────────────────────────────────── */}
+  <h2 id="trazabilidad" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">De la necesidad al test: dónde vive cada mitad</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Esta página no es el único lugar donde vive V&amp;V — es el mapa que conecta documentos que ya existían por
+      separado. La validación empieza antes que cualquier test: en el caso de uso o la historia que dijo qué
+      necesidad real se estaba resolviendo.
+    </p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mb-12">
+    {TRAZABILIDAD.map((t) => (
+      <a href={t.href} class="block rounded-xl border border-white/10 bg-white/[.025] p-4 hover:bg-white/[.04] hover:border-white/20 hover:-translate-y-0.5 transition-all">
+        <div class="text-[14px] font-medium text-ink-50">{t.titulo}</div>
+        <p class="text-[13px] text-ink-200 mt-1 leading-relaxed">{t.rol}</p>
+      </a>
+    ))}
+  </div>
+
+  {/* ── § 6 Glosario ────────────────────────────────────────── */}
+  <h2 id="glosario" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Glosario</h2>
+  <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 mb-6">
+    {GLOSARIO_VV.map((g) => (
+      <div class="border-b border-white/8 pb-3">
+        <dt class="text-[13.5px] font-medium text-ink-50">{g.termino}</dt>
+        <dd class="text-[13px] text-ink-200 leading-relaxed mt-0.5">{g.def}</dd>
+      </div>
+    ))}
+  </dl>
+  </div>
+</BaseLayout>
