@@ -1,0 +1,115 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+
+const paquetes = `flowchart TB
+    MW["src/middleware.ts<br/>clasificador · rate limit · blocklist · chaos · headers"]
+
+    subgraph Presentacion["Presentación"]
+      direction LR
+      PAGES["src/pages/*.astro<br/>admin · portal · lab · notes · cv"]
+      API["src/pages/api/*<br/>admin · portal · auth · cron · payments"]
+    end
+
+    LIB["src/lib/*<br/>auth · payments · notify · monitors · demo<br/>(payments-state.ts es isomorfo, sin dep. de db/)"]
+
+    subgraph Transversales["Módulos transversales"]
+      direction LR
+      SEC["lib/security/<br/>micro-SIEM: clasificador, ratelimit, blocklist"]
+      PORTAL["lib/portal/<br/>sesión y auth del portal cliente"]
+      LAB["lib/lab/<br/>chaos · k6 · SAST (módulo LAB)"]
+    end
+
+    DB[("src/db/<br/>schema.ts · AsyncLocalStorage por request")]
+    TURSO[("Turso / libSQL<br/>prod y demo, bases físicas distintas")]
+
+    MW --> PAGES
+    MW --> API
+    MW -.->|consumo directo, pre-routing| SEC
+    PAGES --> LIB
+    API --> LIB
+    LIB --> SEC
+    LIB --> PORTAL
+    LIB --> LAB
+    SEC --> DB
+    PORTAL --> DB
+    LAB --> DB
+    DB --> TURSO
+`
+---
+
+<BaseLayout title="Diagrama de paquetes">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Notación UML de paquetes sobre la estructura real de <span class="font-mono text-cyan">src/</span>.
+      Las flechas indican dependencia (importa/usa) en la dirección del paquete que depende hacia el
+      dependido; la línea punteada marca el único acoplamiento verdaderamente transversal del repo.
+    </p>
+  </div>
+
+  <div class="rounded-xl border border-white/15 bg-ink-800 p-4 overflow-x-auto">
+    <pre class="mermaid">{paquetes}</pre>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mt-6">
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <div class="text-[12.5px] font-mono uppercase tracking-wide text-violet mb-2">lib/security/ es transversal</div>
+      <p class="text-[14px] text-ink-100 leading-relaxed">
+        No solo lo consume <span class="font-mono text-cyan">lib/*</span>: <span class="font-mono text-cyan">middleware.ts</span> lo
+        invoca directamente en cada request, antes de llegar a páginas o endpoints.
+      </p>
+    </div>
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <div class="text-[12.5px] font-mono uppercase tracking-wide text-violet mb-2">Tres sistemas de auth aislados</div>
+      <p class="text-[14px] text-ink-100 leading-relaxed">
+        <span class="font-mono text-cyan">lib/portal/</span> mantiene sesión y cookie propias, sin compartir
+        lógica ni cookies con Auth.js/GitHub (admin) ni con el pase HMAC (demo pública).
+      </p>
+    </div>
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <div class="text-[12.5px] font-mono uppercase tracking-wide text-violet mb-2">payments-state.ts es isomorfo</div>
+      <p class="text-[14px] text-ink-100 leading-relaxed">
+        Vive dentro de <span class="font-mono text-cyan">lib/*</span> pero no depende de <span class="font-mono text-cyan">db/</span>,
+        por lo que se importa igual desde endpoints del servidor y desde <span class="font-mono text-cyan">&lt;script&gt;</span> en
+        páginas Astro renderizadas en el navegador.
+      </p>
+    </div>
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+      <div class="text-[12.5px] font-mono uppercase tracking-wide text-violet mb-2">Turso duplicado en modo demo</div>
+      <p class="text-[14px] text-ink-100 leading-relaxed">
+        En modo demo, <span class="font-mono text-cyan">AsyncLocalStorage</span> enruta las queries hacia
+        <span class="font-mono text-cyan">TURSO_DEMO_URL</span>, una base física distinta a la de producción.
+      </p>
+    </div>
+  </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import mermaid from 'mermaid'
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    themeVariables: {
+      background: '#13131a',
+      primaryColor: '#1c1c26',
+      primaryTextColor: '#e7e7ec',
+      primaryBorderColor: '#6a6a7a',
+      lineColor: '#c4c4cc',
+      secondaryColor: '#171720',
+      tertiaryColor: '#0e0e12',
+      textColor: '#e7e7ec',
+      edgeLabelBackground: '#13131a',
+      clusterBkg: '#0e0e12',
+      clusterBorder: '#3a3a48',
+    },
+  })
+</script>
+
+<style>
+  .mermaid { display: flex; justify-content: center; }
+</style>
