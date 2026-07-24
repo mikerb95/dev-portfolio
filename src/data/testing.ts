@@ -46,7 +46,7 @@ export const NIVELES: Nivel[] = [
     herramienta: 'Vitest',
     pregunta: '¿Esta función devuelve lo correcto para cada entrada, incluidas las raras?',
     volumen: '394 tests sobre funciones sin efectos',
-    archivos: 'tests/*.test.ts (40 archivos)',
+    archivos: 'tests/*.test.ts (41 archivos)',
     cuando: 'push',
     bloquea: true,
     puntoCiego: 'No sabe nada de la base de datos, la red ni el navegador. Una función puede ser perfecta y el sistema estar roto.',

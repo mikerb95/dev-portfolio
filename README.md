@@ -108,7 +108,7 @@ una vista enmascarada con rate limiting fuerte.
 request → Vercel (edge, DDoS/WAF) → src/middleware.ts
             · clasificador de amenazas + rate limit durable + blocklist (fail-open)
             · chaos flags (LAB) · auth allowlist /admin · headers CSP/HSTS
-          → Astro 6 SSR (páginas + /api) → Turso (libSQL) vía Drizzle
+          → Astro 7 SSR (páginas + /api) → Turso (libSQL) vía Drizzle
 crons externos (cron-job.org) → /api/cron/* (Bearer) → checks, rollups, alertas ntfy
 ```
 
@@ -119,7 +119,7 @@ aditivas), `docs/` (planes vivos).
 
 ## Tests
 
-**521 tests de Vitest** en 40 archivos y **45 e2e** de Playwright en 6 specs,
+**531 tests de Vitest** en 41 archivos y **45 e2e** de Playwright en 6 specs,
 repartidos en 15 niveles distintos de verificación. El recorrido completo —qué
 responde cada nivel y cuál es su punto ciego— está en
 [/docs/testing](https://codebymike.tech/docs/testing).
