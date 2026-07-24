@@ -35,8 +35,8 @@ correr la suite y leer los workflows).
 
 | # | Nivel | Herramienta | Dónde vive | Volumen real | Cuándo corre |
 |---|-------|-------------|------------|--------------|--------------|
-| 1 | Unitario / lógica pura | Vitest | `tests/*.test.ts` (38 archivos) | **498 tests**, 191 suites, 100% verdes | cada push y PR (`ci.yml`), y en local |
-| 2 | Integración con BD real | Vitest + libSQL en archivo temporal | `tests/payments.test.ts`, `cobros-db.test.ts`, `security-blocklist-db.test.ts`, `portal-*` | ~70 de los 498 | igual que arriba |
+| 1 | Unitario / lógica pura | Vitest | `tests/*.test.ts` (40 archivos) | **521 tests**, 201 suites, 100% verdes | cada push y PR (`ci.yml`), y en local |
+| 2 | Integración con BD real | Vitest + libSQL en archivo temporal | `tests/payments.test.ts`, `cobros-db.test.ts`, `security-blocklist-db.test.ts`, `portal-*` | 122 de los 521 | igual que arriba |
 | 3 | Contratos de API | Vitest + Zod | `tests/contracts.test.ts` + `src/lib/contracts.ts` | 5 tests / 4 endpoints | `npm run test:contracts` y en CI |
 | 4 | End-to-end | Playwright (Chromium) | `e2e/*.spec.ts` (6 specs) | **45 tests** | job `e2e` en `ci.yml` |
 | 5 | Cobertura | `@vitest/coverage-v8` | `coverage/` (gitignored) | líneas **53.97%**, ramas 55.13%, funciones 52.76% sobre `src/lib/**` | con `--coverage` en CI |
