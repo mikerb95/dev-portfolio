@@ -48,7 +48,8 @@ correr la suite y leer los workflows).
 | 11 | Chaos engineering | flags en BD + middleware | `src/lib/chaos.ts`, `/admin/lab/chaos` | 12 tests que prueban al propio chaos | manual, TTL acotado |
 | 12 | Monitoreo sintético continuo | monitores propios + cron externo | `/admin/monitors`, `/status` | 8 monitores, checks ~5 min | cron-job.org, 24/7 |
 | 13 | Usabilidad con usuarios | metodología de 6 pasos | `/docs/usability-testing` | 1 flujo (descarga de CV) | manual |
-| 14 | Carga (k6) | *pendiente* | `docs/plan-lab-fases-pendientes.md`, Fase 5 | — | bloqueado por `VERCEL_TOKEN` |
+| 14 | DAST (análisis dinámico) | OWASP ZAP baseline | `.github/workflows/dast.yml`, `parseZapReport` | alertas del reporte ingeridas al LAB | contra el preview, nunca contra prod |
+| 15 | Carga (k6) | *pendiente* | `docs/plan-lab-fases-pendientes.md`, Fase 5 | — | bloqueado por `VERCEL_TOKEN` |
 
 Un compañero debe salir entendiendo **por qué son 15 cosas distintas y no
 una sola llamada «pruebas»**: cada nivel responde una pregunta que ninguno
