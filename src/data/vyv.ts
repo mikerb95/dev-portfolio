@@ -144,6 +144,111 @@ export const TRAZABILIDAD = [
   },
 ]
 
+// ── Niveles de integridad (IEEE 1012, cláusula 5) ───────────────────────────
+// La distinción verificación/validación no dice cuánto rigor aplicar. Eso lo
+// decide el nivel de integridad: la consecuencia de que ese subsistema falle,
+// no la probabilidad. A mayor nivel, más tareas de V&V son obligatorias — acá
+// se listan las que ya existen y las que el nivel exigiría y todavía faltan.
+
+export type NivelIntegridad = 1 | 2 | 3 | 4
+
+export const INTEGRIDAD_LABEL: Record<NivelIntegridad, { nombre: string; consecuencia: string }> = {
+  4: { nombre: 'Alto', consecuencia: 'Catastrófica — dinero real perdido, fraude, credenciales de terceros expuestas' },
+  3: { nombre: 'Crítico', consecuencia: 'Grave — acceso no autorizado al panel o a datos personales de un cliente' },
+  2: { nombre: 'Moderado', consecuencia: 'Degradación operativa — se pierde visibilidad, no hay compromiso directo de datos' },
+  1: { nombre: 'Bajo', consecuencia: 'Negligible — inconveniencia visual, nada operativo se rompe' },
+}
+
+export type Subsistema = {
+  id: string
+  nombre: string
+  nivel: NivelIntegridad
+  porque: string
+  archivos: string
+  /** ids de NIVELES (src/data/testing.ts) que ya cubren este subsistema. */
+  cubiertoPor: string[]
+  refuerzoPendiente?: string
+}
+
+export const SUBSISTEMAS: Subsistema[] = [
+  {
+    id: 'pagos',
+    nombre: 'Pagos y cobros (Wompi)',
+    nivel: 4,
+    porque: 'Un fallo aquí es dinero real: doble cobro, estado de pago inconsistente entre pasarela y base propia.',
+    archivos: 'src/lib/payments.ts, payments-state.ts, cobros*.ts',
+    cubiertoPor: ['unitario', 'integracion', 'contratos', 'mutation', 'e2e'],
+    refuerzoPendiente: 'Falta cubrir con concurrencia real todas las transiciones de la máquina de estados, no solo el camino feliz.',
+  },
+  {
+    id: 'boveda',
+    nombre: 'Bóveda de secretos (project_services.secrets)',
+    nivel: 4,
+    porque: 'Un fallo expone credenciales de terceros cifradas con AES-256-GCM a quien no debería verlas.',
+    archivos: 'src/lib/*, endpoint de revelado bajo sesión admin',
+    cubiertoPor: ['unitario', 'codeql', 'npm-audit'],
+    refuerzoPendiente: 'Que el secreto nunca aparezca en SSR ni en listados es hoy disciplina de código — no hay un test que lo garantice.',
+  },
+  {
+    id: 'auth',
+    nombre: 'Autenticación (admin OAuth+allowlist, portal scrypt)',
+    nivel: 3,
+    porque: 'Un fallo da acceso no autorizado al panel de control o a los datos de un cliente en el portal.',
+    archivos: 'src/middleware.ts, src/lib/portal/*',
+    cubiertoPor: ['integracion', 'e2e', 'dast'],
+    refuerzoPendiente: 'Falta un caso negativo explícito: allowlist revocada a mitad de una sesión ya activa.',
+  },
+  {
+    id: 'middleware-seguridad',
+    nombre: 'Middleware de seguridad (clasificador, rate limit, blocklist)',
+    nivel: 3,
+    porque: 'Un fallo permite el bypass de un atacante. El diseño fail-open acota el daño a «no protege», nunca a «tumba el sitio».',
+    archivos: 'src/lib/security/*',
+    cubiertoPor: ['unitario', 'integracion', 'chaos', 'dast'],
+  },
+  {
+    id: 'observabilidad',
+    nombre: 'Micro-SIEM, crons, notificaciones',
+    nivel: 2,
+    porque: 'Un fallo pierde visibilidad operativa, no compromete datos directamente — proporcional al no-op silencioso con que ya están diseñados.',
+    archivos: 'src/lib/notify.ts, src/pages/api/cron/*',
+    cubiertoPor: ['unitario', 'monitoreo'],
+  },
+  {
+    id: 'contenido-publico',
+    nombre: 'Contenido público (/notes, /status, /tools)',
+    nivel: 1,
+    porque: 'Un fallo es inconveniencia visual. Nada operativo ni financiero depende de que estas páginas rendericen bien.',
+    archivos: 'src/pages/*.astro (rutas públicas)',
+    cubiertoPor: ['cobertura', 'a11y'],
+  },
+]
+
+// ── Procesos del ciclo de vida (IEEE 1012, cláusula 6) ──────────────────────
+// El estándar no ata las tareas de V&V a "niveles de prueba" sino a fases del
+// ciclo de vida del software. Este proyecto cubre casi todas sin haberlas
+// nombrado así — esta tabla es esa traducción.
+
+export type ProcesoCicloVida = {
+  id: string
+  nombre: string
+  tareaVV: string
+  dondeEnRepo: string
+}
+
+export const PROCESOS_CICLO_VIDA: ProcesoCicloVida[] = [
+  { id: 'gestion', nombre: 'Gestión', tareaVV: 'Plan de V&V y asignación de nivel de integridad por riesgo', dondeEnRepo: 'Esta página + docs/plan-*.md' },
+  { id: 'adquisicion', nombre: 'Adquisición / suministro', tareaVV: 'Auditoría de dependencias y librerías de terceros', dondeEnRepo: 'npm audit, CodeQL' },
+  { id: 'concepto', nombre: 'Desarrollo — Concepto', tareaVV: 'Evaluación de la necesidad real antes de escribir código', dondeEnRepo: '/docs/casos-de-uso' },
+  { id: 'requisitos', nombre: 'Desarrollo — Requisitos', tareaVV: 'Trazabilidad de cada requisito a una prueba concreta', dondeEnRepo: '/docs/historias-de-usuario, /docs/requerimientos-no-funcionales' },
+  { id: 'diseno', nombre: 'Desarrollo — Diseño', tareaVV: 'Evaluación de interfaces contra su especificación', dondeEnRepo: 'Contratos Zod (tests/contracts.test.ts)' },
+  { id: 'implementacion', nombre: 'Desarrollo — Implementación', tareaVV: 'Revisión del código fuente y de sus propias pruebas', dondeEnRepo: 'Unitarias + mutation testing' },
+  { id: 'prueba', nombre: 'Desarrollo — Prueba', tareaVV: 'Generación y ejecución de casos de prueba', dondeEnRepo: 'Unitarias, integración, e2e' },
+  { id: 'instalacion', nombre: 'Desarrollo — Instalación', tareaVV: 'Auditoría de configuración tras el despliegue', dondeEnRepo: 'job verify-production, health checks' },
+  { id: 'operacion', nombre: 'Operación', tareaVV: 'Monitoreo continuo y detección de anomalías', dondeEnRepo: '8 monitores + micro-SIEM' },
+  { id: 'mantenimiento', nombre: 'Mantenimiento', tareaVV: 'Análisis de impacto de cada cambio antes de fusionarlo', dondeEnRepo: 'Suite de regresión en cada push' },
+]
+
 export const GLOSARIO_VV = [
   { termino: 'IEEE 1012', def: 'El estándar que formaliza la distinción verificación/validación para software (Verification and Validation Plans). No define herramientas, solo el marco de preguntas.' },
   { termino: 'V-model', def: 'Representación clásica del ciclo de vida donde cada etapa de construcción tiene su etapa de verificación espejo. Aquí no se sigue el modelo en cascada, pero la pregunta de cada espejo sigue aplicando.' },
