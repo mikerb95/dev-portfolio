@@ -57,29 +57,35 @@ const planes = [
 // Perfiles del bloque "¿esto es para ti?": dolor concreto + resultado, en el
 // idioma del cliente, no en el del ingeniero.
 const perfiles = [
+  // Clases de color explícitas (no interpoladas): Tailwind solo genera las
+  // clases que ve escritas completas en el código fuente.
   {
     titulo: 'Tienes un negocio local',
     dolor: 'La gente te encuentra en redes, pero no tienes dónde mandarlos.',
     resultado: 'Una página que sale en Google y recibe clientes por WhatsApp.',
-    color: 'ember',
+    dot: 'bg-ember',
+    texto: 'text-ember',
   },
   {
     titulo: 'Eres profesional independiente',
     dolor: 'Te recomiendan de boca en boca, pero no hay nada que dé confianza online.',
     resultado: 'Una web que te hace ver serio y agenda tus citas.',
-    color: 'lime',
+    dot: 'bg-lime',
+    texto: 'text-lime',
   },
   {
     titulo: 'Estás emprendiendo',
     dolor: 'Tienes la idea y las ganas, pero no un lugar propio en internet.',
     resultado: 'Tu marca con cara profesional desde el día uno, sin gastar de más.',
-    color: 'violet',
+    dot: 'bg-violet',
+    texto: 'text-violet',
   },
   {
     titulo: 'Ya tienes una empresa',
     dolor: 'Tu web se ve vieja o no vende, y actualizarla es un dolor de cabeza.',
     resultado: 'Un sitio renovado con catálogo, reservas o pagos que sí funciona.',
-    color: 'cyan',
+    dot: 'bg-cyan',
+    texto: 'text-cyan',
   },
 ]
 
