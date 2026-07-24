@@ -716,18 +716,18 @@ export const GLOSARIO = [
 ]
 
 // Fallback de las métricas cuando la query a ci_runs no devuelve nada.
-// Medición real del 22 jul 2026 (npx vitest run --coverage), idéntica a la que
-// reporta el pipeline: 1168/2164 líneas de src/lib/**.
+// Medición real del 24 jul 2026 (npx vitest run --coverage), idéntica a la que
+// reporta el pipeline: 1215/2212 líneas de src/lib/**.
 export const METRICAS_REFERENCIA = {
-  fecha: '22 jul 2026',
-  tests: 498,
-  suites: 191,
-  archivos: 38,
+  fecha: '24 jul 2026',
+  tests: 521,
+  suites: 201,
+  archivos: 40,
   e2e: 45,
   e2eSpecs: 6,
-  coberturaLineas: 53.97,
-  coberturaRamas: 55.13,
-  coberturaFunciones: 52.76,
+  coberturaLineas: 54.92,
+  coberturaRamas: 55.89,
+  coberturaFunciones: 53.95,
   niveles: NIVELES.length,
 }
 
