@@ -1,6 +1,6 @@
 // Contenido de /docs/verificacion-validacion.
 //
-// No duplica los 14 niveles de src/data/testing.ts: los reclasifica bajo el
+// No duplica los 15 niveles de src/data/testing.ts: los reclasifica bajo el
 // marco IEEE 1012 (verificación vs. validación) y añade la razón de por qué
 // cada uno cae de un lado o del otro. La página importa NIVELES directamente
 // para pregunta/herramienta/archivos; este archivo solo aporta la etiqueta y
