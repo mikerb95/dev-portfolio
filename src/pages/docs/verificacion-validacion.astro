@@ -26,7 +26,31 @@ const secciones = [
   { id: 'validacion', t: 'Validación' },
   { id: 'frontera', t: 'La frontera' },
   { id: 'trazabilidad', t: 'Trazabilidad' },
+  { id: 'comandos', t: 'Cómo correrlas' },
   { id: 'glosario', t: 'Glosario' },
+]
+
+const COMANDOS = [
+  {
+    cmd: 'npm test',
+    tipo: 'verificacion' as TipoVV,
+    para: 'Corre la suite de Vitest una sola vez: pruebas unitarias (funciones puras en src/lib/) y de integración (las que sí tocan una libSQL temporal). Es el comando de verificación más barato y el que más rápido detecta una regresión.',
+  },
+  {
+    cmd: 'npm run test:coverage',
+    tipo: 'verificacion' as TipoVV,
+    para: 'La misma suite de Vitest, pero midiendo qué porcentaje de líneas y ramas del código ejecuta al menos un test. No agrega pruebas nuevas — sirve para ver qué partes del repositorio nadie está verificando todavía.',
+  },
+  {
+    cmd: 'npm run test:e2e',
+    tipo: 'validacion' as TipoVV,
+    para: 'Playwright abre un navegador real y simula a una persona completando un flujo completo (login, cobro, portal) contra una base de datos desechable. Es validación porque el oráculo es "¿esto le sirve a alguien navegando de verdad?", no la firma de una función.',
+  },
+  {
+    cmd: 'npx astro check',
+    tipo: 'verificacion' as TipoVV,
+    para: 'Verificación de tipos con TypeScript sobre todo el proyecto (páginas .astro incluidas). No es una suite de tests en sentido estricto, pero se corre junto porque detecta errores antes de que lleguen a build: propiedades que no existen, imports rotos, valores posiblemente undefined.',
+  },
 ]
 ---
 
