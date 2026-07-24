@@ -47,7 +47,7 @@ después de escribir este plan.
 | 9 | Accesibilidad | axe-core + Playwright | `scripts/a11y-scan.mjs` | violaciones WCAG reales ingeridas al LAB | `a11y.yml`: push y PR |
 | 10 | Verificación en producción | `curl` + `/api/health` + `vercel rollback` | job `verify-production` de `ci.yml` | 3 health checks, 2/3 para aprobar | solo push a `main` |
 | 11 | Chaos engineering | flags en BD + middleware | `src/lib/chaos.ts`, `/admin/lab/chaos` | 12 tests que prueban al propio chaos | manual, TTL acotado |
-| 12 | Monitoreo sintético continuo | monitores propios + cron externo | `/admin/monitors`, `/status` | 8 monitores, checks ~5 min | cron-job.org, 24/7 |
+| 12 | Monitoreo sintético continuo | monitores propios + cron externo | `/admin/monitors`, `/status` | 10 monitores, checks ~5 min | cron-job.org, 24/7 |
 | 13 | Usabilidad con usuarios | metodología de 6 pasos | `/docs/usability-testing` | 1 flujo (descarga de CV) | manual |
 | 14 | DAST (análisis dinámico) | OWASP ZAP baseline | `.github/workflows/dast.yml`, `parseZapReport` | alertas del reporte ingeridas al LAB | contra el preview, nunca contra prod |
 | 15 | Carga (k6) | *pendiente* | `docs/plan-lab-fases-pendientes.md`, Fase 5 | — | bloqueado por `VERCEL_TOKEN` |

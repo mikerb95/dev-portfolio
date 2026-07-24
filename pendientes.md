@@ -84,32 +84,31 @@ Los dos puntos de higiene del mismo plan ya están cubiertos:
       `scripts/register-portal-monitor.mjs` para darlo de alta. Ver el paso
       pendiente justo abajo.
 
-### ⚠️ Alta del monitor del portal — pendiente, y el orden importa
+### ✅ Alta del monitor del portal (24 jul 2026)
 
-El código está listo, pero **el monitor todavía no está dado de alta**, a
-propósito: registrarlo antes de que `/api/portal/health` exista en producción
-haría que el primer chequeo diera 404 → caída → incidente abierto y push a ntfy
-por un servicio que en realidad está sano.
+Dado de alta con `node scripts/register-portal-monitor.mjs` **después** de que
+el endpoint estuviera desplegado — ese orden importa: al revés, el primer
+chequeo habría dado 404 → caída → incidente y push a ntfy por un servicio sano.
+Verificado que `https://codebymike.tech/api/portal/health` responde 200 con el
+`"ok":true` que el monitor espera.
 
-Después del próximo deploy, una de estas dos:
+Al hacerlo aparecieron **dos** monitores del portal: otra sesión ya había creado
+uno apuntando a `/portal/login`. Se conservaron ambos con nombres distintos
+porque cazan fallos distintos, y `/status` es público:
 
-```sh
-node scripts/register-portal-monitor.mjs      # idempotente, identifica por URL
-```
+| id | Nombre | URL | Qué caza |
+|---|---|---|---|
+| 10 | `Portal (página de login)` | `/portal/login` | que esa página concreta renderice con su contenido |
+| 11 | `Portal de clientes` | `/api/portal/health` | que la cadena de datos del portal funcione |
 
-o el formulario de `/admin/monitors` con estos valores:
+- [ ] Confirmar en `/status` que el id 11 pasa de `unknown` a verde tras el
+      primer disparo del cron (~5 min).
+- [x] Cifra de monitores sincronizada (8 → **10**) en `README.md`,
+      `src/data/testing.ts`, `src/data/documentacion.ts` y `plan-testing-docs.md`.
 
-| Campo | Valor |
-|---|---|
-| Nombre | `Portal de clientes` |
-| URL | `https://codebymike.tech/api/portal/health` |
-| Texto esperado | `"ok":true` |
-| Umbral de latencia | `2000` ms |
-
-- [ ] Correr el alta tras el deploy y confirmar en `/status` que aparece en verde.
-- [ ] Al hacerlo pasan a ser **9 monitores**, no 8: la cifra está escrita a mano
-      en `README.md`, `src/data/testing.ts` (nivel «Monitoreo sintético») y
-      `src/data/documentacion.ts` (RF-401).
+> El monitor id 5 (`ResidentialAccess`) lleva tiempo en `down`. No es del portal,
+> pero conviene decidir si el servicio sigue vivo o el monitor sobra: un rojo
+> permanente en `/status` enseña a ignorar el rojo.
 
 ### LAB — Fase 5: load testing con k6
 
