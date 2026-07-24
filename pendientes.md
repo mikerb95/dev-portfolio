@@ -1,167 +1,148 @@
-# Pendientes — Panel de Control CodeByMike
+# Pendientes — CodeByMike
 
-> Estado (jul 2026): el **código de las 7 fases está completo** y la **configuración de entorno
-> ya quedó hecha** (ver historial abajo). La base Turso está migrada; ya tiene proyectos con
-> portadas y tasas FX cargadas.
-
----
-
-## ✅ Configuración completada (jul 2 2026)
-
-1. **`ENCRYPTION_KEY`** — en `.env` local y en Vercel (Production + Preview), mismo valor (64 hex).
-   ⚠️ No cambiarla una vez haya datos cifrados. Confirmado activo en prod (el endpoint cron
-   responde 200, lo que prueba que las env vars ya cargan en las funciones).
-2. **OAuth GitHub** — `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` en `.env` local y Vercel Production.
-   - [ ] (Opcional) limpiar `DEV_USER`/`DEV_PASSWORD` de `.env` y Vercel: sobran desde que se
-     cambió al provider de GitHub.
-3. **Tasas de cambio** — cargadas en `app_settings`: `fx_COP_per_USD=3401.62`,
-   `fx_EUR_per_USD=0.8783` (jul 2 2026). Actualizables desde `/admin/settings`.
-4. **`CRON_SECRET`** — generado, en `.env` local y Vercel Production. Verificado en prod
-   (200 con Bearer correcto, 401 sin header).
-
-## ✅ Monitores (jul 2 2026) — funcionando en producción
-
-- 8 monitores dados de alta en `monitors`: los 7 proyectos (por `preview_url`) + codebymike.tech.
-- Motor verificado end-to-end contra prod: `GET https://codebymike.tech/api/cron/uptime-check`
-  con Bearer → 8/8 `up`, latencias y SSL registrados en `monitor_checks`.
-- **Job de cron-job.org creado** ("Cron Job Monitor CodeByMike", cada 5 min).
-  - [ ] Confirmar en el EDIT del job que el header `Authorization: Bearer <CRON_SECRET>` quedó
-    guardado (si falta, el HISTORY mostrará 401 en rojo).
-
-## ✅ Notificaciones push (jul 2 2026)
-
-- Canal **ntfy.sh** (gratis, sin features pagas). Topic secreto `NTFY_TOPIC` en `.env` local y
-  Vercel Production. El cron dispara push en cada transición (caída / recuperación / SSL).
-- **Bug corregido**: el header `Title` de ntfy llevaba emoji → `fetch` lanzaba TypeError y
-  `sendPush` lo tragaba en silencio (ninguna alerta llegaba nunca). Fix en `src/lib/notify.ts`
-  (`headerSafe()`): quita emoji del header y codifica UTF-8→latin1 para conservar acentos.
-- Verificado end-to-end en local (monitor de prueba → push entregado con título correcto).
-- [ ] **Acción tuya**: instalar la app **ntfy** en el celular y suscribirte al topic
-  `NTFY_TOPIC` (valor en `.env`). Sin suscribirte, las alertas se envían pero no las ves.
-- ⚠️ En prod las alertas empiezan a llegar tras el **próximo deploy** (que carga `NTFY_TOPIC`
-  y el fix de `notify.ts`). El push de este repo ya dispara ese deploy.
-- (Opcional) Email vía Resend: falta `RESEND_API_KEY` + `ALERT_EMAIL_TO` + verificar dominio.
-
-## ⚠️ Pendiente real (menor)
-
-- [ ] Verificar en prod que la bóveda cifra/revela credenciales en `/admin/projects/[id]` y que
-  los costos en COP suman al P&L en `/admin/costs` (probar creando un servicio con secreto).
+> Estado al **24 jul 2026**. Este archivo es el inventario vivo de lo que falta:
+> acciones manuales (variables de entorno, altas en servicios externos,
+> verificaciones en producción) y trabajo de código todavía sin hacer. Lo ya
+> resuelto se resume al final, sin detalle, para no confundir historia con
+> pendientes.
+>
+> Los planes de cada módulo viven en `docs/plan-*.md` y se actualizan al
+> implementar. El roadmap general está en `docs/plan-roadmap-2026-07.md`.
 
 ---
 
-## Qué se construyó (contexto para retomar)
+## 1. Variables de entorno faltantes en producción
 
-Evolución del CRM a **panel de control completo**, mobile-first, sobre lo existente
-(Astro 6 SSR + Turso/Drizzle + Auth.js GitHub + Tailwind 4):
+Estado real de `dev-portfolio` (proyecto de Vercel que sirve `codebymike.tech`)
+consultado el 24 jul 2026. **Todo lo que falta degrada en silencio** — ese es el
+diseño, pero conviene saber qué está apagado:
 
-- **Costos & P&L** — `/admin/costs`: costo por servicio (multi-moneda → USD base), ciclo,
-  renovaciones con alerta, responsable de pago; margen por proyecto/cliente en dashboard y detalle.
-  Libs: `src/lib/money.ts`, `src/lib/pnl.ts`, `src/lib/services.ts`.
-- **Bóveda cifrada** — credenciales por servicio en `project_services.secrets` (AES‑256‑GCM,
-  `src/lib/crypto.ts`); revelado bajo demanda (`/api/admin/services/[id]/secrets.ts`). Nunca en listados/SSR.
-- **Seguimiento/CRM** — `/admin/seguimiento`: bitácora + tablero de pendientes (vencidos/próximos).
-  Tabla `interactions`, `src/lib/interactions.ts`, componente `InteractionTimeline.astro`.
-- **Shell mobile-first** — `AdminLayout.astro` con drawer CSS-only; `Sidebar.astro` reagrupado;
-  tablas → tarjetas en móvil (`FinanceTable`, `CostTable`).
-- **Seguridad** — allowlist `ALLOWED_GITHUB_LOGINS` revalidada en `src/middleware.ts` + headers.
-- **Datos** — schema en `src/db/schema.ts`; migración `drizzle/0001_huge_the_captain.sql` (ya aplicada).
-- **Armonización** — `repos.astro` (restyle + metadata), `finances.astro`, `projects/index.astro`,
-  color maps de `projects/[id].astro`; locale unificado a `es-CO`.
+| Variable | Qué pasa sin ella | Prioridad |
+|---|---|---|
+| `TURSO_DEMO_URL` + `TURSO_DEMO_AUTH_TOKEN` | **La demo pública no existe**: `/demo` responde 404 y el panel se comporta como si nunca se hubiera construido. Es el feature más visible del portafolio para alguien sin cuenta. | **Alta** |
+| `SECURITY_IP_SALT` | Los eventos del micro-SIEM guardan el hash de la IP sin salt: sigue sin haber IPs en claro, pero el hash es reversible por diccionario (hay ~4.300 millones de IPv4). | Media |
+| `RESEND_API_KEY` + `ALERT_EMAIL_TO` | Las alertas solo salen por ntfy, sin canal de email de respaldo. | Baja |
+| `PSI_API_KEY` | El analizador de sitios (`/lab/site-check`) pierde los datos de PageSpeed Insights. | Baja |
 
-Verificación hecha: `npm run build` OK · tablas/columnas nuevas confirmadas en Turso ·
-9 páginas admin renderizan 200 (probado con bypass temporal, ya revertido) · sin errores en runtime.
+Ya están puestas y verificadas: `ENCRYPTION_KEY`, `CRON_SECRET`, `NTFY_TOPIC`,
+`LAB_INGEST_TOKEN`, `COBRO_HISTORY_SECRET`, las tres de Wompi, las de GitHub
+OAuth y las de Turso.
+
+- [ ] Limpieza opcional: `DEV_USER` y `DEV_PASSWORD` siguen en Vercel (Preview y
+      Production) desde antes de que el login pasara a GitHub OAuth. Ya no las
+      lee nadie.
+
+## 2. Acciones manuales fuera del repo
+
+- [ ] **`VERCEL_TOKEN` en GitHub Secrets.** Es el único bloqueo real que queda en
+      el LAB: sin él, el rollback automático solo avisa en vez de revertir, y la
+      Fase 5 (load testing con k6) no tiene un target de preview estable contra
+      el que correr.
+- [ ] **Cron `security-rollup` en cron-job.org** con `Authorization: Bearer
+      CRON_SECRET`. Sin él, los agregados de seguridad no se calculan y la
+      detección de anomalías se queda sin baseline.
+- [ ] **3 reglas custom del WAF** en el dashboard de Vercel (detalle en
+      `docs/plan-security-observability.md`, Fase 6).
+- [ ] **Altas en Google Search Console y Bing Webmaster Tools.** La capa técnica
+      de SEO (JSON-LD, sitemap, RSS, IndexNow, manifest) está completa desde jul
+      2026; falta el alta manual que ningún código puede hacer.
+- [ ] **App de ntfy en el celular** suscrita al topic. Las alertas se envían
+      igual; sin suscripción no se ven.
+- [ ] Confirmar en el EDIT del job de uptime en cron-job.org que el header
+      `Authorization` quedó guardado (si falta, el HISTORY muestra 401 en rojo).
+
+## 3. Verificaciones pendientes en producción
+
+- [ ] Bóveda de credenciales: crear un servicio con secreto en
+      `/admin/projects/[id]` y confirmar que cifra y revela correctamente.
+- [ ] P&L: comprobar que un costo en COP suma bien al total en `/admin/costs`.
+- [ ] Cobros de campo: hacer un cobro real de punta a punta (`/cobrar` → mensaje
+      de WhatsApp → `/c/[code]` → pago → `/mis-pagos`).
+
+## 4. Trabajo de código pendiente
+
+### Portal de clientes en tiempo real — plan cerrado, sin empezar
+
+Es el gap más grande. El portal está completo y auditado (Fases 0–7), pero
+**nada se actualiza solo**: un cliente con el portal abierto no ve la respuesta a
+su mensaje ni que su monitor se cayó hasta que recarga a mano. El dato *es* de
+tiempo real; la interfaz no.
+
+Diseño ya decidido en `docs/plan-portal-tiempo-real.md`: polling de un digest
+barato cada 20 s (no SSE ni WebSockets — Turso no tiene pub/sub, así que el
+servidor tendría que sondear igual y encima pagaría la conexión abierta), con
+pausa cuando la pestaña no está visible, backoff ante error y fail-open
+silencioso.
+
+Dos puntos de higiene del mismo plan:
+- [ ] El portal no tiene monitor propio en `/status` — es el único subsistema del
+      stack que no se vigila a sí mismo.
+- [ ] El portal no tiene artículo en `/notes`, siendo el feature más grande del
+      repo (la regla transversal del roadmap dice que cada etapa mayor termina
+      con el suyo).
+
+### LAB — Fase 5: load testing con k6
+
+Última fase del laboratorio. Bloqueada por `VERCEL_TOKEN` (ver arriba). Detalle
+en `docs/plan-lab-fases-pendientes.md`.
+
+### Panel de briefings — Fases 2 a 5
+
+La Fase 1 (checklist de ítems, soft delete, timeline de actividad) se entregó el
+6 jul. Faltan, en el orden de valor acordado en `docs/plan-briefings.md`:
+
+- **Fase 3** — link público `/briefing/[token]` con aprobación firmada
+  (nombre + email + timestamp), comentarios del cliente y versionado.
+- **Fase 2** — kanban, filtros y prioridad en el panel.
+- **Fase 4** — intake público y conversión de briefing a proyecto.
+- **Fase 5** — recordatorios por cron y funnel de conversión.
+
+> Nota: parte de lo que la Fase 3 imaginaba como "portal del cliente" ya existe
+> de otra forma —`/portal`, con cuentas reales— así que conviene releer el plan
+> antes de implementarlo y decidir qué se comparte con el portal y qué sigue
+> siendo un link público sin sesión.
+
+### Etapas del roadmap sin empezar
+
+De `docs/plan-roadmap-2026-07.md`, quedan las etapas 9 a 11:
+`/changelog` público generado desde los commits, `/architecture` renovada como
+tour guiado del sistema, y el briefing semanal con IA.
+
+### Mejora menor arrastrada
+
+- [ ] `src/pages/admin/projects/[id].astro`: quedan grises `zinc-*` internos sin
+      migrar a la paleta `ink-*` (visualmente cercanos; los badges de estado y
+      los tabs ya se migraron).
 
 ---
 
-## Cómo retomar (entorno)
+## 5. Cómo retomar (entorno)
 
-- **Node**: el shell default trae v20 y rompe Astro. Anteponer el binario de nvm:
+- **Node ≥22.12.** El shell por defecto puede traer v20, que rompe Astro:
   ```sh
-  export PATH="$HOME/.nvm/versions/node/v22.22.3/bin:$PATH"
+  source ~/.nvm/nvm.sh && nvm use 22
   ```
 - Build / dev: `npm run build` · `npm run dev` (localhost:4321).
-- Migraciones: cargar credenciales antes de drizzle-kit:
+- Migraciones (solo aditivas):
   ```sh
   export $(grep -E '^TURSO_' .env | xargs) && npx drizzle-kit generate   # y luego migrate
   ```
+- Antes de depurar algo raro en dev (sobre todo el aislamiento de la demo),
+  revisar `ps aux` por sesiones de agente concurrentes sobre este mismo checkout
+  y reiniciar `astro dev` desde cero: el HMR no es fiable para verificar
+  aislamiento.
 
-## Mejora futura (opcional, no urgente)
+## 6. Lo ya resuelto (resumen, sin detalle)
 
-- [ ] `src/pages/admin/projects/[id].astro` (922 líneas): quedan grises `zinc-*` internos sin migrar
-  a la paleta `ink-*` (son visualmente cercanos). Se migraron los badges de estado y los tabs.
+Panel de control completo (costos y P&L multi-moneda, bóveda AES-256-GCM,
+seguimiento comercial, backups) · monitoreo propio con 8 monitores y alertas
+push · micro-SIEM completo (clasificador, rate limit durable, blocklist con
+escalado, anomalías por z-score, vitrina pública) · LAB Fases 0–4, 6 y 7
+(CI/CD con rollback, pagos idempotentes, chaos, SLOs, SAST, DAST, a11y,
+mutation testing y contratos) · demo read-only del panel · portal de clientes
+Fases 0–7 · cobros de campo por WhatsApp · suite e2e con Playwright en CI ·
+documentación pública en `/docs` (requisitos, UML, kanban, testing, V&V,
+pipeline en vivo) · landing comercial `/paginas-web`.
 
----
-
-## 📋 Panel de Briefings — plan en curso (jul 6 2026)
-
-Plan completo con comparación vs. Zoho en `docs/plan-briefings.md`. Orden de valor: **Fase 1 → 3 → 2 → 4 → 5**.
-
-### ✅ Fase 1 — Fundamentos (completada jul 6 2026)
-
-- `briefing_items` (checklist requerimiento/entregable/exclusión), `deletedAt` en `briefings`
-  (soft delete), `briefingId` en `interactions` (timeline). Migraciones `drizzle/0008`, `0009`.
-- Columnas viejas `requirements`/`deliverables` (texto plano) eliminadas — no había datos que migrar.
-- APIs actualizadas (`src/pages/api/admin/briefings/**`): soft delete, validación manual (sin zod,
-  el proyecto no lo usa en ningún lado más), nuevos endpoints `[id]/items` y `[id]/items/[itemId]`.
-- UI: checklist con tachado en `[id].astro` + sección de Actividad (timeline de `interactions`).
-- Verificado: `npm run build` OK + capa de datos probada directo contra Turso (insert, cascada,
-  soft-delete). **No verificado en navegador** — el login admin usa GitHub OAuth y no hay forma
-  de automatizarlo sin credenciales; falta que Mike lo pruebe manualmente en `/admin/briefings`.
-
-### ⏭️ Próxima sesión — Fase 3: Portal del cliente (mayor diferenciador)
-
-1. `shareToken` en `briefings` (mismo patrón que `presentations.shareToken`) + `sharedAt`,
-   `approvedAt`, `approvedByName`, `approvedByEmail`, `validUntil`.
-2. Página pública `/briefing/[token]` (branding tipo `/status`/slides): objetivo, alcance, ítems,
-   presupuesto, condiciones.
-3. Aprobación con firma ligera (nombre + email + checkbox + timestamp + IP) y comentarios del
-   cliente (`briefing_comments`).
-4. Eventos automáticos → timeline (`interactions.briefingId`) + push ntfy ("visto", "comentó",
-   "aprobó").
-5. Versionado (`briefing_versions`): snapshot al editar campos materiales tras estado `enviado`.
-
-### Después: Fase 2 (kanban+filtros+prioridad), Fase 4 (intake público + convertir a proyecto),
-Fase 5 (recordatorios cron + funnel de conversión). Detalle de cada una en `docs/plan-briefings.md`.
-
----
-
-## 🎞️ Presentaciones: quitar Microsoft, usar el reproductor nativo (elegido jul 6 2026)
-
-**Contexto:** el tab "Presentación" de `src/pages/admin/projects/[id].astro` (líneas ~640-678)
-previsualiza el `.pptx` embebiendo el visor de Office Online
-(`https://view.officeapps.live.com/op/embed.aspx?...`). Esto (a) depende de Microsoft y
-(b) lo rompe la CSP nueva del middleware (`default-src 'self'` sin `frame-src` bloquea el iframe;
-el spinner "Cargando presentación…" se queda girando para siempre).
-
-**Decisión:** reemplazarlo por el **reproductor de slides nativo que ya existe** (imágenes en
-Vercel Blob). Ese sistema ya está construido y la tabla `presentations` ya tiene `projectId`:
-- `presentations` / `presentation_slides` (schema.ts:184-200) — ya enlazan por proyecto.
-- `src/pages/admin/slides/[id]/present.astro` — modo proyector (renderiza `<img>` por slide). Ya existe.
-- `src/pages/admin/slides/[id]/control.astro` — control remoto con thumbnails. Ya existe.
-- `src/pages/api/slides/create.ts` — crea presentación para un `projectId`. Ya existe.
-- `src/pages/api/slides/[id]/upload.ts` — sube slides como PNG a Vercel Blob. Ya existe.
-- `src/pages/api/slides/[id]/state.ts` — sync del slide actual. Ya existe.
-
-**Trabajo a hacer** (solo cablear el tab; el back ya está):
-1. En `projects/[id].astro`, lado servidor: reemplazar la lógica `hasPptx`/`pptxPublicPath`
-   (busca `public/docs/{slug}.pptx`) por una consulta a `presentations` where `projectId = project.id`
-   + sus `presentation_slides`.
-2. Tab "Presentación":
-   - Si el proyecto **tiene** presentación: grilla de miniaturas (imágenes) + botones a
-     "Modo proyector" (`/admin/slides/{id}/present`) y "Control remoto" (`/admin/slides/{id}/control`),
-     + control para subir más slides (POST `/api/slides/{id}/upload`).
-   - Si **no** tiene: botón "Crear presentación" → POST `/api/slides/create` con `projectId` + título.
-3. **Borrar el `<iframe>` de Office Online** por completo → elimina Microsoft y arregla el break de CSP.
-
-**No hay que tocar la CSP:** ya permite las imágenes de Blob (`img-src 'self' data: https:`).
-
-**Nota de flujo:** el deck deja de ser un `.pptx`; se exporta cada slide como PNG
-(PowerPoint/Keynote/Google Slides → "Exportar como imágenes") y se sube desde el tab.
-Las presentaciones viejas en `.pptx` (`public/docs/*.pptx`) no migran solas: hay que recrearlas.
-Decisión abierta: ¿mantener el botón de descarga del `.pptx` si el archivo aún existe? (a definir).
-
-**Relacionado (misma sesión, revisión de seguridad OWASP):** la CSP se agregó en `src/middleware.ts`
-y su string está **duplicado** en la rama admin y la pública (candidato a extraer a una constante).
-Aparte, el `<link>` a Google Fonts en `AdminLayout.astro` también lo bloquea la CSP pero es
-cosmético (las fuentes se self-hostean vía `@fontsource` en `global.css`); se puede quitar el
-`<link>` externo. Ambos son menores, no urgentes.
+El historial narrado de cada iteración vive en
+`src/data/iteraciones-portfolio.ts` y se ve en `/docs/kanban`.
