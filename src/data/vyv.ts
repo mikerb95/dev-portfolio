@@ -256,7 +256,9 @@ export const PROCESOS_CICLO_VIDA: ProcesoCicloVida[] = [
   { id: 'implementacion', nombre: 'Desarrollo — Implementación', tareaVV: 'Revisión del código fuente y de sus propias pruebas', dondeEnRepo: 'Unitarias + mutation testing' },
   { id: 'prueba', nombre: 'Desarrollo — Prueba', tareaVV: 'Generación y ejecución de casos de prueba', dondeEnRepo: 'Unitarias, integración, e2e' },
   { id: 'instalacion', nombre: 'Desarrollo — Instalación', tareaVV: 'Auditoría de configuración tras el despliegue', dondeEnRepo: 'job verify-production, health checks' },
-  { id: 'operacion', nombre: 'Operación', tareaVV: 'Monitoreo continuo y detección de anomalías', dondeEnRepo: '8 monitores + micro-SIEM' },
+  // Sin cifra de monitores: ese número ya vive en NIVELES.monitoreo.volumen
+  // (testing.ts) y duplicarlo acá lo dejaría desactualizado en silencio.
+  { id: 'operacion', nombre: 'Operación', tareaVV: 'Monitoreo continuo y detección de anomalías', dondeEnRepo: 'Monitoreo sintético + micro-SIEM' },
   { id: 'mantenimiento', nombre: 'Mantenimiento', tareaVV: 'Análisis de impacto de cada cambio antes de fusionarlo', dondeEnRepo: 'Suite de regresión en cada push' },
 ]
 
