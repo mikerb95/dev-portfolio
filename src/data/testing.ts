@@ -268,14 +268,14 @@ export const PIRAMIDE: EstratoPiramide[] = [
   {
     id: 'integracion',
     nombre: 'Integración',
-    tests: 70,
+    tests: 122,
     velocidad: 'segundos',
     proposito: 'Base de datos real y desechable: transacciones, UNIQUE y concurrencia de verdad.',
   },
   {
     id: 'unitario',
     nombre: 'Unitarias',
-    tests: 383,
+    tests: 394,
     velocidad: 'milisegundos',
     proposito: 'Lógica pura, sin BD ni red. Baratas: por eso son la mayoría.',
   },
