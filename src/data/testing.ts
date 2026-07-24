@@ -238,7 +238,7 @@ export const NIVELES: Nivel[] = [
 ]
 
 // ── Pirámide ────────────────────────────────────────────────────────────────
-// Solo los 4 niveles que forman la pirámide clásica. Los otros 10 se muestran
+// Solo los 4 niveles que forman la pirámide clásica. Los otros 11 se muestran
 // aparte a propósito: presentarlos como «más pruebas» mentiría sobre su
 // naturaleza (no verifican comportamiento, verifican propiedades del sistema).
 
