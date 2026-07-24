@@ -144,6 +144,55 @@ const COMANDOS = [
     ))}
   </div>
 
+  {/* ── § 1.5 Nivel de integridad ───────────────────────────── */}
+  <h2 id="integridad" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Nivel de integridad: no todo merece el mismo rigor</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Verificación y validación responden <em>qué</em> se comprueba. IEEE 1012 responde una segunda pregunta,
+      independiente de esa: <em>cuánto</em> rigor exige cada parte del sistema. La clasifica en 4 niveles según
+      la <strong class="text-ink-50">consecuencia</strong> de que ese subsistema falle — no la probabilidad. A
+      mayor nivel, más tareas de V&amp;V son obligatorias. Aplicar el mismo esfuerzo de prueba a una página de
+      contenido y al motor de cobros no sería más riguroso: sería mal presupuestado.
+    </p>
+  </div>
+
+  <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-6">
+    {([4, 3, 2, 1] as NivelIntegridad[]).map((n) => (
+      <div class="glass rounded-2xl p-4 border border-white/10">
+        <div class="flex items-center gap-2 mb-1">
+          <span class={`w-2 h-2 rounded-full ${acentoIntegridad[n]}`} aria-hidden="true"></span>
+          <span class="text-[13px] font-mono uppercase tracking-wide text-ink-50">Nivel {n} · {INTEGRIDAD_LABEL[n].nombre}</span>
+        </div>
+        <p class="text-[12px] text-ink-300 leading-relaxed">{INTEGRIDAD_LABEL[n].consecuencia}</p>
+      </div>
+    ))}
+  </div>
+
+  <div class="grid gap-3 mb-12">
+    {SUBSISTEMAS.map((s) => (
+      <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+        <div class="flex items-center gap-2 flex-wrap mb-1.5">
+          <span class={`w-2 h-2 rounded-full ${acentoIntegridad[s.nivel]} shrink-0`} aria-hidden="true"></span>
+          <h3 class="text-[14px] font-medium text-ink-50">{s.nombre}</h3>
+          <span class="font-mono text-[11px] text-ink-300 ml-auto">nivel {s.nivel} · {INTEGRIDAD_LABEL[s.nivel].nombre}</span>
+        </div>
+        <p class="text-[12.5px] text-ink-200 leading-relaxed mb-2">{s.porque}</p>
+        <p class="text-[11.5px] font-mono text-ink-300 mb-2">{s.archivos}</p>
+        <div class="flex flex-wrap gap-1.5 mb-2">
+          {s.cubiertoPor.map((id) => {
+            const nivel = porId.get(id)
+            return nivel ? (
+              <span class="px-2 py-0.5 rounded-full text-[11px] text-ink-200 border border-white/10">{nivel.nombre}</span>
+            ) : null
+          })}
+        </div>
+        {s.refuerzoPendiente && (
+          <p class="text-[12px] text-ink-300 leading-relaxed italic">↳ Pendiente: {s.refuerzoPendiente}</p>
+        )}
+      </div>
+    ))}
+  </div>
+
   {/* ── § 2 Verificación ────────────────────────────────────── */}
   <h2 id="verificacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Verificación — {verificacion.length} niveles</h2>
   <div class="max-w-3xl mb-6">
