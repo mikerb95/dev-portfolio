@@ -41,7 +41,19 @@ export const GET: APIRoute = async ({ params }) => {
     db.select().from(finances).where(eq(finances.projectId, id)),
   ])
 
-  return new Response(JSON.stringify({ project, envVars, services, contacts, finances: financeRows }), { status: 200 })
+  // `db.select()` sin proyección trae también el contenido de la bóveda: hay que
+  // redactarlo antes de serializar. Los reveladores viven en sus propios
+  // endpoints (services/[id]/secrets, projects/[id]/envvars?id=), no acá.
+  return new Response(
+    JSON.stringify({
+      project,
+      envVars: sinValorCifradoLista(envVars),
+      services: sinSecretosLista(services),
+      contacts,
+      finances: financeRows,
+    }),
+    { status: 200 },
+  )
 }
 
 export const PUT: APIRoute = async ({ params, request }) => {

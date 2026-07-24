@@ -1,10 +1,12 @@
 # Instrucciones para Claude en este repositorio
 
-Portafolio + panel de control privado + laboratorio de ingeniería de Mike
-(@mikerb95, codebymike.tech). Astro 6 (SSR) + Turso/libSQL + Drizzle + Auth.js
-(GitHub OAuth) + Tailwind 4, desplegado en Vercel. Sin frameworks de frontend
-adicionales, sin servicios de pago de terceros más allá de Wompi: monitoreo,
-alertas, SLOs y observabilidad de seguridad son desarrollo propio.
+Portafolio + panel de control privado + portal de clientes + laboratorio de
+ingeniería de Mike (@mikerb95, codebymike.tech). Astro 7 (SSR) + Turso/libSQL +
+Drizzle + Auth.js (GitHub OAuth) + Tailwind 4, desplegado en Vercel. Sin
+frameworks de frontend adicionales, sin servicios de pago de terceros más allá
+de Wompi: monitoreo, alertas, SLOs y observabilidad de seguridad son desarrollo
+propio. Las únicas dependencias de UI son `lenis` (scroll suave), `gsap`
+(animaciones de entrada) y `mermaid` (diagramas de `/docs`).
 
 ## Regla no negociable: deploys y commits
 
