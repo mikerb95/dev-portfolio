@@ -233,6 +233,9 @@ const prefRows = Object.entries(NOTIFICATION_LABELS).map(([type, label]) => ({
     el.textContent = text
     el.className = `mt-3 text-[12px] ${ok ? 'text-lime' : 'text-ember'}`
     el.classList.remove('hidden')
+    // El color distingue éxito de fallo para quien ve la pantalla; para quien
+    // no la ve, el texto es idéntico — de ahí el prefijo explícito al anunciar.
+    window.portalAnnounce?.(ok ? text : `Error: ${text}`)
     setTimeout(() => el.classList.add('hidden'), 4000)
   }
 
