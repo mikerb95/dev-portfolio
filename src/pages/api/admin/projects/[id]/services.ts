@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ params, request }) => {
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning()
-    return new Response(JSON.stringify({ ...row, secrets: undefined }), { status: 201 })
+    return new Response(JSON.stringify(sinSecretos(row)), { status: 201 })
   } catch (e) {
     return new Response(JSON.stringify({ error: errMsg(e) }), { status: 500 })
   }
