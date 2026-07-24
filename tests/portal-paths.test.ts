@@ -49,6 +49,18 @@ describe('portal · clasificación de rutas', () => {
     it('tolera la barra final', () => {
       expect(isPortalPublicPath('/portal/login/')).toBe(true)
     })
+
+    it('deja pasar el health check, que lo sondea un monitor sin sesión', () => {
+      expect(isPortalPublicPath('/api/portal/health')).toBe(true)
+      expect(isPortalPublicPath('/api/portal/health/')).toBe(true)
+    })
+
+    it('el health check no abre nada por debajo suyo', () => {
+      // Es una entrada exacta, no un prefijo: una ruta futura que cuelgue de
+      // ahí debe nacer protegida como cualquier otra.
+      expect(isPortalPublicPath('/api/portal/health/detalle')).toBe(false)
+      expect(isPortalPublicPath('/api/portal/healthz')).toBe(false)
+    })
   })
 
   describe('integración con el rate limit', () => {
@@ -64,6 +76,13 @@ describe('portal · clasificación de rutas', () => {
       expect(isPortalAuthPath('/api/portal/logout')).toBe(false)
       expect(isPortalAuthPath('/portal/facturas')).toBe(false)
       expect(isAuthPath('/portal/facturas')).toBe(false)
+    })
+
+    it('el health check no cae en el límite estrecho de credenciales', () => {
+      // Si cayera ahí, el propio monitor podría agotar la cuota de la IP del
+      // cron y provocar la caída que dice estar vigilando.
+      expect(isPortalAuthPath('/api/portal/health')).toBe(false)
+      expect(isAuthPath('/api/portal/health')).toBe(false)
     })
   })
 })
