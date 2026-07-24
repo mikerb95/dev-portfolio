@@ -172,7 +172,7 @@ const upcoming = [
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
         <span>Ingeniería verificable</span>
       </div>
-      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
+      <h1 class="hero-line overflow-hidden text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
         Laboratorio de<br/>ingeniería.
       </h1>
       <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
@@ -446,3 +446,8 @@ const upcoming = [
 
   </div>
 </BaseLayout>
+
+<script>
+  import { initPageMotion } from '../../lib/motion-reveal'
+  initPageMotion()
+</script>
