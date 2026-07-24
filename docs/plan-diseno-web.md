@@ -1,6 +1,7 @@
 # Plan: Landing "Diseño Web" para clientes no técnicos
 
-> Estado: **propuesta** (jul 2026). Puerta de entrada para clientes no técnicos,
+> Estado: **implementado v1** (jul 2026), pendiente afinar datos reales.
+> Página en `src/pages/paginas-web.astro`. Puerta de entrada para clientes no técnicos,
 > separada del portafolio técnico. El resto del sitio (home, /engineering, /lab,
 > /security) sigue siendo la credibilidad para clientes técnicos.
 
