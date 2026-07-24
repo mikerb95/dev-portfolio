@@ -4,6 +4,7 @@ import { projectServices } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { normalizeServiceInput, SERVICE_CATEGORIES } from '../../../../lib/services'
 import { fetchDomainExpiry } from '../../../../lib/domains'
+import { sinSecretos } from '../../../../lib/vault'
 
 const isValidCategory = (c: unknown) => SERVICE_CATEGORIES.includes(c as any)
 
@@ -23,7 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
       .insert(projectServices)
       .values({ ...(values as any), createdAt: new Date(), updatedAt: new Date() })
       .returning()
-    return new Response(JSON.stringify({ ...row, secrets: undefined }), { status: 201 })
+    return new Response(JSON.stringify(sinSecretos(row)), { status: 201 })
   } catch (e) {
     return new Response(JSON.stringify({ error: errMsg(e) }), { status: 500 })
   }

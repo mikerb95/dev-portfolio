@@ -3,6 +3,7 @@ import { db } from '../../../../../db'
 import { projectEnvVars } from '../../../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { encrypt, decrypt } from '../../../../../lib/crypto'
+import { sinValorCifrado } from '../../../../../lib/vault'
 
 export const GET: APIRoute = async ({ params, url }) => {
   const envId = Number(url.searchParams.get('id'))
@@ -35,7 +36,7 @@ export const POST: APIRoute = async ({ params, request }) => {
     createdAt: new Date(),
   }).returning()
 
-  return new Response(JSON.stringify({ ...row, value: undefined }), { status: 201 })
+  return new Response(JSON.stringify(sinValorCifrado(row)), { status: 201 })
 }
 
 export const PUT: APIRoute = async ({ request }) => {
