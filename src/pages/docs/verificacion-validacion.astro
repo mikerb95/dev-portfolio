@@ -191,12 +191,9 @@ const COMANDOS = [
         <p class="text-[12.5px] text-ink-200 leading-relaxed mb-2">{s.porque}</p>
         <p class="text-[11.5px] font-mono text-ink-300 mb-2">{s.archivos}</p>
         <div class="flex flex-wrap gap-1.5 mb-2">
-          {s.cubiertoPor.map((id) => {
-            const nivel = porId.get(id)
-            return nivel ? (
-              <span class="px-2 py-0.5 rounded-full text-[11px] text-ink-200 border border-white/10">{nivel.nombre}</span>
-            ) : null
-          })}
+          {s.niveles.map((nivel) => (
+            <span class="px-2 py-0.5 rounded-full text-[11px] text-ink-200 border border-white/10">{nivel.nombre}</span>
+          ))}
         </div>
         {s.refuerzoPendiente && (
           <p class="text-[12px] text-ink-300 leading-relaxed italic">↳ Pendiente: {s.refuerzoPendiente}</p>
