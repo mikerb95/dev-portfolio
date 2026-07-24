@@ -28,8 +28,9 @@ usuarios de esta misma historia).
 
 ## 2. Inventario real — el «TODO» que la página debe cubrir
 
-Medido sobre el repo el 22 jul 2026 (no son cifras estimadas: salen de
-correr la suite y leer los workflows).
+Medido sobre el repo el 24 jul 2026 (no son cifras estimadas: salen de
+correr la suite y leer los workflows). El nivel 14 (DAST) se añadió el 23 jul,
+después de escribir este plan.
 
 ### 2.1 Niveles de prueba que existen hoy
 
