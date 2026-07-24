@@ -1,11 +1,12 @@
 # Plan — Portal de Clientes
 
-> Creado: 2026-07-15. **Implementado: Fases 0–7 completas (2026-07-24).**
-> Continuación viva en [`plan-portal-tiempo-real.md`](./plan-portal-tiempo-real.md)
-> (capa de actualización en vivo + feed de actividad).
+> Creado: 2026-07-15. **Estado: Fases 0–7 implementadas (verificado 2026-07-24).**
 > Portal autenticado donde cada cliente ve el estado de sus proyectos, sus finanzas/facturas,
 > se comunica contigo y recibe notificaciones. Nivel: lo que un cliente corporativo espera
 > del panel de un producto contratado.
+>
+> La continuación viva es [`plan-portal-tiempo-real.md`](./plan-portal-tiempo-real.md):
+> actualización en vivo del portal + feed de actividad por proyecto.
 
 ---
 
