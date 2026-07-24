@@ -307,6 +307,26 @@ const COMANDOS = [
     ))}
   </div>
 
+  {/* ── § 5.5 Ciclo de vida ─────────────────────────────────── */}
+  <h2 id="ciclo-vida" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Los procesos del ciclo de vida</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      IEEE 1012 no ata las tareas de V&amp;V a «niveles de prueba» — las ata a fases del ciclo de vida del
+      software, desde la gestión del propio plan hasta el mantenimiento. Este repositorio cubre casi todas sin
+      haberlas llamado así nunca; esta tabla es esa traducción, en el orden en que ocurren.
+    </p>
+  </div>
+
+  <div class="grid gap-2 mb-12">
+    {PROCESOS_CICLO_VIDA.map((p) => (
+      <div class="rounded-xl border border-white/10 bg-white/[.025] p-4 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4">
+        <span class="text-[13.5px] font-medium text-ink-50 sm:w-64 shrink-0">{p.nombre}</span>
+        <span class="text-[12.5px] text-ink-200 leading-relaxed sm:flex-1">{p.tareaVV}</span>
+        <span class="font-mono text-[11px] text-ink-300 sm:w-72 shrink-0 sm:text-right">{p.dondeEnRepo}</span>
+      </div>
+    ))}
+  </div>
+
   {/* ── § 6 Cómo correrlas ──────────────────────────────────── */}
   <h2 id="comandos" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Cómo correrlas tú mismo</h2>
   <div class="max-w-3xl mb-6">
