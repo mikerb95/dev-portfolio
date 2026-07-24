@@ -47,7 +47,11 @@ describe('vault · sinSecretos', () => {
   })
 
   it('tolera una fila que ya viene sin el campo', () => {
-    expect(() => sinSecretos({ id: 1 })).not.toThrow()
+    // En variable, no literal: TypeScript aplica excess property checking a los
+    // literales frescos contra la restricción del genérico. Los callers reales
+    // pasan filas de drizzle, que tampoco son literales.
+    const fila = { id: 1 }
+    expect(() => sinSecretos(fila)).not.toThrow()
   })
 
   it('redacta la lista entera, no solo el primero', () => {
