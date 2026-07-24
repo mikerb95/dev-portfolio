@@ -194,17 +194,16 @@ Casi nadie a nivel tecnólogo conoce mutation testing; sorprende.
 
 ## Resumen y orden sugerido
 
-| Fase | Entrega clave | Tablas nuevas | Workflows | Esfuerzo | Impacto jurado |
-|---|---|---|---|---|---|
-| 5 Load testing | Gráficas p50/p95/p99 bajo 100-1000 VUs | `load_test_runs` | `load-test.yml` (manual) | ~2d | Alto |
-| 6 SAST/DAST + a11y | Hallazgos → resueltos, score a11y | `security_findings` | `security.yml`, `a11y.yml`, ZAP | ~2-3d | Medio-alto |
-| 7 Mutation + contratos | Mutation score + Zod contracts | (reusar `ci_runs`) | `mutation.yml` (semanal) | ~2d | Alto (nadie lo conoce) |
+| Fase | Estado | Entrega clave | Tablas nuevas | Workflows |
+|---|---|---|---|---|
+| 5 Load testing | ⏳ pendiente | Gráficas p50/p95/p99 bajo 100-1000 VUs | `load_test_runs` | `load-test.yml` (manual) |
+| 6 SAST/DAST + a11y | ✅ 17 y 23 jul | Hallazgos → resueltos, violaciones WCAG reales | `security_findings` | `security.yml`, `a11y.yml`, `dast.yml` |
+| 7 Mutation + contratos | ✅ 17 jul | Mutation score 87.2 % + contratos Zod | (reusa `ci_runs`) | `mutation.yml` (semanal) |
 
-**Recomendación de orden**: 5 → 7 → 6.
-- La 5 es visual y autocontenida (buen impacto por esfuerzo).
-- La 7 refuerza el mensaje de "calidad real" que ya vienes contando con los tests.
-- La 6 es la más dependiente de infra externa (preview deploys, ZAP, tokens Snyk) y
-  la que más tiempo de setup consume; dejarla al final evita bloqueos.
+**El orden real fue 6 → 7 → 5**, no el 5 → 7 → 6 que se recomendaba aquí. El
+motivo: la 6 reaprovechaba Playwright recién instalado por los e2e y salió casi
+gratis, y la 5 resultó ser la más dependiente de infra externa (no la 6), porque
+necesita un target de preview estable que sigue sin existir.
 
 ## Trabajo transversal pendiente (no atado a una fase)
 - **VERCEL_TOKEN en GitHub Secrets**: sigue faltando (`gh secret list` no lo muestra).
