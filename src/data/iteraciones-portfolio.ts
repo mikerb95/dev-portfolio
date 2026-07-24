@@ -983,11 +983,154 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-docs-testing-vyv',
+    fase: 'Fase 24 · Documentación de pruebas y V&V',
+    nombre: 'Guía pública del testing, verificación y validación, y diagrama de paquetes',
+    rango: '21 – 22 jul 2026',
+    ghSince: '2026-07-21',
+    ghUntil: '2026-07-22',
+    commits: 24,
+    resumen:
+      'El testing del proyecto existía repartido en cuatro sitios (una línea del stack, el panel privado del LAB, la vitrina /lab y varios artículos de /notes), así que nadie ajeno al repo tenía por dónde empezar. Se construye /docs/testing como punto de entrada único: los niveles de prueba, la pirámide dimensionada con los números reales, la anatomía de un test y las decisiones de ingeniería que el testing impuso sobre la arquitectura. Los datos viven tipados en src/data/testing.ts y la página solo los renderiza, para que ninguna cifra se escriba a mano en el HTML. Al lado, /docs/verificacion-validacion reclasifica esos mismos niveles bajo el marco de V&V (con niveles de integridad y procesos del ciclo de vida) sin duplicar el inventario, y /docs/usability-testing documenta la validación con usuarios reales sobre el flujo de descarga del CV. Se completa el UML con el diagrama de paquetes.',
+    historias: [
+      {
+        id: 'PF-DT-01', titulo: 'Como compañero de clase, quiero un único punto de entrada que me explique cómo se prueba este sistema',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-22', tags: ['documentación', 'testing', 'público', 'fase-24'],
+        dod: [
+          ok('/docs/testing cubre los niveles de prueba, la pirámide con volúmenes reales, el pipeline etapa por etapa y un glosario.'),
+          ok('Las métricas salen de src/data/testing.ts y de la ingesta del pipeline, no se escriben a mano en la página.'),
+          ok('Restricción OPSEC respetada: los tests de seguridad se describen por lo que garantizan, sin citar patrones, rutas señuelo ni umbrales.'),
+        ],
+      },
+      {
+        id: 'PF-DT-02', titulo: 'Como evaluador, quiero ver el testing clasificado bajo el marco de verificación y validación',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-22', tags: ['documentación', 'testing', 'fase-24'],
+        dod: [
+          ok('/docs/verificacion-validacion reclasifica los niveles bajo V&V con niveles de integridad y procesos del ciclo de vida.'),
+          ok('src/data/vyv.ts referencia los niveles de testing.ts por id en vez de duplicarlos, y un test verifica esa integridad referencial.'),
+        ],
+      },
+      {
+        id: 'PF-DT-03', titulo: 'Como evaluador, quiero el diagrama de paquetes que faltaba en la documentación UML',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-22', tags: ['documentación', 'uml', 'fase-24'],
+        dod: [
+          ok('/docs/diagrama-paquetes con la representación UML de los paquetes del sistema y su versión ilustrada.'),
+          ok('Pestaña «Paquetes» añadida a DocsNav.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-dast-zap',
+    fase: 'Fase 25 · DAST con OWASP ZAP',
+    nombre: 'Análisis dinámico de seguridad contra el preview, ingerido al panel del LAB',
+    rango: '23 jul 2026',
+    ghSince: '2026-07-23',
+    ghUntil: '2026-07-23',
+    commits: 8,
+    resumen:
+      'Cierra la sub-fase que la Fase 6 del LAB había dejado abierta: el SAST leía el código sin ejecutarlo, y faltaba el escaneo que ataca la aplicación corriendo. Se añade el workflow dast.yml con el baseline de OWASP ZAP contra el deployment de preview —nunca contra producción— y un parser del reporte JSON que convierte sus alertas en hallazgos del LAB, deduplicados por el mismo fingerprint que ya usaban npm audit y axe. Decisión deliberada: spider.parseRobotsTxt=false, porque un atacante tampoco respeta robots.txt y un escáner que sí lo hace deja sin mirar justo lo que se quiso esconder.',
+    historias: [
+      {
+        id: 'PF-DA-01', titulo: 'Como administrador, quiero que la aplicación corriendo también se ataque de forma automatizada, no solo se lea el código',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-23', tags: ['seguridad', 'lab', 'ci', 'fase-25'],
+        dod: [
+          ok('Workflow dast.yml corre el baseline de OWASP ZAP contra el preview deployment, con guard para no tocar producción.'),
+          ok('parseZapReport convierte el reporte JSON en hallazgos, reutilizando el fingerprint de deduplicación existente en vez de una tabla nueva.'),
+          ok('Tests del parser sobre reportes reales (tests/findings.test.ts).'),
+          ok('DAST incorporado como nivel propio en el inventario de pruebas y en la clasificación de V&V.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-pipeline-vivo-diseno-web',
+    fase: 'Fase 26 · Pipeline en vivo y captación de clientes no técnicos',
+    nombre: 'Estado real del pipeline en /docs y landing comercial de diseño web',
+    rango: '24 jul 2026',
+    ghSince: '2026-07-24',
+    ghUntil: '2026-07-24',
+    commits: 48,
+    resumen:
+      'Dos frentes del mismo día. Por un lado, el diagrama del pipeline en /docs era estático: describía un proceso sin decir si ese proceso acababa de funcionar. Se añade /docs/pipeline-en-vivo, que consulta el estado real de la última corrida etapa por etapa (push, tests, e2e, build, deploy, verificación), con la lógica de normalización y mapeo de estados aislada en un módulo puro y testeado. La etapa de push refleja que el evento ocurrió, no el resultado de la corrida: son cosas distintas y mezclarlas mentía cuando el push era correcto y los tests fallaban. Por otro lado, se abre /paginas-web, una landing dirigida a negocios locales y emprendedores, deliberadamente separada de la marca técnica del resto del sitio: tres planes con precio visible, FAQ, y contacto por WhatsApp o formulario reutilizando /api/contact. Se suma un constructor de mensajes de WhatsApp para presentaciones rápidas y un enlace de agenda directa en /contact.',
+    historias: [
+      {
+        id: 'PF-PL-01', titulo: 'Como visitante, quiero ver si el pipeline acaba de funcionar, no solo un diagrama de cómo funcionaría',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-24', tags: ['documentación', 'observabilidad', 'público', 'fase-26'],
+        dod: [
+          ok('/docs/pipeline-en-vivo muestra el estado real de la última corrida, etapa por etapa, con recorrido paso a paso.'),
+          ok('src/lib/lab/pipeline-live.ts aísla la normalización y el mapeo de estados como lógica pura; tests/pipeline-live.test.ts la cubre.'),
+          ok('La etapa de push refleja la ocurrencia del evento, no el resultado de la corrida.'),
+        ],
+      },
+      {
+        id: 'PF-DW-01', titulo: 'Como dueño de un negocio local, quiero entender qué me ofrecen y cuánto cuesta sin lenguaje técnico',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-24', tags: ['negocio', 'público', 'fase-26'],
+        dod: [
+          ok('/paginas-web con tres planes de precio visible, perfiles de cliente, pasos del proceso y FAQ.'),
+          ok('Contacto por WhatsApp o formulario, reutilizando /api/contact con su rate limiting ya probado.'),
+          ok('Enlace «Diseño Web» en el navbar; la landing vive aparte de la marca técnica del resto del sitio.'),
+        ],
+      },
+      {
+        id: 'PF-DW-02', titulo: 'Como administrador, quiero presentarme por WhatsApp y dejar agendar una llamada sin cruzar correos',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-24', tags: ['negocio', 'herramientas', 'fase-26'],
+        dod: [
+          ok('Constructor de mensajes de WhatsApp para presentaciones rápidas.'),
+          ok('Enlace de agenda directa en /contact, junto al formulario.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-portal-a11y-movimiento',
+    fase: 'Fase 27 · Accesibilidad del portal y capa de movimiento',
+    nombre: 'Salto al contenido, anuncios en vivo y foco explícito; scroll suave con Lenis y GSAP',
+    rango: '24 jul 2026',
+    ghSince: '2026-07-24',
+    ghUntil: '2026-07-24',
+    commits: 22,
+    resumen:
+      'La auditoría del portal encontró que sus formularios eran mudos para un lector de pantalla: el resultado del envío se pintaba en pantalla pero nunca se anunciaba, y el foco quedaba donde estaba. Se añade un enlace de salto al contenido como primer elemento tabulable, una región aria-live que anuncia el resultado —incluidos los errores, no solo el camino feliz, porque un formulario que calla al fallar es peor que uno que no valida— y devolución explícita del foco a la confirmación tras enviar. En paralelo se incorpora la capa de movimiento del sitio público con Lenis (scroll suave) y GSAP (animaciones de entrada); se retira autoRaise de la inicialización de Lenis, que degradaba el rendimiento del scroll sin aportar nada visible.',
+    historias: [
+      {
+        id: 'PF-PA-01', titulo: 'Como cliente que navega con teclado o lector de pantalla, quiero saber qué pasó al enviar un formulario del portal',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-24', tags: ['accesibilidad', 'portal', 'fase-27'],
+        dod: [
+          ok('Skip link como primer elemento tabulable del portal, con el <main> identificado como destino.'),
+          ok('Región aria-live que anuncia el resultado del envío, incluidos los mensajes de error explícitos.'),
+          ok('El foco aterriza en la confirmación tras enviar, en vez de quedarse donde estaba.'),
+        ],
+      },
+      {
+        id: 'PF-PA-02', titulo: 'Como visitante, quiero que el sitio se sienta fluido al desplazarme sin que el scroll se vuelva pesado',
+        tipo: 'historia', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-24', tags: ['diseño', 'público', 'fase-27'],
+        dod: [
+          ok('Lenis para el scroll suave y GSAP para las animaciones de entrada, integrados en el layout público.'),
+          ok('autoRaise retirado de la inicialización de Lenis por su coste en rendimiento del scroll.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 939 },
+  { mes: 'jul', commits: 1064 },
 ]
