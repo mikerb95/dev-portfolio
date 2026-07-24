@@ -103,12 +103,25 @@ porque cazan fallos distintos, y `/status` es público:
 
 - [ ] Confirmar en `/status` que el id 11 pasa de `unknown` a verde tras el
       primer disparo del cron (~5 min).
-- [x] Cifra de monitores sincronizada (8 → **10**) en `README.md`,
-      `src/data/testing.ts`, `src/data/documentacion.ts` y `plan-testing-docs.md`.
+- [x] Cifra de monitores sincronizada en `README.md`, `src/data/testing.ts`,
+      `src/data/documentacion.ts` y `plan-testing-docs.md`. **Son 9 visibles**
+      (10 filas menos el id 5, pausado).
 
-> El monitor id 5 (`ResidentialAccess`) lleva tiempo en `down`. No es del portal,
-> pero conviene decidir si el servicio sigue vivo o el monitor sobra: un rojo
-> permanente en `/status` enseña a ignorar el rojo.
+### Monitor `ResidentialAccess` (id 5) — pausado, no borrado (24 jul 2026)
+
+Llevaba en `down` desde el 20 jul con un incidente sin resolver. Comprobado a
+mano: `https://residential-access.vercel.app` devuelve **HTTP 500**, así que el
+monitor no daba un falso positivo — el servicio está realmente roto.
+
+Se **pausó** (`paused=1`) en vez de borrarse: desaparece de `/status` (la página
+filtra por monitor visible, así que su incidente abierto tampoco se muestra) y
+conserva sus **6.447 chequeos y 6 incidentes** desde el 2 jul. El monitor está
+atado al proyecto 5 del CRM, así que su historial es el registro de
+disponibilidad de ese proyecto.
+
+- [ ] Decidir el destino del proyecto: si se retoma, arreglar el 500 y despausar
+      el monitor; si se archiva, borrar la fila (`delete from monitors where
+      id=5`, que arrastra chequeos e incidentes por cascada).
 
 ### LAB — Fase 5: load testing con k6
 

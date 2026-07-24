@@ -188,7 +188,7 @@ export const NIVELES: Nivel[] = [
     nombre: 'Monitoreo sintético',
     herramienta: 'Monitores propios + cron externo',
     pregunta: '¿Sigue funcionando ahora mismo, a las 3 de la madrugada?',
-    volumen: '10 monitores, sondeo cada ~5 min',
+    volumen: '9 monitores, sondeo cada ~5 min',
     archivos: '/admin/monitors → /status',
     cuando: 'continuo',
     bloquea: false,
@@ -379,7 +379,7 @@ export const PIPELINE: EtapaPipeline[] = [
     dispara: 'cron-job.org, cada ~5 min, para siempre',
     duracion: 'continuo',
     pasos: [
-      '10 monitores sondean endpoints públicos y alimentan /status',
+      '9 monitores sondean endpoints públicos y alimentan /status',
       'Rollups de seguridad y detección de anomalías del micro-SIEM',
       'Error budget de los SLO: cuánto margen de caída queda este mes',
       'Cualquier incidente dispara una notificación push',
