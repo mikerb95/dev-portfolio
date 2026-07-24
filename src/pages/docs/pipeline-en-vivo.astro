@@ -1,0 +1,332 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import { ESCENARIOS, PIPELINE } from '../../data/testing'
+
+// Página "híbrida": el cliente hace polling a /api/lab/pipeline-live (datos
+// reales de la API de Actions/Deployments de GitHub + ci_runs + monitors).
+// Mientras no hay una corrida reciente, reproduce en loop el escenario
+// "Todo verde" de ESCENARIOS —los mismos datos curados que ya usa
+// PipelineMap en /docs/testing— dejando clarísimo que es una simulación.
+// En cuanto el endpoint reporta `live: true`, la página cambia de fuente sin
+// recargar: dos modos, un solo componente.
+const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
+---
+
+<BaseLayout title="Pipeline en vivo">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+  <DocsNav />
+
+  <div class="max-w-3xl mb-6">
+    <h1 class="text-2xl font-semibold text-ink-50 mb-3">El pipeline, ahora mismo</h1>
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Esta página sondea cada pocos segundos la API de Actions y Deployments de GitHub, más las tablas propias
+      de <span class="font-mono text-cyan">ci_runs</span> y <span class="font-mono text-cyan">monitors</span>,
+      y va narrando lo que encuentra como un log de despliegue. Cuando no hay una corrida reciente en
+      <span class="font-mono">main</span>, reproduce en loop un ejemplo real ya ocurrido —marcado
+      explícitamente como simulación— para que la página nunca se vea "vacía".
+    </p>
+  </div>
+
+  <div class="flex items-center gap-2 mb-8" data-modo-indicador>
+    <span class="w-2 h-2 rounded-full bg-ink-400 animate-pulse" data-modo-dot aria-hidden="true"></span>
+    <span class="font-mono text-[12px] uppercase tracking-wide text-ink-300" data-modo-texto>Conectando…</span>
+  </div>
+
+  <div class="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+    {/* ── Log en vivo ─────────────────────────────────────────── */}
+    <div class="rounded-xl border border-white/12 bg-ink-900 overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b border-white/10 bg-white/[.02]">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-ember/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-[#ffcc4d]/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-lime/70"></span>
+        </div>
+        <span class="font-mono text-[11px] text-ink-300" data-log-sha>—</span>
+      </div>
+      <ol class="p-4 space-y-1 font-mono text-[12.5px] leading-relaxed max-h-[520px] overflow-y-auto" data-log>
+        <li class="text-ink-300">esperando datos…</li>
+      </ol>
+    </div>
+
+    {/* ── Mapa de arquitectura ────────────────────────────────── */}
+    <div class="rounded-xl border border-white/10 bg-white/[.02] p-5" data-mapa>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-ink-300 mb-4">Mapa de componentes</div>
+      <div class="space-y-2" data-nodos>
+        <div class="nodo" data-nodo="push"><span class="dot"></span>GitHub — push a <span class="mono">main</span></div>
+        <div class="nodo" data-nodo="ci"><span class="dot"></span>GitHub Actions — CI (test · build · e2e)</div>
+        <div class="nodo" data-nodo="security"><span class="dot"></span>GitHub Actions — Security / Accessibility / DAST</div>
+        <div class="nodo" data-nodo="deploy"><span class="dot"></span>Vercel — build + deploy</div>
+        <div class="nodo" data-nodo="verify"><span class="dot"></span>/api/health — verificación + rollback</div>
+        <div class="nodo" data-nodo="turso"><span class="dot"></span>Turso — libSQL de producción</div>
+        <div class="nodo" data-nodo="operacion"><span class="dot"></span>cron-job.org + ntfy — monitoreo continuo</div>
+      </div>
+      <p class="text-[12px] text-ink-300 leading-relaxed mt-4 pt-4 border-t border-white/8">
+        Un nodo se enciende cuando el evento real correspondiente ocurre. <span class="text-ink-200">Turso</span>
+        no tiene API propia que consultar: se infiere encendido durante «Verificación» porque ese es el momento
+        en que <span class="font-mono">/api/health</span> la consulta de verdad — no es una corrida real
+        instrumentada campo a campo, es la única inferencia de esta página.
+      </p>
+    </div>
+  </div>
+
+  <p class="text-[12.5px] text-ink-300 mt-6 max-w-3xl">
+    Detalle técnico completo de cada etapa en <a href="/docs/testing#pipeline" class="text-cyan hover:underline">/docs/testing</a>.
+    El código de esta página vive en <span class="font-mono">src/pages/api/lab/pipeline-live.ts</span> y
+    <span class="font-mono">src/pages/docs/pipeline-en-vivo.astro</span>.
+  </p>
+  </div>
+
+  {/* Datos del escenario simulado, embebidos como JSON para que el script no reimplemente ESCENARIOS. */}
+  <script type="application/json" id="escenario-idle" set:html={JSON.stringify(ESCENARIO_IDLE)} />
+  <script type="application/json" id="pipeline-meta" set:html={JSON.stringify(PIPELINE.map((p) => ({ id: p.id, nombre: p.nombre })))} />
+</BaseLayout>
+
+<style>
+  .nodo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 13px;
+    color: var(--color-ink-200);
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.5rem;
+    transition: background 0.25s, color 0.25s;
+  }
+  .nodo .mono { font-family: var(--font-mono); font-size: 12px; }
+  .nodo .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+    transition: background 0.25s, box-shadow 0.25s;
+  }
+  .nodo[data-estado='in_progress'] { color: var(--color-ink-50); background: rgba(0, 242, 255, 0.06); }
+  .nodo[data-estado='in_progress'] .dot { background: var(--color-cyan); box-shadow: 0 0 8px rgba(0, 242, 255, 0.6); animation: pulse 1.1s ease-in-out infinite; }
+  .nodo[data-estado='ok'] { color: var(--color-ink-50); }
+  .nodo[data-estado='ok'] .dot { background: var(--color-lime); box-shadow: 0 0 8px rgba(201, 255, 91, 0.5); }
+  .nodo[data-estado='fail'] { color: var(--color-ink-50); background: rgba(255, 107, 61, 0.07); }
+  .nodo[data-estado='fail'] .dot { background: var(--color-ember); box-shadow: 0 0 8px rgba(255, 107, 61, 0.6); }
+  .nodo[data-estado='skip'] .dot { background: var(--color-ink-400); }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  [data-log] li { animation: entra 0.25s ease-out; }
+  @keyframes entra { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  [data-log] .t { color: var(--color-ink-300); margin-right: 0.5rem; }
+  [data-log] .ok { color: var(--color-lime); }
+  [data-log] .fail { color: var(--color-ember); }
+  [data-log] .warn { color: #ffcc4d; }
+  [data-log] .txt { color: var(--color-ink-100); }
+  [data-log] .sim-tag { color: var(--color-violet); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 0.4rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nodo[data-estado='in_progress'] .dot { animation: none; }
+    [data-modo-dot] { animation: none !important; }
+  }
+</style>
+
+<script>
+  type Estado = 'pending' | 'in_progress' | 'ok' | 'fail' | 'skip'
+
+  const logEl = document.querySelector<HTMLElement>('[data-log]')!
+  const shaEl = document.querySelector<HTMLElement>('[data-log-sha]')!
+  const modoDot = document.querySelector<HTMLElement>('[data-modo-dot]')!
+  const modoTxt = document.querySelector<HTMLElement>('[data-modo-texto]')!
+  const nodos = new Map(
+    [...document.querySelectorAll<HTMLElement>('[data-nodo]')].map((n) => [n.dataset.nodo!, n])
+  )
+
+  const escenario = JSON.parse(document.getElementById('escenario-idle')!.textContent!) as {
+    pasos: { etapa: string; estado: string; texto: string }[]
+  }
+
+  const hora = () => new Date().toLocaleTimeString('es-CO', { hour12: false })
+
+  function limpiarLog() {
+    logEl.innerHTML = ''
+  }
+
+  function agregarLinea(opts: { estado: Estado; texto: string; sim?: boolean }) {
+    const li = document.createElement('li')
+    const clase = opts.estado === 'ok' ? 'ok' : opts.estado === 'fail' ? 'fail' : opts.estado === 'in_progress' ? 'warn' : ''
+    li.innerHTML = `<span class="t">${hora()}</span>${opts.sim ? '<span class="sim-tag">sim</span>' : ''}<span class="${clase}">${opts.estado === 'ok' ? '✓' : opts.estado === 'fail' ? '✗' : '›'}</span> <span class="txt">${opts.texto}</span>`
+    logEl.appendChild(li)
+    logEl.scrollTop = logEl.scrollHeight
+    while (logEl.children.length > 60) logEl.removeChild(logEl.firstElementChild!)
+  }
+
+  function pintarNodo(id: string, estado: Estado) {
+    const n = nodos.get(id)
+    if (n) n.dataset.estado = estado
+  }
+
+  function apagarNodos() {
+    for (const n of nodos.values()) delete n.dataset.estado
+  }
+
+  // ── Modo simulado (idle) ────────────────────────────────────
+  let simTimers: ReturnType<typeof setTimeout>[] = []
+  let simRunning = false
+
+  function pararSim() {
+    for (const t of simTimers) clearTimeout(t)
+    simTimers = []
+    simRunning = false
+  }
+
+  function reproducirSim() {
+    if (simRunning) return
+    simRunning = true
+    limpiarLog()
+    apagarNodos()
+    shaEl.textContent = 'simulación'
+    agregarLinea({ estado: 'pending', texto: 'sin corrida reciente en main — reproduciendo un ejemplo real ya ocurrido', sim: true })
+
+    const nodoDeEtapa: Record<string, string> = {
+      local: 'push',
+      push: 'push',
+      ci: 'ci',
+      deploy: 'deploy',
+      verify: 'verify',
+      operacion: 'operacion',
+    }
+
+    escenario.pasos.forEach((p, i) => {
+      simTimers.push(
+        setTimeout(() => {
+          const estado = (p.estado === 'ok' ? 'ok' : p.estado === 'fail' ? 'fail' : p.estado === 'warn' ? 'in_progress' : 'skip') as Estado
+          agregarLinea({ estado, texto: p.texto, sim: true })
+          const nodo = nodoDeEtapa[p.etapa]
+          if (nodo) pintarNodo(nodo, estado)
+          if (p.etapa === 'verify' && estado === 'ok') pintarNodo('turso', 'ok')
+          if (i === escenario.pasos.length - 1) {
+            simTimers.push(setTimeout(() => { simRunning = false; reproducirSim() }, 4000))
+          }
+        }, 1100 * (i + 1))
+      )
+    })
+  }
+
+  // ── Modo vivo ────────────────────────────────────────────────
+  type Live = {
+    live: boolean
+    shaCorta: string | null
+    runUrl: string | null
+    stages: {
+      push: { estado: Estado; ts: string | null }
+      workflows: { id: string; nombre: string; estado: Estado; jobs: { nombre: string; estado: Estado; pasos: { nombre: string; estado: Estado }[] }[] }[]
+      deploy: { estado: Estado; detalle: string | null }
+      verify: { estado: Estado; healthOk: boolean | null }
+      operacion: { estado: Estado; monitoresOk: number; monitoresTotal: number }
+      global: Estado
+    }
+  }
+
+  let visto = new Set<string>()
+  let modoVivo = false
+
+  function marcaClave(pieza: string, estado: Estado) {
+    return `${pieza}:${estado}`
+  }
+
+  function aplicarLive(data: Live) {
+    if (!modoVivo) {
+      modoVivo = true
+      pararSim()
+      limpiarLog()
+      apagarNodos()
+      visto = new Set()
+      agregarLinea({ estado: 'ok', texto: 'corrida real detectada — cambiando a datos en vivo' })
+    }
+
+    shaEl.textContent = data.shaCorta ?? '—'
+    pintarNodo('push', data.stages.push.estado)
+
+    for (const wf of data.stages.workflows) {
+      const key = marcaClave(`wf:${wf.id}`, wf.estado)
+      if (!visto.has(key)) {
+        visto.add(key)
+        agregarLinea({ estado: wf.estado, texto: `${wf.nombre}: ${etiquetaEstado(wf.estado)}` })
+      }
+      pintarNodo(wf.id === 'ci' ? 'ci' : 'security', wf.estado)
+
+      for (const job of wf.jobs) {
+        for (const paso of job.pasos) {
+          const pkey = marcaClave(`paso:${wf.id}:${job.nombre}:${paso.nombre}`, paso.estado)
+          if (!visto.has(pkey)) {
+            visto.add(pkey)
+            agregarLinea({ estado: paso.estado, texto: `${job.nombre} · ${paso.nombre}` })
+          }
+        }
+      }
+    }
+
+    const deployKey = marcaClave('deploy', data.stages.deploy.estado)
+    if (!visto.has(deployKey)) {
+      visto.add(deployKey)
+      agregarLinea({ estado: data.stages.deploy.estado, texto: `Vercel deploy: ${etiquetaEstado(data.stages.deploy.estado)}` })
+    }
+    pintarNodo('deploy', data.stages.deploy.estado)
+
+    const verifyKey = marcaClave('verify', data.stages.verify.estado)
+    if (!visto.has(verifyKey)) {
+      visto.add(verifyKey)
+      agregarLinea({
+        estado: data.stages.verify.estado,
+        texto: `Verificación en producción: ${data.stages.verify.healthOk === true ? 'health check OK' : data.stages.verify.healthOk === false ? 'health check falló → rollback' : etiquetaEstado(data.stages.verify.estado)}`,
+      })
+      if (data.stages.verify.estado !== 'pending') pintarNodo('turso', data.stages.verify.estado)
+    }
+    pintarNodo('verify', data.stages.verify.estado)
+
+    const opKey = marcaClave('op', data.stages.operacion.estado)
+    if (!visto.has(opKey)) {
+      visto.add(opKey)
+      agregarLinea({
+        estado: data.stages.operacion.estado,
+        texto: `Monitoreo continuo: ${data.stages.operacion.monitoresOk}/${data.stages.operacion.monitoresTotal} monitores sanos`,
+      })
+    }
+    pintarNodo('operacion', data.stages.operacion.estado)
+
+    modoDot.className = 'w-2 h-2 rounded-full'
+    modoDot.classList.add(
+      data.stages.global === 'ok' ? 'bg-lime' : data.stages.global === 'fail' ? 'bg-ember' : 'bg-cyan animate-pulse'
+    )
+    modoTxt.textContent = 'en vivo · GitHub Actions + Deployments'
+  }
+
+  function etiquetaEstado(e: Estado): string {
+    return { pending: 'pendiente', in_progress: 'en curso', ok: 'OK', fail: 'falló', skip: 'omitido' }[e]
+  }
+
+  async function poll() {
+    try {
+      const res = await fetch('/api/lab/pipeline-live')
+      const data: Live = await res.json()
+      if (data.live) {
+        aplicarLive(data)
+      } else if (modoVivo) {
+        // Se acabó la ventana de "vivo": vuelve al modo simulado.
+        modoVivo = false
+        modoDot.className = 'w-2 h-2 rounded-full bg-ink-400 animate-pulse'
+        modoTxt.textContent = 'simulación · esperando el próximo push'
+        reproducirSim()
+      } else if (!simRunning) {
+        modoDot.className = 'w-2 h-2 rounded-full bg-ink-400 animate-pulse'
+        modoTxt.textContent = 'simulación · esperando el próximo push'
+        reproducirSim()
+      }
+    } catch {
+      if (!simRunning) {
+        modoTxt.textContent = 'sin conexión · mostrando simulación'
+        reproducirSim()
+      }
+    }
+  }
+
+  poll()
+  setInterval(poll, 6000)
+</script>
