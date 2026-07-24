@@ -231,7 +231,7 @@ export const SUBSISTEMAS: Subsistema[] = [
     archivos: 'src/pages/*.astro (rutas públicas)',
     // Ojo: NO lo cubre «cobertura». El include de vitest.config.ts es
     // src/lib/**, así que ninguna página .astro entra en ese porcentaje.
-    cubiertoPor: ['e2e', 'a11y-TYPO'],
+    cubiertoPor: ['e2e', 'a11y'],
   },
 ]
 
