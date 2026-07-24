@@ -185,7 +185,7 @@ export const SUBSISTEMAS: Subsistema[] = [
     nombre: 'Bóveda de secretos (project_services.secrets)',
     nivel: 4,
     porque: 'Un fallo expone credenciales de terceros cifradas con AES-256-GCM a quien no debería verlas.',
-    archivos: 'src/lib/*, endpoint de revelado bajo sesión admin',
+    archivos: 'src/lib/crypto.ts, project_services.secrets',
     cubiertoPor: ['unitario', 'codeql', 'npm-audit'],
     refuerzoPendiente: 'Que el secreto nunca aparezca en SSR ni en listados es hoy disciplina de código — no hay un test que lo garantice.',
   },
