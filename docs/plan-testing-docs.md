@@ -50,7 +50,7 @@ correr la suite y leer los workflows).
 | 13 | Usabilidad con usuarios | metodología de 6 pasos | `/docs/usability-testing` | 1 flujo (descarga de CV) | manual |
 | 14 | Carga (k6) | *pendiente* | `docs/plan-lab-fases-pendientes.md`, Fase 5 | — | bloqueado por `VERCEL_TOKEN` |
 
-Un compañero debe salir entendiendo **por qué son 14 cosas distintas y no
+Un compañero debe salir entendiendo **por qué son 15 cosas distintas y no
 una sola llamada «pruebas»**: cada nivel responde una pregunta que ninguno
 de los otros responde.
 
@@ -155,7 +155,7 @@ Una franja con 6 números en vivo: tests, cobertura, mutation score, e2e,
 hallazgos abiertos, y el resultado del último deploy (con su SHA corto y
 enlace al run de GitHub Actions). Debajo, una frase que fija el marco:
 
-> «Este proyecto tiene 498 pruebas automáticas repartidas en 14 niveles
+> «Este proyecto tiene 521 pruebas automáticas repartidas en 15 niveles
 > distintos. Ninguno sobra: cada uno responde una pregunta que los otros no
 > pueden responder.»
 
@@ -206,7 +206,7 @@ y se disecciona con 4 capas conmutables sobre el mismo bloque de código:
 Cada capa se resalta en el código y muestra su explicación al lado. Es la
 sección que enseña *cómo se escribe* un test, no solo que existen.
 
-### § 4 — Los 14 niveles, en fichas
+### § 4 — Los 15 niveles, en fichas
 
 Una ficha por nivel, filtrable por **«¿cuándo corre?»** (en cada push /
 semanal / manual / continuo) y por **«¿bloquea el deploy?»** (sí / no).
@@ -281,7 +281,7 @@ presente en el DOM (no inyectado) para que sea legible sin JS.
 
 | Fase | Alcance | Entregable verificable |
 |------|---------|------------------------|
-| **1** | `src/data/testing.ts` con los 14 niveles, 12 decisiones y glosario; página estática con §§ 1, 4, 5, 8, 9; pestaña en `DocsNav` | página navegable y completa en contenido, sin interactividad |
+| **1** | `src/data/testing.ts` con los 15 niveles, 12 decisiones y glosario; página estática con §§ 1, 4, 5, 8, 9; pestaña en `DocsNav` | página navegable y completa en contenido, sin interactividad |
 | **2** | `PipelineMap.astro`: mapa clicable + simulación de 3 finales | § 2 funcionando |
 | **3** | Números en vivo desde `ci_runs` + `security_findings` con fallback | § 0 con datos reales |
 | **4** | `TestAnatomy.astro` (§ 3) y § 6 cobertura vs. mutación | páginas de detalle |
