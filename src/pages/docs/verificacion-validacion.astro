@@ -32,13 +32,22 @@ const acentoTipo: Record<TipoVV, string> = { verificacion: 'bg-cyan', validacion
 
 const secciones = [
   { id: 'marco', t: 'El marco' },
+  { id: 'integridad', t: 'Nivel de integridad' },
   { id: 'verificacion', t: 'Verificación' },
   { id: 'validacion', t: 'Validación' },
   { id: 'frontera', t: 'La frontera' },
   { id: 'trazabilidad', t: 'Trazabilidad' },
+  { id: 'ciclo-vida', t: 'Ciclo de vida' },
   { id: 'comandos', t: 'Cómo correrlas' },
   { id: 'glosario', t: 'Glosario' },
 ]
+
+const acentoIntegridad: Record<NivelIntegridad, string> = {
+  4: 'bg-ember',
+  3: 'bg-lime',
+  2: 'bg-cyan',
+  1: 'bg-ink-300',
+}
 
 const COMANDOS = [
   {
