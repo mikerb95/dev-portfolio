@@ -46,12 +46,13 @@ describe('vault · sinSecretos', () => {
     expect(json).not.toContain('secrets')
   })
 
-  it('tolera una fila que ya viene sin el campo', () => {
-    // En variable, no literal: TypeScript aplica excess property checking a los
-    // literales frescos contra la restricción del genérico. Los callers reales
-    // pasan filas de drizzle, que tampoco son literales.
-    const fila = { id: 1 }
-    expect(() => sinSecretos(fila)).not.toThrow()
+  it('tolera un servicio sin credenciales guardadas', () => {
+    // `secrets` es una columna nullable: un servicio recién creado no tiene nada
+    // en la bóveda. La redacción no debe depender de que el campo traiga valor.
+    const sinCredenciales = { id: 9, name: 'Vercel', secrets: null }
+    const out = sinSecretos(sinCredenciales)
+    expect(out).not.toHaveProperty('secrets')
+    expect(out.name).toBe('Vercel')
   })
 
   it('redacta la lista entera, no solo el primero', () => {
