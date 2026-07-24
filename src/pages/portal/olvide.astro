@@ -70,5 +70,9 @@ import PortalAuthLayout from '../../layouts/PortalAuthLayout.astro'
 
     form.classList.add('hidden')
     done.classList.remove('hidden')
+    // El formulario desaparece bajo el foco: sin mover el foco a la
+    // confirmación, quien navega por teclado o lector de pantalla se queda en un
+    // botón que ya no existe y sin noticia de que el envío funcionó.
+    done.focus()
   })
 </script>
