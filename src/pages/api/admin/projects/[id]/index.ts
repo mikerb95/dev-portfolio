@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { db } from '../../../../../db'
 import { projects, clients, projectEnvVars, projectServices, projectContacts, finances } from '../../../../../db/schema'
 import { eq } from 'drizzle-orm'
+import { sinSecretosLista, sinValorCifradoLista } from '../../../../../lib/vault'
 
 export const GET: APIRoute = async ({ params }) => {
   const id = Number(params.id)
