@@ -87,6 +87,11 @@ export const CLASIFICACION: ClasificacionNivel[] = [
     porque: 'Comprueba que la latencia se mantiene dentro de un presupuesto definido por ingeniería, no por un usuario real observado.',
   },
   {
+    id: 'dast',
+    tipo: 'verificacion',
+    porque: 'Compara el comportamiento del sitio en ejecución contra un catálogo externo de patrones de vulnerabilidad conocidos (OWASP), igual que SAST pero en caliente. El oráculo sigue siendo un estándar, no una persona usando el sistema.',
+  },
+  {
     id: 'e2e',
     tipo: 'validacion',
     porque:
