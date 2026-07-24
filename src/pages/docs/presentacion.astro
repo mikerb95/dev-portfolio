@@ -14,6 +14,7 @@ import { ITERACIONES } from '../../data/iteraciones-portfolio'
 import {
   NIVELES,
   PIPELINE,
+  ESCENARIOS,
   METRICAS_REFERENCIA as TEST_REF,
   TOTAL_AUTOMATIZADOS,
 } from '../../data/testing'
@@ -79,6 +80,28 @@ const diagramas = [
 const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
   (ext) => CASOS_DE_USO.find((c) => c.id === ext.id)!,
 ).filter(Boolean)
+
+// Slide "El pipeline, paso a paso": el mismo escenario "Todo verde" que
+// /docs/pipeline-en-vivo reproduce solo, pero aquí cada línea es un
+// fragmento de Reveal — avanza con la misma tecla/clic que el resto del
+// deck, nada de temporizadores.
+const ESCENARIO_VERDE = ESCENARIOS.find((e) => e.id === 'verde')!
+const NODO_DE_ETAPA: Record<string, string> = {
+  local: 'push',
+  push: 'push',
+  ci: 'ci',
+  deploy: 'deploy',
+  verify: 'verify',
+  operacion: 'operacion',
+}
+const NODOS_SIM = [
+  { id: 'push', nombre: 'GitHub — push a main' },
+  { id: 'ci', nombre: 'GitHub Actions — CI' },
+  { id: 'deploy', nombre: 'Vercel — build + deploy' },
+  { id: 'verify', nombre: '/api/health — verificación' },
+  { id: 'turso', nombre: 'Turso — libSQL prod' },
+  { id: 'operacion', nombre: 'Monitoreo continuo' },
+]
 ---
 
 <SlidesLayout title="Documentación de ingeniería — CodeByMike" light>
@@ -369,6 +392,36 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
       Y dos etapas más que casi nadie automatiza: <strong>verificación post-deploy con rollback</strong>
       {' '}(3 health checks, revierte solo si fallan 2) y <strong>operación continua</strong> (8 monitores cada 5 min).
     </p>
+  </section>
+
+  {/* ── Testing: pipeline paso a paso ──────────────────────── */}
+  <section>
+    <h2>El pipeline, paso a paso</h2>
+    <p class="body">
+      La misma corrida real de <a href="/docs/pipeline-en-vivo">/docs/pipeline-en-vivo</a>, pero cada evento
+      espera al siguiente <kbd>→</kbd> en vez de reproducirse solo.
+    </p>
+    <div class="sim-grid">
+      <ol class="sim-log" id="sim-log-deck">
+        {ESCENARIO_VERDE.pasos.map((p) => (
+          <li
+            class="fragment sim-log-li"
+            data-nodo={NODO_DE_ETAPA[p.etapa]}
+            data-estado={p.estado}
+          >
+            <span class="sim-log-etapa">{PIPELINE.find((e) => e.id === p.etapa)?.nombre ?? p.etapa}</span>
+            <span class="sim-log-txt">{p.texto}</span>
+          </li>
+        ))}
+      </ol>
+      <div class="sim-map" id="sim-map-deck">
+        {NODOS_SIM.map((n) => (
+          <div class="sim-nodo" data-nodo={n.id}>
+            <span class="sim-nodo-dot"></span>{n.nombre}
+          </div>
+        ))}
+      </div>
+    </div>
   </section>
 
   {/* ── Testing: los niveles ────────────────────────────────── */}
@@ -781,6 +834,78 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
     border-radius: 0.15em;
   }
 
+  /* Pipeline paso a paso: log tipo terminal + mapa de componentes que la
+     sección de arriba enciende fragmento a fragmento (ver script al final
+     del archivo). Terminal oscura a propósito, como contraste dentro del
+     deck claro — igual que /docs/pipeline-en-vivo. */
+  .reveal-light .sim-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 0.5em;
+    align-items: start;
+  }
+  .reveal-light .sim-log {
+    list-style: none;
+    margin: 0;
+    padding: 0.5em 0.6em;
+    border-radius: 0.3em;
+    background: #0b1220;
+    max-height: 12.5em;
+    overflow-y: auto;
+  }
+  .reveal-light .sim-log-li {
+    display: grid;
+    grid-template-columns: 6em 1fr;
+    gap: 0.5em;
+    align-items: baseline;
+    font-size: 0.28em;
+    line-height: 1.6;
+    padding: 0.18em 0.3em;
+    border-radius: 0.2em;
+  }
+  .reveal-light .sim-log-etapa {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #7dd3fc;
+  }
+  .reveal-light .sim-log-txt { color: #e2e8f0; }
+  .reveal-light .sim-log-li[data-estado='fail'] .sim-log-txt { color: #fca5a5; }
+  .reveal-light .sim-log-li[data-estado='warn'] .sim-log-txt { color: #fde68a; }
+  .reveal-light .sim-log-li[data-estado='skip'] .sim-log-txt { color: #94a3b8; }
+
+  .reveal-light .sim-map {
+    display: grid;
+    gap: 0.35em;
+  }
+  .reveal-light .sim-nodo {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 0.3em;
+    color: var(--slide-fg-muted);
+    border: 1px solid var(--slide-line);
+    background: var(--slide-surface);
+    border-radius: 0.3em;
+    padding: 0.45em 0.55em;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .reveal-light .sim-nodo-dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 99px;
+    background: var(--slide-line);
+    flex-shrink: 0;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .reveal-light .sim-nodo[data-estado='ok'] { color: var(--slide-fg); }
+  .reveal-light .sim-nodo[data-estado='ok'] .sim-nodo-dot { background: #4ade80; box-shadow: 0 0 0.4em rgba(74, 222, 128, 0.5); }
+  .reveal-light .sim-nodo[data-estado='in_progress'] { color: var(--slide-fg); }
+  .reveal-light .sim-nodo[data-estado='in_progress'] .sim-nodo-dot { background: var(--slide-accent); box-shadow: 0 0 0.4em var(--slide-accent-soft); }
+  .reveal-light .sim-nodo[data-estado='fail'] { color: var(--slide-fg); border-color: #fca5a5; }
+  .reveal-light .sim-nodo[data-estado='fail'] .sim-nodo-dot { background: #f87171; box-shadow: 0 0 0.4em rgba(248, 113, 113, 0.5); }
+
   /* Móvil / pantallas angostas */
   @media (max-width: 800px) {
     .reveal-light .grid-3,
@@ -793,5 +918,50 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
     .reveal-light .grid-2 {
       grid-template-columns: 1fr;
     }
+    .reveal-light .sim-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
+
+<script>
+  // Enciende los nodos del mapa al ritmo de Reveal, no de un timer propio.
+  // Reveal marca cada .fragment revelado con class="visible" (y la quita al
+  // retroceder); un MutationObserver sobre esa clase evita depender de su
+  // API de eventos o de que SlidesLayout exponga la instancia global.
+  const log = document.getElementById('sim-log-deck')
+  const mapa = document.getElementById('sim-map-deck')
+
+  if (log && mapa) {
+    const nodos = new Map(
+      [...mapa.querySelectorAll<HTMLElement>('[data-nodo]')].map((n) => [n.dataset.nodo!, n])
+    )
+    const items = [...log.querySelectorAll<HTMLElement>('[data-nodo]')]
+
+    const aplicar = (li: HTMLElement) => {
+      const nodo = nodos.get(li.dataset.nodo!)
+      if (!nodo) return
+      const visible = li.classList.contains('visible')
+      if (!visible) {
+        delete nodo.dataset.estado
+        return
+      }
+      // "warn" en el escenario simulado representa una etapa en curso (el
+      // mismo significado que 'in_progress' en /docs/pipeline-en-vivo).
+      const estado = li.dataset.estado === 'warn' ? 'in_progress' : li.dataset.estado
+      nodo.dataset.estado = estado
+      // Turso no tiene fila propia en el log: se infiere encendida en el
+      // mismo instante que "Verificación" pasa a ok, igual que en la
+      // versión en vivo de esta página.
+      if (li.dataset.nodo === 'verify' && estado === 'ok') {
+        const turso = nodos.get('turso')
+        if (turso) turso.dataset.estado = 'ok'
+      }
+    }
+
+    const obs = new MutationObserver((muts) => {
+      for (const m of muts) aplicar(m.target as HTMLElement)
+    })
+    for (const li of items) obs.observe(li, { attributes: true, attributeFilter: ['class'] })
+  }
+</script>
