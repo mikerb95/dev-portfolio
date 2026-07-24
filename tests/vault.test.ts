@@ -81,7 +81,8 @@ describe('vault · sinValorCifrado', () => {
   it('no toca un campo `secrets` ajeno ni viceversa', () => {
     // Son entidades distintas a propósito: una redacción genérica por nombre de
     // campo borraría `value` en tablas donde es un dato inocuo.
-    expect(sinValorCifrado({ value: 'x', secrets: 'y' })).toHaveProperty('secrets')
-    expect(sinSecretos({ value: 'x', secrets: 'y' })).toHaveProperty('value')
+    const mixta = { value: 'x', secrets: 'y' }
+    expect(sinValorCifrado(mixta)).toHaveProperty('secrets')
+    expect(sinSecretos(mixta)).toHaveProperty('value')
   })
 })
