@@ -194,7 +194,7 @@ export const SUBSISTEMAS: Subsistema[] = [
     nombre: 'Autenticación (admin OAuth+allowlist, portal scrypt)',
     nivel: 3,
     porque: 'Un fallo da acceso no autorizado al panel de control o a los datos de un cliente en el portal.',
-    archivos: 'src/middleware.ts, src/lib/portal/*',
+    archivos: 'auth.config.ts, src/lib/auth.ts (admin) — src/lib/portal/session.ts, login.ts (portal)',
     cubiertoPor: ['integracion', 'e2e', 'dast'],
     refuerzoPendiente: 'Falta un caso negativo explícito: allowlist revocada a mitad de una sesión ya activa.',
   },
