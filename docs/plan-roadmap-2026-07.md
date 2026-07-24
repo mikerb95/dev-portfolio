@@ -22,9 +22,18 @@
 
 ## Orden de ejecución
 
-> **Estado (17 jul 2026)**: etapas 1-6 ✅ implementadas y verificadas.
-> Siguiente: etapa 7 (LAB Fase 5 — k6, bloqueada por falta de target de
-> preview/staging estable — ver `VERCEL_TOKEN` en pendientes transversales).
+> **Estado (24 jul 2026)**: etapas 1-6 ✅ implementadas y verificadas; la 8
+> quedó cerrada salvo sus dos acciones manuales. La etapa 7 (k6) sigue siendo
+> la única del LAB pendiente, bloqueada por falta de un target de
+> preview/staging estable (ver `VERCEL_TOKEN` en pendientes transversales).
+>
+> **Trabajo grande entregado fuera de este roadmap** (ver sus planes propios):
+> portal de clientes completo (`plan-portal-clientes.md`), cobros de campo por
+> WhatsApp (`plan-cobrar.md`), documentación pública de testing y V&V
+> (`plan-testing-docs.md`), DAST con OWASP ZAP (`plan-lab-fases-pendientes.md`,
+> sub-fase 6b) y la landing comercial `/paginas-web` (`plan-diseno-web.md`).
+> El siguiente gran bloque no está en esta tabla: la capa de tiempo real del
+> portal (`plan-portal-tiempo-real.md`).
 
 | # | Etapa | Tipo | Esfuerzo |
 |---|-------|------|----------|
@@ -32,10 +41,10 @@
 | 2 | ✅ `/lab` público (vitrina del LAB) | feature | ~1 sesión |
 | 3 | ✅ Demo read-only del admin | feature grande | ~2-3 sesiones |
 | 4 | ✅ Playwright e2e | infra de calidad | ~1-2 sesiones |
-| 5 | ✅ LAB Fase 6 — SAST + a11y | LAB | ~2-3 días |
+| 5 | ✅ LAB Fase 6 — SAST + a11y (+ DAST, 23 jul) | LAB | ~2-3 días |
 | 6 | ✅ LAB Fase 7 — Mutation + contratos | LAB | ~2 días |
 | 7 | LAB Fase 5 — Load testing k6 | LAB | ~2 días |
-| 8 | Remate vitrina seguridad | remate | ~1 h |
+| 8 | ✅ Remate vitrina seguridad (código) | remate | ~1 h |
 | 9 | Changelog público | feature | ~½ sesión |
 | 10 | Página `/architecture` renovada | mejora | ~½ sesión |
 | 11 | Briefing semanal con IA | feature | ~1 sesión |
