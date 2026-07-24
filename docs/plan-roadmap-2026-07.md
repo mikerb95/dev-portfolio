@@ -426,19 +426,19 @@ briefing sin IA; test del recolector y del truncado.
 
 ## Transversal — Artículos `/notes` faltantes
 
-Publicados (13): monitor propio, micro-SIEM, chaos, SLOs, sesiones revocables,
+Publicados (14): monitor propio, micro-SIEM, chaos, SLOs, sesiones revocables,
 RAG, mutation testing, e2e, SAST ("no solo un scan verde"), bloqueo escalado de
-IPs, analizador de dominios, cobros por WhatsApp, y el del `clientId` que nunca
-viene de la URL.
+IPs, analizador de dominios, cobros por WhatsApp, el del `clientId` que nunca
+viene de la URL, y "Dos logins en el mismo sitio, y ninguno conoce al otro"
+(por qué el portal no reutiliza la auth del admin).
 
 Cola de artículos (escribir cada uno al cerrar su etapa):
 
 1. **Pasarela de pagos mock**: idempotencia, webhooks firmados, por qué mock.
 2. **Bóveda AES-256-GCM**: cifrado por servicio, revelado bajo demanda, qué NO hacer.
 3. **Demo read-only** (etapa 3, entregada): aislar por diseño (BD separada) vs filtrar por query.
-4. **Portal de clientes**: el feature más grande del repo y el único sin artículo.
-5. **k6** (tras etapa 7): carga contra preview, nunca contra prod facturado.
-6. **Briefing con IA** (tras etapa 11): IA con criterio, contratos de entrada, fail-open.
+4. **k6** (tras etapa 7): carga contra preview, nunca contra prod facturado.
+5. **Briefing con IA** (tras etapa 11): IA con criterio, contratos de entrada, fail-open.
 
 Cada artículo: mismo formato del content collection actual, OG image
 (`og:generate`), submit IndexNow (`seo:indexnow`), distribución vía workflow

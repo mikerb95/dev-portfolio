@@ -23,7 +23,7 @@ El portal está completo y es sólido. Lo verificado:
 
 1. **Nada se actualiza solo.** Cero `EventSource`, `setInterval` o `text/event-stream` bajo `src/pages/portal`. Un cliente con el portal abierto no ve la respuesta a su mensaje, ni el hito que acabas de completar, ni que su monitor se cayó, hasta que recarga a mano. El dato *es* de tiempo real (los checks entran cada ~5 min); la interfaz no.
 2. **El avance del proyecto depende de que tú edites hitos a mano.** Entre hito e hito, el cliente ve una barra inmóvil aunque haya habido diez deploys.
-3. Higiene: el portal **no tiene monitor propio en `/status`** (el único sistema del stack que no se vigila a sí mismo), y **no tiene artículo en `/notes`** pese a ser el feature más grande del repo (regla transversal del roadmap).
+3. Higiene: el portal **no tiene monitor propio en `/status`** (el único sistema del stack que no se vigila a sí mismo). El hueco de `/notes` ya está cubierto con dos artículos —"El clientId nunca viene de la URL" (aislamiento entre tenants) y "Dos logins en el mismo sitio, y ninguno conoce al otro" (por qué la auth del portal es propia)—, ambos del 24 jul 2026.
 
 ## 1. Decisión técnica: polling con digest, no SSE
 

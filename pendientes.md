@@ -77,9 +77,10 @@ silencioso.
 Dos puntos de higiene del mismo plan:
 - [ ] El portal no tiene monitor propio en `/status` — es el único subsistema del
       stack que no se vigila a sí mismo.
-- [ ] El portal no tiene artículo en `/notes`, siendo el feature más grande del
-      repo (la regla transversal del roadmap dice que cada etapa mayor termina
-      con el suyo).
+- [x] Artículo en `/notes`: **"Dos logins en el mismo sitio, y ninguno conoce al
+      otro"** (24 jul), sobre por qué el portal no reutiliza la auth del admin.
+      Junto con "El clientId nunca viene de la URL" cubre las dos decisiones de
+      diseño del portal que valía la pena contar.
 
 ### LAB — Fase 5: load testing con k6
 
