@@ -239,7 +239,30 @@ const COMANDOS = [
     ))}
   </div>
 
-  {/* ── § 6 Glosario ────────────────────────────────────────── */}
+  {/* ── § 6 Cómo correrlas ──────────────────────────────────── */}
+  <h2 id="comandos" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Cómo correrlas tú mismo</h2>
+  <div class="max-w-3xl mb-6">
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Cuatro comandos, cada uno respondiendo una pregunta distinta. Ninguno necesita nada externo: la suite de
+      Vitest usa libSQL en archivo temporal y la de Playwright siembra su propia base desechable al levantar el
+      servidor.
+    </p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 mb-6">
+    {COMANDOS.map((c) => (
+      <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class={`w-2 h-2 rounded-full ${acentoTipo[c.tipo]}`} aria-hidden="true"></span>
+          <code class="font-mono text-[13px] text-ink-50">{c.cmd}</code>
+          <span class="font-mono text-[10.5px] uppercase tracking-wide text-ink-300 ml-auto">{c.tipo}</span>
+        </div>
+        <p class="text-[12.5px] text-ink-200 leading-relaxed">{c.para}</p>
+      </div>
+    ))}
+  </div>
+
+  {/* ── § 7 Glosario ────────────────────────────────────────── */}
   <h2 id="glosario" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Glosario</h2>
   <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 mb-6">
     {GLOSARIO_VV.map((g) => (
