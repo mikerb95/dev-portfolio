@@ -209,7 +209,7 @@ export interface Actor {
 export const ACTORES: Actor[] = [
   { id: 'visitante', nombre: 'Visitante público', descripcion: 'Cualquier persona que navega el sitio público sin autenticarse: recluta, cliente potencial, buscador.' },
   { id: 'admin', nombre: 'Administrador (Mike)', descripcion: 'Único usuario con acceso al panel /admin, autenticado con GitHub OAuth vía allowlist.' },
-  { id: 'cliente', nombre: 'Cliente', descripcion: 'Persona de negocio de un proyecto gestionado; interactúa vía formulario de contacto o presentaciones compartidas.' },
+  { id: 'cliente', nombre: 'Cliente', descripcion: 'Persona de negocio de un proyecto gestionado. Entra al portal con cuenta propia (facturas, documentos, mensajes, avance) y además recibe links de cobro y presentaciones compartidas sin necesidad de sesión.' },
   { id: 'cron', nombre: 'Cron externo (cron-job.org / Vercel Cron)', descripcion: 'Disparador automático periódico que golpea endpoints de sondeo, backup y rollups.' },
   { id: 'gateway', nombre: 'Pasarela de pagos (Wompi)', descripcion: 'Sistema externo que envía webhooks de eventos de pago.' },
   { id: 'buscador', nombre: 'Buscador (Google/Bing)', descripcion: 'Rastreador que consume sitemap, RSS y recibe notificaciones IndexNow.' },
