@@ -410,17 +410,107 @@
 
 ---
 
+## Clientes — Portal autenticado
+
+### HU-35 — Ver mis facturas y descargarlas
+**Como** cliente de un proyecto,  
+**quiero** entrar con mi propia cuenta y ver mis facturas con su estado y vencimiento, descargables en PDF,  
+**para** llevar mi contabilidad sin pedirlas por correo cada vez.
+
+**Criterios de aceptación:**
+- El acceso es con email y contraseña propios, sin relación con el login del administrador.
+- Cada factura se descarga en PDF.
+- Ninguna consulta devuelve datos de otro cliente, ni aunque se manipule el identificador en la URL.
+
+---
+
+### HU-36 — Seguir el avance de mi proyecto y hablar con el desarrollador
+**Como** cliente,  
+**quiero** ver el avance por hitos, los documentos compartidos y un hilo de mensajes,  
+**para** saber en qué va mi proyecto sin agendar una llamada.
+
+**Criterios de aceptación:**
+- El avance se muestra por hitos del proyecto.
+- Los mensajes forman un hilo con estado de leído por ambas partes.
+- Los documentos visibles son solo los del propio cliente.
+
+---
+
+### HU-37 — Recuperar el acceso a mi cuenta
+**Como** cliente que olvidó su contraseña,  
+**quiero** restablecerla desde un enlace enviado a mi correo,  
+**para** no depender de que alguien me la cambie a mano.
+
+**Criterios de aceptación:**
+- El flujo cubre invitación inicial, olvido y restablecimiento.
+- Los intentos de login están limitados por IP y por cuenta.
+- Revocar una sesión la corta en el siguiente request, no al expirar.
+
+---
+
+## Administrador (Mike) — Cobros de campo
+
+### HU-38 — Cobrar un trabajo desde el celular por WhatsApp
+**Como** administrador que acaba de terminar un trabajo en sitio,  
+**quiero** configurar el monto, previsualizar el mensaje y enviarlo por WhatsApp desde mi propio teléfono,  
+**para** cobrar en el momento sin contratar la API de WhatsApp ni volver al escritorio.
+
+**Criterios de aceptación:**
+- El flujo cabe en dos pantallas, operable con una mano.
+- El cliente recibe un enlace corto que lleva al checkout; el monto se firma en el servidor y nunca viaja en la URL del mensaje.
+- El cobro vence por defecto a las 72 h y puede anularse manualmente.
+
+---
+
+### HU-39 — Consultar mi histórico de pagos como cliente
+**Como** cliente que ha pagado varios trabajos,  
+**quiero** ver mi historial desde el enlace que recibí,  
+**para** confirmar qué he pagado sin tener que preguntar.
+
+**Criterios de aceptación:**
+- El enlace firmado del mensaje da acceso al historial completo.
+- La consulta manual solo por número de teléfono muestra datos enmascarados y está fuertemente limitada por tasa.
+
+---
+
+## Visitantes del sitio público — Demo y captación
+
+### HU-40 — Recorrer el panel de control sin crear una cuenta
+**Como** recluta o cliente potencial,  
+**quiero** entrar al panel completo con datos de ejemplo,  
+**para** evaluar el producto sin registrarme ni pedir una demo agendada.
+
+**Criterios de aceptación:**
+- Todas las páginas del panel se navegan con datos ficticios.
+- Ninguna operación de escritura se ejecuta, y las rutas que revelan credenciales están bloqueadas aunque sean GET.
+- Ningún dato real aparece en el HTML servido en modo demo.
+
+---
+
+### HU-41 — Entender qué me ofrecen sin lenguaje técnico
+**Como** dueño de un negocio local,  
+**quiero** una página con planes, precios y ejemplos en lenguaje llano,  
+**para** decidir si contratar sin tener que interpretar vocabulario de desarrollo.
+
+**Criterios de aceptación:**
+- Tres planes con precio visible, perfiles de cliente y preguntas frecuentes.
+- Contacto por WhatsApp o formulario, sin pasos intermedios.
+
+---
+
 ## Resumen
 
 | Grupo | Historias | Rango |
 |---|---|---|
-| Visitantes | 10 | HU-01 a HU-05, HU-25 a HU-27, HU-31 a HU-32 |
+| Visitantes | 12 | HU-01 a HU-05, HU-25 a HU-27, HU-31 a HU-32, HU-40 a HU-41 |
 | Administrador — CRM y perfil | 12 | HU-06 a HU-17 |
 | Administrador — Observabilidad y operación | 7 | HU-18 a HU-24 |
 | Administrador — Seguridad | 3 | HU-28 a HU-30 |
 | Administrador — Seguimiento de descargas del CV | 1 | HU-33 |
 | Administrador — Documentación | 1 | HU-34 |
-| **Total** | **34** | HU-01 a HU-34 |
+| Administrador — Cobros de campo | 2 | HU-38 a HU-39 |
+| Clientes — Portal | 3 | HU-35 a HU-37 |
+| **Total** | **41** | HU-01 a HU-41 |
 
 Ver también el tablero XP con historias ancladas al historial real de commits en `/admin/docs/kanban`
 (datos en `src/data/iteraciones-portfolio.ts`).
