@@ -34,11 +34,13 @@ Cada módulo existe para demostrar una práctica concreta, con tests y datos rea
 - **Chaos engineering** — inyección de fallos con flags de TTL corto (máx 15 min), fail-open, con `/admin` excluido por código.
 - **Micro-SIEM** — clasificador de amenazas OWASP en el middleware, rate limiting durable de dos capas, honeypots con tarpit, auto-block con TTL escalado, detección de anomalías por z-score, y vitrina pública con OPSEC (solo agregados). Plan completo en [`docs/plan-security-observability.md`](./docs/plan-security-observability.md).
 - **Pagos** — checkout con llaves de idempotencia y verificación de firma de webhooks (modo mock sin llaves reales).
+- **SAST + DAST + accesibilidad** — `npm audit` y CodeQL sobre el código, OWASP ZAP baseline contra el preview, y axe-core sobre las páginas públicas; todo desemboca en hallazgos rastreables con estado (abierto/resuelto/aceptado) en el panel del LAB.
+- **Mutation testing + contratos** — Stryker sobre `src/lib` (score real 87.2 %) y esquemas Zod que congelan la forma de las respuestas de la API.
 - **Fingerprinting demo** — [/lab/fingerprint](https://codebymike.tech/lab/fingerprint): identificación de dispositivos entre pestañas/salas.
 
-Planes de fases pendientes (load testing k6, SAST/a11y, mutation testing) en
-[`docs/plan-lab-fases-pendientes.md`](./docs/plan-lab-fases-pendientes.md) y el
-roadmap general en [`docs/plan-roadmap-2026-07.md`](./docs/plan-roadmap-2026-07.md).
+Queda pendiente la última fase del LAB (load testing con k6), detallada en
+[`docs/plan-lab-fases-pendientes.md`](./docs/plan-lab-fases-pendientes.md); el
+roadmap general está en [`docs/plan-roadmap-2026-07.md`](./docs/plan-roadmap-2026-07.md).
 
 ## Panel privado (`/admin`)
 
