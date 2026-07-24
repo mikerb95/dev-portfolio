@@ -350,15 +350,17 @@ en un arranque limpio antes de que la contención empezara.
   `VERCEL_TOKEN` en GitHub Secrets sigue pendiente (transversal).
 - Encender tarjeta de load testing en `/lab` público.
 
-## Etapa 8 — Remate vitrina de seguridad
+## Etapa 8 — Remate vitrina de seguridad ✅ CÓDIGO COMPLETO
 
-El micro-SIEM está implementado (Fases 0-6, ver plan propio). Falta solo:
-1. Caso de estudio / tarjeta en `/tools` apuntando a `/security` (formato de las
-   tarjetas existentes).
-2. Verificar que el artículo de `/notes` del micro-SIEM enlaza a la vitrina viva.
-3. **Acción manual de Mike** (no código): 3 custom rules del WAF en el dashboard
-   de Vercel + alta del cron `security-rollup` en cron-job.org (detalle en
-   `docs/plan-security-observability.md`, Fase 6).
+El micro-SIEM está implementado (Fases 0-6, ver plan propio).
+
+1. ✅ Tarjeta en `/tools` con mock de Security Operations y enlace "Ver Security
+   Operations en vivo" → `/security`.
+2. ✅ El artículo del micro-SIEM en `/notes` enlaza a la vitrina viva y explica
+   por qué solo publica agregados.
+3. ⏳ **Acción manual de Mike** (no código, sigue pendiente): 3 custom rules del
+   WAF en el dashboard de Vercel + alta del cron `security-rollup` en
+   cron-job.org (detalle en `docs/plan-security-observability.md`, Fase 6).
 
 ## Etapa 9 — Changelog público
 
