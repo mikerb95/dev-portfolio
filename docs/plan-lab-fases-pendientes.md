@@ -1,7 +1,14 @@
 # LAB — Fases pendientes (detalle de implementación)
 
-> Complemento de `docs/plan-lab.md`. Estado a jul 4 2026: Fases 0-4 completas
-> (tests base, CI/CD + rollback, pasarela de pagos, chaos engineering, SLO/error budget).
+> Complemento de `docs/plan-lab.md`.
+>
+> **Estado a jul 24 2026**: Fases 0-4 completas (tests base, CI/CD + rollback,
+> pasarela de pagos, chaos engineering, SLO/error budget), **Fase 6 completa**
+> (SAST el 17 jul, DAST el 23 jul, a11y el 17 jul) y **Fase 7 completa**
+> (mutation testing con score real 87.2 % + contratos Zod, 17 jul).
+> **Queda solo la Fase 5** (load testing con k6), bloqueada por la falta de un
+> target de preview/staging estable → `VERCEL_TOKEN`.
+>
 > Este documento detalla las Fases **5, 6 y 7** con alcance, archivos concretos,
 > criterios de aceptación y notas de costo/seguridad.
 >
