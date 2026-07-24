@@ -71,6 +71,37 @@ node scripts/seed-demo.mjs   # recrea el esquema y siembra los datos ficticios
 Requiere `TURSO_DEMO_URL` y `TURSO_DEMO_AUTH_TOKEN`. Sin ellas la demo no existe
 y el panel se comporta exactamente como antes.
 
+## Portal de clientes (`/portal`)
+
+Cada cliente entra con su propia cuenta (email + contraseña con scrypt, cookie y
+tabla de sesiones propias, sin compartir nada con el login del administrador) y
+ve sus facturas —descargables en PDF—, sus documentos, el avance por hitos de su
+proyecto y un hilo de mensajería con el administrador.
+
+El requisito del que cuelga todo lo demás es el aislamiento entre clientes:
+**el identificador de cliente nunca viene del request**, siempre sale de la
+sesión y viaja en el `WHERE` aunque la consulta ya lleve un id de proyecto. Es
+lo que verifican los 26 tests de `tests/portal-isolation.test.ts`. La
+impersonación de soporte ("ver como cliente") es de solo lectura, cortada en el
+middleware y además en el endpoint de pago, que vive fuera del prefijo
+`/api/portal/` y se habría escapado del primer guard.
+
+Falta la capa de tiempo real (el portal no se refresca solo): diseño cerrado en
+[`docs/plan-portal-tiempo-real.md`](./docs/plan-portal-tiempo-real.md).
+
+## Cobros de campo (`/cobrar`)
+
+Flujo mobile-first para cobrar trabajos externos desde el celular: se configura
+monto y teléfono, se previsualiza el mensaje y se envía por WhatsApp **sin usar
+la API de WhatsApp** (se abre `wa.me` desde el propio teléfono). El cliente paga
+en un link corto público `/c/[code]` y consulta su histórico en `/mis-pagos`.
+
+Un cobro **es** una fila de `payments` con campos extra, no una tabla ni una
+máquina de estados paralela. El monto se firma siempre en el servidor: nunca
+viaja en la URL del mensaje. El teléfono tampoco es autenticación — solo el
+token HMAC del link abre el historial completo; la consulta manual por número da
+una vista enmascarada con rate limiting fuerte.
+
 ## Arquitectura (resumen)
 
 ```
