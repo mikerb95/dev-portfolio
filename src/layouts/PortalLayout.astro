@@ -51,6 +51,27 @@ const initials = (user.name ?? user.email)
     <meta name="theme-color" content="#07070a" />
   </head>
   <body class="grain bg-ink-950 text-ink-50 min-h-screen flex flex-col">
+    <!--
+      La navegación del portal se repite en cada página: sin este salto, quien
+      navega por teclado tabula por logo, campana, menú y cinco secciones antes
+      de llegar al contenido, en cada carga.
+    -->
+    <a
+      href="#contenido"
+      class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-3 focus:left-3 focus:px-3 focus:py-2 focus:rounded-lg focus:bg-cyan focus:text-ink-950 focus:text-[13px] focus:font-medium"
+    >
+      Saltar al contenido
+    </a>
+
+    <!--
+      Región de anuncios del portal. Todo cambio que ocurre sin recargar la
+      página (un envío que sale bien, un contador que sube solo) tiene que pasar
+      por aquí: para un lector de pantalla, una interfaz que muta en silencio no
+      ha hecho nada. `polite` y no `assertive` a propósito — nada de lo que pasa
+      en el portal justifica interrumpir lo que la persona esté leyendo.
+    -->
+    <div id="portal-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
     <header class="sticky top-0 z-40 bg-ink-950/85 backdrop-blur-xl border-b border-white/5">
       <div class="max-w-[1100px] mx-auto px-4 md:px-6">
         <div class="h-14 flex items-center justify-between gap-3">
