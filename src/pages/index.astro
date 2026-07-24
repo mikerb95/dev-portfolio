@@ -546,35 +546,5 @@ const visibleProjects = await db
       })
     })
 
-    // 3. Reveal por "scan" en las cards — clip-path wipe de izquierda a
-    // derecha + una barra de luz que la atraviesa, en vez de un fade plano.
-    const cards = document.querySelectorAll<HTMLElement>('section .glass, section .glass-strong')
-
-    cards.forEach((card, i) => {
-      card.style.position = card.style.position || 'relative'
-      card.style.overflow = 'hidden'
-
-      const bar = document.createElement('div')
-      bar.setAttribute('aria-hidden', 'true')
-      bar.style.cssText =
-        'position:absolute;inset-block:0;left:0;width:33%;pointer-events:none;' +
-        'background:linear-gradient(90deg, transparent, rgba(0,242,255,.35), transparent);'
-      card.appendChild(bar)
-
-      const tl = gsap.timeline({
-        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
-        delay: (i % 4) * 0.05,
-      })
-      tl.fromTo(
-        card,
-        { clipPath: 'inset(0 100% 0 0)', opacity: 0 },
-        { clipPath: 'inset(0 0% 0 0)', opacity: 1, duration: 0.7, ease: 'power3.out' }
-      ).fromTo(
-        bar,
-        { xPercent: -140, opacity: 0.9 },
-        { xPercent: 340, opacity: 0, duration: 0.7, ease: 'power2.out', onComplete: () => bar.remove() },
-        '<'
-      )
-    })
   }
 </script>
