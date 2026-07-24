@@ -149,6 +149,11 @@ export const TRAZABILIDAD = [
 // decide el nivel de integridad: la consecuencia de que ese subsistema falle,
 // no la probabilidad. A mayor nivel, más tareas de V&V son obligatorias — acá
 // se listan las que ya existen y las que el nivel exigiría y todavía faltan.
+//
+// OPSEC: /docs es público (solo /docs/presentacion es privado, ver
+// middleware.ts). Los `refuerzoPendiente` describen la CLASE de tarea de V&V
+// que falta, nunca el vector concreto que quedaría sin cubrir: en los
+// subsistemas de nivel 3 y 4 esa frase sería un mapa de dónde buscar.
 
 export type NivelIntegridad = 1 | 2 | 3 | 4
 
