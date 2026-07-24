@@ -167,6 +167,22 @@ body {
 @keyframes pulseDot { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
 .pulse-dot { animation: pulseDot 1.6s ease-in-out infinite; }
 
+/* HUD de diagnóstico del index (id="hud"): réplica manual del look de
+   `.glass` sin usar esa clase, para que el selector de reveal por scroll
+   (`section .glass`) no intente animar un elemento fixed fuera del flujo. */
+.hud-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255,255,255,.06);
+  min-width: 148px;
+}
+.hud-line .hud-status { color: rgba(255,255,255,.25); }
+.hud-line[data-state="active"] { color: #00f2ff; }
+.hud-line[data-state="active"] .hud-status { color: #00f2ff; animation: pulseDot 1.2s ease-in-out infinite; }
+.hud-line[data-state="ok"] { color: rgba(255,255,255,.4); }
+.hud-line[data-state="ok"] .hud-status { color: #c9ff5b; }
+
 /* View transitions */
 @view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) {
