@@ -404,7 +404,7 @@
 **para** sustentar el trabajo (académica o comercialmente) sin mantener documentos externos desincronizados.
 
 **Criterios de aceptación:**
-- Existe una sección "Documentación" en la sidebar con 10 subpáginas navegables.
+- Existe una sección "Documentación" en la sidebar con 16 subpáginas navegables.
 - Todo el contenido se define como datos tipados en el repo (no en documentos sueltos).
 - El tablero kanban del propio portfolio reutiliza el mismo componente que el de DobleYo, sin duplicar lógica.
 
