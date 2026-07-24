@@ -54,10 +54,14 @@ const secciones = [
   { id: 'glosario', t: 'Glosario' },
 ]
 
+// Rampa de un solo tono a propósito: cyan y lime ya significan «verificación» y
+// «validación» en el resto de la página. Reusarlos como niveles 2 y 3 haría que
+// el mismo punto de color dijera dos cosas distintas en la misma pantalla. La
+// intensidad de ember se lee como severidad, no como categoría.
 const acentoIntegridad: Record<NivelIntegridad, string> = {
   4: 'bg-ember',
-  3: 'bg-lime',
-  2: 'bg-cyan',
+  3: 'bg-ember/60',
+  2: 'bg-ember/30',
   1: 'bg-ink-300',
 }
 
