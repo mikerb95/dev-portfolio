@@ -113,14 +113,23 @@ crons externos (cron-job.org) → /api/cron/* (Bearer) → checks, rollups, aler
 ```
 
 Directorios clave: `src/lib/` (lógica pura, testeada), `src/lib/security/`
-(micro-SIEM), `src/pages/api/` (endpoints), `tests/` (Vitest, 280+ tests),
-`drizzle/` (migraciones aditivas), `docs/` (planes vivos).
+(micro-SIEM), `src/lib/portal/` (sesiones del portal), `src/pages/api/`
+(endpoints), `tests/` (Vitest), `e2e/` (Playwright), `drizzle/` (migraciones
+aditivas), `docs/` (planes vivos).
 
 ## Tests
 
+**521 tests de Vitest** en 40 archivos y **45 e2e** de Playwright en 6 specs,
+repartidos en 15 niveles distintos de verificación. El recorrido completo —qué
+responde cada nivel y cuál es su punto ciego— está en
+[/docs/testing](https://codebymike.tech/docs/testing).
+
 ```bash
-npm test              # Vitest (lógica pura + libsql en archivo temporal)
+npm test               # Vitest (lógica pura + libsql en archivo temporal)
 npm run test:coverage
+npm run test:e2e       # Playwright contra bases libsql desechables
+npm run test:contracts # esquemas Zod sobre los handlers reales
+npm run test:mutation  # Stryker sobre src/lib
 ```
 
 ## Seguridad
