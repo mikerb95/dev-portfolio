@@ -1,0 +1,115 @@
+# DAST: análisis dinámico con OWASP ZAP baseline contra el preview deployment
+# de cada PR — nunca contra producción.
+#
+# La URL del preview se obtiene de la propia API de Deployments de GitHub
+# (que la integración git de Vercel puebla sola) vía GITHUB_TOKEN por
+# defecto: no depende de VERCEL_TOKEN, así que no comparte el bloqueo que
+# tiene la Fase 5 (k6) por falta de ese secret.
+#
+# El baseline scan solo sigue enlaces que encuentra en el HTML — no trata las
+# rutas de robots.txt (incluidas las honeypot, ver public/robots.txt) como
+# objetivos: `spider.parseRobotsTxt=false` es exactamente el comportamiento
+# de "crawler legítimo que respeta el robots.txt" que ese archivo pide. Si el
+# scanner pisara una ruta señuelo, el rate limiter durable bloquearía la IP
+# del runner y el resto del scan se quedaría sin cobertura — no es una
+# vulnerabilidad del sitio, es un autogol de configuración.
+#
+# Secrets opcionales (degrada con gracia si faltan, igual que security.yml):
+#   LAB_INGEST_TOKEN → habilita el reporte al panel LAB
+# Variables opcionales:
+#   PROD_URL → default https://codebymike.tech (solo para construir la URL de ingesta)
+
+name: DAST
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  deployments: read
+
+jobs:
+  zap-baseline:
+    name: OWASP ZAP baseline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Esperar el preview deployment de Vercel
+        id: preview
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.pull_request.head.sha
+            const deadline = Date.now() + 8 * 60 * 1000
+            core.info(`Buscando deployment de Vercel para ${sha}...`)
+
+            while (Date.now() < deadline) {
+              const { data: deployments } = await github.rest.repos.listDeployments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha,
+                per_page: 10,
+              })
+              const vercelDeploy = deployments.find((d) => d.environment?.toLowerCase().includes('preview'))
+
+              if (vercelDeploy) {
+                const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  deployment_id: vercelDeploy.id,
+                  per_page: 10,
+                })
+                const success = statuses.find((s) => s.state === 'success' && s.target_url)
+                if (success) {
+                  core.info(`Preview listo: ${success.target_url}`)
+                  core.setOutput('url', success.target_url)
+                  return
+                }
+                if (statuses.find((s) => s.state === 'failure' || s.state === 'error')) {
+                  core.setFailed('El deployment de Vercel falló antes de generar un preview.')
+                  return
+                }
+              }
+              await new Promise((r) => setTimeout(r, 15_000))
+            }
+            core.setFailed('Timeout esperando el preview deployment (8 min).')
+
+      - name: Escanear el preview con ZAP baseline
+        if: steps.preview.outputs.url
+        uses: zaproxy/action-baseline@v0.14.0
+        continue-on-error: true
+        with:
+          target: ${{ steps.preview.outputs.url }}
+          cmd_options: '-z "-config spider.parseRobotsTxt=false" -J report_json.json'
+          # No falla el job de GitHub Actions por sí solo: el semáforo real
+          # vive en /admin/lab/security, igual que npm-audit y axe.
+          fail_action: false
+
+      - name: Reportar hallazgos al panel LAB
+        if: always() && steps.preview.outputs.url
+        env:
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+          LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
+        run: |
+          if [ ! -f report_json.json ]; then
+            echo "::warning::No se generó report_json.json, nada que reportar."
+            exit 0
+          fi
+          if [ -z "$LAB_INGEST_TOKEN" ]; then
+            echo "::warning::Sin LAB_INGEST_TOKEN: se escaneó pero no se reporta al panel."
+            REPORT_PATH=report_json.json node scripts/zap-ingest.mjs
+          else
+            REPORT_PATH=report_json.json \
+            INGEST_URL="$PROD_URL/api/lab/ingest" \
+            node scripts/zap-ingest.mjs
+          fi
+        continue-on-error: true
+
+      - name: Subir resultados como artefacto
+        if: always() && steps.preview.outputs.url
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-results
+          path: report_json.json
+          retention-days: 30
