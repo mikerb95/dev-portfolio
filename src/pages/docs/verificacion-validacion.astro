@@ -28,6 +28,18 @@ const filas = CLASIFICACION.map((c) => {
 const verificacion = filas.filter((f) => f.tipo === 'verificacion')
 const validacion = filas.filter((f) => f.tipo === 'validacion')
 
+// Mismo trato que CLASIFICACION: un id de nivel mal escrito rompe el build en
+// vez de desaparecer del render. Un badge que falta en silencio haría que la
+// tabla de integridad mintiera sobre qué cubre a un subsistema de nivel 4.
+const subsistemas = SUBSISTEMAS.map((s) => ({
+  ...s,
+  niveles: s.cubiertoPor.map((id) => {
+    const nivel = porId.get(id)
+    if (!nivel) throw new Error(`vyv.ts: SUBSISTEMAS.${s.id} referencia un id de nivel inexistente: ${id}`)
+    return nivel
+  }),
+}))
+
 const acentoTipo: Record<TipoVV, string> = { verificacion: 'bg-cyan', validacion: 'bg-lime' }
 
 const secciones = [
