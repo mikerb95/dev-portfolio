@@ -2,25 +2,27 @@
 
 **En vivo: [codebymike.tech](https://codebymike.tech)**
 
-Portafolio público, **panel de control privado** y **laboratorio de ingeniería**
-construido con Astro 6 (SSR), Turso/libSQL + Drizzle, Auth.js (GitHub OAuth) y
-Tailwind 4. Desplegado en Vercel. Sin frameworks de frontend, sin servicios de
-pago: monitoreo, alertas, SLOs y observabilidad de seguridad son **desarrollo
-propio** sobre capas gratuitas.
+Portafolio público, **panel de control privado**, **portal de clientes** y
+**laboratorio de ingeniería** construido con Astro 7 (SSR), Turso/libSQL +
+Drizzle, Auth.js (GitHub OAuth) y Tailwind 4. Desplegado en Vercel. Sin
+frameworks de frontend, sin servicios de pago más allá de la pasarela:
+monitoreo, alertas, SLOs y observabilidad de seguridad son **desarrollo propio**
+sobre capas gratuitas.
 
 ## En vivo (sin login)
 
 | Página | Qué demuestra |
 |---|---|
 | [/demo](https://codebymike.tech/demo) | **El panel completo con datos ficticios**, sin registro: costos y P&L, clientes, monitoreo. Solo lectura, sobre una base de datos aparte |
-| [/lab](https://codebymike.tech/lab) | Laboratorio: pipeline CI/CD con rollback, chaos engineering y ataques controlados a la pasarela, con resultados reales |
+| [/lab](https://codebymike.tech/lab) | Laboratorio: pipeline CI/CD con rollback, chaos engineering, hallazgos de seguridad y ataques controlados a la pasarela, con resultados reales |
 | [/status](https://codebymike.tech/status) | Uptime real de 8 monitores propios (motor de checks + incidentes + SSL), SLOs y error budget |
 | [/security](https://codebymike.tech/security) | Micro-SIEM propio: intentos de intrusión detectados/bloqueados (agregados en vivo), arquitectura de 4 capas |
-| [/notes](https://codebymike.tech/notes) | Artículos técnicos: chaos engineering, SLOs, micro-SIEM, sesiones revocables, RAG… |
+| [/notes](https://codebymike.tech/notes) | Artículos técnicos: chaos engineering, SLOs, micro-SIEM, sesiones revocables, mutation testing, RAG… |
 | [/tools](https://codebymike.tech/tools) | Índice de las herramientas construidas en este repo |
-| [/docs](https://codebymike.tech/docs) | Documentación formal: casos de uso, diagramas UML (SVG), requerimientos, historias de usuario |
+| [/docs](https://codebymike.tech/docs) | Documentación formal: requerimientos, casos de uso, diagramas UML, kanban, [guía completa de testing](https://codebymike.tech/docs/testing), V&V y [estado del pipeline en vivo](https://codebymike.tech/docs/pipeline-en-vivo) |
 | [/architecture](https://codebymike.tech/architecture) | Cómo está construido el sistema |
 | [/pay](https://codebymike.tech/pay) | Pasarela de pagos (modo sandbox) con idempotencia y webhooks firmados |
+| [/paginas-web](https://codebymike.tech/paginas-web) | Landing comercial de diseño web para negocios locales, aparte de la marca técnica |
 
 ## Módulos de ingeniería (LAB)
 
