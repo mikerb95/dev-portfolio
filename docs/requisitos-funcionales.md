@@ -1,5 +1,17 @@
 # Requisitos Funcionales — Portfolio CodeByMike
 
+> ⚠️ **Este archivo es una instantánea histórica (mayo 2026), no la fuente de
+> verdad.** Los requisitos vigentes viven tipados en
+> [`src/data/documentacion.ts`](../src/data/documentacion.ts) y se publican en
+> [`/docs/requerimientos-funcionales`](https://codebymike.tech/docs/requerimientos-funcionales),
+> donde cada requisito lleva además su estado, dónde vive en el código (`origen`)
+> y cómo se comprueba (`verificacion`).
+>
+> Módulos que este archivo **no** cubre porque son posteriores: portal de
+> clientes, cobros de campo por WhatsApp, demo read-only del panel, LAB
+> (CI/CD, chaos, SAST/DAST, a11y, mutation testing), micro-SIEM y landing
+> comercial de diseño web. Se conserva como registro del alcance inicial.
+
 ## RF-01 — Autenticación y control de acceso
 
 | ID | Requisito |
