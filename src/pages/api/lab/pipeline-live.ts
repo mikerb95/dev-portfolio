@@ -174,7 +174,7 @@ export const GET: APIRoute = async () => {
     // El push "ya pasó" en cuanto existe un run disparado por él, sin importar
     // cómo termine ese run — lo que este estado cuenta es si el evento
     // ocurrió, no su resultado (eso lo cuentan workflows/deploy/verify).
-    push: { estado: (ciRun ? 'ok' : 'pending') as const, ts: ciRun?.created_at ?? null },
+    push: { estado: (ciRun ? 'ok' : 'pending') as 'ok' | 'pending', ts: ciRun?.created_at ?? null },
     workflows,
     deploy,
     verify,
