@@ -665,3 +665,67 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = {
     el.addEventListener('click', activate)
   })
 </script>
+
+<script>
+  // Mismo lenguaje de motion que /index: Lenis + GSAP. Sin HUD aquí — esta
+  // página ya tiene su propio indicador "en vivo" (live-strip con timestamps
+  // reales); un segundo panel de estado sería redundante y confundiría cuál
+  // de los dos es la fuente de verdad.
+  import Lenis from 'lenis'
+  import gsap from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+  import { SplitText } from 'gsap/SplitText'
+
+  gsap.registerPlugin(ScrollTrigger, SplitText)
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (!prefersReducedMotion) {
+    const lenis = new Lenis()
+    lenis.on('scroll', ScrollTrigger.update)
+    gsap.ticker.add((time) => lenis.raf(time * 1000))
+    gsap.ticker.lagSmoothing(0)
+
+    // Boot reveal del h1 — reasignamos text-mask a cada carácter porque
+    // background-clip: text no se hereda a los hijos que crea SplitText.
+    document.querySelectorAll<HTMLElement>('.hero-line').forEach((line) => {
+      const split = new SplitText(line, { type: 'chars' })
+      split.chars.forEach((c) => c.classList.add('text-mask'))
+      gsap.set(split.chars, { opacity: 0, yPercent: 100 })
+      gsap.to(split.chars, { opacity: 1, yPercent: 0, duration: 0.7, ease: 'power3.out', stagger: 0.015, delay: 0.15 })
+    })
+
+    // Reveal por "scan" en las cards (mismo patrón que /index): un wipe con
+    // clip-path acompañado de una barra de luz, en vez de un fade plano.
+    // El overflow:hidden se aplica al trigger (.glass), no a .card-pop, así
+    // que no recorta el panel flotante del popover (es un hermano, no un hijo).
+    const cards = document.querySelectorAll<HTMLElement>('section .glass, section .glass-strong')
+
+    cards.forEach((card, i) => {
+      card.style.position = card.style.position || 'relative'
+      card.style.overflow = 'hidden'
+
+      const bar = document.createElement('div')
+      bar.setAttribute('aria-hidden', 'true')
+      bar.style.cssText =
+        'position:absolute;inset-block:0;left:0;width:33%;pointer-events:none;' +
+        'background:linear-gradient(90deg, transparent, rgba(0,242,255,.35), transparent);'
+      card.appendChild(bar)
+
+      const tl = gsap.timeline({
+        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+        delay: (i % 4) * 0.05,
+      })
+      tl.fromTo(
+        card,
+        { clipPath: 'inset(0 100% 0 0)', opacity: 0 },
+        { clipPath: 'inset(0 0% 0 0)', opacity: 1, duration: 0.7, ease: 'power3.out' }
+      ).fromTo(
+        bar,
+        { xPercent: -140, opacity: 0.9 },
+        { xPercent: 340, opacity: 0, duration: 0.7, ease: 'power2.out', onComplete: () => bar.remove() },
+        '<'
+      )
+    })
+  }
+</script>
