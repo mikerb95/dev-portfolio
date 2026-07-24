@@ -194,9 +194,12 @@ export const SUBSISTEMAS: Subsistema[] = [
     nombre: 'Bóveda de secretos (project_services.secrets)',
     nivel: 4,
     porque: 'Un fallo expone credenciales de terceros cifradas con AES-256-GCM a quien no debería verlas.',
-    archivos: 'src/lib/crypto.ts, project_services.secrets',
+    archivos: 'src/lib/crypto.ts, src/lib/vault.ts, project_services.secrets',
     cubiertoPor: ['unitario', 'codeql', 'npm-audit'],
-    refuerzoPendiente: 'El cifrado en reposo sí tiene prueba; las garantías de no-exposición se sostienen todavía en revisión de código, no en una prueba automatizada.',
+    // Cerrado: la redacción antes de serializar pasó de repetirse a mano en cada
+    // endpoint a una función con tipo `Omit` (src/lib/vault.ts) que el
+    // compilador exige, más tests/vault.test.ts.
+    refuerzoPendiente: 'Un nivel 4 pediría además revisión independiente del propio cifrado: hoy el diseño criptográfico lo audita quien lo escribió.',
   },
   {
     id: 'auth',
@@ -268,4 +271,5 @@ export const GLOSARIO_VV = [
   { termino: 'Oráculo', def: 'La fuente de verdad contra la que se compara un resultado. En verificación el oráculo es interno (un esquema, un contrato); en validación el oráculo es una necesidad externa, a menudo humana.' },
   { termino: 'UAT', def: 'User Acceptance Testing: validación formal hecha por quien va a usar o pagar por el sistema, no por quien lo construyó. Este proyecto no tiene un UAT formal separado — el usability testing y los casos de uso cumplen ese rol.' },
   { termino: 'Nivel de integridad', def: 'Clasificación de IEEE 1012 (1 a 4) según la consecuencia de que un subsistema falle, no según la probabilidad de que falle. A mayor nivel, más tareas de V&V son obligatorias.' },
+  { termino: 'IV&V', def: 'V&V independiente: la ejecuta alguien con presupuesto, personal y línea de reporte separados de quien desarrolló. IEEE 1012 la exige en los niveles de integridad altos, porque el autor de un módulo comparte los puntos ciegos de su propio diseño. Un proyecto de una persona no puede cumplirla.' },
 ]
