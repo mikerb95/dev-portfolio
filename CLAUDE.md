@@ -161,6 +161,11 @@ cookies ni lógica:
   consulta de histórico) se registra en el micro-SIEM
   (`recordSecurityEvent`, tabla `security_events`) — fire-and-forget, nunca
   bloquea el response.
+- **El identificador de cliente nunca viene del request.** En cualquier consulta
+  del portal, `clientId` sale de `requirePortalSession()` y viaja en el `WHERE`
+  aunque la query ya lleve un `projectId` o un `invoiceId` que "ya implica" al
+  cliente. Un fallo aquí no degrada una función: expone los datos de un cliente
+  a otro. Cubierto por `tests/portal-isolation.test.ts`.
 
 ## Al añadir una feature grande
 
