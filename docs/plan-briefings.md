@@ -1,6 +1,16 @@
 # Plan: Panel de Briefings de clase mundial
 
 > Objetivo: llevar `/admin/briefings` de un CRUD básico a un sistema de intake → negociación → aprobación → proyecto, comparable con lo que ofrecen Zoho CRM / Zoho Projects / Zoho Forms, pero hecho a medida para un freelance (Mike) y apoyado en la infraestructura que el portfolio ya tiene.
+>
+> **Estado al 24 jul 2026**: solo la **Fase 1** está entregada (checklist de
+> ítems en `briefing_items`, soft delete, timeline de actividad). Las Fases 2-5
+> siguen sin empezar.
+>
+> Antes de retomar la Fase 3, releerla: fue escrita cuando "portal del cliente"
+> significaba un link público con token, y desde entonces existe `/portal` con
+> cuentas reales. Hay que decidir qué pasa a vivir en el portal autenticado y
+> qué sigue siendo un link firmado sin sesión (que es lo correcto para un
+> briefing que aún no tiene cliente dado de alta).
 
 ---
 
