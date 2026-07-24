@@ -131,6 +131,63 @@ describe('parseAxeViolations', () => {
   })
 })
 
+describe('parseZapReport', () => {
+  const report = {
+    site: [
+      {
+        '@name': 'https://preview.example.vercel.app',
+        alerts: [
+          {
+            pluginid: '10038',
+            name: 'Content Security Policy (CSP) Header Not Set',
+            riskdesc: 'Medium (High)',
+            desc: 'CSP es una capa adicional de seguridad...',
+            instances: [{ uri: 'https://preview.example.vercel.app/' }, { uri: 'https://preview.example.vercel.app/contact' }],
+          },
+          {
+            pluginid: '10202',
+            name: 'Absence of Anti-CSRF Tokens',
+            riskdesc: 'High (Medium)',
+            instances: [{ uri: 'https://preview.example.vercel.app/pay' }],
+          },
+        ],
+      },
+    ],
+  }
+
+  it('genera un hallazgo por (alerta, instancia)', () => {
+    const out = parseZapReport(report)
+    expect(out).toHaveLength(3)
+    expect(out[0]).toMatchObject({ source: 'zap', severity: 'medium', ruleId: '10038', route: 'https://preview.example.vercel.app/' })
+    expect(out[1].route).toBe('https://preview.example.vercel.app/contact')
+    expect(out[2]).toMatchObject({ severity: 'high', ruleId: '10202' })
+  })
+
+  it('usa solo la primera palabra de riskdesc para la severidad', () => {
+    expect(parseZapReport(report)[0].severity).toBe('medium')
+  })
+
+  it('acota el número de instancias por alerta', () => {
+    const manyInstances = {
+      site: [{
+        alerts: [{
+          pluginid: '1',
+          name: 'x',
+          riskdesc: 'Low (Low)',
+          instances: Array.from({ length: 50 }, (_, i) => ({ uri: `/p${i}` })),
+        }],
+      }],
+    }
+    expect(parseZapReport(manyInstances)).toHaveLength(15)
+  })
+
+  it('tolera entrada sin site[] o sin alerts[]', () => {
+    expect(parseZapReport(undefined)).toEqual([])
+    expect(parseZapReport({})).toEqual([])
+    expect(parseZapReport({ site: [{}] })).toEqual([])
+  })
+})
+
 describe('canSetStatus', () => {
   it('permite reabrir, resolver, aceptar y reclasificar', () => {
     expect(canSetStatus('open', 'resolved')).toBe(true)
