@@ -28,9 +28,11 @@ const filas = CLASIFICACION.map((c) => {
 const verificacion = filas.filter((f) => f.tipo === 'verificacion')
 const validacion = filas.filter((f) => f.tipo === 'validacion')
 
-// Mismo trato que CLASIFICACION: un id de nivel mal escrito rompe el build en
-// vez de desaparecer del render. Un badge que falta en silencio haría que la
-// tabla de integridad mintiera sobre qué cubre a un subsistema de nivel 4.
+// Mismo trato que CLASIFICACION: un id mal escrito falla ruidosamente en vez de
+// desaparecer del render — un badge ausente en silencio haría que la tabla
+// mintiera sobre qué cubre a un subsistema de nivel 4. La página es SSR, así que
+// este throw es solo el último recinto: quien corta de verdad es tests/vyv.test.ts,
+// que valida las referencias en CI antes de que lleguen a producción.
 const subsistemas = SUBSISTEMAS.map((s) => ({
   ...s,
   niveles: s.cubiertoPor.map((id) => {
