@@ -500,41 +500,18 @@ const visibleProjects = await db
   //   3. Cards: reveal por "scan" (clip-path + barra de luz), no solo opacity.
   // Todo detrás de prefers-reduced-motion: si el usuario lo pide, la página
   // queda completamente estática y funcional, sin perder contenido.
-  import Lenis from 'lenis'
   import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
-  import { SplitText } from 'gsap/SplitText'
-
-  gsap.registerPlugin(ScrollTrigger, SplitText)
+  import { initPageMotion } from '../lib/motion-reveal'
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   if (!prefersReducedMotion) {
-    const lenis = new Lenis()
-    lenis.on('scroll', ScrollTrigger.update)
-    gsap.ticker.add((time) => lenis.raf(time * 1000))
-    gsap.ticker.lagSmoothing(0)
+    // Lenis + boot-reveal del hero + scan-reveal de cards: compartido con
+    // el resto de páginas públicas (ver src/lib/motion-reveal.ts).
+    initPageMotion()
 
-    // 1. Hero boot sequence — cada línea del <h1> se divide en caracteres.
-    // Reasignamos la clase de degradado (text-mask / text-mask-cyan) a cada
-    // carácter porque `background-clip: text` no se propaga a hijos: sin
-    // esto, los caracteres saldrían con color transparent y sin gradiente.
-    document.querySelectorAll<HTMLElement>('.hero-line').forEach((line, lineIndex) => {
-      const maskClass = line.classList.contains('text-mask-cyan') ? 'text-mask-cyan' : 'text-mask'
-      const split = new SplitText(line, { type: 'chars' })
-      split.chars.forEach((c) => c.classList.add(maskClass))
-      gsap.set(split.chars, { opacity: 0, yPercent: 100 })
-      gsap.to(split.chars, {
-        opacity: 1,
-        yPercent: 0,
-        duration: 0.7,
-        ease: 'power3.out',
-        stagger: 0.02,
-        delay: 0.15 + lineIndex * 0.12,
-      })
-    })
-
-    // 2. HUD de diagnóstico — un ScrollTrigger por sección que va marcando
+    // HUD de diagnóstico — un ScrollTrigger por sección que va marcando
     // el estado: pendiente (—) → activo (● parpadeando) → ok (✓ lima).
     const hudLines = Array.from(document.querySelectorAll<HTMLElement>('.hud-line'))
     const sectionKeys = hudLines.map((l) => l.dataset.key)
