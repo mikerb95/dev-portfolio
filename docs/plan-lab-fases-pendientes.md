@@ -75,18 +75,31 @@ Opción B: disparar el `workflow_dispatch` desde la pestaña Actions en vivo.
 mostrar hallazgos → estado (abierto / resuelto / aceptado). La narrativa
 "encontré X y lo resolví" vale más ante el jurado que un scan vacío.
 
-### 6.1 SAST (análisis estático)
+### 6.1 SAST (análisis estático) — ✅ implementado
 - **Job de CI** `security.yml` (en PRs y push a main):
   - `npm audit --json` → parse de vulnerabilidades de dependencias.
   - **Semgrep** (`returntocorp/semgrep-action`) o **Snyk** (free tier) con reglas para JS/TS.
   - CodeQL de GitHub (gratis en repos públicos como `dev-portfolio`) como opción nativa.
 - Resultados → `POST /api/lab/ingest` con `kind: 'security_finding'`.
 
-### 6.2 DAST (análisis dinámico)
-- **OWASP ZAP baseline** (`zaproxy/action-baseline`) contra un **preview deployment**
-  (no prod) en cada PR.
-- Salida SARIF/JSON → ingesta. Cada hallazgo: severidad, título, ruta, estado.
-- Nota: el WAF/BotID de Vercel puede interferir; correr contra preview con bypass o rate razonable.
+### 6.2 DAST (análisis dinámico) — ✅ implementado (jul 23 2026)
+- **OWASP ZAP baseline** (`zaproxy/action-baseline`) contra el **preview deployment**
+  de cada PR (`.github/workflows/dast.yml`), nunca contra producción.
+- La URL del preview se obtiene sondeando la API de Deployments de GitHub
+  (`actions/github-script` + `GITHUB_TOKEN`), sin depender de `VERCEL_TOKEN`
+  — a diferencia de la Fase 5, este job no está bloqueado por ese secret.
+- Decisión de diseño: `spider.parseRobotsTxt=false` para que ZAP se comporte
+  como el "crawler legítimo" que `public/robots.txt` le pide y nunca trate
+  las rutas honeypot (`/wp-login.php`, `/admin.php`, `/admin`, `/api`) como
+  objetivos. Si las pisara, el rate limiter durable bloquearía la IP del
+  runner y el resto del scan perdería cobertura — no sería una
+  vulnerabilidad real, sería un autogol de configuración.
+- Salida JSON (`report_json.json`) → `scripts/zap-ingest.mjs` → ingesta con
+  `source: 'zap'`, `autoResolve: true`. Cada alerta × instancia es un
+  hallazgo, acotado a 15 instancias por alerta.
+- Pendiente de verificar en un PR real (no se ha corrido aún contra un
+  preview vivo): confirmar tiempos de espera del deployment y que
+  `zaproxy/action-baseline` no necesite ajustes de `cmd_options` adicionales.
 
 ### 6.3 Accesibilidad (a11y)
 - **`@axe-core/playwright`** o **Lighthouse CI** sobre las páginas públicas
