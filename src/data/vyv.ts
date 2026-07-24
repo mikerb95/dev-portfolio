@@ -152,9 +152,13 @@ export const TRAZABILIDAD = [
 
 export type NivelIntegridad = 1 | 2 | 3 | 4
 
+// El identificador que define el estándar es el número (4 a 1); el nombre es
+// solo la glosa legible. Se eligió una escala monótona en español —crítico >
+// alto > moderado > bajo— en vez de calcar High/Major/Moderate/Low, porque
+// «mayor» no se lee como un escalón de severidad en castellano.
 export const INTEGRIDAD_LABEL: Record<NivelIntegridad, { nombre: string; consecuencia: string }> = {
-  4: { nombre: 'Alto', consecuencia: 'Catastrófica — dinero real perdido, fraude, credenciales de terceros expuestas' },
-  3: { nombre: 'Crítico', consecuencia: 'Grave — acceso no autorizado al panel o a datos personales de un cliente' },
+  4: { nombre: 'Crítico', consecuencia: 'Catastrófica — dinero real perdido, fraude, credenciales de terceros expuestas' },
+  3: { nombre: 'Alto', consecuencia: 'Grave — acceso no autorizado al panel o a datos personales de un cliente' },
   2: { nombre: 'Moderado', consecuencia: 'Degradación operativa — se pierde visibilidad, no hay compromiso directo de datos' },
   1: { nombre: 'Bajo', consecuencia: 'Negligible — inconveniencia visual, nada operativo se rompe' },
 }
@@ -220,7 +224,9 @@ export const SUBSISTEMAS: Subsistema[] = [
     nivel: 1,
     porque: 'Un fallo es inconveniencia visual. Nada operativo ni financiero depende de que estas páginas rendericen bien.',
     archivos: 'src/pages/*.astro (rutas públicas)',
-    cubiertoPor: ['cobertura', 'a11y'],
+    // Ojo: NO lo cubre «cobertura». El include de vitest.config.ts es
+    // src/lib/**, así que ninguna página .astro entra en ese porcentaje.
+    cubiertoPor: ['e2e', 'a11y'],
   },
 ]
 
