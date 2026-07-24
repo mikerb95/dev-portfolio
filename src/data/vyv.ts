@@ -191,7 +191,7 @@ export const SUBSISTEMAS: Subsistema[] = [
     porque: 'Un fallo expone credenciales de terceros cifradas con AES-256-GCM a quien no debería verlas.',
     archivos: 'src/lib/crypto.ts, project_services.secrets',
     cubiertoPor: ['unitario', 'codeql', 'npm-audit'],
-    refuerzoPendiente: 'Que el secreto nunca aparezca en SSR ni en listados es hoy disciplina de código — no hay un test que lo garantice.',
+    refuerzoPendiente: 'El cifrado en reposo sí tiene prueba; las garantías de no-exposición se sostienen todavía en revisión de código, no en una prueba automatizada.',
   },
   {
     id: 'auth',
