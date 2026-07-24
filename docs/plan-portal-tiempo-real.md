@@ -120,10 +120,12 @@ anunciarlo es exactamente lo que rompe a un lector de pantalla. Y respeta
 5. `activityLastAt` en el digest → un elemento nuevo se inserta en vivo con su anuncio `aria-live`.
 6. Admin: toggle `visibleToClient` sobre entradas del feed, por si algo se emite y no debía verse.
 
-### Fase C — Higiene pendiente
-1. Monitor de uptime del propio `/portal/login` en `monitors` → aparece en `/status`.
-2. Artículo en `src/content/notes/`: **"Tiempo real sin WebSockets: por qué mi portal hace polling"** — el razonamiento de §1 es exactamente el tipo de decisión con trade-off explícito que da valor a `/notes`.
-3. e2e en `e2e/portal.spec.ts`: con la página abierta, insertar un mensaje en la base → el badge de la campana sube sin recargar.
+### Fase C — Higiene ✅ (2026-07-24)
+1. ✅ Monitor **"Portal de clientes"** (id 10) sobre `https://codebymike.tech/portal/login`, con `expectedText: "Entra a tu portal"` — un 200 que devuelva otra página cuenta como caída — y umbral de latencia de 3000 ms (el login real tarda ~1 s; 2000 daría "degradado" en cada arranque en frío). 1 check cada 5 min contra un límite de 30/min por IP: sin riesgo de autobloqueo.
+2. ✅ Artículo **[El clientId nunca viene de la URL](../src/content/notes/el-client-id-nunca-viene-de-la-url.md)**. Se descartó el tema de polling: describiría una Fase A que todavía no existe. El aislamiento multi-tenant sí está construido y es el corazón del diseño.
+3. ✅ A11y previa a la Fase A: región `role="status" aria-live="polite"` + helper `window.portalAnnounce()` (`is:inline`, porque los scripts empaquetados son módulos diferidos y podrían no existir cuando responde el primer formulario), skip link y `<main id="contenido">` en `PortalLayout`. Cableado el `flash()` de `/portal/cuenta` (mutaba en silencio y se borraba a los 4 s) y arreglado `/portal/olvide`, donde el formulario desaparecía bajo el foco sin anunciar nada.
+
+**Pendiente de la Fase C:** e2e del anuncio en vivo — se escribe junto a la Fase A, cuando haya algo que anunciar solo.
 
 ## 3. Riesgos
 
