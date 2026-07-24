@@ -1,9 +1,10 @@
 # Plan — Cobros de campo por WhatsApp (`/cobrar`)
 
 > Creado: 2026-07-15. Estado: **IMPLEMENTADO** (Fases 0–5, 2026-07-15).
-> Migración `0016` aplicada. 427 tests en verde (48 nuevos: phone, cobros,
-> cobros-db, mis-pagos). Pendiente: subir `COBRO_HISTORY_SECRET` a Vercel y
-> probar en prod con un cobro real.
+> Migración `0016` aplicada. 48 tests propios (phone, cobros, cobros-db,
+> mis-pagos) dentro de los 521 de la suite.
+> `COBRO_HISTORY_SECRET` ya está en Vercel (Production) desde el 16 jul.
+> Pendiente: probar en prod con un cobro real de punta a punta.
 > Flujo mobile-first para cobrar trabajos externos (soporte, hardware, tecnología) desde el
 > celular: configuras monto + teléfono, previsualizas y editas el mensaje, lo envías por
 > WhatsApp (sin API de WhatsApp) y el cliente paga en la pasarela existente (Wompi).
