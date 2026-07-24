@@ -254,4 +254,5 @@ export const GLOSARIO_VV = [
   { termino: 'V-model', def: 'Representación clásica del ciclo de vida donde cada etapa de construcción tiene su etapa de verificación espejo. Aquí no se sigue el modelo en cascada, pero la pregunta de cada espejo sigue aplicando.' },
   { termino: 'Oráculo', def: 'La fuente de verdad contra la que se compara un resultado. En verificación el oráculo es interno (un esquema, un contrato); en validación el oráculo es una necesidad externa, a menudo humana.' },
   { termino: 'UAT', def: 'User Acceptance Testing: validación formal hecha por quien va a usar o pagar por el sistema, no por quien lo construyó. Este proyecto no tiene un UAT formal separado — el usability testing y los casos de uso cumplen ese rol.' },
+  { termino: 'Nivel de integridad', def: 'Clasificación de IEEE 1012 (1 a 4) según la consecuencia de que un subsistema falle, no según la probabilidad de que falle. A mayor nivel, más tareas de V&V son obligatorias.' },
 ]
