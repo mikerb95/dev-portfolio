@@ -490,3 +490,114 @@ const visibleProjects = await db
   <GithubProjects />
 
 </BaseLayout>
+
+<script>
+  // Motion del index: Lenis (scroll suave) + GSAP ScrollTrigger. Tres piezas,
+  // todas atadas a la identidad de "monitoreo/SIEM" del sitio en vez de un
+  // fade-in genérico:
+  //   1. Hero: el headline se arma carácter por carácter, como un boot.
+  //   2. HUD fijo (#hud): va marcando "ok" sección por sección al scrollear.
+  //   3. Cards: reveal por "scan" (clip-path + barra de luz), no solo opacity.
+  // Todo detrás de prefers-reduced-motion: si el usuario lo pide, la página
+  // queda completamente estática y funcional, sin perder contenido.
+  import Lenis from 'lenis'
+  import gsap from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+  import { SplitText } from 'gsap/SplitText'
+
+  gsap.registerPlugin(ScrollTrigger, SplitText)
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (!prefersReducedMotion) {
+    const lenis = new Lenis()
+    lenis.on('scroll', ScrollTrigger.update)
+    gsap.ticker.add((time) => lenis.raf(time * 1000))
+    gsap.ticker.lagSmoothing(0)
+
+    // 1. Hero boot sequence — cada línea del <h1> se divide en caracteres.
+    // Reasignamos la clase de degradado (text-mask / text-mask-cyan) a cada
+    // carácter porque `background-clip: text` no se propaga a hijos: sin
+    // esto, los caracteres saldrían con color transparent y sin gradiente.
+    document.querySelectorAll<HTMLElement>('.hero-line').forEach((line, lineIndex) => {
+      const maskClass = line.classList.contains('text-mask-cyan') ? 'text-mask-cyan' : 'text-mask'
+      const split = new SplitText(line, { type: 'chars' })
+      split.chars.forEach((c) => c.classList.add(maskClass))
+      gsap.set(split.chars, { opacity: 0, yPercent: 100 })
+      gsap.to(split.chars, {
+        opacity: 1,
+        yPercent: 0,
+        duration: 0.7,
+        ease: 'power3.out',
+        stagger: 0.02,
+        delay: 0.15 + lineIndex * 0.12,
+      })
+    })
+
+    // 2. HUD de diagnóstico — un ScrollTrigger por sección que va marcando
+    // el estado: pendiente (—) → activo (● parpadeando) → ok (✓ lima).
+    const hudLines = Array.from(document.querySelectorAll<HTMLElement>('.hud-line'))
+    const sectionKeys = hudLines.map((l) => l.dataset.key)
+    const sections = sectionKeys
+      .map((key) => document.getElementById(key!))
+      .filter((el): el is HTMLElement => el !== null)
+
+    const setHud = (activeIndex: number) => {
+      hudLines.forEach((line, i) => {
+        const status = line.querySelector('.hud-status')
+        if (!status) return
+        if (i < activeIndex) {
+          line.dataset.state = 'ok'
+          status.textContent = '✓'
+        } else if (i === activeIndex) {
+          line.dataset.state = 'active'
+          status.textContent = '●'
+        } else {
+          line.dataset.state = 'pending'
+          status.textContent = '—'
+        }
+      })
+    }
+
+    sections.forEach((section, i) => {
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top 55%',
+        end: 'bottom 55%',
+        onEnter: () => setHud(i),
+        onEnterBack: () => setHud(i),
+      })
+    })
+
+    // 3. Reveal por "scan" en las cards — clip-path wipe de izquierda a
+    // derecha + una barra de luz que la atraviesa, en vez de un fade plano.
+    const cards = document.querySelectorAll<HTMLElement>('section .glass, section .glass-strong')
+
+    cards.forEach((card, i) => {
+      card.style.position = card.style.position || 'relative'
+      card.style.overflow = 'hidden'
+
+      const bar = document.createElement('div')
+      bar.setAttribute('aria-hidden', 'true')
+      bar.style.cssText =
+        'position:absolute;inset-block:0;left:0;width:33%;pointer-events:none;' +
+        'background:linear-gradient(90deg, transparent, rgba(0,242,255,.35), transparent);'
+      card.appendChild(bar)
+
+      const tl = gsap.timeline({
+        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+        delay: (i % 4) * 0.05,
+      })
+      tl.fromTo(
+        card,
+        { clipPath: 'inset(0 100% 0 0)', opacity: 0 },
+        { clipPath: 'inset(0 0% 0 0)', opacity: 1, duration: 0.7, ease: 'power3.out' }
+      ).fromTo(
+        bar,
+        { xPercent: -140, opacity: 0.9 },
+        { xPercent: 340, opacity: 0, duration: 0.7, ease: 'power2.out', onComplete: () => bar.remove() },
+        '<'
+      )
+    })
+  }
+</script>
