@@ -45,7 +45,7 @@ export const NIVELES: Nivel[] = [
     nombre: 'Unitario / lógica pura',
     herramienta: 'Vitest',
     pregunta: '¿Esta función devuelve lo correcto para cada entrada, incluidas las raras?',
-    volumen: '~450 tests sobre funciones sin efectos',
+    volumen: '394 tests sobre funciones sin efectos',
     archivos: 'tests/*.test.ts (40 archivos)',
     cuando: 'push',
     bloquea: true,
@@ -58,7 +58,7 @@ export const NIVELES: Nivel[] = [
     nombre: 'Integración con BD real',
     herramienta: 'Vitest + libSQL en archivo temporal',
     pregunta: '¿El UNIQUE, la transacción y la concurrencia se comportan como creo?',
-    volumen: '~70 tests contra una base de verdad',
+    volumen: '122 tests contra una base de verdad',
     archivos: 'payments, cobros-db, portal-*, security-blocklist-db',
     cuando: 'push',
     bloquea: true,
@@ -303,7 +303,7 @@ export const PIPELINE: EtapaPipeline[] = [
     dispara: 'A mano, mientras escribo código',
     duracion: '~4 s la suite completa',
     pasos: [
-      'npm test — los 498 tests de Vitest',
+      'npm test — los 521 tests de Vitest',
       'npm run test:e2e:ui — Playwright en modo inspector, si toqué una página',
       'npx astro check — type-check de todo el proyecto',
     ],
@@ -412,9 +412,9 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Todo verde',
     resumen: 'El camino feliz: el código llega a producción y se queda.',
     pasos: [
-      { etapa: 'local', estado: 'ok', texto: '498 tests en verde. Push.' },
+      { etapa: 'local', estado: 'ok', texto: '521 tests en verde. Push.' },
       { etapa: 'push', estado: 'ok', texto: 'CI, Security y Accessibility arrancan en paralelo.' },
-      { etapa: 'ci', estado: 'ok', texto: 'Vitest 498/498 · build OK · 45 e2e en verde.' },
+      { etapa: 'ci', estado: 'ok', texto: 'Vitest 521/521 · build OK · 45 e2e en verde.' },
       { etapa: 'deploy', estado: 'ok', texto: 'Vercel publica. /api/health ya devuelve el SHA nuevo.' },
       { etapa: 'verify', estado: 'ok', texto: '3 de 3 health checks con HTTP 200.' },
       { etapa: 'operacion', estado: 'ok', texto: 'Los monitores siguen en verde. Run reportado al panel LAB.' },
@@ -440,7 +440,7 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Deploy insano → rollback',
     resumen: 'Pasa todos los tests y aun así rompe producción. El escenario que nadie enseña.',
     pasos: [
-      { etapa: 'local', estado: 'ok', texto: '498 tests en verde. Todo correcto.' },
+      { etapa: 'local', estado: 'ok', texto: '521 tests en verde. Todo correcto.' },
       { etapa: 'push', estado: 'ok', texto: 'CI arranca.' },
       { etapa: 'ci', estado: 'ok', texto: 'Suite completa en verde, build OK, e2e en verde.' },
       { etapa: 'deploy', estado: 'ok', texto: 'Vercel publica la versión nueva en codebymike.tech.' },
@@ -661,7 +661,7 @@ export const PENDIENTES = [
 // ── Comandos ────────────────────────────────────────────────────────────────
 
 export const COMANDOS = [
-  { cmd: 'npm test', desc: 'Los 498 tests de Vitest. ~4 segundos.' },
+  { cmd: 'npm test', desc: 'Los 521 tests de Vitest. ~4 segundos.' },
   { cmd: 'npm run test:watch', desc: 'Modo interactivo: re-ejecuta solo lo que toca el archivo que estás editando.' },
   { cmd: 'npm run test:coverage', desc: 'Genera el reporte HTML en coverage/ para ver qué líneas no toca nadie.' },
   { cmd: 'npm run test:e2e', desc: 'Playwright. Siembra dos bases desechables y levanta el servidor solo.' },
