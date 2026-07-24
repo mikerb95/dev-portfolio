@@ -70,6 +70,7 @@ export const POST: APIRoute = async ({ request }) => {
  *  · { kind, findings: [...] }          → hallazgos ya normalizados.
  *  · { kind, source:'npm-audit', report } → salida cruda de `npm audit --json`.
  *  · { kind, source:'axe', pageUrl, violations } → violaciones de axe-core.
+ *  · { kind, source:'zap', report } → reporte JSON de OWASP ZAP baseline.
  *
  * Si el lote trae `autoResolve:true` y un `source`, los hallazgos de esa fuente
  * que no aparecieron en este lote se marcan resueltos (el scan ya no los ve).
@@ -82,6 +83,8 @@ async function ingestSecurityFindings(body: Record<string, unknown>): Promise<Re
     normalized = parseNpmAudit(body.report)
   } else if (body.source === 'axe' && typeof body.pageUrl === 'string') {
     normalized = parseAxeViolations(body.violations, body.pageUrl)
+  } else if (body.source === 'zap' && body.report) {
+    normalized = parseZapReport(body.report)
   } else if (Array.isArray(body.findings)) {
     normalized = body.findings.map(normalizeFinding).filter((f): f is NonNullable<typeof f> => f !== null)
   } else {
