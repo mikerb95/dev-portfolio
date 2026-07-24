@@ -2,7 +2,17 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 import { NIVELES, METRICAS_REFERENCIA as REF } from '../../data/testing'
-import { DEFINICIONES, CLASIFICACION, TRAZABILIDAD, GLOSARIO_VV, type TipoVV } from '../../data/vyv'
+import {
+  DEFINICIONES,
+  CLASIFICACION,
+  TRAZABILIDAD,
+  GLOSARIO_VV,
+  SUBSISTEMAS,
+  INTEGRIDAD_LABEL,
+  PROCESOS_CICLO_VIDA,
+  type TipoVV,
+  type NivelIntegridad,
+} from '../../data/vyv'
 
 // Cada nivel de /docs/testing se reclasifica aquí bajo V&V. No se inventan
 // niveles nuevos ni se duplican sus datos: se les añade una etiqueta y un
