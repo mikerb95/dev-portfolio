@@ -75,7 +75,10 @@ Directorios clave:
 - `src/lib/portal/` — sesiones y auth del portal de clientes (separado del admin).
 - `src/pages/api/` — endpoints; `src/pages/api/admin/` requiere sesión admin.
 - `src/db/schema.ts` — schema Drizzle único, fuente de verdad.
-- `tests/` — Vitest.
+- `src/data/` — datos tipados que alimentan `/docs` (requisitos, casos de uso,
+  niveles de testing, V&V, iteraciones del kanban). Las páginas de `/docs` solo
+  renderizan: **ninguna cifra se escribe a mano en el `.astro`**.
+- `tests/` — Vitest; `e2e/` — Playwright.
 - `drizzle/` — migraciones generadas, nunca editadas a mano.
 - `docs/` — planes vivos (`plan-*.md`), se actualizan al implementar, no se archivan.
 - `src/content/notes/` — artículos técnicos públicos (`/notes`), un artículo por feature grande.
