@@ -200,7 +200,7 @@ export const SUBSISTEMAS: Subsistema[] = [
     porque: 'Un fallo da acceso no autorizado al panel de control o a los datos de un cliente en el portal.',
     archivos: 'auth.config.ts, src/lib/auth.ts (admin) — src/lib/portal/session.ts, login.ts (portal)',
     cubiertoPor: ['integracion', 'e2e', 'dast'],
-    refuerzoPendiente: 'Falta un caso negativo explícito: allowlist revocada a mitad de una sesión ya activa.',
+    refuerzoPendiente: 'Los casos negativos de revocación se prueban a mano; un nivel 3 pediría cubrirlos también de forma automatizada.',
   },
   {
     id: 'middleware-seguridad',
