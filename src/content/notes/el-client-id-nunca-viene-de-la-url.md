@@ -1,6 +1,6 @@
 ---
 title: El clientId nunca viene de la URL
-description: Construí un portal donde cada cliente ve sus proyectos, sus facturas y sus documentos. El riesgo número uno no era que alguien entrara sin permiso: era que alguien entrara con el suyo y viera lo de otro.
+description: "Construí un portal donde cada cliente ve sus proyectos, sus facturas y sus documentos. El riesgo número uno no era que alguien entrara sin permiso: era que alguien entrara con el suyo y viera lo de otro."
 date: 2026-07-24
 tags: [seguridad, multi-tenant, arquitectura, astro]
 ---
