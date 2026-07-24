@@ -208,11 +208,11 @@ const faqs = [
         {perfiles.map((p) => (
           <div class="glass lift rounded-3xl p-7">
             <div class="flex items-center gap-2.5 mb-4">
-              <span class={`w-2.5 h-2.5 rounded-full bg-${p.color}`}></span>
+              <span class={`w-2.5 h-2.5 rounded-full ${p.dot}`}></span>
               <h3 class="text-[17px] font-medium text-ink-50">{p.titulo}</h3>
             </div>
             <p class="text-[14px] text-ink-200 leading-relaxed mb-3">{p.dolor}</p>
-            <p class={`text-[14px] text-${p.color} leading-relaxed font-medium`}>
+            <p class={`text-[14px] ${p.texto} leading-relaxed font-medium`}>
               → {p.resultado}
             </p>
           </div>
