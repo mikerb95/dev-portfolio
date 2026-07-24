@@ -6,6 +6,7 @@ import {
   normalizeFinding,
   normalizeSeverity,
   parseAxeViolations,
+  parseZapReport,
   parseNpmAudit,
 } from '../src/lib/lab/findings'
 
