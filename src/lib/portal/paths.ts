@@ -20,6 +20,11 @@ const PUBLIC_EXACT = new Set([
   // endpoint se la crea (ver src/pages/api/portal/demo.ts). El propio endpoint
   // valida que la demo esté disponible; aquí solo se le permite ser alcanzado.
   '/api/portal/demo',
+  // Health check del portal: lo sondea el motor de uptime, que por definición
+  // no tiene sesión. Es la única ruta pública de esta lista que no sirve para
+  // conseguir una — se admite porque no lee ni devuelve datos de ningún
+  // cliente, solo si el portal responde (ver lib/portal/health.ts).
+  '/api/portal/health',
 ])
 
 const PUBLIC_PREFIXES = [
