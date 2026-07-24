@@ -426,7 +426,7 @@ briefing sin IA; test del recolector y del truncado.
 
 ## Transversal — Artículos `/notes` faltantes
 
-Publicados (12): monitor propio, micro-SIEM, chaos, SLOs, sesiones revocables,
+Publicados (13): monitor propio, micro-SIEM, chaos, SLOs, sesiones revocables,
 RAG, mutation testing, e2e, SAST ("no solo un scan verde"), bloqueo escalado de
 IPs, analizador de dominios, cobros por WhatsApp, y el del `clientId` que nunca
 viene de la URL.
