@@ -73,6 +73,26 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 - [x] Página kanban montando el board con datos del portfolio
 - [x] Build de producción verificado (`npm run build`)
 
+## 5.b Entregado después de la Fase 1 (jul 21-24 2026)
+
+- [x] `/docs/historias-de-usuario` — catálogo consolidado desde las historias del
+      kanban, agrupado por rol, sin duplicar datos.
+- [x] `/docs/diagrama-paquetes` — el diagrama UML que faltaba, con su versión
+      ilustrada.
+- [x] `/docs/testing` — guía completa del testing del proyecto (plan propio en
+      `plan-testing-docs.md`), con datos tipados en `src/data/testing.ts`.
+- [x] `/docs/verificacion-validacion` — reclasificación de esos mismos niveles
+      bajo el marco de V&V, con niveles de integridad y procesos del ciclo de
+      vida; `src/data/vyv.ts` los referencia por id en vez de duplicarlos, y
+      `tests/vyv.test.ts` verifica esa integridad referencial.
+- [x] `/docs/usability-testing` — metodología de validación con usuarios reales
+      sobre el flujo de descarga del CV.
+- [x] `/docs/pipeline-en-vivo` — estado real de la última corrida del pipeline,
+      etapa por etapa, en vez de un diagrama estático.
+- [x] `/docs/presentacion` — deck de sustentación.
+
+El menú (`DocsNav.astro`) pasó de 10 a 16 pestañas.
+
 ## 6. Fases futuras
 
 - **Fase 2 — Vivo**: derivar el estado de RF desde los tests (cada RF apunta a
