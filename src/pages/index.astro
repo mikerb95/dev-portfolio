@@ -35,8 +35,37 @@ const visibleProjects = await db
     })}
   />
 
+  <!-- ── HUD de diagnóstico: panel fijo que va marcando qué sección ha
+       "pasado el chequeo" a medida que se hace scroll. Reutiliza la
+       identidad de monitoreo/SIEM del sitio en vez de un efecto genérico.
+       Oculto en mobile (poco espacio, aporta menos que estorba). -->
+  <div
+    id="hud"
+    class="hud-panel hidden lg:flex fixed bottom-6 left-6 z-40 flex-col gap-1.5 rounded-xl px-4 py-3 font-mono text-[10px] pointer-events-none select-none"
+  >
+    <div class="text-ink-300 tracking-[.22em] uppercase mb-0.5">sys.monitor</div>
+    <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="hero">
+      <span>boot</span><span class="hud-status">—</span>
+    </div>
+    <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="bento">
+      <span>sistema</span><span class="hud-status">—</span>
+    </div>
+    <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="proyectos">
+      <span>build</span><span class="hud-status">—</span>
+    </div>
+    <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="proceso">
+      <span>pipeline</span><span class="hud-status">—</span>
+    </div>
+    <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="expertise">
+      <span>stack</span><span class="hud-status">—</span>
+    </div>
+    <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="laboratorio">
+      <span>lab</span><span class="hud-status">—</span>
+    </div>
+  </div>
+
   <!-- ── Hero ── -->
-  <section class="relative pt-28 pb-24 px-6 md:px-12 lg:px-20 overflow-hidden">
+  <section id="hero" class="relative pt-28 pb-24 px-6 md:px-12 lg:px-20 overflow-hidden">
     <div class="halo"></div>
     <div class="relative max-w-[1280px] mx-auto">
 
