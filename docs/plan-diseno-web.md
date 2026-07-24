@@ -28,8 +28,23 @@ puerta aparte** que traduzca todo a resultados.
 ## Cambios de navbar
 
 - [x] Quitar "Certificaciones" del navbar (hecho).
-- [ ] Añadir "Diseño Web" al navbar apuntando a `/diseno-web`. Considerar
-  ubicarlo primero o destacado (es producto que genera ingresos).
+- [x] Añadir "Diseño Web" al navbar apuntando a `/paginas-web`, primero en la
+  lista (producto de ingresos, público amplio).
+
+## Decisiones tomadas al implementar
+
+- **Slug**: `/paginas-web` (más volumen de búsqueda que `/diseno-web`).
+- **Formulario**: reutiliza `POST /api/contact` (tabla `messages` + push ntfy),
+  sin endpoint ni migración nuevos. Si el cliente deja WhatsApp en vez de email,
+  se envía un email placeholder y el número real va en el cuerpo del mensaje
+  (el endpoint exige email válido). Asunto: `Página web · <negocio>`.
+- **Tono visual**: acentos `ember`/`lime`/`violet` (cálidos) en vez del cyan
+  técnico, para diferenciar sin salir del sistema de tokens.
+- **Prueba social**: tarjetas placeholder honestas ("Tu negocio aquí ·
+  Próximamente"), sin testimonios inventados.
+- Precios/tiempos de referencia hardcodeados en un array al inicio del `.astro`
+  (Presencia $650k/3-5d · Negocio $1.5M/1-2sem · A medida cotización) — ajustar
+  ahí sin tocar el diseño.
 
 ## Estructura de la página `/diseno-web`
 
