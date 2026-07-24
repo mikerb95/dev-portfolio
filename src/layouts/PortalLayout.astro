@@ -191,5 +191,26 @@ const initials = (user.name ?? user.email)
         <a href="/contact" class="text-[11px] text-ink-300 hover:text-cyan transition-colors">¿Necesitas ayuda?</a>
       </div>
     </footer>
+
+    <!--
+      `is:inline` a propósito: los scripts de página que Astro empaqueta son
+      módulos diferidos, así que un helper importado podría no existir todavía
+      cuando el primer formulario responda. Esto se ejecuta al parsear.
+      Aun así, todo llamador usa `window.portalAnnounce?.(...)`: anunciar es una
+      cortesía, y jamás debe ser lo que rompa un formulario que funciona.
+    -->
+    <script is:inline>
+      window.portalAnnounce = function (message) {
+        var el = document.getElementById('portal-live')
+        if (!el || !message) return
+        // Reasignar el MISMO texto no dispara anuncio en varios lectores (nada
+        // cambió en el DOM). Vaciar primero fuerza el cambio, y así "Mensaje
+        // enviado" dos veces seguidas se oye las dos veces.
+        el.textContent = ''
+        window.setTimeout(function () {
+          el.textContent = message
+        }, 60)
+      }
+    </script>
   </body>
 </html>
