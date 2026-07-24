@@ -1,0 +1,493 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+// Número de WhatsApp de contacto (mismo que /contact). El mensaje pre-escrito
+// baja la fricción: el cliente no técnico solo pulsa "enviar".
+const WHATSAPP = '573104641228'
+const waLink = (text: string) =>
+  `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`
+
+// Precios y tiempos viven aquí arriba, en un solo lugar, para ajustarlos sin
+// tocar el diseño. Cifras de referencia (COP) — editar a gusto.
+const planes = [
+  {
+    nombre: 'Presencia',
+    para: 'Para negocios locales y marcas personales que arrancan.',
+    precio: 'desde $650.000',
+    tiempo: 'Lista en 3–5 días',
+    destacado: false,
+    incluye: [
+      'Una página, todo en un solo lugar',
+      'Tu dominio propio (tunegocio.com)',
+      'Botón de WhatsApp para que te escriban',
+      'Apareces en Google y Maps',
+      'Se ve perfecta en el celular',
+    ],
+  },
+  {
+    nombre: 'Negocio',
+    para: 'Para profesionales independientes y pymes.',
+    precio: 'desde $1.500.000',
+    tiempo: 'Lista en 1–2 semanas',
+    destacado: true,
+    incluye: [
+      'Varias secciones (servicios, galería, sobre ti…)',
+      'Catálogo o lista de servicios',
+      'Formulario de contacto',
+      'SEO local para aparecer cuando te buscan',
+      'Todo lo del plan Presencia',
+    ],
+  },
+  {
+    nombre: 'A medida',
+    para: 'Para negocios que venden y quieren crecer.',
+    precio: 'Cotización',
+    tiempo: 'Según el proyecto',
+    destacado: false,
+    incluye: [
+      'Tienda en línea o sistema de reservas/citas',
+      'Pagos en línea (tarjeta, PSE, Nequi)',
+      'Integraciones a tu medida',
+      'Acompañamiento cercano en todo el proceso',
+      'Todo lo del plan Negocio',
+    ],
+  },
+]
+
+// Perfiles del bloque "¿esto es para ti?": dolor concreto + resultado, en el
+// idioma del cliente, no en el del ingeniero.
+const perfiles = [
+  {
+    titulo: 'Tienes un negocio local',
+    dolor: 'La gente te encuentra en redes, pero no tienes dónde mandarlos.',
+    resultado: 'Una página que sale en Google y recibe clientes por WhatsApp.',
+    color: 'ember',
+  },
+  {
+    titulo: 'Eres profesional independiente',
+    dolor: 'Te recomiendan de boca en boca, pero no hay nada que dé confianza online.',
+    resultado: 'Una web que te hace ver serio y agenda tus citas.',
+    color: 'lime',
+  },
+  {
+    titulo: 'Estás emprendiendo',
+    dolor: 'Tienes la idea y las ganas, pero no un lugar propio en internet.',
+    resultado: 'Tu marca con cara profesional desde el día uno, sin gastar de más.',
+    color: 'violet',
+  },
+  {
+    titulo: 'Ya tienes una empresa',
+    dolor: 'Tu web se ve vieja o no vende, y actualizarla es un dolor de cabeza.',
+    resultado: 'Un sitio renovado con catálogo, reservas o pagos que sí funciona.',
+    color: 'cyan',
+  },
+]
+
+const pasos = [
+  {
+    n: '01',
+    titulo: 'Me cuentas',
+    texto: 'Me dices qué haces y qué quieres lograr. Yo te guío, tú no necesitas saber nada técnico.',
+  },
+  {
+    n: '02',
+    titulo: 'Yo diseño',
+    texto: 'Armo tu página, escojo los colores, ordeno la información y te la muestro para ajustar.',
+  },
+  {
+    n: '03',
+    titulo: 'Publicamos',
+    texto: 'Me encargo del dominio y de dejarla en línea. Tú solo la compartes y recibes clientes.',
+  },
+]
+
+const faqs = [
+  {
+    q: '¿Tengo que hacer algo técnico?',
+    a: 'No. Tú me mandas la información (fotos, textos, tus datos) y yo me encargo de todo lo demás: dominio, diseño y publicación.',
+  },
+  {
+    q: '¿Cuánto cuesta mantenerla?',
+    a: 'El dominio se renueva una vez al año (bajo costo). Si quieres cambios grandes después, los cotizamos aparte. Sin sorpresas.',
+  },
+  {
+    q: '¿Puedo editarla después?',
+    a: 'Sí. Podemos dejarla para que hagas cambios sencillos tú mismo, o me la dejas a mí y yo la mantengo. Como prefieras.',
+  },
+  {
+    q: '¿Cuánto se demora?',
+    a: 'Depende del plan: entre 3 días y un par de semanas. En la primera conversación te doy una fecha clara.',
+  },
+  {
+    q: '¿Y si ya tengo dominio o redes?',
+    a: 'Mejor aún. Trabajamos sobre lo que ya tienes y lo conectamos todo. No empiezas de cero.',
+  },
+]
+---
+
+<BaseLayout
+  title="Diseño de páginas web para tu negocio — CodeByMike"
+  description="Páginas web profesionales para negocios, profesionales y emprendedores en Colombia. Tú me cuentas, yo la construyo, tú solo la usas. Lista en días, no en meses."
+  image="/og-default.png"
+>
+  <script
+    is:inline
+    slot="head"
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      serviceType: 'Diseño y desarrollo de páginas web',
+      provider: { '@type': 'Person', name: 'Mike', url: 'https://codebymike.tech' },
+      areaServed: { '@type': 'Country', name: 'Colombia' },
+      description:
+        'Páginas web profesionales para negocios locales, profesionales independientes, emprendedores y pymes.',
+    })}
+  />
+
+  <!-- ── Hero ── -->
+  <section class="relative pt-32 pb-20 px-6 md:px-12 lg:px-20 overflow-hidden">
+    <div class="halo" style="filter: hue-rotate(120deg);"></div>
+    <div class="relative max-w-[1000px] mx-auto text-center">
+      <div class="inline-flex items-center gap-2.5 rounded-full glass px-4 py-1.5 mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-ember pulse-dot"></span>
+        <span class="text-[12px] text-ink-100">Diseño de páginas web · Colombia</span>
+      </div>
+
+      <h1 class="font-sans font-medium tracking-[-.03em] leading-[1.02] text-[clamp(36px,6.5vw,74px)] text-ink-50">
+        Tu negocio necesita una página
+        <span class="text-ember">que trabaje por ti.</span>
+      </h1>
+
+      <p class="mt-7 text-[17px] md:text-[19px] text-ink-100 leading-relaxed max-w-2xl mx-auto">
+        Yo la construyo, tú solo la usas. Sin palabras raras, sin complicaciones:
+        me cuentas qué haces y en pocos días tienes una web profesional que te
+        consigue clientes.
+      </p>
+
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <a
+          href={waLink('Hola Mike, quiero una página web para mi negocio. ¿Me ayudas?')}
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-2.5 h-13 px-6 py-3.5 text-[15px] font-medium rounded-full bg-ember text-ink-950 hover:brightness-110 transition-all shadow-[0_0_0_1px_rgba(255,107,61,.35),0_0_32px_-8px_rgba(255,107,61,.6)]"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.359.101 11.945c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a11.9 11.9 0 0 0 5.71 1.454h.006c6.585 0 11.946-5.359 11.949-11.945a11.9 11.9 0 0 0-3.48-8.408"/></svg>
+          Escríbeme por WhatsApp
+        </a>
+        <a
+          href="#planes"
+          class="inline-flex items-center gap-2 h-13 px-6 py-3.5 text-[15px] font-medium rounded-full border border-white/15 text-ink-100 hover:border-ember/40 hover:text-ember transition-colors"
+        >
+          Ver planes y precios
+        </a>
+      </div>
+
+      <p class="mt-6 text-[13px] text-ink-300">
+        Respuesta el mismo día · Sin compromiso · Hecho por un ingeniero, no una plantilla
+      </p>
+    </div>
+  </section>
+
+  <!-- ── ¿Esto es para ti? ── -->
+  <section class="px-6 md:px-12 lg:px-20 py-16">
+    <div class="max-w-[1100px] mx-auto">
+      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
+        ¿Esto es para ti?
+      </h2>
+      <p class="text-[15px] text-ink-200 text-center max-w-xl mx-auto mb-12">
+        Si te reconoces en alguno de estos, hablemos.
+      </p>
+      <div class="grid sm:grid-cols-2 gap-5">
+        {perfiles.map((p) => (
+          <div class="glass lift rounded-3xl p-7">
+            <div class="flex items-center gap-2.5 mb-4">
+              <span class={`w-2.5 h-2.5 rounded-full bg-${p.color}`}></span>
+              <h3 class="text-[17px] font-medium text-ink-50">{p.titulo}</h3>
+            </div>
+            <p class="text-[14px] text-ink-200 leading-relaxed mb-3">{p.dolor}</p>
+            <p class={`text-[14px] text-${p.color} leading-relaxed font-medium`}>
+              → {p.resultado}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Qué logras (beneficios) ── -->
+  <section class="px-6 md:px-12 lg:px-20 py-16">
+    <div class="max-w-[1100px] mx-auto">
+      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
+        Lo que consigues
+      </h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {[
+          { t: 'Apareces en Google', d: 'Cuando alguien busca lo que ofreces, te encuentra a ti.' },
+          { t: 'Te escriben por WhatsApp', d: 'Con un botón, tus clientes te contactan directo desde la web.' },
+          { t: 'Se ve profesional', d: 'En el celular y en el computador, tu negocio da confianza.' },
+          { t: 'Tú no tocas nada técnico', d: 'Yo me encargo del dominio, el diseño y de dejarla en línea.' },
+        ].map((b) => (
+          <div class="glass rounded-3xl p-6">
+            <div class="w-10 h-10 rounded-2xl bg-ember/10 border border-ember/25 flex items-center justify-center mb-4">
+              <span class="w-2 h-2 rounded-full bg-ember"></span>
+            </div>
+            <h3 class="text-[16px] font-medium text-ink-50 mb-2">{b.t}</h3>
+            <p class="text-[14px] text-ink-200 leading-relaxed">{b.d}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Cómo funciona ── -->
+  <section class="px-6 md:px-12 lg:px-20 py-16">
+    <div class="max-w-[1000px] mx-auto">
+      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
+        Cómo funciona
+      </h2>
+      <p class="text-[15px] text-ink-200 text-center mb-12">Tres pasos. Tú pones la info, yo pongo el resto.</p>
+      <div class="grid md:grid-cols-3 gap-5">
+        {pasos.map((paso) => (
+          <div class="glass rounded-3xl p-7">
+            <div class="font-serif italic text-[40px] text-ember/70 leading-none mb-4">{paso.n}</div>
+            <h3 class="text-[18px] font-medium text-ink-50 mb-2">{paso.titulo}</h3>
+            <p class="text-[14px] text-ink-200 leading-relaxed">{paso.texto}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Planes ── -->
+  <section id="planes" class="px-6 md:px-12 lg:px-20 py-16 scroll-mt-24">
+    <div class="max-w-[1150px] mx-auto">
+      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
+        Planes y precios
+      </h2>
+      <p class="text-[15px] text-ink-200 text-center max-w-xl mx-auto mb-12">
+        Precios claros, sin letra pequeña. Escoge el que va con tu momento y ajustamos juntos.
+      </p>
+      <div class="grid md:grid-cols-3 gap-5 items-start">
+        {planes.map((plan) => (
+          <div
+            class={`rounded-3xl p-7 flex flex-col h-full ${
+              plan.destacado
+                ? 'glass-strong border border-ember/30 shadow-[0_0_40px_-12px_rgba(255,107,61,.4)]'
+                : 'glass'
+            }`}
+          >
+            {plan.destacado && (
+              <span class="self-start inline-flex items-center gap-1.5 rounded-full bg-ember/15 text-ember text-[11px] font-medium px-3 py-1 mb-4">
+                <span class="w-1.5 h-1.5 rounded-full bg-ember"></span>
+                El más elegido
+              </span>
+            )}
+            <h3 class="text-[20px] font-medium text-ink-50 mb-1">{plan.nombre}</h3>
+            <p class="text-[13px] text-ink-200 mb-5">{plan.para}</p>
+            <div class="mb-1 text-[26px] font-medium text-ink-50">{plan.precio}</div>
+            <div class="text-[13px] text-ember mb-6">{plan.tiempo}</div>
+            <ul class="space-y-2.5 mb-7 flex-1">
+              {plan.incluye.map((item) => (
+                <li class="flex items-start gap-2.5 text-[14px] text-ink-100 leading-relaxed">
+                  <svg class="w-4 h-4 mt-0.5 text-ember shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href={waLink(`Hola Mike, me interesa el plan ${plan.nombre} para mi página web. ¿Me cuentas más?`)}
+              target="_blank"
+              rel="noopener"
+              class={`inline-flex items-center justify-center gap-2 h-11 px-5 text-[14px] font-medium rounded-full transition-all ${
+                plan.destacado
+                  ? 'bg-ember text-ink-950 hover:brightness-110'
+                  : 'border border-white/15 text-ink-100 hover:border-ember/40 hover:text-ember'
+              }`}
+            >
+              {plan.precio === 'Cotización' ? 'Cotizar mi proyecto' : 'Quiero este plan'}
+            </a>
+          </div>
+        ))}
+      </div>
+      <p class="text-[13px] text-ink-300 text-center mt-8">
+        ¿No sabes cuál elegir? Escríbeme y en 5 minutos te digo cuál te conviene.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Prueba social (placeholder honesto) ── -->
+  <section class="px-6 md:px-12 lg:px-20 py-16">
+    <div class="max-w-[1100px] mx-auto">
+      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
+        Negocios que confían
+      </h2>
+      <div class="grid sm:grid-cols-3 gap-5">
+        {[1, 2, 3].map(() => (
+          <div class="glass rounded-3xl p-7 border border-dashed border-white/10">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-ink-300">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
+              </span>
+              <div>
+                <div class="text-[14px] text-ink-100">Tu negocio aquí</div>
+                <div class="text-[12px] text-ink-300">Próximamente</div>
+              </div>
+            </div>
+            <p class="text-[14px] text-ink-300 leading-relaxed italic">
+              Este espacio es para el testimonio de tu negocio. ¿Serás el primero?
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FAQ ── -->
+  <section class="px-6 md:px-12 lg:px-20 py-16">
+    <div class="max-w-[800px] mx-auto">
+      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
+        Preguntas frecuentes
+      </h2>
+      <div class="space-y-3">
+        {faqs.map((faq) => (
+          <details class="group glass rounded-2xl px-6 py-5">
+            <summary class="flex items-center justify-between cursor-pointer list-none text-[16px] font-medium text-ink-50">
+              {faq.q}
+              <svg class="w-5 h-5 text-ink-300 transition-transform group-open:rotate-45 shrink-0 ml-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </summary>
+            <p class="mt-3 text-[14px] text-ink-200 leading-relaxed">{faq.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA final: WhatsApp + formulario ── -->
+  <section class="px-6 md:px-12 lg:px-20 py-20">
+    <div class="max-w-[1000px] mx-auto glass-strong rounded-[2rem] p-8 md:p-12">
+      <div class="grid md:grid-cols-2 gap-10 items-center">
+        <div>
+          <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 mb-4 leading-[1.1]">
+            Hablemos de tu página.
+          </h2>
+          <p class="text-[15px] text-ink-100 leading-relaxed mb-7">
+            Cuéntame qué haces y qué te gustaría lograr. Te respondo el mismo día,
+            sin compromiso y sin palabras técnicas.
+          </p>
+          <a
+            href={waLink('Hola Mike, quiero una página web para mi negocio. ¿Me ayudas?')}
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-2.5 h-12 px-6 text-[15px] font-medium rounded-full bg-ember text-ink-950 hover:brightness-110 transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.359.101 11.945c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a11.9 11.9 0 0 0 5.71 1.454h.006c6.585 0 11.946-5.359 11.949-11.945a11.9 11.9 0 0 0-3.48-8.408"/></svg>
+            Escríbeme por WhatsApp
+          </a>
+          <p class="text-[13px] text-ink-300 mt-4">O déjame tus datos y yo te escribo →</p>
+        </div>
+
+        <form id="lead-form" class="space-y-3">
+          <input
+            type="text"
+            name="name"
+            required
+            maxlength="200"
+            placeholder="Tu nombre"
+            class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-ink-50 text-[15px] placeholder:text-ink-300 focus:outline-none focus:border-ember/50 transition-colors"
+          />
+          <input
+            type="text"
+            name="negocio"
+            maxlength="200"
+            placeholder="¿A qué se dedica tu negocio?"
+            class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-ink-50 text-[15px] placeholder:text-ink-300 focus:outline-none focus:border-ember/50 transition-colors"
+          />
+          <input
+            type="text"
+            name="contacto"
+            required
+            maxlength="200"
+            placeholder="Tu WhatsApp o correo"
+            class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-ink-50 text-[15px] placeholder:text-ink-300 focus:outline-none focus:border-ember/50 transition-colors"
+          />
+          <textarea
+            name="mensaje"
+            rows="3"
+            maxlength="2000"
+            placeholder="¿Qué te gustaría lograr con tu página? (opcional)"
+            class="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-ink-50 text-[15px] placeholder:text-ink-300 focus:outline-none focus:border-ember/50 transition-colors resize-none"
+          ></textarea>
+          <button
+            type="submit"
+            class="w-full h-12 rounded-2xl bg-ember text-ink-950 text-[15px] font-medium hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Enviar
+          </button>
+          <p id="lead-status" class="text-[13px] text-center min-h-[1.2em]" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  // El formulario reutiliza el endpoint de contacto existente (/api/contact →
+  // tabla `messages` + push ntfy). Componemos un asunto y cuerpo legibles para
+  // que la notificación llegue con el contexto del lead de "páginas web".
+  const form = document.getElementById('lead-form') as HTMLFormElement | null
+  const status = document.getElementById('lead-status')
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    if (!status) return
+    const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement
+    const fd = new FormData(form)
+    const name = String(fd.get('name') ?? '').trim()
+    const negocio = String(fd.get('negocio') ?? '').trim()
+    const contacto = String(fd.get('contacto') ?? '').trim()
+    const mensaje = String(fd.get('mensaje') ?? '').trim()
+
+    if (!name || !contacto) {
+      status.textContent = 'Escribe al menos tu nombre y cómo contactarte.'
+      status.style.color = '#ff6b3d'
+      return
+    }
+
+    // El endpoint exige un email válido; si el cliente dejó un WhatsApp usamos
+    // un placeholder y el número real viaja en el cuerpo del mensaje.
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacto)
+    const email = looksLikeEmail ? contacto : 'lead-paginas-web@codebymike.tech'
+    const body =
+      `Lead de /paginas-web\n` +
+      `Negocio: ${negocio || '(no indicó)'}\n` +
+      `Contacto: ${contacto}\n\n` +
+      `${mensaje || '(sin mensaje)'}`
+
+    btn.disabled = true
+    status.textContent = 'Enviando…'
+    status.style.color = '#85858f'
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, subject: `Página web · ${negocio || name}`, body }),
+      })
+      if (res.ok) {
+        form.reset()
+        status.textContent = '¡Listo! Te escribo el mismo día. Gracias 🙌'
+        status.style.color = '#c9ff5b'
+      } else {
+        const data = await res.json().catch(() => ({}))
+        status.textContent = data.error ?? 'No se pudo enviar. Escríbeme mejor por WhatsApp.'
+        status.style.color = '#ff6b3d'
+      }
+    } catch {
+      status.textContent = 'No se pudo enviar. Escríbeme mejor por WhatsApp.'
+      status.style.color = '#ff6b3d'
+    } finally {
+      btn.disabled = false
+    }
+  })
+</script>
