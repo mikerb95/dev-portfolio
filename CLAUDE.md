@@ -65,7 +65,7 @@ el siguiente paso obvio" cuando ese paso es un deploy o un commit.
 request → Vercel (edge) → src/middleware.ts
             · clasificador de amenazas + rate limit durable + blocklist (fail-open)
             · chaos flags (LAB) · auth allowlist /admin · headers CSP/HSTS
-          → Astro 6 SSR (páginas + /api) → Turso (libSQL) vía Drizzle
+          → Astro 7 SSR (páginas + /api) → Turso (libSQL) vía Drizzle
 crons externos (cron-job.org) → /api/cron/* (Bearer CRON_SECRET) → checks, rollups, alertas ntfy
 ```
 
