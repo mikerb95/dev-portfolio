@@ -209,9 +209,11 @@ necesita un target de preview estable que sigue sin existir.
 - **VERCEL_TOKEN en GitHub Secrets**: sigue faltando (`gh secret list` no lo muestra).
   Sin él, el rollback de la Fase 1 solo avisa, no revierte. Subirlo con
   `gh secret set VERCEL_TOKEN --repo mikerb95/dev-portfolio`.
-- **Llaves Wompi reales** (Fase 2): `WOMPI_PUBLIC_KEY`, `WOMPI_INTEGRITY_SECRET`,
-  `WOMPI_EVENTS_SECRET` en Vercel + registrar el webhook `https://codebymike.tech/api/payments/webhook`.
-  Sin ellas la pasarela opera en modo mock (suficiente para la demo).
+- ~~**Llaves Wompi reales** (Fase 2)~~: ✅ `WOMPI_PUBLIC_KEY`,
+  `WOMPI_INTEGRITY_SECRET` y `WOMPI_EVENTS_SECRET` están en Vercel (Production)
+  desde el 16 jul 2026. Falta confirmar el registro del webhook
+  `https://codebymike.tech/api/payments/webhook` en el panel de Wompi y hacer un
+  cobro real de punta a punta.
 - **Dashboard `/admin` consolidado**: tarjetas resumen que ya tienen datos
   (badge CI, cobertura, SLO/error budget, último mutation score) en la portada del panel
   para el arranque de la sustentación.
