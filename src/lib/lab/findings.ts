@@ -147,6 +147,60 @@ export function parseAxeViolations(violations: unknown, pageUrl: string): Normal
   })
 }
 
+type ZapAlert = {
+  pluginid?: unknown
+  name?: unknown
+  riskdesc?: unknown
+  desc?: unknown
+  instances?: unknown
+}
+
+/**
+ * Parsea el reporte JSON de OWASP ZAP baseline (`zap-baseline.py -J`). Un
+ * hallazgo por (alerta, instancia): la misma regla en dos rutas son dos
+ * hallazgos, igual que axe. `riskdesc` viene como "High (Medium)" (riesgo y
+ * confianza) — solo se usa la primera palabra.
+ *
+ * Tope de instancias por alerta: el baseline puede reportar la misma regla
+ * decenas de veces (p. ej. una cabecera ausente en cada página crawleada) y
+ * no aporta nada guardar cada URL por separado más allá de una muestra.
+ */
+const ZAP_MAX_INSTANCES_PER_ALERT = 15
+
+export function parseZapReport(json: unknown): NormalizedFinding[] {
+  if (!json || typeof json !== 'object') return []
+  const sites = (json as Record<string, unknown>).site
+  if (!Array.isArray(sites)) return []
+
+  const out: NormalizedFinding[] = []
+  for (const site of sites) {
+    const alerts = (site as Record<string, unknown>)?.alerts
+    if (!Array.isArray(alerts)) continue
+
+    for (const raw of alerts) {
+      const a = (raw ?? {}) as ZapAlert
+      const title = clean(a.name, 260)
+      const ruleId = clean(a.pluginid, 60)
+      if (!title || !ruleId) continue
+
+      const severity = normalizeSeverity(String(a.riskdesc ?? '').split(' ')[0])
+      const description = clean(a.desc, 2000)
+      const instances = Array.isArray(a.instances) ? a.instances : []
+      const uris = instances
+        .map((i) => clean((i as Record<string, unknown>)?.uri, 300))
+        .filter((u): u is string => u !== null)
+        .slice(0, ZAP_MAX_INSTANCES_PER_ALERT)
+
+      // Una alerta sin instancias (raro, pero el schema no lo garantiza) igual
+      // se registra: mejor un hallazgo sin ruta que perderlo silenciosamente.
+      for (const route of uris.length > 0 ? uris : [null]) {
+        out.push({ source: 'zap', severity, title, description, route, ruleId })
+      }
+    }
+  }
+  return out
+}
+
 /** Transiciones de estado permitidas al marcar un hallazgo desde el panel. */
 export function canSetStatus(from: FindingStatus, to: FindingStatus): boolean {
   if (from === to) return false

@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro'
 import { timingSafeEqual } from 'node:crypto'
 import { db } from '../../../db'
 import { ciRuns } from '../../../db/schema'
-import { normalizeFinding, parseAxeViolations, parseNpmAudit } from '../../../lib/lab/findings'
+import { normalizeFinding, parseAxeViolations, parseNpmAudit, parseZapReport } from '../../../lib/lab/findings'
 import { autoResolveStale, ingestFindings } from '../../../lib/lab/findings-store'
 
 // Recibe artefactos generados por CI (métricas de runs, y a futuro k6/ZAP/Stryker).
