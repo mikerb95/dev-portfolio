@@ -3,6 +3,7 @@ import { db } from '../../../../../db'
 import { projectServices } from '../../../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { normalizeServiceInput, SERVICE_CATEGORIES } from '../../../../../lib/services'
+import { sinSecretos } from '../../../../../lib/vault'
 
 const isValidCategory = (c: unknown) => SERVICE_CATEGORIES.includes(c as any)
 
