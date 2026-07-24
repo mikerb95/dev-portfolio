@@ -178,3 +178,9 @@ cookies ni lógica:
 5. `docs/plan-*.md` se actualiza al implementar (fases marcadas ✅, decisiones
    que surgieron documentadas), no se deja como un plan estático desalineado
    del código.
+6. `src/data/documentacion.ts` es la fuente de verdad de `/docs`: un requisito
+   nuevo entra ahí (estado `planeado`) y se promueve a `implementado` al
+   entregarlo, con `origen` (dónde vive en el código) y `verificacion` (cómo se
+   comprueba). Cerrar una iteración añade su entrada a
+   `src/data/iteraciones-portfolio.ts`. Un feature entregado que no aparece en
+   `/docs` es un feature que, para efectos de la sustentación, no existe.
