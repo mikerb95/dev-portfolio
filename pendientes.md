@@ -74,13 +74,42 @@ servidor tendría que sondear igual y encima pagaría la conexión abierta), con
 pausa cuando la pestaña no está visible, backoff ante error y fail-open
 silencioso.
 
-Dos puntos de higiene del mismo plan:
-- [ ] El portal no tiene monitor propio en `/status` — es el único subsistema del
-      stack que no se vigila a sí mismo.
+Los dos puntos de higiene del mismo plan ya están cubiertos:
 - [x] Artículo en `/notes`: **"Dos logins en el mismo sitio, y ninguno conoce al
       otro"** (24 jul), sobre por qué el portal no reutiliza la auth del admin.
       Junto con "El clientId nunca viene de la URL" cubre las dos decisiones de
       diseño del portal que valía la pena contar.
+- [x] **Monitor propio** (24 jul): endpoint público `/api/portal/health` que
+      ejerce el join real de tres tablas del portal, más
+      `scripts/register-portal-monitor.mjs` para darlo de alta. Ver el paso
+      pendiente justo abajo.
+
+### ⚠️ Alta del monitor del portal — pendiente, y el orden importa
+
+El código está listo, pero **el monitor todavía no está dado de alta**, a
+propósito: registrarlo antes de que `/api/portal/health` exista en producción
+haría que el primer chequeo diera 404 → caída → incidente abierto y push a ntfy
+por un servicio que en realidad está sano.
+
+Después del próximo deploy, una de estas dos:
+
+```sh
+node scripts/register-portal-monitor.mjs      # idempotente, identifica por URL
+```
+
+o el formulario de `/admin/monitors` con estos valores:
+
+| Campo | Valor |
+|---|---|
+| Nombre | `Portal de clientes` |
+| URL | `https://codebymike.tech/api/portal/health` |
+| Texto esperado | `"ok":true` |
+| Umbral de latencia | `2000` ms |
+
+- [ ] Correr el alta tras el deploy y confirmar en `/status` que aparece en verde.
+- [ ] Al hacerlo pasan a ser **9 monitores**, no 8: la cifra está escrita a mano
+      en `README.md`, `src/data/testing.ts` (nivel «Monitoreo sintético») y
+      `src/data/documentacion.ts` (RF-401).
 
 ### LAB — Fase 5: load testing con k6
 
