@@ -443,12 +443,17 @@ Cada artículo: mismo formato del content collection actual, OG image
 
 ## Acciones manuales pendientes (solo Mike, no código)
 
+> Lista consolidada y con el estado real de las env vars de producción en
+> [`pendientes.md`](../pendientes.md). Resumen al 24 jul 2026:
+
 - [ ] `VERCEL_TOKEN` en GitHub Secrets (rollback Fase 1 LAB + k6).
+- [ ] **`TURSO_DEMO_URL` + `TURSO_DEMO_AUTH_TOKEN` en Vercel (Production)** —
+      confirmado que siguen sin subir: la demo no existe en prod (etapa 3).
+- [ ] `SECURITY_IP_SALT` en Vercel (sin ella el hash de IP del SIEM va sin salt).
 - [ ] Altas en Google Search Console y Bing Webmaster (capa SEO ya lista).
 - [ ] 3 custom rules WAF en dashboard Vercel (etapa 8).
 - [ ] Cron `security-rollup` en cron-job.org con `CRON_SECRET`.
 - [ ] App ntfy en el celular suscrita al topic.
 - [ ] Verificar bóveda/P&L COP en prod (pendientes.md).
 - [ ] (Opcional) limpiar `DEV_USER`/`DEV_PASSWORD` de env.
-- [ ] **`TURSO_DEMO_URL` + `TURSO_DEMO_AUTH_TOKEN` en Vercel (Production)** — ya
-      están en `.env` local; sin ellas la demo no existe en prod (etapa 3).
+- [x] `COBRO_HISTORY_SECRET` en Vercel (Production) — subida el 16 jul.
