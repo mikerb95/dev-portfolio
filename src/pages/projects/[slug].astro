@@ -5,6 +5,7 @@ import IteracionesBoard from '../../components/IteracionesBoard.astro'
 import { db } from '../../db'
 import { projects, clients, educationMilestones } from '../../db/schema'
 import { eq, and } from 'drizzle-orm'
+import { parseTechStack } from '../../lib/tech-stack'
 
 const { slug } = Astro.params
 
@@ -29,7 +30,7 @@ const [client, milestones] = await Promise.all([
     .where(and(eq(educationMilestones.projectId, project.id), eq(educationMilestones.isPublic, true))),
 ])
 
-const stack: string[] = project.techStack ? JSON.parse(project.techStack) : []
+const stack: string[] = parseTechStack(project.techStack)
 
 // Tablero de iteraciones XP: sólo para el proyecto DobleYo Café.
 // Ajusta el slug aquí si en tu BD usas otro identificador.
