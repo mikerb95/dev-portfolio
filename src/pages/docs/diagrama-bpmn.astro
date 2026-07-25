@@ -206,6 +206,13 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, sizeOf
 </BaseLayout>
 
 <style>
+  .tiempos summary::marker {
+    color: #4d4d5d;
+  }
+  .tiempos[open] summary {
+    color: #e7e7ec;
+  }
+
   /* Tinte de marca al pasar por encima, en vez de una franja de acento. */
   .compuerta:hover {
     background: color-mix(in srgb, var(--color-cyan-dim) 6%, var(--color-ink-800));
