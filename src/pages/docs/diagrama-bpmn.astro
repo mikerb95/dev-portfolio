@@ -57,13 +57,19 @@ const muestras = leyendaBpmn.map((item) => {
     <!-- ── Leyenda de la notación ─────────────────────────────────────── -->
     <section class="mb-10">
       <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-3">Notación</h2>
-      <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-5 gap-y-3.5 list-none p-0 m-0">
+      <ul class="bpmn-scope grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3.5 list-none p-0 m-0">
         {muestras.map((m) => (
-          <li class="flex items-center gap-2.5">
-            <span class="shrink-0 grid place-items-center w-[52px] h-[38px] rounded-lg bg-ink-800 border border-white/10 overflow-hidden">
-              <span class="scale-[0.62] origin-center leyenda-simbolo">
-                <BpmnDiagram proceso={m.proceso} />
-              </span>
+          <li class="flex items-center gap-3">
+            <span class="shrink-0 grid place-items-center w-[76px]">
+              <svg
+                width={m.ancho}
+                height={ALTO_MUESTRA}
+                viewBox={`0 0 ${m.vbW} ${m.vbH}`}
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <BpmnShape node={m.node} />
+              </svg>
             </span>
             <span class="min-w-0">
               <span class="block text-[12.5px] text-ink-50 leading-tight">{m.label}</span>
@@ -95,16 +101,3 @@ const muestras = leyendaBpmn.map((item) => {
     </div>
   </div>
 </BaseLayout>
-
-<style define:vars={{ leyendaAncho: `${GEO.laneHeaderW + GEO.padX * 2 + GEO.taskW}px` }}>
-  /* Las muestras de la leyenda son diagramas de un nodo: se les quita el marco
-     del contenedor para que solo se vea la figura. */
-  .leyenda-simbolo :global(.bpmn) {
-    border: 0;
-    background: transparent;
-    width: var(--leyendaAncho);
-  }
-  .leyenda-simbolo :global(.bpmn-pool) {
-    display: none;
-  }
-</style>
