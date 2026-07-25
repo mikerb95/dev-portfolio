@@ -345,7 +345,8 @@ const monitoreo: BpmnProcess = {
     { from: 'gauth', to: 'sonda', label: 'sí' },
     { from: 'sonda', to: 'resp', kind: 'message' },
     // Baja pegado a la tarea para no cruzar el carril del servicio sondeado.
-    { from: 'corte', to: 'reg', label: 'se anota como caída', channelOffset: -78 },
+    // Sin etiqueta: el propio evento de borde ya dice qué pasa y en cuánto.
+    { from: 'corte', to: 'reg', channelOffset: -78 },
     { from: 'resp', to: 'reg' },
     { from: 'reg', to: 'gok' },
     { from: 'gok', to: 'gabierto', label: 'no' },
