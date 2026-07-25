@@ -68,8 +68,12 @@ body {
    otro. La paleta es la del sitio: acentos solo donde aportan lectura (inicio
    en lima, fin por error en ámbar, compuertas en cian). */
 .bpmn-scope {
-  --bpmn-lane-a: #13131a;
-  --bpmn-lane-b: #101017;
+  /* Los dos carriles comparten fondo a propósito: el forro de las flechas y el
+     halo de los textos se pintan de ese color, y con bandas alternas quedaría
+     un cerco visible al cruzar de carril. Los carriles se distinguen por sus
+     líneas divisorias, no por el tono. */
+  --bpmn-lane-a: #111117;
+  --bpmn-lane-b: #111117;
   --bpmn-header: #171720;
   --bpmn-border: #2e2e3a;
   --bpmn-line: #a6a6b2;
