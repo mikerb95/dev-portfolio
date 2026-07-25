@@ -538,6 +538,31 @@ const es = {
       networkErrorStatus: '✗ Error de red. Intenta de nuevo.',
     },
   },
+  certifications: {
+    title: 'Certificaciones — CodeByMike',
+    description: 'Formación técnica continua: certificaciones, cursos y habilidades adquiridas.',
+    eyebrow: 'Formación continua',
+    h1Line1: 'Formación y',
+    h1Line2: 'certificaciones.',
+    intro: 'Aprendizaje técnico continuo. Cursos, certificaciones y habilidades que complementan la experiencia práctica.',
+    empty: 'No hay certificaciones publicadas aún.',
+    statusInProgress: 'En curso',
+    statusCompleted: 'Completado',
+    statusCompletedSection: 'Completados',
+    statusPaused: 'Pausado',
+    statusPausedSection: 'Pausados',
+    viewCertificate: 'Ver certificado',
+    viewImage: 'Ver imagen',
+    fullProfile: {
+      heading: 'Ver perfil completo',
+      platziLabel: 'Platzi',
+      platziTitle: 'Ver mis cursos y rutas',
+      platziDetail: 'Historial completo de aprendizaje',
+      linkedinLabel: 'LinkedIn',
+      linkedinTitle: 'Ver perfil profesional',
+      linkedinDetail: 'Experiencia, skills y recomendaciones',
+    },
+  },
 }
 
 export default es
