@@ -69,7 +69,7 @@ const byStatus = {
       <section class="mb-16">
         <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
           <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
-          <span>Completados</span>
+          <span>{cert.statusCompletedSection}</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {byStatus.completado.map((c) => <CertCard cert={c} />)}
