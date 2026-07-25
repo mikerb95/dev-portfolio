@@ -251,6 +251,62 @@ describe('findLayoutIssues', () => {
     expect(issues.some((i) => i.kind === 'crossing')).toBe(true)
   })
 
+  it('detecta una etiqueta de rama posada sobre el trazo de otra flecha', () => {
+    const issues = findLayoutIssues({
+      ...base,
+      lanes: [
+        { id: 'a', label: '' },
+        { id: 'b', label: '' },
+      ],
+      nodes: [
+        { id: 'g', type: 'gatewayExclusive', label: '', lane: 'a', col: 0 },
+        { id: 'x', type: 'task', label: 'X', lane: 'a', col: 1 },
+        { id: 'y', type: 'task', label: 'Y', lane: 'b', col: 1 },
+        { id: 'z', type: 'task', label: 'Z', lane: 'b', col: 0 },
+      ],
+      // z → x sube por el mismo corredor donde g etiqueta su rama hacia y.
+      flows: [
+        { from: 'g', to: 'y', label: 'una etiqueta bien ancha' },
+        { from: 'g', to: 'x', label: 'otra' },
+        { from: 'z', to: 'x' },
+      ],
+    })
+    expect(issues.some((i) => i.kind === 'label')).toBe(true)
+  })
+
+  it('detecta una etiqueta de nodo aterrizando sobre la figura de al lado', () => {
+    const issues = findLayoutIssues({
+      ...base,
+      nodes: [
+        // El texto de un evento cuelga debajo; con la tarea justo en la fila
+        // siguiente, cae dentro de su caja.
+        { id: 'e', type: 'startEvent', label: 'Una etiqueta larga de evento', lane: 'l', col: 0 },
+        { id: 't', type: 'task', label: 'T', lane: 'l', col: 0, row: 1 },
+      ],
+      flows: [{ from: 'e', to: 't' }],
+    })
+    expect(issues.some((i) => i.detail.includes('cae sobre la figura'))).toBe(true)
+  })
+
+  it('detecta un texto que se sale del lienzo', () => {
+    const issues = findLayoutIssues({
+      ...base,
+      nodes: [
+        {
+          id: 'a',
+          type: 'task',
+          label: 'A',
+          lane: 'l',
+          col: 0,
+          duracion: 'una anotación de tiempo absurdamente larga que no cabe',
+        },
+        { id: 'b', type: 'task', label: 'B', lane: 'l', col: 1 },
+      ],
+      flows: [{ from: 'a', to: 'b' }],
+    })
+    expect(issues.some((i) => i.detail.includes('se sale del lienzo'))).toBe(true)
+  })
+
   it('detecta la etiqueta de una rama encimada con la de su compuerta', () => {
     const gwAbajo = findLayoutIssues({
       ...base,
