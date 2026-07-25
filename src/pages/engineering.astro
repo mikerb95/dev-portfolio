@@ -354,43 +354,42 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
     <section class="mb-14 grid md:grid-cols-2 gap-3">
       <CardPopover id="ci-pipeline">
         <div class="rounded-2xl glass p-6 cursor-default hover:border-cyan/25 transition-colors">
-          <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Último pipeline verde</h2>
+          <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{e.pipeline.heading}</h2>
           {lastSuccess ? (
             <div class="grid grid-cols-3 gap-4">
               <div>
                 <div class="text-3xl font-medium text-lime tabular-nums">{lastSuccess.testsPassed ?? '—'}</div>
-                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">tests ✓</div>
+                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.testsLabel}</div>
               </div>
               <div>
                 <div class="text-3xl font-medium text-ink-50 tabular-nums">{lastSuccess.coveragePct != null ? `${Math.round(lastSuccess.coveragePct)}%` : '—'}</div>
-                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">cobertura</div>
+                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.coverageLabel}</div>
               </div>
               <div>
                 <div class="text-3xl font-medium text-ink-50 tabular-nums">{fmtDuration(lastSuccess.durationMs)}</div>
-                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">duración</div>
+                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.durationLabel}</div>
               </div>
               <div class="col-span-3 pt-3 mt-1 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-ink-400">
-                <span>{greenStreak > 1 ? `${greenStreak} runs verdes seguidos` : 'último run'}</span>
+                <span>{greenStreak > 1 ? interpolate(e.pipeline.streak, { n: greenStreak }) : e.pipeline.lastRun}</span>
                 <span>{lastSuccess.createdAt ? fmtDate.format(lastSuccess.createdAt) : ''}</span>
               </div>
             </div>
           ) : (
-            <p class="text-[13px] text-ink-300 py-4">El pipeline aún no ha reportado ejecuciones. Se poblará con el próximo deploy.</p>
+            <p class="text-[13px] text-ink-300 py-4">{e.pipeline.empty}</p>
           )}
         </div>
         <Fragment slot="panel">
           <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">Pipeline CI/CD</span>
-            {successRate != null && <span class="font-mono text-[11px] text-ink-400">{successRate}% éxito · últimos {recentRuns.length} runs</span>}
+            <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">{e.pipeline.panelTitle}</span>
+            {successRate != null && <span class="font-mono text-[11px] text-ink-400">{interpolate(e.pipeline.successRate, { pct: successRate, n: recentRuns.length })}</span>}
           </div>
           <p class="text-ink-200 mb-3">
-            Cada push corre la suite completa (Vitest) en GitHub Actions. Un fallo bloquea el merge; un éxito
-            dispara el deploy y un health check post-despliegue.
+            {e.pipeline.desc}
           </p>
 
           {durationSeries.length > 1 && (
             <div class="mb-3">
-              <div class="text-[11px] font-mono uppercase text-ink-400 mb-1">Duración · últimos {durationSeries.length} runs</div>
+              <div class="text-[11px] font-mono uppercase text-ink-400 mb-1">{interpolate(e.pipeline.durationChart, { n: durationSeries.length })}</div>
               <svg viewBox={`0 0 ${durationSeries.length * 14} 32`} class="w-full h-8" preserveAspectRatio="none">
                 {durationSeries.map((d, i) => {
                   const h = d.ms != null ? Math.max(2, (d.ms / maxDuration) * 30) : 2
