@@ -528,6 +528,8 @@ export function layout(process: BpmnProcess): Layout {
       lines: wrap(b.label, 20, 2),
       outside: true,
       labelAbove: false,
+      labelAlign: 'end' as const,
+      labelX: host.cx + host.w / 2 - w - 12,
     }
     nodes.push(placed)
     byId.set(b.id, placed)
