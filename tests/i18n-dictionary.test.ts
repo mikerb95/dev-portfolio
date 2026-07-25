@@ -83,6 +83,19 @@ describe('paridad del diccionario es/en', () => {
         'contact.whatsappLabel',
         'certifications.fullProfile.linkedinLabel',
         'certifications.fullProfile.platziLabel',
+        'architecture.footnoteLinkLabel',
+        'architecture.layers[1].title',
+        'architecture.layers[2].title',
+        'architecture.layers[3].title',
+        'architecture.layers[0].nodes[1].name',
+        'architecture.layers[1].nodes[1].name',
+        'architecture.layers[1].nodes[2].name',
+        'architecture.layers[2].nodes[1].name',
+        'architecture.externals[1].name',
+        'architecture.externals[2].name',
+        'architecture.externals[3].name',
+        'architecture.externals[4].name',
+        'architecture.externals[0].name',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal
