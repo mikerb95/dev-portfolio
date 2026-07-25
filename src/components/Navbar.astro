@@ -208,7 +208,30 @@ const navLinks = [
       href={languageHref}
       class="flex items-center justify-between px-4 py-2.5 rounded-full text-[13px] font-mono text-ink-100 transition-colors hover:bg-white/5 hover:text-cyan"
     >
-      <span>{t.nav.languageSwitch}</span>
+      <span class="flex items-center gap-2">
+        {otherLocale === 'en' && (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 7410 3900"
+            width="18"
+            height="14"
+            class="rounded-[2px] shrink-0"
+            aria-hidden="true"
+          >
+            <rect width="7410" height="3900" fill="#b22234"></rect>
+            <g fill="#fff">
+              <rect y="300" width="7410" height="300"></rect>
+              <rect y="900" width="7410" height="300"></rect>
+              <rect y="1500" width="7410" height="300"></rect>
+              <rect y="2100" width="7410" height="300"></rect>
+              <rect y="2700" width="7410" height="300"></rect>
+              <rect y="3300" width="7410" height="300"></rect>
+            </g>
+            <rect width="2964" height="2100" fill="#3c3b6e"></rect>
+          </svg>
+        )}
+        {t.nav.languageSwitch}
+      </span>
       <span class="text-ink-200">{otherLocale.toUpperCase()}</span>
     </a>
     <div class="h-px bg-white/10 my-1"></div>
