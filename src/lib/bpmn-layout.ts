@@ -692,6 +692,47 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
         issues.push({ kind: 'label', detail: `la etiqueta "${e.label}" (${e.from} → ${e.to}) cae sobre "${n.id}"` })
       }
     }
+
+    // Una etiqueta de rama sobre el trazo de OTRA flecha es el mismo defecto
+    // que un texto cruzado por una línea, visto desde el otro lado.
+    for (const otra of edges) {
+      if (otra === e) continue
+      for (let i = 0; i < otra.points.length - 1; i++) {
+        if (segmentHitsBox(otra.points[i], otra.points[i + 1], box)) {
+          issues.push({
+            kind: 'label',
+            detail: `la etiqueta "${e.label}" (${e.from} → ${e.to}) queda sobre el trazo de ${otra.from} → ${otra.to}`,
+          })
+          break
+        }
+      }
+    }
+  }
+
+  // Etiqueta de nodo contra FIGURA ajena: el texto cuelga fuera de su propia
+  // caja, así que puede aterrizar dentro de la de al lado sin que ninguna de
+  // las comprobaciones anteriores lo note.
+  for (const et of etiquetasNodo) {
+    for (const n of nodes) {
+      if (n.id === et.id) continue
+      if (anfitrionDe.get(et.id) === n.id || anfitrionDe.get(n.id) === et.id) continue
+      if (boxesOverlap(et.box, bbox(n))) {
+        issues.push({ kind: 'label', detail: `la etiqueta de "${et.id}" cae sobre la figura de "${n.id}"` })
+      }
+    }
+  }
+
+  // Nada puede salirse del lienzo: un texto cortado por el borde del SVG no se
+  // ve como un error de layout, se ve como una palabra mal escrita.
+  const lienzo: Box = { x1: 0, x2: width, y1: 0, y2: height }
+  const dentro = (b: Box): boolean => b.x1 >= lienzo.x1 && b.x2 <= lienzo.x2 && b.y1 >= lienzo.y1 && b.y2 <= lienzo.y2
+  for (const et of etiquetasNodo) {
+    if (!dentro(et.box)) issues.push({ kind: 'label', detail: `la etiqueta de "${et.id}" se sale del lienzo` })
+  }
+  for (const { e, box } of etiquetasFlujo) {
+    if (!dentro(box)) {
+      issues.push({ kind: 'label', detail: `la etiqueta "${e.label}" (${e.from} → ${e.to}) se sale del lienzo` })
+    }
   }
 
   return issues
