@@ -400,7 +400,7 @@ export function layout(process: BpmnProcess): Layout {
       path: polylinePath(points),
       label: f.label,
       // Junto al origen: en BPMN la condición se lee pegada a la compuerta.
-      labelAt: f.label ? pointAlong(points, 26) : undefined,
+      labelAt: f.label ? labelAnchor(points, 26) : undefined,
     }
   })
 
