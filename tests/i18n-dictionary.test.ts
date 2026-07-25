@@ -81,6 +81,8 @@ describe('paridad del diccionario es/en', () => {
         'contact.form.okShort',
         'contact.linkedinLabel',
         'contact.whatsappLabel',
+        'certifications.fullProfile.linkedinLabel',
+        'certifications.fullProfile.platziLabel',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal
