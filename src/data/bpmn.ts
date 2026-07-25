@@ -349,9 +349,10 @@ const monitoreo: BpmnProcess = {
     { from: 'corte', to: 'reg', channelOffset: -78 },
     { from: 'resp', to: 'reg' },
     { from: 'reg', to: 'gok' },
-    { from: 'gok', to: 'gabierto', label: 'no' },
-    // Las dos ramas de la compuerta bajan por canales distintos para no salir
-    // encimadas del mismo punto.
+    // Las dos ramas bajan en paralelo un buen trecho, así que se separan lo
+    // máximo que permite la etiqueta de la compuerta de abajo: pegadas, el ojo
+    // no distingue cuál lleva a cuál.
+    { from: 'gok', to: 'gabierto', label: 'no', channelOffset: -40 },
     { from: 'gok', to: 'gcerrar', label: 'sí', channelOffset: 24 },
     { from: 'gabierto', to: 'abre', label: 'no' },
     { from: 'gabierto', to: 'act', label: 'sí' },
