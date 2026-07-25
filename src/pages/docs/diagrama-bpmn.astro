@@ -1,0 +1,98 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import BpmnDiagram from '../../components/BpmnDiagram.astro'
+import { procesosBpmn, leyendaBpmn } from '../../data/bpmn'
+import { GEO } from '../../lib/bpmn-layout'
+
+// La leyenda reusa el mismo renderer: cada símbolo es un proceso de un solo
+// nodo, así que si cambia el dibujo de una figura, la leyenda cambia con ella.
+const muestras = leyendaBpmn.map((item) => ({
+  ...item,
+  proceso: {
+    id: `leyenda-${item.type}`,
+    titulo: item.label,
+    desc: '',
+    origen: '',
+    lanes: [{ id: 'l', label: '' }],
+    nodes: [{ id: 'n', type: item.type, label: '', lane: 'l', col: 0 }],
+    flows: [],
+  },
+}))
+---
+
+<BaseLayout title="Diagramas BPMN">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-8">
+      <p class="text-[14.5px] text-ink-200 leading-relaxed">
+        Los cuatro procesos de negocio del sistema en notación BPMN: cobro de campo, acceso al
+        portal de clientes, respuesta de seguridad y ciclo de monitoreo. A diferencia de los
+        diagramas de secuencia, aquí lo que se lee es <em>quién</em> hace cada cosa y
+        <em>dónde se decide</em> el camino — por eso cada participante tiene su carril y toda
+        bifurcación pasa por una compuerta.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        El SVG se genera en el servidor desde un modelo tipado
+        (<code class="font-mono text-ink-200">src/data/bpmn.ts</code>); las posiciones, el ruteo de
+        las flechas y el corte de las etiquetas los calcula
+        <code class="font-mono text-ink-200">src/lib/bpmn-layout.ts</code>, con tests que verifican
+        que ninguna flecha atraviese una figura ajena y que ningún nodo quede encimado.
+      </p>
+    </div>
+
+    <!-- ── Leyenda de la notación ─────────────────────────────────────── -->
+    <section class="mb-10">
+      <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-3">Notación</h2>
+      <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-5 gap-y-3.5 list-none p-0 m-0">
+        {muestras.map((m) => (
+          <li class="flex items-center gap-2.5">
+            <span class="shrink-0 grid place-items-center w-[52px] h-[38px] rounded-lg bg-ink-800 border border-white/10 overflow-hidden">
+              <span class="scale-[0.62] origin-center leyenda-simbolo">
+                <BpmnDiagram proceso={m.proceso} />
+              </span>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-[12.5px] text-ink-50 leading-tight">{m.label}</span>
+              <span class="block text-[11.5px] text-ink-300 leading-tight mt-0.5">{m.desc}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- ── Procesos ───────────────────────────────────────────────────── -->
+    <div class="space-y-12">
+      {procesosBpmn.map((p) => (
+        <section id={p.id} class="scroll-mt-28">
+          <h2 class="text-[15px] font-semibold text-ink-50 mb-1">{p.titulo}</h2>
+          <p class="text-[13.5px] text-ink-300 leading-relaxed max-w-3xl mb-1.5">{p.desc}</p>
+          <p class="text-[12px] text-ink-400 font-mono mb-3.5 break-words">{p.origen}</p>
+
+          <BpmnDiagram proceso={p} />
+
+          {p.nota && (
+            <p class="mt-3 max-w-3xl text-[13px] text-ink-200 leading-relaxed">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-dim align-middle mr-2 -translate-y-px"></span>
+              {p.nota}
+            </p>
+          )}
+        </section>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style define:vars={{ leyendaAncho: `${GEO.laneHeaderW + GEO.padX * 2 + GEO.taskW}px` }}>
+  /* Las muestras de la leyenda son diagramas de un nodo: se les quita el marco
+     del contenedor para que solo se vea la figura. */
+  .leyenda-simbolo :global(.bpmn) {
+    border: 0;
+    background: transparent;
+    width: var(--leyendaAncho);
+  }
+  .leyenda-simbolo :global(.bpmn-pool) {
+    display: none;
+  }
+</style>
