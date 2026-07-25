@@ -75,7 +75,9 @@ body {
   --bpmn-lane-a: #111117;
   --bpmn-lane-b: #111117;
   --bpmn-header: #171720;
-  --bpmn-border: #2e2e3a;
+  /* Al no haber bandas alternas, la divisoria es lo único que separa carriles:
+     va algo más marcada que antes. */
+  --bpmn-border: #34343f;
   --bpmn-line: #a6a6b2;
   --bpmn-msg: #85858f;
   --bpmn-task-fill: #1c1c26;
