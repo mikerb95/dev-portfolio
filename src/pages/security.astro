@@ -91,32 +91,26 @@ const severityCls: Record<Severity, string> = {
 }
 ---
 
-<BaseLayout
-  title="Seguridad — CodeByMike"
-  description="Auditoría OWASP real sobre este mismo repositorio: hallazgos, severidad y el commit exacto que aplicó cada corrección."
-  image="/og-security.png"
->
+<BaseLayout title={s.title} description={s.description} image="/og-security.png">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
     <!-- Back -->
-    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+    <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      Volver
+      {t.common.back}
     </a>
 
     <header class="mb-12">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/security</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Auditoría OWASP</span>
+        <span>{s.eyebrow}</span>
       </div>
       <h1 class="hero-line overflow-hidden text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        Seguridad,<br/>con evidencia.
+        {s.h1Line1}<br/>{s.h1Line2}
       </h1>
       <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        Una revisión real sobre el código de este sitio, mapeada a OWASP Top 10. Cada hallazgo
-        enlaza al commit exacto que lo corrigió — verificable en el historial público del repo,
-        no una promesa.
+        {s.intro}
       </p>
     </header>
 
@@ -124,32 +118,28 @@ const severityCls: Record<Severity, string> = {
     <section class="mb-20">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-        <span>Security Operations · en vivo</span>
+        <span>{s.secops.badge}</span>
       </div>
 
       <p class="text-[14px] text-ink-100 max-w-2xl leading-relaxed mb-8">
-        Este sitio corre su propio motor de <span class="text-ink-50">observabilidad de seguridad</span>
-        (un "micro-SIEM"): un clasificador de amenazas alineado con OWASP corre en el middleware de
-        cada request, endpoints señuelo confirman intención maliciosa, y un cron horario aplica
-        bloqueos temporales y detecta anomalías por estadística (z-score sobre una baseline de 30
-        días). Los números de abajo son agregados reales de los últimos {SECOPS_WINDOW_DAYS} días.
+        {interpolate(s.secops.intro, { days: SECOPS_WINDOW_DAYS })}
       </p>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Detectados (30d)</div>
-          <div class="mt-1.5 text-3xl font-medium text-ink-50 tabular-nums">{totalDetected.toLocaleString('es')}</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{s.secops.detected}</div>
+          <div class="mt-1.5 text-3xl font-medium text-ink-50 tabular-nums">{totalDetected.toLocaleString(intlLocale(locale))}</div>
         </div>
         <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Bloqueos automáticos</div>
-          <div class="mt-1.5 text-3xl font-medium text-cyan tabular-nums">{autoBlocks30d.toLocaleString('es')}</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{s.secops.autoBlocks}</div>
+          <div class="mt-1.5 text-3xl font-medium text-cyan tabular-nums">{autoBlocks30d.toLocaleString(intlLocale(locale))}</div>
         </div>
         <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Categorías OWASP</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{s.secops.owaspCategories}</div>
           <div class="mt-1.5 text-3xl font-medium text-ink-50 tabular-nums">{byCategory.length}</div>
         </div>
         <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Overhead p99</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{s.secops.overheadP99}</div>
           <div class="mt-1.5 text-3xl font-medium text-lime tabular-nums">≤5ms</div>
         </div>
       </div>
@@ -157,9 +147,9 @@ const severityCls: Record<Severity, string> = {
       <div class="grid md:grid-cols-2 gap-4 mb-4">
         <!-- Desglose OWASP -->
         <div class="rounded-2xl glass p-6">
-          <h3 class="text-[13px] font-medium text-ink-50 mb-4">Desglose por categoría (OWASP)</h3>
+          <h3 class="text-[13px] font-medium text-ink-50 mb-4">{s.secops.byCategoryHeading}</h3>
           {byCategory.length === 0 ? (
-            <p class="text-[13px] text-ink-400">Sin actividad hostil en la ventana.</p>
+            <p class="text-[13px] text-ink-400">{s.secops.byCategoryEmpty}</p>
           ) : (
             <ul class="space-y-2.5">
               {byCategory.map((c) => (
@@ -179,9 +169,9 @@ const severityCls: Record<Severity, string> = {
 
         <!-- Origen geográfico -->
         <div class="rounded-2xl glass p-6">
-          <h3 class="text-[13px] font-medium text-ink-50 mb-4">Origen geográfico</h3>
+          <h3 class="text-[13px] font-medium text-ink-50 mb-4">{s.secops.byCountryHeading}</h3>
           {byCountry.length === 0 ? (
-            <p class="text-[13px] text-ink-400">Sin datos de geolocalización en la ventana.</p>
+            <p class="text-[13px] text-ink-400">{s.secops.byCountryEmpty}</p>
           ) : (
             <ul class="space-y-2.5">
               {byCountry.map((c) => (
