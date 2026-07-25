@@ -137,27 +137,38 @@ describe('pointAlong', () => {
 
 describe('labelAnchor', () => {
   it('aparta la etiqueta del trazo en tramos horizontales', () => {
-    const p = labelAnchor(
-      [
-        { x: 0, y: 100 },
-        { x: 200, y: 100 },
-      ],
-      26,
-    )
+    const p = labelAnchor([
+      { x: 0, y: 100 },
+      { x: 200, y: 100 },
+    ])
     expect(p.y).toBeLessThan(100)
     expect(p.x).toBe(26)
   })
 
   it('aparta la etiqueta hacia el costado en tramos verticales', () => {
-    const p = labelAnchor(
-      [
-        { x: 100, y: 0 },
-        { x: 100, y: 200 },
-      ],
-      26,
-    )
+    const p = labelAnchor([
+      { x: 100, y: 0 },
+      { x: 100, y: 200 },
+    ])
     expect(p.x).toBeGreaterThan(100)
     expect(p.y).toBe(26)
+  })
+
+  it('ancla la etiqueta después del quiebre, ya dentro de su propia rama', () => {
+    // Rama recta y rama que baja salen del MISMO puerto: si ambas etiquetas se
+    // anclaran en el tramo compartido, "sí" y "no" caerían en el mismo punto.
+    const recta = labelAnchor([
+      { x: 0, y: 0 },
+      { x: 200, y: 0 },
+    ])
+    const quiebra = labelAnchor([
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 200 },
+      { x: 200, y: 200 },
+    ])
+    expect(quiebra.y).toBeGreaterThan(0)
+    expect(Math.hypot(quiebra.x - recta.x, quiebra.y - recta.y)).toBeGreaterThan(20)
   })
 })
 
@@ -206,6 +217,52 @@ describe('labelBox', () => {
   })
 })
 
+describe('findLayoutIssues', () => {
+  // Un detector que nunca detecta nada deja pasar todo: estos casos confirman
+  // que los diagramas reales pasan porque están bien, no porque no se mire.
+  const base = { id: 'malo', titulo: '', desc: '', origen: '', lanes: [{ id: 'l', label: '' }] }
+
+  it('detecta dos nodos en la misma celda', () => {
+    const issues = findLayoutIssues({
+      ...base,
+      nodes: [
+        { id: 'a', type: 'task', label: 'A', lane: 'l', col: 0 },
+        { id: 'b', type: 'task', label: 'B', lane: 'l', col: 0 },
+      ],
+      flows: [{ from: 'a', to: 'b' }],
+    })
+    expect(issues.some((i) => i.kind === 'overlap')).toBe(true)
+  })
+
+  it('detecta una flecha que atraviesa una figura ajena', () => {
+    const issues = findLayoutIssues({
+      ...base,
+      nodes: [
+        { id: 'a', type: 'task', label: 'A', lane: 'l', col: 0 },
+        { id: 'medio', type: 'task', label: 'En medio', lane: 'l', col: 1 },
+        { id: 'b', type: 'task', label: 'B', lane: 'l', col: 2 },
+      ],
+      // a → b pasa por encima de "medio", que está justo entre los dos.
+      flows: [{ from: 'a', to: 'b' }],
+    })
+    expect(issues.some((i) => i.kind === 'crossing')).toBe(true)
+  })
+
+  it('detecta la etiqueta de una rama encimada con la de su compuerta', () => {
+    const gwAbajo = findLayoutIssues({
+      ...base,
+      nodes: [
+        { id: 'g', type: 'gatewayExclusive', label: '¿Sigue el proceso?', lane: 'l', col: 0 },
+        { id: 'fin', type: 'endEvent', label: 'Fin', lane: 'l', col: 0, row: 1 },
+      ],
+      flows: [{ from: 'g', to: 'fin', label: 'no' }],
+    })
+    // Con la etiqueta de la compuerta arriba del rombo, la rama que baja no la
+    // toca: este es justamente el choque que se corrigió.
+    expect(gwAbajo.filter((i) => i.kind === 'label')).toEqual([])
+  })
+})
+
 describe('procesos BPMN documentados', () => {
   it('hay diagramas para los cuatro procesos críticos', () => {
     expect(procesosBpmn.length).toBe(4)
@@ -234,6 +291,16 @@ describe('procesos BPMN documentados', () => {
         const fines = proc.nodes.filter((n) => n.type.startsWith('endEvent'))
         expect(inicios).toHaveLength(1)
         expect(fines.length).toBeGreaterThan(0)
+      })
+
+      it('todo camino termina en un evento de fin', () => {
+        // Una tarea sin flujo de salida deja el proceso colgando: en BPMN es un
+        // error de modelado, no un detalle estético.
+        const sinSalida = proc.nodes
+          .filter((n) => !n.type.startsWith('endEvent'))
+          .filter((n) => !proc.flows.some((f) => f.from === n.id))
+          .map((n) => n.id)
+        expect(sinSalida).toEqual([])
       })
 
       it('todo nodo es alcanzable desde el evento de inicio', () => {

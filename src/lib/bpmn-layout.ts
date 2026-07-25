@@ -296,21 +296,31 @@ export function pointAlong(pts: Pt[], dist: number): Pt {
 }
 
 /**
- * Igual que `pointAlong`, pero apartado del trazo: una etiqueta encima de su
- * propia flecha se lee mal. Se desplaza perpendicular al tramo donde cae.
+ * Dónde va la etiqueta de condición de un flujo.
+ *
+ * No basta con "a 26px del origen": las dos ramas de una compuerta salen por el
+ * mismo puerto y sus dos primeros tramos se solapan, así que "sí" y "no"
+ * terminaban dibujados en el mismo punto — leyéndose sobre la rama contraria.
+ * Por eso, si la rama quiebra, la etiqueta se ancla DESPUÉS del quiebre: ahí el
+ * trazo ya es exclusivo de esa rama y no hay ambigüedad posible.
+ *
+ * Además se aparta perpendicular al tramo: una etiqueta encima de su propia
+ * flecha se lee mal.
  */
-export function labelAnchor(pts: Pt[], dist: number): Pt {
-  const p = pointAlong(pts, dist)
-  let remaining = dist
-  for (let i = 0; i < pts.length - 1; i++) {
-    const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y)
-    if (len >= remaining) {
-      const vertical = Math.abs(pts[i + 1].x - pts[i].x) < 0.001
-      return vertical ? { x: p.x + 16, y: p.y } : { x: p.x, y: p.y - 11 }
-    }
-    remaining -= len
+export function labelAnchor(pts: Pt[]): Pt {
+  if (pts.length === 2) {
+    const p = pointAlong(pts, 26)
+    const vertical = Math.abs(pts[1].x - pts[0].x) < 0.001
+    return vertical ? { x: p.x + 16, y: p.y } : { x: p.x, y: p.y - 11 }
   }
-  return { x: p.x, y: p.y - 11 }
+
+  const bend = pts[1]
+  const next = pts[2]
+  const len = Math.hypot(next.x - bend.x, next.y - bend.y)
+  const t = len === 0 ? 0 : Math.min(18, len / 2) / len
+  const p = { x: round(bend.x + (next.x - bend.x) * t), y: round(bend.y + (next.y - bend.y) * t) }
+  const vertical = Math.abs(next.x - bend.x) < 0.001
+  return vertical ? { x: p.x + 16, y: p.y } : { x: p.x, y: p.y - 11 }
 }
 
 // Aproximación del ancho de una etiqueta: sin métricas de fuente en el
@@ -400,7 +410,7 @@ export function layout(process: BpmnProcess): Layout {
       path: polylinePath(points),
       label: f.label,
       // Junto al origen: en BPMN la condición se lee pegada a la compuerta.
-      labelAt: f.label ? labelAnchor(points, 26) : undefined,
+      labelAt: f.label ? labelAnchor(points) : undefined,
     }
   })
 
@@ -470,6 +480,25 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
         issues.push({
           kind: 'label',
           detail: `las etiquetas de "${etiquetasNodo[i].id}" y "${etiquetasNodo[j].id}" se encinan`,
+        })
+      }
+    }
+  }
+
+  // Etiqueta de rama contra etiqueta de rama: es el choque que deja un "sí"
+  // dibujado sobre el camino del "no". Sin esta comprobación se coló una vez.
+  const etiquetasFlujo = edges
+    .filter((e) => e.label && e.labelAt)
+    .map((e) => ({ e, box: flowLabelBox(e.label!, e.labelAt!) }))
+
+  for (let i = 0; i < etiquetasFlujo.length; i++) {
+    for (let j = i + 1; j < etiquetasFlujo.length; j++) {
+      const a = etiquetasFlujo[i]
+      const b = etiquetasFlujo[j]
+      if (boxesOverlap(a.box, b.box)) {
+        issues.push({
+          kind: 'label',
+          detail: `las etiquetas "${a.e.label}" (${a.e.from} → ${a.e.to}) y "${b.e.label}" (${b.e.from} → ${b.e.to}) se encinan`,
         })
       }
     }
