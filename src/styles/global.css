@@ -90,6 +90,21 @@ body {
 }
 .bpmn-scope .bpmn-node-label { font-size: 11.5px; fill: #e7e7ec; font-weight: 450; }
 .bpmn-scope .bpmn-outside { font-size: 10.5px; fill: #c4c4cc; }
+
+/* Halo del color del fondo alrededor del texto que vive fuera de las figuras:
+   ahí es donde pasan las flechas, y `paint-order` hace que el trazo se pinte
+   por debajo del relleno, de modo que la letra recorta la línea en vez de
+   mezclarse con ella. No se aplica al texto interior de las tareas, que
+   ninguna flecha puede cruzar. */
+.bpmn-scope .bpmn-outside,
+.bpmn-scope .bpmn-duracion,
+.bpmn-scope .bpmn-flow-label,
+.bpmn-scope .bpmn-lane-label {
+  paint-order: stroke fill;
+  stroke: var(--bpmn-lane-a);
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+}
 .bpmn-scope .bpmn-lane-label {
   font-size: 10.5px;
   fill: #c4c4cc;
