@@ -199,7 +199,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Links de cobro: el código corto es su única protección. Un cliente abre
     // su link un par de veces; 30/min solo lo roza quien está probando códigos.
-    if (isCobroLinkPath(pathname)) {
+    if (isCobroLinkPath(canonicalPath)) {
       const r = await enforceLimit(`cobro-link:${ip}`, { limit: 30, windowMs: 60_000, deferUntil: 0.5 })
       if (!r.allowed) {
         recordEnforcementEvent({
@@ -222,7 +222,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Paraguas global anti-scraping agresivo. Límite generoso para no rozar a
     // usuarios reales; solo cuenta rutas dinámicas (no assets estáticos).
-    if (isRateLimitablePath(pathname)) {
+    if (isRateLimitablePath(canonicalPath)) {
       const r = await enforceLimit(`ip:${ip}`, { limit: 600, windowMs: 60_000, deferUntil: 0.8 })
       if (!r.allowed) {
         recordEnforcementEvent({
@@ -248,22 +248,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // panel: misma sesión, mismo trato que /admin. La ruta pública que genera es
   // /c/[code], que no cae aquí. Ver docs/plan-cobrar.md.
   const isAdmin =
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/api/admin') ||
-    pathname === '/cobrar' ||
-    pathname.startsWith('/cobrar/')
+    canonicalPath.startsWith('/admin') ||
+    canonicalPath.startsWith('/api/admin') ||
+    canonicalPath === '/cobrar' ||
+    canonicalPath.startsWith('/cobrar/')
 
   // El deck de sustentación tiene URL bajo /docs (la sección es pública) pero no
   // es público: solo lo ve la sesión del administrador. Se trata como ruta
   // privada tanto para el gate de sesión como para los headers de respuesta —
   // en particular para que NO herede el `Cache-Control` público de más abajo,
   // que haría que la CDN cachee el HTML y lo sirva a cualquiera.
-  const isPrivateDeck = pathname === '/docs/presentacion'
+  const isPrivateDeck = canonicalPath === '/docs/presentacion'
 
   // Portal de clientes: privado como /admin a efectos de headers (noindex, sin
   // caché en la CDN), pero con una auth completamente distinta — ni comparte
   // cookie con el admin ni pasa por Auth.js. Ver docs/plan-portal-clientes.md.
-  const isPortal = isPortalPath(pathname)
+  const isPortal = isPortalPath(canonicalPath)
   const isPrivate = isAdmin || isPrivateDeck || isPortal
 
   let portalDemoMode = false

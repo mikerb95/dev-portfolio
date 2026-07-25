@@ -15,12 +15,14 @@
 
   <!-- M de Mike trazada a mano en vez de con <text>: un favicon se renderiza
        en contextos sin acceso a JetBrains Mono (pestañas, PWA, .ico) -->
-  <g fill="none" stroke="#e7e7ec" stroke-width="6.5" stroke-linecap="butt">
-    <path d="M17 45 L17 19"/>
-    <path d="M35 45 L35 19"/>
-    <path d="M17 19 L26 33"/>
-    <path d="M35 19 L26 33"/>
-  </g>
+  <path
+    d="M17 45 L17 20 L26 33 L35 20 L35 45"
+    fill="none"
+    stroke="#e7e7ec"
+    stroke-width="6.5"
+    stroke-linecap="butt"
+    stroke-linejoin="miter"
+  />
 
   <!-- Cursor de bloque de terminal -->
   <rect x="43" y="19" width="7.5" height="26" fill="#00f2ff" filter="url(#cursor-glow)"/>
