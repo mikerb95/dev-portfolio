@@ -563,21 +563,26 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
     ci: { lastAt: number | null; lastConclusion: string | null; lastSha: string | null }
   }
 
+  import { getDictionary, getLocaleFromUrl, interpolate, intlLocale } from '../i18n'
+
+  const locale = getLocaleFromUrl(location.pathname)
+  const el = getDictionary(locale).engineering.live
+
   let data: LiveData | null = null
   let fetchedAt = 0
   let inflight: Promise<void> | null = null
   let ticker: number | null = null
 
-  const nf = new Intl.NumberFormat('es-CO')
+  const nf = new Intl.NumberFormat(intlLocale(locale))
 
   function ago(ts: number | null): string {
-    if (ts == null) return '—'
+    if (ts == null) return el.never
     const s = Math.max(0, Math.round((Date.now() - ts) / 1000))
-    if (s < 60) return `hace ${s} s`
+    if (s < 60) return interpolate(el.agoSeconds, { n: s })
     const m = Math.floor(s / 60)
-    if (m < 60) return `hace ${m} min`
+    if (m < 60) return interpolate(el.agoMinutes, { n: m })
     const h = Math.floor(m / 60)
-    return h < 48 ? `hace ${h} h` : `hace ${Math.floor(h / 24)} d`
+    return h < 48 ? interpolate(el.agoHours, { n: h }) : interpolate(el.agoDays, { n: Math.floor(h / 24) })
   }
 
   function render() {
@@ -592,20 +597,37 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
         const v = data.vitals
         text.textContent =
           v.lastAt == null
-            ? `Consulta en vivo ${ago(fetchedAt)} · sin muestras aún`
-            : `Consulta en vivo ${ago(fetchedAt)} · última muestra ${v.lastMetric} ${ago(v.lastAt)} · ${nf.format(v.count24h)} en 24 h`
+            ? interpolate(el.vitalsNone, { ago: ago(fetchedAt) })
+            : interpolate(el.vitalsSome, {
+                ago: ago(fetchedAt),
+                metric: v.lastMetric ?? '',
+                sampleAgo: ago(v.lastAt),
+                count: nf.format(v.count24h),
+              })
       } else if (kind === 'uptime') {
         const u = data.uptime
         text.textContent =
           u.lastAt == null
-            ? `Consulta en vivo ${ago(fetchedAt)} · sin sondeos aún`
-            : `Consulta en vivo ${ago(fetchedAt)} · último sondeo ${ago(u.lastAt)} (${u.lastName ?? '?'} · ${u.lastStatusCode ?? '—'} · ${u.lastMs ?? '—'} ms) · ${nf.format(u.count24h)} en 24 h`
+            ? interpolate(el.uptimeNone, { ago: ago(fetchedAt) })
+            : interpolate(el.uptimeSome, {
+                ago: ago(fetchedAt),
+                checkAgo: ago(u.lastAt),
+                name: u.lastName ?? '?',
+                status: String(u.lastStatusCode ?? '—'),
+                ms: String(u.lastMs ?? '—'),
+                count: nf.format(u.count24h),
+              })
       } else if (kind === 'ci') {
         const c = data.ci
         text.textContent =
           c.lastAt == null
-            ? `Consulta en vivo ${ago(fetchedAt)} · sin runs aún`
-            : `Consulta en vivo ${ago(fetchedAt)} · último run ${ago(c.lastAt)} (${c.lastConclusion ?? '?'} · ${c.lastSha ?? ''})`
+            ? interpolate(el.ciNone, { ago: ago(fetchedAt) })
+            : interpolate(el.ciSome, {
+                ago: ago(fetchedAt),
+                runAgo: ago(c.lastAt),
+                conclusion: c.lastConclusion ?? '?',
+                sha: c.lastSha ?? '',
+              })
       }
     })
   }
@@ -614,7 +636,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
     document.querySelectorAll<HTMLElement>('.live-strip').forEach((strip) => {
       strip.classList.add('is-error')
       const text = strip.querySelector<HTMLElement>('.live-text')
-      if (text) text.textContent = 'No se pudo verificar en vivo ahora mismo'
+      if (text) text.textContent = getDictionary(locale).engineering.pipeline.liveError
     })
   }
 
