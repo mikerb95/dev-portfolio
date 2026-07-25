@@ -97,10 +97,24 @@ const uid = proceso.id
         />
       </g>
 
-      {/* ── Flujos ─────────────────────────────────────────────────────── */}
+      {/*
+        ── Flujos ───────────────────────────────────────────────────────
+        Cada flecha se pinta dos veces: primero un trazo grueso del color del
+        fondo (el "forro") y encima el trazo real. Como van en pares y en
+        orden, al cruzarse una línea interrumpe visiblemente a la de debajo en
+        vez de fundirse con ella — el mismo recurso de los mapas de metro. Sin
+        esto, dos trazos que se tocan se leen como uno solo.
+      */}
       <g class="bpmn-edges">
         {edges.map((e) => (
           <g>
+            <path
+              d={e.path}
+              fill="none"
+              stroke="var(--bpmn-lane-a)"
+              stroke-width={e.kind === 'message' ? 5 : 5.5}
+              stroke-linecap="round"
+            />
             <path
               d={e.path}
               fill="none"
@@ -109,29 +123,26 @@ const uid = proceso.id
               stroke-dasharray={e.kind === 'message' ? '6 4' : undefined}
               marker-end={`url(#${e.kind === 'message' ? 'msg' : 'seq'}-${uid})`}
             />
-            {e.label && e.labelAt && (
-              <g>
-                <rect
-                  x={e.labelAt.x - (e.label.length * 5.1) / 2 - 4}
-                  y={e.labelAt.y - 8}
-                  width={e.label.length * 5.1 + 8}
-                  height="15"
-                  rx="3"
-                  fill="var(--bpmn-label-bg)"
-                />
-                <text
-                  class="bpmn-flow-label"
-                  x={e.labelAt.x}
-                  y={e.labelAt.y}
-                  text-anchor="middle"
-                  dominant-baseline="central"
-                >
-                  {e.label}
-                </text>
-              </g>
-            )}
           </g>
         ))}
+      </g>
+
+      {/* Las etiquetas de rama van por encima de TODAS las flechas: si se
+          dibujaran junto a la suya, la siguiente flecha las taparía. */}
+      <g class="bpmn-edge-labels">
+        {edges.map((e) =>
+          e.label && e.labelAt ? (
+            <text
+              class="bpmn-flow-label"
+              x={e.labelAt.x}
+              y={e.labelAt.y}
+              text-anchor="middle"
+              dominant-baseline="central"
+            >
+              {e.label}
+            </text>
+          ) : null,
+        )}
       </g>
 
       {/* ── Figuras ────────────────────────────────────────────────────── */}
