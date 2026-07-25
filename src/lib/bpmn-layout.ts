@@ -49,6 +49,12 @@ export interface BpmnFlow {
   /** Etiqueta de condición ("sí", "no", …). Se dibuja junto al origen, como en BPMN. */
   label?: string
   kind?: BpmnFlowKind
+  /**
+   * Desplaza el canal por el que se rutea el tramo intermedio. Sirve cuando dos
+   * flujos salen de la misma compuerta hacia filas distintas: sin esto ambos
+   * comparten el mismo canal y se dibujan encimados un buen tramo.
+   */
+  channelOffset?: number
 }
 
 export interface BpmnLane {
