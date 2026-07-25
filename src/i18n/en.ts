@@ -386,6 +386,113 @@ const en = {
       },
     ],
   },
+  security: {
+    title: 'Security — CodeByMike',
+    description: 'A real OWASP audit of this very repository: findings, severity, and the exact commit that fixed each one.',
+    eyebrow: 'OWASP audit',
+    h1Line1: 'Security,',
+    h1Line2: 'with evidence.',
+    intro:
+      "A real review of this site's code, mapped to the OWASP Top 10. Every finding links to the exact commit that fixed it — verifiable in the repo's public history, not a promise.",
+    secops: {
+      badge: 'Security Operations · live',
+      intro: 'This site runs its own security observability engine (a "micro-SIEM"): an OWASP-aligned threat classifier runs in the middleware on every request, decoy endpoints confirm malicious intent, and an hourly cron applies temporary blocks and statistically detects anomalies (z-score over a 30-day baseline). The numbers below are real aggregates from the last {days} days.',
+      detected: 'Detected (30d)',
+      autoBlocks: 'Automatic blocks',
+      owaspCategories: 'OWASP categories',
+      overheadP99: 'p99 overhead',
+      byCategoryHeading: 'Breakdown by category (OWASP)',
+      byCategoryEmpty: 'No hostile activity in this window.',
+      byCountryHeading: 'Geographic origin',
+      byCountryEmpty: 'No geolocation data in this window.',
+      trendHeading: 'Daily trend (14 days)',
+      trendTooltipSuffix: 'events',
+      howItWorksHeading: 'How it works (4 layers)',
+      layers: [
+        'Automatic DDoS mitigation and the platform firewall (Vercel).',
+        'A custom classifier in the middleware: OWASP signatures, two-layer durable rate limiting, IP blocking.',
+        'Logging of every hostile event (with burst deduplication) and decoy endpoints that confirm malicious intent.',
+        'Hourly cron: aggregates, detects statistical anomalies, auto-blocks repeat offenders, and alerts.',
+      ],
+      sloHeading: 'Pipeline SLO targets',
+      slo: {
+        overhead: 'Overhead added per request (p99)',
+        detectionToBlock: 'Detection → automatic block',
+        detectionToAlert: 'Detection → alert (critical)',
+        falsePositives: 'False-positive blocks',
+        retention: 'Raw event retention',
+        retentionValue: '90 days',
+      },
+      opsecNote:
+        'By design, this page never shows full IPs, exact detection rule names, or which routes are decoy endpoints — that would hand an attacker the playbook.',
+      categoryLabels: {
+        recon_cms: 'CMS/panel reconnaissance',
+        secrets_probing: 'Secrets/config probing',
+        path_traversal: 'Path traversal / LFI',
+        injection: 'Injection (SQLi/XSS/cmd)',
+        auth_probing: 'Authentication probing',
+        bad_bot: 'Offensive bot',
+        protocol_anomaly: 'Protocol anomaly',
+        honeypot: 'Decoy endpoint touched',
+        blocklist: 'Blocked repeat offender',
+        api_abuse: 'API abuse (rate limit)',
+      } as Record<string, string>,
+    },
+    findingsHeading: 'Fixed findings',
+    findings: [
+      {
+        title: 'Stored XSS via unvalidated file extension',
+        problema:
+          'The certificate upload endpoint derived the final file extension from the client-supplied filename, and only validated the MIME type declared by the client itself (easily forged). A file uploaded as "foo.html" with a fake Content-Type ended up served as HTML from /assets/certs. SVG was also on the allowed-types list, and an SVG can contain an executable <script>.',
+        solucion: 'The extension is now derived from a fixed MIME → extension map, never from the filename. SVG was removed from the allowed types.',
+      },
+      {
+        title: 'Contact form with no rate limit or validation',
+        problema:
+          'The public contact endpoint accepted unlimited inserts into the database with no rate limit, no email format validation, no field length limits, and malformed JSON produced an unhandled 500 error.',
+        solucion: "The project's existing rate limiter was applied (5 submissions/min per IP), along with email format validation, per-field length limits, and explicit handling of invalid JSON.",
+      },
+      {
+        title: 'Sessions without a login claim bypassed the allowlist',
+        problema: 'The middleware only revalidated the GitHub allowlist when the session carried the "login" claim. A session without that claim passed the check by default instead of being rejected.',
+        solucion: 'The admin gate now requires the claim on every session: without a valid login on the allowlist, the response is 403, no exceptions.',
+      },
+      {
+        title: 'CSP and HSTS were missing from responses',
+        problema: 'The middleware already set several security headers (nosniff, Referrer-Policy, X-Frame-Options on admin) but included no Content-Security-Policy or Strict-Transport-Security on any route.',
+        solucion: 'A restrictive CSP (default-src self, frame-ancestors none) and HSTS with preload were added to every response, public and admin alike.',
+      },
+    ],
+    problemLabel: 'Problem',
+    fixLabel: 'Fix',
+    commitPrefix: 'commit',
+    controlsHeading: 'Controls already in place',
+    controls: [
+      {
+        title: 'Verified payment webhooks',
+        detail: "The Wompi event receiver verifies the HMAC signature before processing any event, rejects events older than 6 hours (anti-replay), and validates that the amount/currency match the expected payment before applying a state transition.",
+      },
+      {
+        title: 'Secrets encrypted at rest',
+        detail: 'The credentials vault encrypts every value with AES-256-GCM (authenticated encryption) before writing it to the database. The key lives only in the server environment, never in the database or in backups.',
+      },
+      {
+        title: 'Defense in depth on /admin',
+        detail: 'Authorization is revalidated against the allowlist both in the login callback and in the middleware, on every request — logging in once is not enough.',
+      },
+      {
+        title: 'Parameterized queries',
+        detail: 'All data access goes through Drizzle ORM with parameterized queries; there is no SQL string interpolation anywhere in the project.',
+      },
+    ],
+    methodology: {
+      heading: 'Methodology',
+      p1: "The review covered authentication and access control, file uploads, public endpoints, secret handling, payment webhooks, and response headers — this repository's real code, not a theoretical exercise.",
+      p2: 'Every finding was classified against the OWASP Top 10 (2021), fixed in a dedicated commit, and verified with the test suite and a full build before merging.',
+      p3: 'This page is updated every time an audit finds or fixes something new. What you see here is the real state of the code in production.',
+    },
+    severity: { alta: 'high', media: 'medium' },
+  },
 } satisfies typeof es
 
 export default en
