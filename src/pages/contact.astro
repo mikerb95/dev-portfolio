@@ -106,7 +106,7 @@ const L = (path: string) => localizePath(path, locale)
               <span class="w-2 h-2 rounded-full bg-cyan pulse-dot"></span>
               <span class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-100">{c.form.badge}</span>
             </div>
-            <span class="text-[11px] font-mono text-ink-300" id="field-count" data-template={c.form.fieldCount}>{c.form.fieldCount.replace('{n}', '0').replace('{total}', '3')}</span>
+            <span class="text-[11px] font-mono text-ink-300" id="field-count">{interpolate(c.form.fieldCount, { n: 0, total: 3 })}</span>
           </div>
 
           <form id="contact-form" class="grid md:grid-cols-2 gap-4">
