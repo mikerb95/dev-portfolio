@@ -438,30 +438,32 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
 
       <CardPopover id="uptime">
         <div class="rounded-2xl glass p-6 flex flex-col cursor-default hover:border-cyan/25 transition-colors">
-          <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Disponibilidad · 90 días</h2>
+          <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{e.uptime.heading}</h2>
           <div class="flex-1 flex items-center">
             <div>
               <div class="text-4xl font-medium tabular-nums text-lime">{uptime90 != null ? `${uptime90}%` : '—'}</div>
               <div class="text-[11px] font-mono text-ink-400 mt-2">
-                {monCount?.n ?? 0} servicios monitoreados · {(uptimeAgg?.total ?? 0).toLocaleString('es-CO')} sondeos
+                {interpolate(e.uptime.meta, {
+                  services: monCount?.n ?? 0,
+                  checks: (uptimeAgg?.total ?? 0).toLocaleString(intlLocale(locale)),
+                })}
               </div>
             </div>
           </div>
-          <a href="/status" class="text-[11px] font-mono text-cyan hover:underline mt-3">Ver status en vivo →</a>
+          <a href={L('/status')} class="text-[11px] font-mono text-cyan hover:underline mt-3">{e.uptime.viewStatusCta}</a>
         </div>
         <Fragment slot="panel">
           <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">Disponibilidad</span>
-            {checkCadenceMin != null && <span class="font-mono text-[11px] text-ink-400">~1 check cada {checkCadenceMin} min/servicio</span>}
+            <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">{e.uptime.panelTitle}</span>
+            {checkCadenceMin != null && <span class="font-mono text-[11px] text-ink-400">{interpolate(e.uptime.cadence, { n: checkCadenceMin })}</span>}
           </div>
           <p class="text-ink-200 mb-2">
-            {uptime90 != null ? `${uptime90}%` : '—'} de sondeos exitosos equivale a <span class="text-ink-50 font-medium">{fmtDowntime(downtimeMin)}</span> de
-            indisponibilidad acumulada en 90 días.
+            {interpolate(e.uptime.explain, { pct: uptime90 != null ? `${uptime90}%` : '—', time: fmtDowntime(downtimeMin) })}
           </p>
           {(incidentRows.length > 0 || mttrMin != null) && (
             <div class="text-[12px] text-ink-300 mb-3">
-              {incidentRows.length} incidente{incidentRows.length === 1 ? '' : 's'} registrado{incidentRows.length === 1 ? '' : 's'}
-              {mttrMin != null && ` · MTTR ${mttrMin} min`}
+              {incidentRows.length} {incidentRows.length === 1 ? e.uptime.incidentWord : e.uptime.incidentWordPlural} {incidentRows.length === 1 ? e.uptime.registeredWord : e.uptime.registeredWordPlural}
+              {mttrMin != null && ` · ${interpolate(e.uptime.mttr, { n: mttrMin })}`}
             </div>
           )}
           {monitorRows.length > 0 && (
