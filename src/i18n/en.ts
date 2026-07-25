@@ -5,6 +5,12 @@ import type es from './es'
 // mecanismo de paridad. Reforzado por tests/i18n-dictionary.test.ts (que
 // además detecta valores idénticos al español — traducción olvidada).
 const en = {
+  common: {
+    back: 'Back',
+    good: 'good',
+    needsImprovement: 'needs improvement',
+    poor: 'poor',
+  },
   meta: {
     siteName: 'CodeByMike',
     defaultDescription: 'Software Engineer focused on scalability, performance, and world-class user experience.',
