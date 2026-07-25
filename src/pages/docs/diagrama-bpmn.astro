@@ -85,6 +85,67 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, 42) })
       </ul>
     </section>
 
+    <!-- ── Las cinco compuertas ───────────────────────────────────────── -->
+    <section class="mb-12">
+      <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-2">Los 5 tipos de compuerta</h2>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed max-w-3xl mb-5">
+        Las cinco se dibujan con el mismo rombo: lo único que cambia es el marcador de dentro. Ese
+        detalle no es decorativo — decide si el proceso sigue por un camino o por varios, y si al
+        juntarse espera a los demás o no. De las cinco, estos diagramas solo necesitan la
+        <strong class="font-medium text-ink-100">exclusiva</strong>; las otras cuatro van aquí con
+        el ejemplo de dónde encajarían en este sistema, para que se entienda la diferencia.
+      </p>
+
+      <ul class="bpmn-scope grid grid-cols-1 lg:grid-cols-2 gap-x-7 gap-y-5 list-none p-0 m-0">
+        {compuertas.map((c) => (
+          <li class="compuerta rounded-xl bg-ink-800/70 border border-white/10 p-4 transition-colors">
+            <div class="flex items-start gap-3.5">
+              <span class="shrink-0 grid place-items-center w-[46px] h-[46px] rounded-lg bg-ink-850">
+                <svg
+                  width={c.ancho}
+                  height={c.alto}
+                  viewBox={`0 0 ${c.vbW} ${c.vbH}`}
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <BpmnShape node={c.node} />
+                </svg>
+              </span>
+
+              <div class="min-w-0">
+                <h3 class="text-[13.5px] font-semibold text-ink-50 leading-tight">
+                  Compuerta {c.nombre}
+                  {c.alias && <span class="ml-1.5 font-mono text-[11px] text-ink-300">{c.alias}</span>}
+                  {c.usada && (
+                    <span class="ml-2 align-middle text-[10px] uppercase tracking-[0.08em] text-cyan-dim">
+                      en uso
+                    </span>
+                  )}
+                </h3>
+                <p class="text-[11.5px] text-ink-400 mt-0.5">Se marca con {c.marcador}.</p>
+              </div>
+            </div>
+
+            <dl class="mt-3 space-y-1.5 text-[12.5px] leading-relaxed">
+              <div class="flex gap-2">
+                <dt class="shrink-0 w-[76px] text-ink-400">Al dividir</dt>
+                <dd class="m-0 text-ink-100">{c.divergencia}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="shrink-0 w-[76px] text-ink-400">Al juntar</dt>
+                <dd class="m-0 text-ink-100">{c.convergencia}</dd>
+              </div>
+            </dl>
+
+            <p class="mt-2.5 text-[12.5px] text-ink-200 leading-relaxed">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-dim align-middle mr-2 -translate-y-px"></span>
+              {c.ejemplo}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
     <!-- ── Procesos ───────────────────────────────────────────────────── -->
     <div class="space-y-12">
       {procesosBpmn.map((p) => (
@@ -106,3 +167,11 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, 42) })
     </div>
   </div>
 </BaseLayout>
+
+<style>
+  /* Tinte de marca al pasar por encima, en vez de una franja de acento. */
+  .compuerta:hover {
+    background: color-mix(in srgb, var(--color-cyan-dim) 6%, var(--color-ink-800));
+    border-color: color-mix(in srgb, var(--color-cyan-dim) 30%, transparent);
+  }
+</style>
