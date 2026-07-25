@@ -355,7 +355,9 @@ const monitoreo: BpmnProcess = {
     { from: 'gok', to: 'gabierto', label: 'no', channelOffset: -40 },
     { from: 'gok', to: 'gcerrar', label: 'sí', channelOffset: 24 },
     { from: 'gabierto', to: 'abre', label: 'no' },
-    { from: 'gabierto', to: 'act', label: 'sí' },
+    // Su canal se adelanta para que el "sí" no caiga sobre la línea que sube
+    // desde la compuerta de abajo.
+    { from: 'gabierto', to: 'act', label: 'sí', channelOffset: -20 },
     { from: 'gcerrar', to: 'cierra', label: 'sí' },
     { from: 'gcerrar', to: 'estable', label: 'no' },
     { from: 'abre', to: 'caida' },
