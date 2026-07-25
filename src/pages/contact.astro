@@ -193,6 +193,11 @@ const L = (path: string) => localizePath(path, locale)
 </BaseLayout>
 
 <script>
+  import { getDictionary, getLocaleFromUrl, interpolate } from '../i18n'
+
+  const locale = getLocaleFromUrl(location.pathname)
+  const cf = getDictionary(locale).contact.form
+
   const form = document.getElementById('contact-form') as HTMLFormElement
   const status = document.getElementById('form-status') as HTMLParagraphElement
   const fieldCount = document.getElementById('field-count') as HTMLSpanElement
