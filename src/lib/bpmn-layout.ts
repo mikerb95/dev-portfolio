@@ -584,7 +584,7 @@ const boxesOverlap = (a: Box, b: Box): boolean => a.x2 > b.x1 && a.x1 < b.x2 && 
  * Se ejecuta en los tests, no en runtime.
  */
 export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
-  const { nodes, edges } = layout(process)
+  const { nodes, edges, width, height } = layout(process)
   const issues: LayoutIssue[] = []
 
   const cells = new Map<string, string>()
