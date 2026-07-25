@@ -259,6 +259,133 @@ const en = {
       ciSome: 'Live check {ago} · last run {runAgo} ({conclusion} · {sha})',
     },
   },
+  tools: {
+    title: 'Tools — CodeByMike',
+    description:
+      'Case studies of the tools I built to operate my own projects and clients: SLO-based monitoring, per-project P&L, an encrypted vault, CI/CD with rollback, and chaos engineering.',
+    eyebrow: 'Purpose-built tools',
+    h1Line1: 'The tools I use',
+    h1Line2: 'to run my projects.',
+    intro:
+      "I don't use these tools because they're trendy: I built them because I needed them. Monitoring, finance, client tracking, security, and deploys — all running on this very site. Each case study tells the real problem that started it and how I solved it. The same discipline I apply here is what every client gets.",
+    problemLabel: 'The problem',
+    solutionLabel: 'The solution',
+    mockCaption: 'Recreation of the panel with illustrative data — real data is never published.',
+    inProductionLabel: 'In production',
+    demoPortal: {
+      eyebrow: 'Client portal',
+      title: 'This is the panel I hand to every client',
+      body: 'Project status with real uptime, invoices paid online, direct messaging, and documents. No signup required: it uses data from a fictional client, and you can test the payment with the simulated gateway.',
+      cta: 'Try the demo portal',
+    },
+    closing: {
+      quote: 'The tool I use with you is the one I use with myself.',
+      body: 'If we work together, your project joins this same system: SLO-based monitoring, visible tracking, encrypted credentials, and deploys with a safety net.',
+      cta: "Let's talk about your project",
+    },
+    cases: [
+      {
+        title: 'Monitoring, SLOs, and error budgets',
+        tagline: 'SRE-style observability, built from scratch',
+        problema:
+          "Running client sites without knowing they're down until someone complains. Generic uptime services don't catch a broken deploy that responds 200 with the wrong page.",
+        solucion:
+          'A custom check engine: every probe validates the HTTP status, expected response content, and a latency threshold. Failures group into incidents (from first failure to first success), and SLOs and error budgets are computed over that history, Google SRE-style.',
+        detalle: [
+          'Per-service SLO with burn rate: not just "how much it went down," but how fast the error budget is being spent.',
+          'Instant push alerts to my phone via ntfy when a service goes down or degrades.',
+          'Monitoring for TLS certificate and domain expiration.',
+          'The data feeds the public status page: what you see there is exactly what I see.',
+        ],
+        liveLabel: 'View the live public status',
+      },
+      {
+        title: 'Per-project costs and P&L',
+        tagline: 'Knowing what it costs to run each thing, down to the cent',
+        problema:
+          "Hosting, domains, database, email: every project piles up services billed differently. Without a record, it's impossible to know if a project is profitable or what it costs to maintain per year.",
+        solucion:
+          'A registry of services per project (and account-wide) with cost and billing cycle, cross-referenced against revenue that is collected, pending, and projected. The result is a per-project P&L: real margin, not a guess.',
+        detalle: [
+          'Normalizes billing cycles (monthly, annual) into a comparable cost.',
+          'Revenue in three states — collected, pending, projected — to separate real cash from expectation.',
+          'The P&L and money-handling logic has its own battery of unit tests.',
+        ],
+        liveLabel: 'View the P&L in the panel demo',
+      },
+      {
+        title: 'Client tracking portal',
+        tagline: 'Transparency as a practice, not a promise',
+        problema:
+          "A client who doesn't know where their project stands asks over WhatsApp, and the answer gets lost. Trust erodes in the silence between updates.",
+        solucion:
+          "Every project has a tracking view where the client sees progress without asking: milestones, interactions, and briefs. Public project pages show only what's marked visible; the rest stays in the panel.",
+        detalle: [
+          'Per-client interaction log: what was discussed, what was agreed, when.',
+          'Structured briefs that document requirements before any code is written.',
+          'Fine-grained visibility control: each piece of data decides whether it is public, client-facing, or internal.',
+        ],
+        liveLabel: null,
+      },
+      {
+        title: 'Encrypted credentials vault',
+        tagline: "Project secrets, never in plain text",
+        problema:
+          "Each project's credentials (API keys, environment variables) tend to end up in notes, chats, or loose files — the worst possible place.",
+        solucion:
+          'A vault inside the panel that encrypts every value with AES-256-GCM before it touches the database. The encryption key lives outside the database, in the server environment: a database dump exposes no secrets.',
+        detalle: [
+          "Authenticated encryption (GCM): a tampered value doesn't silently decrypt, it fails.",
+          'Panel backups that preserve encryption: secrets travel encrypted in the backup too.',
+          'The /admin route requires a session with an allowlist revalidated on every request, at every layer.',
+        ],
+        liveLabel: null,
+      },
+      {
+        title: 'CI/CD with health check and rollback',
+        tagline: 'Deploying without fear because the pipeline watches',
+        problema:
+          "A deploy that passes tests can still break production. If nobody's watching in the following minutes, the site stays down until someone notices.",
+        solucion:
+          "The GitHub Actions pipeline deploys, checks the live site's health, and if the health check fails, automatically rolls back to the previous deploy. Every run reports its result to the panel, which keeps the history: success, failure, or rollback.",
+        detalle: [
+          'Post-deploy health check against the real site, not a mock.',
+          'Automatic rollback with no human intervention when the check fails.',
+          'Run history in the panel with a direct link to the logs of each execution.',
+        ],
+        liveLabel: 'View the live lab',
+      },
+      {
+        title: 'Controlled chaos engineering',
+        tagline: 'Breaking the site on purpose to trust the alerts',
+        problema:
+          "How do you know your monitoring catches an outage if you've never seen one? Trusting alerts that have never fired is faith, not engineering.",
+        solucion:
+          'A fault-injection module toggleable from the panel: extra latency, 500 errors, or a dead service, per route. It exists to verify end-to-end that monitors detect it, the incident gets logged, and the alert reaches my phone.',
+        detalle: [
+          'Fail-open by design: if the chaos engine fails, the request passes through clean. Chaos can never become a real incident.',
+          'Mandatory TTL on every flag: no injected fault survives more than 15 minutes, not even by forgetting about it.',
+          'The panel and authentication are excluded by code: there is always a reachable panic button.',
+        ],
+        liveLabel: 'View the live experiments',
+      },
+      {
+        title: 'Security observability (custom micro-SIEM)',
+        tagline: 'Knowing who is trying to get in, not just waiting until they do',
+        problema:
+          "Any site with a public IP gets automated probing from minute one: scans for other CMSs, config files, injections on every parameter. The normal reaction is to ignore the noise — but those 404s are the real attack surface, and dismissing them throws away a free signal.",
+        solucion:
+          'A custom engine that runs in the middleware on every request: an OWASP Top 10-aligned classifier detects attack signatures, a two-layer durable rate limiter and a blocklist choke abuse, decoy endpoints confirm malicious intent, and an hourly cron aggregates events, statistically detects anomalies, and applies escalating automatic blocks.',
+        detalle: [
+          'Fail-open at every layer: if the security sensor fails, the request passes through clean — it can never take down the site it protects.',
+          "Z-score anomaly detection over a 30-day baseline, not a black box: every alert can be explained in a sentence.",
+          'Blocks with mandatory TTL and escalation by recurrence (1h → 24h → 7d), never permanent by default.',
+          'The public showcase shows real aggregates with deliberate OPSEC: never full IPs, never rule names, never which routes are decoys.',
+        ],
+        liveLabel: 'View Security Operations live',
+      },
+    ],
+  },
 } satisfies typeof es
 
 export default en
