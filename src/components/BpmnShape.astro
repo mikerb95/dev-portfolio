@@ -41,7 +41,7 @@ const tiempoY = duracionY(n)
 ---
 
 {n.duracion && (
-  <text class="bpmn-duracion" x={n.cx} y={tiempoY} text-anchor="middle">
+  <text class="bpmn-duracion" x={n.labelX} y={tiempoY} text-anchor={n.labelAlign}>
     {n.duracion}
   </text>
 )}
@@ -148,9 +148,9 @@ const tiempoY = duracionY(n)
         </g>
       )}
       {n.lines.length > 0 && (
-        <text class="bpmn-node-label bpmn-outside" x={n.cx} y={etiquetaY} text-anchor="middle">
+        <text class="bpmn-node-label bpmn-outside" x={n.labelX} y={etiquetaY} text-anchor={n.labelAlign}>
           {n.lines.map((line, i) => (
-            <tspan x={n.cx} dy={i === 0 ? 0 : 12}>
+            <tspan x={n.labelX} dy={i === 0 ? 0 : 12}>
               {line}
             </tspan>
           ))}
@@ -201,9 +201,9 @@ const tiempoY = duracionY(n)
         )}
       </g>
       {n.lines.length > 0 && (
-        <text class="bpmn-node-label bpmn-outside" x={n.cx} y={etiquetaY} text-anchor="middle">
+        <text class="bpmn-node-label bpmn-outside" x={n.labelX} y={etiquetaY} text-anchor={n.labelAlign}>
           {n.lines.map((line, i) => (
-            <tspan x={n.cx} dy={i === 0 ? 0 : 12}>
+            <tspan x={n.labelX} dy={i === 0 ? 0 : 12}>
               {line}
             </tspan>
           ))}

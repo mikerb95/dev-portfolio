@@ -183,6 +183,14 @@ const navLinks = [
       })
     }
     <div class="h-px bg-white/10 my-1"></div>
+    <a
+      href={languageHref}
+      class="flex items-center justify-between px-4 py-2.5 rounded-full text-[13px] font-mono text-ink-100 transition-colors hover:bg-white/5 hover:text-cyan"
+    >
+      <span>{t.nav.languageSwitchLabel ?? (otherLocale === 'en' ? 'English' : 'Español')}</span>
+      <span class="text-ink-200">{otherLocale.toUpperCase()}</span>
+    </a>
+    <div class="h-px bg-white/10 my-1"></div>
     <span
       class="flex items-center gap-2 px-4 py-2 text-[12px] font-mono text-ink-200"
     >
