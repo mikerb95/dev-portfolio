@@ -502,6 +502,8 @@ export function layout(process: BpmnProcess): Layout {
       lines: wrap(n.label, outside ? 20 : 21, outside ? 2 : 3),
       outside,
       labelAbove: outside && n.type.startsWith('gateway'),
+      labelAlign: 'middle' as const,
+      labelX: GEO.laneHeaderW + GEO.padX + n.col * GEO.colW + GEO.taskW / 2,
     }
   })
 
