@@ -15,6 +15,12 @@ const en = {
     siteName: 'CodeByMike',
     defaultDescription: 'Software Engineer focused on scalability, performance, and world-class user experience.',
   },
+  langPrompt: {
+    title: 'Switch to Spanish?',
+    body: 'Your browser is set to Spanish. I can show you the site in that language.',
+    switch: 'Cambiar a español',
+    stay: 'Stay in English',
+  },
   nav: {
     diseno: 'Web Design',
     tools: 'Tools',
