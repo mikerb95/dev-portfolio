@@ -581,16 +581,16 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
     else cells.set(key, n.id)
   }
 
-  // Un evento de borde se pisa con su anfitrión por definición, y la flecha que
-  // entra a la tarea pasa cerca del evento colgado de ella: ambos casos son
-  // correctos, así que se emparejan para no reportarlos.
-  const emparejados = new Map<string, Set<string>>()
-  for (const n of nodes) {
-    if (!n.attachedTo) continue
-    emparejados.set(n.id, new Set([n.attachedTo]))
-    emparejados.set(n.attachedTo, new Set([...(emparejados.get(n.attachedTo) ?? []), n.id]))
-  }
-  const relacionado = (a: string, b: string): boolean => emparejados.get(a)?.has(b) ?? false
+  // Un evento de borde se pisa con su anfitrión por definición, y su flecha de
+  // salida arranca sobre el borde de esa misma tarea. Solo esos dos casos se
+  // perdonan: perdonar cualquier flecha que toque al anfitrión dejaba pasar
+  // que una salida de la tarea partiera en dos la etiqueta del temporizador.
+  const anfitrionDe = new Map<string, string>()
+  for (const n of nodes) if (n.attachedTo) anfitrionDe.set(n.id, n.attachedTo)
+
+  const exentoDeLaFlecha = (nodeId: string, e: PlacedEdge): boolean =>
+    // el nodo es el borde que emite la flecha, o el anfitrión de quien la emite
+    anfitrionDe.get(e.from) === nodeId || anfitrionDe.get(nodeId) === e.from
 
   // Margen: una flecha que pasa rozando una caja también se ve mal.
   const M = 6

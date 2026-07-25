@@ -2,151 +2,39 @@
 import BaseLayout from '../layouts/BaseLayout.astro'
 import ToolMock from '../components/ToolMock.astro'
 import { demoAvailable } from '../db'
+import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
 
 // Casos de estudio de las herramientas internas construidas sobre este mismo
 // sitio. Contenido 100% estático: describe arquitectura y decisiones, nunca
-// datos de clientes ni configuración real.
+// datos de clientes ni configuración real. El texto vive en el diccionario
+// (t.tools.cases); aquí solo quedan los campos no traducibles (num, mock,
+// stack de tecnologías, href).
 
-type CaseStudy = {
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const L = (path: string) => localizePath(path, locale)
+
+type CaseMeta = {
   num: string
-  title: string
-  tagline: string
   mock: 'monitors' | 'pnl' | 'seguimiento' | 'vault' | 'pipeline' | 'chaos' | 'security'
-  problema: string
-  solucion: string
-  detalle: string[]
   stack: string[]
-  live?: { href: string; label: string }
+  liveHref?: string
 }
 
-const tools: CaseStudy[] = [
-  {
-    num: '01',
-    title: 'Monitoreo, SLOs y error budgets',
-    mock: 'monitors',
-    tagline: 'Observabilidad estilo SRE, construida desde cero',
-    problema:
-      'Operar sitios de clientes sin saber si están caídos hasta que alguien avisa. Los servicios de uptime genéricos no detectan un deploy roto que responde 200 con la página equivocada.',
-    solucion:
-      'Un motor de checks propio: cada sondeo valida código HTTP, contenido esperado en la respuesta y umbral de latencia. Los fallos se agrupan en incidentes (del primer fallo al primer éxito) y sobre el historial se calculan SLOs y presupuestos de error al estilo Google SRE.',
-    detalle: [
-      'SLO por servicio con burn rate: no solo "cuánto cayó", sino a qué velocidad se consume el presupuesto de error.',
-      'Alertas push instantáneas al móvil vía ntfy cuando un servicio cae o se degrada.',
-      'Vigilancia de expiración de certificados TLS y de dominios.',
-      'Los datos alimentan la página pública de status: lo que ves ahí es lo mismo que veo yo.',
-    ],
-    stack: ['Astro API routes', 'Drizzle ORM', 'Turso', 'cron externo', 'ntfy'],
-    live: { href: '/status', label: 'Ver el status público en vivo' },
-  },
-  {
-    num: '02',
-    title: 'Costos y P&L por proyecto',
-    mock: 'pnl',
-    tagline: 'Saber qué cuesta operar cada cosa, al centavo',
-    problema:
-      'Hosting, dominios, base de datos, email: cada proyecto acumula servicios con facturación distinta. Sin registro, es imposible saber si un proyecto es rentable o cuánto cuesta mantenerlo al año.',
-    solucion:
-      'Un registro de servicios por proyecto (y a nivel de cuenta) con su costo y ciclo de facturación, cruzado con ingresos cobrados, pendientes y proyectados. El resultado es un P&L por proyecto: margen real, no intuición.',
-    detalle: [
-      'Normalización de ciclos de facturación (mensual, anual) a costo comparable.',
-      'Ingresos en tres estados — cobrado, pendiente, proyectado — para separar caja real de expectativa.',
-      'La lógica de P&L y manejo de dinero tiene su propia batería de tests unitarios.',
-    ],
-    stack: ['Drizzle ORM', 'Turso', 'Vitest'],
-    live: { href: '/demo', label: 'Ver el P&L en la demo del panel' },
-  },
-  {
-    num: '03',
-    title: 'Portal de seguimiento para clientes',
-    mock: 'seguimiento',
-    tagline: 'Transparencia como práctica, no como promesa',
-    problema:
-      'El cliente que no sabe en qué va su proyecto pregunta por WhatsApp, y la respuesta se pierde. La confianza se erosiona en el silencio entre actualizaciones.',
-    solucion:
-      'Cada proyecto tiene una vista de seguimiento donde el cliente ve el avance sin pedirlo: hitos, interacciones y briefings. Las páginas públicas de proyecto muestran solo lo que está marcado como visible; el resto queda en el panel.',
-    detalle: [
-      'Registro de interacciones por cliente: qué se habló, qué se acordó, cuándo.',
-      'Briefings estructurados que documentan los requisitos antes de escribir código.',
-      'Control fino de visibilidad: cada dato decide si es público, del cliente o interno.',
-    ],
-    stack: ['Astro SSR', 'Drizzle ORM', 'auth con allowlist'],
-  },
-  {
-    num: '04',
-    title: 'Bóveda cifrada de credenciales',
-    mock: 'vault',
-    tagline: 'Los secretos de los proyectos, nunca en texto plano',
-    problema:
-      'Las credenciales de cada proyecto (API keys, variables de entorno) suelen terminar en notas, chats o archivos sueltos: el peor lugar posible.',
-    solucion:
-      'Una bóveda dentro del panel que cifra cada valor con AES-256-GCM antes de tocar la base de datos. La clave de cifrado vive fuera de la BD, en el entorno del servidor: un volcado de la base de datos no expone ningún secreto.',
-    detalle: [
-      'Cifrado autenticado (GCM): un valor alterado no se descifra en silencio, falla.',
-      'Backups del panel que preservan el cifrado: los secretos viajan cifrados también en el respaldo.',
-      'La ruta /admin exige sesión con allowlist revalidada en cada request, en cada capa.',
-    ],
-    stack: ['AES-256-GCM', 'node:crypto', 'middleware Astro'],
-  },
-  {
-    num: '05',
-    title: 'CI/CD con health check y rollback',
-    mock: 'pipeline',
-    tagline: 'Desplegar sin miedo porque el pipeline vigila',
-    problema:
-      'Un deploy que pasa los tests todavía puede romper producción. Si nadie mira en los minutos siguientes, el sitio queda caído hasta que alguien lo nota.',
-    solucion:
-      'El pipeline de GitHub Actions despliega, verifica la salud del sitio en vivo y, si el health check falla, revierte automáticamente al deploy anterior. Cada run reporta su resultado al panel, que guarda el historial: éxito, fallo o rollback.',
-    detalle: [
-      'Health check post-deploy contra el sitio real, no contra un mock.',
-      'Rollback automático sin intervención humana cuando la verificación falla.',
-      'Historial de runs en el panel con enlace directo a los logs de cada ejecución.',
-    ],
-    stack: ['GitHub Actions', 'Vercel', 'Vitest'],
-    live: { href: '/lab', label: 'Ver el laboratorio en vivo' },
-  },
-  {
-    num: '06',
-    title: 'Chaos engineering controlado',
-    mock: 'chaos',
-    tagline: 'Romper el sitio a propósito para confiar en las alertas',
-    problema:
-      '¿Cómo sabes que tu monitoreo detecta una caída si nunca has visto una? Confiar en alertas que jamás se han disparado es fe, no ingeniería.',
-    solucion:
-      'Un módulo de inyección de fallos activable desde el panel: latencia extra, errores 500 o servicio muerto, por ruta. Sirve para verificar de punta a punta que los monitores detectan, el incidente se registra y la alerta llega al móvil.',
-    detalle: [
-      'Fail-open por diseño: si el motor de caos falla, el request pasa limpio. El caos jamás puede volverse un incidente real.',
-      'TTL obligatorio en cada flag: ningún fallo inyectado sobrevive más de 15 minutos, ni por olvido.',
-      'El panel y la autenticación están excluidos por código: siempre hay un botón de pánico alcanzable.',
-    ],
-    stack: ['middleware Astro', 'flags en Turso con TTL'],
-    live: { href: '/lab', label: 'Ver los experimentos en vivo' },
-  },
-  {
-    num: '07',
-    title: 'Observabilidad de seguridad (micro-SIEM propio)',
-    mock: 'security',
-    tagline: 'Saber quién intenta entrar, no solo esperar a que lo logre',
-    problema:
-      'Cualquier sitio con IP pública recibe sondeos automáticos desde el primer minuto: CMS ajenos, archivos de configuración, inyecciones en cada parámetro. La reacción normal es ignorar el ruido — pero esos 404 son la superficie de ataque real, y descartarlos es tirar una señal gratis.',
-    solucion:
-      'Un motor propio que corre en el middleware de cada request: un clasificador alineado con OWASP Top 10 detecta firmas de ataque, un rate limiter durable de dos capas y una lista de bloqueo frenan el abuso, endpoints señuelo confirman intención maliciosa, y un cron horario agrega eventos, detecta anomalías por estadística y aplica bloqueos automáticos escalonados.',
-    detalle: [
-      'Fail-open en cada capa: si el sensor de seguridad falla, el request pasa limpio — nunca puede tumbar el sitio que protege.',
-      'Detección de anomalías con z-score sobre una baseline de 30 días, no una caja negra: cada alerta se puede explicar con una frase.',
-      'Bloqueos con TTL obligatorio y escalado por reincidencia (1h → 24h → 7d), nunca eternos por defecto.',
-      'La vitrina pública muestra agregados reales con OPSEC deliberada: nunca IPs completas, nunca nombres de reglas, nunca qué rutas son señuelo.',
-    ],
-    stack: ['middleware Astro', 'Drizzle ORM', 'Turso', 'cron externo', 'estadística propia'],
-    live: { href: '/security', label: 'Ver Security Operations en vivo' },
-  },
+const CASES_META: CaseMeta[] = [
+  { num: '01', mock: 'monitors', stack: ['Astro API routes', 'Drizzle ORM', 'Turso', 'cron externo', 'ntfy'], liveHref: '/status' },
+  { num: '02', mock: 'pnl', stack: ['Drizzle ORM', 'Turso', 'Vitest'], liveHref: '/demo' },
+  { num: '03', mock: 'seguimiento', stack: ['Astro SSR', 'Drizzle ORM', 'auth con allowlist'] },
+  { num: '04', mock: 'vault', stack: ['AES-256-GCM', 'node:crypto', 'middleware Astro'] },
+  { num: '05', mock: 'pipeline', stack: ['GitHub Actions', 'Vercel', 'Vitest'], liveHref: '/lab' },
+  { num: '06', mock: 'chaos', stack: ['middleware Astro', 'flags en Turso con TTL'], liveHref: '/lab' },
+  { num: '07', mock: 'security', stack: ['middleware Astro', 'Drizzle ORM', 'Turso', 'cron externo', 'estadística propia'], liveHref: '/security' },
 ]
+
+const tools = CASES_META.map((meta, i) => ({ ...meta, ...t.tools.cases[i] }))
 ---
 
-<BaseLayout
-  title="Herramientas — CodeByMike"
-  description="Casos de estudio de las herramientas que construí para operar mis proyectos y clientes: monitoreo con SLOs, P&L por proyecto, bóveda cifrada, CI/CD con rollback y chaos engineering."
-  image="/og-tools.png"
->
+<BaseLayout title={t.tools.title} description={t.tools.description} image="/og-tools.png">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
     <!-- Back -->
