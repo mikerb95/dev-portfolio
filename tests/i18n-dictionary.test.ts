@@ -42,12 +42,34 @@ describe('paridad del diccionario es/en', () => {
       const enVal = getPath(en as unknown as Json, p)
       if (typeof esVal !== 'string' || esVal.length < 4) return false
       // Nombres propios / marca que sí deben ser idénticos a propósito.
+      // Jerga técnica, marcas y nombres propios que son legítimamente iguales
+      // en los dos idiomas — no son traducciones olvidadas.
       const ALLOWED_IDENTICAL = new Set([
         'meta.siteName',
+        'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',
         'home.bento.github.user',
         'home.hud.title',
+        'home.hud.boot',
+        'home.hud.build',
+        'home.hud.pipeline',
+        'home.hud.stack',
+        'home.bento.capabilities.items[2]',
+        'home.bento.capabilities.items[3]',
+        'home.bento.contactMicro.badge',
+        'home.bento.contactMicro.cta',
+        'home.bento.location.country',
+        'home.expertise.items[1].title',
+        'home.githubDevProgramValue',
+        'home.githubTop3Label',
+        'home.githubTop3Value',
+        'home.lab.p1strong',
+        'home.proceso.steps[3].t',
+        'nav.loginAria',
+        'notFound.eyebrow',
+        'notFound.title',
+        'footer.groups.operacion.status',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal

@@ -4,6 +4,7 @@ import DocsNav from '../../components/DocsNav.astro'
 import { REQUISITOS_FUNCIONALES, REQUISITOS_NO_FUNCIONALES, CASOS_DE_USO, ACTORES } from '../../data/documentacion'
 import { ITERACIONES as ITER_PF } from '../../data/iteraciones-portfolio'
 import { METRICAS_REFERENCIA as TEST_REF, TOTAL_AUTOMATIZADOS } from '../../data/testing'
+import { procesosBpmn as PROCESOS_BPMN } from '../../data/bpmn'
 
 const rfTotal = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const rfImpl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
@@ -26,6 +27,7 @@ const subpaginas = [
   { href: '/docs/casos-de-uso', titulo: 'Casos de uso', desc: `${ACTORES.length} actores, ${cuTotal} casos de uso con diagrama.` },
   { href: '/docs/casos-de-uso-extendidos', titulo: 'Casos de uso extendidos', desc: 'Flujo principal, alternos, excepciones y postcondiciones de los CU críticos.' },
   { href: '/docs/historias-de-usuario', titulo: 'Historias de usuario', desc: `${historiasTotal} historias en formato XP, agrupadas por actor, con su DoD.` },
+  { href: '/docs/diagrama-bpmn', titulo: 'Diagramas BPMN', desc: `Los ${PROCESOS_BPMN.length} procesos de negocio con carriles por participante: cobro de campo, acceso al portal, respuesta de seguridad y ciclo de monitoreo.` },
   { href: '/docs/diagrama-secuencia', titulo: 'Diagrama de secuencia', desc: 'Login OAuth, chequeo de monitor, enforcement de seguridad y webhook de pagos.' },
   { href: '/docs/diagrama-componentes', titulo: 'Diagrama de componentes', desc: 'Despliegue: navegador → Vercel (Astro SSR + middleware) → Turso/Blob/GitHub/ntfy/cron.' },
   { href: '/docs/diagrama-clases', titulo: 'Diagrama de clases', desc: 'Entidades del dominio derivadas de src/db/schema.ts, agrupadas por módulo.' },

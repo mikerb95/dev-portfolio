@@ -90,8 +90,26 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 - [x] `/docs/pipeline-en-vivo` — estado real de la última corrida del pipeline,
       etapa por etapa, en vez de un diagrama estático.
 - [x] `/docs/presentacion` — deck de sustentación.
+- [x] `/docs/diagrama-bpmn` — los 4 procesos de negocio en notación BPMN real
+      (carriles por participante, compuertas con marcador, eventos de inicio /
+      intermedio / fin, flujos de secuencia y de mensaje). **No usa Mermaid**:
+      Mermaid no tiene tipo de diagrama BPMN y un flowchart disfrazado no dibuja
+      la notación. Tampoco `bpmn-js`, que habría metido ~500 KB de dependencia
+      de UI por cuatro diagramas. El SVG se genera en el servidor desde un
+      modelo tipado (`src/data/bpmn.ts`) con un motor de layout propio
+      (`src/lib/bpmn-layout.ts`): posiciones en grilla, ruteo ortogonal y corte
+      de etiquetas, sin JavaScript en el cliente.
 
-El menú (`DocsNav.astro`) pasó de 10 a 16 pestañas.
+      La decisión que hizo viable el enfoque fue tratar la geometría como algo
+      verificable: `tests/bpmn.test.ts` comprueba que ninguna flecha atraviese
+      una figura ajena, que no haya nodos ni etiquetas encimados, que toda
+      compuerta abra ramas etiquetadas y que todo camino llegue a un fin. Esa
+      verificación encontró tres cruces reales, una etiqueta de compuerta
+      pisada por la de su rama, dos ramas cuyos "sí"/"no" caían en el mismo
+      punto (y por tanto se leían sobre el camino contrario) y una tarea sin
+      salida en el modelo de seguridad.
+
+El menú (`DocsNav.astro`) pasó de 10 a 18 pestañas.
 
 ## 6. Fases futuras
 

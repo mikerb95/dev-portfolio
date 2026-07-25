@@ -5,6 +5,14 @@ import GithubProjects from '../components/GithubProjects.astro'
 import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
+import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
+
+// Página única compartida por /  y /en (ver src/pages/en/index.astro, que
+// solo la reexporta): el locale sale de la URL real del request, no del
+// archivo — así funciona igual la importen desde donde la importen.
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale).home
+const L = (path: string) => localizePath(path, locale)
 
 const visibleProjects = await db
   .select()
@@ -13,10 +21,7 @@ const visibleProjects = await db
   .orderBy(projects.createdAt)
 ---
 
-<BaseLayout
-  title="CodeByMike | Mike — Software Engineer"
-  description="Mike — Software Engineer en Colombia (remoto). TypeScript, React, Next.js, Astro, Node.js y PostgreSQL. Productos escalables, arquitectura robusta y rendimiento obsesivo."
->
+<BaseLayout title={t.title} description={t.description}>
   <script
     is:inline
     slot="head"
@@ -43,24 +48,24 @@ const visibleProjects = await db
     id="hud"
     class="hud-panel hidden lg:flex fixed bottom-6 left-6 z-40 flex-col gap-1.5 rounded-xl px-4 py-3 font-mono text-[10px] pointer-events-none select-none"
   >
-    <div class="text-ink-300 tracking-[.22em] uppercase mb-0.5">sys.monitor</div>
+    <div class="text-ink-300 tracking-[.22em] uppercase mb-0.5">{t.hud.title}</div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="hero">
-      <span>boot</span><span class="hud-status">—</span>
+      <span>{t.hud.boot}</span><span class="hud-status">—</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="bento">
-      <span>sistema</span><span class="hud-status">—</span>
+      <span>{t.hud.sistema}</span><span class="hud-status">—</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="proyectos">
-      <span>build</span><span class="hud-status">—</span>
+      <span>{t.hud.build}</span><span class="hud-status">—</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="proceso">
-      <span>pipeline</span><span class="hud-status">—</span>
+      <span>{t.hud.pipeline}</span><span class="hud-status">—</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="expertise">
-      <span>stack</span><span class="hud-status">—</span>
+      <span>{t.hud.stack}</span><span class="hud-status">—</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="laboratorio">
-      <span>lab</span><span class="hud-status">—</span>
+      <span>{t.hud.lab}</span><span class="hud-status">—</span>
     </div>
   </div>
 
@@ -72,7 +77,7 @@ const visibleProjects = await db
       <!-- Availability badge -->
       <div class="flex items-center gap-3 mb-7">
         <span class="w-2 h-2 rounded-full bg-cyan pulse-dot shadow-[0_0_12px_#00f2ff]"></span>
-        <span class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-100">Disponible · Colombia · Remoto</span>
+        <span class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-100">{t.badge}</span>
       </div>
 
       <!-- GitHub credentials -->
@@ -88,8 +93,8 @@ const visibleProjects = await db
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.5 11.5 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.595 24 12.297c0-6.627-5.373-12-12-12"/></svg>
           </span>
           <span class="flex flex-col leading-none">
-            <span class="text-[9.5px] font-mono uppercase tracking-[.22em] text-ink-300">GitHub Colombia</span>
-            <span class="mt-1 text-[13px] font-medium text-ink-50">Top <span class="text-cyan">#3</span> Contributor</span>
+            <span class="text-[9.5px] font-mono uppercase tracking-[.22em] text-ink-300">{t.githubTop3Label}</span>
+            <span class="mt-1 text-[13px] font-medium text-ink-50">Top <span class="text-cyan">#3</span> {t.githubTop3Value}</span>
           </span>
           <svg class="ml-0.5 w-3 h-3 text-ink-300 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
         </a>
@@ -105,8 +110,8 @@ const visibleProjects = await db
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
           </span>
           <span class="flex flex-col leading-none">
-            <span class="text-[9.5px] font-mono uppercase tracking-[.22em] text-ink-300">Miembro oficial</span>
-            <span class="mt-1 text-[13px] font-medium text-ink-50">GitHub <span class="text-violet">Developer Program</span></span>
+            <span class="text-[9.5px] font-mono uppercase tracking-[.22em] text-ink-300">{t.githubDevProgramLabel}</span>
+            <span class="mt-1 text-[13px] font-medium text-ink-50">GitHub <span class="text-violet">{t.githubDevProgramValue}</span></span>
           </span>
           <svg class="ml-0.5 w-3 h-3 text-ink-300 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-violet" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
         </a>
@@ -114,19 +119,19 @@ const visibleProjects = await db
 
       <!-- Headline -->
       <h1 class="font-sans font-medium tracking-[-.035em] leading-[.98] text-[clamp(44px,8vw,120px)]">
-        <span class="hero-line block overflow-hidden text-mask">Ingeniería de</span>
-        <span class="hero-line block overflow-hidden text-mask-cyan italic font-serif font-normal">software</span>
-        <span class="hero-line block overflow-hidden text-mask">con propósito.</span>
+        <span class="hero-line block overflow-hidden text-mask">{t.hero.line1}</span>
+        <span class="hero-line block overflow-hidden text-mask-cyan italic font-serif font-normal">{t.hero.line2}</span>
+        <span class="hero-line block overflow-hidden text-mask">{t.hero.line3}</span>
       </h1>
 
       <div class="mt-10 grid md:grid-cols-12 gap-8 items-end">
         <p class="md:col-span-6 text-[16px] md:text-[18px] text-ink-100 leading-relaxed max-w-xl">
-          Soy <span class="text-ink-50 font-medium">Mike</span> — un Software Engineer construyendo productos escalables para equipos que no pueden permitirse adivinar. Arquitectura robusta, rendimiento obsesivo, experiencias de clase mundial.
+          {t.hero.lead}
         </p>
         <div class="md:col-span-3 space-y-2">
-          <div class="text-[10.5px] font-mono uppercase tracking-[.2em] text-ink-300">Stack principal</div>
-          <div class="text-[14px] text-ink-50">TypeScript · React · Next.js</div>
-          <div class="text-[14px] text-ink-50">Astro · Node.js · PostgreSQL</div>
+          <div class="text-[10.5px] font-mono uppercase tracking-[.2em] text-ink-300">{t.hero.stackLabel}</div>
+          <div class="text-[14px] text-ink-50">{t.hero.stackLine1}</div>
+          <div class="text-[14px] text-ink-50">{t.hero.stackLine2}</div>
         </div>
         <div class="md:col-span-3 flex md:justify-end gap-3 flex-wrap">
           {visibleProjects.length > 0 ? (
@@ -134,23 +139,23 @@ const visibleProjects = await db
               href="#proyectos"
               class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all shadow-glow"
             >
-              Ver proyectos
+              {t.hero.ctaProjects}
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </a>
           ) : (
             <a
-              href="/certifications"
+              href={L('/certifications')}
               class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
             >
-              Certificaciones
+              {t.hero.ctaCerts}
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </a>
           )}
           <a
-            href="/contact"
+            href={L('/contact')}
             class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-white/[.03] text-ink-50 border border-white/10 hover:bg-white/[.06] transition-all"
           >
-            Hablemos
+            {t.hero.ctaContact}
           </a>
         </div>
       </div>
@@ -179,7 +184,7 @@ const visibleProjects = await db
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/01</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Qué hago</span>
+        <span>{t.bento.sectionLabel}</span>
       </div>
 
       <div class="grid grid-cols-12 grid-rows-[180px_180px_180px] gap-4 mt-6">
@@ -190,24 +195,24 @@ const visibleProjects = await db
           <div>
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
               <span class="w-1.5 h-1.5 rounded-full pulse-dot bg-cyan"></span>
-              Práctica
+              {t.bento.about.badge}
             </span>
             <h3 class="mt-5 text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 leading-[1.1] max-w-lg">
-              Diseño la arquitectura que escala tu producto. Y la construyo.
+              {t.bento.about.title}
             </h3>
           </div>
           <div class="grid grid-cols-3 gap-6 mt-6">
             <div>
               <div class="text-2xl font-medium text-cyan">5+</div>
-              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">Años exp.</div>
+              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">{t.bento.about.statYears}</div>
             </div>
             <div>
               <div class="text-2xl font-medium text-cyan">20+</div>
-              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">Proyectos</div>
+              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">{t.bento.about.statProjects}</div>
             </div>
             <div>
               <div class="text-2xl font-medium text-cyan">8+</div>
-              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">Industrias</div>
+              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">{t.bento.about.statIndustries}</div>
             </div>
           </div>
         </div>
@@ -217,12 +222,12 @@ const visibleProjects = await db
           <div class="flex items-center justify-between">
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-lime/10 text-lime border-lime/30">
               <span class="w-1.5 h-1.5 rounded-full pulse-dot bg-lime"></span>
-              Ahora
+              {t.bento.now.badge}
             </span>
             <span class="text-[10px] font-mono text-ink-300">2026</span>
           </div>
           <div class="mt-3 text-[14px] text-ink-50 leading-snug">
-            Construyendo productos full-stack con <span class="text-lime">Astro + Next.js</span> y arquitectura serverless.
+            {t.bento.now.body}
           </div>
           <div class="mt-auto flex items-center gap-2">
             <div class="h-1.5 flex-1 rounded-full bg-white/5 overflow-hidden">
@@ -235,36 +240,26 @@ const visibleProjects = await db
         <!-- Capabilities -->
         <div class="col-span-6 md:col-span-5 row-span-1 rounded-2xl glass lift overflow-hidden p-5">
           <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-violet/10 text-violet border-violet/30">
-            Capacidades
+            {t.bento.capabilities.badge}
           </span>
           <ul class="mt-3 space-y-1.5 text-[13px] text-ink-100">
-            <li class="flex items-center gap-2">
-              <svg class="w-3.5 h-3.5 text-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Arquitectura escalable · Full-stack
-            </li>
-            <li class="flex items-center gap-2">
-              <svg class="w-3.5 h-3.5 text-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              APIs REST · GraphQL · tRPC
-            </li>
-            <li class="flex items-center gap-2">
-              <svg class="w-3.5 h-3.5 text-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Performance · Core Web Vitals
-            </li>
-            <li class="flex items-center gap-2">
-              <svg class="w-3.5 h-3.5 text-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Testing · Unit · E2E · TypeScript
-            </li>
+            {t.bento.capabilities.items.map((item) => (
+              <li class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {item}
+              </li>
+            ))}
           </ul>
         </div>
 
         <!-- Location -->
         <div class="col-span-6 md:col-span-3 row-span-1 rounded-2xl glass lift overflow-hidden p-5 flex flex-col justify-between">
           <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-white/5 text-ink-100 border-white/10">
-            Base
+            {t.bento.location.badge}
           </span>
           <div>
-            <div class="text-2xl text-ink-50 tracking-tight">Colombia</div>
-            <div class="text-[11px] font-mono text-ink-200 mt-0.5">GMT−5 · Remoto global</div>
+            <div class="text-2xl text-ink-50 tracking-tight">{t.bento.location.country}</div>
+            <div class="text-[11px] font-mono text-ink-200 mt-0.5">{t.bento.location.tz}</div>
           </div>
         </div>
 
@@ -272,16 +267,16 @@ const visibleProjects = await db
         <div class="col-span-6 md:col-span-4 row-span-1 rounded-2xl glass lift overflow-hidden p-5 flex items-center justify-between">
           <div>
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
-              Inbound
+              {t.bento.contactMicro.badge}
             </span>
-            <div class="mt-2 text-[14px] text-ink-50">Primera respuesta en 24 h · L–V.</div>
-            <div class="text-[11px] font-mono text-ink-200">Proyectos evaluados por fit y timing.</div>
+            <div class="mt-2 text-[14px] text-ink-50">{t.bento.contactMicro.body}</div>
+            <div class="text-[11px] font-mono text-ink-200">{t.bento.contactMicro.note}</div>
           </div>
           <a
-            href="/contact"
+            href={L('/contact')}
             class="inline-flex items-center gap-2 h-10 px-4 text-[13px] font-medium rounded-full border border-cyan/40 text-cyan hover:bg-cyan/10 transition-all"
           >
-            Brief
+            {t.bento.contactMicro.cta}
           </a>
         </div>
 
@@ -294,8 +289,8 @@ const visibleProjects = await db
             </svg>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-[13px] text-ink-50 font-medium">mikerb95</div>
-            <div class="text-[11px] font-mono text-ink-300">Open source · commits diarios</div>
+            <div class="text-[13px] text-ink-50 font-medium">{t.bento.github.user}</div>
+            <div class="text-[11px] font-mono text-ink-300">{t.bento.github.note}</div>
           </div>
           <a
             href="https://github.com/mikerb95"
@@ -303,7 +298,7 @@ const visibleProjects = await db
             rel="noopener"
             class="inline-flex items-center gap-1 text-[11px] font-mono text-cyan hover:underline"
           >
-            Ver perfil
+            {t.bento.github.cta}
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
           </a>
         </div>
@@ -318,10 +313,10 @@ const visibleProjects = await db
         <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
           <span class="text-cyan">/02</span>
           <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-          <span>Trabajo seleccionado</span>
+          <span>{t.proyectos.sectionLabel}</span>
         </div>
         <h2 class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask max-w-2xl leading-[1] mb-12">
-          Proyectos en producción.
+          {t.proyectos.title}
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {visibleProjects.map((p) => (
@@ -344,21 +339,16 @@ const visibleProjects = await db
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/03</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Cómo trabajo</span>
+        <span>{t.proceso.sectionLabel}</span>
       </div>
       <h2 class="font-sans text-4xl md:text-5xl font-medium tracking-[-.025em] text-mask max-w-2xl leading-[1.05] mb-12">
-        Un proceso en cuatro pasos, calibrado a tu velocidad.
+        {t.proceso.title}
       </h2>
       <div class="grid md:grid-cols-4 gap-4">
-        {[
-          { k: "01", t: "Diagnóstico", d: "Dos semanas escuchando — cada flujo, cada hoja de cálculo, cada workaround.", time: "Sem 1–2" },
-          { k: "02", t: "Arquitectura", d: "Mapeo de decisiones del producto. Qué es crítico vs. cosmético.", time: "Sem 3" },
-          { k: "03", t: "Prototipo", d: "React real, datos reales, límites reales. Testeado con los usuarios finales.", time: "Sem 4–8" },
-          { k: "04", t: "Ship & mentoring", d: "Construyo junto a tu equipo. Les dejo un sistema que pueden escalar.", time: "Sem 9+" },
-        ].map((s) => (
+        {t.proceso.steps.map((s, i) => (
           <div class="rounded-2xl glass p-6 lift">
             <div class="flex items-center justify-between">
-              <span class="font-mono text-[11px] tracking-[.2em] text-cyan">/{s.k}</span>
+              <span class="font-mono text-[11px] tracking-[.2em] text-cyan">/{String(i + 1).padStart(2, "0")}</span>
               <span class="font-mono text-[10px] text-ink-300">{s.time}</span>
             </div>
             <h3 class="mt-6 text-2xl font-medium text-ink-50 tracking-tight">{s.t}</h3>
@@ -375,35 +365,20 @@ const visibleProjects = await db
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/04</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Expertise técnico</span>
+        <span>{t.expertise.sectionLabel}</span>
       </div>
       <div class="grid md:grid-cols-3 gap-4 mt-6">
         {[
-          {
-            icon: `<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>`,
-            color: "text-cyan bg-cyan/10",
-            title: "Arquitectura Escalable",
-            body: "Diseño sistemas distribuidos y modulares pensados para crecer. Monorepos, APIs robustas y patrones de diseño sólidos.",
-          },
-          {
-            icon: `<path d="M13 10V3L4 14h7v7l9-11h-7z"/>`,
-            color: "text-violet bg-violet/10",
-            title: "Performance First",
-            body: "La velocidad es una feature. Optimizo Core Web Vitals, tiempos de respuesta de API y eficiencia en bases de datos.",
-          },
-          {
-            icon: `<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>`,
-            color: "text-lime bg-lime/10",
-            title: "Calidad de Código",
-            body: "Testing riguroso (Unit, E2E), tipado estático estricto y documentación clara. Código mantenible es código rentable.",
-          },
-        ].map((item) => (
+          { icon: `<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>`, color: "text-cyan bg-cyan/10" },
+          { icon: `<path d="M13 10V3L4 14h7v7l9-11h-7z"/>`, color: "text-violet bg-violet/10" },
+          { icon: `<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>`, color: "text-lime bg-lime/10" },
+        ].map((visual, i) => (
           <div class="rounded-2xl glass p-7 lift">
-            <div class={`flex h-10 w-10 items-center justify-center rounded-xl ${item.color} mb-5`}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={item.icon} />
+            <div class={`flex h-10 w-10 items-center justify-center rounded-xl ${visual.color} mb-5`}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={visual.icon} />
             </div>
-            <h3 class="text-xl font-medium text-ink-50 tracking-tight mb-2">{item.title}</h3>
-            <p class="text-[13px] text-ink-200 leading-relaxed">{item.body}</p>
+            <h3 class="text-xl font-medium text-ink-50 tracking-tight mb-2">{t.expertise.items[i].title}</h3>
+            <p class="text-[13px] text-ink-200 leading-relaxed">{t.expertise.items[i].body}</p>
           </div>
         ))}
       </div>
@@ -416,7 +391,7 @@ const visibleProjects = await db
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/05</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Laboratorio en vivo</span>
+        <span>{t.lab.sectionLabel}</span>
       </div>
 
       <div class="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-16 items-center">
@@ -424,60 +399,40 @@ const visibleProjects = await db
         <div>
           <div class="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-[.18em] text-ember border border-ember/30 bg-ember/10 rounded-full px-3 py-1 mb-6">
             <span class="w-1.5 h-1.5 rounded-full bg-ember pulse-dot"></span>
-            Demo interactiva · seguridad
+            {t.lab.badge}
           </div>
           <h2 class="font-sans text-4xl md:text-5xl font-medium tracking-[-.03em] text-mask max-w-xl leading-[1.02] mb-5">
-            Sala de espejos:<br/>te reconozco sin cookies.
+            {t.lab.titleLine1}<br/>{t.lab.titleLine2}
           </h2>
           <p class="text-[15px] text-ink-100 leading-relaxed max-w-xl mb-4">
-            Construí un laboratorio de <strong class="text-ink-50">device fingerprinting</strong> para
-            hacer visible algo que casi nadie ve: tu navegador expone decenas de señales —canvas, GPU,
-            fuentes, audio— que juntas forman una huella casi única. Escaneas un QR, entras a una sala
-            y un tablero te identifica en vivo <strong class="text-ink-50">sin login y sin cookies</strong>.
+            {t.lab.p1a}<strong class="text-ink-50">{t.lab.p1strong}</strong>{t.lab.p1b}<strong class="text-ink-50">{t.lab.p1strong2}</strong>{t.lab.p1c}
           </p>
           <p class="text-[15px] text-ink-100 leading-relaxed max-w-xl mb-8">
-            ¿El objetivo? Que lo <em class="text-ink-50 not-italic font-medium">sientas</em>: entra en
-            incógnito, borra tus cookies y vuelve a entrar. Te reconoce igual. Y termina enseñándote
-            cómo defenderte. Un demo para explicar privacidad y rastreo sin diapositivas.
+            {t.lab.p2a}<em class="text-ink-50 not-italic font-medium">{t.lab.p2em}</em>{t.lab.p2b}
           </p>
           <div class="flex flex-wrap items-center gap-4">
-            <a href="/lab/fingerprint" class="inline-flex items-center gap-2 h-12 px-6 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium hover:bg-zinc-100 transition-colors">
-              Entrar al laboratorio
+            <a href={L('/lab/fingerprint')} class="inline-flex items-center gap-2 h-12 px-6 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium hover:bg-zinc-100 transition-colors">
+              {t.lab.cta}
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </a>
-            <span class="text-[12px] font-mono text-ink-400">Efímero · sin PII · las salas se borran en 2h</span>
+            <span class="text-[12px] font-mono text-ink-400">{t.lab.note}</span>
           </div>
         </div>
 
         <!-- Puntos -->
         <div class="grid gap-4">
           {[
-            {
-              color: "text-cyan bg-cyan/10",
-              icon: `<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>`,
-              title: "Escanea y entra",
-              body: "Varios dispositivos se enlazan a la misma sala por un QR — como un aula o un evento en vivo.",
-            },
-            {
-              color: "text-ember bg-ember/10",
-              icon: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`,
-              title: "Te reconoce, no te loguea",
-              body: "Recolector propio contrastado con FingerprintJS. Si vuelves en incógnito, el contador de revisitas sube.",
-            },
-            {
-              color: "text-lime bg-lime/10",
-              icon: `<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>`,
-              title: "Aprende a defenderte",
-              body: "Cierra explicando por qué el incógnito no basta y qué sí funciona: Tor, resistFingerprinting y más.",
-            },
-          ].map((item) => (
+            { color: "text-cyan bg-cyan/10", icon: `<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>` },
+            { color: "text-ember bg-ember/10", icon: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>` },
+            { color: "text-lime bg-lime/10", icon: `<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>` },
+          ].map((visual, i) => (
             <div class="rounded-2xl glass p-5 lift flex items-start gap-4">
-              <div class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.color}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={item.icon} />
+              <div class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${visual.color}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={visual.icon} />
               </div>
               <div>
-                <h3 class="text-[15px] font-medium text-ink-50 tracking-tight mb-1">{item.title}</h3>
-                <p class="text-[13px] text-ink-200 leading-relaxed">{item.body}</p>
+                <h3 class="text-[15px] font-medium text-ink-50 tracking-tight mb-1">{t.lab.points[i].title}</h3>
+                <p class="text-[13px] text-ink-200 leading-relaxed">{t.lab.points[i].body}</p>
               </div>
             </div>
           ))}

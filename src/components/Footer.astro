@@ -1,4 +1,9 @@
 ---
+import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const L = (path: string) => localizePath(path, locale)
 ---
 
 <footer class="px-6 md:px-12 lg:px-20 pt-16 pb-10 border-t border-white/5">
@@ -6,44 +11,44 @@
     <div class="md:col-span-4">
       <div class="font-serif italic text-5xl text-mask-cyan">CodeByMike</div>
       <p class="mt-3 text-[13px] text-ink-200 max-w-sm leading-relaxed">
-        Software Engineer. Arquitectura escalable, rendimiento obsesivo y experiencias de usuario de clase mundial.
+        {t.footer.tagline}
       </p>
     </div>
     <div class="md:col-span-8 flex flex-wrap gap-x-8 gap-y-8">
       <div class="min-w-[110px]">
-        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Sitio</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{t.footer.groups.sitio.title}</div>
         <ul class="space-y-1.5 text-[13px] text-ink-100">
-          <li><a href="/" class="hover:text-ink-50 transition-colors">Inicio</a></li>
-          <li><a href="/contact" class="hover:text-ink-50 transition-colors">Contacto</a></li>
+          <li><a href={L('/')} class="hover:text-ink-50 transition-colors">{t.footer.groups.sitio.inicio}</a></li>
+          <li><a href={L('/contact')} class="hover:text-ink-50 transition-colors">{t.footer.groups.sitio.contacto}</a></li>
         </ul>
       </div>
       <div class="min-w-[130px]">
-        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Producto</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{t.footer.groups.producto.title}</div>
         <ul class="space-y-1.5 text-[13px] text-ink-100">
-          <li><a href="/tools" class="hover:text-ink-50 transition-colors">Herramientas</a></li>
-          <li><a href="/notes" class="hover:text-ink-50 transition-colors">Notas</a></li>
-          <li><a href="/docs" class="hover:text-ink-50 transition-colors">Documentación</a></li>
-          <li><a href="/certifications" class="hover:text-ink-50 transition-colors">Certificaciones</a></li>
+          <li><a href={L('/tools')} class="hover:text-ink-50 transition-colors">{t.footer.groups.producto.herramientas}</a></li>
+          <li><a href={L('/notes')} class="hover:text-ink-50 transition-colors">{t.footer.groups.producto.notas}</a></li>
+          <li><a href="/docs" class="hover:text-ink-50 transition-colors">{t.footer.groups.producto.docs}</a></li>
+          <li><a href={L('/certifications')} class="hover:text-ink-50 transition-colors">{t.footer.groups.producto.certificaciones}</a></li>
         </ul>
       </div>
       <div class="min-w-[130px]">
-        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Ingeniería</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{t.footer.groups.ingenieria.title}</div>
         <ul class="space-y-1.5 text-[13px] text-ink-100">
-          <li><a href="/engineering" class="hover:text-ink-50 transition-colors">Ingeniería</a></li>
-          <li><a href="/architecture" class="hover:text-ink-50 transition-colors">Arquitectura</a></li>
-          <li><a href="/security" class="hover:text-ink-50 transition-colors">Seguridad</a></li>
-          <li><a href="/lab" class="hover:text-ink-50 transition-colors">Laboratorio</a></li>
+          <li><a href={L('/engineering')} class="hover:text-ink-50 transition-colors">{t.footer.groups.ingenieria.ingenieria}</a></li>
+          <li><a href={L('/architecture')} class="hover:text-ink-50 transition-colors">{t.footer.groups.ingenieria.arquitectura}</a></li>
+          <li><a href={L('/security')} class="hover:text-ink-50 transition-colors">{t.footer.groups.ingenieria.seguridad}</a></li>
+          <li><a href={L('/lab')} class="hover:text-ink-50 transition-colors">{t.footer.groups.ingenieria.laboratorio}</a></li>
         </ul>
       </div>
       <div class="min-w-[100px]">
-        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Operación</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{t.footer.groups.operacion.title}</div>
         <ul class="space-y-1.5 text-[13px] text-ink-100">
-          <li><a href="/log" class="hover:text-ink-50 transition-colors">Log</a></li>
-          <li><a href="/status" class="hover:text-ink-50 transition-colors">Status</a></li>
+          <li><a href={L('/log')} class="hover:text-ink-50 transition-colors">{t.footer.groups.operacion.log}</a></li>
+          <li><a href={L('/status')} class="hover:text-ink-50 transition-colors">{t.footer.groups.operacion.status}</a></li>
         </ul>
       </div>
       <div class="min-w-[110px]">
-        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Redes</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{t.footer.groups.redes.title}</div>
         <div class="flex items-center gap-3">
           <a
             href="https://github.com/mikerb95"
@@ -70,7 +75,7 @@
         </div>
       </div>
       <div class="min-w-[160px]">
-        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Contacto directo</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{t.footer.groups.contacto.title}</div>
         <ul class="space-y-1.5 text-[13px] text-ink-100">
           <li><a href="mailto:mikedrb@proton.me" class="hover:text-cyan transition-colors">mikedrb@proton.me</a></li>
           <li><a href="https://wa.me/573104641228" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">+57 310 464 1228</a></li>

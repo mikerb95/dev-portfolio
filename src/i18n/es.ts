@@ -18,7 +18,10 @@ const es = {
     log: 'Log',
     available: 'Disponible',
     loginAria: 'Login',
+    contactCta: 'Contáctame',
     languageSwitch: 'English',
+    openMenu: 'Abrir menú',
+    closeMenu: 'Cerrar menú',
   },
   footer: {
     tagline: 'Software Engineer. Arquitectura escalable, rendimiento obsesivo y experiencias de usuario de clase mundial.',
