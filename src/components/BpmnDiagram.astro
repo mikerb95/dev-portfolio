@@ -174,10 +174,12 @@ function anilloEvento(type: string) {
                       <path d="M 3.2 3.4 h 3.4 M 3.2 5.6 h 3.4" />
                     </g>
                   )}
+                  {/* El sobre relleno usa `style` y no el atributo `fill`: una
+                      regla CSS de la clase le gana a un atributo de presentación. */}
                   {n.type === 'taskSend' && (
                     <g>
-                      <rect x="0.6" y="1.8" width="9" height="6.8" rx="1" fill="var(--bpmn-line)" />
-                      <path d="M 0.9 2.3 L 5.1 5.6 L 9.3 2.3" stroke="var(--bpmn-task-fill)" />
+                      <rect x="0.6" y="1.8" width="9" height="6.8" rx="1" style="fill: var(--bpmn-line)" />
+                      <path d="M 0.9 2.3 L 5.1 5.6 L 9.3 2.3" style="stroke: var(--bpmn-task-fill)" />
                     </g>
                   )}
                 </g>
