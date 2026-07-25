@@ -72,95 +72,18 @@ const trendMax = Math.max(1, ...trend.map((t) => t.count))
 
 type Severity = 'alta' | 'media'
 
-type Finding = {
-  id: string
-  title: string
-  owasp: string
-  severity: Severity
-  file: string
-  problema: string
-  solucion: string
-  commit: string
-  date: string
-}
-
-const findings: Finding[] = [
-  {
-    id: 'upload-ext',
-    title: 'XSS almacenado vía extensión de archivo no validada',
-    owasp: 'A03:2021 · Injection',
-    severity: 'alta',
-    file: 'src/pages/api/admin/upload.ts',
-    problema:
-      'El endpoint de subida de certificados derivaba la extensión del archivo final del nombre enviado por el cliente, y solo validaba el MIME type declarado por el propio cliente (fácilmente falsificable). Un archivo subido como "foo.html" con Content-Type falso quedaba servido como HTML desde /assets/certs. SVG estaba además en la lista de tipos permitidos, y un SVG puede contener <script> ejecutable.',
-    solucion:
-      'La extensión ahora se deriva de un mapa fijo MIME → extensión, nunca del nombre del archivo. SVG se eliminó de los tipos permitidos.',
-    commit: 'd439054',
-    date: '2026-07-06',
-  },
-  {
-    id: 'contact-abuse',
-    title: 'Formulario de contacto sin límite de tasa ni validación',
-    owasp: 'A04:2021 · Insecure Design',
-    severity: 'media',
-    file: 'src/pages/api/contact.ts',
-    problema:
-      'El endpoint público de contacto aceptaba inserciones ilimitadas a la base de datos sin rate limit, sin validar formato de email ni longitud de campos, y un JSON malformado producía un error 500 sin manejar.',
-    solucion:
-      'Se aplicó el rate limiter ya existente en el proyecto (5 envíos/min por IP), validación de formato de email, límites de longitud por campo y manejo explícito de JSON inválido.',
-    commit: '779f4b0',
-    date: '2026-07-06',
-  },
-  {
-    id: 'legacy-session',
-    title: 'Sesiones sin claim de login evadían la allowlist',
-    owasp: 'A01:2021 · Broken Access Control',
-    severity: 'media',
-    file: 'src/middleware.ts',
-    problema:
-      'El middleware solo revalidaba la allowlist de GitHub cuando la sesión traía el claim "login". Una sesión sin ese claim pasaba el chequeo por defecto en vez de ser rechazada.',
-    solucion:
-      'El gate de admin ahora exige el claim en toda sesión: sin login válido en la allowlist, la respuesta es 403 sin excepción.',
-    commit: '14b08e2',
-    date: '2026-07-06',
-  },
-  {
-    id: 'missing-headers',
-    title: 'Faltaban CSP y HSTS en las respuestas',
-    owasp: 'A05:2021 · Security Misconfiguration',
-    severity: 'media',
-    file: 'src/middleware.ts',
-    problema:
-      'El middleware ya fijaba varios headers de seguridad (nosniff, Referrer-Policy, X-Frame-Options en admin) pero no incluía Content-Security-Policy ni Strict-Transport-Security en ninguna ruta.',
-    solucion:
-      'Se agregó CSP restrictiva (default-src self, frame-ancestors none) y HSTS con preload a todas las respuestas, públicas y de admin.',
-    commit: '32bcf0d',
-    date: '2026-07-06',
-  },
+// Metadatos no traducibles (identificador, ruta de archivo, commit, fecha,
+// clasificación OWASP): el texto (título/problema/solución) viene del
+// diccionario por índice — mismo patrón que /tools.
+const FINDINGS_META: { id: string; owasp: string; severity: Severity; file: string; commit: string; date: string }[] = [
+  { id: 'upload-ext', owasp: 'A03:2021 · Injection', severity: 'alta', file: 'src/pages/api/admin/upload.ts', commit: 'd439054', date: '2026-07-06' },
+  { id: 'contact-abuse', owasp: 'A04:2021 · Insecure Design', severity: 'media', file: 'src/pages/api/contact.ts', commit: '779f4b0', date: '2026-07-06' },
+  { id: 'legacy-session', owasp: 'A01:2021 · Broken Access Control', severity: 'media', file: 'src/middleware.ts', commit: '14b08e2', date: '2026-07-06' },
+  { id: 'missing-headers', owasp: 'A05:2021 · Security Misconfiguration', severity: 'media', file: 'src/middleware.ts', commit: '32bcf0d', date: '2026-07-06' },
 ]
 
-const good: { title: string; detail: string }[] = [
-  {
-    title: 'Webhooks de pago verificados',
-    detail:
-      'El receptor de eventos de Wompi verifica la firma HMAC antes de procesar cualquier evento, rechaza eventos con más de 6 horas de antigüedad (anti-replay) y valida que el monto/moneda coincidan con el pago esperado antes de aplicar una transición de estado.',
-  },
-  {
-    title: 'Secretos cifrados en reposo',
-    detail:
-      'La bóveda de credenciales cifra cada valor con AES-256-GCM (cifrado autenticado) antes de escribirlo en la base de datos. La clave vive solo en el entorno del servidor, nunca en la BD ni en los backups.',
-  },
-  {
-    title: 'Defensa en profundidad en /admin',
-    detail:
-      'La autorización se revalida contra la allowlist tanto en el callback de login como en el middleware, en cada request — no basta con haber iniciado sesión una vez.',
-  },
-  {
-    title: 'Consultas parametrizadas',
-    detail:
-      'Todo el acceso a datos pasa por Drizzle ORM con consultas parametrizadas; no hay interpolación de strings en SQL en ninguna ruta del proyecto.',
-  },
-]
+const findings = FINDINGS_META.map((meta, i) => ({ ...meta, ...s.findings[i] }))
+const good = s.controls
 
 const severityCls: Record<Severity, string> = {
   alta: 'text-ember border-ember/40 bg-ember/15',
