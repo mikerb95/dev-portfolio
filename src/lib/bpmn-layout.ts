@@ -338,7 +338,7 @@ export function layout(process: BpmnProcess): Layout {
     const b = byId.get(f.to)
     if (!a) throw new Error(`El flujo "${f.from} → ${f.to}" sale de un nodo inexistente`)
     if (!b) throw new Error(`El flujo "${f.from} → ${f.to}" entra a un nodo inexistente`)
-    const points = route(a, b)
+    const points = route(a, b, f.channelOffset ?? 0)
     return {
       from: f.from,
       to: f.to,
