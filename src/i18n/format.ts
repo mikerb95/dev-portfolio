@@ -45,3 +45,13 @@ export function formatCOP(value: number, locale: Locale): string {
 export function formatRelativeTime(value: number, unit: Intl.RelativeTimeFormatUnit, locale: Locale): string {
   return new Intl.RelativeTimeFormat(INTL_LOCALE[locale], { numeric: 'auto' }).format(value, unit)
 }
+
+/**
+ * Sustituye `{clave}` por su valor. Usado por las plantillas del diccionario
+ * que mezclan texto traducido con números/paths dinámicos (p. ej.
+ * "{n} servicios monitoreados"). El test de paridad de diccionarios ya
+ * verifica que los placeholders coincidan entre es/en.
+ */
+export function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, k: string) => (k in vars ? String(vars[k]) : `{${k}}`))
+}
