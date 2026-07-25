@@ -411,27 +411,27 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
 
           {coverageDelta != null && (
             <div class="text-[12px] text-ink-300 mb-2">
-              Cobertura: {coverageDelta > 0 ? '+' : ''}{coverageDelta} pts vs el run exitoso anterior.
+              {interpolate(e.pipeline.coverageDelta, { value: `${coverageDelta > 0 ? '+' : ''}${coverageDelta}` })}
             </div>
           )}
           {lastSuccess?.healthOk != null && (
             <div class="text-[12px] text-ink-300 mb-2">
-              Health check post-deploy: <span class={lastSuccess.healthOk ? 'text-lime' : 'text-ember'}>{lastSuccess.healthOk ? 'OK' : 'falló'}</span>
+              {e.pipeline.healthCheckLabel} <span class={lastSuccess.healthOk ? 'text-lime' : 'text-ember'}>{lastSuccess.healthOk ? e.pipeline.healthOk : e.pipeline.healthFail}</span>
             </div>
           )}
           {lastSuccess?.sha && (
             <div class="text-[12px] font-mono text-ink-300 mb-1">
-              commit <span class="text-ink-100">{lastSuccess.sha.slice(0, 7)}</span>
+              {e.pipeline.commitLabel} <span class="text-ink-100">{lastSuccess.sha.slice(0, 7)}</span>
             </div>
           )}
           {lastSuccess?.url && (
             <a href={lastSuccess.url} target="_blank" rel="noopener" class="text-[12px] font-mono text-cyan hover:underline">
-              Ver run en GitHub Actions →
+              {e.pipeline.viewRunCta}
             </a>
           )}
           <div class="live-strip flex items-center gap-1.5 text-[11px] font-mono text-ink-400 mt-3 pt-2 border-t border-white/5" data-live="ci">
             <span class="live-dot"></span>
-            <span class="live-text">Verificando en vivo…</span>
+            <span class="live-text">{e.pipeline.liveChecking}</span>
           </div>
         </Fragment>
       </CardPopover>
