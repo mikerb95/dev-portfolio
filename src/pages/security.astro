@@ -253,7 +253,7 @@ const severityCls: Record<Severity, string> = {
             <div class="flex flex-wrap items-center gap-3 mb-4">
               <h2 class="text-[15px] font-medium">{f.title}</h2>
               <span class={`text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${severityCls[f.severity]}`}>
-                {f.severity}
+                {s.severity[f.severity]}
               </span>
               <span class="text-[11px] font-mono text-cyan">{f.owasp}</span>
               <span class="ml-auto text-[11px] font-mono text-ink-300">{f.file}</span>
@@ -261,11 +261,11 @@ const severityCls: Record<Severity, string> = {
 
             <div class="grid md:grid-cols-2 gap-4 mb-4">
               <div class="rounded-xl bg-white/[.02] border border-white/5 p-4">
-                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-2">Problema</div>
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-2">{s.problemLabel}</div>
                 <p class="text-[13px] text-ink-100 leading-relaxed">{f.problema}</p>
               </div>
               <div class="rounded-xl bg-white/[.02] border border-white/5 p-4">
-                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-2">Corrección</div>
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-2">{s.fixLabel}</div>
                 <p class="text-[13px] text-ink-100 leading-relaxed">{f.solucion}</p>
               </div>
             </div>
@@ -278,7 +278,7 @@ const severityCls: Record<Severity, string> = {
                 rel="noopener"
                 class="inline-flex items-center gap-1.5 text-cyan hover:underline"
               >
-                commit {f.commit} ↗
+                {s.commitPrefix} {f.commit} ↗
               </a>
             </div>
           </div>
@@ -290,7 +290,7 @@ const severityCls: Record<Severity, string> = {
     <section class="mb-20">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-        <span>Controles ya vigentes</span>
+        <span>{s.controlsHeading}</span>
       </div>
       <div class="grid md:grid-cols-2 gap-4">
         {good.map((g) => (
@@ -304,22 +304,11 @@ const severityCls: Record<Severity, string> = {
 
     <!-- Metodología -->
     <section class="rounded-2xl glass p-8">
-      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">Metodología</div>
+      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">{s.methodology.heading}</div>
       <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
-        <p>
-          La revisión cubrió autenticación y control de acceso, subida de archivos, endpoints
-          públicos, manejo de secretos, webhooks de pago y headers de respuesta — el código
-          real de este repositorio, no un ejercicio teórico.
-        </p>
-        <p>
-          Cada hallazgo se clasificó contra <span class="text-ink-50">OWASP Top 10 (2021)</span>,
-          se corrigió en un commit dedicado y se verificó con la suite de tests y un build
-          completo antes de mergear.
-        </p>
-        <p>
-          Esta página se actualiza cada vez que una auditoría encuentra o corrige algo nuevo.
-          Lo que ves aquí es el estado real del código en producción.
-        </p>
+        <p>{s.methodology.p1}</p>
+        <p>{s.methodology.p2}</p>
+        <p>{s.methodology.p3}</p>
       </div>
     </section>
 
