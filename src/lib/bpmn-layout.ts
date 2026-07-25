@@ -200,7 +200,7 @@ const CHANNEL = 30
  * carril hacia adelante, y rodeo por un canal si el flujo vuelve hacia atrás
  * (bucles de reintento).
  */
-export function route(a: PlacedNode, b: PlacedNode): Pt[] {
+export function route(a: PlacedNode, b: PlacedNode, channelOffset = 0): Pt[] {
   const dx = b.cx - a.cx
   const dy = b.cy - a.cy
   const sameY = Math.abs(dy) < 2
