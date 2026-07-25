@@ -710,8 +710,12 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
   }
 
   // Etiqueta de nodo contra FIGURA ajena: el texto cuelga fuera de su propia
-  // caja, así que puede aterrizar dentro de la de al lado sin que ninguna de
-  // las comprobaciones anteriores lo note.
+  // caja, así que podría aterrizar dentro de la de al lado.
+  //
+  // Hoy es inalcanzable —el aire entre filas de GEO es mayor que la etiqueta
+  // más alta— y por eso no tiene caso hostil en los tests: no supe construir
+  // uno sin tocar la geometría. Se queda como red para el día que alguien
+  // apriete `rowH` o `lanePadY` buscando diagramas más compactos.
   for (const et of etiquetasNodo) {
     for (const n of nodes) {
       if (n.id === et.id) continue
