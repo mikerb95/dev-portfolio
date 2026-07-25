@@ -170,13 +170,17 @@ const monitoreo: BpmnProcess = {
     { id: 'resp', type: 'task', label: 'Responde o agota el tiempo', lane: 'svc', col: 3 },
     { id: 'reg', type: 'taskService', label: 'Registra el sondeo y el estado del monitor', lane: 'db', col: 4 },
     { id: 'gok', type: 'gatewayExclusive', label: '¿Sondeo correcto?', lane: 'api', col: 5 },
+    // El carril del registro se lee en tres bandas: fallo nuevo, fallo repetido
+    // y recuperación. Mezclarlas en dos filas hacía que las flechas de una rama
+    // pasaran por encima de las tareas de la otra.
     { id: 'gabierto', type: 'gatewayExclusive', label: '¿Ya había incidente?', lane: 'db', col: 6 },
-    { id: 'gcerrar', type: 'gatewayExclusive', label: '¿Había incidente abierto?', lane: 'db', col: 6, row: 1 },
+    { id: 'gcerrar', type: 'gatewayExclusive', label: '¿Había incidente abierto?', lane: 'db', col: 6, row: 2 },
     { id: 'abre', type: 'taskService', label: 'Abre el incidente y marca caída', lane: 'db', col: 7 },
     { id: 'act', type: 'taskService', label: 'Actualiza el último error', lane: 'db', col: 7, row: 1 },
-    { id: 'cierra', type: 'taskService', label: 'Cierra el incidente con su duración', lane: 'db', col: 8, row: 1 },
+    { id: 'cierra', type: 'taskService', label: 'Cierra el incidente con su duración', lane: 'db', col: 8, row: 2 },
+    { id: 'estable', type: 'endEvent', label: 'Nada que cerrar', lane: 'db', col: 6, row: 3 },
     { id: 'caida', type: 'taskSend', label: 'Aviso de servicio caído', lane: 'op', col: 8 },
-    { id: 'recu', type: 'taskSend', label: 'Aviso de recuperación', lane: 'op', col: 9 },
+    { id: 'recu', type: 'taskSend', label: 'Aviso de recuperación', lane: 'op', col: 9, row: 1 },
     { id: 'fin', type: 'endEvent', label: 'Estado publicado en la página pública', lane: 'api', col: 10 },
   ],
   flows: [
@@ -187,16 +191,18 @@ const monitoreo: BpmnProcess = {
     { from: 'resp', to: 'reg' },
     { from: 'reg', to: 'gok' },
     { from: 'gok', to: 'gabierto', label: 'no' },
-    { from: 'gok', to: 'gcerrar', label: 'sí' },
+    // Las dos ramas de la compuerta bajan por canales distintos para no salir
+    // encimadas del mismo punto.
+    { from: 'gok', to: 'gcerrar', label: 'sí', channelOffset: 22 },
     { from: 'gabierto', to: 'abre', label: 'no' },
     { from: 'gabierto', to: 'act', label: 'sí' },
     { from: 'gcerrar', to: 'cierra', label: 'sí' },
+    { from: 'gcerrar', to: 'estable', label: 'no' },
     { from: 'abre', to: 'caida' },
     { from: 'cierra', to: 'recu' },
     { from: 'caida', to: 'fin' },
     { from: 'recu', to: 'fin' },
     { from: 'act', to: 'fin' },
-    { from: 'gcerrar', to: 'fin', label: 'no' },
   ],
 }
 
