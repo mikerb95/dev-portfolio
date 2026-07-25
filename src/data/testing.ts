@@ -45,7 +45,7 @@ export const NIVELES: Nivel[] = [
     nombre: 'Unitario / lógica pura',
     herramienta: 'Vitest',
     pregunta: '¿Esta función devuelve lo correcto para cada entrada, incluidas las raras?',
-    volumen: '680 tests sobre funciones sin efectos',
+    volumen: '696 tests sobre funciones sin efectos',
     archivos: 'tests/*.test.ts (39 archivos)',
     cuando: 'push',
     bloquea: true,
@@ -275,7 +275,7 @@ export const PIRAMIDE: EstratoPiramide[] = [
   {
     id: 'unitario',
     nombre: 'Unitarias',
-    tests: 680,
+    tests: 696,
     velocidad: 'milisegundos',
     proposito: 'Lógica pura, sin BD ni red. Baratas: por eso son la mayoría.',
   },
@@ -303,7 +303,7 @@ export const PIPELINE: EtapaPipeline[] = [
     dispara: 'A mano, mientras escribo código',
     duracion: '~4 s la suite completa',
     pasos: [
-      'npm test — los 783 tests de Vitest',
+      'npm test — los 799 tests de Vitest',
       'npm run test:e2e:ui — Playwright en modo inspector, si toqué una página',
       'npx astro check — type-check de todo el proyecto',
     ],
@@ -412,9 +412,9 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Todo verde',
     resumen: 'El camino feliz: el código llega a producción y se queda.',
     pasos: [
-      { etapa: 'local', estado: 'ok', texto: '783 tests en verde. Push.' },
+      { etapa: 'local', estado: 'ok', texto: '799 tests en verde. Push.' },
       { etapa: 'push', estado: 'ok', texto: 'CI, Security y Accessibility arrancan en paralelo.' },
-      { etapa: 'ci', estado: 'ok', texto: 'Vitest 783/783 · build OK · 45 e2e en verde.' },
+      { etapa: 'ci', estado: 'ok', texto: 'Vitest 799/799 · build OK · 45 e2e en verde.' },
       { etapa: 'deploy', estado: 'ok', texto: 'Vercel publica. /api/health ya devuelve el SHA nuevo.' },
       { etapa: 'verify', estado: 'ok', texto: '3 de 3 health checks con HTTP 200.' },
       { etapa: 'operacion', estado: 'ok', texto: 'Los monitores siguen en verde. Run reportado al panel LAB.' },
@@ -440,7 +440,7 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Deploy insano → rollback',
     resumen: 'Pasa todos los tests y aun así rompe producción. El escenario que nadie enseña.',
     pasos: [
-      { etapa: 'local', estado: 'ok', texto: '783 tests en verde. Todo correcto.' },
+      { etapa: 'local', estado: 'ok', texto: '799 tests en verde. Todo correcto.' },
       { etapa: 'push', estado: 'ok', texto: 'CI arranca.' },
       { etapa: 'ci', estado: 'ok', texto: 'Suite completa en verde, build OK, e2e en verde.' },
       { etapa: 'deploy', estado: 'ok', texto: 'Vercel publica la versión nueva en codebymike.tech.' },
@@ -661,7 +661,7 @@ export const PENDIENTES = [
 // ── Comandos ────────────────────────────────────────────────────────────────
 
 export const COMANDOS = [
-  { cmd: 'npm test', desc: 'Los 783 tests de Vitest. ~4 segundos.' },
+  { cmd: 'npm test', desc: 'Los 799 tests de Vitest. ~4 segundos.' },
   { cmd: 'npm run test:watch', desc: 'Modo interactivo: re-ejecuta solo lo que toca el archivo que estás editando.' },
   { cmd: 'npm run test:coverage', desc: 'Genera el reporte HTML en coverage/ para ver qué líneas no toca nadie.' },
   { cmd: 'npm run test:e2e', desc: 'Playwright. Siembra dos bases desechables y levanta el servidor solo.' },
@@ -720,8 +720,8 @@ export const GLOSARIO = [
 // reporta el pipeline: 1237/2258 líneas de src/lib/**.
 export const METRICAS_REFERENCIA = {
   fecha: '24 jul 2026',
-  tests: 783,
-  suites: 187,
+  tests: 799,
+  suites: 188,
   archivos: 46,
   e2e: 45,
   e2eSpecs: 6,
