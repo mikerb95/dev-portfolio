@@ -218,7 +218,7 @@ export function route(a: PlacedNode, b: PlacedNode, channelOffset = 0): Pt[] {
   if (dx > 0) {
     const start = port(a, 'r')
     const end = port(b, 'l')
-    const midX = (start.x + end.x) / 2
+    const midX = (start.x + end.x) / 2 + channelOffset
     return [start, { x: midX, y: start.y }, { x: midX, y: end.y }, end]
   }
 
