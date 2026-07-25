@@ -104,15 +104,15 @@ const L = (path: string) => localizePath(path, locale)
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
               <span class="w-2 h-2 rounded-full bg-cyan pulse-dot"></span>
-              <span class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-100">Formulario</span>
+              <span class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-100">{c.form.badge}</span>
             </div>
-            <span class="text-[11px] font-mono text-ink-300" id="field-count">0/4 campos</span>
+            <span class="text-[11px] font-mono text-ink-300" id="field-count" data-template={c.form.fieldCount}>{c.form.fieldCount.replace('{n}', '0').replace('{total}', '3')}</span>
           </div>
 
           <form id="contact-form" class="grid md:grid-cols-2 gap-4">
             <label class="block">
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Nombre</span>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.nameLabel}</span>
                 <span class="text-[10px] font-mono text-ink-300" id="hint-name"></span>
               </div>
               <input
@@ -120,14 +120,14 @@ const L = (path: string) => localizePath(path, locale)
                 name="name"
                 type="text"
                 required
-                placeholder="Tu nombre"
+                placeholder={c.form.namePlaceholder}
                 class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
               />
             </label>
 
             <label class="block">
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Email</span>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.emailLabel}</span>
                 <span class="text-[10px] font-mono text-ink-300" id="hint-email"></span>
               </div>
               <input
@@ -135,28 +135,28 @@ const L = (path: string) => localizePath(path, locale)
                 name="email"
                 type="email"
                 required
-                placeholder="tu@email.com"
+                placeholder={c.form.emailPlaceholder}
                 class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
               />
             </label>
 
             <label class="block">
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Asunto</span>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.subjectLabel}</span>
                 <span class="text-[10px] font-mono text-ink-300" id="hint-subject"></span>
               </div>
               <input
                 id="subject"
                 name="subject"
                 type="text"
-                placeholder="¿De qué trata tu proyecto?"
+                placeholder={c.form.subjectPlaceholder}
                 class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
               />
             </label>
 
             <div class="md:col-span-2 block">
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Mensaje</span>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.messageLabel}</span>
                 <span class="text-[10px] font-mono text-ink-300" id="hint-body"></span>
               </div>
               <textarea
@@ -164,7 +164,7 @@ const L = (path: string) => localizePath(path, locale)
                 name="body"
                 required
                 rows="5"
-                placeholder="Cuéntame qué estás construyendo, dónde estás atascado, o qué necesitas."
+                placeholder={c.form.messagePlaceholder}
                 class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300 resize-none leading-relaxed"
               ></textarea>
             </div>
@@ -172,7 +172,7 @@ const L = (path: string) => localizePath(path, locale)
             <div class="md:col-span-2 flex items-center justify-between gap-4 pt-2">
               <div class="flex items-center gap-2 text-[11px] font-mono text-ink-300">
                 <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="11" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Enviado sobre TLS
+                {c.form.tlsNote}
               </div>
               <button
                 type="submit"
@@ -180,7 +180,7 @@ const L = (path: string) => localizePath(path, locale)
                 class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                Enviar mensaje
+                {c.form.submitCta}
               </button>
             </div>
           </form>
