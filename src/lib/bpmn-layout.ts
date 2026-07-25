@@ -25,9 +25,14 @@ export type BpmnNodeType =
   | 'taskService'
   | 'taskScript'
   | 'taskSend'
-  // Compuertas: rombos con marcador interno.
-  | 'gatewayExclusive' // X
-  | 'gatewayParallel' // +
+  // Compuertas: todas son el mismo rombo; lo que cambia el comportamiento es
+  // el marcador interno, así que dibujarlo mal cambia el significado del
+  // diagrama, no su estética.
+  | 'gatewayExclusive' // X — un solo camino
+  | 'gatewayEvent' // pentágono en doble círculo — decide el primer evento que ocurra
+  | 'gatewayParallel' // + — todos los caminos a la vez
+  | 'gatewayInclusive' // O — uno, varios o todos
+  | 'gatewayComplex' // * — condición que no cabe en las anteriores
 
 export type BpmnFlowKind = 'sequence' | 'message' | 'default'
 

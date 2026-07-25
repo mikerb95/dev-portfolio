@@ -210,6 +210,74 @@ const monitoreo: BpmnProcess = {
 
 export const procesosBpmn: BpmnProcess[] = [cobroCampo, portalAcceso, seguridad, monitoreo]
 
+/**
+ * Los cinco tipos de compuerta de BPMN.
+ *
+ * Todas se dibujan con el mismo rombo: lo único que las distingue es el
+ * marcador de dentro. Por eso van documentadas — confundir el marcador no es un
+ * desliz estético, cambia lo que el diagrama afirma que hace el sistema.
+ *
+ * Cada una se comporta distinto según divida o junte caminos, así que ambos
+ * sentidos se describen por separado.
+ */
+export const COMPUERTAS_BPMN = [
+  {
+    type: 'gatewayExclusive' as const,
+    nombre: 'Exclusiva',
+    marcador: 'una X',
+    alias: 'XOR',
+    divergencia: 'Toma UN solo camino: el primero cuya condición se cumple. Las ramas son mutuamente excluyentes.',
+    convergencia: 'Deja pasar cada camino que llega, sin esperar a los demás.',
+    ejemplo: 'Es la única que usan estos cuatro diagramas: “¿Link vigente?”, “¿Credenciales válidas?”, “¿IP bloqueada?”.',
+    usada: true,
+  },
+  {
+    type: 'gatewayEvent' as const,
+    nombre: 'Basada en eventos',
+    marcador: 'un pentágono dentro de un doble círculo',
+    alias: null,
+    divergencia:
+      'También toma un solo camino, pero no lo decide una condición que el proceso evalúa: lo decide cuál de los eventos que espera ocurre primero. Es una carrera.',
+    convergencia: 'No se usa para juntar caminos; su sentido es abrir la espera.',
+    ejemplo:
+      'Encajaría en el cobro de campo: tras enviar el link, el proceso espera a que llegue el webhook de la pasarela o a que venza la vigencia, lo que pase antes. Hoy ese vencimiento se modela como una condición evaluada al abrir el link, que es como está implementado de verdad.',
+    usada: false,
+  },
+  {
+    type: 'gatewayParallel' as const,
+    nombre: 'Paralela',
+    marcador: 'un signo +',
+    alias: 'AND',
+    divergencia: 'Activa TODOS los caminos a la vez, sin evaluar ninguna condición.',
+    convergencia: 'Espera a que lleguen todos los caminos antes de continuar. Si uno no llega, el proceso se queda ahí.',
+    ejemplo:
+      'Sería lo correcto para el chequeo de monitores si el sondeo y la verificación del certificado corrieran a la vez; hoy van en secuencia dentro de la misma tarea.',
+    usada: false,
+  },
+  {
+    type: 'gatewayInclusive' as const,
+    nombre: 'Inclusiva',
+    marcador: 'un círculo',
+    alias: 'OR',
+    divergencia: 'Activa todos los caminos cuya condición se cumple: uno, varios o todos. No son excluyentes entre sí.',
+    convergencia: 'Espera solo a los caminos que llegaron a activarse, no a todos los posibles.',
+    ejemplo:
+      'Describiría la notificación de un incidente si hubiera que avisar por push, por correo y en el panel según lo grave que sea: varios canales a la vez, no uno solo.',
+    usada: false,
+  },
+  {
+    type: 'gatewayComplex' as const,
+    nombre: 'Compleja',
+    marcador: 'un asterisco',
+    alias: null,
+    divergencia: 'Para condiciones que no caben en las anteriores; su comportamiento se explica con una expresión escrita al lado.',
+    convergencia: 'Sincroniza según esa misma expresión, por ejemplo “sigue cuando hayan llegado 3 de los 5 caminos”.',
+    ejemplo:
+      'Es la menos usada de las cinco, y con razón: si hay que leer un párrafo para saber qué hace, el dibujo dejó de comunicar por sí mismo.',
+    usada: false,
+  },
+]
+
 /** Leyenda de la notación, para que el diagrama se lea sin saber BPMN de memoria. */
 export const leyendaBpmn = [
   { type: 'startEvent' as const, label: 'Evento de inicio', desc: 'dispara el proceso' },

@@ -112,6 +112,29 @@ const anillo =
           stroke-linecap="round"
         />
       )}
+      {n.type === 'gatewayInclusive' && (
+        <circle cx={n.cx} cy={n.cy} r="7.4" fill="none" stroke="var(--bpmn-gw-stroke)" stroke-width="2.1" />
+      )}
+      {n.type === 'gatewayComplex' && (
+        <path
+          d={`M ${n.cx} ${n.cy - 8.5} V ${n.cy + 8.5} M ${n.cx - 8.5} ${n.cy} H ${n.cx + 8.5} M ${n.cx - 6} ${n.cy - 6} L ${n.cx + 6} ${n.cy + 6} M ${n.cx + 6} ${n.cy - 6} L ${n.cx - 6} ${n.cy + 6}`}
+          stroke="var(--bpmn-gw-stroke)"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      )}
+      {/* Basada en eventos: doble círculo con un pentágono dentro — el mismo
+          pentágono del evento múltiple, que es lo que la compuerta espera. */}
+      {n.type === 'gatewayEvent' && (
+        <g fill="none" stroke="var(--bpmn-gw-stroke)" stroke-width="1.3">
+          <circle cx={n.cx} cy={n.cy} r="9.4" />
+          <circle cx={n.cx} cy={n.cy} r="7.2" />
+          <path
+            d={`M ${n.cx} ${n.cy - 4.6} L ${n.cx + 4.4} ${n.cy - 1.4} L ${n.cx + 2.7} ${n.cy + 3.7} L ${n.cx - 2.7} ${n.cy + 3.7} L ${n.cx - 4.4} ${n.cy - 1.4} Z`}
+            stroke-linejoin="round"
+          />
+        </g>
+      )}
       {n.lines.length > 0 && (
         <text class="bpmn-node-label bpmn-outside" x={n.cx} y={etiquetaY} text-anchor="middle">
           {n.lines.map((line, i) => (
