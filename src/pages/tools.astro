@@ -58,39 +58,39 @@ const tools = CASES_META.map((meta, i) => ({ ...meta, ...t.tools.cases[i] }))
     </header>
 
     <div class="space-y-8">
-      {tools.map((t) => (
+      {tools.map((tool) => (
         <article class="rounded-2xl glass p-8 md:p-10 lift">
           <div class="flex items-start gap-6 mb-8">
-            <span class="font-serif italic text-4xl text-ink-300 leading-none select-none">{t.num}</span>
+            <span class="font-serif italic text-4xl text-ink-300 leading-none select-none">{tool.num}</span>
             <div>
-              <h2 class="text-2xl md:text-3xl font-medium tracking-[-.02em] text-ink-50 mb-1.5">{t.title}</h2>
-              <p class="text-[13px] font-mono text-cyan">{t.tagline}</p>
+              <h2 class="text-2xl md:text-3xl font-medium tracking-[-.02em] text-ink-50 mb-1.5">{tool.title}</h2>
+              <p class="text-[13px] font-mono text-cyan">{tool.tagline}</p>
             </div>
           </div>
 
           <div class="grid lg:grid-cols-[1fr_400px] gap-6 mb-8 items-start">
             <div class="space-y-6">
               <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
-                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-3">El problema</div>
-                <p class="text-[14px] text-ink-100 leading-relaxed">{t.problema}</p>
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-3">{t.tools.problemLabel}</div>
+                <p class="text-[14px] text-ink-100 leading-relaxed">{tool.problema}</p>
               </div>
               <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
-                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-3">La solución</div>
-                <p class="text-[14px] text-ink-100 leading-relaxed">{t.solucion}</p>
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-3">{t.tools.solutionLabel}</div>
+                <p class="text-[14px] text-ink-100 leading-relaxed">{tool.solucion}</p>
               </div>
             </div>
             <div>
-              <ToolMock kind={t.mock} />
+              <ToolMock kind={tool.mock} />
               <p class="text-[10px] font-mono text-ink-300 mt-2 text-center">
-                Recreación del panel con datos ilustrativos — los datos reales no se publican.
+                {t.tools.mockCaption}
               </p>
             </div>
           </div>
 
           <div class="mb-8">
-            <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-4">En producción</div>
+            <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-4">{t.tools.inProductionLabel}</div>
             <ul class="space-y-2.5">
-              {t.detalle.map((d) => (
+              {tool.detalle.map((d) => (
                 <li class="flex items-start gap-3 text-[14px] text-ink-100 leading-relaxed">
                   <span class="w-1 h-1 rounded-full bg-cyan mt-2.5 shrink-0"></span>
                   <span>{d}</span>
@@ -100,15 +100,15 @@ const tools = CASES_META.map((meta, i) => ({ ...meta, ...t.tools.cases[i] }))
           </div>
 
           <div class="flex flex-wrap items-center gap-1.5">
-            {t.stack.map((s) => (
+            {tool.stack.map((s) => (
               <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
                 {s}
               </span>
             ))}
-            {t.live && (
-              <a href={t.live.href} class="ml-auto inline-flex items-center gap-2 text-[13px] text-cyan hover:underline">
+            {tool.liveHref && tool.liveLabel && (
+              <a href={L(tool.liveHref)} class="ml-auto inline-flex items-center gap-2 text-[13px] text-cyan hover:underline">
                 <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
-                {t.live.label} →
+                {tool.liveLabel} →
               </a>
             )}
           </div>
