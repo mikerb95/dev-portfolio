@@ -3,6 +3,12 @@
 // reforzada por tests/i18n-dictionary.test.ts.
 
 const es = {
+  common: {
+    back: 'Volver',
+    good: 'bueno',
+    needsImprovement: 'mejorable',
+    poor: 'pobre',
+  },
   meta: {
     siteName: 'CodeByMike',
     defaultDescription:
