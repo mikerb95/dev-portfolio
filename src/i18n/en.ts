@@ -564,6 +564,57 @@ const en = {
       linkedinDetail: 'Experience, skills, and recommendations',
     },
   },
+  architecture: {
+    title: 'Architecture — CodeByMike',
+    description: 'How this site is built: a layer diagram of Astro SSR over Turso, with an external cron, RUM, and notifications, plus the design decisions behind each piece.',
+    eyebrow: 'Systems design',
+    h1Line1: 'How this is',
+    h1Line2: 'built.',
+    intro: "This site isn't a template: it's a system with a private panel, custom monitoring, and a payment gateway. Here's its anatomy —layer by layer— and the reasoning behind each decision.",
+    externalsHeading: 'External services',
+    decisionsHeading: 'Decisions and trade-offs',
+    footnoteA: 'All the code lives in a public repository as a portfolio. The decisions here are not theory: each one has its commit, its tests, and — where it applies — its security finding documented at ',
+    footnoteLinkLabel: '/security',
+    footnoteB: '.',
+    layers: [
+      {
+        tag: 'Client',
+        title: "Visitor's browser",
+        nodes: [
+          { name: 'SSR HTML + islands', detail: 'Astro ships rendered HTML; JS only where it is actually needed.' },
+          { name: 'RUM web-vitals', detail: 'Measures real LCP/INP/CLS and sends them via beacon.' },
+        ],
+      },
+      {
+        tag: 'Edge',
+        title: 'Vercel — Edge & Functions',
+        nodes: [
+          { name: 'CDN + cache', detail: 'Public pages with s-maxage + stale-while-revalidate.' },
+          { name: 'Middleware', detail: 'Auth, allowlist, security headers (CSP/HSTS), chaos flags.' },
+          { name: 'SSR Functions', detail: 'Astro server output: dynamic routes and API on Node.' },
+        ],
+      },
+      {
+        tag: 'Application',
+        title: 'Astro 7 (SSR) + Auth.js',
+        nodes: [
+          { name: '/admin panel', detail: 'CRM, costs/P&L, encrypted vault, monitors, LAB.' },
+          { name: 'API routes', detail: 'Typed REST endpoints; server-side validation.' },
+          { name: 'JWT auth', detail: 'GitHub OAuth + allowlist; revocable per-device sessions.' },
+        ],
+      },
+      {
+        tag: 'Data',
+        title: 'Turso (libSQL) + Drizzle ORM',
+        nodes: [
+          { name: 'Typed schema', detail: 'Drizzle: versioned migrations in git.' },
+          { name: 'AES-256-GCM secrets', detail: 'Credentials encrypted at rest; revealed on demand.' },
+        ],
+      },
+    ],
+    externals: [] as { name: string; role: string }[],
+    decisions: [] as { q: string; a: string }[],
+  },
 } satisfies typeof es
 
 export default en
