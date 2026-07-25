@@ -597,7 +597,7 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
   for (const e of edges) {
     for (const n of nodes) {
       if (n.id === e.from || n.id === e.to) continue
-      if (relacionado(n.id, e.from) || relacionado(n.id, e.to)) continue
+      if (exentoDeLaFlecha(n.id, e)) continue
       const box = grow(bbox(n), M)
       for (let i = 0; i < e.points.length - 1; i++) {
         if (segmentHitsBox(e.points[i], e.points[i + 1], box)) {
