@@ -79,6 +79,21 @@ function resolvePortalDemoPass(
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url
 
+  // i18n: cortar en seco un `/en/` delante de una ruta privada (admin, API,
+  // portal, cobros, gates de login). Ninguna de esas rutas tiene traducción
+  // — si se dejara pasar, cada guard de seguridad de abajo (que compara por
+  // ruta literal) sería ciego al prefijo y quedaría sin vigilancia. Ver
+  // docs/plan-i18n-en.md §3. Va antes que cualquier otra cosa, incluso el
+  // chaos engineering: no hay escenario en el que esta combinación deba
+  // ejecutar código alguno.
+  if (isLocalizedPrivateRequest(pathname)) {
+    return new Response('Not Found', { status: 404 })
+  }
+  // A partir de aquí, todo guard que clasifique la ruta usa la versión SIN
+  // prefijo de idioma — nunca `pathname` crudo — para que `/algo` y
+  // `/en/algo` reciban idéntico trato de seguridad.
+  const canonicalPath = delocalizePath(pathname)
+
   // LAB · chaos engineering: fallos inyectados por flags con TTL (máx 15 min).
   // Fail-open y con /admin, /api/admin y /api/auth excluidos por código:
   // sin flags activos este camino cuesta una lectura cacheada cada ~5s.
