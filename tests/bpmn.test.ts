@@ -133,6 +133,77 @@ describe('pointAlong', () => {
   })
 })
 
+describe('labelAnchor', () => {
+  it('aparta la etiqueta del trazo en tramos horizontales', () => {
+    const p = labelAnchor(
+      [
+        { x: 0, y: 100 },
+        { x: 200, y: 100 },
+      ],
+      26,
+    )
+    expect(p.y).toBeLessThan(100)
+    expect(p.x).toBe(26)
+  })
+
+  it('aparta la etiqueta hacia el costado en tramos verticales', () => {
+    const p = labelAnchor(
+      [
+        { x: 100, y: 0 },
+        { x: 100, y: 200 },
+      ],
+      26,
+    )
+    expect(p.x).toBeGreaterThan(100)
+    expect(p.y).toBe(26)
+  })
+})
+
+describe('labelBox', () => {
+  it('coloca la etiqueta de una compuerta por encima del rombo', () => {
+    const gw = layout({
+      id: 'x',
+      titulo: '',
+      desc: '',
+      origen: '',
+      lanes: [{ id: 'l', label: '' }],
+      nodes: [{ id: 'g', type: 'gatewayExclusive', label: '¿Sigue?', lane: 'l', col: 0 }],
+      flows: [],
+    }).nodes[0]
+    const box = labelBox(gw)!
+    expect(gw.labelAbove).toBe(true)
+    expect(box.y2).toBeLessThanOrEqual(gw.cy - gw.h / 2)
+  })
+
+  it('coloca la etiqueta de un evento por debajo del círculo', () => {
+    const ev = layout({
+      id: 'x',
+      titulo: '',
+      desc: '',
+      origen: '',
+      lanes: [{ id: 'l', label: '' }],
+      nodes: [{ id: 'e', type: 'startEvent', label: 'Arranca', lane: 'l', col: 0 }],
+      flows: [],
+    }).nodes[0]
+    const box = labelBox(ev)!
+    expect(ev.labelAbove).toBe(false)
+    expect(box.y1).toBeGreaterThanOrEqual(ev.cy + ev.h / 2)
+  })
+
+  it('no reporta caja para el texto que va dentro de una tarea', () => {
+    const t = layout({
+      id: 'x',
+      titulo: '',
+      desc: '',
+      origen: '',
+      lanes: [{ id: 'l', label: '' }],
+      nodes: [{ id: 't', type: 'taskService', label: 'Hace algo', lane: 'l', col: 0 }],
+      flows: [],
+    }).nodes[0]
+    expect(labelBox(t)).toBeNull()
+  })
+})
+
 describe('procesos BPMN documentados', () => {
   it('hay diagramas para los cuatro procesos críticos', () => {
     expect(procesosBpmn.length).toBe(4)
