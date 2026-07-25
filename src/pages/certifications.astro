@@ -81,7 +81,7 @@ const byStatus = {
       <section>
         <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
           <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-          <span>Pausados</span>
+          <span>{cert.statusPausedSection}</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {byStatus.pausado.map((c) => <CertCard cert={c} />)}
