@@ -258,6 +258,133 @@ const es = {
       ciSome: 'Consulta en vivo {ago} · último run {runAgo} ({conclusion} · {sha})',
     },
   },
+  tools: {
+    title: 'Herramientas — CodeByMike',
+    description:
+      'Casos de estudio de las herramientas que construí para operar mis proyectos y clientes: monitoreo con SLOs, P&L por proyecto, bóveda cifrada, CI/CD con rollback y chaos engineering.',
+    eyebrow: 'Herramientas a medida',
+    h1Line1: 'Las herramientas con las',
+    h1Line2: 'que opero mis proyectos.',
+    intro:
+      'No uso estas herramientas porque estén de moda: las construí porque las necesitaba. Monitoreo, finanzas, seguimiento de clientes, seguridad y despliegues — todo corre sobre este mismo sitio. Cada caso de estudio cuenta el problema real que lo originó y cómo lo resolví. La misma disciplina que aplico aquí es la que recibe cada cliente.',
+    problemLabel: 'El problema',
+    solutionLabel: 'La solución',
+    mockCaption: 'Recreación del panel con datos ilustrativos — los datos reales no se publican.',
+    inProductionLabel: 'En producción',
+    demoPortal: {
+      eyebrow: 'Portal de clientes',
+      title: 'Así es el panel que le entrego a cada cliente',
+      body: 'Estado del proyecto con uptime real, facturas que se pagan en línea, mensajería directa y documentos. Entra sin registro: son datos de un cliente inventado, y puedes probar el pago con la pasarela simulada.',
+      cta: 'Probar el portal demo',
+    },
+    closing: {
+      quote: 'La herramienta que uso contigo es la que uso conmigo.',
+      body: 'Si trabajamos juntos, tu proyecto entra a este mismo sistema: monitoreo con SLOs, seguimiento visible, credenciales cifradas y despliegues con red de seguridad.',
+      cta: 'Hablemos de tu proyecto',
+    },
+    cases: [
+      {
+        title: 'Monitoreo, SLOs y error budgets',
+        tagline: 'Observabilidad estilo SRE, construida desde cero',
+        problema:
+          'Operar sitios de clientes sin saber si están caídos hasta que alguien avisa. Los servicios de uptime genéricos no detectan un deploy roto que responde 200 con la página equivocada.',
+        solucion:
+          'Un motor de checks propio: cada sondeo valida código HTTP, contenido esperado en la respuesta y umbral de latencia. Los fallos se agrupan en incidentes (del primer fallo al primer éxito) y sobre el historial se calculan SLOs y presupuestos de error al estilo Google SRE.',
+        detalle: [
+          'SLO por servicio con burn rate: no solo "cuánto cayó", sino a qué velocidad se consume el presupuesto de error.',
+          'Alertas push instantáneas al móvil vía ntfy cuando un servicio cae o se degrada.',
+          'Vigilancia de expiración de certificados TLS y de dominios.',
+          'Los datos alimentan la página pública de status: lo que ves ahí es lo mismo que veo yo.',
+        ],
+        liveLabel: 'Ver el status público en vivo',
+      },
+      {
+        title: 'Costos y P&L por proyecto',
+        tagline: 'Saber qué cuesta operar cada cosa, al centavo',
+        problema:
+          'Hosting, dominios, base de datos, email: cada proyecto acumula servicios con facturación distinta. Sin registro, es imposible saber si un proyecto es rentable o cuánto cuesta mantenerlo al año.',
+        solucion:
+          'Un registro de servicios por proyecto (y a nivel de cuenta) con su costo y ciclo de facturación, cruzado con ingresos cobrados, pendientes y proyectados. El resultado es un P&L por proyecto: margen real, no intuición.',
+        detalle: [
+          'Normalización de ciclos de facturación (mensual, anual) a costo comparable.',
+          'Ingresos en tres estados — cobrado, pendiente, proyectado — para separar caja real de expectativa.',
+          'La lógica de P&L y manejo de dinero tiene su propia batería de tests unitarios.',
+        ],
+        liveLabel: 'Ver el P&L en la demo del panel',
+      },
+      {
+        title: 'Portal de seguimiento para clientes',
+        tagline: 'Transparencia como práctica, no como promesa',
+        problema:
+          'El cliente que no sabe en qué va su proyecto pregunta por WhatsApp, y la respuesta se pierde. La confianza se erosiona en el silencio entre actualizaciones.',
+        solucion:
+          'Cada proyecto tiene una vista de seguimiento donde el cliente ve el avance sin pedirlo: hitos, interacciones y briefings. Las páginas públicas de proyecto muestran solo lo que está marcado como visible; el resto queda en el panel.',
+        detalle: [
+          'Registro de interacciones por cliente: qué se habló, qué se acordó, cuándo.',
+          'Briefings estructurados que documentan los requisitos antes de escribir código.',
+          'Control fino de visibilidad: cada dato decide si es público, del cliente o interno.',
+        ],
+        liveLabel: null,
+      },
+      {
+        title: 'Bóveda cifrada de credenciales',
+        tagline: 'Los secretos de los proyectos, nunca en texto plano',
+        problema:
+          'Las credenciales de cada proyecto (API keys, variables de entorno) suelen terminar en notas, chats o archivos sueltos: el peor lugar posible.',
+        solucion:
+          'Una bóveda dentro del panel que cifra cada valor con AES-256-GCM antes de tocar la base de datos. La clave de cifrado vive fuera de la BD, en el entorno del servidor: un volcado de la base de datos no expone ningún secreto.',
+        detalle: [
+          'Cifrado autenticado (GCM): un valor alterado no se descifra en silencio, falla.',
+          'Backups del panel que preservan el cifrado: los secretos viajan cifrados también en el respaldo.',
+          'La ruta /admin exige sesión con allowlist revalidada en cada request, en cada capa.',
+        ],
+        liveLabel: null,
+      },
+      {
+        title: 'CI/CD con health check y rollback',
+        tagline: 'Desplegar sin miedo porque el pipeline vigila',
+        problema:
+          'Un deploy que pasa los tests todavía puede romper producción. Si nadie mira en los minutos siguientes, el sitio queda caído hasta que alguien lo nota.',
+        solucion:
+          'El pipeline de GitHub Actions despliega, verifica la salud del sitio en vivo y, si el health check falla, revierte automáticamente al deploy anterior. Cada run reporta su resultado al panel, que guarda el historial: éxito, fallo o rollback.',
+        detalle: [
+          'Health check post-deploy contra el sitio real, no contra un mock.',
+          'Rollback automático sin intervención humana cuando la verificación falla.',
+          'Historial de runs en el panel con enlace directo a los logs de cada ejecución.',
+        ],
+        liveLabel: 'Ver el laboratorio en vivo',
+      },
+      {
+        title: 'Chaos engineering controlado',
+        tagline: 'Romper el sitio a propósito para confiar en las alertas',
+        problema:
+          '¿Cómo sabes que tu monitoreo detecta una caída si nunca has visto una? Confiar en alertas que jamás se han disparado es fe, no ingeniería.',
+        solucion:
+          'Un módulo de inyección de fallos activable desde el panel: latencia extra, errores 500 o servicio muerto, por ruta. Sirve para verificar de punta a punta que los monitores detectan, el incidente se registra y la alerta llega al móvil.',
+        detalle: [
+          'Fail-open por diseño: si el motor de caos falla, el request pasa limpio. El caos jamás puede volverse un incidente real.',
+          'TTL obligatorio en cada flag: ningún fallo inyectado sobrevive más de 15 minutos, ni por olvido.',
+          'El panel y la autenticación están excluidos por código: siempre hay un botón de pánico alcanzable.',
+        ],
+        liveLabel: 'Ver los experimentos en vivo',
+      },
+      {
+        title: 'Observabilidad de seguridad (micro-SIEM propio)',
+        tagline: 'Saber quién intenta entrar, no solo esperar a que lo logre',
+        problema:
+          'Cualquier sitio con IP pública recibe sondeos automáticos desde el primer minuto: CMS ajenos, archivos de configuración, inyecciones en cada parámetro. La reacción normal es ignorar el ruido — pero esos 404 son la superficie de ataque real, y descartarlos es tirar una señal gratis.',
+        solucion:
+          'Un motor propio que corre en el middleware de cada request: un clasificador alineado con OWASP Top 10 detecta firmas de ataque, un rate limiter durable de dos capas y una lista de bloqueo frenan el abuso, endpoints señuelo confirman intención maliciosa, y un cron horario agrega eventos, detecta anomalías por estadística y aplica bloqueos automáticos escalonados.',
+        detalle: [
+          'Fail-open en cada capa: si el sensor de seguridad falla, el request pasa limpio — nunca puede tumbar el sitio que protege.',
+          'Detección de anomalías con z-score sobre una baseline de 30 días, no una caja negra: cada alerta se puede explicar con una frase.',
+          'Bloqueos con TTL obligatorio y escalado por reincidencia (1h → 24h → 7d), nunca eternos por defecto.',
+          'La vitrina pública muestra agregados reales con OPSEC deliberada: nunca IPs completas, nunca nombres de reglas, nunca qué rutas son señuelo.',
+        ],
+        liveLabel: 'Ver Security Operations en vivo',
+      },
+    ],
+  },
 }
 
 export default es
