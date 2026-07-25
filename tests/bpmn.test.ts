@@ -1,5 +1,6 @@
+import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
-import { procesosBpmn } from '../src/data/bpmn'
+import { procesosBpmn, COMPUERTAS_BPMN } from '../src/data/bpmn'
 import {
   findLayoutIssues,
   labelAnchor,
@@ -8,6 +9,7 @@ import {
   polylinePath,
   pointAlong,
   route,
+  sizeOf,
   wrap,
   type PlacedNode,
 } from '../src/lib/bpmn-layout'
@@ -260,6 +262,40 @@ describe('findLayoutIssues', () => {
     // Con la etiqueta de la compuerta arriba del rombo, la rama que baja no la
     // toca: este es justamente el choque que se corrigió.
     expect(gwAbajo.filter((i) => i.kind === 'label')).toEqual([])
+  })
+})
+
+describe('compuertas documentadas', () => {
+  it('documenta los 5 tipos de compuerta de BPMN', () => {
+    expect(COMPUERTAS_BPMN).toHaveLength(5)
+    expect(new Set(COMPUERTAS_BPMN.map((c) => c.type)).size).toBe(5)
+  })
+
+  it('cada compuerta explica qué hace al dividir y al juntar caminos', () => {
+    for (const c of COMPUERTAS_BPMN) {
+      expect(c.divergencia.length, c.nombre).toBeGreaterThan(20)
+      expect(c.convergencia.length, c.nombre).toBeGreaterThan(20)
+      expect(c.marcador.length, c.nombre).toBeGreaterThan(0)
+    }
+  })
+
+  it('el renderer sabe dibujar toda compuerta documentada', () => {
+    // sizeOf reconoce el tipo por prefijo; lo que importa es que el marcador
+    // exista en BpmnShape, así que se comprueba contra su código fuente: una
+    // compuerta documentada que se dibuje como un rombo vacío miente.
+    const shape = readFileSync(new URL('../src/components/BpmnShape.astro', import.meta.url), 'utf8')
+    for (const c of COMPUERTAS_BPMN) {
+      expect(shape.includes(`'${c.type}'`), `falta el marcador de ${c.nombre} en BpmnShape.astro`).toBe(true)
+      expect(sizeOf(c.type).w).toBeGreaterThan(0)
+    }
+  })
+
+  it('marca como en uso exactamente las que aparecen en los diagramas', () => {
+    const usadasEnDiagramas = new Set(
+      procesosBpmn.flatMap((p) => p.nodes.filter((n) => n.type.startsWith('gateway')).map((n) => n.type)),
+    )
+    const marcadasEnUso = new Set(COMPUERTAS_BPMN.filter((c) => c.usada).map((c) => c.type))
+    expect([...marcadasEnUso].sort()).toEqual([...usadasEnDiagramas].sort())
   })
 })
 

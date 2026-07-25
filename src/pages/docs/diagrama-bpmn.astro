@@ -35,7 +35,10 @@ function muestra(type: BpmnNodeType, alto: number) {
 
 const ALTO_MUESTRA = 30
 const muestras = leyendaBpmn.map((item) => ({ ...item, ...muestra(item.type, ALTO_MUESTRA) }))
-const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, 42) }))
+// Las compuertas se muestran a escala 1:1 (el rombo mide 42 px más el margen):
+// reducidas, el pentágono de la basada en eventos deja de distinguirse del
+// círculo, que es justo lo que hay que poder diferenciar aquí.
+const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, sizeOf(c.type).h + 6) }))
 ---
 
 <BaseLayout title="Diagramas BPMN">
@@ -91,7 +94,7 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, 42) })
       <p class="text-[13.5px] text-ink-300 leading-relaxed max-w-3xl mb-5">
         Las cinco se dibujan con el mismo rombo: lo único que cambia es el marcador de dentro. Ese
         detalle no es decorativo — decide si el proceso sigue por un camino o por varios, y si al
-        juntarse espera a los demás o no. De las cinco, estos diagramas solo necesitan la
+        juntarse espera a los demás o no. De las cinco, estos diagramas solo necesitan la{' '}
         <strong class="font-medium text-ink-100">exclusiva</strong>; las otras cuatro van aquí con
         el ejemplo de dónde encajarían en este sistema, para que se entienda la diferencia.
       </p>
@@ -100,7 +103,7 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, 42) })
         {compuertas.map((c) => (
           <li class="compuerta rounded-xl bg-ink-800/70 border border-white/10 p-4 transition-colors">
             <div class="flex items-start gap-3.5">
-              <span class="shrink-0 grid place-items-center w-[46px] h-[46px] rounded-lg bg-ink-850">
+              <span class="shrink-0 grid place-items-center w-[52px] h-[52px] rounded-lg bg-ink-850">
                 <svg
                   width={c.ancho}
                   height={c.alto}
