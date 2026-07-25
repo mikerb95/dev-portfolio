@@ -231,11 +231,12 @@ export function route(a: PlacedNode, b: PlacedNode, channelOffset = 0): Pt[] {
   const enter: Side = sameY ? 'b' : goingDown ? 't' : 'b'
   const start = port(a, exit)
   const end = port(b, enter)
+  const channel = CHANNEL + Math.abs(channelOffset)
   const channelY = sameY
-    ? Math.max(start.y, end.y) + CHANNEL
+    ? Math.max(start.y, end.y) + channel
     : goingDown
-      ? start.y + CHANNEL
-      : start.y - CHANNEL
+      ? start.y + channel
+      : start.y - channel
   return [start, { x: start.x, y: channelY }, { x: end.x, y: channelY }, end]
 }
 
