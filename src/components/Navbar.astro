@@ -74,8 +74,29 @@ const navLinks = [
       </span>
       <a
         href={languageHref}
-        class="hidden sm:inline-flex items-center h-8 px-3 text-[12px] font-mono rounded-full bg-white/5 text-ink-100 hover:bg-white/10 hover:text-cyan transition-colors"
+        class="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 text-[12px] font-mono rounded-full bg-white/5 text-ink-100 hover:bg-white/10 hover:text-cyan transition-colors"
       >
+        {otherLocale === 'en' && (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 7410 3900"
+            width="16"
+            height="12"
+            class="rounded-[2px] shrink-0"
+            aria-hidden="true"
+          >
+            <rect width="7410" height="3900" fill="#b22234"></rect>
+            <g fill="#fff">
+              <rect y="300" width="7410" height="300"></rect>
+              <rect y="900" width="7410" height="300"></rect>
+              <rect y="1500" width="7410" height="300"></rect>
+              <rect y="2100" width="7410" height="300"></rect>
+              <rect y="2700" width="7410" height="300"></rect>
+              <rect y="3300" width="7410" height="300"></rect>
+            </g>
+            <rect width="2964" height="2100" fill="#3c3b6e"></rect>
+          </svg>
+        )}
         {t.nav.languageSwitch}
       </a>
       <a
