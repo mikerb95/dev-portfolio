@@ -3,19 +3,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 import BpmnDiagram from '../../components/BpmnDiagram.astro'
 import BpmnShape from '../../components/BpmnShape.astro'
-import { procesosBpmn, leyendaBpmn } from '../../data/bpmn'
-import { sizeOf, type PlacedNode } from '../../lib/bpmn-layout'
+import { procesosBpmn, leyendaBpmn, COMPUERTAS_BPMN } from '../../data/bpmn'
+import { sizeOf, type BpmnNodeType, type PlacedNode } from '../../lib/bpmn-layout'
 
-// La leyenda monta la misma figura que el diagrama (BpmnShape) en un lienzo
-// ajustado a su tamaño: si cambia el dibujo de un símbolo, cambia en los dos
-// sitios. Alto de muestra fijo para que la fila quede pareja.
-const ALTO_MUESTRA = 30
-const muestras = leyendaBpmn.map((item) => {
-  const { w, h } = sizeOf(item.type)
+// Monta una figura suelta (sin carriles ni flujos) en un lienzo ajustado a su
+// tamaño, para las muestras de la leyenda y de las compuertas. Es el MISMO
+// componente que usa el diagrama: si cambia el dibujo de un símbolo, cambia en
+// los tres sitios a la vez.
+function muestra(type: BpmnNodeType, alto: number) {
+  const { w, h } = sizeOf(type)
   const pad = 3
   const node: PlacedNode = {
-    id: `leyenda-${item.type}`,
-    type: item.type,
+    id: `muestra-${type}`,
+    type,
     label: '',
     lane: 'l',
     col: 0,
@@ -30,8 +30,12 @@ const muestras = leyendaBpmn.map((item) => {
   }
   const vbW = w + pad * 2
   const vbH = h + pad * 2
-  return { ...item, node, vbW, vbH, ancho: Math.round((vbW * ALTO_MUESTRA) / vbH) }
-})
+  return { node, vbW, vbH, alto, ancho: Math.round((vbW * alto) / vbH) }
+}
+
+const ALTO_MUESTRA = 30
+const muestras = leyendaBpmn.map((item) => ({ ...item, ...muestra(item.type, ALTO_MUESTRA) }))
+const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, 42) }))
 ---
 
 <BaseLayout title="Diagramas BPMN">
