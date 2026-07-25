@@ -17,6 +17,8 @@ export type BpmnNodeType =
   | 'messageStart' // borde fino + sobre
   | 'timerStart' // borde fino + reloj
   | 'intermediateEvent' // borde doble
+  | 'timerIntermediate' // borde doble + reloj: el proceso espera aquí
+  | 'boundaryTimer' // borde doble pegado a una tarea: se dispara si tarda de más
   | 'endEvent' // borde grueso
   | 'endEventError' // borde grueso + rayo
   // Actividades: rectángulos redondeados con marcador de tipo arriba a la izquierda.
@@ -36,10 +38,20 @@ export type BpmnNodeType =
 
 export type BpmnFlowKind = 'sequence' | 'message' | 'default'
 
-export interface BpmnNode {
+interface BpmnNodeBase {
   id: string
-  type: BpmnNodeType
   label: string
+  /**
+   * Tiempo asociado al nodo (presupuesto, ventana, vigencia o cadencia). Se
+   * dibuja como anotación junto a la figura. Cada valor sale de una constante
+   * del código, no de una estimación: ver `tiempos` del proceso.
+   */
+  duracion?: string
+}
+
+/** Nodo colocado en la grilla de carriles y columnas. */
+export interface BpmnGridNode extends BpmnNodeBase {
+  type: Exclude<BpmnNodeType, 'boundaryTimer'>
   /** id del carril donde vive. */
   lane: string
   /** Columna en la grilla (0 = extremo izquierdo). Ordena la lectura izquierda→derecha. */
@@ -47,6 +59,23 @@ export interface BpmnNode {
   /** Fila dentro del carril, para ramas paralelas. Por defecto 0. */
   row?: number
 }
+
+/**
+ * Evento de borde: no ocupa celda propia, va pegado al borde de la tarea que
+ * vigila. Modelado como tipo aparte para que sea imposible declarar uno sin
+ * anfitrión o con una columna que nadie usaría.
+ */
+export interface BpmnBoundaryNode extends BpmnNodeBase {
+  type: 'boundaryTimer'
+  /** id de la tarea a cuyo borde se pega. */
+  attachedTo: string
+  /** false = no interrumpe la tarea (borde punteado). Por defecto interrumpe. */
+  interrumpe?: boolean
+}
+
+export type BpmnNode = BpmnGridNode | BpmnBoundaryNode
+
+export const isBoundary = (n: BpmnNode): n is BpmnBoundaryNode => n.type === 'boundaryTimer'
 
 export interface BpmnFlow {
   from: string
@@ -77,6 +106,21 @@ export interface BpmnProcess {
   nodes: BpmnNode[]
   flows: BpmnFlow[]
   nota?: string
+  /**
+   * Los tiempos del proceso con su procedencia. Un diagrama que dice "72 h" sin
+   * decir de dónde sale ese 72 es una afirmación sin respaldo: cada fila cita
+   * la constante del código que la fija, para poder contrastarla.
+   */
+  tiempos?: TiempoProceso[]
+}
+
+export interface TiempoProceso {
+  concepto: string
+  valor: string
+  /** Constante y archivo donde está fijado el valor. */
+  origen: string
+  /** Por qué ese número y no otro. */
+  razon?: string
 }
 
 // ── Geometría ───────────────────────────────────────────────────────────────
@@ -87,6 +131,7 @@ export const GEO = {
   taskW: 134,
   taskH: 58,
   eventD: 36,
+  boundaryD: 30,
   gwD: 42,
   lanePadY: 34,
   laneHeaderW: 34,
@@ -103,6 +148,9 @@ export interface Size {
 export function sizeOf(type: BpmnNodeType): Size {
   if (type.startsWith('gateway')) return { w: GEO.gwD, h: GEO.gwD }
   if (type.startsWith('task')) return { w: GEO.taskW, h: GEO.taskH }
+  // El evento de borde va algo más pequeño para que se lea como pegado a la
+  // tarea y no como un evento suelto que quedó encima.
+  if (type === 'boundaryTimer') return { w: GEO.boundaryD, h: GEO.boundaryD }
   // Todo lo demás es un evento (círculo).
   return { w: GEO.eventD, h: GEO.eventD }
 }
@@ -115,7 +163,14 @@ export interface Pt {
   y: number
 }
 
-export interface PlacedNode extends BpmnNode {
+export interface PlacedNode extends BpmnNodeBase {
+  type: BpmnNodeType
+  lane: string
+  col: number
+  row: number
+  /** Solo en eventos de borde: id de la tarea a la que están pegados. */
+  attachedTo?: string
+  interrumpe?: boolean
   cx: number
   cy: number
   w: number
@@ -341,13 +396,51 @@ export interface Box {
   y2: number
 }
 
-/** Caja que ocupa la etiqueta de un nodo cuando se dibuja fuera de la figura. */
+/**
+ * Caja que ocupa el texto que un nodo dibuja FUERA de su figura: la etiqueta de
+ * eventos y compuertas, y la anotación de duración de cualquier nodo. Devuelve
+ * la unión de ambas, que es lo que hay que mantener libre de flechas.
+ */
 export function labelBox(n: PlacedNode): Box | null {
-  if (!n.outside || n.lines.length === 0) return null
-  const w = Math.max(...n.lines.map((l) => l.length)) * CHAR_W + 6
-  const h = n.lines.length * LINE_H + 4
-  const y1 = n.labelAbove ? n.cy - n.h / 2 - 6 - h : n.cy + n.h / 2 + 4
-  return { x1: n.cx - w / 2, x2: n.cx + w / 2, y1, y2: y1 + h }
+  const cajas: Box[] = []
+
+  if (n.outside && n.lines.length > 0) {
+    const w = Math.max(...n.lines.map((l) => l.length)) * CHAR_W + 6
+    const h = n.lines.length * LINE_H + 4
+    const y1 = n.labelAbove ? n.cy - n.h / 2 - 6 - h : n.cy + n.h / 2 + 4
+    cajas.push({ x1: n.cx - w / 2, x2: n.cx + w / 2, y1, y2: y1 + h })
+  }
+
+  if (n.duracion) {
+    const w = n.duracion.length * CHAR_W + 10
+    const y1 = duracionY(n) - 9
+    cajas.push({ x1: n.cx - w / 2, x2: n.cx + w / 2, y1, y2: y1 + 15 })
+  }
+
+  if (cajas.length === 0) return null
+  return cajas.reduce((a, b) => ({
+    x1: Math.min(a.x1, b.x1),
+    x2: Math.max(a.x2, b.x2),
+    y1: Math.min(a.y1, b.y1),
+    y2: Math.max(a.y2, b.y2),
+  }))
+}
+
+/**
+ * Línea base de la anotación de duración.
+ *
+ * Debajo de la figura salvo en las compuertas: ahí abajo es donde salen las
+ * ramas con sus "sí"/"no", así que el tiempo se apila arriba, encima de la
+ * etiqueta. En un evento el texto va primero y el tiempo justo debajo.
+ */
+export function duracionY(n: PlacedNode): number {
+  if (n.labelAbove) {
+    const primeraLinea = n.cy - n.h / 2 - 8 - Math.max(0, n.lines.length - 1) * LINE_H
+    return primeraLinea - LINE_H
+  }
+  const bajoLaFigura = n.cy + n.h / 2 + 13
+  if (!n.outside || n.lines.length === 0) return bajoLaFigura
+  return bajoLaFigura + n.lines.length * LINE_H
 }
 
 /** Caja de la etiqueta de un flujo, centrada en su ancla. */
@@ -359,9 +452,14 @@ export function flowLabelBox(label: string, at: Pt): Box {
 // ── Layout ──────────────────────────────────────────────────────────────────
 
 export function layout(process: BpmnProcess): Layout {
+  // Los eventos de borde no ocupan celda: su sitio sale del de su anfitrión, así
+  // que se colocan en una segunda pasada.
+  const gridNodes = process.nodes.filter((n): n is BpmnGridNode => !isBoundary(n))
+  const boundaryNodes = process.nodes.filter(isBoundary)
+
   const rowsPerLane = new Map<string, number>()
   for (const lane of process.lanes) rowsPerLane.set(lane.id, 1)
-  for (const n of process.nodes) {
+  for (const n of gridNodes) {
     const rows = (n.row ?? 0) + 1
     rowsPerLane.set(n.lane, Math.max(rowsPerLane.get(n.lane) ?? 1, rows))
   }
@@ -376,11 +474,11 @@ export function layout(process: BpmnProcess): Layout {
   }
   const laneById = new Map(lanes.map((l) => [l.id, l]))
 
-  const maxCol = process.nodes.reduce((m, n) => Math.max(m, n.col), 0)
+  const maxCol = gridNodes.reduce((m, n) => Math.max(m, n.col), 0)
   const width = GEO.laneHeaderW + GEO.padX + maxCol * GEO.colW + GEO.taskW + GEO.padRight
   const height = y
 
-  const nodes: PlacedNode[] = process.nodes.map((n) => {
+  const nodes: PlacedNode[] = gridNodes.map((n) => {
     const lane = laneById.get(n.lane)
     if (!lane) throw new Error(`El nodo "${n.id}" apunta al carril inexistente "${n.lane}"`)
     const { w, h } = sizeOf(n.type)
@@ -400,6 +498,30 @@ export function layout(process: BpmnProcess): Layout {
   })
 
   const byId = new Map(nodes.map((n) => [n.id, n]))
+
+  // Segunda pasada: los eventos de borde se cuelgan del borde inferior derecho
+  // de su tarea. Esa esquina es la que queda libre — la izquierda recibe la
+  // flecha de entrada y el marcador de tipo de tarea vive arriba.
+  for (const b of boundaryNodes) {
+    const host = byId.get(b.attachedTo)
+    if (!host) throw new Error(`El evento de borde "${b.id}" se cuelga de la tarea inexistente "${b.attachedTo}"`)
+    const { w, h } = sizeOf(b.type)
+    const placed: PlacedNode = {
+      ...b,
+      lane: host.lane,
+      col: host.col,
+      row: host.row,
+      w,
+      h,
+      cx: host.cx + host.w / 2 - w / 2 - 6,
+      cy: host.cy + host.h / 2,
+      lines: wrap(b.label, 20, 2),
+      outside: true,
+      labelAbove: false,
+    }
+    nodes.push(placed)
+    byId.set(b.id, placed)
+  }
 
   const edges: PlacedEdge[] = process.flows.map((f) => {
     const a = byId.get(f.from)
@@ -451,17 +573,31 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
 
   const cells = new Map<string, string>()
   for (const n of nodes) {
+    // Los eventos de borde comparten celda con su anfitrión a propósito.
+    if (n.attachedTo) continue
     const key = `${n.lane}:${n.col}:${n.row ?? 0}`
     const taken = cells.get(key)
     if (taken) issues.push({ kind: 'overlap', detail: `"${n.id}" y "${taken}" comparten la celda ${key}` })
     else cells.set(key, n.id)
   }
 
+  // Un evento de borde se pisa con su anfitrión por definición, y la flecha que
+  // entra a la tarea pasa cerca del evento colgado de ella: ambos casos son
+  // correctos, así que se emparejan para no reportarlos.
+  const emparejados = new Map<string, Set<string>>()
+  for (const n of nodes) {
+    if (!n.attachedTo) continue
+    emparejados.set(n.id, new Set([n.attachedTo]))
+    emparejados.set(n.attachedTo, new Set([...(emparejados.get(n.attachedTo) ?? []), n.id]))
+  }
+  const relacionado = (a: string, b: string): boolean => emparejados.get(a)?.has(b) ?? false
+
   // Margen: una flecha que pasa rozando una caja también se ve mal.
   const M = 6
   for (const e of edges) {
     for (const n of nodes) {
       if (n.id === e.from || n.id === e.to) continue
+      if (relacionado(n.id, e.from) || relacionado(n.id, e.to)) continue
       const box = grow(bbox(n), M)
       for (let i = 0; i < e.points.length - 1; i++) {
         if (segmentHitsBox(e.points[i], e.points[i + 1], box)) {

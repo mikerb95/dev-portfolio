@@ -94,6 +94,14 @@ body {
   text-transform: uppercase;
 }
 .bpmn-scope .bpmn-flow-label { font-size: 10px; fill: #c4c4cc; font-weight: 500; }
+/* Anotación de tiempo: monoespaciada y en cian tenue para que se lea como un
+   dato medible y no se confunda con el nombre de la figura. */
+.bpmn-scope .bpmn-duracion {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: #00b8c4;
+  letter-spacing: -0.01em;
+}
 .bpmn-scope .bpmn-marker,
 .bpmn-scope .bpmn-event-icon {
   fill: none;

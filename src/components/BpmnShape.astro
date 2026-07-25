@@ -6,7 +6,7 @@
 // Los colores y las clases de texto se definen en `.bpmn-scope`
 // (src/styles/global.css) porque este componente se usa dentro de dos árboles
 // distintos y los estilos con scope de Astro no cruzarían de uno al otro.
-import type { PlacedNode } from '../lib/bpmn-layout'
+import { duracionY, type PlacedNode } from '../lib/bpmn-layout'
 
 interface Props {
   node: PlacedNode
@@ -16,6 +16,10 @@ const { node: n } = Astro.props
 
 const esTarea = n.type.startsWith('task')
 const esCompuerta = n.type.startsWith('gateway')
+const esReloj = n.type === 'timerStart' || n.type === 'timerIntermediate' || n.type === 'boundaryTimer'
+// Doble anillo: eventos intermedios y de borde. Es lo que los separa a la vista
+// de un inicio (anillo fino) o un fin (anillo grueso).
+const anilloDoble = n.type === 'intermediateEvent' || n.type === 'timerIntermediate' || n.type === 'boundaryTimer'
 
 // Línea base del primer renglón de la etiqueta externa. Arriba se apila hacia
 // atrás (la última línea queda pegada a la figura); abajo, hacia adelante.
@@ -24,15 +28,23 @@ const etiquetaY = n.labelAbove
   : n.cy + n.h / 2 + 13
 
 /** El anillo exterior es lo que distingue a los eventos entre sí en BPMN. */
-const anillo =
-  n.type === 'intermediateEvent'
-    ? { grosor: 1.4, doble: true, color: 'var(--bpmn-line)' }
-    : n.type === 'endEventError'
-      ? { grosor: 3.2, doble: false, color: 'var(--bpmn-error)' }
-      : n.type.startsWith('endEvent')
-        ? { grosor: 3.2, doble: false, color: 'var(--bpmn-end)' }
-        : { grosor: 1.4, doble: false, color: 'var(--bpmn-start)' }
+const anillo = anilloDoble
+  ? { grosor: 1.4, doble: true, color: 'var(--bpmn-line)' }
+  : n.type === 'endEventError'
+    ? { grosor: 3.2, doble: false, color: 'var(--bpmn-error)' }
+    : n.type.startsWith('endEvent')
+      ? { grosor: 3.2, doble: false, color: 'var(--bpmn-end)' }
+      : { grosor: 1.4, doble: false, color: 'var(--bpmn-start)' }
+
+// Anotación de tiempo: se dibuja siempre, sea el nodo tarea o evento.
+const tiempoY = duracionY(n)
 ---
+
+{n.duracion && (
+  <text class="bpmn-duracion" x={n.cx} y={tiempoY} text-anchor="middle">
+    {n.duracion}
+  </text>
+)}
 
 {
   esTarea && (
@@ -158,9 +170,18 @@ const anillo =
         fill="var(--bpmn-event-fill)"
         stroke={anillo.color}
         stroke-width={anillo.grosor}
+        stroke-dasharray={n.interrumpe === false ? '3 2.5' : undefined}
       />
       {anillo.doble && (
-        <circle cx={n.cx} cy={n.cy} r={n.w / 2 - 3.4} fill="none" stroke="var(--bpmn-line)" stroke-width="1.4" />
+        <circle
+          cx={n.cx}
+          cy={n.cy}
+          r={n.w / 2 - 3.4}
+          fill="none"
+          stroke="var(--bpmn-line)"
+          stroke-width="1.4"
+          stroke-dasharray={n.interrumpe === false ? '3 2.5' : undefined}
+        />
       )}
       <g class="bpmn-event-icon" transform={`translate(${n.cx} ${n.cy})`}>
         {(n.type === 'messageStart' || n.type === 'intermediateEvent') && (
@@ -169,10 +190,10 @@ const anillo =
             <path d="M -6.1 -4.1 L 0 0.6 L 6.1 -4.1" />
           </g>
         )}
-        {n.type === 'timerStart' && (
+        {esReloj && (
           <g>
-            <circle cx="0" cy="0" r="6.4" />
-            <path d="M 0 -3.6 V 0 L 2.6 1.7" />
+            <circle cx="0" cy="0" r={n.type === 'boundaryTimer' ? 5.2 : 6.4} />
+            <path d={n.type === 'boundaryTimer' ? 'M 0 -3 V 0 L 2.2 1.4' : 'M 0 -3.6 V 0 L 2.6 1.7'} />
           </g>
         )}
         {n.type === 'endEventError' && (

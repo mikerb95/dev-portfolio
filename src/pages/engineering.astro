@@ -331,7 +331,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
                         {interpolate(e.vitals.worstPath, {
                           path: v.worstPath.path,
                           value: formatVital(v.metric, v.worstPath.p75),
-                        }).split(v.worstPath.path).map((part, i) => i === 0 ? <>{part}<span class="font-mono text-ink-100">{v.worstPath!.path}</span></> : part)}
+                        })}
                       </div>
                     )}
                   </>

@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { procesosBpmn, COMPUERTAS_BPMN } from '../src/data/bpmn'
 import {
   findLayoutIssues,
+  isBoundary,
   labelAnchor,
   labelBox,
   layout,
@@ -322,6 +323,37 @@ describe('procesos BPMN documentados', () => {
         expect(huerfanos).toEqual([])
       })
 
+      it('todo evento de borde se cuelga de una tarea real y no recibe flechas', () => {
+        for (const b of proc.nodes.filter(isBoundary)) {
+          const host = proc.nodes.find((n) => n.id === b.attachedTo)
+          expect(host, `${b.id} → ${b.attachedTo}`).toBeDefined()
+          expect(host!.type.startsWith('task'), `${b.id} se cuelga de ${b.attachedTo}`).toBe(true)
+          // Un evento de borde lo dispara su temporizador, no un flujo entrante.
+          expect(proc.flows.filter((f) => f.to === b.id), `entra un flujo a ${b.id}`).toEqual([])
+          expect(proc.flows.some((f) => f.from === b.id), `${b.id} no lleva a ningún lado`).toBe(true)
+        }
+      })
+
+      it('todo tiempo declarado cita dónde está fijado', () => {
+        for (const t of proc.tiempos ?? []) {
+          expect(t.valor.length, t.concepto).toBeGreaterThan(0)
+          expect(t.origen.length, t.concepto).toBeGreaterThan(0)
+        }
+      })
+
+      it('toda duración anotada en el diagrama aparece en la tabla de tiempos', () => {
+        // Evita la deriva más fácil de cometer: cambiar el número del dibujo y
+        // dejar la tabla —que es la que cita el código— diciendo otra cosa.
+        const tabla = (proc.tiempos ?? []).map((t) => `${t.concepto} ${t.valor}`.toLowerCase()).join(' | ')
+        const numeros = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? []
+        for (const n of proc.nodes) {
+          if (!n.duracion) continue
+          for (const num of numeros(n.duracion)) {
+            expect(tabla.includes(num), `"${n.duracion}" (${n.id}): el ${num} no aparece en los tiempos`).toBe(true)
+          }
+        }
+      })
+
       it('tiene exactamente un inicio y al menos un fin', () => {
         const inicios = proc.nodes.filter((n) => n.type.endsWith('Start') || n.type === 'startEvent')
         const fines = proc.nodes.filter((n) => n.type.startsWith('endEvent'))
@@ -343,6 +375,11 @@ describe('procesos BPMN documentados', () => {
         const inicio = proc.nodes.find((n) => n.type.endsWith('Start') || n.type === 'startEvent')!
         const salidas = new Map<string, string[]>()
         for (const f of proc.flows) salidas.set(f.from, [...(salidas.get(f.from) ?? []), f.to])
+        // Un evento de borde se alcanza a través de la tarea que vigila: no le
+        // llega ninguna flecha, pero es alcanzable en cuanto la tarea corre.
+        for (const b of proc.nodes.filter(isBoundary)) {
+          salidas.set(b.attachedTo, [...(salidas.get(b.attachedTo) ?? []), b.id])
+        }
 
         const vistos = new Set<string>([inicio.id])
         const pila = [inicio.id]
