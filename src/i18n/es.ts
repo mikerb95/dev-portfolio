@@ -142,6 +142,7 @@ const es = {
       ],
     },
     lab: {
+      sectionLabel_UNUSED_ANCHOR: '',
       sectionLabel: 'Laboratorio en vivo',
       badge: 'Demo interactiva · seguridad',
       titleLine1: 'Sala de espejos:',
