@@ -3,7 +3,12 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import { db } from '../db'
 import { securityEvents, blockedIps } from '../db/schema'
 import { and, gte, sql } from 'drizzle-orm'
-import { THREAT_CATEGORY_LABELS } from '../lib/security/classify'
+import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizePath } from '../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const s = t.security
+const L = (path: string) => localizePath(path, locale)
 
 // Página pública de seguridad. Documenta hallazgos reales de una auditoría
 // sobre este mismo repositorio, mapeados a OWASP Top 10, con el commit que
