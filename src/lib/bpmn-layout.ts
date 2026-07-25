@@ -634,7 +634,6 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
   for (const e of edges) {
     for (const et of etiquetasNodo) {
       if (et.id === e.from || et.id === e.to) continue
-      if (exentoDeLaFlecha(et.id, e)) continue
       for (let i = 0; i < e.points.length - 1; i++) {
         if (segmentHitsBox(e.points[i], e.points[i + 1], et.box)) {
           issues.push({ kind: 'label', detail: `el flujo ${e.from} → ${e.to} cruza la etiqueta de "${et.id}"` })
