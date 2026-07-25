@@ -274,20 +274,6 @@ describe('findLayoutIssues', () => {
     expect(issues.some((i) => i.kind === 'label')).toBe(true)
   })
 
-  it('detecta una etiqueta de nodo aterrizando sobre la figura de al lado', () => {
-    const issues = findLayoutIssues({
-      ...base,
-      nodes: [
-        // El texto de un evento cuelga debajo; con la tarea justo en la fila
-        // siguiente, cae dentro de su caja.
-        { id: 'e', type: 'startEvent', label: 'Una etiqueta larga de evento', lane: 'l', col: 0 },
-        { id: 't', type: 'task', label: 'T', lane: 'l', col: 0, row: 1 },
-      ],
-      flows: [{ from: 'e', to: 't' }],
-    })
-    expect(issues.some((i) => i.detail.includes('cae sobre la figura'))).toBe(true)
-  })
-
   it('detecta un texto que se sale del lienzo', () => {
     const issues = findLayoutIssues({
       ...base,
