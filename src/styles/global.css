@@ -98,8 +98,7 @@ body {
    ninguna flecha puede cruzar. */
 .bpmn-scope .bpmn-outside,
 .bpmn-scope .bpmn-duracion,
-.bpmn-scope .bpmn-flow-label,
-.bpmn-scope .bpmn-lane-label {
+.bpmn-scope .bpmn-flow-label {
   paint-order: stroke fill;
   stroke: var(--bpmn-lane-a);
   stroke-width: 3.5px;
