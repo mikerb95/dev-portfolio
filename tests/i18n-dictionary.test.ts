@@ -70,6 +70,9 @@ describe('paridad del diccionario es/en', () => {
         'notFound.eyebrow',
         'notFound.title',
         'footer.groups.operacion.status',
+        'engineering.pipeline.commitLabel',
+        'engineering.pipeline.testsLabel',
+        'engineering.uptime.mttr',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal
