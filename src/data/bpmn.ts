@@ -79,8 +79,8 @@ const portalAcceso: BpmnProcess = {
     { id: 'hash', type: 'taskScript', label: 'Deriva scrypt y consume el token', lane: 'sistema', col: 6 },
     { id: 'login', type: 'taskUser', label: 'Inicia sesión', lane: 'usuario', col: 7 },
     { id: 'gcred', type: 'gatewayExclusive', label: '¿Credenciales válidas?', lane: 'sistema', col: 8 },
-    { id: 'falla', type: 'taskScript', label: 'Cuenta el intento y bloquea al llegar al tope', lane: 'sistema', col: 8, row: 1 },
     { id: 'ses', type: 'taskService', label: 'Crea la sesión y su cookie propia', lane: 'sistema', col: 9 },
+    { id: 'falla', type: 'taskScript', label: 'Cuenta el intento y bloquea al llegar al tope', lane: 'sistema', col: 9, row: 1 },
     { id: 'fin', type: 'endEvent', label: 'Acceso solo a los datos de su cliente', lane: 'usuario', col: 10 },
   ],
   flows: [
