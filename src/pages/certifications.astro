@@ -4,6 +4,12 @@ import CertCard from '../components/CertCard.astro'
 import { db } from '../db'
 import { educationMilestones } from '../db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const cert = t.certifications
+const L = (path: string) => localizePath(path, locale)
 
 const certs = await db
   .select()
