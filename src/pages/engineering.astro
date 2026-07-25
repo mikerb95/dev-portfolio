@@ -482,7 +482,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
           )}
           <div class="live-strip flex items-center gap-1.5 text-[11px] font-mono text-ink-400 mt-3 pt-2 border-t border-white/5" data-live="uptime">
             <span class="live-dot"></span>
-            <span class="live-text">Verificando en vivo…</span>
+            <span class="live-text">{e.pipeline.liveChecking}</span>
           </div>
         </Fragment>
       </CardPopover>
@@ -490,19 +490,19 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
 
     <!-- ── Verificable ── -->
     <section>
-      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Compruébalo tú mismo</h2>
+      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{e.verifiable.heading}</h2>
       <div class="grid sm:grid-cols-3 gap-3">
-        <a href="/security" class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
-          <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">Auditoría de seguridad</div>
-          <div class="text-[11px] text-ink-400 leading-relaxed">Hallazgos OWASP reales, cada uno mapeado al commit que lo corrigió.</div>
+        <a href={L('/security')} class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
+          <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">{e.verifiable.security.title}</div>
+          <div class="text-[11px] text-ink-400 leading-relaxed">{e.verifiable.security.body}</div>
         </a>
-        <a href="/status" class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
-          <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">Status operacional</div>
-          <div class="text-[11px] text-ink-400 leading-relaxed">Uptime, latencia y presupuesto de error de mi propia infraestructura.</div>
+        <a href={L('/status')} class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
+          <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">{e.verifiable.status.title}</div>
+          <div class="text-[11px] text-ink-400 leading-relaxed">{e.verifiable.status.body}</div>
         </a>
-        <a href="/tools" class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
-          <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">Herramientas internas</div>
-          <div class="text-[11px] text-ink-400 leading-relaxed">Casos de estudio de lo que construí sobre este mismo sitio.</div>
+        <a href={L('/tools')} class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
+          <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">{e.verifiable.tools.title}</div>
+          <div class="text-[11px] text-ink-400 leading-relaxed">{e.verifiable.tools.body}</div>
         </a>
       </div>
       <p class="text-[11px] text-ink-500 mt-6 leading-relaxed max-w-2xl">
