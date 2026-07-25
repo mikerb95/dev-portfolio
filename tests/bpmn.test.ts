@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { procesosBpmn } from '../src/data/bpmn'
 import {
   findLayoutIssues,
+  labelAnchor,
+  labelBox,
   layout,
   polylinePath,
   pointAlong,
