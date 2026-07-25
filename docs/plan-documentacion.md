@@ -109,6 +109,17 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
       punto (y por tanto se leían sobre el camino contrario) y una tarea sin
       salida en el modelo de seguridad.
 
+      Ampliado después con lo que pidió la sustentación: la explicación de los
+      **5 tipos de compuerta** (cada símbolo dibujado por el mismo componente
+      que el diagrama, con qué hace al dividir y al juntar caminos), y la
+      **especificidad temporal** — temporizadores de borde donde el código
+      realmente corta por tiempo (12 s del sondeo HTTP, 72 h del token de
+      invitación), anotaciones de duración sobre las figuras, y una tabla de
+      tiempos por proceso donde cada valor cita la constante que lo fija. El
+      único tiempo que no vive en el repositorio (la cadencia del cron, que se
+      configura en cron-job.org) se declara explícitamente como externo en vez
+      de inventarle un origen.
+
 El menú (`DocsNav.astro`) pasó de 10 a 18 pestañas.
 
 ## 6. Fases futuras
