@@ -14,6 +14,12 @@ const es = {
     defaultDescription:
       'Software Engineer especializado en escalabilidad, rendimiento y experiencia de usuario de clase mundial.',
   },
+  langPrompt: {
+    title: '¿Cambiar a inglés?',
+    body: 'Tu navegador está en inglés. Puedo mostrarte el sitio en ese idioma.',
+    switch: 'Switch to English',
+    stay: 'Seguir en español',
+  },
   nav: {
     diseno: 'Diseño Web',
     tools: 'Herramientas',
