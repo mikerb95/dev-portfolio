@@ -1,0 +1,164 @@
+---
+// Dibuja UNA figura BPMN ya posicionada. Vive aparte para que el diagrama
+// completo y la leyenda de notación pinten exactamente el mismo símbolo: si
+// cambia el rombo de una compuerta, cambia en los dos sitios.
+//
+// Los colores y las clases de texto se definen en `.bpmn-scope`
+// (src/styles/global.css) porque este componente se usa dentro de dos árboles
+// distintos y los estilos con scope de Astro no cruzarían de uno al otro.
+import type { PlacedNode } from '../lib/bpmn-layout'
+
+interface Props {
+  node: PlacedNode
+}
+
+const { node: n } = Astro.props
+
+const esTarea = n.type.startsWith('task')
+const esCompuerta = n.type.startsWith('gateway')
+
+/** El anillo exterior es lo que distingue a los eventos entre sí en BPMN. */
+const anillo =
+  n.type === 'intermediateEvent'
+    ? { grosor: 1.4, doble: true, color: 'var(--bpmn-line)' }
+    : n.type === 'endEventError'
+      ? { grosor: 3.2, doble: false, color: 'var(--bpmn-error)' }
+      : n.type.startsWith('endEvent')
+        ? { grosor: 3.2, doble: false, color: 'var(--bpmn-end)' }
+        : { grosor: 1.4, doble: false, color: 'var(--bpmn-start)' }
+---
+
+{
+  esTarea && (
+    <g>
+      <rect
+        x={n.cx - n.w / 2}
+        y={n.cy - n.h / 2}
+        width={n.w}
+        height={n.h}
+        rx="9"
+        fill="var(--bpmn-task-fill)"
+        stroke="var(--bpmn-task-stroke)"
+        stroke-width="1.3"
+      />
+      {/* Marcador de tipo de tarea, arriba a la izquierda como manda la notación. */}
+      <g transform={`translate(${n.cx - n.w / 2 + 7} ${n.cy - n.h / 2 + 7})`} class="bpmn-marker">
+        {n.type === 'taskUser' && (
+          <g>
+            <circle cx="5" cy="3.4" r="2.3" />
+            <path d="M 0.6 10 a 4.4 4.4 0 0 1 8.8 0" />
+          </g>
+        )}
+        {n.type === 'taskService' && (
+          <g>
+            <circle cx="5" cy="5.2" r="2.2" />
+            <path d="M 5 0.6 v 1.6 M 5 8.2 v 1.6 M 0.4 5.2 h 1.6 M 8 5.2 h 1.6 M 1.8 2 l 1.1 1.1 M 7.1 7.3 l 1.1 1.1 M 8.2 2 l -1.1 1.1 M 2.9 7.3 l -1.1 1.1" />
+          </g>
+        )}
+        {n.type === 'taskScript' && (
+          <g>
+            <path d="M 2 0.8 h 6.2 a 1.6 1.6 0 0 0 -1.6 1.6 v 6.2 a 1.6 1.6 0 0 1 -1.6 1.6 H 1.6" />
+            <path d="M 3.2 3.4 h 3.4 M 3.2 5.6 h 3.4" />
+          </g>
+        )}
+        {/* El sobre relleno usa `style` y no el atributo `fill`: una regla CSS
+            de la clase le gana a un atributo de presentación. */}
+        {n.type === 'taskSend' && (
+          <g>
+            <rect x="0.6" y="1.8" width="9" height="6.8" rx="1" style="fill: var(--bpmn-line)" />
+            <path d="M 0.9 2.3 L 5.1 5.6 L 9.3 2.3" style="stroke: var(--bpmn-task-fill)" />
+          </g>
+        )}
+      </g>
+      <text class="bpmn-node-label" x={n.cx} y={n.cy} text-anchor="middle" dominant-baseline="central">
+        {n.lines.map((line, i) => (
+          <tspan x={n.cx} dy={i === 0 ? -((n.lines.length - 1) * 13) / 2 : 13}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    </g>
+  )
+}
+
+{
+  esCompuerta && (
+    <g>
+      <path
+        d={`M ${n.cx} ${n.cy - n.h / 2} L ${n.cx + n.w / 2} ${n.cy} L ${n.cx} ${n.cy + n.h / 2} L ${n.cx - n.w / 2} ${n.cy} Z`}
+        fill="var(--bpmn-gw-fill)"
+        stroke="var(--bpmn-gw-stroke)"
+        stroke-width="1.4"
+      />
+      {n.type === 'gatewayExclusive' && (
+        <path
+          d={`M ${n.cx - 6} ${n.cy - 6} L ${n.cx + 6} ${n.cy + 6} M ${n.cx + 6} ${n.cy - 6} L ${n.cx - 6} ${n.cy + 6}`}
+          stroke="var(--bpmn-gw-stroke)"
+          stroke-width="1.9"
+          stroke-linecap="round"
+        />
+      )}
+      {n.type === 'gatewayParallel' && (
+        <path
+          d={`M ${n.cx} ${n.cy - 8} V ${n.cy + 8} M ${n.cx - 8} ${n.cy} H ${n.cx + 8}`}
+          stroke="var(--bpmn-gw-stroke)"
+          stroke-width="1.9"
+          stroke-linecap="round"
+        />
+      )}
+      {n.lines.length > 0 && (
+        <text class="bpmn-node-label bpmn-outside" x={n.cx} y={n.cy + n.h / 2 + 13} text-anchor="middle">
+          {n.lines.map((line, i) => (
+            <tspan x={n.cx} dy={i === 0 ? 0 : 12}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      )}
+    </g>
+  )
+}
+
+{
+  !esTarea && !esCompuerta && (
+    <g>
+      <circle
+        cx={n.cx}
+        cy={n.cy}
+        r={n.w / 2}
+        fill="var(--bpmn-event-fill)"
+        stroke={anillo.color}
+        stroke-width={anillo.grosor}
+      />
+      {anillo.doble && (
+        <circle cx={n.cx} cy={n.cy} r={n.w / 2 - 3.4} fill="none" stroke="var(--bpmn-line)" stroke-width="1.4" />
+      )}
+      <g class="bpmn-event-icon" transform={`translate(${n.cx} ${n.cy})`}>
+        {(n.type === 'messageStart' || n.type === 'intermediateEvent') && (
+          <g>
+            <rect x="-6.5" y="-4.5" width="13" height="9" rx="1" />
+            <path d="M -6.1 -4.1 L 0 0.6 L 6.1 -4.1" />
+          </g>
+        )}
+        {n.type === 'timerStart' && (
+          <g>
+            <circle cx="0" cy="0" r="6.4" />
+            <path d="M 0 -3.6 V 0 L 2.6 1.7" />
+          </g>
+        )}
+        {n.type === 'endEventError' && (
+          <path d="M -5 5 L -1.4 -1.6 L 1.4 1.6 L 5 -5" style="stroke: var(--bpmn-error)" />
+        )}
+      </g>
+      {n.lines.length > 0 && (
+        <text class="bpmn-node-label bpmn-outside" x={n.cx} y={n.cy + n.h / 2 + 13} text-anchor="middle">
+          {n.lines.map((line, i) => (
+            <tspan x={n.cx} dy={i === 0 ? 0 : 12}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      )}
+    </g>
+  )
+}
