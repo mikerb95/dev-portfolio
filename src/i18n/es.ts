@@ -563,6 +563,84 @@ const es = {
       linkedinDetail: 'Experiencia, skills y recomendaciones',
     },
   },
+  architecture: {
+    title: 'Arquitectura — CodeByMike',
+    description: 'Cómo está construido este sitio: diagrama de capas de Astro SSR sobre Turso, con cron externo, RUM y notificaciones, y las decisiones de diseño detrás de cada pieza.',
+    eyebrow: 'Diseño de sistemas',
+    h1Line1: 'Cómo está',
+    h1Line2: 'construido esto.',
+    intro: 'Este sitio no es una plantilla: es un sistema con un panel privado, monitoreo propio y una pasarela de pagos. Aquí está su anatomía —capa por capa— y el porqué de cada decisión.',
+    externalsHeading: 'Servicios externos',
+    decisionsHeading: 'Decisiones y trade-offs',
+    footnoteA: 'Todo el código vive en un repositorio público como portafolio. Las decisiones aquí no son teoría: cada una tiene su commit, sus tests y —cuando aplica— su hallazgo de seguridad documentado en ',
+    footnoteLinkLabel: '/security',
+    footnoteB: '.',
+    layers: [
+      {
+        tag: 'Cliente',
+        title: 'Navegador del visitante',
+        nodes: [
+          { name: 'HTML SSR + islas', detail: 'Astro entrega HTML renderizado; JS solo donde hace falta.' },
+          { name: 'RUM web-vitals', detail: 'Mide LCP/INP/CLS reales y los envía por beacon.' },
+        ],
+      },
+      {
+        tag: 'Borde',
+        title: 'Vercel — Edge & Functions',
+        nodes: [
+          { name: 'CDN + caché', detail: 'Páginas públicas con s-maxage + stale-while-revalidate.' },
+          { name: 'Middleware', detail: 'Auth, allowlist, headers de seguridad (CSP/HSTS), chaos flags.' },
+          { name: 'SSR Functions', detail: 'Astro server output: rutas dinámicas y API en Node.' },
+        ],
+      },
+      {
+        tag: 'Aplicación',
+        title: 'Astro 7 (SSR) + Auth.js',
+        nodes: [
+          { name: 'Panel /admin', detail: 'CRM, costos/P&L, bóveda cifrada, monitores, LAB.' },
+          { name: 'API routes', detail: 'Endpoints REST tipados; validación en servidor.' },
+          { name: 'Auth JWT', detail: 'GitHub OAuth + allowlist; sesiones por dispositivo revocables.' },
+        ],
+      },
+      {
+        tag: 'Datos',
+        title: 'Turso (libSQL) + Drizzle ORM',
+        nodes: [
+          { name: 'Esquema tipado', detail: 'Drizzle: migraciones versionadas en git.' },
+          { name: 'Secretos AES-256-GCM', detail: 'Credenciales cifradas en reposo; reveladas bajo demanda.' },
+        ],
+      },
+    ],
+    externals: [
+      { name: 'cron-job.org', role: 'Dispara el motor de checks cada pocos minutos (el plan Hobby solo da 1 cron/día).' },
+      { name: 'ntfy.sh', role: 'Push al móvil: caídas, SSL por vencer, sesión de admin nueva.' },
+      { name: 'GitHub Actions', role: 'CI: tests + cobertura → registra cada run y habilita rollback.' },
+      { name: 'GitHub OAuth', role: 'Único proveedor de identidad para el panel.' },
+      { name: 'Resend', role: 'Email transaccional de alertas (canal secundario).' },
+    ],
+    decisions: [
+      {
+        q: 'SSR sobre estático puro',
+        a: 'El panel privado necesita datos en vivo y auth por request. Las páginas públicas se cachean en el edge, así que pago SSR solo donde aporta y sirvo el resto casi gratis.',
+      },
+      {
+        q: 'JWT stateless, no sesiones en BD',
+        a: 'Logins sin tocar la base de datos y cero infraestructura de sesión. El punto ciego —revocar— lo resolví con un sid firmado dentro del token y una tabla de dispositivos, sin abandonar el JWT.',
+      },
+      {
+        q: 'Turso/libSQL en vez de Postgres',
+        a: 'SQLite en el edge: latencia mínima, réplicas, y un modelo mental simple para un dominio que no necesita concurrencia masiva. Drizzle mantiene el esquema tipado y las migraciones en git.',
+      },
+      {
+        q: 'Cron externo en vez del de Vercel',
+        a: 'El plan Hobby limita a un cron diario, inútil para uptime. Un cron externo golpea un endpoint autenticado por token cada pocos minutos; el cron de Vercel queda de red de seguridad. La restricción de la plataforma fue el comienzo del diseño, no el final.',
+      },
+      {
+        q: 'Fail-open en todo lo secundario',
+        a: 'Telemetría, registro de sesiones y notificaciones nunca deben tumbar el flujo principal. Si un subsistema de observabilidad falla, degrada en silencio en vez de romper la experiencia.',
+      },
+    ],
+  },
 }
 
 export default es
