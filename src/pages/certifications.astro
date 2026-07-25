@@ -49,7 +49,7 @@ const byStatus = {
 
     {certs.length === 0 && (
       <div class="rounded-2xl glass p-12 text-center">
-        <p class="text-[13px] font-mono text-ink-300">No hay certificaciones publicadas aún.</p>
+        <p class="text-[13px] font-mono text-ink-300">{cert.empty}</p>
       </div>
     )}
 
@@ -57,7 +57,7 @@ const byStatus = {
       <section class="mb-16">
         <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
           <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-          <span>En curso</span>
+          <span>{cert.statusInProgress}</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {byStatus.en_curso.map((c) => <CertCard cert={c} />)}
