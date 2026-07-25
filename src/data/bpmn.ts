@@ -439,6 +439,8 @@ export const COMPUERTAS_BPMN = [
 export const leyendaBpmn = [
   { type: 'startEvent' as const, label: 'Evento de inicio', desc: 'dispara el proceso' },
   { type: 'intermediateEvent' as const, label: 'Evento intermedio', desc: 'algo ocurre a mitad del flujo' },
+  { type: 'timerStart' as const, label: 'Inicio temporizado', desc: 'lo dispara el reloj, no una persona' },
+  { type: 'boundaryTimer' as const, label: 'Temporizador de borde', desc: 'corta la tarea si se pasa del plazo' },
   { type: 'endEvent' as const, label: 'Evento de fin', desc: 'el proceso termina bien' },
   { type: 'endEventError' as const, label: 'Fin por error', desc: 'termina por una condición de fallo' },
   { type: 'taskUser' as const, label: 'Tarea de usuario', desc: 'la ejecuta una persona' },
