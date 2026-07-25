@@ -118,6 +118,12 @@ export interface PlacedNode extends BpmnNode {
   /** Líneas ya cortadas para el <text>. */
   lines: string[]
   outside: boolean
+  /**
+   * Las etiquetas de compuerta van ARRIBA del rombo: debajo chocan con la
+   * etiqueta de la rama que baja ("no", "sí"), que se dibuja pegada al origen.
+   * Las de evento van debajo, como es convención.
+   */
+  labelAbove: boolean
 }
 
 export interface PlacedLane extends BpmnLane {
@@ -289,6 +295,52 @@ export function pointAlong(pts: Pt[], dist: number): Pt {
   return pts[pts.length - 1]
 }
 
+/**
+ * Igual que `pointAlong`, pero apartado del trazo: una etiqueta encima de su
+ * propia flecha se lee mal. Se desplaza perpendicular al tramo donde cae.
+ */
+export function labelAnchor(pts: Pt[], dist: number): Pt {
+  const p = pointAlong(pts, dist)
+  let remaining = dist
+  for (let i = 0; i < pts.length - 1; i++) {
+    const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y)
+    if (len >= remaining) {
+      const vertical = Math.abs(pts[i + 1].x - pts[i].x) < 0.001
+      return vertical ? { x: p.x + 16, y: p.y } : { x: p.x, y: p.y - 11 }
+    }
+    remaining -= len
+  }
+  return { x: p.x, y: p.y - 11 }
+}
+
+// Aproximación del ancho de una etiqueta: sin métricas de fuente en el
+// servidor, se estima por caracteres. Va holgada a propósito — el objetivo es
+// detectar choques en los tests, y quedarse corto sería peor que pasarse.
+const CHAR_W = 5.6
+const LINE_H = 12
+
+export interface Box {
+  x1: number
+  x2: number
+  y1: number
+  y2: number
+}
+
+/** Caja que ocupa la etiqueta de un nodo cuando se dibuja fuera de la figura. */
+export function labelBox(n: PlacedNode): Box | null {
+  if (!n.outside || n.lines.length === 0) return null
+  const w = Math.max(...n.lines.map((l) => l.length)) * CHAR_W + 6
+  const h = n.lines.length * LINE_H + 4
+  const y1 = n.labelAbove ? n.cy - n.h / 2 - 6 - h : n.cy + n.h / 2 + 4
+  return { x1: n.cx - w / 2, x2: n.cx + w / 2, y1, y2: y1 + h }
+}
+
+/** Caja de la etiqueta de un flujo, centrada en su ancla. */
+export function flowLabelBox(label: string, at: Pt): Box {
+  const w = label.length * CHAR_W + 8
+  return { x1: at.x - w / 2, x2: at.x + w / 2, y1: at.y - 8, y2: at.y + 8 }
+}
+
 // ── Layout ──────────────────────────────────────────────────────────────────
 
 export function layout(process: BpmnProcess): Layout {
@@ -328,6 +380,7 @@ export function layout(process: BpmnProcess): Layout {
       // Fuera de la figura hay más aire que dentro de una tarea.
       lines: wrap(n.label, outside ? 20 : 21, outside ? 2 : 3),
       outside,
+      labelAbove: outside && n.type.startsWith('gateway'),
     }
   })
 
