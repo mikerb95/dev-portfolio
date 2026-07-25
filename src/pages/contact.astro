@@ -253,7 +253,7 @@ const L = (path: string) => localizePath(path, locale)
   function updateCount() {
     const required = ['name', 'email', 'body']
     const okCount = required.filter(id => validateField(id, inputs[id as keyof typeof inputs]?.value ?? '')).length
-    fieldCount.textContent = `${okCount}/${required.length} campos`
+    fieldCount.textContent = interpolate(cf.fieldCount, { n: okCount, total: required.length })
   }
 
   Object.keys(inputs).forEach(id => {
