@@ -385,6 +385,113 @@ const es = {
       },
     ],
   },
+  security: {
+    title: 'Seguridad — CodeByMike',
+    description: 'Auditoría OWASP real sobre este mismo repositorio: hallazgos, severidad y el commit exacto que aplicó cada corrección.',
+    eyebrow: 'Auditoría OWASP',
+    h1Line1: 'Seguridad,',
+    h1Line2: 'con evidencia.',
+    intro:
+      'Una revisión real sobre el código de este sitio, mapeada a OWASP Top 10. Cada hallazgo enlaza al commit exacto que lo corrigió — verificable en el historial público del repo, no una promesa.',
+    secops: {
+      badge: 'Security Operations · en vivo',
+      intro: 'Este sitio corre su propio motor de observabilidad de seguridad (un "micro-SIEM"): un clasificador de amenazas alineado con OWASP corre en el middleware de cada request, endpoints señuelo confirman intención maliciosa, y un cron horario aplica bloqueos temporales y detecta anomalías por estadística (z-score sobre una baseline de 30 días). Los números de abajo son agregados reales de los últimos {days} días.',
+      detected: 'Detectados (30d)',
+      autoBlocks: 'Bloqueos automáticos',
+      owaspCategories: 'Categorías OWASP',
+      overheadP99: 'Overhead p99',
+      byCategoryHeading: 'Desglose por categoría (OWASP)',
+      byCategoryEmpty: 'Sin actividad hostil en la ventana.',
+      byCountryHeading: 'Origen geográfico',
+      byCountryEmpty: 'Sin datos de geolocalización en la ventana.',
+      trendHeading: 'Tendencia diaria (14 días)',
+      trendTooltipSuffix: 'eventos',
+      howItWorksHeading: 'Cómo funciona (4 capas)',
+      layers: [
+        'Mitigación DDoS automática y firewall de la plataforma (Vercel).',
+        'Clasificador propio en el middleware: firmas OWASP, rate limiting durable de dos capas, bloqueo por IP.',
+        'Registro de cada evento hostil (con deduplicación de ráfagas) y endpoints señuelo que confirman intención maliciosa.',
+        'Cron horario: agrega, detecta anomalías estadísticas, auto-bloquea reincidentes y alerta.',
+      ],
+      sloHeading: 'Objetivos de SLO del pipeline',
+      slo: {
+        overhead: 'Overhead añadido por request (p99)',
+        detectionToBlock: 'Detección → bloqueo automático',
+        detectionToAlert: 'Detección → alerta (crítico)',
+        falsePositives: 'Falsos positivos de bloqueo',
+        retention: 'Retención de eventos crudos',
+        retentionValue: '90 días',
+      },
+      opsecNote:
+        'Por diseño, esta página nunca muestra IPs completas, nombres exactos de reglas de detección ni cuáles rutas son endpoints señuelo — eso le daría el manual de juego a un atacante.',
+      categoryLabels: {
+        recon_cms: 'Reconocimiento de CMS/paneles',
+        secrets_probing: 'Búsqueda de secretos/config',
+        path_traversal: 'Path traversal / LFI',
+        injection: 'Inyección (SQLi/XSS/cmd)',
+        auth_probing: 'Sondeo de autenticación',
+        bad_bot: 'Bot ofensivo',
+        protocol_anomaly: 'Anomalía de protocolo',
+        honeypot: 'Endpoint señuelo tocado',
+        blocklist: 'Reincidencia bloqueada',
+        api_abuse: 'Abuso de API (rate limit)',
+      } as Record<string, string>,
+    },
+    findingsHeading: 'Hallazgos corregidos',
+    findings: [
+      {
+        title: 'XSS almacenado vía extensión de archivo no validada',
+        problema:
+          'El endpoint de subida de certificados derivaba la extensión del archivo final del nombre enviado por el cliente, y solo validaba el MIME type declarado por el propio cliente (fácilmente falsificable). Un archivo subido como "foo.html" con Content-Type falso quedaba servido como HTML desde /assets/certs. SVG estaba además en la lista de tipos permitidos, y un SVG puede contener <script> ejecutable.',
+        solucion: 'La extensión ahora se deriva de un mapa fijo MIME → extensión, nunca del nombre del archivo. SVG se eliminó de los tipos permitidos.',
+      },
+      {
+        title: 'Formulario de contacto sin límite de tasa ni validación',
+        problema:
+          'El endpoint público de contacto aceptaba inserciones ilimitadas a la base de datos sin rate limit, sin validar formato de email ni longitud de campos, y un JSON malformado producía un error 500 sin manejar.',
+        solucion: 'Se aplicó el rate limiter ya existente en el proyecto (5 envíos/min por IP), validación de formato de email, límites de longitud por campo y manejo explícito de JSON inválido.',
+      },
+      {
+        title: 'Sesiones sin claim de login evadían la allowlist',
+        problema: 'El middleware solo revalidaba la allowlist de GitHub cuando la sesión traía el claim "login". Una sesión sin ese claim pasaba el chequeo por defecto en vez de ser rechazada.',
+        solucion: 'El gate de admin ahora exige el claim en toda sesión: sin login válido en la allowlist, la respuesta es 403 sin excepción.',
+      },
+      {
+        title: 'Faltaban CSP y HSTS en las respuestas',
+        problema: 'El middleware ya fijaba varios headers de seguridad (nosniff, Referrer-Policy, X-Frame-Options en admin) pero no incluía Content-Security-Policy ni Strict-Transport-Security en ninguna ruta.',
+        solucion: 'Se agregó CSP restrictiva (default-src self, frame-ancestors none) y HSTS con preload a todas las respuestas, públicas y de admin.',
+      },
+    ],
+    problemLabel: 'Problema',
+    fixLabel: 'Corrección',
+    commitPrefix: 'commit',
+    controlsHeading: 'Controles ya vigentes',
+    controls: [
+      {
+        title: 'Webhooks de pago verificados',
+        detail: 'El receptor de eventos de Wompi verifica la firma HMAC antes de procesar cualquier evento, rechaza eventos con más de 6 horas de antigüedad (anti-replay) y valida que el monto/moneda coincidan con el pago esperado antes de aplicar una transición de estado.',
+      },
+      {
+        title: 'Secretos cifrados en reposo',
+        detail: 'La bóveda de credenciales cifra cada valor con AES-256-GCM (cifrado autenticado) antes de escribirlo en la base de datos. La clave vive solo en el entorno del servidor, nunca en la BD ni en los backups.',
+      },
+      {
+        title: 'Defensa en profundidad en /admin',
+        detail: 'La autorización se revalida contra la allowlist tanto en el callback de login como en el middleware, en cada request — no basta con haber iniciado sesión una vez.',
+      },
+      {
+        title: 'Consultas parametrizadas',
+        detail: 'Todo el acceso a datos pasa por Drizzle ORM con consultas parametrizadas; no hay interpolación de strings en SQL en ninguna ruta del proyecto.',
+      },
+    ],
+    methodology: {
+      heading: 'Metodología',
+      p1: 'La revisión cubrió autenticación y control de acceso, subida de archivos, endpoints públicos, manejo de secretos, webhooks de pago y headers de respuesta — el código real de este repositorio, no un ejercicio teórico.',
+      p2: 'Cada hallazgo se clasificó contra OWASP Top 10 (2021), se corrigió en un commit dedicado y se verificó con la suite de tests y un build completo antes de mergear.',
+      p3: 'Esta página se actualiza cada vez que una auditoría encuentra o corrige algo nuevo. Lo que ves aquí es el estado real del código en producción.',
+    },
+    severity: { alta: 'alta', media: 'media' },
+  },
 }
 
 export default es
