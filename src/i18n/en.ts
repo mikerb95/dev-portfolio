@@ -539,6 +539,31 @@ const en = {
       networkErrorStatus: '✗ Network error. Please try again.',
     },
   },
+  certifications: {
+    title: 'Certifications — CodeByMike',
+    description: 'Continuous technical education: certifications, courses, and skills acquired.',
+    eyebrow: 'Continuous education',
+    h1Line1: 'Education and',
+    h1Line2: 'certifications.',
+    intro: 'Continuous technical learning. Courses, certifications, and skills that complement hands-on experience.',
+    empty: 'No certifications published yet.',
+    statusInProgress: 'In progress',
+    statusCompleted: 'Completed',
+    statusCompletedSection: 'Completed',
+    statusPaused: 'Paused',
+    statusPausedSection: 'Paused',
+    viewCertificate: 'View certificate',
+    viewImage: 'View image',
+    fullProfile: {
+      heading: 'View full profile',
+      platziLabel: 'Platzi',
+      platziTitle: 'View my courses and paths',
+      platziDetail: 'Full learning history',
+      linkedinLabel: 'LinkedIn',
+      linkedinTitle: 'View professional profile',
+      linkedinDetail: 'Experience, skills, and recommendations',
+    },
+  },
 } satisfies typeof es
 
 export default en
