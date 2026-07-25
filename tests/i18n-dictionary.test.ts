@@ -73,6 +73,8 @@ describe('paridad del diccionario es/en', () => {
         'engineering.pipeline.commitLabel',
         'engineering.pipeline.testsLabel',
         'engineering.uptime.mttr',
+        'security.commitPrefix',
+        'security.secops.categoryLabels.path_traversal',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal
