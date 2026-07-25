@@ -178,7 +178,7 @@ const monitoreo: BpmnProcess = {
     { id: 'abre', type: 'taskService', label: 'Abre el incidente y marca caída', lane: 'db', col: 7 },
     { id: 'act', type: 'taskService', label: 'Actualiza el último error', lane: 'db', col: 7, row: 1 },
     { id: 'cierra', type: 'taskService', label: 'Cierra el incidente con su duración', lane: 'db', col: 8, row: 2 },
-    { id: 'estable', type: 'endEvent', label: 'Nada que cerrar', lane: 'db', col: 6, row: 3 },
+    { id: 'estable', type: 'endEvent', label: 'Nada que cerrar', lane: 'api', col: 7, row: 1 },
     { id: 'caida', type: 'taskSend', label: 'Aviso de servicio caído', lane: 'op', col: 8 },
     { id: 'recu', type: 'taskSend', label: 'Aviso de recuperación', lane: 'op', col: 9, row: 1 },
     { id: 'fin', type: 'endEvent', label: 'Estado publicado en la página pública', lane: 'api', col: 10 },
