@@ -75,6 +75,12 @@ describe('paridad del diccionario es/en', () => {
         'engineering.uptime.mttr',
         'security.commitPrefix',
         'security.secops.categoryLabels.path_traversal',
+        'contact.eyebrow',
+        'contact.form.emailLabel',
+        'contact.form.messageCharCount',
+        'contact.form.okShort',
+        'contact.linkedinLabel',
+        'contact.whatsappLabel',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal
