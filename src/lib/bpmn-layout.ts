@@ -412,17 +412,21 @@ export interface Box {
 export function labelBox(n: PlacedNode): Box | null {
   const cajas: Box[] = []
 
+  // El texto crece hacia la izquierda cuando va alineado al final.
+  const horizontal = (w: number): { x1: number; x2: number } =>
+    n.labelAlign === 'end' ? { x1: n.labelX - w, x2: n.labelX } : { x1: n.labelX - w / 2, x2: n.labelX + w / 2 }
+
   if (n.outside && n.lines.length > 0) {
     const w = Math.max(...n.lines.map((l) => l.length)) * CHAR_W + 6
     const h = n.lines.length * LINE_H + 4
     const y1 = n.labelAbove ? n.cy - n.h / 2 - 6 - h : n.cy + n.h / 2 + 4
-    cajas.push({ x1: n.cx - w / 2, x2: n.cx + w / 2, y1, y2: y1 + h })
+    cajas.push({ ...horizontal(w), y1, y2: y1 + h })
   }
 
   if (n.duracion) {
     const w = n.duracion.length * CHAR_W + 10
     const y1 = duracionY(n) - 9
-    cajas.push({ x1: n.cx - w / 2, x2: n.cx + w / 2, y1, y2: y1 + 15 })
+    cajas.push({ ...horizontal(w), y1, y2: y1 + 15 })
   }
 
   if (cajas.length === 0) return null
