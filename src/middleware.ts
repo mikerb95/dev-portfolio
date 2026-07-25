@@ -97,7 +97,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // LAB · chaos engineering: fallos inyectados por flags con TTL (máx 15 min).
   // Fail-open y con /admin, /api/admin y /api/auth excluidos por código:
   // sin flags activos este camino cuesta una lectura cacheada cada ~5s.
-  const chaosResponse = await maybeChaos(pathname)
+  const chaosResponse = await maybeChaos(canonicalPath)
   if (chaosResponse) return chaosResponse
 
   // Sensor de seguridad (micro-SIEM). FASE 0: solo observa y registra requests
@@ -153,7 +153,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Allí el JWT y WebAuthn hacen varios roundtrips por login legítimo; aquí un
     // login es UN POST. 10/min por IP no lo roza ni un cliente torpe, y le quita
     // el oxígeno a un ataque de diccionario antes de que llegue a scrypt.
-    if (isPortalAuthPath(pathname) && method === 'POST') {
+    if (isPortalAuthPath(canonicalPath) && method === 'POST') {
       const r = await enforceLimit(`portal-auth:${ip}`, { limit: 10, windowMs: 60_000, deferUntil: 0.5 })
       if (!r.allowed) {
         recordEnforcementEvent({
@@ -176,7 +176,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Endpoints de autenticación: objetivo típico de fuerza bruta. Un humano
     // legítimo nunca hace 30 requests/min aquí → excederlo es sondeo.
-    if (isAuthPath(pathname)) {
+    if (isAuthPath(canonicalPath)) {
       const r = await enforceLimit(`auth:${ip}`, { limit: 30, windowMs: 60_000, deferUntil: 0.5 })
       if (!r.allowed) {
         recordEnforcementEvent({
