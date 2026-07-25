@@ -273,7 +273,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
               <Fragment slot="panel">
                 <div class="flex items-center justify-between mb-2">
                   <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">{v.metric}</span>
-                  <span class="font-mono text-[11px] text-ink-400">{v.samples.toLocaleString('es-CO')} muestras</span>
+                  <span class="font-mono text-[11px] text-ink-400">{v.samples.toLocaleString(intlLocale(locale))} {e.vitals.samplesWord}</span>
                 </div>
                 <p class="text-ink-200 mb-3">{v.label} — {VITAL_EXPLAIN[v.metric]}</p>
 
@@ -282,8 +282,8 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
                     <div class="mb-3">
                       <div class="flex justify-between text-[11px] font-mono text-ink-400 mb-1">
                         <span>0</span>
-                        <span>bueno ≤ {formatVital(v.metric, v.goodThreshold)}</span>
-                        <span>pobre &gt; {formatVital(v.metric, v.niThreshold)}</span>
+                        <span>{interpolate(e.vitals.goodThreshold, { value: formatVital(v.metric, v.goodThreshold) })}</span>
+                        <span>{interpolate(e.vitals.poorThreshold, { value: formatVital(v.metric, v.niThreshold) })}</span>
                       </div>
                       <svg viewBox="0 0 300 14" class="w-full h-3.5" preserveAspectRatio="none">
                         <rect x="0" y="4" width={`${(v.goodThreshold / v.niThreshold) * 100 * 0.82}`} height="6" rx="3" fill="var(--color-lime)" opacity="0.35" />
