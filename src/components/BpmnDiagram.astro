@@ -246,7 +246,9 @@ function anilloEvento(type: string) {
                       <path d="M 0 -3.6 V 0 L 2.6 1.7" />
                     </g>
                   )}
-                  {n.type === 'endEventError' && <path d="M -5 5 L -1.4 -1.6 L 1.4 1.6 L 5 -5" />}
+                  {n.type === 'endEventError' && (
+                    <path d="M -5 5 L -1.4 -1.6 L 1.4 1.6 L 5 -5" style="stroke: var(--bpmn-error)" />
+                  )}
                 </g>
                 <text class="bpmn-node-label bpmn-outside" x={n.cx} y={n.cy + n.h / 2 + 13} text-anchor="middle">
                   {n.lines.map((line, i) => (
