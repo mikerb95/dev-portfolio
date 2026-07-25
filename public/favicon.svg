@@ -25,5 +25,5 @@
   />
 
   <!-- Cursor de bloque de terminal -->
-  <rect x="43" y="19" width="7.5" height="26" fill="#00f2ff" filter="url(#cursor-glow)"/>
+  <rect x="44.5" y="19" width="6.5" height="26" fill="#00f2ff" filter="url(#cursor-glow)"/>
 </svg>
