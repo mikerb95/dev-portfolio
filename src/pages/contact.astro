@@ -279,15 +279,15 @@ const L = (path: string) => localizePath(path, locale)
         form.reset()
         Object.values(inputs).forEach(el => el.classList.remove('input-ok', 'input-bad'))
         Object.values(hints).forEach(el => { el.textContent = ''; })
-        fieldCount.textContent = '0/3 campos'
-        status.textContent = '✓ Mensaje enviado. Te respondo en menos de 24 horas.'
+        fieldCount.textContent = interpolate(cf.fieldCount, { n: 0, total: 3 })
+        status.textContent = cf.successStatus
         status.className = 'mt-4 text-[13px] font-mono text-cyan'
       } else {
-        status.textContent = '✗ Error al enviar. Intenta de nuevo.'
+        status.textContent = cf.errorStatus
         status.className = 'mt-4 text-[13px] font-mono text-ember'
       }
     } catch {
-      status.textContent = '✗ Error de red. Intenta de nuevo.'
+      status.textContent = cf.networkErrorStatus
       status.className = 'mt-4 text-[13px] font-mono text-ember'
     }
 
