@@ -588,9 +588,11 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
   const anfitrionDe = new Map<string, string>()
   for (const n of nodes) if (n.attachedTo) anfitrionDe.set(n.id, n.attachedTo)
 
-  const exentoDeLaFlecha = (nodeId: string, e: PlacedEdge): boolean =>
-    // el nodo es el borde que emite la flecha, o el anfitrión de quien la emite
-    anfitrionDe.get(e.from) === nodeId || anfitrionDe.get(nodeId) === e.from
+  // Solo la figura del anfitrión queda exenta, y solo frente a la flecha que
+  // sale de SU evento de borde (que nace pegada a ese borde). La etiqueta del
+  // evento no se exime nunca: que una salida de la tarea la parta en dos es
+  // exactamente el defecto que hay que ver.
+  const exentoDeLaFlecha = (nodeId: string, e: PlacedEdge): boolean => anfitrionDe.get(e.from) === nodeId
 
   // Margen: una flecha que pasa rozando una caja también se ve mal.
   const M = 6
