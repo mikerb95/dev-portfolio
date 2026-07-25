@@ -201,7 +201,7 @@ const fmtDuration = (ms: number | null) => {
   const s = ms / 1000
   return s < 60 ? `${s.toFixed(1)} s` : `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`
 }
-const fmtDate = new Intl.DateTimeFormat('es-CO', {
+const fmtDate = new Intl.DateTimeFormat(intlLocale(locale), {
   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota',
 })
 
@@ -211,60 +211,48 @@ const ratingCls: Record<VitalRating, string> = {
   poor: 'text-ember border-ember/40 bg-ember/15',
 }
 const ratingLabel: Record<VitalRating, string> = {
-  good: 'Bueno',
-  'needs-improvement': 'Mejorable',
-  poor: 'Pobre',
+  good: e.vitals.good,
+  'needs-improvement': e.vitals.needsImprovement,
+  poor: e.vitals.poor,
 }
 
-const VITAL_EXPLAIN: Record<VitalMetric, string> = {
-  LCP: 'tiempo hasta que el elemento más grande del viewport termina de pintar.',
-  INP: 'latencia entre una interacción del usuario y el siguiente pintado en pantalla.',
-  CLS: 'cuánto se mueven los elementos visibles sin interacción del usuario.',
-  FCP: 'tiempo hasta el primer píxel de contenido visible.',
-  TTFB: 'tiempo desde la petición hasta el primer byte de respuesta del servidor.',
-}
+const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
 ---
 
-<BaseLayout
-  title="Ingeniería — CodeByMike"
-  description="Métricas de ingeniería medidas en producción: Core Web Vitals de usuarios reales, resultado del pipeline CI y disponibilidad. Datos vivos y verificables, no afirmaciones."
-  image="/og-engineering.png"
->
+<BaseLayout title={e.title} description={e.description} image="/og-engineering.png">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
-    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+    <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      Volver
+      {t.common.back}
     </a>
 
     <header class="mb-12">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/engineering</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Excelencia medida, no afirmada</span>
+        <span>{e.eyebrow}</span>
       </div>
       <h1 class="hero-line overflow-hidden text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        La calidad,<br/>en números.
+        {e.h1Line1}<br/>{e.h1Line2}
       </h1>
       <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
-        Cualquiera puede decir que su código es rápido, probado y confiable. Esta página lo
-        <em>mide</em>: Web Vitals de visitantes reales, el resultado de mi pipeline de CI y la
-        disponibilidad de mis servicios. Todo sale de datos de producción, en vivo.
-        <span class="text-ink-300">Pasa el cursor (o el foco) sobre cada tarjeta para ver el detalle.</span>
+        {e.introA}<em>{e.introEmphasis}</em>{e.introB}
+        <span class="text-ink-300"> {e.introHint}</span>
       </p>
     </header>
 
     <!-- ── Core Web Vitals (RUM) ── -->
     <section class="mb-14">
       <div class="flex items-baseline justify-between mb-5">
-        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">Core Web Vitals · usuarios reales</h2>
+        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">{e.vitals.heading}</h2>
         <span class="text-[11px] font-mono text-ink-400">
-          p75 · {VITALS_DAYS}d · {totalSamples.toLocaleString('es-CO')} muestras
+          {interpolate(e.vitals.meta, { days: VITALS_DAYS, samples: totalSamples.toLocaleString(intlLocale(locale)) })}
         </span>
       </div>
 
       {totalSamples === 0 ? (
         <div class="rounded-2xl glass p-8 text-center">
-          <p class="text-[13px] text-ink-300">Aún recolectando telemetría de visitantes reales. Vuelve pronto.</p>
+          <p class="text-[13px] text-ink-300">{e.vitals.empty}</p>
         </div>
       ) : (
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
