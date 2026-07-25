@@ -25,12 +25,7 @@ const SECOPS_WINDOW_DAYS = 30
 const DAY_MS = 86_400_000
 const secOpsSince = new Date(Date.now() - SECOPS_WINDOW_DAYS * DAY_MS)
 
-const CAT_LABELS: Record<string, string> = {
-  ...THREAT_CATEGORY_LABELS,
-  blocklist: 'Reincidencia bloqueada',
-  api_abuse: 'Abuso de API (rate limit)',
-  auth_probing: 'Sondeo de autenticación',
-}
+const CAT_LABELS: Record<string, string> = s.secops.categoryLabels
 
 const sumHits = sql<number>`coalesce(sum(${securityEvents.hits}), 0)`
 
