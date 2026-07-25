@@ -184,6 +184,14 @@ export interface PlacedNode extends BpmnNodeBase {
    * Las de evento van debajo, como es convención.
    */
   labelAbove: boolean
+  /**
+   * Los eventos de borde alinean su texto hacia la izquierda del círculo: por
+   * la derecha del borde es por donde sale su propia flecha, y una etiqueta
+   * centrada acaba partida por ese trazo.
+   */
+  labelAlign: 'middle' | 'end'
+  /** Punto de anclaje horizontal del texto, según `labelAlign`. */
+  labelX: number
 }
 
 export interface PlacedLane extends BpmnLane {
