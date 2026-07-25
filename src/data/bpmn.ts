@@ -352,7 +352,7 @@ const monitoreo: BpmnProcess = {
     { from: 'gok', to: 'gabierto', label: 'no' },
     // Las dos ramas de la compuerta bajan por canales distintos para no salir
     // encimadas del mismo punto.
-    { from: 'gok', to: 'gcerrar', label: 'sí', channelOffset: 46 },
+    { from: 'gok', to: 'gcerrar', label: 'sí', channelOffset: 24 },
     { from: 'gabierto', to: 'abre', label: 'no' },
     { from: 'gabierto', to: 'act', label: 'sí' },
     { from: 'gcerrar', to: 'cierra', label: 'sí' },
