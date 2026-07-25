@@ -1,8 +1,43 @@
 # Plan — Versión en inglés de la parte pública
 
-**Estado:** propuesto · **Creado:** 2026-07-24 · **Alcance:** todo lo que un
-visitante ve sin autenticarse. El panel `/admin`, el interior de `/portal` y
-`/cobrar` quedan en español (ver §9 para la excepción de sus puertas públicas).
+**Estado:** en implementación · **Creado:** 2026-07-24 · **Última actualización:** 2026-07-24
+**Alcance:** todo lo que un visitante ve sin autenticarse. El panel `/admin`,
+el interior de `/portal` y `/cobrar` quedan en español (ver §9 para la
+excepción de sus puertas públicas).
+
+## Estado de implementación
+
+- ✅ **Fase 0 — Infraestructura**: `astro.config.mjs` (`i18n.routing: 'manual'`),
+  `src/i18n/{config,routing,format,es,en,index}.ts`, normalización del
+  pathname en `src/middleware.ts` (`isLocalizedPrivateRequest` corta con 404
+  cualquier `/en/` delante de una ruta privada, antes de cualquier otra
+  clasificación). Tests: `tests/i18n-routing.test.ts`,
+  `tests/i18n-routing-guards.test.ts`, `tests/i18n-dictionary.test.ts`.
+  Verificado en vivo: `/en/admin`, `/en/api/*`, `/en/portal/*` → 404; `/admin`
+  en español sigue redirigiendo a login como siempre.
+- ✅ **Fase 1 — Chrome global y SEO**: `BaseLayout` (`lang`, `hreflang`
+  recíproco incl. `x-default`, canónico localizado, `og:locale` +
+  `og:locale:alternate`), `Navbar` y `Footer` traducidos con selector de
+  idioma que preserva la página actual, `404.astro` deriva el locale de la
+  URL que falló, `sitemap.xml.ts` emite ambas variantes con
+  `xhtml:link rel="alternate"`, `src/pages/en/rss.xml.ts` (vacío hasta la
+  Fase 4: no hay notas traducidas todavía — un canal sin items es válido, no
+  se mezclan idiomas en un mismo feed).
+- ✅ **Fase 2 (parcial) — Prueba de patrón**: `src/pages/index.astro` traducida
+  por completo vía diccionario (`t.home.*`); `src/pages/en/index.astro` es el
+  cascarón de 3 líneas que la reexporta (patrón confirmado: el locale sale de
+  `Astro.url.pathname` del request real, no del archivo). El resto de páginas
+  de marca (§6) sigue solo en español.
+- ⬜ **Fases 2 (resto), 3–7**: sin empezar. Volumen pendiente: ~3 350 líneas de
+  páginas de marca, contenido de `projects`/`education_milestones` en BD,
+  11 383 palabras de notas, LAB, ~3 900 líneas + 240 KB de datos de `/docs`,
+  y los flujos de audiencia local (§7). Ver desglose de cada fase más abajo,
+  sin cambios respecto al plan original.
+- ⬜ **Fase 8 (assets)**: imágenes OG y CV en inglés sin generar.
+- ⬜ **Documentación de sustentación** (§14): pendiente registrar en
+  `src/data/documentacion.ts` / `iteraciones-portfolio.ts` y el artículo de
+  `/notes` — se hará al cerrar un bloque de contenido con volumen real que
+  merezca su propia entrada, no tras la sola infraestructura.
 
 ---
 

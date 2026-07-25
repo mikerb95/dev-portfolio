@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets'
 import { parseTechStack } from '../lib/tech-stack'
+import { getLocaleFromUrl } from '../i18n'
 
 interface Props {
   slug: string
@@ -12,6 +13,11 @@ interface Props {
 
 const { slug, title, description, techStack, screenshotUrl } = Astro.props
 const stack = parseTechStack(techStack)
+// El proyecto en sí (título/descripción, de la BD) todavía no tiene columna
+// _en (Fase 3 del plan de i18n, sin empezar): solo el chrome de la card se
+// traduce; el link sigue apuntando a /projects/<slug> en los dos idiomas.
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const viewProjectLabel = locale === 'en' ? 'View project' : 'Ver proyecto'
 ---
 
 <a
@@ -39,7 +45,7 @@ const stack = parseTechStack(techStack)
       <div class="glass-strong rounded-xl px-3 py-2 flex items-center justify-between">
         <span class="text-[11px] font-mono text-ink-100">{stack.slice(0,3).join(' · ')}{stack.length > 3 ? ` + ${stack.length - 3}` : ''}</span>
         <span class="text-[11px] font-mono text-cyan flex items-center gap-1">
-          Ver proyecto
+          {viewProjectLabel}
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
         </span>
       </div>
