@@ -612,8 +612,35 @@ const en = {
         ],
       },
     ],
-    externals: [] as { name: string; role: string }[],
-    decisions: [] as { q: string; a: string }[],
+    externals: [
+      { name: 'cron-job.org', role: 'Triggers the check engine every few minutes (the Hobby plan only gives 1 cron/day).' },
+      { name: 'ntfy.sh', role: 'Push to my phone: outages, expiring SSL, new admin session.' },
+      { name: 'GitHub Actions', role: 'CI: tests + coverage → logs every run and enables rollback.' },
+      { name: 'GitHub OAuth', role: 'Sole identity provider for the panel.' },
+      { name: 'Resend', role: 'Transactional email for alerts (secondary channel).' },
+    ],
+    decisions: [
+      {
+        q: 'SSR over pure static',
+        a: 'The private panel needs live data and per-request auth. Public pages are cached at the edge, so I pay for SSR only where it pays off and serve the rest almost for free.',
+      },
+      {
+        q: 'Stateless JWT, no DB sessions',
+        a: 'Logins without touching the database and zero session infrastructure. The blind spot — revocation — I solved with a signed sid inside the token and a device table, without giving up the JWT.',
+      },
+      {
+        q: 'Turso/libSQL instead of Postgres',
+        a: 'SQLite at the edge: minimal latency, replicas, and a simple mental model for a domain that does not need massive concurrency. Drizzle keeps the schema typed and migrations in git.',
+      },
+      {
+        q: 'External cron instead of Vercel’s',
+        a: "The Hobby plan limits you to one daily cron, useless for uptime. An external cron hits a token-authenticated endpoint every few minutes; Vercel's cron becomes a safety net. The platform's constraint was the start of the design, not the end of it.",
+      },
+      {
+        q: 'Fail-open on everything secondary',
+        a: 'Telemetry, session logging, and notifications must never take down the main flow. If an observability subsystem fails, it degrades silently instead of breaking the experience.',
+      },
+    ],
   },
 } satisfies typeof es
 
