@@ -626,6 +626,22 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
     }
   }
 
+  // Flechas contra etiquetas de nodo: el texto vive fuera de la figura, así que
+  // una flecha puede pasar limpia por encima de la caja y aun así partir en dos
+  // el nombre que cuelga debajo.
+  for (const e of edges) {
+    for (const et of etiquetasNodo) {
+      if (et.id === e.from || et.id === e.to) continue
+      if (relacionado(et.id, e.from) || relacionado(et.id, e.to)) continue
+      for (let i = 0; i < e.points.length - 1; i++) {
+        if (segmentHitsBox(e.points[i], e.points[i + 1], et.box)) {
+          issues.push({ kind: 'label', detail: `el flujo ${e.from} → ${e.to} cruza la etiqueta de "${et.id}"` })
+          break
+        }
+      }
+    }
+  }
+
   // Etiqueta de rama contra etiqueta de rama: es el choque que deja un "sí"
   // dibujado sobre el camino del "no". Sin esta comprobación se coló una vez.
   const etiquetasFlujo = edges
