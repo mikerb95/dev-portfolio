@@ -2,23 +2,35 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 import BpmnDiagram from '../../components/BpmnDiagram.astro'
+import BpmnShape from '../../components/BpmnShape.astro'
 import { procesosBpmn, leyendaBpmn } from '../../data/bpmn'
-import { GEO } from '../../lib/bpmn-layout'
+import { sizeOf, type PlacedNode } from '../../lib/bpmn-layout'
 
-// La leyenda reusa el mismo renderer: cada símbolo es un proceso de un solo
-// nodo, así que si cambia el dibujo de una figura, la leyenda cambia con ella.
-const muestras = leyendaBpmn.map((item) => ({
-  ...item,
-  proceso: {
+// La leyenda monta la misma figura que el diagrama (BpmnShape) en un lienzo
+// ajustado a su tamaño: si cambia el dibujo de un símbolo, cambia en los dos
+// sitios. Alto de muestra fijo para que la fila quede pareja.
+const ALTO_MUESTRA = 30
+const muestras = leyendaBpmn.map((item) => {
+  const { w, h } = sizeOf(item.type)
+  const pad = 3
+  const node: PlacedNode = {
     id: `leyenda-${item.type}`,
-    titulo: item.label,
-    desc: '',
-    origen: '',
-    lanes: [{ id: 'l', label: '' }],
-    nodes: [{ id: 'n', type: item.type, label: '', lane: 'l', col: 0 }],
-    flows: [],
-  },
-}))
+    type: item.type,
+    label: '',
+    lane: 'l',
+    col: 0,
+    row: 0,
+    cx: w / 2 + pad,
+    cy: h / 2 + pad,
+    w,
+    h,
+    lines: [],
+    outside: false,
+  }
+  const vbW = w + pad * 2
+  const vbH = h + pad * 2
+  return { ...item, node, vbW, vbH, ancho: Math.round((vbW * ALTO_MUESTRA) / vbH) }
+})
 ---
 
 <BaseLayout title="Diagramas BPMN">
