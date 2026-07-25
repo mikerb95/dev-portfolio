@@ -226,13 +226,13 @@ const L = (path: string) => localizePath(path, locale)
 
     if (id === 'name') {
       ok = value.length >= 2
-      msg = ok ? '✓ Ok' : value ? `✗ Mínimo 2 caracteres` : ''
+      msg = ok ? cf.okShort : value ? cf.nameTooShort : ''
     } else if (id === 'email') {
       ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-      msg = ok ? '✓ Ok' : value ? '✗ Email inválido' : ''
+      msg = ok ? cf.okShort : value ? cf.emailInvalid : ''
     } else if (id === 'body') {
       ok = value.length >= 20
-      msg = ok ? `✓ ${value.length} chars` : value ? `✗ ${value.length}/20 mín.` : ''
+      msg = ok ? interpolate(cf.messageCharCount, { n: value.length }) : value ? interpolate(cf.messageTooShort, { n: value.length, min: 20 }) : ''
     } else if (id === 'subject') {
       return true
     }
