@@ -1,14 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CodeByMike">
   <defs>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="1.2" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <filter id="glow-strong" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
+    <!-- El glow va solo en el cursor: a 16px es lo que hace que el cyan se lea
+         como acento de marca y no como un pixel perdido -->
+    <filter id="cursor-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="1.6" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -16,64 +11,17 @@
     </filter>
   </defs>
 
-  <!-- Background -->
-  <rect width="64" height="64" rx="11" fill="#07000F"/>
+  <rect width="64" height="64" rx="12" fill="#0a0a0d"/>
 
-  <!-- Neck -->
-  <rect x="28" y="33" width="8" height="7" rx="1" fill="#5C3018"/>
+  <!-- M de Mike trazada a mano en vez de con <text>: un favicon se renderiza
+       en contextos sin acceso a JetBrains Mono (pestañas, PWA, .ico) -->
+  <g fill="none" stroke="#e7e7ec" stroke-width="6.5" stroke-linecap="butt">
+    <path d="M17 45 L17 19"/>
+    <path d="M35 45 L35 19"/>
+    <path d="M17 19 L26 33"/>
+    <path d="M35 19 L26 33"/>
+  </g>
 
-  <!-- Shoulders / hoodie -->
-  <path d="M10 64 L10 46 Q10 39 20 37 L28 34.5 L32 36 L36 34.5 L44 37 Q54 39 54 46 L54 64Z" fill="#12002A"/>
-
-  <!-- Hoodie accent line -->
-  <path d="M28 34.5 Q32 39 36 34.5" stroke="#ff00ff" stroke-width="1.2" fill="none" stroke-linecap="round" filter="url(#glow)"/>
-
-  <!-- Head (dark skin) -->
-  <circle cx="32" cy="21" r="13" fill="#5C3018"/>
-
-  <!-- Hair (short, tight curl) -->
-  <path d="M19 19 C19 9 45 9 45 19 C45 16 44 11 32 11 C20 11 19 16 19 19Z" fill="#111"/>
-  <ellipse cx="32" cy="11" rx="9" ry="3.5" fill="#111"/>
-
-  <!-- Ear left -->
-  <ellipse cx="19.5" cy="22" rx="2" ry="2.5" fill="#5C3018"/>
-  <!-- Ear right -->
-  <ellipse cx="44.5" cy="22" rx="2" ry="2.5" fill="#5C3018"/>
-
-  <!-- Eyes — neon cyan -->
-  <ellipse cx="26.5" cy="21" rx="3" ry="2.5" fill="#00ffff" filter="url(#glow)"/>
-  <ellipse cx="37.5" cy="21" rx="3" ry="2.5" fill="#00ffff" filter="url(#glow)"/>
-  <circle cx="26.5" cy="21.5" r="1.5" fill="#001C1C"/>
-  <circle cx="37.5" cy="21.5" r="1.5" fill="#001C1C"/>
-  <!-- Pupil glint -->
-  <circle cx="27" cy="21" r="0.5" fill="#00ffff" opacity="0.6"/>
-  <circle cx="38" cy="21" r="0.5" fill="#00ffff" opacity="0.6"/>
-
-  <!-- Nose -->
-  <path d="M30.5 25 Q32 27 33.5 25" stroke="#3d1e0a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-
-  <!-- Mouth — neon magenta smile -->
-  <path d="M27 29 Q32 33.5 37 29" stroke="#ff00ff" stroke-width="2" fill="none" stroke-linecap="round" filter="url(#glow)"/>
-
-  <!-- Laptop screen frame (cyan glow) -->
-  <rect x="15" y="43" width="34" height="19" rx="2.5" fill="#00ffff" filter="url(#glow-strong)" opacity="0.85"/>
-  <!-- Screen surface -->
-  <rect x="16.5" y="44.5" width="31" height="16" rx="1.5" fill="#050020"/>
-
-  <!-- Code lines on screen -->
-  <rect x="19" y="47.5" width="14" height="1.8" rx="0.9" fill="#39FF14" filter="url(#glow)"/>
-  <rect x="19" y="51" width="20" height="1.8" rx="0.9" fill="#ff00ff" filter="url(#glow)"/>
-  <rect x="19" y="54.5" width="10" height="1.8" rx="0.9" fill="#00ffff" filter="url(#glow)"/>
-  <rect x="31" y="54.5" width="7" height="1.8" rx="0.9" fill="#ffff00" filter="url(#glow)"/>
-
-  <!-- Cursor blink -->
-  <rect x="29" y="47.5" width="1.2" height="1.8" rx="0.4" fill="#00ffff" opacity="0.9"/>
-
-  <!-- Laptop base / keyboard -->
-  <rect x="13" y="61" width="38" height="3" rx="1.5" fill="#00ffff" opacity="0.35"/>
-
-  <!-- Neon accent dots (acid vibe) -->
-  <circle cx="55" cy="8" r="2" fill="#ff00ff" opacity="0.5" filter="url(#glow)"/>
-  <circle cx="9" cy="56" r="1.5" fill="#39FF14" opacity="0.45" filter="url(#glow)"/>
-  <circle cx="58" cy="50" r="1" fill="#00ffff" opacity="0.35"/>
+  <!-- Cursor de bloque de terminal -->
+  <rect x="43" y="19" width="7.5" height="26" fill="#00f2ff" filter="url(#cursor-glow)"/>
 </svg>
