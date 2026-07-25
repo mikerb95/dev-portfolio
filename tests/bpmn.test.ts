@@ -46,6 +46,7 @@ describe('route', () => {
     h: 50,
     lines: ['x'],
     outside: false,
+    labelAbove: false,
   })
 
   it('une con una recta los nodos alineados hacia adelante', () => {

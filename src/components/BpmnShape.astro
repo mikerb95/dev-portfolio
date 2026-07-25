@@ -17,6 +17,12 @@ const { node: n } = Astro.props
 const esTarea = n.type.startsWith('task')
 const esCompuerta = n.type.startsWith('gateway')
 
+// Línea base del primer renglón de la etiqueta externa. Arriba se apila hacia
+// atrás (la última línea queda pegada a la figura); abajo, hacia adelante.
+const etiquetaY = n.labelAbove
+  ? n.cy - n.h / 2 - 8 - (n.lines.length - 1) * 12
+  : n.cy + n.h / 2 + 13
+
 /** El anillo exterior es lo que distingue a los eventos entre sí en BPMN. */
 const anillo =
   n.type === 'intermediateEvent'
@@ -107,7 +113,7 @@ const anillo =
         />
       )}
       {n.lines.length > 0 && (
-        <text class="bpmn-node-label bpmn-outside" x={n.cx} y={n.cy + n.h / 2 + 13} text-anchor="middle">
+        <text class="bpmn-node-label bpmn-outside" x={n.cx} y={etiquetaY} text-anchor="middle">
           {n.lines.map((line, i) => (
             <tspan x={n.cx} dy={i === 0 ? 0 : 12}>
               {line}
@@ -151,7 +157,7 @@ const anillo =
         )}
       </g>
       {n.lines.length > 0 && (
-        <text class="bpmn-node-label bpmn-outside" x={n.cx} y={n.cy + n.h / 2 + 13} text-anchor="middle">
+        <text class="bpmn-node-label bpmn-outside" x={n.cx} y={etiquetaY} text-anchor="middle">
           {n.lines.map((line, i) => (
             <tspan x={n.cx} dy={i === 0 ? 0 : 12}>
               {line}

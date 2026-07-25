@@ -410,21 +410,25 @@ export function layout(process: BpmnProcess): Layout {
 // ── Verificación de la geometría ────────────────────────────────────────────
 
 export interface LayoutIssue {
-  kind: 'overlap' | 'crossing'
+  kind: 'overlap' | 'crossing' | 'label'
   detail: string
 }
 
-const bbox = (n: PlacedNode) => ({
+const bbox = (n: PlacedNode): Box => ({
   x1: n.cx - n.w / 2,
   x2: n.cx + n.w / 2,
   y1: n.cy - n.h / 2,
   y2: n.cy + n.h / 2,
 })
 
+const grow = (b: Box, m: number): Box => ({ x1: b.x1 - m, x2: b.x2 + m, y1: b.y1 - m, y2: b.y2 + m })
+
+const boxesOverlap = (a: Box, b: Box): boolean => a.x2 > b.x1 && a.x1 < b.x2 && a.y2 > b.y1 && a.y1 < b.y2
+
 /**
- * Detecta los dos defectos que arruinan un BPMN a la vista: dos nodos en la
- * misma celda y una flecha que atraviesa una figura con la que no tiene nada
- * que ver. Se ejecuta en los tests, no en runtime.
+ * Detecta los defectos que arruinan un BPMN a la vista: nodos en la misma
+ * celda, flechas que atraviesan figuras ajenas y etiquetas encimadas entre sí.
+ * Se ejecuta en los tests, no en runtime.
  */
 export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
   const { nodes, edges } = layout(process)
@@ -443,8 +447,7 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
   for (const e of edges) {
     for (const n of nodes) {
       if (n.id === e.from || n.id === e.to) continue
-      const b = bbox(n)
-      const box = { x1: b.x1 - M, x2: b.x2 + M, y1: b.y1 - M, y2: b.y2 + M }
+      const box = grow(bbox(n), M)
       for (let i = 0; i < e.points.length - 1; i++) {
         if (segmentHitsBox(e.points[i], e.points[i + 1], box)) {
           issues.push({ kind: 'crossing', detail: `el flujo ${e.from} → ${e.to} atraviesa "${n.id}"` })
@@ -454,12 +457,46 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
     }
   }
 
+  // Etiquetas: las de nodo contra las de nodo, y las de rama contra las de
+  // nodo. Es justo el choque que se cuela sin darse cuenta, porque el texto se
+  // dibuja fuera de la figura y nadie lo cuenta como ocupación.
+  const etiquetasNodo = nodes
+    .map((n) => ({ id: n.id, box: labelBox(n) }))
+    .filter((x): x is { id: string; box: Box } => x.box !== null)
+
+  for (let i = 0; i < etiquetasNodo.length; i++) {
+    for (let j = i + 1; j < etiquetasNodo.length; j++) {
+      if (boxesOverlap(etiquetasNodo[i].box, etiquetasNodo[j].box)) {
+        issues.push({
+          kind: 'label',
+          detail: `las etiquetas de "${etiquetasNodo[i].id}" y "${etiquetasNodo[j].id}" se encinan`,
+        })
+      }
+    }
+  }
+
+  for (const e of edges) {
+    if (!e.label || !e.labelAt) continue
+    const box = flowLabelBox(e.label, e.labelAt)
+    for (const et of etiquetasNodo) {
+      if (boxesOverlap(box, et.box)) {
+        issues.push({ kind: 'label', detail: `la etiqueta "${e.label}" (${e.from} → ${e.to}) choca con la de "${et.id}"` })
+      }
+    }
+    for (const n of nodes) {
+      if (n.id === e.from || n.id === e.to) continue
+      if (boxesOverlap(box, bbox(n))) {
+        issues.push({ kind: 'label', detail: `la etiqueta "${e.label}" (${e.from} → ${e.to}) cae sobre "${n.id}"` })
+      }
+    }
+  }
+
   return issues
 }
 
 // Los tramos siempre son horizontales o verticales (ruteo ortogonal), así que
 // basta con comparar rangos: no hace falta intersección de segmentos general.
-function segmentHitsBox(a: Pt, b: Pt, box: { x1: number; x2: number; y1: number; y2: number }): boolean {
+function segmentHitsBox(a: Pt, b: Pt, box: Box): boolean {
   const minX = Math.min(a.x, b.x)
   const maxX = Math.max(a.x, b.x)
   const minY = Math.min(a.y, b.y)
