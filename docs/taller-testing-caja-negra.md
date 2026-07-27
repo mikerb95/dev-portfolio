@@ -1,11 +1,13 @@
 # Taller de Testing — Técnicas de caja negra
 
-**Proyecto bajo prueba:** CodeByMike (`codebymike.tech`) — Portal de clientes y
-Cobros de campo
-**Módulos:** `/portal` (autenticación, facturas, cuenta) y `/cobrar → /c/[code] → /mis-pagos`
-**Stack:** Astro 7 (SSR) · Turso/libSQL · Drizzle · Tailwind 4 · Vercel
-**Responsable:** Mike (@mikerb95)
-**Fecha de ejecución:** 26–27 de julio de 2026
+| | |
+|---|---|
+| **Proyecto bajo prueba** | CodeByMike — `codebymike.tech` |
+| **Módulos** | Portal de clientes (`/portal`: autenticación, facturas, cuenta) y Cobros de campo (`/cobrar → /c/[code] → /mis-pagos`) |
+| **Stack** | Astro 7 (SSR) · Turso/libSQL · Drizzle · Tailwind 4 · Vercel |
+| **Técnicas aplicadas** | Casos de prueba · Escenarios · Particiones de equivalencia · Valores límite (BVA) · Pruebas exploratorias · Trazabilidad |
+| **Responsable** | Mike (@mikerb95) |
+| **Fecha de ejecución** | 26–27 de julio de 2026 |
 
 ---
 
