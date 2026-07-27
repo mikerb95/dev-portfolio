@@ -11,7 +11,7 @@
 
 ---
 
-## 0. Entorno de pruebas
+## Entorno de pruebas
 
 Todos los casos se ejecutaron contra una instancia **local y desechable**, nunca
 contra producción: los casos escriben (pagos, sesiones, bloqueos de cuenta) y no
@@ -57,193 +57,171 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ---
 
-## 1. Casos de prueba
+## Casos de Prueba
 
-### TC-01
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-01 |
-| **Módulo / Función** | Portal — Autenticación · Login con credenciales válidas |
+| **Módulo/Función** | Portal — Autenticación · Login con credenciales válidas |
 | **Objetivo** | Validar que un usuario de un cliente con portal habilitado inicia sesión y llega a su panel. |
 | **Precondiciones** | Usuario `active` con contraseña definida; su cliente tiene `portal_enabled = 1`; sin sesión previa. |
 | **Datos de prueba** | Correo: `ana.torres@altiplano.test` · Contraseña: `Altiplano2026` |
-| **Pasos** | 1. Abrir `/portal/login`.<br>2. Escribir el correo.<br>3. Escribir la contraseña.<br>4. Presionar «Entrar». |
+| **Pasos (numerados)** | 1. Abrir `/portal/login`.<br>2. Escribir el correo.<br>3. Escribir la contraseña.<br>4. Presionar «Entrar». |
 | **Oráculo (resultado esperado)** | HTTP 200 con cookie `portal_session` (`HttpOnly`, `SameSite=Lax`, `Max-Age=2592000`). Redirección a `/portal` con el saludo «Hola, Ana» y los KPI del cliente (por pagar, mensajes, avance). |
 | **Resultado obtenido** | ✅ Conforme. Cookie emitida; panel de Cafetería Altiplano con «$ 476.000 por pagar», «1 sin leer», «63% de avance». |
 | **Veredicto** | **PASA** |
-| **Evidencia** | `evidencias-taller-testing/TC-01-login-valido-dashboard.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-01-login-valido-dashboard.jpg` |
 
-### TC-02
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-02 |
-| **Módulo / Función** | Portal — Autenticación · Login con credenciales inválidas |
+| **Módulo/Función** | Portal — Autenticación · Login con credenciales inválidas |
 | **Objetivo** | Verificar que un fallo de credenciales no revela si la cuenta existe (mensaje único). |
 | **Precondiciones** | La cuenta `ana.torres@altiplano.test` existe; `nadie@nada.test` no existe. |
 | **Datos de prueba** | (a) correo existente + `claveIncorrecta1` · (b) `nadie@nada.test` + `Altiplano2026` |
-| **Pasos** | 1. Abrir `/portal/login`.<br>2. Escribir el correo y una contraseña incorrecta.<br>3. Presionar «Entrar».<br>4. Repetir con un correo inexistente. |
-| **Oráculo** | En **ambos** casos, el mismo texto: «Correo o contraseña incorrectos.» Sin cookie de sesión. La latencia debe ser comparable (se calcula un scrypt de relleno para la cuenta inexistente). |
+| **Pasos (numerados)** | 1. Abrir `/portal/login`.<br>2. Escribir el correo y una contraseña incorrecta.<br>3. Presionar «Entrar».<br>4. Repetir con un correo inexistente. |
+| **Oráculo (resultado esperado)** | En **ambos** casos, el mismo texto: «Correo o contraseña incorrectos.» Sin cookie de sesión. La latencia debe ser comparable (se calcula un scrypt de relleno para la cuenta inexistente). |
 | **Resultado obtenido** | ✅ Conforme. Los dos caminos devuelven el mismo mensaje, palabra por palabra. |
 | **Veredicto** | **PASA** |
-| **Evidencia** | `evidencias-taller-testing/TC-02-login-credenciales-invalidas.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-02-login-credenciales-invalidas.jpg` |
 
-### TC-03
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-03 |
-| **Módulo / Función** | Portal — Autenticación · Bloqueo temporal por fuerza bruta |
+| **Módulo/Función** | Portal — Autenticación · Bloqueo temporal por fuerza bruta |
 | **Objetivo** | Verificar que la cuenta se bloquea 15 minutos al décimo intento fallido, aunque el atacante cambie de IP. |
 | **Precondiciones** | Cuenta `bloqueo@altiplano.test` activa, con el contador de fallos en 0. |
 | **Datos de prueba** | 10 intentos con `claveIncorrecta1`, **cada uno desde una IP distinta**; luego un intento con la contraseña correcta `Altiplano2026`. |
-| **Pasos** | 1. Enviar 10 intentos fallidos variando `x-forwarded-for`.<br>2. Intentar entrar con la contraseña **correcta**. |
-| **Oráculo** | Intentos 1–9: «Correo o contraseña incorrectos.» Intento 10: «Demasiados intentos fallidos. Vuelve a intentar en 15 minutos.» El intento posterior con la contraseña correcta **también** se rechaza mientras dure el bloqueo. |
+| **Pasos (numerados)** | 1. Enviar 10 intentos fallidos variando `x-forwarded-for`.<br>2. Intentar entrar con la contraseña **correcta**. |
+| **Oráculo (resultado esperado)** | Intentos 1–9: «Correo o contraseña incorrectos.» Intento 10: «Demasiados intentos fallidos. Vuelve a intentar en 15 minutos.» El intento posterior con la contraseña correcta **también** se rechaza mientras dure el bloqueo. |
 | **Resultado obtenido** | ✅ Conforme. El bloqueo saltó exactamente en el intento 10 y resistió la contraseña correcta («…en 14 minutos», el contador decrece). Cambiar de IP no evita el bloqueo: el contador va contra la cuenta, no contra la IP. |
 | **Veredicto** | **PASA** |
-| **Evidencia** | `evidencias-taller-testing/TC-03-bloqueo-tras-10-intentos.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-03-bloqueo-tras-10-intentos.jpg` |
 
-### TC-04
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-04 |
-| **Módulo / Función** | Portal — Facturas · Visualización del listado |
+| **Módulo/Función** | Portal — Facturas · Visualización del listado |
 | **Objetivo** | Verificar que el cliente ve sus facturas con estado y totales coherentes con los KPI. |
 | **Precondiciones** | Sesión activa de `ana.torres@altiplano.test`; el cliente 1 tiene 3 facturas sembradas. |
 | **Datos de prueba** | INV-2026-101 ($450.000, pagada) · INV-2026-102 ($380.800, pendiente) · INV-2026-103 ($95.200, vencida) |
-| **Pasos** | 1. Iniciar sesión.<br>2. Ir a la pestaña «Facturas».<br>3. Contrastar los KPI de la cabecera con la suma de las filas. |
-| **Oráculo** | Las 3 facturas listadas con su estado. «Pendiente de pago» = 380.800 + 95.200 = **$476.000**. «Vencidas» = **1**. «Pagado en 2026» = **$450.000**. La factura vencida marca la fecha en rojo. Solo las abiertas ofrecen «Pagar». |
+| **Pasos (numerados)** | 1. Iniciar sesión.<br>2. Ir a la pestaña «Facturas».<br>3. Contrastar los KPI de la cabecera con la suma de las filas. |
+| **Oráculo (resultado esperado)** | Las 3 facturas listadas con su estado. «Pendiente de pago» = 380.800 + 95.200 = **$476.000**. «Vencidas» = **1**. «Pagado en 2026» = **$450.000**. La factura vencida marca la fecha en rojo. Solo las abiertas ofrecen «Pagar». |
 | **Resultado obtenido** | ✅ Conforme. Los tres agregados cuadran con las filas; la pagada solo ofrece «Ver». |
 | **Veredicto** | **PASA** |
-| **Evidencia** | `evidencias-taller-testing/TC-04-facturas-listado.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-04-facturas-listado.jpg` |
 
-### TC-05
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-05 |
-| **Módulo / Función** | Portal — Facturas · Detalle y descarga del PDF |
+| **Módulo/Función** | Portal — Facturas · Detalle y descarga del PDF |
 | **Objetivo** | Verificar que el detalle desglosa los conceptos y que el PDF se descarga como adjunto y no se cachea. |
 | **Precondiciones** | Sesión activa de Ana; factura id 2 (INV-2026-102) del cliente 1. |
 | **Datos de prueba** | Desarrollo de catálogo: 80 × $3.000 = $240.000 · Integración de pagos: 20 × $4.000 = $80.000 |
-| **Pasos** | 1. Abrir `/portal/facturas/2`.<br>2. Verificar el desglose y el total.<br>3. Pulsar «Descargar PDF». |
-| **Oráculo** | Subtotal $320.000 + impuestos $60.800 = total **$380.800**, igual al bloque «A pagar». La descarga responde `200`, `content-type: application/pdf`, `content-disposition: attachment; filename="INV-2026-102.pdf"` y `cache-control: no-store, private`. |
+| **Pasos (numerados)** | 1. Abrir `/portal/facturas/2`.<br>2. Verificar el desglose y el total.<br>3. Pulsar «Descargar PDF». |
+| **Oráculo (resultado esperado)** | Subtotal $320.000 + impuestos $60.800 = total **$380.800**, igual al bloque «A pagar». La descarga responde `200`, `content-type: application/pdf`, `content-disposition: attachment; filename="INV-2026-102.pdf"` y `cache-control: no-store, private`. |
 | **Resultado obtenido** | ✅ Conforme. PDF real de 2.123 bytes con cabecera `%PDF-1.7`; todas las cabeceras esperadas presentes. |
 | **Veredicto** | **PASA** |
-| **Evidencia** | `evidencias-taller-testing/TC-05-factura-detalle-pdf.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-05-factura-detalle-pdf.jpg` |
 
-### TC-06
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-06 |
-| **Módulo / Función** | Portal — Aislamiento entre clientes |
+| **Módulo/Función** | Portal — Aislamiento entre clientes |
 | **Objetivo** | Verificar que un cliente **no** puede leer una factura de otro cliente conociendo su id. Un fallo aquí no degrada una función: expone los datos de un cliente a otro. |
 | **Precondiciones** | Dos clientes con portal habilitado; la factura id 2 pertenece al cliente 1. |
 | **Datos de prueba** | Sesión de `carlos.ruiz@otrocliente.test` (cliente 2) pidiendo la factura id 2. |
-| **Pasos** | 1. Iniciar sesión como Carlos.<br>2. Navegar directamente a `/portal/facturas/2`.<br>3. Pedir además `/api/portal/facturas/2/pdf`.<br>4. Repetir como Ana (dueña) para descartar un falso positivo.<br>5. Repetir sin sesión. |
-| **Oráculo** | Carlos: **404** en la página y **404** en el PDF (no 403: un 403 confirmaría que el recurso existe). Ana: **200**. Sin sesión: **302** a `/portal/login?next=%2Fportal%2Ffacturas%2F2`. |
+| **Pasos (numerados)** | 1. Iniciar sesión como Carlos.<br>2. Navegar directamente a `/portal/facturas/2`.<br>3. Pedir además `/api/portal/facturas/2/pdf`.<br>4. Repetir como Ana (dueña) para descartar un falso positivo.<br>5. Repetir sin sesión. |
+| **Oráculo (resultado esperado)** | Carlos: **404** en la página y **404** en el PDF (no 403: un 403 confirmaría que el recurso existe). Ana: **200**. Sin sesión: **302** a `/portal/login?next=%2Fportal%2Ffacturas%2F2`. |
 | **Resultado obtenido** | ✅ Conforme en los cuatro caminos. |
 | **Veredicto** | **PASA** |
-| **Evidencia** | `evidencias-taller-testing/TC-06-aislamiento-entre-clientes-404.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-06-aislamiento-entre-clientes-404.jpg` |
 
-### TC-07
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-07 |
-| **Módulo / Función** | Portal — Cuenta · Cambio de contraseña |
+| **Módulo/Función** | Portal — Cuenta · Cambio de contraseña |
 | **Objetivo** | Verificar que la contraseña nueva se valida (longitud y composición) y que se exige la actual aunque ya haya sesión. |
 | **Precondiciones** | Sesión activa; se conoce la contraseña actual. |
 | **Datos de prueba** | Actual: `Altiplano2026` · Nuevas: `abcdefgh1` (9), `abcdefghij` (10 sin dígitos), `abcdefghi1` (10 válida) |
-| **Pasos** | 1. Abrir `/portal/cuenta`.<br>2. Escribir la contraseña actual y una nueva de 9 caracteres.<br>3. Pulsar «Cambiar contraseña».<br>4. Repetir con una de 10 caracteres sin dígitos.<br>5. Repetir con una contraseña actual incorrecta y una nueva válida. |
-| **Oráculo** | 9 caracteres → «La contraseña debe tener al menos 10 caracteres.» · 10 sin dígitos → «La contraseña debe combinar letras y números.» · Nueva válida con actual incorrecta → «La contraseña actual no es correcta.» (la validación de formato corre **antes** de tocar la BD). Éxito → «Contraseña cambiada. Las demás sesiones se cerraron.» |
+| **Pasos (numerados)** | 1. Abrir `/portal/cuenta`.<br>2. Escribir la contraseña actual y una nueva de 9 caracteres.<br>3. Pulsar «Cambiar contraseña».<br>4. Repetir con una de 10 caracteres sin dígitos.<br>5. Repetir con una contraseña actual incorrecta y una nueva válida. |
+| **Oráculo (resultado esperado)** | 9 caracteres → «La contraseña debe tener al menos 10 caracteres.» · 10 sin dígitos → «La contraseña debe combinar letras y números.» · Nueva válida con actual incorrecta → «La contraseña actual no es correcta.» (la validación de formato corre **antes** de tocar la BD). Éxito → «Contraseña cambiada. Las demás sesiones se cerraron.» |
 | **Resultado obtenido** | ✅ Conforme en los tres mensajes. **Observación:** el aviso se auto-oculta a los 4 s (ver BUG-04). |
 | **Veredicto** | **PASA con observación** |
-| **Evidencia** | `evidencias-taller-testing/TC-07-cambio-contrasena-formulario.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-07-cambio-contrasena-formulario.jpg` |
 
-### TC-08
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-08 |
-| **Módulo / Función** | Portal — Autenticación · Cerrar sesión |
+| **Módulo/Función** | Portal — Autenticación · Cerrar sesión |
 | **Objetivo** | Verificar que «Cerrar sesión» revoca la sesión y devuelve al login. |
 | **Precondiciones** | Sesión activa de `ana.torres@altiplano.test`. |
 | **Datos de prueba** | — |
-| **Pasos** | 1. Iniciar sesión.<br>2. Abrir el menú del avatar (arriba a la derecha).<br>3. Pulsar «Cerrar sesión».<br>4. Navegar a `/portal`. |
-| **Oráculo** | Redirección `302` a `/portal/login?m=session-closed`, cookie borrada y fila de `portal_sessions` eliminada. Al volver a `/portal` debe pedir login. |
+| **Pasos (numerados)** | 1. Iniciar sesión.<br>2. Abrir el menú del avatar (arriba a la derecha).<br>3. Pulsar «Cerrar sesión».<br>4. Navegar a `/portal`. |
+| **Oráculo (resultado esperado)** | Redirección `302` a `/portal/login?m=session-closed`, cookie borrada y fila de `portal_sessions` eliminada. Al volver a `/portal` debe pedir login. |
 | **Resultado obtenido** | ❌ **No conforme.** El navegador muestra una página en blanco con el texto `Cross-site POST form submissions are forbidden`. La sesión **no** se cierra: al volver a `/portal` el usuario sigue dentro como Ana. Reproducido 2 de 2 veces en un flujo limpio. El mismo `POST` con cabecera `Origin` explícita sí devuelve `302` y cierra la sesión, así que el endpoint funciona: falla la petición que emite el formulario. |
 | **Veredicto** | **FALLA → BUG-01** |
-| **Evidencia** | `evidencias-taller-testing/TC-08-menu-cerrar-sesion.jpg` · `evidencias-taller-testing/BUG-01-logout-csrf.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-08-menu-cerrar-sesion.jpg` · `evidencias-taller-testing/BUG-01-logout-csrf.jpg` |
 
-### TC-09
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-09 |
-| **Módulo / Función** | Cobros de campo — Pago desde el link corto `/c/[code]` |
+| **Módulo/Función** | Cobros de campo — Pago desde el link corto `/c/[code]` |
 | **Objetivo** | Verificar el ciclo completo de un cobro: link vigente → pago → estado terminal, y que los links vencido y ya pagado no permiten cobrar de nuevo. |
 | **Precondiciones** | Cobros `MN5TW3` (vigente), `XY7MQ2` (vencido) y `PK4RT8` (aprobado) en la base. |
 | **Datos de prueba** | `MN5TW3` = $195.000, «Soporte y ajustes de octubre», vence en 3 días. |
-| **Pasos** | 1. Abrir `/c/MN5TW3` (sin sesión: es un link público).<br>2. Verificar monto, concepto y vencimiento.<br>3. Pulsar «Pagar».<br>4. Confirmar el estado en la base.<br>5. Repetir el pago (doble clic).<br>6. Abrir `/c/XY7MQ2` y `/c/PK4RT8`. |
-| **Oráculo** | Paso 2: «$195.000», concepto y «vence en 3 días»; el monto se firma en el servidor y el link no puede alterarlo. Paso 3: página «¡Gracias! Pago recibido». Paso 4: estado `approved`. Paso 5: **idempotente** — el segundo intento no aplica nada (`applied:false`) y el estado sigue en `approved`. Paso 6: «Este link venció» y «Este cobro ya fue pagado»; sus endpoints de checkout devuelven `{"status":"expired"}` y `{"status":"approved"}`. |
+| **Pasos (numerados)** | 1. Abrir `/c/MN5TW3` (sin sesión: es un link público).<br>2. Verificar monto, concepto y vencimiento.<br>3. Pulsar «Pagar».<br>4. Confirmar el estado en la base.<br>5. Repetir el pago (doble clic).<br>6. Abrir `/c/XY7MQ2` y `/c/PK4RT8`. |
+| **Oráculo (resultado esperado)** | Paso 2: «$195.000», concepto y «vence en 3 días»; el monto se firma en el servidor y el link no puede alterarlo. Paso 3: página «¡Gracias! Pago recibido». Paso 4: estado `approved`. Paso 5: **idempotente** — el segundo intento no aplica nada (`applied:false`) y el estado sigue en `approved`. Paso 6: «Este link venció» y «Este cobro ya fue pagado»; sus endpoints de checkout devuelven `{"status":"expired"}` y `{"status":"approved"}`. |
 | **Resultado obtenido** | ✅ Conforme en los seis pasos. El pago pasó `created → pending → approved` y el reintento quedó registrado como duplicado sin efecto. |
 | **Veredicto** | **PASA** |
-| **Evidencia** | `TC-09a-cobro-link-vigente.jpg` · `TC-09b-pago-recibido.jpg` · `TC-09c-cobro-link-vencido.jpg` |
+| **Evidencia (archivo)** | `TC-09a-cobro-link-vigente.jpg` · `TC-09b-pago-recibido.jpg` · `TC-09c-cobro-link-vencido.jpg` |
 
-### TC-10
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | TC-10 |
-| **Módulo / Función** | Cobros de campo — Histórico público `/mis-pagos` |
+| **Módulo/Función** | Cobros de campo — Histórico público `/mis-pagos` |
 | **Objetivo** | Verificar que consultar por teléfono devuelve datos **enmascarados** (un teléfono no es una credencial) y que la consulta está limitada por IP. |
 | **Precondiciones** | 4 cobros asociados a `+573104641228`. |
 | **Datos de prueba** | `3104641228` · `310 464 1228` · `+573104641228` · `1234` · `abc` |
-| **Pasos** | 1. Abrir `/mis-pagos`.<br>2. Escribir el número y pulsar «Consultar».<br>3. Repetir con las variantes de formato.<br>4. Probar entradas inválidas.<br>5. Repetir la consulta 6 veces desde la misma IP. |
-| **Oráculo** | Se listan los pagos con fecha, estado y **monto enmascarado** (`$ •••.000`): nunca el monto completo, nunca el concepto, nunca el teléfono. Las tres variantes de formato dan el mismo resultado (se normalizan a E.164). Entradas inválidas → «número inválido». La 6.ª consulta desde la misma IP → «demasiadas consultas…». |
+| **Pasos (numerados)** | 1. Abrir `/mis-pagos`.<br>2. Escribir el número y pulsar «Consultar».<br>3. Repetir con las variantes de formato.<br>4. Probar entradas inválidas.<br>5. Repetir la consulta 6 veces desde la misma IP. |
+| **Oráculo (resultado esperado)** | Se listan los pagos con fecha, estado y **monto enmascarado** (`$ •••.000`): nunca el monto completo, nunca el concepto, nunca el teléfono. Las tres variantes de formato dan el mismo resultado (se normalizan a E.164). Entradas inválidas → «número inválido». La 6.ª consulta desde la misma IP → «demasiadas consultas…». |
 | **Resultado obtenido** | ✅ Conforme. 4 pagos con monto enmascarado y estados «Aprobado»/«Creado»; el límite saltó exactamente en la 6.ª consulta. **Observación:** las entradas inválidas también consumen cuota (ver BUG-03). |
 | **Veredicto** | **PASA con observación** |
-| **Evidencia** | `evidencias-taller-testing/TC-10-mis-pagos-historico-enmascarado.jpg` |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-10-mis-pagos-historico-enmascarado.jpg` |
 
 ---
 
-## 2. Escenarios
+## Escenario
 
-### ESC-01 — Ciclo de vida del cliente en el portal
-
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | ESC-01 |
 | **Nombre** | Login, consulta de facturas, descarga de PDF y cierre de sesión |
 | **Objetivo** | Validar de punta a punta la jornada típica de un cliente: entra, revisa lo que debe, se descarga la factura y se va. |
 | **Precondiciones** | Aplicación disponible; `ana.torres@altiplano.test` activa con 3 facturas; sin sesión previa. |
-| **Pasos** | 1. Abrir `/portal/login` e iniciar sesión. **(TC-01)**<br>2. Leer los KPI del panel.<br>3. Ir a «Facturas» y contrastar los agregados. **(TC-04)**<br>4. Abrir INV-2026-102 y descargar el PDF. **(TC-05)**<br>5. Ir a «Mi cuenta» e intentar una contraseña de 9 caracteres. **(TC-07)**<br>6. Abrir el menú del avatar y cerrar sesión. **(TC-08)**<br>7. Volver a `/portal`. |
+| **Pasos (numerados)** | 1. Abrir `/portal/login` e iniciar sesión. **(TC-01)**<br>2. Leer los KPI del panel.<br>3. Ir a «Facturas» y contrastar los agregados. **(TC-04)**<br>4. Abrir INV-2026-102 y descargar el PDF. **(TC-05)**<br>5. Ir a «Mi cuenta» e intentar una contraseña de 9 caracteres. **(TC-07)**<br>6. Abrir el menú del avatar y cerrar sesión. **(TC-08)**<br>7. Volver a `/portal`. |
 | **Oráculo de salida** | El usuario entra, ve $476.000 pendientes y 1 factura vencida, descarga el PDF correcto, es rechazado al poner una contraseña corta, cierra sesión y `/portal` vuelve a pedir credenciales. |
 | **Resultado obtenido** | ⚠️ **Parcial.** Los pasos 1–5 conformes. El paso 6 falla: página en blanco con `Cross-site POST form submissions are forbidden`; en el paso 7 el usuario **sigue dentro**. |
 | **Veredicto** | **FALLA en el paso 6 → BUG-01** |
-| **Evidencia** | `TC-01…`, `TC-04…`, `TC-05…`, `TC-07…`, `TC-08…`, `BUG-01-logout-csrf.jpg` |
+| **Evidencia (archivo)** | `TC-01…`, `TC-04…`, `TC-05…`, `TC-07…`, `TC-08…`, `BUG-01-logout-csrf.jpg` |
 
-### ESC-02 — Ciclo de vida de un cobro de campo
+## Escenario 2
 
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | ESC-02 |
 | **Nombre** | Link de cobro, pago, idempotencia, caducidad e histórico |
 | **Objetivo** | Validar que un cobro enviado por WhatsApp se paga una sola vez, que caduca, y que el pagador puede consultar su historial sin exponer datos a terceros. |
 | **Precondiciones** | Cobros `MN5TW3` (vigente), `XY7MQ2` (vencido), `PK4RT8` (pagado) asociados a `+573104641228`. |
-| **Pasos** | 1. Abrir `/c/MN5TW3` sin sesión y verificar monto y vencimiento. **(TC-09)**<br>2. Pagar.<br>3. Reintentar el pago (doble clic).<br>4. Abrir `/c/XY7MQ2` (vencido).<br>5. Abrir `/c/PK4RT8` (ya pagado).<br>6. Ir a `/mis-pagos` y consultar por el teléfono. **(TC-10)**<br>7. Consultar 6 veces seguidas desde la misma IP. |
+| **Pasos (numerados)** | 1. Abrir `/c/MN5TW3` sin sesión y verificar monto y vencimiento. **(TC-09)**<br>2. Pagar.<br>3. Reintentar el pago (doble clic).<br>4. Abrir `/c/XY7MQ2` (vencido).<br>5. Abrir `/c/PK4RT8` (ya pagado).<br>6. Ir a `/mis-pagos` y consultar por el teléfono. **(TC-10)**<br>7. Consultar 6 veces seguidas desde la misma IP. |
 | **Oráculo de salida** | El cobro vigente se paga una vez y queda `approved`; el reintento no duplica el cargo; el vencido y el pagado se niegan con su propio mensaje; el histórico muestra 4 pagos con montos enmascarados; la 6.ª consulta se corta por límite. |
 | **Resultado obtenido** | ✅ **Conforme en los siete pasos.** El estado recorrió `created → pending → approved`, el reintento quedó marcado como duplicado sin aplicar, y el histórico nunca reveló montos completos. |
 | **Veredicto** | **PASA** |
-| **Evidencia** | `TC-09a…`, `TC-09b…`, `TC-09c…`, `TC-10…` |
+| **Evidencia (archivo)** | `TC-09a…`, `TC-09b…`, `TC-09c…`, `TC-10…` |
 
 ---
 
-## 3. Particiones de equivalencia
+## Particiones de equivalencia
 
 | Operación / Módulo | Regla / Restricción | Clases válidas | Clases inválidas | Representantes | Oráculo esperado |
 |---|---|---|---|---|---|
@@ -258,7 +236,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ---
 
-## 4. Casos derivados por equivalencia
+## Casos derivados por equivalencia
 
 | ID | Operación | Precondiciones | Datos | Pasos | Oráculo (esperado) | Resultado |
 |---|---|---|---|---|---|---|
@@ -274,7 +252,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ---
 
-## 5. Valores límite
+## Valores límite
 
 | Parámetro / Límite | Valores a probar (min−1, min, min+1, max−1, max, max+1) | Oráculo esperado | Notas |
 |---|---|---|---|
@@ -285,7 +263,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ---
 
-## 6. Casos de valores límite (BVA)
+## Casos Valores límite BVA
 
 ### Longitud de contraseña
 
@@ -322,9 +300,9 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ---
 
-## 7. Chárter de prueba exploratoria
+## Chárter de prueba exploratoria
 
-| Campo | Detalle |
+| | |
 |---|---|
 | **ID** | CHR-01 |
 | **Objetivo (charter)** | Explorar el ciclo de sesión del portal y el ciclo de vida de un cobro de campo, buscando estados en los que el sistema **diga una cosa y haga otra**: sesiones que parecen cerradas, links que parecen inválidos, cobros que se pudieran pagar dos veces. |
@@ -334,7 +312,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | **Criterio de cierre** | Se agota el tiempo, o se cubren las cinco áreas con al menos un intento de abuso por cada riesgo listado. |
 | **Evidencias requeridas** | Captura de cada anomalía + petición reproducible (curl o pasos en la UI) + estado en la base de datos cuando el defecto sea de persistencia. |
 
-### Notas de exploración
+## Notas de exploración
 
 | Hora | Acción | Datos | Resultado observado | Resultado esperado (oráculo) | Notas / Riesgos |
 |---|---|---|---|---|---|
@@ -353,7 +331,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ---
 
-## 8. Reporte de defectos
+## Reporte de defectos
 
 > El taller de referencia dejaba la matriz TC ↔ BUG sin una tabla de defectos que
 > la respaldara. Aquí los defectos se listan primero, con pasos reproducibles, y
@@ -458,7 +436,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ---
 
-## 9. Matriz de trazabilidad TC ↔ BUG
+## Matriz de trazabilidad TC ↔ BUG
 
 Cada `✗` significa que **ese caso de prueba fue el que reveló ese defecto**. Las
 celdas vacías no son un olvido: significan que el caso ejecutó ese camino sin
@@ -495,7 +473,7 @@ encontrar el defecto (o que no lo ejercita).
 
 ---
 
-## 10. Resumen de ejecución
+## Resumen de ejecución
 
 | Métrica | Valor |
 |---|---|
