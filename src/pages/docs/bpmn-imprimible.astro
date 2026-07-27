@@ -81,24 +81,21 @@ const procesos = procesosBpmn.map((proceso) => {
     <title>Diagramas BPMN — versión imprimible</title>
   </head>
   <body class="papel">
+    <!-- ── Carátula ────────────────────────────────────────────────────── -->
+    <section class="hoja caratula">
+      <div>
+        <p>DIAGRAMAS BPMN</p>
+        <p>codebymike.tech</p>
+        <p><strong>MICHAEL DAVID RODRIGUEZ BELTRAN</strong></p>
+        <p>FICHA 3114731</p>
+      </div>
+    </section>
+
     <!-- ── Portada ─────────────────────────────────────────────────────── -->
     <section class="hoja portada">
       <div>
         <p class="sello">Documento de arquitectura</p>
         <h1>Diagramas BPMN de los procesos de negocio</h1>
-        <p class="entradilla">
-          Los cuatro procesos críticos del sistema en notación BPMN 2.0, con la piscina transpuesta:
-          cada participante ocupa una columna y el proceso avanza de arriba hacia abajo. Lo que se
-          lee en cada uno es <em>quién</em> hace cada cosa y <em>dónde se decide</em> el camino, por
-          eso toda bifurcación pasa por una compuerta.
-        </p>
-        <p class="entradilla">
-          Los diagramas se generan desde un modelo tipado
-          (<code>src/data/bpmn.ts</code>); las posiciones, el ruteo de las flechas y el corte de las
-          etiquetas los calcula <code>src/lib/bpmn-layout.ts</code>, con pruebas automáticas que
-          verifican, en las dos orientaciones, que ninguna flecha atraviese una figura ajena y que
-          ningún nodo ni etiqueta queden encimados.
-        </p>
 
         <ol class="indice">
           {procesos.map(({ proceso }, i) => (
@@ -310,10 +307,21 @@ const procesos = procesosBpmn.map((proceso) => {
   }
 
   /* ── Tipografía ─────────────────────────────────────────────────────── */
+  .caratula,
   .portada {
     display: flex;
     align-items: center;
     min-height: 240mm;
+  }
+
+  .caratula p {
+    margin: 0 0 3mm;
+    font-size: 13pt;
+    text-align: left;
+  }
+
+  .caratula strong {
+    font-weight: 700;
   }
 
   .sello {
