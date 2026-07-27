@@ -13,9 +13,6 @@ import BpmnShape from '../../components/BpmnShape.astro'
 import { procesosBpmn, leyendaBpmn, COMPUERTAS_BPMN } from '../../data/bpmn'
 import { layout, sizeOf, type BpmnNodeType, type PlacedNode } from '../../lib/bpmn-layout'
 
-// Sin datos privados ni endpoints: es una vista estática de `src/data/bpmn.ts`.
-export const prerender = true
-
 // Misma muestra suelta que la leyenda de la web, en tamaño de papel.
 function muestra(type: BpmnNodeType, alto: number) {
   const { w, h } = sizeOf(type)
