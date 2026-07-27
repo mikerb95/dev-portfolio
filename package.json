@@ -22,7 +22,8 @@
     "test:contracts": "vitest run tests/contracts.test.ts",
     "seed:demo": "node scripts/seed-demo.mjs",
     "seo:indexnow": "node scripts/submit-indexnow.mjs",
-    "og:generate": "node scripts/og/generate.mjs"
+    "og:generate": "node scripts/og/generate.mjs",
+    "bpmn:export": "node scripts/export-bpmn.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.3",

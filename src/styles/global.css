@@ -89,9 +89,39 @@ body {
   --bpmn-end: #e7e7ec;
   --bpmn-error: #ff6b3d;
   --bpmn-label-bg: #13131a;
+  --bpmn-text: #e7e7ec;
+  --bpmn-text-dim: #c4c4cc;
+  --bpmn-accent: #00b8c4;
 }
-.bpmn-scope .bpmn-node-label { font-size: 11.5px; fill: #e7e7ec; font-weight: 450; }
-.bpmn-scope .bpmn-outside { font-size: 10.5px; fill: #c4c4cc; }
+
+/* Variante sobre papel: el documento de arquitectura y los diagramas que se
+   exportan para insertar en él. No es el tema oscuro con los colores invertidos
+   uno a uno — el lima del evento de inicio desaparece sobre blanco y el cian de
+   las compuertas pierde contraste, así que ambos bajan de luminosidad hasta
+   cumplir contraste sobre el papel. */
+.bpmn-scope.bpmn-claro {
+  --bpmn-lane-a: #ffffff;
+  --bpmn-lane-b: #ffffff;
+  --bpmn-header: #f1f2f5;
+  --bpmn-border: #9aa0aa;
+  --bpmn-line: #3d4149;
+  --bpmn-msg: #6b7079;
+  --bpmn-task-fill: #ffffff;
+  --bpmn-task-stroke: #6b7079;
+  --bpmn-gw-fill: #ffffff;
+  --bpmn-gw-stroke: #06707a;
+  --bpmn-event-fill: #ffffff;
+  --bpmn-start: #4a7d10;
+  --bpmn-end: #24262b;
+  --bpmn-error: #c23c10;
+  --bpmn-label-bg: #ffffff;
+  --bpmn-text: #16181c;
+  --bpmn-text-dim: #3d4149;
+  --bpmn-accent: #06707a;
+}
+
+.bpmn-scope .bpmn-node-label { font-size: 11.5px; fill: var(--bpmn-text); font-weight: 450; }
+.bpmn-scope .bpmn-outside { font-size: 10.5px; fill: var(--bpmn-text-dim); }
 
 /* Halo del color del fondo alrededor del texto que vive fuera de las figuras:
    ahí es donde pasan las flechas, y `paint-order` hace que el trazo se pinte
@@ -108,18 +138,18 @@ body {
 }
 .bpmn-scope .bpmn-lane-label {
   font-size: 10.5px;
-  fill: #c4c4cc;
+  fill: var(--bpmn-text-dim);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.bpmn-scope .bpmn-flow-label { font-size: 10px; fill: #c4c4cc; font-weight: 500; }
+.bpmn-scope .bpmn-flow-label { font-size: 10px; fill: var(--bpmn-text-dim); font-weight: 500; }
 /* Anotación de tiempo: monoespaciada y en cian tenue para que se lea como un
    dato medible y no se confunda con el nombre de la figura. */
 .bpmn-scope .bpmn-duracion {
   font-family: var(--font-mono);
   font-size: 10px;
-  fill: #00b8c4;
+  fill: var(--bpmn-accent);
   letter-spacing: -0.01em;
 }
 .bpmn-scope .bpmn-marker,

@@ -38,6 +38,19 @@ export type BpmnNodeType =
 
 export type BpmnFlowKind = 'sequence' | 'message' | 'default'
 
+/**
+ * Sentido de lectura del diagrama.
+ *
+ * `horizontal` es el de la web: carriles apilados y el proceso avanzando de
+ * izquierda a derecha. `vertical` transpone la piscina —cada participante pasa
+ * a ser una columna y el proceso baja— porque un BPMN de doce columnas no cabe
+ * legible en una hoja vertical, que es el formato del documento de
+ * arquitectura. El modelo de datos es el mismo: `col` sigue siendo el orden de
+ * lectura y `row` sigue siendo la rama paralela; lo único que cambia es a qué
+ * eje se mapea cada uno.
+ */
+export type BpmnOrientacion = 'horizontal' | 'vertical'
+
 interface BpmnNodeBase {
   id: string
   label: string
@@ -89,6 +102,12 @@ export interface BpmnFlow {
    * comparten el mismo canal y se dibujan encimados un buen tramo.
    */
   channelOffset?: number
+  /**
+   * El mismo ajuste, para el diagrama transpuesto. Va aparte porque el canal se
+   * desplaza sobre el eje transversal, y ese eje mide distinto en cada
+   * orientación: reusar el valor horizontal movía los canales a ciegas.
+   */
+  channelOffsetV?: number
 }
 
 export interface BpmnLane {
@@ -140,14 +159,47 @@ export const GEO = {
   cornerR: 9,
 } as const
 
+/**
+ * Geometría del diagrama transpuesto. No es la horizontal con los ejes
+ * cambiados: al bajar, el eje caro pasa a ser el ancho, así que la tarea se
+ * estrecha y se alarga, y la etiqueta de eventos y compuertas deja de ir debajo
+ * de la figura —donde la partiría en dos la flecha de salida— para irse al
+ * costado. Ese hueco lateral va contado DENTRO del paso de fila: reservarlo
+ * como relleno del carril lo cobraba en cada fila y ensanchaba el diagrama sin
+ * necesidad.
+ */
+export const GEO_V = {
+  taskW: 112,
+  taskH: 74,
+  /** Avance entre columnas (eje vertical). */
+  colStep: 148,
+  /** Ancho del hueco lateral reservado a la etiqueta externa. */
+  labelW: 80,
+  /** Separación entre el bloque figura+etiqueta de una fila y el de la siguiente. */
+  rowGap: 20,
+  laneHeaderH: 30,
+  lanePadX: 16,
+  padTop: 24,
+  padBottom: 46,
+  /** Corte del texto: dentro de la tarea, y fuera de eventos y compuertas. */
+  charsDentro: 17,
+  lineasDentro: 4,
+  charsFuera: 13,
+  // Cuatro líneas y no tres: al costado sobra alto y falta ancho, así que el
+  // texto cabe entero en vez de terminar recortado con elipsis.
+  lineasFuera: 4,
+} as const
+
 export interface Size {
   w: number
   h: number
 }
 
-export function sizeOf(type: BpmnNodeType): Size {
+export function sizeOf(type: BpmnNodeType, orientacion: BpmnOrientacion = 'horizontal'): Size {
   if (type.startsWith('gateway')) return { w: GEO.gwD, h: GEO.gwD }
-  if (type.startsWith('task')) return { w: GEO.taskW, h: GEO.taskH }
+  if (type.startsWith('task')) {
+    return orientacion === 'vertical' ? { w: GEO_V.taskW, h: GEO_V.taskH } : { w: GEO.taskW, h: GEO.taskH }
+  }
   // El evento de borde va algo más pequeño para que se lea como pegado a la
   // tarea y no como un evento suelto que quedó encima.
   if (type === 'boundaryTimer') return { w: GEO.boundaryD, h: GEO.boundaryD }
@@ -162,6 +214,17 @@ export interface Pt {
   x: number
   y: number
 }
+
+/**
+ * Dónde cuelga la etiqueta de un nodo respecto de su figura.
+ *
+ * `above` es para las compuertas del diagrama horizontal: debajo chocarían con
+ * la etiqueta de la rama que baja ("sí", "no"), que se dibuja pegada al origen.
+ * `below` es la convención para los eventos. `right` es el modo del diagrama
+ * transpuesto: ahí las flechas salen por abajo, así que cualquier texto bajo la
+ * figura acaba partido por su propio trazo.
+ */
+export type LabelPos = 'above' | 'below' | 'right'
 
 export interface PlacedNode extends BpmnNodeBase {
   type: BpmnNodeType
@@ -178,24 +241,31 @@ export interface PlacedNode extends BpmnNodeBase {
   /** Líneas ya cortadas para el <text>. */
   lines: string[]
   outside: boolean
-  /**
-   * Las etiquetas de compuerta van ARRIBA del rombo: debajo chocan con la
-   * etiqueta de la rama que baja ("no", "sí"), que se dibuja pegada al origen.
-   * Las de evento van debajo, como es convención.
-   */
-  labelAbove: boolean
+  labelPos: LabelPos
   /**
    * Los eventos de borde alinean su texto hacia la izquierda del círculo: por
    * la derecha del borde es por donde sale su propia flecha, y una etiqueta
    * centrada acaba partida por ese trazo.
    */
-  labelAlign: 'middle' | 'end'
+  labelAlign: 'middle' | 'end' | 'start'
   /** Punto de anclaje horizontal del texto, según `labelAlign`. */
   labelX: number
+  /** Línea base del PRIMER renglón de la etiqueta externa. */
+  labelY: number
 }
 
+/**
+ * Banda completa de un carril, header incluido. Se describe con un rectángulo y
+ * no con un solo eje porque en horizontal el carril es una franja de alto fijo
+ * y ancho total, y en vertical justo al revés: con las cuatro medidas el
+ * componente pinta las dos sin ramificar la geometría.
+ */
 export interface PlacedLane extends BpmnLane {
+  /** El nombre ya cortado a la medida de la cabecera. */
+  labelLines: string[]
+  x: number
   y: number
+  width: number
   height: number
   rows: number
 }
@@ -213,6 +283,9 @@ export interface PlacedEdge {
 export interface Layout {
   width: number
   height: number
+  orientacion: BpmnOrientacion
+  /** Grosor de la banda de cabecera de los carriles (alto en vertical, ancho en horizontal). */
+  laneHeader: number
   lanes: PlacedLane[]
   nodes: PlacedNode[]
   edges: PlacedEdge[]
@@ -314,6 +387,26 @@ export function route(a: PlacedNode, b: PlacedNode, channelOffset = 0): Pt[] {
   return [start, { x: start.x, y: channelY }, { x: end.x, y: channelY }, end]
 }
 
+/**
+ * El diagrama transpuesto se rutea con el MISMO algoritmo, reflejando los nodos
+ * sobre la diagonal (x↔y, ancho↔alto), enrutando y reflejando los puntos de
+ * vuelta. Escribir una segunda versión de `route` con los ejes cambiados habría
+ * duplicado los cuatro casos y sus bucles de reintento, con dos sitios donde
+ * corregir cualquier defecto de trazo.
+ */
+const reflejar = (p: Pt): Pt => ({ x: p.y, y: p.x })
+const reflejarNodo = (n: PlacedNode): PlacedNode => ({ ...n, cx: n.cy, cy: n.cx, w: n.h, h: n.w })
+
+export function routeOrientado(
+  a: PlacedNode,
+  b: PlacedNode,
+  channelOffset: number,
+  orientacion: BpmnOrientacion,
+): Pt[] {
+  if (orientacion === 'horizontal') return route(a, b, channelOffset)
+  return route(reflejarNodo(a), reflejarNodo(b), channelOffset).map(reflejar)
+}
+
 /** Convierte una polilínea en un path con esquinas redondeadas. */
 export function polylinePath(pts: Pt[], r = GEO.cornerR): string {
   if (pts.length < 2) return ''
@@ -375,9 +468,9 @@ export function pointAlong(pts: Pt[], dist: number): Pt {
  * Además se aparta perpendicular al tramo: una etiqueta encima de su propia
  * flecha se lee mal.
  */
-export function labelAnchor(pts: Pt[]): Pt {
+export function labelAnchor(pts: Pt[], avanceExtra = 0): Pt {
   if (pts.length === 2) {
-    const p = pointAlong(pts, 26)
+    const p = pointAlong(pts, 26 + avanceExtra)
     const vertical = Math.abs(pts[1].x - pts[0].x) < 0.001
     return vertical ? { x: p.x + 16, y: p.y } : { x: p.x, y: p.y - 11 }
   }
@@ -385,7 +478,7 @@ export function labelAnchor(pts: Pt[]): Pt {
   const bend = pts[1]
   const next = pts[2]
   const len = Math.hypot(next.x - bend.x, next.y - bend.y)
-  const t = len === 0 ? 0 : Math.min(18, len / 2) / len
+  const t = len === 0 ? 0 : Math.min(18 + avanceExtra, len / 2) / len
   const p = { x: round(bend.x + (next.x - bend.x) * t), y: round(bend.y + (next.y - bend.y) * t) }
   const vertical = Math.abs(next.x - bend.x) < 0.001
   return vertical ? { x: p.x + 16, y: p.y } : { x: p.x, y: p.y - 11 }
@@ -396,6 +489,9 @@ export function labelAnchor(pts: Pt[]): Pt {
 // detectar choques en los tests, y quedarse corto sería peor que pasarse.
 const CHAR_W = 5.6
 const LINE_H = 12
+// El nombre del carril va en versalitas con espaciado ampliado: gasta bastante
+// más por carácter que el texto normal de las figuras.
+const LANE_CHAR_W = 7.4
 
 export interface Box {
   x1: number
@@ -414,13 +510,18 @@ export function labelBox(n: PlacedNode): Box | null {
 
   // El texto crece hacia la izquierda cuando va alineado al final.
   const horizontal = (w: number): { x1: number; x2: number } =>
-    n.labelAlign === 'end' ? { x1: n.labelX - w, x2: n.labelX } : { x1: n.labelX - w / 2, x2: n.labelX + w / 2 }
+    n.labelAlign === 'end'
+      ? { x1: n.labelX - w, x2: n.labelX }
+      : n.labelAlign === 'start'
+        ? { x1: n.labelX, x2: n.labelX + w }
+        : { x1: n.labelX - w / 2, x2: n.labelX + w / 2 }
 
   if (n.outside && n.lines.length > 0) {
     const w = Math.max(...n.lines.map((l) => l.length)) * CHAR_W + 6
-    const h = n.lines.length * LINE_H + 4
-    const y1 = n.labelAbove ? n.cy - n.h / 2 - 6 - h : n.cy + n.h / 2 + 4
-    cajas.push({ ...horizontal(w), y1, y2: y1 + h })
+    // `labelY` es la línea base del primer renglón: la caja empieza un poco por
+    // encima de esa base y crece un renglón por línea.
+    const y1 = n.labelY - 9
+    cajas.push({ ...horizontal(w), y1, y2: y1 + n.lines.length * LINE_H + 3 })
   }
 
   if (n.duracion) {
@@ -439,20 +540,19 @@ export function labelBox(n: PlacedNode): Box | null {
 }
 
 /**
- * Línea base de la anotación de duración.
- *
- * Debajo de la figura salvo en las compuertas: ahí abajo es donde salen las
- * ramas con sus "sí"/"no", así que el tiempo se apila arriba, encima de la
- * etiqueta. En un evento el texto va primero y el tiempo justo debajo.
+ * Línea base de la anotación de duración: siempre al otro lado de la etiqueta,
+ * para que las dos se lean como dos bloques y no como un párrafo. Con la
+ * etiqueta arriba (compuertas horizontales) el tiempo se apila por encima; con
+ * la etiqueta debajo o al costado, va después del último renglón.
  */
 export function duracionY(n: PlacedNode): number {
-  if (n.labelAbove) {
-    const primeraLinea = n.cy - n.h / 2 - 8 - Math.max(0, n.lines.length - 1) * LINE_H
-    return primeraLinea - LINE_H
+  if (n.labelPos === 'above') return n.labelY - LINE_H
+  if (!n.outside || n.lines.length === 0) {
+    // En una tarea del diagrama transpuesto el texto va dentro, así que el
+    // tiempo se queda solo al costado y se centra con la figura.
+    return n.labelPos === 'right' ? n.cy + 4 : n.cy + n.h / 2 + 13
   }
-  const bajoLaFigura = n.cy + n.h / 2 + 13
-  if (!n.outside || n.lines.length === 0) return bajoLaFigura
-  return bajoLaFigura + n.lines.length * LINE_H
+  return n.labelY + n.lines.length * LINE_H
 }
 
 /** Caja de la etiqueta de un flujo, centrada en su ancla. */
@@ -463,11 +563,12 @@ export function flowLabelBox(label: string, at: Pt): Box {
 
 // ── Layout ──────────────────────────────────────────────────────────────────
 
-export function layout(process: BpmnProcess): Layout {
+export function layout(process: BpmnProcess, orientacion: BpmnOrientacion = 'horizontal'): Layout {
   // Los eventos de borde no ocupan celda: su sitio sale del de su anfitrión, así
   // que se colocan en una segunda pasada.
   const gridNodes = process.nodes.filter((n): n is BpmnGridNode => !isBoundary(n))
   const boundaryNodes = process.nodes.filter(isBoundary)
+  const vertical = orientacion === 'vertical'
 
   const rowsPerLane = new Map<string, number>()
   for (const lane of process.lanes) rowsPerLane.set(lane.id, 1)
@@ -476,38 +577,133 @@ export function layout(process: BpmnProcess): Layout {
     rowsPerLane.set(n.lane, Math.max(rowsPerLane.get(n.lane) ?? 1, rows))
   }
 
+  const maxCol = gridNodes.reduce((m, n) => Math.max(m, n.col), 0)
+
+  // Qué filas necesitan el hueco lateral para su texto. Una fila que solo lleva
+  // tareas sin anotación de tiempo no lo necesita —el nombre va dentro de la
+  // caja—, y reservárselo igual ensanchaba el diagrama en 80 px por fila sin
+  // que nada llegara a ocuparlos. En el proceso de monitoreo eran cuatro filas
+  // de las nueve.
+  const filaDeHost = new Map<string, string>(gridNodes.map((n) => [n.id, `${n.lane}:${n.row ?? 0}`]))
+  // El texto de un evento de borde vive en el hueco de la fila de su anfitrión,
+  // porque el círculo va pegado a esa misma tarea.
+  const filaDe = (n: BpmnNode): string =>
+    isBoundary(n) ? (filaDeHost.get(n.attachedTo) ?? '') : `${n.lane}:${n.row ?? 0}`
+  const conHueco = new Set<string>()
+  for (const n of process.nodes) {
+    if (labelsOutside(n.type) || n.duracion) conHueco.add(filaDe(n))
+  }
+  /** Ancho que ocupa una fila del carril transpuesto, con su hueco de texto o sin él. */
+  const anchoFila = (laneId: string, row: number): number =>
+    GEO_V.taskW + (conHueco.has(`${laneId}:${row}`) ? GEO_V.labelW : 0)
+  /** Desplazamiento de una fila respecto del borde interior de su carril. */
+  const offsetFila = (laneId: string, row: number): number => {
+    let off = 0
+    for (let r = 0; r < row; r++) off += anchoFila(laneId, r) + GEO_V.rowGap
+    return off
+  }
+
+  const grosorDe = (laneId: string): number => {
+    const rows = rowsPerLane.get(laneId) ?? 1
+    return vertical
+      ? GEO_V.lanePadX * 2 + offsetFila(laneId, rows - 1) + anchoFila(laneId, rows - 1)
+      : GEO.lanePadY * 2 + (rows - 1) * GEO.rowH + GEO.taskH
+  }
+
+  // El nombre del carril se corta a la medida de su cabecera. En horizontal la
+  // cabecera es alta y el texto va girado, así que siempre cabe de una línea;
+  // en vertical es una banda estrecha del ancho del carril, y un participante
+  // de nombre largo se salía por los dos lados hasta pisar al vecino.
+  const laneLines = new Map<string, string[]>(
+    process.lanes.map((l) => [
+      l.id,
+      vertical ? wrap(l.label.toUpperCase(), Math.floor((grosorDe(l.id) - 12) / LANE_CHAR_W), 2) : [l.label],
+    ]),
+  )
+  const laneHeader = vertical
+    ? GEO_V.laneHeaderH + (Math.max(...laneLines.values().map((l) => l.length)) - 1) * LINE_H
+    : GEO.laneHeaderW
+
+  // Longitud del eje de avance: el que recorre el proceso de principio a fin.
+  const avance = vertical
+    ? laneHeader + GEO_V.padTop + maxCol * GEO_V.colStep + GEO_V.taskH + GEO_V.padBottom
+    : laneHeader + GEO.padX + maxCol * GEO.colW + GEO.taskW + GEO.padRight
+
+  // Los carriles se apilan sobre el eje transversal; el de avance lo cubren
+  // entero, así que el rectángulo de cada uno se arma con las dos medidas.
   const lanes: PlacedLane[] = []
-  let y = 0
+  let transversal = 0
   for (const lane of process.lanes) {
     const rows = rowsPerLane.get(lane.id) ?? 1
-    const height = GEO.lanePadY * 2 + (rows - 1) * GEO.rowH + GEO.taskH
-    lanes.push({ ...lane, y, height, rows })
-    y += height
+    const grosor = grosorDe(lane.id)
+    const labelLines = laneLines.get(lane.id) ?? [lane.label]
+    lanes.push(
+      vertical
+        ? { ...lane, labelLines, x: transversal, y: 0, width: grosor, height: avance, rows }
+        : { ...lane, labelLines, x: 0, y: transversal, width: avance, height: grosor, rows },
+    )
+    transversal += grosor
   }
   const laneById = new Map(lanes.map((l) => [l.id, l]))
 
-  const maxCol = gridNodes.reduce((m, n) => Math.max(m, n.col), 0)
-  const width = GEO.laneHeaderW + GEO.padX + maxCol * GEO.colW + GEO.taskW + GEO.padRight
-  const height = y
+  const width = vertical ? transversal : avance
+  const height = vertical ? avance : transversal
 
   const nodes: PlacedNode[] = gridNodes.map((n) => {
     const lane = laneById.get(n.lane)
     if (!lane) throw new Error(`El nodo "${n.id}" apunta al carril inexistente "${n.lane}"`)
-    const { w, h } = sizeOf(n.type)
+    const { w, h } = sizeOf(n.type, orientacion)
     const outside = labelsOutside(n.type)
+    const row = n.row ?? 0
+
+    if (!vertical) {
+      const cx = GEO.laneHeaderW + GEO.padX + n.col * GEO.colW + GEO.taskW / 2
+      const cy = lane.y + GEO.lanePadY + row * GEO.rowH + GEO.taskH / 2
+      // Fuera de la figura hay más aire que dentro de una tarea.
+      const lines = wrap(n.label, outside ? 20 : 21, outside ? 2 : 3)
+      const labelPos: LabelPos = outside && n.type.startsWith('gateway') ? 'above' : 'below'
+      return {
+        ...n,
+        row,
+        w,
+        h,
+        cx,
+        cy,
+        lines,
+        outside,
+        labelPos,
+        labelAlign: 'middle' as const,
+        labelX: cx,
+        labelY: labelY(labelPos, cy, h, lines.length),
+      }
+    }
+
+    // Transpuesto: la columna baja y la fila se aparta hacia la derecha, con su
+    // hueco de etiqueta reservado a la derecha de cada figura.
+    const cx = lane.x + GEO_V.lanePadX + offsetFila(lane.id, row) + GEO_V.taskW / 2
+    const cy = laneHeader + GEO_V.padTop + n.col * GEO_V.colStep + GEO_V.taskH / 2
+    const lines = wrap(
+      n.label,
+      outside ? GEO_V.charsFuera : GEO_V.charsDentro,
+      outside ? GEO_V.lineasFuera : GEO_V.lineasDentro,
+    )
+    // Las compuertas suben su etiqueta al hombro derecho del rombo: al costado
+    // exacto es por donde se va la rama de excepción hacia la fila vecina, y su
+    // "sí"/"no" caería justo encima del nombre de la compuerta.
+    const labelPos: LabelPos = outside && n.type.startsWith('gateway') ? 'above' : 'right'
     return {
       ...n,
-      row: n.row ?? 0,
+      row,
       w,
       h,
-      cx: GEO.laneHeaderW + GEO.padX + n.col * GEO.colW + GEO.taskW / 2,
-      cy: lane.y + GEO.lanePadY + (n.row ?? 0) * GEO.rowH + GEO.taskH / 2,
-      // Fuera de la figura hay más aire que dentro de una tarea.
-      lines: wrap(n.label, outside ? 20 : 21, outside ? 2 : 3),
+      cx,
+      cy,
+      lines,
       outside,
-      labelAbove: outside && n.type.startsWith('gateway'),
-      labelAlign: 'middle' as const,
-      labelX: GEO.laneHeaderW + GEO.padX + n.col * GEO.colW + GEO.taskW / 2,
+      labelPos,
+      labelAlign: 'start' as const,
+      labelX: cx + w / 2 + 8,
+      labelY: labelY(labelPos, cy, h, lines.length),
     }
   })
 
@@ -519,7 +715,14 @@ export function layout(process: BpmnProcess): Layout {
   for (const b of boundaryNodes) {
     const host = byId.get(b.attachedTo)
     if (!host) throw new Error(`El evento de borde "${b.id}" se cuelga de la tarea inexistente "${b.attachedTo}"`)
-    const { w, h } = sizeOf(b.type)
+    const { w, h } = sizeOf(b.type, orientacion)
+    // Se cuelga del borde por el que NO salen las flechas de la tarea: el
+    // inferior derecho cuando el proceso avanza a lo ancho, el lateral derecho
+    // cuando avanza hacia abajo. Si comparte borde con la salida de su
+    // anfitrión, el trazo acaba partiendo en dos su etiqueta.
+    const cx = vertical ? host.cx + host.w / 2 : host.cx + host.w / 2 - w / 2 - 6
+    const cy = vertical ? host.cy : host.cy + host.h / 2
+    const lines = wrap(b.label, vertical ? GEO_V.charsFuera : 20, vertical ? GEO_V.lineasFuera : 2)
     const placed: PlacedNode = {
       ...b,
       lane: host.lane,
@@ -527,14 +730,18 @@ export function layout(process: BpmnProcess): Layout {
       row: host.row,
       w,
       h,
-      cx: host.cx + host.w / 2 - w / 2 - 6,
-      cy: host.cy + host.h / 2,
-      lines: wrap(b.label, 20, 2),
+      cx,
+      cy,
+      lines,
       outside: true,
-      labelAbove: false,
-      labelAlign: 'end' as const,
-      labelX: host.cx + host.w / 2 - w - 12,
+      // En vertical el texto se va al hueco lateral de la fila del anfitrión,
+      // el mismo sitio donde iría el de cualquier otra figura de esa fila.
+      labelPos: vertical ? 'right' : 'below',
+      labelAlign: vertical ? 'start' : 'end',
+      labelX: vertical ? cx + w / 2 + 8 : host.cx + host.w / 2 - w - 12,
+      labelY: 0,
     }
+    placed.labelY = labelY(placed.labelPos, cy, h, lines.length)
     nodes.push(placed)
     byId.set(b.id, placed)
   }
@@ -544,7 +751,9 @@ export function layout(process: BpmnProcess): Layout {
     const b = byId.get(f.to)
     if (!a) throw new Error(`El flujo "${f.from} → ${f.to}" sale de un nodo inexistente`)
     if (!b) throw new Error(`El flujo "${f.from} → ${f.to}" entra a un nodo inexistente`)
-    const points = route(a, b, f.channelOffset ?? 0)
+    const offset = (vertical ? f.channelOffsetV : f.channelOffset) ?? 0
+    const points = routeOrientado(a, b, offset, orientacion)
+
     return {
       from: f.from,
       to: f.to,
@@ -552,12 +761,58 @@ export function layout(process: BpmnProcess): Layout {
       points,
       path: polylinePath(points),
       label: f.label,
-      // Junto al origen: en BPMN la condición se lee pegada a la compuerta.
+      // Junto al origen: en BPMN la condición se lee pegada a la compuerta. El
+      // ancla NO se refleja con el trazo: `labelAnchor` ya decide el lado según
+      // el tramo sea vertical u horizontal, y reflejarla mandaba la etiqueta al
+      // lado equivocado, encima de la figura de la que sale.
       labelAt: f.label ? labelAnchor(points) : undefined,
     }
   })
 
-  return { width, height, lanes, nodes, edges }
+  colocarEtiquetasDeRama(edges, nodes)
+
+  return { width, height, orientacion, laneHeader, lanes, nodes, edges }
+}
+
+/**
+ * Aparta las etiquetas de rama que caen sobre algo.
+ *
+ * Todas las salidas de una compuerta arrancan por el mismo puerto y comparten
+ * un tramo, así que la posición "a 26 px del origen" está ocupada por tantas
+ * ramas como salidas tenga. Cuando el sitio está tomado —por otra etiqueta, por
+ * un trazo ajeno o por una figura— la etiqueta avanza sobre su PROPIO trazo
+ * hasta encontrar hueco: sigue pegada a su rama, que es lo que la hace legible,
+ * y deja de contradecir al dibujo.
+ */
+function colocarEtiquetasDeRama(edges: PlacedEdge[], nodes: PlacedNode[]): void {
+  const etiquetadas = edges.filter((e) => e.label && e.labelAt)
+  const cajasFijas: Box[] = []
+
+  for (const e of etiquetadas) {
+    const ajenos = edges.filter((otra) => otra !== e)
+    for (const extra of [0, 16, 32, 48, 64]) {
+      const at = labelAnchor(e.points, extra)
+      const caja = flowLabelBox(e.label!, at)
+      const libre =
+        !cajasFijas.some((otra) => boxesOverlap(caja, otra)) &&
+        !nodes.some((n) => boxesOverlap(caja, bbox(n))) &&
+        !ajenos.some((otra) =>
+          otra.points.some((p, i) => i > 0 && segmentHitsBox(otra.points[i - 1], p, caja)),
+        )
+      e.labelAt = at
+      if (libre) break
+    }
+    cajasFijas.push(flowLabelBox(e.label!, e.labelAt!))
+  }
+}
+
+/** Línea base del primer renglón de la etiqueta externa, según dónde cuelgue. */
+function labelY(pos: LabelPos, cy: number, h: number, lineas: number): number {
+  // Arriba el bloque se apila hacia atrás para que el ÚLTIMO renglón quede
+  // pegado a la figura; al costado se centra con ella.
+  if (pos === 'above') return cy - h / 2 - 8 - Math.max(0, lineas - 1) * LINE_H
+  if (pos === 'right') return cy - ((Math.max(1, lineas) - 1) * LINE_H) / 2 + 4
+  return cy + h / 2 + 13
 }
 
 // ── Verificación de la geometría ────────────────────────────────────────────
@@ -583,8 +838,8 @@ const boxesOverlap = (a: Box, b: Box): boolean => a.x2 > b.x1 && a.x1 < b.x2 && 
  * celda, flechas que atraviesan figuras ajenas y etiquetas encimadas entre sí.
  * Se ejecuta en los tests, no en runtime.
  */
-export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
-  const { nodes, edges, width, height } = layout(process)
+export function findLayoutIssues(process: BpmnProcess, orientacion: BpmnOrientacion = 'horizontal'): LayoutIssue[] {
+  const { nodes, edges, width, height } = layout(process, orientacion)
   const issues: LayoutIssue[] = []
 
   const cells = new Map<string, string>()
@@ -686,8 +941,11 @@ export function findLayoutIssues(process: BpmnProcess): LayoutIssue[] {
         issues.push({ kind: 'label', detail: `la etiqueta "${e.label}" (${e.from} → ${e.to}) choca con la de "${et.id}"` })
       }
     }
+    // Aquí no se exime al origen ni al destino: la etiqueta de una rama nace
+    // pegada a su compuerta, pero encima de ella no puede quedar. En el
+    // diagrama transpuesto un bucle de reintento salía por el costado y dejaba
+    // su "mensaje único" escrito sobre la caja de la propia tarea.
     for (const n of nodes) {
-      if (n.id === e.from || n.id === e.to) continue
       if (boxesOverlap(box, bbox(n))) {
         issues.push({ kind: 'label', detail: `la etiqueta "${e.label}" (${e.from} → ${e.to}) cae sobre "${n.id}"` })
       }

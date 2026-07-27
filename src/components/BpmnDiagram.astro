@@ -2,22 +2,32 @@
 // Renderiza un proceso BPMN como SVG servido desde el servidor: cero JS en el
 // cliente, cero dependencias. La geometría la calcula src/lib/bpmn-layout.ts y
 // cada figura la pinta BpmnShape; aquí se montan la piscina y los flujos.
-import { GEO, layout, type BpmnProcess } from '../lib/bpmn-layout'
+import { layout, type BpmnOrientacion, type BpmnProcess } from '../lib/bpmn-layout'
 import BpmnShape from './BpmnShape.astro'
 
 interface Props {
   proceso: BpmnProcess
+  /** `vertical` transpone la piscina: cada carril es una columna. */
+  orientacion?: BpmnOrientacion
+  /** Sin marco ni fondo propios: para el documento imprimible y la exportación. */
+  desnudo?: boolean
+  /** Paleta sobre papel blanco en vez de la del sitio. */
+  claro?: boolean
 }
 
-const { proceso } = Astro.props
-const { width, height, lanes, nodes, edges } = layout(proceso)
+const { proceso, orientacion = 'horizontal', desnudo = false, claro = false } = Astro.props
+// El grosor de la banda de título ya viene calculado: al transponer pasa de ser
+// una franja lateral con el texto girado a una cabecera superior con el texto
+// normal, que crece si algún nombre necesita dos líneas.
+const { width, height, lanes, nodes, edges, laneHeader: headerGrosor } = layout(proceso, orientacion)
+const vertical = orientacion === 'vertical'
 
 // Sufijo único por diagrama: varios SVG en la misma página no pueden compartir
 // los ids de <marker>, o el segundo se queda sin puntas de flecha.
 const uid = proceso.id
 ---
 
-<figure class="bpmn bpmn-scope">
+<figure class:list={['bpmn', 'bpmn-scope', { desnudo, 'bpmn-claro': claro }]}>
   <div class="bpmn-scroll">
     <svg
       width={width}
@@ -52,36 +62,64 @@ const uid = proceso.id
         </marker>
       </defs>
 
-      {/* ── Piscina y carriles ─────────────────────────────────────────── */}
+      {/* ── Piscina y carriles ───────────────────────────────────────────
+          El carril es un rectángulo con su cabecera en un extremo; qué extremo
+          y hacia dónde crece lo decide la orientación, pero la geometría (x, y,
+          ancho, alto) ya viene resuelta del layout. */}
       <g class="bpmn-pool">
         {lanes.map((lane, i) => (
           <g>
             <rect
-              x={GEO.laneHeaderW}
-              y={lane.y}
-              width={width - GEO.laneHeaderW}
-              height={lane.height}
+              x={vertical ? lane.x : headerGrosor}
+              y={vertical ? headerGrosor : lane.y}
+              width={vertical ? lane.width : lane.width - headerGrosor}
+              height={vertical ? lane.height - headerGrosor : lane.height}
               fill={i % 2 === 0 ? 'var(--bpmn-lane-a)' : 'var(--bpmn-lane-b)'}
             />
-            <rect x="0" y={lane.y} width={GEO.laneHeaderW} height={lane.height} fill="var(--bpmn-header)" />
+            <rect
+              x={lane.x}
+              y={lane.y}
+              width={vertical ? lane.width : headerGrosor}
+              height={vertical ? headerGrosor : lane.height}
+              fill="var(--bpmn-header)"
+            />
+            {/* En horizontal la cabecera es una franja estrecha y alta: el único
+                sitio donde cabe el nombre es girado 90°. */}
             <text
               class="bpmn-lane-label"
-              x={GEO.laneHeaderW / 2}
-              y={lane.y + lane.height / 2}
-              transform={`rotate(-90 ${GEO.laneHeaderW / 2} ${lane.y + lane.height / 2})`}
+              x={vertical ? lane.x + lane.width / 2 : headerGrosor / 2}
+              y={vertical ? headerGrosor / 2 : lane.y + lane.height / 2}
+              transform={vertical ? undefined : `rotate(-90 ${headerGrosor / 2} ${lane.y + lane.height / 2})`}
               text-anchor="middle"
               dominant-baseline="central"
             >
-              {lane.label}
+              {lane.labelLines.map((linea, j) => (
+                <tspan
+                  x={vertical ? lane.x + lane.width / 2 : headerGrosor / 2}
+                  dy={j === 0 ? -((lane.labelLines.length - 1) * 12) / 2 : 12}
+                >
+                  {linea}
+                </tspan>
+              ))}
             </text>
-            {i > 0 && <line x1="0" y1={lane.y} x2={width} y2={lane.y} stroke="var(--bpmn-border)" stroke-width="1" />}
+            {i > 0 && (
+              <line
+                x1={lane.x}
+                y1={lane.y}
+                x2={vertical ? lane.x : width}
+                y2={vertical ? height : lane.y}
+                stroke="var(--bpmn-border)"
+                stroke-width="1"
+              />
+            )}
           </g>
         ))}
+        {/* Divisoria entre las cabeceras y el área de trabajo. */}
         <line
-          x1={GEO.laneHeaderW}
-          y1="0"
-          x2={GEO.laneHeaderW}
-          y2={height}
+          x1={vertical ? 0 : headerGrosor}
+          y1={vertical ? headerGrosor : 0}
+          x2={vertical ? width : headerGrosor}
+          y2={vertical ? headerGrosor : height}
           stroke="var(--bpmn-border)"
           stroke-width="1.2"
         />
@@ -162,11 +200,29 @@ const uid = proceso.id
     overflow: hidden;
   }
 
+  /* Sin marco: el documento imprimible y los SVG exportados ponen el suyo (o
+     ninguno), y el borde claro sobre papel blanco se ve como un recuadro
+     sobrante alrededor de la piscina, que ya tiene el suyo. */
+  .bpmn.desnudo {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
   .bpmn-scroll {
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
     scrollbar-color: #3a3a48 transparent;
+  }
+
+  .bpmn.desnudo .bpmn-scroll {
+    overflow: visible;
+  }
+
+  .bpmn.desnudo svg {
+    width: 100%;
+    height: auto;
   }
 
   svg {

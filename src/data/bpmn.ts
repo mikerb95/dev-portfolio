@@ -346,18 +346,21 @@ const monitoreo: BpmnProcess = {
     { from: 'sonda', to: 'resp', kind: 'message' },
     // Baja pegado a la tarea para no cruzar el carril del servicio sondeado.
     // Sin etiqueta: el propio evento de borde ya dice qué pasa y en cuánto.
-    { from: 'corte', to: 'reg', channelOffset: -78 },
+    // Transpuesto el estorbo es el mismo pero en el otro eje: el tramo que
+    // cambia de carril tiene que pasar por encima del servicio sondeado, no a
+    // su altura.
+    { from: 'corte', to: 'reg', channelOffset: -78, channelOffsetV: -75 },
     { from: 'resp', to: 'reg' },
     { from: 'reg', to: 'gok' },
     // Las dos ramas bajan en paralelo un buen trecho, así que se separan lo
     // máximo que permite la etiqueta de la compuerta de abajo: pegadas, el ojo
     // no distingue cuál lleva a cuál.
-    { from: 'gok', to: 'gabierto', label: 'no', channelOffset: -40 },
-    { from: 'gok', to: 'gcerrar', label: 'sí', channelOffset: 24 },
+    { from: 'gok', to: 'gabierto', label: 'no', channelOffset: -40, channelOffsetV: -34 },
+    { from: 'gok', to: 'gcerrar', label: 'sí', channelOffset: 24, channelOffsetV: 0 },
     { from: 'gabierto', to: 'abre', label: 'no' },
     // Su canal se adelanta para que el "sí" no caiga sobre la línea que sube
     // desde la compuerta de abajo.
-    { from: 'gabierto', to: 'act', label: 'sí', channelOffset: -20 },
+    { from: 'gabierto', to: 'act', label: 'sí', channelOffset: -20, channelOffsetV: -22 },
     { from: 'gcerrar', to: 'cierra', label: 'sí' },
     { from: 'gcerrar', to: 'estable', label: 'no' },
     { from: 'abre', to: 'caida' },

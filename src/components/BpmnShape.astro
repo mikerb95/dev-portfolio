@@ -21,11 +21,9 @@ const esReloj = n.type === 'timerStart' || n.type === 'timerIntermediate' || n.t
 // de un inicio (anillo fino) o un fin (anillo grueso).
 const anilloDoble = n.type === 'intermediateEvent' || n.type === 'timerIntermediate' || n.type === 'boundaryTimer'
 
-// Línea base del primer renglón de la etiqueta externa. Arriba se apila hacia
-// atrás (la última línea queda pegada a la figura); abajo, hacia adelante.
-const etiquetaY = n.labelAbove
-  ? n.cy - n.h / 2 - 8 - (n.lines.length - 1) * 12
-  : n.cy + n.h / 2 + 13
+// Dónde arranca la etiqueta externa lo decide el layout (depende de la
+// orientación del diagrama), no esta figura.
+const etiquetaY = n.labelY
 
 /** El anillo exterior es lo que distingue a los eventos entre sí en BPMN. */
 const anillo = anilloDoble

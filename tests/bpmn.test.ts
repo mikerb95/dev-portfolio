@@ -51,7 +51,10 @@ describe('route', () => {
     h: 50,
     lines: ['x'],
     outside: false,
-    labelAbove: false,
+    labelPos: 'below',
+    labelAlign: 'middle',
+    labelX: cx,
+    labelY: cy + 38,
   })
 
   it('une con una recta los nodos alineados hacia adelante', () => {
@@ -187,7 +190,7 @@ describe('labelBox', () => {
       flows: [],
     }).nodes[0]
     const box = labelBox(gw)!
-    expect(gw.labelAbove).toBe(true)
+    expect(gw.labelPos).toBe('above')
     expect(box.y2).toBeLessThanOrEqual(gw.cy - gw.h / 2)
   })
 
@@ -202,7 +205,7 @@ describe('labelBox', () => {
       flows: [],
     }).nodes[0]
     const box = labelBox(ev)!
-    expect(ev.labelAbove).toBe(false)
+    expect(ev.labelPos).toBe('below')
     expect(box.y1).toBeGreaterThanOrEqual(ev.cy + ev.h / 2)
   })
 
@@ -357,6 +360,22 @@ describe('procesos BPMN documentados', () => {
       it('no encima nodos ni cruza flechas por encima de otras figuras', () => {
         const issues = findLayoutIssues(proc)
         expect(issues.map((i) => i.detail)).toEqual([])
+      })
+
+      // El diagrama transpuesto no es el mismo dibujo girado: cambian el ruteo,
+      // el lado de las etiquetas y el tamaño de las tareas. Un diagrama que se
+      // ve bien en la web puede tener flechas encima de figuras en la versión
+      // que va al documento de arquitectura, así que se verifica igual.
+      it('tampoco al transponerlo para el documento vertical', () => {
+        const issues = findLayoutIssues(proc, 'vertical')
+        expect(issues.map((i) => i.detail)).toEqual([])
+      })
+
+      it('baja al transponerlo, en vez de extenderse a lo ancho', () => {
+        const h = layout(proc, 'horizontal')
+        const v = layout(proc, 'vertical')
+        expect(v.height).toBeGreaterThan(v.width * 0.8)
+        expect(v.width / v.height).toBeLessThan(h.width / h.height)
       })
 
       it('cada nodo participa en al menos un flujo', () => {

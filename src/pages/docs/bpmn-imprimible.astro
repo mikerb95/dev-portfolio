@@ -1,0 +1,517 @@
+---
+// Versión para papel de los diagramas BPMN: fondo blanco, piscinas
+// transpuestas (cada participante es una columna, el proceso baja) y una hoja
+// por proceso, para pegar en el documento de arquitectura o exportar a PDF
+// desde el navegador.
+//
+// No usa BaseLayout a propósito: esta página no es parte del sitio —no lleva
+// navegación, ni fondo oscuro, ni animaciones— y arrastrar el layout habría
+// significado desactivar cada una de esas piezas desde aquí.
+import '../../styles/global.css'
+import BpmnDiagram from '../../components/BpmnDiagram.astro'
+import BpmnShape from '../../components/BpmnShape.astro'
+import { procesosBpmn, leyendaBpmn, COMPUERTAS_BPMN } from '../../data/bpmn'
+import { layout, sizeOf, type BpmnNodeType, type PlacedNode } from '../../lib/bpmn-layout'
+
+// Sin datos privados ni endpoints: es una vista estática de `src/data/bpmn.ts`.
+export const prerender = true
+
+// Misma muestra suelta que la leyenda de la web, en tamaño de papel.
+function muestra(type: BpmnNodeType, alto: number) {
+  const { w, h } = sizeOf(type)
+  const pad = 3
+  const node: PlacedNode = {
+    id: `muestra-${type}`,
+    type,
+    label: '',
+    lane: 'l',
+    col: 0,
+    row: 0,
+    cx: w / 2 + pad,
+    cy: h / 2 + pad,
+    w,
+    h,
+    lines: [],
+    outside: false,
+    labelPos: 'below',
+    labelAlign: 'middle',
+    labelX: w / 2 + pad,
+    labelY: h + pad,
+  }
+  const vbW = w + pad * 2
+  const vbH = h + pad * 2
+  return { node, vbW, vbH, alto, ancho: Math.round((vbW * alto) / vbH) }
+}
+
+const ALTO_MUESTRA = 26
+const muestras = leyendaBpmn.map((item) => ({ ...item, ...muestra(item.type, ALTO_MUESTRA) }))
+const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, 34) }))
+
+// Área útil para el diagrama en cada tipo de hoja, en milímetros (el alto ya
+// descuenta la cabecera del proceso). Sirve para decidir cómo va cada hoja: hoy
+// los cuatro procesos caben en vertical, pero un proceso nuevo con muchos
+// participantes podría no hacerlo, y girar la hoja es preferible a publicarlo
+// en un cuerpo que no se puede leer.
+const UTIL = { vertical: { ancho: 180, alto: 205 }, apaisada: { ancho: 270, alto: 140 } }
+const MM_POR_PX = 25.4 / 96
+
+const procesos = procesosBpmn.map((proceso) => {
+  const { width, height } = layout(proceso, 'vertical')
+  const escala = (util: { ancho: number; alto: number }) =>
+    Math.min(util.ancho / (width * MM_POR_PX), util.alto / (height * MM_POR_PX))
+  // La hoja se gira solo si compensa de verdad: un diagrama alto y estrecho
+  // pierde al girarlo, porque entonces lo que lo limita es el alto de la hoja.
+  const apaisada = escala(UTIL.apaisada) > escala(UTIL.vertical) * 1.15
+  return { proceso, width, height, apaisada }
+})
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Diagramas BPMN — versión imprimible</title>
+  </head>
+  <body class="papel">
+    <!-- ── Portada ─────────────────────────────────────────────────────── -->
+    <section class="hoja portada">
+      <div>
+        <p class="sello">Documento de arquitectura</p>
+        <h1>Diagramas BPMN de los procesos de negocio</h1>
+        <p class="entradilla">
+          Los cuatro procesos críticos del sistema en notación BPMN 2.0, con la piscina transpuesta:
+          cada participante ocupa una columna y el proceso avanza de arriba hacia abajo. Lo que se
+          lee en cada uno es <em>quién</em> hace cada cosa y <em>dónde se decide</em> el camino, por
+          eso toda bifurcación pasa por una compuerta.
+        </p>
+        <p class="entradilla">
+          Los diagramas se generan desde un modelo tipado
+          (<code>src/data/bpmn.ts</code>); las posiciones, el ruteo de las flechas y el corte de las
+          etiquetas los calcula <code>src/lib/bpmn-layout.ts</code>, con pruebas automáticas que
+          verifican, en las dos orientaciones, que ninguna flecha atraviese una figura ajena y que
+          ningún nodo ni etiqueta queden encimados.
+        </p>
+
+        <ol class="indice">
+          {procesos.map(({ proceso }, i) => (
+            <li>
+              <span class="num">{i + 1}</span>
+              <span>
+                <strong>{proceso.titulo}</strong>
+                <span class="origen">{proceso.origen}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <!-- ── Notación ────────────────────────────────────────────────────── -->
+    <section class="hoja">
+      <h2 class="titulo-hoja">Notación empleada</h2>
+
+      <ul class="bpmn-scope bpmn-claro leyenda">
+        {muestras.map((m) => (
+          <li>
+            <span class="figura">
+              <svg
+                width={m.ancho}
+                height={ALTO_MUESTRA}
+                viewBox={`0 0 ${m.vbW} ${m.vbH}`}
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <BpmnShape node={m.node} />
+              </svg>
+            </span>
+            <span>
+              <strong>{m.label}</strong>
+              <span class="desc">{m.desc}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <h3 class="subtitulo">Los cinco tipos de compuerta</h3>
+      <p class="parrafo">
+        Las cinco se dibujan con el mismo rombo: lo único que cambia es el marcador de dentro. Ese
+        detalle no es decorativo — decide si el proceso sigue por un camino o por varios, y si al
+        juntarse espera a los demás o no. De las cinco, estos diagramas solo necesitan la exclusiva;
+        las otras cuatro se incluyen con el ejemplo de dónde encajarían en este sistema.
+      </p>
+
+      <table class="tabla compuertas bpmn-scope bpmn-claro">
+        <thead>
+          <tr>
+            <th class="col-fig">Símbolo</th>
+            <th>Compuerta</th>
+            <th>Al dividir</th>
+            <th>Al juntar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {compuertas.map((c) => (
+            <tr>
+              <td class="col-fig">
+                <svg
+                  width={c.ancho}
+                  height={c.alto}
+                  viewBox={`0 0 ${c.vbW} ${c.vbH}`}
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <BpmnShape node={c.node} />
+                </svg>
+              </td>
+              <td>
+                <strong>{c.nombre}</strong>
+                {c.alias && <span class="mono"> {c.alias}</span>}
+                {c.usada && <span class="chip">en uso</span>}
+                <span class="desc">Se marca con {c.marcador}.</span>
+              </td>
+              <td>{c.divergencia}</td>
+              <td>{c.convergencia}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ── Un proceso por hoja ─────────────────────────────────────────── -->
+    {
+      procesos.map(({ proceso, apaisada }, i) => (
+        <>
+          <section class:list={['hoja', { apaisada }]}>
+            <header class="cabecera">
+              <h2 class="titulo-hoja">
+                <span class="num">{i + 1}</span>
+                {proceso.titulo}
+              </h2>
+              <p class="parrafo">{proceso.desc}</p>
+              <p class="origen">{proceso.origen}</p>
+            </header>
+
+            <div class="lienzo" data-proceso={proceso.id}>
+              <BpmnDiagram proceso={proceso} orientacion="vertical" desnudo claro />
+            </div>
+
+            {proceso.nota && <p class="nota">{proceso.nota}</p>}
+          </section>
+
+          {proceso.tiempos && proceso.tiempos.length > 0 && (
+            <section class="hoja">
+              <h2 class="titulo-hoja">
+                <span class="num">{i + 1}</span>
+                Tiempos del proceso
+              </h2>
+              <p class="parrafo">
+                Cada valor del diagrama sale de una constante del código, no de una estimación: la
+                tabla cita dónde está fijado para poder contrastarlo.
+              </p>
+              <table class="tabla">
+                <thead>
+                  <tr>
+                    <th>Concepto</th>
+                    <th class="col-valor">Valor</th>
+                    <th>Dónde está fijado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {proceso.tiempos.map((t) => (
+                    <tr>
+                      <td>
+                        <strong>{t.concepto}</strong>
+                        {t.razon && <span class="desc">{t.razon}</span>}
+                      </td>
+                      <td class="col-valor mono">{t.valor}</td>
+                      <td class="mono origen">{t.origen}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
+        </>
+      ))
+    }
+  </body>
+</html>
+
+<style is:global>
+  /* Hoja A4 con márgenes de documento. El pie con la numeración lo pone el
+     navegador al exportar (Chrome: "Encabezados y pies de página"). */
+  @page {
+    size: A4 portrait;
+    margin: 14mm 15mm;
+  }
+
+  /* Los diagramas que no bajan de un mínimo de legibilidad al encoger van en su
+     propia hoja girada. Es una página con nombre, no un `transform`: girar el
+     SVG dejaría el texto de lado en el PDF y sin poder seleccionarlo. */
+  @page apaisada {
+    size: A4 landscape;
+    margin: 12mm 14mm;
+  }
+
+  html,
+  body.papel {
+    background: #ffffff;
+    color: #16181c;
+  }
+
+  body.papel {
+    font-family: "Inter Variable", system-ui, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .hoja {
+    /* En pantalla la hoja se ve como tal; al imprimir, los márgenes los pone
+       @page y este ancho deja de aplicarse. */
+    width: 180mm;
+    margin: 0 auto;
+    padding: 12mm 0;
+    break-after: page;
+  }
+
+  .hoja.apaisada {
+    width: 270mm;
+    page: apaisada;
+  }
+
+  .hoja:last-child {
+    break-after: auto;
+  }
+
+  @media screen {
+    body.papel {
+      background: #6b7079;
+      padding: 10mm 0;
+    }
+    .hoja {
+      background: #ffffff;
+      padding: 14mm 15mm;
+      width: 210mm;
+      margin: 0 auto 8mm;
+      box-shadow: 0 2px 14px rgb(0 0 0 / 0.28);
+    }
+    .hoja.apaisada {
+      width: 297mm;
+    }
+  }
+
+  /* ── Tipografía ─────────────────────────────────────────────────────── */
+  .portada {
+    display: flex;
+    align-items: center;
+    min-height: 240mm;
+  }
+
+  .sello {
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #06707a;
+    margin: 0 0 6mm;
+  }
+
+  .portada h1 {
+    font-size: 26pt;
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 8mm;
+    max-width: 150mm;
+  }
+
+  .entradilla {
+    font-size: 10.5pt;
+    color: #3d4149;
+    max-width: 145mm;
+    margin: 0 0 4mm;
+  }
+
+  .indice {
+    list-style: none;
+    padding: 0;
+    margin: 12mm 0 0;
+    border-top: 1px solid #d3d7dd;
+  }
+
+  .indice li {
+    display: flex;
+    gap: 5mm;
+    align-items: baseline;
+    padding: 3.5mm 0;
+    border-bottom: 1px solid #e6e9ed;
+  }
+
+  .indice strong {
+    display: block;
+    font-weight: 550;
+  }
+
+  .num {
+    display: inline-block;
+    min-width: 6mm;
+    font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+    font-size: 9pt;
+    color: #06707a;
+  }
+
+  .titulo-hoja {
+    font-size: 14pt;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 3mm;
+  }
+
+  .subtitulo {
+    font-size: 11.5pt;
+    font-weight: 600;
+    margin: 10mm 0 2mm;
+  }
+
+  .parrafo {
+    font-size: 10pt;
+    color: #3d4149;
+    max-width: 165mm;
+    margin: 0 0 3mm;
+  }
+
+  .origen,
+  .mono,
+  code {
+    font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  }
+
+  .origen {
+    font-size: 8pt;
+    color: #6b7079;
+    overflow-wrap: anywhere;
+  }
+
+  .desc {
+    display: block;
+    font-size: 9pt;
+    color: #3d4149;
+  }
+
+  .nota {
+    font-size: 9.5pt;
+    color: #16181c;
+    background: #f1f2f5;
+    border-radius: 2mm;
+    padding: 3mm 4mm;
+    margin: 5mm 0 0;
+  }
+
+  .cabecera {
+    margin-bottom: 5mm;
+  }
+
+  /* ── Diagrama ───────────────────────────────────────────────────────── */
+  .lienzo {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* El diagrama se escala al ancho de la hoja, pero nunca más alto de lo que
+     queda: con solo `width: 100%` un proceso largo se parte entre dos hojas. */
+  .lienzo svg {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 205mm;
+  }
+
+  .apaisada .lienzo svg {
+    max-height: 140mm;
+  }
+
+  /* ── Leyenda y tablas ───────────────────────────────────────────────── */
+  .leyenda {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3mm 8mm;
+  }
+
+  .leyenda li {
+    display: flex;
+    gap: 4mm;
+    align-items: center;
+    break-inside: avoid;
+  }
+
+  .leyenda strong {
+    font-size: 9.5pt;
+    font-weight: 550;
+  }
+
+  .figura {
+    flex: 0 0 20mm;
+    display: grid;
+    place-items: center;
+  }
+
+  .tabla {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 3mm;
+    font-size: 9.5pt;
+  }
+
+  .tabla th {
+    text-align: left;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7079;
+    border-bottom: 1px solid #9aa0aa;
+    padding: 0 3mm 2mm 0;
+  }
+
+  .tabla td {
+    vertical-align: top;
+    padding: 2.5mm 3mm 2.5mm 0;
+    border-bottom: 1px solid #e6e9ed;
+  }
+
+  .tabla tr {
+    break-inside: avoid;
+  }
+
+  .col-fig {
+    width: 16mm;
+  }
+
+  .col-valor {
+    width: 34mm;
+    color: #06707a;
+  }
+
+  .chip {
+    display: inline-block;
+    margin-left: 2mm;
+    font-size: 7.5pt;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #06707a;
+  }
+
+  /* Chrome descarta los fondos al imprimir salvo que se pidan explícitamente, y
+     sin ellos las cabeceras de carril y la nota pierden su separación. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+</style>

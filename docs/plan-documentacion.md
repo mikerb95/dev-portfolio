@@ -120,6 +120,33 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
       configura en cron-job.org) se declara explícitamente como externo en vez
       de inventarle un origen.
 
+- [x] `/docs/bpmn-imprimible` — los mismos cuatro procesos **transpuestos** y
+      sobre papel, para el documento de arquitectura, que es vertical. El motor
+      de layout aprendió una orientación (`layout(proceso, 'vertical')`): los
+      carriles pasan a ser columnas y el proceso baja. No es el diagrama girado
+      —eso habría dejado el texto de lado—, sino otro layout sobre el mismo
+      modelo: la tarea se estrecha y se alarga porque al bajar el eje caro es el
+      ancho, y la etiqueta de eventos y compuertas se va al costado porque
+      debajo la parte en dos la flecha de salida. El ruteo sí se reutiliza tal
+      cual, reflejando los nodos sobre la diagonal antes de enrutar y los puntos
+      después: una segunda copia de los cuatro casos de trazo habría sido dos
+      sitios donde corregir cada defecto.
+
+      Dos hallazgos del camino, ambos del verificador de geometría:
+      reservar el hueco lateral de la etiqueta en **todas** las filas ensanchaba
+      el diagrama de monitoreo en 320 px que nadie ocupaba (una fila de puras
+      tareas lleva su texto dentro de la caja), y la comprobación de "etiqueta
+      de rama sobre una figura" eximía al nodo de origen — con lo que un bucle
+      de reintento escribía su condición encima de su propia tarea sin que nadie
+      protestara. Las etiquetas de rama ahora se colocan resolviendo choques:
+      avanzan sobre su propio trazo hasta encontrar hueco.
+
+      Salidas: `/docs/bpmn-imprimible` (fondo blanco, `@page` A4, un proceso por
+      hoja con su tabla de tiempos) y `npm run bpmn:export`, que escribe
+      `docs/diagramas-bpmn/<proceso>-vertical.{svg,png}` para insertarlos en el
+      DEA. El SVG lleva dentro los estilos y las tipografías, y el PNG se
+      rasteriza desde ese mismo SVG: la imagen y el vector no pueden divergir.
+
 El menú (`DocsNav.astro`) pasó de 10 a 18 pestañas.
 
 ## 6. Fases futuras

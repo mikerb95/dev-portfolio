@@ -26,7 +26,10 @@ function muestra(type: BpmnNodeType, alto: number) {
     h,
     lines: [],
     outside: false,
-    labelAbove: false,
+    labelPos: 'below',
+    labelAlign: 'middle',
+    labelX: w / 2 + pad,
+    labelY: h + pad,
   }
   const vbW = w + pad * 2
   const vbH = h + pad * 2
@@ -59,6 +62,15 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, sizeOf
         las flechas y el corte de las etiquetas los calcula{' '}
         <code class="font-mono text-ink-200">src/lib/bpmn-layout.ts</code>, con tests que verifican
         que ninguna flecha atraviese una figura ajena y que ningún nodo quede encimado.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        Para el documento de arquitectura —que es vertical— existe{' '}
+        <a
+          href="/docs/bpmn-imprimible"
+          class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40"
+        >
+          la misma página transpuesta y sobre papel
+        </a>: cada participante en una columna, el proceso bajando, una hoja A4 por proceso.
       </p>
     </div>
 
