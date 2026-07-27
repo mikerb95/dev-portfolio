@@ -21,6 +21,11 @@ const en = {
     switch: 'Cambiar a español',
     stay: 'Stay in English',
   },
+  whatsapp: {
+    label: 'Chat with me',
+    aria: 'Message me on WhatsApp',
+    message: "Hi Mike, I'm coming from codebymike.tech and I'd like to talk about a project.",
+  },
   nav: {
     diseno: 'Web Design',
     tools: 'Tools',
