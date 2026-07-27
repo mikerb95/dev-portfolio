@@ -114,14 +114,29 @@ const enHref = alternateUrls(Astro.url.pathname).en
     const browserLang = (navigator.language || navigator.languages?.[0] || '').toLowerCase()
     const prefersNonSpanish = browserLang !== '' && !browserLang.startsWith('es')
 
+    // La burbuja de WhatsApp vive en la misma esquina: se le publica el estado
+    // y la altura real de la tarjeta (varía con el idioma y el ancho) para que
+    // se aparte hacia arriba en vez de solaparse o quedar debajo.
+    const markOpen = () => {
+      const card = root.querySelector('.lang-suggest-card')
+      const h = card instanceof HTMLElement ? card.offsetHeight : 0
+      if (h > 0) document.documentElement.style.setProperty('--lang-suggest-h', `${h}px`)
+      document.documentElement.dataset.langSuggest = 'open'
+    }
+    const markClosed = () => {
+      delete document.documentElement.dataset.langSuggest
+    }
+
     if (!alreadyDismissed && prefersNonSpanish) {
       const timer = setTimeout(() => {
         root.classList.remove('hidden')
+        markOpen()
       }, 900)
 
       const dismiss = () => {
         clearTimeout(timer)
         root.classList.add('hidden')
+        markClosed()
         try {
           localStorage.setItem(STORAGE_KEY, '1')
         } catch {
