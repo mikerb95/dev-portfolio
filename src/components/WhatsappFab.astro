@@ -1,0 +1,61 @@
+---
+// Burbuja flotante de WhatsApp, presente en todas las páginas públicas.
+// Sin API ni widget de terceros: es un enlace wa.me con mensaje precargado,
+// igual que /paginas-web y /contact.
+//
+// Convive con LanguageSuggestModal, que ocupa la misma esquina inferior
+// derecha: cuando esa modal está visible el script del modal marca
+// `data-lang-suggest="open"` en <html> y publica su altura en
+// `--lang-suggest-h`; la burbuja se sube por encima de la tarjeta y gana
+// z-index para no quedar tapada ni superpuesta.
+import { getDictionary, getLocaleFromUrl } from '../i18n'
+import { waLink } from '../lib/phone'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+
+const PHONE = '+573104641228'
+const href = waLink(PHONE, t.whatsapp.message)
+---
+
+<a
+  id="wa-fab"
+  href={href}
+  target="_blank"
+  rel="noopener"
+  class="wa-fab group fixed right-4 sm:right-5 z-40 inline-flex items-center gap-2.5 h-12 pl-3 pr-3 sm:pr-4 rounded-full bg-[#25D366] text-[#062e16] shadow-[0_8px_28px_rgba(37,211,102,.35)] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366]"
+  aria-label={t.whatsapp.aria}
+  data-analytics="whatsapp-fab"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true" class="shrink-0">
+    <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"></path>
+    <path d="M12.04 2C6.6 2 2.18 6.42 2.18 11.86c0 1.74.46 3.44 1.32 4.94L2 22l5.36-1.4a9.83 9.83 0 0 0 4.68 1.19h.01c5.43 0 9.85-4.42 9.85-9.86 0-2.63-1.02-5.11-2.88-6.97A9.79 9.79 0 0 0 12.04 2Zm0 17.94h-.01a8.2 8.2 0 0 1-4.17-1.14l-.3-.18-3.1.81.83-3.02-.2-.31a8.13 8.13 0 0 1-1.25-4.34c0-4.52 3.68-8.2 8.2-8.2a8.14 8.14 0 0 1 5.79 2.4 8.14 8.14 0 0 1 2.4 5.8c0 4.52-3.68 8.18-8.19 8.18Z"></path>
+  </svg>
+  <span class="hidden sm:inline text-[13px] font-medium whitespace-nowrap max-w-0 opacity-0 overflow-hidden transition-all duration-300 group-hover:max-w-[10rem] group-hover:opacity-100">
+    {t.whatsapp.label}
+  </span>
+</a>
+
+<style>
+  .wa-fab {
+    /* Separación base del borde inferior; la modal de idioma la aumenta. */
+    --wa-gap: 1.25rem;
+    bottom: var(--wa-gap);
+    transition:
+      bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.2s ease;
+  }
+
+  /* Modal de idioma abierta: la burbuja se sube por encima de la tarjeta
+     (que mide --lang-suggest-h) y sube de plano para no quedar detrás. */
+  :global(html[data-lang-suggest='open']) .wa-fab {
+    bottom: calc(var(--wa-gap) + var(--lang-suggest-h, 9rem) + 0.75rem);
+    z-index: 70;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wa-fab {
+      transition: none;
+    }
+  }
+</style>
