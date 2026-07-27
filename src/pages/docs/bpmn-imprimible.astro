@@ -13,9 +13,12 @@ import BpmnShape from '../../components/BpmnShape.astro'
 import { procesosBpmn, leyendaBpmn, COMPUERTAS_BPMN } from '../../data/bpmn'
 import { layout, sizeOf, type BpmnNodeType, type PlacedNode } from '../../lib/bpmn-layout'
 
-// Misma muestra suelta que la leyenda de la web, en tamaño de papel.
+// Misma muestra suelta que la leyenda de la web, en tamaño de papel y con la
+// proporción del diagrama transpuesto: la tarea vertical es más alta y
+// estrecha, y una leyenda que la dibujara apaisada no coincidiría con lo que se
+// ve tres páginas más adelante.
 function muestra(type: BpmnNodeType, alto: number) {
-  const { w, h } = sizeOf(type)
+  const { w, h } = sizeOf(type, 'vertical')
   const pad = 3
   const node: PlacedNode = {
     id: `muestra-${type}`,
@@ -40,8 +43,14 @@ function muestra(type: BpmnNodeType, alto: number) {
   return { node, vbW, vbH, alto, ancho: Math.round((vbW * alto) / vbH) }
 }
 
-const ALTO_MUESTRA = 26
-const muestras = leyendaBpmn.map((item) => ({ ...item, ...muestra(item.type, ALTO_MUESTRA) }))
+const ALTO_MUESTRA = 32
+// Las tareas van más grandes que los eventos: lo que distingue a una tarea de
+// otra es el marcador de la esquina, y encogido al tamaño de un círculo se
+// convierte en una mancha de tres píxeles que no dice nada.
+const muestras = leyendaBpmn.map((item) => ({
+  ...item,
+  ...muestra(item.type, item.type.startsWith('task') ? 48 : ALTO_MUESTRA),
+}))
 const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, 34) }))
 
 // Área útil para el diagrama en cada tipo de hoja, en milímetros (el alto ya
@@ -115,7 +124,7 @@ const procesos = procesosBpmn.map((proceso) => {
             <span class="figura">
               <svg
                 width={m.ancho}
-                height={ALTO_MUESTRA}
+                height={m.alto}
                 viewBox={`0 0 ${m.vbW} ${m.vbH}`}
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
