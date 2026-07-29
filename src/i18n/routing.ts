@@ -124,3 +124,18 @@ export function isLocalizedPrivateRequest(pathname: string): boolean {
   if (locale === DEFAULT_LOCALE) return false
   return isPrivateCanonicalPath(delocalizePath(pathname))
 }
+
+/**
+ * `/en/algo` donde `algo` es público pero todavía no está traducido. El
+ * middleware lo manda a la versión en español en vez de dejar que Astro
+ * devuelva 404: hay enlaces viejos y URLs de sitemap ya publicadas apuntando
+ * a rutas `/en/` que nunca llegaron a existir. Devuelve la ruta destino, o
+ * `null` si no hay que redirigir.
+ */
+export function untranslatedLocalizedTarget(pathname: string): string | null {
+  const locale = getLocaleFromUrl(pathname)
+  if (locale === DEFAULT_LOCALE) return null
+  const canonical = delocalizePath(pathname)
+  if (isPrivateCanonicalPath(canonical)) return null // eso es 404, no redirect
+  return hasTranslation(canonical, locale) ? null : canonical
+}
