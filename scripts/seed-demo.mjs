@@ -83,9 +83,18 @@ async function resetSchema() {
     `select name from sqlite_master where type='table' and name not like 'sqlite_%' and name not like 'libsql_%'`
   )
   if (rows.length) {
-    await db.execute('pragma foreign_keys = off')
-    for (const { name } of rows) await db.execute(`drop table if exists "${name}"`)
-    await db.execute('pragma foreign_keys = on')
+    // Todo en UN script con executeMultiple, no en `execute` sueltos: contra
+    // Turso por HTTP cada execute viaja en su propia sesión, así que el pragma
+    // se apagaba y se perdía antes del primer drop — los drops fallaban por
+    // FOREIGN KEY. Tampoco sirve batch(): envuelve en transacción y SQLite
+    // ignora `pragma foreign_keys` dentro de una. executeMultiple corre el
+    // script seguido en una sola conexión y sin transacción implícita.
+    const script = [
+      'pragma foreign_keys = off',
+      ...rows.map(({ name }) => `drop table if exists "${name}"`),
+      'pragma foreign_keys = on',
+    ].join(';\n')
+    await db.executeMultiple(script)
   }
 
   await drizzleMigrate(drizzle(db), { migrationsFolder: join(root, 'drizzle') })
