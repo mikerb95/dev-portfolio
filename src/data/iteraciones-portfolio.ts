@@ -1126,11 +1126,140 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-bpmn-arquitectura',
+    fase: 'Fase 28 · Procesos de negocio en BPMN y documento de arquitectura',
+    nombre: 'Motor de diagramas BPMN propio, versión imprimible y DEA',
+    rango: '25–27 jul 2026',
+    ghSince: '2026-07-25',
+    ghUntil: '2026-07-27',
+    commits: 40,
+    resumen:
+      'Los procesos de negocio del sistema (monitoreo, cobro de campo, acceso al portal, respuesta a incidentes de seguridad) estaban descritos en prosa pero no modelados. Se construye un motor de layout BPMN propio en vez de incrustar una imagen exportada de otra herramienta: los diagramas se declaran como datos en src/data/bpmn.ts y src/lib/bpmn-layout.ts calcula carriles, canales de las transiciones y posición de las etiquetas. La decisión clave fue detectar colisiones de etiquetas en el propio layout —una etiqueta encima de una flecha convierte un diagrama correcto en uno ilegible, y revisarlo a ojo no escala—. Se añaden eventos temporizadores de frontera con sus duraciones, una versión imprimible con portada para entregar en físico y un script de exportación a SVG/PNG. En paralelo se cierra el taller de testing de caja negra y se actualiza el documento de arquitectura (DEA).',
+    historias: [
+      {
+        id: 'PF-BP-01', titulo: 'Como jurado, quiero ver los procesos de negocio modelados en BPMN, no descritos en prosa',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-25', tags: ['documentación', 'bpmn', 'público', 'fase-28'],
+        dod: [
+          ok('/docs/diagrama-bpmn renderiza cuatro procesos (monitoreo, cobro de campo, acceso al portal, seguridad) desde datos tipados en src/data/bpmn.ts.'),
+          ok('src/lib/bpmn-layout.ts calcula carriles, canales de transición y cajas de etiqueta como lógica pura; 83 tests en tests/bpmn.test.ts.'),
+          ok('Detección de colisiones de etiquetas y de texto fuera de los límites dentro del propio motor de layout.'),
+          ok('Eventos temporizadores de frontera con su tabla de tiempos por proceso.'),
+        ],
+      },
+      {
+        id: 'PF-BP-02', titulo: 'Como sustentante, quiero entregar los diagramas en papel sin perder legibilidad',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-27', tags: ['documentación', 'bpmn', 'fase-28'],
+        dod: [
+          ok('/docs/bpmn-imprimible con portada, un proceso por página y diagramas en vertical.'),
+          ok('scripts/export-bpmn.mjs exporta cada proceso a SVG y PNG en docs/diagramas-bpmn/.'),
+          ok('Documento de arquitectura (DEA) y taller de testing de caja negra actualizados junto a los diagramas.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-i18n-en',
+    fase: 'Fase 29 · Internacionalización del sitio público',
+    nombre: 'Versión en inglés bajo /en sin duplicar páginas ni abrir bypasses',
+    rango: '25–29 jul 2026',
+    ghSince: '2026-07-25',
+    ghUntil: '2026-07-29',
+    commits: 95,
+    resumen:
+      'El sitio no tenía ninguna capa de idioma. Se levanta la infraestructura completa (Astro i18n en modo manual, diccionarios tipados con paridad forzada por TypeScript, formateo por locale) y se traducen el chrome global y siete páginas de marca. Dos decisiones sostienen todo lo demás. La primera es de seguridad: los guardas de ruta —rate limiting, bloqueo en modo demo, gate de admin, portal— comparan rutas literales, así que un /en/admin sin normalizar habría sido una copia del panel sin vigilancia; el middleware normaliza el pathname una sola vez antes de clasificar nada y las rutas privadas responden 404 bajo cualquier prefijo. La segunda salió de un fallo real: los helpers calculaban la forma de una URL /en sin saber si esa página existía, así que con 7 de ~16 páginas traducidas el nav, el footer y el sitemap anunciaban 404 a los usuarios y a Google. Se introduce TRANSLATED_ROUTES como única fuente de verdad, los enlaces caen al español cuando no hay traducción y el middleware redirige el resto con 302 (no 308: esas URLs deben empezar a servir cuando se traduzcan).',
+    historias: [
+      {
+        id: 'PF-I18-01', titulo: 'Como visitante internacional, quiero leer el sitio en inglés sin perder la página en la que estoy',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-25', tags: ['i18n', 'público', 'seo', 'fase-29'],
+        dod: [
+          ok('Prefijo /en con el español como idioma canónico sin prefijo; el selector de idioma conserva la página actual.'),
+          ok('Siete páginas de marca traducidas vía diccionario: home, engineering, tools, security, contact, certifications y architecture.'),
+          ok('Una sola implementación por página: la variante /en es un cascarón que reexporta la misma página y el locale sale de la URL del request.'),
+          ok('hreflang recíproco con x-default, canónico localizado, og:locale y feed propio /en/rss.xml.'),
+          ok('Sugerencia de idioma por Accept-Language como invitación descartable, nunca como mecanismo de ruteo (rompería el cache público).'),
+        ],
+      },
+      {
+        id: 'PF-I18-02', titulo: 'Como responsable del sistema, quiero que ningún guarda de seguridad cambie de veredicto por un prefijo de idioma',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-25', tags: ['i18n', 'seguridad', 'middleware', 'fase-29'],
+        dod: [
+          ok('El middleware normaliza el pathname una sola vez, antes de cualquier clasificación de amenazas o de auth.'),
+          ok('Las rutas privadas (admin, API, portal, cobros y los tres gates de login) devuelven 404 bajo cualquier prefijo de idioma.'),
+          ok('141 tests en tests/i18n-routing-guards.test.ts: cada guarda da el mismo veredicto para /x y /en/x, con casos adversariales (//en/admin, /EN/admin, /e%6E/admin, /english/algo).'),
+        ],
+      },
+      {
+        id: 'PF-I18-03', titulo: 'Como visitante, quiero que ningún enlace en inglés me lleve a una página que no existe',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-29', tags: ['i18n', 'seo', 'público', 'fase-29'],
+        dod: [
+          ok('TRANSLATED_ROUTES como única fuente de verdad de qué existe en inglés; localizedHref cae al español si no hay traducción.'),
+          ok('El hreflang y el sitemap solo anuncian idiomas en los que la página existe de verdad.'),
+          ok('El middleware redirige GET/HEAD de /en sin traducir a la versión en español con 302, no 308.'),
+          ok('tests/i18n-routing.test.ts cruza la lista contra los archivos reales de src/pages/en/ en las dos direcciones.'),
+        ],
+      },
+      {
+        id: 'PF-I18-04', titulo: 'Como traductor del sitio, quiero que falte una clave rompa el build y no la página',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-25', tags: ['i18n', 'calidad', 'fase-29'],
+        dod: [
+          ok('en.ts declarado con satisfies sobre el diccionario español: astro check falla si falta un par.'),
+          ok('tests/i18n-dictionary.test.ts detecta claves huérfanas y valores en inglés idénticos al español.'),
+          ok('src/i18n/format.ts centraliza fechas, números y moneda por locale, con COP explícito para que no se lea como dólares.'),
+        ],
+        // El grueso del contenido (notas, /docs, LAB, datos en BD y assets)
+        // sigue pendiente: ver docs/plan-i18n-en.md.
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-latencia-demo',
+    fase: 'Fase 30 · Coste de las consultas de /status y demo encendida',
+    nombre: 'Índices, lectura por lotes dentro del techo de Turso y siembra de la demo',
+    rango: '28–29 jul 2026',
+    ghSince: '2026-07-28',
+    ghUntil: '2026-07-29',
+    commits: 14,
+    resumen:
+      'La gráfica de latencia de /status pedía el historial reciente monitor por monitor: una consulta por monitor en cada carga de una página pública y cacheada. Se reescribe como una sola lectura con UNION ALL, se añaden los índices compuestos que faltaban en monitor_checks y ci_runs, y se ajusta el Cache-Control de la API. Al probarlo apareció el límite real: Turso corta los compound SELECT en 50 ramas, así que la versión "una rama por monitor" habría sido un 500 en /status el día que existan 51 monitores — se resuelve leyendo por lotes, con un test que ejerce ese techo en vez de confiar en que no se alcance. En paralelo se encendió la demo pública en producción, y re-sembrarla destapó un bug propio: el pragma que apaga las FK viajaba en su propia sesión HTTP contra Turso y se perdía, así que los drop table fallaban.',
+    historias: [
+      {
+        id: 'PF-LT-01', titulo: 'Como visitante de /status, quiero que la página no pague una consulta por monitor para pintar la latencia',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-28', tags: ['rendimiento', 'observabilidad', 'público', 'fase-30'],
+        dod: [
+          ok('recentLatency lee el historial de todos los monitores por lotes, no uno por consulta.'),
+          ok('Índices compuestos en monitor_checks (monitorId, at) y en ci_runs (createdAt), con migración aditiva.'),
+          ok('Cache-Control ajustado en /api/status/latency.'),
+          ok('tests/latency.test.ts cubre el techo de 50 términos por compound SELECT de Turso y los ids duplicados.'),
+        ],
+      },
+      {
+        id: 'PF-LT-02', titulo: 'Como visitante, quiero recorrer la demo del panel con datos que no parezcan abandonados',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-29', tags: ['demo', 'operación', 'fase-30'],
+        dod: [
+          ok('Variables de la base demo en Production y Preview; base re-sembrada con 90 días de historial que terminan hoy.'),
+          ok('resetSchema usa executeMultiple: contra Turso por HTTP cada execute viaja en su propia sesión y el pragma de foreign_keys se perdía.'),
+          ok('Verificado en los dos backends (Turso y archivo local), dos corridas seguidas.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 1064 },
+  { mes: 'jul', commits: 1331 },
 ]
