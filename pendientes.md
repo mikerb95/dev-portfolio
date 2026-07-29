@@ -145,6 +145,46 @@ disponibilidad de ese proyecto.
       el monitor; si se archiva, borrar la fila (`delete from monitors where
       id=5`, que arrastra chequeos e incidentes por cascada).
 
+### Versión en inglés — Fases 2 (resto) a 8
+
+`/en` está en producción con la infraestructura completa (Fases 0 y 1) y 7
+páginas de marca traducidas: `/`, `/engineering`, `/tools`, `/security`,
+`/contact`, `/certifications` y `/architecture`. Falta el grueso del contenido,
+detallado en `docs/plan-i18n-en.md`:
+
+- **Resto de páginas de marca** (`/status`, `/log`, `/demo`, `/hola`,
+  `/platziconf`, `/cv/descargar`, `/paginas-web`).
+- **Contenido en BD** (Fase 3): columnas `_en` en `projects` y
+  `education_milestones` con fallback al español. Migración aditiva, sin
+  empezar.
+- **Notas técnicas** (Fase 4): 14 artículos, 11 383 palabras. Es el activo de
+  más valor internacional y el más caro; hoy `/en/rss.xml` es un canal vacío
+  a propósito.
+- **LAB y `/docs`** (Fases 5 y 6): incluyen refactor real —los textos de
+  `src/lib/lab/findings.ts` deben pasar a claves de diccionario, no a frases.
+- **Assets** (Fase 8): imágenes OG y CV en inglés sin generar.
+
+> Regla operativa que salió de la corrección del 29 jul: traducir una página son
+> **tres** pasos, no dos — texto al diccionario, cascarón en `src/pages/en/` y
+> alta en `TRANSLATED_ROUTES`. Sin el tercero la página queda invisible; el
+> tercero sin el segundo publica un 404 en el sitemap. `tests/i18n-routing.test.ts`
+> cruza la lista contra los archivos reales para que no se separen.
+
+- [ ] Alta de la propiedad en inglés en Search Console y Bing (ver §2).
+- [ ] Artículo de `/notes` sobre el hallazgo de los guardas ciegos al prefijo
+      (§14 del plan) — pendiente, con el riesgo de bypass como columna
+      vertebral.
+
+### Test lento en `tests/latency.test.ts`
+
+`«supera el techo de 50 términos por compound SELECT de Turso»` siembra bastantes
+filas en libSQL y tarda ~5 s, justo en el límite del `testTimeout` por defecto de
+Vitest: falla de forma intermitente en `npm test` y pasa con
+`--testTimeout=30000`. No es un fallo del código —la función se comporta bien—,
+pero un test que falla por reloj entrena a ignorar el rojo.
+
+- [ ] Darle timeout explícito a ese test (o bajar el volumen sembrado).
+
 ### LAB — Fase 5: load testing con k6
 
 Última fase del laboratorio. Bloqueada por `VERCEL_TOKEN` (ver arriba). Detalle
