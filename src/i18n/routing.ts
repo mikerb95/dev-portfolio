@@ -63,6 +63,7 @@ export function alternateUrls(pathname: string): Record<Locale, string> {
  */
 export const TRANSLATED_ROUTES: readonly string[] = [
   '/',
+  '/architecture',
   '/certifications',
   '/contact',
   '/engineering',
