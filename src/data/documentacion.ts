@@ -286,6 +286,10 @@ export const CASOS_DE_USO: CasoDeUso[] = [
     { tipo: 'include', nodo: { id: 'CU-16-N1', nombre: 'Sincronizar slide vía polling' } },
   ] },
   { id: 'CU-17', nombre: 'Indexar contenido nuevo en buscadores', actor: 'buscador', rf: ['RF-007'], resumen: 'Al publicar contenido, el sistema notifica vía IndexNow y actualiza el RSS/sitemap para acelerar la indexación.' },
+  { id: 'CU-19', nombre: 'Consultar el sitio en inglés', actor: 'visitante', rf: ['RF-013', 'RF-014'], resumen: 'El visitante internacional cambia de idioma desde cualquier página y sigue en la misma página, ahora en inglés.', relaciones: [
+    { tipo: 'extends', nodo: { id: 'CU-19-X1', nombre: 'Sugerir inglés según el idioma del navegador' } },
+    { tipo: 'extends', nodo: { id: 'CU-19-X2', nombre: 'Devolver la versión en español si la página no está traducida' } },
+  ] },
   { id: 'CU-18', nombre: 'Consultar documentación del proyecto', actor: 'admin', rf: ['RF-703'], resumen: 'El administrador navega /docs para revisar requerimientos, casos de uso, diagramas y el kanban del propio portfolio.', relaciones: [
     { tipo: 'include', nodo: { id: 'CU-18-N1', nombre: 'Navegar subpágina de documentación' } },
     { tipo: 'extends', nodo: { id: 'CU-18-X1', nombre: 'Consultar diagrama Mermaid' } },
