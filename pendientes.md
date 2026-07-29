@@ -66,8 +66,9 @@ base de archivo, dos corridas seguidas.
 - [ ] **3 reglas custom del WAF** en el dashboard de Vercel (detalle en
       `docs/plan-security-observability.md`, Fase 6).
 - [ ] **Altas en Google Search Console y Bing Webmaster Tools.** La capa técnica
-      de SEO (JSON-LD, sitemap, RSS, IndexNow, manifest) está completa desde jul
-      2026; falta el alta manual que ningún código puede hacer.
+      de SEO (JSON-LD, sitemap, RSS, IndexNow, manifest, `hreflang`) está
+      completa desde jul 2026; falta el alta manual que ningún código puede
+      hacer. Incluye dar de alta también la versión en inglés.
 - [ ] **App de ntfy en el celular** suscrita al topic. Las alertas se envían
       igual; sin suscripción no se ven.
 - [ ] Confirmar en el EDIT del job de uptime en cron-job.org que el header
