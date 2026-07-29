@@ -40,7 +40,10 @@ const canonicalPath = alternateUrls(Astro.url.pathname)[locale]
 const canonical = new URL(canonicalPath, site).href
 const ogImage = new URL(image, site).href
 const OG_LOCALE = { es: 'es_CO', en: 'en_US' } as const
-const alt = alternateUrls(Astro.url.pathname)
+// Solo se anuncian los idiomas en los que esta página EXISTE. Emitir
+// hreflang="en" hacia una URL sin traducir manda al buscador (y al usuario) a
+// una redirección al español, o antes a un 404 directo.
+const alt = translatedAlternates(Astro.url.pathname)
 const rssHref = locale === DEFAULT_LOCALE ? '/rss.xml' : '/en/rss.xml'
 
 const websiteJsonLd = JSON.stringify({
