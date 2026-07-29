@@ -262,7 +262,14 @@ export const monitorChecks = sqliteTable('monitor_checks', {
   statusCode: integer('status_code'),
   responseMs: integer('response_ms'),
   error: text('error'),
-})
+}, (t) => ({
+  // Compuesto (monitor_id, at): sin él, la serie del EKG de /status obliga a un
+  // SCAN + sort de la tabla entera en cada poll de 30s. Con 62k filas eso agotó
+  // el 93% de la cuota de lecturas de Turso con una sola query (jul 2026).
+  // El orden importa: monitor_id primero para poder buscar por partición, `at`
+  // después para leer las últimas N sin ordenar.
+  monitorAtIdx: index('monitor_checks_monitor_at_idx').on(t.monitorId, t.at),
+}))
 
 // Caídas agrupadas: del primer fallo al primer éxito posterior. Da el "informe de caídas".
 export const monitorIncidents = sqliteTable('monitor_incidents', {
@@ -441,7 +448,11 @@ export const webVitals = sqliteTable('web_vitals', {
   path: text('path'),
   navigationType: text('navigation_type'),
   createdAt: integer('created_at', { mode: 'timestamp' }),
-})
+}, (t) => ({
+  // /api/engineering/live pide la última muestra y el conteo de 24h en cada
+  // apertura de card; sin índice ambas cosas son un scan completo.
+  createdIdx: index('web_vitals_created_idx').on(t.createdAt),
+}))
 
 // Sesiones de administrador por dispositivo. La estrategia de auth es JWT
 // (stateless), así que este registro lo mantiene el middleware para poder
