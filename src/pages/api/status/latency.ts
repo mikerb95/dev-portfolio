@@ -8,6 +8,11 @@ import { recentLatency } from '../../../lib/latency'
 // vivo de cada card del /status. Lo consume un poll del cliente cada ~30s.
 // Expone SOLO ms/ok/estado agregado por monitor activo; nunca URLs internas,
 // errores crudos ni configuración.
+//
+// Se cachea en el CDN pese a ser un feed "en vivo": el cron de sondeo escribe
+// como mucho cada ~5 min, así que dos polls seguidos del mismo cliente devolvían
+// datos idénticos. Sin caché, N pestañas abiertas = N queries cada 30s contra
+// Turso. Con s-maxage todas colapsan en un hit de origen por ventana.
 export const GET: APIRoute = async () => {
   const mons = await db
     .select({
@@ -34,6 +39,9 @@ export const GET: APIRoute = async () => {
 
   return new Response(JSON.stringify({ series, status, ts: Date.now() }), {
     status: 200,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+    },
   })
 }
