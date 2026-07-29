@@ -269,6 +269,10 @@ export const monitorChecks = sqliteTable('monitor_checks', {
   // El orden importa: monitor_id primero para poder buscar por partición, `at`
   // después para leer las últimas N sin ordenar.
   monitorAtIdx: index('monitor_checks_monitor_at_idx').on(t.monitorId, t.at),
+  // Aparte del compuesto: /api/engineering/live consulta por fecha SIN filtrar
+  // por monitor ("último sondeo", "cuántos en 24h"), y ahí el compuesto no
+  // sirve — `at` no es su columna líder. Verificado con EXPLAIN QUERY PLAN.
+  atIdx: index('monitor_checks_at_idx').on(t.at),
 }))
 
 // Caídas agrupadas: del primer fallo al primer éxito posterior. Da el "informe de caídas".
