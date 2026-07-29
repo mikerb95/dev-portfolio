@@ -89,6 +89,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (isLocalizedPrivateRequest(pathname)) {
     return new Response('Not Found', { status: 404 })
   }
+
+  // i18n: `/en/` sobre una página pública que aún no está traducida. El sitio
+  // se traduce por fases, así que hay enlaces y URLs de sitemap publicados
+  // apuntando a rutas /en/ inexistentes. Redirigir a la versión en español es
+  // degradar el idioma; dejarlo pasar es un 404. Se usa 302 (no 308) porque
+  // cuando esa página se traduzca, la URL /en/ sí debe empezar a servir.
+  const untranslated = untranslatedLocalizedTarget(pathname)
+  if (untranslated && (context.request.method === 'GET' || context.request.method === 'HEAD')) {
+    return context.redirect(`${untranslated}${context.url.search}`, 302)
+  }
   // A partir de aquí, todo guard que clasifique la ruta usa la versión SIN
   // prefijo de idioma — nunca `pathname` crudo — para que `/algo` y
   // `/en/algo` reciban idéntico trato de seguridad.
