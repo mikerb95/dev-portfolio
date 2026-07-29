@@ -6,7 +6,7 @@ import WebVitals from '../components/WebVitals.astro'
 import AmbientBlobs from '../components/AmbientBlobs.astro'
 import LanguageSuggestModal from '../components/LanguageSuggestModal.astro'
 import WhatsappFab from '../components/WhatsappFab.astro'
-import { DEFAULT_LOCALE, alternateUrls, getDictionary, getLocaleFromUrl } from '../i18n'
+import { DEFAULT_LOCALE, alternateUrls, getDictionary, getLocaleFromUrl, translatedAlternates } from '../i18n'
 
 interface Props {
   title: string
@@ -65,9 +65,9 @@ const websiteJsonLd = JSON.stringify({
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
-    <link rel="alternate" hreflang="es" href={new URL(alt.es, site).href} />
-    <link rel="alternate" hreflang="en" href={new URL(alt.en, site).href} />
-    <link rel="alternate" hreflang="x-default" href={new URL(alt.es, site).href} />
+    {alt.es && <link rel="alternate" hreflang="es" href={new URL(alt.es, site).href} />}
+    {alt.en && <link rel="alternate" hreflang="en" href={new URL(alt.en, site).href} />}
+    {alt.es && <link rel="alternate" hreflang="x-default" href={new URL(alt.es, site).href} />}
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
