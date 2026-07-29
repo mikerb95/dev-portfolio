@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest'
+import { existsSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
 import {
+  TRANSLATED_ROUTES,
   alternateUrls,
   delocalizePath,
   getLocaleFromUrl,
   isLocalizedPrivateRequest,
+  hasTranslation,
   isPrivateCanonicalPath,
   localizePath,
+  localizedHref,
+  translatedAlternates,
+  untranslatedLocalizedTarget,
 } from '../src/i18n/routing'
 
 describe('getLocaleFromUrl', () => {
@@ -131,5 +138,100 @@ describe('isLocalizedPrivateRequest — el guard que corta en el middleware', ()
     // filesystem de rutas de Astro es case-sensitive).
     expect(isLocalizedPrivateRequest('/EN/admin')).toBe(false)
     expect(isLocalizedPrivateRequest('/english/admin')).toBe(false)
+  })
+})
+
+// El bug original: nav, footer, hreflang y sitemap generaban `/en/<ruta>` para
+// TODA ruta, cuando solo un puñado de páginas tiene versión en inglés. Cada
+// enlace de esos era un 404. Estos tests fijan el contrato de "qué existe en
+// inglés" y lo cruzan contra el filesystem real.
+describe('hasTranslation', () => {
+  it('el idioma por defecto siempre existe', () => {
+    expect(hasTranslation('/notes', 'es')).toBe(true)
+    expect(hasTranslation('/cualquier-cosa', 'es')).toBe(true)
+  })
+
+  it('reconoce las páginas que sí están traducidas', () => {
+    expect(hasTranslation('/tools', 'en')).toBe(true)
+    expect(hasTranslation('/en/tools', 'en')).toBe(true)
+    expect(hasTranslation('/', 'en')).toBe(true)
+  })
+
+  it('las páginas sin traducir no existen en inglés', () => {
+    expect(hasTranslation('/notes', 'en')).toBe(false)
+    expect(hasTranslation('/status', 'en')).toBe(false)
+    expect(hasTranslation('/lab', 'en')).toBe(false)
+    expect(hasTranslation('/paginas-web', 'en')).toBe(false)
+  })
+})
+
+describe('localizedHref', () => {
+  it('prefija solo lo que existe en inglés', () => {
+    expect(localizedHref('/tools', 'en')).toBe('/en/tools')
+    expect(localizedHref('/', 'en')).toBe('/en')
+  })
+
+  it('cae al español cuando la página no está traducida (nunca un 404)', () => {
+    expect(localizedHref('/notes', 'en')).toBe('/notes')
+    expect(localizedHref('/status', 'en')).toBe('/status')
+  })
+
+  it('desde inglés hacia español siempre quita el prefijo', () => {
+    expect(localizedHref('/en/tools', 'es')).toBe('/tools')
+    expect(localizedHref('/en', 'es')).toBe('/')
+  })
+})
+
+describe('translatedAlternates', () => {
+  it('solo anuncia los idiomas en los que la página existe', () => {
+    expect(translatedAlternates('/tools')).toEqual({ es: '/tools', en: '/en/tools' })
+    expect(translatedAlternates('/notes')).toEqual({ es: '/notes' })
+    expect(translatedAlternates('/en/notes')).toEqual({ es: '/notes' })
+  })
+})
+
+describe('untranslatedLocalizedTarget', () => {
+  it('manda /en/<sin traducir> a la versión en español', () => {
+    expect(untranslatedLocalizedTarget('/en/notes')).toBe('/notes')
+    expect(untranslatedLocalizedTarget('/en/status')).toBe('/status')
+  })
+
+  it('no toca las páginas que sí existen en inglés', () => {
+    expect(untranslatedLocalizedTarget('/en/tools')).toBeNull()
+    expect(untranslatedLocalizedTarget('/en')).toBeNull()
+  })
+
+  it('no toca nada sin prefijo de idioma', () => {
+    expect(untranslatedLocalizedTarget('/notes')).toBeNull()
+  })
+
+  it('las rutas privadas NO se redirigen: siguen siendo 404 seco', () => {
+    expect(untranslatedLocalizedTarget('/en/admin')).toBeNull()
+    expect(untranslatedLocalizedTarget('/en/api/contact')).toBeNull()
+    expect(untranslatedLocalizedTarget('/en//admin')).toBeNull()
+  })
+})
+
+describe('TRANSLATED_ROUTES contra el filesystem', () => {
+  const pagesEn = join(process.cwd(), 'src/pages/en')
+
+  // Ruta canónica -> archivo que la sirve bajo src/pages/en.
+  const fileFor = (route: string) => {
+    if (route === '/') return 'index.astro'
+    const name = route.slice(1)
+    return name.includes('.') ? `${name}.ts` : `${name}.astro`
+  }
+
+  it('cada ruta declarada tiene su archivo (si no, es un 404 anunciado)', () => {
+    for (const route of TRANSLATED_ROUTES) {
+      expect(existsSync(join(pagesEn, fileFor(route))), `falta src/pages/en/${fileFor(route)}`).toBe(true)
+    }
+  })
+
+  it('cada archivo en src/pages/en está declarado (si no, es invisible)', () => {
+    const declared = new Set(TRANSLATED_ROUTES.map(fileFor))
+    for (const file of readdirSync(pagesEn)) {
+      expect(declared.has(file), `src/pages/en/${file} no está en TRANSLATED_ROUTES`).toBe(true)
+    }
   })
 })
