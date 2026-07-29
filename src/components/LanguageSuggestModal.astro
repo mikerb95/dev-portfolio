@@ -5,11 +5,15 @@
 // navegador, si ya se descartó antes) es 100% cliente — el servidor no puede
 // saber `navigator.language`, así que el markup se renderiza oculto siempre
 // y un script decide si mostrarlo.
-import { getLocaleFromUrl, alternateUrls, getDictionary } from '../i18n'
+import { getLocaleFromUrl, hasTranslation, localizedHref, getDictionary } from '../i18n'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary('es')
-const enHref = alternateUrls(Astro.url.pathname).en
+// Si la página actual no existe en inglés, la sugerencia manda a la home en
+// inglés — nunca a un /en/<ruta> inexistente.
+const enHref = hasTranslation(Astro.url.pathname, 'en')
+  ? localizedHref(Astro.url.pathname, 'en')
+  : '/en'
 ---
 
 {locale === 'es' && (

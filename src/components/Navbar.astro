@@ -1,5 +1,5 @@
 ---
-import { alternateUrls, delocalizePath, getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
+import { delocalizePath, getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 
 const rawPath = Astro.url.pathname;
 // Comparar la sección activa contra la ruta SIN prefijo de idioma: con /en/
@@ -9,7 +9,12 @@ const currentPath = delocalizePath(rawPath);
 const locale = getLocaleFromUrl(rawPath);
 const t = getDictionary(locale);
 const otherLocale = locale === 'es' ? 'en' : 'es';
-const languageHref = alternateUrls(rawPath)[otherLocale];
+// El conmutador de idioma apunta a la misma página en el otro idioma solo
+// si existe; si no, a la home de ese idioma. Antes construía `/en/<ruta>`
+// siempre, y en las páginas sin traducir eso era un 404.
+const languageHref = hasTranslation(rawPath, otherLocale)
+  ? localizedHref(rawPath, otherLocale)
+  : localizedHref('/', otherLocale);
 
 const navLinks = [
   { canonical: "/paginas-web", label: t.nav.diseno },
@@ -19,7 +24,7 @@ const navLinks = [
   { canonical: "/notes", label: t.nav.notes },
   { canonical: "/security", label: t.nav.security },
   { canonical: "/log", label: t.nav.log },
-].map((link) => ({ ...link, href: localizePath(link.canonical, locale) }));
+].map((link) => ({ ...link, href: localizedHref(link.canonical, locale) }));
 ---
 
 <header
@@ -30,7 +35,7 @@ const navLinks = [
     class="glass-strong rounded-full pl-5 pr-2 py-2 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,.55)]"
   >
     <!-- Brand -->
-    <a href={localizePath('/', locale)} class="flex items-center gap-3 select-none">
+    <a href={localizedHref('/', locale)} class="flex items-center gap-3 select-none">
       <img
         src="https://github.com/mikerb95.png"
         alt="Mike (@mikerb95)"
@@ -122,7 +127,7 @@ const navLinks = [
         <span class="hidden lg:inline">{t.nav.loginAria}</span>
       </a>
       <a
-        href={localizePath('/contact', locale)}
+        href={localizedHref('/contact', locale)}
         class="inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
       >
         <svg
