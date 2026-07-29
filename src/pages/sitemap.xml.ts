@@ -9,7 +9,7 @@ import { LOCALES, translatedAlternates } from '../i18n'
 // (feed de GitHub en tiempo real), sin contenido indexable ni intención de
 // búsqueda. Lleva noindex en log.astro; mantenerla fuera del sitemap evita
 // anunciar thin content y diluir la calidad del sitio. Ver seo.MD (hallazgo #9).
-const STATIC_PATHS = ['/', '/tools', '/lab', '/demo', '/status', '/notes', '/security', '/certifications', '/contact']
+const STATIC_PATHS = ['/', '/tools', '/engineering', '/architecture', '/lab', '/demo', '/status', '/notes', '/security', '/certifications', '/contact']
 
 export const GET: APIRoute = async ({ site }) => {
   const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')
