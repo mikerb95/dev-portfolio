@@ -303,7 +303,10 @@ export const ciRuns = sqliteTable('ci_runs', {
   // ejecutó"; esto dice "si la rompo, ¿algún test se entera?".
   mutationScore: real('mutation_score'),
   createdAt: integer('created_at', { mode: 'timestamp' }),
-})
+}, (t) => ({
+  // Mismo motivo que web_vitals: /api/engineering/live ordena por fecha desc.
+  createdIdx: index('ci_runs_created_idx').on(t.createdAt),
+}))
 
 // Hallazgos de seguridad y accesibilidad reportados por CI (npm audit, CodeQL,
 // axe…). Un hallazgo persiste entre corridas: se identifica por su `fingerprint`
