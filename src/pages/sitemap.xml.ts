@@ -22,15 +22,20 @@ export const GET: APIRoute = async ({ site }) => {
     getCollection('notes', ({ data }) => !data.draft),
   ])
 
-  // Cada ruta estática se emite en ambos idiomas, con hreflang recíproco
-  // (xhtml:link) entre las dos: es lo que le dice a un buscador que /notes y
-  // /en/notes son la misma página en otro idioma, no contenido duplicado.
+  // Cada ruta estática se emite en los idiomas en los que EXISTE, con hreflang
+  // recíproco (xhtml:link) entre ellas. El sitio se traduce por fases: emitir
+  // /en/ para toda ruta (lo que hacía antes) publicaba en el sitemap URLs que
+  // devolvían 404 — la peor forma posible de que un buscador descubra el
+  // inglés. `translatedAlternates` es la fuente de verdad de qué existe.
   const staticEntries = STATIC_PATHS.flatMap((path) => {
-    const alt = alternateUrls(path)
-    return LOCALES.map((locale) => ({
+    const alt = translatedAlternates(path)
+    const available = LOCALES.filter((l) => alt[l])
+    return available.map((locale) => ({
       loc: `${base}${alt[locale]}`,
       lastmod: null as Date | null,
-      alternates: LOCALES.map((l) => ({ hreflang: l, href: `${base}${alt[l]}` })),
+      // Un solo idioma disponible no necesita anunciar alternates.
+      alternates:
+        available.length > 1 ? available.map((l) => ({ hreflang: l, href: `${base}${alt[l]}` })) : [],
     }))
   })
 
