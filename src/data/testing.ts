@@ -97,7 +97,7 @@ export const NIVELES: Nivel[] = [
     nombre: 'Cobertura de código',
     herramienta: '@vitest/coverage-v8',
     pregunta: '¿Qué parte del código no ejecuta ni una sola prueba?',
-    volumen: '1416 de 2440 líneas de src/lib/**',
+    volumen: '1534 de 2562 líneas de src/lib/**',
     archivos: 'vitest.config.ts → coverage/',
     cuando: 'push',
     bloquea: false,
@@ -661,7 +661,7 @@ export const PENDIENTES = [
 // ── Comandos ────────────────────────────────────────────────────────────────
 
 export const COMANDOS = [
-  { cmd: 'npm test', desc: 'Los 799 tests de Vitest. ~4 segundos.' },
+  { cmd: 'npm test', desc: 'Los 831 tests de Vitest. ~20 segundos.' },
   { cmd: 'npm run test:watch', desc: 'Modo interactivo: re-ejecuta solo lo que toca el archivo que estás editando.' },
   { cmd: 'npm run test:coverage', desc: 'Genera el reporte HTML en coverage/ para ver qué líneas no toca nadie.' },
   { cmd: 'npm run test:e2e', desc: 'Playwright. Siembra dos bases desechables y levanta el servidor solo.' },
@@ -716,18 +716,18 @@ export const GLOSARIO = [
 ]
 
 // Fallback de las métricas cuando la query a ci_runs no devuelve nada.
-// Medición real del 24 jul 2026 (npx vitest run --coverage), idéntica a la que
-// reporta el pipeline: 1237/2258 líneas de src/lib/**.
+// Medición real del 29 jul 2026 (npx vitest run --coverage), idéntica a la que
+// reporta el pipeline: 1534/2562 líneas de src/lib/**.
 export const METRICAS_REFERENCIA = {
-  fecha: '24 jul 2026',
-  tests: 799,
-  suites: 188,
-  archivos: 46,
+  fecha: '29 jul 2026',
+  tests: 831,
+  suites: 192,
+  archivos: 47,
   e2e: 45,
   e2eSpecs: 6,
-  coberturaLineas: 58.03,
-  coberturaRamas: 57.75,
-  coberturaFunciones: 56.5,
+  coberturaLineas: 59.87,
+  coberturaRamas: 59.77,
+  coberturaFunciones: 58.24,
   niveles: NIVELES.length,
 }
 

@@ -119,7 +119,7 @@ aditivas), `docs/` (planes vivos).
 
 ## Tests
 
-**531 tests de Vitest** en 41 archivos y **45 e2e** de Playwright en 6 specs,
+**831 tests de Vitest** en 47 archivos y **45 e2e** de Playwright en 6 specs,
 repartidos en 15 niveles distintos de verificación. El recorrido completo —qué
 responde cada nivel y cuál es su punto ciego— está en
 [/docs/testing](https://codebymike.tech/docs/testing).
