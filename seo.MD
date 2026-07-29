@@ -50,7 +50,7 @@ La capa técnica ya no es el cuello de botella. Para "top de Google" el ranking 
 | 2 | **Distribuir cada nota**: LinkedIn, dev.to / Hashnode (con `rel=canonical` apuntando a codebymike.tech), comunidades (r/devsarg, forocoches dev, Discords de Astro/Vercel) | Backlinks + tráfico de referencia = señales de autoridad | Por nota |
 | 3 | **Backlinks de perfil**: URL del sitio en GitHub profile/repos README, LinkedIn, committers.top, dev.to, X | Enlaces fáciles y legítimos de dominios con autoridad | Una vez |
 | 4 | **Interlinking interno**: cada nota enlaza a proyectos/tools relacionados y viceversa | Distribuye PageRank interno y aumenta páginas/sesión | Por nota |
-| 5 | **Título home con keywords buscables** — ya incluye "Software Engineer"; considerar variante EN si apuntas a mercado remoto internacional (con `hreflang`) | La búsqueda de reclutadores es mayormente en inglés | Decisión |
+| 5 | ~~**Título home con keywords buscables** — considerar variante EN~~ → hecho: `/en` en producción con `hreflang` recíproco (ver §15). Queda pendiente traducir las notas técnicas, que es donde vive el long-tail | La búsqueda de reclutadores es mayormente en inglés | ✅ + continua |
 | 6 | **Medir**: Search Console (queries, impresiones, CTR) semanal el primer mes; PageSpeed Insights tras cada cambio grande; CrUX aparece ~28 días después del alta | Sin medición no hay iteración | Semanal |
 
 **Expectativa realista:** indexación completa en 1–2 semanas tras dar de alta Search Console; primeras impresiones por marca ("codebymike") en días; posicionamiento long-tail de las notas en 2–3 meses con publicación constante. El dominio es joven — la constancia pesa más que cualquier truco técnico.
@@ -258,9 +258,18 @@ La home —la página más importante— usa la descripción por defecto, que no
 ### 14. Enlaces externos sin `rel="noopener"`
 Los enlaces a GitHub/LinkedIn/WhatsApp en `Footer.astro`/`Navbar.astro` — verificar que los que usan `target="_blank"` llevan `rel="noopener noreferrer"`. (Los navegadores modernos lo implican con `target="_blank"`, pero Lighthouse aún lo marca.)
 
-### 15. Sin `meta name="generator"` ni hreflang
-- Hreflang: solo aplica si planeas versión EN del portfolio (recomendable para alcance internacional como freelance remoto — hoy todo el contenido es ES).
-- El atributo `lang="es"` está bien; si el público objetivo es Colombia considera `lang="es-CO"` (impacto marginal).
+### 15. Sin `meta name="generator"` ni hreflang — ✅ resuelto (29 jul 2026)
+- Hreflang: implementado. `BaseLayout` emite `hreflang` recíproco más `x-default`
+  y el sitemap duplica cada URL traducida con su `xhtml:link rel="alternate"`.
+  Clave: los alternates salen de `TRANSLATED_ROUTES` (`src/i18n/routing.ts`), así
+  que solo se anuncian los idiomas en los que la página **existe de verdad** —
+  anunciar un `hreflang="en"` hacia un 404 es peor que no anunciarlo. Detalle en
+  `docs/plan-i18n-en.md`.
+- El atributo `lang` es dinámico por locale (`es` / `en`), junto con `og:locale`
+  y `og:locale:alternate`. Si el público objetivo es Colombia se puede afinar a
+  `es-CO` (impacto marginal).
+- **Pendiente humano:** dar de alta la propiedad en inglés en Search Console y
+  Bing Webmaster Tools, igual que la española.
 
 ### 16. Accesibilidad que afecta Lighthouse SEO score
 - Botón/enlaces solo-icono (SVGs de flechas en `index.astro`) van acompañados de texto ✓.
