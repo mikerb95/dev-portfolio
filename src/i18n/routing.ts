@@ -37,10 +37,67 @@ export function localizePath(pathname: string, locale: Locale): string {
   return canonical === '/' ? `/${locale}` : `/${locale}${canonical}`
 }
 
-/** URL equivalente de una ruta en cada idioma soportado. */
+/**
+ * URL equivalente de una ruta en cada idioma soportado, exista o no esa
+ * traducción. Es un cálculo puro de forma de URL: sirve para el canónico y
+ * para tests, NO para pintar enlaces ni hreflang — para eso está
+ * `localizedHref` / `translatedAlternates`, que sí saben qué existe.
+ */
 export function alternateUrls(pathname: string): Record<Locale, string> {
   const canonical = delocalizePath(pathname)
   return Object.fromEntries(LOCALES.map((l) => [l, localizePath(canonical, l)])) as Record<Locale, string>
+}
+
+/**
+ * Rutas canónicas que HOY tienen una versión en inglés servida (existe un
+ * cascarón en `src/pages/en/…`). El sitio se traduce por fases, así que esta
+ * lista es un subconjunto del sitio en español y crece con cada página
+ * traducida — es la única fuente de verdad de "qué existe en inglés".
+ *
+ * Sin ella, el nav, el footer, el sitemap y el hreflang generaban `/en/` para
+ * cualquier ruta y el usuario aterrizaba en un 404: el enlace se construía
+ * asumiendo un sitio traducido al 100% que no existe. Añadir una página nueva
+ * a `src/pages/en/` sin añadirla aquí la deja invisible; añadirla aquí sin
+ * crear el archivo devuelve el 404. `tests/i18n-routing.test.ts` cruza esta
+ * lista contra los archivos reales para que no se separen.
+ */
+export const TRANSLATED_ROUTES: readonly string[] = [
+  '/',
+  '/certifications',
+  '/contact',
+  '/engineering',
+  '/rss.xml',
+  '/security',
+  '/tools',
+]
+
+const TRANSLATED = new Set(TRANSLATED_ROUTES)
+
+/** ¿Existe esta ruta en ese idioma? El idioma por defecto siempre existe. */
+export function hasTranslation(pathname: string, locale: Locale): boolean {
+  if (locale === DEFAULT_LOCALE) return true
+  return TRANSLATED.has(delocalizePath(pathname))
+}
+
+/**
+ * href para pintar en un enlace. Si la página no está traducida todavía,
+ * devuelve la versión en español en vez de un `/en/…` que no existe: un
+ * enlace que cambia de idioma es un inconveniente, un 404 es un sitio roto.
+ */
+export function localizedHref(pathname: string, locale: Locale): string {
+  const canonical = delocalizePath(pathname)
+  return hasTranslation(canonical, locale) ? localizePath(canonical, locale) : canonical
+}
+
+/**
+ * Alternates para `hreflang` y sitemap: solo los idiomas en los que la página
+ * realmente existe. Anunciar un `hreflang="en"` hacia una URL que devuelve 404
+ * es peor que no anunciarlo.
+ */
+export function translatedAlternates(pathname: string): Partial<Record<Locale, string>> {
+  const canonical = delocalizePath(pathname)
+  const entries = LOCALES.filter((l) => hasTranslation(canonical, l)).map((l) => [l, localizePath(canonical, l)])
+  return Object.fromEntries(entries) as Partial<Record<Locale, string>>
 }
 
 // Rutas que NUNCA existen en otro idioma que no sea el default: admin, API,
