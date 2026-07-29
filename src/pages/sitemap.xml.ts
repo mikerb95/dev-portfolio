@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content'
 import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
-import { LOCALES, alternateUrls } from '../i18n'
+import { LOCALES, translatedAlternates } from '../i18n'
 
 // '/log' se excluye a propósito: es una página "viva" renderizada en cliente
 // (feed de GitHub en tiempo real), sin contenido indexable ni intención de
