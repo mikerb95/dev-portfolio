@@ -155,6 +155,13 @@
       "when": 1784471779488,
       "tag": "0021_serious_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1785294737424,
+      "tag": "0022_eager_raider",
+      "breakpoints": true
     }
   ]
 }
