@@ -5,14 +5,14 @@ import GithubProjects from '../components/GithubProjects.astro'
 import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
-import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
 // archivo — así funciona igual la importen desde donde la importen.
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale).home
-const L = (path: string) => localizePath(path, locale)
+const L = (path: string) => localizedHref(path, locale)
 
 const visibleProjects = await db
   .select()

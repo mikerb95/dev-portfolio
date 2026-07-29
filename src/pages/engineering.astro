@@ -16,12 +16,12 @@ import {
   type VitalMetric,
   type VitalRating,
 } from '../lib/vitals'
-import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizePath } from '../i18n'
+import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizedHref } from '../i18n'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 const e = t.engineering
-const L = (path: string) => localizePath(path, locale)
+const L = (path: string) => localizedHref(path, locale)
 
 export const prerender = false
 

@@ -1,12 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
-import { getDictionary, getLocaleFromUrl, interpolate, localizePath } from '../i18n'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
 
 const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 const c = t.contact
-const L = (path: string) => localizePath(path, locale)
+const L = (path: string) => localizedHref(path, locale)
 ---
 
 <BaseLayout title={c.title} description={c.description} image="/og-contact.png">

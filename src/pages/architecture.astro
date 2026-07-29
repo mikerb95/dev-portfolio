@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
-import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 
 // Página estática: arquitectura del propio sitio. Un diagrama de capas y las
 // decisiones de diseño con su trade-off. Es lo que un ingeniero senior busca
@@ -10,7 +10,7 @@ import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 const a = t.architecture
-const L = (path: string) => localizePath(path, locale)
+const L = (path: string) => localizedHref(path, locale)
 
 const { layers, externals, decisions } = a
 ---

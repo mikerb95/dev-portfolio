@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro'
 import ToolMock from '../components/ToolMock.astro'
 import { demoAvailable } from '../db'
-import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 
 // Casos de estudio de las herramientas internas construidas sobre este mismo
 // sitio. Contenido 100% estático: describe arquitectura y decisiones, nunca
@@ -12,7 +12,7 @@ import { getDictionary, getLocaleFromUrl, localizePath } from '../i18n'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
-const L = (path: string) => localizePath(path, locale)
+const L = (path: string) => localizedHref(path, locale)
 
 type CaseMeta = {
   num: string
