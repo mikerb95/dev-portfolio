@@ -109,6 +109,26 @@ describe('recentLatency', () => {
     expect(out.has(99)).toBe(false)
   })
 
+  it('no duplica la serie si llegan ids repetidos', async () => {
+    await seed(1, 10)
+
+    // El `where monitor_id in (1,1)` anterior deduplicaba solo; una rama por id
+    // no, así que sin el Set esto devolvería 20 puntos para un solo monitor.
+    const out = await recentLatency([1, 1, 1], 40)
+    expect(out.get(1)!.length).toBe(10)
+  })
+
+  it('supera el techo de 50 términos por compound SELECT de Turso', async () => {
+    // Turso corta los UNION ALL en 50 ramas. Con un monitor por rama, sin lotes
+    // esto sería un 500 en /status el día que existan 51 monitores.
+    const ids = Array.from({ length: 120 }, (_, i) => i + 1)
+    for (const id of ids) await seed(id, 3)
+
+    const out = await recentLatency(ids, 40)
+    expect(out.size).toBe(120)
+    expect([...out.values()].every((pts) => pts.length === 3)).toBe(true)
+  })
+
   it('usa el índice en vez de escanear la tabla (la regresión que agotó la cuota)', async () => {
     await seed(1, 200)
     await seed(2, 200)
