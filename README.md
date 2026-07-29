@@ -42,6 +42,25 @@ Queda pendiente la última fase del LAB (load testing con k6), detallada en
 [`docs/plan-lab-fases-pendientes.md`](./docs/plan-lab-fases-pendientes.md); el
 roadmap general está en [`docs/plan-roadmap-2026-07.md`](./docs/plan-roadmap-2026-07.md).
 
+## Sitio público en inglés (`/en`)
+
+Las páginas de marca existen bajo el prefijo `/en` (español canónico, sin
+prefijo): hoy `/`, `/engineering`, `/tools`, `/security`, `/contact`,
+`/certifications` y `/architecture`, más el chrome global y un feed propio.
+Una sola implementación por página — la variante en inglés es un cascarón que
+reexporta la misma página y el locale sale de la URL del request.
+
+Lo que hace que esto no sea solo traducción: **los guardas de ruta comparan
+rutas literales**, así que un `/en/admin` sin normalizar habría sido una copia
+del panel sin rate limiting, sin bloqueo en modo demo y sin gate de sesión. El
+middleware normaliza el pathname una sola vez, antes de clasificar nada, y las
+rutas privadas devuelven 404 bajo cualquier prefijo de idioma
+(`tests/i18n-routing-guards.test.ts`, 141 tests). `TRANSLATED_ROUTES` es la
+única fuente de verdad de qué existe en inglés: los enlaces, el sitemap y el
+`hreflang` no anuncian una URL `/en/` que no exista, y el resto se redirige a
+su versión en español. Plan en
+[`docs/plan-i18n-en.md`](./docs/plan-i18n-en.md).
+
 ## Panel privado (`/admin`)
 
 Fuente centralizada de información del negocio: clientes, proyectos, **costos de
