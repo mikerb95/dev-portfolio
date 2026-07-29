@@ -1,6 +1,6 @@
 # Pendientes — CodeByMike
 
-> Estado al **24 jul 2026**. Este archivo es el inventario vivo de lo que falta:
+> Estado al **29 jul 2026**. Este archivo es el inventario vivo de lo que falta:
 > acciones manuales (variables de entorno, altas en servicios externos,
 > verificaciones en producción) y trabajo de código todavía sin hacer. Lo ya
 > resuelto se resume al final, sin detalle, para no confundir historia con
