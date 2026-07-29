@@ -19,7 +19,6 @@ diseño, pero conviene saber qué está apagado:
 
 | Variable | Qué pasa sin ella | Prioridad |
 |---|---|---|
-| `TURSO_DEMO_URL` + `TURSO_DEMO_AUTH_TOKEN` | **La demo pública no existe**: `/demo` responde 404 y el panel se comporta como si nunca se hubiera construido. Es el feature más visible del portafolio para alguien sin cuenta. | **Alta** |
 | `SECURITY_IP_SALT` | Los eventos del micro-SIEM guardan el hash de la IP sin salt: sigue sin haber IPs en claro, pero el hash es reversible por diccionario (hay ~4.300 millones de IPv4). | Media |
 | `RESEND_API_KEY` + `ALERT_EMAIL_TO` | Las alertas solo salen por ntfy, sin canal de email de respaldo. | Baja |
 | `PSI_API_KEY` | El analizador de sitios (`/lab/site-check`) pierde los datos de PageSpeed Insights. | Baja |
@@ -27,6 +26,29 @@ diseño, pero conviene saber qué está apagado:
 Ya están puestas y verificadas: `ENCRYPTION_KEY`, `CRON_SECRET`, `NTFY_TOPIC`,
 `LAB_INGEST_TOKEN`, `COBRO_HISTORY_SECRET`, las tres de Wompi, las de GitHub
 OAuth y las de Turso.
+
+### ✅ Demo pública encendida (29 jul 2026)
+
+`TURSO_DEMO_URL` y `TURSO_DEMO_AUTH_TOKEN` subidas a **Production y Preview**
+(Preview a propósito: permite ver la demo en una URL de preview antes de que
+toque el dominio). La base demo ya existía; se re-sembró porque su historial
+moría el 17 jul — con 12 días de retraso las gráficas de monitores se veían
+muertas. Ahora: 51 tablas (migraciones al día), 90 días de historial que
+terminan hoy, 4 clientes/proyectos/monitores ficticios.
+
+Al re-sembrar apareció un bug real en `scripts/seed-demo.mjs`: `resetSchema()`
+apagaba las FK con `pragma foreign_keys = off` en un `execute` suelto, pero
+contra Turso por HTTP cada `execute` viaja en su propia sesión, así que el
+pragma se perdía y los `drop table` fallaban por FOREIGN KEY. Arreglado con
+`executeMultiple` (una sola conexión, sin transacción implícita — dentro de una
+transacción SQLite ignora ese pragma). Verificado en los dos backends: Turso y
+base de archivo, dos corridas seguidas.
+
+- [ ] Verificar tras el próximo build: `/demo` responde 200 (hoy 404), el POST
+      deja la cookie `demo_session` y redirige a `/admin` con datos ficticios, y
+      el revelador de secretos (`…/secrets`) da 403 aunque sea GET.
+      `demoAvailable` se evalúa al cargar `src/db/index.ts`, así que la demo
+      aparece con el build, no al guardar la variable.
 
 - [ ] Limpieza opcional: `DEV_USER` y `DEV_PASSWORD` siguen en Vercel (Preview y
       Production) desde antes de que el login pasara a GitHub OAuth. Ya no las
