@@ -1,6 +1,6 @@
 # Plan — Versión en inglés de la parte pública
 
-**Estado:** en implementación · **Creado:** 2026-07-24 · **Última actualización:** 2026-07-24
+**Estado:** en implementación · **Creado:** 2026-07-24 · **Última actualización:** 2026-07-29
 **Alcance:** todo lo que un visitante ve sin autenticarse. El panel `/admin`,
 el interior de `/portal` y `/cobrar` quedan en español (ver §9 para la
 excepción de sus puertas públicas).
@@ -23,11 +23,40 @@ excepción de sus puertas públicas).
   `xhtml:link rel="alternate"`, `src/pages/en/rss.xml.ts` (vacío hasta la
   Fase 4: no hay notas traducidas todavía — un canal sin items es válido, no
   se mezclan idiomas en un mismo feed).
-- ✅ **Fase 2 (parcial) — Prueba de patrón**: `src/pages/index.astro` traducida
-  por completo vía diccionario (`t.home.*`); `src/pages/en/index.astro` es el
-  cascarón de 3 líneas que la reexporta (patrón confirmado: el locale sale de
-  `Astro.url.pathname` del request real, no del archivo). El resto de páginas
-  de marca (§6) sigue solo en español.
+- ✅ **Fase 2 (parcial) — 7 páginas de marca**: traducidas vía diccionario y con
+  su cascarón en `src/pages/en/`: `/`, `/tools`, `/engineering`, `/security`,
+  `/certifications`, `/contact`, `/architecture` (patrón confirmado: el locale
+  sale de `Astro.url.pathname` del request real, no del archivo). El resto de
+  páginas de marca (§6) sigue solo en español.
+- 🐛 **Corrección 2026-07-29 — enlaces `/en/` hacia páginas inexistentes.**
+  Síntoma: casi todo el sitio en inglés daba 404. Causa: `localizePath` /
+  `alternateUrls` calculan la *forma* de una URL sin saber si esa página
+  existe, y el nav, el footer, el selector de idioma, el `hreflang` del
+  `BaseLayout`, el sitemap y los CTAs internos de cada página los usaban para
+  generar enlaces. Con 7 de ~16 páginas públicas traducidas, todo enlace a
+  `/en/notes`, `/en/status`, `/en/lab`, `/en/log`, `/en/paginas-web`,
+  `/en/demo` era un 404 — y el sitemap además se los anunciaba a Google.
+  No fue una regresión: el generador de enlaces se escribió asumiendo un sitio
+  traducido al 100% mientras la traducción avanzaba por fases.
+  **Arreglo:**
+  1. `TRANSLATED_ROUTES` en `src/i18n/routing.ts` — única fuente de verdad de
+     qué rutas existen en inglés, con `hasTranslation`, `localizedHref`
+     (cae al español si no hay traducción) y `translatedAlternates`
+     (`hreflang` solo de lo que existe).
+  2. Todo generador de enlaces usa `localizedHref`, nunca `localizePath`:
+     `Navbar`, `Footer`, `LanguageSuggestModal`, `404.astro` y el helper `L`
+     de las 7 páginas de marca. El selector de idioma cae a `/en` cuando la
+     página actual no existe en inglés.
+  3. El middleware redirige `GET/HEAD /en/<pública sin traducir>` → versión en
+     español con **302** (no 308: cuando esa página se traduzca, la URL `/en/`
+     debe empezar a servir). Las rutas privadas siguen dando 404 seco — esa
+     rama va antes y no se toca.
+  4. `tests/i18n-routing.test.ts` cruza `TRANSLATED_ROUTES` contra los
+     archivos reales de `src/pages/en/` en las dos direcciones: declarar una
+     ruta sin archivo (404 anunciado) o crear un archivo sin declararlo
+     (página invisible) rompe el test.
+  **Regla operativa:** traducir una página son *tres* pasos, no dos — página
+  al diccionario, cascarón en `src/pages/en/`, y alta en `TRANSLATED_ROUTES`.
 - ⬜ **Fases 2 (resto), 3–7**: sin empezar. Volumen pendiente: ~3 350 líneas de
   páginas de marca, contenido de `projects`/`education_milestones` en BD,
   11 383 palabras de notas, LAB, ~3 900 líneas + 240 KB de datos de `/docs`,
