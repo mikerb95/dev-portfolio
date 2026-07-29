@@ -247,7 +247,11 @@ escalado, anomalías por z-score, vitrina pública) · LAB Fases 0–4, 6 y 7
 mutation testing y contratos) · demo read-only del panel · portal de clientes
 Fases 0–7 · cobros de campo por WhatsApp · suite e2e con Playwright en CI ·
 documentación pública en `/docs` (requisitos, UML, kanban, testing, V&V,
-pipeline en vivo) · landing comercial `/paginas-web`.
+pipeline en vivo, diagramas BPMN con versión imprimible) · landing comercial
+`/paginas-web` · infraestructura de internacionalización con `/en` y 7 páginas
+de marca traducidas · optimización de las consultas de latencia de `/status`
+(índices compuestos en `monitor_checks` y `ci_runs`, lectura por lotes que
+respeta el techo de 50 ramas por compound SELECT de Turso).
 
 El historial narrado de cada iteración vive en
 `src/data/iteraciones-portfolio.ts` y se ve en `/docs/kanban`.
