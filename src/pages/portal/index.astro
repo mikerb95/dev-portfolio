@@ -298,6 +298,7 @@ const canSeeMessages = user.role !== 'billing'
             p.total === 0 ? 'Sin hitos definidos aún' : `${p.done} de ${p.total} hitos completados`
         }
         el('progress-pct')?.replaceChildren(`${p.pct}%`)
+        // (la barra se actualiza justo debajo)
         const bar = el('progress-bar')
         if (bar) {
           bar.setAttribute('aria-valuenow', String(p.pct))
