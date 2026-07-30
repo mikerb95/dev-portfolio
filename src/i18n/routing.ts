@@ -65,6 +65,8 @@ export const TRANSLATED_ROUTES: readonly string[] = [
   '/',
   '/architecture',
   '/certifications',
+  '/demo',
+  '/log',
   '/contact',
   '/engineering',
   '/rss.xml',
