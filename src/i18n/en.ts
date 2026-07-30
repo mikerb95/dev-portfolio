@@ -1209,6 +1209,38 @@ const en = {
     entropyBits: 'bits of entropy',
     incognitoWarning: 'Incognito mode does not protect you.',
   },
+  cvDownload: {
+    title: 'Preparing your download — CodeByMike',
+    description: 'Your CV download will be ready in a moment.',
+    heading: 'Preparing your download…',
+    body: 'One moment, this should not take long.',
+    privacyNote: 'This page records basic technical data for security and access-control purposes.',
+    noscriptLink: 'Download the CV',
+    starting: 'Ready, starting the download…',
+  },
+  platziconf: {
+    title: 'Platzi Conf — CodeByMike',
+    description: 'We met at Platzi Conf. Here is some of what I know — stack, engineering, and real projects running in production.',
+    eventLine: 'Bogotá · Aug 29, 2026',
+    h1: 'Hi, we met at Platzi Conf.',
+    lead: "I'd like to know whether I can contribute to your idea or project. Here is some of what I know — no slides, just what I have running in production right now.",
+    iam: "I'm Mike",
+    whatIDo: 'I build full-stack software end to end: architecture, performance, and user experience, with security and observability as part of the design from day one, not a patch at the end. This very site is the lab: a micro-SIEM of my own, monitoring with real SLOs, payments with idempotency, and a chaos engineering suite that injects controlled failures to prove the alerts actually work.',
+    stackHeading: 'Stack',
+    stackNote: 'And the differentiator: security and observability built in-house — micro-SIEM, durable rate limiting, SLOs with an error budget, fail-open chaos engineering.',
+    uptimeLabel: 'Aggregated uptime',
+    monitoredServices: 'Monitored services',
+    seeDetail: 'See the full detail →',
+    casesHeading: 'Case studies',
+    cases: [
+      { title: 'Building a micro-SIEM for my portfolio', blurb: 'An engine of my own that detects, classifies, and blocks hostile traffic in real time.' },
+      { title: 'Charging for field work without the WhatsApp API', blurb: 'Payments with real idempotency and a state machine, without paying for an API I did not need.' },
+      { title: "Chaos engineering that can't hurt you", blurb: 'Injecting failures in production safely to prove the alerts actually work.' },
+    ],
+    ctaHeading: "Let's talk",
+    scheduleCall: 'Schedule a call',
+    waMessage: 'Hi Mike, we met at Platzi Conf 👋',
+  },
 } satisfies typeof es
 
 export default en

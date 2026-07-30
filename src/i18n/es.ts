@@ -1217,6 +1217,38 @@ const es = {
     entropyBits: 'bits de entropía',
     incognitoWarning: 'El modo incógnito no protege.',
   },
+  cvDownload: {
+    title: 'Preparando tu descarga — CodeByMike',
+    description: 'Tu descarga del CV está lista en un momento.',
+    heading: 'Preparando tu descarga…',
+    body: 'Un momento, esto no debería tardar.',
+    privacyNote: 'Esta página registra datos técnicos básicos con fines de seguridad y control de acceso.',
+    noscriptLink: 'Descargar el CV',
+    starting: 'Listo, iniciando descarga…',
+  },
+  platziconf: {
+    title: 'Platzi Conf — CodeByMike',
+    description: 'Nos conocimos en la Platzi Conf. Te muestro algo de lo que sé — stack, ingeniería y proyectos reales corriendo en producción.',
+    eventLine: 'Bogotá · 29 ago 2026',
+    h1: 'Hola, nos conocimos en la Platzi Conf.',
+    lead: 'Me gustaría saber si puedo aportar a tu idea o proyecto. Te muestro algo de lo que sé — sin diapositivas, con lo que tengo corriendo en producción ahora mismo.',
+    iam: 'Soy Mike',
+    whatIDo: 'Construyo software full-stack de punta a punta: arquitectura, rendimiento y experiencia de usuario, con la seguridad y la observabilidad como parte del diseño desde el primer día, no como un parche al final. Este mismo sitio es el laboratorio: un micro-SIEM propio, monitoreo con SLOs reales, pagos con idempotencia y una suite de chaos engineering que inyecta fallos controlados para probar que las alertas de verdad funcionan.',
+    stackHeading: 'Stack',
+    stackNote: 'Y lo diferenciador: seguridad y observabilidad como desarrollo propio — micro-SIEM, rate limiting durable, SLOs con presupuesto de error, chaos engineering fail-open.',
+    uptimeLabel: 'Uptime agregado',
+    monitoredServices: 'Servicios monitoreados',
+    seeDetail: 'Ver el detalle completo →',
+    casesHeading: 'Casos de estudio',
+    cases: [
+      { title: 'Construyendo un micro-SIEM para mi portfolio', blurb: 'Motor propio que detecta, clasifica y bloquea tráfico hostil en tiempo real.' },
+      { title: 'Cobrar un trabajo de campo sin API de WhatsApp', blurb: 'Pagos con idempotencia real y máquina de estados, sin pagar una API que no necesitaba.' },
+      { title: 'Chaos engineering que no puede hacerte daño', blurb: 'Inyectar fallos en producción de forma segura para probar que las alertas de verdad funcionan.' },
+    ],
+    ctaHeading: 'Hablemos',
+    scheduleCall: 'Agendar llamada',
+    waMessage: 'Hola Mike, nos vimos en la Platzi Conf 👋',
+  },
 }
 
 export default es
