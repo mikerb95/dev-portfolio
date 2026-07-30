@@ -298,25 +298,24 @@ const upcoming = [
       <section class="mb-16">
         <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
           <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-          <span>Seguridad & accesibilidad · análisis automático</span>
+          <span>{lb.findings.heading}</span>
         </div>
         <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
-          Análisis estático de dependencias y código, más accesibilidad sobre las páginas públicas,
-          en cada push. Lo que cuenta no es un scan verde sino el ciclo: cada hallazgo se sigue hasta
-          que queda <span class="text-ink-50">resuelto</span> o <span class="text-ink-50">aceptado a conciencia</span>.
+          {lb.findings.bodyPre} <span class="text-ink-50">{lb.findings.resolvedWord}</span>{' '}
+          {lb.findings.bodyMid} <span class="text-ink-50">{lb.findings.acceptedWord}</span>.
         </p>
         <div class="grid grid-cols-3 gap-4 max-w-lg">
           <div class="rounded-2xl glass p-5">
             <div class={`font-mono text-[22px] leading-none ${findingsAgg.open > 0 ? 'text-ember' : 'text-lime'}`}>{findingsAgg.open}</div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Abiertos</div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.findings.open}</div>
           </div>
           <div class="rounded-2xl glass p-5">
             <div class="font-mono text-[22px] leading-none text-lime">{findingsAgg.resolved}</div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Resueltos</div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.findings.resolved}</div>
           </div>
           <div class="rounded-2xl glass p-5">
             <div class="font-mono text-[22px] leading-none text-cyan">{findingsAgg.accepted}</div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Aceptados</div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.findings.accepted}</div>
           </div>
         </div>
       </section>
@@ -326,29 +325,27 @@ const upcoming = [
     <section class="mb-16">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
         <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-        <span>Pasarela de pagos · sandbox</span>
+        <span>{lb.gateway.heading}</span>
       </div>
       <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
-        Pasarela propia con llaves de idempotencia, máquina de estados sin retrocesos y
-        verificación de firma en webhooks. Los contadores de abajo son eventos hostiles que
-        llegaron y fueron <span class="text-ink-50">detectados y neutralizados</span>, no aplicados.
+        {lb.gateway.bodyPre} <span class="text-ink-50">{lb.gateway.neutralizedWord}</span>{lb.gateway.bodyPost}
       </p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="rounded-2xl glass p-5">
           <div class="font-mono text-[22px] leading-none text-ink-50">{payAgg.total}</div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Pagos sandbox</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.gateway.payments}</div>
         </div>
         <div class="rounded-2xl glass p-5">
           <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.duplicates}</div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Webhooks duplicados ignorados</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.gateway.duplicates}</div>
         </div>
         <div class="rounded-2xl glass p-5">
           <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.outOfOrder}</div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Eventos fuera de orden contenidos</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.gateway.outOfOrder}</div>
         </div>
         <div class="rounded-2xl glass p-5">
           <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.mismatches}</div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Montos adulterados rechazados</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.gateway.mismatches}</div>
         </div>
       </div>
     </section>
@@ -357,51 +354,45 @@ const upcoming = [
     <section class="mb-16">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
         <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-        <span>Analizador de sitios · abierto a cualquiera</span>
+        <span>{lb.siteCheck.heading}</span>
       </div>
       <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
-        Construido para mis compañeros de clase: pega cualquier dominio y obtén, en vivo,
-        12 pruebas — cabeceras de seguridad, certificado TLS, DNS, vencimiento del dominio,
-        robots.txt, sitemap.xml, metadatos SEO, rendimiento básico, accesibilidad heurística
-        y un reporte <span class="text-ink-50">Lighthouse real</span> vía la API de Google
-        PageSpeed Insights. Todo se lee de respuestas HTTP públicas — nada intrusivo — con
-        límite de 5 análisis por minuto por IP y protección anti-SSRF (rechaza IPs privadas
-        o de red interna) para que no se pueda usar como proxy hacia infraestructura ajena.
+        {lb.siteCheck.bodyPre} <span class="text-ink-50">{lb.siteCheck.lighthouseWord}</span>{' '}
+        {lb.siteCheck.bodyPost}
       </p>
-      <a href="/lab/site-check" class="inline-flex rounded-2xl glass p-6 lift group max-w-sm">
+      <a href={L('/lab/site-check')} class="inline-flex rounded-2xl glass p-6 lift group max-w-sm">
         <div>
-          <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Analizador de sitios</h3>
+          <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">{lb.siteCheck.cardTitle}</h3>
           <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
-            Pega un dominio y mira las 12 pruebas correr en vivo, con streaming de resultados.
+            {lb.siteCheck.cardBody}
           </p>
-          <span class="text-[13px] text-cyan group-hover:underline">Analizar un dominio →</span>
+          <span class="text-[13px] text-cyan group-hover:underline">{lb.siteCheck.cardCta}</span>
         </div>
       </a>
     </section>
 
     <!-- Demo interactiva + enlaces -->
     <section class="grid md:grid-cols-3 gap-4 mb-16">
-      <a href="/lab/fingerprint" class="rounded-2xl glass p-6 lift group">
-        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Fingerprint de dispositivos</h3>
+      <a href={L('/lab/fingerprint')} class="rounded-2xl glass p-6 lift group">
+        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">{lb.cards.fingerprintTitle}</h3>
         <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
-          Demo interactiva: abre una sala desde dos dispositivos y mira cómo se identifican
-          sin cookies ni login.
+          {lb.cards.fingerprintBody}
         </p>
-        <span class="text-[13px] text-cyan group-hover:underline">Probar en vivo →</span>
+        <span class="text-[13px] text-cyan group-hover:underline">{lb.cards.fingerprintCta}</span>
       </a>
-      <a href="/status" class="rounded-2xl glass p-6 lift group">
-        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Monitoreo y SLOs</h3>
+      <a href={L('/status')} class="rounded-2xl glass p-6 lift group">
+        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">{lb.cards.statusTitle}</h3>
         <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
-          Uptime, latencia p95 y presupuesto de error medidos por el motor de checks propio.
+          {lb.cards.statusBody}
         </p>
-        <span class="text-[13px] text-cyan group-hover:underline">Ver /status →</span>
+        <span class="text-[13px] text-cyan group-hover:underline">{lb.cards.statusCta}</span>
       </a>
-      <a href="/security" class="rounded-2xl glass p-6 lift group">
-        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">Security Operations</h3>
+      <a href={L('/security')} class="rounded-2xl glass p-6 lift group">
+        <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">{lb.cards.securityTitle}</h3>
         <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
-          Micro-SIEM propio: intentos de intrusión detectados y bloqueados, en agregado y en vivo.
+          {lb.cards.securityBody}
         </p>
-        <span class="text-[13px] text-cyan group-hover:underline">Ver /security →</span>
+        <span class="text-[13px] text-cyan group-hover:underline">{lb.cards.securityCta}</span>
       </a>
     </section>
 
@@ -409,7 +400,7 @@ const upcoming = [
     <section class="mb-16">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-        <span>En construcción</span>
+        <span>{lb.upcoming.heading}</span>
       </div>
       <div class="grid md:grid-cols-3 gap-4">
         {upcoming.map((u) => (
@@ -423,22 +414,17 @@ const upcoming = [
 
     <!-- Metodología -->
     <section class="rounded-2xl glass p-8">
-      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">Cómo funciona esta página</div>
+      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">{lb.methodology.heading}</div>
       <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
         <p>
-          Los datos no son capturas ni ejemplos: se leen en el servidor de la misma base
-          (Turso/libSQL) donde el pipeline, los experimentos y la pasarela escriben sus
-          resultados. Lo que falla también se muestra.
+          {lb.methodology.p1}
         </p>
         <p>
-          Los experimentos de chaos corren con cinturones de seguridad: TTL máximo de 15
-          minutos, rutas críticas excluidas por código y kill-switch. Todo el sistema es
-          <span class="text-ink-50">fail-open</span>: un fallo del laboratorio nunca tumba el sitio.
+          {lb.methodology.p2Pre}{' '}
+          <span class="text-ink-50">{lb.methodology.failOpenWord}</span>{lb.methodology.p2Post}
         </p>
         <p>
-          El detalle crudo (parámetros, payloads, flags activos) vive en el panel privado.
-          Aquí se publica el veredicto agregado — suficiente para verificar, sin regalar el
-          mapa interno.
+          {lb.methodology.p3}
         </p>
       </div>
     </section>
