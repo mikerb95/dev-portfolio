@@ -86,7 +86,16 @@ excepción de sus puertas públicas).
   interno propio — vive en la lib y no en `src/i18n/es.ts` a propósito: la
   consume tanto la ruta pública como el diagnóstico del panel, y atar una lib de
   infraestructura al diccionario de páginas sería la dependencia equivocada.
-- ⬜ **Fases 6–7**: sin empezar. Volumen pendiente: ~3 350 líneas de
+- ❌ **Fase 6 — `/docs`: descartada (decisión del 30 jul 2026).** `/docs` se
+  queda solo en español. Es material académico normativo —casos de uso, ISO/IEC
+  25010, IEEE 1012, historias en formato XP— cuya audiencia natural es el jurado
+  de la sustentación, no un lector internacional, y era el bloque de peor
+  relación esfuerzo/retorno del plan (§10 ya lo anticipaba). La infraestructura
+  quedó lista por si se retoma: `src/i18n/bilingual.ts` (`tx()`, `txAll`,
+  `translationCoverage`, 10 tests) acepta un campo como `'texto'` o como
+  `{ es, en }` y cae al español, así que los 5 módulos de datos se pueden
+  traducir uno a uno sin romper ninguna página en el intermedio.
+- ⬜ **Fase 7**: sin empezar. Volumen pendiente: ~3 350 líneas de
   páginas de marca, contenido de `projects`/`education_milestones` en BD,
   11 383 palabras de notas, LAB, ~3 900 líneas + 240 KB de datos de `/docs`,
   y los flujos de audiencia local (§7). Ver desglose de cada fase más abajo,
