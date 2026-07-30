@@ -100,7 +100,7 @@ anunciarlo es exactamente lo que rompe a un lector de pantalla. Y respeta
 ## 2. Fases
 
 ### Fase A — Digest y capa viva ✅ (2026-07-30)
-1. ✅ `src/lib/portal/live.ts` con `portalLiveDigest()` sobre los helpers existentes (cero SQL nuevo) + `tests/portal-live.test.ts` (9 casos con libSQL real).
+1. ✅ `src/lib/portal/live.ts` con `portalLiveDigest()` sobre los helpers existentes (cero SQL nuevo) + `tests/portal-live.test.ts` (8 casos con libSQL real).
 2. ✅ `GET /api/portal/live` + rate limit **por sesión** (10/min) + `no-store`.
 3. ✅ Script del layout: ciclo de 20 s, pausa por visibilidad, backoff 20→40→…→300 s, `CustomEvent('portal:live')`.
 4. ✅ Suscriptores: campana (layout), dashboard (`portal/index.astro`), hilo abierto (`portal/mensajes/[id].astro`).

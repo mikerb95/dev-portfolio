@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { getCollection } from 'astro:content'
+import { getNotes, getTranslationSlug, noteSlug } from '../lib/notes'
 import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ site }) => {
       })
       .from(projects)
       .where(eq(projects.visible, true)),
-    getCollection('notes', ({ data }) => !data.draft),
+    getNotes('es'),
   ])
 
   // Cada ruta estática se emite en los idiomas en los que EXISTE, con hreflang
@@ -62,16 +62,29 @@ export const GET: APIRoute = async ({ site }) => {
     return urls
   })
 
-  // Las notas todavía no tienen traducción propia (Fase 4): solo la versión en
-  // español.
+  // Notas: cada artículo se anuncia en español y, si existe su hermano
+  // traducido, también en inglés — con el slug del hermano, que es distinto.
+  const noteEntries = await Promise.all(
+    notes.map(async (n) => {
+      const slug = noteSlug(n)
+      const enSlug = await getTranslationSlug(n)
+      const path = `/notes/${slug}`
+      const alternates = enSlug
+        ? [
+            { hreflang: 'es', href: `${base}${path}` },
+            { hreflang: 'en', href: `${base}/en/notes/${enSlug}` },
+          ]
+        : []
+      const urls = [{ loc: `${base}${path}`, lastmod: n.data.date, alternates }]
+      if (enSlug) urls.push({ loc: `${base}/en/notes/${enSlug}`, lastmod: n.data.date, alternates })
+      return urls
+    })
+  )
+
   const entries = [
     ...staticEntries,
     ...projectEntries,
-    ...notes.map((n) => ({
-      loc: `${base}/notes/${n.id}`,
-      lastmod: n.data.date,
-      alternates: [] as { hreflang: string; href: string }[],
-    })),
+    ...noteEntries.flat(),
   ]
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

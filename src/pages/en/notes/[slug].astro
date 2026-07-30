@@ -1,0 +1,8 @@
+---
+// Cascarón de ruta: la implementación real vive en src/pages/notes/[slug].astro.
+// El slug aquí es el del artículo EN INGLÉS (los slugs se traducen); la página
+// busca la nota dentro del idioma de la URL. Ver docs/plan-i18n-en.md §8.
+import Note from '../../notes/[slug].astro'
+---
+
+<Note />
