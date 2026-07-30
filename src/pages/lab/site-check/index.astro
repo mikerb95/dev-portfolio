@@ -1,35 +1,35 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../../../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const sc = t.siteCheck
+const L = (path: string) => localizedHref(path, locale)
 ---
 
-<BaseLayout
-  title="Analizador de sitios — CodeByMike"
-  description="Pega cualquier dominio y obtén un análisis en vivo: cabeceras de seguridad, TLS, SEO, rendimiento y accesibilidad heurística."
->
+<BaseLayout title={sc.title} description={sc.description}>
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
-    <a href="/lab" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+    <a href={L('/lab')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      Volver a /lab
+      {sc.backToLab}
     </a>
 
     <header class="mb-10">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/lab/site-check</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Analizador de sitios</span>
+        <span>{sc.eyebrow}</span>
       </div>
       <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        Analiza cualquier<br/>dominio.
+        {sc.h1Line1}<br/>{sc.h1Line2}
       </h1>
       <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        Pega una URL o dominio y obtén, en vivo, cabeceras de seguridad, certificado TLS,
-        DNS, SEO básico, rendimiento y una revisión heurística de accesibilidad. Todo se
-        lee de respuestas HTTP públicas del sitio — no es un escaneo intrusivo.
+        {sc.intro}
       </p>
       <p class="text-[12px] font-mono text-ink-300 mt-4">
-        Úsalo solo con sitios propios o donde tengas permiso para analizarlos. Límite: 5
-        análisis por minuto por IP.
+        {sc.disclaimer}
       </p>
       <button
         id="how-it-works-btn"
@@ -37,15 +37,15 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
         class="inline-flex items-center gap-2 mt-6 text-[12px] font-mono uppercase tracking-[.12em] text-ink-200 border border-white/10 rounded-full px-4 py-2 hover:text-cyan hover:border-cyan/30 transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-        Cómo funciona
+        {sc.howItWorks}
       </button>
     </header>
 
     <dialog id="how-it-works-modal" class="how-it-works-modal">
       <div class="rounded-2xl glass p-0 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
         <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10 sticky top-0 bg-[#0b0b0e]/95 backdrop-blur">
-          <h2 class="text-[15px] font-medium text-ink-50">Cómo funciona el analizador</h2>
-          <button id="how-it-works-close" type="button" aria-label="Cerrar" class="ml-auto text-ink-300 hover:text-ink-50 transition-colors">
+          <h2 class="text-[15px] font-medium text-ink-50">{sc.modalTitle}</h2>
+          <button id="how-it-works-close" type="button" aria-label={sc.close} class="ml-auto text-ink-300 hover:text-ink-50 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
         </div>
@@ -53,7 +53,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
         <div class="px-6 py-6 space-y-8 text-[13px] text-ink-100 leading-relaxed">
 
           <section>
-            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">Paso a paso</div>
+            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">{sc.stepsHeading}</div>
             <ol class="space-y-2 list-decimal list-inside marker:text-cyan marker:font-mono">
               <li>Pegas una URL o dominio y das clic en <span class="text-ink-50">Analizar</span>.</li>
               <li>El navegador hace un <code class="font-mono text-[12px] text-cyan">POST</code> a <code class="font-mono text-[12px] text-cyan">/api/lab/site-check</code>, protegido por un límite de 5 solicitudes por minuto por IP.</li>
@@ -64,7 +64,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
           </section>
 
           <section>
-            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">Las 12 pruebas</div>
+            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">{sc.testsHeading}</div>
             <ul class="space-y-2">
               <li><span class="text-ink-50">Disponibilidad HTTP</span> — status, tiempo hasta la primera respuesta (TTFB), redirecciones.</li>
               <li><span class="text-ink-50">Certificado TLS</span> — abre un socket TLS crudo (<code class="font-mono text-[12px]">node:tls</code>) y lee emisor, vigencia y protocolo.</li>
@@ -81,7 +81,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
           </section>
 
           <section>
-            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">Detalles técnicos</div>
+            <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">{sc.technicalHeading}</div>
             <ul class="space-y-2">
               <li><span class="text-ink-50">Sin navegador headless.</span> Todo corre con <code class="font-mono text-[12px]">fetch</code> + <code class="font-mono text-[12px]">node:tls</code> + <code class="font-mono text-[12px]">node:dns</code> — nada de Chromium/Playwright, por eso responde en segundos y cabe en el plan gratuito de Vercel.</li>
               <li><span class="text-ink-50">Solo lectura pasiva.</span> Ninguna prueba modifica el sitio de destino ni intenta explotar nada — son las mismas respuestas HTTP que vería cualquier visitante o buscador.</li>
@@ -101,7 +101,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
         inputmode="url"
         autocomplete="off"
         spellcheck="false"
-        placeholder="ejemplo.com"
+        placeholder={sc.inputPlaceholder}
         required
         class="flex-1 bg-transparent border border-white/10 rounded-xl px-4 py-3 text-[14px] text-ink-50 placeholder:text-ink-400 focus:outline-none focus:border-cyan/50 transition-colors"
       />
@@ -110,7 +110,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
         id="site-check-submit"
         class="rounded-xl px-6 py-3 text-[13px] font-mono uppercase tracking-[.1em] bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Analizar
+        {sc.analyze}
       </button>
     </form>
 
@@ -119,6 +119,20 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
     <div id="site-check-results" class="grid md:grid-cols-2 gap-4"></div>
 
   </div>
+
+  <script
+    id="site-check-i18n"
+    type="application/json"
+    set:html={JSON.stringify({
+      analyzing: sc.analyzing,
+      analyzingHost: sc.analyzingHost,
+      analyzingProgress: sc.analyzingProgress,
+      doneMsg: sc.doneMsg,
+      errorPrefix: sc.errorPrefix,
+      readError: sc.readError,
+      networkError: sc.networkError,
+    })}
+  />
 </BaseLayout>
 
 <style>
@@ -168,6 +182,9 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
   const submit = document.getElementById('site-check-submit') as HTMLButtonElement
   const statusEl = document.getElementById('site-check-status') as HTMLDivElement
   const resultsEl = document.getElementById('site-check-results') as HTMLDivElement
+  // Textos ya resueltos por el servidor en el idioma de la página (mismo patrón
+  // que el resto de scripts de cliente: no se importa el diccionario).
+  const L = JSON.parse(document.getElementById('site-check-i18n')!.textContent!) as Record<string, string>
 
   const STATUS_STYLE: Record<DiagnosticStatus, { dot: string; text: string }> = {
     pass: { dot: 'bg-lime', text: 'text-lime' },
@@ -225,7 +242,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
 
     submit.disabled = true
     resultsEl.innerHTML = ''
-    statusEl.textContent = 'Analizando…'
+    statusEl.textContent = L.analyzing
 
     try {
       const res = await fetch('/api/lab/site-check', {
@@ -240,7 +257,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
         return
       }
       if (!res.body) {
-        statusEl.textContent = 'No se pudo leer la respuesta'
+        statusEl.textContent = L.readError
         return
       }
 
@@ -261,20 +278,20 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
           const msg = JSON.parse(line)
           if (msg.type === 'start') {
             total = msg.total
-            statusEl.textContent = `Analizando ${msg.target?.host ?? target}… 0/${total}`
+            statusEl.textContent = L.analyzingHost.replace('{host}', msg.target?.host ?? target).replace('{total}', String(total))
           } else if (msg.type === 'result') {
             done++
-            statusEl.textContent = `Analizando… ${done}/${total}`
+            statusEl.textContent = L.analyzingProgress.replace('{done}', String(done)).replace('{total}', String(total))
             renderResult(msg.result)
           } else if (msg.type === 'done') {
-            statusEl.textContent = `Listo · ${done}/${total} pruebas`
+            statusEl.textContent = L.doneMsg.replace('{done}', String(done)).replace('{total}', String(total))
           } else if (msg.type === 'error') {
-            statusEl.textContent = `Error: ${msg.error}`
+            statusEl.textContent = `${L.errorPrefix} ${msg.error}`
           }
         }
       }
     } catch {
-      statusEl.textContent = 'Error de red al analizar el dominio'
+      statusEl.textContent = L.networkError
     } finally {
       submit.disabled = false
     }
