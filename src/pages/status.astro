@@ -217,31 +217,26 @@ const statusBadge = {
 const healthLabel = st.healthLabel
 ---
 
-<BaseLayout
-  title="Status — CodeByMike"
-  description="Estado en tiempo real de los servicios que opero: uptime, latencia y presupuesto de error, medidos por mi propia infraestructura de monitoreo."
-  image="/og-status.png"
->
+<BaseLayout title={st.title} description={st.description} image="/og-status.png">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
     <!-- Back -->
-    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+    <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      Volver
+      {t.common.back}
     </a>
 
     <header class="mb-12">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/status</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Transparencia operacional</span>
+        <span>{st.eyebrow}</span>
       </div>
       <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        Estado de los<br/>servicios.
+        {st.h1Line1}<br/>{st.h1Line2}
       </h1>
       <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        Uptime, latencia y presupuesto de error de los servicios que opero, medidos cada pocos
-        minutos por mi propia infraestructura de monitoreo. Datos reales, sin maquillaje.
+        {st.intro}
       </p>
     </header>
 
@@ -254,7 +249,7 @@ const healthLabel = st.healthLabel
           {globalUptime30 === null ? '—' : `${globalUptime30}%`}
         </div>
         <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-1">
-          Uptime agregado · {SLO_DAYS}d
+          {st.uptimeAggregated} · {SLO_DAYS}d
         </div>
       </div>
     </div>
@@ -264,14 +259,14 @@ const healthLabel = st.healthLabel
         <div class="flex items-center gap-3 mb-3">
           <span class="w-2 h-2 rounded-full bg-ember pulse-dot"></span>
           <span class="text-[13px] font-medium text-ember">
-            {activeIncidents.length === 1 ? 'Incidente activo' : `${activeIncidents.length} incidentes activos`}
+            {activeIncidents.length === 1 ? st.activeIncident : interpolate(st.activeIncidents, { n: activeIncidents.length })}
           </span>
         </div>
         <div class="space-y-1.5">
           {activeIncidents.map((i) => (
             <div class="flex flex-wrap items-center gap-x-3 text-[13px]">
               <span class="font-medium">{nameById.get(i.monitorId)}</span>
-              <span class="font-mono text-[11px] text-ember">en curso · {ago(i.startedAt)}</span>
+              <span class="font-mono text-[11px] text-ember">{st.inProgress} · {ago(i.startedAt)}</span>
             </div>
           ))}
         </div>
@@ -280,13 +275,13 @@ const healthLabel = st.healthLabel
 
     <div class="mb-12 flex justify-end">
       <span class="text-[11px] font-mono text-ink-300">
-        Objetivo SLO {OBJECTIVE}% · ventana {SLO_DAYS} días
+        {interpolate(st.sloObjective, { pct: OBJECTIVE, days: SLO_DAYS })}
       </span>
     </div>
 
     {cards.length === 0 && (
       <div class="rounded-2xl glass p-12 text-center">
-        <p class="text-[13px] font-mono text-ink-300">No hay monitores públicos configurados.</p>
+        <p class="text-[13px] font-mono text-ink-300">{st.noMonitors}</p>
       </div>
     )}
 
@@ -305,20 +300,20 @@ const healthLabel = st.healthLabel
               {(() => {
                 const ssl = sslInfo(c.sslExpiresAt)
                 return ssl && (
-                  <span class={`text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${ssl.cls}`} title="Días hasta la expiración del certificado TLS">
+                  <span class={`text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${ssl.cls}`} title={st.sslTitle}>
                     {ssl.label}
                   </span>
                 )
               })()}
               <span class="last-checked ml-auto text-[11px] font-mono text-ink-300" data-checked-at={c.lastCheckedAt ? c.lastCheckedAt.getTime() : ''}>
-                último check {ago(c.lastCheckedAt)}
+                {interpolate(st.lastChecked, { ago: ago(c.lastCheckedAt) })}
               </span>
             </div>
 
             <!-- Latencia en vivo (osciloscopio / EKG) -->
             <div class="mb-5">
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300">Latencia en vivo</span>
+                <span class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300">{st.liveLatency}</span>
                 <span class="ekg-now font-mono text-[11px] text-ink-100 tabular-nums" data-monitor-id={c.id}>
                   {c.lastResponseMs != null ? `${c.lastResponseMs} ms` : '—'}
                 </span>
@@ -333,7 +328,7 @@ const healthLabel = st.healthLabel
                   <path class="ekg-trace" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
                 </svg>
                 <span class="ekg-cursor absolute right-0 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]" style="top:50%"></span>
-                <span class="ekg-empty absolute inset-0 hidden items-center justify-center text-[10px] font-mono text-ink-400">sin datos aún</span>
+                <span class="ekg-empty absolute inset-0 hidden items-center justify-center text-[10px] font-mono text-ink-400">{st.noDataYet}</span>
                 <span class="ekg-hover-line absolute top-0 bottom-0 w-px bg-white/25 hidden pointer-events-none"></span>
                 <span class="ekg-hover-dot absolute w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-current ring-2 ring-black/60 hidden pointer-events-none"></span>
                 <span class="ekg-tooltip absolute hidden top-1 -translate-x-1/2 px-2 py-1 rounded-md bg-black/85 ring-1 ring-white/10 text-[10px] font-mono text-ink-50 whitespace-nowrap pointer-events-none z-10"></span>
@@ -345,35 +340,35 @@ const healthLabel = st.healthLabel
               {c.bars.map((b) => (
                 <div
                   class={`flex-1 rounded-[2px] ${barColor(b.pct)} ${b.pct === null ? 'h-2 self-center' : 'h-full'} opacity-90 hover:opacity-100`}
-                  title={`${b.day} · ${b.pct === null ? 'sin datos' : `${b.pct}% uptime`}`}
+                  title={`${b.day} · ${b.pct === null ? st.noDataYet : `${b.pct}% uptime`}`}
                 ></div>
               ))}
             </div>
             <div class="flex justify-between text-[10px] font-mono text-ink-300 mb-5">
-              <span>hace {WINDOW_DAYS} días</span>
-              <span>hoy</span>
+              <span>{interpolate(st.daysAgo, { n: WINDOW_DAYS })}</span>
+              <span>{st.today}</span>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[13px]">
               <div>
-                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Uptime {SLO_DAYS}d</div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{interpolate(st.uptimeShort, { n: SLO_DAYS })}</div>
                 <div class={`font-mono ${c.slo.meetsObjective ? 'text-lime' : 'text-ember'}`}>
                   {c.slo.sliPct === null ? '—' : `${c.slo.sliPct}%`}
                 </div>
               </div>
               <div>
-                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Uptime {WINDOW_DAYS}d</div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{interpolate(st.uptimeShort, { n: WINDOW_DAYS })}</div>
                 <div class="font-mono text-ink-50">{c.uptime90 === null ? '—' : `${c.uptime90}%`}</div>
               </div>
               <div>
-                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Latencia media · p95</div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{st.latencyAvgP95}</div>
                 <div class="font-mono text-ink-50">
                   {c.avgMs30 === null ? '—' : `${c.avgMs30}`}
                   <span class="text-ink-300"> · {c.p95Ms30 === null ? '—' : `${c.p95Ms30}`} ms</span>
                 </div>
               </div>
               <div>
-                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Error budget</div>
+                <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{st.errorBudget}</div>
                 <div class="font-mono text-ink-50">
                   {c.slo.budgetRemainingPct === null
                     ? '—'
@@ -391,11 +386,11 @@ const healthLabel = st.healthLabel
     <section class="mb-20">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-        <span>Incidentes resueltos · últimos {WINDOW_DAYS} días</span>
+        <span>{interpolate(st.resolvedIncidents, { n: WINDOW_DAYS })}</span>
       </div>
       {incidents.length === 0 ? (
         <div class="rounded-2xl glass p-8">
-          <p class="text-[13px] font-mono text-ink-200">Sin incidentes registrados en la ventana. 🎉</p>
+          <p class="text-[13px] font-mono text-ink-200">{st.noIncidents}</p>
         </div>
       ) : (
         <div class="rounded-2xl glass divide-y divide-white/5">
@@ -404,7 +399,7 @@ const healthLabel = st.healthLabel
               <span class="font-medium">{nameById.get(i.monitorId)}</span>
               <span class="text-ink-300 font-mono text-[11px]">{fmtDate.format(i.startedAt)}</span>
               <span class="ml-auto font-mono text-[11px] text-ember">
-                {i.durationSec != null ? formatMinutes(i.durationSec / 60) : 'duración desconocida'} de caída
+                {interpolate(st.downFor, { duration: i.durationSec != null ? formatMinutes(i.durationSec / 60) : st.unknownDuration })}
               </span>
             </div>
           ))}
@@ -414,38 +409,36 @@ const healthLabel = st.healthLabel
 
     <!-- Enlace a Security Operations -->
     <a
-      href="/security"
+      href={L('/security')}
       class="mb-20 rounded-2xl glass p-6 lift flex flex-wrap items-center gap-4 group"
     >
       <span class="w-2 h-2 rounded-full bg-cyan pulse-dot shrink-0"></span>
       <div class="min-w-0">
-        <h3 class="text-[14px] font-medium text-ink-50">Security Operations</h3>
+        <h3 class="text-[14px] font-medium text-ink-50">{st.securityCard.title}</h3>
         <p class="text-[12px] text-ink-300 mt-0.5">
-          Intentos de intrusión detectados y bloqueados, desglose OWASP y SLOs del pipeline propio de seguridad.
+          {st.securityCard.body}
         </p>
       </div>
-      <span class="ml-auto text-[13px] text-cyan group-hover:underline shrink-0">Ver /security →</span>
+      <span class="ml-auto text-[13px] text-cyan group-hover:underline shrink-0">{st.securityCard.cta}</span>
     </a>
 
     <!-- Metodología -->
     <section class="rounded-2xl glass p-8">
-      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">Cómo se mide</div>
+      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">{st.methodology.heading}</div>
       <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
         <p>
-          Un cron externo sondea cada servicio cada pocos minutos: código HTTP esperado,
-          contenido de la respuesta, latencia y certificado TLS. Un 200 con la página equivocada
-          también cuenta como caída.
+          {st.methodology.p1}
         </p>
         <p>
-          El <span class="text-ink-50">SLO</span> es {OBJECTIVE}% de disponibilidad en {SLO_DAYS} días.
-          El <span class="text-ink-50">presupuesto de error</span> es el tiempo de caída que ese objetivo
-          permite; aquí se muestra cuánto queda. La latencia se reporta como media y
-          <span class="text-ink-50">p95</span> — el percentil que de verdad siente el usuario lento —,
-          nunca solo el promedio.
+          {st.methodology.p2Pre} <span class="text-ink-50">{st.methodology.sloWord}</span>{' '}
+          {interpolate(st.methodology.p2Mid, { pct: OBJECTIVE, days: SLO_DAYS })}{' '}
+          <span class="text-ink-50">{st.methodology.budgetWord}</span>{' '}
+          {st.methodology.p2Mid2}{' '}
+          <span class="text-ink-50">{st.methodology.p95Word}</span>{' '}
+          {st.methodology.p2End}
         </p>
         <p>
-          Todo el sistema — motor de checks, incidentes, SLOs y alertas — es una herramienta
-          propia construida sobre este mismo sitio. Los datos se sirven tal cual se midieron.
+          {st.methodology.p3}
         </p>
       </div>
     </section>
