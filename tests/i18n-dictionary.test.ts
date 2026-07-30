@@ -84,6 +84,8 @@ describe('paridad del diccionario es/en', () => {
         // 'device fingerprinting' es el término técnico, igual en ambos idiomas.
         'fingerprint.introStrong',
         'siteCheck.errorPrefix',
+        // 'bits' es la unidad, igual en los dos idiomas.
+        'fpRoom.bits',
         'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',
