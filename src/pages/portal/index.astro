@@ -170,7 +170,11 @@ const canSeeMessages = user.role !== 'billing'
           <div class="space-y-3">
             {health && health.monitorCount > 0 && <HealthCard health={health} />}
 
-            <div class="glass rounded-2xl p-4" data-live-activity>
+            <div
+              class="glass rounded-2xl p-4"
+              data-live-activity
+              data-last={actividad.items[0]?.at.toISOString() ?? ''}
+            >
               <div class="flex items-baseline justify-between mb-3.5">
                 <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Actividad</p>
                 {actividad.items.length > 0 && (
