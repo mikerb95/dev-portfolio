@@ -148,7 +148,7 @@ describe('isLocalizedPrivateRequest — el guard que corta en el middleware', ()
 // inglés" y lo cruzan contra el filesystem real.
 describe('hasTranslation', () => {
   it('el idioma por defecto siempre existe', () => {
-    expect(hasTranslation('/lab', 'es')).toBe(true)
+    expect(hasTranslation('/docs', 'es')).toBe(true)
     expect(hasTranslation('/cualquier-cosa', 'es')).toBe(true)
   })
 
@@ -158,10 +158,12 @@ describe('hasTranslation', () => {
     expect(hasTranslation('/', 'en')).toBe(true)
     expect(hasTranslation('/status', 'en')).toBe(true)
     expect(hasTranslation('/paginas-web', 'en')).toBe(true)
+    expect(hasTranslation('/lab/site-check', 'en')).toBe(true)
   })
 
   it('las páginas sin traducir no existen en inglés', () => {
-    expect(hasTranslation('/lab', 'en')).toBe(false)
+    expect(hasTranslation('/docs', 'en')).toBe(false)
+    expect(hasTranslation('/docs/testing', 'en')).toBe(false)
     expect(hasTranslation('/demo/algo-inventado', 'en')).toBe(false)
   })
 })
@@ -173,8 +175,8 @@ describe('localizedHref', () => {
   })
 
   it('cae al español cuando la página no está traducida (nunca un 404)', () => {
-    expect(localizedHref('/lab', 'en')).toBe('/lab')
-    expect(localizedHref('/lab/site-check', 'en')).toBe('/lab/site-check')
+    expect(localizedHref('/docs', 'en')).toBe('/docs')
+    expect(localizedHref('/docs/testing', 'en')).toBe('/docs/testing')
   })
 
   it('desde inglés hacia español siempre quita el prefijo', () => {
@@ -186,15 +188,15 @@ describe('localizedHref', () => {
 describe('translatedAlternates', () => {
   it('solo anuncia los idiomas en los que la página existe', () => {
     expect(translatedAlternates('/tools')).toEqual({ es: '/tools', en: '/en/tools' })
-    expect(translatedAlternates('/lab')).toEqual({ es: '/lab' })
-    expect(translatedAlternates('/en/lab')).toEqual({ es: '/lab' })
+    expect(translatedAlternates('/docs')).toEqual({ es: '/docs' })
+    expect(translatedAlternates('/en/docs')).toEqual({ es: '/docs' })
   })
 })
 
 describe('untranslatedLocalizedTarget', () => {
   it('manda /en/<sin traducir> a la versión en español', () => {
-    expect(untranslatedLocalizedTarget('/en/lab')).toBe('/lab')
-    expect(untranslatedLocalizedTarget('/en/lab/site-check')).toBe('/lab/site-check')
+    expect(untranslatedLocalizedTarget('/en/docs')).toBe('/docs')
+    expect(untranslatedLocalizedTarget('/en/lab/fingerprint/abc123')).toBe('/lab/fingerprint/abc123')
   })
 
   it('no toca las páginas que sí existen en inglés', () => {

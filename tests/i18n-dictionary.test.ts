@@ -81,6 +81,9 @@ describe('paridad del diccionario es/en', () => {
         'lab.pipeline.testsLabel',
         'lab.upcoming.k6Title',
         'lab.upcoming.mutationTitle',
+        // 'device fingerprinting' es el término técnico, igual en ambos idiomas.
+        'fingerprint.introStrong',
+        'siteCheck.errorPrefix',
         'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',
