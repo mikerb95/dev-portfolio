@@ -66,6 +66,7 @@ export const TRANSLATED_ROUTES: readonly string[] = [
   '/architecture',
   '/certifications',
   '/demo',
+  '/lab',
   '/log',
   '/notes',
   '/paginas-web',
@@ -88,7 +89,7 @@ export const TRANSLATED_ROUTES: readonly string[] = [
  * ANUNCIA (sitemap, hreflang) es `hasRowTranslation` con los datos en mano —
  * una cosa es que la página funcione y otra es publicarla como traducida.
  */
-export const TRANSLATED_PREFIXES: readonly string[] = ['/notes', '/projects']
+export const TRANSLATED_PREFIXES: readonly string[] = ['/lab', '/notes', '/projects']
 
 const TRANSLATED = new Set(TRANSLATED_ROUTES)
 
