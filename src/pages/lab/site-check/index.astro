@@ -55,38 +55,21 @@ const L = (path: string) => localizedHref(path, locale)
           <section>
             <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">{sc.stepsHeading}</div>
             <ol class="space-y-2 list-decimal list-inside marker:text-cyan marker:font-mono">
-              <li>Pegas una URL o dominio y das clic en <span class="text-ink-50">Analizar</span>.</li>
-              <li>El navegador hace un <code class="font-mono text-[12px] text-cyan">POST</code> a <code class="font-mono text-[12px] text-cyan">/api/lab/site-check</code>, protegido por un límite de 5 solicitudes por minuto por IP.</li>
-              <li>El servidor normaliza la URL y resuelve su DNS para verificar que <span class="text-ink-50">no apunte a una IP privada o interna</span> (127.0.0.1, 10.x, 169.254.x, etc.) — si apunta ahí, se rechaza antes de conectar.</li>
-              <li>Se lanzan las 12 pruebas <span class="text-ink-50">en paralelo</span>, cada una con su propio timeout, y los resultados se transmiten al navegador conforme van terminando (streaming NDJSON) — por eso las tarjetas aparecen una a una en vez de esperar todas juntas.</li>
-              <li>Nada se guarda: el análisis es efímero, vive solo en esa respuesta. No hay historial ni base de datos detrás.</li>
+              {sc.steps.map((step) => <li set:html={step} />)}
             </ol>
           </section>
 
           <section>
             <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">{sc.testsHeading}</div>
             <ul class="space-y-2">
-              <li><span class="text-ink-50">Disponibilidad HTTP</span> — status, tiempo hasta la primera respuesta (TTFB), redirecciones.</li>
-              <li><span class="text-ink-50">Certificado TLS</span> — abre un socket TLS crudo (<code class="font-mono text-[12px]">node:tls</code>) y lee emisor, vigencia y protocolo.</li>
-              <li><span class="text-ink-50">Redirección a HTTPS</span> — verifica si la versión HTTP redirige a HTTPS.</li>
-              <li><span class="text-ink-50">Cabeceras de seguridad</span> — HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.</li>
-              <li><span class="text-ink-50">Registros DNS</span> — A, AAAA, CNAME, MX, NS, TXT vía <code class="font-mono text-[12px]">node:dns</code>.</li>
-              <li><span class="text-ink-50">Vencimiento del dominio</span> — consulta RDAP, sin API key.</li>
-              <li><span class="text-ink-50">robots.txt</span> y <span class="text-ink-50">sitemap.xml</span> — presencia y validez básica de formato.</li>
-              <li><span class="text-ink-50">Metadatos SEO</span> — title, meta description, canonical, Open Graph, atributo lang.</li>
-              <li><span class="text-ink-50">Rendimiento básico</span> — TTFB, peso del HTML, conteo de scripts/estilos/imágenes enlazados.</li>
-              <li><span class="text-ink-50">Accesibilidad (heurística)</span> — imágenes sin alt, campos sin label, jerarquía de encabezados, texto de enlaces genérico. Es un chequeo estático simple, <span class="text-ink-50">no reemplaza una auditoría axe-core real</span>.</li>
-              <li><span class="text-ink-50">Lighthouse (PageSpeed Insights)</span> — corre Lighthouse de verdad en los servidores de Google vía su API pública; rendimiento, accesibilidad, buenas prácticas y SEO con métricas reales (LCP, CLS, TBT).</li>
+              {sc.tests.map((test) => <li set:html={test} />)}
             </ul>
           </section>
 
           <section>
             <div class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-300 mb-3">{sc.technicalHeading}</div>
             <ul class="space-y-2">
-              <li><span class="text-ink-50">Sin navegador headless.</span> Todo corre con <code class="font-mono text-[12px]">fetch</code> + <code class="font-mono text-[12px]">node:tls</code> + <code class="font-mono text-[12px]">node:dns</code> — nada de Chromium/Playwright, por eso responde en segundos y cabe en el plan gratuito de Vercel.</li>
-              <li><span class="text-ink-50">Solo lectura pasiva.</span> Ninguna prueba modifica el sitio de destino ni intenta explotar nada — son las mismas respuestas HTTP que vería cualquier visitante o buscador.</li>
-              <li><span class="text-ink-50">Anti-SSRF.</span> La resolución DNS se valida contra rangos privados/loopback/link-local antes de cualquier conexión, para que el servidor no pueda usarse como proxy hacia redes internas.</li>
-              <li><span class="text-ink-50">Lighthouse real es opcional.</span> Depende de una clave de Google PageSpeed Insights configurada en el servidor; si falta, esa tarjeta simplemente indica que no está configurada.</li>
+              {sc.technical.map((item) => <li set:html={item} />)}
             </ul>
           </section>
 
