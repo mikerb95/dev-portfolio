@@ -13,3 +13,4 @@ export function getDictionary(locale: Locale = DEFAULT_LOCALE): Dictionary {
 export * from './config'
 export * from './routing'
 export * from './format'
+export * from './localize'
