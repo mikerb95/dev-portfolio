@@ -117,9 +117,18 @@ sola petición: campana, dashboard y hilo abierto. Pausa con la pestaña oculta,
 backoff 20→300 s y fail-open silencioso. Detalle y decisiones en
 `docs/plan-portal-tiempo-real.md`.
 
-- [ ] **Fase B — feed de actividad por proyecto** (`portal_activity`,
-      `recordActivity()`, columna en `/portal` y página `/portal/actividad`).
-      Es lo que queda del plan; requiere migración aditiva.
+**Fase B entregada el 30 jul 2026**: migración `0024` aplicada a producción,
+`recordActivity()` cableado en los 5 puntos que notifican, columna en `/portal`,
+página `/portal/actividad` con filtro y paginación por cursor, `activityLastAt`
+en el digest y `/admin/portal/actividad` para apagar entradas sin borrarlas.
+
+- [ ] **Entradas de tipo `deploy`**: bloqueadas por el modelo — `ci_runs` no
+      tiene `projectId` (es el CI de este repo, no el de los proyectos de
+      clientes). Hace falta decidir entre añadir esa columna y que cada proyecto
+      reporte su CI, o derivar "hay movimiento" de `monitors`, que sí lo tienen.
+- [ ] **Documentos e incidentes en el feed**: no hay dónde cablearlos todavía
+      porque ninguno de los dos notifica hoy (no existe endpoint de subida de
+      documentos ni emisión de incidentes al cliente).
 - [ ] e2e del anuncio en vivo (`aria-live`) — los specs nuevos de
       `e2e/portal.spec.ts` cubren el 401 y el digest sobre la base de demo, pero
       no se pudieron correr localmente (ver nota de puertos abajo).
