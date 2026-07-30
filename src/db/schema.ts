@@ -907,3 +907,32 @@ export const portalNotificationPrefs = sqliteTable('portal_notification_prefs', 
 }, (t) => ({
   userTypeIdx: index('portal_notification_prefs_user_type_idx').on(t.clientUserId, t.type),
 }))
+
+// Feed de actividad del portal: la línea de tiempo de "qué ha pasado en mi
+// proyecto" que el cliente ve sin preguntar. No sustituye a las notificaciones
+// (que son por persona y tienen estado de leído): esto es el registro compartido
+// del cliente, y una entrada puede existir sin que se le notifique a nadie.
+//
+// `clientId` está denormalizado a propósito aunque se pueda derivar de
+// `projectId`: el feed se lee SIEMPRE filtrando por él, y la consulta más
+// caliente del portal no debe depender de un JOIN. Además hay entradas sin
+// proyecto (facturas, avisos de cuenta), donde no habría de dónde derivarlo.
+export const portalActivity = sqliteTable('portal_activity', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  type: text('type', {
+    enum: ['milestone', 'invoice', 'document', 'message', 'incident', 'deploy', 'system'],
+  }).notNull(),
+  title: text('title').notNull(),
+  detail: text('detail'),
+  href: text('href'),
+  // Interruptor de seguridad: permite emitir primero y decidir después. Si algo
+  // se registra y no debía verse, se apaga desde /admin sin borrar el registro.
+  visibleToClient: integer('visible_to_client', { mode: 'boolean' }).notNull().default(true),
+  at: integer('at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  // El feed se pagina por cliente y fecha: este índice es la consulta literal.
+  clientAtIdx: index('portal_activity_client_at_idx').on(t.clientId, t.at),
+  projectAtIdx: index('portal_activity_project_at_idx').on(t.projectId, t.at),
+}))
