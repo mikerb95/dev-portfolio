@@ -155,12 +155,13 @@ describe('hasTranslation', () => {
     expect(hasTranslation('/tools', 'en')).toBe(true)
     expect(hasTranslation('/en/tools', 'en')).toBe(true)
     expect(hasTranslation('/', 'en')).toBe(true)
+    expect(hasTranslation('/status', 'en')).toBe(true)
+    expect(hasTranslation('/paginas-web', 'en')).toBe(true)
   })
 
   it('las páginas sin traducir no existen en inglés', () => {
     expect(hasTranslation('/notes', 'en')).toBe(false)
     expect(hasTranslation('/lab', 'en')).toBe(false)
-    expect(hasTranslation('/paginas-web', 'en')).toBe(true)
   })
 })
 
