@@ -87,3 +87,98 @@ export const sections = [
     ornament: 'available',
   },
 ]
+
+// ── Variantes en inglés ─────────────────────────────────────────────────────
+// Mismo diseño y mismos adornos; solo cambia el texto. El slug lleva el prefijo
+// `en-` y produce `public/og-en-<slug>.png`, que es lo que sirve BaseLayout
+// cuando la página se renderiza bajo /en. Una imagen OG en español compartida
+// desde la versión inglesa es la clase de detalle que delata una traducción a
+// medias justo donde más se ve: en la tarjeta que se pega en LinkedIn o Slack.
+export const sectionsEn = [
+  {
+    slug: 'en-default',
+    kicker: '/',
+    kickerLabel: 'AVAILABLE · COLOMBIA · REMOTE',
+    titleLine1: 'CodeByMike',
+    titleLine2: 'Senior Software Engineer',
+    description: 'TypeScript · React · Next.js · Astro · Node.js · PostgreSQL',
+    footerLeft: 'codebymike.tech',
+    footerRight: 'github.com/mikerb95',
+    ornament: 'brand',
+  },
+  {
+    slug: 'en-status',
+    kicker: '/STATUS',
+    kickerLabel: 'OPERATIONAL TRANSPARENCY',
+    titleLine1: 'Service status,',
+    titleLine2: 'measured, not promised.',
+    description: 'Uptime, latency, and error budget for every service I run — live data from my own monitoring infrastructure.',
+    badge: 'SLO 99.5% · 30-day window',
+    ornament: 'bars',
+  },
+  {
+    slug: 'en-tools',
+    kicker: '/TOOLS',
+    kickerLabel: 'PUBLIC TOOLS',
+    titleLine1: 'Utilities I built',
+    titleLine2: 'to solve real problems.',
+    description: 'Small free tools, no friction, that I use myself day to day.',
+    ornament: 'grid',
+  },
+  {
+    slug: 'en-engineering',
+    kicker: '/ENGINEERING',
+    kickerLabel: 'HOW I BUILD',
+    titleLine1: 'Engineering decisions,',
+    titleLine2: 'explained with evidence.',
+    description: 'Architecture, trade-offs, and the reasoning behind every system I design and operate.',
+    ornament: 'architecture',
+  },
+  {
+    slug: 'en-notes',
+    kicker: '/NOTES',
+    kickerLabel: 'TECHNICAL NOTES',
+    titleLine1: 'Engineering notes,',
+    titleLine2: 'written while building.',
+    description: 'Lessons, curious bugs, and decisions documented in the moment, not months later.',
+    ornament: 'prose',
+  },
+  {
+    slug: 'en-security',
+    kicker: '/SECURITY',
+    kickerLabel: 'ACTIVE DEFENSE',
+    titleLine1: 'Site security,',
+    titleLine2: 'watched, not assumed.',
+    description: 'Headers, monitoring, incident response, and the micro-SIEM that logs every suspicious attempt.',
+    ornament: 'log',
+  },
+  {
+    slug: 'en-certifications',
+    kicker: '/CERTIFICATIONS',
+    kickerLabel: 'CREDENTIALS',
+    titleLine1: 'Certifications,',
+    titleLine2: 'verifiable, not decorative.',
+    description: 'Every credential links to its official verification — no badges without backing.',
+    ornament: 'badges',
+  },
+  {
+    slug: 'en-log',
+    kicker: '/LOG',
+    kickerLabel: 'CHANGELOG',
+    titleLine1: 'A record of changes,',
+    titleLine2: 'commit by commit.',
+    description: 'What changed, when, and why — the real history of the project, unedited.',
+    ornament: 'commits',
+  },
+  {
+    slug: 'en-contact',
+    kicker: '/CONTACT',
+    kickerLabel: 'AVAILABLE NOW',
+    titleLine1: "Let's talk,",
+    titleLine2: 'no middlemen.',
+    description: 'A direct message, no endless forms and no recruiting inboxes.',
+    ornament: 'available',
+  },
+]
+
+export const allSections = [...sections, ...sectionsEn]

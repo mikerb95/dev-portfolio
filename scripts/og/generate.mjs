@@ -10,7 +10,7 @@ import { readFile, writeFile, mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { sections } from './sections.mjs'
+import { allSections as sections } from './sections.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..', '..')
