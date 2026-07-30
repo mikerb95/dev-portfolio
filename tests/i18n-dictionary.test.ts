@@ -55,6 +55,13 @@ describe('paridad del diccionario es/en', () => {
         'toolMock.pipeline.rollback',
         'toolMock.pipeline.step',
         'toolMock.security.overhead',
+        // '/architecture' es una ruta, no prosa. 'commit' es préstamo técnico
+        // igual en los dos idiomas. 'Engineering Log' es el nombre de la página.
+        'demo.footnoteLinkLabel',
+        'log.title',
+        'log.h1',
+        'log.oneCommit',
+        'log.nCommits',
         'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',
