@@ -4,37 +4,69 @@ import { messages } from '../../db/schema'
 import { clientIp } from '../../lib/ratelimit'
 import { enforceLimit } from '../../lib/security/ratelimit-durable'
 import { sendPush } from '../../lib/notify'
+import { isLocale, type Locale } from '../../i18n'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_LEN = { name: 200, email: 200, subject: 200, body: 5000 }
+
+// Mensajes de error del endpoint en los dos idiomas del sitio. Viven aquí (no
+// en el diccionario de páginas) porque son contrato de API, no copy de una
+// página concreta — /contact y /paginas-web comparten este mismo endpoint.
+const ERRORS = {
+  es: {
+    rateLimited: 'Demasiados intentos, intenta de nuevo en un minuto',
+    badJson: 'JSON inválido',
+    missing: 'Faltan campos obligatorios',
+    badEmail: 'Email inválido',
+    tooLong: 'Campo demasiado largo',
+  },
+  en: {
+    rateLimited: 'Too many attempts, try again in a minute',
+    badJson: 'Invalid JSON',
+    missing: 'Missing required fields',
+    badEmail: 'Invalid email',
+    tooLong: 'Field too long',
+  },
+} satisfies Record<Locale, Record<string, string>>
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status })
 
 export const POST: APIRoute = async ({ request }) => {
-  const { allowed } = await enforceLimit(`contact:${clientIp(request)}`, { limit: 5, windowMs: 60_000 })
-  if (!allowed) {
-    return json(429, { error: 'Demasiados intentos, intenta de nuevo en un minuto' })
-  }
-
-  let data: Record<string, unknown>
+  let data: Record<string, unknown> = {}
+  let rawLocale: unknown
   try {
     data = await request.json()
+    rawLocale = data.locale
   } catch {
-    return json(400, { error: 'JSON inválido' })
+    // El locale por defecto (es) decide el idioma de ESTE error concreto; no
+    // hay nada más que leer del body si el JSON ni siquiera parseó.
+  }
+  // Nunca se confía en `Referer`: el locale es un campo explícito del body,
+  // validado contra la lista cerrada de locales soportados.
+  const locale: Locale = typeof rawLocale === 'string' && isLocale(rawLocale) ? rawLocale : 'es'
+  const E = ERRORS[locale]
+
+  const { allowed } = await enforceLimit(`contact:${clientIp(request)}`, { limit: 5, windowMs: 60_000 })
+  if (!allowed) {
+    return json(429, { error: E.rateLimited })
+  }
+
+  if (!Object.keys(data).length) {
+    return json(400, { error: E.badJson })
   }
 
   const { name, email, subject, body } = data
 
   if (typeof name !== 'string' || typeof email !== 'string' || typeof body !== 'string' || !name || !email || !body) {
-    return json(400, { error: 'Missing required fields' })
+    return json(400, { error: E.missing })
   }
   if (!EMAIL_RE.test(email)) {
-    return json(400, { error: 'Email inválido' })
+    return json(400, { error: E.badEmail })
   }
   if (name.length > MAX_LEN.name || email.length > MAX_LEN.email || body.length > MAX_LEN.body ||
     (typeof subject === 'string' && subject.length > MAX_LEN.subject)) {
-    return json(400, { error: 'Campo demasiado largo' })
+    return json(400, { error: E.tooLong })
   }
 
   await db.insert(messages).values({
