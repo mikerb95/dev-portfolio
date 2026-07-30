@@ -28,6 +28,15 @@ interface Props {
    * Sin pasar nada, decide el registro de rutas (`TRANSLATED_ROUTES`).
    */
   englishAvailable?: boolean
+  /**
+   * Alternates explícitos, para páginas cuya URL en el otro idioma NO se
+   * deriva de la actual. Es el caso de `/notes/<slug>`: los slugs también se
+   * traducen ("por-que-construi-mi-propio-monitor" ↔ "why-i-built-my-own-monitor"),
+   * así que anteponer `/en` al pathname daría una URL inexistente. Cuando se
+   * pasa, sustituye por completo a lo que deduciría el registro de rutas, y
+   * también alimenta el conmutador de idioma del Navbar.
+   */
+  alternatePaths?: Partial<Record<'es' | 'en', string>>
 }
 
 const site = Astro.site ?? new URL('https://codebymike.tech')
@@ -41,12 +50,13 @@ const {
   noindex = false,
   publishedTime,
   englishAvailable,
+  alternatePaths,
 } = Astro.props
 
 // Solo se anuncian los idiomas en los que esta página EXISTE. Emitir
 // hreflang="en" hacia una URL sin traducir manda al buscador (y al usuario) a
 // una redirección al español, o antes a un 404 directo.
-const alt = translatedAlternates(Astro.url.pathname)
+const alt = alternatePaths ?? translatedAlternates(Astro.url.pathname)
 // Contenido de BD sin traducir: la URL /en/ funciona pero no es una versión en
 // inglés, así que no se anuncia como tal.
 if (englishAvailable === false) delete alt.en
@@ -57,9 +67,10 @@ if (englishAvailable === false) delete alt.en
 // página en inglés es en realidad contenido español, el canónico apunta al
 // español: una sola URL indexada en vez de dos con el mismo texto.
 const canonicalPath =
-  englishAvailable === false && locale === 'en'
+  alternatePaths?.[locale] ??
+  (englishAvailable === false && locale === 'en'
     ? alternateUrls(Astro.url.pathname).es
-    : alternateUrls(Astro.url.pathname)[locale]
+    : alternateUrls(Astro.url.pathname)[locale])
 const canonical = new URL(canonicalPath, site).href
 const ogImage = new URL(image, site).href
 const OG_LOCALE = { es: 'es_CO', en: 'en_US' } as const
@@ -129,7 +140,7 @@ const websiteJsonLd = JSON.stringify({
   </head>
   <body class="grain">
     <AmbientBlobs />
-    <Navbar />
+    <Navbar languageHref={alt[locale === 'en' ? 'es' : 'en']} />
     <main>
       <slot />
     </main>

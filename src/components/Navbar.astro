@@ -1,6 +1,16 @@
 ---
 import { delocalizePath, getDictionary, getLocaleFromUrl, hasTranslation, localizedHref } from '../i18n'
 
+interface Props {
+  /**
+   * URL de esta misma página en el otro idioma, cuando la página la conoce
+   * mejor que el registro de rutas (notas: el slug también se traduce).
+   * Sin ella se deduce del pathname.
+   */
+  languageHref?: string
+}
+
+const { languageHref: languageHrefOverride } = Astro.props;
 const rawPath = Astro.url.pathname;
 // Comparar la sección activa contra la ruta SIN prefijo de idioma: con /en/
 // delante, `currentPath.startsWith(link.href)` nunca matchea nada y todo el
@@ -12,9 +22,11 @@ const otherLocale = locale === 'es' ? 'en' : 'es';
 // El conmutador de idioma apunta a la misma página en el otro idioma solo
 // si existe; si no, a la home de ese idioma. Antes construía `/en/<ruta>`
 // siempre, y en las páginas sin traducir eso era un 404.
-const languageHref = hasTranslation(rawPath, otherLocale)
-  ? localizedHref(rawPath, otherLocale)
-  : localizedHref('/', otherLocale);
+const languageHref =
+  languageHrefOverride ??
+  (hasTranslation(rawPath, otherLocale)
+    ? localizedHref(rawPath, otherLocale)
+    : localizedHref('/', otherLocale));
 
 const navLinks = [
   { canonical: "/paginas-web", label: t.nav.diseno },
