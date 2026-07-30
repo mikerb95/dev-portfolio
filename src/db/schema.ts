@@ -24,6 +24,12 @@ export const projects = sqliteTable('projects', {
   slug: text('slug').notNull().unique(),
   title: text('title').notNull(),
   description: text('description'),
+  // Traducción opcional para /en/projects/<slug>. `techStack` no se traduce
+  // (son nombres propios de tecnologías). NULL = todavía sin traducir; el
+  // helper pickLocalized (src/i18n/localize.ts) cae al español, nunca en
+  // blanco. Ver docs/plan-i18n-en.md §7.
+  titleEn: text('title_en'),
+  descriptionEn: text('description_en'),
   techStack: text('tech_stack'),
   repoUrl: text('repo_url'),
   previewUrl: text('preview_url'),
