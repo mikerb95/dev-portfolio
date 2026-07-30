@@ -107,18 +107,30 @@ base de archivo, dos corridas seguidas.
 
 ## 4. Trabajo de código pendiente
 
-### Portal de clientes en tiempo real — plan cerrado, sin empezar
+### ✅ Portal en tiempo real — Fase A entregada (30 jul 2026)
 
-Es el gap más grande. El portal está completo y auditado (Fases 0–7), pero
-**nada se actualiza solo**: un cliente con el portal abierto no ve la respuesta a
-su mensaje ni que su monitor se cayó hasta que recarga a mano. El dato *es* de
-tiempo real; la interfaz no.
+El portal ya se actualiza solo. `src/lib/portal/live.ts` (digest sobre los
+helpers existentes, cero SQL nuevo) + `GET /api/portal/live` (10/min por sesión,
+`no-store`) + un único ciclo de 20 s en `PortalLayout` que emite
+`CustomEvent('portal:live')`. Lo escuchan tres suscriptores compartiendo una
+sola petición: campana, dashboard y hilo abierto. Pausa con la pestaña oculta,
+backoff 20→300 s y fail-open silencioso. Detalle y decisiones en
+`docs/plan-portal-tiempo-real.md`.
 
-Diseño ya decidido en `docs/plan-portal-tiempo-real.md`: polling de un digest
-barato cada 20 s (no SSE ni WebSockets — Turso no tiene pub/sub, así que el
-servidor tendría que sondear igual y encima pagaría la conexión abierta), con
-pausa cuando la pestaña no está visible, backoff ante error y fail-open
-silencioso.
+- [ ] **Fase B — feed de actividad por proyecto** (`portal_activity`,
+      `recordActivity()`, columna en `/portal` y página `/portal/actividad`).
+      Es lo que queda del plan; requiere migración aditiva.
+- [ ] e2e del anuncio en vivo (`aria-live`) — los specs nuevos de
+      `e2e/portal.spec.ts` cubren el 401 y el digest sobre la base de demo, pero
+      no se pudieron correr localmente (ver nota de puertos abajo).
+
+> **Nota de entorno:** el e2e no corre en esta máquina por dos choques ajenos al
+> código: el puerto 4331 (`playwright.config.ts`) lo ocupa un proceso del
+> proyecto `github.com/eko`, y con `reuseExistingServer` Playwright lanza la
+> suite contra ese servidor, que devuelve 404 a todo (fallan hasta los tests
+> preexistentes). Además Astro no levanta un segundo `astro dev` si ya hay uno.
+> Verificado a mano contra un dev server real: `/api/portal/live` → 401 sin
+> sesión, `/portal` → 302, `/api/portal/health` → 200.
 
 Los dos puntos de higiene del mismo plan ya están cubiertos:
 - [x] Artículo en `/notes`: **"Dos logins en el mismo sitio, y ninguno conoce al
