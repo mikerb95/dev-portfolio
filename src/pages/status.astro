@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
 import { db } from '../db'
 import { monitors, monitorChecks, monitorIncidents } from '../db/schema'
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm'
@@ -9,6 +10,11 @@ import { recentLatency } from '../lib/latency'
 // Página de status pública. Expone SOLO datos operativos agregados de los
 // monitores activos (nombre, uptime, latencia); nunca URLs internas, errores
 // crudos ni configuración. El filtrado ocurre aquí, en el servidor.
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const st = t.status
+const L = (path: string) => localizedHref(path, locale)
 
 const OBJECTIVE = 99.5
 const WINDOW_DAYS = 90
@@ -159,13 +165,9 @@ const overall = cards.some((c) => c.lastStatus === 'down')
     ? 'degraded'
     : 'up'
 
-const overallLabel = {
-  up: 'Todos los sistemas operativos',
-  degraded: 'Rendimiento degradado en algún servicio',
-  down: 'Incidente activo en algún servicio',
-}[overall]
+const overallLabel = st.overallLabel[overall]
 
-const fmtDate = new Intl.DateTimeFormat('es-CO', {
+const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', {
   day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   timeZone: 'America/Bogota',
 })
@@ -173,10 +175,10 @@ const fmtDate = new Intl.DateTimeFormat('es-CO', {
 function ago(d: Date | null): string {
   if (!d) return '—'
   const min = Math.round((now - d.getTime()) / 60_000)
-  if (min < 1) return 'hace <1 min'
-  if (min < 60) return `hace ${min} min`
+  if (min < 1) return st.agoJustNow
+  if (min < 60) return interpolate(st.agoMinutes, { n: min })
   const h = Math.floor(min / 60)
-  return h < 24 ? `hace ${h} h` : `hace ${Math.floor(h / 24)} d`
+  return h < 24 ? interpolate(st.agoHours, { n: h }) : interpolate(st.agoDaysShort, { n: Math.floor(h / 24) })
 }
 
 function barColor(pct: number | null): string {
@@ -190,10 +192,11 @@ function barColor(pct: number | null): string {
 function sslInfo(d: Date | null): { label: string; cls: string } | null {
   if (!d) return null
   const days = Math.round((d.getTime() - now) / DAY_MS)
-  if (days < 0) return { label: 'TLS vencido', cls: 'text-ember border-ember/40 bg-ember/15' }
-  if (days <= 14) return { label: `TLS · ${days} d`, cls: 'text-ember border-ember/30 bg-ember/10' }
-  if (days <= 30) return { label: `TLS · ${days} d`, cls: 'text-ember/80 border-ember/20 bg-ember/5' }
-  return { label: `TLS · ${days} d`, cls: 'text-lime/80 border-lime/20 bg-lime/5' }
+  const label = days < 0 ? st.sslExpired : interpolate(st.sslDays, { n: days })
+  if (days < 0) return { label, cls: 'text-ember border-ember/40 bg-ember/15' }
+  if (days <= 14) return { label, cls: 'text-ember border-ember/30 bg-ember/10' }
+  if (days <= 30) return { label, cls: 'text-ember/80 border-ember/20 bg-ember/5' }
+  return { label, cls: 'text-lime/80 border-lime/20 bg-lime/5' }
 }
 
 // Color del trazo EKG según el estado actual del monitor.
@@ -205,18 +208,13 @@ const ekgColor: Record<string, string> = {
 }
 
 const statusBadge = {
-  up: { label: 'Operativo', cls: 'text-lime border-lime/30 bg-lime/10', dot: 'bg-lime' },
-  degraded: { label: 'Degradado', cls: 'text-ember border-ember/30 bg-ember/10', dot: 'bg-ember' },
-  down: { label: 'Caído', cls: 'text-ember border-ember/40 bg-ember/15', dot: 'bg-ember' },
-  unknown: { label: 'Sin datos', cls: 'text-ink-200 border-white/10 bg-white/5', dot: 'bg-ink-400' },
+  up: { label: st.statusBadge.up, cls: 'text-lime border-lime/30 bg-lime/10', dot: 'bg-lime' },
+  degraded: { label: st.statusBadge.degraded, cls: 'text-ember border-ember/30 bg-ember/10', dot: 'bg-ember' },
+  down: { label: st.statusBadge.down, cls: 'text-ember border-ember/40 bg-ember/15', dot: 'bg-ember' },
+  unknown: { label: st.statusBadge.unknown, cls: 'text-ink-200 border-white/10 bg-white/5', dot: 'bg-ink-400' },
 } as const
 
-const healthLabel = {
-  healthy: 'saludable',
-  warning: 'en alerta',
-  critical: 'crítico',
-  exhausted: 'agotado',
-} as const
+const healthLabel = st.healthLabel
 ---
 
 <BaseLayout
