@@ -4,6 +4,7 @@ import { db } from '../../../../../db'
 import { portalThreads } from '../../../../../db/schema'
 import { addMessage, MAX_BODY_LEN } from '../../../../../lib/portal/threads'
 import { notifyClient } from '../../../../../lib/portal/notifications'
+import { recordActivity } from '../../../../../lib/portal/activity'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -55,6 +56,15 @@ export const POST: APIRoute = async ({ params, request }) => {
     body: body.length > 200 ? `${body.slice(0, 200)}…` : body,
     href: `/portal/mensajes/${threadId}`,
     emailCta: 'Leer y responder',
+  })
+  await recordActivity({
+    clientId: thread.clientId,
+    projectId: thread.projectId ?? null,
+    type: 'message',
+    // Sin el cuerpo del mensaje: el feed dice que pasó algo y adónde ir, no
+    // reproduce la conversación en una vista con otras reglas de visibilidad.
+    title: `Nueva respuesta · ${thread.subject}`,
+    href: `/portal/mensajes/${threadId}`,
   })
 
   return json(201, { ok: true, id: message.id })
