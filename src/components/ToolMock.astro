@@ -3,10 +3,16 @@
 // Todos los datos son FICTICIOS a propósito: el panel real nunca se captura
 // porque contiene información de clientes. Decorativo: aria-hidden.
 
+import { getDictionary, getLocaleFromUrl } from '../i18n'
+
 interface Props {
   kind: 'monitors' | 'pnl' | 'seguimiento' | 'vault' | 'pipeline' | 'chaos' | 'security'
 }
 const { kind } = Astro.props
+
+// El idioma sale de la URL del request, no de dónde vive el componente: /tools
+// y /en/tools renderizan este mismo archivo.
+const m = getDictionary(getLocaleFromUrl(Astro.url.pathname)).toolMock
 
 // Barras de uptime ficticias (mayoría arriba, alguna caída para que sea creíble).
 const bars = (down: number[]) =>
@@ -18,18 +24,14 @@ const monitorRows = [
   { name: 'tienda-demo.shop', status: 'degraded', uptime: '98.94%', ms: '2.4 s', down: [22, 27] },
 ]
 
-const pnlRows = [
-  { p: 'Proyecto Alfa', ing: '$4.2M', cos: '$310K', mar: 93 },
-  { p: 'Proyecto Beta', ing: '$2.8M', cos: '$780K', mar: 72 },
-  { p: 'Proyecto Gama', ing: '$1.1M', cos: '$495K', mar: 55 },
+const pnlFigures = [
+  { ing: '$4.2M', cos: '$310K', mar: 93 },
+  { ing: '$2.8M', cos: '$780K', mar: 72 },
+  { ing: '$1.1M', cos: '$495K', mar: 55 },
 ]
+const pnlRows = pnlFigures.map((f, i) => ({ ...f, p: m.pnl.rows[i] }))
 
-const timeline = [
-  { d: '02 jul', t: 'Deploy a producción · v1.4', done: true },
-  { d: '28 jun', t: 'Briefing aprobado: módulo de pagos', done: true },
-  { d: '24 jun', t: 'Reunión de seguimiento · acta enviada', done: true },
-  { d: 'próx.', t: 'Entrega: integración de facturación', done: false },
-]
+const timeline = m.timeline.map((e, i) => ({ ...e, done: i < 3 }))
 
 const vaultRows = [
   { k: 'DATABASE_URL', env: 'production' },
@@ -38,22 +40,20 @@ const vaultRows = [
 ]
 
 const runs = [
-  { sha: 'a3f9e21', res: 'success', label: 'éxito', t: '2 min' },
-  { sha: '8c04b77', res: 'success', label: 'éxito', t: '2 min' },
-  { sha: 'f51d0ac', res: 'rolled_back', label: 'rollback', t: '4 min' },
+  { sha: 'a3f9e21', res: 'success', label: m.pipeline.success, t: '2 min' },
+  { sha: '8c04b77', res: 'success', label: m.pipeline.success, t: '2 min' },
+  { sha: 'f51d0ac', res: 'rolled_back', label: m.pipeline.rollback, t: '4 min' },
 ]
 
-const flags = [
-  { k: 'Latencia extra', route: '/api/*', ttl: '09:41', on: true },
-  { k: 'Error 500', route: '/tienda', ttl: '—', on: false },
-]
+const flags = m.chaos.flags.map((f, i) => ({ ...f, ttl: i === 0 ? '09:41' : '—', on: i === 0 }))
 
-const secEvents = [
-  { cat: 'Búsqueda de secretos/config', sev: 'high', ip: '198.51.x.x', country: 'RU' },
-  { cat: 'Endpoint señuelo tocado', sev: 'critical', ip: '203.0.x.x', country: 'CN' },
-  { cat: 'Inyección (SQLi/XSS/cmd)', sev: 'high', ip: '192.0.x.x', country: 'BR' },
-  { cat: 'Reconocimiento de CMS', sev: 'medium', ip: '198.51.x.x', country: 'CO' },
+const secMeta = [
+  { sev: 'high', ip: '198.51.x.x', country: 'RU' },
+  { sev: 'critical', ip: '203.0.x.x', country: 'CN' },
+  { sev: 'high', ip: '192.0.x.x', country: 'BR' },
+  { sev: 'medium', ip: '198.51.x.x', country: 'CO' },
 ]
+const secEvents = secMeta.map((e, i) => ({ ...e, cat: m.security.events[i] }))
 const secSevDot: Record<string, string> = { low: 'bg-ink-400', medium: 'bg-amber-400', high: 'bg-orange-500', critical: 'bg-red-500' }
 ---
 
@@ -67,7 +67,7 @@ const secSevDot: Record<string, string> = { low: 'bg-ink-400', medium: 'bg-amber
     <span class="w-2 h-2 rounded-full bg-lime/50"></span>
     <span class="w-2 h-2 rounded-full bg-cyan/50"></span>
     <span class="ml-3 text-[10px] font-mono text-ink-300 truncate">
-      /admin · datos ilustrativos
+      {m.windowLabel}
     </span>
   </div>
 
@@ -93,7 +93,7 @@ const secSevDot: Record<string, string> = { low: 'bg-ink-400', medium: 'bg-amber
     {kind === 'pnl' && (
       <div class="space-y-2.5">
         <div class="grid grid-cols-[1fr_auto_auto_88px] gap-3 text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 px-3">
-          <span>Proyecto</span><span>Ingresos</span><span>Costos</span><span class="text-right">Margen</span>
+          <span>{m.pnl.project}</span><span>{m.pnl.revenue}</span><span>{m.pnl.costs}</span><span class="text-right">{m.pnl.margin}</span>
         </div>
         {pnlRows.map((r) => (
           <div class="grid grid-cols-[1fr_auto_auto_88px] gap-3 items-center rounded-lg bg-white/[.03] border border-white/5 px-3 py-2.5 text-[12px] font-mono">
@@ -136,7 +136,7 @@ const secSevDot: Record<string, string> = { low: 'bg-ink-400', medium: 'bg-amber
           </div>
         ))}
         <div class="text-[10px] font-mono text-ink-300 px-1 pt-1">
-          cifrado AES-256-GCM · la clave nunca toca la base de datos
+          {m.vaultNote}
         </div>
       </div>
     )}
@@ -147,7 +147,7 @@ const secSevDot: Record<string, string> = { low: 'bg-ink-400', medium: 'bg-amber
           <div class="flex items-center gap-3 rounded-lg bg-white/[.03] border border-white/5 px-3 py-2.5 text-[12px] font-mono">
             <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${r.res === 'success' ? 'bg-lime' : 'bg-ember'}`}></span>
             <span class="text-ink-50">{r.sha}</span>
-            <span class="text-ink-300 hidden sm:inline">deploy → health check</span>
+            <span class="text-ink-300 hidden sm:inline">{m.pipeline.step}</span>
             <span class={`ml-auto text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${r.res === 'success' ? 'text-lime border-lime/30 bg-lime/10' : 'text-ember border-ember/30 bg-ember/10'}`}>{r.label}</span>
             <span class="text-[11px] text-ink-300">{r.t}</span>
           </div>
@@ -169,7 +169,7 @@ const secSevDot: Record<string, string> = { low: 'bg-ink-400', medium: 'bg-amber
         ))}
         <div class="flex justify-end pt-1">
           <span class="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-3 py-1.5 rounded-full border border-ember/40 bg-ember/10 text-ember">
-            ■ Pánico: apagar todo
+            ■ {m.chaos.panic}
           </span>
         </div>
       </div>
@@ -179,15 +179,15 @@ const secSevDot: Record<string, string> = { low: 'bg-ink-400', medium: 'bg-amber
       <div class="space-y-2.5">
         <div class="grid grid-cols-3 gap-2 mb-1">
           <div class="rounded-lg bg-white/[.03] border border-white/5 px-3 py-2">
-            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">Detectados 30d</div>
+            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">{m.security.detected}</div>
             <div class="text-[15px] font-mono text-ink-50">1.284</div>
           </div>
           <div class="rounded-lg bg-white/[.03] border border-white/5 px-3 py-2">
-            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">Auto-bloqueos</div>
+            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">{m.security.autoBlocks}</div>
             <div class="text-[15px] font-mono text-cyan">37</div>
           </div>
           <div class="rounded-lg bg-white/[.03] border border-white/5 px-3 py-2">
-            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">Overhead p99</div>
+            <div class="text-[9px] font-mono uppercase tracking-wider text-ink-300">{m.security.overhead}</div>
             <div class="text-[15px] font-mono text-lime">≤5ms</div>
           </div>
         </div>

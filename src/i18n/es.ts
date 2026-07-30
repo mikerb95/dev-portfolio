@@ -646,6 +646,58 @@ const es = {
       },
     ],
   },
+
+  // Maquetas ilustrativas del panel /admin que se muestran en /tools. Los datos
+  // son ficticios a propósito (el panel real nunca se captura), pero el texto
+  // lo lee un humano: si /tools existe en inglés, esto también tiene que
+  // estar en inglés o la página queda a medio traducir.
+  toolMock: {
+    windowLabel: '/admin · datos ilustrativos',
+    pnl: {
+      project: 'Proyecto',
+      revenue: 'Ingresos',
+      costs: 'Costos',
+      margin: 'Margen',
+      rows: ['Proyecto Alfa', 'Proyecto Beta', 'Proyecto Gama'],
+    },
+    timeline: [
+      { d: '02 jul', t: 'Deploy a producción · v1.4' },
+      { d: '28 jun', t: 'Briefing aprobado: módulo de pagos' },
+      { d: '24 jun', t: 'Reunión de seguimiento · acta enviada' },
+      { d: 'próx.', t: 'Entrega: integración de facturación' },
+    ],
+    vaultNote: 'cifrado AES-256-GCM · la clave nunca toca la base de datos',
+    pipeline: { step: 'deploy → health check', success: 'éxito', rollback: 'rollback' },
+    chaos: {
+      flags: [
+        { k: 'Latencia extra', route: '/api/*' },
+        { k: 'Error 500', route: '/tienda' },
+      ],
+      panic: 'Pánico: apagar todo',
+    },
+    security: {
+      detected: 'Detectados 30d',
+      autoBlocks: 'Auto-bloqueos',
+      overhead: 'Overhead p99',
+      events: [
+        'Búsqueda de secretos/config',
+        'Endpoint señuelo tocado',
+        'Inyección (SQLi/XSS/cmd)',
+        'Reconocimiento de CMS',
+      ],
+    },
+  },
+  // Sección de actividad de GitHub de la home. El grid se pinta en cliente,
+  // así que los textos que usa el script viajan en data-attributes desde el
+  // servidor: el idioma sale de la URL de la página, no de `navigator.language`.
+  githubProjects: {
+    eyebrow: 'Open source',
+    headline: 'Actividad reciente en GitHub.',
+    sub: 'Explorando ideas y construyendo herramientas en público.',
+    noDescription: 'Sin descripción.',
+    empty: 'Sin repositorios públicos.',
+    error: 'No se pudo cargar la actividad de GitHub.',
+  },
 }
 
 export default es

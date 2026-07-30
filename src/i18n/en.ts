@@ -647,6 +647,51 @@ const en = {
       },
     ],
   },
+
+  toolMock: {
+    windowLabel: '/admin · illustrative data',
+    pnl: {
+      project: 'Project',
+      revenue: 'Revenue',
+      costs: 'Costs',
+      margin: 'Margin',
+      rows: ['Project Alpha', 'Project Beta', 'Project Gamma'],
+    },
+    timeline: [
+      { d: 'Jul 02', t: 'Production deploy · v1.4' },
+      { d: 'Jun 28', t: 'Briefing approved: payments module' },
+      { d: 'Jun 24', t: 'Follow-up meeting · minutes sent' },
+      { d: 'next', t: 'Delivery: billing integration' },
+    ],
+    vaultNote: 'AES-256-GCM encrypted · the key never touches the database',
+    pipeline: { step: 'deploy → health check', success: 'success', rollback: 'rollback' },
+    chaos: {
+      flags: [
+        { k: 'Added latency', route: '/api/*' },
+        { k: 'Error 500', route: '/shop' },
+      ],
+      panic: 'Panic: kill everything',
+    },
+    security: {
+      detected: 'Detected 30d',
+      autoBlocks: 'Auto-blocks',
+      overhead: 'Overhead p99',
+      events: [
+        'Secrets/config scanning',
+        'Decoy endpoint touched',
+        'Injection (SQLi/XSS/cmd)',
+        'CMS reconnaissance',
+      ],
+    },
+  },
+  githubProjects: {
+    eyebrow: 'Open source',
+    headline: 'Latest GitHub activity.',
+    sub: 'Exploring ideas and building tools in public.',
+    noDescription: 'No description provided.',
+    empty: 'No public repositories.',
+    error: 'Could not load GitHub activity.',
+  },
 } satisfies typeof es
 
 export default en
