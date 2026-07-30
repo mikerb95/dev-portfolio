@@ -99,13 +99,40 @@ anunciarlo es exactamente lo que rompe a un lector de pantalla. Y respeta
 
 ## 2. Fases
 
-### Fase A — Digest y capa viva 🔴 núcleo
-1. `src/lib/portal/live.ts` con `portalLiveDigest()` (puro sobre los helpers existentes) y su test de unidad: mismo cliente → datos suyos; proyecto ajeno → cae al propio.
-2. `GET /api/portal/live` + rate limit por sesión + `no-store`.
-3. Script del layout: ciclo de 20 s, pausa por visibilidad, backoff, `CustomEvent`.
-4. Suscriptores: campana, dashboard, hilo abierto.
-5. Región `aria-live` + `prefers-reduced-motion`.
-6. Guard de demo/impersonación: el digest es `GET`, así que pasa — verificar que en modo demo lee de la base demo (el `AsyncLocalStorage` ya lo resuelve, pero merece un caso en `tests/portal-demo.test.ts`).
+### Fase A — Digest y capa viva ✅ (2026-07-30)
+1. ✅ `src/lib/portal/live.ts` con `portalLiveDigest()` sobre los helpers existentes (cero SQL nuevo) + `tests/portal-live.test.ts` (9 casos con libSQL real).
+2. ✅ `GET /api/portal/live` + rate limit **por sesión** (10/min) + `no-store`.
+3. ✅ Script del layout: ciclo de 20 s, pausa por visibilidad, backoff 20→40→…→300 s, `CustomEvent('portal:live')`.
+4. ✅ Suscriptores: campana (layout), dashboard (`portal/index.astro`), hilo abierto (`portal/mensajes/[id].astro`).
+5. ✅ Región `aria-live` (reusa la de Fase C) + `motion-reduce` en la barra de avance.
+6. ✅ Guard de demo: casos en `tests/portal-demo.test.ts` (el digest es GET, así que la demo late) y en `tests/portal-paths.test.ts` (nunca público), más un e2e que comprueba que en modo demo el digest lee de la base de demo.
+
+**Decisiones que aparecieron al implementar**
+
+- **`milestonesUpdatedAt` no existe como tal.** `project_milestones` no tiene
+  `updatedAt`, así que el digest expone `milestonesAt` = máximo de
+  `completedAt`/`createdAt`. Se mueve al añadir y al completar un hito; un paso a
+  `en_curso` no la mueve pero sí mueve `progress.pct` (cuenta como medio), así
+  que el par (pct, at) cubre todo lo que el cliente percibe. Solo una corrección
+  de texto pasa inadvertida hasta recargar — el precio de detectarla era una
+  columna nueva y una migración, y no lo vale.
+- **`progress` viaja como `{ pct, done, total }`**, no como `progressPct` suelto:
+  la tarjeta escribe "3 de 5 hitos completados" y con solo el porcentaje el
+  número grande se actualizaría dejando el texto de abajo contradiciéndolo.
+- **`threads.lastThreadId`** se añadió al digest porque sin él la vista de un
+  hilo abierto no distingue "llegó respuesta aquí" de "llegó en otra
+  conversación", y avisaría en falso.
+- **El hilo abierto recarga, no anexa.** El plan decía "pedir los mensajes
+  nuevos de ese hilo y anexarlos", pero esa página ya había decidido lo
+  contrario para el envío ("una sola ruta de pintado, la del servidor"). Se
+  respeta esa convención: si no hay borrador a medias, recarga sola; si lo hay,
+  muestra un botón "Hay una respuesta nueva · Ver" y lo anuncia por `aria-live`,
+  sin tocar lo que el usuario está escribiendo ni mover el foco.
+- **Rate limit por sesión, no por IP**: varias personas del mismo cliente detrás
+  de una NAT corporativa no deben gastarse el cupo entre ellas.
+- **El rol `billing` no recibe nada de mensajes en el digest.** No ve mensajes en
+  ninguna vista del portal; el digest no puede ser la rendija por la que se
+  entere de que existen. Con caso propio en los tests.
 
 ### Fase B — Feed de actividad por proyecto
 1. Migración aditiva `portal_activity`:
