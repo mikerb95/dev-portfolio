@@ -3,6 +3,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import { db } from '../../db'
 import { ciRuns, labExperiments, payments, paymentEvents, securityFindings } from '../../db/schema'
 import { desc, gte, sql } from 'drizzle-orm'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const lb = t.lab
+const L = (path: string) => localizedHref(path, locale)
 
 // Vitrina pública del LAB. Expone SOLO datos agregados o públicos por naturaleza
 // (el repo y sus GitHub Actions son públicos): corridas de CI, experimentos con
@@ -88,13 +94,15 @@ const [expAgg] = await db
   })
   .from(labExperiments)
 
-// Etiquetas amigables por tipo de experimento; el detalle crudo se queda en el panel.
+// Etiquetas amigables por tipo de experimento; el detalle crudo se queda en el
+// panel. El `kind` es la clave técnica que escribe el experimento — no se
+// traduce; lo que se traduce es su etiqueta legible.
 const EXPERIMENT_LABELS: Record<string, string> = {
-  'chaos:db_fail_midtx': 'Caída de BD a mitad de una transacción de pago',
-  'payments:double_click': 'Doble clic en «pagar» (idempotencia concurrente)',
-  'payments:duplicate_webhook': 'Webhook duplicado (mismo evento dos veces)',
-  'payments:out_of_order': 'Webhook tardío que intenta retroceder el estado',
-  'payments:race_condition': 'Aprobado y rechazado en carrera por el mismo pago',
+  'chaos:db_fail_midtx': lb.experiments.labels.dbFailMidtx,
+  'payments:double_click': lb.experiments.labels.doubleClick,
+  'payments:duplicate_webhook': lb.experiments.labels.duplicateWebhook,
+  'payments:out_of_order': lb.experiments.labels.outOfOrder,
+  'payments:race_condition': lb.experiments.labels.raceCondition,
 }
 const expLabel = (kind: string) => EXPERIMENT_LABELS[kind] ?? kind.replace(/[_:]/g, ' ')
 
@@ -118,7 +126,7 @@ const [evtAgg] = await db
 const absorbed = evtAgg.duplicates + evtAgg.outOfOrder + evtAgg.mismatches
 
 // ── Presentación ────────────────────────────────────────────────────────────
-const fmtDate = new Intl.DateTimeFormat('es-CO', {
+const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', {
   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
   timeZone: 'America/Bogota',
 })
@@ -133,52 +141,47 @@ const fmtDuration = (ms: number | null) => {
 // de línea del template al HTML.
 const runMeta = (r: (typeof runs)[number]) =>
   [
-    r.testsPassed != null ? `${r.testsPassed} tests` : null,
-    r.testsFailed ? `${r.testsFailed} fallidos` : null,
-    r.coveragePct != null ? `${Math.round(r.coveragePct * 10) / 10}% cov` : null,
+    r.testsPassed != null ? `${r.testsPassed} ${lb.pipeline.testsLabel}` : null,
+    r.testsFailed ? `${r.testsFailed} ${lb.pipeline.failedLabel}` : null,
+    r.coveragePct != null ? `${Math.round(r.coveragePct * 10) / 10}% ${lb.pipeline.covLabel}` : null,
   ]
     .filter(Boolean)
     .join(' · ')
 
 const runBadge = {
-  success: { label: 'OK', cls: 'text-lime border-lime/30 bg-lime/10' },
-  failure: { label: 'Falló', cls: 'text-ember border-ember/40 bg-ember/15' },
-  rolled_back: { label: 'Rollback', cls: 'text-ember border-ember/30 bg-ember/10' },
+  success: { label: lb.pipeline.badgeOk, cls: 'text-lime border-lime/30 bg-lime/10' },
+  failure: { label: lb.pipeline.badgeFailure, cls: 'text-ember border-ember/40 bg-ember/15' },
+  rolled_back: { label: lb.pipeline.badgeRollback, cls: 'text-ember border-ember/30 bg-ember/10' },
 } as const
 
 // La tarjeta de SAST/a11y solo aparece en "En construcción" mientras no haya
 // hallazgos ingeridos; en cuanto CI reporte, arriba se muestra la sección real.
 const upcoming = [
-  { title: 'Load testing (k6)', desc: 'Latencia p50/p95/p99 bajo 100–1000 usuarios concurrentes contra un entorno de staging.' },
-  ...(hasFindings ? [] : [{ title: 'SAST + accesibilidad', desc: 'Hallazgos de análisis estático (CodeQL, npm audit) y score a11y, con su ciclo abierto → resuelto.' }]),
-  ...(lastMutation ? [] : [{ title: 'Mutation testing', desc: 'No solo cuánta cobertura hay, sino si los tests detectan de verdad cuando el código se rompe.' }]),
+  { title: lb.upcoming.k6Title, desc: lb.upcoming.k6Desc },
+  ...(hasFindings ? [] : [{ title: lb.upcoming.sastTitle, desc: lb.upcoming.sastDesc }]),
+  ...(lastMutation ? [] : [{ title: lb.upcoming.mutationTitle, desc: lb.upcoming.mutationDesc }]),
 ]
 ---
 
-<BaseLayout
-  title="Laboratorio — CodeByMike"
-  description="Laboratorio de ingeniería en vivo: pipeline CI/CD con rollback, chaos engineering, ataques controlados a la pasarela de pagos y sus resultados reales."
->
+<BaseLayout title={lb.title} description={lb.description}>
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
-    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+    <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      Volver
+      {t.common.back}
     </a>
 
     <header class="mb-12">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/lab</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Ingeniería verificable</span>
+        <span>{lb.eyebrow}</span>
       </div>
       <h1 class="hero-line overflow-hidden text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        Laboratorio de<br/>ingeniería.
+        {lb.h1Line1}<br/>{lb.h1Line2}
       </h1>
       <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        Este sitio es también mi banco de pruebas: pipeline con rollback automático, chaos
-        engineering, ataques controlados contra mi propia pasarela de pagos. Lo que ves abajo
-        son los resultados reales, leídos de la misma base de datos que usa el sistema.
+        {lb.intro}
       </p>
     </header>
 
@@ -188,30 +191,30 @@ const upcoming = [
         <div class={`font-mono text-[26px] leading-none tracking-tight ${successRate30 !== null && successRate30 >= 90 ? 'text-lime' : 'text-ember'}`}>
           {successRate30 === null ? '—' : `${successRate30}%`}
         </div>
-        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Pipelines exitosos · 30d</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.pipelines}</div>
       </div>
       <div class="rounded-2xl glass p-5">
         <div class="font-mono text-[26px] leading-none tracking-tight text-ink-50">
           {lastCoverage === null ? '—' : `${Math.round(lastCoverage * 10) / 10}%`}
         </div>
-        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Cobertura de tests</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.coverage}</div>
       </div>
       <div class="rounded-2xl glass p-5">
         <div class={`font-mono text-[26px] leading-none tracking-tight ${expAgg.total > 0 && expAgg.ok === expAgg.total ? 'text-lime' : 'text-ink-50'}`}>
           {expAgg.ok}/{expAgg.total}
         </div>
-        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Experimentos superados</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.experiments}</div>
       </div>
       <div class="rounded-2xl glass p-5">
         <div class="font-mono text-[26px] leading-none tracking-tight text-cyan">{absorbed}</div>
-        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Ataques absorbidos (pagos)</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.absorbed}</div>
       </div>
       {lastMutation && (
-        <div class="rounded-2xl glass p-5" title="% de mutantes detectados por los tests sobre src/lib — no solo qué línea se ejecutó, sino si algún test se entera cuando se rompe">
+        <div class="rounded-2xl glass p-5" title={lb.kpi.mutationTitle}>
           <div class={`font-mono text-[26px] leading-none tracking-tight ${lastMutation.mutationScore! >= 80 ? 'text-lime' : lastMutation.mutationScore! >= 60 ? 'text-cyan' : 'text-ember'}`}>
             {Math.round(lastMutation.mutationScore! * 10) / 10}%
           </div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">Mutation score</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.mutationScore}</div>
         </div>
       )}
     </div>
@@ -220,16 +223,14 @@ const upcoming = [
     <section class="mb-16">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
         <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-        <span>Pipeline CI/CD · con health check y rollback automático</span>
+        <span>{lb.pipeline.heading}</span>
       </div>
       <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
-        Cada push corre los tests y reporta el resultado aquí. Si el deploy pasa pero el health
-        check post-deploy falla, el pipeline revierte solo. El repositorio y sus Actions son
-        públicos: cada fila enlaza a los logs reales.
+        {lb.pipeline.body}
       </p>
       {runs.length === 0 ? (
         <div class="rounded-2xl glass p-8">
-          <p class="text-[13px] font-mono text-ink-300">Aún no hay corridas registradas.</p>
+          <p class="text-[13px] font-mono text-ink-300">{lb.pipeline.empty}</p>
         </div>
       ) : (
         <div class="rounded-2xl glass divide-y divide-white/5 overflow-hidden">
@@ -260,16 +261,14 @@ const upcoming = [
     <section class="mb-16">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
         <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-        <span>Experimentos · chaos engineering y ataques controlados</span>
+        <span>{lb.experiments.heading}</span>
       </div>
       <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
-        Cada experimento define qué debería pasar (la defensa) y verifica qué pasó de verdad.
-        «Superado» significa que el sistema se defendió solo: sin pagos duplicados, sin estados
-        a medias, sin eventos huérfanos.
+        {lb.experiments.body}
       </p>
       {experiments.length === 0 ? (
         <div class="rounded-2xl glass p-8">
-          <p class="text-[13px] font-mono text-ink-300">Aún no hay experimentos registrados.</p>
+          <p class="text-[13px] font-mono text-ink-300">{lb.experiments.empty}</p>
         </div>
       ) : (
         <div class="rounded-2xl glass divide-y divide-white/5">
@@ -281,11 +280,11 @@ const upcoming = [
                 <span class="text-ink-50">{expLabel(e.kind)}</span>
                 <span class={`text-[10px] font-mono uppercase tracking-[.15em] ${allOk ? 'text-lime' : 'text-ember'}`}>
                   {allOk
-                    ? `${e.runs} ${e.runs === 1 ? 'corrida' : 'corridas'} · superado`
-                    : `${e.ok}/${e.runs} superadas`}
+                    ? `${e.runs} ${e.runs === 1 ? lb.experiments.runOne : lb.experiments.runMany} · ${lb.experiments.passed}`
+                    : `${e.ok}/${e.runs} ${lb.experiments.passedRatio}`}
                 </span>
                 <span class="ml-auto font-mono text-[11px] text-ink-300">
-                  última: {e.lastRunAt ? fmtDate.format(new Date(e.lastRunAt * 1000)) : '—'}
+                  {lb.experiments.last} {e.lastRunAt ? fmtDate.format(new Date(e.lastRunAt * 1000)) : '—'}
                 </span>
               </div>
             )
