@@ -1,0 +1,123 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { db } from '../../../db'
+import { clients, portalActivity } from '../../../db/schema'
+import { desc, eq } from 'drizzle-orm'
+import { formatDateTime } from '../../../lib/portal/format'
+import { ACTIVITY_LABELS } from '../../../lib/portal/activity'
+
+// Vista de control del feed: aquí se ve TODO, incluido lo apagado — es el
+// sentido de la página. La consulta no filtra por visibleToClient a propósito.
+const clientRows = await db
+  .select({ id: clients.id, name: clients.name, company: clients.company })
+  .from(clients)
+  .where(eq(clients.portalEnabled, true))
+  .orderBy(clients.name)
+
+const selected = Number(Astro.url.searchParams.get('c')) || clientRows[0]?.id || null
+
+const items = selected
+  ? await db
+      .select()
+      .from(portalActivity)
+      .where(eq(portalActivity.clientId, selected))
+      .orderBy(desc(portalActivity.at))
+      .limit(100)
+  : []
+---
+
+<AdminLayout title="Actividad del portal">
+  <div class="mb-5">
+    <a href="/admin/portal" class="text-[12px] text-ink-300 hover:text-cyan transition-colors">← Portal</a>
+    <p class="mt-2 text-[12px] text-ink-300">
+      Lo que el cliente ve en su feed. Apagar una entrada la oculta en el portal sin borrarla:
+      el registro de que ocurrió sigue aquí. Últimas 100.
+    </p>
+  </div>
+
+  {clientRows.length > 1 && (
+    <div class="flex items-center gap-1.5 mb-5 overflow-x-auto no-scrollbar">
+      {clientRows.map((c) => (
+        <a
+          href={`/admin/portal/actividad?c=${c.id}`}
+          class:list={[
+            'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-[12px] border transition-colors',
+            c.id === selected
+              ? 'bg-cyan/10 border-cyan/30 text-cyan'
+              : 'bg-white/[.03] border-white/10 text-ink-200 hover:text-ink-50',
+          ]}
+        >{c.company ?? c.name}</a>
+      ))}
+    </div>
+  )}
+
+  <div class="rounded-2xl glass overflow-hidden">
+    {items.length === 0 ? (
+      <p class="p-6 text-[13px] text-ink-300">Este cliente todavía no tiene actividad registrada.</p>
+    ) : (
+      <table class="w-full text-[13px]">
+        <thead class="text-[11px] font-mono uppercase tracking-[.14em] text-ink-300 border-b border-white/10">
+          <tr>
+            <th class="text-left font-normal px-4 py-2.5">Cuándo</th>
+            <th class="text-left font-normal px-4 py-2.5">Tipo</th>
+            <th class="text-left font-normal px-4 py-2.5">Entrada</th>
+            <th class="text-right font-normal px-4 py-2.5">Visible</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((a) => (
+            <tr class="border-b border-white/[.06] last:border-0" data-row={a.id}>
+              <td class="px-4 py-2.5 text-ink-300 whitespace-nowrap">{formatDateTime(a.at)}</td>
+              <td class="px-4 py-2.5 text-ink-200">{ACTIVITY_LABELS[a.type]}</td>
+              <td class="px-4 py-2.5">
+                <span class="text-ink-50">{a.title}</span>
+                {a.detail && <span class="text-ink-300"> · {a.detail}</span>}
+              </td>
+              <td class="px-4 py-2.5 text-right">
+                <button
+                  class="toggle-btn h-7 px-3 text-[11px] rounded-full border transition-colors"
+                  data-id={a.id}
+                  data-visible={String(a.visibleToClient)}
+                >{a.visibleToClient ? 'Visible' : 'Oculta'}</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </div>
+
+  <script>
+    // Pinta el botón según el estado. Se hace en JS y no solo con class:list
+    // porque el botón cambia sin recargar.
+    function paint(btn: HTMLElement, visible: boolean) {
+      btn.dataset.visible = String(visible)
+      btn.textContent = visible ? 'Visible' : 'Oculta'
+      btn.className = visible
+        ? 'toggle-btn h-7 px-3 text-[11px] rounded-full border transition-colors bg-lime/10 border-lime/25 text-lime'
+        : 'toggle-btn h-7 px-3 text-[11px] rounded-full border transition-colors bg-white/[.04] border-white/10 text-ink-300'
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('.toggle-btn').forEach((btn) => {
+      paint(btn, btn.dataset.visible === 'true')
+
+      btn.addEventListener('click', async () => {
+        const next = btn.dataset.visible !== 'true'
+        btn.disabled = true
+        try {
+          const res = await fetch('/api/admin/portal/actividad', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: Number(btn.dataset.id), visibleToClient: next }),
+          })
+          const data = await res.json().catch(() => ({}))
+          if (res.ok) paint(btn, data.visibleToClient)
+          else alert(data.error ?? 'No se pudo cambiar la visibilidad')
+        } catch {
+          alert('Error de red al cambiar la visibilidad')
+        }
+        btn.disabled = false
+      })
+    })
+  </script>
+</AdminLayout>
