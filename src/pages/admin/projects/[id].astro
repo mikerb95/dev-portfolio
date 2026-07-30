@@ -21,6 +21,8 @@ const project = await db
     slug: projects.slug,
     title: projects.title,
     description: projects.description,
+    titleEn: projects.titleEn,
+    descriptionEn: projects.descriptionEn,
     techStack: projects.techStack,
     repoUrl: projects.repoUrl,
     previewUrl: projects.previewUrl,
@@ -375,6 +377,21 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
         <div class="col-span-2">
           <label class="block text-xs text-zinc-400 mb-1">Descripción</label>
           <input id="edit-description" type="text" value={project.description ?? ''} class="input-base w-full" />
+        </div>
+        <!-- Traducción al inglés (opcional): lo que quede vacío se muestra en
+             español en /en/projects/<slug>, y el sitemap no anuncia esa URL
+             como versión en inglés. -->
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">
+            Title (EN) <span class="text-zinc-600">· opcional</span>
+          </label>
+          <input id="edit-title-en" type="text" value={project.titleEn ?? ''} class="input-base w-full" placeholder={project.title} />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">
+            Description (EN) <span class="text-zinc-600">· opcional</span>
+          </label>
+          <input id="edit-description-en" type="text" value={project.descriptionEn ?? ''} class="input-base w-full" placeholder="Sin traducir ⇒ se muestra el español" />
         </div>
         <div>
           <label class="block text-xs text-zinc-400 mb-1">Stack (separado por comas)</label>
@@ -1178,6 +1195,8 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
         slug: document.getElementById('edit-slug').value.trim(),
         title: document.getElementById('edit-title').value.trim(),
         description: document.getElementById('edit-description').value.trim() || null,
+        titleEn: document.getElementById('edit-title-en').value.trim() || null,
+        descriptionEn: document.getElementById('edit-description-en').value.trim() || null,
         techStack,
         status: document.getElementById('edit-status').value,
         clientId: clientId ? Number(clientId) : null,

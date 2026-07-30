@@ -10,6 +10,9 @@ export const GET: APIRoute = async () => {
       title: educationMilestones.title,
       institution: educationMilestones.institution,
       description: educationMilestones.description,
+      titleEn: educationMilestones.titleEn,
+      institutionEn: educationMilestones.institutionEn,
+      descriptionEn: educationMilestones.descriptionEn,
       skills: educationMilestones.skills,
       status: educationMilestones.status,
       startDate: educationMilestones.startDate,
@@ -29,7 +32,7 @@ export const GET: APIRoute = async () => {
 }
 
 export const POST: APIRoute = async ({ request }) => {
-  const { title, institution, description, skills, status, startDate, completedDate, certificateUrl, projectId, isPublic } =
+  const { title, titleEn, institution, institutionEn, description, descriptionEn, skills, status, startDate, completedDate, certificateUrl, projectId, isPublic } =
     await request.json()
 
   if (!title) {
@@ -42,6 +45,10 @@ export const POST: APIRoute = async ({ request }) => {
       title,
       institution: institution ?? null,
       description: description ?? null,
+      // Traducciones opcionales: vacío ⇒ NULL ⇒ /en muestra el español.
+      titleEn: titleEn || null,
+      institutionEn: institutionEn || null,
+      descriptionEn: descriptionEn || null,
       skills: skills ? JSON.stringify(skills) : null,
       status: status ?? 'en_curso',
       startDate: startDate ? new Date(startDate) : null,
