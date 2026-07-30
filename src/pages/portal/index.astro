@@ -194,4 +194,88 @@ const canSeeMessages = user.role !== 'billing'
       )}
     </>
   )}
+
+  <!--
+    Suscriptor del dashboard a la capa viva. No hace su propio fetch: escucha el
+    `portal:live` que emite el único ciclo de PortalLayout, así que abrir esta
+    página no añade ni una petición.
+
+    Las plantillas de texto están duplicadas del SSR de arriba a propósito: la
+    alternativa era mover el formato a un módulo isomorfo y usarlo en los dos
+    lados, y para tres frases no compensa el salto de indirección. Si algún día
+    son diez, ese es el momento de extraerlo.
+  -->
+  <script>
+    import { formatMoney } from '../../lib/portal/format'
+
+    type Digest = {
+      v: number
+      threads: { unread: number }
+      invoices: { pending: number; pendingCents: number; overdue: number; currency: string }
+      project: { id: number; progress: { pct: number; done: number; total: number } } | null
+    }
+
+    const el = (name: string) => document.querySelector<HTMLElement>(`[data-live="${name}"]`)
+    const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
+
+    document.addEventListener('portal:live', (event) => {
+      const d = (event as CustomEvent<Digest>).detail
+      if (!d || d.v !== 1) return
+
+      // Facturas
+      const invValue = el('invoices-value')
+      if (invValue) {
+        invValue.innerHTML =
+          d.invoices.pending === 0
+            ? '<span class="text-lime">Al día</span>'
+            : formatMoney(d.invoices.pendingCents, d.invoices.currency)
+      }
+      const invSub = el('invoices-sub')
+      if (invSub) {
+        const base =
+          d.invoices.pending === 0
+            ? 'No tienes facturas pendientes'
+            : `${d.invoices.pending} ${plural(d.invoices.pending, 'factura pendiente', 'facturas pendientes')}`
+        const overdue =
+          d.invoices.overdue > 0
+            ? ` · ${d.invoices.overdue} ${plural(d.invoices.overdue, 'vencida', 'vencidas')}`
+            : ''
+        // textContent, no innerHTML: estas cifras vienen del servidor, pero la
+        // regla del repo es que nada que se pinte se interprete como HTML si no
+        // hace falta. El tramo de "vencidas" pierde su color; lo recupera al
+        // recargar, y no vale un innerHTML por eso.
+        invSub.textContent = base + overdue
+      }
+
+      // Mensajes (la tarjeta no existe para el rol billing)
+      const thValue = el('threads-value')
+      if (thValue) {
+        thValue.innerHTML =
+          d.threads.unread === 0
+            ? '<span class="text-ink-200">Sin novedades</span>'
+            : `${d.threads.unread} sin leer`
+      }
+      const thSub = el('threads-sub')
+      if (thSub) thSub.textContent = d.threads.unread === 0 ? 'Todo leído' : 'Tienes respuestas esperando'
+
+      // Avance
+      const p = d.project?.progress
+      if (p) {
+        const pctEl = el('progress-value')
+        if (pctEl) pctEl.textContent = p.total === 0 ? '—' : `${p.pct}%`
+        const subEl = el('progress-sub')
+        if (subEl) {
+          subEl.textContent =
+            p.total === 0 ? 'Sin hitos definidos aún' : `${p.done} de ${p.total} hitos completados`
+        }
+        el('progress-pct')?.replaceChildren(`${p.pct}%`)
+        const bar = el('progress-bar')
+        if (bar) {
+          bar.setAttribute('aria-valuenow', String(p.pct))
+          const fill = bar.firstElementChild as HTMLElement | null
+          if (fill) fill.style.width = `${p.pct}%`
+        }
+      }
+    })
+  </script>
 </PortalLayout>

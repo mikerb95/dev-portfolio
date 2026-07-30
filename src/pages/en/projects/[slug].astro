@@ -1,0 +1,9 @@
+---
+// Cascarón de ruta: la implementación real vive en src/pages/projects/[slug].astro.
+// El slug es el mismo en los dos idiomas (los proyectos no tienen slug traducido);
+// el contenido de cada fila cae al español si no tiene traducción propia.
+// Ver docs/plan-i18n-en.md §7.
+import Project from '../../projects/[slug].astro'
+---
+
+<Project />
