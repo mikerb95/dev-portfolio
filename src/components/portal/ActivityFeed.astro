@@ -1,0 +1,77 @@
+---
+import { relativeTime } from '../../lib/portal/format'
+import type { ActivityType } from '../../lib/portal/activity'
+import type { portalActivity } from '../../db/schema'
+
+interface Props {
+  items: (typeof portalActivity.$inferSelect)[]
+  /** Texto cuando no hay nada, para que cada vista diga lo suyo. */
+  empty?: string
+}
+
+const { items, empty = 'Todavía no hay actividad que mostrar.' } = Astro.props
+const now = new Date()
+
+// Un punto de color por tipo: el mismo idioma que MilestoneTimeline, sin
+// franjas laterales. El color es la única señal de tipo además del texto, así
+// que el título nunca depende de él para entenderse.
+const DOT: Record<ActivityType, string> = {
+  milestone: 'bg-lime/25 border-lime',
+  invoice: 'bg-cyan/25 border-cyan',
+  document: 'bg-white/10 border-white/30',
+  message: 'bg-cyan/25 border-cyan',
+  incident: 'bg-ember/25 border-ember',
+  deploy: 'bg-white/10 border-white/30',
+  system: 'bg-white/10 border-white/20',
+}
+
+export const TYPE_LABELS: Record<ActivityType, string> = {
+  milestone: 'Avance',
+  invoice: 'Facturación',
+  document: 'Documentos',
+  message: 'Mensajes',
+  incident: 'Incidentes',
+  deploy: 'Despliegues',
+  system: 'Sistema',
+}
+---
+
+{
+  items.length === 0 ? (
+    <p class="text-[13px] text-ink-300">{empty}</p>
+  ) : (
+    <ol class="relative" data-activity-list>
+      {items.map((item, i) => (
+        <li class="relative pl-7 pb-5 last:pb-0">
+          {i < items.length - 1 && (
+            <span class="absolute left-[7px] top-[18px] bottom-0 w-px bg-white/10" aria-hidden="true" />
+          )}
+
+          <span
+            class:list={['absolute left-0 top-[5px] w-[15px] h-[15px] rounded-full border-2', DOT[item.type]]}
+            aria-hidden="true"
+          />
+
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            {item.href ? (
+              <a href={item.href} class="text-[14px] font-medium text-ink-50 hover:text-cyan transition-colors">
+                {item.title}
+              </a>
+            ) : (
+              <h4 class="text-[14px] font-medium text-ink-50">{item.title}</h4>
+            )}
+            <span class="text-[11px] font-mono text-ink-300">
+              {/* El título del `time` da la fecha exacta a quien la necesite:
+                  "hace 3 días" es cómodo de leer pero malo para reclamar algo. */}
+              <time datetime={item.at.toISOString()} title={item.at.toLocaleString('es-CO')}>
+                {relativeTime(item.at, now)}
+              </time>
+            </span>
+          </div>
+
+          {item.detail && <p class="mt-0.5 text-[12px] text-ink-200">{item.detail}</p>}
+        </li>
+      ))}
+    </ol>
+  )
+}
