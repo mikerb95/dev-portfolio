@@ -8,6 +8,7 @@ import {
 } from '../../../../lib/portal/invoices'
 import { notifyClient } from '../../../../lib/portal/notifications'
 import { formatMoney } from '../../../../lib/portal/format'
+import { recordActivity } from '../../../../lib/portal/activity'
 
 // CRUD de facturas desde el panel. La sesión de admin la impone el middleware.
 
@@ -139,6 +140,14 @@ export const PATCH: APIRoute = async ({ request }) => {
       }. Puedes consultarla y pagarla desde tu portal.`,
       href: `/portal/facturas/${invoice.id}`,
       emailCta: 'Ver y pagar la factura',
+    })
+    await recordActivity({
+      clientId: invoice.clientId,
+      projectId: invoice.projectId ?? null,
+      type: 'invoice',
+      title: `Factura ${invoice.number} emitida`,
+      detail: formatMoney(invoice.totalCents, invoice.currency),
+      href: `/portal/facturas/${invoice.id}`,
     })
 
     return json(200, { ok: true, number: invoice.number })
