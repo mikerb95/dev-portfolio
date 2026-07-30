@@ -162,7 +162,9 @@ describe('portal · digest de la capa viva', () => {
 
     // Proyecto: el suyo, con su avance (1 completado de 2 → 50%).
     expect(d.project?.id).toBe(acmeProject)
-    expect(d.project?.progress.pct).toBe(50)
+    expect(d.project?.progress).toEqual({ pct: 50, done: 1, total: 2 })
+    // Los hitos de RIVAL no engordan el total del proyecto de ACME.
+    expect(d.project?.progress.total).toBe(2)
   })
 
   it('un projectId ajeno cae al proyecto propio, sin filtrar que existe', async () => {
