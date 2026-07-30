@@ -380,7 +380,7 @@ const faqs = pw.faqs
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject: `${L.leadSubjectPrefix} · ${negocio || name}`, body }),
+        body: JSON.stringify({ name, email, subject: `${L.leadSubjectPrefix} · ${negocio || name}`, body, locale: document.documentElement.lang }),
       })
       if (res.ok) {
         form.reset()
