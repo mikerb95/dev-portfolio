@@ -198,12 +198,20 @@ const L = (path: string) => localizedHref(path, locale)
     sparkline: number[]
   }
 
+  // El locale sale del data-attribute que puso el servidor (misma técnica que
+  // GithubProjects): este script se ejecuta en el navegador y no puede
+  // importar el diccionario sin arrastrar todo el i18n al bundle del cliente.
+  const root = document.querySelector<HTMLElement>('[data-locale]')
+  const locale = root?.dataset.locale === 'en' ? 'en' : 'es'
+  const intlLocale = locale === 'en' ? 'en-US' : 'es-CO'
+  const L = JSON.parse(document.getElementById('log-i18n')!.textContent!) as Record<string, any>
+
   function relativeTime(iso: string): string {
     const diff = (Date.now() - new Date(iso).getTime()) / 1000
-    if (diff < 3600) return `hace ${Math.floor(diff / 60)}m`
-    if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`
-    if (diff < 86400 * 7) return `hace ${Math.floor(diff / 86400)}d`
-    return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+    if (diff < 3600) return L.justNowMinutes.replace('{n}', String(Math.floor(diff / 60)))
+    if (diff < 86400) return L.justNowHours.replace('{n}', String(Math.floor(diff / 3600)))
+    if (diff < 86400 * 7) return L.justNowDays.replace('{n}', String(Math.floor(diff / 86400)))
+    return new Date(iso).toLocaleDateString(intlLocale, { day: 'numeric', month: 'short' })
   }
 
   function escapeHtml(s: string) {
