@@ -14,6 +14,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '../../db'
 import { invoices, payments } from '../../db/schema'
 import { markInvoicePaid } from './invoices'
+import { recordActivity } from './activity'
 import { notifyClient } from './notifications'
 import { audit } from './audit'
 import { formatMoney } from './format'
@@ -46,6 +47,15 @@ export async function settlePaymentByReference(reference: string): Promise<{ set
       href: `/portal/facturas/${invoice.id}`,
       emailCta: 'Ver el recibo',
     }).catch(() => {})
+
+    recordActivity({
+      clientId: invoice.clientId,
+      projectId: invoice.projectId ?? null,
+      type: 'invoice',
+      title: `Pago recibido · factura ${invoice.number}`,
+      detail: formatMoney(invoice.totalCents, invoice.currency),
+      href: `/portal/facturas/${invoice.id}`,
+    })
 
     audit({
       clientId: invoice.clientId,

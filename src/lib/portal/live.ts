@@ -3,6 +3,7 @@ import { clientProjects, computeProgress, projectHealth, projectMilestonesFor } 
 import { clientInvoiceSummary } from './invoices'
 import { clientThreads } from './threads'
 import { unreadCount } from './notifications'
+import { lastActivityAt } from './activity'
 
 // Digest de la capa viva del portal: el objeto mínimo que el navegador sondea
 // cada 20 s para saber si algo cambió. No devuelve contenido, solo contadores y
@@ -18,6 +19,13 @@ export type PortalLiveDigest = {
   v: 1
   at: string
   notifications: { unread: number }
+  /**
+   * Marca del elemento más reciente del feed de actividad. El navegador la
+   * compara con la que ya tiene: si avanzó, hay algo nuevo que pintar. Va en la
+   * raíz y no dentro de `project` porque el feed incluye entradas sin proyecto
+   * (facturas, avisos de cuenta).
+   */
+  activityLastAt: string | null
   threads: {
     unread: number
     lastMessageAt: string | null
@@ -91,12 +99,13 @@ export async function portalLiveDigest(params: PortalLiveParams): Promise<Portal
   const projects = await clientProjects(clientId)
   const current = projects.find((p) => p.id === requestedProjectId) ?? projects[0] ?? null
 
-  const [notifUnread, threads, invoices, milestones, health] = await Promise.all([
+  const [notifUnread, threads, invoices, milestones, health, activityAt] = await Promise.all([
     unreadCount(userId),
     canSeeMessages ? clientThreads(clientId, userId) : Promise.resolve([]),
     clientInvoiceSummary(clientId, now),
     current ? projectMilestonesFor(clientId, current.id) : Promise.resolve([]),
     current ? projectHealth(clientId, current.id) : Promise.resolve(null),
+    lastActivityAt(clientId),
   ])
 
   // `next` (el hito siguiente) se descarta a propósito: es un objeto entero de
@@ -107,6 +116,7 @@ export async function portalLiveDigest(params: PortalLiveParams): Promise<Portal
     v: 1,
     at: now.toISOString(),
     notifications: { unread: notifUnread },
+    activityLastAt: iso(activityAt),
     // `clientThreads` ya ordena por lastMessageAt desc, así que el más reciente
     // es el primero: no hace falta recorrer para encontrarlo.
     threads: {
