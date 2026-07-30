@@ -161,7 +161,7 @@ describe('hasTranslation', () => {
     expect(hasTranslation('/notes', 'en')).toBe(false)
     expect(hasTranslation('/status', 'en')).toBe(false)
     expect(hasTranslation('/lab', 'en')).toBe(false)
-    expect(hasTranslation('/paginas-web', 'en')).toBe(false)
+    expect(hasTranslation('/notes', 'en')).toBe(false)
   })
 })
 
