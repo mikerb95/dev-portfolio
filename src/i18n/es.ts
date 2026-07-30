@@ -983,6 +983,20 @@ const es = {
     educationEyebrow: 'Hitos de aprendizaje',
     breadcrumbProjects: 'Proyectos',
   },
+  notes: {
+    title: 'Notas de ingeniería — CodeByMike',
+    description: 'Artículos técnicos sobre las decisiones detrás de mis herramientas: observabilidad, SLOs, chaos engineering y operación de proyectos.',
+    eyebrow: 'Notas de ingeniería',
+    h1Line1: 'Decisiones,',
+    h1Line2: 'no tutoriales.',
+    introPre: 'El criterio detrás de las',
+    introLink: 'herramientas que construyo',
+    introPost: ': qué problema había, qué decidí y por qué. Escrito desde código en producción, no desde la teoría.',
+    empty: 'Aún no hay notas publicadas.',
+    backToNotes: 'Notas',
+    breadcrumb: 'Notas',
+    onlyInSpanish: 'Este artículo todavía no está traducido al inglés.',
+  },
 }
 
 export default es

@@ -977,6 +977,20 @@ const en = {
     educationEyebrow: 'Learning milestones',
     breadcrumbProjects: 'Projects',
   },
+  notes: {
+    title: 'Engineering notes — CodeByMike',
+    description: 'Technical writing about the decisions behind my tools: observability, SLOs, chaos engineering, and running projects.',
+    eyebrow: 'Engineering notes',
+    h1Line1: 'Decisions,',
+    h1Line2: 'not tutorials.',
+    introPre: 'The reasoning behind the',
+    introLink: 'tools I build',
+    introPost: ': what the problem was, what I decided, and why. Written from production code, not from theory.',
+    empty: 'No notes published yet.',
+    backToNotes: 'Notes',
+    breadcrumb: 'Notes',
+    onlyInSpanish: 'This article is only available in Spanish for now.',
+  },
 } satisfies typeof es
 
 export default en
