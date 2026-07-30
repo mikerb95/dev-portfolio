@@ -22,7 +22,12 @@ export type PortalLiveDigest = {
   invoices: { pending: number; pendingCents: number; overdue: number; currency: string }
   project: {
     id: number
-    progressPct: number
+    /**
+     * `done`/`total` viajan además del `pct` porque la tarjeta de avance escribe
+     * "3 de 5 hitos completados": sin ellos el número grande se actualizaría solo
+     * y el texto de debajo quedaría contradiciéndolo.
+     */
+    progress: { pct: number; done: number; total: number }
     /**
      * Marca de cambio de los hitos. `project_milestones` no tiene `updatedAt`,
      * así que es el máximo de `completedAt`/`createdAt`: se mueve al añadir un

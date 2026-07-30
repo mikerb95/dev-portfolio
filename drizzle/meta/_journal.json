@@ -162,6 +162,13 @@
       "when": 1785294737424,
       "tag": "0022_eager_raider",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1785387889396,
+      "tag": "0023_gorgeous_silvermane",
+      "breakpoints": true
     }
   ]
 }
