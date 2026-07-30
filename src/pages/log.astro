@@ -1,19 +1,20 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const l = t.log
+const L = (path: string) => localizedHref(path, locale)
 ---
 
-<BaseLayout
-  title="Engineering Log — CodeByMike"
-  description="Registro de actividad de desarrollo en tiempo real. Commits, decisiones y métricas de trabajo profundo."
-  image="/og-log.png"
-  noindex
->
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+<BaseLayout title={l.title} description={l.description} image="/og-log.png" noindex>
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24" data-locale={locale}>
 
     <!-- Back -->
-    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+    <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      Volver
+      {t.common.back}
     </a>
 
     <header class="mb-12">
@@ -22,24 +23,24 @@ import BaseLayout from '../layouts/BaseLayout.astro'
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
         <span class="flex items-center gap-2" id="feed-status">
           <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-          <span id="feed-status-text">Cargando actividad de GitHub…</span>
+          <span id="feed-status-text">{l.loadingStatus}</span>
         </span>
       </div>
       <h1 class="hero-line overflow-hidden text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        Engineering Log.
+        {l.h1}
       </h1>
       <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        Actividad de desarrollo extraída en tiempo real de GitHub. Cada commit es evidencia de trabajo real en curso.
+        {l.intro}
       </p>
     </header>
 
     <!-- Stats bento -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
       {[
-        { label: 'Deep Work · 7 días', id: 'stat-week', unit: 'horas de foco' },
-        { label: 'Deep Work · 30 días', id: 'stat-month', unit: 'horas de foco' },
-        { label: 'Commits · 30 días', id: 'stat-commits', unit: 'contribuciones' },
-        { label: 'Racha activa', id: 'stat-streak', unit: 'días consecutivos' },
+        { label: l.stats.week, id: 'stat-week', unit: l.stats.focusHours },
+        { label: l.stats.month, id: 'stat-month', unit: l.stats.focusHours },
+        { label: l.stats.commits, id: 'stat-commits', unit: l.stats.contributions },
+        { label: l.stats.streak, id: 'stat-streak', unit: l.stats.consecutiveDays },
       ].map((s) => (
         <div class="rounded-2xl glass p-5">
           <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">{s.label}</div>
