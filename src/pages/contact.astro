@@ -266,7 +266,7 @@ const L = (path: string) => localizedHref(path, locale)
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
-    const data = Object.fromEntries(new FormData(form))
+    const data = { ...Object.fromEntries(new FormData(form)), locale }
 
     try {
       const res = await fetch('/api/contact', {
