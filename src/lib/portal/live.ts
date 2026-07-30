@@ -90,6 +90,10 @@ export async function portalLiveDigest(params: PortalLiveParams): Promise<Portal
     current ? projectHealth(clientId, current.id) : Promise.resolve(null),
   ])
 
+  // `next` (el hito siguiente) se descarta a propósito: es un objeto entero de
+  // la fila y el digest no transporta contenido, solo señales de cambio.
+  const { pct, done, total } = computeProgress(milestones)
+
   return {
     v: 1,
     at: now.toISOString(),
