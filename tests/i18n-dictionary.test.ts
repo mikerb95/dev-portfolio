@@ -62,6 +62,13 @@ describe('paridad del diccionario es/en', () => {
         'log.h1',
         'log.oneCommit',
         'log.nCommits',
+        // 'Status' y 'Security Operations' son nombres de página/sección ya en
+        // inglés en el original español (jerga SRE de uso corriente); 'Error
+        // budget' idem; 'uptimeShort' es solo un placeholder de número.
+        'status.title',
+        'status.securityCard.title',
+        'status.errorBudget',
+        'status.uptimeShort',
         'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',
