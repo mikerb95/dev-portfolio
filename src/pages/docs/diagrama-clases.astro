@@ -216,6 +216,7 @@ const diagramas = [
   {
     id: 'cv-educacion',
     titulo: 'CV y educación',
+    nota: 'Sin relaciones: ambas tablas registran telemetría suelta (descargas de CV, progreso de labs) sin foreign keys hacia el resto del schema.',
     src: `classDiagram
     class CvDownload {
       +string deviceHash
