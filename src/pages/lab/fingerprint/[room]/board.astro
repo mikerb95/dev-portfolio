@@ -2,6 +2,10 @@
 import BaseLayout from '../../../../layouts/BaseLayout.astro'
 import { getRoom } from '../../../../lib/fingerprint'
 import QRCode from 'qrcode'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../../../../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const b = getDictionary(locale).fpBoard
 
 const roomId = Astro.params.room!
 const room = await getRoom(roomId)
@@ -11,7 +15,8 @@ if (!room) {
 }
 
 const site = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
-const joinUrl = `${site}/lab/fingerprint/${roomId}`
+// El QR lleva al visitante a la sala en el mismo idioma del tablero.
+const joinUrl = `${site}${localizedHref('/lab/fingerprint', locale)}/${roomId}`
 const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 260 })
 ---
 
@@ -21,12 +26,12 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
       <!-- QR + info -->
       <div class="lg:sticky lg:top-28 lg:self-start">
         <div class="rounded-2xl glass p-6 text-center mb-4">
-          <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-4">Escanea para entrar</div>
+          <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-4">{b.scanToEnter}</div>
           <div class="bg-white rounded-xl p-3 [&_svg]:w-full [&_svg]:h-auto" set:html={qrSvg} />
           <p class="text-[11px] font-mono text-ink-400 mt-4 break-all">{joinUrl}</p>
         </div>
         <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Dispositivos en sala</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{b.devicesInRoom}</div>
           <div id="device-count" class="mt-1.5 text-3xl font-medium text-cyan tabular-nums">0</div>
         </div>
       </div>
@@ -38,37 +43,48 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
             <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
             <span>Sala {roomId} · en vivo</span>
           </div>
-          <h1 class="text-4xl font-medium tracking-[-.03em] text-mask mb-2">Sala de espejos</h1>
+          <h1 class="text-4xl font-medium tracking-[-.03em] text-mask mb-2">{b.hallOfMirrors}</h1>
           <p class="text-[14px] text-ink-100 max-w-2xl leading-relaxed">
-            Cada dispositivo que escanea el QR aparece aquí, identificado sin cookies ni login. Si
-            alguien vuelve a entrar en incógnito, el contador de <span class="text-ember">revisitas</span>
-            sube — el mismo dispositivo, reconocido de nuevo.
+            {b.boardIntroPre} <span class="text-ember">{b.revisitsWord}</span> {b.boardIntroPost}
           </p>
         </header>
 
         <p id="board-expired" class="hidden text-[13px] text-ember mb-6">
-          Esta sala expiró — los datos ya se purgaron. Crea una nueva desde el inicio.
+          {b.expired}
         </p>
 
         <div id="devices" class="grid md:grid-cols-2 gap-4">
-          <p id="devices-empty" class="text-ink-400 text-[13px]">Esperando dispositivos…</p>
+          <p id="devices-empty" class="text-ink-400 text-[13px]">{b.waiting}</p>
         </div>
       </div>
     </div>
 
     <!-- Cierre pedagógico -->
     <section class="mt-16 rounded-2xl glass p-8">
-      <h2 class="text-[13px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">Cómo defenderte</h2>
+      <h2 class="text-[13px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">{b.howToDefend}</h2>
       <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
-        <p><strong class="text-ink-50">El modo incógnito no protege.</strong> Borra cookies e historial local, pero el canvas, el GPU, las fuentes y el audio que expone tu navegador siguen siendo los mismos — por eso el tablero te reconoció igual.</p>
-        <p><strong class="text-ink-50">Tor Browser</strong> normaliza deliberadamente estas señales entre todos sus usuarios (mismo canvas, misma resolución reportada) para que el fingerprint no sirva para distinguir a nadie.</p>
-        <p><strong class="text-ink-50">Firefox con resistFingerprinting</strong> (about:config) reduce la precisión de varias de estas señales. Extensiones de bloqueo de canvas/WebGL también ayudan, aunque paradójicamente un fingerprint "demasiado bloqueado" puede volverse único en sí mismo.</p>
+        <p><strong class="text-ink-50">{b.incognitoWarning}</strong> {b.incognitoText}</p>
+        <p><strong class="text-ink-50">Tor Browser</strong> {b.torText}</p>
+        <p><strong class="text-ink-50">Firefox + resistFingerprinting</strong> {b.firefoxText}</p>
       </div>
     </section>
   </div>
+  <script
+    id="fp-board-i18n"
+    type="application/json"
+    set:html={JSON.stringify({
+      noBehaviorData: b.noBehaviorData,
+      deviceLabel: b.deviceLabel,
+      revisitOne: b.revisitOne,
+      revisitMany: b.revisitMany,
+      ownId: b.ownId,
+      entropyBits: b.entropyBits,
+    })}
+  />
 </BaseLayout>
 
 <script>
+  const L = JSON.parse(document.getElementById('fp-board-i18n')!.textContent!) as Record<string, string>
   const roomId = (document.getElementById('fp-board') as HTMLElement).dataset.room!
 
   const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) =>
@@ -103,21 +119,21 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
           b.avgKeyIntervalMs != null ? `⌨ ${Math.round(b.avgKeyIntervalMs)}ms` : null,
           b.avgMouseSpeed != null ? `🖱 ${b.avgMouseSpeed.toFixed(2)}px/ms` : null,
           b.tiltX != null ? `📱 tilt ${Math.round(b.tiltX)}°` : null,
-        ].filter(Boolean).join(' · ') || 'sin datos de comportamiento aún'
-      : 'sin datos de comportamiento aún'
+        ].filter(Boolean).join(' · ') || L.noBehaviorData
+      : L.noBehaviorData
     const revisitBadge = d.revisits > 0
-      ? `<span class="text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border text-ember border-ember/40 bg-ember/15">${d.revisits} revisita${d.revisits === 1 ? '' : 's'}</span>`
+      ? `<span class="text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border text-ember border-ember/40 bg-ember/15">${d.revisits} ${d.revisits === 1 ? L.revisitOne : L.revisitMany}</span>`
       : ''
     const libLine = d.libFpHash
       ? `<div class="text-[11px] font-mono text-ink-400 mt-2">FingerprintJS: <span class="text-cyan">${esc(d.libFpHash.slice(0, 12))}</span></div>`
       : ''
     return `
       <div class="flex items-center justify-between mb-3">
-        <span class="text-[15px] font-medium text-mask">Dispositivo #${esc(d.label)}</span>
+        <span class="text-[15px] font-medium text-mask">${L.deviceLabel} #${esc(d.label)}</span>
         ${revisitBadge}
       </div>
-      <div class="text-[11px] font-mono text-ink-400 mb-1">id propio: <span class="text-ink-200">${esc(d.idShort)}</span></div>
-      <div class="text-[12px] font-mono text-ink-300 mb-2">≈ ${d.entropyBits ?? '?'} bits de entropía</div>
+      <div class="text-[11px] font-mono text-ink-400 mb-1">${L.ownId} <span class="text-ink-200">${esc(d.idShort)}</span></div>
+      <div class="text-[12px] font-mono text-ink-300 mb-2">≈ ${d.entropyBits ?? '?'} ${L.entropyBits}</div>
       <div class="text-[12px] text-ink-100">${esc(behaviorLine)}</div>
       ${libLine}
     `
