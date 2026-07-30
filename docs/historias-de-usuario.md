@@ -454,9 +454,21 @@
 
 ---
 
+### HU-38 — Ver el listado de mis proyectos y entrar al detalle de cada uno
+**Como** cliente con más de un proyecto gestionado,  
+**quiero** ver un selector con todos mis proyectos al entrar al portal y cambiar entre ellos para revisar el detalle de cada uno,  
+**para** ubicar rápido el proyecto que me interesa sin mezclar información de los demás.
+
+**Criterios de aceptación:**
+- El selector de proyecto solo aparece cuando el cliente tiene más de uno; con uno solo se muestra directo su detalle.
+- El proyecto activo se resuelve por parámetro `?p=`, pero solo si pertenece a la lista de proyectos del cliente autenticado — un id ajeno cae al primero propio, nunca al proyecto de otro cliente.
+- Sin proyectos publicados, el portal muestra un estado vacío explícito en vez de una pantalla en blanco o un error.
+
+---
+
 ## Administrador (Mike) — Cobros de campo
 
-### HU-38 — Cobrar un trabajo desde el celular por WhatsApp
+### HU-39 — Cobrar un trabajo desde el celular por WhatsApp
 **Como** administrador que acaba de terminar un trabajo en sitio,  
 **quiero** configurar el monto, previsualizar el mensaje y enviarlo por WhatsApp desde mi propio teléfono,  
 **para** cobrar en el momento sin contratar la API de WhatsApp ni volver al escritorio.
@@ -468,7 +480,7 @@
 
 ---
 
-### HU-39 — Consultar mi histórico de pagos como cliente
+### HU-40 — Consultar mi histórico de pagos como cliente
 **Como** cliente que ha pagado varios trabajos,  
 **quiero** ver mi historial desde el enlace que recibí,  
 **para** confirmar qué he pagado sin tener que preguntar.
@@ -481,7 +493,7 @@
 
 ## Visitantes del sitio público — Demo y captación
 
-### HU-40 — Recorrer el panel de control sin crear una cuenta
+### HU-41 — Recorrer el panel de control sin crear una cuenta
 **Como** recluta o cliente potencial,  
 **quiero** entrar al panel completo con datos de ejemplo,  
 **para** evaluar el producto sin registrarme ni pedir una demo agendada.
@@ -493,7 +505,7 @@
 
 ---
 
-### HU-41 — Entender qué me ofrecen sin lenguaje técnico
+### HU-42 — Entender qué me ofrecen sin lenguaje técnico
 **Como** dueño de un negocio local,  
 **quiero** una página con planes, precios y ejemplos en lenguaje llano,  
 **para** decidir si contratar sin tener que interpretar vocabulario de desarrollo.
@@ -508,15 +520,15 @@
 
 | Grupo | Historias | Rango |
 |---|---|---|
-| Visitantes | 12 | HU-01 a HU-05, HU-25 a HU-27, HU-31 a HU-32, HU-40 a HU-41 |
+| Visitantes | 12 | HU-01 a HU-05, HU-25 a HU-27, HU-31 a HU-32, HU-41 a HU-42 |
 | Administrador — CRM y perfil | 12 | HU-06 a HU-17 |
 | Administrador — Observabilidad y operación | 7 | HU-18 a HU-24 |
 | Administrador — Seguridad | 3 | HU-28 a HU-30 |
 | Administrador — Seguimiento de descargas del CV | 1 | HU-33 |
 | Administrador — Documentación | 1 | HU-34 |
-| Administrador — Cobros de campo | 2 | HU-38 a HU-39 |
-| Clientes — Portal | 3 | HU-35 a HU-37 |
-| **Total** | **41** | HU-01 a HU-41 |
+| Administrador — Cobros de campo | 2 | HU-39 a HU-40 |
+| Clientes — Portal | 4 | HU-35 a HU-38 |
+| **Total** | **42** | HU-01 a HU-42 |
 
 Ver también el tablero XP con historias ancladas al historial real de commits en `/admin/docs/kanban`
 (datos en `src/data/iteraciones-portfolio.ts`).
