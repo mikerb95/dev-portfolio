@@ -72,7 +72,26 @@ const canonicalPath =
     ? alternateUrls(Astro.url.pathname).es
     : alternateUrls(Astro.url.pathname)[locale])
 const canonical = new URL(canonicalPath, site).href
-const ogImage = new URL(image, site).href
+
+// Imagen Open Graph en el idioma de la página. Las variantes inglesas las
+// genera scripts/og/generate.mjs con el prefijo `en-`; la lista está aquí (y no
+// se deduce del nombre) para no anunciar un archivo que no existe: si una
+// sección no tiene variante, se sirve la española antes que un 404 en la
+// tarjeta que alguien pega en LinkedIn o Slack.
+const OG_WITH_EN = new Set([
+  '/og-default.png',
+  '/og-status.png',
+  '/og-tools.png',
+  '/og-engineering.png',
+  '/og-notes.png',
+  '/og-security.png',
+  '/og-certifications.png',
+  '/og-log.png',
+  '/og-contact.png',
+])
+const localizedImage =
+  locale === 'en' && OG_WITH_EN.has(image) ? image.replace('/og-', '/og-en-') : image
+const ogImage = new URL(localizedImage, site).href
 const OG_LOCALE = { es: 'es_CO', en: 'en_US' } as const
 const rssHref = locale === DEFAULT_LOCALE ? '/rss.xml' : '/en/rss.xml'
 
