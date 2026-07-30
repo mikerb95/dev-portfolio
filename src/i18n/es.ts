@@ -293,6 +293,13 @@ const es = {
       body: 'Si trabajamos juntos, tu proyecto entra a este mismo sistema: monitoreo con SLOs, seguimiento visible, credenciales cifradas y despliegues con red de seguridad.',
       cta: 'Hablemos de tu proyecto',
     },
+    stackTerms: {
+      cronExterno: 'cron externo',
+      authAllowlist: 'auth con allowlist',
+      middlewareAstro: 'middleware Astro',
+      flagsTtl: 'flags en Turso con TTL',
+      ownStats: 'estadística propia',
+    },
     cases: [
       {
         title: 'Monitoreo, SLOs y error budgets',

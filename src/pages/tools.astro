@@ -21,14 +21,18 @@ type CaseMeta = {
   liveHref?: string
 }
 
+// Los nombres propios (Astro, Turso, Drizzle…) no se traducen; los términos
+// descriptivos sí — viven en el diccionario.
+const st = t.tools.stackTerms
+
 const CASES_META: CaseMeta[] = [
-  { num: '01', mock: 'monitors', stack: ['Astro API routes', 'Drizzle ORM', 'Turso', 'cron externo', 'ntfy'], liveHref: '/status' },
+  { num: '01', mock: 'monitors', stack: ['Astro API routes', 'Drizzle ORM', 'Turso', st.cronExterno, 'ntfy'], liveHref: '/status' },
   { num: '02', mock: 'pnl', stack: ['Drizzle ORM', 'Turso', 'Vitest'], liveHref: '/demo' },
-  { num: '03', mock: 'seguimiento', stack: ['Astro SSR', 'Drizzle ORM', 'auth con allowlist'] },
-  { num: '04', mock: 'vault', stack: ['AES-256-GCM', 'node:crypto', 'middleware Astro'] },
+  { num: '03', mock: 'seguimiento', stack: ['Astro SSR', 'Drizzle ORM', st.authAllowlist] },
+  { num: '04', mock: 'vault', stack: ['AES-256-GCM', 'node:crypto', st.middlewareAstro] },
   { num: '05', mock: 'pipeline', stack: ['GitHub Actions', 'Vercel', 'Vitest'], liveHref: '/lab' },
-  { num: '06', mock: 'chaos', stack: ['middleware Astro', 'flags en Turso con TTL'], liveHref: '/lab' },
-  { num: '07', mock: 'security', stack: ['middleware Astro', 'Drizzle ORM', 'Turso', 'cron externo', 'estadística propia'], liveHref: '/security' },
+  { num: '06', mock: 'chaos', stack: [st.middlewareAstro, st.flagsTtl], liveHref: '/lab' },
+  { num: '07', mock: 'security', stack: [st.middlewareAstro, 'Drizzle ORM', 'Turso', st.cronExterno, st.ownStats], liveHref: '/security' },
 ]
 
 const tools = CASES_META.map((meta, i) => ({ ...meta, ...t.tools.cases[i] }))

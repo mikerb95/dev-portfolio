@@ -1,8 +1,13 @@
 ---
 // Recupera y muestra los repositorios públicos recientes de GitHub.
-// Se renderiza en el cliente (la API pública de GitHub no requiere token).
-// Los textos son bilingües (es/en) según el idioma del navegador; el SSR
-// usa español por defecto para coincidir con <html lang="es">.
+// El grid se pinta en el cliente (la API pública de GitHub no requiere token),
+// pero el idioma sale de la URL de la página —no de `navigator.language`—:
+// antes, un visitante con navegador en español veía /en con este bloque en
+// español, y el HTML SSR de /en salía en español para los buscadores.
+// Los textos que necesita el script viajan en data-attributes.
+import { getDictionary, getLocaleFromUrl } from '../i18n'
+
+const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).githubProjects
 const username = 'mikerb95'
 ---
 
@@ -11,16 +16,23 @@ const username = 'mikerb95'
     <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
       <span class="text-cyan">/05</span>
       <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-      <span data-i18n="eyebrow">Open source</span>
+      <span>{t.eyebrow}</span>
     </div>
-    <h2 data-i18n="headline" class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask max-w-2xl leading-[1]">
-      Actividad reciente en GitHub.
+    <h2 class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask max-w-2xl leading-[1]">
+      {t.headline}
     </h2>
-    <p data-i18n="sub" class="mt-5 text-[15px] text-ink-200 max-w-xl">
-      Explorando ideas y construyendo herramientas en público.
+    <p class="mt-5 text-[15px] text-ink-200 max-w-xl">
+      {t.sub}
     </p>
 
-    <div id="github-grid" class="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-6" data-username={username}>
+    <div
+      id="github-grid"
+      class="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+      data-username={username}
+      data-no-description={t.noDescription}
+      data-empty={t.empty}
+      data-error={t.error}
+    >
       {Array.from({ length: 6 }).map(() => (
         <div class="h-[180px] rounded-2xl bg-white/[.02] border border-white/5 animate-pulse"></div>
       ))}
@@ -40,35 +52,14 @@ const username = 'mikerb95'
     fork: boolean
   }
 
-  type Lang = 'es' | 'en'
-
-  const i18n = {
-    es: {
-      eyebrow: 'Open source',
-      headline: 'Actividad reciente en GitHub.',
-      sub: 'Explorando ideas y construyendo herramientas en público.',
-      noDescription: 'Sin descripción.',
-      empty: 'Sin repositorios públicos.',
-      error: 'No se pudo cargar la actividad de GitHub.',
-    },
-    en: {
-      eyebrow: 'Open source',
-      headline: 'Latest GitHub activity.',
-      sub: 'Exploring ideas and building tools in public.',
-      noDescription: 'No description provided.',
-      empty: 'No public repositories.',
-      error: 'Could not load GitHub activity.',
-    },
-  } satisfies Record<Lang, Record<string, string>>
-
-  const lang: Lang = (navigator.language || '').toLowerCase().startsWith('en') ? 'en' : 'es'
-  const t = i18n[lang]
-
-  function applyHeaderText() {
-    for (const key of ['eyebrow', 'headline', 'sub'] as const) {
-      const el = document.querySelector(`#github [data-i18n="${key}"]`)
-      if (el) el.textContent = t[key]
-    }
+  // Textos ya resueltos por el servidor en el idioma de la página. Este módulo
+  // corre en el navegador: no puede importar el diccionario (arrastraría el
+  // resto del i18n al bundle del cliente), así que los lee del DOM.
+  const grid0 = document.getElementById('github-grid')
+  const t = {
+    noDescription: grid0?.dataset.noDescription ?? '',
+    empty: grid0?.dataset.empty ?? '',
+    error: grid0?.dataset.error ?? '',
   }
 
   function escapeHtml(str: string): string {
@@ -110,7 +101,6 @@ const username = 'mikerb95'
   async function load() {
     const grid = document.getElementById('github-grid')
     if (!grid) return
-    applyHeaderText()
     try {
       const res = await fetch('/api/github/public-repos')
       if (!res.ok) throw new Error('API error')

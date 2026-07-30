@@ -22,7 +22,7 @@
 
 ## Orden de ejecución
 
-> **Estado (24 jul 2026)**: etapas 1-6 ✅ implementadas y verificadas; la 8
+> **Estado (29 jul 2026)**: etapas 1-6 ✅ implementadas y verificadas; la 8
 > quedó cerrada salvo sus dos acciones manuales. La etapa 7 (k6) sigue siendo
 > la única del LAB pendiente, bloqueada por falta de un target de
 > preview/staging estable (ver `VERCEL_TOKEN` en pendientes transversales).
@@ -32,8 +32,13 @@
 > WhatsApp (`plan-cobrar.md`), documentación pública de testing y V&V
 > (`plan-testing-docs.md`), DAST con OWASP ZAP (`plan-lab-fases-pendientes.md`,
 > sub-fase 6b) y la landing comercial `/paginas-web` (`plan-diseno-web.md`).
-> El siguiente gran bloque no está en esta tabla: la capa de tiempo real del
-> portal (`plan-portal-tiempo-real.md`).
+> Desde entonces se sumaron, también fuera de esta tabla: los diagramas BPMN de
+> los procesos de negocio con su versión imprimible (`plan-documentacion.md`) y
+> la internacionalización del sitio público (`plan-i18n-en.md`, Fases 0-1
+> completas y 7 páginas de marca traducidas).
+> Los dos grandes bloques que siguen abiertos no están en esta tabla: la capa de
+> tiempo real del portal (`plan-portal-tiempo-real.md`) y el contenido pendiente
+> de traducir (`plan-i18n-en.md`, Fases 2-8).
 
 | # | Etapa | Tipo | Esfuerzo |
 |---|-------|------|----------|

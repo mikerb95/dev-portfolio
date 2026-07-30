@@ -294,6 +294,13 @@ const en = {
       body: 'If we work together, your project joins this same system: SLO-based monitoring, visible tracking, encrypted credentials, and deploys with a safety net.',
       cta: "Let's talk about your project",
     },
+    stackTerms: {
+      cronExterno: 'external cron',
+      authAllowlist: 'auth with allowlist',
+      middlewareAstro: 'Astro middleware',
+      flagsTtl: 'Turso flags with TTL',
+      ownStats: 'custom statistics',
+    },
     cases: [
       {
         title: 'Monitoring, SLOs, and error budgets',
