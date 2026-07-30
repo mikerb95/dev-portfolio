@@ -7,8 +7,11 @@ export const PUT: APIRoute = async ({ request }) => {
   const {
     id,
     title,
+    titleEn,
     institution,
+    institutionEn,
     description,
+    descriptionEn,
     skills,
     status,
     startDate,
@@ -24,6 +27,10 @@ export const PUT: APIRoute = async ({ request }) => {
       ...(title !== undefined && { title }),
       ...(institution !== undefined && { institution }),
       ...(description !== undefined && { description }),
+      // Traducciones al inglés: vacío ⇒ NULL ⇒ se muestra el español.
+      ...(titleEn !== undefined && { titleEn: titleEn || null }),
+      ...(institutionEn !== undefined && { institutionEn: institutionEn || null }),
+      ...(descriptionEn !== undefined && { descriptionEn: descriptionEn || null }),
       ...(skills !== undefined && { skills: skills ? JSON.stringify(skills) : null }),
       ...(status !== undefined && { status }),
       ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),

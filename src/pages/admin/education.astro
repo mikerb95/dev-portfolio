@@ -175,6 +175,25 @@ const progress = completados + enCurso > 0 ? Math.round((completados / (completa
           <label class="block text-xs text-zinc-400 mb-1">Descripción</label>
           <textarea name="description" rows="2" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none" placeholder="¿Qué aprendiste?"></textarea>
         </div>
+
+        <!-- Traducción al inglés (opcional). Vacío ⇒ /en muestra el español. -->
+        <div class="sm:col-span-2 pt-2 border-t border-zinc-800">
+          <p class="text-[11px] text-zinc-500 mb-3">
+            Traducción al inglés — opcional. Lo que dejes vacío se muestra en español en <code class="text-zinc-400">/en</code>.
+          </p>
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Title (EN)</label>
+          <input name="titleEn" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500" placeholder="e.g. Advanced TypeScript Course" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Institution (EN)</label>
+          <input name="institutionEn" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500" placeholder="Udemy, Platzi…" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-zinc-400 mb-1">Description (EN)</label>
+          <textarea name="descriptionEn" rows="2" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none" placeholder="What did you learn?"></textarea>
+        </div>
         <div>
           <label class="block text-xs text-zinc-400 mb-1">Skills (separadas por coma)</label>
           <input name="skills" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500" placeholder="TypeScript, Drizzle ORM, Astro" />
@@ -294,6 +313,9 @@ const progress = completados + enCurso > 0 ? Math.round((completados / (completa
       title: data.get('title'),
       institution: data.get('institution') || null,
       description: data.get('description') || null,
+      titleEn: data.get('titleEn') || null,
+      institutionEn: data.get('institutionEn') || null,
+      descriptionEn: data.get('descriptionEn') || null,
       skills,
       status: data.get('status'),
       startDate: data.get('startDate') || null,

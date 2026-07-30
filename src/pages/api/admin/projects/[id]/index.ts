@@ -12,7 +12,9 @@ export const GET: APIRoute = async ({ params }) => {
       id: projects.id,
       slug: projects.slug,
       title: projects.title,
+      titleEn: projects.titleEn,
       description: projects.description,
+      descriptionEn: projects.descriptionEn,
       techStack: projects.techStack,
       repoUrl: projects.repoUrl,
       previewUrl: projects.previewUrl,
@@ -61,12 +63,16 @@ export const PUT: APIRoute = async ({ params, request }) => {
   const id = Number(params.id)
   const body = await request.json()
 
-  const { title, description, techStack, repoUrl, previewUrl, screenshotUrl, status, startDate, endDate, internalNotes, clientId, visible, slug } = body
+  const { title, titleEn, description, descriptionEn, techStack, repoUrl, previewUrl, screenshotUrl, status, startDate, endDate, internalNotes, clientId, visible, slug } = body
 
   await db.update(projects).set({
     ...(title !== undefined && { title }),
     ...(slug !== undefined && { slug }),
     ...(description !== undefined && { description }),
+    // Traducciones al inglés: cadena vacía se guarda como NULL para que
+    // `pickLocalized` la trate como "sin traducir" y caiga al español.
+    ...(titleEn !== undefined && { titleEn: titleEn || null }),
+    ...(descriptionEn !== undefined && { descriptionEn: descriptionEn || null }),
     ...(techStack !== undefined && { techStack }),
     ...(repoUrl !== undefined && { repoUrl }),
     ...(previewUrl !== undefined && { previewUrl }),

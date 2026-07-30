@@ -21,7 +21,7 @@ import { DEFAULT_LOCALE, type Locale } from './config'
  *   pickLocalized(row, 'title', 'en')  // row.titleEn ?? row.title
  *   pickLocalized(row, 'title', 'es')  // row.title
  */
-export function pickLocalized<T extends Record<string, unknown>, K extends string & keyof T>(
+export function pickLocalized<T extends object, K extends string & keyof T>(
   row: T,
   field: K,
   locale: Locale
@@ -29,7 +29,10 @@ export function pickLocalized<T extends Record<string, unknown>, K extends strin
   const base = row[field]
   if (locale === DEFAULT_LOCALE) return base
 
-  const translated = row[`${field}En` as keyof T]
+  // El acceso al campo hermano `<campo>En` se hace por índice: no existe en el
+  // tipo de la fila cuando el `select` de Drizzle no lo pidió, y ese caso es
+  // legítimo (se cae al español).
+  const translated = (row as Record<string, unknown>)[`${field}En`]
   // Se descarta también la cadena vacía y la que es solo espacios: un campo
   // que el admin dejó en blanco cuenta como "sin traducir", no como
   // "traducido a nada". Un `0` o un `false` sí son valores legítimos.
@@ -47,14 +50,14 @@ export function pickLocalized<T extends Record<string, unknown>, K extends strin
  * normalmente el título. Un campo secundario sin traducir (una descripción)
  * degrada al español sin invalidar la página.
  */
-export function hasRowTranslation<T extends Record<string, unknown>>(
-  row: T,
-  requiredFields: readonly (string & keyof T)[],
+export function hasRowTranslation(
+  row: object,
+  requiredFields: readonly string[],
   locale: Locale
 ): boolean {
   if (locale === DEFAULT_LOCALE) return true
   return requiredFields.every((field) => {
-    const translated = row[`${field}En` as keyof T]
+    const translated = (row as Record<string, unknown>)[`${field}En`]
     return typeof translated === 'string' && translated.trim() !== ''
   })
 }
