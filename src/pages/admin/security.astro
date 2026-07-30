@@ -398,6 +398,35 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
       })
     })
 
+    // Disparo manual del cron de seguridad. Va al PUT del propio endpoint del
+    // cron (valida sesión admin por su cuenta, porque no cuelga de /api/admin).
+    const rollupBtn = document.getElementById('run-rollup') as HTMLButtonElement | null
+    const rollupOut = document.getElementById('rollup-result')
+    rollupBtn?.addEventListener('click', async () => {
+      // Purga eventos de más de 90 días, y eso no se deshace.
+      if (!confirm('Ejecuta auto-block, rollups y detección de anomalías, y purga los eventos de más de 90 días (irreversible). ¿Continuar?')) return
+      rollupBtn.disabled = true
+      if (rollupOut) rollupOut.textContent = 'Ejecutando…'
+      try {
+        const res = await fetch('/api/cron/security-rollup', { method: 'PUT' })
+        const data = await res.json().catch(() => ({}))
+        if (res.ok) {
+          const parts = []
+          if (data.blocked != null) parts.push(`${data.blocked} IP(s) bloqueada(s)`)
+          if (data.overflow) parts.push(`${data.overflow} sin bloquear por tope`)
+          parts.push(`${data.anomalies ?? 0} anomalía(s) nueva(s)`)
+          if (rollupOut) rollupOut.textContent = `✓ ${parts.join(' · ')} — recargando…`
+          setTimeout(() => location.reload(), 1200)
+        } else {
+          if (rollupOut) rollupOut.textContent = `✗ ${data.error ?? res.status}`
+          rollupBtn.disabled = false
+        }
+      } catch {
+        if (rollupOut) rollupOut.textContent = '✗ Error de red'
+        rollupBtn.disabled = false
+      }
+    })
+
     const bf = document.getElementById('block-form') as HTMLFormElement | null
     bf?.addEventListener('submit', async (ev) => {
       ev.preventDefault()
