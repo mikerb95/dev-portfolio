@@ -60,9 +60,32 @@ base de archivo, dos corridas seguidas.
       el LAB: sin él, el rollback automático solo avisa en vez de revertir, y la
       Fase 5 (load testing con k6) no tiene un target de preview estable contra
       el que correr.
-- [ ] **Cron `security-rollup` en cron-job.org** con `Authorization: Bearer
-      CRON_SECRET`. Sin él, los agregados de seguridad no se calculan y la
-      detección de anomalías se queda sin baseline.
+- [ ] **Cron `security-rollup` en cron-job.org** — `GET
+      https://codebymike.tech/api/cron/security-rollup` con header
+      `Authorization: Bearer <CRON_SECRET>`, **cada 15 min** (`5,20,35,50 * * * *`).
+
+      Es el único disparador de seis tareas del micro-SIEM (verificado por grep:
+      nada más en el repo las ejecuta). Sin él quedan sin correr: el auto-block
+      por **ráfaga** high/critical ≥ umbral, los rollups horarios/diarios que
+      alimentan `/admin/security` y `/security`, la baseline sin la cual no hay
+      detección de anomalías, las alertas push/email, y la purga (eventos > 90 d,
+      buckets y bloqueos vencidos).
+
+      Dos cosas que **no** se rompen, para no sobredimensionarlo: los honeypots
+      sí se bloquean sin cron (inline en el middleware desde el 19 jul, que se
+      añadió justo porque este cron nunca se dio de alta), y los TTL de bloqueo
+      sí se respetan (`isBlocked` filtra por `gt(expiresAt, now)`) — la purga es
+      higiene de tabla, no corrección funcional.
+
+      Cada 15 min es seguro aunque los rollups sean horarios: `writeRollups`
+      hace delete-then-insert por `(bucket, at)` sobre una hora ya cerrada
+      (idempotente) y `persistAnomalies` solo devuelve las nuevas, así que no
+      re-alerta. Ya no está en `vercel.json` (se removió por el límite de crons
+      del plan), así que cron-job.org es el único disparador posible.
+
+      Antes de agendarlo se puede probar el pipeline completo con el botón de
+      disparo manual de `/admin/security` (el `PUT` del mismo endpoint, bajo
+      sesión admin): si devuelve `{ok:true, anomalies:N}`, solo falta agendarlo.
 - [ ] **3 reglas custom del WAF** en el dashboard de Vercel (detalle en
       `docs/plan-security-observability.md`, Fase 6).
 - [ ] **Altas en Google Search Console y Bing Webmaster Tools.** La capa técnica
