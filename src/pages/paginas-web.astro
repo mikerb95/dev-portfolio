@@ -1,134 +1,42 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { getDictionary, getLocaleFromUrl, interpolate } from '../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const pw = t.paginasWeb
 
 // Número de WhatsApp de contacto (mismo que /contact). El mensaje pre-escrito
-// baja la fricción: el cliente no técnico solo pulsa "enviar".
+// baja la fricción: el cliente no técnico solo pulsa "enviar". Es el mismo
+// número sin importar el idioma: el negocio es local a Colombia.
 const WHATSAPP = '573104641228'
 const waLink = (text: string) =>
   `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`
 
 // Precios y tiempos viven aquí arriba, en un solo lugar, para ajustarlos sin
 // tocar el diseño. Cifras de referencia (COP) — editar a gusto.
-const planes = [
-  {
-    nombre: 'Presencia',
-    para: 'Para negocios locales y marcas personales que arrancan.',
-    precio: 'desde $650.000',
-    tiempo: 'Lista en 3–5 días',
-    destacado: false,
-    incluye: [
-      'Una página, todo en un solo lugar',
-      'Tu dominio propio (tunegocio.com)',
-      'Botón de WhatsApp para que te escriban',
-      'Apareces en Google y Maps',
-      'Se ve perfecta en el celular',
-    ],
-  },
-  {
-    nombre: 'Negocio',
-    para: 'Para profesionales independientes y pymes.',
-    precio: 'desde $1.500.000',
-    tiempo: 'Lista en 1–2 semanas',
-    destacado: true,
-    incluye: [
-      'Varias secciones (servicios, galería, sobre ti…)',
-      'Catálogo o lista de servicios',
-      'Formulario de contacto',
-      'SEO local para aparecer cuando te buscan',
-      'Todo lo del plan Presencia',
-    ],
-  },
-  {
-    nombre: 'A medida',
-    para: 'Para negocios que venden y quieren crecer.',
-    precio: 'Cotización',
-    tiempo: 'Según el proyecto',
-    destacado: false,
-    incluye: [
-      'Tienda en línea o sistema de reservas/citas',
-      'Pagos en línea (tarjeta, PSE, Nequi)',
-      'Integraciones a tu medida',
-      'Acompañamiento cercano en todo el proceso',
-      'Todo lo del plan Negocio',
-    ],
-  },
+// Precio (COP) y el flag "destacado" no salen del diccionario: la moneda no
+// cambia con el idioma (el negocio es local a Colombia) y el destacado es una
+// decisión de producto, no de texto.
+const PRICE_META = [
+  { precio: 'from $650,000 COP', destacado: false },
+  { precio: 'from $1,500,000 COP', destacado: true },
+  { precio: null, destacado: false },
 ]
+const planes = pw.planes.map((p, i) => ({ ...p, ...PRICE_META[i] }))
 
-// Perfiles del bloque "¿esto es para ti?": dolor concreto + resultado, en el
-// idioma del cliente, no en el del ingeniero.
-const perfiles = [
-  // Clases de color explícitas (no interpoladas): Tailwind solo genera las
-  // clases que ve escritas completas en el código fuente.
-  {
-    titulo: 'Tienes un negocio local',
-    dolor: 'La gente te encuentra en redes, pero no tienes dónde mandarlos.',
-    resultado: 'Una página que sale en Google y recibe clientes por WhatsApp.',
-    dot: 'bg-ember',
-    texto: 'text-ember',
-  },
-  {
-    titulo: 'Eres profesional independiente',
-    dolor: 'Te recomiendan de boca en boca, pero no hay nada que dé confianza online.',
-    resultado: 'Una web que te hace ver serio y agenda tus citas.',
-    dot: 'bg-lime',
-    texto: 'text-lime',
-  },
-  {
-    titulo: 'Estás emprendiendo',
-    dolor: 'Tienes la idea y las ganas, pero no un lugar propio en internet.',
-    resultado: 'Tu marca con cara profesional desde el día uno, sin gastar de más.',
-    dot: 'bg-violet',
-    texto: 'text-violet',
-  },
-  {
-    titulo: 'Ya tienes una empresa',
-    dolor: 'Tu web se ve vieja o no vende, y actualizarla es un dolor de cabeza.',
-    resultado: 'Un sitio renovado con catálogo, reservas o pagos que sí funciona.',
-    dot: 'bg-cyan',
-    texto: 'text-cyan',
-  },
+// Clases de color explícitas (no interpoladas): Tailwind solo genera las
+// clases que ve escritas completas en el código fuente.
+const PERFIL_COLORS = [
+  { dot: 'bg-ember', texto: 'text-ember' },
+  { dot: 'bg-lime', texto: 'text-lime' },
+  { dot: 'bg-violet', texto: 'text-violet' },
+  { dot: 'bg-cyan', texto: 'text-cyan' },
 ]
+const perfiles = pw.perfiles.map((p, i) => ({ ...p, ...PERFIL_COLORS[i] }))
 
-const pasos = [
-  {
-    n: '01',
-    titulo: 'Me cuentas',
-    texto: 'Me dices qué haces y qué quieres lograr. Yo te guío, tú no necesitas saber nada técnico.',
-  },
-  {
-    n: '02',
-    titulo: 'Yo diseño',
-    texto: 'Armo tu página, escojo los colores, ordeno la información y te la muestro para ajustar.',
-  },
-  {
-    n: '03',
-    titulo: 'Publicamos',
-    texto: 'Me encargo del dominio y de dejarla en línea. Tú solo la compartes y recibes clientes.',
-  },
-]
-
-const faqs = [
-  {
-    q: '¿Tengo que hacer algo técnico?',
-    a: 'No. Tú me mandas la información (fotos, textos, tus datos) y yo me encargo de todo lo demás: dominio, diseño y publicación.',
-  },
-  {
-    q: '¿Cuánto cuesta mantenerla?',
-    a: 'El dominio se renueva una vez al año (bajo costo). Si quieres cambios grandes después, los cotizamos aparte. Sin sorpresas.',
-  },
-  {
-    q: '¿Puedo editarla después?',
-    a: 'Sí. Podemos dejarla para que hagas cambios sencillos tú mismo, o me la dejas a mí y yo la mantengo. Como prefieras.',
-  },
-  {
-    q: '¿Cuánto se demora?',
-    a: 'Depende del plan: entre 3 días y un par de semanas. En la primera conversación te doy una fecha clara.',
-  },
-  {
-    q: '¿Y si ya tengo dominio o redes?',
-    a: 'Mejor aún. Trabajamos sobre lo que ya tienes y lo conectamos todo. No empiezas de cero.',
-  },
-]
+const pasos = pw.pasos.map((p, i) => ({ ...p, n: `0${i + 1}` }))
+const faqs = pw.faqs
 ---
 
 <BaseLayout
