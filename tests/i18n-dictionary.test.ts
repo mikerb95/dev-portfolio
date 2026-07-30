@@ -86,6 +86,10 @@ describe('paridad del diccionario es/en', () => {
         'siteCheck.errorPrefix',
         // 'bits' es la unidad, igual en los dos idiomas.
         'fpRoom.bits',
+        // 'Stack' y el título de la landing del evento son iguales en ambos
+        // idiomas ('Platzi Conf' es nombre propio).
+        'platziconf.stackHeading',
+        'platziconf.title',
         'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',

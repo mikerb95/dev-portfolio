@@ -250,11 +250,13 @@ describe('TRANSLATED_ROUTES contra el filesystem', () => {
 
   it('cada archivo en src/pages/en está declarado (si no, es invisible)', () => {
     const declared = new Set(TRANSLATED_ROUTES.flatMap(filesFor))
+    // Solo se lista el primer nivel de src/pages/en, así que basta con conocer
+    // el primer segmento de cada ruta/prefijo declarado: `/notes` puede vivir en
+    // `notes/index.astro` y `/cv/descargar` en `cv/descargar.astro`.
+    const firstSegment = (route: string) => route.slice(1).split('/')[0]!
     const declaredDirs = new Set([
-      ...TRANSLATED_PREFIXES.map((p) => p.slice(1)),
-      // Una ruta declarada como `/notes` puede vivir en `notes/index.astro`:
-      // el directorio también cuenta como declarado.
-      ...TRANSLATED_ROUTES.filter((r) => r !== '/' && !r.includes('.')).map((r) => r.slice(1)),
+      ...TRANSLATED_PREFIXES.map(firstSegment),
+      ...TRANSLATED_ROUTES.filter((r) => r !== '/' && !r.includes('.')).map(firstSegment),
     ])
     for (const file of readdirSync(pagesEn)) {
       const ok = declared.has(file) || declaredDirs.has(file)
