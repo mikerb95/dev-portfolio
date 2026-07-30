@@ -69,7 +69,7 @@ const drain = (res: Response) => res.body?.cancel?.().catch(() => {})
 type Outcome = Omit<DiagnosticResult, 'id' | 'label' | 'ms'>
 
 /** Envuelve una prueba: la cronometra y captura cualquier excepción como fallo. */
-async function timed(id: string, label: string, fn: () => Promise<Outcome>): Promise<DiagnosticResult> {
+async function timed(id: string, label: string, L: Strings, fn: () => Promise<Outcome>): Promise<DiagnosticResult> {
   const started = Date.now()
   try {
     const r = await fn()
@@ -81,7 +81,7 @@ async function timed(id: string, label: string, fn: () => Promise<Outcome>): Pro
       label,
       ms: Date.now() - started,
       status: 'fail',
-      summary: aborted ? `Timeout (>${HTTP_TIMEOUT_MS / 1000}s)` : e instanceof Error ? e.message : 'Error inesperado',
+      summary: aborted ? L.timeout(HTTP_TIMEOUT_MS / 1000) : e instanceof Error ? e.message : L.unexpectedError,
     }
   }
 }
@@ -266,7 +266,7 @@ function stringsFor(locale: Locale) {
 // ── Pruebas individuales ────────────────────────────────────────────────────
 
 /** Disponibilidad HTTP: status, latencia hasta cabeceras, redirecciones y metadatos. */
-async function testReachability(t: DiagnosticTarget): Promise<Outcome> {
+async function testReachability(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const started = Date.now()
   const res = await fetchWithTimeout(t.url, { redirect: 'follow' })
   const ttfb = Date.now() - started
@@ -276,10 +276,10 @@ async function testReachability(t: DiagnosticTarget): Promise<Outcome> {
     status,
     summary: `HTTP ${res.status} · ${ttfb}ms`,
     details: [
-      `URL final: ${res.url}`,
-      res.redirected ? 'Se siguieron redirecciones' : 'Sin redirecciones',
+      L.finalUrl(res.url),
+      res.redirected ? L.redirected : L.notRedirected,
       `Content-Type: ${res.headers.get('content-type') ?? '—'}`,
-      `Servidor: ${res.headers.get('server') ?? '—'}`,
+      L.server(res.headers.get('server') ?? '—'),
     ],
   }
 }
@@ -312,9 +312,9 @@ function makeHtmlFetcher(): GetHtml {
 }
 
 /** Meta tags de SEO: title, description, canonical, Open Graph, lang. */
-async function testSeoMeta(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outcome> {
+async function testSeoMeta(t: DiagnosticTarget, getHtml: GetHtml, L: Strings): Promise<Outcome> {
   const snap = await getHtml(t)
-  if (!snap) return { status: 'fail', summary: 'No se pudo descargar el HTML' }
+  if (!snap) return { status: 'fail', summary: L.htmlDownloadFail }
   const { html } = snap
   const title = html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim()
   const description = html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1]?.trim()
@@ -324,12 +324,12 @@ async function testSeoMeta(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outco
 
   const missing: string[] = []
   if (!title) missing.push('title')
-  if (!description) missing.push('meta description')
+  if (!description) missing.push(L.metaDescription)
   if (!canonical) missing.push('canonical')
 
   return {
     status: missing.length === 0 ? 'pass' : missing.length >= 2 ? 'warn' : 'warn',
-    summary: missing.length === 0 ? 'title, description y canonical presentes' : `Falta: ${missing.join(', ')}`,
+    summary: missing.length === 0 ? L.seoAllPresent : L.seoMissing(missing.join(', ')),
     details: [
       `Title: ${title ?? '—'}`,
       `Description: ${description ?? '—'}`,
@@ -341,9 +341,9 @@ async function testSeoMeta(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outco
 }
 
 /** Rendimiento básico: TTFB, tamaño de respuesta y conteo de recursos enlazados. */
-async function testPerformance(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outcome> {
+async function testPerformance(t: DiagnosticTarget, getHtml: GetHtml, L: Strings): Promise<Outcome> {
   const snap = await getHtml(t)
-  if (!snap) return { status: 'fail', summary: 'No se pudo medir el rendimiento' }
+  if (!snap) return { status: 'fail', summary: L.perfFail }
   const { html, ttfb, bytes } = snap
   const scripts = (html.match(/<script[^>]+src=/gi) ?? []).length
   const styles = (html.match(/<link[^>]+rel=["']stylesheet["']/gi) ?? []).length
@@ -353,10 +353,10 @@ async function testPerformance(t: DiagnosticTarget, getHtml: GetHtml): Promise<O
     status,
     summary: `TTFB ${ttfb}ms · ${(bytes / 1024).toFixed(1)}KB HTML`,
     details: [
-      `Scripts enlazados: ${scripts}`,
-      `Hojas de estilo: ${styles}`,
-      `Imágenes: ${images}`,
-      `Tamaño del HTML: ${(bytes / 1024).toFixed(1)}KB`,
+      L.linkedScripts(scripts),
+      L.stylesheets(styles),
+      L.images(images),
+      L.htmlSize((bytes / 1024).toFixed(1)),
     ],
   }
 }
@@ -364,9 +364,9 @@ async function testPerformance(t: DiagnosticTarget, getHtml: GetHtml): Promise<O
 const GENERIC_LINK_TEXT = /^(click here|leer m[aá]s|read more|aqu[ií]|here|more|m[aá]s)$/i
 
 /** Heurísticas de accesibilidad sobre el HTML estático (no reemplaza una auditoría con axe-core). */
-async function testAccessibilityHeuristics(t: DiagnosticTarget, getHtml: GetHtml): Promise<Outcome> {
+async function testAccessibilityHeuristics(t: DiagnosticTarget, getHtml: GetHtml, L: Strings): Promise<Outcome> {
   const snap = await getHtml(t)
-  if (!snap) return { status: 'fail', summary: 'No se pudo analizar el HTML' }
+  if (!snap) return { status: 'fail', summary: L.htmlParseFail }
   const { html } = snap
 
   const lang = /<html[^>]+lang=["'][^"']+["']/i.test(html)
@@ -389,20 +389,17 @@ async function testAccessibilityHeuristics(t: DiagnosticTarget, getHtml: GetHtml
   const genericLinks = linkTexts.filter((text) => GENERIC_LINK_TEXT.test(text)).length
 
   const issues: string[] = []
-  if (!lang) issues.push('Falta atributo lang en <html>')
-  if (imgsWithoutAlt > 0) issues.push(`${imgsWithoutAlt} imagen(es) sin alt`)
-  if (inputsWithoutLabel > 0) issues.push(`${inputsWithoutLabel} campo(s) sin label/aria-label`)
-  if (h1Count === 0) issues.push('Sin <h1>')
-  if (h1Count > 1) issues.push(`${h1Count} etiquetas <h1> (debería haber una)`)
-  if (genericLinks > 0) issues.push(`${genericLinks} enlace(s) con texto genérico`)
+  if (!lang) issues.push(L.missingLang)
+  if (imgsWithoutAlt > 0) issues.push(L.imgsNoAlt(imgsWithoutAlt))
+  if (inputsWithoutLabel > 0) issues.push(L.inputsNoLabel(inputsWithoutLabel))
+  if (h1Count === 0) issues.push(L.noH1)
+  if (h1Count > 1) issues.push(L.multipleH1(h1Count))
+  if (genericLinks > 0) issues.push(L.genericLinks(genericLinks))
 
   return {
     status: issues.length === 0 ? 'pass' : issues.length >= 3 ? 'fail' : 'warn',
-    summary:
-      issues.length === 0
-        ? 'Sin hallazgos heurísticos (no reemplaza una auditoría axe-core)'
-        : `${issues.length} hallazgo(s) heurístico(s)`,
-    details: [...issues, 'Chequeo heurístico sobre HTML estático — no reemplaza axe-core'],
+    summary: issues.length === 0 ? L.a11yClean : L.a11yFindings(issues.length),
+    details: [...issues, L.a11yNote],
   }
 }
 
@@ -410,13 +407,13 @@ const PSI_TIMEOUT_MS = 28_000
 const PSI_CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'] as const
 
 /** Reporte Lighthouse real vía la API de Google PageSpeed Insights (requiere PSI_API_KEY). */
-async function testLighthouse(t: DiagnosticTarget): Promise<Outcome> {
+async function testLighthouse(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const key = serverEnv('PSI_API_KEY')
   if (!key) {
     return {
       status: 'info',
-      summary: 'No configurado (falta PSI_API_KEY)',
-      details: ['Requiere una clave gratuita de Google PageSpeed Insights para correr Lighthouse real.'],
+      summary: L.psiNotConfigured,
+      details: [L.psiNeedsKey],
     }
   }
 
@@ -429,11 +426,11 @@ async function testLighthouse(t: DiagnosticTarget): Promise<Outcome> {
   const res = await fetchWithTimeout(psiUrl.toString(), { timeoutMs: PSI_TIMEOUT_MS })
   if (!res.ok) {
     drain(res)
-    return { status: 'fail', summary: `PageSpeed Insights respondió ${res.status}` }
+    return { status: 'fail', summary: L.psiResponded(res.status) }
   }
   const data = await res.json().catch(() => null)
   const categories = data?.lighthouseResult?.categories
-  if (!categories) return { status: 'fail', summary: 'Respuesta de PageSpeed Insights sin datos de Lighthouse' }
+  if (!categories) return { status: 'fail', summary: L.psiNoData }
 
   const pct = (score: number | null | undefined) => (score == null ? null : Math.round(score * 100))
   const scores = {
@@ -453,41 +450,45 @@ async function testLighthouse(t: DiagnosticTarget): Promise<Outcome> {
 
   return {
     status,
-    summary: `Rendimiento ${scores.performance ?? '—'} · Accesibilidad ${scores.accessibility ?? '—'} · SEO ${scores.seo ?? '—'}`,
+    summary: L.psiSummary(
+      String(scores.performance ?? '—'),
+      String(scores.accessibility ?? '—'),
+      String(scores.seo ?? '—')
+    ),
     details: [
-      `Rendimiento: ${scores.performance ?? '—'}/100`,
-      `Accesibilidad: ${scores.accessibility ?? '—'}/100`,
-      `Buenas prácticas: ${scores.bestPractices ?? '—'}/100`,
-      `SEO: ${scores.seo ?? '—'}/100`,
+      L.psiPerformance(String(scores.performance ?? '—')),
+      L.psiAccessibility(String(scores.accessibility ?? '—')),
+      L.psiBestPractices(String(scores.bestPractices ?? '—')),
+      L.psiSeo(String(scores.seo ?? '—')),
       `LCP: ${lcp ?? '—'} · CLS: ${cls ?? '—'} · TBT: ${tbt ?? '—'}`,
     ],
   }
 }
 
 /** Certificado TLS: emisor, vigencia, protocolo y días restantes. */
-async function testTls(t: DiagnosticTarget): Promise<Outcome> {
+async function testTls(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const u = new URL(t.url)
-  if (u.protocol !== 'https:') return { status: 'info', summary: 'El objetivo no usa HTTPS' }
+  if (u.protocol !== 'https:') return { status: 'info', summary: L.notHttps }
 
   const info = await inspectTls(t.url)
-  if (!info || !info.validTo) return { status: 'fail', summary: 'No se pudo leer el certificado TLS' }
+  if (!info || !info.validTo) return { status: 'fail', summary: L.tlsUnreadable }
 
   const days = info.daysLeft ?? Math.round(daysUntil(info.validTo))
   const status: DiagnosticStatus = days < 0 ? 'fail' : days <= 14 ? 'warn' : 'pass'
   return {
     status,
-    summary: days < 0 ? `Vencido hace ${Math.abs(days)}d` : `Válido · vence en ${days}d`,
+    summary: days < 0 ? L.expiredAgo(Math.abs(days)) : L.validExpiresIn(days),
     details: [
-      `Emisor: ${info.issuer ?? '—'}`,
-      `Sujeto: ${info.subject ?? '—'}`,
-      `Vigencia: ${fmtDate(info.validFrom)} → ${fmtDate(info.validTo)}`,
-      `Protocolo: ${info.protocol ?? '—'}`,
+      L.issuer(info.issuer ?? '—'),
+      L.subject(info.subject ?? '—'),
+      L.validity(fmtDate(info.validFrom), fmtDate(info.validTo)),
+      L.protocol(info.protocol ?? '—'),
     ],
   }
 }
 
 /** Redirección de HTTP a HTTPS (buenas prácticas de seguridad). */
-async function testHttpsRedirect(t: DiagnosticTarget): Promise<Outcome> {
+async function testHttpsRedirect(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const httpUrl = `http://${t.host}${new URL(t.url).pathname}`
   try {
     const res = await fetchWithTimeout(httpUrl, { redirect: 'manual', timeoutMs: 8000 })
@@ -496,13 +497,13 @@ async function testHttpsRedirect(t: DiagnosticTarget): Promise<Outcome> {
     if (res.status >= 300 && res.status < 400) {
       const toHttps = loc.startsWith('https://') || (loc.startsWith('/') && false)
       return toHttps
-        ? { status: 'pass', summary: `Redirige a HTTPS (${res.status})`, details: [`Location: ${loc}`] }
-        : { status: 'warn', summary: `Redirige, pero no a HTTPS (${res.status})`, details: [`Location: ${loc || '—'}`] }
+        ? { status: 'pass', summary: L.redirectsToHttps(res.status), details: [`Location: ${loc}`] }
+        : { status: 'warn', summary: L.redirectsNotHttps(res.status), details: [`Location: ${loc || '—'}`] }
     }
-    if (res.status === 200) return { status: 'warn', summary: 'Sirve por HTTP sin redirigir a HTTPS' }
-    return { status: 'info', summary: `HTTP responde ${res.status}` }
+    if (res.status === 200) return { status: 'warn', summary: L.servesHttpNoRedirect }
+    return { status: 'info', summary: L.httpResponds(res.status) }
   } catch {
-    return { status: 'info', summary: 'No responde por HTTP (puede ser correcto si solo hay HTTPS)' }
+    return { status: 'info', summary: L.noHttpResponse }
   }
 }
 
@@ -516,7 +517,7 @@ const SEC_HEADERS: { key: string; label: string; critical: boolean }[] = [
 ]
 
 /** Cabeceras de seguridad recomendadas. */
-async function testSecurityHeaders(t: DiagnosticTarget): Promise<Outcome> {
+async function testSecurityHeaders(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const res = await fetchWithTimeout(t.url, { redirect: 'follow' })
   drain(res)
   const details: string[] = []
@@ -529,15 +530,15 @@ async function testSecurityHeaders(t: DiagnosticTarget): Promise<Outcome> {
       details.push(`✓ ${h.label}: ${val.length > 60 ? val.slice(0, 60) + '…' : val}`)
     } else {
       if (h.critical) missingCritical++
-      details.push(`✗ ${h.label}: ausente`)
+      details.push(`✗ ${h.label}: ${L.headerAbsent}`)
     }
   }
   const status: DiagnosticStatus = missingCritical > 0 ? 'warn' : present === SEC_HEADERS.length ? 'pass' : 'warn'
-  return { status, summary: `${present}/${SEC_HEADERS.length} presentes`, details }
+  return { status, summary: L.headersPresent(present, SEC_HEADERS.length), details }
 }
 
 /** Registros DNS (A, AAAA, CNAME, MX, NS, TXT). */
-async function testDns(t: DiagnosticTarget): Promise<Outcome> {
+async function testDns(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const settle = <T>(p: Promise<T>) => p.then((v) => v).catch(() => null)
   const [a, aaaa, cname, mx, ns, txt] = await Promise.all([
     settle(dns.resolve4(t.hostname)),
@@ -550,66 +551,66 @@ async function testDns(t: DiagnosticTarget): Promise<Outcome> {
   const hasAddr = (a?.length ?? 0) + (aaaa?.length ?? 0) + (cname?.length ?? 0) > 0
   return {
     status: hasAddr ? 'pass' : 'fail',
-    summary: hasAddr ? `Resuelve · ${a?.length ?? 0} A, ${aaaa?.length ?? 0} AAAA` : 'No resuelve',
+    summary: hasAddr ? L.dnsResolves(a?.length ?? 0, aaaa?.length ?? 0) : L.dnsNoResolve,
     details: [
       `A: ${a?.length ? a.join(', ') : '—'}`,
       `AAAA: ${aaaa?.length ? aaaa.join(', ') : '—'}`,
       `CNAME: ${cname?.length ? cname.join(', ') : '—'}`,
       `MX: ${mx?.length ? mx.map((r) => r.exchange).join(', ') : '—'}`,
       `NS: ${ns?.length ? ns.join(', ') : '—'}`,
-      `TXT: ${txt?.length ? `${txt.length} registro(s)` : '—'}`,
+      `TXT: ${txt?.length ? L.txtRecords(txt.length) : '—'}`,
     ],
   }
 }
 
 /** Vencimiento del dominio vía RDAP. */
-async function testDomainExpiry(t: DiagnosticTarget): Promise<Outcome> {
+async function testDomainExpiry(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const exp = await fetchDomainExpiry(t.domain)
-  if (!exp) return { status: 'info', summary: 'No disponible por RDAP para este TLD' }
+  if (!exp) return { status: 'info', summary: L.rdapUnavailable }
   const days = Math.round(daysUntil(exp))
   const status: DiagnosticStatus = days < 0 ? 'fail' : days <= 30 ? 'warn' : 'pass'
   return {
     status,
-    summary: days < 0 ? `Vencido hace ${Math.abs(days)}d` : `Vence en ${days}d`,
-    details: [`Dominio: ${t.domain}`, `Fecha: ${fmtDate(exp)}`],
+    summary: days < 0 ? L.expiredAgo(Math.abs(days)) : L.expiresIn(days),
+    details: [L.domain(t.domain), L.date(fmtDate(exp))],
   }
 }
 
 /** robots.txt presente y no un catch-all de SPA. */
-async function testRobots(t: DiagnosticTarget): Promise<Outcome> {
+async function testRobots(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const res = await fetchWithTimeout(new URL('/robots.txt', t.origin).toString(), { redirect: 'follow' })
   if (!res.ok) {
     drain(res)
-    return { status: 'info', summary: `Sin robots.txt (${res.status})` }
+    return { status: 'info', summary: L.noRobots(res.status) }
   }
   const ct = res.headers.get('content-type') ?? ''
   const body = (await res.text().catch(() => '')).trim()
   const looksReal = /text\/plain/i.test(ct) || /(user-agent|disallow|sitemap)\s*:/i.test(body)
-  if (!looksReal) return { status: 'warn', summary: 'Responde 200 pero no parece robots.txt (posible catch-all)' }
+  if (!looksReal) return { status: 'warn', summary: L.robotsNotReal }
   const hasSitemap = /^sitemap\s*:/im.test(body)
   return {
     status: 'pass',
-    summary: `Presente${hasSitemap ? ' · declara Sitemap' : ''}`,
-    details: [`${body.split('\n').length} líneas`, hasSitemap ? 'Directiva Sitemap ✓' : 'Sin directiva Sitemap'],
+    summary: L.robotsPresent(hasSitemap),
+    details: [L.lines(body.split('\n').length), hasSitemap ? L.sitemapDirectiveOk : L.sitemapDirectiveMissing],
   }
 }
 
 /** sitemap.xml presente y con formato XML. */
-async function testSitemap(t: DiagnosticTarget): Promise<Outcome> {
+async function testSitemap(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const res = await fetchWithTimeout(new URL('/sitemap.xml', t.origin).toString(), { redirect: 'follow' })
   if (!res.ok) {
     drain(res)
-    return { status: 'info', summary: `Sin sitemap.xml (${res.status})` }
+    return { status: 'info', summary: L.noSitemap(res.status) }
   }
   const ct = res.headers.get('content-type') ?? ''
   const body = (await res.text().catch(() => '')).slice(0, 2000)
   const looksXml = /xml/i.test(ct) || /<(urlset|sitemapindex)/i.test(body)
-  if (!looksXml) return { status: 'warn', summary: 'Responde 200 pero no parece XML (posible catch-all)' }
+  if (!looksXml) return { status: 'warn', summary: L.sitemapNotXml }
   const count = (body.match(/<loc>/gi) ?? []).length
   const isIndex = /<sitemapindex/i.test(body)
   return {
     status: 'pass',
-    summary: isIndex ? 'Índice de sitemaps' : `${count}+ URL${count === 1 ? '' : 's'}`,
+    summary: isIndex ? L.sitemapIndex : L.sitemapUrls(count),
     details: [`Content-Type: ${ct || '—'}`],
   }
 }
@@ -677,21 +678,25 @@ const toSingleString = (v: string | string[] | undefined): string | null =>
 // ── Orquestador ─────────────────────────────────────────────────────────────
 
 /** Suite completa de pruebas para un objetivo. Cada entrada corre en paralelo. */
-export function diagnosticSuite(t: DiagnosticTarget): { id: string; label: string; run: () => Promise<DiagnosticResult> }[] {
+export function diagnosticSuite(
+  t: DiagnosticTarget,
+  locale: Locale = 'es'
+): { id: string; label: string; run: () => Promise<DiagnosticResult> }[] {
   const getHtml = makeHtmlFetcher()
+  const L = stringsFor(locale)
   const defs: { id: string; label: string; fn: (t: DiagnosticTarget) => Promise<Outcome> }[] = [
-    { id: 'reachability', label: 'Disponibilidad HTTP', fn: testReachability },
-    { id: 'tls', label: 'Certificado TLS', fn: testTls },
-    { id: 'https-redirect', label: 'Redirección a HTTPS', fn: testHttpsRedirect },
-    { id: 'security-headers', label: 'Cabeceras de seguridad', fn: testSecurityHeaders },
-    { id: 'dns', label: 'Registros DNS', fn: testDns },
-    { id: 'domain-expiry', label: 'Vencimiento del dominio', fn: testDomainExpiry },
-    { id: 'robots', label: 'robots.txt', fn: testRobots },
-    { id: 'sitemap', label: 'sitemap.xml', fn: testSitemap },
-    { id: 'seo-meta', label: 'Metadatos SEO', fn: (target) => testSeoMeta(target, getHtml) },
-    { id: 'performance', label: 'Rendimiento básico', fn: (target) => testPerformance(target, getHtml) },
-    { id: 'lighthouse', label: 'Lighthouse (PageSpeed Insights)', fn: testLighthouse },
-    { id: 'accessibility', label: 'Accesibilidad (heurística)', fn: (target) => testAccessibilityHeuristics(target, getHtml) },
+    { id: 'reachability', label: L.labels.reachability, fn: (target) => testReachability(target, L) },
+    { id: 'tls', label: L.labels.tls, fn: (target) => testTls(target, L) },
+    { id: 'https-redirect', label: L.labels.httpsRedirect, fn: (target) => testHttpsRedirect(target, L) },
+    { id: 'security-headers', label: L.labels.securityHeaders, fn: (target) => testSecurityHeaders(target, L) },
+    { id: 'dns', label: L.labels.dns, fn: (target) => testDns(target, L) },
+    { id: 'domain-expiry', label: L.labels.domainExpiry, fn: (target) => testDomainExpiry(target, L) },
+    { id: 'robots', label: 'robots.txt', fn: (target) => testRobots(target, L) },
+    { id: 'sitemap', label: 'sitemap.xml', fn: (target) => testSitemap(target, L) },
+    { id: 'seo-meta', label: L.labels.seoMeta, fn: (target) => testSeoMeta(target, getHtml, L) },
+    { id: 'performance', label: L.labels.performance, fn: (target) => testPerformance(target, getHtml, L) },
+    { id: 'lighthouse', label: L.labels.lighthouse, fn: (target) => testLighthouse(target, L) },
+    { id: 'accessibility', label: L.labels.accessibility, fn: (target) => testAccessibilityHeuristics(target, getHtml, L) },
   ]
-  return defs.map((d) => ({ id: d.id, label: d.label, run: () => timed(d.id, d.label, () => d.fn(t)) }))
+  return defs.map((d) => ({ id: d.id, label: d.label, run: () => timed(d.id, d.label, L, () => d.fn(t)) }))
 }
