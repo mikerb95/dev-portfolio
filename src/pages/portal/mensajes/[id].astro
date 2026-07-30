@@ -16,6 +16,13 @@ const { thread, messages } = result
 // Abrir el hilo lo marca leído para ESTE usuario (no para sus compañeros).
 await markThreadRead(thread.id, user.id)
 
+// Marca del último mensaje que ESTE render incluye. El script la compara con la
+// del digest para saber si llegó algo después de pintar la página.
+const renderedUpTo = messages.reduce<number>(
+  (max, m) => Math.max(max, m.createdAt?.getTime() ?? 0),
+  0
+)
+
 const rendered = messages.map((m) => ({
   ...m,
   html: renderBody(m.body),
@@ -97,9 +104,21 @@ const rendered = messages.map((m) => ({
     </div>
     <p id="error" class="hidden mt-2 text-[12px] text-ember" role="alert" />
   </form>
+
+  <!--
+    Aviso de mensaje nuevo, oculto hasta que la capa viva detecte uno. No se
+    recarga sola si hay un borrador a medio escribir: perder lo que el usuario
+    llevaba tecleado sería peor que enterarse un minuto más tarde.
+  -->
+  <div id="nuevo-mensaje" class="hidden mt-4">
+    <button
+      type="button"
+      class="w-full h-9 px-3 text-[12px] rounded-lg bg-cyan/10 border border-cyan/30 text-cyan hover:bg-cyan/15 transition"
+    >Hay una respuesta nueva · Ver</button>
+  </div>
 </PortalLayout>
 
-<script define:vars={{ threadId: thread.id }}>
+<script define:vars={{ threadId: thread.id, renderedUpTo }}>
   const form = document.getElementById('reply')
   const errorEl = document.getElementById('error')
   const send = document.getElementById('send')
@@ -134,4 +153,40 @@ const rendered = messages.map((m) => ({
     send.disabled = false
     send.textContent = 'Enviar'
   })
+
+  // ── Capa viva ──────────────────────────────────────────────────────────────
+  // Se recarga en vez de anexar el mensaje en el DOM, por la misma razón que el
+  // envío de arriba: una sola ruta de pintado, la del servidor. El plan
+  // (docs/plan-portal-tiempo-real.md) esbozaba "pedir los mensajes nuevos y
+  // anexarlos", pero eso es exactamente la segunda ruta que esta página ya
+  // decidió no tener.
+  const aviso = document.getElementById('nuevo-mensaje')
+  const textarea = form.querySelector('textarea')
+  let ultimoVisto = renderedUpTo
+
+  document.addEventListener('portal:live', (event) => {
+    const d = event.detail
+    if (!d || d.v !== 1) return
+
+    // Tiene que ser un mensaje DE ESTE hilo: el digest reporta el más reciente
+    // del cliente, que puede estar en otra conversación.
+    if (d.threads.lastThreadId !== threadId || !d.threads.lastMessageAt) return
+
+    const llegada = Date.parse(d.threads.lastMessageAt)
+    if (!Number.isFinite(llegada) || llegada <= ultimoVisto) return
+    ultimoVisto = llegada
+
+    const borrador = (textarea?.value ?? '').trim().length > 0
+    if (!borrador) {
+      window.location.reload()
+      return
+    }
+
+    // Con borrador a medias: se avisa y se deja la decisión al usuario. Nunca se
+    // mueve el foco ni se toca lo que está escribiendo.
+    aviso.classList.remove('hidden')
+    window.portalAnnounce?.('Hay una respuesta nueva en esta conversación')
+  })
+
+  aviso.querySelector('button').addEventListener('click', () => window.location.reload())
 </script>
