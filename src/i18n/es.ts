@@ -551,6 +551,7 @@ const es = {
     },
   },
   certifications: {
+    certificateAlt: 'Certificado',
     title: 'Certificaciones — CodeByMike',
     description: 'Formación técnica continua: certificaciones, cursos y habilidades adquiridas.',
     eyebrow: 'Formación continua',

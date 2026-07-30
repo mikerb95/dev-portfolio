@@ -552,6 +552,7 @@ const en = {
     },
   },
   certifications: {
+    certificateAlt: 'Certificate',
     title: 'Certifications — CodeByMike',
     description: 'Continuous technical education: certifications, courses, and skills acquired.',
     eyebrow: 'Continuous education',
