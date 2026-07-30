@@ -137,6 +137,11 @@ export const educationMilestones = sqliteTable('education_milestones', {
   title: text('title').notNull(),
   institution: text('institution'),
   description: text('description'),
+  // Traducción opcional para la versión en inglés de /certifications. `skills`
+  // no se traduce (nombres propios de tecnologías). Mismo patrón que projects.
+  titleEn: text('title_en'),
+  institutionEn: text('institution_en'),
+  descriptionEn: text('description_en'),
   skills: text('skills'), // JSON array: ["TypeScript", "Drizzle ORM"]
   status: text('status', { enum: ['en_curso', 'completado', 'pausado'] }).default('en_curso'),
   startDate: integer('start_date', { mode: 'timestamp' }),
