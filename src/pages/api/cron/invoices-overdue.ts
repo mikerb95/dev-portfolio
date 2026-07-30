@@ -3,6 +3,7 @@ import { getSession } from 'auth-astro/server'
 import { isAllowedLogin } from '../../../lib/auth'
 import { sweepOverdue } from '../../../lib/portal/invoices'
 import { notifyClient } from '../../../lib/portal/notifications'
+import { recordActivity } from '../../../lib/portal/activity'
 import { formatMoney } from '../../../lib/portal/format'
 import { sendPush } from '../../../lib/notify'
 
@@ -29,6 +30,14 @@ async function run() {
       body: `La factura ${invoice.number} por ${formatMoney(invoice.totalCents, invoice.currency)} pasó su fecha de vencimiento. Si ya la pagaste, ignora este aviso.`,
       href: `/portal/facturas/${invoice.id}`,
       emailCta: 'Ver la factura',
+    })
+    await recordActivity({
+      clientId: invoice.clientId,
+      projectId: invoice.projectId ?? null,
+      type: 'invoice',
+      title: `Factura ${invoice.number} vencida`,
+      detail: formatMoney(invoice.totalCents, invoice.currency),
+      href: `/portal/facturas/${invoice.id}`,
     })
   }
 
