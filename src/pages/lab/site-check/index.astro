@@ -231,7 +231,7 @@ const L = (path: string) => localizedHref(path, locale)
       const res = await fetch('/api/lab/site-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target }),
+        body: JSON.stringify({ target, locale: document.documentElement.lang }),
       })
 
       if (!res.ok) {
