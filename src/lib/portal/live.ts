@@ -107,7 +107,7 @@ export async function portalLiveDigest(params: PortalLiveParams): Promise<Portal
     project: current
       ? {
           id: current.id,
-          progressPct: computeProgress(milestones).pct,
+          progress: pick(computeProgress(milestones), ['pct', 'done', 'total']),
           milestonesAt: iso(maxDate(milestones.flatMap((m) => [m.completedAt, m.createdAt]))),
           health: health
             ? {
