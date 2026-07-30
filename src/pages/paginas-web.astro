@@ -39,11 +39,7 @@ const pasos = pw.pasos.map((p, i) => ({ ...p, n: `0${i + 1}` }))
 const faqs = pw.faqs
 ---
 
-<BaseLayout
-  title="Diseño de páginas web para tu negocio — CodeByMike"
-  description="Páginas web profesionales para negocios, profesionales y emprendedores en Colombia. Tú me cuentas, yo la construyo, tú solo la usas. Lista en días, no en meses."
-  image="/og-default.png"
->
+<BaseLayout title={pw.title} description={pw.description} image="/og-default.png">
   <script
     is:inline
     slot="head"
@@ -51,11 +47,10 @@ const faqs = pw.faqs
     set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Service',
-      serviceType: 'Diseño y desarrollo de páginas web',
+      serviceType: locale === 'en' ? 'Website design and development' : 'Diseño y desarrollo de páginas web',
       provider: { '@type': 'Person', name: 'Mike', url: 'https://codebymike.tech' },
       areaServed: { '@type': 'Country', name: 'Colombia' },
-      description:
-        'Páginas web profesionales para negocios locales, profesionales independientes, emprendedores y pymes.',
+      description: pw.jsonLdDescription,
     })}
   />
 
@@ -65,40 +60,38 @@ const faqs = pw.faqs
     <div class="relative max-w-[1000px] mx-auto text-center">
       <div class="inline-flex items-center gap-2.5 rounded-full glass px-4 py-1.5 mb-8">
         <span class="w-1.5 h-1.5 rounded-full bg-ember pulse-dot"></span>
-        <span class="text-[12px] text-ink-100">Diseño de páginas web · Colombia</span>
+        <span class="text-[12px] text-ink-100">{pw.hero.badge}</span>
       </div>
 
       <h1 class="font-sans font-medium tracking-[-.03em] leading-[1.02] text-[clamp(36px,6.5vw,74px)] text-ink-50">
-        Tu negocio necesita una página
-        <span class="text-ember">que trabaje por ti.</span>
+        {pw.hero.h1Line1}
+        <span class="text-ember">{pw.hero.h1Line2}</span>
       </h1>
 
       <p class="mt-7 text-[17px] md:text-[19px] text-ink-100 leading-relaxed max-w-2xl mx-auto">
-        Yo la construyo, tú solo la usas. Sin palabras raras, sin complicaciones:
-        me cuentas qué haces y en pocos días tienes una web profesional que te
-        consigue clientes.
+        {pw.hero.intro}
       </p>
 
       <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
         <a
-          href={waLink('Hola Mike, quiero una página web para mi negocio. ¿Me ayudas?')}
+          href={waLink(pw.hero.waMessage)}
           target="_blank"
           rel="noopener"
           class="inline-flex items-center gap-2.5 h-14 px-6 text-[15px] font-medium rounded-full bg-ember text-ink-950 hover:brightness-110 transition-all shadow-[0_0_0_1px_rgba(255,107,61,.35),0_0_32px_-8px_rgba(255,107,61,.6)]"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.359.101 11.945c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a11.9 11.9 0 0 0 5.71 1.454h.006c6.585 0 11.946-5.359 11.949-11.945a11.9 11.9 0 0 0-3.48-8.408"/></svg>
-          Escríbeme por WhatsApp
+          {pw.hero.ctaWhatsapp}
         </a>
         <a
           href="#planes"
           class="inline-flex items-center gap-2 h-14 px-6 text-[15px] font-medium rounded-full border border-white/15 text-ink-100 hover:border-ember/40 hover:text-ember transition-colors"
         >
-          Ver planes y precios
+          {pw.hero.ctaPlanes}
         </a>
       </div>
 
       <p class="mt-6 text-[13px] text-ink-300">
-        Respuesta el mismo día · Sin compromiso · Hecho por un ingeniero, no una plantilla
+        {pw.hero.trust}
       </p>
     </div>
   </section>
@@ -107,10 +100,10 @@ const faqs = pw.faqs
   <section class="px-6 md:px-12 lg:px-20 py-16">
     <div class="max-w-[1100px] mx-auto">
       <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
-        ¿Esto es para ti?
+        {pw.perfilesHeading}
       </h2>
       <p class="text-[15px] text-ink-200 text-center max-w-xl mx-auto mb-12">
-        Si te reconoces en alguno de estos, hablemos.
+        {pw.perfilesSub}
       </p>
       <div class="grid sm:grid-cols-2 gap-5">
         {perfiles.map((p) => (
@@ -133,15 +126,10 @@ const faqs = pw.faqs
   <section class="px-6 md:px-12 lg:px-20 py-16">
     <div class="max-w-[1100px] mx-auto">
       <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
-        Lo que consigues
+        {pw.beneficiosHeading}
       </h2>
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {[
-          { t: 'Apareces en Google', d: 'Cuando alguien busca lo que ofreces, te encuentra a ti.' },
-          { t: 'Te escriben por WhatsApp', d: 'Con un botón, tus clientes te contactan directo desde la web.' },
-          { t: 'Se ve profesional', d: 'En el celular y en el computador, tu negocio da confianza.' },
-          { t: 'Tú no tocas nada técnico', d: 'Yo me encargo del dominio, el diseño y de dejarla en línea.' },
-        ].map((b) => (
+        {pw.beneficios.map((b) => (
           <div class="glass lift rounded-3xl p-6">
             <div class="w-10 h-10 rounded-2xl bg-ember/10 border border-ember/25 flex items-center justify-center mb-4">
               <span class="w-2 h-2 rounded-full bg-ember"></span>
@@ -158,9 +146,9 @@ const faqs = pw.faqs
   <section class="px-6 md:px-12 lg:px-20 py-16">
     <div class="max-w-[1000px] mx-auto">
       <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
-        Cómo funciona
+        {pw.pasosHeading}
       </h2>
-      <p class="text-[15px] text-ink-200 text-center mb-12">Tres pasos. Tú pones la info, yo pongo el resto.</p>
+      <p class="text-[15px] text-ink-200 text-center mb-12">{pw.pasosSub}</p>
       <div class="grid md:grid-cols-3 gap-5">
         {pasos.map((paso) => (
           <div class="glass lift rounded-3xl p-7">
@@ -177,10 +165,10 @@ const faqs = pw.faqs
   <section id="planes" class="px-6 md:px-12 lg:px-20 py-16 scroll-mt-24">
     <div class="max-w-[1150px] mx-auto">
       <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
-        Planes y precios
+        {pw.planesHeading}
       </h2>
       <p class="text-[15px] text-ink-200 text-center max-w-xl mx-auto mb-12">
-        Precios claros, sin letra pequeña. Escoge el que va con tu momento y ajustamos juntos.
+        {pw.planesSub}
       </p>
       <div class="grid md:grid-cols-3 gap-5 items-start">
         {planes.map((plan) => (
@@ -194,12 +182,12 @@ const faqs = pw.faqs
             {plan.destacado && (
               <span class="self-start inline-flex items-center gap-1.5 rounded-full bg-ember/15 text-ember text-[11px] font-medium px-3 py-1 mb-4">
                 <span class="w-1.5 h-1.5 rounded-full bg-ember"></span>
-                El más elegido
+                {pw.destacadoBadge}
               </span>
             )}
             <h3 class="text-[20px] font-medium text-ink-50 mb-1">{plan.nombre}</h3>
             <p class="text-[13px] text-ink-200 mb-5">{plan.para}</p>
-            <div class="mb-1 text-[26px] font-medium text-ink-50">{plan.precio}</div>
+            <div class="mb-1 text-[26px] font-medium text-ink-50">{plan.precio ?? pw.cotizacion}</div>
             <div class="text-[13px] text-ember mb-6">{plan.tiempo}</div>
             <ul class="space-y-2.5 mb-7 flex-1">
               {plan.incluye.map((item) => (
@@ -210,7 +198,7 @@ const faqs = pw.faqs
               ))}
             </ul>
             <a
-              href={waLink(`Hola Mike, me interesa el plan ${plan.nombre} para mi página web. ¿Me cuentas más?`)}
+              href={waLink(interpolate(pw.planWaMessage, { plan: plan.nombre }))}
               target="_blank"
               rel="noopener"
               class={`inline-flex items-center justify-center gap-2 h-11 px-5 text-[14px] font-medium rounded-full transition-all ${
@@ -219,13 +207,13 @@ const faqs = pw.faqs
                   : 'border border-white/15 text-ink-100 hover:border-ember/40 hover:text-ember'
               }`}
             >
-              {plan.precio === 'Cotización' ? 'Cotizar mi proyecto' : 'Quiero este plan'}
+              {plan.precio === null ? pw.ctaCotizar : pw.ctaQuieroPlan}
             </a>
           </div>
         ))}
       </div>
       <p class="text-[13px] text-ink-300 text-center mt-8">
-        ¿No sabes cuál elegir? Escríbeme y en 5 minutos te digo cuál te conviene.
+        {pw.planesFootnote}
       </p>
     </div>
   </section>
@@ -234,7 +222,7 @@ const faqs = pw.faqs
   <section class="px-6 md:px-12 lg:px-20 py-16">
     <div class="max-w-[1100px] mx-auto">
       <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
-        Negocios que confían
+        {pw.socialHeading}
       </h2>
       <div class="grid sm:grid-cols-3 gap-5">
         {[1, 2, 3].map(() => (
@@ -244,12 +232,12 @@ const faqs = pw.faqs
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
               </span>
               <div>
-                <div class="text-[14px] text-ink-100">Tu negocio aquí</div>
-                <div class="text-[12px] text-ink-300">Próximamente</div>
+                <div class="text-[14px] text-ink-100">{pw.socialYourBusiness}</div>
+                <div class="text-[12px] text-ink-300">{pw.socialComingSoon}</div>
               </div>
             </div>
             <p class="text-[14px] text-ink-300 leading-relaxed italic">
-              Este espacio es para el testimonio de tu negocio. ¿Serás el primero?
+              {pw.socialPlaceholder}
             </p>
           </div>
         ))}
@@ -261,7 +249,7 @@ const faqs = pw.faqs
   <section class="px-6 md:px-12 lg:px-20 py-16">
     <div class="max-w-[800px] mx-auto">
       <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
-        Preguntas frecuentes
+        {pw.faqHeading}
       </h2>
       <div class="space-y-3">
         {faqs.map((faq) => (
@@ -283,22 +271,21 @@ const faqs = pw.faqs
       <div class="grid md:grid-cols-2 gap-10 items-center">
         <div>
           <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 mb-4 leading-[1.1]">
-            Hablemos de tu página.
+            {pw.finalCta.heading}
           </h2>
           <p class="text-[15px] text-ink-100 leading-relaxed mb-7">
-            Cuéntame qué haces y qué te gustaría lograr. Te respondo el mismo día,
-            sin compromiso y sin palabras técnicas.
+            {pw.finalCta.body}
           </p>
           <a
-            href={waLink('Hola Mike, quiero una página web para mi negocio. ¿Me ayudas?')}
+            href={waLink(pw.hero.waMessage)}
             target="_blank"
             rel="noopener"
             class="inline-flex items-center gap-2.5 h-12 px-6 text-[15px] font-medium rounded-full bg-ember text-ink-950 hover:brightness-110 transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.359.101 11.945c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a11.9 11.9 0 0 0 5.71 1.454h.006c6.585 0 11.946-5.359 11.949-11.945a11.9 11.9 0 0 0-3.48-8.408"/></svg>
-            Escríbeme por WhatsApp
+            {pw.hero.ctaWhatsapp}
           </a>
-          <p class="text-[13px] text-ink-300 mt-4">O déjame tus datos y yo te escribo →</p>
+          <p class="text-[13px] text-ink-300 mt-4">{pw.finalCta.or}</p>
         </div>
 
         <form id="lead-form" class="space-y-3">
@@ -307,14 +294,14 @@ const faqs = pw.faqs
             name="name"
             required
             maxlength="200"
-            placeholder="Tu nombre"
+            placeholder={pw.form.namePlaceholder}
             class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-ink-50 text-[15px] placeholder:text-ink-300 focus:outline-none focus:border-ember/50 transition-colors"
           />
           <input
             type="text"
             name="negocio"
             maxlength="200"
-            placeholder="¿A qué se dedica tu negocio?"
+            placeholder={pw.form.negocioPlaceholder}
             class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-ink-50 text-[15px] placeholder:text-ink-300 focus:outline-none focus:border-ember/50 transition-colors"
           />
           <input
@@ -322,21 +309,21 @@ const faqs = pw.faqs
             name="contacto"
             required
             maxlength="200"
-            placeholder="Tu WhatsApp o correo"
+            placeholder={pw.form.contactoPlaceholder}
             class="w-full h-12 px-4 rounded-2xl bg-white/5 border border-white/10 text-ink-50 text-[15px] placeholder:text-ink-300 focus:outline-none focus:border-ember/50 transition-colors"
           />
           <textarea
             name="mensaje"
             rows="3"
             maxlength="2000"
-            placeholder="¿Qué te gustaría lograr con tu página? (opcional)"
+            placeholder={pw.form.mensajePlaceholder}
             class="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-ink-50 text-[15px] placeholder:text-ink-300 focus:outline-none focus:border-ember/50 transition-colors resize-none"
           ></textarea>
           <button
             type="submit"
             class="w-full h-12 rounded-2xl bg-ember text-ink-950 text-[15px] font-medium hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Enviar
+            {pw.form.submit}
           </button>
           <p id="lead-status" class="text-[13px] text-center min-h-[1.2em]" role="status" aria-live="polite"></p>
         </form>
