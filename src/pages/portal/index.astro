@@ -305,6 +305,25 @@ const canSeeMessages = user.role !== 'billing'
           if (fill) fill.style.width = `${p.pct}%`
         }
       }
+
+      // Actividad: se avisa, no se recarga sola. Repintar la columna por debajo
+      // de alguien que la está leyendo mueve las líneas bajo su vista; y
+      // recargar el dashboard entero por una entrada nueva es peor todavía.
+      if (d.activityLastAt) {
+        const box = document.querySelector<HTMLElement>('[data-live-activity]')
+        const btn = box?.querySelector<HTMLElement>('[data-activity-refresh]')
+        if (box && btn && btn.classList.contains('hidden')) {
+          const visto = Date.parse(box.dataset.last || '') || 0
+          if (Date.parse(d.activityLastAt) > visto) {
+            btn.classList.remove('hidden')
+            window.portalAnnounce?.('Hay actividad nueva en tu proyecto')
+          }
+        }
+      }
     })
+
+    document
+      .querySelector<HTMLElement>('[data-activity-refresh]')
+      ?.addEventListener('click', () => window.location.reload())
   </script>
 </PortalLayout>
