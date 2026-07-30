@@ -76,12 +76,27 @@ export const TRANSLATED_ROUTES: readonly string[] = [
   '/tools',
 ]
 
+/**
+ * Familias de rutas dinámicas cuya PLANTILLA existe en inglés (hay un cascarón
+ * en `src/pages/en/<prefijo>/[param].astro`). El texto de plantilla está
+ * traducido; el contenido de cada fila cae al español si esa fila concreta no
+ * tiene traducción (`pickLocalized`, ver `localize.ts`).
+ *
+ * Por eso son prefijos y no rutas exactas: no se puede enumerar cada slug, y
+ * la URL en inglés siempre renderiza algo legible. Quien decide si esa URL se
+ * ANUNCIA (sitemap, hreflang) es `hasRowTranslation` con los datos en mano —
+ * una cosa es que la página funcione y otra es publicarla como traducida.
+ */
+export const TRANSLATED_PREFIXES: readonly string[] = ['/projects']
+
 const TRANSLATED = new Set(TRANSLATED_ROUTES)
 
 /** ¿Existe esta ruta en ese idioma? El idioma por defecto siempre existe. */
 export function hasTranslation(pathname: string, locale: Locale): boolean {
   if (locale === DEFAULT_LOCALE) return true
-  return TRANSLATED.has(delocalizePath(pathname))
+  const canonical = delocalizePath(pathname)
+  if (TRANSLATED.has(canonical)) return true
+  return TRANSLATED_PREFIXES.some((p) => canonical.startsWith(`${p}/`) && canonical.length > p.length + 1)
 }
 
 /**

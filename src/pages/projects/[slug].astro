@@ -6,6 +6,12 @@ import { db } from '../../db'
 import { projects, clients, educationMilestones } from '../../db/schema'
 import { eq, and } from 'drizzle-orm'
 import { parseTechStack } from '../../lib/tech-stack'
+import { getDictionary, getLocaleFromUrl, localizedHref, pickLocalized } from '../../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const pj = t.project
+const L = (path: string) => localizedHref(path, locale)
 
 const { slug } = Astro.params
 
@@ -32,6 +38,11 @@ const [client, milestones] = await Promise.all([
 
 const stack: string[] = parseTechStack(project.techStack)
 
+// Contenido en BD: se muestra la traducción si existe, y si no, el español.
+// `pickLocalized` nunca devuelve vacío por falta de traducción (§7 del plan).
+const title = pickLocalized(project, 'title', locale)
+const description = pickLocalized(project, 'description', locale)
+
 // Tablero de iteraciones XP: sólo para el proyecto DobleYo Café.
 // Ajusta el slug aquí si en tu BD usas otro identificador.
 const showIteraciones =
@@ -48,8 +59,8 @@ const statusColor: Record<string, string> = {
 ---
 
 <BaseLayout
-  title={`${project.title} — CodeByMike`}
-  description={project.description ?? undefined}
+  title={`${title} — CodeByMike`}
+  description={description ?? undefined}
   image={project.screenshotUrl ?? undefined}
   type="article"
 >
@@ -62,8 +73,8 @@ const statusColor: Record<string, string> = {
       '@graph': [
         {
           '@type': 'CreativeWork',
-          name: project.title,
-          description: project.description ?? undefined,
+          name: title,
+          description: description ?? undefined,
           url: new URL(Astro.url.pathname, Astro.site).href,
           image: project.screenshotUrl ?? undefined,
           author: { '@type': 'Person', name: 'Mike', url: 'https://codebymike.tech' },
@@ -72,11 +83,11 @@ const statusColor: Record<string, string> = {
         {
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Proyectos', item: 'https://codebymike.tech/' },
+            { '@type': 'ListItem', position: 1, name: pj.breadcrumbProjects, item: 'https://codebymike.tech/' },
             {
               '@type': 'ListItem',
               position: 2,
-              name: project.title,
+              name: title,
               item: new URL(Astro.url.pathname, Astro.site).href,
             },
           ],
@@ -87,21 +98,21 @@ const statusColor: Record<string, string> = {
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
     <!-- Back -->
-    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+    <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      Volver
+      {t.common.back}
     </a>
 
     <!-- Header -->
     <div class="mb-10">
       {project.status && (
         <span class={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border mb-4 ${statusColor[project.status] ?? statusColor.activo}`}>
-          {project.status}
+          {pj.statusLabel[project.status]}
         </span>
       )}
-      <h1 class="hero-line overflow-hidden text-5xl md:text-7xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-7">{project.title}</h1>
-      {project.description && (
-        <p class="text-[18px] text-ink-100 leading-relaxed max-w-2xl">{project.description}</p>
+      <h1 class="hero-line overflow-hidden text-5xl md:text-7xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-7">{title}</h1>
+      {description && (
+        <p class="text-[18px] text-ink-100 leading-relaxed max-w-2xl">{description}</p>
       )}
     </div>
 
@@ -112,7 +123,7 @@ const statusColor: Record<string, string> = {
         {project.screenshotUrl && (
           <Image
             src={project.screenshotUrl}
-            alt={project.title}
+            alt={title}
             width={1280}
             height={720}
             class="w-full h-full object-cover"
@@ -127,7 +138,7 @@ const statusColor: Record<string, string> = {
     <div class="grid md:grid-cols-3 gap-4 mb-10">
       {stack.length > 0 && (
         <div class="rounded-2xl glass p-6">
-          <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Stack tecnológico</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{pj.stackHeading}</div>
           <div class="flex flex-wrap gap-1.5">
             {stack.map((t) => (
               <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
@@ -140,14 +151,14 @@ const statusColor: Record<string, string> = {
 
       {client && (
         <div class="rounded-2xl glass p-6">
-          <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Cliente</div>
+          <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{pj.clientHeading}</div>
           <div class="text-[15px] text-ink-50 font-medium">{client.name}</div>
           {client.company && <div class="text-[12px] font-mono text-ink-300 mt-1">{client.company}</div>}
         </div>
       )}
 
       <div class="rounded-2xl glass p-6">
-        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Links</div>
+        <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{pj.linksHeading}</div>
         <div class="flex flex-col gap-2">
           {project.repoUrl && (
             <a
@@ -157,7 +168,7 @@ const statusColor: Record<string, string> = {
               class="inline-flex items-center gap-2 text-[13px] text-ink-100 hover:text-cyan transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-              Repositorio ↗
+              {pj.repoLink}
             </a>
           )}
           {project.previewUrl && (
@@ -168,7 +179,7 @@ const statusColor: Record<string, string> = {
               class="inline-flex items-center gap-2 text-[13px] text-cyan hover:underline"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
-              Ver en vivo ↗
+              {pj.liveLink}
             </a>
           )}
         </div>
@@ -181,7 +192,7 @@ const statusColor: Record<string, string> = {
         <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-8">
           <span class="text-cyan">/iteraciones</span>
           <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-          <span>Cómo se construyó · XP con IA</span>
+          <span>{pj.iteracionesEyebrow}</span>
         </div>
         <IteracionesBoard />
       </div>
@@ -193,16 +204,16 @@ const statusColor: Record<string, string> = {
         <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-8">
           <span class="text-cyan">/education</span>
           <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-          <span>Hitos de aprendizaje</span>
+          <span>{pj.educationEyebrow}</span>
         </div>
         <div class="space-y-4">
           {milestones.map((m) => (
             <div class="rounded-2xl glass p-5 flex items-start gap-4">
               <div class={`w-2 h-2 rounded-full mt-2 shrink-0 ${m.status === 'completado' ? 'bg-lime' : m.status === 'en_curso' ? 'bg-cyan pulse-dot' : 'bg-ink-400'}`}></div>
               <div>
-                <div class="text-[15px] text-ink-50 font-medium">{m.title}</div>
-                {m.institution && <div class="text-[12px] font-mono text-ink-300 mt-0.5">{m.institution}</div>}
-                {m.description && <p class="text-[13px] text-ink-200 leading-relaxed mt-2">{m.description}</p>}
+                <div class="text-[15px] text-ink-50 font-medium">{pickLocalized(m, 'title', locale)}</div>
+                {m.institution && <div class="text-[12px] font-mono text-ink-300 mt-0.5">{pickLocalized(m, 'institution', locale)}</div>}
+                {m.description && <p class="text-[13px] text-ink-200 leading-relaxed mt-2">{pickLocalized(m, 'description', locale)}</p>}
               </div>
             </div>
           ))}
