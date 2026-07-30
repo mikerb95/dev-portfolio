@@ -133,7 +133,7 @@ const es = {
       },
       github: { user: 'mikerb95', note: 'Open source · commits diarios', cta: 'Ver perfil' },
     },
-    proyectos: { sectionLabel: 'Trabajo seleccionado', title: 'Proyectos en producción.' },
+    proyectos: { sectionLabel: 'Trabajo seleccionado', title: 'Proyectos en producción.', viewProject: 'Ver proyecto' },
     proceso: {
       sectionLabel: 'Cómo trabajo',
       title: 'Un proceso en cuatro pasos, calibrado a tu velocidad.',

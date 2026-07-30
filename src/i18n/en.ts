@@ -134,7 +134,7 @@ const en = {
       },
       github: { user: 'mikerb95', note: 'Open source · daily commits', cta: 'View profile' },
     },
-    proyectos: { sectionLabel: 'Selected work', title: 'Projects in production.' },
+    proyectos: { sectionLabel: 'Selected work', title: 'Projects in production.', viewProject: 'View project' },
     proceso: {
       sectionLabel: 'How I work',
       title: 'A four-step process, calibrated to your pace.',

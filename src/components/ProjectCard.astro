@@ -20,7 +20,7 @@ const locale = getLocaleFromUrl(Astro.url.pathname)
 // español fila por fila en vez de mostrar el hueco (§7 del plan de i18n).
 const title = pickLocalized(Astro.props, 'title', locale)
 const description = pickLocalized(Astro.props, 'description', locale)
-const viewProjectLabel = getDictionary(locale).proyectos.viewProject
+const viewProjectLabel = getDictionary(locale).home.proyectos.viewProject
 ---
 
 <a
