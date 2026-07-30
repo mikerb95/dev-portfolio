@@ -2,6 +2,7 @@
 import PortalLayout from '../../layouts/PortalLayout.astro'
 import MilestoneTimeline from '../../components/portal/MilestoneTimeline.astro'
 import HealthCard from '../../components/portal/HealthCard.astro'
+import ActivityFeed from '../../components/portal/ActivityFeed.astro'
 import {
   clientProjects,
   computeProgress,
@@ -11,6 +12,7 @@ import {
 } from '../../lib/portal/projects'
 import { clientInvoiceSummary } from '../../lib/portal/invoices'
 import { unreadThreadCount } from '../../lib/portal/threads'
+import { clientActivity } from '../../lib/portal/activity'
 import { formatMoney } from '../../lib/portal/format'
 
 const { user, client } = Astro.locals.portal!
@@ -22,11 +24,14 @@ const projects = await clientProjects(client.id)
 const requested = Number(Astro.url.searchParams.get('p'))
 const current = projects.find((p) => p.id === requested) ?? projects[0] ?? null
 
-const [milestones, health, invoices, unreadThreads] = await Promise.all([
+const [milestones, health, invoices, unreadThreads, actividad] = await Promise.all([
   current ? projectMilestonesFor(client.id, current.id) : Promise.resolve([]),
   current ? projectHealth(client.id, current.id) : Promise.resolve(null),
   clientInvoiceSummary(client.id),
   user.role === 'billing' ? Promise.resolve(0) : unreadThreadCount(client.id, user.id),
+  // Últimas 15 de TODO el cliente, no solo del proyecto mostrado: el feed
+  // incluye facturas y avisos que no cuelgan de ninguno.
+  clientActivity(client.id, { limit: 15 }),
 ])
 
 const progress = computeProgress(milestones)
@@ -164,6 +169,18 @@ const canSeeMessages = user.role !== 'billing'
 
           <div class="space-y-3">
             {health && health.monitorCount > 0 && <HealthCard health={health} />}
+
+            <div class="glass rounded-2xl p-4" data-live-activity>
+              <div class="flex items-baseline justify-between mb-3.5">
+                <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Actividad</p>
+                {actividad.items.length > 0 && (
+                  <a href="/portal/actividad" class="text-[11px] text-ink-300 hover:text-cyan transition-colors">
+                    Ver todo
+                  </a>
+                )}
+              </div>
+              <ActivityFeed items={actividad.items} empty="Aquí aparecerá lo que vaya pasando." />
+            </div>
 
             {current.previewUrl && (
               <a
