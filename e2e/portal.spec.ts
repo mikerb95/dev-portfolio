@@ -23,6 +23,13 @@ test.describe('portal · gate', () => {
     expect(res.status()).toBe(401)
   })
 
+  test('el digest de la capa viva tampoco responde a anónimos', async ({ page }) => {
+    // Se sondea 3 veces por minuto por pestaña, así que es la ruta del portal
+    // con más tráfico: merece su propio caso y no confiar en el genérico.
+    const res = await page.request.get('/api/portal/live', { headers: ipDePrueba() })
+    expect(res.status()).toBe(401)
+  })
+
   test('el portal no es indexable', async ({ page }) => {
     const res = await page.request.get('/portal/login', { headers: ipDePrueba() })
     expect(res.headers()['x-robots-tag']).toContain('noindex')
