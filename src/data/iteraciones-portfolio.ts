@@ -512,6 +512,7 @@ export const ITERACIONES: Iteracion[] = [
         fecha: '2026-07-15', tags: ['portal', 'dashboard', 'fase-11'],
         dod: [
           ok('Página de overview del proyecto con HealthCard (salud de monitores) y MilestoneTimeline (hitos con estado).'),
+          ok('Selector de proyecto (tabs) cuando el cliente tiene más de uno, resuelto por ?p= solo contra la lista de proyectos de su propia sesión — un id ajeno cae al primero propio.'),
           ok('Módulo invoices/invoice_items con CRUD completo, numeración correlativa y estados (draft/sent/paid/overdue/void).'),
           ok('Centro de notificaciones in-app e hilos de mensajería (portal_threads/portal_messages) con conteo de no leídos.'),
         ],
