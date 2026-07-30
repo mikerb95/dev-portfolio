@@ -330,6 +330,12 @@ const faqs = pw.faqs
       </div>
     </div>
   </section>
+
+  <script
+    id="paginas-web-i18n"
+    type="application/json"
+    set:html={JSON.stringify(pw.form)}
+  />
 </BaseLayout>
 
 <script>
@@ -338,6 +344,7 @@ const faqs = pw.faqs
   // que la notificación llegue con el contexto del lead de "páginas web".
   const form = document.getElementById('lead-form') as HTMLFormElement | null
   const status = document.getElementById('lead-status')
+  const L = JSON.parse(document.getElementById('paginas-web-i18n')!.textContent!) as Record<string, string>
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -350,7 +357,7 @@ const faqs = pw.faqs
     const mensaje = String(fd.get('mensaje') ?? '').trim()
 
     if (!name || !contacto) {
-      status.textContent = 'Escribe al menos tu nombre y cómo contactarte.'
+      status.textContent = L.errRequired
       status.style.color = '#ff6b3d'
       return
     }
@@ -360,32 +367,32 @@ const faqs = pw.faqs
     const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacto)
     const email = looksLikeEmail ? contacto : 'lead-paginas-web@codebymike.tech'
     const body =
-      `Lead de /paginas-web\n` +
-      `Negocio: ${negocio || '(no indicó)'}\n` +
-      `Contacto: ${contacto}\n\n` +
-      `${mensaje || '(sin mensaje)'}`
+      `${L.leadBodyIntro}\n` +
+      `${L.leadBodyNegocio}: ${negocio || L.leadBodyNoIndico}\n` +
+      `${L.leadBodyContacto}: ${contacto}\n\n` +
+      `${mensaje || L.leadBodySinMensaje}`
 
     btn.disabled = true
-    status.textContent = 'Enviando…'
+    status.textContent = L.sending
     status.style.color = '#85858f'
 
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject: `Página web · ${negocio || name}`, body }),
+        body: JSON.stringify({ name, email, subject: `${L.leadSubjectPrefix} · ${negocio || name}`, body }),
       })
       if (res.ok) {
         form.reset()
-        status.textContent = '¡Listo! Te escribo el mismo día. Gracias 🙌'
+        status.textContent = L.success
         status.style.color = '#c9ff5b'
       } else {
         const data = await res.json().catch(() => ({}))
-        status.textContent = data.error ?? 'No se pudo enviar. Escríbeme mejor por WhatsApp.'
+        status.textContent = data.error ?? L.errGeneric
         status.style.color = '#ff6b3d'
       }
     } catch {
-      status.textContent = 'No se pudo enviar. Escríbeme mejor por WhatsApp.'
+      status.textContent = L.errGeneric
       status.style.color = '#ff6b3d'
     } finally {
       btn.disabled = false
