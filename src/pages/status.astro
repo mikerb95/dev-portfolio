@@ -469,7 +469,7 @@ const healthLabel = st.healthLabel
     }
   </style>
 
-  <script define:vars={{ statusBadge, ekgColor }}>
+  <script define:vars={{ statusBadge, ekgColor, agoStrings: { justNow: st.agoJustNow, minutes: st.agoMinutes, hours: st.agoHours, days: st.agoDaysShort }, lastCheckedTpl: st.lastChecked }}>
     const W = 300, H = 56, PAD = 6
     const seriesByEl = new WeakMap()
 
@@ -573,10 +573,10 @@ const healthLabel = st.healthLabel
     function ago(ms) {
       if (!ms) return '—'
       const min = Math.round((Date.now() - ms) / 60_000)
-      if (min < 1) return 'hace <1 min'
-      if (min < 60) return `hace ${min} min`
+      if (min < 1) return agoStrings.justNow
+      if (min < 60) return agoStrings.minutes.replace('{n}', min)
       const h = Math.floor(min / 60)
-      return h < 24 ? `hace ${h} h` : `hace ${Math.floor(h / 24)} d`
+      return h < 24 ? agoStrings.hours.replace('{n}', h) : agoStrings.days.replace('{n}', Math.floor(h / 24))
     }
 
     // Refresca badge de estado, "último check" y color del EKG sin recargar.
@@ -599,7 +599,7 @@ const healthLabel = st.healthLabel
         }
         const checked = card.querySelector('.last-checked')
         if (checked) {
-          checked.textContent = `último check ${ago(s.checkedAt)}`
+          checked.textContent = lastCheckedTpl.replace('{ago}', ago(s.checkedAt))
           checked.setAttribute('data-checked-at', s.checkedAt ?? '')
         }
 
@@ -615,7 +615,7 @@ const healthLabel = st.healthLabel
     function tickAgo() {
       document.querySelectorAll('.last-checked').forEach((el) => {
         const at = Number(el.getAttribute('data-checked-at'))
-        if (at) el.textContent = `último check ${ago(at)}`
+        if (at) el.textContent = lastCheckedTpl.replace('{ago}', ago(at))
       })
     }
 
