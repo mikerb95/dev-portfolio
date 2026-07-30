@@ -432,11 +432,13 @@
 
 ### HU-36 — Seguir el avance de mi proyecto y hablar con el desarrollador
 **Como** cliente,  
-**quiero** ver el avance por hitos, los documentos compartidos y un hilo de mensajes,  
-**para** saber en qué va mi proyecto sin agendar una llamada.
+**quiero** ver el listado de mis proyectos, entrar al detalle de cada uno con su avance por hitos, los documentos compartidos y un hilo de mensajes,  
+**para** saber en qué va cada proyecto sin agendar una llamada ni mezclar información entre proyectos.
 
 **Criterios de aceptación:**
-- El avance se muestra por hitos del proyecto.
+- Si tengo más de un proyecto, veo un selector para cambiar entre ellos; con uno solo, entro directo a su detalle.
+- El proyecto activo se resuelve siempre contra la lista de proyectos de mi propia sesión — un id ajeno en la URL cae al primero propio, nunca al proyecto de otro cliente.
+- El avance se muestra por hitos del proyecto seleccionado.
 - Los mensajes forman un hilo con estado de leído por ambas partes.
 - Los documentos visibles son solo los del propio cliente.
 
