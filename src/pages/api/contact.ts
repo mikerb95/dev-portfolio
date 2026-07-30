@@ -33,17 +33,18 @@ const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status })
 
 export const POST: APIRoute = async ({ request }) => {
-  let data: Record<string, unknown> = {}
-  let rawLocale: unknown
+  let data: Record<string, unknown>
+  let parseFailed = false
   try {
     data = await request.json()
-    rawLocale = data.locale
   } catch {
-    // El locale por defecto (es) decide el idioma de ESTE error concreto; no
-    // hay nada más que leer del body si el JSON ni siquiera parseó.
+    data = {}
+    parseFailed = true
   }
   // Nunca se confía en `Referer`: el locale es un campo explícito del body,
-  // validado contra la lista cerrada de locales soportados.
+  // validado contra la lista cerrada de locales soportados. Si el JSON ni
+  // siquiera parseó, no hay locale que leer: el error sale en español.
+  const rawLocale = data.locale
   const locale: Locale = typeof rawLocale === 'string' && isLocale(rawLocale) ? rawLocale : 'es'
   const E = ERRORS[locale]
 
@@ -52,7 +53,7 @@ export const POST: APIRoute = async ({ request }) => {
     return json(429, { error: E.rateLimited })
   }
 
-  if (!Object.keys(data).length) {
+  if (parseFailed) {
     return json(400, { error: E.badJson })
   }
 
