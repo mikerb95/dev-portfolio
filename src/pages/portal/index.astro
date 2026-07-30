@@ -46,14 +46,14 @@ const canSeeMessages = user.role !== 'billing'
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-7">
         <a href="/portal/facturas" class="glass rounded-2xl p-4 lift block">
           <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Por pagar</p>
-          <p class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
+          <p data-live="invoices-value" class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
             {invoices.dueCount === 0 ? (
               <span class="text-lime">Al día</span>
             ) : (
               formatMoney(invoices.dueCents, invoices.currency)
             )}
           </p>
-          <p class="mt-0.5 text-[12px] text-ink-300">
+          <p data-live="invoices-sub" class="mt-0.5 text-[12px] text-ink-300">
             {invoices.dueCount === 0
               ? 'No tienes facturas pendientes'
               : `${invoices.dueCount} factura${invoices.dueCount !== 1 ? 's' : ''} pendiente${invoices.dueCount !== 1 ? 's' : ''}`}
@@ -64,10 +64,10 @@ const canSeeMessages = user.role !== 'billing'
         {canSeeMessages && (
           <a href="/portal/mensajes" class="glass rounded-2xl p-4 lift block">
             <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Mensajes</p>
-            <p class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
+            <p data-live="threads-value" class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
               {unreadThreads === 0 ? <span class="text-ink-200">Sin novedades</span> : `${unreadThreads} sin leer`}
             </p>
-            <p class="mt-0.5 text-[12px] text-ink-300">
+            <p data-live="threads-sub" class="mt-0.5 text-[12px] text-ink-300">
               {unreadThreads === 0 ? 'Todo leído' : 'Tienes respuestas esperando'}
             </p>
           </a>
@@ -75,10 +75,10 @@ const canSeeMessages = user.role !== 'billing'
 
         <div class="glass rounded-2xl p-4">
           <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Avance</p>
-          <p class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
+          <p data-live="progress-value" class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
             {progress.total === 0 ? <span class="text-ink-200">—</span> : `${progress.pct}%`}
           </p>
-          <p class="mt-0.5 text-[12px] text-ink-300">
+          <p data-live="progress-sub" class="mt-0.5 text-[12px] text-ink-300">
             {progress.total === 0
               ? 'Sin hitos definidos aún'
               : `${progress.done} de ${progress.total} hitos completados`}

@@ -960,6 +960,22 @@ const en = {
     agoHours: '{n}h ago',
     agoDaysShort: '{n}d ago',
   },
+  project: {
+    statusLabel: {
+      activo: 'active',
+      pausado: 'paused',
+      completado: 'completed',
+      archivado: 'archived',
+    },
+    stackHeading: 'Tech stack',
+    clientHeading: 'Client',
+    linksHeading: 'Links',
+    repoLink: 'Repository ↗',
+    liveLink: 'View live ↗',
+    iteracionesEyebrow: 'How it was built · XP with AI',
+    educationEyebrow: 'Learning milestones',
+    breadcrumbProjects: 'Projects',
+  },
 } satisfies typeof es
 
 export default en

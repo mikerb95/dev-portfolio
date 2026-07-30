@@ -966,6 +966,22 @@ const es = {
     agoHours: 'hace {n} h',
     agoDaysShort: 'hace {n} d',
   },
+  project: {
+    statusLabel: {
+      activo: 'activo',
+      pausado: 'pausado',
+      completado: 'completado',
+      archivado: 'archivado',
+    },
+    stackHeading: 'Stack tecnológico',
+    clientHeading: 'Cliente',
+    linksHeading: 'Links',
+    repoLink: 'Repositorio ↗',
+    liveLink: 'Ver en vivo ↗',
+    iteracionesEyebrow: 'Cómo se construyó · XP con IA',
+    educationEyebrow: 'Hitos de aprendizaje',
+    breadcrumbProjects: 'Proyectos',
+  },
 }
 
 export default es
