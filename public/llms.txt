@@ -2,17 +2,37 @@
 
 > Portfolio y notas de ingeniería de Mike (@mikerb95). TypeScript, React,
 > Next.js, Astro, Node.js y PostgreSQL. Colombia · remoto.
+>
+> El sitio es bilingüe: el español es el idioma canónico (sin prefijo) y el
+> inglés vive bajo /en. Cada página declara su hreflang recíproco.
 
-## Páginas principales
+## Páginas principales (español)
 
 - [Inicio](https://codebymike.tech/): perfil, proyectos y stack
 - [Notas de ingeniería](https://codebymike.tech/notes): artículos técnicos sobre observabilidad, SRE, arquitectura y rendimiento
 - [Herramientas](https://codebymike.tech/tools): herramientas construidas dentro del portfolio
+- [Laboratorio](https://codebymike.tech/lab): pipeline CI/CD, chaos engineering y analizador de sitios
 - [Estado](https://codebymike.tech/status): página de estado pública con monitores en vivo
+- [Seguridad](https://codebymike.tech/security): micro-SIEM propio, agregados de intentos detectados
+- [Arquitectura](https://codebymike.tech/architecture): cómo está construido este sitio
 - [Certificaciones](https://codebymike.tech/certifications)
 - [Contacto](https://codebymike.tech/contact)
+- [Documentación](https://codebymike.tech/docs): requerimientos, casos de uso y diagramas UML (solo en español)
+
+## Main pages (English)
+
+- [Home](https://codebymike.tech/en): profile, projects, and stack
+- [Engineering notes](https://codebymike.tech/en/notes): technical writing on observability, SRE, architecture, and performance
+- [Tools](https://codebymike.tech/en/tools): tools built inside the portfolio
+- [Lab](https://codebymike.tech/en/lab): CI/CD pipeline, chaos engineering, and site scanner
+- [Status](https://codebymike.tech/en/status): public status page with live monitors
+- [Security](https://codebymike.tech/en/security): custom micro-SIEM, aggregates of detected attempts
+- [Architecture](https://codebymike.tech/en/architecture): how this site is built
+- [Certifications](https://codebymike.tech/en/certifications)
+- [Contact](https://codebymike.tech/en/contact)
 
 ## Feeds
 
-- [RSS de notas](https://codebymike.tech/rss.xml)
+- [RSS de notas (es)](https://codebymike.tech/rss.xml)
+- [Notes RSS (en)](https://codebymike.tech/en/rss.xml)
 - [Sitemap](https://codebymike.tech/sitemap.xml)
