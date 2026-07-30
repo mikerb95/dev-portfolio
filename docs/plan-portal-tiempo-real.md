@@ -134,7 +134,37 @@ anunciarlo es exactamente lo que rompe a un lector de pantalla. Y respeta
   ninguna vista del portal; el digest no puede ser la rendija por la que se
   entere de que existen. Con caso propio en los tests.
 
-### Fase B — Feed de actividad por proyecto
+### Fase B — Feed de actividad por proyecto ✅ (2026-07-30, salvo `deploy`)
+
+1. ✅ Migración `0024_overjoyed_hawkeye.sql` (`portal_activity` + índices
+   `(client_id, at)` y `(project_id, at)`), aplicada a producción.
+2. ✅ `src/lib/portal/activity.ts`: `recordActivity()` fire-and-forget,
+   `clientActivity()` con paginación **por cursor** y `lastActivityAt()`.
+   16 casos en `tests/portal-activity.test.ts`.
+3. ✅ Cableado en los **cinco** puntos que hoy notifican: hito completado,
+   factura emitida, factura pagada (`settlement.ts`), factura vencida (cron) y
+   respuesta del admin en un hilo.
+4. ✅ UI: columna en `/portal` (últimas 15) + `/portal/actividad` con filtro por
+   tipo y paginación por cursor.
+5. ✅ `activityLastAt` en el digest, con dos casos propios en
+   `tests/portal-live.test.ts`.
+6. ✅ Admin: `/admin/portal/actividad` + `PATCH /api/admin/portal/actividad`
+   para apagar una entrada sin borrarla.
+
+**Bloqueado: las entradas de tipo `deploy`.** El plan las quería alimentadas
+desde `ciRuns`, pero `ci_runs` **no tiene `projectId`**: es el CI de este
+portfolio, no el de los proyectos de clientes. No hay forma de atribuir una
+corrida a un cliente sin un cambio de modelo. Dos salidas cuando toque:
+añadir `projectId` a `ci_runs` y que cada proyecto reporte su propio CI, o
+derivar el "hay movimiento" de los `monitors`, que sí tienen `projectId`. El
+tipo `deploy` se queda en el enum a la espera de una fuente real.
+
+**Puntos que el plan daba por existentes y no existen:** documentos subidos e
+incidentes abiertos/resueltos **no notifican hoy** (no hay endpoint de subida ni
+emisión de incidentes al cliente), así que no había dónde cablearlos. Sus tipos
+también quedan en el enum.
+
+#### Diseño original de la fase
 1. Migración aditiva `portal_activity`:
    ```
    id, clientId, projectId?, type: 'milestone' | 'invoice' | 'document' |
