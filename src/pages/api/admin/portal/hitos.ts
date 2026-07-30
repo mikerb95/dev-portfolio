@@ -3,6 +3,7 @@ import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../../../../db'
 import { projectMilestones, projects } from '../../../../db/schema'
 import { notifyClient } from '../../../../lib/portal/notifications'
+import { recordActivity } from '../../../../lib/portal/activity'
 
 // Hitos del proyecto: lo que el cliente ve como línea de tiempo en su portal.
 // Sesión de admin impuesta por el middleware de /api/admin.
