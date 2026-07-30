@@ -193,7 +193,7 @@ describe('translatedAlternates', () => {
 describe('untranslatedLocalizedTarget', () => {
   it('manda /en/<sin traducir> a la versión en español', () => {
     expect(untranslatedLocalizedTarget('/en/notes')).toBe('/notes')
-    expect(untranslatedLocalizedTarget('/en/status')).toBe('/status')
+    expect(untranslatedLocalizedTarget('/en/lab')).toBe('/lab')
   })
 
   it('no toca las páginas que sí existen en inglés', () => {
