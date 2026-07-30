@@ -53,6 +53,17 @@ describe('portal · demo pública', () => {
       expect(isPortalDemoAllowedMethod('GET', '/portal/cuenta')).toBe(true)
       expect(isPortalDemoAllowedMethod('HEAD', '/api/portal/facturas/1')).toBe(true)
       expect(isPortalDemoAllowedMethod('GET', '/api/portal/cuenta/equipo')).toBe(true)
+      // El digest de la capa viva es GET, así que la demo también late. No hace
+      // falta excepción: sus datos salen de la base de demo por el
+      // AsyncLocalStorage de src/db/index.ts, igual que el resto de la vista.
+      expect(isPortalDemoAllowedMethod('GET', '/api/portal/live')).toBe(true)
+    })
+
+    it('el digest de la capa viva solo se lee, nunca se muta', () => {
+      // Es de solo lectura por naturaleza; si algún día alguien le añade un POST,
+      // este caso obliga a decidirlo a conciencia en vez de heredarlo.
+      expect(isPortalDemoAllowedMethod('POST', '/api/portal/live')).toBe(false)
+      expect(isPortalDemoAllowedMethod('DELETE', '/api/portal/live')).toBe(false)
     })
 
     it('permite los dos pasos del flujo de pago simulado', () => {
