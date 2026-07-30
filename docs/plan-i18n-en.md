@@ -1,6 +1,6 @@
 # Plan — Versión en inglés de la parte pública
 
-**Estado:** en implementación · **Creado:** 2026-07-24 · **Última actualización:** 2026-07-29
+**Estado:** en implementación · **Creado:** 2026-07-24 · **Última actualización:** 2026-07-30
 **Alcance:** todo lo que un visitante ve sin autenticarse. El panel `/admin`,
 el interior de `/portal` y `/cobrar` quedan en español (ver §9 para la
 excepción de sus puertas públicas).
@@ -57,7 +57,36 @@ excepción de sus puertas públicas).
      (página invisible) rompe el test.
   **Regla operativa:** traducir una página son *tres* pasos, no dos — página
   al diccionario, cascarón en `src/pages/en/`, y alta en `TRANSLATED_ROUTES`.
-- ⬜ **Fases 2 (resto), 3–7**: sin empezar. Volumen pendiente: ~3 350 líneas de
+- ✅ **Fase 2 (completa) — Páginas de marca**: además de las 7 anteriores,
+  `/status`, `/log`, `/demo`, `/paginas-web` y `/notes` (índice). `/api/contact`
+  y `/api/lab/site-check` reciben el locale como campo explícito del body
+  (validado contra `LOCALES`, nunca deducido del `Referer`) y responden sus
+  errores en ese idioma.
+- ✅ **Fase 3 — Contenido en base de datos**: migración aditiva `0023`
+  (`title_en`/`description_en` en `projects`; `title_en`/`institution_en`/
+  `description_en` en `education_milestones`), aplicada a Turso. Helper puro
+  `pickLocalized` + `hasRowTranslation` (`src/i18n/localize.ts`, 11 tests):
+  una fila sin traducir se muestra en español, nunca vacía. Campos `_en` en el
+  panel (`admin/projects/[id]`, `admin/education`) y en sus endpoints. Los 13
+  proyectos visibles ya tienen su traducción cargada. `BaseLayout` acepta
+  `englishAvailable`: una fila sin traducir sigue sirviendo la URL `/en/` pero
+  no la anuncia como versión en inglés (sin `hreflang="en"`, canónico al
+  español) y el sitemap tampoco la emite.
+- ✅ **Fase 4 — Notas técnicas**: los 14 artículos traducidos (11 383 palabras),
+  con slug propio en inglés y `translationOf` recíproco. La colección pasó a
+  `src/content/notes/{es,en}/` con `lang` en el frontmatter; las URLs en español
+  no cambiaron, así que no hubo redirecciones 301. `src/lib/notes.ts` centraliza
+  el filtrado por idioma y la traducción id↔slug para índice, artículo, los dos
+  feeds RSS y el sitemap. `BaseLayout` acepta `alternatePaths` porque el slug
+  del hermano es distinto y no se puede deducir de la URL — eso alimenta también
+  el conmutador de idioma del Navbar.
+- ✅ **Fase 5 — LAB público**: `/lab`, `/lab/site-check`, `/lab/fingerprint` y
+  las salas `[room]` (tablero y vista de dispositivo). `src/lib/diagnostics.ts`
+  pasó a recibir el locale y resolver sus ~55 veredictos contra un diccionario
+  interno propio — vive en la lib y no en `src/i18n/es.ts` a propósito: la
+  consume tanto la ruta pública como el diagnóstico del panel, y atar una lib de
+  infraestructura al diccionario de páginas sería la dependencia equivocada.
+- ⬜ **Fases 6–7**: sin empezar. Volumen pendiente: ~3 350 líneas de
   páginas de marca, contenido de `projects`/`education_milestones` en BD,
   11 383 palabras de notas, LAB, ~3 900 líneas + 240 KB de datos de `/docs`,
   y los flujos de audiencia local (§7). Ver desglose de cada fase más abajo,
