@@ -162,7 +162,7 @@ describe('portal · digest de la capa viva', () => {
 
     // Proyecto: el suyo, con su avance (1 completado de 2 → 50%).
     expect(d.project?.id).toBe(acmeProject)
-    expect(d.project?.progressPct).toBe(50)
+    expect(d.project?.progress.pct).toBe(50)
   })
 
   it('un projectId ajeno cae al proyecto propio, sin filtrar que existe', async () => {
@@ -172,7 +172,7 @@ describe('portal · digest de la capa viva', () => {
     // confirmaría que ese id existe, que es justo lo que no se quiere decir.
     expect(d.project?.id).toBe(acmeProject)
     expect(d.project?.id).not.toBe(rivalProject)
-    expect(d.project?.progressPct).toBe(50)
+    expect(d.project?.progress.pct).toBe(50)
   })
 
   it('un projectId inexistente también cae al propio', async () => {
