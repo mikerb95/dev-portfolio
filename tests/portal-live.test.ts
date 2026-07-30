@@ -26,8 +26,10 @@ import {
   portalThreads,
   portalMessages,
   portalNotifications,
+  portalActivity,
 } from '../src/db/schema'
 import { portalLiveDigest } from '../src/lib/portal/live'
+import { recordActivity } from '../src/lib/portal/activity'
 
 // Dos clientes. La pregunta de todo el archivo: ¿puede el digest de ACME
 // filtrar algo de RIVAL, o dejar ver mensajes a quien no debe verlos?
@@ -49,6 +51,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   // Orden inverso a las FK.
+  await db.delete(portalActivity)
   await db.delete(portalNotifications)
   await db.delete(portalMessages)
   await db.delete(portalThreads)
@@ -222,6 +225,24 @@ describe('portal · digest de la capa viva', () => {
     // El resto del digest sigue siendo útil.
     expect(d.invoices.pending).toBe(2)
     expect(d.notifications.unread).toBe(2)
+  })
+
+  it('activityLastAt refleja el feed y respeta el interruptor de visibilidad', async () => {
+    // Sin actividad: null, no una fecha inventada.
+    expect((await digestFor(acmeUser)).activityLastAt).toBeNull()
+
+    await recordActivity({ clientId: acme, type: 'milestone', title: 'Hito', at: hourAgo })
+    expect((await digestFor(acmeUser)).activityLastAt).toBe(hourAgo.toISOString())
+
+    // Una entrada apagada no adelanta la marca: si lo hiciera, el navegador
+    // avisaría de algo que el cliente no puede ver por ningún lado.
+    await recordActivity({ clientId: acme, type: 'system', title: 'Interna', visibleToClient: false, at: now })
+    expect((await digestFor(acmeUser)).activityLastAt).toBe(hourAgo.toISOString())
+  })
+
+  it('la actividad de otro cliente no asoma en el digest', async () => {
+    await recordActivity({ clientId: rival, type: 'milestone', title: 'De RIVAL', at: now })
+    expect((await digestFor(acmeUser)).activityLastAt).toBeNull()
   })
 
   it('sella la versión y la marca de tiempo del digest', async () => {
