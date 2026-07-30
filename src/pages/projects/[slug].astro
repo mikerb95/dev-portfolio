@@ -6,7 +6,7 @@ import { db } from '../../db'
 import { projects, clients, educationMilestones } from '../../db/schema'
 import { eq, and } from 'drizzle-orm'
 import { parseTechStack } from '../../lib/tech-stack'
-import { getDictionary, getLocaleFromUrl, localizedHref, pickLocalized } from '../../i18n'
+import { getDictionary, getLocaleFromUrl, hasRowTranslation, localizedHref, pickLocalized } from '../../i18n'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -42,6 +42,9 @@ const stack: string[] = parseTechStack(project.techStack)
 // `pickLocalized` nunca devuelve vacío por falta de traducción (§7 del plan).
 const title = pickLocalized(project, 'title', locale)
 const description = pickLocalized(project, 'description', locale)
+// Si este proyecto concreto no tiene traducción, la página en inglés muestra el
+// español (mejor que un hueco) pero NO se anuncia como versión en inglés.
+const englishAvailable = hasRowTranslation(project, ['title'], 'en')
 
 // Tablero de iteraciones XP: sólo para el proyecto DobleYo Café.
 // Ajusta el slug aquí si en tu BD usas otro identificador.
@@ -63,6 +66,7 @@ const statusColor: Record<string, string> = {
   description={description ?? undefined}
   image={project.screenshotUrl ?? undefined}
   type="article"
+  englishAvailable={englishAvailable}
 >
   <script
     is:inline

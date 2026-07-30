@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content'
 import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
-import { LOCALES, translatedAlternates } from '../i18n'
+import { LOCALES, hasRowTranslation, localizePath, translatedAlternates } from '../i18n'
 
 // '/log' se excluye a propósito: es una página "viva" renderizada en cliente
 // (feed de GitHub en tiempo real), sin contenido indexable ni intención de
@@ -16,7 +16,12 @@ export const GET: APIRoute = async ({ site }) => {
 
   const [visibleProjects, notes] = await Promise.all([
     db
-      .select({ slug: projects.slug, createdAt: projects.createdAt })
+      .select({
+        slug: projects.slug,
+        createdAt: projects.createdAt,
+        // Se lee la traducción solo para decidir si la URL /en/ se anuncia.
+        titleEn: projects.titleEn,
+      })
       .from(projects)
       .where(eq(projects.visible, true)),
     getCollection('notes', ({ data }) => !data.draft),
@@ -39,16 +44,29 @@ export const GET: APIRoute = async ({ site }) => {
     }))
   })
 
-  // Fase 3 del plan de i18n (docs/plan-i18n-en.md §7): los proyectos y notas
-  // todavía no tienen traducción propia — solo se anuncia la versión en
-  // español para no publicar una URL /en/ con contenido a medias.
+  // La plantilla de /projects/<slug> existe en los dos idiomas, pero el
+  // contenido de cada proyecto se traduce fila por fila: solo se anuncia la URL
+  // en inglés de los proyectos que SÍ tienen `title_en`. Anunciar el resto
+  // sería publicar una URL /en/ cuyo contenido sale en español — thin content
+  // a ojos de un buscador. Ver docs/plan-i18n-en.md §7.
+  const projectEntries = visibleProjects.flatMap((p) => {
+    const path = `/projects/${p.slug}`
+    const translated = hasRowTranslation(p, ['title'], 'en')
+    const alternates = translated
+      ? LOCALES.map((l) => ({ hreflang: l, href: `${base}${localizePath(path, l)}` }))
+      : []
+    const urls = [{ loc: `${base}${path}`, lastmod: p.createdAt, alternates }]
+    if (translated) {
+      urls.push({ loc: `${base}${localizePath(path, 'en')}`, lastmod: p.createdAt, alternates })
+    }
+    return urls
+  })
+
+  // Las notas todavía no tienen traducción propia (Fase 4): solo la versión en
+  // español.
   const entries = [
     ...staticEntries,
-    ...visibleProjects.map((p) => ({
-      loc: `${base}/projects/${p.slug}`,
-      lastmod: p.createdAt,
-      alternates: [] as { hreflang: string; href: string }[],
-    })),
+    ...projectEntries,
     ...notes.map((n) => ({
       loc: `${base}/notes/${n.id}`,
       lastmod: n.data.date,

@@ -19,6 +19,15 @@ interface Props {
   noindex?: boolean
   /** Fecha de publicación (solo para type="article"): emite article:published_time */
   publishedTime?: Date
+  /**
+   * Solo para páginas cuyo CONTENIDO vive en BD y se traduce fila por fila
+   * (`/projects/<slug>`): si esta fila concreta no tiene traducción, la página
+   * en inglés sigue funcionando (cae al español) pero no debe anunciarse como
+   * versión en inglés. Con `false` se omite el `hreflang="en"` y el canónico
+   * apunta al español, para que un buscador consolide en una sola URL.
+   * Sin pasar nada, decide el registro de rutas (`TRANSLATED_ROUTES`).
+   */
+  englishAvailable?: boolean
 }
 
 const site = Astro.site ?? new URL('https://codebymike.tech')
@@ -31,19 +40,29 @@ const {
   type = 'website',
   noindex = false,
   publishedTime,
+  englishAvailable,
 } = Astro.props
 
-// El canónico se calcula sobre la ruta SIN prefijo de idioma con el prefijo
-// del locale actual reaplicado: evita que una URL con locale mal formado
-// (mayúsculas, slashes de más) produzca un canónico distinto al real.
-const canonicalPath = alternateUrls(Astro.url.pathname)[locale]
-const canonical = new URL(canonicalPath, site).href
-const ogImage = new URL(image, site).href
-const OG_LOCALE = { es: 'es_CO', en: 'en_US' } as const
 // Solo se anuncian los idiomas en los que esta página EXISTE. Emitir
 // hreflang="en" hacia una URL sin traducir manda al buscador (y al usuario) a
 // una redirección al español, o antes a un 404 directo.
 const alt = translatedAlternates(Astro.url.pathname)
+// Contenido de BD sin traducir: la URL /en/ funciona pero no es una versión en
+// inglés, así que no se anuncia como tal.
+if (englishAvailable === false) delete alt.en
+
+// El canónico se calcula sobre la ruta SIN prefijo de idioma con el prefijo
+// del locale actual reaplicado: evita que una URL con locale mal formado
+// (mayúsculas, slashes de más) produzca un canónico distinto al real. Si esta
+// página en inglés es en realidad contenido español, el canónico apunta al
+// español: una sola URL indexada en vez de dos con el mismo texto.
+const canonicalPath =
+  englishAvailable === false && locale === 'en'
+    ? alternateUrls(Astro.url.pathname).es
+    : alternateUrls(Astro.url.pathname)[locale]
+const canonical = new URL(canonicalPath, site).href
+const ogImage = new URL(image, site).href
+const OG_LOCALE = { es: 'es_CO', en: 'en_US' } as const
 const rssHref = locale === DEFAULT_LOCALE ? '/rss.xml' : '/en/rss.xml'
 
 const websiteJsonLd = JSON.stringify({
