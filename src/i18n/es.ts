@@ -993,6 +993,8 @@ const es = {
     introLink: 'herramientas que construyo',
     introPost: ': qué problema había, qué decidí y por qué. Escrito desde código en producción, no desde la teoría.',
     empty: 'Aún no hay notas publicadas.',
+    allNotes: '← Todas las notas',
+    seeTools: 'Ver las herramientas →',
     backToNotes: 'Notas',
     breadcrumb: 'Notas',
     onlyInSpanish: 'Este artículo todavía no está traducido al inglés.',

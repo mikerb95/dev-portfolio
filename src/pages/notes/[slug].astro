@@ -1,17 +1,30 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import { getEntry, render } from 'astro:content'
+import { render } from 'astro:content'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
+import { getNote, getTranslationSlug } from '../../lib/notes'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const n = t.notes
+const L = (path: string) => localizedHref(path, locale)
 
 const { slug } = Astro.params
-const note = await getEntry('notes', slug!)
+// La nota se busca dentro del idioma de la URL: /notes/x nunca sirve un
+// artículo en inglés ni al revés, aunque los slugs coincidieran.
+const note = await getNote(slug!, locale)
 
-if (!note || note.data.draft) {
+if (!note) {
   return new Response(null, { status: 404 })
 }
 
+// Un artículo sin hermano traducido no anuncia hreflang del otro idioma: no
+// existe esa URL. `translationOf` enlaza los slugs (que sí se traducen).
+const translationSlug = await getTranslationSlug(note)
+
 const { Content } = await render(note)
 // timeZone UTC: la fecha del frontmatter es un día calendario, no un instante.
-const fmtDate = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 
 const site = Astro.site ?? new URL('https://codebymike.tech')
 const canonical = new URL(Astro.url.pathname, site).href
@@ -25,7 +38,7 @@ const jsonLd = JSON.stringify({
       url: canonical,
       mainEntityOfPage: canonical,
       datePublished: note.data.date.toISOString(),
-      inLanguage: 'es',
+      inLanguage: locale,
       keywords: note.data.tags.join(', '),
       author: { '@type': 'Person', name: 'Mike', url: site.href },
       publisher: { '@type': 'Person', name: 'Mike', url: site.href },
@@ -33,7 +46,7 @@ const jsonLd = JSON.stringify({
     {
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Notas', item: new URL('/notes', site).href },
+        { '@type': 'ListItem', position: 1, name: n.breadcrumb, item: new URL(L('/notes'), site).href },
         { '@type': 'ListItem', position: 2, name: note.data.title, item: canonical },
       ],
     },
@@ -46,14 +59,15 @@ const jsonLd = JSON.stringify({
   description={note.data.description}
   type="article"
   publishedTime={note.data.date}
+  englishAvailable={locale === 'en' || translationSlug !== null}
 >
   <script is:inline slot="head" type="application/ld+json" set:html={jsonLd} />
   <div class="max-w-[820px] mx-auto px-6 md:px-12 pt-32 pb-24">
 
     <!-- Back -->
-    <a href="/notes" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+    <a href={L('/notes')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      Notas
+      {n.backToNotes}
     </a>
 
     <header class="mb-12">
@@ -74,8 +88,8 @@ const jsonLd = JSON.stringify({
     </article>
 
     <div class="mt-16 pt-8 border-t border-white/5 flex flex-wrap items-center gap-4">
-      <a href="/notes" class="text-[13px] font-mono text-ink-200 hover:text-cyan transition-colors">← Todas las notas</a>
-      <a href="/tools" class="ml-auto text-[13px] font-mono text-cyan hover:underline">Ver las herramientas →</a>
+      <a href={L('/notes')} class="text-[13px] font-mono text-ink-200 hover:text-cyan transition-colors">{n.allNotes}</a>
+      <a href={L('/tools')} class="ml-auto text-[13px] font-mono text-cyan hover:underline">{n.seeTools}</a>
     </div>
 
   </div>

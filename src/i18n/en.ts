@@ -987,6 +987,8 @@ const en = {
     introLink: 'tools I build',
     introPost: ': what the problem was, what I decided, and why. Written from production code, not from theory.',
     empty: 'No notes published yet.',
+    allNotes: '← All notes',
+    seeTools: 'See the tools →',
     backToNotes: 'Notes',
     breadcrumb: 'Notes',
     onlyInSpanish: 'This article is only available in Spanish for now.',
