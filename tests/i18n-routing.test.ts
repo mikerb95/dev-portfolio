@@ -159,9 +159,8 @@ describe('hasTranslation', () => {
 
   it('las páginas sin traducir no existen en inglés', () => {
     expect(hasTranslation('/notes', 'en')).toBe(false)
-    expect(hasTranslation('/status', 'en')).toBe(false)
     expect(hasTranslation('/lab', 'en')).toBe(false)
-    expect(hasTranslation('/notes', 'en')).toBe(false)
+    expect(hasTranslation('/paginas-web', 'en')).toBe(true)
   })
 })
 
@@ -173,7 +172,7 @@ describe('localizedHref', () => {
 
   it('cae al español cuando la página no está traducida (nunca un 404)', () => {
     expect(localizedHref('/notes', 'en')).toBe('/notes')
-    expect(localizedHref('/status', 'en')).toBe('/status')
+    expect(localizedHref('/lab', 'en')).toBe('/lab')
   })
 
   it('desde inglés hacia español siempre quita el prefijo', () => {
