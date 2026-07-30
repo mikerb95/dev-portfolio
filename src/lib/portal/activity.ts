@@ -18,6 +18,22 @@ export type ActivityType =
   | 'deploy'
   | 'system'
 
+/** Etiquetas de cara al cliente. Aquí y no en el componente: las usa también el filtro. */
+export const ACTIVITY_LABELS: Record<ActivityType, string> = {
+  milestone: 'Avance',
+  invoice: 'Facturación',
+  document: 'Documentos',
+  message: 'Mensajes',
+  incident: 'Incidentes',
+  deploy: 'Despliegues',
+  system: 'Sistema',
+}
+
+/** ¿Es un tipo de actividad conocido? Valida lo que llega por `?tipo=`. */
+export function isActivityType(value: unknown): value is ActivityType {
+  return typeof value === 'string' && value in ACTIVITY_LABELS
+}
+
 export type ActivityInput = {
   clientId: number
   projectId?: number | null
