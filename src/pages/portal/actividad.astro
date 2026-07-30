@@ -1,0 +1,107 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro'
+import ActivityFeed from '../../components/portal/ActivityFeed.astro'
+import { ACTIVITY_LABELS, clientActivity, isActivityType } from '../../lib/portal/activity'
+import { clientProjects } from '../../lib/portal/projects'
+
+const { client } = Astro.locals.portal!
+
+const params = Astro.url.searchParams
+
+// El tipo se valida contra la lista conocida: un `?tipo=` inventado se ignora
+// en vez de colarse en el WHERE.
+const tipoRaw = params.get('tipo')
+const tipo = isActivityType(tipoRaw) ? tipoRaw : null
+
+// Mismo criterio que el dashboard: el proyecto de `?p=` solo cuenta si es del
+// cliente. Un id ajeno se ignora y se ve el feed completo, sin decir si existe.
+const projects = await clientProjects(client.id)
+const pedido = Number(params.get('p'))
+const proyecto = projects.find((p) => p.id === pedido) ?? null
+
+const cursorRaw = Number(params.get('desde'))
+const cursor = Number.isFinite(cursorRaw) && cursorRaw > 0 ? cursorRaw : null
+
+const { items, nextCursor } = await clientActivity(client.id, {
+  projectId: proyecto?.id ?? null,
+  type: tipo,
+  cursor,
+})
+
+/** Conserva los filtros al cambiar de página o de filtro. */
+const href = (cambios: Record<string, string | null>) => {
+  const q = new URLSearchParams()
+  const base: Record<string, string | null> = {
+    tipo,
+    p: proyecto ? String(proyecto.id) : null,
+    desde: cursor ? String(cursor) : null,
+    ...cambios,
+  }
+  for (const [k, v] of Object.entries(base)) if (v) q.set(k, v)
+  const s = q.toString()
+  return s ? `/portal/actividad?${s}` : '/portal/actividad'
+}
+
+const filtros = Object.entries(ACTIVITY_LABELS) as [keyof typeof ACTIVITY_LABELS, string][]
+---
+
+<PortalLayout title="Actividad" section="inicio">
+  <div class="mb-6">
+    <h1 class="text-[22px] font-medium tracking-tight text-ink-50">Actividad</h1>
+    <p class="mt-1 text-[13px] text-ink-300">
+      Todo lo que ha pasado en {proyecto ? proyecto.title : 'tus proyectos'}, de lo más reciente a lo más antiguo.
+    </p>
+  </div>
+
+  <!-- Filtros por tipo -->
+  <div class="flex items-center gap-1.5 mb-5 overflow-x-auto no-scrollbar" role="tablist" aria-label="Filtrar por tipo">
+    <a
+      href={href({ tipo: null, desde: null })}
+      role="tab"
+      aria-selected={tipo === null}
+      class:list={[
+        'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-[12px] border transition-colors',
+        tipo === null
+          ? 'bg-cyan/10 border-cyan/30 text-cyan'
+          : 'bg-white/[.03] border-white/10 text-ink-200 hover:text-ink-50',
+      ]}
+    >Todo</a>
+    {filtros.map(([value, label]) => (
+      <a
+        href={href({ tipo: value, desde: null })}
+        role="tab"
+        aria-selected={tipo === value}
+        class:list={[
+          'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-[12px] border transition-colors',
+          tipo === value
+            ? 'bg-cyan/10 border-cyan/30 text-cyan'
+            : 'bg-white/[.03] border-white/10 text-ink-200 hover:text-ink-50',
+        ]}
+      >{label}</a>
+    ))}
+  </div>
+
+  <div class="glass rounded-2xl p-5 md:p-6">
+    <ActivityFeed
+      items={items}
+      empty={tipo ? 'No hay actividad de este tipo todavía.' : 'Todavía no hay actividad que mostrar.'}
+    />
+  </div>
+
+  {nextCursor && (
+    <div class="mt-5 flex justify-center">
+      <a
+        href={href({ desde: String(nextCursor) })}
+        class="h-9 px-4 inline-flex items-center rounded-lg text-[12px] bg-white/[.04] border border-white/10 text-ink-100 hover:bg-white/[.08] transition-colors"
+      >Ver más antiguas</a>
+    </div>
+  )}
+
+  {cursor && (
+    <p class="mt-4 text-center">
+      <a href={href({ desde: null })} class="text-[12px] text-ink-300 hover:text-cyan transition-colors">
+        Volver al principio
+      </a>
+    </p>
+  )}
+</PortalLayout>
