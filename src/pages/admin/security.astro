@@ -106,6 +106,18 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
       <code class="text-ink-200">security-rollup</code> no hay auto-block ni anomalías.
     </p>
 
+    <!-- Disparo manual del rollup. Existe porque el PUT del endpoint estaba
+         implementado y sin cablear: sirve para probar el pipeline completo
+         (auto-block → rollups → anomalías → purga) sin esperar al cron, y para
+         recuperar el terreno si el cron externo estuvo caído. -->
+    <div class="flex items-center gap-3 flex-wrap">
+      <button
+        id="run-rollup"
+        class="h-8 px-3 text-[12px] rounded-lg bg-white/[.06] border border-white/10 text-ink-100 hover:bg-white/[.08] transition disabled:opacity-50"
+      >Ejecutar rollup ahora</button>
+      <span id="rollup-result" class="text-[12px] text-ink-300" role="status" aria-live="polite"></span>
+    </div>
+
     <!-- KPIs -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="rounded-2xl glass p-4">
