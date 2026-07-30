@@ -63,10 +63,12 @@ excepción de sus puertas públicas).
   y los flujos de audiencia local (§7). Ver desglose de cada fase más abajo,
   sin cambios respecto al plan original.
 - ⬜ **Fase 8 (assets)**: imágenes OG y CV en inglés sin generar.
-- ⬜ **Documentación de sustentación** (§14): pendiente registrar en
-  `src/data/documentacion.ts` / `iteraciones-portfolio.ts` y el artículo de
-  `/notes` — se hará al cerrar un bloque de contenido con volumen real que
-  merezca su propia entrada, no tras la sola infraestructura.
+- ✅ **Documentación de sustentación** (§14, 29 jul): registrado en
+  `src/data/documentacion.ts` (RF-013 sitio en inglés —estado *parcial*—,
+  RF-014 sugerencia de idioma, RNF-20 guardas ciegos al idioma, RNF-21 paridad
+  de traducciones, CU-19) y en `src/data/iteraciones-portfolio.ts` (Fase 29).
+  Queda ⬜ el artículo de `/notes`: se escribirá con el §3 como columna
+  vertebral, al cerrar un bloque de contenido con volumen real.
 
 ---
 
