@@ -70,6 +70,17 @@ describe('paridad del diccionario es/en', () => {
         'status.errorBudget',
         'status.uptimeShort',
         'project.linksHeading',
+        // Jerga técnica del LAB idéntica en los dos idiomas: nombres de
+        // herramientas ('Load testing (k6)', 'Mutation testing'), términos
+        // adoptados ('rollback', 'fail-open', 'tests') y el nombre propio de
+        // la sección 'Security Operations'.
+        'lab.cards.securityTitle',
+        'lab.kpi.mutationScore',
+        'lab.methodology.failOpenWord',
+        'lab.pipeline.badgeRollback',
+        'lab.pipeline.testsLabel',
+        'lab.upcoming.k6Title',
+        'lab.upcoming.mutationTitle',
         'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',
