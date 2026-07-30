@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { getCollection } from 'astro:content'
+import { getNotes, noteSlug } from '../lib/notes'
 
 // Feed RSS de las notas de ingeniería. Además de lectores RSS, es una señal
 // de descubrimiento/frescura para crawlers y agregadores (se anuncia con
@@ -9,13 +9,11 @@ const escapeXml = (s: string) =>
 
 export const GET: APIRoute = async ({ site }) => {
   const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')
-  const notes = (await getCollection('notes', ({ data }) => !data.draft)).sort(
-    (a, b) => b.data.date.getTime() - a.data.date.getTime()
-  )
+  const notes = await getNotes('es')
 
   const items = notes
     .map((n) => {
-      const url = `${base}/notes/${n.id}`
+      const url = `${base}/notes/${noteSlug(n)}`
       return `    <item>
       <title>${escapeXml(n.data.title)}</title>
       <link>${url}</link>

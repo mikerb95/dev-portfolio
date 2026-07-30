@@ -1,24 +1,19 @@
 import type { APIRoute } from 'astro'
-import { getCollection } from 'astro:content'
+import { getNotes, noteSlug } from '../../lib/notes'
 
-// Feed en inglés de las notas de ingeniería. Vacío hasta que exista al menos
-// un artículo traducido (Fase 4 de docs/plan-i18n-en.md — la colección de
-// contenido aún no distingue idioma). Un canal RSS sin items es válido: mejor
-// eso que mezclar artículos en español bajo un feed anunciado como inglés.
+// Feed en inglés de las notas de ingeniería. Dos feeds separados, uno por
+// idioma: mezclar artículos en español dentro de un canal anunciado como
+// inglés es peor que un canal corto.
 const escapeXml = (s: string) =>
   s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[c]!)
 
 export const GET: APIRoute = async ({ site }) => {
   const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')
-  // TODO(fase 4 i18n): filtrar por `data.lang === 'en'` una vez la colección
-  // de notas distinga idioma. Hoy no hay ninguna nota en inglés.
-  const notes = (await getCollection('notes', () => false)).sort(
-    (a, b) => b.data.date.getTime() - a.data.date.getTime()
-  )
+  const notes = await getNotes('en')
 
   const items = notes
     .map((n) => {
-      const url = `${base}/en/notes/${n.id}`
+      const url = `${base}/en/notes/${noteSlug(n)}`
       return `    <item>
       <title>${escapeXml(n.data.title)}</title>
       <link>${url}</link>
