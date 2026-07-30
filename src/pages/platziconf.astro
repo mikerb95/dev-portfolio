@@ -3,6 +3,11 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import { db } from '../db'
 import { monitors, monitorChecks } from '../db/schema'
 import { and, eq, gte, sql } from 'drizzle-orm'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const pc = getDictionary(locale).platziconf
+const L = (path: string) => localizedHref(path, locale)
 
 // Landing de una sola página para compartir por QR/link con gente que conozca en la
 // Platzi Conf (Bogotá, 2026-08-29). No entra al sitemap (STATIC_PATHS en
@@ -30,33 +35,20 @@ const totals = await db
 const globalUptime30 =
   totals[0]?.total > 0 ? Math.round((totals[0].ok / totals[0].total) * 1000) / 10 : null
 
-const CASOS = [
-  {
-    href: '/notes/construyendo-un-micro-siem-para-mi-portfolio',
-    title: 'Construyendo un micro-SIEM para mi portfolio',
-    blurb: 'Motor propio que detecta, clasifica y bloquea tráfico hostil en tiempo real.',
-  },
-  {
-    href: '/notes/cobrar-un-trabajo-de-campo-sin-api-de-whatsapp',
-    title: 'Cobrar un trabajo de campo sin API de WhatsApp',
-    blurb: 'Pagos con idempotencia real y máquina de estados, sin pagar una API que no necesitaba.',
-  },
-  {
-    href: '/notes/chaos-engineering-que-no-puede-hacerte-dano',
-    title: 'Chaos engineering que no puede hacerte daño',
-    blurb: 'Inyectar fallos en producción de forma segura para probar que las alertas de verdad funcionan.',
-  },
+// Los slugs de las notas se traducen, así que el href depende del idioma: en
+// inglés apunta al artículo hermano, no al español con /en delante.
+const CASO_SLUGS = [
+  { es: '/notes/construyendo-un-micro-siem-para-mi-portfolio', en: '/en/notes/building-a-micro-siem-for-my-portfolio' },
+  { es: '/notes/cobrar-un-trabajo-de-campo-sin-api-de-whatsapp', en: '/en/notes/charging-for-field-work-without-the-whatsapp-api' },
+  { es: '/notes/chaos-engineering-que-no-puede-hacerte-dano', en: '/en/notes/chaos-engineering-that-cannot-hurt-you' },
 ]
+const CASOS = pc.cases.map((c, i) => ({ ...c, href: CASO_SLUGS[i][locale] }))
 
-const WA_MSG = encodeURIComponent('Hola Mike, nos vimos en la Platzi Conf 👋')
+const WA_MSG = encodeURIComponent(pc.waMessage)
 const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
 ---
 
-<BaseLayout
-  title="Platzi Conf — CodeByMike"
-  description="Nos conocimos en la Platzi Conf. Te muestro algo de lo que sé — stack, ingeniería y proyectos reales corriendo en producción."
-  image="/og-default.png"
->
+<BaseLayout title={pc.title} description={pc.description} image="/og-default.png">
   <div class="platzi-theme max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
     <!-- Hero -->
@@ -64,18 +56,17 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/platziconf</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Bogotá · 29 ago 2026</span>
+        <span>{pc.eventLine}</span>
         <img src="/platzi-logo.png" alt="Platzi" width="72" height="19" class="h-[15px] w-auto opacity-90" />
       </div>
       <h1 class="font-sans text-4xl md:text-6xl font-medium tracking-[-.03em] text-mask leading-[1.05] max-w-3xl mb-6">
-        Hola, nos conocimos en la Platzi Conf.
+        {pc.h1}
       </h1>
       <p class="text-[17px] md:text-[19px] text-ink-100 leading-relaxed max-w-2xl mb-4">
-        Me gustaría saber si puedo aportar a tu idea o proyecto. Te muestro algo de lo que sé —
-        sin diapositivas, con lo que tengo corriendo en producción ahora mismo.
+        {pc.lead}
       </p>
       <p class="text-[14px] text-ink-300 max-w-xl">
-        Soy Mike (<a href="https://github.com/mikerb95" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">@mikerb95</a>) —
+        {pc.iam} (<a href="https://github.com/mikerb95" target="_blank" rel="noopener" class="hover:text-cyan transition-colors">@mikerb95</a>) —
         <a href="https://codebymike.tech" class="hover:text-cyan transition-colors">codebymike.tech</a>
       </p>
     </header>
@@ -83,18 +74,13 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
     <!-- Qué hago -->
     <section class="mb-14 max-w-2xl">
       <p class="text-[15px] text-ink-100 leading-relaxed">
-        Construyo software full-stack de punta a punta: arquitectura, rendimiento y experiencia
-        de usuario, con la seguridad y la observabilidad como parte del diseño desde el primer
-        día, no como un parche al final. Este mismo sitio es el laboratorio: un micro-SIEM
-        propio, monitoreo con SLOs reales, pagos con idempotencia y una suite de chaos
-        engineering que inyecta fallos controlados para probar que las alertas de verdad
-        funcionan.
+        {pc.whatIDo}
       </p>
     </section>
 
     <!-- Stack técnico -->
     <section class="mb-14">
-      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-4">Stack</div>
+      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-4">{pc.stackHeading}</div>
       <div class="flex flex-wrap gap-2 mb-4">
         {['Astro', 'TypeScript', 'Turso / libSQL', 'Drizzle', 'Auth.js', 'Tailwind', 'Vercel'].map((t) => (
           <span class="px-3 py-1.5 rounded-full border border-white/10 bg-white/[.03] text-[12px] font-mono text-ink-100">
@@ -103,8 +89,7 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
         ))}
       </div>
       <p class="text-[13px] text-ink-300 max-w-xl leading-relaxed">
-        Y lo diferenciador: seguridad y observabilidad como desarrollo propio — micro-SIEM,
-        rate limiting durable, SLOs con presupuesto de error, chaos engineering fail-open.
+        {pc.stackNote}
       </p>
     </section>
 
@@ -116,7 +101,7 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
             {globalUptime30 === null ? '—' : `${globalUptime30}%`}
           </div>
           <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-1">
-            Uptime agregado · {SLO_DAYS}d
+            {pc.uptimeLabel} · {SLO_DAYS}d
           </div>
         </div>
         <div>
@@ -124,18 +109,18 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
             {activeMonitors.length}
           </div>
           <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-1">
-            Servicios monitoreados
+            {pc.monitoredServices}
           </div>
         </div>
-        <a href="/status" class="ml-auto text-[13px] text-cyan hover:underline shrink-0">
-          Ver el detalle completo →
+        <a href={L('/status')} class="ml-auto text-[13px] text-cyan hover:underline shrink-0">
+          {pc.seeDetail}
         </a>
       </div>
     </section>
 
     <!-- Casos de estudio -->
     <section class="mb-16">
-      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Casos de estudio</div>
+      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{pc.casesHeading}</div>
       <div class="grid md:grid-cols-3 gap-4">
         {CASOS.map((c) => (
           <a href={c.href} class="rounded-2xl glass p-5 lift block">
@@ -148,7 +133,7 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
 
     <!-- CTA final -->
     <section class="rounded-2xl glass p-7">
-      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Hablemos</div>
+      <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{pc.ctaHeading}</div>
       <div class="grid sm:grid-cols-3 gap-3">
         <a
           href={`https://wa.me/573104641228?text=${WA_MSG}`}
@@ -166,7 +151,7 @@ const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
           class="h-14 rounded-full border border-white/15 text-[14px] font-medium flex items-center justify-center gap-2 hover:border-cyan/50 hover:text-cyan transition-all"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          Agendar llamada
+          {pc.scheduleCall}
         </a>
         <a
           href="mailto:mikedrb@proton.me"
