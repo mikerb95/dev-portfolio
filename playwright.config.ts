@@ -15,7 +15,7 @@ import { join } from 'node:path'
 // 2. **`astro dev`, no `astro preview`.** El adaptador de Vercel no soporta
 //    `astro preview`; levantar el build requeriría `vercel dev`. El middleware
 //    —que es lo que estos tests verifican— corre igual en dev.
-const PORT = 4331
+const PORT = 4351
 const E2E_DIR = join(process.cwd(), '.e2e')
 
 export const E2E = {
