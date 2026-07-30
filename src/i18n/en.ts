@@ -656,6 +656,7 @@ const en = {
   },
 
   toolMock: {
+    monitorHosts: ['client-a.com', 'api.client-b.co', 'demo-store.shop'],
     windowLabel: '/admin · illustrative data',
     pnl: {
       project: 'Project',

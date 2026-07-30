@@ -18,11 +18,12 @@ const m = getDictionary(getLocaleFromUrl(Astro.url.pathname)).toolMock
 const bars = (down: number[]) =>
   Array.from({ length: 30 }, (_, i) => (down.includes(i) ? 'bg-ember' : 'bg-lime'))
 
-const monitorRows = [
-  { name: 'cliente-a.com', status: 'up', uptime: '99.98%', ms: '182 ms', down: [] as number[] },
-  { name: 'api.cliente-b.co', status: 'up', uptime: '99.71%', ms: '240 ms', down: [11] },
-  { name: 'tienda-demo.shop', status: 'degraded', uptime: '98.94%', ms: '2.4 s', down: [22, 27] },
+const monitorFigures = [
+  { status: 'up', uptime: '99.98%', ms: '182 ms', down: [] as number[] },
+  { status: 'up', uptime: '99.71%', ms: '240 ms', down: [11] },
+  { status: 'degraded', uptime: '98.94%', ms: '2.4 s', down: [22, 27] },
 ]
+const monitorRows = monitorFigures.map((f, i) => ({ ...f, name: m.monitorHosts[i] }))
 
 const pnlFigures = [
   { ing: '$4.2M', cos: '$310K', mar: 93 },

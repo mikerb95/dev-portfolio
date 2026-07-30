@@ -659,6 +659,7 @@ const es = {
   // lo lee un humano: si /tools existe en inglés, esto también tiene que
   // estar en inglés o la página queda a medio traducir.
   toolMock: {
+    monitorHosts: ['cliente-a.com', 'api.cliente-b.co', 'tienda-demo.shop'],
     windowLabel: '/admin · datos ilustrativos',
     pnl: {
       project: 'Proyecto',
