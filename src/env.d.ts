@@ -32,3 +32,14 @@ declare namespace App {
     portalDemo?: boolean
   }
 }
+
+interface Window {
+  /**
+   * Anuncia un mensaje en la región `aria-live` del portal. Lo define un script
+   * `is:inline` de PortalLayout (ver el porqué allí), así que puede no existir
+   * si ese layout no es el que está en pantalla: los llamadores usan
+   * `window.portalAnnounce?.(...)`, porque anunciar es una cortesía y jamás
+   * debe ser lo que rompa una interacción que ya funciona.
+   */
+  portalAnnounce?: (message: string) => void
+}
