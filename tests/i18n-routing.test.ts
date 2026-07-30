@@ -216,16 +216,20 @@ describe('untranslatedLocalizedTarget', () => {
 describe('TRANSLATED_ROUTES contra el filesystem', () => {
   const pagesEn = join(process.cwd(), 'src/pages/en')
 
-  // Ruta canónica -> archivo que la sirve bajo src/pages/en.
-  const fileFor = (route: string) => {
-    if (route === '/') return 'index.astro'
+  // Ruta canónica -> archivo(s) que podrían servirla bajo src/pages/en. Astro
+  // acepta las dos formas: `notes.astro` y `notes/index.astro`.
+  const filesFor = (route: string): string[] => {
+    if (route === '/') return ['index.astro']
     const name = route.slice(1)
-    return name.includes('.') ? `${name}.ts` : `${name}.astro`
+    if (name.includes('.')) return [`${name}.ts`]
+    return [`${name}.astro`, join(name, 'index.astro')]
   }
 
   it('cada ruta declarada tiene su archivo (si no, es un 404 anunciado)', () => {
     for (const route of TRANSLATED_ROUTES) {
-      expect(existsSync(join(pagesEn, fileFor(route))), `falta src/pages/en/${fileFor(route)}`).toBe(true)
+      const candidates = filesFor(route)
+      const found = candidates.some((f) => existsSync(join(pagesEn, f)))
+      expect(found, `falta src/pages/en/${candidates.join(' o ')}`).toBe(true)
     }
   })
 
@@ -241,8 +245,13 @@ describe('TRANSLATED_ROUTES contra el filesystem', () => {
   })
 
   it('cada archivo en src/pages/en está declarado (si no, es invisible)', () => {
-    const declared = new Set(TRANSLATED_ROUTES.map(fileFor))
-    const declaredDirs = new Set(TRANSLATED_PREFIXES.map((p) => p.slice(1)))
+    const declared = new Set(TRANSLATED_ROUTES.flatMap(filesFor))
+    const declaredDirs = new Set([
+      ...TRANSLATED_PREFIXES.map((p) => p.slice(1)),
+      // Una ruta declarada como `/notes` puede vivir en `notes/index.astro`:
+      // el directorio también cuenta como declarado.
+      ...TRANSLATED_ROUTES.filter((r) => r !== '/' && !r.includes('.')).map((r) => r.slice(1)),
+    ])
     for (const file of readdirSync(pagesEn)) {
       const ok = declared.has(file) || declaredDirs.has(file)
       expect(ok, `src/pages/en/${file} no está en TRANSLATED_ROUTES ni TRANSLATED_PREFIXES`).toBe(true)

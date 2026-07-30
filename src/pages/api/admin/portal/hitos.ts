@@ -108,13 +108,23 @@ export const PATCH: APIRoute = async ({ request }) => {
       .limit(1)
 
     if (project?.clientId) {
+      const titulo = (patch.title as string) ?? current.title
       await notifyClient({
         clientId: project.clientId,
         type: 'milestone',
-        title: `Hito completado · ${(patch.title as string) ?? current.title}`,
+        title: `Hito completado · ${titulo}`,
         body: `Avanzamos en ${project.title}. Puedes ver el detalle en tu portal.`,
         href: '/portal',
         emailCta: 'Ver el avance',
+      })
+      // Feed: la notificación es por persona y se marca leída; esto es el
+      // registro compartido que queda en la línea de tiempo del proyecto.
+      await recordActivity({
+        clientId: project.clientId,
+        projectId: current.projectId,
+        type: 'milestone',
+        title: `Hito completado · ${titulo}`,
+        href: '/portal',
       })
     }
   }
