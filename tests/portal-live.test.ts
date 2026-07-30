@@ -156,9 +156,12 @@ describe('portal · digest de la capa viva', () => {
     expect(d.invoices.pendingCents).toBe(800_000)
     expect(d.invoices.overdue).toBe(1)
 
-    // Hilos: el suyo, no el de RIVAL.
+    // Hilos: el suyo, no el de RIVAL. El de RIVAL tiene lastMessageAt MÁS
+    // reciente (now vs hourAgo), así que si la query se olvidara del clientId
+    // este caso lo cazaría por el lado de la fecha además del contador.
     expect(d.threads.unread).toBe(1)
     expect(d.threads.lastMessageAt).toBe(hourAgo.toISOString())
+    expect(d.threads.lastThreadId).toBe(acmeThread)
 
     // Proyecto: el suyo, con su avance (1 completado de 2 → 50%).
     expect(d.project?.id).toBe(acmeProject)
@@ -189,6 +192,7 @@ describe('portal · digest de la capa viva', () => {
     // el digest no puede ser la rendija por la que se enteren.
     expect(d.threads.unread).toBe(0)
     expect(d.threads.lastMessageAt).toBeNull()
+    expect(d.threads.lastThreadId).toBeNull()
 
     // Lo que sí le corresponde sigue llegando.
     expect(d.invoices.pending).toBe(2)

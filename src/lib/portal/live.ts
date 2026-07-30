@@ -18,7 +18,16 @@ export type PortalLiveDigest = {
   v: 1
   at: string
   notifications: { unread: number }
-  threads: { unread: number; lastMessageAt: string | null }
+  threads: {
+    unread: number
+    lastMessageAt: string | null
+    /**
+     * Hilo al que pertenece ese `lastMessageAt`. Sin él, la vista de un hilo
+     * abierto no puede distinguir "llegó respuesta AQUÍ" de "llegó respuesta en
+     * otro hilo", y avisaría en falso.
+     */
+    lastThreadId: number | null
+  }
   invoices: { pending: number; pendingCents: number; overdue: number; currency: string }
   project: {
     id: number
@@ -98,9 +107,12 @@ export async function portalLiveDigest(params: PortalLiveParams): Promise<Portal
     v: 1,
     at: now.toISOString(),
     notifications: { unread: notifUnread },
+    // `clientThreads` ya ordena por lastMessageAt desc, así que el más reciente
+    // es el primero: no hace falta recorrer para encontrarlo.
     threads: {
       unread: threads.filter((t) => t.unread > 0).length,
-      lastMessageAt: iso(maxDate(threads.map((t) => t.lastMessageAt))),
+      lastMessageAt: iso(threads[0]?.lastMessageAt),
+      lastThreadId: threads[0]?.id ?? null,
     },
     invoices: {
       pending: invoices.dueCount,
