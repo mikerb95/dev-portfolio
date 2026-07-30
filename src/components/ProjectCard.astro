@@ -1,27 +1,30 @@
 ---
 import { Image } from 'astro:assets'
 import { parseTechStack } from '../lib/tech-stack'
-import { getLocaleFromUrl } from '../i18n'
+import { getDictionary, getLocaleFromUrl, localizedHref, pickLocalized } from '../i18n'
 
 interface Props {
   slug: string
   title: string
+  titleEn?: string | null
   description?: string | null
+  descriptionEn?: string | null
   techStack?: string | null
   screenshotUrl?: string | null
 }
 
-const { slug, title, description, techStack, screenshotUrl } = Astro.props
+const { slug, techStack, screenshotUrl } = Astro.props
 const stack = parseTechStack(techStack)
-// El proyecto en sí (título/descripción, de la BD) todavía no tiene columna
-// _en (Fase 3 del plan de i18n, sin empezar): solo el chrome de la card se
-// traduce; el link sigue apuntando a /projects/<slug> en los dos idiomas.
 const locale = getLocaleFromUrl(Astro.url.pathname)
-const viewProjectLabel = locale === 'en' ? 'View project' : 'Ver proyecto'
+// Título y descripción salen de la BD y pueden no estar traducidos: se cae al
+// español fila por fila en vez de mostrar el hueco (§7 del plan de i18n).
+const title = pickLocalized(Astro.props, 'title', locale)
+const description = pickLocalized(Astro.props, 'description', locale)
+const viewProjectLabel = getDictionary(locale).proyectos.viewProject
 ---
 
 <a
-  href={`/projects/${slug}`}
+  href={localizedHref(`/projects/${slug}`, locale)}
   class="group block rounded-2xl glass lift overflow-hidden"
 >
   <!-- Visual region -->
