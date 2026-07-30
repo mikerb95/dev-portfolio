@@ -35,6 +35,9 @@ describe('portal · clasificación de rutas', () => {
       expect(isPortalPublicPath('/portal/documentos')).toBe(false)
       expect(isPortalPublicPath('/portal/cuenta')).toBe(false)
       expect(isPortalPublicPath('/api/portal/logout')).toBe(false)
+      // El digest de la capa viva devuelve datos de un cliente concreto: si
+      // alguien lo añadiera a la allowlist, los serviría sin sesión.
+      expect(isPortalPublicPath('/api/portal/live')).toBe(false)
     })
 
     it('no se deja engañar por prefijos parecidos', () => {
