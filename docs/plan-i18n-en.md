@@ -95,12 +95,32 @@ excepción de sus puertas públicas).
   `translationCoverage`, 10 tests) acepta un campo como `'texto'` o como
   `{ es, en }` y cae al español, así que los 5 módulos de datos se pueden
   traducir uno a uno sin romper ninguna página en el intermedio.
-- ⬜ **Fase 7**: sin empezar. Volumen pendiente: ~3 350 líneas de
+- ✅ **Fase 7 — Flujos con audiencia local**: `/platziconf` y `/cv/descargar`
+  traducidas. `/hola` se queda en español a propósito: es una herramienta
+  personal (no está en el sitemap ni enlazada desde el nav) cuyo producto es un
+  mensaje de WhatsApp para contactos hispanohablantes — traducirla no cambiaría
+  nada para nadie. Volumen pendiente: ~3 350 líneas de
   páginas de marca, contenido de `projects`/`education_milestones` en BD,
   11 383 palabras de notas, LAB, ~3 900 líneas + 240 KB de datos de `/docs`,
   y los flujos de audiencia local (§7). Ver desglose de cada fase más abajo,
   sin cambios respecto al plan original.
-- ⬜ **Fase 8 (assets)**: imágenes OG y CV en inglés sin generar.
+- ✅ **Fase 8 — Assets**: las 9 imágenes Open Graph tienen variante inglesa
+  (`public/og-en-*.png`), generadas por el mismo `scripts/og/generate.mjs` con
+  las secciones nuevas de `scripts/og/sections.mjs`. `BaseLayout` sirve la
+  variante según el locale, con una lista explícita de cuáles existen para no
+  anunciar un archivo ausente. `public/llms.txt` lista ambos idiomas y ambos
+  feeds. ⬜ **Pendiente**: el CV en PDF en inglés — es un documento a redactar
+  (contenido real de una hoja de vida), no algo que se genere desde el repo.
+- ✅ **Fase 9 — Verificación**: rastreo completo del sitio en inglés: 36 páginas
+  `/en` visitadas sin ningún enlace roto, 57 enlaces salientes únicos
+  comprobados (incluidos los que caen al español), 16/16 `hreflang` recíprocos
+  verificados en las dos direcciones, y cero español residual en el texto
+  renderizado. Los guardas siguen intactos: `/en/admin`, `/en/api/*`,
+  `/en/portal/*`, `/en/cobrar`, `/en/login` y `/en/docs/presentacion` devuelven
+  404 seco; `/en/docs`, `/en/docs/testing` y `/en/hola` redirigen 302 al
+  español. 881/883 tests (los 2 restantes son un flaky preexistente de
+  `latency.test.ts`, ajeno a i18n), build limpio y `astro check` sin errores
+  nuevos.
 - ✅ **Documentación de sustentación** (§14, 29 jul): registrado en
   `src/data/documentacion.ts` (RF-013 sitio en inglés —estado *parcial*—,
   RF-014 sugerencia de idioma, RNF-20 guardas ciegos al idioma, RNF-21 paridad
