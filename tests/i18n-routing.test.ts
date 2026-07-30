@@ -196,7 +196,7 @@ describe('translatedAlternates', () => {
 describe('untranslatedLocalizedTarget', () => {
   it('manda /en/<sin traducir> a la versión en español', () => {
     expect(untranslatedLocalizedTarget('/en/docs')).toBe('/docs')
-    expect(untranslatedLocalizedTarget('/en/lab/fingerprint/abc123')).toBe('/lab/fingerprint/abc123')
+    expect(untranslatedLocalizedTarget('/en/mis-pagos')).toBe('/mis-pagos')
   })
 
   it('no toca las páginas que sí existen en inglés', () => {
@@ -241,8 +241,10 @@ describe('TRANSLATED_ROUTES contra el filesystem', () => {
     for (const prefix of TRANSLATED_PREFIXES) {
       const dir = join(pagesEn, prefix.slice(1))
       expect(existsSync(dir), `falta el directorio src/pages/en${prefix}`).toBe(true)
-      const hasParamRoute = readdirSync(dir).some((f) => f.startsWith('[') && f.endsWith('.astro'))
-      expect(hasParamRoute, `src/pages/en${prefix} no tiene una ruta [param].astro`).toBe(true)
+      // La ruta [param] puede ser un archivo (`[slug].astro`) o un directorio
+      // con varias vistas dentro (`[room]/index.astro`, `[room]/board.astro`).
+      const hasParamRoute = readdirSync(dir).some((f) => f.startsWith('['))
+      expect(hasParamRoute, `src/pages/en${prefix} no tiene una ruta [param]`).toBe(true)
     }
   })
 
