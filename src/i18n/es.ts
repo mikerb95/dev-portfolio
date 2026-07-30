@@ -706,6 +706,34 @@ const es = {
     empty: 'Sin repositorios públicos.',
     error: 'No se pudo cargar la actividad de GitHub.',
   },
+  demo: {
+    title: 'Demo del panel — CodeByMike',
+    description: 'Explora el panel de control completo con datos ficticios: costos y P&L, clientes, proyectos, monitoreo y laboratorio de ingeniería. Sin registro.',
+    eyebrow: 'Panel de control',
+    h1Line1: 'Entra al panel',
+    h1Line2: 'sin registrarte.',
+    intro: 'El panel que uso a diario para operar mis proyectos: costos, márgenes, clientes, monitoreo y laboratorio. Esta demo te deja recorrerlo completo, con datos inventados y sin tocar nada real.',
+    includeHeading: 'Qué vas a ver',
+    include: [
+      'Costos e infraestructura con P&L multi-moneda y margen por proyecto.',
+      'Clientes, proyectos y su seguimiento (llamadas, reuniones, recordatorios).',
+      'Monitores de uptime, incidentes y el laboratorio de ingeniería.',
+      'Finanzas, briefings y certificaciones.',
+    ],
+    rulesHeading: 'Reglas del juego',
+    rules: [
+      'Los datos son ficticios: salen de una base de datos aparte, no de la real.',
+      'Es de solo lectura: crear, editar y borrar están deshabilitados en el servidor.',
+      'La bóveda de credenciales, los backups y la gestión de sesiones quedan fuera.',
+      'El panel se muestra en español: es la interfaz real que uso, sin traducir.',
+    ],
+    passDuration: 'El pase dura 2 horas',
+    passNote: 'Sin correo, sin cuenta, sin cookies de rastreo.',
+    cta: 'Entrar a la demo',
+    footnoteA: '¿Buscas cómo está construido? El aislamiento de la demo no depende de esconder botones: los datos salen de otra base de datos y el servidor rechaza cualquier método que no sea de lectura. Lo cuento en ',
+    footnoteLinkLabel: '/architecture',
+    footnoteB: '.',
+  },
 }
 
 export default es

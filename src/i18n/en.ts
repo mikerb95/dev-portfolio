@@ -700,6 +700,34 @@ const en = {
     empty: 'No public repositories.',
     error: 'Could not load GitHub activity.',
   },
+  demo: {
+    title: 'Panel Demo — CodeByMike',
+    description: 'Explore the full control panel with fictional data: costs and P&L, clients, projects, monitoring, and the engineering lab. No sign-up.',
+    eyebrow: 'Control panel',
+    h1Line1: 'Step into the panel,',
+    h1Line2: 'no sign-up required.',
+    intro: "The panel I use daily to run my projects: costs, margins, clients, monitoring, and the lab. This demo lets you explore the whole thing, with made-up data and without touching anything real.",
+    includeHeading: "What you'll see",
+    include: [
+      'Costs and infrastructure with multi-currency P&L and per-project margin.',
+      'Clients, projects, and their tracking (calls, meetings, reminders).',
+      'Uptime monitors, incidents, and the engineering lab.',
+      'Finances, briefings, and certifications.',
+    ],
+    rulesHeading: 'Ground rules',
+    rules: [
+      'The data is fictional: it comes from a separate database, not the real one.',
+      "It's read-only: create, edit, and delete are disabled on the server.",
+      'The credentials vault, backups, and session management are out of scope.',
+      "The panel itself is shown in Spanish: it's the real interface I use, untranslated.",
+    ],
+    passDuration: 'The pass lasts 2 hours',
+    passNote: 'No email, no account, no tracking cookies.',
+    cta: 'Enter the demo',
+    footnoteA: "Curious how this is built? The demo's isolation doesn't rely on hiding buttons: the data comes from a separate database and the server rejects any non-read method. I cover it in ",
+    footnoteLinkLabel: '/architecture',
+    footnoteB: '.',
+  },
 } satisfies typeof es
 
 export default en
