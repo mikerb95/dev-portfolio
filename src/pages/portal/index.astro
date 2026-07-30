@@ -184,6 +184,13 @@ const canSeeMessages = user.role !== 'billing'
                 )}
               </div>
               <ActivityFeed items={actividad.items} empty="Aquí aparecerá lo que vaya pasando." />
+
+              <!-- Aviso de actividad nueva, oculto hasta que la capa viva la detecte -->
+              <button
+                type="button"
+                data-activity-refresh
+                class="hidden w-full mt-3.5 h-8 px-3 text-[12px] rounded-lg bg-cyan/10 border border-cyan/30 text-cyan hover:bg-cyan/15 transition"
+              >Hay actividad nueva · Actualizar</button>
             </div>
 
             {current.previewUrl && (
