@@ -59,6 +59,24 @@ test.describe('portal · demo pública', () => {
     await expect(page.getByText('INV-2026-101')).toBeVisible()
   })
 
+  test('la capa viva late con datos de la base de demo', async ({ page }) => {
+    await page.goto('/api/portal/demo')
+
+    const res = await page.request.get('/api/portal/live')
+    expect(res.status()).toBe(200)
+    // Datos de un cliente concreto: nunca en caché.
+    expect(res.headers()['cache-control']).toContain('no-store')
+
+    const digest = await res.json()
+    expect(digest.v).toBe(1)
+    // El pase de demo corre sobre la base de demo (AsyncLocalStorage en
+    // src/db/index.ts): el digest tiene que ver el proyecto sembrado ahí, no
+    // uno real ni un null por haber mirado la base equivocada.
+    expect(digest.project).not.toBeNull()
+    expect(digest.project.progress.total).toBeGreaterThan(0)
+    expect(digest.invoices.pending).toBeGreaterThan(0)
+  })
+
   test('es de solo lectura: invitar y escribir mensajes se rechazan', async ({ page }) => {
     await page.goto('/api/portal/demo')
 
