@@ -131,6 +131,23 @@ const L = (path: string) => localizedHref(path, locale)
       </div>
     </div>
   </div>
+
+  <script
+    id="log-i18n"
+    type="application/json"
+    set:html={JSON.stringify({
+      oneCommit: l.oneCommit,
+      nCommits: l.nCommits,
+      today: l.today,
+      noActivity: l.noActivity,
+      live: l.live,
+      connectError: l.connectError,
+      loadError: l.loadError,
+      justNowMinutes: l.justNowMinutes,
+      justNowHours: l.justNowHours,
+      justNowDays: l.justNowDays,
+    })}
+  />
 </BaseLayout>
 
 <style>
