@@ -217,5 +217,127 @@ const initials = (user.name ?? user.email)
         }, 60)
       }
     </script>
+
+    <!--
+      Capa viva: UN solo ciclo de sondeo para todo el portal, aquí y no por
+      página, porque la campana, el dashboard y un hilo abierto quieren el mismo
+      dato. Emite `portal:live` y cada vista decide si le interesa; así tres
+      suscriptores comparten una petición en vez de abrir tres.
+    -->
+    <script>
+      type Digest = {
+        v: number
+        notifications: { unread: number }
+        threads: { unread: number; lastMessageAt: string | null }
+      }
+
+      const BASE_MS = 20_000
+      const MAX_MS = 300_000
+
+      let delay = BASE_MS
+      let timer: number | undefined
+      let stopped = false
+      // Arranca con lo que pintó el SSR: así el primer digest no anuncia como
+      // "nuevo" algo que el usuario ya tiene delante en la pantalla.
+      let lastUnread = Number(document.getElementById('portal-bell')?.dataset.unread ?? 0)
+
+      /** Pinta el contador de la campana sin recargar. */
+      function paintBell(unread: number): void {
+        const bell = document.getElementById('portal-bell')
+        if (!bell) return
+        bell.dataset.unread = String(unread)
+        bell.setAttribute(
+          'aria-label',
+          unread > 0 ? `Notificaciones (${unread} sin leer)` : 'Notificaciones'
+        )
+
+        let badge = bell.querySelector<HTMLElement>('[data-bell-badge]')
+        if (unread === 0) {
+          badge?.remove()
+          return
+        }
+        if (!badge) {
+          badge = document.createElement('span')
+          badge.setAttribute('data-bell-badge', '')
+          badge.className =
+            'absolute top-1 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-cyan text-ink-950 text-[9px] font-bold grid place-items-center'
+          bell.appendChild(badge)
+        }
+        badge.textContent = unread > 9 ? '9+' : String(unread)
+      }
+
+      function apply(digest: Digest): void {
+        // Un digest de una versión que este script no entiende se ignora entero:
+        // mejor quedarse con el SSR que pintar campos que cambiaron de sentido.
+        if (digest.v !== 1) return
+
+        const unread = digest.notifications.unread
+        if (unread !== lastUnread) {
+          paintBell(unread)
+          // Solo se anuncia lo que SUBE: pasar a 0 es consecuencia de que el
+          // propio usuario acaba de leerlas, y no hay nada que avisarle.
+          if (unread > lastUnread) {
+            const n = unread - lastUnread
+            window.portalAnnounce?.(
+              n === 1 ? 'Tienes una notificación nueva' : `Tienes ${n} notificaciones nuevas`
+            )
+          }
+          lastUnread = unread
+        }
+
+        // Las vistas que quieran más (avance, salud, facturas, hilo abierto) se
+        // enganchan aquí. El layout no conoce sus detalles a propósito.
+        document.dispatchEvent(new CustomEvent('portal:live', { detail: digest }))
+      }
+
+      async function tick(): Promise<void> {
+        if (stopped) return
+        // Pestaña oculta: no se gasta una petición. El ciclo se reanuda al
+        // volver, con un sondeo inmediato (ver visibilitychange).
+        if (document.visibilityState !== 'visible') return schedule()
+
+        try {
+          const p = new URLSearchParams(location.search).get('p')
+          const res = await fetch(`/api/portal/live${p ? `?p=${encodeURIComponent(p)}` : ''}`, {
+            headers: { Accept: 'application/json' },
+          })
+
+          if (res.status === 401) {
+            // La sesión venció: seguir sondeando solo produciría 401 en bucle.
+            // No se redirige — el usuario puede estar leyendo algo; lo hará su
+            // próxima navegación.
+            stopped = true
+            return
+          }
+          if (!res.ok) throw new Error(String(res.status))
+
+          apply(await res.json())
+          delay = BASE_MS // primer 200 → se recupera el ritmo normal
+        } catch {
+          // Fail-open y silencioso: el portal se queda con los datos del SSR y
+          // el usuario no ve ningún error. Un mecanismo de conveniencia jamás
+          // degrada la página que adorna.
+          delay = Math.min(delay * 2, MAX_MS)
+        }
+        schedule()
+      }
+
+      function schedule(): void {
+        window.clearTimeout(timer)
+        if (!stopped) timer = window.setTimeout(tick, delay)
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && !stopped) {
+          // Al volver, lo primero que quiere ver el usuario es el estado real,
+          // no esperar hasta 20 s más.
+          delay = BASE_MS
+          window.clearTimeout(timer)
+          timer = window.setTimeout(tick, 0)
+        }
+      })
+
+      schedule()
+    </script>
   </body>
 </html>
