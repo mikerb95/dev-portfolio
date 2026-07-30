@@ -69,6 +69,7 @@ describe('paridad del diccionario es/en', () => {
         'status.securityCard.title',
         'status.errorBudget',
         'status.uptimeShort',
+        'project.linksHeading',
         'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',

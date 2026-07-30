@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import {
+  TRANSLATED_PREFIXES,
   TRANSLATED_ROUTES,
   alternateUrls,
   delocalizePath,
@@ -228,10 +229,39 @@ describe('TRANSLATED_ROUTES contra el filesystem', () => {
     }
   })
 
+  // Los prefijos dinámicos son directorios con una ruta [param] dentro, no
+  // archivos: /projects -> src/pages/en/projects/[slug].astro.
+  it('cada prefijo dinámico declarado tiene su directorio con una ruta [param]', () => {
+    for (const prefix of TRANSLATED_PREFIXES) {
+      const dir = join(pagesEn, prefix.slice(1))
+      expect(existsSync(dir), `falta el directorio src/pages/en${prefix}`).toBe(true)
+      const hasParamRoute = readdirSync(dir).some((f) => f.startsWith('[') && f.endsWith('.astro'))
+      expect(hasParamRoute, `src/pages/en${prefix} no tiene una ruta [param].astro`).toBe(true)
+    }
+  })
+
   it('cada archivo en src/pages/en está declarado (si no, es invisible)', () => {
     const declared = new Set(TRANSLATED_ROUTES.map(fileFor))
+    const declaredDirs = new Set(TRANSLATED_PREFIXES.map((p) => p.slice(1)))
     for (const file of readdirSync(pagesEn)) {
-      expect(declared.has(file), `src/pages/en/${file} no está en TRANSLATED_ROUTES`).toBe(true)
+      const ok = declared.has(file) || declaredDirs.has(file)
+      expect(ok, `src/pages/en/${file} no está en TRANSLATED_ROUTES ni TRANSLATED_PREFIXES`).toBe(true)
     }
+  })
+})
+
+describe('hasTranslation con prefijos dinámicos', () => {
+  it('cualquier proyecto tiene plantilla en inglés', () => {
+    expect(hasTranslation('/projects/dobleyo', 'en')).toBe(true)
+    expect(hasTranslation('/en/projects/dobleyo', 'en')).toBe(true)
+  })
+
+  it('el prefijo desnudo no cuenta: /projects sin slug no es una página', () => {
+    expect(hasTranslation('/projects', 'en')).toBe(false)
+    expect(hasTranslation('/projects/', 'en')).toBe(false)
+  })
+
+  it('un prefijo parecido no matchea', () => {
+    expect(hasTranslation('/projectsss/x', 'en')).toBe(false)
   })
 })
