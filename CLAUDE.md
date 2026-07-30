@@ -73,6 +73,10 @@ Directorios clave:
 - `src/lib/` — lógica pura, testeada sin BD cuando es posible.
 - `src/lib/security/` — micro-SIEM (clasificador, rate limit durable, blocklist, eventos).
 - `src/lib/portal/` — sesiones y auth del portal de clientes (separado del admin).
+- `src/i18n/` — locales, diccionarios (`es.ts`/`en.ts`), formateo y helpers de
+  ruta. Módulo **puro**: lo importan el middleware y el navegador.
+- `src/pages/en/` — cascarones de ruta de la versión en inglés (3 líneas cada
+  uno); la implementación de la página es única y vive fuera.
 - `src/pages/api/` — endpoints; `src/pages/api/admin/` requiere sesión admin.
 - `src/db/schema.ts` — schema Drizzle único, fuente de verdad.
 - `src/data/` — datos tipados que alimentan `/docs` (requisitos, casos de uso,
@@ -121,6 +125,16 @@ cookies ni lógica:
   `/status`), `Cache-Control: public, s-maxage=300, stale-while-revalidate`
   que ya pone el middleware — no hay que añadirlo página por página salvo
   que se necesite `no-store` explícito (datos personales, rutas privadas).
+- **i18n (español canónico, inglés bajo `/en`)**: el pathname se normaliza con
+  `delocalizePath` **una sola vez** al inicio del middleware, y todos los
+  guardas de seguridad reciben la ruta canónica — comparan rutas literales, así
+  que un `/en/` sin normalizar delante de `/admin` sería una copia del panel sin
+  vigilancia. Las rutas privadas dan 404 bajo cualquier prefijo de idioma.
+  Traducir una página son **tres** pasos: texto al diccionario, cascarón en
+  `src/pages/en/`, y alta en `TRANSLATED_ROUTES` (`src/i18n/routing.ts`). Los
+  enlaces se pintan con `localizedHref`, nunca con `localizePath`: el primero
+  cae al español cuando no hay traducción, el segundo publica un 404. Plan en
+  `docs/plan-i18n-en.md`.
 - **Rutas privadas nuevas**: si necesitan la sesión admin, añadirlas al
   matcher `isAdmin` en `src/middleware.ts` (no crear un gate paralelo). Si
   son públicas pero sensibles (links firmados, tokens), usar

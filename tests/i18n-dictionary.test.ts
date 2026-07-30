@@ -46,6 +46,15 @@ describe('paridad del diccionario es/en', () => {
       // en los dos idiomas — no son traducciones olvidadas.
       const ALLOWED_IDENTICAL = new Set([
         'meta.siteName',
+        // Jerga y marcas de las maquetas de /tools que son iguales en los dos
+        // idiomas: 'Open source', 'rollback', 'deploy → health check', rutas
+        // ficticias y el nombre de una métrica.
+        'githubProjects.eyebrow',
+        'toolMock.chaos.flags[0].route',
+        'toolMock.chaos.flags[1].k',
+        'toolMock.pipeline.rollback',
+        'toolMock.pipeline.step',
+        'toolMock.security.overhead',
         'home.title',
         'home.hero.stackLine1',
         'home.hero.stackLine2',
