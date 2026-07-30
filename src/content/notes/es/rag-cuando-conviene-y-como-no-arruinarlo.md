@@ -3,6 +3,8 @@ title: RAG — cuándo conviene y cómo no arruinarlo
 description: Retrieval-Augmented Generation no es magia ni un reemplazo del fine-tuning. Es una decisión de arquitectura con trade-offs claros — y la mayoría de los fracasos ocurren en la recuperación, no en el modelo.
 date: 2026-07-09
 tags: [rag, llm, arquitectura, ia]
+lang: es
+translationOf: rag-when-it-fits-and-how-not-to-ruin-it
 ---
 
 Cada vez que alguien quiere que un LLM "sepa" sobre sus propios datos, aparece la misma bifurcación: ¿reentreno el modelo o le doy la información en el momento de la pregunta? La segunda opción es RAG — Retrieval-Augmented Generation — y en la enorme mayoría de los casos es la respuesta correcta. No porque esté de moda, sino porque los trade-offs casi siempre caen de su lado.

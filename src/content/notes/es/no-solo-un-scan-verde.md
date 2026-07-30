@@ -3,6 +3,8 @@ title: No solo un scan verde
 description: Conectar npm audit, CodeQL y axe-core a un panel propio con historial y dedup — para que un análisis de seguridad y accesibilidad cuente una historia, no solo un checkmark que nadie mira dos veces.
 date: 2026-07-17
 tags: [seguridad, accesibilidad, sast, testing, ci-cd]
+lang: es
+translationOf: more-than-a-green-scan
 ---
 
 Un scanner de seguridad que corre en CI y no reporta a ninguna parte es ruido decorativo: aparece verde en un badge, nadie lo abre, y el día que encuentra algo real se pierde entre cien notificaciones de GitHub que también se ignoran. Lo que hace valioso un análisis automático no es que exista — es que alguien pueda mirarlo seis meses después y ver la historia completa: esto se encontró, esto se arregló, esto se aceptó a conciencia.

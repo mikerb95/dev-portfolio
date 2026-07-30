@@ -3,6 +3,8 @@ title: SLOs y error budgets para proyectos pequeños
 description: El uptime en porcentaje engaña. Adaptar la disciplina SRE de Google — SLI, SLO, presupuesto de error y burn rate — a un portfolio de proyectos chicos.
 date: 2026-07-05
 tags: [sre, slo, observabilidad]
+lang: es
+translationOf: slos-and-error-budgets-in-a-portfolio
 ---
 
 "99.2% de uptime este mes" suena bien hasta que haces la cuenta: son casi seis horas caído. ¿Eso es aceptable? ¿Es una crisis? El porcentaje solo no lo dice. La disciplina SRE de Google resolvió esto hace años con tres conceptos que casi nadie aplica fuera de las empresas grandes, y que funcionan igual de bien en un portfolio de proyectos pequeños.

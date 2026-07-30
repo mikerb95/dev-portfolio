@@ -3,6 +3,8 @@ title: Chaos engineering que no puede hacerte daño
 description: Inyectar fallos en producción para probar que las alertas funcionan — con fail-open, TTL obligatorio y un botón de pánico, para que el caos jamás se convierta en un incidente real.
 date: 2026-07-05
 tags: [chaos-engineering, resiliencia, sre]
+lang: es
+translationOf: chaos-engineering-that-cannot-hurt-you
 ---
 
 ¿Cómo sabes que tu monitoreo detecta una caída si nunca has visto una? Confiar en alertas que jamás se han disparado es fe, no ingeniería. La única forma de saber que la cadena completa funciona — el monitor detecta, el incidente se registra, la push llega al móvil — es romper algo a propósito y mirar.

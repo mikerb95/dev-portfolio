@@ -3,6 +3,8 @@ title: El clientId nunca viene de la URL
 description: "Construí un portal donde cada cliente ve sus proyectos, sus facturas y sus documentos. El riesgo número uno no era que alguien entrara sin permiso: era que alguien entrara con el suyo y viera lo de otro."
 date: 2026-07-24
 tags: [seguridad, multi-tenant, arquitectura, astro]
+lang: es
+translationOf: the-client-id-never-comes-from-the-url
 ---
 
 Un portal de clientes tiene una superficie de ataque incómoda: casi todo el que lo usa está **legítimamente autenticado**. El login puede ser perfecto — contraseñas con scrypt, sesiones revocables, rate limiting — y aun así basta un `WHERE` mal escrito para que una empresa vea la factura de otra. Ese fallo no dispara ninguna alarma de seguridad, porque desde fuera parece una consulta normal de un usuario normal.

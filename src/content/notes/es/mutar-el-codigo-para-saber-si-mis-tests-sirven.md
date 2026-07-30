@@ -3,6 +3,8 @@ title: Mutar mi código para saber si mis tests sirven de verdad
 description: Cobertura dice qué líneas se ejecutaron. Mutation testing pregunta algo más incómodo — si rompo esta línea a propósito, ¿algún test se entera? Y contratos con Zod, para que un endpoint no cambie de forma sin que nadie se dé cuenta.
 date: 2026-07-17
 tags: [testing, calidad, ci-cd]
+lang: es
+translationOf: mutating-my-code-to-find-out-if-my-tests-work
 ---
 
 Este sitio tiene más de 400 tests y una cobertura que se ve bien en cualquier badge. Durante mucho tiempo eso me bastó como prueba de que la suite era sólida. Pero cobertura mide una pregunta muy limitada: ¿esta línea se ejecutó al menos una vez durante los tests? Un `if` que se ejecuta pero cuya condición nunca importa para el resultado cuenta como "cubierto" exactamente igual que uno que de verdad se está verificando. Cobertura alta con aserciones débiles es un número que miente con la conciencia tranquila.

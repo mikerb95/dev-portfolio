@@ -3,6 +3,8 @@ title: Sesiones revocables sobre un JWT stateless
 description: Mi panel de admin usaba JWT puro; una cookie robada era imparable hasta expirar. Así le añadí lista de dispositivos, revocación remota y alertas sin abandonar el JWT.
 date: 2026-07-09
 tags: [seguridad, auth, astro]
+lang: es
+translationOf: revocable-sessions-on-stateless-jwt
 ---
 
 El panel de administración de este sitio se autentica con OAuth de GitHub y una sesión JWT. Es un diseño cómodo — sin store de sesiones, sin estado en el servidor — pero tiene un punto ciego incómodo: **el servidor no sabe cuántas sesiones existen ni dónde**. Si alguien roba la cookie (un dispositivo perdido, una laptop compartida, un descuido), esa sesión es invisible e imparable hasta que el token expire por sí solo.

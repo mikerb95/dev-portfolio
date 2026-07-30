@@ -3,6 +3,8 @@ title: Tests e2e que prueban lo que de verdad importa
 description: Cerrar la pirámide de testing con Playwright sin volverla frágil — bases de datos desechables, un centinela que demuestra el aislamiento de la demo, y por qué cada test necesita su propia IP.
 date: 2026-07-16
 tags: [testing, playwright, e2e, calidad]
+lang: es
+translationOf: e2e-tests-that-check-what-actually-matters
 ---
 
 Tengo más de 400 tests unitarios sobre la lógica de este sitio: idempotencia de pagos, cálculo de P&L, clasificación de amenazas, detección de anomalías. Todos corren en milisegundos y ninguno abre un navegador. Son excelentes para lo que hacen — y ciegos para lo que no.

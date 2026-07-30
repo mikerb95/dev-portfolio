@@ -3,6 +3,8 @@ title: Bloqueo escalado de IPs sin desconectarme a mí mismo
 description: Detectar amenazas ya no bastaba. El micro-SIEM del portfolio gana enforcement de verdad — TTL que escala con la reincidencia y honeypots que se bloquean en el propio request, no en el próximo cron.
 date: 2026-07-19
 tags: [seguridad, observabilidad, sre]
+lang: es
+translationOf: escalating-ip-blocks-without-locking-myself-out
 ---
 
 [El micro-SIEM de este sitio](/notes/construyendo-un-micro-siem-para-mi-portfolio) llevaba semanas detectando y clasificando tráfico hostil, pero se quedaba corto en la parte que más importa: actuar. Un scanner que tocaba un honeypot generaba un evento, el evento esperaba al cron de auto-block, y entre que el cron corría y decidía bloquear podían pasar minutos en los que la misma IP seguía golpeando el sitio sin fricción. Detectar sin bloquear es la mitad del trabajo.

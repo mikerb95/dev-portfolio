@@ -3,6 +3,8 @@ title: Construyendo un micro-SIEM para mi portfolio
 description: Los scanners atacan cualquier sitio con IP pública, incluido este. En vez de ignorar el ruido, construí un motor propio que lo detecta, lo clasifica, lo bloquea y lo muestra en público.
 date: 2026-07-10
 tags: [seguridad, observabilidad, sre]
+lang: es
+translationOf: building-a-micro-siem-for-my-portfolio
 ---
 
 Cualquier sitio con una IP pública recibe tráfico hostil desde el primer minuto, portfolio personal incluido. Scanners automáticos prueban `/wp-login.php`, `/.env`, `/.git/config`, inyecciones en cada parámetro de query — no porque te hayan elegido, sino porque escanean internet entero y tú simplemente estás en el rango. La reacción normal es ignorarlo: son 404, no rompen nada, ¿para qué mirar?

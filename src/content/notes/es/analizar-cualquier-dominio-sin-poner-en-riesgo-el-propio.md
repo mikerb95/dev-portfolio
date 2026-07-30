@@ -3,6 +3,8 @@ title: Analizar cualquier dominio sin poner en riesgo el propio
 description: Convertir un endpoint de diagnóstico que solo yo podía usar en una herramienta pública para mis compañeros — y por qué eso obliga a resolver primero el abuso y el SSRF, no el análisis en sí.
 date: 2026-07-17
 tags: [seguridad, ssrf, rate-limiting, accesibilidad, lab]
+lang: es
+translationOf: scanning-any-domain-without-risking-your-own
 ---
 
 Un compañero de clase pidió algo simple: un lugar donde pegar la URL de su proyecto y ver qué tan bien está armado — cabeceras, TLS, SEO, accesibilidad. Yo ya tenía casi todo eso escrito. Vivía en `src/lib/diagnostics.ts`, detrás del panel de administración, usado solo para diagnosticar mis propios monitores. La tentación fue copiar el endpoint, quitarle el `middleware` de auth y llamarlo terminado. No lo hice, porque ahí es donde empieza el problema real: en cuanto un endpoint acepta una URL arbitraria de un visitante anónimo, deja de ser una herramienta de diagnóstico y pasa a ser una superficie de ataque.

@@ -3,6 +3,8 @@ title: Por qué construí mi propio monitor de uptime
 description: UptimeRobot me decía que todo estaba bien mientras producción servía la página equivocada. Así que escribí el motor de checks que necesitaba.
 date: 2026-07-05
 tags: [observabilidad, astro, sre]
+lang: es
+translationOf: why-i-built-my-own-uptime-monitor
 ---
 
 Un servicio de uptime genérico responde una sola pregunta: ¿el servidor devolvió 200? Y esa es la pregunta equivocada. Un deploy roto puede responder 200 con una página en blanco, con el bundle sin compilar o con el HTML de otro proyecto. El sitio está "arriba" y a la vez completamente caído para quien lo visita.
