@@ -1,0 +1,97 @@
+---
+// Pinta un diagrama de comunicación UML: objetos, enlaces y mensajes numerados.
+// El SVG sale renderizado desde el servidor, sin JavaScript de diagramas.
+import { layout, type UmlCommunicationModel } from '../../lib/uml-communication'
+
+interface Props {
+  model: UmlCommunicationModel
+}
+
+const { model } = Astro.props
+const l = layout(model)
+const uid = `com-${model.id}`
+---
+
+<svg
+  class="uml-scope block"
+  viewBox={`0 0 ${l.w} ${l.h}`}
+  width={l.w}
+  height={l.h}
+  role="img"
+  aria-label={`Diagrama de comunicación: ${model.titulo}`}
+  style={`max-width: ${l.w}px`}
+>
+  <defs>
+    {/* Punta MACIZA para el mensaje síncrono y ABIERTA para el asíncrono y el
+        retorno: en UML esa diferencia dice si el emisor se queda esperando, que
+        es exactamente lo que separa el registro fail-open del resto. */}
+    <marker id={`${uid}-llena`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 Z" fill="var(--uml-line)" />
+    </marker>
+    <marker id={`${uid}-abierta`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="var(--uml-line)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width={l.w} height={l.h} fill="var(--uml-bg)" />
+
+  {/* Enlaces: línea simple y sin punta. El enlace dice que dos objetos PUEDEN
+      hablar; quién habla y en qué orden lo dicen los mensajes que lleva. */}
+  {l.enlaces.map((e) => <line x1={e.a.x} y1={e.a.y} x2={e.b.x} y2={e.b.y} stroke="var(--uml-border)" stroke-width="1.3" />)}
+
+  {
+    l.mensajes.map((m) => (
+      <g>
+        <path
+          d={`M ${m.a.x} ${m.a.y} L ${m.b.x} ${m.b.y}`}
+          fill="none"
+          stroke="var(--uml-line)"
+          stroke-width="1.4"
+          stroke-dasharray={m.kind === 'reply' ? '5 4' : undefined}
+          marker-end={`url(#${uid}-${m.kind === 'sync' || !m.kind ? 'llena' : 'abierta'})`}
+        />
+        <text class="uml-guarda" x={m.at.x} y={m.at.y} text-anchor={m.align} dominant-baseline="central">
+          {m.lines.map((line, i) => (
+            <tspan x={m.at.x} dy={i === 0 ? -((m.lines.length - 1) * 11) / 2 : 11}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      </g>
+    ))
+  }
+
+  {
+    l.objetos.map((o) => (
+      <g>
+        <rect
+          x={o.cx - o.w / 2}
+          y={o.cy - o.h / 2}
+          width={o.w}
+          height={o.h}
+          fill="var(--uml-node-fill)"
+          stroke="var(--uml-node-stroke)"
+          stroke-width="1.3"
+        />
+        {o.estereotipo && (
+          <text class="uml-estereotipo" x={o.cx} y={o.cy - 7} text-anchor="middle" dominant-baseline="central">
+            «{o.estereotipo}»
+          </text>
+        )}
+        {/* El nombre de una instancia va SUBRAYADO. Es lo único que distingue un
+            objeto de una clase en UML, así que el subrayado no es un adorno:
+            sin él, el diagrama estaría hablando de clases. */}
+        <text
+          class="uml-label"
+          x={o.cx}
+          y={o.estereotipo ? o.cy + 8 : o.cy}
+          text-anchor="middle"
+          dominant-baseline="central"
+          text-decoration="underline"
+        >
+          {o.etiqueta}
+        </text>
+      </g>
+    ))
+  }
+</svg>
