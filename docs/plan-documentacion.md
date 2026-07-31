@@ -1,7 +1,9 @@
 # Plan — Módulo de Documentación del proyecto (`/admin/docs`)
 
-> Estado: **Fase 1 implementada** (jul 2026). Este plan es el documento vivo del módulo:
-> alcance, arquitectura, contenido de cada subpágina, fuentes de verdad y fases futuras.
+> Estado: **Fase 1 implementada** (jul 2026), más las entregas posteriores de
+> §5.b (21–24 jul) y §5.c (30 jul). El módulo vive hoy en `/docs` (público), no
+> en `/admin/docs`. Este plan es el documento vivo: alcance, arquitectura,
+> contenido de cada subpágina, fuentes de verdad y fases futuras.
 
 ## 1. Objetivo
 
@@ -208,3 +210,10 @@ El menú pasó de 18 a 20 pestañas (`Comunicación`, `Actividades`, `Despliegue
 - Cierre de iteración → nueva entrada en `iteraciones-portfolio.ts` con
   `git rev-list --count --since --until` para el conteo de commits.
 - Cambio de schema → actualizar el diagrama de clases en la misma PR.
+- Diagrama nuevo con motor propio → modelo tipado en `src/data/`, motor en
+  `src/lib/` reutilizando la geometría del de BPMN, y test de geometría **y**
+  notación en `tests/`. Un diagrama cuya corrección solo se comprueba mirándolo
+  vuelve a estar mal a la tercera edición.
+- Cambio de arquitectura (nodo, servicio externo, interfaz entre componentes) →
+  tocar `src/data/{despliegue,componentes}.ts` en la misma PR: los tests de UML
+  no detectan que el modelo esté desactualizado, solo que sea consistente.
