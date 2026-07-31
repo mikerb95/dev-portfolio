@@ -33,18 +33,27 @@ x-libsql: &libsql
   # Endurecido por defecto: un contenedor de laboratorio que corre con todas las
   # capacidades es una superficie nueva, no una herramienta.
   #
-  # DAC_OVERRIDE no es decorativo ni "por si acaso": sin él sqld muere en bucle
-  # con `mkdir: /var/lib/sqld/main.db: Permission denied`, porque su wrapper de
-  # arranque crea el directorio de datos dentro de un volumen que no le
-  # pertenece. Se comprobó una por una cuál hacía falta — CHOWN, SETUID, SETGID
-  # y FOWNER no lo son — en vez de devolver el ALL entero al primer fallo, que
-  # es como los contenedores acaban corriendo con todo abierto.
+  # Estas cuatro no son decorativas ni "por si acaso": son el mínimo exacto que
+  # necesita el wrapper de arranque de sqld, medido quitándolas una a una hasta
+  # que /health dejaba de responder. Su secuencia es crear el directorio de
+  # datos en un volumen que no le pertenece (DAC_OVERRIDE), adueñárselo (CHOWN)
+  # y bajar privilegios antes de ejecutar el servidor (SETUID + SETGID).
+  # FOWNER no hace falta.
+  #
+  # El error de la primera medición vale la pena recordarlo: se dio por buena
+  # una capacidad de menos porque la sonda buscaba el texto "Permission denied"
+  # y el fallo real decía "Operation not permitted". Un test que busca un string
+  # concreto en un log afirma menos de lo que parece; el criterio correcto era
+  # el que se usó después — que el servidor conteste.
   security_opt:
     - no-new-privileges:true
   cap_drop:
     - ALL
   cap_add:
     - DAC_OVERRIDE
+    - CHOWN
+    - SETUID
+    - SETGID
 
 services:
   libsql-main:
