@@ -303,7 +303,7 @@ export const PIPELINE: EtapaPipeline[] = [
     dispara: 'A mano, mientras escribo código',
     duracion: '~4 s la suite completa',
     pasos: [
-      'npm test — los 831 tests de Vitest',
+      'npm test — los 937 tests de Vitest',
       'npm run test:e2e:ui — Playwright en modo inspector, si toqué una página',
       'npx astro check — type-check de todo el proyecto',
     ],
@@ -333,7 +333,7 @@ export const PIPELINE: EtapaPipeline[] = [
     duracion: '~3-6 min',
     pasos: [
       'Job quality: vitest run --coverage y luego npm run build',
-      'Job e2e: instala Chromium, siembra dos bases libSQL desechables y corre los 45 tests de Playwright',
+      'Job e2e: instala Chromium, siembra dos bases libSQL desechables y corre los 47 tests de Playwright',
       'Extrae métricas (cobertura, tests pasados/fallidos) del reporte JSON para publicarlas',
       'En paralelo: npm audit, CodeQL y axe-core, todos con continue-on-error',
     ],
@@ -412,9 +412,9 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Todo verde',
     resumen: 'El camino feliz: el código llega a producción y se queda.',
     pasos: [
-      { etapa: 'local', estado: 'ok', texto: '831 tests en verde. Push.' },
+      { etapa: 'local', estado: 'ok', texto: '937 tests en verde. Push.' },
       { etapa: 'push', estado: 'ok', texto: 'CI, Security y Accessibility arrancan en paralelo.' },
-      { etapa: 'ci', estado: 'ok', texto: 'Vitest 831/831 · build OK · 45 e2e en verde.' },
+      { etapa: 'ci', estado: 'ok', texto: 'Vitest 937/937 · build OK · 47 e2e en verde.' },
       { etapa: 'deploy', estado: 'ok', texto: 'Vercel publica. /api/health ya devuelve el SHA nuevo.' },
       { etapa: 'verify', estado: 'ok', texto: '3 de 3 health checks con HTTP 200.' },
       { etapa: 'operacion', estado: 'ok', texto: 'Los monitores siguen en verde. Run reportado al panel LAB.' },
@@ -440,7 +440,7 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Deploy insano → rollback',
     resumen: 'Pasa todos los tests y aun así rompe producción. El escenario que nadie enseña.',
     pasos: [
-      { etapa: 'local', estado: 'ok', texto: '831 tests en verde. Todo correcto.' },
+      { etapa: 'local', estado: 'ok', texto: '937 tests en verde. Todo correcto.' },
       { etapa: 'push', estado: 'ok', texto: 'CI arranca.' },
       { etapa: 'ci', estado: 'ok', texto: 'Suite completa en verde, build OK, e2e en verde.' },
       { etapa: 'deploy', estado: 'ok', texto: 'Vercel publica la versión nueva en codebymike.tech.' },
@@ -661,7 +661,7 @@ export const PENDIENTES = [
 // ── Comandos ────────────────────────────────────────────────────────────────
 
 export const COMANDOS = [
-  { cmd: 'npm test', desc: 'Los 831 tests de Vitest. ~20 segundos.' },
+  { cmd: 'npm test', desc: 'Los 937 tests de Vitest. ~20 segundos.' },
   { cmd: 'npm run test:watch', desc: 'Modo interactivo: re-ejecuta solo lo que toca el archivo que estás editando.' },
   { cmd: 'npm run test:coverage', desc: 'Genera el reporte HTML en coverage/ para ver qué líneas no toca nadie.' },
   { cmd: 'npm run test:e2e', desc: 'Playwright. Siembra dos bases desechables y levanta el servidor solo.' },
