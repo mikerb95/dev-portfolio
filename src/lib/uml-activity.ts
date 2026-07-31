@@ -231,10 +231,12 @@ export function route(a: PlacedActivityNode, b: PlacedActivityNode, channelOffse
   // deploy sano que no hace rollback): la recta vertical la haría atravesar las
   // figuras intermedias, así que baja por un canal lateral y entra de costado.
   if (dy > 0 && channelOffset !== 0) {
-    const haciaLaDerecha = channelOffset > 0
-    const start = port(a, haciaLaDerecha ? 'r' : 'l')
-    const end = port(b, haciaLaDerecha ? 'r' : 'l')
+    const start = port(a, channelOffset > 0 ? 'r' : 'l')
     const x = a.cx + channelOffset
+    // Por qué cara entra depende de dónde quedó el canal respecto al destino,
+    // no del signo del desvío: entrar por la cara equivocada dibuja la flecha
+    // atravesando la figura que debería estar señalando.
+    const end = port(b, x > b.cx ? 'r' : 'l')
     return [start, { x, y: start.y }, { x, y: end.y }, end]
   }
 
