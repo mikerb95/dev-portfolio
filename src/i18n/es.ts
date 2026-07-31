@@ -74,8 +74,10 @@ const es = {
   },
   home: {
     title: 'CodeByMike | Mike — Software Engineer',
+    // ≤155 caracteres: por encima de eso Google corta el snippet y la última
+    // frase no llega nunca al resultado de búsqueda.
     description:
-      'Mike — Software Engineer en Colombia (remoto). TypeScript, React, Next.js, Astro, Node.js y PostgreSQL. Productos escalables, arquitectura robusta y rendimiento obsesivo.',
+      'Mike — Software Engineer en Colombia (remoto). TypeScript, React, Next.js, Astro y PostgreSQL. Productos escalables con arquitectura robusta.',
     badge: 'Disponible · Colombia · Remoto',
     githubTop3Label: 'GitHub Colombia',
     githubTop3Value: 'Contributor',
