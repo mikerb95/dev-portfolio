@@ -80,6 +80,13 @@ export interface UmlActivityEdge {
   kind?: 'control' | 'object'
   /** Desplaza el canal de ruteo cuando dos aristas comparten tramo. */
   channelOffset?: number
+  /**
+   * Corrige a mano dónde cae la guarda. Hace falta cuando dos ramas salen del
+   * mismo rombo: sus primeros tramos son casi paralelos y el ancla automática
+   * las deja una encima de otra, con lo que cada guarda acaba leyéndose sobre
+   * la rama contraria — que dice justo lo contrario de lo que pasa.
+   */
+  guardaOffset?: { dx?: number; dy?: number }
 }
 
 export interface UmlParticion {
