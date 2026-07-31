@@ -100,9 +100,14 @@ const optionBase =
       )
 
       return isActive ? (
-        <span class={`${optionBase} bg-white/10 text-ink-50 shadow-[0_1px_2px_rgba(0,0,0,.35)]`} aria-current="true">
+        <span
+          class={`${optionBase} ${activePadding} bg-white/10 text-ink-50 shadow-[0_1px_2px_rgba(0,0,0,.35)]`}
+          aria-current="true"
+        >
           {flag}
-          <span>{code.toUpperCase()}</span>
+          {/* La bandera ya identifica el idioma activo; el código solo estorba
+              visualmente, pero sigue leyéndose en lectores de pantalla. */}
+          <span class="sr-only">{code.toUpperCase()}</span>
         </span>
       ) : (
         <a
