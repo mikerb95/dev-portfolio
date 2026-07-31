@@ -117,6 +117,27 @@ export interface DeploymentLayout {
   caminos: PlacedCamino[]
 }
 
+// Sin métricas de fuente en el servidor, el texto se mide por caracteres, con
+// holgura: el cálculo sirve para apartar etiquetas del camino que rotulan.
+const CHAR_W = 5.9
+const LINE_H = 11
+
+interface Caja {
+  x1: number
+  x2: number
+  y1: number
+  y2: number
+}
+
+function cajaEtiqueta(at: Pt, align: 'start' | 'middle' | 'end', lines: string[]): Caja {
+  const w = Math.max(...lines.map((l) => l.length)) * CHAR_W
+  const h = lines.length * LINE_H
+  const x1 = align === 'start' ? at.x : align === 'end' ? at.x - w : at.x - w / 2
+  return { x1, x2: x1 + w, y1: at.y - h / 2, y2: at.y + h / 2 }
+}
+
+const cajasSeCortan = (a: Caja, b: Caja): boolean => a.x2 > b.x1 && a.x1 < b.x2 && a.y2 > b.y1 && a.y1 < b.y2
+
 const anchoNodo = (n: UmlNodo): number => (n.span ?? 1) * GEO.colW + ((n.span ?? 1) - 1) * GEO.colGap
 
 const altoNodo = (n: UmlNodo): number => {
