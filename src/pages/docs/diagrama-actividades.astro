@@ -50,7 +50,8 @@ function muestra(type: UmlActivityNodeType) {
     labelY: vbH / 2,
     labelAlign: 'middle',
   }
-  return { node, vbW, vbH, ancho: Math.round((vbW / vbH) * ALTO) }
+  const escala = Math.min(ANCHO_MAX / vbW, ALTO / vbH)
+  return { node, vbW, vbH, ancho: Math.round(vbW * escala), alto: Math.round(vbH * escala) }
 }
 
 const muestras = LEYENDA.map((item) => ({ ...item, ...muestra(item.type) }))
