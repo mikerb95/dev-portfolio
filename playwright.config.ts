@@ -67,7 +67,16 @@ export default defineConfig({
     // La siembra va aquí y no en globalSetup a propósito: Playwright levanta el
     // webServer ANTES de ejecutar globalSetup, así que sembrar allí llegaría
     // tarde y el servidor arrancaría contra una base que no existe.
-    command: `node scripts/seed-e2e.mjs && npm run dev -- --port ${PORT}`,
+    command: [
+      // En modo servidor hay que esperar a que sqld acepte conexiones: compose
+      // devuelve el control cuando el contenedor arrancó, no cuando el proceso
+      // de dentro está listo, y sembrar en ese hueco falla de forma
+      // intermitente — el peor tipo de fallo en una suite e2e.
+      useDbServer
+        ? `node scripts/wait-libsql.mjs ${E2E.mainDbUrl} ${E2E.demoDbUrl} && `
+        : '',
+      `node scripts/seed-e2e.mjs && npm run dev -- --port ${PORT}`,
+    ].join(''),
     url: E2E.baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
