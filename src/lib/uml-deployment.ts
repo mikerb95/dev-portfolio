@@ -138,6 +138,18 @@ function cajaEtiqueta(at: Pt, align: 'start' | 'middle' | 'end', lines: string[]
 
 const cajasSeCortan = (a: Caja, b: Caja): boolean => a.x2 > b.x1 && a.x1 < b.x2 && a.y2 > b.y1 && a.y1 < b.y2
 
+/** ¿El segmento atraviesa la caja? Muestreo: basta para detectar el choque. */
+function cortaCaja(a: Pt, b: Pt, c: Caja): boolean {
+  const pasos = 40
+  for (let i = 0; i <= pasos; i++) {
+    const t = i / pasos
+    const x = a.x + (b.x - a.x) * t
+    const y = a.y + (b.y - a.y) * t
+    if (x > c.x1 && x < c.x2 && y > c.y1 && y < c.y2) return true
+  }
+  return false
+}
+
 const anchoNodo = (n: UmlNodo): number => (n.span ?? 1) * GEO.colW + ((n.span ?? 1) - 1) * GEO.colGap
 
 const altoNodo = (n: UmlNodo): number => {
