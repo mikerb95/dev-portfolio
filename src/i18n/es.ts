@@ -113,7 +113,25 @@ const es = {
       },
       now: {
         badge: 'Ahora',
+        // Respaldo en SSR: lo que ve el visitante si /api/now no responde o si
+        // la base todavía no tiene datos. Nunca debe quedar la card vacía.
         body: 'Construyendo productos full-stack con Astro + Next.js y arquitectura serverless.',
+        labels: {
+          deploy: 'Último deploy',
+          uptime: 'Último check de uptime',
+          siem: 'Tráfico clasificado por el micro-SIEM',
+        },
+        meta: {
+          deploy: '{branch}@{sha} · {conclusion}',
+          uptime: '{name} · {status} en {ms} ms',
+          siem: '{events} eventos · últimas 24 h',
+        },
+        conclusion: {
+          success: 'verde',
+          failure: 'en rojo',
+          rolled_back: 'revertido',
+        },
+        budgetLabel: 'presupuesto de error · {days} d',
       },
       capabilities: {
         badge: 'Capacidades',
