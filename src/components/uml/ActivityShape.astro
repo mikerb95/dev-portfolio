@@ -1,0 +1,140 @@
+---
+// Dibuja UNA figura de actividad UML ya posicionada. Vive aparte para que el
+// diagrama y la leyenda de notación pinten exactamente el mismo símbolo: si
+// cambia el aspa del final de flujo, cambia en los dos sitios a la vez.
+//
+// Los colores salen de `.uml-scope` (src/styles/global.css) y no de un `<style>`
+// con scope de Astro, porque este componente se usa dentro de dos árboles
+// distintos y el scope no cruzaría de uno al otro.
+import type { PlacedActivityNode } from '../../lib/uml-activity'
+
+interface Props {
+  node: PlacedActivityNode
+}
+
+const { node: n } = Astro.props
+
+const x = n.cx - n.w / 2
+const y = n.cy - n.h / 2
+
+// Pentágono de señal: la punta sale hacia la derecha si se envía y muerde por
+// la izquierda si se recibe. Esa muesca es toda la diferencia entre "el sistema
+// avisa" y "el sistema espera": dibujarla al revés invierte el diagrama.
+const puntaW = 14
+const enviar = `M ${x} ${y} H ${x + n.w - puntaW} L ${x + n.w} ${n.cy} L ${x + n.w - puntaW} ${y + n.h} H ${x} Z`
+const recibir = `M ${x} ${y} H ${x + n.w} V ${y + n.h} H ${x} L ${x + puntaW} ${n.cy} Z`
+
+const etiquetaDentro = n.lines.length > 0 && (n.type === 'action' || n.type === 'objectNode' || n.type === 'sendSignal' || n.type === 'acceptEvent')
+const etiquetaFuera = n.lines.length > 0 && !etiquetaDentro
+// La etiqueta interna de una señal se corre hacia el lado contrario a la punta
+// para no montarse sobre el vértice.
+const textoX = n.type === 'sendSignal' ? n.cx - puntaW / 2 : n.type === 'acceptEvent' ? n.cx + puntaW / 2 : n.cx
+---
+
+{
+  n.type === 'action' && (
+    <rect x={x} y={y} width={n.w} height={n.h} rx="12" fill="var(--uml-node-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.3" />
+  )
+}
+
+{/* Nodo de objeto: rectángulo de esquinas RECTAS. Es lo único que lo separa a
+    la vista de una acción, y en UML separa un dato de una ejecución. */}
+{
+  n.type === 'objectNode' && (
+    <rect x={x} y={y} width={n.w} height={n.h} fill="var(--uml-control-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.3" />
+  )
+}
+
+{n.type === 'sendSignal' && <path d={enviar} fill="var(--uml-node-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.3" stroke-linejoin="round" />}
+{n.type === 'acceptEvent' && <path d={recibir} fill="var(--uml-node-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.3" stroke-linejoin="round" />}
+
+{
+  (n.type === 'decision' || n.type === 'merge') && (
+    <path
+      d={`M ${n.cx} ${y} L ${x + n.w} ${n.cy} L ${n.cx} ${y + n.h} L ${x} ${n.cy} Z`}
+      fill="var(--uml-control-fill)"
+      stroke="var(--uml-control-stroke)"
+      stroke-width="1.4"
+    />
+  )
+}
+
+{/* Barra de bifurcación/unión: rectángulo relleno, sin borde. UML no distingue
+    fork de join por la figura sino por cuántas transiciones entran y salen —
+    por eso el motor valida esa cardinalidad en vez de fiarla al dibujo. */}
+{(n.type === 'fork' || n.type === 'join') && <rect x={x} y={y} width={n.w} height={n.h} rx="2.5" fill="var(--uml-line)" />}
+
+{n.type === 'initial' && <circle cx={n.cx} cy={n.cy} r={n.w / 2} fill="var(--uml-inicio)" />}
+
+{/* Final de actividad: diana. El anillo exterior hueco y el disco interior son
+    obligatorios; un solo círculo relleno sería un nodo inicial. */}
+{
+  n.type === 'activityFinal' && (
+    <g>
+      <circle cx={n.cx} cy={n.cy} r={n.w / 2} fill="var(--uml-control-fill)" stroke="var(--uml-fin)" stroke-width="1.6" />
+      <circle cx={n.cx} cy={n.cy} r={n.w / 2 - 4.5} fill="var(--uml-fin)" />
+    </g>
+  )
+}
+
+{/* Final de FLUJO: círculo con aspa. Termina la rama y deja viva la actividad —
+    es lo que hace visible el fail-open del micro-SIEM. */}
+{
+  n.type === 'flowFinal' && (
+    <g>
+      <circle cx={n.cx} cy={n.cy} r={n.w / 2} fill="var(--uml-control-fill)" stroke="var(--uml-fin)" stroke-width="1.6" />
+      <path
+        d={`M ${n.cx - 6} ${n.cy - 6} L ${n.cx + 6} ${n.cy + 6} M ${n.cx + 6} ${n.cy - 6} L ${n.cx - 6} ${n.cy + 6}`}
+        stroke="var(--uml-fin)"
+        stroke-width="1.7"
+        stroke-linecap="round"
+      />
+    </g>
+  )
+}
+
+{
+  n.type === 'timeEvent' && (
+    <path
+      d={`M ${x} ${y} H ${x + n.w} L ${x} ${y + n.h} H ${x + n.w} Z`}
+      fill="var(--uml-control-fill)"
+      stroke="var(--uml-line)"
+      stroke-width="1.4"
+      stroke-linejoin="round"
+    />
+  )
+}
+
+{
+  etiquetaDentro && (
+    <text class="uml-label" x={textoX} y={n.cy} text-anchor="middle" dominant-baseline="central">
+      {n.lines.map((line, i) => (
+        <tspan x={textoX} dy={i === 0 ? -((n.lines.length - 1) * 13) / 2 : 13}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  )
+}
+
+{
+  etiquetaFuera && (
+    <text class="uml-label uml-label-out" x={n.labelX} y={n.labelY} text-anchor={n.labelAlign} dominant-baseline="central">
+      {n.lines.map((line, i) => (
+        <tspan x={n.labelX} dy={i === 0 ? 0 : 12}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  )
+}
+
+{/* La nota va SIEMPRE debajo de la figura: es comentario del autor, no parte
+    del modelo, y no debe competir con el nombre del nodo. */}
+{
+  n.nota && (
+    <text class="uml-nota" x={n.cx} y={n.cy + n.h / 2 + 15} text-anchor="middle">
+      {n.nota}
+    </text>
+  )
+}
