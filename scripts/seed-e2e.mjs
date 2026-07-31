@@ -23,14 +23,43 @@ const mainUrl = process.env.TURSO_DATABASE_URL
 const demoUrl = process.env.TURSO_DEMO_URL
 const sentinel = process.env.E2E_SENTINEL ?? ''
 
-if (!mainUrl?.startsWith('file:') || !demoUrl?.startsWith('file:')) {
-  console.error('✗ seed-e2e espera URLs file: en TURSO_DATABASE_URL y TURSO_DEMO_URL.')
-  process.exit(1)
+// Se aceptan bases en archivo (default) y servidores libSQL locales
+// (E2E_DB_MODE=server, ver compose.yaml). Lo que NO se acepta es nada remoto:
+// este script arrasa el esquema del destino antes de sembrarlo, así que un
+// error de configuración aquí no degrada un test, borra una base. La lista es
+// blanca a propósito — enumerar lo permitido falla cerrado, enumerar lo
+// prohibido falla abierto en cuanto aparece un host que nadie previó.
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', 'libsql-main', 'libsql-demo'])
+
+const assertDisposable = (url, name) => {
+  if (url?.startsWith('file:')) return
+  let parsed
+  try {
+    parsed = new URL(url ?? '')
+  } catch {
+    console.error(`✗ ${name} no es una URL válida: ${url}`)
+    process.exit(1)
+  }
+  const esLocal =
+    (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+    LOCAL_HOSTS.has(parsed.hostname)
+  if (!esLocal) {
+    console.error(`✗ ${name} apunta fuera de la máquina (${parsed.host}). Abortado.`)
+    console.error('  seed-e2e solo siembra bases desechables: file: o libSQL local.')
+    process.exit(1)
+  }
 }
 
-const dir = join(root, '.e2e')
-rmSync(dir, { recursive: true, force: true })
-mkdirSync(dir, { recursive: true })
+assertDisposable(mainUrl, 'TURSO_DATABASE_URL')
+assertDisposable(demoUrl, 'TURSO_DEMO_URL')
+
+// El directorio solo existe en modo archivo. En modo servidor no hay nada que
+// limpiar: seed-demo.mjs recrea el esquema desde cero en cada corrida.
+if (mainUrl.startsWith('file:') || demoUrl.startsWith('file:')) {
+  const dir = join(root, '.e2e')
+  rmSync(dir, { recursive: true, force: true })
+  mkdirSync(dir, { recursive: true })
+}
 
 const seed = (url, prefix) =>
   execFileSync('node', [join(root, 'scripts', 'seed-demo.mjs')], {
