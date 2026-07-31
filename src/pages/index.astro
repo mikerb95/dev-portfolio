@@ -29,9 +29,14 @@ const visibleProjects = await db
     set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Person',
+      // @id estable para que el nodo Person sea el mismo en ES y EN y en
+      // cualquier página que quiera referenciarlo, en vez de dos personas.
+      '@id': 'https://codebymike.tech/#person',
       name: 'Mike',
       alternateName: 'CodeByMike',
       jobTitle: 'Software Engineer',
+      description: t.description,
+      image: 'https://github.com/mikerb95.png',
       url: 'https://codebymike.tech',
       email: 'mailto:mikedrb@proton.me',
       address: { '@type': 'PostalAddress', addressCountry: 'CO' },
