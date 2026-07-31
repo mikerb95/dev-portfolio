@@ -403,6 +403,13 @@ export function findLayoutIssues(model: UmlCommunicationModel): LayoutIssue[] {
         issues.push({ kind: 'etiqueta-encimada', detail: `el enlace ${e.entre.join('–')} atraviesa la etiqueta del mensaje ${etiquetas[i].seq}` })
       }
     }
+    // Y también contra las flechas de los mensajes: son trazos cortos, pero se
+    // acumulan justo en el corredor donde van los rótulos.
+    for (const otro of l.mensajes) {
+      if (cortaCaja(otro.a, otro.b, etiquetas[i].caja)) {
+        issues.push({ kind: 'etiqueta-encimada', detail: `la flecha del mensaje ${otro.seq} atraviesa la etiqueta del mensaje ${etiquetas[i].seq}` })
+      }
+    }
   }
 
   const ids = new Set(model.objetos.map((o) => o.id))
