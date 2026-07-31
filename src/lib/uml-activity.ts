@@ -283,7 +283,11 @@ export function guardAnchor(pts: Pt[]): { at: Pt; align: 'start' | 'middle' | 'e
   if (pts.length === 2) {
     const p = pointAlong(pts, 24)
     const vertical = Math.abs(pts[1].x - pts[0].x) < 0.001
-    return vertical ? { at: { x: p.x + 8, y: p.y }, align: 'start' } : { at: { x: p.x, y: p.y - 8 }, align: 'middle' }
+    if (vertical) return { at: { x: p.x + 8, y: p.y }, align: 'start' }
+    // En un tramo horizontal el texto se escribe ALEJÁNDOSE del origen. Con
+    // anclaje centrado, la mitad del texto retrocede sobre el rombo del que
+    // acaba de salir y queda medio tapada.
+    return { at: { x: p.x, y: p.y - 8 }, align: pts[1].x > pts[0].x ? 'start' : 'end' }
   }
   const bend = pts[1]
   const next = pts[2]
