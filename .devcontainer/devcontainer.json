@@ -1,0 +1,39 @@
+{
+  "name": "codebymike.tech",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "node",
+
+  "features": {
+    // Docker CLI hablando con el demonio del host: lo necesitan las
+    // herramientas del LAB que corren en contenedor (ZAP, k6, Trivy) y que
+    // deben poder lanzarse desde dentro del devcontainer.
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // El volumen de node_modules nace vacío; sin esto el primer arranque deja el
+  // workspace sin dependencias y todo falla con un error que no las menciona.
+  "postCreateCommand": "npm ci",
+
+  "forwardPorts": [4321, 8080, 8081],
+  "portsAttributes": {
+    "4321": { "label": "astro dev" },
+    "8080": { "label": "libSQL principal" },
+    "8081": { "label": "libSQL demo" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "astro-build.astro-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-playwright.playwright",
+        "vitest.explorer"
+      ]
+    }
+  }
+}
