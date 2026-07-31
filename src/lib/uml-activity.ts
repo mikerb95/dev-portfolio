@@ -335,7 +335,7 @@ export function layout(model: UmlActivityModel): ActivityLayout {
     // el resto se centra en su columna, desplazado por rama si la hay.
     const centroCol = col * colW + (abarca > 1 ? (colW * abarca) / 2 : colW / 2)
     const cx = centroCol + (n.rama ?? 0) * ramaW
-    const cy = headerH + padTop + n.fila * filaH + h / 2
+    const cy = headerH + padTop + n.fila * filaH + GEO.filaCentro
 
     const maxChars = CHARS_POR_LINEA[n.type]
     const lines = n.label && maxChars ? wrap(n.label, maxChars, 3) : n.label ? wrap(n.label, 26, 2) : []
