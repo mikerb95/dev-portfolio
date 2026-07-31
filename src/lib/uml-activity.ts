@@ -374,9 +374,15 @@ export function layout(model: UmlActivityModel): ActivityLayout {
 // ── Verificación del dibujo ─────────────────────────────────────────────────
 
 export interface LayoutIssue {
-  kind: 'overlap' | 'edge-crosses-node' | 'fuera-de-particion' | 'semantica'
+  kind: 'overlap' | 'edge-crosses-node' | 'fuera-de-particion' | 'semantica' | 'guarda-encimada'
   detail: string
 }
+
+// Sin métricas de fuente en el servidor, el tamaño de una guarda se estima por
+// caracteres. La estimación va holgada a propósito: el objetivo es cazar
+// choques, y quedarse corto sería peor que pasarse.
+const GUARDA_CHAR_W = 5.9
+const GUARDA_H = 12
 
 interface Box {
   x1: number
