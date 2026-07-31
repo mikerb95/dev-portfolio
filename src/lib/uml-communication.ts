@@ -264,16 +264,11 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
 // ── Verificación ────────────────────────────────────────────────────────────
 
 export interface LayoutIssue {
-  kind: 'overlap' | 'enlace-cruza-objeto' | 'numeracion' | 'semantica'
+  kind: 'overlap' | 'enlace-cruza-objeto' | 'numeracion' | 'semantica' | 'etiqueta-encimada'
   detail: string
 }
 
-interface Box {
-  x1: number
-  x2: number
-  y1: number
-  y2: number
-}
+type Box = Caja
 
 const bbox = (o: PlacedObjeto): Box => ({
   x1: o.cx - o.w / 2,
