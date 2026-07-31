@@ -463,7 +463,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
   )
 
   const isPublicPage = !pathname.startsWith('/api') && context.request.method === 'GET'
-  if (isPublicPage && res.status === 200 && !resHeaders.has('Cache-Control')) {
+  // No basta con "solo si nadie puso Cache-Control": el runtime de Vercel ya
+  // emite `public, max-age=0, must-revalidate` en toda respuesta SSR, así que
+  // esa condición nunca se cumplía y ninguna página pública llegaba a
+  // cachearse en el edge (x-vercel-cache: MISS permanente). Lo que sí hay que
+  // respetar es la opción explícita de NO cachear (`no-store`/`private`), que
+  // es como las rutas con datos personales se protegen del CDN compartido.
+  const prevCache = resHeaders.get('Cache-Control') ?? ''
+  const optedOut = /no-store|private/i.test(prevCache)
+  if (isPublicPage && res.status === 200 && !optedOut) {
     resHeaders.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400')
   }
 
