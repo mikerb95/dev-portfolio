@@ -187,18 +187,34 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
     porEnlace.set(k, [...(porEnlace.get(k) ?? []), m])
   }
 
+  // Los enlaces se colocan TODOS antes que los mensajes: una etiqueta que se
+  // aparta tiene que poder comprobar que no aterriza sobre un enlace que
+  // todavía no se había calculado.
   const enlaces: PlacedEnlace[] = []
-  const mensajes: PlacedMensaje[] = []
-
-  for (const [clave, lista] of porEnlace) {
+  for (const clave of porEnlace.keys()) {
     const [idA, idB] = clave.split('~')
     const oa = porId.get(idA)
     const ob = porId.get(idB)
     if (!oa || !ob) throw new Error(`Enlace ${clave}: objeto inexistente`)
+    enlaces.push({ a: borde(oa, { x: ob.cx, y: ob.cy }), b: borde(ob, { x: oa.cx, y: oa.cy }), entre: [idA, idB] })
+  }
+
+  const mensajes: PlacedMensaje[] = []
+  const cajasOcupadas: Caja[] = objetos.map(
+    (o): Caja => ({ x1: o.cx - o.w / 2, x2: o.cx + o.w / 2, y1: o.cy - o.h / 2, y2: o.cy + o.h / 2 }),
+  )
+
+  /** ¿La caja de una etiqueta choca con algo ya dibujado? */
+  const chocaConAlgo = (caja: Caja): boolean =>
+    cajasOcupadas.some((c) => cajasSeCortan(caja, c)) || enlaces.some((e) => cortaCaja(e.a, e.b, caja))
+
+  for (const [clave, lista] of porEnlace) {
+    const [idA, idB] = clave.split('~')
+    const oa = porId.get(idA)!
+    const ob = porId.get(idB)!
 
     const pa = borde(oa, { x: ob.cx, y: ob.cy })
     const pb = borde(ob, { x: oa.cx, y: oa.cy })
-    enlaces.push({ a: pa, b: pb, entre: [idA, idB] })
 
     const dir = norm({ x: pb.x - pa.x, y: pb.y - pa.y })
     const perp = { x: -dir.y, y: dir.x }
