@@ -219,11 +219,23 @@ export function route(a: PlacedActivityNode, b: PlacedActivityNode, channelOffse
   const sameY = Math.abs(dy) < 2
 
   // Caso A · misma columna y hacia abajo: recta vertical.
-  if (sameX && dy > 0) return [port(a, 'b'), port(b, 't')]
+  if (sameX && dy > 0 && channelOffset === 0) return [port(a, 'b'), port(b, 't')]
 
   // Caso B · misma fila: recta horizontal entre particiones o ramas.
   if (sameY && !sameX) {
     return dx > 0 ? [port(a, 'r'), port(b, 'l')] : [port(a, 'l'), port(b, 'r')]
+  }
+
+  // Caso A-bis · salto largo hacia abajo con canal explícito. Es el caso de la
+  // rama que se salta varios pasos (la ruta pública que no verifica sesión, el
+  // deploy sano que no hace rollback): la recta vertical la haría atravesar las
+  // figuras intermedias, así que baja por un canal lateral y entra de costado.
+  if (dy > 0 && channelOffset !== 0) {
+    const haciaLaDerecha = channelOffset > 0
+    const start = port(a, haciaLaDerecha ? 'r' : 'l')
+    const end = port(b, haciaLaDerecha ? 'r' : 'l')
+    const x = a.cx + channelOffset
+    return [start, { x, y: start.y }, { x, y: end.y }, end]
   }
 
   // Caso C · hacia abajo cambiando de columna: Z por el canal intermedio.
