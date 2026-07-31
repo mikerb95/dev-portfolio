@@ -104,6 +104,8 @@ describe('paridad del diccionario es/en', () => {
         'home.bento.contactMicro.badge',
         'home.bento.contactMicro.cta',
         'home.bento.location.country',
+        // Solo placeholders y separadores: "{branch}@{sha} · {conclusion}".
+        'home.bento.now.meta.deploy',
         'home.expertise.items[1].title',
         'home.githubDevProgramValue',
         'home.githubTop3Label',
