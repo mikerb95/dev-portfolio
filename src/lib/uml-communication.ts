@@ -234,26 +234,42 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
 
       const lines = wrap(`${m.seq}: ${m.label}`, 34, 2)
 
-      // La etiqueta se aparta hasta despejar todo lo ya dibujado. Un
-      // desplazamiento fijo no basta: es perpendicular a la línea, pero el texto
-      // se escribe siempre horizontal, así que en un enlace diagonal la propia
-      // línea le entra por una esquina por lejos que esté el punto de anclaje.
-      // La única salida fiable es medir la caja del texto y empujarla.
-      let at = { x: 0, y: 0 }
-      let align: 'start' | 'middle' | 'end' = 'middle'
-      let caja = cajaEtiqueta(at, align, lines)
-      for (let paso = 0; paso < 20; paso++) {
-        const offTexto = off + haciaFuera * (13 + paso * 9)
-        at = { x: medio.x + perp.x * offTexto, y: medio.y + perp.y * offTexto }
-        const desplazamientoX = perp.x * offTexto
-        align = desplazamientoX > 6 ? 'start' : desplazamientoX < -6 ? 'end' : 'middle'
-        caja = cajaEtiqueta(at, align, lines)
-        if (!chocaConAlgo(caja)) break
+      // Colocación de la etiqueta por búsqueda, no por desplazamiento fijo.
+      //
+      // Apartarla en perpendicular no basta y no es cuestión de apartarla más:
+      // el texto se escribe horizontal aunque el enlace sea diagonal, y en un
+      // enlace vertical alejarse en perpendicular mueve la etiqueta a lo largo
+      // de su propio ancho, así que puede no despejar nunca. Se prueban
+      // posiciones ordenadas por cuánto se alejan de la ideal —primero el lado
+      // natural y sin correr, luego más lejos, luego corrida a lo largo del
+      // enlace y por último el lado contrario— y gana la primera libre.
+      const candidatos: { at: Pt; align: 'start' | 'middle' | 'end'; caja: Caja; coste: number }[] = []
+      for (const lado of [haciaFuera, -haciaFuera]) {
+        for (let paso = 0; paso < 14; paso++) {
+          for (const corrida of [0, 32, -32, 64, -64]) {
+            const offPerp = lado * (GEO.msgOffset + i * GEO.msgPaso + 13 + paso * 9)
+            const at = {
+              x: medio.x + perp.x * offPerp + dir.x * corrida,
+              y: medio.y + perp.y * offPerp + dir.y * corrida,
+            }
+            const desplazamientoX = perp.x * offPerp
+            const align = desplazamientoX > 6 ? 'start' : desplazamientoX < -6 ? 'end' : 'middle'
+            candidatos.push({
+              at,
+              align,
+              caja: cajaEtiqueta(at, align, lines),
+              coste: paso * 10 + Math.abs(corrida) * 0.35 + (lado === haciaFuera ? 0 : 22),
+            })
+          }
+        }
       }
-      // La etiqueta ya colocada pasa a ser un obstáculo para las siguientes.
-      cajasOcupadas.push(caja)
+      candidatos.sort((x, y) => x.coste - y.coste)
+      const elegido = candidatos.find((c) => !chocaConAlgo(c.caja)) ?? candidatos[0]
 
-      mensajes.push({ ...m, a, b, at, align, lines })
+      // La etiqueta ya colocada pasa a ser un obstáculo para las siguientes.
+      cajasOcupadas.push(elegido.caja)
+
+      mensajes.push({ ...m, a, b, at: elegido.at, align: elegido.align, lines })
     })
   }
 
