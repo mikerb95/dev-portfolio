@@ -36,11 +36,11 @@ después de escribir este plan.
 
 | # | Nivel | Herramienta | Dónde vive | Volumen real | Cuándo corre |
 |---|-------|-------------|------------|--------------|--------------|
-| 1 | Unitario / lógica pura | Vitest | `tests/*.test.ts` (47 archivos) | **831 tests**, 100% verdes | cada push y PR (`ci.yml`), y en local |
-| 2 | Integración con BD real | Vitest + libSQL en archivo temporal | `tests/payments.test.ts`, `cobros-db.test.ts`, `security-blocklist-db.test.ts`, `portal-*` | 102 de los 831 | igual que arriba |
+| 1 | Unitario / lógica pura | Vitest | `tests/*.test.ts` (55 archivos) | **937 tests**, 100% verdes | cada push y PR (`ci.yml`), y en local |
+| 2 | Integración con BD real | Vitest + libSQL en archivo temporal | `tests/payments.test.ts`, `cobros-db.test.ts`, `security-blocklist-db.test.ts`, `portal-*` | 160 de los 937 | igual que arriba |
 | 3 | Contratos de API | Vitest + Zod | `tests/contracts.test.ts` + `src/lib/contracts.ts` | 5 tests / 4 endpoints | `npm run test:contracts` y en CI |
-| 4 | End-to-end | Playwright (Chromium) | `e2e/*.spec.ts` (6 specs) | **45 tests** | job `e2e` en `ci.yml` |
-| 5 | Cobertura | `@vitest/coverage-v8` | `coverage/` (gitignored) | líneas **59.87%**, ramas 59.77%, funciones 58.24% sobre `src/lib/**` | con `--coverage` en CI |
+| 4 | End-to-end | Playwright (Chromium) | `e2e/*.spec.ts` (6 specs) | **47 tests** | job `e2e` en `ci.yml` |
+| 5 | Cobertura | `@vitest/coverage-v8` | `coverage/` (gitignored) | líneas **66.41%**, ramas 63.18%, funciones 64.21% sobre `src/lib/**` | con `--coverage` en CI |
 | 6 | Mutation testing | Stryker + runner de Vitest | `stryker.config.json` | umbrales high 80 / low 60 / break 50 | `mutation.yml`: manual + domingos 08:00 UTC |
 | 7 | SAST dependencias | `npm audit` → panel LAB | `scripts/npm-audit-scan.mjs` | hallazgos reales en `security_findings` | `security.yml`: push, PR y domingos 06:00 |
 | 8 | SAST código | CodeQL (`javascript-typescript`) | `security.yml` | pestaña Security de GitHub | push y PR |
@@ -157,7 +157,7 @@ Una franja con 6 números en vivo: tests, cobertura, mutation score, e2e,
 hallazgos abiertos, y el resultado del último deploy (con su SHA corto y
 enlace al run de GitHub Actions). Debajo, una frase que fija el marco:
 
-> «Este proyecto tiene 831 pruebas automáticas repartidas en 15 niveles
+> «Este proyecto tiene 937 pruebas automáticas repartidas en 15 niveles
 > distintos. Ninguno sobra: cada uno responde una pregunta que los otros no
 > pueden responder.»
 

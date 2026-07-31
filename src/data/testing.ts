@@ -301,7 +301,7 @@ export const PIPELINE: EtapaPipeline[] = [
     nombre: 'Local',
     subtitulo: 'Antes de que nadie más lo vea',
     dispara: 'A mano, mientras escribo código',
-    duracion: '~4 s la suite completa',
+    duracion: '~20 s la suite completa',
     pasos: [
       'npm test — los 937 tests de Vitest',
       'npm run test:e2e:ui — Playwright en modo inspector, si toqué una página',
@@ -716,18 +716,18 @@ export const GLOSARIO = [
 ]
 
 // Fallback de las métricas cuando la query a ci_runs no devuelve nada.
-// Medición real del 29 jul 2026 (npx vitest run --coverage), idéntica a la que
-// reporta el pipeline: 1534/2562 líneas de src/lib/**.
+// Medición real del 31 jul 2026 (npx vitest run --coverage), idéntica a la que
+// reporta el pipeline: 2161/3254 líneas de src/lib/**.
 export const METRICAS_REFERENCIA = {
-  fecha: '29 jul 2026',
-  tests: 831,
-  suites: 192,
-  archivos: 47,
-  e2e: 45,
+  fecha: '31 jul 2026',
+  tests: 937,
+  suites: 280,
+  archivos: 55,
+  e2e: 47,
   e2eSpecs: 6,
-  coberturaLineas: 59.87,
-  coberturaRamas: 59.77,
-  coberturaFunciones: 58.24,
+  coberturaLineas: 66.41,
+  coberturaRamas: 63.18,
+  coberturaFunciones: 64.21,
   niveles: NIVELES.length,
 }
 

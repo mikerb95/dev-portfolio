@@ -12,7 +12,7 @@
 > **Estado al 29 jul 2026**: el plan está ejecutado salvo la Fase 5 (load
 > testing con k6), bloqueada por `VERCEL_TOKEN`. La tabla de abajo es la
 > auditoría del punto de partida, conservada a propósito para poder comparar:
-> hoy hay 831 tests de Vitest y 45 e2e, seis workflows de GitHub Actions y
+> hoy hay 937 tests de Vitest y 47 e2e, seis workflows de GitHub Actions y
 > pipeline con rollback automático. El detalle de las fases 5-7 está en
 > `plan-lab-fases-pendientes.md`.
 
