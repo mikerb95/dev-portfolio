@@ -115,6 +115,22 @@ const en = {
       now: {
         badge: 'Now',
         body: 'Building full-stack products with Astro + Next.js and serverless architecture.',
+        labels: {
+          deploy: 'Last deploy',
+          uptime: 'Last uptime check',
+          siem: 'Traffic classified by the micro-SIEM',
+        },
+        meta: {
+          deploy: '{branch}@{sha} · {conclusion}',
+          uptime: '{name} · {status} in {ms} ms',
+          siem: '{events} events · last 24h',
+        },
+        conclusion: {
+          success: 'green',
+          failure: 'failed',
+          rolled_back: 'rolled back',
+        },
+        budgetLabel: 'error budget · {days}d',
       },
       capabilities: {
         badge: 'Capabilities',
