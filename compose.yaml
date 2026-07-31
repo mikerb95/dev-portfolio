@@ -30,13 +30,21 @@ x-libsql: &libsql
   # sqld 0.24.33 — ghcr.io/tursodatabase/libsql-server:latest al 2026-07-31
   image: ghcr.io/tursodatabase/libsql-server@sha256:07d5da358f37f7f327cc33c1cb5278e7892e04225f011a65a76049372a308982
   restart: unless-stopped
-  # Endurecido por defecto: nada de esto necesita privilegios ni capacidades
-  # extra, y un contenedor de laboratorio que corre con todo abierto es una
-  # superficie nueva, no una herramienta.
+  # Endurecido por defecto: un contenedor de laboratorio que corre con todas las
+  # capacidades es una superficie nueva, no una herramienta.
+  #
+  # DAC_OVERRIDE no es decorativo ni "por si acaso": sin él sqld muere en bucle
+  # con `mkdir: /var/lib/sqld/main.db: Permission denied`, porque su wrapper de
+  # arranque crea el directorio de datos dentro de un volumen que no le
+  # pertenece. Se comprobó una por una cuál hacía falta — CHOWN, SETUID, SETGID
+  # y FOWNER no lo son — en vez de devolver el ALL entero al primer fallo, que
+  # es como los contenedores acaban corriendo con todo abierto.
   security_opt:
     - no-new-privileges:true
   cap_drop:
     - ALL
+  cap_add:
+    - DAC_OVERRIDE
 
 services:
   libsql-main:

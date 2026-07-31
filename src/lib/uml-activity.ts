@@ -349,7 +349,14 @@ export function layout(model: UmlActivityModel): ActivityLayout {
     if (!a || !b) throw new Error(`Arista ${e.from}→${e.to}: nodo inexistente`)
     const pts = route(a, b, e.channelOffset ?? 0)
     const { at, align } = guardAnchor(pts)
-    return { ...e, pts, d: polylinePath(pts, GEO.cornerR), guardAt: at, guardAlign: align }
+    const ajuste = e.guardaOffset
+    return {
+      ...e,
+      pts,
+      d: polylinePath(pts, GEO.cornerR),
+      guardAt: { x: at.x + (ajuste?.dx ?? 0), y: at.y + (ajuste?.dy ?? 0) },
+      guardAlign: align,
+    }
   })
 
   // El ancho útil puede exceder las particiones si alguna rama se desplaza.
