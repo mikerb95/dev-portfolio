@@ -1,108 +1,95 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
-
-const componentes = `flowchart TB
-    subgraph Cliente["Navegador"]
-      B["Visitante / Administrador"]
-    end
-
-    subgraph Vercel["Vercel (Fluid Compute)"]
-      direction TB
-      MW["Middleware Astro<br/>(auth, chaos, sensor, blocklist, rate-limit)"]
-      SSR["Páginas SSR<br/>(público + /admin)"]
-      API["Rutas /api/*<br/>(admin, cron, payments, status, contact)"]
-      CRON_H["Handlers de cron<br/>(uptime-check, rollups, backup)"]
-    end
-
-    subgraph Datos["Persistencia"]
-      TURSO[("Turso / libSQL<br/>(Drizzle ORM)")]
-      BLOB[("Vercel Blob<br/>(backups, screenshots)")]
-    end
-
-    subgraph Externos["Servicios externos"]
-      GH["GitHub OAuth + API<br/>(login, repos)"]
-      CRONJOB["cron-job.org<br/>(disparador de sondeos)"]
-      NTFY["ntfy.sh<br/>(push)"]
-      WOMPI["Wompi<br/>(pasarela de pagos)"]
-      RDAP["RDAP<br/>(vencimiento de dominios)"]
-      SEARCH["Buscadores<br/>(IndexNow, RSS, sitemap)"]
-    end
-
-    B -->|HTTPS| MW
-    MW --> SSR
-    MW --> API
-    SSR --> TURSO
-    API --> TURSO
-    API --> BLOB
-    CRONJOB -->|POST + CRON_SECRET| CRON_H
-    CRON_H --> API
-    API -->|OAuth| GH
-    API -->|push| NTFY
-    API <-->|webhooks| WOMPI
-    API -->|lookup| RDAP
-    SSR -->|IndexNow ping| SEARCH
-`
+import ComponentDiagram from '../../components/uml/ComponentDiagram.astro'
+import { COMPONENTES } from '../../data/componentes'
 ---
 
 <BaseLayout title="Diagrama de componentes">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
-  <DocsNav />
+    <DocsNav />
 
-  <div class="max-w-3xl mb-6">
-    <p class="text-[14.5px] text-ink-200 leading-relaxed">
-      Vista de despliegue: el navegador habla con Astro SSR en Vercel a través de un único middleware
-      que centraliza autenticación, chaos engineering y el enforcement de seguridad. Los cron externos
-      disparan el sondeo de monitores y los backups; los datos viven en Turso (libSQL) y Vercel Blob.
-    </p>
-  </div>
-
-  <div class="rounded-xl border border-white/15 bg-ink-800 p-4 overflow-x-auto">
-    <pre class="mermaid">{componentes}</pre>
-  </div>
-
-  <div class="grid gap-3 sm:grid-cols-2 mt-6">
-    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
-      <div class="text-[12.5px] font-mono uppercase tracking-wide text-violet mb-2">Middleware (src/middleware.ts)</div>
-      <p class="text-[14px] text-ink-100 leading-relaxed">
-        Único punto de entrada para chaos, sensor de seguridad, blocklist, rate limiting durable
-        y headers de seguridad (CSP, HSTS, X-Frame-Options en /admin). Todo el bloque de enforcement
-        es fail-open.
+    <div class="max-w-3xl mb-8">
+      <p class="text-[14.5px] text-ink-200 leading-relaxed">
+        Las piezas de software del sistema y las interfaces por las que dependen unas de otras. Un
+        diagrama de componentes no afirma dónde corre nada ni en qué orden ocurren las cosas: afirma
+        <strong class="font-medium text-ink-100">quién ofrece qué</strong> y
+        <strong class="font-medium text-ink-100">quién depende de ello</strong>, que es lo que decide
+        si una pieza se puede sustituir sin tocar a las demás.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        Esta página describía antes el despliegue —navegador, Vercel, Turso, servicios externos— con
+        un <code class="font-mono text-ink-200">flowchart</code> de Mermaid. Eran dos errores: ese
+        dibujo no declaraba una sola interfaz provista ni requerida, que es todo lo que un diagrama
+        de componentes dice; y respondía a la pregunta de
+        <a
+          href="/docs/diagrama-despliegue"
+          class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40"
+          >el diagrama de despliegue</a
+        >, que ahora existe. Cada página responde ahora a la suya.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        El SVG se genera en el servidor desde
+        <code class="font-mono text-ink-200">src/data/componentes.ts</code> con
+        <code class="font-mono text-ink-200">src/lib/uml-component.ts</code>. Entre los tests hay uno
+        que vigila justamente la recaída: falla si algún componente vuelve a nombrar a un proveedor
+        de infraestructura.
       </p>
     </div>
-    <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
-      <div class="text-[12.5px] font-mono uppercase tracking-wide text-violet mb-2">Cron externo</div>
-      <p class="text-[14px] text-ink-100 leading-relaxed">
-        cron-job.org dispara los sondeos de uptime cada ~5 min; Vercel Cron dispara backups y rollups
-        de seguridad. Ninguno mantiene estado propio: todo el estado vive en Turso.
-      </p>
+
+    <!-- ── Leyenda de la notación ─────────────────────────────────────── -->
+    <section class="mb-12">
+      <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-3">Notación</h2>
+      <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 list-none p-0 m-0 text-[12.5px]">
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Rectángulo con el icono de pestañas</strong> y
+          «component»
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Una unidad de software sustituible. Sin el icono ni el estereotipo sería una clase.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Bola</strong> — interfaz provista
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Lo que el componente ofrece. Hay una sola bola por interfaz, aunque la consuman varios.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Enchufe</strong> — interfaz requerida
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Lo que el componente necesita. El arco abre siempre hacia la bola a la que se acopla.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Bola dentro de enchufe</strong> — conector de
+          ensamblaje
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            La dependencia real. En el código corresponde a un import que se puede señalar.
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ── Diagramas ──────────────────────────────────────────────────── -->
+    <div class="space-y-12">
+      {COMPONENTES.map((c) => (
+        <section id={c.id} class="scroll-mt-28">
+          <h2 class="text-[15px] font-semibold text-ink-50 mb-1">{c.titulo}</h2>
+          <p class="text-[13.5px] text-ink-300 leading-relaxed max-w-3xl mb-1.5">{c.desc}</p>
+          <p class="text-[12px] text-ink-400 font-mono mb-3.5 break-words">{c.origen}</p>
+
+          <div class="rounded-xl border border-white/15 bg-ink-800 p-3 overflow-x-auto">
+            <ComponentDiagram model={c} />
+          </div>
+
+          {c.nota && (
+            <p class="mt-3 max-w-3xl text-[13px] text-ink-200 leading-relaxed">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-dim align-middle mr-2 -translate-y-px" />
+              {c.nota}
+            </p>
+          )}
+        </section>
+      ))}
     </div>
-  </div>
   </div>
 </BaseLayout>
-
-<script>
-  import mermaid from 'mermaid'
-  mermaid.initialize({
-    startOnLoad: true,
-    theme: 'dark',
-    securityLevel: 'loose',
-    themeVariables: {
-      background: '#13131a',
-      primaryColor: '#1c1c26',
-      primaryTextColor: '#e7e7ec',
-      primaryBorderColor: '#6a6a7a',
-      lineColor: '#c4c4cc',
-      secondaryColor: '#171720',
-      tertiaryColor: '#0e0e12',
-      textColor: '#e7e7ec',
-      edgeLabelBackground: '#13131a',
-      clusterBkg: '#0e0e12',
-      clusterBorder: '#3a3a48',
-    },
-  })
-</script>
-
-<style>
-  .mermaid { display: flex; justify-content: center; }
-</style>
