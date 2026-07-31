@@ -88,6 +88,14 @@ administrar. CI no cambia.
    cerrado— en vez de lo prohibido, que falla abierto en cuanto aparece un host
    que nadie previó.
 
+### Material de sustentación
+
+`/docs/docker` (fuente: `src/data/docker.ts`) es la versión para exponer en
+clase: conceptos con su malentendido típico, anatomía archivo por archivo con su
+porqué, decisiones defendibles, los hallazgos de abajo, ruta de estudio priorizada
+y preguntas probables del jurado con respuesta preparada. Este plan es el registro
+técnico; esa página es el guion.
+
 ## Fase 3 — Herramientas del LAB en contenedor (pendiente)
 
 ZAP ya corre en contenedor sin que se note (`zaproxy/action-baseline` envuelve
