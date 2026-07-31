@@ -94,7 +94,17 @@ ${entries
     (e) =>
       `  <url><loc>${e.loc}</loc>${e.lastmod ? `<lastmod>${e.lastmod.toISOString().slice(0, 10)}</lastmod>` : ''}${e.alternates
         .map((a) => `<xhtml:link rel="alternate" hreflang="${a.hreflang}" href="${a.href}" />`)
-        .join('')}</url>`
+        .join('')}${
+        // x-default apuntando al español, igual que el <head> del HTML. Sin él
+        // el sitemap contradice a la página: Google exige que cada URL de un
+        // grupo hreflang declare el mismo conjunto de alternates, y una de las
+        // dos fuentes anunciaría un idioma de respaldo que la otra no.
+        e.alternates.find((a) => a.hreflang === 'es')
+          ? `<xhtml:link rel="alternate" hreflang="x-default" href="${
+              e.alternates.find((a) => a.hreflang === 'es')!.href
+            }" />`
+          : ''
+      }</url>`
   )
   .join('\n')}
 </urlset>
