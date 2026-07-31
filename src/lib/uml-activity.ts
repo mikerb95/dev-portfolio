@@ -122,6 +122,14 @@ export const GEO = {
   cornerR: 9,
   /** Ancho de una rama dentro de una partición. */
   ramaW: 116,
+  /**
+   * Distancia del centro de una fila respecto de su inicio. Todas las figuras
+   * de una fila comparten esta línea central, sin importar su altura: si se
+   * alinearan por el borde superior, un rombo de 48 y un final de 26 en la
+   * misma fila quedarían a distinta altura y el tramo horizontal que los une
+   * dejaría de ser recto — con lo que el ruteo lo trataría como un bucle.
+   */
+  filaCentro: 26,
 } as const
 
 export interface Size {
