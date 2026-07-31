@@ -525,3 +525,156 @@ const visibleProjects = await db
 
   }
 </script>
+
+<script>
+  // Card "Ahora" del bento: la rellena /api/now con hechos reales (último
+  // deploy, último check de uptime, tráfico clasificado por el SIEM) que van
+  // rotando, más el presupuesto de error del SLO en la barra.
+  //
+  // Va en su propio script, fuera del bloque de prefers-reduced-motion: esto
+  // es contenido, no decoración — quien pide menos animación igual merece el
+  // dato fresco, solo sin el cross-fade (lo apaga `motion-reduce:` en CSS).
+  import { formatNumber, formatTimeAgo, interpolate } from '../i18n/format'
+  import type { Locale } from '../i18n/config'
+
+  type NowItem =
+    | { kind: 'deploy'; at: number; sha: string; branch: string; conclusion: string }
+    | { kind: 'uptime'; at: number; name: string; ok: boolean; statusCode: number | null; responseMs: number | null }
+    | { kind: 'siem'; at: number; events: number }
+
+  type NowPayload = {
+    ts: number
+    items: NowItem[]
+    budget: { remainingPct: number; health: string; objectivePct: number; windowDays: number } | null
+  }
+
+  const card = document.getElementById('now-card')
+  const bodyEl = document.getElementById('now-body')
+  const labelEl = document.getElementById('now-label')
+  const metaEl = document.getElementById('now-meta')
+  const ageEl = document.getElementById('now-age')
+
+  const ROTATE_MS = 6000
+  const AGE_REFRESH_MS = 30_000
+
+  if (card && bodyEl && labelEl && metaEl && ageEl) {
+    const locale = (card.dataset.locale ?? 'es') as Locale
+    const labels = JSON.parse(card.dataset.labels ?? '{}') as Record<string, string>
+    const metaTpl = JSON.parse(card.dataset.meta ?? '{}') as Record<string, string>
+    const conclusions = JSON.parse(card.dataset.conclusion ?? '{}') as Record<string, string>
+
+    // Cada item se traduce a "título + línea técnica". La conclusión del CI o
+    // el código HTTP viajan como dato, no como frase, para que el endpoint no
+    // tenga que saber en qué idioma está el visitante.
+    const describe = (item: NowItem): string => {
+      if (item.kind === 'deploy') {
+        return interpolate(metaTpl.deploy ?? '', {
+          branch: item.branch,
+          sha: item.sha,
+          conclusion: conclusions[item.conclusion] ?? item.conclusion,
+        })
+      }
+      if (item.kind === 'uptime') {
+        return interpolate(metaTpl.uptime ?? '', {
+          name: item.name,
+          status: item.statusCode ?? (item.ok ? 'ok' : 'error'),
+          ms: item.responseMs ?? '—',
+        })
+      }
+      return interpolate(metaTpl.siem ?? '', { events: formatNumber(item.events, locale) })
+    }
+
+    let items: NowItem[] = []
+    let index = 0
+    let rotateTimer: number | undefined
+    let ageTimer: number | undefined
+
+    const paint = () => {
+      const item = items[index]
+      if (!item) return
+      labelEl.textContent = labels[item.kind] ?? ''
+      metaEl.textContent = describe(item)
+      ageEl.textContent = formatTimeAgo(item.at, locale)
+    }
+
+    const advance = () => {
+      index = (index + 1) % items.length
+      // Cross-fade corto: el contenido cambia a mitad de la transición para
+      // que no se vea el salto de texto.
+      bodyEl.style.opacity = '0'
+      window.setTimeout(() => {
+        paint()
+        bodyEl.style.opacity = '1'
+      }, 300)
+    }
+
+    const startRotation = () => {
+      if (rotateTimer || items.length < 2) return
+      rotateTimer = window.setInterval(advance, ROTATE_MS)
+    }
+    const stopRotation = () => {
+      if (rotateTimer) window.clearInterval(rotateTimer)
+      rotateTimer = undefined
+    }
+
+    const applyBudget = (budget: NowPayload['budget']) => {
+      if (!budget) return
+      const wrap = document.getElementById('now-budget')
+      const bar = document.getElementById('now-budget-bar')
+      const pct = document.getElementById('now-budget-pct')
+      const label = document.getElementById('now-budget-label')
+      if (!wrap || !bar || !pct || !label) return
+
+      label.textContent = interpolate(card.dataset.budgetLabel ?? '', { days: budget.windowDays })
+      pct.textContent = `${budget.remainingPct}%`
+      // El color sale de budgetHealth (src/lib/slo.ts), no de un umbral
+      // inventado aquí: la barra dice lo mismo que /status.
+      const gradient =
+        budget.health === 'healthy'
+          ? 'from-lime to-cyan'
+          : budget.health === 'warning'
+            ? 'from-lime to-ember'
+            : 'from-ember to-ember'
+      bar.className = `h-full bg-gradient-to-r ${gradient} transition-[width] duration-700 motion-reduce:transition-none`
+      wrap.classList.remove('hidden')
+      // En el siguiente frame para que la transición de ancho se vea.
+      requestAnimationFrame(() => {
+        bar.style.width = `${budget.remainingPct}%`
+      })
+    }
+
+    // Fail-open: cualquier error deja el texto de respaldo que ya pintó el SSR.
+    fetch('/api/now')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: NowPayload | null) => {
+        if (!data || !Array.isArray(data.items) || data.items.length === 0) return
+        items = data.items
+        paint()
+        applyBudget(data.budget)
+
+        // Solo rota mientras la card está a la vista y la pestaña está activa:
+        // un timer corriendo en una pestaña de fondo no le sirve a nadie.
+        const io = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting && !document.hidden) startRotation()
+            else stopRotation()
+          }
+        })
+        io.observe(card)
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) stopRotation()
+          else startRotation()
+        })
+
+        // "hace 4 min" tiene que envejecer solo en sesiones largas.
+        ageTimer = window.setInterval(() => {
+          const item = items[index]
+          if (item) ageEl.textContent = formatTimeAgo(item.at, locale)
+        }, AGE_REFRESH_MS)
+      })
+      .catch(() => {
+        if (ageTimer) window.clearInterval(ageTimer)
+      })
+  }
+</script>
