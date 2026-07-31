@@ -1,0 +1,88 @@
+---
+// Pinta un diagrama de componentes UML: componentes con su icono, interfaces
+// provistas (bola) y requeridas (enchufe) unidas por conectores de ensamblaje.
+import { GEO, layout, type UmlComponentModel } from '../../lib/uml-component'
+
+interface Props {
+  model: UmlComponentModel
+}
+
+const { model } = Astro.props
+const l = layout(model)
+const r = GEO.enchufeR
+
+/**
+ * Arco del enchufe: media circunferencia abierta hacia la bola. Se dibuja con
+ * un arco entre los dos extremos del diámetro perpendicular a esa dirección, y
+ * el sentido del barrido decide hacia qué lado abre — invertirlo dejaría el
+ * enchufe mirando al revés, que en UML significa lo contrario.
+ */
+function arcoEnchufe(centro: { x: number; y: number }, dir: { x: number; y: number }): string {
+  const perp = { x: -dir.y, y: dir.x }
+  const p1 = { x: centro.x + perp.x * r, y: centro.y + perp.y * r }
+  const p2 = { x: centro.x - perp.x * r, y: centro.y - perp.y * r }
+  return `M ${p1.x} ${p1.y} A ${r} ${r} 0 0 1 ${p2.x} ${p2.y}`
+}
+---
+
+<svg
+  class="uml-scope block"
+  viewBox={`0 0 ${l.w} ${l.h}`}
+  width={l.w}
+  height={l.h}
+  role="img"
+  aria-label={`Diagrama de componentes: ${model.titulo}`}
+  style={`max-width: ${l.w}px`}
+>
+  <rect x="0" y="0" width={l.w} height={l.h} fill="var(--uml-bg)" />
+
+  {
+    l.interfaces.map((iface) => (
+      <g>
+        {/* Vástago del proveedor a su bola. */}
+        <line x1={iface.tallo[0].x} y1={iface.tallo[0].y} x2={iface.tallo[1].x} y2={iface.tallo[1].y} stroke="var(--uml-line)" stroke-width="1.3" />
+
+        {iface.enchufes.map((e) => (
+          <g>
+            <line x1={e.desde.x} y1={e.desde.y} x2={e.hasta.x} y2={e.hasta.y} stroke="var(--uml-line)" stroke-width="1.3" />
+            <path d={arcoEnchufe(e.centro, e.dir)} fill="none" stroke="var(--uml-control-stroke)" stroke-width="1.7" stroke-linecap="round" />
+          </g>
+        ))}
+
+        <circle cx={iface.bola.x} cy={iface.bola.y} r={GEO.bolaR} fill="var(--uml-bg)" stroke="var(--uml-control-stroke)" stroke-width="1.7" />
+        <text class="uml-guarda" x={iface.at.x} y={iface.at.y} text-anchor={iface.align} dominant-baseline="central">
+          {iface.interfaz}
+        </text>
+      </g>
+    ))
+  }
+
+  {
+    l.componentes.map((c) => (
+      <g>
+        <rect x={c.x} y={c.y} width={c.w} height={c.h} rx="3" fill="var(--uml-node-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.3" />
+
+        {/* Icono de componente en la esquina superior derecha: el rectángulo con
+            las dos pestañas. Junto al estereotipo «component» es lo que
+            identifica la figura; sin ninguno de los dos sería una clase. */}
+        <g transform={`translate(${c.x + c.w - 26} ${c.y + 9})`}>
+          <rect x="3" y="0" width="15" height="16" fill="var(--uml-control-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.1" />
+          <rect x="0" y="3" width="8" height="4.5" fill="var(--uml-node-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.1" />
+          <rect x="0" y="10" width="8" height="4.5" fill="var(--uml-node-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.1" />
+        </g>
+
+        <text class="uml-estereotipo" x={c.x + 12} y={c.y + 15} text-anchor="start" dominant-baseline="central">
+          «component»
+        </text>
+        <text class="uml-label" x={c.x + 12} y={c.y + 30} text-anchor="start" dominant-baseline="central">
+          {c.nombre}
+        </text>
+        {c.lineasDetalle.map((line, i) => (
+          <text class="uml-nota" x={c.x + 12} y={c.y + 44 + i * 11} text-anchor="start" dominant-baseline="central">
+            {line}
+          </text>
+        ))}
+      </g>
+    ))
+  }
+</svg>
