@@ -47,6 +47,23 @@ export function formatRelativeTime(value: number, unit: Intl.RelativeTimeFormatU
 }
 
 /**
+ * "hace 4 min" a partir de una marca de tiempo, eligiendo la unidad más grande
+ * que siga siendo precisa. Se usa desde el navegador (card "Ahora" del index):
+ * el timestamp relativo es lo que demuestra que el dato es fresco, así que
+ * tiene que recalcularse en cliente y no quedarse congelado en el HTML del CDN.
+ */
+export function formatTimeAgo(at: number, locale: Locale, now: number = Date.now()): string {
+  const seconds = Math.round((at - now) / 1000) // negativo = en el pasado
+  const abs = Math.abs(seconds)
+
+  if (abs < 60) return formatRelativeTime(seconds, 'second', locale)
+  if (abs < 3600) return formatRelativeTime(Math.round(seconds / 60), 'minute', locale)
+  if (abs < 86_400) return formatRelativeTime(Math.round(seconds / 3600), 'hour', locale)
+  if (abs < 2_592_000) return formatRelativeTime(Math.round(seconds / 86_400), 'day', locale)
+  return formatRelativeTime(Math.round(seconds / 2_592_000), 'month', locale)
+}
+
+/**
  * Sustituye `{clave}` por su valor. Usado por las plantillas del diccionario
  * que mezclan texto traducido con números/paths dinámicos (p. ej.
  * "{n} servicios monitoreados"). El test de paridad de diccionarios ya
