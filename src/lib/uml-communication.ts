@@ -216,12 +216,25 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
       const a = { x: base.x - dir.x * GEO.msgLargo * signo, y: base.y - dir.y * GEO.msgLargo * signo }
       const b = { x: base.x + dir.x * GEO.msgLargo * signo, y: base.y + dir.y * GEO.msgLargo * signo }
 
-      const offTexto = off + haciaFuera * 13
-      const at = { x: medio.x + perp.x * offTexto, y: medio.y + perp.y * offTexto }
-      const desplazamientoX = perp.x * offTexto
-      const align = desplazamientoX > 6 ? 'start' : desplazamientoX < -6 ? 'end' : 'middle'
+      const lines = wrap(`${m.seq}: ${m.label}`, 34, 2)
 
-      mensajes.push({ ...m, a, b, at, align, lines: wrap(`${m.seq}: ${m.label}`, 34, 2) })
+      // La etiqueta se aparta del enlace hasta despejarlo. Un desplazamiento
+      // fijo no basta: es perpendicular a la línea, pero el texto se escribe
+      // siempre horizontal, así que en un enlace diagonal la propia línea le
+      // entra por una esquina por muy lejos que esté el punto de anclaje. La
+      // única salida fiable es medir la caja del texto y empujarla hasta que ya
+      // no la corte.
+      let at = { x: 0, y: 0 }
+      let align: 'start' | 'middle' | 'end' = 'middle'
+      for (let paso = 0; paso < 14; paso++) {
+        const offTexto = off + haciaFuera * (13 + paso * 8)
+        at = { x: medio.x + perp.x * offTexto, y: medio.y + perp.y * offTexto }
+        const desplazamientoX = perp.x * offTexto
+        align = desplazamientoX > 6 ? 'start' : desplazamientoX < -6 ? 'end' : 'middle'
+        if (!cortaCaja(pa, pb, cajaEtiqueta(at, align, lines))) break
+      }
+
+      mensajes.push({ ...m, a, b, at, align, lines })
     })
   }
 
