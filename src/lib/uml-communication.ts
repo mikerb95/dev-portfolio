@@ -199,14 +199,27 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
     enlaces.push({ a: borde(oa, { x: ob.cx, y: ob.cy }), b: borde(ob, { x: oa.cx, y: oa.cy }), entre: [idA, idB] })
   }
 
-  const mensajes: PlacedMensaje[] = []
   const cajasOcupadas: Caja[] = objetos.map(
     (o): Caja => ({ x1: o.cx - o.w / 2, x2: o.cx + o.w / 2, y1: o.cy - o.h / 2, y2: o.cy + o.h / 2 }),
   )
+  // Toda la geometría de trazos —enlaces y flechas de mensaje— se calcula ANTES
+  // de colocar ninguna etiqueta. Si se hicieran mensaje a mensaje, un rótulo ya
+  // colocado podría acabar bajo la flecha de un mensaje posterior, que es
+  // exactamente lo que no puede pasar: el texto tiene que poder leerse.
+  const segmentos: [Pt, Pt][] = enlaces.map((e) => [e.a, e.b])
 
-  /** ¿La caja de una etiqueta choca con algo ya dibujado? */
-  const chocaConAlgo = (caja: Caja): boolean =>
-    cajasOcupadas.some((c) => cajasSeCortan(caja, c)) || enlaces.some((e) => cortaCaja(e.a, e.b, caja))
+  interface Pendiente {
+    m: UmlMensaje
+    a: Pt
+    b: Pt
+    lines: string[]
+    dir: Pt
+    perp: Pt
+    medio: Pt
+    haciaFuera: number
+    i: number
+  }
+  const pendientes: Pendiente[] = []
 
   for (const [clave, lista] of porEnlace) {
     const [idA, idB] = clave.split('~')
@@ -231,9 +244,18 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
       const signo = m.from === idA ? 1 : -1
       const a = { x: base.x - dir.x * GEO.msgLargo * signo, y: base.y - dir.y * GEO.msgLargo * signo }
       const b = { x: base.x + dir.x * GEO.msgLargo * signo, y: base.y + dir.y * GEO.msgLargo * signo }
+      segmentos.push([a, b])
+      pendientes.push({ m, a, b, lines: wrap(`${m.seq}: ${m.label}`, 34, 2), dir, perp, medio, haciaFuera, i })
+    })
+  }
 
-      const lines = wrap(`${m.seq}: ${m.label}`, 34, 2)
+  /** ¿La caja de una etiqueta choca con algo ya dibujado? */
+  const chocaConAlgo = (caja: Caja): boolean =>
+    cajasOcupadas.some((c) => cajasSeCortan(caja, c)) || segmentos.some(([p, q]) => cortaCaja(p, q, caja))
 
+  const mensajes: PlacedMensaje[] = []
+  for (const { m, a, b, lines, dir, perp, medio, haciaFuera, i } of pendientes) {
+    {
       // Colocación de la etiqueta por búsqueda, no por desplazamiento fijo.
       //
       // Apartarla en perpendicular no basta y no es cuestión de apartarla más:
