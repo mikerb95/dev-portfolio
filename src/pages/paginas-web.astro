@@ -14,16 +14,20 @@ const waLink = (text: string) =>
   `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`
 
 // Precios y tiempos viven aquí arriba, en un solo lugar, para ajustarlos sin
-// tocar el diseño. Cifras de referencia (COP) — editar a gusto.
-// Precio (COP) y el flag "destacado" no salen del diccionario: la moneda no
-// cambia con el idioma (el negocio es local a Colombia) y el destacado es una
-// decisión de producto, no de texto.
-const PRICE_META = [
-  { precio: 'from $650,000 COP', destacado: false },
-  { precio: 'from $1,500,000 COP', destacado: true },
-  { precio: null, destacado: false },
-]
-const planes = pw.planes.map((p, i) => ({ ...p, ...PRICE_META[i] }))
+// tocar el diseño. El precio sí cambia con el idioma: el visitante en inglés
+// no es local a Colombia, así que ve una tarifa en USD, no una conversión de
+// pesos. El flag "destacado" no sale del diccionario porque es una decisión de
+// producto, no de texto.
+const PRICES: Record<typeof locale, (string | null)[]> = {
+  es: ['desde $650.000 COP', 'desde $1.500.000 COP', null],
+  en: ['from $250 USD', 'from $500 USD', null],
+}
+const DESTACADO = [false, true, false]
+const planes = pw.planes.map((p, i) => ({
+  ...p,
+  precio: PRICES[locale][i],
+  destacado: DESTACADO[i],
+}))
 
 // Clases de color explícitas (no interpoladas): Tailwind solo genera las
 // clases que ve escritas completas en el código fuente.
