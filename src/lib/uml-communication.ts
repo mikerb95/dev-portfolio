@@ -234,21 +234,24 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
 
       const lines = wrap(`${m.seq}: ${m.label}`, 34, 2)
 
-      // La etiqueta se aparta del enlace hasta despejarlo. Un desplazamiento
-      // fijo no basta: es perpendicular a la línea, pero el texto se escribe
-      // siempre horizontal, así que en un enlace diagonal la propia línea le
-      // entra por una esquina por muy lejos que esté el punto de anclaje. La
-      // única salida fiable es medir la caja del texto y empujarla hasta que ya
-      // no la corte.
+      // La etiqueta se aparta hasta despejar todo lo ya dibujado. Un
+      // desplazamiento fijo no basta: es perpendicular a la línea, pero el texto
+      // se escribe siempre horizontal, así que en un enlace diagonal la propia
+      // línea le entra por una esquina por lejos que esté el punto de anclaje.
+      // La única salida fiable es medir la caja del texto y empujarla.
       let at = { x: 0, y: 0 }
       let align: 'start' | 'middle' | 'end' = 'middle'
-      for (let paso = 0; paso < 14; paso++) {
-        const offTexto = off + haciaFuera * (13 + paso * 8)
+      let caja = cajaEtiqueta(at, align, lines)
+      for (let paso = 0; paso < 20; paso++) {
+        const offTexto = off + haciaFuera * (13 + paso * 9)
         at = { x: medio.x + perp.x * offTexto, y: medio.y + perp.y * offTexto }
         const desplazamientoX = perp.x * offTexto
         align = desplazamientoX > 6 ? 'start' : desplazamientoX < -6 ? 'end' : 'middle'
-        if (!cortaCaja(pa, pb, cajaEtiqueta(at, align, lines))) break
+        caja = cajaEtiqueta(at, align, lines)
+        if (!chocaConAlgo(caja)) break
       }
+      // La etiqueta ya colocada pasa a ser un obstáculo para las siguientes.
+      cajasOcupadas.push(caja)
 
       mensajes.push({ ...m, a, b, at, align, lines })
     })
