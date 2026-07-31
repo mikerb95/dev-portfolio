@@ -129,12 +129,19 @@ const textoX = n.type === 'sendSignal' ? n.cx - puntaW / 2 : n.type === 'acceptE
   )
 }
 
-{/* La nota va SIEMPRE debajo de la figura: es comentario del autor, no parte
-    del modelo, y no debe competir con el nombre del nodo. */}
+{/* La nota es comentario del autor, no parte del modelo, así que nunca compite
+    con el nombre del nodo. En una barra va arriba y alineada a su extremo
+    izquierdo: debajo y centrada la atravesarían las propias ramas que la barra
+    acaba de abrir, que es justo lo que la nota explica. */}
 {
-  n.nota && (
-    <text class="uml-nota" x={n.cx} y={n.cy + n.h / 2 + 15} text-anchor="middle">
-      {n.nota}
-    </text>
-  )
+  n.nota &&
+    (n.type === 'fork' || n.type === 'join' ? (
+      <text class="uml-nota" x={n.cx - n.w / 2} y={n.cy - n.h / 2 - 10} text-anchor="start">
+        {n.nota}
+      </text>
+    ) : (
+      <text class="uml-nota" x={n.cx} y={n.cy + n.h / 2 + 15} text-anchor="middle">
+        {n.nota}
+      </text>
+    ))
 }
