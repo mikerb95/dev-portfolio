@@ -217,23 +217,44 @@ const visibleProjects = await db
           </div>
         </div>
 
-        <!-- Now -->
-        <div class="col-span-6 md:col-span-5 row-span-1 rounded-2xl glass lift overflow-hidden p-5 flex flex-col">
+        <!-- Now — única card viva del bento. El SSR pinta el texto de respaldo
+             y el script la reemplaza por hechos reales (deploy, uptime, SIEM)
+             que rotan. Ver src/pages/api/now.ts. -->
+        <div
+          id="now-card"
+          class="col-span-6 md:col-span-5 row-span-1 rounded-2xl glass lift overflow-hidden p-5 flex flex-col"
+          data-locale={locale}
+          data-labels={JSON.stringify(t.bento.now.labels)}
+          data-meta={JSON.stringify(t.bento.now.meta)}
+          data-conclusion={JSON.stringify(t.bento.now.conclusion)}
+          data-budget-label={t.bento.now.budgetLabel}
+        >
           <div class="flex items-center justify-between">
             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-lime/10 text-lime border-lime/30">
               <span class="w-1.5 h-1.5 rounded-full pulse-dot bg-lime"></span>
               {t.bento.now.badge}
             </span>
-            <span class="text-[10px] font-mono text-ink-300">2026</span>
+            <span id="now-age" class="text-[10px] font-mono text-ink-300 tabular-nums"></span>
           </div>
-          <div class="mt-3 text-[14px] text-ink-50 leading-snug">
-            {t.bento.now.body}
-          </div>
-          <div class="mt-auto flex items-center gap-2">
-            <div class="h-1.5 flex-1 rounded-full bg-white/5 overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-lime to-cyan" style="width:78%"></div>
+          <div class="mt-3 min-h-[3.25rem]">
+            <div
+              id="now-body"
+              class="transition-opacity duration-300 motion-reduce:transition-none"
+            >
+              <div id="now-label" class="text-[14px] text-ink-50 leading-snug">
+                {t.bento.now.body}
+              </div>
+              <div id="now-meta" class="text-[11px] font-mono text-ink-300 mt-0.5"></div>
             </div>
-            <span class="text-[10px] font-mono text-ink-200">78%</span>
+          </div>
+          <div id="now-budget" class="mt-auto hidden">
+            <div id="now-budget-label" class="text-[10px] font-mono text-ink-300 mb-1"></div>
+            <div class="flex items-center gap-2">
+              <div class="h-1.5 flex-1 rounded-full bg-white/5 overflow-hidden">
+                <div id="now-budget-bar" class="h-full w-0 bg-gradient-to-r from-lime to-cyan transition-[width] duration-700 motion-reduce:transition-none"></div>
+              </div>
+              <span id="now-budget-pct" class="text-[10px] font-mono text-ink-200 tabular-nums"></span>
+            </div>
           </div>
         </div>
 
