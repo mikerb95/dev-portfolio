@@ -93,8 +93,8 @@ const muestras = LEYENDA.map((item) => ({ ...item, ...muestra(item.type) }))
       <ul class="uml-scope grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3.5 list-none p-0 m-0">
         {muestras.map((m) => (
           <li class="flex items-center gap-3">
-            <span class="shrink-0 grid place-items-center w-[92px]">
-              <svg width={m.ancho} height={ALTO} viewBox={`0 0 ${m.vbW} ${m.vbH}`} aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <span class="shrink-0 grid place-items-center w-[92px] h-[36px]">
+              <svg width={m.ancho} height={m.alto} viewBox={`0 0 ${m.vbW} ${m.vbH}`} aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
                 <ActivityShape node={m.node} />
               </svg>
             </span>
