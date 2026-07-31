@@ -87,6 +87,12 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     env: {
+      // Astro 7 detecta entornos de agente de IA y se va solo a segundo plano.
+      // Aquí eso rompe dos cosas: Playwright deja de poder matar el servidor al
+      // terminar (gestiona el proceso que lanza, no el que este deja detrás), y
+      // el modo background es incompatible con `--ignore-lock`. En foreground
+      // siempre, lo lance quien lo lance.
+      ASTRO_DEV_BACKGROUND: '0',
       TURSO_DATABASE_URL: E2E.mainDbUrl,
       TURSO_AUTH_TOKEN: '',
       TURSO_DEMO_URL: E2E.demoDbUrl,
