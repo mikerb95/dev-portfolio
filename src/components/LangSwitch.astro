@@ -1,0 +1,120 @@
+---
+import type { Locale } from '../i18n'
+
+interface Props {
+  /** Idioma de la página actual: se pinta como opción activa, sin enlace. */
+  locale: Locale
+  /** URL de esta misma página en el otro idioma (ya resuelta por el llamador). */
+  languageHref: string
+  /** `sm` en la barra fija, `md` en el panel móvil. */
+  size?: 'sm' | 'md'
+  class?: string
+}
+
+const { locale, languageHref, size = 'sm', class: className = '' } = Astro.props
+
+// Los `clipPath` de las banderas son globales al documento: el conmutador se
+// pinta dos veces (barra + panel móvil) y con ids fijos el segundo duplicaría
+// el id y el navegador aplicaría el recorte del primero.
+const uid = Math.random().toString(36).slice(2, 8)
+
+const otherLocale: Locale = locale === 'es' ? 'en' : 'es'
+const flagW = size === 'sm' ? 18 : 20
+const flagH = size === 'sm' ? 12 : 14
+const optionBase =
+  size === 'sm'
+    ? 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-mono uppercase tracking-[.08em] transition-colors'
+    : 'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] font-mono uppercase tracking-[.08em] transition-colors'
+---
+
+<div
+  class={`inline-flex items-center gap-0.5 rounded-full border border-white/10 bg-white/5 p-[3px] ${className}`}
+  role="group"
+  aria-label={locale === 'es' ? 'Ver en inglés' : 'View in Spanish'}
+>
+  {
+    (['es', 'en'] as const).map((code) => {
+      const isActive = code === locale
+      const flag = (
+        <svg
+          class={`shrink-0 block rounded-[2px] transition-[filter] ${isActive ? '' : 'saturate-[.25] opacity-70 group-hover/lang:saturate-100 group-hover/lang:opacity-100'}`}
+          viewBox="0 0 20 14"
+          width={flagW}
+          height={flagH}
+          aria-hidden="true"
+          focusable="false"
+        >
+          <clipPath id={`flag-${code}-${uid}`}>
+            <rect width="20" height="14" rx="2.2" />
+          </clipPath>
+          <g clip-path={`url(#flag-${code}-${uid})`}>
+            {code === 'es' ? (
+              <>
+                <rect width="20" height="14" fill="#AA151B" />
+                <rect y="3.5" width="20" height="7" fill="#F1BF00" />
+                <g fill="#AA151B" opacity=".9">
+                  <rect x="4.1" y="5.6" width="2.6" height="2.9" rx=".5" />
+                  <rect x="3.5" y="5.1" width="3.8" height="1" rx=".4" />
+                </g>
+              </>
+            ) : (
+              <>
+                <rect width="20" height="14" fill="#fff" />
+                <g fill="#B31942">
+                  <rect width="20" height="1.077" y="0" />
+                  <rect width="20" height="1.077" y="2.154" />
+                  <rect width="20" height="1.077" y="4.308" />
+                  <rect width="20" height="1.077" y="6.462" />
+                  <rect width="20" height="1.077" y="8.615" />
+                  <rect width="20" height="1.077" y="10.769" />
+                  <rect width="20" height="1.077" y="12.923" />
+                </g>
+                <rect width="8.6" height="7.54" fill="#0A3161" />
+                <g fill="#fff">
+                  <circle cx="1.6" cy="1.4" r=".52" />
+                  <circle cx="4.3" cy="1.4" r=".52" />
+                  <circle cx="7" cy="1.4" r=".52" />
+                  <circle cx="2.95" cy="2.75" r=".52" />
+                  <circle cx="5.65" cy="2.75" r=".52" />
+                  <circle cx="1.6" cy="4.1" r=".52" />
+                  <circle cx="4.3" cy="4.1" r=".52" />
+                  <circle cx="7" cy="4.1" r=".52" />
+                  <circle cx="2.95" cy="5.45" r=".52" />
+                  <circle cx="5.65" cy="5.45" r=".52" />
+                  <circle cx="1.6" cy="6.6" r=".52" />
+                  <circle cx="4.3" cy="6.6" r=".52" />
+                  <circle cx="7" cy="6.6" r=".52" />
+                </g>
+              </>
+            )}
+          </g>
+          <rect
+            width="20"
+            height="14"
+            rx="2.2"
+            fill="none"
+            stroke="rgba(255,255,255,.18)"
+            stroke-width="1"
+          />
+        </svg>
+      )
+
+      return isActive ? (
+        <span class={`${optionBase} bg-white/10 text-ink-50 shadow-[0_1px_2px_rgba(0,0,0,.35)]`} aria-current="true">
+          {flag}
+          <span>{code.toUpperCase()}</span>
+        </span>
+      ) : (
+        <a
+          href={languageHref}
+          hreflang={otherLocale}
+          title={otherLocale === 'en' ? 'View in English' : 'Ver en español'}
+          class={`group/lang ${optionBase} text-ink-200 hover:bg-white/5 hover:text-cyan`}
+        >
+          {flag}
+          <span>{code.toUpperCase()}</span>
+        </a>
+      )
+    })
+  }
+</div>
