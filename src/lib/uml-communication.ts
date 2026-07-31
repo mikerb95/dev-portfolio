@@ -280,14 +280,27 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
     if (!o) throw new Error(`Mensaje reflexivo ${m.seq}: objeto inexistente`)
     const a = { x: o.cx + o.w / 2 - 16, y: o.cy - o.h / 2 }
     const b = { x: o.cx + o.w / 2, y: o.cy - o.h / 2 + 14 }
-    mensajes.push({
-      ...m,
-      a,
-      b,
-      at: { x: o.cx + o.w / 2 + 16, y: o.cy - o.h / 2 - 12 },
-      align: 'start',
-      lines: wrap(`${m.seq}: ${m.label}`, 30, 2),
-    })
+    const lines = wrap(`${m.seq}: ${m.label}`, 30, 2)
+
+    // La etiqueta del lazo también busca sitio: la esquina superior derecha del
+    // objeto es la posición natural, pero es justo por donde suelen salir sus
+    // enlaces, así que se prueban las cuatro esquinas alejándose.
+    const esquinas = [
+      { dx: 1, dy: -1, align: 'start' as const },
+      { dx: -1, dy: -1, align: 'end' as const },
+      { dx: 1, dy: 1, align: 'start' as const },
+      { dx: -1, dy: 1, align: 'end' as const },
+    ]
+    const candidatos = esquinas.flatMap((e) =>
+      Array.from({ length: 8 }, (_, paso) => {
+        const at = { x: o.cx + e.dx * (o.w / 2 + 16 + paso * 8), y: o.cy + e.dy * (o.h / 2 + 12 + paso * 8) }
+        return { at, align: e.align, caja: cajaEtiqueta(at, e.align, lines) }
+      }),
+    )
+    const elegido = candidatos.find((c) => !chocaConAlgo(c.caja)) ?? candidatos[0]
+    cajasOcupadas.push(elegido.caja)
+
+    mensajes.push({ ...m, a, b, at: elegido.at, align: elegido.align, lines })
   }
 
   const w = objetos.reduce((max, o) => Math.max(max, o.cx + o.w / 2), 0) + padX
