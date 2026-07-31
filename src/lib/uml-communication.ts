@@ -313,6 +313,28 @@ export function findLayoutIssues(model: UmlCommunicationModel): LayoutIssue[] {
     }
   }
 
+  // Etiquetas: ni sobre un objeto, ni unas sobre otras, ni sobre un enlace que
+  // no sea el suyo. Es donde más se degrada este diagrama, porque los mensajes
+  // se acumulan alrededor del objeto más conectado.
+  const etiquetas = l.mensajes.map((m) => ({ seq: m.seq, caja: cajaEtiqueta(m.at, m.align, m.lines) }))
+  for (let i = 0; i < etiquetas.length; i++) {
+    for (let j = i + 1; j < etiquetas.length; j++) {
+      if (cajasSeCortan(etiquetas[i].caja, etiquetas[j].caja)) {
+        issues.push({ kind: 'etiqueta-encimada', detail: `los mensajes ${etiquetas[i].seq} y ${etiquetas[j].seq} se enciman` })
+      }
+    }
+    for (const o of l.objetos) {
+      if (cajasSeCortan(etiquetas[i].caja, bbox(o))) {
+        issues.push({ kind: 'etiqueta-encimada', detail: `el mensaje ${etiquetas[i].seq} cae sobre el objeto "${o.id}"` })
+      }
+    }
+    for (const e of l.enlaces) {
+      if (cortaCaja(e.a, e.b, etiquetas[i].caja)) {
+        issues.push({ kind: 'etiqueta-encimada', detail: `el enlace ${e.entre.join('–')} atraviesa la etiqueta del mensaje ${etiquetas[i].seq}` })
+      }
+    }
+  }
+
   const ids = new Set(model.objetos.map((o) => o.id))
   for (const m of model.mensajes) {
     if (!ids.has(m.from)) issues.push({ kind: 'semantica', detail: `mensaje ${m.seq}: origen "${m.from}" no existe` })
