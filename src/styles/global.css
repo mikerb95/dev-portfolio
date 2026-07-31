@@ -162,6 +162,66 @@ body {
 .bpmn-scope .bpmn-marker { stroke-width: 1.1; }
 .bpmn-scope .bpmn-event-icon { stroke-width: 1.3; }
 
+/* ── Diagramas UML (actividades, comunicación, despliegue, componentes) ──────
+   Scope propio y no reutilizado del BPMN: comparten técnica (SVG generado en el
+   servidor) pero no vocabulario. Mezclar las variables haría que retocar el
+   color de una compuerta BPMN moviera el de un rombo de decisión UML, que son
+   figuras de notaciones distintas y no tienen por qué ir de la mano. */
+.uml-scope {
+  --uml-bg: #111117;
+  --uml-header: #171720;
+  --uml-border: #34343f;
+  --uml-line: #a6a6b2;
+  --uml-node-fill: #1c1c26;
+  --uml-node-stroke: #4d4d5d;
+  --uml-control-fill: #13131a;
+  --uml-control-stroke: #00b8c4;
+  /* El nodo inicial y el final de actividad son los dos extremos del flujo:
+     mismo peso visual que el inicio/fin de BPMN para que el lector que viene de
+     esa página no tenga que reaprender el código de color. */
+  --uml-inicio: #c9ff5b;
+  --uml-fin: #e7e7ec;
+  --uml-error: #ff6b3d;
+  --uml-text: #e7e7ec;
+  --uml-text-dim: #c4c4cc;
+  --uml-accent: #00b8c4;
+  --uml-estereotipo: #8f8f9c;
+}
+
+.uml-scope .uml-label { font-size: 11.5px; fill: var(--uml-text); font-weight: 450; }
+.uml-scope .uml-label-out { font-size: 10.5px; fill: var(--uml-text-dim); }
+/* Guarda de transición: monoespaciada porque en UML es una expresión booleana,
+   no prosa, y conviene que se lea como código. */
+.uml-scope .uml-guarda {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  fill: var(--uml-accent);
+  letter-spacing: -0.01em;
+}
+/* Estereotipos «así» y nombres de partición: versalitas, como el estándar los
+   imprime. */
+.uml-scope .uml-estereotipo { font-size: 9.5px; fill: var(--uml-estereotipo); font-weight: 500; }
+.uml-scope .uml-particion {
+  font-size: 10.5px;
+  fill: var(--uml-text-dim);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.uml-scope .uml-rol { font-size: 9.5px; fill: var(--uml-estereotipo); font-weight: 400; letter-spacing: 0; text-transform: none; }
+.uml-scope .uml-nota { font-size: 9.5px; fill: var(--uml-estereotipo); font-style: italic; }
+/* Halo del color del fondo bajo todo texto que vive fuera de una figura: por
+   ahí pasan las transiciones, y `paint-order` hace que la letra recorte la
+   línea en vez de mezclarse con ella. */
+.uml-scope .uml-label-out,
+.uml-scope .uml-guarda,
+.uml-scope .uml-nota {
+  paint-order: stroke fill;
+  stroke: var(--uml-bg);
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+}
+
 /* Blobs ambientales de fondo (cyan + lime): ver componente AmbientBlobs.astro,
    montado en BaseLayout, que reemplaza el ::after estático anterior por 3
    capas independientes con desplazamiento sutil al hacer scroll. El hero del
