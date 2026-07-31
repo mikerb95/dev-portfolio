@@ -1,0 +1,35 @@
+# Composición del devcontainer: reutiliza las bases del compose.yaml raíz en vez
+# de declararlas otra vez. Dos definiciones de la misma infraestructura acaban
+# divergiendo, y la que se rompe siempre es la que nadie mira.
+include:
+  - ../compose.yaml
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # El contenedor no arranca ningún proceso propio: VS Code se conecta y
+    # ejecuta ahí dentro. Sin esto, el contenedor termina y la sesión se cae.
+    command: sleep infinity
+    volumes:
+      - ..:/workspace:cached
+      # node_modules en volumen propio: montarlo desde el host mezclaría
+      # binarios compilados para dos sistemas distintos (esbuild, libsql) y los
+      # fallos que produce eso no se parecen a su causa.
+      - node-modules:/workspace/node_modules
+    environment:
+      # Nombres de servicio, no localhost: dentro de la red de compose las bases
+      # se resuelven por DNS y el puerto es el interno (8080 en ambas).
+      TURSO_DATABASE_URL: http://libsql-main:8080
+      TURSO_AUTH_TOKEN: ''
+      TURSO_DEMO_URL: http://libsql-demo:8080
+      TURSO_DEMO_AUTH_TOKEN: ''
+    depends_on:
+      - libsql-main
+      - libsql-demo
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  node-modules:
