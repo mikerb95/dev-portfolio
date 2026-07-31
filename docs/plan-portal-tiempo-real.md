@@ -1,6 +1,10 @@
 # Plan — Portal en tiempo real + feed de actividad
 
-> Creado: 2026-07-24. Estado: **planificado, sin iniciar**.
+> Creado: 2026-07-24. Estado: **Fases A, B y C implementadas** (30 jul 2026);
+> queda pendiente solo el tipo de actividad `deploy`, que necesita un cambio de
+> modelo (`ci_runs` no tiene `projectId`, así que hoy no hay forma de atribuir
+> una corrida a un cliente). Entregado como RF-807 y RF-808 en
+> `src/data/documentacion.ts`.
 > Continuación de [`plan-portal-clientes.md`](./plan-portal-clientes.md) (Fases 0–7 ya
 > implementadas). Aquí se cierra lo único que el portal prometía y no cumple:
 > que la información del proyecto esté **viva**, no congelada en el instante del SSR.
