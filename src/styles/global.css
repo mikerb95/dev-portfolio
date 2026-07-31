@@ -283,12 +283,18 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  /* Expande la caja de pintado para que el clip no recorte
-     ascendentes/descendentes (sobre todo la cursiva serif),
-     y compensa arriba con margen negativo. No tocar margin-bottom:
-     rompería el mb-* de Tailwind aplicado en el mismo elemento. */
-  padding-block: 0.12em;
-  margin-top: -0.12em;
+}
+
+/* Máscara del boot-reveal (SplitText mueve los caracteres hacia abajo con
+   yPercent: 100 y hay que ocultarlos hasta que suben). Se recorta con
+   clip-path y NO con overflow:hidden porque overflow recorta por los cuatro
+   lados: con leading < 1 la caja de línea es más baja que la altura real de
+   la fuente y se comía el ascendente de la cursiva serif ("software") y las
+   colas de g/p. Aquí solo importa cerrar por abajo lo suficiente para tapar
+   los caracteres desplazados; arriba y a los lados se deja aire. Ventaja
+   extra: sin padding/margen no altera el interlineado de la headline. */
+.hero-line {
+  clip-path: inset(-0.35em -0.25em -0.14em -0.25em);
 }
 .text-mask {
   background-image: linear-gradient(180deg, #fff 0%, #fff 50%, #6b6b78 100%);
