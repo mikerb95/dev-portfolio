@@ -243,7 +243,8 @@ export function layout(model: UmlDeploymentModel): DeploymentLayout {
       }
     }
     candidatos.sort((x, y) => x.coste - y.coste)
-    const libre = (caja: Caja) => !cajasOcupadas.some((k) => cajasSeCortan(caja, k))
+    const libre = (caja: Caja) =>
+      !cajasOcupadas.some((k) => cajasSeCortan(caja, k)) && !trazos.some(([p, q]) => cortaCaja(p, q, caja))
     const elegido = candidatos.find((k) => libre(k.caja)) ?? candidatos[0]
     cajasOcupadas.push(elegido.caja)
 
@@ -313,6 +314,11 @@ export function findLayoutIssues(model: UmlDeploymentModel): LayoutIssue[] {
     for (const n of l.nodos) {
       if (cajasSeCortan(etiquetas[i].caja, bbox(n))) {
         issues.push({ kind: 'etiqueta-encimada', detail: `el rótulo de ${etiquetas[i].id} cae sobre "${n.id}"` })
+      }
+    }
+    for (const c of l.caminos) {
+      if (cortaCaja(c.a, c.b, etiquetas[i].caja)) {
+        issues.push({ kind: 'etiqueta-encimada', detail: `el camino ${c.from}–${c.to} atraviesa el rótulo de ${etiquetas[i].id}` })
       }
     }
   }
