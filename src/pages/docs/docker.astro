@@ -1,0 +1,321 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import {
+  TESIS,
+  CONCEPTOS,
+  ANATOMIA,
+  DECISIONES,
+  HALLAZGOS,
+  COMANDOS,
+  RUTA_ESTUDIO,
+  PREGUNTAS,
+  FASES,
+  type Acento,
+} from '../../data/docker'
+
+// Página de estudio: el objetivo no es documentar la configuración —para eso
+// están los archivos y docs/plan-docker.md— sino poder sustentarla en voz alta.
+// De ahí el orden: primero la tesis, luego el vocabulario, después la anatomía,
+// y al final las preguntas que un jurado puede hacer.
+
+const punto: Record<Acento, string> = {
+  cyan: 'bg-cyan',
+  violet: 'bg-violet',
+  lime: 'bg-lime',
+  ember: 'bg-ember',
+}
+
+const textoAcento: Record<Acento, string> = {
+  cyan: 'text-cyan',
+  violet: 'text-violet',
+  lime: 'text-lime',
+  ember: 'text-ember',
+}
+
+const nivelEstilo = {
+  imprescindible: { punto: 'bg-ember', label: 'Imprescindible' },
+  recomendado: { punto: 'bg-ink-300', label: 'Recomendado' },
+  'para destacar': { punto: 'bg-cyan', label: 'Para destacar' },
+}
+
+const hechas = FASES.filter((f) => f.estado === 'hecho').length
+
+const secciones = [
+  { id: 'tesis', t: 'La tesis' },
+  { id: 'conceptos', t: 'Conceptos' },
+  { id: 'anatomia', t: 'Anatomía' },
+  { id: 'decisiones', t: 'Decisiones' },
+  { id: 'hallazgos', t: 'Hallazgos' },
+  { id: 'comandos', t: 'Comandos' },
+  { id: 'estudio', t: 'Qué estudiar' },
+  { id: 'preguntas', t: 'Preguntas' },
+  { id: 'fases', t: 'Fases' },
+]
+---
+
+<BaseLayout title="Docker">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+  <DocsNav />
+
+  {/* ── Hero ────────────────────────────────────────────────── */}
+  <div class="max-w-3xl mb-8">
+    <h1 class="text-2xl font-semibold text-ink-50 mb-3">
+      Docker en este proyecto: <span class="text-cyan">entorno y pruebas</span>, no despliegue
+    </h1>
+    <p class="text-[14.5px] text-ink-200 leading-relaxed">
+      Esta página no es una guía de Docker ni la documentación de la configuración —esa vive en los propios
+      archivos y en <span class="font-mono text-cyan">docs/plan-docker.md</span>. Es el material para
+      <strong class="text-ink-50">poder explicarlo en voz alta</strong>: qué conceptos hay que dominar, qué hace
+      cada pieza, por qué se decidió así y qué preguntas conviene tener respondidas de antemano.
+    </p>
+  </div>
+
+  <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-10">
+    <div class="glass rounded-2xl p-4 border border-white/10">
+      <div class="text-2xl font-semibold text-ink-50 tabular-nums">{CONCEPTOS.length}</div>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-cyan mt-1">Conceptos</div>
+      <div class="text-[12px] text-ink-300 mt-0.5">el vocabulario mínimo</div>
+    </div>
+    <div class="glass rounded-2xl p-4 border border-white/10">
+      <div class="text-2xl font-semibold text-ink-50 tabular-nums">{ANATOMIA.length}</div>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-lime mt-1">Piezas</div>
+      <div class="text-[12px] text-ink-300 mt-0.5">archivos que intervienen</div>
+    </div>
+    <div class="glass rounded-2xl p-4 border border-white/10">
+      <div class="text-2xl font-semibold text-ink-50 tabular-nums">{HALLAZGOS.length}</div>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-ember mt-1">Hallazgos</div>
+      <div class="text-[12px] text-ink-300 mt-0.5">bugs que enseñaron algo</div>
+    </div>
+    <div class="glass rounded-2xl p-4 border border-white/10">
+      <div class="text-2xl font-semibold text-ink-50 tabular-nums">{hechas}<span class="text-ink-300 text-base">/{FASES.length}</span></div>
+      <div class="text-[12px] font-mono uppercase tracking-wide text-violet mt-1">Fases</div>
+      <div class="text-[12px] text-ink-300 mt-0.5">implementadas</div>
+    </div>
+  </div>
+
+  {/* ── Índice ──────────────────────────────────────────────── */}
+  <nav class="flex flex-wrap gap-1.5 mb-12" aria-label="Secciones de la página">
+    {secciones.map((s) => (
+      <a
+        href={`#${s.id}`}
+        class="px-3 py-1 rounded-full text-[12.5px] text-ink-300 border border-white/10 hover:bg-white/5 hover:text-ink-50 transition-colors"
+      >
+        {s.t}
+      </a>
+    ))}
+  </nav>
+
+  {/* ── 1. Tesis ────────────────────────────────────────────── */}
+  <section id="tesis" class="mb-14 scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">La tesis</h2>
+    <div class="glass rounded-2xl p-6 border border-white/10 max-w-3xl">
+      <h3 class="text-[17px] font-semibold text-ink-50 mb-3 leading-snug">{TESIS.titulo}</h3>
+      <p class="text-[14.5px] text-ink-200 leading-relaxed mb-4">{TESIS.cuerpo}</p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed pt-3 border-t border-white/10">{TESIS.remate}</p>
+    </div>
+  </section>
+
+  {/* ── 2. Conceptos ────────────────────────────────────────── */}
+  <section id="conceptos" class="mb-14 scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-2 pb-2 border-b border-white/10">Conceptos</h2>
+    <p class="text-[13.5px] text-ink-300 mb-5 max-w-3xl">
+      Cada concepto con su definición, dónde aparece en este proyecto y el malentendido típico que conviene
+      poder corregir si sale en la exposición.
+    </p>
+    <div class="grid gap-3 md:grid-cols-2">
+      {CONCEPTOS.map((c) => (
+        <article class="glass rounded-2xl p-5 border border-white/10">
+          <div class="flex items-center gap-2 mb-2">
+            <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${punto[c.acento]}`} aria-hidden="true"></span>
+            <h3 class="text-[14.5px] font-semibold text-ink-50">{c.termino}</h3>
+          </div>
+          <p class="text-[13.5px] text-ink-200 leading-relaxed mb-3">{c.definicion}</p>
+          <p class="text-[13px] text-ink-300 leading-relaxed mb-3">
+            <span class={`font-mono text-[11px] uppercase tracking-wide ${textoAcento[c.acento]}`}>Aquí</span>{' '}
+            {c.enElProyecto}
+          </p>
+          {c.confusionComun && (
+            <p class="text-[13px] text-ink-300 leading-relaxed pt-3 border-t border-white/10">
+              <span class="font-mono text-[11px] uppercase tracking-wide text-ember">Ojo</span>{' '}
+              {c.confusionComun}
+            </p>
+          )}
+        </article>
+      ))}
+    </div>
+  </section>
+
+  {/* ── 3. Anatomía ─────────────────────────────────────────── */}
+  <section id="anatomia" class="mb-14 scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-2 pb-2 border-b border-white/10">Anatomía</h2>
+    <p class="text-[13.5px] text-ink-300 mb-5 max-w-3xl">
+      Qué archivo hace qué, y —lo que de verdad preguntan— por qué está hecho así.
+    </p>
+    <div class="space-y-3">
+      {ANATOMIA.map((p) => (
+        <article class="glass rounded-2xl p-5 border border-white/10">
+          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-2">
+            <span class="font-mono text-[13px] text-cyan">{p.archivo}</span>
+            <span class="text-[13.5px] text-ink-100">{p.rol}</span>
+          </div>
+          <p class="text-[13.5px] text-ink-200 leading-relaxed mb-3">{p.detalle}</p>
+          <p class="text-[13px] text-ink-300 leading-relaxed pt-3 border-t border-white/10">
+            <span class="font-mono text-[11px] uppercase tracking-wide text-lime">Por qué</span> {p.porque}
+          </p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  {/* ── 4. Decisiones ───────────────────────────────────────── */}
+  <section id="decisiones" class="mb-14 scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-2 pb-2 border-b border-white/10">Decisiones</h2>
+    <p class="text-[13.5px] text-ink-300 mb-5 max-w-3xl">
+      Las cinco preguntas incómodas y su respuesta preparada.
+    </p>
+    <div class="grid gap-3 md:grid-cols-2">
+      {DECISIONES.map((d) => (
+        <article class="glass rounded-2xl p-5 border border-white/10">
+          <div class="flex items-start gap-2 mb-3">
+            <span class={`w-1.5 h-1.5 rounded-full shrink-0 mt-2 ${punto[d.acento]}`} aria-hidden="true"></span>
+            <h3 class="text-[14px] font-semibold text-ink-50 leading-snug">{d.pregunta}</h3>
+          </div>
+          <p class="text-[13.5px] text-ink-200 leading-relaxed">{d.respuesta}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  {/* ── 5. Hallazgos ────────────────────────────────────────── */}
+  <section id="hallazgos" class="mb-14 scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-2 pb-2 border-b border-white/10">Hallazgos</h2>
+    <p class="text-[13.5px] text-ink-300 mb-5 max-w-3xl">
+      Tres fallos reales de la implementación. Valen más que la configuración final: son lo que demuestra que el
+      trabajo se hizo, no se copió.
+    </p>
+    <div class="space-y-3">
+      {HALLAZGOS.map((h, i) => (
+        <article class="glass rounded-2xl p-5 border border-white/10">
+          <div class="flex items-start gap-3 mb-3">
+            <span class="font-mono text-[11px] text-ember tabular-nums mt-0.5">{String(i + 1).padStart(2, '0')}</span>
+            <h3 class="text-[14.5px] font-semibold text-ink-50 leading-snug">{h.titulo}</h3>
+          </div>
+          <dl class="space-y-2.5">
+            <div>
+              <dt class="font-mono text-[11px] uppercase tracking-wide text-ink-300 mb-0.5">Síntoma</dt>
+              <dd class="text-[13.5px] text-ink-200 leading-relaxed">{h.sintoma}</dd>
+            </div>
+            <div>
+              <dt class="font-mono text-[11px] uppercase tracking-wide text-ink-300 mb-0.5">Causa</dt>
+              <dd class="text-[13.5px] text-ink-200 leading-relaxed">{h.causa}</dd>
+            </div>
+            <div class="pt-2.5 border-t border-white/10">
+              <dt class="font-mono text-[11px] uppercase tracking-wide text-lime mb-0.5">Lección</dt>
+              <dd class="text-[13.5px] text-ink-200 leading-relaxed">{h.leccion}</dd>
+            </div>
+          </dl>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  {/* ── 6. Comandos ─────────────────────────────────────────── */}
+  <section id="comandos" class="mb-14 scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-2 pb-2 border-b border-white/10">Comandos</h2>
+    <p class="text-[13.5px] text-ink-300 mb-5 max-w-3xl">
+      Los ocho que hay que poder teclear sin dudar durante una demostración en vivo.
+    </p>
+    <div class="glass rounded-2xl border border-white/10 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[560px]">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="px-5 py-3 text-[11px] font-mono uppercase tracking-wide text-ink-300 font-medium">Comando</th>
+              <th class="px-5 py-3 text-[11px] font-mono uppercase tracking-wide text-ink-300 font-medium">Qué hace</th>
+            </tr>
+          </thead>
+          <tbody>
+            {COMANDOS.map((c) => (
+              <tr class="border-b border-white/5 last:border-0">
+                <td class="px-5 py-3 align-top whitespace-nowrap">
+                  <code class="font-mono text-[12.5px] text-cyan">{c.cmd}</code>
+                </td>
+                <td class="px-5 py-3 text-[13.5px] text-ink-200 leading-relaxed">{c.que}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  {/* ── 7. Qué estudiar ─────────────────────────────────────── */}
+  <section id="estudio" class="mb-14 scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-2 pb-2 border-b border-white/10">Qué estudiar</h2>
+    <p class="text-[13.5px] text-ink-300 mb-5 max-w-3xl">
+      Ordenado por lo que cuesta perder puntos si falta, no por dificultad.
+    </p>
+    <div class="space-y-2">
+      {RUTA_ESTUDIO.map((t) => (
+        <article class="glass rounded-2xl px-5 py-4 border border-white/10">
+          <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${nivelEstilo[t.nivel].punto}`} aria-hidden="true"></span>
+            <h3 class="text-[14px] font-semibold text-ink-50">{t.tema}</h3>
+            <span class="font-mono text-[10.5px] uppercase tracking-wide text-ink-300">
+              {nivelEstilo[t.nivel].label}
+            </span>
+          </div>
+          <p class="text-[13.5px] text-ink-200 leading-relaxed">{t.porQue}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  {/* ── 8. Preguntas ────────────────────────────────────────── */}
+  <section id="preguntas" class="mb-14 scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-2 pb-2 border-b border-white/10">Preguntas probables</h2>
+    <p class="text-[13.5px] text-ink-300 mb-5 max-w-3xl">
+      Cada una desplegable: conviene intentar responderla antes de abrirla.
+    </p>
+    <div class="space-y-2">
+      {PREGUNTAS.map((p) => (
+        <details class="glass rounded-2xl border border-white/10 group">
+          <summary class="px-5 py-4 cursor-pointer text-[14px] font-medium text-ink-50 list-none flex items-start gap-3">
+            <span class="text-cyan text-[13px] mt-0.5 shrink-0 transition-transform group-open:rotate-90" aria-hidden="true">▸</span>
+            <span>{p.q}</span>
+          </summary>
+          <p class="px-5 pb-5 pl-11 text-[13.5px] text-ink-200 leading-relaxed">{p.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  {/* ── 9. Fases ────────────────────────────────────────────── */}
+  <section id="fases" class="scroll-mt-24">
+    <h2 class="text-sm font-semibold text-ink-50 mb-2 pb-2 border-b border-white/10">Fases</h2>
+    <p class="text-[13.5px] text-ink-300 mb-5 max-w-3xl">
+      Plan completo en <span class="font-mono text-cyan">docs/plan-docker.md</span>. Poder nombrar lo que falta,
+      y por qué está planificado así, vale tanto como lo entregado.
+    </p>
+    <div class="space-y-2">
+      {FASES.map((f) => (
+        <article class="glass rounded-2xl px-5 py-4 border border-white/10">
+          <div class="flex items-center gap-2.5 mb-1.5 flex-wrap">
+            <span class="font-mono text-[11px] text-ink-300 tabular-nums">F{f.n}</span>
+            <h3 class="text-[14px] font-semibold text-ink-50">{f.titulo}</h3>
+            <span
+              class={`font-mono text-[10.5px] uppercase tracking-wide px-2 py-0.5 rounded-full ${
+                f.estado === 'hecho' ? 'text-lime bg-lime/10' : 'text-ink-300 bg-white/5'
+              }`}
+            >
+              {f.estado === 'hecho' ? 'Implementada' : 'Pendiente'}
+            </span>
+          </div>
+          <p class="text-[13.5px] text-ink-200 leading-relaxed">{f.resumen}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+  </div>
+</BaseLayout>
