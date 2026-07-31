@@ -75,7 +75,13 @@ export default defineConfig({
       useDbServer
         ? `node scripts/wait-libsql.mjs ${E2E.mainDbUrl} ${E2E.demoDbUrl} && `
         : '',
-      `node scripts/seed-e2e.mjs && npm run dev -- --port ${PORT}`,
+      // `--ignore-lock` es lo que permite correr los e2e con un `astro dev`
+      // abierto en otra terminal. Astro 7 mantiene un lock global de servidor de
+      // desarrollo: sin esta bandera, el segundo arranque no falla con un error
+      // de puerto ocupado —usa otro puerto— sino que imprime "Dev server
+      // already running" y sale con código 0, y Playwright solo reporta
+      // "Process from config.webServer exited early", que no menciona el lock.
+      `node scripts/seed-e2e.mjs && npm run dev -- --port ${PORT} --ignore-lock`,
     ].join(''),
     url: E2E.baseURL,
     reuseExistingServer: !process.env.CI,
