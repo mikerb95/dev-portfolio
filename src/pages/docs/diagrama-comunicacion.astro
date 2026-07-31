@@ -1,0 +1,118 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import CommunicationDiagram from '../../components/uml/CommunicationDiagram.astro'
+import { COMUNICACIONES } from '../../data/comunicacion'
+---
+
+<BaseLayout title="Diagrama de comunicación">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-8">
+      <p class="text-[14.5px] text-ink-200 leading-relaxed">
+        Las cuatro interacciones principales del sistema en notación de comunicación UML 2.5.1. Son
+        <em>las mismas cuatro</em> que están en
+        <a
+          href="/docs/diagrama-secuencia"
+          class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40"
+          >el diagrama de secuencia</a
+        >, con los mismos participantes y los mismos mensajes. En UML ambos diagramas son
+        equivalentes: contienen la misma información y lo único que cambia es qué se pone delante.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        La secuencia enseña el <strong class="font-medium text-ink-100">tiempo</strong>: líneas de
+        vida y un orden de arriba abajo. La comunicación enseña la
+        <strong class="font-medium text-ink-100">estructura</strong>: qué objeto está enlazado con
+        cuál, con el orden reducido a la numeración decimal de los mensajes. Puestas una al lado de
+        la otra sirven para lo que ninguna sirve sola — contrastarlas. Un mensaje que aparezca en una
+        y no en la otra significa que una de las dos está desactualizada.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        Mermaid no tiene este diagrama, así que el SVG se genera en el servidor desde un modelo
+        tipado (<code class="font-mono text-ink-200">src/data/comunicacion.ts</code>) con
+        <code class="font-mono text-ink-200">src/lib/uml-communication.ts</code>. Los tests verifican
+        el dibujo y también la numeración: sin eje de tiempo, un número repetido o un
+        <code class="font-mono text-ink-200">3.1</code> sin un <code class="font-mono text-ink-200">3</code>
+        que lo contenga dejan la interacción sin lectura única.
+      </p>
+    </div>
+
+    <!-- ── Leyenda de la notación ─────────────────────────────────────── -->
+    <section class="mb-12">
+      <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-3">Notación</h2>
+      <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 list-none p-0 m-0 text-[12.5px]">
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">nombre:Clase</strong>, subrayado
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Un objeto es una instancia, no una clase. El subrayado es lo único que los separa.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">«estereotipo»</strong>
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Papel del objeto en la interacción: actor, frontera, control, entidad o externo.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Línea sin punta</strong> — enlace
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Dice que dos objetos <em>pueden</em> comunicarse. Se dibuja una sola vez por pareja,
+            lleve un mensaje o siete.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Flecha con número</strong> — mensaje
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Viaja sobre un enlace. La numeración decimal (1, 1.1, 1.2) es el único orden del
+            diagrama.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Punta maciza</strong> frente a
+          <strong class="font-medium text-ink-50">punta abierta</strong>
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Maciza: llamada síncrona, el emisor espera. Abierta: asíncrona — el caso del registro de
+            seguridad, que nadie espera.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Línea discontinua</strong> — retorno
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            La respuesta a una llamada previa, no una llamada nueva.
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ── Interacciones ──────────────────────────────────────────────── -->
+    <div class="space-y-12">
+      {COMUNICACIONES.map((c) => (
+        <section id={c.id} class="scroll-mt-28">
+          <h2 class="text-[15px] font-semibold text-ink-50 mb-1">{c.titulo}</h2>
+          <p class="text-[13.5px] text-ink-300 leading-relaxed max-w-3xl mb-1.5">{c.desc}</p>
+          <p class="text-[12px] text-ink-400 font-mono mb-1 break-words">{c.origen}</p>
+          <p class="text-[12px] mb-3.5">
+            <a
+              href={c.equivaleA}
+              class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40"
+            >
+              Ver la misma interacción como diagrama de secuencia
+            </a>
+          </p>
+
+          <div class="rounded-xl border border-white/15 bg-ink-800 p-3 overflow-x-auto">
+            <CommunicationDiagram model={c} />
+          </div>
+
+          {c.nota && (
+            <p class="mt-3 max-w-3xl text-[13px] text-ink-200 leading-relaxed">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-dim align-middle mr-2 -translate-y-px" />
+              {c.nota}
+            </p>
+          )}
+        </section>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
