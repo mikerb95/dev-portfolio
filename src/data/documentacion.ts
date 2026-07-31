@@ -390,7 +390,8 @@ export const CASOS_DE_USO_EXTENDIDOS: CasoDeUsoExtendido[] = [
       'La página renderiza el contenido desde src/data/documentacion.ts o src/data/iteraciones-portfolio.ts.',
     ],
     flujosAlternos: [
-      { titulo: 'Consulta de diagrama', pasos: ['El administrador entra a una página de diagrama (secuencia/componentes/clases).', 'El navegador renderiza el diagrama Mermaid desde el texto embebido en la página.'] },
+      { titulo: 'Consulta de diagrama Mermaid', pasos: ['El administrador entra a una página de diagrama de secuencia, clases u objetos.', 'El navegador renderiza el diagrama Mermaid desde el texto embebido en la página.'] },
+      { titulo: 'Consulta de diagrama con motor propio', pasos: ['El administrador entra a una página de diagrama BPMN, de despliegue, de comunicación, de actividades o de componentes.', 'El servidor genera el SVG desde el modelo tipado de src/data/ con el motor de layout correspondiente de src/lib/; el navegador no ejecuta JavaScript para dibujarlo.'] },
     ],
     excepciones: [],
     postcondiciones: ['El administrador cuenta con la documentación de ingeniería completa del proyecto sin salir del panel.'],
