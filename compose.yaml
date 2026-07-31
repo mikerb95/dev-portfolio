@@ -1,0 +1,66 @@
+# Infraestructura LOCAL de desarrollo y pruebas. No es el runtime de producción
+# y no debe llegar a serlo: el sitio lo construye y ejecuta Vercel (SSR sobre
+# Fluid Compute), y meterlo en un contenedor sería perder edge, preview deploys
+# y el rollback automático de .github/workflows/ci.yml.
+#
+# Docker entra aquí para lo que Vercel no da y hoy depende de que la máquina
+# esté "bien configurada":
+#
+#   1. Un libSQL REAL (sqld) en vez de bases en archivo. Turso habla HTTP/hrana,
+#      no filesystem: los tests que dependen de transacciones, UNIQUE y
+#      concurrencia — pagos y aislamiento del portal, justo donde un falso verde
+#      sale caro — solo son fieles contra el mismo protocolo que corre en prod.
+#   2. Un entorno reproducible (ver .devcontainer/), con Node 22.12 fijo en vez
+#      del que traiga el shell. El propio CLAUDE.md documenta que un Node 20
+#      suelto rompe `astro build`: esa clase de fallo desaparece aquí.
+#
+# Las imágenes van pineadas por DIGEST, no por tag. Un tag es mutable: una
+# reproducibilidad que depende de que nadie mueva `latest` no es reproducible.
+#
+#   npm run db:up      levanta ambas bases y espera a que respondan
+#   npm run db:seed    las siembra con datos ficticios
+#   npm run db:reset   las borra (volúmenes incluidos) y vuelve a empezar
+
+name: codebymike
+
+# Dos bases distintas, igual que en producción. El aislamiento de la demo es por
+# construcción (ver src/db/index.ts): si aquí fueran la misma instancia, los
+# tests que afirman que la demo nunca filtra datos reales pasarían por accidente.
+x-libsql: &libsql
+  # sqld 0.24.33 — ghcr.io/tursodatabase/libsql-server:latest al 2026-07-31
+  image: ghcr.io/tursodatabase/libsql-server@sha256:07d5da358f37f7f327cc33c1cb5278e7892e04225f011a65a76049372a308982
+  restart: unless-stopped
+  # Endurecido por defecto: nada de esto necesita privilegios ni capacidades
+  # extra, y un contenedor de laboratorio que corre con todo abierto es una
+  # superficie nueva, no una herramienta.
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+services:
+  libsql-main:
+    <<: *libsql
+    container_name: codebymike-libsql-main
+    environment:
+      SQLD_NODE: primary
+      SQLD_DB_PATH: /var/lib/sqld/main.db
+    ports:
+      - '127.0.0.1:8080:8080'
+    volumes:
+      - libsql-main-data:/var/lib/sqld
+
+  libsql-demo:
+    <<: *libsql
+    container_name: codebymike-libsql-demo
+    environment:
+      SQLD_NODE: primary
+      SQLD_DB_PATH: /var/lib/sqld/demo.db
+    ports:
+      - '127.0.0.1:8081:8080'
+    volumes:
+      - libsql-demo-data:/var/lib/sqld
+
+volumes:
+  libsql-main-data:
+  libsql-demo-data:

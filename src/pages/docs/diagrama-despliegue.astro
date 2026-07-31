@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import DeploymentDiagram from '../../components/uml/DeploymentDiagram.astro'
+import { DESPLIEGUES } from '../../data/despliegue'
+---
+
+<BaseLayout title="Diagrama de despliegue">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-8">
+      <p class="text-[14.5px] text-ink-200 leading-relaxed">
+        La vista de red del sistema: qué corre en cada máquina, qué artefacto se despliega en cada
+        entorno de ejecución y por qué protocolo viaja cada cosa.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        Va como <strong class="font-medium text-ink-100">diagrama de despliegue</strong> y no como
+        «diagrama de red» porque UML 2.5.1 no tiene ninguno con ese nombre: entre sus catorce tipos,
+        el que representa máquinas, entornos de ejecución, artefactos desplegados y el enlace físico
+        entre ellos es este. Dibujar una topología de red con símbolos inventados y llamarla UML
+        sería lo contrario de respetar la notación.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        Complementa a
+        <a
+          href="/docs/diagrama-componentes"
+          class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40"
+          >el diagrama de componentes</a
+        >, que responde a la otra pregunta: aquel dice qué pieza de software ofrece y requiere qué
+        interfaz; este dice dónde acaba corriendo cada una.
+      </p>
+    </div>
+
+    <!-- ── Leyenda de la notación ─────────────────────────────────────── -->
+    <section class="mb-12">
+      <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-3">Notación</h2>
+      <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 list-none p-0 m-0 text-[12.5px]">
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Caja tridimensional</strong> — nodo
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Un recurso de cómputo. Es la figura que UML reserva para esto: un rectángulo plano sería
+            una clase o un componente.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">«device»</strong> frente a
+          <strong class="font-medium text-ink-50">«executionEnvironment»</strong>
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Lo primero se desenchufa; lo segundo se reinicia. Un entorno de ejecución siempre vive
+            dentro de un dispositivo.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Rectángulo con la esquina doblada</strong> —
+          artefacto
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Algo físico que se despliega: un bundle, una base de datos, un binario. Va dentro del
+            nodo que lo aloja.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Línea con «protocolo»</strong> — camino de
+          comunicación
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Un enlace por el que dos nodos se hablan. Sin el estereotipo del protocolo sería una raya
+            entre dos cajas.
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ── Despliegues ────────────────────────────────────────────────── -->
+    <div class="space-y-12">
+      {DESPLIEGUES.map((dpl) => (
+        <section id={dpl.id} class="scroll-mt-28">
+          <h2 class="text-[15px] font-semibold text-ink-50 mb-1">{dpl.titulo}</h2>
+          <p class="text-[13.5px] text-ink-300 leading-relaxed max-w-3xl mb-1.5">{dpl.desc}</p>
+          <p class="text-[12px] text-ink-400 font-mono mb-3.5 break-words">{dpl.origen}</p>
+
+          <div class="rounded-xl border border-white/15 bg-ink-800 p-3 overflow-x-auto">
+            <DeploymentDiagram model={dpl} />
+          </div>
+
+          {dpl.nota && (
+            <p class="mt-3 max-w-3xl text-[13px] text-ink-200 leading-relaxed">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-dim align-middle mr-2 -translate-y-px" />
+              {dpl.nota}
+            </p>
+          )}
+        </section>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
