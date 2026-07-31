@@ -1256,11 +1256,143 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-portal-vivo',
+    fase: 'Fase 31 · El portal deja de estar congelado en el instante del SSR',
+    nombre: 'Digest en vivo, campana de notificaciones y feed de actividad por proyecto',
+    rango: '29–30 jul 2026',
+    ghSince: '2026-07-29',
+    ghUntil: '2026-07-30',
+    commits: 69,
+    resumen:
+      'El portal servía datos de tiempo real (los checks entran cada ~5 min) en una interfaz que no se movía hasta recargar. Se cierra con polling de un digest, no con SSE ni WebSockets: Turso no tiene pub/sub, así que el servidor tendría que sondear igual y encima pagando la conexión abierta. Un único ciclo en el layout emite un CustomEvent y lo escuchan tres suscriptores —campana, dashboard e hilo abierto—, así que tres partes de la página se refrescan con una sola petición. Detrás llega el feed de actividad: portal_activity con clientId denormalizado a propósito, porque la consulta más caliente del portal no debe depender de un JOIN, y un emisor fire-and-forget cableado en los cinco puntos que ya notificaban. El tipo deploy se quedó fuera y está declarado como tal: ci_runs no tiene projectId y atribuir una corrida a un cliente exigiría cambiar el modelo.',
+    historias: [
+      {
+        id: 'PF-PV-01', titulo: 'Como cliente, quiero ver la respuesta a mi mensaje sin recargar la página',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-29', tags: ['portal', 'tiempo-real', 'fase-31'],
+        dod: [
+          ok('portalLiveDigest() sobre los helpers existentes: cero SQL nuevo.'),
+          ok('GET /api/portal/live con rate limit por sesión (10/min) y no-store.'),
+          ok('Ciclo de 20 s con pausa por visibilidad y backoff 20→300 s; fail-open silencioso.'),
+          ok('Un CustomEvent y tres suscriptores: campana, dashboard e hilo abierto.'),
+          ok('tests/portal-live.test.ts con libSQL real: aislamiento entre clientes, rol billing sin mensajes, projectId ajeno cae al propio.'),
+        ],
+      },
+      {
+        id: 'PF-PV-02', titulo: 'Como cliente, quiero una línea de tiempo de lo que ha pasado en mi proyecto',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-30', tags: ['portal', 'tiempo-real', 'fase-31'],
+        dod: [
+          ok('Migración aditiva de portal_activity con sus índices; clientId denormalizado para no depender de un JOIN.'),
+          ok('recordActivity() fire-and-forget cableado en los cinco puntos que ya notificaban; nunca lanza.'),
+          ok('Feed en /portal (últimas 15) y /portal/actividad con filtro y paginación por cursor.'),
+          ok('Las entradas se apagan desde /admin/portal/actividad en vez de borrarse.'),
+          ok('tests/portal-activity.test.ts: aislamiento, cursor que no repite ni salta filas, interruptor de visibilidad.'),
+        ],
+      },
+      {
+        id: 'PF-PV-03', titulo: 'Como cliente con lector de pantalla, quiero enterarme de lo que cambia solo',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-29', tags: ['portal', 'accesibilidad', 'fase-31'],
+        dod: [
+          ok('La región aria-live existente anuncia también lo que llega por el digest.'),
+          ok('motion-reduce en la barra de avance.'),
+          ok('Guard de demo: el digest late en modo demo pero leyendo de la base de demo, con casos en tests/portal-demo.test.ts, tests/portal-paths.test.ts y un e2e.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-i18n-cierre',
+    fase: 'Fase 32 · El inglés deja de ser solo la marca',
+    nombre: 'Cierre del plan bilingüe: /status, /demo, /log, /paginas-web, OG en inglés y contenido de BD',
+    rango: '29–30 jul 2026',
+    ghSince: '2026-07-29',
+    ghUntil: '2026-07-30',
+    commits: 97,
+    resumen:
+      'La Fase 29 dejó traducidas las siete páginas de marca; el resto del sitio seguía en español bajo un prefijo que prometía inglés. Se completan las fases 7–9 del plan: /status con sus etiquetas de tiempo relativo, /demo, /log de ingeniería, /paginas-web con precios y perfiles, y el formulario de contacto llevando el locale hasta la notificación. Lo que no era texto estático pedía otra pieza: el contenido que vive en la base (títulos y descripciones de proyecto) se traduce con campos opcionales y un helper de localización, de modo que un proyecto sin traducción cae al español en vez de dejar un hueco. Las imágenes OG ganaron variante inglesa, y el selector de idioma pasó de un enlace a un componente propio.',
+    historias: [
+      {
+        id: 'PF-I18-05', titulo: 'Como visitante anglófono, quiero que las páginas de producto y estado estén en mi idioma, no solo la portada',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-29', tags: ['i18n', 'público', 'fase-32'],
+        dod: [
+          ok('/status, /demo, /log y /paginas-web traducidas y dadas de alta en TRANSLATED_ROUTES.'),
+          ok('Tiempos relativos y fechas por locale, sin cadenas en español coladas en la versión inglesa.'),
+          ok('El formulario de contacto envía el locale y la notificación lo refleja.'),
+          ok('tests/i18n-dictionary.test.ts y tests/i18n-routing.test.ts cubren las claves y rutas nuevas.'),
+        ],
+      },
+      {
+        id: 'PF-I18-06', titulo: 'Como visitante anglófono, quiero que los proyectos del portafolio no vuelvan al español a mitad de página',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-30', tags: ['i18n', 'crm', 'fase-32'],
+        dod: [
+          ok('Campos opcionales de título y descripción en inglés en el contenido de la base.'),
+          ok('Helper de localización que cae al español cuando falta la traducción, en vez de dejar el hueco.'),
+          ok('ProjectCard y la página de proyecto localizan título, descripción, estado y avance.'),
+          ok('Variantes inglesas de las imágenes Open Graph.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-uml-docker',
+    fase: 'Fase 33 · Las notaciones que Mermaid no dibuja, y el entorno como código',
+    nombre: 'Diagramas UML de despliegue, comunicación, actividades y componentes con motor propio; devcontainer y libSQL en contenedor',
+    rango: '30 jul 2026',
+    ghSince: '2026-07-30',
+    ghUntil: '2026-07-31',
+    commits: 93,
+    resumen:
+      'Cuatro diagramas UML más, con el enfoque ya probado en BPMN: modelo tipado en src/data, motor de layout propio en src/lib, SVG generado en el servidor y geometría verificada por tests. Mermaid se descartó por incapacidad y no por gusto: no tiene diagrama de comunicación ni de despliegue, y su flowchart no es notación de actividad. La sorpresa fue /docs/diagrama-componentes, que llevaba meses siendo un flowchart de despliegue sin una sola interfaz declarada —es decir, la otra vista duplicada—; se rehízo con interfaces provistas y requeridas, y un test falla si algún componente vuelve a nombrar un proveedor de infraestructura. Los tests verifican la notación, no solo la geometría: toda decisión con guarda en cada salida, ninguna unión con dos, ningún nodo inalcanzable, numeración decimal sin huérfanos. En paralelo entra Docker donde sí aporta —entorno reproducible y libSQL real en pruebas— y explícitamente no como runtime de producción.',
+    historias: [
+      {
+        id: 'PF-UML-01', titulo: 'Como evaluador, quiero ver la vista de red y las interacciones en notación UML de verdad',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-30', tags: ['documentación', 'uml', 'fase-33'],
+        dod: [
+          ok('Diagrama de despliegue con nodos «device»/«executionEnvironment», artefactos y caminos de comunicación con su protocolo.'),
+          ok('Cuatro diagramas de comunicación con numeración decimal, enlazados en ambos sentidos con los de secuencia.'),
+          ok('Tres diagramas de actividades con particiones, bifurcación concurrente y bucle de reintento.'),
+          ok('SVG generado en el servidor desde modelos tipados; el navegador no ejecuta JavaScript para dibujarlos.'),
+        ],
+      },
+      {
+        id: 'PF-UML-02', titulo: 'Como responsable de la documentación, quiero que un diagrama mal formado falle en CI y no en la sustentación',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-30', tags: ['documentación', 'uml', 'testing', 'fase-33'],
+        dod: [
+          ok('54 tests de geometría y notación en tests/uml-{activity,communication,deployment,component}.test.ts.'),
+          ok('Geometría: nada encimado, ninguna transición atravesando una figura ajena, todo elemento dentro de su nodo o partición.'),
+          ok('Notación: decisiones con al menos dos salidas y todas con guarda, uniones con una sola salida, ningún final con transiciones salientes, ningún nodo inalcanzable.'),
+          ok('/docs/diagrama-componentes rehecho como diagrama de componentes real; un test falla si vuelve a nombrar infraestructura.'),
+        ],
+      },
+      {
+        id: 'PF-DK-01', titulo: 'Como desarrollador, quiero que clonar el repositorio produzca el mismo entorno en cualquier máquina',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-07-30', tags: ['infraestructura', 'docker', 'fase-33'],
+        dod: [
+          ok('.devcontainer/ con Node 22.12 exacto, Chromium de Playwright preinstalado y usuario no-root.'),
+          ok('Imágenes pineadas por digest, no por tag: una reproducibilidad que depende de que nadie mueva latest no lo es.'),
+          ok('compose.yaml levanta dos servidores sqld (principal y demo), como en producción, con npm run db:up.'),
+          ok('Contenedores con cap_drop ALL y solo las capacidades medidas como imprescindibles.'),
+          ok('Documentado que Docker no es ni debe ser el runtime de producción: contenerizar la app perdería edge, previews y rollback automático.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 1331 },
+  { mes: 'jul', commits: 1608 },
 ]

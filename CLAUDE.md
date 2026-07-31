@@ -38,6 +38,20 @@ el siguiente paso obvio" cuando ese paso es un deploy o un commit.
   npm run test:e2e          # playwright test
   npx astro check            # type-check
   ```
+- **Docker es infraestructura de desarrollo y pruebas, nunca el runtime de
+  producción** (el sitio lo construye y ejecuta Vercel; contenerizar la app
+  perdería edge, previews por PR y el rollback automático de `ci.yml`).
+  `.devcontainer/` fija Node 22.12 y el Chromium de Playwright — es la salida
+  definitiva al problema del Node 20 suelto en el PATH. `compose.yaml` levanta
+  dos servidores `sqld` (principal y demo, como en producción):
+  ```bash
+  npm run db:up            # levanta ambos y espera a que respondan
+  npm run db:seed          # siembra las dos bases locales
+  npm run test:e2e:server  # e2e contra sqld en vez de archivo
+  npm run db:reset         # borra volúmenes y vuelve a levantar
+  ```
+  Imágenes pineadas por digest, no por tag. Plan y fases en
+  `docs/plan-docker.md`.
 - Migraciones Drizzle (**solo aditivas**, nunca destructivas sin discutirlo
   antes):
   ```bash
@@ -80,8 +94,16 @@ Directorios clave:
 - `src/pages/api/` — endpoints; `src/pages/api/admin/` requiere sesión admin.
 - `src/db/schema.ts` — schema Drizzle único, fuente de verdad.
 - `src/data/` — datos tipados que alimentan `/docs` (requisitos, casos de uso,
-  niveles de testing, V&V, iteraciones del kanban). Las páginas de `/docs` solo
-  renderizan: **ninguna cifra se escribe a mano en el `.astro`**.
+  niveles de testing, V&V, iteraciones del kanban, y los modelos de los
+  diagramas: `bpmn.ts`, `despliegue.ts`, `comunicacion.ts`, `actividades.ts`,
+  `componentes.ts`). Las páginas de `/docs` solo renderizan: **ninguna cifra se
+  escribe a mano en el `.astro`**.
+- `src/lib/bpmn-layout.ts` y `src/lib/uml-*.ts` — motores de layout propios que
+  generan el SVG **en el servidor** desde esos modelos (Mermaid no tiene BPMN,
+  ni comunicación, ni despliegue, y su flowchart no es notación de actividad).
+  Secuencia, clases y objetos sí siguen siendo Mermaid. Un diagrama nuevo con
+  motor propio lleva siempre su test de geometría **y** de notación en
+  `tests/uml-*.test.ts`, con la geometría genérica reutilizada del motor BPMN.
 - `tests/` — Vitest; `e2e/` — Playwright.
 - `drizzle/` — migraciones generadas, nunca editadas a mano.
 - `docs/` — planes vivos (`plan-*.md`), se actualizan al implementar, no se archivan.

@@ -105,7 +105,12 @@ impersonación de soporte ("ver como cliente") es de solo lectura, cortada en el
 middleware y además en el endpoint de pago, que vive fuera del prefijo
 `/api/portal/` y se habría escapado del primer guard.
 
-Falta la capa de tiempo real (el portal no se refresca solo): diseño cerrado en
+El portal se refresca solo desde el 30 jul 2026: un digest que se sondea cada
+20 s (no SSE ni WebSockets — Turso no tiene pub/sub, así que el servidor
+sondearía igual y encima pagando la conexión abierta), con un único ciclo en el
+layout y tres suscriptores: campana, dashboard e hilo abierto. Debajo, un feed
+de actividad por proyecto alimentado fire-and-forget desde los cinco puntos que
+ya notificaban. Plan y decisiones en
 [`docs/plan-portal-tiempo-real.md`](./docs/plan-portal-tiempo-real.md).
 
 ## Cobros de campo (`/cobrar`)
