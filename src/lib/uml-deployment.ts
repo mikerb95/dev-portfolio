@@ -193,6 +193,8 @@ export function layout(model: UmlDeploymentModel): DeploymentLayout {
   })
 
   const porId = new Map(nodos.map((n) => [n.id, n]))
+  const cajasOcupadas: Caja[] = nodos.map((n) => ({ x1: n.x, x2: n.x + n.w, y1: n.y - GEO.prof, y2: n.y + n.h }))
+
   const caminos: PlacedCamino[] = model.caminos.map((c) => {
     const na = porId.get(c.from)
     const nb = porId.get(c.to)
@@ -200,16 +202,34 @@ export function layout(model: UmlDeploymentModel): DeploymentLayout {
     const a = borde(na, { x: nb.cx, y: nb.cy })
     const b = borde(nb, { x: na.cx, y: na.cy })
     const medio = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
-    // La etiqueta se aparta perpendicular al camino: encima de su propia línea
-    // no se lee, y aquí las líneas son largas y casi siempre diagonales.
     const dx = b.x - a.x
     const dy = b.y - a.y
-    const largo = Math.hypot(dx, dy) || 1
-    const perp = { x: -dy / largo, y: dx / largo }
-    const signo = perp.y < 0 ? 1 : -1
-    const at = { x: medio.x + perp.x * 11 * signo, y: medio.y + perp.y * 11 * signo }
-    const align = perp.x * signo > 0.4 ? 'start' : perp.x * signo < -0.4 ? 'end' : 'middle'
-    return { ...c, a, b, at, align, lines: wrap(`«${c.protocolo}»${c.detalle ? ` ${c.detalle}` : ''}`, 30, 2) }
+    const largoCamino = Math.hypot(dx, dy) || 1
+    const dir = { x: dx / largoCamino, y: dy / largoCamino }
+    const perp = { x: -dir.y, y: dir.x }
+    const lines = wrap(`«${c.protocolo}»${c.detalle ? ` ${c.detalle}` : ''}`, 30, 2)
+
+    // La etiqueta busca sitio en vez de sentarse a una distancia fija: los
+    // caminos aquí son largos y diagonales, y el texto se escribe horizontal,
+    // así que una separación fija deja el rótulo cruzado por su propia línea o
+    // pisando el nodo que conecta.
+    const candidatos: { at: Pt; align: 'start' | 'middle' | 'end'; caja: Caja; coste: number }[] = []
+    for (const signo of [perp.y < 0 ? 1 : -1, perp.y < 0 ? -1 : 1]) {
+      for (let paso = 0; paso < 10; paso++) {
+        for (const corrida of [0, 40, -40, 80, -80]) {
+          const off = signo * (11 + paso * 9)
+          const at = { x: medio.x + perp.x * off + dir.x * corrida, y: medio.y + perp.y * off + dir.y * corrida }
+          const align = perp.x * signo > 0.4 ? 'start' : perp.x * signo < -0.4 ? 'end' : 'middle'
+          candidatos.push({ at, align, caja: cajaEtiqueta(at, align, lines), coste: paso * 10 + Math.abs(corrida) * 0.3 })
+        }
+      }
+    }
+    candidatos.sort((x, y) => x.coste - y.coste)
+    const libre = (caja: Caja) => !cajasOcupadas.some((k) => cajasSeCortan(caja, k))
+    const elegido = candidatos.find((k) => libre(k.caja)) ?? candidatos[0]
+    cajasOcupadas.push(elegido.caja)
+
+    return { ...c, a, b, at: elegido.at, align: elegido.align, lines }
   })
 
   const w = nodos.reduce((max, n) => Math.max(max, n.x + n.w), 0) + padX + prof
