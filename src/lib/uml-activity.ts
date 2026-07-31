@@ -446,6 +446,32 @@ export function findLayoutIssues(model: UmlActivityModel): LayoutIssue[] {
     }
   }
 
+  // Guardas: ni encimadas entre sí ni tapadas por una figura. Una guarda que se
+  // lee sobre la rama contraria invierte el significado del diagrama.
+  const guardas = l.edges
+    .filter((e) => e.guarda)
+    .map((e) => {
+      const ancho = (e.guarda!.length + 2) * GUARDA_CHAR_W
+      const x = e.guardAlign === 'start' ? e.guardAt.x : e.guardAlign === 'end' ? e.guardAt.x - ancho : e.guardAt.x - ancho / 2
+      return {
+        id: `${e.from}→${e.to}`,
+        box: { x1: x, x2: x + ancho, y1: e.guardAt.y - GUARDA_H / 2, y2: e.guardAt.y + GUARDA_H / 2 },
+      }
+    })
+
+  for (let i = 0; i < guardas.length; i++) {
+    for (let j = i + 1; j < guardas.length; j++) {
+      if (overlap(guardas[i].box, guardas[j].box)) {
+        issues.push({ kind: 'guarda-encimada', detail: `las guardas de ${guardas[i].id} y ${guardas[j].id} se enciman` })
+      }
+    }
+    for (const n of l.nodes) {
+      if (overlap(guardas[i].box, bbox(n))) {
+        issues.push({ kind: 'guarda-encimada', detail: `la guarda de ${guardas[i].id} cae sobre "${n.id}"` })
+      }
+    }
+  }
+
   const entradas = new Map<string, number>()
   const salidas = new Map<string, UmlActivityEdge[]>()
   for (const e of model.edges) {
