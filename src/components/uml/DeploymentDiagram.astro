@@ -1,0 +1,143 @@
+---
+// Pinta un diagrama de despliegue UML: nodos tridimensionales, artefactos
+// desplegados y caminos de comunicación con su protocolo.
+import { GEO, layout, type UmlDeploymentModel } from '../../lib/uml-deployment'
+
+interface Props {
+  model: UmlDeploymentModel
+}
+
+const { model } = Astro.props
+const l = layout(model)
+const uid = `dep-${model.id}`
+const d = GEO.prof
+---
+
+<svg
+  class="uml-scope block"
+  viewBox={`0 0 ${l.w} ${l.h}`}
+  width={l.w}
+  height={l.h}
+  role="img"
+  aria-label={`Diagrama de despliegue: ${model.titulo}`}
+  style={`max-width: ${l.w}px`}
+>
+  <defs>
+    {/* Los caminos bidireccionales llevan punta en los dos extremos: el webhook
+        de la pasarela entra por el mismo camino por el que salió el cobro. */}
+    <marker id={`${uid}-punta`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="var(--uml-line)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width={l.w} height={l.h} fill="var(--uml-bg)" />
+
+  {/* Caminos de comunicación: línea simple. En UML no llevan punta salvo que se
+      quiera marcar el sentido, y aquí se marca solo donde el sentido importa. */}
+  {
+    l.caminos.map((c) => (
+      <g>
+        <line
+          x1={c.a.x}
+          y1={c.a.y}
+          x2={c.b.x}
+          y2={c.b.y}
+          stroke="var(--uml-line)"
+          stroke-width="1.3"
+          marker-end={c.bidireccional ? `url(#${uid}-punta)` : undefined}
+          marker-start={c.bidireccional ? `url(#${uid}-punta)` : undefined}
+        />
+        <text class="uml-guarda" x={c.at.x} y={c.at.y} text-anchor={c.align} dominant-baseline="central">
+          {c.lines.map((line, i) => (
+            <tspan x={c.at.x} dy={i === 0 ? -((c.lines.length - 1) * 11) / 2 : 11}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      </g>
+    ))
+  }
+
+  {
+    l.nodos.map((n) => (
+      <g>
+        {/* Caja tridimensional: la cara frontal más las dos aristas de fondo.
+            Es la figura que UML reserva para un nodo — un rectángulo plano sería
+            una clase o un componente, no una máquina. */}
+        <path
+          d={`M ${n.x} ${n.y} L ${n.x + d} ${n.y - d} L ${n.x + n.w + d} ${n.y - d} L ${n.x + n.w} ${n.y} Z`}
+          fill="var(--uml-header)"
+          stroke="var(--uml-node-stroke)"
+          stroke-width="1.2"
+          stroke-linejoin="round"
+        />
+        <path
+          d={`M ${n.x + n.w} ${n.y} L ${n.x + n.w + d} ${n.y - d} L ${n.x + n.w + d} ${n.y + n.h - d} L ${n.x + n.w} ${n.y + n.h} Z`}
+          fill="var(--uml-header)"
+          stroke="var(--uml-node-stroke)"
+          stroke-width="1.2"
+          stroke-linejoin="round"
+        />
+        <rect x={n.x} y={n.y} width={n.w} height={n.h} fill="var(--uml-node-fill)" stroke="var(--uml-node-stroke)" stroke-width="1.3" />
+
+        <text class="uml-estereotipo" x={n.x + n.w / 2} y={n.y + 15} text-anchor="middle" dominant-baseline="central">
+          «{n.estereotipo}»
+        </text>
+        <text class="uml-label" x={n.x + n.w / 2} y={n.y + 29} text-anchor="middle" dominant-baseline="central">
+          {n.label}
+        </text>
+
+        {n.elementos.map((e) => (
+          <g>
+            {/* Nodo anidado: otra caja tridimensional, más pequeña. Artefacto:
+                rectángulo plano con la esquina doblada, el icono del estándar. */}
+            {e.tipo === 'nodo' ? (
+              <g>
+                <path
+                  d={`M ${e.x} ${e.y} L ${e.x + 6} ${e.y - 6} L ${e.x + e.w + 6} ${e.y - 6} L ${e.x + e.w} ${e.y} Z M ${e.x + e.w} ${e.y} L ${e.x + e.w + 6} ${e.y - 6} L ${e.x + e.w + 6} ${e.y + e.h - 6} L ${e.x + e.w} ${e.y + e.h} Z`}
+                  fill="var(--uml-header)"
+                  stroke="var(--uml-node-stroke)"
+                  stroke-width="1"
+                  stroke-linejoin="round"
+                />
+                <rect x={e.x} y={e.y} width={e.w} height={e.h} fill="var(--uml-control-fill)" stroke="var(--uml-control-stroke)" stroke-width="1.2" />
+              </g>
+            ) : (
+              <g>
+                <path
+                  d={`M ${e.x} ${e.y} H ${e.x + e.w - 9} L ${e.x + e.w} ${e.y + 9} V ${e.y + e.h} H ${e.x} Z`}
+                  fill="var(--uml-control-fill)"
+                  stroke="var(--uml-node-stroke)"
+                  stroke-width="1.2"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d={`M ${e.x + e.w - 9} ${e.y} V ${e.y + 9} H ${e.x + e.w}`}
+                  fill="none"
+                  stroke="var(--uml-node-stroke)"
+                  stroke-width="1"
+                />
+              </g>
+            )}
+
+            <text
+              class="uml-label"
+              x={e.x + 9}
+              y={e.detalle ? e.y + 11 : e.y + e.h / 2}
+              text-anchor="start"
+              dominant-baseline="central"
+            >
+              <tspan class="uml-estereotipo">{e.tipo === 'nodo' ? `«${e.estereotipo}» ` : '«artifact» '}</tspan>
+              {e.label}
+            </text>
+            {e.detalle && (
+              <text class="uml-nota" x={e.x + 9} y={e.y + 22} text-anchor="start" dominant-baseline="central">
+                {e.detalle}
+              </text>
+            )}
+          </g>
+        ))}
+      </g>
+    ))
+  }
+</svg>
