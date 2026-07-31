@@ -223,7 +223,7 @@ const webhookPago: UmlActivityModel = {
     { from: 'evt', to: 'fok' },
     // Las dos salidas de "¿actualizó alguna fila?" arrancan casi paralelas y sus
     // guardas caen una sobre otra; la del reintento se sube a su propio tramo.
-    { from: 'dgano', to: 'dre', guarda: 'otra escritura ganó', guardaOffset: { dy: -15 } },
+    { from: 'dgano', to: 'dre', guarda: 'otra escritura ganó', guardaOffset: { dx: -58, dy: -15 } },
     { from: 'dre', to: 'fagot', guarda: 'sin reintentos' },
     { from: 'dre', to: 'mg', guarda: 'quedan', channelOffset: 86, guardaOffset: { dx: -62 } },
   ],
