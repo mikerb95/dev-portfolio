@@ -8,6 +8,7 @@ import { procesosBpmn as PROCESOS_BPMN } from '../../data/bpmn'
 import { ACTIVIDADES } from '../../data/actividades'
 import { COMUNICACIONES } from '../../data/comunicacion'
 import { COMPONENTES } from '../../data/componentes'
+import { CONCEPTOS as CONCEPTOS_DOCKER, ANATOMIA as ANATOMIA_DOCKER, PREGUNTAS as PREGUNTAS_DOCKER } from '../../data/docker'
 
 const rfTotal = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const rfImpl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
