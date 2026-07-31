@@ -292,7 +292,7 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
       cajasOcupadas.push(elegido.caja)
 
       mensajes.push({ ...m, a, b, at: elegido.at, align: elegido.align, lines })
-    })
+    }
   }
 
   // Mensajes reflexivos: no tienen enlace propio, se dibujan como un lazo sobre
