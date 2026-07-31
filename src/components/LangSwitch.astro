@@ -23,8 +23,12 @@ const flagW = size === 'sm' ? 18 : 20
 const flagH = size === 'sm' ? 12 : 14
 const optionBase =
   size === 'sm'
-    ? 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-mono uppercase tracking-[.08em] transition-colors'
-    : 'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] font-mono uppercase tracking-[.08em] transition-colors'
+    ? 'inline-flex items-center gap-1.5 rounded-full py-1 text-[11px] font-mono uppercase tracking-[.08em] transition-colors'
+    : 'inline-flex items-center gap-2 rounded-full py-1.5 text-[12px] font-mono uppercase tracking-[.08em] transition-colors'
+// El activo solo muestra la bandera, así que necesita menos aire lateral que
+// la opción con código visible; sin esto la píldora queda descompensada.
+const activePadding = size === 'sm' ? 'px-2' : 'px-2.5'
+const inactivePadding = size === 'sm' ? 'px-2.5' : 'px-3'
 ---
 
 <div
