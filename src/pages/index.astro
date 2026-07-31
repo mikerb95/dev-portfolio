@@ -124,11 +124,14 @@ const visibleProjects = await db
 
       <!-- Headline -->
       <h1 class="font-sans font-medium tracking-[-.035em] leading-[.94] text-[clamp(44px,8vw,120px)]">
-        <span class="hero-line block text-mask">{t.hero.line1}</span>
+        {/* Los espacios entre spans son intencionales: al ser `block` no se
+            ven, pero sin ellos el texto plano que extrae un buscador (o un
+            lector de pantalla) queda pegado — "Ingeniería desoftwarecon". */}
+        <span class="hero-line block text-mask">{t.hero.line1}</span>{' '}
         {/* La cursiva serif tiene altura-x mucho menor que la sans a igual
             font-size: sin subirla ~12% y cerrar su interlineado, la línea
             del medio parece flotar suelta entre las otras dos. */}
-        <span class="hero-line block text-mask-cyan italic font-serif font-normal text-[1.12em] leading-[.86]">{t.hero.line2}</span>
+        <span class="hero-line block text-mask-cyan italic font-serif font-normal text-[1.12em] leading-[.86]">{t.hero.line2}</span>{' '}
         <span class="hero-line block text-mask">{t.hero.line3}</span>
       </h1>
 
