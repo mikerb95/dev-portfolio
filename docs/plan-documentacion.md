@@ -149,6 +149,48 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 
 El menú (`DocsNav.astro`) pasó de 10 a 18 pestañas.
 
+## 5.c Entregado después (30 jul 2026) — las notaciones que Mermaid no dibuja
+
+Cuatro diagramas UML más, con el mismo enfoque que el BPMN: modelo tipado en
+`src/data/`, motor de layout propio en `src/lib/`, SVG generado en el servidor y
+geometría verificada por tests. Registrado como **RF-707** en
+`documentacion.ts`.
+
+| Ruta | Modelo | Motor | Tests |
+|---|---|---|---|
+| `/docs/diagrama-despliegue` | `src/data/despliegue.ts` | `src/lib/uml-deployment.ts` | `tests/uml-deployment.test.ts` |
+| `/docs/diagrama-comunicacion` | `src/data/comunicacion.ts` | `src/lib/uml-communication.ts` | `tests/uml-communication.test.ts` |
+| `/docs/diagrama-actividades` | `src/data/actividades.ts` | `src/lib/uml-activity.ts` | `tests/uml-activity.test.ts` |
+| `/docs/diagrama-componentes` | `src/data/componentes.ts` | `src/lib/uml-component.ts` | `tests/uml-component.test.ts` |
+
+- **Por qué no Mermaid**: no tiene diagrama de comunicación ni de despliegue, y
+  su flowchart no es notación de actividad (sin barra de bifurcación, sin
+  particiones, sin distinguir final de flujo de final de actividad). El
+  descarte fue por incapacidad de la herramienta, no por gusto. Con esto, las
+  páginas que siguen siendo Mermaid inline son las de secuencia, clases y
+  objetos, donde sí tiene la notación.
+- **`/docs/diagrama-componentes` era un diagrama equivocado**: un flowchart de
+  despliegue sin una sola interfaz declarada, es decir, la vista de despliegue
+  duplicada. Se rehízo como diagrama de componentes real, con interfaces
+  provistas/requeridas y conectores de ensamblaje. Un test falla si algún
+  componente vuelve a nombrar un proveedor de infraestructura, que es la
+  recaída concreta que lo tenía duplicando la otra vista.
+- **Reutilización, no copia**: los tres motores nuevos toman del motor BPMN la
+  geometría genérica (corte de texto, polilíneas redondeadas, punto sobre la
+  traza, detección de cruces) y aportan solo lo propio de cada notación.
+- **Los tests verifican notación, no solo geometría** — que es lo que un repaso
+  visual no atrapa: toda decisión con dos salidas o más y todas con guarda,
+  toda unión con una sola salida, ningún nodo final con transiciones salientes,
+  ningún nodo inalcanzable, numeración decimal sin repeticiones ni niveles
+  huérfanos, todo camino de comunicación con su protocolo, y una bola por
+  interfaz provista en vez de una por consumidor.
+- **Comunicación y secuencia son las mismas cuatro interacciones**, enlazadas en
+  ambos sentidos: en UML son equivalentes, y tenerlas enfrentadas hace visible
+  que una de las dos se quedó atrás.
+
+El menú pasó de 18 a 20 pestañas (`Comunicación`, `Actividades`, `Despliegue`;
+`bpmn-imprimible` y `presentacion` no van en el menú).
+
 ## 6. Fases futuras
 
 - **Fase 2 — Vivo**: derivar el estado de RF desde los tests (cada RF apunta a
