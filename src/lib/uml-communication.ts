@@ -248,6 +248,7 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
         const desplazamientoX = perp.x * offTexto
         align = desplazamientoX > 6 ? 'start' : desplazamientoX < -6 ? 'end' : 'middle'
         caja = cajaEtiqueta(at, align, lines)
+        if (m.seq === '6') console.log('paso', paso, JSON.stringify(caja), 'choca', chocaConAlgo(caja), 'ocupadas', cajasOcupadas.length)
         if (!chocaConAlgo(caja)) break
       }
       // La etiqueta ya colocada pasa a ser un obstáculo para las siguientes.
