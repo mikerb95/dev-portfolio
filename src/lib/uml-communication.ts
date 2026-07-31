@@ -110,6 +110,40 @@ export interface CommunicationLayout {
 const len = (p: Pt): number => Math.hypot(p.x, p.y) || 1
 const norm = (p: Pt): Pt => ({ x: p.x / len(p), y: p.y / len(p) })
 
+// Sin métricas de fuente en el servidor, el tamaño del texto se estima por
+// caracteres, holgado a propósito: el cálculo sirve para apartar etiquetas, y
+// quedarse corto las deja encima de la línea.
+const CHAR_W_MSG = 5.9
+const LINE_H_MSG = 11
+
+interface Caja {
+  x1: number
+  x2: number
+  y1: number
+  y2: number
+}
+
+/** Caja que ocupará el texto de un mensaje, según su anclaje. */
+function cajaEtiqueta(at: Pt, align: 'start' | 'middle' | 'end', lines: string[]): Caja {
+  const w = Math.max(...lines.map((l) => l.length)) * CHAR_W_MSG
+  const h = lines.length * LINE_H_MSG
+  const x1 = align === 'start' ? at.x : align === 'end' ? at.x - w : at.x - w / 2
+  return { x1, x2: x1 + w, y1: at.y - h / 2, y2: at.y + h / 2 }
+}
+
+const cortaCaja = (a: Pt, b: Pt, c: Caja): boolean => {
+  const pasos = 30
+  for (let i = 0; i <= pasos; i++) {
+    const t = i / pasos
+    const x = a.x + (b.x - a.x) * t
+    const y = a.y + (b.y - a.y) * t
+    if (x > c.x1 && x < c.x2 && y > c.y1 && y < c.y2) return true
+  }
+  return false
+}
+
+const cajasSeCortan = (a: Caja, b: Caja): boolean => a.x2 > b.x1 && a.x1 < b.x2 && a.y2 > b.y1 && a.y1 < b.y2
+
 /**
  * Punto donde la recta que va del centro de la caja hacia `hacia` corta el
  * borde. El enlace UML une los bordes de los objetos, no sus centros: una línea
