@@ -18,10 +18,29 @@ import { join } from 'node:path'
 const PORT = 4331
 const E2E_DIR = join(process.cwd(), '.e2e')
 
+// Dos modos de base, mismo suite de tests:
+//
+//   file   (default) — bases libsql en archivo, cero dependencias. Es lo que
+//                      corre en CI hoy y no requiere Docker.
+//   server (E2E_DB_MODE=server) — los sqld de compose.yaml. Turso en producción
+//                      habla HTTP/hrana, no filesystem: este modo ejerce el
+//                      mismo protocolo, el mismo pool de conexiones y la misma
+//                      semántica de transacciones que la base real. Los tests
+//                      que dependen de concurrencia solo son fieles aquí.
+//
+// El default sigue siendo `file` a propósito: obligar a levantar contenedores
+// para correr los e2e sería cambiar un test que funciona por uno que además hay
+// que administrar.
+const useDbServer = process.env.E2E_DB_MODE === 'server'
+
 export const E2E = {
   baseURL: `http://localhost:${PORT}`,
-  mainDbUrl: `file:${join(E2E_DIR, 'main.db')}`,
-  demoDbUrl: `file:${join(E2E_DIR, 'demo.db')}`,
+  mainDbUrl: useDbServer
+    ? (process.env.E2E_LIBSQL_MAIN_URL ?? 'http://127.0.0.1:8080')
+    : `file:${join(E2E_DIR, 'main.db')}`,
+  demoDbUrl: useDbServer
+    ? (process.env.E2E_LIBSQL_DEMO_URL ?? 'http://127.0.0.1:8081')
+    : `file:${join(E2E_DIR, 'demo.db')}`,
   /** Prefijo de los datos de la base "principal": jamás debe verse en la demo. */
   sentinel: 'CENTINELA-REAL ',
   authSecret: 'e2e-auth-secret-no-usado-en-produccion-0123456789',
