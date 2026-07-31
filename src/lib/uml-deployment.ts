@@ -207,12 +207,18 @@ export function layout(model: UmlDeploymentModel): DeploymentLayout {
   const porId = new Map(nodos.map((n) => [n.id, n]))
   const cajasOcupadas: Caja[] = nodos.map((n) => ({ x1: n.x, x2: n.x + n.w, y1: n.y - GEO.prof, y2: n.y + n.h }))
 
-  const caminos: PlacedCamino[] = model.caminos.map((c) => {
+  // La geometría de TODOS los caminos se calcula antes de rotular ninguno: un
+  // rótulo colocado mirando solo a los caminos ya trazados acabaría bajo el
+  // siguiente, y el protocolo es justo el dato que este diagrama aporta.
+  const trazos: [Pt, Pt][] = model.caminos.map((c) => {
     const na = porId.get(c.from)
     const nb = porId.get(c.to)
     if (!na || !nb) throw new Error(`Camino ${c.from}→${c.to}: nodo inexistente`)
-    const a = borde(na, { x: nb.cx, y: nb.cy })
-    const b = borde(nb, { x: na.cx, y: na.cy })
+    return [borde(na, { x: nb.cx, y: nb.cy }), borde(nb, { x: na.cx, y: na.cy })]
+  })
+
+  const caminos: PlacedCamino[] = model.caminos.map((c, indice) => {
+    const [a, b] = trazos[indice]
     const medio = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
     const dx = b.x - a.x
     const dy = b.y - a.y
