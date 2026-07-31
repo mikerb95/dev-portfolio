@@ -23,8 +23,15 @@ const LEYENDA: { type: UmlActivityNodeType; label: string; desc: string }[] = [
 ]
 
 const ALTO = 34
+const ANCHO_MAX = 84
 
-/** Encierra una figura suelta en un lienzo mínimo, centrada, para la leyenda. */
+/**
+ * Encierra una figura suelta en un lienzo mínimo, centrada, para la leyenda.
+ *
+ * El encaje respeta la proporción PERO dentro de una caja: la barra de
+ * bifurcación mide 176×8, y escalarla solo por su altura la estiraría a casi
+ * 400 px, encima del texto que la explica.
+ */
 function muestra(type: UmlActivityNodeType) {
   const { w, h } = sizeOf(type)
   const vbW = w + 8
