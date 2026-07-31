@@ -241,16 +241,11 @@ export function layout(model: UmlDeploymentModel): DeploymentLayout {
 // ── Verificación ────────────────────────────────────────────────────────────
 
 export interface LayoutIssue {
-  kind: 'overlap' | 'camino-cruza-nodo' | 'semantica'
+  kind: 'overlap' | 'camino-cruza-nodo' | 'semantica' | 'etiqueta-encimada'
   detail: string
 }
 
-interface Box {
-  x1: number
-  x2: number
-  y1: number
-  y2: number
-}
+type Box = Caja
 
 const bbox = (n: PlacedNodo): Box => ({ x1: n.x, x2: n.x + n.w, y1: n.y, y2: n.y + n.h })
 const grow = (b: Box, m: number): Box => ({ x1: b.x1 - m, x2: b.x2 + m, y1: b.y1 - m, y2: b.y2 + m })
@@ -284,6 +279,22 @@ export function findLayoutIssues(model: UmlDeploymentModel): LayoutIssue[] {
       if (n.id === c.from || n.id === c.to) continue
       if (segmentoCruza(c.a, c.b, grow(bbox(n), 3))) {
         issues.push({ kind: 'camino-cruza-nodo', detail: `el camino ${c.from}–${c.to} cruza "${n.id}"` })
+      }
+    }
+  }
+
+  // Rótulos de protocolo: ni sobre un nodo ni unos sobre otros. Es el dato que
+  // justifica el diagrama, así que no puede quedar tapado.
+  const etiquetas = l.caminos.map((c) => ({ id: `${c.from}–${c.to}`, caja: cajaEtiqueta(c.at, c.align, c.lines) }))
+  for (let i = 0; i < etiquetas.length; i++) {
+    for (let j = i + 1; j < etiquetas.length; j++) {
+      if (cajasSeCortan(etiquetas[i].caja, etiquetas[j].caja)) {
+        issues.push({ kind: 'etiqueta-encimada', detail: `los rótulos de ${etiquetas[i].id} y ${etiquetas[j].id} se enciman` })
+      }
+    }
+    for (const n of l.nodos) {
+      if (cajasSeCortan(etiquetas[i].caja, bbox(n))) {
+        issues.push({ kind: 'etiqueta-encimada', detail: `el rótulo de ${etiquetas[i].id} cae sobre "${n.id}"` })
       }
     }
   }
