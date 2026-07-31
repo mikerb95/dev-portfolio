@@ -1,0 +1,19 @@
+# Lo que nunca debe entrar en un contexto de build. Además de peso, esto es
+# higiene de cadena de suministro: un secreto que llega al contexto puede quedar
+# en una capa de la imagen aunque el Dockerfile no lo copie nunca.
+.env
+.env.*
+.vercel
+.git
+
+node_modules
+dist
+.astro
+coverage
+test-results
+playwright-report
+.e2e
+
+*.pdf
+*.docx
+*.pptx
