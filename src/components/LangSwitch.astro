@@ -118,7 +118,7 @@ const inactivePadding = size === 'sm' ? 'px-2.5' : 'px-3'
           href={languageHref}
           hreflang={otherLocale}
           title={otherLocale === 'en' ? 'View in English' : 'Ver en español'}
-          class={`group/lang ${optionBase} text-ink-200 hover:bg-white/5 hover:text-cyan`}
+          class={`group/lang ${optionBase} ${inactivePadding} text-ink-200 hover:bg-white/5 hover:text-cyan`}
         >
           {flag}
           <span>{code.toUpperCase()}</span>
