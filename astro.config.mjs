@@ -19,6 +19,14 @@ export default defineConfig({
     // del nuestro. Ver docs/plan-i18n-en.md §2.2.
     routing: 'manual',
   },
+  // /admin/slides pasó a ser /admin/presentations (hub de presentaciones). Los
+  // enlaces viejos siguen vivos en marcadores y en pestañas de proyección
+  // abiertas, así que se redirigen en vez de romperse.
+  redirects: {
+    '/admin/slides': '/admin/presentations',
+    '/admin/slides/[id]/control': '/admin/presentations/[id]/control',
+    '/admin/slides/[id]/present': '/admin/presentations/[id]/present',
+  },
   image: {
     // Autoriza optimizar imágenes remotas alojadas en Vercel Blob
     remotePatterns: [{ protocol: 'https', hostname: '**.public.blob.vercel-storage.com' }],
