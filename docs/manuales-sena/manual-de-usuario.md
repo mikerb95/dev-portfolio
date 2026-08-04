@@ -95,9 +95,14 @@ los siguientes subsistemas:
 
 # 2. DESCRIPCIÓN DE LAS FUNCIONALIDADES
 
-Las capturas de pantalla que ilustran este apartado corresponden al entorno de
-demostración público del panel (`/demo`), que reproduce la interfaz real con datos
-ficticios. Ninguna imagen de este manual contiene información de clientes reales.
+Las capturas de pantalla que ilustran este apartado se tomaron sobre el entorno
+de demostración del sistema, que ejecuta la interfaz real contra una base de
+datos sembrada con datos ficticios. Ninguna imagen de este manual contiene
+información de clientes reales.
+
+Dos apartados se describen sin captura —la gestión de sesiones (2.1.2) y el cobro
+de campo (2.3.5)— porque el modo de demostración veta esas rutas por diseño: son
+precisamente las que tocan credenciales y dinero.
 
 ## 2.1 Subsistema de acceso y sesiones
 
@@ -118,8 +123,11 @@ Para iniciar sesión, el administrador debe:
 4. El sistema comprueba que el nombre de usuario devuelto está en la lista de
    autorización y, en caso afirmativo, crea la sesión y muestra el panel.
 
-> **Figura 1 — Pantalla de acceso al panel de administración**
-> `imagenes/figura-01-admin-login.png`
+![Pantalla de acceso al panel de administración](imagenes/figura-01-admin-login.jpg)
+
+> **Figura 1 — Pantalla de acceso al panel de administración.** Las dos puertas
+> de entrada son equivalentes; el enlace inferior lleva a la demostración
+> pública, sin cuenta.
 
 Como alternativa al proveedor externo, el sistema admite el acceso mediante
 **llave de acceso (passkey)**, basado en el estándar WebAuthn/FIDO2. La llave de
@@ -138,14 +146,31 @@ pulsa **Revocar** en la fila correspondiente. La revocación es inmediata: en la
 siguiente petición, ese dispositivo pierde el acceso y es enviado de vuelta a la
 pantalla de inicio de sesión.
 
-> **Figura 2 — Listado de sesiones activas por dispositivo**
-> `imagenes/figura-02-admin-sessions.png`
+Este apartado no lleva captura: la gestión de sesiones está vetada en el modo de
+demostración.
 
 ### 2.1.3 Cerrar sesión
 
 El enlace **Cerrar sesión**, disponible en la barra lateral de cualquier página
 del panel, elimina la sesión actual. Tras pulsarlo, cualquier intento de acceder
 a una ruta privada vuelve a exigir autenticación.
+
+### 2.1.4 Orientación general del panel
+
+Tras el acceso, el sistema presenta el **Dashboard**, que resume el estado del
+negocio: ingresos cobrados, pendientes y proyectados, número de proyectos
+publicados, mensajes sin leer, clientes registrados, costo de infraestructura
+mensual y anual, margen estimado y renovaciones próximas.
+
+La barra lateral izquierda agrupa los apartados por bloque —Workspace, CRM,
+Finanzas y Perfil— y permanece visible en todas las páginas. En viewport móvil se
+colapsa en un cajón desplegable.
+
+![Dashboard del panel de administración](imagenes/figura-02-admin-dashboard.jpg)
+
+> **Figura 2 — Dashboard del panel de administración.** El aviso superior indica
+> que la sesión corre en modo de demostración y que ningún dato puede
+> modificarse.
 
 ## 2.2 Subsistema CRM
 
@@ -173,8 +198,11 @@ mensaje de error indicando el campo pendiente.
 Desde el detalle de un proyecto, el administrador accede además a sus contactos,
 sus decisiones de arquitectura, sus presentaciones y sus servicios contratados.
 
-> **Figura 3 — Listado de proyectos en el panel**
-> `imagenes/figura-03-admin-projects.png`
+![Listado de proyectos en el panel](imagenes/figura-03-admin-proyectos.jpg)
+
+> **Figura 3 — Listado de proyectos.** Cada fila muestra el proyecto y su
+> identificador de URL, el cliente asociado, el stack, el estado y la fecha de
+> inicio.
 
 ### 2.2.2 Gestionar clientes
 
@@ -253,8 +281,11 @@ cambio, el sistema **lo excluye del total y lo señala como advertencia** en lug
 de fallar el cálculo. Ver un total acompañado de una advertencia significa que
 ese total está incompleto; la tasa se configura en **Ajustes**.
 
-> **Figura 4 — Costos y rentabilidad por proyecto**
-> `imagenes/figura-04-admin-costs.png`
+![Costos y rentabilidad por proyecto](imagenes/figura-04-admin-costos.jpg)
+
+> **Figura 4 — Costos de infraestructura y operación.** Los totales se convierten
+> a la moneda base y se desglosan por categoría, por responsable de pago y por
+> renovación próxima.
 
 ### 2.3.3 Custodiar credenciales en la bóveda
 
@@ -295,8 +326,8 @@ el cliente entra a esa página consultando su número de teléfono en lugar de u
 el enlace, los datos se muestran enmascarados: el número de teléfono no es una
 credencial de acceso.
 
-> **Figura 5 — Pantalla de cobro de campo**
-> `imagenes/figura-05-cobrar.png`
+Este apartado no lleva captura: la ruta de cobro está vetada en el modo de
+demostración, por ser una de las que mueven dinero.
 
 ## 2.4 Subsistema de observabilidad
 
@@ -318,8 +349,11 @@ Cuando un monitor falla, el sistema agrupa los fallos consecutivos en un
 posterior, registrando causa y duración. El histórico de incidentes es la
 evidencia de disponibilidad del servicio y alimenta la página pública `/status`.
 
-> **Figura 6 — Monitores e incidentes**
-> `imagenes/figura-06-admin-monitors.png`
+![Monitores e incidentes](imagenes/figura-05-admin-monitoreo.jpg)
+
+> **Figura 5 — Monitoreo de disponibilidad.** Los contadores superiores separan
+> los servicios caídos, degradados y operativos; cada fila muestra el uptime de
+> 30 días, la latencia del último sondeo y su traza.
 
 ### 2.4.3 Evaluar objetivos de nivel de servicio
 
@@ -358,8 +392,12 @@ Cuando el bloqueo lo aplica el sistema de forma automática, la duración escala
 con la reincidencia: una hora la primera vez, veinticuatro horas la segunda y
 siete días a partir de la tercera.
 
-> **Figura 7 — Panel de seguridad**
-> `imagenes/figura-07-admin-security.png`
+![Panel de seguridad](imagenes/figura-06-admin-seguridad.jpg)
+
+> **Figura 6 — Panel de seguridad.** La captura corresponde a un entorno de
+> demostración sin actividad hostil registrada, por lo que los contadores están a
+> cero; la disposición de las tarjetas y de los controles de bloqueo es la
+> real.
 
 ## 2.6 Subsistema LAB
 
@@ -391,8 +429,11 @@ pueden ser objeto de un experimento: la exclusión evita que el administrador se
 deje a sí mismo fuera del panel. La vista dispone además de un **interruptor de
 pánico** que desactiva de golpe todos los experimentos activos.
 
-> **Figura 8 — Consola de chaos engineering**
-> `imagenes/figura-08-admin-chaos.png`
+![Consola de chaos engineering](imagenes/figura-07-admin-chaos.jpg)
+
+> **Figura 7 — Consola de inyección de fallos.** El propio texto de la pantalla
+> declara las rutas protegidas y el tiempo máximo del experimento; el botón rojo
+> superior es el interruptor de pánico.
 
 ## 2.7 Subsistema de administración del portal de clientes
 
@@ -412,6 +453,12 @@ El sistema envía una invitación con un enlace de un solo uso. El usuario queda
 estado `invitado` hasta que abre el enlace y elige su contraseña, momento en el
 que pasa a `activo`. Un usuario puede pasarse a `deshabilitado` para retirarle el
 acceso sin borrar su histórico.
+
+![Administración del portal de clientes](imagenes/figura-08-admin-portal.jpg)
+
+> **Figura 8 — Administración del portal de clientes.** Por cliente se ve si su
+> portal está activo, cuántos usuarios tiene, su último acceso y lo que queda
+> pendiente de atender.
 
 ### 2.7.2 Publicar hitos de avance
 
@@ -486,8 +533,10 @@ Si el cliente ha olvidado su contraseña, el enlace **¿Olvidó su contraseña?*
 envía un correo con un enlace de restablecimiento de un solo uso, con el mismo
 mecanismo que la invitación.
 
-> **Figura 9 — Acceso al portal de clientes**
-> `imagenes/figura-09-portal-login.png`
+![Acceso al portal de clientes](imagenes/figura-09-portal-login.jpg)
+
+> **Figura 9 — Acceso al portal de clientes.** El acceso es por invitación: no
+> hay formulario de registro.
 
 ### 2.8.3 Consultar el avance del proyecto
 
@@ -498,8 +547,11 @@ La información se actualiza sola mientras la pestaña está visible, sin necesi
 de recargar. Al pasar a otra pestaña, la actualización se pausa y se reanuda al
 volver.
 
-> **Figura 10 — Pantalla inicial del portal de clientes**
-> `imagenes/figura-10-portal-inicio.png`
+![Pantalla inicial del portal de clientes](imagenes/figura-10-portal-inicio.jpg)
+
+> **Figura 10 — Pantalla inicial del portal.** Resume lo pendiente de pago, los
+> mensajes sin leer y el avance por hitos, con el estado de disponibilidad del
+> servicio a la derecha.
 
 ### 2.8.4 Consultar y descargar facturas
 
@@ -509,6 +561,11 @@ importe y fecha de vencimiento. Desde el detalle de cada una, el cliente puede
 
 Los clientes con rol `owner` o `billing` pueden además iniciar el pago desde la
 propia factura.
+
+![Facturas en el portal de clientes](imagenes/figura-11-portal-facturas.jpg)
+
+> **Figura 11 — Facturas del cliente.** El estado de cada factura se muestra con
+> su etiqueta y la fecha de vencimiento se resalta cuando ya pasó.
 
 ### 2.8.5 Consultar documentos
 
