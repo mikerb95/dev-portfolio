@@ -11,12 +11,12 @@
 
 | | | | |
 |---|---|---|---|
-| **Organismo** | SENA — `<Centro de formación>` | | |
+| **Organismo** | SENA — Centro de Servicios Financieros, Regional Distrito Capital | | |
 | **Proyecto** | CodeByMike — Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
 | **Entregable** | Manual Técnico | | |
-| **Autor** | Michael David Rodríguez Beltran — Ficha 3114731 | | |
+| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software — Ficha 3114731 — Trimestre 7 | | |
 | **Versión/Edición** | 0100 | **Fecha Versión** | 03/08/2026 |
-| **Aprobado por** | `<Nombre del instructor>` | **Fecha Aprobación** | DD/MM/AAAA |
+| **Aprobado por** | (pendiente de asignación) | **Fecha Aprobación** | (pendiente) |
 | | | **Nº Total de Páginas** | `<al exportar>` |
 
 ## REGISTRO DE CAMBIOS
@@ -831,8 +831,8 @@ Parámetros fijados en código:
 
 | Nombre | Cargo | Módulo | Contacto |
 |---|---|---|---|
-| Michael David Rodríguez Beltran | Desarrollador y responsable técnico | Todos | `<correo>` · @mikerb95 |
-| `<Nombre>` | Instructor / supervisor | Documentación y sustentación | `<correo>` |
+| Michael David Rodríguez Beltran | Aprendiz — desarrollador y responsable técnico | Todos | 0368dev@gmail.com · @mikerb95 |
+| (Instructor asignado) | Instructor / supervisor | Documentación y sustentación | — |
 | Soporte de Vercel | Proveedor | Cómputo y despliegue | `vercel.com/support` |
 | Soporte de Turso | Proveedor | Base de datos | `turso.tech` |
 | Soporte de Wompi | Proveedor | Pasarela de pagos | `wompi.co` |

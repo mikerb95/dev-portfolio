@@ -11,12 +11,12 @@
 
 | | | | |
 |---|---|---|---|
-| **Organismo** | SENA — `<Centro de formación>` | | |
+| **Organismo** | SENA — Centro de Servicios Financieros, Regional Distrito Capital | | |
 | **Proyecto** | CodeByMike — Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
 | **Entregable** | Manual de Usuario | | |
-| **Autor** | Michael David Rodríguez Beltran — Ficha 3114731 | | |
+| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software — Ficha 3114731 — Trimestre 7 | | |
 | **Versión/Edición** | 0100 | **Fecha Versión** | 03/08/2026 |
-| **Aprobado por** | `<Nombre del instructor>` | **Fecha Aprobación** | DD/MM/AAAA |
+| **Aprobado por** | (pendiente de asignación) | **Fecha Aprobación** | (pendiente) |
 | | | **Nº Total de Páginas** | `<al exportar>` |
 
 ## REGISTRO DE CAMBIOS
@@ -31,9 +31,9 @@
 
 | Nombre y Apellidos |
 |---|
-| Michael David Rodríguez Beltran |
-| `<Nombre del instructor>` |
-| `<Jurado de sustentación>` |
+| Michael David Rodríguez Beltran — Aprendiz, ficha 3114731 |
+| (Instructor asignado) |
+| (Jurado de sustentación) |
 | |
 
 ---
