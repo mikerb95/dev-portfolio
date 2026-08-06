@@ -213,10 +213,23 @@ export type BusCredentials = {
 
 let cached: PresentStore | null = null
 
+/**
+ * Resolución del bus. `PRESENT_BUS_*` manda si está puesta; si no, se usa la
+ * misma base del estado con las variables que la integración de Upstash ya
+ * inyecta sola (`KV_REST_API_READ_ONLY_TOKEN` es el token de solo lectura que
+ * Upstash documenta precisamente para clientes web). Así el caso normal —una
+ * base, la que crea el Marketplace— funciona sin configurar nada a mano.
+ */
+const busUrl = () => serverEnv('PRESENT_BUS_REST_URL') || serverEnv('UPSTASH_REDIS_REST_URL')
+const busWriteToken = () =>
+  serverEnv('PRESENT_BUS_REST_TOKEN') || serverEnv('UPSTASH_REDIS_REST_TOKEN')
+const busReadonlyToken = () =>
+  serverEnv('PRESENT_BUS_READONLY_TOKEN') || serverEnv('KV_REST_API_READ_ONLY_TOKEN')
+
 /** Credenciales del bus para el navegador, o null si no está configurado. */
 export function busCredentials(): BusCredentials | null {
-  const url = serverEnv('PRESENT_BUS_REST_URL')
-  const readonlyToken = serverEnv('PRESENT_BUS_READONLY_TOKEN')
+  const url = busUrl()
+  const readonlyToken = busReadonlyToken()
   if (!url || !readonlyToken) return null
   return { url: url.replace(/\/+$/, ''), readonlyToken }
 }
