@@ -67,7 +67,7 @@ export const REQUISITOS_FUNCIONALES: Modulo[] = [
       { id: 'RF-205', titulo: 'Briefings de cliente', descripcion: 'Documento de alcance por proyecto con objetivo, presupuesto estimado/acordado, horas e ítems (requerimiento/entregable/exclusión).', prioridad: 'media', estado: 'implementado', origen: 'src/pages/admin/briefings, briefings, briefing_items', verificacion: 'Revisión manual creando un briefing completo con ítems de los tres tipos.', relacionados: ['CU-07'] },
       { id: 'RF-206', titulo: 'Contactos por proyecto', descripcion: 'Registro de contactos (cliente, PM, dev, QA, diseño) asociados a un proyecto.', prioridad: 'baja', estado: 'implementado', origen: 'project_contacts', verificacion: 'Revisión manual desde el detalle de proyecto.' },
       { id: 'RF-207', titulo: 'Decisiones de arquitectura (ADRs)', descripcion: 'Registro de decisiones técnicas por proyecto con contexto, decisión, justificación y alternativas consideradas; opcionalmente públicas.', prioridad: 'media', estado: 'implementado', origen: 'project_adrs', verificacion: 'Revisión manual del flag isPublic reflejándose en la vitrina pública del proyecto.', relacionados: ['RNF-15', 'CU-06'] },
-      { id: 'RF-208', titulo: 'Presentaciones (slides) para cliente', descripcion: 'Creación de presentaciones ligadas a un proyecto con control remoto de avance de diapositivas en tiempo real.', prioridad: 'baja', estado: 'implementado', origen: 'src/pages/admin/presentations, src/pages/present/[token], presentations', verificacion: 'Prueba manual con dos pestañas: control del administrador y vista pública del cliente en /present/[shareToken], confirmando sincronización.', notas: 'Sincronización por polling corto sobre HTTP, no WebSockets; suficiente para el caso de uso pero con latencia de hasta un ciclo de polling. La vista del cliente vive en /present/[shareToken] (pública, protegida solo por el token), separada de /admin/presentations/[id]/present (previsualización del propio administrador, tras sesión). Las mutaciones (crear presentación, avanzar slide, subir slides) quedaron bajo /api/admin/slides/* tras corregir que no tenían gate de sesión.', relacionados: ['CU-16'] },
+      { id: 'RF-208', titulo: 'Presentaciones proyectadas con público en sincronía', descripcion: 'Biblioteca de decks HTML autónomos y sesiones de proyección: pantalla principal, control remoto desde el celular y vista del público en sincronía por PIN corto servido en la raíz del dominio.', prioridad: 'media', estado: 'implementado', origen: 'src/lib/present/*, src/pages/admin/presentaciones, src/pages/present/[sessionId], src/pages/remote/[sessionId], src/pages/[pin], decks/deck_slides', verificacion: 'tests/present-sync.test.ts levanta dos clientes suscritos al bus y comprueba que un salto de slide llega a ambos con el mismo valor y en orden; tests/present-pin.test.ts cubre la generación del PIN sin colisión con rutas reservadas; tests/present-state.test.ts, la máquina de estados.', notas: 'Sustituye por completo al sistema anterior (imágenes PNG por proyecto, sincronizadas por polling). El estado vivo de la sesión —PIN, slide actual, secreto del presentador— es EFÍMERO y vive en Redis con TTL de 6 h, nunca en Turso; en Turso solo queda la biblioteca de decks y el feedback. El tiempo real no gasta compute sostenido: el público abre su EventSource directamente contra el bus de Upstash con un token de solo lectura, en vez de contra una función de Vercel, que quedaría abierta una por espectador durante toda la charla. El bus lleva únicamente números de slide y va en una base distinta de la del estado, para que ese token público no alcance jamás el secreto del presentador.', relacionados: ['CU-16'] },
     ],
   },
   {
@@ -286,8 +286,10 @@ export const CASOS_DE_USO: CasoDeUso[] = [
     { tipo: 'extends', nodo: { id: 'CU-14-X1', nombre: 'Bloquear IP manualmente' } },
   ] },
   { id: 'CU-15', nombre: 'Aplicar rate limiting durable', actor: 'admin', rf: ['RF-603'], resumen: 'Un cliente excede el límite de requests permitido; el sistema lo limita usando el estado persistido en base de datos.' },
-  { id: 'CU-16', nombre: 'Presentar un proyecto a un cliente', actor: 'cliente', rf: ['RF-208'], resumen: 'El administrador controla remotamente el avance de una presentación que el cliente ve en su navegador.', relaciones: [
-    { tipo: 'include', nodo: { id: 'CU-16-N1', nombre: 'Sincronizar slide vía polling' } },
+  { id: 'CU-16', nombre: 'Proyectar una presentación con el público en sincronía', actor: 'cliente', rf: ['RF-208'], resumen: 'El administrador proyecta un deck y lo controla desde su celular; el público lo sigue en sus propios dispositivos entrando por un QR o un PIN de cuatro caracteres.', relaciones: [
+    { tipo: 'include', nodo: { id: 'CU-16-N1', nombre: 'Generar PIN libre de colisiones' } },
+    { tipo: 'include', nodo: { id: 'CU-16-N2', nombre: 'Sincronizar slide por pub/sub' } },
+    { tipo: 'extends', nodo: { id: 'CU-16-X1', nombre: 'Recoger feedback del público al cerrar' } },
   ] },
   { id: 'CU-17', nombre: 'Indexar contenido nuevo en buscadores', actor: 'buscador', rf: ['RF-007'], resumen: 'Al publicar contenido, el sistema notifica vía IndexNow y actualiza el RSS/sitemap para acelerar la indexación.' },
   { id: 'CU-19', nombre: 'Consultar el sitio en inglés', actor: 'visitante', rf: ['RF-013', 'RF-014'], resumen: 'El visitante internacional cambia de idioma desde cualquier página y sigue en la misma página, ahora en inglés.', relaciones: [
@@ -469,22 +471,30 @@ export const CASOS_DE_USO_EXTENDIDOS: CasoDeUsoExtendido[] = [
   },
   {
     id: 'CU-16',
-    precondiciones: ['Existe una presentación creada para el proyecto con al menos un slide subido.'],
+    precondiciones: ['Existe un deck en la biblioteca: un archivo HTML autónomo con un <deck-stage> del que se extrajeron sus slides al subirlo.'],
     flujoPrincipal: [
-      'El administrador crea la presentación, que queda identificada con un token de acceso aleatorio y arranca en el primer slide.',
-      'Sube las imágenes de los slides, asociadas a la presentación en orden.',
-      'Comparte con el cliente el enlace de vista (/present/[shareToken]), que este abre en su navegador en pantalla completa sin necesidad de ninguna sesión.',
-      'La vista del cliente consulta /api/present/[shareToken]/state cada fracción de segundo (polling corto sobre HTTP).',
-      'El administrador controla el avance desde otra pestaña o su celular, avanzando o retrocediendo slides.',
-      'Cada acción de control actualiza el slide actual persistido en base de datos.',
-      'En el siguiente ciclo de polling, la vista del cliente detecta el cambio y hace la transición al nuevo slide.',
+      'El administrador pulsa Presentar y confirma en una pantalla que muestra el deck, su número de slides y la caducidad de la sesión.',
+      'El sistema crea la sesión en Redis en estado lobby, con slide 0, un secreto de presentador y un PIN de cuatro caracteres (dos letras y dos dígitos) comprobado contra las rutas reservadas del sitio y contra los PIN ya en uso.',
+      'La pantalla de reparto ofrece las dos vistas: la pantalla principal para el proyector y el control remoto, este último también como QR para escanearlo con el celular.',
+      'La pantalla principal muestra a pantalla completa el QR hacia codebymike.tech/{pin} y el PIN escrito en grande; es la única vista que los muestra.',
+      'El público escanea o teclea la dirección y ve la pantalla de espera con el título del deck.',
+      'El administrador inicia desde el control remoto, que exige sesión de administrador y valida además el secreto de la sesión.',
+      'Cada comando (anterior, siguiente, salto directo) se valida en el servidor contra el rango de slides, se persiste en Redis y se publica al bus.',
+      'Cada dispositivo del salón, suscrito directamente al bus, recibe el cambio y salta al slide correspondiente en menos de 300 ms.',
     ],
     flujosAlternos: [
-      { titulo: 'Agregar slides en vivo', pasos: ['El administrador sube un slide nuevo mientras la presentación está en curso; la vista del cliente lo incorpora sin recargar la página.'] },
-      { titulo: 'Navegación directa', pasos: ['El administrador salta a un slide específico desde la grilla de miniaturas, en lugar de avanzar de a uno.'] },
+      { titulo: 'Espectador que llega tarde', pasos: ['Al conectar, el cliente pide el snapshot de la sesión y entra directamente al slide en curso, sin ver los anteriores.'] },
+      { titulo: 'Navegación directa', pasos: ['El administrador abre el selector de slides del control remoto y salta a uno concreto por su número y rótulo, en lugar de avanzar de a uno.'] },
+      { titulo: 'Cierre con feedback', pasos: ['Al pasar del último slide o pulsar Finalizar, las tres vistas muestran la misma pantalla de cierre con un QR hacia /feedback.'] },
     ],
-    excepciones: ['Si la presentación consultada no existe, la vista del cliente ignora la respuesta fallida y sigue reintentando sin romper la interfaz.'],
-    postcondiciones: ['El slide actual queda sincronizado entre el control del administrador y la vista del cliente mediante estado persistido, sin necesidad de una conexión en tiempo real (WebSockets).'],
+    excepciones: [
+      'Si se pierde la red del celular, al reconectar el control retoma el slide real: el servidor es la fuente de verdad y el cliente nunca impone su estado.',
+      'Si un mensaje del bus se pierde (pub/sub no garantiza entrega), la resincronización periódica del snapshot corrige la pantalla en menos de diez segundos.',
+      'Si el bus no llega a conectar, cada cliente cae a consultar el snapshot en bucle corto: se degrada la latencia, no la sincronía.',
+      'Si el PIN no existe o la sesión terminó, la vista del público muestra la pantalla de cierre con el enlace de feedback, nunca un error crudo.',
+      'Un texto de un segmento que no tenga forma de PIN devuelve el 404 normal del sitio sin llegar a consultar Redis.',
+    ],
+    postcondiciones: ['Al terminar, la sesión pasa a estado ended y libera su PIN, que vuelve a quedar disponible para otra sesión. El estado efímero caduca solo por TTL sin dejar rastro en la base de datos.'],
   },
 ]
 
