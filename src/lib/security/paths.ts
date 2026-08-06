@@ -41,6 +41,30 @@ export function isCobroLinkPath(pathname: string): boolean {
 }
 
 /**
+ * Vista del público de una presentación: `/{pin}` en la raíz del dominio.
+ *
+ * Merece un límite propio por la misma razón que `/c/[code]`: el PIN es corto
+ * (cuatro caracteres) y es lo único que separa a cualquiera del deck. La forma
+ * del PIN —dos letras y dos dígitos, sin caracteres ambiguos— es exactamente
+ * la que hay que reconocer aquí; nada más de un segmento la cumple.
+ *
+ * Deliberadamente NO importa `lib/present/pin.ts`: este módulo lo carga el
+ * middleware en cada request y debe seguir siendo puro y sin dependencias. La
+ * regex es la misma forma, y `tests/present-pin.test.ts` cruza ambas para que
+ * no se separen.
+ */
+const PIN_PATH_RE = /^\/(?=(?:[a-hj-km-np-z2-9]){4}$)(?=(?:[^a-hj-km-np-z]*[a-hj-km-np-z]){2}[^a-hj-km-np-z]*$)[a-hj-km-np-z2-9]{4}$/i
+
+export function isPinPath(pathname: string): boolean {
+  return PIN_PATH_RE.test(pathname)
+}
+
+/** Snapshot público de una sesión: lo consulta cada dispositivo del salón. */
+export function isPresentSnapshotPath(pathname: string): boolean {
+  return pathname.startsWith('/api/present/')
+}
+
+/**
  * Rutas de credenciales del portal. Separado de `isAuthPath` porque estas
  * merecen además un límite propio, más estrecho, dentro del middleware.
  */

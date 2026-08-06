@@ -1,0 +1,189 @@
+---
+// Dos pantallas en una ruta: confirmación y reparto.
+//
+// La confirmación no es burocracia. Presentar publica un PIN en la raíz del
+// dominio y arranca una sesión de seis horas; hacerlo desde una tarjeta de la
+// biblioteca con un solo clic es demasiado fácil de disparar por accidente
+// mientras se busca "editar".
+import AdminLayout from '../../../../layouts/AdminLayout.astro'
+import Qr from '../../../../components/present/Qr.astro'
+import { getDeck } from '../../../../lib/present/decks'
+import { getSession } from '../../../../lib/present/session'
+import { storeReadiness } from '../../../../lib/present/store'
+
+const id = Number(Astro.params.id)
+const deck = Number.isInteger(id) ? await getDeck(id) : null
+
+if (!deck) {
+  return Astro.rewrite('/404')
+}
+
+// Estado vivo en la URL: la pantalla de reparto no debe cachearse.
+Astro.response.headers.set('Cache-Control', 'no-store')
+
+const sessionId = Astro.url.searchParams.get('session')
+const session = sessionId ? await getSession(sessionId) : null
+const readiness = storeReadiness()
+
+const origin = Astro.url.origin
+const remoteUrl = session ? `${origin}/remote/${session.id}` : ''
+---
+
+<AdminLayout title={session ? 'Sesión lista' : 'Iniciar presentación'}>
+  {!session ? (
+    <!-- ── Confirmación ──────────────────────────────────────────────── -->
+    <div class="max-w-lg">
+      <a href="/admin/presentaciones" class="text-[11px] font-mono text-ink-300 hover:text-cyan transition-colors">
+        ← Biblioteca
+      </a>
+
+      <h1 class="mt-4 text-xl md:text-2xl font-medium tracking-tight text-ink-50">
+        ¿Iniciar sesión de presentación para <span class="text-cyan">«{deck.title}»</span>?
+      </h1>
+
+      <div class="mt-6 rounded-2xl glass p-5 grid gap-2.5 text-[12px]">
+        <div class="flex justify-between gap-4">
+          <span class="text-ink-200">Slides</span>
+          <span class="text-ink-50 font-mono">{deck.slideCount}</span>
+        </div>
+        <div class="flex justify-between gap-4">
+          <span class="text-ink-200">Archivo</span>
+          <span class="text-ink-50 font-mono truncate max-w-[60%]">{deck.blobPath.split('/').pop()}</span>
+        </div>
+        <div class="flex justify-between gap-4">
+          <span class="text-ink-200">PIN público</span>
+          <span class="text-ink-50 font-mono">se genera al iniciar</span>
+        </div>
+        <div class="flex justify-between gap-4">
+          <span class="text-ink-200">Caduca</span>
+          <span class="text-ink-50 font-mono">6 horas</span>
+        </div>
+      </div>
+
+      {!readiness.ok && (
+        <div class="mt-4 rounded-2xl border border-[#ff7a7a]/30 bg-[#ff7a7a]/[0.07] p-4">
+          <p class="text-[11px] text-ink-200 leading-relaxed">{readiness.reason}</p>
+        </div>
+      )}
+
+      <div class="mt-6 flex items-center gap-3">
+        <a
+          href="/admin/presentaciones"
+          class="h-10 px-5 inline-flex items-center rounded-full bg-white/5 text-ink-100 border border-white/10 text-[13px] hover:bg-white/10 transition-colors"
+        >
+          Cancelar
+        </a>
+        <button
+          type="button"
+          id="start-session"
+          data-deck={deck.id}
+          class="h-10 px-6 inline-flex items-center rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:brightness-110 transition-all"
+        >
+          Iniciar
+        </button>
+        <span id="start-msg" class="text-[11px] font-mono text-ink-200"></span>
+      </div>
+    </div>
+  ) : (
+    <!-- ── Reparto ───────────────────────────────────────────────────── -->
+    <div class="max-w-3xl">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-lime animate-pulse"></span>
+        <span class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-200">Sesión activa</span>
+      </div>
+
+      <h1 class="mt-3 text-xl md:text-2xl font-medium tracking-tight text-ink-50">{session.deckTitle}</h1>
+      <p class="mt-2 text-[13px] text-ink-200">
+        El público entrará por <span class="font-mono text-cyan">codebymike.tech/{session.pin}</span>, que
+        aparecerá en la pantalla principal. Abre las dos vistas y empieza cuando quieras.
+      </p>
+
+      <div class="mt-7 grid gap-4 md:grid-cols-2">
+        <!-- Pantalla principal -->
+        <section class="rounded-2xl glass p-6 flex flex-col gap-4">
+          <div>
+            <h2 class="text-[14px] text-ink-50">Pantalla principal</h2>
+            <p class="mt-1 text-[12px] text-ink-200 leading-relaxed">
+              Lo que se proyecta. Ábrela en el equipo conectado al proyector y ponla a pantalla completa.
+            </p>
+          </div>
+          <a
+            href={`/present/${session.id}`}
+            target="_blank"
+            class="mt-auto h-10 px-5 inline-flex items-center justify-center rounded-full bg-cyan/15 text-cyan border border-cyan/30 text-[13px] hover:bg-cyan/25 transition-colors"
+          >
+            Abrir pantalla principal ↗
+          </a>
+        </section>
+
+        <!-- Control remoto -->
+        <section class="rounded-2xl glass p-6 flex flex-col items-center gap-4 text-center">
+          <div>
+            <h2 class="text-[14px] text-ink-50">Control remoto</h2>
+            <p class="mt-1 text-[12px] text-ink-200 leading-relaxed">
+              Escanea con el celular. Pedirá tu sesión de admin (la passkey basta).
+            </p>
+          </div>
+
+          <Qr data={remoteUrl} size={200} dark="#0a0a0d" />
+
+          <a
+            href={`/remote/${session.id}`}
+            class="mt-auto h-10 px-5 inline-flex items-center justify-center rounded-full bg-white/5 text-ink-100 border border-white/10 text-[13px] hover:bg-white/10 transition-colors"
+          >
+            Abrir aquí
+          </a>
+        </section>
+      </div>
+
+      <div class="mt-5 flex items-center gap-3">
+        <a href="/admin/presentaciones" class="text-[12px] text-ink-200 hover:text-cyan transition-colors">
+          ← Biblioteca
+        </a>
+        <span class="text-ink-500">·</span>
+        <button
+          type="button"
+          id="end-session"
+          data-session={session.id}
+          class="text-[12px] text-[#ff9a9a] hover:underline"
+        >
+          Finalizar sesión
+        </button>
+      </div>
+    </div>
+  )}
+</AdminLayout>
+
+<script>
+  const startBtn = document.getElementById('start-session') as HTMLButtonElement | null
+  const msg = document.getElementById('start-msg')
+
+  startBtn?.addEventListener('click', async () => {
+    if (!msg) return
+    startBtn.disabled = true
+    msg.textContent = 'creando sesión…'
+
+    const res = await fetch('/api/admin/present/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deckId: Number(startBtn.dataset.deck) }),
+    })
+    const body = await res.json().catch(() => ({}))
+
+    if (res.ok) {
+      // Misma ruta, ahora con la sesión: así el reparto se puede recargar y
+      // volver a abrir desde el historial sin crear otra sesión.
+      location.href = `${location.pathname}?session=${body.sessionId}`
+    } else {
+      startBtn.disabled = false
+      msg.textContent = body.error ?? 'no se pudo iniciar'
+    }
+  })
+
+  const endBtn = document.getElementById('end-session') as HTMLButtonElement | null
+  endBtn?.addEventListener('click', async () => {
+    endBtn.disabled = true
+    await fetch(`/api/admin/present/${endBtn.dataset.session}/end`, { method: 'POST' })
+    location.href = '/admin/presentaciones'
+  })
+</script>

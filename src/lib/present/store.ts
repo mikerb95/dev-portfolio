@@ -215,6 +215,22 @@ export function busCredentials(): BusCredentials | null {
   return { url: url.replace(/\/+$/, ''), readonlyToken }
 }
 
+/**
+ * Origen del bus, para abrirlo en `connect-src`. La CSP del sitio es
+ * `connect-src 'self'`, así que sin esto el navegador bloquearía el
+ * EventSource contra Upstash y las tres vistas caerían al modo polling sin que
+ * nada lo delatara salvo un error en la consola.
+ */
+export function presentBusOrigin(): string | null {
+  const url = serverEnv('PRESENT_BUS_REST_URL')
+  if (!url) return null
+  try {
+    return new URL(url).origin
+  } catch {
+    return null
+  }
+}
+
 export function presentStore(): PresentStore {
   if (cached) return cached
 

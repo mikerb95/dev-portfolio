@@ -19,13 +19,19 @@ export default defineConfig({
     // del nuestro. Ver docs/plan-i18n-en.md §2.2.
     routing: 'manual',
   },
-  // /admin/slides pasó a ser /admin/presentations (hub de presentaciones). Los
-  // enlaces viejos siguen vivos en marcadores y en pestañas de proyección
-  // abiertas, así que se redirigen en vez de romperse.
+  // Historia de la sección de presentaciones: /admin/slides → /admin/presentations
+  // → /admin/presentaciones. Las dos primeras etapas siguen vivas en marcadores
+  // y en pestañas abiertas, así que se redirigen en vez de romperse. Las rutas
+  // por id de aquellos sistemas ya no tienen equivalente (el modelo cambió de
+  // "imágenes de un proyecto" a "deck HTML + sesión efímera"), así que caen en
+  // la biblioteca, que es de donde se sale a presentar.
   redirects: {
-    '/admin/slides': '/admin/presentations',
-    '/admin/slides/[id]/control': '/admin/presentations/[id]/control',
-    '/admin/slides/[id]/present': '/admin/presentations/[id]/present',
+    '/admin/slides': '/admin/presentaciones',
+    '/admin/slides/[id]/control': '/admin/presentaciones',
+    '/admin/slides/[id]/present': '/admin/presentaciones',
+    '/admin/presentations': '/admin/presentaciones',
+    '/admin/presentations/[id]/control': '/admin/presentaciones',
+    '/admin/presentations/[id]/present': '/admin/presentaciones',
   },
   image: {
     // Autoriza optimizar imágenes remotas alojadas en Vercel Blob

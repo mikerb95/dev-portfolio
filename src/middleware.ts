@@ -7,7 +7,15 @@ import { recordSession } from './lib/device-sessions'
 import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
 import { isBlocked, blockIpEscalated } from './lib/security/blocklist'
 import { enforceLimit } from './lib/security/ratelimit-durable'
-import { isAuthPath, isCobroLinkPath, isPortalAuthPath, isRateLimitablePath } from './lib/security/paths'
+import {
+  isAuthPath,
+  isCobroLinkPath,
+  isPinPath,
+  isPortalAuthPath,
+  isPresentSnapshotPath,
+  isRateLimitablePath,
+} from './lib/security/paths'
+import { presentBusOrigin } from './lib/present/store'
 import { DEMO_COOKIE, isDemoAllowedMethod, isDemoBlockedPath, verifyDemoToken } from './lib/demo'
 import { demoAvailable, runInDemoContext } from './db'
 import { getPortalSession } from './lib/portal/session'
@@ -230,9 +238,53 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
     }
 
+    // Vista del público de una presentación (`/{pin}`). El PIN son cuatro
+    // caracteres: es el mismo problema que los links de cobro, con un límite
+    // más holgado por una razón muy concreta — un salón entero comparte la IP
+    // del wifi, y treinta personas escaneando el QR a la vez son treinta
+    // peticiones en diez segundos. 90/min deja pasar esa ráfaga y sigue
+    // convirtiendo un barrido del espacio de PINs en algo de días, sobre PINs
+    // que solo viven seis horas.
+    if (isPinPath(canonicalPath)) {
+      const r = await enforceLimit(`present-pin:${ip}`, { limit: 90, windowMs: 60_000, deferUntil: 0.5 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'enumeration',
+          severity: 'medium',
+          ruleId: 'ratelimit.present_pin',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers: reqHeaders,
+        })
+        return new Response('Demasiadas solicitudes. Espera un minuto.', {
+          status: 429,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Retry-After': '60' },
+        })
+      }
+    }
+
+    // Snapshot de sesión: lo consulta cada dispositivo del salón al conectar,
+    // cada 10 s como resincronización y —si el bus de Upstash no engancha— en
+    // bucle corto. Con toda la sala tras el mismo NAT eso supera de largo el
+    // paraguas global, así que tiene su propio límite y queda FUERA del
+    // paraguas: el fallo aquí no es un scraper suelto, es la presentación
+    // congelándose para media sala.
+    if (isPresentSnapshotPath(canonicalPath)) {
+      const r = await enforceLimit(`present-snap:${ip}`, { limit: 2_000, windowMs: 60_000, deferUntil: 0.9 })
+      if (!r.allowed) {
+        return new Response(JSON.stringify({ error: 'demasiadas solicitudes' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '10' },
+        })
+      }
+    }
+
     // Paraguas global anti-scraping agresivo. Límite generoso para no rozar a
     // usuarios reales; solo cuenta rutas dinámicas (no assets estáticos).
-    if (isRateLimitablePath(canonicalPath)) {
+    if (isRateLimitablePath(canonicalPath) && !isPresentSnapshotPath(canonicalPath)) {
       const r = await enforceLimit(`ip:${ip}`, { limit: 600, windowMs: 60_000, deferUntil: 0.8 })
       if (!r.allowed) {
         recordEnforcementEvent({
@@ -257,11 +309,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // `/cobrar` vive en la raíz (se teclea desde el celular en la calle) pero es
   // panel: misma sesión, mismo trato que /admin. La ruta pública que genera es
   // /c/[code], que no cae aquí. Ver docs/plan-cobrar.md.
+  // `/remote/<sessionId>` es el control remoto de una presentación: vive fuera
+  // de /admin porque se abre escaneando un QR desde el celular, pero es panel a
+  // todos los efectos — desde ahí se mueve lo que ve el público. Va al mismo
+  // matcher que /cobrar y por la misma razón: la ruta está en la raíz por
+  // comodidad de uso, no porque sea pública.
   const isAdmin =
     canonicalPath.startsWith('/admin') ||
     canonicalPath.startsWith('/api/admin') ||
     canonicalPath === '/cobrar' ||
-    canonicalPath.startsWith('/cobrar/')
+    canonicalPath.startsWith('/cobrar/') ||
+    canonicalPath.startsWith('/remote/')
 
   // El deck de sustentación tiene URL bajo /docs (la sección es pública) pero no
   // es público: solo lo ve la sesión del administrador. Se trata como ruta
@@ -437,6 +495,26 @@ export const onRequest = defineMiddleware(async (context, next) => {
     'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()'
   )
   const CSP_REPORTING = ' report-to csp-endpoint; report-uri /api/security/csp-report;'
+
+  // Vistas de proyección. Dos excepciones a la CSP base, ambas necesarias:
+  //
+  //  · `connect-src` abre el origen del bus de Upstash, porque el público se
+  //    suscribe DIRECTAMENTE allí (es lo que evita sostener una conexión por
+  //    espectador en una función). Con `connect-src 'self'` a secas, el
+  //    EventSource se bloquearía y todo el salón caería al modo polling.
+  //  · `/decks/*` sirve el HTML que enmarcan las tres vistas: no puede heredar
+  //    `frame-ancestors 'none'` o el iframe quedaría en blanco. Su respuesta
+  //    trae su propia CSP (`frame-ancestors 'self'`) y aquí solo hay que no
+  //    pisarla.
+  const isDeckFile = canonicalPath.startsWith('/decks/')
+  const isPresentView =
+    canonicalPath.startsWith('/present/') || canonicalPath.startsWith('/remote/') || isPinPath(canonicalPath)
+  const busOrigin = isPresentView ? presentBusOrigin() : null
+  const connectSrc = busOrigin ? `connect-src 'self' ${busOrigin};` : "connect-src 'self';"
+
+  if (isDeckFile) {
+    return new Response(res.body, { status: res.status, headers: resHeaders })
+  }
 
   if (isPrivate) {
     resHeaders.set('X-Frame-Options', 'DENY')
