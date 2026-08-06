@@ -174,6 +174,62 @@ export type DeckHandle = {
  * `/decks/<id>.html` y no desde su URL de blob), así que el acceso al DOM es
  * legítimo y no hay postMessage de por medio.
  */
+/**
+ * Oculta los controles propios del deck: rail de miniaturas, contador y botones.
+ *
+ * Lo delicado es DÓNDE viven. En el deck que exporta Claude Design el cromo
+ * está dentro del **shadow DOM** de `<deck-stage>` (`.rail`, `.overlay`,
+ * `button.btn`, `span.count`), y una hoja de estilos del documento no cruza esa
+ * frontera: el CSS “genérico” que se inyectaba en el `<head>` no ocultaba
+ * absolutamente nada y se proyectaba con 188 px de miniaturas a la vista.
+ *
+ * Se hacen dos cosas, en este orden:
+ *
+ *  1. `no-rail`, que es la API del propio componente (está en sus
+ *     `observedAttributes`). Además de esconder el rail, **recupera su ancho**:
+ *     con CSS a secas el rail desaparecía pero dejaba una banda negra de 188 px,
+ *     porque el layout sigue reservándole el hueco.
+ *  2. Un `<style>` inyectado DENTRO del shadow root para el resto del cromo, y
+ *     otro en el documento para los decks que no usan shadow DOM.
+ *
+ * Todo va en try/catch: un deck que no deje tocar su interior se proyecta igual,
+ * solo que con su propia barra a la vista.
+ */
+export function hideDeckChrome(iframe: HTMLIFrameElement, opts: { readOnly?: boolean } = {}): void {
+  try {
+    const doc = iframe.contentDocument
+    if (!doc) return
+
+    const light = doc.createElement('style')
+    light.textContent = `
+      deck-nav, deck-progress, deck-counter, deck-thumbs,
+      [data-deck-chrome], .deck-nav, .deck-counter, .deck-thumbnails, .deck-controls {
+        display: none !important;
+      }
+      ${opts.readOnly ? 'html, body { user-select: none !important; }' : ''}
+    `
+    doc.head.appendChild(light)
+
+    const stage = doc.querySelector('deck-stage')
+    if (!stage) return
+
+    stage.setAttribute('no-rail', '')
+
+    const shadow = (stage as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot
+    if (shadow) {
+      const inner = doc.createElement('style')
+      inner.textContent = `
+        .rail, .rail-resize, .overlay { display: none !important; }
+        ${opts.readOnly ? '.canvas { pointer-events: none !important; }' : ''}
+      `
+      shadow.appendChild(inner)
+    }
+  } catch {
+    // Sin acceso al documento del deck no hay nada que hacer, y desde luego no
+    // hay que romper la vista que lo envuelve.
+  }
+}
+
 export function attachDeck(iframe: HTMLIFrameElement): DeckHandle | null {
   const doc = iframe.contentDocument
   if (!doc) return null

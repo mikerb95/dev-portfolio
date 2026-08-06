@@ -150,7 +150,7 @@ const feedbackUrl = `${origin}/feedback`
 </style>
 
 <script>
-  import { startSync, attachDeck, type Snapshot, type DeckHandle } from '../lib/present/client-sync'
+  import { startSync, attachDeck, hideDeckChrome, type Snapshot, type DeckHandle } from '../lib/present/client-sync'
 
   const configEl = document.getElementById('present-config')
 
@@ -169,30 +169,14 @@ const feedbackUrl = `${origin}/feedback`
     let deck: DeckHandle | null = null
     let pendingSlide = snapshot.currentSlide
 
-    // Además de los controles del deck, aquí se desactiva cualquier
-    // interacción: el público no puede adelantarse ni aunque el deck traiga sus
-    // propios atajos de teclado.
-    const READ_ONLY_CSS = `
-      deck-nav, deck-progress, deck-counter, deck-thumbs,
-      [data-deck-chrome], .deck-nav, .deck-counter, .deck-thumbnails, .deck-controls {
-        display: none !important;
-      }
-      html, body { pointer-events: none !important; user-select: none !important; }
-    `
-
     iframe.addEventListener('load', () => {
+      // `readOnly`: además del cromo, se desactiva la interacción. El público
+      // no puede adelantarse ni con los atajos de teclado del propio deck.
+      hideDeckChrome(iframe, { readOnly: true })
       try {
-        const doc = iframe.contentDocument
-        if (doc) {
-          const style = doc.createElement('style')
-          style.textContent = READ_ONLY_CSS
-          doc.head.appendChild(style)
-          // Cinturón y tirantes: si el deck escucha teclas, no las recibe.
-          doc.addEventListener('keydown', (e) => e.stopPropagation(), true)
-        }
+        iframe.contentDocument?.addEventListener('keydown', (e) => e.stopPropagation(), true)
       } catch {
-        // Sin acceso al documento del deck, la vista sigue sincronizada; solo
-        // que el deck conserva su propio cromo.
+        // Sin acceso al documento; la sincronía sigue funcionando igual.
       }
       deck = attachDeck(iframe)
       deck?.goTo(pendingSlide)

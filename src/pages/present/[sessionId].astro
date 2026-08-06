@@ -137,7 +137,7 @@ const feedbackUrl = `${origin}/feedback`
   // La configuración viaja en un <script type="application/json"> y no por
   // `define:vars`: `define:vars` fuerza el script a inline, y un script inline
   // no puede importar el módulo de sincronía.
-  import { startSync, attachDeck, type Snapshot, type DeckHandle } from '../../lib/present/client-sync'
+  import { startSync, attachDeck, hideDeckChrome, type Snapshot, type DeckHandle } from '../../lib/present/client-sync'
 
   const configEl = document.getElementById('present-config')
 
@@ -155,28 +155,8 @@ const feedbackUrl = `${origin}/feedback`
     let deck: DeckHandle | null = null
     let pendingSlide = snapshot.currentSlide
 
-    // Este CSS se inyecta DENTRO del iframe: es otro documento, y ningún
-    // selector de fuera llega hasta él. Que sea mismo origen es lo que lo hace
-    // posible (ver /decks/[id].html.ts).
-    const HIDE_DECK_CHROME = `
-      deck-nav, deck-progress, deck-counter, deck-thumbs,
-      [data-deck-chrome], .deck-nav, .deck-counter, .deck-thumbnails, .deck-controls {
-        display: none !important;
-      }
-    `
-
     iframe.addEventListener('load', () => {
-      try {
-        const doc = iframe.contentDocument
-        if (doc) {
-          const style = doc.createElement('style')
-          style.textContent = HIDE_DECK_CHROME
-          doc.head.appendChild(style)
-        }
-      } catch {
-        // Un deck que no deje tocar su documento se proyecta igual, solo que
-        // con su propia barra de navegación a la vista.
-      }
+      hideDeckChrome(iframe)
       deck = attachDeck(iframe)
       deck?.goTo(pendingSlide)
     })
