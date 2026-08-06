@@ -1,6 +1,11 @@
-// Biblioteca de decks: la parte persistente de la feature. Un deck es UN
-// archivo HTML autónomo; aquí se guarda el archivo en Blob y el índice de sus
-// slides (rótulo + notas) en Turso.
+// Biblioteca de decks: la parte persistente de la feature. Aquí se guarda el
+// HTML del deck en Blob y el índice de sus slides (rótulo + notas) en Turso.
+//
+// Un deck puede subirse como UN archivo autónomo o como la CARPETA que exporta
+// Claude Design (HTML + los .js del runtime + uploads/*.png). En el segundo
+// caso los assets van a Blob público y sus rutas se reescriben en el HTML, de
+// forma que lo que se guarda como deck sigue siendo un único archivo servido
+// desde nuestro origen. Ver `assets.ts` para el porqué.
 //
 // La duplicación es deliberada: las notas están en el HTML y también en la
 // base. El control remoto no carga el iframe (es un celular, y cargar el deck
@@ -13,9 +18,16 @@ import { del as blobDel, get as blobGet, put as blobPut } from '@vercel/blob'
 import { db } from '../../db'
 import { deckSlides, decks } from '../../db/schema'
 import { parseDeck, DeckParseError } from './deck-parse'
+import { missingAssets, normalizeAssetPath, rewriteAssetUrls } from './assets'
 
-/** 8 MB. Un deck autónomo con imágenes en base64 cabe de sobra; un vídeo no. */
+/** 8 MB para el HTML. Sobra: el export real ronda los 100 KB. */
 export const MAX_DECK_BYTES = 8 * 1024 * 1024
+/** 40 MB por asset suelto y 90 MB en total, por debajo del límite de request. */
+export const MAX_ASSET_BYTES = 40 * 1024 * 1024
+export const MAX_BUNDLE_BYTES = 90 * 1024 * 1024
+
+/** Un archivo de la carpeta, con su ruta relativa al HTML de entrada. */
+export type UploadedFile = { path: string; file: File }
 
 export class DeckError extends Error {
   constructor(message: string, readonly status = 400) {
@@ -31,41 +43,112 @@ function assertHtml(file: File): void {
   if (!file || typeof file.size !== 'number') throw new DeckError('falta el archivo del deck')
   if (file.size === 0) throw new DeckError('el archivo está vacío')
   if (file.size > MAX_DECK_BYTES) {
-    throw new DeckError(`el archivo supera ${Math.round(MAX_DECK_BYTES / 1024 / 1024)} MB`)
-  }
-  const name = (file.name ?? '').toLowerCase()
-  if (!name.endsWith('.html') && !name.endsWith('.htm')) {
-    throw new DeckError('el deck debe ser un archivo .html')
+    throw new DeckError(`el HTML del deck supera ${Math.round(MAX_DECK_BYTES / 1024 / 1024)} MB`)
   }
 }
 
-/**
- * Sube el archivo, lo parsea y devuelve lo necesario para guardar. El parseo va
- * ANTES de escribir en Blob: un HTML sin `<deck-stage>` se rechaza sin dejar
- * basura en el almacén.
- */
-async function ingestFile(file: File, title: string) {
-  assertHtml(file)
-  const html = await file.text()
+const isHtmlName = (name: string) => /\.html?$/i.test(name ?? '')
 
-  let parsed
-  try {
-    parsed = parseDeck(html)
-  } catch (err) {
-    if (err instanceof DeckParseError) throw new DeckError(err.message)
-    throw err
+/**
+ * De todos los archivos subidos, ¿cuál es el deck?
+ *
+ * No se elige por nombre: el export lo llama «Data Centers Bogota.dc.html» y
+ * cualquier convención que inventemos aquí se rompería con el siguiente export.
+ * Se elige por CONTENIDO — el HTML que declara un deck-stage con slides. De
+ * paso, eso valida el archivo antes de subir un solo byte.
+ */
+async function findEntry(files: UploadedFile[]) {
+  const candidates = files.filter((f) => isHtmlName(f.path) || isHtmlName(f.file.name))
+  if (candidates.length === 0) throw new DeckError('no hay ningún archivo .html en lo que subiste')
+
+  let lastError: string | null = null
+  for (const candidate of candidates) {
+    assertHtml(candidate.file)
+    const html = await candidate.file.text()
+    try {
+      return { entry: candidate, html, parsed: parseDeck(html) }
+    } catch (err) {
+      if (err instanceof DeckParseError) {
+        lastError = err.message
+        continue
+      }
+      throw err
+    }
   }
+  throw new DeckError(
+    candidates.length === 1
+      ? (lastError ?? 'el archivo no es un deck válido')
+      : `ninguno de los ${candidates.length} archivos .html es un deck válido (${lastError})`
+  )
+}
+
+/**
+ * Sube la carpeta y devuelve lo necesario para guardar.
+ *
+ * El orden importa: primero se parsea (fallar aquí no deja basura en Blob),
+ * después se suben los assets, y solo al final el HTML ya reescrito.
+ */
+async function ingestFiles(files: UploadedFile[], title: string) {
+  const { entry, html, parsed } = await findEntry(files)
+
+  const total = files.reduce((a, f) => a + f.file.size, 0)
+  if (total > MAX_BUNDLE_BYTES) {
+    throw new DeckError(`la carpeta pesa ${Math.round(total / 1024 / 1024)} MB; el máximo es ${Math.round(MAX_BUNDLE_BYTES / 1024 / 1024)} MB`)
+  }
+
+  // Los assets se indexan por su ruta normalizada relativa al HTML de entrada.
+  const entryDir = entry.path.includes('/') ? entry.path.slice(0, entry.path.lastIndexOf('/') + 1) : ''
+  const assets = new Map<string, File>()
+  for (const f of files) {
+    if (f === entry) continue
+    if (f.file.size === 0) continue
+    if (f.file.size > MAX_ASSET_BYTES) {
+      throw new DeckError(`«${f.path}» supera ${Math.round(MAX_ASSET_BYTES / 1024 / 1024)} MB`)
+    }
+    const rel = entryDir && f.path.startsWith(entryDir) ? f.path.slice(entryDir.length) : f.path
+    assets.set(normalizeAssetPath(rel), f.file)
+  }
+
+  const faltan = missingAssets(html, assets.keys())
+  if (faltan.length > 0) {
+    // Vale la pena cortar aquí: un deck al que le falta su runtime se proyecta
+    // como una pantalla negra, y descubrirlo delante del público es el fallo
+    // que toda esta pantalla de subida existe para evitar.
+    throw new DeckError(
+      `faltan ${faltan.length} archivo(s) que el deck necesita: ${faltan.slice(0, 5).join(', ')}` +
+        (faltan.length > 5 ? '…' : '') +
+        '. Sube la carpeta completa, no solo el .html.'
+    )
+  }
+
+  // Los assets van a Blob PÚBLICO y se sirven desde el CDN directamente al
+  // navegador. Solo el documento HTML necesita ser del mismo origen (lo exige
+  // `contentDocument`); una imagen o un script no.
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const urls: Record<string, string> = {}
+  await Promise.all(
+    [...assets].map(async ([rel, file]) => {
+      const blob = await blobPut(`decks/assets/${stamp}/${rel}`, file, {
+        access: 'public',
+        contentType: file.type || undefined,
+        addRandomSuffix: false,
+      })
+      urls[rel] = blob.url
+    })
+  )
+
+  const rewritten = rewriteAssetUrls(html, urls)
 
   // Privado a propósito: el deck se sirve por /decks/<id>.html, que es mismo
   // origen (requisito del control por DOM) y pasa por nuestros headers. Un blob
   // público sería una segunda URL del mismo contenido, fuera de todo control.
-  const blob = await blobPut(blobPathFor(title), html, {
+  const blob = await blobPut(blobPathFor(title), rewritten, {
     access: 'private',
     contentType: 'text/html; charset=utf-8',
     addRandomSuffix: true,
   })
 
-  return { blob, parsed, size: file.size }
+  return { blob, parsed, size: rewritten.length, assetCount: assets.size }
 }
 
 async function writeSlides(deckId: number, slides: { idx: number; label: string | null; speakerNotes: string | null }[]) {
@@ -79,12 +162,13 @@ async function writeSlides(deckId: number, slides: { idx: number; label: string 
 export async function createDeck(input: {
   title: string
   description: string | null
-  file: File
+  files: UploadedFile[]
 }) {
   const title = input.title.trim()
   if (!title) throw new DeckError('el título es obligatorio')
+  if (input.files.length === 0) throw new DeckError('no subiste ningún archivo')
 
-  const { blob, parsed, size } = await ingestFile(input.file, title)
+  const { blob, parsed, size } = await ingestFiles(input.files, title)
   const now = new Date()
 
   const [row] = await db
@@ -105,11 +189,12 @@ export async function createDeck(input: {
   return row
 }
 
-export async function replaceDeckFile(deckId: number, file: File) {
+export async function replaceDeckFile(deckId: number, files: UploadedFile[]) {
   const deck = await getDeck(deckId)
   if (!deck) throw new DeckError('deck no encontrado', 404)
+  if (files.length === 0) throw new DeckError('no subiste ningún archivo')
 
-  const { blob, parsed, size } = await ingestFile(file, deck.title)
+  const { blob, parsed, size } = await ingestFiles(files, deck.title)
 
   await db
     .update(decks)

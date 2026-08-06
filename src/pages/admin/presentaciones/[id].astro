@@ -103,12 +103,15 @@ const withoutLabel = slides.filter((s) => !s.label).length
       <p class="text-[11px] font-mono text-ink-300 mb-3 break-all">{deck.blobPath}</p>
       <form id="file-form" class="grid gap-3">
         <input
-          name="file"
+          id="replace-folder"
           type="file"
-          accept=".html,.htm,text/html"
+          webkitdirectory
+          directory
+          multiple
           required
           class="h-10 px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-[12px] text-ink-100 file:mr-3 file:h-6 file:px-2 file:rounded file:border-0 file:bg-cyan/15 file:text-cyan file:text-[11px]"
         />
+        <span class="text-[10px] text-ink-300">La carpeta completa, igual que al subirlo.</span>
         <div class="flex items-center gap-3">
           <button
             type="submit"
@@ -184,8 +187,18 @@ const withoutLabel = slides.filter((s) => !s.label).length
 
   document.getElementById('file-form').addEventListener('submit', (e) => {
     e.preventDefault()
+    const chosen = [...(document.getElementById('replace-folder').files || [])]
+    if (!chosen.length) {
+      document.getElementById('file-msg').textContent = 'selecciona la carpeta'
+      return
+    }
+    const data = new FormData()
+    for (const file of chosen) {
+      data.append('files', file)
+      data.append('paths', file.webkitRelativePath || file.name)
+    }
     post(document.getElementById('file-msg'), () =>
-      fetch(`/api/admin/decks/${deckId}`, { method: 'PUT', body: new FormData(e.target) })
+      fetch(`/api/admin/decks/${deckId}`, { method: 'PUT', body: data })
     )
   })
 

@@ -170,21 +170,66 @@ function skipRawText(html: string, name: string, from: number): number {
 }
 
 /**
- * Slides de un deck: los `<section>` que son hijos DIRECTOS de `<deck-stage>`.
- * Un `<section>` anidado dentro de un slide es contenido del slide, no un slide
- * — por eso se lleva la cuenta de la profundidad y no basta con contar tags.
+ * Localiza el elemento que contiene los slides.
+ *
+ * Hay dos formas legítimas, y la segunda no es un caso raro: es lo que exporta
+ * Claude Design. Ahí `<deck-stage>` NO aparece en el HTML — solo existe en
+ * tiempo de ejecución, cuando `<x-import>` carga el módulo que lo define:
+ *
+ *   <x-import component-from-global-scope="deck-stage" from="./deck-stage.js">
+ *     <section data-label="…" data-speaker-notes="…">
+ *
+ * Como este parser corre sobre el HTML estático al subir el archivo, buscar
+ * `<deck-stage>` literal daba un rechazo en un deck perfectamente válido. Lo
+ * que identifica al contenedor es el componente que declara, no la etiqueta.
+ */
+function findStage(html: string): Tag | null {
+  let i = 0
+  while (i < html.length) {
+    const lt = html.indexOf('<', i)
+    if (lt === -1) return null
+
+    const skipped = skipDeclaration(html, lt)
+    if (skipped !== null) {
+      i = skipped
+      continue
+    }
+
+    const tag = readTag(html, lt)
+    if (!tag) {
+      i = lt + 1
+      continue
+    }
+
+    if (!tag.closing) {
+      if (tag.name === 'deck-stage') return tag
+      if (tag.name === 'x-import' && tag.attrs['component-from-global-scope'] === 'deck-stage') return tag
+      // El contenido de un <script> puede mencionar 'deck-stage' en un string.
+      if (RAW_TEXT_ELEMENTS.has(tag.name)) {
+        i = skipRawText(html, tag.name, tag.end)
+        continue
+      }
+    }
+    i = tag.end
+  }
+  return null
+}
+
+/**
+ * Slides de un deck: los `<section>` que son hijos DIRECTOS del contenedor
+ * (`<deck-stage>` o el `<x-import>` que lo declara). Un `<section>` anidado
+ * dentro de un slide es contenido del slide, no un slide — por eso se lleva la
+ * cuenta de la profundidad y no basta con contar tags.
  */
 export function parseDeck(html: string): ParsedDeck {
-  const lower = html.toLowerCase()
-  const stageStart = lower.indexOf('<deck-stage')
-  if (stageStart === -1) {
-    throw new DeckParseError('el archivo no contiene un elemento <deck-stage>')
+  const stageTag = findStage(html)
+  if (!stageTag) {
+    throw new DeckParseError(
+      'el archivo no declara un deck-stage: se esperaba <deck-stage> o ' +
+        '<x-import component-from-global-scope="deck-stage">'
+    )
   }
-
-  const stageTag = readTag(html, stageStart)
-  if (!stageTag || stageTag.closing) {
-    throw new DeckParseError('el elemento <deck-stage> está malformado')
-  }
+  const stageName = stageTag.name
 
   const slides: ParsedSlide[] = []
   // Elementos abiertos por debajo de <deck-stage>. Vacía = estamos en el nivel
@@ -192,7 +237,6 @@ export function parseDeck(html: string): ParsedDeck {
   const stack: string[] = []
   let openSection: { attrs: Record<string, string> } | null = null
   let i = stageTag.end
-  let closedCleanly = false
 
   while (i < html.length) {
     const lt = html.indexOf('<', i)
@@ -211,10 +255,7 @@ export function parseDeck(html: string): ParsedDeck {
     }
 
     if (tag.closing) {
-      if (tag.name === 'deck-stage' && stack.length === 0) {
-        closedCleanly = true
-        break
-      }
+      if (tag.name === stageName && stack.length === 0) break
       if (tag.name === 'section' && stack.length === 0 && openSection) {
         slides.push({
           idx: slides.length,
@@ -261,11 +302,8 @@ export function parseDeck(html: string): ParsedDeck {
     })
   }
 
-  if (!closedCleanly && slides.length === 0) {
-    throw new DeckParseError('no se encontró ningún <section> dentro de <deck-stage>')
-  }
   if (slides.length === 0) {
-    throw new DeckParseError('el <deck-stage> no contiene slides')
+    throw new DeckParseError(`el <${stageName}> no contiene ningún <section>: el deck no tiene slides`)
   }
 
   return { slides }

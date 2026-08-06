@@ -1,5 +1,19 @@
 import type { APIRoute } from 'astro'
-import { DeckError, deleteDeck, getDeck, replaceDeckFile, updateDeckMeta } from '../../../../lib/present/decks'
+import {
+  DeckError,
+  deleteDeck,
+  getDeck,
+  replaceDeckFile,
+  updateDeckMeta,
+  type UploadedFile,
+} from '../../../../lib/present/decks'
+
+/** Igual que en el alta: las rutas relativas viajan aparte (ver index.ts). */
+function collectFiles(form: FormData): UploadedFile[] {
+  const files = form.getAll('files').filter((f): f is File => f instanceof File)
+  const paths = form.getAll('paths').map(String)
+  return files.map((file, i) => ({ path: paths[i] || file.name, file }))
+}
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -34,9 +48,9 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   try {
     const form = await request.formData()
-    const file = form.get('file')
-    if (!(file instanceof File)) return json(400, { error: 'falta el archivo del deck' })
-    return json(200, await replaceDeckFile(id, file))
+    const files = collectFiles(form)
+    if (files.length === 0) return json(400, { error: 'falta el archivo del deck' })
+    return json(200, await replaceDeckFile(id, files))
   } catch (err) {
     if (err instanceof DeckError) return json(err.status, { error: err.message })
     console.error('[decks] reemplazo fallido', err)

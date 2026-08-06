@@ -119,14 +119,20 @@ const fmtSize = (bytes: number) =>
           />
         </label>
         <label class="grid gap-1.5">
-          <span class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200">Archivo .html</span>
+          <span class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200">Carpeta del deck</span>
           <input
-            name="file"
+            id="deck-folder"
             type="file"
-            accept=".html,.htm,text/html"
+            webkitdirectory
+            directory
+            multiple
             required
             class="h-10 px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-[12px] text-ink-100 file:mr-3 file:h-6 file:px-2 file:rounded file:border-0 file:bg-cyan/15 file:text-cyan file:text-[11px]"
           />
+          <span class="text-[10px] text-ink-300 leading-relaxed">
+            La carpeta que exporta Claude Design, entera: el .html, sus .js y <span class="font-mono">uploads/</span>.
+            Si tu deck es un único archivo autónomo, también sirve seleccionar solo su carpeta.
+          </span>
         </label>
         <label class="grid gap-1.5 md:col-span-2">
           <span class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200">Descripción</span>
@@ -234,9 +240,26 @@ const fmtSize = (bytes: number) =>
   form?.addEventListener('submit', async (e) => {
     e.preventDefault()
     if (!msg) return
-    msg.textContent = 'subiendo…'
 
-    const res = await fetch('/api/admin/decks', { method: 'POST', body: new FormData(form) })
+    const picker = document.getElementById('deck-folder') as HTMLInputElement | null
+    const chosen = [...(picker?.files ?? [])]
+    if (chosen.length === 0) {
+      msg.textContent = 'selecciona la carpeta del deck'
+      return
+    }
+
+    const data = new FormData(form)
+    // Cada archivo con su ruta relativa al lado: FormData solo conserva el
+    // nombre base, y sin la ruta el servidor no puede resolver `./uploads/x.png`.
+    for (const file of chosen) {
+      data.append('files', file)
+      data.append('paths', file.webkitRelativePath || file.name)
+    }
+
+    const mb = chosen.reduce((a, f) => a + f.size, 0) / 1024 / 1024
+    msg.textContent = `subiendo ${chosen.length} archivos (${mb.toFixed(1)} MB)…`
+
+    const res = await fetch('/api/admin/decks', { method: 'POST', body: data })
     const body = await res.json().catch(() => ({}))
 
     if (res.ok) {
