@@ -14,6 +14,7 @@
 // reemplaza el archivo — el HTML es la fuente de verdad, esto es un índice.
 
 import { desc, eq } from 'drizzle-orm'
+import { serverEnv } from '../env'
 import { del as blobDel, get as blobGet, put as blobPut } from '@vercel/blob'
 import { db } from '../../db'
 import { deckSlides, decks } from '../../db/schema'
@@ -124,6 +125,21 @@ async function ingestFiles(files: UploadedFile[], title: string) {
   // Los assets van a Blob PÚBLICO y se sirven desde el CDN directamente al
   // navegador. Solo el documento HTML necesita ser del mismo origen (lo exige
   // `contentDocument`); una imagen o un script no.
+  //
+  // Store aparte, con su propio token: Vercel fija el modo de acceso POR STORE
+  // y de forma irreversible, y en el store por defecto viven los backups de la
+  // base y los documentos de clientes — que son privados y deben seguir
+  // siéndolo. Mezclarlos obligaría a elegir entre publicar los backups o
+  // proxear 30 MB de imágenes por una función en cada visita.
+  const assetsToken = serverEnv('DECK_ASSETS_BLOB_READ_WRITE_TOKEN')
+  if (!assetsToken && assets.size > 0) {
+    throw new DeckError(
+      'falta DECK_ASSETS_BLOB_READ_WRITE_TOKEN: el store público de assets no está conectado al proyecto. ' +
+        'Sin él los assets acabarían en el store privado y el deck se proyectaría sin imágenes.',
+      503
+    )
+  }
+
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const urls: Record<string, string> = {}
   await Promise.all(
@@ -132,6 +148,7 @@ async function ingestFiles(files: UploadedFile[], title: string) {
         access: 'public',
         contentType: file.type || undefined,
         addRandomSuffix: false,
+        token: assetsToken,
       })
       urls[rel] = blob.url
     })
