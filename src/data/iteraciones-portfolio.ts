@@ -1388,6 +1388,54 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-presentaciones',
+    fase: 'Fase 34 · Proyectar sin gastar servidor',
+    nombre: 'Presentaciones con PIN en la raíz, control remoto desde el celular y público en sincronía',
+    rango: '6 ago 2026',
+    ghSince: '2026-08-06',
+    ghUntil: '2026-08-07',
+    commits: 1,
+    resumen:
+      'Se reemplaza entero el sistema de presentaciones (imágenes PNG por proyecto, sincronizadas por polling) por decks HTML autónomos con sesiones efímeras. Tres vistas sobre una misma sesión —proyector, control remoto y público— y un PIN de cuatro caracteres servido en la raíz del dominio. El estado vivo sale de Turso y pasa a Redis con TTL; el tiempo real se resuelve sin sostener ni una sola invocación abierta durante la charla.',
+    historias: [
+      {
+        id: 'PF-PR-01', titulo: 'Como presentador, quiero proyectar desde cualquier pantalla y controlarla desde mi celular',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-06', tags: ['presentaciones', 'redis', 'tiempo-real', 'fase-34'],
+        dod: [
+          ok('Tres vistas sobre una sesión: /present/[sessionId] proyecta, /remote/[sessionId] controla y /[pin] sigue en sincronía.'),
+          ok('El control remoto no carga el iframe del deck: las notas salen de deck_slides, extraídas al subir el archivo.'),
+          ok('Layout de dos mitades sin scroll, botones de 72 px, Wake Lock y vibración corta, todo con degradación silenciosa.'),
+          ok('El deck se sirve desde /decks/[id].html —mismo origen— porque el control por DOM del iframe no funciona contra una URL de blob.'),
+        ],
+      },
+      {
+        id: 'PF-PR-02', titulo: 'Como público, quiero seguir la presentación en mi dispositivo escaneando un QR',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-06', tags: ['presentaciones', 'público', 'fase-34'],
+        dod: [
+          ok('PIN de cuatro caracteres, dos letras y dos dígitos, sin i/l/o ni 0/1: 203.136 combinaciones y forma inconfundible con una ruta del sitio.'),
+          ok('/[pin] es la última ruta en resolver; lo que no tiene forma de PIN devuelve el 404 normal sin llegar a consultar Redis.'),
+          ok('Generación con reintento contra rutas reservadas y PIN vivos; un test cruza la lista de reservadas contra los archivos de src/pages.'),
+          ok('Vista de solo lectura: sin controles, sin notas y con el teclado del deck neutralizado dentro del iframe.'),
+        ],
+      },
+      {
+        id: 'PF-PR-03', titulo: 'Como responsable del coste, quiero tiempo real sin una invocación abierta por espectador',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-06', tags: ['presentaciones', 'arquitectura', 'coste', 'fase-34'],
+        dod: [
+          ok('El público se suscribe DIRECTAMENTE al bus de Upstash con un token de solo lectura; Vercel solo trabaja al crear la sesión, al dar el snapshot y en cada comando.'),
+          ok('Dos bases separadas: estado (privada, con el secreto del presentador) y bus (token público, solo números de slide).'),
+          ok('Tres capas de sincronía: bus, resincronización cada 10 s y polling de rescate — pub/sub no garantiza entrega.'),
+          ok('El servidor es la fuente de verdad: valida rango, persiste y reemite; el cliente descarta mensajes con versión anterior.'),
+          ok('tests/present-sync.test.ts levanta dos clientes y comprueba que el salto llega a ambos, en orden, y que sin secreto no se mueve nada.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
