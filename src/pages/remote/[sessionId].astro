@@ -14,7 +14,7 @@
 import PresentLayout from '../../layouts/PresentLayout.astro'
 import ClosingScreen from '../../components/present/ClosingScreen.astro'
 import { getDeckSlides } from '../../lib/present/decks'
-import { getSession, toPublicSnapshot } from '../../lib/present/session'
+import { getSession, presenterSecretFor, toPublicSnapshot } from '../../lib/present/session'
 import { busCredentials } from '../../lib/present/store'
 
 const { sessionId } = Astro.params
@@ -26,6 +26,10 @@ if (!session) Astro.response.status = 404
 const slides = session ? await getDeckSlides(session.deckId) : []
 const bus = busCredentials()
 const snapshot = session ? toPublicSnapshot(session) : null
+// Se recalcula aquí en vez de leerse de Redis: el secreto no está guardado en
+// ninguna parte, se deriva del id de sesión. Esta página es el único sitio del
+// sitio que lo materializa.
+const presenterSecret = session ? await presenterSecretFor(session.id) : ''
 const feedbackUrl = `${Astro.url.origin}/feedback`
 ---
 
@@ -100,7 +104,7 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
           // gate de admin y que se sirve con `no-store`. No aparece en la URL,
           // así que no queda en el historial, ni en un referer, ni en el QR que
           // se proyecta.
-          secret: session.presenterSecret,
+          secret: presenterSecret,
           slides: slides.map((s) => ({ idx: s.idx, label: s.label, notes: s.speakerNotes })),
         })}
       />

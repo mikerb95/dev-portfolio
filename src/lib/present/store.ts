@@ -7,18 +7,24 @@
 // eso; emularlo en SQL sería una tabla más un cron de barrido para guardar algo
 // que no queremos guardar.
 //
-// Por qué DOS bases y no una:
+// Dos roles, UNA base por defecto:
 //
-//   · `state` — privada, solo servidor. Guarda el PIN, el slide actual y el
-//     secreto del presentador.
+//   · `state` — el PIN, el slide actual, los contadores.
 //   · `bus`   — solo pub/sub. Su token de SOLO LECTURA viaja al navegador del
 //     público para que cada espectador se suscriba DIRECTAMENTE a Upstash.
 //
-// Esa separación es el punto entero del diseño. Si el bus y el estado
-// compartieran base, el token que exponemos al público leería también el
-// secreto del presentador. Separados, lo peor que puede hacer alguien con el
-// token público es leer por qué slide vamos — que es literalmente lo que está
-// viendo proyectado.
+// El diseño original pedía dos bases de Redis separadas, porque el JSON de la
+// sesión guardaba el secreto del presentador y el token público lo habría
+// leído. Ese secreto ya no se guarda: se deriva del id de sesión con HMAC (ver
+// `session.ts`), así que lo único que hay en Redis es el snapshot que el
+// público ya recibe por el PIN. Con eso, lo peor que puede hacer alguien con
+// el token público es leer por qué slide vamos — que es literalmente lo que
+// está viendo proyectado — y una sola base alcanza.
+//
+// Las variables `PRESENT_BUS_*` siguen existiendo y ganan cuando están
+// puestas: separar el bus deja de ser un requisito de seguridad, pero sigue
+// siendo útil si algún día el pub/sub de una charla concurrida conviene que no
+// comparta cuota con el estado.
 //
 // Y es lo que evita mantener una conexión SSE abierta por espectador en una
 // función de Vercel durante toda la charla: Vercel solo interviene al crear la

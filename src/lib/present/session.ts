@@ -1,6 +1,7 @@
 // Ciclo de vida de una sesión de presentación. Todo lo de aquí es efímero:
 // vive en Redis con TTL y desaparece solo. Nada toca Turso.
 
+import { serverEnv } from '../env'
 import { generatePin, normalizePin } from './pin'
 import { isReservedSegment } from './reserved'
 import { applyCommand, type Command, type SessionState } from './state'
@@ -27,12 +28,6 @@ export type PresentSession = {
   state: SessionState
   currentSlide: number
   totalSlides: number
-  /**
-   * Autoriza los comandos del control remoto. Nunca sale en una URL ni llega a
-   * la vista del público: solo lo recibe la página `/remote/:id`, que ya está
-   * detrás de la sesión de admin.
-   */
-  presenterSecret: string
   version: number
   createdAt: number
   startedAt: number | null
@@ -66,6 +61,53 @@ function randomHex(bytes: number): string {
   const buf = new Uint8Array(bytes)
   crypto.getRandomValues(buf)
   return [...buf].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// ── Secreto del presentador ─────────────────────────────────────────────────
+//
+// No se guarda: se DERIVA del id de sesión con HMAC. La diferencia importa
+// porque decide cuántas bases de Redis hace falta pagar. Guardado, el JSON de
+// la sesión contenía un secreto, y entonces el token de solo lectura que el
+// bus le entrega a cada espectador no podía apuntar a la misma base — de ahí
+// las dos bases del diseño original. Derivado, lo que queda en Redis es
+// exactamente el `PublicSnapshot` que el público ya recibe por el PIN, más el
+// deckId y unas marcas de tiempo. Una sola base, y el token público deja de
+// ser un problema aunque lea todas las claves.
+//
+// El presentador nunca teclea este valor: lo incrusta `/remote/:id`, que ya
+// está detrás del gate de admin. Derivarlo significa que esa página lo puede
+// recalcular sin tenerlo almacenado en ningún sitio.
+
+let processKey: string | null = null
+
+/**
+ * Clave del HMAC. `AUTH_SECRET` es el respaldo porque ya existe en producción
+ * y es estable entre instancias, que es la única propiedad que importa aquí:
+ * una clave distinta por instancia haría que el comando emitido contra una
+ * lambda fuera rechazado por la siguiente. El aleatorio por proceso es para
+ * `npm run dev` y los tests, donde solo hay un proceso.
+ */
+function secretKey(): string {
+  const configured = serverEnv('PRESENT_SECRET') || serverEnv('AUTH_SECRET')
+  if (configured) return configured
+  if (!processKey) processKey = randomHex(32)
+  return processKey
+}
+
+const HMAC_ALGO = { name: 'HMAC', hash: 'SHA-256' } as const
+
+/**
+ * Secreto que autoriza los comandos del control remoto de UNA sesión. El
+ * prefijo separa dominios: la misma clave firmando otra cosa en el futuro no
+ * puede producir un valor que valga como secreto de presentador.
+ */
+export async function presenterSecretFor(sessionId: string): Promise<string> {
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey('raw', enc.encode(secretKey()), HMAC_ALGO, false, [
+    'sign',
+  ])
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(`present:v1:${sessionId}`))
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 // ── Lectura ─────────────────────────────────────────────────────────────────
@@ -148,7 +190,6 @@ export async function createSession(deck: {
     state: 'lobby',
     currentSlide: 0,
     totalSlides: deck.slideCount,
-    presenterSecret: randomHex(32),
     version: 1,
     createdAt: Date.now(),
     startedAt: null,
@@ -182,7 +223,7 @@ export async function runCommand(
   const session = await getSession(sessionId)
   if (!session) return { ok: false, error: 'sesión no encontrada o expirada', status: 404 }
 
-  if (!timingSafeEqualStr(session.presenterSecret, presenterSecret)) {
+  if (!timingSafeEqualStr(await presenterSecretFor(session.id), presenterSecret)) {
     return { ok: false, error: 'no autorizado', status: 403 }
   }
 
@@ -248,7 +289,8 @@ function timingSafeEqualStr(a: string, b: string): boolean {
 export async function forceEndSession(sessionId: string): Promise<PresentSession | null> {
   const session = await getSession(sessionId)
   if (!session) return null
-  return (await runCommand(sessionId, session.presenterSecret, { type: 'end' })).ok
+  const secret = await presenterSecretFor(session.id)
+  return (await runCommand(sessionId, secret, { type: 'end' })).ok
     ? await getSession(sessionId)
     : null
 }

@@ -12,10 +12,9 @@ const json = (status: number, body: unknown) =>
   })
 
 export const GET: APIRoute = async () => {
-  const sessions = await listLiveSessions()
-  // Sin el secreto del presentador: este endpoint alimenta el listado del
-  // panel, y el secreto solo lo entrega la página del control remoto.
-  return json(200, sessions.map(({ presenterSecret, ...rest }) => rest))
+  // La sesión almacenada ya no lleva secreto —se deriva en cada uso—, así que
+  // no hay nada que recortar antes de mandarla al listado del panel.
+  return json(200, await listLiveSessions())
 }
 
 export const POST: APIRoute = async ({ request }) => {
