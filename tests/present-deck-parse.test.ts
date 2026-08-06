@@ -173,3 +173,39 @@ describe('coste', () => {
     expect(performance.now() - t0).toBeLessThan(500)
   })
 })
+
+describe('export de Claude Design (envoltorio x-import)', () => {
+  // El export real no trae un <deck-stage> literal: solo existe en tiempo de
+  // ejecución, cuando x-import carga el módulo que lo define. Buscar la
+  // etiqueta rechazaba un deck perfectamente válido.
+  const xImport = (inner: string) =>
+    `<!doctype html><html><body><x-dc><helmet><script src="./support.js"></script></helmet>` +
+    `<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920">` +
+    `${inner}</x-import></x-dc></body></html>`
+
+  it('reconoce el contenedor por el componente que declara', () => {
+    const { slides } = parseDeck(
+      xImport(`
+        <section data-label="Uno" data-screen-label="00" data-speaker-notes="Nota uno"></section>
+        <section data-label="Dos" data-speaker-notes="Nota dos"></section>
+      `)
+    )
+    expect(slides.map((s) => s.label)).toEqual(['Uno', 'Dos'])
+    expect(slides[0].speakerNotes).toBe('Nota uno')
+  })
+
+  it('no confunde otro x-import con el del deck', () => {
+    expect(() =>
+      parseDeck('<x-import component-from-global-scope="otra-cosa"><section></section></x-import>')
+    ).toThrow(DeckParseError)
+  })
+
+  it('sigue leyendo un <deck-stage> literal', () => {
+    const { slides } = parseDeck('<deck-stage><section data-label="Uno"></section></deck-stage>')
+    expect(slides).toHaveLength(1)
+  })
+
+  it('el mensaje de error nombra las dos formas válidas', () => {
+    expect(() => parseDeck('<html><body></body></html>')).toThrow(/deck-stage.*x-import|x-import.*deck-stage/s)
+  })
+})
