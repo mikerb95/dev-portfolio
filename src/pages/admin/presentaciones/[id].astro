@@ -64,7 +64,7 @@ const withoutLabel = slides.filter((s) => !s.label).length
   )}
 
   <div class="grid gap-4 lg:grid-cols-2">
-    <!-- Metadatos -->
+    {/* Metadatos */}
     <section class="rounded-2xl glass p-5">
       <h2 class="text-[13px] font-medium text-ink-50 mb-4">Metadatos</h2>
       <form id="meta-form" class="grid gap-3">
@@ -97,7 +97,7 @@ const withoutLabel = slides.filter((s) => !s.label).length
       </form>
     </section>
 
-    <!-- Archivo -->
+    {/* Archivo */}
     <section class="rounded-2xl glass p-5">
       <h2 class="text-[13px] font-medium text-ink-50 mb-4">Archivo</h2>
       <p class="text-[11px] font-mono text-ink-300 mb-3 break-all">{deck.blobPath}</p>
@@ -133,7 +133,7 @@ const withoutLabel = slides.filter((s) => !s.label).length
     </section>
   </div>
 
-  <!-- Índice de slides -->
+  {/* Índice de slides */}
   <section class="mt-8">
     <h2 class="text-[13px] font-medium text-ink-50 mb-3">Slides y notas</h2>
     <div class="space-y-2">

@@ -39,7 +39,7 @@ const feedbackUrl = `${origin}/feedback`
     </main>
   ) : (
     <>
-      <!-- Lobby: QR + PIN a pantalla completa -->
+      {/* Lobby: QR + PIN a pantalla completa */}
       <section class="lobby" id="lobby">
         <p class="eyebrow">{session.deckTitle}</p>
 
@@ -52,8 +52,8 @@ const feedbackUrl = `${origin}/feedback`
         <p class="lobby-hint">Escanea el código o escribe esa dirección para seguir la presentación desde tu dispositivo.</p>
       </section>
 
-      <!-- El deck. Los controles propios del deck se ocultan: aquí manda el
-           control remoto, y una barra de navegación proyectada distrae. -->
+      {/* El deck. Los controles propios del deck se ocultan: aquí manda el
+           control remoto, y una barra de navegación proyectada distrae. */}
       <div class="stage" id="stage" hidden>
         <iframe id="deck" src={deckSrc} title={session.deckTitle} loading="eager"></iframe>
       </div>

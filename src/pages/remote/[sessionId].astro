@@ -39,7 +39,7 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
   ) : (
     <>
       <main class="remote" id="remote">
-        <!-- Mitad superior: contexto + notas -->
+        {/* Mitad superior: contexto + notas */}
         <section class="notes-pane">
           <header class="notes-head">
             <span class="counter mono" id="counter">–/{session.totalSlides}</span>
@@ -51,7 +51,7 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
           </div>
         </section>
 
-        <!-- Mitad inferior: controles al alcance del pulgar -->
+        {/* Mitad inferior: controles al alcance del pulgar */}
         <section class="controls">
           <div class="nav-row">
             <button type="button" class="nav-btn" id="prev" aria-label="Slide anterior">
@@ -70,7 +70,7 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
         </section>
       </main>
 
-      <!-- Rejilla de salto directo -->
+      {/* Rejilla de salto directo */}
       <div class="grid-sheet" id="grid-sheet" hidden>
         <div class="grid-head">
           <span class="eyebrow">Ir al slide</span>

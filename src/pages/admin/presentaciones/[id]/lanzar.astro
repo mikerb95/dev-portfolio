@@ -30,8 +30,8 @@ const remoteUrl = session ? `${origin}/remote/${session.id}` : ''
 ---
 
 <AdminLayout title={session ? 'Sesión lista' : 'Iniciar presentación'}>
+  {/* Sin `?session=` en la URL, esto es la confirmación; con ella, el reparto. */}
   {!session ? (
-    <!-- ── Confirmación ──────────────────────────────────────────────── -->
     <div class="max-w-lg">
       <a href="/admin/presentaciones" class="text-[11px] font-mono text-ink-300 hover:text-cyan transition-colors">
         ← Biblioteca
@@ -85,7 +85,6 @@ const remoteUrl = session ? `${origin}/remote/${session.id}` : ''
       </div>
     </div>
   ) : (
-    <!-- ── Reparto ───────────────────────────────────────────────────── -->
     <div class="max-w-3xl">
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-lime animate-pulse"></span>
@@ -99,7 +98,7 @@ const remoteUrl = session ? `${origin}/remote/${session.id}` : ''
       </p>
 
       <div class="mt-7 grid gap-4 md:grid-cols-2">
-        <!-- Pantalla principal -->
+        {/* Pantalla principal */}
         <section class="rounded-2xl glass p-6 flex flex-col gap-4">
           <div>
             <h2 class="text-[14px] text-ink-50">Pantalla principal</h2>
@@ -116,7 +115,7 @@ const remoteUrl = session ? `${origin}/remote/${session.id}` : ''
           </a>
         </section>
 
-        <!-- Control remoto -->
+        {/* Control remoto */}
         <section class="rounded-2xl glass p-6 flex flex-col items-center gap-4 text-center">
           <div>
             <h2 class="text-[14px] text-ink-50">Control remoto</h2>

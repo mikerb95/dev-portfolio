@@ -48,17 +48,17 @@ const feedbackUrl = `${origin}/feedback`
       </main>
     ) : (
       <>
-        <!-- Espera: el PIN ya está en pantalla en la sala, aquí no se repite. -->
+        {/* Espera: el PIN ya está en pantalla en la sala, aquí no se repite. */}
         <section class="waiting" id="waiting">
           <span class="pulse" aria-hidden="true"></span>
           <p class="waiting-title">La presentación está por comenzar</p>
           <p class="waiting-deck">{session.deckTitle}</p>
         </section>
 
-        <!-- Solo lectura: sin controles, sin notas y sin forma de adelantarse.
+        {/* Solo lectura: sin controles, sin notas y sin forma de adelantarse.
              El iframe no recibe eventos de teclado ni de puntero porque esta
              vista no escucha ninguno; el deck se mueve únicamente cuando llega
-             un snapshot del servidor. -->
+             un snapshot del servidor. */}
         <div class="stage" id="stage" hidden>
           <iframe id="deck" src={deckSrc} title={session.deckTitle} loading="eager"></iframe>
         </div>
