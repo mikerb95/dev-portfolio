@@ -15,6 +15,7 @@ import {
   channelFor,
   createSession,
   getSessionByPin,
+  presenterSecretFor,
   runCommand,
   type PresentSession,
 } from '../src/lib/present/session'
@@ -51,7 +52,7 @@ describe('dos clientes siguen el mismo slide', () => {
     const a = connectClient(session)
     const b = connectClient(session)
 
-    await runCommand(session.id, session.presenterSecret, { type: 'goto', slide: 3 })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'goto', slide: 3 })
 
     expect(a.slide()).toBe(3)
     expect(b.slide()).toBe(3)
@@ -63,10 +64,10 @@ describe('dos clientes siguen el mismo slide', () => {
     const a = connectClient(session)
     const b = connectClient(session)
 
-    await runCommand(session.id, session.presenterSecret, { type: 'start' })
-    await runCommand(session.id, session.presenterSecret, { type: 'next' })
-    await runCommand(session.id, session.presenterSecret, { type: 'next' })
-    await runCommand(session.id, session.presenterSecret, { type: 'prev' })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'start' })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'next' })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'next' })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'prev' })
 
     expect(a.received.map((r) => r.currentSlide)).toEqual([0, 1, 2, 1])
     expect(b.received.map((r) => r.currentSlide)).toEqual([0, 1, 2, 1])
@@ -79,7 +80,7 @@ describe('dos clientes siguen el mismo slide', () => {
 
   it('un cliente que llega tarde entra directo al slide en curso', async () => {
     const session = await createSession(DECK)
-    await runCommand(session.id, session.presenterSecret, { type: 'goto', slide: 4 })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'goto', slide: 4 })
 
     // El rezagado no recibió nada por el bus: su estado sale del snapshot.
     const late = await getSessionByPin(session.pin)
@@ -91,9 +92,9 @@ describe('dos clientes siguen el mismo slide', () => {
     // Tocar dos veces el mismo slide del selector no debe gastar una escritura
     // ni despertar a toda la sala.
     const session = await createSession(DECK)
-    await runCommand(session.id, session.presenterSecret, { type: 'goto', slide: 2 })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'goto', slide: 2 })
     const client = connectClient(session)
-    await runCommand(session.id, session.presenterSecret, { type: 'goto', slide: 2 })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'goto', slide: 2 })
     expect(client.received).toHaveLength(0)
   })
 })
@@ -119,7 +120,7 @@ describe('solo el control mueve la presentación', () => {
     const session = await createSession(DECK)
     const client = connectClient(session)
 
-    const r = await runCommand(session.id, session.presenterSecret, { type: 'goto', slide: 99 })
+    const r = await runCommand(session.id, await presenterSecretFor(session.id), { type: 'goto', slide: 99 })
 
     expect(r).toMatchObject({ ok: false, status: 409 })
     expect(client.received).toHaveLength(0)
@@ -130,11 +131,11 @@ describe('resiliencia', () => {
   it('reconectar devuelve el slide real, no el que tuviera el cliente', async () => {
     const session = await createSession(DECK)
     const a = connectClient(session)
-    await runCommand(session.id, session.presenterSecret, { type: 'goto', slide: 2 })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'goto', slide: 2 })
 
     // Se cae la red de este cliente y se pierde el siguiente cambio.
     a.off()
-    await runCommand(session.id, session.presenterSecret, { type: 'goto', slide: 4 })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'goto', slide: 4 })
     expect(a.slide()).toBe(2)
 
     // Al reconectar, el snapshot manda.
@@ -148,7 +149,7 @@ describe('resiliencia', () => {
     const session = await createSession(DECK)
     vi.spyOn(store, 'publish').mockRejectedValueOnce(new Error('bus caído'))
 
-    const r = await runCommand(session.id, session.presenterSecret, { type: 'goto', slide: 3 })
+    const r = await runCommand(session.id, await presenterSecretFor(session.id), { type: 'goto', slide: 3 })
 
     expect(r.ok).toBe(true)
     expect((await getSessionByPin(session.pin))?.currentSlide).toBe(3)
@@ -165,7 +166,7 @@ describe('ciclo de vida del PIN', () => {
 
   it('al terminar, el PIN queda libre para otra sesión', async () => {
     const session = await createSession(DECK)
-    await runCommand(session.id, session.presenterSecret, { type: 'end' })
+    await runCommand(session.id, await presenterSecretFor(session.id), { type: 'end' })
 
     expect(await getSessionByPin(session.pin)).toBeNull()
     // Y ya no lo reclama nadie: una sesión nueva puede tomarlo.
@@ -179,8 +180,8 @@ describe('ciclo de vida del PIN', () => {
 
     expect(new Set([a.pin, b.pin, c.pin]).size).toBe(3)
 
-    await runCommand(a.id, a.presenterSecret, { type: 'goto', slide: 1 })
-    await runCommand(b.id, b.presenterSecret, { type: 'goto', slide: 4 })
+    await runCommand(a.id, await presenterSecretFor(a.id), { type: 'goto', slide: 1 })
+    await runCommand(b.id, await presenterSecretFor(b.id), { type: 'goto', slide: 4 })
 
     // Mover una no toca a las otras.
     expect((await getSessionByPin(a.pin))?.currentSlide).toBe(1)

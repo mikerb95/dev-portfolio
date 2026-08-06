@@ -241,7 +241,7 @@ export function busCredentials(): BusCredentials | null {
  * nada lo delatara salvo un error en la consola.
  */
 export function presentBusOrigin(): string | null {
-  const url = serverEnv('PRESENT_BUS_REST_URL')
+  const url = busUrl()
   if (!url) return null
   try {
     return new URL(url).origin
@@ -255,12 +255,12 @@ export function presentStore(): PresentStore {
 
   const stateUrl = serverEnv('UPSTASH_REDIS_REST_URL')
   const stateToken = serverEnv('UPSTASH_REDIS_REST_TOKEN')
-  const busUrl = serverEnv('PRESENT_BUS_REST_URL')
-  const busToken = serverEnv('PRESENT_BUS_REST_TOKEN')
+  const bus = busUrl()
+  const busToken = busWriteToken()
 
-  if (stateUrl && stateToken && busUrl && busToken) {
+  if (stateUrl && stateToken && bus && busToken) {
     cached = upstashStore(stateUrl.replace(/\/+$/, ''), stateToken, {
-      url: busUrl.replace(/\/+$/, ''),
+      url: bus.replace(/\/+$/, ''),
       token: busToken,
     })
   } else {
@@ -292,7 +292,7 @@ export function storeReadiness(): { ok: boolean; reason?: string } {
     return {
       ok: false,
       reason:
-        'Redis no está configurado: faltan UPSTASH_REDIS_REST_URL/TOKEN y PRESENT_BUS_REST_URL/TOKEN. ' +
+        'Redis no está configurado: faltan UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN. ' +
         'Sin ellas el estado vive en la memoria de cada instancia y el público vería slides distintos.',
     }
   }
