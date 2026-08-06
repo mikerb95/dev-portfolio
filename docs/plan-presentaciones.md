@@ -1,7 +1,8 @@
 # Presentaciones: proyectar, controlar desde el celular y llevar al público en sincronía
 
-Estado: **implementado** (6 ago 2026). Falta únicamente provisionar Upstash y
-subir las variables a Vercel — ver §7.
+Estado: **implementado** (6 ago 2026). Upstash y el store privado de Blob ya
+están provisionados; falta conectar el store público `deck-assets` con su
+prefijo de variable — ver §7.
 
 Reemplaza por completo al sistema anterior (imágenes PNG subidas a un proyecto,
 sincronizadas por polling contra Turso). Ese sistema se retiró: sus rutas ya no
@@ -144,6 +145,32 @@ mismo origen. Es obligatorio: el contrato de integración
 origen de blob. Esa ruta lleva `frame-ancestors 'self'` explícito y el
 middleware la deja pasar sin pisarle la CSP — heredar el `frame-ancestors 'none'`
 de las rutas privadas dejaría el iframe en blanco.
+
+## 5.b Dos stores de Blob, y por qué no puede ser uno
+
+Vercel fija el modo de acceso **por store** y de forma **irreversible** («you
+cannot change it after the creation of a blob store»). Este repo guarda en Blob
+dos clases de contenido incompatibles:
+
+| Store | Modo | Contenido | Token |
+|---|---|---|---|
+| `dev-portfolio-blob` | privado | backups de Turso, documentos del portal, HTML del deck | `BLOB_READ_WRITE_TOKEN` (el que usa el SDK por defecto) |
+| `deck-assets` | público | imágenes y JS de los decks | `DECK_ASSETS_BLOB_READ_WRITE_TOKEN` |
+
+Con un solo store había que elegir entre dos cosas inaceptables: publicar los
+volcados de la base de datos, o hacer pasar 30 MB de imágenes por una función en
+cada visita — justo el gasto de compute que toda esta feature evita. Separarlos
+además abarata la parte que sí se factura: la transferencia de blobs públicos es
+3× más eficiente que servir el mismo archivo a través de una función.
+
+`ingestFiles()` corta con un 503 explícito si falta el token del store público,
+en vez de dejar que los assets caigan en el privado — ahí se subirían sin error
+y el deck se proyectaría sin una sola imagen.
+
+**Descubierto por el camino:** no había ningún store conectado al proyecto, así
+que `BLOB_READ_WRITE_TOKEN` no existía. El cron diario de `/api/admin/backup`
+llevaba fallando en silencio desde su creación, y lo mismo la subida de
+documentos del portal. Crear el store privado lo arregló de paso.
 
 ## 6. Seguridad
 
