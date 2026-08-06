@@ -474,7 +474,7 @@ export const CASOS_DE_USO_EXTENDIDOS: CasoDeUsoExtendido[] = [
     precondiciones: ['Existe un deck en la biblioteca: un archivo HTML autónomo con un <deck-stage> del que se extrajeron sus slides al subirlo.'],
     flujoPrincipal: [
       'El administrador pulsa Presentar y confirma en una pantalla que muestra el deck, su número de slides y la caducidad de la sesión.',
-      'El sistema crea la sesión en Redis en estado lobby, con slide 0, un secreto de presentador y un PIN de cuatro caracteres (dos letras y dos dígitos) comprobado contra las rutas reservadas del sitio y contra los PIN ya en uso.',
+      'El sistema crea la sesión en Redis en estado lobby, con slide 0 y un PIN de cuatro caracteres (dos letras y dos dígitos) comprobado contra las rutas reservadas del sitio y contra los PIN ya en uso.',
       'La pantalla de reparto ofrece las dos vistas: la pantalla principal para el proyector y el control remoto, este último también como QR para escanearlo con el celular.',
       'La pantalla principal muestra a pantalla completa el QR hacia codebymike.tech/{pin} y el PIN escrito en grande; es la única vista que los muestra.',
       'El público escanea o teclea la dirección y ve la pantalla de espera con el título del deck.',
