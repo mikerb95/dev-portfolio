@@ -42,16 +42,34 @@ slide). Cero conexiones sostenidas.
 WebSocket se descartó antes: el adaptador de Astro para Vercel no expone el
 handshake de upgrade (`experimental_upgradeWebSocket` es API de Next).
 
-### 2.2 Dos bases de Redis, no una
+### 2.2 Dos roles, una sola base de Redis
 
-- **estado** (`UPSTASH_REDIS_REST_URL` / `_TOKEN`) — privada, solo servidor.
-  PIN, slide actual, secreto del presentador.
-- **bus** (`PRESENT_BUS_REST_*`) — solo pub/sub. Su token de **solo lectura**
-  viaja al navegador de cualquiera que entre por el PIN.
+- **estado** (`UPSTASH_REDIS_REST_URL` / `_TOKEN`) — solo servidor. PIN, slide
+  actual, contadores.
+- **bus** — solo pub/sub. Su token de **solo lectura** viaja al navegador de
+  cualquiera que entre por el PIN.
 
-Separadas porque si compartieran base, el token que exponemos al público leería
-también el secreto del presentador. Por el bus solo viajan números de slide —
-justo lo que el público está viendo proyectado.
+El plan original pedía **dos** bases separadas, porque el JSON de la sesión
+guardaba el secreto del presentador y el token que exponemos al público lo
+habría leído. Se resolvió por el otro lado, que sale gratis: el secreto **ya no
+se guarda**, se deriva del id de sesión con `HMAC-SHA256(clave, "present:v1:" +
+sessionId)` en `presenterSecretFor()` (`session.ts`). La clave sale de
+`PRESENT_SECRET` o, en su defecto, de `AUTH_SECRET` — estable entre instancias,
+que es lo único que importa: una clave por instancia haría que el comando
+emitido contra una lambda lo rechazara la siguiente.
+
+Con eso, lo que queda en Redis es exactamente el `PublicSnapshot` que el
+público ya recibe al teclear el PIN, más el `deckId` y unas marcas de tiempo. Lo
+peor que puede hacer alguien con el token público es leer por qué slide vamos —
+justo lo que está viendo proyectado. Cubierto por el test *«nada de lo que se
+guarda en Redis sirve para tomar el control»* en `tests/present-sync.test.ts`,
+que recorre cada valor del JSON almacenado y exige un 403 por cada uno.
+
+Las variables `PRESENT_BUS_*` siguen soportadas y ganan cuando están puestas:
+separar el bus deja de ser un requisito de seguridad, pero sigue siendo una
+salida si el pub/sub de una charla concurrida conviene que no comparta cuota
+con el estado. Sin ellas, `store.ts` cae a la base del estado usando
+`KV_REST_API_READ_ONLY_TOKEN`, que la integración de Upstash inyecta sola.
 
 ## 3. Estado efímero
 
@@ -152,23 +170,30 @@ de las rutas privadas dejaría el iframe en blanco.
   sesión. El único campo que puede identificar es `contact`, y lo escribe quien
   quiere respuesta.
 
-## 7. Pendiente: provisionar Upstash
+## 7. Upstash ✅
+
+Una sola base en el plan **Free** del Marketplace, provisionada como
+`present-state` en el proyecto **dev-portfolio** (verificado en
+`.vercel/project.json`):
 
 ```bash
-vercel integration add upstash --yes     # ×2: una base de estado y una de bus
+vercel integration add upstash/upstash-kv -n present-state
 ```
 
-Variables (proyecto **dev-portfolio**, verificado en `.vercel/project.json`):
+Variables que hacen falta, todas inyectadas por la propia integración:
 
-| Variable | Base | Dónde se usa |
-|---|---|---|
-| `UPSTASH_REDIS_REST_URL` | estado | servidor |
-| `UPSTASH_REDIS_REST_TOKEN` | estado | servidor |
-| `PRESENT_BUS_REST_URL` | bus | servidor + navegador |
-| `PRESENT_BUS_REST_TOKEN` | bus | servidor (publish) |
-| `PRESENT_BUS_READONLY_TOKEN` | bus | **navegador** (solo lectura) |
+| Variable | Dónde se usa |
+|---|---|
+| `UPSTASH_REDIS_REST_URL` | servidor (estado) + navegador (bus, por defecto) |
+| `UPSTASH_REDIS_REST_TOKEN` | servidor: estado y `publish` |
+| `KV_REST_API_READ_ONLY_TOKEN` | **navegador** (solo lectura, suscripción al bus) |
 
-Con las cinco puestas, `storeReadiness()` deja de avisar en
+Opcionales, solo si algún día se separa el bus a su propia base:
+`PRESENT_BUS_REST_URL`, `PRESENT_BUS_REST_TOKEN`,
+`PRESENT_BUS_READONLY_TOKEN`. Y `PRESENT_SECRET`, si se prefiere una clave
+propia para el HMAC del §2.2 en vez de reutilizar `AUTH_SECRET`.
+
+Con la integración conectada, `storeReadiness()` deja de avisar en
 `/admin/presentaciones` y las sesiones pasan a Upstash.
 
 **Verificación pendiente en vivo:** que `EventSource` (que solo hace GET) sea
