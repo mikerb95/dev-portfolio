@@ -523,7 +523,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     resHeaders.set('X-Robots-Tag', 'noindex, nofollow')
     resHeaders.set(
       'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" +
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; " +
+        connectSrc +
+        " frame-ancestors 'none'; base-uri 'self'; form-action 'self';" +
         CSP_REPORTING
     )
     return new Response(res.body, { status: res.status, headers: resHeaders })
@@ -536,7 +538,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   resHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   resHeaders.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" +
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; " +
+      connectSrc +
+      " frame-ancestors 'none'; base-uri 'self'; form-action 'self';" +
       CSP_REPORTING
   )
 

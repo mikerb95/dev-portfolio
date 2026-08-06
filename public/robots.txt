@@ -1,6 +1,13 @@
 User-agent: *
 Disallow: /admin
 Disallow: /api
+# Presentaciones: estado efímero de una sesión, no contenido. Las páginas ya
+# llevan noindex; esto evita además el gasto de rastrearlas. Los PIN de la raíz
+# (/{pin}) no se pueden listar aquí porque viven horas, pero caducan solos.
+Disallow: /present
+Disallow: /remote
+Disallow: /decks
+Disallow: /feedback
 # Rutas señuelo (honeypots): los crawlers legítimos las respetan; tocarlas es
 # señal de sondeo malicioso.
 Disallow: /wp-login.php

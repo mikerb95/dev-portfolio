@@ -131,8 +131,14 @@ export function translatedAlternates(pathname: string): Partial<Record<Locale, s
 // contenido (traducirlas no tiene sentido) y, sobre todo, cada guard de
 // seguridad las compara por ruta literal — permitir un prefijo /en/ delante
 // crearía una copia de cada una sin vigilancia.
+//
+// Las vistas de proyección (`/present`, `/remote`, `/decks`) entran aquí por la
+// misma lógica: no son contenido traducible sino estado de una sesión, y
+// `/remote` además está en el matcher `isAdmin` del middleware, que compara la
+// ruta canónica — un `/en/remote/...` sin cortar sería el control remoto sin
+// gate de sesión.
 const PRIVATE_EXACT = new Set(['/login', '/logout', '/entrar', '/docs/presentacion'])
-const PRIVATE_PREFIXES = ['/admin', '/api', '/portal', '/cobrar']
+const PRIVATE_PREFIXES = ['/admin', '/api', '/portal', '/cobrar', '/present', '/remote', '/decks']
 
 /** ¿Esta ruta CANÓNICA (ya sin prefijo de idioma) es privada? */
 export function isPrivateCanonicalPath(canonicalPath: string): boolean {
