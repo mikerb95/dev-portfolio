@@ -116,6 +116,45 @@ describe('solo el control mueve la presentación', () => {
     expect(r).toMatchObject({ ok: false, status: 404 })
   })
 
+  // Esto es lo que permite que el bus y el estado compartan una sola base de
+  // Redis: si el secreto volviera a guardarse, el token de solo lectura que
+  // recibe cada espectador lo leería y el control remoto dejaría de ser del
+  // presentador. El test falla en el momento en que alguien lo persista.
+  it('nada de lo que se guarda en Redis sirve para tomar el control', async () => {
+    const session = await createSession(DECK)
+
+    const stored = JSON.parse((await store.get(`present:s:${session.id}`))!)
+    const secret = await presenterSecretFor(session.id)
+
+    expect(JSON.stringify(stored)).not.toContain(secret)
+    for (const value of Object.values(stored)) {
+      expect(await runCommand(session.id, String(value), { type: 'next' })).toMatchObject({
+        ok: false,
+        status: 403,
+      })
+    }
+  })
+
+  it('el secreto de una sesión no vale para otra', async () => {
+    const a = await createSession(DECK)
+    const b = await createSession({ ...DECK, id: 2, title: 'Otra' })
+
+    const r = await runCommand(b.id, await presenterSecretFor(a.id), { type: 'next' })
+
+    expect(r).toMatchObject({ ok: false, status: 403 })
+  })
+
+  it('el secreto se deriva igual en cada llamada: otra instancia acepta el mismo comando', async () => {
+    const session = await createSession(DECK)
+    const primera = await presenterSecretFor(session.id)
+    const segunda = await presenterSecretFor(session.id)
+
+    expect(segunda).toBe(primera)
+    expect(await runCommand(session.id, segunda, { type: 'goto', slide: 2 })).toMatchObject({
+      ok: true,
+    })
+  })
+
   it('un salto fuera de rango no mueve nada', async () => {
     const session = await createSession(DECK)
     const client = connectClient(session)
