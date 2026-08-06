@@ -18,6 +18,10 @@ if (!deck) {
 
 const slides = await getDeckSlides(deck.id)
 const withNotes = slides.filter((s) => s.speakerNotes).length
+// `webkitdirectory` es un atributo real de los navegadores pero no está en
+// los tipos de Astro; se pasa por spread para no castear el input entero.
+const FOLDER_ATTRS = { webkitdirectory: true, directory: true } as Record<string, unknown>
+
 const withoutLabel = slides.filter((s) => !s.label).length
 ---
 
@@ -105,8 +109,7 @@ const withoutLabel = slides.filter((s) => !s.label).length
         <input
           id="replace-folder"
           type="file"
-          webkitdirectory
-          directory
+          {...FOLDER_ATTRS}
           multiple
           required
           class="h-10 px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-[12px] text-ink-100 file:mr-3 file:h-6 file:px-2 file:rounded file:border-0 file:bg-cyan/15 file:text-cyan file:text-[11px]"
