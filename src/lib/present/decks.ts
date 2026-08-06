@@ -183,8 +183,10 @@ export async function readDeckHtml(deckId: number): Promise<ReadableStream | nul
   const deck = await getDeck(deckId)
   if (!deck) return null
   try {
-    const { stream } = await blobGet(deck.blobPath, { access: 'private' })
-    return stream
+    // `null` = el blob ya no está (borrado a mano, o un reemplazo que falló a
+    // medias). No es una excepción, es un 404 para quien pidió el archivo.
+    const result = await blobGet(deck.blobPath, { access: 'private' })
+    return result?.stream ?? null
   } catch {
     return null
   }
