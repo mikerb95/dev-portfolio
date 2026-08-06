@@ -936,3 +936,64 @@ export const portalActivity = sqliteTable('portal_activity', {
   clientAtIdx: index('portal_activity_client_at_idx').on(t.clientId, t.at),
   projectAtIdx: index('portal_activity_project_at_idx').on(t.projectId, t.at),
 }))
+
+// ── Presentaciones (decks HTML autónomos) ───────────────────────────────────
+//
+// Convive con las tablas `presentations`/`presentation_slides` de arriba, que
+// son del sistema anterior (imágenes PNG por proyecto) y quedan congeladas: sus
+// rutas se retiraron, pero borrarlas sería una migración destructiva sobre
+// datos de clientes reales. Ver docs/plan-presentaciones.md.
+//
+// Aquí SOLO vive lo persistente: la biblioteca de decks. El estado vivo de una
+// sesión de proyección (PIN, slide actual, secreto del presentador) es efímero
+// y vive en Redis con TTL — nunca toca Turso.
+export const decks = sqliteTable('decks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  description: text('description'),
+  // Ruta del archivo en Vercel Blob. El HTML NO se sirve desde su URL de blob:
+  // el control por DOM del deck exige mismo origen, así que se sirve por
+  // /decks/<id>.html. Ver src/pages/decks/[id].html.ts.
+  blobPath: text('blob_path').notNull(),
+  blobUrl: text('blob_url').notNull(),
+  fileSize: integer('file_size').notNull().default(0),
+  // Total de <section> dentro de <deck-stage>, extraído al subir. El control
+  // remoto no carga el iframe, así que necesita esta cifra de la base.
+  slideCount: integer('slide_count').notNull().default(0),
+  lastSessionAt: integer('last_session_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+// Notas y rótulos por slide, extraídos del HTML al subirlo. Se reescriben
+// enteros cada vez que se reemplaza el archivo (borrar + insertar), porque el
+// deck es la fuente de verdad y editar a mano aquí se desincronizaría.
+export const deckSlides = sqliteTable('deck_slides', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  deckId: integer('deck_id').notNull().references(() => decks.id, { onDelete: 'cascade' }),
+  idx: integer('idx').notNull(),
+  label: text('label'),
+  speakerNotes: text('speaker_notes'),
+}, (t) => ({
+  deckIdxIdx: index('deck_slides_deck_idx').on(t.deckId, t.idx),
+}))
+
+// Feedback del público. Anónimo por diseño: no hay identificador de sesión ni
+// de dispositivo, solo el deck que vieron. `contact` es opcional y lo escribe
+// quien quiera respuesta — es el único campo que puede contener PII.
+export const presentationFeedback = sqliteTable('presentation_feedback', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Nullable: alguien puede llegar a /feedback sin venir de una presentación.
+  // `set null` y no `cascade`: borrar un deck no debe borrar lo que la gente
+  // opinó de él.
+  deckId: integer('deck_id').references(() => decks.id, { onDelete: 'set null' }),
+  // Título congelado en el momento del envío: si el deck se borra o se
+  // renombra, el comentario sigue teniendo contexto.
+  deckTitle: text('deck_title'),
+  rating: integer('rating'),
+  comment: text('comment'),
+  contact: text('contact'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  createdAtIdx: index('presentation_feedback_created_idx').on(t.createdAt),
+}))

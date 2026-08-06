@@ -1,0 +1,224 @@
+---
+// Vista del público: `codebymike.tech/{pin}`.
+//
+// Es LA ÚLTIMA ruta del sitio en resolverse. Astro ya prioriza las rutas
+// estáticas sobre las dinámicas, así que ninguna página real queda tapada por
+// esta; el orden importa igualmente porque este archivo captura cualquier
+// `/algo` de un solo segmento que no exista.
+//
+// Por eso el primer filtro es la FORMA del PIN, no una consulta: lo que no
+// tiene forma de PIN es un 404 normal y no llega a tocar Redis. Sin ese filtro,
+// esta ruta convertiría cada 404 del sitio (bots incluidos) en una lectura del
+// almacén de sesiones.
+import PresentLayout from '../layouts/PresentLayout.astro'
+import ClosingScreen from '../components/present/ClosingScreen.astro'
+import { isPinShape } from '../lib/present/pin'
+import { getSessionByPin, toPublicSnapshot } from '../lib/present/session'
+import { busCredentials } from '../lib/present/store'
+
+const { pin } = Astro.params
+
+// Ni parece un PIN: es una URL que no existe y le corresponde el 404 del sitio
+// —con su nav, su idioma y su status— y no una pantalla de presentación.
+if (!isPinShape(pin)) {
+  return Astro.rewrite('/404')
+}
+
+const session = await getSessionByPin(pin!)
+
+// Estado vivo: fuera de la caché del edge, siempre.
+Astro.response.headers.set('Cache-Control', 'no-store')
+
+if (!session) Astro.response.status = 404
+
+const origin = Astro.url.origin
+const bus = busCredentials()
+const snapshot = session ? toPublicSnapshot(session) : null
+const deckSrc = session ? `/decks/${session.deckId}.html` : ''
+const feedbackUrl = `${origin}/feedback`
+---
+
+<PresentLayout title={session ? session.deckTitle : 'Presentación'}>
+  {!session ? (
+      <main class="ended-standalone">
+        <p class="eyebrow">Presentación</p>
+        <h1>Esta presentación ya terminó.</h1>
+        <p class="ended-note">Si acabas de verla, puedes dejar tus comentarios aquí.</p>
+        <a class="ended-cta mono" href={feedbackUrl}>Dejar comentarios →</a>
+      </main>
+    ) : (
+      <>
+        <!-- Espera: el PIN ya está en pantalla en la sala, aquí no se repite. -->
+        <section class="waiting" id="waiting">
+          <span class="pulse" aria-hidden="true"></span>
+          <p class="waiting-title">La presentación está por comenzar</p>
+          <p class="waiting-deck">{session.deckTitle}</p>
+        </section>
+
+        <!-- Solo lectura: sin controles, sin notas y sin forma de adelantarse.
+             El iframe no recibe eventos de teclado ni de puntero porque esta
+             vista no escucha ninguno; el deck se mueve únicamente cuando llega
+             un snapshot del servidor. -->
+        <div class="stage" id="stage" hidden>
+          <iframe id="deck" src={deckSrc} title={session.deckTitle} loading="eager"></iframe>
+        </div>
+
+        <a class="feedback-tab mono" id="feedback-tab" href={`${feedbackUrl}?deck=${session.deckId}`} hidden>
+          comentarios
+        </a>
+
+        <ClosingScreen feedbackUrl={feedbackUrl} deckId={session.deckId} />
+
+        <script
+          type="application/json"
+          id="present-config"
+          set:html={JSON.stringify({ snapshot, bus })}
+        />
+    </>
+  )}
+</PresentLayout>
+
+<style>
+  .ended-standalone,
+  .waiting {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.1rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .ended-standalone h1,
+  .waiting-title {
+    font-size: clamp(1.5rem, 5vw, 2.6rem);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    max-width: 18ch;
+  }
+  .ended-note { color: var(--ink-200); font-size: 0.95rem; max-width: 34ch; line-height: 1.6; }
+  .ended-cta { color: var(--cyan); text-decoration: none; font-size: 0.95rem; letter-spacing: 0.04em; }
+
+  .waiting-deck {
+    color: var(--ink-200);
+    font-size: clamp(0.95rem, 2.4vw, 1.2rem);
+    max-width: 30ch;
+    line-height: 1.5;
+  }
+  .waiting[hidden] { display: none; }
+
+  /* Latido lento: da señal de que la página está viva y esperando, sin ser un
+     spinner que sugiere que algo va mal. */
+  .pulse {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--cyan);
+    box-shadow: 0 0 24px var(--cyan);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.25; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .stage { position: fixed; inset: 0; z-index: 10; background: #000; }
+  .stage[hidden] { display: none; }
+  #deck { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* Enlace sutil a /feedback durante toda la presentación, como pide el brief:
+     visible si lo buscas, invisible si estás mirando el deck. */
+  .feedback-tab {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(0.5rem + var(--safe-bottom));
+    z-index: 20;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-300);
+    text-decoration: none;
+    padding: 0.5rem 0.9rem;
+    transition: color 0.2s ease;
+  }
+  .feedback-tab:hover { color: var(--ink-100); }
+  .feedback-tab[hidden] { display: none; }
+</style>
+
+<script>
+  import { startSync, attachDeck, type Snapshot, type DeckHandle } from '../lib/present/client-sync'
+
+  const configEl = document.getElementById('present-config')
+
+  if (configEl) {
+    const { snapshot, bus } = JSON.parse(configEl.textContent || '{}') as {
+      snapshot: Snapshot
+      bus: { url: string; token: string } | null
+    }
+
+    const waiting = document.getElementById('waiting')!
+    const stage = document.getElementById('stage')!
+    const closing = document.getElementById('closing')!
+    const tab = document.getElementById('feedback-tab')!
+    const iframe = document.getElementById('deck') as HTMLIFrameElement
+
+    let deck: DeckHandle | null = null
+    let pendingSlide = snapshot.currentSlide
+
+    // Además de los controles del deck, aquí se desactiva cualquier
+    // interacción: el público no puede adelantarse ni aunque el deck traiga sus
+    // propios atajos de teclado.
+    const READ_ONLY_CSS = `
+      deck-nav, deck-progress, deck-counter, deck-thumbs,
+      [data-deck-chrome], .deck-nav, .deck-counter, .deck-thumbnails, .deck-controls {
+        display: none !important;
+      }
+      html, body { pointer-events: none !important; user-select: none !important; }
+    `
+
+    iframe.addEventListener('load', () => {
+      try {
+        const doc = iframe.contentDocument
+        if (doc) {
+          const style = doc.createElement('style')
+          style.textContent = READ_ONLY_CSS
+          doc.head.appendChild(style)
+          // Cinturón y tirantes: si el deck escucha teclas, no las recibe.
+          doc.addEventListener('keydown', (e) => e.stopPropagation(), true)
+        }
+      } catch {
+        // Sin acceso al documento del deck, la vista sigue sincronizada; solo
+        // que el deck conserva su propio cromo.
+      }
+      deck = attachDeck(iframe)
+      deck?.goTo(pendingSlide)
+    })
+
+    const render = (snap: Snapshot) => {
+      pendingSlide = snap.currentSlide
+
+      if (snap.state === 'ended') {
+        closing.hidden = false
+        waiting.hidden = true
+        stage.hidden = true
+        tab.hidden = true
+        return
+      }
+
+      const live = snap.state === 'live'
+      waiting.hidden = live
+      stage.hidden = !live
+      tab.hidden = !live
+      closing.hidden = true
+
+      if (live) deck?.goTo(snap.currentSlide)
+    }
+
+    render(snapshot)
+    startSync({ sessionId: snapshot.sessionId, bus, onSnapshot: render })
+  }
+</script>

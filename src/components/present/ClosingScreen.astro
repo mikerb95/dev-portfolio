@@ -1,0 +1,69 @@
+---
+// Pantalla de cierre. La misma en las tres vistas: cuando la sesión pasa a
+// `ended`, proyector, público y control muestran esto.
+//
+// Sobria a propósito. Un pop-up de "¡valóranos!" sobre el último slide
+// convierte el final de una sustentación en una petición de reseña de app; esto
+// es una pantalla más del deck, con su mismo fondo y su misma tipografía, que
+// además resulta llevar a un formulario.
+import Qr from './Qr.astro'
+
+interface Props {
+  feedbackUrl: string
+  deckId?: number | null
+  /** Oculto por defecto: la vista lo revela cuando la sesión termina. */
+  hidden?: boolean
+}
+
+const { feedbackUrl, deckId = null, hidden = true } = Astro.props
+const url = deckId ? `${feedbackUrl}?deck=${deckId}` : feedbackUrl
+const written = url.replace(/^https?:\/\//, '')
+---
+
+<section class="closing" id="closing" hidden={hidden} aria-live="polite">
+  <p class="closing-text">
+    ¿Qué te pareció esta presentación?<br />
+    <span class="closing-soft">Cuéntame tus comentarios.</span>
+  </p>
+
+  <Qr data={url} size={200} />
+
+  <a class="closing-link mono" href={url}>{written}</a>
+</section>
+
+<style>
+  .closing {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.5rem, 4vh, 2.75rem);
+    padding: 2rem;
+    background: #050508;
+    text-align: center;
+  }
+  .closing[hidden] { display: none; }
+
+  .closing-text {
+    font-size: clamp(1.35rem, 3.2vw, 2.5rem);
+    line-height: 1.35;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    max-width: 22ch;
+    color: var(--ink-50);
+  }
+  .closing-soft { color: var(--ink-200); font-weight: 400; }
+
+  .closing-link {
+    font-size: clamp(0.9rem, 1.6vw, 1.15rem);
+    color: var(--cyan);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    padding-bottom: 2px;
+    border-bottom: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent);
+  }
+  .closing-link:hover { border-bottom-color: var(--cyan); }
+</style>

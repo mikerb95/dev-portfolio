@@ -1,0 +1,89 @@
+---
+// Cascarón de las tres vistas de proyección (pantalla principal, público y
+// control remoto). No hereda de BaseLayout a propósito: ahí viven el nav, el
+// footer, Lenis y GSAP, y ninguna de esas cosas pinta nada en un salón — pesan
+// en el arranque de un celular con mala señal justo cuando el público está
+// esperando a que cargue.
+//
+// CSS plano y sin Tailwind por la misma razón que pide el brief: el deck trae
+// su propio estilo dentro del iframe, y lo de fuera son cuatro pantallas
+// (lobby, cierre, controles) que no justifican una hoja de utilidades.
+
+interface Props {
+  title: string
+  /** Color de fondo; el deck usa negro, el control un gris apenas más claro. */
+  background?: string
+}
+
+const { title, background = '#050508' } = Astro.props
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content={background} />
+    <title>{title}</title>
+    <style define:vars={{ background }}>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --ink-50: #e7e7ec;
+        --ink-100: #c4c4cc;
+        --ink-200: #85858f;
+        --ink-300: #4d4d5d;
+        --ink-700: #1c1c26;
+        --ink-800: #13131a;
+        --cyan: #00f2ff;
+        --cyan-glow: #9bfaff;
+        --lime: #c9ff5b;
+        /* Respeta la barra de estado y el gesto de inicio del iPhone: el
+           control remoto pega sus botones al borde inferior y sin esto el
+           "Siguiente" queda debajo de la barra del sistema. */
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-top: env(safe-area-inset-top, 0px);
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        background: var(--background);
+        color: var(--ink-50);
+        font-family: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        overscroll-behavior: none;
+      }
+
+      body { overflow: hidden; }
+
+      .mono {
+        font-family: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+      }
+
+      /* Contraste alto y tamaño generoso: estas pantallas se leen desde el
+         fondo del salón, no desde 50 cm. */
+      .eyebrow {
+        font-size: clamp(11px, 1.2vw, 15px);
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--ink-200);
+        font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
+      }
+
+      a { color: var(--cyan); }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

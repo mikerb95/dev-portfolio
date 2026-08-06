@@ -1,0 +1,205 @@
+---
+// Pantalla principal: lo que se proyecta. Es la ÚNICA vista que enseña el QR y
+// el PIN, y solo mientras la sesión está en lobby.
+//
+// Sustituye a la antigua `/present/[token]` (presentaciones por imágenes), que
+// se retiró con el resto de ese sistema.
+import PresentLayout from '../../layouts/PresentLayout.astro'
+import ClosingScreen from '../../components/present/ClosingScreen.astro'
+import Qr from '../../components/present/Qr.astro'
+import { getSession, toPublicSnapshot } from '../../lib/present/session'
+import { busCredentials } from '../../lib/present/store'
+
+const { sessionId } = Astro.params
+const session = sessionId ? await getSession(sessionId) : null
+
+// Nunca cacheable: es estado vivo, y el middleware cachea 300 s en el edge todo
+// GET público que no diga lo contrario.
+Astro.response.headers.set('Cache-Control', 'no-store')
+
+if (!session) {
+  Astro.response.status = 404
+}
+
+const origin = Astro.url.origin
+const bus = busCredentials()
+const snapshot = session ? toPublicSnapshot(session) : null
+const audienceUrl = session ? `${origin}/${session.pin}` : ''
+const audienceWritten = audienceUrl.replace(/^https?:\/\//, '')
+const deckSrc = session ? `/decks/${session.deckId}.html` : ''
+const feedbackUrl = `${origin}/feedback`
+---
+
+<PresentLayout title={session ? session.deckTitle : 'Sesión no encontrada'}>
+  {!session ? (
+    <main class="empty">
+      <p class="eyebrow">Sesión</p>
+      <h1>Esta sesión de presentación ya no existe.</h1>
+      <p class="empty-note">Puede que haya terminado o que hayan pasado más de seis horas desde que se creó.</p>
+    </main>
+  ) : (
+    <>
+      <!-- Lobby: QR + PIN a pantalla completa -->
+      <section class="lobby" id="lobby">
+        <p class="eyebrow">{session.deckTitle}</p>
+
+        <Qr data={audienceUrl} size={420} />
+
+        <p class="pin-line mono">
+          <span class="pin-host">{audienceWritten.split('/')[0]}/</span><span class="pin-code">{session.pin}</span>
+        </p>
+
+        <p class="lobby-hint">Escanea el código o escribe esa dirección para seguir la presentación desde tu dispositivo.</p>
+      </section>
+
+      <!-- El deck. Los controles propios del deck se ocultan: aquí manda el
+           control remoto, y una barra de navegación proyectada distrae. -->
+      <div class="stage" id="stage" hidden>
+        <iframe id="deck" src={deckSrc} title={session.deckTitle} loading="eager"></iframe>
+      </div>
+
+      <ClosingScreen feedbackUrl={feedbackUrl} deckId={session.deckId} />
+    </>
+  )}
+</PresentLayout>
+
+<style>
+  .empty {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
+  }
+  .empty h1 { font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 500; letter-spacing: -0.02em; }
+  .empty-note { color: var(--ink-200); max-width: 44ch; font-size: 0.95rem; line-height: 1.6; }
+
+  .lobby {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.5rem, 4vh, 3rem);
+    padding: 3vh 2rem;
+    text-align: center;
+    background: #050508;
+  }
+  .lobby[hidden] { display: none; }
+
+  /* El PIN tiene que leerse desde la última fila: por eso escala con el ancho
+     del viewport y no con un tamaño fijo. */
+  .pin-line {
+    font-size: clamp(2.2rem, 7vw, 6rem);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .pin-host { color: var(--ink-200); font-weight: 400; }
+  .pin-code {
+    color: var(--cyan);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 40px color-mix(in srgb, var(--cyan) 45%, transparent);
+  }
+
+  .lobby-hint {
+    color: var(--ink-100);
+    font-size: clamp(0.95rem, 1.6vw, 1.4rem);
+    max-width: 34ch;
+    line-height: 1.5;
+  }
+
+  .stage { position: fixed; inset: 0; z-index: 10; background: #000; }
+  .stage[hidden] { display: none; }
+
+  #deck { width: 100%; height: 100%; border: 0; display: block; }
+</style>
+
+{session && (
+  <script
+    type="application/json"
+    id="present-config"
+    set:html={JSON.stringify({ snapshot, bus })}
+  />
+)}
+
+
+<script>
+  // La configuración viaja en un <script type="application/json"> y no por
+  // `define:vars`: `define:vars` fuerza el script a inline, y un script inline
+  // no puede importar el módulo de sincronía.
+  import { startSync, attachDeck, type Snapshot, type DeckHandle } from '../../lib/present/client-sync'
+
+  const configEl = document.getElementById('present-config')
+
+  if (configEl) {
+    const { snapshot, bus } = JSON.parse(configEl.textContent || '{}') as {
+      snapshot: Snapshot
+      bus: { url: string; token: string } | null
+    }
+
+    const lobby = document.getElementById('lobby')!
+    const stage = document.getElementById('stage')!
+    const closing = document.getElementById('closing')!
+    const iframe = document.getElementById('deck') as HTMLIFrameElement
+
+    let deck: DeckHandle | null = null
+    let pendingSlide = snapshot.currentSlide
+
+    // Este CSS se inyecta DENTRO del iframe: es otro documento, y ningún
+    // selector de fuera llega hasta él. Que sea mismo origen es lo que lo hace
+    // posible (ver /decks/[id].html.ts).
+    const HIDE_DECK_CHROME = `
+      deck-nav, deck-progress, deck-counter, deck-thumbs,
+      [data-deck-chrome], .deck-nav, .deck-counter, .deck-thumbnails, .deck-controls {
+        display: none !important;
+      }
+    `
+
+    iframe.addEventListener('load', () => {
+      try {
+        const doc = iframe.contentDocument
+        if (doc) {
+          const style = doc.createElement('style')
+          style.textContent = HIDE_DECK_CHROME
+          doc.head.appendChild(style)
+        }
+      } catch {
+        // Un deck que no deje tocar su documento se proyecta igual, solo que
+        // con su propia barra de navegación a la vista.
+      }
+      deck = attachDeck(iframe)
+      deck?.goTo(pendingSlide)
+    })
+
+    const render = (snap: Snapshot) => {
+      pendingSlide = snap.currentSlide
+
+      if (snap.state === 'ended') {
+        closing.hidden = false
+        lobby.hidden = true
+        stage.hidden = true
+        return
+      }
+
+      const live = snap.state === 'live'
+      lobby.hidden = live
+      stage.hidden = !live
+      closing.hidden = true
+
+      if (live) deck?.goTo(snap.currentSlide)
+    }
+
+    render(snapshot)
+    startSync({ sessionId: snapshot.sessionId, bus, onSnapshot: render })
+  }
+</script>
