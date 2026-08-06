@@ -1,0 +1,259 @@
+---
+// Biblioteca de decks. Reemplaza a /admin/presentations (sistema de imágenes
+// por proyecto), que se retiró entero; los enlaces viejos se redirigen desde
+// astro.config.mjs.
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { listDecks } from '../../../lib/present/decks'
+import { listLiveSessions } from '../../../lib/present/session'
+import { storeReadiness } from '../../../lib/present/store'
+import { db } from '../../../db'
+import { presentationFeedback } from '../../../db/schema'
+import { desc } from 'drizzle-orm'
+
+const decksList = await listDecks()
+
+// Redis puede no estar configurado (o caído): la biblioteca se lee de Turso y
+// debe seguir viéndose igual. Solo se pierde el aviso de sesión en curso.
+let live: Awaited<ReturnType<typeof listLiveSessions>> = []
+let liveError: string | null = null
+try {
+  live = await listLiveSessions()
+} catch {
+  liveError = 'no se pudo consultar Redis: el estado de las sesiones en curso no está disponible'
+}
+
+const readiness = storeReadiness()
+
+const feedback = await db
+  .select()
+  .from(presentationFeedback)
+  .orderBy(desc(presentationFeedback.createdAt))
+  .limit(8)
+
+const fmtDate = (d: Date | null) =>
+  d ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d) : '—'
+const fmtSize = (bytes: number) =>
+  bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
+---
+
+<AdminLayout title="Presentaciones">
+  <p class="text-[12px] text-ink-200 max-w-2xl mb-6">
+    Cada presentación es <strong class="text-ink-100">un archivo HTML autónomo</strong> con un
+    <span class="font-mono text-cyan">&lt;deck-stage&gt;</span> dentro. Al subirlo se extraen sus slides y
+    las notas del presentador. <strong class="text-ink-100">Presentar</strong> abre una sesión con PIN:
+    tú proyectas, controlas desde el celular y el público sigue en
+    <span class="font-mono text-cyan">codebymike.tech/{'{pin}'}</span>.
+  </p>
+
+  {!readiness.ok && (
+    <div class="rounded-2xl border border-[#ff7a7a]/30 bg-[#ff7a7a]/[0.07] p-4 mb-6">
+      <div class="text-[12px] text-[#ff9a9a] font-medium mb-1">Redis sin configurar</div>
+      <p class="text-[11px] text-ink-200 leading-relaxed">{readiness.reason}</p>
+    </div>
+  )}
+
+  {liveError && (
+    <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4 mb-6 text-[11px] text-ink-200">
+      {liveError}
+    </div>
+  )}
+
+  <!-- Sesión en curso: lo primero que se ve, con las dos salidas útiles -->
+  {live.length > 0 && (
+    <section class="mb-8">
+      <h2 class="text-[13px] font-medium text-ink-50 mb-3">En curso</h2>
+      <div class="space-y-3">
+        {live.map((s) => (
+          <div class="rounded-2xl bg-cyan/[0.06] border border-cyan/25 p-5">
+            <div class="flex flex-wrap items-center gap-4">
+              <div class="flex-1 min-w-[200px]">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-lime animate-pulse shrink-0"></span>
+                  <span class="text-[14px] text-ink-50 truncate">{s.deckTitle}</span>
+                </div>
+                <div class="mt-1 text-[11px] font-mono text-ink-200">
+                  <span class="text-cyan">codebymike.tech/{s.pin}</span>
+                  <span> · {s.state === 'lobby' ? 'en el lobby' : `slide ${s.currentSlide + 1} de ${s.totalSlides}`}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <a
+                  href={`/remote/${s.id}`}
+                  class="h-9 px-4 inline-flex items-center rounded-full bg-cyan/15 text-cyan border border-cyan/30 text-[12px] hover:bg-cyan/25 transition-colors"
+                >
+                  Control remoto
+                </a>
+                <a
+                  href={`/present/${s.id}`}
+                  target="_blank"
+                  class="h-9 px-4 inline-flex items-center rounded-full bg-white/5 text-ink-100 border border-white/10 text-[12px] hover:bg-white/10 transition-colors"
+                >
+                  Pantalla ↗
+                </a>
+                <button
+                  type="button"
+                  data-end-session={s.id}
+                  class="h-9 px-4 inline-flex items-center rounded-full bg-white/5 text-[#ff9a9a] border border-[#ff7a7a]/25 text-[12px] hover:bg-[#ff7a7a]/10 transition-colors"
+                >
+                  Finalizar
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- Subir deck nuevo -->
+  <section class="mb-8">
+    <details class="rounded-2xl glass p-5">
+      <summary class="text-[13px] text-ink-50 cursor-pointer select-none">Subir un deck nuevo</summary>
+      <form id="upload-form" class="mt-4 grid gap-3 md:grid-cols-2">
+        <label class="grid gap-1.5">
+          <span class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200">Título</span>
+          <input
+            name="title"
+            required
+            class="h-10 px-3 rounded-lg bg-ink-800 border border-white/10 text-[13px] text-ink-50 focus:border-cyan/40 outline-none"
+          />
+        </label>
+        <label class="grid gap-1.5">
+          <span class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200">Archivo .html</span>
+          <input
+            name="file"
+            type="file"
+            accept=".html,.htm,text/html"
+            required
+            class="h-10 px-3 py-2 rounded-lg bg-ink-800 border border-white/10 text-[12px] text-ink-100 file:mr-3 file:h-6 file:px-2 file:rounded file:border-0 file:bg-cyan/15 file:text-cyan file:text-[11px]"
+          />
+        </label>
+        <label class="grid gap-1.5 md:col-span-2">
+          <span class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200">Descripción</span>
+          <input
+            name="description"
+            class="h-10 px-3 rounded-lg bg-ink-800 border border-white/10 text-[13px] text-ink-50 focus:border-cyan/40 outline-none"
+          />
+        </label>
+        <div class="md:col-span-2 flex items-center gap-3">
+          <button
+            type="submit"
+            class="h-9 px-4 rounded-full bg-cyan/15 text-cyan border border-cyan/30 text-[12px] hover:bg-cyan/25 transition-colors"
+          >
+            Subir deck
+          </button>
+          <span id="upload-msg" class="text-[11px] font-mono text-ink-200"></span>
+        </div>
+      </form>
+    </details>
+  </section>
+
+  <!-- Biblioteca -->
+  <section>
+    <div class="flex items-baseline justify-between gap-3 mb-3">
+      <h2 class="text-[13px] font-medium text-ink-50">Biblioteca</h2>
+      <span class="text-[11px] font-mono text-ink-300">{decksList.length} decks</span>
+    </div>
+
+    {decksList.length === 0 ? (
+      <div class="rounded-2xl glass p-8 text-center text-[12px] text-ink-200">
+        Todavía no hay decks. Sube el primer archivo HTML arriba.
+      </div>
+    ) : (
+      <div class="grid gap-3 md:grid-cols-2">
+        {decksList.map((d) => (
+          <article class="rounded-2xl glass p-5 flex flex-col gap-3 hover:bg-white/[0.04] transition-colors">
+            <div class="flex items-start gap-2 min-w-0">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan shrink-0 mt-2"></span>
+              <div class="min-w-0">
+                <h3 class="text-[14px] text-ink-50 truncate">{d.title}</h3>
+                {d.description && <p class="text-[12px] text-ink-200 leading-relaxed mt-1">{d.description}</p>}
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 text-[10px] font-mono text-ink-300">
+              <span class="px-2 py-0.5 rounded-full bg-white/5 border border-white/10">{d.slideCount} slides</span>
+              <span class="px-2 py-0.5 rounded-full bg-white/5 border border-white/10">{fmtSize(d.fileSize)}</span>
+              <span class="px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                {d.lastSessionAt ? `última: ${fmtDate(d.lastSessionAt)}` : 'sin presentar'}
+              </span>
+            </div>
+
+            <div class="mt-auto pt-2 flex items-center justify-between gap-3">
+              <a href={`/admin/presentaciones/${d.id}`} class="text-[11px] font-mono text-ink-200 hover:text-cyan transition-colors">
+                Editar · {fmtDate(d.createdAt)}
+              </a>
+              <a
+                href={`/admin/presentaciones/${d.id}/lanzar`}
+                class="inline-flex items-center gap-1.5 h-8 px-4 text-[12px] rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25 transition-colors"
+              >
+                Presentar
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    )}
+  </section>
+
+  <!-- Feedback recibido -->
+  <section class="mt-10">
+    <div class="flex items-baseline justify-between gap-3 mb-3">
+      <h2 class="text-[13px] font-medium text-ink-50">Comentarios del público</h2>
+      <span class="text-[11px] font-mono text-ink-300">últimos {feedback.length}</span>
+    </div>
+
+    {feedback.length === 0 ? (
+      <div class="rounded-2xl glass p-6 text-center text-[12px] text-ink-200">
+        Sin comentarios todavía. El público llega a <span class="font-mono text-cyan">/feedback</span> desde
+        la pantalla de cierre.
+      </div>
+    ) : (
+      <div class="space-y-2">
+        {feedback.map((f) => (
+          <div class="rounded-xl glass p-4">
+            <div class="flex items-center gap-2 text-[11px] font-mono text-ink-300 mb-1.5">
+              {f.rating && <span class="text-lime">{'★'.repeat(f.rating)}<span class="text-ink-500">{'★'.repeat(5 - f.rating)}</span></span>}
+              <span>{f.deckTitle ?? 'sin deck'}</span>
+              <span>·</span>
+              <span>{fmtDate(f.createdAt)}</span>
+            </div>
+            {f.comment && <p class="text-[13px] text-ink-100 leading-relaxed">{f.comment}</p>}
+            {f.contact && <p class="mt-1.5 text-[11px] font-mono text-cyan">{f.contact}</p>}
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+</AdminLayout>
+
+<script>
+  const form = document.getElementById('upload-form') as HTMLFormElement | null
+  const msg = document.getElementById('upload-msg')
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    if (!msg) return
+    msg.textContent = 'subiendo…'
+
+    const res = await fetch('/api/admin/decks', { method: 'POST', body: new FormData(form) })
+    const body = await res.json().catch(() => ({}))
+
+    if (res.ok) {
+      msg.textContent = 'listo ✓'
+      location.reload()
+    } else {
+      // El error del parser es útil de verdad ("el archivo no contiene un
+      // elemento <deck-stage>"): se muestra tal cual en vez de un genérico.
+      msg.textContent = body.error ?? 'no se pudo subir'
+    }
+  })
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-end-session]')) {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true
+      await fetch(`/api/admin/present/${btn.dataset.endSession}/end`, { method: 'POST' })
+      location.reload()
+    })
+  }
+</script>
