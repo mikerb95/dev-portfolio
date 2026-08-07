@@ -135,8 +135,7 @@ continuidad del servicio y la confidencialidad de los datos de clientes.
 | E-01 | Aplicación desplegada en producción | URL `codebymike.tech` | Smoke test §7.3 |
 | E-02 | Base de datos migrada | Migraciones `drizzle/00XX_*.sql` aplicadas | `drizzle-kit migrate` sin pendientes |
 | E-03 | Variables de entorno productivas | Vercel env (Production) | `vercel env ls` y arranque sin warnings |
-| E-04 | Crons externos activos | 
- cron-job.org | Ejecución exitosa con `Bearer CRON_SECRET` |
+| E-04 | Crons externos activos | cron-job.org | Ejecución exitosa con `Bearer CRON_SECRET` |
 | E-05 | Monitores configurados | `/admin/monitors` | 8 monitores con checks recientes |
 | E-06 | Demo pública sembrada | `/demo` | `npm run seed:demo` ejecutado, datos sintéticos |
 
