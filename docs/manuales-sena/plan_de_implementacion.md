@@ -147,7 +147,7 @@ continuidad del servicio y la confidencialidad de los datos de clientes.
 | E-08 | Manual de instalación | `docs/manuales-sena/manual-de-instalacion.md` |
 | E-09 | Manual de usuario | `docs/manuales-sena/manual-de-usuario.md` |
 | E-10 | Plan de capacitación | `docs/manuales-sena/plan-de-capacitacion.md` |
-| E-11 | Este plan de implantación | `docs/plan_de_implementacion.md` |
+| E-11 | Este plan de implantación | `docs/manuales-sena/plan_de_implementacion.md` |
 | E-12 | Requisitos funcionales y no funcionales vigentes | `src/data/documentacion.ts` → `/docs` |
 | E-13 | Diagramas (BPMN, despliegue, componentes, actividades, comunicación, secuencia, clases, objetos) | `src/data/*.ts` → `/docs` |
 | E-14 | Plan de pruebas y matriz V&V | `src/data/testing.ts`, `src/data/vyv.ts` |
