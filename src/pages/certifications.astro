@@ -135,6 +135,48 @@ const byStatus = {
       </section>
     )}
 
+    {visibleSpecializations.length > 0 && (
+      <section class="mt-20">
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
+          <span>{cert.specialization.heading}</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {visibleSpecializations.map((sp) => (
+            <div class="rounded-2xl glass p-6 border border-white/5">
+              <p class="text-[17px] font-medium text-ink-50 leading-snug">{sp.name}</p>
+              {sp.tagline && <p class="text-[13px] text-ink-300 mt-1.5 leading-relaxed">{sp.tagline}</p>}
+              <div class="mt-5 h-1 rounded-full bg-white/8 overflow-hidden">
+                <div class="h-full bg-cyan transition-all" style={`width: ${sp.pct}%`}></div>
+              </div>
+              <div class="mt-5 grid grid-cols-3 gap-4">
+                <div>
+                  <p class="text-[22px] font-medium text-ink-50 tabular-nums">{sp.hours}</p>
+                  <p class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-300 mt-0.5">
+                    {cert.specialization.hoursLabel}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[22px] font-medium text-ink-50 tabular-nums">{sp.pct}%</p>
+                  <p class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-300 mt-0.5">
+                    {cert.specialization.syllabusLabel}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[22px] font-medium text-ink-50 tabular-nums">{sp.recordStreak}</p>
+                  <p class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-300 mt-0.5">
+                    {cert.specialization.streakLabel}
+                  </p>
+                </div>
+              </div>
+              <p class="text-[11px] text-ink-400 mt-5 leading-relaxed">{cert.specialization.note}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
     <!-- CTA Cards -->
     <section class="mt-20">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
