@@ -261,7 +261,7 @@ const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, bi
   /** Pares -> objeto. Los vacíos se ignoran; el servidor revalida igual. */
   function readBilling(): Record<string, string> {
     const out: Record<string, string> = {}
-    billRows.querySelectorAll('.flex').forEach((row) => {
+    billRows.querySelectorAll('.bill-row').forEach((row) => {
       const k = (row.querySelector('.bill-k') as HTMLInputElement)?.value.trim()
       const v = (row.querySelector('.bill-v') as HTMLInputElement)?.value.trim()
       if (k && v) out[k] = v
