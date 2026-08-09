@@ -193,6 +193,34 @@ geometría verificada por tests. Registrado como **RF-707** en
 El menú pasó de 18 a 20 pestañas (`Comunicación`, `Actividades`, `Despliegue`;
 `bpmn-imprimible` y `presentacion` no van en el menú).
 
+## 5.d Entregado después (6 ago 2026) - gobernanza y niveles de autoridad
+
+`/docs/gobernanza`: la pirámide estratégico / táctico / operativo y la matriz
+RACI de las 12 actividades críticas. Modelo tipado en `src/data/gobernanza.ts`,
+página que solo renderiza, reglas verificadas en `tests/gobernanza.test.ts`.
+Registrado como **RNF-24** en `documentacion.ts`.
+
+- **La tesis que sostiene la página**: en un proyecto de una sola persona los
+  tres niveles no separan personas, separan tipos de decisión. Publicar es una
+  decisión reservada (regla de deploys en `CLAUDE.md`), revertir es automática
+  (job «Verificar deploy + rollback» de `ci.yml`) y ejecutar no incluye ni
+  publicar ni destruir (migraciones aditivas, secretos solo por endpoint bajo
+  sesión). Cada fila de la matriz lleva su `evidencia`: el archivo o mecanismo
+  donde esa frontera existe de verdad. Sin ese campo la tabla sería una
+  declaración de intenciones, que es en lo que suele quedar una matriz RACI.
+- **Las reglas de la lámina son un test, no un pie de tabla**: un solo aprobador
+  y al menos un responsable por actividad. Al escribirlas como prueba, cuatro
+  de las doce filas iniciales resultaron incumplirlas (dos con aprobador pero
+  sin ejecutor, dos sin aprobador). Una fila mal asignada se renderiza igual de
+  bonita, así que nada visual lo habría delatado.
+- **Una celda es un arreglo de roles, no una letra**: `['A', 'R']` es el caso
+  normal aquí, no una excepción. Forzar una sola letra por celda habría obligado
+  a mentir en la mitad de las filas.
+- **Lo que la página declara que NO puede afirmar**: al ocupar una misma persona
+  los tres niveles, la separación protege contra el error, la prisa y el olvido,
+  no contra alguien que decida saltársela. Es la misma limitación estructural
+  que ya reconoce el nivel de integridad 4 en `/docs/verificacion-validacion`.
+
 ## 6. Fases futuras
 
 - **Fase 2 - Vivo**: derivar el estado de RF desde los tests (cada RF apunta a
