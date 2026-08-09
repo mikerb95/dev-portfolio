@@ -238,6 +238,31 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
     }
 
+    // Canje del código de grupo del banco de capacitación. Más estrecho que el
+    // de cobros porque nadie canjea dos veces: quien acaba de salir de la
+    // capacitación teclea su código una vez y ya. Diez intentos por minuto
+    // dejan espacio a los dedos torpes y ninguno a un barrido.
+    if (isTrainingAccessPath(canonicalPath)) {
+      const r = await enforceLimit(`capacitacion-acceso:${ip}`, { limit: 10, windowMs: 60_000, deferUntil: 0.5 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'enumeration',
+          severity: 'high',
+          ruleId: 'ratelimit.capacitacion_acceso',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers: reqHeaders,
+        })
+        return new Response(JSON.stringify({ error: 'demasiados intentos, espera un minuto' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+
     // Vista del público de una presentación (`/{pin}`). El PIN son cuatro
     // caracteres: es el mismo problema que los links de cobro, con un límite
     // más holgado por una razón muy concreta - un salón entero comparte la IP
