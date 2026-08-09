@@ -110,8 +110,13 @@ export const LEYENDA_RACI: Record<RolRaci, { nombre: string; que: string }> = {
 export interface ActividadRaci {
   id: string
   actividad: string
-  /** null = ese nivel no participa en absoluto (mejor que inventar una I de relleno). */
-  asignacion: Record<Nivel, RolRaci | null>
+  /**
+   * Roles de ese nivel en la actividad. Un nivel puede acumular varios: lo
+   * habitual es ['A', 'R'] cuando quien aprueba es también quien ejecuta - que
+   * en un proyecto de una sola persona es la mitad de las filas. null = ese
+   * nivel no participa en absoluto (mejor que inventar una I de relleno).
+   */
+  asignacion: Record<Nivel, RolRaci[] | null>
   /** Por qué la A cae donde cae: el riesgo que justifica reservar la aprobación ahí. */
   porque: string
   /** Dónde se comprueba en el repositorio que la frontera existe de verdad. */
@@ -122,7 +127,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'alcance',
     actividad: 'Definir el alcance de una iteración',
-    asignacion: { estrategico: 'A', tactico: 'I', operativo: 'C' },
+    asignacion: { estrategico: ['A'], tactico: ['I'], operativo: ['C'] },
     porque:
       'Comprometer alcance es comprometer tiempo y dinero propios. El nivel operativo aporta la estimación, pero no puede aprobar su propia carga de trabajo.',
     evidencia: 'src/data/iteraciones-portfolio.ts · docs/plan-*.md',
@@ -130,7 +135,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'desarrollo',
     actividad: 'Desarrollar una funcionalidad',
-    asignacion: { estrategico: 'A', tactico: 'I', operativo: 'R' },
+    asignacion: { estrategico: ['A'], tactico: ['I'], operativo: ['R'] },
     porque:
       'La implementación es una decisión técnica delegada; lo que no se delega es dar por buena la funcionalidad terminada.',
     evidencia: 'src/lib/ · src/pages/',
@@ -138,7 +143,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'pruebas',
     actividad: 'Ejecutar las pruebas (unitarias, e2e, accesibilidad, análisis estático)',
-    asignacion: { estrategico: 'I', tactico: 'C', operativo: 'R' },
+    asignacion: { estrategico: ['I'], tactico: ['C'], operativo: ['R'] },
     porque:
       'Quien ejecuta las pruebas no debería ser quien decide si un resultado en rojo se ignora: el pipeline consulta el resultado y corta por sí mismo.',
     evidencia: 'tests/ · e2e/ · workflows ci.yml, security.yml, a11y.yml, mutation.yml, dast.yml',
@@ -146,7 +151,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'deploy',
     actividad: 'Aprobar y disparar el despliegue a producción',
-    asignacion: { estrategico: 'A', tactico: 'R', operativo: 'I' },
+    asignacion: { estrategico: ['A'], tactico: ['R'], operativo: ['I'] },
     porque:
       'Es el punto de no retorno hacia usuarios reales. La aprobación es humana y reservada; la ejecución mecánica del despliegue ya es de la plataforma.',
     evidencia: 'Regla de deploys en CLAUDE.md · despliegue en Vercel disparado por el dueño',
@@ -154,7 +159,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'health',
     actividad: 'Verificar la salud del sistema después de desplegar',
-    asignacion: { estrategico: 'I', tactico: 'R', operativo: 'C' },
+    asignacion: { estrategico: ['I'], tactico: ['R'], operativo: ['C'] },
     porque:
       'Una comprobación automática e incondicional vale más que la atención de una persona justo después de publicar, que es cuando menos disponible está.',
     evidencia: 'Paso «Health check post-deploy» contra /api/health en .github/workflows/ci.yml',
@@ -162,7 +167,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'rollback',
     actividad: 'Revertir a la versión anterior (rollback)',
-    asignacion: { estrategico: 'A', tactico: 'R', operativo: 'I' },
+    asignacion: { estrategico: ['A'], tactico: ['R'], operativo: ['I'] },
     porque:
       'Revertir se ejecuta sin esperar autorización porque el costo de esperar es tiempo de caída; la política que lo autoriza se aprobó antes, no durante el incidente.',
     evidencia: 'Paso «Rollback automático» + notificación ntfy en .github/workflows/ci.yml',
@@ -170,7 +175,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'migracion',
     actividad: 'Aplicar una migración de esquema',
-    asignacion: { estrategico: 'A', tactico: 'I', operativo: 'R' },
+    asignacion: { estrategico: ['A'], tactico: ['I'], operativo: ['R'] },
     porque:
       'Una migración destructiva no tiene rollback barato: los datos ya no están. Por eso las migraciones son aditivas por política y eliminar una columna exige autorización explícita.',
     evidencia: 'drizzle/ (generadas, nunca editadas a mano) · política de migraciones aditivas en CLAUDE.md',
@@ -178,7 +183,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'secretos',
     actividad: 'Gestionar secretos y variables de entorno',
-    asignacion: { estrategico: 'A', tactico: 'C', operativo: 'I' },
+    asignacion: { estrategico: ['A'], tactico: ['C'], operativo: ['I'] },
     porque:
       'Un secreto filtrado no se corrige con un despliegue: hay que rotarlo en cada sistema que lo usa. El nivel operativo trabaja con los secretos, pero no los custodia.',
     evidencia: 'Bóveda cifrada AES-256-GCM en project_services.secrets · revelado solo bajo sesión administrada',
@@ -186,7 +191,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'alerta',
     actividad: 'Atender una alerta de seguridad',
-    asignacion: { estrategico: 'A', tactico: 'R', operativo: 'C' },
+    asignacion: { estrategico: ['A'], tactico: ['R'], operativo: ['C'] },
     porque:
       'La contención automática (limitar, bloquear) actúa en milisegundos; la decisión de escalar, avisar a un cliente o aceptar el riesgo sigue siendo humana.',
     evidencia: 'src/lib/security/ (clasificador, límite de tasa, lista de bloqueo) · tabla security_events · alertas ntfy',
@@ -194,7 +199,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'publicacion-docs',
     actividad: 'Publicar cifras en /docs y /status',
-    asignacion: { estrategico: 'A', tactico: 'I', operativo: 'R' },
+    asignacion: { estrategico: ['A'], tactico: ['I'], operativo: ['R'] },
     porque:
       'Son afirmaciones públicas sobre el propio sistema. Se generan desde el dato tipado y las mediciones reales para que nadie pueda «ajustar» un número al escribir la página.',
     evidencia: 'src/data/ como fuente de verdad de /docs · /status proyecta monitor_checks, no cifras escritas a mano',
@@ -202,7 +207,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'cobro',
     actividad: 'Cobrar a un cliente y conciliar el pago',
-    asignacion: { estrategico: 'A', tactico: 'R', operativo: 'C' },
+    asignacion: { estrategico: ['A'], tactico: ['R'], operativo: ['C'] },
     porque:
       'Es la única actividad donde un error mueve dinero de otra persona. La máquina de estados idempotente ejecuta; quién cobra, cuánto y a quién no se automatiza.',
     evidencia: 'src/lib/payments.ts (createPaymentIdempotent, applyGatewayEvent) · src/lib/payments-state.ts',
@@ -210,7 +215,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'datos-cliente',
     actividad: 'Dar acceso a un cliente a su información en el portal',
-    asignacion: { estrategico: 'A', tactico: 'C', operativo: 'R' },
+    asignacion: { estrategico: ['A'], tactico: ['C'], operativo: ['R'] },
     porque:
       'Un fallo de aislamiento no degrada una función: expone los datos de un cliente a otro. El identificador de cliente nunca viene del request, sale siempre de la sesión.',
     evidencia: 'requirePortalSession() en src/lib/portal/ · tests/portal-isolation.test.ts',
