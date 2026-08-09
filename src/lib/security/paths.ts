@@ -41,6 +41,16 @@ export function isCobroLinkPath(pathname: string): boolean {
 }
 
 /**
+ * Canje del código de grupo del banco de capacitación. Mismo problema que los
+ * links de cobro: el código son ocho caracteres de un alfabeto de 29 y es lo
+ * único que separa a cualquiera del material restringido. Solo el endpoint de
+ * canje, no el banco entero: leer /capacitacion es libre.
+ */
+export function isTrainingAccessPath(pathname: string): boolean {
+  return pathname === '/api/capacitacion/acceso'
+}
+
+/**
  * Vista del público de una presentación: `/{pin}` en la raíz del dominio.
  *
  * Merece un límite propio por la misma razón que `/c/[code]`: el PIN es corto
