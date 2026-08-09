@@ -1,0 +1,133 @@
+---
+// Banco público de recursos de capacitación en IA.
+//
+// Es cara pública y a la vez entrega post-sesión: lo `publico` se indexa (y
+// funciona como captación), lo `con_codigo` solo aparece con un pase vigente.
+// El filtro va en la consulta, no en el render: un recurso restringido no
+// llega al HTML de quien no tiene pase, ni siquiera oculto.
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { listarRecursos } from '../../lib/capacitacion/repo'
+import { tienePaseCapacitacion } from '../../lib/capacitacion/pase'
+import { COLOR_TIPO, ETIQUETA_NIVEL, ETIQUETA_TIPO } from '../../lib/capacitacion/tipos'
+
+const conPase = await tienePaseCapacitacion(Astro.cookies)
+
+let recursos: Awaited<ReturnType<typeof listarRecursos>> = []
+try {
+  recursos = await listarRecursos({ conPase })
+} catch (err) {
+  // Fail-open de lectura: el banco vacío es peor que un 500 solo para mí, no
+  // para quien llega desde una capacitación con el enlace en la mano.
+  console.error('[capacitacion] no se pudo listar el banco', err)
+}
+
+const restringidos = recursos.filter((r) => r.visibility === 'con_codigo').length
+
+// Los temas salen de los propios recursos: mantener una taxonomía aparte solo
+// garantiza que se desincronice.
+const temas = [...new Set(recursos.flatMap((r) => r.topics))].sort().slice(0, 14)
+---
+
+<BaseLayout
+  title="Banco de recursos de IA"
+  description="Guías, prompts, plantillas y material de las capacitaciones en inteligencia artificial: lo que se queda contigo después de la sesión."
+  image="/og-default.png"
+>
+  <section class="relative pt-32 pb-10 px-6 md:px-12 lg:px-20">
+    <div class="halo" style="filter: hue-rotate(200deg);"></div>
+    <div class="relative max-w-[900px] mx-auto">
+      <div class="inline-flex items-center gap-2.5 rounded-full glass px-4 py-1.5 mb-7">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
+        <span class="text-[12px] text-ink-100">Capacitación en IA</span>
+      </div>
+
+      <h1 class="font-sans font-medium tracking-[-.03em] leading-[1.05] text-[clamp(32px,5.5vw,58px)] text-ink-50">
+        El material no se acaba<br />cuando termina la sesión
+      </h1>
+
+      <p class="mt-6 text-[15px] text-ink-200 leading-relaxed max-w-[62ch]">
+        Guías, prompts, plantillas y checklists para usar inteligencia artificial en el trabajo real.
+        Todo lo de aquí se escribió para una capacitación concreta y se revisa cuando deja de ser
+        cierto, que en esto pasa rápido.
+      </p>
+
+      <div class="mt-7 flex flex-wrap items-center gap-3">
+        {conPase ? (
+          <span class="inline-flex items-center gap-2 rounded-full bg-lime/[0.08] border border-lime/25 px-4 py-1.5 text-[12px] text-lime">
+            <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
+            Pase activo: ves también el material del grupo
+          </span>
+        ) : (
+          <a
+            href="/capacitacion/acceso"
+            class="inline-flex items-center gap-2 rounded-full bg-cyan/[0.08] border border-cyan/25 px-4 py-1.5 text-[12px] text-cyan hover:bg-cyan/[0.14] transition-colors"
+          >
+            ¿Estuviste en una capacitación? Entra con tu código
+          </a>
+        )}
+        <a href="/capacitacion-ia" class="text-[12px] text-ink-200 hover:text-ink-50 transition-colors">
+          Ver los programas →
+        </a>
+      </div>
+
+      {temas.length > 0 && (
+        <div class="mt-8 flex flex-wrap gap-2">
+          {temas.map((t) => (
+            <span class="text-[11px] font-mono text-ink-300 rounded-lg border border-white/8 px-2.5 py-1">{t}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="px-6 md:px-12 lg:px-20 pb-28">
+    <div class="max-w-[900px] mx-auto">
+      {recursos.length === 0 ? (
+        <div class="rounded-2xl glass p-8 text-[13px] text-ink-200">
+          Todavía no hay nada publicado aquí. Si vienes de una capacitación y te dieron un código,
+          <a href="/capacitacion/acceso" class="text-cyan hover:underline"> canjéalo</a>: el material
+          del grupo aparece al entrar.
+        </div>
+      ) : (
+        <div class="grid gap-3 sm:grid-cols-2">
+          {recursos.map((r) => (
+            <a
+              href={`/capacitacion/${r.slug}`}
+              class="group rounded-2xl glass p-5 lift hover:bg-white/[0.04] transition-colors block"
+            >
+              <div class="flex items-center gap-2">
+                <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${COLOR_TIPO[r.kind].punto}`}></span>
+                <span class={`text-[10px] font-mono uppercase tracking-[.18em] ${COLOR_TIPO[r.kind].texto}`}>
+                  {ETIQUETA_TIPO[r.kind]}
+                </span>
+                {r.visibility === 'con_codigo' && (
+                  <span class="ml-auto text-[10px] font-mono uppercase tracking-[.14em] text-lime">
+                    del grupo
+                  </span>
+                )}
+              </div>
+
+              <h2 class="mt-3 text-[16px] text-ink-50 leading-snug group-hover:text-cyan transition-colors">
+                {r.title}
+              </h2>
+
+              {r.summary && <p class="mt-2 text-[12.5px] text-ink-200 leading-relaxed">{r.summary}</p>}
+
+              <div class="mt-4 text-[10.5px] font-mono text-ink-300">
+                {ETIQUETA_NIVEL[r.level]}
+                {r.programaTitulo && ` · ${r.programaTitulo}`}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+
+      {!conPase && restringidos === 0 && recursos.length > 0 && (
+        <p class="mt-8 text-[12px] text-ink-300">
+          Hay material adicional reservado para los grupos capacitados. Se abre con el código que se
+          entrega al cerrar la sesión.
+        </p>
+      )}
+    </div>
+  </section>
+</BaseLayout>
