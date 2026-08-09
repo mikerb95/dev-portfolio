@@ -7,8 +7,8 @@ import { NIVELES_AUTORIDAD, ORDEN_NIVELES, RACI, REGLAS_RACI, type Nivel, type R
 // y solo renderiza el dato, nada rompería visiblemente - la fila saldría
 // dibujada igual. Estas pruebas convierten esa afirmación en un fallo de CI.
 
-const rolesDe = (asignacion: Record<Nivel, RolRaci | null>) =>
-  ORDEN_NIVELES.map((n) => asignacion[n]).filter((r): r is RolRaci => r !== null)
+const rolesDe = (asignacion: Record<Nivel, RolRaci[] | null>) =>
+  ORDEN_NIVELES.flatMap((n) => asignacion[n] ?? [])
 
 describe('gobernanza · reglas de la matriz RACI', () => {
   it('cada actividad tiene exactamente un Aprobador', () => {
