@@ -18,6 +18,51 @@ const certs = await db
   .where(eq(educationMilestones.isPublic, true))
   .orderBy(desc(educationMilestones.completedDate), desc(educationMilestones.createdAt))
 
+// Resumen agregado de los tracks del tracker privado que estén marcados como
+// públicos. Solo cifras: horas, porcentaje del temario y racha. La bitácora y
+// los hitos individuales no salen del panel (misma regla de OPSEC que /status).
+const publicTracks = await db
+  .select()
+  .from(skillTracks)
+  .where(eq(skillTracks.isPublic, true))
+  .orderBy(desc(skillTracks.isActive), skillTracks.name)
+
+const today = dayKeyOf()
+const specializations = await Promise.all(
+  publicTracks.map(async (t) => {
+    const [days, milestoneStats] = await Promise.all([
+      db
+        .select({ day: skillSessions.day, minutes: sql<number>`sum(${skillSessions.minutes})` })
+        .from(skillSessions)
+        .where(eq(skillSessions.trackId, t.id))
+        .groupBy(skillSessions.day),
+      db
+        .select({
+          total: sql<number>`count(*)`,
+          done: sql<number>`sum(case when ${skillMilestones.status} = 'hecho' then 1 else 0 end)`,
+        })
+        .from(skillMilestones)
+        .where(eq(skillMilestones.trackId, t.id)),
+    ])
+
+    const sessions = days.map((d) => ({ day: d.day, minutes: Number(d.minutes) }))
+    const totalMinutes = sessions.reduce((acc, s) => acc + s.minutes, 0)
+    const total = Number(milestoneStats[0]?.total ?? 0)
+    const done = Number(milestoneStats[0]?.done ?? 0)
+
+    return {
+      name: t.name,
+      tagline: t.tagline,
+      startedOn: t.startedOn,
+      hours: Math.round(totalMinutes / 60),
+      pct: total > 0 ? Math.round((done / total) * 100) : 0,
+      recordStreak: computeStreak(sessions, today).record,
+    }
+  })
+)
+// Un track recién sembrado, sin una sola sesión, no dice nada bueno en público.
+const visibleSpecializations = specializations.filter((s) => s.hours > 0 || s.pct > 0)
+
 const byStatus = {
   en_curso: certs.filter((c) => c.status === 'en_curso'),
   completado: certs.filter((c) => c.status === 'completado'),
