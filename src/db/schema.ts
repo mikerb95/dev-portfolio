@@ -167,6 +167,69 @@ export const educationLabProgress = sqliteTable('education_lab_progress', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 })
 
+// ── Tracker de especialización (/admin/aprendizaje) ─────────────────────────
+// Distinto del Evolution Path: aquel es contenido estático con checkboxes,
+// este mide la práctica real en el tiempo (racha, horas, temario, logros).
+// Multi-track desde el día uno: el primero es .NET/C#, pero el modelo no sabe
+// nada de .NET - añadir Rust o Azure es una fila, no una migración.
+export const skillTracks = sqliteTable('skill_tracks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  tagline: text('tagline'),
+  // Por qué te metiste en esto. Se muestra arriba del tablero: el tracker es
+  // motivacional, y el recordatorio del motivo hace más que cualquier cifra.
+  motivation: text('motivation'),
+  // Meta semanal en minutos (no horas: las sesiones se registran en minutos y
+  // convertir en dos sitios distintos es donde aparecen los off-by-60).
+  weeklyGoalMinutes: integer('weekly_goal_minutes').notNull().default(360),
+  accent: text('accent').notNull().default('violet'),
+  startedOn: text('started_on'), // 'YYYY-MM-DD'
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  // Privado por defecto: el tracker es una herramienta personal. Si se activa,
+  // solo se publica el AGREGADO (horas y % de avance), nunca la bitácora.
+  isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+export const skillSessions = sqliteTable('skill_sessions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  trackId: integer('track_id')
+    .notNull()
+    .references(() => skillTracks.id, { onDelete: 'cascade' }),
+  // Día calendario 'YYYY-MM-DD' en la zona del tracker, no un timestamp: una
+  // racha es un hecho del calendario y guardarla como instante obligaría a
+  // reinterpretar la zona en cada consulta. Ver src/lib/skills.ts.
+  day: text('day').notNull(),
+  minutes: integer('minutes').notNull(),
+  topic: text('topic').notNull(),
+  // Qué entendiste hoy. Es la bitácora, y lo único que sigue valiendo dentro
+  // de un año cuando las cifras ya no digan nada.
+  note: text('note'),
+  milestoneId: integer('milestone_id'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
+
+export const skillMilestones = sqliteTable('skill_milestones', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  trackId: integer('track_id')
+    .notNull()
+    .references(() => skillTracks.id, { onDelete: 'cascade' }),
+  area: text('area').notNull(), // agrupador del temario: "C# fundamentos", "EF Core"...
+  title: text('title').notNull(),
+  description: text('description'),
+  position: integer('position').notNull().default(0),
+  status: text('status', { enum: ['pendiente', 'en_curso', 'hecho'] })
+    .notNull()
+    .default('pendiente'),
+  completedOn: text('completed_on'), // 'YYYY-MM-DD', mismo criterio que day
+  // Prueba de que el hito está cerrado de verdad: repo, PR, endpoint desplegado.
+  evidenceUrl: text('evidence_url'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
 export const briefings = sqliteTable('briefings', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   clientId: integer('client_id').references(() => clients.id),
