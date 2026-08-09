@@ -36,6 +36,10 @@ function safeHref(url: string): string | null {
 function inline(escaped: string): string {
   // El código va primero y su contenido no vuelve a formatearse: dentro de un
   // `span` de código, los asteriscos son asteriscos.
+  //
+  // El hueco se marca con NUL (que `renderMarkdown` retira de la entrada) y no
+  // con un número entre espacios: una frase tan común como "tenemos 3 casos"
+  // habría reemplazado ese "3" por un slot inexistente.
   const codeSlots: string[] = []
   let out = escaped.replace(/`([^`]+)`/g, (_m, code: string) => {
     codeSlots.push(`<code>${code}</code>`)
