@@ -1,0 +1,173 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro'
+import { db } from '../../../../db'
+import { decks } from '../../../../db/schema'
+import { asc } from 'drizzle-orm'
+import { listarProgramas, obtenerRecursoPorId } from '../../../../lib/capacitacion/repo'
+import { renderMarkdown } from '../../../../lib/capacitacion/markdown'
+import {
+  ETIQUETA_FORMATO,
+  ETIQUETA_NIVEL,
+  ETIQUETA_TIPO,
+  ETIQUETA_VISIBILIDAD,
+  NIVELES,
+  TIPOS_RECURSO,
+  VISIBILIDADES,
+} from '../../../../lib/capacitacion/tipos'
+
+const id = Number(Astro.params.id)
+const recurso = Number.isFinite(id) ? await obtenerRecursoPorId(id) : null
+if (!recurso) return Astro.redirect('/admin/capacitacion')
+
+const [programas, decksDisponibles] = await Promise.all([
+  listarProgramas(),
+  db.select({ id: decks.id, title: decks.title }).from(decks).orderBy(asc(decks.title)),
+])
+
+// La previsualización se genera en el servidor con el MISMO renderizador que
+// usa la página pública: si aquí se viera distinto, la previsualización sería
+// una mentira útil solo para sorprenderse después.
+const preview = renderMarkdown(recurso.body)
+---
+
+<AdminLayout title={`Recurso · ${recurso.title}`}>
+  <div class="flex items-center justify-between gap-3 mb-5">
+    <a href="/admin/capacitacion" class="text-[12px] text-ink-200 hover:text-ink-50">← Capacitación</a>
+    <div class="flex items-center gap-2">
+      <a
+        href={`/capacitacion/${recurso.slug}`}
+        target="_blank"
+        rel="noopener"
+        class="text-[12px] px-3 py-1.5 rounded-lg text-ink-200 border border-white/10 hover:bg-white/5"
+      >
+        Ver público
+      </a>
+      <button id="btn-borrar" class="text-[12px] px-3 py-1.5 rounded-lg text-[#ff9a9a] border border-[#ff7a7a]/25 hover:bg-[#ff7a7a]/10">
+        Borrar
+      </button>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <form id="form" class="flex flex-col gap-3 text-[12px]">
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Título</span>
+        <input name="title" required value={recurso.title} class="input-base w-full mt-1" />
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Slug (URL pública)</span>
+        <input name="slug" value={recurso.slug} class="input-base w-full mt-1 font-mono" />
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Resumen</span>
+        <input name="summary" value={recurso.summary ?? ''} class="input-base w-full mt-1" />
+      </label>
+
+      <div class="grid grid-cols-3 gap-2">
+        <select name="kind" class="input-base w-full">
+          {TIPOS_RECURSO.map((k) => (
+            <option value={k} selected={k === recurso.kind}>{ETIQUETA_TIPO[k]}</option>
+          ))}
+        </select>
+        <select name="level" class="input-base w-full">
+          {NIVELES.map((n) => (
+            <option value={n} selected={n === recurso.level}>{ETIQUETA_NIVEL[n]}</option>
+          ))}
+        </select>
+        <select name="visibility" class="input-base w-full">
+          {VISIBILIDADES.map((v) => (
+            <option value={v} selected={v === recurso.visibility}>{ETIQUETA_VISIBILIDAD[v]}</option>
+          ))}
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <select name="programId" class="input-base w-full">
+          <option value="">Sin programa</option>
+          {programas.map((p) => (
+            <option value={p.id} selected={p.id === recurso.programId}>
+              {p.title} ({ETIQUETA_FORMATO[p.format]})
+            </option>
+          ))}
+        </select>
+        <select name="deckId" class="input-base w-full">
+          <option value="">Sin presentación</option>
+          {decksDisponibles.map((d) => (
+            <option value={d.id} selected={d.id === recurso.deckId}>{d.title}</option>
+          ))}
+        </select>
+      </div>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Enlace externo</span>
+        <input name="externalUrl" value={recurso.externalUrl ?? ''} class="input-base w-full mt-1" />
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Archivo (blob)</span>
+        <input name="fileUrl" value={recurso.fileUrl ?? ''} class="input-base w-full mt-1" />
+      </label>
+
+      <div class="grid grid-cols-2 gap-2">
+        <label class="block">
+          <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Temas</span>
+          <input name="topics" value={recurso.topics.join(', ')} class="input-base w-full mt-1" />
+        </label>
+        <label class="block">
+          <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Orden</span>
+          <input name="sortOrder" type="number" value={recurso.sortOrder} class="input-base w-full mt-1" />
+        </label>
+      </div>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Contenido (markdown)</span>
+        <textarea name="body" rows="18" class="input-base w-full mt-1 font-mono text-[11.5px]">{recurso.body ?? ''}</textarea>
+      </label>
+
+      <div class="flex items-center justify-between gap-3">
+        <span id="estado" class="text-[11px] text-ink-300"></span>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-cyan/15 text-cyan border border-cyan/25 text-[12px]">
+          Guardar
+        </button>
+      </div>
+    </form>
+
+    <div>
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 mb-2">
+        Previsualización · {recurso.views} lecturas
+      </div>
+      <div class="rounded-2xl glass p-5 prose-capacitacion" set:html={preview} />
+    </div>
+  </div>
+</AdminLayout>
+
+<script define:vars={{ id: recurso.id }}>
+  const form = document.getElementById('form')
+  const estado = document.getElementById('estado')
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    estado.textContent = 'guardando...'
+    const res = await fetch(`/api/admin/capacitacion/recursos/${id}`, {
+      method: 'PUT',
+      body: new FormData(form),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      estado.textContent = data.error ?? 'no se pudo guardar'
+      return
+    }
+    // Recarga tras guardar: la previsualización se renderiza en el servidor y
+    // quedaría desfasada del texto recién guardado.
+    location.reload()
+  })
+
+  document.getElementById('btn-borrar')?.addEventListener('click', async () => {
+    if (!confirm('¿Borrar este recurso? No se puede deshacer.')) return
+    const res = await fetch(`/api/admin/capacitacion/recursos/${id}`, { method: 'DELETE' })
+    if (res.ok) location.href = '/admin/capacitacion'
+    else estado.textContent = 'no se pudo borrar'
+  })
+</script>
