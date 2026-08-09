@@ -100,8 +100,8 @@ de demostración del sistema, que ejecuta la interfaz real contra una base de
 datos sembrada con datos ficticios. Ninguna imagen de este manual contiene
 información de clientes reales.
 
-Dos apartados se describen sin captura (la gestión de sesiones (2.1.2) y el cobro
-de campo (2.3.5)) porque el modo de demostración veta esas rutas por diseño: son
+Dos apartados se describen sin captura, la gestión de sesiones (2.1.2) y el cobro
+de campo (2.3.5), porque el modo de demostración veta esas rutas por diseño: son
 precisamente las que tocan credenciales y dinero.
 
 ## 2.1 Subsistema de acceso y sesiones

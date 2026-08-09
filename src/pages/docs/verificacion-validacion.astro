@@ -100,8 +100,8 @@ const COMANDOS = [
     <h1 class="text-2xl font-semibold text-ink-50 mb-3">¿Construimos el producto <span class="text-cyan">correctamente</span>, o construimos el producto <span class="text-lime">correcto</span>?</h1>
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       <span class="font-mono text-cyan">/docs/testing</span> ya documenta {REF.niveles} niveles de prueba con sus
-      métricas reales. Esta página no repite ese inventario: lo reclasifica bajo un marco distinto (verificación y
-      validación (IEEE 1012)) que responde una pregunta que el inventario técnico no hace explícita: de esos{' '}
+      métricas reales. Esta página no repite ese inventario: lo reclasifica bajo un marco distinto, el de verificación y
+      validación (IEEE 1012), que responde una pregunta que el inventario técnico no hace explícita: de esos{' '}
       {REF.niveles} niveles, ¿cuáles comprueban que el código cumple su propia especificación, y cuáles comprueban
       que el sistema le sirve a alguien de verdad?
     </p>
@@ -212,8 +212,8 @@ const COMANDOS = [
     <p class="text-[13.5px] text-ink-100 leading-relaxed">
       <strong class="text-ink-50">El requisito de nivel 4 que este proyecto no puede cumplir.</strong> Para los
       niveles de integridad más altos, IEEE 1012 no solo pide más tareas: pide que las ejecute alguien{' '}
-      <em>independiente</em> de quien escribió el código (presupuesto, personal y línea de reporte separados
-      (IV&amp;V)). La razón es que el autor de un módulo comparte los puntos ciegos de su propio diseño: no se le
+      <em>independiente</em> de quien escribió el código, con presupuesto, personal y línea de reporte separados
+      (IV&amp;V). La razón es que el autor de un módulo comparte los puntos ciegos de su propio diseño: no se le
       ocurre probar el caso que no se le ocurrió programar. Un proyecto de una sola persona no puede satisfacer
       eso, y ninguna cantidad de tests lo compensa. Lo más cerca que llega este repositorio son sustitutos
       parciales que no dependen del criterio del autor: herramientas externas con su propio catálogo de reglas
