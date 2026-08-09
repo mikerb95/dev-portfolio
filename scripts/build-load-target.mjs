@@ -58,6 +58,15 @@ if (existsSync(overrideFile)) {
 writeFileSync(overrideFile, override)
 console.log(`→ Objetivo de carga: main=${MAIN_URL} demo=${DEMO_URL}`)
 
+// El adaptador de Vercel mueve `dist/server/entry.mjs` dentro de
+// `.vercel/output` al terminar. Si quedan restos de una compilación anterior,
+// el hook `astro:build:done` busca un archivo que ya se llevó y muere con un
+// ENOENT que no dice nada de la causa. Se limpia antes, no después: un fallo a
+// mitad de build dejaría el artefacto viejo intacto y creerías haberlo
+// recompilado.
+rmSync(join(root, 'dist'), { recursive: true, force: true })
+rmSync(join(root, '.vercel/output'), { recursive: true, force: true })
+
 try {
   execFileSync('npx', ['astro', 'build'], { cwd: root, stdio: 'inherit' })
 } finally {
