@@ -163,7 +163,7 @@ export async function canjearCodigo(input: string, now = new Date()): Promise<Co
     .where(eq(trainingAccessCodes.code, code))
     .limit(1)
 
-  if (!codigoUtilizable(row ?? null, now)) return null
+  if (!row || !codigoUtilizable(row, now)) return null
 
   await db
     .update(trainingAccessCodes)
