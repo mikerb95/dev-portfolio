@@ -89,8 +89,6 @@ export const DELETE: APIRoute = async ({ request }) => {
   return json({ ok: true })
 }
 
-export { isValidDayKey }
-
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
