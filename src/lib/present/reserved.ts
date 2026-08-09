@@ -22,6 +22,8 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   'api',
   'architecture',
   'c',
+  'capacitacion',
+  'capacitacion-ia',
   'certifications',
   'cobrar',
   'contact',
