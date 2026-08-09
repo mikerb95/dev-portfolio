@@ -127,7 +127,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'alcance',
     actividad: 'Definir el alcance de una iteración',
-    asignacion: { estrategico: ['A'], tactico: ['I'], operativo: ['C'] },
+    asignacion: { estrategico: ['A', 'R'], tactico: ['I'], operativo: ['C'] },
     porque:
       'Comprometer alcance es comprometer tiempo y dinero propios. El nivel operativo aporta la estimación, pero no puede aprobar su propia carga de trabajo.',
     evidencia: 'src/data/iteraciones-portfolio.ts · docs/plan-*.md',
