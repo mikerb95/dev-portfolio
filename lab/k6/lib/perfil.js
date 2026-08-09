@@ -8,6 +8,7 @@
  */
 import http from 'k6/http'
 import { check } from 'k6'
+import { Trend } from 'k6/metrics'
 import exec from 'k6/execution'
 
 /**
@@ -78,12 +79,23 @@ export function rutaAleatoria() {
   return ACUMULADO.find((r) => dado <= r.hasta) ?? ACUMULADO[0]
 }
 
+/**
+ * Una métrica por ruta. Etiquetar la petición no basta: k6 solo publica una
+ * submétrica de una etiqueta si algún umbral la nombra, así que un desglose
+ * basado solo en `tags` sale vacío del summary (comprobado: la primera corrida
+ * de carga volvió sin ninguna cifra por ruta). Con Trend propio siempre está.
+ */
+const TRENDS = Object.fromEntries(
+  RUTAS.map((r) => [r.nombre, new Trend(`ruta_${r.nombre}`, true)]),
+)
+
 /** Una petición instrumentada, con la ruta como etiqueta para separar métricas. */
 export function pedir(base, ruta, unaSolaIp = false) {
   const res = http.get(`${base}${ruta.path}`, {
     headers: cabeceras(unaSolaIp),
     tags: { ruta: ruta.nombre },
   })
+  TRENDS[ruta.nombre]?.add(res.timings.duration)
   check(res, {
     'status 200': (r) => r.status === 200,
     'cuerpo no vacío': (r) => r.body != null && r.body.length > 0,
