@@ -99,6 +99,7 @@ const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, bi
                 </td>
                 <td class="px-4 py-3 text-ink-200">
                   {c.email ? <a href={`mailto:${c.email}`} class="hover:text-cyan transition-colors">{c.email}</a> : '-'}
+                  {c.phone && <div class="text-[12px] text-ink-300 font-mono">{formatPhone(c.phone)}</div>}
                 </td>
                 <td class="px-4 py-3">
                   {c.projectCount > 0 ? (
