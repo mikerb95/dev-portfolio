@@ -237,7 +237,6 @@ const estiloVisibilidad: Record<string, string> = {
                   <button
                     data-codigo={c.id}
                     data-accion={c.revokedAt ? 'reactivar' : 'revocar'}
-                    class="btn-codigo-accion text-[11px] px-2.5 py-1 rounded-lg border transition-colors ${''}"
                     class:list={[
                       'btn-codigo-accion text-[11px] px-2.5 py-1 rounded-lg border transition-colors',
                       c.revokedAt
