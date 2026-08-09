@@ -5,7 +5,7 @@ import { trainingAccessCodes } from '../../../../../db/schema'
 import { generateAccessCode, normalizeAccessCode } from '../../../../../lib/capacitacion/access'
 import { listarCodigos } from '../../../../../lib/capacitacion/repo'
 import { recordSecurityEvent } from '../../../../../lib/security/events'
-import { clientIp } from '../../../../../lib/device-info'
+import { clientIp } from '../../../../../lib/ratelimit'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
