@@ -143,7 +143,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'pruebas',
     actividad: 'Ejecutar las pruebas (unitarias, e2e, accesibilidad, análisis estático)',
-    asignacion: { estrategico: ['I'], tactico: ['C'], operativo: ['R'] },
+    asignacion: { estrategico: ['I'], tactico: ['A', 'C'], operativo: ['R'] },
     porque:
       'Quien ejecuta las pruebas no debería ser quien decide si un resultado en rojo se ignora: el pipeline consulta el resultado y corta por sí mismo.',
     evidencia: 'tests/ · e2e/ · workflows ci.yml, security.yml, a11y.yml, mutation.yml, dast.yml',
@@ -159,7 +159,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'health',
     actividad: 'Verificar la salud del sistema después de desplegar',
-    asignacion: { estrategico: ['I'], tactico: ['R'], operativo: ['C'] },
+    asignacion: { estrategico: ['I'], tactico: ['A', 'R'], operativo: ['C'] },
     porque:
       'Una comprobación automática e incondicional vale más que la atención de una persona justo después de publicar, que es cuando menos disponible está.',
     evidencia: 'Paso «Health check post-deploy» contra /api/health en .github/workflows/ci.yml',
