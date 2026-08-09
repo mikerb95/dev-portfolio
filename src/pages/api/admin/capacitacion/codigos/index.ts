@@ -54,14 +54,17 @@ export const POST: APIRoute = async ({ request }) => {
     })
     .returning()
 
-  recordSecurityEvent({
-    category: 'admin_action',
-    severity: 'low',
-    ruleId: 'capacitacion.codigo_creado',
-    action: 'allowed',
-    path: '/api/admin/capacitacion/codigos',
+  void recordSecurityEvent({
+    classification: { category: 'capacitacion', severity: 'low', ruleId: 'capacitacion.code_created' },
+    ip: clientIp(request),
     method: 'POST',
-    detail: `código de capacitación creado para "${label}"`,
+    path: '/api/admin/capacitacion/codigos',
+    query: null,
+    userAgent: request.headers.get('user-agent'),
+    country: request.headers.get('x-vercel-ip-country'),
+    asn: request.headers.get('x-vercel-ip-as-number'),
+    statusCode: 201,
+    action: 'logged',
   })
 
   // El código legible solo se devuelve aquí, en la respuesta del alta: es el
