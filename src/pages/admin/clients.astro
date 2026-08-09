@@ -231,6 +231,62 @@ const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, bi
     errBox.classList.remove('hidden')
   }
 
+  // --- Datos de facturación: editor de pares clave/valor ---
+  // Pares libres y no campos fijos porque cada cliente pide etiquetas distintas
+  // (NIT, RFC, VAT) y porque así nunca se pierde una clave que ya esté en BD.
+  const billRows = $('c-bill-rows')
+  const SUGGESTED: [string, string][] = [['NIT', ''], ['Dirección', ''], ['Ciudad', '']]
+
+  function addBillRow(key = '', value = '') {
+    const row = document.createElement('div')
+    row.className = 'flex gap-2 items-center'
+    row.innerHTML = `
+      <input class="bill-k input-base w-[38%] rounded-lg px-2.5 py-1.5 text-[12px]" maxlength="40" placeholder="Etiqueta" autocomplete="off" />
+      <input class="bill-v input-base flex-1 rounded-lg px-2.5 py-1.5 text-[12px]" maxlength="200" placeholder="Valor" autocomplete="off" />
+      <button type="button" class="bill-del text-ink-400 hover:text-ember transition-colors p-1 shrink-0" aria-label="Quitar dato">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>`
+    ;(row.querySelector('.bill-k') as HTMLInputElement).value = key
+    ;(row.querySelector('.bill-v') as HTMLInputElement).value = value
+    row.querySelector('.bill-del')!.addEventListener('click', () => row.remove())
+    billRows.appendChild(row)
+  }
+
+  function fillBilling(billing: Record<string, string> | null) {
+    billRows.innerHTML = ''
+    const pairs = billing ? Object.entries(billing) : []
+    for (const [k, v] of pairs.length ? pairs : SUGGESTED) addBillRow(k, v)
+  }
+
+  /** Pares -> objeto. Los vacíos se ignoran; el servidor revalida igual. */
+  function readBilling(): Record<string, string> {
+    const out: Record<string, string> = {}
+    billRows.querySelectorAll('.flex').forEach((row) => {
+      const k = (row.querySelector('.bill-k') as HTMLInputElement)?.value.trim()
+      const v = (row.querySelector('.bill-v') as HTMLInputElement)?.value.trim()
+      if (k && v) out[k] = v
+    })
+    return out
+  }
+
+  $('c-bill-add').addEventListener('click', () => addBillRow())
+
+  const logoPreview = $('c-logo-preview') as unknown as HTMLImageElement
+  function syncLogoPreview() {
+    const url = $('c-logo').value.trim()
+    // Solo https: la vista previa no debe ser la puerta por la que entra un
+    // esquema raro al DOM del panel.
+    if (url.startsWith('https://')) {
+      logoPreview.src = url
+      logoPreview.classList.remove('hidden')
+    } else {
+      logoPreview.removeAttribute('src')
+      logoPreview.classList.add('hidden')
+    }
+  }
+  $('c-logo').addEventListener('input', syncLogoPreview)
+  logoPreview.addEventListener('error', () => logoPreview.classList.add('hidden'))
+
   function open(row: Row | null) {
     errBox.classList.add('hidden')
     $('cl-form-title').textContent = row ? 'Editar cliente' : 'Nuevo cliente'
