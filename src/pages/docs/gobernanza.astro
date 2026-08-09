@@ -219,12 +219,16 @@ const porId = new Map(NIVELES_AUTORIDAD.map((n) => [n.id, n]))
                 <span class="block font-mono text-[11px] text-ink-300 mt-1">{a.evidencia}</span>
               </th>
               {ORDEN_NIVELES.map((n) => {
-                const rol = a.asignacion[n]
+                const roles = a.asignacion[n]
                 return (
                   <td class="p-3 text-center">
-                    {rol ? (
-                      <span class={`inline-flex items-center justify-center w-6 h-6 rounded-md border font-mono text-[12px] ${estiloRol[rol]}`} title={LEYENDA_RACI[rol].nombre}>
-                        {rol}
+                    {roles && roles.length > 0 ? (
+                      <span class="inline-flex gap-1 justify-center">
+                        {roles.map((rol) => (
+                          <span class={`inline-flex items-center justify-center w-6 h-6 rounded-md border font-mono text-[12px] ${estiloRol[rol]}`} title={LEYENDA_RACI[rol].nombre}>
+                            {rol}
+                          </span>
+                        ))}
                       </span>
                     ) : (
                       <span class="text-ink-300" aria-label="no participa">-</span>
