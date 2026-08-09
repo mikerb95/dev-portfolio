@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '../../../../../db'
 import { trainingAccessCodes } from '../../../../../db/schema'
 import { recordSecurityEvent } from '../../../../../lib/security/events'
+import { clientIp } from '../../../../../lib/device-info'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {

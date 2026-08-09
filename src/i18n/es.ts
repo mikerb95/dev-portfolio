@@ -586,6 +586,15 @@ const es = {
     statusPausedSection: 'Pausados',
     viewCertificate: 'Ver certificado',
     viewImage: 'Ver imagen',
+    specialization: {
+      heading: 'Especialización en curso',
+      hoursLabel: 'Horas de práctica',
+      syllabusLabel: 'Temario cubierto',
+      streakLabel: 'Mejor racha',
+      streakUnit: 'días seguidos',
+      sinceLabel: 'Desde',
+      note: 'Medido con el tracker propio del panel: cada sesión de práctica se registra y se contrasta contra una meta semanal.',
+    },
     fullProfile: {
       heading: 'Ver perfil completo',
       platziLabel: 'Platzi',
