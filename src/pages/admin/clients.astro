@@ -351,8 +351,11 @@ const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, bi
     const payload = {
       name,
       email: email || null,
+      phone: $('c-phone').value.trim() || null,
       company: $('c-company').value.trim() || null,
       notes: ($('c-notes') as unknown as HTMLTextAreaElement).value.trim() || null,
+      logoUrl: $('c-logo').value.trim() || null,
+      billingInfo: readBilling(),
     }
 
     saveBtn.disabled = true
