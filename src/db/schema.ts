@@ -997,3 +997,90 @@ export const presentationFeedback = sqliteTable('presentation_feedback', {
 }, (t) => ({
   createdAtIdx: index('presentation_feedback_created_idx').on(t.createdAt),
 }))
+
+// ── Capacitación en IA ───────────────────────────────────────────────────────
+//
+// Dos piezas distintas que conviene no confundir:
+//
+//  · `training_programs` es el CATÁLOGO comercial (qué se puede contratar). Lo
+//    consume la landing pública /capacitacion-ia.
+//  · `training_resources` es el BANCO de material que se queda con la gente
+//    después de la sesión. Es general y reutilizable a propósito: los
+//    ejercicios interactivos que se construyen a la medida del negocio de cada
+//    cliente viven fuera de este repo y aquí solo entran como enlace.
+//
+// Las presentaciones NO se duplican aquí: un recurso de tipo `deck` apunta a
+// la tabla `decks`, que sigue siendo la única fuente de verdad del material
+// proyectable.
+export const trainingPrograms = sqliteTable('training_programs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  slug: text('slug').notNull().unique(),
+  title: text('title').notNull(),
+  summary: text('summary'),
+  // A quién va dirigido: es el eje que más cambia el contenido de una
+  // capacitación en IA (no es lo mismo un comité directivo que un equipo de
+  // desarrollo), así que es campo propio y no una etiqueta suelta.
+  audience: text('audience'),
+  format: text('format', { enum: ['charla', 'taller', 'programa'] }).notNull().default('taller'),
+  durationHours: real('duration_hours'),
+  level: text('level', { enum: ['intro', 'intermedio', 'avanzado'] }).notNull().default('intro'),
+  // JSON arrays de strings. Se guardan serializados porque son listas de texto
+  // sin identidad propia: nunca se consultan por elemento ni se referencian.
+  outcomes: text('outcomes'),
+  modules: text('modules'),
+  priceNote: text('price_note'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+export const trainingResources = sqliteTable('training_resources', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  slug: text('slug').notNull().unique(),
+  title: text('title').notNull(),
+  summary: text('summary'),
+  kind: text('kind', {
+    enum: ['guia', 'prompt', 'plantilla', 'checklist', 'video', 'enlace', 'deck'],
+  }).notNull().default('guia'),
+  // Markdown propio del recurso. Se renderiza con el subconjunto de
+  // src/lib/capacitacion/markdown.ts, que escapa el HTML antes de formatear:
+  // este texto lo escribe el admin, pero se sirve en una página pública y no
+  // hay razón para permitir marcado arbitrario.
+  body: text('body'),
+  externalUrl: text('external_url'),
+  fileUrl: text('file_url'),
+  deckId: integer('deck_id').references(() => decks.id, { onDelete: 'set null' }),
+  programId: integer('program_id').references(() => trainingPrograms.id, { onDelete: 'set null' }),
+  level: text('level', { enum: ['intro', 'intermedio', 'avanzado'] }).notNull().default('intro'),
+  topics: text('topics'), // JSON array de strings
+  // `con_codigo` no protege secretos: separa lo que se publica al mundo (SEO,
+  // captación) de lo que se entrega a quien asistió. El código de grupo es la
+  // única barrera y por eso su canje tiene rate limit propio.
+  visibility: text('visibility', { enum: ['publico', 'con_codigo', 'borrador'] })
+    .notNull()
+    .default('borrador'),
+  views: integer('views').notNull().default(0),
+  sortOrder: integer('sort_order').notNull().default(0),
+  publishedAt: integer('published_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+}, (t) => ({
+  visibilityIdx: index('training_resources_visibility_idx').on(t.visibility, t.sortOrder),
+}))
+
+// Códigos de grupo que se dictan en voz alta al cerrar una sesión. No son
+// credenciales de una persona: identifican a un grupo capacitado y caducan.
+// Canjearlo entrega una cookie firmada; el código en sí no vuelve a viajar.
+export const trainingAccessCodes = sqliteTable('training_access_codes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  code: text('code').notNull().unique(),
+  label: text('label').notNull(),
+  note: text('note'),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+  maxUses: integer('max_uses'),
+  uses: integer('uses').notNull().default(0),
+  revokedAt: integer('revoked_at', { mode: 'timestamp' }),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
