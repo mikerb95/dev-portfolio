@@ -132,6 +132,19 @@ export function resumen(escenario, data, base) {
     tasaErrorPct: Number(((fallos.rate ?? 0) * 100).toFixed(3)),
     checksOk: checks.passes ?? 0,
     checksFallidos: checks.fails ?? 0,
+    porRuta: Object.fromEntries(
+      RUTAS.map((r) => {
+        const v = data.metrics[`ruta_${r.nombre}`]?.values ?? {}
+        return [r.nombre, {
+          path: r.path,
+          n: v.count ?? 0,
+          p50: Number((v.med ?? 0).toFixed(1)),
+          p95: Number((v['p(95)'] ?? 0).toFixed(1)),
+          p99: Number((v['p(99)'] ?? 0).toFixed(1)),
+          max: Number((v.max ?? 0).toFixed(1)),
+        }]
+      }),
+    ),
     umbralesCumplidos: Object.entries(data.metrics)
       .filter(([, m]) => m.thresholds)
       .every(([, m]) => Object.values(m.thresholds).every((t) => t.ok !== false)),
