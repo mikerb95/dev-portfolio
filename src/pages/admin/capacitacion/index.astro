@@ -1,0 +1,409 @@
+---
+// Módulo de capacitación en IA. Tres cosas distintas en una pantalla porque se
+// operan juntas al cerrar una sesión: el material que se entrega (banco), lo
+// que se vende (catálogo) y el código con el que el grupo entra al banco.
+//
+// Lo que NO vive aquí: las presentaciones (siguen en /admin/presentaciones, un
+// recurso solo las referencia) y los ejercicios interactivos, que se construyen
+// a la medida del negocio de cada cliente fuera de este repo y entran como
+// recurso de tipo enlace.
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { db } from '../../../db'
+import { decks } from '../../../db/schema'
+import { asc } from 'drizzle-orm'
+import {
+  listarCodigos,
+  listarProgramas,
+  listarRecursos,
+  metricas,
+} from '../../../lib/capacitacion/repo'
+import {
+  ETIQUETA_NIVEL,
+  ETIQUETA_TIPO,
+  ETIQUETA_VISIBILIDAD,
+  COLOR_TIPO,
+  FORMATOS,
+  ETIQUETA_FORMATO,
+  NIVELES,
+  TIPOS_RECURSO,
+  VISIBILIDADES,
+  formatearDuracion,
+} from '../../../lib/capacitacion/tipos'
+
+// La demo del panel corre contra otra base Turso: si sus migraciones aún no
+// incluyen estas tablas, la página tiene que enseñar el vacío, no un 500.
+let datos: {
+  recursos: Awaited<ReturnType<typeof listarRecursos>>
+  programas: Awaited<ReturnType<typeof listarProgramas>>
+  codigos: Awaited<ReturnType<typeof listarCodigos>>
+  cifras: Awaited<ReturnType<typeof metricas>> | null
+  decksDisponibles: { id: number; title: string }[]
+} = { recursos: [], programas: [], codigos: [], cifras: null, decksDisponibles: [] }
+let errorCarga: string | null = null
+
+try {
+  const [recursos, programas, codigos, cifras, decksDisponibles] = await Promise.all([
+    listarRecursos({ incluirBorradores: true, conPase: true }),
+    listarProgramas(),
+    listarCodigos(),
+    metricas(),
+    db.select({ id: decks.id, title: decks.title }).from(decks).orderBy(asc(decks.title)),
+  ])
+  datos = { recursos, programas, codigos, cifras, decksDisponibles }
+} catch (err) {
+  console.error('[capacitacion] no se pudo cargar el módulo', err)
+  errorCarga = 'no se pudieron leer las tablas de capacitación en esta base'
+}
+
+const { recursos, programas, codigos, cifras, decksDisponibles } = datos
+
+const fmtFecha = (d: Date | null) =>
+  d ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d) : '-'
+
+const estiloVisibilidad: Record<string, string> = {
+  publico: 'text-lime bg-lime/10 border-lime/20',
+  con_codigo: 'text-cyan bg-cyan/10 border-cyan/20',
+  borrador: 'text-ink-300 bg-white/5 border-white/10',
+}
+---
+
+<AdminLayout title="Capacitación IA">
+  <p class="text-[12px] text-ink-200 max-w-2xl mb-6">
+    El <strong class="text-ink-100">banco</strong> es lo que se queda con la gente después de la
+    sesión: guías, prompts, plantillas y las presentaciones que ya viven en
+    <a href="/admin/presentaciones" class="text-cyan hover:underline">Presentaciones</a>. Lo público
+    se indexa y capta; lo marcado <strong class="text-ink-100">con código</strong> solo lo ve quien
+    canjeó el código del grupo en <span class="font-mono text-cyan">/capacitacion/acceso</span>.
+  </p>
+
+  {errorCarga && (
+    <div class="rounded-2xl border border-[#ff7a7a]/30 bg-[#ff7a7a]/[0.07] p-4 mb-6 text-[11px] text-ink-200">
+      {errorCarga}. Si es la base de la demo, le falta la migración de las tablas de capacitación.
+    </div>
+  )}
+
+  {cifras && (
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      {[
+        { k: 'En el banco', v: cifras.recursos?.total ?? 0, d: `${cifras.recursos?.publicos ?? 0} públicos · ${cifras.recursos?.conCodigo ?? 0} con código` },
+        { k: 'Borradores', v: cifras.recursos?.borradores ?? 0, d: 'sin publicar' },
+        { k: 'Lecturas', v: cifras.recursos?.vistas ?? 0, d: 'acumuladas' },
+        { k: 'Canjes', v: cifras.codigos?.canjes ?? 0, d: `${cifras.codigos?.total ?? 0} códigos · ${cifras.codigos?.revocados ?? 0} revocados` },
+      ].map((c) => (
+        <div class="rounded-2xl glass p-4">
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{c.k}</div>
+          <div class="text-[26px] text-ink-50 mt-1 tabular-nums">{c.v}</div>
+          <div class="text-[10.5px] text-ink-300 mt-1">{c.d}</div>
+        </div>
+      ))}
+    </section>
+  )}
+
+  <!-- ── Banco de recursos ── -->
+  <section class="mb-10">
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <h2 class="text-[13px] font-medium text-ink-50">Banco de recursos</h2>
+      <button id="btn-recurso" class="text-[12px] px-3 py-1.5 rounded-lg bg-cyan/10 text-cyan border border-cyan/20 hover:bg-cyan/15 transition-colors">
+        Nuevo recurso
+      </button>
+    </div>
+
+    {recursos.length === 0 ? (
+      <div class="rounded-2xl glass p-6 text-[12px] text-ink-300">
+        Nada todavía. El primer recurso útil suele ser el más aburrido: la guía de "qué hacer el
+        lunes siguiente" con tres casos de uso concretos del sector.
+      </div>
+    ) : (
+      <div class="rounded-2xl glass overflow-hidden">
+        <table class="w-full text-[12px]">
+          <thead class="text-[10px] font-mono uppercase tracking-[.16em] text-ink-300 border-b border-white/5">
+            <tr>
+              <th class="text-left font-normal px-4 py-2.5">Recurso</th>
+              <th class="text-left font-normal px-4 py-2.5 hidden md:table-cell">Programa</th>
+              <th class="text-left font-normal px-4 py-2.5">Visibilidad</th>
+              <th class="text-right font-normal px-4 py-2.5">Lecturas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recursos.map((r) => (
+              <tr class="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+                <td class="px-4 py-3">
+                  <a href={`/admin/capacitacion/recursos/${r.id}`} class="flex items-center gap-2 min-w-0">
+                    <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${COLOR_TIPO[r.kind].punto}`}></span>
+                    <span class="text-ink-50 truncate">{r.title}</span>
+                  </a>
+                  <div class="mt-0.5 text-[10.5px] text-ink-300 font-mono truncate">
+                    {ETIQUETA_TIPO[r.kind]} · {ETIQUETA_NIVEL[r.level]} · /capacitacion/{r.slug}
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-ink-200 hidden md:table-cell">{r.programaTitulo ?? '-'}</td>
+                <td class="px-4 py-3">
+                  <span class={`inline-block px-2 py-0.5 rounded-md border text-[10.5px] ${estiloVisibilidad[r.visibility]}`}>
+                    {ETIQUETA_VISIBILIDAD[r.visibility]}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right tabular-nums text-ink-200">{r.views}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    {cifras && cifras.masVistos.length > 0 && (
+      <div class="mt-3 text-[11px] text-ink-300">
+        Más leídos: {cifras.masVistos.map((m) => `${m.title} (${m.views})`).join(' · ')}
+      </div>
+    )}
+  </section>
+
+  <!-- ── Catálogo ── -->
+  <section class="mb-10">
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <h2 class="text-[13px] font-medium text-ink-50">Catálogo de programas</h2>
+      <button id="btn-programa" class="text-[12px] px-3 py-1.5 rounded-lg bg-violet/10 text-violet border border-violet/20 hover:bg-violet/15 transition-colors">
+        Nuevo programa
+      </button>
+    </div>
+
+    {programas.length === 0 ? (
+      <div class="rounded-2xl glass p-6 text-[12px] text-ink-300">
+        Los programas públicos son los que se pintan en <span class="font-mono">/capacitacion-ia</span>.
+      </div>
+    ) : (
+      <div class="grid gap-3 md:grid-cols-2">
+        {programas.map((p) => (
+          <a
+            href={`/admin/capacitacion/programas/${p.id}`}
+            class="rounded-2xl glass p-4 hover:bg-white/[0.04] transition-colors block"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-[13px] text-ink-50 truncate">{p.title}</div>
+                <div class="mt-1 text-[10.5px] font-mono uppercase tracking-[.14em] text-ink-300">
+                  {ETIQUETA_FORMATO[p.format]} · {ETIQUETA_NIVEL[p.level]}
+                  {formatearDuracion(p.durationHours) && ` · ${formatearDuracion(p.durationHours)}`}
+                </div>
+              </div>
+              <span class={`shrink-0 text-[10.5px] px-2 py-0.5 rounded-md border ${p.isPublic ? 'text-lime bg-lime/10 border-lime/20' : 'text-ink-300 bg-white/5 border-white/10'}`}>
+                {p.isPublic ? 'Publicado' : 'Interno'}
+              </span>
+            </div>
+            {p.summary && <p class="mt-2 text-[11.5px] text-ink-200 line-clamp-2">{p.summary}</p>}
+            {p.audience && <div class="mt-2 text-[10.5px] text-ink-300">Para: {p.audience}</div>}
+          </a>
+        ))}
+      </div>
+    )}
+  </section>
+
+  <!-- ── Códigos de grupo ── -->
+  <section class="mb-6">
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <h2 class="text-[13px] font-medium text-ink-50">Códigos de grupo</h2>
+      <button id="btn-codigo" class="text-[12px] px-3 py-1.5 rounded-lg bg-lime/10 text-lime border border-lime/20 hover:bg-lime/15 transition-colors">
+        Generar código
+      </button>
+    </div>
+
+    <p class="text-[11px] text-ink-300 mb-3 max-w-2xl">
+      Se dicta al cerrar la sesión. Abre el material marcado "con código" durante 30 días por
+      navegador. Revocarlo corta el acceso de ese grupo al instante, sin tocar el de los demás.
+    </p>
+
+    {codigos.length > 0 && (
+      <div class="rounded-2xl glass overflow-hidden">
+        <table class="w-full text-[12px]">
+          <thead class="text-[10px] font-mono uppercase tracking-[.16em] text-ink-300 border-b border-white/5">
+            <tr>
+              <th class="text-left font-normal px-4 py-2.5">Grupo</th>
+              <th class="text-left font-normal px-4 py-2.5 hidden sm:table-cell">Vence</th>
+              <th class="text-right font-normal px-4 py-2.5">Canjes</th>
+              <th class="text-right font-normal px-4 py-2.5"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {codigos.map((c) => (
+              <tr class="border-b border-white/5 last:border-0">
+                <td class="px-4 py-3">
+                  <div class="text-ink-50">{c.label}</div>
+                  {c.note && <div class="text-[10.5px] text-ink-300 mt-0.5">{c.note}</div>}
+                </td>
+                <td class="px-4 py-3 text-ink-200 hidden sm:table-cell">{fmtFecha(c.expiresAt)}</td>
+                <td class="px-4 py-3 text-right tabular-nums text-ink-200">
+                  {c.uses}{c.maxUses ? ` / ${c.maxUses}` : ''}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <button
+                    data-codigo={c.id}
+                    data-accion={c.revokedAt ? 'reactivar' : 'revocar'}
+                    class="btn-codigo-accion text-[11px] px-2.5 py-1 rounded-lg border transition-colors ${''}"
+                    class:list={[
+                      'btn-codigo-accion text-[11px] px-2.5 py-1 rounded-lg border transition-colors',
+                      c.revokedAt
+                        ? 'text-ink-200 border-white/10 hover:bg-white/5'
+                        : 'text-[#ff9a9a] border-[#ff7a7a]/25 hover:bg-[#ff7a7a]/10',
+                    ]}
+                  >
+                    {c.revokedAt ? 'Reactivar' : 'Revocar'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </section>
+
+  <!-- Alta de recurso -->
+  <dialog id="dlg-recurso" class="bg-ink-950 border border-white/10 rounded-2xl p-6 w-full max-w-xl text-ink-50 backdrop:bg-black/70">
+    <h3 class="text-[14px] mb-4">Nuevo recurso</h3>
+    <form id="form-recurso" class="flex flex-col gap-3 text-[12px]">
+      <input name="title" required placeholder="Título" class="input-base w-full" />
+      <input name="summary" placeholder="Resumen de una línea" class="input-base w-full" />
+      <div class="grid grid-cols-3 gap-2">
+        <select name="kind" class="input-base w-full">
+          {TIPOS_RECURSO.map((k) => <option value={k}>{ETIQUETA_TIPO[k]}</option>)}
+        </select>
+        <select name="level" class="input-base w-full">
+          {NIVELES.map((n) => <option value={n}>{ETIQUETA_NIVEL[n]}</option>)}
+        </select>
+        <select name="visibility" class="input-base w-full">
+          {VISIBILIDADES.map((v) => <option value={v}>{ETIQUETA_VISIBILIDAD[v]}</option>)}
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <select name="programId" class="input-base w-full">
+          <option value="">Sin programa</option>
+          {programas.map((p) => <option value={p.id}>{p.title}</option>)}
+        </select>
+        <select name="deckId" class="input-base w-full">
+          <option value="">Sin presentación</option>
+          {decksDisponibles.map((d) => <option value={d.id}>{d.title}</option>)}
+        </select>
+      </div>
+      <input name="externalUrl" placeholder="Enlace externo (ejercicio a la medida, video...)" class="input-base w-full" />
+      <input name="topics" placeholder="Temas separados por coma" class="input-base w-full" />
+      <textarea name="body" rows="6" placeholder="Contenido en markdown" class="input-base w-full font-mono text-[11.5px]"></textarea>
+      <div class="flex justify-end gap-2 mt-1">
+        <button type="button" data-cerrar="dlg-recurso" class="px-3 py-1.5 rounded-lg text-ink-200 hover:bg-white/5">Cancelar</button>
+        <button type="submit" class="px-3 py-1.5 rounded-lg bg-cyan/15 text-cyan border border-cyan/25">Crear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Alta de programa -->
+  <dialog id="dlg-programa" class="bg-ink-950 border border-white/10 rounded-2xl p-6 w-full max-w-xl text-ink-50 backdrop:bg-black/70">
+    <h3 class="text-[14px] mb-4">Nuevo programa</h3>
+    <form id="form-programa" class="flex flex-col gap-3 text-[12px]">
+      <input name="title" required placeholder="Título" class="input-base w-full" />
+      <input name="summary" placeholder="Resumen de una línea" class="input-base w-full" />
+      <input name="audience" placeholder="Audiencia (comité directivo, equipo comercial...)" class="input-base w-full" />
+      <div class="grid grid-cols-3 gap-2">
+        <select name="format" class="input-base w-full">
+          {FORMATOS.map((f) => <option value={f}>{ETIQUETA_FORMATO[f]}</option>)}
+        </select>
+        <select name="level" class="input-base w-full">
+          {NIVELES.map((n) => <option value={n}>{ETIQUETA_NIVEL[n]}</option>)}
+        </select>
+        <input name="durationHours" type="number" step="0.5" min="0" placeholder="Horas" class="input-base w-full" />
+      </div>
+      <textarea name="outcomes" rows="3" placeholder="Objetivos de aprendizaje, uno por línea" class="input-base w-full"></textarea>
+      <textarea name="modules" rows="3" placeholder="Módulos del temario, uno por línea" class="input-base w-full"></textarea>
+      <input name="priceNote" placeholder="Nota de precio (desde $X por sesión cerrada)" class="input-base w-full" />
+      <label class="flex items-center gap-2 text-ink-200">
+        <input type="checkbox" name="isPublic" /> Publicar en /capacitacion-ia
+      </label>
+      <div class="flex justify-end gap-2 mt-1">
+        <button type="button" data-cerrar="dlg-programa" class="px-3 py-1.5 rounded-lg text-ink-200 hover:bg-white/5">Cancelar</button>
+        <button type="submit" class="px-3 py-1.5 rounded-lg bg-violet/15 text-violet border border-violet/25">Crear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Alta de código -->
+  <dialog id="dlg-codigo" class="bg-ink-950 border border-white/10 rounded-2xl p-6 w-full max-w-md text-ink-50 backdrop:bg-black/70">
+    <h3 class="text-[14px] mb-4">Generar código de grupo</h3>
+    <form id="form-codigo" class="flex flex-col gap-3 text-[12px]">
+      <input name="label" required placeholder="Grupo (empresa, cohorte, evento)" class="input-base w-full" />
+      <input name="note" placeholder="Nota interna" class="input-base w-full" />
+      <div class="grid grid-cols-2 gap-2">
+        <input name="validDays" type="number" min="1" max="730" value="180" class="input-base w-full" placeholder="Días de vigencia" />
+        <input name="maxUses" type="number" min="0" placeholder="Tope de canjes (0 = sin tope)" class="input-base w-full" />
+      </div>
+      <div class="flex justify-end gap-2 mt-1">
+        <button type="button" data-cerrar="dlg-codigo" class="px-3 py-1.5 rounded-lg text-ink-200 hover:bg-white/5">Cancelar</button>
+        <button type="submit" class="px-3 py-1.5 rounded-lg bg-lime/15 text-lime border border-lime/25">Generar</button>
+      </div>
+    </form>
+    <div id="codigo-resultado" class="hidden mt-4 rounded-xl bg-lime/[0.07] border border-lime/25 p-4 text-center">
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Dictar este código</div>
+      <div id="codigo-valor" class="text-[24px] font-mono tracking-[.15em] text-lime mt-1"></div>
+      <div class="text-[10.5px] text-ink-300 mt-2">No se vuelve a mostrar. Se canjea en /capacitacion/acceso</div>
+    </div>
+  </dialog>
+</AdminLayout>
+
+<script>
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)
+
+  const abrir = (id: string) => $<HTMLDialogElement>(`#${id}`)?.showModal()
+  $<HTMLButtonElement>('#btn-recurso')?.addEventListener('click', () => abrir('dlg-recurso'))
+  $<HTMLButtonElement>('#btn-programa')?.addEventListener('click', () => abrir('dlg-programa'))
+  $<HTMLButtonElement>('#btn-codigo')?.addEventListener('click', () => abrir('dlg-codigo'))
+
+  document.querySelectorAll<HTMLButtonElement>('[data-cerrar]').forEach((b) =>
+    b.addEventListener('click', () => $<HTMLDialogElement>(`#${b.dataset.cerrar}`)?.close())
+  )
+
+  async function enviar(form: HTMLFormElement, url: string): Promise<Record<string, unknown> | null> {
+    const res = await fetch(url, { method: 'POST', body: new FormData(form) })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      // El error del servidor se muestra tal cual: son mensajes escritos para
+      // que el admin sepa qué corregir, no códigos internos.
+      alert(data.error ?? 'no se pudo guardar')
+      return null
+    }
+    return data
+  }
+
+  $<HTMLFormElement>('#form-recurso')?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const form = e.target as HTMLFormElement
+    if (await enviar(form, '/api/admin/capacitacion/recursos')) location.reload()
+  })
+
+  $<HTMLFormElement>('#form-programa')?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const form = e.target as HTMLFormElement
+    if (await enviar(form, '/api/admin/capacitacion/programas')) location.reload()
+  })
+
+  $<HTMLFormElement>('#form-codigo')?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const form = e.target as HTMLFormElement
+    const data = await enviar(form, '/api/admin/capacitacion/codigos')
+    if (!data) return
+    // No se recarga: el código legible solo existe en esta respuesta y recargar
+    // lo perdería para siempre.
+    form.classList.add('hidden')
+    const caja = $<HTMLDivElement>('#codigo-resultado')
+    const valor = $<HTMLDivElement>('#codigo-valor')
+    if (caja && valor) {
+      valor.textContent = String(data.codeLegible ?? '')
+      caja.classList.remove('hidden')
+    }
+  })
+
+  document.querySelectorAll<HTMLButtonElement>('.btn-codigo-accion').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const body = new FormData()
+      body.set('accion', b.dataset.accion ?? 'revocar')
+      const res = await fetch(`/api/admin/capacitacion/codigos/${b.dataset.codigo}`, { method: 'PUT', body })
+      if (res.ok) location.reload()
+      else alert('no se pudo actualizar el código')
+    })
+  )
+</script>
