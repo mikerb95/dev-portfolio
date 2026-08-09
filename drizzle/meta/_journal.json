@@ -183,6 +183,13 @@
       "when": 1786040654862,
       "tag": "0025_calm_anthem",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1786235931200,
+      "tag": "0026_kind_wraith",
+      "breakpoints": true
     }
   ]
 }
