@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro'
 import { db } from '../../../../db'
 import { skillMilestones } from '../../../../db/schema'
 import { and, eq, sql } from 'drizzle-orm'
-import { dayKeyOf, isValidDayKey } from '../../../../lib/skills'
+import { dayKeyOf } from '../../../../lib/skills'
 
 const STATUSES = ['pendiente', 'en_curso', 'hecho'] as const
 type Status = (typeof STATUSES)[number]
