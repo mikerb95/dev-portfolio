@@ -293,8 +293,12 @@ const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, bi
     $('c-id').value = row?.id ?? ''
     $('c-name').value = row?.name ?? ''
     $('c-email').value = row?.email ?? ''
+    $('c-phone').value = row?.phone ?? ''
     $('c-company').value = row?.company ?? ''
+    $('c-logo').value = row?.logoUrl ?? ''
     ;($('c-notes') as unknown as HTMLTextAreaElement).value = row?.notes ?? ''
+    fillBilling(row?.billing ?? null)
+    syncLogoPreview()
     overlay.classList.remove('hidden')
     $('c-name').focus()
   }
