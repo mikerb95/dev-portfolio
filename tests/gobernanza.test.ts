@@ -42,6 +42,16 @@ describe('gobernanza · consistencia estructural', () => {
     expect(incompletas).toEqual([])
   })
 
+  it('no repite un mismo rol dentro de una celda', () => {
+    const repetidas = RACI.filter((a) =>
+      ORDEN_NIVELES.some((n) => {
+        const roles = a.asignacion[n] ?? []
+        return new Set(roles).size !== roles.length
+      }),
+    ).map((a) => a.id)
+    expect(repetidas).toEqual([])
+  })
+
   it('no repite ids de actividad', () => {
     const ids = RACI.map((a) => a.id)
     expect(new Set(ids).size).toBe(ids.length)
