@@ -30,6 +30,21 @@ const base = objetivo()
 const latenciaRecuperacion = new Trend('recuperacion_duracion', true)
 const erroresRecuperacion = new Rate('recuperacion_errores')
 
+/**
+ * La recuperación no es un número, es una curva. Un p95 agregado de toda la
+ * fase mezcla los primeros segundos (cuando el sistema todavía está drenando la
+ * cola que dejó la saturación) con los últimos (cuando ya está normal) y no
+ * responde la pregunta que importa: CUÁNTO tarda en volver.
+ *
+ * Se mide en tramos de 10 s. El primero que baje a latencia normal es el
+ * tiempo de recuperación.
+ */
+const TRAMOS = [0, 10, 20, 30, 40, 50]
+const porTramo = Object.fromEntries(
+  TRAMOS.map((t) => [t, new Trend(`recuperacion_t${t}`, true)]),
+)
+const INICIO_RECUPERACION = 155
+
 export const options = {
   scenarios: {
     // Fase 1: subir el ritmo hasta que algo ceda.
