@@ -1,0 +1,120 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { obtenerRecursoPorSlug, registrarVista } from '../../lib/capacitacion/repo'
+import { tienePaseCapacitacion } from '../../lib/capacitacion/pase'
+import { renderMarkdown, markdownExcerpt } from '../../lib/capacitacion/markdown'
+import { COLOR_TIPO, ETIQUETA_NIVEL, ETIQUETA_TIPO } from '../../lib/capacitacion/tipos'
+
+const slug = String(Astro.params.slug ?? '')
+const conPase = await tienePaseCapacitacion(Astro.cookies)
+
+let recurso: Awaited<ReturnType<typeof obtenerRecursoPorSlug>> = null
+try {
+  recurso = await obtenerRecursoPorSlug(slug, { conPase })
+} catch (err) {
+  console.error('[capacitacion] no se pudo leer el recurso', err)
+}
+
+// 404 y no 403 cuando falta el pase: decir "existe pero no puedes verlo"
+// confirma qué material hay, y ese inventario es justo lo que no tiene por qué
+// conocer quien no estuvo en la capacitación.
+if (!recurso) return Astro.redirect('/capacitacion', 302)
+
+registrarVista(recurso.id)
+
+const cuerpo = renderMarkdown(recurso.body)
+const descripcion = recurso.summary ?? markdownExcerpt(recurso.body)
+
+// El material del grupo no se cachea en la CDN: la respuesta depende de una
+// cookie y una copia compartida se le serviría a quien no tiene pase.
+if (recurso.visibility === 'con_codigo') {
+  Astro.response.headers.set('Cache-Control', 'private, no-store')
+}
+---
+
+<BaseLayout
+  title={recurso.title}
+  description={descripcion}
+  type="article"
+  image="/og-default.png"
+  noindex={recurso.visibility === 'con_codigo'}
+>
+  <article class="relative pt-32 pb-24 px-6 md:px-12 lg:px-20">
+    <div class="halo" style="filter: hue-rotate(200deg);"></div>
+    <div class="relative max-w-[720px] mx-auto">
+      <a href="/capacitacion" class="text-[12px] text-ink-300 hover:text-ink-100 transition-colors">
+        ← Banco de recursos
+      </a>
+
+      <div class="mt-6 flex items-center gap-2">
+        <span class={`w-1.5 h-1.5 rounded-full ${COLOR_TIPO[recurso.kind].punto}`}></span>
+        <span class={`text-[10px] font-mono uppercase tracking-[.18em] ${COLOR_TIPO[recurso.kind].texto}`}>
+          {ETIQUETA_TIPO[recurso.kind]}
+        </span>
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+          · {ETIQUETA_NIVEL[recurso.level]}
+        </span>
+      </div>
+
+      <h1 class="mt-3 font-sans font-medium tracking-[-.03em] leading-[1.1] text-[clamp(28px,4.5vw,44px)] text-ink-50">
+        {recurso.title}
+      </h1>
+
+      {recurso.summary && (
+        <p class="mt-4 text-[15px] text-ink-200 leading-relaxed">{recurso.summary}</p>
+      )}
+
+      {recurso.topics.length > 0 && (
+        <div class="mt-5 flex flex-wrap gap-2">
+          {recurso.topics.map((t) => (
+            <span class="text-[11px] font-mono text-ink-300 rounded-lg border border-white/8 px-2.5 py-1">{t}</span>
+          ))}
+        </div>
+      )}
+
+      {(recurso.externalUrl || recurso.fileUrl || recurso.deckId) && (
+        <div class="mt-7 flex flex-wrap gap-3">
+          {recurso.externalUrl && (
+            <a
+              href={recurso.externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="rounded-xl bg-cyan/[0.08] border border-cyan/25 px-4 py-2 text-[12.5px] text-cyan hover:bg-cyan/[0.14] transition-colors"
+            >
+              Abrir el ejercicio
+            </a>
+          )}
+          {recurso.fileUrl && (
+            <a
+              href={recurso.fileUrl}
+              class="rounded-xl border border-white/10 px-4 py-2 text-[12.5px] text-ink-100 hover:bg-white/5 transition-colors"
+            >
+              Descargar
+            </a>
+          )}
+          {recurso.deckId && (
+            <a
+              href={`/decks/${recurso.deckId}.html`}
+              target="_blank"
+              rel="noopener"
+              class="rounded-xl border border-white/10 px-4 py-2 text-[12.5px] text-ink-100 hover:bg-white/5 transition-colors"
+            >
+              Ver la presentación{recurso.deckSlides ? ` (${recurso.deckSlides} slides)` : ''}
+            </a>
+          )}
+        </div>
+      )}
+
+      {cuerpo && <div class="mt-10 prose-capacitacion" set:html={cuerpo} />}
+
+      <div class="mt-14 rounded-2xl glass p-6">
+        <div class="text-[13px] text-ink-50">¿Esto le sirve a tu equipo?</div>
+        <p class="mt-2 text-[12.5px] text-ink-200 leading-relaxed">
+          Las capacitaciones se arman sobre los procesos que ya tiene la organización, no sobre
+          ejemplos genéricos. Los formatos y el temario están en
+          <a href="/capacitacion-ia" class="text-cyan hover:underline">/capacitacion-ia</a>.
+        </p>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
