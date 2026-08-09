@@ -1,0 +1,160 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro'
+import { db } from '../../../../db'
+import { trainingPrograms } from '../../../../db/schema'
+import { eq } from 'drizzle-orm'
+import { aVistaPrograma, listarRecursos } from '../../../../lib/capacitacion/repo'
+import {
+  ETIQUETA_FORMATO,
+  ETIQUETA_NIVEL,
+  ETIQUETA_TIPO,
+  FORMATOS,
+  NIVELES,
+} from '../../../../lib/capacitacion/tipos'
+
+const id = Number(Astro.params.id)
+const [fila] = Number.isFinite(id)
+  ? await db.select().from(trainingPrograms).where(eq(trainingPrograms.id, id)).limit(1)
+  : []
+if (!fila) return Astro.redirect('/admin/capacitacion')
+
+const programa = aVistaPrograma(fila)
+// Los recursos del programa se listan aquí para ver de un vistazo si el
+// material de apoyo existe: un programa publicado sin nada en el banco es una
+// promesa a medias.
+const recursos = await listarRecursos({ programaId: programa.id, incluirBorradores: true, conPase: true })
+---
+
+<AdminLayout title={`Programa · ${programa.title}`}>
+  <div class="flex items-center justify-between gap-3 mb-5">
+    <a href="/admin/capacitacion" class="text-[12px] text-ink-200 hover:text-ink-50">← Capacitación</a>
+    <button id="btn-borrar" class="text-[12px] px-3 py-1.5 rounded-lg text-[#ff9a9a] border border-[#ff7a7a]/25 hover:bg-[#ff7a7a]/10">
+      Borrar
+    </button>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+    <form id="form" class="flex flex-col gap-3 text-[12px]">
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Título</span>
+        <input name="title" required value={programa.title} class="input-base w-full mt-1" />
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Slug</span>
+        <input name="slug" value={programa.slug} class="input-base w-full mt-1 font-mono" />
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Resumen</span>
+        <textarea name="summary" rows="3" class="input-base w-full mt-1">{programa.summary ?? ''}</textarea>
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Audiencia</span>
+        <input name="audience" value={programa.audience ?? ''} class="input-base w-full mt-1" />
+      </label>
+
+      <div class="grid grid-cols-3 gap-2">
+        <select name="format" class="input-base w-full">
+          {FORMATOS.map((f) => (
+            <option value={f} selected={f === programa.format}>{ETIQUETA_FORMATO[f]}</option>
+          ))}
+        </select>
+        <select name="level" class="input-base w-full">
+          {NIVELES.map((n) => (
+            <option value={n} selected={n === programa.level}>{ETIQUETA_NIVEL[n]}</option>
+          ))}
+        </select>
+        <input
+          name="durationHours"
+          type="number"
+          step="0.5"
+          min="0"
+          value={programa.durationHours ?? ''}
+          placeholder="Horas"
+          class="input-base w-full"
+        />
+      </div>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+          Objetivos de aprendizaje (uno por línea)
+        </span>
+        <textarea name="outcomes" rows="5" class="input-base w-full mt-1">{programa.outcomes.join('\n')}</textarea>
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+          Módulos del temario (uno por línea)
+        </span>
+        <textarea name="modules" rows="6" class="input-base w-full mt-1">{programa.modules.join('\n')}</textarea>
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Nota de precio</span>
+        <input name="priceNote" value={programa.priceNote ?? ''} class="input-base w-full mt-1" />
+      </label>
+
+      <div class="grid grid-cols-2 gap-2 items-center">
+        <label class="flex items-center gap-2 text-ink-200">
+          <input type="checkbox" name="isPublic" checked={programa.isPublic} /> Publicar en /capacitacion-ia
+        </label>
+        <label class="block">
+          <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">Orden</span>
+          <input name="sortOrder" type="number" value={programa.sortOrder} class="input-base w-full mt-1" />
+        </label>
+      </div>
+
+      <div class="flex items-center justify-between gap-3">
+        <span id="estado" class="text-[11px] text-ink-300"></span>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-violet/15 text-violet border border-violet/25 text-[12px]">
+          Guardar
+        </button>
+      </div>
+    </form>
+
+    <div>
+      <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 mb-2">
+        Material de apoyo ({recursos.length})
+      </div>
+      {recursos.length === 0 ? (
+        <div class="rounded-2xl glass p-5 text-[12px] text-ink-300">
+          Ningún recurso apunta a este programa todavía.
+        </div>
+      ) : (
+        <div class="rounded-2xl glass divide-y divide-white/5">
+          {recursos.map((r) => (
+            <a href={`/admin/capacitacion/recursos/${r.id}`} class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors">
+              <span class="text-[12px] text-ink-50 truncate">{r.title}</span>
+              <span class="text-[10.5px] font-mono text-ink-300 shrink-0">{ETIQUETA_TIPO[r.kind]}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</AdminLayout>
+
+<script define:vars={{ id: programa.id }}>
+  const form = document.getElementById('form')
+  const estado = document.getElementById('estado')
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    estado.textContent = 'guardando...'
+    const res = await fetch(`/api/admin/capacitacion/programas/${id}`, {
+      method: 'PUT',
+      body: new FormData(form),
+    })
+    const data = await res.json().catch(() => ({}))
+    estado.textContent = res.ok ? 'guardado' : (data.error ?? 'no se pudo guardar')
+  })
+
+  document.getElementById('btn-borrar')?.addEventListener('click', async () => {
+    if (!confirm('¿Borrar este programa? Los recursos que lo referencian se quedan sin programa.')) return
+    const res = await fetch(`/api/admin/capacitacion/programas/${id}`, { method: 'DELETE' })
+    if (res.ok) location.href = '/admin/capacitacion'
+    else estado.textContent = 'no se pudo borrar'
+  })
+</script>
