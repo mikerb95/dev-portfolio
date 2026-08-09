@@ -63,6 +63,12 @@ export const options = {
       ],
       tags: { fase: 'quiebre' },
       exec: 'apretar',
+      // Se corta en seco a los 150 s. Sin esto k6 deja terminar las peticiones
+      // en vuelo, y con el sistema saturado eso son decenas de segundos de cola
+      // que se solapan con la fase de recuperación: la primera corrida midió un
+      // p95 de 35 s "recuperándose" que en realidad era la saturación todavía
+      // drenando.
+      gracefulStop: '0s',
     },
     // Fase 2: soltar. Arranca cuando la 1 ya terminó y pide poco, para
     // responder "¿volvió a la normalidad, y en cuánto?".
