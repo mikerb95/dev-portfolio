@@ -31,14 +31,6 @@ export const aVistaPrograma = (p: Programa): ProgramaVista => ({
   modules: parseLista(p.modules),
 })
 
-/**
- * Visibilidades que puede ver un visitante según su pase. El borrador NUNCA
- * sale del panel: es la única visibilidad que no se publica de ninguna forma.
- */
-export function visibilidadesVisibles(conPase: boolean): Visibilidad[] {
-  return conPase ? ['publico', 'con_codigo'] : ['publico']
-}
-
 /** Programas del catálogo público, ordenados como se muestran en la landing. */
 export async function listarProgramasPublicos(): Promise<ProgramaVista[]> {
   const rows = await db
