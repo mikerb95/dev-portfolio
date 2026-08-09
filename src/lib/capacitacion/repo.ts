@@ -7,7 +7,7 @@ import {
   trainingResources,
 } from '../../db/schema'
 import { codigoUtilizable, normalizeAccessCode } from './access'
-import { parseLista, type Nivel, type TipoRecurso, type Visibilidad } from './tipos'
+import { parseLista, visibilidadesVisibles, type Nivel, type TipoRecurso } from './tipos'
 
 export type Recurso = typeof trainingResources.$inferSelect
 export type Programa = typeof trainingPrograms.$inferSelect
