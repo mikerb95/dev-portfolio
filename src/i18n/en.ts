@@ -584,6 +584,15 @@ const en = {
     statusPausedSection: 'Paused',
     viewCertificate: 'View certificate',
     viewImage: 'View image',
+    specialization: {
+      heading: 'Specialization in progress',
+      hoursLabel: 'Practice hours',
+      syllabusLabel: 'Syllabus covered',
+      streakLabel: 'Best streak',
+      streakUnit: 'days in a row',
+      sinceLabel: 'Since',
+      note: 'Measured with the panel’s own tracker: every practice session is logged and checked against a weekly goal.',
+    },
     fullProfile: {
       heading: 'View full profile',
       platziLabel: 'Platzi',
