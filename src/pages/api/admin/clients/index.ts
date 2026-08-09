@@ -10,8 +10,11 @@ export const GET: APIRoute = async () => {
       id: clients.id,
       name: clients.name,
       email: clients.email,
+      phone: clients.phone,
       company: clients.company,
       notes: clients.notes,
+      logoUrl: clients.logoUrl,
+      billingInfo: clients.billingInfo,
       createdAt: clients.createdAt,
     })
     .from(clients)
