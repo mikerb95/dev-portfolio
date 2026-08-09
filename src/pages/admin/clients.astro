@@ -164,8 +164,32 @@ const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, bi
         </div>
 
         <div>
+          <label for="c-phone" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Teléfono</label>
+          <input id="c-phone" type="tel" maxlength="24" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="3104641228" autocomplete="off" />
+          <p class="mt-1 text-[11px] text-ink-400">Se guarda normalizado. Es la llave con la que un cobro de <a href="/admin/cobros" class="text-cyan hover:underline">/cobrar</a> se vincula solo a esta ficha.</p>
+        </div>
+
+        <div>
           <label for="c-company" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Empresa</label>
           <input id="c-company" maxlength="120" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Empresa u organización" autocomplete="off" />
+        </div>
+
+        <div>
+          <label for="c-logo" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Logo (URL)</label>
+          <div class="flex items-center gap-2">
+            <img id="c-logo-preview" alt="" class="w-8 h-8 rounded object-contain bg-white/5 shrink-0 hidden" />
+            <input id="c-logo" type="url" maxlength="500" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="https://…/logo.svg" autocomplete="off" />
+          </div>
+          <p class="mt-1 text-[11px] text-ink-400">Aparece en la cabecera de su portal. Solo https.</p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300">Datos de facturación</span>
+            <button type="button" id="c-bill-add" class="text-[11px] text-cyan hover:underline">+ Añadir</button>
+          </div>
+          <div id="c-bill-rows" class="space-y-2"></div>
+          <p class="mt-1 text-[11px] text-ink-400">Salen impresos en su factura y en el PDF, en este orden.</p>
         </div>
 
         <div>
