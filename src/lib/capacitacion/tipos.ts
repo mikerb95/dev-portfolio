@@ -69,6 +69,15 @@ export const esVisibilidad = (v: unknown): v is Visibilidad =>
   VISIBILIDADES.includes(v as Visibilidad)
 
 /**
+ * Visibilidades que puede ver un visitante según su pase. Vive en el módulo
+ * puro (y no junto a las consultas) para poder probar sin base la regla que
+ * más importa: `borrador` no sale nunca, con pase o sin él.
+ */
+export function visibilidadesVisibles(conPase: boolean): Visibilidad[] {
+  return conPase ? ['publico', 'con_codigo'] : ['publico']
+}
+
+/**
  * Slug a partir de un título. Sin acentos, sin signos y sin guiones dobles: es
  * la URL pública del recurso y tiene que sobrevivir a un título escrito en
  * español con tildes y signos de interrogación.
