@@ -5,11 +5,12 @@ import { normalizePhone } from '../../../../lib/phone'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX = { name: 120, email: 160, company: 120, notes: 2000, logoUrl: 500 } as const
 
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]/g
+
 // Datos de facturación: pares clave/valor libres porque cada país (y cada
 // cliente) pide etiquetas distintas - NIT aquí, RFC en México, VAT en la UE.
 // Los límites existen porque estas cadenas se imprimen en el PDF de la factura:
 // una clave larguísima no rompe nada, pero desmaqueta el encabezado.
-const CONTROL_CHARS = /[\u0000-\u001f\u007f]/g
 
 const BILLING = { maxPairs: 12, maxKey: 40, maxValue: 200 } as const
 
