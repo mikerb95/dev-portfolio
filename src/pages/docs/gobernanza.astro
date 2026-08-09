@@ -253,6 +253,12 @@ const porId = new Map(NIVELES_AUTORIDAD.map((n) => [n.id, n]))
           </li>
         ))}
       </ul>
+      <p class="text-[12.5px] text-ink-200 leading-relaxed mb-2">
+        Un mismo nivel puede llevar <span class="font-mono text-[11.5px]">A</span> y{' '}
+        <span class="font-mono text-[11.5px]">R</span> en la misma fila: aprobar y ejecutar no son incompatibles,
+        son responsabilidades distintas que aquí suelen recaer en la misma persona. Lo que la regla prohíbe es
+        que dos niveles distintos aprueben la misma actividad.
+      </p>
       <p class="text-[12.5px] text-ink-200 leading-relaxed">
         No son una convención declarada al pie de la tabla: <span class="font-mono text-cyan">tests/gobernanza.test.ts</span>{' '}
         las comprueba sobre los datos que renderizan esta página, así que una fila con dos aprobadores o sin
