@@ -183,7 +183,7 @@ export const RACI: ActividadRaci[] = [
   {
     id: 'secretos',
     actividad: 'Gestionar secretos y variables de entorno',
-    asignacion: { estrategico: ['A'], tactico: ['C'], operativo: ['I'] },
+    asignacion: { estrategico: ['A', 'R'], tactico: ['C'], operativo: ['I'] },
     porque:
       'Un secreto filtrado no se corrige con un despliegue: hay que rotarlo en cada sistema que lo usa. El nivel operativo trabaja con los secretos, pero no los custodia.',
     evidencia: 'Bóveda cifrada AES-256-GCM en project_services.secrets · revelado solo bajo sesión administrada',
