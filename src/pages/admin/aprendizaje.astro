@@ -1,0 +1,653 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { skillTracks, skillSessions, skillMilestones } from '../../db/schema'
+import { desc, eq } from 'drizzle-orm'
+import {
+  buildHeatmap,
+  computeAchievements,
+  computeStreak,
+  dayKeyOf,
+  formatMinutes,
+  milestoneProgress,
+  totals,
+  weeklyGoal,
+} from '../../lib/skills'
+import { DOTNET_TRACK } from '../../data/track-dotnet'
+
+const tracks = await db
+  .select()
+  .from(skillTracks)
+  .orderBy(desc(skillTracks.isActive), skillTracks.name)
+
+const requested = Astro.url.searchParams.get('track')
+const track = tracks.find((t) => t.slug === requested) ?? tracks[0] ?? null
+
+const [sessions, milestones] = track
+  ? await Promise.all([
+      db
+        .select()
+        .from(skillSessions)
+        .where(eq(skillSessions.trackId, track.id))
+        .orderBy(desc(skillSessions.day), desc(skillSessions.id)),
+      db
+        .select()
+        .from(skillMilestones)
+        .where(eq(skillMilestones.trackId, track.id))
+        .orderBy(skillMilestones.position),
+    ])
+  : [[], []]
+
+const today = dayKeyOf()
+const sessionInputs = sessions.map((s) => ({ day: s.day, minutes: s.minutes }))
+const milestoneInputs = milestones.map((m) => ({
+  area: m.area,
+  status: m.status,
+  completedOn: m.completedOn,
+}))
+
+const streak = computeStreak(sessionInputs, today)
+const goal = weeklyGoal(sessionInputs, today, track?.weeklyGoalMinutes ?? 360)
+const stats = totals(sessionInputs, today)
+const progress = milestoneProgress(milestoneInputs)
+const heatmap = buildHeatmap(sessionInputs, today, 26)
+const achievements = computeAchievements(
+  sessionInputs,
+  milestoneInputs,
+  today,
+  track?.weeklyGoalMinutes ?? 360
+)
+const unlocked = achievements.filter((a) => a.unlockedOn)
+const locked = achievements.filter((a) => !a.unlockedOn)
+
+// Hitos agrupados por área, conservando el orden del temario.
+const areas: { name: string; items: typeof milestones }[] = []
+for (const m of milestones) {
+  const last = areas[areas.length - 1]
+  if (last && last.name === m.area) last.items.push(m)
+  else areas.push({ name: m.area, items: [m] })
+}
+
+const daysSinceStart = track?.startedOn ? Math.max(1, Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${track.startedOn}T00:00:00Z`)) / 86_400_000) + 1) : null
+
+const heatColors = ['bg-zinc-800/70', 'bg-violet-950', 'bg-violet-800', 'bg-violet-600', 'bg-violet-400']
+
+const fmtDay = (d: string | null) =>
+  d
+    ? new Date(`${d}T12:00:00Z`).toLocaleDateString('es-CO', {
+        day: 'numeric',
+        month: 'short',
+        year: '2-digit',
+      })
+    : ''
+
+const statusLabels: Record<string, string> = {
+  pendiente: 'Pendiente',
+  en_curso: 'En curso',
+  hecho: 'Hecho',
+}
+
+// Frase de cabecera según el estado real de la racha. El tablero habla
+// distinto si venís de 12 días seguidos o si llevás tres semanas sin abrirlo.
+let pulse: { text: string; tone: 'good' | 'warn' | 'idle' }
+if (!track || stats.sessionCount === 0) {
+  pulse = { text: 'Sin sesiones todavía. La primera es la que cuesta.', tone: 'idle' }
+} else if (streak.activeToday) {
+  pulse = { text: `Hoy ya practicaste. Racha de ${streak.current} ${streak.current === 1 ? 'día' : 'días'}.`, tone: 'good' }
+} else if (streak.atRisk) {
+  pulse = { text: `Racha de ${streak.current} ${streak.current === 1 ? 'día' : 'días'} en juego: hoy todavía no hay sesión.`, tone: 'warn' }
+} else {
+  const gap = stats.firstDay ? Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${streak.lastActive}T00:00:00Z`)) / 86_400_000) : 0
+  pulse = { text: `Última sesión hace ${gap} días. Tu récord fue de ${streak.record}: se vuelve a empezar hoy.`, tone: 'warn' }
+}
+---
+
+<AdminLayout title="Aprendizaje">
+  <div class="space-y-6">
+
+    {!track && (
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
+        <h1 class="text-xl font-bold text-white">Tracker de especialización</h1>
+        <p class="text-zinc-400 text-sm mt-2 max-w-lg mx-auto">
+          Mide la práctica real en el tiempo: racha, horas contra una meta semanal, temario con
+          hitos y bitácora. Empezá sembrando el track de {DOTNET_TRACK.name} con su temario
+          de {DOTNET_TRACK.milestones.length} hitos.
+        </p>
+        <button
+          id="seed-dotnet"
+          class="mt-6 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          Sembrar track {DOTNET_TRACK.name}
+        </button>
+      </div>
+    )}
+
+    {track && (
+      <>
+        <!-- Cabecera: track, motivo y selector -->
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-xl font-bold text-white">{track.name}</h1>
+              {track.isPublic && (
+                <span class="text-xs px-2 py-0.5 rounded-md bg-sky-950 text-sky-300">
+                  Resumen público
+                </span>
+              )}
+            </div>
+            {track.tagline && <p class="text-zinc-400 text-sm mt-1">{track.tagline}</p>}
+          </div>
+          {tracks.length > 1 && (
+            <div class="flex gap-1.5 flex-wrap">
+              {tracks.map((t) => (
+                <a
+                  href={`/admin/aprendizaje?track=${t.slug}`}
+                  class={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                    t.id === track.id
+                      ? 'bg-violet-950 border-violet-800 text-violet-200'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {t.name}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {track.motivation && (
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+              <p class="text-xs uppercase tracking-wide text-zinc-500">Por qué estoy en esto</p>
+            </div>
+            <p class="text-zinc-300 text-sm leading-relaxed">{track.motivation}</p>
+          </div>
+        )}
+
+        <!-- Pulso del día -->
+        <div
+          class={`rounded-xl px-5 py-4 border ${
+            pulse.tone === 'good'
+              ? 'bg-emerald-950/40 border-emerald-900 text-emerald-200'
+              : pulse.tone === 'warn'
+                ? 'bg-amber-950/40 border-amber-900 text-amber-200'
+                : 'bg-zinc-900 border-zinc-800 text-zinc-300'
+          }`}
+        >
+          <p class="text-sm font-medium">{pulse.text}</p>
+        </div>
+
+        <!-- Métricas -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+            <p class="text-zinc-400 text-xs mb-1">Racha actual</p>
+            <p class={`text-2xl font-bold ${streak.current > 0 ? 'text-orange-400' : 'text-zinc-500'}`}>
+              {streak.current}
+              <span class="text-sm font-normal text-zinc-500 ml-1">
+                {streak.current === 1 ? 'día' : 'días'}
+              </span>
+            </p>
+            <p class="text-zinc-500 text-xs mt-1">Récord: {streak.record}</p>
+          </div>
+
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+            <p class="text-zinc-400 text-xs mb-1">Esta semana</p>
+            <p class={`text-2xl font-bold ${goal.met ? 'text-emerald-400' : 'text-zinc-200'}`}>
+              {formatMinutes(goal.minutes)}
+            </p>
+            <div class="mt-2 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                class={`h-full transition-all ${goal.met ? 'bg-emerald-500' : 'bg-violet-500'}`}
+                style={`width: ${goal.pct}%`}
+              />
+            </div>
+            <p class="text-zinc-500 text-xs mt-1">
+              {goal.met
+                ? `Meta de ${formatMinutes(goal.goalMinutes)} cumplida`
+                : `Faltan ${formatMinutes(goal.remaining)} (${formatMinutes(goal.paceNeeded)}/día)`}
+            </p>
+          </div>
+
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+            <p class="text-zinc-400 text-xs mb-1">Total acumulado</p>
+            <p class="text-2xl font-bold text-zinc-200">{formatMinutes(stats.totalMinutes)}</p>
+            <p class="text-zinc-500 text-xs mt-1">
+              {stats.activeDays} {stats.activeDays === 1 ? 'día activo' : 'días activos'}
+              {daysSinceStart ? ` de ${daysSinceStart}` : ''}
+            </p>
+          </div>
+
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+            <p class="text-zinc-400 text-xs mb-1">Temario</p>
+            <p class="text-2xl font-bold text-violet-300">{progress.pct}%</p>
+            <div class="mt-2 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div class="h-full bg-violet-500 transition-all" style={`width: ${progress.pct}%`} />
+            </div>
+            <p class="text-zinc-500 text-xs mt-1">{progress.done} de {progress.total} hitos</p>
+          </div>
+        </div>
+
+        <!-- Registrar sesión -->
+        <details class="bg-zinc-900 border border-zinc-800 rounded-xl" open={!streak.activeToday}>
+          <summary class="px-5 py-4 cursor-pointer text-sm font-medium text-zinc-300 hover:text-white select-none">
+            + Registrar sesión de práctica
+          </summary>
+          <form id="form-session" class="p-5 pt-0 grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <input type="hidden" name="trackId" value={track.id} />
+            <div>
+              <label class="block text-xs text-zinc-400 mb-1">Fecha</label>
+              <input
+                type="date"
+                name="day"
+                value={today}
+                max={today}
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+              />
+            </div>
+            <div>
+              <label class="block text-xs text-zinc-400 mb-1">Minutos *</label>
+              <input
+                type="number"
+                name="minutes"
+                required
+                min="1"
+                max="960"
+                step="5"
+                value="60"
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+              />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs text-zinc-400 mb-1">Tema *</label>
+              <input
+                name="topic"
+                required
+                placeholder="ej. LINQ: IQueryable y ejecución diferida"
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+              />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-xs text-zinc-400 mb-1">Qué entendiste hoy</label>
+              <textarea
+                name="note"
+                rows="2"
+                placeholder="La frase que te habría ahorrado dos horas si la hubieras sabido al empezar."
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+              ></textarea>
+            </div>
+            <div>
+              <label class="block text-xs text-zinc-400 mb-1">Hito relacionado</label>
+              <select
+                name="milestoneId"
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+              >
+                <option value="">Ninguno</option>
+                {milestones
+                  .filter((m) => m.status !== 'hecho')
+                  .map((m) => (
+                    <option value={m.id}>{m.title}</option>
+                  ))}
+              </select>
+            </div>
+            <div class="sm:col-span-4 flex justify-end">
+              <button
+                type="submit"
+                class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Guardar sesión
+              </button>
+            </div>
+          </form>
+        </details>
+
+        <!-- Heatmap -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+          <div class="flex items-end justify-between gap-4 mb-4 flex-wrap">
+            <div>
+              <h2 class="text-white font-semibold">Últimos 6 meses</h2>
+              <p class="text-zinc-500 text-xs mt-0.5">
+                Un cuadro por día. La intensidad es relativa a tu mejor día ({formatMinutes(heatmap.max)}).
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs text-zinc-500 mr-1">Menos</span>
+              {heatColors.map((c) => <span class={`w-3 h-3 rounded-sm ${c}`}></span>)}
+              <span class="text-xs text-zinc-500 ml-1">Más</span>
+            </div>
+          </div>
+          <div class="overflow-x-auto pb-1">
+            <div class="flex gap-1 min-w-max">
+              {heatmap.weeks.map((week) => (
+                <div class="flex flex-col gap-1">
+                  {week.map((cell) => (
+                    <span
+                      class={`w-3 h-3 rounded-sm ${cell.future ? 'bg-zinc-900 border border-zinc-800/80' : heatColors[cell.level]}`}
+                      title={`${fmtDay(cell.day)}: ${cell.minutes > 0 ? formatMinutes(cell.minutes) : 'sin práctica'}`}
+                    ></span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <!-- Temario -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="text-white font-semibold">Temario</h2>
+              <span class="text-xs text-zinc-500">{progress.done}/{progress.total}</span>
+            </div>
+            {areas.map((area) => {
+              const stat = progress.areas.find((a) => a.area === area.name)
+              return (
+                <details class="bg-zinc-900 border border-zinc-800 rounded-xl" open={stat && stat.done < stat.total && (stat.done > 0 || stat.inProgress > 0)}>
+                  <summary class="px-5 py-3.5 cursor-pointer select-none list-none">
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span
+                          class={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            stat?.pct === 100 ? 'bg-emerald-400' : stat && stat.done > 0 ? 'bg-violet-400' : 'bg-zinc-600'
+                          }`}
+                        ></span>
+                        <h3 class="text-white text-sm font-semibold truncate">{area.name}</h3>
+                      </div>
+                      <span class="text-xs text-zinc-500 shrink-0">{stat?.done}/{stat?.total}</span>
+                    </div>
+                    <div class="mt-2.5 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        class={`h-full transition-all ${stat?.pct === 100 ? 'bg-emerald-500' : 'bg-violet-500'}`}
+                        style={`width: ${stat?.pct ?? 0}%`}
+                      />
+                    </div>
+                  </summary>
+                  <div class="px-5 pb-4 space-y-2">
+                    {area.items.map((m) => (
+                      <div
+                        class={`rounded-lg p-3 border ${
+                          m.status === 'hecho'
+                            ? 'border-emerald-900 bg-emerald-950/25'
+                            : m.status === 'en_curso'
+                              ? 'border-violet-900 bg-violet-950/20'
+                              : 'border-zinc-800 bg-zinc-950'
+                        }`}
+                      >
+                        <div class="flex items-start justify-between gap-3">
+                          <div class="min-w-0">
+                            <p
+                              class={`text-sm font-medium ${m.status === 'hecho' ? 'text-emerald-200' : 'text-white'}`}
+                            >
+                              {m.title}
+                            </p>
+                            {m.description && (
+                              <p class="text-zinc-500 text-xs mt-1 leading-relaxed">{m.description}</p>
+                            )}
+                            {m.completedOn && (
+                              <p class="text-emerald-500/80 text-xs mt-1.5">
+                                Cerrado el {fmtDay(m.completedOn)}
+                              </p>
+                            )}
+                          </div>
+                          <select
+                            class="milestone-status shrink-0 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-zinc-500"
+                            data-id={m.id}
+                            data-track={track.id}
+                          >
+                            {Object.entries(statusLabels).map(([value, label]) => (
+                              <option value={value} selected={m.status === value}>
+                                {label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )
+            })}
+          </div>
+
+          <!-- Logros -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="text-white font-semibold">Logros</h2>
+              <span class="text-xs text-zinc-500">{unlocked.length}/{achievements.length}</span>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-2.5">
+              {unlocked.length === 0 && (
+                <p class="text-zinc-500 text-sm">
+                  Todavía ninguno. El primero se desbloquea con la primera sesión registrada.
+                </p>
+              )}
+              {unlocked.map((a) => (
+                <div class="flex items-start gap-3 p-3 rounded-lg bg-violet-950/25 border border-violet-900/70">
+                  <span class="w-2 h-2 rounded-full bg-violet-400 mt-1.5 shrink-0"></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-baseline justify-between gap-2">
+                      <p class="text-sm font-semibold text-violet-100">{a.title}</p>
+                      <span class="text-xs text-zinc-500 shrink-0">{fmtDay(a.unlockedOn)}</span>
+                    </div>
+                    <p class="text-zinc-400 text-xs mt-0.5 leading-relaxed">{a.description}</p>
+                  </div>
+                </div>
+              ))}
+
+              {locked.length > 0 && (
+                <div class="pt-2 space-y-2.5">
+                  <p class="text-xs uppercase tracking-wide text-zinc-600">Por desbloquear</p>
+                  {locked.map((a) => {
+                    const pct = a.progress.target > 0 ? Math.min(100, Math.round((a.progress.current / a.progress.target) * 100)) : 0
+                    return (
+                      <div class="p-3 rounded-lg bg-zinc-950 border border-zinc-800">
+                        <div class="flex items-baseline justify-between gap-2">
+                          <p class="text-sm font-medium text-zinc-400">{a.title}</p>
+                          <span class="text-xs text-zinc-600 shrink-0">{pct}%</span>
+                        </div>
+                        <p class="text-zinc-600 text-xs mt-0.5 leading-relaxed">{a.description}</p>
+                        <div class="mt-2 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                          <div class="h-full bg-zinc-600 transition-all" style={`width: ${pct}%`} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <!-- Bitácora -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-white font-semibold">Bitácora</h2>
+            <span class="text-xs text-zinc-500">
+              {stats.sessionCount} {stats.sessionCount === 1 ? 'sesión' : 'sesiones'}
+            </span>
+          </div>
+          {sessions.length === 0 && (
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+              <p class="text-zinc-500 text-sm">
+                Sin sesiones registradas. Lo que escribas aquí es lo único que va a seguir sirviendo
+                dentro de un año, cuando las cifras ya no digan nada.
+              </p>
+            </div>
+          )}
+          <div class="space-y-2">
+            {sessions.slice(0, 40).map((s) => (
+              <div class="bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4">
+                <div class="flex items-start justify-between gap-4">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-xs text-zinc-500">{fmtDay(s.day)}</span>
+                      <span class="text-xs text-zinc-600">·</span>
+                      <span class="text-xs text-violet-300">{formatMinutes(s.minutes)}</span>
+                    </div>
+                    <p class="text-white text-sm font-medium mt-1">{s.topic}</p>
+                    {s.note && <p class="text-zinc-400 text-sm mt-1.5 leading-relaxed">{s.note}</p>}
+                  </div>
+                  <button
+                    class="session-delete text-xs text-zinc-600 hover:text-red-400 transition-colors shrink-0"
+                    data-id={s.id}
+                    data-track={track.id}
+                  >
+                    Borrar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Ajustes del track -->
+        <details class="bg-zinc-900 border border-zinc-800 rounded-xl">
+          <summary class="px-5 py-4 cursor-pointer text-sm font-medium text-zinc-300 hover:text-white select-none">
+            Ajustes del track
+          </summary>
+          <form id="form-track" class="p-5 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input type="hidden" name="id" value={track.id} />
+            <div>
+              <label class="block text-xs text-zinc-400 mb-1">Meta semanal (minutos)</label>
+              <input
+                type="number"
+                name="weeklyGoalMinutes"
+                min="30"
+                max="2400"
+                step="30"
+                value={track.weeklyGoalMinutes}
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+              />
+              <p class="text-zinc-600 text-xs mt-1">
+                Ahora: {formatMinutes(track.weeklyGoalMinutes)} por semana.
+              </p>
+            </div>
+            <div>
+              <label class="block text-xs text-zinc-400 mb-1">Nombre</label>
+              <input
+                name="name"
+                value={track.name}
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+              />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs text-zinc-400 mb-1">Por qué estoy en esto</label>
+              <textarea
+                name="motivation"
+                rows="2"
+                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+              >{track.motivation ?? ''}</textarea>
+            </div>
+            <label class="sm:col-span-2 flex items-start gap-3 p-3 rounded-lg bg-zinc-950 border border-zinc-800">
+              <input
+                type="checkbox"
+                name="isPublic"
+                checked={track.isPublic}
+                class="mt-0.5 accent-violet-500 shrink-0"
+              />
+              <span class="min-w-0">
+                <span class="block text-sm text-white">Publicar resumen en /certifications</span>
+                <span class="block text-zinc-500 text-xs mt-0.5">
+                  Solo el agregado: nombre, horas acumuladas y porcentaje del temario. La bitácora,
+                  las fechas y los hitos individuales nunca salen del panel.
+                </span>
+              </span>
+            </label>
+            <div class="sm:col-span-2 flex justify-end">
+              <button
+                type="submit"
+                class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Guardar ajustes
+              </button>
+            </div>
+          </form>
+        </details>
+      </>
+    )}
+  </div>
+</AdminLayout>
+
+<script>
+  const post = async (url: string, body: unknown, method = 'POST') => {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      alert(data.error ?? 'No se pudo guardar')
+      return false
+    }
+    return true
+  }
+
+  document.getElementById('seed-dotnet')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget as HTMLButtonElement
+    btn.disabled = true
+    btn.textContent = 'Sembrando…'
+    if (await post('/api/admin/skills/tracks', { seed: 'dotnet' })) {
+      location.href = '/admin/aprendizaje?track=dotnet'
+    } else {
+      btn.disabled = false
+    }
+  })
+
+  document.getElementById('form-session')?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const form = e.currentTarget as HTMLFormElement
+    const fd = new FormData(form)
+    const ok = await post('/api/admin/skills/sessions', {
+      trackId: Number(fd.get('trackId')),
+      day: fd.get('day') || undefined,
+      minutes: Number(fd.get('minutes')),
+      topic: fd.get('topic'),
+      note: fd.get('note'),
+      milestoneId: fd.get('milestoneId') || null,
+    })
+    if (ok) location.reload()
+  })
+
+  document.querySelectorAll<HTMLSelectElement>('.milestone-status').forEach((sel) => {
+    sel.addEventListener('change', async () => {
+      const ok = await post(
+        '/api/admin/skills/milestones',
+        { id: Number(sel.dataset.id), trackId: Number(sel.dataset.track), status: sel.value },
+        'PATCH'
+      )
+      if (ok) location.reload()
+    })
+  })
+
+  document.querySelectorAll<HTMLButtonElement>('.session-delete').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      // Sin confirm(): borrar una sesión mal registrada es reversible en
+      // segundos y el diálogo estorba más de lo que protege.
+      const ok = await post(
+        '/api/admin/skills/sessions',
+        { id: Number(btn.dataset.id), trackId: Number(btn.dataset.track) },
+        'DELETE'
+      )
+      if (ok) location.reload()
+    })
+  })
+
+  document.getElementById('form-track')?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const form = e.currentTarget as HTMLFormElement
+    const fd = new FormData(form)
+    const ok = await post(
+      '/api/admin/skills/tracks',
+      {
+        id: Number(fd.get('id')),
+        name: fd.get('name'),
+        motivation: fd.get('motivation'),
+        weeklyGoalMinutes: Number(fd.get('weeklyGoalMinutes')),
+        isPublic: fd.get('isPublic') === 'on',
+      },
+      'PATCH'
+    )
+    if (ok) location.reload()
+  })
+</script>
