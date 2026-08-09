@@ -1,0 +1,104 @@
+---
+// Canje del código de grupo. Ruta estática, así que gana sobre /capacitacion/[slug].
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { tienePaseCapacitacion } from '../../lib/capacitacion/pase'
+
+const conPase = await tienePaseCapacitacion(Astro.cookies)
+
+// Depende de una cookie: nunca cacheada.
+Astro.response.headers.set('Cache-Control', 'private, no-store')
+---
+
+<BaseLayout
+  title="Entrar al banco de recursos"
+  description="Canjea el código que se entrega al cerrar la capacitación y abre el material del grupo."
+  noindex
+>
+  <section class="relative pt-32 pb-28 px-6 md:px-12 lg:px-20">
+    <div class="halo" style="filter: hue-rotate(200deg);"></div>
+    <div class="relative max-w-[460px] mx-auto text-center">
+      <h1 class="font-sans font-medium tracking-[-.03em] leading-[1.1] text-[clamp(26px,4vw,38px)] text-ink-50">
+        Entrar con tu código
+      </h1>
+
+      <p class="mt-4 text-[13.5px] text-ink-200 leading-relaxed">
+        Es el código que se dicta al cerrar la capacitación. Abre el material del grupo en este
+        navegador durante 30 días. No pide correo ni crea ninguna cuenta.
+      </p>
+
+      {conPase ? (
+        <div class="mt-8 rounded-2xl glass p-6">
+          <p class="text-[13px] text-lime">Ya tienes el pase activo en este navegador.</p>
+          <div class="mt-4 flex flex-wrap justify-center gap-3">
+            <a
+              href="/capacitacion"
+              class="rounded-xl bg-cyan/[0.08] border border-cyan/25 px-4 py-2 text-[12.5px] text-cyan hover:bg-cyan/[0.14] transition-colors"
+            >
+              Ir al banco
+            </a>
+            <button
+              id="btn-salir"
+              class="rounded-xl border border-white/10 px-4 py-2 text-[12.5px] text-ink-200 hover:bg-white/5 transition-colors"
+            >
+              Salir de este dispositivo
+            </button>
+          </div>
+        </div>
+      ) : (
+        <form id="form" class="mt-8 rounded-2xl glass p-6">
+          <label for="codigo" class="block text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+            Código del grupo
+          </label>
+          <input
+            id="codigo"
+            name="codigo"
+            required
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            placeholder="XXXX-XXXX"
+            class="input-base w-full mt-2 text-center font-mono text-[20px] tracking-[.2em] uppercase"
+          />
+          <button
+            type="submit"
+            class="mt-4 w-full rounded-xl bg-cyan/[0.10] border border-cyan/25 px-4 py-2.5 text-[13px] text-cyan hover:bg-cyan/[0.16] transition-colors"
+          >
+            Entrar
+          </button>
+          <p id="estado" class="mt-3 text-[12px] text-[#ff9a9a] min-h-[1.2em]" role="status" aria-live="polite"></p>
+        </form>
+      )}
+
+      <p class="mt-6 text-[12px] text-ink-300">
+        ¿Sin código? El material público está en
+        <a href="/capacitacion" class="text-cyan hover:underline">/capacitacion</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('form') as HTMLFormElement | null
+  const estado = document.getElementById('estado')
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    if (estado) estado.textContent = ''
+    const res = await fetch('/api/capacitacion/acceso', { method: 'POST', body: new FormData(form) })
+
+    if (res.ok) {
+      location.href = '/capacitacion'
+      return
+    }
+
+    const data = await res.json().catch(() => ({}) as { error?: string })
+    // El 429 lo pone el middleware y trae su propio mensaje; el resto es el
+    // rechazo genérico del endpoint, que a propósito no distingue causas.
+    if (estado) estado.textContent = data.error ?? 'no se pudo validar el código'
+  })
+
+  document.getElementById('btn-salir')?.addEventListener('click', async () => {
+    await fetch('/api/capacitacion/acceso', { method: 'DELETE' })
+    location.reload()
+  })
+</script>
