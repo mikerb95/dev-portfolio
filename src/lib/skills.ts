@@ -1,7 +1,7 @@
-// Motor del tracker de aprendizaje (/admin/aprendizaje). Módulo PURO e
-// isomorfo: no importa ../db ni node:*, porque la página lo usa en el servidor
-// para pintar el tablero y en el navegador para recalcular racha y meta sin
-// recargar tras registrar una sesión.
+// Motor del tracker de aprendizaje (/admin/aprendizaje). Módulo PURO: no
+// importa ../db ni node:*, así que se puede testear sin base de datos y, si
+// más adelante conviene recalcular racha y meta en el cliente sin recargar,
+// vale tal cual desde un <script> de la página.
 //
 // Todo el cálculo se hace sobre claves de día 'YYYY-MM-DD', nunca sobre
 // timestamps: una racha es un hecho del calendario, no del reloj. La zona es
