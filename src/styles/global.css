@@ -402,3 +402,43 @@ select {
   background: #13131a;
   color: #c4c4cc;
 }
+
+/* Cuerpo de un recurso del banco de capacitación (markdown renderizado en el
+   servidor desde la BD). Vive aquí y no en la página porque lo pintan dos: el
+   detalle público y la previsualización del panel. */
+.prose-capacitacion { color: #c4c4cc; font-size: 15.5px; line-height: 1.75; }
+.prose-capacitacion h2 {
+  color: #e7e7ec; font-size: 22px; font-weight: 550; letter-spacing: -0.02em;
+  margin: 2em 0 0.7em;
+}
+.prose-capacitacion h3 { color: #e7e7ec; font-size: 18px; font-weight: 550; margin: 1.7em 0 0.6em; }
+.prose-capacitacion h4 { color: #e7e7ec; font-size: 15.5px; font-weight: 600; margin: 1.5em 0 0.5em; }
+.prose-capacitacion p { margin: 0 0 1.1em; }
+.prose-capacitacion strong { color: #e7e7ec; font-weight: 600; }
+.prose-capacitacion em { font-style: italic; }
+.prose-capacitacion a { color: #00f2ff; text-decoration: none; }
+.prose-capacitacion a:hover { text-decoration: underline; }
+.prose-capacitacion ul, .prose-capacitacion ol { margin: 0 0 1.1em; padding-left: 1.4em; }
+.prose-capacitacion li { margin: 0.35em 0; }
+.prose-capacitacion li::marker { color: #00f2ff; }
+.prose-capacitacion code {
+  font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  font-size: 0.88em; color: #9bfaff;
+  background: rgba(0, 242, 255, 0.07);
+  border: 1px solid rgba(0, 242, 255, 0.12);
+  border-radius: 6px; padding: 0.1em 0.4em;
+}
+.prose-capacitacion pre {
+  background: #0e0e12; border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px; padding: 1.1em 1.3em; margin: 0 0 1.3em;
+  overflow-x: auto; font-size: 13px; line-height: 1.6;
+}
+.prose-capacitacion pre code { background: none; border: none; padding: 0; color: inherit; }
+/* Cita sin franja lateral: tinte de marca y aire propio, que se lee como una
+   pieza y no como una card con acento pegado al margen. */
+.prose-capacitacion blockquote {
+  margin: 0 0 1.2em; padding: 0.9em 1.1em; border-radius: 12px;
+  background: rgba(0, 242, 255, 0.05); color: #a8a8b2;
+}
+.prose-capacitacion blockquote p { margin: 0; }
+.prose-capacitacion hr { border: none; border-top: 1px solid rgba(255, 255, 255, 0.06); margin: 2.2em 0; }
