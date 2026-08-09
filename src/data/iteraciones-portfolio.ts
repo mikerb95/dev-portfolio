@@ -1436,6 +1436,63 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-tracker-aprendizaje',
+    fase: 'Fase 35 · Medir el aprendizaje, no declararlo',
+    nombre: 'Tracker de especialización técnica: racha, meta semanal, temario y logros derivados',
+    rango: '8 ago 2026',
+    ghSince: '2026-08-08',
+    ghUntil: '2026-08-09',
+    commits: 2,
+    resumen:
+      'El panel gana un tracker privado de especialización, estrenado con .NET/C#. El Evolution Path ya listaba formación, pero con checkboxes sobre contenido estático: no decía cuánto tiempo se había invertido ni si el hábito se sostenía. Aquí lo que se persiste es la sesión de práctica (día, minutos, tema y qué se entendió), y todo lo demás (racha, meta semanal, mapa de calor, porcentaje del temario y logros) se calcula sobre eso en un módulo puro. Multi-track desde el diseño: añadir otra tecnología es una fila, no una migración.',
+    historias: [
+      {
+        id: 'PF-AP-01', titulo: 'Como aprendiz, quiero registrar cada sesión de práctica y ver si el hábito se sostiene',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-08', tags: ['aprendizaje', 'panel', 'fase-35'],
+        dod: [
+          ok('Registro de sesión con día, minutos, tema, bitácora y hito relacionado; tres tablas nuevas (skill_tracks, skill_sessions, skill_milestones) en migración aditiva.'),
+          ok('Racha con día de gracia: si la última sesión fue ayer sigue viva y se marca "en juego", en vez de romperse a las 00:00 de un día que apenas empieza.'),
+          ok('Meta semanal configurable con lo que falta y el ritmo por día necesario para llegar antes del domingo.'),
+          ok('Mapa de calor de 26 semanas con intensidad relativa al mejor día de la ventana, no a umbrales fijos.'),
+        ],
+      },
+      {
+        id: 'PF-AP-02', titulo: 'Como aprendiz, quiero un temario concreto en vez de una intención vaga de "aprender .NET"',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-08', tags: ['aprendizaje', 'contenido', 'fase-35'],
+        dod: [
+          ok('Temario semilla de 28 hitos en 8 áreas, de fundamentos de C# a desplegar una API real, con dos hitos de proyecto insignia.'),
+          ok('La siembra es idempotente por título: volver a dispararla añade los hitos nuevos de la plantilla sin duplicar ni pisar el estado de los cerrados.'),
+          ok('Los hitos se editan desde el panel una vez sembrados; la plantilla en src/data/track-dotnet.ts no vuelve a tocar un track existente.'),
+        ],
+      },
+      {
+        id: 'PF-AP-03', titulo: 'Como responsable de que el dato sea correcto, quiero que la racha no dependa de la zona horaria del servidor',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-08', tags: ['aprendizaje', 'correctitud', 'testing', 'fase-35'],
+        dod: [
+          ok('Los días se guardan como clave de calendario "YYYY-MM-DD" en zona de Bogotá, no como timestamp: el servidor corre en UTC y una sesión de las 8 de la noche caería en el día siguiente, partiendo la racha.'),
+          ok('Los logros se derivan de las sesiones en cada render en vez de persistirse: una tabla de badges se desincroniza al borrar una sesión mal registrada.'),
+          ok('Cada logro queda fechado en el día en que se cumplió (cruce del umbral acumulado, cierre de la racha), no en el día en que se consulta el panel.'),
+          ok('tests/skills.test.ts: 31 casos sobre el módulo puro, incluidos cambio de mes, año bisiesto, fin de año, corte de racha a los dos días y niveles relativos del mapa de calor.'),
+        ],
+      },
+      {
+        id: 'PF-AP-04', titulo: 'Como dueño del sitio, quiero poder mostrar el avance sin publicar mi bitácora',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-08', tags: ['aprendizaje', 'opsec', 'i18n', 'fase-35'],
+        dod: [
+          ok('Visibilidad por track (is_public, privado por defecto); /certifications publica solo el agregado: horas, porcentaje del temario y mejor racha.'),
+          ok('La bitácora, las fechas de cada sesión y los hitos individuales no salen del panel, misma regla de OPSEC que /status.'),
+          ok('Un track recién sembrado y sin sesiones no aparece en público: cero horas y cero por ciento no dicen nada bueno.'),
+          ok('Sección traducida en los dos diccionarios (es/en), que es lo que exige la paridad de claves de npx astro check.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
