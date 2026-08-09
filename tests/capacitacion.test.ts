@@ -8,6 +8,7 @@ import {
   esNivel,
   esTipoRecurso,
   esVisibilidad,
+  visibilidadesVisibles,
 } from '../src/lib/capacitacion/tipos'
 import {
   CODE_LENGTH,
