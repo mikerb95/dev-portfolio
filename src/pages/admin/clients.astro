@@ -38,8 +38,25 @@ const tableRows = rows.map((r) => ({
   lastContactLabel: fmtDate(r.lastContact),
 }))
 
-// Datos para el formulario de edición (solo campos editables)
-const formData = rows.map(({ id, name, email, company, notes }) => ({ id, name, email, company, notes }))
+// Datos para el formulario de edición (solo campos editables). `billingInfo`
+// viaja ya parseado: el formulario edita pares, no una cadena JSON.
+const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, billingInfo }) => ({
+  id,
+  name,
+  email,
+  phone,
+  company,
+  notes,
+  logoUrl,
+  billing: (() => {
+    try {
+      return billingInfo ? (JSON.parse(billingInfo) as Record<string, string>) : null
+    } catch {
+      // JSON corrupto en BD: mejor abrir el formulario vacío que romper la página.
+      return null
+    }
+  })(),
+}))
 ---
 
 <AdminLayout title="Clientes">
