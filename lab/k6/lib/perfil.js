@@ -165,5 +165,10 @@ export function aTexto(r) {
     `  checks        ${r.checksOk} ok / ${r.checksFallidos} fallidos`,
     `  umbrales      ${r.umbralesCumplidos ? 'CUMPLIDOS' : 'INCUMPLIDOS'}`,
     ``,
+    `  por ruta                n      p50      p95      p99`,
+    ...Object.entries(r.porRuta ?? {}).map(([nombre, v]) =>
+      `  ${(nombre + ' ' + v.path).padEnd(22)}${String(v.n).padStart(6)}${String(Math.round(v.p50)).padStart(9)}${String(Math.round(v.p95)).padStart(9)}${String(Math.round(v.p99)).padStart(9)}`,
+    ),
+    ``,
   ].join('\n')
 }
