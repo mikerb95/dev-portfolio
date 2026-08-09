@@ -1,0 +1,282 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import {
+  NIVELES_AUTORIDAD,
+  ORDEN_NIVELES,
+  LEYENDA_RACI,
+  RACI,
+  REGLAS_RACI,
+  type Nivel,
+  type RolRaci,
+} from '../../data/gobernanza'
+
+const acentoNivel: Record<Nivel, string> = {
+  estrategico: 'bg-violet',
+  tactico: 'bg-ember',
+  operativo: 'bg-cyan',
+}
+
+const textoNivel: Record<Nivel, string> = {
+  estrategico: 'text-violet',
+  tactico: 'text-ember',
+  operativo: 'text-cyan',
+}
+
+// R y A son actuación y responsabilidad: se marcan con relleno. C e I son
+// participación periférica; con el mismo peso visual la tabla se vuelve un
+// mosaico donde no se distingue quién hace de quién se entera.
+const estiloRol: Record<RolRaci, string> = {
+  R: 'bg-lime/15 text-lime border-lime/30',
+  A: 'bg-violet/15 text-violet border-violet/30',
+  C: 'border-white/15 text-ink-200',
+  I: 'border-white/10 text-ink-300',
+}
+
+const secciones = [
+  { id: 'premisa', t: 'La premisa' },
+  { id: 'piramide', t: 'Los tres niveles' },
+  { id: 'raci', t: 'Matriz RACI' },
+  { id: 'limites', t: 'Dónde está el límite' },
+]
+
+// Geometría de la pirámide: tres bandas de la misma altura recortadas del mismo
+// triángulo, para que el ancho de cada franja sea la proporción real del nivel
+// dentro de la figura y no una caja apilada que solo la insinúa.
+const APICE = { x: 200, y: 16 }
+const BASE_Y = 236
+const BASE_MITAD = 168
+const anchoEn = (y: number) => ((y - APICE.y) / (BASE_Y - APICE.y)) * BASE_MITAD
+const bandas = ORDEN_NIVELES.map((id, i) => {
+  const yArriba = APICE.y + ((BASE_Y - APICE.y) * i) / 3
+  const yAbajo = APICE.y + ((BASE_Y - APICE.y) * (i + 1)) / 3
+  const a = anchoEn(yArriba)
+  const b = anchoEn(yAbajo)
+  return {
+    id,
+    puntos: `${APICE.x - a},${yArriba} ${APICE.x + a},${yArriba} ${APICE.x + b},${yAbajo} ${APICE.x - b},${yAbajo}`,
+    centroY: (yArriba + yAbajo) / 2,
+  }
+})
+const porId = new Map(NIVELES_AUTORIDAD.map((n) => [n.id, n]))
+---
+
+<BaseLayout title="Gobernanza y niveles de autoridad">
+  <section class="mx-auto max-w-6xl px-5 py-14">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-10">
+      <p class="text-[12px] font-mono uppercase tracking-wide text-ink-300 mb-2">Documentación · Gobernanza</p>
+      <h1 class="text-2xl font-semibold text-ink-50 mb-3">
+        Quién decide qué, y <span class="text-violet">quién responde</span> por el resultado
+      </h1>
+      <p class="text-[14.5px] text-ink-200 leading-relaxed">
+        Este proyecto lo desarrolla una sola persona. Eso hace tentador declarar que los niveles de autoridad
+        «no aplican», y sería falso: aplican, solo que no separan personas sino <strong class="text-ink-50">
+        tipos de decisión</strong>. La pregunta que responde esta página no es «¿quién es el jefe?», sino
+        «¿qué puede hacer cada nivel sin pedir permiso, y qué no puede hacer aunque tenga el acceso técnico
+        para hacerlo?».
+      </p>
+    </div>
+
+    <nav class="mb-12 flex flex-wrap gap-1.5" aria-label="Secciones de esta página">
+      {secciones.map((s) => (
+        <a href={`#${s.id}`} class="px-3 py-1 rounded-full text-[13px] text-ink-200 border border-white/10 hover:bg-white/5 hover:text-ink-50 transition-colors">
+          {s.t}
+        </a>
+      ))}
+    </nav>
+
+    {/* ── § 1 La premisa ──────────────────────────────────────── */}
+    <h2 id="premisa" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">La premisa: la separación está en el código, no en la buena voluntad</h2>
+    <div class="max-w-3xl mb-6">
+      <p class="text-[14.5px] text-ink-200 leading-relaxed mb-3">
+        En una organización, los niveles de autoridad se sostienen porque distintas personas ocupan distintos
+        cargos. Aquí no hay a quién delegar, así que la frontera tuvo que quedar escrita en un lugar que no
+        dependa del criterio de quien programa a las 2 a. m.:
+      </p>
+      <ul class="text-[14px] text-ink-200 leading-relaxed space-y-2">
+        <li class="flex gap-2.5">
+          <span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-violet shrink-0" aria-hidden="true"></span>
+          <span><strong class="text-ink-50">Publicar es una decisión reservada.</strong> Ninguna automatización ni asistente dispara un despliegue: la regla está escrita en las instrucciones del repositorio y el flujo de trabajo la respeta.</span>
+        </li>
+        <li class="flex gap-2.5">
+          <span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-ember shrink-0" aria-hidden="true"></span>
+          <span><strong class="text-ink-50">Revertir es una decisión automática.</strong> El pipeline comprueba la salud del despliegue y ejecuta el rollback sin consultar a nadie, porque esperar cuesta tiempo de caída.</span>
+        </li>
+        <li class="flex gap-2.5">
+          <span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-cyan shrink-0" aria-hidden="true"></span>
+          <span><strong class="text-ink-50">Ejecutar no incluye publicar ni destruir.</strong> Las migraciones son aditivas por política y los secretos solo se revelan por un endpoint bajo sesión administrada.</span>
+        </li>
+      </ul>
+    </div>
+
+    {/* ── § 2 La pirámide ─────────────────────────────────────── */}
+    <h2 id="piramide" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Los tres niveles</h2>
+
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,340px)_1fr] items-start mb-12">
+      <div class="glass rounded-2xl border border-white/10 p-4">
+        <svg viewBox="0 0 400 252" class="w-full h-auto" role="img" aria-label="Pirámide de niveles de autoridad: estratégico en la cúspide, táctico en el medio, operativo en la base.">
+          {bandas.map((b) => {
+            const nivel = porId.get(b.id)!
+            return (
+              <g>
+                <polygon
+                  points={b.puntos}
+                  class={`${textoNivel[b.id]} fill-current opacity-[.12] stroke-current`}
+                  stroke-opacity=".5"
+                  stroke-width="1"
+                />
+                <text x={APICE.x} y={b.centroY - 4} text-anchor="middle" class="fill-ink-50 text-[13px] font-medium">{nivel.nombre}</text>
+                <text x={APICE.x} y={b.centroY + 12} text-anchor="middle" class="fill-ink-300 text-[11px]">{nivel.lema}</text>
+              </g>
+            )
+          })}
+        </svg>
+        <p class="text-[11.5px] text-ink-300 leading-relaxed mt-2 px-1">
+          El ancho de cada franja es su proporción real dentro de la figura: arriba se decide poco y pesa mucho;
+          abajo se hace casi todo el trabajo y se autoriza casi nada.
+        </p>
+      </div>
+
+      <div class="grid gap-3">
+        {NIVELES_AUTORIDAD.map((n) => (
+          <div class="rounded-xl border border-white/10 bg-white/[.025] p-5">
+            <div class="flex items-center gap-2 flex-wrap mb-2">
+              <span class={`w-2 h-2 rounded-full ${acentoNivel[n.id]} shrink-0`} aria-hidden="true"></span>
+              <h3 class="text-[14.5px] font-medium text-ink-50">{n.nombre}</h3>
+              <span class="text-[12px] text-ink-300 ml-auto">{n.lema}</span>
+            </div>
+            <p class="text-[13px] text-ink-200 leading-relaxed mb-3">{n.quien}</p>
+            <p class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300 mb-1.5">Decide sin pedir permiso</p>
+            <ul class="text-[13px] text-ink-100 leading-relaxed space-y-1.5 mb-3">
+              {n.decide.map((d) => (
+                <li class="flex gap-2">
+                  <span class={`mt-[7px] w-1 h-1 rounded-full ${acentoNivel[n.id]} shrink-0`} aria-hidden="true"></span>
+                  <span>{d}</span>
+                </li>
+              ))}
+            </ul>
+            <p class="text-[13px] text-ink-200 leading-relaxed mb-3">
+              <strong class="text-ink-50">No puede:</strong> {n.noPuede}
+            </p>
+            <div class="flex flex-wrap gap-1.5">
+              {n.evidencia.map((e) => (
+                <span class="px-2 py-0.5 rounded-full text-[11px] text-ink-300 border border-white/10" title={e.que}>
+                  {e.donde}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* ── § 3 RACI ────────────────────────────────────────────── */}
+    <h2 id="raci" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Matriz RACI - {RACI.length} actividades</h2>
+    <div class="max-w-3xl mb-6">
+      <p class="text-[14.5px] text-ink-200 leading-relaxed">
+        Las columnas son los tres niveles, no tres cargos. Leerla así evita la trampa habitual de las matrices
+        RACI de un proyecto pequeño: repartir letras entre nombres inventados. Aquí cada fila contesta algo
+        comprobable: <em>si esto sale mal, ¿de qué nivel es la culpa, y dónde en el repositorio está escrita
+        esa frontera?</em>
+      </p>
+    </div>
+
+    <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-6">
+      {(Object.keys(LEYENDA_RACI) as RolRaci[]).map((r) => (
+        <div class="glass rounded-2xl p-4 border border-white/10">
+          <div class="flex items-center gap-2 mb-1">
+            <span class={`inline-flex items-center justify-center w-6 h-6 rounded-md border font-mono text-[12px] ${estiloRol[r]}`}>{r}</span>
+            <span class="text-[13.5px] font-medium text-ink-50">{LEYENDA_RACI[r].nombre}</span>
+          </div>
+          <p class="text-[12px] text-ink-300 leading-relaxed">{LEYENDA_RACI[r].que}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-white/10 mb-6">
+      <table class="w-full min-w-[720px] text-left border-collapse">
+        <thead>
+          <tr class="border-b border-white/10 bg-white/[.03]">
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium">Actividad</th>
+            {ORDEN_NIVELES.map((n) => (
+              <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium text-center whitespace-nowrap">
+                <span class="inline-flex items-center gap-1.5">
+                  <span class={`w-1.5 h-1.5 rounded-full ${acentoNivel[n]}`} aria-hidden="true"></span>
+                  {porId.get(n)!.nombre}
+                </span>
+              </th>
+            ))}
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium">Por qué la aprobación cae ahí</th>
+          </tr>
+        </thead>
+        <tbody>
+          {RACI.map((a) => (
+            <tr class="border-b border-white/[.06] last:border-0 hover:bg-white/[.02] transition-colors align-top">
+              <th scope="row" class="p-3 text-[13.5px] font-normal text-ink-50 leading-snug">
+                {a.actividad}
+                <span class="block font-mono text-[11px] text-ink-300 mt-1">{a.evidencia}</span>
+              </th>
+              {ORDEN_NIVELES.map((n) => {
+                const rol = a.asignacion[n]
+                return (
+                  <td class="p-3 text-center">
+                    {rol ? (
+                      <span class={`inline-flex items-center justify-center w-6 h-6 rounded-md border font-mono text-[12px] ${estiloRol[rol]}`} title={LEYENDA_RACI[rol].nombre}>
+                        {rol}
+                      </span>
+                    ) : (
+                      <span class="text-ink-300" aria-label="no participa">-</span>
+                    )}
+                  </td>
+                )
+              })}
+              <td class="p-3 text-[12.5px] text-ink-200 leading-relaxed max-w-md">{a.porque}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-12">
+      <p class="text-[12px] font-mono uppercase tracking-wide text-ink-300 mb-2">Las dos reglas</p>
+      <ul class="text-[13.5px] text-ink-100 leading-relaxed space-y-1.5 mb-3">
+        {REGLAS_RACI.map((r) => (
+          <li class="flex gap-2">
+            <span class="mt-[7px] w-1 h-1 rounded-full bg-violet shrink-0" aria-hidden="true"></span>
+            <span>{r}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="text-[12.5px] text-ink-200 leading-relaxed">
+        No son una convención declarada al pie de la tabla: <span class="font-mono text-cyan">tests/gobernanza.test.ts</span>{' '}
+        las comprueba sobre los datos que renderizan esta página, así que una fila con dos aprobadores o sin
+        ejecutor rompe la integración continua antes de llegar a producción.
+      </p>
+    </div>
+
+    {/* ── § 4 Límites ─────────────────────────────────────────── */}
+    <h2 id="limites" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Dónde está el límite (y qué no se puede afirmar)</h2>
+    <div class="max-w-3xl grid gap-3">
+      <div class="rounded-xl border border-white/10 bg-white/[.025] p-5">
+        <p class="text-[13.5px] text-ink-100 leading-relaxed">
+          <strong class="text-ink-50">La separación de niveles no es separación de personas.</strong> Una misma
+          persona ocupa los tres, y eso significa que ninguna de estas fronteras protege contra el escenario que
+          un organigrama real sí cubre: el de alguien que decide saltársela deliberadamente. Lo que sí protegen
+          es contra el error, la prisa y el olvido, que son las causas de la inmensa mayoría de los incidentes.
+          Afirmar más que eso sería vender un control que no existe.
+        </p>
+      </div>
+      <div class="rounded-xl border border-white/10 bg-white/[.025] p-5">
+        <p class="text-[13.5px] text-ink-100 leading-relaxed">
+          <strong class="text-ink-50">Lo que sí se puede afirmar.</strong> Que la autorización de publicar está
+          separada de la capacidad de programar; que revertir no requiere una persona despierta; que destruir
+          datos exige una decisión explícita y deja rastro; y que un cliente no puede ver los datos de otro
+          aunque manipule el identificador que envía - eso último no es una política, es una prueba
+          (<span class="font-mono text-cyan">tests/portal-isolation.test.ts</span>).
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
