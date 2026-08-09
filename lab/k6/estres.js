@@ -103,6 +103,11 @@ export function soltar() {
   const res = pedir(base, rutaAleatoria())
   latenciaRecuperacion.add(res.timings.duration)
   erroresRecuperacion.add(res.status !== 200)
+
+  const seg = Math.floor(exec.instance.currentTestRunDuration / 1000) - INICIO_RECUPERACION
+  const tramo = TRAMOS.reduce((acc, t) => (seg >= t ? t : acc), 0)
+  porTramo[tramo]?.add(res.timings.duration)
+
   sleep(1)
 }
 
