@@ -37,14 +37,21 @@ export const PUT: APIRoute = async ({ params, request }) => {
     .where(eq(trainingAccessCodes.id, id))
     .returning()
 
-  recordSecurityEvent({
-    category: 'admin_action',
-    severity: revokedAt ? 'medium' : 'low',
-    ruleId: revokedAt ? 'capacitacion.codigo_revocado' : 'capacitacion.codigo_reactivado',
-    action: 'allowed',
-    path: `/api/admin/capacitacion/codigos/${id}`,
+  void recordSecurityEvent({
+    classification: {
+      category: 'capacitacion',
+      severity: revokedAt ? 'medium' : 'low',
+      ruleId: revokedAt ? 'capacitacion.code_revoked' : 'capacitacion.code_restored',
+    },
+    ip: clientIp(request),
     method: 'PUT',
-    detail: `código de "${actual.label}" ${revokedAt ? 'revocado' : 'reactivado'}`,
+    path: `/api/admin/capacitacion/codigos/${id}`,
+    query: null,
+    userAgent: request.headers.get('user-agent'),
+    country: request.headers.get('x-vercel-ip-country'),
+    asn: request.headers.get('x-vercel-ip-as-number'),
+    statusCode: 200,
+    action: 'logged',
   })
 
   return json(200, guardado)
