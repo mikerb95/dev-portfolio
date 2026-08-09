@@ -1,0 +1,61 @@
+{
+  "escenario": "estres",
+  "objetivo": "http://127.0.0.1:4400",
+  "fecha": "2026-08-09T17:53:34.070Z",
+  "vusMax": 3040,
+  "duracionS": 211,
+  "peticiones": 13051,
+  "rps": 61.85,
+  "latenciaMs": {
+    "media": 27342.5,
+    "p50": 26460.7,
+    "p90": 60000.4,
+    "p95": 60000.8,
+    "p99": 60001.2,
+    "max": 60013
+  },
+  "tasaErrorPct": 17.033,
+  "checksOk": 21656,
+  "checksFallidos": 4446,
+  "porRuta": {
+    "home": {
+      "path": "/",
+      "n": 5233,
+      "p50": 25335.8,
+      "p95": 45430.6,
+      "p99": 45853.8,
+      "max": 45942.5
+    },
+    "status": {
+      "path": "/status",
+      "n": 3024,
+      "p50": 60000.3,
+      "p95": 60001.2,
+      "p99": 60003.1,
+      "max": 60013
+    },
+    "health": {
+      "path": "/api/health",
+      "n": 2658,
+      "p50": 25554.8,
+      "p95": 45342.7,
+      "p99": 45772,
+      "max": 45884.9
+    },
+    "tools": {
+      "path": "/tools",
+      "n": 2136,
+      "p50": 12691.6,
+      "p95": 29683.4,
+      "p99": 29996.4,
+      "max": 30201.2
+    }
+  },
+  "umbralesCumplidos": false,
+  "recuperacion": {
+    "p50": 82.7,
+    "p95": 35099.4,
+    "max": 51846.2,
+    "tasaErrorPct": 0
+  }
+}
