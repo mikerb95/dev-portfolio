@@ -3,6 +3,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro'
 import { db } from '../../db'
 import { clients, clientUsers, projects, interactions } from '../../db/schema'
 import { desc, eq, sql } from 'drizzle-orm'
+import { formatPhone } from '../../lib/phone'
 
 const rows = await db
   .select({
