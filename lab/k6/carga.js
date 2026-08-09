@@ -49,7 +49,7 @@ export const options = {
   },
   // Sin esto k6 agrega todas las URLs bajo una sola métrica y se pierde el
   // desglose por ruta, que es justo donde está la información útil.
-  summaryTrendStats: ['avg', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
+  summaryTrendStats: ['avg', 'med', 'p(90)', 'p(95)', 'p(99)', 'max', 'count'],
 }
 
 export default function () {

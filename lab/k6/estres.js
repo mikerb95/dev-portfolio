@@ -71,7 +71,7 @@ export const options = {
     'recuperacion_duracion': ['p(95)<1000'],
     'recuperacion_errores': ['rate<0.02'],
   },
-  summaryTrendStats: ['avg', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
+  summaryTrendStats: ['avg', 'med', 'p(90)', 'p(95)', 'p(99)', 'max', 'count'],
 }
 
 export function apretar() {
