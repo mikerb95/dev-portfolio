@@ -78,7 +78,7 @@ export const options = {
       timeUnit: '1s',
       duration: '60s',
       preAllocatedVUs: 40,
-      startTime: '150s',
+      startTime: `${INICIO_RECUPERACION}s`,
       tags: { fase: 'recuperacion' },
       exec: 'soltar',
     },
