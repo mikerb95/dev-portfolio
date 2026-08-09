@@ -239,7 +239,7 @@ const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, bi
 
   function addBillRow(key = '', value = '') {
     const row = document.createElement('div')
-    row.className = 'flex gap-2 items-center'
+    row.className = 'bill-row flex gap-2 items-center'
     row.innerHTML = `
       <input class="bill-k input-base w-[38%] rounded-lg px-2.5 py-1.5 text-[12px]" maxlength="40" placeholder="Etiqueta" autocomplete="off" />
       <input class="bill-v input-base flex-1 rounded-lg px-2.5 py-1.5 text-[12px]" maxlength="200" placeholder="Valor" autocomplete="off" />
