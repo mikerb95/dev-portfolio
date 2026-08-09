@@ -1,0 +1,21 @@
+{
+  "escenario": "carga",
+  "objetivo": "http://127.0.0.1:4400",
+  "fecha": "2026-08-09T01:01:46.880Z",
+  "vusMax": 20,
+  "duracionS": 12,
+  "peticiones": 77,
+  "rps": 6.41,
+  "latenciaMs": {
+    "media": 32.9,
+    "p50": 17.2,
+    "p90": 105.3,
+    "p95": 114.2,
+    "p99": 127.3,
+    "max": 127.9
+  },
+  "tasaErrorPct": 0,
+  "checksOk": 154,
+  "checksFallidos": 0,
+  "umbralesCumplidos": true
+}
