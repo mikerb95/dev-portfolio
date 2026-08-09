@@ -1,4 +1,4 @@
-# Requisitos Funcionales — Portfolio CodeByMike
+# Requisitos Funcionales - Portfolio CodeByMike
 
 > ⚠️ **Este archivo es una instantánea histórica (mayo 2026), no la fuente de
 > verdad.** Los requisitos vigentes viven tipados en
@@ -12,7 +12,7 @@
 > (CI/CD, chaos, SAST/DAST, a11y, mutation testing), micro-SIEM y landing
 > comercial de diseño web. Se conserva como registro del alcance inicial.
 
-## RF-01 — Autenticación y control de acceso
+## RF-01 - Autenticación y control de acceso
 
 | ID | Requisito |
 |----|-----------|
@@ -23,7 +23,7 @@
 
 ---
 
-## RF-02 — Gestión de proyectos
+## RF-02 - Gestión de proyectos
 
 | ID | Requisito |
 |----|-----------|
@@ -38,7 +38,7 @@
 
 ---
 
-## RF-03 — Variables de entorno por proyecto
+## RF-03 - Variables de entorno por proyecto
 
 | ID | Requisito |
 |----|-----------|
@@ -51,7 +51,7 @@
 
 ---
 
-## RF-04 — Gestión de clientes
+## RF-04 - Gestión de clientes
 
 | ID | Requisito |
 |----|-----------|
@@ -61,7 +61,7 @@
 
 ---
 
-## RF-05 — Gestión de finanzas
+## RF-05 - Gestión de finanzas
 
 | ID | Requisito |
 |----|-----------|
@@ -72,7 +72,7 @@
 
 ---
 
-## RF-06 — Mensajes de contacto
+## RF-06 - Mensajes de contacto
 
 | ID | Requisito |
 |----|-----------|
@@ -85,7 +85,7 @@
 
 ---
 
-## RF-07 — Certifications y educación
+## RF-07 - Certifications y educación
 
 | ID | Requisito |
 |----|-----------|
@@ -97,7 +97,7 @@
 
 ---
 
-## RF-08 — Briefings
+## RF-08 - Briefings
 
 | ID | Requisito |
 |----|-----------|
@@ -108,7 +108,7 @@
 
 ---
 
-## RF-09 — ADRs (Architecture Decision Records)
+## RF-09 - ADRs (Architecture Decision Records)
 
 | ID | Requisito |
 |----|-----------|
@@ -119,7 +119,7 @@
 
 ---
 
-## RF-10 — Servicios externos por proyecto
+## RF-10 - Servicios externos por proyecto
 
 | ID | Requisito |
 |----|-----------|
@@ -129,7 +129,7 @@
 
 ---
 
-## RF-11 — Contactos por proyecto
+## RF-11 - Contactos por proyecto
 
 | ID | Requisito |
 |----|-----------|
@@ -139,7 +139,7 @@
 
 ---
 
-## RF-12 — Engineering Log
+## RF-12 - Engineering Log
 
 | ID | Requisito |
 |----|-----------|
@@ -148,7 +148,7 @@
 
 ---
 
-## RF-13 — Repositorios
+## RF-13 - Repositorios
 
 | ID | Requisito |
 |----|-----------|

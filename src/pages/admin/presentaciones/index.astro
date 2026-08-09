@@ -31,7 +31,7 @@ const feedback = await db
   .limit(8)
 
 const fmtDate = (d: Date | null) =>
-  d ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d) : '—'
+  d ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d) : '-'
 // `webkitdirectory` es un atributo real de los navegadores pero no está en
 // los tipos de Astro; se pasa por spread para no castear el input entero.
 const FOLDER_ATTRS = { webkitdirectory: true, directory: true } as Record<string, unknown>

@@ -145,7 +145,7 @@ export const GET: APIRoute = async () => {
 
   // 1) Discover repos touched within the window. Sorting by `pushed` descending
   //    lets us stop as soon as we reach a repo that hasn't been pushed since
-  //    `thirtyDaysAgo` — everything after it is older too.
+  //    `thirtyDaysAgo` - everything after it is older too.
   const activeRepos: Array<{ owner: string; name: string; full: string }> = []
   let repoPage = 1
   discover: while (repoPage <= 20) {
@@ -215,7 +215,7 @@ export const GET: APIRoute = async () => {
   )
 
   // 3) Supplement with the Search API for commits in external repos not covered
-  //    above (capped at 1000, but only used to fill gaps — dedup is by SHA).
+  //    above (capped at 1000, but only used to fill gaps - dedup is by SHA).
   let page = 1
   let totalCount = Infinity
   while (searchItems.length < totalCount && page <= 10) {

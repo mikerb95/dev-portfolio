@@ -1,4 +1,4 @@
-# LAB — Fases pendientes (detalle de implementación)
+# LAB - Fases pendientes (detalle de implementación)
 
 > Complemento de `docs/plan-lab.md`.
 >
@@ -21,7 +21,7 @@
 
 ---
 
-## Fase 5 — Load testing con k6
+## Fase 5 - Load testing con k6
 
 **Objetivo**: mostrar latencia y throughput bajo carga (100 / 500 / 1000 usuarios
 concurrentes) con gráficas p50/p95/p99, y contar la historia de "cómo se comporta
@@ -37,9 +37,9 @@ El job de k6 es **manual** (`workflow_dispatch`), nunca en cada push.
 
 ### Entregables
 1. **Scripts k6** en `lab/k6/`:
-   - `home.js` — GET a la home pública (renderizado SSR).
-   - `api-read.js` — GET a un endpoint público de lectura (p. ej. `/api/health`).
-   - `checkout.js` — POST a `/api/payments/checkout` en modo mock (idempotency key única por VU/iteración) para medir la ruta de escritura + BD bajo carga.
+   - `home.js` - GET a la home pública (renderizado SSR).
+   - `api-read.js` - GET a un endpoint público de lectura (p. ej. `/api/health`).
+   - `checkout.js` - POST a `/api/payments/checkout` en modo mock (idempotency key única por VU/iteración) para medir la ruta de escritura + BD bajo carga.
    - Escenario con etapas (`stages`): ramp-up a 100 → 500 → 1000 VUs y ramp-down, con `thresholds` (p. ej. `http_req_duration: p(95)<800`).
 2. **Tabla `load_test_runs`** (migración nueva):
    ```
@@ -48,7 +48,7 @@ El job de k6 es **manual** (`workflow_dispatch`), nunca en cada push.
    ```
 3. **Ingesta**: ampliar `POST /api/lab/ingest` para aceptar `kind: 'load_test'`.
    El job parsea el `summary.json` de k6 (`handleSummary` → métricas) y lo postea.
-4. **Endpoint admin** `GET /api/admin/lab/load` — últimas corridas.
+4. **Endpoint admin** `GET /api/admin/lab/load` - últimas corridas.
 5. **Página** `/admin/lab/load`:
    - Tarjetas por corrida con p50/p95/p99, RPS y tasa de error.
    - Gráfica de latencia por nivel de carga (SVG inline o `<canvas>` sin libs externas; recordar CSP de artifacts si se exporta).
@@ -76,30 +76,30 @@ Opción B: disparar el `workflow_dispatch` desde la pestaña Actions en vivo.
 
 ---
 
-## Fase 6 — Seguridad (SAST / DAST) + Accesibilidad (a11y)
+## Fase 6 - Seguridad (SAST / DAST) + Accesibilidad (a11y)
 
 **Objetivo**: correr análisis de seguridad automáticos y de accesibilidad, y
 mostrar hallazgos → estado (abierto / resuelto / aceptado). La narrativa
 "encontré X y lo resolví" vale más ante el jurado que un scan vacío.
 
-### 6.1 SAST (análisis estático) — ✅ implementado
+### 6.1 SAST (análisis estático) - ✅ implementado
 - **Job de CI** `security.yml` (en PRs y push a main):
   - `npm audit --json` → parse de vulnerabilidades de dependencias.
   - **Semgrep** (`returntocorp/semgrep-action`) o **Snyk** (free tier) con reglas para JS/TS.
   - CodeQL de GitHub (gratis en repos públicos como `dev-portfolio`) como opción nativa.
 - Resultados → `POST /api/lab/ingest` con `kind: 'security_finding'`.
 
-### 6.2 DAST (análisis dinámico) — ✅ implementado (jul 23 2026)
+### 6.2 DAST (análisis dinámico) - ✅ implementado (jul 23 2026)
 - **OWASP ZAP baseline** (`zaproxy/action-baseline`) contra el **preview deployment**
   de cada PR (`.github/workflows/dast.yml`), nunca contra producción.
 - La URL del preview se obtiene sondeando la API de Deployments de GitHub
   (`actions/github-script` + `GITHUB_TOKEN`), sin depender de `VERCEL_TOKEN`
-  — a diferencia de la Fase 5, este job no está bloqueado por ese secret.
+  - a diferencia de la Fase 5, este job no está bloqueado por ese secret.
 - Decisión de diseño: `spider.parseRobotsTxt=false` para que ZAP se comporte
   como el "crawler legítimo" que `public/robots.txt` le pide y nunca trate
   las rutas honeypot (`/wp-login.php`, `/admin.php`, `/admin`, `/api`) como
   objetivos. Si las pisara, el rate limiter durable bloquearía la IP del
-  runner y el resto del scan perdería cobertura — no sería una
+  runner y el resto del scan perdería cobertura - no sería una
   vulnerabilidad real, sería un autogol de configuración.
 - Salida JSON (`report_json.json`) → `scripts/zap-ingest.mjs` → ingesta con
   `source: 'zap'`, `autoResolve: true`. Cada alerta × instancia es un
@@ -144,7 +144,7 @@ mostrar hallazgos → estado (abierto / resuelto / aceptado). La narrativa
 
 ---
 
-## Fase 7 — Mutation testing + Contract testing (remate)
+## Fase 7 - Mutation testing + Contract testing (remate)
 
 **Objetivo**: demostrar **calidad de las pruebas mismas**, no solo cobertura.
 Casi nadie a nivel tecnólogo conoce mutation testing; sorprende.
@@ -158,7 +158,7 @@ Casi nadie a nivel tecnólogo conoce mutation testing; sorprende.
   nunca en cada push.
 - El `mutation-report.json` → parse del `mutationScore` → ingesta `kind: 'mutation_run'`.
 - Mostrar junto a cobertura en `/admin/lab/quality` (o `/admin/lab/pipeline`):
-  *"87% cobertura, 74% mutation score — y sé explicar la diferencia"*.
+  *"87% cobertura, 74% mutation score - y sé explicar la diferencia"*.
   - La diferencia es el gancho: cobertura dice "esta línea se ejecutó"; mutation
     dice "si rompo esta línea, ¿algún test se da cuenta?". Un mutation score bajo
     con cobertura alta = tests que no verifican de verdad.
@@ -176,7 +176,7 @@ Casi nadie a nivel tecnólogo conoce mutation testing; sorprende.
 1. **Dependencias dev**: `@stryker-mutator/core`, `@stryker-mutator/vitest-runner`, `zod`.
 2. **`stryker.config.json`** + script `npm run test:mutation`.
 3. **Tabla `mutation_runs`** (o reutilizar `ci_runs` con columna `mutationScore` ya existente
-   — decidir: hay `coveragePct` y `mutationScore` en `ci_runs`, quizá basta ampliar el ingest de `ci_run`).
+   - decidir: hay `coveragePct` y `mutationScore` en `ci_runs`, quizá basta ampliar el ingest de `ci_run`).
 4. **Esquemas Zod** en `src/lib/contracts.ts` + tests `tests/contracts.test.ts`.
 5. **Workflow** `mutation.yml` (`workflow_dispatch` + `schedule` semanal).
 6. **UI**: tarjeta de mutation score en el panel (junto a cobertura del pipeline).

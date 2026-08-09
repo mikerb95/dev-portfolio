@@ -6,7 +6,7 @@ import { parseCspReports } from '../../../lib/security/csp-report'
 
 // Receptor de reportes de violación de CSP (report-uri / Reporting API). La
 // CSP ya corre en modo ENFORCE (el navegador ya bloqueó lo que sea); esto solo
-// añade observabilidad continua — si un futuro cambio rompe la CSP, o alguien
+// añade observabilidad continua - si un futuro cambio rompe la CSP, o alguien
 // intenta inyectar algo que la política ya bloquea, queda registrado.
 //
 // Sin auth (los navegadores no mandan credenciales en estos POST). Rate limit

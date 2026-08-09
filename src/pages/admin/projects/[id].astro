@@ -314,7 +314,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
       <div class="text-2xl font-semibold text-lime tracking-tight">{fmtUSD(pnl.ingresosCobrados)}</div>
       {pnl.ingresosPendientes > 0
         ? <div class="mt-1.5 text-[10px] font-mono text-amber-400/70">{fmtUSD(pnl.ingresosPendientes)} pendiente</div>
-        : <div class="mt-1.5 text-[10px] font-mono text-ink-300/50">—</div>
+        : <div class="mt-1.5 text-[10px] font-mono text-ink-300/50">-</div>
       }
     </div>
     <div class="rounded-xl glass p-4 border-t-2 border-cyan/40 shadow-[0_4px_24px_-8px_rgba(0,242,255,0.08)]">
@@ -334,7 +334,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
     </div>
   </div>
   {pnl.costosSinTasa > 0 && (
-    <p class="-mt-3 mb-5 text-[11px] font-mono text-ember">⚠ {pnl.costosSinTasa} costo(s) sin tasa de cambio configurada — no sumados. <a href="/admin/settings" class="underline">Ajustes</a></p>
+    <p class="-mt-3 mb-5 text-[11px] font-mono text-ember">⚠ {pnl.costosSinTasa} costo(s) sin tasa de cambio configurada - no sumados. <a href="/admin/settings" class="underline">Ajustes</a></p>
   )}
 
   <!-- Tabs de navegación -->
@@ -459,7 +459,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
                 </span>
               ))}
             </div>
-          ) : <p class="text-zinc-600 text-sm">—</p>}
+          ) : <p class="text-zinc-600 text-sm">-</p>}
         </div>
 
         {project.clientName && (
@@ -540,10 +540,10 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
                 <td class="py-2.5 pr-4 font-medium text-zinc-200">{s.name}</td>
                 <td class="py-2.5 pr-4 text-zinc-500 text-xs">{categoryLabels[s.category] ?? s.category}</td>
                 <td class="py-2.5 pr-4">
-                  {s.url ? <a href={s.url} target="_blank" rel="noopener" class="text-zinc-400 hover:text-zinc-200 text-xs truncate max-w-[180px] block">{s.url}</a> : <span class="text-zinc-600">—</span>}
+                  {s.url ? <a href={s.url} target="_blank" rel="noopener" class="text-zinc-400 hover:text-zinc-200 text-xs truncate max-w-[180px] block">{s.url}</a> : <span class="text-zinc-600">-</span>}
                 </td>
-                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{s.username ?? '—'}</td>
-                <td class="py-2.5 pr-4 text-zinc-600 text-xs max-w-[160px] truncate">{s.notes ?? '—'}</td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{s.username ?? '-'}</td>
+                <td class="py-2.5 pr-4 text-zinc-600 text-xs max-w-[160px] truncate">{s.notes ?? '-'}</td>
                 <td class="py-2.5 text-right">
                   <button class="btn-delete text-xs text-zinc-600 hover:text-red-400 transition-colors" data-resource="services" data-id={s.id}>Eliminar</button>
                 </td>
@@ -616,7 +616,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
                   <button class="btn-reveal font-sans text-zinc-600 hover:text-zinc-300 text-xs ml-2 transition-colors" data-env-id={e.id}>mostrar</button>
                 </td>
                 <td class="py-2.5 pr-4 text-zinc-500 text-xs font-sans">{e.environment ?? 'all'}</td>
-                <td class="py-2.5 pr-4 text-zinc-600 text-xs font-sans">{e.notes ?? '—'}</td>
+                <td class="py-2.5 pr-4 text-zinc-600 text-xs font-sans">{e.notes ?? '-'}</td>
                 <td class="py-2.5 text-right font-sans">
                   <button class="btn-delete text-xs text-zinc-600 hover:text-red-400 transition-colors" data-resource="envvars" data-id={e.id}>Eliminar</button>
                 </td>
@@ -685,12 +685,12 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
             {contacts.map((c) => (
               <tr class="text-zinc-300 contact-row" data-id={c.id}>
                 <td class="py-2.5 pr-4 font-medium text-zinc-200">{c.name}</td>
-                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{c.role ?? '—'}</td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{c.role ?? '-'}</td>
                 <td class="py-2.5 pr-4 text-xs">
-                  {c.email ? <a href={`mailto:${c.email}`} class="text-zinc-400 hover:text-zinc-200">{c.email}</a> : <span class="text-zinc-600">—</span>}
+                  {c.email ? <a href={`mailto:${c.email}`} class="text-zinc-400 hover:text-zinc-200">{c.email}</a> : <span class="text-zinc-600">-</span>}
                 </td>
-                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{c.phone ?? '—'}</td>
-                <td class="py-2.5 pr-4 text-zinc-600 text-xs">{c.notes ?? '—'}</td>
+                <td class="py-2.5 pr-4 text-zinc-500 text-xs">{c.phone ?? '-'}</td>
+                <td class="py-2.5 pr-4 text-zinc-600 text-xs">{c.notes ?? '-'}</td>
                 <td class="py-2.5 text-right">
                   <button class="btn-delete text-xs text-zinc-600 hover:text-red-400 transition-colors" data-resource="contacts" data-id={c.id}>Eliminar</button>
                 </td>
@@ -736,13 +736,13 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
         <tbody class="divide-y divide-zinc-800/60">
           {financeRows.map((f) => (
             <tr class="text-zinc-300">
-              <td class="py-2.5 pr-4">{f.description ?? '—'}</td>
+              <td class="py-2.5 pr-4">{f.description ?? '-'}</td>
               <td class="py-2.5 pr-4 font-mono text-xs">{fmt.format(f.amount)}</td>
               <td class="py-2.5 pr-4">
                 <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${finStatusColors[f.status]}`}>{f.status}</span>
               </td>
               <td class="py-2.5 text-zinc-500 text-xs">
-                {f.dueDate ? f.dueDate.toLocaleDateString('es-CO') : '—'}
+                {f.dueDate ? f.dueDate.toLocaleDateString('es-CO') : '-'}
               </td>
             </tr>
           ))}
@@ -796,7 +796,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
               <div class="flex items-center justify-between mb-1.5">
                 <span class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300">Latencia en vivo</span>
                 <span class="ekg-now font-mono text-[11px] text-ink-100 tabular-nums" data-monitor-id={c.id}>
-                  {c.lastResponseMs != null ? `${c.lastResponseMs} ms` : '—'}
+                  {c.lastResponseMs != null ? `${c.lastResponseMs} ms` : '-'}
                 </span>
               </div>
               <div class={`ekg relative h-14 rounded-lg overflow-hidden bg-black/30 ring-1 ring-white/5 ${ekgColor[c.status]}`}
@@ -817,19 +817,19 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-[13px]">
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Uptime 24h</div>
-                <div class={`font-mono ${upCls(c.uptime24h)}`}>{c.uptime24h == null ? '—' : `${c.uptime24h}%`}</div>
+                <div class={`font-mono ${upCls(c.uptime24h)}`}>{c.uptime24h == null ? '-' : `${c.uptime24h}%`}</div>
               </div>
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Uptime 7d</div>
-                <div class={`font-mono ${upCls(c.uptime7d)}`}>{c.uptime7d == null ? '—' : `${c.uptime7d}%`}</div>
+                <div class={`font-mono ${upCls(c.uptime7d)}`}>{c.uptime7d == null ? '-' : `${c.uptime7d}%`}</div>
               </div>
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Uptime 30d</div>
-                <div class={`font-mono ${upCls(c.uptime30d)}`}>{c.uptime30d == null ? '—' : `${c.uptime30d}%`}</div>
+                <div class={`font-mono ${upCls(c.uptime30d)}`}>{c.uptime30d == null ? '-' : `${c.uptime30d}%`}</div>
               </div>
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Latencia media</div>
-                <div class="font-mono text-ink-50">{c.avgMs30d == null ? '—' : `${c.avgMs30d} ms`}</div>
+                <div class="font-mono text-ink-50">{c.avgMs30d == null ? '-' : `${c.avgMs30d} ms`}</div>
               </div>
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">Último check</div>
@@ -1024,7 +1024,7 @@ const hasPptx = existsSync(join(process.cwd(), 'public', 'docs', `${project.slug
                   </div>
                 )}
                 <p class="text-xs text-zinc-600">
-                  Registrado el {adr.createdAt?.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
+                  Registrado el {adr.createdAt?.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '-'}
                 </p>
               </div>
             </div>

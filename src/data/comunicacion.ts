@@ -4,7 +4,7 @@
 // Los cuatro modelos son las CUATRO MISMAS interacciones que ya están en
 // /docs/diagrama-secuencia, con los mismos participantes. Es deliberado: en UML
 // el diagrama de comunicación y el de secuencia son semánticamente
-// equivalentes, y lo único que cambia es qué se pone delante — allí el orden
+// equivalentes, y lo único que cambia es qué se pone delante - allí el orden
 // temporal sobre líneas de vida, aquí la estructura de enlaces con la secuencia
 // reducida a la numeración decimal. Documentar interacciones distintas en cada
 // página desperdiciaría justamente eso: la posibilidad de contrastar las dos
@@ -17,11 +17,11 @@ const login: UmlCommunicationModel = {
   id: 'login',
   titulo: 'Login del administrador (GitHub OAuth)',
   desc:
-    'La misma interacción del diagrama de secuencia, vista por su estructura: qué objeto está enlazado con cuál. Se lee de un vistazo que el navegador nunca habla con GitHub ni con la base — solo con el middleware y con Auth.js.',
+    'La misma interacción del diagrama de secuencia, vista por su estructura: qué objeto está enlazado con cuál. Se lee de un vistazo que el navegador nunca habla con GitHub ni con la base - solo con el middleware y con Auth.js.',
   equivaleA: '/docs/diagrama-secuencia#login',
   origen: 'src/middleware.ts · auth.config.mjs · src/lib/auth.ts · src/lib/device-sessions.ts',
   nota:
-    'La validación contra la allowlist es un mensaje reflexivo: no sale del objeto. Por eso además se repite en el middleware en cada request — un mensaje que no cruza un enlace tampoco deja rastro que otro objeto pueda verificar.',
+    'La validación contra la allowlist es un mensaje reflexivo: no sale del objeto. Por eso además se repite en el middleware en cada request - un mensaje que no cruza un enlace tampoco deja rastro que otro objeto pueda verificar.',
   objetos: [
     { id: 'admin', clase: 'Administrador', estereotipo: 'actor', col: 0, fila: 0 },
     { id: 'mw', clase: 'Middleware', estereotipo: 'control', col: 1, fila: 0 },

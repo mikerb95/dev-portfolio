@@ -1,10 +1,10 @@
-# Distribución automática de notas — lo que debes hacer de tu lado
+# Distribución automática de notas - lo que debes hacer de tu lado
 
 Cuando haces `git push` a `main` con una nota nueva en `src/content/notes/`, el
 workflow **Distribuir nota** (`.github/workflows/distribute-note.yml`) la publica
 solo en blogs/redes y avisa a los buscadores.
 
-**Todo funciona sin configurar nada** — pero cada plataforma está apagada hasta
+**Todo funciona sin configurar nada** - pero cada plataforma está apagada hasta
 que añadas sus secrets. No configuras secrets = esa plataforma se salta con
 gracia (el resto sigue). Ve activando una por una.
 
@@ -18,14 +18,14 @@ Run workflow**, y pega la ruta de una nota existente.
 
 ---
 
-## 1. IndexNow — ✅ ya funciona, no hagas nada
+## 1. IndexNow - ✅ ya funciona, no hagas nada
 
 Avisa a Bing, Yandex, Seznam, Naver y Yep. La clave es pública por diseño (ya
 está en el repo). Cero configuración.
 
 ---
 
-## 2. dev.to — el más fácil y el de más valor SEO
+## 2. dev.to - el más fácil y el de más valor SEO
 
 Cross-postea el artículo completo con `canonical_url` → codebymike.tech. Backlink
 de un dominio con autoridad, sin penalización por duplicado.
@@ -37,7 +37,7 @@ de un dominio con autoridad, sin penalización por duplicado.
 
 ---
 
-## 3. Hashnode — otro backlink de autoridad
+## 3. Hashnode - otro backlink de autoridad
 
 1. Token: https://hashnode.com/settings/developer → **Generate new token** (PAT).
 2. Publication ID: entra a tu blog de Hashnode → Dashboard. El ID sale en la URL
@@ -49,7 +49,7 @@ de un dominio con autoridad, sin penalización por duplicado.
 
 ---
 
-## 4. X (Twitter) — el más engorroso de configurar (una vez)
+## 4. X (Twitter) - el más engorroso de configurar (una vez)
 
 Necesitas una **app** en el portal de desarrolladores con permisos de escritura.
 
@@ -58,7 +58,7 @@ Necesitas una **app** en el portal de desarrolladores con permisos de escritura.
    **Read and write**.
 3. En **Keys and tokens** genera:
    - API Key y API Key Secret (de la app)
-   - Access Token y Access Token Secret (de tu usuario) — **regenéralos DESPUÉS
+   - Access Token y Access Token Secret (de tu usuario) - **regenéralos DESPUÉS
      de poner permiso Read and write**, o el token será de solo lectura.
 4. Secrets:
    - `X_API_KEY`
@@ -70,7 +70,7 @@ Necesitas una **app** en el portal de desarrolladores con permisos de escritura.
 
 ---
 
-## 5. LinkedIn — el que hay que renovar cada ~60 días
+## 5. LinkedIn - el que hay que renovar cada ~60 días
 
 Requiere una app aprobada con el producto **Share on LinkedIn** / **Sign In**.
 
@@ -88,7 +88,7 @@ Requiere una app aprobada con el producto **Share on LinkedIn** / **Sign In**.
 
 ---
 
-## 6. Instagram — opcional y quisquilloso (déjalo para el final)
+## 6. Instagram - opcional y quisquilloso (déjalo para el final)
 
 Instagram **no permite posts de solo texto**: se publica con una imagen (usamos
 tu `og-default.png`). Requiere:
@@ -109,7 +109,7 @@ Secrets:
 
 ---
 
-## 7. Google Indexing API — indexa en Google en horas, no días
+## 7. Google Indexing API - indexa en Google en horas, no días
 
 Complementa a IndexNow (que Google no usa).
 

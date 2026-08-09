@@ -62,7 +62,7 @@ const d = GEO.prof
     l.nodos.map((n) => (
       <g>
         {/* Caja tridimensional: la cara frontal más las dos aristas de fondo.
-            Es la figura que UML reserva para un nodo — un rectángulo plano sería
+            Es la figura que UML reserva para un nodo - un rectángulo plano sería
             una clase o un componente, no una máquina. */}
         <path
           d={`M ${n.x} ${n.y} L ${n.x + d} ${n.y - d} L ${n.x + n.w + d} ${n.y - d} L ${n.x + n.w} ${n.y} Z`}

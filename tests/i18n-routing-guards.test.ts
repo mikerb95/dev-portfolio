@@ -1,7 +1,7 @@
 // Cada guard de seguridad del repo compara contra rutas literales sin
 // prefijo de idioma. Este test verifica que, tras pasar por `delocalizePath`
 // (lo que hace src/middleware.ts antes de clasificar), CUALQUIER guard da el
-// mismo veredicto para "/x" que para "/en/x" — es decir, que normalizar
+// mismo veredicto para "/x" que para "/en/x" - es decir, que normalizar
 // primero de verdad neutraliza el prefijo. Ver docs/plan-i18n-en.md §3.
 import { describe, expect, it } from 'vitest'
 import { delocalizePath, localizePath } from '../src/i18n/routing'

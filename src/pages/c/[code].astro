@@ -27,7 +27,7 @@ const pagable = Boolean(payment) && !vencido && !terminal
 const estado: { titulo: string; detalle: string } | null = !payment
   ? { titulo: 'Cobro no encontrado', detalle: 'Este link no existe o ya no está disponible. Escríbeme por WhatsApp y te envío uno nuevo.' }
   : pagado
-    ? { titulo: 'Este cobro ya fue pagado', detalle: `Recibido el ${payment.updatedAt?.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) ?? '—'}. Gracias.` }
+    ? { titulo: 'Este cobro ya fue pagado', detalle: `Recibido el ${payment.updatedAt?.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) ?? '-'}. Gracias.` }
     : payment.status === 'voided'
       ? { titulo: 'Cobro anulado', detalle: 'Este cobro fue anulado. Si crees que es un error, escríbeme por WhatsApp.' }
       : terminal
@@ -46,11 +46,11 @@ const WHATSAPP = 'https://wa.me/573104641228'
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#09090b" />
-    <title>Pago — CodeByMike</title>
+    <title>Pago - CodeByMike</title>
     <!-- OG deliberadamente genérica: WhatsApp cachea las previews de forma
          agresiva y las muestra en el chat. Con el monto dentro, el valor
          quedaría visible sin abrir el link y congelado aunque el cobro cambie. -->
-    <meta property="og:title" content="Pago seguro — CodeByMike" />
+    <meta property="og:title" content="Pago seguro - CodeByMike" />
     <meta property="og:description" content="Link de pago personal. Ábrelo para ver el detalle." />
     <meta property="og:type" content="website" />
   </head>

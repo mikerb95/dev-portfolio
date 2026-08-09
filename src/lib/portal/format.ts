@@ -17,13 +17,13 @@ export function formatMoney(cents: number, currency = 'COP'): string {
 }
 
 export function formatDate(d: Date | number | null | undefined): string {
-  if (d == null) return '—'
+  if (d == null) return '-'
   const date = d instanceof Date ? d : new Date(d)
   return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
 }
 
 export function formatDateTime(d: Date | number | null | undefined): string {
-  if (d == null) return '—'
+  if (d == null) return '-'
   const date = d instanceof Date ? d : new Date(d)
   return new Intl.DateTimeFormat('es-CO', {
     day: '2-digit',
@@ -39,7 +39,7 @@ export function formatDateTime(d: Date | number | null | undefined): string {
  * importa si algo vence pronto, no el 14 de agosto.
  */
 export function relativeTime(d: Date | number | null | undefined, now = new Date()): string {
-  if (d == null) return '—'
+  if (d == null) return '-'
   const date = d instanceof Date ? d : new Date(d)
   const diffMs = date.getTime() - now.getTime()
   const abs = Math.abs(diffMs)
@@ -68,7 +68,7 @@ export function daysUntil(d: Date | null | undefined, now = new Date()): number 
 }
 
 export function formatBytes(bytes: number | null | undefined): string {
-  if (bytes == null) return '—'
+  if (bytes == null) return '-'
   if (bytes < 1024) return `${bytes} B`
   const units = ['KB', 'MB', 'GB']
   let value = bytes / 1024

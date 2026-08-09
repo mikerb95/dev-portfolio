@@ -10,7 +10,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 // respuestas desde fuera, ahí sí valdría la pena Pact de verdad.
 //
 // BD: libsql en archivo temporal, migrada con el MISMO migrador que usa
-// producción (drizzle-orm/libsql/migrator) — nunca DDL escrito a mano. Ya nos
+// producción (drizzle-orm/libsql/migrator) - nunca DDL escrito a mano. Ya nos
 // mordió una vez (tests/payments.test.ts) que el DDL a mano se desincronizara
 // del esquema real cuando otro trabajo le agregó columnas.
 vi.mock('../src/db', async () => {

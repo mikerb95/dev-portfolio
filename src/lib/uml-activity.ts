@@ -10,7 +10,7 @@
 //
 // Se reutiliza del motor BPMN todo lo que es geometría genérica (corte de
 // texto, polilíneas redondeadas, punto sobre la traza); lo que cambia es el
-// sentido de lectura —aquí el flujo baja y las particiones son columnas— y el
+// sentido de lectura (aquí el flujo baja y las particiones son columnas) y el
 // catálogo de figuras, que es el de UML y no el de BPMN.
 //
 // Módulo PURO: sin Astro, sin BD. Los tests verifican la geometría
@@ -24,7 +24,7 @@ export type { Pt }
 /**
  * Catálogo de nodos de actividad de UML 2.5.1. El significado va en la figura:
  * dibujar un `merge` como `decision` (o al revés) cambia lo que el diagrama
- * afirma, no su estética — el rombo de decisión tiene una entrada y varias
+ * afirma, no su estética - el rombo de decisión tiene una entrada y varias
  * salidas con guarda, el de unión varias entradas y una salida sin guarda.
  */
 export type UmlActivityNodeType =
@@ -84,7 +84,7 @@ export interface UmlActivityEdge {
    * Corrige a mano dónde cae la guarda. Hace falta cuando dos ramas salen del
    * mismo rombo: sus primeros tramos son casi paralelos y el ancla automática
    * las deja una encima de otra, con lo que cada guarda acaba leyéndose sobre
-   * la rama contraria — que dice justo lo contrario de lo que pasa.
+   * la rama contraria - que dice justo lo contrario de lo que pasa.
    */
   guardaOffset?: { dx?: number; dy?: number }
 }
@@ -127,7 +127,7 @@ export const GEO = {
    * de una fila comparten esta línea central, sin importar su altura: si se
    * alinearan por el borde superior, un rombo de 48 y un final de 26 en la
    * misma fila quedarían a distinta altura y el tramo horizontal que los une
-   * dejaría de ser recto — con lo que el ruteo lo trataría como un bucle.
+   * dejaría de ser recto - con lo que el ruteo lo trataría como un bucle.
    */
   filaCentro: 26,
 } as const

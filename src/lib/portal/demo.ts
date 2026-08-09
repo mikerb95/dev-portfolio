@@ -36,7 +36,7 @@ export const verifyPortalDemoToken = verifyDemoToken
  *
  * Todo lo demás que mute algo queda fuera a propósito: invitar usuarios o
  * cambiar contraseñas dispararía correos reales a direcciones que escribe un
- * anónimo — eso sí sería un vector de abuso, aunque los datos vivan en una
+ * anónimo - eso sí sería un vector de abuso, aunque los datos vivan en una
  * base desechable.
  */
 const MUTATION_ALLOWLIST: RegExp[] = [

@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ site }) => {
   // Cada ruta estática se emite en los idiomas en los que EXISTE, con hreflang
   // recíproco (xhtml:link) entre ellas. El sitio se traduce por fases: emitir
   // /en/ para toda ruta (lo que hacía antes) publicaba en el sitemap URLs que
-  // devolvían 404 — la peor forma posible de que un buscador descubra el
+  // devolvían 404 - la peor forma posible de que un buscador descubra el
   // inglés. `translatedAlternates` es la fuente de verdad de qué existe.
   const staticEntries = STATIC_PATHS.flatMap((path) => {
     const alt = translatedAlternates(path)
@@ -47,7 +47,7 @@ export const GET: APIRoute = async ({ site }) => {
   // La plantilla de /projects/<slug> existe en los dos idiomas, pero el
   // contenido de cada proyecto se traduce fila por fila: solo se anuncia la URL
   // en inglés de los proyectos que SÍ tienen `title_en`. Anunciar el resto
-  // sería publicar una URL /en/ cuyo contenido sale en español — thin content
+  // sería publicar una URL /en/ cuyo contenido sale en español - thin content
   // a ojos de un buscador. Ver docs/plan-i18n-en.md §7.
   const projectEntries = visibleProjects.flatMap((p) => {
     const path = `/projects/${p.slug}`
@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ site }) => {
   })
 
   // Notas: cada artículo se anuncia en español y, si existe su hermano
-  // traducido, también en inglés — con el slug del hermano, que es distinto.
+  // traducido, también en inglés - con el slug del hermano, que es distinto.
   const noteEntries = await Promise.all(
     notes.map(async (n) => {
       const slug = noteSlug(n)

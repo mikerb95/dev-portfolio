@@ -27,7 +27,7 @@ const sentinel = process.env.E2E_SENTINEL ?? ''
 // (E2E_DB_MODE=server, ver compose.yaml). Lo que NO se acepta es nada remoto:
 // este script arrasa el esquema del destino antes de sembrarlo, así que un
 // error de configuración aquí no degrada un test, borra una base. La lista es
-// blanca a propósito — enumerar lo permitido falla cerrado, enumerar lo
+// blanca a propósito - enumerar lo permitido falla cerrado, enumerar lo
 // prohibido falla abierto en cuanto aparece un host que nadie previó.
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', 'libsql-main', 'libsql-demo'])
 

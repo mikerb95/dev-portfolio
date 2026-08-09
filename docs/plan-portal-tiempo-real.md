@@ -1,4 +1,4 @@
-# Plan — Portal en tiempo real + feed de actividad
+# Plan - Portal en tiempo real + feed de actividad
 
 > Creado: 2026-07-24. Estado: **Fases A, B y C implementadas** (30 jul 2026);
 > queda pendiente solo el tipo de actividad `deploy`, que necesita un cambio de
@@ -27,9 +27,9 @@ El portal está completo y es sólido. Lo verificado:
 
 1. **Nada se actualiza solo.** Cero `EventSource`, `setInterval` o `text/event-stream` bajo `src/pages/portal`. Un cliente con el portal abierto no ve la respuesta a su mensaje, ni el hito que acabas de completar, ni que su monitor se cayó, hasta que recarga a mano. El dato *es* de tiempo real (los checks entran cada ~5 min); la interfaz no.
 2. **El avance del proyecto depende de que tú edites hitos a mano.** Entre hito e hito, el cliente ve una barra inmóvil aunque haya habido diez deploys.
-3. ~~Higiene~~ **resuelta el 24 jul 2026**: el portal ya tiene monitor propio (`/api/portal/health` + `scripts/register-portal-monitor.mjs`, pendiente solo el alta tras el deploy) y sus dos artículos en `/notes` —"El clientId nunca viene de la URL" (aislamiento entre tenants) y "Dos logins en el mismo sitio, y ninguno conoce al otro" (por qué la auth del portal es propia).
+3. ~~Higiene~~ **resuelta el 24 jul 2026**: el portal ya tiene monitor propio (`/api/portal/health` + `scripts/register-portal-monitor.mjs`, pendiente solo el alta tras el deploy) y sus dos artículos en `/notes` -"El clientId nunca viene de la URL" (aislamiento entre tenants) y "Dos logins en el mismo sitio, y ninguno conoce al otro" (por qué la auth del portal es propia).
 
-   Nota de diseño del monitor, por si sirve de referencia para el digest de este plan: sondear `/portal/login` habría sido inútil. Esa página renderiza sin tocar la base —sin cookie no hay sesión que resolver—, así que un 200 ahí solo prueba que el SSR responde. El health check ejerce el **mismo join de tres tablas** que resuelve una sesión real, con un id imposible: cero filas en un sistema sano, excepción si el esquema se rompió. Un chequeo que no puede fallar cuando el sistema falla es decoración.
+   Nota de diseño del monitor, por si sirve de referencia para el digest de este plan: sondear `/portal/login` habría sido inútil. Esa página renderiza sin tocar la base (sin cookie no hay sesión que resolver), así que un 200 ahí solo prueba que el SSR responde. El health check ejerce el **mismo join de tres tablas** que resuelve una sesión real, con un id imposible: cero filas en un sistema sano, excepción si el esquema se rompió. Un chequeo que no puede fallar cuando el sistema falla es decoración.
 
 ## 1. Decisión técnica: polling con digest, no SSE
 
@@ -70,7 +70,7 @@ Tres reglas que hacen que el polling no sea un problema:
 
 Todo sale de un único helper `portalLiveDigest(clientId, userId, projectId)` en
 `src/lib/portal/live.ts`, que reutiliza `unreadCount`, `unreadThreadCount`,
-`clientInvoiceSummary`, `computeProgress` y `projectHealth` — **cero SQL nuevo
+`clientInvoiceSummary`, `computeProgress` y `projectHealth` - **cero SQL nuevo
 duplicado**. `projectId` se valida contra los proyectos del cliente igual que en
 `index.astro`: un id ajeno cae al primero suyo, nunca filtra existencia.
 
@@ -103,7 +103,7 @@ anunciarlo es exactamente lo que rompe a un lector de pantalla. Y respeta
 
 ## 2. Fases
 
-### Fase A — Digest y capa viva ✅ (2026-07-30)
+### Fase A - Digest y capa viva ✅ (2026-07-30)
 1. ✅ `src/lib/portal/live.ts` con `portalLiveDigest()` sobre los helpers existentes (cero SQL nuevo) + `tests/portal-live.test.ts` (8 casos con libSQL real).
 2. ✅ `GET /api/portal/live` + rate limit **por sesión** (10/min) + `no-store`.
 3. ✅ Script del layout: ciclo de 20 s, pausa por visibilidad, backoff 20→40→…→300 s, `CustomEvent('portal:live')`.
@@ -118,7 +118,7 @@ anunciarlo es exactamente lo que rompe a un lector de pantalla. Y respeta
   `completedAt`/`createdAt`. Se mueve al añadir y al completar un hito; un paso a
   `en_curso` no la mueve pero sí mueve `progress.pct` (cuenta como medio), así
   que el par (pct, at) cubre todo lo que el cliente percibe. Solo una corrección
-  de texto pasa inadvertida hasta recargar — el precio de detectarla era una
+  de texto pasa inadvertida hasta recargar - el precio de detectarla era una
   columna nueva y una migración, y no lo vale.
 - **`progress` viaja como `{ pct, done, total }`**, no como `progressPct` suelto:
   la tarjeta escribe "3 de 5 hitos completados" y con solo el porcentaje el
@@ -138,7 +138,7 @@ anunciarlo es exactamente lo que rompe a un lector de pantalla. Y respeta
   ninguna vista del portal; el digest no puede ser la rendija por la que se
   entere de que existen. Con caso propio en los tests.
 
-### Fase B — Feed de actividad por proyecto ✅ (2026-07-30, salvo `deploy`)
+### Fase B - Feed de actividad por proyecto ✅ (2026-07-30, salvo `deploy`)
 
 1. ✅ Migración `0024_overjoyed_hawkeye.sql` (`portal_activity` + índices
    `(client_id, at)` y `(project_id, at)`), aplicada a producción.
@@ -177,18 +177,18 @@ también quedan en el enum.
    ```
    `clientId` denormalizado a propósito: el feed se lee siempre filtrando por él,
    y no quiero que la consulta más caliente del portal dependa de un JOIN.
-2. Emisor `recordActivity()` — fire-and-forget, nunca bloquea, mismo contrato que `recordSecurityEvent`. Se cablea en los puntos que **ya** notifican: hito completado, factura emitida/pagada, documento subido, incidente abierto/resuelto.
-3. `deploy`: alimentado desde `ciRuns` de los proyectos del cliente, con texto neutro ("Nueva versión desplegada") — nunca SHA, rama, ni nombre de job. Es OPSEC igual que en `/status`: el cliente ve que hay movimiento, no el mapa de mi pipeline.
+2. Emisor `recordActivity()` - fire-and-forget, nunca bloquea, mismo contrato que `recordSecurityEvent`. Se cablea en los puntos que **ya** notifican: hito completado, factura emitida/pagada, documento subido, incidente abierto/resuelto.
+3. `deploy`: alimentado desde `ciRuns` de los proyectos del cliente, con texto neutro ("Nueva versión desplegada") - nunca SHA, rama, ni nombre de job. Es OPSEC igual que en `/status`: el cliente ve que hay movimiento, no el mapa de mi pipeline.
 4. UI: columna de actividad en `/portal` (últimos 15) + página `/portal/actividad` con paginación y filtro por tipo.
 5. `activityLastAt` en el digest → un elemento nuevo se inserta en vivo con su anuncio `aria-live`.
 6. Admin: toggle `visibleToClient` sobre entradas del feed, por si algo se emite y no debía verse.
 
-### Fase C — Higiene ✅ (2026-07-24)
-1. ✅ Monitor **"Portal de clientes"** (id 10) sobre `https://codebymike.tech/portal/login`, con `expectedText: "Entra a tu portal"` — un 200 que devuelva otra página cuenta como caída — y umbral de latencia de 3000 ms (el login real tarda ~1 s; 2000 daría "degradado" en cada arranque en frío). 1 check cada 5 min contra un límite de 30/min por IP: sin riesgo de autobloqueo.
+### Fase C - Higiene ✅ (2026-07-24)
+1. ✅ Monitor **"Portal de clientes"** (id 10) sobre `https://codebymike.tech/portal/login`, con `expectedText: "Entra a tu portal"` - un 200 que devuelva otra página cuenta como caída - y umbral de latencia de 3000 ms (el login real tarda ~1 s; 2000 daría "degradado" en cada arranque en frío). 1 check cada 5 min contra un límite de 30/min por IP: sin riesgo de autobloqueo.
 2. ✅ Artículo **[El clientId nunca viene de la URL](../src/content/notes/el-client-id-nunca-viene-de-la-url.md)**. Se descartó el tema de polling: describiría una Fase A que todavía no existe. El aislamiento multi-tenant sí está construido y es el corazón del diseño.
 3. ✅ A11y previa a la Fase A: región `role="status" aria-live="polite"` + helper `window.portalAnnounce()` (`is:inline`, porque los scripts empaquetados son módulos diferidos y podrían no existir cuando responde el primer formulario), skip link y `<main id="contenido">` en `PortalLayout`. Cableado el `flash()` de `/portal/cuenta` (mutaba en silencio y se borraba a los 4 s) y arreglado `/portal/olvide`, donde el formulario desaparecía bajo el foco sin anunciar nada.
 
-**Pendiente de la Fase C:** e2e del anuncio en vivo — se escribe junto a la Fase A, cuando haya algo que anunciar solo.
+**Pendiente de la Fase C:** e2e del anuncio en vivo - se escribe junto a la Fase A, cuando haya algo que anunciar solo.
 
 ## 3. Riesgos
 
@@ -202,6 +202,6 @@ también quedan en el enum.
 
 ## 4. Backlog (no en este plan)
 
-- Web Push (Notification API) para avisar con la pestaña cerrada — requiere permiso del usuario y `service-worker`.
+- Web Push (Notification API) para avisar con la pestaña cerrada - requiere permiso del usuario y `service-worker`.
 - Bajar a SSE **solo** si aparece un caso que lo exija (chat en vivo durante una sesión de soporte).
-- Presencia ("Mike está escribiendo") — bonito, y ninguna utilidad real en un portal asíncrono.
+- Presencia ("Mike está escribiendo") - bonito, y ninguna utilidad real en un portal asíncrono.

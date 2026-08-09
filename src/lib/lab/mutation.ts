@@ -1,6 +1,6 @@
 // Lógica pura sobre el reporte JSON de Stryker (Mutation Testing Elements,
-// schemaVersion 1.0). El reporte NO trae un score agregado — cada mutante solo
-// tiene un `status`— así que el cálculo es responsabilidad nuestra. Aquí vive
+// schemaVersion 1.0). El reporte NO trae un score agregado - cada mutante solo
+// tiene un `status`- así que el cálculo es responsabilidad nuestra. Aquí vive
 // aislado de la red y del disco para poder testearlo contra un reporte real.
 
 export type MutantStatus =
@@ -19,7 +19,7 @@ export type MutationReport = {
 /**
  * % de mutantes "detectados" (Killed + Timeout) sobre los que de verdad cuentan
  * para el score. Se excluyen `Ignored` (mutados a propósito fuera de alcance) y
- * `CompileError` (mutación inválida, no dice nada de los tests) — mismo criterio
+ * `CompileError` (mutación inválida, no dice nada de los tests) - mismo criterio
  * que usa Stryker internamente. `NoCoverage` SÍ cuenta como no detectado: ningún
  * test tocó esa línea, que es exactamente el hueco que mutation testing existe
  * para encontrar.

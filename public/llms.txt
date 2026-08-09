@@ -1,4 +1,4 @@
-# CodeByMike — Mike, Software Engineer
+# CodeByMike - Mike, Software Engineer
 
 > Portfolio y notas de ingeniería de Mike (@mikerb95). TypeScript, React,
 > Next.js, Astro, Node.js y PostgreSQL. Colombia · remoto.

@@ -28,7 +28,7 @@ export async function notifyCobroPaid(reference: string): Promise<void> {
     if (!row || row.payment.source !== 'cobro') return
 
     const quien = row.clientName ?? formatPhone(row.payment.payerPhone)
-    const concepto = row.payment.description ? ` — ${row.payment.description}` : ''
+    const concepto = row.payment.description ? ` - ${row.payment.description}` : ''
 
     await sendPush(
       'Cobro pagado',

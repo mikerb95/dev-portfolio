@@ -4,8 +4,8 @@
 // por proceso, para pegar en el documento de arquitectura o exportar a PDF
 // desde el navegador.
 //
-// No usa BaseLayout a propósito: esta página no es parte del sitio —no lleva
-// navegación, ni fondo oscuro, ni animaciones— y arrastrar el layout habría
+// No usa BaseLayout a propósito: esta página no es parte del sitio (no lleva
+// navegación, ni fondo oscuro, ni animaciones) y arrastrar el layout habría
 // significado desactivar cada una de esas piezas desde aquí.
 import '../../styles/global.css'
 import BpmnDiagram from '../../components/BpmnDiagram.astro'
@@ -78,7 +78,7 @@ const procesos = procesosBpmn.map((proceso) => {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Diagramas BPMN — versión imprimible</title>
+    <title>Diagramas BPMN - versión imprimible</title>
   </head>
   <body class="papel">
     <!-- ── Carátula ────────────────────────────────────────────────────── -->
@@ -140,7 +140,7 @@ const procesos = procesosBpmn.map((proceso) => {
       <h3 class="subtitulo">Los cinco tipos de compuerta</h3>
       <p class="parrafo">
         Las cinco se dibujan con el mismo rombo: lo único que cambia es el marcador de dentro. Ese
-        detalle no es decorativo — decide si el proceso sigue por un camino o por varios, y si al
+        detalle no es decorativo - decide si el proceso sigue por un camino o por varios, y si al
         juntarse espera a los demás o no. De las cinco, estos diagramas solo necesitan la exclusiva;
         las otras cuatro se incluyen con el ejemplo de dónde encajarían en este sistema.
       </p>

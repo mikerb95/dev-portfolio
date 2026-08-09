@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
 
 // Base libsql en archivo temporal con el esquema real, igual que
 // portal-isolation.test.ts. El digest se prueba contra SQL de verdad porque lo
-// que se verifica —que ningún WHERE se olvide del clientId y que un projectId
-// ajeno no cuele— es exactamente lo que un mock respondería a favor.
+// que se verifica (que ningún WHERE se olvide del clientId y que un projectId
+// ajeno no cuele) es exactamente lo que un mock respondería a favor.
 vi.mock('../src/db', async () => {
   const { createClient } = await import('@libsql/client')
   const { drizzle } = await import('drizzle-orm/libsql')

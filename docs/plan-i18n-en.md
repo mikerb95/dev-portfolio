@@ -1,4 +1,4 @@
-# Plan — Versión en inglés de la parte pública
+# Plan - Versión en inglés de la parte pública
 
 **Estado:** en implementación · **Creado:** 2026-07-24 · **Última actualización:** 2026-07-30
 **Alcance:** todo lo que un visitante ve sin autenticarse. El panel `/admin`,
@@ -7,7 +7,7 @@ excepción de sus puertas públicas).
 
 ## Estado de implementación
 
-- ✅ **Fase 0 — Infraestructura**: `astro.config.mjs` (`i18n.routing: 'manual'`),
+- ✅ **Fase 0 - Infraestructura**: `astro.config.mjs` (`i18n.routing: 'manual'`),
   `src/i18n/{config,routing,format,es,en,index}.ts`, normalización del
   pathname en `src/middleware.ts` (`isLocalizedPrivateRequest` corta con 404
   cualquier `/en/` delante de una ruta privada, antes de cualquier otra
@@ -15,31 +15,31 @@ excepción de sus puertas públicas).
   `tests/i18n-routing-guards.test.ts`, `tests/i18n-dictionary.test.ts`.
   Verificado en vivo: `/en/admin`, `/en/api/*`, `/en/portal/*` → 404; `/admin`
   en español sigue redirigiendo a login como siempre.
-- ✅ **Fase 1 — Chrome global y SEO**: `BaseLayout` (`lang`, `hreflang`
+- ✅ **Fase 1 - Chrome global y SEO**: `BaseLayout` (`lang`, `hreflang`
   recíproco incl. `x-default`, canónico localizado, `og:locale` +
   `og:locale:alternate`), `Navbar` y `Footer` traducidos con selector de
   idioma que preserva la página actual, `404.astro` deriva el locale de la
   URL que falló, `sitemap.xml.ts` emite ambas variantes con
   `xhtml:link rel="alternate"`, `src/pages/en/rss.xml.ts` (vacío hasta la
-  Fase 4: no hay notas traducidas todavía — un canal sin items es válido, no
+  Fase 4: no hay notas traducidas todavía - un canal sin items es válido, no
   se mezclan idiomas en un mismo feed).
-- ✅ **Fase 2 (parcial) — 7 páginas de marca**: traducidas vía diccionario y con
+- ✅ **Fase 2 (parcial) - 7 páginas de marca**: traducidas vía diccionario y con
   su cascarón en `src/pages/en/`: `/`, `/tools`, `/engineering`, `/security`,
   `/certifications`, `/contact`, `/architecture` (patrón confirmado: el locale
   sale de `Astro.url.pathname` del request real, no del archivo). El resto de
   páginas de marca (§6) sigue solo en español.
-- 🐛 **Corrección 2026-07-29 — enlaces `/en/` hacia páginas inexistentes.**
+- 🐛 **Corrección 2026-07-29 - enlaces `/en/` hacia páginas inexistentes.**
   Síntoma: casi todo el sitio en inglés daba 404. Causa: `localizePath` /
   `alternateUrls` calculan la *forma* de una URL sin saber si esa página
   existe, y el nav, el footer, el selector de idioma, el `hreflang` del
   `BaseLayout`, el sitemap y los CTAs internos de cada página los usaban para
   generar enlaces. Con 7 de ~16 páginas públicas traducidas, todo enlace a
   `/en/notes`, `/en/status`, `/en/lab`, `/en/log`, `/en/paginas-web`,
-  `/en/demo` era un 404 — y el sitemap además se los anunciaba a Google.
+  `/en/demo` era un 404 - y el sitemap además se los anunciaba a Google.
   No fue una regresión: el generador de enlaces se escribió asumiendo un sitio
   traducido al 100% mientras la traducción avanzaba por fases.
   **Arreglo:**
-  1. `TRANSLATED_ROUTES` en `src/i18n/routing.ts` — única fuente de verdad de
+  1. `TRANSLATED_ROUTES` en `src/i18n/routing.ts` - única fuente de verdad de
      qué rutas existen en inglés, con `hasTranslation`, `localizedHref`
      (cae al español si no hay traducción) y `translatedAlternates`
      (`hreflang` solo de lo que existe).
@@ -49,20 +49,20 @@ excepción de sus puertas públicas).
      página actual no existe en inglés.
   3. El middleware redirige `GET/HEAD /en/<pública sin traducir>` → versión en
      español con **302** (no 308: cuando esa página se traduzca, la URL `/en/`
-     debe empezar a servir). Las rutas privadas siguen dando 404 seco — esa
+     debe empezar a servir). Las rutas privadas siguen dando 404 seco - esa
      rama va antes y no se toca.
   4. `tests/i18n-routing.test.ts` cruza `TRANSLATED_ROUTES` contra los
      archivos reales de `src/pages/en/` en las dos direcciones: declarar una
      ruta sin archivo (404 anunciado) o crear un archivo sin declararlo
      (página invisible) rompe el test.
-  **Regla operativa:** traducir una página son *tres* pasos, no dos — página
+  **Regla operativa:** traducir una página son *tres* pasos, no dos - página
   al diccionario, cascarón en `src/pages/en/`, y alta en `TRANSLATED_ROUTES`.
-- ✅ **Fase 2 (completa) — Páginas de marca**: además de las 7 anteriores,
+- ✅ **Fase 2 (completa) - Páginas de marca**: además de las 7 anteriores,
   `/status`, `/log`, `/demo`, `/paginas-web` y `/notes` (índice). `/api/contact`
   y `/api/lab/site-check` reciben el locale como campo explícito del body
   (validado contra `LOCALES`, nunca deducido del `Referer`) y responden sus
   errores en ese idioma.
-- ✅ **Fase 3 — Contenido en base de datos**: migración aditiva `0023`
+- ✅ **Fase 3 - Contenido en base de datos**: migración aditiva `0023`
   (`title_en`/`description_en` en `projects`; `title_en`/`institution_en`/
   `description_en` en `education_milestones`), aplicada a Turso. Helper puro
   `pickLocalized` + `hasRowTranslation` (`src/i18n/localize.ts`, 11 tests):
@@ -72,46 +72,46 @@ excepción de sus puertas públicas).
   `englishAvailable`: una fila sin traducir sigue sirviendo la URL `/en/` pero
   no la anuncia como versión en inglés (sin `hreflang="en"`, canónico al
   español) y el sitemap tampoco la emite.
-- ✅ **Fase 4 — Notas técnicas**: los 14 artículos traducidos (11 383 palabras),
+- ✅ **Fase 4 - Notas técnicas**: los 14 artículos traducidos (11 383 palabras),
   con slug propio en inglés y `translationOf` recíproco. La colección pasó a
   `src/content/notes/{es,en}/` con `lang` en el frontmatter; las URLs en español
   no cambiaron, así que no hubo redirecciones 301. `src/lib/notes.ts` centraliza
   el filtrado por idioma y la traducción id↔slug para índice, artículo, los dos
   feeds RSS y el sitemap. `BaseLayout` acepta `alternatePaths` porque el slug
-  del hermano es distinto y no se puede deducir de la URL — eso alimenta también
+  del hermano es distinto y no se puede deducir de la URL - eso alimenta también
   el conmutador de idioma del Navbar.
-- ✅ **Fase 5 — LAB público**: `/lab`, `/lab/site-check`, `/lab/fingerprint` y
+- ✅ **Fase 5 - LAB público**: `/lab`, `/lab/site-check`, `/lab/fingerprint` y
   las salas `[room]` (tablero y vista de dispositivo). `src/lib/diagnostics.ts`
   pasó a recibir el locale y resolver sus ~55 veredictos contra un diccionario
-  interno propio — vive en la lib y no en `src/i18n/es.ts` a propósito: la
+  interno propio - vive en la lib y no en `src/i18n/es.ts` a propósito: la
   consume tanto la ruta pública como el diagnóstico del panel, y atar una lib de
   infraestructura al diccionario de páginas sería la dependencia equivocada.
-- ❌ **Fase 6 — `/docs`: descartada (decisión del 30 jul 2026).** `/docs` se
-  queda solo en español. Es material académico normativo —casos de uso, ISO/IEC
-  25010, IEEE 1012, historias en formato XP— cuya audiencia natural es el jurado
+- ❌ **Fase 6 - `/docs`: descartada (decisión del 30 jul 2026).** `/docs` se
+  queda solo en español. Es material académico normativo (casos de uso, ISO/IEC
+  25010, IEEE 1012, historias en formato XP) cuya audiencia natural es el jurado
   de la sustentación, no un lector internacional, y era el bloque de peor
   relación esfuerzo/retorno del plan (§10 ya lo anticipaba). La infraestructura
   quedó lista por si se retoma: `src/i18n/bilingual.ts` (`tx()`, `txAll`,
   `translationCoverage`, 10 tests) acepta un campo como `'texto'` o como
   `{ es, en }` y cae al español, así que los 5 módulos de datos se pueden
   traducir uno a uno sin romper ninguna página en el intermedio.
-- ✅ **Fase 7 — Flujos con audiencia local**: `/platziconf` y `/cv/descargar`
+- ✅ **Fase 7 - Flujos con audiencia local**: `/platziconf` y `/cv/descargar`
   traducidas. `/hola` se queda en español a propósito: es una herramienta
   personal (no está en el sitemap ni enlazada desde el nav) cuyo producto es un
-  mensaje de WhatsApp para contactos hispanohablantes — traducirla no cambiaría
+  mensaje de WhatsApp para contactos hispanohablantes - traducirla no cambiaría
   nada para nadie. Volumen pendiente: ~3 350 líneas de
   páginas de marca, contenido de `projects`/`education_milestones` en BD,
   11 383 palabras de notas, LAB, ~3 900 líneas + 240 KB de datos de `/docs`,
   y los flujos de audiencia local (§7). Ver desglose de cada fase más abajo,
   sin cambios respecto al plan original.
-- ✅ **Fase 8 — Assets**: las 9 imágenes Open Graph tienen variante inglesa
+- ✅ **Fase 8 - Assets**: las 9 imágenes Open Graph tienen variante inglesa
   (`public/og-en-*.png`), generadas por el mismo `scripts/og/generate.mjs` con
   las secciones nuevas de `scripts/og/sections.mjs`. `BaseLayout` sirve la
   variante según el locale, con una lista explícita de cuáles existen para no
   anunciar un archivo ausente. `public/llms.txt` lista ambos idiomas y ambos
-  feeds. ⬜ **Pendiente**: el CV en PDF en inglés — es un documento a redactar
+  feeds. ⬜ **Pendiente**: el CV en PDF en inglés - es un documento a redactar
   (contenido real de una hoja de vida), no algo que se genere desde el repo.
-- ✅ **Fase 9 — Verificación**: rastreo completo del sitio en inglés: 36 páginas
+- ✅ **Fase 9 - Verificación**: rastreo completo del sitio en inglés: 36 páginas
   `/en` visitadas sin ningún enlace roto, 57 enlaces salientes únicos
   comprobados (incluidos los que caen al español), 16/16 `hreflang` recíprocos
   verificados en las dos direcciones, y cero español residual en el texto
@@ -122,7 +122,7 @@ excepción de sus puertas públicas).
   `latency.test.ts`, ajeno a i18n), build limpio y `astro check` sin errores
   nuevos.
 - ✅ **Documentación de sustentación** (§14, 29 jul): registrado en
-  `src/data/documentacion.ts` (RF-013 sitio en inglés —estado *parcial*—,
+  `src/data/documentacion.ts` (RF-013 sitio en inglés (estado *parcial*),
   RF-014 sugerencia de idioma, RNF-20 guardas ciegos al idioma, RNF-21 paridad
   de traducciones, CU-19) y en `src/data/iteraciones-portfolio.ts` (Fase 29).
   Queda ⬜ el artículo de `/notes`: se escribirá con el §3 como columna
@@ -221,7 +221,7 @@ ruta son cascarones. Para páginas simples basta con que la página lea
 genere la ruta.
 
 **Excepción:** los artículos de `/notes` y los diagramas Mermaid de `/docs` sí se
-duplican como archivos separados — son contenido, no plantilla, y traducirlos
+duplican como archivos separados - son contenido, no plantilla, y traducirlos
 palabra por palabra desde un diccionario sería absurdo.
 
 ### 2.4 Diccionarios tipados con paridad forzada
@@ -280,19 +280,19 @@ primero, no al final.
 
 ---
 
-## 4. Fase 0 — Infraestructura (sin ninguna página traducida todavía)
+## 4. Fase 0 - Infraestructura (sin ninguna página traducida todavía)
 
 Entregable: el andamiaje completo, con el sitio funcionando exactamente igual
 que hoy en español y una única ruta `/en/` de humo.
 
 1. `astro.config.mjs`: bloque `i18n` con `routing: 'manual'`.
-2. `src/i18n/config.ts` — `LOCALES = ['es','en'] as const`, `Locale`,
+2. `src/i18n/config.ts` - `LOCALES = ['es','en'] as const`, `Locale`,
    `DEFAULT_LOCALE`.
-3. `src/i18n/routing.ts` — `localizePath(path, locale)`,
+3. `src/i18n/routing.ts` - `localizePath(path, locale)`,
    `delocalizePath(path)`, `getLocaleFromUrl(url)`, `alternateUrls(path)`.
    Módulo **puro**, sin `node:crypto` ni `../db`: lo importan el middleware
    (servidor) y el selector de idioma (navegador).
-4. `src/i18n/format.ts` — envuelve `Intl.DateTimeFormat`,
+4. `src/i18n/format.ts` - envuelve `Intl.DateTimeFormat`,
    `Intl.NumberFormat` e `Intl.RelativeTimeFormat` por locale. Reemplaza los
    19 usos dispersos hoy en páginas públicas (`status`, `engineering`,
    `notes`, `log`, `lab`, `EvolutionTimeline`, `CertCard`, `EngineeringFeed`,
@@ -300,7 +300,7 @@ que hoy en español y una única ruta `/en/` de humo.
    **Decisión de moneda:** los importes siguen en COP (es la moneda real de las
    facturas); solo cambia el formateo (`es-CO` → `en-US`) y se añade el código
    `COP` explícito para que un lector anglófono no lo lea como dólares.
-5. `src/i18n/es.ts` / `en.ts` / `index.ts` — diccionarios vacíos con la
+5. `src/i18n/es.ts` / `en.ts` / `index.ts` - diccionarios vacíos con la
    estructura de espacios de nombres y el `satisfies`.
 6. **Middleware**: normalización del pathname (§3) + gate de rutas privadas.
 7. `src/lib/demo.ts` y `src/lib/security/paths.ts`: reciben pathname
@@ -313,7 +313,7 @@ que hoy en español y una única ruta `/en/` de humo.
 
 ---
 
-## 5. Fase 1 — Chrome global y SEO
+## 5. Fase 1 - Chrome global y SEO
 
 Lo que envuelve a toda página. Traducir esto mal se nota en las 30 páginas a la vez.
 
@@ -323,7 +323,7 @@ Lo que envuelve a toda página. Traducir esto mal se nota en las 30 páginas a l
 - `hreflang`: por cada página, `<link rel="alternate" hreflang="es">`,
   `hreflang="en"` y `hreflang="x-default"` apuntando al español.
 - `canonical` calculado sobre la URL localizada (hoy usa `Astro.url.pathname`
-  crudo — con prefijo daría un canónico cruzado entre idiomas, que es peor que
+  crudo - con prefijo daría un canónico cruzado entre idiomas, que es peor que
   no tener canónico).
 - `description` por defecto traducida.
 - JSON-LD `WebSite`: añadir `inLanguage`.
@@ -374,7 +374,7 @@ prefijo de la URL fallida; si no hay prefijo, español.
 
 ---
 
-## 6. Fase 2 — Páginas de marca técnica
+## 6. Fase 2 - Páginas de marca técnica
 
 El bloque de mayor retorno: es lo que ve un reclutador o cliente internacional.
 
@@ -383,7 +383,7 @@ El bloque de mayor retorno: es lo que ve un reclutador o cliente internacional.
 | `index.astro` | 549 | Hero, secciones de servicios, CTA. Copy de marca: adaptación, no traducción literal |
 | `engineering.astro` | 680 | Métricas en vivo + narrativa. Cuidado con los `Intl.*` (3 usos) |
 | `status.astro` | 650 | Página pública de estado. Labels de estado vienen de `src/lib/monitors.ts` y `slo.ts` → traducir en el diccionario, no en la lib |
-| `security.astro` | 422 | **OPSEC**: la versión en inglés mantiene la misma regla — solo agregados, nunca nombres de reglas de detección ni rutas honeypot |
+| `security.astro` | 422 | **OPSEC**: la versión en inglés mantiene la misma regla - solo agregados, nunca nombres de reglas de detección ni rutas honeypot |
 | `tools.astro` | 283 | 7 casos de estudio con `problema`/`solucion`/`detalle`/`stack` inline → extraer a diccionario |
 | `contact.astro` | 290 | Formulario: labels, placeholders, validación y estados de éxito/error (ver §6.1) |
 | `architecture.astro` | 181 | Diagrama Mermaid con etiquetas en español → variante EN del grafo |
@@ -406,11 +406,11 @@ idioma del formulario que los invocó: el cliente envía un campo `locale`
 validado contra `LOCALES` (nunca se confía en `Referer`), y el endpoint elige el
 diccionario. Mismo tratamiento para `/api/lab/site-check`, `/api/mis-pagos/lookup`
 y `/api/payments/checkout`. El correo de notificación al admin (`notify.ts`)
-**sigue en español** — el destinatario es Mike.
+**sigue en español** - el destinatario es Mike.
 
 ---
 
-## 7. Fase 3 — Contenido dinámico en base de datos
+## 7. Fase 3 - Contenido dinámico en base de datos
 
 `/projects/[slug]` y `/certifications` renderizan texto que vive en Turso.
 Traducir las plantillas y dejar el contenido en español sería incoherente.
@@ -442,7 +442,7 @@ ALTER TABLE education_milestones ADD COLUMN institution_en TEXT;
 
 ---
 
-## 8. Fase 4 — Notas técnicas (`/notes`)
+## 8. Fase 4 - Notas técnicas (`/notes`)
 
 14 artículos, 11 383 palabras. Es el contenido con más valor para audiencia
 internacional y el más caro de traducir.
@@ -479,7 +479,7 @@ lector anglófono ve código comentado en un idioma que no lee).
 
 ---
 
-## 9. Fase 5 — LAB público
+## 9. Fase 5 - LAB público
 
 `lab/index.astro` (453), `lab/site-check/index.astro` (282),
 `lab/fingerprint/index.astro` (88) + `[room]/index.astro` + `[room]/board.astro`.
@@ -501,7 +501,7 @@ lector anglófono ve código comentado en un idioma que no lee).
 
 ---
 
-## 10. Fase 6 — Documentación `/docs`
+## 10. Fase 6 - Documentación `/docs`
 
 El bloque más pesado y el de decisión menos obvia.
 
@@ -510,7 +510,7 @@ datos que suman ~240 KB: `documentacion.ts` (521 líneas), `iteraciones-portfoli
 (1 136), `iteraciones.ts` (794), `testing.ts` (734), `vyv.ts` (275).
 
 **Contexto honesto:** `/docs` es material académico (sustentación SENA) con
-vocabulario normativo español — casos de uso, historias de usuario en formato XP,
+vocabulario normativo español - casos de uso, historias de usuario en formato XP,
 ISO/IEC 25010, IEEE 1012, kanban. Su audiencia natural es el jurado, no un
 reclutador extranjero. Es la fase con peor relación esfuerzo/retorno del plan.
 
@@ -520,7 +520,7 @@ software formal. Pero va **última entre las de contenido** y es la primera
 candidata a recortar si el plan se comprime.
 
 **Enfoque de datos:** los 5 módulos pasan a campos bilingües inline
-(`titulo: { es, en }`). Alternativa descartada: archivos `*.en.ts` paralelos —
+(`titulo: { es, en }`). Alternativa descartada: archivos `*.en.ts` paralelos -
 con 5 módulos que cambian cada iteración, la desincronización es cuestión de
 semanas. Inline duele al leer el archivo pero garantiza que quien añade un
 requisito ve el hueco en inglés.
@@ -542,7 +542,7 @@ requisito ve el hueco en inglés.
 
 ---
 
-## 11. Fase 7 — Flujos con audiencia local
+## 11. Fase 7 - Flujos con audiencia local
 
 Estas superficies son públicas por URL pero su audiencia real es Colombia.
 
@@ -560,7 +560,7 @@ autorización) y se valida contra `LOCALES` antes de usarse.
 
 ---
 
-## 12. Fase 8 — Assets
+## 12. Fase 8 - Assets
 
 - **8 imágenes OG** (`og-default`, `-tools`, `-notes`, `-security`, `-status`,
   `-engineering`, `-certifications`, `-contact`, `-log`) llevan texto en español
@@ -569,7 +569,7 @@ autorización) y se valida contra `LOCALES` antes de usarse.
 - **CV en PDF**: `public/cv/CV_Michael_Rodriguez_2026.pdf` está en español.
   Añadir `CV_Michael_Rodriguez_2026_EN.pdf` y que `/api/cv/download` y
   `/cv/descargar` sirvan la variante según locale. `src/lib/cv-downloads.ts`
-  registra qué variante se descargó (columna nueva o sufijo en el label) —
+  registra qué variante se descargó (columna nueva o sufijo en el label) -
   saber si el tráfico internacional descarga el CV es la métrica que justifica
   todo este plan.
 - `public/llms.txt` reescrito con ambas versiones.
@@ -577,18 +577,18 @@ autorización) y se valida contra `LOCALES` antes de usarse.
 
 ---
 
-## 13. Fase 9 — Verificación
+## 13. Fase 9 - Verificación
 
 **Unitarios (Vitest, lógica pura, sin BD):**
-- `tests/i18n-routing.test.ts` — `localizePath`/`delocalizePath` ida y vuelta,
+- `tests/i18n-routing.test.ts` - `localizePath`/`delocalizePath` ida y vuelta,
   casos adversariales del §3.
-- `tests/i18n-routing-guards.test.ts` — cada guarda de `paths.ts` y `demo.ts` da
+- `tests/i18n-routing-guards.test.ts` - cada guarda de `paths.ts` y `demo.ts` da
   el mismo veredicto para `/x` y `/en/x`; `/en/admin` nunca es servible.
-- `tests/i18n-dictionary.test.ts` — paridad de claves ES/EN, sin claves
+- `tests/i18n-dictionary.test.ts` - paridad de claves ES/EN, sin claves
   huérfanas, sin valores EN idénticos al ES (traducción olvidada), sin
   interpolaciones (`{n}`) presentes en un idioma y ausentes en el otro.
-- `tests/i18n-format.test.ts` — fechas y moneda por locale, COP explícito.
-- `tests/i18n-fallback.test.ts` — `pickLocalized` cae al español y nunca
+- `tests/i18n-format.test.ts` - fechas y moneda por locale, COP explícito.
+- `tests/i18n-fallback.test.ts` - `pickLocalized` cae al español y nunca
   devuelve vacío.
 
 **E2E (Playwright):**
@@ -600,7 +600,7 @@ autorización) y se valida contra `LOCALES` antes de usarse.
 
 **Manual:**
 - `npx astro check` limpio (la garantía real de paridad de diccionarios).
-- Lighthouse/axe sobre 3 páginas EN — `lang` correcto es criterio WCAG
+- Lighthouse/axe sobre 3 páginas EN - `lang` correcto es criterio WCAG
   (3.1.1 Language of Page); un `lang="es"` con contenido inglés es una
   violación real, no cosmética.
 - Revisar que el middleware sigue poniendo `Cache-Control` correcto en `/en/*`.
@@ -617,7 +617,7 @@ sustentación.
    y se promueven a `implementado` al entregar, con `origen` (`src/i18n/`,
    `middleware.ts`) y `verificacion` (los tests del §13).
 2. `src/data/iteraciones-portfolio.ts`: entrada de la iteración al cerrarla.
-3. `src/content/notes/`: artículo de caso de estudio. Título candidato —
+3. `src/content/notes/`: artículo de caso de estudio. Título candidato -
    *"Traducir un sitio sin duplicarlo (y sin abrir un bypass de seguridad)"*,
    con el §3 como columna vertebral. Es exactamente el tipo de hallazgo que
    merece nota propia. Se publica en ambos idiomas.
@@ -653,7 +653,7 @@ bypasses del §3.
 ## 16. Decisiones abiertas
 
 1. **¿`/docs` entra de verdad?** El plan lo incluye por el encargo explícito.
-   Confirmar antes de empezar la Fase 6 — son ~240 KB de datos y vocabulario
+   Confirmar antes de empezar la Fase 6 - son ~240 KB de datos y vocabulario
    normativo que hay que traducir con criterio, no con diccionario.
 2. **¿`/paginas-web` en inglés?** Producto vendido en COP por WhatsApp a
    clientes colombianos. Incluido, pero sin audiencia identificada.

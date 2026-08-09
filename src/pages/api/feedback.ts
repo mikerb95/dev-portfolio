@@ -19,7 +19,7 @@ const MAX_CONTACT = 200
  * identificador de sesión. Lo único que puede identificar a alguien es el campo
  * `contact`, que escribe quien quiere respuesta.
  *
- * El rate limit usa la IP, pero solo para contar — no se persiste en la fila.
+ * El rate limit usa la IP, pero solo para contar - no se persiste en la fila.
  */
 export const POST: APIRoute = async ({ request }) => {
   const ip = clientIp(request.headers)

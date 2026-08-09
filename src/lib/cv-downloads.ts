@@ -1,6 +1,6 @@
 // Lógica de servidor para el control de descargas del CV: reusa el mismo
 // recolector de señales del lab de fingerprinting (src/lib/fingerprint-client.ts)
-// pero aquí sí persiste IP/UA y no hay TTL — el propósito es un historial
+// pero aquí sí persiste IP/UA y no hay TTL - el propósito es un historial
 // permanente de quién descarga el CV, no una demo efímera.
 
 import { randomBytes } from 'node:crypto'

@@ -70,8 +70,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
                 <span class="font-mono text-zinc-300">${esc(e.kind)}</span>
                 <span class="text-zinc-600 ml-auto font-mono">${e.ranAt ? fmt.format(new Date(e.ranAt)) : ''}</span>
               </div>
-              <div class="text-zinc-500">Esperado: <span class="text-zinc-400">${esc(r.esperado ?? '—')}</span></div>
-              <div class="text-zinc-500">Observado: <span class="text-zinc-400 font-mono">${esc(r.observado ?? '—')}</span></div>
+              <div class="text-zinc-500">Esperado: <span class="text-zinc-400">${esc(r.esperado ?? '-')}</span></div>
+              <div class="text-zinc-500">Observado: <span class="text-zinc-400 font-mono">${esc(r.observado ?? '-')}</span></div>
             </div>`
         }).join('')
       : '<p class="text-zinc-600 text-sm">Aún no hay experimentos. Lanza un ataque arriba.</p>'
@@ -128,7 +128,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
         if (!res.ok) throw new Error(r.error ?? 'error')
         box.className = `rounded-xl border p-4 mb-8 text-sm ${r.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'}`
         box.innerHTML = `
-          <div class="font-medium mb-2 ${r.ok ? 'text-emerald-400' : 'text-red-400'}">${r.ok ? '✓ El sistema resistió el ataque' : '✗ El sistema NO resistió'} — ${r.kind}</div>
+          <div class="font-medium mb-2 ${r.ok ? 'text-emerald-400' : 'text-red-400'}">${r.ok ? '✓ El sistema resistió el ataque' : '✗ El sistema NO resistió'} - ${r.kind}</div>
           <div class="text-zinc-400 text-xs mb-1"><span class="text-zinc-500">Esperado:</span> ${esc(r.esperado)}</div>
           <div class="text-zinc-400 text-xs font-mono"><span class="text-zinc-500 font-sans">Observado:</span> ${esc(r.observado)}</div>`
         await load()

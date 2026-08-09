@@ -7,7 +7,7 @@
  * La espera se hace desde el HOST y no con un `healthcheck` de compose a
  * propósito: un healthcheck tendría que ejecutar curl/wget DENTRO de la imagen
  * de sqld, y eso ata nuestra infraestructura de pruebas a qué binarios trae esa
- * imagen — un detalle que sus mantenedores pueden cambiar sin avisar y que nos
+ * imagen - un detalle que sus mantenedores pueden cambiar sin avisar y que nos
  * rompería el arranque sin que el fallo diga por qué. Node ya está aquí.
  */
 const targets = process.argv.slice(2)

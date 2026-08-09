@@ -19,7 +19,7 @@ export const sections = [
     kickerLabel: 'TRANSPARENCIA OPERACIONAL',
     titleLine1: 'Estado de los servicios,',
     titleLine2: 'medido, no prometido.',
-    description: 'Uptime, latencia y presupuesto de error de cada servicio que opero — datos en vivo de mi propia infraestructura de monitoreo.',
+    description: 'Uptime, latencia y presupuesto de error de cada servicio que opero - datos en vivo de mi propia infraestructura de monitoreo.',
     badge: 'SLO 99.5% · ventana 30 días',
     ornament: 'bars',
   },
@@ -65,7 +65,7 @@ export const sections = [
     kickerLabel: 'CREDENCIALES',
     titleLine1: 'Certificaciones,',
     titleLine2: 'verificables, no decorativas.',
-    description: 'Cada credencial enlaza a su verificación oficial — nada de insignias sin respaldo.',
+    description: 'Cada credencial enlaza a su verificación oficial - nada de insignias sin respaldo.',
     ornament: 'badges',
   },
   {
@@ -74,7 +74,7 @@ export const sections = [
     kickerLabel: 'BITÁCORA',
     titleLine1: 'Registro de cambios,',
     titleLine2: 'commit a commit.',
-    description: 'Qué cambió, cuándo y por qué — la historia real del proyecto, sin editar.',
+    description: 'Qué cambió, cuándo y por qué - la historia real del proyecto, sin editar.',
     ornament: 'commits',
   },
   {
@@ -112,7 +112,7 @@ export const sectionsEn = [
     kickerLabel: 'OPERATIONAL TRANSPARENCY',
     titleLine1: 'Service status,',
     titleLine2: 'measured, not promised.',
-    description: 'Uptime, latency, and error budget for every service I run — live data from my own monitoring infrastructure.',
+    description: 'Uptime, latency, and error budget for every service I run - live data from my own monitoring infrastructure.',
     badge: 'SLO 99.5% · 30-day window',
     ornament: 'bars',
   },
@@ -158,7 +158,7 @@ export const sectionsEn = [
     kickerLabel: 'CREDENTIALS',
     titleLine1: 'Certifications,',
     titleLine2: 'verifiable, not decorative.',
-    description: 'Every credential links to its official verification — no badges without backing.',
+    description: 'Every credential links to its official verification - no badges without backing.',
     ornament: 'badges',
   },
   {
@@ -167,7 +167,7 @@ export const sectionsEn = [
     kickerLabel: 'CHANGELOG',
     titleLine1: 'A record of changes,',
     titleLine2: 'commit by commit.',
-    description: 'What changed, when, and why — the real history of the project, unedited.',
+    description: 'What changed, when, and why - the real history of the project, unedited.',
     ornament: 'commits',
   },
   {

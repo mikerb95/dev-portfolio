@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { hasRowTranslation, pickLocalized } from '../src/i18n/localize'
 
 // El contrato que estos tests fijan: una fila de BD sin traducir se muestra en
-// español, NUNCA en blanco. Un fallo aquí no rompe la página — la vacía, que
+// español, NUNCA en blanco. Un fallo aquí no rompe la página - la vacía, que
 // es peor porque parece intencional. Ver docs/plan-i18n-en.md §7.
 
 const row = {

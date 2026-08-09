@@ -88,7 +88,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro'
       const res = await fetch('/api/admin/backup', { method: 'PUT' })
       const data = await res.json()
       if (data.ok) {
-        status.textContent = `Backup creado — ${(data.size / 1024).toFixed(1)} KB`
+        status.textContent = `Backup creado - ${(data.size / 1024).toFixed(1)} KB`
         await loadBackups()
       } else {
         status.textContent = 'Error al crear el backup'

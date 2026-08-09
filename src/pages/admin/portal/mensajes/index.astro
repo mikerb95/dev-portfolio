@@ -11,7 +11,7 @@ const clientById = new Map(clientRows.map((c) => [c.id, c.company ?? c.name]))
 // Los que esperan respuesta mía van arriba: es la única ordenación que importa
 // cuando abro esta página.
 const rows = threads
-  .map((t) => ({ ...t, clientName: clientById.get(t.clientId) ?? '—', waiting: t.lastAuthor === 'client' && t.status === 'open' }))
+  .map((t) => ({ ...t, clientName: clientById.get(t.clientId) ?? '-', waiting: t.lastAuthor === 'client' && t.status === 'open' }))
   .sort((a, b) => Number(b.waiting) - Number(a.waiting))
 
 const waiting = rows.filter((r) => r.waiting).length

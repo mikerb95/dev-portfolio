@@ -83,17 +83,17 @@ const statusColor: Record<string, string> = {
                   {statusLabel[r.status ?? 'borrador']}
                 </span>
               </td>
-              <td class="py-3 pr-4 text-zinc-400">{r.clientName ?? '—'}</td>
-              <td class="py-3 pr-4 text-zinc-400">{r.projectTitle ?? '—'}</td>
+              <td class="py-3 pr-4 text-zinc-400">{r.clientName ?? '-'}</td>
+              <td class="py-3 pr-4 text-zinc-400">{r.projectTitle ?? '-'}</td>
               <td class="py-3 pr-4">
                 {r.agreedBudget
                   ? <span class="text-emerald-400">{fmt.format(r.agreedBudget)}</span>
                   : r.estimatedBudget
                     ? <span class="text-zinc-400">{fmt.format(r.estimatedBudget)}</span>
-                    : '—'}
+                    : '-'}
               </td>
               <td class="py-3 pr-4 text-zinc-400">
-                {r.deadline ? new Date(r.deadline).toLocaleDateString('es-CO') : '—'}
+                {r.deadline ? new Date(r.deadline).toLocaleDateString('es-CO') : '-'}
               </td>
               <td class="py-3 flex gap-2 justify-end">
                 <a
@@ -158,7 +158,7 @@ const statusColor: Record<string, string> = {
             id="f-client"
             class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
           >
-            <option value="">— Sin cliente —</option>
+            <option value="">- Sin cliente -</option>
             {allClients.map((c) => (
               <option value={c.id}>{c.name}</option>
             ))}
@@ -170,7 +170,7 @@ const statusColor: Record<string, string> = {
             id="f-project"
             class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
           >
-            <option value="">— Sin proyecto —</option>
+            <option value="">- Sin proyecto -</option>
             {allProjects.map((p) => (
               <option value={p.id}>{p.title}</option>
             ))}

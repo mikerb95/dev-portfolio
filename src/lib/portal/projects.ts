@@ -147,7 +147,7 @@ export async function projectHealth(clientId: number, projectId: number): Promis
     .where(and(inArray(monitorIncidents.monitorId, ids), sql`${monitorIncidents.resolvedAt} is null`))
 
   // El peor monitor manda: con cinco servicios y uno caído, el proyecto NO está
-  // "arriba" — está caído para el usuario que necesita ese uno.
+  // "arriba" - está caído para el usuario que necesita ese uno.
   const worst = rows.some((r) => r.lastStatus === 'down')
     ? 'down'
     : rows.some((r) => r.lastStatus === 'degraded')

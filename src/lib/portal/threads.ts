@@ -120,7 +120,7 @@ export async function unreadThreadCount(clientId: number, clientUserId: number):
 }
 
 /**
- * Un hilo con sus mensajes. Devuelve null si el hilo no es del cliente — nunca
+ * Un hilo con sus mensajes. Devuelve null si el hilo no es del cliente - nunca
  * un 403, que confirmaría que ese id existe.
  */
 export async function threadWithMessages(clientId: number, threadId: number) {

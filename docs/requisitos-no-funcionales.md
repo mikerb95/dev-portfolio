@@ -1,13 +1,13 @@
-# Requisitos No Funcionales — Portfolio CodeByMike
+# Requisitos No Funcionales - Portfolio CodeByMike
 
 > ⚠️ **Instantánea histórica (mayo 2026), no la fuente de verdad.** Los RNF
 > vigentes viven tipados en
-> [`src/data/documentacion.ts`](../src/data/documentacion.ts) —clasificados por
-> las categorías de ISO/IEC 25010— y se publican en
+> [`src/data/documentacion.ts`](../src/data/documentacion.ts) (clasificados por
+> las categorías de ISO/IEC 25010) y se publican en
 > [`/docs/requerimientos-no-funcionales`](https://codebymike.tech/docs/requerimientos-no-funcionales).
 > Se conserva como registro del alcance inicial.
 
-## RNF-01 — Rendimiento
+## RNF-01 - Rendimiento
 
 | ID | Requisito | Métrica objetivo |
 |----|-----------|-----------------|
@@ -15,11 +15,11 @@
 | RNF-01.2 | El Time to First Byte (TTFB) en páginas estáticas no debe superar 200ms. | TTFB < 200ms |
 | RNF-01.3 | El Cumulative Layout Shift (CLS) debe mantenerse por debajo del umbral recomendado. | CLS < 0.1 |
 | RNF-01.4 | Las APIs del panel admin deben responder en menos de 500ms bajo carga normal. | P95 < 500ms |
-| RNF-01.5 | Las imágenes deben optimizarse y servirse en formato moderno (WebP/AVIF) con lazy loading. | — |
+| RNF-01.5 | Las imágenes deben optimizarse y servirse en formato moderno (WebP/AVIF) con lazy loading. | - |
 
 ---
 
-## RNF-02 — Seguridad
+## RNF-02 - Seguridad
 
 | ID | Requisito |
 |----|-----------|
@@ -34,18 +34,18 @@
 
 ---
 
-## RNF-03 — Disponibilidad y confiabilidad
+## RNF-03 - Disponibilidad y confiabilidad
 
 | ID | Requisito | Métrica objetivo |
 |----|-----------|-----------------|
 | RNF-03.1 | El sitio público debe tener una disponibilidad mínima del 99.5% mensual. | Uptime ≥ 99.5% |
-| RNF-03.2 | La plataforma de despliegue (Vercel) debe manejar failover automático. | — |
-| RNF-03.3 | Los deployments deben ser zero-downtime (sin cortes durante actualizaciones). | — |
-| RNF-03.4 | La base de datos debe tener backups automáticos periódicos. | — |
+| RNF-03.2 | La plataforma de despliegue (Vercel) debe manejar failover automático. | - |
+| RNF-03.3 | Los deployments deben ser zero-downtime (sin cortes durante actualizaciones). | - |
+| RNF-03.4 | La base de datos debe tener backups automáticos periódicos. | - |
 
 ---
 
-## RNF-04 — Usabilidad y accesibilidad
+## RNF-04 - Usabilidad y accesibilidad
 
 | ID | Requisito |
 |----|-----------|
@@ -59,7 +59,7 @@
 
 ---
 
-## RNF-05 — Mantenibilidad
+## RNF-05 - Mantenibilidad
 
 | ID | Requisito |
 |----|-----------|
@@ -71,7 +71,7 @@
 
 ---
 
-## RNF-06 — Escalabilidad
+## RNF-06 - Escalabilidad
 
 | ID | Requisito |
 |----|-----------|
@@ -81,7 +81,7 @@
 
 ---
 
-## RNF-07 — SEO y metadatos
+## RNF-07 - SEO y metadatos
 
 | ID | Requisito |
 |----|-----------|
@@ -92,7 +92,7 @@
 
 ---
 
-## RNF-08 — Compatibilidad de navegadores
+## RNF-08 - Compatibilidad de navegadores
 
 | ID | Requisito |
 |----|-----------|
@@ -101,7 +101,7 @@
 
 ---
 
-## RNF-09 — Despliegue y entorno
+## RNF-09 - Despliegue y entorno
 
 | ID | Requisito |
 |----|-----------|

@@ -6,7 +6,7 @@
  *
  * Lento a propósito: es el job manual/semanal, nunca en cada push (ver
  * stryker.config.json y mutation.yml). Con INGEST_URL + LAB_INGEST_TOKEN
- * postea kind:'ci_run' con mutationScore — reusa el mismo mecanismo que ya
+ * postea kind:'ci_run' con mutationScore - reusa el mismo mecanismo que ya
  * reporta los runs del pipeline, así que aparece junto a ellos sin tocar el
  * esquema de nuevo.
  */
@@ -23,7 +23,7 @@ try {
 } catch {
   // Stryker sale con código != 0 si el score cae bajo el threshold `break`;
   // el reporte JSON se genera de todos modos. Se sigue para leerlo e ingerir
-  // el score real — la decisión de qué hacer con un score bajo es del panel,
+  // el score real - la decisión de qué hacer con un score bajo es del panel,
   // no de un exit code silencioso en CI.
 }
 const durationMs = Date.now() - started
@@ -34,7 +34,7 @@ let report
 try {
   report = JSON.parse(readFileSync('reports/mutation/mutation.json', 'utf8'))
 } catch {
-  console.error('✗ No se encontró reports/mutation/mutation.json — ¿Stryker corrió?')
+  console.error('✗ No se encontró reports/mutation/mutation.json - ¿Stryker corrió?')
   process.exit(1)
 }
 

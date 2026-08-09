@@ -7,7 +7,7 @@ lang: es
 translationOf: the-client-id-never-comes-from-the-url
 ---
 
-Un portal de clientes tiene una superficie de ataque incómoda: casi todo el que lo usa está **legítimamente autenticado**. El login puede ser perfecto — contraseñas con scrypt, sesiones revocables, rate limiting — y aun así basta un `WHERE` mal escrito para que una empresa vea la factura de otra. Ese fallo no dispara ninguna alarma de seguridad, porque desde fuera parece una consulta normal de un usuario normal.
+Un portal de clientes tiene una superficie de ataque incómoda: casi todo el que lo usa está **legítimamente autenticado**. El login puede ser perfecto - contraseñas con scrypt, sesiones revocables, rate limiting - y aun así basta un `WHERE` mal escrito para que una empresa vea la factura de otra. Ese fallo no dispara ninguna alarma de seguridad, porque desde fuera parece una consulta normal de un usuario normal.
 
 Así que el diseño entero gira alrededor de una regla sola.
 
@@ -17,7 +17,7 @@ Así que el diseño entero gira alrededor de una regla sola.
 
 Hay un único helper que resuelve cookie → sesión → usuario → empresa → rol, y es la única puerta por la que ese identificador puede entrar al código. Ningún endpoint lo acepta como parámetro. No es que esté validado: es que **no existe la forma de pasarlo**.
 
-Suena obvio escrito así. Deja de serlo en cuanto llega la segunda pantalla y alguien necesita `/facturas/482`. Ese `482` sí viene de la URL — y ahí es donde empieza el trabajo real.
+Suena obvio escrito así. Deja de serlo en cuanto llega la segunda pantalla y alguien necesita `/facturas/482`. Ese `482` sí viene de la URL - y ahí es donde empieza el trabajo real.
 
 ## Defensa en profundidad, o por qué el filtro va dos veces
 
@@ -27,7 +27,7 @@ Cuando pido los hitos de un proyecto, el `WHERE` lleva el id del proyecto **y** 
 where projectId = ? and projects.clientId = ?
 ```
 
-El segundo filtro es redundante en el camino feliz. No lo es en el camino donde alguien cambia el número de la URL. Sin él, la consulta encuentra el proyecto de otra empresa y lo devuelve encantada, porque el gate de sesión ya dijo que sí — el gate contesta "hay sesión", que es una pregunta distinta de "estos datos son suyos".
+El segundo filtro es redundante en el camino feliz. No lo es en el camino donde alguien cambia el número de la URL. Sin él, la consulta encuentra el proyecto de otra empresa y lo devuelve encantada, porque el gate de sesión ya dijo que sí - el gate contesta "hay sesión", que es una pregunta distinta de "estos datos son suyos".
 
 La consecuencia práctica es que **la seguridad no vive en el middleware**. El middleware dice quién eres; cada consulta decide qué es tuyo. Un gate que se salta no debería poder mostrar nada.
 
@@ -49,7 +49,7 @@ En el mismo dominio conviven tres sistemas de autenticación, y **ninguno compar
 
 Reutilizar el sistema del admin para los clientes habría sido menos código. También habría significado que un bug en un callback de OAuth pudiera, en el peor caso, convertir una sesión de cliente en una de administrador. Son dos poblaciones con dos perfiles de riesgo distintos: los mantengo separados a nivel de cookie para que ni siquiera viajen juntas en la misma petición.
 
-Las sesiones del portal son opacas: 256 bits de aleatoriedad de los que la base solo guarda el sha-256. Un volcado de la tabla de sesiones no permite suplantar a nadie, y revocar es un `UPDATE` con efecto inmediato — sin la ventana de "el token sigue siendo válido hasta que expire".
+Las sesiones del portal son opacas: 256 bits de aleatoriedad de los que la base solo guarda el sha-256. Un volcado de la tabla de sesiones no permite suplantar a nadie, y revocar es un `UPDATE` con efecto inmediato - sin la ventana de "el token sigue siendo válido hasta que expire".
 
 ## El detalle que casi se me escapa
 
@@ -57,9 +57,9 @@ Puedo entrar al portal de un cliente para ver exactamente lo que él ve. Es util
 
 Esa sesión nace marcada, y el middleware la vuelve de solo lectura: cualquier método que no sea `GET` recibe un 403.
 
-El problema es que ese corte cubría las rutas del portal, y la pasarela de pago **no vive ahí** — es infraestructura compartida con el cobro público, en otro prefijo. Un administrador viendo el portal como cliente podía alcanzar el único mutador que todo el resto del código bloqueaba.
+El problema es que ese corte cubría las rutas del portal, y la pasarela de pago **no vive ahí** - es infraestructura compartida con el cobro público, en otro prefijo. Un administrador viendo el portal como cliente podía alcanzar el único mutador que todo el resto del código bloqueaba.
 
-Es el fallo típico de las listas por prefijo: proteges un espacio de nombres y la excepción está fuera de él. La solución fue un segundo corte explícito en esa ruta concreta, y la lección es más general — **cada vez que la autorización se apoya en "las rutas que empiezan por", hay que ir a buscar qué quedó fuera**. Casi siempre hay algo.
+Es el fallo típico de las listas por prefijo: proteges un espacio de nombres y la excepción está fuera de él. La solución fue un segundo corte explícito en esa ruta concreta, y la lección es más general - **cada vez que la autorización se apoya en "las rutas que empiezan por", hay que ir a buscar qué quedó fuera**. Casi siempre hay algo.
 
 ## Lo que lo mantiene honesto
 

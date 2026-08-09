@@ -13,7 +13,7 @@ import { readDeckHtml } from '../../lib/present/decks'
  * Y por eso `frame-ancestors 'self'` explícito: el middleware pone
  * `frame-ancestors 'none'` + `X-Frame-Options: DENY` en las rutas privadas, y
  * heredarlo aquí dejaría el iframe en blanco. Se sobrescribe con el valor
- * mínimo que permite lo único que queremos permitir — que lo enmarquemos
+ * mínimo que permite lo único que queremos permitir - que lo enmarquemos
  * nosotros.
  */
 export const GET: APIRoute = async ({ params }) => {

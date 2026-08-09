@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
 
 // BD libsql en archivo temporal (no ':memory:', ver tests/payments.test.ts):
 // aquí lo que se prueba es el SQL real que compone Drizzle, así que hace falta
-// un motor de verdad — un mock del cliente no detectaría un UNION ALL mal
+// un motor de verdad - un mock del cliente no detectaría un UNION ALL mal
 // parentizado ni un LIMIT que no se aplica por rama.
 vi.mock('../src/db', async () => {
   const { createClient } = await import('@libsql/client')

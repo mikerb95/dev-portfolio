@@ -105,7 +105,7 @@ async function attackRace(): Promise<AttackOutcome> {
   const appliedCount = [a, d].filter((r) => r.applied).length
   const ok = appliedCount === 1 && (row.status === 'approved' || row.status === 'declined')
   return {
-    esperado: 'exactamente UNO gana (estado terminal); el otro no aplica — sin corrupción ni doble transición',
+    esperado: 'exactamente UNO gana (estado terminal); el otro no aplica - sin corrupción ni doble transición',
     observado: `approved: applied=${a.applied} · declined: applied=${d.applied} · estado final: ${row.status} (version ${row.version})`,
     ok,
   }

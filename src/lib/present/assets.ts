@@ -11,7 +11,7 @@
 //
 // Así que al subir se hace lo siguiente: cada asset va a Blob PÚBLICO y en el
 // HTML se sustituye su ruta relativa por la URL del blob. Lo que se guarda como
-// deck sigue siendo UN archivo HTML —de unos 100 KB— servido en `/decks/:id.html`
+// deck sigue siendo UN archivo HTML (de unos 100 KB) servido en `/decks/:id.html`
 // desde nuestro origen, igual que antes. Los 30 MB de imágenes nunca pasan por
 // una función: los sirve el CDN de Blob directamente al navegador.
 //
@@ -40,7 +40,7 @@ export function isRelativeAssetRef(value: string): boolean {
 
 /**
  * Ruta canónica de un asset, tal como se usará de clave. Quita el `./` inicial
- * y la query/hash, y normaliza los `../` — dos referencias al mismo archivo
+ * y la query/hash, y normaliza los `../` - dos referencias al mismo archivo
  * escritas distinto deben resolver a la misma clave o se subiría dos veces.
  */
 export function normalizeAssetPath(ref: string): string {

@@ -2,7 +2,7 @@
 //
 // notify.ts ya habla con Resend, pero solo sabe escribirme A MÍ (destinatario
 // fijo en ALERT_EMAIL_TO): sirve para alertas de infraestructura. Esto es otra
-// cosa — correo a terceros, con la marca puesta y contenido que el cliente va a
+// cosa - correo a terceros, con la marca puesta y contenido que el cliente va a
 // juzgar. Misma API, distinto propósito y distinto remitente.
 //
 // No-op si falta RESEND_API_KEY: en local no se envía nada y el flujo sigue
@@ -113,7 +113,7 @@ Enviado por CodeByMike · <a href="${SITE_URL}" style="color:#9a9aa4;">codebymik
 
 /** Versión en texto plano. No es opcional: sin ella el spam score sube. */
 export const renderText = (heading: string, lines: string[], button?: Button): string =>
-  [heading, '', ...lines, ...(button ? ['', `${button.label}: ${button.url}`] : []), '', '—', 'CodeByMike · codebymike.tech'].join('\n')
+  [heading, '', ...lines, ...(button ? ['', `${button.label}: ${button.url}`] : []), '', '-', 'CodeByMike · codebymike.tech'].join('\n')
 
 // ── Correos concretos ───────────────────────────────────────────────────────
 

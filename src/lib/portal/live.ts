@@ -7,7 +7,7 @@ import { lastActivityAt } from './activity'
 
 // Digest de la capa viva del portal: el objeto mínimo que el navegador sondea
 // cada 20 s para saber si algo cambió. No devuelve contenido, solo contadores y
-// marcas de tiempo — quien detecta un cambio pide el detalle por su ruta de
+// marcas de tiempo - quien detecta un cambio pide el detalle por su ruta de
 // siempre. Así el ciclo caliente del portal no arrastra cuerpos grandes ni
 // duplica la lógica de ninguna vista.
 //
@@ -75,7 +75,7 @@ export type PortalLiveParams = {
   clientId: number
   userId: number
   role: PortalRole
-  /** Viene de `?p=` — SIN validar. Se valida aquí contra los proyectos del cliente. */
+  /** Viene de `?p=` - SIN validar. Se valida aquí contra los proyectos del cliente. */
   requestedProjectId?: number | null
   now?: Date
 }
@@ -86,7 +86,7 @@ export type PortalLiveParams = {
  * datos de otro cliente (ver tests/portal-isolation.test.ts).
  *
  * `requestedProjectId` sí viene del request, y por eso se valida contra la lista
- * del cliente: un id ajeno cae al primer proyecto propio en vez de dar 403 —
+ * del cliente: un id ajeno cae al primer proyecto propio en vez de dar 403 -
  * igual que en `portal/index.astro`. Un 403 confirmaría que ese id existe.
  */
 export async function portalLiveDigest(params: PortalLiveParams): Promise<PortalLiveDigest> {

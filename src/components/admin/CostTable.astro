@@ -9,8 +9,8 @@ export interface CostRow {
   clientName: string | null
   costLabel: string          // costo en moneda nativa, ej "$20.00 USD"
   cycleLabel: string
-  monthlyUSDLabel: string    // equivalente mensual en USD o '—'
-  renewalLabel: string       // fecha o '—'
+  monthlyUSDLabel: string    // equivalente mensual en USD o '-'
+  renewalLabel: string       // fecha o '-'
   renewalState: 'overdue' | 'soon' | 'ok' | null
   payerLabel: string
   active: boolean
@@ -49,14 +49,14 @@ const renewalPill: Record<string, string> = {
           </div>
           <div class="text-[10.5px] font-mono text-ink-300 truncate">{r.categoryLabel}{r.provider ? ` · ${r.provider}` : ''}</div>
         </div>
-        <div class="text-[12px] font-mono text-ink-200 truncate">{r.projectTitle ?? r.clientName ?? '—'}</div>
+        <div class="text-[12px] font-mono text-ink-200 truncate">{r.projectTitle ?? r.clientName ?? '-'}</div>
         <div class="text-[12.5px] text-ink-50 font-mono">{r.costLabel}<span class="text-ink-300 text-[10px]"> / {r.cycleLabel}</span></div>
         <div class="text-[13px] text-cyan font-mono">{r.monthlyUSDLabel}</div>
         <div class="text-[11px] font-mono text-ink-200 truncate">{r.payerLabel}</div>
         <div>
           {r.renewalState
             ? <span class={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono border ${renewalPill[r.renewalState]}`}>{r.renewalState === 'overdue' ? '⚠ ' : ''}{r.renewalLabel}</span>
-            : <span class="text-[11px] font-mono text-ink-300">—</span>}
+            : <span class="text-[11px] font-mono text-ink-300">-</span>}
         </div>
         <div class="flex items-center gap-1.5 justify-end">
           {r.hasSecrets && (

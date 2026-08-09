@@ -1,7 +1,7 @@
 // Documentos y entregables del portal.
 //
 // El binario vive en Vercel Blob con `access: 'private'`: sus URLs no son
-// adivinables, pero eso NO es el control de acceso — un enlace filtrado sería
+// adivinables, pero eso NO es el control de acceso - un enlace filtrado sería
 // suficiente para cualquiera. El control real es que la descarga pasa siempre
 // por un endpoint que valida sesión y tenant, y solo entonces firma una URL de
 // vida corta. La URL del blob nunca se le entrega al navegador tal cual.
@@ -79,7 +79,7 @@ export async function clientDocuments(clientId: number, opts?: { includeHidden?:
 }
 
 /**
- * Un documento del cliente. Null si no es suyo — el `clientId` en el WHERE es
+ * Un documento del cliente. Null si no es suyo - el `clientId` en el WHERE es
  * lo único que separa "descargar mi contrato" de "descargar el de otro".
  */
 export async function clientDocument(clientId: number, documentId: number): Promise<PortalDocument | null> {

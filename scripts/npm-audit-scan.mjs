@@ -4,7 +4,7 @@
  *
  *   node scripts/npm-audit-scan.mjs
  *
- * Con INGEST_URL + LAB_INGEST_TOKEN postea con autoResolve:true — las
+ * Con INGEST_URL + LAB_INGEST_TOKEN postea con autoResolve:true - las
  * vulnerabilidades que ya no aparecen (dependencia actualizada) se marcan
  * resueltas solas. Sin ellos, solo imprime el resumen.
  *

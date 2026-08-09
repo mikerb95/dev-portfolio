@@ -96,7 +96,7 @@ body {
 
 /* Variante sobre papel: el documento de arquitectura y los diagramas que se
    exportan para insertar en él. No es el tema oscuro con los colores invertidos
-   uno a uno — el lima del evento de inicio desaparece sobre blanco y el cian de
+   uno a uno - el lima del evento de inicio desaparece sobre blanco y el cian de
    las compuertas pierde contraste, así que ambos bajan de luminosidad hasta
    cumplir contraste sobre el papel. */
 .bpmn-scope.bpmn-claro {

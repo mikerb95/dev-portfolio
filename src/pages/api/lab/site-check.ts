@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
     parseFailed = true
   }
   // El idioma llega como campo explícito del body, validado contra la lista
-  // cerrada de locales — nunca se deduce del `Referer`.
+  // cerrada de locales - nunca se deduce del `Referer`.
   const locale: Locale = typeof rawLocale === 'string' && isLocale(rawLocale) ? rawLocale : 'es'
   const E = ERRORS[locale]
 

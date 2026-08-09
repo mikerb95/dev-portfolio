@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 // Esquemas del "shape" de respuesta de los endpoints públicos/clave. No
-// validan valores de negocio (eso lo hacen los tests unitarios de cada lib) —
+// validan valores de negocio (eso lo hacen los tests unitarios de cada lib) -
 // validan que el CONTRATO no cambie sin que alguien se entere. Un campo que
 // desaparece, cambia de tipo o se renombra rompe el test correspondiente en
 // tests/contracts.test.ts.

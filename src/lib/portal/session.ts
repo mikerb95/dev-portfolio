@@ -7,7 +7,7 @@
 //
 // El token es opaco (256 bits de aleatoriedad) y en la base solo vive su
 // sha-256. Esto significa que un volcado de `portal_sessions` no permite
-// suplantar a nadie, y que revocar es un UPDATE con efecto inmediato — sin la
+// suplantar a nadie, y que revocar es un UPDATE con efecto inmediato - sin la
 // ventana de "el JWT sigue siendo válido hasta que expire" que tiene el admin.
 
 import { createHash, randomBytes } from 'node:crypto'
@@ -102,7 +102,7 @@ export function clearSessionCookie(cookies: CookieSetter): void {
  *
  * Devuelve null ante cualquier duda. Deshabilitar un usuario o apagar el portal
  * de un cliente tiene efecto en el siguiente request, sin esperar a que expire
- * la sesión — por eso el JOIN se hace aquí y no se cachea en la cookie.
+ * la sesión - por eso el JOIN se hace aquí y no se cachea en la cookie.
  */
 export async function resolveSession(token: string | undefined | null, now = new Date()): Promise<PortalSession | null> {
   if (!token) return null

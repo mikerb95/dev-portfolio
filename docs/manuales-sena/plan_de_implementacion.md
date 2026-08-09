@@ -1,8 +1,8 @@
-# Plan de Implantación — Portfolio CodeByMike (codebymike.tech)
+# Plan de Implantación - Portfolio CodeByMike (codebymike.tech)
 
 > **Producto**: puesta en operación controlada del sistema Portfolio +
 > Panel de control + Portal de clientes + Módulo LAB.
-> **Versión del plan**: 1.0 — 6 de agosto de 2026.
+> **Versión del plan**: 1.0 - 6 de agosto de 2026.
 > **Responsable**: Mike (@mikerb95).
 > **Estado**: aprobado para ejecución por fases.
 
@@ -28,12 +28,12 @@ las tres cosas.
 
 Módulos que entran en operación:
 
-1. **Sitio público** — portafolio, `/notes`, `/tools`, `/status`, `/security`, `/docs`, `/paginas-web`, versión en inglés bajo `/en`.
-2. **Panel de control admin** (`/admin`) — proyectos, costos y P&L, bóveda de secretos cifrada, monitores, cobros.
-3. **Portal de clientes** (`/portal`) — acceso email+contraseña, facturas, actividad en tiempo real.
-4. **Demo pública** (`/demo`) — panel de solo lectura contra base de datos separada.
-5. **Módulo LAB** (`/admin/lab`) — CI/CD, calidad, chaos, SLO, seguridad, pagos.
-6. **Micro-SIEM** — clasificador de amenazas, rate limit durable, blocklist, `security_events`.
+1. **Sitio público** - portafolio, `/notes`, `/tools`, `/status`, `/security`, `/docs`, `/paginas-web`, versión en inglés bajo `/en`.
+2. **Panel de control admin** (`/admin`) - proyectos, costos y P&L, bóveda de secretos cifrada, monitores, cobros.
+3. **Portal de clientes** (`/portal`) - acceso email+contraseña, facturas, actividad en tiempo real.
+4. **Demo pública** (`/demo`) - panel de solo lectura contra base de datos separada.
+5. **Módulo LAB** (`/admin/lab`) - CI/CD, calidad, chaos, SLO, seguridad, pagos.
+6. **Micro-SIEM** - clasificador de amenazas, rate limit durable, blocklist, `security_events`.
 
 ### 1.2 Ambientes
 
@@ -172,31 +172,31 @@ Los hitos (◆) son puntos de decisión: no se avanza sin cerrarlos.
 
 | Fase | Actividad | Días | Semana | Salida |
 |---|---|---|---|---|
-| **F0 — Preparación** | Auditoría de prerrequisitos §1.3 | 1 | S1 | Checklist completo |
+| **F0 - Preparación** | Auditoría de prerrequisitos §1.3 | 1 | S1 | Checklist completo |
 | | Congelación de alcance y creación de rama de release | 1 | S1 | Rama `release/implantacion` |
 | | Backup completo de la base productiva | 0.5 | S1 | Dump verificado y restaurable |
-| | ◆ **Hito 1: ambiente listo** | — | S1 | Aprobación de continuidad |
-| **F1 — Verificación** | Suite Vitest + e2e Playwright completa | 1 | S1 | E-15 |
+| | ◆ **Hito 1: ambiente listo** | - | S1 | Aprobación de continuidad |
+| **F1 - Verificación** | Suite Vitest + e2e Playwright completa | 1 | S1 | E-15 |
 | | Cobertura, mutation testing y contratos | 1 | S2 | E-16 |
 | | SAST (npm audit + CodeQL), DAST y accesibilidad (axe) | 1 | S2 | Hallazgos triados |
 | | Corrección de hallazgos bloqueantes | 2 | S2 | Cero hallazgos críticos |
-| | ◆ **Hito 2: calidad aprobada** | — | S2 | Autorización de migración |
-| **F2 — Datos** | Generación y revisión del SQL de migración | 0.5 | S3 | SQL revisado a mano |
+| | ◆ **Hito 2: calidad aprobada** | - | S2 | Autorización de migración |
+| **F2 - Datos** | Generación y revisión del SQL de migración | 0.5 | S3 | SQL revisado a mano |
 | | Ensayo de migración sobre copia | 0.5 | S3 | Migración reversible confirmada |
 | | Aplicación de migraciones en producción | 0.5 | S3 | E-02 |
 | | Siembra de la base demo | 0.5 | S3 | E-06 |
-| **F3 — Despliegue** | Carga de variables de entorno en Vercel | 0.5 | S3 | E-03 |
+| **F3 - Despliegue** | Carga de variables de entorno en Vercel | 0.5 | S3 | E-03 |
 | | Deploy a preview y validación funcional | 1 | S3 | Preview aprobada |
 | | Promoción a producción (ventana 20:00–23:00) | 0.5 | S3 | E-01 |
 | | Alta de crons y monitores | 0.5 | S3 | E-04, E-05 |
 | | Smoke test y verificación de seguridad | 0.5 | S3 | E-18 |
-| | ◆ **Hito 3: sistema en producción** | — | S3 | Inicio de estabilización |
-| **F4 — Estabilización** | Monitoreo intensivo (hypercare) | 5 | S4 | E-20 |
+| | ◆ **Hito 3: sistema en producción** | - | S3 | Inicio de estabilización |
+| **F4 - Estabilización** | Monitoreo intensivo (hypercare) | 5 | S4 | E-20 |
 | | Ajustes finos y corrección de defectos menores | 2 | S4 | Backlog en cero |
-| **F5 — Transferencia** | Entrega de manuales | 1 | S4 | E-07 a E-10 |
+| **F5 - Transferencia** | Entrega de manuales | 1 | S4 | E-07 a E-10 |
 | | Sesión de capacitación | 0.5 | S4 | Asistencia registrada |
 | | Presentación y aprobación formal | 0.5 | S4 | E-19 |
-| | ◆ **Hito 4: implantación aceptada** | — | S4 | Cierre |
+| | ◆ **Hito 4: implantación aceptada** | - | S4 | Cierre |
 
 ### 5.1 Ruta crítica
 
@@ -259,22 +259,22 @@ hito y debe tener su mitigación verificada antes de avanzar.
 | Actividad | Líder | Dev | DevOps | QA | Seguridad | Instructor | Cliente |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Definir alcance y objetivos | A | C | C | C | C | C | I |
-| Auditar prerrequisitos del ambiente | A | R | R | C | C | — | — |
-| Backup de la base productiva | A | C | R | I | C | — | — |
-| Ejecutar suite de pruebas y cobertura | I | C | — | R/A | C | — | — |
-| Triaje de hallazgos SAST/DAST/a11y | A | R | — | C | R | I | — |
-| Generar y revisar SQL de migración | A | R | C | C | — | — | — |
-| Aplicar migración en producción | A | R | C | I | I | — | — |
-| Cargar variables de entorno | A | C | R | — | C | — | — |
-| Deploy a preview | I | R | R | C | — | — | — |
+| Auditar prerrequisitos del ambiente | A | R | R | C | C | - | - |
+| Backup de la base productiva | A | C | R | I | C | - | - |
+| Ejecutar suite de pruebas y cobertura | I | C | - | R/A | C | - | - |
+| Triaje de hallazgos SAST/DAST/a11y | A | R | - | C | R | I | - |
+| Generar y revisar SQL de migración | A | R | C | C | - | - | - |
+| Aplicar migración en producción | A | R | C | I | I | - | - |
+| Cargar variables de entorno | A | C | R | - | C | - | - |
+| Deploy a preview | I | R | R | C | - | - | - |
 | Promoción a producción | A | C | R | C | C | I | I |
-| Alta de crons y monitores | I | C | R | C | C | — | — |
-| Smoke test post-despliegue | A | C | C | R | C | — | I |
+| Alta de crons y monitores | I | C | R | C | C | - | - |
+| Smoke test post-despliegue | A | C | C | R | C | - | I |
 | Decidir y ejecutar rollback | A | C | R | C | C | I | I |
-| Monitoreo en hypercare | A | C | R | C | R | — | I |
+| Monitoreo en hypercare | A | C | R | C | R | - | I |
 | Atención de incidentes | A | R | R | C | C | I | I |
 | Redacción de manuales | A | R | C | C | C | I | I |
-| Sesión de capacitación | R/A | C | — | — | — | I | R |
+| Sesión de capacitación | R/A | C | - | - | - | I | R |
 | Presentación y aprobación final | R | C | C | C | C | A | C |
 
 Regla no negociable del proyecto: **el líder es el único que dispara deploys y
@@ -315,7 +315,7 @@ commits**. Ninguna automatización ni tercero promueve a producción.
 
 ### 8.1 Configuración operativa
 
-Variables críticas en Vercel (Production) — sin ellas el módulo correspondiente
+Variables críticas en Vercel (Production) - sin ellas el módulo correspondiente
 queda inoperante o en no-op silencioso:
 
 | Variable | Módulo | Efecto si falta |
@@ -334,10 +334,10 @@ queda inoperante o en no-op silencioso:
 
 | Severidad | Definición | Detección | Respuesta | Resolución objetivo |
 |---|---|---|---|---|
-| **S1 — Crítica** | Sitio caído, fuga de datos, cobro duplicado | Monitor + ntfy | 15 min | 2 h o rollback |
-| **S2 — Alta** | Módulo inoperante (portal, admin, cobros) | Monitor / reporte | 1 h | 8 h |
-| **S3 — Media** | Función degradada con workaround | Reporte | 1 día hábil | 3 días hábiles |
-| **S4 — Baja** | Cosmético, mejora | Backlog | 3 días hábiles | Próxima iteración |
+| **S1 - Crítica** | Sitio caído, fuga de datos, cobro duplicado | Monitor + ntfy | 15 min | 2 h o rollback |
+| **S2 - Alta** | Módulo inoperante (portal, admin, cobros) | Monitor / reporte | 1 h | 8 h |
+| **S3 - Media** | Función degradada con workaround | Reporte | 1 día hábil | 3 días hábiles |
+| **S4 - Baja** | Cosmético, mejora | Backlog | 3 días hábiles | Próxima iteración |
 
 Horario de soporte: días hábiles 08:00–20:00 (COT). Las S1 se atienden fuera de
 horario porque los monitores alertan por push a cualquier hora.

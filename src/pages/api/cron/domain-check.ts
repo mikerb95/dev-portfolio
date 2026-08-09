@@ -80,10 +80,10 @@ async function runCheck(force = false) {
 
   const critical = toNotify.filter((a) => a.state === 'overdue' || a.state === 'critical').length
   const subject = `⚠ ${toNotify.length} dominio${toNotify.length === 1 ? '' : 's'} por vencer`
-  const lines = toNotify.map((a) => `• ${a.name} — ${stateLabel(a)}`)
+  const lines = toNotify.map((a) => `• ${a.name} - ${stateLabel(a)}`)
   const text = `${subject}\n\n${lines.join('\n')}\n\nRevisa: ${SITE_URL}/admin/domains`
   const html = `<h2 style="font-family:system-ui">Vencimiento de dominios</h2><ul style="font-family:system-ui;font-size:14px">${toNotify
-    .map((a) => `<li><strong>${a.name}</strong> — ${stateLabel(a)}</li>`)
+    .map((a) => `<li><strong>${a.name}</strong> - ${stateLabel(a)}</li>`)
     .join('')}</ul><p><a href="${SITE_URL}/admin/domains">Abrir panel de dominios →</a></p>`
 
   const [email, push] = await Promise.all([

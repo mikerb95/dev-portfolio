@@ -146,7 +146,7 @@ async function notify(events: Event[]) {
   const ssls = events.filter((e): e is Extract<Event, { kind: 'ssl' }> => e.kind === 'ssl')
 
   const lines: string[] = []
-  for (const e of downs) lines.push(`🔴 ${e.name} CAÍDO — ${e.error}`)
+  for (const e of downs) lines.push(`🔴 ${e.name} CAÍDO - ${e.error}`)
   for (const e of recoveries) lines.push(`🟢 ${e.name} recuperado (caído ${fmtDuration(e.downSec)})`)
   for (const e of ssls) lines.push(`⚠ SSL de ${e.name} ${e.days < 0 ? `vencido hace ${Math.abs(e.days)}d` : `vence en ${e.days}d`}`)
 

@@ -6,7 +6,7 @@ import { desc, eq } from 'drizzle-orm'
 import { formatDateTime } from '../../../lib/portal/format'
 import { ACTIVITY_LABELS } from '../../../lib/portal/activity'
 
-// Vista de control del feed: aquí se ve TODO, incluido lo apagado — es el
+// Vista de control del feed: aquí se ve TODO, incluido lo apagado - es el
 // sentido de la página. La consulta no filtra por visibleToClient a propósito.
 const clientRows = await db
   .select({ id: clients.id, name: clients.name, company: clients.company })

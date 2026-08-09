@@ -208,14 +208,14 @@ const hasFilters = !!(fType || fProject || fClient)
           <div>
             <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Proyecto</label>
             <select id="i-project" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
-              <option value="">—</option>
+              <option value="">-</option>
               {projectsList.map((p) => <option value={p.id}>{p.title}</option>)}
             </select>
           </div>
           <div>
             <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cliente</label>
             <select id="i-client" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
-              <option value="">—</option>
+              <option value="">-</option>
               {clientsList.map((c) => <option value={c.id}>{c.name}</option>)}
             </select>
           </div>

@@ -1,6 +1,6 @@
-# SEO — Portfolio CodeByMike
+# SEO - Portfolio CodeByMike
 
-## Estado y plan de posicionamiento orgánico — 2026-07-09
+## Estado y plan de posicionamiento orgánico - 2026-07-09
 
 ### ✅ Capa técnica completada (auditoría de junio + sesión de julio)
 
@@ -20,22 +20,22 @@ Todo lo crítico de la auditoría de abajo ya está implementado y verificado en
 
 **Añadido en esta sesión (2026-07-09):**
 
-- **JSON-LD `BlogPosting` + `BreadcrumbList`** en `/notes/[slug]` y breadcrumbs en `/projects/[slug]` — elegibilidad para rich results de artículos.
+- **JSON-LD `BlogPosting` + `BreadcrumbList`** en `/notes/[slug]` y breadcrumbs en `/projects/[slug]` - elegibilidad para rich results de artículos.
 - **`article:published_time` / `article:author`** vía prop `publishedTime` de `BaseLayout`.
-- **Feed RSS** en `/rss.xml` (notas, con categorías y `lastBuildDate`) + `<link rel="alternate">` en el head — señal de frescura para crawlers y agregadores.
+- **Feed RSS** en `/rss.xml` (notas, con categorías y `lastBuildDate`) + `<link rel="alternate">` en el head - señal de frescura para crawlers y agregadores.
 - **`site.webmanifest` + `apple-touch-icon.png` + icon-192/512** generados desde el favicon SVG.
 - **IndexNow (automático)**: clave en `public/eec9c30b0348b882cba9349b7fb125f2.txt`, lógica en `src/lib/indexnow.ts` (con tests en `tests/indexnow.test.ts`). Se envía **solo, a diario** vía cron de Vercel `/api/cron/indexnow` (`30 8 * * *`, auth `CRON_SECRET`), que reenvía el sitemap a **Bing, Yandex, Seznam, Naver y Yep**. Disparo manual: `npm run seo:indexnow` o `PUT /api/cron/indexnow` (sesión admin). Google no usa IndexNow; su canal es Search Console.
-- **`llms.txt`** — mapa del sitio para crawlers de IA (ChatGPT, Perplexity, Claude), un canal de descubrimiento creciente.
-- **Hallazgo #9 resuelto — thin content de `/log`**: la página es 100% client-side (feed de GitHub en tiempo real); un crawler solo veía encabezado + esqueletos de carga. Ahora lleva `noindex` y se excluyó de `STATIC_PATHS` en `sitemap.xml.ts`, así robots y sitemap quedan coherentes y no se anuncia thin content. `/status`, `/tools` y `/security` se verificaron server-rendered (indexables de verdad) y se dejan como están.
+- **`llms.txt`** - mapa del sitio para crawlers de IA (ChatGPT, Perplexity, Claude), un canal de descubrimiento creciente.
+- **Hallazgo #9 resuelto - thin content de `/log`**: la página es 100% client-side (feed de GitHub en tiempo real); un crawler solo veía encabezado + esqueletos de carga. Ahora lleva `noindex` y se excluyó de `STATIC_PATHS` en `sitemap.xml.ts`, así robots y sitemap quedan coherentes y no se anuncia thin content. `/status`, `/tools` y `/security` se verificaron server-rendered (indexables de verdad) y se dejan como están.
 - Fix de build: colisión de `const headers` en `middleware.ts` (renombrado a `reqHeaders` en el bloque de enforcement).
 
-### 🔴 Acciones manuales pendientes (requieren tus cuentas — son EL paso que falta para indexación)
+### 🔴 Acciones manuales pendientes (requieren tus cuentas - son EL paso que falta para indexación)
 
 1. **Google Search Console** → <https://search.google.com/search-console>
    - Añadir propiedad de dominio `codebymike.tech` (verificación por DNS TXT en el registrador; cubre www y subdominios).
    - Enviar `https://codebymike.tech/sitemap.xml`.
    - Pedir indexación manual de `/`, `/notes` y las 5 notas (Inspección de URLs → Solicitar indexación).
-2. **Bing Webmaster Tools** → <https://www.bing.com/webmasters> — con "Importar desde Google Search Console" es un clic. Bing alimenta también a DuckDuckGo, Ecosia y Yahoo.
+2. **Bing Webmaster Tools** → <https://www.bing.com/webmasters> - con "Importar desde Google Search Console" es un clic. Bing alimenta también a DuckDuckGo, Ecosia y Yahoo.
 3. ~~Ejecutar `npm run seo:indexnow`~~ → **ya es automático** (cron diario `/api/cron/indexnow`). Solo asegúrate de que `CRON_SECRET` esté configurado en Vercel (ya lo está para los otros crons). Para publicar una nota y anunciarla al instante, `npm run seo:indexnow` sigue disponible.
 4. **Yandex Webmaster** (opcional) → <https://webmaster.yandex.com> si interesa ese mercado.
 5. Verificar en Vercel que `www.codebymike.tech` y `*.vercel.app` redirigen 308 al dominio canónico.
@@ -50,14 +50,14 @@ La capa técnica ya no es el cuello de botella. Para "top de Google" el ranking 
 | 2 | **Distribuir cada nota**: LinkedIn, dev.to / Hashnode (con `rel=canonical` apuntando a codebymike.tech), comunidades (r/devsarg, forocoches dev, Discords de Astro/Vercel) | Backlinks + tráfico de referencia = señales de autoridad | Por nota |
 | 3 | **Backlinks de perfil**: URL del sitio en GitHub profile/repos README, LinkedIn, committers.top, dev.to, X | Enlaces fáciles y legítimos de dominios con autoridad | Una vez |
 | 4 | **Interlinking interno**: cada nota enlaza a proyectos/tools relacionados y viceversa | Distribuye PageRank interno y aumenta páginas/sesión | Por nota |
-| 5 | ~~**Título home con keywords buscables** — considerar variante EN~~ → hecho: `/en` en producción con `hreflang` recíproco (ver §15). Queda pendiente traducir las notas técnicas, que es donde vive el long-tail | La búsqueda de reclutadores es mayormente en inglés | ✅ + continua |
+| 5 | ~~**Título home con keywords buscables** - considerar variante EN~~ → hecho: `/en` en producción con `hreflang` recíproco (ver §15). Queda pendiente traducir las notas técnicas, que es donde vive el long-tail | La búsqueda de reclutadores es mayormente en inglés | ✅ + continua |
 | 6 | **Medir**: Search Console (queries, impresiones, CTR) semanal el primer mes; PageSpeed Insights tras cada cambio grande; CrUX aparece ~28 días después del alta | Sin medición no hay iteración | Semanal |
 
-**Expectativa realista:** indexación completa en 1–2 semanas tras dar de alta Search Console; primeras impresiones por marca ("codebymike") en días; posicionamiento long-tail de las notas en 2–3 meses con publicación constante. El dominio es joven — la constancia pesa más que cualquier truco técnico.
+**Expectativa realista:** indexación completa en 1–2 semanas tras dar de alta Search Console; primeras impresiones por marca ("codebymike") en días; posicionamiento long-tail de las notas en 2–3 meses con publicación constante. El dominio es joven - la constancia pesa más que cualquier truco técnico.
 
 ---
 
-# Auditoría SEO original — 2026-06-09
+# Auditoría SEO original - 2026-06-09
 
 **Fecha:** 2026-06-09
 **Stack:** Astro 6 (SSR, `output: 'server'`) + Vercel + Tailwind 4 + Turso/libSQL
@@ -69,7 +69,7 @@ La capa técnica ya no es el cuello de botella. Para "top de Google" el ranking 
 
 La base es sólida: HTML semántico, una sola `h1` por página, `lang="es"`, `alt` en imágenes, títulos únicos por página y el panel `/admin` correctamente protegido con `X-Robots-Tag: noindex`. Sin embargo, **falta toda la capa de descubribilidad y compartibilidad**: no hay sitemap, ni robots.txt, ni Open Graph, ni canonical, ni datos estructurados. Para un portfolio (cuyo tráfico llega en gran parte por enlaces compartidos en LinkedIn/WhatsApp y por búsquedas de marca personal), los metadatos de compartir son el hallazgo más costoso.
 
-En rendimiento, los dos problemas dominantes son: **fuentes de Google render-blocking** (3 familias, 14 pesos) que retrasan el LCP —que aquí es texto—, y **SSR sin caché en todas las páginas públicas**, donde cada visita paga invocación de función + query a la base de datos (TTFB alto).
+En rendimiento, los dos problemas dominantes son: **fuentes de Google render-blocking** (3 familias, 14 pesos) que retrasan el LCP (que aquí es texto), y **SSR sin caché en todas las páginas públicas**, donde cada visita paga invocación de función + query a la base de datos (TTFB alto).
 
 | Severidad | Hallazgos |
 |---|---|
@@ -86,7 +86,7 @@ En rendimiento, los dos problemas dominantes son: **fuentes de Google render-blo
 
 El `<head>` solo tiene charset, viewport, description y title. Al compartir cualquier URL en LinkedIn, WhatsApp, X o Slack no se genera tarjeta de vista previa (sin imagen, sin título formateado). Para un portfolio este es el canal de adquisición principal.
 
-**Fix recomendado** — ampliar `BaseLayout.astro` con props `image` y `canonical`:
+**Fix recomendado** - ampliar `BaseLayout.astro` con props `image` y `canonical`:
 
 ```astro
 ---
@@ -141,7 +141,7 @@ Sitemap: https://codebymike.tech/sitemap.xml
 Sin `<link rel="canonical">`, las variantes de URL (query params, trailing slash, dominio `.vercel.app` de los deploys preview) pueden indexarse como duplicados. Añadir `site: 'https://codebymike.tech'` en `astro.config.mjs` y el canonical del punto 1. Verificar también en Vercel que el dominio apex/www redirige 308 a la variante canónica (Vercel lo hace si el dominio secundario está marcado como redirect).
 
 ### 4. Soft-404 en proyectos inexistentes
-**Dónde:** `src/pages/projects/[slug].astro:16` — `return Astro.redirect('/404')`
+**Dónde:** `src/pages/projects/[slug].astro:16` - `return Astro.redirect('/404')`
 
 Dos problemas: (a) responde **302** en lugar de **404**, así que los crawlers tratan URLs muertas como válidas (soft-404 en Search Console); (b) `/404` no existe como página (`src/pages/404.astro` no está), así que el redirect aterriza en el 404 genérico del adapter.
 
@@ -159,7 +159,7 @@ if (!project || !project.visible) {
 
 Para un portfolio personal, los schemas con mejor retorno son:
 
-- **`Person`** en la home (nombre, jobTitle, sameAs → GitHub, LinkedIn) — alimenta el Knowledge Panel y búsquedas de marca personal.
+- **`Person`** en la home (nombre, jobTitle, sameAs → GitHub, LinkedIn) - alimenta el Knowledge Panel y búsquedas de marca personal.
 - **`WebSite`** en el layout base.
 - **`CreativeWork`/`SoftwareSourceCode`** en `/projects/[slug]`.
 - **`BreadcrumbList`** en páginas internas.
@@ -185,7 +185,7 @@ Se cargan **3 familias / 14 pesos** (Inter ×7, JetBrains Mono ×5, Instrument S
 - Google Fonts ya no se beneficia de caché compartida entre sitios (cache partitioning desde 2020): el tercer origen es puro costo.
 
 **Fix (mayor impacto de rendimiento de toda la auditoría):**
-1. **Self-host** con la API de fuentes experimental de Astro o `@fontsource-variable/inter` — las variable fonts reemplazan los 7 pesos de Inter con un solo archivo.
+1. **Self-host** con la API de fuentes experimental de Astro o `@fontsource-variable/inter` - las variable fonts reemplazan los 7 pesos de Inter con un solo archivo.
 2. Reducir pesos: en el CSS solo se usan sans/mono/serif sin tantos cortes; auditar cuáles se usan realmente.
 3. `<link rel="preload" as="font">` para la fuente del hero (Inter) con `font-display: swap` u `optional`.
 4. Subset `latin` únicamente.
@@ -206,7 +206,7 @@ Cada vista de la home ejecuta una invocación de función Vercel + 1-3 queries a
 2. **ISR del adapter Vercel** (`isr: { expiration: 300 }` en `vercel()`), excluyendo `/admin` y `/api` con `exclude`.
 3. `export const prerender = true` en `/contact` (no depende de BD en el render… verificar) y regenerar en deploy.
 
-El endpoint `api/github/activity.ts:214` ya hace esto bien (`s-maxage=1800, stale-while-revalidate`) — replicar el patrón.
+El endpoint `api/github/activity.ts:214` ya hace esto bien (`s-maxage=1800, stale-while-revalidate`) - replicar el patrón.
 
 ### 8. Imágenes sin optimizar (CLS + peso)
 **Dónde:** `src/components/ProjectCard.astro:21-26`, `CertCard.astro:44-48`, `[slug].astro` (screenshot)
@@ -241,7 +241,7 @@ Los navegadores caen al `/favicon.ico` implícito, pero el SVG no se usa y falta
 ### 11. Meta description de la home genérica y sin marca
 **Dónde:** `index.astro:15` (no pasa `description`, usa el default del layout)
 
-La home —la página más importante— usa la descripción por defecto, que no menciona nombre, marca (`CodeByMike`), ubicación ni stack. Escribir una específica (~150 caracteres) con los términos por los que quieres aparecer: "Mike — Senior Software Engineer en Colombia. TypeScript, React, Next.js, Astro y Node.js. Productos escalables y rendimiento obsesivo." Las demás páginas ya tienen descriptions propias ✓.
+La home (la página más importante) usa la descripción por defecto, que no menciona nombre, marca (`CodeByMike`), ubicación ni stack. Escribir una específica (~150 caracteres) con los términos por los que quieres aparecer: "Mike - Senior Software Engineer en Colombia. TypeScript, React, Next.js, Astro y Node.js. Productos escalables y rendimiento obsesivo." Las demás páginas ya tienen descriptions propias ✓.
 
 ### 12. Headers de seguridad solo en `/admin`
 **Dónde:** `src/middleware.ts:24-29`
@@ -256,13 +256,13 @@ La home —la página más importante— usa la descripción por defecto, que no
 `dist/client/_astro/global.*.css` pesa 60 KB sin comprimir (~10 KB con Brotli en Vercel). Aceptable, pero al ser Tailwind 4 conviene confirmar que no se están incluyendo utilidades del panel `/admin` en el bundle público (los layouts comparten `global.css`). Si el CSS del admin es significativo, separar hoja para `AdminLayout`.
 
 ### 14. Enlaces externos sin `rel="noopener"`
-Los enlaces a GitHub/LinkedIn/WhatsApp en `Footer.astro`/`Navbar.astro` — verificar que los que usan `target="_blank"` llevan `rel="noopener noreferrer"`. (Los navegadores modernos lo implican con `target="_blank"`, pero Lighthouse aún lo marca.)
+Los enlaces a GitHub/LinkedIn/WhatsApp en `Footer.astro`/`Navbar.astro` - verificar que los que usan `target="_blank"` llevan `rel="noopener noreferrer"`. (Los navegadores modernos lo implican con `target="_blank"`, pero Lighthouse aún lo marca.)
 
-### 15. Sin `meta name="generator"` ni hreflang — ✅ resuelto (29 jul 2026)
+### 15. Sin `meta name="generator"` ni hreflang - ✅ resuelto (29 jul 2026)
 - Hreflang: implementado. `BaseLayout` emite `hreflang` recíproco más `x-default`
   y el sitemap duplica cada URL traducida con su `xhtml:link rel="alternate"`.
   Clave: los alternates salen de `TRANSLATED_ROUTES` (`src/i18n/routing.ts`), así
-  que solo se anuncian los idiomas en los que la página **existe de verdad** —
+  que solo se anuncian los idiomas en los que la página **existe de verdad** -
   anunciar un `hreflang="en"` hacia un 404 es peor que no anunciarlo. Detalle en
   `docs/plan-i18n-en.md`.
 - El atributo `lang` es dinámico por locale (`es` / `en`), junto con `og:locale`
@@ -273,7 +273,7 @@ Los enlaces a GitHub/LinkedIn/WhatsApp en `Footer.astro`/`Navbar.astro` — veri
 
 ### 16. Accesibilidad que afecta Lighthouse SEO score
 - Botón/enlaces solo-icono (SVGs de flechas en `index.astro`) van acompañados de texto ✓.
-- Verificar contraste de `text-ink-300` (#4d4d5d) sobre `#07070a` — ratio ≈ 3.2:1, **falla AA para texto pequeño** (los labels mono de 10-11px). Subir a `ink-200` en textos informativos pequeños.
+- Verificar contraste de `text-ink-300` (#4d4d5d) sobre `#07070a` - ratio ≈ 3.2:1, **falla AA para texto pequeño** (los labels mono de 10-11px). Subir a `ink-200` en textos informativos pequeños.
 
 ---
 
@@ -283,7 +283,7 @@ Los enlaces a GitHub/LinkedIn/WhatsApp en `Footer.astro`/`Navbar.astro` — veri
 - Una sola `h1` por página, jerarquía de headings coherente.
 - `alt` descriptivo en todas las imágenes (`ProjectCard`, `CertCard`).
 - `loading="lazy"` en imágenes bajo el fold.
-- Títulos únicos y con patrón de marca (`Página — CodeByMike`).
+- Títulos únicos y con patrón de marca (`Página - CodeByMike`).
 - `/admin` y `/api/admin` protegidos con sesión + `X-Robots-Tag: noindex, nofollow` (`middleware.ts:28`).
 - `preconnect` a los orígenes de fuentes (mitiga parcialmente el punto 6).
 - API de GitHub con `Cache-Control` + SWR bien configurado.

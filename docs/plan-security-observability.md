@@ -1,4 +1,4 @@
-# Plan: Observabilidad de Seguridad (SecOps) — CodeByMike
+# Plan: Observabilidad de Seguridad (SecOps) - CodeByMike
 
 > Objetivo: construir un módulo de **observabilidad de seguridad** de nivel profesional que
 > registre, agregue y visualice la actividad hostil contra codebymike.tech (endpoints
@@ -23,14 +23,14 @@
 | Área | Estado |
 |---|---|
 | Middleware | `src/middleware.ts`: auth de `/admin`, headers de seguridad (HSTS, CSP en admin), chaos LAB, registro de sesiones de dispositivo |
-| Rate limiting | `src/lib/ratelimit.ts`: ventana fija **en memoria, por instancia** — se pierde entre cold starts y no comparte estado entre instancias. Usado solo en `contact`, `checkout`, `mock/pay` |
+| Rate limiting | `src/lib/ratelimit.ts`: ventana fija **en memoria, por instancia** - se pierde entre cold starts y no comparte estado entre instancias. Usado solo en `contact`, `checkout`, `mock/pay` |
 | Registro de actividad hostil | **Cero.** Los 404 de scanners (p. ej. `/wp-login.php`, `/.env`) no se registran en ninguna parte |
-| Firewall de plataforma | Vercel plan Hobby: DDoS mitigation automática incluida; WAF con **3 custom rules gratis** y challenge/deny sin costo — disponible pero sin configurar |
+| Firewall de plataforma | Vercel plan Hobby: DDoS mitigation automática incluida; WAF con **3 custom rules gratis** y challenge/deny sin costo - disponible pero sin configurar |
 | Observabilidad existente | Motor propio de uptime (`monitors.ts`), SLO (`slo.ts`), Web Vitals, ntfy + Resend (`notify.ts`), `/status` público |
 | Auth/sesiones | Auth.js + allowlist GitHub, tabla `admin_sessions` con revocación, IP y user-agent ya capturados |
 | Base de datos | Turso/libSQL + Drizzle, migraciones aditivas con `drizzle-kit generate` |
 
-Ventaja clave: ya existe el patrón completo a replicar — tabla de eventos + cron de
+Ventaja clave: ya existe el patrón completo a replicar - tabla de eventos + cron de
 agregación + panel admin + página pública filtrada + alertas ntfy. El módulo de seguridad
 es estructuralmente análogo al de monitores.
 
@@ -76,7 +76,7 @@ Principios (mismos del LAB, no negociables):
    fallback a "permitir".
 2. **Presupuesto de latencia**: la capa 1 añade **≤ 5 ms p99** al request (una lectura
    cacheada de la blocklist cada ~30 s; la clasificación es regex/lookup en memoria; la
-   escritura del evento no se espera con `await` en el camino de respuesta —
+   escritura del evento no se espera con `await` en el camino de respuesta -
    `context.waitUntil` si está disponible, o promesa suelta con catch).
 3. **Aditivo**: tablas nuevas, rutas nuevas, un solo punto de contacto con código
    existente (el middleware, extendido con el mismo cuidado que `maybeChaos`).
@@ -93,7 +93,7 @@ Principios (mismos del LAB, no negociables):
 ## Nuevas tablas (Drizzle, migración aditiva)
 
 ```
-security_events        — evento crudo por request sospechoso
+security_events        - evento crudo por request sospechoso
   id, at (unixepoch), ip (texto), ipHash (sha-256 truncado, para públicos),
   method, path, query (truncado 200 chars), userAgent (truncado 300),
   country (header x-vercel-ip-country), asn (x-vercel-ip-as-number, si llega),
@@ -101,17 +101,17 @@ security_events        — evento crudo por request sospechoso
   action ('logged'|'rate_limited'|'blocked'|'honeypot'), statusCode,
   ruleId (qué regla del clasificador disparó)
 
-security_rollups       — agregado horario/diario para dashboards y baseline
+security_rollups       - agregado horario/diario para dashboards y baseline
   id, bucket ('hour'|'day'), at, category, count, uniqueIps, topPath, topCountry
 
-blocked_ips            — lista de bloqueo con TTL (nunca bloqueos eternos por defecto)
+blocked_ips            - lista de bloqueo con TTL (nunca bloqueos eternos por defecto)
   ip (pk), reason, ruleId, hits, createdAt, expiresAt (obligatorio; escalado:
   1h → 24h → 7d por reincidencia), source ('auto'|'manual')
 
-rate_limit_buckets     — estado durable del rate limiter (clave, ventana, contador)
-  key (pk), count, resetAt   — con purga perezosa en el cron
+rate_limit_buckets     - estado durable del rate limiter (clave, ventana, contador)
+  key (pk), count, resetAt   - con purga perezosa en el cron
 
-security_anomalies     — hallazgos del detector (para timeline y alertas)
+security_anomalies     - hallazgos del detector (para timeline y alertas)
   id, at, kind ('spike'|'new_pattern'|'geo_anomaly'|'auth_probing'|'error_burst'),
   zScore, baseline, observed, detail (json), notified, acknowledged
 ```
@@ -140,16 +140,16 @@ del LAB: la suite de seguridad suma coverage real).
 
 ## Fases
 
-### Fase 0 — Fundamento: telemetría de eventos (el "sensor") ~1 sesión
+### Fase 0 - Fundamento: telemetría de eventos (el "sensor") ~1 sesión
 
 1. Migración con las 5 tablas.
 2. `src/lib/security/classify.ts` + `src/lib/security/events.ts` (`recordSecurityEvent`,
    fire-and-forget, dedupe en memoria de ráfagas idénticas: máx 1 escritura/seg por
-   `ip+ruleId` para que un scan de 500 rutas no haga 500 inserts — se acumula `hits`).
+   `ip+ruleId` para que un scan de 500 rutas no haga 500 inserts - se acumula `hits`).
 3. Hook en `middleware.ts`: clasificar el request; si matchea, registrar. **Sin bloquear
-   todavía** (fase de solo observación — igual que se despliega un WAF real: primero
+   todavía** (fase de solo observación - igual que se despliega un WAF real: primero
    `log`, luego `enforce`). El middleware ve TODAS las rutas (incluidas las que acaban en
-   404), así que un scanner de `/wp-login.php`, `/.env`, etc. ya queda registrado aquí —
+   404), así que un scanner de `/wp-login.php`, `/.env`, etc. ya queda registrado aquí -
    no hace falta un hook aparte en `404.astro` (evita doble conteo). Un hook de 404 solo
    añadiría valor para medir volumen de escaneo de rutas SIN firma; se deja para una fase
    posterior si interesa esa métrica.
@@ -160,7 +160,7 @@ del LAB: la suite de seguridad suma coverage real).
 datos antes de encender el enforcement (evita bloquear tráfico legítimo por una regla
 mal calibrada).
 
-### Fase 1 — Rate limiting durable + enforcement ✅ IMPLEMENTADA (2026-07-09)
+### Fase 1 - Rate limiting durable + enforcement ✅ IMPLEMENTADA (2026-07-09)
 
 Entregado: `ratelimit-durable.ts` (dos capas memoria→Turso, upsert atómico, fail-open
 150 ms), `blocklist.ts` (cache 30 s + allowlist + escalado de TTL 1h→24h→7d),
@@ -190,7 +190,7 @@ datos. El auto-block (que llena `blocked_ips`) es de la Fase 2.
 < 0.1% de requests legítimos (medible: eventos `rate_limited` cuya IP luego navega
 normalmente).
 
-### Fase 2 — Honeypots + auto-block ✅ IMPLEMENTADA (2026-07-09)
+### Fase 2 - Honeypots + auto-block ✅ IMPLEMENTADA (2026-07-09)
 
 Entregado: rutas señuelo `/wp-login.php`, `/admin.php`, `/api/v1/token`
 (`src/pages/…`, exportan `ALL`) que sirven contenido falso plausible tras un tarpit
@@ -204,7 +204,7 @@ Disallow de señuelos. Tests: `security-autoblock` + `security-honeypot` (255 to
 verdes). Verificado e2e: honeypot→200/401 falso, cron bloquea la IP (`source='auto'`, TTL
 3600 s), request posterior→403. **Pendiente operativo**: dar de alta el cron en cron-job.org.
 
-**Refuerzo (2026-07-19) — bloqueo inline de honeypots:** el auto-block dependía
+**Refuerzo (2026-07-19) - bloqueo inline de honeypots:** el auto-block dependía
 únicamente del cron, que nunca se dio de alta en cron-job.org y además se removió de
 `vercel.json` (posible límite de crons del plan) → los honeypots tocados no se bloqueaban
 en la práctica: se veían hits repetidos de la misma IP en `/admin/security` sin bloqueo.
@@ -212,7 +212,7 @@ Como un hit a ruta señuelo es intención inequívoca (cero falsos positivos), s
 caso a **bloqueo inline en `src/middleware.ts`**: `observeRequest` ya devuelve la
 clasificación de forma síncrona; si `category==='honeypot'`, el middleware llama a
 `blockIpEscalated` justo tras el check de blocklist. El request que dispara la trampa
-**sigue su curso y recibe el señuelo** (tarpit + HTML falso — no se delata la trampa en el
+**sigue su curso y recibe el señuelo** (tarpit + HTML falso - no se delata la trampa en el
 primer contacto); a partir del siguiente request la IP cae en la blocklist (403). Se
 extrajo `blockIpEscalated` en `src/lib/security/blocklist.ts` (lee `hits` previos →
 `escalatedTtlSec` → `blockIp`), compartido por el inline y por `runAutoBlock` (un único
@@ -225,19 +225,19 @@ camino inline: si el insert falla, el request continúa.
 
 1. Endpoints trampa que ningún usuario legítimo toca: `/wp-login.php`, `/.env`,
    `/admin.php`, `/api/v1/token` (rutas Astro reales que responden 200 con contenido
-   plausible-pero-falso tras un delay aleatorio de 1–3 s — un *tarpit* suave — y
+   plausible-pero-falso tras un delay aleatorio de 1–3 s - un *tarpit* suave - y
    registran `honeypot`/`critical`). Añadir `Disallow` de esas rutas en `robots.txt`
-   (los crawlers legítimos las respetan; los atacantes no — filtro adicional).
+   (los crawlers legítimos las respetan; los atacantes no - filtro adicional).
 2. Auto-block escalonado. El caso `honeypot` se bloquea **inline en el middleware**
    (ver refuerzo 2026-07-19 arriba); la ráfaga de ≥ N eventos `high` en 10 min sigue
    corriendo en el cron. Ambos → insert en `blocked_ips` con TTL 1 h; reincidencia → 24 h
    → 7 días. **Salvaguardas**: nunca auto-bloquear IPs de rangos de Vercel/cron-job.org
    ni la IP del admin (allowlist en `app_settings`); tope de 500 IPs bloqueadas
-   simultáneas (si se excede, alerta en vez de bloquear — señal de ataque distribuido
+   simultáneas (si se excede, alerta en vez de bloquear - señal de ataque distribuido
    que se maneja en capa 0).
 3. Panel de gestión manual: bloquear/desbloquear desde `/admin/security`.
 
-### Fase 3 — Cron de análisis, anomalías y alertas ✅ IMPLEMENTADA (2026-07-09)
+### Fase 3 - Cron de análisis, anomalías y alertas ✅ IMPLEMENTADA (2026-07-09)
 
 Entregado: `src/lib/security/anomaly.ts` (puro: `mean`/`stddev`/`zScore` + `detectSpikes`
 z>3 con mínimo absoluto, `detectNewPatterns`, `detectGeoAnomalies`), `rollup.ts`
@@ -254,7 +254,7 @@ evaluada no entre en su propia baseline.
 1. `/api/cron/security-rollup` (vercel.json, cada hora + respaldo cron-job.org como los
    monitores): agrega la hora anterior a `security_rollups`, ejecuta auto-block, purga
    retención, actualiza baseline.
-2. **Detección de anomalías** (propia, estadística simple y explicable — vende más en
+2. **Detección de anomalías** (propia, estadística simple y explicable - vende más en
    una sustentación que una caja negra):
    - *Spike*: eventos/hora por categoría vs media+desviación de la misma hora en los
      últimos 30 días; z-score > 3 → anomalía.
@@ -262,12 +262,12 @@ evaluada no entre en su propia baseline.
    - *Geo anomaly*: país nuevo entrando al top-3 de origen de eventos high/critical.
    - *Auth probing*: > X fallos de auth en la ventana.
    - *Error burst*: correlación con `monitor_checks` (¿el ataque coincide con
-     degradación de uptime? — esto une los dos sistemas de observabilidad).
+     degradación de uptime? - esto une los dos sistemas de observabilidad).
 3. Alertas vía `notify.ts` existente: `critical` inmediato (push prioridad 5),
    `high` agrupado por hora, resumen diario por email. Anti-fatiga: una anomalía
    abierta no re-alerta hasta que se reconozca o pasen 24 h.
 
-### Fase 4 — Panel privado `/admin/security` ✅ IMPLEMENTADA (2026-07-10)
+### Fase 4 - Panel privado `/admin/security` ✅ IMPLEMENTADA (2026-07-10)
 
 Entregado: página única `src/pages/admin/security.astro` (dashboard + explorador +
 blocklist en una vista, en vez de 4 sub-rutas) con KPIs (eventos 24h/7d, IPs bloqueadas,
@@ -280,7 +280,7 @@ por el guard de `/api/admin`). Entrada "Seguridad" añadida al grupo Sistema del
 temporal, ya borrado), guard redirige 302 sin sesión tanto la página como la API. UI reusa
 los patrones de `sessions.astro`/`monitors.astro` (glass cards, fetch POST, rel-time).
 
-### Fase 4 (referencia original) — Panel privado `/admin/security` ~1–2 sesiones
+### Fase 4 (referencia original) - Panel privado `/admin/security` ~1–2 sesiones
 
 Nueva entrada en el sidebar (grupo Sistema, junto a Monitores):
 
@@ -296,44 +296,44 @@ Nueva entrada en el sidebar (grupo Sistema, junto a Monitores):
 Gráficas con el mismo enfoque server-rendered de `/status` (SVG/tablas, sin librerías
 cliente pesadas). Acciones de mutación con el mismo guard auth + CSRF de las APIs admin.
 
-### Fase 5 — Vitrina pública ✅ IMPLEMENTADA PARCIALMENTE (2026-07-10)
+### Fase 5 - Vitrina pública ✅ IMPLEMENTADA PARCIALMENTE (2026-07-10)
 
 Entregado: sección "Security Operations" añadida a `/security` (existente, no
-reemplazada — ya tenía hallazgos reales de auditoría OWASP con commits, que se
+reemplazada - ya tenía hallazgos reales de auditoría OWASP con commits, que se
 conservaron intactos): KPIs (detectados 30d, bloqueos automáticos, categorías OWASP,
 overhead objetivo), desglose por categoría, origen geográfico, tendencia diaria (14d,
 barras SVG-less con CSS), diagrama de 4 capas y SLOs publicados como objetivos de
 diseño (no se afirma falsamente que son medidos en producción). Todas las queries
-agregadas, sin IPs crudas ni nombres de reglas ni lista de honeypots — verificado
+agregadas, sin IPs crudas ni nombres de reglas ni lista de honeypots - verificado
 grepeando el HTML servido. Tarjeta de enlace añadida en `/status`. **Reajuste de
 OPSEC vs. el borrador original**: se cambió "top 5 rutas señuelo más atacadas" por
-"categoría más atacada" — listar rutas señuelo específicas contradice el principio de
+"categoría más atacada" - listar rutas señuelo específicas contradice el principio de
 no revelar cuáles endpoints son honeypots. Bug encontrado y corregido en verificación
 visual: las barras de tendencia no renderizaban por falta de `h-full` en el contenedor
 flex (porcentaje de altura sin base de referencia). **Pendiente**: caso de estudio en
-`/tools` y artículo en `/notes` (contenido, no bloqueante — se puede añadir después).
+`/tools` y artículo en `/notes` (contenido, no bloqueante - se puede añadir después).
 
-### Fase 5 (referencia original) — Vitrina pública ~1 sesión
+### Fase 5 (referencia original) - Vitrina pública ~1 sesión
 
 1. **`/security` (rediseño de la página existente)** → "Security Operations":
    - Contadores agregados: "N intentos de intrusión detectados y bloqueados este mes",
      desglose por categoría OWASP, top 5 rutas-señuelo más atacadas, mapa/lista de
      países de origen, tendencia de 90 días.
    - Sección "Cómo funciona": diagrama de las 4 capas, presupuesto de latencia, política
-     de retención, filosofía fail-open — el texto técnico es la pieza de marketing.
+     de retención, filosofía fail-open - el texto técnico es la pieza de marketing.
    - SLA/SLO publicados: overhead del pipeline, tiempo de detección→bloqueo (objetivo:
      auto-block en ≤ 60 min vía cron, inmediato para rate limit), falsos positivos.
    - **OPSEC**: solo agregados; IPs enmascaradas; sin nombres de reglas exactos; sin
      revelar cuáles endpoints son honeypots (decir "endpoints señuelo" sin listarlos).
 2. Tarjeta "Security" en `/status` (junto a uptime) y entrada en `/tools`.
-3. Artículo en `/notes`: *"Construyendo un micro-SIEM para mi portfolio"* — el formato
+3. Artículo en `/notes`: *"Construyendo un micro-SIEM para mi portfolio"* - el formato
    que ya usas para mostrar conocimiento.
 4. OG image propia, identidad CodeByMike.
 
-### Fase 6 — Capa 0 (Vercel WAF free) + endurecimiento ✅ CÓDIGO IMPLEMENTADO (2026-07-10)
+### Fase 6 - Capa 0 (Vercel WAF free) + endurecimiento ✅ CÓDIGO IMPLEMENTADO (2026-07-10)
 
 **Corrección al borrador**: la auditoría mostró que la CSP ya corría en modo **enforce**
-(no report-only) tanto en `/admin` como en público desde antes de esta fase — el punto 2
+(no report-only) tanto en `/admin` como en público desde antes de esta fase - el punto 2
 original ("CSP solo cubre admin") estaba desactualizado. Por eso NO se hizo la migración
 report-only→enforce (ya estaba en enforce); en su lugar se añadió **observabilidad
 continua** sobre una CSP que ya bloquea.
@@ -344,28 +344,28 @@ Entregado (código, ya committeado):
   `src/pages/api/security/csp-report.ts` (POST sin auth, con rate limit durable 20/min/IP,
   registra `category='csp_violation'` vía `recordSecurityEvent`). Middleware: header
   `Reporting-Endpoints` + directivas `report-to`/`report-uri` añadidas a la CSP existente
-  (pública y admin) — el navegador ya bloqueaba, ahora además avisa.
+  (pública y admin) - el navegador ya bloqueaba, ahora además avisa.
 - `Permissions-Policy` global (camera/microphone/geolocation/payment/usb/interest-cohort/
   browsing-topics todos en `()`), en ambas ramas del middleware.
 - `/.well-known/security.txt` (RFC 9116): **ya existía**, completo y correcto (Contact,
-  Expires, Preferred-Languages, Canonical, Policy) — no se modificó.
+  Expires, Preferred-Languages, Canonical, Policy) - no se modificó.
 - Tests: `security-csp-report.test.ts` (280 totales verdes). Verificado e2e: headers
   confirmados por curl en `/` (CSP con report-to/report-uri, Permissions-Policy,
   Reporting-Endpoints), POST de prueba al endpoint → 204 + evento `csp_violation`
   registrado con el `document-uri` y `blocked-uri` correctos. Datos de prueba limpiados.
 
-**Pendiente — acción manual en el dashboard de Vercel (no ejecutable desde el agente):**
+**Pendiente - acción manual en el dashboard de Vercel (no ejecutable desde el agente):**
 las 3 custom rules gratis del WAF. Con el motor propio ya cubriendo detección/bloqueo,
 estas reglas son un respaldo de plataforma (capa 0) para cuando el propio origen esté
 sobrecargado o el ataque sea volumétrico. Sugerencia concreta a configurar en
 Vercel → Project → Firewall:
 1. **Deny** a paths que matcheen patrones de CMS/secrets (`/wp-*`, `/.git/*`, `/.env*`)
-   — con excepción explícita de las rutas propias `/wp-login.php`, `/admin.php`,
+   - con excepción explícita de las rutas propias `/wp-login.php`, `/admin.php`,
    `/api/v1/token` (son honeypots reales del proyecto, deben seguir respondiendo).
 2. **Challenge** (o Deny) a User-Agents que contengan `sqlmap|nikto|nuclei|masscan|nmap`
    (mismo patrón que `classify.ts`, como defensa redundante antes de que el request
    llegue a la función).
-3. **Rate limit** de respaldo en `/api/*` (p. ej. 300 req/10s por IP) — red de seguridad
+3. **Rate limit** de respaldo en `/api/*` (p. ej. 300 req/10s por IP) - red de seguridad
    por si el limiter durable propio fallara (fail-open) bajo un ataque muy agresivo.
 
 ---
@@ -389,14 +389,14 @@ Vercel → Project → Firewall:
 | Escrituras a Turso amplifican un ataque (el ataque genera writes) | Dedupe 1 write/s por ip+regla; tope de eventos/min global con degradación a solo-contador en memoria |
 | Auto-block se vuelve arma de DoS contra terceros (IP spoofing en XFF) | En Vercel `x-forwarded-for` lo pone la plataforma (no falsificable en la primera IP); aún así, TTLs cortos y tope de 500 IPs |
 | Vitrina filtra inteligencia al atacante | Reglas de OPSEC de la Fase 5 (solo agregados, sin firmas, sin lista de honeypots) |
-| Cron de Vercel Hobby limitado (1 ejecución/día por cron en Hobby) | Igual que los monitores: cron-job.org (free) como disparador horario del endpoint, protegido por token — patrón ya probado en el repo |
+| Cron de Vercel Hobby limitado (1 ejecución/día por cron en Hobby) | Igual que los monitores: cron-job.org (free) como disparador horario del endpoint, protegido por token - patrón ya probado en el repo |
 | Crecimiento de datos | Retención por capas + purga en cron; estimación 15 MB/año vs 5 GB free |
 
 ## Terceros (todos free tier, todos opcionales/no-op si faltan)
 
-- **Vercel WAF free** (3 reglas + DDoS automático) — capa 0, ya incluido en el plan Hobby.
-- **cron-job.org** — disparador horario (ya en uso para monitores).
-- **ntfy.sh + Resend** — alertas (ya integrados vía `notify.ts`).
+- **Vercel WAF free** (3 reglas + DDoS automático) - capa 0, ya incluido en el plan Hobby.
+- **cron-job.org** - disparador horario (ya en uso para monitores).
+- **ntfy.sh + Resend** - alertas (ya integrados vía `notify.ts`).
 - Opcional futuro, no en el MVP: enriquecimiento de IPs con listas públicas gratuitas
   (p. ej. feed de AbuseIPDB free o listas de Tor exit nodes descargadas por el cron y
   cacheadas en `app_settings`) para marcar "IP con reputación conocida" en el panel.

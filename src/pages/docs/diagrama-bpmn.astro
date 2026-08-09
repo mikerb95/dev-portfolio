@@ -53,7 +53,7 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, sizeOf
         Los cuatro procesos de negocio del sistema en notación BPMN: cobro de campo, acceso al
         portal de clientes, respuesta de seguridad y ciclo de monitoreo. A diferencia de los
         diagramas de secuencia, aquí lo que se lee es <em>quién</em> hace cada cosa y
-        <em>dónde se decide</em> el camino — por eso cada participante tiene su carril y toda
+        <em>dónde se decide</em> el camino - por eso cada participante tiene su carril y toda
         bifurcación pasa por una compuerta.
       </p>
       <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
@@ -64,7 +64,7 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, sizeOf
         que ninguna flecha atraviese una figura ajena y que ningún nodo quede encimado.
       </p>
       <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
-        Para el documento de arquitectura —que es vertical— existe{' '}
+        Para el documento de arquitectura (que es vertical) existe{' '}
         <a
           href="/docs/bpmn-imprimible"
           class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40"
@@ -105,7 +105,7 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, sizeOf
       <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-2">Los 5 tipos de compuerta</h2>
       <p class="text-[13.5px] text-ink-300 leading-relaxed max-w-3xl mb-5">
         Las cinco se dibujan con el mismo rombo: lo único que cambia es el marcador de dentro. Ese
-        detalle no es decorativo — decide si el proceso sigue por un camino o por varios, y si al
+        detalle no es decorativo - decide si el proceso sigue por un camino o por varios, y si al
         juntarse espera a los demás o no. De las cinco, estos diagramas solo necesitan la{' '}
         <strong class="font-medium text-ink-100">exclusiva</strong>; las otras cuatro van aquí con
         el ejemplo de dónde encajarían en este sistema, para que se entienda la diferencia.
@@ -183,7 +183,7 @@ const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, sizeOf
               <summary class="cursor-pointer select-none px-4 py-3 text-[13px] text-ink-100 hover:text-ink-50 transition-colors">
                 Tiempos del proceso
                 <span class="ml-1.5 font-mono text-[11.5px] text-ink-400">({p.tiempos.length})</span>
-                <span class="ml-2 text-[12px] text-ink-400">— cada valor, con la constante que lo fija</span>
+                <span class="ml-2 text-[12px] text-ink-400">- cada valor, con la constante que lo fija</span>
               </summary>
 
               <div class="overflow-x-auto border-t border-white/10">

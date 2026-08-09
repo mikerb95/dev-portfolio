@@ -22,7 +22,7 @@ const rows = await db
   .orderBy(projectServices.renewalDate)
 
 const fmtDate = (d?: Date | null) =>
-  d ? d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+  d ? d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
 
 const items = rows
   .map((r) => {
@@ -112,7 +112,7 @@ const STATE_BADGE: Record<string, { cls: string; label: (d: number) => string }>
               {!i.autoRenew && <span class="text-[10px] font-mono text-ember border border-ember/30 rounded px-1.5 py-0.5">sin auto-renovación</span>}
             </div>
             <div class="text-[10.5px] font-mono text-ink-300 mt-0.5 truncate">
-              {i.domain ?? '—'}{i.provider ? ` · ${i.provider}` : ''}{i.projectTitle ? ` · ${i.projectTitle}` : ''}
+              {i.domain ?? '-'}{i.provider ? ` · ${i.provider}` : ''}{i.projectTitle ? ` · ${i.projectTitle}` : ''}
             </div>
           </div>
           <div class="text-right shrink-0">

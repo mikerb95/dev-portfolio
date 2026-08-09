@@ -1,8 +1,8 @@
-# Taller de Testing — Técnicas de caja negra
+# Taller de Testing - Técnicas de caja negra
 
 | | |
 |---|---|
-| **Proyecto bajo prueba** | CodeByMike — `codebymike.tech` |
+| **Proyecto bajo prueba** | CodeByMike - `codebymike.tech` |
 | **Módulos** | Portal de clientes (`/portal`: autenticación, facturas, cuenta) y Cobros de campo (`/cobrar → /c/[code] → /mis-pagos`) |
 | **Stack** | Astro 7 (SSR) · Turso/libSQL · Drizzle · Tailwind 4 · Vercel |
 | **Técnicas aplicadas** | Casos de prueba · Escenarios · Particiones de equivalencia · Valores límite (BVA) · Pruebas exploratorias · Trazabilidad |
@@ -62,7 +62,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-01 |
-| **Módulo/Función** | Portal — Autenticación · Login con credenciales válidas |
+| **Módulo/Función** | Portal - Autenticación · Login con credenciales válidas |
 | **Objetivo** | Validar que un usuario de un cliente con portal habilitado inicia sesión y llega a su panel. |
 | **Precondiciones** | Usuario `active` con contraseña definida; su cliente tiene `portal_enabled = 1`; sin sesión previa. |
 | **Datos de prueba** | Correo: `ana.torres@altiplano.test` · Contraseña: `Altiplano2026` |
@@ -75,7 +75,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-02 |
-| **Módulo/Función** | Portal — Autenticación · Login con credenciales inválidas |
+| **Módulo/Función** | Portal - Autenticación · Login con credenciales inválidas |
 | **Objetivo** | Verificar que un fallo de credenciales no revela si la cuenta existe (mensaje único). |
 | **Precondiciones** | La cuenta `ana.torres@altiplano.test` existe; `nadie@nada.test` no existe. |
 | **Datos de prueba** | (a) correo existente + `claveIncorrecta1` · (b) `nadie@nada.test` + `Altiplano2026` |
@@ -88,7 +88,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-03 |
-| **Módulo/Función** | Portal — Autenticación · Bloqueo temporal por fuerza bruta |
+| **Módulo/Función** | Portal - Autenticación · Bloqueo temporal por fuerza bruta |
 | **Objetivo** | Verificar que la cuenta se bloquea 15 minutos al décimo intento fallido, aunque el atacante cambie de IP. |
 | **Precondiciones** | Cuenta `bloqueo@altiplano.test` activa, con el contador de fallos en 0. |
 | **Datos de prueba** | 10 intentos con `claveIncorrecta1`, **cada uno desde una IP distinta**; luego un intento con la contraseña correcta `Altiplano2026`. |
@@ -101,7 +101,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-04 |
-| **Módulo/Función** | Portal — Facturas · Visualización del listado |
+| **Módulo/Función** | Portal - Facturas · Visualización del listado |
 | **Objetivo** | Verificar que el cliente ve sus facturas con estado y totales coherentes con los KPI. |
 | **Precondiciones** | Sesión activa de `ana.torres@altiplano.test`; el cliente 1 tiene 3 facturas sembradas. |
 | **Datos de prueba** | INV-2026-101 ($450.000, pagada) · INV-2026-102 ($380.800, pendiente) · INV-2026-103 ($95.200, vencida) |
@@ -114,7 +114,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-05 |
-| **Módulo/Función** | Portal — Facturas · Detalle y descarga del PDF |
+| **Módulo/Función** | Portal - Facturas · Detalle y descarga del PDF |
 | **Objetivo** | Verificar que el detalle desglosa los conceptos y que el PDF se descarga como adjunto y no se cachea. |
 | **Precondiciones** | Sesión activa de Ana; factura id 2 (INV-2026-102) del cliente 1. |
 | **Datos de prueba** | Desarrollo de catálogo: 80 × $3.000 = $240.000 · Integración de pagos: 20 × $4.000 = $80.000 |
@@ -127,7 +127,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-06 |
-| **Módulo/Función** | Portal — Aislamiento entre clientes |
+| **Módulo/Función** | Portal - Aislamiento entre clientes |
 | **Objetivo** | Verificar que un cliente **no** puede leer una factura de otro cliente conociendo su id. Un fallo aquí no degrada una función: expone los datos de un cliente a otro. |
 | **Precondiciones** | Dos clientes con portal habilitado; la factura id 2 pertenece al cliente 1. |
 | **Datos de prueba** | Sesión de `carlos.ruiz@otrocliente.test` (cliente 2) pidiendo la factura id 2. |
@@ -140,7 +140,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-07 |
-| **Módulo/Función** | Portal — Cuenta · Cambio de contraseña |
+| **Módulo/Función** | Portal - Cuenta · Cambio de contraseña |
 | **Objetivo** | Verificar que la contraseña nueva se valida (longitud y composición) y que se exige la actual aunque ya haya sesión. |
 | **Precondiciones** | Sesión activa; se conoce la contraseña actual. |
 | **Datos de prueba** | Actual: `Altiplano2026` · Nuevas: `abcdefgh1` (9), `abcdefghij` (10 sin dígitos), `abcdefghi1` (10 válida) |
@@ -153,10 +153,10 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-08 |
-| **Módulo/Función** | Portal — Autenticación · Cerrar sesión |
+| **Módulo/Función** | Portal - Autenticación · Cerrar sesión |
 | **Objetivo** | Verificar que «Cerrar sesión» revoca la sesión y devuelve al login. |
 | **Precondiciones** | Sesión activa de `ana.torres@altiplano.test`. |
-| **Datos de prueba** | — |
+| **Datos de prueba** | - |
 | **Pasos (numerados)** | 1. Iniciar sesión.<br>2. Abrir el menú del avatar (arriba a la derecha).<br>3. Pulsar «Cerrar sesión».<br>4. Navegar a `/portal`. |
 | **Oráculo (resultado esperado)** | Redirección `302` a `/portal/login?m=session-closed`, cookie borrada y fila de `portal_sessions` eliminada. Al volver a `/portal` debe pedir login. |
 | **Resultado obtenido** | ❌ **No conforme.** El navegador muestra una página en blanco con el texto `Cross-site POST form submissions are forbidden`. La sesión **no** se cierra: al volver a `/portal` el usuario sigue dentro como Ana. Reproducido 2 de 2 veces en un flujo limpio. El mismo `POST` con cabecera `Origin` explícita sí devuelve `302` y cierra la sesión, así que el endpoint funciona: falla la petición que emite el formulario. |
@@ -166,12 +166,12 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-09 |
-| **Módulo/Función** | Cobros de campo — Pago desde el link corto `/c/[code]` |
+| **Módulo/Función** | Cobros de campo - Pago desde el link corto `/c/[code]` |
 | **Objetivo** | Verificar el ciclo completo de un cobro: link vigente → pago → estado terminal, y que los links vencido y ya pagado no permiten cobrar de nuevo. |
 | **Precondiciones** | Cobros `MN5TW3` (vigente), `XY7MQ2` (vencido) y `PK4RT8` (aprobado) en la base. |
 | **Datos de prueba** | `MN5TW3` = $195.000, «Soporte y ajustes de octubre», vence en 3 días. |
 | **Pasos (numerados)** | 1. Abrir `/c/MN5TW3` (sin sesión: es un link público).<br>2. Verificar monto, concepto y vencimiento.<br>3. Pulsar «Pagar».<br>4. Confirmar el estado en la base.<br>5. Repetir el pago (doble clic).<br>6. Abrir `/c/XY7MQ2` y `/c/PK4RT8`. |
-| **Oráculo (resultado esperado)** | Paso 2: «$195.000», concepto y «vence en 3 días»; el monto se firma en el servidor y el link no puede alterarlo. Paso 3: página «¡Gracias! Pago recibido». Paso 4: estado `approved`. Paso 5: **idempotente** — el segundo intento no aplica nada (`applied:false`) y el estado sigue en `approved`. Paso 6: «Este link venció» y «Este cobro ya fue pagado»; sus endpoints de checkout devuelven `{"status":"expired"}` y `{"status":"approved"}`. |
+| **Oráculo (resultado esperado)** | Paso 2: «$195.000», concepto y «vence en 3 días»; el monto se firma en el servidor y el link no puede alterarlo. Paso 3: página «¡Gracias! Pago recibido». Paso 4: estado `approved`. Paso 5: **idempotente** - el segundo intento no aplica nada (`applied:false`) y el estado sigue en `approved`. Paso 6: «Este link venció» y «Este cobro ya fue pagado»; sus endpoints de checkout devuelven `{"status":"expired"}` y `{"status":"approved"}`. |
 | **Resultado obtenido** | ✅ Conforme en los seis pasos. El pago pasó `created → pending → approved` y el reintento quedó registrado como duplicado sin efecto. |
 | **Veredicto** | **PASA** |
 | **Evidencia (archivo)** | `TC-09a-cobro-link-vigente.jpg` · `TC-09b-pago-recibido.jpg` · `TC-09c-cobro-link-vencido.jpg` |
@@ -179,7 +179,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | | |
 |---|---|
 | **ID** | TC-10 |
-| **Módulo/Función** | Cobros de campo — Histórico público `/mis-pagos` |
+| **Módulo/Función** | Cobros de campo - Histórico público `/mis-pagos` |
 | **Objetivo** | Verificar que consultar por teléfono devuelve datos **enmascarados** (un teléfono no es una credencial) y que la consulta está limitada por IP. |
 | **Precondiciones** | 4 cobros asociados a `+573104641228`. |
 | **Datos de prueba** | `3104641228` · `310 464 1228` · `+573104641228` · `1234` · `abc` |
@@ -240,15 +240,15 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 | ID | Operación | Precondiciones | Datos | Pasos | Oráculo (esperado) | Resultado |
 |---|---|---|---|---|---|---|
-| CDE-01 | Definir contraseña — clase V1 | Sesión activa, contraseña actual conocida | Actual = `Altiplano2026` · Nueva = `abcdefghi1` (10) | 1. `/portal/cuenta` 2. Escribir actual y nueva 3. «Cambiar contraseña» | `{"ok":true}` y «Contraseña cambiada. Las demás sesiones se cerraron.» Después: la nueva contraseña entra (`200`) y la vieja es rechazada | ✅ PASA — verificados los tres efectos |
-| CDE-02 | Definir contraseña — clase I1 | Ídem | Nueva = `abcdefgh1` (9) | Ídem | «La contraseña debe tener al menos 10 caracteres.» | ✅ PASA |
-| CDE-03 | Definir contraseña — clase I3 | Ídem | Nueva = `abcdefghij` (10, sin dígitos) | Ídem | «La contraseña debe combinar letras y números.» | ✅ PASA |
-| CDE-04 | Crear pago — clase V1 | Endpoint público disponible | `amountCents = 15000000`, clave de idempotencia única | `POST /api/payments/checkout` | `200/201` con `reference` y estado `created` | ✅ PASA |
-| CDE-05 | Crear pago — clase I3 | Ídem | `amountCents = 100000.5` | Ídem | `400` «debe ser un entero entre 100000 y 500000000» | ✅ PASA |
-| CDE-06 | Consultar histórico — clase V2 | 4 cobros con ese teléfono | `310 464 1228` | 1. `/mis-pagos` 2. Consultar | Mismo histórico que `+573104641228`, con montos enmascarados | ✅ PASA |
-| CDE-07 | Consultar histórico — clase I1 | Ídem | `310464122` (9 dígitos) | Ídem | `400` «número inválido» | ✅ PASA |
-| CDE-08 | Abrir cobro — clase I2 | Cobro `AB3K9F` existe | `AB0K9F` (contiene un `0`) | Abrir `/c/AB0K9F` | `404` «Cobro no encontrado» | ✅ PASA |
-| CDE-09 | Abrir cobro — clase I3 | Cobro `AB3K9F` existe | `ab3k9f` (minúsculas) | Abrir `/c/ab3k9f` | *Esperado por diseño:* el cobro se abre (el código se dicta y se teclea a mano) | ❌ **FALLA → BUG-02** (devuelve `404`) |
+| CDE-01 | Definir contraseña - clase V1 | Sesión activa, contraseña actual conocida | Actual = `Altiplano2026` · Nueva = `abcdefghi1` (10) | 1. `/portal/cuenta` 2. Escribir actual y nueva 3. «Cambiar contraseña» | `{"ok":true}` y «Contraseña cambiada. Las demás sesiones se cerraron.» Después: la nueva contraseña entra (`200`) y la vieja es rechazada | ✅ PASA - verificados los tres efectos |
+| CDE-02 | Definir contraseña - clase I1 | Ídem | Nueva = `abcdefgh1` (9) | Ídem | «La contraseña debe tener al menos 10 caracteres.» | ✅ PASA |
+| CDE-03 | Definir contraseña - clase I3 | Ídem | Nueva = `abcdefghij` (10, sin dígitos) | Ídem | «La contraseña debe combinar letras y números.» | ✅ PASA |
+| CDE-04 | Crear pago - clase V1 | Endpoint público disponible | `amountCents = 15000000`, clave de idempotencia única | `POST /api/payments/checkout` | `200/201` con `reference` y estado `created` | ✅ PASA |
+| CDE-05 | Crear pago - clase I3 | Ídem | `amountCents = 100000.5` | Ídem | `400` «debe ser un entero entre 100000 y 500000000» | ✅ PASA |
+| CDE-06 | Consultar histórico - clase V2 | 4 cobros con ese teléfono | `310 464 1228` | 1. `/mis-pagos` 2. Consultar | Mismo histórico que `+573104641228`, con montos enmascarados | ✅ PASA |
+| CDE-07 | Consultar histórico - clase I1 | Ídem | `310464122` (9 dígitos) | Ídem | `400` «número inválido» | ✅ PASA |
+| CDE-08 | Abrir cobro - clase I2 | Cobro `AB3K9F` existe | `AB0K9F` (contiene un `0`) | Abrir `/c/AB0K9F` | `404` «Cobro no encontrado» | ✅ PASA |
+| CDE-09 | Abrir cobro - clase I3 | Cobro `AB3K9F` existe | `ab3k9f` (minúsculas) | Abrir `/c/ab3k9f` | *Esperado por diseño:* el cobro se abre (el código se dicta y se teclea a mano) | ❌ **FALLA → BUG-02** (devuelve `404`) |
 
 ---
 
@@ -346,7 +346,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | BUG-05 | Un 404 dentro del portal renderiza el 404 público del sitio de marketing | Baja | Portal · Navegación | TC-06, exploratoria | Abierto |
 | BUG-06 | 18 vulnerabilidades en dependencias (2 críticas, 9 altas) | **Alta** | Transversal · Dependencias | Exploratoria (`npm audit`) | Abierto |
 
-### BUG-01 — «Cerrar sesión» falla y la sesión permanece abierta
+### BUG-01 - «Cerrar sesión» falla y la sesión permanece abierta
 
 - **Severidad:** Alta. No es solo un error visual: el cliente cree que cerró
   sesión y no la cerró. En un equipo prestado o compartido, el siguiente que
@@ -371,19 +371,19 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
   (HTTPS y dominio propio) o si es específico del servidor de desarrollo. La
   diferencia importa para priorizarlo, no para dudar del hallazgo.
 
-### BUG-02 — El código corto distingue mayúsculas de minúsculas
+### BUG-02 - El código corto distingue mayúsculas de minúsculas
 
 - **Severidad:** Media. Afecta al camino feliz del cobro: el cliente que teclea
   el código a mano recibe «Cobro no encontrado» y concluye que el link no sirve.
 - **Pasos:** abrir `/c/ab3k9f` existiendo el cobro `AB3K9F`.
 - **Obtenido:** `404` «Cobro no encontrado». **Esperado:** el cobro se abre.
 - **Por qué es un defecto y no una decisión:** el alfabeto del código excluye
-  deliberadamente `0`, `O`, `1`, `I` y `L` porque —según el propio comentario de
-  `src/lib/cobros-codes.ts`— «el código se dicta por teléfono y se teclea a
+  deliberadamente `0`, `O`, `1`, `I` y `L` porque (según el propio comentario de
+  `src/lib/cobros-codes.ts`) «el código se dicta por teléfono y se teclea a
   mano». Rechazar las minúsculas contradice ese objetivo de diseño.
 - **Sugerencia:** normalizar a mayúsculas antes de validar la forma.
 
-### BUG-03 — Las consultas inválidas consumen la cuota horaria
+### BUG-03 - Las consultas inválidas consumen la cuota horaria
 
 - **Severidad:** Baja. **Pasos:** enviar 5 consultas con un número mal escrito
   desde la misma IP y luego una con el número correcto.
@@ -395,7 +395,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
   real. El límite existe para encarecer la enumeración de teléfonos; hoy también
   castiga al dueño del número.
 
-### BUG-04 — El aviso de validación se auto-oculta a los 4 segundos
+### BUG-04 - El aviso de validación se auto-oculta a los 4 segundos
 
 - **Severidad:** Baja. **Pasos:** en `/portal/cuenta`, intentar una contraseña
   de 9 caracteres y esperar 5 segundos.
@@ -408,7 +408,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 - **Origen:** `setTimeout(… 4000)` en el helper `flash` de
   `src/pages/portal/cuenta.astro:239`.
 
-### BUG-05 — El 404 del portal es el 404 del sitio público
+### BUG-05 - El 404 del portal es el 404 del sitio público
 
 - **Severidad:** Baja (cosmético / consistencia). **Pasos:** con sesión de
   portal, abrir `/portal/facturas/<id ajeno>`.
@@ -417,10 +417,10 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 - **Esperado:** un 404 dentro del marco del portal, con la navegación del
   cliente y un enlace de vuelta a sus facturas.
 
-### BUG-06 — Vulnerabilidades en dependencias
+### BUG-06 - Vulnerabilidades en dependencias
 
 - **Severidad:** Alta. **Comando:** `npm audit`.
-- **Obtenido:** 18 vulnerabilidades — **2 críticas**, 9 altas, 6 moderadas, 1 baja.
+- **Obtenido:** 18 vulnerabilidades - **2 críticas**, 9 altas, 6 moderadas, 1 baja.
 - **Las más relevantes:**
 
   | Paquete | Severidad | Problema |
@@ -469,7 +469,7 @@ encontrar el defecto (o que no lo ejercita).
 | BUG-03 | BVA-18 (valor límite) | No. El límite se prueba con entradas válidas. |
 | BUG-04 | TC-07 | No. Es un comportamiento de la capa de presentación. |
 | BUG-05 | TC-06 | No. El caso automatizado solo comprueba el código 404, no qué se renderiza. |
-| BUG-06 | Exploratoria | Sí — `npm audit` ya corre en `security.yml`; el hallazgo está en el panel del LAB pero sin atender. |
+| BUG-06 | Exploratoria | Sí - `npm audit` ya corre en `security.yml`; el hallazgo está en el panel del LAB pero sin atender. |
 
 ---
 
@@ -482,7 +482,7 @@ encontrar el defecto (o que no lo ejercita).
 | Casos derivados por equivalencia (CDE) | 9 · 8 pasan, 1 falla |
 | Casos de valores límite (BVA) | 18 · 17 pasan, 1 falla |
 | Chárter exploratorio | 1 · 12 notas registradas |
-| **Defectos encontrados** | **6** — 2 de severidad alta, 1 media, 3 bajas |
+| **Defectos encontrados** | **6** - 2 de severidad alta, 1 media, 3 bajas |
 
 ### Lectura de los resultados
 
@@ -492,13 +492,13 @@ dice que caen, el aislamiento entre clientes resiste la manipulación de ids, y
 la idempotencia impide el doble cargo. Nada de eso falló.
 
 Los defectos aparecieron **en los bordes**: no en la lógica de dominio sino en
-la capa que la conecta con la persona — el formulario que no envía, el código
+la capa que la conecta con la persona - el formulario que no envía, el código
 que no se puede teclear, el mensaje que se va antes de leerse, el límite que
 castiga al legítimo. Es un resultado típico de las técnicas de caja negra
 aplicadas sobre un sistema con buena cobertura unitaria: lo que las pruebas
 automatizadas no miran es justo lo que ve el usuario.
 
 El más grave, BUG-01, ilustra por qué el oráculo no puede detenerse en «la
-pantalla cambió»: la pantalla cambió (a un error), pero el **estado** —la sesión
-en la base de datos— no. Sin el paso 4 del caso («volver a `/portal`») el
+pantalla cambió»: la pantalla cambió (a un error), pero el **estado** (la sesión
+en la base de datos) no. Sin el paso 4 del caso («volver a `/portal`») el
 defecto se habría clasificado como cosmético.

@@ -1,4 +1,4 @@
-# CodeByMike — Portafolio, Panel de Control y Portal de Clientes
+# CodeByMike - Portafolio, Panel de Control y Portal de Clientes
 
 ## Manual de Instalación
 
@@ -11,10 +11,10 @@
 
 | | | | |
 |---|---|---|---|
-| **Organismo** | SENA — Centro de Servicios Financieros, Regional Distrito Capital | | |
-| **Proyecto** | CodeByMike — Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
+| **Organismo** | SENA - Centro de Servicios Financieros, Regional Distrito Capital | | |
+| **Proyecto** | CodeByMike - Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
 | **Entregable** | Manual de Instalación | | |
-| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software — Ficha 3114731 — Trimestre 7 | | |
+| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software - Ficha 3114731 - Trimestre 7 | | |
 | **Versión/Edición** | 0100 | **Fecha Versión** | 03/08/2026 |
 | **Aprobado por** | (pendiente de asignación) | **Fecha Aprobación** | (pendiente) |
 | | | **Nº Total de Páginas** | `<al exportar>` |
@@ -31,7 +31,7 @@
 
 | Nombre y Apellidos |
 |---|
-| Michael David Rodríguez Beltran — Aprendiz, ficha 3114731 |
+| Michael David Rodríguez Beltran - Aprendiz, ficha 3114731 |
 | (Instructor asignado) |
 | (Jurado de sustentación) |
 | |
@@ -101,8 +101,8 @@ para los costos, el correo y la mensajería instantánea para el seguimiento con
 clientes, servicios de terceros para el monitoreo de disponibilidad y ningún
 mecanismo propio de detección de tráfico hostil. Esa fragmentación multiplicaba
 costos fijos mensuales, dispersaba la información entre sistemas que no se
-comunican entre sí e impedía responder a preguntas elementales —cuánto margen
-real deja un proyecto, desde cuándo está caído un servicio— sin reconstruir los
+comunican entre sí e impedía responder a preguntas elementales (cuánto margen
+real deja un proyecto, desde cuándo está caído un servicio) sin reconstruir los
 datos a mano.
 
 A ello se sumaba un problema de fondo: demostrar competencia técnica real es
@@ -167,7 +167,7 @@ posterior al despliegue.
 En consecuencia, los recursos de cómputo no se dimensionan en procesador y
 memoria, sino en los límites del plan del proveedor:
 
-**Cómputo — Vercel (Fluid Compute)**
+**Cómputo - Vercel (Fluid Compute)**
 
 | Dato | Valor mínimo | Valor recomendado |
 |---|---|---|
@@ -177,7 +177,7 @@ memoria, sino en los límites del plan del proveedor:
 | Regiones | 1 | Región más próxima a Colombia |
 | Tamaño del paquete desplegado | < 250 MB | Sin restricción práctica (límite de 5 GB) |
 
-**Base de datos — Turso (libSQL)**
+**Base de datos - Turso (libSQL)**
 
 | Dato | Valor mínimo | Valor recomendado |
 |---|---|---|
@@ -186,7 +186,7 @@ memoria, sino en los límites del plan del proveedor:
 | Conexiones concurrentes | Las del plan gratuito | Plan con margen sobre el pico de sondeos |
 | Respaldos | Los del proveedor | Los del proveedor más los volcados propios a almacenamiento de objetos |
 
-**Almacenamiento de objetos — Vercel Blob**
+**Almacenamiento de objetos - Vercel Blob**
 
 | Dato | Valor mínimo | Valor recomendado |
 |---|---|---|
@@ -200,7 +200,7 @@ memoria, sino en los límites del plan del proveedor:
 | Procesador | 2 núcleos x86-64 o ARM64 | 4 núcleos o más |
 | Memoria RAM | 4 GB | 8 GB (16 GB si se usan contenedores y navegador de pruebas simultáneamente) |
 | Tamaño Almacenamiento | 10 GB libres | 20 GB libres |
-| Otros | — | Contenedores habilitados para levantar los dos servidores libSQL locales |
+| Otros | - | Contenedores habilitados para levantar los dos servidores libSQL locales |
 
 ## 3.2 Estaciones cliente
 
@@ -209,7 +209,7 @@ ningún ejecutable ni se instala nada en la estación del usuario.
 
 | Dato | Valor mínimo | Valor recomendado |
 |---|---|---|
-| Procesador | Cualquiera con soporte del navegador vigente | — |
+| Procesador | Cualquiera con soporte del navegador vigente | - |
 | Memoria RAM | 2 GB | 4 GB |
 | Tamaño Almacenamiento | Sin requisito | Sin requisito |
 | Otros | Resolución 360 px de ancho (el panel es operable desde móvil) | 1280 px o superior para las vistas de laboratorio y diagramas |
@@ -222,7 +222,7 @@ pensada específicamente para uso móvil.
 
 | Dato | Valor mínimo | Valor recomendado |
 |---|---|---|
-| Tarjeta de Red | Cualquiera con conectividad a internet | — |
+| Tarjeta de Red | Cualquiera con conectividad a internet | - |
 | Tipo de Red | Acceso a internet, 3G o superior | Banda ancha o 4G |
 | Otros | Salida HTTPS (puerto 443) sin intercepción de TLS | Resolución DNS sin filtrado del dominio |
 
@@ -266,8 +266,8 @@ puertos en firewall corporativo alguno: todo el tráfico es saliente sobre HTTPS
 |---|---|---|
 | Sistema operativo (runtime) | Gestionado por el proveedor | El sistema no administra el sistema operativo de ejecución |
 | Sistema operativo (desarrollo) | Linux, macOS o Windows con WSL2 | Verificado sobre Linux |
-| Servidor de aplicaciones | No aplica — cómputo gestionado sin servidor (Vercel Fluid Compute) | No hay servidor de aplicaciones que instalar ni configurar |
-| Máquina virtual | No aplica — no se emplea tecnología Java | — |
+| Servidor de aplicaciones | No aplica - cómputo gestionado sin servidor (Vercel Fluid Compute) | No hay servidor de aplicaciones que instalar ni configurar |
+| Máquina virtual | No aplica - no se emplea tecnología Java | - |
 | Runtime | Node.js ≥ 22.12.0 | Declarado en `engines` de `package.json`. Node.js 20 **no** es compatible |
 | Servidor de base de datos | libSQL, ofrecido como servicio gestionado por Turso | En desarrollo, `sqld` en contenedor, imagen fijada por *digest* |
 | Contenedores (desarrollo) | Docker con Docker Compose | Solo desarrollo y pruebas |
@@ -295,9 +295,9 @@ puertos en firewall corporativo alguno: todo el tráfico es saliente sobre HTTPS
 | Navegador | Versión mínima | Observaciones |
 |---|---|---|
 | Google Chrome / Chromium | Últimas dos versiones estables | Requerido para llaves de acceso (WebAuthn) |
-| Mozilla Firefox | Últimas dos versiones estables | — |
-| Safari (escritorio e iOS) | 16 o superior | — |
-| Microsoft Edge | Últimas dos versiones estables | — |
+| Mozilla Firefox | Últimas dos versiones estables | - |
+| Safari (escritorio e iOS) | 16 o superior | - |
+| Microsoft Edge | Últimas dos versiones estables | - |
 
 El sitio se renderiza en el servidor, de modo que el contenido es accesible aun
 con JavaScript deshabilitado; las funciones interactivas (actualización en vivo
@@ -701,10 +701,10 @@ Comprobaciones adicionales recomendadas:
 
 | # | Elemento de configuración | Fase | Obligatorio | Detalle |
 |---|---|---|---|---|
-| 1 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Previa al despliegue | Sí | Apartado 6.1 — Conexión a base de datos |
+| 1 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Previa al despliegue | Sí | Apartado 6.1 - Conexión a base de datos |
 | 2 | `TURSO_DEMO_URL`, `TURSO_DEMO_AUTH_TOKEN` | Previa al despliegue | No | Requerido solo para `/demo` |
-| 3 | `AUTH_SECRET`, `AUTH_URL`, `BASE_URL` | Previa al despliegue | Sí | Apartado 6.1 — Autenticación |
-| 4 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Previa al despliegue | Sí | Apartado 6.1 — Autenticación |
+| 3 | `AUTH_SECRET`, `AUTH_URL`, `BASE_URL` | Previa al despliegue | Sí | Apartado 6.1 - Autenticación |
+| 4 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Previa al despliegue | Sí | Apartado 6.1 - Autenticación |
 | 5 | `ALLOWED_GITHUB_LOGINS` | Previa al despliegue | Sí | Única fuente de autorización del panel |
 | 6 | `ENCRYPTION_KEY` | Previa al primer uso de la bóveda | Sí | Su pérdida es irreversible |
 | 7 | `CRON_SECRET` + trabajos en cron-job.org | Posterior al despliegue | Sí | Sin ella no hay sondeos, agregados ni respaldos |
@@ -791,14 +791,14 @@ prueba, borraría una base de datos.
 
 | Referencia | Título | Código / Ubicación |
 |---|---|---|
-| Ref. 1 | Documentación oficial de Astro — modo servidor y adaptadores | `docs.astro.build` |
+| Ref. 1 | Documentación oficial de Astro - modo servidor y adaptadores | `docs.astro.build` |
 | Ref. 2 | Documentación de Drizzle ORM y Drizzle Kit | `orm.drizzle.team` |
 | Ref. 3 | Documentación de Turso / libSQL | `docs.turso.tech` |
-| Ref. 4 | Documentación de Vercel — Funciones, Fluid Compute y Routing Middleware | `vercel.com/docs` |
+| Ref. 4 | Documentación de Vercel - Funciones, Fluid Compute y Routing Middleware | `vercel.com/docs` |
 | Ref. 5 | Documentación de Auth.js | `authjs.dev` |
 | Ref. 6 | Especificación WebAuthn / FIDO2 | W3C Web Authentication Level 2 |
 | Ref. 7 | Documentación de la pasarela de pagos Wompi | `docs.wompi.co` |
-| Ref. 8 | ISO/IEC 25010 — Modelo de calidad del producto software | Norma internacional |
+| Ref. 8 | ISO/IEC 25010 - Modelo de calidad del producto software | Norma internacional |
 | Ref. 9 | OWASP Top 10 | `owasp.org` |
 | Ref. 10 | WCAG 2.1 nivel AA | W3C |
 | Ref. 11 | Manual Técnico del sistema | `docs/manuales-sena/manual-tecnico.md` |

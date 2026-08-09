@@ -4,7 +4,7 @@ import { etiquetaObjeto, findLayoutIssues, layout } from '../src/lib/uml-communi
 
 // En un diagrama de comunicación no hay eje de tiempo: el orden lo lleva ENTERO
 // la numeración decimal. Un número repetido o un nivel sin padre no es un
-// defecto estético, deja la interacción sin lectura posible — por eso se
+// defecto estético, deja la interacción sin lectura posible - por eso se
 // verifica aquí y no en una revisión visual.
 
 describe.each(COMUNICACIONES)('comunicación "$id"', (modelo) => {

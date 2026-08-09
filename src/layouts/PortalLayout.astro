@@ -3,7 +3,7 @@
 //
 // La sesión la resuelve el middleware y la deja en locals: aquí no se vuelve a
 // consultar la base. Si alguien renderiza este layout sin sesión es un bug del
-// gate, no un caso a manejar — por eso el `!` es deliberado y no un `?.`
+// gate, no un caso a manejar - por eso el `!` es deliberado y no un `?.`
 // defensivo que enmascararía el fallo.
 import '../styles/global.css'
 import { unreadCount } from '../lib/portal/notifications'
@@ -45,7 +45,7 @@ const initials = (user.name ?? user.email)
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title} — Portal · CodeByMike</title>
+    <title>{title} - Portal · CodeByMike</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="theme-color" content="#07070a" />
@@ -67,7 +67,7 @@ const initials = (user.name ?? user.email)
       Región de anuncios del portal. Todo cambio que ocurre sin recargar la
       página (un envío que sale bien, un contador que sube solo) tiene que pasar
       por aquí: para un lector de pantalla, una interfaz que muta en silencio no
-      ha hecho nada. `polite` y no `assertive` a propósito — nada de lo que pasa
+      ha hecho nada. `polite` y no `assertive` a propósito - nada de lo que pasa
       en el portal justifica interrumpir lo que la persona esté leyendo.
     -->
     <div id="portal-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -304,7 +304,7 @@ const initials = (user.name ?? user.email)
 
           if (res.status === 401) {
             // La sesión venció: seguir sondeando solo produciría 401 en bucle.
-            // No se redirige — el usuario puede estar leyendo algo; lo hará su
+            // No se redirige - el usuario puede estar leyendo algo; lo hará su
             // próxima navegación.
             stopped = true
             return

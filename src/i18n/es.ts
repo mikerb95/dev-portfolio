@@ -1,5 +1,5 @@
 // Diccionario fuente (español). `en.ts` se declara `satisfies typeof es` para
-// que TypeScript rompa si falta una clave — es la garantía real de paridad,
+// que TypeScript rompa si falta una clave - es la garantía real de paridad,
 // reforzada por tests/i18n-dictionary.test.ts.
 
 const es = {
@@ -64,7 +64,7 @@ const es = {
     },
   },
   notFound: {
-    title: '404 — CodeByMike',
+    title: '404 - CodeByMike',
     description: 'La página que buscas no existe o ya no está disponible.',
     eyebrow: 'Error 404',
     headingA: 'Página',
@@ -73,11 +73,11 @@ const es = {
     cta: 'Volver al inicio',
   },
   home: {
-    title: 'CodeByMike | Mike — Software Engineer',
+    title: 'CodeByMike | Mike - Software Engineer',
     // ≤155 caracteres: por encima de eso Google corta el snippet y la última
     // frase no llega nunca al resultado de búsqueda.
     description:
-      'Mike — Software Engineer en Colombia (remoto). TypeScript, React, Next.js, Astro y PostgreSQL. Productos escalables con arquitectura robusta.',
+      'Mike - Software Engineer en Colombia (remoto). TypeScript, React, Next.js, Astro y PostgreSQL. Productos escalables con arquitectura robusta.',
     badge: 'Disponible · Colombia · Remoto',
     githubTop3Label: 'GitHub Colombia',
     githubTop3Value: 'Contributor',
@@ -96,7 +96,7 @@ const es = {
       line1: 'Ingeniería de',
       line2: 'software',
       line3: 'con propósito.',
-      lead: 'Soy Mike — un Software Engineer construyendo productos escalables para equipos que no pueden permitirse adivinar. Arquitectura robusta, rendimiento obsesivo, experiencias de clase mundial.',
+      lead: 'Soy Mike - un Software Engineer construyendo productos escalables para equipos que no pueden permitirse adivinar. Arquitectura robusta, rendimiento obsesivo, experiencias de clase mundial.',
       stackLabel: 'Stack principal',
       stackLine1: 'TypeScript · React · Next.js',
       stackLine2: 'Astro · Node.js · PostgreSQL',
@@ -158,7 +158,7 @@ const es = {
       sectionLabel: 'Cómo trabajo',
       title: 'Un proceso en cuatro pasos, calibrado a tu velocidad.',
       steps: [
-        { t: 'Diagnóstico', d: 'Dos semanas escuchando — cada flujo, cada hoja de cálculo, cada workaround.', time: 'Sem 1–2' },
+        { t: 'Diagnóstico', d: 'Dos semanas escuchando - cada flujo, cada hoja de cálculo, cada workaround.', time: 'Sem 1–2' },
         { t: 'Arquitectura', d: 'Mapeo de decisiones del producto. Qué es crítico vs. cosmético.', time: 'Sem 3' },
         { t: 'Prototipo', d: 'React real, datos reales, límites reales. Testeado con los usuarios finales.', time: 'Sem 4–8' },
         { t: 'Ship & mentoring', d: 'Construyo junto a tu equipo. Les dejo un sistema que pueden escalar.', time: 'Sem 9+' },
@@ -180,7 +180,7 @@ const es = {
       p1a: 'Construí un laboratorio de ',
       p1strong: 'device fingerprinting',
       p1b:
-        ' para hacer visible algo que casi nadie ve: tu navegador expone decenas de señales —canvas, GPU, fuentes, audio— que juntas forman una huella casi única. Escaneas un QR, entras a una sala y un tablero te identifica en vivo ',
+        ' para hacer visible algo que casi nadie ve: tu navegador expone decenas de señales (canvas, GPU, fuentes, audio) que juntas forman una huella casi única. Escaneas un QR, entras a una sala y un tablero te identifica en vivo ',
       p1strong2: 'sin login y sin cookies',
       p1c: '.',
       p2a: '¿El objetivo? Que lo ',
@@ -190,14 +190,14 @@ const es = {
       cta: 'Entrar al laboratorio',
       note: 'Efímero · sin PII · las salas se borran en 2h',
       points: [
-        { title: 'Escanea y entra', body: 'Varios dispositivos se enlazan a la misma sala por un QR — como un aula o un evento en vivo.' },
+        { title: 'Escanea y entra', body: 'Varios dispositivos se enlazan a la misma sala por un QR - como un aula o un evento en vivo.' },
         { title: 'Te reconoce, no te loguea', body: 'Recolector propio contrastado con FingerprintJS. Si vuelves en incógnito, el contador de revisitas sube.' },
         { title: 'Aprende a defenderte', body: 'Cierra explicando por qué el incógnito no basta y qué sí funciona: Tor, resistFingerprinting y más.' },
       ],
     },
   },
   engineering: {
-    title: 'Ingeniería — CodeByMike',
+    title: 'Ingeniería - CodeByMike',
     description:
       'Métricas de ingeniería medidas en producción: Core Web Vitals de usuarios reales, resultado del pipeline CI y disponibilidad. Datos vivos y verificables, no afirmaciones.',
     eyebrow: 'Excelencia medida, no afirmada',
@@ -280,7 +280,7 @@ const es = {
       agoMinutes: 'hace {n} min',
       agoHours: 'hace {n} h',
       agoDays: 'hace {n} d',
-      never: '—',
+      never: '-',
       vitalsNone: 'Consulta en vivo {ago} · sin muestras aún',
       vitalsSome: 'Consulta en vivo {ago} · última muestra {metric} {sampleAgo} · {count} en 24 h',
       uptimeNone: 'Consulta en vivo {ago} · sin sondeos aún',
@@ -290,17 +290,17 @@ const es = {
     },
   },
   tools: {
-    title: 'Herramientas — CodeByMike',
+    title: 'Herramientas - CodeByMike',
     description:
       'Casos de estudio de las herramientas que construí para operar mis proyectos y clientes: monitoreo con SLOs, P&L por proyecto, bóveda cifrada, CI/CD con rollback y chaos engineering.',
     eyebrow: 'Herramientas a medida',
     h1Line1: 'Las herramientas con las',
     h1Line2: 'que opero mis proyectos.',
     intro:
-      'No uso estas herramientas porque estén de moda: las construí porque las necesitaba. Monitoreo, finanzas, seguimiento de clientes, seguridad y despliegues — todo corre sobre este mismo sitio. Cada caso de estudio cuenta el problema real que lo originó y cómo lo resolví. La misma disciplina que aplico aquí es la que recibe cada cliente.',
+      'No uso estas herramientas porque estén de moda: las construí porque las necesitaba. Monitoreo, finanzas, seguimiento de clientes, seguridad y despliegues - todo corre sobre este mismo sitio. Cada caso de estudio cuenta el problema real que lo originó y cómo lo resolví. La misma disciplina que aplico aquí es la que recibe cada cliente.',
     problemLabel: 'El problema',
     solutionLabel: 'La solución',
-    mockCaption: 'Recreación del panel con datos ilustrativos — los datos reales no se publican.',
+    mockCaption: 'Recreación del panel con datos ilustrativos - los datos reales no se publican.',
     inProductionLabel: 'En producción',
     demoPortal: {
       eyebrow: 'Portal de clientes',
@@ -345,7 +345,7 @@ const es = {
           'Un registro de servicios por proyecto (y a nivel de cuenta) con su costo y ciclo de facturación, cruzado con ingresos cobrados, pendientes y proyectados. El resultado es un P&L por proyecto: margen real, no intuición.',
         detalle: [
           'Normalización de ciclos de facturación (mensual, anual) a costo comparable.',
-          'Ingresos en tres estados — cobrado, pendiente, proyectado — para separar caja real de expectativa.',
+          'Ingresos en tres estados - cobrado, pendiente, proyectado - para separar caja real de expectativa.',
           'La lógica de P&L y manejo de dinero tiene su propia batería de tests unitarios.',
         ],
         liveLabel: 'Ver el P&L en la demo del panel',
@@ -410,11 +410,11 @@ const es = {
         title: 'Observabilidad de seguridad (micro-SIEM propio)',
         tagline: 'Saber quién intenta entrar, no solo esperar a que lo logre',
         problema:
-          'Cualquier sitio con IP pública recibe sondeos automáticos desde el primer minuto: CMS ajenos, archivos de configuración, inyecciones en cada parámetro. La reacción normal es ignorar el ruido — pero esos 404 son la superficie de ataque real, y descartarlos es tirar una señal gratis.',
+          'Cualquier sitio con IP pública recibe sondeos automáticos desde el primer minuto: CMS ajenos, archivos de configuración, inyecciones en cada parámetro. La reacción normal es ignorar el ruido - pero esos 404 son la superficie de ataque real, y descartarlos es tirar una señal gratis.',
         solucion:
           'Un motor propio que corre en el middleware de cada request: un clasificador alineado con OWASP Top 10 detecta firmas de ataque, un rate limiter durable de dos capas y una lista de bloqueo frenan el abuso, endpoints señuelo confirman intención maliciosa, y un cron horario agrega eventos, detecta anomalías por estadística y aplica bloqueos automáticos escalonados.',
         detalle: [
-          'Fail-open en cada capa: si el sensor de seguridad falla, el request pasa limpio — nunca puede tumbar el sitio que protege.',
+          'Fail-open en cada capa: si el sensor de seguridad falla, el request pasa limpio - nunca puede tumbar el sitio que protege.',
           'Detección de anomalías con z-score sobre una baseline de 30 días, no una caja negra: cada alerta se puede explicar con una frase.',
           'Bloqueos con TTL obligatorio y escalado por reincidencia (1h → 24h → 7d), nunca eternos por defecto.',
           'La vitrina pública muestra agregados reales con OPSEC deliberada: nunca IPs completas, nunca nombres de reglas, nunca qué rutas son señuelo.',
@@ -424,13 +424,13 @@ const es = {
     ],
   },
   security: {
-    title: 'Seguridad — CodeByMike',
+    title: 'Seguridad - CodeByMike',
     description: 'Auditoría OWASP real sobre este mismo repositorio: hallazgos, severidad y el commit exacto que aplicó cada corrección.',
     eyebrow: 'Auditoría OWASP',
     h1Line1: 'Seguridad,',
     h1Line2: 'con evidencia.',
     intro:
-      'Una revisión real sobre el código de este sitio, mapeada a OWASP Top 10. Cada hallazgo enlaza al commit exacto que lo corrigió — verificable en el historial público del repo, no una promesa.',
+      'Una revisión real sobre el código de este sitio, mapeada a OWASP Top 10. Cada hallazgo enlaza al commit exacto que lo corrigió - verificable en el historial público del repo, no una promesa.',
     secops: {
       badge: 'Security Operations · en vivo',
       intro: 'Este sitio corre su propio motor de observabilidad de seguridad (un "micro-SIEM"): un clasificador de amenazas alineado con OWASP corre en el middleware de cada request, endpoints señuelo confirman intención maliciosa, y un cron horario aplica bloqueos temporales y detecta anomalías por estadística (z-score sobre una baseline de 30 días). Los números de abajo son agregados reales de los últimos {days} días.',
@@ -461,7 +461,7 @@ const es = {
         retentionValue: '90 días',
       },
       opsecNote:
-        'Por diseño, esta página nunca muestra IPs completas, nombres exactos de reglas de detección ni cuáles rutas son endpoints señuelo — eso le daría el manual de juego a un atacante.',
+        'Por diseño, esta página nunca muestra IPs completas, nombres exactos de reglas de detección ni cuáles rutas son endpoints señuelo - eso le daría el manual de juego a un atacante.',
       categoryLabels: {
         recon_cms: 'Reconocimiento de CMS/paneles',
         secrets_probing: 'Búsqueda de secretos/config',
@@ -515,7 +515,7 @@ const es = {
       },
       {
         title: 'Defensa en profundidad en /admin',
-        detail: 'La autorización se revalida contra la allowlist tanto en el callback de login como en el middleware, en cada request — no basta con haber iniciado sesión una vez.',
+        detail: 'La autorización se revalida contra la allowlist tanto en el callback de login como en el middleware, en cada request - no basta con haber iniciado sesión una vez.',
       },
       {
         title: 'Consultas parametrizadas',
@@ -524,14 +524,14 @@ const es = {
     ],
     methodology: {
       heading: 'Metodología',
-      p1: 'La revisión cubrió autenticación y control de acceso, subida de archivos, endpoints públicos, manejo de secretos, webhooks de pago y headers de respuesta — el código real de este repositorio, no un ejercicio teórico.',
+      p1: 'La revisión cubrió autenticación y control de acceso, subida de archivos, endpoints públicos, manejo de secretos, webhooks de pago y headers de respuesta - el código real de este repositorio, no un ejercicio teórico.',
       p2: 'Cada hallazgo se clasificó contra OWASP Top 10 (2021), se corrigió en un commit dedicado y se verificó con la suite de tests y un build completo antes de mergear.',
       p3: 'Esta página se actualiza cada vez que una auditoría encuentra o corrige algo nuevo. Lo que ves aquí es el estado real del código en producción.',
     },
     severity: { alta: 'alta', media: 'media' },
   },
   contact: {
-    title: 'Contacto — CodeByMike',
+    title: 'Contacto - CodeByMike',
     description: 'Contáctame para hablar de tu proyecto o colaboración.',
     eyebrow: 'Intake',
     h1: 'Cuéntame qué estás construyendo.',
@@ -572,7 +572,7 @@ const es = {
   },
   certifications: {
     certificateAlt: 'Certificado',
-    title: 'Certificaciones — CodeByMike',
+    title: 'Certificaciones - CodeByMike',
     description: 'Formación técnica continua: certificaciones, cursos y habilidades adquiridas.',
     eyebrow: 'Formación continua',
     h1Line1: 'Formación y',
@@ -597,15 +597,15 @@ const es = {
     },
   },
   architecture: {
-    title: 'Arquitectura — CodeByMike',
+    title: 'Arquitectura - CodeByMike',
     description: 'Cómo está construido este sitio: diagrama de capas de Astro SSR sobre Turso, con cron externo, RUM y notificaciones, y las decisiones de diseño detrás de cada pieza.',
     eyebrow: 'Diseño de sistemas',
     h1Line1: 'Cómo está',
     h1Line2: 'construido esto.',
-    intro: 'Este sitio no es una plantilla: es un sistema con un panel privado, monitoreo propio y una pasarela de pagos. Aquí está su anatomía —capa por capa— y el porqué de cada decisión.',
+    intro: 'Este sitio no es una plantilla: es un sistema con un panel privado, monitoreo propio y una pasarela de pagos. Aquí está su anatomía (capa por capa) y el porqué de cada decisión.',
     externalsHeading: 'Servicios externos',
     decisionsHeading: 'Decisiones y trade-offs',
-    footnoteA: 'Todo el código vive en un repositorio público como portafolio. Las decisiones aquí no son teoría: cada una tiene su commit, sus tests y —cuando aplica— su hallazgo de seguridad documentado en ',
+    footnoteA: 'Todo el código vive en un repositorio público como portafolio. Las decisiones aquí no son teoría: cada una tiene su commit, sus tests y (cuando aplica) su hallazgo de seguridad documentado en ',
     footnoteLinkLabel: '/security',
     footnoteB: '.',
     layers: [
@@ -619,7 +619,7 @@ const es = {
       },
       {
         tag: 'Borde',
-        title: 'Vercel — Edge & Functions',
+        title: 'Vercel - Edge & Functions',
         nodes: [
           { name: 'CDN + caché', detail: 'Páginas públicas con s-maxage + stale-while-revalidate.' },
           { name: 'Middleware', detail: 'Auth, allowlist, headers de seguridad (CSP/HSTS), chaos flags.' },
@@ -658,7 +658,7 @@ const es = {
       },
       {
         q: 'JWT stateless, no sesiones en BD',
-        a: 'Logins sin tocar la base de datos y cero infraestructura de sesión. El punto ciego —revocar— lo resolví con un sid firmado dentro del token y una tabla de dispositivos, sin abandonar el JWT.',
+        a: 'Logins sin tocar la base de datos y cero infraestructura de sesión. El punto ciego (revocar) lo resolví con un sid firmado dentro del token y una tabla de dispositivos, sin abandonar el JWT.',
       },
       {
         q: 'Turso/libSQL en vez de Postgres',
@@ -728,7 +728,7 @@ const es = {
     error: 'No se pudo cargar la actividad de GitHub.',
   },
   demo: {
-    title: 'Demo del panel — CodeByMike',
+    title: 'Demo del panel - CodeByMike',
     description: 'Explora el panel de control completo con datos ficticios: costos y P&L, clientes, proyectos, monitoreo y laboratorio de ingeniería. Sin registro.',
     eyebrow: 'Panel de control',
     h1Line1: 'Entra al panel',
@@ -756,7 +756,7 @@ const es = {
     footnoteB: '.',
   },
   log: {
-    title: 'Engineering Log — CodeByMike',
+    title: 'Engineering Log - CodeByMike',
     description: 'Registro de actividad de desarrollo en tiempo real. Commits, decisiones y métricas de trabajo profundo.',
     loadingStatus: 'Cargando actividad de GitHub…',
     h1: 'Engineering Log.',
@@ -788,7 +788,7 @@ const es = {
     justNowDays: 'hace {n}d',
   },
   paginasWeb: {
-    title: 'Diseño de páginas web para tu negocio — CodeByMike',
+    title: 'Diseño de páginas web para tu negocio - CodeByMike',
     description: 'Páginas web profesionales para negocios, profesionales y emprendedores en Colombia. Tú me cuentas, yo la construyo, tú solo la usas. Lista en días, no en meses.',
     jsonLdDescription: 'Páginas web profesionales para negocios locales, profesionales independientes, emprendedores y pymes.',
     hero: {
@@ -921,7 +921,7 @@ const es = {
     },
   },
   status: {
-    title: 'Status — CodeByMike',
+    title: 'Status - CodeByMike',
     description: 'Estado en tiempo real de los servicios que opero: uptime, latencia y presupuesto de error, medidos por mi propia infraestructura de monitoreo.',
     eyebrow: 'Transparencia operacional',
     h1Line1: 'Estado de los',
@@ -979,8 +979,8 @@ const es = {
       budgetWord: 'presupuesto de error',
       p2Mid2: 'es el tiempo de caída que ese objetivo permite; aquí se muestra cuánto queda. La latencia se reporta como media y',
       p95Word: 'p95',
-      p2End: '— el percentil que de verdad siente el usuario lento —, nunca solo el promedio.',
-      p3: 'Todo el sistema — motor de checks, incidentes, SLOs y alertas — es una herramienta propia construida sobre este mismo sitio. Los datos se sirven tal cual se midieron.',
+      p2End: '- el percentil que de verdad siente el usuario lento, nunca solo el promedio.',
+      p3: 'Todo el sistema - motor de checks, incidentes, SLOs y alertas - es una herramienta propia construida sobre este mismo sitio. Los datos se sirven tal cual se midieron.',
     },
     agoJustNow: 'hace <1 min',
     agoMinutes: 'hace {n} min',
@@ -1004,7 +1004,7 @@ const es = {
     breadcrumbProjects: 'Proyectos',
   },
   notes: {
-    title: 'Notas de ingeniería — CodeByMike',
+    title: 'Notas de ingeniería - CodeByMike',
     description: 'Artículos técnicos sobre las decisiones detrás de mis herramientas: observabilidad, SLOs, chaos engineering y operación de proyectos.',
     eyebrow: 'Notas de ingeniería',
     h1Line1: 'Decisiones,',
@@ -1020,7 +1020,7 @@ const es = {
     onlyInSpanish: 'Este artículo todavía no está traducido al inglés.',
   },
   lab: {
-    title: 'Laboratorio — CodeByMike',
+    title: 'Laboratorio - CodeByMike',
     description: 'Laboratorio de ingeniería en vivo: pipeline CI/CD con rollback, chaos engineering, ataques controlados a la pasarela de pagos y sus resultados reales.',
     eyebrow: 'Ingeniería verificable',
     h1Line1: 'Laboratorio de',
@@ -1032,7 +1032,7 @@ const es = {
       experiments: 'Experimentos superados',
       absorbed: 'Ataques absorbidos (pagos)',
       mutationScore: 'Mutation score',
-      mutationTitle: '% de mutantes detectados por los tests sobre src/lib — no solo qué línea se ejecutó, sino si algún test se entera cuando se rompe',
+      mutationTitle: '% de mutantes detectados por los tests sobre src/lib - no solo qué línea se ejecutó, sino si algún test se entera cuando se rompe',
     },
     pipeline: {
       heading: 'Pipeline CI/CD · con health check y rollback automático',
@@ -1084,9 +1084,9 @@ const es = {
     },
     siteCheck: {
       heading: 'Analizador de sitios · abierto a cualquiera',
-      bodyPre: 'Construido para mis compañeros de clase: pega cualquier dominio y obtén, en vivo, 12 pruebas — cabeceras de seguridad, certificado TLS, DNS, vencimiento del dominio, robots.txt, sitemap.xml, metadatos SEO, rendimiento básico, accesibilidad heurística y un reporte',
+      bodyPre: 'Construido para mis compañeros de clase: pega cualquier dominio y obtén, en vivo, 12 pruebas - cabeceras de seguridad, certificado TLS, DNS, vencimiento del dominio, robots.txt, sitemap.xml, metadatos SEO, rendimiento básico, accesibilidad heurística y un reporte',
       lighthouseWord: 'Lighthouse real',
-      bodyPost: 'vía la API de Google PageSpeed Insights. Todo se lee de respuestas HTTP públicas — nada intrusivo — con límite de 5 análisis por minuto por IP y protección anti-SSRF (rechaza IPs privadas o de red interna) para que no se pueda usar como proxy hacia infraestructura ajena.',
+      bodyPost: 'vía la API de Google PageSpeed Insights. Todo se lee de respuestas HTTP públicas - nada intrusivo - con límite de 5 análisis por minuto por IP y protección anti-SSRF (rechaza IPs privadas o de red interna) para que no se pueda usar como proxy hacia infraestructura ajena.',
       cardTitle: 'Analizador de sitios',
       cardBody: 'Pega un dominio y mira las 12 pruebas correr en vivo, con streaming de resultados.',
       cardCta: 'Analizar un dominio →',
@@ -1117,17 +1117,17 @@ const es = {
       p2Pre: 'Los experimentos de chaos corren con cinturones de seguridad: TTL máximo de 15 minutos, rutas críticas excluidas por código y kill-switch. Todo el sistema es',
       failOpenWord: 'fail-open',
       p2Post: ': un fallo del laboratorio nunca tumba el sitio.',
-      p3: 'El detalle crudo (parámetros, payloads, flags activos) vive en el panel privado. Aquí se publica el veredicto agregado — suficiente para verificar, sin regalar el mapa interno.',
+      p3: 'El detalle crudo (parámetros, payloads, flags activos) vive en el panel privado. Aquí se publica el veredicto agregado - suficiente para verificar, sin regalar el mapa interno.',
     },
   },
   siteCheck: {
-    title: 'Analizador de sitios — CodeByMike',
+    title: 'Analizador de sitios - CodeByMike',
     description: 'Pega cualquier dominio y obtén un análisis en vivo: cabeceras de seguridad, TLS, SEO, rendimiento y accesibilidad heurística.',
     backToLab: 'Volver a /lab',
     eyebrow: 'Analizador de sitios',
     h1Line1: 'Analiza cualquier',
     h1Line2: 'dominio.',
-    intro: 'Pega una URL o dominio y obtén, en vivo, cabeceras de seguridad, certificado TLS, DNS, SEO básico, rendimiento y una revisión heurística de accesibilidad. Todo se lee de respuestas HTTP públicas del sitio — no es un escaneo intrusivo.',
+    intro: 'Pega una URL o dominio y obtén, en vivo, cabeceras de seguridad, certificado TLS, DNS, SEO básico, rendimiento y una revisión heurística de accesibilidad. Todo se lee de respuestas HTTP públicas del sitio - no es un escaneo intrusivo.',
     disclaimer: 'Úsalo solo con sitios propios o donde tengas permiso para analizarlos. Límite: 5 análisis por minuto por IP.',
     howItWorks: 'Cómo funciona',
     modalTitle: 'Cómo funciona el analizador',
@@ -1140,26 +1140,26 @@ const es = {
     steps: [
       'Pegas una URL o dominio y das clic en <span class="text-ink-50">Analizar</span>.',
       'El navegador hace un <code class="font-mono text-[12px] text-cyan">POST</code> a <code class="font-mono text-[12px] text-cyan">/api/lab/site-check</code>, protegido por un límite de 5 solicitudes por minuto por IP.',
-      'El servidor normaliza la URL y resuelve su DNS para verificar que <span class="text-ink-50">no apunte a una IP privada o interna</span> (127.0.0.1, 10.x, 169.254.x, etc.) — si apunta ahí, se rechaza antes de conectar.',
-      'Se lanzan las 12 pruebas <span class="text-ink-50">en paralelo</span>, cada una con su propio timeout, y los resultados se transmiten al navegador conforme van terminando (streaming NDJSON) — por eso las tarjetas aparecen una a una en vez de esperar todas juntas.',
+      'El servidor normaliza la URL y resuelve su DNS para verificar que <span class="text-ink-50">no apunte a una IP privada o interna</span> (127.0.0.1, 10.x, 169.254.x, etc.) - si apunta ahí, se rechaza antes de conectar.',
+      'Se lanzan las 12 pruebas <span class="text-ink-50">en paralelo</span>, cada una con su propio timeout, y los resultados se transmiten al navegador conforme van terminando (streaming NDJSON) - por eso las tarjetas aparecen una a una en vez de esperar todas juntas.',
       'Nada se guarda: el análisis es efímero, vive solo en esa respuesta. No hay historial ni base de datos detrás.',
     ],
     tests: [
-      '<span class="text-ink-50">Disponibilidad HTTP</span> — status, tiempo hasta la primera respuesta (TTFB), redirecciones.',
-      '<span class="text-ink-50">Certificado TLS</span> — abre un socket TLS crudo (<code class="font-mono text-[12px]">node:tls</code>) y lee emisor, vigencia y protocolo.',
-      '<span class="text-ink-50">Redirección a HTTPS</span> — verifica si la versión HTTP redirige a HTTPS.',
-      '<span class="text-ink-50">Cabeceras de seguridad</span> — HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.',
-      '<span class="text-ink-50">Registros DNS</span> — A, AAAA, CNAME, MX, NS, TXT vía <code class="font-mono text-[12px]">node:dns</code>.',
-      '<span class="text-ink-50">Vencimiento del dominio</span> — consulta RDAP, sin API key.',
-      '<span class="text-ink-50">robots.txt</span> y <span class="text-ink-50">sitemap.xml</span> — presencia y validez básica de formato.',
-      '<span class="text-ink-50">Metadatos SEO</span> — title, meta description, canonical, Open Graph, atributo lang.',
-      '<span class="text-ink-50">Rendimiento básico</span> — TTFB, peso del HTML, conteo de scripts/estilos/imágenes enlazados.',
-      '<span class="text-ink-50">Accesibilidad (heurística)</span> — imágenes sin alt, campos sin label, jerarquía de encabezados, texto de enlaces genérico. Es un chequeo estático simple, <span class="text-ink-50">no reemplaza una auditoría axe-core real</span>.',
-      '<span class="text-ink-50">Lighthouse (PageSpeed Insights)</span> — corre Lighthouse de verdad en los servidores de Google vía su API pública; rendimiento, accesibilidad, buenas prácticas y SEO con métricas reales (LCP, CLS, TBT).',
+      '<span class="text-ink-50">Disponibilidad HTTP</span> - status, tiempo hasta la primera respuesta (TTFB), redirecciones.',
+      '<span class="text-ink-50">Certificado TLS</span> - abre un socket TLS crudo (<code class="font-mono text-[12px]">node:tls</code>) y lee emisor, vigencia y protocolo.',
+      '<span class="text-ink-50">Redirección a HTTPS</span> - verifica si la versión HTTP redirige a HTTPS.',
+      '<span class="text-ink-50">Cabeceras de seguridad</span> - HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.',
+      '<span class="text-ink-50">Registros DNS</span> - A, AAAA, CNAME, MX, NS, TXT vía <code class="font-mono text-[12px]">node:dns</code>.',
+      '<span class="text-ink-50">Vencimiento del dominio</span> - consulta RDAP, sin API key.',
+      '<span class="text-ink-50">robots.txt</span> y <span class="text-ink-50">sitemap.xml</span> - presencia y validez básica de formato.',
+      '<span class="text-ink-50">Metadatos SEO</span> - title, meta description, canonical, Open Graph, atributo lang.',
+      '<span class="text-ink-50">Rendimiento básico</span> - TTFB, peso del HTML, conteo de scripts/estilos/imágenes enlazados.',
+      '<span class="text-ink-50">Accesibilidad (heurística)</span> - imágenes sin alt, campos sin label, jerarquía de encabezados, texto de enlaces genérico. Es un chequeo estático simple, <span class="text-ink-50">no reemplaza una auditoría axe-core real</span>.',
+      '<span class="text-ink-50">Lighthouse (PageSpeed Insights)</span> - corre Lighthouse de verdad en los servidores de Google vía su API pública; rendimiento, accesibilidad, buenas prácticas y SEO con métricas reales (LCP, CLS, TBT).',
     ],
     technical: [
-      '<span class="text-ink-50">Sin navegador headless.</span> Todo corre con <code class="font-mono text-[12px]">fetch</code> + <code class="font-mono text-[12px]">node:tls</code> + <code class="font-mono text-[12px]">node:dns</code> — nada de Chromium/Playwright, por eso responde en segundos y cabe en el plan gratuito de Vercel.',
-      '<span class="text-ink-50">Solo lectura pasiva.</span> Ninguna prueba modifica el sitio de destino ni intenta explotar nada — son las mismas respuestas HTTP que vería cualquier visitante o buscador.',
+      '<span class="text-ink-50">Sin navegador headless.</span> Todo corre con <code class="font-mono text-[12px]">fetch</code> + <code class="font-mono text-[12px]">node:tls</code> + <code class="font-mono text-[12px]">node:dns</code> - nada de Chromium/Playwright, por eso responde en segundos y cabe en el plan gratuito de Vercel.',
+      '<span class="text-ink-50">Solo lectura pasiva.</span> Ninguna prueba modifica el sitio de destino ni intenta explotar nada - son las mismas respuestas HTTP que vería cualquier visitante o buscador.',
       '<span class="text-ink-50">Anti-SSRF.</span> La resolución DNS se valida contra rangos privados/loopback/link-local antes de cualquier conexión, para que el servidor no pueda usarse como proxy hacia redes internas.',
       '<span class="text-ink-50">Lighthouse real es opcional.</span> Depende de una clave de Google PageSpeed Insights configurada en el servidor; si falta, esa tarjeta simplemente indica que no está configurada.',
     ],
@@ -1174,14 +1174,14 @@ const es = {
     networkError: 'Error de red al analizar el dominio',
   },
   fingerprint: {
-    title: 'Laboratorio de Fingerprinting — CodeByMike',
+    title: 'Laboratorio de Fingerprinting - CodeByMike',
     description: 'Demo educativa en vivo: cómo un sitio puede reconocer tu dispositivo sin cookies, solo con las señales que tu navegador expone.',
     eyebrow: 'Demo en vivo',
     h1Line1: 'Sala de',
     h1Line2: 'espejos.',
     introPre: 'Un laboratorio de',
     introStrong: 'device fingerprinting',
-    introPost: ': escanea el QR desde tu celular, entra a la sala y observa cómo el tablero te reconoce solo por las señales que tu navegador expone — sin cookies, sin login. Luego intenta escapar: abre incógnito o borra cookies y vuelve a entrar. El punto de la demo es que te va a reconocer igual.',
+    introPost: ': escanea el QR desde tu celular, entra a la sala y observa cómo el tablero te reconoce solo por las señales que tu navegador expone - sin cookies, sin login. Luego intenta escapar: abre incógnito o borra cookies y vuelve a entrar. El punto de la demo es que te va a reconocer igual.',
     collectHeading: 'Qué vamos a recolectar',
     collect: [
       'Render de canvas 2D y GPU (WebGL vendor/renderer)',
@@ -1197,26 +1197,26 @@ const es = {
     createError: 'Error creando la sala, intenta de nuevo.',
   },
   fpRoom: {
-    title: 'Tu dispositivo — Laboratorio de Fingerprinting',
+    title: 'Tu dispositivo - Laboratorio de Fingerprinting',
     description: 'Esto es lo que tu navegador reveló sin que hicieras nada.',
     room: 'Sala',
     gateTitle: 'Antes de empezar',
     gateBody: 'Al continuar, tu navegador va a compartir señales técnicas (canvas, GPU, fuentes, audio, pantalla, comportamiento de mouse/teclado) con el tablero de esta sala, para demostrar cómo funciona el fingerprinting. Nada se guarda tras cerrarse la sala (máx. 2 horas).',
     accept: 'Entiendo, continuar',
     youAre: 'Eres el',
-    returningNote: 'Este dispositivo ya había pasado por aquí — reconocido de nuevo sin cookies.',
+    returningNote: 'Este dispositivo ya había pasado por aquí - reconocido de nuevo sin cookies.',
     revealed: 'Esto es lo que tu navegador reveló, sin que dieras ningún permiso especial:',
     uniqueness: 'Unicidad estimada',
     bits: 'bits',
     oddsPre: '≈ 1 en',
     oddsPost: 'dispositivos con esta misma combinación de señales. Estimación educativa basada en pesos publicados por estudios de fingerprinting (EFF Panopticlick / AmIUnique), no una medición poblacional en vivo.',
-    watchBoard: 'Mira el tablero en la pantalla principal — apareces ahí en vivo.',
+    watchBoard: 'Mira el tablero en la pantalla principal - apareces ahí en vivo.',
     collecting: 'Recolectando…',
     retryError: 'Error, intenta de nuevo',
     empty: '(vacío)',
   },
   fpBoard: {
-    title: 'Tablero — Laboratorio de Fingerprinting',
+    title: 'Tablero - Laboratorio de Fingerprinting',
     scanToEnter: 'Escanea para entrar',
     devicesInRoom: 'Dispositivos en sala',
     hallOfMirrors: 'Sala de espejos',
@@ -1224,10 +1224,10 @@ const es = {
     howToDefend: 'Cómo defenderte',
     boardIntroPre: 'Cada dispositivo que escanea el QR aparece aquí, identificado sin cookies ni login. Si alguien vuelve a entrar en incógnito, el contador de',
     revisitsWord: 'revisitas',
-    boardIntroPost: 'sube — el mismo dispositivo, reconocido de nuevo.',
-    expired: 'Esta sala expiró — los datos ya se purgaron. Crea una nueva desde el inicio.',
+    boardIntroPost: 'sube - el mismo dispositivo, reconocido de nuevo.',
+    expired: 'Esta sala expiró - los datos ya se purgaron. Crea una nueva desde el inicio.',
     torText: 'normaliza deliberadamente estas señales entre todos sus usuarios (mismo canvas, misma resolución reportada) para que el fingerprint no sirva para distinguir a nadie.',
-    incognitoText: 'Borra cookies e historial local, pero el canvas, el GPU, las fuentes y el audio que expone tu navegador siguen siendo los mismos — por eso el tablero te reconoció igual.',
+    incognitoText: 'Borra cookies e historial local, pero el canvas, el GPU, las fuentes y el audio que expone tu navegador siguen siendo los mismos - por eso el tablero te reconoció igual.',
     firefoxText: '(about:config) reduce la precisión de varias de estas señales. Extensiones de bloqueo de canvas/WebGL también ayudan, aunque paradójicamente un fingerprint "demasiado bloqueado" puede volverse único en sí mismo.',
     noBehaviorData: 'sin datos de comportamiento aún',
     deviceLabel: 'Dispositivo',
@@ -1238,7 +1238,7 @@ const es = {
     incognitoWarning: 'El modo incógnito no protege.',
   },
   cvDownload: {
-    title: 'Preparando tu descarga — CodeByMike',
+    title: 'Preparando tu descarga - CodeByMike',
     description: 'Tu descarga del CV está lista en un momento.',
     heading: 'Preparando tu descarga…',
     body: 'Un momento, esto no debería tardar.',
@@ -1247,15 +1247,15 @@ const es = {
     starting: 'Listo, iniciando descarga…',
   },
   platziconf: {
-    title: 'Platzi Conf — CodeByMike',
-    description: 'Nos conocimos en la Platzi Conf. Te muestro algo de lo que sé — stack, ingeniería y proyectos reales corriendo en producción.',
+    title: 'Platzi Conf - CodeByMike',
+    description: 'Nos conocimos en la Platzi Conf. Te muestro algo de lo que sé - stack, ingeniería y proyectos reales corriendo en producción.',
     eventLine: 'Bogotá · 29 ago 2026',
     h1: 'Hola, nos conocimos en la Platzi Conf.',
-    lead: 'Me gustaría saber si puedo aportar a tu idea o proyecto. Te muestro algo de lo que sé — sin diapositivas, con lo que tengo corriendo en producción ahora mismo.',
+    lead: 'Me gustaría saber si puedo aportar a tu idea o proyecto. Te muestro algo de lo que sé - sin diapositivas, con lo que tengo corriendo en producción ahora mismo.',
     iam: 'Soy Mike',
     whatIDo: 'Construyo software full-stack de punta a punta: arquitectura, rendimiento y experiencia de usuario, con la seguridad y la observabilidad como parte del diseño desde el primer día, no como un parche al final. Este mismo sitio es el laboratorio: un micro-SIEM propio, monitoreo con SLOs reales, pagos con idempotencia y una suite de chaos engineering que inyecta fallos controlados para probar que las alertas de verdad funcionan.',
     stackHeading: 'Stack',
-    stackNote: 'Y lo diferenciador: seguridad y observabilidad como desarrollo propio — micro-SIEM, rate limiting durable, SLOs con presupuesto de error, chaos engineering fail-open.',
+    stackNote: 'Y lo diferenciador: seguridad y observabilidad como desarrollo propio - micro-SIEM, rate limiting durable, SLOs con presupuesto de error, chaos engineering fail-open.',
     uptimeLabel: 'Uptime agregado',
     monitoredServices: 'Servicios monitoreados',
     seeDetail: 'Ver el detalle completo →',

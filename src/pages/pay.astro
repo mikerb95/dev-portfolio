@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 ---
 
 <BaseLayout
-  title="Apoya mi trabajo — CodeByMike"
+  title="Apoya mi trabajo - CodeByMike"
   description="Donaciones y pagos de desarrollo con checkout seguro (Wompi)."
   noindex
 >
@@ -59,7 +59,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
   const status = document.getElementById('status')!
 
   // Una clave de idempotencia por INTENTO de pago: se renueva ante CUALQUIER
-  // cambio de monto (tecleo o preset — ojo: asignar .value por JS no dispara
+  // cambio de monto (tecleo o preset - ojo: asignar .value por JS no dispara
   // eventos, hay que renovar en el click). Doble clic o reintentos de red
   // reutilizan la misma clave → un solo cobro. Si la clave y el monto llegaran
   // a divergir, el servidor responde 409 en vez de cobrar el valor viejo.
@@ -87,7 +87,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
           amountCents,
           idempotencyKey,
           payerEmail: emailEl.value || undefined,
-          description: 'Donación / pago dev — codebymike.tech',
+          description: 'Donación / pago dev - codebymike.tech',
         }),
       })
       const data = await res.json()
@@ -108,8 +108,8 @@ import BaseLayout from '../layouts/BaseLayout.astro'
       })
       const result = await confirm.json()
       status.textContent = result.status === 'approved'
-        ? `✓ Pago aprobado (simulado) — ref ${data.payment.reference}`
-        : `Pago ${result.status} — ref ${data.payment.reference}`
+        ? `✓ Pago aprobado (simulado) - ref ${data.payment.reference}`
+        : `Pago ${result.status} - ref ${data.payment.reference}`
       renewKey() // el intento terminó: el próximo pago es uno nuevo
     } catch (err) {
       status.textContent = err instanceof Error ? err.message : 'Error de conexión'

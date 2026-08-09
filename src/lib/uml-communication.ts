@@ -1,8 +1,8 @@
 // Motor de layout de diagramas de comunicación UML 2.5.1.
 //
 // Mermaid no tiene este diagrama: ni una aproximación. Y es el que peor se
-// sustituye por otro, porque su aportación no es la información —la misma que
-// la de un diagrama de secuencia— sino el ÉNFASIS: la secuencia enseña el
+// sustituye por otro, porque su aportación no es la información (la misma que
+// la de un diagrama de secuencia) sino el ÉNFASIS: la secuencia enseña el
 // tiempo, la comunicación enseña la estructura de enlaces. Por eso estos
 // modelos se derivan de las MISMAS interacciones que ya están en
 // /docs/diagrama-secuencia, con los mismos participantes: si un mensaje aparece
@@ -31,7 +31,7 @@ export interface UmlObjeto {
 export interface UmlMensaje {
   /**
    * Número de secuencia decimal: "1", "1.1", "2.3.1". Es lo único que ordena el
-   * diagrama —aquí no hay eje de tiempo—, así que la numeración no es
+   * diagrama (aquí no hay eje de tiempo), así que la numeración no es
    * decorativa: es la semántica.
    */
   seq: string
@@ -202,7 +202,7 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
   const cajasOcupadas: Caja[] = objetos.map(
     (o): Caja => ({ x1: o.cx - o.w / 2, x2: o.cx + o.w / 2, y1: o.cy - o.h / 2, y2: o.cy + o.h / 2 }),
   )
-  // Toda la geometría de trazos —enlaces y flechas de mensaje— se calcula ANTES
+  // Toda la geometría de trazos (enlaces y flechas de mensaje) se calcula ANTES
   // de colocar ninguna etiqueta. Si se hicieran mensaje a mensaje, un rótulo ya
   // colocado podría acabar bajo la flecha de un mensaje posterior, que es
   // exactamente lo que no puede pasar: el texto tiene que poder leerse.
@@ -262,9 +262,9 @@ export function layout(model: UmlCommunicationModel): CommunicationLayout {
       // el texto se escribe horizontal aunque el enlace sea diagonal, y en un
       // enlace vertical alejarse en perpendicular mueve la etiqueta a lo largo
       // de su propio ancho, así que puede no despejar nunca. Se prueban
-      // posiciones ordenadas por cuánto se alejan de la ideal —primero el lado
+      // posiciones ordenadas por cuánto se alejan de la ideal (primero el lado
       // natural y sin correr, luego más lejos, luego corrida a lo largo del
-      // enlace y por último el lado contrario— y gana la primera libre.
+      // enlace y por último el lado contrario) y gana la primera libre.
       const candidatos: { at: Pt; align: 'start' | 'middle' | 'end'; caja: Caja; coste: number }[] = []
       for (const lado of [haciaFuera, -haciaFuera]) {
         for (let paso = 0; paso < 14; paso++) {

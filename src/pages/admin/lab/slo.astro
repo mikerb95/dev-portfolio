@@ -6,7 +6,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
   <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <p class="text-zinc-400 text-sm max-w-2xl">
       Objetivo de nivel de servicio (SLO) y <strong class="text-zinc-300">presupuesto de error</strong> por monitor,
-      calculado sobre los chequeos reales de uptime — como hacen Google/Netflix. El budget es cuánta
+      calculado sobre los chequeos reales de uptime - como hacen Google/Netflix. El budget es cuánta
       caída te "permite" el objetivo antes de incumplirlo.
     </p>
     <div class="flex items-end gap-3">
@@ -63,7 +63,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
       const h = HEALTH[r.health] ?? HEALTH.healthy
       const remaining = s.budgetRemainingPct ?? 100
       const noData = s.totalChecks === 0
-      const sli = s.sliPct == null ? '—' : `${s.sliPct}%`
+      const sli = s.sliPct == null ? '-' : `${s.sliPct}%`
       const met = s.meetsObjective
       return `
         <div class="rounded-xl border border-zinc-800 p-5">

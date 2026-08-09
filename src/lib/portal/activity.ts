@@ -80,7 +80,7 @@ const PAGE_SIZE = 20
 
 /**
  * Página del feed de un cliente. `clientId` sale SIEMPRE de la sesión, nunca del
- * request — igual que en el resto del portal.
+ * request - igual que en el resto del portal.
  *
  * `projectId` sí puede venir del request: quien llama lo valida antes contra los
  * proyectos del cliente. Aun así el `WHERE` lleva el clientId además del

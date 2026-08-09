@@ -36,7 +36,7 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
     {PIPELINE.map((e) => (
       <div class="panel" id={`panel-${e.id}`} data-panel={e.id} hidden>
         <div class="panel-head">
-          <h3>{e.nombre} — {e.subtitulo}</h3>
+          <h3>{e.nombre} - {e.subtitulo}</h3>
           <span class={`chip ${e.bloquea ? 'chip-block' : 'chip-soft'}`}>
             {e.bloquea ? 'Bloquea el deploy' : 'No bloquea'}
           </span>

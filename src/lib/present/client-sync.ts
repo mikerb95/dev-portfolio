@@ -9,9 +9,9 @@
 // lectura, Vercel solo trabaja al entrar (un snapshot) y en cada comando.
 //
 // Tres capas, de más rápida a más terca:
-//   1. Bus (SSE a Upstash)  — la vía normal, decenas de ms.
-//   2. Resync periódico     — un snapshot cada 10 s cura un mensaje perdido.
-//   3. Polling de rescate   — si el bus no conecta, 1 s de latencia y seguimos.
+//   1. Bus (SSE a Upstash)  - la vía normal, decenas de ms.
+//   2. Resync periódico     - un snapshot cada 10 s cura un mensaje perdido.
+//   3. Polling de rescate   - si el bus no conecta, 1 s de latencia y seguimos.
 //
 // El pub/sub no garantiza entrega, así que la capa 2 no es opcional: sin ella,
 // un mensaje perdido dejaría a media sala en el slide anterior para siempre.
@@ -170,7 +170,7 @@ export type DeckHandle = {
 
 /**
  * Engancha el `<deck-stage>` del iframe. Devuelve null mientras el documento no
- * esté listo — el iframe es del mismo origen (por eso el deck se sirve desde
+ * esté listo - el iframe es del mismo origen (por eso el deck se sirve desde
  * `/decks/<id>.html` y no desde su URL de blob), así que el acceso al DOM es
  * legítimo y no hay postMessage de por medio.
  */

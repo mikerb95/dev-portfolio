@@ -11,7 +11,7 @@ const MAX_LEN = { name: 200, email: 200, subject: 200, body: 5000 }
 
 // Mensajes de error del endpoint en los dos idiomas del sitio. Viven aquí (no
 // en el diccionario de páginas) porque son contrato de API, no copy de una
-// página concreta — /contact y /paginas-web comparten este mismo endpoint.
+// página concreta - /contact y /paginas-web comparten este mismo endpoint.
 const ERRORS = {
   es: {
     rateLimited: 'Demasiados intentos, intenta de nuevo en un minuto',
@@ -83,7 +83,7 @@ export const POST: APIRoute = async ({ request }) => {
   const preview = body.length > 140 ? `${body.slice(0, 140)}…` : body
   await sendPush(
     `Nuevo mensaje de ${name}`,
-    `${typeof subject === 'string' && subject ? `${subject}\n` : ''}${preview}\n— ${email}`,
+    `${typeof subject === 'string' && subject ? `${subject}\n` : ''}${preview}\n- ${email}`,
     { priority: 4, tags: 'envelope', click: 'https://codebymike.tech/admin/messages' },
   ).catch(() => {})
 

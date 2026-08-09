@@ -144,7 +144,7 @@ describe('rutas reservadas', () => {
 
   it('ninguna ruta reservada tiene forma de PIN (no se bloquean PINs válidos)', () => {
     // Si una ruta real tuviera forma de PIN, la lista estaría quitándole a la
-    // generación un hueco legítimo — señal de que hay que renombrar la ruta.
+    // generación un hueco legítimo - señal de que hay que renombrar la ruta.
     for (const seg of RESERVED_ROOT_SEGMENTS) {
       expect(isPinShape(seg), `la ruta "${seg}" tiene forma de PIN`).toBe(false)
     }

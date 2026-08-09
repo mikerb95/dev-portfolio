@@ -14,7 +14,7 @@ const json = (status: number, body: unknown) =>
 /**
  * Acepta una invitación: fija nombre y contraseña, activa la cuenta y deja al
  * usuario dentro. No se le pide volver a escribir la contraseña que acaba de
- * elegir — ya demostró control del buzón y acaba de elegirla; mandarlo al login
+ * elegir - ya demostró control del buzón y acaba de elegirla; mandarlo al login
  * sería fricción sin ganancia de seguridad.
  */
 export const POST: APIRoute = async ({ params, request, cookies }) => {

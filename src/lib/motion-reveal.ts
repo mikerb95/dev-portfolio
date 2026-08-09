@@ -1,6 +1,6 @@
 // Motion compartido entre páginas públicas: scroll suave (Lenis) + reveal
 // "scan" en cards .glass + boot-reveal por carácter en headlines .hero-line.
-// Módulo puro para el navegador (sin ../db, sin node:crypto) — se importa
+// Módulo puro para el navegador (sin ../db, sin node:crypto) - se importa
 // desde <script> de cada página que quiera el mismo lenguaje visual.
 import Lenis from 'lenis'
 import gsap from 'gsap'
@@ -17,7 +17,7 @@ export function initPageMotion(opts: { cardSelector?: string } = {}) {
   gsap.ticker.add((time) => lenis.raf(time * 1000))
   gsap.ticker.lagSmoothing(0)
 
-  // Boot reveal — cada .hero-line se divide en caracteres. Reasignamos la
+  // Boot reveal - cada .hero-line se divide en caracteres. Reasignamos la
   // clase de degradado (text-mask / text-mask-cyan) porque background-clip:
   // text no se propaga a los hijos que crea SplitText.
   document.querySelectorAll<HTMLElement>('.hero-line').forEach((line, i) => {
@@ -35,7 +35,7 @@ export function initPageMotion(opts: { cardSelector?: string } = {}) {
     })
   })
 
-  // Reveal por "scan" en las cards — clip-path wipe + barra de luz, en vez
+  // Reveal por "scan" en las cards - clip-path wipe + barra de luz, en vez
   // de un fade plano. Se escanea dentro de <main> a propósito: el Navbar
   // (fijo, fuera de <main>) también usa .glass y no debe animarse.
   const cards = document.querySelectorAll<HTMLElement>(opts.cardSelector ?? 'main .glass, main .glass-strong')

@@ -20,30 +20,30 @@
 | `/log` | default (no pasa `image`) | 🆕 crear `og-log.png` |
 | `/contact` (botón CTA) | default | 🆕 opcional: `og-contact.png` |
 
-Problema adicional: los PNG actuales no tienen fuente en el repo — no se pueden regenerar ni mantener consistentes. Este plan lo corrige.
+Problema adicional: los PNG actuales no tienen fuente en el repo - no se pueden regenerar ni mantener consistentes. Este plan lo corrige.
 
 ## Enfoque: generador reproducible en `scripts/og/`
 
 Un template HTML por sección + un script que lo renderiza y captura a 1200×630. Los PNG resultantes se commitean en `public/` como hasta ahora (cero costo en runtime, cero dependencias en prod).
 
-1. **`scripts/og/template.html`** — esqueleto compartido con el sistema visual ya establecido:
+1. **`scripts/og/template.html`** - esqueleto compartido con el sistema visual ya establecido:
    - Fondo oscuro `#050a0c` con textura de grid/puntos sutil.
    - Kicker superior: `/<ruta>` en JetBrains Mono cian + etiqueta en gris tracking ancho.
    - Título en Inter bold blanco + segunda línea en Instrument Serif itálica cian.
    - Descripción en gris, wordmark `CODEBYMIKE` abajo a la derecha.
    - Un "adorno de datos" distinto por sección (como las barras de uptime en la de status).
-2. **`scripts/og/sections.mjs`** — datos por sección (ruta, kicker, título, subtítulo itálico, descripción, adorno).
-3. **`scripts/og/generate.mjs`** — abre el template con Playwright (devDependency, ya se usa `npx playwright` sin ensuciar prod), viewport 1200×630, screenshot por sección a `public/og-<seccion>.png`. Script npm: `npm run og:generate`.
+2. **`scripts/og/sections.mjs`** - datos por sección (ruta, kicker, título, subtítulo itálico, descripción, adorno).
+3. **`scripts/og/generate.mjs`** - abre el template con Playwright (devDependency, ya se usa `npx playwright` sin ensuciar prod), viewport 1200×630, screenshot por sección a `public/og-<seccion>.png`. Script npm: `npm run og:generate`.
 4. Regenerar también `og-status`, `og-tools` y `og-default` desde el template para que todo el set sea reproducible (comparando visualmente antes de reemplazar).
 
 ## Copy propuesto por sección
 
-- **engineering** — kicker `/ENGINEERING · CÓMO CONSTRUYO`; título "Decisiones de ingeniería, *explicadas con evidencia.*"; adorno: mini-diagrama de arquitectura (cajas conectadas).
-- **notes** — kicker `/NOTES · APUNTES TÉCNICOS`; título "Notas de ingeniería, *escritas mientras construyo.*"; adorno: líneas tipo prosa/markdown.
-- **security** — kicker `/SECURITY · DEFENSA ACTIVA`; título "Seguridad del sitio, *vigilada, no asumida.*"; adorno: filas tipo log de eventos con severidades.
-- **certifications** — kicker `/CERTIFICATIONS · CREDENCIALES`; título "Certificaciones, *verificables, no decorativas.*"; adorno: badges/sellos minimal.
-- **log** — kicker `/LOG · BITÁCORA`; título "Registro de cambios, *commit a commit.*"; adorno: grafo de commits estilo git.
-- **contact** (opcional) — kicker `/CONTACT · DISPONIBLE`; título "Hablemos, *sin intermediarios.*"; adorno: punto verde "disponible".
+- **engineering** - kicker `/ENGINEERING · CÓMO CONSTRUYO`; título "Decisiones de ingeniería, *explicadas con evidencia.*"; adorno: mini-diagrama de arquitectura (cajas conectadas).
+- **notes** - kicker `/NOTES · APUNTES TÉCNICOS`; título "Notas de ingeniería, *escritas mientras construyo.*"; adorno: líneas tipo prosa/markdown.
+- **security** - kicker `/SECURITY · DEFENSA ACTIVA`; título "Seguridad del sitio, *vigilada, no asumida.*"; adorno: filas tipo log de eventos con severidades.
+- **certifications** - kicker `/CERTIFICATIONS · CREDENCIALES`; título "Certificaciones, *verificables, no decorativas.*"; adorno: badges/sellos minimal.
+- **log** - kicker `/LOG · BITÁCORA`; título "Registro de cambios, *commit a commit.*"; adorno: grafo de commits estilo git.
+- **contact** (opcional) - kicker `/CONTACT · DISPONIBLE`; título "Hablemos, *sin intermediarios.*"; adorno: punto verde "disponible".
 
 ## Cableado en las páginas
 
@@ -59,7 +59,7 @@ Añadir/ajustar el prop `image` en el `<BaseLayout>` de cada página:
 
 ## Futuro (fuera de alcance)
 
-- OG dinámica por artículo en `/notes/[slug]` (título del artículo en la imagen) — requeriría satori o un endpoint; con ~5 artículos aún no se justifica.
+- OG dinámica por artículo en `/notes/[slug]` (título del artículo en la imagen) - requeriría satori o un endpoint; con ~5 artículos aún no se justifica.
 
 ## Estimación
 

@@ -1,7 +1,7 @@
 // Persistencia de anomalías con anti-fatiga: una anomalía del mismo `kind` no se
 // vuelve a insertar ni a alertar mientras haya una abierta (sin reconocer) de
 // menos de 24h. Dedup por `kind` (no por categoría) a propósito: es conservador
-// —prevenir fatiga de alertas prima sobre no perder una segunda categoría—, y el
+// (prevenir fatiga de alertas prima sobre no perder una segunda categoría), y el
 // esquema no guarda categoría. Evita spamear al detectar lo mismo cada hora.
 
 import { and, gte, sql } from 'drizzle-orm'

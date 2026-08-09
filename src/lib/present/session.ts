@@ -68,7 +68,7 @@ function randomHex(bytes: number): string {
 // No se guarda: se DERIVA del id de sesión con HMAC. La diferencia importa
 // porque decide cuántas bases de Redis hace falta pagar. Guardado, el JSON de
 // la sesión contenía un secreto, y entonces el token de solo lectura que el
-// bus le entrega a cada espectador no podía apuntar a la misma base — de ahí
+// bus le entrega a cada espectador no podía apuntar a la misma base - de ahí
 // las dos bases del diseño original. Derivado, lo que queda en Redis es
 // exactamente el `PublicSnapshot` que el público ya recibe por el PIN, más el
 // deckId y unas marcas de tiempo. Una sola base, y el token público deja de
@@ -127,7 +127,7 @@ export async function getSession(sessionId: string): Promise<PresentSession | nu
  * Resuelve el PIN que alguien tecleó o escaneó. Devuelve null tanto si el PIN
  * no tiene forma válida como si no hay sesión: quien llama no debe poder
  * distinguir "PIN inexistente" de "PIN mal escrito" por el tiempo de respuesta
- * ni por el mensaje — es la misma pantalla de "la sesión terminó".
+ * ni por el mensaje - es la misma pantalla de "la sesión terminó".
  */
 export async function getSessionByPin(rawPin: string): Promise<PresentSession | null> {
   const pin = normalizePin(rawPin)
@@ -211,7 +211,7 @@ export type CommandOutcome =
 
 /**
  * Aplica un comando del control remoto. Es el único camino por el que cambia
- * una sesión, y valida el secreto siempre — aunque el endpoint que llama ya
+ * una sesión, y valida el secreto siempre - aunque el endpoint que llama ya
  * esté detrás de la sesión de admin. Defensa en profundidad: la sesión de admin
  * dice "eres tú", el secreto dice "eres tú y estás en ESTA presentación".
  */

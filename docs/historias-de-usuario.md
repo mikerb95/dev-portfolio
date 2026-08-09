@@ -1,4 +1,4 @@
-# Historias de Usuario — Portfolio CodeByMike
+# Historias de Usuario - Portfolio CodeByMike
 
 > Catálogo narrativo, actualizado el 24 jul 2026. Las historias con su DoD y su
 > anclaje al historial real de commits viven en
@@ -8,7 +8,7 @@
 
 ## Visitantes del sitio público
 
-### HU-01 — Ver portafolio profesional
+### HU-01 - Ver portafolio profesional
 **Como** visitante del sitio,  
 **quiero** ver una presentación clara de las habilidades, proyectos y experiencia del desarrollador,  
 **para** evaluar si es el perfil adecuado para mis necesidades.
@@ -20,7 +20,7 @@
 
 ---
 
-### HU-02 — Explorar proyectos
+### HU-02 - Explorar proyectos
 **Como** visitante,  
 **quiero** ver el detalle de cada proyecto (stack, descripción, links),  
 **para** conocer el nivel técnico y tipo de trabajo realizado.
@@ -32,7 +32,7 @@
 
 ---
 
-### HU-03 — Ver certificaciones
+### HU-03 - Ver certificaciones
 **Como** visitante,  
 **quiero** ver las certificaciones y logros académicos del desarrollador,  
 **para** validar su formación y actualización profesional.
@@ -43,7 +43,7 @@
 
 ---
 
-### HU-04 — Enviar mensaje de contacto
+### HU-04 - Enviar mensaje de contacto
 **Como** visitante interesado,  
 **quiero** enviar un mensaje de contacto,  
 **para** iniciar una conversación sobre un proyecto o colaboración.
@@ -56,7 +56,7 @@
 
 ---
 
-### HU-05 — Ver Engineering Log
+### HU-05 - Ver Engineering Log
 **Como** visitante,  
 **quiero** leer el registro de decisiones técnicas y aprendizajes del desarrollador,  
 **para** entender su proceso de pensamiento y nivel de madurez técnica.
@@ -69,7 +69,7 @@
 
 ## Administrador (Mike)
 
-### HU-06 — Iniciar sesión en el panel admin
+### HU-06 - Iniciar sesión en el panel admin
 **Como** administrador,  
 **quiero** autenticarme con mis credenciales,  
 **para** acceder al panel de gestión privado.
@@ -81,7 +81,7 @@
 
 ---
 
-### HU-07 — Gestionar proyectos
+### HU-07 - Gestionar proyectos
 **Como** administrador,  
 **quiero** crear, editar y archivar proyectos,  
 **para** mantener actualizado mi portafolio y el registro interno de trabajo.
@@ -94,7 +94,7 @@
 
 ---
 
-### HU-08 — Gestionar variables de entorno por proyecto
+### HU-08 - Gestionar variables de entorno por proyecto
 **Como** administrador,  
 **quiero** guardar las variables de entorno asociadas a cada proyecto,  
 **para** tener un registro centralizado y seguro de configuraciones.
@@ -106,7 +106,7 @@
 
 ---
 
-### HU-09 — Gestionar clientes
+### HU-09 - Gestionar clientes
 **Como** administrador,  
 **quiero** registrar y editar la información de mis clientes,  
 **para** tener un directorio centralizado vinculado a proyectos y mensajes.
@@ -117,7 +117,7 @@
 
 ---
 
-### HU-10 — Gestionar finanzas
+### HU-10 - Gestionar finanzas
 **Como** administrador,  
 **quiero** registrar ingresos, pagos pendientes y proyecciones económicas,  
 **para** tener control sobre el estado financiero de mi actividad freelance.
@@ -128,7 +128,7 @@
 
 ---
 
-### HU-11 — Gestionar briefings
+### HU-11 - Gestionar briefings
 **Como** administrador,  
 **quiero** crear y gestionar briefings de proyectos con clientes,  
 **para** documentar alcance, requerimientos y presupuesto acordado.
@@ -140,7 +140,7 @@
 
 ---
 
-### HU-12 — Leer mensajes de contacto
+### HU-12 - Leer mensajes de contacto
 **Como** administrador,  
 **quiero** ver los mensajes recibidos a través del formulario de contacto,  
 **para** responder oportunamente a posibles clientes o colaboradores.
@@ -152,7 +152,7 @@
 
 ---
 
-### HU-13 — Registrar hitos educativos
+### HU-13 - Registrar hitos educativos
 **Como** administrador,  
 **quiero** registrar cursos, certificaciones y logros de aprendizaje,  
 **para** mantener un historial personal y controlar qué aparece públicamente.
@@ -164,7 +164,7 @@
 
 ---
 
-### HU-14 — Gestionar ADRs por proyecto
+### HU-14 - Gestionar ADRs por proyecto
 **Como** administrador,  
 **quiero** documentar decisiones arquitectónicas (ADRs) por proyecto,  
 **para** mantener un registro de las decisiones técnicas tomadas y su justificación.
@@ -176,7 +176,7 @@
 
 ---
 
-### HU-15 — Gestionar servicios externos por proyecto
+### HU-15 - Gestionar servicios externos por proyecto
 **Como** administrador,  
 **quiero** registrar los servicios externos que usa cada proyecto (hosting, BD, auth, etc.),  
 **para** tener un inventario rápido de dependencias de infraestructura.
@@ -187,7 +187,7 @@
 
 ---
 
-### HU-16 — Gestionar contactos por proyecto
+### HU-16 - Gestionar contactos por proyecto
 **Como** administrador,  
 **quiero** registrar los contactos relevantes de cada proyecto (PM, QA, diseño, etc.),  
 **para** tener acceso rápido a las personas involucradas.
@@ -198,7 +198,7 @@
 
 ---
 
-### HU-17 — Gestionar repositorios
+### HU-17 - Gestionar repositorios
 **Como** administrador,  
 **quiero** visualizar y gestionar los repositorios vinculados a mis proyectos,  
 **para** tener acceso directo a los repos desde el panel.
@@ -209,9 +209,9 @@
 
 ---
 
-## Administrador (Mike) — Observabilidad y operación
+## Administrador (Mike) - Observabilidad y operación
 
-### HU-18 — Monitorear la salud de mis servicios
+### HU-18 - Monitorear la salud de mis servicios
 **Como** administrador,  
 **quiero** monitorear la disponibilidad y latencia de los servicios en producción,  
 **para** enterarme de caídas antes que mis clientes.
@@ -223,7 +223,7 @@
 
 ---
 
-### HU-19 — Ver historial de incidentes
+### HU-19 - Ver historial de incidentes
 **Como** administrador,  
 **quiero** que las caídas consecutivas se agrupen automáticamente en incidentes,  
 **para** conocer cuánto duró cada caída sin reconstruirla manualmente del log crudo.
@@ -234,7 +234,7 @@
 
 ---
 
-### HU-20 — Evaluar SLO y presupuesto de error
+### HU-20 - Evaluar SLO y presupuesto de error
 **Como** administrador,  
 **quiero** definir un objetivo de disponibilidad (SLO) y ventana de tiempo por monitor,  
 **para** saber cuánto margen de caída me queda antes de incumplir el objetivo.
@@ -245,7 +245,7 @@
 
 ---
 
-### HU-21 — Recibir notificaciones push de alertas
+### HU-21 - Recibir notificaciones push de alertas
 **Como** administrador,  
 **quiero** recibir una notificación push cuando un servicio cae, un dominio está por vencer o se detecta una anomalía de seguridad,  
 **para** reaccionar sin tener que revisar el panel constantemente.
@@ -256,7 +256,7 @@
 
 ---
 
-### HU-22 — Gestionar vencimiento de dominios
+### HU-22 - Gestionar vencimiento de dominios
 **Como** administrador,  
 **quiero** que el sistema descubra automáticamente la fecha de expiración de mis dominios,  
 **para** no perder uno por olvido de renovación.
@@ -267,7 +267,7 @@
 
 ---
 
-### HU-23 — Dar seguimiento comercial a clientes y proyectos
+### HU-23 - Dar seguimiento comercial a clientes y proyectos
 **Como** administrador,  
 **quiero** registrar llamadas, reuniones, notas y tareas pendientes por cliente/proyecto,  
 **para** no perder el hilo de una negociación o un compromiso adquirido.
@@ -278,7 +278,7 @@
 
 ---
 
-### HU-24 — Presentar slides a un cliente con control remoto
+### HU-24 - Presentar slides a un cliente con control remoto
 **Como** administrador,  
 **quiero** avanzar una presentación desde mi teléfono mientras el cliente la ve en su pantalla,  
 **para** dar demos sin depender de compartir pantalla en video llamada.
@@ -289,9 +289,9 @@
 
 ---
 
-## Visitantes del sitio público — Vitrina y SEO
+## Visitantes del sitio público - Vitrina y SEO
 
-### HU-25 — Ver el estado en vivo de los servicios
+### HU-25 - Ver el estado en vivo de los servicios
 **Como** visitante,  
 **quiero** ver el uptime, los incidentes activos y la latencia en tiempo real de los servicios públicos,  
 **para** confiar en que el sitio (y quien lo construyó) toma en serio la operación en producción.
@@ -303,7 +303,7 @@
 
 ---
 
-### HU-26 — Encontrar el sitio en buscadores
+### HU-26 - Encontrar el sitio en buscadores
 **Como** visitante que busca en Google,  
 **quiero** que el contenido del portafolio aparezca indexado y bien descrito,  
 **para** encontrarlo fácilmente sin conocer la URL exacta.
@@ -315,7 +315,7 @@
 
 ---
 
-### HU-27 — Explorar herramientas y notas técnicas
+### HU-27 - Explorar herramientas y notas técnicas
 **Como** visitante técnico,  
 **quiero** ver una vitrina de herramientas internas y notas de ingeniería del stack,  
 **para** evaluar la profundidad técnica real detrás del portafolio.
@@ -326,9 +326,9 @@
 
 ---
 
-## Administrador (Mike) — Seguridad
+## Administrador (Mike) - Seguridad
 
-### HU-28 — Detectar requests hostiles sin frenar tráfico legítimo
+### HU-28 - Detectar requests hostiles sin frenar tráfico legítimo
 **Como** administrador,  
 **quiero** que el sistema observe y clasifique cada request sospechoso,  
 **para** tener visibilidad de ataques sin arriesgar falsos positivos que bloqueen visitantes reales.
@@ -339,7 +339,7 @@
 
 ---
 
-### HU-29 — Bloquear IPs maliciosas y limitar su tasa de requests
+### HU-29 - Bloquear IPs maliciosas y limitar su tasa de requests
 **Como** administrador,  
 **quiero** bloquear IPs reincidentes y aplicar un límite de tasa que no se resetee con cada despliegue,  
 **para** contener abuso sostenido sin depender de reiniciar el servicio.
@@ -353,7 +353,7 @@
 
 ---
 
-### HU-30 — Revisar anomalías de seguridad agregadas
+### HU-30 - Revisar anomalías de seguridad agregadas
 **Como** administrador,  
 **quiero** ver picos y patrones nuevos de tráfico hostil agregados en un panel,  
 **para** revisar la postura de seguridad periódicamente sin leer eventos crudos uno por uno.
@@ -364,9 +364,9 @@
 
 ---
 
-## Visitantes del sitio público — Descarga de CV y educación
+## Visitantes del sitio público - Descarga de CV y educación
 
-### HU-31 — Descargar el CV desde la página de contacto
+### HU-31 - Descargar el CV desde la página de contacto
 **Como** visitante,  
 **quiero** descargar el CV directamente desde `/contact`,  
 **para** conservar el perfil del desarrollador sin pedirlo por otro medio.
@@ -377,7 +377,7 @@
 
 ---
 
-### HU-32 — Seguir rutas de aprendizaje con labs cronometrados y marcar mi progreso
+### HU-32 - Seguir rutas de aprendizaje con labs cronometrados y marcar mi progreso
 **Como** visitante,  
 **quiero** avanzar por rutas de aprendizaje ("Linux Real" y otras) con labs cronometrados y marcar cada uno como completado,  
 **para** aprender de forma guiada y ver mi propio avance.
@@ -388,9 +388,9 @@
 
 ---
 
-## Administrador (Mike) — Seguimiento de descargas del CV
+## Administrador (Mike) - Seguimiento de descargas del CV
 
-### HU-33 — Ver quién descargó mi CV y detectar revisitas del mismo dispositivo
+### HU-33 - Ver quién descargó mi CV y detectar revisitas del mismo dispositivo
 **Como** administrador,  
 **quiero** ver el historial completo de descargas de mi CV, con IP, user-agent y referer, y detectar cuándo el mismo dispositivo vuelve a descargarlo,  
 **para** entender quién se interesó en mi perfil sin depender de que dejen sus datos por otro medio.
@@ -402,9 +402,9 @@
 
 ---
 
-## Administrador (Mike) — Documentación del proyecto
+## Administrador (Mike) - Documentación del proyecto
 
-### HU-34 — Consultar la documentación de ingeniería sin salir del panel
+### HU-34 - Consultar la documentación de ingeniería sin salir del panel
 **Como** administrador,  
 **quiero** navegar requerimientos, casos de uso, diagramas UML y el kanban del propio proyecto desde `/admin`,  
 **para** sustentar el trabajo (académica o comercialmente) sin mantener documentos externos desincronizados.
@@ -416,9 +416,9 @@
 
 ---
 
-## Clientes — Portal autenticado
+## Clientes - Portal autenticado
 
-### HU-35 — Ver mis facturas y descargarlas
+### HU-35 - Ver mis facturas y descargarlas
 **Como** cliente de un proyecto,  
 **quiero** entrar con mi propia cuenta y ver mis facturas con su estado y vencimiento, descargables en PDF,  
 **para** llevar mi contabilidad sin pedirlas por correo cada vez.
@@ -430,21 +430,21 @@
 
 ---
 
-### HU-36 — Seguir el avance de mi proyecto y hablar con el desarrollador
+### HU-36 - Seguir el avance de mi proyecto y hablar con el desarrollador
 **Como** cliente,  
 **quiero** ver el listado de mis proyectos, entrar al detalle de cada uno con su avance por hitos, los documentos compartidos y un hilo de mensajes,  
 **para** saber en qué va cada proyecto sin agendar una llamada ni mezclar información entre proyectos.
 
 **Criterios de aceptación:**
 - Si tengo más de un proyecto, veo un selector para cambiar entre ellos; con uno solo, entro directo a su detalle.
-- El proyecto activo se resuelve siempre contra la lista de proyectos de mi propia sesión — un id ajeno en la URL cae al primero propio, nunca al proyecto de otro cliente.
+- El proyecto activo se resuelve siempre contra la lista de proyectos de mi propia sesión - un id ajeno en la URL cae al primero propio, nunca al proyecto de otro cliente.
 - El avance se muestra por hitos del proyecto seleccionado.
 - Los mensajes forman un hilo con estado de leído por ambas partes.
 - Los documentos visibles son solo los del propio cliente.
 
 ---
 
-### HU-37 — Recuperar el acceso a mi cuenta
+### HU-37 - Recuperar el acceso a mi cuenta
 **Como** cliente que olvidó su contraseña,  
 **quiero** restablecerla desde un enlace enviado a mi correo,  
 **para** no depender de que alguien me la cambie a mano.
@@ -456,9 +456,9 @@
 
 ---
 
-## Administrador (Mike) — Cobros de campo
+## Administrador (Mike) - Cobros de campo
 
-### HU-38 — Cobrar un trabajo desde el celular por WhatsApp
+### HU-38 - Cobrar un trabajo desde el celular por WhatsApp
 **Como** administrador que acaba de terminar un trabajo en sitio,  
 **quiero** configurar el monto, previsualizar el mensaje y enviarlo por WhatsApp desde mi propio teléfono,  
 **para** cobrar en el momento sin contratar la API de WhatsApp ni volver al escritorio.
@@ -470,7 +470,7 @@
 
 ---
 
-### HU-39 — Consultar mi histórico de pagos como cliente
+### HU-39 - Consultar mi histórico de pagos como cliente
 **Como** cliente que ha pagado varios trabajos,  
 **quiero** ver mi historial desde el enlace que recibí,  
 **para** confirmar qué he pagado sin tener que preguntar.
@@ -481,9 +481,9 @@
 
 ---
 
-## Visitantes del sitio público — Demo y captación
+## Visitantes del sitio público - Demo y captación
 
-### HU-40 — Recorrer el panel de control sin crear una cuenta
+### HU-40 - Recorrer el panel de control sin crear una cuenta
 **Como** recluta o cliente potencial,  
 **quiero** entrar al panel completo con datos de ejemplo,  
 **para** evaluar el producto sin registrarme ni pedir una demo agendada.
@@ -495,7 +495,7 @@
 
 ---
 
-### HU-41 — Entender qué me ofrecen sin lenguaje técnico
+### HU-41 - Entender qué me ofrecen sin lenguaje técnico
 **Como** dueño de un negocio local,  
 **quiero** una página con planes, precios y ejemplos en lenguaje llano,  
 **para** decidir si contratar sin tener que interpretar vocabulario de desarrollo.
@@ -511,13 +511,13 @@
 | Grupo | Historias | Rango |
 |---|---|---|
 | Visitantes | 12 | HU-01 a HU-05, HU-25 a HU-27, HU-31 a HU-32, HU-40 a HU-41 |
-| Administrador — CRM y perfil | 12 | HU-06 a HU-17 |
-| Administrador — Observabilidad y operación | 7 | HU-18 a HU-24 |
-| Administrador — Seguridad | 3 | HU-28 a HU-30 |
-| Administrador — Seguimiento de descargas del CV | 1 | HU-33 |
-| Administrador — Documentación | 1 | HU-34 |
-| Administrador — Cobros de campo | 2 | HU-38 a HU-39 |
-| Clientes — Portal | 3 | HU-35 a HU-37 |
+| Administrador - CRM y perfil | 12 | HU-06 a HU-17 |
+| Administrador - Observabilidad y operación | 7 | HU-18 a HU-24 |
+| Administrador - Seguridad | 3 | HU-28 a HU-30 |
+| Administrador - Seguimiento de descargas del CV | 1 | HU-33 |
+| Administrador - Documentación | 1 | HU-34 |
+| Administrador - Cobros de campo | 2 | HU-38 a HU-39 |
+| Clientes - Portal | 3 | HU-35 a HU-37 |
 | **Total** | **41** | HU-01 a HU-41 |
 
 Ver también el tablero XP con historias ancladas al historial real de commits en `/admin/docs/kanban`

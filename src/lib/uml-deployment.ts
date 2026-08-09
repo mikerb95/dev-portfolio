@@ -4,8 +4,8 @@
 // no tiene ninguno con ese nombre: sus 14 tipos no incluyen una vista de red, y
 // el elemento que representa una máquina, un entorno de ejecución y el enlace
 // físico entre ellos es el diagrama de despliegue. Así que se entrega como
-// despliegue —nodos «device» y «executionEnvironment», artefactos desplegados y
-// caminos de comunicación con su protocolo— que es lo que la notación permite
+// despliegue (nodos «device» y «executionEnvironment», artefactos desplegados y
+// caminos de comunicación con su protocolo) que es lo que la notación permite
 // afirmar sin inventarse símbolos.
 //
 // Mermaid tampoco tiene este diagrama: no hay caja tridimensional, ni

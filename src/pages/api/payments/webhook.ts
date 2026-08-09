@@ -11,7 +11,7 @@ import { notifyCobroPaid } from '../../../lib/cobros-notify'
 // firmado con WOMPI_EVENTS_SECRET antes de tocar nada.
 //
 // Diseño de resiliencia: SIEMPRE respondemos 200 a eventos válidos aunque no
-// apliquen (duplicados, fuera de orden, referencia ajena) — la pasarela solo
+// apliquen (duplicados, fuera de orden, referencia ajena) - la pasarela solo
 // necesita saber que lo recibimos; los flags quedan en payment_events.
 
 const json = (status: number, body: unknown) =>
@@ -59,7 +59,7 @@ export const POST: APIRoute = async ({ request }) => {
   })
 
   // Conciliación con el portal: si este pago salda una factura, marcarla y
-  // avisar al cliente. Solo cuando la transición se APLICÓ de verdad — un
+  // avisar al cliente. Solo cuando la transición se APLICÓ de verdad - un
   // duplicado o un evento fuera de orden no debe disparar otro correo.
   //
   // Va después de responder al resto de la lógica y nunca lanza: el pago ya

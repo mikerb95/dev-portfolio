@@ -15,8 +15,8 @@ import {
 // Endpoint público (mismo criterio OPSEC que /status: solo agregados) que
 // arma el estado "en vivo" de /docs/pipeline-en-vivo combinando tres fuentes
 // reales:
-//   1. API de Actions de GitHub — jobs/pasos del run más reciente en `main`.
-//   2. API de Deployments de GitHub — mismo truco que dast.yml para saber si
+//   1. API de Actions de GitHub - jobs/pasos del run más reciente en `main`.
+//   2. API de Deployments de GitHub - mismo truco que dast.yml para saber si
 //      Vercel ya publicó esa versión, sin necesitar VERCEL_TOKEN.
 //   3. Nuestras propias tablas (ci_runs, monitors) para health check y
 //      monitoreo continuo, que la API de GitHub no puede contarnos.
@@ -27,7 +27,7 @@ import {
 //
 // Cache en memoria del propio proceso (best-effort entre invocaciones de la
 // misma instancia serverless, no un cache distribuido) para no gastar la
-// cuota de la API de GitHub —60 req/hora sin token— en cada poll de cada
+// cuota de la API de GitHub (60 req/hora sin token) en cada poll de cada
 // visitante. GITHUB_API_TOKEN es opcional: sin él el endpoint sigue
 // funcionando, solo que con menos margen ante tráfico simultáneo alto.
 
@@ -67,7 +67,7 @@ type GhRun = {
 
 // Los 4 workflows que pueden correr para un mismo commit. DAST solo aplica a
 // PRs (necesita un preview), así que en un push a main simplemente no aparece
-// entre los runs — no es un fallo, es que no le tocaba correr.
+// entre los runs - no es un fallo, es que no le tocaba correr.
 const WORKFLOW_LABEL: Record<string, string> = {
   CI: 'CI',
   Security: 'Security',
@@ -118,7 +118,7 @@ export const GET: APIRoute = async () => {
 
   const live = esRunVivo(ciRun ? { status: ciRun.status, updatedAt: ciRun.updated_at } : null, now)
 
-  // 4. Deployment de Vercel para ese sha — mismo patrón que dast.yml, sin VERCEL_TOKEN.
+  // 4. Deployment de Vercel para ese sha - mismo patrón que dast.yml, sin VERCEL_TOKEN.
   let deploy: { estado: WorkflowResumen['estado']; detalle: string | null; url: string | null } = {
     estado: 'pending',
     detalle: null,
@@ -172,7 +172,7 @@ export const GET: APIRoute = async () => {
 
   const stages = {
     // El push "ya pasó" en cuanto existe un run disparado por él, sin importar
-    // cómo termine ese run — lo que este estado cuenta es si el evento
+    // cómo termine ese run - lo que este estado cuenta es si el evento
     // ocurrió, no su resultado (eso lo cuentan workflows/deploy/verify).
     push: { estado: (ciRun ? 'ok' : 'pending') as 'ok' | 'pending', ts: ciRun?.created_at ?? null },
     workflows,

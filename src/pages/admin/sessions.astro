@@ -20,7 +20,7 @@ const rows = await db
 const items = rows.map((r) => ({
   id: r.id,
   device: describeDevice(r.userAgent),
-  ip: r.ip ?? '—',
+  ip: r.ip ?? '-',
   firstSeen: r.firstSeen ? r.firstSeen.getTime() : null,
   lastSeen: r.lastSeen ? r.lastSeen.getTime() : null,
   isCurrent: r.id === currentId,
@@ -74,7 +74,7 @@ const otherCount = items.filter((i) => !i.isCurrent).length
                 </div>
               </div>
               {it.isCurrent ? (
-                <span class="shrink-0 text-[11px] font-mono text-ink-400">—</span>
+                <span class="shrink-0 text-[11px] font-mono text-ink-400">-</span>
               ) : (
                 <button
                   class="revoke-one shrink-0 h-8 px-3 text-[12px] font-medium rounded-full text-ink-200 border border-white/10 hover:border-ember/40 hover:text-ember transition-colors"

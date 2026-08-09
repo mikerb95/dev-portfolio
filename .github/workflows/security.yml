@@ -1,6 +1,6 @@
 # SAST: análisis estático de dependencias (npm audit) y código (CodeQL).
 #
-# npm audit reporta al panel LAB propio (kind: security_finding) — se ve en
+# npm audit reporta al panel LAB propio (kind: security_finding) - se ve en
 # /admin/lab/security y agregado en /lab público. CodeQL usa la integración
 # nativa de GitHub (gratis en repos públicos): sus hallazgos van directo a la
 # pestaña Security del repo, sin parseo propio.

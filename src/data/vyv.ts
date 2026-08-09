@@ -13,13 +13,13 @@ export const DEFINICIONES: Record<TipoVV, { titulo: string; pregunta: string; en
     titulo: 'Verificación',
     pregunta: '¿Estamos construyendo el producto correctamente?',
     enfoque:
-      'Conformidad interna: el código hace lo que su propia especificación dice que debe hacer. No necesita a nadie fuera del equipo — un esquema, un contrato o una línea de código ya definen qué es «correcto».',
+      'Conformidad interna: el código hace lo que su propia especificación dice que debe hacer. No necesita a nadie fuera del equipo - un esquema, un contrato o una línea de código ya definen qué es «correcto».',
   },
   validacion: {
     titulo: 'Validación',
     pregunta: '¿Estamos construyendo el producto correcto?',
     enfoque:
-      'Conformidad externa: el sistema sirve para lo que una persona real necesita hacer con él. La vara no es una especificación interna, es alguien —o algo que simula a alguien— tratando de cumplir un objetivo real.',
+      'Conformidad externa: el sistema sirve para lo que una persona real necesita hacer con él. La vara no es una especificación interna, es alguien (o algo que simula a alguien) tratando de cumplir un objetivo real.',
   },
 }
 
@@ -101,7 +101,7 @@ export const CLASIFICACION: ClasificacionNivel[] = [
     id: 'a11y',
     tipo: 'validacion',
     porque:
-      'La vara no es el propio código: es si una persona con lector de pantalla o sin ratón puede usar la página. axe-core es un proxy automatizado de esa pregunta —cubre ~30-40%— pero la pregunta que responde es externa al sistema, no interna.',
+      'La vara no es el propio código: es si una persona con lector de pantalla o sin ratón puede usar la página. axe-core es un proxy automatizado de esa pregunta (cubre ~30-40%) pero la pregunta que responde es externa al sistema, no interna.',
   },
   {
     id: 'usabilidad',
@@ -130,11 +130,11 @@ export const TRAZABILIDAD = [
   {
     href: '/docs/requerimientos-no-funcionales',
     titulo: 'Requerimientos no funcionales',
-    rol: 'ISO/IEC 25010 es, en el fondo, un catálogo de propiedades verificables (rendimiento, seguridad, mantenibilidad) — el lado de verificación de este mismo mapa.',
+    rol: 'ISO/IEC 25010 es, en el fondo, un catálogo de propiedades verificables (rendimiento, seguridad, mantenibilidad) - el lado de verificación de este mismo mapa.',
   },
   {
     href: '/docs/testing',
-    titulo: 'Testing — los 15 niveles',
+    titulo: 'Testing - los 15 niveles',
     rol: 'El detalle técnico completo de cada nivel: herramienta, volumen, archivos, punto ciego. Esta página los reclasifica; esa los explica uno por uno.',
   },
   {
@@ -147,7 +147,7 @@ export const TRAZABILIDAD = [
 // ── Niveles de integridad (IEEE 1012, cláusula 5) ───────────────────────────
 // La distinción verificación/validación no dice cuánto rigor aplicar. Eso lo
 // decide el nivel de integridad: la consecuencia de que ese subsistema falle,
-// no la probabilidad. A mayor nivel, más tareas de V&V son obligatorias — acá
+// no la probabilidad. A mayor nivel, más tareas de V&V son obligatorias - acá
 // se listan las que ya existen y las que el nivel exigiría y todavía faltan.
 //
 // OPSEC: /docs es público (solo /docs/presentacion es privado, ver
@@ -158,14 +158,14 @@ export const TRAZABILIDAD = [
 export type NivelIntegridad = 1 | 2 | 3 | 4
 
 // El identificador que define el estándar es el número (4 a 1); el nombre es
-// solo la glosa legible. Se eligió una escala monótona en español —crítico >
-// alto > moderado > bajo— en vez de calcar High/Major/Moderate/Low, porque
+// solo la glosa legible. Se eligió una escala monótona en español (crítico >
+// alto > moderado > bajo) en vez de calcar High/Major/Moderate/Low, porque
 // «mayor» no se lee como un escalón de severidad en castellano.
 export const INTEGRIDAD_LABEL: Record<NivelIntegridad, { nombre: string; consecuencia: string }> = {
-  4: { nombre: 'Crítico', consecuencia: 'Catastrófica — dinero real perdido, fraude, credenciales de terceros expuestas' },
-  3: { nombre: 'Alto', consecuencia: 'Grave — acceso no autorizado al panel o a datos personales de un cliente' },
-  2: { nombre: 'Moderado', consecuencia: 'Degradación operativa — se pierde visibilidad, no hay compromiso directo de datos' },
-  1: { nombre: 'Bajo', consecuencia: 'Negligible — inconveniencia visual, nada operativo se rompe' },
+  4: { nombre: 'Crítico', consecuencia: 'Catastrófica - dinero real perdido, fraude, credenciales de terceros expuestas' },
+  3: { nombre: 'Alto', consecuencia: 'Grave - acceso no autorizado al panel o a datos personales de un cliente' },
+  2: { nombre: 'Moderado', consecuencia: 'Degradación operativa - se pierde visibilidad, no hay compromiso directo de datos' },
+  1: { nombre: 'Bajo', consecuencia: 'Negligible - inconveniencia visual, nada operativo se rompe' },
 }
 
 export type Subsistema = {
@@ -206,7 +206,7 @@ export const SUBSISTEMAS: Subsistema[] = [
     nombre: 'Autenticación (admin OAuth+allowlist, portal scrypt)',
     nivel: 3,
     porque: 'Un fallo da acceso no autorizado al panel de control o a los datos de un cliente en el portal.',
-    archivos: 'auth.config.ts, src/lib/auth.ts (admin) — src/lib/portal/session.ts, login.ts (portal)',
+    archivos: 'auth.config.ts, src/lib/auth.ts (admin) - src/lib/portal/session.ts, login.ts (portal)',
     cubiertoPor: ['integracion', 'e2e', 'dast'],
     refuerzoPendiente: 'Los casos negativos de revocación se prueban a mano; un nivel 3 pediría cubrirlos también de forma automatizada.',
   },
@@ -222,7 +222,7 @@ export const SUBSISTEMAS: Subsistema[] = [
     id: 'observabilidad',
     nombre: 'Micro-SIEM, crons, notificaciones',
     nivel: 2,
-    porque: 'Un fallo pierde visibilidad operativa, no compromete datos directamente — proporcional al no-op silencioso con que ya están diseñados.',
+    porque: 'Un fallo pierde visibilidad operativa, no compromete datos directamente - proporcional al no-op silencioso con que ya están diseñados.',
     archivos: 'src/lib/notify.ts, src/pages/api/cron/*',
     cubiertoPor: ['unitario', 'monitoreo'],
   },
@@ -241,7 +241,7 @@ export const SUBSISTEMAS: Subsistema[] = [
 // ── Procesos del ciclo de vida (IEEE 1012, cláusula 6) ──────────────────────
 // El estándar no ata las tareas de V&V a "niveles de prueba" sino a fases del
 // ciclo de vida del software. Este proyecto cubre casi todas sin haberlas
-// nombrado así — esta tabla es esa traducción.
+// nombrado así - esta tabla es esa traducción.
 
 export type ProcesoCicloVida = {
   id: string
@@ -253,12 +253,12 @@ export type ProcesoCicloVida = {
 export const PROCESOS_CICLO_VIDA: ProcesoCicloVida[] = [
   { id: 'gestion', nombre: 'Gestión', tareaVV: 'Plan de V&V y asignación de nivel de integridad por riesgo', dondeEnRepo: 'Esta página + docs/plan-*.md' },
   { id: 'adquisicion', nombre: 'Adquisición / suministro', tareaVV: 'Auditoría de dependencias y librerías de terceros', dondeEnRepo: 'npm audit, CodeQL' },
-  { id: 'concepto', nombre: 'Desarrollo — Concepto', tareaVV: 'Evaluación de la necesidad real antes de escribir código', dondeEnRepo: '/docs/casos-de-uso' },
-  { id: 'requisitos', nombre: 'Desarrollo — Requisitos', tareaVV: 'Trazabilidad de cada requisito a una prueba concreta', dondeEnRepo: '/docs/historias-de-usuario, /docs/requerimientos-no-funcionales' },
-  { id: 'diseno', nombre: 'Desarrollo — Diseño', tareaVV: 'Evaluación de interfaces contra su especificación', dondeEnRepo: 'Contratos Zod (tests/contracts.test.ts)' },
-  { id: 'implementacion', nombre: 'Desarrollo — Implementación', tareaVV: 'Revisión del código fuente y de sus propias pruebas', dondeEnRepo: 'Unitarias + mutation testing' },
-  { id: 'prueba', nombre: 'Desarrollo — Prueba', tareaVV: 'Generación y ejecución de casos de prueba', dondeEnRepo: 'Unitarias, integración, e2e' },
-  { id: 'instalacion', nombre: 'Desarrollo — Instalación', tareaVV: 'Auditoría de configuración tras el despliegue', dondeEnRepo: 'job verify-production, health checks' },
+  { id: 'concepto', nombre: 'Desarrollo - Concepto', tareaVV: 'Evaluación de la necesidad real antes de escribir código', dondeEnRepo: '/docs/casos-de-uso' },
+  { id: 'requisitos', nombre: 'Desarrollo - Requisitos', tareaVV: 'Trazabilidad de cada requisito a una prueba concreta', dondeEnRepo: '/docs/historias-de-usuario, /docs/requerimientos-no-funcionales' },
+  { id: 'diseno', nombre: 'Desarrollo - Diseño', tareaVV: 'Evaluación de interfaces contra su especificación', dondeEnRepo: 'Contratos Zod (tests/contracts.test.ts)' },
+  { id: 'implementacion', nombre: 'Desarrollo - Implementación', tareaVV: 'Revisión del código fuente y de sus propias pruebas', dondeEnRepo: 'Unitarias + mutation testing' },
+  { id: 'prueba', nombre: 'Desarrollo - Prueba', tareaVV: 'Generación y ejecución de casos de prueba', dondeEnRepo: 'Unitarias, integración, e2e' },
+  { id: 'instalacion', nombre: 'Desarrollo - Instalación', tareaVV: 'Auditoría de configuración tras el despliegue', dondeEnRepo: 'job verify-production, health checks' },
   // Sin cifra de monitores: ese número ya vive en NIVELES.monitoreo.volumen
   // (testing.ts) y duplicarlo acá lo dejaría desactualizado en silencio.
   { id: 'operacion', nombre: 'Operación', tareaVV: 'Monitoreo continuo y detección de anomalías', dondeEnRepo: 'Monitoreo sintético + micro-SIEM' },
@@ -269,7 +269,7 @@ export const GLOSARIO_VV = [
   { termino: 'IEEE 1012', def: 'El estándar que formaliza la distinción verificación/validación para software (Verification and Validation Plans). No define herramientas, solo el marco de preguntas.' },
   { termino: 'V-model', def: 'Representación clásica del ciclo de vida donde cada etapa de construcción tiene su etapa de verificación espejo. Aquí no se sigue el modelo en cascada, pero la pregunta de cada espejo sigue aplicando.' },
   { termino: 'Oráculo', def: 'La fuente de verdad contra la que se compara un resultado. En verificación el oráculo es interno (un esquema, un contrato); en validación el oráculo es una necesidad externa, a menudo humana.' },
-  { termino: 'UAT', def: 'User Acceptance Testing: validación formal hecha por quien va a usar o pagar por el sistema, no por quien lo construyó. Este proyecto no tiene un UAT formal separado — el usability testing y los casos de uso cumplen ese rol.' },
+  { termino: 'UAT', def: 'User Acceptance Testing: validación formal hecha por quien va a usar o pagar por el sistema, no por quien lo construyó. Este proyecto no tiene un UAT formal separado - el usability testing y los casos de uso cumplen ese rol.' },
   { termino: 'Nivel de integridad', def: 'Clasificación de IEEE 1012 (1 a 4) según la consecuencia de que un subsistema falle, no según la probabilidad de que falle. A mayor nivel, más tareas de V&V son obligatorias.' },
   { termino: 'IV&V', def: 'V&V independiente: la ejecuta alguien con presupuesto, personal y línea de reporte separados de quien desarrolló. IEEE 1012 la exige en los niveles de integridad altos, porque el autor de un módulo comparte los puntos ciegos de su propio diseño. Un proyecto de una persona no puede cumplirla.' },
 ]

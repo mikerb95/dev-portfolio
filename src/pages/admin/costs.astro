@@ -55,7 +55,7 @@ function renewalState(d: Date | null): 'overdue' | 'soon' | 'ok' | null {
   return 'ok'
 }
 const fmtDate = (d?: Date | null) =>
-  d ? d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'
+  d ? d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: '2-digit' }) : '-'
 
 // Agregados y filas para la tabla
 let totalMonthlyUSD = 0
@@ -92,9 +92,9 @@ const tableRows: CostRow[] = raw.map((r) => {
     provider: r.provider,
     projectTitle: r.projectTitle,
     clientName: r.clientName,
-    costLabel: r.cost == null ? (r.billingCycle === 'free' ? 'Gratis' : '—') : fmtMoney(r.cost, r.currency ?? 'USD'),
+    costLabel: r.cost == null ? (r.billingCycle === 'free' ? 'Gratis' : '-') : fmtMoney(r.cost, r.currency ?? 'USD'),
     cycleLabel: BILLING_CYCLE_LABELS[(r.billingCycle ?? 'monthly') as keyof typeof BILLING_CYCLE_LABELS],
-    monthlyUSDLabel: monthlyUSD == null ? '—' : fmtUSD(monthlyUSD, 2),
+    monthlyUSDLabel: monthlyUSD == null ? '-' : fmtUSD(monthlyUSD, 2),
     renewalLabel: fmtDate(r.renewalDate),
     renewalState: state,
     payerLabel: PAYER_LABELS[(r.payer ?? 'me') as keyof typeof PAYER_LABELS],
@@ -250,7 +250,7 @@ const missingRates = [...usedCurrenciesNoRate]
           <div>
             <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Proveedor</label>
             <select id="f-provider" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
-              <option value="">—</option>
+              <option value="">-</option>
               {PROVIDERS.map((p) => <option value={p}>{p}</option>)}
             </select>
           </div>
@@ -260,14 +260,14 @@ const missingRates = [...usedCurrenciesNoRate]
           <div>
             <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Proyecto</label>
             <select id="f-project" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
-              <option value="">— (a nivel cuenta)</option>
+              <option value="">- (a nivel cuenta)</option>
               {projectsList.map((p) => <option value={p.id}>{p.title}</option>)}
             </select>
           </div>
           <div>
             <label class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cliente</label>
             <select id="f-client" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
-              <option value="">—</option>
+              <option value="">-</option>
               {clientsList.map((c) => <option value={c.id}>{c.name}</option>)}
             </select>
           </div>

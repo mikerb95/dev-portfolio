@@ -65,7 +65,7 @@ function resolveDemoPass(
 /**
  * Igual que `resolveDemoPass`, pero para el pase de demo del PORTAL: cookie
  * distinta, allowlist de mutación distinta (ver lib/portal/demo.ts). Nunca se
- * consulta si ya hay una sesión real del portal — esta función solo se llama
+ * consulta si ya hay una sesión real del portal - esta función solo se llama
  * cuando `getPortalSession` ya dijo que no hay ninguna.
  */
 function resolvePortalDemoPass(
@@ -89,7 +89,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // i18n: cortar en seco un `/en/` delante de una ruta privada (admin, API,
   // portal, cobros, gates de login). Ninguna de esas rutas tiene traducción
-  // — si se dejara pasar, cada guard de seguridad de abajo (que compara por
+  // - si se dejara pasar, cada guard de seguridad de abajo (que compara por
   // ruta literal) sería ciego al prefijo y quedaría sin vigilancia. Ver
   // docs/plan-i18n-en.md §3. Va antes que cualquier otra cosa, incluso el
   // chaos engineering: no hay escenario en el que esta combinación deba
@@ -108,7 +108,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect(`${untranslated}${context.url.search}`, 302)
   }
   // A partir de aquí, todo guard que clasifique la ruta usa la versión SIN
-  // prefijo de idioma — nunca `pathname` crudo — para que `/algo` y
+  // prefijo de idioma - nunca `pathname` crudo - para que `/algo` y
   // `/en/algo` reciban idéntico trato de seguridad.
   const canonicalPath = delocalizePath(pathname)
 
@@ -153,7 +153,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 1.b) Honeypot inline. Tocar una ruta señuelo es intención inequívoca (cero
   //      falsos positivos: nadie legítimo pide /wp-login.php). Bloqueamos la IP
   //      aquí mismo en vez de esperar al cron de auto-block, que puede tardar
-  //      o no estar corriendo — así la defensa no depende de un disparador
+  //      o no estar corriendo - así la defensa no depende de un disparador
   //      externo. Este request SÍ sigue su curso y recibe el señuelo (tarpit +
   //      HTML falso): no delatamos la trampa en el primer contacto; a partir de
   //      la siguiente petición la IP cae en la blocklist (403 seco) para todo.
@@ -240,7 +240,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Vista del público de una presentación (`/{pin}`). El PIN son cuatro
     // caracteres: es el mismo problema que los links de cobro, con un límite
-    // más holgado por una razón muy concreta — un salón entero comparte la IP
+    // más holgado por una razón muy concreta - un salón entero comparte la IP
     // del wifi, y treinta personas escaneando el QR a la vez son treinta
     // peticiones en diez segundos. 90/min deja pasar esa ráfaga y sigue
     // convirtiendo un barrido del espacio de PINs en algo de días, sobre PINs
@@ -267,7 +267,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     // Snapshot de sesión: lo consulta cada dispositivo del salón al conectar,
-    // cada 10 s como resincronización y —si el bus de Upstash no engancha— en
+    // cada 10 s como resincronización y (si el bus de Upstash no engancha) en
     // bucle corto. Con toda la sala tras el mismo NAT eso supera de largo el
     // paraguas global, así que tiene su propio límite y queda FUERA del
     // paraguas: el fallo aquí no es un scraper suelto, es la presentación
@@ -311,7 +311,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // /c/[code], que no cae aquí. Ver docs/plan-cobrar.md.
   // `/remote/<sessionId>` es el control remoto de una presentación: vive fuera
   // de /admin porque se abre escaneando un QR desde el celular, pero es panel a
-  // todos los efectos — desde ahí se mueve lo que ve el público. Va al mismo
+  // todos los efectos - desde ahí se mueve lo que ve el público. Va al mismo
   // matcher que /cobrar y por la misma razón: la ruta está en la raíz por
   // comodidad de uso, no porque sea pública.
   const isAdmin =
@@ -323,13 +323,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // El deck de sustentación tiene URL bajo /docs (la sección es pública) pero no
   // es público: solo lo ve la sesión del administrador. Se trata como ruta
-  // privada tanto para el gate de sesión como para los headers de respuesta —
+  // privada tanto para el gate de sesión como para los headers de respuesta -
   // en particular para que NO herede el `Cache-Control` público de más abajo,
   // que haría que la CDN cachee el HTML y lo sirva a cualquiera.
   const isPrivateDeck = canonicalPath === '/docs/presentacion'
 
   // Portal de clientes: privado como /admin a efectos de headers (noindex, sin
-  // caché en la CDN), pero con una auth completamente distinta — ni comparte
+  // caché en la CDN), pero con una auth completamente distinta - ni comparte
   // cookie con el admin ni pasa por Auth.js. Ver docs/plan-portal-clientes.md.
   const isPortal = isPortalPath(canonicalPath)
   const isPrivate = isAdmin || isPrivateDeck || isPortal
@@ -365,7 +365,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       return context.redirect(`/portal/login?next=${next}`)
     }
 
-    // "Ver como cliente" (ver /admin/clients): solo lectura, sin excepciones —
+    // "Ver como cliente" (ver /admin/clients): solo lectura, sin excepciones -
     // ni siquiera el pago simulado que sí se permite en la demo pública. Aquí
     // los datos SON reales; simular un pago o mandar un mensaje "de parte del
     // cliente" sería confuso o dañino de verdad, no una demostración inocua.
@@ -374,7 +374,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     //
     // La ÚNICA excepción es salir (POST /api/portal/logout): bloquearlo dejaría
     // al admin atrapado en la vista de cliente sin más salida que borrar la
-    // cookie a mano. Salir no es una escritura sobre los datos del cliente —
+    // cookie a mano. Salir no es una escritura sobre los datos del cliente -
     // solo revoca la propia fila de sesión.
     if (portalSession.impersonatedBy && method !== 'GET' && method !== 'HEAD' && pathname !== '/api/portal/logout') {
       return new Response(
@@ -393,7 +393,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Aun así, es la única mutación que la demo del portal permite (ver
   // lib/portal/demo.ts), así que un visitante de la demo que llega aquí para
   // completar su pago de prueba necesita que ESTA petición también corra en
-  // contexto de demo — si no, buscaría el pago que acaba de crear en la base
+  // contexto de demo - si no, buscaría el pago que acaba de crear en la base
   // real (vacía para él) y fallaría con "pago no encontrado".
   //
   // Nunca pisa una sesión real: si ya hay sesión de portal o de admin, esta
@@ -426,7 +426,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Gate del admin. La condición NO es `isPrivate`: el portal también es
   // privado, pero su auth ya se resolvió arriba y no debe pasar por Auth.js ni
-  // por la allowlist de GitHub — un cliente no tiene ni puede tener login de
+  // por la allowlist de GitHub - un cliente no tiene ni puede tener login de
   // GitHub autorizado, así que este bloque lo expulsaría.
   if (isAdmin || isPrivateDeck) {
     const session = await getSession(context.request)
@@ -472,7 +472,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
       // Nota: WebAuthn (llave de seguridad) es una puerta de entrada ALTERNATIVA
       // a GitHub (ver /login y auth.config.ts), no un segundo factor obligatorio
-      // encima de GitHub — quien ya entró por cualquiera de las dos no vuelve a
+      // encima de GitHub - quien ya entró por cualquiera de las dos no vuelve a
       // pasar por la otra.
     }
   }

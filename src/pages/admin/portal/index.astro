@@ -41,7 +41,7 @@ const tableRows = rows.map((r) => ({
       <p class="text-[13px] text-ember font-medium">Correo sin configurar</p>
       <p class="mt-0.5 text-[12px] leading-relaxed text-ink-200">
         Falta <code class="font-mono text-ink-100">RESEND_API_KEY</code>: las invitaciones no se enviarán por correo.
-        Puedes invitar igualmente y pasar el enlace a mano — se muestra al crear la invitación.
+        Puedes invitar igualmente y pasar el enlace a mano - se muestra al crear la invitación.
       </p>
     </div>
   )}
@@ -133,7 +133,7 @@ const tableRows = rows.map((r) => ({
                     </span>
                   )}
                 </td>
-                <td class="px-4 py-3 text-[13px] text-ink-200">{c.lastLoginLabel ?? '—'}</td>
+                <td class="px-4 py-3 text-[13px] text-ink-200">{c.lastLoginLabel ?? '-'}</td>
                 <td class="px-4 py-3 text-[13px]">
                   <div class="flex gap-1.5">
                     {c.openInvoices > 0 && (
@@ -146,7 +146,7 @@ const tableRows = rows.map((r) => ({
                         {c.openThreads} hilo(s)
                       </span>
                     )}
-                    {c.openInvoices === 0 && c.openThreads === 0 && <span class="text-ink-300">—</span>}
+                    {c.openInvoices === 0 && c.openThreads === 0 && <span class="text-ink-300">-</span>}
                   </div>
                 </td>
                 <td class="px-4 py-3 text-right">
@@ -186,9 +186,9 @@ const tableRows = rows.map((r) => ({
         <div>
           <label for="role" class="block text-[12px] font-medium text-ink-100 mb-1.5">Rol</label>
           <select id="role" name="role" class="input-base w-full">
-            <option value="owner" selected>Administrador — todo, incluida la gestión de su equipo</option>
-            <option value="member">Miembro — proyectos, mensajes y documentos</option>
-            <option value="billing">Facturación — solo facturas y pagos</option>
+            <option value="owner" selected>Administrador - todo, incluida la gestión de su equipo</option>
+            <option value="member">Miembro - proyectos, mensajes y documentos</option>
+            <option value="billing">Facturación - solo facturas y pagos</option>
           </select>
         </div>
       </div>

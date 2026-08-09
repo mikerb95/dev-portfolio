@@ -14,7 +14,7 @@
 
 ---
 
-## 1. Estado actual (auditoría — julio 2026)
+## 1. Estado actual (auditoría - julio 2026)
 
 **Lo que existe:**
 
@@ -69,7 +69,7 @@ recibido → borrador → enviado → en_revision → negociacion → aprobado �
 ### 2.2 Modelo de datos (nuevas tablas / columnas)
 
 ```ts
-// briefings — columnas nuevas
+// briefings - columnas nuevas
 shareToken: text('share_token').unique()        // link público
 sharedAt, approvedAt, approvedByName, approvedByEmail, clientSignature (text)
 priority: enum ['baja','media','alta']
@@ -79,15 +79,15 @@ validUntil: timestamp                            // expiración de la propuesta
 templateId: fk → briefing_templates
 deletedAt: timestamp                             // soft delete
 
-// briefing_items — reemplaza los textarea de requirements/deliverables
+// briefing_items - reemplaza los textarea de requirements/deliverables
 id, briefingId (fk cascade), kind: enum ['requerimiento','entregable','exclusion'],
 content, done (bool), sortOrder, createdAt
 
-// briefing_versions — snapshot en cada cambio material
+// briefing_versions - snapshot en cada cambio material
 id, briefingId, version (int), snapshot (JSON del briefing+items),
 changeNote, createdAt
 
-// briefing_comments — hilo Mike ↔ cliente sobre el link compartido
+// briefing_comments - hilo Mike ↔ cliente sobre el link compartido
 id, briefingId, authorType: enum ['owner','client'], authorName,
 body, createdAt
 
@@ -97,7 +97,7 @@ id, briefingId, fileName, url (Vercel Blob), size, mimeType, uploadedBy, created
 // briefing_templates
 id, name, description, defaultItems (JSON), defaultObjective/scope, createdAt
 
-// interactions — columna nueva
+// interactions - columna nueva
 briefingId: fk → briefings (set null)
 ```
 
@@ -109,7 +109,7 @@ briefingId: fk → briefings (set null)
 - Filtros: estado, cliente, prioridad, rango de fechas; búsqueda por título; orden por columna.
 - Indicadores de deadline: chip ámbar <7 días, rojo vencido.
 
-**B. Detalle** (`/admin/briefings/[id]`) — reorganizar en pestañas o secciones:
+**B. Detalle** (`/admin/briefings/[id]`) - reorganizar en pestañas o secciones:
 - **Resumen**: cards actuales + prioridad + validez + margen estimado (acordado vs horas×tarifa).
 - **Ítems**: checklist de requerimientos/entregables/exclusiones, reordenables.
 - **Actividad**: timeline (interactions con `briefingId`) + eventos automáticos (creado, enviado, visto, comentado, aprobado).
@@ -118,7 +118,7 @@ briefingId: fk → briefings (set null)
 - **Adjuntos**: subida a Vercel Blob (ya hay `upload.ts` como referencia).
 - Acciones: Compartir (genera/rota token), Marcar enviado, **Convertir a proyecto**, Duplicar, Archivar.
 
-**C. Página pública** (`/briefing/[token]`) — el diferenciador tipo "portal de cliente" de Zoho:
+**C. Página pública** (`/briefing/[token]`) - el diferenciador tipo "portal de cliente" de Zoho:
 - Propuesta legible con branding del portfolio (reutilizar estética de `/status` y slides).
 - Muestra: objetivo, alcance, ítems, presupuesto, validez, condiciones.
 - El cliente puede: **comentar**, **solicitar cambios**, o **Aprobar** (nombre + email + checkbox de aceptación = firma ligera con timestamp e IP).
@@ -151,30 +151,30 @@ briefingId: fk → briefings (set null)
 
 ## 3. Fases de implementación
 
-### Fase 1 — Fundamentos (esfuerzo: ~1 sesión)
+### Fase 1 - Fundamentos (esfuerzo: ~1 sesión)
 1. Migración Drizzle: columnas nuevas en `briefings` + `briefing_items` + `briefingId` en `interactions` (⚠️ recordar gotcha de migraciones del proyecto).
 2. Validación zod en las APIs + soft delete.
 3. Detalle: checklist de ítems (CRUD inline) migrando los textarea; script one-off que convierta texto existente en ítems (split por líneas).
 4. Timeline en el detalle usando `interactions`.
 
-### Fase 2 — Pipeline y UX del panel (~1 sesión)
-5. Nuevos estados + vista kanban con drag & drop (vanilla JS, sin librerías pesadas — consistente con el resto del admin).
+### Fase 2 - Pipeline y UX del panel (~1 sesión)
+5. Nuevos estados + vista kanban con drag & drop (vanilla JS, sin librerías pesadas - consistente con el resto del admin).
 6. Filtros, búsqueda y métricas de cabecera.
 7. Prioridad, validez, indicadores de deadline.
 8. Plantillas + botón Duplicar.
 
-### Fase 3 — Portal del cliente (~1–2 sesiones) ← mayor diferenciador
+### Fase 3 - Portal del cliente (~1–2 sesiones) ← mayor diferenciador
 9. `shareToken` + página pública `/briefing/[token]` con branding.
 10. Aprobación con firma ligera + comentarios del cliente.
 11. Eventos (visto/comentado/aprobado) → timeline + ntfy.
 12. Versionado: snapshot automático al editar campos materiales tras `enviado`.
 
-### Fase 4 — Intake y conversión (~1 sesión)
+### Fase 4 - Intake y conversión (~1 sesión)
 13. Formulario público de intake multi-paso con anti-spam.
 14. Acción "Convertir a proyecto" (proyecto + finanzas + pendientes).
 15. Adjuntos vía Vercel Blob.
 
-### Fase 5 — Automatización y analítica (~1 sesión)
+### Fase 5 - Automatización y analítica (~1 sesión)
 16. Cron diario de recordatorios (deadlines y propuestas por expirar).
 17. Funnel y métricas en admin.
 18. OG image para el link compartido (reutilizar pipeline de OG existente).

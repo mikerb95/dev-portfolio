@@ -7,7 +7,7 @@ import { clientIp } from '../../../../lib/device-info'
 // Paso 2: verifica la respuesta de la llave y, si el login resultante está en
 // la allowlist, devuelve un proof firmado de vida corta (30s) para que el
 // cliente lo entregue de inmediato al provider 'passkey' de Auth.js (signIn)
-// y así obtener una sesión real — sin pasar por GitHub.
+// y así obtener una sesión real - sin pasar por GitHub.
 export const POST: APIRoute = async ({ request, cookies }) => {
   const ip = clientIp(request.headers) ?? 'unknown'
   const { allowed } = await enforceLimit(`passkey-login-verify:${ip}`, { limit: 10, windowMs: 60_000 })

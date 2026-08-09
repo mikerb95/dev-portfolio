@@ -2,12 +2,12 @@
 
 Estado: **implementado** (6 ago 2026). Upstash y el store privado de Blob ya
 están provisionados; falta conectar el store público `deck-assets` con su
-prefijo de variable — ver §7.
+prefijo de variable - ver §7.
 
 Reemplaza por completo al sistema anterior (imágenes PNG subidas a un proyecto,
 sincronizadas por polling contra Turso). Ese sistema se retiró: sus rutas ya no
 existen y `astro.config.mjs` las redirige. Sus tablas (`presentations`,
-`presentation_slides`) siguen en la base, intactas y sin código que las lea —
+`presentation_slides`) siguen en la base, intactas y sin código que las lea -
 borrarlas sería una migración destructiva sobre datos de clientes reales.
 
 ---
@@ -45,9 +45,9 @@ handshake de upgrade (`experimental_upgradeWebSocket` es API de Next).
 
 ### 2.2 Dos roles, una sola base de Redis
 
-- **estado** (`UPSTASH_REDIS_REST_URL` / `_TOKEN`) — solo servidor. PIN, slide
+- **estado** (`UPSTASH_REDIS_REST_URL` / `_TOKEN`) - solo servidor. PIN, slide
   actual, contadores.
-- **bus** — solo pub/sub. Su token de **solo lectura** viaja al navegador de
+- **bus** - solo pub/sub. Su token de **solo lectura** viaja al navegador de
   cualquiera que entre por el PIN.
 
 El plan original pedía **dos** bases separadas, porque el JSON de la sesión
@@ -55,13 +55,13 @@ guardaba el secreto del presentador y el token que exponemos al público lo
 habría leído. Se resolvió por el otro lado, que sale gratis: el secreto **ya no
 se guarda**, se deriva del id de sesión con `HMAC-SHA256(clave, "present:v1:" +
 sessionId)` en `presenterSecretFor()` (`session.ts`). La clave sale de
-`PRESENT_SECRET` o, en su defecto, de `AUTH_SECRET` — estable entre instancias,
+`PRESENT_SECRET` o, en su defecto, de `AUTH_SECRET` - estable entre instancias,
 que es lo único que importa: una clave por instancia haría que el comando
 emitido contra una lambda lo rechazara la siguiente.
 
 Con eso, lo que queda en Redis es exactamente el `PublicSnapshot` que el
 público ya recibe al teclear el PIN, más el `deckId` y unas marcas de tiempo. Lo
-peor que puede hacer alguien con el token público es leer por qué slide vamos —
+peor que puede hacer alguien con el token público es leer por qué slide vamos -
 justo lo que está viendo proyectado. Cubierto por el test *«nada de lo que se
 guarda en Redis sirve para tomar el control»* en `tests/present-sync.test.ts`,
 que recorre cada valor del JSON almacenado y exige un 403 por cada uno.
@@ -91,12 +91,12 @@ de cierre y no un 404 mudo.
 Sin credenciales de Upstash, `store.ts` cae a un backend **en memoria**. Sirve
 para `npm run dev` y para los tests (implementa el mismo contrato, incluido
 `subscribe`, que es lo que permite probar dos clientes de verdad). En Vercel eso
-sería catastrófico —cada instancia con su copia, media sala en otro slide— así
+sería catastrófico (cada instancia con su copia, media sala en otro slide) así
 que `storeReadiness()` lo corta **al crear la sesión**, antes de proyectar nada.
 
 > **Sobre Docker:** no se añadió un Redis a `compose.yaml`. Un `redis:8` local
 > daría paridad para el almacén, pero no para lo único que de verdad hay que
-> probar en esta feature —el `/subscribe` por SSE que consume el navegador— que
+> probar en esta feature (el `/subscribe` por SSE que consume el navegador) que
 > es una extensión REST de Upstash y no del protocolo Redis. Un contenedor que
 > reproduce la mitad fácil y no la difícil da una falsa sensación de paridad. En
 > local se usa el backend en memoria, o se apunta a una base de Upstash de
@@ -116,7 +116,7 @@ salón.
 estáticas sobre las dinámicas, así que ninguna página real queda tapada; el
 orden importa porque este archivo captura cualquier `/algo` de un segmento que
 no exista. Por eso el primer filtro es la **forma** del PIN: lo que no la cumple
-devuelve el 404 normal del sitio sin llegar a tocar Redis — si no, cada 404 del
+devuelve el 404 normal del sitio sin llegar a tocar Redis - si no, cada 404 del
 sitio (bots incluidos) sería una lectura del almacén de sesiones.
 
 La generación reintenta contra `RESERVED_ROOT_SEGMENTS` y contra los PIN vivos.
@@ -143,7 +143,7 @@ El archivo va a Vercel Blob en modo privado y se sirve por **`/decks/:id.html`**
 mismo origen. Es obligatorio: el contrato de integración
 (`iframe.contentDocument.querySelector('deck-stage')`) no funciona contra un
 origen de blob. Esa ruta lleva `frame-ancestors 'self'` explícito y el
-middleware la deja pasar sin pisarle la CSP — heredar el `frame-ancestors 'none'`
+middleware la deja pasar sin pisarle la CSP - heredar el `frame-ancestors 'none'`
 de las rutas privadas dejaría el iframe en blanco.
 
 ## 5.b Dos stores de Blob, y por qué no puede ser uno
@@ -159,12 +159,12 @@ dos clases de contenido incompatibles:
 
 Con un solo store había que elegir entre dos cosas inaceptables: publicar los
 volcados de la base de datos, o hacer pasar 30 MB de imágenes por una función en
-cada visita — justo el gasto de compute que toda esta feature evita. Separarlos
+cada visita - justo el gasto de compute que toda esta feature evita. Separarlos
 además abarata la parte que sí se factura: la transferencia de blobs públicos es
 3× más eficiente que servir el mismo archivo a través de una función.
 
 `ingestFiles()` corta con un 503 explícito si falta el token del store público,
-en vez de dejar que los assets caigan en el privado — ahí se subirían sin error
+en vez de dejar que los assets caigan en el privado - ahí se subirían sin error
 y el deck se proyectaría sin una sola imagen.
 
 **Descubierto por el camino:** no había ningún store conectado al proyecto, así
@@ -182,7 +182,7 @@ documentos del portal. Crear el store privado lo arregló de paso.
   ya está tras el gate y se sirve `no-store`.
 - **La vista pública no tiene endpoint que emitir.** Ni conoce el secreto ni
   pasaría el gate.
-- **Rate limit**: `/{pin}` a 90/min por IP — más holgado que `/c/[code]` porque
+- **Rate limit**: `/{pin}` a 90/min por IP - más holgado que `/c/[code]` porque
   un salón entero comparte la IP del wifi y treinta escaneos simultáneos son una
   ráfaga legítima. El snapshot (`/api/present/*`) tiene límite propio de
   2.000/min y queda **fuera** del paraguas global por lo mismo: el fallo aquí no
@@ -190,7 +190,7 @@ documentos del portal. Crear el store privado lo arregló de paso.
 - **`no-store`** en las tres vistas y en el snapshot. El middleware cachea 300 s
   en el edge todo GET público que no diga lo contrario, lo que congelaría el
   slide para todo el mundo.
-- **i18n**: `/present`, `/remote` y `/decks` son prefijos privados —`/en/remote/…`
+- **i18n**: `/present`, `/remote` y `/decks` son prefijos privados -`/en/remote/…`
   devuelve 404 y no una copia del control sin gate. `/{pin}` bajo `/en` redirige
   al español.
 - **Feedback anónimo de verdad**: no se guarda IP, ni hash de IP, ni id de

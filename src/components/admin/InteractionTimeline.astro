@@ -75,7 +75,7 @@ const dueTone: Record<string, string> = {
             <div class="mt-2.5 flex items-center justify-between gap-3 rounded-lg bg-white/[.03] border border-white/8 px-3 py-2">
               <div class="min-w-0 text-[12px]">
                 <span class="text-ink-300 font-mono text-[10px] uppercase tracking-wider mr-2">Próx.</span>
-                <span class="text-ink-100">{r.nextAction ?? '—'}</span>
+                <span class="text-ink-100">{r.nextAction ?? '-'}</span>
                 {r.dueLabel && <span class={`ml-2 font-mono text-[11px] ${r.done ? 'text-ink-300' : (dueTone[r.dueState ?? 'ok'])}`}>{r.dueState === 'overdue' && !r.done ? '⚠ ' : ''}{r.dueLabel}</span>}
               </div>
               <button data-done-int={r.id} data-done={r.done ? '1' : '0'} class={`done-int shrink-0 text-[10px] font-mono px-2 py-1 rounded-md border transition-colors ${r.done ? 'border-lime/30 text-lime bg-lime/10' : 'border-white/15 text-ink-200 hover:bg-white/5'}`}>

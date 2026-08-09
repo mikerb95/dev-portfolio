@@ -263,7 +263,7 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
                   <td class="py-2 text-ink-200">{b.reason}</td>
                   <td class="py-2"><span class={`font-mono text-[11px] ${b.source === 'auto' ? 'text-cyan' : 'text-ink-300'}`}>{b.source}</span></td>
                   <td class="py-2 font-mono text-ink-300">{b.hits}</td>
-                  <td class="py-2 font-mono text-ink-300">{b.expiresAt ? fmtTtl(Math.round((b.expiresAt.getTime() - now) / 1000)) : '—'}</td>
+                  <td class="py-2 font-mono text-ink-300">{b.expiresAt ? fmtTtl(Math.round((b.expiresAt.getTime() - now) / 1000)) : '-'}</td>
                   <td class="py-2 text-right"><button class="unblock-btn h-7 px-3 text-[11px] rounded-full bg-white/[.04] border border-white/10 text-ink-100 hover:bg-white/[.08]" data-ip={b.ip}>Desbloquear</button></td>
                 </tr>
               ))}
@@ -313,8 +313,8 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
                   <td class="py-2"><span class={`inline-block w-2 h-2 rounded-full ${SEV_DOT[e.severity] ?? 'bg-ink-400'}`} title={e.severity}></span></td>
                   <td class="py-2 text-ink-200">{catLabel(e.category)}</td>
                   <td class="py-2 font-mono text-ink-100 max-w-[220px] truncate">{e.path}</td>
-                  <td class="py-2 font-mono text-ink-300">{e.ip ?? '—'}</td>
-                  <td class="py-2 font-mono text-ink-300">{e.country ?? '—'}</td>
+                  <td class="py-2 font-mono text-ink-300">{e.ip ?? '-'}</td>
+                  <td class="py-2 font-mono text-ink-300">{e.country ?? '-'}</td>
                   <td class="py-2 font-mono text-ink-400">{e.action}{e.hits > 1 ? ` ×${e.hits}` : ''}</td>
                 </tr>
               ))}
@@ -337,7 +337,7 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
     }
     document.querySelectorAll<HTMLElement>('.rel-time').forEach((el) => {
       const ts = Number(el.dataset.ts)
-      el.textContent = ts ? rel(ts) : '—'
+      el.textContent = ts ? rel(ts) : '-'
     })
 
     async function post(payload: Record<string, unknown>) {
@@ -415,7 +415,7 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
           if (data.blocked != null) parts.push(`${data.blocked} IP(s) bloqueada(s)`)
           if (data.overflow) parts.push(`${data.overflow} sin bloquear por tope`)
           parts.push(`${data.anomalies ?? 0} anomalía(s) nueva(s)`)
-          if (rollupOut) rollupOut.textContent = `✓ ${parts.join(' · ')} — recargando…`
+          if (rollupOut) rollupOut.textContent = `✓ ${parts.join(' · ')} - recargando…`
           setTimeout(() => location.reload(), 1200)
         } else {
           if (rollupOut) rollupOut.textContent = `✗ ${data.error ?? res.status}`

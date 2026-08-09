@@ -1,12 +1,12 @@
 // WebAuthn (passkeys / llaves FIDO2 como YubiKey) como método de login
-// ALTERNATIVO al panel admin — no un segundo factor obligatorio encima de
+// ALTERNATIVO al panel admin - no un segundo factor obligatorio encima de
 // GitHub. Se apoya en @simplewebauthn/server (estándar, sin costo).
 //
 // Modelo: dos puertas de entrada independientes, cualquiera basta por sí sola.
 //  - GitHub OAuth (allowlist en auth.ts): como siempre.
 //  - Llave de seguridad (passwordless, discoverable credential): la llave
 //    identifica al login por sí misma, sin pasar por GitHub. auth.config.ts
-//    la conecta como provider 'passkey' (Credentials) — la ceremonia FIDO2
+//    la conecta como provider 'passkey' (Credentials) - la ceremonia FIDO2
 //    corre aquí, y el resultado se entrega a Auth.js como un proof firmado
 //    de vida corta para que emita una sesión real, igual que el OAuth.
 //
@@ -15,7 +15,7 @@
 //    que hereda el gate de sesión+allowlist del middleware (hay que estar
 //    dentro del panel, vía GitHub, para dar de alta la primera llave).
 //  - Autenticación (login passwordless): vive bajo /api/auth/webauthn/*,
-//    fuera de /admin, porque se ejecuta SIN sesión previa — es la puerta de
+//    fuera de /admin, porque se ejecuta SIN sesión previa - es la puerta de
 //    entrada alternativa, no una verificación posterior.
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
@@ -83,7 +83,7 @@ function takeChallenge(cookies: AstroCookies, kind: 'reg' | 'auth', login: strin
 
 // ── Proof firmado para el provider 'passkey' de Auth.js ─────────────────
 // finishPrimaryAuthentication() (más abajo) confirma la posesión de la llave
-// pero no crea sesión por sí sola — esa ceremonia FIDO2 vive fuera de Auth.js.
+// pero no crea sesión por sí sola - esa ceremonia FIDO2 vive fuera de Auth.js.
 // Empaquetamos el resultado en un proof firmado (HMAC, no cifrado: no lleva
 // secretos, solo "este login verificó su llave antes de expiresAt") y de vida
 // muy corta (30s) que el Credentials provider valida de forma síncrona en su
@@ -236,7 +236,7 @@ export async function finishRegistration(
 // ── Autenticación (login passwordless: probar posesión de la llave) ──────
 // A diferencia del registro, aquí NO hay sesión de GitHub previa: no se
 // conoce el login de antemano. Se apoya en llaves discoverable (resident
-// key) — el navegador ofrece las credenciales guardadas para este rpID y el
+// key) - el navegador ofrece las credenciales guardadas para este rpID y el
 // usuario elige/toca la suya; el login se descubre a partir del id devuelto.
 
 export async function buildPrimaryAuthenticationOptions(cookies: AstroCookies, requestUrl: string) {

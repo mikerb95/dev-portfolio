@@ -7,7 +7,7 @@ import { ACTIVIDADES } from '../../data/actividades'
 import { sizeOf, type PlacedActivityNode, type UmlActivityNodeType } from '../../lib/uml-activity'
 
 // La leyenda no dibuja iconos aparte: monta el MISMO componente de figura que
-// el diagrama. Si un símbolo cambia, cambia en los dos sitios — una leyenda que
+// el diagrama. Si un símbolo cambia, cambia en los dos sitios - una leyenda que
 // se desincroniza del dibujo es peor que no tenerla.
 const LEYENDA: { type: UmlActivityNodeType; label: string; desc: string }[] = [
   { type: 'initial', label: 'Nodo inicial', desc: 'Círculo relleno. Donde arranca la actividad; no admite transiciones entrantes.' },
@@ -65,8 +65,8 @@ const muestras = LEYENDA.map((item) => ({ ...item, ...muestra(item.type) }))
       <p class="text-[14.5px] text-ink-200 leading-relaxed">
         Tres flujos de control internos en notación de actividades UML 2.5.1. No repiten lo que ya
         está en <a href="/docs/diagrama-bpmn" class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40">los diagramas BPMN</a>:
-        aquellos documentan procesos de negocio —quién habla con quién para cobrar, para dar acceso,
-        para responder a un incidente—; estos documentan <em>algoritmos</em>, que es donde esta
+        aquellos documentan procesos de negocio (quién habla con quién para cobrar, para dar acceso,
+        para responder a un incidente); estos documentan <em>algoritmos</em>, que es donde esta
         notación aporta lo que BPMN no tiene tan a mano: la rama concurrente que nunca se vuelve a
         unir y el bucle de reintento.
       </p>
@@ -76,14 +76,14 @@ const muestras = LEYENDA.map((item) => ({ ...item, ...muestra(item.type) }))
         ruteo y el corte de etiquetas los calcula
         <code class="font-mono text-ink-200">src/lib/uml-activity.ts</code>. Los tests no solo
         verifican el dibujo (nada encimado, ninguna transición atravesando una figura ajena):
-        también verifican la <strong class="font-medium text-ink-100">notación</strong> — que toda
+        también verifican la <strong class="font-medium text-ink-100">notación</strong> - que toda
         decisión tenga al menos dos salidas y todas con guarda, que una unión tenga una sola salida,
         que ningún nodo final tenga transiciones salientes y que no queden nodos inalcanzables.
       </p>
       <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
         No se usó Mermaid a propósito: su <code class="font-mono text-ink-200">flowchart</code> no es
-        notación de actividad —no tiene barra de bifurcación, ni particiones, ni distingue el final
-        de flujo del final de actividad—, y esas tres cosas son justo lo que estos diagramas afirman.
+        notación de actividad (no tiene barra de bifurcación, ni particiones, ni distingue el final
+        de flujo del final de actividad), y esas tres cosas son justo lo que estos diagramas afirman.
       </p>
     </div>
 

@@ -1,6 +1,6 @@
 // Seed the `projects` table from the GitHub API.
 //
-// Reads all config from the environment — never hardcode secrets here.
+// Reads all config from the environment - never hardcode secrets here.
 // Run with Node's native env loading (Node 20.6+):
 //
 //   node --env-file=.env scripts/seed-projects.mjs

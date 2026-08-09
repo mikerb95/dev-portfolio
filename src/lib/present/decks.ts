@@ -11,7 +11,7 @@
 // base. El control remoto no carga el iframe (es un celular, y cargar el deck
 // entero para leer un atributo sería absurdo), así que necesita las notas
 // servidas desde la base. La base se reescribe entera cada vez que se
-// reemplaza el archivo — el HTML es la fuente de verdad, esto es un índice.
+// reemplaza el archivo - el HTML es la fuente de verdad, esto es un índice.
 
 import { desc, eq } from 'drizzle-orm'
 import { serverEnv } from '../env'
@@ -55,7 +55,7 @@ const isHtmlName = (name: string) => /\.html?$/i.test(name ?? '')
  *
  * No se elige por nombre: el export lo llama «Data Centers Bogota.dc.html» y
  * cualquier convención que inventemos aquí se rompería con el siguiente export.
- * Se elige por CONTENIDO — el HTML que declara un deck-stage con slides. De
+ * Se elige por CONTENIDO - el HTML que declara un deck-stage con slides. De
  * paso, eso valida el archivo antes de subir un solo byte.
  */
 async function findEntry(files: UploadedFile[]) {
@@ -128,7 +128,7 @@ async function ingestFiles(files: UploadedFile[], title: string) {
   //
   // Store aparte, con su propio token: Vercel fija el modo de acceso POR STORE
   // y de forma irreversible, y en el store por defecto viven los backups de la
-  // base y los documentos de clientes — que son privados y deben seguir
+  // base y los documentos de clientes - que son privados y deben seguir
   // siéndolo. Mezclarlos obligaría a elegir entre publicar los backups o
   // proxear 30 MB de imágenes por una función en cada visita.
   const assetsToken = serverEnv('DECK_ASSETS_BLOB_READ_WRITE_TOKEN')

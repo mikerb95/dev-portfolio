@@ -2,7 +2,7 @@
 // formatos según su antigüedad: el legacy `application/csp-report` (objeto
 // envuelto en "csp-report") y el nuevo Reporting API `application/reports+json`
 // (array de reportes con "type":"csp-violation"). Ver
-// docs/plan-security-observability.md — la CSP ya está en modo enforce; esto
+// docs/plan-security-observability.md - la CSP ya está en modo enforce; esto
 // añade observabilidad continua sin cambiar el bloqueo del navegador.
 
 export type ParsedCspReport = {

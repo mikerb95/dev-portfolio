@@ -83,7 +83,7 @@ const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
 
 // Slide "El pipeline, paso a paso": el mismo escenario "Todo verde" que
 // /docs/pipeline-en-vivo reproduce solo, pero aquí cada línea es un
-// fragmento de Reveal — avanza con la misma tecla/clic que el resto del
+// fragmento de Reveal - avanza con la misma tecla/clic que el resto del
 // deck, nada de temporizadores.
 const ESCENARIO_VERDE = ESCENARIOS.find((e) => e.id === 'verde')!
 const NODO_DE_ETAPA: Record<string, string> = {
@@ -95,23 +95,23 @@ const NODO_DE_ETAPA: Record<string, string> = {
   operacion: 'operacion',
 }
 const NODOS_SIM = [
-  { id: 'push', nombre: 'GitHub — push a main' },
-  { id: 'ci', nombre: 'GitHub Actions — CI' },
-  { id: 'deploy', nombre: 'Vercel — build + deploy' },
-  { id: 'verify', nombre: '/api/health — verificación' },
-  { id: 'turso', nombre: 'Turso — libSQL prod' },
+  { id: 'push', nombre: 'GitHub - push a main' },
+  { id: 'ci', nombre: 'GitHub Actions - CI' },
+  { id: 'deploy', nombre: 'Vercel - build + deploy' },
+  { id: 'verify', nombre: '/api/health - verificación' },
+  { id: 'turso', nombre: 'Turso - libSQL prod' },
   { id: 'operacion', nombre: 'Monitoreo continuo' },
 ]
 ---
 
-<SlidesLayout title="Documentación de ingeniería — CodeByMike" light>
+<SlidesLayout title="Documentación de ingeniería - CodeByMike" light>
   {/* ── Portada ─────────────────────────────────────────────── */}
   <section class="deck-cover">
     <div class="cover-halo" aria-hidden="true"></div>
     <div class="eyebrow">Documentación de ingeniería</div>
     <h1 class="brand-mark">Code<span class="brand-by">By</span>Mike</h1>
     <p class="lede">
-      Requerimientos, casos de uso, diagramas UML y el tablero del propio proyecto —
+      Requerimientos, casos de uso, diagramas UML y el tablero del propio proyecto -
       un sistema en producción documentado con rigor formal.
     </p>
     <div class="cover-meta">
@@ -125,8 +125,8 @@ const NODOS_SIM = [
   <section>
     <h2>Propósito</h2>
     <p class="body">
-      Dejar <strong>trazabilidad formal del ciclo de vida</strong> — del requerimiento a la
-      historia de usuario y su estado en el kanban — usando formatos reconocidos de
+      Dejar <strong>trazabilidad formal del ciclo de vida</strong> - del requerimiento a la
+      historia de usuario y su estado en el kanban - usando formatos reconocidos de
       ingeniería de software.
     </p>
     <div class="two-up">
@@ -177,7 +177,7 @@ const NODOS_SIM = [
       <div class="panel panel-out">
         <div class="panel-title">Fuera (por ahora)</div>
         <ul class="tight">
-          <li>Multiusuario y roles — el panel es de un solo administrador</li>
+          <li>Multiusuario y roles - el panel es de un solo administrador</li>
           <li>Pasarela de pagos en producción real</li>
           <li>SAST y mutation testing automatizados</li>
         </ul>
@@ -252,7 +252,7 @@ const NODOS_SIM = [
       <h2>Requerimientos no funcionales</h2>
       <p class="body">
         {rnfTotal} requerimientos por categoría ISO/IEC 25010, cada uno con una
-        <strong> métrica verificable</strong> — no adjetivos.
+        <strong> métrica verificable</strong> - no adjetivos.
       </p>
       <div class="grid-3">
         {REQUISITOS_NO_FUNCIONALES.map((m) => (
@@ -336,7 +336,7 @@ const NODOS_SIM = [
     <h2>Demo animada</h2>
     <p class="body">
       Clip generado offline con HyperFrames a partir de HTML/CSS versionado en
-      el repo — no corre en el runtime de Vercel, solo el `.mp4` resultante se
+      el repo - no corre en el runtime de Vercel, solo el `.mp4` resultante se
       sube como asset estático.
     </p>
     <div class="video-frame">
@@ -348,14 +348,14 @@ const NODOS_SIM = [
         <source src="/videos/hyperframes-demo.mp4" type="video/mp4" />
       </video>
     </div>
-    <p class="hint">↑ placeholder — pendiente de render con HyperFrames</p>
+    <p class="hint">↑ placeholder - pendiente de render con HyperFrames</p>
   </section>
 
   {/* ── Iteraciones ─────────────────────────────────────────── */}
   <section>
     <h2>Iteraciones</h2>
     <p class="body">
-      {ITERACIONES.length} fases derivadas del historial real de git — {commitsTotal} commits,
+      {ITERACIONES.length} fases derivadas del historial real de git - {commitsTotal} commits,
       {' '}{historias.length} historias con su DoD.
     </p>
     <div class="timeline">
@@ -451,7 +451,7 @@ const NODOS_SIM = [
     </div>
     <p class="foot">
       Cobertura dice «esta línea se ejecutó». <strong>Mutation testing</strong> dice «si la rompo,
-      ¿algún test se entera?». Son preguntas distintas — detalle en /docs/testing.
+      ¿algún test se entera?». Son preguntas distintas - detalle en /docs/testing.
     </p>
   </section>
 
@@ -607,7 +607,7 @@ const NODOS_SIM = [
     gap: 0.4em;
   }
 
-  /* Tarjeta base — equivalente claro de las cards del sitio */
+  /* Tarjeta base - equivalente claro de las cards del sitio */
   .reveal-light .panel {
     border: 1px solid var(--slide-line);
     background: var(--slide-surface);
@@ -837,7 +837,7 @@ const NODOS_SIM = [
   /* Pipeline paso a paso: log tipo terminal + mapa de componentes que la
      sección de arriba enciende fragmento a fragmento (ver script al final
      del archivo). Terminal oscura a propósito, como contraste dentro del
-     deck claro — igual que /docs/pipeline-en-vivo. */
+     deck claro - igual que /docs/pipeline-en-vivo. */
   .reveal-light .sim-grid {
     display: grid;
     grid-template-columns: 1.3fr 1fr;

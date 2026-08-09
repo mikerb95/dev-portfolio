@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
 // Sesión de demo del panel: deja explorar /admin con datos ficticios y SIN
-// capacidad de escritura. No es autenticación — es un pase anónimo firmado para
+// capacidad de escritura. No es autenticación - es un pase anónimo firmado para
 // que nadie pueda fabricarse uno con TTL arbitrario ni reutilizarlo tras vencer.
 //
 // La garantía real de aislamiento NO vive aquí sino en dos capas independientes:

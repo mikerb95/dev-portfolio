@@ -1,6 +1,6 @@
 ---
 // ─────────────────────────────────────────────────────────────────────────────
-// IteracionesBoard — Tablero XP del proyecto DobleYo Café, re-skineado al tema
+// IteracionesBoard - Tablero XP del proyecto DobleYo Café, re-skineado al tema
 // del portfolio (oscuro · glass · cyan/lime/violet).
 //
 // Datos: src/data/iteraciones.ts (snapshot del historial real de GitHub +
@@ -40,7 +40,7 @@ const {
   iteraciones = DY_ITERACIONES,
   commitsPorMes = DY_COMMITS_POR_MES,
   repo = DY_REPO,
-  subtitle = 'Tablero XP reconstruido del historial real de GitHub y el CHANGELOG — cada historia con su Definition of Done, anclada a sus commits.',
+  subtitle = 'Tablero XP reconstruido del historial real de GitHub y el CHANGELOG - cada historia con su Definition of Done, anclada a sus commits.',
   showBiblio = true,
 } = Astro.props
 
@@ -136,7 +136,7 @@ const iterData = {
   <div class="card xp-biblio" style="margin-top:24px">
     <div class="card-header">
       <div>
-        <h3 class="card-title">Marco metodológico — XP &amp; Programación en Pareja con IA</h3>
+        <h3 class="card-title">Marco metodológico - XP &amp; Programación en Pareja con IA</h3>
         <p class="card-subtitle">Referencias académicas que sustentan la adaptación de XP con un asistente de IA como par.</p>
       </div>
     </div>
@@ -405,7 +405,7 @@ const iterData = {
 
 <script is:inline>
 (() => {
-  // Tablero XP — datos inyectados desde src/data/iteraciones.ts
+  // Tablero XP - datos inyectados desde src/data/iteraciones.ts
   const dataEl = document.getElementById('iterData');
   if (!dataEl) return;
   const DATA = JSON.parse(dataEl.textContent);
@@ -510,7 +510,7 @@ const iterData = {
       { label: 'Historias',  value: h.length,                 sub: `${aceptadas} aceptadas`, tone: '' },
       { label: 'DoD',        value: `${d.pass}/${d.total}`,    sub: `${d.pend} pendientes`,   tone: 'info' },
       { label: 'Completado', value: `${d.pct}%`,               sub: `${enCurso} en curso`,    tone: 'success' },
-      { label: 'Commits',    value: iterActual.commits != null ? iterActual.commits : '—', sub: iterActual.rango, tone: 'warning' },
+      { label: 'Commits',    value: iterActual.commits != null ? iterActual.commits : '-', sub: iterActual.rango, tone: 'warning' },
     ].forEach(k => {
       const tile = document.createElement('div');
       tile.className = `kpi-tile${k.tone ? ' ' + k.tone : ''}`;
@@ -640,7 +640,7 @@ const iterData = {
 
     const pair = document.createElement('span');
     pair.className = 'iter-card__pair';
-    pair.title = `${par.nombre} — ${par.rol}`;
+    pair.title = `${par.nombre} - ${par.rol}`;
     const avatar = document.createElement('span');
     avatar.className = 'iter-avatar';
     avatar.style.background = par.color;

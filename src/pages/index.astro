@@ -9,7 +9,7 @@ import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
-// archivo — así funciona igual la importen desde donde la importen.
+// archivo - así funciona igual la importen desde donde la importen.
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale).home
 const L = (path: string) => localizedHref(path, locale)
@@ -55,22 +55,22 @@ const visibleProjects = await db
   >
     <div class="text-ink-300 tracking-[.22em] uppercase mb-0.5">{t.hud.title}</div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="hero">
-      <span>{t.hud.boot}</span><span class="hud-status">—</span>
+      <span>{t.hud.boot}</span><span class="hud-status">-</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="bento">
-      <span>{t.hud.sistema}</span><span class="hud-status">—</span>
+      <span>{t.hud.sistema}</span><span class="hud-status">-</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="proyectos">
-      <span>{t.hud.build}</span><span class="hud-status">—</span>
+      <span>{t.hud.build}</span><span class="hud-status">-</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="proceso">
-      <span>{t.hud.pipeline}</span><span class="hud-status">—</span>
+      <span>{t.hud.pipeline}</span><span class="hud-status">-</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="expertise">
-      <span>{t.hud.stack}</span><span class="hud-status">—</span>
+      <span>{t.hud.stack}</span><span class="hud-status">-</span>
     </div>
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="laboratorio">
-      <span>{t.hud.lab}</span><span class="hud-status">—</span>
+      <span>{t.hud.lab}</span><span class="hud-status">-</span>
     </div>
   </div>
 
@@ -126,7 +126,7 @@ const visibleProjects = await db
       <h1 class="font-sans font-medium tracking-[-.035em] leading-[.94] text-[clamp(44px,8vw,120px)]">
         {/* Los espacios entre spans son intencionales: al ser `block` no se
             ven, pero sin ellos el texto plano que extrae un buscador (o un
-            lector de pantalla) queda pegado — "Ingeniería desoftwarecon". */}
+            lector de pantalla) queda pegado - "Ingeniería desoftwarecon". */}
         <span class="hero-line block text-mask">{t.hero.line1}</span>{' '}
         {/* La cursiva serif tiene altura-x mucho menor que la sans a igual
             font-size: sin subirla ~12% y cerrar su interlineado, la línea
@@ -200,7 +200,7 @@ const visibleProjects = await db
 
       <div class="grid grid-cols-12 grid-rows-[180px_180px_180px] gap-4 mt-6">
 
-        <!-- About — span 2 rows -->
+        <!-- About - span 2 rows -->
         <div class="col-span-12 md:col-span-7 row-span-2 rounded-2xl glass lift overflow-hidden p-7 flex flex-col justify-between relative">
           <div class="absolute -right-12 -bottom-12 w-72 h-72 rounded-full bg-cyan/10 blur-3xl pointer-events-none"></div>
           <div>
@@ -228,7 +228,7 @@ const visibleProjects = await db
           </div>
         </div>
 
-        <!-- Now — única card viva del bento. El SSR pinta el texto de respaldo
+        <!-- Now - única card viva del bento. El SSR pinta el texto de respaldo
              y el script la reemplaza por hechos reales (deploy, uptime, SIEM)
              que rotan. Ver src/pages/api/now.ts. -->
         <div
@@ -499,8 +499,8 @@ const visibleProjects = await db
     // el resto de páginas públicas (ver src/lib/motion-reveal.ts).
     initPageMotion()
 
-    // HUD de diagnóstico — un ScrollTrigger por sección que va marcando
-    // el estado: pendiente (—) → activo (● parpadeando) → ok (✓ lima).
+    // HUD de diagnóstico - un ScrollTrigger por sección que va marcando
+    // el estado: pendiente (-) → activo (● parpadeando) → ok (✓ lima).
     const hudLines = Array.from(document.querySelectorAll<HTMLElement>('.hud-line'))
     const sectionKeys = hudLines.map((l) => l.dataset.key)
     const sections = sectionKeys
@@ -519,7 +519,7 @@ const visibleProjects = await db
           status.textContent = '●'
         } else {
           line.dataset.state = 'pending'
-          status.textContent = '—'
+          status.textContent = '-'
         }
       })
     }
@@ -543,7 +543,7 @@ const visibleProjects = await db
   // rotando, más el presupuesto de error del SLO en la barra.
   //
   // Va en su propio script, fuera del bloque de prefers-reduced-motion: esto
-  // es contenido, no decoración — quien pide menos animación igual merece el
+  // es contenido, no decoración - quien pide menos animación igual merece el
   // dato fresco, solo sin el cross-fade (lo apaga `motion-reduce:` en CSS).
   import { formatNumber, formatTimeAgo, interpolate } from '../i18n/format'
   import type { Locale } from '../i18n/config'
@@ -589,7 +589,7 @@ const visibleProjects = await db
         return interpolate(metaTpl.uptime ?? '', {
           name: item.name,
           status: item.statusCode ?? (item.ok ? 'ok' : 'error'),
-          ms: item.responseMs ?? '—',
+          ms: item.responseMs ?? '-',
         })
       }
       return interpolate(metaTpl.siem ?? '', { events: formatNumber(item.events, locale) })

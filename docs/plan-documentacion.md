@@ -1,4 +1,4 @@
-# Plan — Módulo de Documentación del proyecto (`/admin/docs`)
+# Plan - Módulo de Documentación del proyecto (`/admin/docs`)
 
 > Estado: **Fase 1 implementada** (jul 2026), más las entregas posteriores de
 > §5.b (21–24 jul) y §5.c (30 jul). El módulo vive hoy en `/docs` (público), no
@@ -77,22 +77,22 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 
 ## 5.b Entregado después de la Fase 1 (jul 21-24 2026)
 
-- [x] `/docs/historias-de-usuario` — catálogo consolidado desde las historias del
+- [x] `/docs/historias-de-usuario` - catálogo consolidado desde las historias del
       kanban, agrupado por rol, sin duplicar datos.
-- [x] `/docs/diagrama-paquetes` — el diagrama UML que faltaba, con su versión
+- [x] `/docs/diagrama-paquetes` - el diagrama UML que faltaba, con su versión
       ilustrada.
-- [x] `/docs/testing` — guía completa del testing del proyecto (plan propio en
+- [x] `/docs/testing` - guía completa del testing del proyecto (plan propio en
       `plan-testing-docs.md`), con datos tipados en `src/data/testing.ts`.
-- [x] `/docs/verificacion-validacion` — reclasificación de esos mismos niveles
+- [x] `/docs/verificacion-validacion` - reclasificación de esos mismos niveles
       bajo el marco de V&V, con niveles de integridad y procesos del ciclo de
       vida; `src/data/vyv.ts` los referencia por id en vez de duplicarlos, y
       `tests/vyv.test.ts` verifica esa integridad referencial.
-- [x] `/docs/usability-testing` — metodología de validación con usuarios reales
+- [x] `/docs/usability-testing` - metodología de validación con usuarios reales
       sobre el flujo de descarga del CV.
-- [x] `/docs/pipeline-en-vivo` — estado real de la última corrida del pipeline,
+- [x] `/docs/pipeline-en-vivo` - estado real de la última corrida del pipeline,
       etapa por etapa, en vez de un diagrama estático.
-- [x] `/docs/presentacion` — deck de sustentación.
-- [x] `/docs/diagrama-bpmn` — los 4 procesos de negocio en notación BPMN real
+- [x] `/docs/presentacion` - deck de sustentación.
+- [x] `/docs/diagrama-bpmn` - los 4 procesos de negocio en notación BPMN real
       (carriles por participante, compuertas con marcador, eventos de inicio /
       intermedio / fin, flujos de secuencia y de mensaje). **No usa Mermaid**:
       Mermaid no tiene tipo de diagrama BPMN y un flowchart disfrazado no dibuja
@@ -114,7 +114,7 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
       Ampliado después con lo que pidió la sustentación: la explicación de los
       **5 tipos de compuerta** (cada símbolo dibujado por el mismo componente
       que el diagrama, con qué hace al dividir y al juntar caminos), y la
-      **especificidad temporal** — temporizadores de borde donde el código
+      **especificidad temporal** - temporizadores de borde donde el código
       realmente corta por tiempo (12 s del sondeo HTTP, 72 h del token de
       invitación), anotaciones de duración sobre las figuras, y una tabla de
       tiempos por proceso donde cada valor cita la constante que lo fija. El
@@ -122,11 +122,11 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
       configura en cron-job.org) se declara explícitamente como externo en vez
       de inventarle un origen.
 
-- [x] `/docs/bpmn-imprimible` — los mismos cuatro procesos **transpuestos** y
+- [x] `/docs/bpmn-imprimible` - los mismos cuatro procesos **transpuestos** y
       sobre papel, para el documento de arquitectura, que es vertical. El motor
       de layout aprendió una orientación (`layout(proceso, 'vertical')`): los
       carriles pasan a ser columnas y el proceso baja. No es el diagrama girado
-      —eso habría dejado el texto de lado—, sino otro layout sobre el mismo
+      (eso habría dejado el texto de lado), sino otro layout sobre el mismo
       modelo: la tarea se estrecha y se alarga porque al bajar el eje caro es el
       ancho, y la etiqueta de eventos y compuertas se va al costado porque
       debajo la parte en dos la flecha de salida. El ruteo sí se reutiliza tal
@@ -138,7 +138,7 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
       reservar el hueco lateral de la etiqueta en **todas** las filas ensanchaba
       el diagrama de monitoreo en 320 px que nadie ocupaba (una fila de puras
       tareas lleva su texto dentro de la caja), y la comprobación de "etiqueta
-      de rama sobre una figura" eximía al nodo de origen — con lo que un bucle
+      de rama sobre una figura" eximía al nodo de origen - con lo que un bucle
       de reintento escribía su condición encima de su propia tarea sin que nadie
       protestara. Las etiquetas de rama ahora se colocan resolviendo choques:
       avanzan sobre su propio trazo hasta encontrar hueco.
@@ -151,7 +151,7 @@ Una sección **Documentación** en la sidebar del admin con estas subpáginas:
 
 El menú (`DocsNav.astro`) pasó de 10 a 18 pestañas.
 
-## 5.c Entregado después (30 jul 2026) — las notaciones que Mermaid no dibuja
+## 5.c Entregado después (30 jul 2026) - las notaciones que Mermaid no dibuja
 
 Cuatro diagramas UML más, con el mismo enfoque que el BPMN: modelo tipado en
 `src/data/`, motor de layout propio en `src/lib/`, SVG generado en el servidor y
@@ -180,7 +180,7 @@ geometría verificada por tests. Registrado como **RF-707** en
 - **Reutilización, no copia**: los tres motores nuevos toman del motor BPMN la
   geometría genérica (corte de texto, polilíneas redondeadas, punto sobre la
   traza, detección de cruces) y aportan solo lo propio de cada notación.
-- **Los tests verifican notación, no solo geometría** — que es lo que un repaso
+- **Los tests verifican notación, no solo geometría** - que es lo que un repaso
   visual no atrapa: toda decisión con dos salidas o más y todas con guarda,
   toda unión con una sola salida, ningún nodo final con transiciones salientes,
   ningún nodo inalcanzable, numeración decimal sin repeticiones ni niveles
@@ -195,12 +195,12 @@ El menú pasó de 18 a 20 pestañas (`Comunicación`, `Actividades`, `Despliegue
 
 ## 6. Fases futuras
 
-- **Fase 2 — Vivo**: derivar el estado de RF desde los tests (cada RF apunta a
+- **Fase 2 - Vivo**: derivar el estado de RF desde los tests (cada RF apunta a
   su spec en `tests/`); commits por iteración vía API de GitHub en runtime.
-- **Fase 3 — Trazabilidad completa**: matriz RF ↔ CU ↔ historias ↔ tests en el hub.
-- **Fase 4 — Export**: exportar la documentación como PDF/HTML estático para
+- **Fase 3 - Trazabilidad completa**: matriz RF ↔ CU ↔ historias ↔ tests en el hub.
+- **Fase 4 - Export**: exportar la documentación como PDF/HTML estático para
   entregas académicas (SENA) o comerciales, reutilizando el patrón `export/` de DobleYo.
-- **Fase 5 — Demo pública**: versión read-only de `/admin/docs` en la vitrina
+- **Fase 5 - Demo pública**: versión read-only de `/admin/docs` en la vitrina
   pública (`/tools`), alineada con el pendiente "demo read-only del admin".
 
 ## 7. Mantenimiento

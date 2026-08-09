@@ -90,7 +90,7 @@ async function timed(id: string, label: string, L: Strings, fn: () => Promise<Ou
 // El analizador es público y se sirve en los dos idiomas (/lab/site-check y
 // /en/lab/site-check), así que sus veredictos también. Los textos viven aquí y
 // no en `src/i18n/es.ts` a propósito: este módulo corre en el servidor y lo
-// consume tanto la ruta pública como el diagnóstico del panel — importar el
+// consume tanto la ruta pública como el diagnóstico del panel - importar el
 // diccionario de páginas ataría una lib de infraestructura a la capa de UI.
 // Las claves que se ven en la tarjeta (label, summary, details) se resuelven
 // con el locale que llega en la petición; el panel usa el idioma por defecto.
@@ -123,7 +123,7 @@ function stringsFor(locale: Locale) {
     genericLinks: (n: number) => `${n} enlace(s) con texto genérico`,
     a11yClean: 'Sin hallazgos heurísticos (no reemplaza una auditoría axe-core)',
     a11yFindings: (n: number) => `${n} hallazgo(s) heurístico(s)`,
-    a11yNote: 'Chequeo heurístico sobre HTML estático — no reemplaza axe-core',
+    a11yNote: 'Chequeo heurístico sobre HTML estático - no reemplaza axe-core',
     psiNotConfigured: 'No configurado (falta PSI_API_KEY)',
     psiNeedsKey: 'Requiere una clave gratuita de Google PageSpeed Insights para correr Lighthouse real.',
     psiResponded: (n: number) => `PageSpeed Insights respondió ${n}`,
@@ -204,7 +204,7 @@ function stringsFor(locale: Locale) {
     genericLinks: (n: number) => `${n} link(s) with generic text`,
     a11yClean: 'No heuristic findings (does not replace an axe-core audit)',
     a11yFindings: (n: number) => `${n} heuristic finding(s)`,
-    a11yNote: 'Heuristic check over static HTML — does not replace axe-core',
+    a11yNote: 'Heuristic check over static HTML - does not replace axe-core',
     psiNotConfigured: 'Not configured (PSI_API_KEY missing)',
     psiNeedsKey: 'Requires a free Google PageSpeed Insights key to run real Lighthouse.',
     psiResponded: (n: number) => `PageSpeed Insights responded ${n}`,
@@ -278,8 +278,8 @@ async function testReachability(t: DiagnosticTarget, L: Strings): Promise<Outcom
     details: [
       L.finalUrl(res.url),
       res.redirected ? L.redirected : L.notRedirected,
-      `Content-Type: ${res.headers.get('content-type') ?? '—'}`,
-      L.server(res.headers.get('server') ?? '—'),
+      `Content-Type: ${res.headers.get('content-type') ?? '-'}`,
+      L.server(res.headers.get('server') ?? '-'),
     ],
   }
 }
@@ -331,11 +331,11 @@ async function testSeoMeta(t: DiagnosticTarget, getHtml: GetHtml, L: Strings): P
     status: missing.length === 0 ? 'pass' : missing.length >= 2 ? 'warn' : 'warn',
     summary: missing.length === 0 ? L.seoAllPresent : L.seoMissing(missing.join(', ')),
     details: [
-      `Title: ${title ?? '—'}`,
-      `Description: ${description ?? '—'}`,
-      `Canonical: ${canonical ?? '—'}`,
-      `Open Graph title: ${ogTitle ?? '—'}`,
-      `lang: ${lang ?? '—'}`,
+      `Title: ${title ?? '-'}`,
+      `Description: ${description ?? '-'}`,
+      `Canonical: ${canonical ?? '-'}`,
+      `Open Graph title: ${ogTitle ?? '-'}`,
+      `lang: ${lang ?? '-'}`,
     ],
   }
 }
@@ -451,16 +451,16 @@ async function testLighthouse(t: DiagnosticTarget, L: Strings): Promise<Outcome>
   return {
     status,
     summary: L.psiSummary(
-      String(scores.performance ?? '—'),
-      String(scores.accessibility ?? '—'),
-      String(scores.seo ?? '—')
+      String(scores.performance ?? '-'),
+      String(scores.accessibility ?? '-'),
+      String(scores.seo ?? '-')
     ),
     details: [
-      L.psiPerformance(String(scores.performance ?? '—')),
-      L.psiAccessibility(String(scores.accessibility ?? '—')),
-      L.psiBestPractices(String(scores.bestPractices ?? '—')),
-      L.psiSeo(String(scores.seo ?? '—')),
-      `LCP: ${lcp ?? '—'} · CLS: ${cls ?? '—'} · TBT: ${tbt ?? '—'}`,
+      L.psiPerformance(String(scores.performance ?? '-')),
+      L.psiAccessibility(String(scores.accessibility ?? '-')),
+      L.psiBestPractices(String(scores.bestPractices ?? '-')),
+      L.psiSeo(String(scores.seo ?? '-')),
+      `LCP: ${lcp ?? '-'} · CLS: ${cls ?? '-'} · TBT: ${tbt ?? '-'}`,
     ],
   }
 }
@@ -479,10 +479,10 @@ async function testTls(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
     status,
     summary: days < 0 ? L.expiredAgo(Math.abs(days)) : L.validExpiresIn(days),
     details: [
-      L.issuer(info.issuer ?? '—'),
-      L.subject(info.subject ?? '—'),
+      L.issuer(info.issuer ?? '-'),
+      L.subject(info.subject ?? '-'),
       L.validity(fmtDate(info.validFrom), fmtDate(info.validTo)),
-      L.protocol(info.protocol ?? '—'),
+      L.protocol(info.protocol ?? '-'),
     ],
   }
 }
@@ -498,7 +498,7 @@ async function testHttpsRedirect(t: DiagnosticTarget, L: Strings): Promise<Outco
       const toHttps = loc.startsWith('https://') || (loc.startsWith('/') && false)
       return toHttps
         ? { status: 'pass', summary: L.redirectsToHttps(res.status), details: [`Location: ${loc}`] }
-        : { status: 'warn', summary: L.redirectsNotHttps(res.status), details: [`Location: ${loc || '—'}`] }
+        : { status: 'warn', summary: L.redirectsNotHttps(res.status), details: [`Location: ${loc || '-'}`] }
     }
     if (res.status === 200) return { status: 'warn', summary: L.servesHttpNoRedirect }
     return { status: 'info', summary: L.httpResponds(res.status) }
@@ -553,12 +553,12 @@ async function testDns(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
     status: hasAddr ? 'pass' : 'fail',
     summary: hasAddr ? L.dnsResolves(a?.length ?? 0, aaaa?.length ?? 0) : L.dnsNoResolve,
     details: [
-      `A: ${a?.length ? a.join(', ') : '—'}`,
-      `AAAA: ${aaaa?.length ? aaaa.join(', ') : '—'}`,
-      `CNAME: ${cname?.length ? cname.join(', ') : '—'}`,
-      `MX: ${mx?.length ? mx.map((r) => r.exchange).join(', ') : '—'}`,
-      `NS: ${ns?.length ? ns.join(', ') : '—'}`,
-      `TXT: ${txt?.length ? L.txtRecords(txt.length) : '—'}`,
+      `A: ${a?.length ? a.join(', ') : '-'}`,
+      `AAAA: ${aaaa?.length ? aaaa.join(', ') : '-'}`,
+      `CNAME: ${cname?.length ? cname.join(', ') : '-'}`,
+      `MX: ${mx?.length ? mx.map((r) => r.exchange).join(', ') : '-'}`,
+      `NS: ${ns?.length ? ns.join(', ') : '-'}`,
+      `TXT: ${txt?.length ? L.txtRecords(txt.length) : '-'}`,
     ],
   }
 }
@@ -611,7 +611,7 @@ async function testSitemap(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   return {
     status: 'pass',
     summary: isIndex ? L.sitemapIndex : L.sitemapUrls(count),
-    details: [`Content-Type: ${ct || '—'}`],
+    details: [`Content-Type: ${ct || '-'}`],
   }
 }
 
@@ -670,7 +670,7 @@ function inspectTls(rawUrl: string): Promise<TlsInfo | null> {
 }
 
 const fmtDate = (d?: Date | null) =>
-  d ? d.toISOString().slice(0, 10) : '—'
+  d ? d.toISOString().slice(0, 10) : '-'
 
 const toSingleString = (v: string | string[] | undefined): string | null =>
   Array.isArray(v) ? (v[0] ?? null) : (v ?? null)

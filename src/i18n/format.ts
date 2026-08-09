@@ -1,6 +1,6 @@
 // Formato de fechas, números y moneda por locale. Reemplaza los usos sueltos
 // de `Intl.*`/`toLocaleDateString` repartidos en páginas y componentes
-// públicos — un solo lugar donde decidir qué locale de Intl corresponde a
+// públicos - un solo lugar donde decidir qué locale de Intl corresponde a
 // cada idioma del sitio.
 
 import type { Locale } from './config'
@@ -31,7 +31,7 @@ export function formatNumber(value: number, locale: Locale, opts?: Intl.NumberFo
 
 /**
  * Pesos colombianos. La moneda no cambia con el idioma (las facturas reales
- * son en COP) — solo el formato de agrupación/decimales. El código ISO va
+ * son en COP) - solo el formato de agrupación/decimales. El código ISO va
  * siempre explícito para que un lector angloparlante no lo lea como dólares.
  */
 export function formatCOP(value: number, locale: Locale): string {

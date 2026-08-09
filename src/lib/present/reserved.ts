@@ -3,7 +3,7 @@
 // `src/pages/[pin].astro` es la última ruta en resolver: captura cualquier
 // `/algo` que no haya coincidido con una página real. Astro ya resuelve las
 // estáticas antes que las dinámicas, así que en la práctica un PIN nunca podría
-// tapar una ruta existente — pero esta lista existe para el caso inverso, que
+// tapar una ruta existente - pero esta lista existe para el caso inverso, que
 // sí es real: que un PIN generado COINCIDA con una ruta que se añada mañana y
 // el público que escanee el QR aterrice en el portafolio en vez de en el deck.
 //

@@ -4,7 +4,7 @@
 // Por qué propio y no bpmn-js: la única forma de dibujar notación BPMN real
 // sin bpmn-js (~500 KB de diagram-js) era generar el SVG nosotros. A cambio de
 // escribir el ruteo, el diagrama queda sin dependencias, con los mismos tokens
-// de color del sitio y sin JavaScript en el cliente — el SVG sale ya renderizado
+// de color del sitio y sin JavaScript en el cliente - el SVG sale ya renderizado
 // desde el servidor.
 //
 // Módulo PURO a propósito: no importa Astro ni la BD, así los tests pueden
@@ -30,11 +30,11 @@ export type BpmnNodeType =
   // Compuertas: todas son el mismo rombo; lo que cambia el comportamiento es
   // el marcador interno, así que dibujarlo mal cambia el significado del
   // diagrama, no su estética.
-  | 'gatewayExclusive' // X — un solo camino
-  | 'gatewayEvent' // pentágono en doble círculo — decide el primer evento que ocurra
-  | 'gatewayParallel' // + — todos los caminos a la vez
-  | 'gatewayInclusive' // O — uno, varios o todos
-  | 'gatewayComplex' // * — condición que no cabe en las anteriores
+  | 'gatewayExclusive' // X - un solo camino
+  | 'gatewayEvent' // pentágono en doble círculo - decide el primer evento que ocurra
+  | 'gatewayParallel' // + - todos los caminos a la vez
+  | 'gatewayInclusive' // O - uno, varios o todos
+  | 'gatewayComplex' // * - condición que no cabe en las anteriores
 
 export type BpmnFlowKind = 'sequence' | 'message' | 'default'
 
@@ -42,8 +42,8 @@ export type BpmnFlowKind = 'sequence' | 'message' | 'default'
  * Sentido de lectura del diagrama.
  *
  * `horizontal` es el de la web: carriles apilados y el proceso avanzando de
- * izquierda a derecha. `vertical` transpone la piscina —cada participante pasa
- * a ser una columna y el proceso baja— porque un BPMN de doce columnas no cabe
+ * izquierda a derecha. `vertical` transpone la piscina (cada participante pasa
+ * a ser una columna y el proceso baja) porque un BPMN de doce columnas no cabe
  * legible en una hoja vertical, que es el formato del documento de
  * arquitectura. El modelo de datos es el mismo: `col` sigue siendo el orden de
  * lectura y `row` sigue siendo la rama paralela; lo único que cambia es a qué
@@ -163,7 +163,7 @@ export const GEO = {
  * Geometría del diagrama transpuesto. No es la horizontal con los ejes
  * cambiados: al bajar, el eje caro pasa a ser el ancho, así que la tarea se
  * estrecha y se alarga, y la etiqueta de eventos y compuertas deja de ir debajo
- * de la figura —donde la partiría en dos la flecha de salida— para irse al
+ * de la figura (donde la partiría en dos la flecha de salida) para irse al
  * costado. Ese hueco lateral va contado DENTRO del paso de fila: reservarlo
  * como relleno del carril lo cobraba en cada fila y ensanchaba el diagrama sin
  * necesidad.
@@ -461,7 +461,7 @@ export function pointAlong(pts: Pt[], dist: number): Pt {
  *
  * No basta con "a 26px del origen": las dos ramas de una compuerta salen por el
  * mismo puerto y sus dos primeros tramos se solapan, así que "sí" y "no"
- * terminaban dibujados en el mismo punto — leyéndose sobre la rama contraria.
+ * terminaban dibujados en el mismo punto - leyéndose sobre la rama contraria.
  * Por eso, si la rama quiebra, la etiqueta se ancla DESPUÉS del quiebre: ahí el
  * trazo ya es exclusivo de esa rama y no hay ambigüedad posible.
  *
@@ -485,7 +485,7 @@ export function labelAnchor(pts: Pt[], avanceExtra = 0): Pt {
 }
 
 // Aproximación del ancho de una etiqueta: sin métricas de fuente en el
-// servidor, se estima por caracteres. Va holgada a propósito — el objetivo es
+// servidor, se estima por caracteres. Va holgada a propósito - el objetivo es
 // detectar choques en los tests, y quedarse corto sería peor que pasarse.
 const CHAR_W = 5.6
 const LINE_H = 12
@@ -580,8 +580,8 @@ export function layout(process: BpmnProcess, orientacion: BpmnOrientacion = 'hor
   const maxCol = gridNodes.reduce((m, n) => Math.max(m, n.col), 0)
 
   // Qué filas necesitan el hueco lateral para su texto. Una fila que solo lleva
-  // tareas sin anotación de tiempo no lo necesita —el nombre va dentro de la
-  // caja—, y reservárselo igual ensanchaba el diagrama en 80 px por fila sin
+  // tareas sin anotación de tiempo no lo necesita (el nombre va dentro de la
+  // caja), y reservárselo igual ensanchaba el diagrama en 80 px por fila sin
   // que nada llegara a ocuparlos. En el proceso de monitoreo eran cuatro filas
   // de las nueve.
   const filaDeHost = new Map<string, string>(gridNodes.map((n) => [n.id, `${n.lane}:${n.row ?? 0}`]))
@@ -710,7 +710,7 @@ export function layout(process: BpmnProcess, orientacion: BpmnOrientacion = 'hor
   const byId = new Map(nodes.map((n) => [n.id, n]))
 
   // Segunda pasada: los eventos de borde se cuelgan del borde inferior derecho
-  // de su tarea. Esa esquina es la que queda libre — la izquierda recibe la
+  // de su tarea. Esa esquina es la que queda libre - la izquierda recibe la
   // flecha de entrada y el marcador de tipo de tarea vive arriba.
   for (const b of boundaryNodes) {
     const host = byId.get(b.attachedTo)
@@ -779,8 +779,8 @@ export function layout(process: BpmnProcess, orientacion: BpmnOrientacion = 'hor
  *
  * Todas las salidas de una compuerta arrancan por el mismo puerto y comparten
  * un tramo, así que la posición "a 26 px del origen" está ocupada por tantas
- * ramas como salidas tenga. Cuando el sitio está tomado —por otra etiqueta, por
- * un trazo ajeno o por una figura— la etiqueta avanza sobre su PROPIO trazo
+ * ramas como salidas tenga. Cuando el sitio está tomado (por otra etiqueta, por
+ * un trazo ajeno o por una figura) la etiqueta avanza sobre su PROPIO trazo
  * hasta encontrar hueco: sigue pegada a su rama, que es lo que la hace legible,
  * y deja de contradecir al dibujo.
  */
@@ -970,8 +970,8 @@ export function findLayoutIssues(process: BpmnProcess, orientacion: BpmnOrientac
   // Etiqueta de nodo contra FIGURA ajena: el texto cuelga fuera de su propia
   // caja, así que podría aterrizar dentro de la de al lado.
   //
-  // Hoy es inalcanzable —el aire entre filas de GEO es mayor que la etiqueta
-  // más alta— y por eso no tiene caso hostil en los tests: no supe construir
+  // Hoy es inalcanzable (el aire entre filas de GEO es mayor que la etiqueta
+  // más alta) y por eso no tiene caso hostil en los tests: no supe construir
   // uno sin tocar la geometría. Se queda como red para el día que alguien
   // apriete `rowH` o `lanePadY` buscando diagramas más compactos.
   for (const et of etiquetasNodo) {

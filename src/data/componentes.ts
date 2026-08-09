@@ -15,7 +15,7 @@ const arquitectura: UmlComponentModel = {
     'Las piezas de software del sistema y las interfaces por las que dependen unas de otras. Lo que el diagrama afirma es sustituibilidad: un componente que solo depende de interfaces provistas puede cambiarse por otro que ofrezca las mismas sin tocar a sus consumidores.',
   origen: 'src/pages/* · src/middleware.ts · src/lib/{security,payments,notify}.ts · src/db/*',
   nota:
-    'El acceso a datos es el único componente del que dependen casi todos, y por eso es también el único punto donde se puede imponer una regla transversal como el aislamiento por cliente del portal. Un atajo que consultara la base sin pasar por ahí no aparecería en este diagrama — y esa es exactamente la clase de fallo que expone los datos de un cliente a otro.',
+    'El acceso a datos es el único componente del que dependen casi todos, y por eso es también el único punto donde se puede imponer una regla transversal como el aislamiento por cliente del portal. Un atajo que consultara la base sin pasar por ahí no aparecería en este diagrama - y esa es exactamente la clase de fallo que expone los datos de un cliente a otro.',
   componentes: [
     { id: 'web', nombre: 'SitioPublico', detalle: 'portafolio, /status, /notes, /docs', col: 0, fila: 0 },
     { id: 'admin', nombre: 'PanelAdmin', detalle: 'CRM, finanzas, bóveda, LAB', col: 1, fila: 0 },

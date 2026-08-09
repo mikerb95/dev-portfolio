@@ -30,7 +30,7 @@ const statusColors: Record<string, string> = {
   archivado: 'text-ink-300 bg-white/5 border-white/10',
 }
 const fmtDate = (d?: Date | null) =>
-  d ? new Date(d).toLocaleDateString('es-CO', { year: 'numeric', month: 'short' }) : '—'
+  d ? new Date(d).toLocaleDateString('es-CO', { year: 'numeric', month: 'short' }) : '-'
 ---
 
 <AdminLayout title="Proyectos">
@@ -116,8 +116,8 @@ const fmtDate = (d?: Date | null) =>
                 <span class="text-[13px] font-medium text-ink-50 truncate block">{p.title}</span>
                 <span class="text-[10px] text-ink-400 font-mono">{p.slug}</span>
               </div>
-              <div class="text-[12px] font-mono text-ink-200 truncate">{p.clientName ?? '—'}</div>
-              <div class="text-[11px] font-mono text-ink-300 truncate">{stackLabel || '—'}</div>
+              <div class="text-[12px] font-mono text-ink-200 truncate">{p.clientName ?? '-'}</div>
+              <div class="text-[11px] font-mono text-ink-300 truncate">{stackLabel || '-'}</div>
               <div>
                 <span class={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border ${statusColors[p.status ?? 'activo']}`}>{p.status ?? 'activo'}</span>
               </div>

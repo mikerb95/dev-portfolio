@@ -15,7 +15,7 @@ const json = (status: number, body: unknown) =>
  *
  * El límite por correo es aparte del límite por IP del middleware: sin él, un
  * atacante con IPs rotativas podría inundar el buzón de un cliente concreto de
- * enlaces de restablecimiento — molesto para él y perfecto para colar un
+ * enlaces de restablecimiento - molesto para él y perfecto para colar un
  * phishing entre correos legítimos.
  */
 export const POST: APIRoute = async ({ request }) => {

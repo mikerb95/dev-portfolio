@@ -87,7 +87,7 @@ const vitals = METRIC_ORDER.map((m) => {
     p75: v,
     p50: v50,
     p95: v95,
-    display: v === null ? '—' : formatVital(m, v),
+    display: v === null ? '-' : formatVital(m, v),
     rating: (v === null ? null : rateVital(m, v)) as VitalRating | null,
     samples: values.length,
     dist,
@@ -178,7 +178,7 @@ const mttrMin =
 const downtimeMin =
   uptime90 != null ? Math.round(90 * 24 * 60 * (1 - uptime90 / 100)) : null
 const fmtDowntime = (min: number | null) => {
-  if (min == null) return '—'
+  if (min == null) return '-'
   if (min < 60) return `${min} min`
   const h = Math.floor(min / 60)
   const m = min % 60
@@ -196,7 +196,7 @@ const checkCadenceMin =
   monCount?.n && cadenceAgg?.total ? Math.round((24 * 60) / (cadenceAgg.total / monCount.n)) : null
 
 const fmtDuration = (ms: number | null) => {
-  if (ms == null) return '—'
+  if (ms == null) return '-'
   if (ms < 1000) return `${ms} ms`
   const s = ms / 1000
   return s < 60 ? `${s.toFixed(1)} s` : `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`
@@ -275,7 +275,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
                   <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">{v.metric}</span>
                   <span class="font-mono text-[11px] text-ink-400">{v.samples.toLocaleString(intlLocale(locale))} {e.vitals.samplesWord}</span>
                 </div>
-                <p class="text-ink-200 mb-3">{v.label} — {VITAL_EXPLAIN[v.metric]}</p>
+                <p class="text-ink-200 mb-3">{v.label} - {VITAL_EXPLAIN[v.metric]}</p>
 
                 {v.p75 != null && (
                   <>
@@ -358,11 +358,11 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
           {lastSuccess ? (
             <div class="grid grid-cols-3 gap-4">
               <div>
-                <div class="text-3xl font-medium text-lime tabular-nums">{lastSuccess.testsPassed ?? '—'}</div>
+                <div class="text-3xl font-medium text-lime tabular-nums">{lastSuccess.testsPassed ?? '-'}</div>
                 <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.testsLabel}</div>
               </div>
               <div>
-                <div class="text-3xl font-medium text-ink-50 tabular-nums">{lastSuccess.coveragePct != null ? `${Math.round(lastSuccess.coveragePct)}%` : '—'}</div>
+                <div class="text-3xl font-medium text-ink-50 tabular-nums">{lastSuccess.coveragePct != null ? `${Math.round(lastSuccess.coveragePct)}%` : '-'}</div>
                 <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.coverageLabel}</div>
               </div>
               <div>
@@ -441,7 +441,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
           <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{e.uptime.heading}</h2>
           <div class="flex-1 flex items-center">
             <div>
-              <div class="text-4xl font-medium tabular-nums text-lime">{uptime90 != null ? `${uptime90}%` : '—'}</div>
+              <div class="text-4xl font-medium tabular-nums text-lime">{uptime90 != null ? `${uptime90}%` : '-'}</div>
               <div class="text-[11px] font-mono text-ink-400 mt-2">
                 {interpolate(e.uptime.meta, {
                   services: monCount?.n ?? 0,
@@ -458,7 +458,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
             {checkCadenceMin != null && <span class="font-mono text-[11px] text-ink-400">{interpolate(e.uptime.cadence, { n: checkCadenceMin })}</span>}
           </div>
           <p class="text-ink-200 mb-2">
-            {interpolate(e.uptime.explain, { pct: uptime90 != null ? `${uptime90}%` : '—', time: fmtDowntime(downtimeMin) })}
+            {interpolate(e.uptime.explain, { pct: uptime90 != null ? `${uptime90}%` : '-', time: fmtDowntime(downtimeMin) })}
           </p>
           {(incidentRows.length > 0 || mttrMin != null) && (
             <div class="text-[12px] text-ink-300 mb-3">
@@ -474,8 +474,8 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
                   <div class="w-16 h-1 rounded-full bg-white/5 overflow-hidden shrink-0">
                     <div class="h-full bg-lime/70" style={`width:${m.uptime ?? 0}%`}></div>
                   </div>
-                  <span class="font-mono tabular-nums text-ink-400 w-12 text-right shrink-0">{m.uptime != null ? `${m.uptime}%` : '—'}</span>
-                  <span class="font-mono tabular-nums text-ink-500 w-14 text-right shrink-0">{m.avgMs != null ? `${m.avgMs}ms` : '—'}</span>
+                  <span class="font-mono tabular-nums text-ink-400 w-12 text-right shrink-0">{m.uptime != null ? `${m.uptime}%` : '-'}</span>
+                  <span class="font-mono tabular-nums text-ink-500 w-14 text-right shrink-0">{m.avgMs != null ? `${m.avgMs}ms` : '-'}</span>
                 </div>
               ))}
             </div>
@@ -613,8 +613,8 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
                 ago: ago(fetchedAt),
                 checkAgo: ago(u.lastAt),
                 name: u.lastName ?? '?',
-                status: String(u.lastStatusCode ?? '—'),
-                ms: String(u.lastMs ?? '—'),
+                status: String(u.lastStatusCode ?? '-'),
+                ms: String(u.lastMs ?? '-'),
                 count: nf.format(u.count24h),
               })
       } else if (kind === 'ci') {
@@ -686,7 +686,7 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
 </script>
 
 <script>
-  // Mismo lenguaje de motion que /index: Lenis + GSAP. Sin HUD aquí — esta
+  // Mismo lenguaje de motion que /index: Lenis + GSAP. Sin HUD aquí - esta
   // página ya tiene su propio indicador "en vivo" (live-strip con timestamps
   // reales); un segundo panel de estado sería redundante y confundiría cuál
   // de los dos es la fuente de verdad.
@@ -694,6 +694,6 @@ const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
 
   // El overflow:hidden que aplica el reveal va sobre el trigger (.glass), no
   // sobre .card-pop, así que no recorta el panel flotante del popover (es un
-  // hermano, no un hijo) — ver src/components/CardPopover.astro.
+  // hermano, no un hijo) - ver src/components/CardPopover.astro.
   initPageMotion()
 </script>

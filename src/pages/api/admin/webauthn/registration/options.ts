@@ -4,7 +4,7 @@ import { isAllowedLogin } from '../../../../../lib/auth'
 import { buildRegistrationOptions } from '../../../../../lib/webauthn'
 
 // Alta de una llave nueva. Vive bajo /api/admin, así que el middleware ya
-// exige sesión + allowlist (y MFA, una vez que exista al menos una llave —
+// exige sesión + allowlist (y MFA, una vez que exista al menos una llave -
 // pero antes de la primera, el gate de MFA todavía está apagado, así que esto
 // también sirve para el alta inicial sin quedar bloqueado a medio camino).
 export const GET: APIRoute = async ({ request, cookies }) => {

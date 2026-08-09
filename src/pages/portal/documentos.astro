@@ -75,7 +75,7 @@ const maxMb = MAX_UPLOAD_BYTES / 1024 / 1024
                     {CATEGORY_LABELS[d.category]}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-ink-200 text-[13px]">{d.projectTitle ?? '—'}</td>
+                <td class="px-4 py-3 text-ink-200 text-[13px]">{d.projectTitle ?? '-'}</td>
                 <td class="px-4 py-3 font-mono text-[12px] text-ink-200">{formatBytes(d.sizeBytes)}</td>
                 <td class="px-4 py-3 text-ink-200 text-[13px]">{formatDate(d.createdAt)}</td>
                 <td class="px-4 py-3 text-right">

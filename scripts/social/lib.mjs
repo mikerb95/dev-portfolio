@@ -9,7 +9,7 @@ export const SITE = 'https://codebymike.tech'
 /**
  * Separa el frontmatter YAML del cuerpo markdown y devuelve
  * { data, body }. Solo entiende las claves que usan las notas
- * (title, description, date, tags, draft) — no es un parser YAML general.
+ * (title, description, date, tags, draft) - no es un parser YAML general.
  */
 export function parseFrontmatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)

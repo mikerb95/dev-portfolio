@@ -2,7 +2,7 @@
 // Sugerencia de cambio a inglés cuando el navegador no está en español.
 // Solo tiene sentido en páginas canónicas (locale === 'es'): si el usuario ya
 // está viendo /en/*, no hay nada que sugerir. La detección real (idioma del
-// navegador, si ya se descartó antes) es 100% cliente — el servidor no puede
+// navegador, si ya se descartó antes) es 100% cliente - el servidor no puede
 // saber `navigator.language`, así que el markup se renderiza oculto siempre
 // y un script decide si mostrarlo.
 import { getLocaleFromUrl, hasTranslation, localizedHref, getDictionary } from '../i18n'
@@ -10,7 +10,7 @@ import { getLocaleFromUrl, hasTranslation, localizedHref, getDictionary } from '
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary('es')
 // Si la página actual no existe en inglés, la sugerencia manda a la home en
-// inglés — nunca a un /en/<ruta> inexistente.
+// inglés - nunca a un /en/<ruta> inexistente.
 const enHref = hasTranslation(Astro.url.pathname, 'en')
   ? localizedHref(Astro.url.pathname, 'en')
   : '/en'
@@ -113,7 +113,7 @@ const enHref = hasTranslation(Astro.url.pathname, 'en')
     })()
 
     // navigator.language refleja la config del navegador, no de la UI del
-    // SO ni el país — es la señal correcta para "¿este visitante lee inglés
+    // SO ni el país - es la señal correcta para "¿este visitante lee inglés
     // antes que español?". Cualquier prefijo que no sea "es" cuenta.
     const browserLang = (navigator.language || navigator.languages?.[0] || '').toLowerCase()
     const prefersNonSpanish = browserLang !== '' && !browserLang.startsWith('es')
@@ -144,7 +144,7 @@ const enHref = hasTranslation(Astro.url.pathname, 'en')
         try {
           localStorage.setItem(STORAGE_KEY, '1')
         } catch {
-          // localStorage puede fallar en modo privado — degradar sin romper
+          // localStorage puede fallar en modo privado - degradar sin romper
         }
       }
 

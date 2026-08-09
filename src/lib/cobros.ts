@@ -121,6 +121,6 @@ export function buildWhatsAppMessage(input: MessageInput): string {
     `${input.payUrl}\n` +
     `${vence}` +
     `${historial}\n\n` +
-    `Gracias,\nMike — CodeByMike`
+    `Gracias,\nMike - CodeByMike`
   )
 }

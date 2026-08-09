@@ -3,7 +3,7 @@ import type es from './es'
 // `satisfies typeof es` obliga a TypeScript a marcar error si falta o sobra
 // una clave respecto al diccionario fuente. No es solo tipado: es el
 // mecanismo de paridad. Reforzado por tests/i18n-dictionary.test.ts (que
-// además detecta valores idénticos al español — traducción olvidada).
+// además detecta valores idénticos al español - traducción olvidada).
 const en = {
   common: {
     back: 'Back',
@@ -65,7 +65,7 @@ const en = {
     },
   },
   notFound: {
-    title: '404 — CodeByMike',
+    title: '404 - CodeByMike',
     description: 'The page you are looking for does not exist or is no longer available.',
     eyebrow: 'Error 404',
     headingA: 'Page',
@@ -74,10 +74,10 @@ const en = {
     cta: 'Back to home',
   },
   home: {
-    title: 'CodeByMike | Mike — Software Engineer',
+    title: 'CodeByMike | Mike - Software Engineer',
     // ≤155 caracteres, igual que en es.ts: el snippet de Google se corta ahí.
     description:
-      'Mike — Software Engineer in Colombia (remote). TypeScript, React, Next.js, Astro and PostgreSQL. Scalable products with robust architecture.',
+      'Mike - Software Engineer in Colombia (remote). TypeScript, React, Next.js, Astro and PostgreSQL. Scalable products with robust architecture.',
     badge: 'Available · Colombia · Remote',
     githubTop3Label: 'GitHub Colombia',
     githubTop3Value: 'Contributor',
@@ -96,7 +96,7 @@ const en = {
       line1: 'Software',
       line2: 'engineering',
       line3: 'with purpose.',
-      lead: "I'm Mike — a Software Engineer building scalable products for teams that can't afford to guess. Robust architecture, obsessive performance, world-class experiences.",
+      lead: "I'm Mike - a Software Engineer building scalable products for teams that can't afford to guess. Robust architecture, obsessive performance, world-class experiences.",
       stackLabel: 'Core stack',
       stackLine1: 'TypeScript · React · Next.js',
       stackLine2: 'Astro · Node.js · PostgreSQL',
@@ -156,7 +156,7 @@ const en = {
       sectionLabel: 'How I work',
       title: 'A four-step process, calibrated to your pace.',
       steps: [
-        { t: 'Diagnosis', d: 'Two weeks listening — every flow, every spreadsheet, every workaround.', time: 'Wk 1–2' },
+        { t: 'Diagnosis', d: 'Two weeks listening - every flow, every spreadsheet, every workaround.', time: 'Wk 1–2' },
         { t: 'Architecture', d: 'Mapping product decisions. What is critical vs. cosmetic.', time: 'Wk 3' },
         { t: 'Prototype', d: 'Real React, real data, real constraints. Tested with end users.', time: 'Wk 4–8' },
         { t: 'Ship & mentoring', d: 'I build alongside your team. I leave them a system they can scale.', time: 'Wk 9+' },
@@ -178,7 +178,7 @@ const en = {
       p1a: 'I built a ',
       p1strong: 'device fingerprinting',
       p1b:
-        ' lab to make visible something almost no one sees: your browser exposes dozens of signals —canvas, GPU, fonts, audio— that together form an almost unique fingerprint. Scan a QR code, join a room, and a live board identifies you ',
+        ' lab to make visible something almost no one sees: your browser exposes dozens of signals (canvas, GPU, fonts, audio) that together form an almost unique fingerprint. Scan a QR code, join a room, and a live board identifies you ',
       p1strong2: 'without login and without cookies',
       p1c: '.',
       p2a: 'The goal? To make you ',
@@ -188,16 +188,16 @@ const en = {
       cta: 'Enter the lab',
       note: 'Ephemeral · no PII · rooms are wiped after 2h',
       points: [
-        { title: 'Scan and join', body: 'Several devices link to the same room via a QR code — like a classroom or a live event.' },
+        { title: 'Scan and join', body: 'Several devices link to the same room via a QR code - like a classroom or a live event.' },
         { title: 'It recognizes you, it does not log you in', body: 'A custom collector cross-checked against FingerprintJS. Come back incognito and the revisit counter still goes up.' },
         { title: 'Learn to defend yourself', body: "Ends by explaining why incognito isn't enough and what actually works: Tor, resistFingerprinting, and more." },
       ],
     },
   },
   engineering: {
-    title: 'Engineering — CodeByMike',
+    title: 'Engineering - CodeByMike',
     description:
-      'Engineering metrics measured in production: Core Web Vitals from real users, CI pipeline results, and uptime. Live, verifiable data — not claims.',
+      'Engineering metrics measured in production: Core Web Vitals from real users, CI pipeline results, and uptime. Live, verifiable data - not claims.',
     eyebrow: 'Excellence measured, not claimed',
     h1Line1: 'Quality,',
     h1Line2: 'in numbers.',
@@ -278,7 +278,7 @@ const en = {
       agoMinutes: '{n}min ago',
       agoHours: '{n}h ago',
       agoDays: '{n}d ago',
-      never: '—',
+      never: '-',
       vitalsNone: 'Live check {ago} · no samples yet',
       vitalsSome: 'Live check {ago} · last sample {metric} {sampleAgo} · {count} in 24h',
       uptimeNone: 'Live check {ago} · no checks yet',
@@ -288,17 +288,17 @@ const en = {
     },
   },
   tools: {
-    title: 'Tools — CodeByMike',
+    title: 'Tools - CodeByMike',
     description:
       'Case studies of the tools I built to operate my own projects and clients: SLO-based monitoring, per-project P&L, an encrypted vault, CI/CD with rollback, and chaos engineering.',
     eyebrow: 'Purpose-built tools',
     h1Line1: 'The tools I use',
     h1Line2: 'to run my projects.',
     intro:
-      "I don't use these tools because they're trendy: I built them because I needed them. Monitoring, finance, client tracking, security, and deploys — all running on this very site. Each case study tells the real problem that started it and how I solved it. The same discipline I apply here is what every client gets.",
+      "I don't use these tools because they're trendy: I built them because I needed them. Monitoring, finance, client tracking, security, and deploys - all running on this very site. Each case study tells the real problem that started it and how I solved it. The same discipline I apply here is what every client gets.",
     problemLabel: 'The problem',
     solutionLabel: 'The solution',
-    mockCaption: 'Recreation of the panel with illustrative data — real data is never published.',
+    mockCaption: 'Recreation of the panel with illustrative data - real data is never published.',
     inProductionLabel: 'In production',
     demoPortal: {
       eyebrow: 'Client portal',
@@ -343,7 +343,7 @@ const en = {
           'A registry of services per project (and account-wide) with cost and billing cycle, cross-referenced against revenue that is collected, pending, and projected. The result is a per-project P&L: real margin, not a guess.',
         detalle: [
           'Normalizes billing cycles (monthly, annual) into a comparable cost.',
-          'Revenue in three states — collected, pending, projected — to separate real cash from expectation.',
+          'Revenue in three states - collected, pending, projected - to separate real cash from expectation.',
           'The P&L and money-handling logic has its own battery of unit tests.',
         ],
         liveLabel: 'View the P&L in the panel demo',
@@ -366,7 +366,7 @@ const en = {
         title: 'Encrypted credentials vault',
         tagline: "Project secrets, never in plain text",
         problema:
-          "Each project's credentials (API keys, environment variables) tend to end up in notes, chats, or loose files — the worst possible place.",
+          "Each project's credentials (API keys, environment variables) tend to end up in notes, chats, or loose files - the worst possible place.",
         solucion:
           'A vault inside the panel that encrypts every value with AES-256-GCM before it touches the database. The encryption key lives outside the database, in the server environment: a database dump exposes no secrets.',
         detalle: [
@@ -408,11 +408,11 @@ const en = {
         title: 'Security observability (custom micro-SIEM)',
         tagline: 'Knowing who is trying to get in, not just waiting until they do',
         problema:
-          "Any site with a public IP gets automated probing from minute one: scans for other CMSs, config files, injections on every parameter. The normal reaction is to ignore the noise — but those 404s are the real attack surface, and dismissing them throws away a free signal.",
+          "Any site with a public IP gets automated probing from minute one: scans for other CMSs, config files, injections on every parameter. The normal reaction is to ignore the noise - but those 404s are the real attack surface, and dismissing them throws away a free signal.",
         solucion:
           'A custom engine that runs in the middleware on every request: an OWASP Top 10-aligned classifier detects attack signatures, a two-layer durable rate limiter and a blocklist choke abuse, decoy endpoints confirm malicious intent, and an hourly cron aggregates events, statistically detects anomalies, and applies escalating automatic blocks.',
         detalle: [
-          'Fail-open at every layer: if the security sensor fails, the request passes through clean — it can never take down the site it protects.',
+          'Fail-open at every layer: if the security sensor fails, the request passes through clean - it can never take down the site it protects.',
           "Z-score anomaly detection over a 30-day baseline, not a black box: every alert can be explained in a sentence.",
           'Blocks with mandatory TTL and escalation by recurrence (1h → 24h → 7d), never permanent by default.',
           'The public showcase shows real aggregates with deliberate OPSEC: never full IPs, never rule names, never which routes are decoys.',
@@ -422,13 +422,13 @@ const en = {
     ],
   },
   security: {
-    title: 'Security — CodeByMike',
+    title: 'Security - CodeByMike',
     description: 'A real OWASP audit of this very repository: findings, severity, and the exact commit that fixed each one.',
     eyebrow: 'OWASP audit',
     h1Line1: 'Security,',
     h1Line2: 'with evidence.',
     intro:
-      "A real review of this site's code, mapped to the OWASP Top 10. Every finding links to the exact commit that fixed it — verifiable in the repo's public history, not a promise.",
+      "A real review of this site's code, mapped to the OWASP Top 10. Every finding links to the exact commit that fixed it - verifiable in the repo's public history, not a promise.",
     secops: {
       badge: 'Security Operations · live',
       intro: 'This site runs its own security observability engine (a "micro-SIEM"): an OWASP-aligned threat classifier runs in the middleware on every request, decoy endpoints confirm malicious intent, and an hourly cron applies temporary blocks and statistically detects anomalies (z-score over a 30-day baseline). The numbers below are real aggregates from the last {days} days.',
@@ -459,7 +459,7 @@ const en = {
         retentionValue: '90 days',
       },
       opsecNote:
-        'By design, this page never shows full IPs, exact detection rule names, or which routes are decoy endpoints — that would hand an attacker the playbook.',
+        'By design, this page never shows full IPs, exact detection rule names, or which routes are decoy endpoints - that would hand an attacker the playbook.',
       categoryLabels: {
         recon_cms: 'CMS/panel reconnaissance',
         secrets_probing: 'Secrets/config probing',
@@ -513,7 +513,7 @@ const en = {
       },
       {
         title: 'Defense in depth on /admin',
-        detail: 'Authorization is revalidated against the allowlist both in the login callback and in the middleware, on every request — logging in once is not enough.',
+        detail: 'Authorization is revalidated against the allowlist both in the login callback and in the middleware, on every request - logging in once is not enough.',
       },
       {
         title: 'Parameterized queries',
@@ -522,14 +522,14 @@ const en = {
     ],
     methodology: {
       heading: 'Methodology',
-      p1: "The review covered authentication and access control, file uploads, public endpoints, secret handling, payment webhooks, and response headers — this repository's real code, not a theoretical exercise.",
+      p1: "The review covered authentication and access control, file uploads, public endpoints, secret handling, payment webhooks, and response headers - this repository's real code, not a theoretical exercise.",
       p2: 'Every finding was classified against the OWASP Top 10 (2021), fixed in a dedicated commit, and verified with the test suite and a full build before merging.',
       p3: 'This page is updated every time an audit finds or fixes something new. What you see here is the real state of the code in production.',
     },
     severity: { alta: 'high', media: 'medium' },
   },
   contact: {
-    title: 'Contact — CodeByMike',
+    title: 'Contact - CodeByMike',
     description: "Get in touch to talk about your project or a collaboration.",
     eyebrow: 'Intake',
     h1: "Tell me what you're building.",
@@ -570,7 +570,7 @@ const en = {
   },
   certifications: {
     certificateAlt: 'Certificate',
-    title: 'Certifications — CodeByMike',
+    title: 'Certifications - CodeByMike',
     description: 'Continuous technical education: certifications, courses, and skills acquired.',
     eyebrow: 'Continuous education',
     h1Line1: 'Education and',
@@ -595,15 +595,15 @@ const en = {
     },
   },
   architecture: {
-    title: 'Architecture — CodeByMike',
+    title: 'Architecture - CodeByMike',
     description: 'How this site is built: a layer diagram of Astro SSR over Turso, with an external cron, RUM, and notifications, plus the design decisions behind each piece.',
     eyebrow: 'Systems design',
     h1Line1: 'How this is',
     h1Line2: 'built.',
-    intro: "This site isn't a template: it's a system with a private panel, custom monitoring, and a payment gateway. Here's its anatomy —layer by layer— and the reasoning behind each decision.",
+    intro: "This site isn't a template: it's a system with a private panel, custom monitoring, and a payment gateway. Here's its anatomy (layer by layer) and the reasoning behind each decision.",
     externalsHeading: 'External services',
     decisionsHeading: 'Decisions and trade-offs',
-    footnoteA: 'All the code lives in a public repository as a portfolio. The decisions here are not theory: each one has its commit, its tests, and — where it applies — its security finding documented at ',
+    footnoteA: 'All the code lives in a public repository as a portfolio. The decisions here are not theory: each one has its commit, its tests, and - where it applies - its security finding documented at ',
     footnoteLinkLabel: '/security',
     footnoteB: '.',
     layers: [
@@ -617,7 +617,7 @@ const en = {
       },
       {
         tag: 'Edge',
-        title: 'Vercel — Edge & Functions',
+        title: 'Vercel - Edge & Functions',
         nodes: [
           { name: 'CDN + cache', detail: 'Public pages with s-maxage + stale-while-revalidate.' },
           { name: 'Middleware', detail: 'Auth, allowlist, security headers (CSP/HSTS), chaos flags.' },
@@ -656,7 +656,7 @@ const en = {
       },
       {
         q: 'Stateless JWT, no DB sessions',
-        a: 'Logins without touching the database and zero session infrastructure. The blind spot — revocation — I solved with a signed sid inside the token and a device table, without giving up the JWT.',
+        a: 'Logins without touching the database and zero session infrastructure. The blind spot - revocation - I solved with a signed sid inside the token and a device table, without giving up the JWT.',
       },
       {
         q: 'Turso/libSQL instead of Postgres',
@@ -719,7 +719,7 @@ const en = {
     error: 'Could not load GitHub activity.',
   },
   demo: {
-    title: 'Panel Demo — CodeByMike',
+    title: 'Panel Demo - CodeByMike',
     description: 'Explore the full control panel with fictional data: costs and P&L, clients, projects, monitoring, and the engineering lab. No sign-up.',
     eyebrow: 'Control panel',
     h1Line1: 'Step into the panel,',
@@ -747,7 +747,7 @@ const en = {
     footnoteB: '.',
   },
   log: {
-    title: 'Engineering Log — CodeByMike',
+    title: 'Engineering Log - CodeByMike',
     description: 'Real-time development activity log. Commits, decisions, and deep-work metrics.',
     loadingStatus: 'Loading GitHub activity…',
     h1: 'Engineering Log.',
@@ -779,7 +779,7 @@ const en = {
     justNowDays: '{n}d ago',
   },
   paginasWeb: {
-    title: 'Web design for your business — CodeByMike',
+    title: 'Web design for your business - CodeByMike',
     description: 'Professional websites for businesses, professionals, and entrepreneurs in Colombia. You tell me, I build it, you just use it. Ready in days, not months.',
     jsonLdDescription: 'Professional websites for local businesses, independent professionals, entrepreneurs, and small businesses.',
     hero: {
@@ -826,7 +826,7 @@ const en = {
     pasosHeading: 'How it works',
     pasosSub: 'Three steps. You bring the info, I bring the rest.',
     pasos: [
-      { titulo: 'You tell me', texto: "You tell me what you do and what you want to achieve. I guide you — you don't need to know anything technical." },
+      { titulo: 'You tell me', texto: "You tell me what you do and what you want to achieve. I guide you - you don't need to know anything technical." },
       { titulo: 'I design it', texto: 'I build your site, pick the colors, organize the content, and show it to you to fine-tune.' },
       { titulo: 'We publish', texto: 'I handle the domain and getting it live. You just share it and start getting clients.' },
     ],
@@ -912,7 +912,7 @@ const en = {
     },
   },
   status: {
-    title: 'Status — CodeByMike',
+    title: 'Status - CodeByMike',
     description: 'Real-time status of the services I run: uptime, latency, and error budget, measured by my own monitoring infrastructure.',
     eyebrow: 'Operational transparency',
     h1Line1: 'Status of the',
@@ -970,8 +970,8 @@ const en = {
       budgetWord: 'error budget',
       p2Mid2: 'is the downtime that objective allows; this shows how much is left. Latency is reported as average and',
       p95Word: 'p95',
-      p2End: '— the percentile a slow user actually feels —, never just the average.',
-      p3: 'The whole system — check engine, incidents, SLOs, and alerts — is a custom tool built on top of this same site. The data is served exactly as measured.',
+      p2End: '- the percentile a slow user actually feels, never just the average.',
+      p3: 'The whole system - check engine, incidents, SLOs, and alerts - is a custom tool built on top of this same site. The data is served exactly as measured.',
     },
     agoJustNow: '<1 min ago',
     agoMinutes: '{n} min ago',
@@ -995,7 +995,7 @@ const en = {
     breadcrumbProjects: 'Projects',
   },
   notes: {
-    title: 'Engineering notes — CodeByMike',
+    title: 'Engineering notes - CodeByMike',
     description: 'Technical writing about the decisions behind my tools: observability, SLOs, chaos engineering, and running projects.',
     eyebrow: 'Engineering notes',
     h1Line1: 'Decisions,',
@@ -1011,7 +1011,7 @@ const en = {
     onlyInSpanish: 'This article is only available in Spanish for now.',
   },
   lab: {
-    title: 'Lab — CodeByMike',
+    title: 'Lab - CodeByMike',
     description: 'A live engineering lab: CI/CD pipeline with rollback, chaos engineering, controlled attacks against the payment gateway, and their real results.',
     eyebrow: 'Verifiable engineering',
     h1Line1: 'Engineering',
@@ -1023,7 +1023,7 @@ const en = {
       experiments: 'Experiments passed',
       absorbed: 'Attacks absorbed (payments)',
       mutationScore: 'Mutation score',
-      mutationTitle: '% of mutants caught by the tests over src/lib — not just which line ran, but whether any test notices when it breaks',
+      mutationTitle: '% of mutants caught by the tests over src/lib - not just which line ran, but whether any test notices when it breaks',
     },
     pipeline: {
       heading: 'CI/CD pipeline · with health check and automatic rollback',
@@ -1075,9 +1075,9 @@ const en = {
     },
     siteCheck: {
       heading: 'Site scanner · open to anyone',
-      bodyPre: 'Built for my classmates: paste any domain and get, live, 12 tests — security headers, TLS certificate, DNS, domain expiry, robots.txt, sitemap.xml, SEO metadata, basic performance, heuristic accessibility, and a',
+      bodyPre: 'Built for my classmates: paste any domain and get, live, 12 tests - security headers, TLS certificate, DNS, domain expiry, robots.txt, sitemap.xml, SEO metadata, basic performance, heuristic accessibility, and a',
       lighthouseWord: 'real Lighthouse',
-      bodyPost: 'report via the Google PageSpeed Insights API. Everything is read from public HTTP responses — nothing intrusive — with a limit of 5 scans per minute per IP and anti-SSRF protection (it rejects private or internal-network IPs) so it can\'t be used as a proxy into someone else\'s infrastructure.',
+      bodyPost: 'report via the Google PageSpeed Insights API. Everything is read from public HTTP responses - nothing intrusive - with a limit of 5 scans per minute per IP and anti-SSRF protection (it rejects private or internal-network IPs) so it can\'t be used as a proxy into someone else\'s infrastructure.',
       cardTitle: 'Site scanner',
       cardBody: 'Paste a domain and watch the 12 tests run live, with streamed results.',
       cardCta: 'Scan a domain →',
@@ -1108,17 +1108,17 @@ const en = {
       p2Pre: 'The chaos experiments run with seatbelts on: a 15-minute maximum TTL, critical routes excluded in code, and a kill switch. The whole system is',
       failOpenWord: 'fail-open',
       p2Post: ': a lab failure never takes the site down.',
-      p3: 'The raw detail (parameters, payloads, active flags) lives in the private panel. What gets published here is the aggregate verdict — enough to verify, without handing over the internal map.',
+      p3: 'The raw detail (parameters, payloads, active flags) lives in the private panel. What gets published here is the aggregate verdict - enough to verify, without handing over the internal map.',
     },
   },
   siteCheck: {
-    title: 'Site scanner — CodeByMike',
+    title: 'Site scanner - CodeByMike',
     description: 'Paste any domain and get a live analysis: security headers, TLS, SEO, performance, and heuristic accessibility.',
     backToLab: 'Back to /lab',
     eyebrow: 'Site scanner',
     h1Line1: 'Scan any',
     h1Line2: 'domain.',
-    intro: "Paste a URL or domain and get, live, security headers, TLS certificate, DNS, basic SEO, performance, and a heuristic accessibility review. Everything is read from the site's public HTTP responses — this is not an intrusive scan.",
+    intro: "Paste a URL or domain and get, live, security headers, TLS certificate, DNS, basic SEO, performance, and a heuristic accessibility review. Everything is read from the site's public HTTP responses - this is not an intrusive scan.",
     disclaimer: 'Only use it on sites you own or have permission to scan. Limit: 5 scans per minute per IP.',
     howItWorks: 'How it works',
     modalTitle: 'How the scanner works',
@@ -1129,26 +1129,26 @@ const en = {
     steps: [
       'You paste a URL or domain and click <span class="text-ink-50">Scan</span>.',
       'The browser sends a <code class="font-mono text-[12px] text-cyan">POST</code> to <code class="font-mono text-[12px] text-cyan">/api/lab/site-check</code>, protected by a limit of 5 requests per minute per IP.',
-      'The server normalizes the URL and resolves its DNS to verify it <span class="text-ink-50">does not point to a private or internal IP</span> (127.0.0.1, 10.x, 169.254.x, etc.) — if it does, it is rejected before connecting.',
-      'The 12 tests are launched <span class="text-ink-50">in parallel</span>, each with its own timeout, and results are streamed to the browser as they finish (NDJSON streaming) — which is why the cards appear one by one instead of all at once.',
+      'The server normalizes the URL and resolves its DNS to verify it <span class="text-ink-50">does not point to a private or internal IP</span> (127.0.0.1, 10.x, 169.254.x, etc.) - if it does, it is rejected before connecting.',
+      'The 12 tests are launched <span class="text-ink-50">in parallel</span>, each with its own timeout, and results are streamed to the browser as they finish (NDJSON streaming) - which is why the cards appear one by one instead of all at once.',
       'Nothing is stored: the scan is ephemeral, it lives only in that response. There is no history and no database behind it.',
     ],
     tests: [
-      '<span class="text-ink-50">HTTP availability</span> — status, time to first byte (TTFB), redirects.',
-      '<span class="text-ink-50">TLS certificate</span> — opens a raw TLS socket (<code class="font-mono text-[12px]">node:tls</code>) and reads issuer, validity, and protocol.',
-      '<span class="text-ink-50">HTTPS redirect</span> — checks whether the HTTP version redirects to HTTPS.',
-      '<span class="text-ink-50">Security headers</span> — HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.',
-      '<span class="text-ink-50">DNS records</span> — A, AAAA, CNAME, MX, NS, TXT via <code class="font-mono text-[12px]">node:dns</code>.',
-      '<span class="text-ink-50">Domain expiry</span> — an RDAP lookup, no API key needed.',
-      '<span class="text-ink-50">robots.txt</span> and <span class="text-ink-50">sitemap.xml</span> — presence and basic format validity.',
-      '<span class="text-ink-50">SEO metadata</span> — title, meta description, canonical, Open Graph, lang attribute.',
-      '<span class="text-ink-50">Basic performance</span> — TTFB, HTML weight, count of linked scripts/styles/images.',
-      '<span class="text-ink-50">Accessibility (heuristic)</span> — images without alt, fields without a label, heading hierarchy, generic link text. It is a simple static check and <span class="text-ink-50">does not replace a real axe-core audit</span>.',
-      '<span class="text-ink-50">Lighthouse (PageSpeed Insights)</span> — runs real Lighthouse on Google servers via their public API; performance, accessibility, best practices, and SEO with real metrics (LCP, CLS, TBT).',
+      '<span class="text-ink-50">HTTP availability</span> - status, time to first byte (TTFB), redirects.',
+      '<span class="text-ink-50">TLS certificate</span> - opens a raw TLS socket (<code class="font-mono text-[12px]">node:tls</code>) and reads issuer, validity, and protocol.',
+      '<span class="text-ink-50">HTTPS redirect</span> - checks whether the HTTP version redirects to HTTPS.',
+      '<span class="text-ink-50">Security headers</span> - HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.',
+      '<span class="text-ink-50">DNS records</span> - A, AAAA, CNAME, MX, NS, TXT via <code class="font-mono text-[12px]">node:dns</code>.',
+      '<span class="text-ink-50">Domain expiry</span> - an RDAP lookup, no API key needed.',
+      '<span class="text-ink-50">robots.txt</span> and <span class="text-ink-50">sitemap.xml</span> - presence and basic format validity.',
+      '<span class="text-ink-50">SEO metadata</span> - title, meta description, canonical, Open Graph, lang attribute.',
+      '<span class="text-ink-50">Basic performance</span> - TTFB, HTML weight, count of linked scripts/styles/images.',
+      '<span class="text-ink-50">Accessibility (heuristic)</span> - images without alt, fields without a label, heading hierarchy, generic link text. It is a simple static check and <span class="text-ink-50">does not replace a real axe-core audit</span>.',
+      '<span class="text-ink-50">Lighthouse (PageSpeed Insights)</span> - runs real Lighthouse on Google servers via their public API; performance, accessibility, best practices, and SEO with real metrics (LCP, CLS, TBT).',
     ],
     technical: [
-      '<span class="text-ink-50">No headless browser.</span> Everything runs on <code class="font-mono text-[12px]">fetch</code> + <code class="font-mono text-[12px]">node:tls</code> + <code class="font-mono text-[12px]">node:dns</code> — no Chromium/Playwright, which is why it answers in seconds and fits in Vercel\'s free plan.',
-      '<span class="text-ink-50">Passive read-only.</span> No test modifies the target site or attempts to exploit anything — these are the same HTTP responses any visitor or search engine would see.',
+      '<span class="text-ink-50">No headless browser.</span> Everything runs on <code class="font-mono text-[12px]">fetch</code> + <code class="font-mono text-[12px]">node:tls</code> + <code class="font-mono text-[12px]">node:dns</code> - no Chromium/Playwright, which is why it answers in seconds and fits in Vercel\'s free plan.',
+      '<span class="text-ink-50">Passive read-only.</span> No test modifies the target site or attempts to exploit anything - these are the same HTTP responses any visitor or search engine would see.',
       '<span class="text-ink-50">Anti-SSRF.</span> DNS resolution is validated against private/loopback/link-local ranges before any connection, so the server cannot be used as a proxy into internal networks.',
       '<span class="text-ink-50">Real Lighthouse is optional.</span> It depends on a Google PageSpeed Insights key configured on the server; if it is missing, that card simply says it is not configured.',
     ],
@@ -1163,14 +1163,14 @@ const en = {
     networkError: 'Network error while scanning the domain',
   },
   fingerprint: {
-    title: 'Fingerprinting Lab — CodeByMike',
+    title: 'Fingerprinting Lab - CodeByMike',
     description: 'A live educational demo: how a site can recognize your device with no cookies, using only the signals your browser exposes.',
     eyebrow: 'Live demo',
     h1Line1: 'Hall of',
     h1Line2: 'mirrors.',
     introPre: 'A',
     introStrong: 'device fingerprinting',
-    introPost: ' lab: scan the QR code with your phone, enter the room, and watch the board recognize you purely from the signals your browser exposes — no cookies, no login. Then try to escape: open incognito or clear your cookies and come back. The point of the demo is that it will recognize you anyway.',
+    introPost: ' lab: scan the QR code with your phone, enter the room, and watch the board recognize you purely from the signals your browser exposes - no cookies, no login. Then try to escape: open incognito or clear your cookies and come back. The point of the demo is that it will recognize you anyway.',
     collectHeading: "What we're going to collect",
     collect: [
       '2D canvas and GPU rendering (WebGL vendor/renderer)',
@@ -1186,26 +1186,26 @@ const en = {
     createError: 'Error creating the room, try again.',
   },
   fpRoom: {
-    title: 'Your device — Fingerprinting Lab',
+    title: 'Your device - Fingerprinting Lab',
     description: 'This is what your browser revealed without you doing anything.',
     room: 'Room',
     gateTitle: 'Before we start',
     gateBody: 'By continuing, your browser will share technical signals (canvas, GPU, fonts, audio, screen, mouse/keyboard behavior) with this room\'s board, to demonstrate how fingerprinting works. Nothing is kept after the room closes (max. 2 hours).',
     accept: 'I understand, continue',
     youAre: 'You are',
-    returningNote: 'This device has been here before — recognized again with no cookies.',
+    returningNote: 'This device has been here before - recognized again with no cookies.',
     revealed: 'This is what your browser revealed, without you granting any special permission:',
     uniqueness: 'Estimated uniqueness',
     bits: 'bits',
     oddsPre: '≈ 1 in',
     oddsPost: 'devices with this same combination of signals. An educational estimate based on weights published by fingerprinting studies (EFF Panopticlick / AmIUnique), not a live population measurement.',
-    watchBoard: 'Watch the board on the main screen — you appear there live.',
+    watchBoard: 'Watch the board on the main screen - you appear there live.',
     collecting: 'Collecting…',
     retryError: 'Error, try again',
     empty: '(empty)',
   },
   fpBoard: {
-    title: 'Board — Fingerprinting Lab',
+    title: 'Board - Fingerprinting Lab',
     scanToEnter: 'Scan to enter',
     devicesInRoom: 'Devices in the room',
     hallOfMirrors: 'Hall of mirrors',
@@ -1213,10 +1213,10 @@ const en = {
     howToDefend: 'How to defend yourself',
     boardIntroPre: 'Every device that scans the QR appears here, identified with no cookies and no login. If someone comes back in incognito, the',
     revisitsWord: 'revisits',
-    boardIntroPost: 'counter goes up — the same device, recognized again.',
-    expired: 'This room expired — the data has already been purged. Create a new one from the start page.',
+    boardIntroPost: 'counter goes up - the same device, recognized again.',
+    expired: 'This room expired - the data has already been purged. Create a new one from the start page.',
     torText: 'deliberately normalizes these signals across all its users (same canvas, same reported resolution) so the fingerprint cannot tell anyone apart.',
-    incognitoText: 'It clears cookies and local history, but the canvas, the GPU, the fonts, and the audio your browser exposes stay the same — which is why the board recognized you anyway.',
+    incognitoText: 'It clears cookies and local history, but the canvas, the GPU, the fonts, and the audio your browser exposes stay the same - which is why the board recognized you anyway.',
     firefoxText: '(about:config) reduces the precision of several of these signals. Canvas/WebGL blocking extensions help too, though paradoxically a fingerprint that is "too blocked" can become unique in itself.',
     noBehaviorData: 'no behavior data yet',
     deviceLabel: 'Device',
@@ -1227,7 +1227,7 @@ const en = {
     incognitoWarning: 'Incognito mode does not protect you.',
   },
   cvDownload: {
-    title: 'Preparing your download — CodeByMike',
+    title: 'Preparing your download - CodeByMike',
     description: 'Your CV download will be ready in a moment.',
     heading: 'Preparing your download…',
     body: 'One moment, this should not take long.',
@@ -1236,15 +1236,15 @@ const en = {
     starting: 'Ready, starting the download…',
   },
   platziconf: {
-    title: 'Platzi Conf — CodeByMike',
-    description: 'We met at Platzi Conf. Here is some of what I know — stack, engineering, and real projects running in production.',
+    title: 'Platzi Conf - CodeByMike',
+    description: 'We met at Platzi Conf. Here is some of what I know - stack, engineering, and real projects running in production.',
     eventLine: 'Bogotá · Aug 29, 2026',
     h1: 'Hi, we met at Platzi Conf.',
-    lead: "I'd like to know whether I can contribute to your idea or project. Here is some of what I know — no slides, just what I have running in production right now.",
+    lead: "I'd like to know whether I can contribute to your idea or project. Here is some of what I know - no slides, just what I have running in production right now.",
     iam: "I'm Mike",
     whatIDo: 'I build full-stack software end to end: architecture, performance, and user experience, with security and observability as part of the design from day one, not a patch at the end. This very site is the lab: a micro-SIEM of my own, monitoring with real SLOs, payments with idempotency, and a chaos engineering suite that injects controlled failures to prove the alerts actually work.',
     stackHeading: 'Stack',
-    stackNote: 'And the differentiator: security and observability built in-house — micro-SIEM, durable rate limiting, SLOs with an error budget, fail-open chaos engineering.',
+    stackNote: 'And the differentiator: security and observability built in-house - micro-SIEM, durable rate limiting, SLOs with an error budget, fail-open chaos engineering.',
     uptimeLabel: 'Aggregated uptime',
     monitoredServices: 'Monitored services',
     seeDetail: 'See the full detail →',

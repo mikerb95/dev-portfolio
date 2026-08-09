@@ -1,4 +1,4 @@
-# RFC 9116 — Política de divulgación responsable de vulnerabilidades
+# RFC 9116 - Política de divulgación responsable de vulnerabilidades
 # https://codebymike.tech/security
 
 Contact: mailto:mikedrb@proton.me

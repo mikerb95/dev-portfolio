@@ -1,6 +1,6 @@
 // Selección de campo traducido para contenido que vive en base de datos
 // (`projects`, `education_milestones`). Módulo puro: sin `../db`, sin
-// `node:crypto` — se puede importar desde cualquier lado y testear sin BD.
+// `node:crypto` - se puede importar desde cualquier lado y testear sin BD.
 //
 // El contenido en BD se traduce fila por fila y a mano, así que en cualquier
 // momento hay filas con traducción y filas sin ella. La regla es explícita:
@@ -46,7 +46,7 @@ export function pickLocalized<T extends object, K extends string & keyof T>(
  * el sitemap anuncia la URL `/en/...` de la fila: anunciar una URL en inglés
  * cuyo contenido saldría en español es thin content a ojos de un buscador.
  *
- * `requiredFields` son los campos que hacen a la página realmente traducida —
+ * `requiredFields` son los campos que hacen a la página realmente traducida -
  * normalmente el título. Un campo secundario sin traducir (una descripción)
  * degrada al español sin invalidar la página.
  */

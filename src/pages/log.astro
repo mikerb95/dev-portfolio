@@ -44,7 +44,7 @@ const L = (path: string) => localizedHref(path, locale)
       ].map((s) => (
         <div class="rounded-2xl glass p-5">
           <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">{s.label}</div>
-          <div class="text-3xl font-medium text-ink-50 tracking-tight animate-pulse stat-value" id={s.id}>—</div>
+          <div class="text-3xl font-medium text-ink-50 tracking-tight animate-pulse stat-value" id={s.id}>-</div>
           <div class="text-[10px] font-mono text-ink-300 mt-1">{s.unit}</div>
         </div>
       ))}
@@ -115,7 +115,7 @@ const L = (path: string) => localizedHref(path, locale)
           {l.loadPause}
         </div>
         <p class="text-[14.5px] text-ink-100 max-w-md leading-relaxed">
-          {l.loadPauseBodyPrefix} <span id="feed-more-count" class="text-ink-50 font-medium">—</span> {l.loadPauseBodySuffix}
+          {l.loadPauseBodyPrefix} <span id="feed-more-count" class="text-ink-50 font-medium">-</span> {l.loadPauseBodySuffix}
         </p>
         <button
           id="feed-more-btn"
@@ -126,7 +126,7 @@ const L = (path: string) => localizedHref(path, locale)
           {l.loadMoreBtn}
         </button>
         <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
-          <span id="feed-more-remaining">—</span> {l.remainingCommits}
+          <span id="feed-more-remaining">-</span> {l.remainingCommits}
         </div>
       </div>
     </div>

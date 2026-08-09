@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Iteraciones — Portfolio (codebymike.tech / dev-portfolio)
+// Iteraciones - Portfolio (codebymike.tech / dev-portfolio)
 // Tablero XP derivado del historial REAL de GitHub (mikerb95/dev-portfolio).
 // Mismo formato que src/data/iteraciones.ts (DobleYo); se inyecta como props
 // en <IteracionesBoard> para reutilizar el mismo motor de render sin duplicar
@@ -225,7 +225,7 @@ export const ITERACIONES: Iteracion[] = [
         id: 'PF-VS-04', titulo: 'Como administrador, quiero una demo read-only del panel admin para mostrar a reclutadores',
         tipo: 'spike', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
         fecha: '2026-07-15', tags: ['demo', 'fase-10'],
-        dod: [ok('Entregada en Fase 10 — ver PF-LD-02.')],
+        dod: [ok('Entregada en Fase 10 - ver PF-LD-02.')],
       },
     ],
   },
@@ -283,7 +283,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-11',
     commits: 20,
     resumen:
-      'Panel público /engineering que reúne solo señales verificables de producción: Core Web Vitals p75 de usuarios reales (RUM), resultado del pipeline CI (tests, cobertura, duración) y disponibilidad agregada del monitoreo. Cada card explica al hover de dónde sale el número y contra qué umbral se compara —nada de badges decorativos. Se le suma una prueba de vida que consulta datos frescos desde el navegador para demostrar que nada está hardcodeado.',
+      'Panel público /engineering que reúne solo señales verificables de producción: Core Web Vitals p75 de usuarios reales (RUM), resultado del pipeline CI (tests, cobertura, duración) y disponibilidad agregada del monitoreo. Cada card explica al hover de dónde sale el número y contra qué umbral se compara -nada de badges decorativos. Se le suma una prueba de vida que consulta datos frescos desde el navegador para demostrar que nada está hardcodeado.',
     historias: [
       {
         id: 'PF-EN-01', titulo: 'Como visitante técnico, quiero un panel público con métricas de ingeniería reales (Web Vitals, CI, disponibilidad)',
@@ -317,7 +317,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-11',
     commits: 21,
     resumen:
-      'Demo educativa de device fingerprinting: varios dispositivos entran a una sala por QR y un tablero en vivo los reconoce por las señales que expone el navegador —sin cookies ni login— demostrando que el incógnito no evade la re-identificación. Recolector propio contrastado con FingerprintJS, capa de comportamiento y cierre pedagógico sobre defensas. Entregado en la rama lab-fingerprinting (PR #2).',
+      'Demo educativa de device fingerprinting: varios dispositivos entran a una sala por QR y un tablero en vivo los reconoce por las señales que expone el navegador (sin cookies ni login) demostrando que el incógnito no evade la re-identificación. Recolector propio contrastado con FingerprintJS, capa de comportamiento y cierre pedagógico sobre defensas. Entregado en la rama lab-fingerprinting (PR #2).',
     historias: [
       {
         id: 'PF-FP-01', titulo: 'Como visitante, quiero escanear un QR y ver cómo un tablero reconoce mi dispositivo en vivo sin cookies',
@@ -390,8 +390,8 @@ export const ITERACIONES: Iteracion[] = [
         tipo: 'bug', valor: 'medio', col: 'cola', par: 'MR', agente: 'Claude',
         tags: ['webauthn', 'passkey', 'ux', 'pendiente'],
         dod: [
-          pend('Detectado en uso real (2026-07-12): con 2+ llaves registradas, el diálogo nativo "Choose a passkey" de Chrome muestra "mikerb95 / USB security key" repetido para cada una, en vez del nickname (YubiKey 1, YubiKey 2) — porque userDisplayName se fija en generateRegistrationOptions con el login, no con un nombre por llave, y queda grabado en el hardware al registrar.'),
-          pend('Fix: pasar un userDisplayName distinto por llave (ej. incluir el nickname) en buildRegistrationOptions, y re-registrar las llaves existentes para que tomen el nuevo nombre — el cambio no aplica retroactivo a credenciales ya grabadas.'),
+          pend('Detectado en uso real (2026-07-12): con 2+ llaves registradas, el diálogo nativo "Choose a passkey" de Chrome muestra "mikerb95 / USB security key" repetido para cada una, en vez del nickname (YubiKey 1, YubiKey 2) - porque userDisplayName se fija en generateRegistrationOptions con el login, no con un nombre por llave, y queda grabado en el hardware al registrar.'),
+          pend('Fix: pasar un userDisplayName distinto por llave (ej. incluir el nickname) en buildRegistrationOptions, y re-registrar las llaves existentes para que tomen el nuevo nombre - el cambio no aplica retroactivo a credenciales ya grabadas.'),
         ],
       },
     ],
@@ -512,7 +512,7 @@ export const ITERACIONES: Iteracion[] = [
         fecha: '2026-07-15', tags: ['portal', 'dashboard', 'fase-11'],
         dod: [
           ok('Página de overview del proyecto con HealthCard (salud de monitores) y MilestoneTimeline (hitos con estado).'),
-          ok('Selector de proyecto (tabs) cuando el cliente tiene más de uno, resuelto por ?p= solo contra la lista de proyectos de su propia sesión — un id ajeno cae al primero propio.'),
+          ok('Selector de proyecto (tabs) cuando el cliente tiene más de uno, resuelto por ?p= solo contra la lista de proyectos de su propia sesión - un id ajeno cae al primero propio.'),
           ok('Módulo invoices/invoice_items con CRUD completo, numeración correlativa y estados (draft/sent/paid/overdue/void).'),
           ok('Centro de notificaciones in-app e hilos de mensajería (portal_threads/portal_messages) con conteo de no leídos.'),
         ],
@@ -752,7 +752,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-17',
     commits: 22,
     resumen:
-      'Nueva herramienta en /lab: cualquier visitante pega una URL y recibe un diagnóstico en vivo (SEO, Core Web Vitals vía Lighthouse/PageSpeed, accesibilidad, certificado TLS) sin arriesgar el propio servidor — resolución de hostname y bloqueo de rangos privados antes de hacer el fetch (protección SSRF). El fetch del HTML se memoiza para que las distintas pruebas no dupliquen la petición al sitio analizado.',
+      'Nueva herramienta en /lab: cualquier visitante pega una URL y recibe un diagnóstico en vivo (SEO, Core Web Vitals vía Lighthouse/PageSpeed, accesibilidad, certificado TLS) sin arriesgar el propio servidor - resolución de hostname y bloqueo de rangos privados antes de hacer el fetch (protección SSRF). El fetch del HTML se memoiza para que las distintas pruebas no dupliquen la petición al sitio analizado.',
     historias: [
       {
         id: 'PF-SI-01', titulo: 'Como visitante, quiero analizar cualquier dominio público (SEO, performance, accesibilidad, TLS) desde el sitio',
@@ -960,7 +960,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-20',
     commits: 6,
     resumen:
-      'El fondo decorativo (3 gradientes radiales en un único ::after estático) se reemplaza por AmbientBlobs.astro: cada blob es su propia capa, desplazada al hacer scroll combinando senoidales de frecuencia mutuamente irracional por blob/eje para que el movimiento no se perciba mecánico ni repita en un ciclo corto, sin librería de ruido externa. Respeta prefers-reduced-motion (sin transform ni transición). Ajuste posterior de position/isolation en el body para que el nuevo layering no rompa el stacking context del resto del sitio. El footer, que tenía 12 enlaces bajo un solo grupo "Sitio", se reagrupó en 5 categorías temáticas (Sitio, Producto, Ingeniería, Operación, Redes/Contacto) con flex-wrap en vez de grid fijo — más fácil de escanear y de extender sin romper el layout en columnas angostas.',
+      'El fondo decorativo (3 gradientes radiales en un único ::after estático) se reemplaza por AmbientBlobs.astro: cada blob es su propia capa, desplazada al hacer scroll combinando senoidales de frecuencia mutuamente irracional por blob/eje para que el movimiento no se perciba mecánico ni repita en un ciclo corto, sin librería de ruido externa. Respeta prefers-reduced-motion (sin transform ni transición). Ajuste posterior de position/isolation en el body para que el nuevo layering no rompa el stacking context del resto del sitio. El footer, que tenía 12 enlaces bajo un solo grupo "Sitio", se reagrupó en 5 categorías temáticas (Sitio, Producto, Ingeniería, Operación, Redes/Contacto) con flex-wrap en vez de grid fijo - más fácil de escanear y de extender sin romper el layout en columnas angostas.',
     historias: [
       {
         id: 'PF-VIS-01', titulo: 'Como visitante, quiero un fondo ambiental que se sienta vivo al hacer scroll sin distraer del contenido',
@@ -1036,7 +1036,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-23',
     commits: 8,
     resumen:
-      'Cierra la sub-fase que la Fase 6 del LAB había dejado abierta: el SAST leía el código sin ejecutarlo, y faltaba el escaneo que ataca la aplicación corriendo. Se añade el workflow dast.yml con el baseline de OWASP ZAP contra el deployment de preview —nunca contra producción— y un parser del reporte JSON que convierte sus alertas en hallazgos del LAB, deduplicados por el mismo fingerprint que ya usaban npm audit y axe. Decisión deliberada: spider.parseRobotsTxt=false, porque un atacante tampoco respeta robots.txt y un escáner que sí lo hace deja sin mirar justo lo que se quiso esconder.',
+      'Cierra la sub-fase que la Fase 6 del LAB había dejado abierta: el SAST leía el código sin ejecutarlo, y faltaba el escaneo que ataca la aplicación corriendo. Se añade el workflow dast.yml con el baseline de OWASP ZAP contra el deployment de preview (nunca contra producción) y un parser del reporte JSON que convierte sus alertas en hallazgos del LAB, deduplicados por el mismo fingerprint que ya usaban npm audit y axe. Decisión deliberada: spider.parseRobotsTxt=false, porque un atacante tampoco respeta robots.txt y un escáner que sí lo hace deja sin mirar justo lo que se quiso esconder.',
     historias: [
       {
         id: 'PF-DA-01', titulo: 'Como administrador, quiero que la aplicación corriendo también se ataque de forma automatizada, no solo se lea el código',
@@ -1104,7 +1104,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-24',
     commits: 22,
     resumen:
-      'La auditoría del portal encontró que sus formularios eran mudos para un lector de pantalla: el resultado del envío se pintaba en pantalla pero nunca se anunciaba, y el foco quedaba donde estaba. Se añade un enlace de salto al contenido como primer elemento tabulable, una región aria-live que anuncia el resultado —incluidos los errores, no solo el camino feliz, porque un formulario que calla al fallar es peor que uno que no valida— y devolución explícita del foco a la confirmación tras enviar. En paralelo se incorpora la capa de movimiento del sitio público con Lenis (scroll suave) y GSAP (animaciones de entrada); se retira autoRaise de la inicialización de Lenis, que degradaba el rendimiento del scroll sin aportar nada visible.',
+      'La auditoría del portal encontró que sus formularios eran mudos para un lector de pantalla: el resultado del envío se pintaba en pantalla pero nunca se anunciaba, y el foco quedaba donde estaba. Se añade un enlace de salto al contenido como primer elemento tabulable, una región aria-live que anuncia el resultado (incluidos los errores, no solo el camino feliz, porque un formulario que calla al fallar es peor que uno que no valida) y devolución explícita del foco a la confirmación tras enviar. En paralelo se incorpora la capa de movimiento del sitio público con Lenis (scroll suave) y GSAP (animaciones de entrada); se retira autoRaise de la inicialización de Lenis, que degradaba el rendimiento del scroll sin aportar nada visible.',
     historias: [
       {
         id: 'PF-PA-01', titulo: 'Como cliente que navega con teclado o lector de pantalla, quiero saber qué pasó al enviar un formulario del portal',
@@ -1137,7 +1137,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-27',
     commits: 40,
     resumen:
-      'Los procesos de negocio del sistema (monitoreo, cobro de campo, acceso al portal, respuesta a incidentes de seguridad) estaban descritos en prosa pero no modelados. Se construye un motor de layout BPMN propio en vez de incrustar una imagen exportada de otra herramienta: los diagramas se declaran como datos en src/data/bpmn.ts y src/lib/bpmn-layout.ts calcula carriles, canales de las transiciones y posición de las etiquetas. La decisión clave fue detectar colisiones de etiquetas en el propio layout —una etiqueta encima de una flecha convierte un diagrama correcto en uno ilegible, y revisarlo a ojo no escala—. Se añaden eventos temporizadores de frontera con sus duraciones, una versión imprimible con portada para entregar en físico y un script de exportación a SVG/PNG. En paralelo se cierra el taller de testing de caja negra y se actualiza el documento de arquitectura (DEA).',
+      'Los procesos de negocio del sistema (monitoreo, cobro de campo, acceso al portal, respuesta a incidentes de seguridad) estaban descritos en prosa pero no modelados. Se construye un motor de layout BPMN propio en vez de incrustar una imagen exportada de otra herramienta: los diagramas se declaran como datos en src/data/bpmn.ts y src/lib/bpmn-layout.ts calcula carriles, canales de las transiciones y posición de las etiquetas. La decisión clave fue detectar colisiones de etiquetas en el propio layout (una etiqueta encima de una flecha convierte un diagrama correcto en uno ilegible, y revisarlo a ojo no escala). Se añaden eventos temporizadores de frontera con sus duraciones, una versión imprimible con portada para entregar en físico y un script de exportación a SVG/PNG. En paralelo se cierra el taller de testing de caja negra y se actualiza el documento de arquitectura (DEA).',
     historias: [
       {
         id: 'PF-BP-01', titulo: 'Como jurado, quiero ver los procesos de negocio modelados en BPMN, no descritos en prosa',
@@ -1172,7 +1172,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-29',
     commits: 95,
     resumen:
-      'El sitio no tenía ninguna capa de idioma. Se levanta la infraestructura completa (Astro i18n en modo manual, diccionarios tipados con paridad forzada por TypeScript, formateo por locale) y se traducen el chrome global y siete páginas de marca. Dos decisiones sostienen todo lo demás. La primera es de seguridad: los guardas de ruta —rate limiting, bloqueo en modo demo, gate de admin, portal— comparan rutas literales, así que un /en/admin sin normalizar habría sido una copia del panel sin vigilancia; el middleware normaliza el pathname una sola vez antes de clasificar nada y las rutas privadas responden 404 bajo cualquier prefijo. La segunda salió de un fallo real: los helpers calculaban la forma de una URL /en sin saber si esa página existía, así que con 7 de ~16 páginas traducidas el nav, el footer y el sitemap anunciaban 404 a los usuarios y a Google. Se introduce TRANSLATED_ROUTES como única fuente de verdad, los enlaces caen al español cuando no hay traducción y el middleware redirige el resto con 302 (no 308: esas URLs deben empezar a servir cuando se traduzcan).',
+      'El sitio no tenía ninguna capa de idioma. Se levanta la infraestructura completa (Astro i18n en modo manual, diccionarios tipados con paridad forzada por TypeScript, formateo por locale) y se traducen el chrome global y siete páginas de marca. Dos decisiones sostienen todo lo demás. La primera es de seguridad: los guardas de ruta (rate limiting, bloqueo en modo demo, gate de admin, portal) comparan rutas literales, así que un /en/admin sin normalizar habría sido una copia del panel sin vigilancia; el middleware normaliza el pathname una sola vez antes de clasificar nada y las rutas privadas responden 404 bajo cualquier prefijo. La segunda salió de un fallo real: los helpers calculaban la forma de una URL /en sin saber si esa página existía, así que con 7 de ~16 páginas traducidas el nav, el footer y el sitemap anunciaban 404 a los usuarios y a Google. Se introduce TRANSLATED_ROUTES como única fuente de verdad, los enlaces caen al español cuando no hay traducción y el middleware redirige el resto con 302 (no 308: esas URLs deben empezar a servir cuando se traduzcan).',
     historias: [
       {
         id: 'PF-I18-01', titulo: 'Como visitante internacional, quiero leer el sitio en inglés sin perder la página en la que estoy',
@@ -1231,7 +1231,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-29',
     commits: 14,
     resumen:
-      'La gráfica de latencia de /status pedía el historial reciente monitor por monitor: una consulta por monitor en cada carga de una página pública y cacheada. Se reescribe como una sola lectura con UNION ALL, se añaden los índices compuestos que faltaban en monitor_checks y ci_runs, y se ajusta el Cache-Control de la API. Al probarlo apareció el límite real: Turso corta los compound SELECT en 50 ramas, así que la versión "una rama por monitor" habría sido un 500 en /status el día que existan 51 monitores — se resuelve leyendo por lotes, con un test que ejerce ese techo en vez de confiar en que no se alcance. En paralelo se encendió la demo pública en producción, y re-sembrarla destapó un bug propio: el pragma que apaga las FK viajaba en su propia sesión HTTP contra Turso y se perdía, así que los drop table fallaban.',
+      'La gráfica de latencia de /status pedía el historial reciente monitor por monitor: una consulta por monitor en cada carga de una página pública y cacheada. Se reescribe como una sola lectura con UNION ALL, se añaden los índices compuestos que faltaban en monitor_checks y ci_runs, y se ajusta el Cache-Control de la API. Al probarlo apareció el límite real: Turso corta los compound SELECT en 50 ramas, así que la versión "una rama por monitor" habría sido un 500 en /status el día que existan 51 monitores - se resuelve leyendo por lotes, con un test que ejerce ese techo en vez de confiar en que no se alcance. En paralelo se encendió la demo pública en producción, y re-sembrarla destapó un bug propio: el pragma que apaga las FK viajaba en su propia sesión HTTP contra Turso y se perdía, así que los drop table fallaban.',
     historias: [
       {
         id: 'PF-LT-01', titulo: 'Como visitante de /status, quiero que la página no pague una consulta por monitor para pintar la latencia',
@@ -1266,7 +1266,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-30',
     commits: 69,
     resumen:
-      'El portal servía datos de tiempo real (los checks entran cada ~5 min) en una interfaz que no se movía hasta recargar. Se cierra con polling de un digest, no con SSE ni WebSockets: Turso no tiene pub/sub, así que el servidor tendría que sondear igual y encima pagando la conexión abierta. Un único ciclo en el layout emite un CustomEvent y lo escuchan tres suscriptores —campana, dashboard e hilo abierto—, así que tres partes de la página se refrescan con una sola petición. Detrás llega el feed de actividad: portal_activity con clientId denormalizado a propósito, porque la consulta más caliente del portal no debe depender de un JOIN, y un emisor fire-and-forget cableado en los cinco puntos que ya notificaban. El tipo deploy se quedó fuera y está declarado como tal: ci_runs no tiene projectId y atribuir una corrida a un cliente exigiría cambiar el modelo.',
+      'El portal servía datos de tiempo real (los checks entran cada ~5 min) en una interfaz que no se movía hasta recargar. Se cierra con polling de un digest, no con SSE ni WebSockets: Turso no tiene pub/sub, así que el servidor tendría que sondear igual y encima pagando la conexión abierta. Un único ciclo en el layout emite un CustomEvent y lo escuchan tres suscriptores (campana, dashboard e hilo abierto), así que tres partes de la página se refrescan con una sola petición. Detrás llega el feed de actividad: portal_activity con clientId denormalizado a propósito, porque la consulta más caliente del portal no debe depender de un JOIN, y un emisor fire-and-forget cableado en los cinco puntos que ya notificaban. El tipo deploy se quedó fuera y está declarado como tal: ci_runs no tiene projectId y atribuir una corrida a un cliente exigiría cambiar el modelo.',
     historias: [
       {
         id: 'PF-PV-01', titulo: 'Como cliente, quiero ver la respuesta a mi mensaje sin recargar la página',
@@ -1350,7 +1350,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-07-31',
     commits: 93,
     resumen:
-      'Cuatro diagramas UML más, con el enfoque ya probado en BPMN: modelo tipado en src/data, motor de layout propio en src/lib, SVG generado en el servidor y geometría verificada por tests. Mermaid se descartó por incapacidad y no por gusto: no tiene diagrama de comunicación ni de despliegue, y su flowchart no es notación de actividad. La sorpresa fue /docs/diagrama-componentes, que llevaba meses siendo un flowchart de despliegue sin una sola interfaz declarada —es decir, la otra vista duplicada—; se rehízo con interfaces provistas y requeridas, y un test falla si algún componente vuelve a nombrar un proveedor de infraestructura. Los tests verifican la notación, no solo la geometría: toda decisión con guarda en cada salida, ninguna unión con dos, ningún nodo inalcanzable, numeración decimal sin huérfanos. En paralelo entra Docker donde sí aporta —entorno reproducible y libSQL real en pruebas— y explícitamente no como runtime de producción.',
+      'Cuatro diagramas UML más, con el enfoque ya probado en BPMN: modelo tipado en src/data, motor de layout propio en src/lib, SVG generado en el servidor y geometría verificada por tests. Mermaid se descartó por incapacidad y no por gusto: no tiene diagrama de comunicación ni de despliegue, y su flowchart no es notación de actividad. La sorpresa fue /docs/diagrama-componentes, que llevaba meses siendo un flowchart de despliegue sin una sola interfaz declarada (es decir, la otra vista duplicada); se rehízo con interfaces provistas y requeridas, y un test falla si algún componente vuelve a nombrar un proveedor de infraestructura. Los tests verifican la notación, no solo la geometría: toda decisión con guarda en cada salida, ninguna unión con dos, ningún nodo inalcanzable, numeración decimal sin huérfanos. En paralelo entra Docker donde sí aporta (entorno reproducible y libSQL real en pruebas) y explícitamente no como runtime de producción.',
     historias: [
       {
         id: 'PF-UML-01', titulo: 'Como evaluador, quiero ver la vista de red y las interacciones en notación UML de verdad',
@@ -1398,7 +1398,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-08-07',
     commits: 1,
     resumen:
-      'Se reemplaza entero el sistema de presentaciones (imágenes PNG por proyecto, sincronizadas por polling) por decks HTML autónomos con sesiones efímeras. Tres vistas sobre una misma sesión —proyector, control remoto y público— y un PIN de cuatro caracteres servido en la raíz del dominio. El estado vivo sale de Turso y pasa a Redis con TTL; el tiempo real se resuelve sin sostener ni una sola invocación abierta durante la charla.',
+      'Se reemplaza entero el sistema de presentaciones (imágenes PNG por proyecto, sincronizadas por polling) por decks HTML autónomos con sesiones efímeras. Tres vistas sobre una misma sesión (proyector, control remoto y público) y un PIN de cuatro caracteres servido en la raíz del dominio. El estado vivo sale de Turso y pasa a Redis con TTL; el tiempo real se resuelve sin sostener ni una sola invocación abierta durante la charla.',
     historias: [
       {
         id: 'PF-PR-01', titulo: 'Como presentador, quiero proyectar desde cualquier pantalla y controlarla desde mi celular',
@@ -1408,7 +1408,7 @@ export const ITERACIONES: Iteracion[] = [
           ok('Tres vistas sobre una sesión: /present/[sessionId] proyecta, /remote/[sessionId] controla y /[pin] sigue en sincronía.'),
           ok('El control remoto no carga el iframe del deck: las notas salen de deck_slides, extraídas al subir el archivo.'),
           ok('Layout de dos mitades sin scroll, botones de 72 px, Wake Lock y vibración corta, todo con degradación silenciosa.'),
-          ok('El deck se sirve desde /decks/[id].html —mismo origen— porque el control por DOM del iframe no funciona contra una URL de blob.'),
+          ok('El deck se sirve desde /decks/[id].html (mismo origen) porque el control por DOM del iframe no funciona contra una URL de blob.'),
         ],
       },
       {
@@ -1429,7 +1429,7 @@ export const ITERACIONES: Iteracion[] = [
         dod: [
           ok('El público se suscribe DIRECTAMENTE al bus de Upstash con un token de solo lectura; Vercel solo trabaja al crear la sesión, al dar el snapshot y en cada comando.'),
           ok('Dos bases separadas: estado (privada, con el secreto del presentador) y bus (token público, solo números de slide).'),
-          ok('Tres capas de sincronía: bus, resincronización cada 10 s y polling de rescate — pub/sub no garantiza entrega.'),
+          ok('Tres capas de sincronía: bus, resincronización cada 10 s y polling de rescate - pub/sub no garantiza entrega.'),
           ok('El servidor es la fuente de verdad: valida rango, persiste y reemite; el cliente descarta mensajes con versión anterior.'),
           ok('tests/present-sync.test.ts levanta dos clientes y comprueba que el salto llega a ambos, en orden, y que sin secreto no se mueve nada.'),
         ],

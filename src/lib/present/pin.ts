@@ -51,7 +51,7 @@ export function isPinShape(raw: string | null | undefined): boolean {
 /**
  * Forma canónica de un PIN para buscarlo en Redis. `/A7B3` y `/a7b3` son el
  * mismo PIN: nadie escribe mayúsculas a mano desde un celular y el QR ya no
- * distingue. Devuelve null si no tiene la forma válida — quien llama nunca
+ * distingue. Devuelve null si no tiene la forma válida - quien llama nunca
  * debe construir una clave de Redis con texto sin validar.
  */
 export function normalizePin(raw: string | null | undefined): string | null {
@@ -109,7 +109,7 @@ export class PinExhaustedError extends Error {
  *
  * El reintento es la parte que importa. Con 203.136 combinaciones y un puñado
  * de sesiones vivas, la probabilidad de que 20 intentos seguidos colisionen es
- * indistinguible de cero — si se agotan, es que Redis está devolviendo basura,
+ * indistinguible de cero - si se agotan, es que Redis está devolviendo basura,
  * y entonces lanzar es correcto: presentar con un PIN que no resuelve es peor
  * que no presentar.
  */

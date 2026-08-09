@@ -2,7 +2,7 @@ import { expect, ipDePrueba, test } from './fixtures'
 
 // Portal de clientes: el gate, la demo pública y el flujo de pago de punta a
 // punta. Los datos salen de scripts/seed-demo.mjs (cliente Altiplano con
-// portal habilitado, 3 facturas semilla) sembrado en AMBAS bases e2e — la
+// portal habilitado, 3 facturas semilla) sembrado en AMBAS bases e2e - la
 // demo pública siempre entra por TURSO_DEMO_URL, nunca por la principal.
 
 test.describe('portal · gate', () => {
@@ -96,7 +96,7 @@ test.describe('portal · demo pública', () => {
 
     // Por los botones reales, no por page.request: ese cliente HTTP de
     // Playwright no reproduce fielmente los headers que pone un fetch() del
-    // navegador (en particular el Content-Type), y aquí eso SÍ importa — la
+    // navegador (en particular el Content-Type), y aquí eso SÍ importa - la
     // protección CSRF de Astro decide por ese header.
     await page.goto('/portal/facturas/2')
     await page.getByRole('button', { name: 'Pagar ahora' }).click()

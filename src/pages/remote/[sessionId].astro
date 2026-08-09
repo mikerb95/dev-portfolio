@@ -6,7 +6,7 @@
 //
 // La ruta está en el matcher `isAdmin` del middleware: sin sesión de admin no
 // se llega, y el secreto del presentador que autoriza los comandos se entrega
-// en el HTML de esta página — nunca en una URL, nunca a la vista del público.
+// en el HTML de esta página - nunca en una URL, nunca a la vista del público.
 //
 // Aquí NO se carga el iframe del deck. Cargar el deck entero en un móvil para
 // leer un atributo sería absurdo: las notas vienen de `deck_slides`, que se
@@ -47,7 +47,7 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
         <section class="notes-pane">
           <header class="notes-head">
             <span class="counter mono" id="counter">–/{session.totalSlides}</span>
-            <span class="label" id="label">—</span>
+            <span class="label" id="label">-</span>
             <span class="conn" id="conn" title="Estado de la conexión" aria-live="polite"></span>
           </header>
           <div class="notes" id="notes" tabindex="0">
@@ -359,7 +359,7 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
 
       const slide = slides.find((s) => s.idx === snap.currentSlide)
       counter.textContent = `${snap.currentSlide + 1}/${snap.totalSlides}`
-      label.textContent = slide?.label ?? '—'
+      label.textContent = slide?.label ?? '-'
 
       if (slide?.notes) {
         notes.textContent = slide.notes
@@ -409,7 +409,7 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
     // ── Pantalla encendida ──────────────────────────────────────────────────
     // Un celular que se apaga a los 30 segundos obliga a desbloquearlo entre
     // slide y slide. Degradación silenciosa: si el navegador no trae Wake Lock,
-    // no se avisa de nada — no hay nada que el presentador pueda hacer al
+    // no se avisa de nada - no hay nada que el presentador pueda hacer al
     // respecto en mitad de una charla.
     let wakeLock: WakeLockSentinel | null = null
     const keepAwake = async () => {

@@ -33,7 +33,7 @@ export const GET: APIRoute = async (context) => {
   })
   if (!rate.allowed) {
     // 429 con Retry-After: el cliente JS lo traduce a backoff, no a error
-    // visible. No se registra en el micro-SIEM — pasarse de cupo aquí es una
+    // visible. No se registra en el micro-SIEM - pasarse de cupo aquí es una
     // pestaña entusiasta, no un ataque, y ensuciaría la señal de seguridad.
     return new Response(JSON.stringify({ error: 'demasiadas solicitudes' }), {
       status: 429,

@@ -85,7 +85,7 @@ const STATUS_STYLE: Record<string, string> = {
                       {inv.number}
                     </a>
                   </td>
-                  <td class="px-4 py-3 text-ink-200 text-[13px]">{inv.projectTitle ?? '—'}</td>
+                  <td class="px-4 py-3 text-ink-200 text-[13px]">{inv.projectTitle ?? '-'}</td>
                   <td class="px-4 py-3 text-ink-200 text-[13px]">{formatDate(inv.issuedAt)}</td>
                   <td class="px-4 py-3 text-[13px]">
                     <span class={inv.status === 'overdue' ? 'text-ember' : 'text-ink-200'}>{formatDate(inv.dueAt)}</span>

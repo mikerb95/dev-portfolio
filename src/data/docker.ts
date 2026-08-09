@@ -209,7 +209,7 @@ export const DECISIONES: Decision[] = [
     id: 'no-produccion',
     pregunta: '¿Por qué no se despliega el proyecto en un contenedor?',
     respuesta:
-      'Porque la plataforma de despliegue ya resuelve mejor ese problema. Contenerizar la aplicación costaría el edge, los despliegues de previsualización por Pull Request y el rollback automático del pipeline, sin ganar portabilidad real: la base de datos es un servicio gestionado y el resto del sistema es código. El contenedor entra donde sí hay un problema abierto — el entorno y las pruebas.',
+      'Porque la plataforma de despliegue ya resuelve mejor ese problema. Contenerizar la aplicación costaría el edge, los despliegues de previsualización por Pull Request y el rollback automático del pipeline, sin ganar portabilidad real: la base de datos es un servicio gestionado y el resto del sistema es código. El contenedor entra donde sí hay un problema abierto - el entorno y las pruebas.',
     acento: 'cyan',
   },
   {
@@ -272,7 +272,7 @@ export const HALLAZGOS: Hallazgo[] = [
     causa:
       'La sonda buscaba el texto «Permission denied» en los registros, pero el fallo real decía «Operation not permitted». Un mensaje distinto para el mismo problema bastó para que la prueba mintiera.',
     leccion:
-      'Es un caso de estudio de testing perfecto: un aserto sobre un mensaje de error es un aserto sobre una cadena de texto, no sobre el comportamiento. El criterio correcto era el que se usó después — comprobar que el servidor respondiera.',
+      'Es un caso de estudio de testing perfecto: un aserto sobre un mensaje de error es un aserto sobre una cadena de texto, no sobre el comportamiento. El criterio correcto era el que se usó después - comprobar que el servidor respondiera.',
   },
   {
     id: 'servidor-singleton',

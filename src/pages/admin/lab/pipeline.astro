@@ -95,9 +95,9 @@ const WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/ci.yml`
             <p class="text-zinc-200 font-medium">Aún no hay runs reportados.</p>
             <p>El workflow ya está en el repo. Para que reporte aquí, configura en GitHub → Settings → Secrets:</p>
             <ul class="list-disc pl-5 space-y-1 text-zinc-500">
-              <li><span class="font-mono text-zinc-300">LAB_INGEST_TOKEN</span> — el mismo valor que en Vercel (reporta métricas a este panel)</li>
-              <li><span class="font-mono text-zinc-300">VERCEL_TOKEN</span> — habilita el rollback automático</li>
-              <li><span class="font-mono text-zinc-300">NTFY_TOPIC</span> — push al teléfono si hay rollback</li>
+              <li><span class="font-mono text-zinc-300">LAB_INGEST_TOKEN</span> - el mismo valor que en Vercel (reporta métricas a este panel)</li>
+              <li><span class="font-mono text-zinc-300">VERCEL_TOKEN</span> - habilita el rollback automático</li>
+              <li><span class="font-mono text-zinc-300">NTFY_TOPIC</span> - push al teléfono si hay rollback</li>
             </ul>
           </div>`
         return
@@ -128,13 +128,13 @@ const WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/ci.yml`
                   <span class="inline-block px-2 py-0.5 rounded-md border text-xs ${CHIP[r.conclusion] ?? ''}">${LABEL[r.conclusion] ?? r.conclusion}</span>
                 </td>
                 <td class="py-2.5 pr-4 text-xs font-mono">
-                  ${r.testsPassed != null ? `<span class="text-emerald-400">${r.testsPassed} ✓</span>` : '—'}
+                  ${r.testsPassed != null ? `<span class="text-emerald-400">${r.testsPassed} ✓</span>` : '-'}
                   ${r.testsFailed ? `<span class="text-red-400 ml-1">${r.testsFailed} ✗</span>` : ''}
                 </td>
-                <td class="py-2.5 pr-4 text-xs font-mono">${r.coveragePct != null ? `${r.coveragePct}%` : '—'}</td>
-                <td class="py-2.5 pr-4 text-xs">${r.healthOk == null ? '—' : r.healthOk ? '🟢' : '🔴'}</td>
-                <td class="py-2.5 pr-4 text-xs text-zinc-500 font-mono">${r.durationMs != null ? `${Math.round(r.durationMs / 1000)}s` : '—'}</td>
-                <td class="py-2.5 text-xs text-zinc-500 font-mono">${r.createdAt ? fmt.format(new Date(r.createdAt)) : '—'}</td>
+                <td class="py-2.5 pr-4 text-xs font-mono">${r.coveragePct != null ? `${r.coveragePct}%` : '-'}</td>
+                <td class="py-2.5 pr-4 text-xs">${r.healthOk == null ? '-' : r.healthOk ? '🟢' : '🔴'}</td>
+                <td class="py-2.5 pr-4 text-xs text-zinc-500 font-mono">${r.durationMs != null ? `${Math.round(r.durationMs / 1000)}s` : '-'}</td>
+                <td class="py-2.5 text-xs text-zinc-500 font-mono">${r.createdAt ? fmt.format(new Date(r.createdAt)) : '-'}</td>
               </tr>
             `).join('')}
           </tbody>

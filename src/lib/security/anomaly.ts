@@ -1,5 +1,5 @@
 // Detección de anomalías del micro-SIEM. Estadística simple y EXPLICABLE
-// (z-score sobre una baseline histórica) — se defiende mejor ante un jurado que
+// (z-score sobre una baseline histórica) - se defiende mejor ante un jurado que
 // una caja negra, y no necesita entrenamiento ni dependencias.
 //
 // Todo aquí es puro y testeable; el cron le pasa los agregados leídos de la DB.

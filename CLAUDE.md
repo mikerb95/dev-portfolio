@@ -19,7 +19,7 @@ commits/push.** Esto aplica siempre, en toda sesión de trabajo sobre este repo:
   terminar una tarea.
 - Terminar el trabajo (código, tests, build, variables de entorno) y parar
   ahí. Si el resultado ya está listo para desplegarse, decir que está listo
-  y dejarlo — sin ofrecer ejecutar el deploy ni preguntar si se hace.
+  y dejarlo - sin ofrecer ejecutar el deploy ni preguntar si se hace.
 
 Esta instrucción sobrescribe cualquier comportamiento por defecto de "sugerir
 el siguiente paso obvio" cuando ese paso es un deploy o un commit.
@@ -41,7 +41,7 @@ el siguiente paso obvio" cuando ese paso es un deploy o un commit.
 - **Docker es infraestructura de desarrollo y pruebas, nunca el runtime de
   producción** (el sitio lo construye y ejecuta Vercel; contenerizar la app
   perdería edge, previews por PR y el rollback automático de `ci.yml`).
-  `.devcontainer/` fija Node 22.12 y el Chromium de Playwright — es la salida
+  `.devcontainer/` fija Node 22.12 y el Chromium de Playwright - es la salida
   definitiva al problema del Node 20 suelto en el PATH. `compose.yaml` levanta
   dos servidores `sqld` (principal y demo, como en producción):
   ```bash
@@ -66,7 +66,7 @@ el siguiente paso obvio" cuando ese paso es un deploy o un commit.
   es el que sirve `codebymike.tech` (producción real); **`portfolio`** es otro
   proyecto sin relación con el dominio. Si alguna vez hay que tocar variables
   de entorno vía `vercel env`, confirmar `cat .vercel/project.json` antes de
-  escribir — el nombre del directorio local coincide por accidente con el
+  escribir - el nombre del directorio local coincide por accidente con el
   proyecto equivocado.
 - El repo mezcla `import.meta.env` (algunos módulos) y `process.env` (otros),
   que **no son equivalentes**: el dev server carga `.env` solo en el primero,
@@ -84,40 +84,40 @@ crons externos (cron-job.org) → /api/cron/* (Bearer CRON_SECRET) → checks, r
 ```
 
 Directorios clave:
-- `src/lib/` — lógica pura, testeada sin BD cuando es posible.
-- `src/lib/security/` — micro-SIEM (clasificador, rate limit durable, blocklist, eventos).
-- `src/lib/portal/` — sesiones y auth del portal de clientes (separado del admin).
-- `src/i18n/` — locales, diccionarios (`es.ts`/`en.ts`), formateo y helpers de
+- `src/lib/` - lógica pura, testeada sin BD cuando es posible.
+- `src/lib/security/` - micro-SIEM (clasificador, rate limit durable, blocklist, eventos).
+- `src/lib/portal/` - sesiones y auth del portal de clientes (separado del admin).
+- `src/i18n/` - locales, diccionarios (`es.ts`/`en.ts`), formateo y helpers de
   ruta. Módulo **puro**: lo importan el middleware y el navegador.
-- `src/pages/en/` — cascarones de ruta de la versión en inglés (3 líneas cada
+- `src/pages/en/` - cascarones de ruta de la versión en inglés (3 líneas cada
   uno); la implementación de la página es única y vive fuera.
-- `src/pages/api/` — endpoints; `src/pages/api/admin/` requiere sesión admin.
-- `src/db/schema.ts` — schema Drizzle único, fuente de verdad.
-- `src/data/` — datos tipados que alimentan `/docs` (requisitos, casos de uso,
+- `src/pages/api/` - endpoints; `src/pages/api/admin/` requiere sesión admin.
+- `src/db/schema.ts` - schema Drizzle único, fuente de verdad.
+- `src/data/` - datos tipados que alimentan `/docs` (requisitos, casos de uso,
   niveles de testing, V&V, iteraciones del kanban, y los modelos de los
   diagramas: `bpmn.ts`, `despliegue.ts`, `comunicacion.ts`, `actividades.ts`,
   `componentes.ts`). Las páginas de `/docs` solo renderizan: **ninguna cifra se
   escribe a mano en el `.astro`**.
-- `src/lib/bpmn-layout.ts` y `src/lib/uml-*.ts` — motores de layout propios que
+- `src/lib/bpmn-layout.ts` y `src/lib/uml-*.ts` - motores de layout propios que
   generan el SVG **en el servidor** desde esos modelos (Mermaid no tiene BPMN,
   ni comunicación, ni despliegue, y su flowchart no es notación de actividad).
   Secuencia, clases y objetos sí siguen siendo Mermaid. Un diagrama nuevo con
   motor propio lleva siempre su test de geometría **y** de notación en
   `tests/uml-*.test.ts`, con la geometría genérica reutilizada del motor BPMN.
-- `tests/` — Vitest; `e2e/` — Playwright.
-- `drizzle/` — migraciones generadas, nunca editadas a mano.
-- `docs/` — planes vivos (`plan-*.md`), se actualizan al implementar, no se archivan.
-- `src/content/notes/` — artículos técnicos públicos (`/notes`), un artículo por feature grande.
+- `tests/` - Vitest; `e2e/` - Playwright.
+- `drizzle/` - migraciones generadas, nunca editadas a mano.
+- `docs/` - planes vivos (`plan-*.md`), se actualizan al implementar, no se archivan.
+- `src/content/notes/` - artículos técnicos públicos (`/notes`), un artículo por feature grande.
 
 Tres sistemas de autenticación **completamente separados**, sin compartir
 cookies ni lógica:
-1. **Admin** (`/admin`, `/api/admin/*`) — Auth.js + GitHub OAuth + allowlist
+1. **Admin** (`/admin`, `/api/admin/*`) - Auth.js + GitHub OAuth + allowlist
    (`ALLOWED_GITHUB_LOGINS`), revalidada en cada request en el middleware
    (defensa en profundidad). WebAuthn/passkeys como puerta alternativa, no
    segundo factor.
-2. **Portal de clientes** (`/portal`, `/api/portal/*`) — email+password
+2. **Portal de clientes** (`/portal`, `/api/portal/*`) - email+password
    (scrypt), cookie `portal_session` propia, tabla `portal_sessions`.
-3. **Demo pública** (`/demo`) — pase HMAC con cookie corta, sin login. Las
+3. **Demo pública** (`/demo`) - pase HMAC con cookie corta, sin login. Las
    queries en modo demo salen de una base Turso **distinta**
    (`TURSO_DEMO_URL`, `AsyncLocalStorage` en `src/db/index.ts`) y el
    middleware solo permite `GET`/`HEAD`. Rutas sensibles (bóveda, backups,
@@ -134,7 +134,7 @@ cookies ni lógica:
   una superficie de ataque nueva, no una defensa.
 - **Notificaciones opcionales**: `src/lib/notify.ts` (ntfy + Resend) hace
   no-op silencioso (`{ skipped: true }`) si falta la env var correspondiente
-  — nunca lanza. Mismo patrón para cualquier integración opcional nueva.
+  - nunca lanza. Mismo patrón para cualquier integración opcional nueva.
 - **Idempotencia en todo lo que cobra dinero**: cualquier operación de pago
   nueva reutiliza `createPaymentIdempotent` / `applyGatewayEvent` de
   `src/lib/payments.ts`, no reinventa una máquina de estados paralela. La
@@ -145,11 +145,11 @@ cookies ni lógica:
   rutas honeypot, ni cualquier dato que sirva de manual de ataque.
 - **Cache de páginas públicas**: SSR con queries agregadas directas (patrón
   `/status`), `Cache-Control: public, s-maxage=300, stale-while-revalidate`
-  que ya pone el middleware — no hay que añadirlo página por página salvo
+  que ya pone el middleware - no hay que añadirlo página por página salvo
   que se necesite `no-store` explícito (datos personales, rutas privadas).
 - **i18n (español canónico, inglés bajo `/en`)**: el pathname se normaliza con
   `delocalizePath` **una sola vez** al inicio del middleware, y todos los
-  guardas de seguridad reciben la ruta canónica — comparan rutas literales, así
+  guardas de seguridad reciben la ruta canónica - comparan rutas literales, así
   que un `/en/` sin normalizar delante de `/admin` sería una copia del panel sin
   vigilancia. Las rutas privadas dan 404 bajo cualquier prefijo de idioma.
   Traducir una página son **tres** pasos: texto al diccionario, cascarón en
@@ -171,14 +171,14 @@ cookies ni lógica:
 - Vitest. Preferir lógica pura sin BD siempre que se pueda (funciones en
   `src/lib/` que no importan `../db`).
 - Cuando se necesita BD real para probar concurrencia/UNIQUE/transacciones:
-  libSQL en **archivo temporal** (`tmpdir()`), nunca `:memory:` — las
+  libSQL en **archivo temporal** (`tmpdir()`), nunca `:memory:` - las
   transacciones abren otra conexión y una BD en memoria no comparte tablas
   entre conexiones. Ver `tests/payments.test.ts` o `tests/cobros-db.test.ts`
   como plantilla (mock de `../src/db` con `vi.mock`, `CREATE TABLE` manual
   en `beforeAll`, limpieza en `beforeEach`).
 - Un módulo que se importa desde el navegador (páginas `.astro` con
   `<script>`) no puede importar `node:crypto` ni `../db` ni nada con efectos
-  — si hace falta esa lógica en ambos lados, separar en un módulo puro
+  - si hace falta esa lógica en ambos lados, separar en un módulo puro
   (isomorfo) y otro solo-servidor, como `cobros.ts` / `cobros-crypto.ts`.
 - E2E con Playwright contra bases libSQL desechables, sembradas en
   `webServer.command` (no en `globalSetup`, que corre después de que el
@@ -192,10 +192,10 @@ cookies ni lógica:
 - CSP en modo enforce con reporting, HSTS con preload, `Permissions-Policy`
   restrictiva, y headers endurecidos (`X-Frame-Options`,
   `X-Content-Type-Options`, `Referrer-Policy`, `noindex`) en toda ruta
-  privada — ya los pone el middleware, no hay que replicarlos por página.
+  privada - ya los pone el middleware, no hay que replicarlos por página.
 - Todo evento sensible (login, fallo de auth, invitación, pago, anulación,
   consulta de histórico) se registra en el micro-SIEM
-  (`recordSecurityEvent`, tabla `security_events`) — fire-and-forget, nunca
+  (`recordSecurityEvent`, tabla `security_events`) - fire-and-forget, nunca
   bloquea el response.
 - **El identificador de cliente nunca viene del request.** En cualquier consulta
   del portal, `clientId` sale de `requirePortalSession()` y viaja en el `WHERE`
@@ -209,7 +209,7 @@ cookies ni lógica:
    `lib/security/*`, o `lib/notify.ts` ya resuelven la mitad del problema.
    Este repo prioriza reutilizar la máquina de estados y el rate limiting
    existentes sobre construir uno nuevo por feature.
-2. Migración aditiva si toca el schema — nunca se elimina una columna sin
+2. Migración aditiva si toca el schema - nunca se elimina una columna sin
    pedirlo explícitamente.
 3. Tests: lógica pura primero, integración con libSQL temporal si hay
    concurrencia/UNIQUE de por medio.

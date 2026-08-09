@@ -1,4 +1,4 @@
-# CodeByMike — Portafolio + Panel de Control + Laboratorio de Ingeniería
+# CodeByMike - Portafolio + Panel de Control + Laboratorio de Ingeniería
 
 **En vivo: [codebymike.tech](https://codebymike.tech)**
 
@@ -28,15 +28,15 @@ sobre capas gratuitas.
 
 Cada módulo existe para demostrar una práctica concreta, con tests y datos reales:
 
-- **Monitoreo propio** — motor de uptime checks (latencia, SSL, incidentes) disparado por cron externo; alimenta `/status` y alertas push vía ntfy.
-- **SLO / error budget** — objetivos de disponibilidad calculados sobre los checks reales, con presupuesto de error visible.
-- **CI/CD + rollback** — pipeline en GitHub Actions que reporta cada corrida (estado, duración, cobertura) a la base vía ingesta autenticada; rollback automatizado.
-- **Chaos engineering** — inyección de fallos con flags de TTL corto (máx 15 min), fail-open, con `/admin` excluido por código.
-- **Micro-SIEM** — clasificador de amenazas OWASP en el middleware, rate limiting durable de dos capas, honeypots con tarpit, auto-block con TTL escalado, detección de anomalías por z-score, y vitrina pública con OPSEC (solo agregados). Plan completo en [`docs/plan-security-observability.md`](./docs/plan-security-observability.md).
-- **Pagos** — checkout con llaves de idempotencia y verificación de firma de webhooks (modo mock sin llaves reales).
-- **SAST + DAST + accesibilidad** — `npm audit` y CodeQL sobre el código, OWASP ZAP baseline contra el preview, y axe-core sobre las páginas públicas; todo desemboca en hallazgos rastreables con estado (abierto/resuelto/aceptado) en el panel del LAB.
-- **Mutation testing + contratos** — Stryker sobre `src/lib` (score real 87.2 %) y esquemas Zod que congelan la forma de las respuestas de la API.
-- **Fingerprinting demo** — [/lab/fingerprint](https://codebymike.tech/lab/fingerprint): identificación de dispositivos entre pestañas/salas.
+- **Monitoreo propio** - motor de uptime checks (latencia, SSL, incidentes) disparado por cron externo; alimenta `/status` y alertas push vía ntfy.
+- **SLO / error budget** - objetivos de disponibilidad calculados sobre los checks reales, con presupuesto de error visible.
+- **CI/CD + rollback** - pipeline en GitHub Actions que reporta cada corrida (estado, duración, cobertura) a la base vía ingesta autenticada; rollback automatizado.
+- **Chaos engineering** - inyección de fallos con flags de TTL corto (máx 15 min), fail-open, con `/admin` excluido por código.
+- **Micro-SIEM** - clasificador de amenazas OWASP en el middleware, rate limiting durable de dos capas, honeypots con tarpit, auto-block con TTL escalado, detección de anomalías por z-score, y vitrina pública con OPSEC (solo agregados). Plan completo en [`docs/plan-security-observability.md`](./docs/plan-security-observability.md).
+- **Pagos** - checkout con llaves de idempotencia y verificación de firma de webhooks (modo mock sin llaves reales).
+- **SAST + DAST + accesibilidad** - `npm audit` y CodeQL sobre el código, OWASP ZAP baseline contra el preview, y axe-core sobre las páginas públicas; todo desemboca en hallazgos rastreables con estado (abierto/resuelto/aceptado) en el panel del LAB.
+- **Mutation testing + contratos** - Stryker sobre `src/lib` (score real 87.2 %) y esquemas Zod que congelan la forma de las respuestas de la API.
+- **Fingerprinting demo** - [/lab/fingerprint](https://codebymike.tech/lab/fingerprint): identificación de dispositivos entre pestañas/salas.
 
 Queda pendiente la última fase del LAB (load testing con k6), detallada en
 [`docs/plan-lab-fases-pendientes.md`](./docs/plan-lab-fases-pendientes.md); el
@@ -47,7 +47,7 @@ roadmap general está en [`docs/plan-roadmap-2026-07.md`](./docs/plan-roadmap-20
 Las páginas de marca existen bajo el prefijo `/en` (español canónico, sin
 prefijo): hoy `/`, `/engineering`, `/tools`, `/security`, `/contact`,
 `/certifications` y `/architecture`, más el chrome global y un feed propio.
-Una sola implementación por página — la variante en inglés es un cascarón que
+Una sola implementación por página - la variante en inglés es un cascarón que
 reexporta la misma página y el locale sale de la URL del request.
 
 Lo que hace que esto no sea solo traducción: **los guardas de ruta comparan
@@ -81,7 +81,7 @@ certificaciones, monitores, seguridad y backups.
 esconder botones: los datos salen de una **base Turso distinta** (seleccionada
 por request con `AsyncLocalStorage`, ver `src/db/index.ts`), el middleware solo
 admite `GET`/`HEAD`, y las rutas que revelan credenciales o vuelcan datos están
-vetadas por patrón — incluidas las que son GET, como el revelado de la bóveda.
+vetadas por patrón - incluidas las que son GET, como el revelado de la bóveda.
 
 ```bash
 node scripts/seed-demo.mjs   # recrea el esquema y siembra los datos ficticios
@@ -94,7 +94,7 @@ y el panel se comporta exactamente como antes.
 
 Cada cliente entra con su propia cuenta (email + contraseña con scrypt, cookie y
 tabla de sesiones propias, sin compartir nada con el login del administrador) y
-ve sus facturas —descargables en PDF—, sus documentos, el avance por hitos de su
+ve sus facturas (descargables en PDF), sus documentos, el avance por hitos de su
 proyecto y un hilo de mensajería con el administrador.
 
 El requisito del que cuelga todo lo demás es el aislamiento entre clientes:
@@ -106,7 +106,7 @@ middleware y además en el endpoint de pago, que vive fuera del prefijo
 `/api/portal/` y se habría escapado del primer guard.
 
 El portal se refresca solo desde el 30 jul 2026: un digest que se sondea cada
-20 s (no SSE ni WebSockets — Turso no tiene pub/sub, así que el servidor
+20 s (no SSE ni WebSockets - Turso no tiene pub/sub, así que el servidor
 sondearía igual y encima pagando la conexión abierta), con un único ciclo en el
 layout y tres suscriptores: campana, dashboard e hilo abierto. Debajo, un feed
 de actividad por proyecto alimentado fire-and-forget desde los cinco puntos que
@@ -122,7 +122,7 @@ en un link corto público `/c/[code]` y consulta su histórico en `/mis-pagos`.
 
 Un cobro **es** una fila de `payments` con campos extra, no una tabla ni una
 máquina de estados paralela. El monto se firma siempre en el servidor: nunca
-viaja en la URL del mensaje. El teléfono tampoco es autenticación — solo el
+viaja en la URL del mensaje. El teléfono tampoco es autenticación - solo el
 token HMAC del link abre el historial completo; la consulta manual por número da
 una vista enmascarada con rate limiting fuerte.
 
@@ -144,8 +144,8 @@ aditivas), `docs/` (planes vivos).
 ## Tests
 
 **937 tests de Vitest** en 55 archivos y **47 e2e** de Playwright en 6 specs,
-repartidos en 15 niveles distintos de verificación. El recorrido completo —qué
-responde cada nivel y cuál es su punto ciego— está en
+repartidos en 15 niveles distintos de verificación. El recorrido completo (qué
+responde cada nivel y cuál es su punto ciego) está en
 [/docs/testing](https://codebymike.tech/docs/testing).
 
 ```bash
@@ -165,8 +165,8 @@ npm run test:mutation  # Stryker sobre src/lib
 
 ## Licencia
 
-**Software propietario — Todos los derechos reservados.**
-© 2026 Mike (@mikerb95) — codebymike.tech
+**Software propietario - Todos los derechos reservados.**
+© 2026 Mike (@mikerb95) - codebymike.tech
 
 Este repositorio es público **solo** con fines de portafolio y demostración.
 No se concede ningún permiso de uso, copia, modificación, distribución ni

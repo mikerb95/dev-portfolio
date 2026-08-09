@@ -27,7 +27,7 @@ export type CreateCobroResult = {
 
 /**
  * Busca la ficha del CRM por teléfono. Vínculo SUAVE: si no hay ficha, el cobro
- * simplemente queda suelto — cobrar un trabajo puntual no debe llenar el CRM de
+ * simplemente queda suelto - cobrar un trabajo puntual no debe llenar el CRM de
  * contactos que nunca vuelven.
  */
 export async function findClientByPhone(phoneE164: string): Promise<{ id: number; name: string } | null> {
@@ -74,7 +74,7 @@ export async function createCobro(input: CreateCobroInput): Promise<CreateCobroR
   })
 
   // Replay (doble clic): el cobro ya existe con su código y vencimiento. No se
-  // toca nada — reasignar el código rompería el link que quizá ya se envió.
+  // toca nada - reasignar el código rompería el link que quizá ya se envió.
   if (replayed || conflict) return { payment, replayed, conflict, client }
 
   const shortCode = await assignShortCode(payment.id)

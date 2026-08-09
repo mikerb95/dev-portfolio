@@ -173,7 +173,7 @@ const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', {
 })
 
 function ago(d: Date | null): string {
-  if (!d) return '—'
+  if (!d) return '-'
   const min = Math.round((now - d.getTime()) / 60_000)
   if (min < 1) return st.agoJustNow
   if (min < 60) return interpolate(st.agoMinutes, { n: min })
@@ -246,7 +246,7 @@ const healthLabel = st.healthLabel
       <span class="text-[15px] font-medium">{overallLabel}</span>
       <div class="ml-auto text-right">
         <div class={`font-mono text-[22px] leading-none tracking-tight ${globalUptime30 !== null && globalUptime30 >= OBJECTIVE ? 'text-lime' : 'text-ember'}`}>
-          {globalUptime30 === null ? '—' : `${globalUptime30}%`}
+          {globalUptime30 === null ? '-' : `${globalUptime30}%`}
         </div>
         <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-1">
           {st.uptimeAggregated} · {SLO_DAYS}d
@@ -315,7 +315,7 @@ const healthLabel = st.healthLabel
               <div class="flex items-center justify-between mb-1.5">
                 <span class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300">{st.liveLatency}</span>
                 <span class="ekg-now font-mono text-[11px] text-ink-100 tabular-nums" data-monitor-id={c.id}>
-                  {c.lastResponseMs != null ? `${c.lastResponseMs} ms` : '—'}
+                  {c.lastResponseMs != null ? `${c.lastResponseMs} ms` : '-'}
                 </span>
               </div>
               <div class={`ekg relative h-14 rounded-lg overflow-hidden bg-black/30 ring-1 ring-white/5 ${ekgColor[c.lastStatus ?? 'unknown']}`}
@@ -353,25 +353,25 @@ const healthLabel = st.healthLabel
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{interpolate(st.uptimeShort, { n: SLO_DAYS })}</div>
                 <div class={`font-mono ${c.slo.meetsObjective ? 'text-lime' : 'text-ember'}`}>
-                  {c.slo.sliPct === null ? '—' : `${c.slo.sliPct}%`}
+                  {c.slo.sliPct === null ? '-' : `${c.slo.sliPct}%`}
                 </div>
               </div>
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{interpolate(st.uptimeShort, { n: WINDOW_DAYS })}</div>
-                <div class="font-mono text-ink-50">{c.uptime90 === null ? '—' : `${c.uptime90}%`}</div>
+                <div class="font-mono text-ink-50">{c.uptime90 === null ? '-' : `${c.uptime90}%`}</div>
               </div>
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{st.latencyAvgP95}</div>
                 <div class="font-mono text-ink-50">
-                  {c.avgMs30 === null ? '—' : `${c.avgMs30}`}
-                  <span class="text-ink-300"> · {c.p95Ms30 === null ? '—' : `${c.p95Ms30}`} ms</span>
+                  {c.avgMs30 === null ? '-' : `${c.avgMs30}`}
+                  <span class="text-ink-300"> · {c.p95Ms30 === null ? '-' : `${c.p95Ms30}`} ms</span>
                 </div>
               </div>
               <div>
                 <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{st.errorBudget}</div>
                 <div class="font-mono text-ink-50">
                   {c.slo.budgetRemainingPct === null
-                    ? '—'
+                    ? '-'
                     : `${c.slo.budgetRemainingPct}% (${formatMinutes(c.slo.remainingMinutes)})`}
                   <span class="text-ink-300"> · {healthLabel[c.health]}</span>
                 </div>
@@ -571,7 +571,7 @@ const healthLabel = st.healthLabel
     }
 
     function ago(ms) {
-      if (!ms) return '—'
+      if (!ms) return '-'
       const min = Math.round((Date.now() - ms) / 60_000)
       if (min < 1) return agoStrings.justNow
       if (min < 60) return agoStrings.minutes.replace('{n}', min)

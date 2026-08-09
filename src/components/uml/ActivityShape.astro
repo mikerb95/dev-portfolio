@@ -60,7 +60,7 @@ const textoX = n.type === 'sendSignal' ? n.cx - puntaW / 2 : n.type === 'acceptE
 }
 
 {/* Barra de bifurcación/unión: rectángulo relleno, sin borde. UML no distingue
-    fork de join por la figura sino por cuántas transiciones entran y salen —
+    fork de join por la figura sino por cuántas transiciones entran y salen -
     por eso el motor valida esa cardinalidad en vez de fiarla al dibujo. */}
 {(n.type === 'fork' || n.type === 'join') && <rect x={x} y={y} width={n.w} height={n.h} rx="2.5" fill="var(--uml-line)" />}
 
@@ -77,7 +77,7 @@ const textoX = n.type === 'sendSignal' ? n.cx - puntaW / 2 : n.type === 'acceptE
   )
 }
 
-{/* Final de FLUJO: círculo con aspa. Termina la rama y deja viva la actividad —
+{/* Final de FLUJO: círculo con aspa. Termina la rama y deja viva la actividad -
     es lo que hace visible el fail-open del micro-SIEM. */}
 {
   n.type === 'flowFinal' && (

@@ -65,7 +65,7 @@ export const POST: APIRoute = async (context) => {
   // pocas cosas del portal que no puede esperar a que yo mire el panel.
   sendPush(
     `Mensaje de ${session.client.company ?? session.client.name}`,
-    `${subject} — ${body.slice(0, 120)}`,
+    `${subject} - ${body.slice(0, 120)}`,
     { priority: 4, tags: 'speech_balloon', click: `${SITE_URL}/admin/portal/mensajes/${thread.id}` }
   ).catch(() => {})
 

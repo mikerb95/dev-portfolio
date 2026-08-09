@@ -404,7 +404,7 @@ describe('procesos BPMN documentados', () => {
 
       it('toda duración anotada en el diagrama aparece en la tabla de tiempos', () => {
         // Evita la deriva más fácil de cometer: cambiar el número del dibujo y
-        // dejar la tabla —que es la que cita el código— diciendo otra cosa.
+        // dejar la tabla (que es la que cita el código) diciendo otra cosa.
         const tabla = (proc.tiempos ?? []).map((t) => `${t.concepto} ${t.valor}`.toLowerCase()).join(' | ')
         const numeros = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? []
         for (const n of proc.nodes) {

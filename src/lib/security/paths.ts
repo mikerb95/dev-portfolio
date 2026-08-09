@@ -45,7 +45,7 @@ export function isCobroLinkPath(pathname: string): boolean {
  *
  * Merece un límite propio por la misma razón que `/c/[code]`: el PIN es corto
  * (cuatro caracteres) y es lo único que separa a cualquiera del deck. La forma
- * del PIN —dos letras y dos dígitos, sin caracteres ambiguos— es exactamente
+ * del PIN (dos letras y dos dígitos, sin caracteres ambiguos) es exactamente
  * la que hay que reconocer aquí; nada más de un segmento la cumple.
  *
  * Deliberadamente NO importa `lib/present/pin.ts`: este módulo lo carga el

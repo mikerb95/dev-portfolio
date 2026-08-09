@@ -5,7 +5,7 @@
 // equivalentes: en el dev server de Astro el .env se carga en import.meta.env
 // y NO en process.env, mientras que en Vercel las variables del proyecto
 // llegan por process.env. Leer solo una de las dos produce el peor bug posible
-// —funciona en un entorno y falla silenciosamente en el otro—, así que este
+// (funciona en un entorno y falla silenciosamente en el otro), así que este
 // helper mira ambas.
 
 /**

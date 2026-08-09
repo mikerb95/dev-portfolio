@@ -1,7 +1,7 @@
 // Almacén efímero de las sesiones de presentación (Redis, vía REST de Upstash).
 //
 // Por qué Redis y no Turso, teniendo Turso delante: el estado vivo de una
-// sesión es lo contrario de lo que una base relacional hace bien — se escribe
+// sesión es lo contrario de lo que una base relacional hace bien - se escribe
 // una vez por cambio de slide, se lee desde cada dispositivo del salón, no
 // tiene historia que conservar y debe desaparecer solo. Un TTL es exactamente
 // eso; emularlo en SQL sería una tabla más un cron de barrido para guardar algo
@@ -9,8 +9,8 @@
 //
 // Dos roles, UNA base por defecto:
 //
-//   · `state` — el PIN, el slide actual, los contadores.
-//   · `bus`   — solo pub/sub. Su token de SOLO LECTURA viaja al navegador del
+//   · `state` - el PIN, el slide actual, los contadores.
+//   · `bus`   - solo pub/sub. Su token de SOLO LECTURA viaja al navegador del
 //     público para que cada espectador se suscriba DIRECTAMENTE a Upstash.
 //
 // El diseño original pedía dos bases de Redis separadas, porque el JSON de la
@@ -18,8 +18,8 @@
 // leído. Ese secreto ya no se guarda: se deriva del id de sesión con HMAC (ver
 // `session.ts`), así que lo único que hay en Redis es el snapshot que el
 // público ya recibe por el PIN. Con eso, lo peor que puede hacer alguien con
-// el token público es leer por qué slide vamos — que es literalmente lo que
-// está viendo proyectado — y una sola base alcanza.
+// el token público es leer por qué slide vamos - que es literalmente lo que
+// está viendo proyectado - y una sola base alcanza.
 //
 // Las variables `PRESENT_BUS_*` siguen existiendo y ganan cuando están
 // puestas: separar el bus deja de ser un requisito de seguridad, pero sigue
@@ -217,8 +217,8 @@ let cached: PresentStore | null = null
  * Resolución del bus. `PRESENT_BUS_*` manda si está puesta; si no, se usa la
  * misma base del estado con las variables que la integración de Upstash ya
  * inyecta sola (`KV_REST_API_READ_ONLY_TOKEN` es el token de solo lectura que
- * Upstash documenta precisamente para clientes web). Así el caso normal —una
- * base, la que crea el Marketplace— funciona sin configurar nada a mano.
+ * Upstash documenta precisamente para clientes web). Así el caso normal (una
+ * base, la que crea el Marketplace) funciona sin configurar nada a mano.
  */
 const busUrl = () => serverEnv('PRESENT_BUS_REST_URL') || serverEnv('UPSTASH_REDIS_REST_URL')
 const busWriteToken = () =>
@@ -280,8 +280,8 @@ export function __setPresentStore(store: PresentStore | null): void {
  * El fallback en memoria es cómodo en local y catastrófico en producción, y el
  * fallo sería el peor posible: todo parece funcionar en la pantalla del
  * presentador mientras el público ve el slide equivocado, porque cada instancia
- * de Vercel tiene su propia copia del estado. Se corta al CREAR la sesión —
- * antes de proyectar nada — y no en mitad de la charla.
+ * de Vercel tiene su propia copia del estado. Se corta al CREAR la sesión -
+ * antes de proyectar nada - y no en mitad de la charla.
  */
 export function storeReadiness(): { ok: boolean; reason?: string } {
   const store = presentStore()

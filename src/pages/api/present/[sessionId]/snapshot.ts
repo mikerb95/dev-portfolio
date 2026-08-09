@@ -7,7 +7,7 @@ import { getSession, toPublicSnapshot } from '../../../../lib/present/session'
  * (`client-sync.ts` cae a consultar aquí cada segundo).
  *
  * Solo lectura, por definición: no hay verbo aquí que mueva la presentación.
- * `no-store` es obligatorio — esta ruta es pública y el middleware cachea las
+ * `no-store` es obligatorio - esta ruta es pública y el middleware cachea las
  * páginas públicas 300 s en el edge, lo que congelaría el slide para todo el
  * salón.
  */

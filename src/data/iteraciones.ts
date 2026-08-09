@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Iteraciones — DobleYo Café
+// Iteraciones - DobleYo Café
 // Tablero XP derivado del historial REAL de GitHub (mikerb95/dobleyo) y del
 // CHANGELOG del proyecto. Cada iteración se ancla a su momento histórico en
 // GitHub (rango de fechas + enlace a los commits de ese periodo) y cada historia
@@ -438,7 +438,7 @@ export const ITERACIONES: Iteracion[] = [
     ],
   },
   // ───────────────────────────────────────────────────────────────────────────
-  // PLAN DE 13 FASES (marzo 2026) — documentado en CHANGELOG
+  // PLAN DE 13 FASES (marzo 2026) - documentado en CHANGELOG
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: "plan-d",
@@ -453,7 +453,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F9-1",
         titulo:
-          "Fase 9 — Como visitante internacional, quiero el sitio en inglés con precios en USD y SEO multilingüe",
+          "Fase 9 - Como visitante internacional, quiero el sitio en inglés con precios en USD y SEO multilingüe",
         tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-04", tags: ["fase-9", "i18n", "seo"],
         dod: [
@@ -465,7 +465,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F10-1",
         titulo:
-          "Fase 10 — Como administrador, quiero un panel profesional con dashboard y gestión de pedidos",
+          "Fase 10 - Como administrador, quiero un panel profesional con dashboard y gestión de pedidos",
         tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-02", tags: ["fase-10", "admin"],
         dod: [
@@ -477,7 +477,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F11-1",
         titulo:
-          "Fase 11 — Como responsable, quiero SEO técnico y cabeceras de seguridad activas en producción",
+          "Fase 11 - Como responsable, quiero SEO técnico y cabeceras de seguridad activas en producción",
         tipo: "tarea", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-02", tags: ["fase-11", "seo", "seguridad"],
         dod: [
@@ -489,7 +489,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F12-1",
         titulo:
-          "Fase 12 — Como equipo, quiero un pipeline de CI/CD con pruebas automáticas para desplegar con confianza",
+          "Fase 12 - Como equipo, quiero un pipeline de CI/CD con pruebas automáticas para desplegar con confianza",
         tipo: "tarea", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-03", tags: ["fase-12", "ci-cd", "testing"],
         dod: [
@@ -514,7 +514,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F6-1",
         titulo:
-          "Fase 6 — Como administrador, quiero registrar gastos, facturas y pagos sobre una base contable de doble partida",
+          "Fase 6 - Como administrador, quiero registrar gastos, facturas y pagos sobre una base contable de doble partida",
         tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-02", tags: ["fase-6", "finanzas"],
         dod: [
@@ -526,7 +526,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F6-2",
         titulo:
-          "Fase 6 — Como caficultor, quiero ver mis liquidaciones históricas con detalle por lote",
+          "Fase 6 - Como caficultor, quiero ver mis liquidaciones históricas con detalle por lote",
         tipo: "historia", valor: "medio", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-02", tags: ["fase-6", "caficultor"],
         dod: [
@@ -536,7 +536,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F7-1",
         titulo:
-          "Fase 7 — Como visitante, quiero conocer las fincas y, como caficultor, gestionar el perfil de la mía",
+          "Fase 7 - Como visitante, quiero conocer las fincas y, como caficultor, gestionar el perfil de la mía",
         tipo: "historia", valor: "medio", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-02", tags: ["fase-7", "fincas"],
         dod: [
@@ -548,7 +548,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F8-1",
         titulo:
-          "Fase 8 — Como administrador, quiero un mapa de calor de ventas que combine tienda web y MercadoLibre",
+          "Fase 8 - Como administrador, quiero un mapa de calor de ventas que combine tienda web y MercadoLibre",
         tipo: "historia", valor: "medio", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-03", tags: ["fase-8", "heatmap", "ventas"],
         dod: [
@@ -573,7 +573,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F3-1",
         titulo:
-          "Fase 3 — Como usuario, quiero páginas legales y consentimiento de cookies conforme a la ley colombiana",
+          "Fase 3 - Como usuario, quiero páginas legales y consentimiento de cookies conforme a la ley colombiana",
         tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-02", tags: ["fase-3", "legal", "compliance"],
         dod: [
@@ -585,7 +585,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F4-1",
         titulo:
-          "Fase 4 — Como cliente, quiero completar mi compra con pago en línea (Wompi) y recibir confirmación",
+          "Fase 4 - Como cliente, quiero completar mi compra con pago en línea (Wompi) y recibir confirmación",
         tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-02", tags: ["fase-4", "pagos", "checkout"],
         dod: [
@@ -597,7 +597,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F4-2",
         titulo:
-          "Fase 4 — Como negocio, quiero ofrecer MercadoPago además de Wompi como pasarela alternativa",
+          "Fase 4 - Como negocio, quiero ofrecer MercadoPago además de Wompi como pasarela alternativa",
         tipo: "historia", valor: "bajo", col: "cola", par: "MR", agente: "Claude",
         fecha: "2026-03-02", tags: ["fase-4", "pagos"],
         dod: [
@@ -607,7 +607,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F5-1",
         titulo:
-          "Fase 5 — Como cliente, quiero escanear el QR del empaque y ver el historial completo de mi café",
+          "Fase 5 - Como cliente, quiero escanear el QR del empaque y ver el historial completo de mi café",
         tipo: "historia", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-03", tags: ["fase-5", "trazabilidad", "qr"],
         dod: [
@@ -632,7 +632,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F0-1",
         titulo:
-          "Fase 0 — Como equipo, quiero una base documental y de gobernanza IA para que cualquiera contribuya con contexto",
+          "Fase 0 - Como equipo, quiero una base documental y de gobernanza IA para que cualquiera contribuya con contexto",
         tipo: "tarea", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-01", tags: ["fase-0", "docs", "gobernanza"],
         dod: [
@@ -644,7 +644,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F1-1",
         titulo:
-          "Fase 1 — Como sistema, necesito un backend estable sobre PostgreSQL con paridad standalone/serverless",
+          "Fase 1 - Como sistema, necesito un backend estable sobre PostgreSQL con paridad standalone/serverless",
         tipo: "tarea", valor: "alto", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-01", tags: ["fase-1", "bd", "postgresql"],
         dod: [
@@ -656,7 +656,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F1-2",
         titulo:
-          "Fase 1 — Como usuario, quiero que el newsletter y la autenticación funcionen de forma consistente",
+          "Fase 1 - Como usuario, quiero que el newsletter y la autenticación funcionen de forma consistente",
         tipo: "bug", valor: "medio", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-01", tags: ["fase-1", "auth"],
         dod: [
@@ -667,7 +667,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: "F2-1",
         titulo:
-          "Fase 2 — Como usuario móvil, quiero navegar el sitio cómodamente en cualquier pantalla",
+          "Fase 2 - Como usuario móvil, quiero navegar el sitio cómodamente en cualquier pantalla",
         tipo: "tarea", valor: "medio", col: "aceptada", par: "MR", agente: "Claude",
         fecha: "2026-03-01", tags: ["fase-2", "mobile-first", "css"],
         dod: [
@@ -679,7 +679,7 @@ export const ITERACIONES: Iteracion[] = [
     ],
   },
   // ───────────────────────────────────────────────────────────────────────────
-  // FUNDACIÓN (pre-plan) — agosto 2025 → febrero 2026
+  // FUNDACIÓN (pre-plan) - agosto 2025 → febrero 2026
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: "backend",

@@ -100,10 +100,10 @@ const kpis = [
   { valor: fmt(testsVivos), label: 'Tests unitarios', sub: `${REF.archivos} archivos, ${REF.suites} suites` },
   { valor: String(REF.e2e), label: 'Tests e2e', sub: `${REF.e2eSpecs} specs con navegador real` },
   { valor: pct(coberturaViva), label: 'Cobertura', sub: 'líneas de src/lib/**' },
-  { valor: mutationScore !== null ? pct(mutationScore) : '—', label: 'Mutation score', sub: mutationScore !== null ? 'mutantes detectados' : 'pendiente de corrida semanal' },
+  { valor: mutationScore !== null ? pct(mutationScore) : '-', label: 'Mutation score', sub: mutationScore !== null ? 'mutantes detectados' : 'pendiente de corrida semanal' },
   { valor: String(REF.niveles), label: 'Niveles de prueba', sub: `${nivelesActivos} activos, ${REF.niveles - nivelesActivos} pendiente` },
   {
-    valor: ultimoRun ? (ultimoRun.conclusion === 'success' ? 'OK' : ultimoRun.conclusion === 'rolled_back' ? 'ROLLBACK' : 'FALLO') : '—',
+    valor: ultimoRun ? (ultimoRun.conclusion === 'success' ? 'OK' : ultimoRun.conclusion === 'rolled_back' ? 'ROLLBACK' : 'FALLO') : '-',
     label: 'Último deploy',
     sub: ultimoRun ? `${ultimoRun.sha.slice(0, 7)} en main` : 'sin corridas registradas',
   },
@@ -193,8 +193,8 @@ const secciones = [
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       La forma de la pirámide no es decorativa: cada estrato está dibujado en proporción al número real de tests
-      que tiene. Muchas pruebas baratas abajo, pocas y caras arriba. Cuando se invierte —muchos e2e y pocas
-      unitarias— la suite se vuelve lenta, frágil y nadie la corre.
+      que tiene. Muchas pruebas baratas abajo, pocas y caras arriba. Cuando se invierte (muchos e2e y pocas
+      unitarias) la suite se vuelve lenta, frágil y nadie la corre.
     </p>
   </div>
 
@@ -232,7 +232,7 @@ const secciones = [
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Seis etapas, desde el portátil hasta las tres de la madrugada del día siguiente. Cada una es clicable:
       qué corre exactamente, cuánto tarda, qué la dispara y qué pasa si falla. Abajo se puede
-      <strong class="text-ink-50"> simular una corrida completa</strong> con tres desenlaces distintos —
+      <strong class="text-ink-50"> simular una corrida completa</strong> con tres desenlaces distintos -
       el tercero, el rollback automático, es el que mejor explica por qué la verificación no termina en el merge.
     </p>
   </div>
@@ -261,7 +261,7 @@ const secciones = [
   <h2 id="niveles" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Los {REF.niveles} niveles, uno por uno</h2>
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
-      Cada ficha trae la pregunta que responde el nivel y —más importante— <strong class="text-ink-50">su punto
+      Cada ficha trae la pregunta que responde el nivel y (más importante) <strong class="text-ink-50">su punto
       ciego</strong>. Ningún nivel es suficiente por sí solo; el conjunto funciona porque los puntos ciegos de
       uno los cubre otro. Filtra por cuándo corre o por si bloquea el deploy.
     </p>
@@ -401,11 +401,11 @@ const secciones = [
   <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-3">
     <p class="text-[13.5px] text-ink-100 leading-relaxed">
       <strong class="text-ink-50">Y sí, {pct(coberturaViva)} de cobertura no es una cifra de la que presumir.</strong>
-      Se mide sobre <span class="font-mono text-[13px]">src/lib/**</span> entero — {fmt(2164)} líneas — incluyendo
+      Se mide sobre <span class="font-mono text-[13px]">src/lib/**</span> entero - {fmt(2164)} líneas - incluyendo
       módulos que solo se ejecutan contra servicios externos (pasarela real, notificaciones, RDAP) y que no se
       prueban con tests unitarios sino en el LAB y en producción. Inflarla sería trivial: bastaría con excluir
       esos archivos del cálculo. Se deja el número completo porque un porcentaje maquillado no informa de nada, y
-      porque el dato que de verdad importa —si las líneas que sí se prueban están defendidas— lo da el mutation
+      porque el dato que de verdad importa (si las líneas que sí se prueban están defendidas) lo da el mutation
       score, no este.
     </p>
   </div>
@@ -458,7 +458,7 @@ const secciones = [
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Todo lo de esta página se puede reproducir clonando el repositorio. Requiere
-      <span class="font-mono text-[13px] text-cyan"> Node ≥ 22.12</span> — con Node 20 el build de Astro se
+      <span class="font-mono text-[13px] text-cyan"> Node ≥ 22.12</span> - con Node 20 el build de Astro se
       rompe. Ningún comando de aquí necesita credenciales: las bases de prueba son archivos desechables.
     </p>
   </div>

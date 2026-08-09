@@ -110,7 +110,7 @@ describe('isPrivateCanonicalPath', () => {
   })
 })
 
-describe('isLocalizedPrivateRequest — el guard que corta en el middleware', () => {
+describe('isLocalizedPrivateRequest - el guard que corta en el middleware', () => {
   it('bloquea cualquier combinación /en/ + ruta privada', () => {
     expect(isLocalizedPrivateRequest('/en/admin')).toBe(true)
     expect(isLocalizedPrivateRequest('/en/admin/monitors')).toBe(true)

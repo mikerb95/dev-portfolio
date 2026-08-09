@@ -46,7 +46,7 @@ const runs = [
   { sha: 'f51d0ac', res: 'rolled_back', label: m.pipeline.rollback, t: '4 min' },
 ]
 
-const flags = m.chaos.flags.map((f, i) => ({ ...f, ttl: i === 0 ? '09:41' : '—', on: i === 0 }))
+const flags = m.chaos.flags.map((f, i) => ({ ...f, ttl: i === 0 ? '09:41' : '-', on: i === 0 }))
 
 const secMeta = [
   { sev: 'high', ip: '198.51.x.x', country: 'RU' },

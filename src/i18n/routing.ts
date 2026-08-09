@@ -6,7 +6,7 @@
 // middleware para clasificar una ruta ANTES de decidir rate limit, gate de
 // admin o veto de demo. Los guards existentes (`lib/security/paths.ts`,
 // `lib/demo.ts`, `lib/portal/paths.ts`) comparan contra rutas literales sin
-// prefijo — son ciegos a `/en/`. Si un request a `/en/admin` llegara a esos
+// prefijo - son ciegos a `/en/`. Si un request a `/en/admin` llegara a esos
 // guards sin normalizar antes, el gate de admin nunca se activaría: un
 // bypass real, no cosmético. Ver docs/plan-i18n-en.md §3.
 
@@ -23,7 +23,7 @@ export function getLocaleFromUrl(pathname: string): Locale {
 /**
  * Quita el prefijo de idioma y deja la ruta "canónica" (la misma que en
  * español, sin prefijo). Es la única función que deben usar los guards de
- * seguridad para clasificar una ruta — nunca el pathname crudo.
+ * seguridad para clasificar una ruta - nunca el pathname crudo.
  */
 export function delocalizePath(pathname: string): string {
   const stripped = pathname.replace(LOCALE_PREFIX_RE, '/').replace(/\/{2,}/g, '/')
@@ -40,7 +40,7 @@ export function localizePath(pathname: string, locale: Locale): string {
 /**
  * URL equivalente de una ruta en cada idioma soportado, exista o no esa
  * traducción. Es un cálculo puro de forma de URL: sirve para el canónico y
- * para tests, NO para pintar enlaces ni hreflang — para eso está
+ * para tests, NO para pintar enlaces ni hreflang - para eso está
  * `localizedHref` / `translatedAlternates`, que sí saben qué existe.
  */
 export function alternateUrls(pathname: string): Record<Locale, string> {
@@ -52,7 +52,7 @@ export function alternateUrls(pathname: string): Record<Locale, string> {
  * Rutas canónicas que HOY tienen una versión en inglés servida (existe un
  * cascarón en `src/pages/en/…`). El sitio se traduce por fases, así que esta
  * lista es un subconjunto del sitio en español y crece con cada página
- * traducida — es la única fuente de verdad de "qué existe en inglés".
+ * traducida - es la única fuente de verdad de "qué existe en inglés".
  *
  * Sin ella, el nav, el footer, el sitemap y el hreflang generaban `/en/` para
  * cualquier ruta y el usuario aterrizaba en un 404: el enlace se construía
@@ -90,7 +90,7 @@ export const TRANSLATED_ROUTES: readonly string[] = [
  *
  * Por eso son prefijos y no rutas exactas: no se puede enumerar cada slug, y
  * la URL en inglés siempre renderiza algo legible. Quien decide si esa URL se
- * ANUNCIA (sitemap, hreflang) es `hasRowTranslation` con los datos en mano —
+ * ANUNCIA (sitemap, hreflang) es `hasRowTranslation` con los datos en mano -
  * una cosa es que la página funcione y otra es publicarla como traducida.
  */
 export const TRANSLATED_PREFIXES: readonly string[] = ['/lab/fingerprint', '/notes', '/projects']
@@ -129,13 +129,13 @@ export function translatedAlternates(pathname: string): Partial<Record<Locale, s
 // Rutas que NUNCA existen en otro idioma que no sea el default: admin, API,
 // portal de clientes, cobros de campo y los tres gates de login. No son
 // contenido (traducirlas no tiene sentido) y, sobre todo, cada guard de
-// seguridad las compara por ruta literal — permitir un prefijo /en/ delante
+// seguridad las compara por ruta literal - permitir un prefijo /en/ delante
 // crearía una copia de cada una sin vigilancia.
 //
 // Las vistas de proyección (`/present`, `/remote`, `/decks`) entran aquí por la
 // misma lógica: no son contenido traducible sino estado de una sesión, y
 // `/remote` además está en el matcher `isAdmin` del middleware, que compara la
-// ruta canónica — un `/en/remote/...` sin cortar sería el control remoto sin
+// ruta canónica - un `/en/remote/...` sin cortar sería el control remoto sin
 // gate de sesión.
 const PRIVATE_EXACT = new Set(['/login', '/logout', '/entrar', '/docs/presentacion'])
 const PRIVATE_PREFIXES = ['/admin', '/api', '/portal', '/cobrar', '/present', '/remote', '/decks']

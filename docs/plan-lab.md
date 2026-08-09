@@ -85,11 +85,11 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 
 ## Fases
 
-### Fase 0 — Fundaciones de testing (prerequisito de todo)
+### Fase 0 - Fundaciones de testing (prerequisito de todo)
 1. Instalar Vitest + `@vitest/coverage-v8`; scripts `test`, `test:coverage`.
 2. Escribir suite inicial sobre lo que ya existe y es puro/testeable:
    `money.ts`, `pnl.ts`, `crypto.ts`, `domains.ts` (cálculo "vence en Nd"), `monitors.ts`
-   (probe con fetch mockeado), `notify.ts` (headerSafe — el bug del emoji ya corregido es
+   (probe con fetch mockeado), `notify.ts` (headerSafe - el bug del emoji ya corregido es
    un caso de test perfecto para contar en la sustentación).
 3. Tests de timezone/DST y clock skew: casos sobre el cálculo de vencimientos con
    `America/Bogota`, cambios de día UTC vs local, y expiración JWT con reloj desfasado
@@ -100,13 +100,13 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 > **Progreso**: Fase 0 ✅ (jul 3: 94 tests, 87% líneas en src/lib). Fase 1 ✅ (jul 4: workflow CI,
 > /api/health, ingest, tabla ci_runs, página /admin/lab/pipeline). Falta el secret VERCEL_TOKEN
 > en GitHub para habilitar el rollback automático (crear en vercel.com/account/tokens).
-> Fase 2 ✅ (jul 4: pasarela propia — /pay con checkout idempotente, webhook Wompi con verificación
+> Fase 2 ✅ (jul 4: pasarela propia - /pay con checkout idempotente, webhook Wompi con verificación
 > de checksum, modo mock demo, máquina de estados con concurrencia optimista, panel
 > /admin/lab/payments-lab con 4 ataques en vivo, 18 tests contra BD en memoria; 112 tests totales).
 > Pendiente para pagos reales: crear cuenta Wompi sandbox y configurar WOMPI_PUBLIC_KEY,
 > WOMPI_INTEGRITY_SECRET y WOMPI_EVENTS_SECRET en Vercel (sin ellas opera en modo mock).
 
-### Fase 1 — Pipeline CI/CD en vivo
+### Fase 1 - Pipeline CI/CD en vivo
 1. `.github/workflows/ci.yml`: push → `lint/typecheck (astro check)` → `vitest --coverage`
    → build → deploy Vercel (CLI con `--prebuilt`) → **health check post-deploy**
    (`GET /api/health`, nuevo endpoint que valida BD + versión).
@@ -117,7 +117,7 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 4. Badge de estado del workflow en el dashboard `/admin` y en `/admin/lab/pipeline`, con
    lista de runs en vivo (polling a la API de GitHub que ya usas en `/admin/repos`).
 
-### Fase 2 — Pasarela de pagos propia (checkout de donaciones/pagos dev)
+### Fase 2 - Pasarela de pagos propia (checkout de donaciones/pagos dev)
 1. Página pública `/pay` (o `/donate`): checkout con Wompi sandbox (Colombia, tiene sandbox
    gratuito y widget embebible; MercadoPago como alternativa si prefieres).
 2. Backend: `POST /api/payments/checkout` con **idempotency key obligatoria** (UNIQUE en
@@ -134,7 +134,7 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
    - "Race de inventario/saldo" → N updates concurrentes → invariante verificado.
    Cada botón muestra el resultado esperado vs. real y registra en `lab_experiments`.
 
-### Fase 3 — Chaos engineering + recuperación
+### Fase 3 - Chaos engineering + recuperación
 1. Middleware Astro (`src/middleware.ts`, nuevo): lee `chaos_flags` activos (cacheado
    ~5 s en memoria) y, solo si hay flag vigente para la ruta exacta, inyecta latencia,
    responde 500, o marca el contexto para fallo de BD. Sin flags → cero overhead extra
@@ -150,13 +150,13 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 4. Para el cron `uptime-check` diario: durante demos usar el trigger manual existente de
    cron-job.org o un botón "check ahora" para que la detección sea inmediata.
 
-### Fase 4 — SLO / Error budget
+### Fase 4 - SLO / Error budget
 1. Cálculo sobre datos reales de `monitor_checks`: uptime mensual por monitor, objetivo
    99.5%, presupuesto de error restante en minutos (como Google SRE).
 2. Tarjeta en `/admin` + página `/admin/lab/slo` con gráfica de burn rate.
    Sin dependencias nuevas: es una query de agregación + una vista.
 
-### Fase 5 — Load testing (k6)
+### Fase 5 - Load testing (k6)
 1. Scripts k6 en `lab/k6/` (escenarios: home, API pública, checkout) con etapas de
    100/500/1000 VUs. Se corren localmente o en GitHub Actions (job manual
    `workflow_dispatch` para no gastar minutos en cada push).
@@ -165,7 +165,7 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 3. ⚠️ Solo contra preview deployments o con rate razonable contra prod (Vercel cobra por
    invocación; 1000 VUs contra prod = costo + posible firewall).
 
-### Fase 6 — Seguridad (SAST/DAST) + a11y
+### Fase 6 - Seguridad (SAST/DAST) + a11y
 1. **SAST**: job de CI con `npm audit --json` + Snyk free tier (o Semgrep) → hallazgos a
    `security_findings`.
 2. **DAST**: OWASP ZAP baseline scan (acción oficial `zaproxy/action-baseline`) contra el
@@ -174,14 +174,14 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 3. **a11y**: `@axe-core/playwright` o Lighthouse CI sobre las páginas públicas, con
    score y violaciones en una tarjeta de `/admin/lab/quality`.
 
-### Fase 7 — Mutation testing + contract testing (remate)
+### Fase 7 - Mutation testing + contract testing (remate)
 1. Stryker (`@stryker-mutator/vitest-runner`) sobre `src/lib/**`: mutation score como
-   tarjeta junto a coverage ("87% coverage, 74% mutation score — y sé explicar la
+   tarjeta junto a coverage ("87% coverage, 74% mutation score - y sé explicar la
    diferencia"). Corre en CI como job semanal/manual (es lento).
 2. Contract testing: como front y API viven en el mismo repo Astro, la versión honesta
    aquí es **schema validation con Zod compartido** entre endpoints y consumidores + tests
    de contrato sobre las respuestas de `/api/*` (snapshot del shape). Pact aplica si
-   sustentas con SlideHub/microservicios separados — se documenta como extensión.
+   sustentas con SlideHub/microservicios separados - se documenta como extensión.
 
 ---
 

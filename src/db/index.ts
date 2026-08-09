@@ -12,7 +12,7 @@ const realDb = drizzle(
 )
 
 // Base de la demo pública del panel: MISMO esquema, datos ficticios, instancia
-// aparte. El aislamiento es por construcción — un request en modo demo no tiene
+// aparte. El aislamiento es por construcción - un request en modo demo no tiene
 // forma de alcanzar la base real, ni por un `where` olvidado ni por una ruta
 // nueva que nadie recordó filtrar. Si no está configurada, la demo no existe
 // (mismo patrón no-op que notify.ts): degradar es preferible a improvisar.

@@ -28,7 +28,7 @@ ${n.data.tags.map((t) => `      <category>${escapeXml(t)}</category>`).join('\n'
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Notas de ingeniería — CodeByMike</title>
+    <title>Notas de ingeniería - CodeByMike</title>
     <link>${base}/notes</link>
     <atom:link href="${base}/rss.xml" rel="self" type="application/rss+xml" />
     <description>Artículos técnicos de Mike: observabilidad, SRE, Astro, arquitectura y rendimiento.</description>

@@ -132,7 +132,7 @@ export async function clientInvoices(clientId: number) {
 
 /**
  * Una factura del cliente con sus líneas. El `clientId` va en el WHERE: pedir
- * la factura de otro devuelve null, no un 403 — que un id ajeno responda
+ * la factura de otro devuelve null, no un 403 - que un id ajeno responda
  * "prohibido" ya confirma que ese id existe.
  */
 export async function clientInvoice(clientId: number, invoiceId: number) {

@@ -29,7 +29,7 @@ const verificacion = filas.filter((f) => f.tipo === 'verificacion')
 const validacion = filas.filter((f) => f.tipo === 'validacion')
 
 // Mismo trato que CLASIFICACION: un id mal escrito falla ruidosamente en vez de
-// desaparecer del render — un badge ausente en silencio haría que la tabla
+// desaparecer del render - un badge ausente en silencio haría que la tabla
 // mintiera sobre qué cubre a un subsistema de nivel 4. La página es SSR, así que
 // este throw es solo el último recinto: quien corta de verdad es tests/vyv.test.ts,
 // que valida las referencias en CI antes de que lleguen a producción.
@@ -76,7 +76,7 @@ const COMANDOS = [
   {
     cmd: 'npm run test:coverage',
     tipo: 'verificacion' as TipoVV,
-    para: 'La misma suite de Vitest, pero midiendo qué porcentaje de líneas y ramas del código ejecuta al menos un test. No agrega pruebas nuevas — sirve para ver qué partes del repositorio nadie está verificando todavía.',
+    para: 'La misma suite de Vitest, pero midiendo qué porcentaje de líneas y ramas del código ejecuta al menos un test. No agrega pruebas nuevas - sirve para ver qué partes del repositorio nadie está verificando todavía.',
   },
   {
     cmd: 'npm run test:e2e',
@@ -100,8 +100,8 @@ const COMANDOS = [
     <h1 class="text-2xl font-semibold text-ink-50 mb-3">¿Construimos el producto <span class="text-cyan">correctamente</span>, o construimos el producto <span class="text-lime">correcto</span>?</h1>
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       <span class="font-mono text-cyan">/docs/testing</span> ya documenta {REF.niveles} niveles de prueba con sus
-      métricas reales. Esta página no repite ese inventario: lo reclasifica bajo un marco distinto —verificación y
-      validación (IEEE 1012)— que responde una pregunta que el inventario técnico no hace explícita: de esos{' '}
+      métricas reales. Esta página no repite ese inventario: lo reclasifica bajo un marco distinto (verificación y
+      validación (IEEE 1012)) que responde una pregunta que el inventario técnico no hace explícita: de esos{' '}
       {REF.niveles} niveles, ¿cuáles comprueban que el código cumple su propia especificación, y cuáles comprueban
       que el sistema le sirve a alguien de verdad?
     </p>
@@ -144,7 +144,7 @@ const COMANDOS = [
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       «Testing» suele tratarse como una sola actividad. IEEE 1012 la separa en dos porque tienen oráculos
-      distintos —la fuente de verdad contra la que se compara un resultado— y confundirlos hace que un pipeline
+      distintos (la fuente de verdad contra la que se compara un resultado) y confundirlos hace que un pipeline
       en verde se sienta como garantía de algo que nunca prometió.
     </p>
   </div>
@@ -168,7 +168,7 @@ const COMANDOS = [
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Verificación y validación responden <em>qué</em> se comprueba. IEEE 1012 responde una segunda pregunta,
       independiente de esa: <em>cuánto</em> rigor exige cada parte del sistema. La clasifica en 4 niveles según
-      la <strong class="text-ink-50">consecuencia</strong> de que ese subsistema falle — no la probabilidad. A
+      la <strong class="text-ink-50">consecuencia</strong> de que ese subsistema falle - no la probabilidad. A
       mayor nivel, más tareas de V&amp;V son obligatorias. Aplicar el mismo esfuerzo de prueba a una página de
       contenido y al motor de cobros no sería más riguroso: sería mal presupuestado.
     </p>
@@ -212,20 +212,20 @@ const COMANDOS = [
     <p class="text-[13.5px] text-ink-100 leading-relaxed">
       <strong class="text-ink-50">El requisito de nivel 4 que este proyecto no puede cumplir.</strong> Para los
       niveles de integridad más altos, IEEE 1012 no solo pide más tareas: pide que las ejecute alguien{' '}
-      <em>independiente</em> de quien escribió el código —presupuesto, personal y línea de reporte separados
-      (IV&amp;V)—. La razón es que el autor de un módulo comparte los puntos ciegos de su propio diseño: no se le
+      <em>independiente</em> de quien escribió el código (presupuesto, personal y línea de reporte separados
+      (IV&amp;V)). La razón es que el autor de un módulo comparte los puntos ciegos de su propio diseño: no se le
       ocurre probar el caso que no se le ocurrió programar. Un proyecto de una sola persona no puede satisfacer
       eso, y ninguna cantidad de tests lo compensa. Lo más cerca que llega este repositorio son sustitutos
       parciales que no dependen del criterio del autor: herramientas externas con su propio catálogo de reglas
       (<a href="/docs/testing#niveles" class="text-cyan hover:underline">CodeQL, axe-core, OWASP ZAP</a>), el
-      mutation testing —que ataca las pruebas en vez de confiar en ellas— y la{' '}
+      mutation testing (que ataca las pruebas en vez de confiar en ellas) y la{' '}
       <a href="/docs/usability-testing" class="text-cyan hover:underline">validación con usuarios</a>, el único
       punto donde el juicio viene de fuera de verdad. Es una limitación estructural, no una tarea pendiente.
     </p>
   </div>
 
   {/* ── § 2 Verificación ────────────────────────────────────── */}
-  <h2 id="verificacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Verificación — {verificacion.length} niveles</h2>
+  <h2 id="verificacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Verificación - {verificacion.length} niveles</h2>
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       La mayoría de los niveles de este repositorio son verificación, y tiene sentido que lo sean: son baratos,
@@ -248,7 +248,7 @@ const COMANDOS = [
   </div>
 
   {/* ── § 3 Validación ──────────────────────────────────────── */}
-  <h2 id="validacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Validación — {validacion.length} niveles</h2>
+  <h2 id="validacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Validación - {validacion.length} niveles</h2>
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Aquí el oráculo deja de ser un archivo del repositorio. En e2e es una persona simulada completando un
@@ -274,7 +274,7 @@ const COMANDOS = [
   <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-12">
     <p class="text-[13.5px] text-ink-100 leading-relaxed">
       <strong class="text-ink-50">El desbalance es a propósito, no un hueco.</strong> {verificacion.length} niveles
-      de verificación contra {validacion.length} de validación no significa que la validación importe menos —
+      de verificación contra {validacion.length} de validación no significa que la validación importe menos -
       significa que cuesta más y no se puede automatizar del todo. De los {validacion.length}, solo usabilidad
       exige a una persona real cada vez; e2e y accesibilidad usan proxies automatizados (un navegador sin ojos,
       un escáner de reglas WCAG) que se acercan a la pregunta de validación sin necesitar a alguien en cada
@@ -288,7 +288,7 @@ const COMANDOS = [
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
       Tres casos de este repositorio muestran por qué la clasificación de arriba es una decisión, no un hecho
-      objetivo — y por qué conviene decirlo en vez de esconderlo.
+      objetivo - y por qué conviene decirlo en vez de esconderlo.
     </p>
   </div>
 
@@ -296,7 +296,7 @@ const COMANDOS = [
     <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
       <h3 class="text-[13.5px] font-medium text-ink-50 mb-2">E2E: automatizado pero externo</h3>
       <p class="text-[12.5px] text-ink-200 leading-relaxed">
-        Se ejecuta en CI como un test más —sin persona presente— pero lo que compara es un flujo completo contra
+        Se ejecuta en CI como un test más (sin persona presente) pero lo que compara es un flujo completo contra
         una expectativa de uso, no una función contra su firma. Se clasificó como validación por el oráculo que
         usa, no por cómo se ejecuta.
       </p>
@@ -306,7 +306,7 @@ const COMANDOS = [
       <p class="text-[12.5px] text-ink-200 leading-relaxed">
         axe-core corre en CI y verifica contra reglas WCAG, lo cual suena a verificación. Pero esas reglas existen
         para aproximar una pregunta de validación (¿puede usarlo alguien con una discapacidad?) que ninguna
-        herramienta responde del todo — de ahí que cubra solo ~30-40% de los problemas reales.
+        herramienta responde del todo - de ahí que cubra solo ~30-40% de los problemas reales.
       </p>
     </div>
     <div class="rounded-xl border border-white/10 bg-white/[.025] p-4">
@@ -323,7 +323,7 @@ const COMANDOS = [
   <h2 id="trazabilidad" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">De la necesidad al test: dónde vive cada mitad</h2>
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
-      Esta página no es el único lugar donde vive V&amp;V — es el mapa que conecta documentos que ya existían por
+      Esta página no es el único lugar donde vive V&amp;V - es el mapa que conecta documentos que ya existían por
       separado. La validación empieza antes que cualquier test: en el caso de uso o la historia que dijo qué
       necesidad real se estaba resolviendo.
     </p>
@@ -342,7 +342,7 @@ const COMANDOS = [
   <h2 id="ciclo-vida" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Los procesos del ciclo de vida</h2>
   <div class="max-w-3xl mb-6">
     <p class="text-[14.5px] text-ink-200 leading-relaxed">
-      IEEE 1012 no ata las tareas de V&amp;V a «niveles de prueba» — las ata a fases del ciclo de vida del
+      IEEE 1012 no ata las tareas de V&amp;V a «niveles de prueba» - las ata a fases del ciclo de vida del
       software, desde la gestión del propio plan hasta el mantenimiento. Este repositorio cubre casi todas sin
       haberlas llamado así nunca; esta tabla es esa traducción, en el orden en que ocurren.
     </p>

@@ -19,31 +19,31 @@ const cobroCampo: BpmnProcess = {
     {
       concepto: 'Vigencia del link de cobro',
       valor: '24 h · 72 h · 7 días · sin vencimiento',
-      origen: 'EXPIRY_OPTIONS / DEFAULT_EXPIRY — src/lib/cobros.ts',
+      origen: 'EXPIRY_OPTIONS / DEFAULT_EXPIRY - src/lib/cobros.ts',
       razon: 'Se elige al crear el cobro; 72 h es el valor por defecto porque cubre un fin de semana entero sin dejar el link vivo indefinidamente.',
     },
     {
       concepto: 'Momento en que se evalúa el vencimiento',
       valor: 'al abrir el link, no por temporizador',
-      origen: 'isExpired() — src/lib/cobros.ts',
+      origen: 'isExpired() - src/lib/cobros.ts',
       razon: 'No hay proceso en espera: nada corre mientras el cliente no abre el link, así que el vencimiento se comprueba en ese instante contra expiresAt.',
     },
     {
       concepto: 'Límite de peticiones al link público',
       valor: '30 por minuto y por IP',
-      origen: 'enforceLimit("cobro-link") — src/middleware.ts',
+      origen: 'enforceLimit("cobro-link") - src/middleware.ts',
       razon: 'El código corto es adivinable por fuerza bruta; el límite la vuelve inviable sin estorbar a un cliente real.',
     },
     {
       concepto: 'Presupuesto de la consulta al limitador durable',
       valor: '150 ms',
-      origen: 'timeoutMs — src/lib/security/ratelimit-durable.ts',
+      origen: 'timeoutMs - src/lib/security/ratelimit-durable.ts',
       razon: 'Pasado ese plazo se deja pasar el request (fail-open): el limitador no puede volverse la causa de la caída.',
     },
     {
       concepto: 'Reintentos al aplicar el evento de la pasarela',
       valor: 'hasta 5',
-      origen: 'MAX_RETRIES — src/lib/payments.ts',
+      origen: 'MAX_RETRIES - src/lib/payments.ts',
       razon: 'Concurrencia optimista: si dos webhooks del mismo pago compiten, el que pierde reintenta con la versión nueva en vez de pisar el estado.',
     },
   ],
@@ -99,37 +99,37 @@ const portalAcceso: BpmnProcess = {
     {
       concepto: 'Vigencia de la invitación',
       valor: '72 h',
-      origen: 'INVITE_TTL_MS — src/lib/portal/invitations.ts',
+      origen: 'INVITE_TTL_MS - src/lib/portal/invitations.ts',
       razon: 'Da margen a un cliente que abre el correo el lunes después de recibirlo el viernes.',
     },
     {
       concepto: 'Vigencia del enlace de restablecimiento',
       valor: '30 min',
-      origen: 'RESET_TTL_MS — src/lib/portal/invitations.ts',
+      origen: 'RESET_TTL_MS - src/lib/portal/invitations.ts',
       razon: 'Mucho más corto que la invitación a propósito: en un restablecimiento el buzón ya es un vector activo, así que la ventana de abuso se recorta.',
     },
     {
       concepto: 'Bloqueo por intentos fallidos',
       valor: '15 min tras 10 intentos',
-      origen: 'LOCK_MS / MAX_ATTEMPTS — src/lib/portal/login.ts',
+      origen: 'LOCK_MS / MAX_ATTEMPTS - src/lib/portal/login.ts',
       razon: 'Frena la fuerza bruta sin dejar que un tercero deje fuera a un cliente legítimo de forma indefinida.',
     },
     {
       concepto: 'Duración de la sesión del portal',
       valor: '30 días, renovables',
-      origen: 'SESSION_TTL_MS — src/lib/portal/session.ts',
+      origen: 'SESSION_TTL_MS - src/lib/portal/session.ts',
       razon: 'Cada visita empuja el vencimiento; un cliente que entra una vez al mes no tiene que volver a autenticarse.',
     },
     {
       concepto: 'Refresco del registro de actividad de la sesión',
       valor: 'como mucho cada 5 min',
-      origen: 'WRITE_THROTTLE_MS — src/lib/portal/session.ts',
+      origen: 'WRITE_THROTTLE_MS - src/lib/portal/session.ts',
       razon: 'Sin este freno, cada request escribiría en la tabla de sesiones solo para actualizar la marca de "visto por última vez".',
     },
     {
       concepto: 'Límite de intentos de autenticación',
       valor: '10 por minuto y por IP',
-      origen: 'enforceLimit("portal-auth") — src/middleware.ts',
+      origen: 'enforceLimit("portal-auth") - src/middleware.ts',
       razon: 'Es una segunda barrera por IP, independiente del bloqueo por cuenta: sin ella, atacar 500 cuentas distintas saldría gratis.',
     },
   ],
@@ -189,31 +189,31 @@ const seguridad: BpmnProcess = {
     {
       concepto: 'Presupuesto del middleware antes de ceder el paso',
       valor: '150 ms para la consulta durable',
-      origen: 'timeoutMs — src/lib/security/ratelimit-durable.ts',
+      origen: 'timeoutMs - src/lib/security/ratelimit-durable.ts',
       razon: 'Es el único tiempo de espera del camino caliente. Agotado el plazo, el request pasa sin verificar: el coste de un falso negativo es menor que el de tumbar el sitio.',
     },
     {
       concepto: 'Ventana del limitador',
       valor: '60 s',
-      origen: 'windowMs — src/middleware.ts',
+      origen: 'windowMs - src/middleware.ts',
       razon: 'Ventana fija por IP: 10 peticiones para autenticación del portal, 30 para el resto de autenticación y para los links de cobro, 600 como paraguas general.',
     },
     {
       concepto: 'Caché en memoria de la lista de bloqueo',
       valor: '30 s',
-      origen: 'CACHE_TTL_MS — src/lib/security/blocklist.ts',
+      origen: 'CACHE_TTL_MS - src/lib/security/blocklist.ts',
       razon: 'Evita ir a la base en cada request. El precio es que desbloquear a una IP tarda hasta medio minuto en surtir efecto, que es aceptable en esa dirección.',
     },
     {
       concepto: 'Duración del bloqueo, escalada por reincidencia',
       valor: '1 h → 24 h → 7 días',
-      origen: 'BLOCK_TTL_STEPS_SEC — src/lib/security/blocklist.ts',
+      origen: 'BLOCK_TTL_STEPS_SEC - src/lib/security/blocklist.ts',
       razon: 'Todo bloqueo caduca solo. Un bloqueo permanente por una regla automática convierte cualquier falso positivo en un daño indefinido.',
     },
     {
       concepto: 'Registro del evento y alerta',
       valor: 'no bloquea la respuesta',
-      origen: 'recordSecurityEvent — src/lib/security/events.ts',
+      origen: 'recordSecurityEvent - src/lib/security/events.ts',
       razon: 'Se dispara y se olvida: el usuario nunca espera a que termine de escribirse la auditoría.',
     },
   ],
@@ -275,37 +275,37 @@ const monitoreo: BpmnProcess = {
     {
       concepto: 'Plazo del sondeo HTTP',
       valor: '12 s',
-      origen: 'REQUEST_TIMEOUT_MS — src/lib/monitors.ts',
+      origen: 'REQUEST_TIMEOUT_MS - src/lib/monitors.ts',
       razon: 'Pasado el plazo se aborta la petición y el sondeo cuenta como fallo. Sin corte, un servicio que no cierra la conexión colgaría el ciclo entero.',
     },
     {
       concepto: 'Umbral de degradado',
       valor: '2 s por defecto, ajustable por monitor',
-      origen: 'latencyThresholdMs — src/db/schema.ts, src/lib/monitors.ts',
+      origen: 'latencyThresholdMs - src/db/schema.ts, src/lib/monitors.ts',
       razon: 'Separa "responde pero va lento" de "responde bien". Un servicio degradado no abre incidente, pero sí se ve en la página de estado.',
     },
     {
       concepto: 'Plazo del apretón de manos TLS',
       valor: '8 s',
-      origen: 'SSL_TIMEOUT_MS — src/lib/monitors.ts',
+      origen: 'SSL_TIMEOUT_MS - src/lib/monitors.ts',
       razon: 'Menor que el del sondeo HTTP porque comprobar el certificado es un extra: si tarda, se omite en vez de retrasar el ciclo.',
     },
     {
       concepto: 'Refresco de la fecha del certificado',
       valor: 'como mucho cada 12 h',
-      origen: 'SSL_REFRESH_MS — src/pages/api/cron/uptime-check.ts',
+      origen: 'SSL_REFRESH_MS - src/pages/api/cron/uptime-check.ts',
       razon: 'Abrir un socket TLS es caro y la fecha de expiración cambia una vez cada varios meses: comprobarla cada 5 min sería puro desperdicio.',
     },
     {
       concepto: 'Retención del historial de sondeos',
       valor: '90 días',
-      origen: 'CHECK_RETENTION_DAYS — src/pages/api/cron/uptime-check.ts',
+      origen: 'CHECK_RETENTION_DAYS - src/pages/api/cron/uptime-check.ts',
       razon: 'Cubre de sobra la ventana de 30 días que publica la página de estado y mantiene la tabla acotada sin intervención.',
     },
     {
       concepto: 'Caducidad de sesiones de administración inactivas',
       valor: '24 h sin actividad',
-      origen: 'IDLE_EXPIRY_MS — src/lib/device-sessions.ts',
+      origen: 'IDLE_EXPIRY_MS - src/lib/device-sessions.ts',
       razon: 'La purga viaja en este mismo ciclo, en modo fail-open: si falla, no debe tumbar el chequeo de monitores.',
     },
   ],
@@ -377,7 +377,7 @@ export const procesosBpmn: BpmnProcess[] = [cobroCampo, portalAcceso, seguridad,
  * Los cinco tipos de compuerta de BPMN.
  *
  * Todas se dibujan con el mismo rombo: lo único que las distingue es el
- * marcador de dentro. Por eso van documentadas — confundir el marcador no es un
+ * marcador de dentro. Por eso van documentadas - confundir el marcador no es un
  * desliz estético, cambia lo que el diagrama afirma que hace el sistema.
  *
  * Cada una se comporta distinto según divida o junte caminos, así que ambos

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
 
 // Base libsql local (archivo temporal) con el esquema real aplicado desde las
 // migraciones, igual que payments.test.ts. Se prueba contra SQL de verdad
-// porque lo que se está verificando —que un WHERE no se olvide— no se puede
+// porque lo que se está verificando (que un WHERE no se olvide) no se puede
 // comprobar con dobles: un mock respondería lo que le pidas.
 vi.mock('../src/db', async () => {
   const { createClient } = await import('@libsql/client')

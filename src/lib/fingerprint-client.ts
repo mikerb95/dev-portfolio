@@ -1,8 +1,8 @@
-// Recolector de fingerprint de dispositivo — SOLO se ejecuta en el navegador
+// Recolector de fingerprint de dispositivo - SOLO se ejecuta en el navegador
 // (usa canvas/WebGL/audio/DOM). Nunca se importa desde código de servidor.
 // Cada señal se etiqueta con su peso en bits de entropía: son valores de
 // referencia tomados de estudios públicos de fingerprinting (EFF Panopticlick
-// y AmIUnique), NO una medición poblacional en vivo — se muestra así en la UI.
+// y AmIUnique), NO una medición poblacional en vivo - se muestra así en la UI.
 
 // `value` es el valor COMPLETO (se usa para el hash de identidad); `display`
 // es la versión recortada para pintar en la UI. `bits` es 0 cuando la señal no

@@ -1,10 +1,10 @@
-# Plan — `/docs/testing`: guía visual interactiva del pipeline de pruebas
+# Plan - `/docs/testing`: guía visual interactiva del pipeline de pruebas
 
-> Estado: **implementado** (jul 22 2026) — Fases 1-5 completas, más las dos
+> Estado: **implementado** (jul 22 2026) - Fases 1-5 completas, más las dos
 > diapositivas en el deck y el KPI en el índice de `/docs`. Objetivo: una página dentro de
 > `/docs` que explique **todo** el testing del proyecto a compañeros de
 > clase que no conocen el repo, con un recorrido visual e interactivo del
-> pipeline completo — desde `npm test` en el portátil hasta el rollback
+> pipeline completo - desde `npm test` en el portátil hasta el rollback
 > automático en producción.
 
 ---
@@ -26,7 +26,7 @@ usuarios de esta misma historia).
 
 ---
 
-## 2. Inventario real — el «TODO» que la página debe cubrir
+## 2. Inventario real - el «TODO» que la página debe cubrir
 
 Medido sobre el repo el 29 jul 2026 (no son cifras estimadas: salen de
 correr la suite y leer los workflows). El nivel 14 (DAST) se añadió el 23 jul,
@@ -50,7 +50,7 @@ después de escribir este plan.
 | 12 | Monitoreo sintético continuo | monitores propios + cron externo | `/admin/monitors`, `/status` | 9 monitores, checks ~5 min | cron-job.org, 24/7 |
 | 13 | Usabilidad con usuarios | metodología de 6 pasos | `/docs/usability-testing` | 1 flujo (descarga de CV) | manual |
 | 14 | DAST (análisis dinámico) | OWASP ZAP baseline | `.github/workflows/dast.yml`, `parseZapReport` | alertas del reporte ingeridas al LAB | contra el preview, nunca contra prod |
-| 15 | Carga (k6) | *pendiente* | `docs/plan-lab-fases-pendientes.md`, Fase 5 | — | bloqueado por `VERCEL_TOKEN` |
+| 15 | Carga (k6) | *pendiente* | `docs/plan-lab-fases-pendientes.md`, Fase 5 | - | bloqueado por `VERCEL_TOKEN` |
 
 Un compañero debe salir entendiendo **por qué son 15 cosas distintas y no
 una sola llamada «pruebas»**: cada nivel responde una pregunta que ninguno
@@ -72,7 +72,7 @@ decisión real, tomada por un motivo, documentada en los comentarios del repo:
    Playwright levanta el webServer *antes* de `globalSetup`; sembrar allí
    llega tarde y el servidor arranca contra una base que no existe.
 4. **`astro dev` y no `astro preview` en e2e.** El adaptador de Vercel no
-   soporta `preview`; el middleware —que es justo lo que los e2e verifican—
+   soporta `preview`; el middleware (que es justo lo que los e2e verifican)
    corre igual en dev.
 5. **Bases desechables con centinela.** La base «principal» de e2e se siembra
    con el prefijo `CENTINELA-REAL `; un test afirma que ese texto **jamás**
@@ -139,7 +139,7 @@ revisable.
 | Dato | Fuente | Por qué |
 |------|--------|---------|
 | Nº de tests, cobertura, mutation score, último resultado | **SSR contra la tabla `ci_runs`** (última corrida de `main`) | `coverage/` está gitignored, así que no se puede leer en build. `ci_runs` ya recibe `testsPassed`, `testsFailed`, `coveragePct`, `mutationScore`, `conclusion`, `healthOk` desde `ci.yml`. Mismo patrón que `/status`: query agregada directa en SSR, cache `s-maxage=300` que ya pone el middleware. |
-| Hallazgos SAST/a11y (conteo por severidad) | SSR agregado sobre `security_findings` | Solo agregados por severidad y fuente — nunca el detalle, por OPSEC. |
+| Hallazgos SAST/a11y (conteo por severidad) | SSR agregado sobre `security_findings` | Solo agregados por severidad y fuente - nunca el detalle, por OPSEC. |
 | Inventario de niveles, decisiones, glosario | `src/data/testing.ts` | Es prosa curada, no métrica. |
 | Nº de archivos de test y de e2e | `import.meta.glob` sobre `tests/` y `e2e/` en build | Se cuenta solo, no se desactualiza. *(Alternativa si `glob` fuera de `src/` da problemas: constante en `testing.ts` con fecha de medición.)* |
 
@@ -151,7 +151,7 @@ medición manual: 22 jul 2026». **Fail-open**, como todo lo demás del repo.
 
 ## 4. Secciones de la página (guion completo)
 
-### § 0 — Hero: «¿Qué pasa cuando hago `git push`?»
+### § 0 - Hero: «¿Qué pasa cuando hago `git push`?»
 
 Una franja con 6 números en vivo: tests, cobertura, mutation score, e2e,
 hallazgos abiertos, y el resultado del último deploy (con su SHA corto y
@@ -161,16 +161,16 @@ enlace al run de GitHub Actions). Debajo, una frase que fija el marco:
 > distintos. Ninguno sobra: cada uno responde una pregunta que los otros no
 > pueden responder.»
 
-### § 1 — La pirámide de pruebas, con los números de este proyecto
+### § 1 - La pirámide de pruebas, con los números de este proyecto
 
-Pirámide interactiva (no una imagen): 4 estratos —unitarias, integración,
-contratos, e2e— dimensionados proporcionalmente a los tests reales. Al pasar
+Pirámide interactiva (no una imagen): 4 estratos (unitarias, integración,
+contratos, e2e) dimensionados proporcionalmente a los tests reales. Al pasar
 el cursor o tocar un estrato: cuántos hay, qué preguntan, cuánto tardan, qué
 NO detectan. Encima de la pirámide, una banda aparte para lo que no encaja
 en ella (SAST, a11y, chaos, carga, monitoreo, usabilidad), porque
 presentarlos como «más pruebas» sería mentir sobre su naturaleza.
 
-### § 2 — El mapa del pipeline (el corazón de la página)
+### § 2 - El mapa del pipeline (el corazón de la página)
 
 Diagrama horizontal con 6 etapas: **local → push → CI → deploy → verificación
 en prod → operación continua**. Cada etapa es un nodo clicable; al abrirlo se
@@ -184,9 +184,9 @@ despliega un panel con:
 
 Un control **«Simular una corrida»** anima el recorrido etapa por etapa con
 tres finales seleccionables:
-1. **Todo verde** — llega a producción y se queda.
-2. **Un test falla** — el pipeline para en CI; nada llega a producción.
-3. **Deploy insano** — pasa CI, falla el health check post-deploy, se ejecuta
+1. **Todo verde** - llega a producción y se queda.
+2. **Un test falla** - el pipeline para en CI; nada llega a producción.
+3. **Deploy insano** - pasa CI, falla el health check post-deploy, se ejecuta
    `vercel rollback` y sale un push a ntfy. Este es el escenario que a nadie
    le enseñan en clase y es el que mejor se cuenta visualmente.
 
@@ -194,9 +194,9 @@ Implementación: SVG inline + clases CSS conmutadas por un script pequeño con
 `data-*` attributes. Sin librerías, sin `innerHTML` con datos de BD (o con
 `esc()` si hace falta), compatible con la CSP en modo enforce.
 
-### § 3 — Anatomía de un test, en vivo
+### § 3 - Anatomía de un test, en vivo
 
-Se toma **un** test real —`tests/payments.test.ts`, idempotencia de cobros—
+Se toma **un** test real (`tests/payments.test.ts`, idempotencia de cobros)
 y se disecciona con 4 capas conmutables sobre el mismo bloque de código:
 
 1. *arrange* (BD temporal + migración con el migrador de producción),
@@ -208,22 +208,22 @@ y se disecciona con 4 capas conmutables sobre el mismo bloque de código:
 Cada capa se resalta en el código y muestra su explicación al lado. Es la
 sección que enseña *cómo se escribe* un test, no solo que existen.
 
-### § 4 — Los 15 niveles, en fichas
+### § 4 - Los 15 niveles, en fichas
 
 Una ficha por nivel, filtrable por **«¿cuándo corre?»** (en cada push /
 semanal / manual / continuo) y por **«¿bloquea el deploy?»** (sí / no).
 Cada ficha: pregunta que responde, herramienta, volumen real, coste
-(velocidad), y su punto ciego. Sin `border-left` de color — se distingue con
+(velocidad), y su punto ciego. Sin `border-left` de color - se distingue con
 un *dot* de color junto al título y tinte de fondo en hover.
 
-### § 5 — Las 12 decisiones (§ 2.2), como tarjetas «problema → decisión»
+### § 5 - Las 12 decisiones (§ 2.2), como tarjetas «problema → decisión»
 
 Formato fijo: **el síntoma** («los tests de concurrencia fallaban sin
 sentido») → **la causa** → **la decisión** → **dónde vive en el repo**. Estas
 son las tarjetas que hacen que la página valga para un compañero, no el
 listado de herramientas.
 
-### § 6 — Cobertura vs. mutation score
+### § 6 - Cobertura vs. mutation score
 
 Comparación lado a lado con un ejemplo mínimo y real: una función con 100%
 de cobertura cuyo test no afirma nada, y el mutante que sobrevive. Se
@@ -231,15 +231,15 @@ muestra el reporte de Stryker acotado a `money.ts` (el mismo recorte que ya
 usa `tests/mutation.test.ts` como fixture) y se explican los estados
 *Killed / Survived / NoCoverage / Timeout*.
 
-### § 7 — Lo que aún no está
+### § 7 - Lo que aún no está
 
 Honestidad explícita: k6 (Fase 5, bloqueada por `VERCEL_TOKEN`), la columna
 de evidencia de usabilidad pendiente de participantes reales, y la ausencia
 de tests de regresión visual. Un proyecto que declara sus huecos es más
-creíble que uno que finge cobertura total — y en una sustentación, es la
+creíble que uno que finge cobertura total - y en una sustentación, es la
 diferencia entre parecer honesto y parecer ingenuo.
 
-### § 8 — Cómo correrlo tú mismo
+### § 8 - Cómo correrlo tú mismo
 
 Bloque de comandos copiables (`npm test`, `test:coverage`, `test:e2e`,
 `test:e2e:ui`, `test:mutation`, `test:contracts`) con el aviso de Node ≥22.12
@@ -248,7 +248,7 @@ en largo (`e2e-que-prueban-lo-que-de-verdad-importa`,
 `mutar-el-codigo-para-saber-si-mis-tests-sirven`, `no-solo-un-scan-verde`,
 `chaos-engineering-que-no-puede-hacerte-dano`).
 
-### § 9 — Glosario
+### § 9 - Glosario
 
 12–15 términos (flaky, mutante, fixture, seed, SAST, e2e, error budget,
 idempotencia, fail-open, health check, rollback, contrato) con definición de
@@ -256,13 +256,13 @@ una línea. Un compañero de clase no necesariamente sabe qué es un mutante.
 
 ---
 
-## 5. Interactividad — inventario y coste
+## 5. Interactividad - inventario y coste
 
 | Interacción | Complejidad | Valor |
 |-------------|-------------|-------|
 | Pirámide con estratos conmutables | baja | alto |
 | Mapa de pipeline clicable | media | **el más alto** |
-| Simulación de corrida (3 finales) | media-alta | **el más alto** — es lo que se recuerda |
+| Simulación de corrida (3 finales) | media-alta | **el más alto** - es lo que se recuerda |
 | Anatomía de test por capas | media | alto |
 | Filtros de las fichas de nivel | baja | medio |
 | Números en vivo desde `ci_runs` | baja | alto (prueba que no es una maqueta) |

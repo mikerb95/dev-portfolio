@@ -67,7 +67,7 @@ describe('lo que rompe una regex', () => {
     const { slides } = parseDeck(
       deck(`<section data-speaker-notes="Comparar &lt;deck-stage&gt; con &amp;quot;reveal&amp;quot; &#8212; ojo"></section>`)
     )
-    expect(slides[0].speakerNotes).toBe('Comparar <deck-stage> con &quot;reveal&quot; — ojo')
+    expect(slides[0].speakerNotes).toBe('Comparar <deck-stage> con &quot;reveal&quot; - ojo')
   })
 
   it('decodeEntities deja intacto lo que no reconoce', () => {

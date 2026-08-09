@@ -55,7 +55,7 @@ export async function joinDevice(params: {
   // diseñado para sobrevivir a incógnito y al borrado de cookies. Nuestro hash
   // propio es el respaldo: es más frágil (canvas/audio/devicePixelRatio pueden
   // variar entre sesiones y romper la igualdad exacta), así que si solo con él
-  // buscáramos, el mismo dispositivo en incógnito entraría como uno nuevo — que
+  // buscáramos, el mismo dispositivo en incógnito entraría como uno nuevo - que
   // es justo lo que la demo quiere demostrar que NO debería pasar. Un match por
   // deviceHash O por libFpHash reconoce la revisita aunque el hash propio baile.
   const matchClause = params.libFpHash

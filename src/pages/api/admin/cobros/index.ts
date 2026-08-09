@@ -22,14 +22,14 @@ const json = (status: number, body: unknown) =>
 const MIN_CENTS = 1_000_00
 const MAX_CENTS = 5_000_000_00
 
-/** GET /api/admin/cobros?open=1 — lista para la vista de pendientes. */
+/** GET /api/admin/cobros?open=1 - lista para la vista de pendientes. */
 export const GET: APIRoute = async ({ url }) => {
   const onlyOpen = url.searchParams.get('open') === '1'
   const cobros = await listCobros(30, onlyOpen)
   return json(200, { cobros })
 }
 
-/** POST /api/admin/cobros — crea el cobro y devuelve el mensaje listo para WhatsApp. */
+/** POST /api/admin/cobros - crea el cobro y devuelve el mensaje listo para WhatsApp. */
 export const POST: APIRoute = async ({ request, url }) => {
   // Aunque la ruta ya exige sesión admin, el límite acota el daño de una sesión
   // robada y atrapa un bug de la UI que dispare cobros en bucle.

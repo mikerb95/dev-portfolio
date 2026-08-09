@@ -5,7 +5,7 @@
  *
  *   REPORT_PATH=report_json.json node scripts/zap-ingest.mjs
  *
- * Con INGEST_URL + LAB_INGEST_TOKEN postea con autoResolve:true — las alertas
+ * Con INGEST_URL + LAB_INGEST_TOKEN postea con autoResolve:true - las alertas
  * que ya no aparecen en un scan (vulnerabilidad corregida) se marcan
  * resueltas solas. Sin ellos, solo imprime el resumen.
  *

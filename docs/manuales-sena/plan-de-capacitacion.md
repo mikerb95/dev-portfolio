@@ -1,4 +1,4 @@
-# CodeByMike — Portafolio, Panel de Control y Portal de Clientes
+# CodeByMike - Portafolio, Panel de Control y Portal de Clientes
 
 ## Plan de Capacitación
 
@@ -11,10 +11,10 @@
 
 | | | | |
 |---|---|---|---|
-| **Organismo** | SENA — Centro de Servicios Financieros, Regional Distrito Capital | | |
-| **Proyecto** | CodeByMike — Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
+| **Organismo** | SENA - Centro de Servicios Financieros, Regional Distrito Capital | | |
+| **Proyecto** | CodeByMike - Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
 | **Entregable** | Plan de Capacitación | | |
-| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software — Ficha 3114731 — Trimestre 7 | | |
+| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software - Ficha 3114731 - Trimestre 7 | | |
 | **Versión/Edición** | 0100 | **Fecha Versión** | 03/08/2026 |
 | **Aprobado por** | (pendiente de asignación) | **Fecha Aprobación** | (pendiente) |
 | | | **Nº Total de Páginas** | `<al exportar>` |
@@ -39,8 +39,8 @@ desarrollador.
 
 El sistema presenta una característica que condiciona todo el plan: **sus
 usuarios no forman un grupo homogéneo**. Conviven un perfil técnico con acceso
-total al panel de control y a la infraestructura, y un perfil de negocio —el
-cliente— que entra a un portal acotado y cuya única expectativa es consultar el
+total al panel de control y a la infraestructura, y un perfil de negocio (el
+cliente) que entra a un portal acotado y cuya única expectativa es consultar el
 avance de su proyecto, sus facturas y sus documentos. Impartir a ambos la misma
 sesión sería ineficaz en los dos sentidos: dejaría al cliente frente a conceptos
 que no necesita y dejaría al perfil técnico sin la profundidad que sí requiere.
@@ -88,11 +88,11 @@ finalizar el proceso:
 | 3 | Ejecutar las suites de pruebas y leer sus resultados, incluida la verificación posterior al despliegue y la reversión automática | Técnica |
 | 4 | Diagnosticar y responder ante un incidente de disponibilidad y ante un evento de seguridad | Técnica |
 | 5 | Ejecutar y verificar un respaldo, y conocer el procedimiento de restauración | Técnica |
-| 6 | Operar el ciclo comercial completo: alta de cliente, proyecto, alcance, seguimiento, costos y rentabilidad | Usuario final — administrador |
-| 7 | Emitir una factura, cobrarla y comprobar que el cobro se refleja correctamente | Usuario final — administrador |
-| 8 | Invitar a un usuario de cliente, publicar hitos de avance y atender su mensajería | Usuario final — administrador |
-| 9 | Activar la cuenta, acceder al portal y consultar avance, facturas y documentos | Usuario final — cliente |
-| 10 | Comunicarse por la mensajería del portal y configurar las notificaciones | Usuario final — cliente |
+| 6 | Operar el ciclo comercial completo: alta de cliente, proyecto, alcance, seguimiento, costos y rentabilidad | Usuario final - administrador |
+| 7 | Emitir una factura, cobrarla y comprobar que el cobro se refleja correctamente | Usuario final - administrador |
+| 8 | Invitar a un usuario de cliente, publicar hitos de avance y atender su mensajería | Usuario final - administrador |
+| 9 | Activar la cuenta, acceder al portal y consultar avance, facturas y documentos | Usuario final - cliente |
+| 10 | Comunicarse por la mensajería del portal y configurar las notificaciones | Usuario final - cliente |
 
 ---
 
@@ -330,14 +330,14 @@ El seguimiento se realiza en tres momentos, con instrumentos distintos.
 |---|---|---|
 | Lista de asistencia por sesión | Técnica y usuario final | Asistencia mínima del 80 % de las sesiones |
 | Verificación del entregable de cada sesión | Técnica | El entregable debe completarse; sin él la sesión no se da por cursada |
-| Observación del caso práctico | Usuario final — administrador | El participante completa el flujo de extremo a extremo sin asistencia |
+| Observación del caso práctico | Usuario final - administrador | El participante completa el flujo de extremo a extremo sin asistencia |
 
 **Al finalizar la capacitación**
 
 | Instrumento | Ruta | Criterio de aprobación |
 |---|---|---|
 | Evaluación práctica | Técnica | Desplegar el sistema en un entorno limpio, aplicar una migración aditiva y responder a un incidente simulado. Aprobación con el 100 % de las tres tareas completadas |
-| Evaluación práctica | Usuario final — administrador | Completar el ciclo comercial de extremo a extremo y responder correctamente a una alerta. Aprobación con las dos tareas completadas |
+| Evaluación práctica | Usuario final - administrador | Completar el ciclo comercial de extremo a extremo y responder correctamente a una alerta. Aprobación con las dos tareas completadas |
 | Encuesta de satisfacción | Todas | Instrumento de mejora del plan, no de calificación del participante |
 | Confirmación de primer acceso | Usuario de cliente | La cuenta pasa de estado `invited` a `active`, dato que el sistema registra por sí mismo |
 
@@ -346,7 +346,7 @@ El seguimiento se realiza en tres momentos, con instrumentos distintos.
 | Instrumento | Ruta | Periodo |
 |---|---|---|
 | Acompañamiento con consultas ilimitadas | Técnica | 30 días naturales tras la última sesión |
-| Acompañamiento con consultas ilimitadas | Usuario final — administrador | 15 días naturales tras la última sesión |
+| Acompañamiento con consultas ilimitadas | Usuario final - administrador | 15 días naturales tras la última sesión |
 | Revisión de refuerzo | Técnica y usuario final | Sesión de 1 hora a los 30 días, para resolver las dudas surgidas en la operación real |
 | Soporte por la mensajería del portal | Usuario de cliente | Permanente |
 
@@ -395,7 +395,7 @@ descrito.
 
 ### 5.6.1 Contenido de la capacitación técnica
 
-**Módulo MT-1 — Arquitectura y visión general del sistema (3 h)**
+**Módulo MT-1 - Arquitectura y visión general del sistema (3 h)**
 
 | Tema | Duración | Contenido |
 |---|---|---|
@@ -406,7 +406,7 @@ descrito.
 | Documentación como código | 20 min | La fuente de verdad tipada, los diagramas generados en el servidor y por qué ninguna cifra se escribe a mano |
 | Ejercicio | 30 min | Localizar en el código el punto donde se aplica un requerimiento dado, partiendo de su ficha en `/docs` |
 
-**Módulo MT-2 — Instalación, configuración y despliegue (4 h)**
+**Módulo MT-2 - Instalación, configuración y despliegue (4 h)**
 
 | Tema | Duración | Contenido |
 |---|---|---|
@@ -418,7 +418,7 @@ descrito.
 | Verificación posterior | 30 min | Las once comprobaciones mínimas del Manual de Instalación |
 | Ejercicio | 40 min | Despliegue completo en el entorno del participante, verificado con la lista de comprobación |
 
-**Módulo MT-3 — Modelo de datos y migraciones (3 h)**
+**Módulo MT-3 - Modelo de datos y migraciones (3 h)**
 
 | Tema | Duración | Contenido |
 |---|---|---|
@@ -429,7 +429,7 @@ descrito.
 | Migraciones | 30 min | Generación y aplicación; por qué son exclusivamente aditivas; el caso en que el generador produce SQL incorrecto |
 | Ejercicio | 20 min | Añadir una columna, generar la migración, revisar el SQL y aplicarla |
 
-**Módulo MT-4 — Seguridad, observabilidad y respuesta a incidentes (3 h)**
+**Módulo MT-4 - Seguridad, observabilidad y respuesta a incidentes (3 h)**
 
 | Tema | Duración | Contenido |
 |---|---|---|
@@ -440,7 +440,7 @@ descrito.
 | OPSEC en páginas públicas | 15 min | Qué no puede publicarse nunca, y por qué las vistas públicas solo muestran agregados |
 | Ejercicio | 45 min | Inyectar una caída controlada, observar la apertura del incidente en el monitoreo, cerrarla; bloquear una dirección y comprobar su expiración |
 
-**Módulo MT-5 — Pruebas, integración continua y respaldos (3 h)**
+**Módulo MT-5 - Pruebas, integración continua y respaldos (3 h)**
 
 | Tema | Duración | Contenido |
 |---|---|---|
@@ -455,7 +455,7 @@ descrito.
 
 **Administrador funcional**
 
-**Módulo MU-1 — Acceso, sesiones y orientación general (45 min)**
+**Módulo MU-1 - Acceso, sesiones y orientación general (45 min)**
 
 | Tema | Duración |
 |---|---|
@@ -464,7 +464,7 @@ descrito.
 | Revisar dispositivos conectados y revocar los desconocidos | 15 min |
 | Recorrido general del panel y ubicación de cada apartado | 10 min |
 
-**Módulo MU-2 — Clientes, proyectos, alcance y seguimiento (1 h 15 min)**
+**Módulo MU-2 - Clientes, proyectos, alcance y seguimiento (1 h 15 min)**
 
 | Tema | Duración |
 |---|---|
@@ -474,7 +474,7 @@ descrito.
 | Registrar seguimiento comercial con próxima acción y vencimiento | 15 min |
 | Atender la bandeja de mensajes y la asociación automática por correo | 10 min |
 
-**Módulo MU-3 — Finanzas (1 h)**
+**Módulo MU-3 - Finanzas (1 h)**
 
 | Tema | Duración |
 |---|---|
@@ -483,7 +483,7 @@ descrito.
 | Interpretar la advertencia de moneda sin tasa de cambio | 10 min |
 | Guardar y revelar credenciales en la bóveda | 15 min |
 
-**Módulo MU-4 — Facturación y cobro (1 h)**
+**Módulo MU-4 - Facturación y cobro (1 h)**
 
 | Tema | Duración |
 |---|---|
@@ -491,7 +491,7 @@ descrito.
 | Cobro de campo desde el celular por mensajería instantánea | 25 min |
 | Comprobar que el pago cierra la factura, y qué ocurre ante un doble intento | 15 min |
 
-**Módulo MU-5 — Administración del portal de clientes (1 h)**
+**Módulo MU-5 - Administración del portal de clientes (1 h)**
 
 | Tema | Duración |
 |---|---|
@@ -500,7 +500,7 @@ descrito.
 | Responder la mensajería y compartir documentos | 15 min |
 | Curar el feed de actividad y usar la vista de soporte de solo lectura | 15 min |
 
-**Módulo MU-6 — Observabilidad, seguridad y alertas (1 h)**
+**Módulo MU-6 - Observabilidad, seguridad y alertas (1 h)**
 
 | Tema | Duración |
 |---|---|
@@ -511,7 +511,7 @@ descrito.
 
 **Usuario de cliente**
 
-**Módulo MC-1 — Activación y primer acceso (10 min)**
+**Módulo MC-1 - Activación y primer acceso (10 min)**
 
 | Tema |
 |---|
@@ -519,14 +519,14 @@ descrito.
 | Abrir la invitación y elegir la contraseña |
 | Iniciar sesión y recuperar la contraseña si se olvida |
 
-**Módulo MC-2 — Avance del proyecto (10 min)**
+**Módulo MC-2 - Avance del proyecto (10 min)**
 
 | Tema |
 |---|
 | Leer la barra de avance y los hitos |
 | La información se actualiza sola: no es necesario recargar |
 
-**Módulo MC-3 — Facturas y documentos (10 min)**
+**Módulo MC-3 - Facturas y documentos (10 min)**
 
 | Tema |
 |---|
@@ -534,7 +534,7 @@ descrito.
 | Descargar una factura en PDF |
 | Consultar y descargar los documentos compartidos |
 
-**Módulo MC-4 — Mensajería y notificaciones (15 min)**
+**Módulo MC-4 - Mensajería y notificaciones (15 min)**
 
 | Tema |
 |---|
@@ -545,7 +545,7 @@ descrito.
 
 ---
 
-## Anexo — Restricciones y consideraciones del plan
+## Anexo - Restricciones y consideraciones del plan
 
 | # | Consideración | Implicación |
 |---|---|---|

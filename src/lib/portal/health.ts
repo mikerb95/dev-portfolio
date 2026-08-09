@@ -3,7 +3,7 @@
 // Por qué no basta con monitorear /portal/login: esa página renderiza sin tocar
 // la base (sin cookie no hay sesión que resolver), así que un 200 ahí solo
 // prueba que el SSR responde. El portal puede estar servido y aun así ser
-// inservible — una migración a medias, una tabla renombrada — y el monitor
+// inservible - una migración a medias, una tabla renombrada - y el monitor
 // seguiría en verde. Un chequeo que no puede fallar cuando el sistema falla no
 // es un chequeo, es decoración.
 //

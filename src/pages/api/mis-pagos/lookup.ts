@@ -11,7 +11,7 @@ import { recordSecurityEvent } from '../../../lib/security/events'
 //
 // Un teléfono no es una credencial: cualquiera conoce números ajenos. Por eso
 // esta vista devuelve datos enmascarados (fecha, estado y los últimos 3 dígitos
-// del monto) y nada más — lo justo para que el dueño se reconozca, inútil para
+// del monto) y nada más - lo justo para que el dueño se reconozca, inútil para
 // un tercero que quiera perfilar a quién le cobro y cuánto.
 //
 // El límite de 5/hora por IP es la otra mitad: hace que enumerar teléfonos

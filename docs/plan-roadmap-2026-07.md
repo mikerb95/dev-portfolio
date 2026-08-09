@@ -1,4 +1,4 @@
-# Roadmap — julio 2026 (plan maestro)
+# Roadmap - julio 2026 (plan maestro)
 
 > Plan acordado el 15 jul 2026. Consolida: demo read-only del admin, fases LAB
 > pendientes, remate de la vitrina de seguridad, `/lab` público, README, e2e con
@@ -34,12 +34,12 @@
 > sub-fase 6b) y la landing comercial `/paginas-web` (`plan-diseno-web.md`).
 > Desde entonces se sumaron, también fuera de esta tabla: los diagramas BPMN de
 > los procesos de negocio con su versión imprimible y los cuatro diagramas UML
-> con motor de layout propio —despliegue, comunicación, actividades y
-> componentes— (`plan-documentacion.md` §5.b y §5.c), la internacionalización
+> con motor de layout propio (despliegue, comunicación, actividades y
+> componentes) (`plan-documentacion.md` §5.b y §5.c), la internacionalización
 > del sitio público (`plan-i18n-en.md`), la capa de tiempo real del portal con
 > su feed de actividad (`plan-portal-tiempo-real.md`, Fases A-C entregadas el 30
-> jul) y Docker como entorno de desarrollo y de pruebas —nunca como runtime de
-> producción— (`plan-docker.md`, Fases 1-2).
+> jul) y Docker como entorno de desarrollo y de pruebas (nunca como runtime de
+> producción) (`plan-docker.md`, Fases 1-2).
 >
 > Bloques abiertos que no están en esta tabla: el resto del contenido por
 > traducir (`plan-i18n-en.md`), las Fases 3-5 de `plan-docker.md` y el tipo de
@@ -52,9 +52,9 @@
 | 2 | ✅ `/lab` público (vitrina del LAB) | feature | ~1 sesión |
 | 3 | ✅ Demo read-only del admin | feature grande | ~2-3 sesiones |
 | 4 | ✅ Playwright e2e | infra de calidad | ~1-2 sesiones |
-| 5 | ✅ LAB Fase 6 — SAST + a11y (+ DAST, 23 jul) | LAB | ~2-3 días |
-| 6 | ✅ LAB Fase 7 — Mutation + contratos | LAB | ~2 días |
-| 7 | LAB Fase 5 — Load testing k6 | LAB | ~2 días |
+| 5 | ✅ LAB Fase 6 - SAST + a11y (+ DAST, 23 jul) | LAB | ~2-3 días |
+| 6 | ✅ LAB Fase 7 - Mutation + contratos | LAB | ~2 días |
+| 7 | LAB Fase 5 - Load testing k6 | LAB | ~2 días |
 | 8 | ✅ Remate vitrina seguridad (código) | remate | ~1 h |
 | 9 | Changelog público | feature | ~½ sesión |
 | 10 | Página `/architecture` renovada | mejora | ~½ sesión |
@@ -70,7 +70,7 @@ independientes ordenadas por impacto.
 
 ---
 
-## Etapa 1 — README renovado
+## Etapa 1 - README renovado
 
 **Problema**: el README describe el panel privado pero no enlaza nada de lo
 público. Siendo el repo público "con fines de portafolio", el README es en sí
@@ -89,7 +89,7 @@ Pasos:
 Aceptación: todos los links funcionan en prod; `grep` sin secretos; se entiende
 el proyecto en 60 segundos sin abrir el código.
 
-## Etapa 2 — `/lab` público
+## Etapa 2 - `/lab` público
 
 **Objetivo**: versión pública read-only de lo que hoy solo se ve en `/admin/lab/*`.
 Hoy `/lab` solo tiene `fingerprint/`.
@@ -100,7 +100,7 @@ Pasos:
    inline en ellas), nunca duplicar queries:
    - **Pipeline CI**: últimas corridas de `ci_runs` (estado, duración, cobertura,
      mutation score cuando exista). Sin URLs de preview ni SHAs completos (7 chars).
-   - **SLO / error budget**: reusar `src/lib/slo.ts` — los mismos números que `/status`.
+   - **SLO / error budget**: reusar `src/lib/slo.ts` - los mismos números que `/status`.
    - **Chaos**: experimentos históricos de `lab_experiments` (qué se rompió, qué
      se observó); flags activos NO se muestran (OPSEC: no anunciar fallos inyectables).
    - **Pagos (mock)**: contadores agregados de `payments` (transacciones de
@@ -112,13 +112,13 @@ Pasos:
    tanto como los datos). Mismo tono que `/security`.
 3. Enlaces: tarjeta en `/tools`, link en Footer, link en `/status` si aplica.
 4. SEO: title/description/OG (reusar pipeline `og:generate` si es barato; si no, OG genérica).
-5. OPSEC check: grep del HTML servido — sin tokens, sin URLs vercel.app de
+5. OPSEC check: grep del HTML servido - sin tokens, sin URLs vercel.app de
    preview, sin rutas admin.
 
 Aceptación: `/lab` carga sin sesión con datos reales; sin fugas (grep);
 lighthouse a11y sin regresiones; link visible desde home/tools/footer.
 
-## Etapa 3 — Demo read-only del admin ✅ IMPLEMENTADA (15 jul 2026)
+## Etapa 3 - Demo read-only del admin ✅ IMPLEMENTADA (15 jul 2026)
 
 **Entregado**: base Turso `portfolio-demo` creada y poblada con
 `scripts/seed-demo.mjs` (4 clientes, 4 proyectos, 8 servicios, 4 monitores con
@@ -162,11 +162,11 @@ Diseño (decidir en implementación, pero este es el enfoque recomendado):
    monitores/interacciones ficticios pero verosímiles; secretos de la bóveda =
    placeholders cifrados con una `ENCRYPTION_KEY` demo). Ventaja: imposible tocar
    datos reales por diseño, sin `WHERE is_demo` en cada query.
-2. **Selección de BD por request**: `AsyncLocalStorage` en `src/db/index.ts` —
+2. **Selección de BD por request**: `AsyncLocalStorage` en `src/db/index.ts` -
    el export `db` se vuelve un proxy que resuelve al cliente demo cuando el
    contexto del request lo marca. Cero cambios en las ~30 páginas admin.
    (Plan B si el proxy se complica con Drizzle: factory `getDb(locals)` y tocar
-   los imports de las páginas admin — más ruido, misma seguridad.)
+   los imports de las páginas admin - más ruido, misma seguridad.)
 3. **Entrada**: página pública `/demo` que explica qué es y pone cookie firmada
    (HMAC con `AUTH_SECRET`, TTL 2 h) `demo_session`, luego redirige a `/admin`.
 4. **Middleware** (`src/middleware.ts`, rama `isAdmin`): si no hay sesión real
@@ -175,10 +175,10 @@ Diseño (decidir en implementación, pero este es el enfoque recomendado):
    - Bloquear también los GET peligrosos: revelado de bóveda, backup/export,
      `/admin/passkeys`, `/admin/sessions` (lista blanca o negra explícita de rutas).
    - `locals.demo = true` + activar el ALS de BD demo.
-5. **UI**: banner fijo "🔍 Demo — datos ficticios, solo lectura" en el layout
+5. **UI**: banner fijo "🔍 Demo - datos ficticios, solo lectura" en el layout
    admin cuando `locals.demo`; ocultar/deshabilitar botones de acción (los POST
-   igual están bloqueados server-side — el banner y los disabled son cortesía).
-6. **Headers**: en demo quitar `noindex`… NO — mantener `noindex` (no queremos
+   igual están bloqueados server-side - el banner y los disabled son cortesía).
+6. **Headers**: en demo quitar `noindex`… NO - mantener `noindex` (no queremos
    el panel demo indexado), pero permitir frame-ancestors igual que admin.
 7. **Entradas públicas**: tarjeta en home/`/tools` + botón "Ver demo" en `/login`.
 8. **Tests**: unit del verificador de cookie firmada; e2e (etapa 4): GET ok,
@@ -189,7 +189,7 @@ Aceptación: sin sesión GitHub se navega todo el panel con datos fake; ningún
 método de escritura pasa; el revelado de secretos está bloqueado; con sesión
 real todo sigue exactamente igual; e2e cubriendo los 3 puntos anteriores.
 
-## Etapa 4 — Playwright e2e ✅ IMPLEMENTADA (16 jul 2026)
+## Etapa 4 - Playwright e2e ✅ IMPLEMENTADA (16 jul 2026)
 
 **Entregado**: `playwright.config.ts` + `e2e/` con 5 specs (36 tests):
 `public` (render sin errores + cabeceras + sitemap), `auth` (gate de /admin),
@@ -200,7 +200,7 @@ sube el reporte si falla). Scripts `test:e2e` / `test:e2e:ui` / `seed:demo`.
 **Decisiones que conviene recordar** (documentadas en los archivos):
 - **Bases desechables libsql en archivo** (`.e2e/`), nunca Turso: los e2e
   escriben y no deben tocar datos reales ni gastar cuota. `scripts/seed-e2e.mjs`
-  las siembra en el arranque del `webServer` — **no** en `globalSetup`, porque
+  las siembra en el arranque del `webServer` - **no** en `globalSetup`, porque
   Playwright levanta el servidor ANTES de correr globalSetup.
 - La base "principal" se siembra con un **prefijo centinela** (`SEED_PREFIX` en
   `seed-demo.mjs`, ahora parametrizable); el spec de la demo afirma que ese
@@ -247,7 +247,7 @@ Pasos:
 Aceptación: `npm run test:e2e` verde local y en CI; los specs de demo prueban
 las 3 garantías de seguridad de la etapa 3.
 
-## Etapas 5-7 — LAB Fases 6, 7 y 5
+## Etapas 5-7 - LAB Fases 6, 7 y 5
 
 El detalle completo (entregables, tablas, workflows, criterios) ya está en
 `docs/plan-lab-fases-pendientes.md`. Aquí solo el orden nuevo y los ajustes:
@@ -257,7 +257,7 @@ El detalle completo (entregables, tablas, workflows, criterios) ya está en
 **Entregado**: tabla `security_findings` (fingerprint único por
 source|ruleId|route, dedup entre corridas), lógica pura en
 `src/lib/lab/findings.ts` (parsers de `npm audit --json` y violaciones axe,
-normalización de severidad, transiciones de estado — 15 tests) +
+normalización de severidad, transiciones de estado - 15 tests) +
 `src/lib/lab/findings-store.ts` (upsert idempotente, auto-resolución de lo que
 ya no aparece). Ingesta ampliada (`kind:'security_finding'`, 3 formas de
 payload). Endpoint `GET/PATCH /api/admin/lab/security` + página
@@ -270,27 +270,27 @@ Playwright, mismas 8 páginas públicas que los e2e). Workflows `security.yml`
 local del commit, reporta al panel LAB en prod).
 
 **Verificado con datos REALES, no fixtures**: `npm audit` sobre el repo
-encontró 15 paquetes vulnerables (8 critical/high) — ingeridos correctamente.
+encontró 15 paquetes vulnerables (8 critical/high) - ingeridos correctamente.
 El scan de axe encontró **9 violaciones reales** de contraste WCAG AA en las 8
 páginas públicas (ratios de 2.4-2.95 contra el mínimo 4.5:1, ej. `text-cyan/40`
-sobre fondo oscuro) — no artefactos del entorno de prueba. Ciclo completo
+sobre fondo oscuro) - no artefactos del entorno de prueba. Ciclo completo
 resolver→reflejarse en `/lab` público probado end-to-end.
 
 **Bugs reales encontrados y corregidos al verificar en runtime** (ninguno se
 habría visto sin ejecutar los scripts de verdad):
 - `src/pages/api/lab/ingest.ts` usaba `process.env.LAB_INGEST_TOKEN`, que en
   `astro dev` no está poblado (el resto del repo usa `import.meta.env` para
-  secretos llamados por servicios externos, p. ej. `CRON_SECRET`) — 401
+  secretos llamados por servicios externos, p. ej. `CRON_SECRET`) - 401
   perpetuo en dev. Corregido a `import.meta.env`.
 - `@axe-core/playwright` exige `browser.newContext()` explícito; con
   `browser.newPage()` directo falla con "please use browser.newContext()".
 - El conteo `inserted`/`updated` de `ingestFindings` comparaba `Date` con
-  milisegundos contra un campo `timestamp` que Drizzle trunca a segundos —
+  milisegundos contra un campo `timestamp` que Drizzle trunca a segundos -
   casi siempre daba falsos "updated" en inserts nuevos. Corregido consultando
   qué fingerprints ya existían ANTES del batch.
 - Encontré y borré un `.env.development.local` suelto (de una sesión de
   `/verify` anterior) que redirigía `TURSO_DATABASE_URL` a un archivo temporal
-  inexistente — explicaba fallos de ingesta que parecían de auth.
+  inexistente - explicaba fallos de ingesta que parecían de auth.
 - ZAP/DAST (sub-fase 6b) **no se implementó**: sigue dependiendo de un preview
   deployment estable, que no existe sin `VERCEL_TOKEN` (pendiente transversal).
 
@@ -309,10 +309,10 @@ habría visto sin ejecutar los scripts de verdad):
 
 **Entregado**: `stryker.config.json` (`mutate: src/lib/**/*.ts`, thresholds
 high80/low60/break50) + `src/lib/lab/mutation.ts` (parser puro del reporte de
-Stryker — el JSON no trae un score agregado, hay que calcularlo; `NoCoverage`
+Stryker - el JSON no trae un score agregado, hay que calcularlo; `NoCoverage`
 cuenta como no detectado, `Ignored`/`CompileError` se excluyen) con tests
 propios. `scripts/mutation-scan.mjs` corre Stryker, lee el reporte real (sigue
-de largo aunque Stryker salga con exit≠0 por cruzar el umbral `break` — el
+de largo aunque Stryker salga con exit≠0 por cruzar el umbral `break` - el
 score real importa más que el exit code) y reporta `kind:'ci_run'` con
 `mutationScore` al mismo mecanismo de ingesta que ya usa el pipeline normal.
 Workflow `mutation.yml` (`workflow_dispatch` + `schedule` domingos 08:00 UTC,
@@ -320,7 +320,7 @@ nunca en push). Tarjeta de mutation score en `/admin/lab/pipeline` y en `/lab`
 público, con color por umbral (verde ≥80, ámbar ≥60, rojo debajo).
 
 Contratos: `src/lib/contracts.ts` con 4 esquemas Zod (health, payments
-checkout, status/latency, admin lab slo) + `tests/contracts.test.ts` — cada
+checkout, status/latency, admin lab slo) + `tests/contracts.test.ts` - cada
 test llama al handler real (no un mock) y valida la respuesta real contra el
 esquema; el último test confirma que un campo renombrado (`ok` → `healthy`)
 rompe el esquema, no un test vacío que nunca falla.
@@ -333,7 +333,7 @@ produjo **mutation score 87.2%** (fila real en `ci_runs`, sha `5df7ccb`,
 **Susto de aislamiento en dev, descartado tras investigar** (17 jul 2026): al
 verificar la tarjeta de mutation score en `/admin/lab/pipeline` con sesión demo,
 la API `/api/admin/lab/ci-runs` devolvió corridas reales de producción en vez de
-las 7 ficticias de la demo — parecía una fuga grave del aislamiento de la etapa 3.
+las 7 ficticias de la demo - parecía una fuga grave del aislamiento de la etapa 3.
 Investigación con `console.log` en `activeDb()` + consultas directas a ambas
 bases (bypaseando HTTP) confirmó: **la base demo está correctamente aislada y
 nunca se corrompió** (4 clientes ficticios, 7 ci_runs falsos, estable en todo
@@ -341,7 +341,7 @@ momento); el síntoma era intermitente y desaparecía en arranques limpios del
 servidor. Causa real: **otra sesión de agente estaba trabajando en este mismo
 repo al mismo tiempo** (`ps aux` mostró su propio `astro dev --port 4331` y
 `playwright test e2e/portal.spec.ts` corriendo en paralelo), compartiendo el
-mismo checkout, el mismo `.env`/Turso demo, y el mismo directorio `.e2e/` —
+mismo checkout, el mismo `.env`/Turso demo, y el mismo directorio `.e2e/` -
 sus reseeds y HMR (por sus ediciones a `schema.ts`, `seed-demo.mjs`,
 `tools.astro`, etc.) contaminaron el proceso `astro dev` de larga duración que
 llevaba usándose para verificar TODAS las etapas de este roadmap.
@@ -351,7 +351,7 @@ carga un único grafo de módulos inmutable por deploy.
 fallar en dev, reiniciar `astro dev` desde cero (nunca confiar en HMR) antes de
 sospechar del diseño, y verificar `ps aux` por sesiones concurrentes antes de
 gastar tiempo depurando. La suite e2e (bases sqlite locales por corrida, sin
-Turso) sigue siendo la fuente de verdad para esta garantía — reconfirmada 36/36
+Turso) sigue siendo la fuente de verdad para esta garantía - reconfirmada 36/36
 en un arranque limpio antes de que la contención empezara.
 
 **Etapa 7 = LAB Fase 5 (k6)**
@@ -361,7 +361,7 @@ en un arranque limpio antes de que la contención empezara.
   `VERCEL_TOKEN` en GitHub Secrets sigue pendiente (transversal).
 - Encender tarjeta de load testing en `/lab` público.
 
-## Etapa 8 — Remate vitrina de seguridad ✅ CÓDIGO COMPLETO
+## Etapa 8 - Remate vitrina de seguridad ✅ CÓDIGO COMPLETO
 
 El micro-SIEM está implementado (Fases 0-6, ver plan propio).
 
@@ -373,9 +373,9 @@ El micro-SIEM está implementado (Fases 0-6, ver plan propio).
    WAF en el dashboard de Vercel + alta del cron `security-rollup` en
    cron-job.org (detalle en `docs/plan-security-observability.md`, Fase 6).
 
-## Etapa 9 — Changelog público
+## Etapa 9 - Changelog público
 
-**Objetivo**: `/changelog` generado desde los commits de main — barato porque la
+**Objetivo**: `/changelog` generado desde los commits de main - barato porque la
 integración GitHub ya existe (`/api/github`).
 
 Pasos:
@@ -394,29 +394,29 @@ Pasos:
 Aceptación: refleja los últimos commits reales; un commit `chore:` no aparece;
 test del parser.
 
-## Etapa 10 — `/architecture` renovada ("cómo está construido esto")
+## Etapa 10 - `/architecture` renovada ("cómo está construido esto")
 
 Revisar `src/pages/architecture.astro` (176 líneas actuales) y convertirla en el
 tour guiado del sistema:
 1. Diagrama de capas real y actualizado: edge Vercel → middleware (SIEM/chaos/
    auth/rate limit) → SSR Astro → Turso/Drizzle → crons externos (cron-job.org)
    → ntfy/Resend. Reusar el patrón SVG inline que ya se usó en `/docs` (el
-   commit reciente reemplazó Mermaid por SVG — mantener esa decisión).
+   commit reciente reemplazó Mermaid por SVG - mantener esa decisión).
 2. Por cada pieza: 2 líneas de "por qué así" + **link a la pieza viva**
    (`/status`, `/security`, `/lab`, `/changelog`) y al artículo de `/notes` que
    la cuenta. Esta página se vuelve el índice narrativo de todo el portafolio.
 3. Sección de decisiones/trade-offs (fail-open, Turso free tier, sin frameworks
-   de front, crons externos vs Vercel cron) — honesta, con límites conocidos.
+   de front, crons externos vs Vercel cron) - honesta, con límites conocidos.
 
-## Etapa 11 — Briefing semanal con IA
+## Etapa 11 - Briefing semanal con IA
 
-**Objetivo**: uso de IA con criterio — pequeño, útil, sobre infra propia, sin
+**Objetivo**: uso de IA con criterio - pequeño, útil, sobre infra propia, sin
 chatbot genérico.
 
 Pasos:
 1. `src/lib/weekly-briefing.ts`: recolector que arma un JSON agregado de la
    semana: uptime por monitor, incidentes, eventos de seguridad por categoría
-   (agregados — NUNCA IPs ni rutas señuelo al LLM), web vitals p75, corridas CI,
+   (agregados - NUNCA IPs ni rutas señuelo al LLM), web vitals p75, corridas CI,
    pagos lab, hallazgos SAST abiertos. **Función pura y testeada** (el JSON de
    entrada al LLM es un contrato).
 2. Llamada a la API de Anthropic (`claude-haiku-4-5`, barato; `ANTHROPIC_API_KEY`
@@ -435,7 +435,7 @@ Pasos:
 Aceptación: cron manual produce briefing + push; sin key el endpoint degrada a
 briefing sin IA; test del recolector y del truncado.
 
-## Transversal — Artículos `/notes` faltantes
+## Transversal - Artículos `/notes` faltantes
 
 Publicados (14): monitor propio, micro-SIEM, chaos, SLOs, sesiones revocables,
 RAG, mutation testing, e2e, SAST ("no solo un scan verde"), bloqueo escalado de
@@ -461,7 +461,7 @@ Cada artículo: mismo formato del content collection actual, OG image
 > [`pendientes.md`](../pendientes.md). Resumen al 24 jul 2026:
 
 - [ ] `VERCEL_TOKEN` en GitHub Secrets (rollback Fase 1 LAB + k6).
-- [ ] **`TURSO_DEMO_URL` + `TURSO_DEMO_AUTH_TOKEN` en Vercel (Production)** —
+- [ ] **`TURSO_DEMO_URL` + `TURSO_DEMO_AUTH_TOKEN` en Vercel (Production)** -
       confirmado que siguen sin subir: la demo no existe en prod (etapa 3).
 - [ ] `SECURITY_IP_SALT` en Vercel (sin ella el hash de IP del SIEM va sin salt).
 - [ ] Altas en Google Search Console y Bing Webmaster (capa SEO ya lista).
@@ -470,4 +470,4 @@ Cada artículo: mismo formato del content collection actual, OG image
 - [ ] App ntfy en el celular suscrita al topic.
 - [ ] Verificar bóveda/P&L COP en prod (pendientes.md).
 - [ ] (Opcional) limpiar `DEV_USER`/`DEV_PASSWORD` de env.
-- [x] `COBRO_HISTORY_SECRET` en Vercel (Production) — subida el 16 jul.
+- [x] `COBRO_HISTORY_SECRET` en Vercel (Production) - subida el 16 jul.

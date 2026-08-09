@@ -19,7 +19,7 @@ import { busCredentials } from '../lib/present/store'
 const { pin } = Astro.params
 
 // Ni parece un PIN: es una URL que no existe y le corresponde el 404 del sitio
-// —con su nav, su idioma y su status— y no una pantalla de presentación.
+// (con su nav, su idioma y su status) y no una pantalla de presentación.
 if (!isPinShape(pin)) {
   return Astro.rewrite('/404')
 }

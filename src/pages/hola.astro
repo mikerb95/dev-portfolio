@@ -8,7 +8,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 ---
 
 <BaseLayout
-  title="Hola — CodeByMike"
+  title="Hola - CodeByMike"
   description="Herramienta para armar un mensaje de presentación por WhatsApp."
   image="/og-default.png"
 >
@@ -102,7 +102,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
   function buildMessage(context: string): string {
     const lugar = context.trim()
     const inicio = lugar ? `Hola! Un gusto conocerte en ${lugar}.` : 'Hola! Un gusto conocerte hoy.'
-    return `${inicio} Soy Mike, developer full-stack — te dejo mi web por si quieres ver en qué ando: https://codebymike.tech`
+    return `${inicio} Soy Mike, developer full-stack - te dejo mi web por si quieres ver en qué ando: https://codebymike.tech`
   }
 
   function digitsOnly(value: string): string {

@@ -58,7 +58,7 @@ export const isE164 = (s: unknown): s is string => typeof s === 'string' && E164
 
 /**
  * Formato legible para la UI: '+57 310 464 1228'. Los colombianos se agrupan
- * 3-3-4 (como se escriben aquí); el resto se deja tal cual — inventar grupos
+ * 3-3-4 (como se escriben aquí); el resto se deja tal cual - inventar grupos
  * para un país que no conocemos confunde más de lo que ayuda.
  */
 export function formatPhone(e164: string | null | undefined): string {

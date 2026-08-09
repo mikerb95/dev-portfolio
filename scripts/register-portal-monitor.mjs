@@ -6,7 +6,7 @@
  *   node scripts/register-portal-monitor.mjs            # → TURSO_DATABASE_URL
  *   MONITOR_TARGET_URL=file:/tmp/x.db node scripts/register-portal-monitor.mjs
  *
- * IMPORTANTE — orden de operaciones: correr esto ANTES de desplegar el endpoint
+ * IMPORTANTE - orden de operaciones: correr esto ANTES de desplegar el endpoint
  * `/api/portal/health` crea un monitor que sondea una ruta que todavía no
  * existe. El primer chequeo daría 404 → caída → incidente abierto y push a
  * ntfy. Desplegar primero, dar de alta después.

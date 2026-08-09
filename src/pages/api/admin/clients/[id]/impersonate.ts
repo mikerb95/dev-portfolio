@@ -17,7 +17,7 @@ const json = (status: number, body: unknown) =>
  * el comentario junto al gate del portal.
  *
  * El login de admin queda grabado en la propia fila de sesión
- * (`impersonatedBy`) y en el log de auditoría del cliente — ambos con la
+ * (`impersonatedBy`) y en el log de auditoría del cliente - ambos con la
  * identidad de QUIÉN entró, no solo que alguien entró.
  */
 export const POST: APIRoute = async (context) => {
@@ -34,7 +34,7 @@ export const POST: APIRoute = async (context) => {
   if (!client.portalEnabled) return json(400, { error: 'este cliente no tiene el portal habilitado' })
 
   // Prefiere un owner activo; si no hay, cualquier usuario activo. Sin ninguno,
-  // no hay a quién "ver como" — el cliente no ha aceptado ninguna invitación.
+  // no hay a quién "ver como" - el cliente no ha aceptado ninguna invitación.
   const users = await db
     .select({ id: clientUsers.id, role: clientUsers.role })
     .from(clientUsers)

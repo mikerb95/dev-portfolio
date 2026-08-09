@@ -7,7 +7,7 @@ lang: es
 translationOf: two-logins-one-site-and-neither-knows-the-other
 ---
 
-El panel de administración de este sitio se autentica con OAuth de GitHub, una allowlist de un solo nombre y un JWT de Auth.js. Funciona, está probado y lleva meses en producción. Cuando construí el portal de clientes —donde cada cliente entra a ver sus facturas, sus documentos y el avance de su proyecto— lo obvio era colgarme de esa infraestructura: mismo `auth-astro`, otro provider, un campo de rol en el token y listo.
+El panel de administración de este sitio se autentica con OAuth de GitHub, una allowlist de un solo nombre y un JWT de Auth.js. Funciona, está probado y lleva meses en producción. Cuando construí el portal de clientes (donde cada cliente entra a ver sus facturas, sus documentos y el avance de su proyecto) lo obvio era colgarme de esa infraestructura: mismo `auth-astro`, otro provider, un campo de rol en el token y listo.
 
 No lo hice. El portal tiene su propio login, su propia cookie, su propia tabla de sesiones y cero líneas compartidas con el admin.
 
@@ -17,7 +17,7 @@ El motivo no es purismo arquitectónico, es aritmética de fallos.
 
 El admin tiene exactamente un usuario: yo. La autorización es una allowlist de logins de GitHub revalidada en cada request. El portal tiene N usuarios que no controlo, que se registran por invitación, que eligen su propia contraseña y que, por diseño, están **legítimamente autenticados** mientras navegan.
 
-Si ambos comparten el mismo mecanismo de sesión, aparece una clase de bug que en sistemas separados no existe: que una sesión de cliente se convierta en una de admin. No hace falta un ataque sofisticado — basta un callback que asigna mal un claim, una comparación de rol que devuelve `undefined` en vez de `false`, un refactor que mueve una verificación de sitio. En un sistema unificado esos errores son escalada de privilegios. En dos sistemas separados son, en el peor caso, una sesión rota.
+Si ambos comparten el mismo mecanismo de sesión, aparece una clase de bug que en sistemas separados no existe: que una sesión de cliente se convierta en una de admin. No hace falta un ataque sofisticado - basta un callback que asigna mal un claim, una comparación de rol que devuelve `undefined` en vez de `false`, un refactor que mueve una verificación de sitio. En un sistema unificado esos errores son escalada de privilegios. En dos sistemas separados son, en el peor caso, una sesión rota.
 
 La cookie también es otra (`portal_session`, no la de Auth.js), así que ni siquiera viajan juntas en el mismo request. Un bug de manejo de cookies en un sistema no puede tocar al otro porque no las ve.
 
@@ -40,7 +40,7 @@ La consulta que resuelve la sesión no lee solo la fila de sesión: hace `JOIN` 
 
 Podría haber metido ese estado en la cookie al hacer login y ahorrarme el `JOIN`. No lo hice a propósito: si el estado viaja en la cookie, deshabilitar un usuario no tiene efecto hasta que su sesión caduque. Quiero que apagar el portal de un cliente sea instantáneo, no una promesa a 30 días.
 
-La renovación es deslizante —cada uso empuja la expiración, cómodo para un cliente que entra una vez al mes a mirar una factura— pero con un throttle de cinco minutos sobre la escritura. Sin él, cada carga de página sería un `UPDATE`. Con él, la mayoría de los requests solo leen.
+La renovación es deslizante (cada uso empuja la expiración, cómodo para un cliente que entra una vez al mes a mirar una factura) pero con un throttle de cinco minutos sobre la escritura. Sin él, cada carga de página sería un `UPDATE`. Con él, la mayoría de los requests solo leen.
 
 ## Fuerza bruta: dos capas que no se solapan
 
@@ -58,14 +58,14 @@ Desde `/admin` puedo entrar al portal "como" un cliente para dar soporte. Es út
 
 El corte era simple: si la sesión está impersonada, cualquier método que no sea `GET` o `HEAD` responde 403. Lo puse en el middleware, cubriendo `/api/portal/*`, y me pareció terminado.
 
-No lo estaba. El simulador de pago vive en `/api/payments/mock/pay` — **fuera** del prefijo del portal, porque es infraestructura compartida con la pasarela pública. Mi guard no lo veía. Era, literalmente, el único mutador que un admin impersonando podía alcanzar, y estaba justo en el sitio donde más duele.
+No lo estaba. El simulador de pago vive en `/api/payments/mock/pay` - **fuera** del prefijo del portal, porque es infraestructura compartida con la pasarela pública. Mi guard no lo veía. Era, literalmente, el único mutador que un admin impersonando podía alcanzar, y estaba justo en el sitio donde más duele.
 
 La lección no es "revisa los prefijos". Es que **un guard basado en la forma de la URL es tan bueno como el mapa mental que tenías el día que lo escribiste**, y ese mapa envejece en cuanto una ruta compartida entra en escena. Ahora hay dos cortes: el del prefijo y uno explícito en esa ruta concreta. Redundante a propósito.
 
-La única excepción al bloqueo es salir (`POST /api/portal/logout`). Bloquearlo dejaría al admin atrapado en la vista del cliente sin más salida que borrar la cookie a mano — y salir no escribe sobre los datos del cliente, solo revoca la propia fila de sesión.
+La única excepción al bloqueo es salir (`POST /api/portal/logout`). Bloquearlo dejaría al admin atrapado en la vista del cliente sin más salida que borrar la cookie a mano - y salir no escribe sobre los datos del cliente, solo revoca la propia fila de sesión.
 
 ## Lo que aún no está
 
-El portal no se actualiza solo. Un cliente con la pestaña abierta no ve la respuesta a su mensaje ni que su monitor se cayó hasta que recarga. El dato *es* de tiempo real; la interfaz todavía no. La decisión ya está tomada —polling de un digest barato, no SSE ni WebSockets, porque sin pub/sub en la base el servidor tendría que sondear igual y encima pagaría la conexión abierta— pero está sin construir.
+El portal no se actualiza solo. Un cliente con la pestaña abierta no ve la respuesta a su mensaje ni que su monitor se cayó hasta que recarga. El dato *es* de tiempo real; la interfaz todavía no. La decisión ya está tomada (polling de un digest barato, no SSE ni WebSockets, porque sin pub/sub en la base el servidor tendría que sondear igual y encima pagaría la conexión abierta) pero está sin construir.
 
 Prefiero decirlo así que fingir que el portal está terminado. Lo que sí está terminado es la parte que, si falla, no se arregla con un deploy: la que decide quién ve qué.

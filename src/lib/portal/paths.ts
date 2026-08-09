@@ -8,7 +8,7 @@ export function isPortalPath(pathname: string): boolean {
 }
 
 // Rutas del portal accesibles SIN sesión, por definición: son las que sirven
-// para conseguir una. Allowlist explícita, nunca patrones abiertos — si una
+// para conseguir una. Allowlist explícita, nunca patrones abiertos - si una
 // ruta nueva no se añade aquí a conciencia, nace protegida. El fallo seguro es
 // "pide login de más", no "deja pasar".
 const PUBLIC_EXACT = new Set([
@@ -22,7 +22,7 @@ const PUBLIC_EXACT = new Set([
   '/api/portal/demo',
   // Health check del portal: lo sondea el motor de uptime, que por definición
   // no tiene sesión. Es la única ruta pública de esta lista que no sirve para
-  // conseguir una — se admite porque no lee ni devuelve datos de ningún
+  // conseguir una - se admite porque no lee ni devuelve datos de ningún
   // cliente, solo si el portal responde (ver lib/portal/health.ts).
   '/api/portal/health',
 ])

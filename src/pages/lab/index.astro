@@ -61,7 +61,7 @@ const [lastMutation] = await db
 
 // ── Hallazgos de seguridad/accesibilidad (agregados; sin título ni ruta) ────
 // Solo se publica el conteo por estado: cuántos hay abiertos vs. cerrados. El
-// detalle (qué es, dónde) vive en el panel — no le damos el mapa al atacante.
+// detalle (qué es, dónde) vive en el panel - no le damos el mapa al atacante.
 const [findingsAgg] = await db
   .select({
     open: sql<number>`coalesce(sum(${securityFindings.status} = 'open'), 0)`,
@@ -95,7 +95,7 @@ const [expAgg] = await db
   .from(labExperiments)
 
 // Etiquetas amigables por tipo de experimento; el detalle crudo se queda en el
-// panel. El `kind` es la clave técnica que escribe el experimento — no se
+// panel. El `kind` es la clave técnica que escribe el experimento - no se
 // traduce; lo que se traduce es su etiqueta legible.
 const EXPERIMENT_LABELS: Record<string, string> = {
   'chaos:db_fail_midtx': lb.experiments.labels.dbFailMidtx,
@@ -132,7 +132,7 @@ const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', {
 })
 
 const fmtDuration = (ms: number | null) => {
-  if (ms == null) return '—'
+  if (ms == null) return '-'
   const s = Math.round(ms / 1000)
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`
 }
@@ -189,13 +189,13 @@ const upcoming = [
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
       <div class="rounded-2xl glass p-5">
         <div class={`font-mono text-[26px] leading-none tracking-tight ${successRate30 !== null && successRate30 >= 90 ? 'text-lime' : 'text-ember'}`}>
-          {successRate30 === null ? '—' : `${successRate30}%`}
+          {successRate30 === null ? '-' : `${successRate30}%`}
         </div>
         <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.pipelines}</div>
       </div>
       <div class="rounded-2xl glass p-5">
         <div class="font-mono text-[26px] leading-none tracking-tight text-ink-50">
-          {lastCoverage === null ? '—' : `${Math.round(lastCoverage * 10) / 10}%`}
+          {lastCoverage === null ? '-' : `${Math.round(lastCoverage * 10) / 10}%`}
         </div>
         <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.coverage}</div>
       </div>
@@ -248,7 +248,7 @@ const upcoming = [
                 </span>
                 <span class="font-mono text-[11px] text-ink-300 hidden sm:inline">{runMeta(r)}</span>
                 <span class="ml-auto font-mono text-[11px] text-ink-300">
-                  {fmtDuration(r.durationMs)} · {r.createdAt ? fmtDate.format(r.createdAt) : '—'}
+                  {fmtDuration(r.durationMs)} · {r.createdAt ? fmtDate.format(r.createdAt) : '-'}
                 </span>
               </div>
             )
@@ -284,7 +284,7 @@ const upcoming = [
                     : `${e.ok}/${e.runs} ${lb.experiments.passedRatio}`}
                 </span>
                 <span class="ml-auto font-mono text-[11px] text-ink-300">
-                  {lb.experiments.last} {e.lastRunAt ? fmtDate.format(new Date(e.lastRunAt * 1000)) : '—'}
+                  {lb.experiments.last} {e.lastRunAt ? fmtDate.format(new Date(e.lastRunAt * 1000)) : '-'}
                 </span>
               </div>
             )

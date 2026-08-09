@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
 
 // libSQL en archivo temporal con el esquema real. El feed se prueba contra SQL
-// de verdad porque lo que importa —que el WHERE lleve el clientId, que el
-// cursor no repita ni salte filas— es justo lo que un mock daría por bueno.
+// de verdad porque lo que importa (que el WHERE lleve el clientId, que el
+// cursor no repita ni salte filas) es justo lo que un mock daría por bueno.
 vi.mock('../src/db', async () => {
   const { createClient } = await import('@libsql/client')
   const { drizzle } = await import('drizzle-orm/libsql')

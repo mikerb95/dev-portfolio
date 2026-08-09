@@ -8,7 +8,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
       Hallazgos de <strong class="text-zinc-300">análisis estático</strong> (npm audit, CodeQL) y
       <strong class="text-zinc-300">accesibilidad</strong> (axe sobre las páginas públicas), reportados
       por CI. Un hallazgo persiste entre corridas hasta que lo marcas <span class="text-emerald-400">resuelto</span>
-      o <span class="text-sky-400">aceptado</span> — la historia de "lo encontré y lo cerré", no un scan que se olvida.
+      o <span class="text-sky-400">aceptado</span> - la historia de "lo encontré y lo cerré", no un scan que se olvida.
     </p>
   </div>
 
@@ -98,7 +98,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
           <span class="px-2 py-0.5 rounded-md border text-[10px] ${STATUS_CHIP[f.status]}">${STATUS_LABEL[f.status]}</span>
           <span class="text-[10px] font-mono text-zinc-600">${esc(f.source)}</span>
           ${f.route ? `<span class="text-[10px] font-mono text-zinc-500">${esc(f.route)}</span>` : ''}
-          <span class="ml-auto text-[10px] text-zinc-600">visto ${f.lastSeenAt ? fmt.format(new Date(f.lastSeenAt)) : '—'}</span>
+          <span class="ml-auto text-[10px] text-zinc-600">visto ${f.lastSeenAt ? fmt.format(new Date(f.lastSeenAt)) : '-'}</span>
         </div>
         <div class="text-sm text-zinc-200">${esc(f.title)}</div>
         ${f.description ? `<div class="text-xs text-zinc-500 mt-1">${esc(f.description)}</div>` : ''}

@@ -81,7 +81,7 @@ const canSeeMessages = user.role !== 'billing'
         <div class="glass rounded-2xl p-4">
           <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Avance</p>
           <p data-live="progress-value" class="mt-2 text-[24px] font-medium tracking-tight text-ink-50">
-            {progress.total === 0 ? <span class="text-ink-200">—</span> : `${progress.pct}%`}
+            {progress.total === 0 ? <span class="text-ink-200">-</span> : `${progress.pct}%`}
           </p>
           <p data-live="progress-sub" class="mt-0.5 text-[12px] text-ink-300">
             {progress.total === 0
@@ -291,7 +291,7 @@ const canSeeMessages = user.role !== 'billing'
       const p = d.project?.progress
       if (p) {
         const pctEl = el('progress-value')
-        if (pctEl) pctEl.textContent = p.total === 0 ? '—' : `${p.pct}%`
+        if (pctEl) pctEl.textContent = p.total === 0 ? '-' : `${p.pct}%`
         const subEl = el('progress-sub')
         if (subEl) {
           subEl.textContent =

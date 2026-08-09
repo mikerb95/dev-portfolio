@@ -1,17 +1,17 @@
 # DAST: análisis dinámico con OWASP ZAP baseline contra el preview deployment
-# de cada PR — nunca contra producción.
+# de cada PR - nunca contra producción.
 #
 # La URL del preview se obtiene de la propia API de Deployments de GitHub
 # (que la integración git de Vercel puebla sola) vía GITHUB_TOKEN por
 # defecto: no depende de VERCEL_TOKEN, así que no comparte el bloqueo que
 # tiene la Fase 5 (k6) por falta de ese secret.
 #
-# El baseline scan solo sigue enlaces que encuentra en el HTML — no trata las
+# El baseline scan solo sigue enlaces que encuentra en el HTML - no trata las
 # rutas de robots.txt (incluidas las honeypot, ver public/robots.txt) como
 # objetivos: `spider.parseRobotsTxt=false` es exactamente el comportamiento
 # de "crawler legítimo que respeta el robots.txt" que ese archivo pide. Si el
 # scanner pisara una ruta señuelo, el rate limiter durable bloquearía la IP
-# del runner y el resto del scan se quedaría sin cobertura — no es una
+# del runner y el resto del scan se quedaría sin cobertura - no es una
 # vulnerabilidad del sitio, es un autogol de configuración.
 #
 # Secrets opcionales (degrada con gracia si faltan, igual que security.yml):

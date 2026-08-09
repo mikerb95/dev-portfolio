@@ -1,7 +1,7 @@
 ---
 // Recupera y muestra los repositorios públicos recientes de GitHub.
 // El grid se pinta en el cliente (la API pública de GitHub no requiere token),
-// pero el idioma sale de la URL de la página —no de `navigator.language`—:
+// pero el idioma sale de la URL de la página (no de `navigator.language`):
 // antes, un visitante con navegador en español veía /en con este bloque en
 // español, y el HTML SSR de /en salía en español para los buscadores.
 // Los textos que necesita el script viajan en data-attributes.

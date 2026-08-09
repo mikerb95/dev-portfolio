@@ -42,7 +42,7 @@ const badge: Record<string, string> = {
 }
 
 const fecha = (d: Date | null) =>
-  d?.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) ?? '—'
+  d?.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) ?? '-'
 
 const WHATSAPP = 'https://wa.me/573104641228'
 ---
@@ -54,7 +54,7 @@ const WHATSAPP = 'https://wa.me/573104641228'
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#09090b" />
-    <title>Mis pagos — CodeByMike</title>
+    <title>Mis pagos - CodeByMike</title>
   </head>
   <body class="grain bg-ink-950 text-ink-50 min-h-screen">
     <main class="max-w-[520px] mx-auto px-5 pt-12 pb-24">
@@ -181,7 +181,7 @@ const WHATSAPP = 'https://wa.me/573104641228'
                 li.className = 'p-4 rounded-xl border border-white/10 bg-white/[.02] flex items-center justify-between gap-3'
                 const fecha = p.fecha
                   ? new Date(p.fecha).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
-                  : '—'
+                  : '-'
                 // textContent en vez de innerHTML: los datos vienen del servidor,
                 // pero construir HTML a mano con valores es cómo empiezan los XSS.
                 const izq = document.createElement('div')

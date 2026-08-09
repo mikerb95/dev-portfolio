@@ -85,38 +85,38 @@ const statusLabel: Record<string, string> = {
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
       <p class="text-zinc-400 text-xs mb-1">Cliente</p>
-      <p class="text-white font-medium">{row.clientName ?? '—'}</p>
+      <p class="text-white font-medium">{row.clientName ?? '-'}</p>
     </div>
     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
       <p class="text-zinc-400 text-xs mb-1">Proyecto</p>
-      <p class="text-white font-medium">{row.projectTitle ?? '—'}</p>
+      <p class="text-white font-medium">{row.projectTitle ?? '-'}</p>
     </div>
     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
       <p class="text-zinc-400 text-xs mb-1">Deadline</p>
-      <p class="text-white font-medium">{row.deadline ? new Date(row.deadline).toLocaleDateString('es-CO') : '—'}</p>
+      <p class="text-white font-medium">{row.deadline ? new Date(row.deadline).toLocaleDateString('es-CO') : '-'}</p>
     </div>
     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
       <p class="text-zinc-400 text-xs mb-1">Presupuesto estimado</p>
-      <p class="text-zinc-300 font-medium">{row.estimatedBudget ? fmt.format(row.estimatedBudget) : '—'}</p>
+      <p class="text-zinc-300 font-medium">{row.estimatedBudget ? fmt.format(row.estimatedBudget) : '-'}</p>
     </div>
     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
       <p class="text-zinc-400 text-xs mb-1">Presupuesto acordado</p>
-      <p class="text-emerald-400 font-medium">{row.agreedBudget ? fmt.format(row.agreedBudget) : '—'}</p>
+      <p class="text-emerald-400 font-medium">{row.agreedBudget ? fmt.format(row.agreedBudget) : '-'}</p>
     </div>
     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
       <p class="text-zinc-400 text-xs mb-1">Horas estimadas</p>
-      <p class="text-white font-medium">{row.estimatedHours ? `${row.estimatedHours}h` : '—'}</p>
+      <p class="text-white font-medium">{row.estimatedHours ? `${row.estimatedHours}h` : '-'}</p>
     </div>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
       <p class="text-zinc-400 text-xs mb-2">Objetivo</p>
-      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.objective ?? '—'}</p>
+      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.objective ?? '-'}</p>
     </div>
     <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
       <p class="text-zinc-400 text-xs mb-2">Alcance</p>
-      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.scope ?? '—'}</p>
+      <p class="text-zinc-200 text-sm whitespace-pre-wrap">{row.scope ?? '-'}</p>
     </div>
   </div>
 
@@ -176,12 +176,12 @@ const statusLabel: Record<string, string> = {
         {timeline.map((ev) => (
           <li class="flex gap-3 text-sm">
             <span class="text-zinc-600 shrink-0 w-28">
-              {ev.occurredAt ? new Date(ev.occurredAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '—'}
+              {ev.occurredAt ? new Date(ev.occurredAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
             </span>
             <span class="text-zinc-500 shrink-0 w-20">{TYPE_LABELS[ev.type as keyof typeof TYPE_LABELS] ?? ev.type}</span>
             <span class="text-zinc-200 flex-1">
               {ev.title}
-              {ev.body && <span class="text-zinc-500"> — {ev.body}</span>}
+              {ev.body && <span class="text-zinc-500"> - {ev.body}</span>}
             </span>
           </li>
         ))}
@@ -247,7 +247,7 @@ const statusLabel: Record<string, string> = {
             id="f-client"
             class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
           >
-            <option value="">— Sin cliente —</option>
+            <option value="">- Sin cliente -</option>
             {allClients.map((c) => (
               <option value={c.id} selected={row.clientId === c.id}>{c.name}</option>
             ))}
@@ -259,7 +259,7 @@ const statusLabel: Record<string, string> = {
             id="f-project"
             class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
           >
-            <option value="">— Sin proyecto —</option>
+            <option value="">- Sin proyecto -</option>
             {allProjects.map((p) => (
               <option value={p.id} selected={row.projectId === p.id}>{p.title}</option>
             ))}

@@ -1,4 +1,4 @@
-# Plan — Cobros de campo por WhatsApp (`/cobrar`)
+# Plan - Cobros de campo por WhatsApp (`/cobrar`)
 
 > Creado: 2026-07-15. Estado: **IMPLEMENTADO** (Fases 0–5, 2026-07-15).
 > Migración `0016` aplicada. 48 tests propios (phone, cobros, cobros-db,
@@ -65,14 +65,14 @@ CLIENTE (su celular)
 
 ## 4. Modelo de datos (migración Drizzle)
 
-Cambios a `payments` (todo nullable — los pagos de `/pay` y del portal no se tocan):
+Cambios a `payments` (todo nullable - los pagos de `/pay` y del portal no se tocan):
 
 ```
-payerPhone   text     — E.164 normalizado ('+573104641228')
-source       text     — enum 'pay' | 'cobro' | 'portal', default 'pay'
-shortCode    text     — UNIQUE, 6 chars A-Z2-9 sin ambiguos (p. ej. 'AB3K9F'); solo cobros
-expiresAt    integer  — timestamp; null = sin vencimiento
-clientId     integer  — → clients.id, SET NULL; vínculo suave con el CRM
+payerPhone   text     - E.164 normalizado ('+573104641228')
+source       text     - enum 'pay' | 'cobro' | 'portal', default 'pay'
+shortCode    text     - UNIQUE, 6 chars A-Z2-9 sin ambiguos (p. ej. 'AB3K9F'); solo cobros
+expiresAt    integer  - timestamp; null = sin vencimiento
+clientId     integer  - → clients.id, SET NULL; vínculo suave con el CRM
 ```
 
 Índices: `payments_phone_idx` sobre `payerPhone` (consulta de `/mis-pagos`),
@@ -89,36 +89,36 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
 - Tests unitarios (formatos colombianos típicos: `3104641228`, `310 464 1228`, `+57310…`).
 
 ### `src/lib/cobros.ts`
-- `newShortCode()` — 6 chars del alfabeto sin ambiguos, con reintento ante colisión UNIQUE.
-- `historyToken(phone)` / `verifyHistoryToken(phone, token)` — HMAC-SHA256 con secreto
+- `newShortCode()` - 6 chars del alfabeto sin ambiguos, con reintento ante colisión UNIQUE.
+- `historyToken(phone)` / `verifyHistoryToken(phone, token)` - HMAC-SHA256 con secreto
   `COBRO_HISTORY_SECRET` (nueva env var), truncado a 16 bytes hex, comparación timing-safe.
-- `buildWhatsAppMessage({name?, amountCents, concept, payUrl, historyUrl, expiresAt})` —
+- `buildWhatsAppMessage({name?, amountCents, concept, payUrl, historyUrl, expiresAt})` -
   plantilla por defecto del mensaje (editable en la pantalla 2).
-- `isExpired(payment)` — `expiresAt != null && expiresAt < now && !isTerminal(status)`.
+- `isExpired(payment)` - `expiresAt != null && expiresAt < now && !isTerminal(status)`.
 
 ### Endpoints admin (sesión admin obligatoria + rate limit)
-- `POST /api/admin/cobros` — valida monto/teléfono/concepto, normaliza el teléfono, busca
+- `POST /api/admin/cobros` - valida monto/teléfono/concepto, normaliza el teléfono, busca
   cliente CRM por `payerPhone`, llama `createPaymentIdempotent` (provider según env, como
   hoy) con `source='cobro'`, genera `shortCode` y `expiresAt`. Devuelve
   `{reference, shortCode, payUrl, historyUrl, mensaje, clientName?}`.
-- `GET /api/admin/cobros` — lista cobros (`source='cobro'`) con estado, para la vista de
+- `GET /api/admin/cobros` - lista cobros (`source='cobro'`) con estado, para la vista de
   pendientes de `/cobrar`.
-- `POST /api/admin/cobros/[reference]/void` — anula: `applyGatewayEvent` con evento interno
+- `POST /api/admin/cobros/[reference]/void` - anula: `applyGatewayEvent` con evento interno
   `{provider, type: 'admin.void', status: 'voided'}` → queda en `paymentEvents` como
   auditoría. Solo si el estado actual lo permite (la máquina ya lo garantiza).
-- `GET /api/admin/cobros/lookup-client?phone=` — para mostrar el nombre del cliente CRM en
+- `GET /api/admin/cobros/lookup-client?phone=` - para mostrar el nombre del cliente CRM en
   vivo en la pantalla 1 (debounced).
 
 ### Endpoints públicos
-- `GET /c/[code]` — página Astro SSR: busca por `shortCode`. Estados: activo (muestra monto
+- `GET /c/[code]` - página Astro SSR: busca por `shortCode`. Estados: activo (muestra monto
   + botón Pagar), vencido, anulado, ya pagado (con fecha). `noindex`, `Cache-Control:
   no-store`, rate limit por IP.
-- `POST /api/c/[code]/checkout` — genera los parámetros firmados de Wompi para ESE pago (o
+- `POST /api/c/[code]/checkout` - genera los parámetros firmados de Wompi para ESE pago (o
   el flujo mock si no hay llaves) y devuelve la URL de redirección. Rechaza si vencido,
   anulado o terminal. **No** crea pago nuevo: reutiliza la fila existente.
-- `GET /mis-pagos` — página pública: con `?t=` válido para un teléfono → historial completo
+- `GET /mis-pagos` - página pública: con `?t=` válido para un teléfono → historial completo
   (fecha, concepto, monto, estado). Sin token → formulario de número que llama a…
-- `POST /api/mis-pagos/lookup` — vista enmascarada: fecha, estado y monto parcial
+- `POST /api/mis-pagos/lookup` - vista enmascarada: fecha, estado y monto parcial
   (`$ ***.500`), máximo últimos 5. Rate limit agresivo (5/h por IP) + evento SIEM
   `mispagos.lookup` con IP.
 
@@ -140,7 +140,7 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
   siguiendo el patrón de script vanilla de `/pay`.
 
 ### `/c/[code]` (pública)
-- Monto en grande, concepto, "Cobro de CodeByMike — codebymike.tech", botón **Pagar**
+- Monto en grande, concepto, "Cobro de CodeByMike - codebymike.tech", botón **Pagar**
   (mismo estilo del checkout actual). Estados vencido/anulado/pagado con mensaje claro y
   contacto de WhatsApp para pedir un link nuevo.
 
@@ -159,7 +159,7 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
   checkout 10/min/IP, lookup enmascarado 5/h/IP.
 - Eventos SIEM: `cobro.created`, `cobro.voided`, `cobro.link_opened`, `cobro.paid`
   (desde el webhook cuando `source='cobro'`), `mispagos.lookup`, `mispagos.token_invalid`.
-- Push ntfy cuando un cobro pasa a `approved`: "💰 Cobro pagado — $150.000 de +57310… (Juan)".
+- Push ntfy cuando un cobro pasa a `approved`: "💰 Cobro pagado - $150.000 de +57310… (Juan)".
 - `/c/[code]` y `/mis-pagos` con `noindex` y sin datos en la URL más allá del código/token.
 
 ## 8. Fases de implementación
@@ -187,12 +187,12 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
    `cobros-crypto.ts` (`node:crypto`, solo servidor) y `cobros-codes.ts` (el
    alfabeto compartido, para que generador y validador no diverjan).
 4. **`lib/env.ts` (`serverEnv`)**: el repo mezcla `import.meta.env` y
-   `process.env`, que NO son equivalentes — el dev server carga el `.env` solo en
+   `process.env`, que NO son equivalentes - el dev server carga el `.env` solo en
    el primero y Vercel inyecta las variables solo en el segundo. Leer una sola
    fuente daba el peor bug posible: funcionar en un entorno y fallar en el otro.
 5. **Cuarta vía de autorización en `/api/payments/mock/pay`**: presentar el
    `shortCode` (comparado en tiempo constante). Sin ella, en modo mock el cliente
-   de campo no podía completar el pago — no tiene sesión admin ni factura.
+   de campo no podía completar el pago - no tiene sesión admin ni factura.
 6. **`/cobrar` excluido de la demo pública** (`isDemoBlockedPath`): es la caja
    registradora real, no una vitrina.
 
@@ -200,7 +200,7 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
 
 - ✅ `COBRO_HISTORY_SECRET` subido a Vercel Production (2026-07-16).
 - ✅ `WOMPI_PUBLIC_KEY`, `WOMPI_INTEGRITY_SECRET`, `WOMPI_EVENTS_SECRET` subidos a
-  Vercel Production (2026-07-16), copiados de `dobleyo/.env` — mismo comercio
+  Vercel Production (2026-07-16), copiados de `dobleyo/.env` - mismo comercio
   Wompi para ambos proyectos, confirmado con el usuario. `WOMPI_PRIVATE_KEY` no
   se copió: ningún endpoint de portfolio la lee.
 - **Falta un deploy** para que las cuatro variables surtan efecto (Vercel las
@@ -227,7 +227,7 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
 1. **Recordatorio de cobros por vencer:** el cron de monitoreo existente podría notificarte
    por ntfy los cobros que vencen en <12h para reenviarlos.
 2. **Recibo compartible:** al quedar `approved`, `/c/[code]` muestra un recibo con fecha y
-   referencia que el cliente puede screenshotear — reduce "¿me confirmas que llegó?".
+   referencia que el cliente puede screenshotear - reduce "¿me confirmas que llegó?".
 3. **Integración con `invoices`:** cuando el portal de clientes esté vivo, un cobro de campo
    podría generar factura formal opcional para clientes CRM.
 4. **PWA/atajo:** `/cobrar` como icono en la pantalla de inicio del celular (el manifest ya

@@ -6,8 +6,8 @@
 //
 // Criterio de selección: NINGUNA de estas tres actividades repite un proceso
 // que ya esté en /docs/diagrama-bpmn. BPMN documenta los procesos de negocio
-// —quién habla con quién para cobrar, para dar acceso, para responder a un
-// incidente—; estos diagramas documentan flujos de control internos, que es
+// (quién habla con quién para cobrar, para dar acceso, para responder a un
+// incidente); estos diagramas documentan flujos de control internos, que es
 // donde la notación de actividad aporta lo que BPMN no tiene tan a mano: la
 // bifurcación concurrente que nunca se vuelve a unir y el bucle de reintento.
 
@@ -108,7 +108,7 @@ const pipeline: UmlActivityModel = {
   id: 'pipeline',
   titulo: 'Integración, despliegue y verificación con rollback',
   desc:
-    'Del push a main hasta producción verificada. Las dos ramas de verificación —pruebas y seguridad/accesibilidad— corren concurrentes y se sincronizan antes de desplegar; después del deploy hay una etapa más, la que decide si la versión nueva se queda o se revierte.',
+    'Del push a main hasta producción verificada. Las dos ramas de verificación (pruebas y seguridad/accesibilidad) corren concurrentes y se sincronizan antes de desplegar; después del deploy hay una etapa más, la que decide si la versión nueva se queda o se revierte.',
   origen: '.github/workflows/{ci,security,a11y,dast}.yml · src/pages/api/health.ts · src/pages/docs/pipeline-en-vivo.astro',
   nota:
     'La barra de unión no es decorativa: si una sola de las dos ramas falla, el token de control nunca se completa y el despliegue no ocurre. El rollback se dispara desde el resultado del health check contra el deploy ya publicado, no desde el resultado de los tests.',

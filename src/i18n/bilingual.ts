@@ -3,15 +3,15 @@
 //
 // Esos módulos son la fuente de verdad de la documentación de ingeniería: los
 // `.astro` de /docs solo renderizan, ninguna cifra se escribe a mano allí. Para
-// traducirlos sin duplicar los archivos —cinco módulos que cambian en cada
-// iteración se desincronizarían en semanas— cada campo de texto acepta dos
+// traducirlos sin duplicar los archivos (cinco módulos que cambian en cada
+// iteración se desincronizarían en semanas) cada campo de texto acepta dos
 // formas:
 //
 //   titulo: 'Listado de proyectos'                        ← solo español
 //   titulo: { es: 'Listado de proyectos', en: 'Project listing' }
 //
 // `tx()` resuelve ambas. Un campo que todavía no se tradujo se muestra en
-// español en la versión inglesa, nunca vacío — la misma regla que se aplica al
+// español en la versión inglesa, nunca vacío - la misma regla que se aplica al
 // contenido en base de datos (`pickLocalized`). Así la traducción de /docs
 // avanza fichero a fichero sin que ninguna página quede rota en el intermedio.
 

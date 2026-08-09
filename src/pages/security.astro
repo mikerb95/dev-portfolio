@@ -17,7 +17,7 @@ const L = (path: string) => localizedHref(path, locale)
 //
 // La sección "Security Operations" expone en vivo agregados del micro-SIEM
 // propio (docs/plan-security-observability.md). OPSEC deliberada: SOLO
-// agregados — nunca IPs completas, nunca nombres de reglas exactos, nunca se
+// agregados - nunca IPs completas, nunca nombres de reglas exactos, nunca se
 // revela cuáles rutas son endpoints señuelo. El filtrado ocurre aquí mismo, en
 // el servidor: esta página nunca lee ip/path crudos de security_events.
 
@@ -74,7 +74,7 @@ type Severity = 'alta' | 'media'
 
 // Metadatos no traducibles (identificador, ruta de archivo, commit, fecha,
 // clasificación OWASP): el texto (título/problema/solución) viene del
-// diccionario por índice — mismo patrón que /tools.
+// diccionario por índice - mismo patrón que /tools.
 const FINDINGS_META: { id: string; owasp: string; severity: Severity; file: string; commit: string; date: string }[] = [
   { id: 'upload-ext', owasp: 'A03:2021 · Injection', severity: 'alta', file: 'src/pages/api/admin/upload.ts', commit: 'd439054', date: '2026-07-06' },
   { id: 'contact-abuse', owasp: 'A04:2021 · Insecure Design', severity: 'media', file: 'src/pages/api/contact.ts', commit: '779f4b0', date: '2026-07-06' },

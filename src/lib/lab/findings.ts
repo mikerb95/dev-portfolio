@@ -159,7 +159,7 @@ type ZapAlert = {
  * Parsea el reporte JSON de OWASP ZAP baseline (`zap-baseline.py -J`). Un
  * hallazgo por (alerta, instancia): la misma regla en dos rutas son dos
  * hallazgos, igual que axe. `riskdesc` viene como "High (Medium)" (riesgo y
- * confianza) — solo se usa la primera palabra.
+ * confianza) - solo se usa la primera palabra.
  *
  * Tope de instancias por alerta: el baseline puede reportar la misma regla
  * decenas de veces (p. ej. una cabecera ausente en cada página crawleada) y

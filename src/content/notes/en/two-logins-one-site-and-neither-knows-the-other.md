@@ -7,7 +7,7 @@ lang: en
 translationOf: dos-logins-en-el-mismo-sitio-y-ninguno-conoce-al-otro
 ---
 
-This site's admin panel authenticates with GitHub OAuth, a one-name allowlist, and an Auth.js JWT. It works, it's tested, and it's been in production for months. When I built the client portal — where each client logs in to see their invoices, their documents, and their project's progress — the obvious move was to hang off that infrastructure: same `auth-astro`, another provider, a role field in the token, done.
+This site's admin panel authenticates with GitHub OAuth, a one-name allowlist, and an Auth.js JWT. It works, it's tested, and it's been in production for months. When I built the client portal - where each client logs in to see their invoices, their documents, and their project's progress - the obvious move was to hang off that infrastructure: same `auth-astro`, another provider, a role field in the token, done.
 
 I didn't. The portal has its own login, its own cookie, its own sessions table, and zero shared lines with the admin.
 
@@ -17,7 +17,7 @@ The reason isn't architectural purism, it's failure arithmetic.
 
 The admin has exactly one user: me. Authorization is an allowlist of GitHub logins revalidated on every request. The portal has N users I don't control, who sign up by invitation, who pick their own password, and who, by design, are **legitimately authenticated** while they browse.
 
-If both share the same session mechanism, a class of bug appears that doesn't exist in separate systems: a client session turning into an admin one. It doesn't take a sophisticated attack — a callback that assigns a claim wrong, a role comparison returning `undefined` instead of `false`, a refactor that moves a check somewhere else. In a unified system those mistakes are privilege escalation. In two separate systems they're, at worst, a broken session.
+If both share the same session mechanism, a class of bug appears that doesn't exist in separate systems: a client session turning into an admin one. It doesn't take a sophisticated attack - a callback that assigns a claim wrong, a role comparison returning `undefined` instead of `false`, a refactor that moves a check somewhere else. In a unified system those mistakes are privilege escalation. In two separate systems they're, at worst, a broken session.
 
 The cookie is different too (`portal_session`, not Auth.js's), so they don't even travel together in the same request. A cookie-handling bug in one system can't touch the other because it never sees it.
 
@@ -40,7 +40,7 @@ The query that resolves a session doesn't just read the session row: it `JOIN`s 
 
 I could have stuffed that state into the cookie at login and saved myself the `JOIN`. I deliberately didn't: if the state travels in the cookie, disabling a user has no effect until their session lapses. I want switching off a client's portal to be instantaneous, not a 30-day promise.
 
-Renewal is sliding — each use pushes the expiry out, convenient for a client who logs in once a month to look at an invoice — but with a five-minute throttle on the write. Without it, every page load would be an `UPDATE`. With it, most requests only read.
+Renewal is sliding - each use pushes the expiry out, convenient for a client who logs in once a month to look at an invoice - but with a five-minute throttle on the write. Without it, every page load would be an `UPDATE`. With it, most requests only read.
 
 ## Brute force: two layers that don't overlap
 
@@ -58,14 +58,14 @@ From `/admin` I can enter the portal "as" a client to provide support. It's usef
 
 The cut was simple: if the session is impersonated, any method other than `GET` or `HEAD` answers 403. I put it in the middleware, covering `/api/portal/*`, and considered it done.
 
-It wasn't. The payment simulator lives at `/api/payments/mock/pay` — **outside** the portal prefix, because it's infrastructure shared with the public gateway. My guard didn't see it. It was, literally, the only mutator an impersonating admin could reach, and it sat exactly where it hurts most.
+It wasn't. The payment simulator lives at `/api/payments/mock/pay` - **outside** the portal prefix, because it's infrastructure shared with the public gateway. My guard didn't see it. It was, literally, the only mutator an impersonating admin could reach, and it sat exactly where it hurts most.
 
 The lesson isn't "check your prefixes". It's that **a guard based on URL shape is only as good as the mental map you had the day you wrote it**, and that map ages the moment a shared route enters the picture. Now there are two cuts: the prefix one and an explicit one on that specific route. Redundant on purpose.
 
-The only exception to the block is signing out (`POST /api/portal/logout`). Blocking it would leave the admin trapped in the client's view with no way out but clearing the cookie by hand — and signing out doesn't write over the client's data, it only revokes its own session row.
+The only exception to the block is signing out (`POST /api/portal/logout`). Blocking it would leave the admin trapped in the client's view with no way out but clearing the cookie by hand - and signing out doesn't write over the client's data, it only revokes its own session row.
 
 ## What isn't there yet
 
-The portal doesn't update on its own. A client with the tab open doesn't see the reply to their message, or that their monitor went down, until they reload. The data *is* real time; the interface isn't yet. The decision is already made — polling a cheap digest, not SSE or WebSockets, because without pub/sub in the database the server would have to poll anyway and would additionally pay for the open connection — but it's unbuilt.
+The portal doesn't update on its own. A client with the tab open doesn't see the reply to their message, or that their monitor went down, until they reload. The data *is* real time; the interface isn't yet. The decision is already made - polling a cheap digest, not SSE or WebSockets, because without pub/sub in the database the server would have to poll anyway and would additionally pay for the open connection - but it's unbuilt.
 
 I'd rather say that than pretend the portal is finished. What is finished is the part that, if it fails, isn't fixed with a deploy: the part that decides who sees what.

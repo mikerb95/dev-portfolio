@@ -2,7 +2,7 @@
 //
 // Es la prueba que importa de toda la feature. Que la máquina de estados sea
 // correcta y que el PIN no colisione no sirve de nada si el salto de slide no
-// llega a los dispositivos del salón — y ese camino (comando → validación →
+// llega a los dispositivos del salón - y ese camino (comando → validación →
 // persistencia → publicación → suscriptores) no lo cubre ningún test de módulo
 // puro.
 //

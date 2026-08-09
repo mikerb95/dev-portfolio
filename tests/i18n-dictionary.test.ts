@@ -43,7 +43,7 @@ describe('paridad del diccionario es/en', () => {
       if (typeof esVal !== 'string' || esVal.length < 4) return false
       // Nombres propios / marca que sí deben ser idénticos a propósito.
       // Jerga técnica, marcas y nombres propios que son legítimamente iguales
-      // en los dos idiomas — no son traducciones olvidadas.
+      // en los dos idiomas - no son traducciones olvidadas.
       const ALLOWED_IDENTICAL = new Set([
         'meta.siteName',
         // Jerga y marcas de las maquetas de /tools que son iguales en los dos

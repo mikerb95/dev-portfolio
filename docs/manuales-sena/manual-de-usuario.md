@@ -1,4 +1,4 @@
-# CodeByMike — Portafolio, Panel de Control y Portal de Clientes
+# CodeByMike - Portafolio, Panel de Control y Portal de Clientes
 
 ## Manual de Usuario
 
@@ -11,10 +11,10 @@
 
 | | | | |
 |---|---|---|---|
-| **Organismo** | SENA — Centro de Servicios Financieros, Regional Distrito Capital | | |
-| **Proyecto** | CodeByMike — Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
+| **Organismo** | SENA - Centro de Servicios Financieros, Regional Distrito Capital | | |
+| **Proyecto** | CodeByMike - Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
 | **Entregable** | Manual de Usuario | | |
-| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software — Ficha 3114731 — Trimestre 7 | | |
+| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software - Ficha 3114731 - Trimestre 7 | | |
 | **Versión/Edición** | 0100 | **Fecha Versión** | 03/08/2026 |
 | **Aprobado por** | (pendiente de asignación) | **Fecha Aprobación** | (pendiente) |
 | | | **Nº Total de Páginas** | `<al exportar>` |
@@ -31,7 +31,7 @@
 
 | Nombre y Apellidos |
 |---|
-| Michael David Rodríguez Beltran — Aprendiz, ficha 3114731 |
+| Michael David Rodríguez Beltran - Aprendiz, ficha 3114731 |
 | (Instructor asignado) |
 | (Jurado de sustentación) |
 | |
@@ -67,8 +67,8 @@ preguntas frecuentes con su forma de resolverlas y un glosario de los términos
 empleados.
 
 No forman parte de este documento los procedimientos de instalación y
-configuración —recogidos en el *Manual de Instalación*—, ni el detalle interno de
-módulos, base de datos y arquitectura —recogido en el *Manual Técnico*—.
+configuración (recogidos en el *Manual de Instalación*), ni el detalle interno de
+módulos, base de datos y arquitectura (recogido en el *Manual Técnico*).
 
 ## 1.3 Funcionalidad
 
@@ -100,8 +100,8 @@ de demostración del sistema, que ejecuta la interfaz real contra una base de
 datos sembrada con datos ficticios. Ninguna imagen de este manual contiene
 información de clientes reales.
 
-Dos apartados se describen sin captura —la gestión de sesiones (2.1.2) y el cobro
-de campo (2.3.5)— porque el modo de demostración veta esas rutas por diseño: son
+Dos apartados se describen sin captura (la gestión de sesiones (2.1.2) y el cobro
+de campo (2.3.5)) porque el modo de demostración veta esas rutas por diseño: son
 precisamente las que tocan credenciales y dinero.
 
 ## 2.1 Subsistema de acceso y sesiones
@@ -125,7 +125,7 @@ Para iniciar sesión, el administrador debe:
 
 ![Pantalla de acceso al panel de administración](imagenes/figura-01-admin-login.jpg)
 
-> **Figura 1 — Pantalla de acceso al panel de administración.** Las dos puertas
+> **Figura 1 - Pantalla de acceso al panel de administración.** Las dos puertas
 > de entrada son equivalentes; el enlace inferior lleva a la demostración
 > pública, sin cuenta.
 
@@ -162,13 +162,13 @@ negocio: ingresos cobrados, pendientes y proyectados, número de proyectos
 publicados, mensajes sin leer, clientes registrados, costo de infraestructura
 mensual y anual, margen estimado y renovaciones próximas.
 
-La barra lateral izquierda agrupa los apartados por bloque —Workspace, CRM,
-Finanzas y Perfil— y permanece visible en todas las páginas. En viewport móvil se
+La barra lateral izquierda agrupa los apartados por bloque (Workspace, CRM,
+Finanzas y Perfil) y permanece visible en todas las páginas. En viewport móvil se
 colapsa en un cajón desplegable.
 
 ![Dashboard del panel de administración](imagenes/figura-02-admin-dashboard.jpg)
 
-> **Figura 2 — Dashboard del panel de administración.** El aviso superior indica
+> **Figura 2 - Dashboard del panel de administración.** El aviso superior indica
 > que la sesión corre en modo de demostración y que ningún dato puede
 > modificarse.
 
@@ -200,7 +200,7 @@ sus decisiones de arquitectura, sus presentaciones y sus servicios contratados.
 
 ![Listado de proyectos en el panel](imagenes/figura-03-admin-proyectos.jpg)
 
-> **Figura 3 — Listado de proyectos.** Cada fila muestra el proyecto y su
+> **Figura 3 - Listado de proyectos.** Cada fila muestra el proyecto y su
 > identificador de URL, el cliente asociado, el stack, el estado y la fecha de
 > inicio.
 
@@ -240,9 +240,9 @@ El apartado **Briefings** documenta el alcance de un proyecto antes de
 iniciarlo. Un briefing recoge objetivo, presupuesto estimado, presupuesto
 acordado, horas previstas y una lista de ítems, cada uno clasificado como:
 
-- **Requerimiento** — lo que el cliente necesita.
-- **Entregable** — lo que se va a entregar.
-- **Exclusión** — lo que explícitamente no forma parte del trabajo.
+- **Requerimiento** - lo que el cliente necesita.
+- **Entregable** - lo que se va a entregar.
+- **Exclusión** - lo que explícitamente no forma parte del trabajo.
 
 La sección de exclusiones es la que evita discusiones posteriores de alcance y
 debe diligenciarse con el mismo cuidado que las otras dos.
@@ -283,7 +283,7 @@ ese total está incompleto; la tasa se configura en **Ajustes**.
 
 ![Costos y rentabilidad por proyecto](imagenes/figura-04-admin-costos.jpg)
 
-> **Figura 4 — Costos de infraestructura y operación.** Los totales se convierten
+> **Figura 4 - Costos de infraestructura y operación.** Los totales se convierten
 > a la moneda base y se desglosan por categoría, por responsable de pago y por
 > renovación próxima.
 
@@ -351,7 +351,7 @@ evidencia de disponibilidad del servicio y alimenta la página pública `/status
 
 ![Monitores e incidentes](imagenes/figura-05-admin-monitoreo.jpg)
 
-> **Figura 5 — Monitoreo de disponibilidad.** Los contadores superiores separan
+> **Figura 5 - Monitoreo de disponibilidad.** Los contadores superiores separan
 > los servicios caídos, degradados y operativos; cada fila muestra el uptime de
 > 30 días, la latencia del último sondeo y su traza.
 
@@ -394,7 +394,7 @@ siete días a partir de la tercera.
 
 ![Panel de seguridad](imagenes/figura-06-admin-seguridad.jpg)
 
-> **Figura 6 — Panel de seguridad.** La captura corresponde a un entorno de
+> **Figura 6 - Panel de seguridad.** La captura corresponde a un entorno de
 > demostración sin actividad hostil registrada, por lo que los contadores están a
 > cero; la disposición de las tarjetas y de los controles de bloqueo es la
 > real.
@@ -431,7 +431,7 @@ pánico** que desactiva de golpe todos los experimentos activos.
 
 ![Consola de chaos engineering](imagenes/figura-07-admin-chaos.jpg)
 
-> **Figura 7 — Consola de inyección de fallos.** El propio texto de la pantalla
+> **Figura 7 - Consola de inyección de fallos.** El propio texto de la pantalla
 > declara las rutas protegidas y el tiempo máximo del experimento; el botón rojo
 > superior es el interruptor de pánico.
 
@@ -456,7 +456,7 @@ acceso sin borrar su histórico.
 
 ![Administración del portal de clientes](imagenes/figura-08-admin-portal.jpg)
 
-> **Figura 8 — Administración del portal de clientes.** Por cliente se ve si su
+> **Figura 8 - Administración del portal de clientes.** Por cliente se ve si su
 > portal está activo, cuántos usuarios tiene, su último acceso y lo que queda
 > pendiente de atender.
 
@@ -535,7 +535,7 @@ mecanismo que la invitación.
 
 ![Acceso al portal de clientes](imagenes/figura-09-portal-login.jpg)
 
-> **Figura 9 — Acceso al portal de clientes.** El acceso es por invitación: no
+> **Figura 9 - Acceso al portal de clientes.** El acceso es por invitación: no
 > hay formulario de registro.
 
 ### 2.8.3 Consultar el avance del proyecto
@@ -549,7 +549,7 @@ volver.
 
 ![Pantalla inicial del portal de clientes](imagenes/figura-10-portal-inicio.jpg)
 
-> **Figura 10 — Pantalla inicial del portal.** Resume lo pendiente de pago, los
+> **Figura 10 - Pantalla inicial del portal.** Resume lo pendiente de pago, los
 > mensajes sin leer y el avance por hitos, con el estado de disponibilidad del
 > servicio a la derecha.
 
@@ -564,7 +564,7 @@ propia factura.
 
 ![Facturas en el portal de clientes](imagenes/figura-11-portal-facturas.jpg)
 
-> **Figura 11 — Facturas del cliente.** El estado de cada factura se muestra con
+> **Figura 11 - Facturas del cliente.** El estado de cada factura se muestra con
 > su etiqueta y la fecha de vencimiento se resalta cuando ya pasó.
 
 ### 2.8.5 Consultar documentos
@@ -652,8 +652,8 @@ uno nuevo.
 
 **¿Los datos que se ven en `/demo` son reales?**
 No. El modo de demostración consulta una base de datos distinta, sembrada con
-datos ficticios, y solo admite operaciones de lectura. Las rutas sensibles —
-bóveda, respaldos, sesiones y cobros — están vetadas incluso en modo lectura.
+datos ficticios, y solo admite operaciones de lectura. Las rutas sensibles -
+bóveda, respaldos, sesiones y cobros - están vetadas incluso en modo lectura.
 
 **¿Se puede recuperar un dato borrado por error?**
 El sistema realiza respaldos periódicos automáticos y permite generar uno manual
@@ -685,5 +685,5 @@ interfaz: requiere el procedimiento descrito en el *Manual Técnico*.
 | Rol del portal | Nivel de acceso de un usuario de cliente dentro del portal: `owner`, `member` o `billing`. |
 | SIEM | *Security Information and Event Management*. Sistema de recolección, correlación y respuesta ante eventos de seguridad. |
 | SLO | *Service Level Objective*. Objetivo de disponibilidad de un servicio en una ventana de tiempo, con un presupuesto de error asociado. |
-| Tiempo de vida (TTL) | Plazo tras el cual un dato temporal —un bloqueo de IP, un experimento de caos, una sesión— expira automáticamente. |
+| Tiempo de vida (TTL) | Plazo tras el cual un dato temporal (un bloqueo de IP, un experimento de caos, una sesión) expira automáticamente. |
 | Web Vitals | Métricas de experiencia de carga e interacción medidas sobre visitantes reales del sitio público. |

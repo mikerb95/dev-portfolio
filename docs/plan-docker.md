@@ -9,13 +9,13 @@ serlo. El sitio lo construye y ejecuta Vercel (SSR sobre Fluid Compute);
 contenerizar la app Astro para desplegarla perdería edge, preview deploys por PR
 y el rollback automático de `ci.yml`, a cambio de nada.
 
-Lo que sí aporta —y es donde está el uso profesional serio de contenedores hoy—
+Lo que sí aporta (y es donde está el uso profesional serio de contenedores hoy)
 es todo lo que rodea al despliegue: **entorno reproducible, infraestructura de
 pruebas fiel, herramientas aisladas y cadena de suministro verificable**.
 
 Saber dónde *no* aplicar la herramienta es parte del entregable.
 
-## Fase 1 — Entorno reproducible ✅
+## Fase 1 - Entorno reproducible ✅
 
 `.devcontainer/` define el entorno como código: Node 22.12 fijo, Chromium de
 Playwright preinstalado, Docker CLI y `gh` disponibles.
@@ -31,7 +31,7 @@ Verificado: la imagen construye y contiene Node v22.12.0 exacto, usuario no-root
 **Decisión:** imágenes pineadas por **digest**, no por tag. Una reproducibilidad
 que depende de que nadie mueva `latest` no es reproducibilidad.
 
-## Fase 2 — libSQL real en pruebas ✅
+## Fase 2 - libSQL real en pruebas ✅
 
 `compose.yaml` levanta dos servidores `sqld` (principal y demo, instancias
 distintas igual que en producción).
@@ -44,8 +44,8 @@ npm run test:e2e:server   # e2e contra los contenedores
 ```
 
 Turso habla HTTP/hrana, no filesystem. Los tests que dependen de transacciones,
-UNIQUE y concurrencia —pagos y aislamiento del portal, justo donde un falso
-verde sale caro— solo son fieles contra el mismo protocolo que corre en prod.
+UNIQUE y concurrencia (pagos y aislamiento del portal, justo donde un falso
+verde sale caro) solo son fieles contra el mismo protocolo que corre en prod.
 
 Verificado: las migraciones de Drizzle y `seed-demo.mjs` corren **sin un solo
 cambio de código** contra sqld en contenedor (51 tablas migradas, 4320 checks
@@ -62,7 +62,7 @@ administrar. CI no cambia.
    moría en bucle. El mínimo real resultó ser `DAC_OVERRIDE` + `CHOWN` +
    `SETUID` + `SETGID`: su wrapper crea el directorio de datos en un volumen
    ajeno, se adueña de él y baja privilegios antes de arrancar. `FOWNER` no
-   hace falta. La alternativa —devolver el `ALL` al primer fallo— es como los
+   hace falta. La alternativa (devolver el `ALL` al primer fallo) es como los
    contenedores acaban corriendo con todo abierto.
 
 2. **Una sonda mal escrita afirma menos de lo que parece.** La primera medición
@@ -84,8 +84,8 @@ administrar. CI no cambia.
 4. **Lista blanca en el sembrador.** `seed-e2e.mjs` arrasa el esquema del
    destino antes de sembrarlo. Al admitir URLs `http://` además de `file:`,
    un error de configuración dejaba de degradar una prueba y pasaba a borrar
-   una base. Se restringió a destinos locales enumerando lo permitido —falla
-   cerrado— en vez de lo prohibido, que falla abierto en cuanto aparece un host
+   una base. Se restringió a destinos locales enumerando lo permitido (falla
+   cerrado) en vez de lo prohibido, que falla abierto en cuanto aparece un host
    que nadie previó.
 
 ### Material de sustentación
@@ -96,7 +96,7 @@ porqué, decisiones defendibles, los hallazgos de abajo, ruta de estudio prioriz
 y preguntas probables del jurado con respuesta preparada. Este plan es el registro
 técnico; esa página es el guion.
 
-## Fase 3 — Herramientas del LAB en contenedor (pendiente)
+## Fase 3 - Herramientas del LAB en contenedor (pendiente)
 
 ZAP ya corre en contenedor sin que se note (`zaproxy/action-baseline` envuelve
 una imagen). Formalizarlo en `lab/` con imágenes pineadas por digest da ZAP, k6,
@@ -107,7 +107,7 @@ Desbloquea parcialmente la **Fase 5 del plan del LAB**: k6 está esperando
 sin instalar nada y sin gastar minutos de CI. Es la "Opción A" de
 `docs/plan-lab-fases-pendientes.md`, ya ejecutable.
 
-## Fase 4 — Chaos real con Toxiproxy (pendiente)
+## Fase 4 - Chaos real con Toxiproxy (pendiente)
 
 Los chaos flags actuales solo simulan los fallos que el propio código decide
 simular. Un Toxiproxy entre la app y el libSQL local inyecta latencia, cortes y
@@ -117,7 +117,7 @@ Es lo que valida de verdad la regla de *fail-open* del repo: hoy no se puede
 comprobar si el sitio sigue en pie cuando el rate limiter tarda 5 s en
 responder. Material para un artículo en `/notes`.
 
-## Fase 5 — Cadena de suministro (pendiente)
+## Fase 5 - Cadena de suministro (pendiente)
 
 Donde está el nivel más alto y donde casi nadie mira:
 

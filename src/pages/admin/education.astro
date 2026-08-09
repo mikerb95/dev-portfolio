@@ -179,7 +179,7 @@ const progress = completados + enCurso > 0 ? Math.round((completados / (completa
         <!-- Traducción al inglés (opcional). Vacío ⇒ /en muestra el español. -->
         <div class="sm:col-span-2 pt-2 border-t border-zinc-800">
           <p class="text-[11px] text-zinc-500 mb-3">
-            Traducción al inglés — opcional. Lo que dejes vacío se muestra en español en <code class="text-zinc-400">/en</code>.
+            Traducción al inglés - opcional. Lo que dejes vacío se muestra en español en <code class="text-zinc-400">/en</code>.
           </p>
         </div>
         <div>
@@ -201,7 +201,7 @@ const progress = completados + enCurso > 0 ? Math.round((completados / (completa
         <div>
           <label class="block text-xs text-zinc-400 mb-1">Proyecto vinculado</label>
           <select name="projectId" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500">
-            <option value="">— Ninguno —</option>
+            <option value="">- Ninguno -</option>
             {allProjects.map((p) => (
               <option value={p.id}>{p.title}</option>
             ))}

@@ -78,13 +78,13 @@ const formData = rows.map(({ id, name, email, company, notes }) => ({ id, name, 
                   {c.company && <div class="text-[12px] text-ink-300">{c.company}</div>}
                 </td>
                 <td class="px-4 py-3 text-ink-200">
-                  {c.email ? <a href={`mailto:${c.email}`} class="hover:text-cyan transition-colors">{c.email}</a> : '—'}
+                  {c.email ? <a href={`mailto:${c.email}`} class="hover:text-cyan transition-colors">{c.email}</a> : '-'}
                 </td>
                 <td class="px-4 py-3">
                   {c.projectCount > 0 ? (
                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan/10 text-cyan text-[12px] font-mono">{c.projectCount}</span>
                   ) : (
-                    <span class="text-ink-400">—</span>
+                    <span class="text-ink-400">-</span>
                   )}
                 </td>
                 <td class="px-4 py-3 text-[12px]">
@@ -94,7 +94,7 @@ const formData = rows.map(({ id, name, email, company, notes }) => ({ id, name, 
                     <a href={`/admin/seguimiento?client=${c.id}`} class="text-ink-400 hover:text-cyan transition-colors">sin registro</a>
                   )}
                 </td>
-                <td class="px-4 py-3 text-[12px] text-ink-300">{c.createdAtLabel ?? '—'}</td>
+                <td class="px-4 py-3 text-[12px] text-ink-300">{c.createdAtLabel ?? '-'}</td>
                 <td class="px-4 py-3">
                   <div class="flex gap-3 justify-end items-center">
                     {c.portalEnabled && c.activePortalUsers > 0 && (

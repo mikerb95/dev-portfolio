@@ -28,7 +28,7 @@ const PAGES = ['/', '/lab', '/status', '/security', '/tools', '/notes', '/contac
 // Portal de clientes: son páginas privadas, así que no hay forma de llegar a
 // ellas sin sesión. En vez de dejarlas fuera del escaneo, se entra por la demo
 // pública (mismos datos ficticios que ve cualquier visitante de /tools) y se
-// escanean como una sesión más — es la única forma de cubrir el área
+// escanean como una sesión más - es la única forma de cubrir el área
 // autenticada con este mismo escáner anónimo.
 const PORTAL_DEMO_PAGES = [
   '/portal',
@@ -109,7 +109,7 @@ const demoEntered = !page.url().includes('demo-unavailable')
 if (demoEntered) {
   for (const path of PORTAL_DEMO_PAGES) await scanPage(path)
 } else {
-  console.log('  (demo del portal no configurada — se omiten sus páginas)')
+  console.log('  (demo del portal no configurada - se omiten sus páginas)')
 }
 
 const scanned = PAGES.length + (demoEntered ? PORTAL_DEMO_PAGES.length : 0)

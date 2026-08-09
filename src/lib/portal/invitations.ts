@@ -2,7 +2,7 @@
 //
 // Los dos flujos son el mismo mecanismo con distinto TTL y distinta plantilla:
 // un token de un solo uso que viaja por email y demuestra control del buzón.
-// En la base solo vive el sha-256 del token — igual que las sesiones, un
+// En la base solo vive el sha-256 del token - igual que las sesiones, un
 // volcado de la tabla no permite entrar a nadie.
 //
 // Decisión importante en `startPasswordReset`: la respuesta al usuario es
@@ -202,7 +202,7 @@ export async function resolveToken(token: string | undefined, now = new Date()):
 
 /**
  * Consume el token: lo marca aceptado de forma atómica y devuelve si ganó la
- * carrera. El `WHERE … IS NULL` es lo que hace el "un solo uso" real — dos
+ * carrera. El `WHERE … IS NULL` es lo que hace el "un solo uso" real - dos
  * clics simultáneos en el enlace del correo solo pueden acertar una vez.
  */
 export async function consumeToken(invitationId: number, now = new Date()): Promise<boolean> {

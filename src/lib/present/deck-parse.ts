@@ -6,7 +6,7 @@
 // Tampoco vale una regex: `data-speaker-notes` son notas del presentador en
 // texto libre, así que contienen comillas, `<`, `>` y saltos de línea. Una
 // `/<section([^>]*)>/` corta la nota en el primer `>` y se lleva por delante la
-// mitad del deck sin dar un error — falla en silencio, que es la peor forma de
+// mitad del deck sin dar un error - falla en silencio, que es la peor forma de
 // fallar. Lo que hay aquí es un escáner de etiquetas: pequeño, consciente de
 // comillas y de comentarios, y con tests.
 //
@@ -173,7 +173,7 @@ function skipRawText(html: string, name: string, from: number): number {
  * Localiza el elemento que contiene los slides.
  *
  * Hay dos formas legítimas, y la segunda no es un caso raro: es lo que exporta
- * Claude Design. Ahí `<deck-stage>` NO aparece en el HTML — solo existe en
+ * Claude Design. Ahí `<deck-stage>` NO aparece en el HTML - solo existe en
  * tiempo de ejecución, cuando `<x-import>` carga el módulo que lo define:
  *
  *   <x-import component-from-global-scope="deck-stage" from="./deck-stage.js">
@@ -218,7 +218,7 @@ function findStage(html: string): Tag | null {
 /**
  * Slides de un deck: los `<section>` que son hijos DIRECTOS del contenedor
  * (`<deck-stage>` o el `<x-import>` que lo declara). Un `<section>` anidado
- * dentro de un slide es contenido del slide, no un slide — por eso se lleva la
+ * dentro de un slide es contenido del slide, no un slide - por eso se lleva la
  * cuenta de la profundidad y no basta con contar tags.
  */
 export function parseDeck(html: string): ParsedDeck {

@@ -282,7 +282,7 @@ export const monitorChecks = sqliteTable('monitor_checks', {
   monitorAtIdx: index('monitor_checks_monitor_at_idx').on(t.monitorId, t.at),
   // Aparte del compuesto: /api/engineering/live consulta por fecha SIN filtrar
   // por monitor ("último sondeo", "cuántos en 24h"), y ahí el compuesto no
-  // sirve — `at` no es su columna líder. Verificado con EXPLAIN QUERY PLAN.
+  // sirve - `at` no es su columna líder. Verificado con EXPLAIN QUERY PLAN.
   atIdx: index('monitor_checks_at_idx').on(t.at),
 }))
 
@@ -438,7 +438,7 @@ export const chaosFlags = sqliteTable('chaos_flags', {
 })
 
 // Historial de experimentos del LAB (ataques de idempotencia, caos, etc.)
-// con resultado esperado vs. real — para mostrar el historial al jurado.
+// con resultado esperado vs. real - para mostrar el historial al jurado.
 export const labExperiments = sqliteTable('lab_experiments', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   kind: text('kind').notNull(),
@@ -610,7 +610,7 @@ export const securityAnomalies = sqliteTable('security_anomalies', {
 
 // ── LAB · Fingerprinting (demo educativa) ───────────────────────────────────
 // Sala efímera: se crea con QR, expira sola (≤2h) y el cron la purga junto con
-// sus dispositivos. Nada de esto sobrevive a la demo — es el punto ético.
+// sus dispositivos. Nada de esto sobrevive a la demo - es el punto ético.
 
 export const fpRooms = sqliteTable('fp_rooms', {
   id: text('id').primaryKey(), // slug corto, va en la URL del QR
@@ -642,7 +642,7 @@ export const fpDevices = sqliteTable('fp_devices', {
 // ── Descargas de CV ──────────────────────────────────────────────────────────
 // Registro de control (sin TTL, a diferencia de fp_devices) de quién descarga
 // el CV desde /contact: mismo recolector de señales del lab de fingerprinting,
-// pero aquí sí persiste IP/UA — es el propósito del feature, no un efecto demo.
+// pero aquí sí persiste IP/UA - es el propósito del feature, no un efecto demo.
 export const cvDownloads = sqliteTable('cv_downloads', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   deviceHash: text('device_hash').notNull(),
@@ -679,7 +679,7 @@ export const clientUsers = sqliteTable('client_users', {
   // Identidad de login. UNIQUE global: un email = una persona = un cliente.
   email: text('email').notNull().unique(),
   name: text('name'),
-  // scrypt$N$r$p$salt$hash — el formato lleva sus parámetros para poder
+  // scrypt$N$r$p$salt$hash - el formato lleva sus parámetros para poder
   // endurecerlos luego sin invalidar los hashes viejos. Null mientras la
   // invitación está pendiente (el usuario aún no eligió contraseña).
   passwordHash: text('password_hash'),
@@ -844,7 +844,7 @@ export const portalMessages = sqliteTable('portal_messages', {
 }))
 
 // Lecturas por usuario: con varios usuarios por empresa, "leído" no puede ser
-// una columna del mensaje — cada persona tiene su propio estado.
+// una columna del mensaje - cada persona tiene su propio estado.
 export const portalMessageReads = sqliteTable('portal_message_reads', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   threadId: integer('thread_id').notNull().references(() => portalThreads.id, { onDelete: 'cascade' }),
@@ -946,7 +946,7 @@ export const portalActivity = sqliteTable('portal_activity', {
 //
 // Aquí SOLO vive lo persistente: la biblioteca de decks. El estado vivo de una
 // sesión de proyección (PIN, slide actual, secreto del presentador) es efímero
-// y vive en Redis con TTL — nunca toca Turso.
+// y vive en Redis con TTL - nunca toca Turso.
 export const decks = sqliteTable('decks', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   title: text('title').notNull(),
@@ -980,7 +980,7 @@ export const deckSlides = sqliteTable('deck_slides', {
 
 // Feedback del público. Anónimo por diseño: no hay identificador de sesión ni
 // de dispositivo, solo el deck que vieron. `contact` es opcional y lo escribe
-// quien quiera respuesta — es el único campo que puede contener PII.
+// quien quiera respuesta - es el único campo que puede contener PII.
 export const presentationFeedback = sqliteTable('presentation_feedback', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   // Nullable: alguien puede llegar a /feedback sin venir de una presentación.

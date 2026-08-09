@@ -6,8 +6,8 @@ import { ESCENARIOS, PIPELINE } from '../../data/testing'
 // Página "híbrida": el cliente hace polling a /api/lab/pipeline-live (datos
 // reales de la API de Actions/Deployments de GitHub + ci_runs + monitors).
 // Mientras no hay una corrida reciente, reproduce en loop el escenario
-// "Todo verde" de ESCENARIOS —los mismos datos curados que ya usa
-// PipelineMap en /docs/testing— dejando clarísimo que es una simulación.
+// "Todo verde" de ESCENARIOS (los mismos datos curados que ya usa
+// PipelineMap en /docs/testing) dejando clarísimo que es una simulación.
 // En cuanto el endpoint reporta `live: true`, la página cambia de fuente sin
 // recargar: dos modos, un solo componente.
 const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
@@ -23,8 +23,8 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
       Esta página sondea cada pocos segundos la API de Actions y Deployments de GitHub, más las tablas propias
       de <span class="font-mono text-cyan">ci_runs</span> y <span class="font-mono text-cyan">monitors</span>,
       y va narrando lo que encuentra como un log de despliegue. Cuando no hay una corrida reciente en
-      <span class="font-mono">main</span>, reproduce en loop un ejemplo real ya ocurrido —marcado
-      explícitamente como simulación— para que la página nunca se vea "vacía".
+      <span class="font-mono">main</span>, reproduce en loop un ejemplo real ya ocurrido (marcado
+      explícitamente como simulación) para que la página nunca se vea "vacía".
     </p>
   </div>
 
@@ -42,7 +42,7 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
           <span class="w-2.5 h-2.5 rounded-full bg-[#ffcc4d]/70"></span>
           <span class="w-2.5 h-2.5 rounded-full bg-lime/70"></span>
         </div>
-        <span class="font-mono text-[11px] text-ink-300" data-log-sha>—</span>
+        <span class="font-mono text-[11px] text-ink-300" data-log-sha>-</span>
       </div>
       <ol class="p-4 space-y-1 font-mono text-[12.5px] leading-relaxed max-h-[520px] overflow-y-auto" data-log>
         <li class="text-ink-300">esperando datos…</li>
@@ -53,18 +53,18 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
     <div class="rounded-xl border border-white/10 bg-white/[.02] p-5" data-mapa>
       <div class="text-[12px] font-mono uppercase tracking-wide text-ink-300 mb-4">Mapa de componentes</div>
       <div class="space-y-2" data-nodos>
-        <div class="nodo" data-nodo="push"><span class="dot"></span>GitHub — push a <span class="mono">main</span></div>
-        <div class="nodo" data-nodo="ci"><span class="dot"></span>GitHub Actions — CI (test · build · e2e)</div>
-        <div class="nodo" data-nodo="security"><span class="dot"></span>GitHub Actions — Security / Accessibility / DAST</div>
-        <div class="nodo" data-nodo="deploy"><span class="dot"></span>Vercel — build + deploy</div>
-        <div class="nodo" data-nodo="verify"><span class="dot"></span>/api/health — verificación + rollback</div>
-        <div class="nodo" data-nodo="turso"><span class="dot"></span>Turso — libSQL de producción</div>
-        <div class="nodo" data-nodo="operacion"><span class="dot"></span>cron-job.org + ntfy — monitoreo continuo</div>
+        <div class="nodo" data-nodo="push"><span class="dot"></span>GitHub - push a <span class="mono">main</span></div>
+        <div class="nodo" data-nodo="ci"><span class="dot"></span>GitHub Actions - CI (test · build · e2e)</div>
+        <div class="nodo" data-nodo="security"><span class="dot"></span>GitHub Actions - Security / Accessibility / DAST</div>
+        <div class="nodo" data-nodo="deploy"><span class="dot"></span>Vercel - build + deploy</div>
+        <div class="nodo" data-nodo="verify"><span class="dot"></span>/api/health - verificación + rollback</div>
+        <div class="nodo" data-nodo="turso"><span class="dot"></span>Turso - libSQL de producción</div>
+        <div class="nodo" data-nodo="operacion"><span class="dot"></span>cron-job.org + ntfy - monitoreo continuo</div>
       </div>
       <p class="text-[12px] text-ink-300 leading-relaxed mt-4 pt-4 border-t border-white/8">
         Un nodo se enciende cuando el evento real correspondiente ocurre. <span class="text-ink-200">Turso</span>
         no tiene API propia que consultar: se infiere encendido durante «Verificación» porque ese es el momento
-        en que <span class="font-mono">/api/health</span> la consulta de verdad — no es una corrida real
+        en que <span class="font-mono">/api/health</span> la consulta de verdad - no es una corrida real
         instrumentada campo a campo, es la única inferencia de esta página.
       </p>
     </div>
@@ -182,7 +182,7 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
     limpiarLog()
     apagarNodos()
     shaEl.textContent = 'simulación'
-    agregarLinea({ estado: 'pending', texto: 'sin corrida reciente en main — reproduciendo un ejemplo real ya ocurrido', sim: true })
+    agregarLinea({ estado: 'pending', texto: 'sin corrida reciente en main - reproduciendo un ejemplo real ya ocurrido', sim: true })
 
     const nodoDeEtapa: Record<string, string> = {
       local: 'push',
@@ -238,10 +238,10 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
       limpiarLog()
       apagarNodos()
       visto = new Set()
-      agregarLinea({ estado: 'ok', texto: 'corrida real detectada — cambiando a datos en vivo' })
+      agregarLinea({ estado: 'ok', texto: 'corrida real detectada - cambiando a datos en vivo' })
     }
 
-    shaEl.textContent = data.shaCorta ?? '—'
+    shaEl.textContent = data.shaCorta ?? '-'
     pintarNodo('push', data.stages.push.estado)
 
     for (const wf of data.stages.workflows) {

@@ -1,4 +1,4 @@
-# CodeByMike — Portafolio, Panel de Control y Portal de Clientes
+# CodeByMike - Portafolio, Panel de Control y Portal de Clientes
 
 ## Manual Técnico
 
@@ -11,10 +11,10 @@
 
 | | | | |
 |---|---|---|---|
-| **Organismo** | SENA — Centro de Servicios Financieros, Regional Distrito Capital | | |
-| **Proyecto** | CodeByMike — Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
+| **Organismo** | SENA - Centro de Servicios Financieros, Regional Distrito Capital | | |
+| **Proyecto** | CodeByMike - Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
 | **Entregable** | Manual Técnico | | |
-| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software — Ficha 3114731 — Trimestre 7 | | |
+| **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software - Ficha 3114731 - Trimestre 7 | | |
 | **Versión/Edición** | 0100 | **Fecha Versión** | 03/08/2026 |
 | **Aprobado por** | (pendiente de asignación) | **Fecha Aprobación** | (pendiente) |
 | | | **Nº Total de Páginas** | `<al exportar>` |
@@ -59,7 +59,7 @@ Este documento describe la construcción interna del sistema publicado en
 `codebymike.tech`: sus módulos, sus interfaces, su modelo de datos, su despliegue
 y los procedimientos técnicos necesarios para operarlo y mantenerlo.
 
-Está dirigido a personal técnico —desarrollo y operación— que deba intervenir el
+Está dirigido a personal técnico (desarrollo y operación) que deba intervenir el
 sistema, diagnosticar una incidencia o continuar su evolución. No sustituye al
 *Manual de Usuario*, que describe la operación funcional, ni al *Manual de
 Instalación*, que detalla el procedimiento de puesta en marcha paso a paso.
@@ -69,14 +69,14 @@ Instalación*, que detalla el procedimiento de puesta en marcha paso a paso.
 El documento cubre la totalidad del sistema, que comprende cuatro subsistemas
 desplegados sobre una misma base de código:
 
-- **Sitio público** — portafolio, artículos técnicos, estado de servicios,
+- **Sitio público** - portafolio, artículos técnicos, estado de servicios,
   documentación de ingeniería y vitrina comercial, en español (canónico) e inglés
   (bajo el prefijo `/en`).
-- **Panel de control privado** (`/admin`) — CRM, finanzas y rentabilidad, bóveda
+- **Panel de control privado** (`/admin`) - CRM, finanzas y rentabilidad, bóveda
   de credenciales, observabilidad, seguridad y laboratorio de ingeniería.
-- **Portal de clientes** (`/portal`) — área privada multi-cliente con hitos,
+- **Portal de clientes** (`/portal`) - área privada multi-cliente con hitos,
   facturas, documentos, mensajería y feed de actividad.
-- **Servicios automáticos** — motor de sondeos de disponibilidad, agregación de
+- **Servicios automáticos** - motor de sondeos de disponibilidad, agregación de
   eventos de seguridad, respaldos, detección de anomalías y notificaciones,
   disparados por tareas programadas externas.
 
@@ -99,7 +99,7 @@ documenta la interfaz de integración.
 | Ref. 9 | Diagramas UML (despliegue, componentes, comunicación, actividades) | `src/data/{despliegue,componentes,comunicacion,actividades}.ts` |
 | Ref. 10 | Instrucciones de contribución y convenciones del repositorio | `CLAUDE.md` |
 | Ref. 11 | Planes vivos por módulo | `docs/plan-*.md` |
-| Ref. 12 | ISO/IEC 25010 — Modelo de calidad del producto software | Norma externa |
+| Ref. 12 | ISO/IEC 25010 - Modelo de calidad del producto software | Norma externa |
 | Ref. 13 | OWASP Top 10 | Norma externa |
 | Ref. 14 | WCAG 2.1 nivel AA | Norma externa |
 
@@ -157,16 +157,16 @@ documenta la interfaz de integración.
 
 | Componente | Ubicación | Responsabilidad | Interfaces que provee | Interfaces que consume |
 |---|---|---|---|---|
-| `SitioPublico` | `src/pages/` (raíz, `notes/`, `docs/`, `status/`, `tools/`) | Presentación pública | — | `IEndpointsHTTP` |
-| `PanelAdmin` | `src/pages/admin/` | Operación privada del negocio | — | `IEndpointsHTTP` |
-| `PortalClientes` | `src/pages/portal/` | Área privada del cliente | — | `IEndpointsHTTP` |
-| `Middleware` | `src/middleware.ts` | Guarda único de entrada | — | `IEnforcement` |
+| `SitioPublico` | `src/pages/` (raíz, `notes/`, `docs/`, `status/`, `tools/`) | Presentación pública | - | `IEndpointsHTTP` |
+| `PanelAdmin` | `src/pages/admin/` | Operación privada del negocio | - | `IEndpointsHTTP` |
+| `PortalClientes` | `src/pages/portal/` | Área privada del cliente | - | `IEndpointsHTTP` |
+| `Middleware` | `src/middleware.ts` | Guarda único de entrada | - | `IEnforcement` |
 | `ApiInterna` | `src/pages/api/` | Endpoints de negocio y tareas programadas | `IEndpointsHTTP` | `ICobros`, `IMonitoreo` |
 | `MicroSIEM` | `src/lib/security/` | Clasificación, límite de tasa, bloqueo y agregación | `IEnforcement` | `IRepositorio` |
 | `MotorDePagos` | `src/lib/payments.ts`, `payments-state.ts` | Máquina de estados idempotente | `ICobros` | `IRepositorio`, `INotificacion` |
 | `Observabilidad` | `src/lib/slo.ts`, `src/lib/lab/` | Monitores, incidentes y objetivos de servicio | `IMonitoreo` | `IRepositorio`, `INotificacion` |
-| `AccesoADatos` | `src/db/` | Esquema y consultas | `IRepositorio` | — |
-| `Notificaciones` | `src/lib/notify.ts` | Envío push y correo, opcional | `INotificacion` | — |
+| `AccesoADatos` | `src/db/` | Esquema y consultas | `IRepositorio` | - |
+| `Notificaciones` | `src/lib/notify.ts` | Envío push y correo, opcional | `INotificacion` | - |
 
 El componente de acceso a datos es aquel del que dependen casi todos los demás y
 es, por tanto, el único punto donde puede imponerse una regla transversal como el
@@ -269,8 +269,8 @@ y se cierra en el primer éxito.
 El chequeo de salud del portal (`src/lib/portal/health.ts`) es la **única parte
 de la observabilidad que no es fail-open**: si algo está roto tiene que decirlo.
 Ejecuta la misma unión de tres tablas que resuelve una sesión, con un
-identificador imposible, en lugar de sondear la página de acceso —que renderiza
-sin tocar la base de datos y cuyo `200` no probaría nada—.
+identificador imposible, en lugar de sondear la página de acceso (que renderiza
+sin tocar la base de datos y cuyo `200` no probaría nada).
 
 ### 6.2.7 Módulo de internacionalización (`src/i18n/`)
 
@@ -294,7 +294,7 @@ El esquema completo es la fuente de verdad y vive en `src/db/schema.ts`. Se
 compone de **50 tablas**. A continuación se documenta el diccionario de las
 entidades centrales; el resto se relaciona en el apartado 10.
 
-## 7.1 `clients` — Clientes
+## 7.1 `clients` - Clientes
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
@@ -309,7 +309,7 @@ entidades centrales; el resto se relaciona en el apartado 10.
 | `billing_info` | TEXT | Sí | Datos de facturación |
 | `created_at` | INTEGER (timestamp) | No | Fecha de alta |
 
-## 7.2 `projects` — Proyectos
+## 7.2 `projects` - Proyectos
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
@@ -326,14 +326,14 @@ entidades centrales; el resto se relaciona en el apartado 10.
 | `client_id` | INTEGER FK → `clients.id` | Sí | Cliente asociado |
 | `created_at` | INTEGER (timestamp) | No | Fecha de alta |
 
-## 7.3 `project_services` — Servicios y costos (incluye la bóveda)
+## 7.3 `project_services` - Servicios y costos (incluye la bóveda)
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
 | `id` | INTEGER PK | No | Identificador |
 | `project_id` | INTEGER FK → `projects.id` | Sí | Proyecto asociado |
 | `client_id` | INTEGER FK → `clients.id` | Sí | Cliente asociado |
-| `name`, `category`, `provider`, `url`, `username` | TEXT | — | Identificación del servicio contratado |
+| `name`, `category`, `provider`, `url`, `username` | TEXT | - | Identificación del servicio contratado |
 | `cost` | REAL | Sí | Costo del servicio |
 | `currency` | TEXT | No | Moneda del costo |
 | `billing_cycle` | TEXT | Sí | Periodicidad de facturación |
@@ -343,9 +343,9 @@ entidades centrales; el resto se relaciona en el apartado 10.
 | `billed_to_client` | REAL | Sí | Importe repercutido al cliente |
 | `secrets` | TEXT | Sí | **Credenciales cifradas con AES-256-GCM.** Nunca se devuelve en listados |
 | `notes` | TEXT | Sí | Observaciones |
-| `created_at`, `updated_at` | INTEGER (timestamp) | — | Auditoría |
+| `created_at`, `updated_at` | INTEGER (timestamp) | - | Auditoría |
 
-## 7.4 `payments` — Pagos
+## 7.4 `payments` - Pagos
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
@@ -364,22 +364,22 @@ entidades centrales; el resto se relaciona en el apartado 10.
 | `expires_at` | INTEGER (timestamp) | Sí | Caducidad del enlace de cobro |
 | `client_id` | INTEGER FK → `clients.id` | Sí | Cliente |
 | `version` | INTEGER | No | Control de concurrencia optimista |
-| `created_at`, `updated_at` | INTEGER (timestamp) | — | Auditoría |
+| `created_at`, `updated_at` | INTEGER (timestamp) | - | Auditoría |
 
-## 7.5 `payment_events` — Bitácora de avisos de la pasarela
+## 7.5 `payment_events` - Bitácora de avisos de la pasarela
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
 | `id` | INTEGER PK | No | Identificador |
 | `payment_id` | INTEGER FK → `payments.id` | No | Pago afectado |
-| `provider`, `type`, `gateway_tx_id`, `event_status` | TEXT | — | Datos del evento recibido |
+| `provider`, `type`, `gateway_tx_id`, `event_status` | TEXT | - | Datos del evento recibido |
 | `payload` | TEXT | Sí | Cuerpo íntegro del aviso |
 | `duplicate` | INTEGER (bool) | No | El evento ya se había recibido |
 | `out_of_order` | INTEGER (bool) | No | El evento llegó después de un estado terminal |
 | `amount_mismatch` | INTEGER (bool) | No | El importe no coincide con el del pago |
 | `received_at` | INTEGER (timestamp) | No | Momento de recepción |
 
-## 7.6 `client_users` — Usuarios del portal
+## 7.6 `client_users` - Usuarios del portal
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
@@ -398,7 +398,7 @@ entidades centrales; el resto se relaciona en el apartado 10.
 El formato del hash incorpora sus propios parámetros, lo que permite endurecerlos
 más adelante sin invalidar los hashes existentes.
 
-## 7.7 `invoices` — Facturas
+## 7.7 `invoices` - Facturas
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
@@ -412,9 +412,9 @@ más adelante sin invalidar los hashes existentes.
 | `notes` | TEXT | Sí | Observaciones |
 | `issued_at`, `due_at`, `paid_at` | INTEGER (timestamp) | Sí | Fechas del ciclo |
 | `payment_id` | INTEGER FK → `payments.id` ON DELETE SET NULL | Sí | Pago que la saldó |
-| `created_at`, `updated_at` | INTEGER (timestamp) | — | Auditoría |
+| `created_at`, `updated_at` | INTEGER (timestamp) | - | Auditoría |
 
-## 7.8 `security_events` — Eventos de seguridad
+## 7.8 `security_events` - Eventos de seguridad
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
@@ -422,7 +422,7 @@ más adelante sin invalidar los hashes existentes.
 | `at` | INTEGER (timestamp) | No | Momento del evento |
 | `ip` | TEXT | Sí | Dirección de origen; solo accesible desde el panel |
 | `ip_hash` | TEXT | Sí | Hash empleado en toda exposición fuera del panel |
-| `method`, `path`, `query`, `user_agent` | TEXT | — | Datos de la petición |
+| `method`, `path`, `query`, `user_agent` | TEXT | - | Datos de la petición |
 | `country`, `asn` | TEXT | Sí | Geolocalización aproximada |
 | `category` | TEXT | No | Clase de amenaza detectada |
 | `severity` | TEXT | No | Gravedad |
@@ -431,7 +431,7 @@ más adelante sin invalidar los hashes existentes.
 | `rule_id` | TEXT | Sí | Regla que disparó la clasificación |
 | `hits` | INTEGER | No | Repeticiones agregadas |
 
-## 7.9 `blocked_ips` — Lista de bloqueo
+## 7.9 `blocked_ips` - Lista de bloqueo
 
 | Campo | Tipo | Nulo | Descripción |
 |---|---|---|---|
@@ -442,7 +442,7 @@ más adelante sin invalidar los hashes existentes.
 | `expires_at` | INTEGER (timestamp) | No | **Vencimiento obligatorio.** No existen bloqueos permanentes |
 | `source` | TEXT | No | Manual o automático |
 
-## 7.10 `monitors` y `monitor_checks` — Disponibilidad
+## 7.10 `monitors` y `monitor_checks` - Disponibilidad
 
 `monitors` define qué se vigila (URL, método, código y texto esperados, umbral de
 latencia, intervalo, estado de pausa, y expiración del certificado TLS
@@ -545,8 +545,8 @@ módulo `src/db/index.ts` emplea `AsyncLocalStorage` para propagar el contexto d
 llega a `/demo`, todas las consultas que nazcan de ella se dirigen a la base de
 demostración sin que el código de las páginas lo sepa.
 
-El aislamiento de la demostración es, por tanto, **por diseño** —una base de
-datos distinta— y no por filtrado de consultas ni por ocultación de botones. Este
+El aislamiento de la demostración es, por tanto, **por diseño** (una base de
+datos distinta) y no por filtrado de consultas ni por ocultación de botones. Este
 detalle importa: los endpoints que revelan credenciales de la bóveda son
 peticiones `GET`, de modo que una restricción de «solo lectura» no los habría
 detenido; la lista de rutas vetadas en modo demostración va por patrón de ruta.
@@ -666,7 +666,7 @@ que constituyen la segunda línea de recuperación.
 | `monitor_checks` | 90 días | El detalle crudo de sondeos crece linealmente y solo se necesita para diagnóstico reciente |
 | `security_events` | 90 días | Ídem; los agregados conservan la tendencia |
 | `security_rollups` | Permanente | Agregado sin datos personales; sostiene las series históricas |
-| Sesiones (`admin_sessions`, `portal_sessions`) | Hasta su vencimiento o revocación | — |
+| Sesiones (`admin_sessions`, `portal_sessions`) | Hasta su vencimiento o revocación | - |
 | `blocked_ips`, `chaos_flags`, `rate_limit_buckets` | Hasta su TTL | Todo bloqueo y todo experimento expira solo |
 
 ## 11.3 Recuperación
@@ -686,8 +686,8 @@ desechable: un respaldo que nunca se ha restaurado no es un respaldo verificado.
 
 # 12. INSTALACIÓN Y CONFIGURACIÓN
 
-Este apartado resume el procedimiento. El detalle completo —incluidos recursos de
-hardware, matriz de certificación y verificación posterior— está en el *Manual de
+Este apartado resume el procedimiento. El detalle completo (incluidos recursos de
+hardware, matriz de certificación y verificación posterior) está en el *Manual de
 Instalación* (Ref. 3).
 
 # 12.1 REQUISITOS GENERALES PRE-INSTALACIÓN
@@ -754,8 +754,8 @@ Para leer cualquier variable de entorno nueva debe emplearse siempre
 Antes de escribir variables de entorno mediante la CLI de la plataforma debe
 confirmarse el proyecto destino con `cat .vercel/project.json`: bajo la misma
 organización existen dos proyectos, y el que sirve el dominio real es
-**`dev-portfolio`**, no `portfolio` —cuyo nombre coincide por accidente con el del
-directorio local—.
+**`dev-portfolio`**, no `portfolio` (cuyo nombre coincide por accidente con el del
+directorio local).
 
 # 12.4 Variables de ambiente
 
@@ -831,8 +831,8 @@ Parámetros fijados en código:
 
 | Nombre | Cargo | Módulo | Contacto |
 |---|---|---|---|
-| Michael David Rodríguez Beltran | Aprendiz — desarrollador y responsable técnico | Todos | 0368dev@gmail.com · @mikerb95 |
-| (Instructor asignado) | Instructor / supervisor | Documentación y sustentación | — |
+| Michael David Rodríguez Beltran | Aprendiz - desarrollador y responsable técnico | Todos | 0368dev@gmail.com · @mikerb95 |
+| (Instructor asignado) | Instructor / supervisor | Documentación y sustentación | - |
 | Soporte de Vercel | Proveedor | Cómputo y despliegue | `vercel.com/support` |
 | Soporte de Turso | Proveedor | Base de datos | `turso.tech` |
 | Soporte de Wompi | Proveedor | Pasarela de pagos | `wompi.co` |
@@ -950,7 +950,7 @@ escapado del primer guarda. La sesión impersonada queda marcada en
 
 # 15. ANEXOS
 
-## Anexo A — Estrategia de pruebas
+## Anexo A - Estrategia de pruebas
 
 | Nivel | Herramienta | Alcance |
 |---|---|---|
@@ -977,7 +977,7 @@ Reglas de la suite que conviene conocer antes de escribir una prueba nueva:
   pruebas, no en la preparación global, que se ejecuta después de que el servidor
   ya arrancó.
 
-## Anexo B — Convenciones del repositorio
+## Anexo B - Convenciones del repositorio
 
 - **Comentarios en español**, explicando el *porqué* de una decisión no obvia,
   nunca el *qué* hace el código.
@@ -990,7 +990,7 @@ Reglas de la suite que conviene conocer antes de escribir una prueba nueva:
 - Los datos que alimentan `/docs` viven tipados en `src/data/` y las páginas solo
   los renderizan: **ninguna cifra se escribe a mano** en un fichero `.astro`.
 
-## Anexo C — Rutas de la API
+## Anexo C - Rutas de la API
 
 Las rutas se agrupan por prefijo y régimen de acceso:
 
@@ -1004,7 +1004,7 @@ Las rutas se agrupan por prefijo y régimen de acceso:
 | `/api/lab/*` | Token de ingesta o público | Ingesta del pipeline, estado en vivo, laboratorio de identificación de dispositivos |
 | Resto | Público | Contacto, currículum, métricas, salud, estado, informes de CSP |
 
-## Anexo D — Estado de la documentación de ingeniería
+## Anexo D - Estado de la documentación de ingeniería
 
 La fuente de verdad de los requerimientos, casos de uso e iteraciones es
 `src/data/documentacion.ts`, tipada en TypeScript y verificada por el compilador:

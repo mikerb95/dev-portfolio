@@ -85,7 +85,7 @@ async function resetSchema() {
   if (rows.length) {
     // Todo en UN script con executeMultiple, no en `execute` sueltos: contra
     // Turso por HTTP cada execute viaja en su propia sesión, así que el pragma
-    // se apagaba y se perdía antes del primer drop — los drops fallaban por
+    // se apagaba y se perdía antes del primer drop - los drops fallaban por
     // FOREIGN KEY. Tampoco sirve batch(): envuelve en transacción y SQLite
     // ignora `pragma foreign_keys` dentro de una. executeMultiple corre el
     // script seguido en una sola conexión y sin transacción implícita.
@@ -318,7 +318,7 @@ async function seedPortalDemo() {
     },
   ])
 
-  // Tres facturas: pagada, pendiente próxima a vencer y vencida — así el
+  // Tres facturas: pagada, pendiente próxima a vencer y vencida - así el
   // dashboard y la lista de facturas muestran los tres estados de una vez.
   const invoiceSeeds = [
     {

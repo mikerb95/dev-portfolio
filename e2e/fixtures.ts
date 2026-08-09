@@ -57,7 +57,7 @@ export function ipDePrueba(): Record<string, string> {
  *
  * Devuelve el `page` ya dentro del panel. Ojo al usar peticiones sueltas
  * después: el fixture `request` de Playwright vive en otro contexto y NO lleva
- * la cookie del pase — hay que usar `page.request`.
+ * la cookie del pase - hay que usar `page.request`.
  */
 export async function entrarALaDemo(page: Page) {
   await page.goto('/demo')

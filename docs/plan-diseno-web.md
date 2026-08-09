@@ -10,12 +10,12 @@
 El sitio le habla a ingenieros/CTOs ("Ingeniería de software con propósito",
 stack visible, Lab, SIEM). Un cliente no técnico (dueño de negocio local,
 profesional independiente, emprendedor, pyme) llega, no se reconoce en ese
-lenguaje y rebota. No hay que suavizar todo el sitio — hay que abrir **una
+lenguaje y rebota. No hay que suavizar todo el sitio - hay que abrir **una
 puerta aparte** que traduzca todo a resultados.
 
 ## Decisiones cerradas (con el usuario)
 
-- **Público**: amplio — negocios locales, profesionales independientes,
+- **Público**: amplio - negocios locales, profesionales independientes,
   emprendedores/marca personal y pymes establecidas. La página segmenta con un
   bloque "¿esto es para ti?".
 - **Posicionamiento**: landing propia `/diseno-web`, tono más cálido y humano.
@@ -43,35 +43,35 @@ puerta aparte** que traduzca todo a resultados.
 - **Prueba social**: tarjetas placeholder honestas ("Tu negocio aquí ·
   Próximamente"), sin testimonios inventados.
 - Precios/tiempos de referencia hardcodeados en un array al inicio del `.astro`
-  (Presencia $650k/3-5d · Negocio $1.5M/1-2sem · A medida cotización) — ajustar
+  (Presencia $650k/3-5d · Negocio $1.5M/1-2sem · A medida cotización) - ajustar
   ahí sin tocar el diseño.
 
 ## Estructura de la página `/diseno-web`
 
-1. **Hero cálido** — titular por resultado, no por tecnología.
+1. **Hero cálido** - titular por resultado, no por tecnología.
    Ej: *"Tu negocio necesita una página que trabaje por ti. Yo la construyo,
    tú solo la usas."* Sub: lista en X días, tú solo mandas la info.
    CTA doble: [Escríbeme por WhatsApp] (primario) · [Ver planes] (ancla).
-2. **¿Esto es para ti?** — grid de 4 perfiles (negocio local / profesional /
+2. **¿Esto es para ti?** - grid de 4 perfiles (negocio local / profesional /
    emprendedor / pyme) con el dolor y el resultado de cada uno.
 3. **Qué logras** (beneficios, no features): apareces en Google, clientes te
    escriben por WhatsApp desde la web, se ve profesional en el celular, tú no
    tocas nada técnico.
-4. **Cómo funciona** — 3 pasos: *Me cuentas → yo diseño → publicamos*.
+4. **Cómo funciona** - 3 pasos: *Me cuentas → yo diseño → publicamos*.
    Reduce el miedo a "lo técnico".
 5. **Planes con precio** (3 tiers, precios COP, AJUSTAR con el usuario):
-   - **Presencia** — 1 página (one-page), dominio + WhatsApp + Google. Desde $X.
-   - **Negocio** — varias secciones, catálogo/servicios, formulario, SEO local.
+   - **Presencia** - 1 página (one-page), dominio + WhatsApp + Google. Desde $X.
+   - **Negocio** - varias secciones, catálogo/servicios, formulario, SEO local.
      Desde $Y. *(destacado / "más elegido")*
-   - **A medida** — tienda, reservas, pagos (Wompi), integraciones. Cotización.
+   - **A medida** - tienda, reservas, pagos (Wompi), integraciones. Cotización.
    Cada plan: qué incluye en lenguaje llano + "listo en N días".
-6. **Prueba social** — ejemplos/mini-casos de negocios reconocibles,
+6. **Prueba social** - ejemplos/mini-casos de negocios reconocibles,
    testimonios cortos. (Placeholder hasta tener material real.)
-7. **Puente de credibilidad discreto** — "hecho por un ingeniero, no una
+7. **Puente de credibilidad discreto** - "hecho por un ingeniero, no una
    plantilla; rápido, seguro y tuyo". Un guiño, sin jerga.
-8. **FAQ** — precio, tiempos, "¿yo tengo que hacer algo técnico?", dominio,
+8. **FAQ** - precio, tiempos, "¿yo tengo que hacer algo técnico?", dominio,
    mantenimiento, "¿puedo editarla después?".
-9. **CTA final** — WhatsApp + formulario (nombre, tipo de negocio, qué necesita,
+9. **CTA final** - WhatsApp + formulario (nombre, tipo de negocio, qué necesita,
    WhatsApp/email).
 
 ## Aspecto visual

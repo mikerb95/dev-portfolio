@@ -34,13 +34,13 @@ const s = STATUS[health.status]
   <div class="mt-4 grid grid-cols-2 gap-3">
     <div>
       <p class="text-[20px] font-medium tracking-tight text-ink-50 font-mono">
-        {health.uptimePct === null ? '—' : `${health.uptimePct}%`}
+        {health.uptimePct === null ? '-' : `${health.uptimePct}%`}
       </p>
       <p class="text-[11px] text-ink-300">Uptime · 30 días</p>
     </div>
     <div>
       <p class="text-[20px] font-medium tracking-tight text-ink-50 font-mono">
-        {health.avgLatencyMs === null ? '—' : `${health.avgLatencyMs}`}
+        {health.avgLatencyMs === null ? '-' : `${health.avgLatencyMs}`}
         {health.avgLatencyMs !== null && <span class="text-[12px] text-ink-300"> ms</span>}
       </p>
       <p class="text-[11px] text-ink-300">Respuesta media</p>
