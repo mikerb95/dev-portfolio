@@ -11,7 +11,6 @@ const CONTROL_CHARS = /[\u0000-\u001f\u007f]/g
 // cliente) pide etiquetas distintas - NIT aquí, RFC en México, VAT en la UE.
 // Los límites existen porque estas cadenas se imprimen en el PDF de la factura:
 // una clave larguísima no rompe nada, pero desmaqueta el encabezado.
-
 const BILLING = { maxPairs: 12, maxKey: 40, maxValue: 200 } as const
 
 export type ClientPayload = {
