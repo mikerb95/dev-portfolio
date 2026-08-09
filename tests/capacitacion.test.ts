@@ -21,7 +21,6 @@ import {
   verifyTrainingPass,
 } from '../src/lib/capacitacion/access'
 import { isTrainingAccessPath } from '../src/lib/security/paths'
-import { visibilidadesVisibles } from '../src/lib/capacitacion/repo'
 
 // ── Markdown ────────────────────────────────────────────────────────────────
 //
