@@ -11,6 +11,7 @@ import {
   isAuthPath,
   isCobroLinkPath,
   isPinPath,
+  isTrainingAccessPath,
   isPortalAuthPath,
   isPresentSnapshotPath,
   isRateLimitablePath,
