@@ -28,6 +28,11 @@ const en = {
   },
   nav: {
     diseno: 'Web Design',
+    servicios: 'Services',
+    // La página de capacitación solo existe en español: la etiqueta se traduce
+    // igual, porque el menú es del sitio y no del contenido al que apunta.
+    // `localizedHref` se encarga de que el enlace caiga al español.
+    capacitacion: 'AI Training',
     tools: 'Tools',
     engineering: 'Engineering',
     lab: 'Lab',
