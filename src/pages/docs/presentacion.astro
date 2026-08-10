@@ -1071,16 +1071,16 @@ const NODOS_SIM = [
     .reveal-light .grid-2 {
       grid-template-columns: 1fr;
     }
-    /* En pantalla estrecha las tres columnas de nivel se comen la actividad;
-       recortar la cabecera a su inicial deja el texto legible sin scroll. */
-    .reveal-light table.raci thead th.raci-col {
-      font-size: 0;
-    }
-    .reveal-light table.raci thead th.raci-col::first-letter {
-      font-size: 0.26rem;
+    /* En pantalla estrecha las tres columnas de nivel se comen la actividad.
+       Se deja que la cabecera parta en dos líneas en vez de abreviarla: el
+       nombre del nivel es la mitad del mensaje de la tabla. */
+    .reveal-light table.raci th,
+    .reveal-light table.raci td {
+      padding: 0.3em 0.25em;
     }
     .reveal-light .raci-col {
       width: 3em;
+      white-space: normal;
     }
     .reveal-light .sim-grid {
       grid-template-columns: 1fr;
