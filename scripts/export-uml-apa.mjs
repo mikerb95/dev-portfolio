@@ -497,7 +497,25 @@ const REFERENCIAS = [
 // ── 4. Armado del HTML ──────────────────────────────────────────────────────
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-function construirHtml(porTipo, paginasToc) {
+// Figuras ya aclaradas, troceadas y con clave estable, para que el PDF y el
+// documento de Word numeren y ordenen exactamente igual.
+const cachePrep = new Map()
+function figurasDe(porTipo, clave) {
+  if (!cachePrep.has(clave)) {
+    const lista = (porTipo[clave] ?? []).flatMap((f, i) =>
+      prepararFigura(f.svg).map((tr) => ({
+        ...tr,
+        titulo: f.titulo,
+        desc: f.desc,
+        id: `${clave}-${i}-${tr.parte}`,
+      })),
+    )
+    cachePrep.set(clave, lista)
+  }
+  return cachePrep.get(clave)
+}
+
+function construirHtml(porTipo, paginasToc, pngs = null) {
   let nFig = 0
   const toc = []
   const bloques = []
@@ -529,9 +547,7 @@ function construirHtml(porTipo, paginasToc) {
       bloques.push(`<h1 id="${id}" class="parte">${t.parte}${marca(id)}</h1>`)
     }
     const id = registrar(2, t.titulo)
-    const figuras = (porTipo[t.clave] ?? []).flatMap((f) =>
-      prepararFigura(f.svg).map((tr) => ({ ...tr, titulo: f.titulo, desc: f.desc })),
-    )
+    const figuras = figurasDe(porTipo, t.clave)
 
     // Una figura lógica puede ocupar varias hojas; el número APA no cambia.
     let numeroActual = null
@@ -555,7 +571,11 @@ function construirHtml(porTipo, paginasToc) {
       return `<figure class="fig ${f.ratio > 1.15 || f.total > 1 ? 'alta' : ''}">
         <p class="fig-num">${rotulo}</p>
         <p class="fig-tit"><i>${esc(titulo)}</i></p>
-        <div class="lienzo"><div class="marco" style="--ar:${f.ar}">${f.svg}</div></div>
+        <div class="lienzo">${
+          pngs
+            ? `<img src="${pngs[f.id]}" style="width:${Math.min(16.5, (f.total > 1 || f.ratio > 1.15 ? 19 : 15.5) * Number(f.ar)).toFixed(2)}cm">`
+            : `<div class="marco" style="--ar:${f.ar}">${f.svg}</div>`
+        }</div>
         ${nota}
       </figure>`
     })
