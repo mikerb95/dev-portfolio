@@ -651,6 +651,12 @@ const REFERENCIAS = [
 ]
 
 // ── 4. Armado del HTML ──────────────────────────────────────────────────────
+// Word descarta las reglas de clase al importar el HTML: los filetes de la
+// tabla y la alineación tienen que viajar en el atributo style de cada celda.
+const ESTILO_CELDA =
+  'text-align:left;vertical-align:top;line-height:1.35;padding:0.32em 0.5em 0.32em 0;' +
+  'border-top:0.5pt solid #000;border-bottom:0.5pt solid #000'
+
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 // Cada caja de casos de uso lleva su propia leyenda explicando por qué sus
@@ -867,10 +873,12 @@ function construirHtml(porTipo, paginasToc, pngs = null, fichas = []) {
         const cuerpoHtml = cuerpo
           .map(
             (f) => `<tr>
-              <th scope="row">${esc(f.etiqueta)}</th>
-              <td>${
+              <th scope="row" style="${ESTILO_CELDA};width:4.6cm;font-weight:bold">${esc(f.etiqueta)}</th>
+              <td style="${ESTILO_CELDA}">${
                 f.valor.length > 1
-                  ? `<ol>${f.valor.map((v) => `<li>${esc(v)}</li>`).join('')}</ol>`
+                  ? `<ol style="margin:0;padding-left:1.1em">${f.valor
+                      .map((v) => `<li style="line-height:1.35">${esc(v)}</li>`)
+                      .join('')}</ol>`
                   : esc(f.valor[0] ?? '')
               }</td>
             </tr>`,
@@ -881,7 +889,7 @@ function construirHtml(porTipo, paginasToc, pngs = null, fichas = []) {
           <p class="tab-tit" style="text-indent:0;page-break-after:avoid"><i>${esc(
             tituloFicha(encabezado),
           )}</i></p>
-          <table><tbody>${cuerpoHtml}</tbody></table>
+          <table style="width:100%;border-collapse:collapse;font-size:11pt"><tbody>${cuerpoHtml}</tbody></table>
         </div>`
       })
       bloques.push(
