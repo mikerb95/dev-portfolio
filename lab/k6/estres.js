@@ -21,6 +21,7 @@
  */
 import { sleep } from 'k6'
 import { Trend, Rate } from 'k6/metrics'
+import exec from 'k6/execution'
 import { objetivo, pedir, rutaAleatoria, resumen, aTexto } from './lib/perfil.js'
 
 const base = objetivo()

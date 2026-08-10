@@ -1493,6 +1493,54 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-capacitacion-ia',
+    fase: 'Fase 36 · Capacitación en IA como línea de negocio',
+    nombre: 'Banco de recursos con acceso por código de grupo y landing de capacitación',
+    rango: '8 ago 2026',
+    ghSince: '2026-08-08',
+    ghUntil: '2026-08-09',
+    commits: 1,
+    resumen:
+      'La capacitación en uso de inteligencia artificial deja de ser una charla suelta y pasa a ser un módulo con producto, material permanente y cara pública. El eje no es la presentación (esa ya vivía en /admin/presentaciones y aquí solo se referencia) sino lo que se queda con la gente después: un banco general de guías, prompts, plantillas y checklists, público lo que capta y reservado con código de grupo lo que se entrega al que asistió. Los ejercicios interactivos se quedan fuera por decisión explícita: se construyen alineados al modelo de negocio de cada cliente y entran al banco como enlace.',
+    historias: [
+      {
+        id: 'PF-CP-01', titulo: 'Como capacitador, quiero que el material siga sirviendo cuando termina la sesión',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-08', tags: ['capacitacion', 'panel', 'publico', 'fase-36'],
+        dod: [
+          ok('Tres tablas nuevas en migración aditiva: training_programs (catálogo), training_resources (banco) y training_access_codes (grupos).'),
+          ok('Banco público en /capacitacion con detalle por recurso; el contenido es markdown en base de datos, renderizado en el servidor con un subconjunto propio que escapa el HTML antes de formatear.'),
+          ok('Las presentaciones no se duplican: un recurso de tipo deck referencia la tabla decks, que sigue siendo la única fuente de verdad del material proyectable.'),
+          ok('La previsualización del panel usa el mismo renderizador que la página pública, para que no sea una previsualización que miente.'),
+        ],
+      },
+      {
+        id: 'PF-CP-02', titulo: 'Como asistente, quiero entrar al material de mi grupo sin crear otra cuenta',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-08', tags: ['capacitacion', 'seguridad', 'fase-36'],
+        dod: [
+          ok('Código de grupo que se dicta al cerrar la sesión, con alfabeto sin caracteres ambiguos (sin O/0, I/1/l, S/5) y normalizado al comparar; se canjea por un pase firmado de 30 días, sin correo ni cuenta.'),
+          ok('El id del código viaja dentro de lo firmado y se revalida contra la base en cada request: revocar corta el acceso de esa cohorte al instante, sin tocar el de las demás.'),
+          ok('Único punto del repo que falla CERRADO: sin poder confirmar que el código sigue vivo se cae al banco público, porque abrir publicaría material restringido en una respuesta cacheable.'),
+          ok('El canje devuelve el mismo mensaje para código inexistente, vencido, revocado o mal escrito, y lleva rate limit propio (10/min por IP) sobre el mismo enforcement durable de los links de cobro.'),
+          ok('tests/capacitacion.test.ts: 35 casos. Firma con otro secreto, sin secreto, vencimiento reescrito, id de cohorte reescrito y tokens malformados, todos rechazados sin lanzar.'),
+        ],
+      },
+      {
+        id: 'PF-CP-03', titulo: 'Como visitante, quiero entender qué se contrata antes de escribir',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-08', tags: ['capacitacion', 'publico', 'comercial', 'fase-36'],
+        dod: [
+          ok('Landing /capacitacion-ia con los programas publicados desde el panel: formato, nivel, duración, objetivos, temario desplegable y nota de precio. Ningún dato del catálogo se escribe en el .astro.'),
+          ok('Si la lectura del catálogo falla, la landing sigue sirviendo hero, proceso y contacto en vez de caer.'),
+          ok('El material del grupo va con noindex y Cache-Control private, no-store: la respuesta depende de una cookie y una copia compartida se le serviría a quien no tiene pase.'),
+          ok('capacitacion y capacitacion-ia registradas en RESERVED_ROOT_SEGMENTS: son rutas de un segmento en la raíz y competían con el espacio de los PIN de presentación. Lo cazó el test del repo, no una revisión.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
