@@ -1,4 +1,4 @@
-// Contenido de /docs/gobernanza.
+// Contenido de /docs/roles y /docs/raci.
 //
 // Niveles de autoridad (estratégico / táctico / operativo) y matriz RACI del
 // proyecto. La particularidad que hay que sostener en la sustentación: aquí los

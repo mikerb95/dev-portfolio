@@ -32,7 +32,8 @@ const commitsTotal = ITERACIONES.reduce((a, i) => a + i.commits, 0)
 
 const nombreActor = (id: string) => ACTORES.find((a) => a.id === id)?.nombre ?? id
 
-// Los dos slides de gobernanza leen el mismo dato que /docs/gobernanza. En el
+// Los dos slides de gobernanza leen el mismo dato que /docs/roles y /docs/raci.
+// En el
 // deck se recorta a lo proyectable: la matriz va sin la columna de justificación
 // (se sustenta hablando, no leyendo) y el nombre de cada nivel se abrevia a su
 // inicial en las cabeceras, que a tamaño de proyección es lo único que cabe.
