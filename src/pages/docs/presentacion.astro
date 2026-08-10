@@ -343,6 +343,76 @@ const NODOS_SIM = [
     </div>
   </section>
 
+  {/* ── Gobernanza: niveles de autoridad ────────────────────── */}
+  <section>
+    <h2>Quién decide qué</h2>
+    <p class="body">
+      Un solo desarrollador, pero tres niveles de autoridad. No separan personas:
+      separan <strong>tipos de decisión</strong>, y cada frontera está impuesta por
+      un mecanismo del repositorio.
+    </p>
+    <div class="grid-3">
+      {nivelesResumen.map((n) => (
+        <div class="panel">
+          <div class="panel-title">{n.nombre}</div>
+          <p><strong>{n.lema}.</strong> No puede: {n.noPuede}</p>
+        </div>
+      ))}
+    </div>
+    <p class="foot">
+      Publicar es una decisión humana reservada; <strong>revertir es automático</strong>
+      {' '}(health check + rollback en ci.yml); ejecutar no incluye publicar ni destruir
+      (migraciones solo aditivas).
+    </p>
+  </section>
+
+  {/* ── Gobernanza: matriz RACI ─────────────────────────────── */}
+  <section>
+    <h2>Matriz RACI</h2>
+    <p class="body">
+      {RACI.length} actividades críticas.{' '}
+      {(Object.keys(LEYENDA_RACI) as RolRaci[]).map((r, i) => (
+        <>
+          {i > 0 ? ' · ' : ''}
+          <strong>{r}</strong> {LEYENDA_RACI[r].nombre.toLowerCase()}
+        </>
+      ))}
+    </p>
+    <table class="raci">
+      <thead>
+        <tr>
+          <th>Actividad</th>
+          {ORDEN_NIVELES.map((n) => (
+            <th class="raci-col">{NIVELES_AUTORIDAD.find((x) => x.id === n)!.nombre}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {RACI.map((a) => (
+          <tr>
+            <td>{a.actividad}</td>
+            {ORDEN_NIVELES.map((n) => (
+              <td class="raci-col">
+                {(a.asignacion[n] ?? []).map((rol) => (
+                  <span class={`raci-rol raci-${rol}`}>{rol}</span>
+                ))}
+                {(a.asignacion[n] ?? []).length === 0 ? <span class="raci-nada">-</span> : null}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p class="foot">
+      Regla: un solo <strong>A</strong> por actividad y al menos un <strong>R</strong>.
+      No es una convención al pie de la tabla: la verifica{' '}
+      <span class="mono">tests/gobernanza.test.ts</span> en cada corrida del pipeline.
+      Aprobaciones por nivel: {conteoAprobaciones.map((c, i) => (
+        <>{i > 0 ? ' · ' : ''}{c.nombre} {c.total}</>
+      ))}.
+    </p>
+  </section>
+
   {/* ── Video generado (HyperFrames) ───────────────────────────
       Slide de prueba: estructura lista para un .mp4 generado offline
       con HyperFrames (Puppeteer + FFmpeg, fuera del build de Vercel).
