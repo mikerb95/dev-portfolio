@@ -69,6 +69,47 @@ async function extraer(browser) {
     await page.waitForTimeout(1500)
 
     porTipo[clave] = await page.evaluate(() => {
+      // Los motores propios pintan con var(--uml-*) y clases definidas en la
+      // hoja de estilos del sitio. Sacado el SVG de la página, esas
+      // referencias no resuelven y el navegador cae en negro sólido, así que
+      // se congelan los valores computados como estilo en línea.
+      const PROPS = [
+        'fill',
+        'fill-opacity',
+        'stroke',
+        'stroke-width',
+        'stroke-dasharray',
+        'stroke-linecap',
+        'stroke-linejoin',
+        'opacity',
+        'font-family',
+        'font-size',
+        'font-weight',
+        'font-style',
+        'text-anchor',
+        'dominant-baseline',
+        'letter-spacing',
+      ]
+      const congelar = (svg) => {
+        const clon = svg.cloneNode(true)
+        const orig = [svg, ...svg.querySelectorAll('*')]
+        const copia = [clon, ...clon.querySelectorAll('*')]
+        for (let i = 0; i < orig.length; i++) {
+          const cs = getComputedStyle(orig[i])
+          const decl = []
+          for (const p of PROPS) {
+            const v = cs.getPropertyValue(p)
+            if (v && v !== 'normal' && v !== 'auto' && v !== 'none' && v !== '0px') {
+              decl.push(`${p}:${v}`)
+            } else if (v === 'none' && (p === 'fill' || p === 'stroke')) {
+              decl.push(`${p}:none`)
+            }
+          }
+          copia[i].setAttribute('style', decl.join(';'))
+        }
+        return clon.outerHTML
+      }
+
       const out = []
       for (const svg of document.querySelectorAll('svg')) {
         if (svg.closest('nav, header, footer, a, button')) continue
@@ -81,7 +122,7 @@ async function extraer(browser) {
         out.push({
           titulo: h ? h.textContent.trim() : '',
           desc: ps.find((t) => t.length > 30) || '',
-          svg: svg.outerHTML,
+          svg: congelar(svg),
         })
       }
       return out
