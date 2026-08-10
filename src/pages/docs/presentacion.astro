@@ -735,6 +735,73 @@ const NODOS_SIM = [
     border-left: 2px solid var(--slide-ember);
   }
 
+  /* Matriz RACI. A tamaño de proyección la tabla solo funciona si las letras
+     pesan más que el texto: R y A van con relleno (quien actúa y quien
+     responde), C e I sin él. Con los cuatro roles al mismo peso, la tabla se
+     lee como un mosaico y deja de comunicar la jerarquía. */
+  .reveal-light table.raci {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.3em 0 0.2em;
+  }
+  .reveal-light table.raci th,
+  .reveal-light table.raci td {
+    font-size: 0.3em;
+    line-height: 1.35;
+    text-align: left;
+    padding: 0.32em 0.5em;
+    border-bottom: 1px solid var(--slide-line);
+    color: var(--slide-fg-muted);
+  }
+  .reveal-light table.raci thead th {
+    font-size: 0.26em;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--slide-fg);
+    border-bottom-color: var(--slide-fg-muted);
+  }
+  .reveal-light table.raci tbody td:first-child {
+    color: var(--slide-fg);
+  }
+  .reveal-light table.raci tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .reveal-light .raci-col {
+    text-align: center;
+    width: 4.2em;
+    white-space: nowrap;
+  }
+  .reveal-light .raci-rol {
+    display: inline-block;
+    min-width: 1.5em;
+    margin: 0 0.08em;
+    padding: 0.08em 0.2em;
+    border-radius: 0.25em;
+    border: 1px solid var(--slide-line);
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+    text-align: center;
+  }
+  .reveal-light .raci-R {
+    color: var(--slide-accent);
+    border-color: var(--slide-accent);
+    background: var(--slide-accent-soft);
+  }
+  .reveal-light .raci-A {
+    color: var(--slide-violet);
+    border-color: var(--slide-violet);
+    background: rgba(91, 63, 196, 0.08);
+  }
+  .reveal-light .raci-C,
+  .reveal-light .raci-I {
+    color: var(--slide-fg-muted);
+    background: none;
+  }
+  .reveal-light .raci-nada {
+    color: var(--slide-fg-muted);
+    opacity: 0.5;
+  }
+
   .reveal-light ul.tight {
     list-style: none;
     margin: 0;
