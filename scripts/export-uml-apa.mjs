@@ -538,7 +538,7 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
     const id = registrar(s.nivel ?? 1, s.titulo)
     // El salto va en línea y no solo en la hoja de estilos: al importar el
     // HTML, Word conserva el atributo style pero descarta las reglas de clase.
-    return `<section class="seccion" style="page-break-before:always"><h1 id="${id}">${s.titulo}${marca(id)}</h1>${s.cuerpo.join('\n')}</section>`
+    return `<section class="seccion"><h1 id="${id}" style="page-break-before:always">${s.titulo}${marca(id)}</h1>${s.cuerpo.join('\n')}</section>`
   }
 
   for (const s of SECCIONES) bloques.push(seccion(s))
@@ -577,8 +577,8 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
       // Las figuras troceadas van a hoja propia: cada sección debe aprovechar
       // todo el alto disponible o el corte no habría servido de nada.
       const alta = f.ratio > 1.15 || f.total > 1
-      return `<figure class="fig ${alta ? 'alta' : ''}"${alta ? ' style="page-break-before:always"' : ''}>
-        <p class="fig-num">${rotulo}</p>
+      return `<figure class="fig ${alta ? 'alta' : ''}">
+        <p class="fig-num"${alta ? ' style="page-break-before:always"' : ''}>${rotulo}</p>
         <p class="fig-tit"><i>${esc(titulo)}</i></p>
         <div class="lienzo">${
           pngs
@@ -592,7 +592,7 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
     // El título de la parte y el primer diagrama que agrupa comparten hoja:
     // una página con tres palabras y nada más es papel desperdiciado.
     bloques.push(
-      `<section class="seccion${traeParte ? ' sigue' : ''}"${traeParte ? '' : ' style="page-break-before:always"'}><h2 id="${id}">${t.titulo}${marca(id)}</h2>${t.cuerpo.join('\n')}${html.join('\n')}</section>`,
+      `<section class="seccion${traeParte ? ' sigue' : ''}"><h2 id="${id}"${traeParte ? '' : ' style="page-break-before:always"'}>${t.titulo}${marca(id)}</h2>${t.cuerpo.join('\n')}${html.join('\n')}</section>`,
     )
     traeParte = false
   }
@@ -601,7 +601,7 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
 
   const idRef = registrar(1, 'Referencias')
   bloques.push(
-    `<section class="seccion" style="page-break-before:always"><h1 id="${idRef}">Referencias${marca(idRef)}</h1>
+    `<section class="seccion"><h1 id="${idRef}" style="page-break-before:always">Referencias${marca(idRef)}</h1>
      <div class="refs">${REFERENCIAS.map((r) => `<p>${r}</p>`).join('')}</div></section>`,
   )
 
@@ -690,7 +690,7 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
 </div>
 
 <section class="toc" style="page-break-after: always;">
-  <h1>Tabla de contenido</h1>
+  <h1 style="page-break-before:always">Tabla de contenido</h1>
   ${tocHtml}
 </section>
 
