@@ -205,7 +205,7 @@ const diagramas = [
 <script>
   import mermaid from 'mermaid'
   mermaid.initialize({
-    startOnLoad: true,
+    startOnLoad: false,
     theme: 'dark',
     securityLevel: 'loose',
     themeVariables: {
@@ -220,6 +220,91 @@ const diagramas = [
       edgeLabelBackground: '#13131a',
       classText: '#e7e7ec',
     },
+  })
+
+  // Mermaid traza las relaciones con curvas suaves y pinta todas las clases
+  // del mismo color. La notación de clases de manual usa segmentos rectos y
+  // distingue las cajas por su papel en el modelo, así que se retoca el SVG
+  // recién renderizado: no hay forma de pedirle ninguna de las dos cosas por
+  // configuración sin cambiar de motor de layout.
+  const CODO = 18
+
+  // Tinte por papel estructural, deducido de las propias relaciones: quién
+  // manda (solo origen), quién depende (solo destino) y quién hace de puente.
+  const TINTES = {
+    raiz: { fill: '#1b2434', stroke: '#5c7391' },
+    puente: { fill: '#241f31', stroke: '#7a6a99' },
+    hoja: { fill: '#1a2a23', stroke: '#5c8f76' },
+  }
+
+  function rolesDe(fuente: string) {
+    const origen = new Set<string>()
+    const destino = new Set<string>()
+    for (const linea of fuente.split('\n')) {
+      const m = linea.match(/^\s*(\w+)\s+(?:"[^"]*"\s*)?[-.<>o*|]{2,}\s*(?:"[^"]*"\s*)?(\w+)/)
+      if (!m || /^\s*class\b/.test(linea)) continue
+      origen.add(m[1])
+      destino.add(m[2])
+    }
+    return (nombre: string) => {
+      const esOrigen = origen.has(nombre)
+      const esDestino = destino.has(nombre)
+      if (esOrigen && esDestino) return TINTES.puente
+      if (esDestino) return TINTES.hoja
+      return TINTES.raiz
+    }
+  }
+
+  // Ruta en escuadra entre los extremos del trazo original: se conserva de
+  // dónde sale y a dónde llega (y por tanto el ángulo de la punta de flecha),
+  // solo cambia el camino intermedio.
+  function ortogonalizar(path: SVGPathElement) {
+    const largo = path.getTotalLength()
+    if (!largo) return
+    const a = path.getPointAtLength(0)
+    const b = path.getPointAtLength(largo)
+    // Dirección de salida y de llegada, para decidir si el primer tramo es
+    // vertical u horizontal y que la flecha no entre de costado a la caja.
+    const salida = path.getPointAtLength(Math.min(CODO, largo / 3))
+    const llegada = path.getPointAtLength(Math.max(largo - CODO, (largo * 2) / 3))
+    const verticalSale = Math.abs(salida.y - a.y) >= Math.abs(salida.x - a.x)
+    const verticalLlega = Math.abs(b.y - llegada.y) >= Math.abs(b.x - llegada.x)
+
+    let d
+    if (verticalSale && verticalLlega) {
+      const my = (a.y + b.y) / 2
+      d = `M${a.x},${a.y} L${a.x},${my} L${b.x},${my} L${b.x},${b.y}`
+    } else if (!verticalSale && !verticalLlega) {
+      const mx = (a.x + b.x) / 2
+      d = `M${a.x},${a.y} L${mx},${a.y} L${mx},${b.y} L${b.x},${b.y}`
+    } else if (verticalSale) {
+      d = `M${a.x},${a.y} L${a.x},${b.y} L${b.x},${b.y}`
+    } else {
+      d = `M${a.x},${a.y} L${b.x},${a.y} L${b.x},${b.y}`
+    }
+    path.setAttribute('d', d)
+  }
+
+  const fuentes = [...document.querySelectorAll('pre.mermaid')].map((el) => el.textContent ?? '')
+  await mermaid.run()
+
+  document.querySelectorAll<SVGSVGElement>('svg[id^="mermaid"]').forEach((svg, i) => {
+    const rol = rolesDe(fuentes[i] ?? '')
+
+    svg.querySelectorAll<SVGGElement>('g.node').forEach((nodo) => {
+      const nombre = nodo.id.match(/classId-(.+?)-\d+$/)?.[1]
+      if (!nombre) return
+      const { fill, stroke } = rol(nombre)
+      nodo.querySelectorAll<SVGElement>('rect, path.basic, polygon').forEach((forma) => {
+        // La barra del nombre y los separadores no se tiñen: el relleno va en
+        // el cuerpo de la caja, que es lo que da la lectura de conjunto.
+        if (forma.classList.contains('divider')) return
+        forma.style.fill = fill
+        forma.style.stroke = stroke
+      })
+    })
+
+    svg.querySelectorAll<SVGPathElement>('.edgePaths path, path.relation').forEach(ortogonalizar)
   })
 </script>
 
