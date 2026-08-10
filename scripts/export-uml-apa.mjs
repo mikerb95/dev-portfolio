@@ -237,7 +237,10 @@ function trocear(svg) {
   const ratio = d.h / d.w
   if (ratio <= RATIO_MAXIMO) return [{ svg, parte: 0, total: 1 }]
 
-  const total = Math.ceil(ratio / RATIO_PAGINA)
+  // Apuntar a la proporción exacta de la hoja produce un trozo de más y deja
+  // el último casi vacío; con un objetivo algo más alargado salen mitades
+  // llenas y se ahorra una página.
+  const total = Math.max(2, Math.round(ratio / 1.35))
   const alto = d.h / total
   const trozos = []
   for (let i = 0; i < total; i++) {

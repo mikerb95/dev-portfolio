@@ -2,11 +2,11 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 
-const paquetes = `flowchart LR
+const paquetes = `flowchart TB
     MW["src/middleware.ts<br/>guarda de entrada"]
 
     subgraph Presentacion["Presentación"]
-      direction TB
+      direction LR
       PAGES["src/pages/*.astro"]
       API["src/pages/api/*"]
     end
@@ -14,14 +14,14 @@ const paquetes = `flowchart LR
     LIB["src/lib/*<br/>lógica de dominio"]
 
     subgraph Transversales["Módulos transversales"]
-      direction TB
+      direction LR
       SEC["lib/security/<br/>micro-SIEM"]
       PORTAL["lib/portal/<br/>sesión de cliente"]
       LAB["lib/lab/<br/>chaos · k6 · SAST"]
     end
 
     subgraph Persistencia["Persistencia"]
-      direction TB
+      direction LR
       DB[("src/db/<br/>schema y sesión")]
       TURSO[("Turso / libSQL<br/>prod y demo")]
     end
