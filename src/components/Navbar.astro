@@ -29,15 +29,46 @@ const languageHref =
     ? localizedHref(rawPath, otherLocale)
     : localizedHref('/', otherLocale));
 
-const navLinks = [
-  { canonical: "/paginas-web", label: t.nav.diseno },
-  { canonical: "/tools", label: t.nav.tools },
-  { canonical: "/engineering", label: t.nav.engineering },
-  { canonical: "/lab", label: t.nav.lab },
-  { canonical: "/notes", label: t.nav.notes },
-  { canonical: "/security", label: t.nav.security },
-  { canonical: "/log", label: t.nav.log },
-].map((link) => ({ ...link, href: localizedHref(link.canonical, locale) }));
+// La navegación admite dos formas: enlace suelto y grupo desplegable. Los dos
+// servicios comerciales (diseño web y capacitación) viven agrupados porque son
+// lo mismo desde el punto de vista del visitante: cosas que se contratan. El
+// resto de la barra es material técnico y sigue plano.
+//
+// `localizedHref` y no `localizePath`: la capacitación existe solo en español,
+// y el primero cae al español cuando no hay traducción mientras el segundo
+// publicaría un /en/ que da 404.
+type NavItem = { canonical: string; label: string; href: string };
+type NavEntry = NavItem | { label: string; id: string; items: NavItem[] };
+
+const item = (canonical: string, label: string): NavItem => ({
+  canonical,
+  label,
+  href: localizedHref(canonical, locale),
+});
+
+const navEntries: NavEntry[] = [
+  item("/tools", t.nav.tools),
+  item("/engineering", t.nav.engineering),
+  {
+    label: t.nav.servicios,
+    id: "servicios",
+    items: [item("/paginas-web", t.nav.diseno), item("/capacitacion-ia", t.nav.capacitacion)],
+  },
+  item("/lab", t.nav.lab),
+  item("/notes", t.nav.notes),
+  item("/security", t.nav.security),
+  item("/log", t.nav.log),
+];
+
+const esGrupo = (e: NavEntry): e is Extract<NavEntry, { items: NavItem[] }> => "items" in e;
+
+// Un grupo se marca activo si lo está cualquiera de sus hijos: si no, entrar a
+// /capacitacion-ia apagaría la barra entera y el visitante perdería de vista
+// dónde está. El banco (/capacitacion) también enciende el grupo, aunque no
+// sea una de las entradas del menú.
+const estaActivo = (canonical: string) => currentPath.startsWith(canonical);
+const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) =>
+  e.items.some((i) => estaActivo(i.canonical));
 ---
 
 <header
