@@ -2,11 +2,11 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 
-const paquetes = `flowchart LR
+const paquetes = `flowchart TB
     MW["src/middleware.ts<br/>clasificador · rate limit · blocklist · chaos · headers"]
 
     subgraph Presentacion["Presentación"]
-      direction TB
+      direction LR
       PAGES["src/pages/*.astro<br/>admin · portal · lab · notes · cv"]
       API["src/pages/api/*<br/>admin · portal · auth · cron · payments"]
     end
@@ -14,14 +14,17 @@ const paquetes = `flowchart LR
     LIB["src/lib/*<br/>auth · payments · notify · monitors · demo<br/>(payments-state.ts es isomorfo, sin dep. de db/)"]
 
     subgraph Transversales["Módulos transversales"]
-      direction TB
+      direction LR
       SEC["lib/security/<br/>micro-SIEM: clasificador, ratelimit, blocklist"]
       PORTAL["lib/portal/<br/>sesión y auth del portal cliente"]
       LAB["lib/lab/<br/>chaos · k6 · SAST (módulo LAB)"]
     end
 
-    DB[("src/db/<br/>schema.ts · AsyncLocalStorage por request")]
-    TURSO[("Turso / libSQL<br/>prod y demo, bases físicas distintas")]
+    subgraph Persistencia["Persistencia"]
+      direction LR
+      DB[("src/db/<br/>schema.ts · AsyncLocalStorage por request")]
+      TURSO[("Turso / libSQL<br/>prod y demo, bases físicas distintas")]
+    end
 
     MW --> PAGES
     MW --> API
