@@ -174,6 +174,22 @@ export function handleSummary(data) {
     }),
   }
 
+  // La escalera: ritmo ofrecido contra lo que el sistema realmente sirvió.
+  // La primera fila donde `servidoRps` deja de seguir a `rps` es el punto de
+  // quiebre, y es el número que responde el ítem 6.
+  r.escalera = ESCALONES.map((e) => {
+    const v = data.metrics[`quiebre_e${e.desdeS}`]?.values ?? {}
+    const n = v.count ?? 0
+    return {
+      rpsOfrecido: e.rps,
+      n,
+      servidoRps: Number((n / 30).toFixed(1)),
+      p50: Number((v.med ?? 0).toFixed(1)),
+      p95: Number((v['p(95)'] ?? 0).toFixed(1)),
+      errorPct: Number(((data.metrics[`quiebre_e${e.desdeS}_err`]?.values?.rate ?? 0) * 100).toFixed(1)),
+    }
+  })
+
   const marca = r.fecha.replace(/[:.]/g, '-')
   return {
     stdout: aTexto(r)
