@@ -146,6 +146,41 @@ async function extraer(browser) {
   return porTipo
 }
 
+// La guía pide, además del diagrama, la descripción de cada caso de uso: el
+// flujo de eventos entre actor y sistema. En el sitio vive como fichas en
+// /docs/casos-de-uso-extendidos y aquí se convierten en tablas APA.
+async function extraerFichas(browser) {
+  const page = await browser.newPage({ viewport: { width: 1500, height: 1200 } })
+  await page.goto(`${BASE}/docs/casos-de-uso-extendidos`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(800)
+
+  const fichas = await page.evaluate(() =>
+    [...document.querySelectorAll('section')]
+      .filter((s) => s.querySelector('table'))
+      .map((s) => {
+        const filas = []
+        for (const tr of s.querySelectorAll(':scope > table > tbody > tr')) {
+          const celdas = [...tr.children]
+          if (celdas.length < 2) continue
+          const etiqueta = celdas[0].textContent.trim()
+          // Las listas de pasos se conservan como líneas sueltas para poder
+          // numerarlas en la tabla del documento.
+          const anidada = celdas[1].querySelectorAll('li, tbody > tr')
+          const valor = anidada.length
+            ? [...anidada].map((n) => n.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean)
+            : [celdas[1].textContent.replace(/\s+/g, ' ').trim()]
+          if (etiqueta) filas.push({ etiqueta, valor })
+        }
+        return filas
+      })
+      .filter((f) => f.length > 1),
+  )
+
+  await page.close()
+  console.log(`  /docs/casos-de-uso-extendidos: ${fichas.length} ficha(s)`)
+  return fichas
+}
+
 // ── 2. Paso a paleta clara ──────────────────────────────────────────────────
 // El sitio es oscuro y el papel es blanco. En vez de mantener un mapa de
 // equivalencias color a color (que se rompe con cada retoque de la paleta),
