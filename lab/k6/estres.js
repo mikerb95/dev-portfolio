@@ -135,7 +135,13 @@ export function handleSummary(data) {
 
   const marca = r.fecha.replace(/[:.]/g, '-')
   return {
-    stdout: aTexto(r) + `  recuperación  p50 ${r.recuperacion.p50}ms · p95 ${r.recuperacion.p95}ms · errores ${r.recuperacion.tasaErrorPct}%\n\n`,
+    stdout: aTexto(r)
+      + `  recuperación  p50 ${r.recuperacion.p50}ms · p95 ${r.recuperacion.p95}ms · errores ${r.recuperacion.tasaErrorPct}%\n`
+      + `  curva de recuperación (s desde que cesó la carga)\n`
+      + r.recuperacion.curva
+          .map((c) => `    +${String(c.desdeS).padStart(2)}s   n=${String(c.n).padStart(4)}   p50 ${String(Math.round(c.p50)).padStart(6)}ms   p95 ${String(Math.round(c.p95)).padStart(6)}ms`)
+          .join('\n')
+      + '\n\n',
     [`lab/k6/resultados/estres-${marca}.json`]: JSON.stringify(r, null, 2),
     [`lab/k6/resultados/estres-${marca}.raw.json`]: JSON.stringify(data, null, 2),
   }
