@@ -326,6 +326,74 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
     iconClose?.classList.toggle("hidden", !isOpen);
   });
 
+  // ── Desplegables de la barra de escritorio ──
+  //
+  // Hover Y click, no uno solo: con hover a secas el menú es inalcanzable por
+  // teclado y en pantallas táctiles, y con click a secas se siente pesado en
+  // escritorio. El estado real vive en aria-expanded, y la clase `hidden` se
+  // deriva de él, para que no puedan contradecirse.
+  const grupos = document.querySelectorAll<HTMLElement>("[data-nav-group]");
+
+  const cerrar = (grupo: HTMLElement) => {
+    const trigger = grupo.querySelector<HTMLButtonElement>("[data-nav-group-trigger]");
+    const panelGrupo = grupo.querySelector<HTMLElement>("[data-nav-group-panel]");
+    const chevron = grupo.querySelector<SVGElement>("[data-nav-group-chevron]");
+    trigger?.setAttribute("aria-expanded", "false");
+    panelGrupo?.classList.add("hidden");
+    chevron?.classList.remove("rotate-180");
+  };
+
+  const abrir = (grupo: HTMLElement) => {
+    // Solo uno abierto a la vez: dos menús superpuestos se tapan entre sí.
+    grupos.forEach((otro) => otro !== grupo && cerrar(otro));
+    const trigger = grupo.querySelector<HTMLButtonElement>("[data-nav-group-trigger]");
+    const panelGrupo = grupo.querySelector<HTMLElement>("[data-nav-group-panel]");
+    const chevron = grupo.querySelector<SVGElement>("[data-nav-group-chevron]");
+    trigger?.setAttribute("aria-expanded", "true");
+    panelGrupo?.classList.remove("hidden");
+    chevron?.classList.add("rotate-180");
+  };
+
+  const estaAbierto = (grupo: HTMLElement) =>
+    grupo
+      .querySelector<HTMLButtonElement>("[data-nav-group-trigger]")
+      ?.getAttribute("aria-expanded") === "true";
+
+  grupos.forEach((grupo) => {
+    const trigger = grupo.querySelector<HTMLButtonElement>("[data-nav-group-trigger]");
+
+    trigger?.addEventListener("click", () => {
+      estaAbierto(grupo) ? cerrar(grupo) : abrir(grupo);
+    });
+
+    grupo.addEventListener("mouseenter", () => abrir(grupo));
+    grupo.addEventListener("mouseleave", () => cerrar(grupo));
+
+    // El foco saliendo del grupo lo cierra: es lo que hace que tabular por la
+    // barra no vaya dejando menús abiertos detrás.
+    grupo.addEventListener("focusout", (e) => {
+      const destino = (e as FocusEvent).relatedTarget;
+      if (!(destino instanceof Node) || !grupo.contains(destino)) cerrar(grupo);
+    });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    grupos.forEach((grupo) => {
+      if (!estaAbierto(grupo)) return;
+      cerrar(grupo);
+      // El foco vuelve al disparador: si se queda en un enlace que acaba de
+      // ocultarse, el teclado pierde el hilo de dónde estaba.
+      grupo.querySelector<HTMLButtonElement>("[data-nav-group-trigger]")?.focus();
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    const destino = e.target;
+    if (!(destino instanceof Node)) return;
+    grupos.forEach((grupo) => !grupo.contains(destino) && cerrar(grupo));
+  });
+
   panel?.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
       panel.classList.add("hidden");
