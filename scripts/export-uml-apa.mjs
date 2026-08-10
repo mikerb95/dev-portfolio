@@ -113,7 +113,11 @@ async function extraer(browser) {
               decl.push(`${p}:none`)
             }
           }
-          copia[i].setAttribute('style', decl.join(';'))
+          // Fusionar, no reemplazar: el style propio del elemento lleva cosas
+          // que no se congelan (el flex que centra la etiqueta dentro del
+          // óvalo, por ejemplo) y sobrescribirlo descolocaba el texto.
+          const propio = orig[i].getAttribute('style')
+          copia[i].setAttribute('style', propio ? `${propio};${decl.join(';')}` : decl.join(';'))
         }
         return clon.outerHTML
       }
