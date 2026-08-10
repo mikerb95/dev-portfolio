@@ -158,7 +158,17 @@ async function extraerFichas(browser) {
     [...document.querySelectorAll('section')]
       .filter((s) => s.querySelector('table'))
       .map((s) => {
-        const limpio = (n) => (n.innerText ?? n.textContent ?? '').replace(/\s+/g, ' ').trim()
+        // Uniendo hijo a hijo: el id, el nombre y el actor van en elementos
+        // contiguos sin espacio entre ellos y saldrían pegados. textContent y
+        // no innerText, porque este último aplica el text-transform del sitio
+        // y devolvería las etiquetas en mayúsculas.
+        const limpio = (n) =>
+          [...n.childNodes]
+            .map((c) => (c.textContent ?? '').replace(/\s+/g, ' ').trim())
+            .filter(Boolean)
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim()
         const filas = []
         for (const tr of s.querySelectorAll(':scope > table > tbody > tr')) {
           const celdas = [...tr.children]
