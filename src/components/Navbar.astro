@@ -74,11 +74,9 @@ const esGrupo = (e: NavEntry): e is Extract<NavEntry, { items: NavItem[] }> => "
 
 // Un grupo se marca activo si lo está cualquiera de sus hijos: si no, entrar a
 // /capacitacion-ia apagaría la barra entera y el visitante perdería de vista
-// dónde está. El banco (/capacitacion) también enciende el grupo, aunque no
-// sea una de las entradas del menú.
-const estaActivo = (canonical: string) => currentPath.startsWith(canonical);
-const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) =>
-  e.items.some((i) => estaActivo(i.canonical));
+// dónde está.
+const estaActivo = (i: NavItem) => currentPath.startsWith(i.match);
+const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some(estaActivo);
 ---
 
 <header
