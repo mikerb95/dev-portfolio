@@ -573,16 +573,21 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
           ? `Figura ${numeroActual} <span class="cont">(sección ${f.parte} de ${f.total})</span>`
           : `Figura ${numeroActual}`
       const titulo = f.titulo || t.titulo
-      const nota = f.desc && f.parte <= 1 ? `<p class="nota"><i>Nota.</i> ${esc(f.desc)}</p>` : ''
+      const nota = f.desc && f.parte <= 1 ? `<p class="nota" style="text-indent:0"><i>Nota.</i> ${esc(f.desc)}</p>` : ''
       // Las figuras troceadas van a hoja propia: cada sección debe aprovechar
       // todo el alto disponible o el corte no habría servido de nada.
       const alta = f.ratio > 1.15 || f.total > 1
       return `<figure class="fig ${alta ? 'alta' : ''}">
-        <p class="fig-num"${alta ? ' style="page-break-before:always"' : ''}>${rotulo}</p>
-        <p class="fig-tit"><i>${esc(titulo)}</i></p>
+        <p class="fig-num" style="text-indent:0${alta ? ';page-break-before:always' : ''}">${rotulo}</p>
+        <p class="fig-tit" style="text-indent:0"><i>${esc(titulo)}</i></p>
         <div class="lienzo">${
           pngs
-            ? `<img src="${pngs[f.id]}" style="width:${Math.min(16.5, (f.total > 1 || f.ratio > 1.15 ? 19 : 15.5) * Number(f.ar)).toFixed(2)}cm">`
+            ? (() => {
+                // Word necesita las dos medidas en centímetros: con solo el
+                // ancho escala la imagen a su tamaño en píxeles y desborda.
+                const ancho = Math.min(16.5, (alta ? 19 : 15.5) * Number(f.ar))
+                return `<img src="${pngs[f.id]}" style="width:${ancho.toFixed(2)}cm;height:${(ancho / Number(f.ar)).toFixed(2)}cm">`
+              })()
             : `<div class="marco" style="--ar:${f.ar}">${f.svg}</div>`
         }</div>
         ${nota}
