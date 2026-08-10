@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url'
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..')
 const BASE = process.env.UML_BASE_URL ?? 'http://localhost:4321'
 const SALIDA = join(RAIZ, 'manuales_sena', 'Diagramas-UML-CodeByMike.pdf')
+const SALIDA_DOCX = join(RAIZ, 'manuales_sena', 'Diagramas-UML-CodeByMike.docx')
 
 // ── Datos de portada ────────────────────────────────────────────────────────
 const PORTADA = {
@@ -770,8 +771,27 @@ console.log('Segunda pasada (con paginación real)...')
 const html2 = construirHtml(porTipo, mapa)
 writeFileSync(join(tmp, 'documento.html'), html2)
 await imprimir(browser, html2, SALIDA)
+
+console.log('Rasterizando figuras para la versión editable...')
+const rutas = await rasterizar(browser, porTipo, tmp)
 await browser.close()
 
+// La numeración de la tabla de contenido del PDF sirve de referencia, pero en
+// Word el reflujo la invalida: allí el índice va sin números y se actualiza
+// desde el propio Word si se necesita.
+const htmlWord = construirHtml(porTipo, null, rutas)
+const htmlWordPath = join(tmp, 'documento-word.html')
+writeFileSync(htmlWordPath, htmlWord)
+
+execFileSync(
+  'soffice',
+  ['--headless', '--convert-to', 'docx:MS Word 2007 XML', '--outdir', tmp, htmlWordPath],
+  { stdio: 'ignore' },
+)
+const docxTmp = join(tmp, 'documento-word.docx')
+writeFileSync(SALIDA_DOCX, readFileSync(docxTmp))
+
 const hojas = execFileSync('pdfinfo', [SALIDA], { encoding: 'utf8' }).match(/Pages:\s+(\d+)/)?.[1]
-console.log(`\nListo: ${SALIDA} (${hojas} páginas)`)
+console.log(`\nPDF:  ${SALIDA} (${hojas} páginas)`)
+console.log(`Word: ${SALIDA_DOCX}`)
 console.log(`HTML fuente: ${join(tmp, 'documento.html')}`)
