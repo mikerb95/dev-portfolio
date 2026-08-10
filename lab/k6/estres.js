@@ -125,7 +125,15 @@ export const options = {
 }
 
 export function apretar() {
-  pedir(base, rutaAleatoria())
+  // Igual que en `soltar`: el escalón se decide antes de pedir, porque una
+  // petición que tarda 10 s en rendirse pertenece al ritmo que la provocó, no
+  // al que corría cuando por fin volvió.
+  const seg = Math.floor(exec.instance.currentTestRunDuration / 1000)
+  const clave = ESCALONES.reduce((acc, e) => (seg >= e.desdeS ? e.desdeS : acc), 0)
+
+  const res = pedir(base, rutaAleatoria())
+  porEscalon[clave]?.lat.add(res.timings.duration)
+  porEscalon[clave]?.err.add(res.status !== 200)
 }
 
 export function soltar() {
