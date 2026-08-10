@@ -23,9 +23,14 @@
 import { sleep } from 'k6'
 import { Trend, Rate } from 'k6/metrics'
 import exec from 'k6/execution'
-import { objetivo, pedir, rutaAleatoria, resumen, aTexto } from './lib/perfil.js'
+import { objetivo, exigirBaseLocal, pedir, rutaAleatoria, resumen, aTexto } from './lib/perfil.js'
 
 const base = objetivo()
+
+// Antes de levantar un solo VU: si el objetivo lee de una base remota, aborta.
+export function setup() {
+  exigirBaseLocal(base)
+}
 
 const RAMPA_S = 10
 const MESETA_S = 20
