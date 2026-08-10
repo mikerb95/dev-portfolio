@@ -30,7 +30,8 @@ const stack = [
 const subpaginas = [
   { href: '/docs/requerimientos-funcionales', titulo: 'Requerimientos funcionales', desc: `${rfTotal} requerimientos en 7 módulos (${rfImpl} implementados).` },
   { href: '/docs/requerimientos-no-funcionales', titulo: 'Requerimientos no funcionales', desc: `${rnfTotal} requerimientos por categoría ISO/IEC 25010.` },
-  { href: '/docs/gobernanza', titulo: 'Gobernanza y niveles de autoridad', desc: `Los ${NIVELES_AUTORIDAD.length} niveles de decisión y la matriz RACI de ${RACI.length} actividades, con la evidencia de dónde vive cada frontera en el código.` },
+  { href: '/docs/roles', titulo: 'Roles y niveles de autoridad', desc: `Los ${NIVELES_AUTORIDAD.length} niveles de decisión: qué aprueba cada uno, qué no puede hacer aunque tenga el acceso, y dónde vive esa frontera en el código.` },
+  { href: '/docs/raci', titulo: 'Matriz RACI', desc: `${RACI.length} actividades críticas repartidas sobre esos tres niveles, con la regla de un solo aprobador verificada en CI.` },
   { href: '/docs/casos-de-uso', titulo: 'Casos de uso', desc: `${ACTORES.length} actores, ${cuTotal} casos de uso con diagrama.` },
   { href: '/docs/casos-de-uso-extendidos', titulo: 'Casos de uso extendidos', desc: 'Flujo principal, alternos, excepciones y postcondiciones de los CU críticos.' },
   { href: '/docs/historias-de-usuario', titulo: 'Historias de usuario', desc: `${historiasTotal} historias en formato XP, agrupadas por actor, con su DoD.` },
