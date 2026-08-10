@@ -130,7 +130,11 @@ async function extraer(browser) {
         if (r.width < 150 || r.height < 120) continue
         const sec = svg.closest('section') || svg.parentElement?.parentElement
         const h = sec?.querySelector('h2, h1')
-        const ps = sec ? [...sec.querySelectorAll('p')].map((p) => p.textContent.trim()) : []
+        const ps = sec
+          ? [...sec.querySelectorAll('p')]
+              .filter((p) => !p.closest('svg'))
+              .map((p) => p.textContent.trim())
+          : []
         out.push({
           titulo: h ? h.textContent.trim() : '',
           desc: ps.find((t) => t.length > 30) || '',
@@ -190,7 +194,12 @@ async function extraerFichas(browser) {
           } else {
             valor = [limpio(celdas[1])]
           }
-          if (etiqueta) filas.push({ etiqueta, valor })
+          // Del encabezado interesan las piezas por separado (id, nombre y
+          // actor) para poder componer el título de la tabla con puntuación.
+          const partes = [...celdas[1].childNodes]
+            .map((c) => (c.textContent ?? '').replace(/\s+/g, ' ').trim())
+            .filter(Boolean)
+          if (etiqueta) filas.push({ etiqueta, valor, partes })
         }
         return filas
       })
@@ -376,9 +385,11 @@ function partirPorBloques(svg) {
   })
 }
 
-function prepararFigura(svg, { porBloques = false } = {}) {
+function prepararFigura(svg, { porBloques = false, sinTrocear = false } = {}) {
   const claro = aclararSvg(svg)
-  const partes = (porBloques && partirPorBloques(claro)) || trocear(claro)
+  const partes =
+    (porBloques && partirPorBloques(claro)) ||
+    (sinTrocear ? [{ svg: claro, parte: 0, total: 1 }] : trocear(claro))
   return partes.map((t) => {
     const d = t.w ? { w: t.w, h: t.h } : dimensionesNativas(t.svg) ?? { w: 800, h: 600 }
     // Un SVG en línea no es un elemento reemplazado: max-height lo aplasta en
@@ -730,7 +741,12 @@ const cachePrep = new Map()
 function figurasDe(porTipo, clave) {
   if (!cachePrep.has(clave)) {
     const lista = (porTipo[clave] ?? []).flatMap((f, i) =>
-      prepararFigura(f.svg, { porBloques: clave === 'casos-de-uso' }).map((tr, j) => ({
+      prepararFigura(f.svg, {
+        porBloques: clave === 'casos-de-uso',
+        // Nueve cajas partidas en dos hojas enteras se leían como un cartel:
+        // el diagrama de paquetes entra completo en una sola figura.
+        sinTrocear: clave === 'paquetes',
+      }).map((tr, j) => ({
         ...tr,
         // El corte por bloques trae su propio rótulo (el subsistema y su
         // actor); el resto hereda el título de la sección del sitio.
@@ -747,6 +763,16 @@ function figurasDe(porTipo, clave) {
     cachePrep.set(clave, lista)
   }
   return cachePrep.get(clave)
+}
+
+// "CU-04", "Iniciar sesión como administrador" y "Administrador (Mike)" son
+// tres piezas distintas de la cabecera de la ficha; unidas sin puntuación se
+// leen como una sola frase confusa.
+function tituloFicha(encabezado) {
+  const partes = encabezado.partes?.length ? encabezado.partes : [encabezado.valor.join(' ')]
+  const [id, nombre, actor] = [partes[0], partes[1] ?? '', partes.slice(2).join(' ')]
+  const base = nombre ? `${id}: ${nombre}` : id
+  return `Descripción del caso de uso ${base}${actor ? ` (actor: ${actor})` : ''}`
 }
 
 function construirHtml(porTipo, paginasToc, pngs = null, fichas = []) {
@@ -852,8 +878,8 @@ function construirHtml(porTipo, paginasToc, pngs = null, fichas = []) {
           .join('')
         return `<div class="tabla-apa">
           <p class="tab-num" style="text-indent:0;page-break-after:avoid"><b>Tabla ${i + 1}</b></p>
-          <p class="tab-tit" style="text-indent:0;page-break-after:avoid"><i>Descripción del caso de uso ${esc(
-            encabezado.valor.join(' ').replace(/\s+/g, ' '),
+          <p class="tab-tit" style="text-indent:0;page-break-after:avoid"><i>${esc(
+            tituloFicha(encabezado),
           )}</i></p>
           <table><tbody>${cuerpoHtml}</tbody></table>
         </div>`
