@@ -295,10 +295,10 @@ const diagramas = [
       const nombre = nodo.id.match(/classId-(.+?)-\d+$/)?.[1]
       if (!nombre) return
       const { fill, stroke } = rol(nombre)
-      nodo.querySelectorAll<SVGElement>('rect, path.basic, polygon').forEach((forma) => {
-        // La barra del nombre y los separadores no se tiñen: el relleno va en
-        // el cuerpo de la caja, que es lo que da la lectura de conjunto.
-        if (forma.classList.contains('divider')) return
+      // El contorno de la caja es un path dentro de g.label-container; los
+      // g.divider son los separadores entre compartimentos y se dejan como
+      // están, que es lo que mantiene legible la división en tres bandas.
+      nodo.querySelectorAll<SVGElement>('g.label-container path, g.label-container rect').forEach((forma) => {
         forma.style.fill = fill
         forma.style.stroke = stroke
       })
