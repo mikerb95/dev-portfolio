@@ -82,8 +82,11 @@ export const options = {
       executor: 'constant-arrival-rate',
       rate: 20,
       timeUnit: '1s',
-      duration: '60s',
-      preAllocatedVUs: 40,
+      // 120 s y no 60: la primera corrida terminó la ventana con el sistema
+      // todavía drenando, y "no se recuperó" y "no le dimos tiempo" son
+      // conclusiones distintas que se veían igual.
+      duration: '120s',
+      preAllocatedVUs: 60,
       startTime: `${INICIO_RECUPERACION}s`,
       tags: { fase: 'recuperacion' },
       exec: 'soltar',
