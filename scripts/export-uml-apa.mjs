@@ -254,8 +254,7 @@ function trocear(svg) {
 // caja por módulo con su actor al lado. Cortarlo en franjas de altura fija
 // partía cajas por la mitad, así que se separa por sus propias fronteras y
 // cada subsistema pasa a ser una figura suelta, libre de saltar de página.
-function partirPorBloques(svgOriginal) {
-  let svg = svgOriginal
+function partirPorBloques(svg) {
   const d = dimensionesNativas(svg)
   if (!d) return null
 
@@ -273,19 +272,6 @@ function partirPorBloques(svgOriginal) {
     .sort((a, b) => a.y - b.y)
 
   if (marcos.length < 2) return null
-
-  // El rótulo del actor cabe en dos líneas y algunos nombres necesitan tres:
-  // en pantalla el sobrante queda oculto tras el bloque de al lado, pero
-  // aislado en su propia figura el recorte se nota. Se le da aire.
-  svg = svg.replace(
-    /<foreignObject\b[^>]*>/g,
-    (fo) => {
-      const x = Number(fo.match(/\bx="([-\d.]+)"/)?.[1])
-      const h = Number(fo.match(/\bheight="([-\d.]+)"/)?.[1])
-      if (!(x < 120) || !Number.isFinite(h)) return fo
-      return fo.replace(/\bheight="[-\d.]+"/, `height="${h + 22}"`)
-    },
-  )
 
   const textos = [...svg.matchAll(/<text\b[^>]*\by="([-\d.]+)"[^>]*>([^<]*)<\/text>/g)].map((m) => ({
     y: Number(m[1]),
@@ -593,6 +579,88 @@ const REFERENCIAS = [
 // ── 4. Armado del HTML ──────────────────────────────────────────────────────
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+// Cada caja de casos de uso lleva su propia leyenda explicando por qué sus
+// relaciones son de inclusión o de extensión: la distinción no se ve en el
+// dibujo (una flecha punteada con su estereotipo) y es justo lo que se evalúa.
+// Se indexan por módulo y actor, las dos partes del rótulo de la figura.
+const LEYENDAS_CASOS_USO = [
+  {
+    modulo: 'sitio público',
+    actor: 'visitante',
+    nota: 'CU-19 declara dos extensiones y ninguna inclusión. Sugerir el inglés según el idioma del navegador solo ocurre si el visitante llega con otro idioma configurado, y devolver la versión en español solo si esa página aún no está traducida; en ambos casos el caso base se completa sin ellas. Un comportamiento que siempre se ejecuta se modela como <<include>>, uno que depende de una condición como <<extend>>.',
+  },
+  {
+    modulo: 'autenticación',
+    actor: 'administrador',
+    nota: 'Rechazar el login fuera de la allowlist extiende a CU-04 porque solo se activa cuando la validación de la lista de permitidos falla. El flujo principal de autenticación termina sin pasar nunca por esa extensión, que es la razón por la que no se modela como inclusión.',
+  },
+  {
+    modulo: 'crm',
+    actor: 'administrador',
+    nota: 'CU-06 incluye dos pasos encadenados, registrar la interacción de seguimiento y documentar la decisión de arquitectura: son <<include>> porque el seguimiento de un proyecto no está completo sin ellos, y van encadenados porque el ADR se documenta sobre una interacción ya registrada. Publicar el ADR en la vitrina pública, en cambio, extiende al caso base: la decisión puede quedarse privada y el caso de uso igual se cumple.',
+  },
+  {
+    modulo: 'crm',
+    actor: 'cliente',
+    nota: 'CU-16 incluye generar un PIN libre de colisiones y sincronizar la diapositiva por pub/sub: sin cualquiera de los dos no hay sesión proyectada, así que son obligatorios. Recoger el feedback del público al cerrar es una extensión porque ocurre al final y solo si la sesión se cierra formalmente.',
+  },
+  {
+    modulo: 'finanzas',
+    actor: 'administrador',
+    nota: 'Calcular el P&L del proyecto es un <<include>> de CU-08: registrar un costo sin recalcular el resultado dejaría el proyecto con cifras inconsistentes, de modo que el paso no es opcional. Excluir un costo sin tasa de cambio es un <<extend>> porque solo se dispara ante el caso particular de un costo en otra moneda sin tasa registrada.',
+  },
+  {
+    modulo: 'observabilidad',
+    actor: 'cron',
+    nota: 'Abrir el incidente y notificar la caída por push son inclusiones encadenadas: cuando el chequeo detecta la caída, ambos pasos se ejecutan siempre y en ese orden, porque la notificación necesita el incidente ya creado. Cerrar el incidente por recuperación y marcar la degradación por latencia son extensiones: dependen de condiciones distintas (que el servicio vuelva, o que responda pero lento) y ninguna forma parte del flujo básico de la alerta.',
+  },
+  {
+    modulo: 'observabilidad',
+    actor: 'administrador',
+    nota: 'CU-10 no declara relaciones. Es un caso de uso atómico: consultar el presupuesto de error de un monitor no exige ningún paso compartido con otros casos ni admite variantes condicionales, y descomponerlo solo añadiría ruido al diagrama.',
+  },
+  {
+    modulo: 'sistema',
+    actor: 'administrador',
+    nota: 'El backup automático por cron extiende a CU-11 porque es la misma operación disparada por otro camino, el planificador externo en lugar del administrador, y solo ocurre en esa circunstancia. En CU-18, navegar una subpágina de documentación es una inclusión (no hay consulta sin navegación) y consultar un diagrama Mermaid es una extensión, ya que solo algunas páginas de la documentación llevan diagrama.',
+  },
+  {
+    modulo: 'lab',
+    actor: 'pasarela',
+    nota: 'CU-12 tiene dos extensiones y ninguna inclusión, y eso describe con precisión el diseño de idempotencia: el flujo normal aplica el evento del webhook y termina. Registrar un evento duplicado ocurre solo si la pasarela reenvía un evento ya procesado, y registrar un evento fuera de orden solo si llega uno anterior al estado actual. Ambos son desvíos condicionales, no pasos del camino feliz.',
+  },
+  {
+    modulo: 'lab',
+    actor: 'administrador',
+    nota: 'Aplicar el fallo simulado en el middleware es un <<include>> de CU-13: sin ese paso el flag quedaría registrado pero no habría fallo que observar, luego el paso es parte constitutiva del caso. Desactivar todos los flags con el botón de pánico extiende al caso base porque es una salida de emergencia que solo se usa si el experimento se descontrola.',
+  },
+  {
+    modulo: 'seguridad',
+    actor: 'administrador',
+    nota: 'Registrar el evento de seguridad es una inclusión de CU-14 sin excepciones: toda decisión del sensor queda en la bitácora del micro-SIEM, tanto si termina en bloqueo como si no, y una bitácora con huecos no serviría para auditar. Bloquear la IP manualmente extiende al caso porque es la vía alternativa a la que el auto-bloqueo recorre por su cuenta.',
+  },
+  {
+    modulo: 'sitio público',
+    actor: 'buscador',
+    nota: 'CU-17 no declara relaciones. El actor es un sistema externo (el rastreador del buscador) y el caso de uso se agota en un intercambio: se notifica el contenido nuevo y se actualizan los recursos de indexación, sin pasos compartidos ni variantes condicionales.',
+  },
+]
+
+const sinAcentos = (t) =>
+  t
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+
+function leyendaDeBloque(titulo) {
+  const t = sinAcentos(titulo)
+  const [modulo = '', actor = ''] = t.split(' - ')
+  const hit = LEYENDAS_CASOS_USO.find(
+    (l) => modulo.includes(sinAcentos(l.modulo)) && actor.includes(sinAcentos(l.actor)),
+  )
+  return hit?.nota ?? ''
+}
+
 // Figuras ya aclaradas, troceadas y con clave estable, para que el PDF y el
 // documento de Word numeren y ordenen exactamente igual.
 const cachePrep = new Map()
@@ -604,7 +672,7 @@ function figurasDe(porTipo, clave) {
         // El corte por bloques trae su propio rótulo (el subsistema y su
         // actor); el resto hereda el título de la sección del sitio.
         titulo: tr.titulo || f.titulo,
-        desc: tr.titulo ? '' : f.desc,
+        desc: tr.titulo ? leyendaDeBloque(tr.titulo) : f.desc,
         id: `${clave}-${i}-${j}-${tr.parte}`,
       })),
     )

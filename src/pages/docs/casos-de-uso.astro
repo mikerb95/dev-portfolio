@@ -141,6 +141,12 @@ function actorFigure(cx: number, cy: number) {
   `
 }
 
+// La caja de texto de un óvalo no puede ser tan ancha como el óvalo: a la
+// altura de las esquinas la elipse ya se ha cerrado, y una etiqueta larga
+// terminaba pisando el borde. Se estrecha la caja al ancho útil real y se
+// baja el cuerpo de letra cuando el nombre del caso de uso es largo.
+const cuerpoEtiqueta = (text: string) => (text.length > 64 ? 9.5 : text.length > 42 ? 10.5 : 11.5)
+
 function wrappedLabel(cx: number, cy: number, w: number, h: number, text: string, fontSize: number) {
   return `<foreignObject x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}">
     <div xmlns="http://www.w3.org/1999/xhtml" style="font:${fontSize}px sans-serif;color:#e7e7ec;display:flex;align-items:center;justify-content:center;text-align:center;height:100%;line-height:1.25;">${text}</div>
@@ -173,7 +179,14 @@ for (const { modulo, top: blockTop, height, width } of bloques) {
 for (const nodo of nodos) {
   const isPrincipal = nodo.variante === 'principal'
   diagramSvg += `<ellipse cx="${nodo.cx}" cy="${nodo.cy}" rx="${ELLIPSE_RX}" ry="${ELLIPSE_RY}" fill="${isPrincipal ? '#1c1c26' : '#20202b'}" stroke="${isPrincipal ? '#c4c4cc' : '#8a8a99'}" stroke-width="1.5" />`
-  diagramSvg += wrappedLabel(nodo.cx, nodo.cy, ELLIPSE_RX * 2 - 20, ELLIPSE_RY * 2 - 8, nodo.label, 11.5)
+  diagramSvg += wrappedLabel(
+    nodo.cx,
+    nodo.cy,
+    ELLIPSE_RX * 2 - 60,
+    ELLIPSE_RY * 2 - 12,
+    nodo.label,
+    cuerpoEtiqueta(nodo.label),
+  )
 }
 
 for (const arco of arcos) {
@@ -199,7 +212,7 @@ for (const arco of arcos) {
 
 for (const { actor, actorCy } of bloques) {
   diagramSvg += actorFigure(ACTOR_X, actorCy)
-  diagramSvg += wrappedLabel(ACTOR_X, actorCy + 52, 150, 30, actor.nombre, 11.5)
+  diagramSvg += wrappedLabel(ACTOR_X, actorCy + 58, 160, 44, actor.nombre, cuerpoEtiqueta(actor.nombre))
 }
 
 diagramSvg += `</svg>`
