@@ -164,6 +164,17 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
    de latencia p50/p95/p99 y RPS en `/admin/lab/load`.
 3. ⚠️ Solo contra preview deployments o con rate razonable contra prod (Vercel cobra por
    invocación; 1000 VUs contra prod = costo + posible firewall).
+4. ✅ **Guardarraíl de dos mitades** (ago 2026). `objetivo()` en `lab/k6/lib/perfil.js`
+   ya rechazaba las URL de producción, pero eso solo mira el SERVIDOR. Una corrida
+   contra `127.0.0.1:4400` con el dev server leyendo de la Turso real agotó los 7.500
+   millones de filas de la cuota de lecturas. La segunda mitad, `exigirBaseLocal()`,
+   corre en el `setup()` de cada escenario: consulta `GET /api/health`, mira
+   `checks.db.local` (un booleano, nunca el host) y aborta antes de levantar un solo
+   VU si la base es remota. Detección en `src/lib/db-target.ts`, y ante cualquier duda
+   devuelve "remota". El servidor de carga se levanta con `npm run dev:carga`, que
+   apunta a la sqld local de `compose.yaml` en el puerto 4400.
+   Ver también RNF-25 en `/docs/requerimientos-no-funcionales` (la otra mitad del
+   incidente: el coste por render de `/status`).
 
 ### Fase 6 - Seguridad (SAST/DAST) + a11y
 1. **SAST**: job de CI con `npm audit --json` + Snyk free tier (o Semgrep) → hallazgos a
