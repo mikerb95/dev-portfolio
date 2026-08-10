@@ -1,25 +1,37 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
+import { serverEnv } from '../lib/env'
+import { isLocalDbUrl } from '../lib/db-target'
 import * as schema from './schema'
+
+// Vía `serverEnv` y no `import.meta.env` a secas: con la segunda, el destino de
+// la base queda clavado a lo que diga el .env y no hay forma de apuntar el dev
+// server a la sqld local sin editar el archivo. Poder hacer
+// `TURSO_DATABASE_URL=http://127.0.0.1:8080 npm run dev` es justo lo que evita
+// que una prueba de carga contra localhost acabe leyendo de producción.
+const realUrl = serverEnv('TURSO_DATABASE_URL') as string
 
 const realDb = drizzle(
   createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
+    url: realUrl,
+    authToken: serverEnv('TURSO_AUTH_TOKEN'),
   }),
   { schema }
 )
+
+/** ¿La base real de este proceso es una instancia local (sqld/archivo)? */
+export const realDbIsLocal = isLocalDbUrl(realUrl)
 
 // Base de la demo pública del panel: MISMO esquema, datos ficticios, instancia
 // aparte. El aislamiento es por construcción - un request en modo demo no tiene
 // forma de alcanzar la base real, ni por un `where` olvidado ni por una ruta
 // nueva que nadie recordó filtrar. Si no está configurada, la demo no existe
 // (mismo patrón no-op que notify.ts): degradar es preferible a improvisar.
-const demoUrl = import.meta.env.TURSO_DEMO_URL
+const demoUrl = serverEnv('TURSO_DEMO_URL')
 const demoDb = demoUrl
   ? drizzle(
-      createClient({ url: demoUrl, authToken: import.meta.env.TURSO_DEMO_AUTH_TOKEN }),
+      createClient({ url: demoUrl, authToken: serverEnv('TURSO_DEMO_AUTH_TOKEN') }),
       { schema }
     )
   : null

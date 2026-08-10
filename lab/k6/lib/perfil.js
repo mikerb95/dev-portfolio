@@ -28,6 +28,40 @@ export function objetivo() {
 }
 
 /**
+ * Segunda mitad del guardarraíl, y la que de verdad hacía falta: comprobar a
+ * qué BASE está conectado el objetivo, no solo qué dirección tiene.
+ *
+ * `objetivo()` solo mira la URL del servidor, así que un dev server en
+ * 127.0.0.1 pasaba el filtro aunque su .env apuntara a la Turso de producción.
+ * Eso fue exactamente lo que pasó en agosto de 2026: la corrida contra
+ * localhost agotó la cuota de lecturas de la base real (25% de las peticiones
+ * van a /status, que agrega 90 días de sondeos en cada render).
+ *
+ * Se llama desde `setup()`, que k6 ejecuta una sola vez antes de levantar los
+ * VUs: si aborta, no llega ni una petición a la base equivocada.
+ */
+export function exigirBaseLocal(base) {
+  const res = http.get(`${base}/api/health`, { timeout: '10s' })
+  if (res.status !== 200) {
+    exec.test.abort(`No se pudo verificar la base en ${base}/api/health (HTTP ${res.status}). ¿Está arriba el servidor?`)
+    return
+  }
+  let salud
+  try {
+    salud = res.json()
+  } catch {
+    exec.test.abort(`Respuesta ilegible de ${base}/api/health.`)
+    return
+  }
+  if (salud?.checks?.db?.local !== true) {
+    exec.test.abort(
+      `El objetivo ${base} está conectado a una base REMOTA. La carga nunca corre contra Turso: ` +
+        `levanta la local con "npm run db:up" y arranca el servidor con "npm run dev:carga".`,
+    )
+  }
+}
+
+/**
  * Cabeceras de una petición. `X-Forwarded-For` distinto por VU no es maquillaje
  * para esquivar el rate limit: es lo que hace que la prueba mida el sistema.
  *

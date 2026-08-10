@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { sql } from 'drizzle-orm'
-import { db } from '../../db'
+import { db, realDbIsLocal } from '../../db'
 
 // Health check público: lo consume el pipeline de CI tras cada deploy para
 // decidir si la versión nueva está sana o hay que hacer rollback.
@@ -24,7 +24,10 @@ export const GET: APIRoute = async () => {
     env: process.env.VERCEL_ENV ?? 'local',
     region: process.env.VERCEL_REGION ?? null,
     checks: {
-      db: { ok: dbOk, ms: Date.now() - started, error: dbError },
+      // `local` es un booleano a propósito: nunca el host ni la URL de la base.
+      // Lo consumen las pruebas de carga de lab/k6 para abortar si el servidor
+      // que van a maltratar está conectado a una base remota.
+      db: { ok: dbOk, ms: Date.now() - started, error: dbError, local: realDbIsLocal },
     },
     ts: new Date().toISOString(),
   }
