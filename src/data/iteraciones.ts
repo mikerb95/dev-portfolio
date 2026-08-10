@@ -733,7 +733,7 @@ export const ITERACIONES: Iteracion[] = [
     id: "fundacion",
     fase: "Fundación · Tienda",
     nombre: "Tienda online: catálogo, carrito y checkout",
-    rango: "Ago – Dic 2025",
+    rango: "Ago–Dic 2025",
     ghSince: "2025-08-29",
     ghUntil: "2026-01-01",
     commits: 134,
