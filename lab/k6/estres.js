@@ -180,13 +180,19 @@ export function handleSummary(data) {
   r.escalera = ESCALONES.map((e) => {
     const v = data.metrics[`quiebre_e${e.desdeS}`]?.values ?? {}
     const n = v.count ?? 0
+    const tasaError = data.metrics[`quiebre_e${e.desdeS}_err`]?.values?.rate ?? 0
     return {
       rpsOfrecido: e.rps,
       n,
-      servidoRps: Number((n / 30).toFixed(1)),
+      // Respuestas por segundo, timeouts incluidos. NO es throughput: una
+      // petición que se rinde a los 10 s también "responde".
+      respuestasRps: Number((n / 30).toFixed(1)),
+      // Throughput real: solo lo que se sirvió con un 200. Es la única columna
+      // que dice cuánto trabajo útil hace el sistema.
+      exitosasRps: Number(((n * (1 - tasaError)) / 30).toFixed(1)),
       p50: Number((v.med ?? 0).toFixed(1)),
       p95: Number((v['p(95)'] ?? 0).toFixed(1)),
-      errorPct: Number(((data.metrics[`quiebre_e${e.desdeS}_err`]?.values?.rate ?? 0) * 100).toFixed(1)),
+      errorPct: Number((tasaError * 100).toFixed(1)),
     }
   })
 
@@ -194,9 +200,9 @@ export function handleSummary(data) {
   return {
     stdout: aTexto(r)
       + `  escalera del quiebre\n`
-      + `    ofrecido   servido      p50      p95   errores\n`
+      + `    ofrecido  respuestas   exitosas      p50      p95  errores\n`
       + r.escalera
-          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.servidoRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(7)}%`)
+          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.respuestasRps).padStart(9)}/s ${String(e.exitosasRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(6)}%`)
           .join('\n')
       + `\n\n  recuperación  p50 ${r.recuperacion.p50}ms · p95 ${r.recuperacion.p95}ms · errores ${r.recuperacion.tasaErrorPct}%\n`
       + `  curva de recuperación (s desde que cesó la carga)\n`
