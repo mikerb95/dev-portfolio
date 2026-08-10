@@ -1,0 +1,160 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import {
+  NIVELES_AUTORIDAD,
+  ORDEN_NIVELES,
+  LEYENDA_RACI,
+  RACI,
+  REGLAS_RACI,
+  type RolRaci,
+} from '../../data/gobernanza'
+import { ACENTO_NIVEL, ESTILO_ROL } from '../../lib/gobernanza-estilos'
+
+const porId = new Map(NIVELES_AUTORIDAD.map((n) => [n.id, n]))
+
+// Cuántas actividades aprueba cada nivel. No es adorno: es la comprobación de
+// que la matriz no delega hacia arriba todo por costumbre ni se lo queda todo
+// el nivel operativo por comodidad.
+const aprobaciones = ORDEN_NIVELES.map((nivel) => ({
+  nivel,
+  nombre: porId.get(nivel)!.nombre,
+  total: RACI.filter((a) => (a.asignacion[nivel] ?? []).includes('A')).length,
+}))
+---
+
+<BaseLayout title="Matriz RACI">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-10">
+      <p class="text-[12px] font-mono uppercase tracking-wide text-ink-300 mb-2">Documentación · RACI</p>
+      <h1 class="text-2xl font-semibold text-ink-50 mb-3">
+        Quién ejecuta, y <span class="text-violet">quién responde</span> por el resultado
+      </h1>
+      <p class="text-[14.5px] text-ink-200 leading-relaxed mb-3">
+        Las columnas son los tres <a href="/docs/roles" class="text-cyan hover:underline">niveles de
+        autoridad</a>, no tres cargos. Leerla así evita la trampa habitual de las matrices RACI de un proyecto
+        pequeño: repartir letras entre nombres inventados. Aquí cada fila contesta algo comprobable:
+        <em>si esto sale mal, ¿de qué nivel es la culpa, y dónde en el repositorio está escrita esa
+        frontera?</em>
+      </p>
+    </div>
+
+    <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-8">
+      <div class="glass rounded-2xl p-4 border border-white/10">
+        <div class="text-2xl font-semibold text-ink-50 tabular-nums">{RACI.length}</div>
+        <div class="text-[12px] font-mono uppercase tracking-wide text-ink-200 mt-1">Actividades</div>
+        <div class="text-[12px] text-ink-300 mt-0.5">las críticas, no todas</div>
+      </div>
+      {aprobaciones.map((a) => (
+        <div class="glass rounded-2xl p-4 border border-white/10">
+          <div class="text-2xl font-semibold text-ink-50 tabular-nums">{a.total}</div>
+          <div class="flex items-center gap-1.5 mt-1">
+            <span class={`w-1.5 h-1.5 rounded-full ${ACENTO_NIVEL[a.nivel]}`} aria-hidden="true"></span>
+            <span class="text-[12px] font-mono uppercase tracking-wide text-ink-200">{a.nombre}</span>
+          </div>
+          <div class="text-[12px] text-ink-300 mt-0.5">actividades que aprueba</div>
+        </div>
+      ))}
+    </div>
+
+    {/* ── Leyenda ─────────────────────────────────────────────── */}
+    <h2 id="leyenda" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Los cuatro roles</h2>
+    <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-10">
+      {(Object.keys(LEYENDA_RACI) as RolRaci[]).map((r) => (
+        <div class="glass rounded-2xl p-4 border border-white/10">
+          <div class="flex items-center gap-2 mb-1">
+            <span class={`inline-flex items-center justify-center w-6 h-6 rounded-md border font-mono text-[12px] ${ESTILO_ROL[r]}`}>{r}</span>
+            <span class="text-[13.5px] font-medium text-ink-50">{LEYENDA_RACI[r].nombre}</span>
+          </div>
+          <p class="text-[12px] text-ink-300 leading-relaxed">{LEYENDA_RACI[r].que}</p>
+        </div>
+      ))}
+    </div>
+
+    {/* ── Matriz ──────────────────────────────────────────────── */}
+    <h2 id="matriz" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">La matriz - {RACI.length} actividades</h2>
+
+    <div class="overflow-x-auto rounded-xl border border-white/10 mb-6">
+      <table class="w-full min-w-[720px] text-left border-collapse">
+        <thead>
+          <tr class="border-b border-white/10 bg-white/[.03]">
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium">Actividad</th>
+            {ORDEN_NIVELES.map((n) => (
+              <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium text-center whitespace-nowrap">
+                <span class="inline-flex items-center gap-1.5">
+                  <span class={`w-1.5 h-1.5 rounded-full ${ACENTO_NIVEL[n]}`} aria-hidden="true"></span>
+                  {porId.get(n)!.nombre}
+                </span>
+              </th>
+            ))}
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium">Por qué la aprobación cae ahí</th>
+          </tr>
+        </thead>
+        <tbody>
+          {RACI.map((a) => (
+            <tr class="border-b border-white/[.06] last:border-0 hover:bg-white/[.02] transition-colors align-top">
+              <th scope="row" class="p-3 text-[13.5px] font-normal text-ink-50 leading-snug">
+                {a.actividad}
+                <span class="block font-mono text-[11px] text-ink-300 mt-1">{a.evidencia}</span>
+              </th>
+              {ORDEN_NIVELES.map((n) => {
+                const roles = a.asignacion[n]
+                return (
+                  <td class="p-3 text-center">
+                    {roles && roles.length > 0 ? (
+                      <span class="inline-flex gap-1 justify-center">
+                        {roles.map((rol) => (
+                          <span class={`inline-flex items-center justify-center w-6 h-6 rounded-md border font-mono text-[12px] ${ESTILO_ROL[rol]}`} title={LEYENDA_RACI[rol].nombre}>
+                            {rol}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      <span class="text-ink-300" aria-label="no participa">-</span>
+                    )}
+                  </td>
+                )
+              })}
+              <td class="p-3 text-[12.5px] text-ink-200 leading-relaxed max-w-md">{a.porque}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* ── Reglas ──────────────────────────────────────────────── */}
+    <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 mb-8 max-w-3xl">
+      <p class="text-[12px] font-mono uppercase tracking-wide text-ink-300 mb-2">Las dos reglas</p>
+      <ul class="text-[13.5px] text-ink-100 leading-relaxed space-y-1.5 mb-3">
+        {REGLAS_RACI.map((r) => (
+          <li class="flex gap-2">
+            <span class="mt-[7px] w-1 h-1 rounded-full bg-violet shrink-0" aria-hidden="true"></span>
+            <span>{r}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="text-[12.5px] text-ink-200 leading-relaxed mb-2">
+        Un mismo nivel puede llevar <span class="font-mono text-[11.5px]">A</span> y{' '}
+        <span class="font-mono text-[11.5px]">R</span> en la misma fila: aprobar y ejecutar no son incompatibles,
+        son responsabilidades distintas que aquí suelen recaer en la misma persona. Lo que la regla prohíbe es
+        que dos niveles distintos aprueben la misma actividad.
+      </p>
+      <p class="text-[12.5px] text-ink-200 leading-relaxed">
+        No son una convención declarada al pie de la tabla: <span class="font-mono text-cyan">tests/gobernanza.test.ts</span>{' '}
+        las comprueba sobre los datos que renderizan esta tabla, así que una fila con dos aprobadores o sin
+        ejecutor rompe la integración continua antes de llegar a producción. Al escribirlas como prueba, cuatro
+        de las {RACI.length} filas iniciales resultaron incumplirlas.
+      </p>
+    </div>
+
+    <a href="/docs/roles" class="inline-block rounded-xl border border-white/10 bg-white/[.025] p-5 hover:bg-white/[.04] hover:border-white/20 transition-colors max-w-3xl">
+      <span class="block text-[14px] font-medium text-ink-50 mb-1">← Roles y niveles de autoridad</span>
+      <span class="block text-[13px] text-ink-200 leading-relaxed">
+        Qué decide cada uno de los tres niveles sin pedir permiso, qué no puede hacer aunque tenga el acceso
+        técnico, y en qué archivo del repositorio vive esa frontera.
+      </span>
+    </a>
+  </div>
+</BaseLayout>
