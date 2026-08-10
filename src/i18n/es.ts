@@ -27,6 +27,8 @@ const es = {
   },
   nav: {
     diseno: 'Diseño Web',
+    servicios: 'Servicios',
+    capacitacion: 'Capacitación IA',
     tools: 'Herramientas',
     engineering: 'Ingeniería',
     lab: 'Lab',
