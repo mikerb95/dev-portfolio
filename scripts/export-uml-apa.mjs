@@ -75,6 +75,9 @@ async function extraer(browser) {
       // referencias no resuelven y el navegador cae en negro sólido, así que
       // se congelan los valores computados como estilo en línea.
       const PROPS = [
+        // Mermaid mete los títulos de clase en un foreignObject: ahí el texto
+        // es HTML y se pinta con color, no con fill.
+        'color',
         'fill',
         'fill-opacity',
         'stroke',
@@ -82,6 +85,10 @@ async function extraer(browser) {
         'stroke-dasharray',
         'stroke-linecap',
         'stroke-linejoin',
+        'stroke-opacity',
+        // Sin paint-order, el halo que separa el texto de las líneas se pinta
+        // encima de la letra y la borra: el texto queda invisible.
+        'paint-order',
         'opacity',
         'font-family',
         'font-size',
@@ -159,7 +166,7 @@ function invertirLuminancia(rgb) {
   // Invertir a secas deja trazos gris medio que en papel se pierden: se
   // oscurece lo que queda oscuro y se lleva a blanco puro lo casi blanco.
   let nl = 1 - l
-  if (nl < 0.5) nl *= 0.55
+  if (nl < 0.65) nl *= 0.5
   else if (nl > 0.9) nl = 1
   const c = (1 - Math.abs(2 * nl - 1)) * s
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
@@ -218,7 +225,7 @@ const RATIO_PAGINA = 19 / 16.5 // caja de una figura a hoja completa (alto/ancho
 // Hasta este alargamiento la figura se escala por la altura y sigue siendo
 // legible; más allá, el ancho resultante sería una columna demasiado angosta.
 const RATIO_MAXIMO = 2.2
-const SOLAPE = 40
+const SOLAPE = 90
 
 function trocear(svg) {
   const d = dimensionesNativas(svg)
@@ -250,12 +257,19 @@ function prepararFigura(svg) {
     // Un SVG en línea no es un elemento reemplazado: max-height lo aplasta en
     // vez de reducirlo en proporción. El tamaño lo fija un marco con
     // aspect-ratio y el SVG se limita a llenarlo.
-    const con = t.svg
-      .replace(/\swidth="[^"]*"/, '')
-      .replace(/\sheight="[^"]*"/, '')
-      .replace(/\sstyle="[^"]*"/, '')
-      .replace(/\spreserveAspectRatio="[^"]*"/, '')
-      .replace('<svg', `<svg preserveAspectRatio="xMidYMid meet"`)
+    // Solo la etiqueta de apertura: los SVG de Mermaid no declaran height en
+    // la raíz, y una limpieza global se llevaba por delante el height del
+    // primer foreignObject, dejando sin pintar el título de esa clase.
+    const con = t.svg.replace(
+      /^<svg[^>]*>/,
+      (raiz) =>
+        raiz
+          .replace(/\swidth="[^"]*"/, '')
+          .replace(/\sheight="[^"]*"/, '')
+          .replace(/\sstyle="[^"]*"/, '')
+          .replace(/\spreserveAspectRatio="[^"]*"/, '')
+          .replace('<svg', '<svg preserveAspectRatio="xMidYMid meet"'),
+    )
     return { ...t, svg: con, ratio: d.h / d.w, ar: (d.w / d.h).toFixed(4) }
   })
 }
