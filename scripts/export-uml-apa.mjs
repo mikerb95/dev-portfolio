@@ -720,6 +720,38 @@ function paginasDeMarcas(pdf) {
   return mapa
 }
 
+// ── 6. Versión editable en Word ─────────────────────────────────────────────
+// Word no admite SVG en línea con garantías, así que cada figura se rasteriza
+// a PNG con densidad suficiente para imprimir y el documento se arma con
+// <img>. La conversión final la hace LibreOffice, que respeta la tipografía,
+// el interlineado, la sangría y los saltos de página del HTML.
+async function rasterizar(browser, porTipo, dir) {
+  const page = await browser.newPage({ viewport: { width: 1200, height: 900 } })
+  const rutas = {}
+  for (const t of TIPOS) {
+    for (const f of figurasDe(porTipo, t.clave)) {
+      const d = dimensionesNativas(f.svg) ?? { w: 1000, h: 700 }
+      const escala = Math.min(3, Math.max(1.5, 2200 / d.w))
+      await page.setViewportSize({
+        width: Math.ceil(d.w * escala),
+        height: Math.ceil(d.h * escala),
+      })
+      await page.setContent(
+        `<html><body style="margin:0;background:#fff">
+           <div id="c" style="width:${d.w * escala}px;height:${d.h * escala}px;background:#fff">
+             ${f.svg.replace('<svg', '<svg width="100%" height="100%"')}
+           </div></body></html>`,
+        { waitUntil: 'networkidle' },
+      )
+      const ruta = join(dir, `${f.id}.png`)
+      await page.locator('#c').screenshot({ path: ruta })
+      rutas[f.id] = `${f.id}.png` // relativa: LibreOffice las incrusta al convertir
+    }
+  }
+  await page.close()
+  return rutas
+}
+
 // ── main ────────────────────────────────────────────────────────────────────
 console.log('Extrayendo diagramas de', BASE)
 const browser = await chromium.launch()
