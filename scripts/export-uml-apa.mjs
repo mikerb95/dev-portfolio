@@ -250,9 +250,87 @@ function trocear(svg) {
   return trozos
 }
 
-function prepararFigura(svg) {
+// El diagrama de casos de uso es una pila de subsistemas independientes: una
+// caja por módulo con su actor al lado. Cortarlo en franjas de altura fija
+// partía cajas por la mitad, así que se separa por sus propias fronteras y
+// cada subsistema pasa a ser una figura suelta, libre de saltar de página.
+function partirPorBloques(svgOriginal) {
+  let svg = svgOriginal
+  const d = dimensionesNativas(svg)
+  if (!d) return null
+
+  // Las fronteras del sistema son los únicos rect sin relleno y altos.
+  const marcos = [...svg.matchAll(/<rect\b[^>]*>/g)]
+    .map((m) => m[0])
+    .filter((r) => /fill="none"/.test(r))
+    .map((r) => ({
+      x: Number(r.match(/\bx="([-\d.]+)"/)?.[1]),
+      y: Number(r.match(/\by="([-\d.]+)"/)?.[1]),
+      w: Number(r.match(/\bwidth="([-\d.]+)"/)?.[1]),
+      h: Number(r.match(/\bheight="([-\d.]+)"/)?.[1]),
+    }))
+    .filter((b) => Number.isFinite(b.y) && Number.isFinite(b.h) && b.h > 60)
+    .sort((a, b) => a.y - b.y)
+
+  if (marcos.length < 2) return null
+
+  // El rótulo del actor cabe en dos líneas y algunos nombres necesitan tres:
+  // en pantalla el sobrante queda oculto tras el bloque de al lado, pero
+  // aislado en su propia figura el recorte se nota. Se le da aire.
+  svg = svg.replace(
+    /<foreignObject\b[^>]*>/g,
+    (fo) => {
+      const x = Number(fo.match(/\bx="([-\d.]+)"/)?.[1])
+      const h = Number(fo.match(/\bheight="([-\d.]+)"/)?.[1])
+      if (!(x < 120) || !Number.isFinite(h)) return fo
+      return fo.replace(/\bheight="[-\d.]+"/, `height="${h + 22}"`)
+    },
+  )
+
+  const textos = [...svg.matchAll(/<text\b[^>]*\by="([-\d.]+)"[^>]*>([^<]*)<\/text>/g)].map((m) => ({
+    y: Number(m[1]),
+    txt: m[2].trim(),
+  }))
+  // Solo las etiquetas de la columna del actor: las de los óvalos van mucho
+  // más a la derecha, y sin este filtro el rótulo acababa siendo un caso de uso.
+  const etiquetas = [
+    ...svg.matchAll(/<foreignObject\b[^>]*\bx="([-\d.]+)"[^>]*\by="([-\d.]+)"[^>]*>([\s\S]*?)<\/foreignObject>/g),
+  ]
+    .map((m) => ({ x: Number(m[1]), y: Number(m[2]), txt: m[3].replace(/<[^>]*>/g, '').trim() }))
+    .filter((e) => e.x < 120)
+
+  const MARGEN_SUP = 12
+  const MARGEN_INF = 48 // deja sitio al nombre del actor sin invadir el bloque siguiente
+  const MARGEN_DER = 16
+
+  return marcos.map((b) => {
+    const titulo = textos.find((t) => t.y > b.y && t.y < b.y + 34)?.txt ?? ''
+    // El actor va a la izquierda, centrado verticalmente en su bloque.
+    const actor = etiquetas
+      .filter((e) => e.y > b.y && e.y < b.y + b.h + MARGEN_INF)
+      .sort((p, q) => Math.abs(p.y - (b.y + b.h / 2)) - Math.abs(q.y - (b.y + b.h / 2)))[0]
+    // También en horizontal: un bloque angosto dentro del ancho del diagrama
+    // completo dejaría media hoja en blanco y el texto ilegible de pequeño.
+    const ancho = Number.isFinite(b.x) && Number.isFinite(b.w) ? b.x + b.w + MARGEN_DER : d.w
+    const alto = b.h + MARGEN_SUP + MARGEN_INF
+    return {
+      svg: svg.replace(
+        /viewBox="[^"]*"/,
+        `viewBox="${d.x} ${b.y - MARGEN_SUP} ${ancho} ${alto}"`,
+      ),
+      w: ancho,
+      h: alto,
+      parte: 0,
+      total: 1,
+      titulo: [titulo, actor?.txt].filter(Boolean).join(' - '),
+    }
+  })
+}
+
+function prepararFigura(svg, { porBloques = false } = {}) {
   const claro = aclararSvg(svg)
-  return trocear(claro).map((t) => {
+  const partes = (porBloques && partirPorBloques(claro)) || trocear(claro)
+  return partes.map((t) => {
     const d = t.w ? { w: t.w, h: t.h } : dimensionesNativas(t.svg) ?? { w: 800, h: 600 }
     // Un SVG en línea no es un elemento reemplazado: max-height lo aplasta en
     // vez de reducirlo en proporción. El tamaño lo fija un marco con
@@ -364,7 +442,7 @@ const TIPOS = [
         `Entre esos elementos se dan tres tipos de relaciones. La asociación, trazada del actor al caso de uso, indica que el actor lleva a cabo esa funcionalidad. La relación de inclusión, marcada con el estereotipo &lt;&lt;include&gt;&gt;, se da cuando un caso de uso incorpora obligatoriamente el comportamiento de otro. La relación de extensión, marcada con &lt;&lt;extend&gt;&gt;, señala que un caso de uso amplía o especializa a otro en circunstancias determinadas.`,
       ),
       p(
-        `La Figura 1 presenta el diagrama de casos de uso del sistema. Dada su extensión, se muestra en secciones consecutivas. Los actores identificados son el administrador, el cliente, el visitante público y los sistemas externos que actúan sin intervención humana, como el planificador de tareas programadas y la pasarela de pagos. Su inclusión como actores obedece a que inician casos de uso por su cuenta: la técnica no exige que un actor sea una persona, sino una entidad externa a la frontera del sistema.`,
+        `Las figuras siguientes presentan el diagrama de casos de uso del sistema, una por subsistema: cada figura muestra la frontera de un módulo, los casos de uso que contiene y el actor que los ejecuta. Se presentan por separado, y no como un único diagrama, porque el conjunto completo no cabe en una hoja con un tamaño de letra legible; la lectura conjunta se obtiene recorriéndolas en orden. Los actores identificados son el administrador, el cliente, el visitante público y los sistemas externos que actúan sin intervención humana, como el planificador de tareas programadas y la pasarela de pagos. Su inclusión como actores obedece a que inician casos de uso por su cuenta: la técnica no exige que un actor sea una persona, sino una entidad externa a la frontera del sistema.`,
       ),
     ],
   },
@@ -521,13 +599,20 @@ const cachePrep = new Map()
 function figurasDe(porTipo, clave) {
   if (!cachePrep.has(clave)) {
     const lista = (porTipo[clave] ?? []).flatMap((f, i) =>
-      prepararFigura(f.svg).map((tr) => ({
+      prepararFigura(f.svg, { porBloques: clave === 'casos-de-uso' }).map((tr, j) => ({
         ...tr,
-        titulo: f.titulo,
-        desc: f.desc,
-        id: `${clave}-${i}-${tr.parte}`,
+        // El corte por bloques trae su propio rótulo (el subsistema y su
+        // actor); el resto hereda el título de la sección del sitio.
+        titulo: tr.titulo || f.titulo,
+        desc: tr.titulo ? '' : f.desc,
+        id: `${clave}-${i}-${j}-${tr.parte}`,
       })),
     )
+    // Los bloques se recortan a su propio ancho, así que llevarlos todos al
+    // ancho de la caja de texto ampliaría más el diagrama más pequeño. La
+    // fracción los devuelve a una escala común: se comparan entre sí.
+    const anchoMax = Math.max(...lista.map((f) => f.w || 0), 1)
+    for (const f of lista) f.frac = f.w ? Math.max(0.35, f.w / anchoMax) : 1
     cachePrep.set(clave, lista)
   }
   return cachePrep.get(clave)
@@ -592,17 +677,17 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
       // todo el alto disponible o el corte no habría servido de nada.
       const alta = f.ratio > 1.15 || f.total > 1
       return `<figure class="fig ${alta ? 'alta' : ''}">
-        <p class="fig-num" style="text-indent:0${alta ? ';page-break-before:always' : ''}">${rotulo}</p>
-        <p class="fig-tit" style="text-indent:0"><i>${esc(titulo)}</i></p>
+        <p class="fig-num" style="text-indent:0;page-break-after:avoid${alta ? ';page-break-before:always' : ''}">${rotulo}</p>
+        <p class="fig-tit" style="text-indent:0;page-break-after:avoid"><i>${esc(titulo)}</i></p>
         <div class="lienzo">${
           pngs
             ? (() => {
                 // Word necesita las dos medidas en centímetros: con solo el
                 // ancho escala la imagen a su tamaño en píxeles y desborda.
-                const ancho = Math.min(16.5, (alta ? 19 : 15.5) * Number(f.ar))
+                const ancho = Math.min(16.5 * (f.frac ?? 1), (alta ? 19 : 15.5) * Number(f.ar))
                 return `<img src="${pngs[f.id]}" style="width:${ancho.toFixed(2)}cm;height:${(ancho / Number(f.ar)).toFixed(2)}cm">`
               })()
-            : `<div class="marco" style="--ar:${f.ar}">${f.svg}</div>`
+            : `<div class="marco" style="--ar:${f.ar};--frac:${(f.frac ?? 1).toFixed(3)}">${f.svg}</div>`
         }</div>
         ${nota}
       </figure>`
@@ -685,10 +770,10 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
   .fig-tit { margin-bottom: 0.4em; }
   .fig .nota { margin-top: 0.4em; font-size: 11pt; }
   .lienzo { width: 100%; display: flex; justify-content: center; }
-  .marco { width: min(100%, calc(15.5cm * var(--ar))); aspect-ratio: var(--ar); }
+  .marco { width: min(calc(100% * var(--frac, 1)), calc(15.5cm * var(--ar))); aspect-ratio: var(--ar); }
   .marco svg { width: 100%; height: 100%; display: block; }
   .fig.alta { page-break-before: always; }
-  .fig.alta .marco { width: min(100%, calc(19cm * var(--ar))); }
+  .fig.alta .marco { width: min(calc(100% * var(--frac, 1)), calc(19cm * var(--ar))); }
 
   .refs p { text-indent: 0; padding-left: 1.27cm; text-indent: -1.27cm; }
 </style></head><body>
