@@ -127,7 +127,7 @@ async function extraer(browser) {
         if (svg.closest('nav, header, footer, a, button')) continue
         if (svg.getAttribute('aria-hidden') === 'true') continue // muestras de notación
         const r = svg.getBoundingClientRect()
-        if (r.width < 260 || r.height < 120) continue
+        if (r.width < 150 || r.height < 120) continue
         const sec = svg.closest('section') || svg.parentElement?.parentElement
         const h = sec?.querySelector('h2, h1')
         const ps = sec ? [...sec.querySelectorAll('p')].map((p) => p.textContent.trim()) : []
