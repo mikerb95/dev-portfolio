@@ -5,17 +5,24 @@ import { serverEnv } from '../lib/env'
 import { isLocalDbUrl } from '../lib/db-target'
 import * as schema from './schema'
 
-// Vía `serverEnv` y no `import.meta.env` a secas: con la segunda, el destino de
-// la base queda clavado a lo que diga el .env y no hay forma de apuntar el dev
-// server a la sqld local sin editar el archivo. Poder hacer
-// `TURSO_DATABASE_URL=http://127.0.0.1:8080 npm run dev` es justo lo que evita
-// que una prueba de carga contra localhost acabe leyendo de producción.
-const realUrl = serverEnv('TURSO_DATABASE_URL') as string
+/**
+ * Destino de la base, con `process.env` GANANDO a `import.meta.env`, al revés
+ * que `serverEnv`. La inversión es deliberada y solo aplica aquí: el dev server
+ * de Vite ya volcó el .env en `import.meta.env`, así que con la precedencia
+ * normal una variable puesta en la línea de comandos no tendría ningún efecto y
+ * `npm run dev:carga` seguiría hablando con Turso. Poder redirigir la base sin
+ * editar el .env es lo que hace posible que las pruebas de carga corran contra
+ * la sqld local (ver lib/db-target.ts).
+ */
+const dbEnv = (name: string): string | undefined =>
+  (typeof process !== 'undefined' ? process.env?.[name] : undefined) || serverEnv(name)
+
+const realUrl = dbEnv('TURSO_DATABASE_URL') as string
 
 const realDb = drizzle(
   createClient({
     url: realUrl,
-    authToken: serverEnv('TURSO_AUTH_TOKEN'),
+    authToken: dbEnv('TURSO_AUTH_TOKEN'),
   }),
   { schema }
 )
@@ -28,10 +35,10 @@ export const realDbIsLocal = isLocalDbUrl(realUrl)
 // forma de alcanzar la base real, ni por un `where` olvidado ni por una ruta
 // nueva que nadie recordó filtrar. Si no está configurada, la demo no existe
 // (mismo patrón no-op que notify.ts): degradar es preferible a improvisar.
-const demoUrl = serverEnv('TURSO_DEMO_URL')
+const demoUrl = dbEnv('TURSO_DEMO_URL')
 const demoDb = demoUrl
   ? drizzle(
-      createClient({ url: demoUrl, authToken: serverEnv('TURSO_DEMO_AUTH_TOKEN') }),
+      createClient({ url: demoUrl, authToken: dbEnv('TURSO_DEMO_AUTH_TOKEN') }),
       { schema }
     )
   : null

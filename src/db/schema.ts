@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 export const clients = sqliteTable('clients', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -347,6 +347,34 @@ export const monitorChecks = sqliteTable('monitor_checks', {
   // por monitor ("último sondeo", "cuántos en 24h"), y ahí el compuesto no
   // sirve - `at` no es su columna líder. Verificado con EXPLAIN QUERY PLAN.
   atIdx: index('monitor_checks_at_idx').on(t.at),
+}))
+
+// Resumen diario de sondeos: una fila por monitor y día, escrita por el cron
+// `/api/cron/monitor-rollup`. Es lo que lee /status en vez de agregar 90 días
+// de `monitor_checks` en cada render (200k filas por visita, y la cuota de
+// lecturas de Turso agotada en ago 2026 cuando una prueba de carga le pegó sin
+// el cache del CDN por delante). Los índices de monitor_checks arreglaron la
+// BÚSQUEDA en jul 2026; esto arregla el VOLUMEN, que era lo que quedaba.
+//
+// `latency_hist` es un histograma de latencias en JSON (ver lib/monitor-rollup.ts):
+// total/ok/sum_ms se pueden sumar entre días, pero un percentil no, y el p95 de
+// 30 días tiene que salir de algo aditivo.
+export const monitorDaily = sqliteTable('monitor_daily', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  monitorId: integer('monitor_id').notNull().references(() => monitors.id, { onDelete: 'cascade' }),
+  // 'YYYY-MM-DD' en UTC, la misma clave que `date(at,'unixepoch')`.
+  day: text('day').notNull(),
+  total: integer('total').notNull(),
+  ok: integer('ok').notNull(),
+  sumMs: integer('sum_ms').notNull(),
+  latencyHist: text('latency_hist').notNull(),
+  computedAt: integer('computed_at', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  // UNIQUE y no un índice normal: el cron recalcula los últimos días en cada
+  // pasada y necesita un upsert, no acumular una fila por ejecución.
+  monitorDayIdx: uniqueIndex('monitor_daily_monitor_day_idx').on(t.monitorId, t.day),
+  // /status filtra por ventana de días sin fijar monitor.
+  dayIdx: index('monitor_daily_day_idx').on(t.day),
 }))
 
 // Caídas agrupadas: del primer fallo al primer éxito posterior. Da el "informe de caídas".
