@@ -2,11 +2,11 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 
-const paquetes = `flowchart TB
+const paquetes = `flowchart LR
     MW["src/middleware.ts<br/>clasificador · rate limit · blocklist · chaos · headers"]
 
     subgraph Presentacion["Presentación"]
-      direction LR
+      direction TB
       PAGES["src/pages/*.astro<br/>admin · portal · lab · notes · cv"]
       API["src/pages/api/*<br/>admin · portal · auth · cron · payments"]
     end
@@ -14,7 +14,7 @@ const paquetes = `flowchart TB
     LIB["src/lib/*<br/>auth · payments · notify · monitors · demo<br/>(payments-state.ts es isomorfo, sin dep. de db/)"]
 
     subgraph Transversales["Módulos transversales"]
-      direction LR
+      direction TB
       SEC["lib/security/<br/>micro-SIEM: clasificador, ratelimit, blocklist"]
       PORTAL["lib/portal/<br/>sesión y auth del portal cliente"]
       LAB["lib/lab/<br/>chaos · k6 · SAST (módulo LAB)"]
