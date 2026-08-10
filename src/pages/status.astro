@@ -47,26 +47,66 @@ const mons = await db
   .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
   .orderBy(monitors.name)
 
-// Agregado diario por SQL: monitores × días en vez de un row por check.
-const dayExpr = sql<string>`date(${monitorChecks.at}, 'unixepoch')`
-const daily = await db
+// Resumen diario precalculado por `/api/cron/monitor-rollup`: monitores × días,
+// unas 720 filas. La versión anterior agregaba `monitor_checks` aquí mismo, y
+// eso son ~200.000 filas leídas POR VISITA. Con el cache de 300s del CDN por
+// delante casi nunca se notaba; la primera prueba de carga sin CDN agotó la
+// cuota de lecturas de Turso (ago 2026).
+const cerrados = await db
+  .select({
+    monitorId: monitorDaily.monitorId,
+    day: monitorDaily.day,
+    total: monitorDaily.total,
+    ok: monitorDaily.ok,
+    sumMs: monitorDaily.sumMs,
+    latencyHist: monitorDaily.latencyHist,
+  })
+  .from(monitorDaily)
+  .where(gte(monitorDaily.day, since.toISOString().slice(0, 10)))
+
+// El día EN CURSO no tiene fila todavía (el cron solo cierra días completos),
+// así que se agrega en vivo. Es un solo día: ~2.300 filas, y el índice `at` lo
+// resuelve sin escanear la tabla.
+const hoyInicio = startOfDayUTC(now)
+const checksHoy = await db
   .select({
     monitorId: monitorChecks.monitorId,
-    day: dayExpr,
-    total: sql<number>`count(*)`,
-    ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
-    sumMs: sql<number>`coalesce(sum(${monitorChecks.responseMs}), 0)`,
+    at: monitorChecks.at,
+    ok: monitorChecks.ok,
+    responseMs: monitorChecks.responseMs,
   })
   .from(monitorChecks)
-  .where(gte(monitorChecks.at, since))
-  .groupBy(monitorChecks.monitorId, dayExpr)
+  .where(gte(monitorChecks.at, new Date(hoyInicio)))
 
-type Bucket = { day: string; total: number; ok: number; sumMs: number }
+const aggHoy = aggregateChecks(
+  checksHoy.map<CheckRow>((r) => ({
+    monitorId: r.monitorId,
+    at: r.at.getTime(),
+    ok: Boolean(r.ok),
+    responseMs: r.responseMs,
+  })),
+)
+
+type Bucket = { day: string; total: number; ok: number; sumMs: number; hist: Hist }
 const byMonitor = new Map<number, Map<string, Bucket>>()
-for (const row of daily) {
-  const map = byMonitor.get(row.monitorId) ?? new Map<string, Bucket>()
-  map.set(row.day, row)
-  byMonitor.set(row.monitorId, map)
+const guardar = (monitorId: number, bucket: Bucket) => {
+  const map = byMonitor.get(monitorId) ?? new Map<string, Bucket>()
+  map.set(bucket.day, bucket)
+  byMonitor.set(monitorId, map)
+}
+for (const row of cerrados) {
+  guardar(row.monitorId, {
+    day: row.day,
+    total: row.total,
+    ok: row.ok,
+    sumMs: row.sumMs,
+    hist: parseHist(row.latencyHist),
+  })
+}
+// Después de los cerrados: si el cron ya hubiera escrito el día de hoy, la
+// versión en vivo es la más fresca y debe ganar.
+for (const agg of aggHoy) {
+  guardar(agg.monitorId, { day: agg.day, total: agg.total, ok: agg.ok, sumMs: agg.sumMs, hist: agg.hist })
 }
 
 // Últimos 90 días como claves ISO (UTC), del más antiguo al más reciente.
@@ -79,22 +119,16 @@ const sloCutoff = new Date(now - SLO_DAYS * DAY_MS).toISOString().slice(0, 10)
 // Serie de latencia reciente por monitor para la mini-gráfica tipo EKG.
 const latencyByMonitor = await recentLatency(mons.map((m) => m.id))
 
-// p95 de latencia (30d) por monitor: nearest-rank vía window function.
+// p95 de latencia (30d) por monitor, desde los histogramas diarios ya cargados.
 // La media esconde la cola; el p95 es lo que de verdad sienten los usuarios lentos.
-const p95Cutoff = Math.floor((now - SLO_DAYS * DAY_MS) / 1000)
-const p95Rows = await db.all<{ monitor_id: number; p95: number }>(sql`
-  select monitor_id, response_ms as p95 from (
-    select
-      monitor_id,
-      response_ms,
-      row_number() over (partition by monitor_id order by response_ms) as rn,
-      count(*) over (partition by monitor_id) as cnt
-    from monitor_checks
-    where at >= ${p95Cutoff} and response_ms is not null
-  )
-  where rn = max(1, cast(0.95 * cnt as integer) + (0.95 * cnt > cast(0.95 * cnt as integer)))
-`)
-const p95ByMonitor = new Map<number, number>(p95Rows.map((r) => [r.monitor_id, r.p95]))
+//
+// Antes salía de una window function con nearest-rank sobre `monitor_checks`:
+// exacta, pero obliga a ordenar la partición entera de 30 días en cada visita.
+// El histograma da un p95 aproximado (el error está acotado por el ancho del
+// cubo donde cae, ver lib/monitor-rollup.ts) sin leer una sola fila más de las
+// que la página ya necesitaba. Para un número que se pinta redondeado a
+// milisegundos en una tarjeta de estado, esa precisión sobra.
+const p95ByMonitor = new Map<number, number>()
 
 const cards = mons.map((m) => {
   const buckets = byMonitor.get(m.id) ?? new Map<string, Bucket>()
