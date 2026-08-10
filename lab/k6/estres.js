@@ -40,6 +40,26 @@ const erroresRecuperacion = new Rate('recuperacion_errores')
  * Se mide en tramos de 10 s. El primero que baje a latencia normal es el
  * tiempo de recuperación.
  */
+/**
+ * Escalones del quiebre, para poder decir a QUÉ ritmo colapsa y no solo que
+ * colapsa. Cada uno dura 30 s y se mide por separado: sin esto, la media de
+ * toda la fase mezcla el escalón que iba bien con el que ya estaba muerto y el
+ * punto de quiebre queda invisible entre los dos.
+ */
+const ESCALONES = [
+  { desdeS: 0, rps: 50 },
+  { desdeS: 30, rps: 100 },
+  { desdeS: 60, rps: 200 },
+  { desdeS: 90, rps: 300 },
+  { desdeS: 120, rps: 300 },
+]
+const porEscalon = Object.fromEntries(
+  ESCALONES.map((e) => [e.desdeS, {
+    lat: new Trend(`quiebre_e${e.desdeS}`, true),
+    err: new Rate(`quiebre_e${e.desdeS}_err`),
+  }]),
+)
+
 const TRAMOS = [0, 15, 30, 45, 60, 75, 90, 105]
 const porTramo = Object.fromEntries(
   TRAMOS.map((t) => [t, new Trend(`recuperacion_t${t}`, true)]),
