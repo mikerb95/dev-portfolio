@@ -59,7 +59,10 @@ const navEntries: NavEntry[] = [
   {
     label: t.nav.servicios,
     id: "servicios",
-    items: [item("/paginas-web", t.nav.diseno), item("/capacitacion-ia", t.nav.capacitacion)],
+    items: [
+      item("/paginas-web", t.nav.diseno),
+      item("/capacitacion-ia", t.nav.capacitacion, "/capacitacion"),
+    ],
   },
   item("/lab", t.nav.lab),
   item("/notes", t.nav.notes),
