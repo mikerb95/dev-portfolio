@@ -269,15 +269,35 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
     class="hidden lg:hidden glass-strong rounded-3xl mt-2 p-3 flex flex-col gap-1"
   >
     {
-      navLinks.map((link) => {
-        const isActive = currentPath.startsWith(link.canonical);
+      /* En móvil el desplegable no aporta: el panel ya es una lista vertical y
+         esconder dos enlaces detrás de un toque solo añade fricción. El grupo
+         se muestra como una sección con rótulo. */
+      navEntries.map((entry) => {
+        if (!esGrupo(entry)) {
+          return (
+            <a
+              href={entry.href}
+              class={`px-4 py-2.5 rounded-full text-[13px] font-mono transition-colors hover:bg-white/5 ${estaActivo(entry) ? "text-cyan" : "text-ink-100"}`}
+            >
+              {entry.label}
+            </a>
+          );
+        }
+
         return (
-          <a
-            href={link.href}
-            class={`px-4 py-2.5 rounded-full text-[13px] font-mono transition-colors hover:bg-white/5 ${isActive ? "text-cyan" : "text-ink-100"}`}
-          >
-            {link.label}
-          </a>
+          <div class="flex flex-col gap-1">
+            <div class="px-4 pt-2 pb-1 text-[10px] font-mono uppercase tracking-[.22em] text-ink-300">
+              {entry.label}
+            </div>
+            {entry.items.map((sub) => (
+              <a
+                href={sub.href}
+                class={`px-4 py-2.5 rounded-full text-[13px] font-mono transition-colors hover:bg-white/5 ${estaActivo(sub) ? "text-cyan" : "text-ink-100"}`}
+              >
+                {sub.label}
+              </a>
+            ))}
+          </div>
         );
       })
     }
