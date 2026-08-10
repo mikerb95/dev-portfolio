@@ -55,12 +55,17 @@ export const options = {
       timeUnit: '1s',
       preAllocatedVUs: 200,
       maxVUs: 3000,
+      // Los escalones se fijaron DESPUÉS de conocer la capacidad real medida en
+      // `carga.js` (~62 req/s sostenidas). Apuntar a 4000 req/s, como pedía el
+      // plan original, no encuentra el punto de quiebre: lo pasa de largo 60
+      // veces y lo único que mide después es el tamaño de una cola infinita.
+      // Cinco veces la capacidad basta para romperlo y deja ver la transición.
       stages: [
-        { duration: '30s', target: 200 },   // 200 req/s
-        { duration: '30s', target: 600 },
-        { duration: '30s', target: 1200 },
-        { duration: '30s', target: 2400 },
-        { duration: '30s', target: 4000 },  // muy por encima de lo esperable
+        { duration: '30s', target: 50 },   // por debajo de la capacidad
+        { duration: '30s', target: 100 },  // ~1,6x
+        { duration: '30s', target: 200 },  // ~3x
+        { duration: '30s', target: 300 },  // ~5x
+        { duration: '30s', target: 300 },  // meseta en saturación
       ],
       tags: { fase: 'quiebre' },
       exec: 'apretar',

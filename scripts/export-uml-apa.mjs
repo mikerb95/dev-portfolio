@@ -158,17 +158,28 @@ async function extraerFichas(browser) {
     [...document.querySelectorAll('section')]
       .filter((s) => s.querySelector('table'))
       .map((s) => {
+        const limpio = (n) => (n.innerText ?? n.textContent ?? '').replace(/\s+/g, ' ').trim()
         const filas = []
         for (const tr of s.querySelectorAll(':scope > table > tbody > tr')) {
           const celdas = [...tr.children]
           if (celdas.length < 2) continue
-          const etiqueta = celdas[0].textContent.trim()
-          // Las listas de pasos se conservan como líneas sueltas para poder
-          // numerarlas en la tabla del documento.
-          const anidada = celdas[1].querySelectorAll('li, tbody > tr')
-          const valor = anidada.length
-            ? [...anidada].map((n) => n.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean)
-            : [celdas[1].textContent.replace(/\s+/g, ' ').trim()]
+          const etiqueta = limpio(celdas[0])
+          const anidada = [...celdas[1].querySelectorAll('li, tbody > tr')]
+          let valor
+          if (anidada.length) {
+            valor = anidada
+              .map((n) => {
+                // Los pasos vienen en una tabla anidada de dos columnas: la
+                // primera es el número, que aquí lo pone la lista ordenada.
+                const cols = [...n.children]
+                const texto = cols.length > 1 ? limpio(cols[cols.length - 1]) : limpio(n)
+                return texto
+              })
+              // La fila de cabecera de esa tabla anidada no es un paso.
+              .filter((t) => t && !/^(paso|acción|accion)$/i.test(t))
+          } else {
+            valor = [limpio(celdas[1])]
+          }
           if (etiqueta) filas.push({ etiqueta, valor })
         }
         return filas
