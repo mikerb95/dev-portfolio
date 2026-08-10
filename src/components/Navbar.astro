@@ -37,13 +37,20 @@ const languageHref =
 // `localizedHref` y no `localizePath`: la capacitación existe solo en español,
 // y el primero cae al español cuando no hay traducción mientras el segundo
 // publicaría un /en/ que da 404.
-type NavItem = { canonical: string; label: string; href: string };
+type NavItem = { canonical: string; label: string; href: string; match: string };
 type NavEntry = NavItem | { label: string; id: string; items: NavItem[] };
 
-const item = (canonical: string, label: string): NavItem => ({
+/**
+ * `match` es el prefijo que enciende el enlace, y por defecto es la propia
+ * ruta. Se separa porque una entrada puede representar más de una ruta: la de
+ * capacitación apunta a la landing, pero también tiene que quedar encendida
+ * mientras el visitante recorre el banco de recursos en /capacitacion.
+ */
+const item = (canonical: string, label: string, match = canonical): NavItem => ({
   canonical,
   label,
   href: localizedHref(canonical, locale),
+  match,
 });
 
 const navEntries: NavEntry[] = [
