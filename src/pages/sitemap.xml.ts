@@ -9,7 +9,12 @@ import { LOCALES, hasRowTranslation, localizePath, translatedAlternates } from '
 // (feed de GitHub en tiempo real), sin contenido indexable ni intención de
 // búsqueda. Lleva noindex en log.astro; mantenerla fuera del sitemap evita
 // anunciar thin content y diluir la calidad del sitio. Ver seo.MD (hallazgo #9).
-const STATIC_PATHS = ['/', '/tools', '/engineering', '/architecture', '/lab', '/demo', '/status', '/notes', '/security', '/certifications', '/contact']
+//
+// '/capacitacion' y '/capacitacion-ia' entran porque su función es que las
+// encuentren: el banco público es captación, no solo entrega. Lo que NO entra
+// es '/capacitacion/acceso' (utilitaria, con noindex) ni ningún recurso
+// marcado con código, que además lleva noindex por página.
+const STATIC_PATHS = ['/', '/tools', '/engineering', '/architecture', '/lab', '/demo', '/status', '/notes', '/security', '/certifications', '/contact', '/capacitacion', '/capacitacion-ia']
 
 export const GET: APIRoute = async ({ site }) => {
   const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')
