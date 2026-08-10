@@ -728,7 +728,7 @@ function figurasDe(porTipo, clave) {
   return cachePrep.get(clave)
 }
 
-function construirHtml(porTipo, paginasToc, pngs = null) {
+function construirHtml(porTipo, paginasToc, pngs = null, fichas = []) {
   let nFig = 0
   const toc = []
   const bloques = []
@@ -922,6 +922,21 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
   .fig.alta .marco { width: min(calc(100% * var(--frac, 1)), calc(19cm * var(--ar))); }
 
   .refs p { text-indent: 0; padding-left: 1.27cm; text-indent: -1.27cm; }
+
+  /* Tablas APA: sin líneas verticales, solo los filetes horizontales que
+     separan las filas, y contenido a interlineado sencillo para que la ficha
+     de un caso de uso quepa en una página. */
+  .tabla-apa { margin: 1.2em 0 1.6em; page-break-inside: avoid; }
+  .tabla-apa table { width: 100%; border-collapse: collapse; font-size: 11pt; }
+  .tabla-apa th, .tabla-apa td {
+    text-align: left; vertical-align: top; line-height: 1.35;
+    padding: 0.32em 0.5em 0.32em 0;
+    border-top: 0.5pt solid #000; border-bottom: 0.5pt solid #000;
+  }
+  .tabla-apa th { width: 4.6cm; font-weight: bold; }
+  .tabla-apa ol { margin: 0; padding-left: 1.1em; }
+  .tabla-apa li { line-height: 1.35; }
+  .tab-tit { margin-bottom: 0.35em; }
 </style></head><body>
 
 <div class="portada">
@@ -1069,18 +1084,19 @@ function ajustarDocx(origen, destino) {
 console.log('Extrayendo diagramas de', BASE)
 const browser = await chromium.launch()
 const porTipo = await extraer(browser)
+const fichas = await extraerFichas(browser)
 
 const tmp = mkdtempSync(join(tmpdir(), 'uml-apa-'))
 const borrador = join(tmp, 'borrador.pdf')
 
 console.log('Primera pasada (sin numerar la tabla de contenido)...')
-const html1 = construirHtml(porTipo, null)
+const html1 = construirHtml(porTipo, null, null, fichas)
 await imprimir(browser, html1, borrador)
 
 const mapa = paginasDeMarcas(borrador)
 
 console.log('Segunda pasada (con paginación real)...')
-const html2 = construirHtml(porTipo, mapa)
+const html2 = construirHtml(porTipo, mapa, null, fichas)
 writeFileSync(join(tmp, 'documento.html'), html2)
 await imprimir(browser, html2, SALIDA)
 
@@ -1091,7 +1107,7 @@ await browser.close()
 // La numeración de la tabla de contenido del PDF sirve de referencia, pero en
 // Word el reflujo la invalida: allí el índice va sin números y se actualiza
 // desde el propio Word si se necesita.
-const htmlWord = construirHtml(porTipo, null, rutas)
+const htmlWord = construirHtml(porTipo, null, rutas, fichas)
 const htmlWordPath = join(tmp, 'documento-word.html')
 writeFileSync(htmlWordPath, htmlWord)
 
