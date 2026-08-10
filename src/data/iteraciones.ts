@@ -685,7 +685,7 @@ export const ITERACIONES: Iteracion[] = [
     id: "backend",
     fase: "Fundación · Backend",
     nombre: "Backend de producción y contabilidad",
-    rango: "Ene – Feb 2026",
+    rango: "Ene–Feb 2026",
     ghSince: "2026-01-01",
     ghUntil: "2026-03-01",
     commits: 364,
