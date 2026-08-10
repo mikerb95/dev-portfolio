@@ -214,14 +214,17 @@ function dimensionesNativas(svg) {
 // Una figura mucho más alta que ancha, encogida hasta caber en una página, se
 // vuelve ilegible. Se corta en franjas horizontales del mismo SVG (mismo
 // dibujo, distinto viewBox) con un solape que evita partir una caja en dos.
-const RATIO_PAGINA = 21 / 16.5 // caja útil de la hoja carta con márgenes APA
+const RATIO_PAGINA = 19 / 16.5 // caja de una figura a hoja completa (alto/ancho)
+// Hasta este alargamiento la figura se escala por la altura y sigue siendo
+// legible; más allá, el ancho resultante sería una columna demasiado angosta.
+const RATIO_MAXIMO = 2.2
 const SOLAPE = 40
 
 function trocear(svg) {
   const d = dimensionesNativas(svg)
   if (!d) return [{ svg, parte: 0, total: 1 }]
   const ratio = d.h / d.w
-  if (ratio <= RATIO_PAGINA * 1.05) return [{ svg, parte: 0, total: 1 }]
+  if (ratio <= RATIO_MAXIMO) return [{ svg, parte: 0, total: 1 }]
 
   const total = Math.ceil(ratio / RATIO_PAGINA)
   const alto = d.h / total
@@ -533,7 +536,9 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
 
   const seccion = (s) => {
     const id = registrar(s.nivel ?? 1, s.titulo)
-    return `<section class="seccion"><h1 id="${id}">${s.titulo}${marca(id)}</h1>${s.cuerpo.join('\n')}</section>`
+    // El salto va en línea y no solo en la hoja de estilos: al importar el
+    // HTML, Word conserva el atributo style pero descarta las reglas de clase.
+    return `<section class="seccion" style="page-break-before:always"><h1 id="${id}">${s.titulo}${marca(id)}</h1>${s.cuerpo.join('\n')}</section>`
   }
 
   for (const s of SECCIONES) bloques.push(seccion(s))
@@ -545,7 +550,9 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
       parteActual = t.parte
       traeParte = true
       const id = registrar(1, t.parte)
-      bloques.push(`<h1 id="${id}" class="parte">${t.parte}${marca(id)}</h1>`)
+      bloques.push(
+        `<h1 id="${id}" class="parte" style="page-break-before:always">${t.parte}${marca(id)}</h1>`,
+      )
     }
     const id = registrar(2, t.titulo)
     const figuras = figurasDe(porTipo, t.clave)
@@ -569,7 +576,8 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
       const nota = f.desc && f.parte <= 1 ? `<p class="nota"><i>Nota.</i> ${esc(f.desc)}</p>` : ''
       // Las figuras troceadas van a hoja propia: cada sección debe aprovechar
       // todo el alto disponible o el corte no habría servido de nada.
-      return `<figure class="fig ${f.ratio > 1.15 || f.total > 1 ? 'alta' : ''}">
+      const alta = f.ratio > 1.15 || f.total > 1
+      return `<figure class="fig ${alta ? 'alta' : ''}"${alta ? ' style="page-break-before:always"' : ''}>
         <p class="fig-num">${rotulo}</p>
         <p class="fig-tit"><i>${esc(titulo)}</i></p>
         <div class="lienzo">${
@@ -584,7 +592,7 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
     // El título de la parte y el primer diagrama que agrupa comparten hoja:
     // una página con tres palabras y nada más es papel desperdiciado.
     bloques.push(
-      `<section class="seccion${traeParte ? ' sigue' : ''}"><h2 id="${id}">${t.titulo}${marca(id)}</h2>${t.cuerpo.join('\n')}${html.join('\n')}</section>`,
+      `<section class="seccion${traeParte ? ' sigue' : ''}"${traeParte ? '' : ' style="page-break-before:always"'}><h2 id="${id}">${t.titulo}${marca(id)}</h2>${t.cuerpo.join('\n')}${html.join('\n')}</section>`,
     )
     traeParte = false
   }
@@ -593,7 +601,7 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
 
   const idRef = registrar(1, 'Referencias')
   bloques.push(
-    `<section class="seccion"><h1 id="${idRef}">Referencias${marca(idRef)}</h1>
+    `<section class="seccion" style="page-break-before:always"><h1 id="${idRef}">Referencias${marca(idRef)}</h1>
      <div class="refs">${REFERENCIAS.map((r) => `<p>${r}</p>`).join('')}</div></section>`,
   )
 
@@ -744,13 +752,67 @@ async function rasterizar(browser, porTipo, dir) {
            </div></body></html>`,
         { waitUntil: 'networkidle' },
       )
-      const ruta = join(dir, `${f.id}.png`)
-      await page.locator('#c').screenshot({ path: ruta })
-      rutas[f.id] = `${f.id}.png` // relativa: LibreOffice las incrusta al convertir
+      // En data URI, no como archivo suelto: con rutas relativas LibreOffice
+      // enlaza las imágenes en vez de incrustarlas y el .docx llega vacío al
+      // moverlo de carpeta.
+      const buf = await page.locator('#c').screenshot()
+      rutas[f.id] = `data:image/png;base64,${buf.toString('base64')}`
     }
   }
   await page.close()
   return rutas
+}
+
+// LibreOffice escribe el .docx en A4 y sin encabezado. Dos cosas que APA no
+// perdona (hoja carta y número de página arriba a la derecha) y que se
+// arreglan tocando el XML del paquete, no volviendo a maquetar.
+function ajustarDocx(origen, destino) {
+  const dir = mkdtempSync(join(tmpdir(), 'docx-'))
+  execFileSync('unzip', ['-q', origen, '-d', dir])
+
+  const rutaDoc = join(dir, 'word', 'document.xml')
+  let doc = readFileSync(rutaDoc, 'utf8')
+  doc = doc.replace(/<w:pgSz[^/]*\/>/g, '<w:pgSz w:w="12240" w:h="15840"/>')
+  doc = doc.replace(
+    /<w:pgMar[^/]*\/>/g,
+    '<w:pgMar w:left="1440" w:right="1440" w:gutter="0" w:header="720" w:top="1440" w:footer="720" w:bottom="1440"/>',
+  )
+  doc = doc.replace(
+    '<w:type w:val="nextPage"/>',
+    '<w:type w:val="nextPage"/><w:headerReference w:type="default" r:id="rIdHdrApa"/>',
+  )
+  writeFileSync(rutaDoc, doc)
+
+  const NS =
+    'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
+  writeFileSync(
+    join(dir, 'word', 'header1.xml'),
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:hdr ${NS}><w:p><w:pPr><w:jc w:val="right"/><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/></w:rPr></w:pPr>
+<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r>
+<w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>
+<w:r><w:fldChar w:fldCharType="end"/></w:r></w:p></w:hdr>`,
+  )
+
+  const rutaRels = join(dir, 'word', '_rels', 'document.xml.rels')
+  writeFileSync(
+    rutaRels,
+    readFileSync(rutaRels, 'utf8').replace(
+      '</Relationships>',
+      '<Relationship Id="rIdHdrApa" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/></Relationships>',
+    ),
+  )
+
+  const rutaCt = join(dir, '[Content_Types].xml')
+  writeFileSync(
+    rutaCt,
+    readFileSync(rutaCt, 'utf8').replace(
+      '</Types>',
+      '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/></Types>',
+    ),
+  )
+
+  execFileSync('zip', ['-q', '-r', '-X', destino, '.'], { cwd: dir })
 }
 
 // ── main ────────────────────────────────────────────────────────────────────
@@ -783,13 +845,23 @@ const htmlWord = construirHtml(porTipo, null, rutas)
 const htmlWordPath = join(tmp, 'documento-word.html')
 writeFileSync(htmlWordPath, htmlWord)
 
+// Sin --infilter, LibreOffice abre el HTML como "documento web" y descarta
+// tamaño de página, márgenes y saltos: hay que forzar el importador de Writer.
 execFileSync(
   'soffice',
-  ['--headless', '--convert-to', 'docx:MS Word 2007 XML', '--outdir', tmp, htmlWordPath],
+  [
+    '--headless',
+    '--infilter=HTML (StarWriter)',
+    '--convert-to',
+    'docx:MS Word 2007 XML',
+    '--outdir',
+    tmp,
+    htmlWordPath,
+  ],
   { stdio: 'ignore' },
 )
 const docxTmp = join(tmp, 'documento-word.docx')
-writeFileSync(SALIDA_DOCX, readFileSync(docxTmp))
+ajustarDocx(docxTmp, SALIDA_DOCX)
 
 const hojas = execFileSync('pdfinfo', [SALIDA], { encoding: 'utf8' }).match(/Pages:\s+(\d+)/)?.[1]
 console.log(`\nPDF:  ${SALIDA} (${hojas} páginas)`)
