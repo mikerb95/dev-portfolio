@@ -123,15 +123,6 @@ const diagramas = [
       +string cause
       +int durationSec
     }
-    class CiRun {
-      +string sha
-      +string branch
-      +string conclusion
-      +int testsPassed
-      +int testsFailed
-      +decimal coveragePct
-      +bool healthOk
-    }
     class Payment {
       +string reference
       +string idempotencyKey
@@ -145,17 +136,6 @@ const diagramas = [
       +bool duplicate
       +bool outOfOrder
       +bool amountMismatch
-    }
-    class ChaosFlag {
-      +string kind
-      +string targetRoute
-      +int param
-      +Date expiresAt
-    }
-    class LabExperiment {
-      +string kind
-      +bool ok
-      +string result
     }
 
     Monitor "1" --> "*" MonitorCheck : registra
@@ -182,18 +162,6 @@ const diagramas = [
       +int count
       +int uniqueIps
     }
-    class BlockedIp {
-      +string ip
-      +string reason
-      +string source
-      +int hits
-      +Date expiresAt
-    }
-    class RateLimitBucket {
-      +string key
-      +int count
-      +Date resetAt
-    }
     class SecurityAnomaly {
       +Date at
       +string kind
@@ -202,34 +170,9 @@ const diagramas = [
       +bool notified
       +bool acknowledged
     }
-    class AdminSession {
-      +string id
-      +string login
-      +string ip
-      +Date lastSeen
-      +Date revokedAt
-    }
 
     SecurityEvent "*" --> "1" SecurityRollup : agrega
     SecurityRollup ..> SecurityAnomaly : detecta baseline`,
-  },
-  {
-    id: 'cv-educacion',
-    titulo: 'CV y educación',
-    nota: 'Sin relaciones: ambas tablas registran telemetría suelta (descargas de CV, progreso de labs) sin foreign keys hacia el resto del schema.',
-    src: `classDiagram
-    class CvDownload {
-      +string deviceHash
-      +string downloadToken
-      +Date downloadedAt
-      +int revisits
-      +Date createdAt
-    }
-    class EducationLabProgress {
-      +string labSlug
-      +bool completed
-      +Date completedAt
-    }`,
   },
 ]
 ---
