@@ -2,10 +2,20 @@
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
 import { db } from '../db'
-import { monitors, monitorChecks, monitorIncidents } from '../db/schema'
+import { monitors, monitorChecks, monitorDaily, monitorIncidents } from '../db/schema'
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm'
 import { computeSloFromCounts, formatMinutes, budgetHealth } from '../lib/slo'
 import { recentLatency } from '../lib/latency'
+import {
+  aggregateChecks,
+  mergeHists,
+  parseHist,
+  quantileFromHist,
+  serializeHist,
+  startOfDayUTC,
+  type CheckRow,
+  type Hist,
+} from '../lib/monitor-rollup'
 
 // Página de status pública. Expone SOLO datos operativos agregados de los
 // monitores activos (nombre, uptime, latencia); nunca URLs internas, errores
