@@ -3,27 +3,27 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 
 const paquetes = `flowchart TB
-    MW["src/middleware.ts<br/>clasificador · rate limit · blocklist · chaos · headers"]
+    MW["src/middleware.ts<br/>guarda de entrada"]
 
     subgraph Presentacion["Presentación"]
       direction LR
-      PAGES["src/pages/*.astro<br/>admin · portal · lab · notes · cv"]
-      API["src/pages/api/*<br/>admin · portal · auth · cron · payments"]
+      PAGES["src/pages/*.astro"]
+      API["src/pages/api/*"]
     end
 
-    LIB["src/lib/*<br/>auth · payments · notify · monitors · demo<br/>(payments-state.ts es isomorfo, sin dep. de db/)"]
+    LIB["src/lib/*<br/>lógica de dominio"]
 
     subgraph Transversales["Módulos transversales"]
       direction LR
-      SEC["lib/security/<br/>micro-SIEM: clasificador, ratelimit, blocklist"]
-      PORTAL["lib/portal/<br/>sesión y auth del portal cliente"]
-      LAB["lib/lab/<br/>chaos · k6 · SAST (módulo LAB)"]
+      SEC["lib/security/<br/>micro-SIEM"]
+      PORTAL["lib/portal/<br/>sesión de cliente"]
+      LAB["lib/lab/<br/>chaos · k6 · SAST"]
     end
 
     subgraph Persistencia["Persistencia"]
       direction LR
-      DB[("src/db/<br/>schema.ts · AsyncLocalStorage por request")]
-      TURSO[("Turso / libSQL<br/>prod y demo, bases físicas distintas")]
+      DB[("src/db/<br/>schema y sesión")]
+      TURSO[("Turso / libSQL<br/>prod y demo")]
     end
 
     MW --> PAGES
