@@ -109,12 +109,17 @@ export function apretar() {
 }
 
 export function soltar() {
+  // El tramo se decide ANTES de pedir, no después. Con el sistema saturado una
+  // petición tarda hasta el timeout, así que clasificarla por el momento en que
+  // RESPONDE la mete siempre en un tramo posterior: la primera corrida dejó los
+  // cinco primeros tramos vacíos y todo amontonado en el último, que es
+  // exactamente la curva que se quería ver, invertida.
+  const seg = Math.floor(exec.instance.currentTestRunDuration / 1000) - INICIO_RECUPERACION
+  const tramo = TRAMOS.reduce((acc, t) => (seg >= t ? t : acc), 0)
+
   const res = pedir(base, rutaAleatoria())
   latenciaRecuperacion.add(res.timings.duration)
   erroresRecuperacion.add(res.status !== 200)
-
-  const seg = Math.floor(exec.instance.currentTestRunDuration / 1000) - INICIO_RECUPERACION
-  const tramo = TRAMOS.reduce((acc, t) => (seg >= t ? t : acc), 0)
   porTramo[tramo]?.add(res.timings.duration)
 
   sleep(1)
