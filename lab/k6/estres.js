@@ -40,7 +40,7 @@ const erroresRecuperacion = new Rate('recuperacion_errores')
  * Se mide en tramos de 10 s. El primero que baje a latencia normal es el
  * tiempo de recuperación.
  */
-const TRAMOS = [0, 10, 20, 30, 40, 50]
+const TRAMOS = [0, 15, 30, 45, 60, 75, 90, 105]
 const porTramo = Object.fromEntries(
   TRAMOS.map((t) => [t, new Trend(`recuperacion_t${t}`, true)]),
 )
