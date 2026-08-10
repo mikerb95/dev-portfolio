@@ -193,12 +193,19 @@ geometría verificada por tests. Registrado como **RF-707** en
 El menú pasó de 18 a 20 pestañas (`Comunicación`, `Actividades`, `Despliegue`;
 `bpmn-imprimible` y `presentacion` no van en el menú).
 
-## 5.d Entregado después (6 ago 2026) - gobernanza y niveles de autoridad
+## 5.d Entregado después (6 ago 2026) - roles, niveles de autoridad y RACI
 
-`/docs/gobernanza`: la pirámide estratégico / táctico / operativo y la matriz
-RACI de las 12 actividades críticas. Modelo tipado en `src/data/gobernanza.ts`,
-página que solo renderiza, reglas verificadas en `tests/gobernanza.test.ts`.
+Dos páginas sobre un solo modelo tipado (`src/data/gobernanza.ts`):
+`/docs/roles` (la pirámide estratégico / táctico / operativo, con lo que cada
+nivel decide y lo que no puede hacer) y `/docs/raci` (la matriz de las 12
+actividades críticas). Reglas verificadas en `tests/gobernanza.test.ts`.
 Registrado como **RNF-24** en `documentacion.ts`.
+
+- **Empezó como una sola página** y se separó a pedido. Lo único que se comparte
+  fuera del modelo son los tokens de color (`src/lib/gobernanza-estilos.ts`): si
+  el nivel «estratégico» fuera violeta en la pirámide y ámbar en la matriz,
+  nadie relacionaría una columna con su nivel. Cada página enlaza a la otra al
+  cierre, que es lo que sostiene el argumento cuando ya no comparten pantalla.
 
 - **La tesis que sostiene la página**: en un proyecto de una sola persona los
   tres niveles no separan personas, separan tipos de decisión. Publicar es una
