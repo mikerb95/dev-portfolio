@@ -809,6 +809,42 @@ function construirHtml(porTipo, paginasToc, pngs = null) {
       `<section class="seccion${traeParte ? ' sigue' : ''}"><h2 id="${id}"${traeParte ? '' : ' style="page-break-before:always"'}>${t.titulo}${marca(id)}</h2>${t.cuerpo.join('\n')}${html.join('\n')}</section>`,
     )
     traeParte = false
+
+    // La descripción extendida acompaña al diagrama de casos de uso: el
+    // diagrama dice qué hace el sistema y la ficha, cómo transcurre.
+    if (t.clave === 'casos-de-uso' && fichas.length) {
+      const idDoc = registrar(2, 'Documentación de los casos de uso')
+      const tablas = fichas.map((filas, i) => {
+        const encabezado = filas[0]
+        const cuerpo = filas.slice(1)
+        const cuerpoHtml = cuerpo
+          .map(
+            (f) => `<tr>
+              <th scope="row">${esc(f.etiqueta)}</th>
+              <td>${
+                f.valor.length > 1
+                  ? `<ol>${f.valor.map((v) => `<li>${esc(v)}</li>`).join('')}</ol>`
+                  : esc(f.valor[0] ?? '')
+              }</td>
+            </tr>`,
+          )
+          .join('')
+        return `<div class="tabla-apa">
+          <p class="tab-num" style="text-indent:0;page-break-after:avoid"><b>Tabla ${i + 1}</b></p>
+          <p class="tab-tit" style="text-indent:0;page-break-after:avoid"><i>Descripción del caso de uso ${esc(
+            encabezado.valor.join(' ').replace(/\s+/g, ' '),
+          )}</i></p>
+          <table><tbody>${cuerpoHtml}</tbody></table>
+        </div>`
+      })
+      bloques.push(
+        `<section class="seccion"><h2 id="${idDoc}" style="page-break-before:always">Documentación de los casos de uso${marca(idDoc)}</h2>
+         ${p(
+           'La técnica de casos de uso exige, además del diagrama, la descripción de cada caso: el flujo de eventos que se da entre el sistema y el actor (SENA, 2018). Las tablas siguientes recogen ese formato extendido (precondiciones, secuencia normal, flujos alternos, excepciones y postcondiciones) para los casos de uso más críticos del sistema, que son los que involucran dinero, seguridad o estado que debe permanecer consistente ante fallos.',
+         )}
+         ${tablas.join('\n')}</section>`,
+      )
+    }
   }
 
   for (const s of CIERRE) bloques.push(seccion(s))
