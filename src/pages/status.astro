@@ -11,7 +11,6 @@ import {
   mergeHists,
   parseHist,
   quantileFromHist,
-  serializeHist,
   startOfDayUTC,
   type CheckRow,
   type Hist,
@@ -128,7 +127,6 @@ const latencyByMonitor = await recentLatency(mons.map((m) => m.id))
 // cubo donde cae, ver lib/monitor-rollup.ts) sin leer una sola fila más de las
 // que la página ya necesitaba. Para un número que se pinta redondeado a
 // milisegundos en una tarjeta de estado, esa precisión sobra.
-const p95ByMonitor = new Map<number, number>()
 
 const cards = mons.map((m) => {
   const buckets = byMonitor.get(m.id) ?? new Map<string, Bucket>()
@@ -142,6 +140,7 @@ const cards = mons.map((m) => {
 
   let ok30 = 0, total30 = 0, sumMs30 = 0
   let ok90 = 0, total90 = 0
+  const hists30: Hist[] = []
   for (const [day, b] of buckets) {
     ok90 += b.ok
     total90 += b.total
@@ -149,8 +148,10 @@ const cards = mons.map((m) => {
       ok30 += b.ok
       total30 += b.total
       sumMs30 += b.sumMs
+      hists30.push(b.hist)
     }
   }
+  const p95Ms30 = quantileFromHist(mergeHists(hists30), 0.95)
 
   const slo = computeSloFromCounts(ok30, total30, OBJECTIVE, SLO_DAYS)
   return {
@@ -161,7 +162,7 @@ const cards = mons.map((m) => {
     health: budgetHealth(slo),
     uptime90: total90 > 0 ? Math.round((ok90 / total90) * 1000) / 10 : null,
     avgMs30: total30 > 0 ? Math.round(sumMs30 / total30) : null,
-    p95Ms30: p95ByMonitor.get(m.id) ?? null,
+    p95Ms30,
     ok30,
     total30,
   }
