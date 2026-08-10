@@ -193,7 +193,12 @@ export function handleSummary(data) {
   const marca = r.fecha.replace(/[:.]/g, '-')
   return {
     stdout: aTexto(r)
-      + `  recuperación  p50 ${r.recuperacion.p50}ms · p95 ${r.recuperacion.p95}ms · errores ${r.recuperacion.tasaErrorPct}%\n`
+      + `  escalera del quiebre\n`
+      + `    ofrecido   servido      p50      p95   errores\n`
+      + r.escalera
+          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.servidoRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(7)}%`)
+          .join('\n')
+      + `\n\n  recuperación  p50 ${r.recuperacion.p50}ms · p95 ${r.recuperacion.p95}ms · errores ${r.recuperacion.tasaErrorPct}%\n`
       + `  curva de recuperación (s desde que cesó la carga)\n`
       + r.recuperacion.curva
           .map((c) => `    +${String(c.desdeS).padStart(2)}s   n=${String(c.n).padStart(4)}   p50 ${String(Math.round(c.p50)).padStart(6)}ms   p95 ${String(Math.round(c.p95)).padStart(6)}ms`)
