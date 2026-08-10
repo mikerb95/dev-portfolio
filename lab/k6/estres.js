@@ -122,6 +122,15 @@ export function handleSummary(data) {
     p95: Number((rec['p(95)'] ?? 0).toFixed(1)),
     max: Number((rec.max ?? 0).toFixed(1)),
     tasaErrorPct: Number(((data.metrics.recuperacion_errores?.values?.rate ?? 0) * 100).toFixed(3)),
+    curva: TRAMOS.map((t) => {
+      const v = data.metrics[`recuperacion_t${t}`]?.values ?? {}
+      return {
+        desdeS: t,
+        n: v.count ?? 0,
+        p50: Number((v.med ?? 0).toFixed(1)),
+        p95: Number((v['p(95)'] ?? 0).toFixed(1)),
+      }
+    }),
   }
 
   const marca = r.fecha.replace(/[:.]/g, '-')
