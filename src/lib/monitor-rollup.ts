@@ -15,12 +15,20 @@
 /**
  * Cotas superiores de los cubos de latencia, en ms. La última es el desborde.
  *
- * Están apretadas donde vive la latencia real de estos monitores (100-1000 ms)
- * y espaciadas en la cola, porque la precisión de un p95 solo importa donde cae
- * el p95. El error del percentil está acotado por el ancho de su cubo.
+ * Escalera casi geométrica (cada cota ~25% por encima de la anterior) en vez de
+ * lineal: lo que importa de un p95 no es el error absoluto sino el relativo, y
+ * una escalera lineal que sirve a 100 ms deja cubos de 1000 ms de ancho en la
+ * zona de los segundos. Con la primera versión, un monitor con p95 real de
+ * 2030 ms se pintaba como 2450: dentro de lo prometido, pero un 20% de error en
+ * un número que alguien lee en una tarjeta.
+ *
+ * 32 cubos son ~100 bytes de JSON por fila y ~72 KB en las 720 filas que lee
+ * /status: nada al lado de las 200.000 filas que costaba la versión exacta.
  */
 export const HIST_BOUNDS = [
-  50, 100, 150, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 5000, 10_000, Infinity,
+  25, 35, 50, 65, 80, 100, 125, 150, 175, 200, 250, 300, 350, 400, 500, 600,
+  750, 900, 1100, 1300, 1600, 2000, 2400, 2900, 3500, 4200, 5000, 6000, 7500,
+  9000, 11_000, Infinity,
 ] as const
 
 export type Hist = number[]

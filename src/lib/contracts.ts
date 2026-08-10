@@ -21,6 +21,9 @@ export const HealthResponseSchema = z.object({
       ok: z.boolean(),
       ms: z.number(),
       error: z.string().nullable(),
+      // Solo si la base es local, nunca cuál: lo consumen las pruebas de carga
+      // de lab/k6 para abortar antes de tocar una base remota.
+      local: z.boolean(),
     }),
   }),
   ts: z.string(),

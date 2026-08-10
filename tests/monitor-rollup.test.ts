@@ -19,10 +19,20 @@ const d = (iso: string) => Date.parse(iso)
 describe('cubos de latencia', () => {
   it('mete cada medición en su cubo por cota superior', () => {
     expect(bucketIndex(0)).toBe(0)
-    expect(bucketIndex(50)).toBe(0)
-    expect(bucketIndex(51)).toBe(1)
-    expect(bucketIndex(100)).toBe(1)
+    expect(bucketIndex(25)).toBe(0)
+    expect(bucketIndex(26)).toBe(1)
+    expect(bucketIndex(35)).toBe(1)
     expect(bucketIndex(999_999)).toBe(HIST_BOUNDS.length - 1)
+  })
+
+  // La escalera es casi geométrica a propósito: en un percentil importa el
+  // error RELATIVO, y una lineal deja cubos de 1000 ms de ancho en la zona de
+  // los segundos (ver el comentario de HIST_BOUNDS).
+  it('ningún cubo es más de un 45% más ancho que su cota inferior', () => {
+    for (let i = 1; i < HIST_BOUNDS.length - 1; i++) {
+      const ancho = HIST_BOUNDS[i] - HIST_BOUNDS[i - 1]
+      expect(ancho / HIST_BOUNDS[i - 1]).toBeLessThanOrEqual(0.45)
+    }
   })
 
   it('ignora latencias que no son números útiles', () => {
@@ -37,9 +47,9 @@ describe('cubos de latencia', () => {
   it('suma histogramas cubo a cubo', () => {
     const a = emptyHist()
     const b = emptyHist()
-    addToHist(a, 40)
-    addToHist(b, 40)
-    addToHist(b, 90)
+    addToHist(a, 20)
+    addToHist(b, 20)
+    addToHist(b, 30)
     const total = mergeHists([a, b])
     expect(total[0]).toBe(2)
     expect(total[1]).toBe(1)
@@ -56,7 +66,7 @@ describe('quantileFromHist', () => {
     addToHist(h, 120)
     const p95 = quantileFromHist(h)!
     expect(p95).toBeGreaterThan(100)
-    expect(p95).toBeLessThanOrEqual(150)
+    expect(p95).toBeLessThanOrEqual(125)
   })
 
   // La razón de ser del histograma: el p95 de un periodo tiene que salir de la
@@ -73,14 +83,30 @@ describe('quantileFromHist', () => {
     const exacto = ordenadas[Math.ceil(0.95 * ordenadas.length) - 1]
     const aprox = quantileFromHist(h)!
 
-    // Mismo orden de magnitud y dentro del ancho del cubo donde cae el p95.
-    expect(Math.abs(aprox - exacto)).toBeLessThanOrEqual(250)
+    // Error relativo, que es el que importa en un percentil.
+    expect(Math.abs(aprox - exacto) / exacto).toBeLessThanOrEqual(0.15)
+  })
+
+  // Regresión del caso que destapó la verificación contra la base local: la
+  // escalera lineal pintaba 2450 ms un p95 real de 2030.
+  it('mantiene el error relativo también en la zona de los segundos', () => {
+    const muestras: number[] = []
+    for (let i = 0; i < 950; i++) muestras.push(900 + (i % 200))
+    for (let i = 0; i < 50; i++) muestras.push(2000 + i * 3)
+
+    const h = emptyHist()
+    for (const ms of muestras) addToHist(h, ms)
+
+    const ordenadas = [...muestras].sort((a, b) => a - b)
+    const exacto = ordenadas[Math.ceil(0.95 * ordenadas.length) - 1]
+    const aprox = quantileFromHist(h)!
+    expect(Math.abs(aprox - exacto) / exacto).toBeLessThanOrEqual(0.15)
   })
 
   it('en el cubo de desborde devuelve su cota inferior, no un invento', () => {
     const h = emptyHist()
     for (let i = 0; i < 100; i++) addToHist(h, 50_000)
-    expect(quantileFromHist(h)).toBe(10_000)
+    expect(quantileFromHist(h)).toBe(11_000)
   })
 })
 

@@ -26,7 +26,8 @@ vi.mock('../src/db', async () => {
   const db = drizzle(client, { schema })
   await migrate(db, { migrationsFolder: join(__dirname, '..', 'drizzle') })
 
-  return { db, demoAvailable: false, runInDemoContext: (fn: () => unknown) => fn() }
+  // `realDbIsLocal` es true porque el mock ES una base en archivo temporal.
+  return { db, demoAvailable: false, realDbIsLocal: true, runInDemoContext: (fn: () => unknown) => fn() }
 })
 
 import {
