@@ -89,11 +89,21 @@ const TRENDS = Object.fromEntries(
   RUTAS.map((r) => [r.nombre, new Trend(`ruta_${r.nombre}`, true)]),
 )
 
-/** Una petición instrumentada, con la ruta como etiqueta para separar métricas. */
-export function pedir(base, ruta, unaSolaIp = false) {
+/**
+ * Una petición instrumentada, con la ruta como etiqueta para separar métricas.
+ *
+ * `timeout` importa más de lo que parece en la prueba de estrés. Con el valor
+ * por defecto de k6 (60 s) toda petición encolada acaba contando como 60000 ms,
+ * y el resultado deja de ser una medición para ser el propio timeout repetido:
+ * p50, p95 y p99 salen todos en 60 s y no distinguen "lento" de "muerto".
+ * Diez segundos también es lo que hace un usuario real, y lo que haría un CDN
+ * delante: rendirse mucho antes del minuto.
+ */
+export function pedir(base, ruta, unaSolaIp = false, timeout = '10s') {
   const res = http.get(`${base}${ruta.path}`, {
     headers: cabeceras(unaSolaIp),
     tags: { ruta: ruta.nombre },
+    timeout,
   })
   TRENDS[ruta.nombre]?.add(res.timings.duration)
   check(res, {
