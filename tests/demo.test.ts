@@ -90,6 +90,9 @@ describe('demo · rutas vetadas aunque sean GET', () => {
     for (const p of [
       '/admin/backup',
       '/api/admin/backup',
+      // El cron del backup vive fuera de /api/admin/ (es la única forma de que
+      // el cron de Vercel lo alcance) y es GET, que la demo sí permite.
+      '/api/cron/backup',
       '/api/admin/upload',
       '/admin/passkeys',
       '/admin/sessions',
