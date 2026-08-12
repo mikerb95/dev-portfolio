@@ -65,6 +65,9 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   /\/secrets$/,
   /\/envvars$/,
   /^\/(api\/)?admin\/backup/,
+  // El backup salió de /api/admin/ para que el cron pudiera alcanzarlo, así que
+  // el veto de la demo tiene que seguirlo: es GET, y la demo permite GET.
+  /^\/api\/cron\/backup/,
   /^\/api\/admin\/upload/,
   /^\/(api\/)?admin\/passkeys/,
   /^\/(api\/)?admin\/sessions/,
