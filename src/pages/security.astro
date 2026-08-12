@@ -4,6 +4,7 @@ import { db } from '../db'
 import { securityEvents, blockedIps } from '../db/schema'
 import { and, gte, sql } from 'drizzle-orm'
 import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizedHref } from '../i18n'
+import { safeQuery } from '../lib/safe-query'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -29,40 +30,66 @@ const CAT_LABELS: Record<string, string> = s.secops.categoryLabels
 
 const sumHits = sql<number>`coalesce(sum(${securityEvents.hits}), 0)`
 
-const [totalRow] = await db.select({ v: sumHits }).from(securityEvents).where(gte(securityEvents.at, secOpsSince))
+// Los agregados del micro-SIEM son un extra de esta página: el catálogo de
+// hallazgos OWASP es estático y debe verse aunque la base no responda.
+const [totalRow] = await safeQuery(
+  () => db.select({ v: sumHits }).from(securityEvents).where(gte(securityEvents.at, secOpsSince)),
+  [] as { v: number }[],
+  'security/total-detectado',
+)
 const totalDetected = Number(totalRow?.v ?? 0)
 
-const byCategory = await db
-  .select({ category: securityEvents.category, count: sumHits })
-  .from(securityEvents)
-  .where(gte(securityEvents.at, secOpsSince))
-  .groupBy(securityEvents.category)
-  .orderBy(sql`2 desc`)
-  .limit(8)
+const byCategory = await safeQuery(
+  () =>
+    db
+      .select({ category: securityEvents.category, count: sumHits })
+      .from(securityEvents)
+      .where(gte(securityEvents.at, secOpsSince))
+      .groupBy(securityEvents.category)
+      .orderBy(sql`2 desc`)
+      .limit(8),
+  [] as { category: string; count: number }[],
+  'security/por-categoria',
+)
 const catMax = Math.max(1, ...byCategory.map((c) => Number(c.count)))
 
-const byCountry = await db
-  .select({ country: securityEvents.country, count: sumHits })
-  .from(securityEvents)
-  .where(and(gte(securityEvents.at, secOpsSince), sql`${securityEvents.country} is not null`))
-  .groupBy(securityEvents.country)
-  .orderBy(sql`2 desc`)
-  .limit(6)
+const byCountry = await safeQuery(
+  () =>
+    db
+      .select({ country: securityEvents.country, count: sumHits })
+      .from(securityEvents)
+      .where(and(gte(securityEvents.at, secOpsSince), sql`${securityEvents.country} is not null`))
+      .groupBy(securityEvents.country)
+      .orderBy(sql`2 desc`)
+      .limit(6),
+  [] as { country: string | null; count: number }[],
+  'security/por-pais',
+)
 const countryMax = Math.max(1, ...byCountry.map((c) => Number(c.count)))
 
-const [blocksRow] = await db
-  .select({ n: sql<number>`count(*)` })
-  .from(blockedIps)
-  .where(and(gte(blockedIps.createdAt, secOpsSince), sql`${blockedIps.source} = 'auto'`))
+const [blocksRow] = await safeQuery(
+  () =>
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(blockedIps)
+      .where(and(gte(blockedIps.createdAt, secOpsSince), sql`${blockedIps.source} = 'auto'`)),
+  [] as { n: number }[],
+  'security/bloqueos-automaticos',
+)
 const autoBlocks30d = Number(blocksRow?.n ?? 0)
 
 // Tendencia: eventos por día (14 días), para el mini-gráfico de barras.
 const dayExpr = sql<string>`date(${securityEvents.at}, 'unixepoch')`
-const dailyRaw = await db
-  .select({ day: dayExpr, count: sumHits })
-  .from(securityEvents)
-  .where(gte(securityEvents.at, new Date(Date.now() - 14 * DAY_MS)))
-  .groupBy(dayExpr)
+const dailyRaw = await safeQuery(
+  () =>
+    db
+      .select({ day: dayExpr, count: sumHits })
+      .from(securityEvents)
+      .where(gte(securityEvents.at, new Date(Date.now() - 14 * DAY_MS)))
+      .groupBy(dayExpr),
+  [] as { day: string; count: number }[],
+  'security/tendencia-diaria',
+)
 const dailyMap = new Map(dailyRaw.map((r) => [r.day, Number(r.count)]))
 const trend = Array.from({ length: 14 }, (_, i) => {
   const day = new Date(Date.now() - (13 - i) * DAY_MS).toISOString().slice(0, 10)

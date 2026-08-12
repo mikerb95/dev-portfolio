@@ -17,6 +17,7 @@ import {
   type VitalRating,
 } from '../lib/vitals'
 import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizedHref } from '../i18n'
+import { safeQuery } from '../lib/safe-query'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -40,11 +41,16 @@ const trendSince = new Date(now - 7 * DAY_MS)
 
 // ── Core Web Vitals (RUM) ────────────────────────────────────────────────
 const METRIC_ORDER: VitalMetric[] = ['LCP', 'INP', 'CLS', 'FCP', 'TTFB']
-const vitalRows = await db
-  .select({ metric: webVitals.metric, value: webVitals.value, path: webVitals.path, createdAt: webVitals.createdAt })
-  .from(webVitals)
-  .where(gte(webVitals.createdAt, vitalsSince))
-  .limit(20000)
+const vitalRows = await safeQuery(
+  () =>
+    db
+      .select({ metric: webVitals.metric, value: webVitals.value, path: webVitals.path, createdAt: webVitals.createdAt })
+      .from(webVitals)
+      .where(gte(webVitals.createdAt, vitalsSince))
+      .limit(20000),
+  [] as Pick<typeof webVitals.$inferSelect, 'metric' | 'value' | 'path' | 'createdAt'>[],
+  'engineering/web-vitals',
+)
 
 const byMetric = new Map<VitalMetric, { value: number; path: string | null; createdAt: Date | null }[]>()
 for (const r of vitalRows) {
@@ -102,7 +108,11 @@ const vitals = METRIC_ORDER.map((m) => {
 const totalSamples = vitalRows.length
 
 // ── Pipeline CI (datos reales de GitHub Actions) ─────────────────────────
-const recentRuns = await db.select().from(ciRuns).orderBy(desc(ciRuns.createdAt)).limit(20)
+const recentRuns = await safeQuery(
+  () => db.select().from(ciRuns).orderBy(desc(ciRuns.createdAt)).limit(20),
+  [] as (typeof ciRuns.$inferSelect)[],
+  'engineering/ci-runs',
+)
 const lastSuccess = recentRuns.find((r) => r.conclusion === 'success') ?? null
 const greenStreak = (() => {
   let n = 0
@@ -124,34 +134,49 @@ const coverageDelta =
 
 // ── Disponibilidad agregada (90 días) ────────────────────────────────────
 const uptimeSince = new Date(now - 90 * DAY_MS)
-const [uptimeAgg] = await db
-  .select({
-    total: sql<number>`count(*)`,
-    ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
-  })
-  .from(monitorChecks)
-  .where(gte(monitorChecks.at, uptimeSince))
-const [monCount] = await db
-  .select({ n: sql<number>`count(*)` })
-  .from(monitors)
-  .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
+const [uptimeAgg] = await safeQuery(
+  () =>
+    db
+      .select({
+        total: sql<number>`count(*)`,
+        ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
+      })
+      .from(monitorChecks)
+      .where(gte(monitorChecks.at, uptimeSince)),
+  [] as { total: number; ok: number }[],
+  'engineering/uptime-agregado',
+)
+const [monCount] = await safeQuery(
+  () =>
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(monitors)
+      .where(and(eq(monitors.active, true), eq(monitors.paused, false))),
+  [] as { n: number }[],
+  'engineering/monitores-activos',
+)
 const uptime90 =
   uptimeAgg && uptimeAgg.total > 0 ? Math.round((uptimeAgg.ok / uptimeAgg.total) * 10000) / 100 : null
 
 // Desglose por monitor: uptime % y latencia media en la ventana de 90d.
-const perMonitor = await db
-  .select({
-    id: monitors.id,
-    name: monitors.name,
-    total: sql<number>`count(${monitorChecks.id})`,
-    ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
-    avgMs: sql<number>`coalesce(avg(${monitorChecks.responseMs}), 0)`,
-  })
-  .from(monitors)
-  .leftJoin(monitorChecks, and(eq(monitorChecks.monitorId, monitors.id), gte(monitorChecks.at, uptimeSince)))
-  .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
-  .groupBy(monitors.id)
-  .orderBy(monitors.name)
+const perMonitor = await safeQuery(
+  () =>
+    db
+      .select({
+        id: monitors.id,
+        name: monitors.name,
+        total: sql<number>`count(${monitorChecks.id})`,
+        ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
+        avgMs: sql<number>`coalesce(avg(${monitorChecks.responseMs}), 0)`,
+      })
+      .from(monitors)
+      .leftJoin(monitorChecks, and(eq(monitorChecks.monitorId, monitors.id), gte(monitorChecks.at, uptimeSince)))
+      .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
+      .groupBy(monitors.id)
+      .orderBy(monitors.name),
+  [] as { id: number; name: string; total: number; ok: number; avgMs: number }[],
+  'engineering/uptime-por-monitor',
+)
 
 const monitorRows = perMonitor.map((m) => ({
   name: m.name,
@@ -160,10 +185,15 @@ const monitorRows = perMonitor.map((m) => ({
 }))
 
 // Incidentes en la ventana: conteo y MTTR (solo los ya resueltos).
-const incidentRows = await db
-  .select({ startedAt: monitorIncidents.startedAt, resolvedAt: monitorIncidents.resolvedAt })
-  .from(monitorIncidents)
-  .where(gte(monitorIncidents.startedAt, uptimeSince))
+const incidentRows = await safeQuery(
+  () =>
+    db
+      .select({ startedAt: monitorIncidents.startedAt, resolvedAt: monitorIncidents.resolvedAt })
+      .from(monitorIncidents)
+      .where(gte(monitorIncidents.startedAt, uptimeSince)),
+  [] as { startedAt: Date; resolvedAt: Date | null }[],
+  'engineering/incidentes',
+)
 const resolvedIncidents = incidentRows.filter((i) => i.resolvedAt != null)
 const mttrMin =
   resolvedIncidents.length > 0
@@ -188,10 +218,15 @@ const fmtDowntime = (min: number | null) => {
 // completos) porque no todos los monitores llevan la ventana entera activos, lo que
 // sesgaría el promedio hacia abajo.
 const cadenceSince = new Date(now - 24 * 60 * 60 * 1000)
-const [cadenceAgg] = await db
-  .select({ total: sql<number>`count(*)` })
-  .from(monitorChecks)
-  .where(gte(monitorChecks.at, cadenceSince))
+const [cadenceAgg] = await safeQuery(
+  () =>
+    db
+      .select({ total: sql<number>`count(*)` })
+      .from(monitorChecks)
+      .where(gte(monitorChecks.at, cadenceSince)),
+  [] as { total: number }[],
+  'engineering/cadencia',
+)
 const checkCadenceMin =
   monCount?.n && cadenceAgg?.total ? Math.round((24 * 60) / (cadenceAgg.total / monCount.n)) : null
 

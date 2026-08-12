@@ -6,6 +6,7 @@ import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
+import { safeQuery } from '../lib/safe-query'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
@@ -14,11 +15,15 @@ const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale).home
 const L = (path: string) => localizedHref(path, locale)
 
-const visibleProjects = await db
-  .select()
-  .from(projects)
-  .where(eq(projects.visible, true))
-  .orderBy(projects.createdAt)
+// La portada NO se cae con la base: sin proyectos se pinta el resto de la
+// página (presentación, stack, contacto, repos de GitHub), que es casi todo lo
+// que hay aquí. Esta única consulta devolvía un 404 en producción con la cuota
+// de Turso agotada.
+const visibleProjects = await safeQuery(
+  () => db.select().from(projects).where(eq(projects.visible, true)).orderBy(projects.createdAt),
+  [] as (typeof projects.$inferSelect)[],
+  'home/proyectos-visibles',
+)
 ---
 
 <BaseLayout title={t.title} description={t.description}>

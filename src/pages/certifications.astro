@@ -6,43 +6,64 @@ import { educationMilestones, skillTracks, skillSessions, skillMilestones } from
 import { eq, desc, sql } from 'drizzle-orm'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 import { computeStreak, dayKeyOf } from '../lib/skills'
+import { safeQuery } from '../lib/safe-query'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 const cert = t.certifications
 const L = (path: string) => localizedHref(path, locale)
 
-const certs = await db
-  .select()
-  .from(educationMilestones)
-  .where(eq(educationMilestones.isPublic, true))
-  .orderBy(desc(educationMilestones.completedDate), desc(educationMilestones.createdAt))
+const certs = await safeQuery(
+  () =>
+    db
+      .select()
+      .from(educationMilestones)
+      .where(eq(educationMilestones.isPublic, true))
+      .orderBy(desc(educationMilestones.completedDate), desc(educationMilestones.createdAt)),
+  [] as (typeof educationMilestones.$inferSelect)[],
+  'certifications/hitos',
+)
 
 // Resumen agregado de los tracks del tracker privado que estén marcados como
 // públicos. Solo cifras: horas, porcentaje del temario y racha. La bitácora y
 // los hitos individuales no salen del panel (misma regla de OPSEC que /status).
-const publicTracks = await db
-  .select()
-  .from(skillTracks)
-  .where(eq(skillTracks.isPublic, true))
-  .orderBy(desc(skillTracks.isActive), skillTracks.name)
+const publicTracks = await safeQuery(
+  () =>
+    db
+      .select()
+      .from(skillTracks)
+      .where(eq(skillTracks.isPublic, true))
+      .orderBy(desc(skillTracks.isActive), skillTracks.name),
+  [] as (typeof skillTracks.$inferSelect)[],
+  'certifications/tracks',
+)
 
 const today = dayKeyOf()
 const specializations = await Promise.all(
   publicTracks.map(async (t) => {
     const [days, milestoneStats] = await Promise.all([
-      db
-        .select({ day: skillSessions.day, minutes: sql<number>`sum(${skillSessions.minutes})` })
-        .from(skillSessions)
-        .where(eq(skillSessions.trackId, t.id))
-        .groupBy(skillSessions.day),
-      db
-        .select({
-          total: sql<number>`count(*)`,
-          done: sql<number>`sum(case when ${skillMilestones.status} = 'hecho' then 1 else 0 end)`,
-        })
-        .from(skillMilestones)
-        .where(eq(skillMilestones.trackId, t.id)),
+      safeQuery(
+        () =>
+          db
+            .select({ day: skillSessions.day, minutes: sql<number>`sum(${skillSessions.minutes})` })
+            .from(skillSessions)
+            .where(eq(skillSessions.trackId, t.id))
+            .groupBy(skillSessions.day),
+        [] as { day: string; minutes: number }[],
+        `certifications/sesiones-track-${t.id}`,
+      ),
+      safeQuery(
+        () =>
+          db
+            .select({
+              total: sql<number>`count(*)`,
+              done: sql<number>`sum(case when ${skillMilestones.status} = 'hecho' then 1 else 0 end)`,
+            })
+            .from(skillMilestones)
+            .where(eq(skillMilestones.trackId, t.id)),
+        [] as { total: number; done: number }[],
+        `certifications/hitos-track-${t.id}`,
+      ),
     ])
 
     const sessions = days.map((d) => ({ day: d.day, minutes: Number(d.minutes) }))
