@@ -1,0 +1,37 @@
+import type { APIRoute } from 'astro'
+import { timingSafeEqual } from 'node:crypto'
+import { runBackup } from '../../../lib/backup'
+
+// Backup diario. Estuvo bajo `/api/admin/backup` hasta agosto de 2026 y por eso
+// no funcionó nunca: el middleware protege con sesión todo lo que cuelga de
+// `/api/admin/`, así que el cron de Vercel se llevaba un 302 a /login antes de
+// llegar al handler. Encima el handler del cron era POST y los crons de Vercel
+// disparan GET, con lo que la petición diaria caía en el GET de "listar
+// backups" y devolvía 200 sin hacer nada. Dos fallos que se tapaban entre sí:
+// el panel de Vercel marcaba el cron en verde y el store de Blob estaba vacío.
+//
+// Aquí es GET con Bearer CRON_SECRET, igual que los otros seis crons.
+
+const CRON_SECRET = import.meta.env.CRON_SECRET
+
+/** Comparación en tiempo constante; longitudes distintas se rechazan antes. */
+function secretOk(auth: string | null): boolean {
+  if (!CRON_SECRET || !auth) return false
+  const a = Buffer.from(auth)
+  const b = Buffer.from(`Bearer ${CRON_SECRET}`)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
+export const GET: APIRoute = async ({ request }) => {
+  if (!secretOk(request.headers.get('authorization'))) {
+    return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
+  }
+  try {
+    return new Response(JSON.stringify({ ok: true, ...(await runBackup()) }), { status: 200 })
+  } catch (err) {
+    // Este cron NO es fail-open silencioso como los de observabilidad: un backup
+    // que falla y devuelve 200 es justo lo que dejó el store vacío un mes.
+    console.error('[cron/backup]', err)
+    return new Response(JSON.stringify({ error: 'backup fallido' }), { status: 500 })
+  }
+}
