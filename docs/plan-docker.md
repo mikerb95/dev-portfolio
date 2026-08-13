@@ -96,6 +96,34 @@ porqué, decisiones defendibles, los hallazgos de abajo, ruta de estudio prioriz
 y preguntas probables del jurado con respuesta preparada. Este plan es el registro
 técnico; esa página es el guion.
 
+### Taller de Docker del SENA resuelto sobre este stack (12 ago 2026)
+
+`docs/manuales-sena/taller-docker-linux.md` desarrolla los seis ejercicios de la
+guía *Instalación y uso de Docker* (SENA) contra el proyecto real en vez de
+contra la app de ejemplo Dino Run, sobre el entorno verificado del equipo
+(Ubuntu 24.04.4, Docker Engine 29.6.2, Compose v5.3.1). Se entrega también como
+`.docx` y `.pdf`, generados por `generar-taller-docker-docx.py` y
+`actualizar-indice.py`: el documento no se maquetó a mano, se genera desde el
+markdown, que es la única fuente que se edita.
+
+- **La guía asume Windows + Docker Desktop + WSL 2 y este equipo es Linux**, así
+  que la mitad del procedimiento no es difícil: no existe. La sección 0 mapea
+  paso por paso qué pasa con cada uno en Linux y con qué evidencia se sustituye
+  (`uname -r` en lugar de habilitar WSL 2, `systemctl is-active docker` en lugar
+  del dashboard "Engine running", la tabla de equivalencias GUI → comando).
+  El fondo del asunto, y lo que conviene decir en la sustentación: en Windows la
+  app de la guía tampoco corre en Windows, corre en un Linux dentro de WSL 2.
+- **La app de ejemplo se sustituye por el stack propio** porque aquí Docker ya
+  se usa en serio y con una decisión de arquitectura detrás (la premisa de este
+  plan), no como envoltorio de una app de práctica.
+- `capturas.sh` corre por número los comandos de cada figura del taller e
+  imprime cada uno antes de ejecutarlo, para que la evidencia muestre que se
+  corrió y no solo su resultado. `compose.sena-bind.yaml` es un override
+  exclusivo del ejercicio de persistencia: la guía pide demostrar un *bind
+  mount* y el `compose.yaml` real usa volúmenes gestionados, que es lo correcto
+  para datos de servicio. El modo por defecto del proyecto no cambia por una
+  entrega académica.
+
 ## Fase 3 - Herramientas del LAB en contenedor (pendiente)
 
 ZAP ya corre en contenedor sin que se note (`zaproxy/action-baseline` envuelve
