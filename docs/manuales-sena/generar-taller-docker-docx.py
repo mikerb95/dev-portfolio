@@ -376,20 +376,21 @@ def page_number_header():
 
 page_number_header()
 
+
 # ==================================================================== PORTADA
 for _ in range(4):
     p("", space_after=0)
-p("Instalación, configuración y uso de Docker en GNU/Linux",
+p("Instalación y uso de Docker en Linux",
   align=WD_ALIGN_PARAGRAPH.CENTER, indent=False, bold=True)
-p("Adaptación de la guía del SENA a un entorno Ubuntu 24.04 LTS "
-  "y aplicación al proyecto CodeByMike",
+p("Taller resuelto en Ubuntu 24.04 sobre el proyecto CodeByMike",
   align=WD_ALIGN_PARAGRAPH.CENTER, indent=False, bold=True)
 p("", space_after=0)
-p("Michael David Rodriguez Beltran", align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
-p("Servicio Nacional de Aprendizaje (SENA), Centro de Servicios Financieros, "
-  "Regional Distrito Capital", align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
-p("Análisis y Desarrollo de Software, Ficha 3114731", align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
-p("Instructor(a): [NOMBRE DE LA DOCENTE]", align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
+p("Michael David Rodríguez Beltran", align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
+p("Servicio Nacional de Aprendizaje (SENA), Centro de Servicios Financieros",
+  align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
+p("Análisis y Desarrollo de Software, Ficha 3114731",
+  align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
+p("Instructora: [NOMBRE DE LA DOCENTE]", align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
 p("[FECHA DE ENTREGA]", align=WD_ALIGN_PARAGRAPH.CENTER, indent=False)
 doc.add_page_break()
 
@@ -400,139 +401,104 @@ doc.add_page_break()
 
 # =================================================================== RESUMEN
 p("Resumen", align=WD_ALIGN_PARAGRAPH.CENTER, indent=False, bold=True)
-p("El presente informe documenta el desarrollo del taller de instalación y uso de "
-  "Docker propuesto por el SENA, ejecutado sobre un entorno GNU/Linux (Ubuntu 24.04.4 "
-  "LTS) en lugar del entorno Windows con Docker Desktop y WSL 2 descrito en la guía. "
-  "Se justifica técnicamente cada desviación del procedimiento original, se establece "
-  "una tabla de equivalencias entre la interfaz gráfica de Docker Desktop y la interfaz "
-  "de línea de comandos de Docker Engine, y se resuelven los seis ejercicios prácticos "
-  "de la sección 16 de la guía utilizando la infraestructura de contenedores real del "
-  "proyecto CodeByMike (codebymike.tech) en sustitución de la aplicación de ejemplo "
-  "Dino Run. Los conceptos evaluados (imagen, contenedor, Dockerfile, contexto de "
-  "construcción, publicación de puertos, variables de entorno, bind mount, persistencia, "
-  "registros y Docker Compose) se demuestran integros; únicamente cambia la aplicación "
-  "sobre la cual se ejercitan y la vía de acceso al motor.", indent=False)
+p("Este informe recoge el taller de Docker resuelto en un computador con Ubuntu 24.04 "
+  "y no en Windows con Docker Desktop, que es el entorno de la guía. Explico qué pasos "
+  "de la guía no aplican en Linux y por qué, y dejo una tabla que empareja cada pantalla "
+  "de Docker Desktop con el comando que hace lo mismo en la terminal. Los seis ejercicios "
+  "de la página 27 los desarrollé sobre mi propio proyecto, CodeByMike, que ya usa Docker "
+  "para levantar sus bases de datos de desarrollo, en lugar de la aplicación de ejemplo "
+  "Dino Run. Los temas que evalúa la guía siguen siendo los mismos: imagen, contenedor, "
+  "Dockerfile, puertos, variables de entorno, bind mount, persistencia, logs y Compose.",
+  indent=False)
 p("", space_after=0)
 par = p("", indent=False)
 rich(par, [("Palabras clave: ", {"italic": True}),
-           ("Docker, contenedores, GNU/Linux, Docker Compose, bind mount, "
-            "reproducibilidad, integración continua", {})])
+           ("Docker, contenedores, Linux, Docker Compose, bind mount", {})])
 doc.add_page_break()
 
 # ============================================================== INTRODUCCION
 doc.add_heading("Introducción", level=1)
-p("Docker es una plataforma de virtualización a nivel de sistema operativo que permite "
-  "empaquetar una aplicación junto con sus dependencias, su configuración y su comando "
-  "de arranque en una unidad denominada imagen, a partir de la cual se ejecutan procesos "
-  "aislados llamados contenedores (Docker Inc., 2026a). A diferencia de una máquina "
-  "virtual, un contenedor no incorpora un sistema operativo completo: comparte el núcleo "
-  "del sistema anfitrión y ejecuta únicamente los procesos de la aplicación, lo que "
-  "reduce el consumo de recursos y acelera el arranque.")
-p("La guía de formación Instalación y uso de Docker desarrolla este contenido sobre un "
-  "entorno Windows, apoyandose en Docker Desktop, en el Subsistema de Windows para Linux "
-  "en su versión 2 (WSL 2) y en el asistente Gordon. El equipo de trabajo del autor opera "
-  "bajo Ubuntu 24.04.4 LTS, razón por la cual una parte sustancial del procedimiento de "
-  "instalación descrito no resulta aplicable: no por dificultad técnica, sino porque el "
-  "problema que dicho procedimiento resuelve no se presenta en este entorno.")
-p("Este informe no omite contenido de la guía. Documenta, para cada paso del "
-  "procedimiento original, su equivalente en GNU/Linux o la razón técnica por la cual no "
-  "aplica, y desarrolla los seis ejercicios prácticos propuestos en la sección 16 sobre "
-  "la infraestructura de contenedores del proyecto CodeByMike, un portafolio profesional "
-  "con panel de control y portal de clientes construido con Astro, Turso/libSQL y "
-  "desplegado en Vercel.")
+p("Docker sirve para empaquetar una aplicación con todo lo que necesita para correr y "
+  "ejecutarla como un proceso aislado, al que se le llama contenedor. La diferencia con "
+  "una máquina virtual es que el contenedor no trae un sistema operativo completo: usa el "
+  "núcleo del computador donde corre y solo ejecuta lo suyo. Por eso arranca rápido y "
+  "pesa mucho menos (Docker Inc., 2026a).")
+p("La guía del curso enseña todo esto en Windows, con Docker Desktop, WSL 2 y el "
+  "asistente Gordon. Mi computador tiene Ubuntu 24.04 y ahí buena parte de esa "
+  "instalación no se puede hacer. No porque sea difícil, sino porque el problema que esos "
+  "pasos resuelven no existe en Linux.")
+p("Para no entregar un trabajo incompleto, lo que hice fue ir paso por paso de la guía y "
+  "responder dos cosas: si el paso aplica en Linux, cómo se hace; y si no aplica, por qué "
+  "no. Los ejercicios prácticos los desarrollé sobre mi proyecto de portafolio, que ya "
+  "tenía Docker configurado desde antes del curso. Es una aplicación web hecha con Astro "
+  "y con base de datos Turso, y usa contenedores para levantar las bases de datos "
+  "mientras programo.")
 doc.add_page_break()
 
-# ======================================================== 1. JUSTIFICACION
-doc.add_heading("Justificación de la Adaptación al Entorno GNU/Linux", level=1)
-p("Docker se concibió originalmente como una herramienta de GNU/Linux y su motor se "
-  "apoya en dos mecanismos propios del núcleo de ese sistema: los espacios de nombres "
-  "(namespaces), que aislan la vista que un proceso tiene del sistema, y los grupos de "
-  "control (cgroups), que limitan los recursos que puede consumir (Docker Inc., 2026a). "
-  "En consecuencia, para ejecutar contenedores Linux se requiere un núcleo Linux.")
-p("WSL 2 es precisamente el mecanismo mediante el cual Windows obtiene ese núcleo: una "
-  "máquina virtual ligera y gestionada que ejecuta un núcleo Linux real, sobre la cual "
-  "Docker Desktop arranca el motor (Docker Inc., 2026b). Este es el punto central de la "
-  "adaptación y conviene enunciarlo con precisión: en el procedimiento descrito por la "
-  "guía, la aplicación tampoco se ejecuta sobre Windows, sino sobre una distribución de "
-  "Linux alojada en WSL 2. Docker Desktop constituye la capa de integración que oculta "
-  "ese hecho al usuario.")
-p("Al trabajar directamente sobre Ubuntu, el núcleo requerido es el del propio sistema. "
-  "Desaparecen por tanto la instalación de WSL 2, la habilitación de la virtualización "
-  "por hardware en BIOS/UEFI y la capa de virtualización intermedia. El motor se instala "
-  "como un servicio del sistema administrado por systemd y se opera mediante la interfaz "
-  "de línea de comandos. La Tabla 1 detalla la correspondencia completa.")
+# ======================================================== 1. MI EQUIPO
+doc.add_heading("Por Qué Mi Instalación Se Ve Distinta a la de la Guía", level=1)
+p("Docker nació en Linux. El motor se apoya en dos cosas del núcleo de Linux: los "
+  "namespaces, que hacen que un proceso solo vea lo que le corresponde, y los cgroups, "
+  "que le limitan cuánta memoria y cuánto procesador puede gastar (Docker Inc., 2026a). "
+  "Entonces, para correr contenedores de Linux hace falta un núcleo de Linux.")
+p("Ahí es donde entra WSL 2. Windows no tiene ese núcleo, así que instala una máquina "
+  "virtual pequeña con un Linux real adentro, y sobre esa máquina Docker Desktop levanta "
+  "el motor (Docker Inc., 2026b). Esto me parece lo más importante de toda la adaptación: "
+  "cuando alguien sigue la guía en Windows, la aplicación tampoco está corriendo en "
+  "Windows. Está corriendo en un Linux escondido dentro de WSL 2. Docker Desktop es la "
+  "capa que hace que uno no se dé cuenta.")
+p("En mi caso el núcleo ya es el del sistema, así que no hay nada que instalar por "
+  "debajo. No hay WSL, no hay que habilitar virtualización en la BIOS y no hay máquina "
+  "virtual intermedia. Docker queda como un servicio del sistema y se maneja desde la "
+  "terminal. En la Tabla 1 dejo la comparación completa.")
 
 table(
-    "Correspondencia entre el procedimiento de la guía (Windows) y el entorno GNU/Linux",
-    ["Paso de la guía", "Situación en GNU/Linux", "Evidencia sustitutiva"],
+    "Comparación entre lo que pide la guía y lo que hice en Linux",
+    ["Paso de la guía", "Qué pasa en mi equipo", "Con qué lo reemplacé"],
     [
         ["Instalar Docker Desktop (sección 4)",
-         "No aplica. En Linux, Docker Desktop es opcional y solo agrega una interfaz gráfica y una máquina virtual intermedia. Se emplea Docker Engine nativo.",
-         "docker --version, docker info con el motor nativo"],
-        ["Activar WSL 2 (sección 5.1)",
-         "No existe. El núcleo Linux es el del propio sistema operativo.",
-         "uname -r, que identifica el núcleo compartido con los contenedores"],
-        ["Habilitar virtualización en BIOS/UEFI (sección 5.2)",
-         "No se requiere. Los contenedores son procesos aislados mediante namespaces y cgroups, no máquinas virtuales.",
-         "docker info mostrando apparmor, seccomp y cgroupns"],
-        ["Panel con estado Engine running (sección 5.3)",
-         "El motor es un servicio de systemd; el estado se consulta con el gestor de servicios.",
+         "En Linux, Docker Desktop es opcional. Solo agrega una interfaz gráfica y una máquina virtual que no necesito. Uso Docker Engine directo.",
+         "docker --version y docker info mostrando el motor"],
+        ["Instalar WSL 2 (sección 5.1)",
+         "No existe en Linux. El núcleo ya es el del sistema.",
+         "uname -r, que muestra el núcleo que comparten los contenedores"],
+        ["Habilitar virtualización en BIOS (sección 5.2)",
+         "No se necesita. Los contenedores no son máquinas virtuales, son procesos aislados.",
+         "docker info, donde aparecen apparmor, seccomp y cgroupns"],
+        ["Esperar el estado Engine running (sección 5.3)",
+         "El motor es un servicio de systemd, no una aplicación que uno abre.",
          "systemctl is-active docker y systemctl is-enabled docker"],
-        ["Vistas gráficas Builds, Images, Containers, Logs y Bind mounts",
-         "No hay interfaz gráfica, pero cada vista tiene un comando equivalente que entrega igual o mayor detalle.",
-         "Tabla 3 de equivalencias entre interfaz gráfica y línea de comandos"],
-        ["Asistente Gordon (secciones 8.1 y siguientes)",
-         "No disponible sin Docker Desktop. La propia guía documenta los comandos que Gordon ejecuta internamente.",
-         "docker compose up -d --build y equivalentes, escritos de forma explicita"],
+        ["Pantallas Builds, Images, Containers, Logs y Bind mounts",
+         "No tengo interfaz gráfica, pero cada pantalla tiene su comando.",
+         "Tabla 2, con la lista completa"],
+        ["Usar Gordon",
+         "Gordon viene con Docker Desktop, así que no lo tengo.",
+         "Los comandos que Gordon ejecuta por dentro. La misma guía los menciona"],
         ["Archivo iniciar_juego.bat",
-         "Archivo por lotes propio de Windows; no aplica.",
-         "Scripts npm run db:up, db:seed y db:reset definidos en package.json"],
+         "Es un archivo de Windows.",
+         "Los scripts npm run db:up y npm run db:seed de mi proyecto"],
     ],
-    note=[("Elaboración propia a partir de la guía ", {}),
-          ("Instalación y uso de Docker", {"italic": True}),
-          (" (SENA, 2026) y de la documentación oficial de Docker.", {})],
+    note=[("Elaboración propia a partir de la guía del SENA.", {})],
     widths=[4.6, 6.2, 5.2],
 )
 
-doc.add_heading("Entorno de Trabajo Verificado", level=2)
-p("La totalidad de los comandos y resultados consignados en este informe se ejecutaron y "
-  "verificaron en el entorno descrito en la Tabla 2.")
-
-table(
-    "Especificación del entorno de trabajo",
-    ["Componente", "Versión o estado verificado"],
-    [
-        ["Sistema operativo", "Ubuntu 24.04.4 LTS"],
-        ["Núcleo (kernel)", "7.0.0-28-generic"],
-        ["Docker Engine", "29.6.2, build dfc4efb"],
-        ["Docker Compose", "v5.3.1 (complemento CLI, no docker-compose de Python)"],
-        ["Estado del servicio", "active (en ejecución) y enabled (arranque automático)"],
-        ["Acceso sin privilegios", "Usuario perteneciente al grupo docker"],
-        ["Opciones de seguridad", "apparmor, seccomp con perfil incorporado, cgroupns"],
-        ["Proyecto de aplicación", "CodeByMike: Astro 7 (SSR), Turso/libSQL, Drizzle, Tailwind 4, desplegado en Vercel"],
-    ],
-    note=[("Datos obtenidos mediante ", {}), ("docker info", {"mono": True}),
-          (", ", {}), ("systemctl", {"mono": True}), (" y ", {}),
-          ("uname -r", {"mono": True}), (". Elaboración propia.", {})],
-    widths=[5.0, 11.0],
-)
+p("Todo lo que aparece en este informe lo corrí en un computador con Ubuntu 24.04.4 LTS, "
+  "núcleo 7.0.0-28-generic, Docker Engine 29.6.2 y Docker Compose v5.3.1.")
 doc.add_page_break()
 
-# ============================================ 2. INSTALACION Y CONFIGURACION
-doc.add_heading("Instalación y Configuración de Docker en Ubuntu", level=1)
-p("Esta sección sustituye a las secciones 4, 5 y 15.1 de la guía. Comprende los pasos "
-  "que si corresponden a un entorno GNU/Linux, en el orden en que deben ejecutarse.")
+# ============================================ 2. INSTALACION
+doc.add_heading("Dejar Docker Funcionando en Ubuntu", level=1)
+p("Esta parte reemplaza las secciones 4, 5 y 15.1 de la guía.")
 
-doc.add_heading("Instalación desde el Repositorio Oficial", level=2)
-p("Los paquetes de Docker incluidos en los repositorios de la distribución suelen "
-  "corresponder a versiones antiguas y no incorporan el complemento de Compose en su "
-  "versión 2. Por ello, la instalación se realiza desde el repositorio oficial de Docker, "
-  "conforme a la documentación del fabricante (Docker Inc., 2026c).")
+doc.add_heading("Instalación", level=2)
+p("Ubuntu trae Docker en sus repositorios, pero casi siempre es una versión vieja y "
+  "además no incluye Compose v2. Por eso se instala desde el repositorio oficial de "
+  "Docker (Docker Inc., 2026c). Estos son los comandos:")
 code([
-    "# 1. Retirar paquetes antiguos provenientes de la distribución",
+    "# quitar los paquetes viejos que trae la distribución",
     "sudo apt remove docker docker-engine docker.io containerd runc",
     "",
-    "# 2. Registrar la clave GPG y el repositorio oficial",
+    "# agregar la llave y el repositorio oficial",
     "sudo apt update && sudo apt install -y ca-certificates curl",
     "sudo install -m 0755 -d /etc/apt/keyrings",
     "sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \\",
@@ -544,212 +510,182 @@ code([
     '$(. /etc/os-release && echo $VERSION_CODENAME) stable" \\',
     "  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
     "",
-    "# 3. Instalar motor, CLI, containerd y los complementos buildx y compose",
+    "# instalar el motor, el cliente y los complementos",
     "sudo apt update",
     "sudo apt install -y docker-ce docker-ce-cli containerd.io \\",
     "     docker-buildx-plugin docker-compose-plugin",
 ])
-p("La verificación de la clave GPG no es un formalismo administrativo: garantiza que los "
-  "paquetes descargados fueron firmados por Docker y no sustituidos en transito, lo cual "
-  "constituye una medida elemental de seguridad de la cadena de suministro.")
+p("Lo de la llave GPG no es puro trámite. Sirve para que apt verifique que los paquetes "
+  "vienen firmados por Docker y no los cambió alguien en el camino.")
 
-doc.add_heading("Configuración Posterior a la Instalación", level=2)
-p("Dos ajustes son específicos de GNU/Linux y constituyen el equivalente funcional de "
-  "esperar a que Docker Desktop informe el estado Running.")
-par = p("", )
-rich(par, [("Habilitación del servicio. ", {"bold": True}),
-           ("El motor se ejecuta como un demonio administrado por systemd. Debe "
-            "distinguirse entre dos estados que la guía trata como uno solo: ", {}),
-           ("active", {"mono": True}),
-           (" indica que el motor está en ejecución en este momento, mientras que ", {}),
-           ("enabled", {"mono": True}),
-           (" indica que volverá a iniciarse automáticamente tras reiniciar el equipo. "
-            "La evidencia debe mostrar ambos.", {})])
+doc.add_heading("Los Dos Pasos que Sí Son Propios de Linux", level=2)
+p("Después de instalar quedan dos ajustes. Estos son el equivalente de esperar a que "
+  "Docker Desktop diga Running.")
+p("El primero es dejar el servicio andando y que arranque solo con el computador. Vale la "
+  "pena separar las dos cosas, porque no son lo mismo: active quiere decir que está "
+  "corriendo ahorita, y enabled quiere decir que vuelve a arrancar cuando reinicie el "
+  "equipo. En las evidencias muestro las dos.")
 code([
     "sudo systemctl enable --now docker",
     "systemctl is-active docker      # -> active",
     "systemctl is-enabled docker     # -> enabled",
 ])
-par = p("")
-rich(par, [("Acceso sin privilegios de superusuario. ", {"bold": True}),
-           ("El demonio expone un socket en ", {}),
-           ("/var/run/docker.sock", {"mono": True}),
-           (", cuyo grupo propietario es ", {}), ("docker", {"mono": True}),
-           (". Sin pertenecer a dicho grupo, cada invocación del cliente exigiría ", {}),
-           ("sudo", {"mono": True}), (".", {})])
+p("El segundo es poder usar Docker sin escribir sudo cada vez. El demonio atiende en un "
+  "socket, /var/run/docker.sock, que pertenece al grupo docker. Si mi usuario no está en "
+  "ese grupo, todos los comandos piden contraseña.")
 code([
     "sudo usermod -aG docker $USER",
-    "newgrp docker            # o cerrar sesión y volver a iniciarla",
+    "newgrp docker            # o cerrar sesión y volver a entrar",
     "id -nG | tr ' ' '\\n' | grep -x docker    # -> docker",
 ])
-p("Resulta pertinente advertir, en términos de seguridad, que la pertenencia al grupo "
-  "docker equivale en la práctica a disponer de privilegios de superusuario, dado que "
-  "cualquier usuario capaz de comunicarse con el socket puede montar el sistema de "
-  "archivos raíz dentro de un contenedor privilegiado. No se trata de un error de "
-  "configuración, sino de una consecuencia del modelo de arquitectura del demonio. La "
-  "alternativa endurecida es el modo sin raíz (rootless), que ejecuta el motor con el "
-  "identificador del usuario. Este matiz queda encapsulado tras Docker Desktop en el "
-  "procedimiento original y solo se hace visible al operar el motor de forma directa.")
+p("Sobre esto hay algo que aprendí leyendo la documentación y que me parece importante "
+  "anotar: estar en el grupo docker es casi lo mismo que ser administrador del equipo. "
+  "Quien pueda hablarle al socket puede montar todo el disco dentro de un contenedor y "
+  "hacer lo que quiera. No es un error de configuración, es como está hecho Docker. Si "
+  "uno necesita algo más cerrado existe el modo rootless, que corre el motor con el "
+  "usuario normal (Docker Inc., 2026j). En Windows uno nunca ve este detalle porque "
+  "Docker Desktop lo tapa.")
 
 figura(
-    "Versiones instaladas y estado del servicio Docker",
-    "Terminal (GNOME Terminal), en cualquier directorio.",
+    "Versiones instaladas y estado del servicio",
+    "Terminal, en cualquier carpeta.",
     ["docker --version",
      "docker compose version",
      "systemctl is-active docker",
      "systemctl is-enabled docker",
      "uname -r"],
-    "Las cinco salidas en una sola terminal: versión 29.6.2 del motor, v5.3.1 de "
-    "Compose, active, enabled y el núcleo 7.0.0-28-generic. Esta figura sustituye a "
-    "la captura del panel de Docker Desktop con el estado Engine running.",
+    "Las cinco salidas seguidas en la misma terminal. Esta captura reemplaza la del "
+    "panel de Docker Desktop con el letrero Engine running.",
 )
 
 figura(
-    "Acceso al motor sin privilegios de superusuario",
-    "Terminal, en cualquier directorio.",
+    "Docker funcionando sin sudo",
+    "Terminal, en cualquier carpeta.",
     ["id -nG | tr ' ' '\\n' | grep -x docker",
      "docker ps"],
-    "La palabra docker como resultado de la primera instrucción y, a continuación, "
-    "la tabla de contenedores obtenida sin anteponer sudo. Demuestra que la "
-    "configuración posterior a la instalación se completo.",
-    altura_cm=5,
+    "La palabra docker como respuesta del primer comando y enseguida la lista de "
+    "contenedores, sin haber escrito sudo.",
 )
 
-doc.add_heading("Verificación del Motor", level=2)
-p("Los cuatro comandos de verificación propuestos en la sección 5.3 de la guía operan de "
-  "manera idéntica en GNU/Linux, ya que corresponden al cliente y no a la interfaz "
-  "gráfica.")
-code([
-    "docker --version",
-    "docker compose version",
-    "docker info",
-    "docker run hello-world",
-])
-p("A ellos se suman comprobaciones propias del entorno nativo, que en Windows carecerían "
-  "de sentido por estar mediadas por la máquina virtual de WSL 2:")
-code([
-    "uname -r",
-    "systemctl status docker --no-pager | head -12",
-    "docker info --format 'Servidor: {{.ServerVersion}} | Raíz: {{.DockerRootDir}}'",
-    "docker info --format 'Seguridad: {{.SecurityOptions}}'",
-])
+doc.add_heading("Comprobar que el Motor Responde", level=2)
+p("Los cuatro comandos que pide la sección 5.3 de la guía funcionan igual en Linux, "
+  "porque son del cliente y no de la interfaz gráfica:")
+code(["docker --version",
+      "docker compose version",
+      "docker info",
+      "docker run hello-world"])
+p("Aparte de esos revisé un par de cosas que solo tienen sentido en Linux:")
+code(["uname -r",
+      "systemctl status docker --no-pager | head -12",
+      "docker info --format 'Motor: {{.ServerVersion}} | Datos: {{.DockerRootDir}}'",
+      "docker info --format 'Seguridad: {{.SecurityOptions}}'"])
+p("Ahí me encontré un detalle curioso. Al correr docker context ls me aparecen dos "
+  "contextos: default, que es el que uso, y desktop-linux, que quedó de una prueba vieja "
+  "de Docker Desktop. Vale la pena mirarlo antes de empezar, porque si uno está en el "
+  "contexto equivocado los contenedores parecen desaparecer y en realidad están en el "
+  "otro motor.")
 
 figura(
-    "Salida del comando docker info",
-    "Terminal, en cualquier directorio.",
-    ["docker info | head -40"],
-    "El bloque Server con la versión del motor, el controlador de almacenamiento, el "
-    "directorio raíz de datos y, en Security Options, los valores apparmor, seccomp y "
-    "cgroupns. Estos últimos evidencian los mecanismos de aislamiento del núcleo y "
-    "sustituyen a la captura de virtualización habilitada en BIOS/UEFI de la sección 5.2.",
-    altura_cm=8,
+    "Salida de docker info",
+    "Terminal, en cualquier carpeta.",
+    ["docker info | head -40",
+     "docker context ls"],
+    "El bloque Server con la versión del motor y la carpeta de datos, y en Security "
+    "Options los valores apparmor, seccomp y cgroupns, que son los mecanismos de "
+    "aislamiento del núcleo. Esta captura hace las veces de la de virtualización "
+    "habilitada en BIOS que pide la sección 5.2.",
 )
 
-doc.add_heading("Equivalencias entre la Interfaz Gráfica y la Línea de Comandos", level=2)
-p("La Tabla 3 constituye el núcleo metodológico de esta adaptación: acredita que ninguna "
-  "de las verificaciones solicitadas por la guía se omitio, sino que se practicó por una "
-  "vía distinta. En varios casos, la salida en línea de comandos entrega mayor detalle "
-  "que la pantalla correspondiente.")
+doc.add_heading("Cada Pantalla de Docker Desktop y su Comando", level=2)
+p("Esta tabla es la que más me sirvió mientras hacía el taller, porque con ella pude "
+  "seguir la guía sin saltarme nada. En varios casos el comando muestra más información "
+  "que la pantalla.")
 
 table(
-    "Equivalencia entre las vistas de Docker Desktop y los comandos de Docker Engine",
-    ["Vista en Docker Desktop", "Comando equivalente en GNU/Linux"],
+    "Equivalencia entre las pantallas de Docker Desktop y los comandos",
+    ["Pantalla en Docker Desktop", "Comando en Linux"],
     [
-        ["Panel principal, estado Engine running", [("systemctl is-active docker", {"mono": True})]],
+        ["Panel principal, Engine running", [("systemctl is-active docker", {"mono": True})]],
         ["Images", [("docker images", {"mono": True})]],
         ["Containers", [("docker ps -a", {"mono": True})]],
         ["Builds", [("docker buildx history ls", {"mono": True})]],
         ["Builds, pestaña Logs", [("docker buildx history logs <ID>", {"mono": True})]],
         ["Builds, pestaña Source", [("docker buildx history inspect <ID>", {"mono": True})]],
-        ["Containers, pestaña Logs", [("docker logs <nombre>", {"mono": True}), ("  /  ", {}), ("docker compose logs -f", {"mono": True})]],
+        ["Containers, pestaña Logs", [("docker logs <nombre>", {"mono": True})]],
         ["Containers, pestaña Inspect", [("docker inspect <nombre>", {"mono": True})]],
         ["Containers, pestaña Files", [("docker exec -it <nombre> sh", {"mono": True})]],
         ["Containers, pestaña Stats", [("docker stats", {"mono": True})]],
         ["Containers, pestaña Bind mounts", [("docker inspect --format '{{json .Mounts}}' <nombre>", {"mono": True})]],
-        ["Volumes", [("docker volume ls", {"mono": True}), ("  /  ", {}), ("docker volume inspect", {"mono": True})]],
+        ["Volumes", [("docker volume ls", {"mono": True})]],
         ["Capas de una imagen", [("docker history <imagen>", {"mono": True})]],
-        ["Agrupación de un proyecto de Compose", [("docker compose ps", {"mono": True})]],
+        ["Grupo de un proyecto de Compose", [("docker compose ps", {"mono": True})]],
     ],
-    note=[("Elaboración propia. Los subcomandos ", {}), ("buildx history", {"mono": True}),
-          (" fueron verificados en Docker Engine 29.6.2.", {})],
+    note=[("Elaboración propia. Probé todos los comandos en Docker Engine 29.6.2.", {})],
     widths=[7.0, 9.0],
 )
 doc.add_page_break()
 
-# ================================================ 3. SUSTITUCION DE LA APP
-doc.add_heading("Sustitución de la Aplicación de Ejemplo", level=1)
-p("La guía emplea Dino Run, una aplicación desarrollada con Flask y SQLite, por cuanto "
-  "requiere algún artefacto que contenerizar. El proyecto CodeByMike ya utiliza Docker en "
-  "producción de su ciclo de desarrollo, y lo hace con una decisión de arquitectura "
-  "explícitamente documentada en el archivo compose.yaml del repositorio:")
-q = p("Docker no es el runtime de producción de este proyecto y no debe llegar a serlo. "
-      "El sitio lo construye y ejecuta Vercel (SSR sobre Fluid Compute); contenerizar la "
-      "aplicación Astro para desplegarla perdería edge, despliegues de vista previa por "
-      "solicitud de incorporación de cambios y la reversión automática de ci.yml, a "
-      "cambió de nada.", indent=False)
-q.paragraph_format.left_indent = Cm(1.27)
-p("Delimitar el ámbito de aplicación de una herramienta forma parte del criterio "
-  "profesional que la formación busca desarrollar. Lo que si se encuentra contenerizado, "
-  "y constituye el uso serio de la tecnología en este proyecto, comprende dos artefactos:")
+# ================================================ 3. QUE APP USE
+doc.add_heading("Qué Aplicación Usé en Lugar de Dino Run", level=1)
+p("La guía usa Dino Run porque necesita alguna aplicación para meter en un contenedor. Yo "
+  "aproveché mi proyecto de portafolio, CodeByMike, que ya venía usando Docker antes del "
+  "curso. Eso me obligó a explicar algo que al principio pensé que era una falla del "
+  "proyecto y resultó ser una decisión: mi aplicación no se despliega en contenedores. La "
+  "publica Vercel. Si la metiera en un contenedor para producción perdería los "
+  "despliegues de prueba por cada cambio y la reversión automática, y no ganaría nada.")
+p("Entonces, ¿dónde uso Docker? En dos cosas, y las dos me sirvieron para el taller:")
 bullets([
-    [("compose.yaml", {"mono": True}),
-     (" declara dos servidores libSQL (sqld), el mismo motor de base de datos que opera "
-      "en producción a través de Turso. Permite ejercitar transacciones, restricciones "
-      "UNIQUE y concurrencia contra el protocolo real y no contra un archivo local.", {})],
-    [(".devcontainer/Dockerfile", {"mono": True}),
-     (" fija el entorno de desarrollo con Node 22.12 exacto y el navegador Chromium de "
-      "Playwright, resolviendo un defecto real y documentado: la presencia de Node 20 en "
-      "la ruta de ejecución interrumpe la compilación con astro build.", {})],
+    [("El archivo ", {}), ("compose.yaml", {"mono": True}),
+     (" levanta dos servidores de base de datos libSQL, que es el mismo motor que uso en "
+      "producción. Antes hacía las pruebas contra un archivo local y no era lo mismo: los "
+      "errores de concurrencia y de claves repetidas solo aparecen contra el servidor de "
+      "verdad.", {})],
+    [("El archivo ", {}), (".devcontainer/Dockerfile", {"mono": True}),
+     (" fija la versión de Node en 22.12 y trae el navegador de las pruebas "
+      "automatizadas. Esto salió de un problema real: si la terminal abre con Node 20, el "
+      "comando de compilación falla. Dentro del contenedor eso ya no pasa.", {})],
 ])
-p("Los seis ejercicios se desarrollan sobre estos artefactos. La correspondencia "
-  "conceptual es directa, según se detalla en la Tabla 4.")
+p("La Tabla 3 muestra que los conceptos son los mismos, solo cambia la aplicación.")
 
 table(
-    "Correspondencia conceptual entre la aplicación de la guía y el proyecto CodeByMike",
-    ["Concepto", "En Dino Run (guía)", "En CodeByMike"],
+    "Los mismos conceptos en la aplicación de la guía y en la mía",
+    ["Concepto", "En Dino Run", "En mi proyecto"],
     [
-        ["Imagen", "sena-docker-flask-app-app:latest",
-         "ghcr.io/tursodatabase/libsql-server, fijada por digest, y la imagen del entorno de desarrollo"],
+        ["Imagen", "sena-docker-flask-app-app", "libsql-server y la imagen del entorno de desarrollo"],
         ["Contenedor", "dino-game", "codebymike-libsql-main y codebymike-libsql-demo"],
-        ["Dockerfile", "Python 3.12, Flask", ".devcontainer/Dockerfile, Node 22.12 y Chromium"],
+        ["Dockerfile", "Python 3.12 con Flask", "Node 22.12 con Chromium"],
         ["Puerto publicado", "5000:5000", "127.0.0.1:8080:8080 y 127.0.0.1:8081:8080"],
-        ["Persistencia", "bind mount ./data:/app/data (SQLite)",
-         "volumen gestionado libsql-main-data:/var/lib/sqld, y bind mount en el ejercicio 5"],
-        ["Variables de entorno", "DATABASE_PATH, SECRET_KEY",
-         "SQLD_NODE y SQLD_DB_PATH en el contenedor; TURSO_DATABASE_URL y TURSO_DEMO_URL en la aplicación"],
-        ["Docker Compose", "Un servicio denominado app",
-         "Dos servicios que comparten configuración mediante un ancla YAML (x-libsql)"],
-        ["Comprobación de salud", "HEALTHCHECK sobre la página principal",
-         "Espera activa en scripts/wait-libsql.mjs hasta que el extremo /health responda"],
+        ["Guardar los datos", "bind mount ./data:/app/data", "un volumen de Docker, y en el ejercicio 5 lo cambio a bind mount"],
+        ["Variables de entorno", "DATABASE_PATH y SECRET_KEY", "SQLD_NODE y SQLD_DB_PATH"],
+        ["Compose", "un servicio", "dos servicios que comparten configuración"],
     ],
-    note=[("Elaboración propia. Todos los conceptos evaluados por la guía se conservan; "
-           "únicamente cambia la aplicación sobre la cual se ejercitan.", {})],
+    note=[("Elaboración propia.", {})],
     widths=[3.2, 5.4, 7.4],
 )
 doc.add_page_break()
 
-# ================================================== 4. EJERCICIOS PRACTICOS
-doc.add_heading("Desarrollo de los Ejercicios Prácticos", level=1)
-p("Los seis ejercicios corresponden a la sección 16 de la guía (página 27). Todos los "
-  "comandos se ejecutan desde la raíz del repositorio del proyecto.")
+# ================================================== 4. EJERCICIOS
+doc.add_heading("Los Seis Ejercicios", level=1)
+p("Son los de la sección 16 de la guía, página 27. Todos los comandos los corrí parado en "
+  "la carpeta de mi proyecto.")
 
 # ---- Ejercicio 1
-doc.add_heading("Ejercicio 1. Verificación Inicial del Motor", level=2)
+doc.add_heading("Ejercicio 1. Comprobar que el Motor Sirve", level=2)
 par = p("")
-rich(par, [("Problema planteado. ", {"italic": True}),
-           ("Comprobar que el motor funciona y puede ejecutar imagenes.", {})])
-p("En ausencia de interfaz gráfica, el ciclo completo consiste en descargar una imagen, "
-  "crear un contenedor a partir de ella y ejecutarlo.")
+rich(par, [("Lo que pide: ", {"italic": True}),
+           ("comprobar que el motor funciona y puede ejecutar imágenes.", {})])
+p("Sin interfaz gráfica el ciclo es el mismo: bajar una imagen, crear el contenedor y "
+  "correrlo.")
 code(["docker run hello-world",
       "docker images | head",
       "docker ps -a | head"])
-p("Conviene precisar que docker run no constituye una operación única: localiza la imagen "
-  "en el almacen local, la descarga desde el registro si no se encuentra presente, crea "
-  "el contenedor y lo inicia. La imagen hello-world evidencia las cuatro operaciones de "
-  "manera simultánea y por ello la guía la emplea como prueba de funcionamiento.")
-p("Dado que dicho contenedor finaliza de inmediato, se complementa la evidencia con un "
-  "servicio persistente que publique un puerto, lo que permite verificar además la "
-  "conectividad de red:")
+p("Algo que no tenía claro antes y me quedó claro con esto: docker run no es un solo "
+  "paso. Busca la imagen en el disco, si no la encuentra la descarga, crea el contenedor "
+  "y lo arranca. Por eso la guía usa hello-world como prueba, porque con un comando se "
+  "ven las cuatro cosas.")
+p("El problema de hello-world es que se muere de una y no queda nada que mirar. Para que "
+  "la evidencia quedara más completa levanté también un servidor web con un puerto "
+  "publicado:")
 code(["docker run -d --name prueba-sena -p 8085:80 nginx",
       "curl -s -o /dev/null -w 'HTTP %{http_code}\\n' http://localhost:8085",
       "docker ps --filter name=prueba-sena",
@@ -757,425 +693,310 @@ code(["docker run -d --name prueba-sena -p 8085:80 nginx",
       "docker rm -f prueba-sena"])
 
 figura(
-    "Ejecución de la imagen de prueba hello-world",
-    "Terminal, en cualquier directorio.",
+    "La imagen de prueba hello-world",
+    "Terminal, en cualquier carpeta.",
     ["docker run hello-world"],
-    "El mensaje Hello from Docker! junto con la explicación de los cuatro pasos que "
-    "el motor ejecutó. Si la imagen no estaba descargada previamente, deben apreciarse "
-    "también las líneas de descarga (Unable to find image ... Pulling from ...), lo cual "
-    "enriquece la evidencia.",
-    altura_cm=8,
+    "El mensaje Hello from Docker! con la explicación de los cuatro pasos. Si la "
+    "imagen no estaba descargada también salen las líneas de descarga, y eso hace mejor "
+    "la evidencia.",
 )
 
 figura(
-    "Contenedor con puerto publicado y verificación por HTTP",
-    "Terminal, en cualquier directorio.",
+    "Un contenedor con puerto publicado",
+    "Terminal, en cualquier carpeta.",
     ["docker run -d --name prueba-sena -p 8085:80 nginx",
      "curl -s -o /dev/null -w 'HTTP %{http_code}\\n' http://localhost:8085",
      "docker ps --filter name=prueba-sena"],
-    "El identificador del contenedor creado, la respuesta HTTP 200 y la fila del "
-    "contenedor en ejecución con la asignación de puertos 0.0.0.0:8085->80/tcp. "
-    "Equivale a pulsar el enlace del puerto en la vista Containers de Docker Desktop.",
-    altura_cm=6,
+    "El identificador largo del contenedor, la respuesta HTTP 200 y la fila del "
+    "contenedor con el puerto 0.0.0.0:8085->80/tcp. Es lo mismo que darle clic al enlace "
+    "del puerto en la pantalla Containers.",
 )
 
 # ---- Ejercicio 2
-doc.add_heading("Ejercicio 2. Construcción y Revisión de la Imagen", level=2)
+doc.add_heading("Ejercicio 2. Construir la Imagen y Revisarla", level=2)
 par = p("")
-rich(par, [("Problema planteado. ", {"italic": True}),
-           ("Construir la aplicación y comprender el resultado desde las vistas Images y "
-            "Builds.", {})])
-p("Se construye el Dockerfile del entorno de desarrollo del proyecto, que constituye un "
-  "artefacto en uso y no un ejemplo didáctico:")
+rich(par, [("Lo que pide: ", {"italic": True}),
+           ("construir la aplicación y entender el resultado desde Images y Builds.", {})])
+p("Construí el Dockerfile del entorno de desarrollo de mi proyecto:")
 code(["docker build -t codebymike-dev:sena .devcontainer/"])
-p("La revisión posterior cubre exactamente la información que la interfaz gráfica "
-  "presenta en las vistas Builds e Images:")
-code(["# Vista Builds: historial de construcciones, estado y duración",
+p("Para revisarlo después usé estos comandos, que muestran lo mismo que las pantallas "
+  "Builds e Images:")
+code(["# lo que en Docker Desktop es la pantalla Builds",
       "docker buildx history ls",
-      "",
-      "# Vista Builds, pestañas Logs y Source",
       "docker buildx history logs <BUILD_ID>",
-      "docker buildx history inspect <BUILD_ID>",
       "",
-      "# Vista Images",
+      "# lo que es la pantalla Images",
       "docker images codebymike-dev",
       "",
-      "# Capas de la imagen, con mayor detalle que la interfaz gráfica",
+      "# las capas de la imagen, con el peso de cada una",
       "docker history codebymike-dev:sena --format 'table {{.Size}}\\t{{.CreatedBy}}'"])
-p("La demostración de la memoria caché de capas resulta especialmente pertinente, por "
-  "cuanto la sección 6.2 de la guía justifica precisamente con ese argumento el orden de "
-  "las instrucciones (copiar el archivo de dependencias antes que el código fuente). Al "
-  "repetir la misma construcción, todos los pasos deben resolverse desde la caché y el "
-  "proceso concluye en segundos:")
-code(["docker build -t codebymike-dev:sena .devcontainer/   # todos los pasos CACHED"])
-p("El análisis instrucción por instrucción del Dockerfile empleado, contrastado con el de "
-  "Dino Run, se presenta en la Tabla 5.")
-
-table(
-    "Análisis del Dockerfile del proyecto y su correspondencia con el de la guía",
-    ["Instrucción", "Función en el proyecto", "Correspondencia con la guía"],
-    [
-        ["FROM node:22.12-bookworm@sha256:0e910f...",
-         "Imagen base fijada por digest criptográfico y no por etiqueta.",
-         "Equivale a FROM python:3.12-slim, con un criterio más estricto: una etiqueta es mutable, un digest no. Constituye reproducibilidad verificable."],
-        ["ARG PLAYWRIGHT_VERSION=1.61.1",
-         "Fija la versión del navegador de pruebas automatizadas.",
-         "Sin equivalente en la guía. Evita que Playwright rechace un navegador instalado por otra versión."],
-        ["RUN npx playwright install-deps chromium",
-         "Instala dependencias de sistema con privilegios de root.",
-         "Equivale a RUN pip install --no-cache-dir -r requirements.txt."],
-        ["USER node",
-         "Reduce privilegios antes de ejecutar el proceso principal.",
-         "Idéntico a USER appuser, con idéntico fundamento: limitar el impacto de una eventual vulnerabilidad."],
-        ["ENV PLAYWRIGHT_BROWSERS_PATH=...",
-         "Variable de entorno incorporada a la imagen.",
-         "La guía prefiere declarar variables en compose.yaml. Esta pertenece a la imagen porque no varía entre entornos."],
-        ["WORKDIR /workspace",
-         "Establece el directorio de trabajo dentro del contenedor.",
-         "Equivale a WORKDIR /app."],
-    ],
-    note=[("Elaboración propia a partir de ", {}), (".devcontainer/Dockerfile", {"mono": True}),
-          (" del repositorio del proyecto.", {})],
-    widths=[4.4, 5.4, 6.2],
-)
-
-p("En cuanto al contexto de construcción, el archivo .dockerignore del proyecto responde "
-  "a la pregunta formulada en la sección 6.3 de la guía con un argumento que allí se "
-  "menciona de forma tangencial y que en el repositorio consta como comentario del propio "
-  "archivo: además del peso del contexto, se trata de higiene de la cadena de suministro, "
-  "puesto que un secreto que ingresa al contexto puede permanecer en una capa de la imagen "
-  "aunque el Dockerfile no lo copie en ningún momento. Se excluyen .env y sus variantes, "
-  ".vercel, .git, node_modules, dist, .astro, los informes de cobertura y de pruebas, y "
-  "los documentos en formato PDF y DOCX.")
+p("La parte que más me gustó de este ejercicio fue la caché. La guía explica en la "
+  "sección 6.2 por qué se copia primero requirements.txt y después el código, y uno lo "
+  "lee y dice bueno. Pero al correr el mismo build dos veces se ve solo: la segunda vez "
+  "todos los pasos salen marcados como CACHED y termina en menos de un segundo.")
+code(["docker build -t codebymike-dev:sena .devcontainer/   # ahora sale todo CACHED"])
+p("Comparando mi Dockerfile con el de Dino Run encontré que hacen casi lo mismo pero con "
+  "otras herramientas. Los dos parten de una imagen oficial, instalan dependencias, "
+  "copian lo que hace falta, bajan los permisos con USER y definen la carpeta de trabajo. "
+  "Hay dos diferencias que sí vale la pena mencionar:")
+bullets([
+    ["Mi imagen base va fijada con un digest, que es una huella del contenido, en vez de "
+     "una etiqueta como python:3.12-slim. Una etiqueta puede cambiar mañana y apuntar a "
+     "otra imagen; el digest no cambia nunca. Es más incómodo de escribir pero es la "
+     "única forma de que la construcción sea igual dentro de seis meses.",
+     ],
+    ["Yo uso una instrucción ENV dentro del Dockerfile para la ruta de los navegadores, "
+     "mientras que la guía prefiere poner las variables en compose.yaml. Las dos formas "
+     "son válidas y la diferencia es cuándo cambia el valor: si es igual siempre, va en "
+     "la imagen; si cambia según dónde se ejecute, va en Compose.",
+     ],
+])
+p("Del .dockerignore aprendí algo que la guía menciona de pasada. Uno cree que es para "
+  "que el build sea más rápido, y sí, pero lo importante es otra cosa: si un archivo con "
+  "contraseñas entra al contexto puede quedarse guardado en una capa de la imagen aunque "
+  "el Dockerfile nunca lo copie. Por eso en el mío excluyo .env, la carpeta .git, "
+  "node_modules y los documentos en PDF y Word que tengo dentro del repositorio.")
 
 figura(
-    "Primera construcción de la imagen del entorno de desarrollo",
-    "Terminal, en la raíz del repositorio del proyecto.",
+    "Primera construcción de la imagen",
+    "Terminal, en la carpeta del proyecto.",
     ["docker build -t codebymike-dev:sena .devcontainer/"],
-    "La secuencia completa de pasos numerados, la transferencia del contexto de "
-    "construcción, la descarga de la imagen base y la línea final con el tiempo total. "
-    "Equivale a la vista Builds con estado Completed.",
-    altura_cm=9,
+    "Los pasos numerados, la descarga de la imagen base y el tiempo total al final. "
+    "Equivale a la pantalla Builds con el estado Completed.",
 )
 
 figura(
-    "Segunda construcción con aprovechamiento de la memoria caché",
-    "Terminal, en la raíz del repositorio, inmediatamente después de la Figura 6.",
+    "La segunda construcción usa la caché",
+    "Terminal, justo después de la captura anterior.",
     ["docker build -t codebymike-dev:sena .devcontainer/"],
-    "La totalidad de los pasos marcados como CACHED y una duración total inferior a "
-    "un segundo. Esta figura demuestra el concepto de capas reutilizables que la guía "
-    "expone en la sección 6.2.",
-    altura_cm=7,
+    "Todos los pasos con la palabra CACHED y un tiempo total de menos de un segundo. "
+    "Es la prueba de que las capas se reutilizan.",
 )
 
 figura(
-    "Historial de construcciones, imagenes y capas",
-    "Terminal, en la raíz del repositorio.",
+    "Historial de construcciones, imagen y capas",
+    "Terminal, en la carpeta del proyecto.",
     ["docker buildx history ls",
      "docker images codebymike-dev",
      "docker history codebymike-dev:sena --format 'table {{.Size}}\\t{{.CreatedBy}}'"],
-    "El registro de construcción con estado Completed y su duración (vista Builds), la "
-    "fila de la imagen con etiqueta, identificador y tamaño (vista Images), y el desglose "
-    "de capas con el tamaño que cada instrucción aporta al total.",
-    altura_cm=9,
+    "El registro de la construcción con su duración, la fila de la imagen con etiqueta "
+    "y tamaño, y el desglose de capas donde se ve cuánto pesa cada instrucción.",
 )
 
 # ---- Ejercicio 3
-doc.add_heading("Ejercicio 3. Ejecución y Comprobación con Docker Compose", level=2)
+doc.add_heading("Ejercicio 3. Levantar Todo con Docker Compose", level=2)
 par = p("")
-rich(par, [("Problema planteado. ", {"italic": True}),
-           ("Ejecutar la aplicación mediante Docker Compose y acceder a ella sin "
-            "configurar manualmente cada opción de docker run.", {})])
-p("El proyecto encapsula esta operación en scripts de npm, que constituyen la versión "
-  "profesional del archivo iniciar_juego.bat propuesto por la guía:")
-code(["npm run db:up      # docker compose up -d y espera activa hasta que /health responda",
+rich(par, [("Lo que pide: ", {"italic": True}),
+           ("ejecutar la aplicación con Compose y entrar desde el navegador sin tener que "
+            "configurar cada opción a mano.", {})])
+p("En mi proyecto esto está metido en un script de npm, que viene siendo lo mismo que el "
+  "iniciar_juego.bat de la guía pero para Linux:")
+code(["npm run db:up      # levanta los contenedores y espera a que respondan",
       "docker compose ps"])
-p("De manera equivalente, invocando directamente la herramienta:")
+p("El comando que corre por debajo es este:")
 code(["docker compose up -d",
       "docker compose ps --format 'table {{.Name}}\\t{{.Status}}\\t{{.Ports}}'"])
-p("La comprobación a través del puerto publicado equivale a pulsar el enlace 5000:5000 "
-  "en la vista Containers:")
+p("Y para comprobar por el puerto, que es el equivalente de darle clic a 5000:5000:")
 code(["curl -s -o /dev/null -w 'principal HTTP %{http_code}\\n' http://127.0.0.1:8080/health",
       "curl -s -o /dev/null -w 'demo HTTP %{http_code}\\n' http://127.0.0.1:8081/health"])
-p("Y la aplicación completa operando contra dichas bases de datos:")
+p("Después levanto la aplicación apuntando a esas bases:")
 code(["npm run db:seed",
-      "npm run dev:carga    # Astro contra sqld en los puertos 8080 y 8081"])
-p("El archivo compose.yaml del proyecto excede en varios aspectos al presentado por la "
-  "guía, y conviene destacarlo:")
-bullets([
-    [("La construcción ", {}), ("x-libsql: &libsql", {"mono": True}),
-     (" junto con ", {}), ("<<: *libsql", {"mono": True}),
-     (" corresponde a un ancla y una fusión de YAML: el bloque de configuración común se "
-      "declara una sola vez y ambos servicios lo heredan. La guía, al contar con un único "
-      "servicio, no llega a plantear este problema.", {})],
-    [("La declaración ", {}), ("ports: '127.0.0.1:8080:8080'", {"mono": True}),
-     (" publica el servicio exclusivamente en la interfaz de bucle local. La guía escribe ", {}),
-     ('"5000:5000"', {"mono": True}),
-     (", forma que en GNU/Linux expone el servicio en todas las interfaces de red y lo "
-      "deja accesible desde la red local. Se trata de una diferencia de seguridad "
-      "sustantiva y no de una preferencia de estilo.", {})],
-    [("Las directivas ", {}), ("cap_drop: ALL", {"mono": True}), (" y ", {}),
-     ("cap_add: [DAC_OVERRIDE, CHOWN, SETUID, SETGID]", {"mono": True}),
-     (" restringen el contenedor al conjunto mínimo de capacidades del núcleo que sqld "
-      "requiere para iniciar. El archivo documenta el método empleado para determinarlas, "
-      "consistente en retirarlas una a una hasta que el extremo /health dejó de responder.", {})],
-    [("La directiva ", {}), ("restart: unless-stopped", {"mono": True}),
-     (" es idéntica a la propuesta por la guía.", {})],
-])
+      "npm run dev:carga    # abre en http://localhost:4400"])
+p("Mi compose.yaml tiene tres cosas que el de la guía no, y las entendí mejor haciendo "
+  "esta comparación. La primera es que los dos servicios comparten un bloque de "
+  "configuración escrito una sola vez, usando lo que en YAML se llama un ancla; como la "
+  "guía tiene un solo servicio, nunca se topa con ese problema. La segunda es que mis "
+  "puertos están escritos como 127.0.0.1:8080:8080 y no como 8080:8080. La diferencia es "
+  "grande: la forma corta, en Linux, deja el servicio abierto a toda la red local, "
+  "mientras que la mía solo lo deja disponible en mi propio computador. La tercera es que "
+  "el contenedor arranca con casi todos los permisos del núcleo quitados y solo con "
+  "cuatro habilitados, que fueron los que necesitó la base de datos para poder iniciar.")
 
 figura(
-    "Servicios de Compose en ejecución y respuesta de ambas bases de datos",
-    "Terminal, en la raíz del repositorio.",
+    "Los servicios levantados y respondiendo",
+    "Terminal, en la carpeta del proyecto.",
     ["docker compose ps --format 'table {{.Name}}\\t{{.Status}}\\t{{.Ports}}'",
      "curl -s -o /dev/null -w 'principal HTTP %{http_code}\\n' http://127.0.0.1:8080/health",
      "curl -s -o /dev/null -w 'demo HTTP %{http_code}\\n' http://127.0.0.1:8081/health"],
-    "Los dos contenedores con estado Up y sus puertos publicados en 127.0.0.1, seguidos "
-    "de las dos respuestas HTTP 200. Equivale a la vista Containers con el grupo de "
-    "Compose desplegado y ambos servicios en estado Running.",
-    altura_cm=6,
+    "Los dos contenedores en estado Up con sus puertos, y debajo las dos respuestas "
+    "HTTP 200. Es la pantalla Containers con el grupo de Compose desplegado.",
 )
 
 figura(
-    "Aplicación web en ejecución contra las bases de datos en contenedores",
-    "Navegador web, dirección http://localhost:4400, tras ejecutar npm run dev:carga.",
+    "La aplicación abierta en el navegador",
+    "Navegador, en http://localhost:4400, después de correr npm run dev:carga.",
     ["npm run db:seed",
      "npm run dev:carga"],
-    "Una página del proyecto que muestre datos provenientes de la base de datos (por "
-    "ejemplo el panel de control o la página de estado), lo cual acredita que la "
-    "aplicación consume efectivamente los servicios contenerizados. Equivale a la "
-    "captura de Dino Run en el navegador.",
-    altura_cm=9,
+    "Una página que muestre datos que vienen de la base de datos, para que se note que "
+    "la aplicación sí está usando los contenedores. Es el equivalente de la captura de "
+    "Dino Run funcionando.",
 )
 
 # ---- Ejercicio 4
-doc.add_heading("Ejercicio 4. Variables de Entorno y Gestión de Secretos", level=2)
+doc.add_heading("Ejercicio 4. Las Variables de Entorno y la Clave Secreta", level=2)
 par = p("")
-rich(par, [("Problema planteado. ", {"italic": True}),
-           ("Distinguir las variables predeterminadas, opcionales y sensibles, y "
-            "definirlas correctamente para Docker Compose, comprobando únicamente que la "
-            "variable existe, sin mostrar ni capturar su valor real.", {})])
-p("Las variables declaradas en compose.yaml y entregadas al contenedor se consultan así:")
+rich(par, [("Lo que pide: ", {"italic": True}),
+           ("separar las variables normales de las secretas y comprobar que la variable "
+            "existe sin mostrar su valor.", {})])
+p("Las variables que reciben mis contenedores se ven así:")
 code(["docker inspect codebymike-libsql-main \\",
       "  --format '{{range .Config.Env}}{{println .}}{{end}}'",
       "",
       "# SQLD_NODE=primary",
       "# SQLD_DB_PATH=/var/lib/sqld/main.db"])
-p("La variable SQLD_DB_PATH constituye el paralelo exacto de DATABASE_PATH en Dino Run: "
-  "indica al servicio la ruta en la cual debe escribir, y dicha ruta debe coincidir con "
-  "el punto de montaje declarado. Si una de las dos se modifica sin la otra, los datos se "
-  "escriben fuera del volumen y se pierden al recrear el contenedor.")
-p("Del lado de la aplicación, el repositorio establece un criterio propio, consignado en "
-  "su archivo de instrucciones técnicas: dado que el proyecto combina import.meta.env y "
-  "process.env, que no son equivalentes (el servidor de desarrollo carga el archivo .env "
-  "solo en el primero, mientras que Vercel inyecta las variables únicamente en el "
-  "segundo), toda lectura de una variable nueva debe realizarse mediante la función "
-  "serverEnv de src/lib/env.ts, que consulta ambas fuentes. La clasificación solicitada "
-  "por el ejercicio se presenta en la Tabla 6.")
-
-table(
-    "Clasificación de las variables de entorno del proyecto",
-    ["Tipo", "Ejemplos", "Tratamiento"],
-    [
-        ["Predeterminada",
-         "TURSO_DATABASE_URL=http://127.0.0.1:8080",
-         "Declarada en el script dev:carga de package.json. Su valor es conocido, no comprometedor y puede publicarse."],
-        ["Opcional",
-         "NTFY_TOPIC, RESEND_API_KEY",
-         "Si la variable no existe, el módulo src/lib/notify.ts retorna un resultado con la marca skipped y nunca interrumpe la ejecución. Equivale a la variable FLASK_ENV que la guía califica de opcional, con la diferencia de que aquí la degradación está diseñada de forma deliberada."],
-        ["Sensible",
-         "ENCRYPTION_KEY, AUTH_SECRET, CRON_SECRET, COBRO_HISTORY_SECRET",
-         "Residen en el archivo .env local, excluido por .gitignore y por .dockerignore, y en las variables de entorno de la plataforma de despliegue. Nunca se escriben en compose.yaml ni aparecen en una captura de pantalla."],
-    ],
-    note=[("Elaboración propia. El criterio de tratamiento corresponde a las reglas de "
-           "arquitectura documentadas en el repositorio del proyecto.", {})],
-    widths=[2.8, 4.4, 8.8],
-)
-
-p("La comprobación solicitada exige acreditar la existencia de la variable sin revelar su "
-  "valor. La forma correcta de hacerlo en una evidencia que se entrega consiste en "
-  "recortar el contenido posterior al signo igual:")
-code(["# Correcto: se prueba la existencia, no se expone el valor",
-      "grep -c '^ENCRYPTION_KEY=' .env          # -> 1",
-      "",
+p("SQLD_DB_PATH es lo mismo que DATABASE_PATH en Dino Run: le dice al programa dónde "
+  "escribir. Lo que hay que cuidar es que esa ruta coincida con la del montaje. Si uno "
+  "cambia una y olvida la otra, el programa escribe en un lugar que no se está guardando "
+  "y los datos se pierden apenas se recrea el contenedor.")
+p("Del lado de mi aplicación las variables se dividen en tres grupos, que es justo lo que "
+  "pide el ejercicio. Las normales, como la dirección de la base de datos local, se "
+  "pueden mostrar sin problema. Las opcionales, como las de notificaciones, se pueden "
+  "dejar vacías y la aplicación sigue funcionando, solo que no envía nada. Y las "
+  "secretas, como la clave de cifrado, viven en un archivo .env que está excluido tanto "
+  "del repositorio como del contexto de construcción.")
+p("Para la evidencia hay que comprobar que la variable existe sin dejar ver el valor. La "
+  "forma que encontré es cortar todo lo que va después del signo igual:")
+code(["# muestra solo los nombres, sin los valores",
       "docker inspect codebymike-libsql-main \\",
       "  --format '{{range .Config.Env}}{{println .}}{{end}}' | cut -d= -f1",
-      "# SQLD_NODE",
-      "# SQLD_DB_PATH",
-      "# PATH"])
-p("Resulta oportuno señalar que la guía incurre en su propio ejemplo en la práctica que "
-  "posteriormente advierte: publica el valor SECRET_KEY=tu-clave-secreta-mejor-cambiar-en-"
-  "produccion dentro del archivo compose.yaml reproducido en el documento. La propia guía "
-  "lo corrige en la sección 12, al recomendar la interpolación desde un archivo .env "
-  "local mediante la sintaxis SECRET_KEY=${SECRET_KEY}. El proyecto CodeByMike aplica esa "
-  "regla de forma sistemática: ningún secreto figura escrito en compose.yaml.")
+      "",
+      "# confirma que la clave existe, sin imprimirla",
+      "grep -c '^ENCRYPTION_KEY=' .env          # -> 1"])
+p("Una cosa que me llamó la atención revisando la guía: en la sección 7 el compose.yaml "
+  "de ejemplo trae la clave escrita completa dentro del archivo, y después, en la sección "
+  "12, la misma guía dice que eso no se debe hacer y recomienda traerla desde un archivo "
+  ".env. Supongo que en el ejemplo la dejaron así para que se entienda, pero es el error "
+  "más fácil de cometer, así que lo anoto.")
 
 figura(
-    "Comprobación de variables de entorno sin exposición de valores",
-    "Terminal, en la raíz del repositorio.",
+    "Variables de entorno sin mostrar los valores secretos",
+    "Terminal, en la carpeta del proyecto.",
     ["docker inspect codebymike-libsql-main \\",
      "  --format '{{range .Config.Env}}{{println .}}{{end}}'",
      "",
      "docker inspect codebymike-libsql-main \\",
      "  --format '{{range .Config.Env}}{{println .}}{{end}}' | cut -d= -f1",
      "",
-     "grep -c '^ENCRYPTION_KEY=' .env",
-     "grep -nE '^\\.env' .dockerignore .gitignore"],
-    "Las variables del contenedor con sus valores (no son secretos: SQLD_NODE y "
-    "SQLD_DB_PATH), la misma consulta recortada a solo los nombres, el conteo que "
-    "acredita la existencia de ENCRYPTION_KEY sin mostrarla, y las líneas de "
-    ".dockerignore y .gitignore que excluyen el archivo .env. Verificar antes de "
-    "capturar que no haya ningún valor secreto visible en la terminal.",
-    altura_cm=8,
+     "grep -c '^ENCRYPTION_KEY=' .env"],
+    "Primero las variables del contenedor con sus valores, que no son secretos; "
+    "después la misma consulta cortada a solo los nombres; y por último el conteo que "
+    "prueba que la clave existe sin mostrarla. Antes de tomar la captura hay que "
+    "revisar que no haya quedado ninguna clave visible más arriba en la terminal.",
 )
 
 # ---- Ejercicio 5
-doc.add_heading("Ejercicio 5. Persistencia mediante Bind Mount", level=2)
+doc.add_heading("Ejercicio 5. Que los Datos No Se Pierdan", level=2)
 par = p("")
-rich(par, [("Problema planteado. ", {"italic": True}),
-           ("Conservar los datos mediante el bind mount declarado en compose.yaml: "
-            "registrar información, reiniciar el contenedor y comprobar que permanece.", {})])
-p("El proyecto emplea volúmenes gestionados por Docker y no montajes de enlace, decisión "
-  "que resulta apropiada para datos de servicio: Docker administra los permisos y el "
-  "ciclo de vida del almacenamiento, y los archivos no contaminan el árbol del "
-  "repositorio. Para desarrollar el ejercicio se dispuso un archivo de anulación que "
-  "modifica únicamente ese aspecto, sin alterar el comportamiento predeterminado del "
-  "proyecto. El archivo docs/manuales-sena/compose.sena-bind.yaml contiene:")
+rich(par, [("Lo que pide: ", {"italic": True}),
+           ("guardar los datos con el bind mount de compose.yaml, reiniciar el contenedor "
+            "y comprobar que siguen ahí.", {})])
+p("Mi proyecto no usa bind mount sino un volumen de Docker, que para bases de datos "
+  "funciona mejor porque Docker se encarga de los permisos y los archivos no quedan "
+  "regados en la carpeta del proyecto. Para el ejercicio armé un archivo aparte que "
+  "cambia solo esa parte, sin dañar la configuración normal:")
 code(["services:",
       "  libsql-main:",
       "    volumes:",
       "      - ./.data/libsql-main:/var/lib/sqld"])
-p("El procedimiento completo, con el orden de las comprobaciones, es el siguiente:")
-code(["# 1. Estado inicial: volumen gestionado por Docker",
+p("Y lo levanté combinando los dos archivos:")
+code(["# antes: montaje tipo volume",
       "docker inspect codebymike-libsql-main \\",
-      "  --format '{{range .Mounts}}{{.Type}} {{.Source}} -> {{.Destination}}{{println}}{{end}}'",
+      "  --format '{{range .Mounts}}{{.Type}} {{.Source}}{{println}}{{end}}'",
       "",
-      "# 2. Levantar los servicios con el archivo de anulación",
       "docker compose -f compose.yaml \\",
       "  -f docs/manuales-sena/compose.sena-bind.yaml up -d",
       "",
-      "# 3. Confirmar el cambio de tipo de montaje (vista Bind mounts)",
+      "# después: montaje tipo bind, apuntando a mi carpeta",
       "docker inspect codebymike-libsql-main \\",
-      "  --format '{{range .Mounts}}{{.Type}} {{.Source}} -> {{.Destination}}{{println}}{{end}}'",
+      "  --format '{{range .Mounts}}{{.Type}} {{.Source}}{{println}}{{end}}'",
       "",
-      "# 4. La carpeta aparece en el anfitrión, que es el propósito del bind mount",
-      "ls -la .data/libsql-main",
-      "",
-      "# 5. Escribir datos, reiniciar y comprobar",
-      "npm run db:seed",
-      "docker compose restart libsql-main",
+      "ls -la .data/libsql-main"])
+p("La prueba de que los datos aguantan es la misma que propone la guía con el récord del "
+  "juego: guardar algo, reiniciar y volver a mirar. En mi caso inserté una fila en una "
+  "tabla de prueba, reinicié el contenedor y la volví a consultar. Antes del reinicio "
+  "tenía una fila y después del reinicio seguía teniendo esa misma fila, con el texto "
+  "intacto.")
+code(["docker compose restart libsql-main",
       "du -sh .data/libsql-main"])
-p("Para una comprobación más explícita, equivalente a registrar un usuario y verificar "
-  "que su puntuación permanece tras el reinicio, se inserta un registro, se reinicia el "
-  "contenedor y se consulta nuevamente:")
-code(["node -e \"",
-      "const {createClient} = require('@libsql/client');",
-      "const c = createClient({url:'http://127.0.0.1:8080'});",
-      "(async () => {",
-      "  await c.execute('CREATE TABLE IF NOT EXISTS prueba_sena(id INTEGER PRIMARY KEY, nota TEXT)');",
-      "  await c.execute(\\\"INSERT INTO prueba_sena(nota) VALUES('antes del reinicio')\\\");",
-      "  console.log('filas:', (await c.execute('SELECT count(*) n FROM prueba_sena')).rows[0].n);",
-      "})();\"",
-      "",
-      "docker compose restart libsql-main && sleep 5",
-      "",
-      "node -e \"",
-      "const {createClient} = require('@libsql/client');",
-      "createClient({url:'http://127.0.0.1:8080'})",
-      "  .execute('SELECT count(*) n, max(nota) nota FROM prueba_sena')",
-      "  .then(r => console.log('tras el reinicio:', r.rows[0].n, '|', r.rows[0].nota));\""])
-p("El resultado obtenido en el entorno descrito fue el siguiente:")
-code(["filas: 1",
-      "tras el reinicio: 1 | antes del reinicio"])
-p("Para restablecer el modo predeterminado del proyecto se recrean los servicios sin el "
-  "archivo de anulación:")
+p("Para volver a como estaba antes:")
 code(["docker compose up -d --force-recreate"])
-par = p("")
-rich(par, [("Hallazgo específico del entorno GNU/Linux. ", {"bold": True}),
-           ("Los archivos que sqld crea dentro de la carpeta enlazada quedan bajo el "
-            "identificador de usuario del contenedor (666) y no bajo el del usuario del "
-            "anfitrión. En consecuencia, su eliminación desde el sistema anfitrión falla "
-            "con el mensaje Permission denied, y debe realizarse desde un contenedor, "
-            "que si dispone de privilegios de superusuario:", {})])
+p("Aquí me pasó el único problema que no esperaba. Cuando quise borrar la carpeta .data "
+  "para dejar todo limpio, me salió Permission denied, y eso que era una carpeta dentro "
+  "de mi propio proyecto. Lo que ocurre es que los archivos los creó el usuario que corre "
+  "adentro del contenedor, que tiene otro número de usuario, y desde afuera yo no soy "
+  "dueño de esos archivos. La solución fue borrarlos desde un contenedor:")
 code(['docker run --rm -v "$PWD/.data:/x" alpine rm -rf /x/libsql-main'])
-p("Este comportamiento no se manifiesta en Windows con Docker Desktop, dado que el acceso "
-  "al sistema de archivos se realiza a través de una capa de traducción que homogeniza la "
-  "propiedad de los archivos. Constituye una de las diferencias reales entre ambas "
-  "plataformas y explica por que en equipos GNU/Linux se prefieren volúmenes gestionados "
-  "para datos de servicio, reservando los montajes de enlace para el código fuente "
-  "durante el desarrollo.")
+p("Estuve leyendo y esto en Windows no pasa, porque el acceso a los archivos va por una "
+  "capa intermedia que empareja los permisos. Me sirvió para entender por qué en Linux se "
+  "prefieren los volúmenes de Docker para las bases de datos y los bind mounts se dejan "
+  "más que todo para el código mientras uno programa.")
 
 figura(
-    "Cambió del tipo de montaje: de volumen gestionado a bind mount",
-    "Terminal, en la raíz del repositorio.",
+    "El montaje cambia de volumen a bind mount",
+    "Terminal, en la carpeta del proyecto.",
     ["docker inspect codebymike-libsql-main \\",
-     "  --format '{{range .Mounts}}{{.Type}} {{.Source}} -> {{.Destination}}{{println}}{{end}}'",
+     "  --format '{{range .Mounts}}{{.Type}} {{.Source}}{{println}}{{end}}'",
      "",
      "docker compose -f compose.yaml \\",
      "  -f docs/manuales-sena/compose.sena-bind.yaml up -d",
      "",
      "docker inspect codebymike-libsql-main \\",
-     "  --format '{{range .Mounts}}{{.Type}} {{.Source}} -> {{.Destination}}{{println}}{{end}}'",
+     "  --format '{{range .Mounts}}{{.Type}} {{.Source}}{{println}}{{end}}'",
      "",
      "ls -la .data/libsql-main"],
-    "Las dos consultas de montaje una debajo de la otra: la primera con el prefijo "
-    "volume y una ruta bajo /var/lib/docker/volumes, la segunda con el prefijo bind y la "
-    "ruta del repositorio. Al final, el listado de la carpeta creada en el anfitrión. "
-    "Equivale a la pestaña Bind mounts de Docker Desktop.",
-    altura_cm=8,
+    "Las dos consultas una debajo de la otra: la primera dice volume y una ruta larga "
+    "de Docker, la segunda dice bind y la ruta de mi proyecto. Al final el listado de la "
+    "carpeta que apareció. Es la pestaña Bind mounts de Docker Desktop.",
 )
 
 figura(
-    "Comprobación de la persistencia de los datos tras el reinicio del contenedor",
-    "Terminal, en la raíz del repositorio.",
-    ["# inserción, reinicio y nueva consulta (bloques node -e de esta sección)",
+    "Los datos siguen ahí después de reiniciar",
+    "Terminal, en la carpeta del proyecto.",
+    ["# insertar una fila, reiniciar y volver a consultar",
      "docker compose restart libsql-main",
      "du -sh .data/libsql-main"],
-    "La secuencia completa en una sola terminal: filas: 1, el reinicio del contenedor y "
-    "el resultado tras el reinicio: 1 | antes del reinicio. Esta figura acredita el "
-    "criterio de evaluación relativo a la persistencia.",
-    altura_cm=7,
+    "La consulta antes del reinicio, el reinicio del contenedor y la consulta después, "
+    "con el mismo dato. Esta es la captura que corresponde al récord que se conserva en "
+    "el ejemplo de la guía.",
 )
 
 # ---- Ejercicio 6
-doc.add_heading("Ejercicio 6. Diagnóstico de un Puerto Ocupado", level=2)
+doc.add_heading("Ejercicio 6. El Puerto Ocupado", level=2)
 par = p("")
-rich(par, [("Problema planteado. ", {"italic": True}),
-           ("Diagnosticar un conflicto de puerto y adaptar el puerto del anfitrión en "
+rich(par, [("Lo que pide: ", {"italic": True}),
+           ("diagnosticar un puerto ocupado y cambiar el puerto del computador en "
             "compose.yaml.", {})])
-p("El error se reproduce de forma deliberada y no es necesario esperar a que ocurra. Con "
-  "el contenedor codebymike-libsql-main ocupando el puerto 8080, basta solicitar el mismo "
-  "puerto para otro contenedor:")
+p("Este error no toca esperarlo, se puede provocar. Como mi base de datos ya tiene tomado "
+  "el 8080, pedí ese mismo puerto para otro contenedor:")
 code(["docker run -d --name choque -p 127.0.0.1:8080:80 nginx"])
-p("El mensaje obtenido en el entorno descrito fue:")
+p("Y salió el mensaje de la guía:")
 code(["Error response from daemon: failed to set up container networking:",
       "driver failed programming external connectivity on endpoint choque:",
       "Bind for 127.0.0.1:8080 failed: port is already allocated"])
-p("El diagnóstico, equivalente a identificar en la vista Containers cual servicio ocupa "
-  "el puerto, se realiza en dos niveles:")
-code(["# Si el puerto lo ocupa un contenedor",
+p("Para saber quién lo tiene ocupado hay dos comandos, y me parece importante mostrar los "
+  "dos:")
+code(["# si el que lo ocupa es un contenedor",
       "docker ps --filter publish=8080 --format '{{.Names}} -> {{.Ports}}'",
-      "# codebymike-libsql-main -> 5001/tcp, 127.0.0.1:8080->8080/tcp",
       "",
-      "# Si lo ocupa un proceso nativo del anfitrión",
+      "# si el que lo ocupa es un programa del computador",
       "ss -ltnp | grep :8080"])
-p("El segundo comando constituye una ventaja del entorno GNU/Linux: cuando el puerto se "
-  "encuentra ocupado por un proceso del sistema anfitrión y no por un contenedor, Docker "
-  "Desktop no puede identificarlo y el diagnóstico queda incompleto.")
-p("La solución propuesta por la guía consiste en modificar el puerto del anfitrión y no "
-  "el del contenedor:")
+p("El segundo es una ventaja de estar en Linux. Cuando el puerto lo tiene un programa "
+  "instalado en el equipo y no un contenedor, Docker Desktop no lo puede ver y uno se "
+  "queda sin saber qué pasa.")
+p("La solución es la que dice la guía, cambiar el puerto del lado izquierdo:")
 code(["docker rm -f choque",
       "docker run -d --name choque -p 127.0.0.1:8086:80 nginx",
       "curl -s -o /dev/null -w 'HTTP %{http_code}\\n' http://127.0.0.1:8086",
       "docker rm -f choque"])
-p("En la notación ANFITRIÓN:CONTENEDOR, el valor del lado derecho lo determina la "
-  "aplicación (sqld escucha en el puerto 8080 y no admite negociación), mientras que el "
-  "del lado izquierdo es de libre elección. Por esa razón la corrección consiste siempre "
-  "en desplazar el valor izquierdo, y por esa misma razón la instrucción EXPOSE no "
-  "publica puerto alguno: únicamente documenta el puerto interno.")
+p("Y en Compose sería cambiar 8080:8080 por 8085:8080, igual que la guía cambia 5000:5000 "
+  "por 5001:5000. El número de la derecha lo manda la aplicación, uno no lo puede "
+  "escoger, y el de la izquierda es el que uno elige. Por eso siempre se mueve el "
+  "izquierdo, y por eso EXPOSE no publica nada: solo deja anotado cuál es el puerto de "
+  "adentro.")
 
 figura(
-    "Conflicto de puerto, diagnóstico y resolución",
-    "Terminal, en la raíz del repositorio.",
+    "Puerto ocupado, diagnóstico y solución",
+    "Terminal, en la carpeta del proyecto.",
     ["docker run -d --name choque -p 127.0.0.1:8080:80 nginx",
      "docker ps --filter publish=8080 --format '{{.Names}} -> {{.Ports}}'",
      "ss -ltnp | grep :8080",
@@ -1183,113 +1004,95 @@ figura(
      "docker run -d --name choque -p 127.0.0.1:8086:80 nginx",
      "curl -s -o /dev/null -w 'HTTP %{http_code}\\n' http://127.0.0.1:8086",
      "docker rm -f choque"],
-    "La secuencia completa: el mensaje port is already allocated, la identificación del "
-    "contenedor que ocupa el puerto, la confirmación a nivel de sistema operativo, y el "
-    "mismo contenedor operando correctamente en el puerto alterno con respuesta HTTP 200.",
-    altura_cm=9,
+    "Todo seguido: el mensaje port is already allocated, el contenedor que tenía "
+    "ocupado el puerto, la comprobación a nivel del sistema y el mismo contenedor "
+    "funcionando en el otro puerto con respuesta HTTP 200.",
 )
 doc.add_page_break()
 
-# ================================================ 5. ACTIVIDADES DE APRENDIZAJE
-doc.add_heading("Actividades de Aprendizaje", level=1)
+# ================================================ 5. ACTIVIDADES
+doc.add_heading("Las Preguntas de la Sección 17", level=1)
 
-doc.add_heading("Reflexión Inicial", level=2)
-p("Empaquetar una aplicación consiste en entregar el programa junto con la totalidad de "
-  "los elementos que requiere para ejecutarse (intérprete o máquina de ejecución, "
-  "bibliotecas, configuración y comando de arranque) dentro de una unidad que no depende "
-  "de la configuración previa de la máquina de destino.")
-p("El caso concreto en el cual una aplicación funciona en un equipo y falla en otro se "
-  "encuentra documentado en el propio repositorio del proyecto y coincide exactamente con "
-  "el problema que la guía enuncia en su introducción: el intérprete de Node presente por "
-  "defecto en la ruta de ejecución del sistema corresponde a la versión 20, mientras que "
-  "la compilación mediante astro build exige la versión 22.12 o superior. El mismo "
-  "repositorio y el mismo comando producen resultados distintos según la máquina. El "
-  "directorio .devcontainer constituye la respuesta a ese problema: fija la versión 22.12 "
-  "dentro de una imagen y elimina esa clase completa de fallo.")
+doc.add_heading("Qué Significa Empaquetar una Aplicación", level=2)
+p("Empaquetar es entregar el programa junto con todo lo que necesita para funcionar: el "
+  "lenguaje, las librerías, la configuración y el comando con el que arranca. Todo en una "
+  "sola pieza, para que no dependa de cómo esté configurado el computador donde va a "
+  "correr.")
+p("El caso de que algo funcione en un equipo y falle en otro me pasó con este mismo "
+  "proyecto, y es justo el ejemplo con el que abre la guía. Mi terminal a veces abre con "
+  "Node 20 y el proyecto necesita 22.12 o más nuevo. Mismo repositorio, mismo comando, y "
+  "en un computador compila y en otro no. Antes lo resolvía cambiando la versión a mano "
+  "cada vez, hasta que armé el archivo del entorno de desarrollo y el problema "
+  "desapareció.")
 
-doc.add_heading("Contextualización y Conocimientos Previos", level=2)
-bullets([
-    [("Dockerfile. ", {"bold": True}),
-     ("Archivo de texto que contiene la receta de construcción. En este proyecto, "
-      ".devcontainer/Dockerfile, versionado junto con el código fuente.", {})],
-    [("Imagen. ", {"bold": True}),
-     ("Resultado de ejecutar esa receta. Es inmutable y está organizada en capas "
-      "superpuestas y reutilizables mediante memoria caché. Se consulta con docker images.", {})],
-    [("Contenedor. ", {"bold": True}),
-     ("Instancia en ejecución de una imagen, con una capa de escritura propia. De una "
-      "misma imagen se derivan múltiples contenedores: codebymike-libsql-main y "
-      "codebymike-libsql-demo ejecutan la misma imagen con configuración distinta, hecho "
-      "que se aprecia directamente en la salida de docker ps.", {})],
-])
+doc.add_heading("Diferencia entre Imagen, Contenedor y Dockerfile", level=2)
+p("La forma en que me quedó claro fue pensándolo como una receta. El Dockerfile es la "
+  "receta escrita: un archivo de texto con los pasos. La imagen es el plato ya preparado, "
+  "que no cambia y se puede guardar. Y el contenedor es cuando uno se sienta a comerlo, o "
+  "sea la ejecución.")
+p("De una misma imagen pueden salir varios contenedores. En mi proyecto se ve directo: "
+  "los dos contenedores de base de datos usan exactamente la misma imagen, pero uno tiene "
+  "los datos reales de desarrollo y el otro los de la demostración, y cada uno escucha en "
+  "un puerto distinto. Eso aparece en la salida de docker ps.")
 
-doc.add_heading("Apropiación del Conocimiento", level=2)
-p("Los contenidos de apropiación quedan cubiertos por los ejercicios 2 (capas y memoria "
-  "cache), 3 (orquestación con Compose) y 5 (persistencia). La actividad consistente en "
-  "modificar un elemento y reconstruir la imagen se traduce, en este proyecto, en alterar "
-  "el valor de ARG PLAYWRIGHT_VERSION del Dockerfile del entorno de desarrollo y observar "
-  "en la construcción siguiente que capas se invalidan y cuales se conservan en caché: la "
-  "modificación invalida esa instrucción y todas las posteriores, mientras que la imagen "
-  "base declarada en FROM no vuelve a descargarse.")
+doc.add_heading("Sobre las Pantallas y las Capas", level=2)
+p("Las capas y la caché las trabajé en el ejercicio 2, el bind mount en el ejercicio 5 y "
+  "Compose en el ejercicio 3. La actividad que propone cambiar algo y volver a construir "
+  "la hice cambiando la versión del navegador en el Dockerfile: al reconstruir se ve que "
+  "los pasos de antes de esa línea siguen saliendo como CACHED y los de después se "
+  "vuelven a ejecutar. La imagen base no se descarga otra vez.")
 doc.add_page_break()
 
 # ==================================================== 6. EVIDENCIAS
-doc.add_heading("Relación de Evidencias y Criterios de Evaluación", level=1)
-p("La Tabla 7 relaciona cada figura del presente informe con el criterio de evaluación de "
-  "la sección 19 de la guía que dicha evidencia acredita.")
+doc.add_heading("Qué Captura Corresponde a Cada Criterio", level=1)
+p("Armé esta tabla para revisar que no me estuviera quedando faltando ninguna evidencia "
+  "de las que pide la sección 19.")
 
 table(
-    "Relación entre las evidencias gráficas y los criterios de evaluación",
-    ["Figura", "Evidencia", "Criterio de evaluación acreditado"],
+    "Las capturas y el criterio que le corresponde a cada una",
+    ["Figura", "Qué muestra", "Criterio de la guía"],
     [
-        ["1 y 2", "Motor instalado, activo, habilitado y accesible sin privilegios de superusuario",
-         "Instala Docker y se orienta correctamente en su entorno de operación"],
-        ["3", "Salida de docker info con los mecanismos de aislamiento del núcleo",
-         "Comprende los componentes del motor y su modelo de aislamiento"],
-        ["4 y 5", "Ejecución de hello-world y de un contenedor con puerto publicado",
-         "Ejecuta imagenes y verifica el funcionamiento del motor"],
-        ["6, 7 y 8", "Construcción de la imagen, aprovechamiento de la caché y revisión de capas",
-         "Construye la imagen y analiza el proceso desde el historial de construcciones"],
-        ["9 y 10", "Servicios de Compose en ejecución y aplicación accesible por el puerto publicado",
-         "Ejecuta y comprueba el proyecto mediante Compose y el puerto publicado"],
-        ["11", "Variables de entorno verificadas sin exposición de valores sensibles",
-         "Distingue variables opcionales, predeterminadas y sensibles; entrega evidencias sin exponer información sensible"],
-        ["12 y 13", "Cambió de tipo de montaje y persistencia comprobada tras el reinicio",
-         "Configura y verifica la persistencia mediante el montaje declarado en compose.yaml"],
-        ["14", "Conflicto de puerto, diagnóstico y resolución",
-         "Interpreta registros y corrige errores frecuentes"],
+        ["1 y 2", "Docker instalado, activo y funcionando sin sudo",
+         "Instala Docker y se orienta en su entorno"],
+        ["3", "docker info con los mecanismos de aislamiento",
+         "Entiende los componentes del motor"],
+        ["4 y 5", "hello-world y un contenedor con puerto publicado",
+         "Ejecuta imágenes y comprueba que el motor sirve"],
+        ["6, 7 y 8", "Construcción de la imagen, la caché y las capas",
+         "Construye la imagen y analiza el proceso"],
+        ["9 y 10", "Compose levantado y la aplicación en el navegador",
+         "Ejecuta y comprueba el proyecto por el puerto publicado"],
+        ["11", "Variables comprobadas sin mostrar los valores secretos",
+         "Distingue variables normales y sensibles, y entrega evidencias sin exponer información"],
+        ["12 y 13", "El cambio de montaje y los datos después de reiniciar",
+         "Configura y verifica la persistencia"],
+        ["14", "Puerto ocupado, diagnóstico y solución",
+         "Interpreta errores y los corrige"],
     ],
-    note=[("Elaboración propia a partir de los criterios enunciados en la sección 19 de "
-           "la guía del SENA.", {})],
+    note=[("Elaboración propia a partir de la sección 19 de la guía.", {})],
     widths=[1.8, 6.2, 8.0],
 )
-p("Antes de la entrega debe verificarse que ninguna captura exhiba el valor de una "
-  "variable sensible. El propio criterio de evaluación lo exige de forma expresa y, en "
-  "este proyecto, constituye además una regla de arquitectura documentada.")
+p("Antes de entregar hay que revisar que en ninguna captura se alcance a leer una clave. "
+  "La misma guía lo pide en los criterios de evaluación.")
 doc.add_page_break()
 
 # ==================================================== 7. CONCLUSIONES
 doc.add_heading("Conclusiones", level=1)
-p("El desarrollo del taller sobre un entorno GNU/Linux no supuso una reducción del "
-  "alcance formativo sino un desplazamiento del punto de observación. Los conceptos "
-  "evaluados por la guía (imagen, contenedor, Dockerfile, contexto de construcción, "
-  "publicación de puertos, variables de entorno, montajes, persistencia, registros y "
-  "orquestación mediante Compose) se ejercitaron en su totalidad; lo que cambió fue la "
-  "vía de acceso al motor y la aplicación empleada como caso de estudio.")
-p("Operar Docker Engine de forma directa expuso elementos que la interfaz gráfica "
-  "encapsula y que resultan pertinentes para la formación profesional: la naturaleza del "
-  "motor como servicio del sistema, el modelo de permisos basado en el socket del demonio "
-  "y sus implicaciones de seguridad, la propiedad de los archivos generados en montajes "
-  "de enlace, y la posibilidad de diagnosticar conflictos de puerto a nivel del sistema "
-  "operativo y no únicamente entre contenedores.")
-p("La aplicación del taller a un proyecto real permitió además contrastar el ejemplo "
-  "didáctico con prácticas de mayor exigencia: la fijación de imagenes por digest "
-  "criptográfico frente al uso de etiquetas mutables, la publicación de puertos "
-  "restringida a la interfaz de bucle local, la reducción del conjunto de capacidades del "
-  "núcleo otorgadas al contenedor, y la exclusión sistemática de secretos del contexto de "
-  "construcción. Finalmente, la delimitación del ámbito de aplicación de la herramienta, "
-  "es decir, el reconocimiento de que la contenerización resuelve el entorno de "
-  "desarrollo y de pruebas de este proyecto pero no su despliegue en producción, "
-  "constituye en si misma un resultado de aprendizaje.")
+p("Hacer el taller en Linux no me quitó contenido, me cambió el punto de vista. Los temas "
+  "de la guía los trabajé todos: imagen, contenedor, Dockerfile, contexto de "
+  "construcción, puertos, variables de entorno, montajes, persistencia, logs y Compose. "
+  "Lo que cambió fue que en vez de darle clic a una pantalla tuve que escribir el comando.")
+p("Manejar el motor directo me mostró cosas que la interfaz gráfica esconde y que creo "
+  "que vale la pena saber: que Docker es un servicio del sistema y no un programa que uno "
+  "abre, que estar en el grupo docker es casi ser administrador, que los archivos de un "
+  "bind mount quedan con el usuario del contenedor, y que un puerto ocupado se puede "
+  "diagnosticar a nivel de todo el sistema y no solo entre contenedores.")
+p("También me sirvió comparar el ejemplo de la guía con mi proyecto, porque me obligó a "
+  "explicar decisiones que ya estaban tomadas y que nunca había puesto por escrito: por "
+  "qué fijo las imágenes con un digest, por qué publico los puertos solo en mi "
+  "computador, y por qué mi aplicación usa Docker para desarrollar pero no para "
+  "publicarse. Esa última fue la que más me costó justificar y creo que es la que más "
+  "aprendí, porque saber dónde no usar una herramienta también es parte de saber usarla.")
 doc.add_page_break()
 
 # ==================================================== REFERENCIAS
