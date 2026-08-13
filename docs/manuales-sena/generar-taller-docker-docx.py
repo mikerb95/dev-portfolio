@@ -350,14 +350,22 @@ def figura(titulo, donde, comandos, que_debe_verse, altura_cm=7.0):
     p("", space_after=0)
 
 
+ANCLA_INDICE = []
+
+
 def toc():
-    """Indice escrito como texto, no como campo de Word.
+    """Reserva el sitio del indice. Se rellena al final, con construir_indice."""
+    ANCLA_INDICE.append(doc.add_paragraph())
+
+
+def construir_indice():
+    """Escribe el indice como texto, no como campo de Word.
 
     Un campo TOC obliga a que quien abra el documento le de "actualizar
     campos", y LibreOffice ni siquiera lo rellena: deja el texto de relleno a la
-    vista. Las paginas salen de PAGINAS_INDICE, que calcula el script
-    actualizar-indice.py midiendo el PDF. Si el archivo no existe todavia, el
-    indice se imprime sin numeros.
+    vista. Las paginas salen de indice-paginas.json, que calcula el script
+    actualizar-indice.py midiendo el PDF. Si ese archivo no existe todavia, el
+    indice sale sin numeros.
     """
     import json
     import os
@@ -369,6 +377,7 @@ def toc():
         with open(ruta, encoding="utf-8") as fh:
             paginas = json.load(fh)
 
+    ancla = ANCLA_INDICE[0]
     for texto, nivel in ENTRADAS_INDICE:
         par = doc.add_paragraph()
         pf_ = par.paragraph_format
@@ -376,10 +385,8 @@ def toc():
         pf_.space_after = Pt(6)
         pf_.first_line_indent = Cm(0)
         pf_.left_indent = Cm(0.8) if nivel == 2 else Cm(0)
-        # tabulador con puntos, alineado a la derecha en el margen
-        tabs = par.paragraph_format.tab_stops
-        tabs.add_tab_stop(Cm(16.0 if nivel == 1 else 15.2),
-                          WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+        pf_.tab_stops.add_tab_stop(Cm(16.0), WD_TAB_ALIGNMENT.RIGHT,
+                                   WD_TAB_LEADER.DOTS)
         r = par.add_run(texto)
         r.font.name = "Times New Roman"
         r.font.size = Pt(12)
@@ -387,6 +394,7 @@ def toc():
         r2 = par.add_run("\t" + str(paginas.get(texto, "")))
         r2.font.name = "Times New Roman"
         r2.font.size = Pt(12)
+        ancla._p.addprevious(par._p)
 
 
 def page_number_header():
@@ -1156,6 +1164,7 @@ for r in sorted(refs):
     run.font.name = "Times New Roman"
     run.font.size = Pt(12)
 
+construir_indice()
 doc.save(OUT)
 print("OK ->", OUT)
 print("Figuras:", FIG_N[0], "| Tablas:", TABLE_N[0])
