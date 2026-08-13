@@ -484,7 +484,6 @@ table(
 
 p("Todo lo que aparece en este informe lo corrí en un computador con Ubuntu 24.04.4 LTS, "
   "núcleo 7.0.0-28-generic, Docker Engine 29.6.2 y Docker Compose v5.3.1.")
-doc.add_page_break()
 
 # ============================================ 2. INSTALACION
 doc.add_heading("Dejar Docker Funcionando en Ubuntu", level=1)
@@ -623,7 +622,6 @@ table(
     note=[("Elaboración propia. Probé todos los comandos en Docker Engine 29.6.2.", {})],
     widths=[7.0, 9.0],
 )
-doc.add_page_break()
 
 # ================================================ 3. QUE APP USE
 doc.add_heading("Qué Aplicación Usé en Lugar de Dino Run", level=1)
@@ -662,7 +660,6 @@ table(
     note=[("Elaboración propia.", {})],
     widths=[3.2, 5.4, 7.4],
 )
-doc.add_page_break()
 
 # ================================================== 4. EJERCICIOS
 doc.add_heading("Los Seis Ejercicios", level=1)
@@ -1006,7 +1003,6 @@ figura(
     "ocupado el puerto, la comprobación a nivel del sistema y el mismo contenedor "
     "funcionando en el otro puerto con respuesta HTTP 200.",
 )
-doc.add_page_break()
 
 # ================================================ 5. ACTIVIDADES
 doc.add_heading("Las Preguntas de la Sección 17", level=1)
@@ -1039,7 +1035,6 @@ p("Las capas y la caché las trabajé en el ejercicio 2, el bind mount en el eje
   "la hice cambiando la versión del navegador en el Dockerfile: al reconstruir se ve que "
   "los pasos de antes de esa línea siguen saliendo como CACHED y los de después se "
   "vuelven a ejecutar. La imagen base no se descarga otra vez.")
-doc.add_page_break()
 
 # ==================================================== 6. EVIDENCIAS
 doc.add_heading("Qué Captura Corresponde a Cada Criterio", level=1)
@@ -1072,7 +1067,6 @@ table(
 )
 p("Antes de entregar hay que revisar que en ninguna captura se alcance a leer una clave. "
   "La misma guía lo pide en los criterios de evaluación.")
-doc.add_page_break()
 
 # ==================================================== 7. CONCLUSIONES
 doc.add_heading("Conclusiones", level=1)
