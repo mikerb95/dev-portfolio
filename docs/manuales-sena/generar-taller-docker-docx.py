@@ -9,7 +9,8 @@
 # indica donde tomar la captura, que comandos ejecutar y que debe verse.
 from docx import Document
 from docx.shared import Pt, Cm, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING, WD_BREAK
+from docx.enum.text import (WD_ALIGN_PARAGRAPH, WD_LINE_SPACING, WD_BREAK,
+                            WD_TAB_ALIGNMENT, WD_TAB_LEADER)
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_SECTION
 from docx.oxml.ns import qn
@@ -157,6 +158,15 @@ def bullets(items):
                 if r.font.name != "Courier New":
                     r.font.name = "Times New Roman"
                     r.font.size = Pt(12)
+
+
+ENTRADAS_INDICE = []
+
+
+def titulo(texto, nivel=1):
+    """Crea el encabezado y lo anota para el indice."""
+    ENTRADAS_INDICE.append((texto, nivel))
+    return doc.add_heading(texto, level=nivel)
 
 
 TABLE_N = [0]
@@ -341,22 +351,42 @@ def figura(titulo, donde, comandos, que_debe_verse, altura_cm=7.0):
 
 
 def toc():
-    par = doc.add_paragraph()
-    par.paragraph_format.first_line_indent = Cm(0)
-    run = par.add_run()
-    fld = OxmlElement("w:fldChar")
-    fld.set(qn("w:fldCharType"), "begin")
-    instr = OxmlElement("w:instrText")
-    instr.set(qn("xml:space"), "preserve")
-    instr.text = 'TOC \\o "1-3" \\h \\z \\u'
-    sep = OxmlElement("w:fldChar")
-    sep.set(qn("w:fldCharType"), "separate")
-    txt = OxmlElement("w:t")
-    txt.text = "Actualice la tabla de contenido en Word: clic derecho > Actualizar campos."
-    end = OxmlElement("w:fldChar")
-    end.set(qn("w:fldCharType"), "end")
-    for e in (fld, instr, sep, txt, end):
-        run._r.append(e)
+    """Indice escrito como texto, no como campo de Word.
+
+    Un campo TOC obliga a que quien abra el documento le de "actualizar
+    campos", y LibreOffice ni siquiera lo rellena: deja el texto de relleno a la
+    vista. Las paginas salen de PAGINAS_INDICE, que calcula el script
+    actualizar-indice.py midiendo el PDF. Si el archivo no existe todavia, el
+    indice se imprime sin numeros.
+    """
+    import json
+    import os
+
+    ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "indice-paginas.json")
+    paginas = {}
+    if os.path.exists(ruta):
+        with open(ruta, encoding="utf-8") as fh:
+            paginas = json.load(fh)
+
+    for texto, nivel in ENTRADAS_INDICE:
+        par = doc.add_paragraph()
+        pf_ = par.paragraph_format
+        pf_.line_spacing_rule = WD_LINE_SPACING.SINGLE
+        pf_.space_after = Pt(6)
+        pf_.first_line_indent = Cm(0)
+        pf_.left_indent = Cm(0.8) if nivel == 2 else Cm(0)
+        # tabulador con puntos, alineado a la derecha en el margen
+        tabs = par.paragraph_format.tab_stops
+        tabs.add_tab_stop(Cm(16.0 if nivel == 1 else 15.2),
+                          WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+        r = par.add_run(texto)
+        r.font.name = "Times New Roman"
+        r.font.size = Pt(12)
+        r.bold = nivel == 1
+        r2 = par.add_run("\t" + str(paginas.get(texto, "")))
+        r2.font.name = "Times New Roman"
+        r2.font.size = Pt(12)
 
 
 def page_number_header():
@@ -417,7 +447,7 @@ rich(par, [("Palabras clave: ", {"italic": True}),
 doc.add_page_break()
 
 # ============================================================== INTRODUCCION
-doc.add_heading("Introducción", level=1)
+titulo("Introducción", 1)
 p("Docker sirve para empaquetar una aplicación con todo lo que necesita para correr y "
   "ejecutarla como un proceso aislado, al que se le llama contenedor. La diferencia con "
   "una máquina virtual es que el contenedor no trae un sistema operativo completo: usa el "
@@ -436,7 +466,7 @@ p("Para no entregar un trabajo incompleto, lo que hice fue ir paso por paso de l
 doc.add_page_break()
 
 # ======================================================== 1. MI EQUIPO
-doc.add_heading("Por Qué Mi Instalación Se Ve Distinta a la de la Guía", level=1)
+titulo("Por Qué Mi Instalación Se Ve Distinta a la de la Guía", 1)
 p("Docker nació en Linux. El motor se apoya en dos cosas del núcleo de Linux: los "
   "namespaces, que hacen que un proceso solo vea lo que le corresponde, y los cgroups, "
   "que le limitan cuánta memoria y cuánto procesador puede gastar (Docker Inc., 2026a). "
@@ -486,10 +516,10 @@ p("Todo lo que aparece en este informe lo corrí en un computador con Ubuntu 24.
   "núcleo 7.0.0-28-generic, Docker Engine 29.6.2 y Docker Compose v5.3.1.")
 
 # ============================================ 2. INSTALACION
-doc.add_heading("Dejar Docker Funcionando en Ubuntu", level=1)
+titulo("Dejar Docker Funcionando en Ubuntu", 1)
 p("Esta parte reemplaza las secciones 4, 5 y 15.1 de la guía.")
 
-doc.add_heading("Instalación", level=2)
+titulo("Instalación", 2)
 p("Ubuntu trae Docker en sus repositorios, pero casi siempre es una versión vieja y "
   "además no incluye Compose v2. Por eso se instala desde el repositorio oficial de "
   "Docker (Docker Inc., 2026c). Estos son los comandos:")
@@ -517,7 +547,7 @@ code([
 p("Lo de la llave GPG no es puro trámite. Sirve para que apt verifique que los paquetes "
   "vienen firmados por Docker y no los cambió alguien en el camino.")
 
-doc.add_heading("Los Dos Pasos que Sí Son Propios de Linux", level=2)
+titulo("Los Dos Pasos que Sí Son Propios de Linux", 2)
 p("Después de instalar quedan dos ajustes. Estos son el equivalente de esperar a que "
   "Docker Desktop diga Running.")
 p("El primero es dejar el servicio andando y que arranque solo con el computador. Vale la "
@@ -566,7 +596,7 @@ figura(
     "contenedores, sin haber escrito sudo.",
 )
 
-doc.add_heading("Comprobar que el Motor Responde", level=2)
+titulo("Comprobar que el Motor Responde", 2)
 p("Los cuatro comandos que pide la sección 5.3 de la guía funcionan igual en Linux, "
   "porque son del cliente y no de la interfaz gráfica:")
 code(["docker --version",
@@ -595,7 +625,7 @@ figura(
     "habilitada en BIOS que pide la sección 5.2.",
 )
 
-doc.add_heading("Cada Pantalla de Docker Desktop y su Comando", level=2)
+titulo("Cada Pantalla de Docker Desktop y su Comando", 2)
 p("Esta tabla es la que más me sirvió mientras hacía el taller, porque con ella pude "
   "seguir la guía sin saltarme nada. En varios casos el comando muestra más información "
   "que la pantalla.")
@@ -624,7 +654,7 @@ table(
 )
 
 # ================================================ 3. QUE APP USE
-doc.add_heading("Qué Aplicación Usé en Lugar de Dino Run", level=1)
+titulo("Qué Aplicación Usé en Lugar de Dino Run", 1)
 p("La guía usa Dino Run porque necesita alguna aplicación para meter en un contenedor. Yo "
   "aproveché mi proyecto de portafolio, CodeByMike, que ya venía usando Docker antes del "
   "curso. Eso me obligó a explicar algo que al principio pensé que era una falla del "
@@ -662,12 +692,12 @@ table(
 )
 
 # ================================================== 4. EJERCICIOS
-doc.add_heading("Los Seis Ejercicios", level=1)
+titulo("Los Seis Ejercicios", 1)
 p("Son los de la sección 16 de la guía, página 27. Todos los comandos los corrí parado en "
   "la carpeta de mi proyecto.")
 
 # ---- Ejercicio 1
-doc.add_heading("Ejercicio 1. Comprobar que el Motor Sirve", level=2)
+titulo("Ejercicio 1. Comprobar que el Motor Sirve", 2)
 par = p("")
 rich(par, [("Lo que pide: ", {"italic": True}),
            ("comprobar que el motor funciona y puede ejecutar imágenes.", {})])
@@ -710,7 +740,7 @@ figura(
 )
 
 # ---- Ejercicio 2
-doc.add_heading("Ejercicio 2. Construir la Imagen y Revisarla", level=2)
+titulo("Ejercicio 2. Construir la Imagen y Revisarla", 2)
 par = p("")
 rich(par, [("Lo que pide: ", {"italic": True}),
            ("construir la aplicación y entender el resultado desde Images y Builds.", {})])
@@ -779,7 +809,7 @@ figura(
 )
 
 # ---- Ejercicio 3
-doc.add_heading("Ejercicio 3. Levantar Todo con Docker Compose", level=2)
+titulo("Ejercicio 3. Levantar Todo con Docker Compose", 2)
 par = p("")
 rich(par, [("Lo que pide: ", {"italic": True}),
            ("ejecutar la aplicación con Compose y entrar desde el navegador sin tener que "
@@ -828,7 +858,7 @@ figura(
 )
 
 # ---- Ejercicio 4
-doc.add_heading("Ejercicio 4. Las Variables de Entorno y la Clave Secreta", level=2)
+titulo("Ejercicio 4. Las Variables de Entorno y la Clave Secreta", 2)
 par = p("")
 rich(par, [("Lo que pide: ", {"italic": True}),
            ("separar las variables normales de las secretas y comprobar que la variable "
@@ -880,7 +910,7 @@ figura(
 )
 
 # ---- Ejercicio 5
-doc.add_heading("Ejercicio 5. Que los Datos No Se Pierdan", level=2)
+titulo("Ejercicio 5. Que los Datos No Se Pierdan", 2)
 par = p("")
 rich(par, [("Lo que pide: ", {"italic": True}),
            ("guardar los datos con el bind mount de compose.yaml, reiniciar el contenedor "
@@ -959,7 +989,7 @@ figura(
 )
 
 # ---- Ejercicio 6
-doc.add_heading("Ejercicio 6. El Puerto Ocupado", level=2)
+titulo("Ejercicio 6. El Puerto Ocupado", 2)
 par = p("")
 rich(par, [("Lo que pide: ", {"italic": True}),
            ("diagnosticar un puerto ocupado y cambiar el puerto del computador en "
@@ -1008,9 +1038,9 @@ figura(
 )
 
 # ================================================ 5. ACTIVIDADES
-doc.add_heading("Las Preguntas de la Sección 17", level=1)
+titulo("Las Preguntas de la Sección 17", 1)
 
-doc.add_heading("Qué Significa Empaquetar una Aplicación", level=2)
+titulo("Qué Significa Empaquetar una Aplicación", 2)
 p("Empaquetar es entregar el programa junto con todo lo que necesita para funcionar: el "
   "lenguaje, las librerías, la configuración y el comando con el que arranca. Todo en una "
   "sola pieza, para que no dependa de cómo esté configurado el computador donde va a "
@@ -1022,7 +1052,7 @@ p("El caso de que algo funcione en un equipo y falle en otro me pasó con este m
   "cada vez, hasta que armé el archivo del entorno de desarrollo y el problema "
   "desapareció.")
 
-doc.add_heading("Diferencia entre Imagen, Contenedor y Dockerfile", level=2)
+titulo("Diferencia entre Imagen, Contenedor y Dockerfile", 2)
 p("La forma en que me quedó claro fue pensándolo como una receta. El Dockerfile es la "
   "receta escrita: un archivo de texto con los pasos. La imagen es el plato ya preparado, "
   "que no cambia y se puede guardar. Y el contenedor es cuando uno se sienta a comerlo, o "
@@ -1032,7 +1062,7 @@ p("De una misma imagen pueden salir varios contenedores. En mi proyecto se ve di
   "los datos reales de desarrollo y el otro los de la demostración, y cada uno escucha en "
   "un puerto distinto. Eso aparece en la salida de docker ps.")
 
-doc.add_heading("Sobre las Pantallas y las Capas", level=2)
+titulo("Sobre las Pantallas y las Capas", 2)
 p("Las capas y la caché las trabajé en el ejercicio 2, el bind mount en el ejercicio 5 y "
   "Compose en el ejercicio 3. La actividad que propone cambiar algo y volver a construir "
   "la hice cambiando la versión del navegador en el Dockerfile: al reconstruir se ve que "
@@ -1040,7 +1070,7 @@ p("Las capas y la caché las trabajé en el ejercicio 2, el bind mount en el eje
   "vuelven a ejecutar. La imagen base no se descarga otra vez.")
 
 # ==================================================== 6. EVIDENCIAS
-doc.add_heading("Qué Captura Corresponde a Cada Criterio", level=1)
+titulo("Qué Captura Corresponde a Cada Criterio", 1)
 p("Armé esta tabla para revisar que no me estuviera quedando faltando ninguna evidencia "
   "de las que pide la sección 19.")
 
@@ -1072,7 +1102,7 @@ p("Antes de entregar hay que revisar que en ninguna captura se alcance a leer un
   "La misma guía lo pide en los criterios de evaluación.")
 
 # ==================================================== 7. CONCLUSIONES
-doc.add_heading("Conclusiones", level=1)
+titulo("Conclusiones", 1)
 p("Hacer el taller en Linux no me quitó contenido, me cambió el punto de vista. Los temas "
   "de la guía los trabajé todos: imagen, contenedor, Dockerfile, contexto de "
   "construcción, puertos, variables de entorno, montajes, persistencia, logs y Compose. "
@@ -1091,7 +1121,7 @@ p("También me sirvió comparar el ejemplo de la guía con mi proyecto, porque m
 doc.add_page_break()
 
 # ==================================================== REFERENCIAS
-doc.add_heading("Referencias", level=1)
+titulo("Referencias", 1)
 refs = [
     "Docker Inc. (2026a). Docker overview. Docker Docs. "
     "https://docs.docker.com/get-started/docker-overview/",
