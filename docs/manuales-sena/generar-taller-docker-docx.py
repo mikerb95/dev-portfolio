@@ -907,12 +907,14 @@ code(["# antes: montaje tipo volume",
       "",
       "ls -la .data/libsql-main"])
 p("La prueba de que los datos aguantan es la misma que propone la guía con el récord del "
-  "juego: guardar algo, reiniciar y volver a mirar. En mi caso inserté una fila en una "
-  "tabla de prueba, reinicié el contenedor y la volví a consultar. Antes del reinicio "
-  "tenía una fila y después del reinicio seguía teniendo esa misma fila, con el texto "
-  "intacto.")
-code(["docker compose restart libsql-main",
+  "juego: guardar algo, reiniciar y volver a mirar. Para no escribir la consulta a mano "
+  "cada vez armé un script pequeño que inserta una fila y otro modo que la lee.")
+code(["node scripts/prueba-persistencia.mjs escribir",
+      "docker compose restart libsql-main",
+      "node scripts/prueba-persistencia.mjs leer",
       "du -sh .data/libsql-main"])
+p("Antes del reinicio la tabla tenía una fila y después seguía teniendo la misma, con el "
+  "texto y la fecha intactos.")
 p("Para volver a como estaba antes:")
 code(["docker compose up -d --force-recreate"])
 p("Aquí me pasó el único problema que no esperaba. Cuando quise borrar la carpeta .data "
@@ -947,8 +949,9 @@ figura(
 figura(
     "Los datos siguen ahí después de reiniciar",
     "Terminal, en la carpeta del proyecto.",
-    ["# insertar una fila, reiniciar y volver a consultar",
+    ["node scripts/prueba-persistencia.mjs escribir",
      "docker compose restart libsql-main",
+     "node scripts/prueba-persistencia.mjs leer",
      "du -sh .data/libsql-main"],
     "La consulta antes del reinicio, el reinicio del contenedor y la consulta después, "
     "con el mismo dato. Esta es la captura que corresponde al récord que se conserva en "
