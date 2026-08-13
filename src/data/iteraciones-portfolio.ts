@@ -1549,7 +1549,7 @@ export const ITERACIONES: Iteracion[] = [
     rango: '10-12 ago 2026',
     ghSince: '2026-08-10',
     ghUntil: '2026-08-13',
-    commits: 15,
+    commits: 24,
     resumen:
       'Una corrida de k6 contra localhost, pero con el dev server leyendo de la Turso de producción, agotó los 7.500 millones de filas de la cuota mensual. El incidente destapó tres problemas independientes que llevaban meses ahí sin dar señal: el coste por render de /status crecía con la antigüedad del sistema, una sola consulta caída bastaba para que la portada devolviera 404, y el backup diario llevaba un mes sin producir un solo archivo mientras el panel de Vercel lo pintaba en verde. Los tres se arreglan por separado porque no comparten causa, y los tres terminan con una prueba que falla antes del deploy en vez de con una nota de "tener cuidado".',
     historias: [
