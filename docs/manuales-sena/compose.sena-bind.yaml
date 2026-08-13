@@ -1,0 +1,23 @@
+# Override SOLO para el taller de Docker del SENA (ejercicio 5: persistencia).
+#
+# El compose.yaml real usa volúmenes gestionados por Docker, que es lo correcto
+# para datos de servicio: Docker controla permisos y ciclo de vida, y no
+# ensucian el árbol del repo. La guía del SENA pide demostrar un *bind mount*,
+# que es la otra mitad del concepto: una carpeta del anfitrión conectada a una
+# ruta del contenedor, visible con `ls` desde el host.
+#
+# Se deja como override y no como cambio al compose.yaml principal porque el
+# ejercicio es didáctico y el modo por defecto del proyecto no debe cambiar por
+# una entrega académica.
+#
+#   docker compose -f compose.yaml -f docs/manuales-sena/compose.sena-bind.yaml up -d
+#
+# Aviso: los archivos que sqld crea dentro de .data/ quedan con el uid del
+# usuario del contenedor (666), no con el tuyo. Borrarlos con `rm -rf` desde el
+# host falla con "Permission denied"; hay que borrarlos desde un contenedor
+# (ver el taller, ejercicio 5).
+
+services:
+  libsql-main:
+    volumes:
+      - ./.data/libsql-main:/var/lib/sqld
