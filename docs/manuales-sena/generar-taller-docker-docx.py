@@ -740,16 +740,14 @@ p("Comparando mi Dockerfile con el de Dino Run encontré que hacen casi lo mismo
   "copian lo que hace falta, bajan los permisos con USER y definen la carpeta de trabajo. "
   "Hay dos diferencias que sí vale la pena mencionar:")
 bullets([
-    ["Mi imagen base va fijada con un digest, que es una huella del contenido, en vez de "
+    "Mi imagen base va fijada con un digest, que es una huella del contenido, en vez de "
      "una etiqueta como python:3.12-slim. Una etiqueta puede cambiar mañana y apuntar a "
      "otra imagen; el digest no cambia nunca. Es más incómodo de escribir pero es la "
      "única forma de que la construcción sea igual dentro de seis meses.",
-     ],
-    ["Yo uso una instrucción ENV dentro del Dockerfile para la ruta de los navegadores, "
+    "Yo uso una instrucción ENV dentro del Dockerfile para la ruta de los navegadores, "
      "mientras que la guía prefiere poner las variables en compose.yaml. Las dos formas "
      "son válidas y la diferencia es cuándo cambia el valor: si es igual siempre, va en "
      "la imagen; si cambia según dónde se ejecute, va en Compose.",
-     ],
 ])
 p("Del .dockerignore aprendí algo que la guía menciona de pasada. Uno cree que es para "
   "que el build sea más rápido, y sí, pero lo importante es otra cosa: si un archivo con "
