@@ -1541,11 +1541,70 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-coste-resiliencia',
+    fase: 'Fase 37 · Coste acotado, degradación elegante y respaldo verificable',
+    nombre: 'Lo que se rompió cuando el sitio dejó de ser gratis de leer',
+    rango: '10-12 ago 2026',
+    ghSince: '2026-08-10',
+    ghUntil: '2026-08-13',
+    commits: 15,
+    resumen:
+      'Una corrida de k6 contra localhost, pero con el dev server leyendo de la Turso de producción, agotó los 7.500 millones de filas de la cuota mensual. El incidente destapó tres problemas independientes que llevaban meses ahí sin dar señal: el coste por render de /status crecía con la antigüedad del sistema, una sola consulta caída bastaba para que la portada devolviera 404, y el backup diario llevaba un mes sin producir un solo archivo mientras el panel de Vercel lo pintaba en verde. Los tres se arreglan por separado porque no comparten causa, y los tres terminan con una prueba que falla antes del deploy en vez de con una nota de "tener cuidado".',
+    historias: [
+      {
+        id: 'PF-CR-01', titulo: 'Como responsable del coste, quiero que una página pública lea lo mismo el primer día que el año siguiente',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-10', tags: ['coste', 'observabilidad', 'rendimiento', 'fase-37'],
+        dod: [
+          ok('Tabla monitor_daily con un resumen precalculado por monitor y día, alimentada por un cron nuevo (/api/cron/monitor-rollup); /status lee ~720 filas de resumen más el día en curso en vez de agregar los 90 días crudos de monitor_checks.'),
+          ok('Medido contra la sqld local: 5.912 filas recorridas por render antes, 552 después.'),
+          ok('Los contadores del resumen son exactos y aditivos; la latencia no, porque un percentil no se suma, así que cada día guarda un histograma de 32 cubos del que sale el p95 de la ventana, dentro del 7,4% del exacto que devolvía la window function.'),
+          ok('La escalera de cubos es geométrica y no lineal: en un percentil importa el error relativo, y la primera versión lineal pintaba 2450 ms un p95 real de 2030.'),
+          ok('tests/monitor-rollup.test.ts cubre histograma, percentil y agregación por día UTC.'),
+        ],
+      },
+      {
+        id: 'PF-CR-02', titulo: 'Como responsable del coste, quiero que una prueba de carga no pueda alcanzar la base real',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-10', tags: ['k6', 'lab', 'coste', 'fase-37'],
+        dod: [
+          ok('El health check declara contra qué base está sirviendo el objetivo, y los perfiles de k6 (carga y estrés) se niegan a arrancar un solo usuario virtual si esa base no es local.'),
+          ok('La guarda vive en el arranque de la prueba, no en la documentación: apuntar a localhost no basta cuando el dev server detrás puede estar conectado a Turso.'),
+          ok('tests/db-target.test.ts cubre la detección de base local.'),
+        ],
+      },
+      {
+        id: 'PF-CR-03', titulo: 'Como visitante, quiero que el sitio siga en pie cuando la base no responde',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-11', tags: ['resiliencia', 'publico', 'fase-37'],
+        dod: [
+          ok('safeQuery: una consulta que falla en una página pública devuelve su valor de reemplazo y el dato se pinta como ausente, nunca como error y mucho menos como 404.'),
+          ok('Aplicado a las 23 consultas de las cinco páginas públicas con datos (portada, /status, /security, /certifications, /engineering); no queda ninguna consulta desnuda.'),
+          ok('Cada fallo se registra con etiqueta en el log del servidor: degradar para el visitante no puede significar degradar en silencio para quien opera.'),
+          ok('Excluido a propósito del panel, el portal y todo lo que cobra o autentica, donde un dato ausente en silencio es peor que un error visible.'),
+        ],
+      },
+      {
+        id: 'PF-CR-04', titulo: 'Como dueño de los datos, quiero saber si el backup diario realmente se está haciendo',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-12', tags: ['backup', 'crons', 'fase-37'],
+        dod: [
+          ok('Descubierto con el store de Blob vacío: un mes sin un solo archivo. Dos fallos que se tapaban entre sí: el endpoint vivía bajo /api/admin/, donde el middleware exige sesión y el cron se llevaba un 302; y el handler del backup era POST mientras que los crons de Vercel disparan GET, con lo que la petición diaria caía en el GET de "listar backups" y devolvía 200.'),
+          ok('El backup se mueve a /api/cron/backup con Bearer CRON_SECRET, y es el único cron del repo que NO es fail-open: devuelve 500 cuando falla, porque un cron que solo puede responder 200 no está verificado, está silenciado.'),
+          ok('tests/crons.test.ts recorre cada entrada de vercel.json y afirma las cuatro condiciones que fallaban: la ruta existe, exporta GET, comprueba CRON_SECRET y no cuelga del gate de /api/admin. Ninguna necesita desplegar para comprobarse.'),
+          ok('La ruta del cron queda vetada en la demo, cubierto por tests/demo.test.ts.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
-  { mes: 'jul', commits: 1608 },
+  { mes: 'jul', commits: 1631 },
+  { mes: 'ago', commits: 278 },
 ]
