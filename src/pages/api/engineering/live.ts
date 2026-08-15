@@ -18,10 +18,20 @@ export const GET: APIRoute = async () => {
     .from(webVitals)
     .orderBy(desc(webVitals.createdAt))
     .limit(1)
+  // `count(*)` acotado: sin el LIMIT, un pico de RUM convierte esta cuenta en
+  // un scan de decenas de miles de filas por apertura de card. Lo que la tarjeta
+  // comunica es "hay muestras frescas y son muchas", no la cifra exacta, así
+  // que se cuenta hasta el tope y se muestra como "500+".
   const [vitals24h] = await db
     .select({ n: sql<number>`count(*)` })
-    .from(webVitals)
-    .where(gte(webVitals.createdAt, since24h))
+    .from(
+      db
+        .select({ id: webVitals.id })
+        .from(webVitals)
+        .where(gte(webVitals.createdAt, since24h))
+        .limit(COUNT_CAP)
+        .as('v'),
+    )
 
   const [lastCheck] = await db
     .select({
