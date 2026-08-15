@@ -327,6 +327,27 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
     }
   }
 
-  poll()
-  setInterval(poll, 6000)
+  // 6s era un poll de sala de control aplicado a una página de documentación
+  // pública: 600 peticiones por hora y por pestaña abierta. Un pipeline de CI
+  // tarda minutos, así que 15s no cambia nada de lo que se ve, y la pestaña en
+  // segundo plano deja de pedir del todo.
+  const POLL_MS = 15_000
+  let pollTimer = null
+
+  function arrancarPoll() {
+    if (pollTimer) return
+    poll()
+    pollTimer = setInterval(poll, POLL_MS)
+  }
+  function pararPoll() {
+    if (!pollTimer) return
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pararPoll()
+    else arrancarPoll()
+  })
+  if (!document.hidden) arrancarPoll()
 </script>

@@ -717,7 +717,28 @@ const healthLabel = st.healthLabel
         applyStatus(status)
       } catch { /* red intermitente: reintenta en el próximo tick */ }
     }
-    setInterval(refresh, 30_000)
+    // Los polls solo corren con la pestaña visible. Una pestaña olvidada en
+    // segundo plano hacía 2.880 peticiones al día por sí sola, y cada una
+    // llegaba al origen cuando el CDN revalidaba. Con esto, una pestaña de
+    // fondo cuesta cero y el primer refresh al volver repinta al instante.
+    let refreshTimer = null
+    function startPolling() {
+      if (refreshTimer) return
+      refresh()
+      refreshTimer = setInterval(refresh, 30_000)
+    }
+    function stopPolling() {
+      if (!refreshTimer) return
+      clearInterval(refreshTimer)
+      refreshTimer = null
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopPolling()
+      else startPolling()
+    })
+    if (!document.hidden) startPolling()
+
+    // El "hace X min" sí sigue corriendo: es aritmética local, no pega a la red.
     setInterval(tickAgo, 30_000)
   </script>
 </BaseLayout>
