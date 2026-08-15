@@ -108,19 +108,29 @@ const db = createClient({ url, authToken: token })
 // (last_response_ms); si no, de este perfil por tipo de servicio. Un endpoint
 // de API no puede tener el mismo perfil que una página estática servida por
 // CDN, y un p95 idéntico en todos los monitores se nota falso a simple vista.
-const PERFIL_POR_DEFECTO = { base: 240, dispersion: 0.45, fiabilidad: 0.9985 }
+// La base NO se lee de `monitors.last_response_ms`, aunque sea el dato más
+// realista disponible: el propio script escribe esa columna al terminar, así
+// que cada corrida se alimentaba de su propia salida y la latencia derivaba
+// hacia arriba sin techo (p95 de 1407 ms sobre una base de 210 tras la segunda
+// pasada). El perfil sale del tipo de servicio y de un jitter determinista por
+// id, que no cambia por mucho que se repita la siembra.
+const PERFILES = {
+  api: { base: 95, dispersion: 0.28, fiabilidad: 0.9992 },
+  pagina: { base: 240, dispersion: 0.4, fiabilidad: 0.9982 },
+  externo: { base: 380, dispersion: 0.5, fiabilidad: 0.997 },
+}
 
-function perfilDe(monitor) {
-  const base = monitor.last_response_ms && monitor.last_response_ms > 0
-    ? monitor.last_response_ms
-    : PERFIL_POR_DEFECTO.base
+function perfilDe(monitor, dominioPropio) {
   const url = (monitor.url || '').toLowerCase()
-  // Los endpoints de API y health son más rápidos y más estables que una
-  // página completa; los externos, más lentos y más variables.
-  if (url.includes('/api/') || url.includes('health')) {
-    return { base: Math.max(60, base), dispersion: 0.3, fiabilidad: 0.999 }
-  }
-  return { base, dispersion: PERFIL_POR_DEFECTO.dispersion, fiabilidad: PERFIL_POR_DEFECTO.fiabilidad }
+  let perfil = PERFILES.pagina
+  // Un endpoint de API o de health es más rápido y más estable que una página
+  // completa; un servicio de terceros, más lento y más variable.
+  if (url.includes('/api/') || url.includes('health')) perfil = PERFILES.api
+  else if (dominioPropio && !url.includes(dominioPropio)) perfil = PERFILES.externo
+
+  // ±20% por monitor para que dos páginas del mismo sitio no salgan clavadas.
+  const jitter = 0.8 + azarEn(Number(monitor.id), 0, 99) * 0.4
+  return { ...perfil, base: Math.round(perfil.base * jitter) }
 }
 
 // Azar determinista derivado de (monitor, instante, canal), NO un flujo
@@ -144,18 +154,35 @@ function azarEn(monitorId, at, canal) {
  * derecha - unas pocas peticiones mucho más lentas que la mediana. Es lo que
  * hace que el p95 quede por encima del promedio, como en un servicio de verdad.
  */
-function latencia(base, dispersion, hora, azar) {
-  const u1 = Math.max(azar(), 1e-9)
-  const u2 = azar()
+function latencia(base, dispersion, hora, monitorId, at, canal) {
+  const u1 = Math.max(azarEn(monitorId, at, canal + 10), 1e-9)
+  const u2 = azarEn(monitorId, at, canal + 20)
   const normal = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
   const pico = hora >= 13 && hora <= 22 ? 1.18 : 1 // tarde/noche en UTC
-  return Math.max(25, Math.round(base * pico * Math.exp(normal * dispersion - (dispersion * dispersion) / 2)))
+  // Cola acotada a 2.5σ: la lognormal sin recortar producía p95 de casi 4× la
+  // mediana, que para un sitio sano no es creíble. Recortada, el p95 queda en
+  // el entorno de 1.8-2.2× la base, que es lo que se mide en un servicio real.
+  const acotado = Math.max(-2.5, Math.min(2.5, normal))
+  return Math.max(25, Math.round(base * pico * Math.exp(acotado * dispersion - (dispersion * dispersion) / 2)))
 }
 
 async function main() {
   const { rows: monitores } = await db.execute(
     'select id, name, url, last_response_ms from monitors order by id',
   )
+
+  // El dominio propio es el que más se repite entre los monitores: sirve para
+  // distinguir "mi sitio" de un servicio de terceros sin cablearlo aquí.
+  const dominioPropio = (() => {
+    const cuenta = new Map()
+    for (const m of monitores) {
+      try {
+        const host = new URL(m.url).hostname.replace(/^www\./, '')
+        cuenta.set(host, (cuenta.get(host) ?? 0) + 1)
+      } catch { /* url inválida: no aporta al conteo */ }
+    }
+    return [...cuenta.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+  })()
 
   if (monitores.length === 0) {
     console.error(
@@ -184,8 +211,8 @@ async function main() {
   const checksCrudos = []
 
   for (const monitor of monitores) {
-    const { base, dispersion, fiabilidad } = perfilDe(monitor)
-    const azar = rng(Number(monitor.id) * 7919 + 13)
+    const { base, dispersion, fiabilidad } = perfilDe(monitor, dominioPropio)
+    const idMonitor = Number(monitor.id)
     // Solo el primer monitor sufre los incidentes: una caída simultánea en
     // todos los servicios describiría un apagón de infraestructura, no el
     // patrón normal de fallos independientes.
@@ -206,10 +233,10 @@ async function main() {
           incidentes.some(
             (i) => d === i.diasAtras && hora >= i.horaInicio && hora < i.horaInicio + i.duracionH,
           )
-        const ok = !enIncidente && azar() < fiabilidad
-        const ms = ok ? latencia(base, dispersion, hora, azar) : null
+        const ok = !enIncidente && azarEn(idMonitor, at, 1) < fiabilidad
+        const ms = ok ? latencia(base, dispersion, hora, idMonitor, at, 1) : null
 
-        checksSinteticos.push({ monitorId: Number(monitor.id), at, ok, responseMs: ms })
+        checksSinteticos.push({ monitorId: idMonitor, at, ok, responseMs: ms })
 
         // El crudo de los últimos días alimenta la mini-gráfica EKG. Ahí sí se
         // usa el ritmo real de 5 min: son los puntos que se ven dibujados.
@@ -217,13 +244,13 @@ async function main() {
           for (const desfase of [0, 5, 10]) {
             const atCrudo = at + desfase * 60_000
             if (atCrudo > ahora) continue
-            const okCrudo = !enIncidente && azar() < fiabilidad
+            const okCrudo = !enIncidente && azarEn(idMonitor, atCrudo, 2) < fiabilidad
             checksCrudos.push({
-              monitorId: Number(monitor.id),
+              monitorId: idMonitor,
               at: Math.floor(atCrudo / 1000),
               ok: okCrudo,
               statusCode: okCrudo ? 200 : 503,
-              responseMs: okCrudo ? latencia(base, dispersion, hora, azar) : null,
+              responseMs: okCrudo ? latencia(base, dispersion, hora, idMonitor, atCrudo, 2) : null,
               error: okCrudo ? null : 'connection timeout',
             })
           }
