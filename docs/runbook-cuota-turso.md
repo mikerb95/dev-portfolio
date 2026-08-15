@@ -48,7 +48,43 @@ respuesta porque SQLite las recorre rápido.
 Medido tras el cambio: la consulta de `/api/now` lee **62 filas** con 2
 monitores (~300 con 10), frente a ~86.000.
 
-## Recuperación: mudar a una base nueva
+## Plan elegido: aguantar hasta el corte del ciclo
+
+La cuota se reinicia al empezar el mes. Si la sustentación es después de esa
+fecha, no hay que mudar nada: la base se desbloquea sola y el sitio vuelve a la
+normalidad. Lo único que hay que resolver es que las páginas públicas no se vean
+vacías entre tanto, y eso es RNF-27.
+
+**La capa de respaldo se apaga sola.** No hay bandera que activar hoy ni
+desactivar el día 1: `crearRastreador().q()` intenta siempre la base primero y
+solo usa el reemplazo cuando la consulta lanza. En cuanto Turso vuelve a
+responder, el reemplazo deja de ejecutarse. No hay nada que revertir.
+
+Qué sirve cada página mientras dure el bloqueo:
+
+| Página | Con la base caída |
+|---|---|
+| `/` | Los proyectos reales desde `src/data/instantanea.json` |
+| `/status` | Estado y latencia **medidos en el momento**, sondeando los endpoints |
+| `/engineering`, `/certifications`, `/security` | Su contenido; los datos de base se omiten (RNF-26) |
+
+Para enriquecer la instantánea con los datos curados a mano (título en inglés,
+descripción reescrita, captura de pantalla), que están en la base y no en
+GitHub, hace falta el último backup:
+
+```bash
+# La URL sale del listado de Blob del proyecto en Vercel, o de /admin/backup
+node --experimental-strip-types scripts/capturar-instantanea.mjs \
+  --backup='https://<blob>.public.blob.vercel-storage.com/backups/portfolio-....json'
+
+# Y cuando la base vuelva a responder, para dejar la instantánea al día:
+node --experimental-strip-types scripts/capturar-instantanea.mjs --desde-db
+```
+
+Conviene volver a capturarla con `--desde-db` cada cierto tiempo una vez
+restablecido el servicio: es el respaldo del próximo incidente.
+
+## Recuperación alterna: mudar a una base nueva
 
 La cuota de Turso es **mensual y por organización**, no por base: crear otra
 base dentro de la misma cuenta sigue dando `BLOCKED`. Las salidas son esperar
