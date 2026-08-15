@@ -20,6 +20,12 @@ export type MonitorInput = {
   expectedStatus?: number | null
   expectedText?: string | null
   latencyThresholdMs?: number | null
+  /**
+   * Techo de espera de ESTE sondeo. El cron puede permitirse los 12s por
+   * defecto; un sondeo hecho durante el render de una página no, porque el
+   * visitante los espera. Ver src/lib/fallback/sondeo-vivo.ts.
+   */
+  timeoutMs?: number | null
 }
 
 const REQUEST_TIMEOUT_MS = 12_000
@@ -28,7 +34,8 @@ const SSL_TIMEOUT_MS = 8_000
 /** Sondea una URL una vez. Nunca lanza: cualquier fallo se devuelve como caída. */
 export async function probe(m: MonitorInput): Promise<CheckOutcome> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const techo = m.timeoutMs && m.timeoutMs > 0 ? m.timeoutMs : REQUEST_TIMEOUT_MS
+  const timeout = setTimeout(() => controller.abort(), techo)
   const started = Date.now()
   try {
     const res = await fetch(m.url, {
@@ -66,7 +73,7 @@ export async function probe(m: MonitorInput): Promise<CheckOutcome> {
       state: 'down',
       statusCode: null,
       responseMs,
-      error: aborted ? `Timeout (>${REQUEST_TIMEOUT_MS / 1000}s)` : e instanceof Error ? e.message : 'Error de red',
+      error: aborted ? `Timeout (>${techo / 1000}s)` : e instanceof Error ? e.message : 'Error de red',
     }
   } finally {
     clearTimeout(timeout)

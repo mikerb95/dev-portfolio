@@ -7,6 +7,7 @@ import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 import { safeQuery } from '../lib/safe-query'
+import { proyectosInstantanea } from '../lib/fallback/instantanea'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
@@ -19,9 +20,14 @@ const L = (path: string) => localizedHref(path, locale)
 // página (presentación, stack, contacto, repos de GitHub), que es casi todo lo
 // que hay aquí. Esta única consulta devolvía un 404 en producción con la cuota
 // de Turso agotada.
+// El reemplazo no es una lista vacía sino la instantánea de proyectos reales
+// (ver src/lib/fallback/instantanea.ts). Una portada sin proyectos no está
+// "degradada con elegancia": está rota de una forma que no se nota, que es
+// peor. Los datos son los mismos que sirve la base, capturados en su momento;
+// la sección de proyectos no depende de que Turso conteste.
 const visibleProjects = await safeQuery(
   () => db.select().from(projects).where(eq(projects.visible, true)).orderBy(projects.createdAt),
-  [] as (typeof projects.$inferSelect)[],
+  proyectosInstantanea,
   'home/proyectos-visibles',
 )
 ---

@@ -944,6 +944,10 @@ const es = {
       down: 'Incidente activo en algún servicio',
     },
     uptimeAggregated: 'Uptime agregado',
+    // Modo respaldo: la base no responde y los estados se miden en el momento.
+    fallbackTitle: 'Midiendo en vivo',
+    fallbackBody:
+      'La base de datos que guarda el historial no está respondiendo, así que estos estados y latencias se acaban de medir ahora mismo, sondeando cada endpoint desde el servidor. Son reales y actuales. Lo que no se puede mostrar mientras tanto es el historial de 90 días ni el presupuesto de error, porque eso sí sale de la base.',
     activeIncident: 'Incidente activo',
     activeIncidents: '{n} incidentes activos',
     inProgress: 'en curso',

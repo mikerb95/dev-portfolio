@@ -938,6 +938,10 @@ const en = {
       down: 'Active incident on some service',
     },
     uptimeAggregated: 'Aggregated uptime',
+    // Fallback mode: the database is unreachable and states are measured live.
+    fallbackTitle: 'Measuring live',
+    fallbackBody:
+      'The database holding the history is not responding, so these states and latencies were measured just now, probing each endpoint from the server. They are real and current. What cannot be shown meanwhile is the 90-day history or the error budget, since those do come from the database.',
     activeIncident: 'Active incident',
     activeIncidents: '{n} active incidents',
     inProgress: 'in progress',
