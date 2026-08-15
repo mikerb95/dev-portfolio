@@ -123,16 +123,19 @@ function perfilDe(monitor) {
   return { base, dispersion: PERFIL_POR_DEFECTO.dispersion, fiabilidad: PERFIL_POR_DEFECTO.fiabilidad }
 }
 
-// PRNG con semilla: dos corridas del script producen el MISMO historial. Un
-// Math.random() suelto haría que cada ejecución cambiara el p95 y el uptime que
-// se ven en pantalla, y un número que baila entre recargas es justo lo que
-// delata un dato inventado.
-function rng(semilla) {
-  let s = semilla >>> 0
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0
-    return s / 4294967296
-  }
+// Azar determinista derivado de (monitor, instante, canal), NO un flujo
+// secuencial. La diferencia importa: con un flujo, el número de valores
+// consumidos depende de cuántos sondeos caen antes de `ahora`, así que correr
+// el script una hora más tarde desplazaba toda la secuencia y el p95 cambiaba
+// de 439 a 781 ms entre corridas. Un número que baila entre ejecuciones es
+// justo lo que delata un dato inventado. Con hash posicional, cada sondeo tiene
+// su valor propio y el historial es idéntico se corra cuando se corra.
+function azarEn(monitorId, at, canal) {
+  // xorshift sobre una mezcla de los tres campos.
+  let h = (monitorId * 374761393 + Math.floor(at / 60_000) * 668265263 + canal * 2246822519) >>> 0
+  h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0
+  h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
 
 /**
