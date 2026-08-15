@@ -1,8 +1,9 @@
 import type { APIRoute } from 'astro'
 import { and, desc, eq, gte, sql } from 'drizzle-orm'
 import { db } from '../../db'
-import { ciRuns, monitorChecks, monitors, securityEvents } from '../../db/schema'
+import { ciRuns, monitorChecks, monitorDaily, monitors, securityEvents } from '../../db/schema'
 import { budgetHealth, computeSloFromCounts } from '../../lib/slo'
+import { dayKeyUTC } from '../../lib/monitor-rollup'
 
 // Alimenta la card "Ahora" del index. Antes era una frase fija con una barra
 // de progreso decorativa; el punto de este endpoint es que ese espacio diga
@@ -58,20 +59,27 @@ export const GET: APIRoute = async () => {
       .from(securityEvents)
       .where(gte(securityEvents.at, new Date(now - DAY_MS)))
 
-    // Presupuesto de error global (30 d) sobre los monitores activos: el mismo
-    // cálculo que /status, agregado en SQL para no traer un row por check.
+    // Presupuesto de error global (30 d) sobre los monitores activos.
+    //
+    // Sale de `monitor_daily`, NO de `monitor_checks`. Agregar el crudo aquí
+    // costaba una fila leída por sondeo: ~86.000 por llamada con 10 monitores
+    // cada 5 min, y como el CDN igual revalida una vez por minuto y por región,
+    // eran ~124 millones de filas al día sin un solo visitante nuevo. Fue lo
+    // que agotó la cuota de lecturas de Turso (ago 2026). El resumen diario da
+    // el mismo total/ok (los contadores son exactos y aditivos) leyendo una
+    // fila por monitor y día: ~300 en la misma ventana.
     const [budgetRow] = await db
       .select({
-        total: sql<number>`count(*)`,
-        ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
+        total: sql<number>`coalesce(sum(${monitorDaily.total}), 0)`,
+        ok: sql<number>`coalesce(sum(${monitorDaily.ok}), 0)`,
       })
-      .from(monitorChecks)
-      .innerJoin(monitors, eq(monitors.id, monitorChecks.monitorId))
+      .from(monitorDaily)
+      .innerJoin(monitors, eq(monitors.id, monitorDaily.monitorId))
       .where(
         and(
           eq(monitors.active, true),
           eq(monitors.paused, false),
-          gte(monitorChecks.at, new Date(now - SLO_DAYS * DAY_MS)),
+          gte(monitorDaily.day, dayKeyUTC(now - SLO_DAYS * DAY_MS)),
         ),
       )
 
