@@ -25,8 +25,26 @@ const L = (path: string) => localizedHref(path, locale)
 // "degradada con elegancia": está rota de una forma que no se nota, que es
 // peor. Los datos son los mismos que sirve la base, capturados en su momento;
 // la sección de proyectos no depende de que Turso conteste.
+// La consulta pide exactamente los campos que pinta la tarjeta, no `select()`
+// entero: así el contrato con el reemplazo es explícito (si alguien añade un
+// campo a la tarjeta, el tipo obliga a añadirlo también a la instantánea) y de
+// paso no se traen a memoria notas internas ni URLs de repositorio que esta
+// página no muestra.
 const visibleProjects = await safeQuery(
-  () => db.select().from(projects).where(eq(projects.visible, true)).orderBy(projects.createdAt),
+  () =>
+    db
+      .select({
+        slug: projects.slug,
+        title: projects.title,
+        titleEn: projects.titleEn,
+        description: projects.description,
+        descriptionEn: projects.descriptionEn,
+        techStack: projects.techStack,
+        screenshotUrl: projects.screenshotUrl,
+      })
+      .from(projects)
+      .where(eq(projects.visible, true))
+      .orderBy(projects.createdAt),
   proyectosInstantanea,
   'home/proyectos-visibles',
 )

@@ -17,22 +17,32 @@
 
 import datos from '../../data/instantanea.json'
 
+/**
+ * Los campos que pinta la tarjeta de proyecto, y solo esos. El tipo es el
+ * contrato con la consulta de la portada: si la tarjeta pasa a mostrar un campo
+ * nuevo, `astro check` rompe aquí hasta que la instantánea también lo traiga.
+ */
 export type ProyectoInstantanea = {
-  id: number
   slug: string
   title: string
   description: string | null
   titleEn: string | null
   descriptionEn: string | null
   techStack: string | null
-  repoUrl: string | null
-  previewUrl: string | null
   screenshotUrl: string | null
-  status: string | null
-  createdAt: string | null
 }
 
-export const proyectosInstantanea = datos.proyectos as ProyectoInstantanea[]
+export const proyectosInstantanea: ProyectoInstantanea[] = (
+  datos.proyectos as Record<string, unknown>[]
+).map((p) => ({
+  slug: String(p.slug),
+  title: String(p.title),
+  description: (p.description as string) ?? null,
+  titleEn: (p.titleEn as string) ?? null,
+  descriptionEn: (p.descriptionEn as string) ?? null,
+  techStack: (p.techStack as string) ?? null,
+  screenshotUrl: (p.screenshotUrl as string) ?? null,
+}))
 
 /** Fecha de captura, para que la página pueda decir de cuándo son los datos. */
 export function capturadaEn(): Date | null {
