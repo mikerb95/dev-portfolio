@@ -1,7 +1,12 @@
 import type { APIRoute } from 'astro'
 import { desc, gte, sql } from 'drizzle-orm'
 import { db } from '../../../db'
-import { webVitals, ciRuns, monitorChecks, monitors } from '../../../db/schema'
+import { webVitals, ciRuns, monitorChecks, monitorDaily, monitors } from '../../../db/schema'
+import { dayKeyUTC } from '../../../lib/monitor-rollup'
+
+// Tope de conteo para las cuentas de "cuántos en 24h": ver el comentario en la
+// query de web_vitals. La UI muestra `500+` al llegar al tope.
+const COUNT_CAP = 500
 
 // Prueba de vida para las cards de /engineering. Los popovers se renderizan
 // server-side con datos reales, pero eso es invisible para el visitante: este
@@ -45,10 +50,14 @@ export const GET: APIRoute = async () => {
     .innerJoin(monitors, sql`${monitors.id} = ${monitorChecks.monitorId}`)
     .orderBy(desc(monitorChecks.at))
     .limit(1)
+  // Del resumen diario, no del crudo: son 2 días de filas (una por monitor y
+  // día) en vez de una fila por sondeo. Al cruzar la medianoche UTC la ventana
+  // "24h" pasa a ser "hoy + ayer", un poco más ancha; para un contador de
+  // frescura eso es irrelevante y ahorra el scan completo.
   const [checks24h] = await db
-    .select({ n: sql<number>`count(*)` })
-    .from(monitorChecks)
-    .where(gte(monitorChecks.at, since24h))
+    .select({ n: sql<number>`coalesce(sum(${monitorDaily.total}), 0)` })
+    .from(monitorDaily)
+    .where(gte(monitorDaily.day, dayKeyUTC(now - 24 * 60 * 60 * 1000)))
 
   const [lastRun] = await db
     .select({ at: ciRuns.createdAt, conclusion: ciRuns.conclusion, sha: ciRuns.sha })
@@ -63,6 +72,7 @@ export const GET: APIRoute = async () => {
         lastAt: lastVital?.at ? lastVital.at.getTime() : null,
         lastMetric: lastVital?.metric ?? null,
         count24h: vitals24h?.n ?? 0,
+        count24hCapped: (vitals24h?.n ?? 0) >= COUNT_CAP,
       },
       uptime: {
         lastAt: lastCheck?.at ? lastCheck.at.getTime() : null,
@@ -78,6 +88,17 @@ export const GET: APIRoute = async () => {
         lastSha: lastRun?.sha ? lastRun.sha.slice(0, 7) : null,
       },
     }),
-    { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } },
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        // Era `no-store`, y con eso cada apertura de card de cada visitante
+        // pegaba al origen. Nada de lo que devuelve cambia más rápido que el
+        // cron de sondeo (~5 min), así que 30s de CDN colapsan todas las
+        // aperturas simultáneas en un solo hit sin que el dato deje de ser
+        // "fresco" a ojos de quien mira la tarjeta.
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+      },
+    },
   )
 }
