@@ -17,7 +17,15 @@ vi.mock('../src/db', async () => {
 
 import { recentLatency } from '../src/lib/latency'
 
-type Client = { execute: (sql: string) => Promise<{ rows: Record<string, unknown>[] }> }
+// Recorte mínimo de la superficie de @libsql/client que usan estas pruebas:
+// `execute` para el DDL y el plan de consulta, `batch` para sembrar sin pagar
+// un viaje por fila.
+type Client = {
+  execute: (sql: string) => Promise<{ rows: Record<string, unknown>[] }>
+  batch: (
+    stmts: { sql: string; args: (string | number | null)[] }[],
+  ) => Promise<unknown>
+}
 
 async function client(): Promise<Client> {
   const { __client } = (await import('../src/db')) as unknown as { __client: Client }
