@@ -70,6 +70,14 @@ const temas = [...new Set(recursos.flatMap((r) => r.topics))].sort().slice(0, 14
         </a>
       </div>
 
+      <p class="mt-6 text-[12px] text-ink-300 leading-relaxed max-w-[62ch]">
+        Los módulos de la sesión y la lista de asistencia viven en el aula,
+        <a href="https://capacitaciones.codebymike.tech" class="text-cyan hover:underline">
+          capacitaciones.codebymike.tech
+        </a>. Esto de aquí es el material que se queda después, y el código del banco no es el mismo
+        que el del aula.
+      </p>
+
       {temas.length > 0 && (
         <div class="mt-8 flex flex-wrap gap-2">
           {temas.map((t) => (

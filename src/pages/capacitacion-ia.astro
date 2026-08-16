@@ -116,6 +116,10 @@ const FAQS = [
     a: 'Es lo normal. Los programas de esta página son puntos de partida: el temario final sale del diagnóstico.',
   },
   {
+    q: '¿Cómo sé quiénes de mi equipo asistieron y hasta dónde llegaron?',
+    a: 'En el panel de empresa del aula (capacitaciones.codebymike.tech/empresa), con una clave que se entrega a quien firma el contrato. Muestra quién se registró y qué módulos ha recorrido. Del asistente solo se guarda el nombre que escribe al entrar: ni correo, ni teléfono.',
+  },
+  {
     q: '¿Qué queda después?',
     a: 'El banco de recursos con acceso por código para el grupo, más la revisión a los 30 días. El material se actualiza cuando deja de ser cierto.',
   },
@@ -273,6 +277,60 @@ const FAQS = [
             <p class="mt-2 text-[12.5px] text-ink-200 leading-relaxed">{s.detalle}</p>
           </div>
         ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- El aula -->
+  <section class="px-6 md:px-12 lg:px-20 pb-20">
+    <div class="max-w-[1000px] mx-auto">
+      <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">
+        Dónde ocurre la capacitación
+      </h2>
+
+      <div class="rounded-2xl glass p-7">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
+          <span class="text-[15px] text-ink-50">Academia IA</span>
+          <a
+            href={AULA}
+            class="font-mono text-[11.5px] text-cyan hover:underline"
+          >
+            capacitaciones.codebymike.tech
+          </a>
+        </div>
+
+        <p class="mt-4 text-[13px] text-ink-200 leading-relaxed max-w-[70ch]">
+          El día de la sesión el equipo no aterriza en este sitio: entra al aula, que es una
+          aplicación aparte, con su propio dominio y su propio despliegue. Ahí están los módulos, el
+          registro de asistencia y el avance de cada persona. Este portafolio se queda con lo
+          comercial y con el banco de recursos.
+        </p>
+
+        <div class="mt-6 grid gap-3 md:grid-cols-3">
+          {AULA_PUNTOS.map((p) => (
+            <div class="rounded-xl border border-white/8 p-5 flex flex-col">
+              <div class="flex items-center gap-2">
+                <span class={`w-1.5 h-1.5 rounded-full ${p.dot}`}></span>
+                <span class={`text-[13px] ${p.texto}`}>{p.titulo}</span>
+              </div>
+              <p class="mt-3 text-[12.5px] text-ink-200 leading-relaxed">{p.detalle}</p>
+              <a
+                href={p.enlace.href}
+                class="mt-auto pt-4 text-[12px] text-ink-100 hover:text-ink-50 transition-colors"
+              >
+                {p.enlace.label} →
+              </a>
+            </div>
+          ))}
+        </div>
+
+        <p class="mt-6 text-[12px] text-ink-300 leading-relaxed max-w-[70ch]">
+          Son dos códigos distintos y no se mezclan: el del aula identifica a quien asiste para la
+          lista de asistencia, y el del
+          <a href="/capacitacion/acceso" class="text-cyan hover:underline">banco de recursos</a>
+          abre el material reservado del grupo en este sitio.
+        </p>
       </div>
     </div>
   </section>
