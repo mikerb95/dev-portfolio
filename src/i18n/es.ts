@@ -946,6 +946,8 @@ const es = {
     uptimeAggregated: 'Uptime agregado',
     // Modo respaldo: la base no responde y los estados se miden en el momento.
     fallbackTitle: 'Midiendo en vivo',
+    fallbackDependsOnDb:
+      'Este chequeo consulta la base de datos y responde 503 cuando no está disponible, así que su estado refleja la misma incidencia que describe el aviso de arriba, no un fallo aparte.',
     fallbackBody:
       'La base de datos que guarda el historial no está respondiendo, así que estos estados y latencias se acaban de medir ahora mismo, sondeando cada endpoint desde el servidor. Son reales y actuales. Lo que no se puede mostrar mientras tanto es el historial de 90 días ni el presupuesto de error, porque eso sí sale de la base.',
     activeIncident: 'Incidente activo',

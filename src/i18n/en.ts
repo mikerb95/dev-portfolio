@@ -940,6 +940,8 @@ const en = {
     uptimeAggregated: 'Aggregated uptime',
     // Fallback mode: the database is unreachable and states are measured live.
     fallbackTitle: 'Measuring live',
+    fallbackDependsOnDb:
+      'This check queries the database and returns 503 when it is unavailable, so its state reflects the same incident described in the notice above, not a separate failure.',
     fallbackBody:
       'The database holding the history is not responding, so these states and latencies were measured just now, probing each endpoint from the server. They are real and current. What cannot be shown meanwhile is the 90-day history or the error budget, since those do come from the database.',
     activeIncident: 'Active incident',
