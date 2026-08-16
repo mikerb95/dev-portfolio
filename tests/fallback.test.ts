@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { crearRastreador } from '../src/lib/fallback/rastreador'
 import { proyectosInstantanea, capturadaEn, antiguedadEnDias } from '../src/lib/fallback/instantanea'
-import { origenPublico, DESTINOS_RESPALDO, DEPENDEN_DE_LA_BASE } from '../src/data/respaldo-monitores'
+import { origenPublico, DESTINOS_RESPALDO, DEPENDEN_DE_LA_BASE, urlDe } from '../src/data/respaldo-monitores'
 
 describe('rastreador de degradación', () => {
   it('devuelve el dato vivo y no marca degradación cuando la consulta funciona', async () => {
