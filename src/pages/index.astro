@@ -233,7 +233,7 @@ const visibleProjects = await safeQuery(
         <div class="col-span-12 md:col-span-7 row-span-2 rounded-2xl glass lift overflow-hidden p-7 flex flex-col justify-between relative">
           <div class="absolute -right-12 -bottom-12 w-72 h-72 rounded-full bg-cyan/10 blur-3xl pointer-events-none"></div>
           <div>
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-cyan">
               <span class="w-1.5 h-1.5 rounded-full pulse-dot bg-cyan"></span>
               {t.bento.about.badge}
             </span>
@@ -270,7 +270,7 @@ const visibleProjects = await safeQuery(
           data-budget-label={t.bento.now.budgetLabel}
         >
           <div class="flex items-center justify-between">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-lime/10 text-lime border-lime/30">
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-lime">
               <span class="w-1.5 h-1.5 rounded-full pulse-dot bg-lime"></span>
               {t.bento.now.badge}
             </span>
@@ -300,7 +300,7 @@ const visibleProjects = await safeQuery(
 
         <!-- Capabilities -->
         <div class="col-span-6 md:col-span-5 row-span-1 rounded-2xl glass lift overflow-hidden p-5">
-          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-violet/10 text-violet border-violet/30">
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-violet">
             {t.bento.capabilities.badge}
           </span>
           <ul class="mt-3 space-y-1.5 text-[13px] text-ink-100">
@@ -315,7 +315,7 @@ const visibleProjects = await safeQuery(
 
         <!-- Location -->
         <div class="col-span-6 md:col-span-3 row-span-1 rounded-2xl glass lift overflow-hidden p-5 flex flex-col justify-between">
-          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-white/5 text-ink-100 border-white/10">
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-ink-200">
             {t.bento.location.badge}
           </span>
           <div>
@@ -327,7 +327,7 @@ const visibleProjects = await safeQuery(
         <!-- Contact micro -->
         <div class="col-span-6 md:col-span-4 row-span-1 rounded-2xl glass lift overflow-hidden p-5 flex items-center justify-between">
           <div>
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-cyan">
               {t.bento.contactMicro.badge}
             </span>
             <div class="mt-2 text-[14px] text-ink-50">{t.bento.contactMicro.body}</div>
