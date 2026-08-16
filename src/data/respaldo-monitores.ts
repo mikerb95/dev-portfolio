@@ -1,11 +1,21 @@
 // Endpoints públicos propios que /status sondea EN VIVO cuando la base no
 // responde y no se puede leer la tabla `monitors`.
 //
-// No es una copia de esa tabla ni pretende serlo: es la lista mínima de
-// superficies públicas cuya disponibilidad se puede comprobar desde el propio
-// servidor sin ninguna credencial. Los monitores reales (que incluyen servicios
-// de terceros y umbrales por servicio) siguen viviendo en base de datos; esto
-// es el bote salvavidas.
+// NO ES UNA COPIA DE ESA TABLA, y es importante no confundirlas. Los monitores
+// reales son 9 (docs/plan-testing-docs.md) y sus URLs solo existen en base de
+// datos: incluyen servicios que desde aquí no se pueden adivinar. Esta lista es
+// el bote salvavidas, no el barco.
+//
+// Procedencia de cada destino, para que se sepa qué está verificado y qué no:
+//   - "Portal de clientes" está copiado de scripts/register-portal-monitor.mjs,
+//     que da de alta ese monitor con estos mismos parámetros. Es el único que
+//     se puede afirmar que coincide con uno real.
+//   - El resto son rutas públicas que existen en src/pages/. Que estén
+//     monitoreadas de verdad no consta en ningún sitio del repositorio: se
+//     eligieron por ser las superficies que un fallo dejaría visiblemente rotas.
+//
+// Para que coincida con los monitores de verdad, editar este arreglo (o
+// recuperarlo de la base con /admin/monitors cuando vuelva a responder).
 //
 // Por qué está declarada en código y no en la instantánea: la instantánea
 // guarda MEDICIONES, que caducan. Esto son DESTINOS, que no. Un destino
@@ -36,9 +46,29 @@ export function origenPublico(): string {
 
 export const DESTINOS_RESPALDO: DestinoRespaldo[] = [
   { id: 9001, nombre: 'Portada', ruta: '/', umbralMs: 1500 },
-  { id: 9002, nombre: 'Salud de la aplicación', ruta: '/api/health', umbralMs: 800 },
   { id: 9003, nombre: 'Ingeniería', ruta: '/engineering', umbralMs: 1800 },
   { id: 9004, nombre: 'Notas técnicas', ruta: '/notes', umbralMs: 1800 },
   { id: 9005, nombre: 'Documentación', ruta: '/docs', umbralMs: 1800 },
   { id: 9006, nombre: 'Herramientas', ruta: '/tools', umbralMs: 1800 },
+  // Copiado de scripts/register-portal-monitor.mjs, incluido el texto esperado:
+  // un 200 con el cuerpo equivocado (una página de error del borde, un rewrite
+  // mal puesto) contaría como "arriba" sin esa comprobación.
+  {
+    id: 9007,
+    nombre: 'Portal de clientes',
+    ruta: '/api/portal/health',
+    umbralMs: 2000,
+    textoEsperado: '"ok":true',
+  },
 ]
+
+/**
+ * Destinos cuya salud depende de la base de datos: ambos endpoints de salud
+ * responden 503 cuando Turso no contesta (ver src/pages/api/health.ts).
+ *
+ * En modo respaldo se sondean igual, pero la página no debería presentarlos
+ * como una caída independiente: SABEMOS que la base está caída, es la razón por
+ * la que estamos en modo respaldo. Reportarlo seis veces sería ruido, y
+ * ocultarlo sería mentir; se marca para que la tarjeta pueda decir por qué.
+ */
+export const DEPENDEN_DE_LA_BASE = new Set([9007])

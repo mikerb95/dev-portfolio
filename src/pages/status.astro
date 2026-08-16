@@ -9,6 +9,7 @@ import { recentLatency } from '../lib/latency'
 import { safeQuery } from '../lib/safe-query'
 import { crearRastreador } from '../lib/fallback/rastreador'
 import { sondearEnVivo } from '../lib/fallback/sondeo-vivo'
+import { DEPENDEN_DE_LA_BASE } from '../data/respaldo-monitores'
 import {
   aggregateChecks,
   mergeHists,
@@ -418,6 +419,10 @@ const healthLabel = st.healthLabel
                 {interpolate(st.lastChecked, { ago: ago(c.lastCheckedAt) })}
               </span>
             </div>
+
+            {modoRespaldo && DEPENDEN_DE_LA_BASE.has(c.id) && c.lastStatus !== 'up' && (
+              <p class="text-[11.5px] text-ink-300 leading-relaxed mb-4">{st.fallbackDependsOnDb}</p>
+            )}
 
             <!-- Latencia en vivo (osciloscopio / EKG) -->
             <div class="mb-5">
