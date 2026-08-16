@@ -39,7 +39,7 @@ const MEMO_MS = 60_000
 
 async function sondear(destino: DestinoRespaldo, origen: string): Promise<EstadoVivo> {
   const resultado = await probe({
-    url: `${origen}${destino.ruta}`,
+    url: urlDe(destino, origen),
     method: 'GET',
     expectedStatus: 200,
     expectedText: destino.textoEsperado ?? null,

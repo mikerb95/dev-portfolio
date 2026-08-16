@@ -85,14 +85,19 @@ export const DESTINOS_RESPALDO: DestinoRespaldo[] = [
   //
   // Solo el NOMBRE se publica en /status; la URL nunca sale al HTML (regla
   // OPSEC de las páginas públicas), así que listarlas aquí no las expone.
+  //
+  // DELIBERADAMENTE FUERA: dobleyo.cafe, ekosolv y residential-access, pausados
+  // a mano en Vercel (DEPLOYMENT_PAUSED) mientras dura el ahorro de cuota.
+  // Sondearlos los pintaría "Caído" en la página pública durante semanas por
+  // una decisión operativa, no por una avería. Un panel de estado que reporta
+  // como incidente algo que su dueño apagó a propósito enseña a ignorarlo.
+  // Cuando se reanuden, volver a añadirlos aquí.
   {
     id: 9010,
     nombre: 'Academia IA',
     urlAbsoluta: 'https://capacitaciones.codebymike.tech/',
     umbralMs: 2500,
   },
-  { id: 9011, nombre: 'Ekosolv', urlAbsoluta: 'https://www.ekosolv.com/', umbralMs: 2500 },
-  { id: 9012, nombre: 'DobleYo', urlAbsoluta: 'https://dobleyo.cafe/', umbralMs: 2500 },
 ]
 
 /**
