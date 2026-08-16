@@ -14,7 +14,12 @@
 // 5 minutos por región, no uno por visitante.
 
 import { probe, type MonitorState } from '../monitors'
-import { DESTINOS_RESPALDO, origenPublico, type DestinoRespaldo } from '../../data/respaldo-monitores'
+import {
+  DESTINOS_RESPALDO,
+  origenPublico,
+  urlDe,
+  type DestinoRespaldo,
+} from '../../data/respaldo-monitores'
 
 export type EstadoVivo = {
   id: number

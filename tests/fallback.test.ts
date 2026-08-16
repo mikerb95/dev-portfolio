@@ -108,14 +108,28 @@ describe('destinos de respaldo', () => {
     expect(origenPublico()).toBe('https://ejemplo.test')
   })
 
-  it('los destinos son rutas relativas, nunca URLs absolutas', () => {
-    // Si una ruta trajera su propio host, el sondeo mediría otro sitio que el
-    // del despliegue actual y la página de estado mentiría en los previews.
+  it('cada destino declara una ruta relativa o una URL absoluta, nunca las dos', () => {
     for (const d of DESTINOS_RESPALDO) {
-      expect(d.ruta.startsWith('/')).toBe(true)
-      expect(d.ruta).not.toMatch(/^https?:/)
+      expect(Boolean(d.ruta) !== Boolean(d.urlAbsoluta)).toBe(true)
+      // Una `ruta` con su propio host mediría otro sitio que el del despliegue
+      // actual, y la página de estado mentiría en los previews.
+      if (d.ruta) {
+        expect(d.ruta.startsWith('/')).toBe(true)
+        expect(d.ruta).not.toMatch(/^https?:/)
+      }
+      if (d.urlAbsoluta) expect(d.urlAbsoluta).toMatch(/^https:\/\//)
       expect(d.umbralMs).toBeGreaterThan(0)
     }
+  })
+
+  it('urlDe resuelve la relativa contra el origen y respeta la absoluta', () => {
+    expect(urlDe({ id: 1, nombre: 'x', ruta: '/status', umbralMs: 1 }, 'https://a.test')).toBe(
+      'https://a.test/status',
+    )
+    // La absoluta ignora el origen: es otro servicio, no otra ruta de este.
+    expect(
+      urlDe({ id: 2, nombre: 'y', urlAbsoluta: 'https://b.test/', umbralMs: 1 }, 'https://a.test'),
+    ).toBe('https://b.test/')
   })
 
   it('no repite ids entre destinos', () => {
