@@ -44,15 +44,26 @@ beforeEach(async () => {
   await c.execute('DELETE FROM monitor_checks')
 })
 
+// En un solo batch, no un execute por fila: el caso de los 120 monitores hacía
+// 360 viajes secuenciales y el del plan de consulta 400, lo bastante lento para
+// cruzar el timeout de 5s de vitest cuando la suite corre en paralelo bajo
+// carga. Mismas filas, mismas aserciones, un viaje.
 async function seed(monitorId: number, n: number, opts: { nullEvery?: number } = {}) {
   const c = await client()
+  const filas = []
   for (let i = 0; i < n; i++) {
     const isNull = opts.nullEvery ? i % opts.nullEvery === 0 : false
-    await c.execute(
-      `INSERT INTO monitor_checks (monitor_id, at, ok, response_ms)
-       VALUES (${monitorId}, ${1_700_000_000 + i * 300}, ${i % 7 === 0 ? 0 : 1}, ${isNull ? 'NULL' : 100 + (i % 50)})`,
-    )
+    filas.push({
+      sql: `INSERT INTO monitor_checks (monitor_id, at, ok, response_ms) VALUES (?, ?, ?, ?)`,
+      args: [
+        monitorId,
+        1_700_000_000 + i * 300,
+        i % 7 === 0 ? 0 : 1,
+        isNull ? null : 100 + (i % 50),
+      ],
+    })
   }
+  await c.batch(filas)
 }
 
 describe('recentLatency', () => {
