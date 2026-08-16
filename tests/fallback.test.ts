@@ -122,6 +122,22 @@ describe('destinos de respaldo', () => {
     const ids = DESTINOS_RESPALDO.map((d) => d.id)
     expect(new Set(ids).size).toBe(ids.length)
   })
+
+  it('el monitor del portal conserva los parámetros con que se da de alta', () => {
+    // Copiado de scripts/register-portal-monitor.mjs: si allí cambian, aquí se
+    // estaría sondeando otra cosa que la que /status muestra en condiciones
+    // normales, y la página diría dos verdades distintas según el día.
+    const portal = DESTINOS_RESPALDO.find((d) => d.ruta === '/api/portal/health')
+    expect(portal).toBeDefined()
+    expect(portal!.textoEsperado).toBe('"ok":true')
+    expect(portal!.umbralMs).toBe(2000)
+  })
+
+  it('los destinos marcados como dependientes de la base existen en la lista', () => {
+    // Un id marcado que ya no se sondea dejaría la nota explicativa muerta.
+    const ids = new Set(DESTINOS_RESPALDO.map((d) => d.id))
+    for (const id of DEPENDEN_DE_LA_BASE) expect(ids.has(id)).toBe(true)
+  })
 })
 
 describe('sondeo en vivo', () => {
