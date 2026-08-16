@@ -22,6 +22,38 @@ try {
 const WHATSAPP = '573104641228'
 const waLink = (text: string) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`
 
+// El aula vive en su propio dominio y su propio despliegue (Next.js), aparte de
+// este sitio: durante una sesión el grupo entra ahí y una caída del portafolio
+// no puede llevarse la capacitación por delante. Desde aquí solo se enlaza.
+const AULA = 'https://capacitaciones.codebymike.tech'
+
+const AULA_PUNTOS = [
+  {
+    dot: 'bg-cyan',
+    texto: 'text-cyan',
+    titulo: 'Quien asiste',
+    detalle:
+      'Entra con el código de la sesión y su nombre. No se pide correo ni teléfono, y al volver retoma donde iba.',
+    enlace: { href: AULA, label: 'Ver la entrada del aula' },
+  },
+  {
+    dot: 'bg-lime',
+    texto: 'text-lime',
+    titulo: 'Quien contrató',
+    detalle:
+      'Panel con la lista de asistencia y hasta dónde ha recorrido el material cada persona del equipo, con una clave propia.',
+    enlace: { href: `${AULA}/empresa`, label: 'Panel de la empresa' },
+  },
+  {
+    dot: 'bg-violet',
+    texto: 'text-violet',
+    titulo: 'Quien solo quiere mirar',
+    detalle:
+      'El portal se puede recorrer sin código: los módulos de Copilot, Claude, Gemini y ChatGPT están a la vista antes de contratar nada.',
+    enlace: { href: AULA, label: 'Entrar como invitado' },
+  },
+]
+
 const PERFILES = [
   {
     dot: 'bg-ember',
@@ -60,7 +92,7 @@ const PASOS = [
     n: '03',
     titulo: 'Material que se queda',
     detalle:
-      'Guías, prompts y plantillas quedan en un banco propio con código de acceso para el grupo.',
+      'El grupo entra al aula con el código de la sesión, y las guías, prompts y plantillas quedan en el banco de recursos.',
   },
   {
     n: '04',
@@ -138,6 +170,12 @@ const FAQS = [
           class="rounded-xl bg-lime/[0.10] border border-lime/30 px-5 py-2.5 text-[13px] text-lime hover:bg-lime/[0.16] transition-colors"
         >
           Hablar por WhatsApp
+        </a>
+        <a
+          href={AULA}
+          class="rounded-xl border border-white/10 px-5 py-2.5 text-[13px] text-ink-100 hover:bg-white/5 transition-colors"
+        >
+          Recorrer el aula
         </a>
         <a
           href="/capacitacion"
