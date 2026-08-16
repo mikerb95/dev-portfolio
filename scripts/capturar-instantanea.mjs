@@ -27,7 +27,7 @@
  * páginas de marca. Nada de finanzas, secretos de la bóveda, datos de clientes
  * ni contactos - esto acaba en un archivo del repositorio y se sirve al mundo.
  */
-import { writeFileSync, readFileSync } from 'node:fs'
+import { writeFileSync, readFileSync, readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -90,6 +90,31 @@ const proyectoPublico = (p) => ({
   status: p.status ?? null,
   createdAt: p.createdAt ?? p.created_at ?? null,
 })
+
+// Las portadas viven en el repositorio (`public/assets/screenshots/portada_<slug>.png`),
+// no en la base: son el único dato de la tarjeta que sobrevive a que la base
+// esté bloqueada. Sin esto la instantánea capturada desde GitHub deja
+// `screenshotUrl` en null y la vitrina se queda sin imágenes aunque el archivo
+// esté ahí mismo, servido por Vercel.
+const DIR_PORTADAS = join(root, 'public/assets/screenshots')
+
+const portadasPorSlug = (() => {
+  const mapa = new Map()
+  try {
+    for (const archivo of readdirSync(DIR_PORTADAS)) {
+      const m = archivo.match(/^portada_(.+)\.(png|jpe?g|webp|avif)$/i)
+      if (m) mapa.set(m[1].toLowerCase(), `/assets/screenshots/${archivo}`)
+    }
+  } catch { /* sin carpeta de portadas: no es motivo para perder la captura */ }
+  return mapa
+})()
+
+/** Rellena la portada local solo si la fuente no trajo una propia. */
+function conPortadaLocal(p) {
+  if (p.screenshotUrl) return p
+  const local = portadasPorSlug.get(String(p.slug).toLowerCase())
+  return local ? { ...p, screenshotUrl: local } : p
+}
 
 async function desdeDb() {
   const { createClient } = await import('@libsql/client')
@@ -184,9 +209,12 @@ async function main() {
     process.exit(1)
   }
 
+  instantanea.proyectos = instantanea.proyectos.map(conPortadaLocal)
+  const conPortada = instantanea.proyectos.filter((p) => p.screenshotUrl).length
+
   writeFileSync(DESTINO, JSON.stringify(instantanea, null, 2) + '\n')
   console.log(`\nEscrito ${DESTINO}`)
-  console.log(`  ${instantanea.proyectos.length} proyectos · ${instantanea.certificaciones.length} certificaciones`)
+  console.log(`  ${instantanea.proyectos.length} proyectos (${conPortada} con portada) · ${instantanea.certificaciones.length} certificaciones`)
   console.log(`  fuentes: ${instantanea.meta.fuentes.join(', ')}`)
 }
 

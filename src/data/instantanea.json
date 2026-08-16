@@ -1,6 +1,6 @@
 {
   "meta": {
-    "capturadaEn": "2026-08-15T19:44:47.098Z",
+    "capturadaEn": "2026-08-16T16:48:44.322Z",
     "fuentes": [
       "API de GitHub"
     ]
@@ -16,7 +16,7 @@
       "techStack": "Astro",
       "repoUrl": "https://github.com/mikerb95/dobleyo",
       "previewUrl": "https://dobleyo.cafe/",
-      "screenshotUrl": null,
+      "screenshotUrl": "/assets/screenshots/portada_dobleyo.png",
       "status": "activo",
       "createdAt": "2025-08-29T15:21:53Z"
     },
@@ -44,7 +44,7 @@
       "techStack": "EJS",
       "repoUrl": "https://github.com/mikerb95/gorillaz-motorbikes",
       "previewUrl": "https://gorillazmotorbikes.com",
-      "screenshotUrl": null,
+      "screenshotUrl": "/assets/screenshots/portada_gorillaz-motorbikes.png",
       "status": "activo",
       "createdAt": "2025-09-03T00:16:38Z"
     },
@@ -58,7 +58,7 @@
       "techStack": "TypeScript",
       "repoUrl": "https://github.com/mikerb95/web-toledo-producciones",
       "previewUrl": "https://toledoproducciones.org/",
-      "screenshotUrl": null,
+      "screenshotUrl": "/assets/screenshots/portada_web-toledo-producciones.png",
       "status": "activo",
       "createdAt": "2026-06-16T02:21:03Z"
     },
@@ -86,7 +86,7 @@
       "techStack": "HTML",
       "repoUrl": "https://github.com/mikerb95/SlideHub",
       "previewUrl": "https://slide.lat",
-      "screenshotUrl": null,
+      "screenshotUrl": "/assets/screenshots/portada_slidehub.png",
       "status": "activo",
       "createdAt": "2026-02-27T13:01:13Z"
     },
