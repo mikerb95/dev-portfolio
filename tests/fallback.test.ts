@@ -149,7 +149,9 @@ describe('sondeo en vivo', () => {
   })
 
   it('mide cada destino y devuelve su estado', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('ok', { status: 200 })))
+    // El cuerpo satisface el `textoEsperado` del monitor del portal; los demás
+    // destinos no comprueban texto, así que les sirve igual.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"ok":true}', { status: 200 })))
     const { sondearEnVivo } = await import('../src/lib/fallback/sondeo-vivo')
     const r = await sondearEnVivo()
     expect(r).toHaveLength(DESTINOS_RESPALDO.length)
@@ -167,6 +169,18 @@ describe('sondeo en vivo', () => {
     expect(r).toHaveLength(DESTINOS_RESPALDO.length)
     // Una página de estado que se cae porque el sitio está caído no sirve.
     expect(r.every((m) => m.lastStatus === 'down')).toBe(true)
+  })
+
+  it('un 200 con el cuerpo equivocado cuenta como caída donde se espera texto', async () => {
+    // El caso que justifica `textoEsperado`: una página de error servida por el
+    // borde, o un rewrite mal puesto, responden 200 y pasarían por "arriba".
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('<html>error</html>', { status: 200 })))
+    const { sondearEnVivo } = await import('../src/lib/fallback/sondeo-vivo')
+    const r = await sondearEnVivo()
+    const portal = r.find((m) => m.name === 'Portal de clientes')
+    expect(portal!.lastStatus).toBe('down')
+    // Los que no comprueban texto siguen contando como operativos.
+    expect(r.filter((m) => m.name !== 'Portal de clientes').every((m) => m.lastStatus === 'up')).toBe(true)
   })
 
   it('un 500 cuenta como caída aunque la petición no falle', async () => {
