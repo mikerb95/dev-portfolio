@@ -66,6 +66,16 @@ Qué sirve cada página mientras dure el bloqueo:
 |---|---|
 | `/` | Los proyectos reales desde `src/data/instantanea.json` |
 | `/status` | Estado y latencia **medidos en el momento**, sondeando los endpoints |
+
+Aviso sobre `/status` en modo respaldo: los destinos que sondea **no son** los 9
+monitores reales. Las URLs de esos monitores solo existen en la tabla
+`monitors`, que es justo lo que no se puede leer. La lista de respaldo vive en
+`src/data/respaldo-monitores.ts` y se armó con lo verificable desde el
+repositorio: el monitor del portal está copiado de
+`scripts/register-portal-monitor.mjs` (mismos parámetros, incluido el texto
+esperado); los demás son rutas públicas que existen en `src/pages/`, elegidas
+por criterio, no por constar en ningún sitio. Cuando la base vuelva, conviene
+mirar `/admin/monitors` y ajustar ese arreglo para que ambas listas coincidan.
 | `/engineering`, `/certifications`, `/security` | Su contenido; los datos de base se omiten (RNF-26) |
 
 Para enriquecer la instantánea con los datos curados a mano (título en inglés,
