@@ -25,11 +25,26 @@
 export type DestinoRespaldo = {
   id: number
   nombre: string
-  ruta: string
+  /** Ruta relativa al despliegue actual. Excluyente con `urlAbsoluta`. */
+  ruta?: string
+  /**
+   * Host externo completo, para servicios que no son este despliegue (otros
+   * proyectos propios con su propio dominio). Excluyente con `ruta`.
+   *
+   * La distinción importa: `ruta` se resuelve contra el origen del despliegue,
+   * así que en un preview mide el preview. Un servicio externo no tiene versión
+   * de preview, se mide siempre el mismo.
+   */
+  urlAbsoluta?: string
   /** Un endpoint de salud debe responder rápido; una página completa, no tanto. */
   umbralMs: number
   /** Texto que debe aparecer en el cuerpo. Detecta el "200 que en realidad falló". */
   textoEsperado?: string
+}
+
+/** URL final a sondear para un destino, resuelta contra el origen del despliegue. */
+export function urlDe(destino: DestinoRespaldo, origen: string): string {
+  return destino.urlAbsoluta ?? `${origen}${destino.ruta ?? '/'}`
 }
 
 /**
@@ -50,6 +65,7 @@ export const DESTINOS_RESPALDO: DestinoRespaldo[] = [
   { id: 9004, nombre: 'Notas técnicas', ruta: '/notes', umbralMs: 1800 },
   { id: 9005, nombre: 'Documentación', ruta: '/docs', umbralMs: 1800 },
   { id: 9006, nombre: 'Herramientas', ruta: '/tools', umbralMs: 1800 },
+  { id: 9008, nombre: 'Log de ingeniería', ruta: '/log', umbralMs: 1800 },
   // Copiado de scripts/register-portal-monitor.mjs, incluido el texto esperado:
   // un 200 con el cuerpo equivocado (una página de error del borde, un rewrite
   // mal puesto) contaría como "arriba" sin esa comprobación.
@@ -60,6 +76,23 @@ export const DESTINOS_RESPALDO: DestinoRespaldo[] = [
     umbralMs: 2000,
     textoEsperado: '"ok":true',
   },
+
+  // ── Otros servicios propios, con dominio aparte ──────────────────────────
+  // Reconstruidos del historial del navegador (ago 2026) tras perder el acceso
+  // a la tabla `monitors`. Son despliegues propios en producción, no destinos
+  // inventados, pero tampoco consta que fueran exactamente los monitoreados:
+  // revisar contra /admin/monitors cuando la base vuelva a responder.
+  //
+  // Solo el NOMBRE se publica en /status; la URL nunca sale al HTML (regla
+  // OPSEC de las páginas públicas), así que listarlas aquí no las expone.
+  {
+    id: 9010,
+    nombre: 'Academia IA',
+    urlAbsoluta: 'https://capacitaciones.codebymike.tech/',
+    umbralMs: 2500,
+  },
+  { id: 9011, nombre: 'Ekosolv', urlAbsoluta: 'https://www.ekosolv.com/', umbralMs: 2500 },
+  { id: 9012, nombre: 'DobleYo', urlAbsoluta: 'https://dobleyo.cafe/', umbralMs: 2500 },
 ]
 
 /**
