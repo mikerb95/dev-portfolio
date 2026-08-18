@@ -1,0 +1,15 @@
+<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+  <!-- Logo vertical: símbolo encima, texto abajo -->
+
+  <!-- Símbolo: brackets de código -->
+  <g id="code-symbol">
+    <!-- Left bracket < -->
+    <path d="M 35 30 L 45 50 L 35 70" stroke="#00f2ff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Right bracket > -->
+    <path d="M 85 30 L 75 50 L 85 70" stroke="#00f2ff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Texto: CodeByMike en dos líneas -->
+  <text x="60" y="105" font-family="Monaco, Courier New, monospace" font-size="12" font-weight="600" letter-spacing="0.1" fill="#f0f0f0" text-anchor="middle">Code</text>
+  <text x="60" y="125" font-family="Monaco, Courier New, monospace" font-size="12" font-weight="600" letter-spacing="0.1" fill="#f0f0f0" text-anchor="middle"><tspan fill="#00f2ff">By</tspan>Mike</text>
+</svg>
