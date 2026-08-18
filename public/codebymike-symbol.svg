@@ -1,0 +1,9 @@
+<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Logo solo símbolo: brackets de código -->
+
+  <!-- Left bracket < -->
+  <path d="M 15 18 L 25 30 L 15 42" stroke="#00f2ff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Right bracket > -->
+  <path d="M 45 18 L 35 30 L 45 42" stroke="#00f2ff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
