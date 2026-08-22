@@ -16092,3 +16092,87 @@ running (4m28.9s), 0024/2925 VUs, 20979 complete and 2923 interrupted iterations
 muestreo       [  98% ] 0/2 VUs        4m28.8s/4m35s  0.50 iters/s
 quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s          300.00 iters/s
 recuperacion   [  95% ] 24/60 VUs      1m53.8s/2m0s   20.00 iters/s
+
+running (4m29.9s), 0021/2925 VUs, 21002 complete and 2923 interrupted iterations
+muestreo       [  98% ] 0/2 VUs        4m29.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s          300.00 iters/s
+recuperacion   [  96% ] 21/60 VUs      1m54.8s/2m0s   20.00 iters/s
+
+running (4m30.9s), 0020/2925 VUs, 21024 complete and 2923 interrupted iterations
+muestreo       [  98% ] 0/2 VUs        4m30.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s          300.00 iters/s
+recuperacion   [  97% ] 20/60 VUs      1m55.8s/2m0s   20.00 iters/s
+
+running (4m31.9s), 0020/2925 VUs, 21044 complete and 2923 interrupted iterations
+muestreo       [  99% ] 0/2 VUs        4m31.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s          300.00 iters/s
+recuperacion   [  97% ] 20/60 VUs      1m56.8s/2m0s   20.00 iters/s
+
+running (4m32.9s), 0021/2925 VUs, 21064 complete and 2923 interrupted iterations
+muestreo       [  99% ] 0/2 VUs        4m32.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s          300.00 iters/s
+recuperacion   [  98% ] 21/60 VUs      1m57.8s/2m0s   20.00 iters/s
+
+running (4m33.9s), 0021/2925 VUs, 21084 complete and 2923 interrupted iterations
+muestreo       [ 100% ] 0/2 VUs        4m33.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s          300.00 iters/s
+recuperacion   [  99% ] 21/60 VUs      1m58.8s/2m0s   20.00 iters/s
+
+running (4m34.9s), 0020/2925 VUs, 21106 complete and 2923 interrupted iterations
+muestreo       [ 100% ] 0/2 VUs        4m34.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s          300.00 iters/s
+recuperacion   [ 100% ] 20/60 VUs      1m59.8s/2m0s   20.00 iters/s
+
+running (4m35.9s), 0004/2925 VUs, 21126 complete and 2923 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 21/60 VUs      2m0s   20.00 iters/s
+
+  escenario     estres
+  objetivo      http://127.0.0.1:4400
+  VUs máx       2925
+  duración      276s
+  peticiones    21132 (76.53/s)
+  latencia      p50 115ms · p90 10000.3ms · p95 10000.7ms · p99 10001.1ms · max 10029.4ms
+  errores       69.705%
+  checks        12640 ok / 29382 fallidos
+  umbrales      INCUMPLIDOS
+
+  por ruta                n      p50      p95      p99
+  home /                  8411       91    10001    10001
+  status /status          5181      287    10001    10001
+  health /api/health      4228       56    10001    10001
+  tools /tools            3191       70    10001    10001
+  escalera del quiebre
+    ofrecido  respuestas   exitosas      p50      p95  errores    cpu%   heap MB  estado
+       50/s      49.9/s      49.9/s     157ms    3770ms      0%    15.1%     302.2         ok
+      100/s      70.6/s      64.7/s     912ms   10000ms    8.4%    15.3%     330.8  degradado
+      200/s     113.6/s        33/s   10000ms   10001ms     71%    16.8%       420       roto
+      300/s     213.2/s         0/s       0ms   10001ms    100%       0%         0       roto
+      300/s     186.4/s         0/s       0ms   10000ms    100%       0%         0       roto
+
+  recuperación  p50 53.8ms · p95 9785.3ms · errores 5.508%
+  curva de recuperación (s desde que cesó la carga)
+    + 0s   n= 120   p50  10000ms   p95  10001ms   cpu     0%   heap      0 MB
+    +15s   n= 112   p50   3659ms   p95  10001ms   cpu  16.5%   heap  419.3 MB
+    +30s   n= 264   p50     89ms   p95   2457ms   cpu  11.4%   heap  349.4 MB
+    +45s   n= 300   p50     57ms   p95    581ms   cpu   8.3%   heap  462.5 MB
+    +60s   n= 300   p50     23ms   p95     85ms   cpu     6%   heap  540.5 MB
+    +75s   n= 300   p50     32ms   p95    498ms   cpu   6.4%   heap  581.2 MB
+    +90s   n= 300   p50     66ms   p95    864ms   cpu   7.1%   heap  232.7 MB
+    +105s   n= 301   p50     31ms   p95   1011ms   cpu   6.7%   heap  269.4 MB
+
+  bloque de hallazgos (completar a mano tras revisar la corrida)
+    H-01: (sin completar)
+    H-02: (sin completar)
+    H-03: (sin completar)
+    H-04: (sin completar)
+    H-05: (sin completar)
+
+
+running (4m36.1s), 0000/2925 VUs, 21130 complete and 2923 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2923/2923 VUs  2m30s  300.00 iters/s
+recuperacion ✓ [ 100% ] 00/60 VUs      2m0s   20.00 iters/s
+time="2026-08-22T02:01:30Z" level=error msg="failed to handle the end-of-test summary" error="Could not save some summary information:\n\t- could not open 'lab/k6/resultados/estres-2026-08-22T02-01-30-158Z.json': open lab/k6/resultados/estres-2026-08-22T02-01-30-158Z.json: no such file or directory\n\t- could not open 'lab/k6/resultados/estres-2026-08-22T02-01-30-158Z.raw.json': open lab/k6/resultados/estres-2026-08-22T02-01-30-158Z.raw.json: no such file or directory"
+time="2026-08-22T02:01:31Z" level=error msg="thresholds on metrics 'recuperacion_duracion, recuperacion_errores' have been crossed"

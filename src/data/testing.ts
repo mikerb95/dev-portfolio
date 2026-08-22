@@ -718,16 +718,26 @@ export const GLOSARIO = [
 // Fallback de las métricas cuando la query a ci_runs no devuelve nada.
 // Medición real del 31 jul 2026 (npx vitest run --coverage), idéntica a la que
 // reporta el pipeline: 2161/3254 líneas de src/lib/**.
+// Los conteos de la suite salen de la instantánea de la última corrida real
+// (src/data/ejecucion-pruebas.json), no de un número escrito a mano: la versión
+// anterior de este objeto se había quedado en 937 tests / 55 archivos mientras
+// la suite ya iba por 1181 / 68, y contradecía además a PIRAMIDE. Lo que sigue
+// a mano es lo que no viene del XML JUnit: los e2e (Playwright, otro reporter)
+// y la cobertura (v8, otra herramienta).
 export const METRICAS_REFERENCIA = {
-  fecha: '31 jul 2026',
-  tests: 937,
+  fecha: new Date(EJECUCION.meta.capturadaEn).toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }),
+  tests: EJECUCION.total.pruebas,
   suites: 280,
-  archivos: 55,
-  e2e: 47,
+  archivos: EJECUCION.total.archivos,
+  e2e: 48,
   e2eSpecs: 6,
-  coberturaLineas: 66.41,
-  coberturaRamas: 63.18,
-  coberturaFunciones: 64.21,
+  coberturaLineas: 66.89,
+  coberturaRamas: 63.34,
+  coberturaFunciones: 64.42,
   niveles: NIVELES.length,
 }
 
