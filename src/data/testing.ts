@@ -10,6 +10,8 @@
 // describen por la garantía que dan, nunca citando patrones de detección,
 // rutas honeypot ni umbrales literales.
 
+import { EJECUCION } from './ejecucion-pruebas'
+
 export type Cuando = 'push' | 'semanal' | 'manual' | 'continuo'
 export type Acento = 'cyan' | 'violet' | 'lime' | 'ember'
 
