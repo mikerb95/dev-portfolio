@@ -15637,3 +15637,18 @@ running (3m57.9s), 0020/2873 VUs, 20571 complete and 2869 interrupted iterations
 muestreo       [  86% ] 0/2 VUs        3m57.8s/4m35s  0.50 iters/s
 quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
 recuperacion   [  69% ] 20/60 VUs      1m22.8s/2m0s   20.00 iters/s
+
+running (3m58.9s), 0022/2873 VUs, 20590 complete and 2869 interrupted iterations
+muestreo       [  87% ] 0/2 VUs        3m58.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  70% ] 22/60 VUs      1m23.8s/2m0s   20.00 iters/s
+
+running (3m59.9s), 0021/2873 VUs, 20611 complete and 2869 interrupted iterations
+muestreo       [  87% ] 0/2 VUs        3m59.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  71% ] 21/60 VUs      1m24.8s/2m0s   20.00 iters/s
+
+running (4m00.9s), 0021/2873 VUs, 20632 complete and 2869 interrupted iterations
+muestreo       [  88% ] 0/2 VUs        4m00.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  72% ] 21/60 VUs      1m25.8s/2m0s   20.00 iters/s
