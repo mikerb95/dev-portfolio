@@ -252,32 +252,37 @@ export type EstratoPiramide = {
   proposito: string
 }
 
+// Los contratos corren sobre base real, así que la instantánea los cuenta
+// dentro de integración; aquí se separan porque son un estrato propio de la
+// pirámide. Restarlos evita el error de sumar 1181 y que el total no cuadre.
+const TESTS_CONTRATOS = EJECUCION.suites.find((s) => s.archivo === 'tests/contracts.test.ts')?.pruebas ?? 0
+
 export const PIRAMIDE: EstratoPiramide[] = [
   {
     id: 'e2e',
     nombre: 'End-to-end',
-    tests: 45,
+    tests: 48,
     velocidad: 'minutos',
     proposito: 'Un navegador real recorre el flujo completo. Caros, lentos, pocos.',
   },
   {
     id: 'contratos',
     nombre: 'Contratos',
-    tests: 5,
+    tests: TESTS_CONTRATOS,
     velocidad: 'segundos',
     proposito: 'La forma de la respuesta de la API queda congelada por un esquema Zod.',
   },
   {
     id: 'integracion',
     nombre: 'Integración',
-    tests: 102,
+    tests: EJECUCION.niveles.integracion.pruebas - TESTS_CONTRATOS,
     velocidad: 'segundos',
     proposito: 'Base de datos real y desechable: transacciones, UNIQUE y concurrencia de verdad.',
   },
   {
     id: 'unitario',
     nombre: 'Unitarias',
-    tests: 724,
+    tests: EJECUCION.niveles.unitarias.pruebas,
     velocidad: 'milisegundos',
     proposito: 'Lógica pura, sin BD ni red. Baratas: por eso son la mayoría.',
   },

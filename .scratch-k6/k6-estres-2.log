@@ -15365,3 +15365,80 @@ running (3m04.9s), 0058/2873 VUs, 19518 complete and 2869 interrupted iterations
 muestreo       [  67% ] 0/2 VUs        3m04.8s/4m35s  0.50 iters/s
 quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
 recuperacion   [  25% ] 58/60 VUs      0m29.8s/2m0s   20.00 iters/s
+
+running (3m05.9s), 0057/2873 VUs, 19533 complete and 2869 interrupted iterations
+muestreo       [  68% ] 0/2 VUs        3m05.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  26% ] 57/60 VUs      0m30.8s/2m0s   20.00 iters/s
+
+running (3m06.9s), 0060/2873 VUs, 19543 complete and 2869 interrupted iterations
+muestreo       [  68% ] 0/2 VUs        3m06.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  27% ] 60/60 VUs      0m31.8s/2m0s   20.00 iters/s
+
+running (3m07.9s), 0059/2873 VUs, 19550 complete and 2869 interrupted iterations
+muestreo       [  68% ] 0/2 VUs        3m07.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  27% ] 59/60 VUs      0m32.8s/2m0s   20.00 iters/s
+
+running (3m08.9s), 0056/2873 VUs, 19566 complete and 2869 interrupted iterations
+muestreo       [  69% ] 0/2 VUs        3m08.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  28% ] 56/60 VUs      0m33.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:05:12Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m09.9s), 0060/2873 VUs, 19581 complete and 2869 interrupted iterations
+muestreo       [  69% ] 0/2 VUs        3m09.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  29% ] 60/60 VUs      0m34.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:05:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m10.9s), 0059/2873 VUs, 19596 complete and 2869 interrupted iterations
+muestreo       [  69% ] 0/2 VUs        3m10.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  30% ] 59/60 VUs      0m35.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:05:15Z" level=warning msg="Request Failed" error="request timeout"
+
+running (3m11.9s), 0058/2873 VUs, 19609 complete and 2869 interrupted iterations
+muestreo       [  70% ] 0/2 VUs        3m11.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  31% ] 58/60 VUs      0m36.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:05:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:05:16Z" level=warning msg="Request Failed" error="request timeout"
+time="2026-08-22T02:05:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m12.9s), 0058/2873 VUs, 19622 complete and 2869 interrupted iterations
+muestreo       [  70% ] 0/2 VUs        3m12.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  32% ] 58/60 VUs      0m37.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:05:17Z" level=warning msg="Request Failed" error="request timeout"
+
+running (3m13.9s), 0059/2873 VUs, 19635 complete and 2869 interrupted iterations
+muestreo       [  70% ] 0/2 VUs        3m13.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  32% ] 59/60 VUs      0m38.8s/2m0s   20.00 iters/s
+
+running (3m14.9s), 0059/2873 VUs, 19651 complete and 2869 interrupted iterations
+muestreo       [  71% ] 0/2 VUs        3m14.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  33% ] 59/60 VUs      0m39.8s/2m0s   20.00 iters/s
+
+running (3m15.9s), 0050/2873 VUs, 19680 complete and 2869 interrupted iterations
+muestreo       [  71% ] 0/2 VUs        3m15.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  34% ] 50/60 VUs      0m40.8s/2m0s   20.00 iters/s
+
+running (3m16.9s), 0039/2873 VUs, 19712 complete and 2869 interrupted iterations
+muestreo       [  72% ] 0/2 VUs        3m16.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  35% ] 39/60 VUs      0m41.8s/2m0s   20.00 iters/s
+
+running (3m17.9s), 0020/2873 VUs, 19751 complete and 2869 interrupted iterations
+muestreo       [  72% ] 0/2 VUs        3m17.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  36% ] 20/60 VUs      0m42.8s/2m0s   20.00 iters/s
+
+running (3m18.9s), 0021/2873 VUs, 19771 complete and 2869 interrupted iterations
+muestreo       [  72% ] 0/2 VUs        3m18.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  37% ] 21/60 VUs      0m43.8s/2m0s   20.00 iters/s
