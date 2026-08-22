@@ -15697,3 +15697,33 @@ running (4m09.9s), 0021/2873 VUs, 20816 complete and 2869 interrupted iterations
 muestreo       [  91% ] 0/2 VUs        4m09.8s/4m35s  0.50 iters/s
 quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
 recuperacion   [  79% ] 21/60 VUs      1m34.8s/2m0s   20.00 iters/s
+
+running (4m10.9s), 0020/2873 VUs, 20838 complete and 2869 interrupted iterations
+muestreo       [  91% ] 0/2 VUs        4m10.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  80% ] 20/60 VUs      1m35.8s/2m0s   20.00 iters/s
+
+running (4m11.9s), 0020/2873 VUs, 20858 complete and 2869 interrupted iterations
+muestreo       [  92% ] 0/2 VUs        4m11.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  81% ] 20/60 VUs      1m36.8s/2m0s   20.00 iters/s
+
+running (4m12.9s), 0027/2873 VUs, 20872 complete and 2869 interrupted iterations
+muestreo       [  92% ] 0/2 VUs        4m12.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  82% ] 27/60 VUs      1m37.8s/2m0s   20.00 iters/s
+
+running (4m13.9s), 0020/2873 VUs, 20899 complete and 2869 interrupted iterations
+muestreo       [  92% ] 0/2 VUs        4m13.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  82% ] 20/60 VUs      1m38.8s/2m0s   20.00 iters/s
+
+running (4m14.9s), 0021/2873 VUs, 20919 complete and 2869 interrupted iterations
+muestreo       [  93% ] 0/2 VUs        4m14.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  83% ] 21/60 VUs      1m39.8s/2m0s   20.00 iters/s
+
+running (4m15.9s), 0020/2873 VUs, 20940 complete and 2869 interrupted iterations
+muestreo       [  93% ] 0/2 VUs        4m15.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2869/2871 VUs  2m30s          300.00 iters/s
+recuperacion   [  84% ] 20/60 VUs      1m40.8s/2m0s   20.00 iters/s
