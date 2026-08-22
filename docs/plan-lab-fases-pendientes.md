@@ -110,10 +110,11 @@ el script postea el summary a la ingesta y la tarjeta aparece en `/admin/lab/loa
 Opción B: disparar el `workflow_dispatch` desde la pestaña Actions en vivo.
 
 ### Criterios de aceptación
-- [ ] `lab/k6/*.js` corren local con k6 y generan summary.
+- [x] `lab/k6/*.js` corren local con k6 y generan summary (`carga.js`, `estres.js`).
+- [x] Ningún script apunta a producción por defecto; guardarraíl de dos mitades
+      en `lib/perfil.js` (URL del servidor + `checks.db.local` de `/api/health`).
 - [ ] `load_test_runs` poblada vía ingesta autenticada.
 - [ ] `/admin/lab/load` muestra p50/p95/p99 y gráfica por nivel de VUs.
-- [ ] Ningún script apunta a producción por defecto; guard en el workflow.
 - [ ] Tests: parser del summary de k6 (función pura) + validación del payload de ingesta `load_test`.
 
 ### Esfuerzo estimado: ~2 días
@@ -240,7 +241,7 @@ Casi nadie a nivel tecnólogo conoce mutation testing; sorprende.
 
 | Fase | Estado | Entrega clave | Tablas nuevas | Workflows |
 |---|---|---|---|---|
-| 5 Load testing | ⏳ pendiente | Gráficas p50/p95/p99 bajo 100-1000 VUs | `load_test_runs` | `load-test.yml` (manual) |
+| 5 Load testing | 🟡 scripts listos, panel pendiente | `carga.js`/`estres.js` corridos local con escalera + fila R + CPU/heap + hallazgos H-01..H-05 (ago 2026); falta `/admin/lab/load` | `load_test_runs` | `load-test.yml` (manual) |
 | 6 SAST/DAST + a11y | ✅ 17 y 23 jul | Hallazgos → resueltos, violaciones WCAG reales | `security_findings` | `security.yml`, `a11y.yml`, `dast.yml` |
 | 7 Mutation + contratos | ✅ 17 jul | Mutation score 87.2 % + contratos Zod | (reusa `ci_runs`) | `mutation.yml` (semanal) |
 
