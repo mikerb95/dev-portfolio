@@ -6,8 +6,18 @@
 > pasarela de pagos, chaos engineering, SLO/error budget), **Fase 6 completa**
 > (SAST el 17 jul, DAST el 23 jul, a11y el 17 jul) y **Fase 7 completa**
 > (mutation testing con score real 87.2 % + contratos Zod, 17 jul).
-> **Queda solo la Fase 5** (load testing con k6), bloqueada por la falta de un
-> target de preview/staging estable → `VERCEL_TOKEN`.
+>
+> **Actualización ago 2026**: los scripts k6 de la Fase 5 (`lab/k6/carga.js`
+> ítem 5 y `lab/k6/estres.js` ítem 6 del checklist de pruebas) están
+> **implementados y corridos localmente**, con escalera de niveles, fila de
+> recuperación (curva por tramos de 15 s tras cesar la carga) y, desde esta
+> actualización, muestreo de CPU %/heap del proceso por escalón y por tramo
+> (`src/pages/api/lab/proceso.ts`, solo activo en `astro dev`) más un bloque
+> de hallazgos `H-01` a `H-05` para completar a mano tras revisar cada
+> corrida - ver el detalle abajo. **Lo que sigue faltando** de la Fase 5 es la
+> integración con el panel: tabla `load_test_runs`, ingesta `kind: 'load_test'`,
+> página `/admin/lab/load` y el workflow `load-test.yml`, todo bloqueado por
+> la falta de un target de preview/staging estable (`VERCEL_TOKEN`).
 >
 > Este documento detalla las Fases **5, 6 y 7** con alcance, archivos concretos,
 > criterios de aceptación y notas de costo/seguridad.
@@ -36,12 +46,46 @@ La carga va contra un **preview deployment** desechable o un target de staging.
 El job de k6 es **manual** (`workflow_dispatch`), nunca en cada push.
 
 ### Entregables
-1. **Scripts k6** en `lab/k6/`:
-   - `home.js` - GET a la home pública (renderizado SSR).
-   - `api-read.js` - GET a un endpoint público de lectura (p. ej. `/api/health`).
-   - `checkout.js` - POST a `/api/payments/checkout` en modo mock (idempotency key única por VU/iteración) para medir la ruta de escritura + BD bajo carga.
-   - Escenario con etapas (`stages`): ramp-up a 100 → 500 → 1000 VUs y ramp-down, con `thresholds` (p. ej. `http_req_duration: p(95)<800`).
-2. **Tabla `load_test_runs`** (migración nueva):
+1. **Scripts k6** en `lab/k6/` - ✅ implementados (ago 2026), con un diseño
+   distinto al de la propuesta original y documentado en el propio código:
+   - `carga.js` (ítem 5 del checklist) - escalera de niveles de concurrencia
+     `[10, 25, 50, 100, 250, 500, 1000]` VUs, midiendo solo en meseta (no el
+     agregado de rampa + meseta, que mezcla un nivel sano con uno saturado).
+     El umbral de aceptación del proyecto está en el nivel 25 (orden de
+     magnitud real de un portafolio + portal de pocos clientes); los niveles
+     superiores solo caracterizan la curva.
+   - `estres.js` (ítem 6 del checklist) - responde las tres preguntas de una
+     prueba de estrés real: **¿cuándo colapsa?** (escalera de `ramping-arrival-rate`
+     a 50/100/200/300/300 req/s, no VUs: con VUs el propio sistema se
+     autoprotege bajando la carga cuando se satura y el punto de quiebre nunca
+     aparece), **¿cómo responde?** (throughput ofrecido vs. servido vs.
+     exitoso, p50/p95, % error, y desde esta actualización **CPU %/heap MB
+     del proceso** por escalón, vía `src/pages/api/lab/proceso.ts`), y **¿cómo
+     se recupera?** (**fila R**: escenario `constant-arrival-rate` de baja
+     intensidad tras cesar la carga, medido en tramos de 15 s -no en
+     agregado- porque la media de toda la fase mezcla el sistema todavía
+     drenando con el ya recuperado y no responde CUÁNTO tarda en volver).
+   - Ambos comparten `lab/k6/lib/perfil.js`: guardarraíl de dos mitades
+     (`objetivo()` rechaza URLs de producción, `exigirBaseLocal()` verifica
+     además que el servidor lea de una base LOCAL vía `/api/health`, no solo
+     que su URL lo sea - ver el incidente de cuota de lecturas de ago 2026),
+     mezcla de rutas ponderada (`home`/`status`/`health`/`tools`), e IP
+     sintética por VU para no chocar con el rate limit durable del middleware.
+   - **Bloque de hallazgos H-01 a H-05**: cada corrida de `estres.js` agrega
+     `r.hallazgos` (5 entradas `{ id, titulo, descripcion }` vacías) al JSON
+     de resultado y las imprime como recordatorio en `stdout` - el mismo
+     espacio de un taller de pruebas de estrés clásico para anotar a mano lo
+     que un número no dice por sí solo (memoria que no baja entre escalones,
+     la base saturada, errores 500 a partir de cierto nivel).
+   - Estado `ok`/`degradado`/`roto` por escalón, heurístico sobre el % de
+     error (no un veredicto: la lectura fina va en el bloque de hallazgos).
+   - **Pendiente** (no bloqueante para la demo local): `home.js`/`api-read.js`/
+     `checkout.js` como scripts sueltos de la propuesta original quedaron
+     absorbidos por la mezcla de rutas de `perfil.js` y por `estres.js`
+     mismo; un escenario de escritura contra `/api/payments/checkout` en modo
+     mock bajo carga sigue sin existir como script dedicado.
+2. **Tabla `load_test_runs`** (migración nueva) - ⏳ pendiente, es la parte
+   que de verdad depende de `VERCEL_TOKEN` (ver más abajo):
    ```
    id, tool ('k6'), scenario, vus, durationS, p50, p95, p99, rps,
    errorRate, checksPassed, checksFailed, rawJson, target, createdAt

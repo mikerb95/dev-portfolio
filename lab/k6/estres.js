@@ -19,6 +19,7 @@
  *
  *   k6 run lab/k6/estres.js
  */
+import http from 'k6/http'
 import { sleep } from 'k6'
 import { Trend, Rate } from 'k6/metrics'
 import exec from 'k6/execution'
@@ -70,6 +71,34 @@ const porTramo = Object.fromEntries(
   TRAMOS.map((t) => [t, new Trend(`recuperacion_t${t}`, true)]),
 )
 const INICIO_RECUPERACION = 155
+const FIN_MUESTREO = INICIO_RECUPERACION + 120
+
+/**
+ * CPU % y heap del proceso, por escalón y por tramo. Es la columna que le
+ * faltaba a la escalera junto a throughput y p95: sin ella, un escalón que
+ * responde rápido pero ya tiene el heap disparado se ve idéntico a uno sano.
+ *
+ * Se pide a `/api/lab/proceso` (solo existe en `astro dev`, ver ese archivo),
+ * no al servidor de peticiones normales: mezclar la muestra de proceso con el
+ * tráfico que se está midiendo sesgaría la propia CPU que se quiere observar.
+ */
+const cpuPorEscalon = Object.fromEntries(
+  ESCALONES.map((e) => [e.desdeS, { cpu: new Trend(`proceso_cpu_e${e.desdeS}`), heap: new Trend(`proceso_heap_e${e.desdeS}`, true) }]),
+)
+const cpuPorTramo = Object.fromEntries(
+  TRAMOS.map((t) => [t, { cpu: new Trend(`proceso_cpu_t${t}`), heap: new Trend(`proceso_heap_t${t}`, true) }]),
+)
+
+/** A qué escalón (fase quiebre) o tramo (fase recuperación) pertenece un instante. */
+function ubicar(segAbs) {
+  if (segAbs < INICIO_RECUPERACION) {
+    const clave = ESCALONES.reduce((acc, e) => (segAbs >= e.desdeS ? e.desdeS : acc), 0)
+    return { destino: cpuPorEscalon[clave] }
+  }
+  const segRec = segAbs - INICIO_RECUPERACION
+  const tramo = TRAMOS.reduce((acc, t) => (segRec >= t ? t : acc), 0)
+  return { destino: cpuPorTramo[tramo] }
+}
 
 export const options = {
   scenarios: {
@@ -116,6 +145,21 @@ export const options = {
       tags: { fase: 'recuperacion' },
       exec: 'soltar',
     },
+    // Fase 3: en paralelo a las dos anteriores, sondea el proceso cada 2 s.
+    // Es tráfico aparte del que se está midiendo, con su propio VU: si
+    // compartiera VUs con `apretar`/`soltar` cada muestra esperaría su turno
+    // detrás de las peticiones saturadas y llegaría tarde a describir el
+    // instante que le tocaba.
+    muestreo: {
+      executor: 'constant-arrival-rate',
+      rate: 1,
+      timeUnit: '2s',
+      duration: `${FIN_MUESTREO}s`,
+      preAllocatedVUs: 2,
+      startTime: '0s',
+      tags: { fase: 'muestreo' },
+      exec: 'muestrear',
+    },
   },
   thresholds: {
     // La fase de quiebre NO lleva umbrales de latencia: su objetivo es fallar.
@@ -158,6 +202,25 @@ export function soltar() {
   sleep(1)
 }
 
+export function muestrear() {
+  const segAbs = Math.floor(exec.instance.currentTestRunDuration / 1000)
+  const { destino } = ubicar(segAbs)
+
+  // Si `/api/lab/proceso` no responde (build de producción, o el servidor de
+  // carga corre fuera de `astro dev`) simplemente no hay muestra: el resto de
+  // la prueba sigue midiendo latencia y errores igual.
+  const res = http.get(`${base}/api/lab/proceso`, { timeout: '5s' })
+  if (res.status !== 200) return
+  let m
+  try {
+    m = res.json()
+  } catch {
+    return
+  }
+  destino?.cpu.add(m.cpuPct)
+  destino?.heap.add(m.heapUsedMb)
+}
+
 export function handleSummary(data) {
   const r = resumen('estres', data, base)
 
@@ -170,11 +233,15 @@ export function handleSummary(data) {
     tasaErrorPct: Number(((data.metrics.recuperacion_errores?.values?.rate ?? 0) * 100).toFixed(3)),
     curva: TRAMOS.map((t) => {
       const v = data.metrics[`recuperacion_t${t}`]?.values ?? {}
+      const proc = data.metrics[`proceso_cpu_t${t}`]?.values ?? {}
+      const heap = data.metrics[`proceso_heap_t${t}`]?.values ?? {}
       return {
         desdeS: t,
         n: v.count ?? 0,
         p50: Number((v.med ?? 0).toFixed(1)),
         p95: Number((v['p(95)'] ?? 0).toFixed(1)),
+        cpuPct: Number((proc.avg ?? 0).toFixed(1)),
+        heapMb: Number((heap.avg ?? 0).toFixed(1)),
       }
     }),
   }
@@ -186,6 +253,9 @@ export function handleSummary(data) {
     const v = data.metrics[`quiebre_e${e.desdeS}`]?.values ?? {}
     const n = v.count ?? 0
     const tasaError = data.metrics[`quiebre_e${e.desdeS}_err`]?.values?.rate ?? 0
+    const errorPct = Number((tasaError * 100).toFixed(1))
+    const proc = data.metrics[`proceso_cpu_e${e.desdeS}`]?.values ?? {}
+    const heap = data.metrics[`proceso_heap_e${e.desdeS}`]?.values ?? {}
     return {
       rpsOfrecido: e.rps,
       n,
@@ -197,23 +267,42 @@ export function handleSummary(data) {
       exitosasRps: Number(((n * (1 - tasaError)) / 30).toFixed(1)),
       p50: Number((v.med ?? 0).toFixed(1)),
       p95: Number((v['p(95)'] ?? 0).toFixed(1)),
-      errorPct: Number((tasaError * 100).toFixed(1)),
+      errorPct,
+      cpuPct: Number((proc.avg ?? 0).toFixed(1)),
+      heapMb: Number((heap.avg ?? 0).toFixed(1)),
+      // Heurístico, no un veredicto: `ok`/`degradado`/`roto` según el % de
+      // error del propio escalón. La lectura fina (memoria que no baja, la
+      // base saturada) va en el bloque de hallazgos, escrito a mano tras
+      // revisar la corrida.
+      estado: errorPct >= 20 ? 'roto' : errorPct >= 1 ? 'degradado' : 'ok',
     }
   })
+
+  // Bloque de hallazgos: plantilla para completar a mano después de revisar
+  // la corrida (memoria que no se libera, la base saturada, errores 500 a
+  // partir de cierto escalón). La escalera y la curva de recuperación dicen
+  // QUÉ pasó; este bloque dice POR QUÉ, y eso no lo puede inferir un script.
+  r.hallazgos = Array.from({ length: 5 }, (_, i) => ({
+    id: `H-0${i + 1}`,
+    titulo: '',
+    descripcion: '',
+  }))
 
   const marca = r.fecha.replace(/[:.]/g, '-')
   return {
     stdout: aTexto(r)
       + `  escalera del quiebre\n`
-      + `    ofrecido  respuestas   exitosas      p50      p95  errores\n`
+      + `    ofrecido  respuestas   exitosas      p50      p95  errores    cpu%   heap MB  estado\n`
       + r.escalera
-          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.respuestasRps).padStart(9)}/s ${String(e.exitosasRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(6)}%`)
+          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.respuestasRps).padStart(9)}/s ${String(e.exitosasRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(6)}% ${String(e.cpuPct).padStart(7)}% ${String(e.heapMb).padStart(9)} ${e.estado.padStart(10)}`)
           .join('\n')
       + `\n\n  recuperación  p50 ${r.recuperacion.p50}ms · p95 ${r.recuperacion.p95}ms · errores ${r.recuperacion.tasaErrorPct}%\n`
       + `  curva de recuperación (s desde que cesó la carga)\n`
       + r.recuperacion.curva
-          .map((c) => `    +${String(c.desdeS).padStart(2)}s   n=${String(c.n).padStart(4)}   p50 ${String(Math.round(c.p50)).padStart(6)}ms   p95 ${String(Math.round(c.p95)).padStart(6)}ms`)
+          .map((c) => `    +${String(c.desdeS).padStart(2)}s   n=${String(c.n).padStart(4)}   p50 ${String(Math.round(c.p50)).padStart(6)}ms   p95 ${String(Math.round(c.p95)).padStart(6)}ms   cpu ${String(c.cpuPct).padStart(5)}%   heap ${String(c.heapMb).padStart(6)} MB`)
           .join('\n')
+      + `\n\n  bloque de hallazgos (completar a mano tras revisar la corrida)\n`
+      + r.hallazgos.map((h) => `    ${h.id}: (sin completar)`).join('\n')
       + '\n\n',
     [`lab/k6/resultados/estres-${marca}.json`]: JSON.stringify(r, null, 2),
     [`lab/k6/resultados/estres-${marca}.raw.json`]: JSON.stringify(data, null, 2),
