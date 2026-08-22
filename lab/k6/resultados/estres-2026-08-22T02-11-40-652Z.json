@@ -189,28 +189,28 @@
   "hallazgos": [
     {
       "id": "H-01",
-      "titulo": "",
-      "descripcion": ""
+      "titulo": "El colapso es de concurrencia, no de CPU ni de memoria",
+      "descripcion": "En el escalón roto (200 req/s, 65.2% error) la CPU del proceso sigue en 15.3% y el heap en 398 MB, prácticamente igual que en el escalón sano (50 req/s, 0% error, 12.5% CPU, 333 MB). Si el cuello de botella fuera cómputo o GC, la CPU subiría junto con el error. Como no sube, el límite real es la concurrencia que `astro dev` (servidor de desarrollo, sin cluster ni worker pool) puede sostener en sus sockets/handlers, no el trabajo por request."
     },
     {
       "id": "H-02",
-      "titulo": "",
-      "descripcion": ""
+      "titulo": "El punto de quiebre está muy cerca de la capacidad medida en carga.js",
+      "descripcion": "Ya en el escalón de 100 req/s ofrecidos (~1.6x la capacidad sostenida de ~62 req/s medida en `carga.js`) aparece 11.3% de error y p95 en el timeout de 10 s. A partir de 200 req/s el sistema está roto (65-99% error). No hay un margen amplio entre 'funciona bien' y 'colapsa': la transición ocurre en menos de 2x la carga nominal, lo cual es esperable de un servidor de desarrollo pero sería inaceptable en producción sin verificarlo contra el adaptador de Vercel."
     },
     {
       "id": "H-03",
-      "titulo": "",
-      "descripcion": ""
+      "titulo": "Sin ventana de enfriamiento entre corridas, la recuperación puede no completarse dentro de los 120 s medidos",
+      "descripcion": "Esta corrida se lanzó inmediatamente después de otra corrida de estrés completa (sin pausa). Resultado: la fase de recuperación entera midió 100% de error y p50 de 0 ms (peticiones fallando antes de completarse), incluyendo tramos +15s a +90s con cpu%/heap en 0 porque ni siquiera `/api/lab/proceso` respondía a tiempo. Comparado con una corrida aislada (mismo objetivo, sin corrida previa inmediata) donde la recuperación sí converge a p50 ~25-35ms desde el tramo +45s, esto sugiere que el proceso de Node queda en un estado degradado (colas o handles pendientes) que una sola ventana de 120 s no siempre alcanza a drenar si la carga anterior no tuvo tiempo de asentarse primero."
     },
     {
       "id": "H-04",
-      "titulo": "",
-      "descripcion": ""
+      "titulo": "El endpoint de monitoreo (/api/lab/proceso) también se satura, sesgando su propia muestra",
+      "descripcion": "Durante el tramo más degradado de la recuperación, las peticiones a `/api/lab/proceso` (timeout de 5 s en el script) también timeoutearon, dejando cpuPct=0/heapMb=0 en vez de ausencia de dato. Eso pisa la lectura real (probablemente el proceso seguía con CPU/heap altos, no en cero) y hace parecer que el sistema 'se apagó' cuando en realidad el endpoint de diagnóstico compite por los mismos recursos saturados que intenta medir. Para una corrida de referencia conviene distinguir 'sin muestra' de 'muestra en cero' en el bloque de recuperación."
     },
     {
       "id": "H-05",
-      "titulo": "",
-      "descripcion": ""
+      "titulo": "/status es la ruta más cara de las cuatro, coherente con que agrega datos de BD",
+      "descripcion": "En el escalón sano (50 req/s), p50 de /status (287-337ms según la corrida) es 2-4x más lento que /, /api/health y /tools (56-101ms). Es la única ruta que hace agregación real contra libSQL (90 días de checks), así que es la primera candidata a optimizar si se quisiera subir el punto de quiebre sin tocar el resto del sitio."
     }
   ]
 }
