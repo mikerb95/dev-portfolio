@@ -88,6 +88,15 @@ function resolvePortalDemoPass(
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url
 
+  // Páginas prerenderizadas (/docs/*): Astro ejecuta este middleware durante el
+  // build, donde no hay visitante. Todo lo de aquí abajo (clasificador, rate
+  // limit, gates de sesión) trabajaría sobre un request inventado, y de hecho
+  // leía `request.headers` que en prerender no existe. En producción estas
+  // rutas son archivos que sirve el CDN y no pasan por aquí jamás, así que
+  // saltarlas en el build es lo que hace coincidir el build con la realidad.
+  // Sus cabeceras de seguridad las pone vercel.json, no este archivo.
+  if (context.isPrerendered) return next()
+
   // i18n: cortar en seco un `/en/` delante de una ruta privada (admin, API,
   // portal, cobros, gates de login). Ninguna de esas rutas tiene traducción
   // - si se dejara pasar, cada guard de seguridad de abajo (que compara por
