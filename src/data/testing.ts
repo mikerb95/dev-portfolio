@@ -639,9 +639,9 @@ export const MUTANTES_ESTADO = [
 
 export const PENDIENTES = [
   {
-    titulo: 'Pruebas de carga con k6',
+    titulo: 'Panel de pruebas de carga con k6',
     detalle:
-      'Fase 5 del plan del LAB. Los scripts y la tabla están diseñados; falta el VERCEL_TOKEN que permite crear el preview desechable contra el que se dispara la carga. Nunca irá contra producción: Vercel factura por invocación y Turso tiene cuota de filas.',
+      'Fase 5 del plan del LAB. Los scripts (lab/k6/carga.js, lab/k6/estres.js) ya corren localmente y producen evidencia real: escalera de capacidad, punto de quiebre, curva de recuperación y CPU/heap del proceso. Falta el VERCEL_TOKEN que permite crear el preview desechable contra el que dispararlos en CI, y con él la tabla load_test_runs y la página /admin/lab/load. Nunca irá contra producción: Vercel factura por invocación y Turso tiene cuota de filas.',
   },
   {
     titulo: 'Evidencia de usabilidad',
