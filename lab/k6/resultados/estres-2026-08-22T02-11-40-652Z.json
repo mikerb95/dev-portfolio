@@ -1,0 +1,216 @@
+{
+  "escenario": "estres",
+  "objetivo": "http://127.0.0.1:4400",
+  "fecha": "2026-08-22T02:11:40.652Z",
+  "vusMax": 2914,
+  "duracionS": 286,
+  "peticiones": 19602,
+  "rps": 68.51,
+  "latenciaMs": {
+    "media": 3930.5,
+    "p50": 693.2,
+    "p90": 10000.4,
+    "p95": 10000.7,
+    "p99": 10001.2,
+    "max": 10047.2
+  },
+  "tasaErrorPct": 74.88,
+  "checksOk": 9712,
+  "checksFallidos": 29272,
+  "porRuta": {
+    "home": {
+      "path": "/",
+      "n": 7833,
+      "p50": 807.8,
+      "p95": 10000.7,
+      "p99": 10001.2,
+      "max": 10028.4
+    },
+    "status": {
+      "path": "/status",
+      "n": 4865,
+      "p50": 3601.3,
+      "p95": 10000.9,
+      "p99": 10001.2,
+      "max": 10047.2
+    },
+    "health": {
+      "path": "/api/health",
+      "n": 3883,
+      "p50": 920.4,
+      "p95": 10000.7,
+      "p99": 10001.2,
+      "max": 10009.1
+    },
+    "tools": {
+      "path": "/tools",
+      "n": 2911,
+      "p50": 267,
+      "p95": 9999.9,
+      "p99": 10000.7,
+      "max": 10013.6
+    }
+  },
+  "umbralesCumplidos": false,
+  "recuperacion": {
+    "p50": 0,
+    "p95": 10000.4,
+    "max": 10047.2,
+    "tasaErrorPct": 100,
+    "curva": [
+      {
+        "desdeS": 0,
+        "n": 120,
+        "p50": 6941.7,
+        "p95": 10000.9,
+        "cpuPct": 0,
+        "heapMb": 0
+      },
+      {
+        "desdeS": 15,
+        "n": 60,
+        "p50": 0,
+        "p95": 0,
+        "cpuPct": 0,
+        "heapMb": 0
+      },
+      {
+        "desdeS": 30,
+        "n": 60,
+        "p50": 0,
+        "p95": 0,
+        "cpuPct": 0,
+        "heapMb": 0
+      },
+      {
+        "desdeS": 45,
+        "n": 60,
+        "p50": 0,
+        "p95": 0,
+        "cpuPct": 0,
+        "heapMb": 0
+      },
+      {
+        "desdeS": 60,
+        "n": 60,
+        "p50": 0,
+        "p95": 0,
+        "cpuPct": 0,
+        "heapMb": 0
+      },
+      {
+        "desdeS": 75,
+        "n": 60,
+        "p50": 0,
+        "p95": 0,
+        "cpuPct": 0,
+        "heapMb": 0
+      },
+      {
+        "desdeS": 90,
+        "n": 0,
+        "p50": 0,
+        "p95": 0,
+        "cpuPct": 0,
+        "heapMb": 0
+      },
+      {
+        "desdeS": 105,
+        "n": 86,
+        "p50": 0,
+        "p95": 8984.7,
+        "cpuPct": 0,
+        "heapMb": 0
+      }
+    ]
+  },
+  "escalera": [
+    {
+      "rpsOfrecido": 50,
+      "n": 1497,
+      "respuestasRps": 49.9,
+      "exitosasRps": 49.9,
+      "p50": 138,
+      "p95": 1932.8,
+      "errorPct": 0,
+      "cpuPct": 12.5,
+      "heapMb": 332.8,
+      "estado": "ok"
+    },
+    {
+      "rpsOfrecido": 100,
+      "n": 2096,
+      "respuestasRps": 69.9,
+      "exitosasRps": 62,
+      "p50": 1076.9,
+      "p95": 10000.7,
+      "errorPct": 11.3,
+      "cpuPct": 15.2,
+      "heapMb": 315.6,
+      "estado": "degradado"
+    },
+    {
+      "rpsOfrecido": 200,
+      "n": 3489,
+      "respuestasRps": 116.3,
+      "exitosasRps": 40.4,
+      "p50": 9999.9,
+      "p95": 10000.9,
+      "errorPct": 65.2,
+      "cpuPct": 15.3,
+      "heapMb": 398.3,
+      "estado": "roto"
+    },
+    {
+      "rpsOfrecido": 300,
+      "n": 6324,
+      "respuestasRps": 210.8,
+      "exitosasRps": 7.8,
+      "p50": 0,
+      "p95": 10000.7,
+      "errorPct": 96.3,
+      "cpuPct": 15.4,
+      "heapMb": 429.1,
+      "estado": "roto"
+    },
+    {
+      "rpsOfrecido": 300,
+      "n": 5580,
+      "respuestasRps": 186,
+      "exitosasRps": 1.4,
+      "p50": 0,
+      "p95": 10000.5,
+      "errorPct": 99.3,
+      "cpuPct": 12.7,
+      "heapMb": 405.4,
+      "estado": "roto"
+    }
+  ],
+  "hallazgos": [
+    {
+      "id": "H-01",
+      "titulo": "",
+      "descripcion": ""
+    },
+    {
+      "id": "H-02",
+      "titulo": "",
+      "descripcion": ""
+    },
+    {
+      "id": "H-03",
+      "titulo": "",
+      "descripcion": ""
+    },
+    {
+      "id": "H-04",
+      "titulo": "",
+      "descripcion": ""
+    },
+    {
+      "id": "H-05",
+      "titulo": "",
+      "descripcion": ""
+    }
+  ]
+}

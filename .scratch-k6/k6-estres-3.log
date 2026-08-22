@@ -14912,3 +14912,1149 @@ running (2m30.8s), 0001/2914 VUs, 19061 complete and 2911 interrupted iterations
 muestreo       [  55% ] 1/2 VUs        2m30.8s/4m35s  0.50 iters/s
 quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
 recuperacion • [   0% ] waiting        0m04.2s       
+
+running (2m31.8s), 0000/2914 VUs, 19062 complete and 2911 interrupted iterations
+muestreo       [  55% ] 0/2 VUs        2m31.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion • [   0% ] waiting        0m03.2s       
+
+running (2m32.8s), 0000/2914 VUs, 19063 complete and 2911 interrupted iterations
+muestreo       [  56% ] 0/2 VUs        2m32.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion • [   0% ] waiting        0m02.2s       
+
+running (2m33.8s), 0000/2914 VUs, 19063 complete and 2911 interrupted iterations
+muestreo       [  56% ] 0/2 VUs        2m33.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion • [   0% ] waiting        0m01.2s       
+
+running (2m34.8s), 0001/2914 VUs, 19063 complete and 2911 interrupted iterations
+muestreo       [  56% ] 1/2 VUs        2m34.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion • [   0% ] waiting        0m00.2s       
+
+running (2m35.8s), 0016/2914 VUs, 19063 complete and 2911 interrupted iterations
+muestreo       [  57% ] 1/2 VUs        2m35.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   1% ] 15/60 VUs      0m00.7s/2m0s   20.00 iters/s
+
+running (2m36.8s), 0037/2914 VUs, 19063 complete and 2911 interrupted iterations
+muestreo       [  57% ] 2/2 VUs        2m36.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   1% ] 35/60 VUs      0m01.7s/2m0s   20.00 iters/s
+
+running (2m37.8s), 0057/2914 VUs, 19063 complete and 2911 interrupted iterations
+muestreo       [  57% ] 2/2 VUs        2m37.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   2% ] 55/60 VUs      0m02.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:32Z" level=warning msg="Insufficient VUs, reached 2 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=muestreo
+time="2026-08-22T02:09:32Z" level=warning msg="Insufficient VUs, reached 60 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=recuperacion
+
+running (2m38.8s), 0062/2914 VUs, 19063 complete and 2911 interrupted iterations
+muestreo       [  58% ] 2/2 VUs        2m38.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   3% ] 60/60 VUs      0m03.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:33Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (2m39.8s), 0061/2914 VUs, 19064 complete and 2911 interrupted iterations
+muestreo       [  58% ] 1/2 VUs        2m39.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   4% ] 60/60 VUs      0m04.7s/2m0s   20.00 iters/s
+
+running (2m40.8s), 0062/2914 VUs, 19064 complete and 2911 interrupted iterations
+muestreo       [  58% ] 2/2 VUs        2m40.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   5% ] 60/60 VUs      0m05.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:35Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (2m41.8s), 0061/2914 VUs, 19065 complete and 2911 interrupted iterations
+muestreo       [  59% ] 1/2 VUs        2m41.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   6% ] 60/60 VUs      0m06.7s/2m0s   20.00 iters/s
+
+running (2m42.8s), 0062/2914 VUs, 19065 complete and 2911 interrupted iterations
+muestreo       [  59% ] 2/2 VUs        2m42.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   6% ] 60/60 VUs      0m07.7s/2m0s   20.00 iters/s
+
+running (2m43.8s), 0062/2914 VUs, 19065 complete and 2911 interrupted iterations
+muestreo       [  60% ] 2/2 VUs        2m43.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   7% ] 60/60 VUs      0m08.7s/2m0s   20.00 iters/s
+
+running (2m44.8s), 0062/2914 VUs, 19065 complete and 2911 interrupted iterations
+muestreo       [  60% ] 2/2 VUs        2m44.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   8% ] 60/60 VUs      0m09.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (2m45.8s), 0061/2914 VUs, 19066 complete and 2911 interrupted iterations
+muestreo       [  60% ] 1/2 VUs        2m45.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [   9% ] 60/60 VUs      0m10.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:40Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+
+running (2m46.8s), 0055/2914 VUs, 19080 complete and 2911 interrupted iterations
+muestreo       [  61% ] 2/2 VUs        2m46.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  10% ] 52/60 VUs      0m11.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+
+running (2m47.8s), 0054/2914 VUs, 19101 complete and 2911 interrupted iterations
+muestreo       [  61% ] 1/2 VUs        2m47.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  11% ] 53/60 VUs      0m12.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:42Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+
+running (2m48.8s), 0055/2914 VUs, 19121 complete and 2911 interrupted iterations
+muestreo       [  61% ] 2/2 VUs        2m48.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  11% ] 53/60 VUs      0m13.7s/2m0s   20.00 iters/s
+
+running (2m49.8s), 0062/2914 VUs, 19127 complete and 2911 interrupted iterations
+muestreo       [  62% ] 2/2 VUs        2m49.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  12% ] 60/60 VUs      0m14.7s/2m0s   20.00 iters/s
+
+running (2m50.8s), 0062/2914 VUs, 19127 complete and 2911 interrupted iterations
+muestreo       [  62% ] 2/2 VUs        2m50.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  13% ] 60/60 VUs      0m15.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (2m51.8s), 0061/2914 VUs, 19128 complete and 2911 interrupted iterations
+muestreo       [  62% ] 1/2 VUs        2m51.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  14% ] 60/60 VUs      0m16.7s/2m0s   20.00 iters/s
+
+running (2m52.8s), 0062/2914 VUs, 19128 complete and 2911 interrupted iterations
+muestreo       [  63% ] 2/2 VUs        2m52.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  15% ] 60/60 VUs      0m17.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (2m53.8s), 0061/2914 VUs, 19129 complete and 2911 interrupted iterations
+muestreo       [  63% ] 1/2 VUs        2m53.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  16% ] 60/60 VUs      0m18.7s/2m0s   20.00 iters/s
+
+running (2m54.8s), 0062/2914 VUs, 19129 complete and 2911 interrupted iterations
+muestreo       [  64% ] 2/2 VUs        2m54.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  16% ] 60/60 VUs      0m19.7s/2m0s   20.00 iters/s
+
+running (2m55.8s), 0062/2914 VUs, 19129 complete and 2911 interrupted iterations
+muestreo       [  64% ] 2/2 VUs        2m55.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  17% ] 60/60 VUs      0m20.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:50Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:50Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+
+running (2m56.8s), 0062/2914 VUs, 19129 complete and 2911 interrupted iterations
+muestreo       [  64% ] 2/2 VUs        2m56.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  18% ] 60/60 VUs      0m21.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (2m57.8s), 0057/2914 VUs, 19137 complete and 2911 interrupted iterations
+muestreo       [  65% ] 1/2 VUs        2m57.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  19% ] 56/60 VUs      0m22.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+
+running (2m58.8s), 0058/2914 VUs, 19157 complete and 2911 interrupted iterations
+muestreo       [  65% ] 2/2 VUs        2m58.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  20% ] 56/60 VUs      0m23.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:09:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+
+running (2m59.8s), 0057/2914 VUs, 19178 complete and 2911 interrupted iterations
+muestreo       [  65% ] 1/2 VUs        2m59.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  21% ] 56/60 VUs      0m24.7s/2m0s   20.00 iters/s
+
+running (3m00.8s), 0062/2914 VUs, 19191 complete and 2911 interrupted iterations
+muestreo       [  66% ] 2/2 VUs        3m00.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  21% ] 60/60 VUs      0m25.7s/2m0s   20.00 iters/s
+
+running (3m01.8s), 0062/2914 VUs, 19191 complete and 2911 interrupted iterations
+muestreo       [  66% ] 2/2 VUs        3m01.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  22% ] 60/60 VUs      0m26.7s/2m0s   20.00 iters/s
+
+running (3m02.8s), 0062/2914 VUs, 19191 complete and 2911 interrupted iterations
+muestreo       [  66% ] 2/2 VUs        3m02.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  23% ] 60/60 VUs      0m27.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:57Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m03.8s), 0061/2914 VUs, 19192 complete and 2911 interrupted iterations
+muestreo       [  67% ] 1/2 VUs        3m03.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  24% ] 60/60 VUs      0m28.7s/2m0s   20.00 iters/s
+
+running (3m04.8s), 0062/2914 VUs, 19192 complete and 2911 interrupted iterations
+muestreo       [  67% ] 2/2 VUs        3m04.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  25% ] 60/60 VUs      0m29.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:09:59Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m05.8s), 0061/2914 VUs, 19193 complete and 2911 interrupted iterations
+muestreo       [  68% ] 1/2 VUs        3m05.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  26% ] 60/60 VUs      0m30.7s/2m0s   20.00 iters/s
+
+running (3m06.8s), 0062/2914 VUs, 19193 complete and 2911 interrupted iterations
+muestreo       [  68% ] 2/2 VUs        3m06.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  26% ] 60/60 VUs      0m31.7s/2m0s   20.00 iters/s
+
+running (3m07.8s), 0062/2914 VUs, 19193 complete and 2911 interrupted iterations
+muestreo       [  68% ] 2/2 VUs        3m07.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  27% ] 60/60 VUs      0m32.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m08.8s), 0062/2914 VUs, 19193 complete and 2911 interrupted iterations
+muestreo       [  69% ] 2/2 VUs        3m08.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  28% ] 60/60 VUs      0m33.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m09.8s), 0052/2914 VUs, 19217 complete and 2911 interrupted iterations
+muestreo       [  69% ] 1/2 VUs        3m09.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  29% ] 51/60 VUs      0m34.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m10.8s), 0053/2914 VUs, 19237 complete and 2911 interrupted iterations
+muestreo       [  69% ] 2/2 VUs        3m10.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  30% ] 51/60 VUs      0m35.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m11.8s), 0055/2914 VUs, 19255 complete and 2911 interrupted iterations
+muestreo       [  70% ] 1/2 VUs        3m11.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  31% ] 54/60 VUs      0m36.7s/2m0s   20.00 iters/s
+
+running (3m12.8s), 0062/2914 VUs, 19255 complete and 2911 interrupted iterations
+muestreo       [  70% ] 2/2 VUs        3m12.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  31% ] 60/60 VUs      0m37.7s/2m0s   20.00 iters/s
+
+running (3m13.8s), 0062/2914 VUs, 19255 complete and 2911 interrupted iterations
+muestreo       [  70% ] 2/2 VUs        3m13.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  32% ] 60/60 VUs      0m38.7s/2m0s   20.00 iters/s
+
+running (3m14.8s), 0062/2914 VUs, 19255 complete and 2911 interrupted iterations
+muestreo       [  71% ] 2/2 VUs        3m14.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  33% ] 60/60 VUs      0m39.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:09Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m15.8s), 0061/2914 VUs, 19256 complete and 2911 interrupted iterations
+muestreo       [  71% ] 1/2 VUs        3m15.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  34% ] 60/60 VUs      0m40.7s/2m0s   20.00 iters/s
+
+running (3m16.8s), 0062/2914 VUs, 19256 complete and 2911 interrupted iterations
+muestreo       [  72% ] 2/2 VUs        3m16.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  35% ] 60/60 VUs      0m41.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:11Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m17.8s), 0061/2914 VUs, 19257 complete and 2911 interrupted iterations
+muestreo       [  72% ] 1/2 VUs        3m17.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  36% ] 60/60 VUs      0m42.7s/2m0s   20.00 iters/s
+
+running (3m18.8s), 0062/2914 VUs, 19257 complete and 2911 interrupted iterations
+muestreo       [  72% ] 2/2 VUs        3m18.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  36% ] 60/60 VUs      0m43.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:13Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m19.8s), 0062/2914 VUs, 19257 complete and 2911 interrupted iterations
+muestreo       [  73% ] 2/2 VUs        3m19.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  37% ] 60/60 VUs      0m44.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:14Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m20.8s), 0055/2914 VUs, 19270 complete and 2911 interrupted iterations
+muestreo       [  73% ] 2/2 VUs        3m20.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  38% ] 52/60 VUs      0m45.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:15Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:16Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+
+running (3m22.1s), 0054/2914 VUs, 19297 complete and 2911 interrupted iterations
+muestreo       [  73% ] 2/2 VUs        3m22.1s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  39% ] 52/60 VUs      0m47.3s/2m0s   20.00 iters/s
+
+running (3m22.8s), 0056/2914 VUs, 19310 complete and 2911 interrupted iterations
+muestreo       [  74% ] 2/2 VUs        3m22.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  40% ] 54/60 VUs      0m47.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:17Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m23.8s), 0061/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  74% ] 1/2 VUs        3m23.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  41% ] 60/60 VUs      0m48.7s/2m0s   20.00 iters/s
+
+running (3m24.8s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  74% ] 2/2 VUs        3m24.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  42% ] 60/60 VUs      0m50.2s/2m0s   20.00 iters/s
+
+running (3m26.2s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  75% ] 2/2 VUs        3m26.1s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  43% ] 60/60 VUs      0m51.0s/2m0s   20.00 iters/s
+
+running (3m26.8s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  75% ] 2/2 VUs        3m26.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  43% ] 60/60 VUs      0m51.7s/2m0s   20.00 iters/s
+
+running (3m27.8s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  76% ] 2/2 VUs        3m27.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  44% ] 60/60 VUs      0m52.7s/2m0s   20.00 iters/s
+
+running (3m28.8s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  76% ] 2/2 VUs        3m28.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  45% ] 60/60 VUs      0m53.7s/2m0s   20.00 iters/s
+
+running (3m29.8s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  76% ] 2/2 VUs        3m29.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  46% ] 60/60 VUs      0m54.8s/2m0s   20.00 iters/s
+
+running (3m30.9s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  77% ] 2/2 VUs        3m30.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  46% ] 60/60 VUs      0m55.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m31.9s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  77% ] 2/2 VUs        3m31.9s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  48% ] 60/60 VUs      0m58.0s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m35.7s), 0062/2914 VUs, 19319 complete and 2911 interrupted iterations
+muestreo       [  80% ] 2/2 VUs        3m39.9s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  54% ] 60/60 VUs      1m04.9s/2m0s   20.00 iters/s
+
+running (3m40.0s), 0060/2914 VUs, 19321 complete and 2911 interrupted iterations
+muestreo       [  80% ] 0/2 VUs        3m40.0s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  54% ] 60/60 VUs      1m04.9s/2m0s   20.00 iters/s
+
+running (3m40.8s), 0061/2914 VUs, 19321 complete and 2911 interrupted iterations
+muestreo       [  80% ] 1/2 VUs        3m40.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  55% ] 60/60 VUs      1m05.8s/2m0s   20.00 iters/s
+
+running (3m41.8s), 0017/2914 VUs, 19381 complete and 2911 interrupted iterations
+muestreo       [  81% ] 1/2 VUs        3m41.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  56% ] 16/60 VUs      1m06.7s/2m0s   20.00 iters/s
+
+running (3m42.8s), 0038/2914 VUs, 19381 complete and 2911 interrupted iterations
+muestreo       [  81% ] 2/2 VUs        3m42.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  57% ] 38/60 VUs      1m07.8s/2m0s   20.00 iters/s
+
+running (3m43.8s), 0059/2914 VUs, 19381 complete and 2911 interrupted iterations
+muestreo       [  81% ] 2/2 VUs        3m43.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  57% ] 57/60 VUs      1m08.8s/2m0s   20.00 iters/s
+
+running (3m44.9s), 0062/2914 VUs, 19381 complete and 2911 interrupted iterations
+muestreo       [  82% ] 2/2 VUs        3m44.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  58% ] 60/60 VUs      1m09.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m45.8s), 0062/2914 VUs, 19381 complete and 2911 interrupted iterations
+muestreo       [  82% ] 2/2 VUs        3m45.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  59% ] 60/60 VUs      1m10.8s/2m0s   20.00 iters/s
+
+running (3m46.8s), 0062/2914 VUs, 19382 complete and 2911 interrupted iterations
+muestreo       [  82% ] 2/2 VUs        3m46.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  60% ] 60/60 VUs      1m11.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:41Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m47.8s), 0061/2914 VUs, 19383 complete and 2911 interrupted iterations
+muestreo       [  83% ] 1/2 VUs        3m47.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  61% ] 60/60 VUs      1m12.8s/2m0s   20.00 iters/s
+
+running (3m48.8s), 0062/2914 VUs, 19383 complete and 2911 interrupted iterations
+muestreo       [  83% ] 2/2 VUs        3m48.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  61% ] 60/60 VUs      1m13.7s/2m0s   20.00 iters/s
+
+running (3m49.8s), 0062/2914 VUs, 19383 complete and 2911 interrupted iterations
+muestreo       [  84% ] 2/2 VUs        3m49.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  62% ] 60/60 VUs      1m14.7s/2m0s   20.00 iters/s
+
+running (3m50.8s), 0062/2914 VUs, 19383 complete and 2911 interrupted iterations
+muestreo       [  84% ] 2/2 VUs        3m50.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  63% ] 60/60 VUs      1m15.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+
+running (3m51.8s), 0061/2914 VUs, 19384 complete and 2911 interrupted iterations
+muestreo       [  84% ] 1/2 VUs        3m51.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  64% ] 60/60 VUs      1m16.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+
+running (3m52.8s), 0051/2914 VUs, 19400 complete and 2911 interrupted iterations
+muestreo       [  85% ] 2/2 VUs        3m52.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  65% ] 49/60 VUs      1m17.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:47Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:48Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:48Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:48Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+
+running (3m53.8s), 0050/2914 VUs, 19421 complete and 2911 interrupted iterations
+muestreo       [  85% ] 1/2 VUs        3m53.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  66% ] 49/60 VUs      1m18.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:48Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:10:48Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:48Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:10:48Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:10:48Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (3m54.8s), 0052/2914 VUs, 19440 complete and 2911 interrupted iterations
+muestreo       [  85% ] 2/2 VUs        3m54.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  66% ] 49/60 VUs      1m19.7s/2m0s   20.00 iters/s
+
+running (3m55.8s), 0062/2914 VUs, 19445 complete and 2911 interrupted iterations
+muestreo       [  86% ] 2/2 VUs        3m55.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  67% ] 60/60 VUs      1m20.7s/2m0s   20.00 iters/s
+
+running (3m56.8s), 0062/2914 VUs, 19445 complete and 2911 interrupted iterations
+muestreo       [  86% ] 2/2 VUs        3m56.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  68% ] 60/60 VUs      1m21.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:51Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m57.8s), 0061/2914 VUs, 19446 complete and 2911 interrupted iterations
+muestreo       [  86% ] 1/2 VUs        3m57.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  69% ] 60/60 VUs      1m22.8s/2m0s   20.00 iters/s
+
+running (3m58.8s), 0062/2914 VUs, 19446 complete and 2911 interrupted iterations
+muestreo       [  87% ] 2/2 VUs        3m58.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  70% ] 60/60 VUs      1m23.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:10:53Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (3m59.8s), 0061/2914 VUs, 19447 complete and 2911 interrupted iterations
+muestreo       [  87% ] 1/2 VUs        3m59.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  71% ] 60/60 VUs      1m24.8s/2m0s   20.00 iters/s
+
+running (4m00.8s), 0062/2914 VUs, 19447 complete and 2911 interrupted iterations
+muestreo       [  88% ] 2/2 VUs        4m00.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  72% ] 60/60 VUs      1m25.8s/2m0s   20.00 iters/s
+
+running (4m01.8s), 0062/2914 VUs, 19447 complete and 2911 interrupted iterations
+muestreo       [  88% ] 2/2 VUs        4m01.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  72% ] 60/60 VUs      1m26.8s/2m0s   20.00 iters/s
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:03Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:04Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (4m09.6s), 0062/2914 VUs, 19447 complete and 2911 interrupted iterations
+muestreo       [  91% ] 2/2 VUs        4m09.7s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  79% ] 60/60 VUs      1m35.4s/2m0s   20.00 iters/s
+
+running (4m21.2s), 0062/2914 VUs, 19447 complete and 2911 interrupted iterations
+muestreo       [  95% ] 2/2 VUs        4m21.1s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  88% ] 60/60 VUs      1m46.1s/2m0s   20.00 iters/s
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:02Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (4m21.9s), 0060/2914 VUs, 19449 complete and 2911 interrupted iterations
+muestreo       [  95% ] 0/2 VUs        4m21.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  89% ] 60/60 VUs      1m46.8s/2m0s   20.00 iters/s
+
+running (4m22.8s), 0014/2914 VUs, 19509 complete and 2911 interrupted iterations
+muestreo       [  96% ] 1/2 VUs        4m22.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  90% ] 13/60 VUs      1m47.8s/2m0s   20.00 iters/s
+
+running (4m23.8s), 0033/2914 VUs, 19509 complete and 2911 interrupted iterations
+muestreo       [  96% ] 1/2 VUs        4m23.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  91% ] 32/60 VUs      1m48.7s/2m0s   20.00 iters/s
+
+running (4m24.8s), 0054/2914 VUs, 19509 complete and 2911 interrupted iterations
+muestreo       [  96% ] 2/2 VUs        4m24.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  91% ] 52/60 VUs      1m49.7s/2m0s   20.00 iters/s
+
+running (4m25.8s), 0062/2914 VUs, 19509 complete and 2911 interrupted iterations
+muestreo       [  97% ] 2/2 VUs        4m25.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  92% ] 60/60 VUs      1m50.8s/2m0s   20.00 iters/s
+
+running (4m26.8s), 0062/2914 VUs, 19509 complete and 2911 interrupted iterations
+muestreo       [  97% ] 2/2 VUs        4m26.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  93% ] 60/60 VUs      1m51.9s/2m0s   20.00 iters/s
+
+running (4m27.9s), 0062/2914 VUs, 19509 complete and 2911 interrupted iterations
+muestreo       [  97% ] 2/2 VUs        4m27.9s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  94% ] 60/60 VUs      1m52.9s/2m0s   20.00 iters/s
+time="2026-08-22T02:11:22Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (4m29.1s), 0062/2914 VUs, 19509 complete and 2911 interrupted iterations
+muestreo       [  98% ] 2/2 VUs        4m29.1s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  95% ] 60/60 VUs      1m54.1s/2m0s   20.00 iters/s
+time="2026-08-22T02:11:23Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (4m29.9s), 0061/2914 VUs, 19510 complete and 2911 interrupted iterations
+muestreo       [  98% ] 1/2 VUs        4m29.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  96% ] 60/60 VUs      1m55.0s/2m0s   20.00 iters/s
+
+running (4m30.9s), 0061/2914 VUs, 19511 complete and 2911 interrupted iterations
+muestreo       [  98% ] 1/2 VUs        4m30.9s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  97% ] 60/60 VUs      1m55.8s/2m0s   20.00 iters/s
+
+running (4m31.8s), 0061/2914 VUs, 19511 complete and 2911 interrupted iterations
+muestreo       [  99% ] 1/2 VUs        4m31.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  97% ] 60/60 VUs      1m56.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+
+running (4m32.8s), 0062/2914 VUs, 19511 complete and 2911 interrupted iterations
+muestreo       [  99% ] 2/2 VUs        4m32.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  98% ] 60/60 VUs      1m57.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:27Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+
+running (4m33.8s), 0062/2914 VUs, 19511 complete and 2911 interrupted iterations
+muestreo       [ 100% ] 2/2 VUs        4m33.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [  99% ] 60/60 VUs      1m58.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+
+running (4m34.8s), 0051/2914 VUs, 19542 complete and 2911 interrupted iterations
+muestreo       [ 100% ] 2/2 VUs        4m34.8s/4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s          300.00 iters/s
+recuperacion   [ 100% ] 49/60 VUs      1m59.7s/2m0s   20.00 iters/s
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:29Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+
+running (4m35.8s), 0037/2914 VUs, 19562 complete and 2911 interrupted iterations
+muestreo     ↓ [ 100% ] 2/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+time="2026-08-22T02:11:30Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (4m36.8s), 0027/2914 VUs, 19572 complete and 2911 interrupted iterations
+muestreo     ↓ [ 100% ] 2/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+time="2026-08-22T02:11:31Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/lab/proceso\": request timeout"
+
+running (4m37.8s), 0026/2914 VUs, 19573 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+
+running (4m38.8s), 0026/2914 VUs, 19573 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+
+running (4m39.8s), 0026/2914 VUs, 19573 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+
+running (4m40.8s), 0026/2914 VUs, 19573 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+
+running (4m41.8s), 0026/2914 VUs, 19573 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+
+running (4m42.8s), 0026/2914 VUs, 19573 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+
+running (4m43.8s), 0026/2914 VUs, 19573 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:38Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+
+running (4m44.8s), 0026/2914 VUs, 19573 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/api/health\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/tools\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+time="2026-08-22T02:11:39Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:4400/status\": request timeout"
+
+running (4m45.8s), 0007/2914 VUs, 19592 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ↓ [ 100% ] 49/60 VUs      2m0s   20.00 iters/s
+
+  escenario     estres
+  objetivo      http://127.0.0.1:4400
+  VUs máx       2914
+  duración      286s
+  peticiones    19602 (68.51/s)
+  latencia      p50 693.2ms · p90 10000.4ms · p95 10000.7ms · p99 10001.2ms · max 10047.2ms
+  errores       74.88%
+  checks        9712 ok / 29272 fallidos
+  umbrales      INCUMPLIDOS
+
+  por ruta                n      p50      p95      p99
+  home /                  7833      808    10001    10001
+  status /status          4865     3601    10001    10001
+  health /api/health      3883      920    10001    10001
+  tools /tools            2911      267    10000    10001
+  escalera del quiebre
+    ofrecido  respuestas   exitosas      p50      p95  errores    cpu%   heap MB  estado
+       50/s      49.9/s      49.9/s     138ms    1933ms      0%    12.5%     332.8         ok
+      100/s      69.9/s        62/s    1077ms   10001ms   11.3%    15.2%     315.6  degradado
+      200/s     116.3/s      40.4/s   10000ms   10001ms   65.2%    15.3%     398.3       roto
+      300/s     210.8/s       7.8/s       0ms   10001ms   96.3%    15.4%     429.1       roto
+      300/s       186/s       1.4/s       0ms   10001ms   99.3%    12.7%     405.4       roto
+
+  recuperación  p50 0ms · p95 10000.4ms · errores 100%
+  curva de recuperación (s desde que cesó la carga)
+    + 0s   n= 120   p50   6942ms   p95  10001ms   cpu     0%   heap      0 MB
+    +15s   n=  60   p50      0ms   p95      0ms   cpu     0%   heap      0 MB
+    +30s   n=  60   p50      0ms   p95      0ms   cpu     0%   heap      0 MB
+    +45s   n=  60   p50      0ms   p95      0ms   cpu     0%   heap      0 MB
+    +60s   n=  60   p50      0ms   p95      0ms   cpu     0%   heap      0 MB
+    +75s   n=  60   p50      0ms   p95      0ms   cpu     0%   heap      0 MB
+    +90s   n=   0   p50      0ms   p95      0ms   cpu     0%   heap      0 MB
+    +105s   n=  86   p50      0ms   p95   8985ms   cpu     0%   heap      0 MB
+
+  bloque de hallazgos (completar a mano tras revisar la corrida)
+    H-01: (sin completar)
+    H-02: (sin completar)
+    H-03: (sin completar)
+    H-04: (sin completar)
+    H-05: (sin completar)
+
+
+running (4m46.1s), 0000/2914 VUs, 19599 complete and 2911 interrupted iterations
+muestreo     ✓ [ 100% ] 0/2 VUs        4m35s  0.50 iters/s
+quiebre      ✓ [ 100% ] 2911/2912 VUs  2m30s  300.00 iters/s
+recuperacion ✓ [ 100% ] 00/60 VUs      2m0s   20.00 iters/s
+time="2026-08-22T02:11:43Z" level=error msg="thresholds on metrics 'recuperacion_duracion, recuperacion_errores' have been crossed"
