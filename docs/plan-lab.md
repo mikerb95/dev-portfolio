@@ -15,6 +15,13 @@
 > hoy hay 937 tests de Vitest y 47 e2e, seis workflows de GitHub Actions y
 > pipeline con rollback automático. El detalle de las fases 5-7 está en
 > `plan-lab-fases-pendientes.md`.
+>
+> **Actualización ago 2026**: los scripts k6 de la Fase 5 (`lab/k6/carga.js`,
+> `lab/k6/estres.js`) ya están implementados y corridos localmente (escalera
+> de niveles, fila R de recuperación, muestreo de CPU/heap del proceso y
+> bloque de hallazgos H-01..H-05). Lo que sigue bloqueado por `VERCEL_TOKEN`
+> es solo la integración con el panel (`load_test_runs`, ingesta,
+> `/admin/lab/load`) - detalle en `plan-lab-fases-pendientes.md`.
 
 ## Estado inicial (auditado 2026-07-03, antes de empezar)
 
@@ -157,11 +164,15 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
    Sin dependencias nuevas: es una query de agregación + una vista.
 
 ### Fase 5 - Load testing (k6)
-1. Scripts k6 en `lab/k6/` (escenarios: home, API pública, checkout) con etapas de
-   100/500/1000 VUs. Se corren localmente o en GitHub Actions (job manual
-   `workflow_dispatch` para no gastar minutos en cada push).
-2. `k6 --out json` → parseo → `POST /api/lab/ingest` → tabla `load_test_runs` → gráficas
-   de latencia p50/p95/p99 y RPS en `/admin/lab/load`.
+1. ✅ Scripts k6 en `lab/k6/`: `carga.js` (ítem 5, escalera de VUs 10-1000
+   midiendo solo en meseta) y `estres.js` (ítem 6, quiebre por
+   `ramping-arrival-rate` + fila R de recuperación por tramos de 15 s + CPU/heap
+   del proceso por escalón/tramo + bloque de hallazgos H-01..H-05). Corren
+   localmente contra `npm run dev:carga`.
+2. ⏳ Pendiente: `k6 --out json` → parseo → `POST /api/lab/ingest` → tabla
+   `load_test_runs` → gráficas de latencia p50/p95/p99 y RPS en `/admin/lab/load`.
+   Esta es la parte que sigue bloqueada por `VERCEL_TOKEN` (necesita un target
+   de preview/staging estable para correrse en CI, no solo local).
 3. ⚠️ Solo contra preview deployments o con rate razonable contra prod (Vercel cobra por
    invocación; 1000 VUs contra prod = costo + posible firewall).
 4. ✅ **Guardarraíl de dos mitades** (ago 2026). `objetivo()` en `lab/k6/lib/perfil.js`
