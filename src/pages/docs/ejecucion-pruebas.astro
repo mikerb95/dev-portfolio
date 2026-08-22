@@ -1,0 +1,227 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import {
+  EJECUCION as E,
+  SUITES_POR_TIEMPO,
+  FACTOR_INTEGRACION,
+  formatearDuracion as dur,
+} from '../../data/ejecucion-pruebas'
+
+// Ninguna cifra de esta página se escribe a mano: todas salen del XML JUnit de
+// una corrida real, volcado a src/data/ejecucion-pruebas.json por
+// scripts/report-tests.mjs. Es la contrapartida de /docs/testing, que describe
+// la ESTRATEGIA de pruebas; aquí se muestra la EVIDENCIA de la última corrida.
+
+const capturada = new Date(E.meta.capturadaEn).toLocaleDateString('es-CO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+const fmt = (n: number) => n.toLocaleString('es-CO')
+const pct = (n: number, d: number) => (d === 0 ? 0 : (n / d) * 100)
+
+const cimaHistograma = Math.max(...E.histograma.map((h) => h.n))
+const cimaSuite = Math.max(...SUITES_POR_TIEMPO.map((s) => s.segundos))
+const cimaLenta = Math.max(...E.lentas.map((c) => c.segundos))
+
+const rapidas = E.histograma[0].n + E.histograma[1].n
+
+const kpis = [
+  { valor: fmt(E.total.pruebas), label: 'Pruebas ejecutadas', sub: `${E.total.archivos} archivos` },
+  {
+    valor: String(E.total.fallos),
+    label: 'Fallos',
+    sub: E.total.fallos === 0 ? 'suite completa en verde' : 'requieren atención',
+    verde: E.total.fallos === 0,
+  },
+  { valor: `${E.total.segundos.toFixed(1)} s`, label: 'Duración total', sub: 'suite completa de Vitest' },
+  { valor: dur(E.total.promedioSegundos), label: 'Promedio por prueba', sub: 'media aritmética' },
+]
+
+const niveles = [
+  {
+    id: 'unitarias',
+    nombre: 'Unitarias / lógica pura',
+    detalle: 'Funciones de src/lib sin base de datos ni red.',
+    ...E.niveles.unitarias,
+  },
+  {
+    id: 'integracion',
+    nombre: 'Integración con libSQL',
+    detalle: 'Base de datos real y desechable en un archivo temporal.',
+    ...E.niveles.integracion,
+  },
+]
+
+const secciones = [
+  { id: 'resumen', t: 'Resumen' },
+  { id: 'niveles', t: 'Por nivel' },
+  { id: 'distribucion', t: 'Distribución' },
+  { id: 'lentas', t: 'Las más lentas' },
+  { id: 'archivos', t: 'Por archivo' },
+]
+---
+
+<BaseLayout title="Ejecución de pruebas">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-10">
+      <h1 class="text-2xl font-semibold text-ink-50 mb-3">Ejecución de pruebas</h1>
+      <p class="text-[14px] text-ink-200 leading-relaxed mb-3">
+        La evidencia de la última corrida completa: cuántas pruebas se ejecutaron, cuánto tardó cada
+        una y en qué archivo vive. Donde <a href="/docs/testing" class="text-cyan-dim hover:text-cyan underline underline-offset-2">Testing</a>
+        describe la estrategia, esta página muestra el resultado medido de aplicarla.
+      </p>
+      <p class="text-[12.5px] text-ink-300 leading-relaxed">
+        Capturada el {capturada} desde el reporte JUnit de Vitest. Ninguna cifra de esta página se
+        escribe a mano: se regeneran juntas al correr el script, así que no pueden desalinearse del
+        código sin que el diff lo muestre.
+      </p>
+    </div>
+
+    <nav class="flex flex-wrap gap-2 mb-10">
+      {secciones.map((s) => (
+        <a
+          href={`#${s.id}`}
+          class="px-3 py-1.5 rounded-lg border border-white/10 text-[12.5px] text-ink-200 hover:text-ink-50 hover:border-cyan-deep transition-colors"
+        >{s.t}</a>
+      ))}
+    </nav>
+
+    {/* ── Resumen ───────────────────────────────────────────────── */}
+    <h2 id="resumen" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Resumen de la corrida</h2>
+    <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-10">
+      {kpis.map((k) => (
+        <div class="glass rounded-2xl p-4 border border-white/10">
+          <div class={`font-mono text-2xl tabular-nums mb-1 ${k.verde ? 'text-lime' : 'text-ink-50'}`}>{k.valor}</div>
+          <div class="text-[13px] text-ink-100">{k.label}</div>
+          <div class="text-[12px] text-ink-300 mt-0.5">{k.sub}</div>
+        </div>
+      ))}
+    </div>
+
+    <div class="glass rounded-2xl p-4 border border-white/10 mb-12 overflow-x-auto">
+      <p class="text-[11px] font-mono uppercase tracking-wide text-ink-300 mb-2">Cómo se reproduce</p>
+      <code class="text-[12.5px] font-mono text-ink-100 whitespace-nowrap">
+        npx vitest run --reporter=junit --outputFile=informes/tests-junit.xml &amp;&amp; node scripts/report-tests.mjs
+      </code>
+    </div>
+
+    {/* ── Niveles ───────────────────────────────────────────────── */}
+    <h2 id="niveles" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Por nivel de prueba</h2>
+    <div class="grid gap-3 md:grid-cols-2 mb-4">
+      {niveles.map((n) => (
+        <div class="glass rounded-2xl p-5 border border-white/10">
+          <div class="flex items-center gap-2 mb-2">
+            <span class={`w-2 h-2 rounded-full ${n.id === 'integracion' ? 'bg-violet' : 'bg-cyan'}`}></span>
+            <span class="text-[13.5px] font-medium text-ink-50">{n.nombre}</span>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="font-mono text-2xl tabular-nums text-ink-50">{fmt(n.pruebas)}</span>
+            <span class="text-[12.5px] text-ink-300">
+              pruebas en {n.archivos} archivos · {n.segundos.toFixed(1)} s
+            </span>
+          </div>
+          <div class="h-1.5 rounded-full bg-white/5 overflow-hidden mb-3">
+            <div
+              class={`h-full rounded-full ${n.id === 'integracion' ? 'bg-violet' : 'bg-cyan-deep'}`}
+              style={`width:${pct(n.pruebas, E.total.pruebas)}%`}
+            ></div>
+          </div>
+          <p class="text-[12px] text-ink-300 leading-relaxed">{n.detalle}</p>
+        </div>
+      ))}
+    </div>
+    <p class="text-[12.5px] text-ink-200 leading-relaxed max-w-3xl mb-12">
+      Una prueba de integración cuesta <strong class="text-ink-50 font-mono">{FACTOR_INTEGRACION.toFixed(0)}×</strong> más
+      tiempo que una unitaria. Ese número es la razón de la forma de la pirámide: no es una preferencia
+      estética, es lo que hace que la suite completa siga cabiendo en un minuto de CI.
+    </p>
+
+    {/* ── Distribución ──────────────────────────────────────────── */}
+    <h2 id="distribucion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Distribución de tiempos</h2>
+    <div class="glass rounded-2xl p-5 border border-white/10 mb-4">
+      <div class="flex flex-col gap-2.5">
+        {E.histograma.map((h) => (
+          <div class="grid grid-cols-[86px_1fr_54px] gap-3 items-center">
+            <span class="font-mono text-[12px] text-ink-300 text-right">{h.etiqueta}</span>
+            <span class="h-5 rounded bg-white/5 overflow-hidden">
+              <span class="block h-full rounded bg-cyan-deep" style={`width:${pct(h.n, cimaHistograma)}%`}></span>
+            </span>
+            <span class="font-mono text-[12.5px] tabular-nums text-ink-100">{fmt(h.n)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    <p class="text-[12.5px] text-ink-200 leading-relaxed max-w-3xl mb-12">
+      Escala logarítmica, porque en lineal todo se apilaría en una sola barra:
+      <strong class="text-ink-50">{pct(rapidas, E.total.pruebas).toFixed(0)}%</strong> de las pruebas
+      termina en menos de 10 ms. Solo {E.histograma[4].n} pasan del segundo, y son las que abren base
+      de datos o ejercitan el rate limiting de verdad.
+    </p>
+
+    {/* ── Las más lentas ────────────────────────────────────────── */}
+    <h2 id="lentas" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Las {E.lentas.length} más lentas</h2>
+    <div class="glass rounded-2xl border border-white/10 divide-y divide-white/5 mb-12">
+      {E.lentas.map((c) => (
+        <div class="p-3.5 flex items-baseline gap-4">
+          <span class="flex-1 text-[13px] text-ink-100 leading-snug">{c.nombre}</span>
+          <span class="w-20 h-1.5 rounded-full bg-white/5 overflow-hidden hidden sm:block">
+            <span class="block h-full rounded-full bg-ember" style={`width:${pct(c.segundos, cimaLenta)}%`}></span>
+          </span>
+          <span class="font-mono text-[12.5px] tabular-nums text-ember whitespace-nowrap">{dur(c.segundos)}</span>
+        </div>
+      ))}
+    </div>
+
+    {/* ── Por archivo ───────────────────────────────────────────── */}
+    <h2 id="archivos" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Los {E.total.archivos} archivos</h2>
+    <div class="overflow-x-auto rounded-xl border border-white/10 mb-4">
+      <table class="w-full min-w-[680px] text-left border-collapse">
+        <thead>
+          <tr class="border-b border-white/10">
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium">Archivo</th>
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium text-right">Pruebas</th>
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium text-right">Fallos</th>
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium text-right">Tiempo</th>
+            <th scope="col" class="p-3 w-[22%]"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {SUITES_POR_TIEMPO.map((s) => (
+            <tr class="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+              <th scope="row" class="p-3 font-normal">
+                <span class="flex items-center gap-2 flex-wrap">
+                  <code class="font-mono text-[13px] text-ink-50">{s.archivo.replace(/^tests\//, '')}</code>
+                  {s.integracion && (
+                    <span class="font-mono text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded text-violet bg-violet/10">integración</span>
+                  )}
+                </span>
+              </th>
+              <td class="p-3 font-mono text-[13px] tabular-nums text-ink-100 text-right">{s.pruebas}</td>
+              <td class={`p-3 font-mono text-[13px] tabular-nums text-right ${s.fallos ? 'text-ember' : 'text-ink-300'}`}>{s.fallos}</td>
+              <td class="p-3 font-mono text-[12.5px] tabular-nums text-ink-200 text-right whitespace-nowrap">{dur(s.segundos)}</td>
+              <td class="p-3">
+                <span class="block h-1.5 rounded-full bg-white/5 overflow-hidden">
+                  <span
+                    class={`block h-full rounded-full ${s.integracion ? 'bg-violet' : 'bg-cyan-deep'}`}
+                    style={`width:${Math.max(pct(s.segundos, cimaSuite), 1)}%`}
+                  ></span>
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-[12px] text-ink-300 leading-relaxed max-w-3xl">
+      Las suites marcadas <span class="text-violet">integración</span> abren una base libSQL real en un
+      archivo temporal de <code class="font-mono">tmpdir()</code>, nunca en memoria: una transacción
+      abre otra conexión y una base en memoria no comparte tablas entre conexiones. El resto es lógica
+      pura. La cobertura se mide aparte, con <code class="font-mono">npm run test:coverage</code>.
+    </p>
+  </div>
+</BaseLayout>
