@@ -1,5 +1,14 @@
 /**
- * Convierte el XML JUnit que emite Vitest en un informe HTML navegable.
+ * Convierte el XML JUnit que emite Vitest en dos salidas:
+ *
+ *   1. `informes/tests.html`, informe autocontenido para proyectar o entregar.
+ *   2. `src/data/ejecucion-pruebas.json`, instantánea que renderiza
+ *      /docs/ejecucion-pruebas (mismo patrón que scripts/capturar-instantanea.mjs).
+ *
+ * El (2) existe porque `coverage/` e `informes/` están en .gitignore y una
+ * página de /docs no puede leer en build un archivo que no está versionado. El
+ * JSON sí se versiona: es el único modo de que las cifras de la documentación
+ * salgan de una corrida real en vez de escribirse a mano.
  *
  * El XML crudo es imposible de proyectar en una sustentación, y el reporter
  * `html` de Vitest exige @vitest/ui (dependencia nueva solo para esto). Este
@@ -428,6 +437,54 @@ const html = `<title>Ejecución de pruebas</title>
 
 mkdirSync(dirname(resolve(salida)), { recursive: true })
 writeFileSync(salida, html)
+
+// Instantánea para /docs. Se guardan las 68 suites (no los 1181 casos: el JSON
+// se versiona y entraría al bundle) más los casos de las suites de integración,
+// que son los que la página muestra desplegados.
+const instantanea = {
+  meta: {
+    capturadaEn: new Date().toISOString(),
+    fuente: 'vitest --reporter=junit',
+    comando: 'npx vitest run --reporter=junit --outputFile=informes/tests-junit.xml',
+  },
+  total: {
+    pruebas: total.pruebas,
+    fallos: total.fallos + total.errores,
+    archivos: suites.length,
+    segundos: Number(total.segundos.toFixed(3)),
+    promedioSegundos: Number((suma(todos, (c) => c.segundos) / todos.length).toFixed(6)),
+  },
+  niveles: {
+    unitarias: {
+      pruebas: suma(unitarias, (s) => s.pruebas),
+      archivos: unitarias.length,
+      segundos: Number(suma(unitarias, (s) => s.segundos).toFixed(3)),
+    },
+    integracion: {
+      pruebas: suma(integracion, (s) => s.pruebas),
+      archivos: integracion.length,
+      segundos: Number(suma(integracion, (s) => s.segundos).toFixed(3)),
+    },
+  },
+  histograma: ETIQUETAS.map((etiqueta, i) => ({
+    etiqueta: desescapar(etiqueta),
+    n: cubos[i],
+  })),
+  lentas: lentas.map((c) => ({ nombre: c.nombre, segundos: Number(c.segundos.toFixed(4)) })),
+  suites: suites.map((s) => ({
+    archivo: s.archivo,
+    integracion: s.integracion,
+    pruebas: s.pruebas,
+    fallos: s.fallos,
+    segundos: Number(s.segundos.toFixed(4)),
+    casos: s.integracion
+      ? s.casos.map((c) => ({ nombre: c.nombre, segundos: Number(c.segundos.toFixed(4)) }))
+      : [],
+  })),
+}
+writeFileSync('src/data/ejecucion-pruebas.json', JSON.stringify(instantanea, null, 2) + '\n')
+
 console.log(
   `${salida}: ${total.pruebas} pruebas, ${total.fallos + total.errores} fallos, ${total.segundos.toFixed(2)}s`
 )
+console.log(`src/data/ejecucion-pruebas.json: instantánea de ${suites.length} suites`)
