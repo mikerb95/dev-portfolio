@@ -1,0 +1,1186 @@
+{
+  "meta": {
+    "capturadaEn": "2026-08-22T01:44:02.328Z",
+    "fuente": "vitest --reporter=junit",
+    "comando": "npx vitest run --reporter=junit --outputFile=informes/tests-junit.xml"
+  },
+  "total": {
+    "pruebas": 1181,
+    "fallos": 0,
+    "archivos": 68,
+    "segundos": 65.092,
+    "promedioSegundos": 0.049973
+  },
+  "niveles": {
+    "unitarias": {
+      "pruebas": 1048,
+      "archivos": 58,
+      "segundos": 15.502
+    },
+    "integracion": {
+      "pruebas": 133,
+      "archivos": 10,
+      "segundos": 49.59
+    }
+  },
+  "histograma": [
+    {
+      "etiqueta": "< 1 ms",
+      "n": 325
+    },
+    {
+      "etiqueta": "1 - 10 ms",
+      "n": 623
+    },
+    {
+      "etiqueta": "10 - 100 ms",
+      "n": 128
+    },
+    {
+      "etiqueta": "0.1 - 1 s",
+      "n": 91
+    },
+    {
+      "etiqueta": "> 1 s",
+      "n": 14
+    }
+  ],
+  "lentas": [
+    {
+      "nombre": "tests/latency.test.ts",
+      "segundos": 4.1174
+    },
+    {
+      "nombre": "tests/portal-isolation.test.ts",
+      "segundos": 2.5139
+    },
+    {
+      "nombre": "tests/security-honeypot.test.ts",
+      "segundos": 1.8053
+    },
+    {
+      "nombre": "tests/portal-isolation.test.ts",
+      "segundos": 1.4913
+    },
+    {
+      "nombre": "tests/portal-isolation.test.ts",
+      "segundos": 1.4159
+    },
+    {
+      "nombre": "tests/portal-passwords.test.ts",
+      "segundos": 1.2874
+    },
+    {
+      "nombre": "tests/portal-passwords.test.ts",
+      "segundos": 1.2743
+    },
+    {
+      "nombre": "tests/portal-isolation.test.ts",
+      "segundos": 1.2715
+    },
+    {
+      "nombre": "tests/cobros-db.test.ts",
+      "segundos": 1.2265
+    },
+    {
+      "nombre": "tests/security-honeypot.test.ts",
+      "segundos": 1.1136
+    },
+    {
+      "nombre": "tests/portal-isolation.test.ts",
+      "segundos": 1.0538
+    },
+    {
+      "nombre": "tests/portal-isolation.test.ts",
+      "segundos": 1.0412
+    }
+  ],
+  "suites": [
+    {
+      "archivo": "tests/bpmn.test.ts",
+      "integracion": false,
+      "pruebas": 83,
+      "fallos": 0,
+      "segundos": 0.2182,
+      "casos": []
+    },
+    {
+      "archivo": "tests/capacitacion.test.ts",
+      "integracion": false,
+      "pruebas": 35,
+      "fallos": 0,
+      "segundos": 0.2719,
+      "casos": []
+    },
+    {
+      "archivo": "tests/chaos.test.ts",
+      "integracion": false,
+      "pruebas": 12,
+      "fallos": 0,
+      "segundos": 0.0183,
+      "casos": []
+    },
+    {
+      "archivo": "tests/clients-validate.test.ts",
+      "integracion": false,
+      "pruebas": 14,
+      "fallos": 0,
+      "segundos": 0.046,
+      "casos": []
+    },
+    {
+      "archivo": "tests/cobros-db.test.ts",
+      "integracion": true,
+      "pruebas": 21,
+      "fallos": 0,
+      "segundos": 5.0897,
+      "casos": [
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.2272
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1547
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1306
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1736
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1587
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1461
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1812
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.2728
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.0788
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1336
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.2598
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.3433
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1972
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 1.2265
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.2731
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.2626
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.0639
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1868
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.0618
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.2655
+        },
+        {
+          "nombre": "tests/cobros-db.test.ts",
+          "segundos": 0.1225
+        }
+      ]
+    },
+    {
+      "archivo": "tests/cobros.test.ts",
+      "integracion": false,
+      "pruebas": 22,
+      "fallos": 0,
+      "segundos": 0.254,
+      "casos": []
+    },
+    {
+      "archivo": "tests/contracts.test.ts",
+      "integracion": true,
+      "pruebas": 5,
+      "fallos": 0,
+      "segundos": 3.7074,
+      "casos": [
+        {
+          "nombre": "tests/contracts.test.ts",
+          "segundos": 0.2146
+        },
+        {
+          "nombre": "tests/contracts.test.ts",
+          "segundos": 0.4011
+        },
+        {
+          "nombre": "tests/contracts.test.ts",
+          "segundos": 0.2288
+        },
+        {
+          "nombre": "tests/contracts.test.ts",
+          "segundos": 0.1414
+        },
+        {
+          "nombre": "tests/contracts.test.ts",
+          "segundos": 0.0056
+        }
+      ]
+    },
+    {
+      "archivo": "tests/crons.test.ts",
+      "integracion": false,
+      "pruebas": 29,
+      "fallos": 0,
+      "segundos": 0.0717,
+      "casos": []
+    },
+    {
+      "archivo": "tests/crypto.test.ts",
+      "integracion": false,
+      "pruebas": 8,
+      "fallos": 0,
+      "segundos": 0.0843,
+      "casos": []
+    },
+    {
+      "archivo": "tests/db-target.test.ts",
+      "integracion": false,
+      "pruebas": 5,
+      "fallos": 0,
+      "segundos": 0.0276,
+      "casos": []
+    },
+    {
+      "archivo": "tests/demo.test.ts",
+      "integracion": false,
+      "pruebas": 12,
+      "fallos": 0,
+      "segundos": 0.036,
+      "casos": []
+    },
+    {
+      "archivo": "tests/device-info.test.ts",
+      "integracion": false,
+      "pruebas": 10,
+      "fallos": 0,
+      "segundos": 0.2143,
+      "casos": []
+    },
+    {
+      "archivo": "tests/diagnostics.test.ts",
+      "integracion": false,
+      "pruebas": 37,
+      "fallos": 0,
+      "segundos": 0.2723,
+      "casos": []
+    },
+    {
+      "archivo": "tests/domains.test.ts",
+      "integracion": false,
+      "pruebas": 13,
+      "fallos": 0,
+      "segundos": 0.2438,
+      "casos": []
+    },
+    {
+      "archivo": "tests/fallback.test.ts",
+      "integracion": false,
+      "pruebas": 19,
+      "fallos": 0,
+      "segundos": 0.3421,
+      "casos": []
+    },
+    {
+      "archivo": "tests/findings.test.ts",
+      "integracion": false,
+      "pruebas": 19,
+      "fallos": 0,
+      "segundos": 0.1486,
+      "casos": []
+    },
+    {
+      "archivo": "tests/fingerprint.test.ts",
+      "integracion": true,
+      "pruebas": 12,
+      "fallos": 0,
+      "segundos": 1.5457,
+      "casos": [
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.0452
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.0332
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.0643
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.1086
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.1091
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.0919
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.158
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.1476
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.1662
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.2024
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.1446
+        },
+        {
+          "nombre": "tests/fingerprint.test.ts",
+          "segundos": 0.2045
+        }
+      ]
+    },
+    {
+      "archivo": "tests/gobernanza.test.ts",
+      "integracion": false,
+      "pruebas": 9,
+      "fallos": 0,
+      "segundos": 0.0412,
+      "casos": []
+    },
+    {
+      "archivo": "tests/i18n-bilingual.test.ts",
+      "integracion": false,
+      "pruebas": 10,
+      "fallos": 0,
+      "segundos": 0.033,
+      "casos": []
+    },
+    {
+      "archivo": "tests/i18n-dictionary.test.ts",
+      "integracion": false,
+      "pruebas": 4,
+      "fallos": 0,
+      "segundos": 0.1511,
+      "casos": []
+    },
+    {
+      "archivo": "tests/i18n-localize.test.ts",
+      "integracion": false,
+      "pruebas": 11,
+      "fallos": 0,
+      "segundos": 0.0348,
+      "casos": []
+    },
+    {
+      "archivo": "tests/i18n-routing-guards.test.ts",
+      "integracion": false,
+      "pruebas": 141,
+      "fallos": 0,
+      "segundos": 0.1006,
+      "casos": []
+    },
+    {
+      "archivo": "tests/i18n-routing.test.ts",
+      "integracion": false,
+      "pruebas": 56,
+      "fallos": 0,
+      "segundos": 0.1798,
+      "casos": []
+    },
+    {
+      "archivo": "tests/indexnow.test.ts",
+      "integracion": false,
+      "pruebas": 8,
+      "fallos": 0,
+      "segundos": 0.168,
+      "casos": []
+    },
+    {
+      "archivo": "tests/latency.test.ts",
+      "integracion": true,
+      "pruebas": 9,
+      "fallos": 0,
+      "segundos": 4.8042,
+      "casos": [
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 0.0539
+        },
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 0.0915
+        },
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 0.0626
+        },
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 0.0542
+        },
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 0.0631
+        },
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 0.0345
+        },
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 0.0467
+        },
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 4.1174
+        },
+        {
+          "nombre": "tests/latency.test.ts",
+          "segundos": 0.1314
+        }
+      ]
+    },
+    {
+      "archivo": "tests/mis-pagos.test.ts",
+      "integracion": false,
+      "pruebas": 7,
+      "fallos": 0,
+      "segundos": 0.0631,
+      "casos": []
+    },
+    {
+      "archivo": "tests/money.test.ts",
+      "integracion": false,
+      "pruebas": 13,
+      "fallos": 0,
+      "segundos": 0.1339,
+      "casos": []
+    },
+    {
+      "archivo": "tests/monitor-rollup.test.ts",
+      "integracion": false,
+      "pruebas": 15,
+      "fallos": 0,
+      "segundos": 0.1029,
+      "casos": []
+    },
+    {
+      "archivo": "tests/monitors.test.ts",
+      "integracion": false,
+      "pruebas": 8,
+      "fallos": 0,
+      "segundos": 0.2739,
+      "casos": []
+    },
+    {
+      "archivo": "tests/mutation.test.ts",
+      "integracion": false,
+      "pruebas": 7,
+      "fallos": 0,
+      "segundos": 0.0376,
+      "casos": []
+    },
+    {
+      "archivo": "tests/normalization.test.ts",
+      "integracion": false,
+      "pruebas": 15,
+      "fallos": 0,
+      "segundos": 0.0741,
+      "casos": []
+    },
+    {
+      "archivo": "tests/notify.test.ts",
+      "integracion": false,
+      "pruebas": 10,
+      "fallos": 0,
+      "segundos": 0.1471,
+      "casos": []
+    },
+    {
+      "archivo": "tests/payments.test.ts",
+      "integracion": true,
+      "pruebas": 23,
+      "fallos": 0,
+      "segundos": 1.85,
+      "casos": [
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0056
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0015
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0016
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0008
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0018
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0039
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0023
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0026
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0034
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0051
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0543
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0545
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0853
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0253
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.1592
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.1368
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0872
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.1276
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0027
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0395
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.046
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.0771
+        },
+        {
+          "nombre": "tests/payments.test.ts",
+          "segundos": 0.036
+        }
+      ]
+    },
+    {
+      "archivo": "tests/phone.test.ts",
+      "integracion": false,
+      "pruebas": 14,
+      "fallos": 0,
+      "segundos": 0.0331,
+      "casos": []
+    },
+    {
+      "archivo": "tests/pipeline-live.test.ts",
+      "integracion": false,
+      "pruebas": 11,
+      "fallos": 0,
+      "segundos": 0.0407,
+      "casos": []
+    },
+    {
+      "archivo": "tests/pnl.test.ts",
+      "integracion": false,
+      "pruebas": 9,
+      "fallos": 0,
+      "segundos": 0.05,
+      "casos": []
+    },
+    {
+      "archivo": "tests/portal-activity.test.ts",
+      "integracion": true,
+      "pruebas": 16,
+      "fallos": 0,
+      "segundos": 4.0029,
+      "casos": [
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.1445
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.1983
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.1913
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.1843
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.219
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.2098
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.1998
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.2116
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.1837
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.2564
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.231
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.5278
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.2957
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.2018
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.1471
+        },
+        {
+          "nombre": "tests/portal-activity.test.ts",
+          "segundos": 0.3256
+        }
+      ]
+    },
+    {
+      "archivo": "tests/portal-demo.test.ts",
+      "integracion": false,
+      "pruebas": 11,
+      "fallos": 0,
+      "segundos": 0.058,
+      "casos": []
+    },
+    {
+      "archivo": "tests/portal-health.test.ts",
+      "integracion": true,
+      "pruebas": 8,
+      "fallos": 0,
+      "segundos": 0.4798,
+      "casos": [
+        {
+          "nombre": "tests/portal-health.test.ts",
+          "segundos": 0.0125
+        },
+        {
+          "nombre": "tests/portal-health.test.ts",
+          "segundos": 0.0019
+        },
+        {
+          "nombre": "tests/portal-health.test.ts",
+          "segundos": 0.0013
+        },
+        {
+          "nombre": "tests/portal-health.test.ts",
+          "segundos": 0.0012
+        },
+        {
+          "nombre": "tests/portal-health.test.ts",
+          "segundos": 0.022
+        },
+        {
+          "nombre": "tests/portal-health.test.ts",
+          "segundos": 0.0083
+        },
+        {
+          "nombre": "tests/portal-health.test.ts",
+          "segundos": 0.0036
+        },
+        {
+          "nombre": "tests/portal-health.test.ts",
+          "segundos": 0.0635
+        }
+      ]
+    },
+    {
+      "archivo": "tests/portal-invoices.test.ts",
+      "integracion": false,
+      "pruebas": 17,
+      "fallos": 0,
+      "segundos": 0.1355,
+      "casos": []
+    },
+    {
+      "archivo": "tests/portal-isolation.test.ts",
+      "integracion": true,
+      "pruebas": 26,
+      "fallos": 0,
+      "segundos": 23.0334,
+      "casos": [
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.6323
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.623
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.5995
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.8217
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.8021
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.6817
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.8018
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.906
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 1.4913
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.733
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 1.2715
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 1.0538
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.7261
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.6705
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.6035
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.6923
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.6005
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 1.027
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 1.0412
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 1.0266
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 1.4159
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 2.5139
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.6879
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.3536
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.5159
+        },
+        {
+          "nombre": "tests/portal-isolation.test.ts",
+          "segundos": 0.4983
+        }
+      ]
+    },
+    {
+      "archivo": "tests/portal-live.test.ts",
+      "integracion": true,
+      "pruebas": 10,
+      "fallos": 0,
+      "segundos": 4.8153,
+      "casos": [
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.3021
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.4137
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.3846
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.3754
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.3824
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.449
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.595
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.6114
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.5053
+        },
+        {
+          "nombre": "tests/portal-live.test.ts",
+          "segundos": 0.5259
+        }
+      ]
+    },
+    {
+      "archivo": "tests/portal-passwords.test.ts",
+      "integracion": false,
+      "pruebas": 14,
+      "fallos": 0,
+      "segundos": 3.8606,
+      "casos": []
+    },
+    {
+      "archivo": "tests/portal-paths.test.ts",
+      "integracion": false,
+      "pruebas": 11,
+      "fallos": 0,
+      "segundos": 0.0396,
+      "casos": []
+    },
+    {
+      "archivo": "tests/present-assets.test.ts",
+      "integracion": false,
+      "pruebas": 17,
+      "fallos": 0,
+      "segundos": 0.0867,
+      "casos": []
+    },
+    {
+      "archivo": "tests/present-deck-parse.test.ts",
+      "integracion": false,
+      "pruebas": 24,
+      "fallos": 0,
+      "segundos": 0.162,
+      "casos": []
+    },
+    {
+      "archivo": "tests/present-pin.test.ts",
+      "integracion": false,
+      "pruebas": 15,
+      "fallos": 0,
+      "segundos": 0.8802,
+      "casos": []
+    },
+    {
+      "archivo": "tests/present-state.test.ts",
+      "integracion": false,
+      "pruebas": 15,
+      "fallos": 0,
+      "segundos": 0.0473,
+      "casos": []
+    },
+    {
+      "archivo": "tests/present-sync.test.ts",
+      "integracion": false,
+      "pruebas": 16,
+      "fallos": 0,
+      "segundos": 0.2236,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-anomaly.test.ts",
+      "integracion": false,
+      "pruebas": 13,
+      "fallos": 0,
+      "segundos": 0.0377,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-autoblock.test.ts",
+      "integracion": false,
+      "pruebas": 14,
+      "fallos": 0,
+      "segundos": 0.063,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-blocklist-db.test.ts",
+      "integracion": true,
+      "pruebas": 3,
+      "fallos": 0,
+      "segundos": 0.2621,
+      "casos": [
+        {
+          "nombre": "tests/security-blocklist-db.test.ts",
+          "segundos": 0.0642
+        },
+        {
+          "nombre": "tests/security-blocklist-db.test.ts",
+          "segundos": 0.0925
+        },
+        {
+          "nombre": "tests/security-blocklist-db.test.ts",
+          "segundos": 0.0749
+        }
+      ]
+    },
+    {
+      "archivo": "tests/security-blocklist.test.ts",
+      "integracion": false,
+      "pruebas": 7,
+      "fallos": 0,
+      "segundos": 0.0259,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-classify.test.ts",
+      "integracion": false,
+      "pruebas": 49,
+      "fallos": 0,
+      "segundos": 0.1181,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-csp-report.test.ts",
+      "integracion": false,
+      "pruebas": 6,
+      "fallos": 0,
+      "segundos": 0.0362,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-honeypot.test.ts",
+      "integracion": false,
+      "pruebas": 7,
+      "fallos": 0,
+      "segundos": 4.8086,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-ratelimit.test.ts",
+      "integracion": false,
+      "pruebas": 8,
+      "fallos": 0,
+      "segundos": 0.0156,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-redact.test.ts",
+      "integracion": false,
+      "pruebas": 9,
+      "fallos": 0,
+      "segundos": 0.0364,
+      "casos": []
+    },
+    {
+      "archivo": "tests/security-rollup.test.ts",
+      "integracion": false,
+      "pruebas": 6,
+      "fallos": 0,
+      "segundos": 0.0232,
+      "casos": []
+    },
+    {
+      "archivo": "tests/skills.test.ts",
+      "integracion": false,
+      "pruebas": 31,
+      "fallos": 0,
+      "segundos": 0.0838,
+      "casos": []
+    },
+    {
+      "archivo": "tests/slo.test.ts",
+      "integracion": false,
+      "pruebas": 11,
+      "fallos": 0,
+      "segundos": 0.0898,
+      "casos": []
+    },
+    {
+      "archivo": "tests/uml-activity.test.ts",
+      "integracion": false,
+      "pruebas": 19,
+      "fallos": 0,
+      "segundos": 0.1187,
+      "casos": []
+    },
+    {
+      "archivo": "tests/uml-communication.test.ts",
+      "integracion": false,
+      "pruebas": 25,
+      "fallos": 0,
+      "segundos": 0.3907,
+      "casos": []
+    },
+    {
+      "archivo": "tests/uml-component.test.ts",
+      "integracion": false,
+      "pruebas": 5,
+      "fallos": 0,
+      "segundos": 0.0558,
+      "casos": []
+    },
+    {
+      "archivo": "tests/uml-deployment.test.ts",
+      "integracion": false,
+      "pruebas": 5,
+      "fallos": 0,
+      "segundos": 0.061,
+      "casos": []
+    },
+    {
+      "archivo": "tests/vault.test.ts",
+      "integracion": false,
+      "pruebas": 10,
+      "fallos": 0,
+      "segundos": 0.034,
+      "casos": []
+    },
+    {
+      "archivo": "tests/vitals.test.ts",
+      "integracion": false,
+      "pruebas": 9,
+      "fallos": 0,
+      "segundos": 0.0527,
+      "casos": []
+    },
+    {
+      "archivo": "tests/vyv.test.ts",
+      "integracion": false,
+      "pruebas": 8,
+      "fallos": 0,
+      "segundos": 0.0432,
+      "casos": []
+    }
+  ]
+}
