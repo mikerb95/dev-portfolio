@@ -99,7 +99,7 @@ export const NIVELES: Nivel[] = [
     nombre: 'Cobertura de código',
     herramienta: '@vitest/coverage-v8',
     pregunta: '¿Qué parte del código no ejecuta ni una sola prueba?',
-    volumen: '2161 de 3254 líneas de src/lib/**',
+    volumen: '2886 de 4314 líneas de src/lib/**',
     archivos: 'vitest.config.ts → coverage/',
     cuando: 'push',
     bloquea: false,
