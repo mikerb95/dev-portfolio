@@ -347,16 +347,21 @@ export function layout(model: RedModel): RedLayout {
 }
 
 /**
- * Fila vertical de la zona. Se deduce del orden declarado y de las columnas:
- * dos zonas que no se pisan en columnas comparten fila. Evita repetir en cada
- * zona un número de fila que ya está implícito en su posición horizontal.
+ * Fila vertical de cada zona. Se deduce del orden declarado y de las columnas:
+ * una zona baja a la fila siguiente solo si se pisa en columnas con alguna
+ * anterior. Así dos zonas hermanas (datos y terceros, por ejemplo) quedan lado
+ * a lado sin repetir en el modelo un número de fila que ya está implícito.
  */
-function filaDeZona(model: RedModel, zona: RedZona): number {
-  let fila = 0
+function filasDeZonas(model: RedModel): Map<string, number> {
+  const fila = new Map<string, number>()
   for (const z of model.zonas) {
-    if (z.id === zona.id) break
-    const sePisan = z.col < zona.col + zona.span && zona.col < z.col + z.span
-    if (sePisan) fila = filaDeZona(model, z) + 1
+    let f = 0
+    for (const previa of model.zonas) {
+      if (previa.id === z.id) break
+      const sePisan = previa.col < z.col + z.span && z.col < previa.col + previa.span
+      if (sePisan) f = Math.max(f, fila.get(previa.id)! + 1)
+    }
+    fila.set(z.id, f)
   }
   return fila
 }
