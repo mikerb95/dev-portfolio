@@ -272,6 +272,7 @@ export function handleSummary(data) {
     const errorPct = Number((tasaError * 100).toFixed(1))
     const proc = data.metrics[`proceso_cpu_e${e.desdeS}`]?.values ?? {}
     const heap = data.metrics[`proceso_heap_e${e.desdeS}`]?.values ?? {}
+    const { cpuPct, heapMb } = muestraProceso({ count: proc.count, cpuAvg: proc.avg, heapAvg: heap.avg })
     return {
       rpsOfrecido: e.rps,
       n,
@@ -284,8 +285,8 @@ export function handleSummary(data) {
       p50: Number((v.med ?? 0).toFixed(1)),
       p95: Number((v['p(95)'] ?? 0).toFixed(1)),
       errorPct,
-      cpuPct: Number((proc.avg ?? 0).toFixed(1)),
-      heapMb: Number((heap.avg ?? 0).toFixed(1)),
+      cpuPct,
+      heapMb,
       // Heurístico, no un veredicto: `ok`/`degradado`/`roto` según el % de
       // error del propio escalón. La lectura fina (memoria que no baja, la
       // base saturada) va en el bloque de hallazgos, escrito a mano tras
