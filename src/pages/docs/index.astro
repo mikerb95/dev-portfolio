@@ -45,7 +45,8 @@ const subpaginas = [
   { href: '/docs/diagrama-comunicacion', titulo: 'Diagrama de comunicación', desc: `Las ${COMUNICACIONES.length} mismas interacciones de la secuencia, vistas por su estructura de enlaces y con numeración decimal.` },
   { href: '/docs/diagrama-actividades', titulo: 'Diagrama de actividades', desc: `${ACTIVIDADES.length} flujos de control internos con particiones, bifurcación concurrente y bucle de reintento: middleware, pipeline con rollback y webhook de pago.` },
   { href: '/docs/diagrama-componentes', titulo: 'Diagrama de componentes', desc: `${COMPONENTES[0].componentes.length} componentes con sus interfaces provistas y requeridas (bola y enchufe).` },
-  { href: '/docs/diagrama-despliegue', titulo: 'Diagrama de despliegue', desc: 'La vista de red en notación UML: nodos, artefactos desplegados y caminos de comunicación con su protocolo.' },
+  { href: '/docs/diagrama-despliegue', titulo: 'Diagrama de despliegue', desc: 'Qué corre dónde, en notación UML: nodos, artefactos desplegados y caminos de comunicación con su protocolo.' },
+  { href: '/docs/diagrama-red', titulo: 'Diagrama de red', desc: `Las ${REDES[0].zonas.length} zonas de confianza y los ${REDES[0].flujos.length} flujos entre ellas, cada cruce de frontera con su puerto y los controles que atraviesa.` },
   { href: '/docs/diagrama-clases', titulo: 'Diagrama de clases', desc: 'Entidades del dominio derivadas de src/db/schema.ts, agrupadas por módulo.' },
   { href: '/docs/diagrama-objetos', titulo: 'Diagrama de objetos', desc: 'Instantáneas concretas: proyecto con sus servicios, pago con evento duplicado, IP bloqueada.' },
   { href: '/docs/kanban', titulo: 'Tablero kanban', desc: `${historiasTotal} historias en ${ITER_PF.length} iteraciones del propio proyecto.` },
@@ -102,6 +103,7 @@ const subpaginas = [
       requerimiento hasta la historia de usuario y su estado en el kanban - usando un formato reconocido de
       ingeniería de software (requerimientos funcionales y no funcionales, casos de uso con flujo extendido,
       diagramas UML de secuencia, comunicación, actividades, componentes, despliegue, paquetes, clases y objetos,
+      la topología de red por zonas de confianza,
       más los procesos de negocio en BPMN). Sirve como evidencia para sustentación académica
       y como referencia técnica real para el mantenimiento del sistema en producción.
     </p>
