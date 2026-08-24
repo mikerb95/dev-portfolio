@@ -1,0 +1,175 @@
+---
+// Contenido estático (src/data): se genera en el build, no por request.
+export const prerender = true
+
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import NetworkDiagram from '../../components/uml/NetworkDiagram.astro'
+import { REDES } from '../../data/red'
+
+const NIVELES = [
+  { n: 0, label: 'No confiable', desc: 'Internet y los terceros. Todo lo que llega de aquí se asume hostil.' },
+  { n: 1, label: 'Perímetro', desc: 'El borde: filtra, clasifica y limita antes de que exista el request.' },
+  { n: 2, label: 'Aplicación', desc: 'Solo alcanzable desde el perímetro. Nunca tiene dirección pública propia.' },
+  { n: 3, label: 'Datos', desc: 'Sin ruta desde Internet. Sus credenciales solo existen en el servidor.' },
+]
+---
+
+<BaseLayout title="Diagrama de red">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-8">
+      <p class="text-[14.5px] text-ink-200 leading-relaxed">
+        Qué puede hablar con qué, por qué puerto, y qué control atraviesa el tráfico cada vez que
+        cruza una frontera de confianza.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        Este diagrama <strong class="font-medium text-ink-100">no es UML</strong>, y no lo disimula:
+        UML 2.5.1 no tiene vista de red entre sus catorce tipos, y forzar una sería inventar símbolos.
+        Lo que la notación sí permite afirmar (qué artefacto corre en qué entorno de ejecución, por
+        qué protocolo viajan) ya está en
+        <a
+          href="/docs/diagrama-despliegue"
+          class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40"
+          >el diagrama de despliegue</a
+        >. Aquí se responde la pregunta que ese no puede: el despliegue dice
+        <em>dónde corre cada cosa</em>; este dice <em>qué puede alcanzar a qué y qué lo filtra</em>.
+        Son las dos vistas que se usan en momentos distintos: una al diseñar, otra al operar.
+      </p>
+      <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
+        Solo aparece información que ya es pública: puertos estándar, protocolos, proveedores y
+        controles por categoría. Nunca umbrales del rate limit, nombres de reglas de detección ni
+        rutas trampa: un diagrama de red con ese detalle deja de documentar la defensa y pasa a ser
+        el manual para rodearla.
+      </p>
+    </div>
+
+    <!-- ── Niveles de confianza ───────────────────────────────────────── -->
+    <section class="mb-8">
+      <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-3">
+        Zonas de confianza
+      </h2>
+      <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-3 list-none p-0 m-0 text-[12.5px]">
+        {NIVELES.map((nivel) => (
+          <li class="text-ink-100">
+            <span class="flex items-center gap-2">
+              <span
+                class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                style={`background: ${['#ff6b3d', '#00b8c4', '#00b8c4', '#c9ff5b'][nivel.n]}`}
+              />
+              <strong class="font-medium text-ink-50">{nivel.n} · {nivel.label}</strong>
+            </span>
+            <span class="block text-[11.5px] text-ink-300 mt-0.5">{nivel.desc}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- ── Leyenda de la notación ─────────────────────────────────────── -->
+    <section class="mb-12">
+      <h2 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mb-3">Notación</h2>
+      <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 list-none p-0 m-0 text-[12.5px]">
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Banda de trazo cortado</strong> - zona de confianza
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Una frontera lógica, no una máquina. El punto de color y el número dicen cuánto se le
+            concede a lo que hay dentro.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Rectángulo con «rol»</strong> - host
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Algo que origina o termina tráfico. El rol dice qué papel juega en la red, no qué código
+            contiene.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Flecha continua en color</strong> - cruza frontera
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Lleva número, protocolo y puerto, y debe justificar al menos un control en la tabla de
+            abajo. Doble punta: el tráfico vuelve por el mismo enlace.
+          </span>
+        </li>
+        <li class="text-ink-100">
+          <strong class="font-medium text-ink-50">Flecha punteada gris</strong> - dentro de la zona
+          <span class="block text-[11.5px] text-ink-300 mt-0.5">
+            Tráfico que no cambia de nivel de confianza: no cruza nada, así que no exige puerto ni
+            control.
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ── Redes ──────────────────────────────────────────────────────── -->
+    <div class="space-y-12">
+      {REDES.map((red) => (
+        <section id={red.id} class="scroll-mt-28">
+          <h2 class="text-[15px] font-semibold text-ink-50 mb-1">{red.titulo}</h2>
+          <p class="text-[13.5px] text-ink-300 leading-relaxed max-w-3xl mb-1.5">{red.desc}</p>
+          <p class="text-[12px] text-ink-400 font-mono mb-3.5 break-words">{red.origen}</p>
+
+          <div class="rounded-xl border border-white/15 bg-ink-800 p-3 overflow-x-auto">
+            <NetworkDiagram model={red} />
+          </div>
+
+          {red.nota && (
+            <p class="mt-3 max-w-3xl text-[13px] text-ink-200 leading-relaxed">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-dim align-middle mr-2 -translate-y-px" />
+              {red.nota}
+            </p>
+          )}
+
+          {/* Los controles no caben en el rótulo del flujo sin volver el dibujo
+              ilegible, y son justo lo que hay que poder leer enlace por enlace. */}
+          <h3 class="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-200 mt-10 mb-3">
+            Controles por flujo
+          </h3>
+          <div class="rounded-xl border border-white/12 overflow-x-auto">
+            <table class="w-full text-[12.5px] border-collapse min-w-[680px]">
+              <thead>
+                <tr class="text-left text-[11px] uppercase tracking-[0.1em] text-ink-400">
+                  <th class="py-2.5 px-3 font-medium w-10">#</th>
+                  <th class="py-2.5 px-3 font-medium">Enlace</th>
+                  <th class="py-2.5 px-3 font-medium w-44">Protocolo</th>
+                  <th class="py-2.5 px-3 font-medium">Controles que atraviesa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {red.flujos.map((f, i) => (
+                  <tr class="border-t border-white/8 align-top">
+                    <td class="py-2.5 px-3 font-mono text-ink-400">{i + 1}</td>
+                    <td class="py-2.5 px-3 text-ink-100 font-mono text-[11.5px] whitespace-nowrap">
+                      {f.from} {f.bidireccional ? '↔' : '→'} {f.to}
+                    </td>
+                    <td class="py-2.5 px-3 text-ink-200 whitespace-nowrap">
+                      {f.protocolo}
+                      {f.puerto && <span class="text-ink-400 font-mono text-[11.5px]"> · {f.puerto}</span>}
+                    </td>
+                    <td class="py-2.5 px-3 text-ink-200">
+                      {f.controles?.length ? (
+                        <ul class="list-none p-0 m-0 space-y-1">
+                          {f.controles.map((c) => (
+                            <li class="flex gap-2">
+                              <span class="text-cyan-dim shrink-0">·</span>
+                              <span>{c}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span class="text-ink-400 italic">{f.detalle ?? 'Sin cruce de frontera.'}</span>
+                      )}
+                      {f.controles?.length && f.detalle ? (
+                        <p class="text-[11.5px] text-ink-400 italic mt-1.5">{f.detalle}</p>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
