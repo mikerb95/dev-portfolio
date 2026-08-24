@@ -76,41 +76,86 @@ const mons = modoRespaldo ? await sondearEnVivo() : monsBase
 // eso son ~200.000 filas leídas POR VISITA. Con el cache de 300s del CDN por
 // delante casi nunca se notaba; la primera prueba de carga sin CDN agotó la
 // cuota de lecturas de Turso (ago 2026).
-const cerrados = await safeQuery(
-  () =>
-    db
-      .select({
-        monitorId: monitorDaily.monitorId,
-        day: monitorDaily.day,
-        total: monitorDaily.total,
-        ok: monitorDaily.ok,
-        sumMs: monitorDaily.sumMs,
-        latencyHist: monitorDaily.latencyHist,
-      })
-      .from(monitorDaily)
-      .where(gte(monitorDaily.day, since.toISOString().slice(0, 10))),
-  [] as { monitorId: number; day: string; total: number; ok: number; sumMs: number; latencyHist: string }[],
-  'status/resumen-diario',
-)
-
+//
 // El día EN CURSO no tiene fila todavía (el cron solo cierra días completos),
 // así que se agrega en vivo. Es un solo día: ~2.300 filas, y el índice `at` lo
 // resuelve sin escanear la tabla.
 const hoyInicio = startOfDayUTC(now)
-const checksHoy = await safeQuery(
-  () =>
-    db
-      .select({
-        monitorId: monitorChecks.monitorId,
-        at: monitorChecks.at,
-        ok: monitorChecks.ok,
-        responseMs: monitorChecks.responseMs,
-      })
-      .from(monitorChecks)
-      .where(gte(monitorChecks.at, new Date(hoyInicio))),
-  [] as { monitorId: number; at: Date; ok: boolean; responseMs: number | null }[],
-  'status/checks-de-hoy',
-)
+
+// H-05 (ago 2026): estas cinco consultas no dependen entre sí (solo
+// `latencyByMonitor` depende de los ids de `mons`, ya resueltos arriba), pero
+// se esperaban en serie, sumando sus latencias de red una tras otra - la
+// prueba de estrés de k6 marcó /status como la ruta más cara de las cuatro
+// del sitio público. Todas pasan por `safeQuery` (nunca rechazan, devuelven
+// el fallback si fallan), así que correrlas con Promise.all no cambia el
+// comportamiento fail-open, solo el tiempo total de la página.
+const [cerrados, checksHoy, latencyByMonitor, incidentsRaw, activeIncidentsRaw] = await Promise.all([
+  safeQuery(
+    () =>
+      db
+        .select({
+          monitorId: monitorDaily.monitorId,
+          day: monitorDaily.day,
+          total: monitorDaily.total,
+          ok: monitorDaily.ok,
+          sumMs: monitorDaily.sumMs,
+          latencyHist: monitorDaily.latencyHist,
+        })
+        .from(monitorDaily)
+        .where(gte(monitorDaily.day, since.toISOString().slice(0, 10))),
+    [] as { monitorId: number; day: string; total: number; ok: number; sumMs: number; latencyHist: string }[],
+    'status/resumen-diario',
+  ),
+  safeQuery(
+    () =>
+      db
+        .select({
+          monitorId: monitorChecks.monitorId,
+          at: monitorChecks.at,
+          ok: monitorChecks.ok,
+          responseMs: monitorChecks.responseMs,
+        })
+        .from(monitorChecks)
+        .where(gte(monitorChecks.at, new Date(hoyInicio))),
+    [] as { monitorId: number; at: Date; ok: boolean; responseMs: number | null }[],
+    'status/checks-de-hoy',
+  ),
+  modoRespaldo
+    ? Promise.resolve(new Map<number, { t: number; ms: number; ok: boolean }[]>())
+    : safeQuery(
+        () => recentLatency(mons.map((m) => m.id)),
+        new Map<number, { t: number; ms: number; ok: boolean }[]>(),
+        'status/latencia-reciente',
+      ),
+  safeQuery(
+    () =>
+      db
+        .select({
+          monitorId: monitorIncidents.monitorId,
+          startedAt: monitorIncidents.startedAt,
+          durationSec: monitorIncidents.durationSec,
+        })
+        .from(monitorIncidents)
+        .where(and(isNotNull(monitorIncidents.resolvedAt), gte(monitorIncidents.startedAt, since)))
+        .orderBy(desc(monitorIncidents.startedAt))
+        .limit(10),
+    [] as { monitorId: number; startedAt: Date; durationSec: number | null }[],
+    'status/incidentes-resueltos',
+  ),
+  safeQuery(
+    () =>
+      db
+        .select({
+          monitorId: monitorIncidents.monitorId,
+          startedAt: monitorIncidents.startedAt,
+        })
+        .from(monitorIncidents)
+        .where(sql`${monitorIncidents.resolvedAt} is null`)
+        .orderBy(desc(monitorIncidents.startedAt)),
+    [] as { monitorId: number; startedAt: Date }[],
+    'status/incidentes-activos',
+  ),
+])
 
 const aggHoy = aggregateChecks(
   checksHoy.map<CheckRow>((r) => ({
