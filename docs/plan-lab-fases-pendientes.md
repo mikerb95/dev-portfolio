@@ -76,7 +76,39 @@ El job de k6 es **manual** (`workflow_dispatch`), nunca en cada push.
      de resultado y las imprime como recordatorio en `stdout` - el mismo
      espacio de un taller de pruebas de estrés clásico para anotar a mano lo
      que un número no dice por sí solo (memoria que no baja entre escalones,
-     la base saturada, errores 500 a partir de cierto nivel).
+     la base saturada, errores 500 a partir de cierto nivel). Completados
+     tras revisar la corrida de referencia con CPU%/heap
+     (`lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json`):
+     - **H-01 - El colapso es de concurrencia, no de CPU ni de memoria**: en
+       el escalón roto (200 req/s, 65.2% error) la CPU sigue en 15.3% y el
+       heap en 398 MB, prácticamente igual que en el escalón sano (50 req/s,
+       0% error, 12.5% CPU, 333 MB). Si el cuello de botella fuera cómputo o
+       GC, la CPU subiría junto con el error. El límite real es la
+       concurrencia que `astro dev` (sin cluster ni worker pool) puede
+       sostener en sus sockets/handlers.
+     - **H-02 - El punto de quiebre está muy cerca de la capacidad medida en
+       `carga.js`**: ya en el escalón de 100 req/s (~1.6x la capacidad
+       sostenida de ~62 req/s) aparece 11.3% de error y p95 en el timeout de
+       10 s; a partir de 200 req/s el sistema está roto (65-99% error). No
+       hay margen amplio entre "funciona bien" y "colapsa".
+     - **H-03 - Sin ventana de enfriamiento entre corridas, la recuperación
+       puede no completarse dentro de los 120 s medidos**: al lanzar una
+       corrida inmediatamente después de otra ya saturada, toda la fase de
+       recuperación midió 100% de error y p50 de 0 ms, contra una
+       recuperación limpia (p50 ~25-35 ms desde +45 s) en corridas aisladas
+       con enfriamiento previo.
+     - **H-04 - El propio endpoint de monitoreo (`/api/lab/proceso`) también
+       se satura y sesga su muestra**: durante el tramo más degradado, sus
+       peticiones (timeout de 5 s) también fallaron, dejando `cpuPct=0` /
+       `heapMb=0` en vez de "sin dato" - una lectura falsa de "apagado"
+       cuando el proceso seguía vivo (confirmado al apagarlo después: volvió
+       a responder con CPU normal). Pendiente distinguir "sin muestra" de
+       "muestra en cero" en `estres.js`.
+     - **H-05 - `/status` es la ruta más cara de las cuatro**: p50 de
+       287-337 ms en el escalón sano vs. 40-100 ms de `/`, `/api/health` y
+       `/tools`, coherente con que es la única que agrega datos reales de
+       libSQL (90 días de checks). Primera candidata a optimizar si se
+       quisiera subir el punto de quiebre.
    - Estado `ok`/`degradado`/`roto` por escalón, heurístico sobre el % de
      error (no un veredicto: la lectura fina va en el bloque de hallazgos).
    - **Pendiente** (no bloqueante para la demo local): `home.js`/`api-read.js`/
