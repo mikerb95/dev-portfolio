@@ -221,6 +221,21 @@ export function muestrear() {
   destino?.heap.add(m.heapUsedMb)
 }
 
+/**
+ * H-04: si el escalón/tramo se saturó tanto que ni `/api/lab/proceso`
+ * respondió a tiempo, el Trend correspondiente queda sin muestras
+ * (`count` 0) y `avg` llega `undefined`. Antes, `?? 0` lo convertía en un
+ * falso "CPU 0% / heap 0 MB" indistinguible de un proceso realmente
+ * inactivo. `null` deja explícito que no hay dato, no que el dato sea cero.
+ */
+function muestraProceso(valores) {
+  if (!valores.count) return { cpuPct: null, heapMb: null }
+  return {
+    cpuPct: Number((valores.cpuAvg ?? 0).toFixed(1)),
+    heapMb: Number((valores.heapAvg ?? 0).toFixed(1)),
+  }
+}
+
 export function handleSummary(data) {
   const r = resumen('estres', data, base)
 
@@ -235,13 +250,14 @@ export function handleSummary(data) {
       const v = data.metrics[`recuperacion_t${t}`]?.values ?? {}
       const proc = data.metrics[`proceso_cpu_t${t}`]?.values ?? {}
       const heap = data.metrics[`proceso_heap_t${t}`]?.values ?? {}
+      const { cpuPct, heapMb } = muestraProceso({ count: proc.count, cpuAvg: proc.avg, heapAvg: heap.avg })
       return {
         desdeS: t,
         n: v.count ?? 0,
         p50: Number((v.med ?? 0).toFixed(1)),
         p95: Number((v['p(95)'] ?? 0).toFixed(1)),
-        cpuPct: Number((proc.avg ?? 0).toFixed(1)),
-        heapMb: Number((heap.avg ?? 0).toFixed(1)),
+        cpuPct,
+        heapMb,
       }
     }),
   }
