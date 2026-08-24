@@ -38,7 +38,9 @@ export default defineConfig({
     // Autoriza optimizar imágenes remotas alojadas en Vercel Blob
     remotePatterns: [{ protocol: 'https', hostname: '**.public.blob.vercel-storage.com' }],
   },
-  integrations: [auth()],
+  // staticHeaders va al final: reescribe el config.json que el adaptador de
+  // Vercel acaba de generar, así que tiene que correr después de él.
+  integrations: [auth(), staticHeaders()],
   vite: {
     plugins: [tailwindcss()]
   },
