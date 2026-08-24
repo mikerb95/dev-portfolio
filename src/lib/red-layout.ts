@@ -235,19 +235,20 @@ export function layout(model: RedModel): RedLayout {
     return zonaTituloH + zonaPad + suma + (filas.length - 1) * hostGapY + zonaPad
   }
 
-  const filasZona = [...new Set(model.zonas.map((_, i) => i))].length && [...new Set(model.zonas.map((z) => filaDeZona(model, z)))].sort((a, b) => a - b)
+  const fila = filasDeZonas(model)
+  const filas = [...new Set([...fila.values()])].sort((a, b) => a - b)
   const yDeFila = new Map<number, number>()
   let acumulado = padY
-  for (const f of filasZona as number[]) {
+  for (const f of filas) {
     yDeFila.set(f, acumulado)
-    const alto = Math.max(...model.zonas.filter((z) => filaDeZona(model, z) === f).map(altoZona))
+    const alto = Math.max(...model.zonas.filter((z) => fila.get(z.id) === f).map(altoZona))
     acumulado += alto + filaGap
   }
 
   const zonas: PlacedZona[] = model.zonas.map((z) => ({
     ...z,
     x: padX + z.col * (colW + colGap),
-    y: yDeFila.get(filaDeZona(model, z))!,
+    y: yDeFila.get(fila.get(z.id)!)!,
     w: z.span * colW + (z.span - 1) * colGap,
     h: altoZona(z),
   }))
