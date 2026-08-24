@@ -59,7 +59,10 @@ const COLOR_NIVEL = ['var(--uml-error)', 'var(--uml-accent)', 'var(--uml-control
         <text class="uml-particion" x={z.x + 26} y={z.y + 17} text-anchor="start" dominant-baseline="central">
           {z.label}
         </text>
-        <text class="uml-rol" x={z.x + 26} y={z.y + 17} dx={`${z.label.length * 6.6 + 12}`} dominant-baseline="central">
+        {/* El nivel se ancla al margen derecho de la banda: calcular el ancho
+            del título para ponerlo a continuación sería adivinar la métrica de
+            la fuente desde el servidor. */}
+        <text class="uml-rol" x={z.x + z.w - 15} y={z.y + 17} text-anchor="end" dominant-baseline="central">
           confianza {z.nivel}
         </text>
         {z.nota && (
