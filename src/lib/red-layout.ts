@@ -38,6 +38,12 @@ export interface RedZona {
   col: number
   /** Columnas que ocupa. */
   span: number
+  /**
+   * Columnas de la rejilla INTERNA. Por defecto, las que ocupen sus hosts. Se
+   * declara cuando la zona tiene menos hosts que columnas y se quiere que
+   * queden centrados en vez de apilados contra el margen izquierdo.
+   */
+  cols?: number
 }
 
 export interface RedHost {
