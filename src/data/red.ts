@@ -107,20 +107,26 @@ const produccion: RedModel = {
     },
 
     // ── Perímetro
+    // El WAF abarca el ancho de la zona porque es literalmente lo que hace:
+    // no hay forma de entrar al perímetro por un lado que él no cubra.
     {
       id: 'waf',
       zona: 'borde',
       label: 'Mitigación DDoS y WAF',
       rol: 'perímetro',
       col: 0,
-      detalle: ['filtra antes de que exista el request'],
+      fila: 0,
+      span: 3,
+      detalle: ['filtra antes de que el request exista para la aplicación'],
     },
     {
       id: 'middleware',
       zona: 'borde',
       label: 'Routing Middleware',
       rol: 'perímetro programable',
-      col: 1,
+      col: 0,
+      fila: 1,
+      span: 2,
       detalle: ['clasificador de amenazas · rate limit durable', 'blocklist · allowlist de /admin · cabeceras'],
     },
     {
@@ -129,6 +135,7 @@ const produccion: RedModel = {
       label: 'Caché de borde',
       rol: 'perímetro',
       col: 2,
+      fila: 1,
       detalle: ['respuestas públicas ya calculadas'],
     },
 
