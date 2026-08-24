@@ -45,6 +45,7 @@ const produccion: RedModel = {
       nivel: 2,
       col: 0,
       span: 5,
+      cols: 3,
     },
     {
       id: 'datos',
