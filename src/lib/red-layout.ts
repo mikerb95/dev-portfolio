@@ -265,7 +265,7 @@ export function layout(model: RedModel): RedLayout {
     const z = zonaPorId.get(h.zona)
     if (!z) throw new Error(`Host ${h.id}: zona inexistente "${h.zona}"`)
     const hs = hostsDeZona(z.id)
-    const cols = Math.max(...hs.map((k) => k.col + (k.span ?? 1)))
+    const cols = z.cols ?? Math.max(...hs.map((k) => k.col + (k.span ?? 1)))
     const innerW = z.w - zonaPad * 2
     const hcolW = (innerW - (cols - 1) * hostGapX) / cols
     const span = h.span ?? 1
