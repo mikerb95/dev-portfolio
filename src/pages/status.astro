@@ -255,44 +255,14 @@ const globalUptime30 = globalTotal30 > 0
   ? Math.round((globalOk30 / globalTotal30) * 1000) / 10
   : null
 
-// Incidentes resueltos recientes: nombre, inicio y duración. Sin causa ni
-// mensajes de error (pueden contener detalle interno).
+// Incidentes resueltos recientes (nombre, inicio, duración) e incidentes
+// ACTIVOS (sin resolver): ya vienen de las consultas paralelas de arriba, acá
+// solo se filtran a los monitores públicos. Sin causa ni mensajes de error
+// (pueden contener detalle interno).
 const publicIds = new Set(mons.map((m) => m.id))
 const nameById = new Map(mons.map((m) => [m.id, m.name]))
-const incidents = (
-  await safeQuery(
-    () =>
-      db
-        .select({
-          monitorId: monitorIncidents.monitorId,
-          startedAt: monitorIncidents.startedAt,
-          durationSec: monitorIncidents.durationSec,
-        })
-        .from(monitorIncidents)
-        .where(and(isNotNull(monitorIncidents.resolvedAt), gte(monitorIncidents.startedAt, since)))
-        .orderBy(desc(monitorIncidents.startedAt))
-        .limit(10),
-    [] as { monitorId: number; startedAt: Date; durationSec: number | null }[],
-    'status/incidentes-resueltos',
-  )
-).filter((i) => publicIds.has(i.monitorId))
-
-// Incidentes ACTIVOS (sin resolver): lo primero que busca alguien al entrar.
-const activeIncidents = (
-  await safeQuery(
-    () =>
-      db
-        .select({
-          monitorId: monitorIncidents.monitorId,
-          startedAt: monitorIncidents.startedAt,
-        })
-        .from(monitorIncidents)
-        .where(sql`${monitorIncidents.resolvedAt} is null`)
-        .orderBy(desc(monitorIncidents.startedAt)),
-    [] as { monitorId: number; startedAt: Date }[],
-    'status/incidentes-activos',
-  )
-).filter((i) => publicIds.has(i.monitorId))
+const incidents = incidentsRaw.filter((i) => publicIds.has(i.monitorId))
+const activeIncidents = activeIncidentsRaw.filter((i) => publicIds.has(i.monitorId))
 
 const overall = cards.some((c) => c.lastStatus === 'down')
   ? 'down'
