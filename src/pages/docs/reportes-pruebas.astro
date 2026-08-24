@@ -1,0 +1,176 @@
+---
+// Contenido estático (src/data): se genera en el build, no por request.
+export const prerender = true
+
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import {
+  REPORTERS,
+  FALLO_CONSOLA,
+  FALLO_XML,
+  ANATOMIA_FALLO,
+  EQUIVALENCIAS,
+} from '../../data/reportes-pruebas'
+import { EJECUCION } from '../../data/ejecucion-pruebas'
+
+// Página de referencia: qué log emite el runner y en qué formato. Los bloques
+// de salida son capturas reales (ver la cabecera de reportes-pruebas.ts), no
+// ejemplos redactados: media página de esta documentación es precisamente la
+// prueba de que el comando hace lo que dice.
+
+const aArchivo = REPORTERS.filter((r) => r.destino === 'archivo')
+const aConsola = REPORTERS.filter((r) => r.destino === 'consola')
+
+const secciones = [
+  { id: 'catalogo', t: 'Los 7 formatos' },
+  { id: 'fallo', t: 'Anatomía de un fallo' },
+  { id: 'equivalencias', t: 'Equivalencia con Java' },
+]
+---
+
+<BaseLayout title="Reportes de pruebas">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-10">
+      <h1 class="text-2xl font-semibold text-ink-50 mb-3">Reportes de pruebas</h1>
+      <p class="text-[14px] text-ink-200 leading-relaxed mb-3">
+        Qué emite el runner cuando corren las {EJECUCION.total.pruebas} pruebas del proyecto, en los
+        {REPORTERS.length} formatos que sabe producir: {aConsola.length} van a la consola y
+        {aArchivo.length} escriben un archivo. Referencia para saber cuál pedir según lo que se
+        necesite: depurar, guardar evidencia o alimentar otra herramienta.
+      </p>
+      <p class="text-[12.5px] text-ink-300 leading-relaxed">
+        Cada bloque de salida es una captura real de correr ese reporter contra
+        <code class="font-mono text-cyan-dim">tests/phone.test.ts</code> (14 casos), recortada pero no
+        reescrita. La corrida completa y sus tiempos están en
+        <a href="/docs/ejecucion-pruebas" class="text-cyan-dim hover:text-cyan underline underline-offset-2">Ejecución de pruebas</a>.
+      </p>
+    </div>
+
+    <nav class="flex flex-wrap gap-2 mb-10">
+      {secciones.map((s) => (
+        <a
+          href={`#${s.id}`}
+          class="px-3 py-1.5 rounded-lg border border-white/10 text-[12.5px] text-ink-200 hover:text-ink-50 hover:border-cyan-deep transition-colors"
+        >{s.t}</a>
+      ))}
+    </nav>
+
+    {/* ── Catálogo ──────────────────────────────────────────────── */}
+    <h2 id="catalogo" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Los {REPORTERS.length} formatos</h2>
+
+    <div class="flex flex-col gap-4 mb-12">
+      {REPORTERS.map((r) => (
+        <article class="glass rounded-2xl border border-white/10 overflow-hidden">
+          <div class="p-5 pb-4">
+            <div class="flex items-center gap-2.5 flex-wrap mb-2">
+              <span class={`w-2 h-2 rounded-full ${r.destino === 'archivo' ? 'bg-lime' : 'bg-cyan'}`}></span>
+              <code class="font-mono text-[15px] text-ink-50">--reporter={r.nombre}</code>
+              <span class="text-[12px] text-ink-300">{r.formato}</span>
+              <span class={`font-mono text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                r.destino === 'archivo' ? 'text-lime bg-lime/10' : 'text-cyan bg-cyan/10'
+              }`}>
+                {r.destino === 'archivo' ? 'escribe archivo' : 'solo consola'}
+              </span>
+              {r.dependencia && (
+                <span class="font-mono text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded text-ember bg-ember/10">
+                  requiere {r.dependencia}
+                </span>
+              )}
+            </div>
+            <p class="text-[13px] text-ink-200 leading-relaxed mb-3">{r.paraQue}</p>
+            <div class="rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2 overflow-x-auto mb-3">
+              <code class="font-mono text-[12px] text-ink-100 whitespace-nowrap">{r.comando}</code>
+            </div>
+          </div>
+
+          <div class="px-5 pb-4">
+            <p class="text-[11px] font-mono uppercase tracking-wide text-ink-300 mb-2">Salida real</p>
+            <pre class="rounded-lg border border-white/10 bg-ink-900/60 p-3.5 overflow-x-auto text-[12px] leading-relaxed font-mono text-ink-100"><code>{r.salida}</code></pre>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-px bg-white/10 border-t border-white/10">
+            <div class="bg-ink-850/60 p-4">
+              <p class="text-[11px] font-mono uppercase tracking-wide text-lime mb-1.5">A favor</p>
+              <p class="text-[12.5px] text-ink-200 leading-relaxed">{r.fuerte}</p>
+            </div>
+            <div class="bg-ink-850/60 p-4">
+              <p class="text-[11px] font-mono uppercase tracking-wide text-ember mb-1.5">En contra</p>
+              <p class="text-[12.5px] text-ink-200 leading-relaxed">{r.debil}</p>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    {/* ── Anatomía de un fallo ──────────────────────────────────── */}
+    <h2 id="fallo" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Anatomía de un fallo</h2>
+    <p class="text-[13.5px] text-ink-200 leading-relaxed max-w-3xl mb-5">
+      Lo interesante de un log no es el verde, sino qué información da cuando algo se rompe. Este es
+      un fallo real, provocado a propósito escribiendo mal el número esperado: la función devolvía
+      <code class="font-mono text-cyan-dim">+573104641228</code> y la prueba esperaba un dígito menos.
+    </p>
+
+    <div class="grid lg:grid-cols-2 gap-4 mb-5">
+      <div>
+        <p class="text-[11px] font-mono uppercase tracking-wide text-ink-300 mb-2">En consola (reporter default)</p>
+        <pre class="glass rounded-2xl border border-white/10 p-4 overflow-x-auto text-[11.5px] leading-relaxed font-mono text-ink-100"><code>{FALLO_CONSOLA}</code></pre>
+      </div>
+      <div>
+        <p class="text-[11px] font-mono uppercase tracking-wide text-ink-300 mb-2">El mismo fallo en XML (reporter junit)</p>
+        <pre class="glass rounded-2xl border border-white/10 p-4 overflow-x-auto text-[11.5px] leading-relaxed font-mono text-ink-100"><code>{FALLO_XML}</code></pre>
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl border border-white/10 divide-y divide-white/5 mb-12">
+      {ANATOMIA_FALLO.map((p) => (
+        <div class="p-4 grid sm:grid-cols-[220px_1fr] gap-2 sm:gap-4">
+          <span class="text-[13px] font-medium text-ink-50">{p.pieza}</span>
+          <span class="text-[12.5px] text-ink-200 leading-relaxed">{p.que}</span>
+        </div>
+      ))}
+    </div>
+
+    {/* ── Equivalencias ─────────────────────────────────────────── */}
+    <h2 id="equivalencias" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Equivalencia con el instrumental de Java</h2>
+    <p class="text-[13.5px] text-ink-200 leading-relaxed max-w-3xl mb-5">
+      El vocabulario estándar de pruebas viene en buena medida del mundo Maven, y la correspondencia
+      no es obvia porque los nombres coinciden a medias: aquí "JUnit" es un formato de archivo, no el
+      framework que ejecuta las pruebas.
+    </p>
+
+    <div class="overflow-x-auto rounded-xl border border-white/10 mb-4">
+      <table class="w-full min-w-[680px] text-left border-collapse">
+        <thead>
+          <tr class="border-b border-white/10">
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium">En Java / Maven</th>
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium">En este proyecto</th>
+            <th scope="col" class="p-3 text-[12px] font-mono uppercase tracking-wide text-ink-300 font-medium">Qué cambia</th>
+          </tr>
+        </thead>
+        <tbody>
+          {EQUIVALENCIAS.map((e) => (
+            <tr class="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+              <th scope="row" class="p-3 font-normal">
+                <code class="font-mono text-[13px] text-ink-50">{e.java}</code>
+              </th>
+              <td class="p-3">
+                <code class="font-mono text-[13px] text-cyan-dim">{e.aqui}</code>
+              </td>
+              <td class="p-3 text-[12.5px] text-ink-200 leading-relaxed max-w-md">{e.nota}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-[12px] text-ink-300 leading-relaxed max-w-3xl">
+      El proyecto genera su informe a partir del reporter <code class="font-mono">junit</code>, no del
+      <code class="font-mono">html</code>: el XML no cuesta dependencias, lo reconoce cualquier CI y,
+      por ser un dato procesable, alimenta a la vez el informe entregable y la página de
+      <a href="/docs/ejecucion-pruebas" class="text-cyan-dim hover:text-cyan underline underline-offset-2">Ejecución de pruebas</a>.
+      Una SPA no permite ninguna de las dos cosas.
+    </p>
+  </div>
+</BaseLayout>
