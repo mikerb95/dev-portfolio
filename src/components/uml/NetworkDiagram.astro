@@ -1,0 +1,139 @@
+---
+// Pinta el diagrama de red: bandas de zona de confianza, hosts dentro y flujos
+// dirigidos numerados. El número de cada flujo es la referencia de la tabla de
+// controles que va bajo el diagrama: los controles no caben en el rótulo sin
+// convertir el dibujo en un muro de texto, y son el dato que hay que poder leer
+// flujo por flujo.
+import { GEO, layout, type RedModel } from '../../lib/red-layout'
+
+interface Props {
+  model: RedModel
+}
+
+const { model } = Astro.props
+const l = layout(model)
+const uid = `red-${model.id}`
+
+// El nivel de confianza se codifica en un punto de color junto al título de la
+// zona, no en el relleno: teñir bandas enteras haría ilegible lo que va dentro.
+const COLOR_NIVEL = ['var(--uml-error)', 'var(--uml-accent)', 'var(--uml-control-stroke)', 'var(--uml-inicio)']
+---
+
+<svg
+  class="uml-scope block"
+  viewBox={`0 0 ${l.w} ${l.h}`}
+  width={l.w}
+  height={l.h}
+  role="img"
+  aria-label={`Diagrama de red: ${model.titulo}`}
+  style={`max-width: ${l.w}px`}
+>
+  <defs>
+    <marker id={`${uid}-punta`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="var(--uml-line)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+    </marker>
+    <marker id={`${uid}-punta-frontera`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="var(--uml-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width={l.w} height={l.h} fill="var(--uml-bg)" />
+
+  {/* ── Zonas de confianza: banda con borde discontinuo. El trazo cortado dice
+       que es una frontera lógica, no una máquina. */}
+  {
+    l.zonas.map((z) => (
+      <g>
+        <rect
+          x={z.x}
+          y={z.y}
+          width={z.w}
+          height={z.h}
+          rx="10"
+          fill="var(--uml-header)"
+          stroke="var(--uml-border)"
+          stroke-width="1.2"
+          stroke-dasharray="7 5"
+        />
+        <circle cx={z.x + 15} cy={z.y + 17} r="4" fill={COLOR_NIVEL[z.nivel]} />
+        <text class="uml-particion" x={z.x + 26} y={z.y + 17} text-anchor="start" dominant-baseline="central">
+          {z.label}
+        </text>
+        <text class="uml-rol" x={z.x + 26} y={z.y + 17} dx={`${z.label.length * 6.6 + 12}`} dominant-baseline="central">
+          confianza {z.nivel}
+        </text>
+        {z.nota && (
+          <text class="uml-nota" x={z.x + 15} y={z.y + 29} text-anchor="start" dominant-baseline="central">
+            {z.nota}
+          </text>
+        )}
+      </g>
+    ))
+  }
+
+  {/* ── Flujos. Los que cruzan una frontera van en el color de acento: es el
+       tráfico que tiene que justificar controles. Los internos, en gris fino. */}
+  {
+    l.flujos.map((f) => (
+      <g>
+        <path
+          d={`M ${f.a.x} ${f.a.y} Q ${f.ctrl.x} ${f.ctrl.y} ${f.b.x} ${f.b.y}`}
+          fill="none"
+          stroke={f.cruzaFrontera ? 'var(--uml-accent)' : 'var(--uml-line)'}
+          stroke-width={f.cruzaFrontera ? 1.4 : 1.1}
+          stroke-dasharray={f.cruzaFrontera ? undefined : '4 4'}
+          marker-end={`url(#${uid}-punta${f.cruzaFrontera ? '-frontera' : ''})`}
+          marker-start={f.bidireccional ? `url(#${uid}-punta${f.cruzaFrontera ? '-frontera' : ''})` : undefined}
+        />
+        <text
+          class={f.cruzaFrontera ? 'uml-guarda' : 'uml-nota'}
+          x={f.at.x}
+          y={f.at.y}
+          text-anchor={f.align}
+          dominant-baseline="central"
+        >
+          {f.lines.map((line, i) => (
+            <tspan x={f.at.x} dy={i === 0 ? -((f.lines.length - 1) * 11) / 2 : 11}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      </g>
+    ))
+  }
+
+  {/* ── Hosts */}
+  {
+    l.hosts.map((h) => (
+      <g>
+        <rect
+          x={h.x}
+          y={h.y}
+          width={h.w}
+          height={h.h}
+          rx="6"
+          fill="var(--uml-node-fill)"
+          stroke="var(--uml-node-stroke)"
+          stroke-width="1.3"
+        />
+        <text class="uml-estereotipo" x={h.x + 11} y={h.y + 12} text-anchor="start" dominant-baseline="central">
+          «{h.rol}»
+        </text>
+        <text class="uml-label" x={h.x + 11} y={h.y + 25} text-anchor="start" dominant-baseline="central">
+          {h.label}
+        </text>
+        {(h.detalle ?? []).map((d, i) => (
+          <text
+            class="uml-nota"
+            x={h.x + 11}
+            y={h.y + GEO.hostHeaderH + i * GEO.detalleH + 4}
+            text-anchor="start"
+            dominant-baseline="central"
+          >
+            {d}
+          </text>
+        ))}
+      </g>
+    ))
+  }
+</svg>
