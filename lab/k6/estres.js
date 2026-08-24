@@ -305,18 +305,23 @@ export function handleSummary(data) {
     descripcion: '',
   }))
 
+  // H-04: "s/d" (sin dato) cuando el muestreo de proceso no llegó a tiempo,
+  // para no confundirlo con un 0% / 0 MB real.
+  const cpuTexto = (v) => (v == null ? 's/d'.padStart(6) : `${v}%`.padStart(6))
+  const heapTexto = (v) => (v == null ? 's/d'.padStart(9) : String(v).padStart(9))
+
   const marca = r.fecha.replace(/[:.]/g, '-')
   return {
     stdout: aTexto(r)
       + `  escalera del quiebre\n`
       + `    ofrecido  respuestas   exitosas      p50      p95  errores    cpu%   heap MB  estado\n`
       + r.escalera
-          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.respuestasRps).padStart(9)}/s ${String(e.exitosasRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(6)}% ${String(e.cpuPct).padStart(7)}% ${String(e.heapMb).padStart(9)} ${e.estado.padStart(10)}`)
+          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.respuestasRps).padStart(9)}/s ${String(e.exitosasRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(6)}% ${cpuTexto(e.cpuPct)} ${heapTexto(e.heapMb)} ${e.estado.padStart(10)}`)
           .join('\n')
       + `\n\n  recuperación  p50 ${r.recuperacion.p50}ms · p95 ${r.recuperacion.p95}ms · errores ${r.recuperacion.tasaErrorPct}%\n`
       + `  curva de recuperación (s desde que cesó la carga)\n`
       + r.recuperacion.curva
-          .map((c) => `    +${String(c.desdeS).padStart(2)}s   n=${String(c.n).padStart(4)}   p50 ${String(Math.round(c.p50)).padStart(6)}ms   p95 ${String(Math.round(c.p95)).padStart(6)}ms   cpu ${String(c.cpuPct).padStart(5)}%   heap ${String(c.heapMb).padStart(6)} MB`)
+          .map((c) => `    +${String(c.desdeS).padStart(2)}s   n=${String(c.n).padStart(4)}   p50 ${String(Math.round(c.p50)).padStart(6)}ms   p95 ${String(Math.round(c.p95)).padStart(6)}ms   cpu ${cpuTexto(c.cpuPct)}   heap ${heapTexto(c.heapMb)} MB`)
           .join('\n')
       + `\n\n  bloque de hallazgos (completar a mano tras revisar la corrida)\n`
       + r.hallazgos.map((h) => `    ${h.id}: (sin completar)`).join('\n')
