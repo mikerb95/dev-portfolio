@@ -120,6 +120,9 @@ const [cerrados, checksHoy, latencyByMonitor, incidentsRaw, activeIncidentsRaw] 
     [] as { monitorId: number; at: Date; ok: boolean; responseMs: number | null }[],
     'status/checks-de-hoy',
   ),
+  // Serie de latencia reciente por monitor para la mini-gráfica tipo EKG. En
+  // modo respaldo no se pide: los ids sondeados en vivo no existen en la
+  // tabla, así que la consulta solo gastaría un viaje para volver vacía.
   modoRespaldo
     ? Promise.resolve(new Map<number, { t: number; ms: number; ok: boolean }[]>())
     : safeQuery(
