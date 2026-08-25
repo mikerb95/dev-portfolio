@@ -516,6 +516,14 @@ export function findLayoutIssues(model: RedModel): RedIssue[] {
         issues.push({ kind: 'etiqueta-encimada', detail: `el rótulo de ${etiquetas[i].id} cae sobre el host "${h.id}"` })
       }
     }
+    for (const z of l.zonas) {
+      if (cajasSeCortan(etiquetas[i].caja, cabeceraDeZona(z))) {
+        issues.push({
+          kind: 'etiqueta-encimada',
+          detail: `el rótulo de ${etiquetas[i].id} cae sobre la cabecera de la zona "${z.id}"`,
+        })
+      }
+    }
     for (const f of l.flujos) {
       if (trazaCortaCaja(puntosTraza(f.a, f.ctrl, f.b), etiquetas[i].caja)) {
         issues.push({ kind: 'etiqueta-encimada', detail: `el flujo ${f.from}–${f.to} atraviesa el rótulo de ${etiquetas[i].id}` })
