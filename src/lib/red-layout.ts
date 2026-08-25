@@ -284,7 +284,13 @@ export function layout(model: RedModel): RedLayout {
   })
 
   const hostPorId = new Map(hosts.map((h) => [h.id, h]))
-  const cajasOcupadas: Caja[] = hosts.map((h) => ({ x1: h.x, x2: h.x + h.w, y1: h.y, y2: h.y + h.h }))
+  const cajasOcupadas: Caja[] = [
+    ...hosts.map((h) => ({ x1: h.x, x2: h.x + h.w, y1: h.y, y2: h.y + h.h })),
+    // La cabecera de la zona (título, nivel y nota) es texto, no decoración:
+    // sin reservarla, los rótulos de los flujos que llegan desde arriba
+    // aterrizan justo encima de ella.
+    ...zonas.map(cabeceraDeZona),
+  ]
 
   // La geometría de TODOS los trazos se calcula antes de rotular ninguno: un
   // rótulo colocado mirando solo a los trazos ya dibujados acabaría bajo el
