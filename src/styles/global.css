@@ -210,6 +210,9 @@ body {
 }
 .uml-scope .uml-rol { font-size: 9.5px; fill: var(--uml-estereotipo); font-weight: 400; letter-spacing: 0; text-transform: none; }
 .uml-scope .uml-nota { font-size: 9.5px; fill: var(--uml-estereotipo); font-style: italic; }
+/* Nivel de confianza dentro de su disco, en el diagrama de red. El color lo
+   pone el elemento: cambia con el nivel. */
+.uml-scope .uml-nivel { font-size: 10px; font-weight: 600; }
 /* Halo del color del fondo bajo todo texto que vive fuera de una figura: por
    ahí pasan las transiciones, y `paint-order` hace que la letra recorte la
    línea en vez de mezclarse con ella. */
