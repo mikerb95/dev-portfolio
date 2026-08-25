@@ -100,7 +100,7 @@ export interface RedModel {
 }
 
 export const GEO = {
-  colW: 210,
+  colW: 206,
   colGap: 22,
   padX: 26,
   padY: 26,
