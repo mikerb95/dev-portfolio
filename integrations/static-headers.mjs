@@ -42,26 +42,8 @@ const CABECERAS = {
   'Content-Security-Policy': CSP_PUBLICA,
 }
 
-async function htmlsDe(dir) {
-  const salida = []
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    const p = join(dir, entry.name)
-    if (entry.isDirectory()) salida.push(...(await htmlsDe(p)))
-    else if (entry.name.endsWith('.html')) salida.push(p)
-  }
-  return salida
-}
-
-/** `static/docs/kanban/index.html` → `/docs/kanban`; `static/index.html` → `/` */
-function rutaDe(base, archivo) {
-  const rel = relative(base, archivo).replaceAll('\\', '/')
-  const sinExt = rel.endsWith('/index.html')
-    ? rel.slice(0, -'/index.html'.length)
-    : rel === 'index.html'
-      ? ''
-      : rel.slice(0, -'.html'.length)
-  return `/${sinExt}`
-}
+/** `docs/kanban/` → `docs/kanban`; la raíz queda como cadena vacía. */
+const normaliza = (pathname) => pathname.replace(/^\/+/, '').replace(/\/+$/, '')
 
 const escapa = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
