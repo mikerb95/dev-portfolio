@@ -75,7 +75,7 @@ export default function staticHeaders() {
         }
 
         // `/` sale como cadena vacía en la alternancia; el `/?` final la cubre.
-        const alternancia = rutas.map((r) => escapa(r.slice(1))).join('|')
+        const alternancia = rutas.map(escapa).join('|')
         config.routes.splice(i, 0, {
           src: `^/(?:${alternancia})/?$`,
           headers: CABECERAS,
