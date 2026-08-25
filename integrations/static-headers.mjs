@@ -1,6 +1,4 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { readFile, writeFile } from 'node:fs/promises'
 
 // Cabeceras de seguridad para las páginas PRERENDERIZADAS.
 //
