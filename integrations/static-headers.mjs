@@ -15,12 +15,15 @@ import { readFile, writeFile } from 'node:fs/promises'
 // config.json. Los `crons` de vercel.json sí siguen funcionando porque no son
 // configuración de routing.
 //
-// Las rutas se derivan del HTML realmente emitido en .vercel/output/static, no
-// de una lista escrita a mano. Así marcar una página nueva con `prerender` la
-// cubre sola, y una que vuelve a SSR deja de aparecer sin que nadie se acuerde
-// de tocar este archivo. Van con `continue: true` y ANTES de
-// `handle: filesystem`, que es donde Vercel compila las cabeceras de vercel.json
-// en un build normal: marcan la respuesta y dejan que el archivo se sirva igual.
+// Las rutas se derivan de la lista de páginas prerenderizadas que Astro entrega
+// en el hook, no de una lista escrita a mano. Así marcar una página nueva con
+// `prerender` la cubre sola, y una que vuelve a SSR deja de aparecer sin que
+// nadie se acuerde de tocar este archivo. (No se leen de
+// .vercel/output/static: esta integración corre antes de que el adaptador
+// copie los archivos allí, y el directorio todavía está vacío.) Van con
+// `continue: true` y ANTES de `handle: filesystem`, que es donde Vercel compila
+// las cabeceras de vercel.json en un build normal: marcan la respuesta y dejan
+// que el archivo se sirva igual.
 
 /** CSP de páginas públicas. Copia literal de la que pone el middleware. */
 const CSP_PUBLICA =
