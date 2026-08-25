@@ -1,11 +1,14 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
+import { join, relative } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-// Cabeceras de seguridad para las páginas PRERENDERIZADAS (/docs/*).
+// Cabeceras de seguridad para las páginas PRERENDERIZADAS.
 //
 // Por qué existe este archivo: src/middleware.ts pone HSTS, CSP y compañía en
 // cada respuesta, pero una página prerenderizada es un archivo que sirve el CDN
 // y nunca invoca la función, así que nunca pasa por el middleware. Sin esto,
-// /docs quedaría publicado sin ninguna cabecera de seguridad.
+// toda la parte estática del sitio quedaría publicada sin una sola cabecera de
+// seguridad, y en silencio.
 //
 // Y por qué no en vercel.json: con el Build Output API (que es lo que genera
 // @astrojs/vercel) la autoridad de routing es .vercel/output/config.json, y el
@@ -14,9 +17,12 @@ import { readFile, writeFile } from 'node:fs/promises'
 // config.json. Los `crons` de vercel.json sí siguen funcionando porque no son
 // configuración de routing.
 //
-// Las rutas van con `continue: true` y ANTES de `handle: filesystem`, que es
-// donde Vercel compila las cabeceras de vercel.json en un build normal: marcan
-// la respuesta y dejan que el archivo se sirva igual.
+// Las rutas se derivan del HTML realmente emitido en .vercel/output/static, no
+// de una lista escrita a mano. Así marcar una página nueva con `prerender` la
+// cubre sola, y una que vuelve a SSR deja de aparecer sin que nadie se acuerde
+// de tocar este archivo. Van con `continue: true` y ANTES de
+// `handle: filesystem`, que es donde Vercel compila las cabeceras de vercel.json
+// en un build normal: marcan la respuesta y dejan que el archivo se sirva igual.
 
 /** CSP de páginas públicas. Copia literal de la que pone el middleware. */
 const CSP_PUBLICA =
@@ -35,32 +41,70 @@ const CABECERAS = {
   'Content-Security-Policy': CSP_PUBLICA,
 }
 
-// /docs/presentacion (deck privado) y /docs/testing (lee la base) siguen siendo
-// SSR: el middleware ya los cubre, y el deck necesita las cabeceras de ruta
-// privada, no estas. Excluirlos aquí evita pisarle la CSP restrictiva.
-const RUTAS_SSR = ['presentacion', 'testing']
-const SRC_DOCS = `^/docs(?:/(?!(?:${RUTAS_SSR.join('|')})(?:/)?$).*)?$`
+async function htmlsDe(dir) {
+  const salida = []
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name)
+    if (entry.isDirectory()) salida.push(...(await htmlsDe(p)))
+    else if (entry.name.endsWith('.html')) salida.push(p)
+  }
+  return salida
+}
+
+/** `static/docs/kanban/index.html` → `/docs/kanban`; `static/index.html` → `/` */
+function rutaDe(base, archivo) {
+  const rel = relative(base, archivo).replaceAll('\\', '/')
+  const sinExt = rel.endsWith('/index.html')
+    ? rel.slice(0, -'/index.html'.length)
+    : rel === 'index.html'
+      ? ''
+      : rel.slice(0, -'.html'.length)
+  return `/${sinExt}`
+}
+
+const escapa = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 export default function staticHeaders() {
   return {
     name: 'static-headers',
     hooks: {
-      'astro:build:done': async () => {
-        const ruta = new URL('../.vercel/output/config.json', import.meta.url)
-        const config = JSON.parse(await readFile(ruta, 'utf-8'))
+      'astro:build:done': async ({ logger }) => {
+        const salida = new URL('../.vercel/output/', import.meta.url)
+        const estaticos = fileURLToPath(new URL('static/', salida))
+        const configPath = new URL('config.json', salida)
+
+        const rutas = (await htmlsDe(estaticos))
+          .map((f) => rutaDe(estaticos, f))
+          .sort()
+
+        if (rutas.length === 0) {
+          logger.warn('static-headers: no hay páginas prerenderizadas, no se inyecta nada.')
+          return
+        }
+
+        const config = JSON.parse(await readFile(configPath, 'utf-8'))
 
         // Si el adaptador cambia el formato, es preferible romper el build a
-        // desplegar /docs sin cabeceras de seguridad y no enterarse.
+        // desplegar páginas sin cabeceras de seguridad y no enterarse.
         const i = config.routes?.findIndex((r) => r.handle === 'filesystem')
         if (i === undefined || i < 0) {
           throw new Error(
             'static-headers: no se encontró `handle: filesystem` en .vercel/output/config.json. ' +
-              'El adaptador de Vercel cambió el formato: revisar antes de desplegar, o /docs saldría sin CSP ni HSTS.'
+              'El adaptador de Vercel cambió el formato: revisar antes de desplegar, o las páginas ' +
+              'estáticas saldrían sin CSP ni HSTS.'
           )
         }
 
-        config.routes.splice(i, 0, { src: SRC_DOCS, headers: CABECERAS, continue: true })
-        await writeFile(ruta, JSON.stringify(config, null, 2))
+        // `/` sale como cadena vacía en la alternancia; el `/?` final la cubre.
+        const alternancia = rutas.map((r) => escapa(r.slice(1))).join('|')
+        config.routes.splice(i, 0, {
+          src: `^/(?:${alternancia})/?$`,
+          headers: CABECERAS,
+          continue: true,
+        })
+
+        await writeFile(configPath, JSON.stringify(config, null, 2))
+        logger.info(`cabeceras de seguridad inyectadas en ${rutas.length} páginas estáticas`)
       },
     },
   }
