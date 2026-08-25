@@ -105,7 +105,7 @@ export const GEO = {
   padX: 26,
   padY: 26,
   /** Separación vertical entre bandas de zona. Es donde viven los rótulos. */
-  filaGap: 78,
+  filaGap: 104,
   zonaTituloH: 34,
   zonaPad: 14,
   hostGapX: 20,
