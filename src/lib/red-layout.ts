@@ -213,6 +213,9 @@ function trazaCortaCaja(pts: Pt[], c: Caja, incluirExtremos = true): boolean {
 
 const altoHost = (h: RedHost): number => GEO.hostHeaderH + (h.detalle?.length ?? 0) * GEO.detalleH + GEO.hostPadY
 
+/** Franja de texto de la zona: título a la izquierda, nivel a la derecha, nota debajo. */
+const cabeceraDeZona = (z: PlacedZona): Caja => ({ x1: z.x, x2: z.x + z.w, y1: z.y, y2: z.y + GEO.zonaTituloH })
+
 /** Punto del borde del host en dirección a `hacia`. */
 function borde(h: PlacedHost, hacia: Pt): Pt {
   const dx = hacia.x - h.cx
