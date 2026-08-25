@@ -51,14 +51,10 @@ export default function staticHeaders() {
   return {
     name: 'static-headers',
     hooks: {
-      'astro:build:done': async ({ logger }) => {
-        const salida = new URL('../.vercel/output/', import.meta.url)
-        const estaticos = fileURLToPath(new URL('static/', salida))
-        const configPath = new URL('config.json', salida)
+      'astro:build:done': async ({ pages, logger }) => {
+        const configPath = new URL('../.vercel/output/config.json', import.meta.url)
 
-        const rutas = (await htmlsDe(estaticos))
-          .map((f) => rutaDe(estaticos, f))
-          .sort()
+        const rutas = [...new Set(pages.map((p) => normaliza(p.pathname)))].sort()
 
         if (rutas.length === 0) {
           logger.warn('static-headers: no hay páginas prerenderizadas, no se inyecta nada.')
