@@ -14,15 +14,21 @@ import { DESPLIEGUES } from '../../data/despliegue'
 
     <div class="max-w-3xl mb-8">
       <p class="text-[14.5px] text-ink-200 leading-relaxed">
-        La vista de red del sistema: qué corre en cada máquina, qué artefacto se despliega en cada
-        entorno de ejecución y por qué protocolo viaja cada cosa.
+        Qué corre en cada máquina, qué artefacto se despliega en cada entorno de ejecución y por qué
+        protocolo viaja cada cosa.
       </p>
       <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
-        Va como <strong class="font-medium text-ink-100">diagrama de despliegue</strong> y no como
-        «diagrama de red» porque UML 2.5.1 no tiene ninguno con ese nombre: entre sus catorce tipos,
-        el que representa máquinas, entornos de ejecución, artefactos desplegados y el enlace físico
-        entre ellos es este. Dibujar una topología de red con símbolos inventados y llamarla UML
-        sería lo contrario de respetar la notación.
+        Es la vista de infraestructura que UML sí sabe expresar. Entre sus catorce tipos no hay
+        ninguno llamado «diagrama de red»: el que representa máquinas, entornos de ejecución,
+        artefactos desplegados y el enlace físico entre ellos es este. Dibujar una topología de red
+        con símbolos inventados y llamarla UML sería lo contrario de respetar la notación, así que
+        la topología va aparte y sin disfraz, en
+        <a
+          href="/docs/diagrama-red"
+          class="text-cyan-dim hover:text-cyan transition-colors underline underline-offset-4 decoration-cyan-dim/40"
+          >el diagrama de red</a
+        >: este dice <em>dónde corre cada cosa</em>; aquel, <em>qué puede alcanzar a qué y qué lo
+        filtra</em>. Se usan en momentos distintos: uno al diseñar, otro al operar.
       </p>
       <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
         Complementa a
