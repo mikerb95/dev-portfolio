@@ -17,6 +17,9 @@
  */
 export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   // Páginas y directorios de src/pages
+  // La ficha SENA da nombre a una ruta de un solo segmento en la raíz, así que
+  // compite con el espacio de los PIN igual que cualquier otra página.
+  '3114731',
   '404',
   'admin',
   'api',
