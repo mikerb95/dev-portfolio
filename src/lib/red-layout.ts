@@ -108,8 +108,8 @@ export const GEO = {
   filaGap: 78,
   zonaTituloH: 34,
   zonaPad: 14,
-  hostGapX: 14,
-  hostGapY: 12,
+  hostGapX: 20,
+  hostGapY: 20,
   /** Cabecera del host: rol + nombre. */
   hostHeaderH: 32,
   detalleH: 13,
