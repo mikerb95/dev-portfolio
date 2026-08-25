@@ -1,4 +1,7 @@
 ---
+// Página sin datos vivos: se genera en el build, no por request.
+export const prerender = true
+
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
 

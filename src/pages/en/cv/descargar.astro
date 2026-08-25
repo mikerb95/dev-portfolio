@@ -1,4 +1,7 @@
 ---
+// Página sin datos vivos: se genera en el build, no por request.
+export const prerender = true
+
 // Cascarón de ruta: la implementación real vive en src/pages/cv/descargar.astro.
 // La ruta mantiene el slug en español en los dos idiomas: es una pantalla de
 // paso a la que se llega por redirección desde /api/cv, no una URL que alguien

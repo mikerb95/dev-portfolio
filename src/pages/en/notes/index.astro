@@ -1,4 +1,7 @@
 ---
+// Página sin datos vivos: se genera en el build, no por request.
+export const prerender = true
+
 // Cascarón de ruta: la implementación real vive en src/pages/notes/index.astro,
 // que filtra las notas por el idioma de la URL. Ver docs/plan-i18n-en.md §8.
 import Notes from '../../notes/index.astro'

@@ -1,4 +1,7 @@
 ---
+// Página sin datos vivos: se genera en el build, no por request.
+export const prerender = true
+
 import BaseLayout from '../../layouts/BaseLayout.astro'
 // Wompi redirige aquí tras el checkout con ?id=<transaction_id>.
 // El estado final llega por webhook; esta página es solo la confirmación visual.

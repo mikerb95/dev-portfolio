@@ -1,4 +1,7 @@
 ---
+// Página sin datos vivos: se genera en el build, no por request.
+export const prerender = true
+
 // Cascarón de ruta: la implementación real vive en src/pages/paginas-web.astro.
 // Ver docs/plan-i18n-en.md §2.3.
 import PaginasWeb from '../paginas-web.astro'
