@@ -489,7 +489,7 @@ export function findLayoutIssues(model: RedModel): RedIssue[] {
     const zb = hostPorId.get(f.to)!.zona
     for (const z of l.zonas) {
       if (z.id === za || z.id === zb) continue
-      if (trazaCortaCaja(pts, z)) {
+      if (trazaCortaCaja(pts, bboxZona(z))) {
         issues.push({ kind: 'traza-cruza', detail: `el flujo ${f.from}–${f.to} atraviesa la zona "${z.id}"` })
       }
     }
