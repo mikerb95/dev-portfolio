@@ -302,17 +302,29 @@ export function layout(model: RedModel): RedLayout {
     const ha = hostPorId.get(f.from)
     const hb = hostPorId.get(f.to)
     if (!ha || !hb) throw new Error(`Flujo ${f.from}→${f.to}: host inexistente`)
-    const medio = { x: (ha.cx + hb.cx) / 2, y: (ha.cy + hb.cy) / 2 }
     const dx = hb.cx - ha.cx
     const dy = hb.cy - ha.cy
     const largo = Math.hypot(dx, dy) || 1
     const perp = { x: -dy / largo, y: dx / largo }
     const desvio = f.curva ?? 0
+
     // El control se desvía el DOBLE: una cuadrática pasa por la mitad de la
     // distancia a su punto de control, así que `curva` es la separación real.
-    const ctrl = { x: medio.x + perp.x * desvio * 2, y: medio.y + perp.y * desvio * 2 }
-    const a = borde(ha, ctrl)
-    const b = borde(hb, ctrl)
+    const guia = {
+      x: (ha.cx + hb.cx) / 2 + perp.x * desvio * 2,
+      y: (ha.cy + hb.cy) / 2 + perp.y * desvio * 2,
+    }
+    const a = borde(ha, guia)
+    const b = borde(hb, guia)
+
+    // El control se ancla al medio de los BORDES, no al de los centros: los
+    // puntos de salida no son simétricos respecto a los centros, así que usar
+    // aquellos comba hacia dentro incluso un trazo declarado recto.
+    const medioBordes = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+    const ctrl =
+      desvio === 0
+        ? medioBordes
+        : { x: medioBordes.x + perp.x * desvio * 2, y: medioBordes.y + perp.y * desvio * 2 }
     return { a, ctrl, b, pts: puntosTraza(a, ctrl, b) }
   })
 

@@ -1,0 +1,114 @@
+---
+// Página informativa sobre la etapa productiva SENA (ficha 3114731): fechas de
+// inicio/fin, bitácoras mensuales y visitas de seguimiento. No sensible, pero
+// sin valor de indexación pública ni enlace en el nav.
+export const prerender = true
+
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+const inicio = '2026-09-09'
+const fin = '2027-03-08'
+
+const bitacoras = [
+  { n: 1, desde: '09-sep-2026', hasta: '08-oct-2026' },
+  { n: 2, desde: '09-oct-2026', hasta: '08-nov-2026' },
+  { n: 3, desde: '09-nov-2026', hasta: '08-dic-2026' },
+  { n: 4, desde: '09-dic-2026', hasta: '08-ene-2027' },
+  { n: 5, desde: '09-ene-2027', hasta: '08-feb-2027' },
+  { n: 6, desde: '09-feb-2027', hasta: '08-mar-2027' },
+]
+
+const visitas = [
+  {
+    n: 1,
+    cuando: 'Primer mes de etapa productiva',
+    detalle: 'Entre el 09-sep-2026 y el 08-oct-2026.',
+  },
+  {
+    n: 2,
+    cuando: 'Primera semana de diciembre',
+    detalle: 'Entre el 01-dic-2026 y el 07-dic-2026, o apenas los instructores retomen labores si están en vacaciones.',
+  },
+  {
+    n: 3,
+    cuando: 'Tercer trimestre de la etapa',
+    detalle: 'Aprox. 3 meses después de la visita 2, hacia el cierre de la etapa productiva (08-mar-2027).',
+  },
+]
+---
+
+<BaseLayout
+  title="Etapa productiva SENA - Ficha 3114731"
+  description="Fechas de inicio/fin, bitácoras mensuales y visitas de seguimiento de la etapa productiva."
+  image="/og-default.png"
+  noindex={true}
+>
+  <div class="max-w-[720px] mx-auto px-6 md:px-12 pt-32 pb-24">
+
+    <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+      <span class="text-cyan">/3114731</span>
+      <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+      <span>Etapa productiva SENA</span>
+    </div>
+
+    <h1 class="font-sans text-4xl md:text-5xl font-medium tracking-[-.03em] text-mask leading-[1.05] mb-4">
+      Ficha 3114731
+    </h1>
+    <p class="text-[15px] text-ink-100 leading-relaxed max-w-lg mb-10">
+      Seguimiento de la etapa productiva: fecha de inicio y fin, bitácoras mensuales
+      y visitas de seguimiento.
+    </p>
+
+    <div class="rounded-2xl glass border-accent p-6 mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Duración</span>
+      </div>
+      <div class="grid grid-cols-2 gap-4 text-[13px]">
+        <div>
+          <div class="text-[10px] font-mono uppercase tracking-wider text-ink-300 mb-1">Inicio</div>
+          <div class="text-ink-100">{inicio} · 09-sep-2026</div>
+        </div>
+        <div>
+          <div class="text-[10px] font-mono uppercase tracking-wider text-ink-300 mb-1">Fin</div>
+          <div class="text-ink-100">{fin} · 08-mar-2027</div>
+        </div>
+      </div>
+      <p class="text-[12px] text-ink-300 mt-3">6 meses de etapa productiva.</p>
+    </div>
+
+    <div class="rounded-2xl glass border-accent p-6 mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Bitácoras (6, periodicidad mensual)</span>
+      </div>
+      <div class="space-y-2">
+        {bitacoras.map((b) => (
+          <div class="flex items-center justify-between text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+            <span class="text-ink-100">Bitácora {b.n}</span>
+            <span class="text-ink-300 font-mono text-[12px]">{b.desde} → {b.hasta}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="rounded-2xl glass border-accent p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Visitas de seguimiento (3, cada 3 meses)</span>
+      </div>
+      <div class="space-y-3">
+        {visitas.map((v) => (
+          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+            <div class="flex items-center justify-between text-[13px] mb-1">
+              <span class="text-ink-100">Visita {v.n}</span>
+              <span class="text-cyan font-mono text-[12px]">{v.cuando}</span>
+            </div>
+            <p class="text-[12px] text-ink-300 leading-relaxed">{v.detalle}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>
