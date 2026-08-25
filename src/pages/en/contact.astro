@@ -2,7 +2,10 @@
 // Cascarón de ruta: la implementación real vive en src/pages/contact.astro.
 // Ver docs/plan-i18n-en.md §2.3.
 import Contact from '../contact.astro'
-export const prerender = false
+// Página sin datos vivos: se genera en el build, no por request. El formulario
+// publica contra /api/contact desde el navegador, así que la página en sí no
+// necesita servidor.
+export const prerender = true
 ---
 
 <Contact />
