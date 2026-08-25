@@ -55,15 +55,30 @@ const COLOR_NIVEL = ['var(--uml-error)', 'var(--uml-accent)', 'var(--uml-control
           stroke-width="1.2"
           stroke-dasharray="7 5"
         />
-        <circle cx={z.x + 15} cy={z.y + 17} r="4" fill={COLOR_NIVEL[z.nivel]} />
-        <text class="uml-particion" x={z.x + 26} y={z.y + 17} text-anchor="start" dominant-baseline="central">
-          {z.label}
+        {/* El nivel va DENTRO del disco, pegado al título. Como texto suelto
+            tendría que anclarse al margen derecho de la banda (calcular el
+            ancho del título sería adivinar la métrica de la fuente desde el
+            servidor), y ahí es lo primero que se pierde al hacer scroll. */}
+        <circle
+          cx={z.x + 18}
+          cy={z.y + 16}
+          r="8"
+          fill="var(--uml-bg)"
+          stroke={COLOR_NIVEL[z.nivel]}
+          stroke-width="1.4"
+        />
+        <text
+          class="uml-nivel"
+          x={z.x + 18}
+          y={z.y + 16}
+          fill={COLOR_NIVEL[z.nivel]}
+          text-anchor="middle"
+          dominant-baseline="central"
+        >
+          {z.nivel}
         </text>
-        {/* El nivel se ancla al margen derecho de la banda: calcular el ancho
-            del título para ponerlo a continuación sería adivinar la métrica de
-            la fuente desde el servidor. */}
-        <text class="uml-rol" x={z.x + z.w - 15} y={z.y + 17} text-anchor="end" dominant-baseline="central">
-          confianza {z.nivel}
+        <text class="uml-particion" x={z.x + 33} y={z.y + 16} text-anchor="start" dominant-baseline="central">
+          {z.label}
         </text>
         {z.nota && (
           <text class="uml-nota" x={z.x + 15} y={z.y + 29} text-anchor="start" dominant-baseline="central">

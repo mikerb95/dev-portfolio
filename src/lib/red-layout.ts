@@ -329,7 +329,11 @@ export function layout(model: RedModel): RedLayout {
     const largo = Math.hypot(dx, dy) || 1
     const dir = { x: dx / largo, y: dy / largo }
     const perp = { x: -dir.y, y: dir.x }
-    const texto = `${indice + 1} «${f.protocolo}»${f.puerto ? ` ${f.puerto}` : ''}`
+    // Un flujo interno se rotula solo con su número: su traza es corta y todo
+    // su entorno está ocupado por los hosts que conecta, así que un rótulo
+    // largo acaba buscando sitio a cien píxeles de la línea que nombra. El
+    // protocolo se lee en la tabla, que es donde está el resto del detalle.
+    const texto = cruzaFrontera ? `${indice + 1} «${f.protocolo}» ${f.puerto ?? ''}`.trim() : `${indice + 1}`
     const lines = wrap(texto, 24, 2)
 
     // El rótulo busca sitio en vez de sentarse a una distancia fija: los trazos
