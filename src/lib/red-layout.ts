@@ -539,6 +539,8 @@ export function findLayoutIssues(model: RedModel): RedIssue[] {
       }
     }
     for (const f of l.flujos) {
+      // El rótulo de un flujo interno se apoya en su propia traza a propósito.
+      if (!f.cruzaFrontera && `${f.from}–${f.to}` === etiquetas[i].id) continue
       if (trazaCortaCaja(puntosTraza(f.a, f.ctrl, f.b), etiquetas[i].caja)) {
         issues.push({ kind: 'etiqueta-encimada', detail: `el flujo ${f.from}–${f.to} atraviesa el rótulo de ${etiquetas[i].id}` })
       }
