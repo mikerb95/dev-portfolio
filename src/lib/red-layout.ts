@@ -336,6 +336,16 @@ export function layout(model: RedModel): RedLayout {
     const texto = cruzaFrontera ? `${indice + 1} «${f.protocolo}» ${f.puerto ?? ''}`.trim() : `${indice + 1}`
     const lines = wrap(texto, 24, 2)
 
+    // Un flujo interno lleva su número encima de la propia traza, con halo del
+    // color del fondo: es un solo carácter, la línea queda recortada bajo él, y
+    // así el rótulo no puede acabar lejos de lo que nombra. Buscarle hueco no
+    // sirve aquí, porque todo su entorno son los dos hosts que conecta.
+    if (!cruzaFrontera) {
+      const caja = cajaEtiqueta(medio, 'middle', lines)
+      cajasOcupadas.push(caja)
+      return { ...f, num: indice + 1, a, b, ctrl, at: medio, align: 'middle' as const, lines, cruzaFrontera }
+    }
+
     // El rótulo busca sitio en vez de sentarse a una distancia fija: los trazos
     // son largos y diagonales y el texto se escribe horizontal, así que una
     // separación constante deja el número cruzado por su propia línea.
