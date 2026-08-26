@@ -498,18 +498,18 @@ const visitas = [
         const entregado = checklist.has(key)
 
         const item = document.createElement('div')
-        item.dataset.categoria = h.categoria
         item.className =
-          'rounded-lg border px-3 py-2.5 ' +
+          'calc-item rounded-lg border px-3 py-2.5 ' +
           (h.estado === 'next'
             ? 'bg-lime/[.06] border-lime/30'
             : h.estado === 'past'
               ? 'bg-white/[.02] border-white/10 opacity-70'
               : 'bg-white/[.03] border-white/10')
+        item.dataset.categoria = h.categoria
 
         item.innerHTML = `
           <div class="flex items-center justify-between text-[13px] mb-1 gap-2">
-            <span class="text-ink-100${entregado ? ' line-through text-ink-300' : ''}">${h.titulo}</span>
+            <span class="calc-title text-ink-100${entregado ? ' line-through text-ink-300' : ''}">${h.titulo}</span>
             <span class="${colorPorEstado[h.estado]} font-mono text-[11px] uppercase shrink-0">${labelPorEstado[h.estado]}</span>
           </div>
           <div class="text-cyan font-mono text-[11px] mb-1.5">${fmtLargo(h.fecha)}</div>
@@ -532,8 +532,9 @@ const visitas = [
           if (cb.checked) set.add(k)
           else set.delete(k)
           localStorage.setItem(checklistKeyActual, JSON.stringify([...set]))
-          cb.closest('div')?.parentElement?.querySelector('span.text-ink-100')?.classList.toggle('line-through', cb.checked)
-          cb.closest('div')?.parentElement?.querySelector('span.text-ink-100')?.classList.toggle('text-ink-300', cb.checked)
+          const titulo = cb.closest('.calc-item')?.querySelector('.calc-title')
+          titulo?.classList.toggle('line-through', cb.checked)
+          titulo?.classList.toggle('text-ink-300', cb.checked)
           actualizarProgreso()
         })
       })
@@ -622,10 +623,72 @@ const visitas = [
       }
     }
 
+    // Recordatorio por email: personal, solo admin. La suscripción activa
+    // (si hay) vive en Turso vía /api/admin/sena-recordatorio; el middleware
+    // exige sesión admin en ese endpoint, así que un visitante sin sesión solo
+    // ve el 401 al intentar activarlo.
+    const remindOnBtn = document.getElementById('calc-remind-on') as HTMLButtonElement
+    const remindOffBtn = document.getElementById('calc-remind-off') as HTMLButtonElement
+    const remindStatusEl = document.getElementById('calc-remind-status')!
+
+    interface RecordatorioActivo {
+      tipo: TipoPrograma
+      inicio: string
+    }
+
+    async function actualizarEstadoRecordatorio() {
+      try {
+        const res = await fetch('/api/admin/sena-recordatorio')
+        if (!res.ok) {
+          remindStatusEl.textContent = res.status === 401 ? 'Inicia sesión de admin para activarlo.' : ''
+          remindOnBtn.classList.remove('hidden')
+          remindOffBtn.classList.add('hidden')
+          return
+        }
+        const sub = (await res.json()) as RecordatorioActivo | null
+        const coincide = sub && sub.tipo === tipoEl.value && sub.inicio === inicioEl.value
+        remindOnBtn.classList.toggle('hidden', Boolean(sub))
+        remindOffBtn.classList.toggle('hidden', !sub)
+        remindStatusEl.textContent = sub
+          ? coincide
+            ? 'Activo para esta simulación.'
+            : `Activo para otra simulación (${sub.tipo}, inicio ${sub.inicio}).`
+          : ''
+      } catch {
+        remindStatusEl.textContent = ''
+      }
+    }
+
+    async function activarRecordatorio() {
+      const res = await fetch('/api/admin/sena-recordatorio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: tipoEl.value, inicio: inicioEl.value }),
+      })
+      if (res.status === 401) {
+        mostrarToast('Necesitas sesión de admin - inicia sesión primero')
+        return
+      }
+      if (!res.ok) {
+        mostrarToast('No se pudo activar el recordatorio')
+        return
+      }
+      mostrarToast('Recordatorio activado')
+      actualizarEstadoRecordatorio()
+    }
+
+    async function desactivarRecordatorio() {
+      const res = await fetch('/api/admin/sena-recordatorio', { method: 'DELETE' })
+      if (res.ok) mostrarToast('Recordatorio desactivado')
+      actualizarEstadoRecordatorio()
+    }
+
     document.getElementById('calc-generar')?.addEventListener('click', calcular)
     document.getElementById('calc-print')?.addEventListener('click', () => window.print())
     document.getElementById('calc-ics')?.addEventListener('click', exportarIcs)
     document.getElementById('calc-share')?.addEventListener('click', compartir)
+    remindOnBtn?.addEventListener('click', activarRecordatorio)
+    remindOffBtn?.addEventListener('click', desactivarRecordatorio)
 
     document.querySelectorAll<HTMLButtonElement>('.calc-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
