@@ -94,6 +94,41 @@ node --experimental-strip-types scripts/capturar-instantanea.mjs --desde-db
 Conviene volver a capturarla con `--desde-db` cada cierto tiempo una vez
 restablecido el servicio: es el respaldo del próximo incidente.
 
+## Migraciones pendientes mientras dura el bloqueo
+
+A diferencia del código de la app (que hace fallback solo y no necesita
+revertirse), una migración de esquema **no se aplica sola**: si se generó con
+`drizzle-kit generate` mientras las lecturas estaban bloqueadas, `drizzle-kit
+migrate` falla en silencio (exit 1, sin mensaje visible porque el spinner se
+come el error) y queda pendiente hasta que alguien la corra a mano.
+
+| Migración | Qué agrega | Generada | Aplicada |
+|---|---|---|---|
+| `drizzle/0028_nice_otto_octavius.sql` | Tabla `sena_ep_recordatorios` (suscripción a recordatorios de `/3114731`) | 2026-08-26, con lecturas ya bloqueadas | **No confirmada** - `drizzle-kit migrate` no llegó a correr contra la base real |
+
+Cuando la cuota se reinicie (corte de ciclo, visible en el dashboard de Turso;
+el bloqueo de agosto 2026 dijo que vuelve a la normalidad el 2026-09-01):
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22
+export $(grep -E '^TURSO_' .env | xargs)
+npx drizzle-kit migrate
+```
+
+Verificar que quedó aplicada antes de dar por resuelto:
+
+```bash
+node -e "
+const { createClient } = require('@libsql/client');
+const c = createClient({ url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN });
+c.execute(\"select name from sqlite_master where type='table' and name='sena_ep_recordatorios'\").then(r => console.log(r.rows));
+"
+```
+
+Si en ese momento hay otras migraciones generadas y no aplicadas, revisar
+`drizzle/meta/_journal.json` contra lo que reporte `drizzle-kit migrate` para
+no dar por hecho que esta es la única pendiente.
+
 ## Recuperación alterna: mudar a una base nueva
 
 La cuota de Turso es **mensual y por organización**, no por base: crear otra

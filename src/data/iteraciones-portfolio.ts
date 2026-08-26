@@ -1638,7 +1638,7 @@ export const ITERACIONES: Iteracion[] = [
         fecha: '2026-08-16', tags: ['rendimiento', 'fase-38'],
         dod: [
           ok('El poll de /status (30s) y el de /docs/pipeline-en-vivo (6s → 15s) se detienen con la pestaña oculta (Page Visibility API).'),
-          ok('DESTINOS_RESPALDO actualizado: servicios pausados marcados como tal para que el sondeo en vivo (RNF-27) no los reporte caídos por algo que no es una falla.'),
+          ok('DESTINOS_RESPALDO deja deliberadamente FUERA los tres servicios pausados a mano en Vercel (DEPLOYMENT_PAUSED) mientras dura el ahorro de cuota: sondearlos los pintaría "Caído" durante semanas por una decisión operativa, no por una avería, y un panel de estado que reporta como incidente algo que su dueño apagó a propósito enseña a ignorarlo.'),
         ],
       },
     ],
@@ -1661,7 +1661,7 @@ export const ITERACIONES: Iteracion[] = [
         fecha: '2026-08-21', tags: ['testing', 'documentacion', 'fase-39'],
         dod: [
           ok('scripts/report-tests.mjs lee el XML JUnit de "npx vitest run --reporter=junit" y genera src/data/ejecucion-pruebas.json (versionado, porque coverage/ e informes/ están en .gitignore y Vercel no puede leer lo que no está en el repo) más un informe HTML autocontenido.'),
-          ok('/docs/ejecucion-pruebas publica el total real (1181 tests, 0 fallos, 65,1s), duración por nivel, distribución logarítmica de tiempos y las 12 pruebas más lentas.'),
+          ok('/docs/ejecucion-pruebas publica el total real de la última regeneración (1181 tests y 0 fallos en la entrega del 21 ago; 1200 en 70 archivos tras regenerarla el 26 ago), duración por nivel, distribución logarítmica de tiempos y las 12 pruebas más lentas.'),
           ok('METRICAS_REFERENCIA, NIVELES y PIRAMIDE en src/data/testing.ts pasan a derivarse de la instantánea (EJECUCION) en vez de tener sus propios números, que era justo la fuente de la contradicción (724 vs 777 tests en dos tablas distintas del mismo documento).'),
         ],
       },
@@ -1740,7 +1740,7 @@ export const ITERACIONES: Iteracion[] = [
         dod: [
           ok('src/lib/sena-ep.ts (módulo puro e isomorfo, sin node:crypto ni ../db) calcula computeHitos(tipo, inicioIso): inicio, visita de concertación a los 15 días, una bitácora por mes según la duración del programa (6 meses técnico, 9 tecnólogo), visita parcial de seguimiento y cierre 5 días después del fin nominal.'),
           ok('La calculadora en /3114731 exporta los hitos a .ics para importarlos al calendario del aprendiz y genera un enlace compartible con los parámetros en la URL.'),
-          ok("'3114731' añadido a los segmentos raíz reservados para que no choque con ninguna ruta dinámica existente."),
+          ok("'3114731' añadido a RESERVED_ROOT_SEGMENTS: Astro ya resuelve las estáticas antes que [pin].astro, así que el riesgo real es el inverso, que un PIN generado coincida con esta ruta y el público que escanee el QR aterrice en la ficha SENA en vez de en el deck. tests/present-reserved.test.ts falla si alguien añade una ruta raíz sin registrarla."),
         ],
       },
       {
