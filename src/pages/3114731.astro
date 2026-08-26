@@ -366,32 +366,21 @@ const visitas = [
 </BaseLayout>
 
 <script>
-  // Calculadora de cronograma: replica en cliente la lógica de
-  // seantoma.github.io/manual-aprendiz-sena/calculadora_fechas.html (visita de
-  // concertación a los 15 días, una bitácora por mes, visita parcial en el mes
-  // 3/4 según el programa, cierre 5 días después del fin nominal). Los enlaces
-  // de descarga salen de `data-doc-links`, generado en el frontmatter a partir
-  // del mismo array que ya usa la card de formatos, para no duplicar URLs.
+  // Calculadora de cronograma: la proyección de hitos vive en
+  // src/lib/sena-ep.ts (módulo puro isomorfo) para que este script y el cron
+  // de recordatorios (api/cron/sena-recordatorio) no dupliquen la fórmula.
+  // Los enlaces de descarga salen de `data-doc-links`, generado en el
+  // frontmatter a partir del mismo array que ya usa la card de formatos.
 
-  type Categoria = 'inicio' | 'visita' | 'bitacora'
+  import { computeHitos, type Hito as HitoBase, type TipoPrograma, type DocKey } from '../lib/sena-ep'
+
   type Estado = 'past' | 'next' | 'future'
   type DocLink = { label: string; href: string }
-
-  interface Hito {
-    titulo: string
-    fecha: Date
-    detalle: string
-    categoria: Categoria
-    doc: DocLink
-    estado: Estado
-  }
+  type Hito = HitoBase & { estado: Estado }
 
   const root = document.getElementById('calc')
   if (root) {
-    const docLinks = JSON.parse(root.dataset.docLinks ?? '{}') as Record<
-      'f165' | 'f023_1' | 'f023_2' | 'f023_3' | 'f147',
-      DocLink
-    >
+    const docLinks = JSON.parse(root.dataset.docLinks ?? '{}') as Record<DocKey, DocLink>
 
     const tipoEl = document.getElementById('calc-tipo') as HTMLSelectElement
     const inicioEl = document.getElementById('calc-inicio') as HTMLInputElement
@@ -400,10 +389,12 @@ const visitas = [
     const timelineEl = document.getElementById('calc-timeline')!
     const nextTextEl = document.getElementById('calc-next-text')!
     const toastEl = document.getElementById('calc-toast')!
+    const progresoEl = document.getElementById('calc-progreso')!
 
     // Los últimos hitos calculados quedan aquí para que exportar/compartir no
     // tengan que recalcular ni leer el DOM.
     let hitosActuales: Hito[] = []
+    let checklistKeyActual = ''
     let toastTimer: ReturnType<typeof setTimeout> | undefined
 
     function mostrarToast(mensaje: string) {
@@ -423,16 +414,28 @@ const visitas = [
       x.setDate(x.getDate() + n)
       return x
     }
-    const addMonths = (d: Date, n: number) => {
-      const x = new Date(d)
-      x.setMonth(x.getMonth() + n)
-      return x
-    }
     const fmtCorto = (d: Date) =>
       d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
     const fmtLargo = (d: Date) =>
       d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     const diasEntre = (a: Date, b: Date) => Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / 86400000)
+    const claveHito = (h: HitoBase) => `${h.titulo}|${h.fecha.toISOString().slice(0, 10)}`
+
+    // Checklist "entregado" por hito, persistido en localStorage por
+    // combinación tipo+inicio (cada simulación tiene su propio progreso).
+    function leerChecklist(key: string): Set<string> {
+      try {
+        return new Set(JSON.parse(localStorage.getItem(key) ?? '[]'))
+      } catch {
+        return new Set()
+      }
+    }
+    function actualizarProgreso() {
+      const set = leerChecklist(checklistKeyActual)
+      const total = hitosActuales.length
+      const hechos = hitosActuales.filter((h) => set.has(claveHito(h))).length
+      progresoEl.textContent = total > 0 ? `${hechos}/${total} hitos marcados como entregados` : ''
+    }
 
     function calcular() {
       const valor = inicioEl.value
@@ -442,64 +445,28 @@ const visitas = [
       }
       errorEl.classList.add('hidden')
 
-      const inicio = new Date(`${valor}T00:00:00`)
-      const esTecnologo = tipoEl.value === 'tecnologo'
-      const meses = esTecnologo ? 9 : 6
+      const tipo = tipoEl.value as TipoPrograma
       const hoy = startOfDay(new Date())
 
-      const hitos: Omit<Hito, 'estado'>[] = [
-        {
-          titulo: 'Inicio de etapa productiva',
-          fecha: inicio,
-          detalle: 'Primer día. Verifica afiliación a ARL y entrega el F-165 de selección de alternativa.',
-          categoria: 'inicio',
-          doc: docLinks.f165,
-        },
-        {
-          titulo: 'Visita de concertación',
-          fecha: addDays(inicio, 15),
-          detalle: 'El instructor valida el plan de trabajo con la empresa.',
-          categoria: 'visita',
-          doc: docLinks.f023_1,
-        },
-      ]
-
-      for (let i = 1; i <= meses; i++) {
-        hitos.push({
-          titulo: `Bitácora - mes ${i}`,
-          fecha: addMonths(inicio, i),
-          detalle: `Registro mensual ${i} de ${meses}, firmado por el jefe inmediato.`,
-          categoria: 'bitacora',
-          doc: docLinks.f147,
-        })
+      let hitosBase: HitoBase[]
+      try {
+        hitosBase = computeHitos(tipo, valor)
+      } catch {
+        errorEl.textContent = 'Fecha de inicio inválida.'
+        errorEl.classList.remove('hidden')
+        return
       }
 
-      hitos.push({
-        titulo: 'Visita parcial de seguimiento',
-        fecha: addMonths(inicio, esTecnologo ? 4 : 3),
-        detalle: 'Evaluación de medio término: avances y competencias.',
-        categoria: 'visita',
-        doc: docLinks.f023_2,
-      })
+      let indiceProximo = hitosBase.findIndex((h) => startOfDay(h.fecha) >= hoy)
+      if (indiceProximo === -1) indiceProximo = hitosBase.length - 1
 
-      const fechaCierre = addDays(addMonths(inicio, meses), 5)
-      hitos.push({
-        titulo: 'Visita final y cierre',
-        fecha: fechaCierre,
-        detalle: 'Evaluación final, paz y salvo y cierre de la etapa productiva.',
-        categoria: 'inicio',
-        doc: docLinks.f023_3,
-      })
-
-      hitos.sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
-
-      let indiceProximo = hitos.findIndex((h) => startOfDay(h.fecha) >= hoy)
-      if (indiceProximo === -1) indiceProximo = hitos.length - 1
-
-      const hitosConEstado: Hito[] = hitos.map((h, i) => ({
+      const hitosConEstado: Hito[] = hitosBase.map((h, i) => ({
         ...h,
         estado: startOfDay(h.fecha) < hoy ? 'past' : i === indiceProximo ? 'next' : 'future',
       }))
+
+      const fechaCierre = hitosBase[hitosBase.length - 1].fecha
+      const meses = hitosBase.filter((h) => h.categoria === 'bitacora').length
 
       document.getElementById('calc-sum-duracion')!.textContent = `${meses} meses`
       document.getElementById('calc-sum-bitacoras')!.textContent = String(meses)
@@ -521,8 +488,15 @@ const visitas = [
         future: 'Pendiente',
       }
 
+      checklistKeyActual = `sena-ep-checklist:${tipo}:${valor}`
+      const checklist = leerChecklist(checklistKeyActual)
+
       timelineEl.innerHTML = ''
       for (const h of hitosConEstado) {
+        const doc = docLinks[h.docKey]
+        const key = claveHito(h)
+        const entregado = checklist.has(key)
+
         const item = document.createElement('div')
         item.dataset.categoria = h.categoria
         item.className =
@@ -535,15 +509,34 @@ const visitas = [
 
         item.innerHTML = `
           <div class="flex items-center justify-between text-[13px] mb-1 gap-2">
-            <span class="text-ink-100">${h.titulo}</span>
+            <span class="text-ink-100${entregado ? ' line-through text-ink-300' : ''}">${h.titulo}</span>
             <span class="${colorPorEstado[h.estado]} font-mono text-[11px] uppercase shrink-0">${labelPorEstado[h.estado]}</span>
           </div>
           <div class="text-cyan font-mono text-[11px] mb-1.5">${fmtLargo(h.fecha)}</div>
           <p class="text-[12px] text-ink-300 leading-relaxed mb-2">${h.detalle}</p>
-          <a href="${h.doc.href}" target="_blank" rel="noopener noreferrer" class="text-cyan font-mono text-[11px] hover:underline">${h.doc.label} ↓</a>
+          <div class="flex items-center justify-between gap-3">
+            <a href="${doc.href}" target="_blank" rel="noopener noreferrer" class="text-cyan font-mono text-[11px] hover:underline">${doc.label} ↓</a>
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input type="checkbox" data-key="${key}" class="calc-check w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-cyan" ${entregado ? 'checked' : ''} />
+              <span class="text-[10px] font-mono uppercase text-ink-300">Entregado</span>
+            </label>
+          </div>
         `
         timelineEl.appendChild(item)
       }
+
+      timelineEl.querySelectorAll<HTMLInputElement>('.calc-check').forEach((cb) => {
+        cb.addEventListener('change', () => {
+          const set = leerChecklist(checklistKeyActual)
+          const k = cb.dataset.key!
+          if (cb.checked) set.add(k)
+          else set.delete(k)
+          localStorage.setItem(checklistKeyActual, JSON.stringify([...set]))
+          cb.closest('div')?.parentElement?.querySelector('span.text-ink-100')?.classList.toggle('line-through', cb.checked)
+          cb.closest('div')?.parentElement?.querySelector('span.text-ink-100')?.classList.toggle('text-ink-300', cb.checked)
+          actualizarProgreso()
+        })
+      })
 
       document.querySelectorAll<HTMLButtonElement>('.calc-chip').forEach((chip) => {
         chip.classList.toggle('active', chip.dataset.filter === 'all')
@@ -551,14 +544,16 @@ const visitas = [
       applyFiltro('all')
 
       hitosActuales = hitosConEstado
+      actualizarProgreso()
 
       // El estado mínimo para reconstruir el cronograma cabe en la URL: así un
       // link compartido no necesita backend ni base de datos.
-      const params = new URLSearchParams({ tipo: tipoEl.value, inicio: valor })
+      const params = new URLSearchParams({ tipo, inicio: valor })
       history.replaceState(null, '', `?${params.toString()}`)
 
       resultadosEl.classList.remove('hidden')
       resultadosEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      actualizarEstadoRecordatorio()
     }
 
     function applyFiltro(filtro: string) {
