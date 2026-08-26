@@ -76,6 +76,16 @@ const recursosExternos = [
   },
 ]
 
+// Links de descarga por hito del calculador, tomados del mismo array `recursos`
+// para no duplicar URLs: si un formato cambia de nombre solo se edita arriba.
+const docLinks = {
+  f165: recursos.find((r) => r.label.startsWith('Selección de alternativa'))!,
+  f023_1: recursos.find((r) => r.label === 'Visita 1 (GFPI-F-023)')!,
+  f023_2: recursos.find((r) => r.label === 'Visita 2 (GFPI-F-023)')!,
+  f023_3: recursos.find((r) => r.label === 'Visita 3 (GFPI-F-023)')!,
+  f147: recursos.find((r) => r.label.startsWith('Bitácora'))!,
+}
+
 const visitas = [
   {
     n: 1,
@@ -195,6 +205,96 @@ const visitas = [
       </div>
     </div>
 
+    <div class="rounded-2xl glass border-accent p-6 mt-8" id="calc" data-doc-links={JSON.stringify(docLinks)}>
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Calculadora de cronograma</span>
+      </div>
+      <p class="text-[12px] text-ink-300 leading-relaxed mb-4">
+        Proyecta bitácoras, visitas y cierre a partir de tu fecha de inicio real.
+        Útil para verificar el cronograma de arriba o simular otra ficha.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <label class="grid gap-1.5">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Tipo de programa</span>
+          <select
+            id="calc-tipo"
+            class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+          >
+            <option value="tecnico">Técnico · 6 meses</option>
+            <option value="tecnologo">Tecnólogo · 9 meses</option>
+          </select>
+        </label>
+        <label class="grid gap-1.5">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Fecha de inicio</span>
+          <input
+            id="calc-inicio"
+            type="date"
+            class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none [color-scheme:dark]"
+          />
+        </label>
+      </div>
+
+      <button
+        id="calc-generar"
+        type="button"
+        class="w-full h-11 rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:brightness-110 transition-all"
+      >
+        Generar cronograma
+      </button>
+      <p id="calc-error" class="text-[12px] text-ember mt-2 hidden">Selecciona una fecha de inicio.</p>
+
+      <div id="calc-resultados" class="mt-6 hidden">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
+            <div id="calc-sum-duracion" class="text-[15px] text-ink-50 font-medium"></div>
+            <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Duración</div>
+          </div>
+          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
+            <div id="calc-sum-bitacoras" class="text-[15px] text-ink-50 font-medium"></div>
+            <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Bitácoras</div>
+          </div>
+          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
+            <div class="text-[15px] text-ink-50 font-medium">3</div>
+            <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Visitas</div>
+          </div>
+          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
+            <div id="calc-sum-cierre" class="text-[13px] text-ink-50 font-medium"></div>
+            <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Cierre</div>
+          </div>
+        </div>
+
+        <div id="calc-next" class="flex items-center gap-3 rounded-lg bg-lime/10 border border-lime/30 px-3 py-2.5 mb-4">
+          <span class="w-2 h-2 rounded-full bg-lime shrink-0"></span>
+          <span class="text-[12px] text-ink-100"><strong class="text-lime font-medium">Próximo hito:</strong> <span id="calc-next-text"></span></span>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Filtrar hitos">
+          <button type="button" data-filter="all" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-cyan/40 bg-cyan/10 text-cyan">Todos</button>
+          <button type="button" data-filter="visita" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Visitas</button>
+          <button type="button" data-filter="bitacora" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Bitácoras</button>
+          <button type="button" data-filter="inicio" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Inicio / cierre</button>
+        </div>
+
+        <div id="calc-timeline" class="space-y-2"></div>
+
+        <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
+          <a
+            href="https://outlook.office.com/book/ReservasEtapaProductivaCSF@sena.edu.co/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[12px] font-mono text-lime border border-lime/30 bg-lime/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all"
+          >
+            Agendar visita
+          </a>
+          <button id="calc-print" type="button" class="text-[12px] font-mono text-ink-200 border border-white/10 rounded-full px-3 py-1.5 hover:bg-white/[.06] transition-colors">
+            Imprimir / PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="rounded-2xl glass border-accent p-6 mt-8">
       <div class="flex items-center gap-2 mb-4">
         <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
@@ -240,3 +340,202 @@ const visitas = [
 
   </div>
 </BaseLayout>
+
+<script>
+  // Calculadora de cronograma: replica en cliente la lógica de
+  // seantoma.github.io/manual-aprendiz-sena/calculadora_fechas.html (visita de
+  // concertación a los 15 días, una bitácora por mes, visita parcial en el mes
+  // 3/4 según el programa, cierre 5 días después del fin nominal). Los enlaces
+  // de descarga salen de `data-doc-links`, generado en el frontmatter a partir
+  // del mismo array que ya usa la card de formatos, para no duplicar URLs.
+
+  type Categoria = 'inicio' | 'visita' | 'bitacora'
+  type Estado = 'past' | 'next' | 'future'
+  type DocLink = { label: string; href: string }
+
+  interface Hito {
+    titulo: string
+    fecha: Date
+    detalle: string
+    categoria: Categoria
+    doc: DocLink
+    estado: Estado
+  }
+
+  const root = document.getElementById('calc')
+  if (root) {
+    const docLinks = JSON.parse(root.dataset.docLinks ?? '{}') as Record<
+      'f165' | 'f023_1' | 'f023_2' | 'f023_3' | 'f147',
+      DocLink
+    >
+
+    const tipoEl = document.getElementById('calc-tipo') as HTMLSelectElement
+    const inicioEl = document.getElementById('calc-inicio') as HTMLInputElement
+    const errorEl = document.getElementById('calc-error')!
+    const resultadosEl = document.getElementById('calc-resultados')!
+    const timelineEl = document.getElementById('calc-timeline')!
+    const nextTextEl = document.getElementById('calc-next-text')!
+
+    const startOfDay = (d: Date) => {
+      const x = new Date(d)
+      x.setHours(0, 0, 0, 0)
+      return x
+    }
+    const addDays = (d: Date, n: number) => {
+      const x = new Date(d)
+      x.setDate(x.getDate() + n)
+      return x
+    }
+    const addMonths = (d: Date, n: number) => {
+      const x = new Date(d)
+      x.setMonth(x.getMonth() + n)
+      return x
+    }
+    const fmtCorto = (d: Date) =>
+      d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+    const fmtLargo = (d: Date) =>
+      d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    const diasEntre = (a: Date, b: Date) => Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / 86400000)
+
+    function calcular() {
+      const valor = inicioEl.value
+      if (!valor) {
+        errorEl.classList.remove('hidden')
+        return
+      }
+      errorEl.classList.add('hidden')
+
+      const inicio = new Date(`${valor}T00:00:00`)
+      const esTecnologo = tipoEl.value === 'tecnologo'
+      const meses = esTecnologo ? 9 : 6
+      const hoy = startOfDay(new Date())
+
+      const hitos: Omit<Hito, 'estado'>[] = [
+        {
+          titulo: 'Inicio de etapa productiva',
+          fecha: inicio,
+          detalle: 'Primer día. Verifica afiliación a ARL y entrega el F-165 de selección de alternativa.',
+          categoria: 'inicio',
+          doc: docLinks.f165,
+        },
+        {
+          titulo: 'Visita de concertación',
+          fecha: addDays(inicio, 15),
+          detalle: 'El instructor valida el plan de trabajo con la empresa.',
+          categoria: 'visita',
+          doc: docLinks.f023_1,
+        },
+      ]
+
+      for (let i = 1; i <= meses; i++) {
+        hitos.push({
+          titulo: `Bitácora - mes ${i}`,
+          fecha: addMonths(inicio, i),
+          detalle: `Registro mensual ${i} de ${meses}, firmado por el jefe inmediato.`,
+          categoria: 'bitacora',
+          doc: docLinks.f147,
+        })
+      }
+
+      hitos.push({
+        titulo: 'Visita parcial de seguimiento',
+        fecha: addMonths(inicio, esTecnologo ? 4 : 3),
+        detalle: 'Evaluación de medio término: avances y competencias.',
+        categoria: 'visita',
+        doc: docLinks.f023_2,
+      })
+
+      const fechaCierre = addDays(addMonths(inicio, meses), 5)
+      hitos.push({
+        titulo: 'Visita final y cierre',
+        fecha: fechaCierre,
+        detalle: 'Evaluación final, paz y salvo y cierre de la etapa productiva.',
+        categoria: 'inicio',
+        doc: docLinks.f023_3,
+      })
+
+      hitos.sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
+
+      let indiceProximo = hitos.findIndex((h) => startOfDay(h.fecha) >= hoy)
+      if (indiceProximo === -1) indiceProximo = hitos.length - 1
+
+      const hitosConEstado: Hito[] = hitos.map((h, i) => ({
+        ...h,
+        estado: startOfDay(h.fecha) < hoy ? 'past' : i === indiceProximo ? 'next' : 'future',
+      }))
+
+      document.getElementById('calc-sum-duracion')!.textContent = `${meses} meses`
+      document.getElementById('calc-sum-bitacoras')!.textContent = String(meses)
+      document.getElementById('calc-sum-cierre')!.textContent = fmtCorto(fechaCierre)
+
+      const proximo = hitosConEstado[indiceProximo]
+      const delta = diasEntre(hoy, proximo.fecha)
+      const cuando = delta === 0 ? 'hoy' : delta > 0 ? `en ${delta} día${delta === 1 ? '' : 's'}` : 'ya venció'
+      nextTextEl.textContent = `${proximo.titulo} · ${fmtCorto(proximo.fecha)} (${cuando})`
+
+      const colorPorEstado: Record<Estado, string> = {
+        past: 'text-ink-300',
+        next: 'text-lime',
+        future: 'text-cyan',
+      }
+      const labelPorEstado: Record<Estado, string> = {
+        past: 'Pasado',
+        next: 'Próximo',
+        future: 'Pendiente',
+      }
+
+      timelineEl.innerHTML = ''
+      for (const h of hitosConEstado) {
+        const item = document.createElement('div')
+        item.dataset.categoria = h.categoria
+        item.className =
+          'rounded-lg border px-3 py-2.5 ' +
+          (h.estado === 'next'
+            ? 'bg-lime/[.06] border-lime/30'
+            : h.estado === 'past'
+              ? 'bg-white/[.02] border-white/10 opacity-70'
+              : 'bg-white/[.03] border-white/10')
+
+        item.innerHTML = `
+          <div class="flex items-center justify-between text-[13px] mb-1 gap-2">
+            <span class="text-ink-100">${h.titulo}</span>
+            <span class="${colorPorEstado[h.estado]} font-mono text-[11px] uppercase shrink-0">${labelPorEstado[h.estado]}</span>
+          </div>
+          <div class="text-cyan font-mono text-[11px] mb-1.5">${fmtLargo(h.fecha)}</div>
+          <p class="text-[12px] text-ink-300 leading-relaxed mb-2">${h.detalle}</p>
+          <a href="${h.doc.href}" target="_blank" rel="noopener noreferrer" class="text-cyan font-mono text-[11px] hover:underline">${h.doc.label} ↓</a>
+        `
+        timelineEl.appendChild(item)
+      }
+
+      document.querySelectorAll<HTMLButtonElement>('.calc-chip').forEach((chip) => {
+        chip.classList.toggle('active', chip.dataset.filter === 'all')
+      })
+      applyFiltro('all')
+
+      resultadosEl.classList.remove('hidden')
+      resultadosEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+
+    function applyFiltro(filtro: string) {
+      document.querySelectorAll<HTMLDivElement>('#calc-timeline > div').forEach((item) => {
+        item.classList.toggle('hidden', filtro !== 'all' && item.dataset.categoria !== filtro)
+      })
+    }
+
+    document.getElementById('calc-generar')?.addEventListener('click', calcular)
+    document.getElementById('calc-print')?.addEventListener('click', () => window.print())
+
+    document.querySelectorAll<HTMLButtonElement>('.calc-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll<HTMLButtonElement>('.calc-chip').forEach((c) => {
+          c.classList.remove('bg-cyan/10', 'border-cyan/40', 'text-cyan')
+          c.classList.add('border-white/10', 'text-ink-200')
+        })
+        chip.classList.remove('border-white/10', 'text-ink-200')
+        chip.classList.add('bg-cyan/10', 'border-cyan/40', 'text-cyan')
+        applyFiltro(chip.dataset.filter ?? 'all')
+      })
+    })
+  }
+</script>
