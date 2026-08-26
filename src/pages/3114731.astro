@@ -191,5 +191,48 @@ const visitas = [
       </div>
     </div>
 
+    <div class="rounded-2xl glass border-accent p-6 mt-8">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Formatos descargables</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {recursos.map((r) => (
+          <a
+            href={r.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center justify-between gap-3 text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 hover:bg-white/[.06] transition-colors"
+          >
+            <span class="text-ink-100">{r.label}</span>
+            <span class="text-cyan font-mono text-[11px]">↓</span>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <div class="rounded-2xl glass border-accent p-6 mt-8">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Recursos externos</span>
+      </div>
+      <div class="space-y-2">
+        {recursosExternos.map((r) => (
+          <a
+            href={r.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center justify-between gap-3 text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 hover:bg-white/[.06] transition-colors"
+          >
+            <span class="text-ink-100">{r.label}</span>
+            <span class="text-cyan font-mono text-[11px]">↗</span>
+          </a>
+        ))}
+      </div>
+      <p class="text-[11px] text-ink-300 mt-3 leading-relaxed">
+        Formatos tomados del manual del aprendiz de <a href="https://seantoma.github.io/manual-aprendiz-sena/" target="_blank" rel="noopener noreferrer" class="text-cyan hover:underline">seantoma.github.io/manual-aprendiz-sena</a>, no es un recurso oficial del SENA - verificar siempre contra la plataforma de ejecución.
+      </p>
+    </div>
+
   </div>
 </BaseLayout>
