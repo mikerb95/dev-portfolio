@@ -22,6 +22,18 @@
 > bloque de hallazgos H-01..H-05). Lo que sigue bloqueado por `VERCEL_TOKEN`
 > es solo la integración con el panel (`load_test_runs`, ingesta,
 > `/admin/lab/load`) - detalle en `plan-lab-fases-pendientes.md`.
+>
+> **Actualización 21-23 ago 2026**: los hallazgos de las corridas de k6 quedaron
+> publicados en `/docs` (RF-505, evidencia en `lab/k6/resultados/*.json`), y se
+> sumó `/docs/ejecucion-pruebas` (RF-709, instantánea real de la suite completa:
+> 1181 tests, 0 fallos) y `/docs/reportes-pruebas` (RF-710, referencia de los 7
+> reporters de Vitest con su equivalencia Maven). Además, un incidente real de
+> cuota de lecturas de Turso durante una corrida de k6 contra localhost (con el
+> dev server apuntando por error a la base de producción) motivó
+> `docs/runbook-cuota-turso.md`, la tabla `monitor_daily` con rollup diario
+> (RNF-25) y el modo respaldo con datos reales cuando la base cae (RNF-26,
+> RNF-27). Sigue bloqueada solo la integración de k6 con el panel, igual que en
+> jul 2026.
 
 ## Estado inicial (auditado 2026-07-03, antes de empezar)
 
