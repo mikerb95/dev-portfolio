@@ -76,7 +76,7 @@ const muestras = LEYENDA.map((item) => ({ ...item, ...muestra(item.type) }))
       <p class="text-[13.5px] text-ink-300 leading-relaxed mt-3">
         El SVG se genera en el servidor desde un modelo tipado
         (<code class="font-mono text-ink-200">src/data/actividades.ts</code>); las posiciones, el
-        ruteo y el corte de etiquetas los calcula
+        ruteo y el corte de etiquetas los calcula{' '}
         <code class="font-mono text-ink-200">src/lib/uml-activity.ts</code>. Los tests no solo
         verifican el dibujo (nada encimado, ninguna transición atravesando una figura ajena):
         también verifican la <strong class="font-medium text-ink-100">notación</strong> - que toda
