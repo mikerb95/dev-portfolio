@@ -1599,6 +1599,163 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-runbook-turso',
+    fase: 'Fase 38 · El incidente de cuota no se cierra arreglando el código, se cierra con un runbook',
+    nombre: 'Datos sintéticos verificables y el camino de recuperación completo',
+    rango: '15-16 ago 2026',
+    ghSince: '2026-08-15',
+    ghUntil: '2026-08-16',
+    commits: 35,
+    resumen:
+      'Continuación de la Fase 37: arreglado el código, faltaba el procedimiento para cuando vuelva a pasar. docs/runbook-cuota-turso.md documenta la causa exacta (filas ESCANEADAS, no consultas devueltas), la regla que la evita y dos caminos de recuperación. Para probar el modo respaldo sin esperar a que la cuota se agote de verdad, un script siembra historial de monitoreo sintético pero determinista, reutilizando el mismo agregador que corre en producción. De paso, /status y /engineering dejaron de agregar 24h crudas de monitor_checks/web_vitals en cada apertura, y el poll de /status y /docs/pipeline-en-vivo se detiene con la pestaña oculta.',
+    historias: [
+      {
+        id: 'PF-RT-01', titulo: 'Como responsable del incidente, quiero un procedimiento escrito para la próxima vez que la cuota se agote',
+        tipo: 'tarea', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-15', tags: ['runbook', 'coste', 'fase-38'],
+        dod: [
+          ok('docs/runbook-cuota-turso.md documenta qué pasó (86.000 filas leídas por llamada a /api/now.ts pese a devolver un único número), la regla que lo evita (ningún agregado público sobre ventanas >24h sin rollup) y que es la tercera vez que el mismo patrón agota la cuota.'),
+          ok('Dos caminos de recuperación documentados: aguantar hasta el corte del ciclo (la capa de respaldo de RNF-27 se apaga sola) o mudar a una base nueva, con el requisito de que ENCRYPTION_KEY debe coincidir para no perder la bóveda.'),
+          ok('/api/now.ts (error budget) y /api/engineering/live.ts pasan a leer de monitor_daily en vez de agregar monitor_checks/web_vitals crudos; este último además cambia no-store por s-maxage=30.'),
+        ],
+      },
+      {
+        id: 'PF-RT-02', titulo: 'Como quien prueba el modo respaldo, quiero historial de monitoreo sin esperar un incidente real',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-15', tags: ['datos-sinteticos', 'testing', 'fase-38'],
+        dod: [
+          ok('scripts/seed-monitor-history.mjs genera sondeos en memoria y los pasa por aggregateChecks, el mismo módulo real de rollup que usa el cron en producción: el histograma queda con los mismos cubos.'),
+          ok('90 días de monitor_daily (~900 filas) pero solo 2 días de monitor_checks (~5.700): sembrar 90 días de crudo para alimentar los 40 puntos de la mini-gráfica EKG habría repetido el mismo error de volumen que causó el incidente.'),
+          ok('El azar es determinista (derivado de monitor+instante): dos corridas producen el mismo p95, y el perfil de latencia no se realimenta de monitors.last_response_ms para no derivar entre pasadas.'),
+          ok('scripts/restore-backup.mjs repuebla las tablas de negocio desde el último backup de Blob con --dry-run obligatorio antes de escribir, y se niega a pisar tablas con filas salvo --forzar.'),
+        ],
+      },
+      {
+        id: 'PF-RT-03', titulo: 'Como visitante en modo respaldo, quiero que /status y el poll no sigan trabajando cuando no los veo',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-16', tags: ['rendimiento', 'fase-38'],
+        dod: [
+          ok('El poll de /status (30s) y el de /docs/pipeline-en-vivo (6s → 15s) se detienen con la pestaña oculta (Page Visibility API).'),
+          ok('DESTINOS_RESPALDO actualizado: servicios pausados marcados como tal para que el sondeo en vivo (RNF-27) no los reporte caídos por algo que no es una falla.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-reportes-pruebas',
+    fase: 'Fase 39 · La evidencia de testing deja de vivir solo en la terminal',
+    nombre: 'Instantánea de la corrida real, referencia de reporters y hallazgos de k6 publicados',
+    rango: '18-21 ago 2026',
+    ghSince: '2026-08-18',
+    ghUntil: '2026-08-21',
+    commits: 51,
+    resumen:
+      '/docs/testing declaraba 937 tests cuando la suite ya iba por 1181, y la propia pirámide se contradecía con la tabla de niveles: cifras escritas a mano, justo lo que RF-703 promete que no pasa. scripts/report-tests.mjs convierte el reporte JUnit de una corrida real en una instantánea versionada (src/data/ejecucion-pruebas.json) que alimenta /docs/ejecucion-pruebas y las métricas de testing.ts, más un informe HTML autocontenido para proyectar. /docs/reportes-pruebas documenta los 7 reporters de Vitest con su salida real y la tabla de equivalencias con Maven (Surefire/JaCoCo/PIT). En paralelo, las corridas de k6 (Fase 5 del LAB) terminaron de producir sus hallazgos H-01..H-05 y quedaron reflejados en RF-505. Cierra con el refresco de logos de marca y prerendering para páginas estáticas de documentación.',
+    historias: [
+      {
+        id: 'PF-EP-01', titulo: 'Como jurado, quiero que las cifras de /docs/testing sean la corrida real, no un número escrito a mano',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-21', tags: ['testing', 'documentacion', 'fase-39'],
+        dod: [
+          ok('scripts/report-tests.mjs lee el XML JUnit de "npx vitest run --reporter=junit" y genera src/data/ejecucion-pruebas.json (versionado, porque coverage/ e informes/ están en .gitignore y Vercel no puede leer lo que no está en el repo) más un informe HTML autocontenido.'),
+          ok('/docs/ejecucion-pruebas publica el total real (1181 tests, 0 fallos, 65,1s), duración por nivel, distribución logarítmica de tiempos y las 12 pruebas más lentas.'),
+          ok('METRICAS_REFERENCIA, NIVELES y PIRAMIDE en src/data/testing.ts pasan a derivarse de la instantánea (EJECUCION) en vez de tener sus propios números, que era justo la fuente de la contradicción (724 vs 777 tests en dos tablas distintas del mismo documento).'),
+        ],
+      },
+      {
+        id: 'PF-EP-02', titulo: 'Como quien entrega evidencia, quiero explicar qué log produce cada reporter antes de citarlo',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-23', tags: ['testing', 'documentacion', 'fase-39'],
+        dod: [
+          ok('/docs/reportes-pruebas documenta los 7 reporters de Vitest (default, verbose, dot, tap-flat, junit, json, html) con salida real capturada de tests/phone.test.ts, no reescrita, incluida la anatomía de un fallo provocado a propósito.'),
+          ok('Tabla de equivalencias con el instrumental de Java (Surefire, JaCoCo, PIT), porque el vocabulario estándar de pruebas viene de Maven y los nombres coinciden solo a medias.'),
+          ok('Documentado con el error literal que devuelve el reporter html si falta la dependencia @vitest/ui.'),
+        ],
+      },
+      {
+        id: 'PF-EP-03', titulo: 'Como responsable del LAB, quiero los hallazgos de las corridas de k6 reflejados donde se sustenta',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-21', tags: ['k6', 'lab', 'fase-39'],
+        dod: [
+          ok('RF-505 actualizado con los hallazgos H-01 a H-05 de la corrida de referencia: el colapso es de concurrencia, no hay margen amplio entre nivel sano y roto, y sin ventana de enfriamiento la recuperación puede no completarse en 120s.'),
+          ok('lab/k6/estres.js deja de falsear "CPU 0%" cuando el propio endpoint de muestreo (proceso.ts) se satura bajo la prueba; ahora distingue explícitamente "sin dato".'),
+          ok('Prerendering habilitado en páginas estáticas de /docs para alinear el comportamiento de build con la realidad de producción.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-diagrama-red',
+    fase: 'Fase 40 · La pregunta que el diagrama de despliegue no responde',
+    nombre: 'Diagrama de red por zonas de confianza',
+    rango: '23-24 ago 2026',
+    ghSince: '2026-08-23',
+    ghUntil: '2026-08-24',
+    commits: 54,
+    resumen:
+      'El diagrama de despliegue (RF-707) dice dónde corre cada cosa; faltaba la pregunta de operación: qué puede alcanzar a qué, y qué lo filtra. Motor de layout propio (src/lib/red-layout.ts) que agrupa hosts en zonas de confianza (Internet, perímetro, cómputo, datos gestionados, terceros salientes) y dibuja los flujos dirigidos entre ellas con protocolo, puerto y controles. UML 2.5.1 no tiene vista de red, así que se modela aparte del diagrama de despliegue en vez de forzarlo en una notación que no la contempla.',
+    historias: [
+      {
+        id: 'PF-DR-01', titulo: 'Como jurado, quiero ver qué zona puede alcanzar a cuál y con qué protocolo, no solo dónde corre cada nodo',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-23', tags: ['diagramas', 'seguridad', 'fase-40'],
+        dod: [
+          ok('src/data/red.ts modela zonas (con nivel de confianza), hosts y flujos dirigidos; src/lib/red-layout.ts calcula la geometría reutilizando el motor genérico del BPMN (corte de texto, polilíneas redondeadas).'),
+          ok('NetworkDiagram.astro renderiza el SVG en el servidor; /docs/diagrama-red lo publica con la tabla de controles por cruce de frontera.'),
+          ok('OPSEC respetado: solo entra lo ya público (puertos estándar, protocolos, proveedores y controles por categoría), nunca umbrales de rate limit ni nombres de reglas de detección.'),
+        ],
+      },
+      {
+        id: 'PF-DR-02', titulo: 'Como autor del modelo, quiero que un flujo no pueda saltarse un perímetro sin que el test lo note',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-24', tags: ['testing', 'geometria', 'fase-40'],
+        dod: [
+          ok('tests/red.test.ts verifica geometría (zonas sin solaparse, host dentro de su zona, ninguna traza atravesando una zona ajena a sus extremos, rótulos sin encimarse) y notación (todo flujo con protocolo, todo cruce con puerto y al menos un control, ningún host aislado).'),
+          ok('Regla dura verificada con tres pruebas hostiles a propósito: un flujo que se salta el perímetro, un cruce sin control y un host huérfano, exigiendo que el verificador los detecte.'),
+          ok('findLayoutIssues corregido para usar bboxZona (la caja real, incluida la cabecera de la zona) tras encontrar cabeceras encimadas que la primera versión no detectaba.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-sena-etapa-productiva',
+    fase: 'Fase 41 · Una calculadora personal para la propia etapa productiva',
+    nombre: 'Hitos de la etapa productiva SENA y recordatorio por correo',
+    rango: '25-26 ago 2026',
+    ghSince: '2026-08-25',
+    ghUntil: '2026-08-26',
+    commits: 31,
+    resumen:
+      'Herramienta personal (no un requisito del producto evaluado): página /3114731, sin enlace en el nav y sin valor de indexación, que calcula los hitos de la propia etapa productiva SENA de Mike (visita de concertación a los 15 días, una bitácora por mes, visita parcial y cierre) a partir del tipo de programa y la fecha de inicio, con exportación a calendario (.ics) y enlace para compartir. Un cron diario recalcula los hitos de la suscripción activa y avisa por correo los que se acercan, reutilizando notify.ts y el patrón de crons fail-open del resto del repo.',
+    historias: [
+      {
+        id: 'PF-SP-01', titulo: 'Como aprendiz, quiero calcular las fechas de mi etapa productiva a partir de cuándo empiezo',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-26', tags: ['sena', 'personal', 'fase-41'],
+        dod: [
+          ok('src/lib/sena-ep.ts (módulo puro e isomorfo, sin node:crypto ni ../db) calcula computeHitos(tipo, inicioIso): inicio, visita de concertación a los 15 días, una bitácora por mes según la duración del programa (6 meses técnico, 9 tecnólogo), visita parcial de seguimiento y cierre 5 días después del fin nominal.'),
+          ok('La calculadora en /3114731 exporta los hitos a .ics para importarlos al calendario del aprendiz y genera un enlace compartible con los parámetros en la URL.'),
+          ok("'3114731' añadido a los segmentos raíz reservados para que no choque con ninguna ruta dinámica existente."),
+        ],
+      },
+      {
+        id: 'PF-SP-02', titulo: 'Como aprendiz, quiero un correo cuando se acerca un hito sin tener que volver a la página',
+        tipo: 'historia', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-08-26', tags: ['sena', 'cron', 'notificaciones', 'fase-41'],
+        dod: [
+          ok('src/pages/api/admin/sena-recordatorio.ts (bajo sesión admin: uso personal, nunca recolecta el email de nadie más) crea, consulta o cancela la única suscripción activa (tipo, inicio, diasAntes).'),
+          ok('src/pages/api/cron/sena-recordatorio.ts recalcula hitos con computeHitos, filtra los que caen dentro de la ventana con hitosPorAvisar, y envía un único correo con sendEmail (notify.ts) al ALERT_EMAIL_TO ya configurado, nunca a un correo del request.'),
+          ok('notifiedKeys evita reavisar el mismo hito: cada clave es título+fecha, persistida tras un envío exitoso.'),
+          ok('Fail-open como el resto de los crons de observabilidad: un fallo se registra en logs y responde 200 en vez de tumbar el cron.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
@@ -1606,5 +1763,5 @@ export const COMMITS_POR_MES = [
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
   { mes: 'jul', commits: 1631 },
-  { mes: 'ago', commits: 278 },
+  { mes: 'ago', commits: 462 },
 ]
