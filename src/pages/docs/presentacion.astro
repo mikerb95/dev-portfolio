@@ -342,17 +342,29 @@ const NODOS_SIM = [
 
   {/* ── Diagramas ───────────────────────────────────────────── */}
   <section>
-    <h2>Diagramas UML</h2>
+    <h2>Diagramas</h2>
     <p class="body">
-      Escritos en Mermaid, versionados en el repo, renderizados en el cliente.
+      Todos versionados en el repo como modelo tipado, no como imagen. Se dibujan
+      de dos maneras, y la diferencia es el argumento: seis notaciones que Mermaid
+      no tiene se generan con motor propio en el servidor.
     </p>
     <div class="grid-2">
-      {diagramas.map((d) => (
-        <div class="panel">
-          <div class="panel-title">{d.nombre}</div>
-          <p>{d.desc}</p>
-        </div>
-      ))}
+      <div class="panel">
+        <div class="panel-title">Motor propio · SVG en el servidor</div>
+        <p>
+          {diagramasMotorPropio.map((d) => d.nombre).join(' · ')}. Mermaid no tiene BPMN,
+          ni comunicación, ni despliegue, y su flowchart no es notación de actividad.
+          Cada uno lleva su test de geometría y de notación: nada encimado, ninguna
+          traza cruzando una figura ajena, y las reglas de la notación verificadas.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Mermaid · renderizado en el cliente</div>
+        <p>
+          {diagramasMermaid.map((d) => d.nombre).join(' · ')}. Donde la notación estándar
+          sí existe, no se reimplementa: se usa la librería y se acabó.
+        </p>
+      </div>
     </div>
   </section>
 
