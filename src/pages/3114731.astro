@@ -530,6 +530,13 @@ const visitas = [
       })
       applyFiltro('all')
 
+      hitosActuales = hitosConEstado
+
+      // El estado mínimo para reconstruir el cronograma cabe en la URL: así un
+      // link compartido no necesita backend ni base de datos.
+      const params = new URLSearchParams({ tipo: tipoEl.value, inicio: valor })
+      history.replaceState(null, '', `?${params.toString()}`)
+
       resultadosEl.classList.remove('hidden')
       resultadosEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
@@ -540,8 +547,70 @@ const visitas = [
       })
     }
 
+    // RFC 5545 escapa coma, punto y coma y salto de línea con backslash.
+    const escapeIcs = (s: string) => s.replace(/([,;])/g, '\\$1').replace(/\n/g, '\\n')
+    const fechaIcs = (d: Date) => {
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}${m}${day}`
+    }
+
+    function exportarIcs() {
+      if (hitosActuales.length === 0) return
+
+      const dtstamp = fechaIcs(new Date()) + 'T000000Z'
+      const eventos = hitosActuales.map((h, i) => {
+        const inicio = fechaIcs(h.fecha)
+        const fin = fechaIcs(addDays(h.fecha, 1))
+        return [
+          'BEGIN:VEVENT',
+          `UID:ep-3114731-${i}@codebymike.tech`,
+          `DTSTAMP:${dtstamp}`,
+          `DTSTART;VALUE=DATE:${inicio}`,
+          `DTEND;VALUE=DATE:${fin}`,
+          `SUMMARY:${escapeIcs(h.titulo)}`,
+          `DESCRIPTION:${escapeIcs(h.detalle)}`,
+          'END:VEVENT',
+        ].join('\r\n')
+      })
+
+      const ics = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//CodeByMike//Etapa Productiva SENA//ES',
+        'CALSCALE:GREGORIAN',
+        ...eventos,
+        'END:VCALENDAR',
+      ].join('\r\n')
+
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'etapa-productiva-3114731.ics'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      mostrarToast(`${hitosActuales.length} hitos exportados al calendario`)
+    }
+
+    async function compartir() {
+      const params = new URLSearchParams({ tipo: tipoEl.value, inicio: inicioEl.value })
+      const url = `${location.origin}${location.pathname}?${params.toString()}`
+      try {
+        await navigator.clipboard.writeText(url)
+        mostrarToast('Link copiado al portapapeles')
+      } catch {
+        mostrarToast(url)
+      }
+    }
+
     document.getElementById('calc-generar')?.addEventListener('click', calcular)
     document.getElementById('calc-print')?.addEventListener('click', () => window.print())
+    document.getElementById('calc-ics')?.addEventListener('click', exportarIcs)
+    document.getElementById('calc-share')?.addEventListener('click', compartir)
 
     document.querySelectorAll<HTMLButtonElement>('.calc-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
@@ -554,5 +623,16 @@ const visitas = [
         applyFiltro(chip.dataset.filter ?? 'all')
       })
     })
+
+    // Un link compartido trae tipo+inicio en la query string: precargar y
+    // calcular de una vez para que quien lo reciba no tenga que hacer nada.
+    const urlParams = new URLSearchParams(location.search)
+    const tipoParam = urlParams.get('tipo')
+    const inicioParam = urlParams.get('inicio')
+    if (inicioParam) {
+      if (tipoParam === 'tecnico' || tipoParam === 'tecnologo') tipoEl.value = tipoParam
+      inicioEl.value = inicioParam
+      calcular()
+    }
   }
 </script>
