@@ -379,6 +379,19 @@ const visitas = [
     const resultadosEl = document.getElementById('calc-resultados')!
     const timelineEl = document.getElementById('calc-timeline')!
     const nextTextEl = document.getElementById('calc-next-text')!
+    const toastEl = document.getElementById('calc-toast')!
+
+    // Los últimos hitos calculados quedan aquí para que exportar/compartir no
+    // tengan que recalcular ni leer el DOM.
+    let hitosActuales: Hito[] = []
+    let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+    function mostrarToast(mensaje: string) {
+      toastEl.textContent = mensaje
+      toastEl.classList.remove('hidden')
+      clearTimeout(toastTimer)
+      toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 3200)
+    }
 
     const startOfDay = (d: Date) => {
       const x = new Date(d)
