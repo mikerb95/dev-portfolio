@@ -29,8 +29,10 @@ const tabs = [
 ]
 
 const current = Astro.url.pathname
-const isActive = (href: string) =>
-  href === '/docs' ? current === '/docs' : current.startsWith(href)
+// La comparación exige coincidencia exacta o un separador detrás: con un
+// `startsWith` pelado, estar en /docs/casos-de-uso-extendidos encendía también
+// la pestaña de /docs/casos-de-uso, que es prefijo suyo.
+const isActive = (href: string) => current === href || current.startsWith(`${href}/`)
 ---
 
 <nav class="docs-nav mb-6 flex flex-wrap gap-1.5" aria-label="Subpáginas de documentación">
