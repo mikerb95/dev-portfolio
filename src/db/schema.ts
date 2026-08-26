@@ -1175,3 +1175,19 @@ export const trainingAccessCodes = sqliteTable('training_access_codes', {
   lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
+
+// Suscripción personal (solo admin) a recordatorios por email de la
+// calculadora de etapa productiva SENA (/3114731). Un cron diario recalcula
+// los hitos con `computeHitos` (src/lib/sena-ep.ts) y avisa por
+// `sendEmail` los que caen dentro de la ventana de aviso, sin duplicar envíos
+// gracias a `notifiedKeys`.
+export const senaEpRecordatorios = sqliteTable('sena_ep_recordatorios', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  tipo: text('tipo', { enum: ['tecnico', 'tecnologo'] }).notNull(),
+  inicio: text('inicio').notNull(), // YYYY-MM-DD
+  diasAntes: integer('dias_antes').notNull().default(3),
+  // Claves `titulo|YYYY-MM-DD` de los hitos ya notificados, como JSON array.
+  notifiedKeys: text('notified_keys').notNull().default('[]'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
