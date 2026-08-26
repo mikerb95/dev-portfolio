@@ -29,10 +29,13 @@ const tabs = [
 ]
 
 const current = Astro.url.pathname
-// La comparación exige coincidencia exacta o un separador detrás: con un
-// `startsWith` pelado, estar en /docs/casos-de-uso-extendidos encendía también
-// la pestaña de /docs/casos-de-uso, que es prefijo suyo.
-const isActive = (href: string) => current === href || current.startsWith(`${href}/`)
+// Coincidencia exacta, o un separador detrás para una eventual subruta. Las
+// dos trampas que cubre: con un `startsWith` pelado, estar en
+// /docs/casos-de-uso-extendidos encendía también /docs/casos-de-uso, que es
+// prefijo suyo; y sin el caso aparte de /docs, la pestaña de la visión general
+// se enciende en TODA subpágina, porque es prefijo de todas.
+const isActive = (href: string) =>
+  href === '/docs' ? current === '/docs' : current === href || current.startsWith(`${href}/`)
 ---
 
 <nav class="docs-nav mb-6 flex flex-wrap gap-1.5" aria-label="Subpáginas de documentación">
