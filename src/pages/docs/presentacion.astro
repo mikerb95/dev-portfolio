@@ -86,11 +86,24 @@ const decisiones = [
   },
 ]
 
-const diagramas = [
+// Los diagramas se agrupan por CÓMO se dibujan, que es la decisión que hay
+// que poder defender: Mermaid no tiene BPMN, ni comunicación, ni despliegue, y
+// su flowchart no es notación de actividad. Esos seis se generan en el
+// servidor desde un modelo tipado, con su test de geometría y de notación.
+const diagramasMotorPropio = [
+  { nombre: 'BPMN', desc: 'Los cuatro procesos de negocio con carriles por participante.' },
+  { nombre: 'Comunicación', desc: 'Las mismas interacciones de la secuencia, por estructura de enlaces y numeración decimal.' },
+  { nombre: 'Actividades', desc: 'Flujos de control internos con particiones, bifurcación concurrente y bucle de reintento.' },
+  { nombre: 'Componentes', desc: 'Componentes con sus interfaces provistas y requeridas (bola y enchufe).' },
+  { nombre: 'Despliegue', desc: 'Nodos, artefactos desplegados y caminos de comunicación con su protocolo.' },
+  { nombre: 'Red', desc: 'Zonas de confianza y flujos entre ellas, con puerto y controles en cada cruce de frontera.' },
+]
+
+const diagramasMermaid = [
   { nombre: 'Secuencia', desc: 'Login OAuth, chequeo de monitor, enforcement de seguridad y webhook de pagos.' },
-  { nombre: 'Componentes', desc: 'Navegador → Vercel (Astro SSR + middleware) → Turso, Blob, GitHub, ntfy, cron.' },
   { nombre: 'Clases', desc: 'Entidades del dominio derivadas de src/db/schema.ts, agrupadas por módulo.' },
   { nombre: 'Objetos', desc: 'Instantáneas reales: proyecto con servicios, pago con evento duplicado, IP bloqueada.' },
+  { nombre: 'Paquetes', desc: 'Agrupación del código y dirección permitida de las dependencias entre capas.' },
 ]
 
 const cuDestacados = CASOS_DE_USO_EXTENDIDOS.map(
