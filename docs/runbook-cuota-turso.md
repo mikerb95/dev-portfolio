@@ -104,7 +104,7 @@ come el error) y queda pendiente hasta que alguien la corra a mano.
 
 | Migración | Qué agrega | Generada | Aplicada |
 |---|---|---|---|
-| `drizzle/0028_nice_otto_octavius.sql` | Tabla `sena_ep_recordatorios` (suscripción a recordatorios de `/3114731`) | 2026-08-26, con lecturas ya bloqueadas | **No confirmada** - `drizzle-kit migrate` no llegó a correr contra la base real |
+| `drizzle/0028_nice_otto_octavius.sql` | Tabla `sena_ep_recordatorios` (suscripción a recordatorios de `/ep`) | 2026-08-26, con lecturas ya bloqueadas | **No confirmada** - `drizzle-kit migrate` no llegó a correr contra la base real |
 
 Cuando la cuota se reinicie (corte de ciclo, visible en el dashboard de Turso;
 el bloqueo de agosto 2026 dijo que vuelve a la normalidad el 2026-09-01):

@@ -1,31 +1,11 @@
 ---
+import { DOCS_PAGINAS } from '../data/docs-paginas'
+
+// Las pestañas salen de la lista tipada: el menú y el sitemap no pueden
+// discrepar sobre qué páginas existen.
 const tabs = [
   { href: '/docs', label: 'Visión general' },
-  { href: '/docs/requerimientos-funcionales', label: 'Req. funcionales' },
-  { href: '/docs/requerimientos-no-funcionales', label: 'Req. no funcionales' },
-  { href: '/docs/roles', label: 'Roles' },
-  { href: '/docs/raci', label: 'RACI' },
-  { href: '/docs/casos-de-uso', label: 'Casos de uso' },
-  { href: '/docs/casos-de-uso-extendidos', label: 'CU extendidos' },
-  { href: '/docs/historias-de-usuario', label: 'Historias US' },
-  { href: '/docs/diagrama-bpmn', label: 'BPMN' },
-  { href: '/docs/diagrama-secuencia', label: 'Secuencia' },
-  { href: '/docs/diagrama-comunicacion', label: 'Comunicación' },
-  { href: '/docs/diagrama-actividades', label: 'Actividades' },
-  { href: '/docs/diagrama-componentes', label: 'Componentes' },
-  { href: '/docs/diagrama-despliegue', label: 'Despliegue' },
-  { href: '/docs/diagrama-red', label: 'Red' },
-  { href: '/docs/diagrama-paquetes', label: 'Paquetes' },
-  { href: '/docs/diagrama-clases', label: 'Clases' },
-  { href: '/docs/diagrama-objetos', label: 'Objetos' },
-  { href: '/docs/kanban', label: 'Kanban' },
-  { href: '/docs/testing', label: 'Testing' },
-  { href: '/docs/ejecucion-pruebas', label: 'Ejecución de pruebas' },
-  { href: '/docs/reportes-pruebas', label: 'Reportes de pruebas' },
-  { href: '/docs/docker', label: 'Docker' },
-  { href: '/docs/pipeline-en-vivo', label: 'Pipeline en vivo' },
-  { href: '/docs/verificacion-validacion', label: 'V&V' },
-  { href: '/docs/usability-testing', label: 'Usability testing' },
+  ...DOCS_PAGINAS.map((p) => ({ href: `/docs/${p.slug}`, label: p.label })),
 ]
 
 const current = Astro.url.pathname

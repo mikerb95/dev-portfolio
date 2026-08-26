@@ -4,6 +4,7 @@ import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
 import { LOCALES, hasRowTranslation, localizePath, translatedAlternates } from '../i18n'
+import { docsSitemapPaths } from '../data/docs-paginas'
 
 // '/log' se excluye a propósito: es una página "viva" renderizada en cliente
 // (feed de GitHub en tiempo real), sin contenido indexable ni intención de
@@ -14,7 +15,27 @@ import { LOCALES, hasRowTranslation, localizePath, translatedAlternates } from '
 // encuentren: el banco público es captación, no solo entrega. Lo que NO entra
 // es '/capacitacion/acceso' (utilitaria, con noindex) ni ningún recurso
 // marcado con código, que además lleva noindex por página.
-const STATIC_PATHS = ['/', '/tools', '/engineering', '/architecture', '/lab', '/demo', '/status', '/notes', '/security', '/certifications', '/contact', '/capacitacion', '/capacitacion-ia']
+//
+// '/docs' y sus subpáginas entran completas: son la documentación de ingeniería
+// del proyecto, contenido propio y estable, no una utilidad. Lo que NO entra
+// está declarado con su motivo en src/data/docs-paginas.ts (el deck privado y
+// la versión imprimible del BPMN, que repetiría el mismo texto).
+const STATIC_PATHS = [
+  '/',
+  '/tools',
+  '/engineering',
+  '/architecture',
+  '/lab',
+  '/demo',
+  '/status',
+  '/notes',
+  '/security',
+  '/certifications',
+  '/contact',
+  '/capacitacion',
+  '/capacitacion-ia',
+  ...docsSitemapPaths(),
+]
 
 export const GET: APIRoute = async ({ site }) => {
   const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')

@@ -6,7 +6,7 @@ import { senaEpRecordatorios } from '../../../db/schema'
 import { computeHitos, hitosPorAvisar } from '../../../lib/sena-ep'
 import { sendEmail } from '../../../lib/notify'
 
-// Recordatorio diario de la calculadora de etapa productiva SENA (/3114731).
+// Recordatorio diario de la calculadora de etapa productiva SENA (/ep).
 // Personal: hay como mucho una suscripción activa, y el email siempre va al
 // `ALERT_EMAIL_TO` ya configurado en notify.ts, nunca a un correo enviado por
 // el request. Fail-open como el resto de los crons de observabilidad.
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request }) => {
       const lineas = nuevos.map((h) => `- ${h.titulo}: ${fmt(h.fecha)}`).join('\n')
       const res = await sendEmail(
         `Etapa productiva SENA: ${nuevos.length} hito${nuevos.length === 1 ? '' : 's'} próximo${nuevos.length === 1 ? '' : 's'}`,
-        `Se acercan estos hitos de tu etapa productiva:\n\n${lineas}\n\nDetalle: https://codebymike.tech/3114731?tipo=${sub.tipo}&inicio=${sub.inicio}`
+        `Se acercan estos hitos de tu etapa productiva:\n\n${lineas}\n\nDetalle: https://codebymike.tech/ep?tipo=${sub.tipo}&inicio=${sub.inicio}`
       )
       if (res.ok) {
         avisados += nuevos.length

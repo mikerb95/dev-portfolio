@@ -1,7 +1,7 @@
 // Proyección de hitos de la etapa productiva SENA (visita de concertación a
 // los 15 días, una bitácora por mes, visita parcial en el mes 3/4 según el
 // programa, cierre 5 días después del fin nominal). Módulo puro e isomorfo:
-// lo usa tanto el script cliente de /3114731 (calculadora) como el cron de
+// lo usa tanto el script cliente de /ep (calculadora) como el cron de
 // recordatorios en el servidor, así que no puede importar `node:crypto` ni
 // `../db`.
 

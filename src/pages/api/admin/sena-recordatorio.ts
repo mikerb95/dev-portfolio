@@ -5,7 +5,7 @@ import { senaEpRecordatorios } from '../../../db/schema'
 import type { TipoPrograma } from '../../../lib/sena-ep'
 
 // Suscripción a recordatorios de la calculadora de etapa productiva SENA
-// (/3114731). Personal: envía siempre al `ALERT_EMAIL_TO` de `notify.ts`, no
+// (/ep). Personal: envía siempre al `ALERT_EMAIL_TO` de `notify.ts`, no
 // recolecta el email de nadie más. Por eso vive bajo /api/admin/ - el
 // middleware ya exige sesión aquí.
 

@@ -1177,7 +1177,7 @@ export const trainingAccessCodes = sqliteTable('training_access_codes', {
 })
 
 // Suscripción personal (solo admin) a recordatorios por email de la
-// calculadora de etapa productiva SENA (/3114731). Un cron diario recalcula
+// calculadora de etapa productiva SENA (/ep). Un cron diario recalcula
 // los hitos con `computeHitos` (src/lib/sena-ep.ts) y avisa por
 // `sendEmail` los que caen dentro de la ventana de aviso, sin duplicar envíos
 // gracias a `notifiedKeys`.

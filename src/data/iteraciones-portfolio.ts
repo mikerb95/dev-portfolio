@@ -1731,7 +1731,7 @@ export const ITERACIONES: Iteracion[] = [
     ghUntil: '2026-08-26',
     commits: 31,
     resumen:
-      'Herramienta personal (no un requisito del producto evaluado): página /3114731, sin enlace en el nav y sin valor de indexación, que calcula los hitos de la propia etapa productiva SENA de Mike (visita de concertación a los 15 días, una bitácora por mes, visita parcial y cierre) a partir del tipo de programa y la fecha de inicio, con exportación a calendario (.ics) y enlace para compartir. Un cron diario recalcula los hitos de la suscripción activa y avisa por correo los que se acercan, reutilizando notify.ts y el patrón de crons fail-open del resto del repo.',
+      'Herramienta personal (no un requisito del producto evaluado): página /ep, sin enlace en el nav y sin valor de indexación, que calcula los hitos de la propia etapa productiva SENA de Mike (visita de concertación a los 15 días, una bitácora por mes, visita parcial y cierre) a partir del tipo de programa y la fecha de inicio, con exportación a calendario (.ics) y enlace para compartir. Un cron diario recalcula los hitos de la suscripción activa y avisa por correo los que se acercan, reutilizando notify.ts y el patrón de crons fail-open del resto del repo.',
     historias: [
       {
         id: 'PF-SP-01', titulo: 'Como aprendiz, quiero calcular las fechas de mi etapa productiva a partir de cuándo empiezo',
@@ -1739,8 +1739,8 @@ export const ITERACIONES: Iteracion[] = [
         fecha: '2026-08-26', tags: ['sena', 'personal', 'fase-41'],
         dod: [
           ok('src/lib/sena-ep.ts (módulo puro e isomorfo, sin node:crypto ni ../db) calcula computeHitos(tipo, inicioIso): inicio, visita de concertación a los 15 días, una bitácora por mes según la duración del programa (6 meses técnico, 9 tecnólogo), visita parcial de seguimiento y cierre 5 días después del fin nominal.'),
-          ok('La calculadora en /3114731 exporta los hitos a .ics para importarlos al calendario del aprendiz y genera un enlace compartible con los parámetros en la URL.'),
-          ok("'3114731' añadido a RESERVED_ROOT_SEGMENTS: Astro ya resuelve las estáticas antes que [pin].astro, así que el riesgo real es el inverso, que un PIN generado coincida con esta ruta y el público que escanee el QR aterrice en la ficha SENA en vez de en el deck. tests/present-reserved.test.ts falla si alguien añade una ruta raíz sin registrarla."),
+          ok('La calculadora en /ep exporta los hitos a .ics para importarlos al calendario del aprendiz y genera un enlace compartible con los parámetros en la URL.'),
+          ok("'ep' añadido a RESERVED_ROOT_SEGMENTS: Astro ya resuelve las estáticas antes que [pin].astro, así que el riesgo real es el inverso, que un PIN generado coincida con esta ruta y el público que escanee el QR aterrice en la página de etapa productiva en vez de en el deck. tests/present-reserved.test.ts falla si alguien añade una ruta raíz sin registrarla."),
         ],
       },
       {
