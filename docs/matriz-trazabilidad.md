@@ -5,12 +5,14 @@ Generada el 27 de agosto de 2026, cruzando
 10 casos de prueba de caja negra de
 [`taller-testing-caja-negra.md`](taller-testing-caja-negra.md) (TC-01..TC-10).
 
-**Alcance real, no inflado:** el taller de caja negra cubrió dos módulos -
+**Alcance real, no inflado:** el taller de caja negra cubrió dos rutas -
 Portal de clientes (autenticación, facturas, cuenta) y Cobros de campo
-(`/cobrar → /c/[code] → /mis-pagos`) - de los cinco grandes bloques del
-catálogo de historias (visitantes del sitio público, administrador del panel,
-observabilidad/seguridad, portal de clientes, cobros de campo, demo y
-captación). Que una historia no aparezca aquí como cubierta **no** significa
+(`/cobrar → /c/[code] → /mis-pagos`) - de las 11 secciones reales del
+catálogo de historias (`## ` en `historias-de-usuario.md`): sitio público,
+panel de administración, observabilidad y operación, vitrina y SEO,
+seguridad, descarga de CV y educación, seguimiento de CV, documentación,
+portal de clientes, cobros de campo, y demo/captación. Que una historia no
+aparezca aquí como cubierta **no** significa
 que carezca de toda prueba en el proyecto: puede estar cubierta por Vitest
 (`tests/*.test.ts`) o por otros specs de Playwright (`e2e/*.spec.ts`) fuera del
 alcance de este taller. Lo que esta matriz certifica con precisión es
@@ -54,27 +56,51 @@ está el foco real de la evidencia manual (autenticación y dinero del portal +
 cobros de campo) y dónde no.
 
 ### Visitantes del sitio público (5)
-HU-01, HU-02, HU-03, HU-04, HU-05
+HU-01 Ver portafolio profesional · HU-02 Explorar proyectos · HU-03 Ver
+certificaciones · HU-04 Enviar mensaje de contacto · HU-05 Ver Engineering Log
 
-### Administrador (Mike) - Panel de control (18)
-HU-06, HU-07, HU-08, HU-09, HU-10, HU-11, HU-12, HU-13, HU-14, HU-15, HU-16,
-HU-17, HU-18, HU-19, HU-20, HU-21, HU-22, HU-23
+### Administrador (Mike) (12)
+HU-06 Iniciar sesión en el panel admin · HU-07 Gestionar proyectos · HU-08
+Gestionar variables de entorno por proyecto · HU-09 Gestionar clientes · HU-10
+Gestionar finanzas · HU-11 Gestionar briefings · HU-12 Leer mensajes de
+contacto · HU-13 Registrar hitos educativos · HU-14 Gestionar ADRs por
+proyecto · HU-15 Gestionar servicios externos por proyecto · HU-16 Gestionar
+contactos por proyecto · HU-17 Gestionar repositorios
 
-### Administrador (Mike) - Presentaciones y vitrina (3)
-HU-24, HU-25, HU-26, HU-27 *(nota: son 4, la numeración del catálogo original
-agrupa presentación y vitrina en el mismo bloque narrativo)*
+### Administrador (Mike) - Observabilidad y operación (7)
+HU-18 Monitorear la salud de mis servicios · HU-19 Ver historial de
+incidentes · HU-20 Evaluar SLO y presupuesto de error · HU-21 Recibir
+notificaciones push de alertas · HU-22 Gestionar vencimiento de dominios ·
+HU-23 Dar seguimiento comercial a clientes y proyectos · HU-24 Presentar
+slides a un cliente con control remoto
 
-### Observabilidad de seguridad (3)
-HU-28, HU-29, HU-30
+### Visitantes del sitio público - Vitrina y SEO (3)
+HU-25 Ver el estado en vivo de los servicios · HU-26 Encontrar el sitio en
+buscadores · HU-27 Explorar herramientas y notas técnicas
 
-### Portal de clientes - fuera del alcance de este taller (4)
-HU-31, HU-32, HU-33, HU-34, HU-36
-*(HU-36 - "Seguir el avance de mi proyecto y hablar con el desarrollador" - es
-del mismo bloque que las 4 historias sí cubiertas, pero ningún TC de este
-taller ejercita hitos, documentos ni mensajería; solo facturas y cuenta.)*
+### Administrador (Mike) - Seguridad (3)
+HU-28 Detectar requests hostiles sin frenar tráfico legítimo · HU-29 Bloquear
+IPs maliciosas y limitar su tasa de requests · HU-30 Revisar anomalías de
+seguridad agregadas
 
-### Demo y captación (2)
-HU-40, HU-41
+### Visitantes del sitio público - Descarga de CV y educación (2)
+HU-31 Descargar el CV desde la página de contacto · HU-32 Seguir rutas de
+aprendizaje con labs cronometrados y marcar mi progreso
+
+### Administrador (Mike) - Seguimiento de descargas del CV (1)
+HU-33 Ver quién descargó mi CV y detectar revisitas del mismo dispositivo
+
+### Administrador (Mike) - Documentación del proyecto (1)
+HU-34 Consultar la documentación de ingeniería sin salir del panel
+
+### Clientes - Portal autenticado, parcial (1 de 3)
+HU-36 Seguir el avance de mi proyecto y hablar con el desarrollador - mismo
+bloque que HU-35 y HU-37 (sí cubiertas), pero ningún TC de este taller
+ejercita hitos, documentos ni mensajería del portal; solo facturas y cuenta.
+
+### Visitantes del sitio público - Demo y captación (2)
+HU-40 Recorrer el panel de control sin crear una cuenta · HU-41 Entender qué
+me ofrecen sin lenguaje técnico
 
 **Lectura honesta para el jurado:** este taller de caja negra fue deliberado
 y angosto - autenticación y dinero (portal + cobros), que son los caminos
