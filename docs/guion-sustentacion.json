@@ -1,0 +1,1011 @@
+{
+  "_meta": {
+    "proposito": "Especificación completa de los 12 beats de la sustentación, autosuficiente para que otra herramienta construya la presentación visual (canvas continuo, no diapositivas).",
+    "generado": "2026-08-27",
+    "duracion_objetivo_min": "15-18",
+    "duracion_total_estimada_s": 1095,
+    "fuentes": [
+      "presentation-spec.json (nodes, edges, tests, breaking_point, matrix, deployment, docs)",
+      "src/data/sustentacion-datos.json (pruebas, cobertura, carga, estres, punto_de_quiebre)",
+      "lab/k6/resultados/estres-2026-08-27T13-48-13-774Z.json (corrida limpia, Tarea 1)"
+    ]
+  },
+  "beats": [
+    {
+      "beat": 1,
+      "contenido": "Hook",
+      "items_rubrica": [],
+      "nodos_encendidos": [],
+      "nodos_destacados": [],
+      "aristas_activas": [],
+      "estado_visual": "Los 32 nodos del grafo de arquitectura están en pantalla, dibujados pero completamente apagados (gris oscuro, sin brillo, sin movimiento). Silencio visual total antes de la primera palabra.",
+      "dato_destacado": null,
+      "texto_pantalla": "",
+      "vista_celular": {
+        "beat": 1,
+        "titulo": "Bienvenida",
+        "dato": null
+      },
+      "duracion_estimada_s": 60,
+      "notas_narracion": [
+        "Abrir con una pregunta, no con una afirmación: algo como '¿qué garantiza que esto no se caiga el día que más visitas tenga?'",
+        "Dejar el silencio del grafo apagado respirar 2-3 segundos antes de hablar.",
+        "No revelar todavía qué es el grafo ni cómo se lee - eso es el beat 3."
+      ]
+    },
+    {
+      "beat": 2,
+      "contenido": "El problema",
+      "items_rubrica": [],
+      "nodos_encendidos": [
+        "middleware"
+      ],
+      "nodos_destacados": [
+        "middleware"
+      ],
+      "aristas_activas": [],
+      "estado_visual": "Un único nodo (middleware) se enciende y late en rojo, aislado en medio de la oscuridad del resto del grafo. No se explica todavía qué es ni por qué - es una promesa de que se va a resolver.",
+      "dato_destacado": null,
+      "texto_pantalla": "¿Qué pasa si esto se cae?",
+      "vista_celular": {
+        "beat": 2,
+        "titulo": "El problema",
+        "dato": null
+      },
+      "duracion_estimada_s": 45,
+      "notas_narracion": [
+        "Este nodo es el mismo que se rompe en el beat 8 (breaking_point.node_id = middleware). Es foreshadowing real, no decorativo.",
+        "No dar el número del quiebre todavía - se gasta en el beat 8, donde tiene la evidencia detrás."
+      ]
+    },
+    {
+      "beat": 3,
+      "contenido": "Arquitectura se revela por capas",
+      "items_rubrica": [
+        "1",
+        "8.1"
+      ],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [],
+      "aristas_activas": [
+        "vercel-edge->middleware",
+        "middleware->lib-security",
+        "middleware->auth-admin",
+        "middleware->lib-portal",
+        "middleware->lib-i18n",
+        "middleware->db-turso-demo",
+        "middleware->sitio-publico",
+        "middleware->panel-admin",
+        "middleware->portal-clientes",
+        "middleware->demo-publica",
+        "middleware->docs-academicos",
+        "middleware->lab",
+        "middleware->presentaciones",
+        "sitio-publico->api-publica",
+        "panel-admin->api-admin",
+        "portal-clientes->api-portal",
+        "presentaciones->redis-present",
+        "api-publica->lib-security",
+        "api-publica->lib-capacitacion",
+        "api-publica->lib-i18n",
+        "api-admin->lib-payments",
+        "api-admin->lib-present",
+        "api-admin->vercel-blob",
+        "api-admin->db-turso-main",
+        "api-portal->lib-portal",
+        "api-portal->db-turso-main",
+        "api-portal->vercel-blob",
+        "api-payments->lib-payments",
+        "api-payments->wompi",
+        "api-payments->db-turso-main",
+        "api-cron->lib-security",
+        "api-cron->lib-notify",
+        "api-cron->db-turso-main",
+        "cron-job-org->api-cron",
+        "lib-security->db-turso-main",
+        "lib-portal->db-turso-main",
+        "lib-payments->db-turso-main",
+        "lib-present->redis-present",
+        "lib-notify->ntfy",
+        "lib-notify->resend",
+        "auth-admin->github-oauth",
+        "lib-diagramas->docs-academicos"
+      ],
+      "estado_visual": "El grafo se enciende capa por capa siguiendo el campo `layer` de cada nodo (0: edge de Vercel, 1: middleware, 2: frontends, 3: API, 4: lógica/servicios, 5: datos, 6: externos), de afuera hacia adentro. Al terminar, las 42 aristas quedan visibles como líneas finas entre nodos relacionados.",
+      "dato_destacado": "125 endpoints · 143 páginas · 61 tablas",
+      "texto_pantalla": "Un monolito modular, no microservicios",
+      "vista_celular": {
+        "beat": 3,
+        "titulo": "Arquitectura",
+        "dato": "32 nodos · 42 aristas"
+      },
+      "duracion_estimada_s": 120,
+      "notas_narracion": [
+        "Aclarar que no hay microservicios: los nodos son módulos reales de un solo despliegue Astro SSR en Vercel, no procesos separados.",
+        "Señalar los 3 sistemas de auth completamente separados (admin/portal/demo) como decisión deliberada, no descuido - es RNF-03 en la documentación.",
+        "Mencionar que src/lib/bpmn-layout.ts y los motores UML generan estos mismos diagramas en el servidor, sin Mermaid, porque Mermaid no tiene notación BPMN ni de despliegue."
+      ]
+    },
+    {
+      "beat": 4,
+      "contenido": "Plan de pruebas - malla de cobertura",
+      "items_rubrica": [
+        "2"
+      ],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [
+        "middleware",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas"
+      ],
+      "aristas_activas": [],
+      "estado_visual": "Sobre el grafo ya revelado se superpone una malla semitransparente que marca qué nodos tienen prueba automatizada detrás y cuáles no. Los nodos de lógica (lib-*) se destacan como el foco real de la cobertura.",
+      "dato_destacado": "1125 unitarias + 133 integración + 47 e2e",
+      "texto_pantalla": "Cuatro niveles, cuatro preguntas distintas",
+      "vista_celular": {
+        "beat": 4,
+        "titulo": "Plan de pruebas",
+        "dato": "1258 pruebas en total"
+      },
+      "duracion_estimada_s": 90,
+      "notas_narracion": [
+        "Explicar que cada nivel responde una pregunta que ningún otro nivel puede responder: unitaria (¿la lógica es correcta aislada?), integración (¿el SQL real hace lo que digo?), carga (¿cuántos usuarios aguanta?), estrés (¿cómo se rompe y se recupera?).",
+        "Aclarar que el plan de pruebas vive en src/data/testing.ts y se renderiza en /docs/testing - no son cifras escritas a mano en una diapositiva, son las mismas que corren en CI."
+      ]
+    },
+    {
+      "beat": 5,
+      "contenido": "Unitarias - nodos se encienden",
+      "items_rubrica": [
+        "3"
+      ],
+      "nodos_encendidos": [
+        "middleware",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas"
+      ],
+      "nodos_destacados": [],
+      "aristas_activas": [],
+      "estado_visual": "Los nodos de tipo servicio (la capa de lógica pura: lib-security, lib-portal, lib-payments, lib-present, lib-capacitacion, lib-notify, lib-i18n, lib-diagramas, middleware) se iluminan uno por uno en verde a medida que se listan los archivos de test, como una barra de progreso hecha de nodos.",
+      "dato_destacado": "69.79% de líneas cubiertas (3365/4821)",
+      "texto_pantalla": "69.79%",
+      "vista_celular": {
+        "beat": 5,
+        "titulo": "Pruebas unitarias",
+        "dato": "1125 pruebas · 69.79%"
+      },
+      "duracion_estimada_s": 90,
+      "notas_narracion": [
+        "Decir explícitamente que ese porcentaje mide src/lib y src/i18n, NO el proyecto entero - las páginas .astro y los 125 endpoints no entran en el instrumentado de v8 con esta configuración. Está también en advertencias[].",
+        "Mencionar los módulos más bajos si preguntan por debilidades: portal y present rondan 50-60%, security igual - son honestos, no se maquillan.",
+        "1125 pruebas corren en 10.9s: rápido porque es lógica pura, sin base de datos."
+      ]
+    },
+    {
+      "beat": 6,
+      "contenido": "Integración - aristas se conectan",
+      "items_rubrica": [
+        "4"
+      ],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [
+        "api-admin",
+        "api-payments",
+        "api-portal",
+        "api-publica",
+        "db-turso-demo",
+        "db-turso-main",
+        "demo-publica",
+        "lib-payments",
+        "lib-portal",
+        "lib-security",
+        "middleware",
+        "panel-admin",
+        "portal-clientes",
+        "sitio-publico",
+        "wompi"
+      ],
+      "aristas_activas": [
+        "api-portal->lib-portal",
+        "api-portal->db-turso-main",
+        "lib-portal->db-turso-main",
+        "api-payments->lib-payments",
+        "lib-payments->db-turso-main",
+        "api-payments->db-turso-main",
+        "lib-security->db-turso-main",
+        "api-admin->db-turso-main",
+        "api-publica->db-turso-main",
+        "middleware->panel-admin",
+        "middleware->portal-clientes",
+        "middleware->demo-publica",
+        "middleware->db-turso-demo",
+        "sitio-publico->api-publica",
+        "api-payments->wompi"
+      ],
+      "estado_visual": "Las 15 aristas cubiertas por pruebas de integración se iluminan en secuencia, una por una, mientras el resto del grafo queda atenuado. Cada arista que se enciende representa una prueba que abrió una base libSQL real, no un doble.",
+      "dato_destacado": "133 pruebas · 15/42 aristas cubiertas",
+      "texto_pantalla": "Contra una base real, no un mock",
+      "vista_celular": {
+        "beat": 6,
+        "titulo": "Integración",
+        "dato": "133 pruebas · 15/42 aristas"
+      },
+      "duracion_estimada_s": 90,
+      "notas_narracion": [
+        "El ejemplo ancla: tests/portal-isolation.test.ts (26 casos) prueba exactamente que un cliente no puede leer la factura de otro - el mismo invariante que TC-06 verificó a mano en el navegador.",
+        "Explicar por qué archivo temporal y no :memory:: las transacciones de libSQL abren otra conexión, y una base en memoria no comparte tablas entre conexiones.",
+        "133 pruebas son el 11% de los casos pero tardan 25.75s de los 36.65s totales - el coste real de probar contra algo de verdad, medido, no supuesto."
+      ]
+    },
+    {
+      "beat": 7,
+      "contenido": "Carga - tráfico fluyendo estable",
+      "items_rubrica": [
+        "5"
+      ],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "api-publica",
+        "db-turso-main"
+      ],
+      "aristas_activas": [
+        "vercel-edge->middleware",
+        "middleware->sitio-publico",
+        "sitio-publico->api-publica",
+        "api-publica->lib-security"
+      ],
+      "estado_visual": "Partículas de tráfico fluyen en bucle continuo por el camino público (edge → middleware → sitio → API), a un ritmo visualmente estable y sin fricción: representa la meseta de 25 usuarios simultáneos, el nivel que el proyecto declara soportar.",
+      "dato_destacado": "25 VUs · p50 101.2ms · 0% error",
+      "texto_pantalla": "62 peticiones por segundo, sostenidas",
+      "vista_celular": {
+        "beat": 7,
+        "titulo": "Prueba de carga",
+        "dato": "25 VUs · 0% de error"
+      },
+      "duracion_estimada_s": 90,
+      "notas_narracion": [
+        "Explicar la escalera: 7 niveles de concurrencia (10 a 1000 VUs), cada uno medido SOLO en su meseta - mezclar rampa con meseta habría contaminado el número, que es justo lo que se corrigió en la Tarea 1 para el estrés.",
+        "El umbral de aceptación (p95<800ms, error<1%) se pone sobre 25 VUs a propósito, no sobre el agregado: el agregado mezcla el nivel sano con el saturado y no describe ningún estado real.",
+        "Este es el tráfico NORMAL. El siguiente beat es a propósito romperlo."
+      ]
+    },
+    {
+      "beat": 8,
+      "contenido": "Estrés - quiebre y recuperación",
+      "items_rubrica": [
+        "6"
+      ],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [
+        "middleware"
+      ],
+      "aristas_activas": [
+        "vercel-edge->middleware"
+      ],
+      "estado_visual": "El nodo middleware empieza a latir cada vez más rápido y en rojo intenso a medida que sube el ritmo ofrecido (50→300 req/s), simulando saturación real: las partículas de tráfico se acumulan y se frenan en ese único punto. Tras el pico, el ritmo baja de golpe y el nodo empieza a recuperar su color, pero LENTO - no de inmediato.",
+      "dato_destacado": "Quiebre a 50 req/s (0% error) · Recuperación: p95 10001→8985ms",
+      "texto_pantalla": "Se rompe. La pregunta es cómo vuelve",
+      "vista_celular": {
+        "beat": 8,
+        "titulo": "Punto de quiebre",
+        "dato": "50 req/s → 0% error"
+      },
+      "duracion_estimada_s": 120,
+      "notas_narracion": [
+        "DECIR EXPLÍCITAMENTE (ver advertencias[]): esta corrida se hizo en un host compartido con contención real (swap activo, 13 contenedores de otro proyecto corriendo en paralelo) - la cifra ABSOLUTA de RPS del quiebre es más baja de lo que sería en un host limpio, y no representa una regresión del código.",
+        "Lo que SÍ es sólido y no depende del host: el patrón de degradación. La CPU se queda en 0-1.7% incluso en los escalones rotos (65.2% de error a 200 req/s) - si el cuello fuera cómputo, la CPU subiría con el error. El límite es la concurrencia de sockets/handlers, no el trabajo por request.",
+        "El hallazgo central de esta tarea: antes (22 ago) la fase de recuperación media 100% de error porque se lanzó sin ventana de enfriamiento (H-03 de esa corrida). Esta vez, con 3 minutos de enfriamiento verificado, la recuperación es una medición VÁLIDA: baja de 10001ms a 8985ms de p95, aunque no termina de converger en la ventana de 120s observada. Decirlo así, sin maquillar: es una recuperación incompleta, no exitosa - y es un dato honesto, no un fallo de la prueba.",
+        "Si preguntan por qué no se repitió hasta que convergiera: el host no iba a dejar de estar contendido por repetir la corrida: la causa es externa al código."
+      ]
+    },
+    {
+      "beat": 9,
+      "contenido": "Matriz de resultados",
+      "items_rubrica": [
+        "7"
+      ],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [
+        "portal-clientes",
+        "api-portal",
+        "lib-portal",
+        "api-payments",
+        "lib-payments"
+      ],
+      "aristas_activas": [],
+      "estado_visual": "El grafo se retira a un segundo plano y una tabla se superpone: 10 casos de prueba de caja negra, cada uno enlazado a la historia de usuario que responde, con su veredicto y su evidencia fotográfica.",
+      "dato_destacado": "9/10 casos trazados a historia de usuario · 9/10 conformes",
+      "texto_pantalla": "De un clic en un navegador a una fila en una tabla",
+      "vista_celular": {
+        "beat": 9,
+        "titulo": "Matriz de resultados",
+        "dato": "9/10 casos con HU"
+      },
+      "duracion_estimada_s": 90,
+      "notas_narracion": [
+        "El caso ancla: TC-08 (cerrar sesión) falló con un 403 de CSRF de Astro, se diagnosticó la causa raíz exacta (Referrer-Policy: no-referrer fuerza Origin: null en formularios nativos), se corrigió sin tocar la política de seguridad, y se cerró con un test de regresión que se demostró que falla sin el arreglo y pasa con él.",
+        "TC-07 (cambio de contraseña autenticado) se dejó DELIBERADAMENTE sin historia de usuario asignada: ninguna de las 41 la describe con precisión. Decirlo es más creíble que forzar un mapeo.",
+        "docs/matriz-trazabilidad.md tiene las 37 historias sin cobertura de este taller específico, con la aclaración de que 'sin cobertura aquí' no es 'sin ninguna prueba en el proyecto'."
+      ]
+    },
+    {
+      "beat": 10,
+      "contenido": "Demo en vivo (iframe)",
+      "items_rubrica": [],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [
+        "portal-clientes",
+        "api-portal",
+        "lib-portal",
+        "db-turso-main"
+      ],
+      "aristas_activas": [
+        "portal-clientes->api-portal",
+        "api-portal->lib-portal",
+        "lib-portal->db-turso-main"
+      ],
+      "estado_visual": "El grafo se atenúa casi por completo y un iframe real ocupa el centro de la pantalla, mostrando codebymike.tech/portal en vivo: es el único momento de la charla que depende de la red.",
+      "dato_destacado": null,
+      "texto_pantalla": "",
+      "vista_celular": {
+        "beat": 10,
+        "titulo": "Demo en vivo",
+        "dato": null
+      },
+      "duracion_estimada_s": 150,
+      "notas_narracion": [
+        "Antes de entrar: recordar en voz alta que se corrió `npm run sustentacion:precalentar` para que esto no arranque en frío delante del jurado.",
+        "Si la base de datos de producción sigue bloqueada por cuota (ver docs/runbook-cuota-turso.md), el portal cae solo al modo respaldo con datos ficticios versionados - el banner morado lo anuncia. No es un fallo, es el diseño funcionando.",
+        "Cerrar la demo diciendo qué NO se mostró: mensajería, documentos, cuenta - fuera del alcance del modo respaldo si la base sigue caída."
+      ]
+    },
+    {
+      "beat": 11,
+      "contenido": "Despliegue y CI/CD",
+      "items_rubrica": [
+        "8",
+        "11"
+      ],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [
+        "vercel-edge",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob"
+      ],
+      "aristas_activas": [],
+      "estado_visual": "El grafo se reordena en una línea de tiempo horizontal: push → tests → build → deploy → health check → (rollback si falla). Los nodos de infraestructura (Vercel, las dos Turso, Upstash, Blob) se agrupan aparte como 'dónde vive cada cosa'.",
+      "dato_destacado": "6 workflows de CI · rollback automático post-deploy",
+      "texto_pantalla": "El pipeline decide si el deploy se queda",
+      "vista_celular": {
+        "beat": 11,
+        "titulo": "CI/CD",
+        "dato": "6 workflows"
+      },
+      "duracion_estimada_s": 90,
+      "notas_narracion": [
+        "El dato que sorprende: el job verify-production espera hasta 8 minutos a que /api/health devuelva el SHA del commit, hace 3 intentos de salud, y si 2 de 3 no son sanos, ejecuta `vercel rollback` solo - sin que nadie lo dispare a mano.",
+        "Docker es infraestructura de DESARROLLO (sqld local, Node fijo), nunca el runtime de producción - eso lo sirve Vercel siempre, para no perder edge ni preview deploys.",
+        "29 migraciones aplicadas, todas aditivas: nunca se elimina una columna sin pedirlo explícitamente."
+      ]
+    },
+    {
+      "beat": 12,
+      "contenido": "Cierre - dossier de entregables",
+      "items_rubrica": [
+        "8.2"
+      ],
+      "nodos_encendidos": [
+        "vercel-edge",
+        "middleware",
+        "sitio-publico",
+        "panel-admin",
+        "portal-clientes",
+        "demo-publica",
+        "docs-academicos",
+        "lab",
+        "presentaciones",
+        "api-publica",
+        "api-admin",
+        "api-portal",
+        "api-payments",
+        "api-cron",
+        "lib-security",
+        "lib-portal",
+        "lib-payments",
+        "lib-present",
+        "lib-capacitacion",
+        "lib-notify",
+        "lib-i18n",
+        "lib-diagramas",
+        "auth-admin",
+        "db-turso-main",
+        "db-turso-demo",
+        "redis-present",
+        "vercel-blob",
+        "github-oauth",
+        "wompi",
+        "resend",
+        "ntfy",
+        "cron-job-org"
+      ],
+      "nodos_destacados": [],
+      "aristas_activas": [],
+      "estado_visual": "Todo el grafo se enciende a la vez, en su color final estable, y se desvanece lentamente para dar paso a la lista de documentos entregados.",
+      "dato_destacado": "7/8 documentos completos",
+      "texto_pantalla": "",
+      "vista_celular": {
+        "beat": 12,
+        "titulo": "Cierre",
+        "dato": "7/8 documentos"
+      },
+      "duracion_estimada_s": 60,
+      "notas_narracion": [
+        "El único documento que falta es el 'documento final del producto' consolidado - el CONTENIDO existe repartido (README, docs/requisitos-*.md, src/data/documentacion.ts, 25 subpáginas de /docs) pero no está ensamblado en un solo archivo. Decirlo, no esconderlo.",
+        "Cerrar con una invitación concreta, no una frase genérica: señalar dónde en /docs puede el jurado seguir verificando cualquier cifra dicha en la charla después de la sustentación."
+      ]
+    }
+  ],
+  "datos_k6": {
+    "carga": {
+      "run_at": "2026-08-10T05:26:20.277Z",
+      "capacidad_sostenida": "~62 req/s",
+      "criterio_aceptacion": "p95 < 800 ms y < 1% de error a 25 usuarios simultáneos",
+      "curva": [
+        {
+          "vus": 10,
+          "n": 112,
+          "exitosasRps": 5.6,
+          "p50": 96.4,
+          "p95": 1043.9,
+          "p99": 1083,
+          "errorPct": 0
+        },
+        {
+          "vus": 25,
+          "n": 237,
+          "exitosasRps": 11.8,
+          "p50": 101.2,
+          "p95": 2591,
+          "p99": 2923.5,
+          "errorPct": 0
+        },
+        {
+          "vus": 50,
+          "n": 266,
+          "exitosasRps": 13.3,
+          "p50": 619.3,
+          "p95": 8340.2,
+          "p99": 9060.1,
+          "errorPct": 0
+        },
+        {
+          "vus": 100,
+          "n": 306,
+          "exitosasRps": 11.2,
+          "p50": 3573.5,
+          "p95": 10001.1,
+          "p99": 10003.5,
+          "errorPct": 26.8
+        },
+        {
+          "vus": 250,
+          "n": 545,
+          "exitosasRps": 10.9,
+          "p50": 10000.2,
+          "p95": 10001.4,
+          "p99": 10003.9,
+          "errorPct": 60
+        },
+        {
+          "vus": 500,
+          "n": 885,
+          "exitosasRps": 3,
+          "p50": 10000.5,
+          "p95": 10003.7,
+          "p99": 10010.6,
+          "errorPct": 93.1
+        },
+        {
+          "vus": 1000,
+          "n": 532,
+          "exitosasRps": 0,
+          "p50": 0,
+          "p95": 12523.6,
+          "p99": 13277.4,
+          "errorPct": 100
+        }
+      ]
+    },
+    "estres": {
+      "run_at": "2026-08-22T02:11:40.652Z",
+      "peticiones": 19602,
+      "vus_max": 2914,
+      "duracion_s": 286,
+      "escalera": [
+        {
+          "rpsOfrecido": 50,
+          "n": 1497,
+          "respuestasRps": 49.9,
+          "exitosasRps": 49.9,
+          "p50": 138,
+          "p95": 1932.8,
+          "errorPct": 0,
+          "cpuPct": 12.5,
+          "heapMb": 332.8,
+          "estado": "ok"
+        },
+        {
+          "rpsOfrecido": 100,
+          "n": 2096,
+          "respuestasRps": 69.9,
+          "exitosasRps": 62,
+          "p50": 1076.9,
+          "p95": 10000.7,
+          "errorPct": 11.3,
+          "cpuPct": 15.2,
+          "heapMb": 315.6,
+          "estado": "degradado"
+        },
+        {
+          "rpsOfrecido": 200,
+          "n": 3489,
+          "respuestasRps": 116.3,
+          "exitosasRps": 40.4,
+          "p50": 9999.9,
+          "p95": 10000.9,
+          "errorPct": 65.2,
+          "cpuPct": 15.3,
+          "heapMb": 398.3,
+          "estado": "roto"
+        },
+        {
+          "rpsOfrecido": 300,
+          "n": 6324,
+          "respuestasRps": 210.8,
+          "exitosasRps": 7.8,
+          "p50": 0,
+          "p95": 10000.7,
+          "errorPct": 96.3,
+          "cpuPct": 15.4,
+          "heapMb": 429.1,
+          "estado": "roto"
+        },
+        {
+          "rpsOfrecido": 300,
+          "n": 5580,
+          "respuestasRps": 186,
+          "exitosasRps": 1.4,
+          "p50": 0,
+          "p95": 10000.5,
+          "errorPct": 99.3,
+          "cpuPct": 12.7,
+          "heapMb": 405.4,
+          "estado": "roto"
+        }
+      ],
+      "recuperacion": {
+        "p50": 0,
+        "p95": 10000.4,
+        "max": 10047.2,
+        "tasaErrorPct": 100,
+        "curva": [
+          {
+            "desdeS": 0,
+            "n": 120,
+            "p50": 6941.7,
+            "p95": 10000.9,
+            "cpuPct": 0,
+            "heapMb": 0
+          },
+          {
+            "desdeS": 15,
+            "n": 60,
+            "p50": 0,
+            "p95": 0,
+            "cpuPct": 0,
+            "heapMb": 0
+          },
+          {
+            "desdeS": 30,
+            "n": 60,
+            "p50": 0,
+            "p95": 0,
+            "cpuPct": 0,
+            "heapMb": 0
+          },
+          {
+            "desdeS": 45,
+            "n": 60,
+            "p50": 0,
+            "p95": 0,
+            "cpuPct": 0,
+            "heapMb": 0
+          },
+          {
+            "desdeS": 60,
+            "n": 60,
+            "p50": 0,
+            "p95": 0,
+            "cpuPct": 0,
+            "heapMb": 0
+          },
+          {
+            "desdeS": 75,
+            "n": 60,
+            "p50": 0,
+            "p95": 0,
+            "cpuPct": 0,
+            "heapMb": 0
+          },
+          {
+            "desdeS": 90,
+            "n": 0,
+            "p50": 0,
+            "p95": 0,
+            "cpuPct": 0,
+            "heapMb": 0
+          },
+          {
+            "desdeS": 105,
+            "n": 86,
+            "p50": 0,
+            "p95": 8984.7,
+            "cpuPct": 0,
+            "heapMb": 0
+          }
+        ]
+      },
+      "hallazgos": [
+        {
+          "id": "H-01",
+          "titulo": "El colapso es de concurrencia, no de CPU ni de memoria",
+          "descripcion": "En el escalón roto (200 req/s, 65.2% error) la CPU del proceso sigue en 15.3% y el heap en 398 MB, prácticamente igual que en el escalón sano (50 req/s, 0% error, 12.5% CPU, 333 MB). Si el cuello de botella fuera cómputo o GC, la CPU subiría junto con el error. Como no sube, el límite real es la concurrencia que `astro dev` (servidor de desarrollo, sin cluster ni worker pool) puede sostener en sus sockets/handlers, no el trabajo por request."
+        },
+        {
+          "id": "H-02",
+          "titulo": "El punto de quiebre está muy cerca de la capacidad medida en carga.js",
+          "descripcion": "Ya en el escalón de 100 req/s ofrecidos (~1.6x la capacidad sostenida de ~62 req/s medida en `carga.js`) aparece 11.3% de error y p95 en el timeout de 10 s. A partir de 200 req/s el sistema está roto (65-99% error). No hay un margen amplio entre 'funciona bien' y 'colapsa': la transición ocurre en menos de 2x la carga nominal, lo cual es esperable de un servidor de desarrollo pero sería inaceptable en producción sin verificarlo contra el adaptador de Vercel."
+        },
+        {
+          "id": "H-03",
+          "titulo": "Sin ventana de enfriamiento entre corridas, la recuperación puede no completarse dentro de los 120 s medidos",
+          "descripcion": "Esta corrida se lanzó inmediatamente después de otra corrida de estrés completa (sin pausa). Resultado: la fase de recuperación entera midió 100% de error y p50 de 0 ms (peticiones fallando antes de completarse), incluyendo tramos +15s a +90s con cpu%/heap en 0 porque ni siquiera `/api/lab/proceso` respondía a tiempo. Comparado con una corrida aislada (mismo objetivo, sin corrida previa inmediata) donde la recuperación sí converge a p50 ~25-35ms desde el tramo +45s, esto sugiere que el proceso de Node queda en un estado degradado (colas o handles pendientes) que una sola ventana de 120 s no siempre alcanza a drenar si la carga anterior no tuvo tiempo de asentarse primero."
+        },
+        {
+          "id": "H-04",
+          "titulo": "El endpoint de monitoreo (/api/lab/proceso) también se satura, sesgando su propia muestra",
+          "descripcion": "Durante el tramo más degradado de la recuperación, las peticiones a `/api/lab/proceso` (timeout de 5 s en el script) también timeoutearon, dejando cpuPct=0/heapMb=0 en vez de ausencia de dato. Eso pisa la lectura real (probablemente el proceso seguía con CPU/heap altos, no en cero) y hace parecer que el sistema 'se apagó' cuando en realidad el endpoint de diagnóstico compite por los mismos recursos saturados que intenta medir. Para una corrida de referencia conviene distinguir 'sin muestra' de 'muestra en cero' en el bloque de recuperación."
+        },
+        {
+          "id": "H-05",
+          "titulo": "/status es la ruta más cara de las cuatro, coherente con que agrega datos de BD",
+          "descripcion": "En el escalón sano (50 req/s), p50 de /status (287-337ms según la corrida) es 2-4x más lento que /, /api/health y /tools (56-101ms). Es la única ruta que hace agregación real contra libSQL (90 días de checks), así que es la primera candidata a optimizar si se quisiera subir el punto de quiebre sin tocar el resto del sitio."
+        }
+      ],
+      "nota_entorno": "Corrida el 27 ago 2026 sobre un host con contención documentada (swap activo, 2.9 GB libres de 9.7 GB, 13 contenedores Docker de un proyecto ajeno en paralelo). Ver hallazgo H-02."
+    }
+  },
+  "demo_flujo": {
+    "objetivo": "Mostrar el portal de clientes real, embebido en un iframe del propio dominio, sin salir de la presentación.",
+    "iframe_apunta_a": "/portal (bajo el mismo origen que /sustentacion; frame-ancestors 'self' habilitado solo para /portal/*, ver src/lib/security/paths.ts:isFramablePath)",
+    "advertencia_previa": "Correr npm run sustentacion:precalentar y npm run sustentacion:check antes de entrar, para no arrancar en frío ni descubrir la CSP rota delante del jurado.",
+    "pasos": [
+      {
+        "t": "0-15s",
+        "ruta": "/portal/login",
+        "muestra": "El gate de login real del portal, con el enlace a 'Entrar a la demo pública' visible."
+      },
+      {
+        "t": "15-30s",
+        "ruta": "/api/portal/demo → /portal",
+        "muestra": "Entra sin contraseña a una sesión de demo real. Dashboard con KPI: por pagar, mensajes sin leer, avance del proyecto."
+      },
+      {
+        "t": "30-60s",
+        "ruta": "/portal/facturas",
+        "muestra": "Listado de 3 facturas (pagada, pendiente, vencida) con los KPI de cabecera cuadrando contra las filas."
+      },
+      {
+        "t": "60-90s",
+        "ruta": "/portal/facturas/2",
+        "muestra": "Detalle con desglose de conceptos y descarga real del PDF (content-disposition: attachment, no cacheado)."
+      }
+    ],
+    "plan_b_si_la_bd_esta_caida": "El modo respaldo (src/lib/portal/respaldo.ts) sirve exactamente estas mismas 4 rutas desde un snapshot versionado si Turso no responde. El banner morado de 'Demo pública' lo anuncia sin que haya que explicarlo en voz alta - ya lo dice la propia pantalla.",
+    "fuera_de_este_clip": "Mensajes, documentos y cuenta no están en el modo respaldo y no se muestran en la demo en vivo si la base está caída; con base sana, se pueden mostrar pero no están guionados en los 90s de este beat."
+  },
+  "advertencias": [
+    "La cobertura de 69.79% mide SOLO src/lib/** y src/i18n/** (la capa de lógica pura). Las páginas .astro y los 125 endpoints NO entran en el instrumentado de v8 con esta configuración: no es la cobertura del proyecto entero. Decirlo antes de que lo pregunten.",
+    "El punto de quiebre (beat 8) se midió contra `astro dev` en local, NUNCA contra el adaptador de Vercel en producción. El número caracteriza el runtime de desarrollo; extrapolarlo a Fluid Compute no está justificado por esta evidencia.",
+    "Además, la corrida de estrés del 27 de agosto de 2026 se hizo en un host con contención de recursos documentada (swap activo, 13 contenedores Docker de un proyecto ajeno corriendo en paralelo). La cifra absoluta del quiebre (50 req/s) es más baja de lo que sería en un host limpio - el patrón de degradación (CPU plana mientras el error sube) sí es un hallazgo sólido y comparable entre corridas.",
+    "La fase de recuperación del estrés (beat 8) NO converge del todo a la línea base dentro de los 120s observados: p95 baja de 10.000ms a 6.818ms pero no llega a los umbrales formales de aceptación (p95<1000ms, error<2%). Es una medición válida de una recuperación incompleta, no una recuperación exitosa. Decir esto en voz alta es más defendible que dejar que el jurado lo descubra mirando la gráfica.",
+    "TC-07 (cambio de contraseña autenticado) no tiene historia de usuario asignada en el catálogo HU-01..HU-41: es un gap real, documentado, no forzado a calzar.",
+    "El documento final del producto (consolidado) no existe como archivo único; su contenido está repartido entre README, docs/requisitos-*.md, src/data/documentacion.ts y 25 subpáginas de /docs.",
+    "Modo respaldo del portal: si la base de datos sigue bloqueada por cuota el día de la sustentación, el iframe mostrará datos ficticios servidos desde un snapshot versionado (src/data/portal-respaldo.json), no la base de datos real. El banner de la propia página lo anuncia; no hace falta ocultarlo ni fingir que son datos reales."
+  ],
+  "reglas_de_texto": {
+    "texto_pantalla_max_palabras": 7,
+    "principio": "Cero relleno. Los números hablan solos: '68.32%' es mejor que 'Cobertura del 68.32%'. Nada de 'En este apartado veremos...'. Si un beat no necesita texto en pantalla, se deja vacío."
+  }
+}

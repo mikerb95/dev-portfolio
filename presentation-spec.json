@@ -568,21 +568,22 @@
       "command": "npm run test:coverage   # = vitest run --coverage",
       "command_junit": "npx vitest run --reporter=junit --outputFile=informes/tests-junit.xml && node scripts/report-tests.mjs",
       "executed_in_this_session": true,
-      "total_tests": 1200,
-      "total_files": 70,
+      "total_tests": 1258,
+      "total_files": 75,
       "failures": 0,
-      "duration_s": 35.124,
+      "duration_s": 36.65,
       "avg_test_s": 0.027736,
       "levels": {
         "unitarias": {
-          "pruebas": 1067,
-          "archivos": 60,
-          "segundos": 10.134
+          "pruebas": 1125,
+          "archivos": 65,
+          "segundos": 10.9
         },
         "integracion": {
           "pruebas": 133,
           "archivos": 10,
-          "segundos": 24.99
+          "segundos": 25.75,
+          "nota": "Abren una base libSQL real en archivo temporal, no un doble."
         }
       },
       "levels_note": "El propio repo separa unitarias (lógica pura) de integración (abre una base libSQL real en archivo temporal). Ver src/data/ejecucion-pruebas.ts.",
@@ -659,15 +660,15 @@
         }
       ],
       "coverage_global": {
-        "lines_pct": 68.32,
-        "lines": "3110/4552",
-        "statements_pct": 67.86,
-        "statements": "3755/5533",
-        "branches_pct": 64.08,
-        "branches": "2452/3826",
-        "functions_pct": 66.11,
-        "functions": "765/1157",
-        "measured_at": "2026-08-26, corrida de esta sesión",
+        "lines_pct": 69.79,
+        "lines": "3365/4821",
+        "statements_pct": 69.01,
+        "statements": "4053/5873",
+        "branches_pct": 64.25,
+        "branches": "2580/4015",
+        "functions_pct": 67.9,
+        "functions": "838/1234",
+        "measured_at": "2026-08-27, corrida de esta sesión (tras BUG-01 y la sesión de sustentación)",
         "scope_note": "La cobertura mide src/lib y src/i18n (lógica). Las páginas .astro y los endpoints no entran en el instrumentado de v8 en esta configuración.",
         "source": "coverage/coverage-summary.json"
       },
@@ -2403,14 +2404,15 @@
         "modulo": "Portal · Autenticación",
         "historia_usuario": "HU-37",
         "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-37 en docs/historias-de-usuario.md. criterio de aceptación literal: revocar una sesión la corta en el siguiente request, no al expirar",
-        "resultado": "fail",
+        "resultado": "pass",
         "nodos_involucrados": [
           "portal-clientes",
           "api-portal",
           "lib-portal"
         ],
-        "evidencia": "docs/evidencias-taller-testing/TC-08-*.jpg",
-        "source": "docs/taller-testing-caja-negra.md"
+        "evidencia": "docs/evidencias-taller-testing/TC-08-*.jpg (corrida original, no conforme); e2e/portal.spec.ts (reverificación 27 ago 2026, conforme)",
+        "source": "docs/taller-testing-caja-negra.md",
+        "nota_actualizacion": "Era 'fail' (BUG-01: 403 de CSRF en el submit nativo del formulario de logout). Corregido y reverificado el 27 ago 2026: ver docs/taller-testing-caja-negra.md."
       },
       {
         "id": "TC-09",
