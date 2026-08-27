@@ -6,6 +6,7 @@
 export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { diaInhabil, habilAnterior } from '../lib/festivos-co'
 
 const INICIO_ISO = '2026-09-09'
 const FIN_ISO = '2027-03-08'
@@ -30,6 +31,7 @@ const addMonths = (x: Date, n: number) => {
 // prerenderizado y no debe depender del ICU del runtime que corra el build.
 const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
 const fCorto = (x: Date) => `${String(x.getDate()).padStart(2, '0')}-${MES_CORTO[x.getMonth()]}`
+const DIA_CORTO = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 const fLargo = (x: Date) => `${fCorto(x)}-${x.getFullYear()}`
 
 // Posición de una fecha dentro de la línea de tiempo, en % del ancho total.
@@ -47,7 +49,17 @@ const banda = (desde: Date, hasta: Date) => {
 const bitacoras = Array.from({ length: MESES }, (_, i) => {
   const desde = addMonths(inicioD, i)
   const hasta = addDays(addMonths(inicioD, i + 1), -1)
-  return { n: i + 1, desde, hasta, ...banda(desde, hasta) }
+  // El cierre de la ventana es la fecha que importa: si cae en fin de semana o
+  // festivo no hay a quién entregarle, y el aviso propone el hábil anterior.
+  const inhabil = diaInhabil(hasta)
+  return {
+    n: i + 1,
+    desde,
+    hasta,
+    inhabil,
+    sugerido: inhabil ? habilAnterior(hasta) : null,
+    ...banda(desde, hasta),
+  }
 })
 
 const visitas = [
@@ -203,9 +215,10 @@ const meta = [
   image="/og-default.png"
   noindex={true}
 >
-  <div class="max-w-[1180px] mx-auto px-6 md:px-12 lg:px-16 pt-32 pb-24">
+  <div id="ep-page" class="max-w-[1180px] mx-auto px-6 md:px-12 lg:px-16 pt-32 pb-24">
 
     <a
+      id="ep-volver"
       href="/"
       class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12"
     >
@@ -263,6 +276,18 @@ const meta = [
           </p>
           <p id="ep-proximo" class="text-[12px] font-mono text-ink-300 mt-2">
             6 meses de etapa productiva · 864 horas
+          </p>
+          <button
+            id="ep-cta"
+            type="button"
+            class="inline-flex items-center gap-2 h-10 mt-5 px-5 rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:brightness-110 transition-all"
+          >
+            Crear mi cronograma
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+          </button>
+          <p class="text-[11px] text-ink-300 mt-2.5 max-w-sm leading-relaxed">
+            ¿Eres otro aprendiz? Las fechas de arriba son de esta ficha; abajo puedes
+            proyectar las tuyas a partir de tu propia fecha de inicio.
           </p>
         </div>
 
@@ -323,7 +348,7 @@ const meta = [
               <>
                 <div class="absolute top-[52px] bottom-[64px] w-px bg-violet/25" style={`left:${centro}%`}></div>
                 <div
-                  class="absolute top-[32px] rounded-md bg-violet/15 border border-violet/40 px-2 py-1 whitespace-nowrap"
+                  class="ep-pin absolute top-[32px] rounded-md bg-violet/15 border border-violet/40 px-2 py-1 whitespace-nowrap"
                   style={`left:${centro}%;transform:translateX(${desplazamiento})`}
                 >
                   <span class="text-[10px] font-mono uppercase tracking-[.1em] text-violet">V{v.n} · {v.titulo}</span>
@@ -344,7 +369,7 @@ const meta = [
           <!-- Carril de bitácoras -->
           {bitacoras.map((b) => (
             <div class="absolute top-[126px]" style={`left:${b.left}%;width:${b.width}%`}>
-              <div class="h-8 rounded-md bg-cyan/12 border border-cyan/30 flex items-center justify-center">
+              <div class="ep-bar h-8 rounded-md bg-cyan/12 border border-cyan/30 flex items-center justify-center">
                 <span class="text-[10px] font-mono uppercase tracking-[.1em] text-cyan">B{b.n}</span>
               </div>
               <span class="block text-[10px] font-mono text-ink-300 mt-1.5 whitespace-nowrap">{fCorto(b.hasta)}</span>
@@ -362,7 +387,7 @@ const meta = [
     </figure>
 
     <!-- Detalle + barra lateral -->
-    <div class="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start mb-4">
+    <div id="ep-detalle" class="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start mb-4">
 
       <div class="grid sm:grid-cols-2 gap-4">
 
@@ -387,11 +412,23 @@ const meta = [
             <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Bitácoras</span>
           </div>
           <p class="text-[11px] font-mono text-ink-300 mb-4 pl-3.5">6 · mensuales · GFPI-F-147</p>
+          <p class="text-[11px] text-ink-300 leading-relaxed mb-4 pl-3.5">
+            Las fechas de cierre que caen en fin de semana o festivo colombiano quedan marcadas
+            con el último día hábil para entregar.
+          </p>
           <ol class="space-y-1.5">
             {bitacoras.map((b) => (
-              <li class="flex items-baseline justify-between gap-3 text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
-                <span class="text-ink-100 shrink-0">Bitácora {b.n}</span>
-                <span class="text-ink-300 font-mono text-[11px] text-right">{fCorto(b.desde)} → {fCorto(b.hasta)}</span>
+              <li class="text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+                <div class="flex items-baseline justify-between gap-3">
+                  <span class="text-ink-100 shrink-0">Bitácora {b.n}</span>
+                  <span class="text-ink-300 font-mono text-[11px] text-right">{fCorto(b.desde)} → {fCorto(b.hasta)}</span>
+                </div>
+                {b.inhabil && b.sugerido && (
+                  <p class="flex items-start gap-1.5 text-[11px] font-mono text-ember mt-1.5 leading-relaxed">
+                    <span aria-hidden="true">▲</span>
+                    <span>{b.inhabil.motivo} · entrega el {DIA_CORTO[b.sugerido.getDay()]} {fCorto(b.sugerido)}</span>
+                  </p>
+                )}
               </li>
             ))}
           </ol>
@@ -418,7 +455,7 @@ const meta = [
 
       </div>
 
-      <aside class="grid gap-4 lg:sticky lg:top-24">
+      <aside id="ep-aside" class="grid gap-4 lg:sticky lg:top-24">
         <div class="rounded-2xl glass border-accent p-5">
           <p class="text-[13px] text-ink-100 leading-relaxed mb-4">
             Las visitas se agendan con el instructor de seguimiento del centro.
@@ -432,7 +469,7 @@ const meta = [
             Agendar visita
           </a>
           <a href="#calc" class="flex items-center justify-center h-11 mt-2 rounded-full border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
-            Calcular otra ficha
+            Crear mi cronograma
           </a>
         </div>
 
@@ -481,9 +518,9 @@ const meta = [
 
     <!-- Calculadora -->
     <section class="rounded-2xl glass border-accent p-6 md:p-7" id="calc" data-doc-links={JSON.stringify(docLinks)}>
-      <div class="grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] gap-8 lg:gap-10">
+      <div id="calc-grid" class="grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] gap-8 lg:gap-10">
 
-        <div>
+        <div id="calc-form">
           <div class="flex items-center gap-2 mb-4">
             <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
             <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Calculadora de cronograma</span>
@@ -524,7 +561,7 @@ const meta = [
           </button>
           <p id="calc-error" class="text-[12px] text-ember mt-2 hidden">Selecciona una fecha de inicio.</p>
 
-          <div class="mt-6 pt-6 border-t border-white/10">
+          <div id="calc-recordatorio" class="mt-6 pt-6 border-t border-white/10">
             <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Recordatorio por email (solo admin)</span>
             <p class="text-[12px] text-ink-300 leading-relaxed mt-2 mb-3">
               Activa un cron diario que avisa por correo cuando falten pocos días para un hito.
@@ -584,7 +621,7 @@ const meta = [
 
             <div id="calc-timeline" class="grid sm:grid-cols-2 gap-2"></div>
 
-            <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
+            <div id="calc-acciones" class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
               <a
                 href={AGENDAR_HREF}
                 target="_blank"
@@ -597,7 +634,7 @@ const meta = [
                 Imprimir / PDF
               </button>
               <button id="calc-ics" type="button" class="text-[12px] font-mono text-cyan border border-cyan/30 bg-cyan/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all">
-                Exportar a calendario (.ics)
+                Exportar con recordatorios (.ics)
               </button>
               <button id="calc-share" type="button" class="text-[12px] font-mono text-ink-200 border border-white/10 rounded-full px-3 py-1.5 hover:bg-white/[.06] transition-colors">
                 Copiar link para compartir
@@ -610,8 +647,133 @@ const meta = [
       </div>
     </section>
 
+    <p class="hidden print:block text-[11px] mt-6">
+      Cronograma generado en codebymike.tech/ep · Fechas según el diseño curricular del
+      programa y el Acuerdo 0009 de 2024 (Reglamento del Aprendiz SENA). Documento de
+      apoyo, no oficial.
+    </p>
+
   </div>
 </BaseLayout>
+
+<style is:global>
+  /* Hoja imprimible. El botón "Imprimir / PDF" existía desde antes pero sin
+     estilos de impresión salía el tema oscuro con navbar, barra lateral y
+     formularios: papel gastado en cosas que en papel no sirven. Aquí queda
+     solo lo que el aprendiz le muestra al instructor. Va `is:global` porque
+     hay que alcanzar navbar, footer y FAB, que viven fuera de esta página. */
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 14mm;
+    }
+
+    html,
+    body {
+      background: #fff !important;
+    }
+
+    /* Cromo del sitio y decorados de fondo. */
+    body > header,
+    footer,
+    .wa-fab,
+    #lang-suggest,
+    .ambient-blobs,
+    .halo {
+      display: none !important;
+    }
+    .grain::after {
+      display: none !important;
+    }
+
+    #ep-page {
+      max-width: none !important;
+      padding: 0 !important;
+    }
+
+    /* Toda la paleta del sitio es clara sobre oscuro: sobre papel blanco
+       desaparece, así que el texto se fuerza a tinta. */
+    #ep-page,
+    #ep-page * {
+      color: #16181c !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    #ep-page .text-mask,
+    #ep-page .text-mask-cyan {
+      background-image: none !important;
+      -webkit-text-fill-color: #16181c !important;
+    }
+    #ep-page .glass,
+    #ep-page .border-accent {
+      background: #fff !important;
+      border: 1px solid #c9ccd3 !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    #ep-page section,
+    #ep-page figure,
+    #ep-page aside > div,
+    #ep-page li {
+      break-inside: avoid;
+    }
+
+    /* Interacción pura: no imprime nada útil. */
+    #ep-volver,
+    #ep-cta,
+    #ep-aside,
+    #calc-form,
+    #calc-vacio,
+    #calc-acciones,
+    #calc-recordatorio,
+    #calc-next,
+    #ep-page [role='tablist'] {
+      display: none !important;
+    }
+
+    /* Las dos rejillas de dos columnas se apilan: a 180mm no caben. */
+    #ep-detalle,
+    #calc-grid {
+      display: block !important;
+    }
+
+    /* El cronograma es el motivo de imprimir la hoja: sus fondos tienen que
+       sobrevivir al "no imprimir colores de fondo" del navegador. */
+    #ep-track,
+    #ep-track * {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    #ep-track .ep-bar {
+      background: #d7f4f7 !important;
+      border-color: #06707a !important;
+    }
+    #ep-track .ep-bar span {
+      color: #06707a !important;
+    }
+    #ep-track .ep-pin {
+      background: #ece7ff !important;
+      border-color: #5b46a8 !important;
+    }
+    #ep-track .ep-pin span {
+      color: #5b46a8 !important;
+    }
+    #ep-progreso {
+      background: #06707a !important;
+    }
+
+    /* Los checkbox de "entregado" se imprimen vacíos a propósito: la hoja
+       sirve para ir marcando a mano lo que se va entregando. */
+    #calc-timeline input[type='checkbox'] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 11px;
+      height: 11px;
+      border: 1px solid #16181c !important;
+      border-radius: 2px;
+    }
+  }
+</style>
 
 <script>
   // Dos piezas comparten este script: la banda de estado + el marcador de "hoy"
@@ -621,6 +783,7 @@ const meta = [
   // cron de recordatorios (api/cron/sena-recordatorio) no dupliquen la fórmula.
 
   import { computeHitos, type Hito as HitoBase, type TipoPrograma, type DocKey } from '../lib/sena-ep'
+  import { diaInhabil, habilAnterior } from '../lib/festivos-co'
 
   const startOfDay = (d: Date) => {
     const x = new Date(d)
@@ -734,6 +897,16 @@ const meta = [
 
     const claveHito = (h: HitoBase) => `${h.titulo}|${h.fecha.toISOString().slice(0, 10)}`
 
+    // Un hito que cae en fin de semana o festivo no se puede entregar ese día:
+    // el aviso propone el último hábil en vez de dejar que el aprendiz lo
+    // descubra el lunes.
+    function avisoInhabil(f: Date): string {
+      const inhabil = diaInhabil(f)
+      if (!inhabil) return ''
+      const habil = habilAnterior(f)
+      return `<p class="flex items-start gap-1.5 text-[11px] font-mono text-ember mb-1.5 leading-relaxed"><span aria-hidden="true">▲</span><span>${inhabil.motivo} · entrega el ${fmtCorto(habil)}</span></p>`
+    }
+
     // Checklist "entregado" por hito, persistido en localStorage por
     // combinación tipo+inicio (cada simulación tiene su propio progreso).
     function leerChecklist(key: string): Set<string> {
@@ -826,6 +999,7 @@ const meta = [
             <span class="${colorPorEstado[h.estado]} font-mono text-[11px] uppercase shrink-0">${labelPorEstado[h.estado]}</span>
           </div>
           <div class="text-cyan font-mono text-[11px] mb-1.5">${fmtLargo(h.fecha)}</div>
+          ${avisoInhabil(h.fecha)}
           <p class="text-[12px] text-ink-300 leading-relaxed mb-2">${h.detalle}</p>
           <div class="flex items-center justify-between gap-3">
             <a href="${doc.href}" target="_blank" rel="noopener noreferrer" class="text-cyan font-mono text-[11px] hover:underline">${doc.label} ↓</a>
@@ -890,6 +1064,19 @@ const meta = [
       if (hitosActuales.length === 0) return
 
       const dtstamp = fechaIcs(new Date()) + 'T000000Z'
+
+      // Cada evento lleva sus propias alarmas (7 y 1 día antes). Es el
+      // recordatorio del aprendiz sin pedirle el correo ni guardar nada:
+      // el aviso lo dispara su propio calendario, no este sitio.
+      const alarma = (dias: number, titulo: string) =>
+        [
+          'BEGIN:VALARM',
+          `TRIGGER:-P${dias}D`,
+          'ACTION:DISPLAY',
+          `DESCRIPTION:${escapeIcs(`Faltan ${dias} día${dias === 1 ? '' : 's'}: ${titulo}`)}`,
+          'END:VALARM',
+        ].join('\r\n')
+
       const eventos = hitosActuales.map((h, i) => {
         const desde = fechaIcs(h.fecha)
         const hasta = fechaIcs(addDays(h.fecha, 1))
@@ -901,6 +1088,8 @@ const meta = [
           `DTEND;VALUE=DATE:${hasta}`,
           `SUMMARY:${escapeIcs(h.titulo)}`,
           `DESCRIPTION:${escapeIcs(h.detalle)}`,
+          alarma(7, h.titulo),
+          alarma(1, h.titulo),
           'END:VEVENT',
         ].join('\r\n')
       })
@@ -923,7 +1112,7 @@ const meta = [
       a.click()
       a.remove()
       URL.revokeObjectURL(url)
-      mostrarToast(`${hitosActuales.length} hitos exportados al calendario`)
+      mostrarToast(`${hitosActuales.length} hitos exportados, con aviso 7 y 1 día antes`)
     }
 
     async function compartir() {
@@ -997,6 +1186,10 @@ const meta = [
       actualizarEstadoRecordatorio()
     }
 
+    document.getElementById('ep-cta')?.addEventListener('click', () => {
+      root!.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      inicioEl.focus({ preventScroll: true })
+    })
     document.getElementById('calc-generar')?.addEventListener('click', calcular)
     document.getElementById('calc-print')?.addEventListener('click', () => window.print())
     document.getElementById('calc-ics')?.addEventListener('click', exportarIcs)
