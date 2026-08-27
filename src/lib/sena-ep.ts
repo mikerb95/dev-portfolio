@@ -80,7 +80,7 @@ export function computeHitos(tipo: TipoPrograma, inicioIso: string): Hito[] {
 
   hitos.push({
     titulo: 'Visita parcial de seguimiento',
-    fecha: addMonths(inicio, tipo === 'tecnologo' ? 4 : 3),
+    fecha: addMonths(inicio, Math.floor(meses / 2)),
     detalle: 'Evaluación de medio término: avances y competencias.',
     categoria: 'visita',
     docKey: 'f023_2',

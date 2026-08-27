@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { computeHitos, hitosPorAvisar, mesesDePrograma } from '../src/lib/sena-ep'
 
 describe('mesesDePrograma', () => {
-  it('técnico son 6 meses y tecnólogo 9', () => {
+  // El diseño curricular vigente da 864 horas de etapa productiva a los dos
+  // niveles: la práctica dura lo mismo, lo que cambia es la etapa lectiva.
+  it('son 6 meses tanto en técnico como en tecnólogo', () => {
     expect(mesesDePrograma('tecnico')).toBe(6)
-    expect(mesesDePrograma('tecnologo')).toBe(9)
+    expect(mesesDePrograma('tecnologo')).toBe(6)
   })
 })
 
@@ -25,11 +27,18 @@ describe('computeHitos', () => {
     expect(concertacion.fecha.toISOString().slice(0, 10)).toBe('2026-09-24')
   })
 
-  it('tecnólogo agrega 9 bitácoras y mueve la visita parcial al mes 4', () => {
+  it('tecnólogo produce el mismo cronograma que técnico', () => {
+    const tecnico = computeHitos('tecnico', '2026-09-09')
+    const tecnologo = computeHitos('tecnologo', '2026-09-09')
+    expect(tecnologo.map((h) => [h.titulo, h.fecha.toISOString()])).toEqual(
+      tecnico.map((h) => [h.titulo, h.fecha.toISOString()])
+    )
+  })
+
+  it('la visita parcial cae a mitad de la etapa (mes 3 de 6)', () => {
     const hitos = computeHitos('tecnologo', '2026-09-09')
-    expect(hitos.filter((h) => h.categoria === 'bitacora')).toHaveLength(9)
     const parcial = hitos.find((h) => h.titulo === 'Visita parcial de seguimiento')!
-    expect(parcial.fecha.toISOString().slice(0, 10)).toBe('2027-01-09')
+    expect(parcial.fecha.toISOString().slice(0, 10)).toBe('2026-12-09')
   })
 
   it('el cierre cae 5 días después del fin nominal del programa', () => {
