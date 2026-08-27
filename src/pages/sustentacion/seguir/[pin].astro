@@ -139,11 +139,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       </div>
     </main>
 
+    <script type="application/json" id="cfg" set:html={JSON.stringify({ sessionId: inicial.sessionId, bus })} />
+
     <script>
       import { seguirSustentacion } from '../../../lib/sustentacion/seguir'
-
-      const datos = document.currentScript?.dataset
-      void datos
 
       const cfg = JSON.parse(document.getElementById('cfg')!.textContent!)
 
@@ -176,7 +175,5 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         },
       })
     </script>
-
-    <script type="application/json" id="cfg" set:html={JSON.stringify({ sessionId: inicial.sessionId, bus })} />
   </body>
 </html>
