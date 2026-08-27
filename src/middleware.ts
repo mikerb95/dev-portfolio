@@ -544,7 +544,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
   //    pisarla.
   const isDeckFile = canonicalPath.startsWith('/decks/')
   const isPresentView =
-    canonicalPath.startsWith('/present/') || canonicalPath.startsWith('/remote/') || isPinPath(canonicalPath)
+    canonicalPath.startsWith('/present/') ||
+    canonicalPath.startsWith('/remote/') ||
+    isPinPath(canonicalPath) ||
+    // La vista de seguidor de la sustentación se suscribe al MISMO bus por la
+    // misma razón (una función de Vercel por espectador no es sostenible), así
+    // que necesita idéntica apertura de connect-src. Sin esto el EventSource se
+    // bloquea y todos los seguidores caen al rescate por polling, con el único
+    // rastro de un aviso en la consola de cada celular.
+    canonicalPath.startsWith('/sustentacion/seguir/')
   const busOrigin = isPresentView ? presentBusOrigin() : null
   const connectSrc = busOrigin ? `connect-src 'self' ${busOrigin};` : "connect-src 'self';"
 
