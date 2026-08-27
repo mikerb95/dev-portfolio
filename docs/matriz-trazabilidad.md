@@ -16,8 +16,8 @@ aparezca aquí como cubierta **no** significa
 que carezca de toda prueba en el proyecto: puede estar cubierta por Vitest
 (`tests/*.test.ts`) o por otros specs de Playwright (`e2e/*.spec.ts`) fuera del
 alcance de este taller. Lo que esta matriz certifica con precisión es
-**trazabilidad de caja negra manual con evidencia fotográfica**, que es lo que
-pide el ítem 7 de la rúbrica.
+**trazabilidad de caja negra manual con evidencia fotográfica**, parte de lo
+que pide el ítem 7 de la rúbrica (Documentación y gestión de pruebas).
 
 El mapeo se hizo leyendo el criterio de aceptación completo de cada HU
 candidata y comparándolo contra el objetivo y los pasos exactos de cada TC.

@@ -2870,16 +2870,16 @@
     "checklist": [
       {
         "documento": "Documento final del producto",
-        "exists": false,
-        "path": null,
+        "exists": true,
+        "path": "DEA Formato_Documento_de_Arquitectura.docx",
         "parciales": [
           "README.md (visión general y vitrina)",
           "docs/requisitos-funcionales.md",
           "docs/requisitos-no-funcionales.md",
-          "src/data/documentacion.ts (fuente de verdad de /docs, 186 ítems entre RF/RNF/CU)",
-          "DEA Formato_Documento_de_Arquitectura.docx/.pdf (plantilla de arquitectura, sin diligenciar en el repo)"
+          "src/data/documentacion.ts (fuente de verdad de /docs, 186 ítems entre RF/RNF/CU)"
         ],
-        "que_le_faltaria": "Un documento único que consolide alcance, objetivos, arquitectura, modelo de datos, requisitos y resultados. Hoy el contenido existe repartido entre README, docs/*.md, src/data/documentacion.ts y las 25 subpáginas de /docs, pero no hay un entregable final unificado."
+        "que_le_faltaria": null,
+        "nota_correccion": "CORRECCIÓN 27 ago 2026: la evaluación original de este spec decía 'plantilla sin diligenciar', que era incorrecta - nunca se abrió el archivo para verificarlo. Es un documento completo y fechado (24 jul 2026): 631 párrafos, 6 tablas llenas, 49 diagramas/capturas embebidos, con las 7 secciones del formato DEA (introducción, generalidades, vistas de arquitectura, interfaces de usuario, calidad, normas aplicables). Se actualizaron 6 datos que habían quedado desactualizados desde su redacción (Astro 6→7, ~33→61 tablas, 18→19 casos de uso, 8→9 módulos funcionales), sin reescribir contenido."
       },
       {
         "documento": "Plan de pruebas",
@@ -3112,20 +3112,20 @@
   "highlights": [
     {
       "metrica": "Pruebas automatizadas (Vitest)",
-      "valor": "1200 casos en 70 archivos, 0 fallos, 35.124s",
+      "valor": "1258 casos en 75 archivos, 0 fallos, 36.65s",
       "verificado": "Ejecutado en esta sesión",
       "source": "informes/tests-junit.xml"
     },
     {
       "metrica": "Reparto por nivel",
-      "valor": "1067 unitarias (10.134s) + 133 de integración (24.99s)",
+      "valor": "1125 unitarias (10.9s) + 133 de integración (25.75s)",
       "verificado": "Sí",
       "source": "src/data/ejecucion-pruebas.json",
-      "lectura": "Las de integración son el 11% de los casos y el 71% del tiempo: el coste de usar una base de verdad, medido en vez de supuesto."
+      "lectura": "Las de integración son el 11% de los casos y el 70% del tiempo: el coste de usar una base de verdad, medido en vez de supuesto."
     },
     {
       "metrica": "Cobertura de líneas",
-      "valor": "68.32% (3110/4552)",
+      "valor": "69.79% (3365/4821)",
       "verificado": "Ejecutado en esta sesión",
       "source": "coverage/coverage-summary.json"
     },
@@ -3271,12 +3271,6 @@
       "how_to_fill": "npm run test:mutation (es lento), o leer el último valor en /admin/lab, o abrir el último run de .github/workflows/mutation.yml."
     },
     {
-      "field": "docs.checklist[0] (documento final del producto)",
-      "blocking": "medio",
-      "why": "Es el único de los siete documentos de la lista que no existe como entregable. El contenido está repartido entre README.md, docs/requisitos-*.md, src/data/documentacion.ts y las 25 subpáginas de /docs, y hay una plantilla de arquitectura sin diligenciar (DEA Formato_Documento_de_Arquitectura.docx).",
-      "how_to_fill": "Consolidar en un solo documento: alcance y objetivos, arquitectura (los diagramas ya están generados), modelo de datos (61 tablas), los 186 requisitos de src/data/documentacion.ts y los resultados de pruebas. Casi todo el material ya existe; falta el ensamblado."
-    },
-    {
       "field": "deployment.region",
       "blocking": "bajo",
       "why": "No hay `regions` declarado en vercel.json ni en astro.config.mjs; la región es la del proyecto en el panel de Vercel, que no está versionada.",
@@ -3305,6 +3299,12 @@
       "blocking": "bajo",
       "why": "El 68,32% mide src/lib y src/i18n. Las páginas .astro y los 125 endpoints no entran en el instrumentado de v8 con esta configuración, así que la cifra NO es 'cobertura del proyecto entero'. Presentarla como tal sería falso.",
       "how_to_fill": "Decirlo explícitamente en la diapositiva ('cobertura de la capa de lógica'), o ampliar `coverage.include` en vitest.config.ts y volver a medir. Los módulos más bajos son src/lib/portal (34,91%) y src/lib/present (55,88%)."
+    },
+    {
+      "field": "docs.checklist[0] (documento final del producto)",
+      "blocking": "resuelto",
+      "why": "RESUELTO el 27 ago 2026. El documento SÍ existe y está completo (DEA Formato_Documento_de_Arquitectura.docx, 631 párrafos, 6 tablas, 49 imágenes, fechado 24 jul 2026). La evaluación original de este mismo spec (generada antes, sin abrir el archivo) afirmaba incorrectamente que estaba en blanco - error de origen, no del documento.",
+      "how_to_fill": "Ya no aplica. Quedan 6 correcciones factuales aplicadas (versión de Astro, conteo de tablas, casos de uso y módulos). Recomendado: una revisión humana de las 49 imágenes/diagramas embebidos para confirmar que ningún diagrama quedó desactualizado visualmente (los datos en texto sí se verificaron; las imágenes no se regeneraron ni se inspeccionaron una por una)."
     }
   ]
 }

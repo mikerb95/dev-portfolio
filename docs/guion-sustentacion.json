@@ -8,7 +8,21 @@
       "presentation-spec.json (nodes, edges, tests, breaking_point, matrix, deployment, docs)",
       "src/data/sustentacion-datos.json (pruebas, cobertura, carga, estres, punto_de_quiebre)",
       "lab/k6/resultados/estres-2026-08-27T13-48-13-774Z.json (corrida limpia, Tarea 1)"
-    ]
+    ],
+    "rubrica": {
+      "_nota": "Numeración oficial del checklist de sustentación, confirmada por el usuario el 27 ago 2026. Los items_rubrica[] de cada beat usan estos mismos dígitos.",
+      "1": "Documento del Producto final actualizado",
+      "2": "Plan de Pruebas",
+      "3": "Pruebas unitarias",
+      "4": "Pruebas de integración",
+      "5": "Pruebas de carga",
+      "6": "Pruebas de estrés",
+      "7": "Documentación y gestión de pruebas",
+      "8": "Plan de implantación",
+      "8.1": "Manual técnico",
+      "8.2": "Manual de usuario final y plan de capacitación",
+      "11": "Despliegue y hosting"
+    }
   },
   "beats": [
     {
@@ -712,16 +726,17 @@
       "nodos_destacados": [],
       "aristas_activas": [],
       "estado_visual": "Todo el grafo se enciende a la vez, en su color final estable, y se desvanece lentamente para dar paso a la lista de documentos entregados.",
-      "dato_destacado": "7/8 documentos completos",
+      "dato_destacado": "8/8 documentos completos",
       "texto_pantalla": "",
       "vista_celular": {
         "beat": 12,
         "titulo": "Cierre",
-        "dato": "7/8 documentos"
+        "dato": "8/8 documentos"
       },
       "duracion_estimada_s": 60,
       "notas_narracion": [
-        "El único documento que falta es el 'documento final del producto' consolidado - el CONTENIDO existe repartido (README, docs/requisitos-*.md, src/data/documentacion.ts, 25 subpáginas de /docs) pero no está ensamblado en un solo archivo. Decirlo, no esconderlo.",
+        "Los 8 documentos del checklist están completos, incluido el Documento del Producto Final (DEA Formato_Documento_de_Arquitectura.docx) — consolida arquitectura, requisitos, modelo de datos e historias de usuario en un solo archivo, con 49 diagramas y capturas.",
+        "Ser honesto sobre el límite de esa verificación: se revisó y corrigió el TEXTO del documento (6 datos que habían quedado desactualizados: versión de Astro, conteo de tablas, casos de uso, módulos), pero no se inspeccionaron una por una las 49 imágenes embebidas para confirmar que ningún diagrama quedó visualmente desactualizado.",
         "Cerrar con una invitación concreta, no una frase genérica: señalar dónde en /docs puede el jurado seguir verificando cualquier cifra dicha en la charla después de la sustentación."
       ]
     }
@@ -1011,11 +1026,11 @@
     "Además, la corrida de estrés del 27 de agosto de 2026 se hizo en un host con contención de recursos documentada (swap activo, 13 contenedores Docker de un proyecto ajeno corriendo en paralelo). La cifra absoluta del quiebre (50 req/s) es más baja de lo que sería en un host limpio - el patrón de degradación (CPU plana mientras el error sube) sí es un hallazgo sólido y comparable entre corridas.",
     "La fase de recuperación del estrés (beat 8) NO converge del todo a la línea base dentro de los 120s observados: p95 baja de 10.000ms a 6.818ms pero no llega a los umbrales formales de aceptación (p95<1000ms, error<2%). Es una medición válida de una recuperación incompleta, no una recuperación exitosa. Decir esto en voz alta es más defendible que dejar que el jurado lo descubra mirando la gráfica.",
     "TC-07 (cambio de contraseña autenticado) no tiene historia de usuario asignada en el catálogo HU-01..HU-41: es un gap real, documentado, no forzado a calzar.",
-    "El documento final del producto (consolidado) no existe como archivo único; su contenido está repartido entre README, docs/requisitos-*.md, src/data/documentacion.ts y 25 subpáginas de /docs.",
-    "Modo respaldo del portal: si la base de datos sigue bloqueada por cuota el día de la sustentación, el iframe mostrará datos ficticios servidos desde un snapshot versionado (src/data/portal-respaldo.json), no la base de datos real. El banner de la propia página lo anuncia; no hace falta ocultarlo ni fingir que son datos reales."
+    "Modo respaldo del portal: si la base de datos sigue bloqueada por cuota el día de la sustentación, el iframe mostrará datos ficticios servidos desde un snapshot versionado (src/data/portal-respaldo.json), no la base de datos real. El banner de la propia página lo anuncia; no hace falta ocultarlo ni fingir que son datos reales.",
+    "El Documento del Producto Final (item 1, DEA Formato_Documento_de_Arquitectura.docx) ya estaba redactado desde el 24 jul 2026; el 27 ago 2026 se le corrigieron 6 datos desactualizados (versión de Astro, conteo de tablas, casos de uso, módulos funcionales). No se verificaron visualmente sus 49 imágenes/diagramas embebidos - solo el texto."
   ],
   "reglas_de_texto": {
     "texto_pantalla_max_palabras": 7,
-    "principio": "Cero relleno. Los números hablan solos: '68.32%' es mejor que 'Cobertura del 68.32%'. Nada de 'En este apartado veremos...'. Si un beat no necesita texto en pantalla, se deja vacío."
+    "principio": "Cero relleno. Los números hablan solos: '69.79%' es mejor que 'Cobertura del 69.79%'. Nada de 'En este apartado veremos...'. Si un beat no necesita texto en pantalla, se deja vacío."
   }
 }
