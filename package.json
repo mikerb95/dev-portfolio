@@ -29,6 +29,8 @@
     "seed:demo": "node scripts/seed-demo.mjs",
     "seo:indexnow": "node scripts/submit-indexnow.mjs",
     "og:generate": "node scripts/og/generate.mjs",
+    "sustentacion:check": "node scripts/sustentacion-check.mjs",
+    "sustentacion:precalentar": "node scripts/precalentar-sustentacion.mjs",
     "bpmn:export": "node scripts/export-bpmn.mjs"
   },
   "dependencies": {
