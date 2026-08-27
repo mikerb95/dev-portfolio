@@ -52,26 +52,24 @@ describe('sesión de sustentación', () => {
 
 describe('publicarBeat (servidor)', () => {
   it('publica el snapshot plano en el canal de la sesión', async () => {
+    // El backend en memoria sí permite suscribirse, a diferencia de Upstash,
+    // donde el que se suscribe es el navegador del seguidor.
+    const mem = createMemoryStore()
+    __setPresentStore(mem)
+
     const s = await crearSesion()
     const secreto = await secretoDeSesion(s.id)
     const recibidos: string[] = []
-    const store = __setPresentStore(null) ?? null
-    void store
-    // El backend en memoria sí permite suscribirse, a diferencia de Upstash.
-    const mem = createMemoryStore()
-    __setPresentStore(mem)
-    const s2 = await crearSesion()
-    const secreto2 = await secretoDeSesion(s2.id)
-    mem.subscribe?.(channelFor(s2.id), (m) => recibidos.push(m))
+    mem.subscribe?.(channelFor(s.id), (m) => recibidos.push(m))
 
-    const r = await publicarBeat(s2.id, secreto2, { beat: 3, titulo: 'Punto de quiebre', dato: '100 req/s' })
+    const r = await publicarBeat(s.id, secreto, { beat: 3, titulo: 'Punto de quiebre', dato: '100 req/s' })
     expect(r.ok).toBe(true)
     expect(recibidos).toHaveLength(1)
 
     const msg = JSON.parse(recibidos[0])
     expect(msg).toEqual({
-      sessionId: s2.id,
-      pin: s2.pin,
+      sessionId: s.id,
+      pin: s.pin,
       beat: 3,
       titulo: 'Punto de quiebre',
       dato: '100 req/s',
@@ -79,7 +77,6 @@ describe('publicarBeat (servidor)', () => {
     })
     // Nada de estructura de slides: el contrato es plano a propósito.
     expect(Object.keys(msg).sort()).toEqual(['beat', 'dato', 'pin', 'sessionId', 'titulo', 'version'])
-    void secreto
   })
 
   it('rechaza un secreto que no es el de la sesión', async () => {
