@@ -31,6 +31,14 @@ const KEY_SESSION = (id: string) => `sust:s:${id}`
 const KEY_PIN = (pin: string) => `sust:pin:${pin}`
 /** Claves de `lib/present`, solo para no repetir un PIN suyo. */
 const KEY_PIN_PRESENT = (pin: string) => `present:pin:${pin}`
+/**
+ * Puntero a la sesión en curso. Aquí no hace falta el índice de sesiones vivas
+ * que lleva `lib/present`: solo se sustenta una vez, y lo que de verdad hay que
+ * poder hacer es RECUPERAR la sesión si el canvas se recarga a mitad de charla.
+ * Sin esto, un F5 emitiría un PIN nuevo y dejaría al público mirando el viejo,
+ * que es el peor momento posible para descubrirlo.
+ */
+const KEY_ACTUAL = 'sust:actual'
 
 export const channelFor = (sessionId: string) => `sust:ch:${sessionId}`
 
@@ -177,8 +185,19 @@ export async function crearSesion(titulo = 'Sustentación'): Promise<Sustentacio
   // escribiera antes y fallara la sesión, ese PIN quedaría muerto seis horas.
   await persist(sesion)
   await store.set(KEY_PIN(pin), sesion.id, SUSTENTACION_TTL_SECONDS)
+  await store.set(KEY_ACTUAL, sesion.id, SUSTENTACION_TTL_SECONDS)
 
   return sesion
+}
+
+/**
+ * La sesión en curso, si la hay. Es lo que permite que recargar el canvas
+ * retome la misma sesión y el mismo PIN en vez de emitir otro.
+ */
+export async function sesionActual(): Promise<SustentacionSession | null> {
+  const id = await presentStore().get(KEY_ACTUAL)
+  if (!id) return null
+  return getSesion(id)
 }
 
 export type BeatEntrada = {
