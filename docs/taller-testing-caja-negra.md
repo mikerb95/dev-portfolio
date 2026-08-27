@@ -159,9 +159,10 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | **Datos de prueba** | - |
 | **Pasos (numerados)** | 1. Iniciar sesión.<br>2. Abrir el menú del avatar (arriba a la derecha).<br>3. Pulsar «Cerrar sesión».<br>4. Navegar a `/portal`. |
 | **Oráculo (resultado esperado)** | Redirección `302` a `/portal/login?m=session-closed`, cookie borrada y fila de `portal_sessions` eliminada. Al volver a `/portal` debe pedir login. |
-| **Resultado obtenido** | ❌ **No conforme.** El navegador muestra una página en blanco con el texto `Cross-site POST form submissions are forbidden`. La sesión **no** se cierra: al volver a `/portal` el usuario sigue dentro como Ana. Reproducido 2 de 2 veces en un flujo limpio. El mismo `POST` con cabecera `Origin` explícita sí devuelve `302` y cierra la sesión, así que el endpoint funciona: falla la petición que emite el formulario. |
-| **Veredicto** | **FALLA → BUG-01** |
-| **Evidencia (archivo)** | `evidencias-taller-testing/TC-08-menu-cerrar-sesion.jpg` · `evidencias-taller-testing/BUG-01-logout-csrf.jpg` |
+| **Resultado obtenido (corrida original)** | ❌ **No conforme.** El navegador muestra una página en blanco con el texto `Cross-site POST form submissions are forbidden`. La sesión **no** se cierra: al volver a `/portal` el usuario sigue dentro como Ana. Reproducido 2 de 2 veces en un flujo limpio. El mismo `POST` con cabecera `Origin` explícita sí devuelve `302` y cierra la sesión, así que el endpoint funciona: falla la petición que emite el formulario. → **BUG-01**. |
+| **Reverificación (27 ago 2026, tras BUG-01)** | ✅ **Conforme.** Clic real en el menú de cuenta → «Cerrar sesión»: `302` a `/portal/login?m=session-closed`, banner «Cerraste sesión correctamente.», y `/portal` vuelve a pedir login. Verificado además a nivel de fila: `portal_sessions.revoked_at` queda escrito (no solo se borra la cookie). Cubierto por `e2e/portal.spec.ts` ("cerrar sesión desde el menú revoca la sesión de verdad (BUG-01)"), que falla sin el arreglo y pasa con él (confirmado revirtiendo el cambio y volviendo a correr el test). |
+| **Veredicto** | **PASA** (era FALLA → BUG-01, cerrado el 27 ago 2026) |
+| **Evidencia (archivo)** | `evidencias-taller-testing/TC-08-menu-cerrar-sesion.jpg` · `evidencias-taller-testing/BUG-01-logout-csrf.jpg` (corrida original, no conforme) · `e2e/portal.spec.ts` (regresión automatizada, corrida de verificación) |
 
 | | |
 |---|---|
@@ -201,9 +202,10 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | **Precondiciones** | Aplicación disponible; `ana.torres@altiplano.test` activa con 3 facturas; sin sesión previa. |
 | **Pasos (numerados)** | 1. Abrir `/portal/login` e iniciar sesión. **(TC-01)**<br>2. Leer los KPI del panel.<br>3. Ir a «Facturas» y contrastar los agregados. **(TC-04)**<br>4. Abrir INV-2026-102 y descargar el PDF. **(TC-05)**<br>5. Ir a «Mi cuenta» e intentar una contraseña de 9 caracteres. **(TC-07)**<br>6. Abrir el menú del avatar y cerrar sesión. **(TC-08)**<br>7. Volver a `/portal`. |
 | **Oráculo de salida** | El usuario entra, ve $476.000 pendientes y 1 factura vencida, descarga el PDF correcto, es rechazado al poner una contraseña corta, cierra sesión y `/portal` vuelve a pedir credenciales. |
-| **Resultado obtenido** | ⚠️ **Parcial.** Los pasos 1–5 conformes. El paso 6 falla: página en blanco con `Cross-site POST form submissions are forbidden`; en el paso 7 el usuario **sigue dentro**. |
-| **Veredicto** | **FALLA en el paso 6 → BUG-01** |
-| **Evidencia (archivo)** | `TC-01…`, `TC-04…`, `TC-05…`, `TC-07…`, `TC-08…`, `BUG-01-logout-csrf.jpg` |
+| **Resultado obtenido (corrida original)** | ⚠️ **Parcial.** Los pasos 1–5 conformes. El paso 6 falla: página en blanco con `Cross-site POST form submissions are forbidden`; en el paso 7 el usuario **sigue dentro**. → **BUG-01**. |
+| **Reverificación (27 ago 2026, tras BUG-01)** | ✅ Los 7 pasos conformes: el paso 6 cierra sesión de verdad y el paso 7 vuelve a pedir login. |
+| **Veredicto** | **PASA** (era FALLA en el paso 6 → BUG-01, cerrado el 27 ago 2026) |
+| **Evidencia (archivo)** | `TC-01…`, `TC-04…`, `TC-05…`, `TC-07…`, `TC-08…`, `BUG-01-logout-csrf.jpg` (corrida original) · `e2e/portal.spec.ts` (reverificación) |
 
 ## Escenario 2
 
@@ -325,7 +327,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 | 18:41 | Doble pago del mismo cobro | `pay_taller_mn5tw3` × 2 | 2.º intento: `applied:false`, `duplicate:true`, estado sigue `approved` | Idempotente | Sin defecto: el doble clic del cliente no duplica el cargo. |
 | 18:45 | Factura de otro cliente por id | Carlos (cliente 2) → `/portal/facturas/2` | `404` en página y PDF | `404`, nunca `403` | Sin defecto. El `clientId` viaja en el `WHERE` desde la sesión. |
 | 18:47 | 6 consultas con número inválido | `abc` × 6 desde una IP | La 6.ª: `429` | La basura no debería gastar la cuota del usuario legítimo | **BUG-03.** Cinco erratas al teclear dejan al cliente una hora sin poder consultar. |
-| 18:52 | Cerrar sesión desde el menú | Sesión de Ana | Página en blanco: `Cross-site POST form submissions are forbidden`; la sesión **sigue viva** | `302` a `/portal/login?m=session-closed` y cookie revocada | **BUG-01.** El más grave del taller: el cliente cree que salió y no salió. |
+| 18:52 | Cerrar sesión desde el menú | Sesión de Ana | Página en blanco: `Cross-site POST form submissions are forbidden`; la sesión **sigue viva** | `302` a `/portal/login?m=session-closed` y cookie revocada | **BUG-01** (cerrado el 27 ago 2026). El más grave del taller: el cliente creía que salió y no salía. |
 | 18:55 | 404 dentro del portal | Carlos → `/portal/facturas/2` | Se renderiza el 404 **público** del sitio de marketing, con la navegación comercial y el banner de idioma | Un 404 coherente con el contexto del portal | **BUG-05.** Cosmético, pero desorienta a un cliente autenticado. |
 | 18:58 | Auditoría de dependencias | `npm audit` | 18 vulnerabilidades: 2 críticas, 9 altas, 6 moderadas, 1 baja | 0 críticas y 0 altas | **BUG-06.** Incluye una crítica en `@auth/core`, que es justo la librería de autenticación del panel admin. |
 
@@ -339,7 +341,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 | ID | Título | Severidad | Módulo | Detectado en | Estado |
 |---|---|---|---|---|---|
-| BUG-01 | «Cerrar sesión» falla y la sesión permanece abierta | **Alta** | Portal · Autenticación | TC-08, ESC-01 | Abierto |
+| BUG-01 | «Cerrar sesión» falla y la sesión permanece abierta | **Alta** | Portal · Autenticación | TC-08, ESC-01 | **Cerrado (27 ago 2026)** |
 | BUG-02 | El código corto de un cobro distingue mayúsculas de minúsculas | **Media** | Cobros · `/c/[code]` | CDE-09, exploratoria | Abierto |
 | BUG-03 | Las consultas inválidas consumen la cuota horaria de `/mis-pagos` | Baja | Cobros · `/mis-pagos` | BVA-18, TC-10 | Abierto |
 | BUG-04 | El mensaje de validación del cambio de contraseña se auto-oculta a los 4 s | Baja | Portal · Cuenta | TC-07 | Abierto |
@@ -348,28 +350,74 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ### BUG-01 - «Cerrar sesión» falla y la sesión permanece abierta
 
-- **Severidad:** Alta. No es solo un error visual: el cliente cree que cerró
+**Estado: Cerrado, 27 ago 2026.**
+
+- **Severidad:** Alta. No era solo un error visual: el cliente creía que cerró
   sesión y no la cerró. En un equipo prestado o compartido, el siguiente que
-  abra el navegador entra a sus facturas.
-- **Pasos para reproducir:**
+  abriera el navegador entraba a sus facturas.
+- **Pasos para reproducir (antes del arreglo):**
   1. Iniciar sesión en `/portal/login`.
   2. Abrir el menú del avatar (arriba a la derecha).
   3. Pulsar «Cerrar sesión».
   4. Navegar a `/portal`.
 - **Resultado obtenido:** paso 3 → página en blanco con el texto
-  `Cross-site POST form submissions are forbidden`. Paso 4 → el panel carga con
-  la sesión intacta.
+  `Cross-site POST form submissions are forbidden`. Paso 4 → el panel cargaba
+  con la sesión intacta.
 - **Resultado esperado:** `302` a `/portal/login?m=session-closed`, cookie
-  borrada y fila eliminada de `portal_sessions`.
-- **Reproducibilidad:** 2 de 2 en Chrome sobre `astro dev`.
-- **Análisis:** el endpoint funciona. El mismo `POST /api/portal/logout` con
-  cabecera `Origin: http://localhost:4399` responde `302` y cierra la sesión;
-  sin cabecera `Origin` responde `403`. Es la comprobación de origen de Astro
-  (`checkOrigin`) rechazando el envío del formulario de
-  `src/layouts/PortalLayout.astro:126`.
-- **Pendiente de verificar:** si el fallo se reproduce también en producción
-  (HTTPS y dominio propio) o si es específico del servidor de desarrollo. La
-  diferencia importa para priorizarlo, no para dudar del hallazgo.
+  borrada y `portal_sessions.revoked_at` escrito (la fila se revoca, no se
+  elimina - ver `revokeSession` en `src/lib/portal/session.ts:204`).
+- **Reproducibilidad:** 2 de 2 en Chrome sobre `astro dev`. Reproducido de
+  nuevo el 27 de agosto de 2026 con un clic real de UI (no simulado) antes de
+  aplicar el arreglo, para confirmar que seguía vivo.
+- **Causa raíz confirmada:** el middleware fija `Referrer-Policy: no-referrer`
+  en toda ruta privada (`/portal` incluida). Por el algoritmo del header
+  `Origin` del spec de Fetch, esa política fuerza `Origin: null` en cualquier
+  POST que sea una **navegación** de página completa (el submit nativo de un
+  `<form>`), aunque el request sea mismo origen. `fetch()` no está sujeto a esa
+  regla, así que manda el origen real sin importar la política de referrer. El
+  CSRF nativo de Astro (`checkOrigin`, en
+  `node_modules/astro/dist/core/app/origin-check.js`) compara ese `Origin`
+  contra `url.origin`; al no coincidir (`null` ≠ `http://…`), rechaza con 403.
+  Confirmado empíricamente inyectando
+  `<meta name="referrer" content="strict-origin-when-cross-origin">` en la
+  página en vivo: el mismo formulario, sin ningún otro cambio, deja de fallar.
+- **Por qué no era el endpoint:** `POST /api/portal/logout` con cabecera
+  `Origin` explícita siempre respondió `302` y cerró la sesión correctamente,
+  con o sin el arreglo. El defecto vivía enteramente en la petición que emitía
+  el formulario, nunca en el servidor.
+- **Arreglo aplicado:** los dos `<form method="POST" action="/api/portal/logout">`
+  de `src/layouts/PortalLayout.astro` ahora se envían por `fetch()` en vez de
+  dejar que el navegador navegue de forma nativa (ver el `<script>` justo antes
+  de `</body>` en ese archivo). `fetch()` sí manda el origen real
+  independientemente de `Referrer-Policy`, así que pasa el CSRF sin debilitarlo.
+  Deliberadamente **no** se tocó `Referrer-Policy` (relajarla filtraría a dónde
+  navega el visitante desde toda ruta privada, admin incluido, para arreglar
+  una sola forma) ni el endpoint (ya funcionaba). El `<form>` se deja como
+  fallback si JavaScript está deshabilitado - ese caso ya estaba roto al 100%
+  antes del arreglo, así que no es una regresión.
+- **Verificación tras el arreglo:**
+  - Manual: clic real en el menú → «Cerrar sesión» → banner «Cerraste sesión
+    correctamente.» → `/portal` vuelve a pedir login.
+  - A nivel de fila: `portal_sessions.revoked_at` queda escrito para una sesión
+    real (verificado insertando una fila conocida y confirmando el `UPDATE`
+    tras el logout).
+  - Automatizada: `e2e/portal.spec.ts` › *"cerrar sesión desde el menú revoca
+    la sesión de verdad (BUG-01)"*. Se confirmó que el test **falla** sin el
+    arreglo (revirtiendo el cambio con `git stash` y volviendo a correr:
+    se queda en `/api/portal/logout`) y **pasa** con él aplicado.
+- **Hallazgo aparte, fuera de alcance de este defecto:** durante la
+  verificación se observó que, en modo demo pública (`/api/portal/demo`), la
+  fila de `portal_sessions` **no** queda revocada tras el logout, aunque la
+  cookie sí se limpia y el flujo visible funciona igual. La sesión real
+  (no-demo) sí se revoca correctamente. La sospecha es una interacción entre
+  `AsyncLocalStorage` (que decide contra qué base de datos correr) y el modo
+  de desarrollo de Vite, específica de `astro dev` y del camino de demo. No
+  afecta a TC-08 (que usa una sesión real) ni al arreglo de BUG-01, pero queda
+  anotado para investigar aparte.
+- **Commit:** pendiente de captura por el hook de auto-commit del repositorio
+  al momento de escribir esta nota (27 ago 2026); el archivo modificado es
+  `src/layouts/PortalLayout.astro`. Buscar el commit más reciente que lo toque
+  para la referencia exacta.
 
 ### BUG-02 - El código corto distingue mayúsculas de minúsculas
 
@@ -464,7 +512,7 @@ encontrar el defecto (o que no lo ejercita).
 
 | BUG | Detectado primero en | ¿Lo habría cazado una prueba automatizada existente? |
 |---|---|---|
-| BUG-01 | TC-08 (manual, navegador) | No. Los e2e de `e2e/portal.spec.ts` verifican el *gate* de sesión, no el cierre desde la UI. |
+| BUG-01 | TC-08 (manual, navegador) | No en el momento del hallazgo: los e2e de `e2e/portal.spec.ts` solo verificaban el *gate* de sesión, no el cierre desde la UI. **Cerrado 27 ago 2026** con un test de regresión nuevo en ese mismo archivo (clic real en el menú → `fetch()`-based logout → sesión revocada), que falla sin el arreglo y pasa con él. |
 | BUG-02 | CDE-09 (partición I3) | No. `tests/cobros.test.ts` prueba `isValidShortCode` con el alfabeto en mayúsculas. |
 | BUG-03 | BVA-18 (valor límite) | No. El límite se prueba con entradas válidas. |
 | BUG-04 | TC-07 | No. Es un comportamiento de la capa de presentación. |
