@@ -1,6 +1,6 @@
 // Proyección de hitos de la etapa productiva SENA (visita de concertación a
-// los 15 días, una bitácora por mes, visita parcial en el mes 3/4 según el
-// programa, cierre 5 días después del fin nominal). Módulo puro e isomorfo:
+// los 15 días, una bitácora por mes, visita parcial a mitad de etapa, cierre
+// 5 días después del fin nominal). Módulo puro e isomorfo:
 // lo usa tanto el script cliente de /ep (calculadora) como el cron de
 // recordatorios en el servidor, así que no puede importar `node:crypto` ni
 // `../db`.
@@ -29,8 +29,19 @@ const addMonths = (d: Date, n: number) => {
   return x
 }
 
+// La duración es la misma en los dos niveles: el diseño curricular vigente
+// asigna 864 horas de etapa productiva tanto al técnico como al tecnólogo (en
+// ADSO, código 228118: 3.120 h lectivas + 864 h productivas = 3.984 h / 27
+// meses). Lo que cambia entre niveles es la etapa LECTIVA, no la práctica.
+// Se deja como tabla y no como constante porque es el único punto a tocar si
+// alguna ficha llega con un diseño curricular de distinta duración.
+const MESES_POR_NIVEL: Record<TipoPrograma, number> = {
+  tecnico: 6,
+  tecnologo: 6,
+}
+
 export function mesesDePrograma(tipo: TipoPrograma): number {
-  return tipo === 'tecnologo' ? 9 : 6
+  return MESES_POR_NIVEL[tipo]
 }
 
 /** `inicioIso` en formato `YYYY-MM-DD`. Lanza si la fecha es inválida. */
