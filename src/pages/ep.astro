@@ -904,7 +904,7 @@ const meta = [
       const inhabil = diaInhabil(f)
       if (!inhabil) return ''
       const habil = habilAnterior(f)
-      return `<p class="flex items-start gap-1.5 text-[11px] font-mono text-ember mb-1.5 leading-relaxed"><span aria-hidden="true">▲</span><span>${inhabil.motivo} · entrega el ${fmtCorto(habil)}</span></p>`
+      return `<p class="flex items-start gap-1.5 text-[11px] font-mono text-ember mb-1.5 leading-relaxed"><span aria-hidden="true">▲</span><span>${inhabil.motivo} · entrega el ${fmtLargo(habil)}</span></p>`
     }
 
     // Checklist "entregado" por hito, persistido en localStorage por
