@@ -1,0 +1,226 @@
+{
+  "escenario": "estres",
+  "objetivo": "http://127.0.0.1:4400",
+  "fecha": "2026-08-27T15:10:31.684Z",
+  "vusMax": 2931,
+  "duracionS": 276,
+  "peticiones": 20426,
+  "rps": 74.01,
+  "latenciaMs": {
+    "media": 4634.5,
+    "p50": 4051.5,
+    "p90": 10000.5,
+    "p95": 10000.7,
+    "p99": 10001.1,
+    "max": 10018.7
+  },
+  "tasaErrorPct": 73.446,
+  "checksOk": 10723,
+  "checksFallidos": 29901,
+  "porRuta": {
+    "home": {
+      "path": "/",
+      "n": 8090,
+      "p50": 3233.4,
+      "p95": 10000.8,
+      "p99": 10001.2,
+      "max": 10018.3
+    },
+    "status": {
+      "path": "/status",
+      "n": 5161,
+      "p50": 5463.7,
+      "p95": 10000.8,
+      "p99": 10001.1,
+      "max": 10018.4
+    },
+    "health": {
+      "path": "/api/health",
+      "n": 4010,
+      "p50": 3380.7,
+      "p95": 10000.8,
+      "p99": 10001.2,
+      "max": 10018.7
+    },
+    "tools": {
+      "path": "/tools",
+      "n": 3051,
+      "p50": 803,
+      "p95": 10000.6,
+      "p99": 10001,
+      "max": 10013.3
+    }
+  },
+  "umbralesCumplidos": false,
+  "recuperacion": {
+    "p50": 36.4,
+    "p95": 10000.6,
+    "max": 10001.4,
+    "tasaErrorPct": 27.099,
+    "curva": [
+      {
+        "desdeS": 0,
+        "n": 120,
+        "p50": 10000.3,
+        "p95": 10001,
+        "cpuPct": null,
+        "heapMb": null
+      },
+      {
+        "desdeS": 15,
+        "n": 60,
+        "p50": 10000.1,
+        "p95": 10000.8,
+        "cpuPct": null,
+        "heapMb": null
+      },
+      {
+        "desdeS": 30,
+        "n": 76,
+        "p50": 10000.1,
+        "p95": 10000.8,
+        "cpuPct": null,
+        "heapMb": null
+      },
+      {
+        "desdeS": 45,
+        "n": 104,
+        "p50": 10000.1,
+        "p95": 10000.7,
+        "cpuPct": null,
+        "heapMb": null
+      },
+      {
+        "desdeS": 60,
+        "n": 68,
+        "p50": 7269.8,
+        "p95": 8675.8,
+        "cpuPct": 16.1,
+        "heapMb": 368.2
+      },
+      {
+        "desdeS": 75,
+        "n": 282,
+        "p50": 24,
+        "p95": 60.4,
+        "cpuPct": 8.1,
+        "heapMb": 351.1
+      },
+      {
+        "desdeS": 90,
+        "n": 300,
+        "p50": 26,
+        "p95": 62.7,
+        "cpuPct": 6.8,
+        "heapMb": 224.2
+      },
+      {
+        "desdeS": 105,
+        "n": 300,
+        "p50": 23.6,
+        "p95": 59.8,
+        "cpuPct": 6.1,
+        "heapMb": 239.2
+      }
+    ]
+  },
+  "escalera": [
+    {
+      "rpsOfrecido": 50,
+      "n": 1498,
+      "vusPromedio": 12.3,
+      "vusMax": 82,
+      "respuestasRps": 49.9,
+      "exitosasRps": 49.9,
+      "p50": 34.3,
+      "p95": 1282,
+      "errorPct": 0,
+      "cpuPct": 14,
+      "heapMb": 308.2,
+      "estado": "ok"
+    },
+    {
+      "rpsOfrecido": 100,
+      "n": 2136,
+      "vusPromedio": 184.3,
+      "vusMax": 553,
+      "respuestasRps": 71.2,
+      "exitosasRps": 69.8,
+      "p50": 2154.5,
+      "p95": 7938.9,
+      "errorPct": 1.9,
+      "cpuPct": 14.8,
+      "heapMb": 354.3,
+      "estado": "degradado"
+    },
+    {
+      "rpsOfrecido": 200,
+      "n": 3425,
+      "vusPromedio": 1228,
+      "vusMax": 1769,
+      "respuestasRps": 114.2,
+      "exitosasRps": 27.1,
+      "p50": 10000.2,
+      "p95": 10001,
+      "errorPct": 76.3,
+      "cpuPct": 16.4,
+      "heapMb": 355.1,
+      "estado": "roto"
+    },
+    {
+      "rpsOfrecido": 300,
+      "n": 6353,
+      "vusPromedio": 2330.4,
+      "vusMax": 2725,
+      "respuestasRps": 211.8,
+      "exitosasRps": 0,
+      "p50": 5883.5,
+      "p95": 10000.8,
+      "errorPct": 100,
+      "cpuPct": null,
+      "heapMb": null,
+      "estado": "roto"
+    },
+    {
+      "rpsOfrecido": 300,
+      "n": 5590,
+      "vusPromedio": 2851.7,
+      "vusMax": 2930,
+      "respuestasRps": 186.3,
+      "exitosasRps": 0,
+      "p50": 0,
+      "p95": 10000.4,
+      "errorPct": 100,
+      "cpuPct": null,
+      "heapMb": null,
+      "estado": "roto"
+    }
+  ],
+  "hallazgos": [
+    {
+      "id": "H-01",
+      "titulo": "Host limpio: el punto de quiebre vuelve a ~100 req/s, casi igual a la corrida sin contención del 22 de agosto",
+      "descripcion": "Con los 11 contenedores Docker de otro proyecto detenidos (load average 2.19→0.37-0.98 durante el enfriamiento), el escalón de 50 req/s vuelve a 0% de error (idéntico a la corrida del 22 ago), y el primer escalón degradado es 100 req/s con 1.9% de error, p95 7938.9ms. Confirma la hipótesis de la corrida del 27 ago (v1, host contendido): el quiebre en 50 req/s de esa corrida era un artefacto del host compartido, no una regresión del código."
+    },
+    {
+      "id": "H-02",
+      "titulo": "La recuperación SÍ converge por completo esta vez, pero tarda ~75s en empezar a hacerlo, no es inmediata",
+      "descripcion": "El agregado de toda la fase de recuperación (120s) da 27.099% de error y p95 de 10000.6ms, que a primera vista parece una recuperación fallida. Pero la curva por tramos de 15s muestra algo distinto: los tramos +0s a +45s siguen completamente saturados (p95 ~10000ms, el timeout), y recién en +60s empieza a ceder (p50 7270ms, cpuPct 16.1%). De +75s en adelante converge por completo: p50 24-26ms, p95 60-63ms - MEJOR que el propio escalón sano de 50 req/s (p50 34ms, p95 1282ms). El agregado mezcla la ventana todavía drenando con la ya recuperada y esconde que sí hubo una recuperación completa y limpia; el número honesto es 'tarda ~75s en iniciar la recuperación visible, y converge del todo hacia los +90-105s', no 'no se recupera'."
+    },
+    {
+      "id": "H-03",
+      "titulo": "El drenaje lento no es contención de host: es el volumen de la cola que dejó el escalón final",
+      "descripcion": "El último escalón del quiebre sostuvo 300 req/s durante 30s con 100% de error y hasta 2930 VUs simultáneos (2927 iteraciones quedaron interrumpidas al cortar en seco con gracefulStop:'0s'). Esa cantidad de conexiones/sockets a medio procesar es lo que tarda ~60-75s en drenar del lado del servidor, con el host ya limpio (CPU/heap del proceso muestran valores normales apenas hay dato disponible, desde +60s). Es coherente con H-01 de la corrida anterior: el límite es la concurrencia de sockets/handlers de astro dev, no cómputo ni memoria - y drenar esa cola sostenida también toma su tiempo, aunque el host esté sano."
+    },
+    {
+      "id": "H-04",
+      "titulo": "Sin datos de proceso durante el pico de saturación (300 req/s), como en corridas anteriores",
+      "descripcion": "cpuPct/heapMb quedan sin dato (null) en los dos últimos escalones del quiebre (300 req/s) y en los primeros 45s de la fase de recuperación: el propio endpoint de diagnóstico /api/lab/proceso también se satura y no responde a tiempo bajo esa carga. Mismo patrón documentado en H-04 de la corrida del 22 de agosto."
+    },
+    {
+      "id": "H-05",
+      "titulo": "El host limpio no eliminó el swap por completo, y aun así el resultado fue consistente con la corrida sin contención",
+      "descripcion": "Tras detener los 11 contenedores ajenos, quedó 1.7 GiB de swap en uso (de un pico de 2.6 GiB), atribuible a mysqld (proceso de sistema, no Docker, fuera del alcance autorizado) y al propio escritorio (VS Code, gnome-shell, navegador). Pese a eso, el load average bajó a 0.37-0.98 durante el enfriamiento y los resultados de esta corrida coinciden con los de la corrida sin contención del 22 de agosto. Sugiere que el load average (CPU en cola) importaba más que el swap residual para este tipo de prueba."
+    }
+  ]
+}
