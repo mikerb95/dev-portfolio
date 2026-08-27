@@ -2453,8 +2453,8 @@
       "technique": "Caja negra: particiones de equivalencia, valores límite (BVA) y una sesión exploratoria con chárter",
       "environment": "astro dev en http://localhost:4399 (Node 22.22.3), libSQL en archivo temporal sembrado con scripts/seed-demo.mjs, pasarela mock (PAYMENTS_MOCK_ENABLED=true), Chrome 1512x787",
       "total_cases": 10,
-      "passed": 9,
-      "failed": 1,
+      "passed": 10,
+      "failed": 0,
       "scenarios": [
         "ESC-01 (portal de punta a punta: TC-01, TC-04, TC-05, TC-07, TC-08)",
         "ESC-02 (cobros de campo: TC-09, TC-10)"
@@ -2523,7 +2523,8 @@
         }
       ],
       "evidence_dir": "docs/evidencias-taller-testing/ (14 capturas)",
-      "automated_traceability_note": "Actualizado 27 ago 2026: cada TC-01..TC-10 tiene ahora su HU asignada en el campo historia_usuario (9 de 10; TC-07 queda null, sin HU que lo cubra - ver su nota). Ningún test de Vitest ni de Playwright referencia un id HU-xx o TC-xx en su nombre: la trazabilidad automatizada sigue siendo por módulo, no por identificador. Matriz completa HU→TC→veredicto→evidencia, incluidas las 37 HU sin cobertura de caja negra en este taller, en docs/matriz-trazabilidad.md."
+      "automated_traceability_note": "Actualizado 27 ago 2026: cada TC-01..TC-10 tiene ahora su HU asignada en el campo historia_usuario (9 de 10; TC-07 queda null, sin HU que lo cubra - ver su nota). Ningún test de Vitest ni de Playwright referencia un id HU-xx o TC-xx en su nombre: la trazabilidad automatizada sigue siendo por módulo, no por identificador. Matriz completa HU→TC→veredicto→evidencia, incluidas las 37 HU sin cobertura de caja negra en este taller, en docs/matriz-trazabilidad.md.",
+      "nota_actualizacion": "TC-08 pasó de fail a pass el 27 ago 2026, tras cerrar BUG-01. Los 10 casos están conformes."
     },
     "mutation": {
       "framework": "Stryker (@stryker-mutator/core 9.6.1 + vitest-runner)",
