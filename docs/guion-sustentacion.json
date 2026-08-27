@@ -7,7 +7,8 @@
     "fuentes": [
       "presentation-spec.json (nodes, edges, tests, breaking_point, matrix, deployment, docs)",
       "src/data/sustentacion-datos.json (pruebas, cobertura, carga, estres, punto_de_quiebre)",
-      "lab/k6/resultados/estres-2026-08-27T13-48-13-774Z.json (corrida limpia, Tarea 1)"
+      "lab/k6/resultados/estres-2026-08-27T15-10-31-684Z.json (corrida limpia con host sin contención, la vigente)",
+      "docs/taller-testing-caja-negra.md (BUG-01 cerrado, TC-08 conforme)"
     ],
     "rubrica": {
       "_nota": "Numeración oficial del checklist de sustentación, confirmada por el usuario el 27 ago 2026. Los items_rubrica[] de cada beat usan estos mismos dígitos.",
