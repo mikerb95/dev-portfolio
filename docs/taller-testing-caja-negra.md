@@ -63,6 +63,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-01 |
 | **Módulo/Función** | Portal - Autenticación · Login con credenciales válidas |
+| **Historia de usuario** | [HU-35](historias-de-usuario.md) - acceso con email y contraseña propios, sin relación con el login del administrador |
 | **Objetivo** | Validar que un usuario de un cliente con portal habilitado inicia sesión y llega a su panel. |
 | **Precondiciones** | Usuario `active` con contraseña definida; su cliente tiene `portal_enabled = 1`; sin sesión previa. |
 | **Datos de prueba** | Correo: `ana.torres@altiplano.test` · Contraseña: `Altiplano2026` |
@@ -76,6 +77,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-02 |
 | **Módulo/Función** | Portal - Autenticación · Login con credenciales inválidas |
+| **Historia de usuario** | [HU-35](historias-de-usuario.md) - mismo mecanismo de acceso; el mensaje único ante error es la forma correcta de "acceso con mis propias credenciales" |
 | **Objetivo** | Verificar que un fallo de credenciales no revela si la cuenta existe (mensaje único). |
 | **Precondiciones** | La cuenta `ana.torres@altiplano.test` existe; `nadie@nada.test` no existe. |
 | **Datos de prueba** | (a) correo existente + `claveIncorrecta1` · (b) `nadie@nada.test` + `Altiplano2026` |
@@ -89,6 +91,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-03 |
 | **Módulo/Función** | Portal - Autenticación · Bloqueo temporal por fuerza bruta |
+| **Historia de usuario** | [HU-37](historias-de-usuario.md) - "Los intentos de login están limitados por IP y por cuenta" (criterio de aceptación literal) |
 | **Objetivo** | Verificar que la cuenta se bloquea 15 minutos al décimo intento fallido, aunque el atacante cambie de IP. |
 | **Precondiciones** | Cuenta `bloqueo@altiplano.test` activa, con el contador de fallos en 0. |
 | **Datos de prueba** | 10 intentos con `claveIncorrecta1`, **cada uno desde una IP distinta**; luego un intento con la contraseña correcta `Altiplano2026`. |
@@ -102,6 +105,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-04 |
 | **Módulo/Función** | Portal - Facturas · Visualización del listado |
+| **Historia de usuario** | [HU-35](historias-de-usuario.md) - "ver mis facturas con su estado y vencimiento" |
 | **Objetivo** | Verificar que el cliente ve sus facturas con estado y totales coherentes con los KPI. |
 | **Precondiciones** | Sesión activa de `ana.torres@altiplano.test`; el cliente 1 tiene 3 facturas sembradas. |
 | **Datos de prueba** | INV-2026-101 ($450.000, pagada) · INV-2026-102 ($380.800, pendiente) · INV-2026-103 ($95.200, vencida) |
@@ -115,6 +119,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-05 |
 | **Módulo/Función** | Portal - Facturas · Detalle y descarga del PDF |
+| **Historia de usuario** | [HU-35](historias-de-usuario.md) - "descargables en PDF" |
 | **Objetivo** | Verificar que el detalle desglosa los conceptos y que el PDF se descarga como adjunto y no se cachea. |
 | **Precondiciones** | Sesión activa de Ana; factura id 2 (INV-2026-102) del cliente 1. |
 | **Datos de prueba** | Desarrollo de catálogo: 80 × $3.000 = $240.000 · Integración de pagos: 20 × $4.000 = $80.000 |
@@ -128,6 +133,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-06 |
 | **Módulo/Función** | Portal - Aislamiento entre clientes |
+| **Historia de usuario** | [HU-35](historias-de-usuario.md) - "Ninguna consulta devuelve datos de otro cliente, ni aunque se manipule el identificador en la URL" (criterio de aceptación literal) |
 | **Objetivo** | Verificar que un cliente **no** puede leer una factura de otro cliente conociendo su id. Un fallo aquí no degrada una función: expone los datos de un cliente a otro. |
 | **Precondiciones** | Dos clientes con portal habilitado; la factura id 2 pertenece al cliente 1. |
 | **Datos de prueba** | Sesión de `carlos.ruiz@otrocliente.test` (cliente 2) pidiendo la factura id 2. |
@@ -141,6 +147,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-07 |
 | **Módulo/Función** | Portal - Cuenta · Cambio de contraseña |
+| **Historia de usuario** | *Ninguna.* No hay HU en el catálogo (HU-01..HU-41) que cubra "cambiar mi contraseña estando ya autenticado". HU-37 es la más cercana pero describe explícitamente "cliente que **olvidó** su contraseña" y un flujo de restablecimiento por correo, no un cambio voluntario desde /portal/cuenta. Gap real, no forzado: ver docs/matriz-trazabilidad.md. |
 | **Objetivo** | Verificar que la contraseña nueva se valida (longitud y composición) y que se exige la actual aunque ya haya sesión. |
 | **Precondiciones** | Sesión activa; se conoce la contraseña actual. |
 | **Datos de prueba** | Actual: `Altiplano2026` · Nuevas: `abcdefgh1` (9), `abcdefghij` (10 sin dígitos), `abcdefghi1` (10 válida) |
@@ -154,6 +161,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-08 |
 | **Módulo/Función** | Portal - Autenticación · Cerrar sesión |
+| **Historia de usuario** | [HU-37](historias-de-usuario.md) - "Revocar una sesión la corta en el siguiente request, no al expirar" (criterio de aceptación literal) |
 | **Objetivo** | Verificar que «Cerrar sesión» revoca la sesión y devuelve al login. |
 | **Precondiciones** | Sesión activa de `ana.torres@altiplano.test`. |
 | **Datos de prueba** | - |
@@ -168,6 +176,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-09 |
 | **Módulo/Función** | Cobros de campo - Pago desde el link corto `/c/[code]` |
+| **Historia de usuario** | [HU-38](historias-de-usuario.md) - valida el criterio de aceptación "El cliente recibe un enlace corto que lleva al checkout" desde el lado del cliente; HU-38 está narrada desde el administrador que envía el link, TC-09 prueba lo que pasa cuando el cliente lo abre |
 | **Objetivo** | Verificar el ciclo completo de un cobro: link vigente → pago → estado terminal, y que los links vencido y ya pagado no permiten cobrar de nuevo. |
 | **Precondiciones** | Cobros `MN5TW3` (vigente), `XY7MQ2` (vencido) y `PK4RT8` (aprobado) en la base. |
 | **Datos de prueba** | `MN5TW3` = $195.000, «Soporte y ajustes de octubre», vence en 3 días. |
@@ -181,6 +190,7 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 |---|---|
 | **ID** | TC-10 |
 | **Módulo/Función** | Cobros de campo - Histórico público `/mis-pagos` |
+| **Historia de usuario** | [HU-39](historias-de-usuario.md) - "La consulta manual solo por número de teléfono muestra datos enmascarados y está fuertemente limitada por tasa" (criterio de aceptación literal) |
 | **Objetivo** | Verificar que consultar por teléfono devuelve datos **enmascarados** (un teléfono no es una credencial) y que la consulta está limitada por IP. |
 | **Precondiciones** | 4 cobros asociados a `+573104641228`. |
 | **Datos de prueba** | `3104641228` · `310 464 1228` · `+573104641228` · `1234` · `abc` |
