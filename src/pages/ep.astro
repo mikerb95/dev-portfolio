@@ -1,21 +1,112 @@
 ---
-// Página informativa sobre la etapa productiva SENA (ficha 3114731), en /ep: fechas de
-// inicio/fin, bitácoras mensuales y visitas de seguimiento. No sensible, pero
-// sin valor de indexación pública ni enlace en el nav.
+// Página de la etapa productiva SENA (ficha 3114731), en /ep: el cronograma
+// real de la ficha, una calculadora para proyectar otra, y los formatos
+// oficiales. No sensible, pero sin valor de indexación pública ni enlace en
+// el nav.
 export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
 
-const inicio = '2026-09-09'
-const fin = '2027-03-08'
+const INICIO_ISO = '2026-09-09'
+const FIN_ISO = '2027-03-08'
+const MESES = 6
 
-const bitacoras = [
-  { n: 1, desde: '09-sep-2026', hasta: '08-oct-2026' },
-  { n: 2, desde: '09-oct-2026', hasta: '08-nov-2026' },
-  { n: 3, desde: '09-nov-2026', hasta: '08-dic-2026' },
-  { n: 4, desde: '09-dic-2026', hasta: '08-ene-2027' },
-  { n: 5, desde: '09-ene-2027', hasta: '08-feb-2027' },
-  { n: 6, desde: '09-feb-2027', hasta: '08-mar-2027' },
+const fecha = (iso: string) => new Date(`${iso}T00:00:00`)
+const inicioD = fecha(INICIO_ISO)
+const finD = fecha(FIN_ISO)
+
+const addDays = (x: Date, n: number) => {
+  const y = new Date(x)
+  y.setDate(y.getDate() + n)
+  return y
+}
+const addMonths = (x: Date, n: number) => {
+  const y = new Date(x)
+  y.setMonth(y.getMonth() + n)
+  return y
+}
+
+// Formateo propio en vez de toLocaleDateString: esta salida entra en el HTML
+// prerenderizado y no debe depender del ICU del runtime que corra el build.
+const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const fCorto = (x: Date) => `${String(x.getDate()).padStart(2, '0')}-${MES_CORTO[x.getMonth()]}`
+const fLargo = (x: Date) => `${fCorto(x)}-${x.getFullYear()}`
+
+// Posición de una fecha dentro de la línea de tiempo, en % del ancho total.
+const spanMs = finD.getTime() - inicioD.getTime()
+const pctDe = (x: Date) => ((x.getTime() - inicioD.getTime()) / spanMs) * 100
+const clamp = (n: number) => Math.min(100, Math.max(0, n))
+const banda = (desde: Date, hasta: Date) => {
+  const izq = clamp(pctDe(desde))
+  return { left: izq, width: Math.max(1.5, clamp(pctDe(hasta)) - izq) }
+}
+
+// Las seis ventanas de bitácora se derivan de la fecha de inicio en vez de
+// escribirse a mano: una por mes, cerrando el día antes de que abra la
+// siguiente. Cambiar INICIO_ISO recoloca la tabla y la línea de tiempo.
+const bitacoras = Array.from({ length: MESES }, (_, i) => {
+  const desde = addMonths(inicioD, i)
+  const hasta = addDays(addMonths(inicioD, i + 1), -1)
+  return { n: i + 1, desde, hasta, ...banda(desde, hasta) }
+})
+
+const visitas = [
+  {
+    n: 1,
+    titulo: 'Concertación',
+    desde: inicioD,
+    hasta: addDays(addMonths(inicioD, 1), -1),
+    detalle: 'El instructor valida el plan de trabajo con la empresa dentro del primer mes.',
+  },
+  {
+    n: 2,
+    titulo: 'Seguimiento',
+    desde: fecha('2026-12-01'),
+    hasta: fecha('2026-12-07'),
+    detalle: 'Primera semana de diciembre, o apenas los instructores retomen labores si están en vacaciones.',
+  },
+  {
+    n: 3,
+    titulo: 'Final y cierre',
+    desde: fecha('2027-03-01'),
+    hasta: finD,
+    detalle: 'Evaluación final, paz y salvo y cierre, unos tres meses después de la visita 2.',
+  },
+].map((v) => ({ ...v, ...banda(v.desde, v.hasta) }))
+
+// Marcas de mes de la regla superior. El primer mes empieza antes del inicio
+// de la etapa (09-sep), así que su marca se pega al borde izquierdo.
+const marcasMes: { label: string; left: number }[] = []
+const cursorMes = new Date(inicioD.getFullYear(), inicioD.getMonth(), 1)
+while (cursorMes <= finD) {
+  marcasMes.push({
+    label: cursorMes.getMonth() === 0 ? `${MES_CORTO[0]} ${cursorMes.getFullYear()}` : MES_CORTO[cursorMes.getMonth()],
+    left: clamp(pctDe(cursorMes)),
+  })
+  cursorMes.setMonth(cursorMes.getMonth() + 1)
+}
+
+const contexto = [
+  {
+    titulo: 'Qué es',
+    cuerpo:
+      'La fase final de la formación titulada: el aprendiz aplica lo aprendido resolviendo problemas en un contexto real (o simulado, si no hay alternativa disponible). Es requisito para certificarse.',
+  },
+  {
+    titulo: 'Alternativas vigentes',
+    cuerpo:
+      'Contrato de aprendizaje, contrato de vínculo formativo, proyecto productivo, vínculo laboral, monitoría y prácticas en la economía popular o campesina. Las dos primeras formas de vínculo tienen remuneración obligatoria por ley; las demás pueden ser sin remuneración.',
+  },
+  {
+    titulo: 'Plazo',
+    cuerpo:
+      'La planeación se presenta a más tardar en la finalización por fecha del grupo-ficha. Pasada esa fecha sin planeación presentada, el Acuerdo 0009 de 2024 lo cuenta como deserción.',
+  },
+  {
+    titulo: 'Evaluación',
+    cuerpo:
+      'El plan de trabajo se registra al inicio en el GFPI-F-023 (actividades, plazos y evidencias). La evaluación final combina factores actitudinales y técnicos, más el cumplimiento de bitácoras y visitas.',
+  },
 ]
 
 const recursos = [
@@ -59,12 +150,8 @@ const recursosExternos = [
     href: 'https://normograma.sena.edu.co/compilacion/docs/acuerdo_sena_0009_2024.htm',
   },
   {
-    label: 'Diseño curricular ADSO (código 228118, 3.984 h / 27 meses)',
+    label: 'Diseño curricular ADSO (código 228118)',
     href: 'https://zajuna.sena.edu.co/pdfs/titulada/tecgnologias/analisis_desarrollo_software.pdf',
-  },
-  {
-    label: 'Agendar cita con el instructor (Outlook Bookings)',
-    href: 'https://outlook.office.com/book/ReservasEtapaProductivaCSF@sena.edu.co/',
   },
   {
     label: 'Manual del aprendiz - recursos y formatos EP',
@@ -79,10 +166,18 @@ const recursosExternos = [
     href: 'https://serviciosfinancierosena.blogspot.com/p/etapa-productiva.html',
   },
   {
-    label: 'Canal de YouTube (tutoriales de diligenciamiento)',
+    label: 'Tutoriales de diligenciamiento (YouTube)',
     href: 'https://www.youtube.com/channel/UCH2WKGaNZ3KgfLfCLiV73vw/videos',
   },
 ]
+
+const AGENDAR_HREF = 'https://outlook.office.com/book/ReservasEtapaProductivaCSF@sena.edu.co/'
+
+// La insignia de cada enlace sale del propio href: extensión para los formatos
+// descargables, dominio para los externos. Así una URL nueva no obliga a
+// escribir también su etiqueta.
+const extension = (href: string) => (href.split('?')[0].split('.').pop() ?? '').toUpperCase()
+const dominio = (href: string) => new URL(href).hostname.replace(/^www\./, '')
 
 // Links de descarga por hito del calculador, tomados del mismo array `recursos`
 // para no duplicar URLs: si un formato cambia de nombre solo se edita arriba.
@@ -94,297 +189,508 @@ const docLinks = {
   f147: recursos.find((r) => r.label.startsWith('Bitácora'))!,
 }
 
-const visitas = [
-  {
-    n: 1,
-    cuando: 'Primer mes de etapa productiva',
-    detalle: 'Entre el 09-sep-2026 y el 08-oct-2026.',
-  },
-  {
-    n: 2,
-    cuando: 'Primera semana de diciembre',
-    detalle: 'Entre el 01-dic-2026 y el 07-dic-2026, o apenas los instructores retomen labores si están en vacaciones.',
-  },
-  {
-    n: 3,
-    cuando: 'Tercer trimestre de la etapa',
-    detalle: 'Aprox. 3 meses después de la visita 2, hacia el cierre de la etapa productiva (08-mar-2027).',
-  },
+const meta = [
+  { k: 'Ficha', v: '3114731' },
+  { k: 'Programa', v: 'ADSO · Tecnólogo' },
+  { k: 'Duración', v: '864 h · 6 meses' },
+  { k: 'Centro', v: 'CSF' },
 ]
 ---
 
 <BaseLayout
   title="Etapa productiva SENA - Ficha 3114731"
-  description="Fechas de inicio/fin, bitácoras mensuales y visitas de seguimiento de la etapa productiva."
+  description="Cronograma de la etapa productiva: bitácoras, visitas de seguimiento, formatos oficiales y calculadora para proyectar otra ficha."
   image="/og-default.png"
   noindex={true}
 >
-  <div class="max-w-[720px] mx-auto px-6 md:px-12 pt-32 pb-24">
+  <div class="max-w-[1180px] mx-auto px-6 md:px-12 lg:px-16 pt-32 pb-24">
 
-    <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-      <span class="text-cyan">/ep</span>
-      <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-      <span>Etapa productiva SENA</span>
-    </div>
+    <a
+      href="/"
+      class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Inicio
+    </a>
 
-    <h1 class="font-sans text-4xl md:text-5xl font-medium tracking-[-.03em] text-mask leading-[1.05] mb-4">
-      Ficha 3114731
-    </h1>
-    <p class="text-[15px] text-ink-100 leading-relaxed max-w-lg mb-10">
-      Seguimiento de la etapa productiva: fecha de inicio y fin, bitácoras mensuales
-      y visitas de seguimiento.
-    </p>
-
-    <div class="rounded-2xl glass border-accent p-6 mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Qué es la etapa productiva</span>
+    <header class="mb-12">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/ep</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>SENA · Ficha 3114731</span>
       </div>
-      <p class="text-[13px] text-ink-100 leading-relaxed mb-3">
-        Es la fase final de la formación titulada del SENA: el aprendiz aplica
-        lo aprendido en la etapa lectiva resolviendo problemas en un contexto
-        real (o simulado, si no hay alternativa disponible). Es requisito para
-        certificarse, y el plazo para presentar su planeación va hasta la
-        finalización por fecha del grupo-ficha: pasada esa fecha sin planeación
-        presentada, el Acuerdo 0009 de 2024 la cuenta como deserción.
-      </p>
-      <p class="text-[13px] text-ink-100 leading-relaxed mb-3">
-        Alternativas vigentes (artículo 26, literal b): contrato de aprendizaje,
-        contrato de vínculo formativo, proyecto productivo, vínculo laboral,
-        monitoría y prácticas en la economía popular o campesina. El contrato de
-        aprendizaje y el vínculo laboral tienen remuneración obligatoria por ley;
-        las demás pueden ser sin remuneración.
-      </p>
-      <p class="text-[13px] text-ink-100 leading-relaxed">
-        El plan de trabajo se registra en el formato GFPI-F-023 (actividades,
-        plazos y evidencias) al inicio. La evaluación final combina factores
-        actitudinales y técnicos, además del cumplimiento de bitácoras y
-        visitas de seguimiento.
-      </p>
-    </div>
 
-    <div class="rounded-2xl glass border-accent p-6 mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Duración</span>
-      </div>
-      <div class="grid grid-cols-2 gap-4 text-[13px]">
+      <div class="grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end gap-8">
         <div>
-          <div class="text-[10px] font-mono uppercase tracking-wider text-ink-300 mb-1">Inicio</div>
-          <div class="text-ink-100">{inicio} · 09-sep-2026</div>
+          <h1 class="font-sans text-4xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[1] mb-5">
+            Etapa <span class="font-serif italic font-normal text-mask-cyan">productiva</span>
+          </h1>
+          <p class="text-[15px] md:text-[16px] text-ink-100 leading-relaxed max-w-xl">
+            Seis meses, seis bitácoras y tres visitas de seguimiento, con sus fechas
+            exactas y los formatos que pide cada hito. Abajo hay una calculadora que
+            proyecta el mismo cronograma para cualquier otra ficha.
+          </p>
         </div>
-        <div>
-          <div class="text-[10px] font-mono uppercase tracking-wider text-ink-300 mb-1">Fin</div>
-          <div class="text-ink-100">{fin} · 08-mar-2027</div>
-        </div>
-      </div>
-      <p class="text-[12px] text-ink-300 mt-3">6 meses de etapa productiva.</p>
-    </div>
 
-    <div class="rounded-2xl glass border-accent p-6 mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Bitácoras (6, periodicidad mensual)</span>
-      </div>
-      <div class="space-y-2">
-        {bitacoras.map((b) => (
-          <div class="flex items-center justify-between text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
-            <span class="text-ink-100">Bitácora {b.n}</span>
-            <span class="text-ink-300 font-mono text-[12px]">{b.desde} → {b.hasta}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    <div class="rounded-2xl glass border-accent p-6">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Visitas de seguimiento (3, cada 3 meses)</span>
-      </div>
-      <div class="space-y-3">
-        {visitas.map((v) => (
-          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
-            <div class="flex items-center justify-between text-[13px] mb-1">
-              <span class="text-ink-100">Visita {v.n}</span>
-              <span class="text-cyan font-mono text-[12px]">{v.cuando}</span>
+        <dl class="grid grid-cols-2 gap-x-8 gap-y-4 lg:text-right shrink-0">
+          {meta.map((m) => (
+            <div>
+              <dt class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{m.k}</dt>
+              <dd class="text-[13px] text-ink-50 font-mono">{m.v}</dd>
             </div>
-            <p class="text-[12px] text-ink-300 leading-relaxed">{v.detalle}</p>
-          </div>
-        ))}
+          ))}
+        </dl>
       </div>
-    </div>
+    </header>
 
-    <div class="rounded-2xl glass border-accent p-6 mt-8" id="calc" data-doc-links={JSON.stringify(docLinks)}>
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Calculadora de cronograma</span>
+    <!-- Banda de estado. Los números dependen de "hoy" y la página es
+         prerenderizada, así que los rellena el script: el HTML estático solo
+         lleva las fechas fijas, que no caducan. -->
+    <section
+      id="ep-estado"
+      data-inicio={INICIO_ISO}
+      data-fin={FIN_ISO}
+      class="rounded-2xl glass border-accent p-6 md:p-7 mb-4"
+    >
+      <div class="grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center gap-6">
+        <div>
+          <div class="flex items-center gap-2.5 mb-3">
+            <span class="w-2 h-2 rounded-full bg-lime pulse-dot shrink-0"></span>
+            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-200">Estado</span>
+          </div>
+          <p id="ep-fase" class="text-[19px] md:text-[22px] text-ink-50 font-medium tracking-[-.02em] leading-tight">
+            {fLargo(inicioD)} → {fLargo(finD)}
+          </p>
+          <p id="ep-proximo" class="text-[12px] font-mono text-ink-300 mt-2">
+            6 meses de etapa productiva · 864 horas
+          </p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 sm:gap-4 shrink-0">
+          {[
+            { id: 'ep-stat-avance', label: 'Avance' },
+            { id: 'ep-stat-dias', label: 'Días restantes' },
+            { id: 'ep-stat-bitacora', label: 'Bitácora' },
+          ].map((s) => (
+            <div class="rounded-xl bg-white/[.03] border border-white/10 px-4 py-3 text-center min-w-[92px]">
+              <div id={s.id} class="font-mono text-[20px] leading-none text-ink-50">-</div>
+              <div class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-300 mt-2">{s.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
-      <p class="text-[12px] text-ink-300 leading-relaxed mb-4">
-        Proyecta bitácoras, visitas y cierre a partir de tu fecha de inicio real.
-        Útil para verificar el cronograma de arriba o simular otra ficha. La
-        etapa productiva dura lo mismo en los dos niveles (864 horas, unos 6
-        meses): lo que cambia entre técnico y tecnólogo es la etapa lectiva.
-      </p>
+    </section>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <label class="grid gap-1.5">
-          <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Tipo de programa</span>
-          <select
-            id="calc-tipo"
-            class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
-          >
-            <option value="tecnico">Técnico · 6 meses</option>
-            <option value="tecnologo">Tecnólogo · 6 meses</option>
-          </select>
-        </label>
-        <label class="grid gap-1.5">
-          <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Fecha de inicio</span>
-          <input
-            id="calc-inicio"
-            type="date"
-            class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none [color-scheme:dark]"
-          />
-        </label>
+    <!-- Línea de tiempo. Es la traducción visual de las dos tablas de abajo
+         (bitácoras y visitas), que son la versión accesible del mismo dato:
+         por eso el gráfico va marcado como decorativo. -->
+    <figure class="rounded-2xl glass border-accent p-6 md:p-7 mb-4">
+      <figcaption class="flex flex-wrap items-center gap-x-5 gap-y-2 mb-6">
+        <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-200">Cronograma</span>
+        <span class="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[.12em] text-ink-300">
+          <span class="w-2.5 h-2.5 rounded-[3px] bg-cyan/40 border border-cyan/50"></span> Bitácoras
+        </span>
+        <span class="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[.12em] text-ink-300">
+          <span class="w-2.5 h-2.5 rounded-[3px] bg-violet/40 border border-violet/50"></span> Visitas
+        </span>
+        <span class="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[.12em] text-ink-300">
+          <span class="w-px h-3 bg-lime"></span> Hoy
+        </span>
+      </figcaption>
+
+      <div class="overflow-x-auto -mx-1 px-1">
+        <div id="ep-track" class="relative min-w-[640px] h-[186px]" aria-hidden="true">
+
+          <!-- Regla de meses -->
+          {marcasMes.map((m) => (
+            <>
+              <div class="absolute top-5 bottom-0 w-px bg-white/[.055]" style={`left:${m.left}%`}></div>
+              <span
+                class="absolute top-0 text-[10px] font-mono uppercase tracking-[.12em] text-ink-300 pl-1.5"
+                style={`left:${m.left}%`}
+              >{m.label}</span>
+            </>
+          ))}
+
+          <!-- Carril de visitas -->
+          {visitas.map((v) => (
+            <div class="absolute top-[38px]" style={`left:${v.left}%;width:${v.width}%`}>
+              <div class="h-7 rounded-md bg-violet/15 border border-violet/40 flex items-center justify-center">
+                <span class="text-[10px] font-mono uppercase tracking-[.1em] text-violet">V{v.n}</span>
+              </div>
+              <span class="block text-[10px] font-mono text-ink-300 mt-1.5 whitespace-nowrap truncate">{v.titulo}</span>
+            </div>
+          ))}
+
+          <!-- Vía principal + progreso -->
+          <div class="absolute left-0 right-0 top-[104px] h-2.5 rounded-full bg-white/[.06] overflow-hidden">
+            <div
+              id="ep-progreso"
+              class="h-full rounded-full bg-gradient-to-r from-cyan-deep via-cyan to-cyan-glow"
+              style="width:0%"
+            ></div>
+          </div>
+
+          <!-- Carril de bitácoras -->
+          {bitacoras.map((b) => (
+            <div class="absolute top-[126px]" style={`left:${b.left}%;width:${b.width}%`}>
+              <div class="h-8 rounded-md bg-cyan/12 border border-cyan/30 flex items-center justify-center">
+                <span class="text-[10px] font-mono uppercase tracking-[.1em] text-cyan">B{b.n}</span>
+              </div>
+              <span class="block text-[10px] font-mono text-ink-300 mt-1.5 whitespace-nowrap">{fCorto(b.hasta)}</span>
+            </div>
+          ))}
+
+          <!-- Marcador de hoy: lo coloca el script y solo si cae dentro de la etapa -->
+          <div id="ep-hoy" class="absolute top-4 bottom-0 w-px bg-lime hidden" style="left:0%">
+            <span class="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-mono uppercase tracking-[.12em] text-lime whitespace-nowrap">Hoy</span>
+            <span class="absolute top-[86px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-lime"></span>
+          </div>
+
+        </div>
       </div>
+    </figure>
 
-      <button
-        id="calc-generar"
-        type="button"
-        class="w-full h-11 rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:brightness-110 transition-all"
-      >
-        Generar cronograma
-      </button>
-      <p id="calc-error" class="text-[12px] text-ember mt-2 hidden">Selecciona una fecha de inicio.</p>
+    <!-- Detalle + barra lateral -->
+    <div class="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start mb-4">
 
-      <div id="calc-resultados" class="mt-6 hidden">
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
-            <div id="calc-sum-duracion" class="text-[15px] text-ink-50 font-medium"></div>
-            <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Duración</div>
+      <div class="grid sm:grid-cols-2 gap-4">
+
+        <div class="rounded-2xl glass p-6 sm:col-span-2">
+          <div class="flex items-center gap-2 mb-5">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Cómo funciona la etapa</span>
           </div>
-          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
-            <div id="calc-sum-bitacoras" class="text-[15px] text-ink-50 font-medium"></div>
-            <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Bitácoras</div>
-          </div>
-          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
-            <div class="text-[15px] text-ink-50 font-medium">3</div>
-            <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Visitas</div>
-          </div>
-          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
-            <div id="calc-sum-cierre" class="text-[13px] text-ink-50 font-medium"></div>
-            <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Cierre</div>
+          <div class="grid sm:grid-cols-2 gap-x-8 gap-y-6">
+            {contexto.map((c) => (
+              <div>
+                <h3 class="text-[13px] text-ink-50 font-medium mb-1.5">{c.titulo}</h3>
+                <p class="text-[13px] text-ink-200 leading-relaxed">{c.cuerpo}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div id="calc-next" class="flex items-center gap-3 rounded-lg bg-lime/10 border border-lime/30 px-3 py-2.5 mb-2">
-          <span class="w-2 h-2 rounded-full bg-lime shrink-0"></span>
-          <span class="text-[12px] text-ink-100"><strong class="text-lime font-medium">Próximo hito:</strong> <span id="calc-next-text"></span></span>
+        <div class="rounded-2xl glass p-6">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Bitácoras</span>
+          </div>
+          <p class="text-[11px] font-mono text-ink-300 mb-4 pl-3.5">6 · mensuales · GFPI-F-147</p>
+          <ol class="space-y-1.5">
+            {bitacoras.map((b) => (
+              <li class="flex items-baseline justify-between gap-3 text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+                <span class="text-ink-100 shrink-0">Bitácora {b.n}</span>
+                <span class="text-ink-300 font-mono text-[11px] text-right">{fCorto(b.desde)} → {fCorto(b.hasta)}</span>
+              </li>
+            ))}
+          </ol>
         </div>
-        <p id="calc-progreso" class="text-[11px] font-mono text-ink-300 mb-4"></p>
 
-        <div class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Filtrar hitos">
-          <button type="button" data-filter="all" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-cyan/40 bg-cyan/10 text-cyan">Todos</button>
-          <button type="button" data-filter="visita" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Visitas</button>
-          <button type="button" data-filter="bitacora" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Bitácoras</button>
-          <button type="button" data-filter="inicio" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Inicio / cierre</button>
+        <div class="rounded-2xl glass p-6">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-violet"></span>
+            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Visitas</span>
+          </div>
+          <p class="text-[11px] font-mono text-ink-300 mb-4 pl-3.5">3 · trimestrales · GFPI-F-023</p>
+          <ol class="space-y-2.5">
+            {visitas.map((v) => (
+              <li class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+                <div class="flex items-baseline justify-between gap-3 text-[13px] mb-1">
+                  <span class="text-ink-100">Visita {v.n} · {v.titulo}</span>
+                  <span class="text-violet font-mono text-[11px] shrink-0">{fCorto(v.desde)}</span>
+                </div>
+                <p class="text-[12px] text-ink-300 leading-relaxed">{v.detalle}</p>
+              </li>
+            ))}
+          </ol>
         </div>
 
-        <div id="calc-timeline" class="space-y-2"></div>
+      </div>
 
-        <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
+      <aside class="grid gap-4 lg:sticky lg:top-24">
+        <div class="rounded-2xl glass border-accent p-5">
+          <p class="text-[13px] text-ink-100 leading-relaxed mb-4">
+            Las visitas se agendan con el instructor de seguimiento del centro.
+          </p>
           <a
-            href="https://outlook.office.com/book/ReservasEtapaProductivaCSF@sena.edu.co/"
+            href={AGENDAR_HREF}
             target="_blank"
             rel="noopener noreferrer"
-            class="text-[12px] font-mono text-lime border border-lime/30 bg-lime/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all"
+            class="flex items-center justify-center h-11 rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:brightness-110 transition-all"
           >
             Agendar visita
           </a>
-          <button id="calc-print" type="button" class="text-[12px] font-mono text-ink-200 border border-white/10 rounded-full px-3 py-1.5 hover:bg-white/[.06] transition-colors">
-            Imprimir / PDF
-          </button>
-          <button id="calc-ics" type="button" class="text-[12px] font-mono text-cyan border border-cyan/30 bg-cyan/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all">
-            Exportar a calendario (.ics)
-          </button>
-          <button id="calc-share" type="button" class="text-[12px] font-mono text-ink-200 border border-white/10 rounded-full px-3 py-1.5 hover:bg-white/[.06] transition-colors">
-            Copiar link para compartir
-          </button>
+          <a href="#calc" class="flex items-center justify-center h-11 mt-2 rounded-full border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+            Calcular otra ficha
+          </a>
         </div>
-        <p id="calc-toast" class="text-[11px] text-lime mt-2 hidden"></p>
 
-        <div class="mt-4 pt-4 border-t border-white/10">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Recordatorio por email (solo admin)</span>
+        <div class="rounded-2xl glass p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Formatos</span>
           </div>
-          <p class="text-[11px] text-ink-300 leading-relaxed mb-2">
-            Activa un cron diario que te avisa por correo cuando falten pocos días para un hito.
-            Solo funciona con sesión de administrador; no recolecta el email de nadie más.
+          <div class="grid gap-1">
+            {recursos.map((r) => (
+              <a
+                href={r.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group flex items-center justify-between gap-3 text-[12px] rounded-lg px-2.5 py-2 hover:bg-white/[.06] transition-colors"
+              >
+                <span class="text-ink-100 leading-snug">{r.label}</span>
+                <span class="font-mono text-[9px] tracking-wider text-ink-300 group-hover:text-cyan transition-colors shrink-0">{extension(r.href)}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div class="rounded-2xl glass p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Fuentes y enlaces</span>
+          </div>
+          <div class="grid gap-1">
+            {recursosExternos.map((r) => (
+              <a
+                href={r.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group flex flex-col gap-0.5 text-[12px] rounded-lg px-2.5 py-2 hover:bg-white/[.06] transition-colors"
+              >
+                <span class="text-ink-100 leading-snug">{r.label}</span>
+                <span class="font-mono text-[9px] text-ink-300 group-hover:text-cyan transition-colors">{dominio(r.href)} ↗</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- Calculadora -->
+    <section class="rounded-2xl glass border-accent p-6 md:p-7" id="calc" data-doc-links={JSON.stringify(docLinks)}>
+      <div class="grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] gap-8 lg:gap-10">
+
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Calculadora de cronograma</span>
+          </div>
+          <p class="text-[13px] text-ink-200 leading-relaxed mb-6">
+            Proyecta bitácoras, visitas y cierre a partir de tu fecha de inicio real.
+            La etapa productiva dura lo mismo en los dos niveles (864 horas, unos 6
+            meses): lo que cambia entre técnico y tecnólogo es la etapa lectiva.
           </p>
-          <div class="flex flex-wrap items-center gap-2">
-            <button id="calc-remind-on" type="button" class="text-[12px] font-mono text-lime border border-lime/30 bg-lime/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all">
-              Avisarme de esta simulación
-            </button>
-            <button id="calc-remind-off" type="button" class="text-[12px] font-mono text-ink-200 border border-white/10 rounded-full px-3 py-1.5 hover:bg-white/[.06] transition-colors hidden">
-              Desactivar recordatorio
-            </button>
-            <span id="calc-remind-status" class="text-[11px] text-ink-300"></span>
+
+          <div class="grid gap-3 mb-4">
+            <label class="grid gap-1.5">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Tipo de programa</span>
+              <select
+                id="calc-tipo"
+                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+              >
+                <option value="tecnico">Técnico · 6 meses</option>
+                <option value="tecnologo">Tecnólogo · 6 meses</option>
+              </select>
+            </label>
+            <label class="grid gap-1.5">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Fecha de inicio</span>
+              <input
+                id="calc-inicio"
+                type="date"
+                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none [color-scheme:dark]"
+              />
+            </label>
+          </div>
+
+          <button
+            id="calc-generar"
+            type="button"
+            class="w-full h-11 rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:brightness-110 transition-all"
+          >
+            Generar cronograma
+          </button>
+          <p id="calc-error" class="text-[12px] text-ember mt-2 hidden">Selecciona una fecha de inicio.</p>
+
+          <div class="mt-6 pt-6 border-t border-white/10">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Recordatorio por email (solo admin)</span>
+            <p class="text-[12px] text-ink-300 leading-relaxed mt-2 mb-3">
+              Activa un cron diario que avisa por correo cuando falten pocos días para un hito.
+              Solo funciona con sesión de administrador; no recolecta el email de nadie más.
+            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="calc-remind-on" type="button" class="text-[12px] font-mono text-lime border border-lime/30 bg-lime/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all">
+                Avisarme de esta simulación
+              </button>
+              <button id="calc-remind-off" type="button" class="text-[12px] font-mono text-ink-200 border border-white/10 rounded-full px-3 py-1.5 hover:bg-white/[.06] transition-colors hidden">
+                Desactivar recordatorio
+              </button>
+              <span id="calc-remind-status" class="text-[11px] text-ink-300"></span>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="rounded-2xl glass border-accent p-6 mt-8">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Formatos descargables</span>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {recursos.map((r) => (
-          <a
-            href={r.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center justify-between gap-3 text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 hover:bg-white/[.06] transition-colors"
-          >
-            <span class="text-ink-100">{r.label}</span>
-            <span class="text-cyan font-mono text-[11px]">↓</span>
-          </a>
-        ))}
-      </div>
-    </div>
+        <div>
+          <div id="calc-vacio" class="h-full min-h-[220px] rounded-xl border border-dashed border-white/10 grid place-items-center p-8 text-center">
+            <p class="text-[12px] font-mono text-ink-300 leading-relaxed max-w-[26ch]">
+              Elige una fecha de inicio y el cronograma aparece aquí, hito por hito.
+            </p>
+          </div>
 
-    <div class="rounded-2xl glass border-accent p-6 mt-8">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Recursos externos</span>
+          <div id="calc-resultados" class="hidden">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+              <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
+                <div id="calc-sum-duracion" class="text-[15px] text-ink-50 font-medium"></div>
+                <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Duración</div>
+              </div>
+              <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
+                <div id="calc-sum-bitacoras" class="text-[15px] text-ink-50 font-medium"></div>
+                <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Bitácoras</div>
+              </div>
+              <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
+                <div class="text-[15px] text-ink-50 font-medium">3</div>
+                <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Visitas</div>
+              </div>
+              <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 text-center">
+                <div id="calc-sum-cierre" class="text-[13px] text-ink-50 font-medium"></div>
+                <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">Cierre</div>
+              </div>
+            </div>
+
+            <div id="calc-next" class="flex items-center gap-3 rounded-lg bg-lime/10 border border-lime/30 px-3 py-2.5 mb-2">
+              <span class="w-2 h-2 rounded-full bg-lime shrink-0"></span>
+              <span class="text-[12px] text-ink-100"><strong class="text-lime font-medium">Próximo hito:</strong> <span id="calc-next-text"></span></span>
+            </div>
+            <p id="calc-progreso" class="text-[11px] font-mono text-ink-300 mb-4"></p>
+
+            <div class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Filtrar hitos">
+              <button type="button" data-filter="all" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-cyan/40 bg-cyan/10 text-cyan">Todos</button>
+              <button type="button" data-filter="visita" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Visitas</button>
+              <button type="button" data-filter="bitacora" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Bitácoras</button>
+              <button type="button" data-filter="inicio" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Inicio / cierre</button>
+            </div>
+
+            <div id="calc-timeline" class="grid sm:grid-cols-2 gap-2"></div>
+
+            <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/10">
+              <a
+                href={AGENDAR_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-[12px] font-mono text-lime border border-lime/30 bg-lime/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all"
+              >
+                Agendar visita
+              </a>
+              <button id="calc-print" type="button" class="text-[12px] font-mono text-ink-200 border border-white/10 rounded-full px-3 py-1.5 hover:bg-white/[.06] transition-colors">
+                Imprimir / PDF
+              </button>
+              <button id="calc-ics" type="button" class="text-[12px] font-mono text-cyan border border-cyan/30 bg-cyan/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all">
+                Exportar a calendario (.ics)
+              </button>
+              <button id="calc-share" type="button" class="text-[12px] font-mono text-ink-200 border border-white/10 rounded-full px-3 py-1.5 hover:bg-white/[.06] transition-colors">
+                Copiar link para compartir
+              </button>
+            </div>
+            <p id="calc-toast" class="text-[11px] text-lime mt-2 hidden"></p>
+          </div>
+        </div>
+
       </div>
-      <div class="space-y-2">
-        {recursosExternos.map((r) => (
-          <a
-            href={r.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center justify-between gap-3 text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 hover:bg-white/[.06] transition-colors"
-          >
-            <span class="text-ink-100">{r.label}</span>
-            <span class="text-cyan font-mono text-[11px]">↗</span>
-          </a>
-        ))}
-      </div>
-    </div>
+    </section>
 
   </div>
 </BaseLayout>
 
 <script>
-  // Calculadora de cronograma: la proyección de hitos vive en
-  // src/lib/sena-ep.ts (módulo puro isomorfo) para que este script y el cron
-  // de recordatorios (api/cron/sena-recordatorio) no dupliquen la fórmula.
-  // Los enlaces de descarga salen de `data-doc-links`, generado en el
-  // frontmatter a partir del mismo array que ya usa la card de formatos.
+  // Dos piezas comparten este script: la banda de estado + el marcador de "hoy"
+  // de la línea de tiempo (que dependen de la fecha actual y por eso no pueden
+  // prerenderizarse), y la calculadora de cronograma. La proyección de hitos
+  // vive en src/lib/sena-ep.ts (módulo puro isomorfo) para que este script y el
+  // cron de recordatorios (api/cron/sena-recordatorio) no dupliquen la fórmula.
 
   import { computeHitos, type Hito as HitoBase, type TipoPrograma, type DocKey } from '../lib/sena-ep'
 
+  const startOfDay = (d: Date) => {
+    const x = new Date(d)
+    x.setHours(0, 0, 0, 0)
+    return x
+  }
+  const addDays = (d: Date, n: number) => {
+    const x = new Date(d)
+    x.setDate(x.getDate() + n)
+    return x
+  }
+  const fmtCorto = (d: Date) =>
+    d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+  const fmtLargo = (d: Date) =>
+    d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const diasEntre = (a: Date, b: Date) =>
+    Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / 86400000)
+  const plural = (n: number, s: string) => `${n} ${s}${n === 1 ? '' : 's'}`
+
+  // --- Banda de estado y marcador de hoy ---
+  const estadoEl = document.getElementById('ep-estado')
+  if (estadoEl) {
+    const inicio = new Date(`${estadoEl.dataset.inicio}T00:00:00`)
+    const fin = new Date(`${estadoEl.dataset.fin}T00:00:00`)
+    const hoy = startOfDay(new Date())
+    const total = diasEntre(inicio, fin)
+    const transcurridos = diasEntre(inicio, hoy)
+    const avance = Math.min(1, Math.max(0, transcurridos / total))
+
+    const faseEl = document.getElementById('ep-fase')!
+    const proximoEl = document.getElementById('ep-proximo')!
+    const setStat = (id: string, valor: string) => {
+      document.getElementById(id)!.textContent = valor
+    }
+
+    if (transcurridos < 0) {
+      faseEl.textContent = `Empieza en ${plural(-transcurridos, 'día')}`
+      setStat('ep-stat-avance', '0%')
+      setStat('ep-stat-dias', String(total))
+      setStat('ep-stat-bitacora', `0/6`)
+    } else if (transcurridos > total) {
+      faseEl.textContent = 'Etapa productiva finalizada'
+      setStat('ep-stat-avance', '100%')
+      setStat('ep-stat-dias', '0')
+      setStat('ep-stat-bitacora', '6/6')
+    } else {
+      // La bitácora en curso es la del mes calendario que corre desde el día de
+      // inicio, no `transcurridos / 30`: los meses no miden lo mismo.
+      let enCurso = 1
+      for (let i = 1; i <= 6; i++) {
+        const corte = new Date(inicio)
+        corte.setMonth(corte.getMonth() + i)
+        if (hoy >= corte) enCurso = i + 1
+      }
+      faseEl.textContent = `En curso · ${plural(transcurridos, 'día')} de ${total}`
+      setStat('ep-stat-avance', `${Math.round(avance * 100)}%`)
+      setStat('ep-stat-dias', String(total - transcurridos))
+      setStat('ep-stat-bitacora', `${Math.min(enCurso, 6)}/6`)
+    }
+
+    // El próximo hito sale de la misma proyección que usa la calculadora.
+    const hitos = computeHitos('tecnologo', estadoEl.dataset.inicio!)
+    const proximo = hitos.find((h) => startOfDay(h.fecha) >= hoy)
+    if (proximo) {
+      const delta = diasEntre(hoy, proximo.fecha)
+      const cuando = delta === 0 ? 'hoy' : `en ${plural(delta, 'día')}`
+      proximoEl.textContent = `Próximo hito: ${proximo.titulo} · ${fmtCorto(proximo.fecha)} (${cuando})`
+    }
+
+    const progresoBar = document.getElementById('ep-progreso') as HTMLElement | null
+    if (progresoBar) progresoBar.style.width = `${avance * 100}%`
+
+    const hoyEl = document.getElementById('ep-hoy')
+    if (hoyEl && transcurridos >= 0 && transcurridos <= total) {
+      hoyEl.style.left = `${avance * 100}%`
+      hoyEl.classList.remove('hidden')
+    }
+  }
+
+  // --- Calculadora ---
   type Estado = 'past' | 'next' | 'future'
   type DocLink = { label: string; href: string }
   type Hito = HitoBase & { estado: Estado }
@@ -396,6 +702,7 @@ const visitas = [
     const tipoEl = document.getElementById('calc-tipo') as HTMLSelectElement
     const inicioEl = document.getElementById('calc-inicio') as HTMLInputElement
     const errorEl = document.getElementById('calc-error')!
+    const vacioEl = document.getElementById('calc-vacio')!
     const resultadosEl = document.getElementById('calc-resultados')!
     const timelineEl = document.getElementById('calc-timeline')!
     const nextTextEl = document.getElementById('calc-next-text')!
@@ -415,21 +722,6 @@ const visitas = [
       toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 3200)
     }
 
-    const startOfDay = (d: Date) => {
-      const x = new Date(d)
-      x.setHours(0, 0, 0, 0)
-      return x
-    }
-    const addDays = (d: Date, n: number) => {
-      const x = new Date(d)
-      x.setDate(x.getDate() + n)
-      return x
-    }
-    const fmtCorto = (d: Date) =>
-      d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
-    const fmtLargo = (d: Date) =>
-      d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-    const diasEntre = (a: Date, b: Date) => Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / 86400000)
     const claveHito = (h: HitoBase) => `${h.titulo}|${h.fecha.toISOString().slice(0, 10)}`
 
     // Checklist "entregado" por hito, persistido en localStorage por
@@ -485,7 +777,7 @@ const visitas = [
 
       const proximo = hitosConEstado[indiceProximo]
       const delta = diasEntre(hoy, proximo.fecha)
-      const cuando = delta === 0 ? 'hoy' : delta > 0 ? `en ${delta} día${delta === 1 ? '' : 's'}` : 'ya venció'
+      const cuando = delta === 0 ? 'hoy' : delta > 0 ? `en ${plural(delta, 'día')}` : 'ya venció'
       nextTextEl.textContent = `${proximo.titulo} · ${fmtCorto(proximo.fecha)} (${cuando})`
 
       const colorPorEstado: Record<Estado, string> = {
@@ -563,6 +855,7 @@ const visitas = [
       const params = new URLSearchParams({ tipo, inicio: valor })
       history.replaceState(null, '', `?${params.toString()}`)
 
+      vacioEl.classList.add('hidden')
       resultadosEl.classList.remove('hidden')
       resultadosEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       actualizarEstadoRecordatorio()
@@ -588,14 +881,14 @@ const visitas = [
 
       const dtstamp = fechaIcs(new Date()) + 'T000000Z'
       const eventos = hitosActuales.map((h, i) => {
-        const inicio = fechaIcs(h.fecha)
-        const fin = fechaIcs(addDays(h.fecha, 1))
+        const desde = fechaIcs(h.fecha)
+        const hasta = fechaIcs(addDays(h.fecha, 1))
         return [
           'BEGIN:VEVENT',
           `UID:ep-3114731-${i}@codebymike.tech`,
           `DTSTAMP:${dtstamp}`,
-          `DTSTART;VALUE=DATE:${inicio}`,
-          `DTEND;VALUE=DATE:${fin}`,
+          `DTSTART;VALUE=DATE:${desde}`,
+          `DTEND;VALUE=DATE:${hasta}`,
           `SUMMARY:${escapeIcs(h.titulo)}`,
           `DESCRIPTION:${escapeIcs(h.detalle)}`,
           'END:VEVENT',
