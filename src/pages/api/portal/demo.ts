@@ -4,6 +4,8 @@ import { db, demoAvailable, runInDemoContext } from '../../../db'
 import { clientUsers } from '../../../db/schema'
 import { createSession, setSessionCookie } from '../../../lib/portal/session'
 import { createPortalDemoToken, PORTAL_DEMO_COOKIE, PORTAL_DEMO_EMAIL } from '../../../lib/portal/demo'
+import { crearPaseRespaldo, PORTAL_RESPALDO_COOKIE } from '../../../lib/portal/respaldo'
+import { serverEnv } from '../../../lib/env'
 
 /**
  * Entrada a la demo pública del portal. Un GET simple (navegación normal desde
@@ -17,8 +19,26 @@ import { createPortalDemoToken, PORTAL_DEMO_COOKIE, PORTAL_DEMO_EMAIL } from '..
  * Si la demo no está configurada (falta TURSO_DEMO_URL), no existe: mismo
  * criterio que la demo del admin.
  */
+/**
+ * Entrada al modo respaldo: emite el pase firmado y manda al portal, que a
+ * partir de ahí se sirve del snapshot versionado. Solo se llama cuando ya se
+ * comprobó que la base no responde, nunca como primera opción.
+ */
+function entrarEnRespaldo(cookies: Parameters<APIRoute>[0]['cookies'], redirect: Parameters<APIRoute>[0]['redirect']) {
+  cookies.set(PORTAL_RESPALDO_COOKIE, crearPaseRespaldo(serverEnv('AUTH_SECRET')), {
+    httpOnly: true,
+    secure: import.meta.env.PROD,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 30 * 60,
+  })
+  return redirect('/portal')
+}
+
 export const GET: APIRoute = async ({ cookies, redirect }) => {
-  if (!demoAvailable) return redirect('/portal/login?m=demo-unavailable')
+  // Sin base de demo configurada no hay nada vivo que intentar, pero el
+  // snapshot no necesita base: es exactamente el caso para el que existe.
+  if (!demoAvailable) return entrarEnRespaldo(cookies, redirect)
 
   try {
     const token = await runInDemoContext(async () => {
@@ -41,8 +61,11 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
     })
     return redirect('/portal')
   } catch {
-    // Base de demo configurada pero sin sembrar todavía, o caída: no hay nada
-    // que el visitante pueda hacer, así que se le explica en vez de un 500 seco.
-    return redirect('/portal/login?m=demo-unavailable')
+    // Base de demo configurada pero sin sembrar, o caída (la cuota de Turso es
+    // por organización, así que se agota a la vez que la principal). Antes esto
+    // era un callejón sin salida; ahora cae al snapshot versionado, que enseña
+    // el mismo recorrido sin tocar ninguna base. Se apaga solo: en cuanto la
+    // consulta de arriba vuelva a funcionar, no se llega hasta aquí.
+    return entrarEnRespaldo(cookies, redirect)
   }
 }

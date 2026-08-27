@@ -30,6 +30,8 @@ declare namespace App {
      * (ver src/lib/portal/demo.ts).
      */
     portalDemo?: boolean
+    /** El portal se está sirviendo del snapshot versionado (base caída). */
+    portalRespaldo?: boolean
   }
 }
 

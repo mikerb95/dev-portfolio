@@ -1,6 +1,7 @@
 import { defineMiddleware } from 'astro:middleware'
 import { getSession } from 'auth-astro/server'
 import { isAllowedLogin } from './lib/auth'
+import { serverEnv } from './lib/env'
 import { maybeChaos } from './lib/chaos'
 import { clientIp, resolveDeviceSessionId } from './lib/device-info'
 import { recordSession } from './lib/device-sessions'
@@ -23,6 +24,13 @@ import { demoAvailable, runInDemoContext } from './db'
 import { getPortalSession } from './lib/portal/session'
 import { isPortalPath, isPortalPublicPath } from './lib/portal/paths'
 import { PORTAL_DEMO_COOKIE, isPortalDemoAllowedMethod, verifyPortalDemoToken } from './lib/portal/demo'
+import {
+  PORTAL_RESPALDO_COOKIE,
+  SESION_RESPALDO,
+  rutaCubiertaPorRespaldo,
+  runInRespaldoContext,
+  verificarPaseRespaldo,
+} from './lib/portal/respaldo'
 import { delocalizePath, isLocalizedPrivateRequest, untranslatedLocalizedTarget } from './i18n/routing'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
@@ -371,11 +379,23 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isPrivate = isAdmin || isPrivateDeck || isPortal
 
   let portalDemoMode = false
+  let portalRespaldoMode = false
 
   if (isPortal && !isPortalPublicPath(pathname)) {
     // Sesión real PRIMERO, siempre contra la base real. Un pase de demo nunca
     // debe poder pisar ni disfrazarse de sesión legítima.
-    let portalSession = await getPortalSession(context)
+    //
+    // El try/catch NO es cosmético: con la cuota de Turso agotada, esta consulta
+    // LANZA en vez de devolver null, y sin capturarla el portal entero daría 500
+    // antes de llegar al modo respaldo de más abajo. "No hay sesión" y "no se
+    // puede saber si la hay" son cosas distintas, y solo la segunda justifica
+    // servir el snapshot.
+    let portalSession = null
+    try {
+      portalSession = await getPortalSession(context)
+    } catch {
+      // Base inalcanzable. Se decide abajo.
+    }
 
     if (!portalSession) {
       const demo = resolvePortalDemoPass(context, pathname, method)
@@ -383,9 +403,30 @@ export const onRequest = defineMiddleware(async (context, next) => {
       if (demo) {
         // La sesión de demo (creada en /api/portal/demo) vive en la base de
         // demo: hay que re-resolverla DENTRO de ese contexto para encontrarla.
-        portalSession = await runInDemoContext(() => getPortalSession(context))
-        portalDemoMode = true
+        // La de demo comparte cuota con la principal (es por organización), así
+        // que cuando una cae, la otra también.
+        try {
+          portalSession = await runInDemoContext(() => getPortalSession(context))
+          portalDemoMode = true
+        } catch {
+          // Igual que arriba: cae al respaldo.
+        }
       }
+    }
+
+    // Último recurso: el snapshot versionado. Solo para PÁGINAS y solo en GET
+    // (no hay nada que escribir contra un JSON), solo en las rutas que el
+    // snapshot sabe servir, y solo con un pase firmado que únicamente emite
+    // /api/portal/demo cuando ya comprobó que la base no responde.
+    if (
+      !portalSession &&
+      method === 'GET' &&
+      !pathname.startsWith('/api/') &&
+      rutaCubiertaPorRespaldo(canonicalPath) &&
+      verificarPaseRespaldo(context.cookies.get(PORTAL_RESPALDO_COOKIE)?.value, serverEnv('AUTH_SECRET'))
+    ) {
+      portalSession = SESION_RESPALDO as unknown as typeof portalSession
+      portalRespaldoMode = true
     }
 
     if (!portalSession) {
@@ -422,6 +463,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Las páginas la leen de locals; el middleware ya pagó la consulta.
     context.locals.portal = portalSession
     context.locals.portalDemo = portalDemoMode
+    context.locals.portalRespaldo = portalRespaldoMode
   }
 
   // El simulador de pago vive en /api/payments/*, FUERA del namespace del
@@ -516,7 +558,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // En demo (admin o portal), TODA lectura sale de la base ficticia: el
   // contexto se propaga por async/await hasta cualquier query que dispare el
   // render de la página o del endpoint.
-  const res = demoMode || portalDemoMode ? await runInDemoContext(() => next()) : await next()
+  // El contexto de respaldo envuelve al de demo, no al revés: si el portal se
+  // está sirviendo del snapshot, ninguna consulta debe salir hacia ninguna base.
+  const correr = () =>
+    demoMode || portalDemoMode ? runInDemoContext(() => next()) : next()
+  const res = portalRespaldoMode ? await runInRespaldoContext(correr) : await correr()
   const resHeaders = new Headers(res.headers)
 
   resHeaders.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')

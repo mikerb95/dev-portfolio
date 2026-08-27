@@ -1,6 +1,7 @@
 import { and, desc, eq, lt } from 'drizzle-orm'
 import { db } from '../../db'
 import { portalActivity } from '../../db/schema'
+import { enRespaldo, actividadRespaldo } from './respaldo'
 
 // Feed de actividad del portal: el registro de "qué ha pasado en mi proyecto".
 //
@@ -90,6 +91,11 @@ export async function clientActivity(
   clientId: number,
   opts: { projectId?: number | null; type?: ActivityType | null; cursor?: number | null; limit?: number } = {}
 ): Promise<ActivityPage> {
+  // Modo respaldo: la base no responde y este request se sirve del snapshot
+  // versionado. Se vuelve ANTES de consultar, así que no hay WHERE que
+  // filtrar ni clientId que pueda equivocarse. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return actividadRespaldo()
+
   const limit = Math.min(opts.limit ?? PAGE_SIZE, 50)
 
   const filters = [eq(portalActivity.clientId, clientId), eq(portalActivity.visibleToClient, true)]

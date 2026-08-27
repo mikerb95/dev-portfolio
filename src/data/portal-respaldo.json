@@ -1,0 +1,164 @@
+{
+  "_meta": {
+    "proposito": "Lo que sirve el portal cuando la base no responde. Calcado de scripts/seed-demo.mjs para que la demo enseñe lo mismo con base o sin ella.",
+    "fechas": "Los campos *Dias son DESPLAZAMIENTOS en días respecto a hoy, no fechas absolutas: negativo es pasado, positivo es futuro. Fijar fechas absolutas haría que la demo envejeciera y acabara mostrando todo vencido.",
+    "seguridad": "Datos ficticios, versionados y públicos. No hay nada aquí que no pueda leer cualquiera con acceso al repositorio."
+  },
+
+  "cliente": {
+    "nombre": "Cafetería Altiplano",
+    "empresa": "Altiplano SAS",
+    "datosFacturacion": { "NIT": "900.123.456-7", "Dirección": "Cra 45 #12-30, Bogotá" }
+  },
+
+  "proyectos": [
+    {
+      "id": 1,
+      "slug": "pedidos-altiplano",
+      "title": "Portal de pedidos Altiplano",
+      "description": "Tienda en línea con pagos y despacho por zonas.",
+      "status": "activo",
+      "techStack": "Astro, Turso, Tailwind, Wompi",
+      "previewUrl": "https://pedidos.altiplano.example",
+      "startDateDias": -120,
+      "endDateDias": null
+    }
+  ],
+
+  "hitos": [
+    {
+      "id": 1,
+      "projectId": 1,
+      "title": "Descubrimiento y alcance",
+      "description": "Entrevistas, requisitos y arquitectura del catálogo.",
+      "status": "completado",
+      "dueAtDias": -118,
+      "completedAtDias": -120,
+      "sortOrder": 0,
+      "createdAtDias": -120
+    },
+    {
+      "id": 2,
+      "projectId": 1,
+      "title": "Diseño de interfaz",
+      "description": "Sistema de diseño y pantallas del catálogo y checkout.",
+      "status": "completado",
+      "dueAtDias": -90,
+      "completedAtDias": -93,
+      "sortOrder": 1,
+      "createdAtDias": -120
+    },
+    {
+      "id": 3,
+      "projectId": 1,
+      "title": "Catálogo y checkout",
+      "description": "Desarrollo del núcleo transaccional y pagos.",
+      "status": "en_curso",
+      "dueAtDias": 15,
+      "completedAtDias": null,
+      "sortOrder": 2,
+      "createdAtDias": -120
+    },
+    {
+      "id": 4,
+      "projectId": 1,
+      "title": "Zona de despacho norte",
+      "description": "Ampliación de cobertura de entrega.",
+      "status": "pendiente",
+      "dueAtDias": 45,
+      "completedAtDias": null,
+      "sortOrder": 3,
+      "createdAtDias": -120
+    }
+  ],
+
+  "salud": {
+    "monitorCount": 1,
+    "uptimePct": 99.5,
+    "avgLatencyMs": 180,
+    "status": "up",
+    "openIncidents": 0,
+    "ultimoSondeoMinutos": 4
+  },
+
+  "facturas": [
+    {
+      "id": 1,
+      "projectId": 1,
+      "number": "INV-2026-101",
+      "status": "paid",
+      "currency": "COP",
+      "subtotalCents": 45000000,
+      "taxCents": 0,
+      "totalCents": 45000000,
+      "notes": "Anticipo del 50% del proyecto.",
+      "issuedAtDias": -60,
+      "dueAtDias": -45,
+      "paidAtDias": -50,
+      "items": [{ "description": "Anticipo de proyecto (50%)", "quantity": 1, "unitCents": 45000000 }]
+    },
+    {
+      "id": 2,
+      "projectId": 1,
+      "number": "INV-2026-102",
+      "status": "sent",
+      "currency": "COP",
+      "subtotalCents": 32000000,
+      "taxCents": 6080000,
+      "totalCents": 38080000,
+      "notes": "Segundo hito: catálogo y checkout.",
+      "issuedAtDias": -5,
+      "dueAtDias": 9,
+      "paidAtDias": null,
+      "items": [
+        { "description": "Desarrollo de catálogo", "quantity": 80, "unitCents": 300000 },
+        { "description": "Integración de pagos", "quantity": 20, "unitCents": 400000 }
+      ]
+    },
+    {
+      "id": 3,
+      "projectId": 1,
+      "number": "INV-2026-103",
+      "status": "overdue",
+      "currency": "COP",
+      "subtotalCents": 8000000,
+      "taxCents": 1520000,
+      "totalCents": 9520000,
+      "notes": "Horas de soporte adicional.",
+      "issuedAtDias": -40,
+      "dueAtDias": -12,
+      "paidAtDias": null,
+      "items": [{ "description": "Horas de soporte adicional", "quantity": 20, "unitCents": 400000 }]
+    }
+  ],
+
+  "actividad": [
+    {
+      "id": 1,
+      "projectId": 1,
+      "type": "invoice",
+      "title": "Factura INV-2026-102 emitida",
+      "detail": "Segundo hito: catálogo y checkout.",
+      "href": "/portal/facturas/2",
+      "haceDias": 5
+    },
+    {
+      "id": 2,
+      "projectId": 1,
+      "type": "milestone",
+      "title": "Hito completado: Diseño de interfaz",
+      "detail": "Sistema de diseño y pantallas del catálogo y checkout.",
+      "href": null,
+      "haceDias": 93
+    },
+    {
+      "id": 3,
+      "projectId": 1,
+      "type": "invoice",
+      "title": "Factura INV-2026-101 pagada",
+      "detail": "Anticipo del 50% del proyecto.",
+      "href": "/portal/facturas/1",
+      "haceDias": 50
+    }
+  ]
+}

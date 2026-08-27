@@ -16,7 +16,10 @@ interface Props {
 
 const { title, section } = Astro.props
 const { user, client, impersonatedBy } = Astro.locals.portal!
-const isDemo = Astro.locals.portalDemo === true
+const esRespaldo = Astro.locals.portalRespaldo === true
+// El aviso de demo se muestra también en modo respaldo: el visitante tiene que
+// saber que son datos ficticios, y con la base caída eso es MÁS cierto, no menos.
+const isDemo = Astro.locals.portalDemo === true || esRespaldo
 
 const unread = await unreadCount(user.id)
 
@@ -180,8 +183,9 @@ const initials = (user.name ?? user.email)
             Demo pública
           </span>
           <span class="text-[13px] text-ink-50">
-            Estás viendo datos ficticios de un cliente inventado. Puedes pagar la factura de ejemplo con la
-            pasarela simulada; el resto es solo lectura.
+            {esRespaldo
+              ? 'Estás viendo datos ficticios de un cliente inventado, servidos desde una copia versionada porque la base de datos no está disponible. Solo lectura.'
+              : 'Estás viendo datos ficticios de un cliente inventado. Puedes pagar la factura de ejemplo con la pasarela simulada; el resto es solo lectura.'}
           </span>
           <a href="/contact" class="text-[12px] text-cyan hover:underline ml-auto shrink-0">¿Quieres esto para tu proyecto? →</a>
         </div>

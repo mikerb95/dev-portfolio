@@ -12,6 +12,7 @@ import { and, count, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../../db'
 import { clientUsers, portalNotificationPrefs, portalNotifications } from '../../db/schema'
 import { sendNotificationEmail, SITE_URL } from '../email'
+import { enRespaldo } from './respaldo'
 
 export type NotificationType = 'invoice' | 'message' | 'milestone' | 'incident' | 'document' | 'system'
 
@@ -142,6 +143,10 @@ async function resolveRecipients(input: NotifyInput) {
 
 /** Número de notificaciones sin leer (badge de la campana). */
 export async function unreadCount(clientUserId: number): Promise<number> {
+  // Modo respaldo: lo consulta el LAYOUT del portal, así que si esto lanza no
+  // falla una tarjeta, falla la página entera. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return 0
+
   const [row] = await db
     .select({ n: count() })
     .from(portalNotifications)

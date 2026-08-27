@@ -13,6 +13,7 @@
 import { and, count, desc, eq, inArray, like, ne, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { clients, invoiceItems, invoices, payments, projects } from '../../db/schema'
+import { enRespaldo, facturasRespaldo, facturaRespaldo, resumenFacturasRespaldo } from './respaldo'
 
 export type Invoice = typeof invoices.$inferSelect
 export type InvoiceItem = typeof invoiceItems.$inferSelect
@@ -92,6 +93,11 @@ export type InvoiceSummary = {
 
 /** Resumen para las tarjetas del dashboard. */
 export async function clientInvoiceSummary(clientId: number, now = new Date()): Promise<InvoiceSummary> {
+  // Modo respaldo: la base no responde y este request se sirve del snapshot
+  // versionado. Se vuelve ANTES de consultar, así que no hay WHERE que
+  // filtrar ni clientId que pueda equivocarse. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return resumenFacturasRespaldo()
+
   const rows = await db
     .select({ status: invoices.status, totalCents: invoices.totalCents, currency: invoices.currency, paidAt: invoices.paidAt })
     .from(invoices)
@@ -112,6 +118,11 @@ export async function clientInvoiceSummary(clientId: number, now = new Date()): 
 
 /** Facturas visibles del cliente (nunca los borradores). */
 export async function clientInvoices(clientId: number) {
+  // Modo respaldo: la base no responde y este request se sirve del snapshot
+  // versionado. Se vuelve ANTES de consultar, así que no hay WHERE que
+  // filtrar ni clientId que pueda equivocarse. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return facturasRespaldo()
+
   return db
     .select({
       id: invoices.id,
@@ -136,6 +147,11 @@ export async function clientInvoices(clientId: number) {
  * "prohibido" ya confirma que ese id existe.
  */
 export async function clientInvoice(clientId: number, invoiceId: number) {
+  // Modo respaldo: la base no responde y este request se sirve del snapshot
+  // versionado. Se vuelve ANTES de consultar, así que no hay WHERE que
+  // filtrar ni clientId que pueda equivocarse. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return facturaRespaldo(invoiceId)
+
   const [invoice] = await db
     .select({
       id: invoices.id,

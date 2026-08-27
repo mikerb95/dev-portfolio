@@ -12,11 +12,17 @@
 import { and, avg, count, desc, eq, gte, inArray, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { monitorChecks, monitorIncidents, monitors, projectMilestones, projects } from '../../db/schema'
+import { enRespaldo, proyectosRespaldo, hitosRespaldo, saludRespaldo } from './respaldo'
 
 export type Milestone = typeof projectMilestones.$inferSelect
 
 /** Proyectos visibles del cliente, ordenados: los activos primero. */
 export async function clientProjects(clientId: number) {
+  // Modo respaldo: la base no responde y este request se sirve del snapshot
+  // versionado. Se vuelve ANTES de consultar, así que no hay WHERE que
+  // filtrar ni clientId que pueda equivocarse. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return proyectosRespaldo()
+
   const rows = await db
     .select({
       id: projects.id,
@@ -44,6 +50,11 @@ export async function clientProjects(clientId: number) {
  * los hitos de un proyecto ajeno devuelve vacío en vez de datos de otro.
  */
 export async function projectMilestonesFor(clientId: number, projectId: number): Promise<Milestone[]> {
+  // Modo respaldo: la base no responde y este request se sirve del snapshot
+  // versionado. Se vuelve ANTES de consultar, así que no hay WHERE que
+  // filtrar ni clientId que pueda equivocarse. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return hitosRespaldo()
+
   return db
     .select({
       id: projectMilestones.id,
@@ -109,6 +120,11 @@ const UPTIME_WINDOW_DAYS = 30
  * mostrar la tarjeta que inventar un 100% que nadie midió.
  */
 export async function projectHealth(clientId: number, projectId: number): Promise<ServiceHealth> {
+  // Modo respaldo: la base no responde y este request se sirve del snapshot
+  // versionado. Se vuelve ANTES de consultar, así que no hay WHERE que
+  // filtrar ni clientId que pueda equivocarse. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return saludRespaldo()
+
   const empty: ServiceHealth = {
     monitorCount: 0,
     uptimePct: null,

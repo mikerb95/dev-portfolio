@@ -12,6 +12,7 @@
 import { and, count, desc, eq, gt, inArray, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { clientUsers, portalMessageReads, portalMessages, portalThreads, projects } from '../../db/schema'
+import { enRespaldo } from './respaldo'
 
 export type Thread = typeof portalThreads.$inferSelect
 export type Message = typeof portalMessages.$inferSelect
@@ -115,6 +116,11 @@ export async function clientThreads(clientId: number, clientUserId?: number) {
 
 /** Nº de hilos con algo sin leer (badge del dashboard). */
 export async function unreadThreadCount(clientId: number, clientUserId: number): Promise<number> {
+  // Modo respaldo: la base no responde y este request se sirve del snapshot
+  // versionado. Se vuelve ANTES de consultar, así que no hay WHERE que
+  // filtrar ni clientId que pueda equivocarse. Ver lib/portal/respaldo.ts.
+  if (enRespaldo()) return 0
+
   const threads = await clientThreads(clientId, clientUserId)
   return threads.filter((t) => t.unread > 0).length
 }
