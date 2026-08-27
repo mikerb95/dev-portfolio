@@ -1,0 +1,3015 @@
+{
+  "project": {
+    "name": "CodeByMike - Portafolio + Panel de Control + Portal de Clientes + Laboratorio de Ingeniería",
+    "repo": "https://github.com/mikerb95/dev-portfolio.git",
+    "sitio": "https://codebymike.tech",
+    "stack_summary": "Astro 7.1 (SSR, output: server) + TypeScript 5.9 + Tailwind 4.2 · Turso/libSQL con Drizzle ORM 0.45 · Auth.js (@auth/core 0.37) con GitHub OAuth + WebAuthn · desplegado en Vercel (@astrojs/vercel 11). Sin frameworks de frontend adicionales: sólo lenis (scroll), gsap (animaciones) y mermaid (diagramas). Monitoreo, alertas, SLOs y observabilidad de seguridad son desarrollo propio.",
+    "version": "0.0.1",
+    "node": ">=22.12.0",
+    "source": "package.json, README.md, CLAUDE.md, astro.config.mjs",
+    "generado_en": "2026-08-26"
+  },
+  "nodes": [
+    {
+      "id": "vercel-edge",
+      "label": "Vercel (edge + Fluid Compute)",
+      "type": "infra",
+      "layer": 0,
+      "tech": "@astrojs/vercel ^11.0.3 (adapter, output: server)",
+      "source": "astro.config.mjs:8, vercel.json, .vercel/project.json"
+    },
+    {
+      "id": "cron-externo",
+      "label": "cron-job.org (planificador externo)",
+      "type": "external",
+      "layer": 0,
+      "tech": null,
+      "source": "CLAUDE.md (arquitectura), src/pages/api/cron/ (Bearer CRON_SECRET)"
+    },
+    {
+      "id": "middleware",
+      "label": "Middleware (SIEM + rate limit + gates de auth + i18n)",
+      "type": "service",
+      "layer": 1,
+      "tech": "astro:middleware (Astro ^7.1.3)",
+      "source": "src/middleware.ts"
+    },
+    {
+      "id": "web-publico",
+      "label": "Sitio público (portafolio, /status, /tools, /notes, /docs, /lab)",
+      "type": "frontend",
+      "layer": 2,
+      "tech": "Astro ^7.1.3 SSR + Tailwind ^4.2.4",
+      "source": "src/pages/*.astro, src/pages/docs/, src/pages/lab/"
+    },
+    {
+      "id": "admin-panel",
+      "label": "Panel de control /admin",
+      "type": "frontend",
+      "layer": 2,
+      "tech": "Astro ^7.1.3 SSR",
+      "source": "src/pages/admin/"
+    },
+    {
+      "id": "portal-clientes",
+      "label": "Portal de clientes /portal",
+      "type": "frontend",
+      "layer": 2,
+      "tech": "Astro ^7.1.3 SSR",
+      "source": "src/pages/portal/"
+    },
+    {
+      "id": "demo-publica",
+      "label": "Demo pública read-only (/demo, /portal demo)",
+      "type": "frontend",
+      "layer": 2,
+      "tech": "Astro ^7.1.3 SSR + pase HMAC",
+      "source": "src/lib/demo.ts, src/lib/portal/demo.ts, src/pages/api/portal/demo.ts"
+    },
+    {
+      "id": "api-publica",
+      "label": "API pública (/api/health, /api/status, /api/contact, /api/c, /api/mis-pagos)",
+      "type": "api",
+      "layer": 3,
+      "tech": "Astro API routes",
+      "source": "src/pages/api/"
+    },
+    {
+      "id": "api-admin",
+      "label": "API admin (/api/admin/*)",
+      "type": "api",
+      "layer": 3,
+      "tech": "Astro API routes + sesión admin",
+      "source": "src/pages/api/admin/"
+    },
+    {
+      "id": "api-portal",
+      "label": "API portal (/api/portal/*)",
+      "type": "api",
+      "layer": 3,
+      "tech": "Astro API routes + portal_session",
+      "source": "src/pages/api/portal/"
+    },
+    {
+      "id": "api-cron",
+      "label": "API de crons (/api/cron/*)",
+      "type": "api",
+      "layer": 3,
+      "tech": "Astro API routes + Bearer CRON_SECRET (timingSafeEqual)",
+      "source": "src/pages/api/cron/, vercel.json"
+    },
+    {
+      "id": "auth-admin",
+      "label": "Auth admin (Auth.js + GitHub OAuth + allowlist)",
+      "type": "auth",
+      "layer": 4,
+      "tech": "@auth/core ^0.37.4, auth-astro ^4.2.0",
+      "source": "auth.config.ts, src/lib/auth.ts"
+    },
+    {
+      "id": "auth-webauthn",
+      "label": "WebAuthn / passkeys (puerta alternativa del admin)",
+      "type": "auth",
+      "layer": 4,
+      "tech": "@simplewebauthn/server ^13.3.2, @simplewebauthn/browser ^13.3.0",
+      "source": "src/pages/api/admin/webauthn/, src/pages/api/auth/webauthn/"
+    },
+    {
+      "id": "auth-portal",
+      "label": "Auth portal de clientes (email+password scrypt)",
+      "type": "auth",
+      "layer": 4,
+      "tech": "node:crypto scrypt, cookie portal_session",
+      "source": "src/lib/portal/session.ts, src/lib/portal/passwords.ts, src/lib/portal/login.ts"
+    },
+    {
+      "id": "lib-security",
+      "label": "Micro-SIEM (clasificador, rate limit durable, blocklist, eventos)",
+      "type": "service",
+      "layer": 4,
+      "tech": "TypeScript propio",
+      "source": "src/lib/security/"
+    },
+    {
+      "id": "lib-payments",
+      "label": "Motor de pagos idempotente + máquina de estados",
+      "type": "service",
+      "layer": 4,
+      "tech": "TypeScript propio",
+      "source": "src/lib/payments.ts, src/lib/payments-state.ts"
+    },
+    {
+      "id": "lib-portal",
+      "label": "Lógica del portal (facturas, hilos, actividad, documentos)",
+      "type": "service",
+      "layer": 4,
+      "tech": "TypeScript propio",
+      "source": "src/lib/portal/"
+    },
+    {
+      "id": "lib-present",
+      "label": "Presentaciones sincronizadas (decks, PIN, sesión efímera)",
+      "type": "service",
+      "layer": 4,
+      "tech": "TypeScript propio + reveal.js ^6.0.1",
+      "source": "src/lib/present/"
+    },
+    {
+      "id": "lib-capacitacion",
+      "label": "Capacitación (banco de recursos, códigos de grupo, pases)",
+      "type": "service",
+      "layer": 4,
+      "tech": "TypeScript propio",
+      "source": "src/lib/capacitacion/"
+    },
+    {
+      "id": "lib-notify",
+      "label": "Notificaciones opcionales (ntfy + Resend)",
+      "type": "service",
+      "layer": 4,
+      "tech": "TypeScript propio, fail-open no-op",
+      "source": "src/lib/notify.ts"
+    },
+    {
+      "id": "lib-diagramas",
+      "label": "Motores de layout propios (BPMN/UML) + Mermaid",
+      "type": "service",
+      "layer": 4,
+      "tech": "TypeScript propio; mermaid ^11.16.0",
+      "source": "src/lib/bpmn-layout.ts, src/lib/uml-*.ts, src/data/"
+    },
+    {
+      "id": "turso-main",
+      "label": "Turso / libSQL - base principal",
+      "type": "database",
+      "layer": 5,
+      "tech": "@libsql/client ^0.17.3 + drizzle-orm ^0.45.2",
+      "source": "src/db/index.ts, src/db/schema.ts (61 tablas), drizzle/ (29 migraciones)"
+    },
+    {
+      "id": "turso-demo",
+      "label": "Turso / libSQL - base de la demo (instancia aparte)",
+      "type": "database",
+      "layer": 5,
+      "tech": "@libsql/client ^0.17.3 + drizzle-orm ^0.45.2",
+      "source": "src/db/index.ts (TURSO_DEMO_URL, AsyncLocalStorage)"
+    },
+    {
+      "id": "redis-present",
+      "label": "Bus efímero de presentaciones (Upstash Redis, TTL 6 h)",
+      "type": "queue",
+      "layer": 5,
+      "tech": "Upstash Redis REST",
+      "source": "src/lib/present/store.ts (PRESENT_BUS_REST_URL)"
+    },
+    {
+      "id": "vercel-blob",
+      "label": "Vercel Blob (backups, decks, documentos del portal)",
+      "type": "storage",
+      "layer": 5,
+      "tech": "@vercel/blob ^2.4.0",
+      "source": "src/lib/backup.ts, src/lib/present/decks.ts, src/lib/portal/documents.ts"
+    },
+    {
+      "id": "github-oauth",
+      "label": "GitHub OAuth + API",
+      "type": "external",
+      "layer": 6,
+      "tech": null,
+      "source": "auth.config.ts, src/pages/api/github/"
+    },
+    {
+      "id": "wompi",
+      "label": "Wompi (pasarela de pago)",
+      "type": "external",
+      "layer": 6,
+      "tech": null,
+      "source": "src/pages/api/payments/checkout.ts, src/pages/api/payments/webhook.ts"
+    },
+    {
+      "id": "resend",
+      "label": "Resend (correo transaccional)",
+      "type": "external",
+      "layer": 6,
+      "tech": null,
+      "source": "src/lib/notify.ts (https://api.resend.com)"
+    },
+    {
+      "id": "ntfy",
+      "label": "ntfy.sh (push al teléfono)",
+      "type": "external",
+      "layer": 6,
+      "tech": null,
+      "source": "src/lib/notify.ts (https://ntfy.sh)"
+    }
+  ],
+  "edges": [
+    {
+      "from": "vercel-edge",
+      "to": "middleware",
+      "protocol": "http",
+      "label": "Todo request entra por el middleware",
+      "source": "astro.config.mjs, src/middleware.ts"
+    },
+    {
+      "from": "cron-externo",
+      "to": "api-cron",
+      "protocol": "http",
+      "label": "GET + Bearer CRON_SECRET",
+      "source": "src/pages/api/cron/, CLAUDE.md"
+    },
+    {
+      "from": "middleware",
+      "to": "lib-security",
+      "protocol": "sdk",
+      "label": "Clasifica, limita y bloquea (fail-open)",
+      "source": "src/middleware.ts:7-9"
+    },
+    {
+      "from": "middleware",
+      "to": "auth-admin",
+      "protocol": "sdk",
+      "label": "getSession + allowlist revalidada por request",
+      "source": "src/middleware.ts:2-3"
+    },
+    {
+      "from": "middleware",
+      "to": "auth-portal",
+      "protocol": "sdk",
+      "label": "getPortalSession para /portal",
+      "source": "src/middleware.ts:22"
+    },
+    {
+      "from": "middleware",
+      "to": "demo-publica",
+      "protocol": "sdk",
+      "label": "Verifica el pase HMAC y fuerza contexto demo",
+      "source": "src/middleware.ts:20-21,24"
+    },
+    {
+      "from": "middleware",
+      "to": "turso-demo",
+      "protocol": "sql",
+      "label": "runInDemoContext redirige las lecturas",
+      "source": "src/db/index.ts (runInDemoContext)"
+    },
+    {
+      "from": "middleware",
+      "to": "web-publico",
+      "protocol": "http",
+      "label": "Sirve la ruta pública ya clasificada",
+      "source": "src/middleware.ts"
+    },
+    {
+      "from": "middleware",
+      "to": "admin-panel",
+      "protocol": "http",
+      "label": "Sirve /admin solo con sesión válida",
+      "source": "src/middleware.ts (matcher isAdmin)"
+    },
+    {
+      "from": "middleware",
+      "to": "portal-clientes",
+      "protocol": "http",
+      "label": "Sirve /portal solo con portal_session",
+      "source": "src/lib/portal/paths.ts"
+    },
+    {
+      "from": "middleware",
+      "to": "lib-present",
+      "protocol": "sdk",
+      "label": "presentBusOrigin para la CSP del bus",
+      "source": "src/middleware.ts:19"
+    },
+    {
+      "from": "web-publico",
+      "to": "api-publica",
+      "protocol": "http",
+      "label": "Fetch desde el navegador (status, health, contacto)",
+      "source": "src/pages/api/"
+    },
+    {
+      "from": "admin-panel",
+      "to": "api-admin",
+      "protocol": "http",
+      "label": "Operaciones del panel",
+      "source": "src/pages/api/admin/"
+    },
+    {
+      "from": "portal-clientes",
+      "to": "api-portal",
+      "protocol": "http",
+      "label": "Facturas, mensajes, documentos, live digest",
+      "source": "src/pages/api/portal/"
+    },
+    {
+      "from": "api-publica",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "Drizzle sobre libSQL",
+      "source": "src/db/index.ts"
+    },
+    {
+      "from": "api-admin",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "Drizzle sobre libSQL",
+      "source": "src/db/index.ts"
+    },
+    {
+      "from": "api-portal",
+      "to": "lib-portal",
+      "protocol": "sdk",
+      "label": "clientId siempre desde la sesión",
+      "source": "src/lib/portal/session.ts"
+    },
+    {
+      "from": "lib-portal",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "WHERE con clientId de la sesión",
+      "source": "src/lib/portal/, tests/portal-isolation.test.ts"
+    },
+    {
+      "from": "api-portal",
+      "to": "auth-portal",
+      "protocol": "sdk",
+      "label": "requirePortalSession",
+      "source": "src/lib/portal/session.ts"
+    },
+    {
+      "from": "auth-portal",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "portal_sessions, client_users",
+      "source": "src/db/schema.ts"
+    },
+    {
+      "from": "auth-admin",
+      "to": "github-oauth",
+      "protocol": "http",
+      "label": "OAuth authorization code",
+      "source": "auth.config.ts"
+    },
+    {
+      "from": "auth-admin",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "admin_sessions",
+      "source": "src/db/schema.ts"
+    },
+    {
+      "from": "auth-webauthn",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "webauthn_credentials",
+      "source": "src/db/schema.ts"
+    },
+    {
+      "from": "api-publica",
+      "to": "lib-payments",
+      "protocol": "sdk",
+      "label": "checkout idempotente",
+      "source": "src/pages/api/payments/checkout.ts"
+    },
+    {
+      "from": "lib-payments",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "payments, payment_events (UNIQUE + versión)",
+      "source": "src/lib/payments.ts"
+    },
+    {
+      "from": "lib-payments",
+      "to": "wompi",
+      "protocol": "http",
+      "label": "Checkout y webhook firmado",
+      "source": "src/pages/api/payments/webhook.ts"
+    },
+    {
+      "from": "lib-security",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "security_events, blocked_ips, rate_limit_buckets",
+      "source": "src/lib/security/"
+    },
+    {
+      "from": "api-cron",
+      "to": "lib-notify",
+      "protocol": "sdk",
+      "label": "Alertas tras los checks y rollups",
+      "source": "src/lib/notify.ts"
+    },
+    {
+      "from": "lib-notify",
+      "to": "ntfy",
+      "protocol": "http",
+      "label": "POST push (no-op si falta NTFY_TOPIC)",
+      "source": "src/lib/notify.ts"
+    },
+    {
+      "from": "lib-notify",
+      "to": "resend",
+      "protocol": "http",
+      "label": "POST correo (no-op si falta RESEND_API_KEY)",
+      "source": "src/lib/notify.ts"
+    },
+    {
+      "from": "api-cron",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "monitor_checks, monitor_daily, rollups",
+      "source": "src/pages/api/cron/"
+    },
+    {
+      "from": "lib-present",
+      "to": "redis-present",
+      "protocol": "http",
+      "label": "Snapshot y bus de slides (TTL 6 h)",
+      "source": "src/lib/present/store.ts"
+    },
+    {
+      "from": "lib-present",
+      "to": "vercel-blob",
+      "protocol": "sdk",
+      "label": "Assets de los decks",
+      "source": "src/lib/present/decks.ts"
+    },
+    {
+      "from": "lib-portal",
+      "to": "vercel-blob",
+      "protocol": "sdk",
+      "label": "Documentos del portal",
+      "source": "src/lib/portal/documents.ts"
+    },
+    {
+      "from": "api-admin",
+      "to": "vercel-blob",
+      "protocol": "sdk",
+      "label": "Backups cifrados",
+      "source": "src/lib/backup.ts"
+    },
+    {
+      "from": "web-publico",
+      "to": "lib-diagramas",
+      "protocol": "sdk",
+      "label": "SVG de BPMN/UML generado en el servidor",
+      "source": "src/lib/bpmn-layout.ts, src/lib/uml-*.ts"
+    },
+    {
+      "from": "api-publica",
+      "to": "lib-capacitacion",
+      "protocol": "sdk",
+      "label": "Canje de código y pase firmado",
+      "source": "src/lib/capacitacion/"
+    },
+    {
+      "from": "lib-capacitacion",
+      "to": "turso-main",
+      "protocol": "sql",
+      "label": "training_* (programas, recursos, códigos)",
+      "source": "src/db/schema.ts"
+    }
+  ],
+  "tests": {
+    "unit": {
+      "framework": "Vitest ^4.1.9 (cobertura con @vitest/coverage-v8 ^4.1.9)",
+      "source": "package.json, vitest.config.ts",
+      "command_used": "npm run test:coverage  (= vitest run --coverage)",
+      "junit_command": "npx vitest run --reporter=junit --outputFile=informes/tests-junit.xml",
+      "total_tests": 1200,
+      "total_failures": 0,
+      "total_files": 70,
+      "duration_seconds": 35.124,
+      "levels": {
+        "unitarias": {
+          "pruebas": 1067,
+          "archivos": 60,
+          "segundos": 10.134
+        },
+        "integracion": {
+          "pruebas": 133,
+          "archivos": 10,
+          "segundos": 24.99
+        },
+        "_nota": "Clasificación del propio repo: 'integracion' = abre una base libSQL real en archivo temporal.",
+        "_source": "src/data/ejecucion-pruebas.json (generado por scripts/report-tests.mjs)"
+      },
+      "results_source": "informes/tests-junit.xml (capturado 2026-08-26T15:40:43Z) + src/data/ejecucion-pruebas.json",
+      "coverage": {
+        "measured_at": "Ejecutado en esta sesión (2026-08-26); reemplaza el coverage/ previo del 20 ago.",
+        "source": "coverage/coverage-summary.json",
+        "lines_pct": 68.32,
+        "lines": "3110/4552",
+        "statements_pct": 67.86,
+        "statements": "3755/5533",
+        "branches_pct": 64.08,
+        "branches": "2452/3826",
+        "functions_pct": 66.11,
+        "functions": "765/1157",
+        "by_module_lines_pct": {
+          "src/lib": {
+            "lines_covered": 2041,
+            "lines_total": 2621,
+            "lines_pct": 77.87
+          },
+          "src/lib/capacitacion": {
+            "lines_covered": 165,
+            "lines_total": 212,
+            "lines_pct": 77.83
+          },
+          "src/lib/fallback": {
+            "lines_covered": 29,
+            "lines_total": 30,
+            "lines_pct": 96.67
+          },
+          "src/lib/lab": {
+            "lines_covered": 99,
+            "lines_total": 117,
+            "lines_pct": 84.62
+          },
+          "src/lib/portal": {
+            "lines_covered": 214,
+            "lines_total": 613,
+            "lines_pct": 34.91
+          },
+          "src/lib/present": {
+            "lines_covered": 342,
+            "lines_total": 612,
+            "lines_pct": 55.88
+          },
+          "src/lib/security": {
+            "lines_covered": 220,
+            "lines_total": 347,
+            "lines_pct": 63.4
+          }
+        },
+        "_nota_alcance": "v8 instrumenta solo src/lib/** (lo que importan los tests). Las páginas .astro y src/pages/api/** NO entran en el denominador: su verificación es e2e, no unitaria."
+      },
+      "tests_by_file": {
+        "tests/bpmn.test.ts": {
+          "tests": 83,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.113
+        },
+        "tests/capacitacion.test.ts": {
+          "tests": 35,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.056
+        },
+        "tests/chaos.test.ts": {
+          "tests": 12,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.012
+        },
+        "tests/clients-validate.test.ts": {
+          "tests": 14,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.02
+        },
+        "tests/cobros.test.ts": {
+          "tests": 22,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.098
+        },
+        "tests/crons.test.ts": {
+          "tests": 29,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.018
+        },
+        "tests/crypto.test.ts": {
+          "tests": 8,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.022
+        },
+        "tests/db-target.test.ts": {
+          "tests": 5,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.012
+        },
+        "tests/demo.test.ts": {
+          "tests": 12,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.028
+        },
+        "tests/device-info.test.ts": {
+          "tests": 10,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.05
+        },
+        "tests/diagnostics.test.ts": {
+          "tests": 37,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.136
+        },
+        "tests/domains.test.ts": {
+          "tests": 13,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.091
+        },
+        "tests/fallback.test.ts": {
+          "tests": 19,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.143
+        },
+        "tests/findings.test.ts": {
+          "tests": 19,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.028
+        },
+        "tests/gobernanza.test.ts": {
+          "tests": 9,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.017
+        },
+        "tests/i18n-bilingual.test.ts": {
+          "tests": 10,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.019
+        },
+        "tests/i18n-dictionary.test.ts": {
+          "tests": 4,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.034
+        },
+        "tests/i18n-localize.test.ts": {
+          "tests": 11,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.017
+        },
+        "tests/i18n-routing-guards.test.ts": {
+          "tests": 141,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.056
+        },
+        "tests/i18n-routing.test.ts": {
+          "tests": 56,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.055
+        },
+        "tests/indexnow.test.ts": {
+          "tests": 8,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.071
+        },
+        "tests/mis-pagos.test.ts": {
+          "tests": 7,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.024
+        },
+        "tests/money.test.ts": {
+          "tests": 13,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.058
+        },
+        "tests/monitor-rollup.test.ts": {
+          "tests": 15,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.027
+        },
+        "tests/monitors.test.ts": {
+          "tests": 8,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.1
+        },
+        "tests/mutation.test.ts": {
+          "tests": 7,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.013
+        },
+        "tests/normalization.test.ts": {
+          "tests": 15,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.035
+        },
+        "tests/notify.test.ts": {
+          "tests": 10,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.069
+        },
+        "tests/phone.test.ts": {
+          "tests": 14,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.026
+        },
+        "tests/pipeline-live.test.ts": {
+          "tests": 11,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.018
+        },
+        "tests/pnl.test.ts": {
+          "tests": 9,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.034
+        },
+        "tests/portal-demo.test.ts": {
+          "tests": 11,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.019
+        },
+        "tests/portal-invoices.test.ts": {
+          "tests": 17,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.051
+        },
+        "tests/portal-passwords.test.ts": {
+          "tests": 14,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 1.828
+        },
+        "tests/portal-paths.test.ts": {
+          "tests": 11,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.019
+        },
+        "tests/present-assets.test.ts": {
+          "tests": 17,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.027
+        },
+        "tests/present-deck-parse.test.ts": {
+          "tests": 24,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.049
+        },
+        "tests/present-pin.test.ts": {
+          "tests": 15,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.313
+        },
+        "tests/present-state.test.ts": {
+          "tests": 15,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.023
+        },
+        "tests/present-sync.test.ts": {
+          "tests": 16,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.098
+        },
+        "tests/red.test.ts": {
+          "tests": 12,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.074
+        },
+        "tests/security-anomaly.test.ts": {
+          "tests": 13,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.022
+        },
+        "tests/security-autoblock.test.ts": {
+          "tests": 14,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.021
+        },
+        "tests/security-blocklist.test.ts": {
+          "tests": 7,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.011
+        },
+        "tests/security-classify.test.ts": {
+          "tests": 49,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.03
+        },
+        "tests/security-csp-report.test.ts": {
+          "tests": 6,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.014
+        },
+        "tests/security-honeypot.test.ts": {
+          "tests": 7,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 5.629
+        },
+        "tests/security-ratelimit.test.ts": {
+          "tests": 8,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.009
+        },
+        "tests/security-redact.test.ts": {
+          "tests": 9,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.019
+        },
+        "tests/security-rollup.test.ts": {
+          "tests": 6,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.009
+        },
+        "tests/sena-ep.test.ts": {
+          "tests": 7,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.019
+        },
+        "tests/skills.test.ts": {
+          "tests": 31,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.051
+        },
+        "tests/slo.test.ts": {
+          "tests": 11,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.024
+        },
+        "tests/uml-activity.test.ts": {
+          "tests": 19,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.046
+        },
+        "tests/uml-communication.test.ts": {
+          "tests": 25,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.098
+        },
+        "tests/uml-component.test.ts": {
+          "tests": 5,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.039
+        },
+        "tests/uml-deployment.test.ts": {
+          "tests": 5,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.038
+        },
+        "tests/vault.test.ts": {
+          "tests": 10,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.022
+        },
+        "tests/vitals.test.ts": {
+          "tests": 9,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.014
+        },
+        "tests/vyv.test.ts": {
+          "tests": 8,
+          "failures": 0,
+          "skipped": 0,
+          "seconds": 0.019
+        }
+      }
+    },
+    "integration": {
+      "vitest_integration": {
+        "definicion": "Suite Vitest que abre una base libSQL REAL en archivo temporal (nunca :memory:) con el esquema de drizzle/ aplicado, y mockea src/db para apuntarla ahí.",
+        "total_tests": 133,
+        "total_files": 10,
+        "duration_seconds": 24.99,
+        "usa_testcontainers": false,
+        "motor": "libSQL en archivo temporal (tmpdir()); modo alternativo con sqld en Docker para e2e (compose.yaml)",
+        "source": "tests/, src/data/ejecucion-pruebas.json, CLAUDE.md (sección Tests)",
+        "cases": [
+          {
+            "file": "tests/portal-isolation.test.ts",
+            "tests": 26,
+            "seconds": 12.364,
+            "nodes": [
+              "api-portal",
+              "lib-portal",
+              "auth-portal",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal (tmpdir), esquema aplicado desde drizzle/",
+            "testcontainers": false,
+            "valida_auth": true,
+            "que_valida": "Que ningún WHERE del portal se olvide del clientId de la sesión: un cliente no alcanza datos de otro ni conociendo el id. API + BD + auth juntos.",
+            "covered_edges": [
+              "api-portal->lib-portal",
+              "lib-portal->turso-main",
+              "api-portal->auth-portal",
+              "auth-portal->turso-main"
+            ]
+          },
+          {
+            "file": "tests/payments.test.ts",
+            "tests": 23,
+            "seconds": 0.538,
+            "nodes": [
+              "lib-payments",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal (no :memory:, las transacciones abren otra conexión)",
+            "testcontainers": false,
+            "valida_auth": false,
+            "que_valida": "Idempotencia real: UNIQUE de la clave, UPDATE con versión y transacciones concurrentes del motor de pagos.",
+            "covered_edges": [
+              "lib-payments->turso-main"
+            ]
+          },
+          {
+            "file": "tests/cobros-db.test.ts",
+            "tests": 21,
+            "seconds": 2.297,
+            "nodes": [
+              "api-publica",
+              "lib-payments",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal",
+            "testcontainers": false,
+            "valida_auth": false,
+            "que_valida": "UNIQUE de short_code, join con clients y máquina de estados del cobro de campo.",
+            "covered_edges": [
+              "api-publica->lib-payments",
+              "lib-payments->turso-main"
+            ]
+          },
+          {
+            "file": "tests/portal-live.test.ts",
+            "tests": 10,
+            "seconds": 2.93,
+            "nodes": [
+              "api-portal",
+              "lib-portal",
+              "auth-portal",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal",
+            "testcontainers": false,
+            "valida_auth": true,
+            "que_valida": "El digest en vivo del portal: ningún WHERE pierde el clientId y un projectId ajeno no cuela.",
+            "covered_edges": [
+              "api-portal->lib-portal",
+              "lib-portal->turso-main",
+              "api-portal->auth-portal"
+            ]
+          },
+          {
+            "file": "tests/portal-activity.test.ts",
+            "tests": 16,
+            "seconds": 2.506,
+            "nodes": [
+              "api-portal",
+              "lib-portal",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal",
+            "testcontainers": false,
+            "valida_auth": true,
+            "que_valida": "Feed portal_activity: el WHERE lleva clientId y el cursor no repite ni salta filas.",
+            "covered_edges": [
+              "api-portal->lib-portal",
+              "lib-portal->turso-main"
+            ]
+          },
+          {
+            "file": "tests/portal-health.test.ts",
+            "tests": 8,
+            "seconds": 0.144,
+            "nodes": [
+              "lib-portal",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal",
+            "testcontainers": false,
+            "valida_auth": false,
+            "que_valida": "Que el chequeo de salud DETECTA un esquema roto (no se puede probar con un doble).",
+            "covered_edges": [
+              "lib-portal->turso-main"
+            ]
+          },
+          {
+            "file": "tests/security-blocklist-db.test.ts",
+            "tests": 3,
+            "seconds": 0.141,
+            "nodes": [
+              "lib-security",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal",
+            "testcontainers": false,
+            "valida_auth": false,
+            "que_valida": "UNIQUE de blocked_ips y el onConflictDoUpdate del escalado de bloqueo.",
+            "covered_edges": [
+              "lib-security->turso-main"
+            ]
+          },
+          {
+            "file": "tests/latency.test.ts",
+            "tests": 9,
+            "seconds": 2.143,
+            "nodes": [
+              "api-publica",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal",
+            "testcontainers": false,
+            "valida_auth": false,
+            "que_valida": "El SQL que compone Drizzle de verdad (UNION ALL, LIMIT por rama) para /api/status/latency.",
+            "covered_edges": [
+              "api-publica->turso-main"
+            ]
+          },
+          {
+            "file": "tests/contracts.test.ts",
+            "tests": 5,
+            "seconds": 1.175,
+            "nodes": [
+              "api-publica",
+              "api-admin",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal",
+            "testcontainers": false,
+            "valida_auth": false,
+            "que_valida": "Contrato (shape) de /api/health, /api/payments/checkout, /api/status/latency y /api/admin/lab/slo. Pact liviano.",
+            "covered_edges": [
+              "api-publica->turso-main",
+              "api-admin->turso-main"
+            ]
+          },
+          {
+            "file": "tests/fingerprint.test.ts",
+            "tests": 12,
+            "seconds": 0.753,
+            "nodes": [
+              "api-publica",
+              "turso-main"
+            ],
+            "db": "libSQL real en archivo temporal",
+            "testcontainers": false,
+            "valida_auth": false,
+            "que_valida": "Salas efímeras del lab: join, revisitas y sweep con cascade/returning reales.",
+            "covered_edges": [
+              "api-publica->turso-main"
+            ]
+          }
+        ]
+      },
+      "e2e_playwright": {
+        "framework": "@playwright/test ^1.61.1 (chromium)",
+        "total_tests": 47,
+        "tests_by_file": {
+          "e2e/public.spec.ts": 12,
+          "e2e/portal.spec.ts": 11,
+          "e2e/demo.spec.ts": 10,
+          "e2e/auth.spec.ts": 5,
+          "e2e/payments.spec.ts": 5,
+          "e2e/contact.spec.ts": 4
+        },
+        "conteo_source": "npx playwright test --list (autoritativo). public.spec.ts genera 8 casos en un bucle parametrizado, por eso un grep ingenuo cuenta 40.",
+        "command": "npm run test:e2e   (npm run test:e2e:server para sqld sobre HTTP/hrana)",
+        "db": "Dos bases libSQL desechables en .e2e/, sembradas por webServer (scripts/seed-e2e.mjs). Nunca Turso.",
+        "valida_auth": true,
+        "nodes": [
+          "middleware",
+          "web-publico",
+          "portal-clientes",
+          "demo-publica",
+          "admin-panel",
+          "api-publica",
+          "api-portal",
+          "auth-portal",
+          "auth-admin",
+          "lib-payments",
+          "turso-main",
+          "turso-demo"
+        ],
+        "source": "playwright.config.ts, e2e/",
+        "resultado_ultima_corrida": {
+          "ejecutado_en": "Esta sesión (2026-08-26), modo file, servidor astro dev en :4331",
+          "passed": 44,
+          "failed": 3,
+          "total": 47,
+          "duracion": "1.8m",
+          "fallos": [
+            "e2e/auth.spec.ts:7 /admin sin sesión redirige al login",
+            "e2e/auth.spec.ts:13 las subpáginas del panel también están cerradas",
+            "e2e/auth.spec.ts:20 las APIs del panel no responden a anónimos"
+          ],
+          "diagnostico": "Los 3 fallos son timeouts de 30 s en las PRIMERAS peticiones a /admin, no fallos del gate. Re-ejecutado e2e/auth.spec.ts en aislamiento con timeout de 90 s: 5/5 PASA en 17.2 s. Causa: compilación en frío del panel admin en astro dev bajo 4 workers en paralelo.",
+          "veredicto": "Suite verde funcionalmente; inestabilidad de arranque en frío, no defecto del producto."
+        }
+      },
+      "covered_edges": [
+        "api-admin->turso-main",
+        "api-portal->auth-portal",
+        "api-portal->lib-portal",
+        "api-publica->lib-payments",
+        "api-publica->turso-main",
+        "auth-portal->turso-main",
+        "lib-payments->turso-main",
+        "lib-portal->turso-main",
+        "lib-security->turso-main"
+      ],
+      "uncovered_edges": [
+        "admin-panel->api-admin",
+        "api-admin->vercel-blob",
+        "api-cron->lib-notify",
+        "api-cron->turso-main",
+        "api-publica->lib-capacitacion",
+        "auth-admin->github-oauth",
+        "auth-admin->turso-main",
+        "auth-webauthn->turso-main",
+        "cron-externo->api-cron",
+        "lib-capacitacion->turso-main",
+        "lib-notify->ntfy",
+        "lib-notify->resend",
+        "lib-payments->wompi",
+        "lib-portal->vercel-blob",
+        "lib-present->redis-present",
+        "lib-present->vercel-blob",
+        "middleware->admin-panel",
+        "middleware->auth-admin",
+        "middleware->auth-portal",
+        "middleware->demo-publica",
+        "middleware->lib-present",
+        "middleware->lib-security",
+        "middleware->portal-clientes",
+        "middleware->turso-demo",
+        "middleware->web-publico",
+        "portal-clientes->api-portal",
+        "vercel-edge->middleware",
+        "web-publico->api-publica",
+        "web-publico->lib-diagramas"
+      ]
+    },
+    "load": {
+      "tool": "k6",
+      "script": "lab/k6/carga.js",
+      "tipo": "carga",
+      "executor": "ramping-vus",
+      "stages": [
+        {
+          "duration": "10s",
+          "target": 10
+        },
+        {
+          "duration": "20s",
+          "target": 10
+        },
+        {
+          "duration": "10s",
+          "target": 25
+        },
+        {
+          "duration": "20s",
+          "target": 25
+        },
+        {
+          "duration": "10s",
+          "target": 50
+        },
+        {
+          "duration": "20s",
+          "target": 50
+        },
+        {
+          "duration": "10s",
+          "target": 100
+        },
+        {
+          "duration": "20s",
+          "target": 100
+        },
+        {
+          "duration": "10s",
+          "target": 250
+        },
+        {
+          "duration": "20s",
+          "target": 250
+        },
+        {
+          "duration": "10s",
+          "target": 500
+        },
+        {
+          "duration": "20s",
+          "target": 500
+        },
+        {
+          "duration": "10s",
+          "target": 1000
+        },
+        {
+          "duration": "20s",
+          "target": 1000
+        },
+        {
+          "duration": "10s",
+          "target": 0
+        }
+      ],
+      "stages_source": "lab/k6/carga.js (NIVELES=[10,25,50,100,250,500,1000], RAMPA_S=10, MESETA_S=20)",
+      "thresholds": {
+        "nivel_25": [
+          "p(95)<800"
+        ],
+        "nivel_25_err": [
+          "rate<0.01"
+        ]
+      },
+      "thresholds_nota": "El criterio de aceptación se pone sobre 25 VUs (la concurrencia que el proyecto declara soportar), no sobre el agregado: los niveles altos existen para caracterizar la curva, no para aprobar.",
+      "endpoints": [
+        {
+          "path": "/",
+          "peso": 40
+        },
+        {
+          "path": "/status",
+          "peso": 25
+        },
+        {
+          "path": "/api/health",
+          "peso": 20
+        },
+        {
+          "path": "/tools",
+          "peso": 15
+        }
+      ],
+      "endpoints_source": "lab/k6/lib/perfil.js (RUTAS)",
+      "command": "npm run db:up && npm run db:seed && npm run dev:carga  # y en otra terminal: k6 run lab/k6/carga.js",
+      "guardarrail": "setup() aborta si /api/health no dice checks.db.local===true, y objetivo() prohíbe codebymike.tech y dev-portfolio.vercel.app. La carga nunca corre contra producción.",
+      "resultado": {
+        "fecha": "2026-08-10T05:26:20.277Z",
+        "objetivo": "http://127.0.0.1:4400",
+        "source": "lab/k6/resultados/carga-2026-08-10T05-26-20-277Z.json",
+        "vus_max": 1000,
+        "duracion_s": 225,
+        "http_reqs_total": 5229,
+        "http_reqs_rate": 23.24,
+        "http_req_duration_ms": {
+          "avg": 6551.2,
+          "p50": 9999.9,
+          "p90": 10127.7,
+          "p95": 10606.8,
+          "p99": 12348.7,
+          "max": 19079.2
+        },
+        "http_req_failed_ratio": 0.64448,
+        "iterations": null,
+        "iterations_nota": "El summary guardado no persiste la métrica 'iterations' de k6; sólo http_reqs.",
+        "checks_ok": 3718,
+        "checks_fallidos": 6736,
+        "umbrales_cumplidos": false,
+        "agregado_nota": "El agregado (p95 10.6 s, 64.4% error) NO describe ningún estado real del sistema: mezcla niveles sanos con niveles deliberadamente saturados. La lectura válida es la curva de capacidad por nivel.",
+        "por_ruta": {
+          "home": {
+            "path": "/",
+            "n": 2088,
+            "p50": 9998.6,
+            "p95": 10545.4,
+            "p99": 12306.1,
+            "max": 13409.4
+          },
+          "status": {
+            "path": "/status",
+            "n": 1316,
+            "p50": 10000.5,
+            "p95": 10700.6,
+            "p99": 12652.3,
+            "max": 15334
+          },
+          "health": {
+            "path": "/api/health",
+            "n": 1069,
+            "p50": 9999.6,
+            "p95": 10608.4,
+            "p99": 12046.2,
+            "max": 19079.2
+          },
+          "tools": {
+            "path": "/tools",
+            "n": 754,
+            "p50": 5649,
+            "p95": 10558.6,
+            "p99": 12314.7,
+            "max": 14441.8
+          }
+        },
+        "curva_capacidad": [
+          {
+            "vus": 10,
+            "n": 112,
+            "exitosasRps": 5.6,
+            "p50": 96.4,
+            "p95": 1043.9,
+            "p99": 1083,
+            "errorPct": 0
+          },
+          {
+            "vus": 25,
+            "n": 237,
+            "exitosasRps": 11.8,
+            "p50": 101.2,
+            "p95": 2591,
+            "p99": 2923.5,
+            "errorPct": 0
+          },
+          {
+            "vus": 50,
+            "n": 266,
+            "exitosasRps": 13.3,
+            "p50": 619.3,
+            "p95": 8340.2,
+            "p99": 9060.1,
+            "errorPct": 0
+          },
+          {
+            "vus": 100,
+            "n": 306,
+            "exitosasRps": 11.2,
+            "p50": 3573.5,
+            "p95": 10001.1,
+            "p99": 10003.5,
+            "errorPct": 26.8
+          },
+          {
+            "vus": 250,
+            "n": 545,
+            "exitosasRps": 10.9,
+            "p50": 10000.2,
+            "p95": 10001.4,
+            "p99": 10003.9,
+            "errorPct": 60
+          },
+          {
+            "vus": 500,
+            "n": 885,
+            "exitosasRps": 3,
+            "p50": 10000.5,
+            "p95": 10003.7,
+            "p99": 10010.6,
+            "errorPct": 93.1
+          },
+          {
+            "vus": 1000,
+            "n": 532,
+            "exitosasRps": 0,
+            "p50": 0,
+            "p95": 12523.6,
+            "p99": 13277.4,
+            "errorPct": 100
+          }
+        ],
+        "capacidad_sostenida": {
+          "vus": 25,
+          "exitosas_rps": 11.8,
+          "p95_ms": 2591.0,
+          "error_pct": 0.0,
+          "nota": "Último nivel con 0% de error. El umbral p(95)<800 ms NO se cumplió ni a 25 VUs (2591 ms).",
+          "source": "curvaCapacidad[1] en lab/k6/resultados/carga-2026-08-10T05-26-20-277Z.json"
+        }
+      },
+      "timeseries": [
+        {
+          "x_vus": 10,
+          "p95_ms": 1043.9,
+          "p50_ms": 96.4,
+          "error_rate": 0.0,
+          "exitosas_rps": 5.6,
+          "n": 112
+        },
+        {
+          "x_vus": 25,
+          "p95_ms": 2591,
+          "p50_ms": 101.2,
+          "error_rate": 0.0,
+          "exitosas_rps": 11.8,
+          "n": 237
+        },
+        {
+          "x_vus": 50,
+          "p95_ms": 8340.2,
+          "p50_ms": 619.3,
+          "error_rate": 0.0,
+          "exitosas_rps": 13.3,
+          "n": 266
+        },
+        {
+          "x_vus": 100,
+          "p95_ms": 10001.1,
+          "p50_ms": 3573.5,
+          "error_rate": 0.268,
+          "exitosas_rps": 11.2,
+          "n": 306
+        },
+        {
+          "x_vus": 250,
+          "p95_ms": 10001.4,
+          "p50_ms": 10000.2,
+          "error_rate": 0.6,
+          "exitosas_rps": 10.9,
+          "n": 545
+        },
+        {
+          "x_vus": 500,
+          "p95_ms": 10003.7,
+          "p50_ms": 10000.5,
+          "error_rate": 0.931,
+          "exitosas_rps": 3,
+          "n": 885
+        },
+        {
+          "x_vus": 1000,
+          "p95_ms": 12523.6,
+          "p50_ms": 0,
+          "error_rate": 1.0,
+          "exitosas_rps": 0,
+          "n": 532
+        }
+      ],
+      "timeseries_nota": "Eje X = nivel de concurrencia (VUs), no tiempo: cada punto es una meseta de 20 s medida por separado. No hay serie temporal por request porque las corridas no usaron --out json."
+    },
+    "stress": {
+      "tool": "k6",
+      "script": "lab/k6/estres.js",
+      "tipo": "estres",
+      "escenarios": {
+        "quiebre": {
+          "executor": "ramping-arrival-rate",
+          "startRate": 50,
+          "timeUnit": "1s",
+          "preAllocatedVUs": 200,
+          "maxVUs": 3000,
+          "stages": [
+            {
+              "duration": "30s",
+              "target": 50
+            },
+            {
+              "duration": "30s",
+              "target": 100
+            },
+            {
+              "duration": "30s",
+              "target": 200
+            },
+            {
+              "duration": "30s",
+              "target": 300
+            },
+            {
+              "duration": "30s",
+              "target": 300
+            }
+          ],
+          "gracefulStop": "0s"
+        },
+        "recuperacion": {
+          "executor": "constant-arrival-rate",
+          "rate": 20,
+          "timeUnit": "1s",
+          "duration": "120s",
+          "preAllocatedVUs": 60,
+          "startTime": "155s"
+        },
+        "muestreo": {
+          "executor": "constant-arrival-rate",
+          "rate": 1,
+          "timeUnit": "2s",
+          "duration": "275s",
+          "preAllocatedVUs": 2,
+          "startTime": "0s",
+          "nota": "Sondea /api/lab/proceso (CPU% y heap) en paralelo, con VU propio."
+        }
+      },
+      "stages_source": "lab/k6/estres.js (options.scenarios)",
+      "por_que_arrival_rate": "Con ramping-vus cada usuario espera su respuesta, así que al ralentizarse el servidor la carga baja sola y el punto de quiebre nunca aparece. arrival-rate mantiene el ritmo de llegada pase lo que pase, como el tráfico real.",
+      "thresholds": {
+        "recuperacion_duracion": [
+          "p(95)<1000"
+        ],
+        "recuperacion_errores": [
+          "rate<0.02"
+        ]
+      },
+      "thresholds_nota": "La fase de quiebre NO lleva umbral de latencia a propósito: su objetivo es fallar. El criterio de aceptación del ítem 6 es la RECUPERACIÓN.",
+      "endpoints": [
+        {
+          "path": "/",
+          "peso": 40
+        },
+        {
+          "path": "/status",
+          "peso": 25
+        },
+        {
+          "path": "/api/health",
+          "peso": 20
+        },
+        {
+          "path": "/tools",
+          "peso": 15
+        }
+      ],
+      "command": "npm run db:up && npm run db:seed && npm run dev:carga  # y en otra terminal: k6 run lab/k6/estres.js",
+      "corridas_disponibles": [
+        "lab/k6/resultados/estres-2026-08-10T05-47-15-397Z.json",
+        "lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json"
+      ],
+      "resultado": {
+        "fecha": "2026-08-22T02:11:40.652Z",
+        "objetivo": "http://127.0.0.1:4400",
+        "source": "lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json",
+        "vus_max": 2914,
+        "duracion_s": 286,
+        "http_reqs_total": 19602,
+        "http_reqs_rate": 68.51,
+        "http_req_duration_ms": {
+          "avg": 3930.5,
+          "p50": 693.2,
+          "p90": 10000.4,
+          "p95": 10000.7,
+          "p99": 10001.2,
+          "max": 10047.2
+        },
+        "http_req_failed_ratio": 0.7488,
+        "iterations": null,
+        "checks_ok": 9712,
+        "checks_fallidos": 29272,
+        "umbrales_cumplidos": false,
+        "por_ruta": {
+          "home": {
+            "path": "/",
+            "n": 7833,
+            "p50": 807.8,
+            "p95": 10000.7,
+            "p99": 10001.2,
+            "max": 10028.4
+          },
+          "status": {
+            "path": "/status",
+            "n": 4865,
+            "p50": 3601.3,
+            "p95": 10000.9,
+            "p99": 10001.2,
+            "max": 10047.2
+          },
+          "health": {
+            "path": "/api/health",
+            "n": 3883,
+            "p50": 920.4,
+            "p95": 10000.7,
+            "p99": 10001.2,
+            "max": 10009.1
+          },
+          "tools": {
+            "path": "/tools",
+            "n": 2911,
+            "p50": 267,
+            "p95": 9999.9,
+            "p99": 10000.7,
+            "max": 10013.6
+          }
+        },
+        "escalera": [
+          {
+            "rpsOfrecido": 50,
+            "n": 1497,
+            "respuestasRps": 49.9,
+            "exitosasRps": 49.9,
+            "p50": 138,
+            "p95": 1932.8,
+            "errorPct": 0,
+            "cpuPct": 12.5,
+            "heapMb": 332.8,
+            "estado": "ok"
+          },
+          {
+            "rpsOfrecido": 100,
+            "n": 2096,
+            "respuestasRps": 69.9,
+            "exitosasRps": 62,
+            "p50": 1076.9,
+            "p95": 10000.7,
+            "errorPct": 11.3,
+            "cpuPct": 15.2,
+            "heapMb": 315.6,
+            "estado": "degradado"
+          },
+          {
+            "rpsOfrecido": 200,
+            "n": 3489,
+            "respuestasRps": 116.3,
+            "exitosasRps": 40.4,
+            "p50": 9999.9,
+            "p95": 10000.9,
+            "errorPct": 65.2,
+            "cpuPct": 15.3,
+            "heapMb": 398.3,
+            "estado": "roto"
+          },
+          {
+            "rpsOfrecido": 300,
+            "n": 6324,
+            "respuestasRps": 210.8,
+            "exitosasRps": 7.8,
+            "p50": 0,
+            "p95": 10000.7,
+            "errorPct": 96.3,
+            "cpuPct": 15.4,
+            "heapMb": 429.1,
+            "estado": "roto"
+          },
+          {
+            "rpsOfrecido": 300,
+            "n": 5580,
+            "respuestasRps": 186,
+            "exitosasRps": 1.4,
+            "p50": 0,
+            "p95": 10000.5,
+            "errorPct": 99.3,
+            "cpuPct": 12.7,
+            "heapMb": 405.4,
+            "estado": "roto"
+          }
+        ],
+        "recuperacion": {
+          "p50": 0,
+          "p95": 10000.4,
+          "max": 10047.2,
+          "tasaErrorPct": 100,
+          "curva": [
+            {
+              "desdeS": 0,
+              "n": 120,
+              "p50": 6941.7,
+              "p95": 10000.9,
+              "cpuPct": 0,
+              "heapMb": 0
+            },
+            {
+              "desdeS": 15,
+              "n": 60,
+              "p50": 0,
+              "p95": 0,
+              "cpuPct": 0,
+              "heapMb": 0
+            },
+            {
+              "desdeS": 30,
+              "n": 60,
+              "p50": 0,
+              "p95": 0,
+              "cpuPct": 0,
+              "heapMb": 0
+            },
+            {
+              "desdeS": 45,
+              "n": 60,
+              "p50": 0,
+              "p95": 0,
+              "cpuPct": 0,
+              "heapMb": 0
+            },
+            {
+              "desdeS": 60,
+              "n": 60,
+              "p50": 0,
+              "p95": 0,
+              "cpuPct": 0,
+              "heapMb": 0
+            },
+            {
+              "desdeS": 75,
+              "n": 60,
+              "p50": 0,
+              "p95": 0,
+              "cpuPct": 0,
+              "heapMb": 0
+            },
+            {
+              "desdeS": 90,
+              "n": 0,
+              "p50": 0,
+              "p95": 0,
+              "cpuPct": 0,
+              "heapMb": 0
+            },
+            {
+              "desdeS": 105,
+              "n": 86,
+              "p50": 0,
+              "p95": 8984.7,
+              "cpuPct": 0,
+              "heapMb": 0
+            }
+          ]
+        },
+        "recuperacion_veredicto": "NO CONCLUYENTE en esta corrida: 100% de error en toda la ventana. Según el hallazgo H-03 escrito a mano, la corrida se lanzó inmediatamente después de otra sin ventana de enfriamiento; una corrida aislada sí converge a p50 ~25-35 ms desde el tramo +45 s.",
+        "hallazgos": [
+          {
+            "id": "H-01",
+            "titulo": "El colapso es de concurrencia, no de CPU ni de memoria",
+            "descripcion": "En el escalón roto (200 req/s, 65.2% error) la CPU del proceso sigue en 15.3% y el heap en 398 MB, prácticamente igual que en el escalón sano (50 req/s, 0% error, 12.5% CPU, 333 MB). Si el cuello de botella fuera cómputo o GC, la CPU subiría junto con el error. Como no sube, el límite real es la concurrencia que `astro dev` (servidor de desarrollo, sin cluster ni worker pool) puede sostener en sus sockets/handlers, no el trabajo por request."
+          },
+          {
+            "id": "H-02",
+            "titulo": "El punto de quiebre está muy cerca de la capacidad medida en carga.js",
+            "descripcion": "Ya en el escalón de 100 req/s ofrecidos (~1.6x la capacidad sostenida de ~62 req/s medida en `carga.js`) aparece 11.3% de error y p95 en el timeout de 10 s. A partir de 200 req/s el sistema está roto (65-99% error). No hay un margen amplio entre 'funciona bien' y 'colapsa': la transición ocurre en menos de 2x la carga nominal, lo cual es esperable de un servidor de desarrollo pero sería inaceptable en producción sin verificarlo contra el adaptador de Vercel."
+          },
+          {
+            "id": "H-03",
+            "titulo": "Sin ventana de enfriamiento entre corridas, la recuperación puede no completarse dentro de los 120 s medidos",
+            "descripcion": "Esta corrida se lanzó inmediatamente después de otra corrida de estrés completa (sin pausa). Resultado: la fase de recuperación entera midió 100% de error y p50 de 0 ms (peticiones fallando antes de completarse), incluyendo tramos +15s a +90s con cpu%/heap en 0 porque ni siquiera `/api/lab/proceso` respondía a tiempo. Comparado con una corrida aislada (mismo objetivo, sin corrida previa inmediata) donde la recuperación sí converge a p50 ~25-35ms desde el tramo +45s, esto sugiere que el proceso de Node queda en un estado degradado (colas o handles pendientes) que una sola ventana de 120 s no siempre alcanza a drenar si la carga anterior no tuvo tiempo de asentarse primero."
+          },
+          {
+            "id": "H-04",
+            "titulo": "El endpoint de monitoreo (/api/lab/proceso) también se satura, sesgando su propia muestra",
+            "descripcion": "Durante el tramo más degradado de la recuperación, las peticiones a `/api/lab/proceso` (timeout de 5 s en el script) también timeoutearon, dejando cpuPct=0/heapMb=0 en vez de ausencia de dato. Eso pisa la lectura real (probablemente el proceso seguía con CPU/heap altos, no en cero) y hace parecer que el sistema 'se apagó' cuando en realidad el endpoint de diagnóstico compite por los mismos recursos saturados que intenta medir. Para una corrida de referencia conviene distinguir 'sin muestra' de 'muestra en cero' en el bloque de recuperación."
+          },
+          {
+            "id": "H-05",
+            "titulo": "/status es la ruta más cara de las cuatro, coherente con que agrega datos de BD",
+            "descripcion": "En el escalón sano (50 req/s), p50 de /status (287-337ms según la corrida) es 2-4x más lento que /, /api/health y /tools (56-101ms). Es la única ruta que hace agregación real contra libSQL (90 días de checks), así que es la primera candidata a optimizar si se quisiera subir el punto de quiebre sin tocar el resto del sitio."
+          }
+        ]
+      },
+      "timeseries": [
+        {
+          "fase": "quiebre",
+          "t_desde_s": 0,
+          "t_hasta_s": 30,
+          "rps_ofrecido": 50,
+          "exitosas_rps": 49.9,
+          "respuestas_rps": 49.9,
+          "p50_ms": 138,
+          "p95_ms": 1932.8,
+          "error_rate": 0.0,
+          "cpu_pct": 12.5,
+          "heap_mb": 332.8,
+          "estado": "ok"
+        },
+        {
+          "fase": "quiebre",
+          "t_desde_s": 30,
+          "t_hasta_s": 60,
+          "rps_ofrecido": 100,
+          "exitosas_rps": 62,
+          "respuestas_rps": 69.9,
+          "p50_ms": 1076.9,
+          "p95_ms": 10000.7,
+          "error_rate": 0.113,
+          "cpu_pct": 15.2,
+          "heap_mb": 315.6,
+          "estado": "degradado"
+        },
+        {
+          "fase": "quiebre",
+          "t_desde_s": 60,
+          "t_hasta_s": 90,
+          "rps_ofrecido": 200,
+          "exitosas_rps": 40.4,
+          "respuestas_rps": 116.3,
+          "p50_ms": 9999.9,
+          "p95_ms": 10000.9,
+          "error_rate": 0.652,
+          "cpu_pct": 15.3,
+          "heap_mb": 398.3,
+          "estado": "roto"
+        },
+        {
+          "fase": "quiebre",
+          "t_desde_s": 90,
+          "t_hasta_s": 120,
+          "rps_ofrecido": 300,
+          "exitosas_rps": 7.8,
+          "respuestas_rps": 210.8,
+          "p50_ms": 0,
+          "p95_ms": 10000.7,
+          "error_rate": 0.963,
+          "cpu_pct": 15.4,
+          "heap_mb": 429.1,
+          "estado": "roto"
+        },
+        {
+          "fase": "quiebre",
+          "t_desde_s": 120,
+          "t_hasta_s": 150,
+          "rps_ofrecido": 300,
+          "exitosas_rps": 1.4,
+          "respuestas_rps": 186,
+          "p50_ms": 0,
+          "p95_ms": 10000.5,
+          "error_rate": 0.993,
+          "cpu_pct": 12.7,
+          "heap_mb": 405.4,
+          "estado": "roto"
+        },
+        {
+          "fase": "recuperacion",
+          "t_desde_s": 155,
+          "n": 120,
+          "p50_ms": 6941.7,
+          "p95_ms": 10000.9,
+          "cpu_pct": 0,
+          "heap_mb": 0
+        },
+        {
+          "fase": "recuperacion",
+          "t_desde_s": 170,
+          "n": 60,
+          "p50_ms": 0,
+          "p95_ms": 0,
+          "cpu_pct": 0,
+          "heap_mb": 0
+        },
+        {
+          "fase": "recuperacion",
+          "t_desde_s": 185,
+          "n": 60,
+          "p50_ms": 0,
+          "p95_ms": 0,
+          "cpu_pct": 0,
+          "heap_mb": 0
+        },
+        {
+          "fase": "recuperacion",
+          "t_desde_s": 200,
+          "n": 60,
+          "p50_ms": 0,
+          "p95_ms": 0,
+          "cpu_pct": 0,
+          "heap_mb": 0
+        },
+        {
+          "fase": "recuperacion",
+          "t_desde_s": 215,
+          "n": 60,
+          "p50_ms": 0,
+          "p95_ms": 0,
+          "cpu_pct": 0,
+          "heap_mb": 0
+        },
+        {
+          "fase": "recuperacion",
+          "t_desde_s": 230,
+          "n": 60,
+          "p50_ms": 0,
+          "p95_ms": 0,
+          "cpu_pct": 0,
+          "heap_mb": 0
+        },
+        {
+          "fase": "recuperacion",
+          "t_desde_s": 245,
+          "n": 0,
+          "p50_ms": 0,
+          "p95_ms": 0,
+          "cpu_pct": 0,
+          "heap_mb": 0
+        },
+        {
+          "fase": "recuperacion",
+          "t_desde_s": 260,
+          "n": 86,
+          "p50_ms": 0,
+          "p95_ms": 8984.7,
+          "cpu_pct": 0,
+          "heap_mb": 0
+        }
+      ],
+      "timeseries_nota": "Muestreo a intervalos regulares: 30 s por escalón en la fase de quiebre, 15 s por tramo en la de recuperación. 13 puntos en total. No hay serie por request: las corridas no usaron --out json ni --summary-export de serie temporal."
+    },
+    "matrix": [
+      {
+        "id": "TC-01",
+        "descripcion": "Portal · login con credenciales válidas llega al panel del cliente",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "portal-clientes",
+          "api-portal",
+          "auth-portal",
+          "turso-main"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-01-login-valido-dashboard.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-02",
+        "descripcion": "Portal · login inválido no revela si la cuenta existe (mensaje único)",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "portal-clientes",
+          "auth-portal"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-02-login-credenciales-invalidas.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-03",
+        "descripcion": "Portal · bloqueo de cuenta 15 min al 10.º intento fallido, aunque cambie la IP",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "auth-portal",
+          "lib-security",
+          "turso-main"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-03-bloqueo-tras-10-intentos.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-04",
+        "descripcion": "Portal · listado de facturas coherente con los KPI",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "portal-clientes",
+          "api-portal",
+          "lib-portal",
+          "turso-main"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-04-facturas-listado.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-05",
+        "descripcion": "Portal · detalle de factura y descarga del PDF como adjunto sin cachear",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "portal-clientes",
+          "api-portal",
+          "lib-portal"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-05-factura-detalle-pdf.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-06",
+        "descripcion": "Portal · un cliente no lee la factura de otro conociendo su id",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "api-portal",
+          "lib-portal",
+          "auth-portal",
+          "turso-main"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-06-aislamiento-entre-clientes-404.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-07",
+        "descripcion": "Portal · cambio de contraseña valida longitud/composición y exige la actual",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "portal-clientes",
+          "api-portal",
+          "auth-portal"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-07-cambio-contrasena-formulario.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-08",
+        "descripcion": "Portal · «Cerrar sesión» revoca la sesión y devuelve al login",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "fail",
+        "nodos_involucrados": [
+          "portal-clientes",
+          "auth-portal"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-08-menu-cerrar-sesion.jpg · docs/evidencias-taller-testing/BUG-01-logout-csrf.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-09",
+        "descripcion": "Cobros · ciclo del link corto /c/[code]: vigente → pago → estado terminal; vencido y pagado no recobran",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "api-publica",
+          "lib-payments",
+          "turso-main",
+          "wompi"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-09a-cobro-link-vigente.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "TC-10",
+        "descripcion": "Cobros · /mis-pagos devuelve datos enmascarados y limita por IP (5/hora)",
+        "tipo": "caja-negra-manual",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "api-publica",
+          "lib-security",
+          "turso-main"
+        ],
+        "source": "docs/taller-testing-caja-negra.md",
+        "evidencia": "docs/evidencias-taller-testing/TC-10-mis-pagos-historico-enmascarado.jpg",
+        "historia_usuario_nota": "El caso no declara HU: sus campos son ID/Módulo/Objetivo/Precondiciones/Datos/Pasos/Oráculo/Resultado/Veredicto/Evidencia."
+      },
+      {
+        "id": "SUITE-UNIT",
+        "descripcion": "Suite unitaria completa de Vitest (1067 pruebas puras, 60 archivos)",
+        "tipo": "unitaria",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "lib-security",
+          "lib-payments",
+          "lib-portal",
+          "lib-present",
+          "lib-capacitacion",
+          "lib-diagramas",
+          "lib-notify"
+        ],
+        "source": "informes/tests-junit.xml, src/data/ejecucion-pruebas.json"
+      },
+      {
+        "id": "SUITE-INTEG",
+        "descripcion": "Suite de integración de Vitest sobre libSQL real (133 pruebas, 10 archivos)",
+        "tipo": "integracion",
+        "historia_usuario": null,
+        "resultado": "pass",
+        "nodos_involucrados": [
+          "api-portal",
+          "api-publica",
+          "api-admin",
+          "lib-portal",
+          "lib-payments",
+          "lib-security",
+          "auth-portal",
+          "turso-main"
+        ],
+        "source": "informes/tests-junit.xml, tests/"
+      },
+      {
+        "id": "SUITE-E2E",
+        "descripcion": "Suite e2e de Playwright, navegador real contra bases desechables (47 casos)",
+        "tipo": "integracion",
+        "historia_usuario": null,
+        "resultado": "parcial",
+        "nodos_involucrados": [
+          "middleware",
+          "web-publico",
+          "portal-clientes",
+          "demo-publica",
+          "admin-panel",
+          "api-publica",
+          "api-portal",
+          "auth-portal",
+          "auth-admin",
+          "lib-payments",
+          "turso-main",
+          "turso-demo"
+        ],
+        "source": "playwright.config.ts, e2e/ (corrida de esta sesión: 44 pass / 3 timeouts en frío; re-corrida aislada 5/5 pass)"
+      },
+      {
+        "id": "K6-CARGA",
+        "descripcion": "Prueba de carga: escalera 10→1000 VUs, meseta de 20 s por nivel",
+        "tipo": "carga",
+        "historia_usuario": null,
+        "resultado": "fail",
+        "nodos_involucrados": [
+          "vercel-edge",
+          "middleware",
+          "web-publico",
+          "api-publica",
+          "turso-main"
+        ],
+        "source": "lab/k6/carga.js, lab/k6/resultados/carga-2026-08-10T05-26-20-277Z.json"
+      },
+      {
+        "id": "K6-ESTRES",
+        "descripcion": "Prueba de estrés: quiebre por arrival-rate 50→300 req/s + fase de recuperación",
+        "tipo": "estres",
+        "historia_usuario": null,
+        "resultado": "fail",
+        "nodos_involucrados": [
+          "vercel-edge",
+          "middleware",
+          "web-publico",
+          "api-publica",
+          "turso-main"
+        ],
+        "source": "lab/k6/estres.js, lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json"
+      }
+    ]
+  },
+  "defects": {
+    "source": "docs/taller-testing-caja-negra.md (§ Reporte de defectos)",
+    "abiertos": [
+      {
+        "id": "BUG-01",
+        "titulo": "«Cerrar sesión» falla y la sesión permanece abierta",
+        "severidad": "Alta",
+        "area": "Portal · Autenticación",
+        "casos": [
+          "TC-08",
+          "ESC-01"
+        ],
+        "estado": "Abierto",
+        "detalle": "El POST del formulario devuelve «Cross-site POST form submissions are forbidden» y la sesión sigue viva. El mismo POST con cabecera Origin explícita sí devuelve 302 y cierra: falla la petición que emite el formulario, no el endpoint."
+      },
+      {
+        "id": "BUG-02",
+        "titulo": "El código corto distingue mayúsculas de minúsculas",
+        "severidad": null,
+        "area": "Cobros",
+        "casos": [],
+        "estado": "Abierto"
+      },
+      {
+        "id": "BUG-03",
+        "titulo": "Las consultas inválidas consumen la cuota horaria de /mis-pagos",
+        "severidad": "Baja",
+        "area": "Cobros · /mis-pagos",
+        "casos": [
+          "BVA-18",
+          "TC-10"
+        ],
+        "estado": "Abierto"
+      },
+      {
+        "id": "BUG-04",
+        "titulo": "El mensaje de validación del cambio de contraseña se auto-oculta a los 4 s",
+        "severidad": "Baja",
+        "area": "Portal · Cuenta",
+        "casos": [
+          "TC-07"
+        ],
+        "estado": "Abierto"
+      },
+      {
+        "id": "BUG-05",
+        "titulo": "Un 404 dentro del portal renderiza el 404 público del sitio de marketing",
+        "severidad": "Baja",
+        "area": "Portal · Navegación",
+        "casos": [
+          "TC-06",
+          "exploratoria"
+        ],
+        "estado": "Abierto"
+      },
+      {
+        "id": "BUG-06",
+        "titulo": "Vulnerabilidades en dependencias",
+        "severidad": null,
+        "area": "Dependencias",
+        "casos": [],
+        "estado": "Abierto"
+      }
+    ],
+    "nota": "BUG-01 es el único de severidad Alta y el único que hace fallar un caso de prueba (TC-08)."
+  },
+  "breaking_point": {
+    "node_id": "vercel-edge",
+    "node_id_nota": "En la corrida medida el nodo que saturó es el SERVIDOR SSR de Astro corriendo como `astro dev` en local (el proceso que en producción sería la función de Vercel del nodo vercel-edge/middleware). No hay corrida equivalente contra el runtime de Vercel.",
+    "componente_que_saturo": "El proceso Node de `astro dev`: concurrencia de sockets/handlers, NO cómputo ni memoria ni la base de datos.",
+    "vus": null,
+    "vus_why_null": "El executor ramping-arrival-rate asigna VUs dinámicamente y el summary no persiste VUs por escalón. vus_max de toda la corrida fue 2914, que no corresponde al escalón del quiebre.",
+    "rps_ofrecido": 100,
+    "rps_servido_exitoso": 62.0,
+    "p95_ms": 10000.7,
+    "error_rate": 0.113,
+    "timestamp_relativo_s": 30,
+    "timestamp_nota": "Segundo escalón de la fase de quiebre: 30-60 s desde el inicio de la corrida.",
+    "criterio": "Primer escalón donde http_req_failed supera el 1% (11.3%) y el p95 se dispara al timeout de 10 s frente a los 1932.8 ms del escalón sano de 50 req/s.",
+    "colapso_total_rps": 200,
+    "colapso_total_nota": "A 200 req/s ofrecidos el estado ya es 'roto': 65.2% de error y throughput útil cayendo a 40.4 req/s (menos que a 100 req/s).",
+    "evidence": [
+      "Escalón 50 req/s: 0% error, p95 1932.8 ms, CPU 12.5%, heap 332.8 MB → estado ok.",
+      "Escalón 100 req/s: 11.3% error, p95 10000.7 ms, CPU 15.2%, heap 315.6 MB → estado degradado.",
+      "Escalón 200 req/s: 65.2% error, exitosas 40.4/s, CPU 15.3%, heap 398.3 MB → estado roto.",
+      "H-01 (hallazgo escrito a mano): la CPU no sube con el error (15.3% roto vs 12.5% sano) ni el heap se dispara, así que el cuello de botella es la concurrencia que astro dev sostiene, no cómputo ni GC.",
+      "H-05: /status es la ruta más cara (p50 2-4x el resto) por ser la única que agrega datos de libSQL; es la primera candidata a optimizar para subir el punto de quiebre.",
+      "Contraste con carga.js: la capacidad sostenida sin error es ~62 req/s, así que el quiebre llega a ~1.6x la carga nominal."
+    ],
+    "source": "lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json (escalera[] y hallazgos[]); lab/k6/estres.js",
+    "limitacion_importante": "Medido contra `astro dev` en localhost con libSQL local, NUNCA contra producción (el guardarraíl de lab/k6/lib/perfil.js lo impide por diseño). El número NO es la capacidad de codebymike.tech en Vercel: un servidor de desarrollo no tiene cluster, worker pool ni el autoescalado de Fluid Compute."
+  },
+  "deployment": {
+    "proveedor": "Vercel (org codebymike)",
+    "proyecto_produccion": {
+      "nombre": "dev-portfolio",
+      "projectId": "prj_vdfQibXACk3SvwYWEmKdEpZ4NaGh",
+      "orgId": "team_GwKd4hurNRGdWHhXUHiQ9HeM",
+      "dominio": "codebymike.tech",
+      "source": ".vercel/project.json, CLAUDE.md"
+    },
+    "aviso_proyecto_homonimo": "Existe un segundo proyecto Vercel llamado `portfolio` SIN relación con el dominio. El nombre del directorio local coincide por accidente con el proyecto equivocado: confirmar .vercel/project.json antes de tocar `vercel env`. (CLAUDE.md)",
+    "runtime": {
+      "adapter": "@astrojs/vercel ^11.0.3 (imageService: true)",
+      "output": "server (SSR)",
+      "node": ">=22.12.0",
+      "region": null,
+      "region_why_null": "No hay región declarada en vercel.json ni en astro.config.mjs; /api/health la expone en runtime vía VERCEL_REGION, pero no hay captura de producción en el repo.",
+      "source": "astro.config.mjs, package.json (engines), vercel.json"
+    },
+    "docker": {
+      "rol": "Infraestructura de desarrollo y pruebas, NUNCA runtime de producción",
+      "que_levanta": "Dos servidores sqld (principal :8080 y demo :8081), imágenes pineadas por digest",
+      "source": "compose.yaml, .devcontainer/, docs/plan-docker.md, CLAUDE.md"
+    },
+    "ci_cd": {
+      "workflows": [
+        {
+          "archivo": ".github/workflows/ci.yml",
+          "nombre": "CI",
+          "triggers": [
+            "push a main",
+            "pull_request"
+          ],
+          "concurrency": "ci-${{ github.ref }}, cancel-in-progress: false",
+          "jobs": [
+            {
+              "id": "quality",
+              "nombre": "Test + Build",
+              "pasos": [
+                "checkout",
+                "setup-node 22 (cache npm)",
+                "npm ci",
+                "vitest run --coverage + reporter json",
+                "npm run build",
+                "extraer métricas (cobertura, tests ok/fallidos) a outputs"
+              ]
+            },
+            {
+              "id": "e2e",
+              "nombre": "E2E (Playwright)",
+              "pasos": [
+                "checkout",
+                "setup-node 22",
+                "npm ci",
+                "playwright install chromium",
+                "npm run test:e2e",
+                "subir playwright-report si falla (7 días)"
+              ],
+              "nota": "Sin secrets: las bases son archivos libSQL desechables sembrados por el propio webServer."
+            },
+            {
+              "id": "verify-production",
+              "nombre": "Verificar deploy + rollback",
+              "needs": [
+                "quality"
+              ],
+              "if": "ref == main && event == push",
+              "pasos": [
+                "esperar a que /api/health devuelva el SHA de este commit (máx 8 min, sondeo cada 10 s)",
+                "health check post-deploy 3 intentos (sano si >=2 dan 200)",
+                "rollback automático con `vercel rollback` si no está sano (requiere VERCEL_TOKEN)",
+                "notificar rollback por ntfy (prioridad 5)",
+                "reportar el run a /api/lab/ingest (tabla ci_runs, alimenta /lab)",
+                "fallar el job si el deploy quedó insano"
+              ]
+            }
+          ],
+          "duracion_tipica": null,
+          "duracion_why_null": "No hay historial de duración de workflows en el repo; vive en la API de GitHub Actions y en la tabla ci_runs de producción.",
+          "secrets_opcionales": {
+            "VERCEL_TOKEN": "habilita el rollback automático",
+            "LAB_INGEST_TOKEN": "reporta métricas al panel LAB",
+            "NTFY_TOPIC": "push al teléfono en rollback"
+          },
+          "vars_opcionales": {
+            "PROD_URL": "default https://codebymike.tech"
+          }
+        },
+        {
+          "archivo": ".github/workflows/security.yml",
+          "nombre": "Security",
+          "triggers": null
+        },
+        {
+          "archivo": ".github/workflows/a11y.yml",
+          "nombre": "Accesibilidad",
+          "triggers": null
+        },
+        {
+          "archivo": ".github/workflows/dast.yml",
+          "nombre": "DAST",
+          "triggers": null
+        },
+        {
+          "archivo": ".github/workflows/mutation.yml",
+          "nombre": "Mutation testing (Stryker)",
+          "triggers": null
+        },
+        {
+          "archivo": ".github/workflows/distribute-note.yml",
+          "nombre": "Distribución de artículos",
+          "triggers": null
+        }
+      ],
+      "deploy_trigger": "Auto-deploy por integración Git de Vercel en push a main. El workflow NO despliega: espera, verifica y revierte.",
+      "rollback": "Automático vía `npx vercel rollback --yes` cuando el health check post-deploy falla."
+    },
+    "migraciones": {
+      "herramienta": "drizzle-kit ^0.31.10",
+      "politica": "SOLO ADITIVAS; nunca destructivas sin discutirlo antes",
+      "cantidad": 29,
+      "ultima": "drizzle/0028_nice_otto_octavius.sql",
+      "comandos": [
+        "export $(grep -E '^TURSO_' .env | xargs)",
+        "npx drizzle-kit generate",
+        "npx drizzle-kit migrate"
+      ],
+      "gotcha": "Revisar el SQL generado: al combinar 'añadir columnas + cambiar nullable', drizzle-kit puede generar un INSERT...SELECT que referencia columnas nuevas en la tabla vieja.",
+      "aplicacion": "Manual contra Turso; NO corre en el pipeline. Los seeds sí aplican migraciones (scripts/seed-demo.mjs).",
+      "source": "drizzle/, drizzle.config.ts, CLAUDE.md"
+    },
+    "dominios_dns_tls": {
+      "dominio": "codebymike.tech",
+      "tls": "Gestionado por Vercel",
+      "hsts": "max-age=63072000; includeSubDomains; preload",
+      "hsts_source": "src/middleware.ts:521, integrations/static-headers.mjs:36",
+      "dns": null,
+      "dns_why_null": "La configuración de DNS/registrador no está en el repo (vive en el panel de Vercel y del registrador)."
+    },
+    "healthchecks_monitoreo": {
+      "endpoint_salud": {
+        "ruta": "/api/health",
+        "devuelve": "ok, sha del commit, env, region, checks.db{ok,ms,error,local}, ts",
+        "status": "200 si la BD responde, 503 si no",
+        "cache": "no-store",
+        "source": "src/pages/api/health.ts"
+      },
+      "monitores_propios": "Motor de checks propio (tablas monitors, monitor_checks, monitor_daily, monitor_incidents) que alimenta /status y /admin/monitors. Desarrollo propio, sin servicio de terceros.",
+      "crons_vercel": [
+        {
+          "path": "/api/cron/backup",
+          "schedule": "0 3 * * *"
+        },
+        {
+          "path": "/api/cron/domain-check",
+          "schedule": "0 8 * * *"
+        },
+        {
+          "path": "/api/cron/uptime-check",
+          "schedule": "0 7 * * *"
+        },
+        {
+          "path": "/api/cron/indexnow",
+          "schedule": "30 8 * * *"
+        },
+        {
+          "path": "/api/cron/invoices-overdue",
+          "schedule": "0 9 * * *"
+        },
+        {
+          "path": "/api/cron/portal-demo-reseed",
+          "schedule": "0 4 * * *"
+        },
+        {
+          "path": "/api/cron/monitor-rollup",
+          "schedule": "0 5 * * *"
+        }
+      ],
+      "crons_externos": "cron-job.org dispara /api/cron/* con Authorization: Bearer CRON_SECRET (verificado con timingSafeEqual), fail-open.",
+      "alertas": "ntfy (push) + Resend (correo) vía src/lib/notify.ts, no-op silencioso si falta la env var.",
+      "siem": "Micro-SIEM propio: security_events, security_rollups, blocked_ips, rate_limit_buckets, security_anomalies. Agregados públicos en /security.",
+      "source": "vercel.json, src/pages/api/cron/, src/lib/notify.ts, src/lib/security/"
+    },
+    "env_vars_requeridas": {
+      "_nota": "SOLO nombres, nunca valores. Extraídas de serverEnv()/process.env/import.meta.env en src/, scripts/, auth.config.ts.",
+      "criticas_produccion": [
+        "TURSO_DATABASE_URL",
+        "TURSO_AUTH_TOKEN",
+        "AUTH_SECRET",
+        "AUTH_URL",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
+        "ALLOWED_GITHUB_LOGINS",
+        "ENCRYPTION_KEY",
+        "CRON_SECRET"
+      ],
+      "demo_publica": [
+        "TURSO_DEMO_URL",
+        "TURSO_DEMO_AUTH_TOKEN"
+      ],
+      "pagos": [
+        "WOMPI_PUBLIC_KEY",
+        "WOMPI_INTEGRITY_SECRET",
+        "WOMPI_EVENTS_SECRET",
+        "PAYMENTS_MOCK_ENABLED",
+        "COBRO_HISTORY_SECRET"
+      ],
+      "presentaciones": [
+        "PRESENT_SECRET",
+        "PRESENT_BUS_REST_URL",
+        "PRESENT_BUS_REST_TOKEN",
+        "PRESENT_BUS_READONLY_TOKEN",
+        "DECK_ASSETS_BLOB_READ_WRITE_TOKEN"
+      ],
+      "capacitacion": [
+        "TRAINING_ACCESS_SECRET"
+      ],
+      "notificaciones_opcionales": [
+        "NTFY_TOPIC",
+        "RESEND_API_KEY",
+        "ALERT_EMAIL_TO"
+      ],
+      "seguridad_observabilidad": [
+        "SECURITY_IP_SALT",
+        "SECURITY_IP_ALLOWLIST",
+        "LAB_INGEST_TOKEN"
+      ],
+      "integraciones_opcionales": [
+        "GITHUB_API_TOKEN",
+        "GITHUB_USERNAME",
+        "PSI_API_KEY",
+        "PUBLIC_SITE_URL",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "KV_REST_API_READ_ONLY_TOKEN",
+        "MONITOR_SITE_URL",
+        "MONITOR_TARGET_URL",
+        "MONITOR_TARGET_TOKEN",
+        "GOOGLE_INDEXING_SA",
+        "DEVTO_API_KEY",
+        "HASHNODE_TOKEN",
+        "HASHNODE_PUBLICATION_ID",
+        "LINKEDIN_TOKEN",
+        "LINKEDIN_AUTHOR_URN",
+        "IG_ACCESS_TOKEN",
+        "IG_USER_ID"
+      ],
+      "solo_pruebas_local": [
+        "E2E_SENTINEL",
+        "SEED_PREFIX",
+        "SEED_TARGET_URL",
+        "SEED_TARGET_TOKEN",
+        "LOAD_DB_URL",
+        "LOAD_DEMO_URL",
+        "LOAD_HOST",
+        "LOAD_PORT",
+        "E2E_DB_MODE"
+      ],
+      "gotcha": "El repo mezcla import.meta.env y process.env, que NO son equivalentes (el dev server carga .env sólo en el primero; Vercel inyecta sólo en el segundo). Para leer una env var nueva usar siempre serverEnv() de src/lib/env.ts.",
+      "source": "grep sobre src/, scripts/, auth.config.ts; CLAUDE.md"
+    }
+  },
+  "docs": {
+    "_criterio": "Se distingue PLANTILLA (formato en blanco del SENA) de DOCUMENTO DILIGENCIADO.",
+    "requeridos": {
+      "documento_final_producto": {
+        "existe": false,
+        "ruta": null,
+        "plantilla": "DEA Formato_Documento_de_Arquitectura.docx / .pdf (raíz) - es el FORMATO, no el documento diligenciado",
+        "parcialmente_cubierto_por": [
+          "README.md",
+          "docs/plan-documentacion.md",
+          "src/data/documentacion.ts (186 ítems RF/RNF/CU)",
+          "/docs (25 subpáginas públicas)"
+        ],
+        "que_deberia_llevar": "Documento consolidado del producto: alcance, arquitectura, requisitos funcionales y no funcionales, modelo de datos, diagramas UML/BPMN y resultados de las pruebas. La materia prima existe toda en src/data/documentacion.ts y /docs, pero no hay un entregable único armado."
+      },
+      "plan_de_pruebas": {
+        "existe": true,
+        "ruta": "docs/plan-pruebas-sena.docx",
+        "plantilla": "docs/Plantilla_Plan de Pruebas de Software.docx",
+        "complementos": [
+          "docs/plan-testing-docs.md",
+          "src/data/testing.ts (niveles y punto ciego de cada uno)"
+        ]
+      },
+      "documentacion_gestion_pruebas": {
+        "existe": true,
+        "ruta": [
+          "docs/taller-testing-caja-negra.md",
+          "docs/Taller-Testing-Caja-Negra-CodeByMike.pdf",
+          "docs/evidencias-taller-testing/ (14 capturas)",
+          "informes/tests-junit.xml",
+          "informes/tests.html",
+          "src/data/ejecucion-pruebas.json",
+          "src/data/reportes-pruebas.ts",
+          "src/data/vyv.ts"
+        ],
+        "nota": "Es la pieza más fuerte del expediente: TC-01..TC-10 con oráculo, veredicto y evidencia gráfica, particiones de equivalencia, BVA, carta exploratoria, 6 defectos y matriz TC↔BUG."
+      },
+      "plan_de_implantacion": {
+        "existe": true,
+        "ruta": [
+          "docs/plan-implantacion.md",
+          "docs/plan-implantacion-sena.docx",
+          "docs/PlanImplantacion.pptx"
+        ],
+        "plantilla": "docs/8.Plantilla_Plan_de_Implantación.docx"
+      },
+      "manual_tecnico": {
+        "existe": true,
+        "ruta": [
+          "docs/manuales-sena/manual-tecnico.md",
+          "manuales_sena/manuales_de_usuario/Manual Técnico — CodeByMike.pdf",
+          "manuales_sena/manuales_de_usuario/Manual Técnico — CodeByMike.docx"
+        ],
+        "plantilla": "manuales_sena/Plantilla_Manual_ Técnico.docx"
+      },
+      "manual_usuario_final": {
+        "existe": true,
+        "ruta": [
+          "docs/manuales-sena/manual-de-usuario.md",
+          "manuales_sena/manuales_de_usuario/Manual de Usuario — CodeByMike.pdf",
+          "manuales_sena/manuales_de_usuario/Manual de Usuario — CodeByMike.docx"
+        ]
+      },
+      "plan_capacitacion_usuarios": {
+        "existe": true,
+        "ruta": [
+          "docs/manuales-sena/plan-de-capacitacion.md",
+          "manuales_sena/manuales_de_usuario/Plan de Capacitación — CodeByMike.pdf",
+          "manuales_sena/manuales_de_usuario/Plan de Capacitación — CodeByMike.docx"
+        ],
+        "plantilla": "manuales_sena/Plantilla_Plan_de_Plan de Capacitación.docx"
+      }
+    },
+    "extra_en_el_repo": {
+      "manual_instalacion": [
+        "docs/manuales-sena/manual-de-instalacion.md",
+        "manuales_sena/manuales_de_usuario/Manual de Instalación — CodeByMike.pdf"
+      ],
+      "historias_de_usuario": "docs/historias-de-usuario.md (HU-01..HU-41)",
+      "requisitos": [
+        "docs/requisitos-funcionales.md",
+        "docs/requisitos-no-funcionales.md",
+        "src/data/documentacion.ts"
+      ],
+      "diagramas_uml": [
+        "manuales_sena/Diagramas-UML-CodeByMike.pdf",
+        "docs/diagramas-bpmn/",
+        "src/data/{bpmn,despliegue,comunicacion,actividades,componentes}.ts"
+      ],
+      "taller_docker": [
+        "docs/manuales-sena/taller-docker-linux.md",
+        "docs/manuales-sena/Taller-Docker-Linux-CodeByMike.pdf"
+      ],
+      "sustentacion": "docs/Sustentación Trimestre 6 - DobleYo.pptx",
+      "planes_vivos": "18 archivos docs/plan-*.md que se actualizan al implementar (no se archivan)",
+      "runbook": "docs/runbook-cuota-turso.md"
+    },
+    "source": "ls docs/, manuales_sena/, informes/, raíz del repo"
+  },
+  "demo": {
+    "levantar_stack_local": {
+      "simple": [
+        "source ~/.nvm/nvm.sh && nvm use 22",
+        "npm install",
+        "npm run dev"
+      ],
+      "con_bases_locales_docker": [
+        "source ~/.nvm/nvm.sh && nvm use 22",
+        "npm run db:up",
+        "npm run db:seed",
+        "npm run dev:carga   # sirve en :4400 contra sqld local :8080/:8081"
+      ],
+      "nota_node": "El shell por defecto puede traer Node 20, que rompe astro build/dev. El .devcontainer fija Node 22.12 + Chromium de Playwright.",
+      "source": "package.json (scripts), compose.yaml, CLAUDE.md"
+    },
+    "puerto_frontend": {
+      "dev": 4321,
+      "dev_nota": "Default de `astro dev`; astro.config.mjs no fija server.port.",
+      "variantes": {
+        "dev:carga": 4400,
+        "e2e (playwright.config.ts)": 4331,
+        "taller de testing manual": 4399,
+        "sqld principal": 8080,
+        "sqld demo": 8081
+      }
+    },
+    "embebible_en_iframe": {
+      "posible": false,
+      "x_frame_options": "DENY",
+      "csp_frame_ancestors": "'none'",
+      "archivos": [
+        "src/middleware.ts:555 (X-Frame-Options: DENY)",
+        "src/middleware.ts:560-563 y :575-578 (Content-Security-Policy con frame-ancestors 'none')",
+        "integrations/static-headers.mjs:32 y :42 (misma CSP inyectada en las 46 páginas estáticas del build)"
+      ],
+      "implicacion": "NO se puede embeber el sitio en un iframe dentro de la presentación. Hay que proyectar el navegador directamente (pestaña real) o usar capturas/vídeo. La única excepción documentada en el código es una respuesta que trae su propia CSP con frame-ancestors 'self' (ver el comentario en src/middleware.ts:541-542).",
+      "source": "src/middleware.ts, integrations/static-headers.mjs"
+    },
+    "seed_de_datos": {
+      "existe": true,
+      "comandos": {
+        "demo_publica": "npm run seed:demo  (= node scripts/seed-demo.mjs → TURSO_DEMO_URL)",
+        "bases_e2e": "node scripts/seed-e2e.mjs",
+        "bases_locales_docker": "npm run db:seed",
+        "reset_total": "npm run db:reset"
+      },
+      "que_siembra": "Clientes, proyectos, costos, finanzas, seguimiento, monitores con 90 días de historial, corridas de CI y experimentos del LAB. Es idempotente: arrasa el esquema y lo recrea con el migrador de drizzle.",
+      "salvaguarda": "Se niega a correr contra TURSO_DATABASE_URL (la base real). El aislamiento de la demo depende de que sean bases distintas.",
+      "source": "scripts/seed-demo.mjs, package.json"
+    },
+    "credenciales_de_prueba": {
+      "portal_demo_publica": {
+        "usuario": "demo@codebymike.tech",
+        "password": null,
+        "como_se_entra": "SIN contraseña: GET /api/portal/demo emite un pase anónimo que crea la sesión contra esa fila. Desde la UI, el botón «Probar el portal demo» en /tools.",
+        "source": "scripts/seed-demo.mjs (seedPortalDemo), src/lib/portal/demo.ts:23 (PORTAL_DEMO_EMAIL)"
+      },
+      "panel_admin_demo": {
+        "usuario": null,
+        "password": null,
+        "como_se_entra": "SIN credenciales: el formulario de /demo emite un pase HMAC en cookie corta. Sólo GET/HEAD y con rutas sensibles vetadas por patrón.",
+        "source": "src/lib/demo.ts, src/pages/demo.astro"
+      },
+      "cobros_de_campo": {
+        "codigos": [
+          {
+            "code": "MN5TW3",
+            "monto": "$195.000",
+            "estado": "creado",
+            "vence": "+72 h"
+          },
+          {
+            "code": "AB3K9F",
+            "monto": "$150.000",
+            "estado": "creado",
+            "vence": "+72 h"
+          },
+          {
+            "code": "XY7MQ2",
+            "monto": "$80.000",
+            "estado": "vencido",
+            "vence": "-2 h"
+          },
+          {
+            "code": "PK4RT8",
+            "monto": "$320.000",
+            "estado": "aprobado",
+            "vence": "+48 h"
+          }
+        ],
+        "telefono_pagador": "+57 310 464 1228",
+        "advertencia": "Estos códigos están documentados en docs/taller-testing-caja-negra.md como datos del taller manual. NO los genera scripts/seed-demo.mjs en su estado actual: verificar antes de apoyarse en ellos en vivo.",
+        "source": "docs/taller-testing-caja-negra.md (§ Datos de prueba sembrados)"
+      },
+      "usuarios_con_password_del_taller": {
+        "existen_en_el_seed": false,
+        "detalle": "docs/taller-testing-caja-negra.md documenta ana.torres@altiplano.test / Altiplano2026 (y otros 3 usuarios). Un grep sobre scripts/, src/, tests/ y e2e/ NO encuentra esas cadenas en ningún sitio: el seed actual sólo crea demo@codebymike.tech SIN contraseña. Fueron datos creados a mano para el taller.",
+        "consecuencia": "No hay forma reproducible de demostrar EN VIVO un login con contraseña del portal. Ver gaps[]."
+      },
+      "produccion": "Ninguna credencial de producción aparece en el repo ni en este spec."
+    },
+    "flujo_60_90_segundos": {
+      "titulo": "De la promesa pública a la prueba: el panel real con datos ficticios, sin pedir cuenta",
+      "por_que_este": "Enseña en un minuto lo que diferencia al proyecto: no es un portafolio con capturas, es un producto en marcha con observabilidad propia que cualquiera puede recorrer sin credenciales.",
+      "precondicion": "npm run dev (o proyectar https://codebymike.tech). NO usar iframe: frame-ancestors 'none'.",
+      "pasos": [
+        {
+          "t": "0-10 s",
+          "ruta": "/",
+          "accion": "Abrir la portada y bajar hasta los proyectos.",
+          "se_ve": "Portafolio SSR: hero, expertise, proyectos visibles."
+        },
+        {
+          "t": "10-25 s",
+          "ruta": "/status",
+          "accion": "Abrir el estado del sistema.",
+          "se_ve": "Uptime real de 30 días, incidentes y latencia por servicio, calculados por un motor de checks propio (no un SaaS). Es además la ruta más cara del sitio, la que marca el techo en las pruebas de carga."
+        },
+        {
+          "t": "25-40 s",
+          "ruta": "/security",
+          "accion": "Mostrar el micro-SIEM.",
+          "se_ve": "Intentos de intrusión detectados y bloqueados, en agregados. Sólo agregados por OPSEC: nunca IPs completas ni reglas de detección."
+        },
+        {
+          "t": "40-60 s",
+          "ruta": "/demo",
+          "accion": "Enviar el formulario y entrar al panel completo.",
+          "se_ve": "El panel de control real (costos y P&L, clientes, monitoreo) con datos ficticios y sin registro. Señalar que sale de una base Turso DISTINTA, elegida por request con AsyncLocalStorage: el aislamiento es por construcción, no por filtrar queries."
+        },
+        {
+          "t": "60-75 s",
+          "ruta": "/tools → «Probar el portal demo»",
+          "accion": "Entrar al portal de clientes sin contraseña.",
+          "se_ve": "Portal del cliente Altiplano: facturas, hitos del proyecto y mensajes. Tercer sistema de autenticación, separado del admin."
+        },
+        {
+          "t": "75-90 s",
+          "ruta": "/lab",
+          "accion": "Cerrar en el laboratorio.",
+          "se_ve": "Pipeline CI/CD con rollback automático, chaos engineering y hallazgos de seguridad con resultados reales. Enlaza con la parte de pruebas de la sustentación."
+        }
+      ],
+      "frase_de_cierre": "Todo lo que acaban de ver es SSR contra una base real, con su propio monitoreo, su propio SIEM y su propio pipeline con rollback. Nada de esto es una captura.",
+      "plan_b": "Si falla la red, el mismo recorrido corre en local con `npm run dev` tras `npm run seed:demo`.",
+      "source": "README.md (tabla «En vivo (sin login)»), src/pages/, src/lib/demo.ts"
+    }
+  },
+  "highlights": [
+    {
+      "label": "Líneas de código (src/, .ts + .astro)",
+      "value": 73893,
+      "source": "find src -type f \\( -name '*.ts' -o -name '*.astro' \\) | xargs cat | wc -l"
+    },
+    {
+      "label": "Endpoints de API",
+      "value": 125,
+      "source": "find src/pages/api -name '*.ts' | wc -l"
+    },
+    {
+      "label": "Páginas .astro",
+      "value": 143,
+      "source": "find src/pages -name '*.astro' | wc -l"
+    },
+    {
+      "label": "Tablas en el esquema",
+      "value": 61,
+      "source": "grep -c 'sqliteTable(' src/db/schema.ts"
+    },
+    {
+      "label": "Migraciones Drizzle aplicadas",
+      "value": 29,
+      "source": "ls drizzle/*.sql | wc -l"
+    },
+    {
+      "label": "Módulos en src/lib",
+      "value": 107,
+      "source": "find src/lib -name '*.ts' | wc -l"
+    },
+    {
+      "label": "Pruebas automatizadas (Vitest)",
+      "value": "1200 en 70 archivos, 0 fallos, 35.1 s",
+      "source": "informes/tests-junit.xml"
+    },
+    {
+      "label": "Pruebas e2e (Playwright)",
+      "value": "47 casos en 6 archivos",
+      "source": "npx playwright test --list"
+    },
+    {
+      "label": "Cobertura de líneas sobre src/lib",
+      "value": "68.32% (3110/4552)",
+      "source": "coverage/coverage-summary.json (ejecutado en esta sesión)"
+    },
+    {
+      "label": "Tiempo de build de producción",
+      "value": "18.71 s (server built in 16.46 s)",
+      "source": "/usr/bin/time npm run build, ejecutado en esta sesión"
+    },
+    {
+      "label": "Peso del bundle de cliente",
+      "value": "4.9 MB en dist/client/_astro (20 MB dist/client con todos los assets)",
+      "source": "du -sh dist/client/_astro"
+    },
+    {
+      "label": "Páginas estáticas con cabeceras de seguridad inyectadas",
+      "value": 46,
+      "source": "salida del build: [static-headers] cabeceras inyectadas en 46 páginas estáticas"
+    },
+    {
+      "label": "Requisitos documentados (RF/RNF/CU)",
+      "value": "186 ítems tipados",
+      "source": "grep -c 'id:' src/data/documentacion.ts"
+    },
+    {
+      "label": "Historias de usuario",
+      "value": "41 (HU-01..HU-41)",
+      "source": "docs/historias-de-usuario.md"
+    },
+    {
+      "label": "Casos de prueba manuales de caja negra",
+      "value": "10 (TC-01..TC-10) con evidencia gráfica",
+      "source": "docs/taller-testing-caja-negra.md, docs/evidencias-taller-testing/"
+    },
+    {
+      "label": "Defectos documentados",
+      "value": "6 (BUG-01..BUG-06), 1 de severidad Alta",
+      "source": "docs/taller-testing-caja-negra.md"
+    },
+    {
+      "label": "Crons programados",
+      "value": "7 en vercel.json + disparos externos desde cron-job.org",
+      "source": "vercel.json"
+    },
+    {
+      "label": "Sistemas de autenticación independientes",
+      "value": "3 (admin GitHub OAuth+WebAuthn · portal scrypt · demo pase HMAC)",
+      "source": "CLAUDE.md, src/lib/portal/, src/lib/demo.ts"
+    },
+    {
+      "label": "Capacidad sostenida medida (astro dev local)",
+      "value": "~62 req/s; quiebre a ~100 req/s ofrecidos",
+      "source": "lab/k6/resultados/"
+    },
+    {
+      "label": "Tiempo de arranque en frío",
+      "value": null,
+      "source": "No medido: no hay instrumentación de cold start ni captura de producción en el repo."
+    },
+    {
+      "label": "Tiempo de despliegue",
+      "value": null,
+      "source": "No medido: el pipeline espera hasta 8 min a que Vercel publique el SHA, pero no registra la duración real en el repo."
+    },
+    {
+      "label": "Mutation score (Stryker)",
+      "value": null,
+      "source": "stryker.config.json existe y hay workflow mutation.yml, pero no hay reporte generado en el repo."
+    }
+  ],
+  "gaps": [
+    {
+      "field": "demo.credenciales_de_prueba.usuarios_con_password_del_taller",
+      "why": "docs/taller-testing-caja-negra.md documenta 4 usuarios con contraseña (ana.torres@altiplano.test / Altiplano2026, etc.) pero ninguna de esas cadenas existe en scripts/, src/, tests/ ni e2e/. seed-demo.mjs sólo crea demo@codebymike.tech SIN contraseña. No hay forma reproducible de demostrar en vivo un login con contraseña del portal.",
+      "how_to_fill": "Añadir a scripts/seed-demo.mjs la creación de esos client_users con su hash scrypt, o aceptar demostrar el portal sólo por el pase anónimo de /api/portal/demo y decirlo así en la sustentación.",
+      "bloqueante": "alto"
+    },
+    {
+      "field": "breaking_point.node_id (contra producción)",
+      "why": "Todas las corridas de k6 son contra `astro dev` en localhost con libSQL local: el guardarraíl de lab/k6/lib/perfil.js aborta si el objetivo es producción o si la base es remota. El punto de quiebre medido (~100 req/s) NO es la capacidad de codebymike.tech en Vercel, que tiene autoescalado y worker pool.",
+      "how_to_fill": "Correr k6 contra un deploy de PREVIEW de Vercel (que el guardarraíl sí permite: sólo prohíbe codebymike.tech y dev-portfolio.vercel.app) con su propia base Turso de pruebas, y guardar el resultado en lab/k6/resultados/.",
+      "bloqueante": "alto"
+    },
+    {
+      "field": "breaking_point.vus",
+      "why": "El executor ramping-arrival-rate asigna VUs dinámicamente y handleSummary no persiste VUs por escalón; vus_max (2914) es de toda la corrida y no corresponde al escalón del quiebre.",
+      "how_to_fill": "Añadir un Trend por escalón que registre exec.instance.vusActive en lab/k6/estres.js y volver a correr.",
+      "bloqueante": "medio"
+    },
+    {
+      "field": "tests.load/stress.timeseries (serie por request)",
+      "why": "Las corridas no usaron --out json ni --summary-export de serie temporal: los .raw.json guardados son el objeto agregado de handleSummary, no un stream. La curva disponible es por escalón (30 s) y por tramo (15 s), 13 puntos en total.",
+      "how_to_fill": "Correr `k6 run --out json=lab/k6/resultados/estres.stream.json lab/k6/estres.js` y muestrear el stream a <=200 puntos.",
+      "bloqueante": "medio"
+    },
+    {
+      "field": "tests.stress.resultado.recuperacion (corrida válida)",
+      "why": "La corrida del 22 ago midió 100% de error en toda la fase de recuperación. El propio hallazgo H-03, escrito a mano, atribuye esto a haberse lanzado inmediatamente después de otra corrida de estrés sin ventana de enfriamiento; NO es una medición limpia del comportamiento de recuperación.",
+      "how_to_fill": "Repetir estres.js con el proceso recién arrancado y sin corrida previa inmediata, y archivar ese JSON como la corrida de referencia del ítem 6.",
+      "bloqueante": "alto"
+    },
+    {
+      "field": "matrix[].historia_usuario",
+      "why": "docs/historias-de-usuario.md define HU-01..HU-41 y src/data/documentacion.ts define 186 RF/RNF/CU, pero NINGÚN caso de prueba los referencia: los TC-01..TC-10 declaran Módulo/Función, no HU, y un grep de 'HU-' sobre tests/ y e2e/ devuelve 0 archivos. La trazabilidad caso→historia no existe hoy.",
+      "how_to_fill": "Añadir un campo «Historia de usuario» a cada bloque TC en docs/taller-testing-caja-negra.md y una etiqueta HU-xx en el describe() de cada suite, o construir una tabla de mapeo aparte. Es el ítem 7 de la rúbrica: sin esto la matriz queda a medias.",
+      "bloqueante": "alto"
+    },
+    {
+      "field": "deployment.ci_cd.workflows[].duracion_tipica",
+      "why": "No hay historial de duración de workflows en el repo; vive en la API de GitHub Actions y en la tabla ci_runs de producción (que el propio pipeline alimenta vía /api/lab/ingest).",
+      "how_to_fill": "`gh run list --workflow=ci.yml --json durationMs,conclusion --limit 20`, o consultar ci_runs desde /admin/lab.",
+      "bloqueante": "bajo"
+    },
+    {
+      "field": "deployment.runtime.region",
+      "why": "No hay región declarada en vercel.json ni en astro.config.mjs. /api/health la expone en runtime vía VERCEL_REGION, pero no hay captura de producción en el repo.",
+      "how_to_fill": "curl -s https://codebymike.tech/api/health | jq .region",
+      "bloqueante": "bajo"
+    },
+    {
+      "field": "deployment.dominios_dns_tls.dns",
+      "why": "La configuración de DNS y del registrador no está versionada: vive en el panel de Vercel y del registrador del dominio.",
+      "how_to_fill": "Capturar la configuración desde el panel de Vercel (Settings → Domains) y anotarla en docs/plan-implantacion.md.",
+      "bloqueante": "bajo"
+    },
+    {
+      "field": "docs.requeridos.documento_final_producto",
+      "why": "No existe un entregable único consolidado. La materia prima está completa (README.md, src/data/documentacion.ts con 186 ítems, las 25 subpáginas de /docs, los diagramas UML/BPMN), pero nadie la ha armado en un solo documento; en la raíz sólo está el FORMATO en blanco (DEA Formato_Documento_de_Arquitectura.docx).",
+      "how_to_fill": "Diligenciar el formato DEA con el contenido ya existente: alcance, arquitectura, RF/RNF, modelo de datos, diagramas y resultados de pruebas.",
+      "bloqueante": "alto"
+    },
+    {
+      "field": "highlights: cold start y tiempo de despliegue",
+      "why": "No hay instrumentación de arranque en frío ni registro de la duración real de un deploy en el repo. El pipeline espera hasta 8 min a que aparezca el SHA, pero eso es un techo de sondeo, no una medición.",
+      "how_to_fill": "Medir el cold start con una traza de Vercel Observability; para el deploy, leer durationMs de los últimos runs con `gh run list`.",
+      "bloqueante": "bajo"
+    },
+    {
+      "field": "highlights: mutation score",
+      "why": "stryker.config.json y .github/workflows/mutation.yml existen, y hay tests/mutation.test.ts, pero no hay ningún reporte de Stryker generado en el repo.",
+      "how_to_fill": "npm run test:mutation y archivar el reporte (reports/mutation/).",
+      "bloqueante": "medio"
+    },
+    {
+      "field": "tests.integration: cobertura de aristas",
+      "why": "9 de las 38 aristas del grafo quedan cubiertas por al menos un test de integración de Vitest. Las 29 restantes (integraciones externas: Wompi, Resend, ntfy, GitHub OAuth, Upstash, Vercel Blob; y buena parte del middleware) no tienen test de integración propio: se cubren por e2e, por revisión manual o no se cubren.",
+      "how_to_fill": "Ver tests_integration.uncovered_edges. Las de terceros exigirían dobles o un entorno de sandbox; las del middleware se pueden cubrir ampliando e2e/.",
+      "bloqueante": "medio"
+    },
+    {
+      "field": "tests.unit.coverage: alcance del denominador",
+      "why": "La cobertura del 68.32% mide sólo src/lib/**: lo que los tests importan. Las 143 páginas .astro y los 125 endpoints de src/pages/api/** NO entran en el denominador, así que la cifra NO es «cobertura del proyecto» y no debe presentarse como tal.",
+      "how_to_fill": "Decirlo explícitamente en la sustentación, o configurar coverage.include en vitest.config.ts para declarar el alcance de forma expresa.",
+      "bloqueante": "medio"
+    },
+    {
+      "field": "defects.BUG-01",
+      "why": "Defecto ABIERTO de severidad Alta: «Cerrar sesión» del portal falla con «Cross-site POST form submissions are forbidden» y la sesión NO se cierra. Es el único caso de prueba con veredicto NO CONFORME (TC-08).",
+      "how_to_fill": "Corregir la emisión del POST del formulario de logout (el endpoint funciona: con cabecera Origin explícita devuelve 302). Si no se corrige antes de la sustentación, presentarlo como defecto conocido con su análisis, que es una posición defendible.",
+      "bloqueante": "alto"
+    }
+  ]
+}
