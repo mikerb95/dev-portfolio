@@ -66,19 +66,28 @@ describe('seguidor · camino normal', () => {
     parar()
   })
 
-  it('descarta un snapshot viejo que llega tarde', async () => {
+  it('descarta un mensaje viejo que llega tarde por el bus', async () => {
     // Pub/sub no garantiza orden: un mensaje rezagado no puede hacer retroceder
     // la presentación delante del jurado.
-    const respuestas = [ok(snap({ version: 5, beat: 5 })), ok(snap({ version: 2, beat: 2 }))]
-    vi.stubGlobal('fetch', vi.fn(async () => respuestas.shift()!))
+    vi.stubGlobal('fetch', vi.fn(async () => ok(snap({ version: 5, beat: 5 }))))
     const recibidos: BeatSnapshot[] = []
-    const parar = seguirSustentacion({ sessionId: 's1', bus: null, onSnapshot: (s) => recibidos.push(s) })
+    const parar = seguirSustentacion({
+      sessionId: 's1',
+      bus: { url: 'https://bus.upstash.io', token: 'ro' },
+      onSnapshot: (s) => recibidos.push(s),
+    })
     await vi.waitFor(() => expect(recibidos).toHaveLength(1))
+    expect(recibidos.at(-1)!.beat).toBe(5)
 
-    const es = new EventSourceFalso('x')
-    void es
+    const es = EventSourceFalso.instancias[0]
+    // Rezagado: versión 2 cuando ya vamos por la 5.
+    es.onmessage!({ data: `message,sust:ch:s1,${JSON.stringify(snap({ version: 2, beat: 2 }))}` })
+    expect(recibidos).toHaveLength(1)
+
+    // Uno nuevo sí pasa.
+    es.onmessage!({ data: `message,sust:ch:s1,${JSON.stringify(snap({ version: 6, beat: 6 }))}` })
+    expect(recibidos.at(-1)!.beat).toBe(6)
     parar()
-    expect(recibidos.map((r) => r.beat)).toEqual([5])
   })
 
   it('con bus, se suscribe al canal sust: y marca en-vivo', async () => {
