@@ -2290,8 +2290,8 @@
         "descripcion": "Login con credenciales válidas en el portal",
         "tipo": "caja negra (manual)",
         "modulo": "Portal · Autenticación",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-35",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-35 en docs/historias-de-usuario.md. acceso con email y contraseña propios, sin relación con el login del administrador",
         "resultado": "pass",
         "nodos_involucrados": [
           "portal-clientes",
@@ -2307,8 +2307,8 @@
         "descripcion": "Login inválido: mensaje único que no revela si la cuenta existe",
         "tipo": "caja negra (manual)",
         "modulo": "Portal · Autenticación",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-35",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-35 en docs/historias-de-usuario.md. mismo mecanismo de acceso; el mensaje único ante error es la forma correcta de \"acceso con mis propias credenciales\"",
         "resultado": "pass",
         "nodos_involucrados": [
           "api-portal",
@@ -2322,8 +2322,8 @@
         "descripcion": "Bloqueo de cuenta 15 min al 10.º intento fallido, aunque cambie la IP",
         "tipo": "caja negra (manual)",
         "modulo": "Portal · Autenticación",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-37",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-37 en docs/historias-de-usuario.md. criterio de aceptación literal: intentos de login limitados por IP y por cuenta",
         "resultado": "pass",
         "nodos_involucrados": [
           "api-portal",
@@ -2339,8 +2339,8 @@
         "descripcion": "Listado de facturas coherente con los KPI",
         "tipo": "caja negra (manual)",
         "modulo": "Portal · Facturas",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-35",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-35 en docs/historias-de-usuario.md. criterio de aceptación literal: ver mis facturas con su estado y vencimiento",
         "resultado": "pass",
         "nodos_involucrados": [
           "portal-clientes",
@@ -2355,8 +2355,8 @@
         "descripcion": "Detalle de factura y descarga del PDF como adjunto sin cachear",
         "tipo": "caja negra (manual)",
         "modulo": "Portal · Facturas",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-35",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-35 en docs/historias-de-usuario.md. criterio de aceptación literal: facturas descargables en PDF",
         "resultado": "pass",
         "nodos_involucrados": [
           "api-portal",
@@ -2370,8 +2370,8 @@
         "descripcion": "Aislamiento entre clientes: no se lee una factura ajena conociendo su id",
         "tipo": "caja negra (manual)",
         "modulo": "Portal · Aislamiento",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-35",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-35 en docs/historias-de-usuario.md. criterio de aceptación literal: ninguna consulta devuelve datos de otro cliente, ni manipulando el id en la URL",
         "resultado": "pass",
         "nodos_involucrados": [
           "api-portal",
@@ -2387,7 +2387,7 @@
         "tipo": "caja negra (manual)",
         "modulo": "Portal · Cuenta",
         "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario_note": "sin HU que calce: HU-37 es \"olvidé mi contraseña\" (recuperación por correo), no un cambio voluntario ya autenticado. Gap real, no forzado.",
         "resultado": "pass",
         "nodos_involucrados": [
           "api-portal",
@@ -2401,8 +2401,8 @@
         "descripcion": "Cerrar sesión revoca la sesión y devuelve al login",
         "tipo": "caja negra (manual)",
         "modulo": "Portal · Autenticación",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-37",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-37 en docs/historias-de-usuario.md. criterio de aceptación literal: revocar una sesión la corta en el siguiente request, no al expirar",
         "resultado": "fail",
         "nodos_involucrados": [
           "portal-clientes",
@@ -2417,8 +2417,8 @@
         "descripcion": "Ciclo del cobro por link corto: vigente → pago → estado terminal",
         "tipo": "caja negra (manual)",
         "modulo": "Cobros de campo",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-38",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-38 en docs/historias-de-usuario.md. valida el criterio \"el cliente recibe un enlace corto que lleva al checkout\" desde el lado del cliente; HU-38 está narrada desde el admin que envía el link",
         "resultado": "pass",
         "nodos_involucrados": [
           "api-payments",
@@ -2434,8 +2434,8 @@
         "descripcion": "Histórico público /mis-pagos enmascarado y limitado por IP",
         "tipo": "caja negra (manual)",
         "modulo": "Cobros de campo",
-        "historia_usuario": null,
-        "historia_usuario_note": "El documento de casos no lleva campo de historia de usuario; el catálogo HU-01..HU-41 existe aparte y no está enlazado.",
+        "historia_usuario": "HU-39",
+        "historia_usuario_note": "Asignada el 27 ago 2026 tras leer el criterio de aceptación completo de HU-39 en docs/historias-de-usuario.md. criterio de aceptación literal: consulta por teléfono con datos enmascarados y fuertemente limitada por tasa",
         "resultado": "pass",
         "nodos_involucrados": [
           "api-payments",
@@ -2521,7 +2521,7 @@
         }
       ],
       "evidence_dir": "docs/evidencias-taller-testing/ (14 capturas)",
-      "automated_traceability_note": "Ningún test de Vitest ni de Playwright referencia un id HU-xx o TC-xx: la trazabilidad automatizada es por módulo, no por identificador. La trazabilidad formal requisito→verificación sí existe, en el campo `verificacion` de cada requisito de src/data/documentacion.ts."
+      "automated_traceability_note": "Actualizado 27 ago 2026: cada TC-01..TC-10 tiene ahora su HU asignada en el campo historia_usuario (9 de 10; TC-07 queda null, sin HU que lo cubra - ver su nota). Ningún test de Vitest ni de Playwright referencia un id HU-xx o TC-xx en su nombre: la trazabilidad automatizada sigue siendo por módulo, no por identificador. Matriz completa HU→TC→veredicto→evidencia, incluidas las 37 HU sin cobertura de caja negra en este taller, en docs/matriz-trazabilidad.md."
     },
     "mutation": {
       "framework": "Stryker (@stryker-mutator/core 9.6.1 + vitest-runner)",
@@ -3233,9 +3233,9 @@
   "gaps": [
     {
       "field": "tests.matrix[].historia_usuario",
-      "blocking": "alto",
-      "why": "Los 10 casos de prueba (TC-01..TC-10) no llevan campo de historia de usuario, y ningún test de Vitest o Playwright referencia un id HU-xx. El catálogo de 41 historias existe en docs/historias-de-usuario.md pero está desconectado de las pruebas.",
-      "how_to_fill": "Añadir una fila «Historia de usuario» a cada bloque de caso en docs/taller-testing-caja-negra.md, o una etiqueta HU-xx en el nombre de cada describe(). La trazabilidad que SÍ existe hoy es requisito→verificación en el campo `verificacion` de src/data/documentacion.ts: si la rúbrica la acepta, se puede presentar esa en su lugar."
+      "blocking": "bajo",
+      "why": "RESUELTO el 27 ago 2026: 9 de 10 TC ya tienen su HU asignada, con la ficha completa en docs/taller-testing-caja-negra.md y la matriz cruzada en docs/matriz-trazabilidad.md. TC-07 queda deliberadamente sin HU (gap real: ninguna historia del catálogo describe un cambio de contraseña ya autenticado, distinto de HU-37 que es recuperación por olvido).",
+      "how_to_fill": "Si se quiere cobertura completa, redactar una HU-42 nueva para \"cliente que cambia su contraseña desde /portal/cuenta por rutina, no por haberla olvidado\" y volver a mapear TC-07. No se hizo aquí porque la instrucción fue no inventar una historia para forzar el mapeo."
     },
     {
       "field": "breaking_point.vus",
