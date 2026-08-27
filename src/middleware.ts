@@ -10,6 +10,7 @@ import { enforceLimit } from './lib/security/ratelimit-durable'
 import {
   isAuthPath,
   isCobroLinkPath,
+  isFramablePath,
   isPinPath,
   isTrainingAccessPath,
   isPortalAuthPath,
@@ -552,7 +553,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   if (isPrivate) {
-    resHeaders.set('X-Frame-Options', 'DENY')
+    // La sustentación proyecta el portal dentro de un iframe servido por este
+    // mismo origen. Solo esas rutas se relajan: /admin sigue con 'none'.
+    const framable = isFramablePath(canonicalPath)
+
+    // X-Frame-Options se OMITE en las rutas enmarcables en vez de ponerse en
+    // SAMEORIGIN. Es la cabecera vieja, no entiende 'self' de forma consistente
+    // entre navegadores, y dejarla en DENY junto a `frame-ancestors 'self'` es
+    // contradictorio: algunos aplican la más restrictiva y el iframe queda en
+    // blanco sin más pista que un aviso en consola. Manda la CSP.
+    if (!framable) resHeaders.set('X-Frame-Options', 'DENY')
     resHeaders.set('X-Content-Type-Options', 'nosniff')
     resHeaders.set('Referrer-Policy', 'no-referrer')
     resHeaders.set('X-Robots-Tag', 'noindex, nofollow')
@@ -560,7 +570,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       'Content-Security-Policy',
       "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; " +
         connectSrc +
-        " frame-ancestors 'none'; base-uri 'self'; form-action 'self';" +
+        ` frame-ancestors ${framable ? "'self'" : "'none'"}; base-uri 'self'; form-action 'self';` +
         CSP_REPORTING
     )
     return new Response(res.body, { status: res.status, headers: resHeaders })
