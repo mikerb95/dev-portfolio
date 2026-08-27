@@ -55,6 +55,7 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   'remote',
   'security',
   'status',
+  'sustentacion',
   'tools',
   // Señuelos y archivos servidos en la raíz
   'admin.php',
