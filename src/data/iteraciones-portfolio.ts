@@ -1738,7 +1738,7 @@ export const ITERACIONES: Iteracion[] = [
         tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
         fecha: '2026-08-26', tags: ['sena', 'personal', 'fase-41'],
         dod: [
-          ok('src/lib/sena-ep.ts (módulo puro e isomorfo, sin node:crypto ni ../db) calcula computeHitos(tipo, inicioIso): inicio, visita de concertación a los 15 días, una bitácora por mes según la duración del programa (6 meses técnico, 9 tecnólogo), visita parcial de seguimiento y cierre 5 días después del fin nominal.'),
+          ok('src/lib/sena-ep.ts (módulo puro e isomorfo, sin node:crypto ni ../db) calcula computeHitos(tipo, inicioIso): inicio, visita de concertación a los 15 días, una bitácora por mes durante los 6 meses que dura la etapa productiva en los dos niveles (864 horas de diseño curricular, igual para técnico y tecnólogo), visita parcial de seguimiento y cierre 5 días después del fin nominal.'),
           ok('La calculadora en /ep exporta los hitos a .ics para importarlos al calendario del aprendiz y genera un enlace compartible con los parámetros en la URL.'),
           ok("'ep' añadido a RESERVED_ROOT_SEGMENTS: Astro ya resuelve las estáticas antes que [pin].astro, así que el riesgo real es el inverso, que un PIN generado coincida con esta ruta y el público que escanee el QR aterrice en la página de etapa productiva en vez de en el deck. tests/present-reserved.test.ts falla si alguien añade una ruta raíz sin registrarla."),
         ],
