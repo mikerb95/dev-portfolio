@@ -312,15 +312,25 @@ const meta = [
             </>
           ))}
 
-          <!-- Carril de visitas -->
-          {visitas.map((v) => (
-            <div class="absolute top-[38px]" style={`left:${v.left}%;width:${v.width}%`}>
-              <div class="h-7 rounded-md bg-violet/15 border border-violet/40 flex items-center justify-center">
-                <span class="text-[10px] font-mono uppercase tracking-[.1em] text-violet">V{v.n}</span>
-              </div>
-              <span class="block text-[10px] font-mono text-ink-300 mt-1.5 whitespace-nowrap truncate">{v.titulo}</span>
-            </div>
-          ))}
+          <!-- Carril de visitas. Van como pin y no como banda: las ventanas 2 y
+               3 duran una semana, y a esa escala la banda mide 20px - no cabe
+               la etiqueta dentro. El pin se alinea al borde más cercano para no
+               desbordar el gráfico en los extremos. -->
+          {visitas.map((v) => {
+            const centro = v.left + v.width / 2
+            const desplazamiento = centro > 70 ? '-100%' : centro < 12 ? '0' : '-50%'
+            return (
+              <>
+                <div class="absolute top-[52px] bottom-[64px] w-px bg-violet/25" style={`left:${centro}%`}></div>
+                <div
+                  class="absolute top-[32px] rounded-md bg-violet/15 border border-violet/40 px-2 py-1 whitespace-nowrap"
+                  style={`left:${centro}%;transform:translateX(${desplazamiento})`}
+                >
+                  <span class="text-[10px] font-mono uppercase tracking-[.1em] text-violet">V{v.n} · {v.titulo}</span>
+                </div>
+              </>
+            )
+          })}
 
           <!-- Vía principal + progreso -->
           <div class="absolute left-0 right-0 top-[104px] h-2.5 rounded-full bg-white/[.06] overflow-hidden">
