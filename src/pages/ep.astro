@@ -285,7 +285,7 @@ const meta = [
             Crear mi cronograma
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
           </button>
-          <p class="text-[11px] text-ink-300 mt-2.5 max-w-sm leading-relaxed">
+          <p id="ep-cta-nota" class="text-[11px] text-ink-300 mt-2.5 max-w-sm leading-relaxed">
             ¿Eres otro aprendiz? Las fechas de arriba son de esta ficha; abajo puedes
             proyectar las tuyas a partir de tu propia fecha de inicio.
           </p>
@@ -721,6 +721,8 @@ const meta = [
     /* Interacción pura: no imprime nada útil. */
     #ep-volver,
     #ep-cta,
+    #ep-cta-nota,
+    #calc-toast,
     #ep-aside,
     #calc-form,
     #calc-vacio,
@@ -735,6 +737,11 @@ const meta = [
     #ep-detalle,
     #calc-grid {
       display: block !important;
+    }
+
+    #ep-track {
+      min-width: 0 !important;
+      width: 100% !important;
     }
 
     /* El cronograma es el motivo de imprimir la hoja: sus fondos tienen que
