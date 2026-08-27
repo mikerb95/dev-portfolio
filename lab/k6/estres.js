@@ -66,6 +66,18 @@ const porEscalon = Object.fromEntries(
   }]),
 )
 
+/**
+ * VUs realmente activos en el instante de CADA petición del escalón, no el
+ * VUs "ofrecido" por el ejecutor. Con `ramping-arrival-rate`, k6 asigna VUs
+ * de un pool para sostener el ritmo pedido; cuando el sistema se satura y las
+ * respuestas tardan, hacen falta más VUs simultáneos para mantener la misma
+ * tasa de llegada. Este Trend es lo que permite reportar breaking_point.vus
+ * en vez de dejarlo en null.
+ */
+const vusPorEscalon = Object.fromEntries(
+  ESCALONES.map((e) => [e.desdeS, new Trend(`quiebre_e${e.desdeS}_vus`)]),
+)
+
 const TRAMOS = [0, 15, 30, 45, 60, 75, 90, 105]
 const porTramo = Object.fromEntries(
   TRAMOS.map((t) => [t, new Trend(`recuperacion_t${t}`, true)]),
@@ -183,6 +195,7 @@ export function apretar() {
   const res = pedir(base, rutaAleatoria())
   porEscalon[clave]?.lat.add(res.timings.duration)
   porEscalon[clave]?.err.add(res.status !== 200)
+  vusPorEscalon[clave]?.add(exec.instance.vusActive)
 }
 
 export function soltar() {
@@ -273,9 +286,15 @@ export function handleSummary(data) {
     const proc = data.metrics[`proceso_cpu_e${e.desdeS}`]?.values ?? {}
     const heap = data.metrics[`proceso_heap_e${e.desdeS}`]?.values ?? {}
     const { cpuPct, heapMb } = muestraProceso({ count: proc.count, cpuAvg: proc.avg, heapAvg: heap.avg })
+    const vus = data.metrics[`quiebre_e${e.desdeS}_vus`]?.values ?? {}
     return {
       rpsOfrecido: e.rps,
       n,
+      // VUs activos promedio/máximo mientras corrió este escalón. Es lo que
+      // hace posible reportar breaking_point.vus en vez de null: con
+      // ramping-arrival-rate el ejecutor los asigna solo, no los fija el script.
+      vusPromedio: Number((vus.avg ?? 0).toFixed(1)),
+      vusMax: Math.round(vus.max ?? 0),
       // Respuestas por segundo, timeouts incluidos. NO es throughput: una
       // petición que se rinde a los 10 s también "responde".
       respuestasRps: Number((n / 30).toFixed(1)),
@@ -314,9 +333,9 @@ export function handleSummary(data) {
   return {
     stdout: aTexto(r)
       + `  escalera del quiebre\n`
-      + `    ofrecido  respuestas   exitosas      p50      p95  errores    cpu%   heap MB  estado\n`
+      + `    ofrecido  respuestas   exitosas      p50      p95  errores    cpu%   heap MB   vus  estado\n`
       + r.escalera
-          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.respuestasRps).padStart(9)}/s ${String(e.exitosasRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(6)}% ${cpuTexto(e.cpuPct)} ${heapTexto(e.heapMb)} ${e.estado.padStart(10)}`)
+          .map((e) => `    ${String(e.rpsOfrecido).padStart(5)}/s ${String(e.respuestasRps).padStart(9)}/s ${String(e.exitosasRps).padStart(9)}/s ${String(Math.round(e.p50)).padStart(7)}ms ${String(Math.round(e.p95)).padStart(7)}ms ${String(e.errorPct).padStart(6)}% ${cpuTexto(e.cpuPct)} ${heapTexto(e.heapMb)} ${String(e.vusMax).padStart(5)} ${e.estado.padStart(10)}`)
           .join('\n')
       + `\n\n  recuperación  p50 ${r.recuperacion.p50}ms · p95 ${r.recuperacion.p95}ms · errores ${r.recuperacion.tasaErrorPct}%\n`
       + `  curva de recuperación (s desde que cesó la carga)\n`

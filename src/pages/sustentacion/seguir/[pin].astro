@@ -14,7 +14,17 @@ import { getSesionPorPin, toBeatSnapshot } from '../../../lib/sustentacion/bus'
 import { busCredentials } from '../../../lib/present/store'
 
 const pin = String(Astro.params.pin ?? '')
-const sesion = await getSesionPorPin(pin)
+
+// Redis caído lanza en vez de devolver null. Sin capturarlo, esta página daría
+// un 500 sin estilos delante del jurado en vez de un "PIN no encontrado": son
+// causas distintas, pero el peor caso para quien mira el celular es idéntico,
+// no hay sesión que mostrar.
+let sesion: Awaited<ReturnType<typeof getSesionPorPin>> = null
+try {
+  sesion = await getSesionPorPin(pin)
+} catch {
+  sesion = null
+}
 
 if (!sesion) {
   return new Response('PIN no encontrado', { status: 404 })

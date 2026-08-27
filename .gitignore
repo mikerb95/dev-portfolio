@@ -48,3 +48,9 @@ prueba testing SENACLUB.pdf
 # taller Docker SENA: bind mount local de sqld (docs/manuales-sena/compose.sena-bind.yaml)
 .data/
 docs/PlanImplantacion.pptx
+
+# k6 --out json=... produce un NDJSON con una linea por metrica (decenas de MB
+# por corrida). El resumen curado (*.json) y el summary crudo (*.raw.json) son
+# lo que se versiona; el stream es evidencia de una corrida puntual, no un
+# artefacto para revisar en el repo.
+lab/k6/resultados/*.stream.json

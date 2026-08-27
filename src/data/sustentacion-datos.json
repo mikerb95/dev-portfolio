@@ -12,20 +12,20 @@
     "regenerar": "npx vitest run --coverage --reporter=junit --outputFile=informes/tests-junit.xml, y volver a extraer."
   },
   "pruebas": {
-    "total": 1231,
+    "total": 1258,
     "fallos": 0,
     "errores": 0,
-    "archivos": 73,
-    "segundos": 50.39,
+    "archivos": 75,
+    "segundos": 36.65,
     "unitarias": {
-      "pruebas": 1098,
-      "archivos": 63,
-      "segundos": 16.17
+      "pruebas": 1125,
+      "archivos": 65,
+      "segundos": 10.9
     },
     "integracion": {
       "pruebas": 133,
       "archivos": 10,
-      "segundos": 34.22,
+      "segundos": 25.75,
       "nota": "Abren una base libSQL real en archivo temporal, no un doble."
     },
     "e2e": {
@@ -36,14 +36,14 @@
     }
   },
   "cobertura": {
-    "lineas_pct": 69.23,
-    "lineas": "3270/4723",
-    "sentencias_pct": 68.54,
-    "sentencias": "3937/5744",
-    "ramas_pct": 64.09,
-    "ramas": "2529/3946",
-    "funciones_pct": 67.02,
-    "funciones": "803/1198",
+    "lineas_pct": 69.79,
+    "lineas": "3365/4821",
+    "sentencias_pct": 69.01,
+    "sentencias": "4053/5873",
+    "ramas_pct": 64.25,
+    "ramas": "2580/4015",
+    "funciones_pct": 67.9,
+    "funciones": "838/1234",
     "alcance": "Mide src/lib y src/i18n (la capa de lógica). Las páginas .astro y los endpoints NO entran en el instrumentado de v8 con esta configuración: no es 'cobertura del proyecto entero'."
   },
   "carga": {

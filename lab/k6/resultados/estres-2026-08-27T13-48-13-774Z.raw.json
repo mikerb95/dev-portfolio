@@ -1,0 +1,938 @@
+{
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [],
+    "checks": [
+        {
+          "passes": 4193,
+          "fails": 15829,
+          "name": "status 200",
+          "path": "::status 200",
+          "id": "fad9fa412b86fcb03bee97c80dcd61f1"
+        },
+        {
+          "id": "84689ebc64c31e5f2d48db3ea60393eb",
+          "passes": 4252,
+          "fails": 15770,
+          "name": "cuerpo no vacío",
+          "path": "::cuerpo no vacío"
+        }
+      ]
+  },
+  "options": {
+    "summaryTrendStats": [
+      "avg",
+      "med",
+      "p(90)",
+      "p(95)",
+      "p(99)",
+      "max",
+      "count"
+    ],
+    "summaryTimeUnit": "",
+    "noColor": false
+  },
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 282240.027951
+  },
+  "metrics": {
+    "proceso_heap_e0": {
+      "values": {
+        "p(99)": 498.13,
+        "max": 513.6,
+        "count": 15,
+        "avg": 286.12666666666667,
+        "med": 288.2,
+        "p(90)": 383.38,
+        "p(95)": 436.2499999999999
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 20161,
+        "rate": 71.43210743835446
+      }
+    },
+    "proceso_cpu_e30": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 1.3133333333333332,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 5.909999999999979,
+        "p(99)": 16.94199999999999,
+        "max": 19.7,
+        "count": 15
+      }
+    },
+    "proceso_heap_e60": {
+      "values": {
+        "max": 693.9,
+        "count": 15,
+        "avg": 450.93333333333334,
+        "med": 442.3,
+        "p(90)": 611.0600000000001,
+        "p(95)": 653.86,
+        "p(99)": 685.8919999999999
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "quiebre_e120_err": {
+      "values": {
+        "rate": 0.9494121838261489,
+        "passes": 5330,
+        "fails": 284
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "vus": {
+      "contains": "default",
+      "values": {
+        "value": 2,
+        "min": 0,
+        "max": 2869
+      },
+      "type": "gauge"
+    },
+    "proceso_heap_t75": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 547.56,
+        "p(95)": 557.78,
+        "p(99)": 565.956,
+        "max": 568,
+        "count": 8,
+        "avg": 467.475,
+        "med": 459.04999999999995
+      }
+    },
+    "quiebre_e90": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 10006.941737,
+        "count": 6457,
+        "avg": 1489.5336037601066,
+        "med": 0,
+        "p(90)": 7931.0057192,
+        "p(95)": 10000.0066856,
+        "p(99)": 10000.777005079999
+      }
+    },
+    "proceso_heap_e120": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(99)": 636.029,
+        "max": 640.5,
+        "count": 18,
+        "avg": 436.65,
+        "med": 447.6,
+        "p(90)": 596.0000000000001,
+        "p(95)": 618.145
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.7851297058677645,
+        "passes": 15829,
+        "fails": 4332
+      }
+    },
+    "quiebre_e0": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(99)": 10000.657722560001,
+        "max": 10002.501669,
+        "count": 1454,
+        "avg": 3052.052009339753,
+        "med": 2323.2596365,
+        "p(90)": 6106.5363647,
+        "p(95)": 9999.9253888
+      }
+    },
+    "recuperacion_t90": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 6336.006692999998,
+        "p(99)": 6999.174877199993,
+        "max": 7523.726069,
+        "count": 193,
+        "avg": 3170.1840955284974,
+        "med": 2864.845166,
+        "p(90)": 5603.9634278
+      }
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "count": 20161,
+        "avg": 46.05549867754567,
+        "med": 0,
+        "p(90)": 176.286301,
+        "p(95)": 308.139521,
+        "p(99)": 684.7028232000023,
+        "max": 1159.736859
+      }
+    },
+    "proceso_heap_t15": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 302.20000000000005,
+        "p(90)": 380.09999999999997,
+        "p(95)": 394.79999999999995,
+        "p(99)": 406.56,
+        "max": 409.5,
+        "count": 8,
+        "avg": 305.525
+      }
+    },
+    "proceso_heap_t45": {
+      "contains": "time",
+      "values": {
+        "p(95)": 715.48,
+        "p(99)": 722.536,
+        "max": 724.3,
+        "count": 8,
+        "avg": 654.3125000000001,
+        "med": 657,
+        "p(90)": 706.66
+      },
+      "type": "trend"
+    },
+    "recuperacion_duracion": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 6304.580945160259,
+        "med": 6257.075011999999,
+        "p(90)": 10000.4890285,
+        "p(95)": 10000.7188555,
+        "p(99)": 10001.04106345,
+        "max": 10002.517795,
+        "count": 936
+      },
+      "thresholds": {
+        "p(95)<1000": {
+          "ok": false
+        }
+      }
+    },
+    "recuperacion_t45": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 10002.517795,
+        "count": 104,
+        "avg": 10000.206625259614,
+        "med": 10000.127079999998,
+        "p(90)": 10000.7514767,
+        "p(95)": 10000.86702235,
+        "p(99)": 10001.00854857
+      }
+    },
+    "proceso_cpu_t0": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "p(99)": 39.19799999999998,
+        "max": 41.7,
+        "count": 7,
+        "avg": 5.957142857142857,
+        "med": 0,
+        "p(90)": 16.680000000000017,
+        "p(95)": 29.189999999999973
+      }
+    },
+    "proceso_heap_t0": {
+      "values": {
+        "count": 7,
+        "avg": 632.0857142857142,
+        "med": 631.7,
+        "p(90)": 684.36,
+        "p(95)": 697.8299999999999,
+        "p(99)": 708.6059999999999,
+        "max": 711.3
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "quiebre_e30_err": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.39030745179781134,
+        "passes": 749,
+        "fails": 1170
+      }
+    },
+    "proceso_cpu_t45": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "med": 0,
+        "p(90)": 44.66,
+        "p(95)": 45.08,
+        "p(99)": 45.416,
+        "max": 45.5,
+        "count": 8,
+        "avg": 11.225
+      }
+    },
+    "quiebre_e90_err": {
+      "values": {
+        "fails": 441,
+        "rate": 0.931702028805947,
+        "passes": 6016
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "quiebre_e30": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "count": 1919,
+        "avg": 6622.780548096928,
+        "med": 7592.851718,
+        "p(90)": 10000.7472586,
+        "p(95)": 10000.9076599,
+        "p(99)": 10001.24624156,
+        "max": 10016.525031
+      }
+    },
+    "iteration_duration": {
+      "values": {
+        "p(95)": 10002.3352836,
+        "p(99)": 11001.586572729999,
+        "max": 11006.674393,
+        "count": 20160,
+        "avg": 8655.958869231537,
+        "med": 10000.8723905,
+        "p(90)": 10001.6710487
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "recuperacion_errores": {
+      "values": {
+        "passes": 420,
+        "fails": 516,
+        "rate": 0.44871794871794873
+      },
+      "thresholds": {
+        "rate<0.02": {
+          "ok": false
+        }
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "dropped_iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 4265,
+        "rate": 15.111251337958524
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 20160,
+        "rate": 71.42856435480512
+      }
+    },
+    "quiebre_e60_vus": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 1311.5763316858868,
+        "med": 1330.5,
+        "p(90)": 1644,
+        "p(95)": 1690,
+        "p(99)": 1724,
+        "max": 1728,
+        "count": 3642
+      }
+    },
+    "quiebre_e60_err": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.8830313014827018,
+        "passes": 3216,
+        "fails": 426
+      }
+    },
+    "recuperacion_t75": {
+      "values": {
+        "p(90)": 8627.0706788,
+        "p(95)": 8971.6174232,
+        "p(99)": 9232.01254276,
+        "max": 9456.989026,
+        "count": 133,
+        "avg": 5094.098201323305,
+        "med": 5365.125797
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "proceso_cpu_t90": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "max": 0,
+        "count": 7,
+        "avg": 0,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0
+      }
+    },
+    "http_req_waiting": {
+      "values": {
+        "count": 20161,
+        "avg": 2366.2495362411064,
+        "med": 0,
+        "p(90)": 9999.78653,
+        "p(95)": 10000.303171,
+        "p(99)": 10000.857249,
+        "max": 10024.874251
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "quiebre_e120": {
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "p(90)": 5886.643493799999,
+        "p(95)": 8958.250352749998,
+        "p(99)": 10000.43310745,
+        "max": 10011.710617,
+        "count": 5614,
+        "avg": 1083.609955158177
+      },
+      "type": "trend"
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 1228400,
+        "rate": 4352.323832016003
+      }
+    },
+    "quiebre_e60": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(99)": 10000.95780894,
+        "max": 10025.014767,
+        "count": 3642,
+        "avg": 2673.7620940842958,
+        "med": 0,
+        "p(90)": 10000.0739414,
+        "p(95)": 10000.5419398
+      }
+    },
+    "proceso_cpu_t60": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 0,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0,
+        "max": 0,
+        "count": 7
+      }
+    },
+    "recuperacion_t30": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 10000.170382421054,
+        "med": 10000.166597,
+        "p(90)": 10000.6039185,
+        "p(95)": 10000.7970745,
+        "p(99)": 10000.902057,
+        "max": 10000.954488,
+        "count": 76
+      }
+    },
+    "ruta_health": {
+      "contains": "time",
+      "values": {
+        "avg": 1774.1198429514889,
+        "med": 0,
+        "p(90)": 8963.1745112,
+        "p(95)": 10000.194992899998,
+        "p(99)": 10000.81138468,
+        "max": 10009.362878,
+        "count": 3999
+      },
+      "type": "trend"
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 260.4588043459147,
+        "med": 0,
+        "p(90)": 0.401429,
+        "p(95)": 2063.811022,
+        "p(99)": 5156.7613230000015,
+        "max": 9697.70911,
+        "count": 20161
+      }
+    },
+    "recuperacion_t0": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 9999.938496499999,
+        "p(90)": 10000.930565100001,
+        "p(95)": 10001.0618352,
+        "p(99)": 10001.24005482,
+        "max": 10002.216367,
+        "count": 120,
+        "avg": 7731.446342316671
+      }
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "p(90)": 0.293696,
+        "p(95)": 2057.276389,
+        "p(99)": 5146.189585000001,
+        "max": 7208.187415,
+        "count": 20161,
+        "avg": 237.4301705745252
+      }
+    },
+    "proceso_cpu_e120": {
+      "contains": "default",
+      "values": {
+        "count": 18,
+        "avg": 0.8222222222222223,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 2.219999999999979,
+        "p(99)": 12.283999999999976,
+        "max": 14.8
+      },
+      "type": "trend"
+    },
+    "proceso_cpu_e90": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 1.74,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 7.8299999999999725,
+        "p(99)": 22.445999999999987,
+        "max": 26.1,
+        "count": 15
+      }
+    },
+    "quiebre_e0_err": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.06740027510316368,
+        "passes": 98,
+        "fails": 1356
+      }
+    },
+    "recuperacion_t15": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 9434.347735433334,
+        "med": 9999.9134195,
+        "p(90)": 10000.6239386,
+        "p(95)": 10000.71247615,
+        "p(99)": 10000.91604199,
+        "max": 10001.096723,
+        "count": 60
+      }
+    },
+    "ruta_tools": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 8937.3949448,
+        "p(95)": 10000.171224400001,
+        "p(99)": 10000.83055922,
+        "max": 10011.293223,
+        "count": 3023,
+        "avg": 2062.975846125369,
+        "med": 0
+      }
+    },
+    "proceso_cpu_t105": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "med": 0,
+        "p(90)": 41.879999999999995,
+        "p(95)": 43.13999999999999,
+        "p(99)": 44.147999999999996,
+        "max": 44.4,
+        "count": 8,
+        "avg": 15.3875
+      }
+    },
+    "http_req_tls_handshaking": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0,
+        "max": 0,
+        "count": 20161,
+        "avg": 0,
+        "med": 0
+      }
+    },
+    "proceso_cpu_t15": {
+      "values": {
+        "p(95)": 0,
+        "p(99)": 0,
+        "max": 0,
+        "count": 8,
+        "avg": 0,
+        "med": 0,
+        "p(90)": 0
+      },
+      "type": "trend",
+      "contains": "default"
+    },
+    "proceso_cpu_t75": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "count": 8,
+        "avg": 5.4875,
+        "med": 0,
+        "p(90)": 13.169999999999991,
+        "p(95)": 28.534999999999975,
+        "p(99)": 40.826999999999984,
+        "max": 43.9
+      }
+    },
+    "quiebre_e30_vus": {
+      "contains": "default",
+      "values": {
+        "avg": 472.9734236581553,
+        "med": 453,
+        "p(90)": 762.2,
+        "p(95)": 826,
+        "p(99)": 839.8199999999999,
+        "max": 844,
+        "count": 1919
+      },
+      "type": "trend"
+    },
+    "quiebre_e90_vus": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "med": 2265,
+        "p(90)": 2581,
+        "p(95)": 2617,
+        "p(99)": 2634,
+        "max": 2641,
+        "count": 6457,
+        "avg": 2236.3625522688553
+      }
+    },
+    "http_req_sending": {
+      "values": {
+        "avg": 0.6869253717077533,
+        "med": 0,
+        "p(90)": 0.081123,
+        "p(95)": 0.125497,
+        "p(99)": 0.5075834000000009,
+        "max": 8000.942939,
+        "count": 20161
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "proceso_heap_t30": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 508.5,
+        "p(90)": 542.98,
+        "p(95)": 553.6899999999999,
+        "p(99)": 562.2579999999999,
+        "max": 564.4,
+        "count": 7,
+        "avg": 500.7142857142858
+      }
+    },
+    "proceso_cpu_t30": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 6.328571428571428,
+        "med": 0,
+        "p(90)": 17.720000000000013,
+        "p(95)": 31.009999999999966,
+        "p(99)": 41.641999999999975,
+        "max": 44.3,
+        "count": 7
+      }
+    },
+    "proceso_heap_t105": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(99)": 404.45799999999997,
+        "max": 405.9,
+        "count": 8,
+        "avg": 331.125,
+        "med": 328,
+        "p(90)": 391.48,
+        "p(95)": 398.69
+      }
+    },
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 2412.9919602903615,
+        "med": 0,
+        "p(90)": 9999.906521,
+        "p(95)": 10000.393963,
+        "p(99)": 10000.93082,
+        "max": 10025.014767,
+        "count": 20161
+      }
+    },
+    "proceso_heap_e30": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 555.76,
+        "p(95)": 569.79,
+        "p(99)": 577.238,
+        "max": 579.1,
+        "count": 15,
+        "avg": 392.4866666666668,
+        "med": 380.9
+      }
+    },
+    "proceso_heap_t60": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 337.75,
+        "p(99)": 345.54999999999995,
+        "max": 347.5,
+        "count": 7,
+        "avg": 280.0285714285714,
+        "med": 273.6,
+        "p(90)": 328
+      }
+    },
+    "quiebre_e0_vus": {
+      "contains": "default",
+      "values": {
+        "avg": 145.06671251719393,
+        "med": 137,
+        "p(90)": 200.70000000000005,
+        "p(95)": 223,
+        "p(99)": 242.47000000000003,
+        "max": 255,
+        "count": 1454
+      },
+      "type": "trend"
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 2872,
+        "min": 202,
+        "max": 2872
+      }
+    },
+    "recuperacion_t60": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "count": 60,
+        "avg": 10000.183018599997,
+        "med": 10000.139959,
+        "p(90)": 10000.719454600001,
+        "p(95)": 10000.784414599999,
+        "p(99)": 10000.89560467,
+        "max": 10000.95265
+      }
+    },
+    "proceso_heap_e90": {
+      "values": {
+        "p(99)": 669.168,
+        "max": 674.6,
+        "count": 15,
+        "avg": 433.5266666666668,
+        "med": 390.1,
+        "p(90)": 617.64,
+        "p(95)": 647.4399999999999
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "proceso_heap_t90": {
+      "contains": "time",
+      "values": {
+        "avg": 510.5285714285714,
+        "med": 609.4,
+        "p(90)": 662.4200000000001,
+        "p(95)": 672.56,
+        "p(99)": 680.672,
+        "max": 682.7,
+        "count": 7
+      },
+      "type": "trend"
+    },
+    "recuperacion_t105": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 7533.54519,
+        "count": 190,
+        "avg": 3778.143837084211,
+        "med": 3833.3156135,
+        "p(90)": 6542.2425842,
+        "p(95)": 6818.375283649998,
+        "p(99)": 7450.901577219999
+      }
+    },
+    "quiebre_e120_vus": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "med": 2785,
+        "p(90)": 2853,
+        "p(95)": 2860,
+        "p(99)": 2869,
+        "max": 2870,
+        "count": 5614,
+        "avg": 2771.1528322052013
+      }
+    },
+    "proceso_cpu_e60": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "p(99)": 0,
+        "max": 0,
+        "count": 15,
+        "avg": 0,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 0
+      }
+    },
+    "proceso_cpu_e0": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 1.52,
+        "med": 0,
+        "p(90)": 0.05999999999999997,
+        "p(95)": 6.879999999999975,
+        "p(99)": 19.535999999999987,
+        "max": 22.7,
+        "count": 15
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "contains": "time",
+      "values": {
+        "p(99)": 9768.42128861,
+        "max": 9998.733256,
+        "count": 4332,
+        "avg": 3525.3153769115897,
+        "med": 2895.5615745,
+        "p(90)": 7181.0294256,
+        "p(95)": 8605.429229
+      },
+      "type": "trend"
+    },
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.21089301768055138,
+        "passes": 8445,
+        "fails": 31599
+      }
+    },
+    "ruta_status": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "count": 4920,
+        "avg": 3033.781968331502,
+        "med": 0,
+        "p(90)": 10000.182445999999,
+        "p(95)": 10000.5762514,
+        "p(99)": 10001.01086445,
+        "max": 10016.525031
+      }
+    },
+    "ruta_home": {
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "p(90)": 9999.937981500001,
+        "p(95)": 10000.3976818,
+        "p(99)": 10000.94770312,
+        "max": 10025.014767,
+        "count": 8080,
+        "avg": 2503.681318496166
+      },
+      "type": "trend"
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 927796622,
+        "rate": 3287260.948546518
+      }
+    }
+  }
+}

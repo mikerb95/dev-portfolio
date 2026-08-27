@@ -343,5 +343,42 @@ const initials = (user.name ?? user.email)
 
       schedule()
     </script>
+
+    <!--
+      BUG-01: el submit NATIVO de estos dos <form method="POST"> lo rechaza el
+      CSRF de Astro con 403 "Cross-site POST form submissions are forbidden",
+      aunque sea mismo origen. Causa raíz: `Referrer-Policy: no-referrer` (que
+      el middleware fija en toda ruta privada) hace que Chrome mande
+      `Origin: null` en cualquier POST que sea una NAVEGACIÓN de página completa
+      -es el algoritmo del header Origin del spec de Fetch, ligado a la
+      política de referrer- y Astro compara ese `Origin` contra `url.origin`.
+      `fetch()` no está sujeto a esa regla: manda el origen real sin importar
+      la política de referrer, así que la petición sí pasa el CSRF.
+
+      La corrección es enviar por fetch() en vez de dejar que el navegador
+      navegue. NO se toca `Referrer-Policy` (relajarla filtraría a dónde va el
+      visitante desde toda ruta privada, admin incluido, por una sola forma) ni
+      el endpoint (ya funciona: lo prueba el fetch() de abajo). El <form> queda
+      como está, como fallback si JavaScript está deshabilitado - hoy ese caso
+      ya está roto al 100%, así que esto no es una regresión para nadie.
+    -->
+    <script>
+      for (const form of document.querySelectorAll<HTMLFormElement>('form[action="/api/portal/logout"]')) {
+        form.addEventListener('submit', async (ev) => {
+          ev.preventDefault()
+          try {
+            const res = await fetch(form.action, { method: 'POST', redirect: 'follow' })
+            // El destino lo decide el servidor (según la sesión: login normal o
+            // /admin/clients si se salía de "ver como cliente"), nunca este
+            // script - solo se sigue adonde `fetch()` ya aterrizó tras el 302.
+            window.location.href = res.url
+          } catch {
+            // Sin red: la navegación nativa es el único camino que queda, y es
+            // exactamente lo que habría pasado sin este script.
+            form.submit()
+          }
+        })
+      }
+    </script>
   </body>
 </html>

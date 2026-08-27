@@ -59,6 +59,39 @@ test.describe('portal · demo pública', () => {
     await expect(page.getByText('INV-2026-101')).toBeVisible()
   })
 
+  // BUG-01 (TC-08 en docs/taller-testing-caja-negra.md): el submit NATIVO del
+  // <form method="POST" action="/api/portal/logout"> lo rechazaba el CSRF de
+  // Astro con 403 "Cross-site POST form submissions are forbidden". Causa raíz:
+  // `Referrer-Policy: no-referrer` en toda ruta privada hace que Chrome mande
+  // `Origin: null` en un POST que es NAVEGACIÓN de página completa (el submit
+  // nativo de un <form>), y Astro compara ese Origin contra url.origin. Solo se
+  // reproduce con un click real en un navegador real: ningún test de servidor
+  // (Vitest) ve una diferencia entre curl-con-Origin-forzado y un <form> nativo,
+  // así que este caso pertenece aquí, no a tests/. Sin el arreglo (revertir el
+  // <script> de PortalLayout.astro que envía por fetch()), este test falla con
+  // el mismo texto que veía TC-08 en el navegador.
+  test('cerrar sesión desde el menú revoca la sesión de verdad (BUG-01)', async ({ page }) => {
+    await page.goto('/api/portal/demo')
+    await expect(page).toHaveURL(/\/portal$/)
+
+    // Clic real: abrir el menú de cuenta y pulsar "Cerrar sesión", igual que
+    // hizo el tester humano que encontró el defecto.
+    await page.locator('details.group summary').click()
+    await page.getByRole('button', { name: 'Cerrar sesión' }).click()
+
+    // Con el bug, esto nunca llega a pasar: la página queda en
+    // /api/portal/logout mostrando "Cross-site POST form submissions are
+    // forbidden" y la sesión sigue viva.
+    await expect(page).toHaveURL(/\/portal\/login\?m=session-closed/)
+    await expect(page.getByText('Cerraste sesión correctamente')).toBeVisible()
+    await expect(page.getByText('Cross-site', { exact: false })).not.toBeVisible()
+
+    // La sesión murió de verdad, no solo cambió la URL: volver a /portal exige
+    // login otra vez.
+    await page.goto('/portal')
+    await expect(page).toHaveURL(/\/portal\/login\?next=/)
+  })
+
   test('la capa viva late con datos de la base de demo', async ({ page }) => {
     await page.goto('/api/portal/demo')
 

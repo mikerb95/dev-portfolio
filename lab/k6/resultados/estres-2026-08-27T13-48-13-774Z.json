@@ -1,0 +1,226 @@
+{
+  "escenario": "estres",
+  "objetivo": "http://127.0.0.1:4400",
+  "fecha": "2026-08-27T13:48:13.774Z",
+  "vusMax": 2872,
+  "duracionS": 282,
+  "peticiones": 20161,
+  "rps": 71.43,
+  "latenciaMs": {
+    "media": 2413,
+    "p50": 0,
+    "p90": 9999.9,
+    "p95": 10000.4,
+    "p99": 10000.9,
+    "max": 10025
+  },
+  "tasaErrorPct": 78.513,
+  "checksOk": 8445,
+  "checksFallidos": 31599,
+  "porRuta": {
+    "home": {
+      "path": "/",
+      "n": 8080,
+      "p50": 0,
+      "p95": 10000.4,
+      "p99": 10000.9,
+      "max": 10025
+    },
+    "status": {
+      "path": "/status",
+      "n": 4920,
+      "p50": 0,
+      "p95": 10000.6,
+      "p99": 10001,
+      "max": 10016.5
+    },
+    "health": {
+      "path": "/api/health",
+      "n": 3999,
+      "p50": 0,
+      "p95": 10000.2,
+      "p99": 10000.8,
+      "max": 10009.4
+    },
+    "tools": {
+      "path": "/tools",
+      "n": 3023,
+      "p50": 0,
+      "p95": 10000.2,
+      "p99": 10000.8,
+      "max": 10011.3
+    }
+  },
+  "umbralesCumplidos": false,
+  "recuperacion": {
+    "p50": 6257.1,
+    "p95": 10000.7,
+    "max": 10002.5,
+    "tasaErrorPct": 44.872,
+    "curva": [
+      {
+        "desdeS": 0,
+        "n": 120,
+        "p50": 9999.9,
+        "p95": 10001.1,
+        "cpuPct": 6,
+        "heapMb": 632.1
+      },
+      {
+        "desdeS": 15,
+        "n": 60,
+        "p50": 9999.9,
+        "p95": 10000.7,
+        "cpuPct": 0,
+        "heapMb": 305.5
+      },
+      {
+        "desdeS": 30,
+        "n": 76,
+        "p50": 10000.2,
+        "p95": 10000.8,
+        "cpuPct": 6.3,
+        "heapMb": 500.7
+      },
+      {
+        "desdeS": 45,
+        "n": 104,
+        "p50": 10000.1,
+        "p95": 10000.9,
+        "cpuPct": 11.2,
+        "heapMb": 654.3
+      },
+      {
+        "desdeS": 60,
+        "n": 60,
+        "p50": 10000.1,
+        "p95": 10000.8,
+        "cpuPct": 0,
+        "heapMb": 280
+      },
+      {
+        "desdeS": 75,
+        "n": 133,
+        "p50": 5365.1,
+        "p95": 8971.6,
+        "cpuPct": 5.5,
+        "heapMb": 467.5
+      },
+      {
+        "desdeS": 90,
+        "n": 193,
+        "p50": 2864.8,
+        "p95": 6336,
+        "cpuPct": 0,
+        "heapMb": 510.5
+      },
+      {
+        "desdeS": 105,
+        "n": 190,
+        "p50": 3833.3,
+        "p95": 6818.4,
+        "cpuPct": 15.4,
+        "heapMb": 331.1
+      }
+    ]
+  },
+  "escalera": [
+    {
+      "rpsOfrecido": 50,
+      "n": 1454,
+      "vusPromedio": 145.1,
+      "vusMax": 255,
+      "respuestasRps": 48.5,
+      "exitosasRps": 45.2,
+      "p50": 2323.3,
+      "p95": 9999.9,
+      "errorPct": 6.7,
+      "cpuPct": 1.5,
+      "heapMb": 286.1,
+      "estado": "degradado"
+    },
+    {
+      "rpsOfrecido": 100,
+      "n": 1919,
+      "vusPromedio": 473,
+      "vusMax": 844,
+      "respuestasRps": 64,
+      "exitosasRps": 39,
+      "p50": 7592.9,
+      "p95": 10000.9,
+      "errorPct": 39,
+      "cpuPct": 1.3,
+      "heapMb": 392.5,
+      "estado": "roto"
+    },
+    {
+      "rpsOfrecido": 200,
+      "n": 3642,
+      "vusPromedio": 1311.6,
+      "vusMax": 1728,
+      "respuestasRps": 121.4,
+      "exitosasRps": 14.2,
+      "p50": 0,
+      "p95": 10000.5,
+      "errorPct": 88.3,
+      "cpuPct": 0,
+      "heapMb": 450.9,
+      "estado": "roto"
+    },
+    {
+      "rpsOfrecido": 300,
+      "n": 6457,
+      "vusPromedio": 2236.4,
+      "vusMax": 2641,
+      "respuestasRps": 215.2,
+      "exitosasRps": 14.7,
+      "p50": 0,
+      "p95": 10000,
+      "errorPct": 93.2,
+      "cpuPct": 1.7,
+      "heapMb": 433.5,
+      "estado": "roto"
+    },
+    {
+      "rpsOfrecido": 300,
+      "n": 5614,
+      "vusPromedio": 2771.2,
+      "vusMax": 2870,
+      "respuestasRps": 187.1,
+      "exitosasRps": 9.5,
+      "p50": 0,
+      "p95": 8958.3,
+      "errorPct": 94.9,
+      "cpuPct": 0.8,
+      "heapMb": 436.6,
+      "estado": "roto"
+    }
+  ],
+  "hallazgos": [
+    {
+      "id": "H-01",
+      "titulo": "El colapso vuelve a ser de concurrencia, no de CPU ni de memoria",
+      "descripcion": "Igual que en la corrida del 22 de agosto: en los escalones rotos (100-300 req/s, 39-94.9% de error) la CPU del proceso se mantiene entre 0% y 1.7%, sin correlación con el error. El heap oscila 280-450 MB sin tendencia de fuga. El límite sigue siendo la concurrencia que astro dev puede sostener en sus sockets/handlers, no el trabajo por request."
+    },
+    {
+      "id": "H-02",
+      "titulo": "El punto de quiebre aparece antes que en la corrida del 22 de agosto, y la causa probable NO es la aplicación",
+      "descripcion": "En esta corrida, el primer escalón (50 req/s) ya muestra 6.7% de error (estado degradado), frente al 0% de error que el mismo escalón midió el 22 de agosto. En el momento de esta corrida, el host tenía 2.6 GB de swap en uso, solo 2.9 GB de RAM libre y un stack completo de Supabase ajeno a este proyecto (13 contenedores) corriendo en paralelo. Esa contención de recursos, no un cambio en el código, es la explicación más probable de la diferencia. La cifra absoluta de RPS del quiebre en esta corrida NO debe compararse directamente con la del 22 de agosto; sí es comparable el patrón de degradación (H-01)."
+    },
+    {
+      "id": "H-03",
+      "titulo": "La fase de recuperación deja de ser inválida, pero no converge dentro de la ventana de 120 s",
+      "descripcion": "A diferencia de la corrida del 22 de agosto (100% de error y p50 de 0 ms durante toda la fase, producto de lanzarse sin ventana de enfriamiento tras otra corrida), esta vez el servidor se verificó estable durante 3 minutos completos antes de arrancar (BD sana en 6-11 ms, heap asentado en ~119 MB, CPU en 0%). El resultado es una curva de recuperación REAL: el p95 baja de 10000 ms (el timeout) en +0s a 6818 ms en +105s, y el error agregado de la fase es 44.9% en vez de 100%. Aun así, ni el p95 vuelve cerca de la línea base ni el error baja del umbral de aceptación (p(95)<1000ms, rate<0.02) dentro de los 120 s observados: ambos umbrales siguen incumplidos. Es una medición válida de una recuperación INCOMPLETA, no una recuperación exitosa - la distinción que la corrida anterior no permitía hacer porque su fase de recuperación entera era ruido."
+    },
+    {
+      "id": "H-04",
+      "titulo": "El endpoint de monitoreo respondió durante toda la corrida, a diferencia de la anterior",
+      "descripcion": "Ningún tramo de la curva de recuperación ni del escalonamiento del quiebre quedó con cpuPct/heapMb en null por timeout del endpoint de diagnóstico (comparar con H-04 de la corrida del 22 de agosto, donde varios tramos no tuvieron muestra). La lectura de proceso es confiable en esta corrida completa."
+    },
+    {
+      "id": "H-05",
+      "titulo": "vusPromedio/vusMax por escalón, capturados por primera vez",
+      "descripcion": "Se añadió un Trend (quiebre_e{ini}_vus) que registra exec.instance.vusActive en cada petición de apretar(). Con ramping-arrival-rate el ejecutor asigna VUs para sostener el ritmo pedido, así que el número de VUs simultáneos necesarios para sostener una tasa creció de 145 (promedio, en 50 req/s) a 2771 (promedio, en el último escalón de 300 req/s): la app necesita cada vez más concurrencia real para mantener el mismo ritmo ofrecido a medida que se degrada, que es la firma esperada de un sistema saturándose por handlers, no por CPU."
+    }
+  ]
+}

@@ -54,6 +54,11 @@ async function pedir(path, opts = {}) {
 }
 
 // ── 1. Salud del despliegue ─────────────────────────────────────────────────
+// El estado de la BD por sí solo no dice si la sustentación está lista: con
+// la BD caída, el portal puede seguir sirviendo el modo respaldo (ítem 1b) y
+// eso es un plan B válido, no una emergencia. Pintarlo en rojo sin más
+// entrenaría a ignorar la salida en el único caso donde importa distinguir.
+let bdOk = false
 {
   const { res, texto, status, error } = await pedir('/api/health')
   if (!res) {
@@ -62,12 +67,42 @@ async function pedir(path, opts = {}) {
     let cuerpo = {}
     try { cuerpo = JSON.parse(texto) } catch {}
     const db = cuerpo?.checks?.db
-    if (status === 200 && db?.ok) {
+    bdOk = status === 200 && db?.ok === true
+    if (bdOk) {
       anota('ok', 'Salud del despliegue', `200 · BD ${db.ms}ms · región ${cuerpo.region ?? '?'} · sha ${String(cuerpo.sha ?? '').slice(0, 7)}`)
     } else {
-      anota('mal', 'Salud del despliegue',
+      anota('aviso', 'Salud del despliegue',
         `HTTP ${status} · BD ok=${db?.ok} · ${String(db?.error ?? 'sin detalle').split('\n')[0]}`,
-        'Si la BD falla, el portal NO puede mostrar datos reales. Mira docs/runbook-cuota-turso.md y usa /demo como respaldo.')
+        'Revisa el ítem "Modo respaldo del portal" antes de decidir si esto bloquea. docs/runbook-cuota-turso.md tiene el procedimiento completo.')
+    }
+  }
+}
+
+// ── 1b. Modo respaldo del portal ────────────────────────────────────────────
+// Solo tiene sentido comprobarlo cuando la BD está mal: con la BD sana, el
+// modo respaldo simplemente no se activa y no hay nada que verificar aquí.
+//
+// No se puede fabricar el pase a mano (es HMAC firmado con AUTH_SECRET, un
+// secreto que este script no tiene ni debe tener): se sigue el mismo camino
+// que seguiría un visitante real, entrando por /api/portal/demo y usando la
+// cookie que esa respuesta deje.
+if (!bdOk) {
+  const entrada = await pedir('/api/portal/demo')
+  const setCookie = entrada.res?.headers.get('set-cookie') ?? ''
+  const pase = /portal_respaldo=[^;]+/.exec(setCookie)?.[0] ?? ''
+
+  if (!pase) {
+    anota('mal', 'Modo respaldo del portal',
+      `/api/portal/demo → HTTP ${entrada.status}, sin cookie portal_respaldo`,
+      'Con la BD caída y sin este pase, el iframe no tiene nada que mostrar. Revisa src/pages/api/portal/demo.ts y que AUTH_SECRET esté puesto en Vercel.')
+  } else {
+    const { status: statusPortal, texto: textoPortal } = await pedir('/portal', { headers: { Cookie: pase } })
+    if (statusPortal === 200 && /Altiplano|Demo p/i.test(textoPortal)) {
+      anota('ok', 'Modo respaldo del portal', 'sirve datos ficticios con la BD caída: el iframe sigue mostrando el producto')
+    } else {
+      anota('mal', 'Modo respaldo del portal',
+        `/portal con el pase real → HTTP ${statusPortal}`,
+        'El pase se emitió pero /portal no lo aceptó. Revisa src/lib/portal/respaldo.ts.')
     }
   }
 }

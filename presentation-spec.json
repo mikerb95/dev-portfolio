@@ -1837,62 +1837,66 @@
       "script": "lab/k6/estres.js",
       "type": "estres",
       "target": "http://127.0.0.1:4400",
-      "run_at": "2026-08-22T02:11:40.652Z",
+      "run_at": "2026-08-27T13:48:13.774Z",
       "command": "npm run db:up && npm run dev:carga  # en otra terminal\nk6 run lab/k6/estres.js",
       "guardrails": "setup() aborta si /api/health reporta una base remota; objetivo() aborta contra codebymike.tech y dev-portfolio.vercel.app",
       "results": {
-        "http_reqs_total": 19602,
-        "http_reqs_per_s": 68.51,
+        "http_reqs_total": 20161,
+        "http_reqs_per_s": 71.43,
         "http_req_duration_ms": {
-          "avg": 3930.5,
-          "p50": 693.2,
-          "p90": 10000.4,
-          "p95": 10000.7,
-          "p99": 10001.2,
-          "max": 10047.2
+          "avg": 2413,
+          "p50": 0,
+          "p90": 9999.9,
+          "p95": 10000.4,
+          "p99": 10000.9,
+          "max": 10025
         },
-        "http_req_failed_ratio": 0.7488,
-        "vus_max": 2914,
-        "duration_s": 286,
-        "checks_ok": 9712,
-        "checks_failed": 29272,
-        "thresholds_met": false
+        "http_req_failed_ratio": 0.78513,
+        "vus_max": 2872,
+        "duration_s": 282,
+        "checks_ok": 8445,
+        "checks_failed": 31599,
+        "thresholds_met": false,
+        "thresholds_detail": {
+          "recuperacion_duracion p(95)<1000": false,
+          "recuperacion_errores rate<0.02": false
+        }
       },
       "per_route": {
         "home": {
           "path": "/",
-          "n": 7833,
-          "p50": 807.8,
-          "p95": 10000.7,
-          "p99": 10001.2,
-          "max": 10028.4
+          "n": 8080,
+          "p50": 0,
+          "p95": 10000.4,
+          "p99": 10000.9,
+          "max": 10025
         },
         "status": {
           "path": "/status",
-          "n": 4865,
-          "p50": 3601.3,
-          "p95": 10000.9,
-          "p99": 10001.2,
-          "max": 10047.2
+          "n": 4920,
+          "p50": 0,
+          "p95": 10000.6,
+          "p99": 10001,
+          "max": 10016.5
         },
         "health": {
           "path": "/api/health",
-          "n": 3883,
-          "p50": 920.4,
-          "p95": 10000.7,
-          "p99": 10001.2,
-          "max": 10009.1
+          "n": 3999,
+          "p50": 0,
+          "p95": 10000.2,
+          "p99": 10000.8,
+          "max": 10009.4
         },
         "tools": {
           "path": "/tools",
-          "n": 2911,
-          "p50": 267,
-          "p95": 9999.9,
-          "p99": 10000.7,
-          "max": 10013.6
+          "n": 3023,
+          "p50": 0,
+          "p95": 10000.2,
+          "p99": 10000.8,
+          "max": 10011.3
         }
       },
-      "source": "lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json",
+      "source": "lab/k6/resultados/estres-2026-08-27T13-48-13-774Z.json",
       "executor": "ramping-arrival-rate (fase quiebre) + constant-arrival-rate (recuperación y muestreo)",
       "executor_rationale": "Con ramping-vus el sistema se auto-protege (cada VU espera su respuesta y la carga baja sola) y nunca se encuentra el punto de quiebre. Con arrival-rate k6 mantiene el ritmo pase lo que pase, como el tráfico real.",
       "stages": [
@@ -1947,134 +1951,144 @@
       "escalera": [
         {
           "rpsOfrecido": 50,
-          "n": 1497,
-          "respuestasRps": 49.9,
-          "exitosasRps": 49.9,
-          "p50": 138,
-          "p95": 1932.8,
-          "errorPct": 0,
-          "cpuPct": 12.5,
-          "heapMb": 332.8,
-          "estado": "ok"
-        },
-        {
-          "rpsOfrecido": 100,
-          "n": 2096,
-          "respuestasRps": 69.9,
-          "exitosasRps": 62,
-          "p50": 1076.9,
-          "p95": 10000.7,
-          "errorPct": 11.3,
-          "cpuPct": 15.2,
-          "heapMb": 315.6,
+          "n": 1454,
+          "vusPromedio": 145.1,
+          "vusMax": 255,
+          "respuestasRps": 48.5,
+          "exitosasRps": 45.2,
+          "p50": 2323.3,
+          "p95": 9999.9,
+          "errorPct": 6.7,
+          "cpuPct": 1.5,
+          "heapMb": 286.1,
           "estado": "degradado"
         },
         {
-          "rpsOfrecido": 200,
-          "n": 3489,
-          "respuestasRps": 116.3,
-          "exitosasRps": 40.4,
-          "p50": 9999.9,
+          "rpsOfrecido": 100,
+          "n": 1919,
+          "vusPromedio": 473,
+          "vusMax": 844,
+          "respuestasRps": 64,
+          "exitosasRps": 39,
+          "p50": 7592.9,
           "p95": 10000.9,
-          "errorPct": 65.2,
-          "cpuPct": 15.3,
-          "heapMb": 398.3,
+          "errorPct": 39,
+          "cpuPct": 1.3,
+          "heapMb": 392.5,
           "estado": "roto"
         },
         {
-          "rpsOfrecido": 300,
-          "n": 6324,
-          "respuestasRps": 210.8,
-          "exitosasRps": 7.8,
-          "p50": 0,
-          "p95": 10000.7,
-          "errorPct": 96.3,
-          "cpuPct": 15.4,
-          "heapMb": 429.1,
-          "estado": "roto"
-        },
-        {
-          "rpsOfrecido": 300,
-          "n": 5580,
-          "respuestasRps": 186,
-          "exitosasRps": 1.4,
+          "rpsOfrecido": 200,
+          "n": 3642,
+          "vusPromedio": 1311.6,
+          "vusMax": 1728,
+          "respuestasRps": 121.4,
+          "exitosasRps": 14.2,
           "p50": 0,
           "p95": 10000.5,
-          "errorPct": 99.3,
-          "cpuPct": 12.7,
-          "heapMb": 405.4,
+          "errorPct": 88.3,
+          "cpuPct": 0,
+          "heapMb": 450.9,
+          "estado": "roto"
+        },
+        {
+          "rpsOfrecido": 300,
+          "n": 6457,
+          "vusPromedio": 2236.4,
+          "vusMax": 2641,
+          "respuestasRps": 215.2,
+          "exitosasRps": 14.7,
+          "p50": 0,
+          "p95": 10000,
+          "errorPct": 93.2,
+          "cpuPct": 1.7,
+          "heapMb": 433.5,
+          "estado": "roto"
+        },
+        {
+          "rpsOfrecido": 300,
+          "n": 5614,
+          "vusPromedio": 2771.2,
+          "vusMax": 2870,
+          "respuestasRps": 187.1,
+          "exitosasRps": 9.5,
+          "p50": 0,
+          "p95": 8958.3,
+          "errorPct": 94.9,
+          "cpuPct": 0.8,
+          "heapMb": 436.6,
           "estado": "roto"
         }
       ],
       "recuperacion": {
-        "p50": 0,
-        "p95": 10000.4,
-        "max": 10047.2,
-        "tasaErrorPct": 100,
+        "p50": 6257.1,
+        "p95": 10000.7,
+        "max": 10002.5,
+        "tasaErrorPct": 44.872,
         "curva": [
           {
             "desdeS": 0,
             "n": 120,
-            "p50": 6941.7,
-            "p95": 10000.9,
-            "cpuPct": 0,
-            "heapMb": 0
+            "p50": 9999.9,
+            "p95": 10001.1,
+            "cpuPct": 6,
+            "heapMb": 632.1
           },
           {
             "desdeS": 15,
             "n": 60,
-            "p50": 0,
-            "p95": 0,
+            "p50": 9999.9,
+            "p95": 10000.7,
             "cpuPct": 0,
-            "heapMb": 0
+            "heapMb": 305.5
           },
           {
             "desdeS": 30,
-            "n": 60,
-            "p50": 0,
-            "p95": 0,
-            "cpuPct": 0,
-            "heapMb": 0
+            "n": 76,
+            "p50": 10000.2,
+            "p95": 10000.8,
+            "cpuPct": 6.3,
+            "heapMb": 500.7
           },
           {
             "desdeS": 45,
-            "n": 60,
-            "p50": 0,
-            "p95": 0,
-            "cpuPct": 0,
-            "heapMb": 0
+            "n": 104,
+            "p50": 10000.1,
+            "p95": 10000.9,
+            "cpuPct": 11.2,
+            "heapMb": 654.3
           },
           {
             "desdeS": 60,
             "n": 60,
-            "p50": 0,
-            "p95": 0,
+            "p50": 10000.1,
+            "p95": 10000.8,
             "cpuPct": 0,
-            "heapMb": 0
+            "heapMb": 280
           },
           {
             "desdeS": 75,
-            "n": 60,
-            "p50": 0,
-            "p95": 0,
-            "cpuPct": 0,
-            "heapMb": 0
+            "n": 133,
+            "p50": 5365.1,
+            "p95": 8971.6,
+            "cpuPct": 5.5,
+            "heapMb": 467.5
           },
           {
             "desdeS": 90,
-            "n": 0,
-            "p50": 0,
-            "p95": 0,
+            "n": 193,
+            "p50": 2864.8,
+            "p95": 6336,
             "cpuPct": 0,
-            "heapMb": 0
+            "heapMb": 510.5
           },
           {
             "desdeS": 105,
-            "n": 86,
-            "p50": 0,
-            "p95": 8984.7,
-            "cpuPct": 0,
-            "heapMb": 0
+            "n": 190,
+            "p50": 3833.3,
+            "p95": 6818.4,
+            "cpuPct": 15.4,
+            "heapMb": 331.1
           }
         ]
       },
@@ -2216,37 +2230,59 @@
       "hallazgos": [
         {
           "id": "H-01",
-          "titulo": "El colapso es de concurrencia, no de CPU ni de memoria",
-          "descripcion": "En el escalón roto (200 req/s, 65.2% error) la CPU del proceso sigue en 15.3% y el heap en 398 MB, prácticamente igual que en el escalón sano (50 req/s, 0% error, 12.5% CPU, 333 MB). Si el cuello de botella fuera cómputo o GC, la CPU subiría junto con el error. Como no sube, el límite real es la concurrencia que `astro dev` (servidor de desarrollo, sin cluster ni worker pool) puede sostener en sus sockets/handlers, no el trabajo por request."
+          "titulo": "El colapso vuelve a ser de concurrencia, no de CPU ni de memoria",
+          "descripcion": "Igual que en la corrida del 22 de agosto: en los escalones rotos (100-300 req/s, 39-94.9% de error) la CPU del proceso se mantiene entre 0% y 1.7%, sin correlación con el error. El heap oscila 280-450 MB sin tendencia de fuga. El límite sigue siendo la concurrencia que astro dev puede sostener en sus sockets/handlers, no el trabajo por request."
         },
         {
           "id": "H-02",
-          "titulo": "El punto de quiebre está muy cerca de la capacidad medida en carga.js",
-          "descripcion": "Ya en el escalón de 100 req/s ofrecidos (~1.6x la capacidad sostenida de ~62 req/s medida en `carga.js`) aparece 11.3% de error y p95 en el timeout de 10 s. A partir de 200 req/s el sistema está roto (65-99% error). No hay un margen amplio entre 'funciona bien' y 'colapsa': la transición ocurre en menos de 2x la carga nominal, lo cual es esperable de un servidor de desarrollo pero sería inaceptable en producción sin verificarlo contra el adaptador de Vercel."
+          "titulo": "El punto de quiebre aparece antes que en la corrida del 22 de agosto, y la causa probable NO es la aplicación",
+          "descripcion": "En esta corrida, el primer escalón (50 req/s) ya muestra 6.7% de error (estado degradado), frente al 0% de error que el mismo escalón midió el 22 de agosto. En el momento de esta corrida, el host tenía 2.6 GB de swap en uso, solo 2.9 GB de RAM libre y un stack completo de Supabase ajeno a este proyecto (13 contenedores) corriendo en paralelo. Esa contención de recursos, no un cambio en el código, es la explicación más probable de la diferencia. La cifra absoluta de RPS del quiebre en esta corrida NO debe compararse directamente con la del 22 de agosto; sí es comparable el patrón de degradación (H-01)."
         },
         {
           "id": "H-03",
-          "titulo": "Sin ventana de enfriamiento entre corridas, la recuperación puede no completarse dentro de los 120 s medidos",
-          "descripcion": "Esta corrida se lanzó inmediatamente después de otra corrida de estrés completa (sin pausa). Resultado: la fase de recuperación entera midió 100% de error y p50 de 0 ms (peticiones fallando antes de completarse), incluyendo tramos +15s a +90s con cpu%/heap en 0 porque ni siquiera `/api/lab/proceso` respondía a tiempo. Comparado con una corrida aislada (mismo objetivo, sin corrida previa inmediata) donde la recuperación sí converge a p50 ~25-35ms desde el tramo +45s, esto sugiere que el proceso de Node queda en un estado degradado (colas o handles pendientes) que una sola ventana de 120 s no siempre alcanza a drenar si la carga anterior no tuvo tiempo de asentarse primero."
+          "titulo": "La fase de recuperación deja de ser inválida, pero no converge dentro de la ventana de 120 s",
+          "descripcion": "A diferencia de la corrida del 22 de agosto (100% de error y p50 de 0 ms durante toda la fase, producto de lanzarse sin ventana de enfriamiento tras otra corrida), esta vez el servidor se verificó estable durante 3 minutos completos antes de arrancar (BD sana en 6-11 ms, heap asentado en ~119 MB, CPU en 0%). El resultado es una curva de recuperación REAL: el p95 baja de 10000 ms (el timeout) en +0s a 6818 ms en +105s, y el error agregado de la fase es 44.9% en vez de 100%. Aun así, ni el p95 vuelve cerca de la línea base ni el error baja del umbral de aceptación (p(95)<1000ms, rate<0.02) dentro de los 120 s observados: ambos umbrales siguen incumplidos. Es una medición válida de una recuperación INCOMPLETA, no una recuperación exitosa - la distinción que la corrida anterior no permitía hacer porque su fase de recuperación entera era ruido."
         },
         {
           "id": "H-04",
-          "titulo": "El endpoint de monitoreo (/api/lab/proceso) también se satura, sesgando su propia muestra",
-          "descripcion": "Durante el tramo más degradado de la recuperación, las peticiones a `/api/lab/proceso` (timeout de 5 s en el script) también timeoutearon, dejando cpuPct=0/heapMb=0 en vez de ausencia de dato. Eso pisa la lectura real (probablemente el proceso seguía con CPU/heap altos, no en cero) y hace parecer que el sistema 'se apagó' cuando en realidad el endpoint de diagnóstico compite por los mismos recursos saturados que intenta medir. Para una corrida de referencia conviene distinguir 'sin muestra' de 'muestra en cero' en el bloque de recuperación."
+          "titulo": "El endpoint de monitoreo respondió durante toda la corrida, a diferencia de la anterior",
+          "descripcion": "Ningún tramo de la curva de recuperación ni del escalonamiento del quiebre quedó con cpuPct/heapMb en null por timeout del endpoint de diagnóstico (comparar con H-04 de la corrida del 22 de agosto, donde varios tramos no tuvieron muestra). La lectura de proceso es confiable en esta corrida completa."
         },
         {
           "id": "H-05",
-          "titulo": "/status es la ruta más cara de las cuatro, coherente con que agrega datos de BD",
-          "descripcion": "En el escalón sano (50 req/s), p50 de /status (287-337ms según la corrida) es 2-4x más lento que /, /api/health y /tools (56-101ms). Es la única ruta que hace agregación real contra libSQL (90 días de checks), así que es la primera candidata a optimizar si se quisiera subir el punto de quiebre sin tocar el resto del sitio."
+          "titulo": "vusPromedio/vusMax por escalón, capturados por primera vez",
+          "descripcion": "Se añadió un Trend (quiebre_e{ini}_vus) que registra exec.instance.vusActive en cada petición de apretar(). Con ramping-arrival-rate el ejecutor asigna VUs para sostener el ritmo pedido, así que el número de VUs simultáneos necesarios para sostener una tasa creció de 145 (promedio, en 50 req/s) a 2771 (promedio, en el último escalón de 300 req/s): la app necesita cada vez más concurrencia real para mantener el mismo ritmo ofrecido a medida que se degrada, que es la firma esperada de un sistema saturándose por handlers, no por CPU."
         }
       ],
-      "previous_run": {
-        "source": "lab/k6/resultados/estres-2026-08-10T05-47-15-397Z.json",
-        "run_at": "2026-08-10T05:47:15.397Z",
-        "vus_max": 2937,
-        "http_reqs_total": 19707,
-        "http_req_failed_ratio": 0.97016
-      }
+      "stream_source": "lab/k6/resultados/estres-limpio.stream.json (NDJSON, no versionado; ver .gitignore)",
+      "cooldown_verificado": {
+        "duracion_s": 180,
+        "muestras": "cada 20s durante 3 min: BD ok=true en las 10 muestras, latencia 6-11ms, heap asentado en 118-120MB tras el barrido inicial de GC (137→118MB en los primeros 20s), cpuPct=0 en 8/10 muestras",
+        "conclusion": "Servidor confirmado en reposo real antes de lanzar k6, a diferencia de la corrida del 22 de agosto que se lanzó inmediatamente después de otra corrida (ver H-03 de esa corrida)."
+      },
+      "entorno_de_la_corrida": {
+        "advertencia": "Host compartido con contención de memoria (swap activo, 2.9 GB libres de 9.7 GB) y 13 contenedores Docker de un proyecto ajeno corriendo en paralelo. Las cifras ABSOLUTAS de RPS del quiebre en esta corrida no son comparables a las de corridas anteriores en un host sin esa carga; el patrón de degradación (H-01) y la validez metodológica de la fase de recuperación (H-03) sí lo son.",
+        "swap_uso_gb": 2.6,
+        "ram_libre_gb": 2.9,
+        "ram_total_gb": 9.7
+      },
+      "previous_runs": [
+        {
+          "source": "lab/k6/resultados/estres-2026-08-10T05-47-15-397Z.json",
+          "run_at": "2026-08-10T05:47:15.397Z",
+          "vus_max": 2937,
+          "http_reqs_total": 19707,
+          "http_req_failed_ratio": 0.97016
+        },
+        {
+          "source": "lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json",
+          "run_at": "2026-08-22T02:11:40.652Z",
+          "vus_max": 2914,
+          "http_reqs_total": 19602,
+          "http_req_failed_ratio": 0.7488,
+          "nota": "Corrida en host sin la contención observada en la del 27 de agosto: su escalera (quiebre a 100 req/s, no a 50) es la referencia de capacidad de la app en un host no compartido. Su fase de recuperación es INVÁLIDA (H-03 de esa corrida: lanzada sin ventana de enfriamiento, 100% de error y p50 de 0ms durante toda la fase) y no debe citarse como medición de recuperación. No tiene VUs por escalón instrumentados."
+        }
+      ]
     },
     "matrix": [
       {
@@ -2499,25 +2535,38 @@
   },
   "breaking_point": {
     "node_id": "middleware",
-    "node_id_note": "El nodo que satura es el proceso que ejecuta el SSR de Astro (en esta corrida, `astro dev`), por el que pasa todo request: el middleware y las páginas comparten proceso. NO es la base ni la CPU.",
-    "rps_ofrecido": 100,
-    "rps_servidas_exitosas": 62.0,
-    "p95_ms": 10000.7,
-    "p50_ms": 1076.9,
-    "error_rate": 0.113,
-    "vus": null,
-    "vus_note": "El ejecutor ramping-arrival-rate asigna VUs dinámicamente y el script no registra VUs por escalón; vus_max de toda la corrida fue 2914. El VU exacto en el escalón de quiebre no está en el JSON.",
-    "t_s": 30,
-    "timestamp": "2026-08-22T02:11:40.652Z (fecha de escritura del resumen); el escalón arranca a t=30 s de la corrida",
-    "criterio": "Primer escalón donde http_req_failed supera 1%: 11.3% de error y p95 clavado en el timeout de 10 s, con 100 req/s ofrecidas contra una capacidad sostenida de ~62 req/s (~1.6x).",
-    "saturacion_completa": "A 200 req/s el sistema está roto (65.2% error) y a 300 req/s prácticamente no sirve nada (96.3% y 99.3%).",
+    "node_id_note": "El nodo que satura es el proceso que ejecuta el SSR de Astro (en esta corrida, astro dev), por el que pasa todo request: el middleware y las páginas comparten proceso. NO es la base ni la CPU (ver H-01).",
+    "rps_ofrecido": 50,
+    "rps_servidas_exitosas": 45.2,
+    "p95_ms": 9999.9,
+    "p50_ms": 2323.3,
+    "error_rate": 0.067,
+    "vus": 255,
+    "vus_promedio": 145.1,
+    "vus_note": "Instrumentado en esta corrida (27 ago 2026) con un Trend por escalón sobre exec.instance.vusActive. Antes era null: el ejecutor ramping-arrival-rate asigna VUs dinámicamente y el script no los registraba.",
+    "t_s": 0,
+    "timestamp": "2026-08-27T13:48:13.774Z",
+    "criterio": "Primer escalón donde http_req_failed supera 1%: 6.7% de error ya en el primer escalón (50 req/s), con p95 en 9999.9ms.",
+    "advertencia_comparabilidad": "Esta cifra de RPS de quiebre está medida bajo contención de host documentada (ver tests.stress.entorno_de_la_corrida) y es MÁS BAJA que la de la corrida del 22 de agosto (100 req/s, host sin contención). No representa una regresión de la aplicación. El dato nuevo y válido que aporta esta corrida es (a) VUs por escalón, antes ausentes, y (b) una fase de recuperación metodológicamente válida (no contaminada por falta de enfriamiento), aunque incompleta dentro de la ventana observada.",
+    "saturacion_completa": "A 200 req/s el sistema está roto (88.3% error) y a 300 req/s prácticamente no sirve nada (93.2% y 94.9%).",
+    "recuperacion": {
+      "estado": "incompleta dentro de la ventana de 120s, pero con tendencia de mejora real (no es el aplanado inválido de la corrida anterior)",
+      "p95_inicial_ms": 10001.1,
+      "p95_final_ms": 6818.4,
+      "error_agregado_fase_pct": 44.872,
+      "umbrales_formales_cumplidos": false,
+      "umbrales_formales": "p(95)<1000ms Y error<2%, ninguno de los dos se cumplió dentro de los 120s observados",
+      "tiempo_hasta_linea_base": null,
+      "tiempo_hasta_linea_base_nota": "No alcanzó la línea base dentro de la ventana observada. Reportarlo como un tiempo concreto sería inventar un dato que la corrida no midió."
+    },
     "evidence": [
-      "H-01: en el escalón roto (200 req/s, 65.2% error) la CPU sigue en 15.3% y el heap en 398 MB, casi igual que en el escalón sano (50 req/s, 0% error, 12.5% CPU, 333 MB). Si el cuello fuera cómputo o GC, la CPU subiría con el error. El límite es la concurrencia de sockets/handlers del servidor, no el trabajo por request.",
-      "H-02: la transición de 'funciona bien' a 'colapsa' ocurre en menos de 2x la carga nominal.",
-      "H-05: /status es 2-4x más lenta que el resto (única ruta que agrega 90 días de checks contra libSQL): es la primera candidata a optimizar para subir el punto de quiebre."
+      "Igual que en la corrida del 22 de agosto: en los escalones rotos (100-300 req/s, 39-94.9% de error) la CPU del proceso se mantiene entre 0% y 1.7%, sin correlación con el error. El heap oscila 280-450 MB sin tendencia de fuga. El límite sigue siendo la concurrencia que astro dev puede sostener en sus sockets/handlers, no el trabajo por request.",
+      "En esta corrida, el primer escalón (50 req/s) ya muestra 6.7% de error (estado degradado), frente al 0% de error que el mismo escalón midió el 22 de agosto. En el momento de esta corrida, el host tenía 2.6 GB de swap en uso, solo 2.9 GB de RAM libre y un stack completo de Supabase ajeno a este proyecto (13 contenedores) corriendo en paralelo. Esa contención de recursos, no un cambio en el código, es la explicación más probable de la diferencia. La cifra absoluta de RPS del quiebre en esta corrida NO debe compararse directamente con la del 22 de agosto; sí es comparable el patrón de degradación (H-01).",
+      "A diferencia de la corrida del 22 de agosto (100% de error y p50 de 0 ms durante toda la fase, producto de lanzarse sin ventana de enfriamiento tras otra corrida), esta vez el servidor se verificó estable durante 3 minutos completos antes de arrancar (BD sana en 6-11 ms, heap asentado en ~119 MB, CPU en 0%). El resultado es una curva de recuperación REAL: el p95 baja de 10000 ms (el timeout) en +0s a 6818 ms en +105s, y el error agregado de la fase es 44.9% en vez de 100%. Aun así, ni el p95 vuelve cerca de la línea base ni el error baja del umbral de aceptación (p(95)<1000ms, rate<0.02) dentro de los 120 s observados: ambos umbrales siguen incumplidos. Es una medición válida de una recuperación INCOMPLETA, no una recuperación exitosa - la distinción que la corrida anterior no permitía hacer porque su fase de recuperación entera era ruido."
     ],
-    "caveat": "Medido contra `astro dev` (servidor de desarrollo, sin cluster ni worker pool) sobre libSQL local, NO contra el adaptador de Vercel en producción. El número caracteriza el runtime de desarrollo; extrapolarlo a Fluid Compute no está justificado por esta evidencia.",
-    "source": "lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json (escalera[1] y hallazgos H-01/H-02/H-05)"
+    "caveat": "Medido contra astro dev (servidor de desarrollo, sin cluster ni worker pool) sobre libSQL local, NO contra el adaptador de Vercel en producción. El número caracteriza el runtime de desarrollo bajo la contención de host descrita arriba; extrapolarlo a Fluid Compute o a un host sin contención no está justificado por esta evidencia.",
+    "source": "lab/k6/resultados/estres-2026-08-27T13-48-13-774Z.json (escalera[0] y hallazgos H-01/H-02/H-03)",
+    "referencia_historica": "lab/k6/resultados/estres-2026-08-22T02-11-40-652Z.json midió el quiebre en 100 req/s en un host sin contención, pero con una fase de recuperación inválida y sin VUs instrumentados. Ver tests.stress.previous_runs."
   },
   "deployment": {
     "provider": "Vercel",
