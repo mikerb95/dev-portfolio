@@ -203,6 +203,27 @@ async function persist(s: SustentacionSession): Promise<void> {
   await presentStore().set(KEY_SESSION(s.id), JSON.stringify(s), SUSTENTACION_TTL_SECONDS)
 }
 
+/**
+ * Guarda y anuncia, en ese orden. Lo exporta para que el control remoto
+ * (`control.ts`) publique por el MISMO camino que el canvas y no invente un
+ * segundo publicador: un beat que llegara al bus sin pasar por Redis dejaría a
+ * los seguidores adelantados respecto del snapshot que consultan cada 10 s, y
+ * la corrección se vería como un salto hacia atrás en pantalla.
+ *
+ * Persistir primero y publicar después es la misma regla que `runCommand` de
+ * `lib/present`: si el publish falla, el estado ya es correcto y el siguiente
+ * snapshot lo cura. Al revés, el bus anunciaría un beat que no existe.
+ */
+export async function persistirYPublicar(s: SustentacionSession): Promise<BeatSnapshot> {
+  await persist(s)
+  try {
+    await presentStore().publish(channelFor(s.id), JSON.stringify(toBeatSnapshot(s)))
+  } catch {
+    // El bus es acelerador, no fuente de verdad.
+  }
+  return toBeatSnapshot(s)
+}
+
 export async function crearSesion(titulo = 'Sustentación'): Promise<SustentacionSession> {
   const store = presentStore()
 
