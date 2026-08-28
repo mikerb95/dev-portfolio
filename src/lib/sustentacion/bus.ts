@@ -177,7 +177,12 @@ export async function getSesion(sessionId: string): Promise<SustentacionSession 
   const raw = await presentStore().get(KEY_SESSION(sessionId))
   if (!raw) return null
   try {
-    return JSON.parse(raw) as SustentacionSession
+    const s = JSON.parse(raw) as SustentacionSession
+    // Una sesión creada antes de que existiera el control remoto no trae
+    // `beatIniciadoEn`. Se cura al leerla en vez de dejar un `undefined`
+    // paseándose por los cálculos de tiempo del control.
+    if (typeof s.beatIniciadoEn !== 'number') s.beatIniciadoEn = s.updatedAt ?? s.createdAt
+    return s
   } catch {
     return null
   }
