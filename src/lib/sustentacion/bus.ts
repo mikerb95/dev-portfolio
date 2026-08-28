@@ -112,7 +112,7 @@ function secretKey(): string {
   return processKey
 }
 
-export async function secretoDeSesion(sessionId: string): Promise<string> {
+async function hmac(mensaje: string): Promise<Uint8Array> {
   const enc = new TextEncoder()
   const key = await crypto.subtle.importKey(
     'raw',
@@ -121,12 +121,47 @@ export async function secretoDeSesion(sessionId: string): Promise<string> {
     false,
     ['sign']
   )
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(`sust:v1:${sessionId}`))
-  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(mensaje)))
+}
+
+export async function secretoDeSesion(sessionId: string): Promise<string> {
+  const sig = await hmac(`sust:v1:${sessionId}`)
+  return [...sig].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * PIN de PRESENTADOR de una sesión: la credencial que autoriza los comandos
+ * del control remoto.
+ *
+ * Se DERIVA, igual que el secreto, y esa es la decisión que más importa de
+ * este archivo. Si se guardara en el JSON de la sesión, estaría en la misma
+ * base de Redis que lee el token de SOLO LECTURA que viaja al navegador de
+ * cada asistente para suscribirse al bus (ver la cabecera de
+ * `present/store.ts`): cualquiera del público podría leer la clave de la
+ * sesión y quedarse con el mando. Derivado, en Redis no hay más que el
+ * snapshot que el público ya ve proyectado.
+ *
+ * El prefijo firmado (`sust:pinctl:v1:`) separa dominios: el PIN de
+ * presentador de una sesión no puede valer como secreto de esa misma sesión ni
+ * al revés, aunque los dos salgan de la misma clave.
+ */
+export async function pinPresentadorDe(sessionId: string): Promise<string> {
+  return pinDesdeBytes(await hmac(`sust:pinctl:v1:${sessionId}`))
+}
+
+/**
+ * ¿Es este el PIN de presentador de esta sesión? En tiempo constante: el PIN
+ * es la única credencial del control remoto, así que comparar con `===` sería
+ * regalar, carácter a carácter, por dónde va bien el intento.
+ */
+export async function esPinPresentador(sessionId: string, bruto: string): Promise<boolean> {
+  const candidato = normalizarPinPresentador(bruto)
+  if (!candidato) return false
+  return timingSafeEqualStr(await pinPresentadorDe(sessionId), candidato)
 }
 
 /** Comparación de tiempo constante, copiada de present/session.ts. */
-function timingSafeEqualStr(a: string, b: string): boolean {
+export function timingSafeEqualStr(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false
   if (a.length !== b.length) return false
   let diff = 0
