@@ -143,10 +143,20 @@ describe('idempotencia', () => {
     expect(aplicados).toHaveLength(1)
     expect((await getSesion(sesion.id))?.beat).toBe(BEAT_PRIMERO)
 
-    // Y las tres respuestas dicen la misma posición absoluta.
+    // Ninguna respuesta puede ir POR DELANTE del estado real: lo que no se
+    // tolera es que alguna anuncie un beat de más. Que una copia perdedora
+    // conteste con la posición anterior, cuando las tres van tan pegadas que
+    // ni la relectura alcanza a ver el cambio, es inofensivo por diseño: el
+    // ciclo siguiente de `/estado` trae la posición absoluta.
     for (const r of resultados) {
-      expect(r.ok && r.estado.beat).toBe(BEAT_PRIMERO)
+      expect(r.ok && r.estado.beat).toBeLessThanOrEqual(BEAT_PRIMERO)
     }
+
+    // Y el reintento REAL (el que llega tarde, tras un timeout) sí ve la
+    // posición ya aplicada, que es el caso que de verdad ocurre en un salón.
+    const tardio = await ejecutarComando(comando(pin, { seq: 1 }), IP)
+    expect(tardio).toMatchObject({ ok: true, aplicado: false, motivo: 'duplicado' })
+    expect(tardio.ok && tardio.estado.beat).toBe(BEAT_PRIMERO)
   })
 
   it('un seq nuevo sí avanza: la idempotencia no bloquea el avance normal', async () => {

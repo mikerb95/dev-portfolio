@@ -280,7 +280,15 @@ export async function ejecutarComando(
     if (!gano) {
       // No es un error: el teléfono reintentó porque no vio la respuesta. Se le
       // devuelve la posición absoluta, que es exactamente lo que necesita.
-      return { ok: true, estado: aEstado(sesion), aplicado: false, motivo: 'duplicado' }
+      //
+      // Y se RELEE la sesión antes de responder. El caso real de un duplicado
+      // es un reintento que llega segundos después, cuando la copia que ganó ya
+      // persistió: con la sesión que se leyó al entrar, la respuesta diría el
+      // beat anterior y el control remoto parpadearía hacia atrás. Si las dos
+      // copias van tan pegadas que ni así se ve el cambio, no pasa nada: el
+      // ciclo siguiente de `/estado` trae la posición absoluta (invariante 1).
+      const fresca = (await getSesion(sesion.id)) ?? sesion
+      return { ok: true, estado: aEstado(fresca), aplicado: false, motivo: 'duplicado' }
     }
 
     // ── Orden ───────────────────────────────────────────────────────────────
