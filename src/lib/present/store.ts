@@ -301,9 +301,16 @@ let cached: PresentStore | null = null
  * Upstash documenta precisamente para clientes web). Así el caso normal (una
  * base, la que crea el Marketplace) funciona sin configurar nada a mano.
  */
-const busUrl = () => serverEnv('PRESENT_BUS_REST_URL') || serverEnv('UPSTASH_REDIS_REST_URL')
+const busUrl = () =>
+  serverEnv('PRESENT_BUS_REST_URL') ||
+  serverEnv('KV_REST_API_URL') ||
+  serverEnv('UPSTASH_REDIS_REST_URL')
+// El bus PUBLICA, así que también necesita escritura: mismo orden y por la
+// misma razón que `credencialesEstado`.
 const busWriteToken = () =>
-  serverEnv('PRESENT_BUS_REST_TOKEN') || serverEnv('UPSTASH_REDIS_REST_TOKEN')
+  serverEnv('PRESENT_BUS_REST_TOKEN') ||
+  serverEnv('KV_REST_API_TOKEN') ||
+  serverEnv('UPSTASH_REDIS_REST_TOKEN')
 const busReadonlyToken = () =>
   serverEnv('PRESENT_BUS_READONLY_TOKEN') || serverEnv('KV_REST_API_READ_ONLY_TOKEN')
 
@@ -331,11 +338,51 @@ export function presentBusOrigin(): string | null {
   }
 }
 
+/**
+ * Credenciales de ESCRITURA de la base de estado, y en qué orden se buscan.
+ *
+ * Puro y exportado para poder probarlo: la resolución es lo que falló una vez
+ * en producción y el síntoma era indistinguible de una base caída.
+ *
+ * EL ORDEN IMPORTA, y esta es la razón. La integración de Upstash en el
+ * Marketplace de Vercel inyecta las credenciales de la MISMA base con dos
+ * nombres, y no son equivalentes:
+ *
+ *   · `KV_REST_API_TOKEN`            lectura y ESCRITURA.
+ *   · `KV_REST_API_READ_ONLY_TOKEN`  solo lectura, para el navegador.
+ *   · `UPSTASH_REDIS_REST_TOKEN`     depende de cómo se creara.
+ *
+ * En producción, `UPSTASH_REDIS_REST_TOKEN` resultó ser de SOLO LECTURA. El
+ * fallo era de los caros de encontrar: las lecturas iban bien, así que el panel
+ * y los seguidores parecían sanos, y solo al abrir la sesión saltaba un
+ * `NOPERM ... 'incr'` que se leía como "Redis caído".
+ *
+ * Por eso manda el par `KV_REST_API_*`: es el único que la integración
+ * DOCUMENTA como de escritura. El par `UPSTASH_*` queda de respaldo, para
+ * despliegues configurados a mano donde sea el único que existe.
+ *
+ * La URL y el token viajan SIEMPRE en pareja. Mezclarlos apuntaría el token de
+ * una base a la URL de otra, que es el mismo `NOPERM` con otra causa y aún más
+ * difícil de ver.
+ */
+export function credencialesEstado(): { url: string; token: string } | null {
+  const kvUrl = serverEnv('KV_REST_API_URL')
+  const kvToken = serverEnv('KV_REST_API_TOKEN')
+  if (kvUrl && kvToken) return { url: kvUrl, token: kvToken }
+
+  const upUrl = serverEnv('UPSTASH_REDIS_REST_URL')
+  const upToken = serverEnv('UPSTASH_REDIS_REST_TOKEN')
+  if (upUrl && upToken) return { url: upUrl, token: upToken }
+
+  return null
+}
+
 export function presentStore(): PresentStore {
   if (cached) return cached
 
-  const stateUrl = serverEnv('UPSTASH_REDIS_REST_URL')
-  const stateToken = serverEnv('UPSTASH_REDIS_REST_TOKEN')
+  const estado = credencialesEstado()
+  const stateUrl = estado?.url
+  const stateToken = estado?.token
   const bus = busUrl()
   const busToken = busWriteToken()
 
@@ -373,7 +420,7 @@ export function storeReadiness(): { ok: boolean; reason?: string } {
     return {
       ok: false,
       reason:
-        'Redis no está configurado: faltan UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN. ' +
+        'Redis no está configurado: faltan KV_REST_API_URL y KV_REST_API_TOKEN (o el par UPSTASH_REDIS_REST_*). ' +
         'Sin ellas el estado vive en la memoria de cada instancia y el público vería slides distintos.',
     }
   }
