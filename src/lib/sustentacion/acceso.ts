@@ -107,3 +107,28 @@ export function verificarAcceso(
 
   return igualSeguro(token.slice(corte + 1), firma(secreto, expira))
 }
+
+/**
+ * ¿Debe `/login` ofrecer la clave de la sustentación?
+ *
+ * Dos condiciones, y las dos importan:
+ *
+ *  · Que el destino sea una ruta de la sustentación. En el login normal del
+ *    panel esta puerta no pinta nada, y anunciar en la pantalla de entrada
+ *    general una llave con menos garantías que el OAuth sería invitar a usarla
+ *    para todo.
+ *  · Que la contraseña esté configurada. Un campo sin nada detrás manda a
+ *    teclear contraseñas buenas que van a fallar, cinco minutos antes de
+ *    entrar al salón.
+ *
+ * Vive aquí y no en la página para poder probarla: es una decisión de qué se
+ * enseña y a quién, no maquetación.
+ */
+export function debeOfrecerClave(
+  destino: string | null | undefined,
+  contrasenaConfigurada: string | null | undefined
+): boolean {
+  if (typeof destino !== 'string' || !destino) return false
+  if (typeof contrasenaConfigurada !== 'string' || !contrasenaConfigurada) return false
+  return esRutaDeSustentacion(destino)
+}

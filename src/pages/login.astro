@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css'
-import { esRutaDeSustentacion } from '../lib/sustentacion/acceso'
+import { debeOfrecerClave } from '../lib/sustentacion/acceso'
 import { serverEnv } from '../lib/env'
 // Punto de entrada del login: dos puertas independientes, cualquiera basta.
 // - GitHub OAuth (como siempre): signIn() de auth-astro/client hace el POST
@@ -20,9 +20,10 @@ const callbackUrl =
 // login normal del panel no pinta nada, y anunciar una puerta con menos
 // garantías en la pantalla de entrada general sería invitar a usarla.
 // Ver el alcance (tres rutas, nada más) en src/lib/sustentacion/acceso.ts.
-const destinoSustentacion = esRutaDeSustentacion(callbackUrl)
-const ofreceClaveSustentacion =
-  destinoSustentacion && Boolean(serverEnv('SUSTENTACION_PASSWORD'))
+const ofreceClaveSustentacion = debeOfrecerClave(
+  callbackUrl,
+  serverEnv('SUSTENTACION_PASSWORD')
+)
 
 Astro.response.headers.set('Cache-Control', 'private, no-store')
 ---

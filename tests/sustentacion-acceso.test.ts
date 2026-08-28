@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ACCESO_TTL_SEG,
   contrasenaCorrecta,
+  debeOfrecerClave,
   esRutaDeSustentacion,
   firmarAcceso,
   verificarAcceso,
@@ -128,5 +129,39 @@ describe('cookie de acceso', () => {
     // El pase del escenario firma `sust:pase:v1:<sessionId>:<exp>`; si los
     // dominios se solaparan, esta cookie verificaría allí con el mismo exp.
     expect(acceso.split('.')[1]).not.toBe(exp)
+  })
+})
+
+describe('cuándo ofrecer la clave en /login', () => {
+  it('la ofrece si el destino era el panel de la sustentación', () => {
+    expect(debeOfrecerClave('/admin/sustentacion', 'sustentacion2026')).toBe(true)
+    expect(debeOfrecerClave('/sustentacion', 'sustentacion2026')).toBe(true)
+  })
+
+  it('NO la ofrece en el login normal del panel', () => {
+    // Anunciar en la pantalla de entrada general una llave con menos garantías
+    // que el OAuth sería invitar a usarla para todo.
+    for (const d of ['/entrar', '/admin', '/admin/costs', '/admin/projects', '/']) {
+      expect(debeOfrecerClave(d, 'sustentacion2026'), d).toBe(false)
+    }
+  })
+
+  it('NO la ofrece si no hay contraseña configurada', () => {
+    // Un campo sin nada detrás manda a teclear contraseñas buenas que fallan.
+    expect(debeOfrecerClave('/admin/sustentacion', undefined)).toBe(false)
+    expect(debeOfrecerClave('/admin/sustentacion', null)).toBe(false)
+    expect(debeOfrecerClave('/admin/sustentacion', '')).toBe(false)
+  })
+
+  it('un callbackUrl absoluto no cuela', () => {
+    // `esRutaDeSustentacion` compara rutas exactas, así que una URL completa
+    // (aunque apunte a nuestro propio dominio) no abre este formulario.
+    expect(debeOfrecerClave('https://codebymike.tech/admin/sustentacion', 'x')).toBe(false)
+    expect(debeOfrecerClave('//evil.example/admin/sustentacion', 'x')).toBe(false)
+  })
+
+  it('sin destino no se ofrece', () => {
+    expect(debeOfrecerClave(null, 'sustentacion2026')).toBe(false)
+    expect(debeOfrecerClave('', 'sustentacion2026')).toBe(false)
   })
 })
