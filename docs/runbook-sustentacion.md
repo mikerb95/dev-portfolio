@@ -64,8 +64,40 @@ distintos y una caída no arrastra a la otra.
 ## 3. Controlar la presentación desde el teléfono
 
 El canvas se mueve con el teclado **y** desde el celular; las dos vías son
-equivalentes y ninguna depende de la otra. El teléfono manda contra
-`POST /api/sustentacion/comando` con el PIN de presentador:
+equivalentes y ninguna depende de la otra.
+
+### La pantalla del celular: `/sustentacion/control`
+
+Se abre en el navegador del teléfono, sin login, y pide el PIN de presentador
+una sola vez (queda guardado en el propio teléfono). A partir de ahí muestra:
+
+- El beat actual y su título, con las **notas de narración** de ese beat: es lo
+  único que miro mientras hablo.
+- El **cronómetro** del beat contra su duración estimada. Se pone ámbar al
+  pasarse, nunca rojo: excederse es información, no un fallo.
+- Un botón grande de **ADELANTE** y uno pequeño de atrás. El grande dice
+  `ENVIANDO` mientras el comando va en camino y `NO LLEGÓ` si no volvió: la
+  diferencia entre "no pulsé bien" y "va en camino" tiene que verse.
+- El **indicador de enlace** (punto de color) y una franja roja de
+  `SIN CONEXIÓN · USA EL TECLADO` cuando el teléfono se queda sin red.
+- **Mantener pulsado** el botón de las tres rayas 650 ms abre el selector para
+  saltar a cualquiera de los doce beats. Es un gesto mantenido y no un toque a
+  propósito: un tap suelto en la esquina superior es justo lo que ocurre al
+  agarrar el teléfono.
+
+Dos cosas que conviene tener claras el día de la charla:
+
+- **La posición viene siempre del servidor.** La página no lleva la cuenta del
+  beat, la pide. Por eso puedo avanzar con el teclado del portátil y el celular
+  se entera igual, y por eso recargar el teléfono no descoloca nada.
+- **Si el PIN deja de valer** (por ejemplo tras emitir una sesión nueva), la
+  pantalla lo borra sola y vuelve a pedirlo en vez de reintentar: insistir con
+  un PIN malo solo quema el cupo antifuerza bruta de mi propia IP.
+
+### El protocolo, por debajo
+
+El teléfono manda contra `POST /api/sustentacion/comando` con el PIN de
+presentador:
 
 ```jsonc
 { "pin": "ab3kd9mn2p", "accion": "siguiente", "clienteId": "celular-mike", "seq": 12 }
@@ -82,9 +114,13 @@ Tres cosas que conviene saber el día de la charla:
   comando. Si un mensaje se pierde, el canvas se sincroniza en el ciclo
   siguiente sin que haya que tocar nada.
 - **El guion se pide una sola vez.** `GET /api/sustentacion/guion` trae las
-  notas de narración, el título y la duración estimada de los 12 beats; el
-  control lo guarda en memoria al cargar. Si el celular se queda sin señal a
-  mitad, las notas siguen ahí.
+  notas de narración, el título, el dato y la duración estimada de los 12
+  beats; el control lo guarda en memoria al cargar. Si el celular se queda sin
+  señal a mitad, las notas siguen ahí.
+- **Insistir es seguro también desde la pantalla.** El reintento automático
+  reusa el MISMO `seq` que el comando original, que es exactamente para lo que
+  sirve el reclamo atómico: con 5G irregular lo normal no es que el comando no
+  llegue, es que llegue y se pierda la respuesta.
 
 Si el teléfono deja de responder, **seguir con el teclado y no perder tiempo
 depurando**: son dos caminos independientes contra el mismo estado.
@@ -144,6 +180,8 @@ Y a mano:
 - [ ] `sustentacion:check` sin nada en rojo (los avisos se leen, no bloquean).
 - [ ] El PIN actual funciona: abrir `/sustentacion/seguir/<pin>` desde un
       celular de verdad, con datos móviles, no con el wifi del salón.
+- [ ] `/sustentacion/control` abre en el celular y acepta el PIN de
+      presentador (tenerlo a mano ANTES de empezar: sale solo en el panel).
 - [ ] El control remoto mueve el canvas desde el celular, también con datos
       móviles: avanzar, retroceder y saltar a un beat concreto.
 - [ ] El PIN de presentador NO está en pantalla ni en el QR: solo el de 4
@@ -171,6 +209,8 @@ Y a mano:
   las tres invariantes que lo sostienen (posición absoluta, idempotencia por
   reclamo atómico, y cero dependencia de Turso) explicadas en la cabecera.
 - `src/lib/sustentacion/pin-presentador.ts`: por qué son dos PINes y no uno.
+- `src/pages/sustentacion/control.astro` y `src/lib/sustentacion/mando.ts`: la
+  pantalla del celular y el envío de comandos (identidad, contador y reintento).
 - `src/lib/sustentacion/obedecer.ts`: el lado del canvas, con la decisión de
   transporte (polling de 250 ms siempre, SSE como acelerador).
 - `scripts/precalentar-sustentacion.mjs` y `scripts/sustentacion-check.mjs`:
