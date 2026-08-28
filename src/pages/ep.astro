@@ -852,7 +852,8 @@ const meta = [
 
     /* Los checkbox de "entregado" se imprimen vacíos a propósito: la hoja
        sirve para ir marcando a mano lo que se va entregando. */
-    #calc-timeline input[type='checkbox'] {
+    #calc-timeline input[type='checkbox'],
+    #cierre-checklist input[type='checkbox'] {
       -webkit-appearance: none;
       appearance: none;
       width: 11px;
@@ -949,6 +950,46 @@ const meta = [
       hoyEl.style.left = `${avance * 100}%`
       hoyEl.classList.remove('hidden')
     }
+  }
+
+  // --- Checklist de documentos de cierre ---
+  const CIERRE_KEY = 'sena-ep-cierre:3114731'
+  const cierreChecklist = document.getElementById('cierre-checklist')
+  if (cierreChecklist) {
+    const progresoEl = document.getElementById('cierre-progreso')!
+    const checks = cierreChecklist.querySelectorAll<HTMLInputElement>('.cierre-check')
+
+    const leer = (): Set<string> => {
+      try {
+        return new Set(JSON.parse(localStorage.getItem(CIERRE_KEY) ?? '[]'))
+      } catch {
+        return new Set()
+      }
+    }
+    const actualizar = () => {
+      const set = leer()
+      progresoEl.textContent = `${set.size}/${checks.length} documentos marcados como listos`
+    }
+
+    const set = leer()
+    checks.forEach((cb) => {
+      const key = cb.dataset.key!
+      cb.checked = set.has(key)
+      cb.closest('label')?.querySelector('.cierre-texto')?.classList.toggle('line-through', cb.checked)
+      cb.closest('label')?.querySelector('.cierre-texto')?.classList.toggle('text-ink-300', cb.checked)
+
+      cb.addEventListener('change', () => {
+        const actual = leer()
+        if (cb.checked) actual.add(key)
+        else actual.delete(key)
+        localStorage.setItem(CIERRE_KEY, JSON.stringify([...actual]))
+        const texto = cb.closest('label')?.querySelector('.cierre-texto')
+        texto?.classList.toggle('line-through', cb.checked)
+        texto?.classList.toggle('text-ink-300', cb.checked)
+        actualizar()
+      })
+    })
+    actualizar()
   }
 
   // --- Calculadora ---
