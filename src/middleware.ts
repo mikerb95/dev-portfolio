@@ -552,7 +552,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
       if (demo instanceof Response) return demo
       if (!demo) {
         // El deck vuelve a sí mismo tras el login; el panel pasa por /entrar.
-        const callbackUrl = isPrivateDeck ? encodeURIComponent(pathname) : '%2Fentrar'
+        //
+        // Las páginas de la sustentación también vuelven a sí mismas, y eso es
+        // lo que hace que /login pueda ofrecer allí la clave de la
+        // sustentación: la página mira el `callbackUrl` para decidir si esa
+        // tercera puerta tiene sentido, y sin el destino real no podría. Se
+        // excluyen las rutas de /api porque a esas llega un `fetch`, que no
+        // sigue el redirect ni tiene adónde volver.
+        const vuelveASiMisma =
+          isPrivateDeck || (esRutaDeSustentacion(canonicalPath) && !pathname.startsWith('/api/'))
+        const callbackUrl = vuelveASiMisma ? encodeURIComponent(canonicalPath) : '%2Fentrar'
         return context.redirect(`/login?callbackUrl=${callbackUrl}`)
       }
       demoMode = true
