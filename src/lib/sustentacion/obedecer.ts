@@ -38,6 +38,8 @@ export type EstadoSustentacion = {
   version: number
   actualizadoEn: number
   beatIniciadoEn: number
+  /** Hora del servidor al responder. Puede faltar en un mensaje del bus. */
+  ahora?: number
   primerBeat: number
   ultimoBeat: number
 }
@@ -51,7 +53,13 @@ export type EstadoSustentacion = {
 export type EstadoConexion = 'en-vivo' | 'sondeando' | 'sin-enlace'
 
 export type OpcionesObedecer = {
-  sessionId: string
+  /**
+   * La sesión, si quien mira ya la conoce (el canvas la conoce: la abrió él).
+   * Ahorra una lectura de Redis por sondeo. El control remoto NO la conoce: su
+   * única credencial es el PIN de presentador, así que la omite y `/estado`
+   * resuelve la sesión en curso por su cuenta.
+   */
+  sessionId?: string | null
   /** Credenciales de SOLO LECTURA del bus. Sin ellas, solo polling. */
   bus?: { url: string; token: string } | null
   /** Se llama solo cuando el estado CAMBIA de verdad, no en cada sondeo. */
@@ -68,7 +76,7 @@ const FALLOS_ANTES_DE_AVISAR = 3
 
 export function obedecerComandos(opts: OpcionesObedecer): () => void {
   const {
-    sessionId,
+    sessionId = null,
     bus = null,
     onEstado,
     onConexion,
@@ -107,9 +115,10 @@ export function obedecerComandos(opts: OpcionesObedecer): () => void {
     enVuelo = true
     try {
       const f = fetchImpl ?? fetch
-      const res = await f(`/api/sustentacion/estado?sessionId=${encodeURIComponent(sessionId)}`, {
-        cache: 'no-store',
-      })
+      const url = sessionId
+        ? `/api/sustentacion/estado?sessionId=${encodeURIComponent(sessionId)}`
+        : '/api/sustentacion/estado'
+      const res = await f(url, { cache: 'no-store' })
       if (!res.ok) {
         // 404 (sesión expirada) y 503 (Redis caído) se tratan IGUAL a efectos
         // de pantalla: se conserva lo último y se avisa. Lo que no se hace
@@ -130,7 +139,9 @@ export function obedecerComandos(opts: OpcionesObedecer): () => void {
   }
 
   const conectarBus = () => {
-    if (!bus || detenido || typeof EventSource !== 'function') return
+    // Sin `sessionId` no hay canal al que suscribirse: el bus publica por
+    // sesión. Quien no la conoce se queda con el sondeo, que ya cumple.
+    if (!bus || !sessionId || detenido || typeof EventSource !== 'function') return
     // El token es de SOLO LECTURA: es la única forma de autenticar un
     // EventSource, que no admite cabeceras. Mismo canal que usan los asistentes.
     source = new EventSource(

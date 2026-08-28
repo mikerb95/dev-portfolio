@@ -155,6 +155,15 @@ export type EstadoSustentacion = {
   actualizadoEn: number
   /** Epoch ms en que empezó el beat actual. Alimenta el cronómetro. */
   beatIniciadoEn: number
+  /**
+   * Epoch ms del SERVIDOR al responder. Existe solo para el cronómetro del
+   * control remoto: `beatIniciadoEn` es hora de servidor, y restarle la hora
+   * del teléfono daría un cronómetro desviado tanto como lo esté ese reloj.
+   * Con este par, el teléfono calcula su propio desfase y el minutero es el
+   * mismo que vería el servidor, sin depender de que el móvil tenga la hora
+   * bien puesta.
+   */
+  ahora: number
   primerBeat: number
   ultimoBeat: number
 }
@@ -168,6 +177,7 @@ export function aEstado(s: SustentacionSession): EstadoSustentacion {
     version: s.version,
     actualizadoEn: s.updatedAt,
     beatIniciadoEn: s.beatIniciadoEn,
+    ahora: Date.now(),
     primerBeat: BEAT_PRIMERO,
     ultimoBeat: BEAT_ULTIMO,
   }

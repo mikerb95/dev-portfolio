@@ -1,0 +1,1062 @@
+---
+// El control remoto de la sustentación: lo que tengo en la mano mientras hablo.
+//
+// Es la contraparte de `/sustentacion/seguir/[pin]`. Aquella vista es para el
+// público y no puede hacer nada; esta es para mí y es la única que mueve la
+// presentación desde el celular. Toda la máquina que hay detrás ya existe:
+// `lib/sustentacion/control.ts` en el servidor, `mando.ts` para enviar y
+// `obedecer.ts` para seguir el estado. Esta página es la superficie.
+//
+// PÚBLICA Y SIN LOGIN, a propósito. La credencial es el PIN de presentador (10
+// caracteres, nunca proyectado) y nada más, por la misma razón que el endpoint
+// `/api/sustentacion/comando`: esto se abre en un celular con datos móviles,
+// de pie, minutos antes de empezar. Un OAuth de GitHub a mitad de la charla,
+// con la cookie caducada y sin wifi, es un riesgo mucho peor que el de una
+// URL que no revela nada sin el PIN. La página en sí no muestra un solo dato
+// hasta que ese PIN existe.
+//
+// TODO EL ESTADO VIENE DEL SERVIDOR. La página no lleva la cuenta del beat:
+// la pide. Es la invariante 1 del canal (posición absoluta, nunca
+// incrementos), y es lo que permite que yo avance con el teclado del portátil
+// y el teléfono se entere igual, o que recargue el celular y siga en su sitio.
+//
+// El guion (títulos, duraciones y las notas que voy leyendo) se pide UNA vez
+// al cargar y se queda en memoria: son ~9 KB que no cambian, y volver a
+// pedirlos en cada beat sería gastar el 5G justo en el momento en el que el
+// avance tiene que sentirse instantáneo.
+
+// Ni caché de CDN ni indexación: es una pantalla de control, aunque no revele
+// nada sin el PIN.
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Sin zoom y sin rebote: cada píxel de este viewport es un botón que se
+         pulsa a ciegas. Un pellizco accidental a mitad de la charla dejaría la
+         interfaz descuadrada y sin forma evidente de volver. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#05070a" />
+    <title>Control remoto · Sustentación</title>
+    <style>
+      /* Tipografía del sistema y una pila monoespaciada para los rótulos y las
+         cifras. El diseño pedía Raleway y Noto Sans desde Google Fonts, pero la
+         CSP de este sitio sirve `font-src 'self' data:` y una fuente remota se
+         bloquearía en silencio: quedaría el fallback igualmente, con una
+         petición muerta de por medio en el arranque del celular. */
+      :root {
+        --fondo: #05070a;
+        --panel: #07090d;
+        --texto: #e9f2f9;
+        --nota: #f2f8fc;
+        --tenue: #5c7488;
+        --tenue-mas: #3a4d5f;
+        --titulo: #9fc3da;
+        --acento: #7dd3fc;
+        --linea: #131c26;
+        --linea-suave: #101821;
+        --borde: #1b2836;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        /* Las notas se leen a un brazo de distancia, de pie y con mala luz.
+           25px no es un tamaño de cuerpo de texto, es el tamaño mínimo al que
+           una nota se capta de un vistazo sin dejar de mirar al jurado. */
+        --tam-nota: 25px;
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: manipulation;
+        -webkit-text-size-adjust: 100%;
+        background: var(--fondo);
+        color: var(--texto);
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        padding: 0;
+        border: 0;
+        background: none;
+      }
+
+      .marco {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .app {
+        position: relative;
+        width: 100%;
+        max-width: 430px;
+        height: 100%;
+        max-height: 932px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--panel);
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* ── Aviso de red ──────────────────────────────────────────────────── */
+      /* Ocupa alto cero cuando hay red: no se oculta con `display`, para que
+         aparecer y desaparecer no reacomode el resto de la pantalla de golpe
+         mientras estoy mirando una nota. */
+      .sin-red {
+        flex: 0 0 auto;
+        height: 0;
+        overflow: hidden;
+        line-height: 38px;
+        text-align: center;
+        background: #7f1d1d;
+        color: #fee2e2;
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+      }
+      .app[data-red='off'] .sin-red {
+        height: 38px;
+      }
+
+      /* ── Cabecera ──────────────────────────────────────────────────────── */
+      .cabecera {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 16px 12px;
+      }
+      .contador {
+        flex: 0 0 auto;
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        color: var(--tenue);
+        font-variant-numeric: tabular-nums;
+      }
+      .contador span {
+        color: #243444;
+      }
+      .titulo {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--titulo);
+      }
+      /* Mantener pulsado abre el selector de beats. No es un tap: un tap suelto
+         en la esquina superior es justo lo que ocurre al agarrar el teléfono. */
+      .menu {
+        flex: 0 0 auto;
+        position: relative;
+        width: 52px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        flex-direction: column;
+        background: #0d131b;
+        border: 1px solid var(--borde);
+        overflow: hidden;
+      }
+      .menu i {
+        width: 20px;
+        height: 2px;
+        background: var(--tenue);
+      }
+      .menu .carga {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 3px;
+        width: 0;
+        background: var(--acento);
+      }
+
+      /* ── Notas ─────────────────────────────────────────────────────────── */
+      .lienzo {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+      .scroll {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        padding: 4px 16px 40px;
+      }
+      .dato {
+        font-family: var(--mono);
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--acento);
+        margin-bottom: 14px;
+      }
+      .dato:empty {
+        margin-bottom: 0;
+      }
+      .notas {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .notas li {
+        display: flex;
+        gap: 12px;
+        padding: 14px 0;
+        border-top: 1px solid var(--linea);
+      }
+      .notas li::before {
+        content: '';
+        flex: 0 0 auto;
+        width: 8px;
+        height: 8px;
+        margin-top: 12px;
+        background: #2c4459;
+      }
+      .notas p {
+        flex: 1;
+        margin: 0;
+        font-size: var(--tam-nota);
+        line-height: 1.34;
+        font-weight: 500;
+        color: var(--nota);
+        text-wrap: pretty;
+      }
+      /* El texto no se corta de golpe al final del scroll: se apaga. */
+      .difuminado {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 32px;
+        pointer-events: none;
+        background: linear-gradient(to top, var(--panel), rgba(7, 9, 13, 0));
+      }
+
+      /* ── Cronómetro y enlace ───────────────────────────────────────────── */
+      .medidor {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 16px 10px;
+        border-top: 1px solid var(--linea);
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        font-variant-numeric: tabular-nums;
+      }
+      .reloj {
+        color: #8fb3c9;
+      }
+      /* Pasarse de la duración estimada no es un error: es información. Ámbar,
+         nunca rojo, para que no se lea como "algo se rompió". */
+      .app[data-tiempo='excedido'] .reloj,
+      .app[data-tiempo='excedido'] .barra i {
+        color: #fbbf24;
+        background: #fbbf24;
+      }
+      .reloj span {
+        color: var(--tenue-mas);
+      }
+      .barra {
+        flex: 1;
+        height: 4px;
+        background: var(--linea);
+        overflow: hidden;
+      }
+      .barra i {
+        display: block;
+        height: 4px;
+        width: 0;
+        background: #8fb3c9;
+        transition: width 400ms linear;
+      }
+      .enlace {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--tenue);
+      }
+      .punto {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #34d399;
+        flex: none;
+      }
+      .app[data-enlace='enviando'] .punto {
+        background: #fbbf24;
+      }
+      .app[data-enlace='fallo'] .punto {
+        background: #f87171;
+      }
+      .app[data-enlace='sin-enlace'] .punto,
+      .app[data-red='off'] .punto {
+        background: #64748b;
+      }
+
+      /* ── Botonera ──────────────────────────────────────────────────────── */
+      /* Dos tamaños muy distintos a propósito: el que se pulsa sin mirar es
+         enorme, y el que deshace es pequeño y está al otro lado del pulgar. */
+      .botonera {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
+        padding: 0 16px 20px;
+      }
+      .atras,
+      .adelante {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 60ms linear;
+        transform: scale(1);
+      }
+      .atras {
+        flex: 0 0 104px;
+        height: 88px;
+        border: 2px solid #24384b;
+        background: #0d131b;
+        color: #8fb3c9;
+      }
+      .atras[data-pulsado='si'] {
+        background: #1c2b3a;
+        transform: scale(0.94);
+      }
+      .atras[data-envio='fallo'] {
+        background: #7f1d1d;
+      }
+      .adelante {
+        position: relative;
+        flex: 1 1 auto;
+        height: 124px;
+        flex-direction: column;
+        gap: 6px;
+        overflow: hidden;
+        border: 2px solid #22c08c;
+        background: #0f6b4f;
+        color: #eafff6;
+      }
+      .adelante[data-pulsado='si'] {
+        transform: scale(0.965);
+      }
+      .adelante[data-envio='enviando'] {
+        background: #0c5340;
+      }
+      .adelante[data-envio='fallo'] {
+        background: #b91c1c;
+        border-color: #fca5a5;
+        color: #fff1f1;
+      }
+      .rotulo {
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+      }
+      /* La barra de trabajo solo existe mientras el comando está en vuelo: es
+         la diferencia visible entre "no pulsé bien" y "va en camino". */
+      .trabajando {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 5px;
+        overflow: hidden;
+        opacity: 0;
+        background: rgba(255, 255, 255, 0.14);
+      }
+      .adelante[data-envio='enviando'] .trabajando {
+        opacity: 1;
+      }
+      .trabajando i {
+        display: block;
+        width: 100%;
+        height: 5px;
+        background: #f4fafe;
+        animation: rc-trabajo 700ms linear infinite;
+      }
+      @keyframes rc-trabajo {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .trabajando i {
+          animation: none;
+        }
+        .atras,
+        .adelante,
+        .barra i {
+          transition: none;
+        }
+      }
+
+      /* ── Capas: selector de beats y PIN ────────────────────────────────── */
+      .capa {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        background: var(--fondo);
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .capa[data-abierta='si'] {
+        display: flex;
+      }
+      .capa-cabecera {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 16px 14px;
+        border-bottom: 1px solid var(--linea);
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: var(--tenue);
+      }
+      .cerrar {
+        width: 48px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0d131b;
+        border: 1px solid var(--borde);
+        color: var(--titulo);
+        font-size: 20px;
+      }
+      .lista {
+        flex: 1;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 4px 0 24px;
+        margin: 0;
+        list-style: none;
+      }
+      .lista button {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        height: 62px;
+        padding: 0 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--linea-suave);
+      }
+      .lista .n {
+        flex: 0 0 34px;
+        font-family: var(--mono);
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--tenue-mas);
+      }
+      .lista .t {
+        flex: 1;
+        font-size: 19px;
+        font-weight: 600;
+      }
+      .lista .d {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--tenue-mas);
+      }
+      .lista [aria-current='true'] {
+        background: #111c26;
+      }
+      .lista [aria-current='true'] .n,
+      .lista [aria-current='true'] .t {
+        color: var(--acento);
+      }
+
+      /* La puerta del PIN. Cubre todo hasta que hay credencial: sin ella esta
+         pantalla no muestra ni el beat en el que va la charla. */
+      .puerta {
+        justify-content: center;
+        gap: 22px;
+        padding: 24px;
+      }
+      .puerta h1 {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: var(--tenue);
+      }
+      .puerta p {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.4;
+        color: var(--titulo);
+      }
+      .puerta input {
+        width: 100%;
+        height: 64px;
+        padding: 0 16px;
+        background: #0d131b;
+        border: 1px solid var(--borde);
+        color: var(--texto);
+        font-family: var(--mono);
+        font-size: 24px;
+        letter-spacing: 0.14em;
+        border-radius: 0;
+        -webkit-appearance: none;
+      }
+      .puerta input:focus {
+        outline: 2px solid var(--acento);
+        outline-offset: -2px;
+      }
+      .puerta .entrar {
+        width: 100%;
+        height: 64px;
+        border: 2px solid #22c08c;
+        background: #0f6b4f;
+        color: #eafff6;
+        font-family: var(--mono);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+      }
+      .puerta .error {
+        min-height: 20px;
+        font-size: 15px;
+        color: #fca5a5;
+      }
+      .puerta .error:empty {
+        visibility: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="marco">
+      <div class="app" id="app" data-red="on" data-enlace="sondeando" data-tiempo="dentro">
+        <div class="sin-red">SIN CONEXIÓN · USA EL TECLADO</div>
+
+        <header class="cabecera">
+          <div class="contador"><span id="beat-n">00</span><span id="beat-total">/12</span></div>
+          <div class="titulo" id="beat-titulo">Sin empezar</div>
+          <button
+            class="menu"
+            id="menu"
+            type="button"
+            aria-label="Mantener pulsado para saltar a un beat"
+          >
+            <i></i><i></i><i></i>
+            <span class="carga" id="menu-carga"></span>
+          </button>
+        </header>
+
+        <div class="lienzo">
+          <div class="scroll" id="scroll">
+            <div class="dato" id="dato"></div>
+            <ul class="notas" id="notas"></ul>
+          </div>
+          <div class="difuminado"></div>
+        </div>
+
+        <div class="medidor">
+          <div class="reloj"><span id="transcurrido">0:00</span><span id="objetivo"> / 0:00</span></div>
+          <div class="barra"><i id="progreso"></i></div>
+          <div class="enlace">
+            <span class="punto" aria-hidden="true"></span>
+            <span id="enlace-rotulo">CONECTANDO</span>
+          </div>
+        </div>
+
+        <div class="botonera">
+          <button class="atras" id="atras" type="button" data-envio="idle" aria-label="Beat anterior">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" aria-hidden="true">
+              <path d="M15 5 L8 12 L15 19"></path>
+            </svg>
+          </button>
+          <button class="adelante" id="adelante" type="button" data-envio="idle">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="square" aria-hidden="true">
+              <path d="M9 5 L16 12 L9 19"></path>
+            </svg>
+            <span class="rotulo" id="adelante-rotulo">ADELANTE</span>
+            <span class="trabajando"><i></i></span>
+          </button>
+        </div>
+
+        <div class="capa" id="capa-lista" data-abierta="no">
+          <div class="capa-cabecera">
+            <span>SALTAR A UN BEAT</span>
+            <button class="cerrar" id="cerrar-lista" type="button" aria-label="Cerrar">✕</button>
+          </div>
+          <ul class="lista" id="lista"></ul>
+        </div>
+
+        <div class="capa puerta" id="puerta" data-abierta="si">
+          <h1>PIN DE PRESENTADOR</h1>
+          <p>Diez caracteres. Es el que sale solo en el panel, nunca el que va proyectado.</p>
+          <input
+            id="pin"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="ab3kd-9mn2p"
+            aria-label="PIN de presentador"
+          />
+          <div class="error" id="pin-error"></div>
+          <button class="entrar" id="entrar" type="button">TOMAR EL CONTROL</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      import { obedecerComandos, type EstadoSustentacion, type EstadoConexion } from '../../lib/sustentacion/obedecer'
+      import {
+        almacenSeguro,
+        crearMando,
+        guardarPin,
+        leerPin,
+        olvidarPin,
+        type AccionMando,
+        type FalloMando,
+      } from '../../lib/sustentacion/mando'
+      import { esFormaPinPresentador } from '../../lib/sustentacion/pin-presentador'
+
+      type BeatGuion = {
+        beat: number
+        contenido: string
+        duracion_estimada_s: number
+        notas_narracion: string[]
+        titulo: string
+        dato: string | null
+      }
+
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
+
+      const $app = $('app')
+      const $beatN = $('beat-n')
+      const $beatTotal = $('beat-total')
+      const $titulo = $('beat-titulo')
+      const $scroll = $('scroll')
+      const $dato = $('dato')
+      const $notas = $('notas')
+      const $transcurrido = $('transcurrido')
+      const $objetivo = $('objetivo')
+      const $progreso = $('progreso')
+      const $enlaceRotulo = $('enlace-rotulo')
+      const $atras = $<HTMLButtonElement>('atras')
+      const $adelante = $<HTMLButtonElement>('adelante')
+      const $adelanteRotulo = $('adelante-rotulo')
+      const $menu = $('menu')
+      const $menuCarga = $('menu-carga')
+      const $capaLista = $('capa-lista')
+      const $lista = $('lista')
+      const $puerta = $('puerta')
+      const $pin = $<HTMLInputElement>('pin')
+      const $pinError = $('pin-error')
+
+      const store = almacenSeguro(typeof localStorage !== 'undefined' ? localStorage : null)
+      const mando = crearMando({ store })
+
+      let guion: BeatGuion[] = []
+      let estado: EstadoSustentacion | null = null
+      /** Reloj del teléfono menos reloj del servidor. Ver `ahora` en control.ts. */
+      let desfase = 0
+      let conexion: EstadoConexion = 'sondeando'
+      let envio: 'idle' | 'enviando' | 'fallo' = 'idle'
+      let ultimoFallo: FalloMando | null = null
+      let botonEnFallo: 'adelante' | 'atras' | null = null
+      let temporizadorFallo: ReturnType<typeof setTimeout> | null = null
+
+      const mmss = (s: number) =>
+        `${Math.floor(Math.max(0, s) / 60)}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, '0')}`
+
+      const beatActual = () => estado?.beat ?? 0
+      const delGuion = (n: number) => guion.find((b) => b.beat === n) ?? null
+
+      /** Vibrar es opcional en todas partes y no existe en iOS. Nunca lanza. */
+      const vibrar = (patron: number | number[]) => {
+        try {
+          navigator.vibrate?.(patron)
+        } catch {
+          // Un mando que no vibra sigue siendo un mando.
+        }
+      }
+
+      // ── Pintado ────────────────────────────────────────────────────────────
+      // Una sola función que pinta TODO desde las variables de arriba. No hay
+      // ninguna ruta que toque el DOM por su cuenta: con dos fuentes de verdad,
+      // el estado del botón y el beat real acaban discrepando justo cuando la
+      // red va mal, que es cuando más falta hace confiar en lo que se ve.
+
+      function pintarBeat() {
+        const n = beatActual()
+        const g = delGuion(n)
+        const total = estado?.ultimoBeat ?? guion.length ?? 12
+
+        $beatN.textContent = String(n).padStart(2, '0')
+        $beatTotal.textContent = `/${String(total).padStart(2, '0')}`
+        $titulo.textContent = g?.titulo ?? estado?.titulo ?? (n === 0 ? 'Sin empezar' : `Beat ${n}`)
+        $dato.textContent = g?.dato ?? estado?.dato ?? ''
+
+        $notas.replaceChildren()
+        const notas = g?.notas_narracion ?? []
+        if (notas.length === 0 && n === 0) {
+          // El beat 0 es "aún no he empezado". Decirlo es mejor que un hueco.
+          notas.push('Toca ADELANTE para empezar por el primer beat.')
+        }
+        for (const texto of notas) {
+          const li = document.createElement('li')
+          const p = document.createElement('p')
+          p.textContent = texto
+          li.append(p)
+          $notas.append(li)
+        }
+        // Cambiar de beat con el scroll a mitad dejaría la primera nota fuera
+        // de pantalla justo cuando hay que leerla.
+        $scroll.scrollTop = 0
+        pintarLista()
+      }
+
+      function pintarReloj() {
+        const g = delGuion(beatActual())
+        const objetivo = g?.duracion_estimada_s ?? 0
+        const inicio = estado?.beatIniciadoEn ?? 0
+        const transcurrido = inicio > 0 ? (Date.now() - desfase - inicio) / 1000 : 0
+
+        $transcurrido.textContent = mmss(transcurrido)
+        $objetivo.textContent = ` / ${mmss(objetivo)}`
+        $progreso.style.width = objetivo > 0 ? `${Math.min(100, (transcurrido / objetivo) * 100)}%` : '0%'
+        $app.dataset.tiempo = objetivo > 0 && transcurrido > objetivo ? 'excedido' : 'dentro'
+      }
+
+      const ROTULOS_FALLO: Record<FalloMando, string> = {
+        'sin-pin': 'SIN PIN',
+        ocupado: 'ENVIANDO',
+        'pin-rechazado': 'PIN MALO',
+        'sin-sesion': 'SIN SESIÓN',
+        limite: 'MUY RÁPIDO',
+        'sin-enlace': 'FALLÓ',
+      }
+
+      function pintarEnlace() {
+        const sinRed = typeof navigator !== 'undefined' && navigator.onLine === false
+        $app.dataset.red = sinRed ? 'off' : 'on'
+
+        let rotulo: string
+        if (sinRed) rotulo = 'SIN RED'
+        else if (envio === 'enviando') rotulo = 'ENVIANDO'
+        else if (envio === 'fallo') rotulo = ROTULOS_FALLO[ultimoFallo ?? 'sin-enlace']
+        else if (conexion === 'sin-enlace') rotulo = 'SIN ENLACE'
+        else rotulo = 'CONECTADO'
+
+        $app.dataset.enlace = sinRed ? 'sin-enlace' : envio === 'idle' ? conexion : envio
+        $enlaceRotulo.textContent = rotulo
+
+        // El rótulo del botón grande dice qué pasó con MI último toque, que es
+        // distinto de cómo está el enlace en general.
+        $adelante.dataset.envio = botonEnFallo === 'adelante' && envio === 'fallo' ? 'fallo' : envio === 'enviando' ? 'enviando' : 'idle'
+        $atras.dataset.envio = botonEnFallo === 'atras' && envio === 'fallo' ? 'fallo' : 'idle'
+        $adelanteRotulo.textContent =
+          $adelante.dataset.envio === 'fallo'
+            ? 'NO LLEGÓ'
+            : $adelante.dataset.envio === 'enviando'
+              ? 'ENVIANDO'
+              : 'ADELANTE'
+      }
+
+      function pintarLista() {
+        const actual = beatActual()
+        $lista.replaceChildren()
+        for (const b of guion) {
+          const li = document.createElement('li')
+          const boton = document.createElement('button')
+          boton.type = 'button'
+          if (b.beat === actual) boton.setAttribute('aria-current', 'true')
+
+          const n = document.createElement('span')
+          n.className = 'n'
+          n.textContent = String(b.beat).padStart(2, '0')
+          const t = document.createElement('span')
+          t.className = 't'
+          t.textContent = b.titulo
+          const d = document.createElement('span')
+          d.className = 'd'
+          d.textContent = mmss(b.duracion_estimada_s)
+
+          boton.append(n, t, d)
+          boton.addEventListener('click', () => {
+            cerrarLista()
+            vibrar(12)
+            void enviar('ir', 'adelante', b.beat)
+          })
+          li.append(boton)
+          $lista.append(li)
+        }
+      }
+
+      // ── Envío ──────────────────────────────────────────────────────────────
+
+      async function enviar(accion: AccionMando, boton: 'adelante' | 'atras', beat?: number) {
+        if (mando.ocupado()) return
+
+        // Topes: en el beat 12 no hay "siguiente" y en el 1 no hay "anterior".
+        // El servidor ya los respeta (`beatDestino` no se pasa de rango), pero
+        // gastar una petición para que me diga que no ha pasado nada es gastar
+        // el 5G en el momento en el que menos sobra.
+        const n = beatActual()
+        if (accion === 'siguiente' && estado && n >= estado.ultimoBeat) return vibrar(8)
+        if (accion === 'anterior' && estado && n <= estado.primerBeat) return vibrar(8)
+
+        vibrar(14)
+        envio = 'enviando'
+        botonEnFallo = null
+        pintarEnlace()
+
+        const r = await mando.enviar(accion, beat)
+
+        if (r.ok) {
+          envio = 'idle'
+          ultimoFallo = null
+          // La respuesta trae la posición ABSOLUTA, también cuando el comando
+          // se descartó por duplicado: se acepta igual, es más fresca que el
+          // último sondeo.
+          aplicarEstado(r.estado)
+          pintarEnlace()
+          return
+        }
+
+        if (r.fallo === 'pin-rechazado') {
+          // El PIN guardado ya no vale (sesión nueva, o mal tecleado desde el
+          // principio). Se borra y se pide otro: reintentar con él no va a
+          // funcionar y cada intento quema cupo del antifuerza bruta.
+          olvidarPin(store)
+          abrirPuerta('Ese PIN no controla la sesión en curso.')
+          envio = 'idle'
+          pintarEnlace()
+          return
+        }
+
+        vibrar([40, 60, 40])
+        envio = 'fallo'
+        ultimoFallo = r.fallo
+        botonEnFallo = boton
+        pintarEnlace()
+        if (temporizadorFallo) clearTimeout(temporizadorFallo)
+        temporizadorFallo = setTimeout(() => {
+          envio = 'idle'
+          botonEnFallo = null
+          pintarEnlace()
+        }, 1600)
+      }
+
+      function aplicarEstado(nuevo: EstadoSustentacion) {
+        const cambioDeBeat = nuevo.beat !== estado?.beat
+        estado = nuevo
+        // El desfase se recalcula con cada respuesta: incluye la latencia de
+        // red (decenas de ms, irrelevante para un cronómetro de minutos) y
+        // corrige por completo un reloj de teléfono mal puesto.
+        if (typeof nuevo.ahora === 'number') desfase = Date.now() - nuevo.ahora
+        if (cambioDeBeat) pintarBeat()
+        pintarReloj()
+      }
+
+      // ── Gestos ─────────────────────────────────────────────────────────────
+
+      function armarBoton(el: HTMLElement, accion: AccionMando, boton: 'adelante' | 'atras') {
+        // `pointerdown` y no `click`: el mando tiene que responder en el
+        // instante en que el dedo toca, no cuando se levanta. La diferencia se
+        // nota, y en una presentación se nota como lentitud del sistema.
+        el.addEventListener('pointerdown', (e) => {
+          e.preventDefault()
+          el.dataset.pulsado = 'si'
+          void enviar(accion, boton)
+        })
+        const soltar = () => {
+          el.dataset.pulsado = 'no'
+        }
+        el.addEventListener('pointerup', soltar)
+        el.addEventListener('pointerleave', soltar)
+        el.addEventListener('pointercancel', soltar)
+        // Sin esto, una pulsación algo larga abre el menú contextual del
+        // navegador encima del botón que más falta hace.
+        el.addEventListener('contextmenu', (e) => e.preventDefault())
+      }
+
+      armarBoton($adelante, 'siguiente', 'adelante')
+      armarBoton($atras, 'anterior', 'atras')
+
+      // Mantener pulsado el menú 650 ms abre el selector. El progreso se pinta
+      // en el propio botón: sin realimentación, un gesto oculto se siente roto.
+      const MANTENER_MS = 650
+      let temporizadorMenu: ReturnType<typeof setInterval> | null = null
+
+      const soltarMenu = () => {
+        if (temporizadorMenu) clearInterval(temporizadorMenu)
+        temporizadorMenu = null
+        $menuCarga.style.width = '0'
+      }
+
+      $menu.addEventListener('pointerdown', (e) => {
+        e.preventDefault()
+        soltarMenu()
+        const t0 = Date.now()
+        temporizadorMenu = setInterval(() => {
+          const pct = Math.min(100, ((Date.now() - t0) / MANTENER_MS) * 100)
+          $menuCarga.style.width = `${pct}%`
+          if (pct >= 100) {
+            soltarMenu()
+            vibrar(20)
+            $capaLista.dataset.abierta = 'si'
+          }
+        }, 30)
+      })
+      $menu.addEventListener('pointerup', soltarMenu)
+      $menu.addEventListener('pointerleave', soltarMenu)
+      $menu.addEventListener('pointercancel', soltarMenu)
+      $menu.addEventListener('contextmenu', (e) => e.preventDefault())
+
+      const cerrarLista = () => {
+        $capaLista.dataset.abierta = 'no'
+      }
+      $('cerrar-lista').addEventListener('click', cerrarLista)
+
+      // ── Puerta del PIN ─────────────────────────────────────────────────────
+
+      function abrirPuerta(mensaje = '') {
+        $pinError.textContent = mensaje
+        $pin.value = ''
+        $puerta.dataset.abierta = 'si'
+        cerrarLista()
+        // Sin `focus` hay que dar un toque más para escribir, y el teclado del
+        // celular tarda lo suyo en subir.
+        setTimeout(() => $pin.focus(), 50)
+      }
+
+      function intentarPin() {
+        const bruto = $pin.value
+        if (!esFormaPinPresentador(bruto)) {
+          $pinError.textContent = 'Son diez caracteres, sin las letras ni los dígitos ambiguos.'
+          return
+        }
+        guardarPin(store, bruto)
+        $puerta.dataset.abierta = 'no'
+        $pinError.textContent = ''
+        $pin.value = ''
+        $pin.blur()
+      }
+
+      $('entrar').addEventListener('click', intentarPin)
+      $pin.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') intentarPin()
+      })
+
+      if (leerPin(store)) $puerta.dataset.abierta = 'no'
+      else abrirPuerta()
+
+      // ── Arranque ───────────────────────────────────────────────────────────
+
+      // El guion, una sola vez. Si falla (sin red al abrir), la página sigue
+      // sirviendo: el título y el dato del beat actual llegan por `/estado`, y
+      // lo único que falta son las notas y el selector.
+      void fetch('/api/sustentacion/guion')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { beats?: BeatGuion[] } | null) => {
+          if (!d?.beats?.length) return
+          guion = d.beats
+          pintarBeat()
+        })
+        .catch(() => {
+          // Silencio deliberado: nada de lo que hay aquí puede interrumpir.
+        })
+
+      // Sin `sessionId` ni bus: el mando solo tiene el PIN, y `/estado` resuelve
+      // la sesión en curso. Un segundo entre sondeos, no 250 ms como el canvas:
+      // el teléfono casi siempre es quien MANDA el cambio (y se entera por la
+      // respuesta del propio comando); esto solo cubre el caso de que yo avance
+      // con el teclado del portátil. A 250 ms serían 14.000 lecturas de Redis en
+      // una hora por un caso que ocurre unas pocas veces.
+      obedecerComandos({
+        intervaloMs: 1000,
+        onEstado: aplicarEstado,
+        onConexion: (c) => {
+          conexion = c
+          pintarEnlace()
+        },
+      })
+
+      // El cronómetro corre en local contra `beatIniciadoEn`: no hace ni una
+      // petición por segundo, solo repinta.
+      setInterval(pintarReloj, 500)
+
+      const alCambiarRed = () => pintarEnlace()
+      addEventListener('online', alCambiarRed)
+      addEventListener('offline', alCambiarRed)
+
+      // Pantalla encendida mientras dure la charla. Es opcional en todos los
+      // navegadores y falla sin consecuencias; el bloqueo se pierde al volver
+      // de segundo plano, así que se vuelve a pedir.
+      let wakeLock: WakeLockSentinel | null = null
+      const mantenerDespierto = async () => {
+        try {
+          if (document.visibilityState === 'visible' && 'wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen')
+          }
+        } catch {
+          // El teléfono se apagará solo. Molesto, no grave.
+        }
+      }
+      void mantenerDespierto()
+      document.addEventListener('visibilitychange', () => void mantenerDespierto())
+
+      // Zoom por pellizco y doble toque: el meta viewport no basta en iOS.
+      document.addEventListener('gesturestart', (e) => e.preventDefault())
+      document.addEventListener(
+        'touchmove',
+        (e) => {
+          if (e.touches.length > 1) e.preventDefault()
+        },
+        { passive: false }
+      )
+
+      pintarBeat()
+      pintarReloj()
+      pintarEnlace()
+    </script>
+  </body>
+</html>

@@ -26,6 +26,14 @@ export const GET: APIRoute = async () => {
       contenido: b.contenido,
       duracion_estimada_s: b.duracion_estimada_s,
       notas_narracion: b.notas_narracion,
+      // El título corto y el dato del beat, los mismos que `/estado` devuelve
+      // para el beat ACTUAL. Van aquí además de allí porque el control remoto
+      // los necesita para los DOCE: el selector de beats los pinta todos, y
+      // pedirlos beat a beat sería justo el gasto de red que este endpoint
+      // existe para evitar. Salen del mismo `vista_celular` del guion, así que
+      // no hay dos fuentes de verdad que puedan separarse.
+      titulo: b.vista_celular.titulo,
+      dato: b.vista_celular.dato,
     })),
   }
 
