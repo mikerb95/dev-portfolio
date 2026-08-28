@@ -363,19 +363,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     canonicalPath.startsWith('/api/admin') ||
     canonicalPath === '/cobrar' ||
     canonicalPath.startsWith('/cobrar/') ||
-    canonicalPath.startsWith('/remote/') ||
-    // El ESCENARIO de la sustentación (solo `/sustentacion` exacto). Es panel a
-    // todos los efectos: su HTML lleva el secreto de publicación de la sesión,
-    // que es lo que autoriza a mover la presentación con el teclado. Se proyecta
-    // desde mi portátil, que ya tiene sesión de admin.
-    //
-    // Las OTRAS dos rutas de /sustentacion siguen siendo públicas y tienen que
-    // seguir siéndolo, así que la comparación es exacta y nunca por prefijo:
-    //  · /sustentacion/seguir/<pin>  lo abre el público con el PIN corto.
-    //  · /sustentacion/control       lo abro yo en el celular, con el PIN largo
-    //    de presentador; poner el gate de admin ahí sería exigir un OAuth de
-    //    GitHub en un móvil con 5G a mitad de la charla.
-    canonicalPath === '/sustentacion'
+    canonicalPath.startsWith('/remote/')
 
   // El deck de sustentación tiene URL bajo /docs (la sección es pública) pero no
   // es público: solo lo ve la sesión del administrador. Se trata como ruta
@@ -384,11 +372,27 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // que haría que la CDN cachee el HTML y lo sirva a cualquiera.
   const isPrivateDeck = canonicalPath === '/docs/presentacion'
 
+  // El ESCENARIO de la sustentación (solo `/sustentacion` exacto). Es privado
+  // para los HEADERS (noindex, sin caché de CDN) pero NO pasa por el gate de
+  // login, y esa distinción es deliberada: su puerta la decide la propia
+  // página, que acepta DOS llaves, la sesión de admin o el PIN de presentador
+  // (ver `lib/sustentacion/pase.ts`). Un redirect a /login aquí volvería a
+  // meter GitHub OAuth como dependencia obligatoria para proyectar, que es
+  // justo lo que la segunda llave existe para evitar: sin ninguna de las dos,
+  // la página se muestra igual y se presenta con el teclado, solo que sin
+  // publicar el beat a los seguidores.
+  //
+  // Las otras dos rutas de /sustentacion son públicas y tienen que seguir
+  // siéndolo, así que la comparación es exacta y nunca por prefijo:
+  //  · /sustentacion/seguir/<pin>  lo abre el público con el PIN corto.
+  //  · /sustentacion/control       lo abro yo en el celular con el PIN largo.
+  const isEscenario = canonicalPath === '/sustentacion'
+
   // Portal de clientes: privado como /admin a efectos de headers (noindex, sin
   // caché en la CDN), pero con una auth completamente distinta - ni comparte
   // cookie con el admin ni pasa por Auth.js. Ver docs/plan-portal-clientes.md.
   const isPortal = isPortalPath(canonicalPath)
-  const isPrivate = isAdmin || isPrivateDeck || isPortal
+  const isPrivate = isAdmin || isPrivateDeck || isPortal || isEscenario
 
   let portalDemoMode = false
   let portalRespaldoMode = false

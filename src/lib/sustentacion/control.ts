@@ -238,6 +238,56 @@ export function beatDestino(actual: number, cmd: ComandoEntrada): number {
  * Los pasos 3 y 4 van DESPUÉS de validar: si un comando malformado quemara su
  * `seq`, el reintento corregido del cliente se descartaría como duplicado.
  */
+export type Autorizacion =
+  | { ok: true; sesion: SustentacionSession }
+  | { ok: false; error: string; status: number }
+
+/**
+ * ¿Este PIN manda en la sesión en curso? Con el rate limit por IP y el cupo de
+ * intentos fallidos ya aplicados.
+ *
+ * Está extraído de `ejecutarComando` y no copiado porque hay DOS puertas que se
+ * abren con este mismo PIN (el comando del control remoto y el pase del
+ * escenario), y dos implementaciones del cupo antifuerza bruta serían dos
+ * cupos: probar cien PINes alternando de puerta costaría lo mismo que probar
+ * cincuenta en una, que es justo lo que el límite existe para impedir.
+ *
+ * SOLO REDIS, como todo este módulo. Es lo que permite que la sustentación se
+ * controle y se proyecte con la cuota de Turso agotada.
+ */
+export async function autorizarPorPin(pin: string, ip: string): Promise<Autorizacion> {
+  const store = presentStore()
+  const ttlVentana = Math.ceil(VENTANA_MS / 1000)
+
+  if (await excede(KEY_RL_IP(ventanaActual(VENTANA_MS), ip), LIMITE_IP, ttlVentana)) {
+    return { ok: false, error: 'demasiados comandos, espera un momento', status: 429 }
+  }
+
+  const ventanaFallos = ventanaActual(VENTANA_FALLOS_MS)
+  const ttlFallos = Math.ceil(VENTANA_FALLOS_MS / 1000)
+
+  const sesion = await sesionActual()
+  if (!sesion) return { ok: false, error: 'no hay sesión de sustentación en curso', status: 404 }
+
+  // El cupo de fallos se LEE antes de validar y solo se INCREMENTA al fallar.
+  // Si se incrementara siempre, diez flechas seguidas mías agotarían la
+  // defensa antifuerza bruta y me dejarían fuera de mi propia presentación.
+  const fallos = Number((await store.get(KEY_RL_FALLOS(ventanaFallos, ip))) ?? 0)
+  if (fallos >= LIMITE_FALLOS) {
+    return { ok: false, error: 'demasiados intentos, espera un minuto', status: 429 }
+  }
+
+  if (!(await esPinPresentador(sesion.id, pin))) {
+    // El mensaje no distingue "PIN de asistente" de "PIN inventado": decir cuál
+    // de los dos es sería confirmarle a quien prueba que va por buen camino. Y
+    // el PIN proyectado NO controla, que es todo el punto.
+    await store.incr(KEY_RL_FALLOS(ventanaFallos, ip), ttlFallos)
+    return { ok: false, error: 'PIN sin permiso de control', status: 403 }
+  }
+
+  return { ok: true, sesion }
+}
+
 export async function ejecutarComando(
   cmd: ComandoEntrada,
   ip: string
@@ -246,31 +296,9 @@ export async function ejecutarComando(
   const ttlVentana = Math.ceil(VENTANA_MS / 1000)
 
   try {
-    if (await excede(KEY_RL_IP(ventanaActual(VENTANA_MS), ip), LIMITE_IP, ttlVentana)) {
-      return { ok: false, error: 'demasiados comandos, espera un momento', status: 429 }
-    }
-
-    const ventanaFallos = ventanaActual(VENTANA_FALLOS_MS)
-    const ttlFallos = Math.ceil(VENTANA_FALLOS_MS / 1000)
-
-    const sesion = await sesionActual()
-    if (!sesion) return { ok: false, error: 'no hay sesión de sustentación en curso', status: 404 }
-
-    // El cupo de fallos se LEE antes de validar y solo se INCREMENTA al fallar.
-    // Si se incrementara siempre, diez flechas seguidas mías agotarían la
-    // defensa antifuerza bruta y me dejarían fuera de mi propia presentación.
-    const fallos = Number((await store.get(KEY_RL_FALLOS(ventanaFallos, ip))) ?? 0)
-    if (fallos >= LIMITE_FALLOS) {
-      return { ok: false, error: 'demasiados intentos, espera un minuto', status: 429 }
-    }
-
-    if (!(await esPinPresentador(sesion.id, cmd.pin))) {
-      // El mensaje no distingue "PIN de asistente" de "PIN inventado": decir
-      // cuál de los dos es sería confirmarle a quien prueba que va por buen
-      // camino. Y el PIN proyectado NO controla, que es todo el punto.
-      await store.incr(KEY_RL_FALLOS(ventanaFallos, ip), ttlFallos)
-      return { ok: false, error: 'PIN sin permiso de control', status: 403 }
-    }
+    const auth = await autorizarPorPin(cmd.pin, ip)
+    if (!auth.ok) return auth
+    const sesion = auth.sesion
 
     if (
       await excede(KEY_RL_SESION(ventanaActual(VENTANA_MS), sesion.id), LIMITE_SESION, ttlVentana)

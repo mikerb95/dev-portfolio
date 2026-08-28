@@ -41,6 +41,10 @@ import {
 } from '../data/sustentacion-escena'
 import { BEATS } from '../lib/sustentacion/guion'
 import { secretoDeSesion, sesionActual, type SustentacionSession } from '../lib/sustentacion/bus'
+import { PASE_COOKIE, verificarPase } from '../lib/sustentacion/pase'
+import { isAllowedLogin } from '../lib/auth'
+import { serverEnv } from '../lib/env'
+import { getSession } from 'auth-astro/server'
 
 // Redis caído no puede tumbar la proyección: se entra al vestíbulo y desde ahí
 // se explica qué pasa. El `try` es la diferencia entre eso y un 500 sin estilos.
@@ -52,7 +56,36 @@ try {
   errorRedis = e instanceof Error ? e.message : 'Redis no responde'
 }
 
-const secreto = sesion ? await secretoDeSesion(sesion.id) : null
+// ── Las dos llaves para proyectar ───────────────────────────────────────────
+//
+// El secreto de publicación es lo que autoriza a mover la presentación con el
+// teclado, así que solo entra en el HTML si quien mira tiene una de las dos:
+//
+//   · sesión de admin, revalidada contra la allowlist como en el middleware.
+//   · pase firmado, que se cambia por el PIN de presentador en /api/…/pase.
+//
+// Ninguna de las dos consulta Turso. Y SIN NINGUNA la página se sirve igual:
+// el escenario se presenta con el teclado en local, solo que no publica el beat
+// a los seguidores. Esa degradación es el punto: proyectar no puede depender de
+// GitHub, ni de Redis, ni de la base de datos.
+let autorizado = false
+try {
+  const sesionAdmin = await getSession(Astro.request)
+  const login = (sesionAdmin?.user as { login?: string } | undefined)?.login
+  autorizado = Boolean(sesionAdmin) && isAllowedLogin(login)
+} catch {
+  // Auth.js sin configurar o con la cookie corrupta: se sigue por el pase.
+}
+
+if (!autorizado && sesion) {
+  autorizado = verificarPase(
+    Astro.cookies.get(PASE_COOKIE)?.value,
+    serverEnv('PRESENT_SECRET') || serverEnv('AUTH_SECRET'),
+    sesion.id
+  )
+}
+
+const secreto = sesion && autorizado ? await secretoDeSesion(sesion.id) : null
 const origen = new URL(Astro.request.url).origin
 const urlSeguir = sesion ? `${origen}/sustentacion/seguir/${sesion.pin}` : null
 
@@ -584,6 +617,34 @@ Astro.response.headers.set('Cache-Control', 'no-store')
         line-height: 1.5;
         color: #8fb3c9;
       }
+      .vestibulo .llave {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .vestibulo .llave input {
+        width: 340px;
+        height: 62px;
+        padding: 0 18px;
+        background: #0d131b;
+        border: 1px solid var(--linea);
+        color: #e9f2f9;
+        font-family: var(--mono);
+        font-size: 24px;
+        letter-spacing: 0.12em;
+        border-radius: 0;
+      }
+      .vestibulo .llave input:focus {
+        outline: 2px solid var(--acento);
+        outline-offset: -2px;
+      }
+      .vestibulo .nota-llave {
+        font-family: var(--mono);
+        font-size: 16px;
+        letter-spacing: 0.1em;
+        color: var(--tenue);
+        min-height: 20px;
+      }
       .vestibulo .abrir {
         font-family: var(--mono);
         font-size: 18px;
@@ -713,6 +774,29 @@ Astro.response.headers.set('Cache-Control', 'no-store')
                 <div class="pin">{sesion.pin.toUpperCase()}</div>
                 <Qr data={urlSeguir} size={300} label="Código QR para seguir la sustentación" />
                 <div class="url">{urlSeguir.replace(/^https?:\/\//, '')}</div>
+                {
+                  !autorizado && (
+                    <>
+                      <div class="llave">
+                        <input
+                          id="pin"
+                          type="text"
+                          inputmode="text"
+                          autocomplete="off"
+                          autocapitalize="off"
+                          autocorrect="off"
+                          spellcheck="false"
+                          placeholder="PIN de presentador"
+                          aria-label="PIN de presentador"
+                        />
+                        <button class="abrir" id="desbloquear" type="button">PROYECTAR</button>
+                      </div>
+                      <div class="nota-llave" id="nota-llave">
+                        SIN LLAVE: SE PRESENTA CON EL TECLADO, PERO NADIE LA SIGUE
+                      </div>
+                    </>
+                  )
+                }
               </>
             ) : (
               <>
@@ -1708,6 +1792,44 @@ Astro.response.headers.set('Cache-Control', 'no-store')
           }
         }
       }
+
+      // ── Desbloquear con el PIN de presentador ──────────────────────────────
+      // La llave alternativa al OAuth. Al volver, se recarga: el secreto de
+      // publicación lo tiene que poner el SERVIDOR en el HTML, no este script,
+      // porque es lo que decide si esta pantalla puede mover la presentación.
+      const $pin = document.getElementById('pin') as HTMLInputElement | null
+      const $desbloquear = document.getElementById('desbloquear')
+      const $notaLlave = document.getElementById('nota-llave')
+
+      async function desbloquear() {
+        if (!$pin || !$notaLlave) return
+        const pin = $pin.value.toLowerCase().replace(/[^a-z0-9]/g, '')
+        if (pin.length !== 10) {
+          $notaLlave.textContent = 'SON DIEZ CARACTERES'
+          return
+        }
+        $notaLlave.textContent = 'COMPROBANDO...'
+        try {
+          const res = await fetch('/api/sustentacion/pase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin }),
+          })
+          if (!res.ok) {
+            const d = await res.json().catch(() => ({}))
+            $notaLlave.textContent = (d.error ? String(d.error) : 'NO SE PUDO').toUpperCase()
+            return
+          }
+          location.reload()
+        } catch {
+          $notaLlave.textContent = 'SIN RESPUESTA'
+        }
+      }
+
+      $desbloquear?.addEventListener('click', () => void desbloquear())
+      $pin?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') void desbloquear()
+      })
 
       // ── Abrir sesión desde el propio escenario ─────────────────────────────
       const $abrir = document.getElementById('abrir')

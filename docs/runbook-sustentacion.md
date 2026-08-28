@@ -61,6 +61,77 @@ espacio de PINs.
 está caída, el PIN y la sincronía siguen funcionando igual: son sistemas
 distintos y una caída no arrastra a la otra.
 
+## 2 bis. El escenario proyectado
+
+`/sustentacion` es la pantalla que ve el jurado. Es **privada** (sesión de
+admin): su HTML lleva el secreto de publicación de la sesión, que es lo que
+autoriza a mover la presentación con el teclado. Se abre desde el portátil que
+proyecta, que ya tiene sesión.
+
+- **Antes de empezar** muestra el vestíbulo: el PIN de asistente en grande y su
+  QR, que es de donde el público saca la vista de seguidor. Si no hay sesión
+  abierta, el vestíbulo trae un botón para abrirla sin salir de la pantalla.
+- **Teclas**: flechas para navegar, `P` abre la ventana de presentador (notas
+  del beat y cronómetro, para la pantalla del portátil), `R` repite la
+  animación del beat actual sin publicar nada.
+- **El beat 10 enmarca el portal de verdad**, no un video: el iframe se monta al
+  CARGAR la página, no al llegar al beat, para que no arranque en frío delante
+  del jurado.
+
+El escenario **obedece** el beat que hay en Redis en vez de llevar la cuenta.
+Por eso avanzar con el teclado y avanzar desde el celular son la misma cosa
+vista desde dos sitios, y ninguna de las dos vías depende de la otra.
+
+Los números que salen proyectados (escalera de estrés, recuperación, cobertura,
+conteos del proyecto) se leen de `src/data/sustentacion-datos.json`, que es la
+extracción de las corridas reales. **Ninguna cifra está escrita a mano en la
+diapositiva**: si se repite una corrida y se regenera ese JSON, la pantalla
+cambia sola y no puede contradecir a la evidencia del anexo.
+
+## 2 ter. Qué sobrevive con Turso bloqueado (y con GitHub caído)
+
+**Toda la cadena de la sustentación está construida sobre Redis, no sobre
+Turso.** Con la cuota de la base agotada, esto es lo que pasa:
+
+| Pieza | Con Turso bloqueado |
+|---|---|
+| `/sustentacion` (escenario) | **Funciona.** Solo lee Redis. |
+| `/sustentacion/control` (celular) | **Funciona.** PIN y Redis, nada más. |
+| `/sustentacion/seguir/<pin>` (público) | **Funciona.** Igual. |
+| `/admin/sustentacion` | **Funciona.** Su layout no consulta la base. |
+| Sesión de admin | **Funciona.** Auth.js va con JWT, sin adaptador de base, y el registro de dispositivo ya es fail-open. |
+| Beat 10 (demo del portal) | **Funciona en modo respaldo**, solo. El paso 2 entra por `/api/portal/demo`, que es quien detecta que la base no responde y emite el pase del snapshot. |
+
+**Y proyectar tampoco depende de GitHub.** El escenario acepta DOS llaves:
+
+1. La sesión de admin, que es lo normal desde el portátil de siempre.
+2. **El PIN de presentador**, el mismo de diez caracteres que mueve la
+   presentación desde el celular. Se teclea en el vestíbulo del propio
+   escenario y sirve desde cualquier portátil, sin login y sin GitHub.
+
+Dar el pase a quien ya tiene ese PIN no regala nada: con él ya se puede mover
+la presentación entera desde `/api/sustentacion/comando`. Lo que cambia es
+desde dónde, no qué se puede hacer. Las dos llaves usan el mismo cupo
+antifuerza bruta, así que alternar de puerta no da más intentos.
+
+**Sin ninguna de las dos llaves, el escenario se sirve igual.** Se presenta con
+el teclado en local; lo único que se pierde es publicar el beat a los
+seguidores. Lo mismo si Redis entero está caído: la presentación se da, sin PIN
+ni celular. Esa es la garantía que importa: **para proyectar no hace falta ni
+la base de datos, ni GitHub, ni Redis.**
+
+### Lo único que sí exige sesión de admin
+
+**Abrir la sesión** (`POST /api/admin/sustentacion/sesion`), porque es lo que
+acuña las credenciales y no puede autorizarse con una credencial que aún no
+existe. Por eso el paso previo del día es siempre el mismo:
+
+1. Abrir la sesión desde `/admin/sustentacion` **antes** de entrar al salón.
+2. **Apuntar el PIN de presentador** (dura 6 horas, igual que la sesión).
+
+Con ese PIN en el bolsillo, a partir de ahí no hace falta volver a autenticarse
+en ningún sitio, ni para proyectar ni para controlar.
+
 ## 3. Controlar la presentación desde el teléfono
 
 El canvas se mueve con el teclado **y** desde el celular; las dos vías son
@@ -180,6 +251,11 @@ Y a mano:
 - [ ] `sustentacion:check` sin nada en rojo (los avisos se leen, no bloquean).
 - [ ] El PIN actual funciona: abrir `/sustentacion/seguir/<pin>` desde un
       celular de verdad, con datos móviles, no con el wifi del salón.
+- [ ] `/sustentacion` abre en el portátil que proyecta y se ve el vestíbulo
+      con el PIN y el QR. Probar las flechas y `P` antes de que entre nadie.
+- [ ] **El PIN de presentador está apuntado fuera del navegador** (papel o
+      notas del teléfono). Es la llave que abre el escenario y el control sin
+      depender de GitHub ni de la base de datos.
 - [ ] `/sustentacion/control` abre en el celular y acepta el PIN de
       presentador (tenerlo a mano ANTES de empezar: sale solo en el panel).
 - [ ] El control remoto mueve el canvas desde el celular, también con datos
@@ -211,6 +287,16 @@ Y a mano:
 - `src/lib/sustentacion/pin-presentador.ts`: por qué son dos PINes y no uno.
 - `src/pages/sustentacion/control.astro` y `src/lib/sustentacion/mando.ts`: la
   pantalla del celular y el envío de comandos (identidad, contador y reintento).
+- `src/pages/sustentacion.astro`, `src/lib/sustentacion/escena.ts` y
+  `src/data/sustentacion-escena.ts`: el escenario proyectado, su mecánica
+  (disposición, motor de interpolación, encuadre de cámara) y la coreografía
+  por beat.
+- `src/pages/admin/sustentacion.astro`: abrir la sesión y leer el PIN de
+  presentador. Es el único sitio donde ese PIN aparece.
+- `src/lib/sustentacion/pase.ts`: la segunda llave del escenario, y por qué
+  proyectar no puede depender de GitHub OAuth.
+- `src/lib/portal/respaldo.ts`: el modo respaldo del portal, que es lo que
+  sostiene el beat 10 con la cuota agotada.
 - `src/lib/sustentacion/obedecer.ts`: el lado del canvas, con la decisión de
   transporte (polling de 250 ms siempre, SSE como acelerador).
 - `scripts/precalentar-sustentacion.mjs` y `scripts/sustentacion-check.mjs`:

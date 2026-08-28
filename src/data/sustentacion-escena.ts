@@ -440,10 +440,20 @@ export const DOSSIER = [
 /**
  * Beat 10. El recorrido guionado de la demo. Los tiempos suman los 150 s que
  * el guion le da al beat; si se cambian allí, hay que revisarlos aquí.
+ *
+ * El segundo paso entra por `/api/portal/demo` y NO directamente por `/portal`,
+ * y es la diferencia entre que la demo funcione y que no:
+ *
+ *  · Sin pasar por ahí no hay sesión de portal en el iframe, así que `/portal`
+ *    rebotaría al login delante del jurado.
+ *  · Ese endpoint es además el que decide, él solo, si sirve datos de verdad o
+ *    cae al modo respaldo con el snapshot versionado. Con la cuota de Turso
+ *    agotada el recorrido sigue igual, con el banner que lo anuncia. Apuntar a
+ *    `/portal` a pelo se saltaría esa decisión.
  */
 export const PASOS_DEMO = [
   { t: '0-15s', ruta: '/portal/login', ir: null, ms: 15000 },
-  { t: '15-30s', ruta: '/api/portal/demo → /portal', ir: '/portal', ms: 15000 },
+  { t: '15-30s', ruta: '/portal (entrando)', ir: '/api/portal/demo', ms: 15000 },
   { t: '30-60s', ruta: '/portal/facturas', ir: '/portal/facturas', ms: 30000 },
   { t: '60-90s', ruta: '/portal/facturas/2', ir: '/portal/facturas/2', ms: 30000 },
 ]

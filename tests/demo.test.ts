@@ -105,6 +105,10 @@ describe('demo · rutas vetadas aunque sean GET', () => {
       // sustentación vive en Redis, que la demo comparte con lo real.
       '/admin/sustentacion',
       '/api/admin/sustentacion/sesion',
+      // El pase del escenario también: con él se proyecta y se publica el beat.
+      // No cuelga de /api/admin porque la abre el PIN, no la sesión de admin,
+      // así que necesita su propia línea aquí.
+      '/api/sustentacion/pase',
     ]) {
       expect(isDemoBlockedPath(p), p).toBe(true)
     }

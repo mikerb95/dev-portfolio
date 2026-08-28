@@ -83,6 +83,12 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   // Turso: vive en el MISMO Redis. Un visitante con pase de demo podría leer
   // desde aquí el PIN que mueve la presentación mientras la estoy dando.
   /^\/(api\/)?admin\/sustentacion/,
+  // El pase del escenario: cambia el PIN de presentador por permiso para
+  // proyectar y publicar beats. Va aparte del patrón de arriba porque no cuelga
+  // de /api/admin (lo abre el PIN, no la sesión), y es POST, que la demo ya
+  // rechaza; se veta igualmente para que un cambio futuro de método no lo
+  // reabra en silencio.
+  /^\/api\/sustentacion\/pase/,
 ]
 
 /** ¿La ruta está vetada en modo demo (aun siendo GET)? */
