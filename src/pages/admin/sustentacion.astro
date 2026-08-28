@@ -1,0 +1,221 @@
+---
+// Puesto de mando de la sustentación, en el único sitio donde puede estar.
+//
+// El PIN de PRESENTADOR es la credencial que mueve la presentación y no puede
+// aparecer en ninguna pantalla que se proyecte: si sale en el canvas, todo el
+// salón puede controlarme desde su celular. Aquí sí, porque esta ruta está
+// detrás de la sesión de admin (y vetada en modo demo, ver `lib/demo.ts`: la
+// sesión de sustentación vive en Redis, que la demo comparte con lo real).
+//
+// Lo que resuelve esta página es el paso previo a todo lo demás: sin sesión
+// abierta no hay PIN, y sin PIN el control remoto solo puede decir SIN SESIÓN.
+// El alta ya existía como endpoint (`POST /api/admin/sustentacion/sesion`);
+// lo que faltaba era poder dispararla sin una cookie pegada a mano en un curl,
+// diez minutos antes de entrar.
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import Qr from '../../components/present/Qr.astro'
+import { pinPresentadorDe, sesionActual, type SustentacionSession } from '../../lib/sustentacion/bus'
+import { formatearPinPresentador } from '../../lib/sustentacion/pin-presentador'
+import { storeReadiness } from '../../lib/present/store'
+import { BEATS, DURACION_TOTAL_S } from '../../lib/sustentacion/guion'
+
+// Redis puede estar caído. La página tiene que seguir explicando qué hacer, no
+// devolver un 500 el día en que más falta hace leerla.
+let sesion: SustentacionSession | null = null
+let errorRedis: string | null = null
+try {
+  sesion = await sesionActual()
+} catch (e) {
+  errorRedis = e instanceof Error ? e.message : 'no se pudo consultar Redis'
+}
+
+const readiness = storeReadiness()
+const pinPresentador = sesion ? formatearPinPresentador(await pinPresentadorDe(sesion.id)) : null
+
+// El origen real, no uno escrito a mano: el QR se escanea desde otro aparato y
+// un `localhost` en el código sería un QR muerto en producción.
+const origen = new URL(Astro.request.url).origin
+const urlControl = `${origen}/sustentacion/control`
+const urlSeguir = sesion ? `${origen}/sustentacion/seguir/${sesion.pin}` : null
+
+const beatActual = sesion ? BEATS.find((b) => b.beat === sesion!.beat) ?? null : null
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+---
+
+<AdminLayout title="Sustentación">
+  <p class="text-[12px] text-ink-200 max-w-2xl mb-6">
+    La sesión de sustentación vive en <strong class="text-ink-100">Redis</strong>, no en la base de
+    datos: sigue funcionando aunque Turso esté con la cuota agotada. Emite
+    <strong class="text-ink-100">dos PINes</strong>: el corto va proyectado y solo sirve para
+    <em>seguir</em>; el largo es el que mueve la presentación desde mi celular y
+    <strong class="text-ink-100">no puede aparecer en pantalla</strong>.
+  </p>
+
+  {!readiness.ok && (
+    <div class="rounded-2xl border border-[#ff7a7a]/30 bg-[#ff7a7a]/[0.07] p-4 mb-6">
+      <div class="text-[12px] text-[#ff9a9a] font-medium mb-1">Redis sin configurar</div>
+      <p class="text-[11px] text-ink-200 leading-relaxed">{readiness.reason}</p>
+    </div>
+  )}
+
+  {errorRedis && (
+    <div class="rounded-2xl border border-[#ff7a7a]/30 bg-[#ff7a7a]/[0.07] p-4 mb-6">
+      <div class="text-[12px] text-[#ff9a9a] font-medium mb-1">Redis no responde</div>
+      <p class="text-[11px] text-ink-200 leading-relaxed">{errorRedis}</p>
+    </div>
+  )}
+
+  <div class="grid gap-5 lg:grid-cols-[1.2fr_1fr] items-start">
+    <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+      <div class="flex items-center gap-3 mb-4">
+        <span
+          class="w-2 h-2 rounded-full"
+          style={`background:${sesion ? '#34d399' : '#64748b'}`}
+          aria-hidden="true"></span>
+        <h2 class="text-[13px] font-medium text-ink-100">
+          {sesion ? 'Sesión en curso' : 'Sin sesión abierta'}
+        </h2>
+      </div>
+
+      {sesion ? (
+        <div class="space-y-4">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <div class="text-[10px] uppercase tracking-[0.14em] text-ink-300 mb-1">
+                PIN de asistente
+              </div>
+              <div class="font-mono text-[26px] text-cyan tracking-[0.14em]">
+                {sesion.pin.toUpperCase()}
+              </div>
+              <p class="text-[10px] text-ink-300 mt-1 leading-relaxed">
+                Público por diseño. Va proyectado y en el QR. Solo lectura.
+              </p>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-[0.14em] text-ink-300 mb-1">
+                PIN de presentador
+              </div>
+              <div class="font-mono text-[26px] text-[#fbbf24] tracking-[0.1em]" id="pin-presentador">
+                {pinPresentador}
+              </div>
+              <p class="text-[10px] text-ink-300 mt-1 leading-relaxed">
+                Nunca en pantalla. Es lo que se teclea una vez en el control remoto.
+              </p>
+            </div>
+          </div>
+
+          <dl class="grid grid-cols-3 gap-3 pt-3 border-t border-white/10 text-[11px]">
+            <div>
+              <dt class="text-ink-300">Beat</dt>
+              <dd class="text-ink-100 font-mono">
+                {sesion.beat === 0 ? 'sin empezar' : `${sesion.beat} / ${BEATS.length}`}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-ink-300">Título</dt>
+              <dd class="text-ink-100">{beatActual?.vista_celular.titulo ?? sesion.titulo}</dd>
+            </div>
+            <div>
+              <dt class="text-ink-300">Guion</dt>
+              <dd class="text-ink-100 font-mono">{mmss(DURACION_TOTAL_S)}</dd>
+            </div>
+          </dl>
+
+          <div class="flex flex-wrap gap-2 pt-1">
+            <a
+              class="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] text-ink-100 hover:bg-white/[0.08]"
+              href={urlSeguir}
+              target="_blank"
+              rel="noreferrer">Vista del público ↗</a
+            >
+            <a
+              class="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] text-ink-100 hover:bg-white/[0.08]"
+              href="/sustentacion/control"
+              target="_blank"
+              rel="noreferrer">Control remoto ↗</a
+            >
+          </div>
+        </div>
+      ) : (
+        <p class="text-[12px] text-ink-200 leading-relaxed">
+          Sin sesión abierta, el control remoto responde <span class="font-mono">SIN SESIÓN</span> y
+          la vista del público no existe. Abrir una es lo primero del runbook.
+        </p>
+      )}
+
+      <div class="flex flex-wrap gap-2 mt-5 pt-4 border-t border-white/10">
+        <button
+          type="button"
+          id="abrir"
+          class="rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-2 text-[12px] text-cyan hover:bg-cyan/20"
+        >
+          {sesion ? 'Recuperar la sesión en curso' : 'Abrir sesión'}
+        </button>
+        <button
+          type="button"
+          id="rotar"
+          class="rounded-xl border border-[#ff7a7a]/30 bg-[#ff7a7a]/[0.07] px-4 py-2 text-[12px] text-[#ff9a9a] hover:bg-[#ff7a7a]/[0.14]"
+        >
+          Emitir PINes nuevos
+        </button>
+        <span class="text-[10px] text-ink-300 self-center max-w-[22rem] leading-relaxed">
+          Emitir PINes nuevos deja fuera a quien ya estuviera siguiendo con el anterior. Solo si el
+          largo se filtró.
+        </span>
+      </div>
+
+      <p class="text-[11px] mt-3" id="aviso" aria-live="polite"></p>
+    </section>
+
+    <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+      <h2 class="text-[13px] font-medium text-ink-100 mb-1">Control remoto</h2>
+      <p class="text-[11px] text-ink-300 leading-relaxed mb-4">
+        Escanear con mi celular. El QR lleva solo a la pantalla: el PIN se teclea allí una vez y se
+        queda guardado en el teléfono, así que el código no es una credencial y da igual quién lo vea.
+      </p>
+      <Qr data={urlControl} size={220} label="Código QR hacia el control remoto" />
+      <p class="text-[10px] text-ink-300 mt-3 font-mono break-all">{urlControl}</p>
+    </section>
+  </div>
+
+  <script>
+    // El alta va por `fetch` y no por un `<form>`: el endpoint responde JSON y
+    // recargar la página con el resultado sería perder el mensaje de error justo
+    // cuando hace falta leerlo.
+    const $aviso = document.getElementById('aviso')!
+
+    async function alta(reusar: boolean) {
+      $aviso.textContent = 'Hablando con Redis…'
+      $aviso.className = 'text-[11px] mt-3 text-ink-300'
+      try {
+        const res = await fetch('/api/admin/sustentacion/sesion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ titulo: 'Sustentación', reusar }),
+        })
+        const datos = await res.json()
+        if (!res.ok) {
+          $aviso.textContent = datos.error ?? 'no se pudo abrir la sesión'
+          $aviso.className = 'text-[11px] mt-3 text-[#ff9a9a]'
+          return
+        }
+        // Se recarga para repintar los PINes en el servidor. El PIN de
+        // presentador NO se escribe aquí desde el JSON: cuanto menos viaje esa
+        // cadena por el DOM de una página ya cargada, mejor.
+        location.reload()
+      } catch (e) {
+        $aviso.textContent = `sin respuesta: ${(e as Error).message}`
+        $aviso.className = 'text-[11px] mt-3 text-[#ff9a9a]'
+      }
+    }
+
+    document.getElementById('abrir')!.addEventListener('click', () => void alta(true))
+    document.getElementById('rotar')!.addEventListener('click', () => {
+      // Confirmación deliberada: rotar deja colgado a todo el que ya esté
+      // siguiendo con el PIN anterior, y eso puede ser media sala.
+      if (confirm('Emitir PINes nuevos deja fuera a quien siga con el anterior. ¿Seguir?')) {
+        void alta(false)
+      }
+    })
+  </script>
+</AdminLayout>

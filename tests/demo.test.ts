@@ -100,6 +100,11 @@ describe('demo · rutas vetadas aunque sean GET', () => {
       '/api/admin/webauthn/authenticate',
       '/api/admin/lab/chaos',
       '/api/admin/lab/chaos/experiment',
+      // Credenciales vivas: el PIN de presentador y el secreto de publicación.
+      // No las protege el cambio de base de datos, porque la sesión de
+      // sustentación vive en Redis, que la demo comparte con lo real.
+      '/admin/sustentacion',
+      '/api/admin/sustentacion/sesion',
     ]) {
       expect(isDemoBlockedPath(p), p).toBe(true)
     }

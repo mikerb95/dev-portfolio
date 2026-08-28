@@ -77,6 +77,12 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   // teléfonos de clientes). La demo enseña el panel, no mi caja registradora.
   /^\/cobrar/,
   /^\/api\/admin\/cobros/,
+  // Sustentación: el alta de sesión entrega el PIN de PRESENTADOR y el secreto
+  // de publicación, y son credenciales VIVAS. El aislamiento de la demo va por
+  // base de datos (otra Turso), pero la sesión de sustentación no vive en
+  // Turso: vive en el MISMO Redis. Un visitante con pase de demo podría leer
+  // desde aquí el PIN que mueve la presentación mientras la estoy dando.
+  /^\/(api\/)?admin\/sustentacion/,
 ]
 
 /** ¿La ruta está vetada en modo demo (aun siendo GET)? */
