@@ -53,7 +53,15 @@ export type SustentacionSession = {
   dato: string | null
   version: number
   createdAt: number
+  /** Cuándo cambió algo por última vez (beat, título o dato). */
   updatedAt: number
+  /**
+   * Cuándo empezó el beat ACTUAL. No es lo mismo que `updatedAt`: reenviar el
+   * dato destacado del beat 7 sin salir de él actualiza uno y no el otro. Es lo
+   * que hace que el cronómetro del control remoto mida el beat y no el último
+   * toque, que es la única lectura útil mientras hablo.
+   */
+  beatIniciadoEn: number
 }
 
 /**
@@ -179,6 +187,18 @@ export async function crearSesion(titulo = 'Sustentación'): Promise<Sustentacio
     version: 1,
     createdAt: ahora,
     updatedAt: ahora,
+    beatIniciadoEn: ahora,
+  }
+
+  // La invariante de las dos credenciales, comprobada en el único sitio donde
+  // se emiten. Si algún día alguien iguala las longitudes de los dos PINs,
+  // esto revienta al crear la sesión (antes de proyectar nada) y no delante
+  // del jurado con el público controlando la presentación.
+  const pinControl = await pinPresentadorDe(sesion.id)
+  if (!sonDistintos(pin, pinControl)) {
+    throw new PresentStoreError(
+      'el PIN de asistente y el de presentador coincidieron: revisa PIN_PRESENTADOR_LONGITUD'
+    )
   }
 
   // La sesión primero, igual que en present: si el puntero del PIN se

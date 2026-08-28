@@ -38,6 +38,21 @@ export interface PresentStore {
   set(key: string, value: string, ttlSeconds: number): Promise<void>
   del(key: string): Promise<void>
   exists(key: string): Promise<boolean>
+  /**
+   * `SET key value NX EX ttl`: escribe solo si la clave no existía y responde
+   * si ganó. Es la única primitiva ATÓMICA del almacén, y existe por el
+   * control remoto de la sustentación: un botón pulsado dos veces por mala
+   * señal manda dos veces el mismo comando, y con `get`+`set` las dos copias
+   * pueden leer "no visto" antes de que ninguna escriba. Aquí solo una gana.
+   */
+  setNx(key: string, value: string, ttlSeconds: number): Promise<boolean>
+  /**
+   * `INCR` + `EXPIRE` en la primera vez: contador con ventana. Sostiene el
+   * rate limit de los endpoints de sustentación, que no pueden usar el limiter
+   * durable porque ese vive en Turso y esto tiene que funcionar aunque Turso
+   * esté con la cuota agotada.
+   */
+  incr(key: string, ttlSeconds: number): Promise<number>
   /** Índice de sesiones vivas. Set y no lista: alta/baja idempotentes. */
   sadd(key: string, member: string, ttlSeconds: number): Promise<void>
   srem(key: string, member: string): Promise<void>
@@ -107,6 +122,32 @@ function upstashStore(stateUrl: string, stateToken: string, bus: { url: string; 
       const r = await upstashCommand(stateUrl, stateToken, ['EXISTS', key])
       return Number(r) === 1
     },
+    async setNx(key, value, ttlSeconds) {
+      // Upstash devuelve "OK" si escribió y null si la clave ya existía.
+      const r = await upstashCommand(stateUrl, stateToken, [
+        'SET',
+        key,
+        value,
+        'EX',
+        Math.max(1, Math.floor(ttlSeconds)),
+        'NX',
+      ])
+      return r === 'OK'
+    },
+    async incr(key, ttlSeconds) {
+      const n = Number(await upstashCommand(stateUrl, stateToken, ['INCR', key]))
+      // El EXPIRE solo en el primer golpe de la ventana: refrescarlo en cada
+      // petición convertiría la ventana fija en una deslizante infinita, y
+      // quien martillea el endpoint nunca dejaría que caducara su contador.
+      if (n === 1) {
+        await upstashCommand(stateUrl, stateToken, [
+          'EXPIRE',
+          key,
+          Math.max(1, Math.floor(ttlSeconds)),
+        ])
+      }
+      return n
+    },
     async sadd(key, member, ttlSeconds) {
       await upstashCommand(stateUrl, stateToken, ['SADD', key, member])
       // El índice caduca con la sesión más larga que contenga: se refresca en
@@ -166,6 +207,23 @@ export function createMemoryStore(): PresentStore {
     },
     async exists(key) {
       return alive(key) !== null
+    },
+    async setNx(key, value, ttlSeconds) {
+      // JS es de un solo hilo: entre el `alive` y el `set` no corre nadie más,
+      // así que esto es tan atómico como el `SET NX` de Redis.
+      if (alive(key)) return false
+      data.set(key, { value, expiresAt: Date.now() + ttlSeconds * 1000 })
+      return true
+    },
+    async incr(key, ttlSeconds) {
+      const actual = alive(key)
+      const n = Number(actual?.value ?? 0) + 1
+      data.set(key, {
+        value: String(n),
+        // La ventana la fija el primer golpe, igual que el EXPIRE de Upstash.
+        expiresAt: actual?.expiresAt ?? Date.now() + ttlSeconds * 1000,
+      })
+      return n
     },
     async sadd(key, member) {
       let set = sets.get(key)
