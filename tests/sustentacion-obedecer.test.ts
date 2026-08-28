@@ -258,11 +258,11 @@ describe('nunca se queda en blanco', () => {
   it('no acumula sondeos solapados cuando la red va lenta', async () => {
     // Con respuestas de 2 s y sondeos de 250 ms, sin el guarda habría ocho
     // peticiones en vuelo y las respuestas llegarían desordenadas.
-    let resolver: ((r: Response) => void) | null = null
+    const pendientes: ((r: Response) => void)[] = []
     const fetchImpl = vi.fn(
       () =>
         new Promise<Response>((res) => {
-          resolver = res
+          pendientes.push(res)
         })
     )
 
@@ -275,7 +275,7 @@ describe('nunca se queda en blanco', () => {
     await avanzar(2000)
     expect(fetchImpl).toHaveBeenCalledTimes(1)
 
-    resolver?.(ok(estado()))
+    pendientes.shift()?.(ok(estado()))
     await avanzar(300)
     expect(fetchImpl.mock.calls.length).toBeGreaterThan(1)
     parar()
