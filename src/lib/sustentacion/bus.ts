@@ -23,6 +23,7 @@ import { presentStore, PresentStoreError } from '../present/store'
 import { generatePin, normalizePin } from '../present/pin'
 import { isReservedSegment } from '../present/reserved'
 import { SESSION_TTL_SECONDS } from '../present/session'
+import { normalizarPinPresentador, pinDesdeBytes, sonDistintos } from './pin-presentador'
 
 /** Mismo TTL que una presentación normal: seis horas. */
 export const SUSTENTACION_TTL_SECONDS = SESSION_TTL_SECONDS
