@@ -315,25 +315,20 @@ export async function publicarBeat(
     return { ok: false, error: 'beat inválido', status: 400 }
   }
 
+  const ahora = Date.now()
   const actualizada: SustentacionSession = {
     ...sesion,
     beat: entrada.beat,
     titulo: limpiar(entrada.titulo, 120) || sesion.titulo,
     dato: limpiar(entrada.dato, 200) || null,
     version: sesion.version + 1,
-    updatedAt: Date.now(),
+    updatedAt: ahora,
+    // Solo se reinicia el cronómetro si de verdad cambiamos de beat.
+    beatIniciadoEn:
+      entrada.beat === sesion.beat ? sesion.beatIniciadoEn ?? sesion.updatedAt : ahora,
   }
 
-  await persist(actualizada)
-
-  try {
-    await presentStore().publish(channelFor(actualizada.id), JSON.stringify(toBeatSnapshot(actualizada)))
-  } catch {
-    // El bus es acelerador, no fuente de verdad: los seguidores reconsultan el
-    // snapshot y se curan solos de un mensaje perdido.
-  }
-
-  return { ok: true, snapshot: toBeatSnapshot(actualizada) }
+  return { ok: true, snapshot: await persistirYPublicar(actualizada) }
 }
 
 export { PresentStoreError }
