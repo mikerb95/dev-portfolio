@@ -246,16 +246,20 @@ export async function ejecutarComando(
     const sesion = await sesionActual()
     if (!sesion) return { ok: false, error: 'no hay sesión de sustentación en curso', status: 404 }
 
-    if (!(await esPinPresentador(sesion.id, cmd.pin))) {
-      // El fallo se contabiliza; el mensaje no distingue "PIN de asistente" de
-      // "PIN inventado", que sería decirle a quien prueba que va bien.
-      await excede(KEY_RL_FALLOS(ventanaFallos, ip), LIMITE_FALLOS, ttlFallos)
-      return { ok: false, error: 'PIN sin permiso de control', status: 403 }
-    }
-    if (await excede(KEY_RL_FALLOS(ventanaFallos, ip), LIMITE_FALLOS, ttlFallos)) {
-      // Se comprueba también tras un PIN correcto: si esta IP acaba de gastar
-      // el cupo probando PINs, acertar el último no la debería premiar.
+    // El cupo de fallos se LEE antes de validar y solo se INCREMENTA al fallar.
+    // Si se incrementara siempre, diez flechas seguidas mías agotarían la
+    // defensa antifuerza bruta y me dejarían fuera de mi propia presentación.
+    const fallos = Number((await store.get(KEY_RL_FALLOS(ventanaFallos, ip))) ?? 0)
+    if (fallos >= LIMITE_FALLOS) {
       return { ok: false, error: 'demasiados intentos, espera un minuto', status: 429 }
+    }
+
+    if (!(await esPinPresentador(sesion.id, cmd.pin))) {
+      // El mensaje no distingue "PIN de asistente" de "PIN inventado": decir
+      // cuál de los dos es sería confirmarle a quien prueba que va por buen
+      // camino. Y el PIN proyectado NO controla, que es todo el punto.
+      await store.incr(KEY_RL_FALLOS(ventanaFallos, ip), ttlFallos)
+      return { ok: false, error: 'PIN sin permiso de control', status: 403 }
     }
 
     if (
