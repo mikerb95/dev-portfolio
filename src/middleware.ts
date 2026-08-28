@@ -363,7 +363,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
     canonicalPath.startsWith('/api/admin') ||
     canonicalPath === '/cobrar' ||
     canonicalPath.startsWith('/cobrar/') ||
-    canonicalPath.startsWith('/remote/')
+    canonicalPath.startsWith('/remote/') ||
+    // El ESCENARIO de la sustentación (solo `/sustentacion` exacto). Es panel a
+    // todos los efectos: su HTML lleva el secreto de publicación de la sesión,
+    // que es lo que autoriza a mover la presentación con el teclado. Se proyecta
+    // desde mi portátil, que ya tiene sesión de admin.
+    //
+    // Las OTRAS dos rutas de /sustentacion siguen siendo públicas y tienen que
+    // seguir siéndolo, así que la comparación es exacta y nunca por prefijo:
+    //  · /sustentacion/seguir/<pin>  lo abre el público con el PIN corto.
+    //  · /sustentacion/control       lo abro yo en el celular, con el PIN largo
+    //    de presentador; poner el gate de admin ahí sería exigir un OAuth de
+    //    GitHub en un móvil con 5G a mitad de la charla.
+    canonicalPath === '/sustentacion'
 
   // El deck de sustentación tiene URL bajo /docs (la sección es pública) pero no
   // es público: solo lo ve la sesión del administrador. Se trata como ruta

@@ -1,8 +1,94 @@
 ---
-// Página de sustentación. Por ahora es solo el andamio mínimo de la Fase 1:
-// existe para comprobar que el iframe del portal carga con la CSP nueva.
-// El canvas, el publicador al bus y los datos embebidos llegan en fases
-// posteriores.
+// El ESCENARIO: lo que se proyecta. Es el porte a este repo del diseño hecho en
+// el canvas de Claude Design, sin React y sin su runtime: aquí el grafo se
+// dibuja en un `<canvas>` 2D con un motor de interpolación propio de treinta
+// líneas (`lib/sustentacion/escena.ts`), y los paneles son HTML renderizado en
+// el servidor.
+//
+// QUIÉN MANDA. El beat vive en Redis y esta página lo OBEDECE, igual que el
+// control remoto. Las dos vías de avance son equivalentes:
+//
+//   teclado de este portátil -> publicarBeat (secreto de sesión) -> Redis
+//   celular                  -> /api/sustentacion/comando (PIN)  -> Redis
+//                                                                    |
+//                                       este escenario, los seguidores del salón
+//
+// Ninguna depende de la otra: si el teléfono se queda sin señal, sigo con las
+// flechas y el público no se entera. Es la razón de que el estado no viva en
+// esta página, que sería lo más fácil de escribir y lo peor de sostener.
+//
+// LA PANTALLA NUNCA SE VACÍA. Sin sesión abierta se ve el vestíbulo, no un
+// error. Sin Redis, el último beat conocido se queda donde está y el teclado
+// sigue moviendo el escenario en local. Una pantalla en blanco delante del
+// jurado es peor que cualquier desincronía.
+import Qr from '../components/present/Qr.astro'
+import {
+  ARISTAS,
+  CASOS_MATRIZ,
+  COLOR_TIPO,
+  DOSSIER,
+  ESCALERA,
+  ESCENA,
+  ETAPAS_PIPELINE,
+  FECHA_ESTRES,
+  INFRA_PIPELINE,
+  LIBS,
+  NODOS,
+  NODOS_MATRIZ,
+  PASOS_DEMO,
+  RECUPERACION,
+  TODOS,
+} from '../data/sustentacion-escena'
+import { BEATS } from '../lib/sustentacion/guion'
+import { secretoDeSesion, sesionActual, type SustentacionSession } from '../lib/sustentacion/bus'
+
+// Redis caído no puede tumbar la proyección: se entra al vestíbulo y desde ahí
+// se explica qué pasa. El `try` es la diferencia entre eso y un 500 sin estilos.
+let sesion: SustentacionSession | null = null
+let errorRedis: string | null = null
+try {
+  sesion = await sesionActual()
+} catch (e) {
+  errorRedis = e instanceof Error ? e.message : 'Redis no responde'
+}
+
+const secreto = sesion ? await secretoDeSesion(sesion.id) : null
+const origen = new URL(Astro.request.url).origin
+const urlSeguir = sesion ? `${origen}/sustentacion/seguir/${sesion.pin}` : null
+
+// Lo que el escenario necesita del guion, y solo eso. Se pasa embebido en el
+// HTML y NO por fetch: si la red muere entre el arranque y el beat 1, las notas
+// del presentador y las duraciones ya están dentro de la página.
+const cfg = {
+  sessionId: sesion?.id ?? null,
+  secreto,
+  beats: BEATS.map((b) => ({
+    beat: b.beat,
+    titulo: b.vista_celular.titulo,
+    dato: b.vista_celular.dato,
+    contenido: b.contenido,
+    dur: b.duracion_estimada_s,
+    notas: b.notas_narracion,
+  })),
+  escena: ESCENA,
+  aristas: ARISTAS,
+  todos: TODOS,
+  libs: LIBS,
+  colores: COLOR_TIPO,
+  nodosMatriz: NODOS_MATRIZ,
+  escalera: ESCALERA,
+  recuperacion: RECUPERACION,
+  pasosDemo: PASOS_DEMO,
+}
+
+const fechaEstres = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+})
+  .format(new Date(FECHA_ESTRES))
+  .toUpperCase()
+
 Astro.response.headers.set('Cache-Control', 'no-store')
 ---
 
@@ -10,41 +96,1647 @@ Astro.response.headers.set('Cache-Control', 'no-store')
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
     <title>Sustentación</title>
     <style>
+      /* Las fuentes son las del sistema. El diseño pedía Noto Sans y Raleway
+         desde Google Fonts, pero la CSP de este sitio sirve `font-src 'self'
+         data:` y una fuente remota se bloquearía sin decir nada, dejando el
+         fallback más una petición muerta en el arranque. Lo que aportaba
+         Raleway (monoespaciada, con mucho espaciado entre letras, para rótulos
+         y cifras) lo hace igual la pila monoespaciada del sistema. */
+      :root {
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --tenue: #5c7488;
+        --tenue-mas: #4d6478;
+        --linea: #1b2836;
+        --acento: #7dd3fc;
+      }
+      * {
+        box-sizing: border-box;
+      }
       html,
       body {
         margin: 0;
+        padding: 0;
         height: 100%;
-        background: #0b0d10;
-        color: #e7ecf3;
-        font-family: system-ui, sans-serif;
+        overflow: hidden;
+        background: #05070a;
       }
-      main {
-        display: grid;
-        grid-template-rows: auto 1fr;
-        height: 100%;
+      .sala {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #05070a;
       }
-      h1 {
-        margin: 0;
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-        font-weight: 500;
+      /* El escenario mide SIEMPRE 1920x1080 y se escala entero con un
+         transform. Así toda la geometría de la escena (posiciones de nodos,
+         encuadres de cámara, vuelo de nodos hacia las filas) vive en un solo
+         sistema de coordenadas, y la resolución del proyector no cambia ni un
+         cálculo. Maquetar con unidades relativas habría hecho que cada
+         proyector encuadrara distinto. */
+      .escenario {
+        position: relative;
+        flex: 0 0 auto;
+        width: 1920px;
+        min-width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #06080c;
+        color: #e9f2f9;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        transform-origin: center center;
+      }
+      canvas.grafo {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1920px;
+        height: 1080px;
+      }
+
+      .rotulo {
+        position: absolute;
+        left: 56px;
+        top: 44px;
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--tenue-mas);
+      }
+      .rotulo b {
+        font-weight: 400;
+        color: #9fc3da;
+      }
+      .rotulo i {
+        font-style: normal;
+        color: #243444;
+      }
+      .contador {
+        position: absolute;
+        right: 56px;
+        top: 44px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--tenue-mas);
+      }
+      .contador b {
+        font-weight: 400;
+        color: #9fc3da;
+      }
+
+      .texto {
+        position: absolute;
+        left: 56px;
+        bottom: 96px;
+        max-width: 1080px;
+      }
+      .texto .dato {
+        font-family: var(--mono);
+        font-size: 23px;
         letter-spacing: 0.02em;
-        color: #8fa3bf;
+        color: var(--acento);
+        margin-bottom: 18px;
+        min-height: 28px;
       }
-      iframe {
-        width: 100%;
-        height: 100%;
+      .texto .titular {
+        font-size: 62px;
+        line-height: 1.05;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        color: #f4fafe;
+        text-wrap: pretty;
+        min-height: 66px;
+      }
+
+      /* Los paneles nacen invisibles y fuera del flujo del lector: `visibility`
+         además de `opacity` para que un panel apagado no capture nada. */
+      .panel {
+        position: absolute;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .hud {
+        right: 56px;
+        top: 112px;
+        width: 440px;
+        padding: 26px 28px 22px;
+        background: rgba(8, 12, 17, 0.94);
+        border: 1px solid var(--linea);
+      }
+      .hud-cab {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        color: var(--tenue);
+        margin-bottom: 20px;
+      }
+      .hud-rejilla {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 20px;
+        font-family: var(--mono);
+        margin: 0;
+      }
+      .hud-rejilla dt {
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        color: var(--tenue);
+      }
+      .hud-rejilla dd {
+        margin: 0;
+        font-size: 34px;
+        line-height: 1.2;
+        color: #f4fafe;
+      }
+      .hud canvas {
+        width: 384px;
+        height: 196px;
+        margin-top: 22px;
+        display: block;
+      }
+      .hud-pie {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.13em;
+        color: var(--tenue);
+        margin-top: 10px;
+      }
+      .hud-nota {
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.5;
+        color: #8fb3c9;
+        margin-top: 14px;
+        border-top: 1px solid #17222e;
+        padding-top: 14px;
+        min-height: 40px;
+      }
+
+      .matriz {
+        left: 50%;
+        top: 118px;
+        width: 1300px;
+        margin-left: -650px;
+        padding: 28px 32px 24px;
+        background: rgba(7, 10, 15, 0.95);
+        border: 1px solid var(--linea);
+      }
+      .matriz-tit,
+      .matriz-fila {
+        display: grid;
+        grid-template-columns: 120px 1fr 190px 150px;
+      }
+      .matriz-cab {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        color: var(--tenue);
+        margin-bottom: 18px;
+      }
+      .matriz-tit {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        color: var(--tenue);
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--linea);
+      }
+      .matriz-fila {
+        align-items: center;
+        padding: 11px 0;
+        border-bottom: 1px solid #101923;
+        opacity: 0;
+      }
+      .matriz-fila .caso,
+      .matriz-fila .ver,
+      .matriz-fila .ev {
+        font-family: var(--mono);
+      }
+      .matriz-fila .caso {
+        font-size: 19px;
+        color: #f4fafe;
+      }
+      .matriz-fila .hu {
+        font-size: 19px;
+      }
+      .matriz-fila .ver {
+        font-size: 17px;
+        color: #34d399;
+      }
+      .matriz-fila .ev {
+        font-size: 15px;
+        color: var(--tenue);
+      }
+
+      .pipe {
+        left: 50%;
+        top: 250px;
+        width: 1680px;
+        margin-left: -840px;
+      }
+      .pipe-fila {
+        display: flex;
+        align-items: stretch;
+      }
+      .etapa {
+        flex: 1;
+        padding: 22px 20px;
+        background: rgba(8, 12, 17, 0.94);
+        border: 1px solid var(--linea);
+        border-right: none;
+        opacity: 0;
+      }
+      .etapa:last-child {
+        border-right: 1px solid var(--linea);
+      }
+      .etapa .n {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        color: var(--tenue);
+      }
+      .etapa .t {
+        font-size: 26px;
+        font-weight: 600;
+        margin-top: 10px;
+      }
+      .etapa .d {
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.45;
+        color: #8fb3c9;
+        margin-top: 10px;
+        min-height: 56px;
+      }
+      .pipe-infra {
+        display: flex;
+        gap: 14px;
+        margin-top: 36px;
+        font-family: var(--mono);
+      }
+      .pipe-infra .et {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        color: var(--tenue);
+        padding-top: 11px;
+        width: 190px;
+      }
+      .pipe-infra span {
+        padding: 9px 16px;
+        border: 1px solid #24384b;
+        font-size: 15px;
+        color: #fbbf24;
+      }
+
+      .dossier {
+        left: 50%;
+        top: 210px;
+        width: 1400px;
+        margin-left: -700px;
+      }
+      .dossier .cab {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        color: var(--tenue);
+        margin-bottom: 22px;
+      }
+      .dossier .rejilla {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px 40px;
+      }
+      .doc {
+        display: flex;
+        align-items: baseline;
+        gap: 18px;
+        padding: 13px 18px;
+        border: 1px solid #17222e;
+        background: rgba(8, 12, 17, 0.8);
+        opacity: 0;
+      }
+      .doc .n {
+        font-family: var(--mono);
+        font-size: 15px;
+        color: #34d399;
+        width: 38px;
+      }
+      .doc .t {
+        font-size: 22px;
+        color: #e9f2f9;
+        flex: 1;
+      }
+      .doc .ok {
+        font-family: var(--mono);
+        font-size: 16px;
+        color: #34d399;
+      }
+
+      /* La demo crece desde el nodo `portal clientes` hasta ocupar la pantalla.
+         El marco arranca en 400x260 con `transform-origin` arriba a la
+         izquierda para que el vuelo se calcule en píxeles de escenario. */
+      .demo {
+        left: 0;
+        top: 0;
+        width: 400px;
+        height: 260px;
+        border: 1px solid #2a3f52;
+        background: #06080c;
+        overflow: hidden;
+        transform-origin: 0 0;
+      }
+      .demo-barra {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 16px;
+        background: #0b1219;
+        border-bottom: 1px solid var(--linea);
+        font-family: var(--mono);
+        font-size: 13px;
+        color: #8fb3c9;
+      }
+      .demo-barra .punto {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #34d399;
+        display: inline-block;
+      }
+      .demo-barra .paso {
+        margin-left: auto;
+        color: var(--tenue);
+      }
+      .demo-marco {
+        position: absolute;
+        left: 0;
+        top: 38px;
+        right: 0;
+        bottom: 0;
+        background: #0a0f15;
+      }
+      .demo-marco iframe {
+        width: 1864px;
+        height: 920px;
         border: 0;
-        background: #fff;
+        background: #0a0f15;
+        transform-origin: 0 0;
+      }
+
+      .marcas {
+        position: absolute;
+        left: 56px;
+        right: 56px;
+        bottom: 38px;
+        display: flex;
+        gap: 6px;
+        align-items: flex-end;
+        height: 8px;
+      }
+      .marcas i {
+        flex: 1;
+        height: 2px;
+        background: #141d27;
+        transition:
+          height 220ms ease,
+          background 220ms ease;
+      }
+      .marcas i[data-estado='hecho'] {
+        background: #2f4457;
+      }
+      .marcas i[data-estado='actual'] {
+        height: 8px;
+        background: var(--acento);
+      }
+
+      .pista {
+        position: absolute;
+        right: 56px;
+        bottom: 64px;
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        color: #33475a;
+      }
+
+      /* Vestíbulo: lo que se proyecta antes de empezar y lo que se ve si no hay
+         sesión. Es también donde el público consigue el PIN, así que es la
+         única pantalla pensada para leerse desde el fondo del salón. */
+      .vestibulo {
+        position: absolute;
+        inset: 0;
+        background: #06080c;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 34px;
+        text-align: center;
+      }
+      .vestibulo[hidden] {
+        display: none;
+      }
+      .vestibulo h1 {
+        margin: 0;
+        font-size: 76px;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        color: #f4fafe;
+      }
+      .vestibulo .sigue {
+        font-family: var(--mono);
+        font-size: 22px;
+        letter-spacing: 0.16em;
+        color: var(--tenue);
+      }
+      .vestibulo .pin {
+        font-family: var(--mono);
+        font-size: 132px;
+        letter-spacing: 0.18em;
+        color: var(--acento);
+        line-height: 1;
+      }
+      .vestibulo .url {
+        font-family: var(--mono);
+        font-size: 24px;
+        color: #8fb3c9;
+      }
+      .vestibulo .aviso {
+        max-width: 900px;
+        font-size: 22px;
+        line-height: 1.5;
+        color: #8fb3c9;
+      }
+      .vestibulo .abrir {
+        font-family: var(--mono);
+        font-size: 18px;
+        letter-spacing: 0.2em;
+        padding: 18px 34px;
+        border: 2px solid #22c08c;
+        background: #0f6b4f;
+        color: #eafff6;
       }
     </style>
   </head>
+
   <body>
-    <main>
-      <h1>Prueba de encuadre: /portal dentro de un iframe</h1>
-      <iframe src="/portal" title="Portal de clientes en vivo"></iframe>
-    </main>
+    <div class="sala">
+      <div class="escenario" id="escenario">
+        <canvas class="grafo" id="grafo"></canvas>
+
+        <div class="rotulo">
+          <span>SUSTENTACIÓN DE GRADO</span><i>/</i><b id="rotulo">VESTÍBULO</b>
+        </div>
+        <div class="contador"><b id="contador">00</b> / {ESCENA.length}</div>
+
+        <div class="texto" id="texto">
+          <div class="dato" id="dato"></div>
+          <div class="titular" id="titular"></div>
+        </div>
+
+        <div class="panel hud" id="hud">
+          <div class="hud-cab">
+            <span>K6 · ESTRÉS · {fechaEstres}</span>
+            <span id="hud-fase" style="color:#fca5a5">·</span>
+          </div>
+          <dl class="hud-rejilla">
+            <div><dt>RPS OFRECIDO</dt><dd id="hud-rps">0</dd></div>
+            <div><dt>RESPUESTAS/s</dt><dd id="hud-resp">0</dd></div>
+            <div><dt>p95</dt><dd id="hud-p95" style="color:#fbbf24">0 ms</dd></div>
+            <div><dt>TASA DE ERROR</dt><dd id="hud-err" style="color:#f87171">0 %</dd></div>
+            <div><dt>CPU DEL PROCESO</dt><dd id="hud-cpu" style="color:#34d399">0 %</dd></div>
+            <div><dt>VUs SIMULTÁNEOS</dt><dd id="hud-vus">0</dd></div>
+          </dl>
+          <canvas id="grafica"></canvas>
+          <div class="hud-pie">
+            <span>ESCALERA {ESCALERA[0].rps} a {ESCALERA[ESCALERA.length - 1].rps} req/s</span>
+            <span>RECUPERACIÓN +0 a {RECUPERACION[RECUPERACION.length - 1].t}s</span>
+          </div>
+          <div class="hud-nota" id="hud-nota">&nbsp;</div>
+        </div>
+
+        <div class="panel matriz" id="matriz">
+          <div class="matriz-cab">
+            <span>MATRIZ DE TRAZABILIDAD · CAJA NEGRA</span>
+            <span style="color:#34d399">10/10 CONFORMES · 9/10 CON HU</span>
+          </div>
+          <div class="matriz-tit">
+            <div>CASO</div><div>HISTORIA DE USUARIO</div><div>VEREDICTO</div><div>EVIDENCIA</div>
+          </div>
+          <div id="matriz-filas">
+            {
+              CASOS_MATRIZ.map((c) => (
+                <div class="matriz-fila">
+                  <div class="caso">{c.id}</div>
+                  <div class="hu" style={`color:${c.color}`}>{c.hu}</div>
+                  <div class="ver">CONFORME</div>
+                  <div class="ev">{c.evidencia}</div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        <div class="panel pipe" id="pipe">
+          <div class="pipe-fila">
+            {
+              ETAPAS_PIPELINE.map((e) => (
+                <div class="etapa" style={`border-color:${e.borde}`}>
+                  <div class="n">{e.n}</div>
+                  <div class="t" style={`color:${e.color}`}>
+                    {e.t}
+                  </div>
+                  <div class="d">{e.d}</div>
+                </div>
+              ))
+            }
+          </div>
+          <div class="pipe-infra">
+            <div class="et">DÓNDE VIVE CADA COSA</div>
+            {INFRA_PIPELINE.map((k) => <span>{k}</span>)}
+          </div>
+        </div>
+
+        <div class="panel dossier" id="dossier">
+          <div class="cab">CHECKLIST DE SUSTENTACIÓN · ENTREGABLES</div>
+          <div class="rejilla">
+            {
+              DOSSIER.map((d) => (
+                <div class="doc">
+                  <span class="n">{d.n}</span>
+                  <span class="t">{d.t}</span>
+                  <span class="ok">OK</span>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        <div class="panel demo" id="demo">
+          <div class="demo-barra">
+            <span class="punto" aria-hidden="true"></span>
+            <span id="demo-ruta">/portal/login</span>
+            <span class="paso" id="demo-paso">0-15s</span>
+          </div>
+          <div class="demo-marco" id="demo-marco"></div>
+        </div>
+
+        <div class="marcas" id="marcas">
+          {ESCENA.map(() => <i data-estado="pendiente"></i>)}
+        </div>
+
+        <div class="pista">FLECHAS NAVEGAR · P PRESENTADOR · R REPETIR</div>
+
+        <div class="vestibulo" id="vestibulo">
+          {
+            sesion && urlSeguir ? (
+              <>
+                <h1>Sustentación de grado</h1>
+                <div class="sigue">SIGUE LA PRESENTACIÓN EN TU CELULAR</div>
+                <div class="pin">{sesion.pin.toUpperCase()}</div>
+                <Qr data={urlSeguir} size={300} label="Código QR para seguir la sustentación" />
+                <div class="url">{urlSeguir.replace(/^https?:\/\//, '')}</div>
+              </>
+            ) : (
+              <>
+                <h1>Sin sesión abierta</h1>
+                <p class="aviso">
+                  {errorRedis
+                    ? `Redis no responde (${errorRedis}). El escenario funciona con el teclado, pero no habrá PIN ni control remoto hasta que vuelva.`
+                    : 'Nadie puede seguir la presentación ni controlarla desde el celular hasta que se abra una sesión.'}
+                </p>
+                {!errorRedis && <button class="abrir" id="abrir" type="button">ABRIR SESIÓN</button>}
+                <p class="aviso" style="font-size:18px;color:#5c7488">
+                  También desde /admin/sustentacion, que es donde se lee el PIN de presentador.
+                </p>
+              </>
+            )
+          }
+        </div>
+      </div>
+    </div>
+
+    <script type="application/json" id="cfg" set:html={JSON.stringify(cfg)} />
+
+    <script>
+      import {
+        ALTO,
+        ANCHO,
+        Motor,
+        aPantalla,
+        acotar,
+        disponerNodos,
+        encuadre,
+        mezclar,
+        recortarTitular,
+        rgb,
+        type Camara,
+        type NodoVivo,
+      } from '../lib/sustentacion/escena'
+      import { obedecerComandos, type EstadoSustentacion } from '../lib/sustentacion/obedecer'
+      import { crearPublicador } from '../lib/sustentacion/publicar'
+
+      type Cfg = {
+        sessionId: string | null
+        secreto: string | null
+        beats: {
+          beat: number
+          titulo: string
+          dato: string | null
+          contenido: string
+          dur: number
+          notas: string[]
+        }[]
+        escena: {
+          beat: number
+          rotulo: string
+          encendidos: string[]
+          destacados: string[]
+          activas: string[]
+          dato: string | null
+          titular: string
+        }[]
+        aristas: string[]
+        todos: string[]
+        libs: string[]
+        colores: Record<string, string>
+        nodosMatriz: string[]
+        escalera: {
+          rps: number
+          vus: number
+          resp: number
+          p50: number
+          p95: number
+          err: number
+          cpu: number | null
+          estado: string
+        }[]
+        recuperacion: { t: number; p50: number; p95: number; cpu: number | null }[]
+        pasosDemo: { t: string; ruta: string; ir: string | null; ms: number }[]
+      }
+
+      const cfg: Cfg = JSON.parse(document.getElementById('cfg')!.textContent!)
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
+
+      const $escenario = $('escenario')
+      const $grafo = $<HTMLCanvasElement>('grafo')
+      const $grafica = $<HTMLCanvasElement>('grafica')
+      const $rotulo = $('rotulo')
+      const $contador = $('contador')
+      const $texto = $('texto')
+      const $dato = $('dato')
+      const $titular = $('titular')
+      const $vestibulo = $('vestibulo')
+      const $marcas = $('marcas')
+      const $demo = $('demo')
+      const $demoMarco = $('demo-marco')
+      const paneles = {
+        hud: $('hud'),
+        matriz: $('matriz'),
+        pipe: $('pipe'),
+        dossier: $('dossier'),
+      }
+
+      const ULTIMO = cfg.escena.length
+      const escenaDe = (beat: number) => cfg.escena.find((e) => e.beat === beat) ?? null
+      const guionDe = (beat: number) => cfg.beats.find((b) => b.beat === beat) ?? null
+
+      // ── Estado ─────────────────────────────────────────────────────────────
+      const nodos = disponerNodos()
+      const aristas = cfg.aristas.map((k) => {
+        const [a, b] = k.split('->')
+        return { k, a, b, act: 0 }
+      })
+      const motor = new Motor()
+      let camara: Camara = { fx: 800, fy: 520, s: 0.86 }
+      let camaraFinal: Camara = { ...camara }
+      const atenuacion = { v: 0 }
+      let beatActual = -1
+      let inicioBeat = Date.now()
+      let reloj = 0
+      let particulas: { arista: (typeof aristas)[number]; t: number; v: number }[] = []
+
+      // El HUD del beat 8. Es un objeto plano porque el motor interpola
+      // cualquier propiedad numérica: así la curva de la escalera se anima
+      // exactamente igual que se anima un nodo, con el mismo código.
+      const estres = {
+        rps: 0,
+        resp: 0,
+        p50: 0,
+        p95: 0,
+        err: 0,
+        cpu: 14,
+        vus: 0,
+        cola: 0,
+        paso: -1,
+        rec: -1,
+      }
+      let cpuSinDato = false
+      let fase = ''
+      let notaEstres = ''
+
+      // El teclado publica. `crearPublicador` devuelve void de forma síncrona,
+      // así que la flecha nunca espera a la red (ver publicar.ts).
+      const publicar = crearPublicador({
+        sessionId: cfg.sessionId ?? '',
+        secreto: cfg.secreto ?? '',
+      })
+
+      // ── Dibujo ─────────────────────────────────────────────────────────────
+      const dpr = Math.min(2, window.devicePixelRatio || 1)
+      $grafo.width = ANCHO * dpr
+      $grafo.height = ALTO * dpr
+      $grafica.width = 384 * dpr
+      $grafica.height = 196 * dpr
+      const ctx = $grafo.getContext('2d')!
+      const cctx = $grafica.getContext('2d')!
+
+      const pos = (n: NodoVivo): [number, number] => aPantalla(camara, n.x + n.dx, n.y + n.dy)
+
+      function dibujar(dt: number) {
+        const c = ctx
+        c.setTransform(dpr, 0, 0, dpr, 0, 0)
+        c.fillStyle = '#06080c'
+        c.fillRect(0, 0, ANCHO, ALTO)
+
+        // Rejilla técnica de fondo: evita que el grafo flote en negro y da
+        // referencia de movimiento cuando la cámara viaja.
+        c.strokeStyle = 'rgba(30,44,60,.35)'
+        c.lineWidth = 1
+        for (let gx = 0; gx < ANCHO; gx += 80) {
+          c.beginPath()
+          c.moveTo(gx + 0.5, 0)
+          c.lineTo(gx + 0.5, ALTO)
+          c.stroke()
+        }
+        for (let gy = 0; gy < ALTO; gy += 80) {
+          c.beginPath()
+          c.moveTo(0, gy + 0.5)
+          c.lineTo(ANCHO, gy + 0.5)
+          c.stroke()
+        }
+
+        const S = camara.s
+
+        // Aristas. La curvatura sale de la perpendicular al segmento: con
+        // líneas rectas, las trece que salen del middleware se pisarían.
+        for (const e of aristas) {
+          const a = nodos[e.a]
+          const b = nodos[e.b]
+          if (!a || !b) continue
+          const [x1, y1] = pos(a)
+          const [x2, y2] = pos(b)
+          const mx = (x1 + x2) / 2 + (y2 - y1) * 0.06
+          const my = (y1 + y2) / 2 - (x2 - x1) * 0.06
+          const viva = Math.min(a.on, b.on)
+
+          c.beginPath()
+          c.moveTo(x1, y1)
+          c.quadraticCurveTo(mx, my, x2, y2)
+          if (e.act > 0.02) {
+            const col = cfg.colores[a.tipo]
+            c.strokeStyle = col
+            c.globalAlpha =
+              0.18 + 0.72 * e.act * (1 - atenuacion.v * 0.25 * (1 - Math.max(a.hl, b.hl)))
+            c.lineWidth = 1 + 2.1 * e.act
+            c.shadowColor = col
+            c.shadowBlur = 14 * e.act
+          } else {
+            c.strokeStyle = '#1b2836'
+            c.globalAlpha = 0.35 + 0.4 * viva
+            c.lineWidth = 1
+            c.shadowBlur = 0
+          }
+          c.stroke()
+          c.globalAlpha = 1
+          c.shadowBlur = 0
+        }
+
+        // Partículas de tráfico. En el beat 8 se frenan con la cola: es lo que
+        // hace que la saturación se VEA, en vez de solo leerse en el HUD.
+        const freno = beatActual === 8 ? estres.cola : 0
+        for (const p of particulas) {
+          const a = nodos[p.arista.a]
+          const b = nodos[p.arista.b]
+          if (!a || !b) continue
+          const [x1, y1] = pos(a)
+          const [x2, y2] = pos(b)
+          const mx = (x1 + x2) / 2 + (y2 - y1) * 0.06
+          const my = (y1 + y2) / 2 - (x2 - x1) * 0.06
+          p.t += dt * p.v * (1 - freno * 0.9) * (p.arista.act > 0.4 ? 1 : 0)
+          if (p.t > 1) p.t -= 1
+          const t = p.t
+          const u = 1 - t
+          const px = u * u * x1 + 2 * u * t * mx + t * t * x2
+          const py = u * u * y1 + 2 * u * t * my + t * t * y2
+          c.fillStyle = cfg.colores[a.tipo]
+          c.globalAlpha = 0.9
+          c.shadowColor = cfg.colores[a.tipo]
+          c.shadowBlur = 10
+          c.beginPath()
+          c.arc(px, py, 2.6, 0, 7)
+          c.fill()
+          c.globalAlpha = 1
+          c.shadowBlur = 0
+        }
+
+        // La cola acumulada alrededor del middleware, en el beat 8.
+        if (freno > 0.03) {
+          const mid = nodos['middleware']
+          const [mx, my] = pos(mid)
+          const n = Math.round(freno * 30)
+          for (let i = 0; i < n; i++) {
+            const ang = (i / n) * Math.PI * 2 + reloj * 0.6
+            const rr = 26 * S + (i % 4) * 7 * S + Math.sin(reloj * 3 + i) * 2
+            c.fillStyle = 'rgba(248,113,113,.85)'
+            c.beginPath()
+            c.arc(mx + Math.cos(ang) * rr, my + Math.sin(ang) * rr, 2.2, 0, 7)
+            c.fill()
+          }
+        }
+
+        // La malla de cobertura del beat 4: todos los módulos contra todos, que
+        // es literalmente lo que recorre la suite.
+        if (beatActual === 4) {
+          c.strokeStyle = 'rgba(52,211,153,.20)'
+          c.lineWidth = 1
+          for (let i = 0; i < cfg.libs.length; i++) {
+            for (let j = i + 1; j < cfg.libs.length; j++) {
+              const [ax, ay] = pos(nodos[cfg.libs[i]])
+              const [bx, by] = pos(nodos[cfg.libs[j]])
+              c.beginPath()
+              c.moveTo(ax, ay)
+              c.lineTo(bx, by)
+              c.stroke()
+            }
+          }
+        }
+
+        // Nodos.
+        for (const n of Object.values(nodos)) {
+          const [x, y] = pos(n)
+          const col = cfg.colores[n.tipo]
+          const vivo = n.on
+          const dim = 1 - atenuacion.v * (1 - n.hl) * 0.82
+          const alarma = n.warn
+          const latido = alarma > 0.02 ? 1 + Math.sin(reloj * (3 + alarma * 9)) * 0.16 * alarma : 1
+          const r = (7 + 5 * n.hl * vivo) * S * latido
+
+          if (vivo > 0.05) {
+            const halo = c.createRadialGradient(x, y, 0, x, y, r * 4.6)
+            const base = alarma > 0.35 ? '248,113,113' : rgb(col)
+            halo.addColorStop(0, `rgba(${base},${0.42 * vivo * dim})`)
+            halo.addColorStop(1, `rgba(${base},0)`)
+            c.fillStyle = halo
+            c.beginPath()
+            c.arc(x, y, r * 4.6, 0, 7)
+            c.fill()
+          }
+
+          c.beginPath()
+          c.arc(x, y, Math.max(2.5, r), 0, 7)
+          c.fillStyle =
+            vivo < 0.05
+              ? '#0d141c'
+              : mezclar('#0d141c', alarma > 0.35 ? '#f87171' : col, vivo * dim * 0.92)
+          c.fill()
+          c.lineWidth = 1 + 1.4 * n.hl * vivo
+          c.strokeStyle =
+            vivo < 0.05
+              ? '#1c2836'
+              : mezclar('#26374a', alarma > 0.35 ? '#fca5a5' : col, vivo * dim)
+          c.stroke()
+
+          // Las etiquetas se van cuando la cámara está lejos: a esa escala son
+          // ruido gris y estorban más de lo que informan.
+          if (S > 0.55 || n.hl > 0.6) {
+            const alfa = vivo < 0.06 ? 0.16 : acotar(0.35 + 0.65 * dim, 0, 1)
+            c.font = `${n.hl > 0.7 && vivo > 0.5 ? '600 ' : ''}${Math.max(10, 12 * Math.min(1.25, S))}px ui-monospace, Menlo, Consolas, monospace`
+            const derecha = n.etiquetaDerecha
+            c.textAlign = derecha ? 'right' : 'center'
+            c.textBaseline = derecha ? 'middle' : 'top'
+            const tinta = vivo < 0.06 ? '77,100,120' : rgb(mezclar('#8fb3c9', '#f4fafe', dim * vivo))
+            c.fillStyle = `rgba(${tinta},${alfa})`
+            if (derecha) c.fillText(n.etiqueta, x - r - 10 * S, y)
+            else c.fillText(n.etiqueta, x, y + r + 8 * S)
+          }
+        }
+      }
+
+      // ── HUD del beat 8 ─────────────────────────────────────────────────────
+      const f = (v: number, d = 0) => Number(v).toFixed(d)
+
+      function pintarHud() {
+        $('hud-rps').textContent = f(estres.rps)
+        $('hud-resp').textContent = f(estres.resp, 1)
+        $('hud-p95').textContent = `${f(estres.p95)} ms`
+        $('hud-err').textContent = `${f(estres.err, 1)} %`
+        $('hud-vus').textContent = f(estres.vus)
+        $('hud-fase').textContent = fase
+        $('hud-nota').textContent = notaEstres
+
+        // "sin dato" no es cero: en los escalones rotos, el propio endpoint que
+        // mide el proceso se satura. Decir 0% sería inventarse una medición.
+        const cpu = $('hud-cpu')
+        cpu.textContent = cpuSinDato ? 'sin dato' : `${f(estres.cpu, 1)} %`
+        cpu.style.color = cpuSinDato ? '#5c7488' : '#34d399'
+        cpu.style.fontSize = cpuSinDato ? '26px' : '34px'
+
+        $('hud-err').style.color =
+          estres.err > 50 ? '#f87171' : estres.err > 0.5 ? '#fbbf24' : '#34d399'
+        $('hud-p95').style.color =
+          estres.p95 > 5000 ? '#f87171' : estres.p95 > 1000 ? '#fbbf24' : '#34d399'
+      }
+
+      function pintarGrafica() {
+        const x = cctx
+        const W = 384
+        const H = 196
+        x.setTransform(dpr, 0, 0, dpr, 0, 0)
+        x.clearRect(0, 0, W, H)
+        x.fillStyle = '#080c11'
+        x.fillRect(0, 0, W, H)
+
+        const total = cfg.escalera.length + cfg.recuperacion.length
+        const cw = W / total
+        // La curva se dibuja SOLO hasta donde ha llegado la narración: pintarla
+        // entera desde el principio cuenta el final antes de tiempo.
+        const hasta =
+          estres.rec >= 0
+            ? cfg.escalera.length + estres.rec + 1
+            : estres.paso >= 0
+              ? estres.paso + 1
+              : 0
+
+        x.strokeStyle = '#111c26'
+        x.lineWidth = 1
+        for (let i = 1; i < 4; i++) {
+          const y = (H * i) / 4
+          x.beginPath()
+          x.moveTo(0, y)
+          x.lineTo(W, y)
+          x.stroke()
+        }
+        x.strokeStyle = '#1c2b3a'
+        x.beginPath()
+        x.moveTo(cfg.escalera.length * cw, 0)
+        x.lineTo(cfg.escalera.length * cw, H)
+        x.stroke()
+
+        const topeRps = Math.max(...cfg.escalera.map((e) => e.rps))
+        x.fillStyle = 'rgba(125,211,252,.16)'
+        cfg.escalera.forEach((st, i) => {
+          if (i >= hasta) return
+          const hh = (st.rps / topeRps) * (H - 40)
+          x.fillRect(i * cw + 1, H - hh, cw - 2, hh)
+        })
+
+        const tope = 10001
+        const py = (v: number) => H - 14 - (Math.min(v, tope) / tope) * (H - 34)
+        const ey = (v: number) => H - 14 - (v / 100) * (H - 34)
+        const pts: [number, number][] = []
+        const epts: [number, number][] = []
+        const cpts: [number, number][] = []
+
+        cfg.escalera.forEach((st, i) => {
+          if (i >= hasta) return
+          const cx = i * cw + cw / 2
+          pts.push([cx, py(st.p95)])
+          epts.push([cx, ey(st.err)])
+          if (st.cpu != null) cpts.push([cx, H - 14 - (st.cpu / 100) * (H - 34)])
+        })
+        cfg.recuperacion.forEach((rc, i) => {
+          const idx = cfg.escalera.length + i
+          if (idx >= hasta) return
+          const cx = idx * cw + cw / 2
+          pts.push([cx, py(rc.p95)])
+          epts.push([cx, ey(rc.p50 < 1000 ? 0 : 100)])
+          if (rc.cpu != null) cpts.push([cx, H - 14 - (rc.cpu / 100) * (H - 34)])
+        })
+
+        const linea = (arr: [number, number][], col: string, w: number) => {
+          if (arr.length < 2) return
+          x.strokeStyle = col
+          x.lineWidth = w
+          x.beginPath()
+          arr.forEach((p, i) => (i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])))
+          x.stroke()
+        }
+        linea(epts, '#f87171', 2)
+        linea(pts, '#fbbf24', 2)
+        linea(cpts, '#34d399', 2.4)
+        if (cpts.length) {
+          const l = cpts[cpts.length - 1]
+          x.fillStyle = '#34d399'
+          x.beginPath()
+          x.arc(l[0], l[1], 3, 0, 7)
+          x.fill()
+        }
+
+        x.font = '10px ui-monospace, Menlo, monospace'
+        x.textBaseline = 'top'
+        x.fillStyle = '#f87171'
+        x.fillText('error %', 6, 6)
+        x.fillStyle = '#fbbf24'
+        x.fillText('p95', 64, 6)
+        x.fillStyle = '#34d399'
+        x.fillText('CPU · plana mientras el error sube', 100, 6)
+      }
+
+      // ── Paneles ────────────────────────────────────────────────────────────
+      function mostrar(el: HTMLElement, dur = 0.5) {
+        el.style.visibility = 'visible'
+        el.style.transition = `opacity ${dur}s cubic-bezier(.2,.7,.2,1)`
+        requestAnimationFrame(() => {
+          el.style.opacity = '1'
+        })
+      }
+      function ocultar(el: HTMLElement) {
+        el.style.transition = 'opacity .3s linear'
+        el.style.opacity = '0'
+        setTimeout(() => {
+          if (el.style.opacity === '0') el.style.visibility = 'hidden'
+        }, 320)
+      }
+
+      // ── Coreografías por beat ──────────────────────────────────────────────
+
+      /** Beat 8: la escalera de estrés y la recuperación, con los datos reales. */
+      function lineaEstres() {
+        Object.assign(estres, {
+          rps: 0,
+          resp: 0,
+          p50: 0,
+          p95: 0,
+          err: 0,
+          cpu: 14,
+          vus: 0,
+          cola: 0,
+          paso: -1,
+          rec: -1,
+        })
+        cpuSinDato = false
+        fase = 'RAMPA'
+        notaEstres = ''
+        mostrar(paneles.hud, 0.6)
+
+        const mid = nodos['middleware']
+        const DUR_ESCALON = 3.6
+        const DUR_REC = 2.2
+        const vusMax = Math.max(...cfg.escalera.map((e) => e.vus))
+
+        cfg.escalera.forEach((st, k) => {
+          motor.tras(k * DUR_ESCALON, () => {
+            estres.paso = k
+            estres.rec = -1
+            fase = `ESCALÓN ${st.rps} req/s`
+            notaEstres =
+              st.err === 0
+                ? 'Escalón sano: 0% de error.'
+                : st.err < 5
+                  ? `Punto de quiebre: ${st.err}% de error a ${st.rps} req/s.`
+                  : 'Roto: la cola de sockets crece, el cómputo no.'
+            motor.a(
+              estres,
+              {
+                rps: st.rps,
+                resp: st.resp,
+                p50: st.p50,
+                p95: st.p95,
+                err: st.err,
+                vus: st.vus,
+                cola: acotar(st.vus / vusMax, 0, 1),
+              },
+              DUR_ESCALON * 0.85,
+              'inOut'
+            )
+            cpuSinDato = st.cpu == null
+            if (st.cpu != null) motor.a(estres, { cpu: st.cpu }, DUR_ESCALON * 0.85, 'inOut')
+            else notaEstres = 'Sin dato de proceso: el endpoint que lo mide también se satura.'
+            motor.a(mid, { warn: acotar(0.2 + k * 0.22, 0, 1) }, DUR_ESCALON * 0.7, 'out')
+            motor.a(atenuacion, { v: acotar(0.35 + k * 0.18, 0, 1) }, DUR_ESCALON * 0.7, 'out')
+          })
+        })
+
+        const base = cfg.escalera.length * DUR_ESCALON + 0.6
+        cfg.recuperacion.forEach((rc, k) => {
+          motor.tras(base + k * DUR_REC, () => {
+            estres.paso = -1
+            estres.rec = k
+            fase = `RECUPERACIÓN +${rc.t}s`
+            const convergio = rc.p50 < 1000
+            notaEstres = convergio
+              ? `Convergió: p50 ${rc.p50}ms, mejor que la línea base sana.`
+              : rc.p50 < 9000
+                ? `Empieza a ceder: p50 ${Math.round(rc.p50)}ms.`
+                : 'Sigue drenando la cola del pico.'
+            motor.a(
+              estres,
+              {
+                p50: rc.p50,
+                p95: rc.p95,
+                rps: 60,
+                resp: convergio ? 20 : 2,
+                err: convergio ? 0 : 100,
+                vus: Math.max(0, vusMax - k * 380),
+                cola: convergio ? 0.02 : acotar(1 - k * 0.13, 0, 1),
+              },
+              DUR_REC * 0.9,
+              'inOut'
+            )
+            cpuSinDato = rc.cpu == null
+            if (rc.cpu != null) motor.a(estres, { cpu: rc.cpu }, DUR_REC * 0.9, 'inOut')
+
+            // La curación es progresiva y DESIGUAL a propósito: un grafo que
+            // vuelve entero de golpe contaría una recuperación que no ocurrió.
+            const cura = convergio ? acotar((k - 4) / 3.2, 0, 1) : rc.p50 < 9000 ? 0.25 : 0
+            motor.a(mid, { warn: 1 - cura }, DUR_REC, 'out')
+            cfg.todos.forEach((id, idx) => {
+              if (id === 'middleware') return
+              const desfase = ((idx * 37) % 11) / 11
+              const encendido = cura > 0 ? acotar((cura - desfase * 0.55) * 2.2, 0, 1) : 0
+              motor.a(
+                nodos[id],
+                { hl: 0.28 + 0.72 * encendido },
+                DUR_REC * 1.1,
+                'out',
+                desfase * 0.5
+              )
+            })
+            motor.a(atenuacion, { v: cura > 0.8 ? 0.15 : 1 }, DUR_REC, 'out')
+          })
+        })
+      }
+
+      /** Beat 9: los nodos vuelan hasta convertirse en las filas de la matriz. */
+      function lineaMatriz() {
+        mostrar(paneles.matriz, 0.5)
+        const filas = Array.from($('matriz-filas').children) as HTMLElement[]
+
+        motor.tras(0.05, () => {
+          const caja = $escenario.getBoundingClientRect()
+          // La escala REAL del escenario en pantalla: el vuelo se calcula en
+          // coordenadas de escena, así que hay que deshacer el ajuste al
+          // proyector antes de convertir la posición de una fila.
+          const escala = caja.width / ANCHO || 1
+          // La cámara FINAL, no la que está a mitad de viaje: con la que hay en
+          // vuelo, cada nodo aterrizaría en un sitio distinto.
+          const cam = camaraFinal
+
+          filas.forEach((fila, k) => {
+            const id = cfg.nodosMatriz[k]
+            const nd = nodos[id]
+            if (!nd) return
+            const rb = fila.getBoundingClientRect()
+            const px = (rb.left - caja.left) / escala - 108
+            const py = (rb.top - caja.top) / escala + rb.height / (2 * escala)
+            const gx = (px - ANCHO / 2) / cam.s + cam.fx
+            const gy = (py - ALTO / 2) / cam.s + cam.fy
+
+            // La etiqueta se va al canalón izquierdo: centrada quedaría debajo
+            // del panel y no se leería ninguna.
+            nd.etiquetaDerecha = true
+            motor.a(nd, { dx: gx - nd.x, dy: gy - nd.y }, 1.15, 'inOut', k * 0.055)
+            motor.a(nd, { hl: 1, on: 1 }, 0.6, 'out', k * 0.055)
+
+            fila.style.transition = 'opacity .5s ease, transform .6s cubic-bezier(.2,.7,.2,1)'
+            fila.style.transform = 'translateX(26px)'
+            setTimeout(
+              () => {
+                fila.style.opacity = '1'
+                fila.style.transform = 'translateX(0)'
+              },
+              420 + k * 70
+            )
+          })
+
+          for (const id of cfg.todos) {
+            if (!cfg.nodosMatriz.includes(id)) motor.a(nodos[id], { hl: 0.14 }, 0.9, 'out')
+          }
+        })
+      }
+
+      /** Beat 10: el nodo del portal se abre hasta ser el portal de verdad. */
+      function lineaDemo() {
+        const nd = nodos['portal-clientes']
+        // La cámara se ancla donde va a estar: el marco crece desde un punto
+        // fijo, y con la cámara aún en vuelo el origen se movería bajo él.
+        camara = { ...camaraFinal }
+        const [sx, sy] = aPantalla(camara, nd.x + nd.dx, nd.y + nd.dy)
+
+        $demo.style.transition = 'none'
+        $demo.style.left = '0px'
+        $demo.style.top = '0px'
+        $demo.style.width = '400px'
+        $demo.style.height = '260px'
+        $demo.style.visibility = 'visible'
+        $demo.style.transform = `translate(${sx - 14}px,${sy - 10}px) scale(0.045)`
+        $demo.style.opacity = '0'
+
+        requestAnimationFrame(() => {
+          $demo.style.transition =
+            'transform 1.15s cubic-bezier(.16,.84,.24,1), opacity .5s linear, width 1.15s cubic-bezier(.16,.84,.24,1), height 1.15s cubic-bezier(.16,.84,.24,1)'
+          $demo.style.opacity = '1'
+          $demo.style.width = '1864px'
+          $demo.style.height = '958px'
+          $demo.style.transform = 'translate(28px,66px) scale(1)'
+        })
+
+        motor.a(atenuacion, { v: 1 }, 1, 'out')
+        const protagonistas = escenaDe(10)?.destacados ?? []
+        for (const id of cfg.todos) {
+          if (!protagonistas.includes(id)) motor.a(nodos[id], { hl: 0.1 }, 1, 'out')
+        }
+
+        let t = 0.9
+        cfg.pasosDemo.forEach((p, k) => {
+          motor.tras(t, () => {
+            $('demo-ruta').textContent = p.ruta
+            $('demo-paso').textContent = p.t
+            if (k > 0 && p.ir && marco) marco.src = p.ir
+          })
+          t += p.ms / 1000
+        })
+      }
+
+      function plegarDemo() {
+        if (!$demo.style.visibility || $demo.style.visibility === 'hidden') return
+        const nd = nodos['portal-clientes']
+        const [sx, sy] = aPantalla(camaraFinal, nd.x + nd.dx, nd.y + nd.dy)
+        $demo.style.transition =
+          'transform .85s cubic-bezier(.5,0,.75,0), opacity .6s linear, width .85s ease, height .85s ease'
+        $demo.style.width = '400px'
+        $demo.style.height = '260px'
+        $demo.style.transform = `translate(${sx - 14}px,${sy - 10}px) scale(0.045)`
+        $demo.style.opacity = '0'
+        setTimeout(() => {
+          if ($demo.style.opacity === '0') $demo.style.visibility = 'hidden'
+        }, 900)
+      }
+
+      /** Beat 11: el grafo se retira a una línea de tiempo bajo el pipeline. */
+      function lineaPipeline() {
+        mostrar(paneles.pipe, 0.5)
+        const etapas = paneles.pipe.querySelectorAll<HTMLElement>('.etapa')
+        etapas.forEach((s, k) => {
+          s.style.transition = 'opacity .5s ease, transform .6s cubic-bezier(.2,.7,.2,1)'
+          s.style.transform = 'translateY(18px)'
+          setTimeout(
+            () => {
+              s.style.opacity = '1'
+              s.style.transform = 'translateY(0)'
+            },
+            220 + k * 130
+          )
+        })
+        cfg.todos.forEach((id, k) => {
+          const nd = nodos[id]
+          const tx = 200 + (k / (cfg.todos.length - 1)) * 1200
+          motor.a(nd, { dx: tx - nd.x, dy: 900 - nd.y }, 1.3, 'inOut', (k % 9) * 0.03)
+        })
+        camaraFinal = { fx: 800, fy: 720, s: 0.8 }
+        motor.a(camara, { ...camaraFinal }, 1.4, 'inOut')
+      }
+
+      /** Beat 12: el dossier, y el grafo se apaga detrás sin desaparecer. */
+      function lineaDossier() {
+        mostrar(paneles.dossier, 0.5)
+        const docs = paneles.dossier.querySelectorAll<HTMLElement>('.doc')
+        docs.forEach((d, k) => {
+          d.style.transition = 'opacity .45s ease, transform .55s cubic-bezier(.2,.7,.2,1)'
+          d.style.transform = 'translateY(14px)'
+          setTimeout(
+            () => {
+              d.style.opacity = '1'
+              d.style.transform = 'translateY(0)'
+            },
+            700 + k * 80
+          )
+        })
+        cfg.todos.forEach((id, k) => {
+          motor.a(nodos[id], { on: 1, hl: 1 }, 0.7, 'out', (k % 12) * 0.03)
+          motor.a(nodos[id], { hl: 0.22 }, 1.2, 'inOut', 1.9)
+        })
+        camaraFinal = { fx: 800, fy: 520, s: 0.8 }
+        motor.a(camara, { ...camaraFinal }, 1.6, 'inOut')
+      }
+
+      // ── Entrada a un beat ──────────────────────────────────────────────────
+
+      function entrar(beat: number, primera = false) {
+        const esc = escenaDe(beat)
+        motor.limpiar()
+        inicioBeat = Date.now()
+        beatActual = beat
+
+        $vestibulo.hidden = beat > 0
+        if (!esc) {
+          // Beat 0: el vestíbulo. No hay coreografía que correr, pero sí hay que
+          // recoger lo que dejara el beat anterior al volver hacia atrás.
+          for (const el of Object.values(paneles)) ocultar(el)
+          plegarDemo()
+          pintarCromo(0)
+          return
+        }
+
+        if (!primera) {
+          $texto.style.opacity = '0'
+          $texto.style.transform = 'translateY(14px)'
+          motor.tras(0.18, () => {
+            $texto.style.transition =
+              'opacity .45s cubic-bezier(.2,.7,.2,1), transform .55s cubic-bezier(.2,.7,.2,1)'
+            $texto.style.opacity = '1'
+            $texto.style.transform = 'translateY(0)'
+          })
+        }
+
+        for (const el of Object.values(paneles)) ocultar(el)
+        if (beat !== 10) plegarDemo()
+
+        const encendidos = new Set(esc.encendidos)
+        const destacados = new Set(esc.destacados)
+        const activas = new Set(esc.activas)
+        const hayFoco = esc.destacados.length > 0
+        motor.a(atenuacion, { v: hayFoco ? 1 : 0 }, 1, 'out')
+
+        cfg.todos.forEach((id, k) => {
+          const nd = nodos[id]
+          // El escalonado cuenta algo distinto en cada beat: en el 3 el grafo se
+          // revela CAPA A CAPA (que es como se lee una arquitectura), y en el 5
+          // los módulos se encienden en el orden en que los mide la cobertura.
+          const retardo =
+            beat === 3
+              ? nd.capa * 0.42 + (k % 7) * 0.045
+              : beat === 5
+                ? Math.max(0, cfg.libs.indexOf(id)) * 0.16
+                : 0.02 * (k % 9)
+          motor.a(
+            nd,
+            { on: encendidos.has(id) ? 1 : 0 },
+            beat === 3 ? 0.9 : 0.7,
+            'out',
+            Math.max(0, retardo)
+          )
+          motor.a(nd, { hl: destacados.has(id) ? 1 : hayFoco ? 0.28 : 1 }, 0.9, 'out', 0.1)
+          if (beat !== 8) motor.a(nd, { warn: 0 }, 0.6, 'out')
+          if (beat !== 9) {
+            nd.etiquetaDerecha = false
+            motor.a(nd, { dx: 0, dy: 0 }, 0.9, 'out')
+          }
+        })
+
+        aristas.forEach((e, k) => {
+          const viva = activas.has(e.k)
+          motor.a(
+            e,
+            { act: viva ? 1 : 0 },
+            0.7,
+            'out',
+            beat === 3 ? 0.55 + k * 0.035 : viva ? 0.12 + k * 0.05 : 0
+          )
+        })
+
+        particulas = []
+        if (beat === 7 || beat === 10) {
+          for (const k of esc.activas) {
+            const arista = aristas.find((e) => e.k === k)
+            if (!arista) continue
+            for (let j = 0; j < 4; j++) {
+              particulas.push({ arista, t: j / 4, v: 0.3 + Math.random() * 0.08 })
+            }
+          }
+        }
+
+        const foco = esc.destacados.length
+          ? esc.destacados
+          : esc.encendidos.length
+            ? esc.encendidos
+            : cfg.todos
+        camaraFinal = encuadre(foco, nodos, {
+          conTexto: Boolean(esc.titular || esc.dato),
+          escalaFija: beat === 8 ? 0.82 : undefined,
+          escalaMaxima: beat === 9 ? 1 : undefined,
+        })
+        motor.a(camara, { ...camaraFinal }, 1.5, 'inOut')
+
+        if (beat === 8) lineaEstres()
+        if (beat === 9) lineaMatriz()
+        if (beat === 10) lineaDemo()
+        if (beat === 11) lineaPipeline()
+        if (beat === 12) lineaDossier()
+
+        pintarCromo(beat)
+        empujarPresentador()
+      }
+
+      function pintarCromo(beat: number) {
+        const esc = escenaDe(beat)
+        $rotulo.textContent = esc?.rotulo ?? 'VESTÍBULO'
+        $contador.textContent = String(beat).padStart(2, '0')
+        $dato.textContent = esc?.dato ?? ''
+        $titular.textContent = recortarTitular(esc?.titular ?? '')
+        Array.from($marcas.children).forEach((el, k) => {
+          const n = k + 1
+          ;(el as HTMLElement).dataset.estado =
+            n === beat ? 'actual' : n < beat ? 'hecho' : 'pendiente'
+        })
+      }
+
+      // ── Bucle ──────────────────────────────────────────────────────────────
+      let ultimo = performance.now()
+      function bucle(ahora: number) {
+        const dt = Math.min(0.05, (ahora - ultimo) / 1000)
+        ultimo = ahora
+        reloj += dt
+        motor.avanzar(dt)
+        dibujar(dt)
+        if (beatActual === 8) {
+          pintarHud()
+          pintarGrafica()
+        }
+        requestAnimationFrame(bucle)
+      }
+
+      // ── Ajuste al proyector ────────────────────────────────────────────────
+      function ajustar() {
+        const s = Math.min(window.innerWidth / ANCHO, window.innerHeight / ALTO)
+        $escenario.style.transform = `scale(${s})`
+      }
+      ajustar()
+      addEventListener('resize', ajustar)
+
+      // ── El iframe de la demo ───────────────────────────────────────────────
+      // Se monta al CARGAR, no en el beat 10: el portal necesita su tiempo para
+      // arrancar y descubrir eso delante del jurado no es una opción. Ruta
+      // RELATIVA, no absoluta: la CSP de esta página es `default-src 'self'` y
+      // un https://codebymike.tech desde un preview quedaría bloqueado sin más
+      // rastro que un aviso en la consola.
+      let marco: HTMLIFrameElement | null = null
+      if (cfg.pasosDemo.length > 0) {
+        marco = document.createElement('iframe')
+        marco.title = 'portal de clientes'
+        marco.src = cfg.pasosDemo[0].ruta
+        $demoMarco.appendChild(marco)
+      }
+
+      // ── Avance ─────────────────────────────────────────────────────────────
+
+      /**
+       * Mover desde ESTE portátil. Se pinta primero y se publica después: la
+       * flecha no espera a la red, que es la regla de `publicar.ts`. Si la
+       * publicación se pierde, el celular se entera en su siguiente sondeo.
+       */
+      function mover(destino: number) {
+        const n = acotar(destino, 0, ULTIMO)
+        if (n === beatActual) return
+        entrar(n)
+        const g = guionDe(n)
+        publicar(n, g?.titulo ?? 'Sustentación', g?.dato ?? null)
+      }
+
+      addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          mover(beatActual + 1)
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault()
+          mover(beatActual - 1)
+        } else if (e.key === 'p' || e.key === 'P') {
+          e.preventDefault()
+          abrirPresentador()
+        } else if (e.key === 'r' || e.key === 'R') {
+          // Repetir el beat actual: el botón de "se me adelantó la animación
+          // mientras hablaba". No publica nada, porque el beat no ha cambiado.
+          e.preventDefault()
+          entrar(beatActual)
+        }
+      })
+
+      // Obedecer al celular. Sin sesión no hay a qué obedecer y el escenario
+      // sigue funcionando con el teclado: es el caso de "Redis caído".
+      if (cfg.sessionId) {
+        obedecerComandos({
+          sessionId: cfg.sessionId,
+          onEstado: (e: EstadoSustentacion) => {
+            if (e.beat !== beatActual) entrar(e.beat)
+          },
+        })
+      }
+
+      // ── Vista de presentador ───────────────────────────────────────────────
+      // Ventana aparte para la pantalla del portátil mientras el proyector tiene
+      // el escenario. Es el respaldo del control remoto: si el celular falla,
+      // las notas siguen a la vista sin tocar nada.
+      let presentador: Window | null = null
+      let temporizadorPresentador: ReturnType<typeof setInterval> | null = null
+
+      function abrirPresentador() {
+        if (presentador && !presentador.closed) {
+          presentador.focus()
+          return
+        }
+        const w = window.open('', 'presentador', 'width=980,height=760')
+        if (!w) return
+        w.document.write(
+          '<!doctype html><meta charset="utf-8"><title>Presentador</title>' +
+            '<body style="margin:0;background:#06080c;color:#e9f2f9;font-family:system-ui,sans-serif;padding:28px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:ui-monospace,Menlo,monospace;font-size:13px;letter-spacing:.14em;color:#5c7488">' +
+            '<span id="lb"></span><span id="cn"></span></div>' +
+            '<div id="ti" style="font-size:76px;font-weight:600;letter-spacing:-.02em;margin:14px 0 4px">00:00</div>' +
+            '<div id="bd" style="font-family:ui-monospace,Menlo,monospace;font-size:16px;color:#7dd3fc;margin-bottom:26px"></div>' +
+            '<ul id="nt" style="font-size:19px;line-height:1.55;padding-left:22px;color:#dbe9f4"></ul></body>'
+        )
+        w.document.close()
+        presentador = w
+        if (temporizadorPresentador) clearInterval(temporizadorPresentador)
+        temporizadorPresentador = setInterval(empujarPresentador, 500)
+        empujarPresentador()
+      }
+
+      function empujarPresentador() {
+        const w = presentador
+        if (!w || w.closed) return
+        const g = guionDe(beatActual)
+        const d = w.document
+        const set = (id: string, v: string) => {
+          const e = d.getElementById(id)
+          if (e) e.textContent = v
+        }
+        const segundos = Math.floor((Date.now() - inicioBeat) / 1000)
+        set('lb', g ? `BEAT ${g.beat} · ${g.contenido.toUpperCase()}` : 'VESTÍBULO')
+        set('cn', `${beatActual} / ${ULTIMO}`)
+        set(
+          'ti',
+          `${String(Math.floor(segundos / 60)).padStart(2, '0')}:${String(segundos % 60).padStart(2, '0')}`
+        )
+
+        const bd = d.getElementById('bd')
+        if (bd && g) {
+          const sobra = segundos - g.dur
+          bd.textContent = `estimado ${g.dur}s · ${sobra > 0 ? `+${sobra}s por encima` : `${Math.abs(sobra)}s de margen`}`
+          bd.style.color = sobra > 10 ? '#f87171' : sobra > 0 ? '#fbbf24' : '#34d399'
+        }
+
+        const ul = d.getElementById('nt') as HTMLUListElement | null
+        if (ul && ul.dataset.beat !== String(beatActual)) {
+          ul.dataset.beat = String(beatActual)
+          ul.replaceChildren()
+          for (const nota of g?.notas ?? []) {
+            const li = d.createElement('li')
+            li.style.marginBottom = '14px'
+            // `textContent` y no `innerHTML`: las notas llevan rutas y signos
+            // como `<` que romperían el marcado al concatenarlos.
+            li.textContent = nota
+            ul.appendChild(li)
+          }
+        }
+      }
+
+      // ── Abrir sesión desde el propio escenario ─────────────────────────────
+      const $abrir = document.getElementById('abrir')
+      $abrir?.addEventListener('click', async () => {
+        $abrir.textContent = 'ABRIENDO...'
+        try {
+          const res = await fetch('/api/admin/sustentacion/sesion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ titulo: 'Sustentación', reusar: true }),
+          })
+          if (!res.ok) {
+            const d = await res.json().catch(() => ({}))
+            $abrir.textContent = d.error ? String(d.error).slice(0, 60) : 'NO SE PUDO'
+            return
+          }
+          // Se recarga para que el PIN y el QR los pinte el servidor: es la
+          // pantalla que va a leer todo el salón, no un hueco rellenado a mano.
+          location.reload()
+        } catch {
+          $abrir.textContent = 'SIN RESPUESTA'
+        }
+      })
+
+      // ── Arranque ───────────────────────────────────────────────────────────
+      // Se entra al vestíbulo (beat 0) y el primer sondeo de `/estado` corrige
+      // la posición si la sesión ya venía empezada, por ejemplo tras recargar.
+      entrar(0, true)
+      requestAnimationFrame(bucle)
+    </script>
   </body>
 </html>
