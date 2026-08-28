@@ -89,15 +89,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const sesion = await crearSesion(titulo)
-    return json(201, {
-      sessionId: sesion.id,
-      pin: sesion.pin,
-      beat: sesion.beat,
-      titulo: sesion.titulo,
-      dato: sesion.dato,
-      secreto: await secretoDeSesion(sesion.id),
-      reutilizada: false,
-    })
+    return json(201, { ...(await credenciales(sesion)), reutilizada: false })
   } catch (e) {
     return json(503, { error: e instanceof Error ? e.message : 'no se pudo crear la sesión' })
   }
