@@ -1,5 +1,12 @@
 import type { APIRoute } from 'astro'
-import { crearSesion, secretoDeSesion, sesionActual } from '../../../../lib/sustentacion/bus'
+import {
+  crearSesion,
+  pinPresentadorDe,
+  secretoDeSesion,
+  sesionActual,
+  type SustentacionSession,
+} from '../../../../lib/sustentacion/bus'
+import { formatearPinPresentador } from '../../../../lib/sustentacion/pin-presentador'
 import { storeReadiness } from '../../../../lib/present/store'
 
 /**
