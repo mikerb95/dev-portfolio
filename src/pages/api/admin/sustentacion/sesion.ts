@@ -83,15 +83,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (reusar) {
     const viva = await sesionActual()
     if (viva) {
-      return json(200, {
-        sessionId: viva.id,
-        pin: viva.pin,
-        beat: viva.beat,
-        titulo: viva.titulo,
-        dato: viva.dato,
-        secreto: await secretoDeSesion(viva.id),
-        reutilizada: true,
-      })
+      return json(200, { ...(await credenciales(viva)), reutilizada: true })
     }
   }
 
