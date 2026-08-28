@@ -20,7 +20,12 @@ const AHORA = 1_790_000_000_000
 
 describe('alcance de la llave', () => {
   it('abre solo el escenario, el panel y el alta de sesión', () => {
-    for (const p of ['/sustentacion', '/admin/sustentacion', '/api/admin/sustentacion/sesion']) {
+    for (const p of [
+      '/sustentacion',
+      '/admin/sustentacion',
+      '/api/admin/sustentacion/sesion',
+      '/api/admin/sustentacion/diagnostico',
+    ]) {
       expect(esRutaDeSustentacion(p), p).toBe(true)
     }
   })
@@ -54,6 +59,7 @@ describe('alcance de la llave', () => {
     expect(esRutaDeSustentacion('/admin/sustentacion-secreto')).toBe(false)
     expect(esRutaDeSustentacion('/sustentacion/control')).toBe(false)
     expect(esRutaDeSustentacion('/api/admin/sustentacion/otra')).toBe(false)
+    expect(esRutaDeSustentacion('/api/admin/sustentacion/diagnostico/x')).toBe(false)
   })
 
   it('la barra final no cambia el resultado', () => {

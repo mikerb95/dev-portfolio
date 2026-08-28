@@ -158,13 +158,27 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).
         >
           Emitir PINes nuevos
         </button>
-        <span class="text-[10px] text-ink-300 self-center max-w-[22rem] leading-relaxed">
+        <button
+          type="button"
+          id="diagnostico"
+          class="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-[12px] text-ink-100 hover:bg-white/[0.08]"
+        >
+          Probar Redis
+        </button>
+        <span class="text-[10px] text-ink-300 self-center max-w-[20rem] leading-relaxed">
           Emitir PINes nuevos deja fuera a quien ya estuviera siguiendo con el anterior. Solo si el
           largo se filtró.
         </span>
       </div>
 
       <p class="text-[11px] mt-3" id="aviso" aria-live="polite"></p>
+
+      <!-- El diagnóstico se pinta aquí y no en una pestaña nueva: si Redis falla
+           es el día de la charla, y abrir otra ventana para leer un JSON es un
+           paso de más. Nace vacío y solo aparece cuando hay algo que decir. -->
+      <pre
+        id="diagnostico-salida"
+        class="hidden mt-3 max-h-72 overflow-auto rounded-xl border border-white/10 bg-black/40 p-3 text-[10px] leading-relaxed text-ink-200 whitespace-pre-wrap"></pre>
     </section>
 
     <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -208,6 +222,22 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).
         $aviso.className = 'text-[11px] mt-3 text-[#ff9a9a]'
       }
     }
+
+    const $diagSalida = document.getElementById('diagnostico-salida')!
+
+    document.getElementById('diagnostico')!.addEventListener('click', async () => {
+      $diagSalida.classList.remove('hidden')
+      $diagSalida.textContent = 'Probando lectura y escritura…'
+      try {
+        const res = await fetch('/api/admin/sustentacion/diagnostico')
+        const d = await res.json()
+        // El veredicto primero y el detalle debajo: con prisa se lee la primera
+        // línea, y el JSON completo solo si hace falta pegarlo en algún sitio.
+        $diagSalida.textContent = `${d.veredicto}\n\n${JSON.stringify(d, null, 2)}`
+      } catch (e) {
+        $diagSalida.textContent = `No se pudo consultar: ${(e as Error).message}`
+      }
+    })
 
     document.getElementById('abrir')!.addEventListener('click', () => void alta(true))
     document.getElementById('rotar')!.addEventListener('click', () => {

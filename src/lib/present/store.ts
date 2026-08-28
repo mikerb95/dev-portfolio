@@ -91,8 +91,31 @@ async function upstashCommand(
       signal: controller.signal,
     })
     if (!res.ok) {
-      // El texto del error de Upstash puede repetir la URL; nunca el token.
-      throw new PresentStoreError(`Redis respondió ${res.status}`)
+      // El MOTIVO importa y antes se tiraba. Un `403` a secas puede ser un
+      // token revocado, una base borrada o un token de SOLO LECTURA intentando
+      // escribir, y las tres se arreglan de forma distinta; averiguarlo sin el
+      // texto de Upstash exige adivinar delante de un panel que no dice nada.
+      //
+      // Se sanea antes de propagarlo porque este mensaje llega hasta endpoints
+      // PÚBLICOS (`/api/sustentacion/comando` lo devuelve en su 503): se quitan
+      // las URLs, que es lo único que Upstash repite del entorno. El token no
+      // viaja nunca en el cuerpo del error, solo en la cabecera que enviamos.
+      const detalle = await res
+        .text()
+        .then((t) => {
+          const cuerpo = t.trim().slice(0, 200)
+          try {
+            const j = JSON.parse(cuerpo) as { error?: string }
+            return typeof j.error === 'string' ? j.error : cuerpo
+          } catch {
+            return cuerpo
+          }
+        })
+        .catch(() => '')
+      const limpio = detalle.replace(/https?:\/\/\S+/g, '<url>').trim()
+      throw new PresentStoreError(
+        limpio ? `Redis respondió ${res.status}: ${limpio}` : `Redis respondió ${res.status}`
+      )
     }
     const body = (await res.json()) as { result?: unknown; error?: string }
     if (body.error) throw new PresentStoreError(`Redis: ${body.error}`)

@@ -15,9 +15,14 @@
 //
 // Abre exactamente tres rutas y ninguna más:
 //
-//   · /sustentacion                        el escenario que se proyecta
-//   · /admin/sustentacion                  abrir la sesión y leer los PINes
-//   · /api/admin/sustentacion/sesion       el alta que dispara esa página
+//   · /sustentacion                          el escenario que se proyecta
+//   · /admin/sustentacion                    abrir la sesión y leer los PINes
+//   · /api/admin/sustentacion/sesion         el alta que dispara esa página
+//   · /api/admin/sustentacion/diagnostico    por qué Redis no responde
+//
+// El diagnóstico entra en la lista porque el día que Redis falle habrá que
+// mirarlo desde donde se esté, y no devuelve ni un valor de variable de
+// entorno: solo si están definidas, y el mensaje de error de Upstash.
 //
 // El resto de /admin (la bóveda de secretos, los cobros, las finanzas, los
 // clientes, los backups) sigue detrás de GitHub y de la allowlist. Una
@@ -48,6 +53,7 @@ const RUTAS_PERMITIDAS = new Set([
   '/sustentacion',
   '/admin/sustentacion',
   '/api/admin/sustentacion/sesion',
+  '/api/admin/sustentacion/diagnostico',
 ])
 
 export function esRutaDeSustentacion(pathname: string): boolean {
