@@ -42,6 +42,7 @@ import {
 import { BEATS } from '../lib/sustentacion/guion'
 import { secretoDeSesion, sesionActual, type SustentacionSession } from '../lib/sustentacion/bus'
 import { PASE_COOKIE, verificarPase } from '../lib/sustentacion/pase'
+import { ACCESO_COOKIE, verificarAcceso } from '../lib/sustentacion/acceso'
 import { isAllowedLogin } from '../lib/auth'
 import { serverEnv } from '../lib/env'
 import { getSession } from 'auth-astro/server'
@@ -62,7 +63,8 @@ try {
 // teclado, así que solo entra en el HTML si quien mira tiene una de las dos:
 //
 //   · sesión de admin, revalidada contra la allowlist como en el middleware.
-//   · pase firmado, que se cambia por el PIN de presentador en /api/…/pase.
+//   · pase firmado, que se cambia por el PIN de presentador en /api/…/pase, o
+//     por la contraseña de SUSTENTACION_PASSWORD en /sustentacion/entrar.
 //
 // Ninguna de las dos consulta Turso. Y SIN NINGUNA la página se sirve igual:
 // el escenario se presenta con el teclado en local, solo que no publica el beat
@@ -77,12 +79,17 @@ try {
   // Auth.js sin configurar o con la cookie corrupta: se sigue por el pase.
 }
 
+const claveFirma = serverEnv('PRESENT_SECRET') || serverEnv('AUTH_SECRET')
+
 if (!autorizado && sesion) {
-  autorizado = verificarPase(
-    Astro.cookies.get(PASE_COOKIE)?.value,
-    serverEnv('PRESENT_SECRET') || serverEnv('AUTH_SECRET'),
-    sesion.id
-  )
+  autorizado = verificarPase(Astro.cookies.get(PASE_COOKIE)?.value, claveFirma, sesion.id)
+}
+
+// La contraseña del panel también proyecta: quien puede abrir la sesión y leer
+// los PINes ya podría teclear el de presentador aquí mismo, así que exigírselo
+// solo añadiría un paso en el peor momento.
+if (!autorizado) {
+  autorizado = verificarAcceso(Astro.cookies.get(ACCESO_COOKIE)?.value, claveFirma)
 }
 
 const secreto = sesion && autorizado ? await secretoDeSesion(sesion.id) : null

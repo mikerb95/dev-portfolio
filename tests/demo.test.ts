@@ -109,6 +109,8 @@ describe('demo · rutas vetadas aunque sean GET', () => {
       // No cuelga de /api/admin porque la abre el PIN, no la sesión de admin,
       // así que necesita su propia línea aquí.
       '/api/sustentacion/pase',
+      '/api/sustentacion/acceso',
+      '/sustentacion/entrar',
     ]) {
       expect(isDemoBlockedPath(p), p).toBe(true)
     }

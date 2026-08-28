@@ -1,6 +1,11 @@
 import { defineMiddleware } from 'astro:middleware'
 import { getSession } from 'auth-astro/server'
 import { isAllowedLogin } from './lib/auth'
+import {
+  ACCESO_COOKIE,
+  esRutaDeSustentacion,
+  verificarAcceso,
+} from './lib/sustentacion/acceso'
 import { serverEnv } from './lib/env'
 import { maybeChaos } from './lib/chaos'
 import { clientIp, resolveDeviceSessionId } from './lib/device-info'
@@ -522,7 +527,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // privado, pero su auth ya se resolvió arriba y no debe pasar por Auth.js ni
   // por la allowlist de GitHub - un cliente no tiene ni puede tener login de
   // GitHub autorizado, así que este bloque lo expulsaría.
-  if (isAdmin || isPrivateDeck) {
+  // Puerta por contraseña de la sustentación. Se comprueba ANTES del gate de
+  // Auth.js y solo abre las tres rutas de `esRutaDeSustentacion`: el escenario,
+  // el panel donde se leen los PINes, y el alta de sesión que ese panel llama.
+  // Todo lo demás de /admin sigue exigiendo GitHub y allowlist.
+  //
+  // Existe porque abrir la sesión de sustentación es lo único de la cadena que
+  // no puede autorizarse con los PINes (es lo que los acuña), y eso dejaba el
+  // día de la charla colgando de que GitHub responda. Ver lib/sustentacion/acceso.ts.
+  const accesoPorContrasena =
+    esRutaDeSustentacion(canonicalPath) &&
+    verificarAcceso(
+      context.cookies.get(ACCESO_COOKIE)?.value,
+      serverEnv('PRESENT_SECRET') || serverEnv('AUTH_SECRET')
+    )
+
+  if ((isAdmin || isPrivateDeck) && !accesoPorContrasena) {
     const session = await getSession(context.request)
 
     if (!session) {

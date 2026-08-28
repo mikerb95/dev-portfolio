@@ -1,0 +1,147 @@
+---
+// Puerta por contraseña al panel de la sustentación.
+//
+// Es PÚBLICA a propósito (una página de login que exigiera login no serviría de
+// nada), y por eso no muestra absolutamente nada: ni si hay sesión abierta, ni
+// PINes, ni el estado de la charla. Solo un campo. Lo que hay detrás y por qué
+// el alcance es de tres rutas está en `lib/sustentacion/acceso.ts`.
+import { serverEnv } from '../../lib/env'
+
+// Si la variable no está configurada, esta puerta no existe: un 404 y no un
+// formulario que no puede funcionar. Enseñar el campo sin nada detrás sería
+// mandarme a teclear contraseñas cinco minutos antes de entrar al salón.
+const configurado = Boolean(serverEnv('SUSTENTACION_PASSWORD'))
+if (!configurado) return new Response('No encontrado', { status: 404 })
+
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Sustentación</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #05070a;
+        color: #e9f2f9;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      main {
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        padding: 24px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: #5c7488;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: min(420px, 100%);
+      }
+      input {
+        height: 64px;
+        padding: 0 18px;
+        background: #0d131b;
+        border: 1px solid #1b2836;
+        color: #e9f2f9;
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 22px;
+        letter-spacing: 0.08em;
+        border-radius: 0;
+        -webkit-appearance: none;
+      }
+      input:focus {
+        outline: 2px solid #7dd3fc;
+        outline-offset: -2px;
+      }
+      button {
+        height: 64px;
+        border: 2px solid #22c08c;
+        background: #0f6b4f;
+        color: #eafff6;
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+      }
+      .error {
+        min-height: 22px;
+        font-size: 15px;
+        color: #fca5a5;
+      }
+      .error:empty {
+        visibility: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <h1>PANEL DE SUSTENTACIÓN</h1>
+      <form id="form">
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          placeholder="Contraseña"
+          aria-label="Contraseña del panel de sustentación"
+        />
+        <button type="submit">ENTRAR</button>
+      </form>
+      <div class="error" id="error" aria-live="polite"></div>
+    </main>
+
+    <script>
+      const $form = document.getElementById('form') as HTMLFormElement
+      const $password = document.getElementById('password') as HTMLInputElement
+      const $error = document.getElementById('error')!
+
+      $form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        $error.textContent = ''
+        try {
+          const res = await fetch('/api/sustentacion/acceso', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: $password.value }),
+          })
+          if (!res.ok) {
+            const d = await res.json().catch(() => ({}))
+            $error.textContent = d.error ? String(d.error) : 'No se pudo entrar'
+            return
+          }
+          // Al panel, que es desde donde se abre la sesión y se leen los PINes.
+          // `replace` y no `href`: volver atrás no debe traer de vuelta este
+          // formulario con la contraseña todavía escrita.
+          location.replace('/admin/sustentacion')
+        } catch (err) {
+          $error.textContent = `Sin respuesta: ${(err as Error).message}`
+        }
+      })
+    </script>
+  </body>
+</html>

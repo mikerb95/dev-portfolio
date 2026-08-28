@@ -89,6 +89,10 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   // rechaza; se veta igualmente para que un cambio futuro de método no lo
   // reabra en silencio.
   /^\/api\/sustentacion\/pase/,
+  // Y la puerta por contraseña, por lo mismo: emite una cookie que abre el
+  // panel donde se leen los PINes vivos.
+  /^\/api\/sustentacion\/acceso/,
+  /^\/sustentacion\/entrar/,
 ]
 
 /** ¿La ruta está vetada en modo demo (aun siendo GET)? */
