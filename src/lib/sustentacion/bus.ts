@@ -329,8 +329,7 @@ export async function publicarBeat(
     version: sesion.version + 1,
     updatedAt: ahora,
     // Solo se reinicia el cronómetro si de verdad cambiamos de beat.
-    beatIniciadoEn:
-      entrada.beat === sesion.beat ? sesion.beatIniciadoEn ?? sesion.updatedAt : ahora,
+    beatIniciadoEn: entrada.beat === sesion.beat ? sesion.beatIniciadoEn : ahora,
   }
 
   return { ok: true, snapshot: await persistirYPublicar(actualizada) }
