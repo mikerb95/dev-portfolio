@@ -25,18 +25,40 @@ const json = (status: number, body: unknown) =>
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   })
 
-/** Sesión en curso, para que recargar el canvas no emita un PIN nuevo. */
-export const GET: APIRoute = async () => {
-  const sesion = await sesionActual()
-  if (!sesion) return json(404, { error: 'no hay sesión de sustentación en curso' })
-  return json(200, {
+/**
+ * Los DOS PINes de una sesión, en la única respuesta que los lleva juntos.
+ *
+ *   · `pin`            - de ASISTENTE. Cuatro caracteres, va proyectado y en el
+ *     QR. Solo lectura: con él se sigue la presentación, no se mueve.
+ *   · `pinPresentador` - de CONTROL. Diez caracteres, derivado por HMAC del id
+ *     de sesión (no está guardado en Redis, ver `bus.ts`). Es lo que tecleo en
+ *     el celular y lo único que autoriza `/api/sustentacion/comando`.
+ *
+ * Que el de presentador salga SOLO por aquí es lo que lo mantiene privado: este
+ * subárbol está detrás de la sesión de admin en el middleware, mientras que el
+ * de asistente aparece en pantalla delante de todo el mundo. Si fueran el mismo
+ * valor, cualquiera del público podría mover mi presentación desde su celular.
+ */
+async function credenciales(sesion: SustentacionSession) {
+  const pinPresentador = await pinPresentadorDe(sesion.id)
+  return {
     sessionId: sesion.id,
     pin: sesion.pin,
+    pinPresentador,
+    /** El mismo PIN con guiones, para leerlo y teclearlo sin equivocarse. */
+    pinPresentadorLegible: formatearPinPresentador(pinPresentador),
     beat: sesion.beat,
     titulo: sesion.titulo,
     dato: sesion.dato,
     secreto: await secretoDeSesion(sesion.id),
-  })
+  }
+}
+
+/** Sesión en curso, para que recargar el canvas no emita un PIN nuevo. */
+export const GET: APIRoute = async () => {
+  const sesion = await sesionActual()
+  if (!sesion) return json(404, { error: 'no hay sesión de sustentación en curso' })
+  return json(200, await credenciales(sesion))
 }
 
 export const POST: APIRoute = async ({ request }) => {
