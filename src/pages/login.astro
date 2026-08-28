@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css'
+import { esRutaDeSustentacion } from '../lib/sustentacion/acceso'
+import { serverEnv } from '../lib/env'
 // Punto de entrada del login: dos puertas independientes, cualquiera basta.
 // - GitHub OAuth (como siempre): signIn() de auth-astro/client hace el POST
 //   con token CSRF que Auth.js exige (un GET directo a /api/auth/signin/github
@@ -8,6 +10,20 @@ import '../styles/global.css'
 //   /api/auth/webauthn/{options,verify} y luego signIn('passkey', { proof }).
 const callbackUrl =
   new URL(Astro.request.url).searchParams.get('callbackUrl') ?? '/entrar'
+
+// Tercera puerta, y solo para la sustentación: la contraseña de
+// SUSTENTACION_PASSWORD. Aparece aquí porque es donde el middleware deja a
+// quien iba al panel de la sustentación sin sesión, y mandarlo a otra pantalla
+// a teclearla sería un rebote más justo antes de entrar al salón.
+//
+// Se muestra ÚNICAMENTE si el destino era una ruta de la sustentación: en el
+// login normal del panel no pinta nada, y anunciar una puerta con menos
+// garantías en la pantalla de entrada general sería invitar a usarla.
+// Ver el alcance (tres rutas, nada más) en src/lib/sustentacion/acceso.ts.
+const destinoSustentacion = esRutaDeSustentacion(callbackUrl)
+const ofreceClaveSustentacion =
+  destinoSustentacion && Boolean(serverEnv('SUSTENTACION_PASSWORD'))
+
 Astro.response.headers.set('Cache-Control', 'private, no-store')
 ---
 
@@ -54,6 +70,31 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
             <span id="passkey-label">Usar mi llave de seguridad</span>
           </button>
         </div>
+
+        {
+          ofreceClaveSustentacion && (
+            <form id="form-sustentacion" class="login-sust">
+              <div class="login-or"><span>o</span></div>
+              <label class="login-sust-label" for="clave-sustentacion">
+                Clave de la sustentación
+              </label>
+              <input
+                id="clave-sustentacion"
+                class="login-sust-input"
+                type="password"
+                autocomplete="current-password"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck="false"
+                placeholder="Contraseña"
+              />
+              <button class="login-btn login-btn-ghost" type="submit">Entrar a la sustentación</button>
+              <p class="login-sust-nota">
+                Solo abre el escenario y el panel de la sustentación, nada más del panel.
+              </p>
+            </form>
+          )
+        }
 
         <p id="login-status" class="login-status" role="status" aria-live="polite"></p>
 
@@ -107,6 +148,20 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       .login-demo { margin-top: 14px; font-size: 12px; line-height: 1.6; color: #85858f; }
       .login-demo a { color: #00f2ff; text-decoration: none; }
       .login-demo a:hover { text-decoration: underline; }
+
+      .login-sust { display: grid; gap: 10px; margin-top: 12px; text-align: left; }
+      .login-sust-label {
+        font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em;
+        text-transform: uppercase; color: #7c7c8a;
+      }
+      .login-sust-input {
+        height: 46px; padding: 0 14px; border-radius: 14px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e7e7ec; font-size: 14px; font-family: var(--font-mono); letter-spacing: 0.06em;
+      }
+      .login-sust-input:focus { outline: 2px solid #00f2ff; outline-offset: -2px; }
+      .login-sust-nota { margin: 0; font-size: 11px; line-height: 1.5; color: #7c7c8a; }
     </style>
 
     <script>
@@ -135,6 +190,34 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       const githubBtn = document.getElementById('btn-github') as HTMLButtonElement
       const passkeyBtn = document.getElementById('btn-passkey') as HTMLButtonElement
       const passkeyLabel = document.getElementById('passkey-label') as HTMLElement
+
+      // Clave de la sustentación. Solo existe en el DOM cuando el destino era una
+      // ruta de la sustentación y la variable está configurada.
+      const formSust = document.getElementById('form-sustentacion') as HTMLFormElement | null
+      formSust?.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const campo = document.getElementById('clave-sustentacion') as HTMLInputElement
+        status.classList.remove('err')
+        status.textContent = 'Comprobando…'
+        try {
+          const res = await fetch('/api/sustentacion/acceso', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: campo.value }),
+          })
+          if (!res.ok) {
+            const d = await res.json().catch(() => ({}))
+            throw new Error(d.error ?? 'no se pudo entrar')
+          }
+          // Al destino original, que el servidor ya comprobó que es una ruta de
+          // la sustentación antes de ofrecer siquiera este formulario. `replace`
+          // para que volver atrás no traiga el formulario con la clave escrita.
+          window.location.replace(callbackUrl)
+        } catch (err) {
+          status.classList.add('err')
+          status.textContent = err instanceof Error ? err.message : 'no se pudo entrar'
+        }
+      })
 
       githubBtn.addEventListener('click', () => {
         githubBtn.disabled = true
