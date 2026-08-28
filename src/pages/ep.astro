@@ -201,6 +201,35 @@ const docLinks = {
   f147: recursos.find((r) => r.label.startsWith('Bitácora'))!,
 }
 
+// Checklist de cierre: los documentos que pide el juicio de etapa productiva
+// y la certificación académica (infografía SENA - Centro de Servicios
+// Financieros, Regional Distrito Capital). Se reutilizan los links de
+// `recursos` para los dos formatos que ya existen ahí (F-147 y F-023).
+const documentosCierre = [
+  { texto: 'Fotocopia del documento de identidad ampliada al 150 %.' },
+  { texto: 'Carta donde se indique que no le fue entregado carné por parte del Centro de Formación.' },
+  { texto: 'Certificado de inscripción en la Agencia Pública de Empleo.' },
+  { texto: 'Pantallazo de actualización de datos en SENA Sofía Plus.' },
+  {
+    texto:
+      'Certificación expedida por la empresa, indicando las fechas exactas de inicio y finalización de la Etapa Productiva.',
+  },
+  {
+    texto:
+      'Formato GFPI-F-147 V5 (Bitácora de Seguimiento de Etapa Productiva), debidamente diligenciada, firmada y organizada en orden cronológico.',
+    doc: recursos.find((r) => r.label.startsWith('Bitácora')),
+  },
+  {
+    texto:
+      'Formato GFPI-F-023 V6 (Planeación, Seguimiento y Evaluación de Etapa Productiva), correspondiente a las visitas de concertación, evaluación parcial y evaluación final.',
+    doc: recursos.find((r) => r.label === 'Visita 1 (GFPI-F-023)'),
+  },
+  {
+    texto:
+      'Soporte de presentación de las Pruebas de Estado Saber TyT (aplica únicamente para programas de nivel tecnólogo).',
+  },
+]
+
 const meta = [
   { k: 'Ficha', v: '3114731' },
   { k: 'Programa', v: 'ADSO · Tecnólogo' },
