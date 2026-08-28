@@ -120,14 +120,40 @@ seguidores. Lo mismo si Redis entero está caído: la presentación se da, sin P
 ni celular. Esa es la garantía que importa: **para proyectar no hace falta ni
 la base de datos, ni GitHub, ni Redis.**
 
-### Lo único que sí exige sesión de admin
+### Abrir la sesión sin iniciar sesión con GitHub
 
-**Abrir la sesión** (`POST /api/admin/sustentacion/sesion`), porque es lo que
-acuña las credenciales y no puede autorizarse con una credencial que aún no
-existe. Por eso el paso previo del día es siempre el mismo:
+**Abrir la sesión** (`POST /api/admin/sustentacion/sesion`) es lo único de la
+cadena que no puede autorizarse con los PINes, porque es justamente lo que los
+acuña. Para no depender de GitHub tampoco ahí, hay una puerta por contraseña:
 
-1. Abrir la sesión desde `/admin/sustentacion` **antes** de entrar al salón.
-2. **Apuntar el PIN de presentador** (dura 6 horas, igual que la sesión).
+    https://codebymike.tech/sustentacion/entrar
+
+La contraseña vive en la variable de entorno **`SUSTENTACION_PASSWORD`**
+(configurada en Production). Al acertarla deja una cookie de 12 horas y lleva
+directo al panel.
+
+**Abre exactamente tres rutas y ninguna más:**
+
+| Ruta | Para qué |
+|---|---|
+| `/sustentacion` | proyectar el escenario |
+| `/admin/sustentacion` | abrir la sesión y leer los PINes |
+| `/api/admin/sustentacion/sesion` | el alta que dispara ese panel |
+
+Todo el resto de `/admin` (bóveda de secretos, cobros, finanzas, clientes,
+backups, sesiones) sigue detrás de GitHub y de la allowlist. Es un secreto
+compartido y por tanto **más débil que el OAuth**: lo que acota el daño de una
+filtración es ese alcance, no la contraseña. Una filtración cuesta una sesión
+de sustentación reemitida, no el panel. Si se filtra, se cambia la variable.
+
+Sin la variable configurada la puerta **no existe**: `/sustentacion/entrar`
+devuelve 404. No hay contraseña por defecto.
+
+### El orden del día
+
+1. Entrar por `/sustentacion/entrar` (o con la sesión de admin de siempre).
+2. Abrir la sesión desde `/admin/sustentacion` **antes** de entrar al salón.
+3. **Apuntar el PIN de presentador** (dura 6 horas, igual que la sesión).
 
 Con ese PIN en el bolsillo, a partir de ahí no hace falta volver a autenticarse
 en ningún sitio, ni para proyectar ni para controlar.
@@ -295,6 +321,8 @@ Y a mano:
   presentador. Es el único sitio donde ese PIN aparece.
 - `src/lib/sustentacion/pase.ts`: la segunda llave del escenario, y por qué
   proyectar no puede depender de GitHub OAuth.
+- `src/lib/sustentacion/acceso.ts`: la puerta por contraseña y, sobre todo, por
+  qué su alcance son tres rutas y no el panel entero.
 - `src/lib/portal/respaldo.ts`: el modo respaldo del portal, que es lo que
   sostiene el beat 10 con la cuota agotada.
 - `src/lib/sustentacion/obedecer.ts`: el lado del canvas, con la decisión de
