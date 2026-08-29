@@ -21,6 +21,7 @@
 // error. Sin Redis, el último beat conocido se queda donde está y el teclado
 // sigue moviendo el escenario en local. Una pantalla en blanco delante del
 // jurado es peor que cualquier desincronía.
+import '../styles/sustentacion-fuentes.css'
 import Qr from '../components/present/Qr.astro'
 import {
   ARISTAS,
@@ -139,14 +140,13 @@ Astro.response.headers.set('Cache-Control', 'no-store')
     <meta name="robots" content="noindex, nofollow" />
     <title>Sustentación</title>
     <style>
-      /* Las fuentes son las del sistema. El diseño pedía Noto Sans y Raleway
-         desde Google Fonts, pero la CSP de este sitio sirve `font-src 'self'
-         data:` y una fuente remota se bloquearía sin decir nada, dejando el
-         fallback más una petición muerta en el arranque. Lo que aportaba
-         Raleway (monoespaciada, con mucho espaciado entre letras, para rótulos
-         y cifras) lo hace igual la pila monoespaciada del sistema. */
+      /* Las dos fuentes del diseño, servidas desde este origen (ver
+         `src/styles/sustentacion-fuentes.css`). Los stacks son los del diseño
+         carácter por carácter: Raleway para rótulos y cifras, Noto Sans para
+         los titulares. Sustituirlas por las del sistema, como estaban, cambia
+         el aspecto de cada titular proyectado. */
       :root {
-        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --mono: 'Raleway', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         --tenue: #5c7488;
         --tenue-mas: #4d6478;
         --linea: #1b2836;
@@ -186,7 +186,7 @@ Astro.response.headers.set('Cache-Control', 'no-store')
         overflow: hidden;
         background: #06080c;
         color: #e9f2f9;
-        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        font-family: 'Noto Sans', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
         transform-origin: center center;
       }
       canvas.grafo {
@@ -694,8 +694,8 @@ Astro.response.headers.set('Cache-Control', 'no-store')
           </dl>
           <canvas id="grafica"></canvas>
           <div class="hud-pie">
-            <span>ESCALERA {ESCALERA[0].rps} a {ESCALERA[ESCALERA.length - 1].rps} req/s</span>
-            <span>RECUPERACIÓN +0 a {RECUPERACION[RECUPERACION.length - 1].t}s</span>
+            <span>ESCALERA {ESCALERA[0].rps}→{ESCALERA[ESCALERA.length - 1].rps} req/s</span>
+            <span>RECUPERACIÓN +0→{RECUPERACION[RECUPERACION.length - 1].t}s</span>
           </div>
           <div class="hud-nota" id="hud-nota">&nbsp;</div>
         </div>
@@ -760,7 +760,7 @@ Astro.response.headers.set('Cache-Control', 'no-store')
         <div class="panel demo" id="demo">
           <div class="demo-barra">
             <span class="punto" aria-hidden="true"></span>
-            <span id="demo-ruta">/portal/login</span>
+            <span id="demo-ruta">codebymike.tech/portal/login</span>
             <span class="paso" id="demo-paso">0-15s</span>
           </div>
           <div class="demo-marco" id="demo-marco"></div>
@@ -770,7 +770,7 @@ Astro.response.headers.set('Cache-Control', 'no-store')
           {ESCENA.map(() => <i data-estado="pendiente"></i>)}
         </div>
 
-        <div class="pista">FLECHAS NAVEGAR · P PRESENTADOR · R REPETIR</div>
+        <div class="pista">← →  NAVEGAR · P PRESENTADOR · R REPETIR</div>
 
         <div class="vestibulo" id="vestibulo">
           {
@@ -1459,7 +1459,7 @@ Astro.response.headers.set('Cache-Control', 'no-store')
         let t = 0.9
         cfg.pasosDemo.forEach((p, k) => {
           motor.tras(t, () => {
-            $('demo-ruta').textContent = p.ruta
+            $('demo-ruta').textContent = `codebymike.tech${p.ruta}`
             $('demo-paso').textContent = p.t
             if (k > 0 && p.ir && marco) marco.src = p.ir
           })

@@ -27,6 +27,8 @@
 
 // Ni caché de CDN ni indexación: es una pantalla de control, aunque no revele
 // nada sin el PIN.
+import '../../styles/sustentacion-fuentes.css'
+
 Astro.response.headers.set('Cache-Control', 'no-store')
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 ---
@@ -45,11 +47,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     <meta name="theme-color" content="#05070a" />
     <title>Control remoto · Sustentación</title>
     <style>
-      /* Tipografía del sistema y una pila monoespaciada para los rótulos y las
-         cifras. El diseño pedía Raleway y Noto Sans desde Google Fonts, pero la
-         CSP de este sitio sirve `font-src 'self' data:` y una fuente remota se
-         bloquearía en silencio: quedaría el fallback igualmente, con una
-         petición muerta de por medio en el arranque del celular. */
+      /* Las mismas dos fuentes del diseño, servidas desde este origen (ver
+         `src/styles/sustentacion-fuentes.css`): Raleway para rótulos y cifras,
+         Noto Sans para el cuerpo. Con la CSP en `font-src 'self' data:`, ir a
+         Google Fonts se bloquearía en silencio y quedaría el fallback. */
       :root {
         --fondo: #05070a;
         --panel: #07090d;
@@ -62,7 +63,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         --linea: #131c26;
         --linea-suave: #101821;
         --borde: #1b2836;
-        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --mono: 'Raleway', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         /* Las notas se leen a un brazo de distancia, de pie y con mala luz.
            25px no es un tamaño de cuerpo de texto, es el tamaño mínimo al que
            una nota se capta de un vistazo sin dejar de mirar al jurado. */
@@ -83,7 +84,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         -webkit-text-size-adjust: 100%;
         background: var(--fondo);
         color: var(--texto);
-        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        font-family: 'Noto Sans', system-ui, -apple-system, sans-serif;
       }
       button {
         font: inherit;

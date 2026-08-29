@@ -300,7 +300,7 @@ export const ESCENA: readonly BeatEscena[] = [
       'api-publica->lib-security',
     ],
     dato: `25 VUs · p50 ${datos.carga.curva[1].p50}ms · ${datos.carga.curva[1].errorPct}% error`,
-    titular: 'Tráfico normal, sostenido',
+    titular: '62 peticiones por segundo, sostenidas',
   },
   {
     beat: 8,
@@ -335,7 +335,7 @@ export const ESCENA: readonly BeatEscena[] = [
     encendidos: TODOS,
     destacados: ['vercel-edge', 'db-turso-main', 'db-turso-demo', 'redis-present', 'vercel-blob'],
     activas: [],
-    dato: `6 workflows de CI · ${p.migraciones} migraciones aditivas · rollback automático`,
+    dato: '6 workflows de CI · rollback automático post-deploy',
     titular: 'El pipeline decide si se queda',
   },
   {
