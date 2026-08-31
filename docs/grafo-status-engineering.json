@@ -1,0 +1,82 @@
+{
+  "nodes": [
+    { "id": "browser", "label": "Navegador del visitante", "type": "actor", "tech": "web-vitals lib + sendBeacon", "layer": "client" },
+    { "id": "cron_external", "label": "cron-job.org", "type": "external_service", "tech": "cron HTTP externo", "layer": "external" },
+    { "id": "github_actions", "label": "GitHub Actions (ci.yml)", "type": "external_service", "tech": "CI/CD", "layer": "external" },
+    { "id": "monitored_targets", "label": "Servicios monitoreados (URLs en tabla monitors)", "type": "external_service", "tech": "HTTP(S) diverso, no documentado en repo", "layer": "external" },
+    { "id": "capacitaciones", "label": "capacitaciones.codebymike.tech", "type": "external_service", "tech": "despliegue propio, dominio aparte", "layer": "external" },
+
+    { "id": "page_status", "label": "/status", "type": "page", "tech": "Astro SSR", "layer": "app" },
+    { "id": "page_engineering", "label": "/engineering", "type": "page", "tech": "Astro SSR", "layer": "app" },
+
+    { "id": "api_status_latency", "label": "GET /api/status/latency", "type": "endpoint", "tech": "Astro API route", "layer": "app" },
+    { "id": "api_engineering_live", "label": "GET /api/engineering/live", "type": "endpoint", "tech": "Astro API route", "layer": "app" },
+    { "id": "api_vitals", "label": "POST /api/vitals", "type": "endpoint", "tech": "Astro API route", "layer": "app" },
+    { "id": "api_lab_ingest", "label": "POST /api/lab/ingest", "type": "endpoint", "tech": "Astro API route + Bearer token", "layer": "app" },
+    { "id": "cron_uptime_check", "label": "GET /api/cron/uptime-check", "type": "endpoint", "tech": "Astro API route + Bearer CRON_SECRET", "layer": "app" },
+    { "id": "cron_monitor_rollup", "label": "GET /api/cron/monitor-rollup", "type": "endpoint", "tech": "Astro API route + Bearer CRON_SECRET", "layer": "app" },
+
+    { "id": "lib_slo", "label": "computeSloFromCounts()", "type": "logic", "tech": "src/lib/slo.ts", "layer": "app" },
+    { "id": "lib_monitor_rollup", "label": "aggregateChecks() / rollup diario", "type": "logic", "tech": "src/lib/monitor-rollup.ts", "layer": "app" },
+    { "id": "lib_latency", "label": "recentLatency()", "type": "logic", "tech": "src/lib/latency.ts", "layer": "app" },
+    { "id": "lib_probe", "label": "probe() / fetchSslExpiry()", "type": "logic", "tech": "src/lib/monitors.ts", "layer": "app" },
+    { "id": "lib_sondeo_vivo", "label": "sondearEnVivo() (modo respaldo)", "type": "logic", "tech": "src/lib/fallback/sondeo-vivo.ts", "layer": "app" },
+    { "id": "lib_vitals", "label": "p75/percentile/rateVital()", "type": "logic", "tech": "src/lib/vitals.ts", "layer": "app" },
+
+    { "id": "tbl_monitors", "label": "monitors", "type": "table", "tech": "Turso/libSQL", "layer": "data" },
+    { "id": "tbl_monitor_checks", "label": "monitor_checks", "type": "table", "tech": "Turso/libSQL", "layer": "data" },
+    { "id": "tbl_monitor_daily", "label": "monitor_daily", "type": "table", "tech": "Turso/libSQL", "layer": "data" },
+    { "id": "tbl_monitor_incidents", "label": "monitor_incidents", "type": "table", "tech": "Turso/libSQL", "layer": "data" },
+    { "id": "tbl_web_vitals", "label": "web_vitals", "type": "table", "tech": "Turso/libSQL", "layer": "data" },
+    { "id": "tbl_ci_runs", "label": "ci_runs", "type": "table", "tech": "Turso/libSQL", "layer": "data" }
+  ],
+  "edges": [
+    { "from": "cron_external", "to": "cron_uptime_check", "protocol": "HTTP GET + Bearer CRON_SECRET", "label": "dispara sondeo periódico" },
+    { "from": "cron_uptime_check", "to": "lib_probe", "protocol": "call", "label": "ejecuta probe() por cada monitor activo" },
+    { "from": "lib_probe", "to": "monitored_targets", "protocol": "HTTP(S) fetch", "label": "sondea url del monitor" },
+    { "from": "cron_uptime_check", "to": "tbl_monitors", "protocol": "SQL", "label": "lee activos, actualiza lastStatus/lastResponseMs/sslExpiresAt" },
+    { "from": "cron_uptime_check", "to": "tbl_monitor_checks", "protocol": "SQL INSERT", "label": "registra cada sondeo" },
+    { "from": "cron_uptime_check", "to": "tbl_monitor_incidents", "protocol": "SQL", "label": "abre/cierra incidentes" },
+
+    { "from": "cron_external", "to": "cron_monitor_rollup", "protocol": "HTTP GET + Bearer CRON_SECRET", "label": "dispara rollup diario" },
+    { "from": "cron_monitor_rollup", "to": "tbl_monitor_checks", "protocol": "SQL SELECT", "label": "lee checks del día a cerrar" },
+    { "from": "cron_monitor_rollup", "to": "lib_monitor_rollup", "protocol": "call", "label": "agrega en histograma" },
+    { "from": "cron_monitor_rollup", "to": "tbl_monitor_daily", "protocol": "SQL UPSERT", "label": "escribe resumen diario" },
+
+    { "from": "page_status", "to": "tbl_monitors", "protocol": "SQL SELECT", "label": "monitores activos" },
+    { "from": "page_status", "to": "tbl_monitor_daily", "protocol": "SQL SELECT", "label": "90 días cerrados" },
+    { "from": "page_status", "to": "tbl_monitor_checks", "protocol": "SQL SELECT", "label": "checks del día en curso" },
+    { "from": "page_status", "to": "lib_monitor_rollup", "protocol": "call", "label": "agrega el día en curso (aggregateChecks)" },
+    { "from": "page_status", "to": "lib_slo", "protocol": "call", "label": "calcula SLI/error budget/burn rate" },
+    { "from": "page_status", "to": "lib_latency", "protocol": "call", "label": "serie EKG por monitor" },
+    { "from": "lib_latency", "to": "tbl_monitor_checks", "protocol": "SQL SELECT (UNION ALL)", "label": "últimos N puntos por monitor" },
+    { "from": "page_status", "to": "tbl_monitor_incidents", "protocol": "SQL SELECT", "label": "incidentes resueltos/activos" },
+    { "from": "page_status", "to": "lib_sondeo_vivo", "protocol": "call (fallback si falla la BD)", "label": "modo respaldo" },
+    { "from": "lib_sondeo_vivo", "to": "lib_probe", "protocol": "call", "label": "sondeo en vivo, sin BD" },
+    { "from": "lib_probe", "to": "page_status", "protocol": "HTTP fetch (self)", "label": "sondea rutas propias del destino de respaldo" },
+    { "from": "lib_probe", "to": "capacitaciones", "protocol": "HTTP fetch", "label": "sondea destino externo de respaldo (Academia IA)" },
+
+    { "from": "browser", "to": "api_status_latency", "protocol": "HTTP GET (poll 30s)", "label": "refresca EKG y estado" },
+    { "from": "api_status_latency", "to": "tbl_monitors", "protocol": "SQL SELECT", "label": "estado actual" },
+    { "from": "api_status_latency", "to": "lib_latency", "protocol": "call", "label": "serie reciente" },
+
+    { "from": "browser", "to": "api_vitals", "protocol": "HTTP POST (sendBeacon)", "label": "reporta métrica RUM" },
+    { "from": "api_vitals", "to": "tbl_web_vitals", "protocol": "SQL INSERT", "label": "guarda muestra" },
+
+    { "from": "github_actions", "to": "api_lab_ingest", "protocol": "HTTP POST + Bearer LAB_INGEST_TOKEN", "label": "reporta resultado del run de CI" },
+    { "from": "api_lab_ingest", "to": "tbl_ci_runs", "protocol": "SQL INSERT", "label": "guarda run" },
+
+    { "from": "page_engineering", "to": "tbl_web_vitals", "protocol": "SQL SELECT", "label": "muestras RUM 30d" },
+    { "from": "page_engineering", "to": "lib_vitals", "protocol": "call", "label": "p50/p75/p95, distribución, tendencia" },
+    { "from": "page_engineering", "to": "tbl_ci_runs", "protocol": "SQL SELECT", "label": "últimos 20 runs" },
+    { "from": "page_engineering", "to": "tbl_monitor_checks", "protocol": "SQL SELECT (count/sum agregado)", "label": "uptime 90d + cadencia" },
+    { "from": "page_engineering", "to": "tbl_monitors", "protocol": "SQL SELECT", "label": "monitores activos, desglose por monitor" },
+    { "from": "page_engineering", "to": "tbl_monitor_incidents", "protocol": "SQL SELECT", "label": "incidentes en ventana, MTTR" },
+
+    { "from": "browser", "to": "api_engineering_live", "protocol": "HTTP GET (al abrir popover)", "label": "prueba de vida" },
+    { "from": "api_engineering_live", "to": "tbl_web_vitals", "protocol": "SQL SELECT", "label": "última muestra + conteo 24h" },
+    { "from": "api_engineering_live", "to": "tbl_monitor_checks", "protocol": "SQL SELECT", "label": "último check" },
+    { "from": "api_engineering_live", "to": "tbl_monitor_daily", "protocol": "SQL SELECT", "label": "conteo 24h (checks agregados)" },
+    { "from": "api_engineering_live", "to": "tbl_ci_runs", "protocol": "SQL SELECT", "label": "último run" }
+  ]
+}
