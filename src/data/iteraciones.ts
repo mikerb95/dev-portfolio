@@ -6,7 +6,7 @@
 // de usuario lleva su DoD (Definition of Done) inferido de lo realmente
 // desarrollado y documentado en el CHANGELOG y en las Fases 0–12 del plan.
 //
-// El "par" refleja la programación en pareja humano–IA: Mike Restrepo conduce
+// El "par" refleja la programación en pareja humano–IA: Mike Rodríguez conduce
 // las decisiones de diseño y un agente de IA (Claude / Claude Opus / GitHub
 // Copilot) actúa como navegador (ver bibliografía en /admin/iteraciones).
 // ─────────────────────────────────────────────────────────────────────────────

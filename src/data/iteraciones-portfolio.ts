@@ -14,7 +14,7 @@ import type { Par, Columna, Iteracion } from './iteraciones'
 export const REPO = 'https://github.com/mikerb95/dev-portfolio'
 
 export const PARES: Record<string, Par> = {
-  MR: { nombre: 'Mike Restrepo', rol: 'Conductor (humano)', color: '#3a2618' },
+  MR: { nombre: 'Mike Rodríguez', rol: 'Conductor (humano)', color: '#3a2618' },
   FB: { nombre: 'Claude Fable 5', rol: 'Navegador (IA)', color: '#00838f' },
   OP: { nombre: 'Claude Opus', rol: 'Navegador (IA)', color: '#5319e7' },
   SN: { nombre: 'Claude Sonnet', rol: 'Navegador (IA)', color: '#1f6feb' },
