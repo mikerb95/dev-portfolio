@@ -1,0 +1,302 @@
+---
+// Escenario alternativo: el MISMO guion que `/sustentacion`, pero proyectando
+// el bundle estático `public/final.html` en vez del canvas renderizado por
+// este repo. Existe porque ese archivo es un export autocontenido (de Claude
+// Design) que no se puede tocar sin perder la garantía de "un solo archivo,
+// cero dependencias del servidor" que lo hace útil como respaldo offline.
+//
+// LA CONSIGNA: ni una línea de `final.html` se toca. Todo el enganche pasa
+// por fuera:
+//
+//   · avance -> se simula un `keydown` de flecha sobre `iframe.contentWindow`.
+//     El bundle ya escucha `keydown` en su propio `window`
+//     (`window.addEventListener('keydown', ...)`), así que un evento
+//     sintético lo mueve exactamente igual que el teclado real.
+//   · posición -> el bundle YA dispara `sustentacion:beat` en cada avance
+//     (para publicar a través de `publicarBeat`, que aquí no hace nada porque
+//     su `SYNC_ENDPOINT` viene vacío en el export). Ese evento es la única
+//     fuente de verdad sobre en qué beat está el iframe: nunca se asume.
+//
+// EL RESTO ES EL SISTEMA QUE YA EXISTE, sin tocar ni una línea:
+//
+//   · `/sustentacion/control` (mando.ts + obedecer.ts) ya es agnóstico al
+//     canvas: solo habla con `/api/sustentacion/comando` y `/estado`. El
+//     presentador lo abre en el celular exactamente igual que para el canvas
+//     en vivo.
+//   · `lib/sustentacion/obedecer.ts` (mismo módulo puro que usa `/sustentacion`)
+//     hace el sondeo de 250 ms; aquí su `onEstado` no repinta un canvas propio,
+//     dispara los `keydown` sintéticos que reconcilian el iframe.
+//   · El teclado físico del portátil AVANZA el iframe al instante (sin esperar
+//     al servidor) y publica el resultado con `secretoDeSesion`, igual que
+//     hace `/sustentacion`: las dos vías (teclado local, celular) siguen sin
+//     depender una de la otra.
+//
+// El clic dentro del iframe queda deshabilitado (`pointer-events: none`): el
+// bundle se navega por teclado (flechas, espacio, enter, escape), que es todo
+// lo que expone `key()` en su propio código, así que no se pierde ninguna
+// interacción real.
+import { BEATS } from '../../lib/sustentacion/guion'
+import { secretoDeSesion, sesionActual, type SustentacionSession } from '../../lib/sustentacion/bus'
+import { PASE_COOKIE, verificarPase } from '../../lib/sustentacion/pase'
+import { ACCESO_COOKIE, verificarAcceso } from '../../lib/sustentacion/acceso'
+import { isAllowedLogin } from '../../lib/auth'
+import { serverEnv } from '../../lib/env'
+import { getSession } from 'auth-astro/server'
+
+// Mismo criterio que `/sustentacion`: Redis caído no tumba la página, el
+// bundle se proyecta igual y solo se pierde la reconciliación con el celular.
+let sesion: SustentacionSession | null = null
+try {
+  sesion = await sesionActual()
+} catch {
+  sesion = null
+}
+
+let autorizado = false
+try {
+  const sesionAdmin = await getSession(Astro.request)
+  const login = (sesionAdmin?.user as { login?: string } | undefined)?.login
+  autorizado = Boolean(sesionAdmin) && isAllowedLogin(login)
+} catch {
+  // Auth.js sin configurar o cookie corrupta: se sigue por el pase.
+}
+
+const claveFirma = serverEnv('PRESENT_SECRET') || serverEnv('AUTH_SECRET')
+
+if (!autorizado && sesion) {
+  autorizado = verificarPase(Astro.cookies.get(PASE_COOKIE)?.value, claveFirma, sesion.id)
+}
+if (!autorizado) {
+  autorizado = verificarAcceso(Astro.cookies.get(ACCESO_COOKIE)?.value, claveFirma)
+}
+
+const secreto = sesion && autorizado ? await secretoDeSesion(sesion.id) : null
+
+const cfg = {
+  sessionId: sesion?.id ?? null,
+  secreto,
+  beats: BEATS.map((b) => ({
+    beat: b.beat,
+    titulo: b.vista_celular.titulo,
+    dato: b.vista_celular.dato,
+  })),
+}
+
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Sustentación · bundle</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #05070a;
+      }
+      .lienzo {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        /* El bundle se navega por teclado (ver cabecera del archivo): sin
+           esto, un clic dentro le movería el estado por su cuenta y el
+           sondeo de /estado lo tiraría de vuelta un instante después. */
+        pointer-events: none;
+      }
+      .hud {
+        position: fixed;
+        left: 14px;
+        bottom: 14px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
+        letter-spacing: 0.06em;
+        color: #7dd3fc;
+        background: rgba(5, 7, 10, 0.72);
+        padding: 6px 10px;
+        border-radius: 8px;
+        pointer-events: none;
+      }
+      .hud .punto {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #445667;
+      }
+      .hud[data-conexion='en-vivo'] .punto {
+        background: #4ade80;
+      }
+      .hud[data-conexion='sondeando'] .punto {
+        background: #facc15;
+      }
+      .hud[data-conexion='sin-enlace'] .punto {
+        background: #f87171;
+      }
+      .aviso {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+        background: rgba(5, 7, 10, 0.86);
+        color: #9fc3da;
+        font: 13px/1.6 system-ui, -apple-system, sans-serif;
+      }
+      .aviso a {
+        color: #7dd3fc;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe class="lienzo" id="lienzo" src="/final.html" title="Sustentación"></iframe>
+
+    {
+      cfg.sessionId && cfg.secreto ? (
+        <div class="hud" id="hud" data-conexion="sondeando">
+          <span class="punto" />
+          <span id="hud-texto">beat inicial</span>
+        </div>
+      ) : (
+        <div class="aviso">
+          Sin sesión de sustentación activa o sin autorización para controlarla: el
+          bundle se ve igual, pero no hay reconciliación con <a href="/sustentacion/control">
+            /sustentacion/control
+          </a>. Abre <a href="/sustentacion/entrar">/sustentacion/entrar</a> para
+          habilitar el mando.
+        </div>
+      )
+    }
+
+    <script type="application/json" id="rc-cfg" set:html={JSON.stringify(cfg)} />
+    <script type="module">
+      import { obedecerComandos } from '../../lib/sustentacion/obedecer'
+
+      const cfg = JSON.parse(document.getElementById('rc-cfg').textContent)
+      const iframe = document.getElementById('lienzo')
+      const hud = document.getElementById('hud')
+      const hudTexto = document.getElementById('hud-texto')
+
+      if (cfg.sessionId && cfg.secreto) {
+        let listo = false
+        // Suposición de arranque: el bundle monta siempre en su primer beat.
+        // Se corrige solo con el primer evento real que dispare el iframe.
+        let beatActual = cfg.beats[0]?.beat ?? 1
+        // true mientras estamos aplicando un cambio que vino del servidor: el
+        // eco de ese cambio (el propio `sustentacion:beat` que dispara) no se
+        // vuelve a publicar, o el beat rebotaría entre canvas y servidor.
+        let ecoServidor = false
+
+        const disparar = (tecla) => {
+          try {
+            iframe.contentWindow.dispatchEvent(
+              new KeyboardEvent('keydown', { key: tecla, bubbles: true, cancelable: true })
+            )
+          } catch {
+            // El iframe puede no estar listo todavía o haber perdido el
+            // documento (recarga): un evento que no llega no es un fallo que
+            // valga la pena propagar, el próximo sondeo reintenta.
+          }
+        }
+
+        const avanzarHasta = (destino) => {
+          if (!listo || destino === beatActual) return
+          const tecla = destino > beatActual ? 'ArrowRight' : 'ArrowLeft'
+          const pasos = Math.abs(destino - beatActual)
+          ecoServidor = true
+          let i = 0
+          const paso = () => {
+            disparar(tecla)
+            i++
+            if (i < pasos) {
+              // Espacio para que la transición de un beat se asiente antes de
+              // pedir la siguiente; el bundle no bloquea `go()`, pero saltar
+              // beats sin pausa se ve como un salto, no como una charla.
+              setTimeout(paso, 110)
+            } else {
+              ecoServidor = false
+            }
+          }
+          paso()
+        }
+
+        const publicarLocal = (beat) => {
+          const info = cfg.beats.find((b) => b.beat === beat)
+          fetch('/api/sustentacion/beat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            keepalive: true,
+            body: JSON.stringify({
+              sessionId: cfg.sessionId,
+              secreto: cfg.secreto,
+              beat,
+              titulo: info?.titulo ?? '',
+              dato: info?.dato ?? null,
+            }),
+          }).catch(() => {})
+        }
+
+        iframe.addEventListener('load', () => {
+          listo = true
+          try {
+            iframe.contentWindow.addEventListener('sustentacion:beat', (e) => {
+              beatActual = e.detail.indice
+              hudTexto.textContent = `beat ${beatActual}`
+              if (!ecoServidor) publicarLocal(beatActual)
+            })
+          } catch {
+            // Mismo origen siempre (el iframe sirve del propio dominio), así
+            // que esto no debería fallar; si lo hace, el sondeo de /estado
+            // sigue moviendo el iframe con el teclado, solo sin publicar los
+            // avances locales.
+          }
+        })
+
+        // El teclado físico del portátil también manda: avanza el iframe al
+        // instante (no espera al servidor) y publica el resultado. El clic
+        // dentro del iframe está deshabilitado (`pointer-events: none`), así
+        // que este es el único camino de avance local.
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight') {
+            e.preventDefault()
+            const max = cfg.beats[cfg.beats.length - 1]?.beat ?? beatActual
+            avanzarHasta(Math.min(max, beatActual + 1))
+          } else if (e.key === 'ArrowLeft') {
+            e.preventDefault()
+            const min = cfg.beats[0]?.beat ?? 1
+            avanzarHasta(Math.max(min, beatActual - 1))
+          } else if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') {
+            // Cierre de citas/portada dentro del bundle: no cambian el beat,
+            // así que se reenvían tal cual sin pasar por el reconciliador.
+            e.preventDefault()
+            disparar(e.key)
+          }
+        })
+
+        obedecerComandos({
+          sessionId: cfg.sessionId,
+          onEstado: (estado) => avanzarHasta(estado.beat),
+          onConexion: (c) => {
+            hud.dataset.conexion = c
+          },
+        })
+      }
+    </script>
+  </body>
+</html>

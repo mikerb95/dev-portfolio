@@ -678,13 +678,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Páginas públicas: headers de seguridad base + caché en el edge de Vercel.
   // s-maxage solo aplica a la CDN (no al navegador); SWR sirve la copia vieja
   // mientras revalida, así el contenido editado en /admin tarda ≤5 min en verse.
+  //
+  // /status y /engineering son framable: la sustentación las enmarca en vivo
+  // igual que hace con /portal (ver isFramablePath). El resto del sitio
+  // público sigue en 'none'.
+  const publicFramable = isFramablePath(canonicalPath)
   resHeaders.set('X-Content-Type-Options', 'nosniff')
   resHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   resHeaders.set(
     'Content-Security-Policy',
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; " +
       connectSrc +
-      " frame-ancestors 'none'; base-uri 'self'; form-action 'self';" +
+      ` frame-ancestors ${publicFramable ? "'self'" : "'none'"}; base-uri 'self'; form-action 'self';` +
       CSP_REPORTING
   )
 

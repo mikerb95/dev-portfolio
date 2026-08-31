@@ -95,17 +95,26 @@ export function isPortalAuthPath(pathname: string): boolean {
  * no en la que enmarca: relajarla en /sustentacion no habría servido de nada,
  * hay que relajarla en /portal.
  *
- * Allowlist deliberadamente estrecha, solo las PÁGINAS del portal de clientes:
+ * Allowlist deliberadamente estrecha:
  *  · /admin queda fuera y conserva `frame-ancestors 'none'`.
  *  · Las APIs quedan fuera porque no se enmarcan. `frame-ancestors` solo aplica
  *    a documentos cargados en un frame; el XHR que el iframe haga contra
  *    /api/portal/* es mismo origen y no la mira.
+ *  · /status y /engineering son páginas públicas (no pasan por la rama
+ *    `isPrivate` del middleware) que también se enmarcan desde la
+ *    presentación del beat de la demo, así que necesitan la misma relajación.
  *
- * Se cubre el subárbol entero y no una lista de rutas sueltas a propósito: con
- * rutas sueltas, abrir una factura concreta (/portal/facturas/3) en mitad de la
- * sustentación dejaría el iframe en blanco delante del jurado.
+ * Se cubre el subárbol entero de /portal y no una lista de rutas sueltas a
+ * propósito: con rutas sueltas, abrir una factura concreta
+ * (/portal/facturas/3) en mitad de la sustentación dejaría el iframe en
+ * blanco delante del jurado.
  */
 export function isFramablePath(pathname: string): boolean {
   if (pathname.startsWith('/api/')) return false
-  return pathname === '/portal' || pathname.startsWith('/portal/')
+  return (
+    pathname === '/portal' ||
+    pathname.startsWith('/portal/') ||
+    pathname === '/status' ||
+    pathname === '/engineering'
+  )
 }
