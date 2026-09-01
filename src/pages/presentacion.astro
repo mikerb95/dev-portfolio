@@ -1,11 +1,23 @@
 ---
-// La PANTALLA: lo que se proyecta. `final.html` no se toca ni se edita; se
-// monta en un iframe y se mueve desde fuera simulando la misma tecla que ya
-// escucha su propio `window.addEventListener('keydown', ...)`.
+// La PANTALLA: lo que se proyecta. `final.html` no se toca ni se edita, y
+// además se REEMPLAZA entero cada vez que se itera la presentación: por eso
+// toda la lógica de navegación vive aquí y no queda ni un número suyo cableado
+// (ni cuántos beats trae, ni cuántas capas, ni sus z-index). El bundle se monta
+// en un iframe y se descubre por su forma en cada carga.
 //
 // Esta página es la ÚNICA fuente de verdad del sistema: es la que sabe en qué
-// diapositiva está el bundle y cuántas hay. El servidor solo guarda el destino
+// punto está la presentación y cuántos hay. El servidor solo guarda el destino
 // que pide el mando; aquí se cierra la diferencia y se publica el resultado.
+//
+// EL MAZO NO SON LOS BEATS. El bundle solo sabe contar beats, y su contador
+// dice "01 / 19" tanto en la cita como en la portada, y "19 / 19" en el cierre.
+// Derivar la posición de ese contador -que es lo que se hacía- colapsaba
+// cuatro diapositivas reales en dos números: al arrancar, un solo toque del
+// mando gastaba tres flechas de golpe, y el cierre era inalcanzable porque el
+// servidor acota el destino contra un total que no lo incluía. El reparto de
+// mando que arregla eso: el bundle manda en los beats (por teclas) y esta
+// página manda en las capas (por estilo). Las reglas, en
+// `src/lib/presentacion/mapa.ts`, probadas sin DOM.
 //
 // Tres detalles que costaron una depuración y que no son evidentes:
 //
@@ -18,8 +30,10 @@
 //     enganchaba el listener ya no vuelve. Cuando pasaba, la posición se
 //     quedaba congelada en 1 y la reconciliación "corregía" el servidor hacia
 //     atrás, borrando los toques recién pulsados.
-//  3. Una tecla puede consumirse SIN cambiar de diapositiva (la portada, las
-//     citas, el cierre). Por eso el corte no es el primer no-movimiento.
+//  3. El bundle arranca con sus capas de entrada abiertas y se traga una tecla
+//     por cada una antes de mover un beat. Esa deuda se paga una sola vez y en
+//     orden; después, mandarle una tecla para retirar una capa movería un beat
+//     que nadie pidió.
 Astro.response.headers.set('Cache-Control', 'no-store')
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 ---
