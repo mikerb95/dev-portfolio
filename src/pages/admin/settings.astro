@@ -4,9 +4,55 @@ import { db } from '../../db'
 import { appSettings } from '../../db/schema'
 import { CURRENCIES, BASE_CURRENCY } from '../../lib/money'
 import { ALLOWED_GITHUB_LOGINS } from '../../lib/auth'
+import { CONCEPTOS_DEFAULT, UVT_2026_CENTS } from '../../lib/cuentas-cobro'
 
 const settingsRows = await db.select().from(appSettings)
 const map = Object.fromEntries(settingsRows.map((r) => [r.key, r.value]))
+
+// Datos del emisor y parámetros tributarios de las cuentas de cobro. Viven en
+// app_settings y no en el código porque las tarifas y bases de retención
+// cambian de un año a otro (y durante 2025-2026 cambiaron dos veces con el
+// Decreto 572 de 2025): un contador tiene que poder corregirlas sin un deploy.
+// Ver docs/plan-cuentas-de-cobro.md.
+const EMISOR_FIELDS: {
+  key: string
+  label: string
+  placeholder?: string
+  // Literal y no `string`: es el atributo `type` de un <input>, que TS tipa
+  // como una unión cerrada.
+  type?: 'text' | 'tel' | 'email'
+}[] = [
+  { key: 'emisor_nombre', label: 'Nombre completo' },
+  { key: 'emisor_cedula', label: 'Cédula' },
+  { key: 'emisor_direccion', label: 'Dirección' },
+  { key: 'emisor_ciudad', label: 'Ciudad' },
+  { key: 'emisor_telefono', label: 'Teléfono', type: 'tel' },
+  { key: 'emisor_email', label: 'Email', type: 'email' },
+  { key: 'emisor_banco', label: 'Banco' },
+  { key: 'emisor_tipo_cuenta', label: 'Tipo de cuenta', placeholder: 'Ahorros / Corriente' },
+  { key: 'emisor_numero_cuenta', label: 'Número de cuenta' },
+]
+
+const valueOf = (key: string) => map[key] ?? ''
+
+// Las tarifas se teclean en porcentaje; la conversión a fracción la hace
+// parseCuentaCobroConfig al leerlas, no esta vista.
+const pctDefault = (id: string, campo: 'rateDeclarante' | 'rateNoDeclarante') =>
+  String((CONCEPTOS_DEFAULT.find((c) => c.id === id)![campo] * 100).toFixed(2).replace(/\.?0+$/, ''))
+
+const RET_FIELDS: { key: string; label: string; placeholder: string; step: string }[] = [
+  { key: 'ret_honorarios_declarante', label: 'Honorarios · declarante (%)', placeholder: pctDefault('honorarios', 'rateDeclarante'), step: '0.01' },
+  { key: 'ret_honorarios_no_declarante', label: 'Honorarios · no declarante (%)', placeholder: pctDefault('honorarios', 'rateNoDeclarante'), step: '0.01' },
+  { key: 'ret_servicios_declarante', label: 'Servicios · declarante (%)', placeholder: pctDefault('servicios', 'rateDeclarante'), step: '0.01' },
+  { key: 'ret_servicios_no_declarante', label: 'Servicios · no declarante (%)', placeholder: pctDefault('servicios', 'rateNoDeclarante'), step: '0.01' },
+  { key: 'ret_servicios_base_uvt', label: 'Servicios · base mínima (UVT)', placeholder: '2', step: '1' },
+  { key: 'ret_reteica_por_mil', label: 'ReteICA (por mil)', placeholder: 'p. ej. 9.66', step: '0.01' },
+]
+
+const esDeclarante = map['emisor_declarante'] === 'true'
+const uvtPesos = map['uvt_cents'] ? String(Number(map['uvt_cents']) / 100) : ''
+const smmlvPesos = map['smmlv_cents'] ? String(Number(map['smmlv_cents']) / 100) : ''
+const uvtDefaultPesos = String(UVT_2026_CENTS / 100)
 
 const fxCurrencies = CURRENCIES.filter((c) => c !== BASE_CURRENCY)
 const rateOf = (cur: string) => map[`fx_${cur}_per_USD`] ?? ''
@@ -80,6 +126,83 @@ const encKeyOk = !!encKey && encKey.length === 64
       </div>
     </div>
 
+    <!-- Cuentas de cobro: datos del emisor -->
+    <div class="rounded-2xl glass p-5 md:p-6">
+      <h2 class="text-base font-medium text-ink-50">Emisor de cuentas de cobro</h2>
+      <p class="text-[12px] text-ink-300 mt-1 mb-4">
+        Van impresos en cada cuenta de cobro y se <span class="text-ink-100">congelan al emitirla</span>: cambiarlos
+        aquí no reescribe un documento ya entregado. Son exactamente los datos con los que el pagador genera su
+        Documento Soporte ante la DIAN.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {EMISOR_FIELDS.map((f) => (
+          <div>
+            <label for={f.key} class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">{f.label}</label>
+            <input
+              id={f.key}
+              data-key={f.key}
+              type={f.type ?? 'text'}
+              value={valueOf(f.key)}
+              placeholder={f.placeholder ?? '-'}
+              class="cc-input input-base w-full rounded-lg px-3 py-2 text-[13px]"
+            />
+          </div>
+        ))}
+      </div>
+
+      <label class="flex items-center gap-2.5 mt-4 text-[13px] text-ink-100 cursor-pointer">
+        <input id="emisor_declarante" type="checkbox" checked={esDeclarante} />
+        Soy declarante de renta
+      </label>
+      <p class="text-[11px] text-ink-300 mt-1">
+        Cambia la tarifa de retención por honorarios (11 % declarante frente a 10 % no declarante) y la de servicios
+        (4 % frente a 6 %).
+      </p>
+    </div>
+
+    <!-- Cuentas de cobro: parámetros tributarios -->
+    <div class="rounded-2xl glass p-5 md:p-6">
+      <h2 class="text-base font-medium text-ink-50">Retenciones y UVT</h2>
+      <p class="text-[12px] text-ink-300 mt-1 mb-4">
+        Parametrizado y no incrustado en el código a propósito: las bases mínimas de retención se movieron durante
+        2025-2026 con el Decreto 572 de 2025 y sus modificaciones. Un valor vacío usa el que se muestra como marcador.
+        <span class="text-ink-100">Valídalos con tu contador antes de emitir la primera cuenta real.</span>
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label for="uvt_pesos" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">UVT del año (pesos)</label>
+          <input id="uvt_pesos" type="number" step="1" min="0" value={uvtPesos} placeholder={uvtDefaultPesos} class="input-base w-full rounded-lg px-3 py-2 text-[13px] font-mono" />
+        </div>
+        <div>
+          <label for="smmlv_pesos" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">SMMLV (pesos)</label>
+          <input id="smmlv_pesos" type="number" step="1" min="0" value={smmlvPesos} placeholder="para el piso del IBC" class="input-base w-full rounded-lg px-3 py-2 text-[13px] font-mono" />
+        </div>
+        {RET_FIELDS.map((f) => (
+          <div>
+            <label for={f.key} class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">{f.label}</label>
+            <input
+              id={f.key}
+              data-key={f.key}
+              type="number"
+              step={f.step}
+              min="0"
+              value={valueOf(f.key)}
+              placeholder={f.placeholder}
+              class="cc-input input-base w-full rounded-lg px-3 py-2 text-[13px] font-mono"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div class="flex items-center gap-3 mt-4">
+        <button id="save-cc" class="h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors">
+          Guardar emisor y retenciones
+        </button>
+        <span id="cc-status" class="text-[12px] font-mono text-lime hidden">✓ Guardado</span>
+      </div>
+    </div>
+
     <!-- Info -->
     <div class="rounded-2xl glass p-5 md:p-6">
       <h2 class="text-base font-medium text-ink-50 mb-2">Moneda base</h2>
@@ -106,6 +229,40 @@ const encKeyOk = !!encKey && encKey.length === 64
       setTimeout(() => status.classList.add('hidden'), 2500)
     } else {
       alert('Error al guardar las tasas.')
+    }
+  })
+
+  document.getElementById('save-cc')?.addEventListener('click', async () => {
+    const settings: Record<string, string | null> = {}
+    document.querySelectorAll<HTMLInputElement>('.cc-input').forEach((el) => {
+      const key = el.dataset.key
+      if (key) settings[key] = el.value.trim() || null
+    })
+
+    // La UVT y el SMMLV se teclean en pesos y se guardan en centavos, que es la
+    // unidad en la que trabaja todo el módulo. La conversión pasa aquí, una vez.
+    const aCentavos = (id: string) => {
+      const raw = (document.getElementById(id) as HTMLInputElement | null)?.value.trim()
+      const n = raw ? Number(raw) : NaN
+      return Number.isFinite(n) && n > 0 ? String(Math.round(n * 100)) : null
+    }
+    settings['uvt_cents'] = aCentavos('uvt_pesos')
+    settings['smmlv_cents'] = aCentavos('smmlv_pesos')
+    settings['emisor_declarante'] = (document.getElementById('emisor_declarante') as HTMLInputElement).checked
+      ? 'true'
+      : 'false'
+
+    const res = await fetch('/api/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings }),
+    })
+    const status = document.getElementById('cc-status')!
+    if (res.ok) {
+      status.classList.remove('hidden')
+      setTimeout(() => status.classList.add('hidden'), 2500)
+    } else {
+      alert('Error al guardar los datos del emisor.')
     }
   })
 </script>

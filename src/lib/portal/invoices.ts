@@ -67,6 +67,24 @@ export function computeTotals(items: ItemInput[], taxRate = 0): Totals {
 // ── Numeración ──────────────────────────────────────────────────────────────
 
 /**
+ * ¿El fallo es la colisión del UNIQUE de `number`?
+ *
+ * Hay que recorrer la cadena de causas: drizzle envuelve el error del driver y
+ * su `message` es solo "Failed query: insert into …". El texto del constraint
+ * vive en `cause` (LibsqlError, `SQLITE_CONSTRAINT`), así que comprobar el
+ * mensaje de arriba no detecta nada y el reintento no llega a dispararse.
+ */
+export function esConflictoUnique(e: unknown): boolean {
+  for (let cur: unknown = e, depth = 0; cur && depth < 5; depth++) {
+    const err = cur as { message?: unknown; code?: unknown; cause?: unknown }
+    const texto = `${String(err.message ?? '')} ${String(err.code ?? '')}`
+    if (/unique|constraint/i.test(texto)) return true
+    cur = err.cause
+  }
+  return false
+}
+
+/**
  * Siguiente correlativo del año: INV-2026-001.
  *
  * Se calcula del máximo existente, no de un contador aparte, para que no pueda
@@ -246,7 +264,7 @@ export async function createInvoice(input: SaveInvoiceInput, now = new Date()): 
       }
       return invoice
     } catch (e) {
-      if (attempt === 4 || !/unique|constraint/i.test(String(e))) throw e
+      if (attempt === 4 || !esConflictoUnique(e)) throw e
     }
   }
   throw new Error('no se pudo asignar número de factura')

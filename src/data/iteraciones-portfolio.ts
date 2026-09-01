@@ -1759,6 +1759,55 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-cuentas-de-cobro',
+    fase: 'Fase 42 · El documento que el cliente sí acepta',
+    nombre: 'Cuentas de cobro de persona natural no responsable de IVA',
+    rango: '1 sep 2026',
+    ghSince: '2026-09-01',
+    ghUntil: '2026-09-01',
+    commits: 5,
+    resumen:
+      'Emisión de cuentas de cobro desde /admin bajo el marco normativo colombiano. La investigación previa cambió el diseño entero: el documento con peso fiscal no es la cuenta de cobro, es el Documento Soporte que genera el PAGADOR (Res. DIAN 000167 de 2021), así que lo que decide qué campos son obligatorios no es el gusto del formulario sino lo que él necesita para armarlo. No hay tabla nueva: `invoices` se discrimina por doc_type, con el mismo precedente que payments.source, y el portal filtra por tipo para que un documento con datos personales del emisor nunca aparezca en la sesión de un cliente.',
+    historias: [
+      {
+        id: 'PF-CC-01', titulo: 'Como emisor, quiero una cuenta de cobro que contabilidad no me devuelva',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['finanzas', 'normativa', 'pdf', 'fase-42'],
+        dod: [
+          ok('src/lib/cuentas-cobro.ts es puro e isomorfo (sin ../db ni node:crypto): el formulario lo importa también en el navegador para previsualizar el neto mientras se teclea, igual que cobros.ts en /cobrar. 71 tests sin base de datos.'),
+          ok('numeroALetras con tabla de casos por las irregularidades reales del español: 21 es veintiuno pero 21.000 es veintiún mil, 100 es cien y 101 ciento uno, 500 quinientos, 700 setecientos, 900 novecientos. Como el número siempre va seguido de "pesos", la apócope se aplica siempre y eso simplifica la función entera.'),
+          ok('validateCuentaCobro exige cédula, dirección y datos bancarios del emisor, NIT del deudor, concepto detallado y ciudad. No es burocracia del formulario: son los campos del Documento Soporte del pagador. Los faltantes se muestran TODOS a la vez, en la página y en el 422 de la API, para no caer en el ciclo de arreglar uno y descubrir el siguiente.'),
+          ok('El PDF se dibuja con pdf-lib y no HTML→PDF (no hay Chromium en la función serverless). Todo texto pasa por un saneador WinAnsi: las fuentes estándar LANZAN en runtime con un emoji pegado desde WhatsApp o unas comillas tipográficas, y ese fallo no aparece en compilación. Cubierto con descripciones sucias a propósito.'),
+          ok('Vetada en modo demo por patrón en lib/demo.ts: el PDF imprime cédula, dirección y número de cuenta, y es un GET, así que "la demo es solo lectura" no lo habría detenido. Mismo hallazgo que en su día cambió el diseño de la demo con los reveladores de la bóveda.'),
+        ],
+      },
+      {
+        id: 'PF-CC-02', titulo: 'Como emisor, quiero que reimprimir un documento viejo no lo actualice con mis datos de hoy',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['finanzas', 'integridad', 'fase-42'],
+        dod: [
+          ok('Al emitir se congelan emisor, deudor y retenciones en la propia fila (issuer_snapshot, payer_snapshot, retentions). A partir de ahí el PDF no vuelve a leer app_settings ni clients: cambiar de banco en marzo no reescribe lo entregado en enero. Es el bug más silencioso del módulo y tiene test propio.'),
+          ok('Serie CC-AAAA-NNN independiente de la INV- de las facturas, con UNIQUE en base y reintento. Bug encontrado al probar la carrera: el detector de colisiones comparaba String(e), pero drizzle envuelve el error del driver y su message es solo "Failed query: insert into…"; el texto del constraint vive en la cadena de causas, así que el reintento no se disparaba nunca. esConflictoUnique recorre esa cadena, y la misma corrección arregla de paso la numeración de las facturas del portal, que arrastraba el mismo defecto.'),
+          ok('Una cuenta emitida, pagada o anulada no acepta cambios: corregirla se hace anulando y emitiendo otra, no con un UPDATE. Verificado con libSQL en archivo temporal, nunca :memory:.'),
+          ok('Las tarifas se recalculan en el momento de emitir y no se confía en lo guardado en el borrador: entre la última edición y la emisión pudo cambiar una tarifa en Ajustes.'),
+        ],
+      },
+      {
+        id: 'PF-CC-03', titulo: 'Como emisor, quiero saber antes que mi contador cuándo dejo de poder usar este documento',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['finanzas', 'cumplimiento', 'fase-42'],
+        dod: [
+          ok('Semáforo de las 3.500 UVT del art. 437 par. 3 ET en /admin/cuentas-cobro: aviso al 70 %, alerta al 90 % y advertencia explícita al superarlo, momento en que se pasa a facturación electrónica obligatoria y este documento deja de ser el soporte correcto.'),
+          ok('Cuenta lo emitido y no lo cobrado (el tope mira ingresos del año); borradores y anuladas quedan fuera por no ser documentos vivos.'),
+          ok('Bug encontrado al probarlo: la comparación de fechas iba en una plantilla sql cruda, donde drizzle no conoce la conversión de la columna timestamp y ataba el Date con otra unidad. Devolvía cero en silencio, que es justo el modo de fallo peligroso en un semáforo de cumplimiento. Corregido con gte/lt sobre la columna.'),
+          ok('Tarifas, bases en UVT, UVT y SMMLV en app_settings y no en el código: durante 2025-2026 se movieron dos veces con el Decreto 572 de 2025 y las fuentes públicas aún se contradicen entre 2 y 4 UVT para servicios.'),
+          pend('Validación de la parametrización con un contador antes de emitir la primera cuenta de cobro real.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
@@ -1767,4 +1816,5 @@ export const COMMITS_POR_MES = [
   { mes: 'jun', commits: 104 },
   { mes: 'jul', commits: 1631 },
   { mes: 'ago', commits: 462 },
+  { mes: 'sep', commits: 5 },
 ]

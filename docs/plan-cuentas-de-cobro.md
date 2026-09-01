@@ -5,7 +5,8 @@ natural no responsable de IVA) desde `/admin`. Documento distinto de la
 factura del portal (`invoices`, serie `INV-`), aunque comparte casi toda la
 fontanería.
 
-Estado: **planeado** (1 sep 2026). Sin fases entregadas todavía.
+Estado: **implementado** (1 sep 2026). Fases 0-3 y 5 entregadas; la Fase 4
+(envío por email/WhatsApp) queda fuera por ahora, ver §7.
 
 ---
 
@@ -298,35 +299,61 @@ Todo evento de emisión y anulación se registra con `recordSecurityEvent`
 
 ## 4. Fases
 
-**Fase 0 - Parametrización.** Migración `0030`, claves de `app_settings`,
-sección de emisor y retenciones en `/admin/settings`. Sin UI de cuentas todavía.
-Entregable verificable: guardar los datos del emisor y leerlos de vuelta.
+**Fase 0 - Parametrización.** ✅ Migración `0030` (14 `ALTER TABLE ADD` y un
+índice, sin un solo `INSERT...SELECT`), claves de `app_settings`, y dos secciones
+nuevas en `/admin/settings`: datos del emisor, y tarifas de retención con UVT y
+SMMLV. La UVT y el SMMLV se teclean en pesos y se guardan en centavos; la
+conversión pasa una sola vez, en el borde.
 
-**Fase 1 - Lógica pura y tests.** `src/lib/cuentas-cobro.ts` completo:
-`numeroALetras`, retenciones, totales, IBC, validación. Tests primero, sin BD.
-Esta fase se puede cerrar sin que exista una sola página.
+**Fase 1 - Lógica pura y tests.** ✅ `src/lib/cuentas-cobro.ts`, 71 tests sin
+base de datos. Se cerró antes de que existiera una sola página.
 
-**Fase 2 - CRUD y emisión.** Listado, detalle, endpoints, numeración `CC-`,
-snapshots al emitir, inmutabilidad. Tests de integración con libSQL en archivo
-temporal para la numeración concurrente y el UNIQUE.
+**Fase 2 - CRUD y emisión.** ✅ `src/lib/cuentas-cobro-db.ts`, endpoints,
+listado y detalle. 23 tests de integración con libSQL en archivo temporal.
 
-**Fase 3 - PDF y semáforo de tope.** `cuenta-cobro-pdf.ts`, descarga,
-caché en Blob, y el aviso de 3.500 UVT en el listado.
+**Fase 3 - PDF y semáforo de tope.** ✅ `src/lib/cuenta-cobro-pdf.ts` y el
+semáforo de 3.500 UVT en el listado. 11 tests de PDF. Sin caché en Blob: el
+documento se genera bajo demanda (unos milisegundos con pdf-lib) y cachearlo
+obligaría a invalidar el blob en cada corrección del borrador, que es más
+maquinaria de la que ahorra.
 
-**Fase 4 - Envío y ciclo de cobro.** Envío por email (`lib/notify.ts`, no-op
-silencioso si falta la env var) o WhatsApp reutilizando la plantilla de
-`cobros.ts`; vínculo opcional con un pago de `/cobrar` para cerrar el círculo
-cobro→pago sin una máquina de estados nueva.
+**Fase 4 - Envío y ciclo de cobro.** ⏸️ Fuera de alcance por ahora. El PDF se
+descarga y se manda a mano; automatizar el envío antes de saber cómo lo pide
+cada cliente es construir sobre una suposición. Ver §7.
 
-**Fase 5 - Documentación.** `src/data/documentacion.ts`: **RF-308** (emisión de
-cuentas de cobro), **RF-309** (cálculo de retenciones parametrizable), **RF-310**
-(semáforo de tope de responsabilidad de IVA), en el módulo Finanzas. Entrada de
-iteración en `src/data/iteraciones-portfolio.ts`. Artículo en
-`src/content/notes/` si el módulo lo merece: el ángulo interesante no es el
-CRUD, es *por qué el documento con validez fiscal es el del pagador y no el mío*,
-y cómo eso decide qué campos son obligatorios.
+**Fase 5 - Documentación.** ✅ **RF-308** (emisión), **RF-309** (retenciones
+parametrizables) y **RF-310** (semáforo de tope) en el módulo Finanzas de
+`src/data/documentacion.ts`; iteración `pf-cuentas-de-cobro` (Fase 42) en
+`src/data/iteraciones-portfolio.ts`.
 
----
+## 4 bis. Lo que cambió al implementar
+
+Tres cosas que el plan no anticipaba y que salieron al escribir los tests:
+
+1. **El reintento de numeración no funcionaba, ni aquí ni en las facturas del
+   portal.** El detector de colisiones comparaba `String(e)` buscando "unique",
+   pero drizzle envuelve el error del driver y su `message` es solo
+   `Failed query: insert into …`. El texto del constraint vive en la cadena de
+   `cause` (`LibsqlError`, `SQLITE_CONSTRAINT`). El test de carrera lo destapó.
+   `esConflictoUnique` (en `lib/portal/invoices.ts`, donde nació el patrón)
+   recorre esa cadena, y la corrección arregla de paso `createInvoice`, que
+   arrastraba el mismo defecto desde el principio.
+
+2. **El semáforo de tope devolvía cero en silencio.** La comparación de fechas
+   iba en una plantilla `sql` cruda; ahí drizzle no conoce la conversión de una
+   columna `timestamp` (segundos) y ata el `Date` con otra unidad. No lanza:
+   simplemente no encuentra filas. En un semáforo de cumplimiento, "cero" es
+   exactamente la respuesta tranquilizadora y equivocada. Corregido con
+   `gte`/`lt` sobre la columna.
+
+3. **El extractor del NIT borraba las tildes en vez de plegarlas.** `billing_info`
+   es un JSON sin esquema que he ido llenando a mano, así que las claves se
+   normalizan antes de comparar; con `[^a-z]` a secas, `Dirección` se convertía
+   en `direccin` y no casaba con nada. Ahora se normaliza en NFD y se quitan los
+   diacríticos.
+
+Y una decisión que el plan dejaba abierta y se resolvió sola: **no hace falta
+caché del PDF en Blob** (ver Fase 3).
 
 ## 5. Tests
 
@@ -344,15 +371,29 @@ y cómo eso decide qué campos son obligatorios.
 
 ---
 
-## 6. Decisiones pendientes
+## 6. Decisiones que se tomaron
 
-1. **¿Declarante o no declarante?** Cambia la tarifa de 11 % a 10 %. Va en
-   `app_settings` (`emisor_declarante`), no en el código.
-2. **ReteICA**: depende del municipio y de la actividad. Se deja como un
-   concepto de retención más, configurable, apagado por defecto.
-3. **Firma**: imagen escaneada subida a Blob, o solo el nombre escrito. La
-   imagen es lo que espera el área de pagos; empezar por el nombre y añadir la
-   imagen en Fase 3 si estorba.
-4. **Validación contable**: la parametrización de Fase 0 la revisa un contador
-   antes de la primera emisión real. El módulo puede construirse completo antes
-   de eso; lo que no puede es emitirse a un cliente sin esa revisión.
+1. **Declarante o no declarante**: en `app_settings` (`emisor_declarante`), no en
+   el código. Cambia honorarios de 11 % a 10 % y servicios de 4 % a 6 %.
+2. **ReteICA**: un concepto de retención más, configurable en por mil y **apagado
+   por defecto**. Sin tarifa configurada no se practica nada, en vez de inventar
+   un número que depende del municipio y de la actividad.
+3. **Firma**: por ahora el nombre impreso sobre la línea, más la cédula. La
+   columna `signature_url` existe en el schema para la imagen escaneada, sin usar
+   todavía: se añade el día que un pagador la exija, no antes.
+4. **Caché del PDF**: descartada (Fase 3).
+
+## 7. Pendiente
+
+- **Validación contable de la parametrización.** Lo único que bloquea el uso
+  real. El módulo está completo y probado, pero las tarifas, las bases en UVT y
+  el valor de la UVT los tiene que confirmar un contador antes de emitir la
+  primera cuenta de cobro a un cliente. Es la razón por la que todo eso es
+  configuración y no código.
+- **Datos del emisor en producción.** `/admin/settings` está vacío hasta que se
+  llenen: el panel avisa arriba del listado y bloquea el botón de emitir.
+- **Fase 4 (envío).** Reutilizaría `lib/notify.ts` o la plantilla de WhatsApp de
+  `cobros.ts` y el vínculo opcional con un pago de `/cobrar`.
+- **Artículo en `/notes`.** El ángulo interesante no es el CRUD: es *por qué el
+  documento con validez fiscal es el del pagador y no el mío*, y cómo esa
+  inversión decide qué campos son obligatorios.

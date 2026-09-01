@@ -77,6 +77,11 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   // teléfonos de clientes). La demo enseña el panel, no mi caja registradora.
   /^\/cobrar/,
   /^\/api\/admin\/cobros/,
+  // Cuentas de cobro: el documento lleva mi cédula, mi dirección y mi número de
+  // cuenta bancaria, y el PDF que los imprime es un GET. El aislamiento por base
+  // de datos tampoco basta aquí: los datos del emisor salen de `app_settings`,
+  // que la base de demo también tiene, y "solo lectura" no detiene una descarga.
+  /^\/(api\/)?admin\/cuentas-cobro/,
   // Sustentación: el alta de sesión entrega el PIN de PRESENTADOR y el secreto
   // de publicación, y son credenciales VIVAS. El aislamiento de la demo va por
   // base de datos (otra Turso), pero la sesión de sustentación no vive en

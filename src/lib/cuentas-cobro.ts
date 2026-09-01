@@ -170,7 +170,7 @@ export function computeRetentions(
 ): Retencion[] {
   const base = Number.isFinite(baseCents) && baseCents > 0 ? Math.round(baseCents) : 0
 
-  return seleccion.flatMap((id) => {
+  return seleccion.flatMap((id): Retencion[] => {
     const def = cfg.conceptos.find((c) => c.id === id)
     if (!def) return []
 

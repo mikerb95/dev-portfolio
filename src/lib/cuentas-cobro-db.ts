@@ -3,9 +3,12 @@
 // importa también desde el navegador. Misma separación que cobros.ts /
 // cobros-db.ts. Ver docs/plan-cuentas-de-cobro.md.
 
-import { and, desc, eq, like, ne, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, like, lt, ne, sql } from 'drizzle-orm'
 import { db } from '../db'
 import { appSettings, clients, invoiceItems, invoices, projects } from '../db/schema'
+// El reintento de numeración es el mismo mecanismo que el de las facturas del
+// portal, así que comparte también su detector de colisiones del UNIQUE.
+import { esConflictoUnique } from './portal/invoices'
 import {
   computeCuentaCobro,
   itemTotal,
@@ -139,7 +142,7 @@ export async function createCuentaCobro(input: SaveCuentaCobroInput, now = new D
       if (input.items.length) await db.insert(invoiceItems).values(lineasDe(cuenta.id, input.items))
       return cuenta
     } catch (e) {
-      if (attempt === 4 || !/unique|constraint/i.test(String(e))) throw e
+      if (attempt === 4 || !esConflictoUnique(e)) throw e
     }
   }
   throw new Error('no se pudo asignar número de cuenta de cobro')
@@ -349,14 +352,12 @@ export async function topeIvaDelAnio(year = new Date().getFullYear()): Promise<T
   const [row] = await db
     .select({ total: sql<number | null>`sum(${invoices.totalCents})` })
     .from(invoices)
-    .where(
-      and(
-        esCuenta,
-        ne(invoices.status, 'draft'),
-        ne(invoices.status, 'void'),
-        sql`${invoices.issuedAt} >= ${desde} and ${invoices.issuedAt} < ${hasta}`
-      )
-    )
+    // gte/lt y no un `sql` crudo con las fechas interpoladas: la columna es
+    // `timestamp` (segundos), y en una plantilla cruda drizzle no conoce esa
+    // conversión, así que ata el Date con otra unidad y la comparación no
+    // encuentra nada. Falla en silencio devolviendo cero, que es justo el modo
+    // de fallo peligroso en un semáforo de cumplimiento.
+    .where(and(esCuenta, ne(invoices.status, 'draft'), ne(invoices.status, 'void'), gte(invoices.issuedAt, desde), lt(invoices.issuedAt, hasta)))
 
   const { config } = await loadEmisorYConfig()
   return topeIva(Number(row?.total ?? 0), config)
