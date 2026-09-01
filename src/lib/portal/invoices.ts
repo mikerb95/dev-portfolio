@@ -32,6 +32,12 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
 const IMMUTABLE: ReadonlySet<InvoiceStatus> = new Set(['paid', 'void'])
 export const isImmutable = (s: InvoiceStatus): boolean => IMMUTABLE.has(s)
 
+// `invoices` guarda DOS documentos (ver schema.ts): la factura del portal y la
+// cuenta de cobro. Todo lo que mira el cliente, y todo lo que agrega el panel de
+// facturas, filtra por tipo. Sin este predicado, emitir una cuenta de cobro
+// haría aparecer un documento con mis datos personales en el portal del cliente.
+const esFactura = eq(invoices.docType, 'factura')
+
 /** ¿El cliente puede pagar esta factura ahora mismo? */
 export const isPayable = (s: InvoiceStatus): boolean => s === 'sent' || s === 'overdue'
 
@@ -102,7 +108,7 @@ export async function clientInvoiceSummary(clientId: number, now = new Date()): 
     .select({ status: invoices.status, totalCents: invoices.totalCents, currency: invoices.currency, paidAt: invoices.paidAt })
     .from(invoices)
     // Los borradores NO existen para el cliente: son míos hasta que los emito.
-    .where(and(eq(invoices.clientId, clientId), ne(invoices.status, 'draft')))
+    .where(and(esFactura, eq(invoices.clientId, clientId), ne(invoices.status, 'draft')))
 
   const pending = rows.filter((r) => r.status === 'sent' || r.status === 'overdue')
   const paidThisYear = rows.filter((r) => r.status === 'paid' && r.paidAt && r.paidAt.getFullYear() === now.getFullYear())
@@ -137,7 +143,7 @@ export async function clientInvoices(clientId: number) {
     })
     .from(invoices)
     .leftJoin(projects, eq(invoices.projectId, projects.id))
-    .where(and(eq(invoices.clientId, clientId), ne(invoices.status, 'draft')))
+    .where(and(esFactura, eq(invoices.clientId, clientId), ne(invoices.status, 'draft')))
     .orderBy(desc(invoices.issuedAt), desc(invoices.id))
 }
 
@@ -174,7 +180,7 @@ export async function clientInvoice(clientId: number, invoiceId: number) {
     .from(invoices)
     .innerJoin(clients, eq(invoices.clientId, clients.id))
     .leftJoin(projects, eq(invoices.projectId, projects.id))
-    .where(and(eq(invoices.id, invoiceId), eq(invoices.clientId, clientId), ne(invoices.status, 'draft')))
+    .where(and(esFactura, eq(invoices.id, invoiceId), eq(invoices.clientId, clientId), ne(invoices.status, 'draft')))
     .limit(1)
 
   if (!invoice) return null
@@ -215,6 +221,7 @@ export async function createInvoice(input: SaveInvoiceInput, now = new Date()): 
           clientId: input.clientId,
           projectId: input.projectId ?? null,
           number: await nextInvoiceNumber(now),
+          docType: 'factura',
           status: 'draft',
           currency: input.currency ?? 'COP',
           ...totals,
@@ -247,7 +254,7 @@ export async function createInvoice(input: SaveInvoiceInput, now = new Date()): 
 
 /** Reemplaza líneas y totales de un borrador. */
 export async function updateInvoiceItems(invoiceId: number, items: ItemInput[], taxRate = 0, now = new Date()): Promise<void> {
-  const [invoice] = await db.select().from(invoices).where(eq(invoices.id, invoiceId)).limit(1)
+  const [invoice] = await db.select().from(invoices).where(and(esFactura, eq(invoices.id, invoiceId))).limit(1)
   if (!invoice) throw new Error('factura no encontrada')
   if (isImmutable(invoice.status as InvoiceStatus)) throw new Error('una factura pagada o anulada no se puede modificar')
 
@@ -275,7 +282,7 @@ export async function issueInvoice(invoiceId: number, now = new Date()): Promise
   const [invoice] = await db
     .update(invoices)
     .set({ status: 'sent', issuedAt: now, updatedAt: now })
-    .where(and(eq(invoices.id, invoiceId), eq(invoices.status, 'draft')))
+    .where(and(esFactura, eq(invoices.id, invoiceId), eq(invoices.status, 'draft')))
     .returning()
   return invoice ?? null
 }
@@ -285,7 +292,7 @@ export async function voidInvoice(invoiceId: number, now = new Date()): Promise<
   const res = await db
     .update(invoices)
     .set({ status: 'void', updatedAt: now })
-    .where(and(eq(invoices.id, invoiceId), ne(invoices.status, 'paid')))
+    .where(and(esFactura, eq(invoices.id, invoiceId), ne(invoices.status, 'paid')))
   return res.rowsAffected > 0
 }
 
@@ -314,7 +321,7 @@ export async function sweepOverdue(now = new Date()): Promise<Invoice[]> {
   return db
     .update(invoices)
     .set({ status: 'overdue', updatedAt: now })
-    .where(and(eq(invoices.status, 'sent'), sql`${invoices.dueAt} is not null`, sql`${invoices.dueAt} < ${now}`))
+    .where(and(esFactura, eq(invoices.status, 'sent'), sql`${invoices.dueAt} is not null`, sql`${invoices.dueAt} < ${now}`))
     .returning()
 }
 
@@ -340,10 +347,15 @@ export async function allInvoices() {
     .innerJoin(clients, eq(invoices.clientId, clients.id))
     .leftJoin(projects, eq(invoices.projectId, projects.id))
     .leftJoin(payments, eq(invoices.paymentId, payments.id))
+    .where(esFactura)
     .orderBy(desc(invoices.createdAt))
 }
 
 export async function invoiceCountByStatus(): Promise<Record<string, number>> {
-  const rows = await db.select({ status: invoices.status, n: count() }).from(invoices).groupBy(invoices.status)
+  const rows = await db
+    .select({ status: invoices.status, n: count() })
+    .from(invoices)
+    .where(esFactura)
+    .groupBy(invoices.status)
   return Object.fromEntries(rows.map((r) => [r.status, r.n]))
 }
