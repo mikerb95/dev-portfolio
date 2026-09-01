@@ -1767,7 +1767,7 @@ export const ITERACIONES: Iteracion[] = [
     rango: '1 sep 2026',
     ghSince: '2026-09-01',
     ghUntil: '2026-09-01',
-    commits: 5,
+    commits: 7,
     resumen:
       'Emisión de cuentas de cobro desde /admin bajo el marco normativo colombiano. La investigación previa cambió el diseño entero: el documento con peso fiscal no es la cuenta de cobro, es el Documento Soporte que genera el PAGADOR (Res. DIAN 000167 de 2021), así que lo que decide qué campos son obligatorios no es el gusto del formulario sino lo que él necesita para armarlo. No hay tabla nueva: `invoices` se discrimina por doc_type, con el mismo precedente que payments.source, y el portal filtra por tipo para que un documento con datos personales del emisor nunca aparezca en la sesión de un cliente.',
     historias: [
@@ -1808,6 +1808,102 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-automatizaciones',
+    fase: 'Fase 43 · Lo que corre solo, y la prueba de que corrió',
+    nombre: 'Catálogo público de automatizaciones y bitácora de crons',
+    rango: '1 sep 2026',
+    ghSince: '2026-09-01',
+    ghUntil: '2026-09-01',
+    commits: 9,
+    resumen:
+      'El sistema hacía diez cosas solo (seis workflows, nueve tareas programadas y media docena de automatismos disparados por el propio tráfico) y ninguna de las tres categorías estaba publicada ni verificable desde fuera. La página /automatizaciones las reúne y las cruza con su estado real. Detrás va lo que faltaba de verdad: una tabla que anota cada ejecución de cron, porque hasta ahora una tarea programada solo dejaba su efecto, nunca su ejecución, y un cron que deja de dispararse no produce un error, produce silencio.',
+    historias: [
+      {
+        id: 'PF-AU-01', titulo: 'Como visitante, quiero ver qué corre solo en este sistema y si su última corrida salió bien',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['observabilidad', 'opsec', 'fase-43'],
+        dod: [
+          ok('El catálogo entero vive en src/data/automatizaciones.ts: la página no escribe a mano ni un horario ni un nombre de workflow (RNF-14). Tipado, así que astro check rompe si una entrada queda incompleta.'),
+          ok('Una sola petición a la API de GitHub (40 corridas de main) reducida en memoria a la última de cada workflow. Pedir el último run workflow por workflow serían seis peticiones contra la cuota anónima de 60/hora, y esta página la puede abrir cualquiera.'),
+          ok('Fail-open por separado en las dos fuentes vivas: si GitHub agota cuota o la base no contesta, la sección se pinta con lo que hay y lo dice. Una página de observabilidad que devuelve 500 cuando lo observado falla es inútil justo cuando más se la mira.'),
+          ok('Mismo criterio OPSEC de /status y /security: se describe qué hace cada automatismo y qué se pierde si deja de correr, nunca umbrales de bloqueo, rutas señuelo ni nombres de reglas de detección.'),
+          ok('automatizaciones entra en RESERVED_ROOT_SEGMENTS: es una ruta de un segmento en la raíz y competía con el espacio de los PIN de presentación. Lo cazó el test del repo, no una revisión.'),
+          pend('Alta en el sitemap y cascarón en /en. La página ya está enlazada en el pie y su texto sale del diccionario, pero mientras no esté en TRANSLATED_ROUTES no debe anunciarse en inglés.'),
+        ],
+      },
+      {
+        id: 'PF-AU-02', titulo: 'Como operador, quiero enterarme de que un cron dejó de dispararse sin esperar a echar en falta su efecto',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['observabilidad', 'crons', 'fase-43'],
+        dod: [
+          ok('Tabla cron_runs (job, ok, duration_ms, detail, created_at) y conRegistro() envolviendo los nueve handlers de /api/cron/*. El precedente que lo justifica es real: los sondeos de monitores se cortaron tres semanas de 2026 y el hueco apareció mirando el historial, no por una alerta.'),
+          ok('Fail-open: si el insert falla (base caída, cuota agotada) el cron devuelve lo que iba a devolver. Un registro que puede tumbar la tarea que observa es peor que no tener registro.'),
+          ok('Se awaita, al contrario que recordSecurityEvent: aquí no hay un usuario esperando la respuesta y la función serverless puede morir después del return, así que el fire-and-forget perdería justo las filas de los crons que peor terminan.'),
+          ok('Los 401/403 NO se registran. /api/cron/* es público y recibe escaneo constante: anotar los rechazos llenaría la tabla de ruido y enterraría lo único que se quiere ver, que es el calendario real.'),
+          ok('El detalle se recorta a 300 caracteres y nunca lleva cuerpos de respuesta ni secretos: esa tabla la lee una página pública. Índice por created_at, porque Turso factura filas escaneadas y no devueltas (RNF-25).'),
+        ],
+      },
+      {
+        id: 'PF-AU-03', titulo: 'Como desarrollador, quiero que la puerta de los crons se pruebe una vez y valga para los nueve',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['seguridad', 'refactor', 'fase-43'],
+        dod: [
+          ok('cronSecretOk en src/lib/cron-auth.ts sustituye la comprobación copiada en cada handler: timingSafeEqual sobre longitudes iguales, y rechazo si no hay secreto en el entorno.'),
+          ok('tests/crons.test.ts cubre ahora las dos capas: que toda ruta declarada en vercel.json existe, exporta GET y comprueba el secreto (RNF-28), y los seis casos de la propia función, incluido el header de cualquier longitud, que es donde timingSafeEqual lanzaría.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-mando-presentacion',
+    fase: 'Fase 44 · Un mando que no miente',
+    nombre: 'Control del mazo proyectado desde el celular',
+    rango: '1 sep 2026',
+    ghSince: '2026-09-01',
+    ghUntil: '2026-09-01',
+    commits: 11,
+    resumen:
+      'La presentación de la sustentación es un bundle exportado que se reemplaza entero en cada iteración, así que nada suyo puede estar cableado en el código que lo gobierna. /presentacion lo monta en un iframe y descubre su forma en cada carga; /remote lo maneja desde el teléfono. El sistema se sostiene sobre dos módulos puros probados sin DOM, porque es la única parte del proyecto que puede equivocarse en silencio delante del público.',
+    historias: [
+      {
+        id: 'PF-MP-01', titulo: 'Como presentador, quiero que un toque avance exactamente una diapositiva, también en la portada y en el cierre',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['presentacion', 'fase-44'],
+        dod: [
+          ok('EL MAZO NO SON LOS BEATS. El bundle solo sabe contar beats y su contador dice "01 / 19" tanto en la cita como en la portada: derivar la posición de ahí colapsaba cuatro diapositivas reales en dos números, un toque gastaba tres flechas al arrancar y el cierre era inalcanzable porque el servidor acotaba contra un total que no lo incluía.'),
+          ok('El arreglo es un reparto de mando explícito: el bundle manda en los beats (por teclas) y la pantalla manda en las capas (por estilo). Las reglas viven en src/lib/presentacion/mapa.ts como índice global sobre intro, beats y outro, con 21 casos sin DOM ni bundle.'),
+          ok('Ni un número del bundle cableado: ni cuántos beats trae, ni cuántas capas, ni sus z-index. Solo se asume su forma, que es la de cualquier mazo. Es lo que permite reexportarlo sin tocar el código.'),
+          ok('El KeyboardEvent se construye con el constructor DEL IFRAME. Uno creado en este realm y despachado contra el iframe no dispara su listener y la diapositiva sencillamente no se movía: costó una depuración entera y queda escrito donde se lee.'),
+        ],
+      },
+      {
+        id: 'PF-MP-02', titulo: 'Como presentador, quiero que el mando me diga dónde está la presentación de verdad, no que el servidor recibió mi toque',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['presentacion', 'tiempo-real', 'fase-44'],
+        dod: [
+          ok('Estado partido en dos claves con un escritor cada una: destino lo escribe el mando (una intención) y actual lo publica la pantalla (un hecho). Sin CAS en el almacén, una sola clave compartida podría perder un toque justo en el instante en que la pantalla publica, que es exactamente cuando se vuelve a pulsar.'),
+          ok('La posición es ABSOLUTA, no una cola de comandos: un sondeo perdido no pierde nada porque el siguiente trae el destino entero.'),
+          ok('El mando pinta la posición real y el destino solo mientras no se ha alcanzado. La versión anterior pintaba "ok" con el 200 del POST, que solo confirma que el servidor apuntó la intención: en el final del mazo era un botón que respondía bien mientras nada se movía.'),
+          ok('Frescura de 15 s para distinguir "la charla lleva rato en la misma diapositiva" de "la pestaña de la pantalla se cerró". Reglas de acotado y adopción en src/lib/presentacion/estado.ts, 12 casos.'),
+          ok('Sondeo una vez por segundo y solo con la pestaña visible: el teléfono pasa la charla bloqueado en el bolsillo y no tiene sentido gastar lecturas del almacén para nadie. Estado en Redis con TTL de 6 h, nada en Turso.'),
+        ],
+      },
+      {
+        id: 'PF-MP-03', titulo: 'Como presentador, quiero teclear la URL del mando de memoria y que no me mande a un login',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['presentacion', 'seguridad', 'fase-44'],
+        dod: [
+          ok('El mando vive en /remote a secas, la ruta más corta que quedaba libre en la raíz, y es pública a propósito: una cookie de OAuth caducada y sin wifi minutos antes de empezar es peor riesgo que una URL cuyo peor abuso es pasar una diapositiva de algo que ya está proyectado en la pared.'),
+          ok('El vecindario obliga a una excepción por ruta EXACTA en el matcher isAdmin: /remote y /remote/ quedan fuera del gate, pero cualquier /remote/<sessionId> (el control de las presentaciones con deck y PIN) sigue exigiendo sesión de administrador. Fijado en e2e/auth.spec.ts para que nadie lo relaje por descuido.'),
+          ok('presentacion entra también en RESERVED_ROOT_SEGMENTS, por el mismo choque con el espacio de PIN que /automatizaciones.'),
+          ok('no-store y noindex explícitos en el mando y en la pantalla.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
@@ -1816,5 +1912,5 @@ export const COMMITS_POR_MES = [
   { mes: 'jun', commits: 104 },
   { mes: 'jul', commits: 1631 },
   { mes: 'ago', commits: 462 },
-  { mes: 'sep', commits: 5 },
+  { mes: 'sep', commits: 28 },
 ]
