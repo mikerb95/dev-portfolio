@@ -71,7 +71,7 @@ type Fila = { job: string; ok: boolean; durationMs: number | null; createdAt: Da
 // páginas públicas, y deja el fallo en el log del servidor en vez de tragárselo.
 // Cubre también el caso "la migración todavía no se aplicó": la página se sirve
 // igual y la sección lo dice.
-const filas = await safeQuery<Fila[]>(
+const filasOrNull = await safeQuery<Fila[] | null>(
   () =>
     db
       .select({
@@ -83,24 +83,18 @@ const filas = await safeQuery<Fila[]>(
       .from(cronRuns)
       .orderBy(desc(cronRuns.createdAt))
       .limit(150) as Promise<Fila[]>,
-  [],
+  null,
   'automatizaciones: bitácora de crons'
 )
-const bitacoraOk = filas.length > 0
+// `null` distingue "la consulta falló" de "la tabla existe pero aún no tiene
+// filas": son dos cosas distintas y solo la primera es un aviso.
+const bitacoraOk = filasOrNull !== null
+const filas = filasOrNull ?? []
 
 const ultimaEjecucion = new Map<string, Fila>()
 for (const f of filas) {
   if (!ultimaEjecucion.has(f.job)) ultimaEjecucion.set(f.job, f)
 }
-
-const fmt = new Intl.DateTimeFormat('es-CO', {
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-  timeZone: 'UTC',
-})
 
 function haceCuanto(d: Date | null | undefined): string | null {
   if (!d) return null
