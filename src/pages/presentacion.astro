@@ -103,7 +103,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           for (let intentos = 0; beatReal !== destino && intentos < 40; intentos++) {
             const antes = beatReal
             disparar(destino > beatReal ? 'ArrowRight' : 'ArrowLeft')
-            await new Promise((r) => setTimeout(r, 200))
+            // 350 ms y no menos: cada diapositiva anima un canvas pesado
+            // (~450 ms de transición). Encadenando saltos largos a 200 ms se
+            // llegó a dejar la pestaña sin responder, aunque acabara llegando.
+            await new Promise((r) => setTimeout(r, 350))
             if (beatReal === antes) {
               if (++sinMover >= 3) break
             } else {
@@ -136,7 +139,16 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         }
       }
 
-      setInterval(sondear, 400)
+      // Bucle que se reprograma solo, en vez de `setInterval`: una
+      // reconciliación larga (varias diapositivas de golpe) no deja detrás una
+      // cola de sondeos pendientes que se disparen todos al terminar.
+      async function bucle() {
+        for (;;) {
+          await sondear()
+          await new Promise((r) => setTimeout(r, 500))
+        }
+      }
+      void bucle()
     </script>
   </body>
 </html>
