@@ -6,12 +6,12 @@ import { monitorChecks, monitorDaily } from '../../../db/schema'
 import { isAllowedLogin } from '../../../lib/auth'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import {
-import { conRegistro } from '../../../lib/cron-runs'
   aggregateChecks,
   serializeHist,
   startOfDayUTC,
   type CheckRow,
 } from '../../../lib/monitor-rollup'
+import { conRegistro } from '../../../lib/cron-runs'
 
 // Cron del resumen diario de sondeos. Convierte `monitor_checks` (una fila cada
 // ~5 min por monitor) en `monitor_daily` (una fila por monitor y día), que es lo
