@@ -23,6 +23,7 @@ sobre capas gratuitas.
 | [/architecture](https://codebymike.tech/architecture) | Cómo está construido el sistema |
 | [/pay](https://codebymike.tech/pay) | Pasarela de pagos (modo sandbox) con idempotencia y webhooks firmados |
 | [/paginas-web](https://codebymike.tech/paginas-web) | Landing comercial de diseño web para negocios locales, aparte de la marca técnica |
+| [/automatizaciones](https://codebymike.tech/automatizaciones) | Lo que corre solo: workflows de CI con el resultado de su última corrida, tareas programadas con su bitácora de ejecuciones, y los automatismos que dispara el propio tráfico |
 
 ## Módulos de ingeniería (LAB)
 
@@ -143,7 +144,7 @@ aditivas), `docs/` (planes vivos).
 
 ## Tests
 
-**937 tests de Vitest** en 55 archivos y **47 e2e** de Playwright en 6 specs,
+**1.530 tests de Vitest** en 88 archivos y **50 e2e** de Playwright en 6 specs,
 repartidos en 15 niveles distintos de verificación. El recorrido completo (qué
 responde cada nivel y cuál es su punto ciego) está en
 [/docs/testing](https://codebymike.tech/docs/testing).

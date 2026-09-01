@@ -174,10 +174,16 @@ documentos del portal. Crear el store privado lo arregló de paso.
 
 ## 6. Seguridad
 
-- **`/remote/`** entra en el matcher `isAdmin` de `src/middleware.ts` (mismo
-  criterio que `/cobrar`: vive en la raíz por comodidad de uso, no por ser
-  público). Los comandos van a `/api/admin/present/:id/control`, que hereda ese
-  gate y **además** valida el secreto en tiempo constante.
+- **`/remote/<sessionId>`** entra en el matcher `isAdmin` de
+  `src/middleware.ts` (mismo criterio que `/cobrar`: vive en la raíz por
+  comodidad de uso, no por ser público). Los comandos van a
+  `/api/admin/present/:id/control`, que hereda ese gate y **además** valida el
+  secreto en tiempo constante. **Ojo con el vecindario**: desde el 1 sep 2026
+  `/remote` a secas es otra cosa y es pública (§10), así que la comparación es
+  por prefijo **con barra** y con la ruta exacta exceptuada. Un `startsWith('/remote')`
+  a secas mandaría el mando del mazo a `/login` con la sala mirando; un
+  `startsWith('/remote')` sin excepción dejaría el control de sesiones sin gate.
+  `e2e/auth.spec.ts` fija las dos mitades.
 - **El secreto nunca viaja en una URL.** Se entrega en el HTML del control, que
   ya está tras el gate y se sirve `no-store`.
 - **La vista pública no tiene endpoint que emitir.** Ni conoce el secreto ni
@@ -263,3 +269,100 @@ drizzle/0025_calm_anthem.sql        decks, deck_slides, presentation_feedback
 - **El feedback no se agrega ni se puntúa**: se listan los últimos ocho en el
   panel. Cuando haya volumen suficiente para que una media signifique algo,
   merecerá su propia vista.
+
+---
+
+## 10. El otro mando: `/remote` para el mazo exportado (1 sep 2026)
+
+Lo anterior gobierna **sesiones con deck y PIN**. La sustentación se proyecta
+desde otra cosa: `final.html`, un bundle exportado que **se reemplaza entero**
+cada vez que se itera la presentación. No es un deck de la biblioteca y no
+tiene sesión, así que tiene su propio par de vistas.
+
+| Vista | Ruta | Quién | Qué hace |
+|---|---|---|---|
+| Pantalla | `/presentacion` | el proyector | monta el bundle en un iframe y publica dónde está |
+| Mando | `/remote` | el celular, sin login | pide destinos y pinta la posición real |
+
+### 10.1 Ni un número del bundle en el código
+
+El bundle se reexporta con otro contenido en cualquier momento, así que no
+puede haber cableado ni cuántos beats trae, ni cuántas capas, ni sus `z-index`.
+Solo se asume su **forma**, que es la de cualquier mazo:
+
+```
+capas de entrada  →  beats numerados  →  capas de cierre
+(cita, portada)      (los que pintan      (¿preguntas?, y lo que venga detrás)
+                      "NN / MM")
+```
+
+**El mazo no son los beats.** El bundle solo sabe contar beats: su contador dice
+`01 / 19` tanto en la cita como en la portada, y `19 / 19` en el cierre. Derivar
+la posición de ese contador -que es lo que se hacía- colapsaba cuatro
+diapositivas reales en dos números: al arrancar, un toque del mando gastaba tres
+flechas de golpe, y el cierre era **inalcanzable**, porque el servidor acotaba el
+destino contra un total que no lo incluía.
+
+El arreglo es un reparto de mando explícito: **el bundle manda en los beats**
+(por teclas) y **la pantalla manda en las capas** (por estilo). Las reglas viven
+en `src/lib/presentacion/mapa.ts` como índice global sobre las tres zonas, puro
+y probado sin DOM: es la única parte del sistema que puede equivocarse en
+silencio delante del público.
+
+### 10.2 Dos claves, un escritor cada una
+
+El estado en Redis se parte por escritor, no por dato:
+
+- `presentacion:destino` - lo que pidió el teléfono. Una **intención**.
+- `presentacion:actual` - `{ pos, total }` que publica la pantalla al moverse.
+  Un **hecho**.
+
+Sin CAS en el almacén, una sola clave compartida podría perder un toque justo
+cuando la pantalla publica su cambio, que es exactamente el instante en que se
+vuelve a pulsar. Como el destino es una **posición absoluta** y no una cola de
+comandos, un sondeo perdido no pierde nada: el siguiente trae el destino entero.
+TTL de 6 h, nada en Turso.
+
+Frescura de 15 s para `actual`: la pantalla publica al cambiar, no al sondear,
+así que un tramo largo de charla sobre la misma diapositiva es normal y no es
+una pantalla caída.
+
+### 10.3 El mando no miente
+
+La versión anterior pintaba «ok» en cuanto el POST devolvía 200, que solo
+confirma que el servidor **apuntó** la intención. En el final del mazo eso era
+un botón que respondía bien mientras nada se movía. Ahora lo que se pinta grande
+es la posición **real** que publica la pantalla, y el destino solo aparece
+mientras todavía no se ha alcanzado.
+
+Sondea una vez por segundo y **solo con la pestaña visible**: el teléfono pasa
+la charla bloqueado en el bolsillo.
+
+### 10.4 Por qué es público
+
+`/remote` es la ruta más corta que quedaba libre en la raíz, y se teclea de
+memoria en el celular con la sala esperando. Es pública a propósito, igual que
+`/api/presentacion`: una cookie de OAuth caducada y sin wifi minutos antes de
+empezar es peor riesgo que una URL cuyo peor abuso posible es pasar una
+diapositiva de algo que ya está proyectado en la pared. `presentacion` entra en
+`RESERVED_ROOT_SEGMENTS` por el choque con el espacio de los PIN.
+
+### 10.5 Archivos
+
+```
+src/lib/presentacion/
+  mapa.ts     el mazo completo: índice global sobre intro + beats + outro   21 tests
+  estado.ts   acotar, adoptar, frescura                                     12 tests
+
+src/pages/presentacion.astro · remote/index.astro · api/presentacion.ts
+tests/presentacion-{mapa,estado}.test.ts · e2e/auth.spec.ts (las dos mitades de /remote)
+```
+
+### 10.6 Lo que costó una depuración y no es evidente
+
+- El `KeyboardEvent` hay que construirlo con el constructor **del iframe**. Uno
+  creado en este realm y despachado contra el iframe no dispara su listener: la
+  diapositiva sencillamente no se movía.
+- La posición se lee del **DOM**, no del evento que emite el bundle. El script
+  es un módulo (diferido), así que el iframe puede haber terminado de cargar
+  antes de que corra, y el `load` al que se enganchaba el listener ya no vuelve.

@@ -13,6 +13,12 @@ export default defineConfig({
       // client_id=undefined en local y GitHub devolvía un error de configuración.
       clientId: serverEnv('GITHUB_CLIENT_ID'),
       clientSecret: serverEnv('GITHUB_CLIENT_SECRET'),
+      // GitHub ya devuelve el parámetro `iss` del RFC 9207 en el callback, y
+      // @auth/core 0.37 no declara issuer para este proveedor: cae a su
+      // placeholder "https://authjs.dev", la comparación falla y el login
+      // muere con CallbackRouteError. Lo declaramos aquí con el mismo valor
+      // que trae @auth/core 0.41; al subir esa dependencia esto sobra.
+      issuer: 'https://github.com/login/oauth',
     }),
     // Login alternativo con llave de seguridad (passwordless). La ceremonia
     // FIDO2 ya corrió en /api/auth/webauthn/*; aquí solo se valida el proof
