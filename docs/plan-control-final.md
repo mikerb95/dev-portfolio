@@ -242,3 +242,102 @@ tests/presentacion-estado.test.ts     12 tests
 tests/presentacion-mapa.test.ts       21 tests (incluye convergencia de todos contra todos)
 tests/presentacion-guion.test.ts      11 tests (forma del mazo, zonas, huecos)
 ```
+
+## 10. Pendiente: desplazar el iframe de un beat desde el mando
+
+**Estado: planeado.** Tres beats del mazo proyectan una página viva dentro de un
+iframe (14 la demo del portal, 16 `/status`, 17 `/engineering`). Hoy el mando
+mueve diapositivas pero no puede recorrer esas páginas: hay que ir al portátil.
+
+### 10.1. Por qué se puede
+
+Los tres iframes apuntan a `https://codebymike.tech/...`, que en producción es
+el MISMO origen que sirve `/presentacion`. La cadena entera (página → mazo →
+iframe interno) es de un solo origen y se puede mover con `scrollTo` desde
+fuera. `isFramablePath` ya les da `frame-ancestors 'self'`, que es lo que hace
+falta para que se enmarquen; el mismo origen es lo que además permite tocarlos.
+
+Consecuencia para el desarrollo: **en local no se puede probar tal cual**. Esas
+URLs son absolutas a producción, así que desde `localhost` son de otro origen y
+no se dejan tocar. Se verifica apuntando el iframe descubierto a la ruta local
+equivalente, solo durante la prueba.
+
+### 10.2. El scroll es otra posición absoluta
+
+No un comando relativo. Es la misma decisión que sostiene todo lo demás: un
+sondeo perdido no pierde nada, tres toques seguidos valen tres porque se
+acumulan sobre el destino, y el estado completo cabe en un número.
+
+| Clave | Quién escribe | Qué es |
+|---|---|---|
+| `presentacion:scroll` | el mando (vía servidor) | `{ pos, y }`: el desplazamiento que se pide, y **para qué diapositiva** |
+| `actual.scroll` | la pantalla | `{ y, max, alto }`: dónde está de verdad y cuánto se puede bajar |
+
+El `pos` de la clave es lo que hace que **el iframe vuelva arriba solo** al
+cambiar de diapositiva, que es lo que se pidió: si el `pos` guardado no es el
+destino actual, el desplazamiento pedido es 0. Sin escrituras extra, sin cron de
+limpieza y sin carrera - cualquier camino que cambie de diapositiva (incluida la
+adopción de un movimiento ajeno desde el teclado del portátil) lo reinicia por
+construcción.
+
+El paso lo calcula el SERVIDOR, no el teléfono: `alto / 3` sobre la geometría
+que publicó la pantalla, igual que `mover()` acota contra el techo real del
+mazo. El teléfono solo dice "subir" o "bajar" y no necesita saber nada de la
+página que hay dentro del iframe.
+
+### 10.3. Coste: cero peticiones nuevas
+
+La pantalla ya sondea `?q=destino` dos veces por segundo. Esa respuesta pasa a
+ser `{ destino, scroll }`: un número más en un viaje que ya se hacía. El mando
+publica el desplazamiento en el mismo `POST` con el que ya manda todo lo demás.
+
+### 10.4. La pantalla
+
+1. **Descubrir el iframe en juego.** Como todo aquí, por forma y no por
+   identidad: de los `<iframe>` del mazo, el visible más grande que se solape
+   con el escenario. Un mazo nuevo con otros iframes funciona igual.
+2. **Publicar su geometría** en `actual.scroll`. Si no hay iframe, si es de otro
+   origen o si no tiene nada que desplazar, se publica sin `scroll` y el mando
+   sencillamente no enseña los controles. Fail-open, como el resto.
+3. **Reconciliar** con `scrollTo({ behavior: 'smooth' })`, con un cierre de unos
+   400 ms después de cada empujón: el sondeo va a 500 ms y la animación dura
+   parecido, así que sin ese cierre el siguiente ciclo pelearía con la animación
+   en curso. Y nunca mientras `aplicando` esté activo: si se está cruzando el
+   mazo, el scroll espera.
+
+### 10.5. El mando
+
+Los controles **sustituyen a la rejilla de saltos** mientras la diapositiva
+tenga algo que desplazar, y la rejilla vuelve sola al salir. Es el sitio que
+menos se usa en mitad de una demo y no empuja el guion.
+
+- Dos botones grandes, ↑ y ↓, uno al lado del otro.
+- **Mantener pulsado repite**: el primer empujón sale al tocar y luego se repite
+  cada ~350 ms mientras el dedo siga puesto.
+- Cada empujón es **un tercio de la altura visible**, animado.
+- Se apagan en los topes (`y <= 0`, `y >= max`), por la misma regla que ya
+  gobierna "Siguiente": un botón que no puede hacer nada se apaga en vez de
+  mentir.
+- Una barra fina de 2 px marca por dónde va la página dentro del iframe.
+
+### 10.6. Archivos
+
+```
+src/lib/presentacion/desplazamiento.ts   PURO  paso, acotado y vínculo con la diapositiva
+src/lib/presentacion/estado.ts           + `scroll` en `Actual` (opcional, se descarta si no cuadra)
+src/pages/api/presentacion.ts            + acciones subir/bajar, + `scroll` en `?q=destino`
+src/pages/presentacion.astro             descubrir el iframe, publicar geometría, reconciliar
+src/pages/remote/index.astro             botones ↑/↓ con repetición, en lugar de la rejilla
+tests/presentacion-desplazamiento.test.ts
+src/data/documentacion.ts                RF-715, `planeado` → `implementado` al entregarlo
+```
+
+### 10.7. Fuera de alcance
+
+- **Sin clics dentro del iframe.** Solo desplazamiento. El modelo de posición
+  absoluta admitiría después un clic por coordenadas, pero un clic no es
+  idempotente y no se acumula: es otro problema.
+- **Sin scroll horizontal.** Ninguna de las tres páginas lo necesita.
+- **Sin control del vídeo.** Si el mazo se exporta con `DEMO_MODE=video`, no hay
+  nada que desplazar y los controles no aparecen; pausar o rebobinar sería otra
+  cosa distinta.
