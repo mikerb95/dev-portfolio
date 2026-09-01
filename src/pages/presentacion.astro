@@ -1,17 +1,25 @@
 ---
-// Página pública: lo que ve todo el mundo. `final.html` no se toca ni se
-// edita; se monta en un iframe y se mueve desde fuera simulando la misma
-// tecla que ya escucha su propio `window.addEventListener('keydown', ...)`.
+// La PANTALLA: lo que se proyecta. `final.html` no se toca ni se edita; se
+// monta en un iframe y se mueve desde fuera simulando la misma tecla que ya
+// escucha su propio `window.addEventListener('keydown', ...)`.
 //
-// Dos detalles que costaron una depuración y que no son evidentes:
+// Esta página es la ÚNICA fuente de verdad del sistema: es la que sabe en qué
+// diapositiva está el bundle y cuántas hay. El servidor solo guarda el destino
+// que pide el mando; aquí se cierra la diferencia y se publica el resultado.
+//
+// Tres detalles que costaron una depuración y que no son evidentes:
 //
 //  1. El `KeyboardEvent` tiene que construirse con el constructor DEL IFRAME.
 //     Uno creado en este realm y despachado contra el iframe no dispara su
 //     listener: la diapositiva sencillamente no se movía.
-//  2. La posición real sale del propio bundle, que ya emite
-//     `sustentacion:beat` con `{ indice }` en cada cambio. Nunca se supone en
-//     qué diapositiva va: se pregunta. Eso es lo que permite recuperarse de un
-//     sondeo perdido o de una recarga a mitad de la charla.
+//  2. La posición se lee del DOM y no del evento `sustentacion:beat` que el
+//     bundle emite. Este script es un módulo (diferido), así que el iframe
+//     puede haber terminado de cargar ANTES de que corra y el `load` al que se
+//     enganchaba el listener ya no vuelve. Cuando pasaba, la posición se
+//     quedaba congelada en 1 y la reconciliación "corregía" el servidor hacia
+//     atrás, borrando los toques recién pulsados.
+//  3. Una tecla puede consumirse SIN cambiar de diapositiva (la portada, las
+//     citas, el cierre). Por eso el corte no es el primer no-movimiento.
 Astro.response.headers.set('Cache-Control', 'no-store')
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 ---
@@ -52,26 +60,30 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     <script>
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
+      type Actual = { pos: number; total: number }
+      type Origen = 'inicial' | 'latido' | 'mando' | 'ajena'
+
+      /** Cada cuánto se pregunta el destino. */
+      const SONDEO_MS = 500
+      /** Cada cuánto se republica la posición aunque no haya cambiado, para
+       *  que el mando siga viendo la pantalla viva y conserve el techo real. */
+      const LATIDO_MS = 5_000
+      /** Lo que tarda una diapositiva en asentarse (anima un canvas pesado). */
+      const PASO_MS = 350
+
       /**
        * Dónde está la presentación, leído del propio bundle: pinta su posición
        * como "05 / 14" y de ahí salen la diapositiva actual y el total.
-       *
-       * Se lee del DOM y no del evento `sustentacion:beat` que el bundle
-       * también emite, por una carrera que costó encontrar: este script es un
-       * módulo (diferido), así que el iframe puede haber terminado de cargar
-       * ANTES de que corra, y entonces el `load` al que se enganchaba el
-       * listener ya no vuelve a dispararse. Cuando eso pasaba, la posición se
-       * quedaba congelada en 1, la reconciliación creía que la presentación no
-       * podía moverse y "corregía" el servidor hacia atrás, borrando los
-       * comandos recién pulsados. Leer el DOM no depende de haber llegado a
-       * tiempo a ningún evento.
        */
-      function leerPosicion(): { pos: number; total: number } | null {
+      function leerPosicion(): Actual | null {
         const d = iframe.contentDocument
         const texto = d?.body?.innerText
         if (!texto) return null
         const m = texto.match(/(\d{1,2})\s*\/\s*(\d{1,2})/)
-        return m ? { pos: Number(m[1]), total: Number(m[2]) } : null
+        if (!m) return null
+        const pos = Number(m[1])
+        const total = Number(m[2])
+        return pos >= 1 && total >= pos ? { pos, total } : null
       }
 
       function disparar(tecla: string) {
@@ -91,6 +103,24 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         }
       }
 
+      let ultimo: Actual | null = null
+      let ultimoReporteEn = 0
+
+      /** Publica la posición real. Es lo único que escribe `actual`. */
+      async function reportar(actual: Actual, origen: Origen) {
+        ultimo = actual
+        ultimoReporteEn = Date.now()
+        try {
+          await fetch('/api/presentacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pos: actual.pos, total: actual.total, origen }),
+          })
+        } catch {
+          // Sin red: el latido del próximo ciclo lo vuelve a intentar.
+        }
+      }
+
       /** Evita dos reconciliaciones solapadas peleándose por el mismo hueco. */
       let aplicando = false
 
@@ -98,26 +128,26 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         if (aplicando) return
         aplicando = true
         try {
-          // Una tecla puede consumirse SIN cambiar de diapositiva: al cargar,
-          // el bundle muestra una portada y la primera flecha solo la cierra
-          // (igual con las citas y con la pantalla de cierre). Cortar al primer
-          // no-movimiento daba por agotada la presentación en la primera
-          // pulsación. Tres seguidas sin moverse sí significan "no hay más".
+          // Tres teclas seguidas sin que cambie el contador sí significan "no
+          // hay más"; una sola no, porque la portada se cierra sin avanzar.
           let sinMover = 0
-          for (let intentos = 0; intentos < 40; intentos++) {
-            const actual = leerPosicion()
-            if (!actual || actual.pos === destino) break
+          let actual = leerPosicion()
+          for (let intentos = 0; intentos < 40 && actual && actual.pos !== destino; intentos++) {
             disparar(actual.pos < destino ? 'ArrowRight' : 'ArrowLeft')
-            // 350 ms: cada diapositiva anima un canvas pesado (~450 ms de
-            // transición). Encadenando saltos largos más rápido se llegó a
-            // dejar la pestaña sin responder, aunque acabara llegando.
-            await new Promise((r) => setTimeout(r, 350))
+            await new Promise((r) => setTimeout(r, PASO_MS))
             const despues = leerPosicion()
             if (despues && despues.pos === actual.pos) {
               if (++sinMover >= 3) break
             } else {
               sinMover = 0
             }
+            actual = despues
+          }
+          if (actual) {
+            // Si se llegó, el destino ya era ese y solo se confirma. Si no se
+            // pudo llegar, manda la realidad: el mando deja de mostrar un
+            // destino fantasma y el sondeo siguiente no vuelve a intentarlo.
+            await reportar(actual, actual.pos === destino ? 'mando' : 'ajena')
           }
         } finally {
           aplicando = false
@@ -125,25 +155,28 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
 
       async function sondear() {
-        try {
-          const res = await fetch('/api/presentacion', { cache: 'no-store' })
-          if (!res.ok) return
-          const { pos } = (await res.json()) as { pos: number }
-          const actual = leerPosicion()
-          if (typeof pos !== 'number' || !actual) return
+        const actual = leerPosicion()
+        if (!actual) return
 
-          // El servidor no sabe cuántas diapositivas hay. Si el mando se pasó
-          // del final, se acota al total real y se le devuelve la posición
-          // buena, para que el siguiente toque parta de donde estamos y no
-          // haya que pulsar "anterior" varias veces sin efecto.
-          const destino = Math.min(Math.max(pos, 1), actual.total)
-          if (destino !== pos) {
-            await fetch('/api/presentacion', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pos: destino }),
-            }).catch(() => {})
-          }
+        // Alguien movió el bundle sin pasar por el mando (el teclado del
+        // portátil). Manda la realidad, o el sondeo siguiente arrastraría la
+        // presentación de vuelta y pelearía con quien está delante del teclado.
+        if (!ultimo) {
+          await reportar(actual, 'inicial')
+        } else if (actual.pos !== ultimo.pos || actual.total !== ultimo.total) {
+          await reportar(actual, 'ajena')
+        } else if (Date.now() - ultimoReporteEn > LATIDO_MS) {
+          await reportar(actual, 'latido')
+        }
+
+        try {
+          const res = await fetch('/api/presentacion?q=destino', { cache: 'no-store' })
+          if (!res.ok) return
+          const { destino } = (await res.json()) as { destino: number }
+          if (typeof destino !== 'number') return
+          // El servidor ya acota contra el total que se le publicó, así que
+          // aquí no hace falta corregirle nada: o el destino es alcanzable, o
+          // la reconciliación lo devuelve como movimiento ajeno.
           if (destino !== actual.pos) await reconciliar(destino)
         } catch {
           // Sin red o Redis caído: se reintenta en el próximo ciclo y la
@@ -157,7 +190,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       async function bucle() {
         for (;;) {
           await sondear()
-          await new Promise((r) => setTimeout(r, 500))
+          await new Promise((r) => setTimeout(r, SONDEO_MS))
         }
       }
       void bucle()

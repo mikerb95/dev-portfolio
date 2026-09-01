@@ -1,6 +1,17 @@
 ---
-// Control remoto: dos botones. Manda "siguiente"/"anterior" a
-// `/api/presentacion`, que `/presentacion` sondea y aplica al iframe.
+// El MANDO: lo que llevo en la mano. Manda intenciones a `/api/presentacion`;
+// quien las cumple es `/presentacion`, que es la que tiene el bundle delante.
+//
+// La regla de diseño de esta pantalla: NO MENTIR. La versión anterior pintaba
+// "ok" en cuanto el POST devolvía 200, que solo confirma que el servidor
+// apuntó la intención. En el final del mazo eso era un botón que respondía
+// "ok" mientras nada se movía. Aquí lo que se pinta grande es la posición REAL
+// que publica la pantalla, y el destino solo aparece cuando todavía no se ha
+// alcanzado.
+//
+// Sondea una vez por segundo y SOLO con la pestaña visible: el teléfono pasa
+// la charla entera bloqueado en el bolsillo y no tiene sentido gastar
+// lecturas del almacén para nadie.
 Astro.response.headers.set('Cache-Control', 'no-store')
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 ---
@@ -10,6 +21,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#05070a" />
     <title>Control · Presentación</title>
     <style>
       * {
@@ -23,81 +35,290 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         background: #05070a;
         color: #e9f2f9;
         font-family: system-ui, -apple-system, sans-serif;
+        /* Sin selección accidental al mantener pulsado un botón. */
+        -webkit-user-select: none;
+        user-select: none;
       }
       main {
         min-height: 100svh;
         display: flex;
         flex-direction: column;
-        gap: 14px;
-        padding: 18px;
+        gap: 16px;
+        padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
       }
-      button {
-        flex: 1;
+
+      /* Cabecera: estado del enlace con la pantalla. */
+      header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font: 12px/1 ui-monospace, Menlo, Consolas, monospace;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #5c7488;
+      }
+      #pulso {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #2b3947;
+        flex: none;
+        transition: background 0.2s;
+      }
+      header[data-enlace='viva'] #pulso {
+        background: #35d07f;
+        box-shadow: 0 0 0 4px rgba(53, 208, 127, 0.12);
+      }
+      header[data-enlace='sola'] #pulso {
+        background: #d8a13a;
+      }
+      header[data-enlace='caida'] #pulso {
+        background: #d2544a;
+      }
+
+      /* Posición real, que es lo que de verdad importa mirar. */
+      .lectura {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 6px;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+      #pos {
+        font-size: 4.6rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+      #total {
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: #5c7488;
+      }
+      #viaje {
+        text-align: center;
+        min-height: 1.2em;
+        font: 13px/1.2 ui-monospace, Menlo, Consolas, monospace;
+        color: #7fb2d8;
+      }
+      #viaje:empty::before {
+        content: '\00a0';
+      }
+
+      /* Rejilla de salto: el total lo publica la pantalla, así que se puede
+         pintar un botón por diapositiva sin que nadie lo escriba a mano. */
+      #saltos {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+        gap: 6px;
+      }
+      #saltos button {
+        padding: 10px 0;
+        font: 600 14px/1 ui-monospace, Menlo, Consolas, monospace;
+        color: #7d94a8;
+        background: #0a0f16;
+        border: 1px solid #16202c;
+        border-radius: 10px;
+      }
+      #saltos button[aria-current='true'] {
+        color: #05070a;
+        background: #7fb2d8;
+        border-color: #7fb2d8;
+      }
+
+      .mandos {
+        margin-top: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .mandos button {
         border: 1px solid #1b2836;
         background: #0b1017;
         color: #e9f2f9;
-        border-radius: 14px;
+        border-radius: 16px;
         font-size: 1.4rem;
         font-weight: 600;
-        padding: 28px 0;
+        padding: 26px 0;
         touch-action: manipulation;
       }
-      button:active {
+      .mandos button:active {
         background: #17222f;
       }
+      .mandos button:disabled {
+        opacity: 0.32;
+      }
       #siguiente {
-        flex: 2;
+        padding: 40px 0;
         background: #12324a;
         border-color: #1e4c6e;
       }
       #siguiente:active {
         background: #184163;
       }
-      #estado {
+      #aviso {
         text-align: center;
-        font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
-        letter-spacing: 0.06em;
-        color: #5c7488;
+        min-height: 1.2em;
+        font: 12px/1.2 ui-monospace, Menlo, Consolas, monospace;
+        color: #d2544a;
       }
     </style>
   </head>
   <body>
     <main>
-      <p id="estado">&nbsp;</p>
-      <button id="anterior" type="button">← Anterior</button>
-      <button id="siguiente" type="button">Siguiente →</button>
+      <header id="enlace" data-enlace="">
+        <span id="pulso" aria-hidden="true"></span>
+        <span id="estado">conectando</span>
+      </header>
+
+      <p class="lectura">
+        <span id="pos">-</span><span id="total">/ -</span>
+      </p>
+      <p id="viaje" aria-live="polite"></p>
+
+      <div id="saltos"></div>
+
+      <div class="mandos">
+        <p id="aviso" aria-live="polite"></p>
+        <button id="anterior" type="button">← Anterior</button>
+        <button id="siguiente" type="button">Siguiente →</button>
+      </div>
     </main>
 
     <script>
-      const estado = document.getElementById('estado') as HTMLParagraphElement
-      const botones = {
+      type Actual = { pos: number; total: number; ts: number }
+      type Estado = { destino: number; actual: Actual | null; viva?: boolean }
+
+      const el = {
+        enlace: document.getElementById('enlace') as HTMLElement,
+        estado: document.getElementById('estado') as HTMLElement,
+        pos: document.getElementById('pos') as HTMLElement,
+        total: document.getElementById('total') as HTMLElement,
+        viaje: document.getElementById('viaje') as HTMLElement,
+        saltos: document.getElementById('saltos') as HTMLElement,
+        aviso: document.getElementById('aviso') as HTMLElement,
         anterior: document.getElementById('anterior') as HTMLButtonElement,
         siguiente: document.getElementById('siguiente') as HTMLButtonElement,
       }
 
-      async function mandar(accion: 'siguiente' | 'anterior') {
-        estado.textContent = 'enviando...'
-        try {
-          const res = await fetch('/api/presentacion', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accion }),
-          })
-          estado.textContent = res.ok ? `beat ${accion}, ok` : 'error al enviar'
-        } catch {
-          estado.textContent = 'sin red'
+      const SONDEO_MS = 1_000
+
+      let estado: Estado | null = null
+      let totalPintado = 0
+
+      function pintar(nuevo: Estado, hayRed: boolean) {
+        estado = nuevo
+        const { destino, actual } = nuevo
+        const viva = hayRed && Boolean(nuevo.viva)
+
+        el.enlace.dataset.enlace = !hayRed ? 'caida' : viva ? 'viva' : 'sola'
+        el.estado.textContent = !hayRed
+          ? 'sin red'
+          : viva
+            ? 'pantalla en línea'
+            : 'pantalla sin responder'
+
+        el.pos.textContent = actual ? String(actual.pos) : '-'
+        el.total.textContent = actual ? `/ ${actual.total}` : '/ -'
+
+        // El destino solo se enseña mientras es una promesa pendiente. Cuando
+        // coincide con la posición real no aporta nada y solo hace ruido.
+        el.viaje.textContent =
+          actual && destino !== actual.pos
+            ? `${destino > actual.pos ? 'avanzando' : 'volviendo'} a ${destino}`
+            : ''
+
+        // Los topes salen del total REAL del mazo, no de una constante. Un
+        // botón que no puede hacer nada se apaga en vez de mentir.
+        el.anterior.disabled = !actual || destino <= 1
+        el.siguiente.disabled = Boolean(actual && destino >= actual.total)
+
+        if (actual && actual.total !== totalPintado) pintarSaltos(actual.total)
+        for (const b of el.saltos.querySelectorAll('button')) {
+          b.setAttribute('aria-current', String(Number(b.dataset.n) === destino))
         }
       }
 
-      botones.anterior.addEventListener('click', () => mandar('anterior'))
-      botones.siguiente.addEventListener('click', () => mandar('siguiente'))
+      function pintarSaltos(total: number) {
+        totalPintado = total
+        el.saltos.replaceChildren(
+          ...Array.from({ length: total }, (_, i) => {
+            const b = document.createElement('button')
+            b.type = 'button'
+            b.dataset.n = String(i + 1)
+            b.textContent = String(i + 1)
+            b.addEventListener('click', () => mandar({ destino: i + 1 }))
+            return b
+          })
+        )
+      }
 
-      // El celular del presentador también sirve como teclado: flechas físicas
-      // (con un teclado bluetooth) mandan igual que el toque.
+      /**
+       * Una petición a la vez. Con 5G irregular, dos toques rápidos podían
+       * cruzarse y la respuesta vieja pisaba a la nueva, dejando pintado un
+       * destino anterior al real.
+       */
+      let enVuelo: Promise<void> | null = null
+
+      async function pedir(init?: RequestInit) {
+        try {
+          const res = await fetch('/api/presentacion', { cache: 'no-store', ...init })
+          if (!res.ok) {
+            el.aviso.textContent = res.status === 503 ? 'almacén no disponible' : 'error al enviar'
+            return
+          }
+          el.aviso.textContent = ''
+          pintar((await res.json()) as Estado, true)
+        } catch {
+          el.enlace.dataset.enlace = 'caida'
+          el.estado.textContent = 'sin red'
+        }
+      }
+
+      function mandar(cuerpo: Record<string, unknown>) {
+        // Adelanto local del destino: el pulgar ve el efecto en el mismo
+        // fotograma del toque, y la respuesta lo confirma o lo corrige.
+        if (estado) {
+          const delta = cuerpo.accion === 'siguiente' ? 1 : cuerpo.accion === 'anterior' ? -1 : 0
+          const tentativo =
+            typeof cuerpo.destino === 'number' ? cuerpo.destino : estado.destino + delta
+          const tope = estado.actual?.total ?? 999
+          pintar({ ...estado, destino: Math.min(Math.max(tentativo, 1), tope) }, true)
+        }
+        const tarea = (enVuelo ?? Promise.resolve()).then(() =>
+          pedir({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cuerpo),
+          })
+        )
+        enVuelo = tarea.finally(() => {
+          if (enVuelo === tarea) enVuelo = null
+        })
+      }
+
+      el.anterior.addEventListener('click', () => mandar({ accion: 'anterior' }))
+      el.siguiente.addEventListener('click', () => mandar({ accion: 'siguiente' }))
+
+      // El teléfono también sirve de receptor de un presentador bluetooth:
+      // sus flechas llegan aquí como teclas normales.
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight') mandar('siguiente')
-        else if (e.key === 'ArrowLeft') mandar('anterior')
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') mandar({ accion: 'siguiente' })
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') mandar({ accion: 'anterior' })
       })
+
+      async function bucle() {
+        for (;;) {
+          // Con la pantalla del teléfono apagada no hay nadie mirando: sondear
+          // ahí solo gasta batería y lecturas del almacén.
+          if (document.visibilityState === 'visible' && !enVuelo) await pedir()
+          await new Promise((r) => setTimeout(r, SONDEO_MS))
+        }
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') void pedir()
+      })
+      void bucle()
     </script>
   </body>
 </html>
