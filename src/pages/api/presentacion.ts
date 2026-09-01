@@ -32,7 +32,7 @@ import {
  *   POST { pos, total, intro, outro, scroll, origen }
  *                                   -> la pantalla publica dónde está de verdad
  *
- * DOS CLAVES, UN ESCRITOR CADA UNA. El mando escribe `destino`; la pantalla
+ * UNA CLAVE POR ESCRITOR. El mando escribe `destino` y `scroll`; la pantalla
  * escribe `actual`. Sin CAS en el almacén, una sola clave compartida podría
  * perder un toque justo cuando la pantalla publica su cambio, que es
  * exactamente el instante en que se vuelve a pulsar. Separarlas hace que esa
