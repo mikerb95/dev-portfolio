@@ -220,8 +220,8 @@ const STATUS_STYLE: Record<string, string> = {
           </div>
           {aplicadas.map((r) => (
             <div class="flex justify-between gap-3">
-              <span class="text-ink-300 text-[12px] leading-tight">
-                {r.label}
+              <span class="text-ink-300 text-[12px] leading-tight" title={r.label}>
+                {r.labelCorto ?? r.label}
                 <span class="font-mono"> {(r.rate * 100).toFixed(2).replace(/\.?0+$/, '')} %</span>
               </span>
               <span class="font-mono text-ink-200 whitespace-nowrap">- {formatMoney(r.valueCents)}</span>
