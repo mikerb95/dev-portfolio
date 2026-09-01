@@ -900,11 +900,44 @@ export const invoices = sqliteTable('invoices', {
   paidAt: integer('paid_at', { mode: 'timestamp' }),
   // Pago que la saldó (el webhook de la pasarela cierra el círculo).
   paymentId: integer('payment_id').references(() => payments.id, { onDelete: 'set null' }),
+
+  // ── Solo cuentas de cobro (todas nullables: una factura no las usa) ───────
+  // Datos del emisor y del deudor CONGELADOS al emitir. No se leen de
+  // app_settings ni de clients al reimprimir: cambiar de banco en marzo no
+  // puede reescribir un documento entregado en enero.
+  issuerSnapshot: text('issuer_snapshot'),
+  payerSnapshot: text('payer_snapshot'),
+  // Concepto detallado del servicio. Una descripción genérica hace que el área
+  // de pagos devuelva el documento, así que es obligatorio en este tipo.
+  concept: text('concept'),
+  periodStart: integer('period_start', { mode: 'timestamp' }),
+  periodEnd: integer('period_end', { mode: 'timestamp' }),
+  // Contrato u orden de compra: casi siempre exigido por empresas.
+  contractRef: text('contract_ref'),
+  // Ciudad de expedición (va en el encabezado del documento).
+  city: text('city'),
+  // Snapshot del cálculo: [{ concepto, tarifa, baseUvtCents, valueCents, ... }].
+  // Se guarda el resultado, no la fórmula: las tarifas de retención cambian de
+  // un año a otro y reimprimir no puede recalcular con las de hoy.
+  retentions: text('retentions'),
+  retentionsCents: integer('retentions_cents').notNull().default(0),
+  // Neto = total - retenciones. Redundante a propósito: es lo que se agrega y
+  // se ordena en el panel, y no quiero recalcularlo en cada SELECT.
+  netCents: integer('net_cents').notNull().default(0),
+  // Planilla PILA declarada (muchos pagadores la exigen como anexo).
+  ssPlanilla: text('ss_planilla'),
+  ssPeriodo: text('ss_periodo'),
+  signatureUrl: text('signature_url'),
+
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }),
 }, (t) => ({
   clientIdx: index('invoices_client_idx').on(t.clientId),
   statusIdx: index('invoices_status_idx').on(t.status),
+  // El panel y el portal filtran SIEMPRE por tipo: sin este índice, cada
+  // listado escanea las dos series juntas (y en Turso se factura por filas
+  // escaneadas, no por filas devueltas).
+  docTypeIdx: index('invoices_doc_type_idx').on(t.docType),
 }))
 
 export const invoiceItems = sqliteTable('invoice_items', {
