@@ -1,7 +1,9 @@
 // Allowlist de logins de GitHub autorizados para el panel.
 // Fuente única usada por el callback de auth y por el middleware (defensa en profundidad).
 
-export const ALLOWED_GITHUB_LOGINS = (process.env.ALLOWED_GITHUB_LOGINS ?? 'mikerb95')
+import { serverEnv } from './env'
+
+export const ALLOWED_GITHUB_LOGINS = (serverEnv('ALLOWED_GITHUB_LOGINS') ?? 'mikerb95')
   .split(',')
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean)

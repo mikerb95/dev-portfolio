@@ -16,8 +16,11 @@ proyecta `final.html` y el teléfono que la mueve.
 | Mando | `/remote` | dos botones, rejilla de salto, posición real |
 | Estado | `/api/presentacion` | destino que pide el mando + posición que publica la pantalla |
 
-`final.html` no se toca ni se edita. Se mueve desde fuera despachando el mismo
-`keydown` que su propio bundle ya escucha.
+`final.html` no se toca ni se edita, y además se **reemplaza entero** cada vez
+que se itera la presentación. De ahí la regla dura del diseño: ni una sola cifra
+suya vive en este código. Ni cuántos beats trae, ni cuántas capas, ni sus
+z-index. La pantalla descubre su forma en cada carga y se mueve desde fuera
+despachando el mismo `keydown` que su propio bundle ya escucha.
 
 El mando vive en **`/remote` a secas** porque se teclea de memoria en el
 celular con la sala esperando. `/presentacion/control`, que fue su primera
@@ -29,14 +32,50 @@ presentaciones con deck y PIN y sigue exigiendo sesión de admin. El matcher
 `isAdmin` del middleware los separa por ruta exacta, incluida la variante con
 barra final que Astro sirve igual. Abrir el mando no puede abrir el panel.
 
-## 2. Una sola verdad: el bundle
+## 2. El mazo no son los beats
 
-`final.html` es lo único que sabe en qué diapositiva está y cuántas hay. Todo
-lo demás se deriva de ahí:
+El bundle solo sabe contar beats. Su contador dice `01 / 19` en la cita, `01 /
+19` otra vez en la portada y `19 / 19` en el cierre: cuatro diapositivas reales
+colapsadas en dos números. Derivar la posición de ese contador -que es lo que se
+hacía- daba dos fallos que se vieron en vivo:
+
+- al arrancar, un solo toque del mando gastaba **tres** flechas de golpe (cerrar
+  cita, cerrar portada, avanzar un beat), porque la reconciliación seguía
+  disparando mientras el contador no se moviera;
+- el cierre era **inalcanzable**: el servidor acota el destino contra el total
+  publicado, y ese total no lo incluía.
+
+La posición es ahora un **índice global** sobre las tres zonas del mazo:
+
+| Zona | Qué es | Quién manda |
+|---|---|---|
+| capas de entrada | cita, portada | `/presentacion`, por estilo |
+| beats | los que pinten `NN / MM` | el bundle, por teclas |
+| capas de cierre | «¿Preguntas?», y lo que se añada detrás | `/presentacion`, por estilo |
+
+El reparto de mando es lo que hace la navegación **reversible**. El bundle no
+sabe volver a su portada: `closeCover` es de ida y su `go()` acota en el primer
+beat. Pero su portada no es más que un div tapado, y ponerlo y quitarlo desde
+fuera no necesita recargar nada. Las reglas viven en `src/lib/presentacion/mapa.ts`,
+probadas sin DOM ni bundle.
+
+### Cómo se descubre la forma
+
+Al cargar, `/presentacion` busca en el iframe **capas**: cualquier elemento
+apilado (z-index numérico) que cubra el escenario entero. Las que ya se ven van
+**antes** de los beats; las que están ocultas, **después**. Dentro de la
+entrada manda la más alta (tapa a las de abajo); en el cierre, la más baja (las
+siguientes se apilan encima). Un bundle sin capas se comporta como antes: solo
+beats. Añadir una diapositiva al final del mazo no toca este código.
+
+## 2.1. Una sola verdad: el bundle
+
+`final.html` es lo único que sabe en qué beat está y cuántos hay. Todo lo demás
+se deriva de ahí:
 
 - **`presentacion:destino`** es una INTENCIÓN, no un hecho. Lo escribe el mando.
-- **`presentacion:actual`** (`{ pos, total, ts }`) es el HECHO. Lo publica la
-  pantalla leyendo el contador "05 / 19" del propio bundle.
+- **`presentacion:actual`** (`{ pos, total, ts }`) es el HECHO, ya en índice
+  global. Lo publica la pantalla.
 
 Mientras difieren, la pantalla cierra la diferencia a flechazos. Cuando
 coinciden, el sistema está en reposo. La versión anterior guardaba una sola
@@ -85,14 +124,25 @@ recarga a mitad de charla dejaría la presentación clavada en la portada.
 2. La posición se lee del **DOM**, no del evento `sustentacion:beat`. El script
    es un módulo diferido y el iframe puede haber cargado antes, con lo que el
    `load` ya no vuelve a dispararse.
-3. Una tecla puede consumirse **sin** cambiar de diapositiva (portada, citas,
-   cierre). El corte de la reconciliación son tres no-movimientos, no uno.
+3. El bundle arranca con sus capas de entrada abiertas y **se traga una tecla
+   por cada una** antes de mover un beat. Esa deuda se paga una sola vez y en
+   orden; después, mandarle una tecla para retirar una capa movería un beat que
+   nadie pidió. Aun así el corte de la reconciliación siguen siendo tres
+   no-movimientos, no uno: es la red por debajo, no la regla.
 4. Los botones de la rejilla los crea el script, así que **no** llevan el
    `[data-astro-cid-…]` con el que Astro reescribe los selectores del `<style>`
    scoped: necesitan `:global(...)` o salen con el estilo por defecto del
    navegador, y eso solo se ve ya montado en el móvil.
 5. El teléfono sondea **solo con la pestaña visible**, pero la primera lectura
    es incondicional: abrirlo en segundo plano dejaba el mando en "conectando".
+6. La intención de cada capa se lleva en memoria, no se lee del DOM. Con la
+   pestaña en segundo plano el navegador congela las transiciones CSS y la
+   opacidad calculada se queda a medias: comparar contra ella hacía que la
+   pantalla se peleara consigo misma al volver.
+7. Un viaje largo publica su avance cada cuatro pasos, y de esa misma respuesta
+   saca el destino: cruzar el mazo entero son veinte pasos, y en ese rato el
+   mando daría a la pantalla por muerta (15 s sin hablar) y no habría forma de
+   cambiar de idea a mitad de camino.
 
 ## 6. Coste
 
@@ -103,8 +153,16 @@ el techo del diseño: bajarlo es subir `SONDEO_MS`, a costa de latencia.
 
 ## 7. Verificado en vivo (dev, 1 sep)
 
-Con `/presentacion` y el mando en dos pestañas, contra el
-`final.html` real de 19 diapositivas:
+Contra el `final.html` real, ya con el mazo completo (22 posiciones: cita,
+portada, 19 beats, cierre):
+
+- descubrimiento correcto de las tres capas y del total, sin nada cableado;
+- `1 → 22` y `22 → 1` de punta a punta, con el cierre alcanzable y la cita
+  reabierta después de haber pasado por el final, **sin recargar el iframe**;
+- topes en las dos puntas: la flecha de más no mueve el destino;
+- ida y vuelta paso a paso por la frontera cita/portada/beat 1.
+
+Y antes, con el sistema de solo beats:
 
 - recarga con la charla en la 9: la pantalla se reconstruye sola hasta la 9;
 - tres toques rápidos: llegan los tres (destino 9 → 12), ninguno se pierde;
@@ -128,8 +186,10 @@ Con `/presentacion` y el mando en dos pestañas, contra el
 
 ```
 src/lib/presentacion/estado.ts        PURO  acotar, techo, orígenes, adopción
+src/lib/presentacion/mapa.ts          PURO  zonas del mazo, índice global, paso a paso
 src/pages/presentacion.astro          la pantalla (iframe + reconciliación)
 src/pages/remote/index.astro          el mando (`/presentacion/control` redirige aquí)
 src/pages/api/presentacion.ts         destino + actual, dos claves en Redis
 tests/presentacion-estado.test.ts     12 tests
+tests/presentacion-mapa.test.ts       21 tests (incluye convergencia de todos contra todos)
 ```

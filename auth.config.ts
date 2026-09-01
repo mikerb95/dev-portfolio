@@ -2,13 +2,17 @@ import GitHub from '@auth/core/providers/github'
 import Credentials from '@auth/core/providers/credentials'
 import { defineConfig } from 'auth-astro'
 import { isAllowedLogin } from './src/lib/auth'
+import { serverEnv } from './src/lib/env'
 import { verifyPasskeyProof } from './src/lib/webauthn'
 
 export default defineConfig({
   providers: [
     GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      // serverEnv y no process.env: el dev server de Astro carga el .env en
+      // import.meta.env, así que leer solo process.env dejaba el proveedor con
+      // client_id=undefined en local y GitHub devolvía un error de configuración.
+      clientId: serverEnv('GITHUB_CLIENT_ID'),
+      clientSecret: serverEnv('GITHUB_CLIENT_SECRET'),
     }),
     // Login alternativo con llave de seguridad (passwordless). La ceremonia
     // FIDO2 ya corrió en /api/auth/webauthn/*; aquí solo se valida el proof
