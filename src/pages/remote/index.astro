@@ -362,7 +362,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         el.anterior.disabled = !actual || destino <= 1
         el.siguiente.disabled = Boolean(actual && destino >= actual.total)
 
-        pintarNota(actual)
+        // La nota va con el DESTINO, no con la posición confirmada. Ver
+        // `pintarNota`.
+        pintarNota(destino, actual)
         if (actual && actual.total !== totalPintado) pintarSaltos(actual.total)
         for (const b of el.saltos.querySelectorAll('button')) {
           b.setAttribute('aria-current', String(Number(b.dataset.n) === destino))
@@ -378,18 +380,34 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let notaPintada: number | null = null
 
       /**
-       * El guion de la diapositiva que se está viendo. La zona sale de la forma
-       * del mazo que publica la pantalla; si no la publicó, no se enseña nada:
-       * un número sin forma no distingue una capa de un beat, y la nota
-       * equivocada delante del público es peor que ninguna.
+       * El guion de la diapositiva de la que se va a hablar.
+       *
+       * Va con el DESTINO y no con la posición confirmada, que es lo contrario
+       * de lo que hace el número grande, y es deliberado. La posición real
+       * llega hasta dos segundos tarde: el mando avisa al servidor, la pantalla
+       * lo lee en su sondeo, mueve la diapositiva, publica, y el teléfono lo
+       * sondea. En ese hueco lo que se está leyendo es la nota anterior, que en
+       * una charla es justo el momento en que se mira el teléfono. Con el
+       * destino, la nota cambia en el mismo fotograma del toque.
+       *
+       * No es mentir, que es la regla de esta pantalla: el destino ES lo que se
+       * va a decir, la línea de "avanzando a N" de justo encima dice que la
+       * proyección todavía va por detrás, y si la pantalla no llegara, publica
+       * su posición como movimiento ajeno, el servidor la adopta como destino y
+       * la nota vuelve sola a la realidad. Converge siempre.
+       *
+       * La FORMA del mazo, en cambio, sale de `actual`: es lo único que sabe
+       * cuántas capas hay. Sin ella no se enseña nada, porque un número sin
+       * forma no distingue una capa de un beat, y la nota equivocada delante
+       * del público es peor que ninguna.
        */
-      function pintarNota(actual: Actual | null) {
+      function pintarNota(destino: number, actual: Actual | null) {
         const mazo = actual ? mazoPublicado(actual) : null
-        const clave = mazo && actual ? actual.pos : null
+        const clave = mazo ? destino : null
         if (clave === notaPintada) return
         notaPintada = clave
 
-        const nota = mazo && actual ? notaDeGlobal(mazo, actual.pos) : null
+        const nota = mazo ? notaDeGlobal(mazo, destino) : null
         el.titulo.textContent = nota?.titulo ?? ''
         el.dur.textContent = nota?.dur ? duracion(nota.dur) : ''
 
@@ -492,8 +510,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           await new Promise((r) => setTimeout(r, SONDEO_MS))
         }
       }
+      // Sondeo inmediato al volver a mirar el teléfono, sin esperar a la
+      // siguiente vuelta del bucle: es el momento en que se lee la nota.
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') void pedir()
+        if (document.visibilityState === 'visible' && !enVuelo) void pedir()
       })
       void bucle()
     </script>

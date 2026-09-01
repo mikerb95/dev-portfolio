@@ -27,6 +27,12 @@ export type ConceptoId = 'honorarios' | 'servicios' | 'reteica'
 export type ConceptoDef = {
   id: ConceptoId
   label: string
+  /**
+   * Nombre corto para la columna de totales del PDF, donde el ancho disponible
+   * es el que sobra a la izquierda del importe. El nombre largo no cabe y se
+   * recortaría justo por donde va el porcentaje, que es el dato que se busca.
+   */
+  labelCorto: string
   norma: string
   /** Fracción, no porcentaje: 0.11 = 11 %. */
   rateDeclarante: number
@@ -45,6 +51,7 @@ export const CONCEPTOS_DEFAULT: ConceptoDef[] = [
   {
     id: 'honorarios',
     label: 'Retención en la fuente - honorarios y servicios personales',
+    labelCorto: 'Retefuente honorarios',
     norma: 'Art. 392 ET',
     rateDeclarante: 0.11,
     rateNoDeclarante: 0.1,
@@ -53,6 +60,7 @@ export const CONCEPTOS_DEFAULT: ConceptoDef[] = [
   {
     id: 'servicios',
     label: 'Retención en la fuente - servicios generales',
+    labelCorto: 'Retefuente servicios',
     norma: 'Art. 392 ET',
     // Ojo, no es un error de tecleo: en servicios generales el NO declarante
     // retiene MÁS (6 %) que el declarante (4 %). Es al revés que en honorarios.
@@ -63,6 +71,7 @@ export const CONCEPTOS_DEFAULT: ConceptoDef[] = [
   {
     id: 'reteica',
     label: 'ReteICA municipal',
+    labelCorto: 'ReteICA',
     norma: 'Acuerdo municipal (tarifa por mil según actividad)',
     // Apagada por defecto: la tarifa depende del municipio y de la actividad,
     // así que sin configurar no se practica nada en vez de inventar un número.
@@ -143,6 +152,7 @@ export const rateOf = (c: ConceptoDef, declarante: boolean): number =>
 export type Retencion = {
   id: ConceptoId
   label: string
+  labelCorto: string
   norma: string
   rate: number
   baseUvt: number
@@ -176,7 +186,16 @@ export function computeRetentions(
 
     const rate = rateOf(def, cfg.declarante)
     const minimoCents = Math.round(def.baseUvt * cfg.uvtCents)
-    const common = { id: def.id, label: def.label, norma: def.norma, rate, baseUvt: def.baseUvt, minimoCents, baseCents: base }
+    const common = {
+      id: def.id,
+      label: def.label,
+      labelCorto: def.labelCorto,
+      norma: def.norma,
+      rate,
+      baseUvt: def.baseUvt,
+      minimoCents,
+      baseCents: base,
+    }
 
     if (rate <= 0) {
       return [{ ...common, valueCents: 0, applied: false, motivo: 'tarifa sin configurar' }]
@@ -451,6 +470,47 @@ export function parseDeudor(
     direccion: pick('direccion', 'address'),
     ciudad: pick('ciudad', 'city'),
   }
+}
+
+// ── Identificación de las partes ────────────────────────────────────────────
+
+export type BloqueIdentificacion = {
+  rotulo: 'SEÑORES' | 'DEBE A'
+  papel: 'deudor' | 'emisor'
+  nombre: string
+  documento: string
+  lineas: string[]
+}
+
+/**
+ * Los dos bloques que identifican a las partes, EN EL ORDEN EN QUE VAN IMPRESOS.
+ *
+ * Vive aquí y no en el código que dibuja el PDF porque es una regla del
+ * documento, no una decisión de maquetación, y es lo contrario de lo intuitivo:
+ * la fórmula colombiana es "[DEUDOR] DEBE A [EMISOR]", así que el rótulo
+ * "DEBE A" encabeza a quien COBRA. Colocar al deudor bajo ese rótulo invierte
+ * el sentido y convierte la cuenta de cobro en un reconocimiento de deuda
+ * propia. Es un error que no rompe nada visible y que solo detecta quien lo
+ * lee con cuidado, así que lleva test.
+ */
+export function bloquesIdentificacion(emisor: Emisor, deudor: Deudor): BloqueIdentificacion[] {
+  const contacto = [emisor.telefono, emisor.email].filter(Boolean).join('  ·  ')
+  return [
+    {
+      rotulo: 'SEÑORES',
+      papel: 'deudor',
+      nombre: deudor.nombre,
+      documento: `NIT/C.C. ${deudor.nit}`,
+      lineas: [deudor.direccion, deudor.ciudad].filter(Boolean),
+    },
+    {
+      rotulo: 'DEBE A',
+      papel: 'emisor',
+      nombre: emisor.nombre,
+      documento: `C.C. ${emisor.cedula}`,
+      lineas: [emisor.direccion, emisor.ciudad, contacto].filter(Boolean),
+    },
+  ]
 }
 
 // ── Validación ──────────────────────────────────────────────────────────────

@@ -112,6 +112,21 @@ una forma rota se descarta entera y el mando se queda sin notas, nunca sin
 control. Y si no hay forma, no se enseña ninguna nota: delante del público, la
 nota de otra diapositiva es peor que ninguna.
 
+### La nota va con el destino, el número con la realidad
+
+Es la única cosa de este sistema que NO enseña la posición confirmada, y es
+deliberado. La posición real llega hasta dos segundos tarde: el mando avisa al
+servidor, la pantalla lo lee en su sondeo (500 ms), mueve la diapositiva
+(350 ms), publica, y el teléfono lo sondea (1 s). En ese hueco lo que se lee es
+la nota anterior, y es justo el instante en que se mira el teléfono. Peor en un
+salto largo, donde la pantalla publica cada cuatro pasos.
+
+Con el destino, la nota cambia en el mismo fotograma del toque. No rompe la
+regla de no mentir: el destino ES lo que se va a decir, la línea de "avanzando
+a N" de justo encima avisa de que la proyección va por detrás, y si la pantalla
+no llegara, publica su posición como movimiento `ajena`, el servidor la adopta
+como destino y la nota vuelve sola a la realidad.
+
 **El guion viaja en el JS de `/remote`, que es una página pública.** Quien
 teclee la URL puede leerlo. Para un discurso que se va a dar en voz alta
 delante de un tribunal no es gran cosa, pero es un cambio respecto a "lo peor

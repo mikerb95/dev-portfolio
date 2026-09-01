@@ -11,6 +11,7 @@
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import {
+  bloquesIdentificacion,
   LEYENDA_DOCUMENTO_SOPORTE,
   LEYENDA_NO_OBLIGADO_FACTURAR,
   LEYENDA_NO_RESPONSABLE_IVA,
@@ -150,6 +151,17 @@ export async function generateCuentaCobroPdf(input: CuentaCobroPdfInput): Promis
     return out
   }
 
+  /** Recorta a lo ancho disponible, con puntos suspensivos si no cabe entero. */
+  const truncar = (s: string, f: typeof font, size: number, maxWidth: number): string => {
+    const clean = sanitize(s)
+    if (maxWidth <= 0) return ''
+    if (f.widthOfTextAtSize(clean, size) <= maxWidth) return clean
+
+    let corte = clean.length
+    while (corte > 0 && f.widthOfTextAtSize(`${clean.slice(0, corte)}...`, size) > maxWidth) corte--
+    return corte > 0 ? `${clean.slice(0, corte).trimEnd()}...` : ''
+  }
+
   const paragraph = (s: string, size: number, color = MUTED, f = font) => {
     for (const l of wrap(s, f, size, right - marginX)) {
       text(l, marginX, y, { size, color, f })
@@ -171,31 +183,25 @@ export async function generateCuentaCobroPdf(input: CuentaCobroPdfInput): Promis
   line(y)
   y -= 26
 
-  // ── Emisor ────────────────────────────────────────────────────────────────
+  // ── Identificación de las partes ──────────────────────────────────────────
+  // El orden y los rótulos los decide `bloquesIdentificacion`, que vive en el
+  // módulo puro porque es una regla del documento y no de la maquetación:
+  // "DEBE A" encabeza a quien cobra, no a quien paga. Aquí solo se dibuja.
   const e = input.emisor
-  text(e.nombre, marginX, y, { size: 13, f: bold })
-  y -= 15
-  text(`C.C. ${e.cedula}`, marginX, y, { size: 10, f: mono })
-  y -= 13
-  const contacto = [e.telefono, e.email].filter(Boolean).join(SEP)
-  for (const l of [e.direccion, e.ciudad, contacto].filter(Boolean)) {
-    text(l, marginX, y, { size: 9.5, color: MUTED })
-    y -= 12
+  for (const bloque of bloquesIdentificacion(e, input.deudor)) {
+    text(bloque.rotulo, marginX, y, { size: 8, f: bold, color: MUTED })
+    y -= 16
+    text(bloque.nombre, marginX, y, { size: 13, f: bold })
+    y -= 14
+    text(bloque.documento, marginX, y, { size: 10, f: mono })
+    y -= 13
+    for (const l of bloque.lineas) {
+      text(l, marginX, y, { size: 9.5, color: MUTED })
+      y -= 12
+    }
+    y -= 16
   }
-
-  // ── Deudor ────────────────────────────────────────────────────────────────
-  y -= 16
-  text('DEBE A', marginX, y, { size: 8, f: bold, color: MUTED })
-  y -= 16
-  const d = input.deudor
-  text(d.nombre, marginX, y, { size: 12, f: bold })
-  y -= 14
-  text(`NIT/C.C. ${d.nit}`, marginX, y, { size: 10, f: mono })
-  y -= 13
-  for (const l of [d.direccion, d.ciudad].filter(Boolean)) {
-    text(l, marginX, y, { size: 9.5, color: MUTED })
-    y -= 12
-  }
+  y += 16 // el último bloque no necesita el hueco de separación
 
   // ── La suma ───────────────────────────────────────────────────────────────
   // El valor en letras es requisito de forma en la práctica colombiana, y va
@@ -261,11 +267,17 @@ export async function generateCuentaCobroPdf(input: CuentaCobroPdfInput): Promis
   y -= 20
 
   // ── Totales y retenciones ─────────────────────────────────────────────────
-  const labelX = right - 260
+  const labelX = right - 300
   const fila = (label: string, value: string, o: Opts = {}) => {
     const size = o.size ?? 10
-    text(label, labelX, y, { size, f: o.f ?? font, color: o.color ?? MUTED })
-    textRight(value, right, y, { size, f: o.f ?? font, color: o.color ?? INK })
+    const f = o.f ?? font
+    // El rótulo se recorta a lo que quede libre antes del importe. Los nombres
+    // de los conceptos de retención son largos de verdad ("Retención en la
+    // fuente - honorarios y servicios personales"), y sin esto se dibujan por
+    // encima de la cifra: pdf-lib no recorta ni avisa, simplemente superpone.
+    const libre = right - labelX - f.widthOfTextAtSize(sanitize(value), size) - 12
+    text(truncar(label, f, size, libre), labelX, y, { size, f, color: o.color ?? MUTED })
+    textRight(value, right, y, { size, f, color: o.color ?? INK })
     y -= size + 6
   }
 
@@ -277,7 +289,10 @@ export async function generateCuentaCobroPdf(input: CuentaCobroPdfInput): Promis
   const aplicadas = input.retentions.filter((r) => r.applied)
   for (const r of aplicadas) {
     const pct = (r.rate * 100).toFixed(2).replace(/\.?0+$/, '')
-    fila(`${r.label} (${pct} %)`, `- ${fmt(r.valueCents)}`, { size: 8.5 })
+    // labelCorto y no label: el nombre normativo completo no cabe junto al
+    // importe, y recortarlo se comía justo el porcentaje. `?? label` cubre los
+    // snapshots guardados antes de que existiera el campo.
+    fila(`${r.labelCorto ?? r.label} (${pct} %)`, `- ${fmt(r.valueCents)}`, { size: 9 })
   }
 
   page.drawLine({ start: { x: labelX, y: y + 10 }, end: { x: right, y: y + 10 }, thickness: 0.75, color: rgb(0.7, 0.7, 0.73) })

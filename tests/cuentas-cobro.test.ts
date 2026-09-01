@@ -6,6 +6,7 @@ import {
   computeCuentaCobro,
   computeRetentions,
   ibcSeguridadSocial,
+  bloquesIdentificacion,
   montoEnLetras,
   numeroALetras,
   parseCuentaCobroConfig,
@@ -279,6 +280,47 @@ describe('ibcSeguridadSocial', () => {
     expect(r.pisoCents).toBe(null)
     expect(r.bajoPiso).toBe(false)
     expect(r.cotizableCents).toBe(800_000_00)
+  })
+})
+
+// ── Dirección del documento ─────────────────────────────────────────────────
+// La fórmula colombiana es "[DEUDOR] DEBE A [EMISOR]": el rótulo "DEBE A"
+// encabeza a quien COBRA. Invertirlo no rompe nada visible, solo convierte la
+// cuenta de cobro en un reconocimiento de deuda propia, y eso lo detecta el
+// cliente, no el compilador.
+
+describe('bloquesIdentificacion', () => {
+  const deudor = { nombre: 'Antídoto Colombia', nit: '901777384-6', direccion: 'Cra 7 #1-2', ciudad: 'Bogotá D.C.' }
+
+  it('el deudor va primero, bajo SEÑORES', () => {
+    const [primero] = bloquesIdentificacion(emisorOk, deudor)
+    expect(primero.rotulo).toBe('SEÑORES')
+    expect(primero.papel).toBe('deudor')
+    expect(primero.nombre).toBe('Antídoto Colombia')
+  })
+
+  it('DEBE A encabeza al EMISOR, que es quien cobra', () => {
+    const [, segundo] = bloquesIdentificacion(emisorOk, deudor)
+    expect(segundo.rotulo).toBe('DEBE A')
+    expect(segundo.papel).toBe('emisor')
+    expect(segundo.nombre).toBe(emisorOk.nombre)
+  })
+
+  it('nunca pone al deudor bajo el rótulo DEBE A', () => {
+    const debeA = bloquesIdentificacion(emisorOk, deudor).find((b) => b.rotulo === 'DEBE A')
+    expect(debeA!.nombre).not.toBe(deudor.nombre)
+    expect(debeA!.documento).not.toContain(deudor.nit)
+  })
+
+  it('cada parte lleva su documento con el prefijo que le corresponde', () => {
+    const [señores, debeA] = bloquesIdentificacion(emisorOk, deudor)
+    expect(señores.documento).toBe('NIT/C.C. 901777384-6')
+    expect(debeA.documento).toBe(`C.C. ${emisorOk.cedula}`)
+  })
+
+  it('omite las líneas vacías en vez de dejar huecos en el documento', () => {
+    const [señores] = bloquesIdentificacion(emisorOk, { nombre: 'X', nit: '1', direccion: '', ciudad: '' })
+    expect(señores.lineas).toEqual([])
   })
 })
 

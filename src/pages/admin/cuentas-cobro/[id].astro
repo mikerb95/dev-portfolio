@@ -131,21 +131,26 @@ const STATUS_STYLE: Record<string, string> = {
       <!-- Documento -->
       <div class="glass rounded-2xl p-5">
         <div class="grid gap-5 sm:grid-cols-2">
+          <!--
+            El orden es el del documento y es lo contrario de lo intuitivo: la
+            fórmula es "[DEUDOR] DEBE A [EMISOR]", así que "DEBE A" encabeza a
+            quien cobra. El deudor va primero, bajo "SEÑORES".
+          -->
           <div>
-            <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-2">Emisor</p>
-            <p class="text-[14px] text-ink-50 font-medium">{emisor.nombre || <span class="text-ember">sin configurar</span>}</p>
-            <p class="text-[12px] font-mono text-ink-200">C.C. {emisor.cedula || '-'}</p>
-            <p class="text-[12px] text-ink-300 mt-1">{emisor.direccion}</p>
-            <p class="text-[12px] text-ink-300">{emisor.ciudad}</p>
-          </div>
-          <div>
-            <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-2">Debe a</p>
+            <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-2">Señores (quien paga)</p>
             <p class="text-[14px] text-ink-50 font-medium">{deudor.nombre}</p>
             <p class="text-[12px] font-mono text-ink-200">
               NIT/C.C. {deudor.nit || <span class="text-ember">sin NIT en la ficha</span>}
             </p>
             <p class="text-[12px] text-ink-300 mt-1">{deudor.direccion}</p>
             <p class="text-[12px] text-ink-300">{deudor.ciudad}</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-2">Debe a (quien cobra)</p>
+            <p class="text-[14px] text-ink-50 font-medium">{emisor.nombre || <span class="text-ember">sin configurar</span>}</p>
+            <p class="text-[12px] font-mono text-ink-200">C.C. {emisor.cedula || '-'}</p>
+            <p class="text-[12px] text-ink-300 mt-1">{emisor.direccion}</p>
+            <p class="text-[12px] text-ink-300">{emisor.ciudad}</p>
           </div>
         </div>
 
