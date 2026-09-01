@@ -7,6 +7,7 @@ import { recordActivity } from '../../../lib/portal/activity'
 import { formatMoney } from '../../../lib/portal/format'
 import { sendPush } from '../../../lib/notify'
 import { cronSecretOk } from '../../../lib/cron-auth'
+import { conRegistro } from '../../../lib/cron-runs'
 
 // Barrido diario de facturas vencidas: `sent` con fecha pasada → `overdue`.
 //
@@ -52,7 +53,7 @@ async function run() {
 }
 
 /** Disparado por Vercel cron (GET con Authorization: Bearer CRON_SECRET). */
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = conRegistro('invoices-overdue', async ({ request }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) return json(401, { error: 'no autorizado' })
   try {
     return json(200, await run())
@@ -60,8 +61,7 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[invoices-overdue]', err)
     return json(500, { error: 'barrido fallido' })
   }
-}
-
+})
 /** Disparo manual desde el panel. Fuera del middleware de /api/admin. */
 export const PUT: APIRoute = async ({ request }) => {
   const session = await getSession(request)

@@ -5,6 +5,7 @@ import { senaEpRecordatorios } from '../../../db/schema'
 import { computeHitos, hitosPorAvisar } from '../../../lib/sena-ep'
 import { sendEmail } from '../../../lib/notify'
 import { cronSecretOk } from '../../../lib/cron-auth'
+import { conRegistro } from '../../../lib/cron-runs'
 
 // Recordatorio diario de la calculadora de etapa productiva SENA (/ep).
 // Personal: hay como mucho una suscripción activa, y el email siempre va al
@@ -14,7 +15,7 @@ import { cronSecretOk } from '../../../lib/cron-auth'
 const fmt = (d: Date) => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
 const claveHito = (titulo: string, fecha: Date) => `${titulo}|${fecha.toISOString().slice(0, 10)}`
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = conRegistro('sena-recordatorio', async ({ request }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
@@ -52,4 +53,4 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[cron/sena-recordatorio]', err)
     return new Response(JSON.stringify({ ok: false }), { status: 200 })
   }
-}
+})

@@ -1191,3 +1191,29 @@ export const senaEpRecordatorios = sqliteTable('sena_ep_recordatorios', {
   active: integer('active', { mode: 'boolean' }).notNull().default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
+
+// Bitácora de los crons. Hasta ahora las tareas programadas no dejaban rastro
+// propio: se podía ver su EFECTO (un backup nuevo, un sondeo escrito) pero no
+// la ejecución, así que un cron que dejaba de dispararse solo se notaba cuando
+// alguien echaba de menos el efecto. Eso ya pasó: los sondeos de monitores se
+// cortaron del 10 de agosto al 1 de septiembre de 2026 y el hueco se descubrió
+// tarde, mirando el historial.
+//
+// Una fila por ejecución autorizada. Los 401 de escaneo no se registran: la
+// tabla describe el calendario real, no el ruido de internet.
+export const cronRuns = sqliteTable('cron_runs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Nombre del cron, que es el último segmento de la ruta (`backup`, `uptime-check`).
+  job: text('job').notNull(),
+  ok: integer('ok', { mode: 'boolean' }).notNull(),
+  durationMs: integer('duration_ms'),
+  // Resumen corto del resultado, o el mensaje de error si reventó. Nunca lleva
+  // secretos ni cuerpos de respuesta completos: esta tabla la lee una página pública.
+  detail: text('detail'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+}, (t) => ({
+  // La página pública pide las últimas N filas por fecha desc y reduce en
+  // memoria a "última de cada job": con este índice son N filas escaneadas y
+  // no la tabla entera (Turso factura filas escaneadas, no devueltas).
+  createdIdx: index('cron_runs_created_idx').on(t.createdAt),
+}))

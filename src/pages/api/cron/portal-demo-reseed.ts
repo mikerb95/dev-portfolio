@@ -3,6 +3,7 @@ import { eq, inArray } from 'drizzle-orm'
 import { db, demoAvailable, runInDemoContext } from '../../../db'
 import { clientUsers, invoices, payments, portalNotifications } from '../../../db/schema'
 import { cronSecretOk } from '../../../lib/cron-auth'
+import { conRegistro } from '../../../lib/cron-runs'
 
 // Re-seed nocturno de la demo pública del portal.
 //
@@ -73,7 +74,7 @@ const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 /** Disparado por Vercel cron (GET con Authorization: Bearer CRON_SECRET). */
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = conRegistro('portal-demo-reseed', async ({ request }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) return json(401, { error: 'no autorizado' })
 
   if (!demoAvailable) return json(200, { ok: true, skipped: 'demo no configurada' })
@@ -84,4 +85,4 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[portal-demo-reseed]', err)
     return json(500, { error: 'reseed fallido' })
   }
-}
+})

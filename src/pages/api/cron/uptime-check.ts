@@ -10,6 +10,7 @@ import { isAllowedLogin } from '../../../lib/auth'
 import { sweepSessions } from '../../../lib/device-sessions'
 import { sweepFpRooms } from '../../../lib/fingerprint'
 import { cronSecretOk } from '../../../lib/cron-auth'
+import { conRegistro } from '../../../lib/cron-runs'
 
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
@@ -173,7 +174,7 @@ async function notify(events: Event[]) {
 }
 
 // Disparado por cron-job.org (o Vercel cron) con GET + Authorization: Bearer CRON_SECRET.
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = conRegistro('uptime-check', async ({ request }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
@@ -183,8 +184,7 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[uptime-check]', err)
     return new Response(JSON.stringify({ error: 'chequeo fallido' }), { status: 500 })
   }
-}
-
+})
 // Disparo manual desde /admin/monitors (fuera del middleware de /api/admin → validamos sesión aquí).
 export const PUT: APIRoute = async ({ request }) => {
   const session = await getSession(request)

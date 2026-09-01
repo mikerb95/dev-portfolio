@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { runBackup } from '../../../lib/backup'
 import { cronSecretOk } from '../../../lib/cron-auth'
+import { conRegistro } from '../../../lib/cron-runs'
 
 // Backup diario. Estuvo bajo `/api/admin/backup` hasta agosto de 2026 y por eso
 // no funcionó nunca: el middleware protege con sesión todo lo que cuelga de
@@ -12,7 +13,7 @@ import { cronSecretOk } from '../../../lib/cron-auth'
 //
 // Aquí es GET con Bearer CRON_SECRET, igual que los otros seis crons.
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = conRegistro('backup', async ({ request }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
@@ -24,4 +25,4 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[cron/backup]', err)
     return new Response(JSON.stringify({ error: 'backup fallido' }), { status: 500 })
   }
-}
+})

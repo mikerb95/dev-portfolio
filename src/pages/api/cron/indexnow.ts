@@ -3,6 +3,7 @@ import { getSession } from 'auth-astro/server'
 import { isAllowedLogin } from '../../../lib/auth'
 import { submitSitemapToIndexNow } from '../../../lib/indexnow'
 import { cronSecretOk } from '../../../lib/cron-auth'
+import { conRegistro } from '../../../lib/cron-runs'
 
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
@@ -11,7 +12,7 @@ const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 // dentro de 24h. Fetch del propio sitemap → POST a IndexNow. Barato e idempotente.
 
 // Disparado por Vercel cron (GET con Authorization: Bearer CRON_SECRET).
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = conRegistro('indexnow', async ({ request }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
@@ -22,8 +23,7 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[indexnow]', err)
     return new Response(JSON.stringify({ error: 'envío fallido' }), { status: 500 })
   }
-}
-
+})
 // Disparo manual desde el admin. Fuera del middleware de /api/admin, así que
 // validamos la sesión aquí mismo.
 export const PUT: APIRoute = async ({ request }) => {

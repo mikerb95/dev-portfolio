@@ -19,6 +19,7 @@ import { persistAnomalies } from '../../../lib/security/anomaly-store'
 import { isAllowedLogin } from '../../../lib/auth'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import { sendEmail, sendPush } from '../../../lib/notify'
+import { conRegistro } from '../../../lib/cron-runs'
 
 // Cron de seguridad. Ejecuta, en orden: auto-block (Fase 2), purga por retención,
 // rollups horarios/diarios y detección de anomalías con alertas (Fase 3).
@@ -109,7 +110,7 @@ async function runRollup() {
 }
 
 // Disparo por cron-job.org / Vercel cron.
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = conRegistro('security-rollup', async ({ request }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
@@ -119,8 +120,7 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[security-rollup]', err)
     return new Response(JSON.stringify({ error: 'rollup fallido' }), { status: 500 })
   }
-}
-
+})
 // Disparo manual desde /admin/security (fuera del guard de /api/admin → validamos aquí).
 export const PUT: APIRoute = async ({ request }) => {
   const session = await getSession(request)

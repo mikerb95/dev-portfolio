@@ -7,6 +7,7 @@ import { domainAlertState, daysUntil, type DomainAlertState } from '../../../lib
 import { sendEmail, sendPush } from '../../../lib/notify'
 import { isAllowedLogin } from '../../../lib/auth'
 import { cronSecretOk } from '../../../lib/cron-auth'
+import { conRegistro } from '../../../lib/cron-runs'
 
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
@@ -99,7 +100,7 @@ async function runCheck(force = false) {
 }
 
 // Disparado por Vercel cron, que invoca con GET y añade Authorization: Bearer CRON_SECRET.
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = conRegistro('domain-check', async ({ request }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
@@ -109,8 +110,7 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[domain-check]', err)
     return new Response(JSON.stringify({ error: 'chequeo fallido' }), { status: 500 })
   }
-}
-
+})
 // Disparo manual desde /admin/domains. Esta ruta queda fuera del middleware de /api/admin,
 // así que validamos la sesión aquí mismo. `force` envía aunque no haya empeorado.
 export const PUT: APIRoute = async ({ request }) => {

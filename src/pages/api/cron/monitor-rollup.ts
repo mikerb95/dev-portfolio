@@ -6,6 +6,7 @@ import { monitorChecks, monitorDaily } from '../../../db/schema'
 import { isAllowedLogin } from '../../../lib/auth'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import {
+import { conRegistro } from '../../../lib/cron-runs'
   aggregateChecks,
   serializeHist,
   startOfDayUTC,
@@ -109,7 +110,7 @@ function pedirDias(url: URL): number {
   return Math.min(Math.floor(crudo), DIAS_MAX)
 }
 
-export const GET: APIRoute = async ({ request, url }) => {
+export const GET: APIRoute = conRegistro('monitor-rollup', async ({ request, url }) => {
   if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
@@ -119,8 +120,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     console.error('[monitor-rollup]', err)
     return new Response(JSON.stringify({ error: 'rollup fallido' }), { status: 500 })
   }
-}
-
+})
 // Disparo manual desde el panel (mismo patrón que uptime-check): es la vía para
 // el backfill inicial, `PUT /api/cron/monitor-rollup?days=90`.
 export const PUT: APIRoute = async ({ request, url }) => {
