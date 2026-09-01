@@ -58,6 +58,18 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     <iframe id="lienzo" src="/final.html" title="Presentación"></iframe>
 
     <script>
+      import {
+        aGlobal,
+        aPunto,
+        bundleAunLaTiene,
+        paso,
+        puntoDesdeCapas,
+        totalGlobal,
+        type Accion,
+        type Mazo,
+        type Punto,
+      } from '../lib/presentacion/mapa'
+
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
       type Actual = { pos: number; total: number }
@@ -68,23 +80,116 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       /** Cada cuánto se republica la posición aunque no haya cambiado, para
        *  que el mando siga viendo la pantalla viva y conserve el techo real. */
       const LATIDO_MS = 5_000
-      /** Lo que tarda una diapositiva en asentarse (anima un canvas pesado). */
+      /** Lo que tarda un paso en asentarse (un beat anima un canvas pesado y
+       *  una capa se funde en .4s). */
       const PASO_MS = 350
 
+      /* ------------------------------------------------------------------ *
+       * Descubrimiento del mazo
+       *
+       * `final.html` se reemplaza entero cada vez que se itera la
+       * presentación, así que nada de él puede estar cableado aquí: ni el
+       * número de beats, ni los z-index de sus capas, ni cuántas hay. Lo que
+       * se busca son formas, no identidades.
+       * ------------------------------------------------------------------ */
+
+      type Capa = { el: HTMLElement; z: number }
+
+      let mazo: Mazo | null = null
+      let capas: { intro: Capa[]; outro: Capa[] } = { intro: [], outro: [] }
+      /** Qué capas queremos puestas. Es la verdad, no el DOM: mientras una
+       *  capa se funde, su opacidad calculada miente sobre la intención. */
+      let puestas = { intro: [] as boolean[], outro: [] as boolean[] }
+      /** Cuántas capas de entrada le hemos gastado ya al bundle (ver
+       *  `bundleAunLaTiene`). Se reinicia si el iframe se recarga. */
+      let consumidas = 0
+      let contador: HTMLElement | null = null
+
+      const estilo = (e: Element) => iframe.contentWindow!.getComputedStyle(e)
+
+      /** Una capa es cualquier cosa apilada que cubre el escenario entero. */
+      function esCapa(e: HTMLElement): boolean {
+        const s = estilo(e)
+        if (s.position !== 'absolute' && s.position !== 'fixed') return false
+        const z = Number(s.zIndex)
+        if (!Number.isFinite(z) || z < 1) return false
+        const padre = (e.offsetParent as HTMLElement | null) ?? e.parentElement
+        if (!padre || e.offsetWidth < 600) return false
+        return e.offsetWidth >= padre.offsetWidth * 0.9 && e.offsetHeight >= padre.offsetHeight * 0.9
+      }
+
+      const seVe = (e: HTMLElement) =>
+        estilo(e).visibility !== 'hidden' && Number(estilo(e).opacity) > 0.5
+
       /**
-       * Dónde está la presentación, leído del propio bundle: pinta su posición
-       * como "05 / 14" y de ahí salen la diapositiva actual y el total.
+       * El contador de beats: el elemento más pequeño cuyo texto entero es
+       * "NN / MM". Se busca el elemento y no el `innerText` del documento
+       * porque con una capa delante el texto de la capa va primero y una cifra
+       * suya podría colarse en el regex.
        */
-      function leerPosicion(): Actual | null {
+      function buscarContador(d: Document): HTMLElement | null {
+        const candidatos = [...d.querySelectorAll<HTMLElement>('div,span,p')].filter((e) =>
+          /^\d{1,3}\s*\/\s*\d{1,3}$/.test((e.textContent ?? '').trim())
+        )
+        return candidatos.sort((a, b) => a.querySelectorAll('*').length - b.querySelectorAll('*').length)[0] ?? null
+      }
+
+      function leerBeat(): Actual | null {
         const d = iframe.contentDocument
-        const texto = d?.body?.innerText
-        if (!texto) return null
-        const m = texto.match(/(\d{1,2})\s*\/\s*(\d{1,2})/)
+        if (!d) return null
+        const texto = contador?.isConnected ? contador.textContent : d.body?.innerText
+        const m = texto?.match(/(\d{1,3})\s*\/\s*(\d{1,3})/)
         if (!m) return null
         const pos = Number(m[1])
         const total = Number(m[2])
         return pos >= 1 && total >= pos ? { pos, total } : null
       }
+
+      /**
+       * Clasifica las capas por lo que se ve en el arranque, que es el único
+       * momento en que el bundle habla sin que nadie le haya tocado nada: lo
+       * que ya está puesto va ANTES de los beats (cita, portada) y lo que está
+       * oculto va DESPUÉS (el cierre, y lo que se le añada detrás).
+       *
+       * El orden dentro de cada zona también sale de la forma. En la entrada
+       * se ve primero la más alta, porque tapa a las de abajo. En el cierre es
+       * al revés: cada una se apila sobre la anterior, así que la primera es
+       * la más baja.
+       */
+      function descubrir(): boolean {
+        const d = iframe.contentDocument
+        if (!d?.body) return false
+        const c = buscarContador(d)
+        // Sin contador el bundle todavía no ha montado: descubrir ahora daría
+        // un mazo a medias que luego nadie volvería a mirar.
+        if (!c) return false
+        const todas = [...d.body.querySelectorAll<HTMLElement>('div')].filter(esCapa)
+        const z = (e: HTMLElement) => Number(estilo(e).zIndex)
+        const intro = todas.filter(seVe).sort((a, b) => z(b) - z(a))
+        const outro = todas.filter((e) => !seVe(e)).sort((a, b) => z(a) - z(b))
+        contador = c
+        capas = {
+          intro: intro.map((el) => ({ el, z: z(el) })),
+          outro: outro.map((el) => ({ el, z: z(el) })),
+        }
+        puestas = { intro: intro.map(() => true), outro: outro.map(() => false) }
+        consumidas = 0
+        mazo = { intro: intro.length, beats: leerBeat()?.total ?? 1, outro: outro.length }
+        return true
+      }
+
+      // Si el bundle se recarga por su cuenta vuelve a tener sus capas de
+      // entrada abiertas y su cuenta de teclas sin gastar. Se descubre otra
+      // vez desde cero y el destino guardado reconstruye la charla sola.
+      iframe.addEventListener('load', () => {
+        mazo = null
+        contador = null
+        ultimo = null
+      })
+
+      /* ------------------------------------------------------------------ *
+       * Movimiento
+       * ------------------------------------------------------------------ */
 
       function disparar(tecla: string) {
         const w = iframe.contentWindow
@@ -103,10 +208,75 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         }
       }
 
+      /**
+       * Pone o quita una capa. Es todo lo que hace falta para navegar la
+       * entrada y el cierre, y es lo que hace la navegación REVERSIBLE: el
+       * bundle solo sabe cerrar su portada (`closeCover` es de ida, y `go`
+       * acota en el primer beat), pero su portada no es más que un div tapado,
+       * y eso se deshace desde fuera sin recargar nada.
+       */
+      function pintarCapa(c: Capa, visible: boolean) {
+        const e = c.el
+        e.style.transition = 'opacity .4s linear'
+        e.style.pointerEvents = 'none'
+        if (visible) {
+          e.style.visibility = 'visible'
+          e.style.opacity = '1'
+        } else {
+          e.style.opacity = '0'
+        }
+      }
+
+      /** Re-afirma la intención en el DOM. El bundle deja programado un
+       *  `visibility:hidden` diferido al cerrar sus capas, y una capa que
+       *  volvimos a poner justo antes se apagaría sola sin esto. */
+      function afirmarCapas() {
+        for (const zona of ['intro', 'outro'] as const) {
+          capas[zona].forEach((c, k) => {
+            const quiere = puestas[zona][k]
+            const puesta = seVe(c.el)
+            if (quiere !== puesta) pintarCapa(c, quiere)
+          })
+        }
+      }
+
+      function aplicar(acc: Accion) {
+        if (acc.tipo === 'tecla') {
+          disparar(acc.tecla)
+          return
+        }
+        const c = capas[acc.zona][acc.idx]
+        if (!c) return
+        // Primera vez que se retira una capa de entrada: el bundle todavía la
+        // cree suya y se va a tragar una flecha antes de mover ningún beat.
+        // Gastársela aquí deja su estado y el nuestro de acuerdo; a partir de
+        // ahí la capa es solo estilo.
+        if (acc.zona === 'intro' && !acc.visible && bundleAunLaTiene(acc.idx, consumidas)) {
+          disparar('ArrowRight')
+          consumidas = acc.idx + 1
+        }
+        puestas[acc.zona][acc.idx] = acc.visible
+        pintarCapa(c, acc.visible)
+      }
+
+      function puntoActual(): Punto | null {
+        const beat = leerBeat()
+        if (!mazo || !beat) return null
+        // El total de beats es del bundle, no nuestro: si se reemplaza por uno
+        // con más, el mazo crece solo y el mando ve el techo nuevo.
+        mazo = { ...mazo, beats: beat.total }
+        return puntoDesdeCapas(mazo, { ...puestas, beat: beat.pos })
+      }
+
+      /* ------------------------------------------------------------------ *
+       * Publicación y reconciliación
+       * ------------------------------------------------------------------ */
+
       let ultimo: Actual | null = null
       let ultimoReporteEn = 0
 
-      /** Publica la posición real. Es lo único que escribe `actual`. */
+      /** Publica la posición real, ya en índice global. Es lo único que
+       *  escribe `actual`. */
       async function reportar(actual: Actual, origen: Origen) {
         ultimo = actual
         ultimoReporteEn = Date.now()
@@ -125,29 +295,33 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let aplicando = false
 
       async function reconciliar(destino: number) {
-        if (aplicando) return
+        if (aplicando || !mazo) return
         aplicando = true
         try {
-          // Tres teclas seguidas sin que cambie el contador sí significan "no
-          // hay más"; una sola no, porque la portada se cierra sin avanzar.
           let sinMover = 0
-          let actual = leerPosicion()
-          for (let intentos = 0; intentos < 40 && actual && actual.pos !== destino; intentos++) {
-            disparar(actual.pos < destino ? 'ArrowRight' : 'ArrowLeft')
+          for (let intentos = 0; intentos < 60; intentos++) {
+            const punto = puntoActual()
+            if (!punto || !mazo) break
+            const aqui = aGlobal(mazo, punto)
+            if (aqui === destino) break
+            const acc = paso(mazo, punto, aPunto(mazo, destino))
+            if (!acc) break
+            aplicar(acc)
             await new Promise((r) => setTimeout(r, PASO_MS))
-            const despues = leerPosicion()
-            if (despues && despues.pos === actual.pos) {
+            const despues = puntoActual()
+            // Un paso que no mueve nada tres veces seguidas es un tope real
+            // (el bundle también consume teclas sin avanzar). Manda la
+            // realidad: mejor que el mando deje de perseguir un fantasma.
+            if (despues && mazo && aGlobal(mazo, despues) === aqui) {
               if (++sinMover >= 3) break
             } else {
               sinMover = 0
             }
-            actual = despues
           }
-          if (actual) {
-            // Si se llegó, el destino ya era ese y solo se confirma. Si no se
-            // pudo llegar, manda la realidad: el mando deja de mostrar un
-            // destino fantasma y el sondeo siguiente no vuelve a intentarlo.
-            await reportar(actual, actual.pos === destino ? 'mando' : 'ajena')
+          const punto = puntoActual()
+          if (punto && mazo) {
+            const pos = aGlobal(mazo, punto)
+            await reportar({ pos, total: totalGlobal(mazo) }, pos === destino ? 'mando' : 'ajena')
           }
         } finally {
           aplicando = false
@@ -155,8 +329,12 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
 
       async function sondear() {
-        const actual = leerPosicion()
-        if (!actual) return
+        if (!mazo && !descubrir()) return
+        const punto = puntoActual()
+        if (!punto || !mazo) return
+        afirmarCapas()
+
+        const actual = { pos: aGlobal(mazo, punto), total: totalGlobal(mazo) }
 
         // Alguien movió el bundle sin pasar por el mando (el teclado del
         // portátil). Manda la realidad, o el sondeo siguiente arrastraría la

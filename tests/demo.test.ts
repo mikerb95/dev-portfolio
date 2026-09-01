@@ -111,6 +111,14 @@ describe('demo · rutas vetadas aunque sean GET', () => {
       '/api/sustentacion/pase',
       '/api/sustentacion/acceso',
       '/sustentacion/entrar',
+      // Cuentas de cobro: el PDF imprime cédula, dirección y número de cuenta
+      // bancaria, y es un GET, así que "solo lectura" no lo detendría. Tampoco
+      // basta el cambio de base de datos: los datos del emisor salen de
+      // app_settings, que la base de demo también tiene.
+      '/admin/cuentas-cobro',
+      '/admin/cuentas-cobro/3',
+      '/api/admin/cuentas-cobro',
+      '/api/admin/cuentas-cobro/3/pdf',
     ]) {
       expect(isDemoBlockedPath(p), p).toBe(true)
     }
