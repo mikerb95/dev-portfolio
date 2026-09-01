@@ -64,7 +64,7 @@ const en = {
         seguridad: 'Security',
         laboratorio: 'Lab',
       },
-      operacion: { title: 'Operations', log: 'Log', status: 'Status' },
+      operacion: { title: 'Operations', log: 'Log', status: 'Status', automatizaciones: 'Automation' },
       redes: { title: 'Social' },
       contacto: { title: 'Direct contact' },
     },

@@ -60,7 +60,7 @@ const es = {
         seguridad: 'Seguridad',
         laboratorio: 'Laboratorio',
       },
-      operacion: { title: 'Operación', log: 'Log', status: 'Status' },
+      operacion: { title: 'Operación', log: 'Log', status: 'Status', automatizaciones: 'Automatizaciones' },
       redes: { title: 'Redes' },
       contacto: { title: 'Contacto directo' },
     },
