@@ -869,6 +869,16 @@ export const projectMilestones = sqliteTable('project_milestones', {
 
 // Factura formal. `finances` sigue siendo mi libro contable interno (incluye
 // proyecciones y costos); esto es el documento que el cliente ve y paga.
+//
+// La misma tabla sirve DOS documentos distintos, discriminados por `doc_type`:
+//  · 'factura'      → la del portal, serie INV-, con IVA, la ve el cliente.
+//  · 'cuenta_cobro' → documento de persona natural NO responsable de IVA, serie
+//                     CC-, sin IVA, con retenciones y leyendas legales.
+// No son dos tablas porque comparten líneas, totales en centavos, numeración
+// UNIQUE, máquina de estados e inmutabilidad; duplicarlas sería duplicar el
+// sitio donde arreglar un bug de redondeo. Mismo precedente que
+// `payments.source`. La forma de cada tipo la valida lib/cuentas-cobro.ts en el
+// borde, no la base. Ver docs/plan-cuentas-de-cobro.md.
 export const invoices = sqliteTable('invoices', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   clientId: integer('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
@@ -876,6 +886,8 @@ export const invoices = sqliteTable('invoices', {
   // Correlativo legible y estable: INV-2026-001. UNIQUE porque numerar dos
   // veces igual es un problema contable, no un detalle cosmético.
   number: text('number').notNull().unique(),
+  // El default preserva las filas que existían antes de la migración 0030.
+  docType: text('doc_type', { enum: ['factura', 'cuenta_cobro'] }).notNull().default('factura'),
   status: text('status', { enum: ['draft', 'sent', 'paid', 'overdue', 'void'] }).notNull().default('draft'),
   currency: text('currency').notNull().default('COP'),
   // Todo en centavos enteros: nunca float para dinero.
