@@ -1,0 +1,453 @@
+---
+// Lo que corre solo: workflows de GitHub Actions, tareas programadas y los
+// automatismos que dispara el propio tráfico.
+//
+// Página PÚBLICA, mismo criterio OPSEC que /status: solo agregados y
+// descripciones. Nada de rutas señuelo, umbrales de bloqueo ni nombres de
+// reglas de detección. El catálogo vive en `src/data/automatizaciones.ts`; aquí
+// solo se cruza con el estado real.
+//
+// FAIL-OPEN en las dos fuentes. Si la API de GitHub no responde (cuota, caída)
+// o la base no contesta, la sección se pinta con lo que hay y se dice que no se
+// pudo leer. Una página de observabilidad que devuelve 500 cuando lo observado
+// falla no sirve para nada, que es justo cuando más se mira.
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { db } from '../db'
+import { cronRuns } from '../db/schema'
+import { desc } from 'drizzle-orm'
+import { mapRunEstado } from '../lib/lab/pipeline-live'
+import { safeQuery } from '../lib/safe-query'
+import { serverEnv } from '../lib/env'
+import { WORKFLOWS, CRONS, AUTOMATISMOS } from '../data/automatizaciones'
+
+const REPO = 'mikerb95/dev-portfolio'
+
+type GhRun = {
+  name: string | null
+  status: string | null
+  conclusion: string | null
+  created_at: string
+  html_url: string | null
+  event: string | null
+}
+
+// UNA sola petición para los seis workflows: se piden las últimas corridas de
+// `main` y se reduce a la más reciente de cada nombre. Pedir el último run
+// workflow por workflow serían seis peticiones contra una cuota de 60/hora sin
+// token, y esta página la puede abrir cualquiera.
+let runs: GhRun[] = []
+let githubOk = true
+try {
+  const token = serverEnv('GITHUB_API_TOKEN')
+  const res = await fetch(
+    `https://api.github.com/repos/${REPO}/actions/runs?branch=main&per_page=40`,
+    {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  )
+  if (res.ok) {
+    runs = ((await res.json()) as { workflow_runs?: GhRun[] }).workflow_runs ?? []
+  } else {
+    githubOk = false
+  }
+} catch {
+  githubOk = false
+}
+
+const ultimoRun = new Map<string, GhRun>()
+for (const r of runs) {
+  if (r.name && !ultimoRun.has(r.name)) ultimoRun.set(r.name, r)
+}
+
+// Bitácora de crons: las últimas filas por fecha, reducidas en memoria a la
+// última de cada job. Con LIMIT sobre el índice de fecha son ~150 filas
+// escaneadas, no la tabla entera (Turso factura filas escaneadas).
+type Fila = { job: string; ok: boolean; durationMs: number | null; createdAt: Date | null }
+
+// `safeQuery` y no un try/catch propio: es el patrón del repo para el render de
+// páginas públicas, y deja el fallo en el log del servidor en vez de tragárselo.
+// Cubre también el caso "la migración todavía no se aplicó": la página se sirve
+// igual y la sección lo dice.
+const filas = await safeQuery<Fila[]>(
+  () =>
+    db
+      .select({
+        job: cronRuns.job,
+        ok: cronRuns.ok,
+        durationMs: cronRuns.durationMs,
+        createdAt: cronRuns.createdAt,
+      })
+      .from(cronRuns)
+      .orderBy(desc(cronRuns.createdAt))
+      .limit(150) as Promise<Fila[]>,
+  [],
+  'automatizaciones: bitácora de crons'
+)
+const bitacoraOk = filas.length > 0
+
+const ultimaEjecucion = new Map<string, Fila>()
+for (const f of filas) {
+  if (!ultimaEjecucion.has(f.job)) ultimaEjecucion.set(f.job, f)
+}
+
+const fmt = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: 'UTC',
+})
+
+function haceCuanto(d: Date | null | undefined): string | null {
+  if (!d) return null
+  const min = Math.floor((Date.now() - d.getTime()) / 60000)
+  if (min < 1) return 'hace un momento'
+  if (min < 60) return `hace ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `hace ${h} h`
+  return `hace ${Math.floor(h / 24)} d`
+}
+
+const ETIQUETA_DISPARADOR: Record<string, string> = {
+  push: 'en cada push',
+  pull_request: 'en cada pull request',
+  semanal: 'semanal',
+  manual: 'a mano',
+  vercel: 'cron de Vercel',
+  externo: 'cron externo',
+}
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+---
+
+<BaseLayout
+  title="Automatizaciones"
+  description="Lo que corre solo en codebymike.tech: integración continua, tareas programadas y los automatismos que dispara el propio tráfico, con su último resultado real."
+>
+  <main class="auto">
+    <header class="cab">
+      <p class="eyebrow">Ingeniería</p>
+      <h1>Lo que corre solo</h1>
+      <p class="lede">
+        Seis workflows de integración continua, diez tareas programadas y los automatismos
+        que dispara el propio tráfico. Lo que ves abajo es el último resultado real de cada
+        uno, no una descripción de cómo debería funcionar.
+      </p>
+    </header>
+
+    <section class="bloque">
+      <div class="bloque-cab">
+        <h2>Integración continua</h2>
+        {!githubOk && <span class="aviso">No se pudo leer GitHub ahora mismo</span>}
+      </div>
+      <p class="bloque-sub">
+        Nada llega a producción sin pasar por aquí. La verificación posterior al despliegue
+        puede revertir sola lo que acaba de publicarse.
+      </p>
+
+      <ul class="lista">
+        {
+          WORKFLOWS.map((w) => {
+            const run = ultimoRun.get(w.nombre)
+            const estado = run ? mapRunEstado(run.status, run.conclusion) : null
+            return (
+              <li class="item">
+                <div class="item-cab">
+                  <h3>{w.nombre}</h3>
+                  {estado && <span class={`pill pill-${estado}`}>{estado}</span>}
+                </div>
+                <p class="hace">{w.hace}</p>
+                {w.detalle && <p class="detalle">{w.detalle}</p>}
+                <div class="pie">
+                  <span class="cuando">
+                    {w.disparadores.map((d) => ETIQUETA_DISPARADOR[d] ?? d).join(' · ')}
+                  </span>
+                  {run?.created_at && (
+                    <span class="sello">
+                      última: {haceCuanto(new Date(run.created_at))}
+                    </span>
+                  )}
+                  <span class="archivo">{w.archivo}</span>
+                </div>
+              </li>
+            )
+          })
+        }
+      </ul>
+    </section>
+
+    <section class="bloque">
+      <div class="bloque-cab">
+        <h2>Tareas programadas</h2>
+        {!bitacoraOk && <span class="aviso">Bitácora no disponible</span>}
+      </div>
+      <p class="bloque-sub">
+        El plan que uso permite una ejecución diaria por tarea, así que lo que necesita más
+        frecuencia lo dispara un programador externo contra el mismo endpoint, con el mismo
+        secreto. Cada ejecución autorizada queda anotada: un cron que deja de dispararse no
+        produce un error, produce silencio.
+      </p>
+
+      <div class="tabla-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Tarea</th>
+              <th>Cuándo</th>
+              <th>Origen</th>
+              <th>Qué hace</th>
+              <th>Última</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              CRONS.map((c) => {
+                const u = ultimaEjecucion.get(c.job)
+                return (
+                  <tr>
+                    <td class="job">{c.job}</td>
+                    <td class="num">{c.horario}</td>
+                    <td>
+                      <span class={`origen origen-${c.origen === 'vercel' ? 'v' : 'e'}`}>
+                        {c.origen}
+                      </span>
+                    </td>
+                    <td class="que">
+                      {c.hace}
+                      <span class="sifalla">Si falla: {c.siFalla}</span>
+                    </td>
+                    <td class="num">
+                      {u ? (
+                        <span class={u.ok ? 'ok' : 'mal'}>{haceCuanto(u.createdAt)}</span>
+                      ) : (
+                        <span class="sindato">sin registro</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="bloque">
+      <h2>Automatismos del producto</h2>
+      <p class="bloque-sub">
+        Estos no los dispara un calendario ni un push, sino el propio tráfico.
+      </p>
+      <ul class="rejilla">
+        {
+          AUTOMATISMOS.map((a) => (
+            <li class="tarjeta">
+              <h3>{a.nombre}</h3>
+              <p>{a.hace}</p>
+              <span class="cuando">{a.cuando}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .auto {
+    max-width: 66rem;
+    margin: 0 auto;
+    padding: 3rem 1.25rem 5rem;
+  }
+  .eyebrow {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent, #0369a1);
+    margin: 0 0 0.75rem;
+  }
+  .cab h1 {
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.12;
+    margin: 0 0 0.9rem;
+    text-wrap: balance;
+  }
+  .cab .lede {
+    font-size: 1.06rem;
+    max-width: 60ch;
+    opacity: 0.85;
+    margin: 0;
+  }
+
+  .bloque {
+    margin-top: 3.5rem;
+  }
+  .bloque-cab {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+  }
+  .bloque h2 {
+    font-size: 1.35rem;
+    margin: 0 0 0.5rem;
+  }
+  .bloque-sub {
+    max-width: 62ch;
+    opacity: 0.78;
+    margin: 0 0 1.5rem;
+    font-size: 0.97rem;
+  }
+  .aviso {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    opacity: 0.75;
+  }
+
+  .lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.9rem;
+  }
+  .item {
+    border: 1px solid var(--border, rgba(128, 145, 160, 0.28));
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+  }
+  .item-cab {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.5rem;
+  }
+  .item h3 {
+    font-size: 1.02rem;
+    margin: 0;
+  }
+  .hace {
+    margin: 0 0 0.4rem;
+    font-size: 0.95rem;
+  }
+  .detalle {
+    margin: 0 0 0.6rem;
+    font-size: 0.9rem;
+    opacity: 0.75;
+    max-width: 68ch;
+  }
+  .pie {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    opacity: 0.65;
+  }
+  .archivo {
+    margin-left: auto;
+  }
+
+  .pill {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+  }
+  .pill-ok { color: #15803d; }
+  .pill-fail { color: #b91c1c; }
+  .pill-in_progress, .pill-pending { color: #b45309; }
+  .pill-skip { opacity: 0.6; }
+  :global(html.dark) .pill-ok { color: #4ade80; }
+  :global(html.dark) .pill-fail { color: #f87171; }
+  :global(html.dark) .pill-in_progress, :global(html.dark) .pill-pending { color: #facc15; }
+
+  .tabla-scroll {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    min-width: 46rem;
+  }
+  th {
+    text-align: left;
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    padding: 0 0.7rem 0.6rem 0;
+    font-weight: 600;
+  }
+  td {
+    padding: 0.75rem 0.7rem 0.75rem 0;
+    border-top: 1px solid var(--border, rgba(128, 145, 160, 0.22));
+    vertical-align: top;
+  }
+  .job, .num {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .que {
+    max-width: 30rem;
+  }
+  .sifalla {
+    display: block;
+    font-size: 0.82rem;
+    opacity: 0.62;
+    margin-top: 0.25rem;
+  }
+  .origen {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid var(--border, rgba(128, 145, 160, 0.35));
+    white-space: nowrap;
+  }
+  .ok { color: #15803d; }
+  .mal { color: #b91c1c; }
+  :global(html.dark) .ok { color: #4ade80; }
+  :global(html.dark) .mal { color: #f87171; }
+  .sindato { opacity: 0.5; }
+
+  .rejilla {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 0.9rem;
+  }
+  .tarjeta {
+    border: 1px solid var(--border, rgba(128, 145, 160, 0.28));
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+  }
+  .tarjeta h3 {
+    font-size: 0.98rem;
+    margin: 0 0 0.4rem;
+  }
+  .tarjeta p {
+    margin: 0 0 0.6rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+  .tarjeta .cuando {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    opacity: 0.6;
+  }
+</style>
