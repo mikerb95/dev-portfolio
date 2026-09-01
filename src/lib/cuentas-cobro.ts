@@ -424,12 +424,15 @@ export function parseDeudor(nombre: string, billingInfo: string | null | undefin
   } catch {
     raw = {}
   }
+  // Las tildes se PLIEGAN, no se borran: 'Dirección' tiene que casar con
+  // 'direccion', y un simple [^a-z] la convertiría en 'direccin'.
+  const norm = (s: string) =>
+    s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '')
+
   const pick = (...keys: string[]): string => {
     for (const k of keys) {
       for (const [rk, rv] of Object.entries(raw)) {
-        if (rk.toLowerCase().replace(/[^a-z]/g, '') === k && typeof rv === 'string' && rv.trim()) {
-          return rv.trim()
-        }
+        if (norm(rk) === k && typeof rv === 'string' && rv.trim()) return rv.trim()
       }
     }
     return ''
