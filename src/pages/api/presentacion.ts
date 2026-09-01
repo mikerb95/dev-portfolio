@@ -14,15 +14,22 @@ import {
   type Actual,
   type Origen,
 } from '../../lib/presentacion/estado'
+import {
+  desplazamientoPedido,
+  mover as moverScroll,
+  parsearPeticion,
+  type Peticion,
+} from '../../lib/presentacion/desplazamiento'
 
 /**
  * Estado del control remoto de `/final.html`, que no se toca ni se edita.
  *
  *   GET                             -> { destino, actual, viva }
- *   GET ?q=destino                  -> { destino }            (lo que sondea la pantalla)
+ *   GET ?q=destino                  -> { destino, scroll }    (lo que sondea la pantalla)
  *   POST { accion: siguiente|anterior } -> mueve el destino    (el mando)
+ *   POST { accion: subir|bajar }    -> desplaza el iframe del beat (el mando)
  *   POST { destino: N }             -> salto directo           (el mando)
- *   POST { pos, total, intro, outro, origen }
+ *   POST { pos, total, intro, outro, scroll, origen }
  *                                   -> la pantalla publica dónde está de verdad
  *
  * DOS CLAVES, UN ESCRITOR CADA UNA. El mando escribe `destino`; la pantalla
@@ -40,6 +47,14 @@ import {
 
 const K_DESTINO = 'presentacion:destino'
 const K_ACTUAL = 'presentacion:actual'
+/**
+ * El desplazamiento pedido para el iframe de la diapositiva, con la
+ * diapositiva a la que pertenece. Clave aparte y no un campo del destino por
+ * la misma razón que separa a las otras dos: el destino también lo escribe la
+ * pantalla (para acotarlo y para adoptar un movimiento ajeno), y meterlo ahí
+ * haría que cada reporte borrara el scroll que el pulgar acababa de pedir.
+ */
+const K_SCROLL = 'presentacion:scroll'
 const TTL_SEGUNDOS = 6 * 60 * 60
 
 const json = (status: number, body: unknown) =>
@@ -64,13 +79,21 @@ async function leerActual(): Promise<Actual | null> {
 const guardarDestino = (n: number) =>
   presentStore().set(K_DESTINO, String(n), TTL_SEGUNDOS)
 
+const leerScroll = async (): Promise<Peticion | null> =>
+  parsearPeticion(await presentStore().get(K_SCROLL))
+
 export const GET: APIRoute = async ({ url }) => {
   try {
     // La pantalla sondea dos veces por segundo durante toda la charla y solo
     // necesita el destino. Pedir de paso el `actual` que ella misma escribió
     // duplicaría las lecturas del almacén sin darle nada.
     if (url.searchParams.get('q') === 'destino') {
-      return json(200, { destino: await leerDestino() })
+      // Un número más en un viaje que ya se hacía: la pantalla sondea esto dos
+      // veces por segundo y de aquí saca también hasta dónde desplazar el
+      // iframe. Lo pedido para OTRA diapositiva vale 0, que es la vuelta
+      // arriba automática al cambiar de beat.
+      const [destino, pedido] = await Promise.all([leerDestino(), leerScroll()])
+      return json(200, { destino, scroll: desplazamientoPedido(pedido, destino) })
     }
     const [destino, actual] = await Promise.all([leerDestino(), leerActual()])
     return json(200, { destino, actual, viva: esFresco(actual, Date.now()) })
@@ -93,6 +116,7 @@ export const POST: APIRoute = async ({ request }) => {
     total?: unknown
     intro?: unknown
     outro?: unknown
+    scroll?: unknown
     origen?: unknown
   }
 
@@ -118,6 +142,9 @@ export const POST: APIRoute = async ({ request }) => {
         total,
         ts: Date.now(),
         ...parsearForma(cuerpo.intro, cuerpo.outro, total),
+        // La geometría del iframe viaja con la posición y `parsearActual` la
+        // valida al leerla. Se guarda tal cual para no duplicar esa regla.
+        ...(cuerpo.scroll === undefined ? {} : { scroll: cuerpo.scroll as Actual['scroll'] }),
       }
       await presentStore().set(K_ACTUAL, JSON.stringify(actual), TTL_SEGUNDOS)
 
@@ -130,6 +157,27 @@ export const POST: APIRoute = async ({ request }) => {
     // ── El mando ────────────────────────────────────────────────────────────
     const [previo, actual] = await Promise.all([leerDestino(), leerActual()])
     const tope = techo(actual, Date.now())
+
+    // Desplazar la página que hay dentro del beat. El paso lo calcula el
+    // SERVIDOR sobre la geometría que publicó la pantalla, igual que el
+    // destino se acota contra el techo real del mazo: el teléfono solo dice
+    // arriba o abajo y no sabe nada de la página que hay dentro del iframe.
+    if (cuerpo.accion === 'subir' || cuerpo.accion === 'bajar') {
+      const pedido = await leerScroll()
+      const siguiente = moverScroll(pedido, previo, cuerpo.accion === 'bajar' ? 1 : -1, actual?.scroll)
+      // Sin nada que desplazar no se escribe nada. No es un error: la pantalla
+      // pudo cambiar de diapositiva entre el toque y su llegada.
+      if (siguiente && siguiente.y !== desplazamientoPedido(pedido, previo)) {
+        await presentStore().set(K_SCROLL, JSON.stringify(siguiente), TTL_SEGUNDOS)
+      }
+      return json(200, {
+        destino: previo,
+        actual,
+        viva: esFresco(actual, Date.now()),
+        scroll: siguiente ? siguiente.y : desplazamientoPedido(pedido, previo),
+      })
+    }
+
     let destino: number
 
     if (cuerpo.destino !== undefined) {

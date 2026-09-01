@@ -16,6 +16,8 @@
 // ABSOLUTA y no una cola de comandos es lo que hace que un sondeo perdido no
 // pierda nada: el siguiente trae el destino entero.
 
+import { parsearGeometria, type Geometria } from './desplazamiento'
+
 /**
  * Dónde está la presentación, tal como la publica la pantalla. `pos` y `total`
  * son el índice global del mazo entero (capas de entrada + beats + cierre).
@@ -25,6 +27,13 @@
  * enseñar la nota del guion que toca. Son opcionales porque una pantalla vieja
  * -o una que aún no ha descubierto el bundle- publica sin ellas, y eso no puede
  * romper el mando: se queda sin notas, no sin control.
+ *
+ * `scroll` es la geometría del iframe que hay dentro de la diapositiva, cuando
+ * la hay: dónde está la página, cuánto queda por bajar y qué altura tiene la
+ * ventanilla. Es lo que le permite al servidor calcular el paso y al mando
+ * apagar los botones en los topes. Opcional por la misma razón que la forma, y
+ * por dos más: la mayoría de las diapositivas no tienen iframe, y uno de otro
+ * origen no se deja medir.
  */
 export type Actual = {
   pos: number
@@ -32,6 +41,7 @@ export type Actual = {
   ts: number
   intro?: number
   outro?: number
+  scroll?: Geometria
 }
 
 /** Quién movió la presentación, que es lo que decide si se adopta o no. */
@@ -68,7 +78,11 @@ export function parsearActual(crudo: string | null): Actual | null {
     if (!esEntero(v.pos) || !esEntero(v.total) || !esEntero(v.ts)) return null
     if (v.pos < POS_INICIAL || v.total < POS_INICIAL || v.pos > v.total) return null
     const forma = parsearForma(v.intro, v.outro, v.total)
-    return { pos: v.pos, total: v.total, ts: v.ts, ...forma }
+    // La geometría se valida aparte y se descarta sola si no cuadra: una
+    // medida rota deja al mando sin botones de scroll, nunca sin control de
+    // las diapositivas.
+    const scroll = parsearGeometria(v.scroll)
+    return { pos: v.pos, total: v.total, ts: v.ts, ...forma, ...(scroll ? { scroll } : {}) }
   } catch {
     return null
   }
