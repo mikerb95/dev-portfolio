@@ -16,8 +16,23 @@
 // ABSOLUTA y no una cola de comandos es lo que hace que un sondeo perdido no
 // pierda nada: el siguiente trae el destino entero.
 
-/** Diapositiva en la que está el bundle, tal como él mismo la reporta. */
-export type Actual = { pos: number; total: number; ts: number }
+/**
+ * Dónde está la presentación, tal como la publica la pantalla. `pos` y `total`
+ * son el índice global del mazo entero (capas de entrada + beats + cierre).
+ *
+ * `intro` y `outro` son la FORMA de ese mazo, y viajan por una sola razón: sin
+ * ellas el mando tiene un número pero no sabe de qué zona es, y no podría
+ * enseñar la nota del guion que toca. Son opcionales porque una pantalla vieja
+ * -o una que aún no ha descubierto el bundle- publica sin ellas, y eso no puede
+ * romper el mando: se queda sin notas, no sin control.
+ */
+export type Actual = {
+  pos: number
+  total: number
+  ts: number
+  intro?: number
+  outro?: number
+}
 
 /** Quién movió la presentación, que es lo que decide si se adopta o no. */
 export type Origen = 'inicial' | 'latido' | 'mando' | 'ajena'
@@ -52,10 +67,27 @@ export function parsearActual(crudo: string | null): Actual | null {
     const v = JSON.parse(crudo) as Partial<Actual>
     if (!esEntero(v.pos) || !esEntero(v.total) || !esEntero(v.ts)) return null
     if (v.pos < POS_INICIAL || v.total < POS_INICIAL || v.pos > v.total) return null
-    return { pos: v.pos, total: v.total, ts: v.ts }
+    const forma = parsearForma(v.intro, v.outro, v.total)
+    return { pos: v.pos, total: v.total, ts: v.ts, ...forma }
   } catch {
     return null
   }
+}
+
+/**
+ * La forma del mazo, o nada. Se descarta entera en cuanto no cuadra (media
+ * forma no sirve, y una que no deja ni un beat en medio es una forma rota):
+ * el mando prefiere quedarse sin notas antes que enseñar la de otra
+ * diapositiva.
+ */
+export function parsearForma(
+  intro: unknown,
+  outro: unknown,
+  total: number
+): { intro: number; outro: number } | Record<string, never> {
+  if (!esEntero(intro) || !esEntero(outro)) return {}
+  if (intro < 0 || outro < 0 || intro + outro >= total) return {}
+  return { intro, outro }
 }
 
 export function esFresco(actual: Actual | null, ahora: number): actual is Actual {

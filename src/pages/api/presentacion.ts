@@ -7,6 +7,7 @@ import {
   esFresco,
   mover,
   parsearActual,
+  parsearForma,
   POS_INICIAL,
   POS_MAX,
   techo,
@@ -21,7 +22,8 @@ import {
  *   GET ?q=destino                  -> { destino }            (lo que sondea la pantalla)
  *   POST { accion: siguiente|anterior } -> mueve el destino    (el mando)
  *   POST { destino: N }             -> salto directo           (el mando)
- *   POST { pos, total, origen }     -> la pantalla publica dónde está de verdad
+ *   POST { pos, total, intro, outro, origen }
+ *                                   -> la pantalla publica dónde está de verdad
  *
  * DOS CLAVES, UN ESCRITOR CADA UNA. El mando escribe `destino`; la pantalla
  * escribe `actual`. Sin CAS en el almacén, una sola clave compartida podría
@@ -89,6 +91,8 @@ export const POST: APIRoute = async ({ request }) => {
     destino?: unknown
     pos?: unknown
     total?: unknown
+    intro?: unknown
+    outro?: unknown
     origen?: unknown
   }
 
@@ -106,7 +110,15 @@ export const POST: APIRoute = async ({ request }) => {
           ? cuerpo.origen
           : 'inicial'
 
-      const actual: Actual = { pos, total, ts: Date.now() }
+      // La forma del mazo es opcional y se valida aparte: si viene rota se
+      // descarta sola y la posición sigue publicándose igual. El control de la
+      // presentación no puede depender de que las notas cuadren.
+      const actual: Actual = {
+        pos,
+        total,
+        ts: Date.now(),
+        ...parsearForma(cuerpo.intro, cuerpo.outro, total),
+      }
       await presentStore().set(K_ACTUAL, JSON.stringify(actual), TTL_SEGUNDOS)
 
       const previo = await leerDestino()
