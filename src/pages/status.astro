@@ -277,6 +277,15 @@ const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', {
   timeZone: 'America/Bogota',
 })
 
+// Etiqueta de cada barra del historial. Las claves de `monitor_daily` son días
+// UTC, así que se formatean en UTC y desde el mediodía: con America/Bogota
+// (-05) un 'YYYY-MM-DD' a medianoche retrocede al día anterior y la barra
+// quedaría rotulada con una fecha que no es la suya.
+const fmtDay = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', {
+  day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
+})
+const dayLabel = (day: string) => fmtDay.format(new Date(`${day}T12:00:00Z`))
+
 function ago(d: Date | null): string {
   if (!d) return '-'
   const min = Math.round((now - d.getTime()) / 60_000)
@@ -455,13 +464,21 @@ const healthLabel = st.healthLabel
             </div>
 
             <!-- 90 días de uptime diario -->
-            <div class="flex items-end gap-[2px] h-9 mb-2">
-              {c.bars.map((b) => (
-                <div
-                  class={`flex-1 rounded-[2px] ${barColor(b.pct)} ${b.pct === null ? 'h-2 self-center' : 'h-full'} opacity-90 hover:opacity-100`}
-                  title={`${b.day} · ${b.pct === null ? st.noDataYet : `${b.pct}% uptime`}`}
-                ></div>
-              ))}
+            <div class="uptime-bars relative mb-2">
+              <div class="flex items-end gap-[2px] h-9">
+                {c.bars.map((b) => {
+                  const etiqueta = `${dayLabel(b.day)} · ${b.pct === null ? st.noDataYet : `${b.pct}% uptime`}`
+                  return (
+                    <div
+                      class={`bar flex-1 rounded-[2px] ${barColor(b.pct)} ${b.pct === null ? 'h-2 self-center' : 'h-full'} opacity-90 hover:opacity-100`}
+                      data-label={etiqueta}
+                      role="img"
+                      aria-label={etiqueta}
+                    ></div>
+                  )
+                })}
+              </div>
+              <span class="bars-tooltip absolute hidden -top-1 -translate-x-1/2 -translate-y-full px-2 py-1 rounded-md bg-black/85 ring-1 ring-white/10 text-[10px] font-mono text-ink-50 whitespace-nowrap pointer-events-none z-10"></span>
             </div>
             <div class="flex justify-between text-[10px] font-mono text-ink-300 mb-5">
               <span>{interpolate(st.daysAgo, { n: WINDOW_DAYS })}</span>
@@ -777,5 +794,40 @@ const healthLabel = st.healthLabel
 
     // El "hace X min" sí sigue corriendo: es aritmética local, no pega a la red.
     setInterval(tickAgo, 30_000)
+
+    // Tooltip del historial diario. El `title` nativo servía, pero tarda ~1s en
+    // aparecer y con 30 barras de 4px eso vuelve la lectura del historial un
+    // ejercicio de puntería. Un delegado por contenedor en vez de un listener
+    // por barra: son 9 monitores × 30 días.
+    for (const caja of document.querySelectorAll('.uptime-bars')) {
+      const tip = caja.querySelector('.bars-tooltip')
+      if (!tip) continue
+
+      const mostrar = (barra) => {
+        const etiqueta = barra.getAttribute('data-label')
+        if (!etiqueta) return
+        tip.textContent = etiqueta
+        tip.classList.remove('hidden')
+        // Se ancla al centro de la barra y se recorta contra los bordes de la
+        // tarjeta: sin el clamp, las barras de los extremos sacan el tooltip
+        // fuera del contenedor y el texto queda cortado.
+        const centro = barra.offsetLeft + barra.offsetWidth / 2
+        const mitad = tip.offsetWidth / 2
+        tip.style.left = Math.min(Math.max(centro, mitad), caja.clientWidth - mitad) + 'px'
+      }
+      const ocultar = () => tip.classList.add('hidden')
+
+      caja.addEventListener('pointerover', (e) => {
+        const barra = e.target.closest('.bar')
+        if (barra) mostrar(barra)
+      })
+      caja.addEventListener('pointerleave', ocultar)
+      // Táctil: sin hover, el tap sobre una barra la muestra igual.
+      caja.addEventListener('click', (e) => {
+        const barra = e.target.closest('.bar')
+        if (barra) mostrar(barra)
+        else ocultar()
+      })
+    }
   </script>
 </BaseLayout>
