@@ -4,22 +4,31 @@ import { presentStore } from '../../lib/present/store'
 /**
  * Estado mínimo para controlar `/final.html` a distancia sin tocarlo.
  *
- *   GET  -> { seq, accion } último comando emitido.
- *   POST { accion: "siguiente" | "anterior" } -> lo guarda y sube `seq`.
+ *   GET  -> { pos } diapositiva en la que debe estar la presentación.
+ *   POST { accion: "siguiente" | "anterior" } -> mueve `pos` una posición.
+ *   POST { pos: N } -> fija `pos` (lo usa la página pública para corregir).
  *
- * La página pública (`/presentacion`) hace polling de GET y, cuando `seq`
- * sube, dispara un único `keydown` de flecha dentro del iframe: es la lectura
- * de `seq`, no el valor de `accion` en sí, lo que dice "esto es nuevo".
+ * POSICIÓN ABSOLUTA, no comandos. La primera versión guardaba "último comando
+ * + contador" y la página aplicaba uno por sondeo: al pulsar tres veces
+ * seguidas se perdían dos, porque entre dos sondeos solo cabe un evento. Con
+ * una posición, un sondeo perdido no pierde nada - el siguiente trae el
+ * destino completo y la página cierra la diferencia entera.
  *
- * Sin PIN, sin sesión, sin admin: es el estado completo del sistema, a
- * propósito. Nada aquí revela ni cambia datos sensibles, así que no vale la
- * pena la ceremonia que sí tiene `/sustentacion`.
+ * El servidor NO sabe cuántas diapositivas hay, y no le hace falta: cuando la
+ * presentación llega al final y no puede avanzar más, la propia página manda
+ * su posición real con `POST { pos }` y corrige el desvío. Así no hay que
+ * mantener aquí un número que vive dentro de `final.html`.
+ *
+ * Sin PIN, sin sesión, sin admin: es el estado completo del sistema.
  */
 
-const KEY = 'presentacion:cmd'
+const KEY = 'presentacion:pos'
 const TTL_SEGUNDOS = 6 * 60 * 60
 
-type Estado = { seq: number; accion: 'siguiente' | 'anterior' }
+/** La presentación arranca en su primera diapositiva. */
+const POS_INICIAL = 1
+/** Tope de cordura: nadie tiene una charla de mil diapositivas. */
+const POS_MAX = 999
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -27,11 +36,17 @@ const json = (status: number, body: unknown) =>
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   })
 
+async function leer(): Promise<number> {
+  const crudo = await presentStore().get(KEY)
+  const n = crudo === null ? NaN : Number(crudo)
+  return Number.isInteger(n) ? n : POS_INICIAL
+}
+
+const acotar = (n: number) => Math.min(POS_MAX, Math.max(POS_INICIAL, n))
+
 export const GET: APIRoute = async () => {
   try {
-    const crudo = await presentStore().get(KEY)
-    const estado: Estado = crudo ? JSON.parse(crudo) : { seq: 0, accion: 'siguiente' }
-    return json(200, estado)
+    return json(200, { pos: await leer() })
   } catch (e) {
     return json(503, { error: e instanceof Error ? e.message : 'error inesperado' })
   }
@@ -44,19 +59,25 @@ export const POST: APIRoute = async ({ request }) => {
   } catch {
     return json(400, { error: 'cuerpo inválido' })
   }
-
-  const accion = (bruto as { accion?: unknown })?.accion
-  if (accion !== 'siguiente' && accion !== 'anterior') {
-    return json(400, { error: 'acción desconocida' })
-  }
+  const cuerpo = (bruto ?? {}) as { accion?: unknown; pos?: unknown }
 
   try {
-    const store = presentStore()
-    const crudo = await store.get(KEY)
-    const anterior: Estado = crudo ? JSON.parse(crudo) : { seq: 0, accion: 'siguiente' }
-    const estado: Estado = { seq: anterior.seq + 1, accion }
-    await store.set(KEY, JSON.stringify(estado), TTL_SEGUNDOS)
-    return json(200, estado)
+    let pos: number
+
+    if (cuerpo.pos !== undefined) {
+      // Corrección desde la página pública: su posición real manda sobre lo
+      // que hubiera aquí, que es lo que deshace el desvío del tope.
+      const n = Number(cuerpo.pos)
+      if (!Number.isInteger(n)) return json(400, { error: 'pos inválida' })
+      pos = acotar(n)
+    } else if (cuerpo.accion === 'siguiente' || cuerpo.accion === 'anterior') {
+      pos = acotar((await leer()) + (cuerpo.accion === 'siguiente' ? 1 : -1))
+    } else {
+      return json(400, { error: 'acción desconocida' })
+    }
+
+    await presentStore().set(KEY, String(pos), TTL_SEGUNDOS)
+    return json(200, { pos })
   } catch (e) {
     return json(503, { error: e instanceof Error ? e.message : 'error inesperado' })
   }

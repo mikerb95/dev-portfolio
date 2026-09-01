@@ -1,12 +1,17 @@
 ---
 // Página pública: lo que ve todo el mundo. `final.html` no se toca ni se
-// edita; se monta en un iframe y se avanza desde fuera simulando la misma
+// edita; se monta en un iframe y se mueve desde fuera simulando la misma
 // tecla que ya escucha su propio `window.addEventListener('keydown', ...)`.
 //
-// Sondea `/api/presentacion` cada 400 ms. Cuando `seq` sube respecto al último
-// valor visto, dispara UN `keydown` (flecha derecha o izquierda según
-// `accion`) dentro del iframe. No hace falta saber en qué beat va la
-// presentación: basta con saber que llegó un comando nuevo y en qué sentido.
+// Dos detalles que costaron una depuración y que no son evidentes:
+//
+//  1. El `KeyboardEvent` tiene que construirse con el constructor DEL IFRAME.
+//     Uno creado en este realm y despachado contra el iframe no dispara su
+//     listener: la diapositiva sencillamente no se movía.
+//  2. La posición real sale del propio bundle, que ya emite
+//     `sustentacion:beat` con `{ indice }` en cada cambio. Nunca se supone en
+//     qué diapositiva va: se pregunta. Eso es lo que permite recuperarse de un
+//     sondeo perdido o de una recarga a mitad de la charla.
 Astro.response.headers.set('Cache-Control', 'no-store')
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 ---
@@ -35,9 +40,8 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         width: 100%;
         height: 100%;
         border: 0;
-        /* El bundle se navega por teclado (flechas, espacio, enter). Sin
-           esto, un clic dentro lo movería por su cuenta y el próximo
-           sondeo lo regresaría de golpe. */
+        /* El bundle se navega por teclado. Sin esto, un clic dentro lo
+           movería por su cuenta y el próximo sondeo lo devolvería de golpe. */
         pointer-events: none;
       }
     </style>
@@ -47,23 +51,76 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
     <script>
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
-      let ultimoSeq = 0
+
+      /** Dónde está la presentación de verdad, según ella misma. */
+      let beatReal = 1
+      /** Evita dos reconciliaciones solapadas peleándose por el mismo hueco. */
+      let aplicando = false
+
+      // El bundle emite `sustentacion:beat` en cada cambio de diapositiva, sea
+      // por el mando o por lo que sea. Es la única fuente de verdad.
+      function engancharBeats() {
+        try {
+          iframe.contentWindow?.addEventListener('sustentacion:beat', (e) => {
+            const detalle = (e as CustomEvent<{ indice?: number }>).detail
+            if (typeof detalle?.indice === 'number') beatReal = detalle.indice
+          })
+        } catch {
+          // Mismo origen, no debería fallar; si falla, la reconciliación sigue
+          // funcionando con la posición que tengamos.
+        }
+      }
+      iframe.addEventListener('load', engancharBeats)
+      engancharBeats()
 
       function disparar(tecla: string) {
+        const w = iframe.contentWindow
+        const d = iframe.contentDocument
+        if (!w || !d) return
         try {
-          const w = iframe.contentWindow
-          const d = iframe.contentDocument
-          if (!w || !d) return
-          // El constructor tiene que ser el DEL IFRAME, no el nuestro. Un
-          // KeyboardEvent creado en este realm y despachado contra el `window`
-          // del iframe no dispara su listener (comprobado: la diapositiva no
-          // se movía). Y se despacha sobre el `document` con `bubbles`, que
-          // sube hasta el listener de `window` sea cual sea el nodo elegido.
+          // Constructor DEL IFRAME (ver cabecera): con el de esta página el
+          // listener del bundle no se entera. Se despacha sobre el documento
+          // con `bubbles`, que sube hasta el listener de `window`.
           const Ctor = w.KeyboardEvent || KeyboardEvent
           d.dispatchEvent(new Ctor('keydown', { key: tecla, bubbles: true, cancelable: true }))
         } catch {
-          // El iframe puede no estar listo (recarga en curso); el próximo
-          // sondeo reintenta, no vale la pena hacer más ruido que eso.
+          // Iframe recargándose: el próximo sondeo reintenta.
+        }
+      }
+
+      async function reconciliar(destino: number) {
+        if (aplicando) return
+        aplicando = true
+        // Una tecla puede consumirse SIN cambiar de diapositiva: al cargar, el
+        // bundle muestra una portada y la primera flecha solo la cierra (lo
+        // mismo con las citas a pantalla completa). Cortar al primer
+        // no-movimiento daba por agotada la presentación en la primera pulsación
+        // y devolvía al servidor una posición atrasada, que era justo lo que
+        // borraba los comandos recién pulsados. Solo tres intentos seguidos sin
+        // moverse significan de verdad "no hay más diapositivas por ahí".
+        let sinMover = 0
+        try {
+          for (let intentos = 0; beatReal !== destino && intentos < 40; intentos++) {
+            const antes = beatReal
+            disparar(destino > beatReal ? 'ArrowRight' : 'ArrowLeft')
+            await new Promise((r) => setTimeout(r, 200))
+            if (beatReal === antes) {
+              if (++sinMover >= 3) break
+            } else {
+              sinMover = 0
+            }
+          }
+          if (beatReal !== destino && sinMover >= 3) {
+            // Llegamos al tope: la posición real manda, se corrige el servidor
+            // para que el siguiente toque del mando parta de donde estamos.
+            await fetch('/api/presentacion', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ pos: beatReal }),
+            }).catch(() => {})
+          }
+        } finally {
+          aplicando = false
         }
       }
 
@@ -71,26 +128,15 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         try {
           const res = await fetch('/api/presentacion', { cache: 'no-store' })
           if (!res.ok) return
-          const estado = (await res.json()) as { seq: number; accion: 'siguiente' | 'anterior' }
-          if (estado.seq > ultimoSeq) {
-            ultimoSeq = estado.seq
-            disparar(estado.accion === 'siguiente' ? 'ArrowRight' : 'ArrowLeft')
-          }
+          const { pos } = (await res.json()) as { pos: number }
+          if (typeof pos === 'number' && pos !== beatReal) await reconciliar(pos)
         } catch {
-          // Sin red o Redis caído: se reintenta en el próximo ciclo, la
-          // presentación se queda donde estaba en vez de romperse.
+          // Sin red o Redis caído: se reintenta en el próximo ciclo y la
+          // presentación se queda donde está en vez de romperse.
         }
       }
 
-      // Primer sondeo: fija `ultimoSeq` en lo que ya existía, para no
-      // reproducir de golpe todo el historial de comandos al cargar.
-      fetch('/api/presentacion', { cache: 'no-store' })
-        .then((r) => r.json())
-        .then((e: { seq: number }) => {
-          ultimoSeq = e.seq
-        })
-        .catch(() => {})
-        .finally(() => setInterval(sondear, 400))
+      setInterval(sondear, 400)
     </script>
   </body>
 </html>
