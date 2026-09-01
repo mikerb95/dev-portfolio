@@ -86,7 +86,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
+      /** Lo que se publica: posición global más la forma del mazo. */
       type Actual = { pos: number; total: number; intro: number; outro: number }
+      /** Lo que pinta el contador del bundle, que solo cuenta beats. */
+      type Beat = { pos: number; total: number }
       type Origen = 'inicial' | 'latido' | 'mando' | 'ajena'
 
       /** Cada cuánto se pregunta el destino. */
@@ -153,7 +156,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         return candidatos.sort((a, b) => a.querySelectorAll('*').length - b.querySelectorAll('*').length)[0] ?? null
       }
 
-      function leerBeat(): Actual | null {
+      function leerBeat(): Beat | null {
         const d = iframe.contentDocument
         if (!d) return null
         const texto = contador?.isConnected ? contador.textContent : d.body?.innerText
@@ -291,6 +294,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         pintarCapa(acc.zona, acc.idx, acc.visible)
       }
 
+      /** La posición publicable de un punto: global + forma del mazo. */
+      function posicionDe(m: Mazo, p: Punto): Actual {
+        return { pos: aGlobal(m, p), total: totalGlobal(m), intro: m.intro, outro: m.outro }
+      }
+
       function puntoActual(): Punto | null {
         const beat = leerBeat()
         if (!mazo || !beat) return null
@@ -380,17 +388,14 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
             // cruzar el mazo entero puede acercarse a eso.
             if (despues && mazo && ++desdeReporte >= REPORTE_CADA) {
               desdeReporte = 0
-              const eco = await reportar(
-                { pos: aGlobal(mazo, despues), total: totalGlobal(mazo) },
-                'mando'
-              )
+              const eco = await reportar(posicionDe(mazo, despues), 'mando')
               if (eco !== null) meta = eco
             }
           }
           const punto = puntoActual()
           if (punto && mazo) {
-            const pos = aGlobal(mazo, punto)
-            await reportar({ pos, total: totalGlobal(mazo) }, pos === meta ? 'mando' : 'ajena')
+            const actual = posicionDe(mazo, punto)
+            await reportar(actual, actual.pos === meta ? 'mando' : 'ajena')
           }
         } finally {
           aplicando = false
@@ -403,7 +408,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         if (!punto || !mazo) return
         afirmarCapas()
 
-        const actual = { pos: aGlobal(mazo, punto), total: totalGlobal(mazo) }
+        const actual = posicionDe(mazo, punto)
 
         // Alguien movió el bundle sin pasar por el mando (el teclado del
         // portátil). Manda la realidad, o el sondeo siguiente arrastraría la
