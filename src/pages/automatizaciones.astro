@@ -12,6 +12,7 @@
 // pudo leer. Una página de observabilidad que devuelve 500 cuando lo observado
 // falla no sirve para nada, que es justo cuando más se mira.
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 import { db } from '../db'
 import { cronRuns } from '../db/schema'
 import { desc } from 'drizzle-orm'
@@ -19,6 +20,10 @@ import { mapRunEstado } from '../lib/lab/pipeline-live'
 import { safeQuery } from '../lib/safe-query'
 import { serverEnv } from '../lib/env'
 import { WORKFLOWS, CRONS, AUTOMATISMOS } from '../data/automatizaciones'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const L = (path: string) => localizedHref(path, locale)
 
 const REPO = 'mikerb95/dev-portfolio'
 
@@ -106,6 +111,16 @@ function haceCuanto(d: Date | null | undefined): string | null {
   return `hace ${Math.floor(h / 24)} d`
 }
 
+// Mismo criterio cromático que /status y /engineering: lima lo sano, ámbar lo
+// que exige mirar, cian lo que está en curso. El acento no se inventa por página.
+const ESTADO_CLS: Record<string, string> = {
+  ok: 'text-lime border-lime/30 bg-lime/10',
+  fail: 'text-ember border-ember/40 bg-ember/15',
+  in_progress: 'text-cyan border-cyan/30 bg-cyan/10',
+  pending: 'text-ink-200 border-white/10 bg-white/5',
+  skip: 'text-ink-300 border-white/10 bg-white/5',
+}
+
 const ETIQUETA_DISPARADOR: Record<string, string> = {
   push: 'en cada push',
   pull_request: 'en cada pull request',
@@ -118,83 +133,101 @@ const ETIQUETA_DISPARADOR: Record<string, string> = {
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
 ---
 
+
 <BaseLayout
   title="Automatizaciones"
   description="Lo que corre solo en codebymike.tech: integración continua, tareas programadas y los automatismos que dispara el propio tráfico, con su último resultado real."
 >
-  <main class="auto">
-    <header class="cab">
-      <p class="eyebrow">Ingeniería</p>
-      <h1>Lo que corre solo</h1>
-      <p class="lede">
-        Seis workflows de integración continua, diez tareas programadas y los automatismos
-        que dispara el propio tráfico. Lo que ves abajo es el último resultado real de cada
-        uno, no una descripción de cómo debería funcionar.
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <a
+      href={L('/')}
+      class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      {t.common.back}
+    </a>
+
+    <header class="mb-12">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/automatizaciones</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>Ingeniería</span>
+      </div>
+      <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
+        Lo que corre<br />solo.
+      </h1>
+      <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
+        Seis workflows de integración continua, diez tareas programadas y los automatismos que
+        dispara el propio tráfico. Abajo está el <em>último resultado real</em> de cada uno,
+        leído de GitHub y de mi propia bitácora.
+        <span class="text-ink-300"> No es una descripción de cómo debería funcionar.</span>
       </p>
     </header>
 
-    <section class="bloque">
-      <div class="bloque-cab">
-        <h2>Integración continua</h2>
-        {!githubOk && <span class="aviso">No se pudo leer GitHub ahora mismo</span>}
+    <!-- ── Integración continua ── -->
+    <section class="mb-14">
+      <div class="flex items-baseline justify-between gap-4 mb-5">
+        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">Integración continua</h2>
+        {!githubOk && <span class="text-[11px] font-mono text-ember">GitHub no responde</span>}
       </div>
-      <p class="bloque-sub">
-        Nada llega a producción sin pasar por aquí. La verificación posterior al despliegue
-        puede revertir sola lo que acaba de publicarse.
+      <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
+        Nada llega a producción sin pasar por aquí. La verificación posterior al despliegue puede
+        revertir sola lo que acaba de publicarse.
       </p>
 
-      <ul class="lista">
+      <div class="grid md:grid-cols-2 gap-3">
         {
           WORKFLOWS.map((w) => {
             const run = ultimoRun.get(w.nombre)
             const estado = run ? mapRunEstado(run.status, run.conclusion) : null
             return (
-              <li class="item">
-                <div class="item-cab">
-                  <h3>{w.nombre}</h3>
-                  {estado && <span class={`pill pill-${estado}`}>{estado}</span>}
-                </div>
-                <p class="hace">{w.hace}</p>
-                {w.detalle && <p class="detalle">{w.detalle}</p>}
-                <div class="pie">
-                  <span class="cuando">
-                    {w.disparadores.map((d) => ETIQUETA_DISPARADOR[d] ?? d).join(' · ')}
-                  </span>
-                  {run?.created_at && (
-                    <span class="sello">
-                      última: {haceCuanto(new Date(run.created_at))}
+              <div class="rounded-2xl glass p-5 hover:border-cyan/25 transition-colors">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                  <span class="text-[13px] font-mono font-semibold text-ink-50">{w.nombre}</span>
+                  {estado && (
+                    <span
+                      class={`px-1.5 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border ${ESTADO_CLS[estado] ?? ESTADO_CLS.pending}`}
+                    >
+                      {estado}
                     </span>
                   )}
-                  <span class="archivo">{w.archivo}</span>
                 </div>
-              </li>
+                <p class="text-[13px] text-ink-100 leading-relaxed mb-2">{w.hace}</p>
+                {w.detalle && <p class="text-[12px] text-ink-300 leading-relaxed mb-3">{w.detalle}</p>}
+                <div class="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[.12em] text-ink-400 pt-3 border-t border-white/[.06]">
+                  <span>{w.disparadores.map((d) => ETIQUETA_DISPARADOR[d] ?? d).join(' · ')}</span>
+                  {run?.created_at && <span class="text-ink-300">{haceCuanto(new Date(run.created_at))}</span>}
+                  <span class="ml-auto normal-case tracking-normal">{w.archivo}</span>
+                </div>
+              </div>
             )
           })
         }
-      </ul>
+      </div>
     </section>
 
-    <section class="bloque">
-      <div class="bloque-cab">
-        <h2>Tareas programadas</h2>
-        {!bitacoraOk && <span class="aviso">Bitácora no disponible</span>}
+    <!-- ── Tareas programadas ── -->
+    <section class="mb-14">
+      <div class="flex items-baseline justify-between gap-4 mb-5">
+        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">Tareas programadas</h2>
+        {!bitacoraOk && <span class="text-[11px] font-mono text-ink-400">bitácora no disponible</span>}
       </div>
-      <p class="bloque-sub">
+      <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
         El plan que uso permite una ejecución diaria por tarea, así que lo que necesita más
-        frecuencia lo dispara un programador externo contra el mismo endpoint, con el mismo
-        secreto. Cada ejecución autorizada queda anotada: un cron que deja de dispararse no
-        produce un error, produce silencio.
+        frecuencia lo dispara un programador externo contra el mismo endpoint, con el mismo secreto.
+        Cada ejecución autorizada queda anotada: un cron que deja de dispararse no produce un error,
+        produce silencio.
       </p>
 
-      <div class="tabla-scroll">
-        <table>
+      <div class="rounded-2xl glass overflow-x-auto">
+        <table class="w-full min-w-[46rem] text-left">
           <thead>
-            <tr>
-              <th>Tarea</th>
-              <th>Cuándo</th>
-              <th>Origen</th>
-              <th>Qué hace</th>
-              <th>Última</th>
+            <tr class="border-b border-white/[.06]">
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-5 py-3">Tarea</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">Cuándo</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">Origen</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">Qué hace</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-5 py-3">Última</th>
             </tr>
           </thead>
           <tbody>
@@ -202,23 +235,29 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
               CRONS.map((c) => {
                 const u = ultimaEjecucion.get(c.job)
                 return (
-                  <tr>
-                    <td class="job">{c.job}</td>
-                    <td class="num">{c.horario}</td>
-                    <td>
-                      <span class={`origen origen-${c.origen === 'vercel' ? 'v' : 'e'}`}>
+                  <tr class="border-b border-white/[.04] last:border-0">
+                    <td class="px-5 py-4 align-top font-mono text-[12px] text-ink-50 whitespace-nowrap">{c.job}</td>
+                    <td class="px-3 py-4 align-top font-mono text-[12px] text-ink-200 whitespace-nowrap tabular-nums">{c.horario}</td>
+                    <td class="px-3 py-4 align-top">
+                      <span
+                        class={`px-1.5 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border whitespace-nowrap ${
+                          c.origen === 'vercel'
+                            ? 'text-ink-200 border-white/10 bg-white/5'
+                            : 'text-violet border-violet/30 bg-violet/10'
+                        }`}
+                      >
                         {c.origen}
                       </span>
                     </td>
-                    <td class="que">
-                      {c.hace}
-                      <span class="sifalla">Si falla: {c.siFalla}</span>
+                    <td class="px-3 py-4 align-top max-w-[30rem]">
+                      <span class="text-[13px] text-ink-100 leading-relaxed">{c.hace}</span>
+                      <span class="block text-[12px] text-ink-400 leading-relaxed mt-1">Si falla: {c.siFalla}</span>
                     </td>
-                    <td class="num">
+                    <td class="px-5 py-4 align-top font-mono text-[12px] whitespace-nowrap">
                       {u ? (
-                        <span class={u.ok ? 'ok' : 'mal'}>{haceCuanto(u.createdAt)}</span>
+                        <span class={u.ok ? 'text-lime' : 'text-ember'}>{haceCuanto(u.createdAt)}</span>
                       ) : (
-                        <span class="sindato">sin registro</span>
+                        <span class="text-ink-400">sin registro</span>
                       )}
                     </td>
                   </tr>
@@ -230,218 +269,23 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
       </div>
     </section>
 
-    <section class="bloque">
-      <h2>Automatismos del producto</h2>
-      <p class="bloque-sub">
+    <!-- ── Automatismos del producto ── -->
+    <section>
+      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Automatismos del producto</h2>
+      <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
         Estos no los dispara un calendario ni un push, sino el propio tráfico.
       </p>
-      <ul class="rejilla">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {
           AUTOMATISMOS.map((a) => (
-            <li class="tarjeta">
-              <h3>{a.nombre}</h3>
-              <p>{a.hace}</p>
-              <span class="cuando">{a.cuando}</span>
-            </li>
+            <div class="rounded-2xl glass p-5 hover:border-cyan/25 transition-colors">
+              <h3 class="text-[13px] font-medium text-ink-50 mb-2">{a.nombre}</h3>
+              <p class="text-[13px] text-ink-100 leading-relaxed mb-3">{a.hace}</p>
+              <span class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-400">{a.cuando}</span>
+            </div>
           ))
         }
-      </ul>
+      </div>
     </section>
-  </main>
+  </div>
 </BaseLayout>
-
-<style>
-  .auto {
-    max-width: 66rem;
-    margin: 0 auto;
-    padding: 3rem 1.25rem 5rem;
-  }
-  .eyebrow {
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.72rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--accent, #0369a1);
-    margin: 0 0 0.75rem;
-  }
-  .cab h1 {
-    font-size: clamp(2rem, 5vw, 2.9rem);
-    line-height: 1.12;
-    margin: 0 0 0.9rem;
-    text-wrap: balance;
-  }
-  .cab .lede {
-    font-size: 1.06rem;
-    max-width: 60ch;
-    opacity: 0.85;
-    margin: 0;
-  }
-
-  .bloque {
-    margin-top: 3.5rem;
-  }
-  .bloque-cab {
-    display: flex;
-    align-items: baseline;
-    gap: 0.9rem;
-    flex-wrap: wrap;
-  }
-  .bloque h2 {
-    font-size: 1.35rem;
-    margin: 0 0 0.5rem;
-  }
-  .bloque-sub {
-    max-width: 62ch;
-    opacity: 0.78;
-    margin: 0 0 1.5rem;
-    font-size: 0.97rem;
-  }
-  .aviso {
-    font-size: 0.75rem;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    border: 1px solid currentColor;
-    opacity: 0.75;
-  }
-
-  .lista {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: 0.9rem;
-  }
-  .item {
-    border: 1px solid var(--border, rgba(128, 145, 160, 0.28));
-    border-radius: 10px;
-    padding: 1.1rem 1.25rem;
-  }
-  .item-cab {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    margin-bottom: 0.5rem;
-  }
-  .item h3 {
-    font-size: 1.02rem;
-    margin: 0;
-  }
-  .hace {
-    margin: 0 0 0.4rem;
-    font-size: 0.95rem;
-  }
-  .detalle {
-    margin: 0 0 0.6rem;
-    font-size: 0.9rem;
-    opacity: 0.75;
-    max-width: 68ch;
-  }
-  .pie {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.75rem;
-    opacity: 0.65;
-  }
-  .archivo {
-    margin-left: auto;
-  }
-
-  .pill {
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.68rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 0.12rem 0.5rem;
-    border-radius: 999px;
-    border: 1px solid currentColor;
-  }
-  .pill-ok { color: #15803d; }
-  .pill-fail { color: #b91c1c; }
-  .pill-in_progress, .pill-pending { color: #b45309; }
-  .pill-skip { opacity: 0.6; }
-  :global(html.dark) .pill-ok { color: #4ade80; }
-  :global(html.dark) .pill-fail { color: #f87171; }
-  :global(html.dark) .pill-in_progress, :global(html.dark) .pill-pending { color: #facc15; }
-
-  .tabla-scroll {
-    overflow-x: auto;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.92rem;
-    min-width: 46rem;
-  }
-  th {
-    text-align: left;
-    font-size: 0.72rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    opacity: 0.6;
-    padding: 0 0.7rem 0.6rem 0;
-    font-weight: 600;
-  }
-  td {
-    padding: 0.75rem 0.7rem 0.75rem 0;
-    border-top: 1px solid var(--border, rgba(128, 145, 160, 0.22));
-    vertical-align: top;
-  }
-  .job, .num {
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.85rem;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .que {
-    max-width: 30rem;
-  }
-  .sifalla {
-    display: block;
-    font-size: 0.82rem;
-    opacity: 0.62;
-    margin-top: 0.25rem;
-  }
-  .origen {
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.72rem;
-    padding: 0.1rem 0.45rem;
-    border-radius: 4px;
-    border: 1px solid var(--border, rgba(128, 145, 160, 0.35));
-    white-space: nowrap;
-  }
-  .ok { color: #15803d; }
-  .mal { color: #b91c1c; }
-  :global(html.dark) .ok { color: #4ade80; }
-  :global(html.dark) .mal { color: #f87171; }
-  .sindato { opacity: 0.5; }
-
-  .rejilla {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
-    gap: 0.9rem;
-  }
-  .tarjeta {
-    border: 1px solid var(--border, rgba(128, 145, 160, 0.28));
-    border-radius: 10px;
-    padding: 1rem 1.1rem;
-  }
-  .tarjeta h3 {
-    font-size: 0.98rem;
-    margin: 0 0 0.4rem;
-  }
-  .tarjeta p {
-    margin: 0 0 0.6rem;
-    font-size: 0.9rem;
-    opacity: 0.8;
-  }
-  .tarjeta .cuando {
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.72rem;
-    opacity: 0.6;
-  }
-</style>
