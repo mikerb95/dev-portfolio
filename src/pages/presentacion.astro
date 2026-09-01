@@ -51,9 +51,16 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
       function disparar(tecla: string) {
         try {
-          iframe.contentWindow?.dispatchEvent(
-            new KeyboardEvent('keydown', { key: tecla, bubbles: true, cancelable: true })
-          )
+          const w = iframe.contentWindow
+          const d = iframe.contentDocument
+          if (!w || !d) return
+          // El constructor tiene que ser el DEL IFRAME, no el nuestro. Un
+          // KeyboardEvent creado en este realm y despachado contra el `window`
+          // del iframe no dispara su listener (comprobado: la diapositiva no
+          // se movía). Y se despacha sobre el `document` con `bubbles`, que
+          // sube hasta el listener de `window` sea cual sea el nodo elegido.
+          const Ctor = w.KeyboardEvent || KeyboardEvent
+          d.dispatchEvent(new Ctor('keydown', { key: tecla, bubbles: true, cancelable: true }))
         } catch {
           // El iframe puede no estar listo (recarga en curso); el próximo
           // sondeo reintenta, no vale la pena hacer más ruido que eso.
