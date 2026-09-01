@@ -1,0 +1,89 @@
+---
+// Página pública: lo que ve todo el mundo. `final.html` no se toca ni se
+// edita; se monta en un iframe y se avanza desde fuera simulando la misma
+// tecla que ya escucha su propio `window.addEventListener('keydown', ...)`.
+//
+// Sondea `/api/presentacion` cada 400 ms. Cuando `seq` sube respecto al último
+// valor visto, dispara UN `keydown` (flecha derecha o izquierda según
+// `accion`) dentro del iframe. No hace falta saber en qué beat va la
+// presentación: basta con saber que llegó un comando nuevo y en qué sentido.
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Presentación</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #05070a;
+      }
+      iframe {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        /* El bundle se navega por teclado (flechas, espacio, enter). Sin
+           esto, un clic dentro lo movería por su cuenta y el próximo
+           sondeo lo regresaría de golpe. */
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe id="lienzo" src="/final.html" title="Presentación"></iframe>
+
+    <script>
+      const iframe = document.getElementById('lienzo') as HTMLIFrameElement
+      let ultimoSeq = 0
+
+      function disparar(tecla: string) {
+        try {
+          iframe.contentWindow?.dispatchEvent(
+            new KeyboardEvent('keydown', { key: tecla, bubbles: true, cancelable: true })
+          )
+        } catch {
+          // El iframe puede no estar listo (recarga en curso); el próximo
+          // sondeo reintenta, no vale la pena hacer más ruido que eso.
+        }
+      }
+
+      async function sondear() {
+        try {
+          const res = await fetch('/api/presentacion', { cache: 'no-store' })
+          if (!res.ok) return
+          const estado = (await res.json()) as { seq: number; accion: 'siguiente' | 'anterior' }
+          if (estado.seq > ultimoSeq) {
+            ultimoSeq = estado.seq
+            disparar(estado.accion === 'siguiente' ? 'ArrowRight' : 'ArrowLeft')
+          }
+        } catch {
+          // Sin red o Redis caído: se reintenta en el próximo ciclo, la
+          // presentación se queda donde estaba en vez de romperse.
+        }
+      }
+
+      // Primer sondeo: fija `ultimoSeq` en lo que ya existía, para no
+      // reproducir de golpe todo el historial de comandos al cargar.
+      fetch('/api/presentacion', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((e: { seq: number }) => {
+          ultimoSeq = e.seq
+        })
+        .catch(() => {})
+        .finally(() => setInterval(sondear, 400))
+    </script>
+  </body>
+</html>

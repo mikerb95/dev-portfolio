@@ -1,0 +1,103 @@
+---
+// Control remoto: dos botones. Manda "siguiente"/"anterior" a
+// `/api/presentacion`, que `/presentacion` sondea y aplica al iframe.
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Control · Presentación</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #05070a;
+        color: #e9f2f9;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      main {
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 18px;
+      }
+      button {
+        flex: 1;
+        border: 1px solid #1b2836;
+        background: #0b1017;
+        color: #e9f2f9;
+        border-radius: 14px;
+        font-size: 1.4rem;
+        font-weight: 600;
+        padding: 28px 0;
+        touch-action: manipulation;
+      }
+      button:active {
+        background: #17222f;
+      }
+      #siguiente {
+        flex: 2;
+        background: #12324a;
+        border-color: #1e4c6e;
+      }
+      #siguiente:active {
+        background: #184163;
+      }
+      #estado {
+        text-align: center;
+        font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
+        letter-spacing: 0.06em;
+        color: #5c7488;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p id="estado">&nbsp;</p>
+      <button id="anterior" type="button">← Anterior</button>
+      <button id="siguiente" type="button">Siguiente →</button>
+    </main>
+
+    <script>
+      const estado = document.getElementById('estado') as HTMLParagraphElement
+      const botones = {
+        anterior: document.getElementById('anterior') as HTMLButtonElement,
+        siguiente: document.getElementById('siguiente') as HTMLButtonElement,
+      }
+
+      async function mandar(accion: 'siguiente' | 'anterior') {
+        estado.textContent = 'enviando...'
+        try {
+          const res = await fetch('/api/presentacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion }),
+          })
+          estado.textContent = res.ok ? `beat ${accion}, ok` : 'error al enviar'
+        } catch {
+          estado.textContent = 'sin red'
+        }
+      }
+
+      botones.anterior.addEventListener('click', () => mandar('anterior'))
+      botones.siguiente.addEventListener('click', () => mandar('siguiente'))
+
+      // El celular del presentador también sirve como teclado: flechas físicas
+      // (con un teclado bluetooth) mandan igual que el toque.
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') mandar('siguiente')
+        else if (e.key === 'ArrowLeft') mandar('anterior')
+      })
+    </script>
+  </body>
+</html>
