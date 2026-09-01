@@ -237,14 +237,26 @@ describe('parseEmisor / parseDeudor', () => {
 
   it('extrae el NIT del billing_info aunque la clave esté escrita de otra forma', () => {
     // Ese campo lo he llenado a mano durante meses y no tiene esquema.
-    expect(parseDeudor('ACME', '{"NIT":"900.123.456-7"}').nit).toBe('900.123.456-7')
-    expect(parseDeudor('ACME', '{"Documento":"800111222"}').nit).toBe('800111222')
-    expect(parseDeudor('ACME', '{"Dirección":"Cra 7 #1-2"}').direccion).toBe('Cra 7 #1-2')
+    expect(parseDeudor('ACME', null, '{"NIT":"900.123.456-7"}').nit).toBe('900.123.456-7')
+    expect(parseDeudor('ACME', null, '{"Documento":"800111222"}').nit).toBe('800111222')
+    expect(parseDeudor('ACME', null, '{"Dirección":"Cra 7 #1-2"}').direccion).toBe('Cra 7 #1-2')
+  })
+
+  it('la razón social manda sobre el nombre de contacto de la ficha', () => {
+    // En el CRM `name` suele ser la persona y `company` la empresa. Una cuenta
+    // de cobro a nombre de "Juan Pérez" con el NIT de ACME la devuelve
+    // contabilidad: el nombre y el documento no concuerdan.
+    expect(parseDeudor('Juan Pérez', 'ACME S.A.S.', null).nombre).toBe('ACME S.A.S.')
+  })
+
+  it('sin empresa cae al nombre de la ficha (cliente persona natural)', () => {
+    expect(parseDeudor('Juan Pérez', null, null).nombre).toBe('Juan Pérez')
+    expect(parseDeudor('Juan Pérez', '   ', null).nombre).toBe('Juan Pérez')
   })
 
   it('un billing_info corrupto no lanza: devuelve campos vacíos', () => {
-    expect(parseDeudor('ACME', '{roto').nit).toBe('')
-    expect(parseDeudor('ACME', null).nombre).toBe('ACME')
+    expect(parseDeudor('ACME', null, '{roto').nit).toBe('')
+    expect(parseDeudor('ACME', null, null).nombre).toBe('ACME')
   })
 })
 

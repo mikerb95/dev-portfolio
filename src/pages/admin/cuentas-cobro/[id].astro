@@ -26,7 +26,7 @@ const { emisor: emisorVivo, config } = await loadEmisorYConfig()
 // Emitida: se muestra el snapshot, que es lo que salió impreso. Borrador: los
 // datos vivos, que son los que se congelarían al emitir.
 const emisor = parseSnapshot<Emisor>(cuenta.issuerSnapshot) ?? emisorVivo
-const deudor = parseSnapshot<Deudor>(cuenta.payerSnapshot) ?? parseDeudor(detalle.clientName, detalle.billingInfo)
+const deudor = parseSnapshot<Deudor>(cuenta.payerSnapshot) ?? parseDeudor(detalle.clientName, detalle.company, detalle.billingInfo)
 const congelado = cuenta.issuerSnapshot != null
 
 const retenciones = parseRetenciones(cuenta.retentions)

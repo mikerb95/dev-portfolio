@@ -142,7 +142,6 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
     <button
       id="btn-new"
       class="inline-flex items-center gap-2 h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors"
-      disabled={clientRows.length === 0}
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
       Nueva cuenta de cobro
@@ -215,7 +214,12 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
 
       <div class="grid gap-3 sm:grid-cols-2">
         <div>
-          <label for="clientId" class="block text-[12px] font-medium text-ink-100 mb-1.5">Deudor</label>
+          <div class="flex items-baseline justify-between mb-1.5 gap-2">
+            <label for="clientId" class="block text-[12px] font-medium text-ink-100">Deudor</label>
+            <button type="button" id="btn-nuevo-cliente" class="text-[11px] text-cyan hover:underline">
+              + No está en la lista
+            </button>
+          </div>
           <select id="clientId" name="clientId" required class="input-base w-full">
             {clientRows.map((c) => <option value={c.id}>{c.company ?? c.name}</option>)}
           </select>
@@ -338,6 +342,94 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
       </div>
     </form>
   </dialog>
+
+  <!--
+    Alta rápida del deudor sin salir del flujo. NO escribe en la tabla `clients`
+    por su cuenta: envía a POST /api/admin/clients, el mismo endpoint que usa
+    /admin/clients, para heredar su validación entera (normalización del
+    teléfono a E.164, límites de los pares de facturación, logo solo https). Un
+    INSERT propio aquí sería una segunda definición de "cliente válido" que se
+    desincronizaría con la primera en cuanto una de las dos cambie.
+
+    El cliente nace SIN portal (portal_enabled es false por defecto y el
+    endpoint ni siquiera acepta el campo): dar de alta a quien se le cobra no
+    puede ser, de paso, darle acceso a una sesión.
+  -->
+  <dialog id="dlg-cliente" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">
+    <form id="form-cliente" class="glass-strong rounded-2xl p-5 w-[min(94vw,560px)] max-h-[88vh] overflow-y-auto text-left">
+      <h2 class="text-[16px] font-medium text-ink-50 mb-1">Nuevo deudor</h2>
+      <p class="text-[12px] text-ink-300 mb-4">
+        Se crea como cliente normal del CRM y queda disponible en el resto del panel. Sin acceso al portal.
+      </p>
+
+      <fieldset class="mb-4">
+        <legend class="text-[12px] font-medium text-ink-100 mb-2">Tipo</legend>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 text-[13px] text-ink-100 cursor-pointer">
+            <input type="radio" name="tipo" value="empresa" checked /> Empresa
+          </label>
+          <label class="flex items-center gap-2 text-[13px] text-ink-100 cursor-pointer">
+            <input type="radio" name="tipo" value="persona" /> Persona natural
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="grid gap-3">
+        <div>
+          <label for="c-nombre" class="block text-[12px] font-medium text-ink-100 mb-1.5">
+            <span id="c-nombre-label">Razón social</span>
+          </label>
+          <input type="text" id="c-nombre" required maxlength="120" class="input-base w-full" placeholder="ACME S.A.S." />
+          <p class="mt-1 text-[11px] text-ink-300">Es lo que se imprime en el "DEBE A" de la cuenta de cobro.</p>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label for="c-nit" class="block text-[12px] font-medium text-ink-100 mb-1.5">
+              <span id="c-nit-label">NIT</span>
+            </label>
+            <input type="text" id="c-nit" required maxlength="200" class="input-base w-full" placeholder="900123456-7" />
+          </div>
+          <div>
+            <label for="c-ciudad" class="block text-[12px] font-medium text-ink-100 mb-1.5">Ciudad</label>
+            <input type="text" id="c-ciudad" maxlength="200" class="input-base w-full" placeholder="Bogotá" />
+          </div>
+        </div>
+
+        <div>
+          <label for="c-direccion" class="block text-[12px] font-medium text-ink-100 mb-1.5">Dirección</label>
+          <input type="text" id="c-direccion" maxlength="200" class="input-base w-full" placeholder="Cra 7 # 1-2, oficina 301" />
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label for="c-email" class="block text-[12px] font-medium text-ink-100 mb-1.5">Email (opcional)</label>
+            <input type="email" id="c-email" maxlength="160" class="input-base w-full" placeholder="pagos@acme.com" />
+          </div>
+          <div>
+            <label for="c-telefono" class="block text-[12px] font-medium text-ink-100 mb-1.5">Teléfono (opcional)</label>
+            <input type="tel" id="c-telefono" class="input-base w-full" placeholder="3104641228" />
+          </div>
+        </div>
+      </div>
+
+      <p class="mt-3 text-[11px] text-ink-300">
+        El NIT es obligatorio aquí, aunque el CRM admita clientes sin él: sin NIT la cuenta de cobro no se puede emitir,
+        y crear un deudor al que no se le puede cobrar solo aplaza el problema.
+      </p>
+
+      <p id="c-error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="c-cancel" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" id="c-save" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+          Crear deudor
+        </button>
+      </div>
+    </form>
+  </dialog>
 </AdminLayout>
 
 <script define:vars={{ projectRows, clientRows, conceptos }}>
@@ -387,6 +479,23 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
     itemsEl.appendChild(row)
   }
 
+  // Espejo en el navegador de lo que hace parseDeudor en el servidor: las
+  // claves de billing_info se escriben a mano y hay que plegar las tildes, no
+  // borrarlas, o 'Dirección' se convierte en 'direccin' y no casa con nada.
+  const tieneNit = (cliente) => {
+    try {
+      const info = cliente && cliente.billingInfo ? JSON.parse(cliente.billingInfo) : {}
+      return Object.entries(info).some(
+        ([k, v]) =>
+          /^(nit|documento|cedula|identificacion)$/.test(
+            k.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z]/g, '')
+          ) && typeof v === 'string' && v.trim()
+      )
+    } catch {
+      return false
+    }
+  }
+
   const syncCliente = () => {
     const clientId = Number(document.getElementById('clientId').value)
 
@@ -404,19 +513,7 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
     // Aviso temprano del NIT: es el campo que más devoluciones causa, y sin él
     // la emisión va a fallar de todos modos.
     const cliente = clientRows.find((c) => c.id === clientId)
-    let tieneNit = false
-    try {
-      const info = cliente && cliente.billingInfo ? JSON.parse(cliente.billingInfo) : {}
-      tieneNit = Object.entries(info).some(
-        ([k, v]) =>
-          /^(nit|documento|cedula|identificacion)$/.test(
-            k.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z]/g, '')
-          ) && typeof v === 'string' && v.trim()
-      )
-    } catch {
-      tieneNit = false
-    }
-    document.getElementById('nit-warn').classList.toggle('hidden', tieneNit)
+    document.getElementById('nit-warn').classList.toggle('hidden', tieneNit(cliente))
   }
 
   document.getElementById('btn-new')?.addEventListener('click', () => {
@@ -426,12 +523,112 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
     syncCliente()
     recalc()
     dlg.showModal()
+    // Sin ningún cliente todavía, el primer paso obligatorio es crear el
+    // deudor: abrir un formulario con el selector vacío sería un callejón.
+    if (!clientRows.length) abrirDialogoCliente()
   })
 
   document.getElementById('cancel')?.addEventListener('click', () => dlg.close())
   document.getElementById('add-item')?.addEventListener('click', addItem)
   document.getElementById('clientId')?.addEventListener('change', syncCliente)
   document.querySelectorAll('.ret').forEach((cb) => cb.addEventListener('change', recalc))
+
+  // ── Alta rápida del deudor ────────────────────────────────────────────────
+
+  const dlgCliente = document.getElementById('dlg-cliente')
+  const formCliente = document.getElementById('form-cliente')
+  const cErrorEl = document.getElementById('c-error')
+
+  const tipoActual = () => document.querySelector('input[name="tipo"]:checked').value
+
+  // Empresa y persona natural piden el mismo dato con distinto nombre. Cambian
+  // solo las etiquetas: el payload que se envía es el mismo y lo valida el
+  // endpoint de clientes, no esta pantalla.
+  const syncTipo = () => {
+    const esEmpresa = tipoActual() === 'empresa'
+    document.getElementById('c-nombre-label').textContent = esEmpresa ? 'Razón social' : 'Nombre completo'
+    document.getElementById('c-nit-label').textContent = esEmpresa ? 'NIT' : 'Cédula'
+    document.getElementById('c-nombre').placeholder = esEmpresa ? 'ACME S.A.S.' : 'Juan Pérez'
+    document.getElementById('c-nit').placeholder = esEmpresa ? '900123456-7' : '1000000000'
+  }
+
+  const abrirDialogoCliente = () => {
+    cErrorEl.classList.add('hidden')
+    formCliente.reset()
+    syncTipo()
+    dlgCliente.showModal()
+  }
+
+  document.getElementById('btn-nuevo-cliente')?.addEventListener('click', abrirDialogoCliente)
+  document.getElementById('c-cancel')?.addEventListener('click', () => dlgCliente.close())
+  document.querySelectorAll('input[name="tipo"]').forEach((r) => r.addEventListener('change', syncTipo))
+
+  formCliente?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    cErrorEl.classList.add('hidden')
+    const save = document.getElementById('c-save')
+    save.disabled = true
+
+    const val = (id) => document.getElementById(id).value.trim()
+    const esEmpresa = tipoActual() === 'empresa'
+    const nombre = val('c-nombre')
+
+    // Para una empresa, `name` y `company` llevan la razón social. El listado
+    // pinta `company ?? name` y el PDF imprime `company || name`: si solo se
+    // llenara uno, las dos vistas podrían discrepar. Una persona natural deja
+    // `company` en null, que es lo que la distingue en el resto del CRM.
+    const payload = {
+      name: nombre,
+      company: esEmpresa ? nombre : null,
+      email: val('c-email') || null,
+      phone: val('c-telefono') || null,
+      // Las etiquetas son las que lee parseDeudor en el servidor (tolera NIT,
+      // Documento, Cédula e Identificación) y las mismas que muestra
+      // /admin/clients, donde este cliente se podrá editar como cualquier otro.
+      billingInfo: {
+        [esEmpresa ? 'NIT' : 'Cédula']: val('c-nit'),
+        'Dirección': val('c-direccion'),
+        Ciudad: val('c-ciudad'),
+      },
+    }
+
+    const res = await fetch('/api/admin/clients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      cErrorEl.textContent = body.error ?? 'No se pudo crear el deudor.'
+      cErrorEl.classList.remove('hidden')
+      save.disabled = false
+      return
+    }
+
+    const creado = await res.json()
+
+    // Se inserta en la lista en memoria y en el <select> sin recargar: recargar
+    // aquí tiraría las líneas y el concepto que ya estuvieran tecleados en la
+    // cuenta de cobro de detrás.
+    clientRows.push({
+      id: creado.id,
+      name: creado.name,
+      company: creado.company,
+      billingInfo: creado.billingInfo,
+    })
+
+    const sel = document.getElementById('clientId')
+    const opt = document.createElement('option')
+    opt.value = creado.id
+    opt.textContent = creado.company ?? creado.name
+    sel.appendChild(opt)
+    sel.value = String(creado.id)
+
+    syncCliente()
+    dlgCliente.close()
+    save.disabled = false
+  })
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault()

@@ -200,7 +200,7 @@ export async function emitirCuentaCobro(id: number, now = new Date()): Promise<E
   if (detalle.cuenta.status !== 'draft') return { ok: false, errors: ['la cuenta ya fue emitida'] }
 
   const { emisor, config } = await loadEmisorYConfig()
-  const deudor = parseDeudor(detalle.clientName, detalle.billingInfo)
+  const deudor = parseDeudor(detalle.clientName, detalle.company, detalle.billingInfo)
   const items = detalle.items.map((i) => ({ description: i.description, quantity: i.quantity, unitCents: i.unitCents }))
 
   const errors = validateCuentaCobro({

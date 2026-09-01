@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ params }) => {
   if (!emisor || !deudor) {
     const { emisor: vivo } = await loadEmisorYConfig()
     emisor = emisor ?? vivo
-    deudor = deudor ?? parseDeudor(detalle.clientName, detalle.billingInfo)
+    deudor = deudor ?? parseDeudor(detalle.clientName, detalle.company, detalle.billingInfo)
   }
 
   const bytes = await generateCuentaCobroPdf({

@@ -417,7 +417,11 @@ export function parseEmisor(rows: { key: string; value: string | null }[]): Emis
  * diccionario libre. Se buscan varias grafías de la misma clave porque ese
  * campo lo he ido llenando a mano y no tiene esquema.
  */
-export function parseDeudor(nombre: string, billingInfo: string | null | undefined): Deudor {
+export function parseDeudor(
+  nombre: string,
+  company: string | null | undefined,
+  billingInfo: string | null | undefined
+): Deudor {
   let raw: Record<string, unknown> = {}
   try {
     if (billingInfo) raw = JSON.parse(billingInfo) as Record<string, unknown>
@@ -438,7 +442,11 @@ export function parseDeudor(nombre: string, billingInfo: string | null | undefin
     return ''
   }
   return {
-    nombre: str(nombre),
+    // La razón social manda sobre el nombre de la ficha. En el CRM, `name`
+    // suele ser la persona de contacto y `company` la empresa; una cuenta de
+    // cobro dirigida a "Juan Pérez" cuando quien paga es "ACME S.A.S." la
+    // devuelve contabilidad, porque el NIT y el nombre no concuerdan.
+    nombre: str(company) || str(nombre),
     nit: pick('nit', 'documento', 'cedula', 'identificacion'),
     direccion: pick('direccion', 'address'),
     ciudad: pick('ciudad', 'city'),
