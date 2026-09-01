@@ -41,6 +41,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
       main {
         min-height: 100svh;
+        /* Es un mando de pulgar. Si acaba abierto en un portátil, no tiene
+           sentido estirar los botones a lo ancho de la pantalla. */
+        max-width: 520px;
+        margin-inline: auto;
         display: flex;
         flex-direction: column;
         gap: 16px;
@@ -112,7 +116,12 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
         gap: 6px;
       }
-      #saltos button {
+      /* `:global` es obligatorio, no cosmético: Astro reescribe cada selector
+         de este bloque con su `[data-astro-cid-…]`, y estos botones los crea
+         el script en tiempo de ejecución, así que no llevan ese atributo. Sin
+         esto salen con el estilo por defecto del navegador (fondo claro sobre
+         una página negra) y solo se ve en el móvil, ya montado. */
+      #saltos :global(button) {
         padding: 10px 0;
         font: 600 14px/1 ui-monospace, Menlo, Consolas, monospace;
         color: #7d94a8;
@@ -120,7 +129,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         border: 1px solid #16202c;
         border-radius: 10px;
       }
-      #saltos button[aria-current='true'] {
+      #saltos :global(button[aria-current='true']) {
         color: #05070a;
         background: #7fb2d8;
         border-color: #7fb2d8;
@@ -308,6 +317,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       })
 
       async function bucle() {
+        // La primera lectura no espera a nada: la página tiene que pintar la
+        // posición aunque el teléfono la haya abierto en segundo plano (una
+        // notificación por encima, la pantalla bloqueada al sacarlo del
+        // bolsillo) y el primer `visibilitychange` llegue después.
+        await pedir()
         for (;;) {
           // Con la pantalla del teléfono apagada no hay nadie mirando: sondear
           // ahí solo gasta batería y lecturas del almacén.
