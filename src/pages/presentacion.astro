@@ -82,7 +82,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           // Constructor DEL IFRAME: con el de esta página, el listener del
           // bundle no se entera y la diapositiva no se mueve. Se despacha
           // sobre el documento con `bubbles`, que sube hasta `window`.
-          const Ctor = w.KeyboardEvent || KeyboardEvent
+          const Ctor =
+            (w as unknown as { KeyboardEvent?: typeof KeyboardEvent }).KeyboardEvent ??
+            KeyboardEvent
           d.dispatchEvent(new Ctor('keydown', { key: tecla, bubbles: true, cancelable: true }))
         } catch {
           // Iframe recargándose: el próximo sondeo reintenta.
