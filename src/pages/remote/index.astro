@@ -49,7 +49,12 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         user-select: none;
       }
       main {
-        min-height: 100svh;
+        /* Altura FIJA, no mínima: con `min-height` la columna crece cuando el
+           guion es largo y se lleva los botones fuera de la pantalla, que es
+           lo único que la mano busca a ciegas. Acotada, el único que cede es
+           el panel de notas, que hace scroll dentro de sí mismo. */
+        height: 100svh;
+        overflow: hidden;
         /* Es un mando de pulgar. Si acaba abierto en un portátil, no tiene
            sentido estirar los botones a lo ancho de la pantalla. */
         max-width: 520px;
@@ -89,14 +94,35 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         background: #d2544a;
       }
 
-      /* Posición real, que es lo que de verdad importa mirar. */
+      /* Posición real, que es lo que de verdad importa mirar, y al lado el
+         nombre de la diapositiva: el número dice dónde estás, el título dice
+         de qué estás hablando. */
       .lectura {
         display: flex;
         align-items: baseline;
-        justify-content: center;
-        gap: 6px;
+        gap: 10px;
         font-variant-numeric: tabular-nums;
         line-height: 1;
+      }
+      .cifra {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        flex: none;
+      }
+      #titulo {
+        flex: 1;
+        min-width: 0;
+        font-size: 1.05rem;
+        font-weight: 600;
+        line-height: 1.25;
+        color: #cfe3f2;
+        text-wrap: balance;
+      }
+      #dur {
+        flex: none;
+        font: 11px/1 ui-monospace, Menlo, Consolas, monospace;
+        color: #5c7488;
       }
       #pos {
         font-size: 4.6rem;
@@ -116,6 +142,76 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
       #viaje:empty::before {
         content: '\00a0';
+      }
+
+      /* El guion. Se lleva el hueco que sobra y hace scroll dentro de sí
+         mismo: los botones no pueden salirse de la pantalla por mucho que se
+         alargue una nota, que es lo único que la mano busca a ciegas. */
+      #nota {
+        flex: 1 1 auto;
+        /* Sin esto un elemento flex no baja de su contenido y el `overflow`
+           de abajo no llega a activarse nunca. */
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        /* Sitio para la barra de scroll de escritorio: sin esto el texto se
+           mete por debajo. En el móvil la barra flota y no ocupa nada. */
+        padding-right: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: #22303e transparent;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      #pantalla {
+        margin: 0;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #0a1219;
+        color: #7fb2d8;
+        font-size: 0.95rem;
+        line-height: 1.35;
+      }
+      #pantalla::before {
+        content: 'en pantalla';
+        display: block;
+        margin-bottom: 4px;
+        font: 10px/1 ui-monospace, Menlo, Consolas, monospace;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #46586a;
+      }
+      #notas {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      #notas :global(li) {
+        position: relative;
+        padding-left: 16px;
+        font-size: 1.02rem;
+        line-height: 1.45;
+        color: #dbe8f2;
+      }
+      /* Un punto por idea. Nada de franja de color pegada al margen. */
+      #notas :global(li)::before {
+        content: '';
+        position: absolute;
+        left: 2px;
+        top: 0.62em;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #2f5f80;
+      }
+      #vacio {
+        margin: 0;
+        font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace;
+        color: #46586a;
       }
 
       /* Rejilla de salto: el total lo publica la pantalla, así que se puede
@@ -190,9 +286,17 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       </header>
 
       <p class="lectura">
-        <span id="pos">-</span><span id="total">/ -</span>
+        <span class="cifra"><span id="pos">-</span><span id="total">/ -</span></span>
+        <span id="titulo"></span>
+        <span id="dur"></span>
       </p>
       <p id="viaje" aria-live="polite"></p>
+
+      <section id="nota" aria-live="polite" aria-label="Notas de la diapositiva">
+        <p id="pantalla" hidden></p>
+        <ul id="notas"></ul>
+        <p id="vacio" hidden>sin notas para esta diapositiva</p>
+      </section>
 
       <div id="saltos"></div>
 
@@ -204,7 +308,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     </main>
 
     <script>
-      type Actual = { pos: number; total: number; ts: number }
+      import { mazoPublicado, notaDeGlobal } from '../../lib/presentacion/guion'
+
+      type Actual = { pos: number; total: number; ts: number; intro?: number; outro?: number }
       type Estado = { destino: number; actual: Actual | null; viva?: boolean }
 
       const el = {
@@ -217,6 +323,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         aviso: document.getElementById('aviso') as HTMLElement,
         anterior: document.getElementById('anterior') as HTMLButtonElement,
         siguiente: document.getElementById('siguiente') as HTMLButtonElement,
+        titulo: document.getElementById('titulo') as HTMLElement,
+        dur: document.getElementById('dur') as HTMLElement,
+        pantalla: document.getElementById('pantalla') as HTMLElement,
+        notas: document.getElementById('notas') as HTMLElement,
+        vacio: document.getElementById('vacio') as HTMLElement,
       }
 
       const SONDEO_MS = 1_000
@@ -251,10 +362,53 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         el.anterior.disabled = !actual || destino <= 1
         el.siguiente.disabled = Boolean(actual && destino >= actual.total)
 
+        pintarNota(actual)
         if (actual && actual.total !== totalPintado) pintarSaltos(actual.total)
         for (const b of el.saltos.querySelectorAll('button')) {
           b.setAttribute('aria-current', String(Number(b.dataset.n) === destino))
         }
+      }
+
+      /** Segundos estimados, legibles de un vistazo: 45s, 1:30, 2:30. */
+      const duracion = (s: number) =>
+        s < 60 ? `${s}s` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+
+      /** Última posición con la nota ya montada, para no rehacer el DOM en
+       *  cada sondeo (uno por segundo, toda la charla). */
+      let notaPintada: number | null = null
+
+      /**
+       * El guion de la diapositiva que se está viendo. La zona sale de la forma
+       * del mazo que publica la pantalla; si no la publicó, no se enseña nada:
+       * un número sin forma no distingue una capa de un beat, y la nota
+       * equivocada delante del público es peor que ninguna.
+       */
+      function pintarNota(actual: Actual | null) {
+        const mazo = actual ? mazoPublicado(actual) : null
+        const clave = mazo && actual ? actual.pos : null
+        if (clave === notaPintada) return
+        notaPintada = clave
+
+        const nota = mazo && actual ? notaDeGlobal(mazo, actual.pos) : null
+        el.titulo.textContent = nota?.titulo ?? ''
+        el.dur.textContent = nota?.dur ? duracion(nota.dur) : ''
+
+        el.pantalla.textContent = nota?.enPantalla ?? ''
+        el.pantalla.hidden = !nota?.enPantalla
+
+        const lineas = nota?.notas ?? []
+        el.notas.replaceChildren(
+          ...lineas.map((t) => {
+            const li = document.createElement('li')
+            li.textContent = t
+            return li
+          })
+        )
+        // El hueco se dice, no se deja en blanco: en una diapositiva sin guion
+        // hay que saber que falta escribirlo, no dudar de si el mando falla.
+        el.vacio.hidden = !nota || lineas.length > 0
+        // Una nota nueva se lee desde arriba.
+        el.notas.parentElement?.scrollTo({ top: 0 })
       }
 
       function pintarSaltos(total: number) {

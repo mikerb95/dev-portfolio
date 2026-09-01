@@ -13,7 +13,7 @@ proyecta `final.html` y el teléfono que la mueve.
 | Pieza | Ruta | Papel |
 |---|---|---|
 | Pantalla | `/presentacion` | monta `final.html` en un iframe y lo mueve por teclado |
-| Mando | `/remote` | dos botones, rejilla de salto, posición real |
+| Mando | `/remote` | dos botones, rejilla de salto, posición real y guion |
 | Estado | `/api/presentacion` | destino que pide el mando + posición que publica la pantalla |
 
 `final.html` no se toca ni se edita, y además se **reemplaza entero** cada vez
@@ -86,6 +86,37 @@ Que el estado sea una **posición absoluta** y no una cola de comandos es lo que
 hace que un sondeo perdido no pierda nada. Tres toques seguidos suman tres
 porque se acumulan sobre el destino, no sobre la posición real, que va por
 detrás durante la animación.
+
+## 2.2. El guion en el mando
+
+El mando enseña, de la diapositiva que se está viendo: el título, la frase que
+el público está leyendo, la duración estimada y las notas de discurso.
+
+El guion vive en `src/data/guion-final.ts`, **no dentro del mazo**, por lo mismo
+que el resto: el bundle se reemplaza entero en cada iteración y el discurso no
+puede irse con él. Las notas actuales nacieron dentro de `final.html` y se
+sacaron a ese archivo para poder reescribirlas sin tocarlo.
+
+Va por **zonas**, no por número global: `GUION_INTRO`, `GUION_BEATS`,
+`GUION_OUTRO`. Con una lista plana del 1 al 22, añadir una capa de entrada
+desplazaría el guion entero un puesto y cada nota quedaría en la diapositiva de
+al lado. Por zonas, una diapositiva nueva al final no mueve nada de lo demás.
+
+Un hueco no es un error: una zona más corta que el mazo real (beats nuevos
+todavía sin escribir) enseña **"sin notas para esta diapositiva"**, que es
+justo lo que hay que ver para saber que falta.
+
+Para resolver la zona, la pantalla publica **la forma del mazo** (`intro` y
+`outro`) junto a la posición. Son opcionales en `Actual` y se validan aparte:
+una forma rota se descarta entera y el mando se queda sin notas, nunca sin
+control. Y si no hay forma, no se enseña ninguna nota: delante del público, la
+nota de otra diapositiva es peor que ninguna.
+
+**El guion viaja en el JS de `/remote`, que es una página pública.** Quien
+teclee la URL puede leerlo. Para un discurso que se va a dar en voz alta
+delante de un tribunal no es gran cosa, pero es un cambio respecto a "lo peor
+que puede hacer quien la encuentre es pasar una diapositiva": si alguna vez
+importa, el sitio para poner la puerta sigue siendo el que dice la sección 8.
 
 ## 3. Quién escribe qué, y por qué son dos claves
 
@@ -187,9 +218,12 @@ Y antes, con el sistema de solo beats:
 ```
 src/lib/presentacion/estado.ts        PURO  acotar, techo, orígenes, adopción
 src/lib/presentacion/mapa.ts          PURO  zonas del mazo, índice global, paso a paso
+src/lib/presentacion/guion.ts         PURO  qué nota le toca a cada posición
+src/data/guion-final.ts               el discurso, por zonas (aquí se edita)
 src/pages/presentacion.astro          la pantalla (iframe + reconciliación)
 src/pages/remote/index.astro          el mando (`/presentacion/control` redirige aquí)
 src/pages/api/presentacion.ts         destino + actual, dos claves en Redis
 tests/presentacion-estado.test.ts     12 tests
 tests/presentacion-mapa.test.ts       21 tests (incluye convergencia de todos contra todos)
+tests/presentacion-guion.test.ts      11 tests (forma del mazo, zonas, huecos)
 ```
