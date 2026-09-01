@@ -112,8 +112,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let mazo: Mazo | null = null
       let capas: { intro: Capa[]; outro: Capa[] } = { intro: [], outro: [] }
       /** Qué capas queremos puestas. Es la verdad, no el DOM: mientras una
-       *  capa se funde, su opacidad calculada miente sobre la intención. */
+       *  capa se funde -o mientras la pestaña está en segundo plano y el
+       *  navegador congela la transición- su opacidad calculada miente sobre
+       *  la intención. */
       let puestas = { intro: [] as boolean[], outro: [] as boolean[] }
+      /** Lo último que se le pintó a cada capa, para no reescribir estilos (y
+       *  reiniciar el fundido) en cada sondeo. */
+      let pintado = { intro: [] as boolean[], outro: [] as boolean[] }
       /** Cuántas capas de entrada le hemos gastado ya al bundle (ver
        *  `bundleAunLaTiene`). Se reinicia si el iframe se recarga. */
       let consumidas = 0
@@ -187,6 +192,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           outro: outro.map((el) => ({ el, z: z(el) })),
         }
         puestas = { intro: intro.map(() => true), outro: outro.map(() => false) }
+        pintado = { intro: [...puestas.intro], outro: [...puestas.outro] }
         consumidas = 0
         mazo = { intro: intro.length, beats: leerBeat()?.total ?? 1, outro: outro.length }
         return true
@@ -229,7 +235,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
        * acota en el primer beat), pero su portada no es más que un div tapado,
        * y eso se deshace desde fuera sin recargar nada.
        */
-      function pintarCapa(c: Capa, visible: boolean) {
+      function pintarCapa(zona: 'intro' | 'outro', idx: number, visible: boolean) {
+        const c = capas[zona][idx]
+        if (!c) return
+        pintado[zona][idx] = visible
         const e = c.el
         e.style.transition = 'opacity .4s linear'
         e.style.pointerEvents = 'none'
@@ -238,18 +247,28 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           e.style.opacity = '1'
         } else {
           e.style.opacity = '0'
+          // La visibilidad se retira DESPUÉS del fundido, y solo si para
+          // entonces sigue sobrando: quitarla de golpe cortaría la fundida en
+          // seco, y quitarla sin comprobar apagaría una capa que el mando
+          // acabara de volver a pedir.
+          setTimeout(() => {
+            if (!puestas[zona][idx]) e.style.visibility = 'hidden'
+          }, 450)
         }
       }
 
-      /** Re-afirma la intención en el DOM. El bundle deja programado un
-       *  `visibility:hidden` diferido al cerrar sus capas, y una capa que
-       *  volvimos a poner justo antes se apagaría sola sin esto. */
+      /**
+       * Re-afirma la intención en el DOM. Hace falta por un solo escritor
+       * ajeno: al cerrar sus capas de entrada, el bundle deja programado un
+       * `visibility:hidden` diferido, y una capa que volvimos a poner justo
+       * antes se apagaría sola sin esto.
+       */
       function afirmarCapas() {
         for (const zona of ['intro', 'outro'] as const) {
           capas[zona].forEach((c, k) => {
             const quiere = puestas[zona][k]
-            const puesta = seVe(c.el)
-            if (quiere !== puesta) pintarCapa(c, quiere)
+            const roto = quiere && estilo(c.el).visibility === 'hidden'
+            if (quiere !== pintado[zona][k] || roto) pintarCapa(zona, k, quiere)
           })
         }
       }
@@ -259,8 +278,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           disparar(acc.tecla)
           return
         }
-        const c = capas[acc.zona][acc.idx]
-        if (!c) return
+        if (!capas[acc.zona][acc.idx]) return
         // Primera vez que se retira una capa de entrada: el bundle todavía la
         // cree suya y se va a tragar una flecha antes de mover ningún beat.
         // Gastársela aquí deja su estado y el nuestro de acuerdo; a partir de
@@ -270,7 +288,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           consumidas = acc.idx + 1
         }
         puestas[acc.zona][acc.idx] = acc.visible
-        pintarCapa(c, acc.visible)
+        pintarCapa(acc.zona, acc.idx, acc.visible)
       }
 
       function puntoActual(): Punto | null {
