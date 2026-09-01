@@ -208,138 +208,210 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
   )}
 
   <dialog id="dlg" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">
-    <form id="form" class="glass-strong rounded-2xl p-5 w-[min(94vw,680px)] max-h-[88vh] overflow-y-auto text-left">
-      <h2 class="text-[16px] font-medium text-ink-50 mb-1">Nueva cuenta de cobro</h2>
-      <p class="text-[12px] text-ink-300 mb-4">Se crea como borrador. Los datos del emisor se congelan al emitirla.</p>
+    <!--
+      La estructura es cabecera fija / cuerpo con scroll / pie fijo, y no un
+      formulario largo suelto: el pie lleva los totales, y un importe que se va
+      de la pantalla mientras tecleas las líneas es justo el dato que necesitas
+      mirar al teclearlas.
+    -->
+    <form id="form" class="glass-strong rounded-2xl w-[min(94vw,720px)] max-h-[88vh] flex flex-col text-left overflow-hidden">
+      <header class="px-5 pt-5 pb-4 border-b border-white/5 shrink-0">
+        <h2 class="text-[16px] font-medium text-ink-50">Nueva cuenta de cobro</h2>
+        <p class="text-[12px] text-ink-300 mt-0.5">Se crea como borrador. Los datos del emisor se congelan al emitirla.</p>
+      </header>
 
-      <div class="grid gap-3 sm:grid-cols-2">
-        <div>
-          <div class="flex items-baseline justify-between mb-1.5 gap-2">
-            <label for="clientId" class="block text-[12px] font-medium text-ink-100">Deudor</label>
-            <button type="button" id="btn-nuevo-cliente" class="text-[11px] text-cyan hover:underline">
-              + No está en la lista
+      <div class="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+        <!-- Deudor y datos del documento -->
+        <section>
+          <h3 class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-300 mb-3">Deudor y documento</h3>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <div class="flex items-baseline justify-between mb-1.5 gap-2">
+                <label for="clientId" class="text-[12px] font-medium text-ink-100">Deudor</label>
+                <button
+                  type="button"
+                  id="btn-nuevo-cliente"
+                  class="inline-flex items-center gap-1 text-[11px] text-cyan hover:text-cyan-glow transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  Crear deudor nuevo
+                </button>
+              </div>
+              <select id="clientId" name="clientId" required class="input-base w-full">
+                {clientRows.map((c) => <option value={c.id}>{c.company ?? c.name}</option>)}
+              </select>
+
+              <!--
+                Aviso accionable, no un texto rojo suelto: dice qué falta y
+                lleva al sitio donde se arregla. Se reserva el espacio con
+                `hidden` en vez de insertarlo al vuelo para que aparecer no
+                empuje el resto del formulario hacia abajo de golpe.
+              -->
+              <div
+                id="nit-warn"
+                class="hidden mt-2 rounded-lg bg-ember/[.08] border border-ember/20 px-3 py-2 flex items-start gap-2.5"
+              >
+                <span class="mt-[5px] w-1.5 h-1.5 rounded-full bg-ember shrink-0" />
+                <p class="text-[11.5px] text-ink-100 leading-snug">
+                  Sin NIT en la ficha. Puedes crear el borrador, pero no emitirlo.
+                  <a id="nit-fix" href="/admin/clients" target="_blank" rel="noopener" class="text-cyan hover:underline">Completar la ficha</a>.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label for="projectId" class="block text-[12px] font-medium text-ink-100 mb-1.5">Proyecto <span class="text-ink-300 font-normal">(opcional)</span></label>
+              <select id="projectId" name="projectId" class="input-base w-full">
+                <option value="">Sin proyecto</option>
+              </select>
+            </div>
+            <div>
+              <label for="contractRef" class="block text-[12px] font-medium text-ink-100 mb-1.5">Contrato / OC <span class="text-ink-300 font-normal">(opcional)</span></label>
+              <input type="text" id="contractRef" name="contractRef" maxlength="120" class="input-base w-full" placeholder="OC-4471" />
+            </div>
+
+            <div>
+              <label for="city" class="block text-[12px] font-medium text-ink-100 mb-1.5">Ciudad de expedición</label>
+              <input type="text" id="city" name="city" required value={emisor.ciudad} maxlength="120" class="input-base w-full" />
+            </div>
+            <div>
+              <label class="block text-[12px] font-medium text-ink-100 mb-1.5">Periodo del servicio <span class="text-ink-300 font-normal">(opcional)</span></label>
+              <div class="flex items-center gap-2">
+                <input type="date" id="periodStart" name="periodStart" aria-label="Periodo desde" class="input-base w-full" />
+                <span class="text-[12px] text-ink-300 shrink-0">a</span>
+                <input type="date" id="periodEnd" name="periodEnd" aria-label="Periodo hasta" class="input-base w-full" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Concepto -->
+        <section class="pt-5 border-t border-white/5">
+          <h3 class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-300 mb-3">Concepto</h3>
+          <textarea
+            id="concept"
+            name="concept"
+            rows="2"
+            required
+            maxlength="500"
+            class="input-base w-full resize-y"
+            placeholder="Servicios de desarrollo de software prestados durante agosto de 2026"
+          />
+          <p class="mt-1.5 text-[11px] text-ink-300 leading-relaxed">
+            Es el texto con el que el pagador arma su documento soporte ante la DIAN. Uno genérico hace que contabilidad
+            devuelva el documento.
+          </p>
+        </section>
+
+        <!-- Líneas -->
+        <section class="pt-5 border-t border-white/5">
+          <h3 class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-300 mb-3">Detalle cobrado</h3>
+
+          <div class="overflow-x-auto">
+            <div class="min-w-[520px]">
+              <div class="grid grid-cols-[1fr_64px_128px_100px_28px] gap-2 px-0.5 pb-1.5 text-[10.5px] font-mono uppercase tracking-wider text-ink-300">
+                <span>Detalle</span>
+                <span class="text-right">Cant.</span>
+                <span class="text-right">Valor unit.</span>
+                <span class="text-right">Total</span>
+                <span />
+              </div>
+              <div id="items" class="space-y-2" />
+            </div>
+          </div>
+
+          <button type="button" id="add-item" class="mt-2.5 h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-100 hover:bg-white/[.06] transition-colors">
+            + Añadir línea
+          </button>
+        </section>
+
+        <!-- Retenciones -->
+        <section class="pt-5 border-t border-white/5">
+          <div class="flex items-baseline justify-between gap-2 mb-3">
+            <h3 class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-300">Retenciones que practica el pagador</h3>
+            <span class="text-[10.5px] font-mono text-ink-300">{config.declarante ? 'declarante' : 'no declarante'}</span>
+          </div>
+
+          <div class="space-y-1">
+            {conceptos.map((c) => (
+              <label
+                class:list={[
+                  'flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12.5px] transition-colors',
+                  c.rate > 0 ? 'text-ink-100 hover:bg-white/[.03] cursor-pointer' : 'text-ink-300 cursor-not-allowed',
+                ]}
+              >
+                <input type="checkbox" class="ret shrink-0" value={c.id} disabled={c.rate <= 0} />
+                <span class="flex-1 leading-snug">{c.label}</span>
+                <span class="font-mono text-[11.5px] shrink-0 tabular-nums">
+                  {c.rate > 0 ? (
+                    <>
+                      <span class="text-ink-100">{(c.rate * 100).toFixed(2).replace(/\.?0+$/, '')} %</span>
+                      {c.baseUvt > 0 && <span class="text-ink-300"> · desde {c.baseUvt} UVT</span>}
+                    </>
+                  ) : (
+                    <span class="text-ink-300">sin configurar</span>
+                  )}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          <p class="mt-2 text-[11px] text-ink-300 leading-relaxed">
+            Tarifas según <a href="/admin/settings" class="text-cyan hover:underline">Ajustes</a>. La cuenta se emite por
+            el bruto; el neto es informativo.
+          </p>
+        </section>
+
+        <!-- Seguridad social y notas -->
+        <section class="pt-5 border-t border-white/5">
+          <h3 class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-300 mb-3">Seguridad social y notas</h3>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label for="ssPlanilla" class="block text-[12px] font-medium text-ink-100 mb-1.5">Planilla PILA <span class="text-ink-300 font-normal">(opcional)</span></label>
+              <input type="text" id="ssPlanilla" name="ssPlanilla" maxlength="60" class="input-base w-full" placeholder="1234567890" />
+            </div>
+            <div>
+              <label for="ssPeriodo" class="block text-[12px] font-medium text-ink-100 mb-1.5">Periodo cotizado <span class="text-ink-300 font-normal">(opcional)</span></label>
+              <input type="month" id="ssPeriodo" name="ssPeriodo" class="input-base w-full" />
+            </div>
+            <div class="sm:col-span-2">
+              <label for="notes" class="block text-[12px] font-medium text-ink-100 mb-1.5">Notas <span class="text-ink-300 font-normal">(opcional)</span></label>
+              <textarea id="notes" name="notes" rows="2" maxlength="1000" class="input-base w-full resize-y" />
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="shrink-0 border-t border-white/10 bg-ink-950/50 px-5 py-3.5">
+        <p id="error" class="hidden mb-2.5 text-[12px] text-ember" role="alert" />
+
+        <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div class="flex items-end gap-6">
+            <div>
+              <p class="text-[10.5px] font-mono uppercase tracking-[.16em] text-ink-300">Total a cobrar</p>
+              <p id="total" class="font-mono text-[20px] leading-tight text-cyan tabular-nums">$ 0</p>
+            </div>
+            <div class="hidden sm:block">
+              <p class="text-[10.5px] font-mono uppercase tracking-[.16em] text-ink-300">Neto estimado</p>
+              <p id="neto" class="font-mono text-[13px] leading-tight text-ink-100 tabular-nums">$ 0</p>
+            </div>
+            <div class="hidden sm:block">
+              <p class="text-[10.5px] font-mono uppercase tracking-[.16em] text-ink-300">IBC (40 %)</p>
+              <p id="ibc" class="font-mono text-[13px] leading-tight text-ink-200 tabular-nums">$ 0</p>
+            </div>
+          </div>
+
+          <div class="flex gap-2 ml-auto">
+            <button type="button" id="cancel" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
+              Cancelar
+            </button>
+            <button type="submit" id="save" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
+              Crear borrador
             </button>
           </div>
-          <select id="clientId" name="clientId" required class="input-base w-full">
-            {clientRows.map((c) => <option value={c.id}>{c.company ?? c.name}</option>)}
-          </select>
-          <p id="nit-warn" class="hidden mt-1 text-[11px] text-ember">
-            Este cliente no tiene NIT en su ficha; sin él no se podrá emitir.
-          </p>
         </div>
-        <div>
-          <label for="projectId" class="block text-[12px] font-medium text-ink-100 mb-1.5">Proyecto (opcional)</label>
-          <select id="projectId" name="projectId" class="input-base w-full">
-            <option value="">Sin proyecto</option>
-          </select>
-        </div>
-        <div>
-          <label for="city" class="block text-[12px] font-medium text-ink-100 mb-1.5">Ciudad de expedición</label>
-          <input type="text" id="city" name="city" required value={emisor.ciudad} maxlength="120" class="input-base w-full" />
-        </div>
-        <div>
-          <label for="contractRef" class="block text-[12px] font-medium text-ink-100 mb-1.5">Contrato / OC (opcional)</label>
-          <input type="text" id="contractRef" name="contractRef" maxlength="120" class="input-base w-full" />
-        </div>
-        <div>
-          <label for="periodStart" class="block text-[12px] font-medium text-ink-100 mb-1.5">Periodo desde</label>
-          <input type="date" id="periodStart" name="periodStart" class="input-base w-full" />
-        </div>
-        <div>
-          <label for="periodEnd" class="block text-[12px] font-medium text-ink-100 mb-1.5">Periodo hasta</label>
-          <input type="date" id="periodEnd" name="periodEnd" class="input-base w-full" />
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <label for="concept" class="block text-[12px] font-medium text-ink-100 mb-1.5">Concepto detallado</label>
-        <textarea
-          id="concept"
-          name="concept"
-          rows="2"
-          required
-          maxlength="500"
-          class="input-base w-full resize-y"
-          placeholder="Servicios de desarrollo de software prestados durante agosto de 2026…"
-        />
-        <p class="mt-1 text-[11px] text-ink-300">
-          Un concepto genérico hace que contabilidad devuelva el documento: es el texto con el que el pagador arma su
-          documento soporte ante la DIAN.
-        </p>
-      </div>
-
-      <div class="mt-4">
-        <label class="block text-[12px] font-medium text-ink-100 mb-2">Conceptos cobrados</label>
-        <div id="items" class="space-y-2" />
-        <button type="button" id="add-item" class="mt-2 h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-100 hover:bg-white/[.06] transition-colors">
-          + Añadir línea
-        </button>
-      </div>
-
-      <div class="mt-4">
-        <label class="block text-[12px] font-medium text-ink-100 mb-2">Retenciones que practica el pagador</label>
-        <div class="space-y-1.5">
-          {conceptos.map((c) => (
-            <label class="flex items-start gap-2.5 text-[12.5px] text-ink-100 cursor-pointer">
-              <input type="checkbox" class="ret mt-0.5" value={c.id} disabled={c.rate <= 0} />
-              <span>
-                {c.label}
-                <span class="font-mono text-ink-300">
-                  {' '}{c.rate > 0 ? `${(c.rate * 100).toFixed(2).replace(/\.?0+$/, '')} %` : 'sin configurar'}
-                  {c.baseUvt > 0 ? ` · desde ${c.baseUvt} UVT` : ''}
-                </span>
-              </span>
-            </label>
-          ))}
-        </div>
-        <p class="mt-1.5 text-[11px] text-ink-300">
-          Tarifas según <a href="/admin/settings" class="text-cyan hover:underline">Ajustes</a>
-          {config.declarante ? ' (declarante de renta).' : ' (no declarante de renta).'}
-          La cuenta se emite por el bruto; el neto es informativo.
-        </p>
-      </div>
-
-      <div class="mt-4 grid gap-3 sm:grid-cols-2">
-        <div>
-          <label for="ssPlanilla" class="block text-[12px] font-medium text-ink-100 mb-1.5">Planilla PILA (opcional)</label>
-          <input type="text" id="ssPlanilla" name="ssPlanilla" maxlength="60" class="input-base w-full" />
-        </div>
-        <div>
-          <label for="ssPeriodo" class="block text-[12px] font-medium text-ink-100 mb-1.5">Periodo cotizado</label>
-          <input type="month" id="ssPeriodo" name="ssPeriodo" class="input-base w-full" />
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <label for="notes" class="block text-[12px] font-medium text-ink-100 mb-1.5">Notas (opcional)</label>
-        <textarea id="notes" name="notes" rows="2" maxlength="1000" class="input-base w-full resize-y" />
-      </div>
-
-      <div class="mt-4 pt-3 border-t border-white/5 space-y-1">
-        <div class="flex justify-between items-baseline">
-          <span class="text-[13px] text-ink-200">Total a cobrar</span>
-          <span id="total" class="font-mono text-[17px] text-cyan">$ 0</span>
-        </div>
-        <div class="flex justify-between items-baseline">
-          <span class="text-[12px] text-ink-300">Neto estimado tras retenciones</span>
-          <span id="neto" class="font-mono text-[13px] text-ink-200">$ 0</span>
-        </div>
-        <div class="flex justify-between items-baseline">
-          <span class="text-[12px] text-ink-300">IBC de seguridad social (40 %)</span>
-          <span id="ibc" class="font-mono text-[13px] text-ink-200">$ 0</span>
-        </div>
-      </div>
-
-      <p id="error" class="hidden mt-3 text-[12px] text-ember" role="alert" />
-
-      <div class="mt-5 flex justify-end gap-2">
-        <button type="button" id="cancel" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-100 text-[13px] hover:bg-white/[.06] transition-colors">
-          Cancelar
-        </button>
-        <button type="submit" id="save" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50">
-          Crear borrador
-        </button>
-      </div>
+      </footer>
     </form>
   </dialog>
 
@@ -448,7 +520,12 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
     itemsEl.querySelectorAll('.item').forEach((row) => {
       const qty = Number(row.querySelector('.qty').value) || 0
       const price = Number(row.querySelector('.price').value) || 0
-      subtotal += Math.round(qty * Math.round(price * 100))
+      // Mismo redondeo por línea que `itemTotal` en el servidor: a centavo
+      // entero aquí, no al final. Si la previsualización sumara en crudo,
+      // mostraría un total distinto del que devuelve la API por un peso.
+      const linea = Math.round(qty * Math.round(price * 100))
+      row.querySelector('.line-total').textContent = linea ? fmt(linea) : '-'
+      subtotal += linea
     })
 
     let retenciones = 0
@@ -464,12 +541,13 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
 
   const addItem = () => {
     const row = document.createElement('div')
-    row.className = 'item grid grid-cols-[1fr_70px_120px_auto] gap-2 items-center'
+    row.className = 'item grid grid-cols-[1fr_64px_128px_100px_28px] gap-2 items-center'
     row.innerHTML = `
-      <input type="text" class="desc input-base w-full text-[13px]" placeholder="Detalle" required />
-      <input type="number" class="qty input-base w-full text-[13px]" value="1" min="0.01" step="0.01" required />
-      <input type="number" class="price input-base w-full text-[13px]" placeholder="Valor unit." min="0" step="1" required />
-      <button type="button" class="del w-7 h-7 rounded-lg text-ink-300 hover:text-ember hover:bg-white/[.06] transition-colors">×</button>
+      <input type="text" class="desc input-base w-full text-[13px]" placeholder="Concepto de la línea" required />
+      <input type="number" class="qty input-base w-full text-[13px] text-right" value="1" min="0.01" step="0.01" required aria-label="Cantidad" />
+      <input type="number" class="price input-base w-full text-[13px] text-right" placeholder="0" min="0" step="1" required aria-label="Valor unitario" />
+      <span class="line-total font-mono text-[12.5px] text-ink-200 text-right tabular-nums">-</span>
+      <button type="button" class="del w-7 h-7 rounded-lg text-ink-300 hover:text-ember hover:bg-white/[.06] transition-colors" aria-label="Quitar línea">×</button>
     `
     row.querySelector('.del').addEventListener('click', () => {
       row.remove()
