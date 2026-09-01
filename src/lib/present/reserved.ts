@@ -51,6 +51,10 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   'platziconf',
   'portal',
   'present',
+  // Visor público de `public/final.html` y su control remoto
+  // (`/presentacion` y `/presentacion/control`). Cubre las dos: la página y el
+  // directorio se normalizan al mismo segmento.
+  'presentacion',
   'projects',
   'remote',
   'security',
