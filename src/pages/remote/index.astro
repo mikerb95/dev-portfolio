@@ -1,6 +1,15 @@
 ---
-// El MANDO: lo que llevo en la mano. Manda intenciones a `/api/presentacion`;
-// quien las cumple es `/presentacion`, que es la que tiene el bundle delante.
+// El MANDO de `/final.html`: lo que llevo en la mano. Manda intenciones a
+// `/api/presentacion`; quien las cumple es `/presentacion`, que es la que
+// tiene el bundle delante.
+//
+// Vive en `/remote` a secas porque se teclea de memoria en el celular, con la
+// sala esperando. Es la ruta más corta que queda libre en la raíz.
+//
+// OJO al vecindario: `/remote/<sessionId>` es otra cosa (el control de las
+// presentaciones con deck y PIN) y sigue exigiendo sesión de admin. El
+// middleware separa las dos por ruta EXACTA; ver el comentario del matcher
+// `isAdmin`.
 //
 // La regla de diseño de esta pantalla: NO MENTIR. La versión anterior pintaba
 // "ok" en cuanto el POST devolvía 200, que solo confirma que el servidor

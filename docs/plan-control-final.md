@@ -13,11 +13,21 @@ proyecta `final.html` y el teléfono que la mueve.
 | Pieza | Ruta | Papel |
 |---|---|---|
 | Pantalla | `/presentacion` | monta `final.html` en un iframe y lo mueve por teclado |
-| Mando | `/presentacion/control` | dos botones, rejilla de salto, posición real |
+| Mando | `/remote` | dos botones, rejilla de salto, posición real |
 | Estado | `/api/presentacion` | destino que pide el mando + posición que publica la pantalla |
 
 `final.html` no se toca ni se edita. Se mueve desde fuera despachando el mismo
 `keydown` que su propio bundle ya escucha.
+
+El mando vive en **`/remote` a secas** porque se teclea de memoria en el
+celular con la sala esperando. `/presentacion/control`, que fue su primera
+dirección, quedó como redirección 308.
+
+**`/remote` es público; `/remote/<sessionId>` no.** Son dos sistemas distintos
+compartiendo vecindario en la raíz: el segundo es el control de las
+presentaciones con deck y PIN y sigue exigiendo sesión de admin. El matcher
+`isAdmin` del middleware los separa por ruta exacta, incluida la variante con
+barra final que Astro sirve igual. Abrir el mando no puede abrir el panel.
 
 ## 2. Una sola verdad: el bundle
 
@@ -93,7 +103,7 @@ el techo del diseño: bajarlo es subir `SONDEO_MS`, a costa de latencia.
 
 ## 7. Verificado en vivo (dev, 1 sep)
 
-Con `/presentacion` y `/presentacion/control` en dos pestañas, contra el
+Con `/presentacion` y el mando en dos pestañas, contra el
 `final.html` real de 19 diapositivas:
 
 - recarga con la charla en la 9: la pantalla se reconstruye sola hasta la 9;
@@ -119,7 +129,7 @@ Con `/presentacion` y `/presentacion/control` en dos pestañas, contra el
 ```
 src/lib/presentacion/estado.ts        PURO  acotar, techo, orígenes, adopción
 src/pages/presentacion.astro          la pantalla (iframe + reconciliación)
-src/pages/presentacion/control.astro  el mando
+src/pages/remote/index.astro          el mando (`/presentacion/control` redirige aquí)
 src/pages/api/presentacion.ts         destino + actual, dos claves en Redis
 tests/presentacion-estado.test.ts     12 tests
 ```
