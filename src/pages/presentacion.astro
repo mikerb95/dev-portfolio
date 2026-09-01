@@ -52,35 +52,36 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     <script>
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
-      /** Dónde está la presentación de verdad, según ella misma. */
-      let beatReal = 1
-      /** Evita dos reconciliaciones solapadas peleándose por el mismo hueco. */
-      let aplicando = false
-
-      // El bundle emite `sustentacion:beat` en cada cambio de diapositiva, sea
-      // por el mando o por lo que sea. Es la única fuente de verdad.
-      function engancharBeats() {
-        try {
-          iframe.contentWindow?.addEventListener('sustentacion:beat', (e) => {
-            const detalle = (e as CustomEvent<{ indice?: number }>).detail
-            if (typeof detalle?.indice === 'number') beatReal = detalle.indice
-          })
-        } catch {
-          // Mismo origen, no debería fallar; si falla, la reconciliación sigue
-          // funcionando con la posición que tengamos.
-        }
+      /**
+       * Dónde está la presentación, leído del propio bundle: pinta su posición
+       * como "05 / 14" y de ahí salen la diapositiva actual y el total.
+       *
+       * Se lee del DOM y no del evento `sustentacion:beat` que el bundle
+       * también emite, por una carrera que costó encontrar: este script es un
+       * módulo (diferido), así que el iframe puede haber terminado de cargar
+       * ANTES de que corra, y entonces el `load` al que se enganchaba el
+       * listener ya no vuelve a dispararse. Cuando eso pasaba, la posición se
+       * quedaba congelada en 1, la reconciliación creía que la presentación no
+       * podía moverse y "corregía" el servidor hacia atrás, borrando los
+       * comandos recién pulsados. Leer el DOM no depende de haber llegado a
+       * tiempo a ningún evento.
+       */
+      function leerPosicion(): { pos: number; total: number } | null {
+        const d = iframe.contentDocument
+        const texto = d?.body?.innerText
+        if (!texto) return null
+        const m = texto.match(/(\d{1,2})\s*\/\s*(\d{1,2})/)
+        return m ? { pos: Number(m[1]), total: Number(m[2]) } : null
       }
-      iframe.addEventListener('load', engancharBeats)
-      engancharBeats()
 
       function disparar(tecla: string) {
         const w = iframe.contentWindow
         const d = iframe.contentDocument
         if (!w || !d) return
         try {
-          // Constructor DEL IFRAME (ver cabecera): con el de esta página el
-          // listener del bundle no se entera. Se despacha sobre el documento
-          // con `bubbles`, que sube hasta el listener de `window`.
+          // Constructor DEL IFRAME: con el de esta página, el listener del
+          // bundle no se entera y la diapositiva no se mueve. Se despacha
+          // sobre el documento con `bubbles`, que sube hasta `window`.
           const Ctor = w.KeyboardEvent || KeyboardEvent
           d.dispatchEvent(new Ctor('keydown', { key: tecla, bubbles: true, cancelable: true }))
         } catch {
@@ -88,39 +89,33 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         }
       }
 
+      /** Evita dos reconciliaciones solapadas peleándose por el mismo hueco. */
+      let aplicando = false
+
       async function reconciliar(destino: number) {
         if (aplicando) return
         aplicando = true
-        // Una tecla puede consumirse SIN cambiar de diapositiva: al cargar, el
-        // bundle muestra una portada y la primera flecha solo la cierra (lo
-        // mismo con las citas a pantalla completa). Cortar al primer
-        // no-movimiento daba por agotada la presentación en la primera pulsación
-        // y devolvía al servidor una posición atrasada, que era justo lo que
-        // borraba los comandos recién pulsados. Solo tres intentos seguidos sin
-        // moverse significan de verdad "no hay más diapositivas por ahí".
-        let sinMover = 0
         try {
-          for (let intentos = 0; beatReal !== destino && intentos < 40; intentos++) {
-            const antes = beatReal
-            disparar(destino > beatReal ? 'ArrowRight' : 'ArrowLeft')
-            // 350 ms y no menos: cada diapositiva anima un canvas pesado
-            // (~450 ms de transición). Encadenando saltos largos a 200 ms se
-            // llegó a dejar la pestaña sin responder, aunque acabara llegando.
+          // Una tecla puede consumirse SIN cambiar de diapositiva: al cargar,
+          // el bundle muestra una portada y la primera flecha solo la cierra
+          // (igual con las citas y con la pantalla de cierre). Cortar al primer
+          // no-movimiento daba por agotada la presentación en la primera
+          // pulsación. Tres seguidas sin moverse sí significan "no hay más".
+          let sinMover = 0
+          for (let intentos = 0; intentos < 40; intentos++) {
+            const actual = leerPosicion()
+            if (!actual || actual.pos === destino) break
+            disparar(actual.pos < destino ? 'ArrowRight' : 'ArrowLeft')
+            // 350 ms: cada diapositiva anima un canvas pesado (~450 ms de
+            // transición). Encadenando saltos largos más rápido se llegó a
+            // dejar la pestaña sin responder, aunque acabara llegando.
             await new Promise((r) => setTimeout(r, 350))
-            if (beatReal === antes) {
+            const despues = leerPosicion()
+            if (despues && despues.pos === actual.pos) {
               if (++sinMover >= 3) break
             } else {
               sinMover = 0
             }
-          }
-          if (beatReal !== destino && sinMover >= 3) {
-            // Llegamos al tope: la posición real manda, se corrige el servidor
-            // para que el siguiente toque del mando parta de donde estamos.
-            await fetch('/api/presentacion', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pos: beatReal }),
-            }).catch(() => {})
           }
         } finally {
           aplicando = false
@@ -132,7 +127,22 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           const res = await fetch('/api/presentacion', { cache: 'no-store' })
           if (!res.ok) return
           const { pos } = (await res.json()) as { pos: number }
-          if (typeof pos === 'number' && pos !== beatReal) await reconciliar(pos)
+          const actual = leerPosicion()
+          if (typeof pos !== 'number' || !actual) return
+
+          // El servidor no sabe cuántas diapositivas hay. Si el mando se pasó
+          // del final, se acota al total real y se le devuelve la posición
+          // buena, para que el siguiente toque parta de donde estamos y no
+          // haya que pulsar "anterior" varias veces sin efecto.
+          const destino = Math.min(Math.max(pos, 1), actual.total)
+          if (destino !== pos) {
+            await fetch('/api/presentacion', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ pos: destino }),
+            }).catch(() => {})
+          }
+          if (destino !== actual.pos) await reconciliar(destino)
         } catch {
           // Sin red o Redis caído: se reintenta en el próximo ciclo y la
           // presentación se queda donde está en vez de romperse.
