@@ -9,7 +9,6 @@ import {
   totalGlobal,
   type Accion,
   type Mazo,
-  type Punto,
 } from '../src/lib/presentacion/mapa'
 
 /** El mazo real de la sustentación: cita + portada, 19 beats, cierre. */
