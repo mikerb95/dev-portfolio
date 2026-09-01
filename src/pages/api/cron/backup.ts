@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
-import { timingSafeEqual } from 'node:crypto'
 import { runBackup } from '../../../lib/backup'
+import { cronSecretOk } from '../../../lib/cron-auth'
 
 // Backup diario. Estuvo bajo `/api/admin/backup` hasta agosto de 2026 y por eso
 // no funcionó nunca: el middleware protege con sesión todo lo que cuelga de
@@ -12,18 +12,8 @@ import { runBackup } from '../../../lib/backup'
 //
 // Aquí es GET con Bearer CRON_SECRET, igual que los otros seis crons.
 
-const CRON_SECRET = import.meta.env.CRON_SECRET
-
-/** Comparación en tiempo constante; longitudes distintas se rechazan antes. */
-function secretOk(auth: string | null): boolean {
-  if (!CRON_SECRET || !auth) return false
-  const a = Buffer.from(auth)
-  const b = Buffer.from(`Bearer ${CRON_SECRET}`)
-  return a.length === b.length && timingSafeEqual(a, b)
-}
-
 export const GET: APIRoute = async ({ request }) => {
-  if (!secretOk(request.headers.get('authorization'))) {
+  if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
   try {

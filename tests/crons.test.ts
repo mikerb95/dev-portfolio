@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterAll } from 'vitest'
+import { cronSecretOk } from '../src/lib/cron-auth'
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -43,8 +44,63 @@ describe('crons declarados en vercel.json', () => {
     expect(path.startsWith('/api/admin')).toBe(false)
   })
 
-  it.each(crons.map((c) => c.path))('%s comprueba CRON_SECRET', (path) => {
+  // La validación tiene que pasar por `cronSecretOk` (lib/cron-auth.ts). Las
+  // copias inline se desincronizaron una vez: unas comparaban en tiempo
+  // constante y otras con `!==`, contra lo que decía la documentación.
+  it.each(crons.map((c) => c.path))('%s valida el secreto con cronSecretOk', (path) => {
     const src = readFileSync(archivoDeRuta(path), 'utf8')
-    expect(/CRON_SECRET/.test(src), `${path} no menciona CRON_SECRET`).toBe(true)
+    expect(/cronSecretOk\(/.test(src), `${path} no usa cronSecretOk`).toBe(true)
+  })
+
+  // Un `auth !== \`Bearer ...\`` vuelve a meter comparación variable en tiempo.
+  it.each(crons.map((c) => c.path))('%s no compara el secreto con !==', (path) => {
+    const src = readFileSync(archivoDeRuta(path), 'utf8')
+    expect(/!==\s*`Bearer/.test(src), `${path} compara el secreto con !==`).toBe(false)
+  })
+})
+
+describe('cronSecretOk', () => {
+  const anterior = process.env.CRON_SECRET
+
+  beforeEach(() => {
+    process.env.CRON_SECRET = 'secreto-de-prueba'
+  })
+
+  afterAll(() => {
+    if (anterior === undefined) delete process.env.CRON_SECRET
+    else process.env.CRON_SECRET = anterior
+  })
+
+  it('acepta el header bien formado', () => {
+    expect(cronSecretOk('Bearer secreto-de-prueba')).toBe(true)
+  })
+
+  // El fallo real de cron-job.org (sep 2026): el header quedó guardado con el
+  // secreto pelado, sin el prefijo, y los dos jobs se pasaron tres semanas
+  // recibiendo 401 hasta que el scheduler los deshabilitó solo.
+  it('rechaza el secreto sin el prefijo Bearer', () => {
+    expect(cronSecretOk('secreto-de-prueba')).toBe(false)
+  })
+
+  it('rechaza un secreto distinto de la misma longitud', () => {
+    expect(cronSecretOk('Bearer secreto-de-pruebA')).toBe(false)
+  })
+
+  it('rechaza header ausente o vacío', () => {
+    expect(cronSecretOk(null)).toBe(false)
+    expect(cronSecretOk('')).toBe(false)
+  })
+
+  // timingSafeEqual lanza si los buffers difieren en tamaño: la guarda de
+  // longitud tiene que filtrarlo antes, no propagar la excepción como un 500.
+  it('no lanza con headers de cualquier longitud', () => {
+    expect(() => cronSecretOk('x')).not.toThrow()
+    expect(() => cronSecretOk('Bearer ' + 'x'.repeat(5000))).not.toThrow()
+    expect(cronSecretOk('x')).toBe(false)
+  })
+
+  it('rechaza todo si no hay secreto en el entorno', () => {
+    delete process.env.CRON_SECRET
+    expect(cronSecretOk('Bearer secreto-de-prueba')).toBe(false)
   })
 })

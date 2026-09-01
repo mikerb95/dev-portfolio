@@ -17,13 +17,13 @@ import {
 import { detectSpikes, detectNewPatterns, detectGeoAnomalies, type Anomaly } from '../../../lib/security/anomaly'
 import { persistAnomalies } from '../../../lib/security/anomaly-store'
 import { isAllowedLogin } from '../../../lib/auth'
+import { cronSecretOk } from '../../../lib/cron-auth'
 import { sendEmail, sendPush } from '../../../lib/notify'
 
 // Cron de seguridad. Ejecuta, en orden: auto-block (Fase 2), purga por retención,
 // rollups horarios/diarios y detección de anomalías con alertas (Fase 3).
 // Disparado por cron-job.org (GET + Bearer CRON_SECRET), como el resto de crons.
 
-const CRON_SECRET = import.meta.env.CRON_SECRET
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
 const EVENT_RETENTION_DAYS = 90
@@ -110,8 +110,7 @@ async function runRollup() {
 
 // Disparo por cron-job.org / Vercel cron.
 export const GET: APIRoute = async ({ request }) => {
-  const auth = request.headers.get('authorization')
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
+  if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
   try {

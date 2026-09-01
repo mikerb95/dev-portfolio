@@ -6,8 +6,7 @@ import { notifyClient } from '../../../lib/portal/notifications'
 import { recordActivity } from '../../../lib/portal/activity'
 import { formatMoney } from '../../../lib/portal/format'
 import { sendPush } from '../../../lib/notify'
-
-const CRON_SECRET = import.meta.env.CRON_SECRET
+import { cronSecretOk } from '../../../lib/cron-auth'
 
 // Barrido diario de facturas vencidas: `sent` con fecha pasada → `overdue`.
 //
@@ -54,8 +53,7 @@ async function run() {
 
 /** Disparado por Vercel cron (GET con Authorization: Bearer CRON_SECRET). */
 export const GET: APIRoute = async ({ request }) => {
-  const auth = request.headers.get('authorization')
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) return json(401, { error: 'no autorizado' })
+  if (!cronSecretOk(request.headers.get('authorization'))) return json(401, { error: 'no autorizado' })
   try {
     return json(200, await run())
   } catch (err) {

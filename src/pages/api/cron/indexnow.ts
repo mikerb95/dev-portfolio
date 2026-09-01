@@ -2,8 +2,8 @@ import type { APIRoute } from 'astro'
 import { getSession } from 'auth-astro/server'
 import { isAllowedLogin } from '../../../lib/auth'
 import { submitSitemapToIndexNow } from '../../../lib/indexnow'
+import { cronSecretOk } from '../../../lib/cron-auth'
 
-const CRON_SECRET = import.meta.env.CRON_SECRET
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
 // Reenvía diariamente el sitemap a IndexNow (Bing, Yandex, Seznam, Naver, Yep).
@@ -12,8 +12,7 @@ const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
 // Disparado por Vercel cron (GET con Authorization: Bearer CRON_SECRET).
 export const GET: APIRoute = async ({ request }) => {
-  const auth = request.headers.get('authorization')
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
+  if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
   try {

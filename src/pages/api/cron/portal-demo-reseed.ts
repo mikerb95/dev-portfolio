@@ -2,8 +2,7 @@ import type { APIRoute } from 'astro'
 import { eq, inArray } from 'drizzle-orm'
 import { db, demoAvailable, runInDemoContext } from '../../../db'
 import { clientUsers, invoices, payments, portalNotifications } from '../../../db/schema'
-
-const CRON_SECRET = import.meta.env.CRON_SECRET
+import { cronSecretOk } from '../../../lib/cron-auth'
 
 // Re-seed nocturno de la demo pública del portal.
 //
@@ -75,8 +74,7 @@ const json = (status: number, body: unknown) =>
 
 /** Disparado por Vercel cron (GET con Authorization: Bearer CRON_SECRET). */
 export const GET: APIRoute = async ({ request }) => {
-  const auth = request.headers.get('authorization')
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) return json(401, { error: 'no autorizado' })
+  if (!cronSecretOk(request.headers.get('authorization'))) return json(401, { error: 'no autorizado' })
 
   if (!demoAvailable) return json(200, { ok: true, skipped: 'demo no configurada' })
 

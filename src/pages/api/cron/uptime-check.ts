@@ -9,8 +9,8 @@ import { sendEmail, sendPush } from '../../../lib/notify'
 import { isAllowedLogin } from '../../../lib/auth'
 import { sweepSessions } from '../../../lib/device-sessions'
 import { sweepFpRooms } from '../../../lib/fingerprint'
+import { cronSecretOk } from '../../../lib/cron-auth'
 
-const CRON_SECRET = import.meta.env.CRON_SECRET
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
 const SEVERITY: Record<DomainAlertState, number> = { ok: 0, soon: 1, critical: 2, overdue: 3 }
@@ -174,8 +174,7 @@ async function notify(events: Event[]) {
 
 // Disparado por cron-job.org (o Vercel cron) con GET + Authorization: Bearer CRON_SECRET.
 export const GET: APIRoute = async ({ request }) => {
-  const auth = request.headers.get('authorization')
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
+  if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
   try {

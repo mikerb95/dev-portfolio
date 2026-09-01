@@ -4,6 +4,7 @@ import { getSession } from 'auth-astro/server'
 import { db } from '../../../db'
 import { monitorChecks, monitorDaily } from '../../../db/schema'
 import { isAllowedLogin } from '../../../lib/auth'
+import { cronSecretOk } from '../../../lib/cron-auth'
 import {
   aggregateChecks,
   serializeHist,
@@ -17,8 +18,6 @@ import {
 //
 // Corre una vez al día y es suficiente: el día EN CURSO no se guarda nunca aquí,
 // /status lo calcula en vivo (son ~2.300 filas, no 200.000).
-
-const CRON_SECRET = import.meta.env.CRON_SECRET
 
 /**
  * Días hacia atrás que se recalculan en cada pasada, sin contar el de hoy.
@@ -111,8 +110,7 @@ function pedirDias(url: URL): number {
 }
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const auth = request.headers.get('authorization')
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
+  if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
   try {

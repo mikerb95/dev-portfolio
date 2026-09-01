@@ -6,8 +6,8 @@ import { getSession } from 'auth-astro/server'
 import { domainAlertState, daysUntil, type DomainAlertState } from '../../../lib/domains'
 import { sendEmail, sendPush } from '../../../lib/notify'
 import { isAllowedLogin } from '../../../lib/auth'
+import { cronSecretOk } from '../../../lib/cron-auth'
 
-const CRON_SECRET = import.meta.env.CRON_SECRET
 const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
 
 // Orden de severidad para decidir si un dominio "empeoró" desde el último aviso.
@@ -100,8 +100,7 @@ async function runCheck(force = false) {
 
 // Disparado por Vercel cron, que invoca con GET y añade Authorization: Bearer CRON_SECRET.
 export const GET: APIRoute = async ({ request }) => {
-  const auth = request.headers.get('authorization')
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
+  if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
   try {

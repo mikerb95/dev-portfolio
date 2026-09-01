@@ -1,30 +1,21 @@
 import type { APIRoute } from 'astro'
-import { timingSafeEqual } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { db } from '../../../db'
 import { senaEpRecordatorios } from '../../../db/schema'
 import { computeHitos, hitosPorAvisar } from '../../../lib/sena-ep'
 import { sendEmail } from '../../../lib/notify'
+import { cronSecretOk } from '../../../lib/cron-auth'
 
 // Recordatorio diario de la calculadora de etapa productiva SENA (/ep).
 // Personal: hay como mucho una suscripción activa, y el email siempre va al
 // `ALERT_EMAIL_TO` ya configurado en notify.ts, nunca a un correo enviado por
 // el request. Fail-open como el resto de los crons de observabilidad.
 
-const CRON_SECRET = import.meta.env.CRON_SECRET
-
-function secretOk(auth: string | null): boolean {
-  if (!CRON_SECRET || !auth) return false
-  const a = Buffer.from(auth)
-  const b = Buffer.from(`Bearer ${CRON_SECRET}`)
-  return a.length === b.length && timingSafeEqual(a, b)
-}
-
 const fmt = (d: Date) => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
 const claveHito = (titulo: string, fecha: Date) => `${titulo}|${fecha.toISOString().slice(0, 10)}`
 
 export const GET: APIRoute = async ({ request }) => {
-  if (!secretOk(request.headers.get('authorization'))) {
+  if (!cronSecretOk(request.headers.get('authorization'))) {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 401 })
   }
 
