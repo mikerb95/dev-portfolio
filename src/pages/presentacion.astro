@@ -307,36 +307,53 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let ultimo: Actual | null = null
       let ultimoReporteEn = 0
 
-      /** Publica la posición real, ya en índice global. Es lo único que
-       *  escribe `actual`. */
-      async function reportar(actual: Actual, origen: Origen) {
+      /**
+       * Publica la posición real, ya en índice global. Es lo único que escribe
+       * `actual`. Devuelve el destino que tiene el servidor en ese momento,
+       * que viene de vuelta en la misma respuesta: gratis, y es lo que permite
+       * que un viaje largo se entere de un cambio de idea sin pedir nada más.
+       */
+      async function reportar(actual: Actual, origen: Origen): Promise<number | null> {
         ultimo = actual
         ultimoReporteEn = Date.now()
         try {
-          await fetch('/api/presentacion', {
+          const res = await fetch('/api/presentacion', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pos: actual.pos, total: actual.total, origen }),
           })
+          if (!res.ok) return null
+          const { destino } = (await res.json()) as { destino?: number }
+          return typeof destino === 'number' ? destino : null
         } catch {
           // Sin red: el latido del próximo ciclo lo vuelve a intentar.
+          return null
         }
       }
 
       /** Evita dos reconciliaciones solapadas peleándose por el mismo hueco. */
       let aplicando = false
 
+      /** Cada cuántos pasos de un viaje largo se publica el avance. */
+      const REPORTE_CADA = 4
+
       async function reconciliar(destino: number) {
         if (aplicando || !mazo) return
         aplicando = true
+        // El destino puede cambiar A MITAD del viaje: cruzar el mazo entero
+        // son veinte pasos, y en ese rato la persona que tiene el mando puede
+        // cambiar de idea. Se re-lee de la respuesta de cada reporte, así que
+        // enterarse no cuesta ni una petición extra.
+        let meta = destino
         try {
           let sinMover = 0
-          for (let intentos = 0; intentos < 60; intentos++) {
+          let desdeReporte = 0
+          for (let intentos = 0; intentos < 80; intentos++) {
             const punto = puntoActual()
             if (!punto || !mazo) break
             const aqui = aGlobal(mazo, punto)
-            if (aqui === destino) break
-            const acc = paso(mazo, punto, aPunto(mazo, destino))
+            if (aqui === meta) break
+            const acc = paso(mazo, punto, aPunto(mazo, meta))
             if (!acc) break
             aplicar(acc)
             await new Promise((r) => setTimeout(r, PASO_MS))
@@ -349,11 +366,22 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
             } else {
               sinMover = 0
             }
+            // Publicar el avance a mitad de viaje no es cosmético: el mando da
+            // por muerta a la pantalla que lleva quince segundos sin hablar, y
+            // cruzar el mazo entero puede acercarse a eso.
+            if (despues && mazo && ++desdeReporte >= REPORTE_CADA) {
+              desdeReporte = 0
+              const eco = await reportar(
+                { pos: aGlobal(mazo, despues), total: totalGlobal(mazo) },
+                'mando'
+              )
+              if (eco !== null) meta = eco
+            }
           }
           const punto = puntoActual()
           if (punto && mazo) {
             const pos = aGlobal(mazo, punto)
-            await reportar({ pos, total: totalGlobal(mazo) }, pos === destino ? 'mando' : 'ajena')
+            await reportar({ pos, total: totalGlobal(mazo) }, pos === meta ? 'mando' : 'ajena')
           }
         } finally {
           aplicando = false
