@@ -24,7 +24,12 @@ export type Marca = {
   ahora: number
 }
 
-const entero = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n)
+// Dos guardas distintos a propósito. Los instantes del almacén tienen que ser
+// enteros (un epoch con decimales es basura); los relojes que se comparan solo
+// tienen que ser números de verdad, y ahí lo que se está atajando es un NaN
+// que envenenaría la resta y dejaría el cronómetro en `--:--` para siempre.
+const finito = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n)
+const instante = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n)
 
 /**
  * Cuánto adelanta el reloj local respecto al del servidor.
@@ -40,7 +45,7 @@ const entero = (n: unknown): n is number => typeof n === 'number' && Number.isFi
  * añadiría una fuente de error propia.
  */
 export function desfase(ahoraServidor: number, recibidoEn: number): number {
-  if (!entero(ahoraServidor) || !entero(recibidoEn)) return 0
+  if (!finito(ahoraServidor) || !finito(recibidoEn)) return 0
   return recibidoEn - ahoraServidor
 }
 
@@ -56,8 +61,8 @@ export function transcurrido(
   ahoraLocal: number,
   desfaseMs: number
 ): number | null {
-  if (!entero(inicio)) return null
-  if (!entero(ahoraLocal) || !entero(desfaseMs)) return null
+  if (!instante(inicio)) return null
+  if (!finito(ahoraLocal) || !finito(desfaseMs)) return null
   return Math.max(0, ahoraLocal - desfaseMs - inicio)
 }
 
@@ -70,7 +75,7 @@ export function transcurrido(
  * poder decir la verdad, aunque la verdad sea `4:12:30`.
  */
 export function formatear(ms: number | null): string {
-  if (ms === null || !entero(ms) || ms < 0) return '--:--'
+  if (ms === null || !finito(ms) || ms < 0) return '--:--'
   const total = Math.floor(ms / 1000)
   const s = total % 60
   const m = Math.floor(total / 60) % 60
@@ -110,6 +115,6 @@ export function debeArrancar(
  */
 export function parsearInicio(v: unknown): number | null {
   const n = typeof v === 'string' ? Number(v) : v
-  if (!entero(n) || n <= 0) return null
+  if (!instante(n) || n <= 0) return null
   return n
 }
