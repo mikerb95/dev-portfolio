@@ -24,7 +24,7 @@ import {
 /**
  * Estado del control remoto de `/final.html`, que no se toca ni se edita.
  *
- *   GET                             -> { destino, actual, viva }
+ *   GET                             -> { destino, actual, viva, scroll }
  *   GET ?q=destino                  -> { destino, scroll }    (lo que sondea la pantalla)
  *   POST { accion: siguiente|anterior } -> mueve el destino    (el mando)
  *   POST { accion: subir|bajar }    -> desplaza el iframe del beat (el mando)
@@ -95,8 +95,21 @@ export const GET: APIRoute = async ({ url }) => {
       const [destino, pedido] = await Promise.all([leerDestino(), leerScroll()])
       return json(200, { destino, scroll: desplazamientoPedido(pedido, destino) })
     }
-    const [destino, actual] = await Promise.all([leerDestino(), leerActual()])
-    return json(200, { destino, actual, viva: esFresco(actual, Date.now()) })
+    const [destino, actual, pedido] = await Promise.all([
+      leerDestino(),
+      leerActual(),
+      leerScroll(),
+    ])
+    // El mando necesita el desplazamiento PEDIDO, no solo el real: es lo que
+    // decide si el botón de bajar sigue encendido. Misma regla que con el
+    // destino del mazo, los topes se comparan contra la intención y se acotan
+    // contra la realidad que publica la pantalla.
+    return json(200, {
+      destino,
+      actual,
+      viva: esFresco(actual, Date.now()),
+      scroll: desplazamientoPedido(pedido, destino),
+    })
   } catch (e) {
     return error(e)
   }
@@ -192,8 +205,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (destino !== previo) await guardarDestino(destino)
     // El mando pinta la respuesta: sabe al instante si el toque movió algo o
-    // topó con el final, en vez de decir "ok" a ciegas.
-    return json(200, { destino, actual, viva: esFresco(actual, Date.now()) })
+    // topó con el final, en vez de decir "ok" a ciegas. El desplazamiento va
+    // con ella porque cambiar de diapositiva lo devuelve a cero sin escribir
+    // nada, y el mando tiene que enterarse en el mismo fotograma.
+    const pedido = await leerScroll()
+    return json(200, {
+      destino,
+      actual,
+      viva: esFresco(actual, Date.now()),
+      scroll: desplazamientoPedido(pedido, destino),
+    })
   } catch (e) {
     return error(e)
   }

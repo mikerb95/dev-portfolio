@@ -216,6 +216,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
       /* Rejilla de salto: el total lo publica la pantalla, así que se puede
          pintar un botón por diapositiva sin que nadie lo escriba a mano. */
+      /* `display:grid` gana a `[hidden]`, que solo trae `display:none` de la
+         hoja del navegador. Sin esta regla la rejilla no se esconde nunca. */
+      #saltos[hidden] {
+        display: none;
+      }
       #saltos {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
@@ -238,6 +243,54 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         color: #05070a;
         background: #7fb2d8;
         border-color: #7fb2d8;
+      }
+
+      /* Desplazamiento de la página viva que hay dentro de un beat. Ocupa el
+         sitio de la rejilla de saltos, que es lo que menos se usa en mitad de
+         una demo y lo único que se puede quitar sin empujar el guion. */
+      #desplaza[hidden] {
+        display: none;
+      }
+      #desplaza {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      #botones {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      #botones button {
+        padding: 18px 0;
+        font-size: 1.5rem;
+        line-height: 1;
+        color: #cfe3f2;
+        background: #0a0f16;
+        border: 1px solid #16202c;
+        border-radius: 12px;
+        touch-action: manipulation;
+      }
+      #botones button:active {
+        background: #17222f;
+      }
+      #botones button:disabled {
+        opacity: 0.32;
+      }
+      /* Por dónde va la página de dentro. Dos píxeles: es una referencia de
+         reojo mientras se habla, no un dato que haya que leer. */
+      #recorrido {
+        height: 2px;
+        border-radius: 2px;
+        background: #16202c;
+        overflow: hidden;
+      }
+      #recorrido span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: #2f5f80;
+        transition: width 0.25s linear;
       }
 
       .mandos {
@@ -300,6 +353,14 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
       <div id="saltos"></div>
 
+      <section id="desplaza" hidden aria-label="Desplazar la página proyectada">
+        <div id="botones">
+          <button id="subir" type="button" aria-label="Subir">↑</button>
+          <button id="bajar" type="button" aria-label="Bajar">↓</button>
+        </div>
+        <div id="recorrido"><span id="avance"></span></div>
+      </section>
+
       <div class="mandos">
         <p id="aviso" aria-live="polite"></p>
         <button id="anterior" type="button">← Anterior</button>
@@ -310,8 +371,19 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     <script>
       import { mazoPublicado, notaDeGlobal } from '../../lib/presentacion/guion'
 
-      type Actual = { pos: number; total: number; ts: number; intro?: number; outro?: number }
-      type Estado = { destino: number; actual: Actual | null; viva?: boolean }
+      type Geometria = { y: number; max: number; alto: number }
+      type Actual = {
+        pos: number
+        total: number
+        ts: number
+        intro?: number
+        outro?: number
+        scroll?: Geometria
+      }
+      /** `scroll` es el desplazamiento PEDIDO, el equivalente de `destino`
+       *  para la página que hay dentro de la diapositiva. La geometría real
+       *  viene dentro de `actual`. */
+      type Estado = { destino: number; actual: Actual | null; viva?: boolean; scroll?: number }
 
       const el = {
         enlace: document.getElementById('enlace') as HTMLElement,
@@ -328,6 +400,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         pantalla: document.getElementById('pantalla') as HTMLElement,
         notas: document.getElementById('notas') as HTMLElement,
         vacio: document.getElementById('vacio') as HTMLElement,
+        desplaza: document.getElementById('desplaza') as HTMLElement,
+        subir: document.getElementById('subir') as HTMLButtonElement,
+        bajar: document.getElementById('bajar') as HTMLButtonElement,
+        avance: document.getElementById('avance') as HTMLElement,
       }
 
       const SONDEO_MS = 1_000
@@ -365,10 +441,38 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         // La nota va con el DESTINO, no con la posición confirmada. Ver
         // `pintarNota`.
         pintarNota(destino, actual)
+        pintarDesplazamiento(actual?.scroll, nuevo.scroll ?? 0)
         if (actual && actual.total !== totalPintado) pintarSaltos(actual.total)
         for (const b of el.saltos.querySelectorAll('button')) {
           b.setAttribute('aria-current', String(Number(b.dataset.n) === destino))
         }
+      }
+
+      /**
+       * Los controles de desplazamiento, que SUSTITUYEN a la rejilla de saltos
+       * mientras la diapositiva tenga una página viva dentro. Es el sitio que
+       * menos se usa en mitad de una demo y el único que se puede ceder sin
+       * empujar el guion fuera de la pantalla.
+       *
+       * Aparecen solos y se van solos: la pantalla publica la geometría del
+       * iframe que descubre, y sin geometría -sin iframe, con uno de otro
+       * origen, o con una página que cabe entera- aquí no hay nada que pintar.
+       *
+       * Los topes se comparan contra lo PEDIDO y se acotan contra el máximo
+       * REAL, igual que "Siguiente" se apaga con el destino contra el total del
+       * mazo: mientras el `scrollTo` anima, la posición real va por detrás, y
+       * mirarla dejaría el botón encendido en el fondo de la página.
+       */
+      function pintarDesplazamiento(geo: Geometria | undefined, pedido: number) {
+        const hay = Boolean(geo && geo.max >= 1)
+        el.desplaza.hidden = !hay
+        el.saltos.hidden = hay
+        if (!geo || !hay) return
+        el.subir.disabled = pedido <= 0
+        el.bajar.disabled = pedido >= geo.max
+        // La barra enseña la posición REAL, no la pedida: es la referencia de
+        // por dónde va lo que está viendo el público.
+        el.avance.style.width = `${Math.round((geo.y / geo.max) * 100)}%`
       }
 
       /** Segundos estimados, legibles de un vistazo: 45s, 1:30, 2:30. */
@@ -489,6 +593,47 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
       el.anterior.addEventListener('click', () => mandar({ accion: 'anterior' }))
       el.siguiente.addEventListener('click', () => mandar({ accion: 'siguiente' }))
+
+      /**
+       * Mantener pulsado repite. Recorrer una página larga a toques sueltos
+       * son quince golpes de pulgar mientras se habla; con la repetición es
+       * dejar el dedo puesto y mirar la proyección.
+       *
+       * El primer empujón sale en el `pointerdown`, no al soltar: el retardo
+       * de un `click` se nota mucho cuando lo que se está viendo es la
+       * pantalla de la sala y no el teléfono.
+       */
+      const REPETIR_MS = 350
+
+      function repetible(boton: HTMLButtonElement, accion: 'subir' | 'bajar') {
+        let timer: number | undefined
+        const parar = () => {
+          clearInterval(timer)
+          timer = undefined
+        }
+        boton.addEventListener('pointerdown', (e) => {
+          e.preventDefault()
+          if (boton.disabled) return
+          mandar({ accion })
+          parar()
+          timer = window.setInterval(() => {
+            // El botón puede apagarse a mitad de la repetición al llegar al
+            // fondo: sin esto seguiría mandando toques que el servidor acota
+            // contra el mismo número una y otra vez.
+            if (boton.disabled) parar()
+            else mandar({ accion })
+          }, REPETIR_MS)
+        })
+        // `pointercancel` es el que importa en el móvil: el navegador se lleva
+        // el puntero en cuanto interpreta un gesto de scroll, y sin él el dedo
+        // levantado dejaría el temporizador corriendo para siempre.
+        for (const ev of ['pointerup', 'pointercancel', 'pointerleave'] as const) {
+          boton.addEventListener(ev, parar)
+        }
+      }
+
+      repetible(el.subir, 'subir')
+      repetible(el.bajar, 'bajar')
 
       // El teléfono también sirve de receptor de un presentador bluetooth:
       // sus flechas llegan aquí como teclas normales.

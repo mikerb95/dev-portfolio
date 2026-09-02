@@ -341,3 +341,199 @@ src/data/documentacion.ts                RF-715, `planeado` → `implementado` a
 - **Sin control del vídeo.** Si el mazo se exporta con `DEMO_MODE=video`, no hay
   nada que desplazar y los controles no aparecen; pausar o rebobinar sería otra
   cosa distinta.
+
+## 11. `/present-admin`: la pantalla que sí se toca
+
+**Estado: planeado.**
+
+`/presentacion` monta el mazo con `pointer-events: none` a propósito: un clic
+dentro movería el bundle por su cuenta y el sondeo siguiente lo devolvería de
+golpe. Eso está bien para lo que se proyecta al público y **no se cambia**.
+
+Lo que falta es una pantalla gemela desde la que se pueda **usar** la demo:
+escribir en el login del portal, clicar, recorrer `/status`. Vive en
+`/present-admin`, se abre a la vez que `/presentacion`, y la diferencia entera
+cabe en una frase: obedece al mando igual que la otra, pero **no publica nada**
+y deja pasar el ratón a la ventana viva del beat.
+
+Supuesto explícito, porque cambia lo que ve la sala: **lo que se proyecta es
+`/present-admin`**. `/presentacion` sigue abierta como pantalla del ponente y
+como respaldo, pero la demo se ve en la que se toca. Nada de lo que se escriba
+o clique dentro del iframe se refleja en la otra (ver 11.7).
+
+### 11.1. Dos pantallas, un solo escritor de `actual`
+
+Que las dos sondeen `?q=destino` y reconcilien no choca: son dos iframes
+distintos convergiendo al mismo número, cada uno con sus propias capas.
+
+Lo que sí choca es `presentacion:actual`, y en concreto el origen `ajena`. Si
+`/present-admin` publicara la 5 como movimiento ajeno mientras `/presentacion`
+va camino de la 7, el servidor **adoptaría** la 5 como destino y la otra daría
+media vuelta. Cada pantalla arrastrando a la otra, y el número bailando en el
+teléfono. Es el mismo fallo que `ajena` resuelve para el teclado del portátil,
+solo que aquí el "alguien" es otra pantalla igual de legítima.
+
+La regla es una sola:
+
+> **`/present-admin` nunca escribe `actual`.** Es un seguidor: lee `destino`,
+> mueve su propio iframe y calla.
+
+Y su teclado local no publica una posición, publica un **destino**: el mismo
+`POST { accion }` que manda `/remote`. Es un mando incrustado en la pantalla.
+Con eso, una flecha pulsada en el portátil llega a las dos pantallas por el
+mismo camino que el toque del pulgar, y la adopción de movimientos ajenos no
+tiene que existir en este lado.
+
+Consecuencia que vale por sí sola: **`/presentacion` no cambia ni una línea**.
+El escritor único de `actual` sigue siendo el de siempre, y la carrera que la
+sección 3 evita en el camino caliente sigue sin existir.
+
+### 11.2. Relevo: qué pasa si `/presentacion` no está abierta
+
+Ensayando en solitario sobre el portátil no habría nadie publicando `actual`, y
+eso degrada tres cosas de verdad: `techo()` cae a `POS_MAX` y el mando deja de
+acotar, la forma del mazo desaparece y con ella las notas del guion (sin forma
+no se enseña ninguna, sección 2.2), y `viva` dice que la pantalla está muerta.
+
+Relevo por caducidad, sin coordinación ni bandera nueva:
+
+- `/present-admin` publica `actual` **solo si el que hay está rancio**, con el
+  mismo umbral que ya define "viva" (`FRESCURA_MS`, 15 s).
+- Con `/presentacion` abierta, su latido de 5 s lo mantiene fresco y
+  `/present-admin` no escribe nunca. Sin ella, releva en 15 segundos.
+- Si la otra vuelve, el primer sondeo ve el `ts` fresco y `/present-admin` se
+  calla otra vez. Converge en un ciclo, sin negociar nada.
+- Aun relevando, **nunca publica con origen `ajena`**: `inicial`, `latido` y
+  `mando` no tocan el destino salvo para acotarlo. Adoptar es justo lo que se
+  quiere evitar si la otra pantalla reaparece a mitad de un viaje.
+
+Para saberlo necesita el `ts`, que `?q=destino` no devuelve a propósito (no
+duplicar lecturas de lo que la pantalla misma escribió). Se añade
+`?q=destino&relevo=1`, que agrega **solo el `ts`**, no el `actual` entero. Lo
+pide únicamente `/present-admin`; el coste de `/presentacion` no se mueve.
+
+### 11.3. La interacción: `pointer-events` por dentro, no por fuera
+
+Quitarle el `pointer-events: none` al `<iframe>` devuelve el fallo entero: el
+bundle escucha `onStageClick` y **cualquier clic en el escenario avanza un
+beat**. Lo que se quiere es más fino: que el ratón llegue a la página viva del
+beat y a nada más.
+
+Se hace por dentro, con el mismo truco que ya usa `pintarCapa`. Todo es mismo
+origen, así que se escribe estilo en el documento del bundle:
+
+| Nodo | `pointer-events` |
+|---|---|
+| el `<iframe>` de la pantalla | `auto` |
+| el `body` del bundle | `none` |
+| el iframe vivo descubierto | `auto` |
+
+Un descendiente puede volver a habilitarlos, así que la lámina queda inerte y
+solo la ventanilla recibe clics. `onStageClick` no se dispara ni por accidente,
+y no hace falta ni parchearlo.
+
+El descubrimiento del iframe es **por forma**, como todo aquí y como ya pide la
+sección 10.4: de los `<iframe>` del mazo, el visible más grande que se solape
+con el escenario. Un beat sin iframe deja la lámina entera inerte, que es
+exactamente el comportamiento de hoy. Un mazo nuevo con otros iframes funciona
+igual, y ninguna cifra de `final.html` entra en este código.
+
+El estilo se **re-afirma en cada sondeo**, por la misma razón que `afirmarCapas`
+existe: el bundle monta y desmonta esos iframes al cambiar de beat, y el nodo
+al que se le puso `auto` puede haber dejado de estar.
+
+Detalle que se ve en la pared: el bundle escala el iframe con `transform`
+(`transform-origin: 0 0` sobre 1864x920). El hit-testing del navegador atraviesa
+la transformación, así que el clic cae donde se ve. No hay que corregir
+coordenadas.
+
+### 11.4. El teclado: quién se queda cada tecla
+
+Hay tres consumidores posibles y hay que repartirlos a mano, o dos de ellos se
+pisan.
+
+**1. La página `/present-admin`.** Flechas, espacio, `PageUp`/`PageDown`,
+`Home`/`End` y dígitos para salto directo. No mueve nada por su cuenta: hace el
+`POST` de destino y deja que la reconciliación de las dos pantallas haga el
+resto. `preventDefault` para que la barra espaciadora no desplace la página.
+
+**2. El bundle.** Registra `window.addEventListener('keydown', ...)` en fase de
+burbuja, que es el último eslabón. Si el foco cae dentro del iframe del mazo (y
+un clic lo lleva ahí), una flecha nativa movería un beat **sin pasar por el
+servidor**: la pantalla pública se quedaría atrás y el mando enseñaría un número
+que no es.
+
+Se le tapa con un listener en **fase de captura** sobre el documento del bundle,
+que es el reverso exacto de `disparar()`. Aquella inyecta el evento con el
+constructor del iframe; esta lo intercepta antes de que el bundle lo vea. El
+discriminador es `isTrusted`:
+
+```js
+// Las teclas de carne y hueso no llegan al bundle: mover un beat por fuera del
+// servidor dejaría a la otra pantalla y al mando enseñando un número que no es.
+// Las sintéticas -las que dispara la reconciliación- sí pasan: son la única
+// forma que tiene esta página de mover el mazo.
+d.addEventListener('keydown', (e) => {
+  if (e.isTrusted) { e.stopPropagation(); e.preventDefault() }
+}, true)
+```
+
+**3. La página viva dentro del beat.** Sus teclas nacen en otro documento y no
+suben ni al bundle ni a nosotros, así que escribir una contraseña en el login
+del portal funciona sin hacer nada. El precio es la otra cara de lo mismo y hay
+que saberlo antes de estar delante del tribunal: **con el foco dentro de la
+demo, las flechas no pasan de diapositiva**. Se sale clicando fuera, o se usa el
+móvil, que es lo que ya se hace.
+
+### 11.5. Ruta, puerta y encabezados
+
+Ruta `/present-admin` a secas, un archivo `src/pages/present-admin.astro`. El
+guion en vez de la barra no es cosmético: `/present/<sessionId>` es el sistema
+de decks con PIN y `/remote/<algo>` exige sesión de admin. Con un guion,
+`startsWith('/present/')` e `isAdmin` no la rozan por construcción, y no hay que
+añadir ninguna excepción como la que `/remote` a secas necesitó.
+
+**Sin puerta**, por lo mismo que la sección 8 y con un argumento más: el día de
+la charla, una sesión de GitHub caducada dejaría sin pantalla. Pero cambia una
+cosa respecto a la original y hay que decirla en voz alta: aquí quien encuentre
+la URL no solo pasa una diapositiva, puede **teclear dentro de la demo**. Lo que
+hay dentro es `codebymike.tech/portal/login`, `/status` y `/engineering`, tres
+páginas que ya son públicas y que ya tienen su propio rate limit: enmarcarlas no
+añade superficie, solo la acerca. Si alguna vez importa, el sitio para la puerta
+sigue siendo el `POST`, no la página.
+
+`Cache-Control: no-store` y `noindex, nofollow` como la actual, y fuera de
+sitemap y de cualquier enlace entrante.
+
+### 11.6. Archivos
+
+```
+src/pages/present-admin.astro          la pantalla que se toca (nueva)
+src/lib/presentacion/lienzo.ts   PURO  descubrimiento del mazo y del iframe vivo,
+                                       extraído de presentacion.astro para no
+                                       tener dos copias divergiendo
+src/pages/api/presentacion.ts          + `?q=destino&relevo=1` (agrega solo `ts`)
+src/lib/presentacion/estado.ts         + regla de relevo (rancio -> puedo publicar)
+tests/presentacion-relevo.test.ts      quién publica y cuándo, sin DOM
+src/data/documentacion.ts              RF-716, `planeado` -> `implementado`
+docs/plan-control-final.md             esta sección, marcada al entregar
+```
+
+El único refactor de `/presentacion` que contempla el plan es **extraer** su
+descubrimiento a `lienzo.ts` sin cambiar su comportamiento, para que las dos
+pantallas descubran el mazo con el mismo código. Si al empezar resulta que
+extraerlo obliga a tocar su reconciliación, se duplica y se anota: no vale la
+pena arriesgar la pantalla que ya funciona.
+
+### 11.7. Fuera de alcance
+
+- **La demo no se refleja en `/presentacion`.** Lo que se escribe y se clica se
+  ve en la pantalla que se toca, que es la que se proyecta. Espejar la sesión
+  del iframe entre dos navegadores es otro problema entero.
+- **Sin los controles de scroll del mando en esta pantalla.** Aquí hay ratón.
+  El `presentacion:scroll` de la sección 10 sigue siendo cosa de la pantalla
+  pública y esta ni lo lee ni lo escribe, para no pelearse con la rueda.
+- **Sin modo alternable.** La interacción se activa sola en cuanto el beat trae
+  un iframe, y solo sobre él. No hay tecla que recordar ni indicador que mirar.
+- **Sin control del vídeo.** Si el mazo se exporta con `DEMO_MODE=video`, no hay
+  iframe que descubrir y la lámina queda inerte, como hoy.

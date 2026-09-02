@@ -34,6 +34,15 @@
 //     por cada una antes de mover un beat. Esa deuda se paga una sola vez y en
 //     orden; después, mandarle una tecla para retirar una capa movería un beat
 //     que nadie pidió.
+//
+// TRES BEATS PROYECTAN UNA PÁGINA VIVA dentro de otro iframe (la demo del
+// portal, `/status`, `/engineering`). Como en producción esa cadena entera es
+// de un solo origen, se pueden desplazar desde aquí: se descubre el iframe en
+// juego -por forma, como todo lo demás-, se publica su geometría junto a la
+// posición y se obedece el desplazamiento que pide el mando. En local esas
+// URLs son absolutas a producción y por tanto de otro origen: no se dejan
+// tocar, se publica sin geometría y el mando sencillamente no enseña los
+// controles.
 Astro.response.headers.set('Cache-Control', 'no-store')
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 ---
@@ -83,11 +92,19 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         type Mazo,
         type Punto,
       } from '../lib/presentacion/mapa'
+      import type { Geometria } from '../lib/presentacion/desplazamiento'
 
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
-      /** Lo que se publica: posición global más la forma del mazo. */
-      type Actual = { pos: number; total: number; intro: number; outro: number }
+      /** Lo que se publica: posición global, forma del mazo y, si la
+       *  diapositiva trae una página viva dentro, su geometría. */
+      type Actual = {
+        pos: number
+        total: number
+        intro: number
+        outro: number
+        scroll?: Geometria
+      }
       /** Lo que pinta el contador del bundle, que solo cuenta beats. */
       type Beat = { pos: number; total: number }
       type Origen = 'inicial' | 'latido' | 'mando' | 'ajena'
@@ -100,6 +117,14 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       /** Lo que tarda un paso en asentarse (un beat anima un canvas pesado y
        *  una capa se funde en .4s). */
       const PASO_MS = 350
+      /** Lo que se le da a un `scrollTo` suave antes de volver a empujar. El
+       *  sondeo va a 500 ms y la animación dura parecido: sin este cierre, el
+       *  ciclo siguiente leería una posición a medio camino y pelearía con la
+       *  animación en curso, dando saltos cortos en vez de un empujón. */
+      const CIERRE_SCROLL_MS = 400
+      /** Diferencia de píxeles por debajo de la cual no se hace nada. Evita
+       *  perseguir subpíxeles y republicar la geometría en cada vuelta. */
+      const RUIDO_PX = 2
 
       /* ------------------------------------------------------------------ *
        * Descubrimiento del mazo
@@ -294,9 +319,16 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         pintarCapa(acc.zona, acc.idx, acc.visible)
       }
 
-      /** La posición publicable de un punto: global + forma del mazo. */
-      function posicionDe(m: Mazo, p: Punto): Actual {
-        return { pos: aGlobal(m, p), total: totalGlobal(m), intro: m.intro, outro: m.outro }
+      /** La posición publicable de un punto: global + forma del mazo + la
+       *  geometría de la página de dentro, si esta diapositiva trae una. */
+      function posicionDe(m: Mazo, p: Punto, geo?: Geometria | null): Actual {
+        return {
+          pos: aGlobal(m, p),
+          total: totalGlobal(m),
+          intro: m.intro,
+          outro: m.outro,
+          ...(geo ? { scroll: geo } : {}),
+        }
       }
 
       function puntoActual(): Punto | null {
@@ -306,6 +338,100 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         // con más, el mazo crece solo y el mando ve el techo nuevo.
         mazo = { ...mazo, beats: beat.total }
         return puntoDesdeCapas(mazo, { ...puestas, beat: beat.pos })
+      }
+
+
+      /* ------------------------------------------------------------------ *
+       * La página viva de dentro de la diapositiva
+       *
+       * Igual que las capas: por FORMA, no por identidad. No se busca "el
+       * iframe de /status", se busca el iframe visible más grande que se
+       * solape con el escenario. Un mazo nuevo con otras páginas dentro
+       * funciona sin tocar nada de aquí.
+       * ------------------------------------------------------------------ */
+
+      /** Cuánto del escenario tiene que cubrir un iframe para contar. Por
+       *  debajo de eso es un adorno incrustado, no la página de la que se está
+       *  hablando. */
+      const COBERTURA_MINIMA = 0.15
+
+      function iframeEnJuego(): HTMLIFrameElement | null {
+        const d = iframe.contentDocument
+        if (!d?.documentElement) return null
+        const W = d.documentElement.clientWidth
+        const H = d.documentElement.clientHeight
+        let mejor: HTMLIFrameElement | null = null
+        let mayor = 0
+        for (const f of d.querySelectorAll('iframe')) {
+          if (!seVe(f)) continue
+          const r = f.getBoundingClientRect()
+          // Área VISIBLE, no la del elemento: el bundle deja los beats vecinos
+          // montados y desplazados fuera del escenario, y uno de ellos podría
+          // ser más grande que el que se está proyectando.
+          const ancho = Math.min(r.right, W) - Math.max(r.left, 0)
+          const alto = Math.min(r.bottom, H) - Math.max(r.top, 0)
+          const area = Math.max(ancho, 0) * Math.max(alto, 0)
+          if (area > mayor) {
+            mayor = area
+            mejor = f
+          }
+        }
+        return mayor >= W * H * COBERTURA_MINIMA ? mejor : null
+      }
+
+      /**
+       * Dónde está la página de dentro y cuánto queda por bajar, o `null`.
+       *
+       * Devuelve `null` sin ruido en los tres casos en que no hay nada que
+       * hacer: no hay iframe, es de OTRO ORIGEN (que es lo que pasa en local,
+       * donde esas URLs apuntan absolutas a producción) o la página cabe
+       * entera. Fail-open, como el resto: el mando esconde los controles y el
+       * paso de diapositivas sigue funcionando igual.
+       */
+      function geometriaDe(f: HTMLIFrameElement | null): Geometria | null {
+        if (!f) return null
+        try {
+          const d = f.contentDocument
+          const e = d?.scrollingElement ?? d?.documentElement
+          if (!e) return null
+          const alto = Math.round(e.clientHeight)
+          if (alto < 1) return null
+          const max = Math.max(0, Math.round(e.scrollHeight - e.clientHeight))
+          const y = Math.min(Math.max(Math.round(e.scrollTop), 0), max)
+          return { y, max, alto }
+        } catch {
+          // Otro origen. El navegador ya lo dice todo; aquí solo significa
+          // "esta diapositiva no se desplaza".
+          return null
+        }
+      }
+
+      /** Si dos geometrías dicen lo mismo, con el subpíxel perdonado. */
+      function mismaGeo(a: Geometria | undefined, b: Geometria | undefined): boolean {
+        if (!a || !b) return a === b
+        return (
+          Math.abs(a.y - b.y) < RUIDO_PX && a.max === b.max && Math.abs(a.alto - b.alto) < RUIDO_PX
+        )
+      }
+
+      /** Último empujón, para no pelearse con la animación en curso. */
+      let empujadoEn = 0
+
+      /**
+       * Obedece el desplazamiento pedido. `smooth` no es cosmético: proyectado
+       * a pantalla completa, un salto seco de un tercio de pantalla se lee como
+       * un corte y el público pierde de vista dónde estaba.
+       */
+      function desplazar(f: HTMLIFrameElement, geo: Geometria, meta: number) {
+        const y = Math.min(Math.max(Math.round(meta), 0), geo.max)
+        if (Math.abs(y - geo.y) < RUIDO_PX) return
+        if (Date.now() - empujadoEn < CIERRE_SCROLL_MS) return
+        empujadoEn = Date.now()
+        try {
+          f.contentWindow?.scrollTo({ top: y, behavior: 'smooth' })
+        } catch {
+          // Iframe recargándose o de otro origen: el próximo ciclo reintenta.
+        }
       }
 
       /* ------------------------------------------------------------------ *
@@ -336,6 +462,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
               // la nota del guion que toca.
               intro: actual.intro,
               outro: actual.outro,
+              // Y con ella la geometría de la página de dentro: es lo que le
+              // permite al servidor calcular el paso del desplazamiento y al
+              // mando apagar los botones en los topes.
+              scroll: actual.scroll,
               origen,
             }),
           })
@@ -408,7 +538,12 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         if (!punto || !mazo) return
         afirmarCapas()
 
-        const actual = posicionDe(mazo, punto)
+        // Se vuelve a buscar en cada vuelta y no una sola vez al descubrir el
+        // mazo: el iframe en juego cambia con la diapositiva, y las tres
+        // páginas vivas del mazo están en beats distintos.
+        const dentro = iframeEnJuego()
+        const geo = geometriaDe(dentro)
+        const actual = posicionDe(mazo, punto, geo)
 
         // Alguien movió el bundle sin pasar por el mando (el teclado del
         // portátil). Manda la realidad, o el sondeo siguiente arrastraría la
@@ -417,6 +552,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           await reportar(actual, 'inicial')
         } else if (actual.pos !== ultimo.pos || actual.total !== ultimo.total) {
           await reportar(actual, 'ajena')
+        } else if (!mismaGeo(actual.scroll, ultimo.scroll)) {
+          // La página de dentro se movió, pero la diapositiva no. Es un
+          // `latido` y no una `ajena` a propósito: `ajena` significa "manda la
+          // realidad, adopta esta posición como destino", y aquí no hay
+          // ninguna posición nueva que adoptar, solo geometría que refrescar
+          // para que el mando pinte la barra y los topes.
+          await reportar(actual, 'latido')
         } else if (Date.now() - ultimoReporteEn > LATIDO_MS) {
           await reportar(actual, 'latido')
         }
@@ -424,12 +566,17 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         try {
           const res = await fetch('/api/presentacion?q=destino', { cache: 'no-store' })
           if (!res.ok) return
-          const { destino } = (await res.json()) as { destino: number }
+          const { destino, scroll } = (await res.json()) as { destino: number; scroll?: number }
           if (typeof destino !== 'number') return
           // El servidor ya acota contra el total que se le publicó, así que
           // aquí no hace falta corregirle nada: o el destino es alcanzable, o
           // la reconciliación lo devuelve como movimiento ajeno.
           if (destino !== actual.pos) await reconciliar(destino)
+          // El desplazamiento espera a que el mazo esté quieto: si se está
+          // cruzando media presentación, la diapositiva de la que habla el
+          // scroll pedido ni siquiera está en pantalla todavía.
+          else if (dentro && geo && !aplicando && typeof scroll === 'number')
+            desplazar(dentro, geo, scroll)
         } catch {
           // Sin red o Redis caído: se reintenta en el próximo ciclo y la
           // presentación se queda donde está en vez de romperse.
