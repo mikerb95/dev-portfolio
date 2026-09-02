@@ -223,6 +223,7 @@ export const POST: APIRoute = async ({ request, url }) => {
     outro?: unknown
     scroll?: unknown
     espejo?: unknown
+    puntero?: unknown
     origen?: unknown
     /** La posición absoluta de la rueda. Solo con `accion: 'scroll'`. */
     y?: unknown
