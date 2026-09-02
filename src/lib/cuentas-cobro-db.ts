@@ -345,7 +345,13 @@ export async function cuentaCobro(id: number) {
  * emitida y todavía sin pagar ya es un ingreso comprometido. Los borradores y
  * las anuladas no cuentan porque no son documentos vivos.
  */
-export async function topeIvaDelAnio(year = new Date().getFullYear()): Promise<TopeIva> {
+export async function topeIvaDelAnio(
+  year = new Date().getFullYear(),
+  // La config se puede inyectar para no releer `app_settings` cuando el
+  // llamador ya la tiene. El listado del panel la carga por su cuenta para
+  // pintar el catálogo de retenciones, y sin esto la leía dos veces por carga.
+  configPrecargada?: CuentaCobroConfig
+): Promise<TopeIva> {
   const desde = new Date(year, 0, 1)
   const hasta = new Date(year + 1, 0, 1)
 
@@ -359,7 +365,7 @@ export async function topeIvaDelAnio(year = new Date().getFullYear()): Promise<T
     // de fallo peligroso en un semáforo de cumplimiento.
     .where(and(esCuenta, ne(invoices.status, 'draft'), ne(invoices.status, 'void'), gte(invoices.issuedAt, desde), lt(invoices.issuedAt, hasta)))
 
-  const { config } = await loadEmisorYConfig()
+  const config = configPrecargada ?? (await loadEmisorYConfig()).config
   return topeIva(Number(row?.total ?? 0), config)
 }
 

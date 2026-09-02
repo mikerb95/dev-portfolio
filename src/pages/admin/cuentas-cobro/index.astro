@@ -9,11 +9,15 @@ import { CONCEPTOS_DEFAULT, formatFechaCorta, rateOf, TOPE_NO_RESPONSABLE_UVT } 
 // hora de Colombia. Ver lib/cuentas-cobro.ts.
 import { formatMoney } from '../../../lib/portal/format'
 
-const [rows, counts, tope, { emisor, config }, clientRows, projectRows] = await Promise.all([
+// Los ajustes se leen UNA vez y se le pasan al semáforo. No cuesta latencia:
+// topeIvaDelAnio ya hacía sus dos consultas en serie, así que esto son las
+// mismas dos idas y vueltas con una consulta menos.
+const { emisor, config } = await loadEmisorYConfig()
+
+const [rows, counts, tope, clientRows, projectRows] = await Promise.all([
   allCuentasCobro(),
   cuentaCountByStatus(),
-  topeIvaDelAnio(),
-  loadEmisorYConfig(),
+  topeIvaDelAnio(new Date().getFullYear(), config),
   // A diferencia de las facturas del portal, aquí sirve CUALQUIER cliente: una
   // cuenta de cobro no necesita que el deudor tenga portal.
   db.select({ id: clients.id, name: clients.name, company: clients.company, billingInfo: clients.billingInfo }).from(clients),
