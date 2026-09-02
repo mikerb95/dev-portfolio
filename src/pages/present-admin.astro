@@ -633,7 +633,8 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         ultimo = null
         geoViva = null
         urlViva = null
-        // El espejo NO se borra: la clave del servidor sobrevive a esta recarga
+        objetivoRaton = null
+        // Ni el espejo ni el puntero se borran: la clave del servidor sobrevive a esta recarga
         // y su `seq` tiene que seguir subiendo, o el mensaje siguiente llegaría
         // empatado y los seguidores lo descartarían por viejo.
       })
