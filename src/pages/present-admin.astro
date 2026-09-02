@@ -1173,10 +1173,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           // algunos beats. Ya no puede ser el teclado del portátil, que §11.4
           // tapa, pero manda igual la realidad.
           await reportar(actual, 'ajena')
-        } else if (nuevoEspejo) {
-          // La página de dentro navegó. Es un `latido` y no una `ajena`: no hay
-          // posición nueva que adoptar, solo una URL que la sala tiene que ver
-          // sin esperar a los cinco segundos del latido normal.
+        } else if (nuevoEspejo || nuevoPuntero) {
+          // La página de dentro navegó, o el ratón se movió a otro elemento. Es
+          // un `latido` y no una `ajena`: no hay posición nueva que adoptar,
+          // solo algo que la sala tiene que ver sin esperar a los cinco
+          // segundos del latido normal.
           await reportar(actual, 'latido')
         } else if (!mismaGeo(actual.scroll, ultimo.scroll)) {
           await reportar(actual, 'latido')
