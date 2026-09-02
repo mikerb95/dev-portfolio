@@ -459,6 +459,10 @@ export function aplicarPuntero(
   marcados: Element[]
 ): Element[] {
   if (!doc) return []
+  // Antes de decidir nada: las gemelas del hover tienen que existir para cuando
+  // se marque el elemento, y esta llamada es barata mientras no haya hojas
+  // nuevas que leer.
+  espejarHover(doc)
   const o = p?.objetivo ?? null
   const el = o ? resolverRuta(doc, o.ruta) : null
   if (!o || !el || el.tagName.toLowerCase() !== o.tag) {
