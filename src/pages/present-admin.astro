@@ -419,11 +419,79 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     </style>
   </head>
   <body>
-    <iframe id="lienzo" src="/final.html" title="Presentación"></iframe>
+    <div id="escenario">
+      <iframe id="lienzo" src="/final.html" title="Presentación"></iframe>
+    </div>
 
     <div id="isla">
       <button id="crono" type="button" title="Tiempo de la sustentación">--:--</button>
     </div>
+
+    <!-- La banda sensible del borde, hermana del tirador: hermana y no la
+         misma, porque el tirador viaja con el panel y esta se queda pegada al
+         borde de la ventana. -->
+    <div id="zona"></div>
+
+    <!-- §11.7. El panel del ponente. Nada de aquí llega a la sala: los
+         seguidores pintan su propia copia del mazo y lo único que viaja es la
+         posición y la URL de la página viva. -->
+    <section id="panel" aria-label="Panel del ponente">
+      <button id="tirador" type="button" aria-label="Panel del ponente (tecla P)">···</button>
+
+      <div id="barra">
+        <span class="reloj" id="reloj">--:--</span>
+        <span id="desvio"></span>
+        <span class="cifra"><span id="pos">-</span><span id="total">/ -</span></span>
+        <span class="ahora" id="ahora"></span>
+        <span class="luego" id="luego"></span>
+        <span id="salud" data-estado="sin-mazo">montando el mazo</span>
+      </div>
+
+      <div id="consola">
+        <section aria-label="Guion">
+          <h2 id="tituloGuion">Guion</h2>
+          <p id="pantalla" hidden></p>
+          <ul id="notas"></ul>
+          <p id="vacio" hidden>sin notas para esta diapositiva</p>
+          <p id="sigue"></p>
+        </section>
+
+        <section aria-label="Ritmo y rescate">
+          <h2>Ritmo</h2>
+          <p class="dato"><span>estimado aquí</span><b id="estimado">-</b></p>
+          <p class="dato"><span>queda por decir</span><b id="restante">-</b></p>
+          <p class="dato"><span>duración del mazo</span><b id="mazoDur">-</b></p>
+
+          <h2 style="margin-top:0.9rem">Rescate</h2>
+          <div class="fila">
+            <button id="republicar" type="button">Republicar</button>
+            <button id="reiniciar" type="button">Reiniciar reloj</button>
+          </div>
+          <div class="fila">
+            <button id="recargar" type="button">Recargar lienzo</button>
+          </div>
+        </section>
+
+        <section aria-label="Navegación">
+          <h2>Saltos</h2>
+          <div id="saltos"></div>
+
+          <div id="espejo" hidden>
+            <h2 style="margin-top:0.9rem">Página viva</h2>
+            <code id="url"></code>
+            <div class="fila" id="atajos"></div>
+          </div>
+
+          <div id="desplaza" hidden>
+            <div class="fila">
+              <button id="subir" type="button" aria-label="Subir">↑ subir</button>
+              <button id="bajar" type="button" aria-label="Bajar">↓ bajar</button>
+            </div>
+            <div id="recorrido"><span id="avance"></span></div>
+          </div>
+        </section>
+      </div>
+    </section>
 
     <script>
       import {
