@@ -69,6 +69,13 @@ const K_SCROLL = 'presentacion:scroll'
  */
 const K_ESPEJO = 'presentacion:espejo'
 /**
+ * Qué elemento de esa página viva está señalando el ratón del ponente, para que
+ * la sala vea encenderse lo mismo que se enciende en su portátil. Mismo
+ * escritor y mismo POST que el espejo, y clave aparte por lo mismo: el latido
+ * no sabe nada del ratón y no puede borrarlo cada cinco segundos.
+ */
+const K_PUNTERO = 'presentacion:puntero'
+/**
  * Cuándo arrancó la sustentación, en el reloj del servidor. La escribe el
  * SERVIDOR y nadie más, una sola vez, en el primer movimiento que saca la
  * presentación de su primera diapositiva. Vive aquí y no en el navegador
