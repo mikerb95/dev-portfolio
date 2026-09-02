@@ -175,6 +175,10 @@ export const GET: APIRoute = async ({ url }) => {
         // diapositiva: no es un error, es la vuelta al estado de arranque del
         // beat, y la reinicia cualquier camino que cambie de diapositiva.
         espejo: espejo && espejo.pos === destino ? espejo : null,
+        // Y el ratón del ponente, con la misma regla: el puntero de otra
+        // diapositiva no se aplica, así que cambiar de beat apaga el cursor de
+        // la sala sin escribir nada.
+        puntero: punteroPara(puntero, destino),
         // El cronómetro va de gorra en un viaje que ya se hacía. `ahora` no es
         // adorno: `inicio` lo pone el reloj del servidor y la cuenta la hace el
         // portátil, así que sin este número un portátil dos minutos adelantado
