@@ -23,6 +23,7 @@ import {
 } from '../../lib/presentacion/desplazamiento'
 import { debeArrancar, parsearInicio } from '../../lib/presentacion/cronometro'
 import { parsearEspejo, type Espejo } from '../../lib/presentacion/espejo'
+import { parsearPuntero, punteroPara, type Puntero } from '../../lib/presentacion/puntero'
 
 /**
  * Estado del control remoto de `/final.html`, que no se toca ni se edita.
