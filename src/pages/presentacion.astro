@@ -137,9 +137,6 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
        *  ciclo siguiente leería una posición a medio camino y pelearía con la
        *  animación en curso, dando saltos cortos en vez de un empujón. */
       const CIERRE_SCROLL_MS = 400
-      /** Diferencia de píxeles por debajo de la cual no se hace nada. Evita
-       *  perseguir subpíxeles y republicar la geometría en cada vuelta. */
-      const RUIDO_PX = 2
 
       /* ------------------------------------------------------------------ *
        * Descubrimiento del mazo
@@ -149,8 +146,6 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
        * número de beats, ni los z-index de sus capas, ni cuántas hay. Lo que
        * se busca son formas, no identidades.
        * ------------------------------------------------------------------ */
-
-      type Capa = { el: HTMLElement; z: number }
 
       let mazo: Mazo | null = null
       let capas: { intro: Capa[]; outro: Capa[] } = { intro: [], outro: [] }
@@ -167,77 +162,27 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let consumidas = 0
       let contador: HTMLElement | null = null
 
-      const estilo = (e: Element) => iframe.contentWindow!.getComputedStyle(e)
+      const estilo = estiloEn(iframe)
 
-      /** Una capa es cualquier cosa apilada que cubre el escenario entero. */
-      function esCapa(e: HTMLElement): boolean {
-        const s = estilo(e)
-        if (s.position !== 'absolute' && s.position !== 'fixed') return false
-        const z = Number(s.zIndex)
-        if (!Number.isFinite(z) || z < 1) return false
-        const padre = (e.offsetParent as HTMLElement | null) ?? e.parentElement
-        if (!padre || e.offsetWidth < 600) return false
-        return e.offsetWidth >= padre.offsetWidth * 0.9 && e.offsetHeight >= padre.offsetHeight * 0.9
-      }
-
-      const seVe = (e: HTMLElement) =>
-        estilo(e).visibility !== 'hidden' && Number(estilo(e).opacity) > 0.5
+      const leerBeat = (): Beat | null => leerBeatDe(iframe.contentDocument, contador)
 
       /**
-       * El contador de beats: el elemento más pequeño cuyo texto entero es
-       * "NN / MM". Se busca el elemento y no el `innerText` del documento
-       * porque con una capa delante el texto de la capa va primero y una cifra
-       * suya podría colarse en el regex.
-       */
-      function buscarContador(d: Document): HTMLElement | null {
-        const candidatos = [...d.querySelectorAll<HTMLElement>('div,span,p')].filter((e) =>
-          /^\d{1,3}\s*\/\s*\d{1,3}$/.test((e.textContent ?? '').trim())
-        )
-        return candidatos.sort((a, b) => a.querySelectorAll('*').length - b.querySelectorAll('*').length)[0] ?? null
-      }
-
-      function leerBeat(): Beat | null {
-        const d = iframe.contentDocument
-        if (!d) return null
-        const texto = contador?.isConnected ? contador.textContent : d.body?.innerText
-        const m = texto?.match(/(\d{1,3})\s*\/\s*(\d{1,3})/)
-        if (!m) return null
-        const pos = Number(m[1])
-        const total = Number(m[2])
-        return pos >= 1 && total >= pos ? { pos, total } : null
-      }
-
-      /**
-       * Clasifica las capas por lo que se ve en el arranque, que es el único
-       * momento en que el bundle habla sin que nadie le haya tocado nada: lo
-       * que ya está puesto va ANTES de los beats (cita, portada) y lo que está
-       * oculto va DESPUÉS (el cierre, y lo que se le añada detrás).
-       *
-       * El orden dentro de cada zona también sale de la forma. En la entrada
-       * se ve primero la más alta, porque tapa a las de abajo. En el cierre es
-       * al revés: cada una se apila sobre la anterior, así que la primera es
-       * la más baja.
+       * Vuelca en el estado local lo que `descubrirMazo` haya visto. Sigue
+       * devolviendo un booleano porque el bucle lo usa como "¿ya hay mazo?":
+       * mientras el bundle no haya montado su contador, no hay nada que mirar.
        */
       function descubrir(): boolean {
-        const d = iframe.contentDocument
-        if (!d?.body) return false
-        const c = buscarContador(d)
-        // Sin contador el bundle todavía no ha montado: descubrir ahora daría
-        // un mazo a medias que luego nadie volvería a mirar.
-        if (!c) return false
-        const todas = [...d.body.querySelectorAll<HTMLElement>('div')].filter(esCapa)
-        const z = (e: HTMLElement) => Number(estilo(e).zIndex)
-        const intro = todas.filter(seVe).sort((a, b) => z(b) - z(a))
-        const outro = todas.filter((e) => !seVe(e)).sort((a, b) => z(a) - z(b))
-        contador = c
-        capas = {
-          intro: intro.map((el) => ({ el, z: z(el) })),
-          outro: outro.map((el) => ({ el, z: z(el) })),
+        const hallazgo = descubrirMazo(iframe)
+        if (!hallazgo) return false
+        contador = hallazgo.contador
+        capas = { intro: hallazgo.intro, outro: hallazgo.outro }
+        puestas = {
+          intro: hallazgo.intro.map(() => true),
+          outro: hallazgo.outro.map(() => false),
         }
-        puestas = { intro: intro.map(() => true), outro: outro.map(() => false) }
         pintado = { intro: [...puestas.intro], outro: [...puestas.outro] }
         consumidas = 0
-        mazo = { intro: intro.length, beats: leerBeat()?.total ?? 1, outro: outro.length }
+        mazo = { intro: hallazgo.intro.length, beats: hallazgo.beats, outro: hallazgo.outro.length }
         return true
       }
 
