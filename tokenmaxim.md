@@ -189,7 +189,15 @@ pide §11.2 para treinta teléfonos bajo una IP compartida.
 
 Hay que **parametrizarlo** (canal, endpoint de resincronía, forma del mensaje,
 cadencia del rescate) dejando el sitio de llamada de los decks funcionando
-igual. Sigue sin parametrizar.
+igual. Sigue sin parametrizar, **y se dejó así a conciencia**: su único
+consumidor es el paso 3, que está detrás del paso 0, y tocar hoy un módulo que
+sostiene tres charlas en producción para dejarlo esperando a una compuerta que
+puede cerrarse es arriesgar lo que funciona por algo que quizá no se use.
+
+Aviso para quien lo retome: en el repo ya hay **dos** copias de estas tres capas
+(`lib/present/client-sync.ts` y `lib/sustentacion/seguir.ts`, que documenta en su
+cabecera por qué no reusó la primera). La tercera no se escribe: se parametriza
+la primera.
 
 **2. El orden entre los pasos 2 y 3 es obligatorio.** Hoy el único escritor de
 `actual` es `/presentacion`. Si deja de publicar antes de que `/present-admin`
@@ -206,6 +214,14 @@ Qué queda del origen **`ajena`** (§4) cuando el único que reporta es
 el bundle hace por su cuenta dentro de un beat. No se borra: se decide con la
 regla escrita y se ajusta el comentario de la §4, que si no queda mintiendo
 sobre su propio motivo.
+
+**Sigue abierta, y es lo correcto**: la respuesta depende del paso 3, porque
+mientras `/presentacion` siga publicando hay dos posibles emisores de `ajena` y
+no uno. Lo único que se hizo fue no empeorarla: en `/present-admin` la rama que
+reporta `ajena` lleva escrito **por qué** sigue existiendo ahí (la navegación
+guionizada del propio bundle, ya no el teclado del portátil). El comentario de
+la §4 de `estado.ts` no se tocó: cambiarlo ahora, con el otro escritor todavía
+vivo, lo dejaría mintiendo en la dirección contraria.
 
 ## Gotchas del entorno
 
