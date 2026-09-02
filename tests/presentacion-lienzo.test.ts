@@ -184,6 +184,32 @@ describe('recortadoresDe', () => {
     ).toEqual([])
   })
 
+  it('no mira ni un ancestro más allá del corte', () => {
+    // No es cosmético: cada caja cuesta un `getComputedStyle`, esto corre dos
+    // veces por segundo y por cada iframe del mazo, y casi siempre para en el
+    // `fixed` del escenario a un par de saltos. Recorrer el árbol entero sería
+    // pagarlo todo para tirar la mayor parte.
+    let mirados = 0
+    function* cajas() {
+      for (const c of [caja({ position: 'fixed' }), caja(), caja()]) {
+        mirados++
+        yield c
+      }
+    }
+    expect(recortadoresDe(caja(), cajas())).toEqual([])
+    expect(mirados).toBe(1)
+  })
+
+  it('a un elemento fixed no le pide ni el primer ancestro', () => {
+    let mirados = 0
+    function* cajas() {
+      mirados++
+      yield caja({ overflow: 'hidden' })
+    }
+    expect(recortadoresDe(caja({ position: 'fixed' }), cajas())).toEqual([])
+    expect(mirados).toBe(0)
+  })
+
   it('null si el propio elemento está oculto', () => {
     expect(recortadoresDe(caja({ oculto: true }), [])).toBeNull()
   })
