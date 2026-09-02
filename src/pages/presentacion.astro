@@ -157,8 +157,27 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         leerBeat as leerBeatDe,
         mismaGeometria as mismaGeo,
         RUIDO_PX,
+        urlDe,
         type Capa,
       } from '../lib/presentacion/lienzo'
+      // Las dos cosas que esta ventana OBEDECE además de la diapositiva: la URL
+      // de la página viva que el ponente está tocando y el elemento que está
+      // señalando con el ratón. Las reglas -qué se acepta, qué se descarta por
+      // viejo, qué se aplica a qué diapositiva- son puras y viven fuera.
+      import {
+        debeNavegar,
+        esMasNuevo,
+        parsearEspejo,
+        urlPara,
+        type Espejo,
+      } from '../lib/presentacion/espejo'
+      import {
+        aplicarPuntero,
+        esMasNuevo as esMasNuevoPuntero,
+        parsearPuntero,
+        punteroPara,
+        type Puntero,
+      } from '../lib/presentacion/puntero'
 
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
