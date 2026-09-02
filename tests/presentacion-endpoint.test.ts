@@ -55,7 +55,13 @@ describe('?q=destino', () => {
     // Un viaje que ya se hacía dos veces por segundo. Añadir claves aquí es
     // gratis; abrir un sondeo nuevo por cada cosa, no.
     return get('?q=destino').then(({ cuerpo }) => {
-      expect(cuerpo).toMatchObject({ destino: POS_INICIAL, scroll: 0, espejo: null, inicio: null })
+      expect(cuerpo).toMatchObject({
+        destino: POS_INICIAL,
+        scroll: 0,
+        espejo: null,
+        puntero: null,
+        inicio: null,
+      })
       expect(typeof cuerpo.ahora).toBe('number')
     })
   })
