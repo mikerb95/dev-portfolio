@@ -437,7 +437,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         // Se vuelve a buscar en cada vuelta y no una sola vez al descubrir el
         // mazo: el iframe en juego cambia con la diapositiva, y las tres
         // páginas vivas del mazo están en beats distintos.
-        const dentro = iframeEnJuego()
+        const dentro = iframeEnJuego(iframe)
         const geo = geometriaDe(dentro)
         const actual = posicionDe(mazo, punto, geo)
 
