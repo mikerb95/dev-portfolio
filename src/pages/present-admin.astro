@@ -59,8 +59,14 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         overflow: hidden;
         background: #05070a;
       }
-      iframe {
-        position: fixed;
+      /* La columna que hace que el panel EMPUJE: el escenario se queda con lo
+         que sobra y el mazo se re-encaja dentro. Ver el bloque del panel. */
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      #lienzo {
+        position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
@@ -107,6 +113,306 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
       #crono[data-confirmando='si'] {
         opacity: 1;
+        color: #ffd9d9;
+        border-color: rgba(255, 140, 140, 0.5);
+      }
+      /* ── El panel del ponente ──────────────────────────────────────────
+         EMPUJA, NO SE SUPERPONE, y no es una preferencia estética: el bundle
+         encaja su escenario con `scale(min(w/1920, h/1080))` y lo rehace en
+         cada `resize` de SU ventana, que es este iframe. Quitarle altura no
+         tapa nada: el mazo se re-encaja solo, entero y más pequeño. Un panel
+         encima se comería justo el contador del mazo y la barra de navegación
+         del portal durante la demo.
+
+         Tampoco cambia lo que ve la sala: el iframe vivo está dentro del
+         escenario de 1920 con píxeles fijos, así que solo cambia su escala
+         visual, nunca la `y` ni el `max` que se publican. */
+      #escenario {
+        position: relative;
+        flex: 1 1 auto;
+        /* Sin esto un `flex` no baja de la altura de su contenido y el panel
+           empujaría la página fuera de la ventana en vez de encoger el mazo. */
+        min-height: 0;
+      }
+      #panel {
+        position: relative;
+        flex: 0 0 auto;
+        height: 0;
+        overflow: hidden;
+        background: #070a0e;
+        border-top: 1px solid rgba(244, 246, 248, 0.1);
+        color: rgba(244, 246, 248, 0.82);
+        font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+        transition: height 0.22s ease;
+      }
+      body[data-panel='barra'] #panel {
+        height: 3.25rem;
+      }
+      body[data-panel='consola'] #panel {
+        height: min(40vh, 22rem);
+      }
+      /* Con el panel puesto, el cronómetro ya está dentro: dos relojes en la
+         misma pantalla es uno de más. */
+      body:not([data-panel='oculto']) #isla {
+        display: none;
+      }
+      /* La banda sensible del borde inferior, solo con el panel guardado. Ocho
+         píxeles y con espera: el cursor cruza esa franja cada vez que se clica
+         algo abajo en la demo del portal, y un panel que asoma solo delante
+         del público es peor que no tenerlo. */
+      #zona {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 8px;
+        z-index: 11;
+        pointer-events: none;
+      }
+      body[data-panel='oculto'] #zona {
+        pointer-events: auto;
+      }
+      #tirador {
+        position: absolute;
+        top: -0.9rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 12;
+        width: 5.5rem;
+        height: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(244, 246, 248, 0.12);
+        border-bottom: 0;
+        border-radius: 6px 6px 0 0;
+        background: rgba(7, 10, 14, 0.9);
+        color: rgba(244, 246, 248, 0.45);
+        font-size: 10px;
+        cursor: pointer;
+        opacity: 0.25;
+        transition: opacity 0.2s linear;
+      }
+      #tirador:hover,
+      #tirador:focus-visible {
+        opacity: 1;
+      }
+
+      /* ── La barra fina ── */
+      #barra {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        height: 3.25rem;
+        padding: 0 0.9rem;
+        white-space: nowrap;
+      }
+      #barra .reloj {
+        font: 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.03em;
+      }
+      #barra .cifra {
+        font: 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
+        color: rgba(244, 246, 248, 0.5);
+      }
+      #barra .ahora {
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #barra .luego {
+        color: rgba(244, 246, 248, 0.45);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1 1 auto;
+      }
+      /* El punto de color en vez de una franja pegada al margen: dice el
+         estado sin robarle una columna a la información. */
+      #salud {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: rgba(244, 246, 248, 0.55);
+      }
+      #salud::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      #salud[data-estado='en-linea'] {
+        color: #6ee7a8;
+      }
+      #salud[data-estado='moviendo'] {
+        color: #7cc4ff;
+      }
+      #salud[data-estado='sin-red'],
+      #salud[data-estado='sin-mazo'] {
+        color: #ffb27c;
+      }
+      #desvio {
+        font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
+        padding: 0.2rem 0.45rem;
+        border-radius: 999px;
+        border: 1px solid transparent;
+      }
+      #desvio[data-senal='largo'] {
+        color: #ffb27c;
+        border-color: rgba(255, 178, 124, 0.35);
+      }
+      #desvio[data-senal='corto'] {
+        color: #7cc4ff;
+        border-color: rgba(124, 196, 255, 0.3);
+      }
+      #desvio[data-senal='a-tiempo'] {
+        color: rgba(110, 231, 168, 0.9);
+        border-color: rgba(110, 231, 168, 0.25);
+      }
+
+      /* ── La consola ── */
+      #consola {
+        display: none;
+        grid-template-columns: 1.5fr 0.9fr 1.2fr;
+        gap: 1px;
+        height: calc(100% - 3.25rem);
+        background: rgba(244, 246, 248, 0.07);
+      }
+      body[data-panel='consola'] #consola {
+        display: grid;
+      }
+      #consola > section {
+        background: #070a0e;
+        padding: 0.7rem 0.9rem;
+        overflow-y: auto;
+        min-width: 0;
+      }
+      #consola h2 {
+        margin: 0 0 0.5rem;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(244, 246, 248, 0.35);
+      }
+      #pantalla {
+        margin: 0 0 0.6rem;
+        padding-left: 0.7rem;
+        color: rgba(244, 246, 248, 0.55);
+        font-style: italic;
+      }
+      #notas {
+        margin: 0;
+        padding-left: 1.1rem;
+      }
+      #notas li {
+        margin-bottom: 0.4rem;
+      }
+      #vacio {
+        margin: 0;
+        color: rgba(255, 178, 124, 0.75);
+      }
+      #sigue {
+        margin: 0.7rem 0 0;
+        padding-top: 0.5rem;
+        border-top: 1px dashed rgba(244, 246, 248, 0.12);
+        color: rgba(244, 246, 248, 0.45);
+      }
+      .dato {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.6rem;
+        padding: 0.15rem 0;
+        color: rgba(244, 246, 248, 0.55);
+      }
+      .dato b {
+        font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
+        color: rgba(244, 246, 248, 0.85);
+        font-weight: 500;
+      }
+      #saltos {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(2rem, 1fr));
+        gap: 3px;
+      }
+      #saltos button {
+        aspect-ratio: 1;
+        border: 1px solid rgba(244, 246, 248, 0.12);
+        border-radius: 5px;
+        background: transparent;
+        color: rgba(244, 246, 248, 0.6);
+        font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        cursor: pointer;
+      }
+      #saltos button:hover {
+        background: rgba(124, 196, 255, 0.12);
+        color: #f4f6f8;
+      }
+      /* Las zonas se distinguen por el relleno, no por una franja de color: la
+         entrada y el cierre no son beats y saltar al que no es cuesta caro. */
+      #saltos button[data-zona='intro'],
+      #saltos button[data-zona='outro'] {
+        background: rgba(244, 246, 248, 0.07);
+      }
+      #saltos button[aria-current='true'] {
+        border-color: #7cc4ff;
+        color: #f4f6f8;
+        background: rgba(124, 196, 255, 0.18);
+      }
+      #desplaza[hidden],
+      #espejo[hidden] {
+        display: none;
+      }
+      #recorrido {
+        height: 3px;
+        border-radius: 999px;
+        background: rgba(244, 246, 248, 0.12);
+        overflow: hidden;
+        margin-top: 0.4rem;
+      }
+      #avance {
+        display: block;
+        height: 100%;
+        background: #7cc4ff;
+        transition: width 0.2s linear;
+      }
+      #url {
+        display: block;
+        margin: 0 0 0.5rem;
+        font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: rgba(244, 246, 248, 0.5);
+        word-break: break-all;
+      }
+      .fila {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.5rem;
+      }
+      .fila button {
+        flex: 1 1 auto;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid rgba(244, 246, 248, 0.14);
+        border-radius: 6px;
+        background: transparent;
+        color: rgba(244, 246, 248, 0.7);
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .fila button:hover:not(:disabled) {
+        background: rgba(244, 246, 248, 0.08);
+        color: #f4f6f8;
+      }
+      .fila button:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+      .fila button[data-confirmando='si'] {
         color: #ffd9d9;
         border-color: rgba(255, 140, 140, 0.5);
       }
