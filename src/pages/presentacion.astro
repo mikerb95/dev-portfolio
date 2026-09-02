@@ -451,6 +451,57 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
 
       /* ------------------------------------------------------------------ *
+       * El espejo: la página que el ponente está tocando
+       *
+       * Lo que llega es una URL, no un DOM (`lib/presentacion/espejo.ts`
+       * explica por qué eso basta y qué se pierde). Aquí solo se navega el
+       * iframe de la diapositiva, y con tres frenos:
+       *
+       *  · nunca contra la NAVEGACIÓN GUIONIZADA del propio bundle, que mueve
+       *    ese iframe por su cuenta como parte de algunos beats. Por eso se
+       *    espera a que la diapositiva se asiente y se compara contra el `href`
+       *    que ya hay: `debeNavegar` no dice que sí si el iframe todavía no ha
+       *    navegado a ninguna parte;
+       *  · nunca a mitad de una reconciliación, porque la diapositiva de la que
+       *    habla el espejo aún no está en pantalla;
+       *  · `location.replace` y no `src`, para no llenar de historial una
+       *    ventana que nadie va a navegar hacia atrás.
+       * ------------------------------------------------------------------ */
+
+      let espejo: Espejo | null = null
+      /** Cuándo se vio por última vez un cambio de diapositiva, para dejar que
+       *  la coreografía del beat termine antes de tocarle el iframe. */
+      let cambioEn = 0
+
+      function navegarEspejo(dentro: HTMLIFrameElement | null, pos: number) {
+        if (!dentro || Date.now() - cambioEn < PASO_MS) return
+        const pedida = urlPara(espejo, pos)
+        if (!debeNavegar(pedida, urlDe(dentro))) return
+        try {
+          dentro.contentWindow?.location.replace(pedida as string)
+        } catch {
+          // Otro origen (en local esas URLs son absolutas a producción): no hay
+          // espejo que aplicar y la sala ve el arranque del beat.
+        }
+      }
+
+      /* ------------------------------------------------------------------ *
+       * El puntero: qué está señalando el ponente
+       *
+       * Llega una ruta de índices de hijo, se resuelve en NUESTRA copia de la
+       * misma página y se enciende ahí el hover (con la regla gemela que
+       * `puntero.ts` inyecta, porque `:hover` no se puede falsificar) más una
+       * flecha dibujada dentro del documento. Si la ruta no resuelve o el sello
+       * no cuadra, no se pinta nada: un cursor señalando la fila que no es
+       * sería peor que no tener cursor.
+       * ------------------------------------------------------------------ */
+
+      let puntero: Puntero | null = null
+      /** Lo que quedó marcado con el atributo del hover, para poder apagarlo
+       *  sin recorrer el documento entero en cada vuelta. */
+      let marcados: Element[] = []
+
+      /* ------------------------------------------------------------------ *
        * Publicación y reconciliación
        * ------------------------------------------------------------------ */
 
@@ -567,6 +618,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         if (!ultimo) {
           await reportar(actual, 'inicial')
         } else if (actual.pos !== ultimo.pos || actual.total !== ultimo.total) {
+          // Cambió la diapositiva: el espejo espera a que la coreografía del
+          // beat nuevo termine antes de tocarle el iframe.
+          cambioEn = Date.now()
           await reportar(actual, 'ajena')
         } else if (!mismaGeo(actual.scroll, ultimo.scroll)) {
           // La página de dentro se movió, pero la diapositiva no. Es un
