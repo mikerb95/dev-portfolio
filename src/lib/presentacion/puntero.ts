@@ -183,7 +183,12 @@ export const MARCA = 'puntero-espejo'
  *    la regla dejaría de existir;
  *  · sin el `(?![\w-])`, un `:hover-intent` de terceros pasaría por `:hover`.
  */
-const HOVER = /(?<!\\):hover(?![\w-])/g
+const HOVER_FUENTE = String.raw`(?<!\\):hover(?![\w-])`
+/** Para sustituir (global) y para preguntar (sin `g`, porque `test` con `g`
+ *  arrastra `lastIndex` y alternaría entre `true` y `false` en llamadas
+ *  seguidas sobre el mismo selector). */
+const HOVER = new RegExp(HOVER_FUENTE, 'g')
+const HAY_HOVER = new RegExp(HOVER_FUENTE)
 
 /**
  * `a:hover .x` -> `a[data-puntero] .x`.
@@ -201,7 +206,7 @@ export function selectorEspejado(sel: string): string {
 
 /** ¿Vale la pena duplicar esta regla? */
 export function tieneHover(sel: string): boolean {
-  return HOVER.test(sel)
+  return HAY_HOVER.test(sel)
 }
 
 /**
