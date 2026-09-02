@@ -7,11 +7,14 @@ import {
   computeRetentions,
   ibcSeguridadSocial,
   bloquesIdentificacion,
+  formatFechaCorta,
+  formatFechaLarga,
   montoEnLetras,
   numeroALetras,
   parseCuentaCobroConfig,
   parseDeudor,
   parseEmisor,
+  parseFechaCalendario,
   topeIva,
   validateCuentaCobro,
   type CuentaCobroConfig,
@@ -283,6 +286,54 @@ describe('ibcSeguridadSocial', () => {
   })
 })
 
+// ── Fechas ──────────────────────────────────────────────────────────────────
+// En Vercel el servidor corre en UTC. Los dos errores posibles son OPUESTOS y
+// arreglar uno solo produce el otro, así que van juntos: un instante formateado
+// sin zona salta al día siguiente, y una fecha de calendario anclada a UTC
+// retrocede al anterior al mostrarse en Bogotá.
+
+describe('fechas en zona de Colombia', () => {
+  it('un documento emitido de noche en Colombia NO se fecha al día siguiente', () => {
+    // 1 sep, 19:30 en Bogotá = 2 sep 00:30 UTC. Es el caso que se detectó en uso.
+    const emision = new Date('2026-09-02T00:30:00Z')
+    expect(formatFechaLarga(emision)).toBe('01 de septiembre de 2026')
+  })
+
+  it('una fecha de calendario no retrocede un día al imprimirse', () => {
+    // El error inverso: 'YYYY-MM-DD' leído como medianoche UTC cae el día
+    // anterior en Bogotá, y el periodo de agosto empezaría el 31 de julio.
+    const inicio = parseFechaCalendario('2026-08-01')!
+    expect(formatFechaLarga(inicio)).toBe('01 de agosto de 2026')
+    expect(formatFechaCorta(inicio)).toContain('2026')
+  })
+
+  it('un cierre de mes se mantiene en su mes', () => {
+    expect(formatFechaLarga(parseFechaCalendario('2026-08-31'))).toBe('31 de agosto de 2026')
+    expect(formatFechaLarga(parseFechaCalendario('2026-01-01'))).toBe('01 de enero de 2026')
+  })
+
+  it('ancla las fechas de calendario a medianoche colombiana, no a UTC', () => {
+    // 00:00 en Bogotá (UTC-5) son las 05:00 UTC del mismo día.
+    expect(parseFechaCalendario('2026-08-01')!.toISOString()).toBe('2026-08-01T05:00:00.000Z')
+  })
+
+  it('respeta un instante completo cuando ya viene con zona', () => {
+    expect(parseFechaCalendario('2026-09-02T00:30:00Z')!.toISOString()).toBe('2026-09-02T00:30:00.000Z')
+  })
+
+  it('una fecha inválida es null, nunca un Invalid Date que llegue a la base', () => {
+    for (const v of ['', '   ', 'ayer', '2026-13-45', null, undefined, 42]) {
+      expect(parseFechaCalendario(v)).toBeNull()
+    }
+  })
+
+  it('sin fecha, el formateo no imprime "Invalid Date"', () => {
+    expect(formatFechaLarga(null)).toBe('')
+    expect(formatFechaCorta(null)).toBe('-')
+  })
+})
+
+// ── Identificación de las partes ────────────────────────────────────────────
 // ── Dirección del documento ─────────────────────────────────────────────────
 // La fórmula colombiana es "[DEUDOR] DEBE A [EMISOR]": el rótulo "DEBE A"
 // encabeza a quien COBRA. Invertirlo no rompe nada visible, solo convierte la
