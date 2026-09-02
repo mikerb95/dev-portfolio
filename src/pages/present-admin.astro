@@ -922,6 +922,66 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
 
       /* ------------------------------------------------------------------ *
+       * §11.12. El puntero: que la sala vea qué estás señalando
+       *
+       * El espejo lleva la URL, así que la sala ve la misma página; lo que no
+       * ve es el ratón. El ponente pasa por encima de una fila, esa fila se
+       * ilumina en el portátil, y en la sala no pasa nada: se habla de "esta
+       * fila" y cada quien mira la suya.
+       *
+       * Se lee AQUÍ y solo de la página viva, por la misma razón que la rueda:
+       * el `mousemove` nace dentro de ese documento y no sube. Del mazo no hay
+       * nada que leer, y no es una limitación sino la §11.3 funcionando: su
+       * `body` está inerte a propósito y el ratón no llega a sus elementos.
+       *
+       * Lo que se manda es una RUTA de índices de hijo, no píxeles: la sala
+       * proyecta a otra resolución, y la fila tercera es la fila tercera en
+       * cualquier pantalla. Las reglas están en `lib/presentacion/puntero.ts`.
+       * ------------------------------------------------------------------ */
+
+      /** Lo último que se leyó del ratón, que es lo que el sondeo publica. */
+      let objetivoRaton: Objetivo | null = null
+      /** El último puntero publicado, de donde sale el `seq` siguiente. */
+      let puntero: Puntero | null = null
+      /**
+       * Un `mousemove` son cien eventos por segundo y `elementFromPoint` mide.
+       * Este acotado no es el de la publicación (esa la marca el sondeo): es
+       * para no gastar el hilo del ponente en resolver rutas que nadie va a
+       * mandar, con el mazo de un mega animando al lado.
+       */
+      const LECTURA_RATON_MS = 60
+      let ultimaLecturaRaton = 0
+
+      function engancharPuntero(dentro: HTMLIFrameElement | null) {
+        if (!dentro) return
+        try {
+          const d = dentro.contentDocument as (Document & { __punteroEnganchado?: boolean }) | null
+          if (!d || d.__punteroEnganchado) return
+          d.__punteroEnganchado = true
+          // Documento nuevo: lo que se estuviera señalando era de la página
+          // anterior y ya no significa nada.
+          objetivoRaton = null
+          d.addEventListener(
+            'mousemove',
+            (e) => {
+              const ahora = Date.now()
+              if (ahora - ultimaLecturaRaton < LECTURA_RATON_MS) return
+              ultimaLecturaRaton = ahora
+              objetivoRaton = objetivoDe(d, e.clientX, e.clientY)
+            },
+            { passive: true }
+          )
+          // Salir de la ventanilla apaga el cursor de la sala. Sin esto, la
+          // última fila que se rozó se quedaría encendida el resto del beat.
+          d.addEventListener('mouseleave', () => {
+            objetivoRaton = null
+          })
+        } catch {
+          // Otro origen (que es lo que pasa en local): no hay ratón que seguir.
+        }
+      }
+
+      /* ------------------------------------------------------------------ *
        * El desplazamiento que pide el mando
        * ------------------------------------------------------------------ */
 
