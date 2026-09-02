@@ -1904,6 +1904,78 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-lienzo-tocable',
+    fase: 'Fase 45 · Una ventana que conduce y otra que mira',
+    nombre: 'Lienzo tocable, espejo y cronómetro de la sustentación',
+    rango: '1-2 sep 2026',
+    ghSince: '2026-09-01',
+    ghUntil: '2026-09-02',
+    commits: 33,
+    resumen:
+      'Tres beats del mazo no proyectan una lámina sino una página viva, y enseñarlas exigía volver al portátil justo en mitad de la demo. La fase parte en dos los papeles que /presentacion hacía a la vez: /present-admin conduce y deja TOCAR la página enmarcada, y la sala pasa a mirar. El reparto no es comodidad: con treinta espectadores publicando la posición real, un teléfono desbloqueado con los temporizadores congelados arrastra a la sala entera hacia atrás. Cuatro módulos puros nuevos (lienzo, desplazamiento, espejo, cronómetro) con 101 casos sin DOM ni bundle.',
+    historias: [
+      {
+        id: 'PF-PA-01', titulo: 'Como ponente, quiero entrar a la demo del portal y navegar el panel delante del jurado sin salirme de la presentación',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['presentacion', 'fase-45'],
+        dod: [
+          ok('LA INTERACCIÓN VA POR DENTRO, no por fuera. Quitarle el pointer-events:none al iframe devolvía un fallo entero: el bundle escucha onStageClick y cualquier clic en el escenario avanza un beat. Se afina escribiendo estilo DENTRO del documento del mazo (todo es mismo origen), con el body inerte y solo el iframe vivo receptivo, y se re-afirma en cada sondeo porque el bundle monta y desmonta esos iframes al cambiar de beat.'),
+          ok('El teclado se le tapa al bundle con un listener en fase de CAPTURA, el reverso exacto del disparo sintético de la reconciliación: aquel inyecta el evento con el constructor del iframe, este lo intercepta antes de que el bundle lo vea, y el discriminador es isTrusted. Sin eso una flecha con el foco dentro del mazo movería un beat SIN pasar por el servidor y la sala se quedaría atrás.'),
+          ok('El precio se documenta antes de estar delante del tribunal: con el foco dentro de la demo las flechas no pasan de diapositiva, y se sale clicando fuera o se usa el móvil.'),
+          ok('El código que descubre la forma del mazo vive una sola vez en src/lib/presentacion/lienzo.ts porque lo necesitan las dos ventanas: 38 casos. Dos copias divergiendo es el fallo que nadie nota hasta que una se queda en la diapositiva de al lado.'),
+          ok('Ruta sin puerta a propósito y con guión, no con barra: /present-admin queda fuera de startsWith("/present/") y de isAdmin POR CONSTRUCCIÓN, sin excepciones que añadir al middleware. Una sesión de GitHub caducada el día de la charla dejaría sin mando, y lo que se enmarca ya es público.'),
+        ],
+      },
+      {
+        id: 'PF-PA-02', titulo: 'Como ponente, quiero recorrer la página viva de un beat sin que tres toques seguidos se pierdan',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['presentacion', 'tiempo-real', 'fase-45'],
+        dod: [
+          ok('EL SCROLL ES OTRA POSICIÓN ABSOLUTA, no un comando relativo: misma decisión que sostiene el resto del sistema. Un sondeo perdido no pierde nada, tres toques valen tres porque se acumulan sobre lo PEDIDO y no sobre lo que se ve (que va por detrás mientras la animación corre), y el estado entero cabe en un número.'),
+          ok('El número viaja con la diapositiva a la que pertenece: sin ese sello, el scroll del portal se seguiría aplicando tras pasar a /status. Acotado contra la geometría publicada y descarte de un y imposible en src/lib/presentacion/desplazamiento.ts, 24 casos.'),
+          ok('Los dos botones ↑/↓ ocupan el sitio de la rejilla de saltos solo mientras la diapositiva tenga algo que desplazar, con repetición al mantener pulsado.'),
+          ok('La rueda del ratón escribe en la MISMA clave que el pulgar y se acepta que sean dos escritores: esta ventana es un mando, la ventana de carrera es de milisegundos y el peor caso es un salto de scroll.'),
+          ok('El acotado de dos escrituras por segundo vive en el CLIENTE, no en el servidor: un servidor que descarta en silencio lo que le mandan deja la sala en una posición que nadie puede explicar mirando el estado.'),
+        ],
+      },
+      {
+        id: 'PF-PA-03', titulo: 'Como asistente, quiero ver la página que el ponente está tocando y no el formulario de entrada',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['presentacion', 'fase-45'],
+        dod: [
+          ok('LO QUE VIAJA ES LA URL, NO EL DOM. Duplicar el árbol entre N navegadores es otro problema y otro orden de fragilidad, y no hace falta: todo resultado en esas tres páginas pasa por una navegación. Lo que se pierde es el tecleo carácter a carácter, que además enseñaría cuántas letras tiene una contraseña.'),
+          ok('FUNCIONA PORQUE NO HAY SESIÓN QUE ESPEJAR: al portal se entra por /api/portal/demo, un GET sin login contra la base de demo, así que quien abra esa URL ve lo mismo sea el ponente o cualquiera de la sala. Con un login real no funcionaría, y por eso es una regla del runbook y no un detalle de implementación.'),
+          ok('Solo http: y https:. Un javascript: en un location.replace sería ejecución de código venida de la red, y ninguna página del mazo lo necesita. Ante cualquier duda se devuelve null: quedarse sin espejo es una degradación, aplicar una URL rota es una pantalla en blanco delante del tribunal.'),
+          ok('Orden por seq y URL atada a su diapositiva por pos, en src/lib/presentacion/espejo.ts: 19 casos.'),
+        ],
+      },
+      {
+        id: 'PF-PA-04', titulo: 'Como ponente, quiero saber cuánto llevo sin que la sala vea correr mi reloj',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-01', tags: ['presentacion', 'fase-45'],
+        dod: [
+          ok('El cronómetro vive solo en /present-admin. En la pared no aparece: ver correr el reloj de quien está sustentando cambia cómo se le escucha.'),
+          ok('EL ARRANQUE ES DEL SERVIDOR, no del navegador, y arranca SOLO con el primer movimiento que saca la presentación de su primera diapositiva. No hay botón de empezar: es un gesto más que recordar con la sala esperando, y el que se olvida. Una recarga a mitad de charla está contemplada y no pone el reloj a cero.'),
+          ok('La cuenta corrige el desfase entre los dos relojes con el ahora que ya viaja en el sondeo, sin una petición extra. Arranque idempotente y formato en src/lib/presentacion/cronometro.ts, 20 casos.'),
+          ok('La isla flotante lleva pointer-events:none en el contenedor y auto solo en el pastillero: si se comiera los clics de la franja superior se llevaría por delante justo la barra de navegación del portal durante la demo.'),
+        ],
+      },
+      {
+        id: 'PF-PA-05', titulo: 'Como asistente, quiero un enlace que reúna la documentación del proyecto cuando la sustentación ya terminó',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-02', tags: ['presentacion', 'i18n', 'fase-45'],
+        dod: [
+          ok('/presentacion-end es página pública, indexable y con la navegación normal del sitio: se manda DESPUÉS, no se proyecta, y no toca el sistema de beats.'),
+          ok('El corte de "en números" se cuenta en vivo sobre el kanban de este mismo archivo filtrando por columna aceptada, no son cifras escritas a mano: si el tablero crece, la página no se toca.'),
+          ok('Traducida en los tres pasos del repo: texto al diccionario, cascarón en src/pages/en/ y alta en TRANSLATED_ROUTES.'),
+          ok('LA RUTA TUVO QUE ENTRAR EN RESERVED_ROOT_SEGMENTS y no estaba: es un segmento en la raíz y competía con el espacio de los PIN de presentación, así que un PIN generado podía coincidir y mandar a quien escaneara el QR a esta página en vez de a su deck. Lo cazó tests/present-pin.test.ts, que es la red que existe justo para esto.'),
+          pend('Los enlaces definitivos de documentación: los de hoy son un marcador razonable. Al llegar se tocan DOS sitios a la vez (DOCS_META y presentacionEnd.docs en es.ts y en.ts) o el test de paridad de diccionarios los agarra.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
@@ -1912,5 +1984,5 @@ export const COMMITS_POR_MES = [
   { mes: 'jun', commits: 104 },
   { mes: 'jul', commits: 1631 },
   { mes: 'ago', commits: 462 },
-  { mes: 'sep', commits: 28 },
+  { mes: 'sep', commits: 70 },
 ]
