@@ -75,10 +75,61 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
            movería por su cuenta y el próximo sondeo lo devolvería de golpe. */
         pointer-events: none;
       }
+      #aviso-movil {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        padding: 2rem;
+        text-align: center;
+        background: rgba(5, 7, 10, 0.92);
+        color: #f4f6f8;
+        font: 16px/1.4 system-ui, sans-serif;
+      }
+      #aviso-movil.visible {
+        display: flex;
+      }
+      #aviso-movil svg {
+        width: 3rem;
+        height: 3rem;
+        animation: girar 1.6s ease-in-out infinite;
+      }
+      @keyframes girar {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(-90deg);
+        }
+      }
+      #aviso-movil button {
+        pointer-events: auto;
+        border: 1px solid #f4f6f8;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        padding: 0.5rem 1.25rem;
+        border-radius: 999px;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <iframe id="lienzo" src="/final.html" title="Presentación"></iframe>
+
+    <div id="aviso-movil">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="7" y="2" width="10" height="20" rx="2" />
+        <line x1="11" y1="18" x2="13" y2="18" />
+      </svg>
+      <p id="aviso-texto">Gira el teléfono a horizontal para ver bien la presentación.</p>
+      <button id="aviso-fullscreen" type="button">Pantalla completa</button>
+    </div>
 
     <script>
       import {
@@ -110,6 +161,56 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       } from '../lib/presentacion/lienzo'
 
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
+
+      /* ------------------------------------------------------------------ *
+       * Aviso para móvil: girar a horizontal y sugerir pantalla completa.
+       * Es orientativo, no bloquea nada -si alguien de verdad quiere
+       * proyectar en vertical, puede-, así que se cierra con un toque en
+       * cualquier parte y no vuelve a salir hasta la siguiente vez que el
+       * teléfono pase por vertical.
+       * ------------------------------------------------------------------ */
+      const esMovil =
+        matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches
+      if (esMovil) {
+        const aviso = document.getElementById('aviso-movil') as HTMLElement
+        const texto = document.getElementById('aviso-texto') as HTMLElement
+        const btnFullscreen = document.getElementById('aviso-fullscreen') as HTMLButtonElement
+        let descartado = false
+
+        const enPantallaCompleta = () => Boolean(document.fullscreenElement)
+
+        function actualizarAviso() {
+          if (descartado) return
+          const vertical = matchMedia('(orientation: portrait)').matches
+          if (!vertical) descartado = false // vuelve a poder avisar si regresa a vertical más tarde
+          const faltaFullscreen = !enPantallaCompleta()
+          if (!vertical && !faltaFullscreen) {
+            aviso.classList.remove('visible')
+            return
+          }
+          texto.textContent = vertical
+            ? 'Gira el teléfono a horizontal para ver bien la presentación.'
+            : 'Toca para entrar en pantalla completa.'
+          btnFullscreen.hidden = !faltaFullscreen
+          aviso.classList.add('visible')
+        }
+
+        btnFullscreen.addEventListener('click', () => {
+          document.documentElement.requestFullscreen?.().catch(() => {
+            // Algunos navegadores móviles solo permiten pedirla desde un
+            // gesto del usuario y aun así la niegan (Safari en iPhone, por
+            // ejemplo): no hay nada más que hacer, se deja el aviso de girar.
+          })
+        })
+        aviso.addEventListener('click', (e) => {
+          if (e.target === btnFullscreen) return
+          descartado = true
+          aviso.classList.remove('visible')
+        })
+        matchMedia('(orientation: portrait)').addEventListener('change', actualizarAviso)
+        document.addEventListener('fullscreenchange', actualizarAviso)
+        actualizarAviso()
+      }
 
       /** Lo que se publica: posición global, forma del mazo y, si la
        *  diapositiva trae una página viva dentro, su geometría. */

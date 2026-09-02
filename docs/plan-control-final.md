@@ -422,7 +422,11 @@ locales equivalentes (ver 10.1):
 
 ## 11. `/present-admin`: el mando con lienzo, y el público como público
 
-**Estado: planeado.**
+**Estado: en curso.** Hecho el cimiento (los tres módulos puros, el extracto de
+`lienzo.ts`, el lado servidor y la línea del middleware). Faltan las dos
+páginas, el runbook y `documentacion.ts`. Nada de lo entregado cambia todavía
+el comportamiento de `/presentacion`: las claves nuevas existen y nadie las
+lee aún.
 
 Hasta aquí el sistema tenía una sola pantalla. Esta sección la desdobla en dos
 papeles que hoy están mezclados en `/presentacion`: quien **conduce** el mazo y
@@ -754,8 +758,10 @@ src/pages/api/presentacion.ts           + `espejo`, `inicio` y `ahora` en `?q=de
                                         + publicación al bus en cada cambio
 src/lib/present/client-sync.ts          reuso para el canal de la sala
 src/middleware.ts                       `/presentacion` entra en `isPresentView`
+tests/presentacion-lienzo.test.ts       zonas, quién recorta a quién, geometría
 tests/presentacion-espejo.test.ts       orden por `seq`, diapositiva ajena, sin canal
 tests/presentacion-cronometro.test.ts   desfase, formato, arranque idempotente
+tests/presentacion-endpoint.test.ts     la costura: reglas puras contra el almacén
 src/data/documentacion.ts               RF-716, `planeado` -> `implementado`
 docs/runbook-sustentacion.md            montaje real y la regla del login de demo
 docs/plan-control-final.md              esta sección, marcada al entregar
