@@ -376,6 +376,9 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 - **Severidad:** Alta. No era solo un error visual: el cliente creía que cerró
   sesión y no la cerró. En un equipo prestado o compartido, el siguiente que
   abriera el navegador entraba a sus facturas.
+- **Característica (ISO/IEC 25010):** Seguridad. La sesión sigue viva después
+  de que la persona cree haberla cerrado; eso es control de acceso roto, no un
+  problema de estética ni de disponibilidad.
 - **Pasos para reproducir (antes del arreglo):**
   1. Iniciar sesión en `/portal/login`.
   2. Abrir el menú del avatar (arriba a la derecha).
@@ -444,6 +447,10 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 - **Severidad:** Media. Afecta al camino feliz del cobro: el cliente que teclea
   el código a mano recibe «Cobro no encontrado» y concluye que el link no sirve.
+- **Característica (ISO/IEC 25010):** Usabilidad y accesibilidad. El sistema
+  funciona correctamente (el cobro existe, la ruta responde); lo que falla es
+  que el operador humano no puede completar la tarea con la forma natural en
+  que teclearía el código.
 - **Pasos:** abrir `/c/ab3k9f` existiendo el cobro `AB3K9F`.
 - **Obtenido:** `404` «Cobro no encontrado». **Esperado:** el cobro se abre.
 - **Por qué es un defecto y no una decisión:** el alfabeto del código excluye
@@ -454,7 +461,12 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ### BUG-03 - Las consultas inválidas consumen la cuota horaria
 
-- **Severidad:** Baja. **Pasos:** enviar 5 consultas con un número mal escrito
+- **Severidad:** Baja.
+- **Característica (ISO/IEC 25010):** Confiabilidad y disponibilidad. El
+  límite existe para proteger el servicio, pero termina negando el servicio
+  al dueño legítimo del recurso: es una falla de disponibilidad autoinfligida,
+  no de seguridad ni de interfaz.
+- **Pasos:** enviar 5 consultas con un número mal escrito
   desde la misma IP y luego una con el número correcto.
 - **Obtenido:** la 6.ª (la buena) recibe `429` y el cliente queda una hora sin
   poder consultar. **Esperado:** el límite debería contar consultas *válidas*, o
@@ -466,7 +478,12 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ### BUG-04 - El aviso de validación se auto-oculta a los 4 segundos
 
-- **Severidad:** Baja. **Pasos:** en `/portal/cuenta`, intentar una contraseña
+- **Severidad:** Baja.
+- **Característica (ISO/IEC 25010):** Usabilidad y accesibilidad. La
+  validación es correcta (rechaza la contraseña débil); lo que falla es la
+  reconocibilidad del error: desaparece antes de que la persona entienda por
+  qué el formulario no avanzó.
+- **Pasos:** en `/portal/cuenta`, intentar una contraseña
   de 9 caracteres y esperar 5 segundos.
 - **Obtenido:** el mensaje «La contraseña debe tener al menos 10 caracteres»
   aparece y desaparece; el formulario queda con los campos llenos y sin
@@ -479,7 +496,12 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ### BUG-05 - El 404 del portal es el 404 del sitio público
 
-- **Severidad:** Baja (cosmético / consistencia). **Pasos:** con sesión de
+- **Severidad:** Baja (cosmético / consistencia).
+- **Característica (ISO/IEC 25010):** Usabilidad y accesibilidad. El
+  aislamiento entre clientes funciona (el 404 sí se dispara); lo que se
+  degrada es la consistencia de la interfaz, que saca a la persona del marco
+  del portal en el peor momento (un error).
+- **Pasos:** con sesión de
   portal, abrir `/portal/facturas/<id ajeno>`.
 - **Obtenido:** el 404 público, con la navegación comercial («Diseño Web»,
   «Contáctame», «Login») y el banner de cambio de idioma.
