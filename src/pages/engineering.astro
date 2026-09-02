@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import CardPopover from '../components/CardPopover.astro'
 import { db } from '../db'
 import { webVitals, ciRuns, monitorChecks, monitorIncidents, monitors } from '../db/schema'
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm'
 import {
   p75,
   percentile,
@@ -108,8 +108,15 @@ const vitals = METRIC_ORDER.map((m) => {
 const totalSamples = vitalRows.length
 
 // ── Pipeline CI (datos reales de GitHub Actions) ─────────────────────────
+// healthOk solo lo escribe el paso "Reportar run al panel LAB" de ci.yml
+// (verify-production), y siempre lo manda como booleano si ese paso llegó a
+// correr. scripts/mutation-scan.mjs postea al mismo endpoint con el mismo
+// kind:'ci_run' (para reusar el mecanismo, ver comentario ahí) pero solo
+// trae sha/conclusion/mutationScore/durationMs - nunca healthOk. Filtrar por
+// isNotNull separa un run real del pipeline de un ping semanal de Stryker,
+// que si no se cuela como "último pipeline verde" sin tests ni cobertura.
 const recentRuns = await safeQuery(
-  () => db.select().from(ciRuns).orderBy(desc(ciRuns.createdAt)).limit(20),
+  () => db.select().from(ciRuns).where(isNotNull(ciRuns.healthOk)).orderBy(desc(ciRuns.createdAt)).limit(20),
   [] as (typeof ciRuns.$inferSelect)[],
   'engineering/ci-runs',
 )
