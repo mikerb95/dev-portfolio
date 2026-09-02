@@ -361,12 +361,20 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
        *
        * No basta con su `getBoundingClientRect`, y esto NO es teoría: el mazo
        * monta las tres páginas desde el primer beat y las guarda en cajas
-       * plegadas de 400x260 con `overflow:hidden`. El rectángulo de un iframe
-       * ignora ese recorte y devuelve sus 1864x920 aunque de él solo se asome
-       * una esquina, así que sin subir por los ancestros los tres iframes
-       * parecerían estar en pantalla a la vez y el mando desplazaría el que no
-       * es. Se sube recortando contra cada caja que recorta y apagando el
-       * elemento en cuanto un ancestro está oculto.
+       * plegadas de 336x186 con `overflow:hidden`, que se despliegan al llegar
+       * a su diapositiva. El rectángulo de un iframe ignora ese recorte y
+       * devuelve sus 1572x776 aunque de él solo se asome una esquina, así que
+       * sin subir por los ancestros los tres parecerían estar en pantalla a la
+       * vez y el mando desplazaría el que no es.
+       *
+       * Y al subir hay que respetar QUIÉN RECORTA A QUIÉN, que es la parte que
+       * costó la depuración: un `overflow:hidden` solo recorta a los
+       * descendientes de los que es bloque contenedor. El mazo cuelga su
+       * escenario de un `position:fixed` y deja `<body>` y `<html>` con altura
+       * cero y `overflow:hidden`; midiendo contra todo ancestro, esas dos cajas
+       * vacías daban área cero y el iframe no se descubría nunca. Por eso un
+       * ancestro estático no recorta a un descendiente absoluto, y por encima
+       * de un `fixed` ya no recorta nadie.
        */
       function areaVisible(el: HTMLElement, W: number, H: number): number {
         let r = el.getBoundingClientRect()
@@ -374,16 +382,29 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         let arr = Math.max(r.top, 0)
         let der = Math.min(r.right, W)
         let aba = Math.min(r.bottom, H)
-        for (let a: HTMLElement | null = el; a; a = a.parentElement) {
-          const s = estilo(a)
-          if (s.display === 'none' || s.visibility === 'hidden') return 0
-          if (Number(s.opacity) <= 0.5) return 0
-          if (a !== el && s.overflow !== 'visible') {
-            r = a.getBoundingClientRect()
-            izq = Math.max(izq, r.left)
-            arr = Math.max(arr, r.top)
-            der = Math.min(der, r.right)
-            aba = Math.min(aba, r.bottom)
+
+        const oculto = (s: CSSStyleDeclaration) =>
+          s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) <= 0.5
+
+        const propio = estilo(el)
+        if (oculto(propio)) return 0
+        // Mientras lo que sube es absoluto, los ancestros estáticos no son su
+        // bloque contenedor y no lo recortan. Deja de saltárselos en cuanto
+        // aparece uno posicionado, que sí lo es.
+        let saltarEstaticos = propio.position === 'absolute'
+        if (propio.position !== 'fixed') {
+          for (let a = el.parentElement; a; a = a.parentElement) {
+            const s = estilo(a)
+            if (oculto(s)) return 0
+            if ((!saltarEstaticos || s.position !== 'static') && s.overflow !== 'visible') {
+              r = a.getBoundingClientRect()
+              izq = Math.max(izq, r.left)
+              arr = Math.max(arr, r.top)
+              der = Math.min(der, r.right)
+              aba = Math.min(aba, r.bottom)
+            }
+            if (s.position === 'fixed') break
+            if (s.position !== 'static') saltarEstaticos = s.position === 'absolute'
           }
         }
         return Math.max(der - izq, 0) * Math.max(aba - arr, 0)
