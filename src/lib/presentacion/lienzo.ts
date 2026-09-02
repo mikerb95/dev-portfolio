@@ -134,20 +134,29 @@ export function estaOculto(s: { display: string; visibility: string; opacity: st
  *  · un ancestro estático no recorta a un descendiente absoluto;
  *  · por encima de un `fixed` ya no recorta nadie, y un elemento `fixed` no lo
  *    recorta ningún ancestro.
+ *
+ * Los ancestros se reciben como iterable y NO como lista para que quien los
+ * produzca pueda hacerlo perezosamente: esto corre en el sondeo, dos veces por
+ * segundo y por cada iframe del mazo, y `getComputedStyle` fuerza recálculo de
+ * estilo. Casi siempre se para en el `fixed` del escenario a un par de saltos,
+ * así que calcular la cadena entera por adelantado sería pagar el árbol
+ * completo para tirar la mayor parte. Un array también es iterable, que es lo
+ * que usan los tests.
  */
-export function recortadoresDe(propio: Caja, ancestros: Caja[]): number[] | null {
+export function recortadoresDe(propio: Caja, ancestros: Iterable<Caja>): number[] | null {
   if (propio.oculto) return null
   if (propio.position === 'fixed') return []
 
   const recortan: number[] = []
   let saltarEstaticos = propio.position === 'absolute'
+  let i = 0
 
-  for (let i = 0; i < ancestros.length; i++) {
-    const a = ancestros[i]
+  for (const a of ancestros) {
     if (a.oculto) return null
     if ((!saltarEstaticos || a.position !== 'static') && a.overflow !== 'visible') recortan.push(i)
     if (a.position === 'fixed') break
     if (a.position !== 'static') saltarEstaticos = a.position === 'absolute'
+    i++
   }
   return recortan
 }
@@ -313,10 +322,16 @@ export function areaVisible(
     return { izq: r.left, arr: r.top, der: r.right, aba: r.bottom }
   }
 
+  // Recoger los elementos es barato (subir punteros); calcular sus estilos no.
+  // Por eso los primeros van a una lista y los segundos salen de un generador
+  // que solo llega hasta donde `recortadoresDe` decida parar.
   const ancestros: HTMLElement[] = []
   for (let a = el.parentElement; a; a = a.parentElement) ancestros.push(a)
+  function* cajas() {
+    for (const a of ancestros) yield caja(a)
+  }
 
-  const recortan = recortadoresDe(caja(el), ancestros.map(caja))
+  const recortan = recortadoresDe(caja(el), cajas())
   if (!recortan) return 0
 
   const pantalla: Rect = { izq: 0, arr: 0, der: W, aba: H }
