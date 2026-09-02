@@ -288,6 +288,12 @@ export const POST: APIRoute = async ({ request, url }) => {
         destino,
         scroll: desplazamientoPedido(pedido, destino),
         espejo: espejo && espejo.pos === destino ? espejo : null,
+        // Solo el que venía en ESTE reporte. Los otros dos anuncios ni siquiera
+        // llevan el campo, y esa diferencia es deliberada: para el seguidor,
+        // `puntero` ausente es "sin novedad" y `null` es "apaga el cursor". Si
+        // el anuncio de la rueda mandara `null` por no tenerlo a mano, el
+        // cursor de la sala parpadearía en cada giro.
+        ...(puntero ? { puntero: punteroPara(puntero, destino) } : {}),
       })
 
       return json(200, { destino, actual })
