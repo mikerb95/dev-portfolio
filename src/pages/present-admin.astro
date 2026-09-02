@@ -1078,6 +1078,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           // seguidores lo descartan por `seq` empatado, pero así una clave que
           // venció por TTL vuelve sola en el latido siguiente.
           ...(espejo && espejo.pos === actual.pos ? { espejo } : {}),
+          // Y el puntero con él, por lo mismo y con la misma regla de la
+          // diapositiva: el ratón señala algo de ESTA página, no de la de al
+          // lado. Va en el reporte que ya se hace y no en una petición propia,
+          // que sería una escritura por temblor de mano.
+          ...(puntero && puntero.pos === actual.pos ? { puntero } : {}),
           origen,
         })) as { destino?: number } | null
         return typeof cuerpo?.destino === 'number' ? cuerpo.destino : null
