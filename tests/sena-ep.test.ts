@@ -85,9 +85,28 @@ describe('anclaje de las fechas', () => {
     // /ep pinta estas fechas en el navegador con getDate() y
     // toLocaleDateString(), que son locales. Si el ancla estuviera en un
     // extremo del día, las dos lecturas discreparían.
+    //
+    // El margen del mediodía es de 12 h, así que la propiedad se garantiza
+    // hasta UTC±11. NO es universal, y no puede serlo: una fecha de calendario
+    // representada como un instante siempre se ve corrida en algún meridiano
+    // (Auckland en UTC+12 es el primero que se sale). El público de /ep está en
+    // Colombia (UTC-5), muy dentro del margen; la comprobación se salta en las
+    // zonas extremas en vez de fingir una garantía que no existe.
+    const offsetHoras = Math.abs(new Date('2026-09-09T12:00:00Z').getTimezoneOffset()) / 60
+    if (offsetHoras > 11) return
+
     for (const h of computeHitos('tecnico', '2026-09-09')) {
       expect(h.fecha.getDate()).toBe(h.fecha.getUTCDate())
       expect(h.fecha.getMonth()).toBe(h.fecha.getUTCMonth())
+    }
+  })
+
+  it('en Colombia, que es el público real, el día local coincide siempre', () => {
+    // Independiente de la zona del proceso: se comprueba con un formateador
+    // fijado a Bogotá, no con los accesores locales.
+    const enBogota = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', dateStyle: 'short' })
+    for (const h of computeHitos('tecnico', '2026-09-09')) {
+      expect(enBogota.format(h.fecha)).toBe(h.fecha.toISOString().slice(0, 10))
     }
   })
 

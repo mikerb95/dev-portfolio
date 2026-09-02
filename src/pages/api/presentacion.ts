@@ -189,7 +189,7 @@ export const GET: APIRoute = async ({ url }) => {
   }
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, url }) => {
   let bruto: unknown
   try {
     bruto = await request.json()
@@ -204,6 +204,7 @@ export const POST: APIRoute = async ({ request }) => {
     intro?: unknown
     outro?: unknown
     scroll?: unknown
+    espejo?: unknown
     origen?: unknown
   }
 
@@ -235,9 +236,32 @@ export const POST: APIRoute = async ({ request }) => {
       }
       await presentStore().set(K_ACTUAL, JSON.stringify(actual), TTL_SEGUNDOS)
 
+      // La URL de la página viva viaja con la posición porque quien la conoce
+      // es la misma ventana que la publica: `/present-admin` es la pantalla del
+      // sistema. Va a su propia clave y no dentro de `actual` por lo mismo que
+      // el scroll: `actual` se reescribe en cada latido y se llevaría por
+      // delante el espejo entre una navegación y la siguiente.
+      //
+      // Un reporte SIN espejo no borra el que hay. El latido llega cada cinco
+      // segundos y no sabe nada de la página de dentro; si lo borrara, la sala
+      // volvería sola al arranque del beat en mitad de la demo.
+      const espejo = parsearEspejo(cuerpo.espejo, url.origin)
+      if (espejo) await presentStore().set(K_ESPEJO, JSON.stringify(espejo), TTL_SEGUNDOS)
+
       const previo = await leerDestino()
       const destino = destinoTrasReporte(previo, actual, origen)
       if (destino !== previo) await guardarDestino(destino)
+
+      // La sala se entera por aquí. Se anuncia siempre y no solo cuando algo
+      // cambia: este reporte incluye el latido de la pantalla, que es lo que le
+      // dice a un seguidor recién llegado que la charla sigue viva.
+      const pedido = await leerScroll()
+      void anunciar({
+        destino,
+        scroll: desplazamientoPedido(pedido, destino),
+        espejo: espejo && espejo.pos === destino ? espejo : null,
+      })
+
       return json(200, { destino, actual })
     }
 
@@ -265,6 +289,23 @@ export const POST: APIRoute = async ({ request }) => {
       })
     }
 
+    // Reiniciar el cronómetro. Hace falta de verdad: con TTL de seis horas, el
+    // arranque de un ensayo de la mañana llegaría vivo a la sustentación de la
+    // tarde y el reloj empezaría en 04:12.
+    //
+    // Se borra escribiendo vacío y no con un DELETE porque el almacén no lo
+    // expone, y `parsearInicio('')` ya devuelve null: un valor que no es un
+    // instante posible se descarta igual que si la clave no existiera.
+    if (cuerpo.accion === 'reiniciar-cronometro') {
+      await presentStore().set(K_INICIO, '', TTL_SEGUNDOS)
+      return json(200, {
+        destino: previo,
+        actual,
+        viva: esFresco(actual, Date.now()),
+        inicio: null,
+      })
+    }
+
     let destino: number
 
     if (cuerpo.destino !== undefined) {
@@ -278,17 +319,30 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     if (destino !== previo) await guardarDestino(destino)
+
+    // El reloj arranca SOLO, con el primer toque que saca la presentación de su
+    // primera diapositiva. No hay botón de empezar: sería un gesto más que
+    // recordar con la sala esperando, y el que se olvida. `debeArrancar` es
+    // idempotente porque esto corre en CADA movimiento.
+    let inicio = await leerInicio()
+    if (debeArrancar(inicio, previo, destino, POS_INICIAL)) {
+      inicio = Date.now()
+      await presentStore().set(K_INICIO, String(inicio), TTL_SEGUNDOS)
+    }
+
     // El mando pinta la respuesta: sabe al instante si el toque movió algo o
     // topó con el final, en vez de decir "ok" a ciegas. El desplazamiento va
     // con ella porque cambiar de diapositiva lo devuelve a cero sin escribir
     // nada, y el mando tiene que enterarse en el mismo fotograma.
     const pedido = await leerScroll()
-    return json(200, {
-      destino,
-      actual,
-      viva: esFresco(actual, Date.now()),
-      scroll: desplazamientoPedido(pedido, destino),
-    })
+    const scroll = desplazamientoPedido(pedido, destino)
+
+    // Al cambiar de diapositiva no hay espejo que valga: el de la anterior
+    // pertenece a otra `pos`, así que la sala vuelve al arranque del beat nuevo
+    // por construcción, sin escrituras extra ni limpieza.
+    if (destino !== previo) void anunciar({ destino, scroll, espejo: null })
+
+    return json(200, { destino, actual, viva: esFresco(actual, Date.now()), scroll, inicio })
   } catch (e) {
     return error(e)
   }

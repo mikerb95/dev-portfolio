@@ -801,3 +801,168 @@ abierta en **dos equipos distintos**, uno de ellos un teléfono:
   salón se cae o si los teléfonos no aguantan el bundle, el ponente sigue con su
   portátil y su móvil sin enterarse. Ninguna ruta del camino caliente depende de
   que haya alguien mirando.
+
+## 12. Entrega de la sección 11: inventario y orden
+
+La sección 11 es un diseño cerrado y a medio construir. Esta sección no lo
+rediseña: dice **qué hay de verdad hoy**, qué falta, y en qué orden se entrega
+sin dejar el sistema roto entre paso y paso.
+
+### 12.1. Inventario, contrastado contra el código
+
+| Pieza | Estado | Nota |
+|---|---|---|
+| `lib/presentacion/lienzo.ts` | ✅ | descubrimiento del mazo y del iframe vivo, con tests |
+| `lib/presentacion/espejo.ts` | ✅ puro | `seq`, vínculo con la diapositiva, cuándo navegar |
+| `lib/presentacion/cronometro.ts` | ✅ puro | desfase, formato, arranque |
+| `api/presentacion.ts`, lado LECTURA | ✅ | `?q=destino` ya devuelve `{ destino, scroll, espejo, inicio, ahora }` |
+| `api/presentacion.ts`, lado ESCRITURA | ❌ | ver abajo |
+| `middleware.ts` | ✅ | `/presentacion` ya entra en `isPresentView` (CSP del bus) |
+| `src/pages/present-admin.astro` | ❌ | no existe |
+| `/presentacion` como seguidor puro | ❌ | sigue publicando `actual` |
+| RF-716, runbook, §11 marcada | ❌ | |
+
+**El lado que lee está entero; el lado que escribe está sin empezar.** Las tres
+piezas puras existen, están probadas y **no las llama nadie**. En concreto, en
+`api/presentacion.ts`:
+
+- `K_ESPEJO` solo se lee. Ningún camino la escribe, y el `POST` ni siquiera
+  acepta un `href` en el cuerpo.
+- No hay escritura de scroll **absoluto**: solo existen `subir` y `bajar`, que
+  van a saltos de un tercio. La rueda del ratón (11.5.3) no tiene por dónde
+  entrar.
+- `reiniciar-cronometro` está en el comentario de cabecera y no en el código.
+- `inicio` no lo arranca nadie: `debeArrancar` se importa y no se usa.
+- `anunciar()` está escrita, comentada y **no se llama desde ningún sitio**. Sin
+  esa llamada no hay bus, y sin bus la sala entera cae al sondeo, que es
+  exactamente el fallo que 11.2 existe para evitar.
+
+### 12.2. Dos hallazgos que corrigen a la sección 11
+
+**1. `client-sync.ts` no se reusa "tal cual".** 11.2 y 11.8 lo dan por
+reutilizable, y sus tres capas (bus, resincronía, rescate) son justo lo que no
+conviene volver a derivar. Pero el módulo está atado al sistema de decks: sondea
+`/api/present/<sessionId>/snapshot`, acepta un `Snapshot` con `pin` y
+`deckTitle`, y su rescate va a 1 s, no a los 3 s que pide 11.2 para treinta
+teléfonos bajo una IP compartida. Hay que **parametrizarlo** (canal, endpoint de
+resincronía, forma del mensaje, cadencia del rescate) dejando el sitio de
+llamada de los decks funcionando igual. Escribir un hermano nuevo duplicaría la
+única lógica del sistema que ya se probó en vivo con público delante.
+
+**2. El orden entre los pasos 2 y 3 es obligatorio, no una preferencia.** Hoy el
+único escritor de `actual` es `/presentacion`. Si deja de publicar antes de que
+`/present-admin` publique, queda una ventana sin nadie que diga la forma del
+mazo: el mando pierde el techo real, la rejilla de saltos y el guion, que es
+precisamente lo que la sección 2.2 protege. `/present-admin` publica primero;
+`/presentacion` se calla después. Y mientras dure ese solape, **no se abren las
+dos a la vez**: serían dos escritores de la misma clave.
+
+### 12.3. Paso 0: la compuerta, que hoy está la última
+
+El punto 10 de 11.9 (medir `final.html` en un teléfono de gama baja) no es una
+verificación, es una **compuerta de diseño**, y va primero. `final.html` es 1 MB
+con canvas animados; la sección 11 entera apuesta a que treinta asistentes lo
+corren cada uno en su equipo. Si ahí no va fluido, lo que cambia no es un
+detalle de implementación: se cae la idea de la sala como seguidores y §11 se
+reduce a `/present-admin` más el teclado y el espejo, con una sola proyección
+para todos. Descubrirlo después de construir el bus, el rescate y el seguidor es
+tirar el paso 3 entero.
+
+Se mide con el mazo real, en un teléfono prestado de gama baja, en el WiFi del
+salón si se puede. Lo que se decide con el resultado: **sala sí** (se sigue con
+el plan) o **sala no** (se entrega `/present-admin` y `/presentacion` se queda
+como está, sin tocar su lado escritor).
+
+### 12.4. Paso 1: cerrar el lado de escritura de la API
+
+Autónomo y sin riesgo: no rompe nada de lo que ya funciona, y deja el resto del
+trabajo apoyado en algo que se puede probar con `curl` antes de tener páginas.
+
+1. **Arranque del cronómetro.** Dentro del `POST` que mueve el destino, la
+   primera vez que sale de `POS_INICIAL` y la clave no existe (`debeArrancar`,
+   que ya está importado). Sin escritor nuevo y sin un gesto más que recordar.
+2. **`reiniciar-cronometro`.** Borra `K_INICIO`. El reloj vuelve a arrancar solo
+   en el movimiento siguiente, no al instante: es lo que hace que el reinicio no
+   necesite confirmación en el servidor.
+3. **Espejo.** El `POST` acepta el `href` del iframe vivo y escribe
+   `K_ESPEJO` con `siguienteEspejo` (que ya resuelve el `seq` y el vínculo con
+   la diapositiva). Se descarta sin escribir si el `pos` no es el destino.
+4. **Scroll absoluto.** Una vía para "la rueda dejó la página en `y`", que acota
+   contra la geometría publicada igual que `subir`/`bajar`. El acotado de dos
+   escrituras por segundo (11.5.3) va en el cliente, no aquí: el servidor no
+   debe descartar en silencio lo que le mandan.
+5. **Llamar a `anunciar()`** en cada camino que cambie algo, con el mismo objeto
+   que devuelve `?q=destino`. Fail-open, ya escrito.
+
+Verificación: lo que sea puro entra en `tests/presentacion-espejo.test.ts` y
+`presentacion-cronometro.test.ts`, que ya existen; lo demás, con `curl` contra
+el dev server, como se hizo con la sección 10.
+
+### 12.5. Paso 2: `/present-admin`
+
+La ventana que conduce. Es el grueso del trabajo y se entrega por capas, cada
+una comprobable a ojo en el portátil antes de seguir:
+
+- **a. Lienzo y reconciliación.** Monta `final.html`, descubre el mazo y obedece
+  el destino, reusando `lienzo.ts` y la mecánica que ya está probada en
+  `/presentacion`. Al terminar esta capa, `/present-admin` ya es la pantalla: es
+  el punto en que empieza a publicar `actual`.
+- **b. `pointer-events` por dentro** (11.3): `auto` en el marco, `none` en el
+  `body` del bundle, `auto` en el iframe vivo. Re-afirmado en cada sondeo, como
+  `afirmarCapas`. Prueba: clic en la lámina fuera de la ventanilla y que **no
+  pase nada**.
+- **c. Teclado** (11.4): flechas y dígitos de la página hacen `POST`; listener en
+  **fase de captura** sobre el documento del bundle que se come las teclas
+  `isTrusted`. Prueba: foco dentro del mazo, flecha, y que no se mueva un beat
+  por fuera del servidor.
+- **d. Rueda → scroll** (11.5.3), contra la vía del paso 1.4, acotada a dos
+  escrituras por segundo.
+- **e. Espejo de URL** (11.5.2), contra la vía del paso 1.3, respetando la
+  navegación guionizada del propio bundle.
+- **f. Isla del cronómetro** (11.6), con `pointer-events: none` en el contenedor
+  y `auto` solo en el pastillero.
+
+Ruta sin puerta y sin excepción en el middleware: el guion de `/present-admin`
+la deja fuera de `startsWith('/present/')` y de `isAdmin` por construcción.
+`Cache-Control: no-store`, `noindex, nofollow`, fuera de sitemap.
+
+### 12.6. Paso 3: `/presentacion` pasa a seguidor puro
+
+Solo si el paso 0 dio "sala sí".
+
+- Quitar sus siete llamadas a `reportar`: cero `POST`, que es la corrección de
+  11.1 y el motivo de la sección.
+- Engancharse al canal con el `client-sync` parametrizado (12.2), con rescate a
+  3 s y solo lectura.
+- Conserva su `pointer-events: none`, que ahora tiene un motivo más: que un
+  asistente no desincronice su propia copia.
+
+**Una pregunta que hay que responder aquí y no dejar pasar:** qué queda del
+origen `ajena` (sección 4) cuando el único que reporta es `/present-admin` y
+además tiene el teclado tapado por 11.4. Deja de ser "alguien pulsó la flecha en
+el portátil" y pasa a cubrir solo la navegación que el bundle hace por su cuenta
+dentro de un beat. No se borra a ciegas: se decide con la regla escrita y se
+ajusta el comentario de la sección 4, que si no queda mintiendo sobre el motivo.
+
+### 12.7. Paso 4: documentación
+
+RF-716 en `src/data/documentacion.ts` (un feature entregado que no aparece en
+`/docs` no existe para la sustentación), el montaje real y la regla del login de
+demo en `docs/runbook-sustentacion.md`, y marcar §11 y esta §12 al cerrar.
+
+### 12.8. Paso 5: verificación en vivo
+
+Los diez puntos de 11.9 menos el décimo, ya gastado en el paso 0. **No se puede
+cerrar desde el portátil solo**: los puntos 1, 6 y 9 piden `/presentacion`
+abierta en dos equipos distintos, uno de ellos un teléfono, y el 9 pide cortar
+el bus a propósito. El punto 6 (bloquear el teléfono espectador dos minutos y
+comprobar que al volver no arrastra a nadie) es el que justifica la sección
+entera: si ese no se hace, no se ha verificado nada.
+
+### 12.9. Lo que este plan no decide
+
+- El ritmo contra el guion (11.6.5) sigue fuera: es cero estado nuevo sobre
+  datos que ya existen y se puede añadir después sin tocar nada.
+- El espejo del DOM, el login real en la demo y la puerta siguen fuera, por lo
+  que dice 11.10.
+
