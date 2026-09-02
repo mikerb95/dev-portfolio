@@ -796,6 +796,26 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         if (e.metaKey || e.ctrlKey || e.altKey) return
         const k = e.key
 
+        // §11.7. El panel va con una letra, que el mazo no usa. No colisiona
+        // con escribir dentro de la demo: el teclado del bundle está tapado
+        // (§11.4) y esos eventos ni siquiera salen del iframe.
+        if (k === 'p' || k === 'P') {
+          e.preventDefault()
+          ponerModo(siguienteModo(modo))
+          return
+        }
+        if (k === 'Escape') {
+          e.preventDefault()
+          ponerModo('oculto')
+          return
+        }
+
+        // Con el foco puesto en un botón del panel, el espacio y el enter son
+        // SUYOS. Sin esto, pulsar espacio después de clicar un salto avanzaría
+        // además una diapositiva que nadie pidió.
+        const enPanel = (e.target as HTMLElement | null)?.closest?.('#panel, #tirador, #isla')
+        if (enPanel && (k === ' ' || k === 'Enter')) return
+
         if (/^\d$/.test(k)) {
           // Dos dígitos caben en el mazo entero, así que se espera un poco por
           // el compañero antes de saltar. Con el segundo no se espera nada.
