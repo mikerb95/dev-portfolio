@@ -510,7 +510,12 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 
 ### BUG-06 - Vulnerabilidades en dependencias
 
-- **Severidad:** Alta. **Comando:** `npm audit`.
+- **Severidad:** Alta.
+- **Característica (ISO/IEC 25010):** Seguridad. Vulnerabilidades conocidas en
+  dependencias de producción, una de ellas en la librería de autenticación
+  del panel admin: exposición de confidencialidad/integridad, no un problema
+  de rendimiento ni de interfaz.
+- **Comando:** `npm audit`.
 - **Obtenido:** 18 vulnerabilidades - **2 críticas**, 9 altas, 6 moderadas, 1 baja.
 - **Las más relevantes:**
 
@@ -573,7 +578,7 @@ encontrar el defecto (o que no lo ejercita).
 | Casos derivados por equivalencia (CDE) | 9 · 8 pasan, 1 falla |
 | Casos de valores límite (BVA) | 18 · 17 pasan, 1 falla |
 | Chárter exploratorio | 1 · 12 notas registradas |
-| **Defectos encontrados** | **6** - 2 de severidad alta, 1 media, 3 bajas |
+| **Defectos encontrados** | **6** - 2 de severidad alta, 1 media, 3 bajas - por característica ISO/IEC 25010: 2 Seguridad, 1 Confiabilidad y disponibilidad, 3 Usabilidad y accesibilidad |
 
 ### Lectura de los resultados
 
