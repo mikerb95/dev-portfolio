@@ -1,0 +1,247 @@
+---
+// Contenido estático (src/data): se genera en el build, no por request.
+export const prerender = true
+
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import DocsNav from '../../components/DocsNav.astro'
+import {
+  CAUSAS,
+  JUSTIFICACION,
+  OBJETIVOS_ESPECIFICOS,
+  OBJETIVO_GENERAL,
+  PROBLEMA,
+  SINTOMAS,
+} from '../../data/planteamiento'
+import { REQUISITOS_FUNCIONALES, REQUISITOS_NO_FUNCIONALES } from '../../data/documentacion'
+
+const secciones = [
+  { id: 'problema', t: 'El problema' },
+  { id: 'arbol', t: 'Síntomas y causas' },
+  { id: 'delimitacion', t: 'Delimitación' },
+  { id: 'justificacion', t: 'Justificación' },
+  { id: 'objetivos', t: 'Objetivos' },
+]
+
+// Los títulos de los requisitos citados salen de documentacion.ts: la tabla de
+// objetivos no puede quedarse con el nombre viejo de un requisito renombrado.
+const REQUISITOS = new Map(
+  [...REQUISITOS_FUNCIONALES, ...REQUISITOS_NO_FUNCIONALES]
+    .flatMap((m) => m.items)
+    .map((r) => [r.id, r.titulo]),
+)
+const hrefRequisito = (id: string) =>
+  id.startsWith('RNF') ? '/docs/requerimientos-no-funcionales' : '/docs/requerimientos-funcionales'
+
+const ESTILO_ESTADO = {
+  cumplido: 'text-lime border-lime/30 bg-lime/10',
+  parcial: 'text-ember border-ember/30 bg-ember/10',
+  pendiente: 'text-ink-200 border-white/15 bg-white/5',
+} as const
+
+const totalRequisitos = new Set(OBJETIVOS_ESPECIFICOS.flatMap((o) => o.requisitos)).size
+const causaDe = (sintoma: string) => CAUSAS.filter((c) => c.explica.includes(sintoma))
+---
+
+<BaseLayout title="Planteamiento, justificación y objetivos">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+    <DocsNav />
+
+    <div class="max-w-3xl mb-10">
+      <p class="text-[12px] font-mono uppercase tracking-wide text-ink-300 mb-2">Documentación · Planteamiento</p>
+      <h1 class="text-2xl font-semibold text-ink-50 mb-3">
+        Qué problema resuelve esto, y <span class="text-violet">cómo se sabrá si lo resolvió</span>
+      </h1>
+      <p class="text-[14.5px] text-ink-200 leading-relaxed mb-3">
+        El resto de esta documentación describe <em>qué</em> hace el sistema. Esta página responde lo anterior:
+        qué situación lo motivó, por qué valía la pena construirlo en vez de contratarlo, y con qué medida se
+        va a juzgar. Cada objetivo específico declara los requisitos que lo realizan, y una prueba cruza esos
+        identificadores contra la documentación: si un requisito se retira, el objetivo que lo invocaba falla
+        en el pipeline antes de quedarse apuntando al vacío.
+      </p>
+    </div>
+
+    <nav class="mb-12 flex flex-wrap gap-1.5" aria-label="Secciones de esta página">
+      {secciones.map((s) => (
+        <a href={`#${s.id}`} class="px-3 py-1 rounded-full text-[13px] text-ink-200 border border-white/10 hover:bg-white/5 hover:text-ink-50 transition-colors">
+          {s.t}
+        </a>
+      ))}
+    </nav>
+
+    <div class="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-12">
+      {[
+        { v: SINTOMAS.length, l: 'Síntomas', s: 'con su evidencia' },
+        { v: CAUSAS.length, l: 'Causas', s: 'explican los síntomas' },
+        { v: OBJETIVOS_ESPECIFICOS.length, l: 'Objetivos específicos', s: 'con indicador y meta' },
+        { v: totalRequisitos, l: 'Requisitos citados', s: 'verificados contra /docs' },
+      ].map((k) => (
+        <div class="glass rounded-2xl p-4 border border-white/10">
+          <div class="text-2xl font-semibold text-ink-50 tabular-nums">{k.v}</div>
+          <div class="text-[12px] font-mono uppercase tracking-wide text-ink-200 mt-1">{k.l}</div>
+          <div class="text-[12px] text-ink-300 mt-0.5">{k.s}</div>
+        </div>
+      ))}
+    </div>
+
+    {/* ── § 1 El problema ─────────────────────────────────────── */}
+    <h2 id="problema" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Planteamiento del problema</h2>
+    <div class="max-w-3xl mb-6 space-y-4">
+      <p class="text-[14.5px] text-ink-200 leading-relaxed">{PROBLEMA.contexto}</p>
+      <p class="text-[14.5px] text-ink-100 leading-relaxed">{PROBLEMA.nucleo}</p>
+    </div>
+    <div class="max-w-3xl glass rounded-2xl border border-violet/25 p-5 mb-12">
+      <p class="text-[12px] font-mono uppercase tracking-wide text-violet mb-2">Pregunta que orienta el proyecto</p>
+      <p class="text-[15px] text-ink-50 leading-relaxed">{PROBLEMA.pregunta}</p>
+    </div>
+
+    {/* ── § 2 Árbol de problemas ──────────────────────────────── */}
+    <h2 id="arbol" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Síntomas observados y causas que los explican</h2>
+    <p class="max-w-3xl text-[14px] text-ink-200 leading-relaxed mb-6">
+      Cada síntoma es un hecho que se constató antes de construir nada, con lo que costaba dejarlo estar. Las
+      etiquetas al pie de cada uno son las causas que lo explican: ninguna causa está sin síntoma y ningún
+      síntoma sin causa, y eso lo comprueba una prueba, no la lectura.
+    </p>
+
+    <div class="grid gap-3 md:grid-cols-2 mb-8">
+      {SINTOMAS.map((s) => (
+        <div class="rounded-2xl border border-white/10 bg-white/[.025] p-5 hover:border-white/20 transition-colors">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-ember shrink-0" aria-hidden="true"></span>
+            <span class="text-[12px] font-mono uppercase tracking-wide text-ink-300">{s.id}</span>
+          </div>
+          <p class="text-[14px] text-ink-50 leading-relaxed mb-3">{s.enunciado}</p>
+          <dl class="space-y-2 text-[13px] leading-relaxed">
+            <div>
+              <dt class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300">Cómo se constató</dt>
+              <dd class="text-ink-200">{s.evidencia}</dd>
+            </div>
+            <div>
+              <dt class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300">Lo que cuesta</dt>
+              <dd class="text-ink-200">{s.consecuencia}</dd>
+            </div>
+          </dl>
+          <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-white/10">
+            {causaDe(s.id).map((c) => (
+              <a href={`#${c.id}`} class="px-2 py-0.5 rounded-md border border-cyan/25 bg-cyan/5 text-[11.5px] font-mono text-cyan hover:bg-cyan/10 transition-colors">{c.id}</a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div class="grid gap-3 mb-12">
+      {CAUSAS.map((c) => (
+        <div id={c.id} class="scroll-mt-28 rounded-xl border border-white/10 bg-white/[.025] p-4 flex flex-col sm:flex-row sm:items-start gap-3">
+          <span class="shrink-0 inline-flex items-center justify-center px-2 h-6 rounded-md border border-cyan/25 bg-cyan/5 font-mono text-[12px] text-cyan">{c.id}</span>
+          <p class="text-[14px] text-ink-100 leading-relaxed flex-1">{c.enunciado}</p>
+          <div class="shrink-0 flex flex-wrap gap-1">
+            {c.explica.map((s) => (
+              <span class="px-1.5 py-0.5 rounded border border-white/10 text-[11.5px] font-mono text-ink-300">{s}</span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* ── § 3 Delimitación ────────────────────────────────────── */}
+    <h2 id="delimitacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Delimitación del alcance</h2>
+    <div class="grid gap-3 lg:grid-cols-3 mb-12">
+      {PROBLEMA.delimitacion.map((d) => (
+        <div class="glass rounded-2xl border border-white/10 p-5">
+          <div class="text-[12px] font-mono uppercase tracking-wide text-violet mb-3">{d.dimension}</div>
+          <p class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300 mb-1">Comprende</p>
+          <p class="text-[13.5px] text-ink-100 leading-relaxed mb-3">{d.dentro}</p>
+          <p class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300 mb-1">Queda fuera</p>
+          <p class="text-[13.5px] text-ink-200 leading-relaxed">{d.fuera}</p>
+        </div>
+      ))}
+    </div>
+
+    {/* ── § 4 Justificación ───────────────────────────────────── */}
+    <h2 id="justificacion" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Justificación</h2>
+    <div class="grid gap-3 md:grid-cols-2 mb-12">
+      {JUSTIFICACION.map((j) => (
+        <div class="rounded-2xl border border-white/10 bg-white/[.025] p-5 hover:border-white/20 transition-colors">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan shrink-0" aria-hidden="true"></span>
+            <span class="text-[12px] font-mono uppercase tracking-wide text-ink-300">{j.eje}</span>
+          </div>
+          <h3 class="text-[15px] font-medium text-ink-50 mb-2">{j.titulo}</h3>
+          <p class="text-[13.5px] text-ink-200 leading-relaxed">{j.texto}</p>
+        </div>
+      ))}
+    </div>
+
+    {/* ── § 5 Objetivos ───────────────────────────────────────── */}
+    <h2 id="objetivos" class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Objetivo general</h2>
+    <div class="max-w-3xl glass rounded-2xl border border-white/10 p-5 mb-4">
+      <p class="text-[15px] text-ink-50 leading-relaxed">{OBJETIVO_GENERAL.enunciado}</p>
+    </div>
+    <div class="max-w-3xl mb-12">
+      <p class="text-[13px] text-ink-300 mb-2">
+        Las tres condiciones que lo vuelven falsable: si alguna no se sostiene, el objetivo no se cumplió
+        aunque el sistema funcione.
+      </p>
+      <ul class="space-y-2">
+        {OBJETIVO_GENERAL.condiciones.map((c) => (
+          <li class="flex gap-2.5 text-[14px] text-ink-200 leading-relaxed">
+            <span class="mt-[7px] w-1.5 h-1.5 rounded-full bg-violet shrink-0" aria-hidden="true"></span>
+            <span>{c}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <h2 class="scroll-mt-28 text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Objetivos específicos - {OBJETIVOS_ESPECIFICOS.length}</h2>
+    <div class="grid gap-3 mb-12">
+      {OBJETIVOS_ESPECIFICOS.map((o) => (
+        <div class="rounded-2xl border border-white/10 bg-white/[.025] p-5 hover:border-white/20 transition-colors">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="text-[12px] font-mono uppercase tracking-wide text-ink-300">{o.id}</span>
+            <span class={`px-2 py-0.5 rounded-md border text-[11.5px] font-mono ${ESTILO_ESTADO[o.estado]}`}>{o.estado}</span>
+          </div>
+          <p class="text-[14.5px] text-ink-50 leading-relaxed mb-4">{o.enunciado}</p>
+
+          <div class="grid gap-3 sm:grid-cols-3 mb-4">
+            <div>
+              <p class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300 mb-1">Indicador</p>
+              <p class="text-[13px] text-ink-200 leading-relaxed">{o.indicador}</p>
+            </div>
+            <div>
+              <p class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300 mb-1">Meta</p>
+              <p class="text-[13px] text-ink-100 leading-relaxed">{o.meta}</p>
+            </div>
+            <div>
+              <p class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300 mb-1">Cómo se verifica</p>
+              <p class="text-[13px] text-ink-200 leading-relaxed">{o.verificacion}</p>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-white/10">
+            <p class="text-[11.5px] font-mono uppercase tracking-wide text-ink-300 mb-2">Se realiza en</p>
+            <div class="flex flex-wrap gap-1.5">
+              {o.requisitos.map((id) => (
+                <a
+                  href={hrefRequisito(id)}
+                  title={REQUISITOS.get(id)}
+                  class="px-2 py-0.5 rounded-md border border-white/10 bg-white/[.03] text-[11.5px] font-mono text-ink-200 hover:text-cyan hover:border-cyan/30 transition-colors"
+                >
+                  {id}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div class="max-w-3xl rounded-xl border border-white/10 bg-white/[.025] p-5">
+      <p class="text-[13.5px] text-ink-200 leading-relaxed">
+        Los objetivos de esta página son los del <strong class="text-ink-50">sistema</strong>. Los de su puesta
+        en producción (ventana de corte, disponibilidad comprometida, tiempo de reversión) viven aparte, en el
+        plan de implantación, y los de la transferencia a quien lo opera, en el plan de capacitación. Son tres
+        conjuntos distintos y confundirlos es la forma más rápida de declarar cumplido lo que nadie midió.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

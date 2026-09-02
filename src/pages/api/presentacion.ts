@@ -18,6 +18,7 @@ import {
   desplazamientoPedido,
   mover as moverScroll,
   parsearPeticion,
+  situar,
   type Peticion,
 } from '../../lib/presentacion/desplazamiento'
 import { debeArrancar, parsearInicio } from '../../lib/presentacion/cronometro'
@@ -32,6 +33,7 @@ import { parsearEspejo, type Espejo } from '../../lib/presentacion/espejo'
  *   POST { accion: siguiente|anterior } -> mueve el destino    (el mando)
  *   POST { accion: reiniciar-cronometro } -> borra el arranque   (la isla)
  *   POST { accion: subir|bajar }    -> desplaza el iframe del beat (el mando)
+ *   POST { accion: scroll, y: N }   -> deja el iframe del beat EN y (la rueda)
  *   POST { destino: N }             -> salto directo           (el mando)
  *   POST { pos, total, intro, outro, scroll, origen }
  *                                   -> la pantalla publica dónde está de verdad
@@ -206,6 +208,8 @@ export const POST: APIRoute = async ({ request, url }) => {
     scroll?: unknown
     espejo?: unknown
     origen?: unknown
+    /** La posición absoluta de la rueda. Solo con `accion: 'scroll'`. */
+    y?: unknown
   }
 
   try {
@@ -273,19 +277,41 @@ export const POST: APIRoute = async ({ request, url }) => {
     // SERVIDOR sobre la geometría que publicó la pantalla, igual que el
     // destino se acota contra el techo real del mazo: el teléfono solo dice
     // arriba o abajo y no sabe nada de la página que hay dentro del iframe.
-    if (cuerpo.accion === 'subir' || cuerpo.accion === 'bajar') {
+    //
+    // Y la rueda del ratón de `/present-admin`, que a diferencia del pulgar sabe
+    // dónde ha quedado la página y manda la posición entera (§11.5.3). Son dos
+    // escritores de `presentacion:scroll` y aquí se acepta: esa ventana ES un
+    // mando, la ventana de carrera es de milisegundos y el peor caso es un
+    // salto de scroll, no un botón que no hace nada. El acotado de dos
+    // escrituras por segundo va en el cliente: el servidor no debe descartar en
+    // silencio lo que le mandan.
+    if (cuerpo.accion === 'subir' || cuerpo.accion === 'bajar' || cuerpo.accion === 'scroll') {
       const pedido = await leerScroll()
-      const siguiente = moverScroll(pedido, previo, cuerpo.accion === 'bajar' ? 1 : -1, actual?.scroll)
+      const siguiente =
+        cuerpo.accion === 'scroll'
+          ? situar(previo, cuerpo.y, actual?.scroll)
+          : moverScroll(pedido, previo, cuerpo.accion === 'bajar' ? 1 : -1, actual?.scroll)
       // Sin nada que desplazar no se escribe nada. No es un error: la pantalla
       // pudo cambiar de diapositiva entre el toque y su llegada.
-      if (siguiente && siguiente.y !== desplazamientoPedido(pedido, previo)) {
+      const antes = desplazamientoPedido(pedido, previo)
+      if (siguiente && siguiente.y !== antes) {
         await presentStore().set(K_SCROLL, JSON.stringify(siguiente), TTL_SEGUNDOS)
+        // La sala sigue el scroll por el bus como sigue todo lo demás. Sin este
+        // anuncio se enteraría igual, pero por el rebote: la pantalla ve moverse
+        // la geometría y publica un latido. Eso es un viaje de ida y vuelta de
+        // más y deja al seguidor por detrás del propio proyector.
+        const espejo = await leerEspejo(url.origin)
+        void anunciar({
+          destino: previo,
+          scroll: siguiente.y,
+          espejo: espejo && espejo.pos === previo ? espejo : null,
+        })
       }
       return json(200, {
         destino: previo,
         actual,
         viva: esFresco(actual, Date.now()),
-        scroll: siguiente ? siguiente.y : desplazamientoPedido(pedido, previo),
+        scroll: siguiente ? siguiente.y : antes,
       })
     }
 

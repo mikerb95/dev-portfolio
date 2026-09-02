@@ -178,6 +178,48 @@ describe('el espejo', () => {
   })
 })
 
+describe('el scroll absoluto de la rueda', () => {
+  /** La pantalla publica una página el triple de alta que la ventanilla. */
+  const conGeometria = () => post(reporte({ scroll: { y: 0, max: 2400, alto: 900 } }))
+
+  it('escribe la posición entera, sin acumular sobre lo pedido', async () => {
+    await conGeometria()
+    const { cuerpo } = await post({ accion: 'scroll', y: 742 })
+    expect(cuerpo.scroll).toBe(742)
+    expect((await get('?q=destino')).cuerpo.scroll).toBe(742)
+  })
+
+  it('convive con los saltos del pulgar sobre la misma clave', async () => {
+    // Dos escritores de `presentacion:scroll` (§11.5.3). Lo que se comprueba es
+    // que el segundo parte de lo que dejó el primero y no de cero.
+    await conGeometria()
+    await post({ accion: 'scroll', y: 900 })
+    const { cuerpo } = await post({ accion: 'bajar' })
+    expect(cuerpo.scroll).toBe(1200)
+  })
+
+  it('acota contra la geometría publicada, no contra lo que diga el cliente', async () => {
+    await conGeometria()
+    expect((await post({ accion: 'scroll', y: 99_999 })).cuerpo.scroll).toBe(2400)
+  })
+
+  it('sin geometría no escribe nada, y responde con lo que hay', async () => {
+    // La diapositiva no trae página viva (o es de otro origen, que es el caso
+    // de local). No es un 400: la rueda pudo girar mientras la pantalla
+    // cambiaba de beat.
+    await post(reporte())
+    const { estado, cuerpo } = await post({ accion: 'scroll', y: 600 })
+    expect(estado).toBe(200)
+    expect(cuerpo.scroll).toBe(0)
+  })
+
+  it('un `y` que no es una posición no ensucia lo ya pedido', async () => {
+    await conGeometria()
+    await post({ accion: 'scroll', y: 600 })
+    expect((await post({ accion: 'scroll', y: 'mucho' })).cuerpo.scroll).toBe(600)
+  })
+})
+
 describe('lo que ya funcionaba sigue funcionando', () => {
   it('el reporte de la pantalla sigue publicando y acotando', async () => {
     await post({ destino: 40 })

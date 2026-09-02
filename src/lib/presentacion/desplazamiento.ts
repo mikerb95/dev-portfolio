@@ -125,3 +125,24 @@ export function mover(
   const y = acotar(desplazamientoPedido(pedido, destino) + delta * paso(geo.alto), 0, geo.max)
   return { pos: destino, y }
 }
+
+/**
+ * "La rueda dejó la página en `y`". Es la vía de `/present-admin`, que a
+ * diferencia del pulgar sí sabe dónde ha quedado la página: no acumula un paso,
+ * dice la posición entera.
+ *
+ * Acota contra la MISMA geometría publicada que `mover`, y por el mismo motivo:
+ * el número llega de un navegador y el techo lo pone el servidor. Lo que no
+ * hace es acotar la FRECUENCIA - eso vive en el cliente (§11.5.3), porque un
+ * servidor que descarta en silencio lo que le mandan deja la sala en una
+ * posición que nadie puede explicar mirando el estado.
+ *
+ * Devuelve `null` cuando no hay nada que desplazar o cuando el número no es una
+ * posición posible, igual que `mover`: la rueda pudo girar justo mientras la
+ * pantalla cambiaba de diapositiva.
+ */
+export function situar(destino: number, y: unknown, geo: Geometria | undefined): Peticion | null {
+  if (!hayQueDesplazar(geo)) return null
+  if (!entero(y) || y < 0) return null
+  return { pos: destino, y: acotar(y, 0, geo.max) }
+}

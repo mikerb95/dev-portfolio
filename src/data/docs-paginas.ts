@@ -20,6 +20,7 @@ export interface DocsPagina {
 }
 
 export const DOCS_PAGINAS: DocsPagina[] = [
+  { slug: 'planteamiento', label: 'Planteamiento', indexable: true },
   { slug: 'requerimientos-funcionales', label: 'Req. funcionales', indexable: true },
   { slug: 'requerimientos-no-funcionales', label: 'Req. no funcionales', indexable: true },
   { slug: 'roles', label: 'Roles', indexable: true },

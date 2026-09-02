@@ -16,6 +16,7 @@ import { COMPONENTES } from '../../data/componentes'
 import { REDES } from '../../data/red'
 import { CONCEPTOS as CONCEPTOS_DOCKER, ANATOMIA as ANATOMIA_DOCKER, PREGUNTAS as PREGUNTAS_DOCKER } from '../../data/docker'
 import { RACI, NIVELES_AUTORIDAD } from '../../data/gobernanza'
+import { OBJETIVOS_ESPECIFICOS, SINTOMAS } from '../../data/planteamiento'
 
 const rfTotal = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const rfImpl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
@@ -34,6 +35,7 @@ const stack = [
 ]
 
 const subpaginas = [
+  { href: '/docs/planteamiento', titulo: 'Planteamiento, justificación y objetivos', desc: `El problema en ${SINTOMAS.length} síntomas con su evidencia, la justificación y los ${OBJETIVOS_ESPECIFICOS.length} objetivos específicos con su indicador y su meta.` },
   { href: '/docs/requerimientos-funcionales', titulo: 'Requerimientos funcionales', desc: `${rfTotal} requerimientos en 7 módulos (${rfImpl} implementados).` },
   { href: '/docs/requerimientos-no-funcionales', titulo: 'Requerimientos no funcionales', desc: `${rnfTotal} requerimientos por categoría ISO/IEC 25010.` },
   { href: '/docs/roles', titulo: 'Roles y niveles de autoridad', desc: `Los ${NIVELES_AUTORIDAD.length} niveles de decisión: qué aprueba cada uno, qué no puede hacer aunque tenga el acceso, y dónde vive esa frontera en el código.` },

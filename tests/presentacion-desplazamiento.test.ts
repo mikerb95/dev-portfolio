@@ -8,6 +8,7 @@ import {
   parsearGeometria,
   parsearPeticion,
   paso,
+  situar,
   type Geometria,
   type Peticion,
 } from '../src/lib/presentacion/desplazamiento'
@@ -170,5 +171,37 @@ describe('mover', () => {
     expect(mover(null, 14, 1, geo(0, 900))).toBeNull()
     // Y con un recorrido de puro redondeo, que es el de la demo del portal.
     expect(mover(null, 14, 1, geo(10, 910))).toBeNull()
+  })
+})
+
+describe('situar', () => {
+  it('deja la página donde la rueda la dejó, sin acumular nada', () => {
+    // La diferencia con `mover`: aquí el cliente SABE dónde quedó la página, así
+    // que manda la posición entera y lo pedido anterior no pinta nada.
+    expect(situar(14, 742, geo())).toEqual({ pos: 14, y: 742 })
+  })
+
+  it('se acota contra la geometría publicada, no contra lo que diga el cliente', () => {
+    expect(situar(14, 99_999, geo())).toEqual({ pos: 14, y: 2400 })
+  })
+
+  it('sella la diapositiva a la que pertenece', () => {
+    // Igual que `mover`: cambiar de beat devuelve el iframe arriba solo, sin
+    // escritura de limpieza.
+    expect(situar(16, 500, geo())?.pos).toBe(16)
+  })
+
+  it('descarta lo que no es una posición posible', () => {
+    // Nada de esto es un error del sistema: es un cuerpo mal formado, y la
+    // respuesta honesta es no escribir en vez de guardar un NaN.
+    expect(situar(14, -1, geo())).toBeNull()
+    expect(situar(14, 12.5, geo())).toBeNull()
+    expect(situar(14, '600', geo())).toBeNull()
+    expect(situar(14, undefined, geo())).toBeNull()
+  })
+
+  it('no escribe nada cuando no hay qué desplazar', () => {
+    expect(situar(14, 600, undefined)).toBeNull()
+    expect(situar(14, 600, geo(10, 910))).toBeNull()
   })
 })
