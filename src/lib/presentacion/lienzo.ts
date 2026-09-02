@@ -28,8 +28,12 @@
 /** Lo que pinta el contador del bundle, que solo sabe contar beats. */
 export type Beat = { pos: number; total: number }
 
-/** Dónde está la página de dentro de un beat y cuánto queda por bajar. */
-export type Geometria = { y: number; max: number; alto: number }
+// La geometría se define UNA vez, y es en `desplazamiento.ts` porque es quien
+// la usa para calcular el paso en el servidor. Aquí solo se produce. Dos
+// definiciones estructuralmente iguales compilarían igual y se separarían el
+// día que una de las dos ganara un campo.
+export type { Geometria } from './desplazamiento'
+import type { Geometria } from './desplazamiento'
 
 /** Un rectángulo en coordenadas del escenario. */
 export type Rect = { izq: number; arr: number; der: number; aba: number }

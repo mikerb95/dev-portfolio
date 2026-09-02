@@ -93,6 +93,21 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         type Punto,
       } from '../lib/presentacion/mapa'
       import type { Geometria } from '../lib/presentacion/desplazamiento'
+      // El descubrimiento vive fuera porque `/present-admin` necesita el mismo,
+      // y dos copias de estas reglas divergirían sin que nadie lo notara hasta
+      // tener una ventana en la diapositiva de al lado. Las decisiones con
+      // filo (quién recorta a quién, el orden de las zonas) están probadas en
+      // `tests/presentacion-lienzo.test.ts`.
+      import {
+        descubrirMazo,
+        estiloEn,
+        geometriaDe,
+        iframeEnJuego,
+        leerBeat as leerBeatDe,
+        mismaGeometria as mismaGeo,
+        RUIDO_PX,
+        type Capa,
+      } from '../lib/presentacion/lienzo'
 
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
