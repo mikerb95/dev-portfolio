@@ -222,6 +222,68 @@ Tres cosas que conviene saber el día de la charla:
 Si el teléfono deja de responder, **seguir con el teclado y no perder tiempo
 depurando**: son dos caminos independientes contra el mismo estado.
 
+## 3 bis. El mazo de `/final.html`: las tres ventanas y quién es cada una
+
+Esto es **otro sistema** y conviene no mezclarlo con lo de arriba: `/sustentacion`
+es el escenario dibujado en canvas con PINes y beats; `/final.html` es el mazo
+exportado, que se monta en un iframe y se gobierna desde fuera. Comparten el día
+y nada más - ni sesión, ni PIN, ni código.
+
+Desde la sección 11 del plan hay **tres ventanas con tres papeles distintos**, y
+abrir la que no toca es la forma de romperlo:
+
+| Ventana | Dónde | Cuántas | Papel |
+|---|---|---|---|
+| `/present-admin` | portátil del ponente | **1** | conduce: descubre el mazo, lo toca y publica dónde va |
+| `/remote` | celular del ponente | 1 | manda: pasa diapositivas y enseña el guion |
+| `/presentacion` | equipo de cada asistente | N | mira: obedece y no dice nada |
+
+Ninguna tiene puerta: no hay login que caduque el día de la charla. El estado
+completo del sistema es un número, y lo peor que puede hacer quien encuentre la
+URL es pasar una diapositiva de algo que ya está proyectado en la pared.
+
+### El montaje, en orden
+
+1. **`/present-admin` en el portátil**, a pantalla completa, y esperar a que el
+   mazo monte (el contador `NN / MM` abajo). Es la única ventana que publica la
+   posición real: hasta que esté abierta, el mando no sabe cuántas diapositivas
+   hay.
+2. **`/remote` en el celular.** Sin PIN y sin sesión. Ahí van el guion, la
+   rejilla de saltos y los botones ↑/↓ para recorrer las páginas vivas.
+3. **`/presentacion` en los equipos de la sala**, si se usa. Solo mira.
+
+**Nunca dos ventanas conduciendo a la vez.** `/present-admin` y la vieja
+`/presentacion` escritora serían dos escritores de la misma clave, y el síntoma
+es una presentación que va y viene sola.
+
+### La regla del login de la demo, que no es un detalle
+
+Tres beats del mazo no proyectan una lámina: enmarcan una página viva (la demo
+del portal, `/status`, `/engineering`). En el beat de la demo se entra
+**siempre por el enlace de demo pública**, nunca con credenciales reales.
+
+El motivo: lo que viaja a la sala es la **URL**, no la sesión. Una sesión de
+verdad sería intransferible y cada asistente se quedaría mirando el formulario
+de entrada mientras en la pared se enseña el panel. La demo pública es un `GET`
+sin login que siempre entra como el mismo usuario de mentira contra la base de
+demo, así que quien abra esa dirección ve exactamente lo mismo, sea el ponente
+o cualquiera de la sala.
+
+### Tres cosas que sorprenden si no se saben antes
+
+- **Con el foco dentro de la demo, las flechas no pasan de diapositiva.** Es
+  deliberado: el teclado del mazo está tapado para que una flecha no mueva un
+  beat por fuera del servidor y deje a la sala atrás. Se sale clicando en la
+  lámina, fuera de la ventanilla, o se pasa desde el móvil.
+- **Un clic en la lámina no hace nada**, y eso es la señal de que está bien
+  montado: el bundle avanza un beat con cualquier clic en el escenario, y por
+  eso solo la página viva recibe el ratón.
+- **El cronómetro arranca solo**, con el primer movimiento que saca la
+  presentación de la primera diapositiva. No hay botón de empezar. Un toque en
+  la isla y un segundo toque para confirmar lo reinician - hace falta de
+  verdad: el arranque vive seis horas, así que el de un ensayo de la mañana
+  llegaría vivo a la tarde y el reloj empezaría en `04:12`.
+
 ## 4. Cómo cambiar a modo respaldo si la red falla
 
 Hay dos redes distintas de las que depender, y cada una tiene su propio plan:
@@ -293,6 +355,14 @@ Y a mano:
 - [ ] Publicar un beat de prueba y confirmar que llega al seguidor
       (`SUSTENTACION_COOKIE=… npm run sustentacion:check`, o a mano desde el
       canvas).
+- [ ] **Mazo de `/final.html`:** `/present-admin` abierta en el portátil y el
+      contador del mazo visible; `/remote` en el celular moviendo las tres
+      pantallas; un clic en la lámina que NO avanza nada; y el beat de la demo
+      entrando por el enlace de demo pública, no con credenciales reales.
+- [ ] Si se usa la sala como seguidores: `/presentacion` abierta en un teléfono
+      prestado, bloquearlo dos minutos, desbloquearlo y confirmar que se pone al
+      día **sin arrastrar a nadie**. Es la prueba que justifica el reparto de
+      papeles; si no se hace, no se ha verificado nada.
 - [ ] Si la BD está caída: confirmar que el banner de "Demo pública" aparece
       en `/portal` y que las tres facturas (pagada, pendiente, vencida) se
       ven. Si no aparecen, algo rompió el respaldo, entrar con capturas de
@@ -300,6 +370,12 @@ Y a mano:
 
 ## Referencias
 
+- `docs/plan-control-final.md`: el control remoto de `/final.html` entero. La
+  §11 es el reparto en tres ventanas y la §12 el orden de entrega. **No
+  confundir con `src/lib/sustentacion/`**, que es el otro sistema.
+- `src/pages/present-admin.astro`: la ventana que conduce, con el porqué de cada
+  una de sus cinco piezas propias (interacción por dentro, teclado tapado en
+  fase de captura, rueda, espejo de URL y la isla del cronómetro).
 - `docs/runbook-cuota-turso.md`: por qué se agota la cuota y el plan general
   de "aguantar hasta el corte del ciclo" (no exclusivo de la sustentación).
 - `src/lib/portal/respaldo.ts`: el módulo de respaldo del portal, con la

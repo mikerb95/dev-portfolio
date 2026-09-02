@@ -1,0 +1,714 @@
+---
+// LA PANTALLA DEL SISTEMA, y el sitio desde el que se conduce.
+//
+// Hasta la sección 11 había una sola ventana, `/presentacion`, haciendo dos
+// papeles: conducir el mazo y enseñarlo. Esta los separa. Aquí se descubre el
+// mazo, se publica `actual`, se obedece `destino` y -lo que ninguna otra
+// ventana puede hacer- se TOCA la página viva que enmarca la diapositiva:
+// entrar a la demo del portal, navegar el panel, recorrer `/status`.
+//
+// Por qué la inversión (§11.1): con público, `/presentacion` deja de poder ser
+// el escritor de `actual`. Un asistente bloquea el teléfono, el navegador
+// congela sus temporizadores, lo desbloquea, su copia lee una posición
+// atrasada y la publica como `ajena` - y el servidor la adopta, arrastrando a
+// la sala entera hacia atrás. Treinta espectadores serían treinta copias con
+// derecho a voto. La corrección es quitarles la voz, y el papel de pantalla lo
+// recoge esta ventana, que ya lo tiene todo para ejercerlo.
+//
+// Lo que la separa de `/presentacion`, y es todo lo que hay de nuevo aquí:
+//
+//  · `pointer-events` POR DENTRO (§11.3). Quitarle el `pointer-events:none` al
+//    iframe por fuera devolvería un fallo entero: el bundle escucha
+//    `onStageClick` y cualquier clic en el escenario avanza un beat. Se afina
+//    desde dentro: el `body` del mazo inerte y solo el iframe vivo receptivo.
+//  · El TECLADO en fase de captura (§11.4), que es el reverso exacto de
+//    `disparar()`: aquella inyecta el evento con el constructor del iframe,
+//    esta lo intercepta antes de que el bundle lo vea. Sin ello, una flecha con
+//    el foco dentro del mazo movería un beat sin pasar por el servidor y la
+//    sala se quedaría atrás.
+//  · La RUEDA del ratón, que escribe donde escribe el pulgar (§11.5.3).
+//  · El ESPEJO de la URL (§11.5.2), para que la sala vea la página que se está
+//    tocando y no el formulario de entrada.
+//  · La ISLA del cronómetro (§11.6), que solo ve el ponente.
+//
+// SIN PUERTA, a propósito y con la misma regla que el resto del sistema: el día
+// de la charla, una sesión de GitHub caducada dejaría sin mando. Lo que se
+// enmarca aquí es la demo pública del portal, `/status` y `/engineering`: tres
+// cosas que ya son públicas y con su propio rate limit. El guion en vez de la
+// barra tampoco es cosmético: deja la ruta fuera de `startsWith('/present/')` y
+// de `isAdmin` por construcción, sin excepciones que añadir al middleware.
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Conducir la presentación</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #05070a;
+      }
+      iframe {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        /* Al revés que en `/presentacion`: aquí el ratón SÍ entra. Lo que
+           decide hasta dónde llega es el estilo que se escribe DENTRO del
+           bundle, no este. Ver `afirmarInteraccion`. */
+      }
+      /* La isla flota sobre el lienzo, y el lienzo entero es una superficie que
+         hay que poder clicar: si esta franja se comiera los clics, se llevaría
+         por delante justo la barra de navegación del portal durante la demo.
+         De ahí el `none` en el contenedor y el `auto` solo en el pastillero. */
+      #isla {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: center;
+        padding: 0.5rem;
+        pointer-events: none;
+      }
+      #crono {
+        pointer-events: auto;
+        border: 1px solid rgba(244, 246, 248, 0.18);
+        border-radius: 999px;
+        background: rgba(5, 7, 10, 0.55);
+        color: rgba(244, 246, 248, 0.75);
+        font: 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        /* Sin esto las cifras bailan de ancho al pasar de 9 a 10 y la isla
+           tiembla en el rabillo del ojo durante toda la charla. */
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.04em;
+        padding: 0.35rem 0.75rem;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: opacity 0.2s linear;
+        opacity: 0.35;
+      }
+      #crono:hover,
+      #crono:focus-visible {
+        opacity: 1;
+      }
+      #crono[data-confirmando='si'] {
+        opacity: 1;
+        color: #ffd9d9;
+        border-color: rgba(255, 140, 140, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <iframe id="lienzo" src="/final.html" title="Presentación"></iframe>
+
+    <div id="isla">
+      <button id="crono" type="button" title="Tiempo de la sustentación">--:--</button>
+    </div>
+
+    <script>
+      import {
+        aGlobal,
+        aPunto,
+        bundleAunLaTiene,
+        paso,
+        puntoDesdeCapas,
+        totalGlobal,
+        type Accion,
+        type Mazo,
+        type Punto,
+      } from '../lib/presentacion/mapa'
+      import type { Geometria } from '../lib/presentacion/desplazamiento'
+      // Mismo descubrimiento que `/presentacion`, y por eso vive fuera: dos
+      // copias de estas reglas divergirían sin que nadie lo notara hasta tener
+      // una ventana en la diapositiva de al lado.
+      import {
+        descubrirMazo,
+        estiloEn,
+        geometriaDe,
+        iframeEnJuego,
+        leerBeat as leerBeatDe,
+        mismaGeometria as mismaGeo,
+        urlDe,
+        RUIDO_PX,
+        type Capa,
+      } from '../lib/presentacion/lienzo'
+      import { siguienteEspejo, type Espejo } from '../lib/presentacion/espejo'
+      import { desfase, formatear, transcurrido } from '../lib/presentacion/cronometro'
+
+      const iframe = document.getElementById('lienzo') as HTMLIFrameElement
+
+      type Actual = {
+        pos: number
+        total: number
+        intro: number
+        outro: number
+        scroll?: Geometria
+      }
+      type Beat = { pos: number; total: number }
+      type Origen = 'inicial' | 'latido' | 'mando' | 'ajena'
+
+      /** Cada cuánto se pregunta el destino. */
+      const SONDEO_MS = 500
+      /** Cada cuánto se republica la posición aunque no haya cambiado. */
+      const LATIDO_MS = 5_000
+      /** Lo que tarda un paso en asentarse. */
+      const PASO_MS = 350
+      /** Lo que se le da a un `scrollTo` suave antes de volver a empujar. */
+      const CIERRE_SCROLL_MS = 400
+      /**
+       * El acotado de la rueda (§11.5.3). Va en el CLIENTE y no en el servidor:
+       * un gesto de rueda son cincuenta eventos, y el servidor no debe
+       * descartar en silencio lo que le mandan.
+       */
+      const ESCRITURA_RUEDA_MS = 500
+      /**
+       * Cuánto se deja de obedecer al servidor después del último giro. La
+       * inercia de un trackpad sigue llegando casi un segundo después de
+       * levantar los dedos: sin esta ventana, el desplazamiento pedido de antes
+       * del gesto tiraría de la página hacia atrás mientras el ponente la
+       * recorre.
+       */
+      const INERCIA_RUEDA_MS = 900
+      /** Cuánto espera el reinicio del cronómetro al segundo toque. */
+      const CONFIRMA_MS = 3_000
+      /** Cuánto se queda un dígito esperando a su compañero antes de saltar. */
+      const DIGITO_MS = 900
+
+      /* ------------------------------------------------------------------ *
+       * Descubrimiento del mazo (idéntico a `/presentacion`: mismas reglas,
+       * mismo módulo, misma razón de que nada del bundle esté cableado aquí).
+       * ------------------------------------------------------------------ */
+
+      let mazo: Mazo | null = null
+      let capas: { intro: Capa[]; outro: Capa[] } = { intro: [], outro: [] }
+      let puestas = { intro: [] as boolean[], outro: [] as boolean[] }
+      let pintado = { intro: [] as boolean[], outro: [] as boolean[] }
+      let consumidas = 0
+      let contador: HTMLElement | null = null
+
+      const estilo = estiloEn(iframe)
+
+      const leerBeat = (): Beat | null => leerBeatDe(iframe.contentDocument, contador)
+
+      function descubrir(): boolean {
+        const hallazgo = descubrirMazo(iframe)
+        if (!hallazgo) return false
+        contador = hallazgo.contador
+        capas = { intro: hallazgo.intro, outro: hallazgo.outro }
+        puestas = {
+          intro: hallazgo.intro.map(() => true),
+          outro: hallazgo.outro.map(() => false),
+        }
+        pintado = { intro: [...puestas.intro], outro: [...puestas.outro] }
+        consumidas = 0
+        mazo = { intro: hallazgo.intro.length, beats: hallazgo.beats, outro: hallazgo.outro.length }
+        return true
+      }
+
+      iframe.addEventListener('load', () => {
+        mazo = null
+        contador = null
+        ultimo = null
+        // El espejo NO se borra: la clave del servidor sobrevive a esta recarga
+        // y su `seq` tiene que seguir subiendo, o el mensaje siguiente llegaría
+        // empatado y los seguidores lo descartarían por viejo.
+      })
+
+      /* ------------------------------------------------------------------ *
+       * Movimiento del mazo
+       * ------------------------------------------------------------------ */
+
+      function disparar(tecla: string) {
+        const w = iframe.contentWindow
+        const d = iframe.contentDocument
+        if (!w || !d) return
+        try {
+          // Constructor DEL IFRAME: con el de esta página, el listener del
+          // bundle no se entera y la diapositiva no se mueve.
+          const Ctor =
+            (w as unknown as { KeyboardEvent?: typeof KeyboardEvent }).KeyboardEvent ??
+            KeyboardEvent
+          d.dispatchEvent(new Ctor('keydown', { key: tecla, bubbles: true, cancelable: true }))
+        } catch {
+          // Iframe recargándose: el próximo sondeo reintenta.
+        }
+      }
+
+      function pintarCapa(zona: 'intro' | 'outro', idx: number, visible: boolean) {
+        const c = capas[zona][idx]
+        if (!c) return
+        pintado[zona][idx] = visible
+        const e = c.el
+        e.style.transition = 'opacity .4s linear'
+        e.style.pointerEvents = 'none'
+        if (visible) {
+          e.style.visibility = 'visible'
+          e.style.opacity = '1'
+        } else {
+          e.style.opacity = '0'
+          setTimeout(() => {
+            if (!puestas[zona][idx]) e.style.visibility = 'hidden'
+          }, 450)
+        }
+      }
+
+      function afirmarCapas() {
+        for (const zona of ['intro', 'outro'] as const) {
+          capas[zona].forEach((c, k) => {
+            const quiere = puestas[zona][k]
+            const roto = quiere && estilo(c.el).visibility === 'hidden'
+            if (quiere !== pintado[zona][k] || roto) pintarCapa(zona, k, quiere)
+          })
+        }
+      }
+
+      function aplicar(acc: Accion) {
+        if (acc.tipo === 'tecla') {
+          disparar(acc.tecla)
+          return
+        }
+        if (!capas[acc.zona][acc.idx]) return
+        if (acc.zona === 'intro' && !acc.visible && bundleAunLaTiene(acc.idx, consumidas)) {
+          disparar('ArrowRight')
+          consumidas = acc.idx + 1
+        }
+        puestas[acc.zona][acc.idx] = acc.visible
+        pintarCapa(acc.zona, acc.idx, acc.visible)
+      }
+
+      function posicionDe(m: Mazo, p: Punto, geo?: Geometria | null): Actual {
+        return {
+          pos: aGlobal(m, p),
+          total: totalGlobal(m),
+          intro: m.intro,
+          outro: m.outro,
+          ...(geo ? { scroll: geo } : {}),
+        }
+      }
+
+      function puntoActual(): Punto | null {
+        const beat = leerBeat()
+        if (!mazo || !beat) return null
+        mazo = { ...mazo, beats: beat.total }
+        return puntoDesdeCapas(mazo, { ...puestas, beat: beat.pos })
+      }
+
+      /* ------------------------------------------------------------------ *
+       * §11.3. La interacción, por dentro
+       *
+       * Quitarle el `pointer-events:none` al iframe por fuera devuelve un fallo
+       * entero: el bundle escucha `onStageClick` y CUALQUIER clic en el
+       * escenario avanza un beat. Lo que se quiere es más fino, así que se
+       * escribe estilo dentro del documento del mazo (todo es mismo origen):
+       * el `body` inerte y solo el iframe vivo receptivo. Un descendiente puede
+       * volver a habilitarlos, que es justo lo que hace que esto funcione.
+       *
+       * Se re-afirma en cada sondeo por la misma razón que `afirmarCapas`: el
+       * bundle monta y desmonta esos iframes al cambiar de beat.
+       *
+       * El bundle escala el iframe con `transform`, y el hit-testing del
+       * navegador atraviesa la transformación: el clic cae donde se ve, sin
+       * corregir coordenadas.
+       * ------------------------------------------------------------------ */
+
+      function afirmarInteraccion(dentro: HTMLIFrameElement | null) {
+        try {
+          const b = iframe.contentDocument?.body
+          if (!b) return
+          if (b.style.pointerEvents !== 'none') b.style.pointerEvents = 'none'
+          if (dentro && dentro.style.pointerEvents !== 'auto') dentro.style.pointerEvents = 'auto'
+        } catch {
+          // Iframe recargándose: el próximo sondeo lo vuelve a afirmar.
+        }
+      }
+
+      /* ------------------------------------------------------------------ *
+       * §11.4. El teclado: quién se queda cada tecla
+       * ------------------------------------------------------------------ */
+
+      /**
+       * Le tapa el teclado al bundle. Es el reverso exacto de `disparar()`:
+       * aquella inyecta el evento con el constructor del iframe, esta lo
+       * intercepta en fase de CAPTURA -antes de que el listener de burbuja del
+       * bundle lo vea-, y el discriminador es `isTrusted`.
+       *
+       * Sin esto, un clic dentro del mazo deja el foco ahí y la flecha
+       * siguiente movería un beat POR FUERA del servidor: la sala se quedaría
+       * atrás y el mando enseñaría un número que no es.
+       */
+      function taparTeclado() {
+        try {
+          const d = iframe.contentDocument as
+            | (Document & { __tecladoTapado?: boolean })
+            | null
+          if (!d || d.__tecladoTapado) return
+          d.__tecladoTapado = true
+          d.addEventListener(
+            'keydown',
+            (e) => {
+              // Las sintéticas -las que dispara la reconciliación- sí pasan: son
+              // la única forma que tiene esta página de mover el mazo.
+              if (!e.isTrusted) return
+              e.stopPropagation()
+              e.preventDefault()
+            },
+            true
+          )
+        } catch {
+          // Otro origen o iframe a medio cargar: se reintenta en el sondeo.
+        }
+      }
+
+      /** Un `POST` al mando. Devuelve el cuerpo, o `null` si no hubo red. */
+      async function mandar(cuerpo: Record<string, unknown>): Promise<unknown> {
+        try {
+          const res = await fetch('/api/presentacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cuerpo),
+          })
+          return res.ok ? await res.json() : null
+        } catch {
+          // Sin red: el sondeo siguiente reconcilia con lo que haya.
+          return null
+        }
+      }
+
+      /**
+       * El teclado de ESTA página no mueve nada por su cuenta: hace el mismo
+       * `POST` que el pulgar y deja que la reconciliación haga el resto. Así
+       * hay un solo camino por el que se mueve la presentación, y la sala se
+       * entera de todo lo que pasa aquí.
+       */
+      let digitos = ''
+      let digitoTimer: ReturnType<typeof setTimeout> | null = null
+
+      function saltarADigitos() {
+        const n = Number(digitos)
+        digitos = ''
+        if (Number.isInteger(n) && n >= 1) void mandar({ destino: n })
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.metaKey || e.ctrlKey || e.altKey) return
+        const k = e.key
+
+        if (/^\d$/.test(k)) {
+          // Dos dígitos caben en el mazo entero, así que se espera un poco por
+          // el compañero antes de saltar. Con el segundo no se espera nada.
+          e.preventDefault()
+          digitos += k
+          if (digitoTimer) clearTimeout(digitoTimer)
+          if (digitos.length >= 2) saltarADigitos()
+          else digitoTimer = setTimeout(saltarADigitos, DIGITO_MS)
+          return
+        }
+
+        const adelante = k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === ' '
+        const atras = k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp'
+        if (adelante || atras) {
+          // La barra espaciadora desplazaría la página si se la deja pasar.
+          e.preventDefault()
+          void mandar({ accion: adelante ? 'siguiente' : 'anterior' })
+          return
+        }
+        if (k === 'Home') {
+          e.preventDefault()
+          void mandar({ destino: 1 })
+        } else if (k === 'End' && mazo) {
+          e.preventDefault()
+          void mandar({ destino: totalGlobal(mazo) })
+        }
+      })
+
+      /* ------------------------------------------------------------------ *
+       * §11.5.3. La rueda escribe donde escribe el pulgar
+       *
+       * Si la rueda desplazara el iframe sin escribirlo pasarían dos cosas
+       * malas: la sala no seguiría, y un "bajar" posterior desde el celular
+       * daría un salto, porque el servidor cree que la página sigue arriba.
+       * ------------------------------------------------------------------ */
+
+      /** Hasta cuándo NO se obedece al servidor, por la inercia del gesto. */
+      let ruedaHasta = 0
+      let ultimaEscrituraRueda = 0
+      let ruedaPendiente: ReturnType<typeof setTimeout> | null = null
+      let ultimoYEnviado: number | null = null
+
+      async function publicarRueda() {
+        const geo = geometriaDe(iframeEnJuego(iframe))
+        if (!geo) return
+        ultimaEscrituraRueda = Date.now()
+        if (geo.y === ultimoYEnviado) return
+        ultimoYEnviado = geo.y
+        // El servidor acota contra la geometría que esta misma ventana publicó,
+        // igual que hace con los saltos del pulgar.
+        await mandar({ accion: 'scroll', y: geo.y })
+      }
+
+      function alGirarRueda() {
+        ruedaHasta = Date.now() + INERCIA_RUEDA_MS
+        if (ruedaPendiente) return
+        const espera = Math.max(0, ESCRITURA_RUEDA_MS - (Date.now() - ultimaEscrituraRueda))
+        ruedaPendiente = setTimeout(() => {
+          ruedaPendiente = null
+          void publicarRueda()
+        }, espera)
+      }
+
+      /**
+       * El `wheel` nace DENTRO del documento de la página viva y no sube hasta
+       * aquí, así que hay que engancharlo ahí. Se marca el documento para no
+       * apilar un listener por sondeo, y la marca se va sola con él cuando el
+       * bundle desmonta el iframe al cambiar de beat.
+       */
+      function engancharRueda(dentro: HTMLIFrameElement | null) {
+        if (!dentro) return
+        try {
+          const d = dentro.contentDocument as (Document & { __ruedaEnganchada?: boolean }) | null
+          if (!d || d.__ruedaEnganchada) return
+          d.__ruedaEnganchada = true
+          d.addEventListener('wheel', alGirarRueda, { passive: true })
+        } catch {
+          // Otro origen (que es lo que pasa en local): no hay rueda que seguir.
+        }
+      }
+
+      /* ------------------------------------------------------------------ *
+       * El desplazamiento que pide el mando
+       * ------------------------------------------------------------------ */
+
+      let empujadoEn = 0
+
+      function desplazar(f: HTMLIFrameElement, geo: Geometria, meta: number) {
+        const y = Math.min(Math.max(Math.round(meta), 0), geo.max)
+        if (Math.abs(y - geo.y) < RUIDO_PX) return
+        if (Date.now() - empujadoEn < CIERRE_SCROLL_MS) return
+        empujadoEn = Date.now()
+        try {
+          f.contentWindow?.scrollTo({ top: y, behavior: 'smooth' })
+        } catch {
+          // Iframe recargándose o de otro origen: el próximo ciclo reintenta.
+        }
+      }
+
+      /* ------------------------------------------------------------------ *
+       * §11.6. La isla del cronómetro
+       * ------------------------------------------------------------------ */
+
+      const crono = document.getElementById('crono') as HTMLButtonElement
+      /** Arranque en el reloj DEL SERVIDOR, `null` mientras no haya arrancado. */
+      let inicioServidor: number | null = null
+      /** Cuánto adelanta el reloj de este portátil respecto al del servidor. */
+      let desfaseMs = 0
+      let confirmandoHasta = 0
+
+      function pintarCrono() {
+        if (Date.now() > confirmandoHasta && crono.dataset.confirmando === 'si') {
+          delete crono.dataset.confirmando
+        }
+        if (crono.dataset.confirmando === 'si') return
+        crono.textContent = formatear(transcurrido(inicioServidor, Date.now(), desfaseMs))
+      }
+
+      crono.addEventListener('click', () => {
+        // Confirmación de dos toques: esta es la única cosa clicable que hay
+        // sobre el lienzo, y un clic accidental no puede borrar el tiempo.
+        if (Date.now() < confirmandoHasta) {
+          confirmandoHasta = 0
+          delete crono.dataset.confirmando
+          inicioServidor = null
+          void mandar({ accion: 'reiniciar-cronometro' })
+          return
+        }
+        confirmandoHasta = Date.now() + CONFIRMA_MS
+        crono.dataset.confirmando = 'si'
+        crono.textContent = '¿reiniciar?'
+      })
+
+      // Tick propio de un segundo: la cuenta no depende del sondeo, así que si
+      // Upstash se cae a mitad de charla el reloj sigue.
+      setInterval(pintarCrono, 1_000)
+      pintarCrono()
+
+      /* ------------------------------------------------------------------ *
+       * Publicación y reconciliación
+       * ------------------------------------------------------------------ */
+
+      let ultimo: Actual | null = null
+      let ultimoReporteEn = 0
+      /** El último espejo publicado, que es de donde sale el `seq` siguiente. */
+      let espejo: Espejo | null = null
+
+      /**
+       * Publica la posición real, ya en índice global. Es lo único que escribe
+       * `actual`, y desde §11.1 esta ventana es la única que lo hace. Devuelve
+       * el destino que tiene el servidor en ese momento, que viene en la misma
+       * respuesta: gratis, y es lo que permite que un viaje largo se entere de
+       * un cambio de idea sin pedir nada más.
+       */
+      async function reportar(actual: Actual, origen: Origen): Promise<number | null> {
+        ultimo = actual
+        ultimoReporteEn = Date.now()
+        const cuerpo = (await mandar({
+          pos: actual.pos,
+          total: actual.total,
+          intro: actual.intro,
+          outro: actual.outro,
+          scroll: actual.scroll,
+          // El espejo viaja con la posición porque quien conoce la URL es esta
+          // misma ventana. Se manda el vigente y no solo el que acaba de
+          // cambiar: el servidor lo reescribe idéntico (barato) y los
+          // seguidores lo descartan por `seq` empatado, pero así una clave que
+          // venció por TTL vuelve sola en el latido siguiente.
+          ...(espejo && espejo.pos === actual.pos ? { espejo } : {}),
+          origen,
+        })) as { destino?: number } | null
+        return typeof cuerpo?.destino === 'number' ? cuerpo.destino : null
+      }
+
+      let aplicando = false
+      const REPORTE_CADA = 4
+
+      async function reconciliar(destino: number) {
+        if (aplicando || !mazo) return
+        aplicando = true
+        let meta = destino
+        try {
+          let sinMover = 0
+          let desdeReporte = 0
+          for (let intentos = 0; intentos < 80; intentos++) {
+            const punto = puntoActual()
+            if (!punto || !mazo) break
+            const aqui = aGlobal(mazo, punto)
+            if (aqui === meta) break
+            const acc = paso(mazo, punto, aPunto(mazo, meta))
+            if (!acc) break
+            aplicar(acc)
+            await new Promise((r) => setTimeout(r, PASO_MS))
+            const despues = puntoActual()
+            if (despues && mazo && aGlobal(mazo, despues) === aqui) {
+              if (++sinMover >= 3) break
+            } else {
+              sinMover = 0
+            }
+            if (despues && mazo && ++desdeReporte >= REPORTE_CADA) {
+              desdeReporte = 0
+              const eco = await reportar(posicionDe(mazo, despues), 'mando')
+              if (eco !== null) meta = eco
+            }
+          }
+          const punto = puntoActual()
+          if (punto && mazo) {
+            const actual = posicionDe(mazo, punto)
+            await reportar(actual, actual.pos === meta ? 'mando' : 'ajena')
+          }
+        } finally {
+          aplicando = false
+        }
+      }
+
+      async function sondear() {
+        // El teclado del bundle se tapa cuanto antes y en cada vuelta: el
+        // documento cambia con cada recarga del iframe, y una sola flecha que
+        // se le cuele mueve un beat por fuera del servidor.
+        taparTeclado()
+        if (!mazo && !descubrir()) return
+        const punto = puntoActual()
+        if (!punto || !mazo) return
+        afirmarCapas()
+
+        // Se vuelve a buscar en cada vuelta: el iframe en juego cambia con la
+        // diapositiva, y las tres páginas vivas del mazo están en beats
+        // distintos.
+        const dentro = iframeEnJuego(iframe)
+        afirmarInteraccion(dentro)
+        engancharRueda(dentro)
+
+        const geo = geometriaDe(dentro)
+        const actual = posicionDe(mazo, punto, geo)
+
+        // §11.5.2. La URL de la página viva, atada a SU diapositiva. El `seq`
+        // sube solo cuando hay algo nuevo que contar: un mensaje que llegue
+        // tarde se descarta en vez de deshacer una navegación buena.
+        const nuevoEspejo = siguienteEspejo(actual.pos, urlDe(dentro), espejo)
+        if (nuevoEspejo) espejo = nuevoEspejo
+
+        if (!ultimo) {
+          await reportar(actual, 'inicial')
+        } else if (actual.pos !== ultimo.pos || actual.total !== ultimo.total) {
+          // El bundle se movió por su cuenta: la navegación guionizada de
+          // algunos beats. Ya no puede ser el teclado del portátil, que §11.4
+          // tapa, pero manda igual la realidad.
+          await reportar(actual, 'ajena')
+        } else if (nuevoEspejo) {
+          // La página de dentro navegó. Es un `latido` y no una `ajena`: no hay
+          // posición nueva que adoptar, solo una URL que la sala tiene que ver
+          // sin esperar a los cinco segundos del latido normal.
+          await reportar(actual, 'latido')
+        } else if (!mismaGeo(actual.scroll, ultimo.scroll)) {
+          await reportar(actual, 'latido')
+        } else if (Date.now() - ultimoReporteEn > LATIDO_MS) {
+          await reportar(actual, 'latido')
+        }
+
+        try {
+          const res = await fetch('/api/presentacion?q=destino', { cache: 'no-store' })
+          if (!res.ok) return
+          const { destino, scroll, inicio, ahora } = (await res.json()) as {
+            destino: number
+            scroll?: number
+            inicio?: number | null
+            ahora?: number
+          }
+          // El reloj del servidor llega en una respuesta que ya se hacía. Sin
+          // `ahora`, un portátil dos minutos adelantado arrancaría el
+          // cronómetro en 02:00.
+          if (typeof ahora === 'number') desfaseMs = desfase(ahora, Date.now())
+          inicioServidor = typeof inicio === 'number' ? inicio : null
+          pintarCrono()
+
+          if (typeof destino !== 'number') return
+          if (destino !== actual.pos) await reconciliar(destino)
+          // El desplazamiento espera a que el mazo esté quieto, y también a que
+          // la rueda haya dejado de girar: obedecer a media inercia tiraría de
+          // la página hacia atrás mientras el ponente la recorre.
+          else if (
+            dentro &&
+            geo &&
+            !aplicando &&
+            Date.now() > ruedaHasta &&
+            typeof scroll === 'number'
+          ) {
+            desplazar(dentro, geo, scroll)
+          }
+        } catch {
+          // Sin red o Redis caído: se reintenta en el próximo ciclo y la
+          // presentación se queda donde está en vez de romperse.
+        }
+      }
+
+      async function bucle() {
+        for (;;) {
+          await sondear()
+          await new Promise((r) => setTimeout(r, SONDEO_MS))
+        }
+      }
+      void bucle()
+    </script>
+  </body>
+</html>

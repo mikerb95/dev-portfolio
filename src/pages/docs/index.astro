@@ -152,6 +152,10 @@ const subpaginas = [
   </div>
 
   <h2 class="text-sm font-semibold text-ink-50 mb-4 pb-2 border-b border-white/10">Alcance del proyecto</h2>
+  <p class="max-w-3xl text-[13.5px] text-ink-300 leading-relaxed mb-3">
+    El resumen de lo que entra y lo que no. El problema que lo motivó, la justificación y los objetivos con los
+    que se juzga están en <a href="/docs/planteamiento" class="text-cyan hover:underline">Planteamiento</a>.
+  </p>
   <div class="rounded-xl border border-white/10 bg-white/[.025] p-5 text-[14px] text-ink-100 leading-relaxed space-y-2">
     <p><strong class="text-ink-50">Dentro de alcance:</strong> sitio público de portafolio, CRM interno (proyectos/clientes/seguimiento/briefings), finanzas y P&L por proyecto, observabilidad (monitoreo, SLO, notificaciones), un LAB de ingeniería (CI/CD con rollback, pagos idempotentes, chaos engineering) y un micro-SIEM propio (sensor, blocklist, rate limiting durable, detección de anomalías).</p>
     <p><strong class="text-ink-50">Fuera de alcance (por ahora):</strong> multiusuario/roles (el panel es de un único administrador), pasarela de pagos en producción real (el LAB usa un proveedor mock además de Wompi), y pruebas de carga automatizadas (k6, Fase 5 del plan del LAB; el resto de niveles de prueba, incluidos SAST y mutation testing, ya están operando, ver <a href="/docs/testing" class="text-cyan hover:underline">Testing</a>).</p>

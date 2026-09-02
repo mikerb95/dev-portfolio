@@ -228,6 +228,37 @@ Registrado como **RNF-24** en `documentacion.ts`.
   no contra alguien que decida saltársela. Es la misma limitación estructural
   que ya reconoce el nivel de integridad 4 en `/docs/verificacion-validacion`.
 
+## 5.e Entregado después (2 sep 2026) - planteamiento, justificación y objetivos
+
+El hueco de fondo de toda la sección: `/docs` describía **qué** hace el sistema
+y con qué evidencia, pero el **porqué** no estaba escrito en ninguna parte.
+Existía repartido en dos párrafos de alcance del índice y en el gancho retórico
+del deck de sustentación, y los únicos objetivos redactados (plan de
+implantación y plan de capacitación) son de otra cosa. Entregado como
+`src/data/planteamiento.ts` + `/docs/planteamiento`, registrado como **RF-716**.
+
+- **Tres conjuntos de objetivos que no se pueden mezclar**: los del sistema
+  (esta página), los de la puesta en producción (`plan_de_implementacion.md`,
+  OE-01 a OE-08) y los de la transferencia a quien lo opera
+  (`plan-de-capacitacion.md`). Por eso los de aquí se numeran `OBJ-xx` y no
+  `OE-xx`, y la página lo dice explícitamente al cierre: confundirlos es la
+  forma más rápida de declarar cumplido lo que nadie midió.
+- **La prueba que de verdad sostiene el documento es la inversa**: no que los
+  objetivos citen requisitos que existen (eso también se comprueba), sino que
+  **ningún módulo de requisitos exista sin un objetivo que lo reclame**. Un
+  módulo huérfano es alcance que se coló sin que nadie lo pidiera. La regla
+  hermana impide que dos objetivos se repartan el mismo módulo, que es como se
+  disimula un objetivo que en realidad no tiene contenido propio.
+- **El árbol de problemas cierra por sus dos mitades**: ningún síntoma sin causa
+  que lo explique, ninguna causa que no explique ningún síntoma. Cada síntoma
+  lleva cómo se constató y qué cuesta dejarlo estar, porque un síntoma sin
+  evidencia es una hipótesis y uno sin consecuencia no justifica gastar tiempo.
+- **El .md de la entrega académica es una salida, no una copia**:
+  `docs/planteamiento-del-problema.md` se genera con
+  `npm run planteamiento:export` y un test compara el archivo del repositorio
+  contra lo que el exportador produce hoy. Escribirlo a mano habría creado la
+  segunda versión del mismo texto que RNF-14 existe para impedir.
+
 ## 6. Fases futuras
 
 - **Fase 2 - Vivo**: derivar el estado de RF desde los tests (cada RF apunta a
@@ -241,7 +272,13 @@ Registrado como **RNF-24** en `documentacion.ts`.
 ## 7. Mantenimiento
 
 - Nuevo requerimiento → añadirlo a `documentacion.ts` (estado `planeado`),
-  promoverlo a `parcial`/`implementado` al entregarlo.
+  promoverlo a `parcial`/`implementado` al entregarlo. Si además abre un frente
+  que ningún objetivo del proyecto reclamaba, el objetivo va en
+  `planteamiento.ts` **antes** que el requisito: `tests/planteamiento.test.ts`
+  falla si un módulo funcional se queda sin objetivo que lo justifique.
+- Cambio del planteamiento, la justificación o los objetivos → editar
+  `src/data/planteamiento.ts` y correr `npm run planteamiento:export`; el `.md`
+  de `docs/` nunca se edita a mano.
 - Cierre de iteración → nueva entrada en `iteraciones-portfolio.ts` con
   `git rev-list --count --since --until` para el conteo de commits.
 - Cambio de schema → actualizar el diagrama de clases en la misma PR.

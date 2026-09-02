@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import {
   CAUSAS,
   JUSTIFICACION,
@@ -127,5 +128,16 @@ describe('objetivos', () => {
   it('no reparte el mismo módulo entre varios objetivos', () => {
     const todos = OBJETIVOS_ESPECIFICOS.flatMap((o) => o.modulos)
     expect(new Set(todos).size, 'un módulo reclamado por dos objetivos').toBe(todos.length)
+  })
+})
+
+describe('documento espejo en docs/', () => {
+  it('coincide con lo que genera el exportador', async () => {
+    // El .md de la entrega académica es una salida, no una segunda copia del
+    // texto: si alguien lo edita a mano o cambia el dato tipado sin regenerarlo,
+    // esta prueba lo delata antes de que las dos versiones digan cosas distintas.
+    const { render } = await import('../scripts/export-planteamiento.mjs')
+    const enDisco = readFileSync(new URL('../docs/planteamiento-del-problema.md', import.meta.url), 'utf8')
+    expect(enDisco).toBe(render())
   })
 })
