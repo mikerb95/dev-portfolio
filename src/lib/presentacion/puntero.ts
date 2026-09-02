@@ -175,6 +175,17 @@ export const ATRIBUTO = 'data-puntero'
 export const MARCA = 'puntero-espejo'
 
 /**
+ * El `:hover` de verdad, y solo ese. Los dos recortes valen una regla rota cada
+ * uno, y las dos roturas están en la página que se enseña:
+ *
+ *  · sin el `(?<!\\)`, el `:hover` ESCAPADO del nombre de clase que genera
+ *    Tailwind (`.md\:hover\:bg-x`) se sustituiría dentro del propio selector y
+ *    la regla dejaría de existir;
+ *  · sin el `(?![\w-])`, un `:hover-intent` de terceros pasaría por `:hover`.
+ */
+const HOVER = /(?<!\\):hover(?![\w-])/g
+
+/**
  * `a:hover .x` -> `a[data-puntero] .x`.
  *
  * Sustitución literal y no un parser de selectores a propósito: la especificidad
@@ -185,12 +196,12 @@ export const MARCA = 'puntero-espejo'
  * espejada y el resultado dejaría de ser el mismo que ve el ponente.
  */
 export function selectorEspejado(sel: string): string {
-  return sel.replace(/:hover\b/g, `[${ATRIBUTO}]`)
+  return sel.replace(HOVER, `[${ATRIBUTO}]`)
 }
 
 /** ¿Vale la pena duplicar esta regla? */
 export function tieneHover(sel: string): boolean {
-  return /:hover\b/.test(sel)
+  return HOVER.test(sel)
 }
 
 /**
