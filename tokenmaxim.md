@@ -294,28 +294,38 @@ que tampoco le falta el `labelCorto`.
 
 ## Lo que falta, en orden
 
-### 1. Sincronizar la documentación
+### 1. ✅ Sincronizar la documentación
 
-**Es lo único que choca con la convención del repo** (`CLAUDE.md`: un feature
-entregado que no aparece en `/docs` no existe para la sustentación). Cuatro cosas
-se entregaron después de escribir los RF y no están en
-`src/data/documentacion.ts` ni en el plan:
+**Hecho** (2 sep). Las cuatro cosas entraron así:
 
-- La dirección del documento (`SEÑORES` / `DEBE A`) y por qué el orden es
-  contraintuitivo.
-- El alta de deudor desde el propio flujo de creación.
-- El anclaje de fechas a zona de Colombia, con las dos clases de fecha.
-- Que la razón social manda sobre el nombre de contacto de la ficha.
+| Qué | Dónde quedó |
+|---|---|
+| Dirección del documento (`SEÑORES` / `DEBE A`) | notas de **RF-308**, y §4 bis del plan |
+| La razón social manda sobre el nombre de contacto | notas de **RF-308**, y §4 bis |
+| Alta de deudor desde el flujo de creación | **RF-311**, nuevo |
+| Anclaje de fechas a Colombia, con las dos clases | **RNF-29**, nuevo |
 
-Además el plan sigue diciendo que faltan los datos del emisor, que ya están.
+Se repartieron así y no todo en RF-308 por una razón: el alta de deudor es una
+**capacidad** propia con su propio motivo (la cuenta se redacta cuando el
+cliente la pide, que casi nunca es cuando se dio de alta en el CRM), y el
+anclaje de fechas dejó de ser cosa de este módulo en cuanto se convirtió en
+`lib/fecha-co.ts` compartido con las facturas del portal y los hitos - un RNF,
+no un RF.
 
-### 2. Validación contable de la parametrización
+El plan (`docs/plan-cuentas-de-cobro.md`) recibió una subsección nueva en §4 bis
+("Cuatro cosas que se entregaron después de escribir los RF") y su §7 ya no
+miente sobre los datos del emisor.
+
+### 2. ⛔ Validación contable de la parametrización
 
 Lo único que separa "funciona" de "se puede emitir con confianza". Las tarifas,
 las bases en UVT y el valor de la UVT los tiene que confirmar un contador. Pesa
 más que antes: ya hay una cuenta emitida a un cliente real.
 
-### 3. Tres parámetros sin configurar (caen a valores por defecto)
+### 3. ⛔ Tres parámetros sin configurar (caen a valores por defecto)
+
+Son **configuración en `app_settings`, no código**: se cambian desde
+`/admin/settings`, no desde el repo. Quedan anotados en §7 del plan.
 
 | Clave | Efecto de que falte | Urgencia |
 |---|---|---|
@@ -323,14 +333,14 @@ más que antes: ya hay una cuenta emitida a un cliente real.
 | `smmlv_cents` | no se muestra el piso del IBC en el detalle | baja |
 | `ret_reteica_por_mil` | ReteICA apagado, no se practica | ninguna, es deliberado |
 
-### 4. Fase 4: envío (opcional)
+### 4. ⛔ Fase 4: envío (opcional)
 
 Reutilizaría `lib/notify.ts` o la plantilla de WhatsApp de `cobros.ts`, más el
 vínculo opcional con un pago de `/cobrar`. Se dejó fuera a propósito:
 automatizar el envío antes de saber cómo lo pide cada cliente es construir sobre
 una suposición. Hoy el PDF se descarga y se manda a mano.
 
-### 5. Artículo en `/notes` (opcional)
+### 5. ⛔ Artículo en `/notes` (opcional)
 
 El ángulo no es el CRUD: es **por qué el documento con validez fiscal es el del
 pagador y no el mío**, y cómo esa inversión decide qué campos son obligatorios.
@@ -469,7 +479,7 @@ indexable, con Navbar/Footer y traducida a `/en`.
 
 ## Lo que falta, en orden
 
-### 1. Los links reales de documentación
+### 1. ⛔ Los links reales de documentación
 
 El usuario los va a pasar aparte. Hoy `DOCS_META` en `presentacion-end.astro`
 apunta a rutas ya existentes (`/docs`, `/docs/kanban`, `/architecture`,
@@ -478,26 +488,89 @@ la lista definitiva. Al recibir los links: actualizar `DOCS_META` (hrefs) y
 `t.presentacionEnd.docs` (título/descripción) en `es.ts` **y** `en.ts` a la
 vez, o el test de paridad de diccionarios los va a agarrar.
 
-### 2. No se ha visto en navegador
+### 2. ⚠️ No se ha visto en navegador (a medias)
 
-Se armó y se verificó con `astro check` y el test de i18n, pero no se corrió
-el dev server ni se abrió en Chrome. Antes de darla por cerrada: revisar que
-las cards no se rompan con textos largos, y el estado hover/focus de los
-links externos (GitHub).
+Se corrió el dev server: `/presentacion-end` y `/en/presentacion-end` responden
+200. **La revisión a ojo sigue pendiente** y la tiene que hacer una persona: la
+extensión de Chrome no estaba conectada en la sesión que lo intentó. Queda por
+mirar que las tarjetas no se rompan con textos largos, que es lo que solo se ve
+cuando lleguen los títulos y descripciones definitivos del punto 1.
 
-### 3. Alta en `src/data/documentacion.ts` (a decidir)
+Lo que sí se arregló, que era la otra mitad del punto: **las tarjetas y los dos
+enlaces del cierre solo tenían estados `hover:`**. Quien navega con teclado se
+quedaba con el contorno por defecto del navegador sobre una tarjeta de vidrio
+oscuro, que es casi nada. Ahora llevan `focus-visible:` igualado al hover (anillo
+cian en la tarjeta, y el punto y la flecha reaccionan igual con
+`group-focus-visible:`). El repo corre axe en `/admin/lab/security`, así que era
+un hallazgo esperando a ocurrir.
 
-La convención del repo es que "un feature entregado que no aparece en `/docs`
-no existe para la sustentación". Queda abierto si `/presentacion-end` en sí
-misma amerita una entrada (es una página del sitio, no un requisito del
-sistema que documenta) - no se tomó la decisión, solo se dejó anotada.
+### 3. ✅ Alta en `src/data/documentacion.ts`
+
+**Decidido: sí, entra.** Es **RF-718**, en estado `parcial`.
+
+El argumento que desempató: la duda era si una página del sitio amerita entrada
+frente a un requisito del sistema, pero `/presentacion` y `/remote` ya tienen la
+suya (RF-714), y son exactamente eso. La convención del repo no distingue entre
+las dos cosas: distingue entre entregado y no entregado.
+
+`parcial` y no `implementado` porque los hrefs de hoy son un marcador razonable
+y no la lista final (punto 1), y porque falta la revisión a ojo (punto 2). El RF
+deja escrito qué falta, que es justo para lo que sirve ese estado.
 
 ## Gotchas de este módulo
 
 - Los `docs` de la página NO salen de `src/data/documentacion.ts`: es un
   array local a propósito, porque el contenido definitivo llega después y se
   reemplaza directo en la página, sin indirección de datos.
+- **La ruta tuvo que entrar en `RESERVED_ROOT_SEGMENTS`** y no estaba: es un
+  segmento en la raíz y competía con el espacio de los PIN de presentación, así
+  que un PIN generado podía coincidir y mandar a quien escaneara el QR a esta
+  página en vez de a su deck. Lo cazó `tests/present-pin.test.ts`, que es la red
+  que existe justamente para esto. Cualquier página raíz nueva pasa por ahí.
 - Las estadísticas de "en números" son en vivo, no cifras escritas a mano:
   cuentan sobre `ITER_PF.flatMap(i => i.historias)` filtrando por
   `col === 'aceptada'`. Si el kanban de `iteraciones-portfolio.ts` crece, la
   página no necesita tocarse.
+
+---
+---
+
+# Lo que se cerró y lo que no (2 sep, sesión de cierre)
+
+Un solo sitio para ver el estado de los tres bloques después de esta sesión.
+**Todo lo que quedó abierto está abierto por una razón**, y en los tres casos la
+razón es la misma: hace falta una persona, no más código.
+
+## Entregado
+
+| Bloque | Qué |
+|---|---|
+| `/present-admin` | Paso 1 (scroll absoluto en la API), Paso 2 (la página entera, seis capas), Paso 4 (RF-717, runbook §3 bis, §11 y §12 marcadas) |
+| Cuentas de cobro | Punto 1: las cuatro cosas sin documentar, repartidas en RF-308, RF-311 y RNF-29, más §4 bis y §7 del plan |
+| `/presentacion-end` | Punto 3 (RF-718) y la mitad del punto 2 (estados de foco de tarjetas y enlaces) |
+| De propina | `present-admin` **y** `presentacion-end` registradas en `RESERVED_ROOT_SEGMENTS`; a la segunda le faltaba desde antes y competía con el espacio de los PIN |
+
+`npx vitest run`: **1714 en verde**. `npx astro check`: **7 errores, los siete
+preexistentes de siempre** (`payments/webhook.ts`, `docs/presentacion.astro`,
+`tests/indexnow.test.ts`). El listón era no subir de siete.
+
+## No entregado, y por qué
+
+| Qué falta | Por qué no se hizo | Quién puede |
+|---|---|---|
+| **Paso 0**: medir `final.html` en un teléfono de gama baja | Es una compuerta de diseño, no una verificación. Necesita un teléfono prestado y el WiFi del salón | solo una persona |
+| **Paso 3**: `/presentacion` como seguidor puro | Detrás del paso 0. Si sale "sala no", se cae entero, y construirlo antes es tirarlo | tras el paso 0 |
+| **Parametrizar `client-sync.ts`** | Su único consumidor es el paso 3. Tocar un módulo que sostiene tres charlas en producción para dejarlo esperando sería arriesgar lo que funciona | tras el paso 0 |
+| **Paso 5**: los nueve puntos de §11.9 | Piden `/presentacion` en dos equipos distintos, uno un teléfono, y cortar el bus a propósito | solo una persona |
+| **Credenciales del bus en producción** | Es un `vercel env ls`, no código. Confirmar antes `cat .vercel/project.json`: el que sirve el dominio es `dev-portfolio`, no `portfolio` | solo una persona |
+| **Validación contable** de tarifas, bases UVT y UVT | Lo tiene que confirmar un contador. Ya hay una cuenta emitida a un cliente real, así que ya no es preventivo | un contador |
+| **Los tres parámetros** `uvt_cents`, `smmlv_cents`, `ret_reteica_por_mil` | Es configuración en `app_settings` (`/admin/settings`), no repo. Ninguno urgente, y el tercero está apagado a propósito | solo una persona |
+| **Fase 4** (envío) y **artículo en `/notes`** | Los dos marcados como opcionales y con la decisión razonada en su sitio | cuando se quiera |
+| **Los links reales** de `/presentacion-end` | El usuario los pasa aparte. Al llegar se tocan DOS sitios a la vez: `DOCS_META` y `presentacionEnd.docs` en `es.ts` **y** `en.ts`, o el test de paridad los agarra | solo una persona |
+| **Ver `/presentacion-end` en el navegador** | La extensión de Chrome no estaba conectada. El dev server sí se corrió: la ruta y su gemela en `/en` responden 200 | solo una persona |
+
+## La regla de operación que sale de todo esto
+
+Mientras el paso 3 no se haga, **`/present-admin` y `/presentacion` no se abren
+a la vez**: serían dos escritores de la misma clave y la presentación iría y
+vendría sola. Para conducir, `/present-admin`. Está en el runbook.
