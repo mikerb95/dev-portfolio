@@ -300,3 +300,72 @@ pagador y no el mío**, y cómo esa inversión decide qué campos son obligatori
   obligaría a invalidar en cada corrección del borrador.
 - Liquidar aportes de seguridad social: solo se calcula el IBC de referencia.
   Eso lo hace la PILA.
+
+# Pendiente: comprobaciones de entorno para la sala
+
+Estado a **2 sep 2026**. Esto **no** es el paso a paso de `/present-admin`: ese
+vive en el primer bloque de este archivo y en la §12 del plan, y no se repite
+aquí. Son dos comprobaciones que no pertenecen a ningún paso de
+implementación, y un riesgo del repositorio que se cobró trabajo real en la
+sesión del 1 de septiembre.
+
+## 1. Las credenciales del bus en producción, sin verificar
+
+Toda la rama "sala" da por hecho que el bus funciona. **Nadie lo ha
+comprobado en producción.**
+
+En local no existe ninguna de las variables (`PRESENT_BUS_REST_URL`,
+`PRESENT_BUS_READONLY_TOKEN`, `KV_REST_API_*`, `UPSTASH_REDIS_REST_*`), que es
+lo esperable, pero significa que el camino del `EventSource` **no se ejercita
+en desarrollo**: en local todo cae al rescate por sondeo y parece que funciona.
+
+Si en producción tampoco están, el fallo no se ve venir y aparece con la sala
+delante: cada asistente cae a su sondeo de rescate, y ahí vuelve entero el
+problema que la §11.2 resuelve, treinta teléfonos bajo la IP compartida del
+WiFi del salón contra el paraguas de 600 peticiones por minuto. El síntoma es
+media sala clavada en una diapositiva sin nada que lo explique salvo un aviso
+en la consola de cada uno.
+
+Es un `vercel env ls`. Antes, **confirmar `cat .vercel/project.json`**: el
+directorio local se llama `portfolio` y coincide por accidente con el proyecto
+de Vercel equivocado. El que sirve `codebymike.tech` es `dev-portfolio`.
+
+Si faltan, decidirlo pronto: es alta de variables y redespliegue, no código, y
+bloquea el sentido del paso 3 entero.
+
+## 2. La medición del teléfono sigue sin hacerse
+
+Ya está como Paso 0 en el primer bloque. Se repite aquí por una sola razón: es
+la única tarea de la lista que **puede borrar otras tres**, y es la única que
+no puede hacer quien retome el código.
+
+## 3. El repositorio revierte trabajo, no solo commitea solo
+
+El primer bloque avisa de que hay más de una sesión y de que los commits salen
+solos. Es más afilado que eso, y conviene saberlo antes de perder una hora:
+
+**Los archivos se revierten a versiones anteriores, incluso a mitad de una
+edición.** Pasó dos veces el 1 de septiembre:
+
+- `docs/plan-control-final.md` perdió la **§11 entera** (de 727 a 421 líneas).
+  Se recuperó de `5e756f2` y se injertó sobre el archivo de ese momento, para
+  no perder a cambio lo que `b9b333a` había añadido a la §10.
+- `src/pages/api/presentacion.ts` se revirtió **entre dos ediciones seguidas**:
+  los imports y el `GET` sobrevivieron, el `POST` volvió a la versión anterior.
+  Quedó una API a medio escribir que compilaba y que `astro check` daba por
+  buena.
+
+Lo segundo se detectó **solo porque los tests fallaron**, con `undefined` por
+todas partes en respuestas que parecían correctas. De ahí la regla práctica:
+
+- Después de editar, **releer lo editado** en vez de fiarse de que la
+  herramienta dijo que aplicó. Un `grep -c` del símbolo nuevo basta.
+- **Lo que no tiene test, no se entera.** `tests/presentacion-endpoint.test.ts`
+  existe justamente por esto: cubre la costura entre las reglas puras y el
+  almacén, que es donde un revert deja el código compilando y mintiendo. Los
+  pasos 2 y 3 tocan páginas `.astro`, que no tienen esa red debajo.
+- Mirar `git log` al empezar y al terminar. Los commits `ceabae8`, `3227c77`,
+  `4744ed7` y `b9b333a` no los hizo quien escribió el código que contienen.
+
+Merece la pena averiguar qué lo genera antes de arrancar el paso 2, que es el
+más largo y el que menos protegido está.
