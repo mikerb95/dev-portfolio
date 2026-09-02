@@ -369,3 +369,63 @@ todas partes en respuestas que parecían correctas. De ahí la regla práctica:
 
 Merece la pena averiguar qué lo genera antes de arrancar el paso 2, que es el
 más largo y el que menos protegido está.
+
+---
+---
+
+# Pendiente: `/presentacion-end`
+
+Estado a **2 sep 2026**. Tema **independiente** de los dos bloques de arriba:
+no comparte código ni plan con `/present-admin` ni con cuentas de cobro.
+
+## De qué va, en cuatro líneas
+
+Página de cierre para compartir DESPUÉS de la sustentación en vivo (no se
+proyecta, no toca el sistema de beats de `/presentacion`): cards con links a
+la documentación del proyecto, un corte de "en números" sacado en vivo de
+`iteraciones-portfolio.ts`, y un cierre de agradecimiento + contacto. Pública,
+indexable, con Navbar/Footer y traducida a `/en`.
+
+## Lo que ya está hecho
+
+- `src/pages/presentacion-end.astro` + cascarón `src/pages/en/presentacion-end.astro`.
+- Diccionario `presentacionEnd` en `src/i18n/es.ts` y `en.ts` (textos, no los
+  hrefs).
+- Ruta dada de alta en `TRANSLATED_ROUTES` (`src/i18n/routing.ts`).
+- `astro check` sin errores nuevos (siguen los mismos preexistentes de
+  siempre) y `tests/i18n-dictionary.test.ts` en verde.
+
+## Lo que falta, en orden
+
+### 1. Los links reales de documentación
+
+El usuario los va a pasar aparte. Hoy `DOCS_META` en `presentacion-end.astro`
+apunta a rutas ya existentes (`/docs`, `/docs/kanban`, `/architecture`,
+`/security`, el repo de GitHub, `/notes`) como placeholder razonable, no como
+la lista definitiva. Al recibir los links: actualizar `DOCS_META` (hrefs) y
+`t.presentacionEnd.docs` (título/descripción) en `es.ts` **y** `en.ts` a la
+vez, o el test de paridad de diccionarios los va a agarrar.
+
+### 2. No se ha visto en navegador
+
+Se armó y se verificó con `astro check` y el test de i18n, pero no se corrió
+el dev server ni se abrió en Chrome. Antes de darla por cerrada: revisar que
+las cards no se rompan con textos largos, y el estado hover/focus de los
+links externos (GitHub).
+
+### 3. Alta en `src/data/documentacion.ts` (a decidir)
+
+La convención del repo es que "un feature entregado que no aparece en `/docs`
+no existe para la sustentación". Queda abierto si `/presentacion-end` en sí
+misma amerita una entrada (es una página del sitio, no un requisito del
+sistema que documenta) - no se tomó la decisión, solo se dejó anotada.
+
+## Gotchas de este módulo
+
+- Los `docs` de la página NO salen de `src/data/documentacion.ts`: es un
+  array local a propósito, porque el contenido definitivo llega después y se
+  reemplaza directo en la página, sin indirección de datos.
+- Las estadísticas de "en números" son en vivo, no cifras escritas a mano:
+  cuentan sobre `ITER_PF.flatMap(i => i.historias)` filtrando por
+  `col === 'aceptada'`. Si el kanban de `iteraciones-portfolio.ts` crece, la
+  página no necesita tocarse.
