@@ -156,7 +156,8 @@ export function siguientePuntero(
   objetivo: Objetivo | null,
   anterior: Puntero | null
 ): Puntero | null {
-  if (anterior && anterior.pos === pos && mismoObjetivo(anterior.objetivo, objetivo)) return null
+  if (anterior && anterior.pos === pos && mismoObjetivo(anterior.objetivo, objetivo))
+    return null
   if (!anterior && objetivo === null) return null
   return { pos, seq: (anterior?.seq ?? 0) + 1, objetivo }
 }
@@ -275,16 +276,21 @@ export function objetivoDe(doc: Document, x: number, y: number): Objetivo | null
 /**
  * Duplica en `doc` las reglas de `:hover` con su gemela de `[data-puntero]`.
  *
- * Idempotente por documento y fail-open en cada hoja por separado: una hoja de
- * otro origen (una tipografía de Google, por ejemplo) lanza al leer sus reglas
- * y solo se pierde ella. Se vuelve a llamar cuando la página viva navega,
- * porque entonces es otro documento.
+ * Fail-open hoja por hoja: una de otro origen (una tipografía de Google, por
+ * ejemplo) lanza al leer sus reglas y solo se pierde ella.
+ *
+ * Se llama en cada aplicación y NO se marca con un booleano: la primera vez
+ * puede caer con el documento a medio cargar y media hoja sin registrar, y un
+ * "ya está hecho" ahí dejaría la página sin hover para el resto de la charla.
+ * El contador de hojas es la marca: mientras no aparezca ninguna nueva la
+ * llamada sale por la primera línea, y cuando aparece se rehace entera. Rehacer
+ * es tirar el `<style>` viejo y volver a recorrer, que con la hoja ya
+ * descargada cuesta un milisegundo y pasa una vez por página.
  */
 export function espejarHover(doc: Document): void {
   try {
-    const marcado = doc as Document & { __hoverEspejado?: boolean }
-    if (marcado.__hoverEspejado) return
-    marcado.__hoverEspejado = true
+    const marcado = doc as Document & { __hojasEspejadas?: number }
+    if (marcado.__hojasEspejadas === doc.styleSheets.length) return
     const gemelas: string[] = []
     for (const hoja of [...doc.styleSheets]) {
       try {
@@ -294,13 +300,18 @@ export function espejarHover(doc: Document): void {
         // Hoja de otro origen: no se puede leer y no pasa nada más.
       }
     }
-    if (!gemelas.length) return
-    const style = doc.createElement('style')
-    style.dataset.espejo = MARCA
-    style.textContent = gemelas.join('\n')
-    // Al final del `head` y no del `body`: una hoja del `body` se aplica igual,
-    // pero algunas páginas reordenan sus hijos y la perderían.
-    ;(doc.head ?? doc.documentElement).appendChild(style)
+    for (const viejo of doc.querySelectorAll(`style[data-espejo="${MARCA}"]`)) viejo.remove()
+    if (gemelas.length) {
+      const style = doc.createElement('style')
+      style.dataset.espejo = MARCA
+      style.textContent = gemelas.join('\n')
+      // Al final del `head` y no del `body`: una hoja del `body` se aplica
+      // igual, pero algunas páginas reordenan sus hijos y la perderían.
+      ;(doc.head ?? doc.documentElement).appendChild(style)
+    }
+    // Después de inyectar, para que la propia gemela cuente en el total y la
+    // llamada siguiente no la lea como una hoja nueva.
+    marcado.__hojasEspejadas = doc.styleSheets.length
   } catch {
     // Documento a medio cargar o de otro origen: sin espejo de hover, que es
     // una degradación y no una avería.
@@ -316,19 +327,24 @@ function recogerHover(
   fuera: string[]
 ): void {
   for (const regla of [...reglas]) {
-    const grupo = regla as CSSGroupingRule & { selectorText?: string; style?: CSSStyleDeclaration }
+    const grupo = regla as CSSGroupingRule & {
+      selectorText?: string
+      style?: CSSStyleDeclaration
+    }
     const esEstilo = typeof grupo.selectorText === 'string'
     if (esEstilo) {
       const sel = combinarSelector(padre, grupo.selectorText as string)
       const decls = grupo.style?.cssText ?? ''
-      if (decls && tieneHover(sel)) fuera.push(envolver(envolturas, selectorEspejado(sel), decls))
+      if (decls && tieneHover(sel))
+        fuera.push(envolver(envolturas, selectorEspejado(sel), decls))
       // Un `&:hover` puede colgar de una regla sin hover ninguno, que es
       // exactamente lo que emite Tailwind: hay que bajar siempre.
       if (grupo.cssRules) recogerHover(grupo.cssRules, sel, envolturas, fuera)
       continue
     }
     const prelude = preludeDe(regla)
-    if (grupo.cssRules && prelude) recogerHover(grupo.cssRules, padre, [...envolturas, prelude], fuera)
+    if (grupo.cssRules && prelude)
+      recogerHover(grupo.cssRules, padre, [...envolturas, prelude], fuera)
   }
 }
 
@@ -337,7 +353,11 @@ function recogerHover(
 function preludeDe(regla: CSSRule): string | null {
   const tipo = regla.constructor?.name ?? ''
   const texto = regla.cssText ?? ''
-  if (!/^(CSSMediaRule|CSSSupportsRule|CSSLayerBlockRule|CSSContainerRule|CSSScopeRule)$/.test(tipo)) {
+  if (
+    !/^(CSSMediaRule|CSSSupportsRule|CSSLayerBlockRule|CSSContainerRule|CSSScopeRule)$/.test(
+      tipo
+    )
+  ) {
     return null
   }
   const i = texto.indexOf('{')
@@ -362,4 +382,90 @@ export function marcarHover(el: Element | null, marcados: Element[]): Element[] 
     nuevos.push(n)
   }
   return nuevos
+}
+
+/** Id del cursor pintado, dentro del documento de la página viva. */
+const ID_CURSOR = 'puntero-espejo-cursor'
+
+/**
+ * Pinta (o mueve) la flecha que representa al ratón del ponente sobre el
+ * elemento señalado.
+ *
+ * Vive DENTRO del documento de la página viva y no superpuesta en la ventana
+ * de fuera, y no es una comodidad: el mazo escala ese iframe con `transform`,
+ * así que un cursor pintado fuera necesitaría deshacer la transformación a
+ * mano y volvería a descuadrarse con cada tamaño de pantalla. Pintado dentro,
+ * lo escala la misma matriz que escala la página, gratis y exacto.
+ *
+ * Va al final del `body` a propósito: appendear detrás de todo no mueve el
+ * índice de ningún hermano anterior, así que las rutas que llegan del ponente
+ * -que se calcularon sobre un documento sin cursor- siguen resolviendo igual.
+ */
+export function pintarCursor(doc: Document, el: Element, o: Objetivo): void {
+  try {
+    const cuerpo = doc.body
+    if (!cuerpo) return
+    let cursor = doc.getElementById(ID_CURSOR)
+    if (!cursor) {
+      cursor = doc.createElement('div')
+      cursor.id = ID_CURSOR
+      cursor.setAttribute('aria-hidden', 'true')
+      cursor.innerHTML =
+        '<svg viewBox="0 0 24 24" width="26" height="26">' +
+        '<path d="M5 2.5 19 12l-6.4 1.2L9.6 19z" fill="#f4f6f8" stroke="#05070a" stroke-width="1.4" stroke-linejoin="round"/>' +
+        '</svg>'
+      cursor.style.cssText =
+        'position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;' +
+        'filter:drop-shadow(0 2px 6px rgba(0,0,0,.45));' +
+        // El movimiento se interpola porque la posición llega a saltos de medio
+        // segundo: sin esto, la sala ve una flecha que teletransporta.
+        'transition:transform .18s linear;will-change:transform'
+      cuerpo.appendChild(cursor)
+    }
+    const r = el.getBoundingClientRect()
+    const x = Math.round(r.left + o.fx * r.width)
+    const y = Math.round(r.top + o.fy * r.height)
+    cursor.style.transform = `translate(${x}px, ${y}px)`
+    cursor.style.opacity = '1'
+  } catch {
+    // Documento a medio cargar: el ciclo siguiente lo vuelve a intentar.
+  }
+}
+
+/** Apaga el cursor sin quitarlo del DOM: quitarlo y volver a crearlo perdería
+ *  la interpolación y haría parpadear la flecha en cada pausa del ratón. */
+export function apagarCursor(doc: Document): void {
+  try {
+    const cursor = doc.getElementById(ID_CURSOR)
+    if (cursor) cursor.style.opacity = '0'
+  } catch {
+    // Otro origen: no había cursor que apagar.
+  }
+}
+
+/**
+ * Aplica un puntero en el documento de la página viva del seguidor: enciende el
+ * hover donde toca y pinta la flecha. Devuelve los elementos que quedaron
+ * marcados, para la llamada siguiente.
+ *
+ * Un puntero sin objetivo -o uno cuya ruta no resuelve, o cuyo sello no cuadra
+ * porque el seguidor está en otra página- apaga todo en vez de adivinar. Ver la
+ * página sin cursor es lo mismo que había ayer; ver un cursor señalando la fila
+ * que no es sería peor que no tenerlo.
+ */
+export function aplicarPuntero(
+  doc: Document | null,
+  p: Puntero | null,
+  marcados: Element[]
+): Element[] {
+  if (!doc) return []
+  const o = p?.objetivo ?? null
+  const el = o ? resolverRuta(doc, o.ruta) : null
+  if (!o || !el || el.tagName.toLowerCase() !== o.tag) {
+    apagarCursor(doc)
+    return marcarHover(null, marcados)
+  }
+  espejarHover(doc)
+  pintarCursor(doc, el, o)
+  return marcarHover(el, marcados)
 }
