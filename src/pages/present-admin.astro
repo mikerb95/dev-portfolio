@@ -1145,6 +1145,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         const dentro = iframeEnJuego(iframe)
         afirmarInteraccion(dentro)
         engancharRueda(dentro)
+        engancharPuntero(dentro)
 
         const geo = geometriaDe(dentro)
         const actual = posicionDe(mazo, punto, geo)
