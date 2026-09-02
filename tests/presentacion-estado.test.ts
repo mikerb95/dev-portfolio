@@ -33,6 +33,20 @@ describe('parsearActual', () => {
     expect(parsearActual('{"pos":5,"total":14,"ts":1000}')).toEqual(actual(5, 14, 1000))
   })
 
+  it('trae la geometría del iframe cuando la diapositiva la tiene', () => {
+    expect(
+      parsearActual('{"pos":14,"total":22,"ts":1,"scroll":{"y":300,"max":2400,"alto":900}}')?.scroll
+    ).toEqual({ y: 300, max: 2400, alto: 900 })
+  })
+
+  it('una geometría rota deja la posición intacta', () => {
+    // Sin controles de scroll, nunca sin control de las diapositivas: el paso
+    // del mazo no puede depender de que se pueda medir la página de dentro.
+    const a = parsearActual('{"pos":14,"total":22,"ts":1,"scroll":{"y":300,"alto":0}}')
+    expect(a).toEqual(actual(14, 22, 1))
+    expect(a?.scroll).toBeUndefined()
+  })
+
   it('devuelve null en vez de lanzar ante basura', () => {
     // Un JSON roto significa "no sé dónde está la pantalla", no una excepción
     // que tumbe el mando a mitad de la charla.
