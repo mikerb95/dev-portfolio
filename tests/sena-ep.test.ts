@@ -67,3 +67,61 @@ describe('hitosPorAvisar', () => {
     expect(proximos.some((h) => h.titulo === 'Inicio de etapa productiva')).toBe(false)
   })
 })
+
+// ── Independencia de zona horaria ───────────────────────────────────────────
+// Los hitos son días de calendario, no instantes. Antes se anclaban a
+// medianoche LOCAL del proceso, así que el cronograma dependía de dónde
+// corriera el código: estos tres tests fallaban bajo cualquier zona con
+// desfase positivo (Asia/Tokyo, Pacific/Auckland). Ahora el ancla es el
+// mediodía UTC, que deja 12 h de margen a cada lado.
+
+describe('anclaje de las fechas', () => {
+  it('ancla al mediodía UTC, no a medianoche', () => {
+    const [inicio] = computeHitos('tecnico', '2026-09-09')
+    expect(inicio.fecha.toISOString()).toBe('2026-09-09T12:00:00.000Z')
+  })
+
+  it('el día es el mismo leído en UTC y con accesores locales', () => {
+    // /ep pinta estas fechas en el navegador con getDate() y
+    // toLocaleDateString(), que son locales. Si el ancla estuviera en un
+    // extremo del día, las dos lecturas discreparían.
+    for (const h of computeHitos('tecnico', '2026-09-09')) {
+      expect(h.fecha.getDate()).toBe(h.fecha.getUTCDate())
+      expect(h.fecha.getMonth()).toBe(h.fecha.getUTCMonth())
+    }
+  })
+
+  it('rechaza un día que no existe en vez de correr el cronograma entero', () => {
+    // '2026-02-30' no lanza en JS: se desborda al 2 de marzo, y los diez hitos
+    // saldrían desplazados sin que nadie lo note.
+    expect(() => computeHitos('tecnico', '2026-02-30')).toThrow()
+    expect(() => computeHitos('tecnico', '2026-13-01')).toThrow()
+    expect(() => computeHitos('tecnico', '09-09-2026')).toThrow()
+    expect(() => computeHitos('tecnico', '2028-02-29')).not.toThrow() // bisiesto
+  })
+})
+
+describe('hitosPorAvisar por día colombiano', () => {
+  it('no adelanta el aviso en la franja en que UTC ya cambió de día', () => {
+    // 23:00 en Bogotá del 8 de septiembre = 04:00 UTC del 9. Comparando por día
+    // UTC, un hito del 9 se avisaría cuando en Colombia todavía es el 8.
+    const nocheDel8 = new Date('2026-09-09T04:00:00Z')
+    const hitos = computeHitos('tecnico', '2026-09-08')
+
+    const hoy = hitosPorAvisar(hitos, nocheDel8, 0)
+    expect(hoy.map((h) => h.titulo)).toEqual(['Inicio de etapa productiva'])
+  })
+
+  it('incluye el propio día y el rango pedido', () => {
+    const hitos = computeHitos('tecnico', '2026-09-01')
+    // La concertación cae el 16 (inicio + 15 días).
+    const enPunto = hitosPorAvisar(hitos, new Date('2026-09-16T17:00:00Z'), 0)
+    expect(enPunto.map((h) => h.titulo)).toEqual(['Visita de concertación'])
+
+    const conMargen = hitosPorAvisar(hitos, new Date('2026-09-14T17:00:00Z'), 2)
+    expect(conMargen.map((h) => h.titulo)).toEqual(['Visita de concertación'])
+
+    const justoAntes = hitosPorAvisar(hitos, new Date('2026-09-14T17:00:00Z'), 1)
+    expect(justoAntes).toEqual([])
+  })
+})
