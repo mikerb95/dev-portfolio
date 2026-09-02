@@ -113,6 +113,31 @@ const guardarDestino = (n: number) =>
 const leerScroll = async (): Promise<Peticion | null> =>
   parsearPeticion(await presentStore().get(K_SCROLL))
 
+const leerInicio = async (): Promise<number | null> =>
+  parsearInicio(await presentStore().get(K_INICIO))
+
+const leerEspejo = async (base: string): Promise<Espejo | null> =>
+  parsearEspejo(await presentStore().get(K_ESPEJO), base)
+
+/**
+ * Lo que se le cuenta a la sala en cada cambio: exactamente lo mismo que
+ * devuelve `?q=destino`, para que un seguidor por bus y uno caído al sondeo
+ * vean la misma verdad y no haya dos formas del mismo mensaje.
+ *
+ * FAIL-OPEN, y aquí importa más que en ningún sitio: si el bus no está
+ * configurado o Upstash tose, la charla sigue y los seguidores caen a su
+ * sondeo de rescate. Un canal de conveniencia que pueda tumbar el endpoint que
+ * mueve la presentación no es una mejora, es una avería nueva.
+ */
+async function anunciar(payload: unknown): Promise<void> {
+  try {
+    await presentStore().publish(CANAL, JSON.stringify(payload))
+  } catch {
+    // El sondeo de rescate cubre esto. No se registra: pasaría en cada cambio
+    // mientras el bus no exista (en local no existe) y ahogaría el log.
+  }
+}
+
 export const GET: APIRoute = async ({ url }) => {
   try {
     // La pantalla sondea dos veces por segundo durante toda la charla y solo
