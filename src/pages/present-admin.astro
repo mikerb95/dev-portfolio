@@ -134,10 +134,19 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
            empujaría la página fuera de la ventana en vez de encoger el mazo. */
         min-height: 0;
       }
+      body {
+        --panel: 0px;
+      }
+      body[data-panel='barra'] {
+        --panel: 3.25rem;
+      }
+      body[data-panel='consola'] {
+        --panel: min(40vh, 22rem);
+      }
       #panel {
         position: relative;
         flex: 0 0 auto;
-        height: 0;
+        height: var(--panel);
         overflow: hidden;
         background: #070a0e;
         border-top: 1px solid rgba(244, 246, 248, 0.1);
@@ -145,41 +154,30 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
         transition: height 0.22s ease;
       }
-      body[data-panel='barra'] #panel {
-        height: 3.25rem;
-      }
-      body[data-panel='consola'] #panel {
-        height: min(40vh, 22rem);
-      }
       /* Con el panel puesto, el cronómetro ya está dentro: dos relojes en la
          misma pantalla es uno de más. */
       body:not([data-panel='oculto']) #isla {
         display: none;
       }
-      /* La banda sensible del borde inferior, solo con el panel guardado. Ocho
-         píxeles y con espera: el cursor cruza esa franja cada vez que se clica
-         algo abajo en la demo del portal, y un panel que asoma solo delante
-         del público es peor que no tenerlo. */
-      #zona {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 8px;
-        z-index: 11;
-        pointer-events: none;
-      }
-      body[data-panel='oculto'] #zona {
-        pointer-events: auto;
-      }
+      /* El tirador cabalga el borde superior del panel y sube con él. Va FUERA
+         del panel a propósito: el `overflow:hidden` que hace posible la
+         transición de altura lo recortaría contra un panel de altura cero,
+         que es justo cuando hace falta verlo.
+
+         Su zona sensible es mayor que su dibujo (el `::before`) porque es lo
+         que se busca con el ratón sin mirar; y asomarse cuesta un cuarto de
+         segundo de espera, porque el cursor cruza esta franja cada vez que se
+         clica algo abajo en la demo del portal y un panel que asoma solo
+         delante del público es peor que no tenerlo. */
       #tirador {
-        position: absolute;
-        top: -0.9rem;
+        position: fixed;
+        bottom: var(--panel);
         left: 50%;
         transform: translateX(-50%);
         z-index: 12;
-        width: 5.5rem;
-        height: 0.9rem;
+        width: 10rem;
+        height: 1rem;
+        transition: opacity 0.2s linear, bottom 0.22s ease;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -190,8 +188,12 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         color: rgba(244, 246, 248, 0.45);
         font-size: 10px;
         cursor: pointer;
-        opacity: 0.25;
-        transition: opacity 0.2s linear;
+        opacity: 0.22;
+      }
+      #tirador::before {
+        content: '';
+        position: absolute;
+        inset: -10px -2.5rem;
       }
       #tirador:hover,
       #tirador:focus-visible {
@@ -427,17 +429,12 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       <button id="crono" type="button" title="Tiempo de la sustentación">--:--</button>
     </div>
 
-    <!-- La banda sensible del borde, hermana del tirador: hermana y no la
-         misma, porque el tirador viaja con el panel y esta se queda pegada al
-         borde de la ventana. -->
-    <div id="zona"></div>
-
     <!-- §11.7. El panel del ponente. Nada de aquí llega a la sala: los
          seguidores pintan su propia copia del mazo y lo único que viaja es la
          posición y la URL de la página viva. -->
-    <section id="panel" aria-label="Panel del ponente">
-      <button id="tirador" type="button" aria-label="Panel del ponente (tecla P)">···</button>
+    <button id="tirador" type="button" aria-label="Panel del ponente (tecla P)">···</button>
 
+    <section id="panel" aria-label="Panel del ponente">
       <div id="barra">
         <span class="reloj" id="reloj">--:--</span>
         <span id="desvio"></span>
