@@ -519,6 +519,22 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       } from '../lib/presentacion/lienzo'
       import { siguienteEspejo, type Espejo } from '../lib/presentacion/espejo'
       import { desfase, formatear, transcurrido } from '../lib/presentacion/cronometro'
+      import { hayQueDesplazar } from '../lib/presentacion/desplazamiento'
+      import { notaDeGlobal } from '../lib/presentacion/guion'
+      import {
+        ATAJOS,
+        destinoAtajo,
+        estimadoHasta,
+        estimadoTotal,
+        formatearDesvio,
+        indice,
+        parsearModo,
+        ritmo,
+        salud,
+        siguienteModo,
+        tituloDe,
+        type Modo,
+      } from '../lib/presentacion/panel'
 
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
@@ -594,6 +610,8 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         mazo = null
         contador = null
         ultimo = null
+        geoViva = null
+        urlViva = null
         // El espejo NO se borra: la clave del servidor sobrevive a esta recarga
         // y su `seq` tiene que seguir subiendo, o el mensaje siguiente llegaría
         // empatado y los seguidores lo descartarían por viejo.
@@ -922,7 +940,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
       // Tick propio de un segundo: la cuenta no depende del sondeo, así que si
       // Upstash se cae a mitad de charla el reloj sigue.
-      setInterval(pintarCrono, 1_000)
+      setInterval(() => {
+        pintarCrono()
+        pintarPanel()
+      }, 1_000)
       pintarCrono()
 
       /* ------------------------------------------------------------------ *
@@ -1021,11 +1042,15 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
         const geo = geometriaDe(dentro)
         const actual = posicionDe(mazo, punto, geo)
+        // Se guardan para el panel, que se pinta fuera de esta función: la
+        // alternativa era medir dos veces la misma diapositiva por vuelta.
+        geoViva = geo
+        urlViva = urlDe(dentro)
 
         // §11.5.2. La URL de la página viva, atada a SU diapositiva. El `seq`
         // sube solo cuando hay algo nuevo que contar: un mensaje que llegue
         // tarde se descarta en vez de deshacer una navegación buena.
-        const nuevoEspejo = siguienteEspejo(actual.pos, urlDe(dentro), espejo)
+        const nuevoEspejo = siguienteEspejo(actual.pos, urlViva, espejo)
         if (nuevoEspejo) espejo = nuevoEspejo
 
         if (!ultimo) {
@@ -1048,6 +1073,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
         try {
           const res = await fetch('/api/presentacion?q=destino', { cache: 'no-store' })
+          // Un 503 es el almacén caído, no un fallo de esta ventana: se dice en
+          // el panel y la charla sigue con lo último conocido.
+          hayRed = res.ok
           if (!res.ok) return
           const { destino, scroll, inicio, ahora } = (await res.json()) as {
             destino: number
@@ -1063,6 +1091,8 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           pintarCrono()
 
           if (typeof destino !== 'number') return
+          destinoServidor = destino
+          scrollPedido = typeof scroll === 'number' ? scroll : 0
           if (destino !== actual.pos) await reconciliar(destino)
           // El desplazamiento espera a que el mazo esté quieto, y también a que
           // la rueda haya dejado de girar: obedecer a media inercia tiraría de
@@ -1079,12 +1109,346 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         } catch {
           // Sin red o Redis caído: se reintenta en el próximo ciclo y la
           // presentación se queda donde está en vez de romperse.
+          hayRed = false
         }
       }
+
+      /* ------------------------------------------------------------------ *
+       * §11.7. El panel del ponente
+       *
+       * Es la consola que evita tener que mirar el celular mientras se conduce
+       * con el portátil: el guion, el ritmo contra el guion, la rejilla de
+       * saltos, el estado del enlace y los tres botones de rescate.
+       *
+       * NADA DE ESTO LLEGA A LA SALA. Los seguidores pintan su propia copia del
+       * mazo y lo único que viaja es la posición y la URL de la página viva:
+       * esta ventana es la que solo ve el ponente, que es la misma razón por la
+       * que el cronómetro pudo vivir aquí desde §11.6.
+       *
+       * NO ESCRIBE NADA NUEVO. Todos sus botones pasan por `mandar()`, el mismo
+       * `POST` que hace el pulgar desde `/remote`: un camino único por el que se
+       * mueve la presentación, y la sala se entera de todo lo que pasa aquí.
+       * ------------------------------------------------------------------ */
+
+      const el = {
+        tirador: document.getElementById('tirador') as HTMLButtonElement,
+        panel: document.getElementById('panel') as HTMLElement,
+        reloj: document.getElementById('reloj') as HTMLElement,
+        desvio: document.getElementById('desvio') as HTMLElement,
+        pos: document.getElementById('pos') as HTMLElement,
+        total: document.getElementById('total') as HTMLElement,
+        ahora: document.getElementById('ahora') as HTMLElement,
+        luego: document.getElementById('luego') as HTMLElement,
+        salud: document.getElementById('salud') as HTMLElement,
+        tituloGuion: document.getElementById('tituloGuion') as HTMLElement,
+        pantalla: document.getElementById('pantalla') as HTMLElement,
+        notas: document.getElementById('notas') as HTMLElement,
+        vacio: document.getElementById('vacio') as HTMLElement,
+        sigue: document.getElementById('sigue') as HTMLElement,
+        estimado: document.getElementById('estimado') as HTMLElement,
+        restante: document.getElementById('restante') as HTMLElement,
+        mazoDur: document.getElementById('mazoDur') as HTMLElement,
+        saltos: document.getElementById('saltos') as HTMLElement,
+        espejo: document.getElementById('espejo') as HTMLElement,
+        url: document.getElementById('url') as HTMLElement,
+        atajos: document.getElementById('atajos') as HTMLElement,
+        desplaza: document.getElementById('desplaza') as HTMLElement,
+        subir: document.getElementById('subir') as HTMLButtonElement,
+        bajar: document.getElementById('bajar') as HTMLButtonElement,
+        avance: document.getElementById('avance') as HTMLElement,
+        republicar: document.getElementById('republicar') as HTMLButtonElement,
+        reiniciar: document.getElementById('reiniciar') as HTMLButtonElement,
+        recargar: document.getElementById('recargar') as HTMLButtonElement,
+      }
+
+      const CLAVE_MODO = 'present-admin:panel'
+      /** Lo que hay que quedarse en el tirador para que el panel se asome. */
+      const ASOMO_MS = 250
+      /** Lo que tarda en retirarse un panel asomado al salir el ratón. */
+      const RETIRO_MS = 1_000
+
+      /* --- Lo que el panel necesita saber y el bucle ya averigua --- */
+      let hayRed = true
+      let destinoServidor = 0
+      let scrollPedido = 0
+      let geoViva: Geometria | null = null
+      let urlViva: string | null = null
+
+      /* --- Abrir y cerrar --- */
+
+      let modo: Modo = 'consola'
+      try {
+        modo = parsearModo(localStorage.getItem(CLAVE_MODO))
+      } catch {
+        // Modo privado o almacenamiento bloqueado: se abre en consola, que es
+        // lo que dice `parsearModo` por defecto.
+      }
+      /** Asomado por el ratón, que es distinto de elegido: se retira solo. */
+      let asomado = false
+
+      function aplicarModo() {
+        document.body.dataset.panel = asomado && modo === 'oculto' ? 'barra' : modo
+      }
+
+      function ponerModo(m: Modo) {
+        modo = m
+        asomado = false
+        try {
+          localStorage.setItem(CLAVE_MODO, m)
+        } catch {
+          // Da igual: el modo se pierde en la próxima recarga y nada más.
+        }
+        aplicarModo()
+        pintarPanel()
+      }
+
+      let asomo: ReturnType<typeof setTimeout> | null = null
+      let retiro: ReturnType<typeof setTimeout> | null = null
+      const cancelar = () => {
+        if (asomo) clearTimeout(asomo)
+        if (retiro) clearTimeout(retiro)
+        asomo = retiro = null
+      }
+
+      el.tirador.addEventListener('pointerenter', () => {
+        cancelar()
+        if (modo !== 'oculto') return
+        asomo = setTimeout(() => {
+          asomado = true
+          aplicarModo()
+          pintarPanel()
+        }, ASOMO_MS)
+      })
+      el.tirador.addEventListener('pointerleave', () => {
+        cancelar()
+        if (asomado) retiro = setTimeout(() => ponerModo('oculto'), RETIRO_MS)
+      })
+      el.panel.addEventListener('pointerenter', cancelar)
+      el.panel.addEventListener('pointerleave', () => {
+        if (asomado) retiro = setTimeout(() => ponerModo('oculto'), RETIRO_MS)
+      })
+      el.tirador.addEventListener('click', () => {
+        cancelar()
+        ponerModo(siguienteModo(modo))
+        el.tirador.blur()
+      })
+
+      /* --- Los botones. Todos pasan por `mandar()`. --- */
+
+      /**
+       * Confirmación de dos toques, la misma que la isla del cronómetro y por
+       * la misma razón: estos tres botones se pulsan con el público delante y
+       * ninguno se puede deshacer con otro clic.
+       */
+      function dosToques(boton: HTMLButtonElement, aviso: string, hacer: () => void) {
+        const texto = boton.textContent ?? ''
+        let hasta = 0
+        boton.addEventListener('click', () => {
+          if (Date.now() < hasta) {
+            hasta = 0
+            delete boton.dataset.confirmando
+            boton.textContent = texto
+            hacer()
+            return
+          }
+          hasta = Date.now() + CONFIRMA_MS
+          boton.dataset.confirmando = 'si'
+          boton.textContent = aviso
+          setTimeout(() => {
+            if (Date.now() >= hasta) {
+              delete boton.dataset.confirmando
+              boton.textContent = texto
+            }
+          }, CONFIRMA_MS)
+        })
+      }
+
+      dosToques(el.republicar, '¿republicar?', () => {
+        // No hay que forzar un `POST` a mano: olvidar lo último publicado hace
+        // que el sondeo siguiente lo reporte entero, y lo hace con origen
+        // `inicial`, que es el que NO adopta la posición como destino. Es lo
+        // que se quiere: refrescar la marca de tiempo y la forma del mazo sin
+        // robarle el viaje al mando.
+        ultimo = null
+      })
+      dosToques(el.reiniciar, '¿reiniciar?', () => {
+        inicioServidor = null
+        void mandar({ accion: 'reiniciar-cronometro' })
+      })
+      dosToques(el.recargar, '¿recargar?', () => {
+        // El destino vive en el servidor, así que el mazo se reconstruye solo
+        // hasta donde iba la charla. Es la salida cuando el bundle se queda
+        // sin descubrir o una página viva se cuelga.
+        iframe.src = '/final.html'
+      })
+
+      el.subir.addEventListener('click', () => void mandar({ accion: 'subir' }))
+      el.bajar.addEventListener('click', () => void mandar({ accion: 'bajar' }))
+
+      /* --- Pintado --- */
+
+      /** Segundos legibles de un vistazo: 45s, 1:30, 12:30. */
+      const duracion = (s: number) =>
+        s < 60 ? `${s}s` : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`
+
+      /** Última posición con la nota montada, para no rehacer el DOM cada medio
+       *  segundo durante toda la charla. */
+      let notaPintada: number | null = null
+      let totalPintado = 0
+      let atajosPintados = false
+
+      /**
+       * La nota va con el DESTINO y no con la posición confirmada, igual que en
+       * `/remote` y por lo mismo: el destino ES lo que se va a decir, y mientras
+       * el mazo viaja lo que hay que estar leyendo es la diapositiva a la que se
+       * va, no la que se acaba de dejar.
+       */
+      function pintarGuion(m: Mazo, destino: number) {
+        if (notaPintada === destino) return
+        notaPintada = destino
+        const nota = notaDeGlobal(m, destino)
+        el.tituloGuion.textContent = nota?.dur
+          ? `Guion · ${duracion(nota.dur)}`
+          : 'Guion'
+        el.pantalla.textContent = nota?.enPantalla ?? ''
+        el.pantalla.hidden = !nota?.enPantalla
+        const lineas = nota?.notas ?? []
+        el.notas.replaceChildren(
+          ...lineas.map((t) => {
+            const li = document.createElement('li')
+            li.textContent = t
+            return li
+          })
+        )
+        // El hueco se dice, no se deja en blanco: en una diapositiva sin guion
+        // hay que saber que falta escribirlo, no dudar de si el panel falla.
+        el.vacio.hidden = !nota || lineas.length > 0
+        const total = totalGlobal(m)
+        el.sigue.textContent =
+          destino < total ? `sigue · ${tituloDe(m, destino + 1) || 'sin título'}` : 'última'
+        el.notas.parentElement?.scrollTo({ top: 0 })
+      }
+
+      function pintarSaltos(m: Mazo) {
+        const lista = indice(m)
+        if (lista.length === totalPintado) return
+        totalPintado = lista.length
+        el.saltos.replaceChildren(
+          ...lista.map((e) => {
+            const b = document.createElement('button')
+            b.type = 'button'
+            b.dataset.n = String(e.n)
+            b.dataset.zona = e.zona
+            b.textContent = String(e.n)
+            // El título va en el `title` y no debajo del número: veintidós
+            // rótulos en la rejilla la vuelven ilegible justo cuando se busca
+            // deprisa, y aquí el número ES la dirección que entiende el mando.
+            b.title = e.titulo ? `${e.n}. ${e.titulo}` : `${e.n}`
+            b.addEventListener('click', () => {
+              void mandar({ destino: e.n })
+              b.blur()
+            })
+            return b
+          })
+        )
+      }
+
+      function pintarEspejo() {
+        const hay = Boolean(urlViva)
+        el.espejo.hidden = !hay
+        if (!hay) return
+        el.url.textContent = urlViva
+        if (atajosPintados) return
+        atajosPintados = true
+        el.atajos.replaceChildren(
+          ...ATAJOS.map((a) => {
+            const b = document.createElement('button')
+            b.type = 'button'
+            b.textContent = a.titulo
+            b.addEventListener('click', () => {
+              // Se navega la página viva, no esta ventana. El espejo se entera
+              // solo en el sondeo siguiente y la sala va detrás, que es
+              // exactamente lo que pasa cuando se navega a mano.
+              const destino = destinoAtajo(urlViva, a.href)
+              const dentro = iframeEnJuego(iframe)
+              if (!destino || !dentro) return
+              try {
+                dentro.contentWindow?.location.assign(destino)
+              } catch {
+                // Otro origen: no se puede navegar desde aquí y no pasa nada.
+              }
+              b.blur()
+            })
+            return b
+          })
+        )
+      }
+
+      function pintarDesplazamiento() {
+        const hay = hayQueDesplazar(geoViva ?? undefined)
+        el.desplaza.hidden = !hay
+        if (!hay || !geoViva) return
+        // Los topes se comparan contra lo PEDIDO y la barra enseña lo REAL:
+        // mientras el `scrollTo` anima, la posición va por detrás y mirarla
+        // dejaría el botón encendido en el fondo de la página.
+        el.subir.disabled = scrollPedido <= 0
+        el.bajar.disabled = scrollPedido >= geoViva.max
+        el.avance.style.width = `${Math.round((geoViva.y / geoViva.max) * 100)}%`
+      }
+
+      function pintarPanel() {
+        if (document.body.dataset.panel === 'oculto') return
+
+        const ms = transcurrido(inicioServidor, Date.now(), desfaseMs)
+        el.reloj.textContent = formatear(ms)
+
+        const pos = ultimo?.pos ?? 0
+        const destino = destinoServidor || pos
+        el.pos.textContent = pos ? String(pos) : '-'
+        el.total.textContent = ultimo ? `/ ${ultimo.total}` : '/ -'
+
+        const s = salud({ hayMazo: Boolean(mazo), hayRed, aplicando, pos, destino })
+        el.salud.dataset.estado = s.estado
+        el.salud.textContent = s.texto
+
+        if (!mazo) {
+          el.desvio.textContent = ''
+          delete el.desvio.dataset.senal
+          return
+        }
+
+        el.ahora.textContent = tituloDe(mazo, pos)
+        el.luego.textContent = pos < totalGlobal(mazo) ? `› ${tituloDe(mazo, pos + 1)}` : ''
+
+        const r = ritmo(mazo, destino, ms)
+        el.desvio.textContent = formatearDesvio(r.desvioMs)
+        if (r.desvioMs === null) delete el.desvio.dataset.senal
+        else el.desvio.dataset.senal = r.senal
+
+        if (document.body.dataset.panel === 'consola') {
+          el.estimado.textContent = duracion(estimadoHasta(mazo, destino))
+          el.restante.textContent = duracion(Math.round(r.restanteMs / 1000))
+          el.mazoDur.textContent = duracion(estimadoTotal(mazo))
+          pintarGuion(mazo, destino)
+          pintarSaltos(mazo)
+          pintarEspejo()
+          pintarDesplazamiento()
+          for (const b of el.saltos.querySelectorAll('button')) {
+            b.setAttribute('aria-current', String(Number(b.dataset.n) === destino))
+          }
+        }
+      }
+
+      aplicarModo()
+      pintarPanel()
 
       async function bucle() {
         for (;;) {
           await sondear()
+          // Fuera de `sondear` y no dentro: esa función tiene media docena de
+          // salidas tempranas (sin mazo, sin punto, sin red) y son justo los
+          // estados que el panel tiene que saber decir.
+          pintarPanel()
           await new Promise((r) => setTimeout(r, SONDEO_MS))
         }
       }
