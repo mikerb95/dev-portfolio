@@ -42,7 +42,7 @@ preexistentes de siempre.
 
 ## Lo que falta, en orden
 
-### Paso 0. La compuerta, y va primero
+### Paso 0 ⛔. La compuerta, y va primero
 
 **Medir `final.html` en un teléfono de gama baja**, con el mazo real y a ser
 posible en el WiFi del salón.
@@ -78,10 +78,12 @@ Cubierto por 5 casos nuevos en `tests/presentacion-desplazamiento.test.ts` y 5
 de costura en `tests/presentacion-endpoint.test.ts` (incluido el que fija que la
 rueda y el pulgar comparten clave sin pisarse).
 
-### Paso 2. `/present-admin`, que no existe
+### Paso 2 ✅. `/present-admin`
 
-`src/pages/present-admin.astro`. Es el grueso. Se entrega por capas, cada una
-comprobable a ojo antes de seguir:
+**Hecho**, las seis capas, en `src/pages/present-admin.astro` (714 líneas).
+Type-check limpio y responde 200 con `Cache-Control: no-store` y
+`X-Robots-Tag: noindex, nofollow`. **Sin verificar a ojo con el mazo real**: eso
+es el paso 5. Lo que se entregó, capa por capa:
 
 - **a. Lienzo y reconciliación.** Monta `final.html`, descubre el mazo y obedece
   el destino, reusando `lienzo.ts`. Al terminar esta capa ya es la pantalla del
@@ -105,11 +107,41 @@ comprobable a ojo antes de seguir:
 
 Ruta sin puerta y **sin excepción en el middleware**: el guion de
 `/present-admin` la deja fuera de `startsWith('/present/')` y de `isAdmin` por
-construcción. `Cache-Control: no-store`, `noindex, nofollow`, fuera de sitemap.
+construcción. `Cache-Control: no-store`, `noindex, nofollow`, fuera de sitemap
+(que es una lista explícita, no un glob, así que no había nada que quitar).
 
-### Paso 3. `/presentacion` pasa a seguidor puro
+**Lo que el plan no decía y salió al construirlo:**
 
-Solo si el paso 0 dio "sala sí".
+- **Hubo que registrar la ruta en `RESERVED_ROOT_SEGMENTS`**
+  (`src/lib/present/reserved.ts`). Es un segmento en la raíz y compite con el
+  espacio de los PIN de presentación: un PIN generado podría coincidir y mandar
+  a quien escanee el QR a la ventana de conducción en vez de a su deck. Lo cazó
+  `tests/present-pin.test.ts`, no una revisión. **`presentacion-end` tampoco
+  estaba registrada** (del tercer bloque de este archivo) y se arregló de paso.
+- **El guardia anti-repetición de la rueda tuvo que llevar la diapositiva
+  dentro.** Con solo el número, recorrer dos beats distintos hasta la misma
+  altura hacía que el segundo se descartara por repetido: el servidor seguiría
+  creyendo esa diapositiva arriba y devolvería la página de un tirón en el
+  sondeo siguiente. Mismo patrón `{pos, y}` que ya usa la clave del scroll.
+- **Hay una ventana de inercia de 900 ms** en la que `/present-admin` deja de
+  obedecer el scroll del servidor. Sin ella, la inercia del trackpad sigue
+  llegando casi un segundo después de levantar los dedos y el desplazamiento
+  pedido de antes del gesto tira de la página hacia atrás mientras se recorre.
+- **El espejo se manda en cada reporte, no solo cuando cambia.** El servidor lo
+  reescribe idéntico (barato) y los seguidores lo descartan por `seq` empatado,
+  pero así una clave que venció por TTL vuelve sola en el latido siguiente.
+
+### Paso 3 ⛔. `/presentacion` pasa a seguidor puro
+
+**Sin empezar, y a propósito: depende del paso 0**, que nadie ha hecho. Lo mismo
+vale para parametrizar `client-sync.ts`, que es su única pieza de apoyo: tocar
+hoy un módulo que sostiene tres charlas en producción para dejarlo esperando a
+una compuerta que puede cerrarse es arriesgar lo que funciona por algo que quizá
+no se use.
+
+Mientras tanto **`/presentacion` se queda como está**, y eso impone una regla de
+operación: **no abrir `/present-admin` y `/presentacion` a la vez**, porque
+serían dos escritores de la misma clave.
 
 Hoy sigue teniendo **siete llamadas a `reportar`**. Hay que dejarlo en cero
 `POST` y engancharlo al canal, con rescate a 3 s y solo lectura.
@@ -117,15 +149,24 @@ Hoy sigue teniendo **siete llamadas a `reportar`**. Hay que dejarlo en cero
 Conserva su `pointer-events: none`, que ahora tiene un motivo más: que un
 asistente no desincronice su propia copia sin entender por qué.
 
-### Paso 4. Documentación
+### Paso 4 ✅. Documentación
 
-- **RF-716** en `src/data/documentacion.ts`. Un feature entregado que no aparece
-  en `/docs` no existe para la sustentación.
-- **`docs/runbook-sustentacion.md`**, sin tocar desde el 28 de agosto: el
-  montaje real y la regla del login de demo.
-- Marcar **§11 y §12** de `docs/plan-control-final.md` al cerrar.
+**Hecho**, con una corrección: **el RF salió el 717, no el 716** - ese ya lo
+tenía el planteamiento del proyecto. Entra como `parcial` y no `implementado` a
+propósito: la ventana que conduce está, la sala como seguidores no, y un RF que
+dice "implementado" sobre medio diseño es peor que uno que no existe.
 
-### Paso 5. Verificación en vivo
+- **RF-717** en `src/data/documentacion.ts`.
+- **`docs/runbook-sustentacion.md`**: sección propia `3 bis` con las tres
+  ventanas, el orden de montaje, la regla del login de demo y las tres cosas que
+  sorprenden en vivo (flechas muertas con el foco en la demo, clic inerte en la
+  lámina, cronómetro que arranca solo). Va **separada** del sistema de
+  `/sustentacion`, que es otra cosa y solo comparte el día. Más dos ítems en el
+  chequeo de los diez minutos previos.
+- **§11 y §12** de `docs/plan-control-final.md` marcadas, con los pasos
+  etiquetados ✅/⛔ y el inventario de §12.1 puesto al día.
+
+### Paso 5 ⛔. Verificación en vivo
 
 Los diez puntos de §11.9 menos el décimo, ya gastado en el paso 0. **No se
 cierra desde el portátil solo**: los puntos 1, 6 y 9 piden `/presentacion`
