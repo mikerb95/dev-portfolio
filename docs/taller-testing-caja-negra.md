@@ -348,15 +348,26 @@ Teléfono del pagador en los cuatro cobros: `+57 310 464 1228`.
 > El taller de referencia dejaba la matriz TC ↔ BUG sin una tabla de defectos que
 > la respaldara. Aquí los defectos se listan primero, con pasos reproducibles, y
 > la matriz solo cruza lo que efectivamente se encontró.
+>
+> La columna **Característica** clasifica cada defecto según el modelo de
+> calidad **ISO/IEC 25010**, con las mismas cinco categorías que ya agrupan los
+> requerimientos no funcionales en `src/data/documentacion.ts`
+> (`/docs/requerimientos-no-funcionales`): Seguridad, Confiabilidad y
+> disponibilidad, Eficiencia de desempeño, Mantenibilidad, y Usabilidad y
+> accesibilidad. No es una etiqueta decorativa: dice qué atributo de calidad
+> quedó incumplido, y por eso un defecto de **Usabilidad** (BUG-02, BUG-04,
+> BUG-05) puede convivir con severidad baja mientras uno de **Seguridad**
+> (BUG-01, BUG-06) exige tratamiento prioritario aunque el síntoma visible sea
+> parecido.
 
-| ID | Título | Severidad | Módulo | Detectado en | Estado |
-|---|---|---|---|---|---|
-| BUG-01 | «Cerrar sesión» falla y la sesión permanece abierta | **Alta** | Portal · Autenticación | TC-08, ESC-01 | **Cerrado (27 ago 2026)** |
-| BUG-02 | El código corto de un cobro distingue mayúsculas de minúsculas | **Media** | Cobros · `/c/[code]` | CDE-09, exploratoria | Abierto |
-| BUG-03 | Las consultas inválidas consumen la cuota horaria de `/mis-pagos` | Baja | Cobros · `/mis-pagos` | BVA-18, TC-10 | Abierto |
-| BUG-04 | El mensaje de validación del cambio de contraseña se auto-oculta a los 4 s | Baja | Portal · Cuenta | TC-07 | Abierto |
-| BUG-05 | Un 404 dentro del portal renderiza el 404 público del sitio de marketing | Baja | Portal · Navegación | TC-06, exploratoria | Abierto |
-| BUG-06 | 18 vulnerabilidades en dependencias (2 críticas, 9 altas) | **Alta** | Transversal · Dependencias | Exploratoria (`npm audit`) | Abierto |
+| ID | Título | Severidad | Característica (ISO/IEC 25010) | Módulo | Detectado en | Estado |
+|---|---|---|---|---|---|---|
+| BUG-01 | «Cerrar sesión» falla y la sesión permanece abierta | **Alta** | Seguridad | Portal · Autenticación | TC-08, ESC-01 | **Cerrado (27 ago 2026)** |
+| BUG-02 | El código corto de un cobro distingue mayúsculas de minúsculas | **Media** | Usabilidad y accesibilidad | Cobros · `/c/[code]` | CDE-09, exploratoria | Abierto |
+| BUG-03 | Las consultas inválidas consumen la cuota horaria de `/mis-pagos` | Baja | Confiabilidad y disponibilidad | Cobros · `/mis-pagos` | BVA-18, TC-10 | Abierto |
+| BUG-04 | El mensaje de validación del cambio de contraseña se auto-oculta a los 4 s | Baja | Usabilidad y accesibilidad | Portal · Cuenta | TC-07 | Abierto |
+| BUG-05 | Un 404 dentro del portal renderiza el 404 público del sitio de marketing | Baja | Usabilidad y accesibilidad | Portal · Navegación | TC-06, exploratoria | Abierto |
+| BUG-06 | 18 vulnerabilidades en dependencias (2 críticas, 9 altas) | **Alta** | Seguridad | Transversal · Dependencias | Exploratoria (`npm audit`) | Abierto |
 
 ### BUG-01 - «Cerrar sesión» falla y la sesión permanece abierta
 
