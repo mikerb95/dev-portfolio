@@ -179,6 +179,24 @@ describe('las reglas de CSS', () => {
     expect(selectorEspejado('.x:hoverable')).toBe('.x:hoverable')
   })
 
+  it('no toca el :hover ESCAPADO de un nombre de clase de Tailwind', () => {
+    // `.md\:hover\:bg-x` es un nombre de clase, no una pseudoclase. Sustituirlo
+    // ahí dentro no daría una regla de más: daría una regla rota, y encima en
+    // la página que se enseña.
+    expect(tieneHover(String.raw`.md\:hover\:bg-x`)).toBe(false)
+    expect(selectorEspejado(String.raw`.md\:hover\:bg-x:hover`)).toBe(
+      String.raw`.md\:hover\:bg-x[${ATRIBUTO}]`
+    )
+  })
+
+  it('preguntar dos veces por el mismo selector responde lo mismo', () => {
+    // `test` con un regex global arrastra `lastIndex`: el mismo selector diría
+    // que sí y luego que no, y media hoja se quedaría sin gemela por el orden
+    // en que se leyó.
+    expect(tieneHover('a:hover')).toBe(true)
+    expect(tieneHover('a:hover')).toBe(true)
+  })
+
   it('resuelve el & del anidamiento que emite Tailwind', () => {
     // Tailwind 4 no emite `.hover\:underline:hover`, sino la regla anidada. Sin
     // resolver el `&` se perdería el hover de casi toda la interfaz del portal.
