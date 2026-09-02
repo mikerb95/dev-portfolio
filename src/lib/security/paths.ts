@@ -100,9 +100,11 @@ export function isPortalAuthPath(pathname: string): boolean {
  *  · Las APIs quedan fuera porque no se enmarcan. `frame-ancestors` solo aplica
  *    a documentos cargados en un frame; el XHR que el iframe haga contra
  *    /api/portal/* es mismo origen y no la mira.
- *  · /status y /engineering son páginas públicas (no pasan por la rama
- *    `isPrivate` del middleware) que también se enmarcan desde la
+ *  · /status, /engineering y /lab/site-check son páginas públicas (no pasan por
+ *    la rama `isPrivate` del middleware) que también se enmarcan desde la
  *    presentación del beat de la demo, así que necesitan la misma relajación.
+ *    Mismo origen que /presentacion en producción: por eso el mando puede
+ *    además desplazarlas desde dentro.
  *
  * Se cubre el subárbol entero de /portal y no una lista de rutas sueltas a
  * propósito: con rutas sueltas, abrir una factura concreta
@@ -115,6 +117,7 @@ export function isFramablePath(pathname: string): boolean {
     pathname === '/portal' ||
     pathname.startsWith('/portal/') ||
     pathname === '/status' ||
-    pathname === '/engineering'
+    pathname === '/engineering' ||
+    pathname === '/lab/site-check'
   )
 }
