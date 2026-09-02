@@ -178,6 +178,55 @@ describe('el espejo', () => {
   })
 })
 
+describe('el puntero', () => {
+  const señalando = (pos: number, seq: number) => ({
+    pos,
+    seq,
+    objetivo: { ruta: [1, 3, 0], tag: 'tr', fx: 0.4, fy: 0.6 },
+  })
+
+  it('viaja con el reporte de la pantalla y vuelve en el sondeo', async () => {
+    await post({ destino: 14 })
+    await post(reporte({ pos: 14, puntero: señalando(14, 1) }))
+    expect((await get('?q=destino')).cuerpo.puntero).toEqual(señalando(14, 1))
+  })
+
+  it('el de OTRA diapositiva no se sirve', async () => {
+    // Cambiar de beat apaga el cursor de la sala sin escribir nada, por la
+    // misma construcción que devuelve el scroll arriba y borra el espejo.
+    await post({ destino: 14 })
+    await post(reporte({ pos: 14, puntero: señalando(14, 1) }))
+    await post({ destino: 16 })
+    expect((await get('?q=destino')).cuerpo.puntero).toBeNull()
+  })
+
+  it('un reporte sin puntero no borra el que ya había', async () => {
+    // Un latido no sabe nada del ratón. Que el ratón se haya ido lo dice un
+    // puntero CON `objetivo: null`, que sí se escribe.
+    await post({ destino: 14 })
+    await post(reporte({ pos: 14, puntero: señalando(14, 3) }))
+    await post(reporte({ pos: 14 }))
+    expect((await get('?q=destino')).cuerpo.puntero?.seq).toBe(3)
+  })
+
+  it('el mensaje que apaga el cursor sí se escribe', async () => {
+    await post({ destino: 14 })
+    await post(reporte({ pos: 14, puntero: señalando(14, 3) }))
+    await post(reporte({ pos: 14, puntero: { pos: 14, seq: 4, objetivo: null } }))
+    expect((await get('?q=destino')).cuerpo.puntero).toEqual({ pos: 14, seq: 4, objetivo: null })
+  })
+
+  it('un objetivo imposible se descarta sin romper el reporte', async () => {
+    // Fail-open, como todo lo demás: la sala se queda sin cursor, no sin
+    // presentación.
+    const { estado } = await post(
+      reporte({ pos: 1, puntero: { pos: 1, seq: 1, objetivo: { ruta: [-3], tag: 'tr' } } })
+    )
+    expect(estado).toBe(200)
+    expect((await get('?q=destino')).cuerpo.puntero).toBeNull()
+  })
+})
+
 describe('el scroll absoluto de la rueda', () => {
   /** La pantalla publica una página el triple de alta que la ventanilla. */
   const conGeometria = () => post(reporte({ scroll: { y: 0, max: 2400, alto: 900 } }))
