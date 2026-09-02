@@ -9,7 +9,12 @@ import {
   updateCuentaCobro,
   type SaveCuentaCobroInput,
 } from '../../../../lib/cuentas-cobro-db'
-import { CONCEPTOS_DEFAULT, type ConceptoId, type CuentaCobroItem } from '../../../../lib/cuentas-cobro'
+import {
+  CONCEPTOS_DEFAULT,
+  parseFechaCalendario,
+  type ConceptoId,
+  type CuentaCobroItem,
+} from '../../../../lib/cuentas-cobro'
 
 // CRUD de cuentas de cobro desde el panel. La sesión de admin la impone el
 // middleware (matcher isAdmin), no este archivo.
@@ -64,12 +69,11 @@ const str = (v: unknown, max = 300): string | null => {
   return s || null
 }
 
-/** Fecha desde 'YYYY-MM-DD' o ISO. Una fecha inválida es null, nunca Invalid Date. */
-const date = (v: unknown): Date | null => {
-  if (typeof v !== 'string' || !v.trim()) return null
-  const d = new Date(v)
-  return Number.isNaN(d.getTime()) ? null : d
-}
+// Las fechas de periodo y vencimiento llegan de un <input type="date"> como
+// 'YYYY-MM-DD'. `new Date()` las leería como medianoche UTC, que en Colombia es
+// el día anterior: el periodo "agosto" se imprimiría empezando el 31 de julio.
+// parseFechaCalendario las ancla a medianoche colombiana. Ver lib/cuentas-cobro.ts.
+const date = parseFechaCalendario
 
 function parseInput(data: Record<string, unknown>): SaveCuentaCobroInput | { error: string } {
   const clientId = Number(data.clientId)

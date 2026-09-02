@@ -3,8 +3,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { db } from '../../../db'
 import { clients, projects } from '../../../db/schema'
 import { allCuentasCobro, cuentaCountByStatus, loadEmisorYConfig, topeIvaDelAnio } from '../../../lib/cuentas-cobro-db'
-import { CONCEPTOS_DEFAULT, rateOf, TOPE_NO_RESPONSABLE_UVT } from '../../../lib/cuentas-cobro'
-import { formatMoney, formatDate } from '../../../lib/portal/format'
+import { CONCEPTOS_DEFAULT, formatFechaCorta, rateOf, TOPE_NO_RESPONSABLE_UVT } from '../../../lib/cuentas-cobro'
+// formatFechaCorta y no formatDate: este último usa la zona del servidor, que en
+// Vercel es UTC, y fecharía en el día siguiente todo lo emitido tras las 19:00
+// hora de Colombia. Ver lib/cuentas-cobro.ts.
+import { formatMoney } from '../../../lib/portal/format'
 
 const [rows, counts, tope, { emisor, config }, clientRows, projectRows] = await Promise.all([
   allCuentasCobro(),
@@ -177,7 +180,7 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
                   <div class="text-[13px] text-ink-50">{cc.company ?? cc.clientName}</div>
                   {cc.concept && <div class="text-[11px] text-ink-300 truncate max-w-[280px]">{cc.concept}</div>}
                 </td>
-                <td class="px-4 py-3 text-[13px] text-ink-200">{formatDate(cc.issuedAt)}</td>
+                <td class="px-4 py-3 text-[13px] text-ink-200">{formatFechaCorta(cc.issuedAt)}</td>
                 <td class="px-4 py-3 text-right font-mono text-[13px] text-ink-50">{formatMoney(cc.totalCents)}</td>
                 <td class="px-4 py-3 text-right font-mono text-[13px]">
                   {cc.retentionsCents > 0

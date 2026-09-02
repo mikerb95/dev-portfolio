@@ -472,6 +472,66 @@ export function parseDeudor(
   }
 }
 
+// ── Fechas ──────────────────────────────────────────────────────────────────
+//
+// La fecha de expedición de una cuenta de cobro es un dato del documento, no
+// una marca de tiempo interna: alimenta el Documento Soporte del pagador, que
+// tiene plazos por día. En Vercel el servidor corre en UTC, así que formatear
+// sin zona hace que todo lo emitido después de las 19:00 hora de Colombia
+// aparezca fechado al día siguiente.
+//
+// Hay DOS clases de fecha aquí y confundirlas produce errores opuestos:
+//
+//  · Instantes (emisión, pago): un momento real. Se guardan como instante y se
+//    formatean en América/Bogotá.
+//  · Fechas de calendario (periodo del servicio, vencimiento): vienen de un
+//    <input type="date"> como 'YYYY-MM-DD' y NO son un instante. `new Date()`
+//    las interpreta como medianoche UTC, que en Bogotá es el día ANTERIOR a
+//    las 19:00. Por eso se anclan a medianoche colombiana al entrar.
+
+export const TZ_COLOMBIA = 'America/Bogota'
+
+// Colombia no aplica horario de verano desde 1993, así que el desfase es fijo
+// y se puede escribir literal sin que caduque.
+const OFFSET_COLOMBIA = '-05:00'
+
+const SOLO_FECHA = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * Convierte lo que llega del formulario en un instante.
+ *
+ * 'YYYY-MM-DD' se ancla a medianoche EN COLOMBIA, no en UTC: es una fecha de
+ * calendario que el usuario eligió en su calendario, no un momento universal.
+ * Cualquier otra cosa se parsea tal cual. Una fecha inválida devuelve null y
+ * nunca un `Invalid Date`, que se propagaría hasta la base de datos.
+ */
+export function parseFechaCalendario(v: unknown): Date | null {
+  if (typeof v !== 'string' || !v.trim()) return null
+  const raw = v.trim()
+  const d = new Date(SOLO_FECHA.test(raw) ? `${raw}T00:00:00${OFFSET_COLOMBIA}` : raw)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+const fmtLarga = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+  timeZone: TZ_COLOMBIA,
+})
+
+const fmtCorta = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: TZ_COLOMBIA,
+})
+
+/** '01 de septiembre de 2026'. Para el cuerpo del documento. */
+export const formatFechaLarga = (d: Date | null | undefined): string => (d ? fmtLarga.format(d) : '')
+
+/** '01 sept 2026'. Para listados y tablas del panel. */
+export const formatFechaCorta = (d: Date | null | undefined): string => (d ? fmtCorta.format(d) : '-')
+
 // ── Identificación de las partes ────────────────────────────────────────────
 
 export type BloqueIdentificacion = {

@@ -12,6 +12,7 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import {
   bloquesIdentificacion,
+  formatFechaLarga,
   LEYENDA_DOCUMENTO_SOPORTE,
   LEYENDA_NO_OBLIGADO_FACTURAR,
   LEYENDA_NO_RESPONSABLE_IVA,
@@ -102,8 +103,10 @@ const fmt = (cents: number): string =>
   // justo antes de dibujar, y tenerlo en un solo sitio evita que se olvide.
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(cents / 100)
 
-const fecha = (d: Date | null): string =>
-  d ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }).format(d) : ''
+// Formateo en zona de Colombia, no la del servidor: en Vercel el proceso corre
+// en UTC y una cuenta emitida a las 19:30 de Bogotá saldría fechada al día
+// siguiente. La fecha del documento tiene efectos de plazo, no es decorativa.
+const fecha = (d: Date | null): string => formatFechaLarga(d)
 
 // ── Generación ──────────────────────────────────────────────────────────────
 

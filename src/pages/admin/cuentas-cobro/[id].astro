@@ -7,6 +7,7 @@ import {
   parseSnapshot,
 } from '../../../lib/cuentas-cobro-db'
 import {
+  formatFechaCorta,
   ibcSeguridadSocial,
   montoEnLetras,
   parseDeudor,
@@ -14,7 +15,9 @@ import {
   type Deudor,
   type Emisor,
 } from '../../../lib/cuentas-cobro'
-import { formatMoney, formatDate } from '../../../lib/portal/format'
+// formatFechaCorta y no formatDate: este último usa la zona del servidor (UTC
+// en Vercel) y correría un día las fechas del documento. Ver lib/cuentas-cobro.ts.
+import { formatMoney } from '../../../lib/portal/format'
 
 const id = Number(Astro.params.id)
 const detalle = Number.isInteger(id) ? await cuentaCobro(id) : null
@@ -108,7 +111,7 @@ const STATUS_STYLE: Record<string, string> = {
     </span>
     {congelado && (
       <span class="text-[11px] font-mono text-ink-300">
-        datos congelados el {formatDate(cuenta.issuedAt)}
+        datos congelados el {formatFechaCorta(cuenta.issuedAt)}
       </span>
     )}
   </div>
@@ -166,10 +169,10 @@ const STATUS_STYLE: Record<string, string> = {
             {[
               cuenta.city && `${cuenta.city}`,
               cuenta.periodStart || cuenta.periodEnd
-                ? `periodo ${[formatDate(cuenta.periodStart), formatDate(cuenta.periodEnd)].filter((v) => v !== '-').join(' a ')}`
+                ? `periodo ${[formatFechaCorta(cuenta.periodStart), formatFechaCorta(cuenta.periodEnd)].filter((v) => v !== '-').join(' a ')}`
                 : null,
               cuenta.contractRef && `contrato ${cuenta.contractRef}`,
-              cuenta.dueAt && `pago hasta ${formatDate(cuenta.dueAt)}`,
+              cuenta.dueAt && `pago hasta ${formatFechaCorta(cuenta.dueAt)}`,
             ]
               .filter(Boolean)
               .join('  ·  ')}
