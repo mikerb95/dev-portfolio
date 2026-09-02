@@ -773,7 +773,7 @@ tests/presentacion-lienzo.test.ts       zonas, quién recorta a quién, geometr�
 tests/presentacion-espejo.test.ts       orden por `seq`, diapositiva ajena, sin canal
 tests/presentacion-cronometro.test.ts   desfase, formato, arranque idempotente
 tests/presentacion-endpoint.test.ts     la costura: reglas puras contra el almacén
-src/data/documentacion.ts               RF-716, `planeado` -> `implementado`
+src/data/documentacion.ts               RF-717 (el 716 ya estaba cogido)
 docs/runbook-sustentacion.md            montaje real y la regla del login de demo
 docs/plan-control-final.md              esta sección, marcada al entregar
 ```
@@ -868,6 +868,14 @@ resincronía, forma del mensaje, cadencia del rescate) dejando el sitio de
 llamada de los decks funcionando igual. Escribir un hermano nuevo duplicaría la
 única lógica del sistema que ya se probó en vivo con público delante.
 
+**Sigue sin parametrizar, y a propósito.** Su único consumidor sería el paso 3,
+que está detrás del paso 0. Tocar hoy un módulo que sostiene tres charlas en
+producción para dejarlo esperando a una compuerta que puede cerrarse es
+arriesgar lo que funciona por algo que quizá no se use. Se hace cuando el paso 0
+diga "sala sí". Aviso para quien lo retome: en el repo ya hay **dos** copias de
+estas tres capas (`present/client-sync.ts` y `sustentacion/seguir.ts`), así que
+la tercera no se escribe - se parametriza la primera.
+
 **2. El orden entre los pasos 2 y 3 es obligatorio, no una preferencia.** Hoy el
 único escritor de `actual` es `/presentacion`. Si deja de publicar antes de que
 `/present-admin` publique, queda una ventana sin nadie que diga la forma del
@@ -876,7 +884,7 @@ precisamente lo que la sección 2.2 protege. `/present-admin` publica primero;
 `/presentacion` se calla después. Y mientras dure ese solape, **no se abren las
 dos a la vez**: serían dos escritores de la misma clave.
 
-### 12.3. Paso 0: la compuerta, que hoy está la última
+### 12.3. Paso 0 ⛔: la compuerta, que hoy está la última
 
 El punto 10 de 11.9 (medir `final.html` en un teléfono de gama baja) no es una
 verificación, es una **compuerta de diseño**, y va primero. `final.html` es 1 MB
@@ -892,7 +900,7 @@ salón si se puede. Lo que se decide con el resultado: **sala sí** (se sigue co
 el plan) o **sala no** (se entrega `/present-admin` y `/presentacion` se queda
 como está, sin tocar su lado escritor).
 
-### 12.4. Paso 1: cerrar el lado de escritura de la API
+### 12.4. Paso 1 ✅: cerrar el lado de escritura de la API
 
 Autónomo y sin riesgo: no rompe nada de lo que ya funciona, y deja el resto del
 trabajo apoyado en algo que se puede probar con `curl` antes de tener páginas.
@@ -917,7 +925,7 @@ Verificación: lo que sea puro entra en `tests/presentacion-espejo.test.ts` y
 `presentacion-cronometro.test.ts`, que ya existen; lo demás, con `curl` contra
 el dev server, como se hizo con la sección 10.
 
-### 12.5. Paso 2: `/present-admin`
+### 12.5. Paso 2 ✅: `/present-admin`
 
 La ventana que conduce. Es el grueso del trabajo y se entrega por capas, cada
 una comprobable a ojo en el portátil antes de seguir:
@@ -945,7 +953,7 @@ Ruta sin puerta y sin excepción en el middleware: el guion de `/present-admin`
 la deja fuera de `startsWith('/present/')` y de `isAdmin` por construcción.
 `Cache-Control: no-store`, `noindex, nofollow`, fuera de sitemap.
 
-### 12.6. Paso 3: `/presentacion` pasa a seguidor puro
+### 12.6. Paso 3 ⛔: `/presentacion` pasa a seguidor puro
 
 Solo si el paso 0 dio "sala sí".
 
@@ -963,13 +971,20 @@ el portátil" y pasa a cubrir solo la navegación que el bundle hace por su cuen
 dentro de un beat. No se borra a ciegas: se decide con la regla escrita y se
 ajusta el comentario de la sección 4, que si no queda mintiendo sobre el motivo.
 
-### 12.7. Paso 4: documentación
+### 12.7. Paso 4 ✅: documentación
 
-RF-716 en `src/data/documentacion.ts` (un feature entregado que no aparece en
+RF-717 en `src/data/documentacion.ts` (un feature entregado que no aparece en
 `/docs` no existe para la sustentación), el montaje real y la regla del login de
 demo en `docs/runbook-sustentacion.md`, y marcar §11 y esta §12 al cerrar.
 
-### 12.8. Paso 5: verificación en vivo
+Entregado así: el RF salió **717** y no 716, que ya lo tenía el planteamiento
+del proyecto, y entra como `parcial` y no `implementado` a propósito - la
+ventana que conduce está, la sala como seguidores no, y un RF que dice
+"implementado" sobre medio diseño es peor que uno que no existe. El runbook
+recibió una sección propia (`3 bis`), separada del sistema de `/sustentacion`
+para que no se mezclen dos cosas que solo comparten el día.
+
+### 12.8. Paso 5 ⛔: verificación en vivo
 
 Los diez puntos de 11.9 menos el décimo, ya gastado en el paso 0. **No se puede
 cerrar desde el portátil solo**: los puntos 1, 6 y 9 piden `/presentacion`

@@ -52,6 +52,11 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   'platziconf',
   'portal',
   'present',
+  // La ventana que CONDUCE `final.html` desde el portátil del ponente. El guion
+  // en vez de la barra la deja fuera de `startsWith('/present/')` y de `isAdmin`
+  // por construcción, pero por eso mismo es una ruta raíz más y compite con el
+  // espacio de los PIN igual que cualquier otra.
+  'present-admin',
   // Visor público de `public/final.html` y su control remoto
   // (`/presentacion` y `/presentacion/control`). Cubre las dos: la página y el
   // directorio se normalizan al mismo segmento.
