@@ -1160,6 +1160,12 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         const nuevoEspejo = siguienteEspejo(actual.pos, urlViva, espejo)
         if (nuevoEspejo) espejo = nuevoEspejo
 
+        // §11.12. Y el ratón, con la misma disciplina: `seq` que solo sube y un
+        // umbral de movimiento, para que un pulso quieto sobre un botón no
+        // publique dos veces por segundo durante toda la charla.
+        const nuevoPuntero = siguientePuntero(actual.pos, objetivoRaton, puntero)
+        if (nuevoPuntero) puntero = nuevoPuntero
+
         if (!ultimo) {
           await reportar(actual, 'inicial')
         } else if (actual.pos !== ultimo.pos || actual.total !== ultimo.total) {
