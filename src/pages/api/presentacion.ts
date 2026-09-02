@@ -269,6 +269,13 @@ export const POST: APIRoute = async ({ request, url }) => {
       const espejo = parsearEspejo(cuerpo.espejo, url.origin)
       if (espejo) await presentStore().set(K_ESPEJO, JSON.stringify(espejo), TTL_SEGUNDOS)
 
+      // El puntero viaja igual y con la misma regla de "no borrar": un reporte
+      // sin él es un latido que no sabe nada del ratón, no un ratón que se fue.
+      // Que el ratón se haya ido lo dice un puntero CON `objetivo: null`, que
+      // sí se escribe y sí apaga el cursor de la sala.
+      const puntero = parsearPuntero(cuerpo.puntero)
+      if (puntero) await presentStore().set(K_PUNTERO, JSON.stringify(puntero), TTL_SEGUNDOS)
+
       const previo = await leerDestino()
       const destino = destinoTrasReporte(previo, actual, origen)
       if (destino !== previo) await guardarDestino(destino)
