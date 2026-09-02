@@ -35,6 +35,15 @@
 //     orden; después, mandarle una tecla para retirar una capa movería un beat
 //     que nadie pidió.
 //
+// LO QUE ESTA VENTANA OBEDECE del ponente, además de la diapositiva: la URL de
+// la página viva (el espejo, `lib/presentacion/espejo.ts`) y el elemento que
+// está señalando con el ratón (el puntero, `lib/presentacion/puntero.ts`).
+// Ninguno de los dos es un espejo de píxeles ni de DOM: viajan una URL y una
+// ruta de índices de hijo, y esta ventana las resuelve en SU copia de la misma
+// página. Cuando no resuelven -otra página, otra versión del bundle- no se
+// pinta nada, que es la degradación buena: se ve la lámina sin cursor, en vez
+// de un cursor señalando la fila que no es.
+//
 // TRES BEATS PROYECTAN UNA PÁGINA VIVA dentro de otro iframe (la demo del
 // portal, `/status`, `/engineering`). Como en producción esa cadena entera es
 // de un solo origen, se pueden desplazar desde aquí: se descubre el iframe en
@@ -636,17 +645,49 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         try {
           const res = await fetch('/api/presentacion?q=destino', { cache: 'no-store' })
           if (!res.ok) return
-          const { destino, scroll } = (await res.json()) as { destino: number; scroll?: number }
+          const cuerpo = (await res.json()) as {
+            destino: number
+            scroll?: number
+            espejo?: unknown
+            puntero?: unknown
+          }
+          const { destino, scroll } = cuerpo
           if (typeof destino !== 'number') return
+
+          // El espejo, antes de decidir nada: un mensaje que llegue tarde se
+          // descarta por `seq` en vez de deshacer una navegación buena.
+          const entrante = parsearEspejo(cuerpo.espejo, location.origin)
+          if (entrante && esMasNuevo(entrante, espejo)) espejo = entrante
+
+          // El puntero, con una diferencia que importa: un `null` explícito del
+          // servidor NO es basura, es "no hay puntero para esta diapositiva" y
+          // apaga el cursor. Por eso se distingue de un mensaje ilegible, que
+          // se descarta dejando lo que había.
+          if (cuerpo.puntero === null) puntero = null
+          else if (cuerpo.puntero !== undefined) {
+            const p = parsearPuntero(cuerpo.puntero)
+            if (p && esMasNuevoPuntero(p, puntero)) puntero = p
+          }
+
           // El servidor ya acota contra el total que se le publicó, así que
           // aquí no hace falta corregirle nada: o el destino es alcanzable, o
           // la reconciliación lo devuelve como movimiento ajeno.
-          if (destino !== actual.pos) await reconciliar(destino)
-          // El desplazamiento espera a que el mazo esté quieto: si se está
-          // cruzando media presentación, la diapositiva de la que habla el
-          // scroll pedido ni siquiera está en pantalla todavía.
-          else if (dentro && geo && !aplicando && typeof scroll === 'number')
-            desplazar(dentro, geo, scroll)
+          if (destino !== actual.pos) {
+            cambioEn = Date.now()
+            await reconciliar(destino)
+          } else if (!aplicando) {
+            // Con el mazo quieto: la página que toca, hasta donde toca, con el
+            // ratón donde toca. Si se estuviera cruzando media presentación, la
+            // diapositiva de la que hablan las tres cosas ni siquiera está en
+            // pantalla todavía.
+            navegarEspejo(dentro, actual.pos)
+            if (dentro && geo && typeof scroll === 'number') desplazar(dentro, geo, scroll)
+            marcados = aplicarPuntero(
+              dentro?.contentDocument ?? null,
+              punteroPara(puntero, actual.pos),
+              marcados
+            )
+          }
         } catch {
           // Sin red o Redis caído: se reintenta en el próximo ciclo y la
           // presentación se queda donde está en vez de romperse.
