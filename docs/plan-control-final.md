@@ -721,13 +721,13 @@ Lo demás: cifras tabulares (`font-variant-numeric: tabular-nums`) para que no
 bailen de ancho al pasar de `9` a `10`, `mm:ss` hasta la hora y `h:mm:ss`
 después, y peso visual bajo. Es un dato de apoyo, no el protagonista.
 
-#### 11.6.5. Opcional, no incluido: ritmo contra el guion
+#### 11.6.5. Ritmo contra el guion ✅ (entregado en 11.11)
 
 `GUION_BEATS` ya trae la duración estimada de cada diapositiva (sección 2.2).
 Sumarla da un presupuesto, y contra el tiempo real sale un "vas 2 min por
-delante", que es más útil que el número desnudo. No entra en este plan: es cero
-estado nuevo sobre datos que ya existen, así que se puede añadir después sin
-tocar nada, y conviene ver primero si el reloj a secas basta.
+delante", que es más útil que el número desnudo. Se dejó fuera del plan
+original porque era cero estado nuevo sobre datos que ya existían y convenía
+ver antes si el reloj a secas bastaba. No bastaba, y entró con el panel: 11.11.
 
 ### 11.7. Ruta, puerta y encabezados
 
@@ -818,6 +818,122 @@ abierta en **dos equipos distintos**, uno de ellos un teléfono:
   salón se cae o si los teléfonos no aguantan el bundle, el ponente sigue con su
   portátil y su móvil sin enterarse. Ninguna ruta del camino caliente depende de
   que haya alguien mirando.
+
+### 11.11. El panel del ponente (2 sep 2026) ✅
+
+El cronómetro fue el primer instrumento que se metió en esta ventana; el panel
+es el resto. Lo que resuelve es concreto: hasta aquí, el guion, la rejilla de
+saltos y el estado del enlace solo existían en `/remote`, es decir, en el
+celular. Conduciendo desde el portátil había que mirar dos pantallas.
+
+**No hay estado nuevo, ni clave nueva, ni escritor nuevo.** Todo lo que el panel
+enseña ya viajaba, y todos sus botones pasan por el mismo `POST` que hace el
+pulgar. Es una vista.
+
+#### 11.11.1. Por qué empuja en vez de superponerse
+
+`final.html` encaja su escenario con `scale(min(w/1920, h/1080))` y lo rehace en
+cada `resize` de **su** ventana, que es el iframe. Así que quitarle altura al
+iframe no tapa nada: el mazo se re-encaja solo, entero y más pequeño.
+
+Un panel superpuesto, en cambio, se comería justo la franja de abajo, que es
+donde el bundle pinta su contador y donde el portal pone su navegación durante
+la demo. Es el mismo error que 11.6.4 evita en la isla, un tamaño más grande.
+
+Dos consecuencias que no son evidentes y sí importan:
+
+- **La sala no ve nada de esto.** Los seguidores pintan su propia copia del
+  mazo; lo que viaja es la posición y la URL. El panel no entra en el espejo
+  porque el espejo no es un espejo de píxeles (11.5.4).
+- **La geometría de scroll no cambia.** El iframe vivo está dentro del escenario
+  de 1920 con píxeles fijos: al encoger el marco cambia su escala visual, nunca
+  la `y` ni el `max` que se publican. Abrir el panel no mueve la página de la
+  sala.
+
+Y una tercera que se comprobó antes de escribirlo, porque habría tumbado la
+idea: `iframeEnJuego` elige el iframe vivo por cobertura mínima del 15% de la
+ventana del mazo (11.5). Encoger el marco encoge las dos cosas a la vez y la
+proporción se sostiene con holgura, así que el panel abierto no deja al mando
+sin controles de desplazamiento.
+
+#### 11.11.2. Tres estados, no dos
+
+`oculto` (el mazo a pantalla completa), `barra` (una franja de 52 px con reloj,
+posición, título y estado) y `consola` (guion, ritmo, rejilla e instrumentos).
+Se cicla con **P** y se guarda en `localStorage`.
+
+Que un valor corrupto caiga en `consola` y no en `oculto` es deliberado: una
+recarga a mitad de charla es un escenario contemplado (origen `inicial`), y
+recuperar el panel es una tecla mientras que descubrir que se perdió es mirar
+una pantalla vacía delante del jurado.
+
+**P no colisiona con nada**, y merece decirse porque parece que sí: el mazo usa
+esa misma tecla para su ventana de presentador. No llega a usarla nunca, porque
+11.4 le tapa el teclado entero; y lo que se teclea dentro de la demo no sale del
+iframe, así que tampoco puede disparar el panel por accidente.
+
+El tirador cabalga el borde superior del panel y sube con él. Va **fuera** del
+elemento que anima: el `overflow:hidden` que hace posible la transición de
+altura lo recortaría justo cuando el panel mide cero, que es cuando hace falta
+verlo. Asomarse cuesta un cuarto de segundo de espera sobre el tirador, porque
+el cursor cruza esa franja cada vez que se clica algo abajo en la demo, y un
+panel que asoma solo delante del público es peor que no tenerlo.
+
+#### 11.11.3. Qué enseña
+
+- **Guion** (`notaDeGlobal`, los mismos datos que `/remote`), con el título de
+  la siguiente. Va con el **destino** y no con la posición confirmada, por lo
+  mismo que en 10.3: el destino es lo que se va a decir, y durante los dos
+  segundos de un viaje largo lo que hay que estar leyendo es la diapositiva a la
+  que se va. Los rótulos de la barra van también con el destino, o la barra y el
+  guion se contradicen en ese hueco.
+- **Ritmo** (11.6.5): transcurrido contra la suma de `dur` de lo ya recorrido,
+  con tolerancia de un minuto. Un tramo sin ninguna estimación **no** produce
+  desvío: calcularlo contra cero diría "vas 8 minutos largo" en el minuto ocho
+  de una charla que va perfecta, que es justo el aviso que hace acelerar a quien
+  no debía.
+- **Rejilla de saltos** sobre la forma descubierta, no sobre la longitud del
+  guion: un beat nuevo sin notas escritas tiene que seguir siendo alcanzable.
+- **Salud del enlace**: `sin-mazo` antes que `sin-red`, porque culpar a la red
+  de un bundle sin descubrir manda a mirar el WiFi cuando lo que hay que hacer
+  es recargar el lienzo.
+- **Página viva**: la URL del espejo y cuatro atajos (demo del portal, login,
+  `/status`, `/engineering`) que navegan el iframe, resueltos contra la URL viva
+  y no contra el origen de esta ventana - en local el mazo enmarca producción.
+  Más los `↑/↓` de 11.5.3, que es la misma vía del pulgar.
+- **Rescate**: republicar, reiniciar el reloj y recargar el lienzo, los tres con
+  la confirmación de dos toques de 11.6.3 y por la misma razón.
+
+"Republicar" no fuerza ningún `POST` a mano: olvida lo último publicado, y el
+sondeo siguiente lo reporta entero con origen `inicial`, que es el que **no**
+adopta la posición como destino. Refresca la marca de tiempo y la forma del mazo
+sin robarle el viaje al mando.
+
+#### 11.11.4. Dos detalles que costaron una vuelta
+
+**El CSS va `is:global`.** Astro escopa por atributo los elementos que ve en la
+plantilla, y media consola (la rejilla, los atajos, las líneas del guion) la
+construye el script cuando la pantalla ya dijo cuántas diapositivas hay. Con el
+escopado por defecto esos nodos salían con el estilo por defecto del navegador.
+
+**El espacio y el enter son del botón que tenga el foco.** El teclado de esta
+ventana convierte el espacio en "siguiente"; sin excluir el panel, pulsar
+espacio después de clicar un salto avanzaba además una diapositiva que nadie
+había pedido.
+
+#### 11.11.5. Archivos
+
+```
+src/lib/presentacion/panel.ts        modos, índice, ritmo y salud (puro, nuevo)
+tests/presentacion-panel.test.ts     25 casos (nuevo)
+src/pages/present-admin.astro        la vista y el cableado
+```
+
+Lo que **no** está verificado: el panel se probó en el navegador contra el mazo
+real, pero con el iframe vivo de otro origen (en local esas URLs apuntan a
+producción). El bloque de página viva se comprobó de forma, no de
+funcionamiento: la navegación por atajo y los `↑/↓` con geometría real solo se
+pueden cerrar desde producción.
 
 ## 12. Entrega de la sección 11: inventario y orden
 

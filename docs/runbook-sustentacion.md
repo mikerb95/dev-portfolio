@@ -248,6 +248,16 @@ URL es pasar una diapositiva de algo que ya está proyectado en la pared.
    mazo monte (el contador `NN / MM` abajo). Es la única ventana que publica la
    posición real: hasta que esté abierta, el mando no sabe cuántas diapositivas
    hay.
+   - **Tecla `P`**: cicla el panel del ponente entre oculto, barra fina y
+     consola (guion, ritmo contra el guion, rejilla de saltos, salud del
+     enlace, URL de la página viva y rescate). `Esc` lo guarda. El panel
+     **empuja** al mazo, no lo tapa: el bundle se re-encaja solo. Se recuerda
+     entre recargas, así que se deja como se quiera trabajar.
+   - Ahí están los tres botones de rescate, todos con confirmación de dos
+     toques: **republicar** (refresca la posición sin robarle el viaje al
+     mando), **reiniciar reloj** y **recargar lienzo** (si el mazo se queda sin
+     descubrir; el destino vive en el servidor, así que vuelve solo a donde iba
+     la charla).
 2. **`/remote` en el celular.** Sin PIN y sin sesión. Ahí van el guion, la
    rejilla de saltos y los botones ↑/↓ para recorrer las páginas vivas.
 3. **`/presentacion` en los equipos de la sala**, si se usa. Solo mira.
@@ -373,6 +383,8 @@ Y a mano:
 - `docs/plan-control-final.md`: el control remoto de `/final.html` entero. La
   §11 es el reparto en tres ventanas y la §12 el orden de entrega. **No
   confundir con `src/lib/sustentacion/`**, que es el otro sistema.
+- `src/lib/presentacion/panel.ts`: la lógica del panel del ponente (modos,
+  índice del mazo, ritmo contra el guion, salud del enlace), probada sin DOM.
 - `src/pages/present-admin.astro`: la ventana que conduce, con el porqué de cada
   una de sus cinco piezas propias (interacción por dentro, teclado tapado en
   fase de captura, rueda, espejo de URL y la isla del cronómetro).

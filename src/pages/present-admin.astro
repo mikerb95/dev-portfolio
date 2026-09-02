@@ -30,6 +30,11 @@
 //  · El ESPEJO de la URL (§11.5.2), para que la sala vea la página que se está
 //    tocando y no el formulario de entrada.
 //  · La ISLA del cronómetro (§11.6), que solo ve el ponente.
+//  · El PANEL retráctil (§11.11): guion, ritmo, rejilla de saltos, salud del
+//    enlace y rescate. EMPUJA en vez de superponerse, porque el bundle re-encaja
+//    su escenario en cada `resize` y así no tapa ni un píxel del mazo. No añade
+//    estado: todo lo que enseña ya viajaba y todos sus botones pasan por el
+//    mismo `POST` que hace el pulgar desde `/remote`.
 //
 // SIN PUERTA, a propósito y con la misma regla que el resto del sistema: el día
 // de la charla, una sesión de GitHub caducada dejaría sin mando. Lo que se
@@ -47,7 +52,14 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <title>Conducir la presentación</title>
-    <style>
+    <!-- `is:global` y no el escopado por defecto: Astro marca con un atributo
+         los elementos que ve en la plantilla, y media consola (la rejilla de
+         saltos, los atajos, las líneas del guion) la construye el script en
+         cuanto la pantalla dice cuántas diapositivas hay. Escopado, esos nodos
+         salían con el estilo por defecto del navegador. La página es un
+         documento suelto, sin componentes ni layout, así que no hay a qué
+         filtrarse. -->
+    <style is:global>
       * {
         box-sizing: border-box;
       }
@@ -172,8 +184,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       #tirador {
         position: fixed;
         bottom: var(--panel);
-        left: 50%;
-        transform: translateX(-50%);
+        /* A la izquierda: es la única esquina inferior sin nada. El mazo pone
+           sus atajos abajo a la derecha y el dev toolbar de Astro se planta en
+           el centro, así que un tirador centrado no se podría ni pulsar
+           ensayando en local, que es donde se ensaya. */
+        left: 1.25rem;
         z-index: 12;
         width: 10rem;
         height: 1rem;
@@ -429,7 +444,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       <button id="crono" type="button" title="Tiempo de la sustentación">--:--</button>
     </div>
 
-    <!-- §11.7. El panel del ponente. Nada de aquí llega a la sala: los
+    <!-- §11.11. El panel del ponente. Nada de aquí llega a la sala: los
          seguidores pintan su propia copia del mazo y lo único que viaja es la
          posición y la URL de la página viva. -->
     <button id="tirador" type="button" aria-label="Panel del ponente (tecla P)">···</button>
@@ -796,7 +811,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         if (e.metaKey || e.ctrlKey || e.altKey) return
         const k = e.key
 
-        // §11.7. El panel va con una letra, que el mazo no usa. No colisiona
+        // §11.11. El panel va con una letra, que el mazo no usa. No colisiona
         // con escribir dentro de la demo: el teclado del bundle está tapado
         // (§11.4) y esos eventos ni siquiera salen del iframe.
         if (k === 'p' || k === 'P') {
@@ -1134,7 +1149,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
 
       /* ------------------------------------------------------------------ *
-       * §11.7. El panel del ponente
+       * §11.11. El panel del ponente
        *
        * Es la consola que evita tener que mirar el celular mientras se conduce
        * con el portátil: el guion, el ritmo contra el guion, la rejilla de
@@ -1437,8 +1452,15 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           return
         }
 
-        el.ahora.textContent = tituloDe(mazo, pos)
-        el.luego.textContent = pos < totalGlobal(mazo) ? `› ${tituloDe(mazo, pos + 1)}` : ''
+        // Los rótulos van con el DESTINO, igual que el guion, y el número
+        // grande con la posición real. Es la misma regla de `/remote`: el
+        // número dice dónde está la proyección y el título dice de qué se va a
+        // hablar, con el "avanzando a N" de al lado explicando el hueco. Con el
+        // título en la posición confirmada, la barra y el guion se contradecían
+        // durante los dos segundos que tarda un viaje largo.
+        el.ahora.textContent = tituloDe(mazo, destino)
+        el.luego.textContent =
+          destino < totalGlobal(mazo) ? `› ${tituloDe(mazo, destino + 1)}` : ''
 
         const r = ritmo(mazo, destino, ms)
         el.desvio.textContent = formatearDesvio(r.desvioMs)
