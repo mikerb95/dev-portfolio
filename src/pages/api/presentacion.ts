@@ -20,13 +20,17 @@ import {
   parsearPeticion,
   type Peticion,
 } from '../../lib/presentacion/desplazamiento'
+import { debeArrancar, parsearInicio } from '../../lib/presentacion/cronometro'
+import { parsearEspejo, type Espejo } from '../../lib/presentacion/espejo'
 
 /**
  * Estado del control remoto de `/final.html`, que no se toca ni se edita.
  *
  *   GET                             -> { destino, actual, viva, scroll }
- *   GET ?q=destino                  -> { destino, scroll }    (lo que sondea la pantalla)
+ *   GET ?q=destino                  -> { destino, scroll, espejo, inicio, ahora }
+ *                                      (lo que sondea la pantalla y los seguidores)
  *   POST { accion: siguiente|anterior } -> mueve el destino    (el mando)
+ *   POST { accion: reiniciar-cronometro } -> borra el arranque   (la isla)
  *   POST { accion: subir|bajar }    -> desplaza el iframe del beat (el mando)
  *   POST { destino: N }             -> salto directo           (el mando)
  *   POST { pos, total, intro, outro, scroll, origen }
@@ -55,6 +59,33 @@ const K_ACTUAL = 'presentacion:actual'
  * haría que cada reporte borrara el scroll que el pulgar acababa de pedir.
  */
 const K_SCROLL = 'presentacion:scroll'
+/**
+ * La URL de la página viva del beat, para que la sala vea la que el ponente
+ * está tocando. La escribe `/present-admin` con el mismo POST con el que ya
+ * publica su posición: es la pantalla del sistema, así que no hay escritor
+ * nuevo. Clave aparte por lo mismo que el scroll.
+ */
+const K_ESPEJO = 'presentacion:espejo'
+/**
+ * Cuándo arrancó la sustentación, en el reloj del servidor. La escribe el
+ * SERVIDOR y nadie más, una sola vez, en el primer movimiento que saca la
+ * presentación de su primera diapositiva. Vive aquí y no en el navegador
+ * porque una recarga a mitad de charla es un escenario contemplado, y un
+ * cronómetro que se pone a cero justo ahí sería peor que no tenerlo.
+ */
+const K_INICIO = 'presentacion:inicio'
+/**
+ * El canal de la sala. Sigue la convención de `present:ch:<id>` que ya usan
+ * las presentaciones con deck, con `final` como identificador fijo: aquí no
+ * hay sesiones, solo hay una charla.
+ *
+ * Publicar aquí es lo que permite que N asistentes sigan la presentación sin
+ * sondear: se suscriben a Upstash DIRECTAMENTE con un token de solo lectura,
+ * así que después de cargar la página no vuelven a tocar Vercel. Sin esto, con
+ * la sala compartiendo el WiFi del salón, el paraguas de 600 peticiones por
+ * minuto y por IP empezaría a bloquear a partir del cuarto asistente.
+ */
+const CANAL = 'present:ch:final'
 const TTL_SEGUNDOS = 6 * 60 * 60
 
 const json = (status: number, body: unknown) =>
