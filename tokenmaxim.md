@@ -181,3 +181,122 @@ sobre su propio motivo.
   queda mirando un formulario.
 - Puerta en `/present-admin`: si algún día importa, el sitio es el `POST`, no la
   página.
+
+---
+---
+
+# Pendiente: cuentas de cobro (`/admin/cuentas-cobro`)
+
+Estado a **2 sep 2026**. Tema **independiente** del bloque de arriba: lo de
+`/present-admin` y lo de aquí no comparten código, plan ni entrega. Si retomas
+uno, el otro no te hace falta.
+
+La verdad completa vive en `docs/plan-cuentas-de-cobro.md` (§1 es el marco
+normativo, §7 los pendientes). Este es el resumen operativo.
+
+## De qué va, en cuatro líneas
+
+Emisión de cuentas de cobro de persona natural **no responsable de IVA** desde
+el panel: numeración `CC-AAAA-NNN` propia, valor en letras, retenciones
+parametrizables, leyendas normativas y PDF de una página. No es una tabla nueva:
+es `invoices` discriminada por `doc_type`, con el mismo precedente que
+`payments.source`. El portal del cliente filtra por tipo para que un documento
+con datos personales del emisor no aparezca nunca en su sesión.
+
+## Estado verificado contra producción (2 sep)
+
+No es lo que dice el plan, es lo que respondió la base:
+
+| Cosa | Estado |
+|---|---|
+| Migración `0030` | aplicada a las **dos** bases Turso (principal y demo), 14/14 columnas + índice |
+| Datos del emisor en `app_settings` | los **seis obligatorios completos** (el plan todavía los lista como pendientes) |
+| `CC-2026-001` | emitida y **sana**: deudor congelado = razón social, sin retenciones, fecha correcta |
+| Tests | 1689 en verde bajo UTC y `America/Bogota` |
+| `astro check` | 0 errores propios (siguen los 7 preexistentes de siempre) |
+
+**No hay datos que reparar.** La cuenta emitida se creó antes de varios arreglos
+posteriores, pero ninguno la afectó: su `payer_snapshot` ya traía la razón social
+correcta (en esa ficha `name` y `company` coinciden) y no lleva retenciones, así
+que tampoco le falta el `labelCorto`.
+
+## Lo que falta, en orden
+
+### 1. Sincronizar la documentación
+
+**Es lo único que choca con la convención del repo** (`CLAUDE.md`: un feature
+entregado que no aparece en `/docs` no existe para la sustentación). Cuatro cosas
+se entregaron después de escribir los RF y no están en
+`src/data/documentacion.ts` ni en el plan:
+
+- La dirección del documento (`SEÑORES` / `DEBE A`) y por qué el orden es
+  contraintuitivo.
+- El alta de deudor desde el propio flujo de creación.
+- El anclaje de fechas a zona de Colombia, con las dos clases de fecha.
+- Que la razón social manda sobre el nombre de contacto de la ficha.
+
+Además el plan sigue diciendo que faltan los datos del emisor, que ya están.
+
+### 2. Validación contable de la parametrización
+
+Lo único que separa "funciona" de "se puede emitir con confianza". Las tarifas,
+las bases en UVT y el valor de la UVT los tiene que confirmar un contador. Pesa
+más que antes: ya hay una cuenta emitida a un cliente real.
+
+### 3. Tres parámetros sin configurar (caen a valores por defecto)
+
+| Clave | Efecto de que falte | Urgencia |
+|---|---|---|
+| `uvt_cents` | usa la UVT 2026 correcta ($52.374) por defecto | baja |
+| `smmlv_cents` | no se muestra el piso del IBC en el detalle | baja |
+| `ret_reteica_por_mil` | ReteICA apagado, no se practica | ninguna, es deliberado |
+
+### 4. Fase 4: envío (opcional)
+
+Reutilizaría `lib/notify.ts` o la plantilla de WhatsApp de `cobros.ts`, más el
+vínculo opcional con un pago de `/cobrar`. Se dejó fuera a propósito:
+automatizar el envío antes de saber cómo lo pide cada cliente es construir sobre
+una suposición. Hoy el PDF se descarga y se manda a mano.
+
+### 5. Artículo en `/notes` (opcional)
+
+El ángulo no es el CRUD: es **por qué el documento con validez fiscal es el del
+pagador y no el mío**, y cómo esa inversión decide qué campos son obligatorios.
+
+## Gotchas de este módulo
+
+- **`DEBE A` encabeza a quien COBRA, no a quien paga.** La fórmula colombiana es
+  "[DEUDOR] DEBE A [EMISOR]". Invertirlo no rompe nada visible: solo convierte la
+  cuenta de cobro en un reconocimiento de deuda propia. El orden vive en
+  `bloquesIdentificacion` (módulo puro) y tiene test que lo fija.
+- **Hay DOS clases de fecha y los errores son OPUESTOS.** Los instantes
+  (emisión, pago) se formatean en `America/Bogota`; las fechas de calendario
+  (vencimiento, periodo) se anclan con `parseFechaCalendario` al entrar. Arreglar
+  solo una mitad produce la otra. Todo en `src/lib/fecha-co.ts`.
+- **`sena-ep.ts` ancla al MEDIODÍA UTC, no a medianoche colombiana**, y es
+  correcto: esas fechas se pintan en el navegador con accesores locales. El
+  criterio lo fija quién lee la fecha, no quién la escribe. Garantía real:
+  UTC±11, no universal.
+- **`/admin/cuentas-cobro` está vetada en la demo por patrón** (`lib/demo.ts`).
+  El PDF imprime cédula, dirección y cuenta bancaria, y es un GET: "solo lectura"
+  no lo detendría, y el aislamiento por base tampoco (el emisor sale de
+  `app_settings`, que la base de demo también tiene).
+- **Emitir congela emisor, deudor y retenciones en la fila.** Reimprimir no
+  vuelve a leer `app_settings` ni `clients`. Corregir una cuenta emitida se hace
+  anulando y emitiendo otra, no con un `UPDATE`.
+- **Las fuentes públicas se contradicen** entre 2 y 4 UVT para la base de
+  servicios (Decreto 572 de 2025). Por eso es configuración y no código.
+- **Cuota de Turso**: comprobado con `EXPLAIN QUERY PLAN` contra la base real.
+  Los tres accesos a `invoices` van por índice (`invoices_client_idx`,
+  `invoices_doc_type_idx`, covering index del `number`), y el filtro nuevo del
+  portal **no cambió el plan**. Nada nuevo en rutas públicas.
+
+## Lo que NO entra
+
+- Envío automático por correo o WhatsApp (es la Fase 4, decisión aparte).
+- Firma escaneada: la columna `signature_url` existe sin usar. Se añade el día
+  que un pagador la exija.
+- Caché del PDF en Blob: descartada. Se genera en milisegundos y cachearlo
+  obligaría a invalidar en cada corrección del borrador.
+- Liquidar aportes de seguridad social: solo se calcula el IBC de referencia.
+  Eso lo hace la PILA.
