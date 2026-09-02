@@ -18,6 +18,10 @@ celular, `/remote`, no cambia.
 
 ## Lo que ya está hecho
 
+**Actualizado el 2 sep (sesión de cierre).** Se entregaron los pasos 1, 2 y 4;
+quedan el 0, el 3 y el 5, y el 3 y el 5 no los puede hacer quien retome el
+código solo. Detalle al final, en «Lo que se cerró y lo que no».
+
 | Pieza | Dónde |
 |---|---|
 | Descubrimiento del mazo y del iframe vivo | `src/lib/presentacion/lienzo.ts`, con tests |
@@ -29,8 +33,12 @@ celular, `/remote`, no cambia.
 | API, escritura del espejo | un reporte sin espejo no borra el que hay |
 | API, publicación al bus | `anunciar()`, fail-open, en los dos caminos que cambian algo |
 | CSP del bus para `/presentacion` | `isPresentView` en `src/middleware.ts` |
+| **Scroll ABSOLUTO** (la vía de la rueda) | `situar()` en `desplazamiento.ts` + `accion: 'scroll'` en la API |
+| **`/present-admin` entera** (capas a-f de §12.5) | `src/pages/present-admin.astro` |
+| **RF-717, runbook §3 bis, §11 y §12 marcadas** | `documentacion.ts`, `runbook-sustentacion.md`, `plan-control-final.md` |
 
-58 tests de presentación en verde.
+La suite completa pasa: **1714 tests**, `astro check` sigue en los siete errores
+preexistentes de siempre.
 
 ## Lo que falta, en orden
 
@@ -50,18 +58,25 @@ su equipo. Lo que se decide con el resultado:
 Hacerlo al final (que es donde lo dejaba §11.9, como punto 10) es construir el
 bus, el rescate y el seguidor sin saber si sirven.
 
-### Paso 1. Cerrar el lado de escritura de la API
+### Paso 1 ✅. Cerrar el lado de escritura de la API
 
-Queda **una sola cosa**: la escritura de **scroll absoluto** para la rueda del
-ratón (§11.5.3). Hoy solo existen `subir` y `bajar`, que van a saltos de un
-tercio de pantalla, así que la rueda de `/present-admin` no tiene por dónde
-entrar. Acota contra la geometría publicada igual que las otras dos.
+**Hecho.** `situar()` en `src/lib/presentacion/desplazamiento.ts` (puro, acota
+contra la geometría publicada igual que `mover`, y descarta un `y` que no sea
+una posición posible) y `POST { accion: 'scroll', y }` en
+`src/pages/api/presentacion.ts`.
 
-El acotado de dos escrituras por segundo va en el **cliente**, no en el
-servidor: el servidor no debe descartar en silencio lo que le mandan.
+Dos cosas que se decidieron al cerrarlo:
 
-Archivo: `src/pages/api/presentacion.ts`. Se prueba con `curl` contra el dev
-server.
+- El acotado de dos escrituras por segundo quedó en el **cliente**, como decía
+  el plan. El servidor no descarta en silencio lo que le mandan.
+- **`subir`/`bajar` ahora también anuncian al bus.** No lo hacían, y la sala se
+  enteraba por rebote (la pantalla ve moverse la geometría y publica un latido):
+  un viaje de ida y vuelta de más que dejaba al seguidor por detrás del propio
+  proyector. Es la regla de §12.4.5 aplicada al camino que le faltaba.
+
+Cubierto por 5 casos nuevos en `tests/presentacion-desplazamiento.test.ts` y 5
+de costura en `tests/presentacion-endpoint.test.ts` (incluido el que fija que la
+rueda y el pulgar comparten clave sin pisarse).
 
 ### Paso 2. `/present-admin`, que no existe
 

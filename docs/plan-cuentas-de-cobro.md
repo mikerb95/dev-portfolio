@@ -355,6 +355,43 @@ Tres cosas que el plan no anticipaba y que salieron al escribir los tests:
 Y una decisión que el plan dejaba abierta y se resolvió sola: **no hace falta
 caché del PDF en Blob** (ver Fase 3).
 
+### Cuatro cosas que se entregaron después de escribir los RF
+
+Se documentan aquí y en `src/data/documentacion.ts` (RF-308, RF-311, RNF-29)
+porque ninguna estaba en el plan original y las cuatro cambian el documento que
+sale, no solo su implementación:
+
+4. **La dirección del documento, que es contraintuitiva.** La fórmula
+   colombiana es "[DEUDOR] DEBE A [EMISOR]": el rótulo `SEÑORES` encabeza a
+   quien **paga** y `DEBE A` a quien **cobra**. Invertirlo no rompe nada
+   visible - el PDF sale igual de bonito - pero convierte la cuenta de cobro en
+   un reconocimiento de deuda propia, que es justo lo contrario de lo que se
+   está emitiendo. Por eso el orden vive en `bloquesIdentificacion` (módulo
+   puro) y tiene un test que lo fija, en vez de estar en la plantilla del PDF.
+
+5. **La razón social manda sobre el nombre de contacto.** En el CRM, `name`
+   suele ser la persona con la que se habla y `company` la empresa. Una cuenta
+   dirigida a "Juan Pérez" cuando quien paga es "ACME S.A.S." la devuelve
+   contabilidad, porque el nombre y el NIT no concuerdan. Se resuelve al
+   **congelar** el deudor (`parseDeudor`), no al pintarlo, para que corregir una
+   ficha después no cambie un documento ya emitido.
+
+6. **Alta del deudor desde el propio flujo de creación** (RF-311). La cuenta se
+   redacta cuando el cliente la pide, que casi nunca es el momento en que se dio
+   de alta en el CRM. Obligar a salir a `/admin/clients` y volver perdía lo
+   escrito, y el atajo previsible - teclear el nombre a mano en el documento -
+   es exactamente lo que rompe el modelo, porque el deudor se congela desde la
+   ficha y no desde un texto suelto.
+
+7. **El anclaje de fechas a la zona de Colombia** (RNF-29), que acabó siendo un
+   módulo compartido (`lib/fecha-co.ts`) y no un detalle de este módulo. Hay
+   **dos clases de fecha y los errores son opuestos**, así que arreglar una sola
+   mitad produce la otra y parece que el arreglo no sirvió: los instantes
+   (emisión, pago) se formatean en `America/Bogota`; las fechas de calendario
+   (vencimiento, periodo) se anclan a medianoche colombiana al entrar. Las
+   suites corren bajo **dos** zonas del sistema, porque una regla de zona
+   horaria probada solo en la zona en que se escribió no está probada.
+
 ## 5. Tests
 
 | Qué | Dónde | Por qué así |
@@ -385,13 +422,26 @@ caché del PDF en Blob** (ver Fase 3).
 
 ## 7. Pendiente
 
-- **Validación contable de la parametrización.** Lo único que bloquea el uso
-  real. El módulo está completo y probado, pero las tarifas, las bases en UVT y
-  el valor de la UVT los tiene que confirmar un contador antes de emitir la
-  primera cuenta de cobro a un cliente. Es la razón por la que todo eso es
-  configuración y no código.
-- **Datos del emisor en producción.** `/admin/settings` está vacío hasta que se
-  llenen: el panel avisa arriba del listado y bloquea el botón de emitir.
+- **Validación contable de la parametrización.** Lo único que separa "funciona"
+  de "se puede emitir con confianza". Las tarifas, las bases en UVT y el valor
+  de la UVT los tiene que confirmar un contador. Es la razón por la que todo eso
+  es configuración y no código, y por la que las fuentes públicas todavía se
+  contradicen entre 2 y 4 UVT para servicios (Decreto 572 de 2025).
+
+  **Pesa más que cuando se escribió esto:** ya no es preventivo. `CC-2026-001`
+  está emitida a un cliente real, verificada sana contra la base el 2 sep 2026
+  (deudor congelado = razón social, sin retenciones, fecha correcta). No hay
+  datos que reparar, pero la siguiente ya no sería la primera.
+- ~~**Datos del emisor en producción.**~~ **Hecho.** Los seis obligatorios están
+  completos en `app_settings`, comprobado contra la base el 2 sep 2026. El aviso
+  del panel y el bloqueo del botón de emitir siguen ahí para el caso de que
+  alguno se borre.
+- **Tres parámetros sin configurar, los tres cayendo a su valor por defecto y
+  ninguno urgente.** `uvt_cents` (usa la UVT 2026 correcta, $52.374),
+  `smmlv_cents` (sin él no se muestra el piso del IBC en el detalle) y
+  `ret_reteica_por_mil` (ReteICA apagado, que es **deliberado**: su tarifa
+  depende del municipio y de la actividad, y sin configurar no se practica nada
+  en vez de inventar un número).
 - **Fase 4 (envío).** Reutilizaría `lib/notify.ts` o la plantilla de WhatsApp de
   `cobros.ts` y el vínculo opcional con un pago de `/cobrar`.
 - **Artículo en `/notes`.** El ángulo interesante no es el CRUD: es *por qué el

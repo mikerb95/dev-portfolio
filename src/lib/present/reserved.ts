@@ -61,6 +61,9 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   // (`/presentacion` y `/presentacion/control`). Cubre las dos: la página y el
   // directorio se normalizan al mismo segmento.
   'presentacion',
+  // Página de cierre que se COMPARTE después de la sustentación (no se
+  // proyecta). Pública e indexable, y ruta raíz: entra aquí por lo mismo.
+  'presentacion-end',
   'projects',
   'remote',
   'security',

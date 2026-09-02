@@ -447,14 +447,23 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let ruedaHasta = 0
       let ultimaEscrituraRueda = 0
       let ruedaPendiente: ReturnType<typeof setTimeout> | null = null
-      let ultimoYEnviado: number | null = null
+      /**
+       * Lo último que se le mandó al servidor, CON su diapositiva. El par es
+       * necesario: sin él, recorrer dos beats distintos hasta la misma altura
+       * haría que el segundo se descartara por repetido, el servidor seguiría
+       * creyendo que esa diapositiva está arriba y devolvería la página de un
+       * tirón en el sondeo siguiente.
+       */
+      let ultimoEnviado: { pos: number; y: number } | null = null
 
       async function publicarRueda() {
         const geo = geometriaDe(iframeEnJuego(iframe))
-        if (!geo) return
+        const punto = mazo ? puntoActual() : null
+        if (!geo || !punto || !mazo) return
+        const pos = aGlobal(mazo, punto)
         ultimaEscrituraRueda = Date.now()
-        if (geo.y === ultimoYEnviado) return
-        ultimoYEnviado = geo.y
+        if (ultimoEnviado && ultimoEnviado.pos === pos && ultimoEnviado.y === geo.y) return
+        ultimoEnviado = { pos, y: geo.y }
         // El servidor acota contra la geometría que esta misma ventana publicó,
         // igual que hace con los saltos del pulgar.
         await mandar({ accion: 'scroll', y: geo.y })
