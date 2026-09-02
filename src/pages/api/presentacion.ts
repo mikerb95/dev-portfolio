@@ -148,8 +148,26 @@ export const GET: APIRoute = async ({ url }) => {
       // veces por segundo y de aquí saca también hasta dónde desplazar el
       // iframe. Lo pedido para OTRA diapositiva vale 0, que es la vuelta
       // arriba automática al cambiar de beat.
-      const [destino, pedido] = await Promise.all([leerDestino(), leerScroll()])
-      return json(200, { destino, scroll: desplazamientoPedido(pedido, destino) })
+      const [destino, pedido, espejo, inicio] = await Promise.all([
+        leerDestino(),
+        leerScroll(),
+        leerEspejo(url.origin),
+        leerInicio(),
+      ])
+      return json(200, {
+        destino,
+        scroll: desplazamientoPedido(pedido, destino),
+        // La URL de la página viva, para la sala. `null` si es de otra
+        // diapositiva: no es un error, es la vuelta al estado de arranque del
+        // beat, y la reinicia cualquier camino que cambie de diapositiva.
+        espejo: espejo && espejo.pos === destino ? espejo : null,
+        // El cronómetro va de gorra en un viaje que ya se hacía. `ahora` no es
+        // adorno: `inicio` lo pone el reloj del servidor y la cuenta la hace el
+        // portátil, así que sin este número un portátil dos minutos adelantado
+        // arrancaría el reloj en 02:00.
+        inicio,
+        ahora: Date.now(),
+      })
     }
     const [destino, actual, pedido] = await Promise.all([
       leerDestino(),
