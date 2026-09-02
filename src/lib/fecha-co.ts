@@ -42,9 +42,30 @@ const SOLO_FECHA = /^\d{4}-\d{2}-\d{2}$/
 export function parseFechaCalendario(v: unknown): Date | null {
   if (typeof v !== 'string' || !v.trim()) return null
   const raw = v.trim()
-  const d = new Date(SOLO_FECHA.test(raw) ? `${raw}T00:00:00${OFFSET_COLOMBIA}` : raw)
-  return Number.isNaN(d.getTime()) ? null : d
+
+  if (!SOLO_FECHA.test(raw)) {
+    const instante = new Date(raw)
+    return Number.isNaN(instante.getTime()) ? null : instante
+  }
+
+  const d = new Date(`${raw}T00:00:00${OFFSET_COLOMBIA}`)
+  if (Number.isNaN(d.getTime())) return null
+
+  // Un día inexistente NO lanza: JS lo desborda en silencio y '2026-02-30' se
+  // convierte en el 2 de marzo. Guardar una fecha que nadie escribió es peor
+  // que rechazarla, así que se comprueba que sobreviva el viaje de ida y vuelta.
+  return fechaISOEnColombia(d) === raw ? d : null
 }
+
+const fmtISO = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: TZ_COLOMBIA,
+})
+
+/** El día del calendario colombiano al que pertenece un instante ('YYYY-MM-DD'). */
+export const fechaISOEnColombia = (d: Date): string => fmtISO.format(d)
 
 /** Crea un formateador ya fijado a la zona de Colombia. */
 export const formatterCO = (opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat =>

@@ -29,9 +29,19 @@ describe('parseFechaCalendario', () => {
 
   it('devuelve null en vez de un Invalid Date que llegue a la base', () => {
     // Un Invalid Date se guarda en silencio y revienta al leerlo, lejos de aquí.
-    for (const v of ['', '   ', 'ayer', '2026-13-45', '2026-02-30', null, undefined, 42, {}]) {
+    for (const v of ['', '   ', 'ayer', '2026-13-45', null, undefined, 42, {}]) {
       expect(parseFechaCalendario(v), String(v)).toBeNull()
     }
+  })
+
+  it('rechaza un día que no existe en vez de desbordarlo al mes siguiente', () => {
+    // JS no lanza con estos: '2026-02-30' se convierte en el 2 de marzo, y
+    // quedaría guardada una fecha que nadie escribió.
+    expect(parseFechaCalendario('2026-02-30')).toBeNull()
+    expect(parseFechaCalendario('2026-04-31')).toBeNull()
+    // El 29 de febrero sí existe en año bisiesto y tiene que pasar.
+    expect(parseFechaCalendario('2028-02-29')).not.toBeNull()
+    expect(parseFechaCalendario('2026-02-28')).not.toBeNull()
   })
 })
 
@@ -65,8 +75,9 @@ describe('formateo en zona de Colombia', () => {
 // facturas, y arrastraba el mismo fallo.
 describe('formato del portal', () => {
   it('formatDate fecha el instante en Colombia', () => {
-    expect(formatDate(NOCHE_DEL_1_SEP)).toContain('01')
-    expect(formatDate(NOCHE_DEL_1_SEP)).not.toContain('02')
+    // Aserción sobre la cadena completa y no `toContain('01')`: el año "2026"
+    // contiene "02" como subcadena y haría pasar el test estando roto.
+    expect(formatDate(NOCHE_DEL_1_SEP)).toBe('01 de sept de 2026')
   })
 
   it('formatDateTime también', () => {
