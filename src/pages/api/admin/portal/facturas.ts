@@ -8,6 +8,7 @@ import {
 } from '../../../../lib/portal/invoices'
 import { notifyClient } from '../../../../lib/portal/notifications'
 import { formatMoney } from '../../../../lib/portal/format'
+import { parseFechaCalendario } from '../../../../lib/fecha-co'
 import { recordActivity } from '../../../../lib/portal/activity'
 
 // CRUD de facturas desde el panel. La sesión de admin la impone el middleware.
@@ -64,7 +65,10 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const projectId = Number(data.projectId)
-  const dueAt = typeof data.dueAt === 'string' && data.dueAt ? new Date(data.dueAt) : null
+  // parseFechaCalendario y no `new Date`: 'YYYY-MM-DD' de un <input type="date">
+  // se leería como medianoche UTC, que en Bogotá es el día anterior, y la
+  // factura vencería un día antes de lo que el cliente ve escrito.
+  const dueAt = parseFechaCalendario(data.dueAt)
   if (dueAt && Number.isNaN(dueAt.getTime())) return json(400, { error: 'fecha de vencimiento inválida' })
 
   const invoice = await createInvoice({

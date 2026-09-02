@@ -40,12 +40,30 @@ export type Peticion = { pos: number; y: number }
  */
 export const FRACCION = 3
 
+/**
+ * Recorrido mínimo para que la diapositiva cuente como desplazable.
+ *
+ * No es un umbral de gusto: la demo del portal publica `max: 10` porque su
+ * página de login cabe entera y esos diez píxeles son el redondeo de un iframe
+ * escalado. Con el listón en un píxel, esa diapositiva sacaría dos botones que
+ * mueven la proyección un pelo, que delante del público se lee como un mando
+ * roto. Por debajo de esto no hay nada que recorrer y el mando enseña la
+ * rejilla de saltos, que es lo que sí sirve ahí.
+ */
+export const MINIMO_PX = 32
+
 const entero = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n)
 
 const acotar = (n: number, min: number, max: number) =>
   Math.min(Math.max(n, min), Math.max(min, max))
 
 export const paso = (alto: number): number => Math.max(1, Math.round(alto / FRACCION))
+
+/** Si esta diapositiva tiene algo que recorrer. Lo miran los dos lados: el
+ *  servidor para no escribir un desplazamiento inútil y el mando para decidir
+ *  entre los botones y la rejilla. */
+export const hayQueDesplazar = (geo: Geometria | undefined): geo is Geometria =>
+  Boolean(geo && geo.max >= MINIMO_PX)
 
 /**
  * La geometría publicada, o nada.
@@ -103,7 +121,7 @@ export function mover(
   delta: -1 | 1,
   geo: Geometria | undefined
 ): Peticion | null {
-  if (!geo || geo.max < 1) return null
+  if (!hayQueDesplazar(geo)) return null
   const y = acotar(desplazamientoPedido(pedido, destino) + delta * paso(geo.alto), 0, geo.max)
   return { pos: destino, y }
 }

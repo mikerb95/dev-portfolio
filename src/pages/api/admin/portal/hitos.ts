@@ -4,6 +4,7 @@ import { db } from '../../../../db'
 import { projectMilestones, projects } from '../../../../db/schema'
 import { notifyClient } from '../../../../lib/portal/notifications'
 import { recordActivity } from '../../../../lib/portal/activity'
+import { parseFechaCalendario } from '../../../../lib/fecha-co'
 
 // Hitos del proyecto: lo que el cliente ve como línea de tiempo en su portal.
 // Sesión de admin impuesta por el middleware de /api/admin.
@@ -28,7 +29,8 @@ export const POST: APIRoute = async ({ request }) => {
   const title = typeof data.title === 'string' ? data.title.trim().slice(0, 200) : ''
   if (!title) return json(400, { error: 'el hito necesita un título' })
 
-  const dueAt = typeof data.dueAt === 'string' && data.dueAt ? new Date(data.dueAt) : null
+  // Fecha de calendario, no instante: ver lib/fecha-co.ts.
+  const dueAt = parseFechaCalendario(data.dueAt)
   if (dueAt && Number.isNaN(dueAt.getTime())) return json(400, { error: 'fecha inválida' })
 
   // Al final de la lista: el orden por defecto es el cronológico de creación.
@@ -79,7 +81,7 @@ export const PATCH: APIRoute = async ({ request }) => {
   if (typeof data.visibleToClient === 'boolean') patch.visibleToClient = data.visibleToClient
 
   if (typeof data.dueAt === 'string') {
-    const dueAt = data.dueAt ? new Date(data.dueAt) : null
+    const dueAt = parseFechaCalendario(data.dueAt)
     if (dueAt && Number.isNaN(dueAt.getTime())) return json(400, { error: 'fecha inválida' })
     patch.dueAt = dueAt
   }

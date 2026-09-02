@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   desplazamientoPedido,
   FRACCION,
+  hayQueDesplazar,
+  MINIMO_PX,
   mover,
   parsearGeometria,
   parsearPeticion,
@@ -61,6 +63,23 @@ describe('parsearGeometria', () => {
     // No es un error: es la diapositiva normal. Quien decide esconder los
     // controles es el mando, mirando `max`.
     expect(parsearGeometria({ y: 0, max: 0, alto: 900 })).toEqual(geo(0, 900))
+  })
+})
+
+describe('hayQueDesplazar', () => {
+  it('una página con recorrido de verdad sí', () => {
+    expect(hayQueDesplazar(geo(2400, 900))).toBe(true)
+    expect(hayQueDesplazar(geo(MINIMO_PX, 900))).toBe(true)
+  })
+
+  it('un recorrido de redondeo no', () => {
+    // Caso real, no hipotético: la demo del portal publica `max: 10` porque su
+    // login cabe entero y esos diez píxeles son el redondeo de un iframe
+    // escalado. Dos botones que mueven la proyección un pelo se leen como un
+    // mando roto, y ahí la rejilla de saltos vale más.
+    expect(hayQueDesplazar(geo(10, 910))).toBe(false)
+    expect(hayQueDesplazar(geo(0, 900))).toBe(false)
+    expect(hayQueDesplazar(undefined)).toBe(false)
   })
 })
 
@@ -149,5 +168,7 @@ describe('mover', () => {
     // diapositiva entre el toque y su llegada.
     expect(mover(null, 14, 1, undefined)).toBeNull()
     expect(mover(null, 14, 1, geo(0, 900))).toBeNull()
+    // Y con un recorrido de puro redondeo, que es el de la demo del portal.
+    expect(mover(null, 14, 1, geo(10, 910))).toBeNull()
   })
 })

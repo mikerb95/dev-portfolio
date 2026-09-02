@@ -343,77 +343,93 @@ src/data/documentacion.ts                RF-715, `planeado` → `implementado` a
   cosa distinta.
 
 
-## 11. `/present-admin`: el mando con lienzo
+
+## 11. `/present-admin`: el mando con lienzo, y el público como público
 
 **Estado: planeado.**
 
-`/presentacion` monta el mazo con `pointer-events: none` a propósito: un clic
-dentro movería el bundle por su cuenta y el sondeo siguiente lo devolvería de
-golpe. Eso está bien para lo que se proyecta y **no se cambia**.
+Hasta aquí el sistema tenía una sola pantalla. Esta sección la desdobla en dos
+papeles que hoy están mezclados en `/presentacion`: quien **conduce** el mazo y
+quien lo **mira**.
 
-Lo que falta es una pantalla desde la que se pueda **usar** la demo: escribir en
-el login del portal, clicar, recorrer `/status`. Vive en `/present-admin`, se
-abre a la vez que `/presentacion`, y el reparto de papeles es:
-
-| Ventana | Dónde | Quién la ve | Qué hace |
+| Ventana | Dónde | Cuántas | Papel |
 |---|---|---|---|
-| `/presentacion` | proyector | el público | obedece, publica `actual`, no se toca |
-| `/present-admin` | portátil | solo el ponente | se toca, y lo que hace se refleja en la otra |
-| `/remote` | celular | el ponente | pasa diapositivas y enseña el guion |
+| `/present-admin` | portátil del ponente | 1 | conduce: descubre el mazo, lo toca, publica dónde va |
+| `/remote` | celular del ponente | 1 | manda: pasa diapositivas y enseña el guion |
+| `/presentacion` | equipo de cada asistente | N | mira: obedece y no dice nada |
 
-### 11.1. La idea que ordena todo lo demás
+El motivo de que exista `/present-admin` es que la demo hay que **usarla**:
+escribir en el login del portal, clicar, navegar. `/remote` no puede, y
+`/presentacion` tiene el lienzo deliberadamente inerte.
 
-> **`/present-admin` no es una segunda pantalla: es un mando con lienzo.**
+### 11.1. La inversión: quién es ahora la pantalla
 
-Escribe exactamente lo que escribe `/remote` (el destino, y el desplazamiento
-del beat) y **no escribe nada de lo que escribe la pantalla** (`actual`). Que
-además pinte el mazo es para poder tocarlo, no para que nadie lo mire.
+`/presentacion` no es hoy un espectador. Es **el escritor** de `presentacion:actual`,
+y con origen `ajena` el servidor **adopta** lo que publique como destino
+(sección 4). Esa fila existe para que la flecha pulsada en el portátil mande
+sobre el mando, y es correcta mientras haya una sola pantalla.
 
-Esa frase resuelve las tres cosas que parecían difíciles:
+Con el público encima deja de serlo, y no porque nadie toque nada: es
+automático. Un asistente bloquea el teléfono, el navegador congela los
+temporizadores y las transiciones (nota 6), lo desbloquea, su copia lee una
+posición atrasada y la publica como `ajena`. El servidor la adopta y **la sala
+entera y el ponente viajan hacia atrás**. Treinta espectadores son treinta
+copias con derecho a voto.
 
-- **La carrera de las dos pantallas no existe.** Si `/present-admin` publicara
-  `actual`, y en concreto con origen `ajena`, el servidor adoptaría su posición
-  como destino y las dos ventanas se arrastrarían mutuamente: ping-pong, y el
-  número bailando en el teléfono. Como no lo publica, el escritor único de
-  `actual` sigue siendo el de siempre y la disciplina de la sección 3 se
-  mantiene entera.
-- **Su teclado local no necesita nada nuevo.** Una flecha en el portátil hace el
-  mismo `POST { accion }` que el pulgar. Llega a las dos ventanas por el mismo
-  camino, y el origen `ajena` (que existe para el teclado del portátil dentro
-  del bundle) no tiene que aparecer en este lado.
-- **Medio espejo sale gratis.** La posición ya se refleja por `destino`, y el
-  desplazamiento del iframe por `presentacion:scroll`, que la sección 10 ya
-  dejó montado. Lo único que hay que inventar es la URL (11.5).
+La corrección es quitarles la voz, y al hacerlo el papel de pantalla queda
+vacante. Lo recoge quien ya lo tiene todo para ejercerlo:
 
-Consecuencia que vale por sí sola: **`/presentacion` no cambia ni una línea.**
+> **`/present-admin` es la pantalla del sistema.** Descubre el mazo, publica
+> `actual` y obedece `destino`. `/presentacion` pasa a ser un seguidor puro:
+> lee, mueve su propia copia y **no hace un solo `POST`**.
 
-### 11.2. Relevo: qué pasa si `/presentacion` no está abierta
+La disciplina de la sección 3 se conserva intacta: sigue habiendo **un escritor
+por clave**, solo que el de `actual` cambia de ventana. Y sigue habiendo un solo
+sitio que sabe la forma del mazo, que es lo que el mando necesita para acotar el
+destino y para sacar la nota del guion.
 
-Ensayando en solitario sobre el portátil no habría nadie publicando `actual`, y
-eso degrada tres cosas de verdad: `techo()` cae a `POS_MAX` y el mando deja de
-acotar, la forma del mazo desaparece y con ella las notas del guion (sin forma
-no se enseña ninguna, sección 2.2), y `viva` dice que la pantalla está muerta.
+Cada seguidor descubre su propio mazo en su propio navegador (todos cargan el
+mismo `final.html`) y se mueve solo con el número. No necesita el `actual` de
+nadie: le basta el destino.
 
-Relevo por caducidad, sin coordinación ni bandera nueva:
+### 11.2. Que la sala no tumbe el sitio
 
-- `/present-admin` publica `actual` **solo si el que hay está rancio**, con el
-  mismo umbral que ya define "viva" (`FRESCURA_MS`, 15 s).
-- Con `/presentacion` abierta, su latido de 5 s lo mantiene fresco y
-  `/present-admin` no escribe nunca. Sin ella, releva en 15 segundos.
-- Si la otra vuelve, el primer sondeo ve el `ts` fresco y `/present-admin` se
-  calla otra vez. Converge en un ciclo, sin negociar nada.
-- Aun relevando, **nunca publica con origen `ajena`**: `inicial`, `latido` y
-  `mando` no tocan el destino salvo para acotarlo. Adoptar es justo lo que se
-  quiere evitar si la otra ventana reaparece a mitad de un viaje.
+`/api/presentacion` cuenta para el paraguas por IP, y el límite es **600
+peticiones por minuto** (`src/middleware.ts:337`), con freno progresivo desde el
+80%. Una copia de `/presentacion` gasta hoy 120 lecturas/min (sondeo de 500 ms)
+más 12 escrituras/min de latido.
 
-Para saberlo necesita el `ts`, que `?q=destino` no devuelve a propósito (no
-duplicar lecturas de lo que la pantalla misma escribió). Se añade
-`?q=destino&relevo=1`, que agrega **solo el `ts`**, no el `actual` entero. Lo
-pide únicamente `/present-admin`; el coste de `/presentacion` no se mueve.
+Si la sala está en el WiFi del salón comparten una IP pública. **A partir del
+cuarto asistente empieza el freno y del quinto el bloqueo**: el middleware
+defendiendo el sitio de la propia audiencia, con el peor síntoma posible (media
+sala clavada en una diapositiva y sin nada que lo explique). Contra Upstash,
+treinta asistentes serían ~216.000 lecturas/hora cuando la sección 6 daba 15.000
+como el techo del diseño.
+
+Se arregla con la infraestructura que ya existe y que se construyó exactamente
+para esto. `src/lib/present/client-sync.ts` abre un `EventSource` **contra
+Upstash directamente**, no contra nosotros, con un token de solo lectura, y su
+comentario de cabecera dice el porqué: "si cada espectador abriera un SSE contra
+una función de Vercel, tendríamos una invocación viva por persona". Un seguidor
+por ese canal **no toca Vercel ni una vez** después de cargar la página, así que
+no roza el rate limit ni suma coste por asistente.
+
+Se reusan sus tres capas tal cual, que no son opcionales (el pub/sub no
+garantiza entrega):
+
+1. **Bus**, la vía normal, decenas de ms.
+2. **Resincronía** cada 10 s, que cura un mensaje perdido.
+3. **Rescate por sondeo** si el bus no conecta. Aquí sí a **3 s y solo lectura**,
+   no a 500 ms: es el modo degradado de treinta teléfonos a la vez, y a ese
+   ritmo la sala entera cabe holgada bajo los 600/min de la IP compartida.
+
+Quien publica al bus es `/present-admin`, en el mismo momento en que ya escribe
+`actual`. El mensaje lleva el destino, el desplazamiento y la URL del iframe
+(11.5): es un solo mensaje para las tres cosas.
 
 ### 11.3. La interacción: `pointer-events` por dentro, no por fuera
 
-Quitarle el `pointer-events: none` al `<iframe>` devuelve el fallo entero: el
+Quitarle el `pointer-events: none` al `<iframe>` devuelve un fallo entero: el
 bundle escucha `onStageClick` y **cualquier clic en el escenario avanza un
 beat**. Lo que se quiere es más fino: que el ratón llegue a la página viva del
 beat y a nada más.
@@ -431,14 +447,18 @@ Un descendiente puede volver a habilitarlos, así que la lámina queda inerte y
 solo la ventanilla recibe clics. `onStageClick` no se dispara ni por accidente,
 y no hace falta ni parchearlo.
 
+Esto es **solo de `/present-admin`**. `/presentacion` conserva su
+`pointer-events: none` de siempre, que ahora tiene un motivo más: es lo que
+garantiza que un asistente no mueva su propia copia por su cuenta y se quede
+desincronizado del resto sin entender por qué.
+
 El descubrimiento del iframe es **por forma**, como todo aquí: el visible más
-grande que se solape con el escenario. Es el mismo que la sección 10 ya
-descubre para desplazarlo, así que se reutiliza tal cual. Un beat sin iframe
-deja la lámina entera inerte, que es el comportamiento de hoy.
+grande que se solape con el escenario. Es el mismo que la sección 10 ya descubre
+para desplazarlo, así que se reutiliza. Un beat sin iframe deja la lámina entera
+inerte.
 
 El estilo se **re-afirma en cada sondeo**, por la misma razón que `afirmarCapas`
-existe: el bundle monta y desmonta esos iframes al cambiar de beat, y el nodo al
-que se le puso `auto` puede haber dejado de estar.
+existe: el bundle monta y desmonta esos iframes al cambiar de beat.
 
 Detalle que se ve en la pared: el bundle escala el iframe con `transform`
 (`transform-origin: 0 0` sobre 1864x920). El hit-testing del navegador atraviesa
@@ -447,17 +467,18 @@ coordenadas.
 
 ### 11.4. El teclado: quién se queda cada tecla
 
-Tres consumidores posibles, y hay que repartirlos a mano o dos se pisan.
+Tres consumidores posibles en `/present-admin`, y hay que repartirlos a mano o
+dos se pisan.
 
-**1. La página `/present-admin`.** Flechas, espacio, `PageUp`/`PageDown`,
-`Home`/`End` y dígitos para salto directo. No mueve nada por su cuenta: hace el
-`POST` de destino y deja que la reconciliación de las dos ventanas haga el
-resto. `preventDefault` para que la barra espaciadora no desplace la página.
+**1. La página.** Flechas, espacio, `PageUp`/`PageDown`, `Home`/`End` y dígitos
+para salto directo. No mueve nada por su cuenta: hace el `POST` de destino, igual
+que el pulgar, y deja que la reconciliación haga el resto. `preventDefault` para
+que la barra espaciadora no desplace la página.
 
 **2. El bundle.** Registra `window.addEventListener('keydown', ...)` en fase de
 burbuja, que es el último eslabón. Si el foco cae dentro del iframe del mazo (y
 un clic lo lleva ahí), una flecha nativa movería un beat **sin pasar por el
-servidor**: la proyección se quedaría atrás y el mando enseñaría un número que
+servidor**: la sala entera se quedaría atrás y el mando enseñaría un número que
 no es.
 
 Se le tapa con un listener en **fase de captura** sobre el documento del bundle,
@@ -467,132 +488,123 @@ discriminador es `isTrusted`:
 
 ```js
 // Las teclas de carne y hueso no llegan al bundle: mover un beat por fuera del
-// servidor dejaría a la proyección y al mando enseñando un número que no es.
-// Las sintéticas -las que dispara la reconciliación- sí pasan: son la única
-// forma que tiene esta página de mover el mazo.
+// servidor dejaría a la sala y al mando enseñando un número que no es. Las
+// sintéticas -las que dispara la reconciliación- sí pasan: son la única forma
+// que tiene esta página de mover el mazo.
 d.addEventListener('keydown', (e) => {
   if (e.isTrusted) { e.stopPropagation(); e.preventDefault() }
 }, true)
 ```
 
 **3. La página viva dentro del beat.** Sus teclas nacen en otro documento y no
-suben ni al bundle ni a nosotros, así que escribir una contraseña en el login
-del portal funciona sin hacer nada. El precio es la otra cara de lo mismo y hay
-que saberlo antes de estar delante del tribunal: **con el foco dentro de la
-demo, las flechas no pasan de diapositiva**. Se sale clicando fuera, o se usa el
-móvil, que es lo que ya se hace.
+suben ni al bundle ni a nosotros, así que escribir en el login del portal
+funciona sin hacer nada. El precio es la otra cara de lo mismo y hay que saberlo
+antes de estar delante del tribunal: **con el foco dentro de la demo, las
+flechas no pasan de diapositiva**. Se sale clicando fuera, o se usa el móvil.
 
-### 11.5. El espejo: qué se refleja y qué no
+### 11.5. El espejo: que la sala vea lo que tocas
 
-Lo que hace `/present-admin` tiene que verse en el proyector. Tres capas, y solo
-una es trabajo nuevo:
+Tres cosas, y solo una es trabajo nuevo:
 
-| Qué | Cómo se refleja | Estado |
+| Qué | Cómo llega a la sala | Estado |
 |---|---|---|
-| la diapositiva | `presentacion:destino`, que ya escribe como mando | **hecho** |
-| el desplazamiento del beat | `presentacion:scroll`, sección 10 | **hecho**, falta que lo escriba también la rueda |
-| la URL del iframe vivo | `BroadcastChannel`, 11.5.2 | nuevo |
-| tecleo y clics sin cambio de URL | no se refleja, 11.5.3 | fuera de alcance |
+| la diapositiva | `presentacion:destino`, que ya escribe como mando | hecho |
+| el desplazamiento del beat | `presentacion:scroll`, sección 10 | hecho, falta que lo escriba la rueda |
+| la URL del iframe vivo | `presentacion:espejo`, 11.5.2 | nuevo |
+| tecleo y clics sin cambio de URL | no llega, 11.5.3 | fuera de alcance |
 
-#### 11.5.1. La rueda escribe donde escribe el pulgar
+#### 11.5.1. El login del portal se resuelve solo
 
-Hoy `presentacion:scroll` lo escribe el mando. Si la rueda del ratón desplazara
-el iframe en `/present-admin` sin escribirlo, pasarían dos cosas malas: el
-proyector no seguiría, y un "bajar" posterior desde el celular daría un salto,
-porque el servidor cree que la página sigue arriba.
+El beat de la demo enmarca `codebymike.tech/portal/login`, y una sesión de
+verdad sería intransferible: la sala vería el formulario vacío mientras el
+ponente enseña el panel.
 
-Así que `/present-admin` publica su desplazamiento en esa misma clave. Son dos
-escritores, y aquí sí se acepta: es coherente con 11.1 (esta ventana **es** un
-mando), la ventana de carrera es de milisegundos, y el peor caso es un salto de
-scroll, no un botón que no hace nada. La regla de la sección 3 se guarda para lo
-que de verdad se pulsa a ciegas.
+**Se entra por la demo pública**, y con eso el problema desaparece entero.
+`/api/portal/demo` es un `GET` normal desde un `<a>`, sin login, que siempre
+entra como el mismo usuario de mentira contra la base de demo. No hay sesión que
+espejar: quien abra esa dirección ve **la misma pantalla con los mismos datos**,
+sea el ponente o cualquiera de la sala. Basta con que la URL viaje.
 
-Con un acotado: se escribe **cuando el valor cambia y como mucho dos veces por
-segundo**. Una rueda sin acotar son cincuenta escrituras por gesto, y la sección
-6 ya vive cerca de su techo.
+Consecuencia operativa para el runbook: en ese beat se entra **siempre** por el
+enlace de demo, nunca con credenciales reales. Un login real dejaría a la sala
+mirando un formulario.
 
-#### 11.5.2. La URL: `BroadcastChannel`, y por qué no el servidor
+#### 11.5.2. La URL, por el servidor
 
-Si haces login en el portal, el iframe navega. El proyector tiene que navegar
-igual o se queda en el formulario vacío mientras tú enseñas el panel.
+Clave `presentacion:espejo`, escrita por `/present-admin` cuando la URL del
+iframe vivo cambia, y leída por los seguidores en el mismo mensaje del bus.
 
-El canal es **`BroadcastChannel`**, no una clave más en Upstash. La razón no es
-la latencia ni el coste (que también): es que **el espejo de una demo
-autenticada obliga ya a que las dos ventanas compartan el mismo navegador.** La
-sesión del portal vive en una cookie de `codebymike.tech`; si la proyección
-saliera de otra máquina o de otro perfil, navegar su iframe a `/portal` lo
-devolvería al login delante del tribunal. Como el mismo navegador es un
-requisito duro, un canal que solo funciona dentro del mismo navegador no pierde
-nada, y ahorra una clave, un escritor y un camino que puede discrepar del otro.
-
-- Emisor: `/present-admin` observa la URL del iframe vivo (mismo origen, así que
-  se lee) y emite `{ seq, href }` cuando cambia.
-- Receptor: `/presentacion` navega su propio iframe vivo con
-  `location.replace()` y no con `src`, para no llenar de historial una ventana
-  que nadie va a poder navegar hacia atrás.
-- `seq` monótono: un mensaje viejo que llegue tarde se descarta en vez de
-  deshacer una navegación buena.
+- Lleva `{ pos, href, seq }`. El `pos` vincula la URL a **su** diapositiva, con
+  la misma idea que hace que el scroll vuelva arriba solo al cambiar de beat
+  (sección 10.2): una URL de otra diapositiva no se aplica.
+- `seq` monótono: un mensaje que llegue tarde se descarta en vez de deshacer una
+  navegación buena.
+- El seguidor navega su iframe con `location.replace()` y no con `src`, para no
+  llenar de historial una ventana que nadie va a navegar hacia atrás.
 - **Nunca contra la navegación guionizada del propio bundle.** El mazo ya mueve
   ese iframe por su cuenta (`this.frame.src = new URL(p.nav, DEMO_SRC).href`)
   como parte de la coreografía de algunos beats. El espejo solo actúa si el
   `href` recibido difiere del que ya hay, y espera a que el beat se asiente
-  (`PASO_MS`) antes de mirar. Si no, el espejo y la coreografía se pelearían por
-  el mismo iframe en el peor momento.
-- Sin canal (proyección en otro navegador) no pasa nada roto: la posición y el
-  scroll siguen yendo por el servidor, y solo la navegación de la demo se queda
-  atrás. Fail-open, como el resto.
+  (`PASO_MS`). Si no, el espejo y la coreografía se pelearían por el mismo
+  iframe en el peor momento.
 
-**El requisito operativo, escrito para el runbook:** las dos ventanas, el mismo
-navegador y el mismo perfil. Portátil con pantalla extendida, que es el montaje
-real.
+#### 11.5.3. La rueda escribe donde escribe el pulgar
 
-#### 11.5.3. Lo que no se refleja, y por qué está bien
+Si la rueda del ratón desplazara el iframe en `/present-admin` sin escribirlo,
+pasarían dos cosas malas: la sala no seguiría, y un "bajar" posterior desde el
+celular daría un salto, porque el servidor cree que la página sigue arriba.
+
+Así que `/present-admin` publica su desplazamiento en `presentacion:scroll`. Son
+dos escritores con el mando, y aquí se acepta: esta ventana **es** un mando, la
+ventana de carrera es de milisegundos y el peor caso es un salto de scroll, no
+un botón que no hace nada. La regla de la sección 3 se guarda para lo que de
+verdad se pulsa a ciegas.
+
+Con un acotado: se escribe **cuando el valor cambia y como mucho dos veces por
+segundo**. Una rueda sin acotar son cincuenta escrituras por gesto.
+
+#### 11.5.4. Lo que no llega a la sala, y por qué está bien
 
 Tecleo carácter a carácter, clics que solo cambian estado de cliente (una
-pestaña, un desplegable), foco. Reflejarlo es duplicar el DOM entre dos
-ventanas, y ese es otro problema entero (y otro orden de fragilidad delante de
-un tribunal).
+pestaña, un desplegable), foco. Reflejarlo es duplicar el DOM entre N
+navegadores, y ese es otro problema entero.
 
 En la práctica no se echa de menos: lo que la sala necesita ver es el
-**resultado**, y todo resultado en estas tres páginas pasa por una navegación.
-Escribes el email y la contraseña con el proyector mostrando el formulario
-vacío, pulsas entrar, y las dos ventanas enseñan el panel a la vez. Un
-tecleo espejado, además, enseñaría al tribunal cuántos caracteres tiene tu
-contraseña.
+**resultado**, y todo resultado en estas páginas pasa por una navegación. Se
+teclea con la sala viendo el formulario vacío, se pulsa entrar, y todas las
+pantallas enseñan el panel a la vez.
 
 ### 11.6. El cronómetro
 
 Una isla flotante en la parte superior de `/present-admin` con el tiempo que
-lleva la sustentación. Como esta ventana **solo la ve el ponente** (11), el
-reloj no llega a la pared y no hay nada que ocultar.
+lleva la sustentación. Como esa ventana **solo la ve el ponente**, el reloj no
+llega a nadie más y no hace falta ni ocultarlo ni excluirlo del espejo.
 
 #### 11.6.1. El arranque vive en el servidor
 
-Por lo mismo que todo lo demás de este sistema: una recarga a mitad de charla es
-un escenario contemplado (sección 4, origen `inicial`), y un cronómetro que se
-pone a cero justo ahí sería peor que no tenerlo.
+Por lo mismo que todo lo demás: una recarga a mitad de charla es un escenario
+contemplado (sección 4, origen `inicial`), y un cronómetro que se pone a cero
+justo ahí sería peor que no tenerlo.
 
 - Clave `presentacion:inicio`, epoch en ms, mismo TTL de 6 h.
 - **La escribe el servidor**, dentro del `POST` que mueve el destino, la primera
   vez que el destino sale de `POS_INICIAL` y la clave no existe. Sin escritor
-  nuevo, sin viaje nuevo, y sin un gesto más que recordar con la sala esperando:
+  nuevo, sin viaje nuevo y sin un gesto más que recordar con la sala esperando:
   el primer toque para salir de la cita arranca el reloj.
 - **Se lee de gorra** en `?q=destino`, que pasa a devolver
-  `{ destino, scroll, inicio }`. Un número más en un viaje que ya se hacía, que
-  es la misma decisión que tomó la sección 10.3.
-- La isla cuenta en local desde `inicio` con un tick de 1 s. No depende del
-  sondeo: si Upstash se cae a mitad de charla, el reloj sigue.
+  `{ destino, scroll, espejo, inicio, ahora }`. Números más en un viaje que ya se
+  hacía, que es la misma decisión de la sección 10.3.
+- La isla cuenta en local con un tick de 1 s. No depende del sondeo: si Upstash
+  se cae a mitad de charla, el reloj sigue.
+- No viaja al bus: a la sala no le importa.
 
 #### 11.6.2. El desfase de reloj, que no es teórico
 
 `inicio` lo pone el reloj del servidor y la cuenta la hace el reloj del
 portátil. Si el portátil va dos minutos adelantado, el cronómetro arranca en
-`02:00`, y es exactamente el tipo de fallo que no se nota ensayando y sí en
-vivo.
-
-Se corrige sin pedir nada: la misma respuesta trae el `ahora` del servidor, y de
-la diferencia con el `Date.now()` local sale un desfase que se aplica a la
-cuenta. Dos números en lugar de uno, en un viaje que ya se hacía.
+`02:00`, y es el tipo de fallo que no se nota ensayando y sí en vivo. Se corrige
+con el `ahora` que viene en la misma respuesta: de su diferencia con el
+`Date.now()` local sale el desfase que se aplica a la cuenta.
 
 #### 11.6.3. Reiniciar
 
@@ -608,24 +620,23 @@ reloj vuelve a arrancar solo en el movimiento siguiente.
 
 Va flotando sobre el lienzo, y el lienzo entero es una superficie que hay que
 poder clicar. Si la isla comiera los clics de la franja superior, se llevaría
-por delante justo la barra de navegación del portal en la demo.
+por delante justo la barra de navegación del portal durante la demo.
 
-Por tanto: **`pointer-events: none` en el contenedor de la isla**, y `auto`
-solo en el pastillero del cronómetro, que es lo único que se pulsa. Es la misma
-regla que gobierna 11.3, aplicada a nuestra propia UI.
+Por tanto: **`pointer-events: none` en el contenedor de la isla**, y `auto` solo
+en el pastillero del cronómetro, que es lo único que se pulsa. Es la misma regla
+que gobierna 11.3, aplicada a nuestra propia UI.
 
 Lo demás: cifras tabulares (`font-variant-numeric: tabular-nums`) para que no
 bailen de ancho al pasar de `9` a `10`, `mm:ss` hasta la hora y `h:mm:ss`
-después, y peso visual bajo - es un dato de apoyo, no el protagonista de la
-ventana.
+después, y peso visual bajo. Es un dato de apoyo, no el protagonista.
 
 #### 11.6.5. Opcional, no incluido: ritmo contra el guion
 
 `GUION_BEATS` ya trae la duración estimada de cada diapositiva (sección 2.2).
 Sumarla da un presupuesto, y contra el tiempo real sale un "vas 2 min por
-delante", que es más útil que el número desnudo. No entra en este plan: es
-estado cero y datos que ya existen, así que se puede añadir después sin tocar
-nada de lo de arriba, y conviene ver primero si el reloj a secas ya basta.
+delante", que es más útil que el número desnudo. No entra en este plan: es cero
+estado nuevo sobre datos que ya existen, así que se puede añadir después sin
+tocar nada, y conviene ver primero si el reloj a secas basta.
 
 ### 11.7. Ruta, puerta y encabezados
 
@@ -635,78 +646,82 @@ de decks con PIN y `/remote/<algo>` exige sesión de admin. Con un guion,
 `startsWith('/present/')` e `isAdmin` no la rozan por construcción, y no hay que
 añadir ninguna excepción como la que `/remote` a secas necesitó.
 
+`/presentacion` sí necesita un cambio en el middleware: pasa a ser una vista
+que abre la sala entera, así que entra en `isPresentView` para que su CSP abra
+`connect-src` al origen del bus. Sin eso el `EventSource` se bloquea y los
+treinta teléfonos caen al rescate por sondeo, con el único rastro de un aviso en
+la consola de cada uno.
+
 **Sin puerta**, por lo mismo que la sección 8 y con un argumento más: el día de
 la charla, una sesión de GitHub caducada dejaría sin mando. Pero cambia una cosa
-respecto a la original y hay que decirla en voz alta: aquí quien encuentre la
-URL no solo pasa una diapositiva, puede **teclear dentro de la demo**. Lo que
-hay dentro es `codebymike.tech/portal/login`, `/status` y `/engineering`, tres
-páginas que ya son públicas y con su propio rate limit: enmarcarlas no añade
-superficie, solo la acerca. Si alguna vez importa, el sitio para la puerta sigue
-siendo el `POST`, no la página.
+respecto a la original y hay que decirla en voz alta: aquí quien encuentre la URL
+no solo pasa una diapositiva, puede **teclear dentro de la demo**. Lo que hay
+dentro es la demo pública del portal, `/status` y `/engineering`: tres cosas que
+ya son públicas y con su propio rate limit. Enmarcarlas no añade superficie,
+solo la acerca. Si alguna vez importa, el sitio para la puerta sigue siendo el
+`POST`, no la página.
 
-`Cache-Control: no-store` y `noindex, nofollow` como la actual, y fuera de
-sitemap y de cualquier enlace entrante.
+`Cache-Control: no-store` y `noindex, nofollow` en las dos, y fuera de sitemap.
 
 ### 11.8. Archivos
 
 ```
 src/pages/present-admin.astro           el mando con lienzo (nuevo)
+src/pages/presentacion.astro            deja de publicar; se engancha al bus
 src/lib/presentacion/lienzo.ts    PURO  descubrimiento del mazo y del iframe vivo,
-                                        extraído de presentacion.astro para no
-                                        tener dos copias divergiendo
-src/lib/presentacion/cronometro.ts PURO desfase de reloj, formato mm:ss / h:mm:ss,
-                                        cuándo arranca
-src/lib/presentacion/espejo.ts    PURO  forma del mensaje, `seq`, cuándo se aplica
-                                        y cuándo se descarta
-src/lib/presentacion/estado.ts          + regla de relevo (rancio -> puedo publicar)
-src/pages/api/presentacion.ts           + `inicio` y `ahora` en `?q=destino`
-                                        + `?q=destino&relevo=1` (agrega solo `ts`)
+                                        compartido por las dos ventanas
+src/lib/presentacion/espejo.ts    PURO  forma del mensaje, `seq`, vínculo con la
+                                        diapositiva, cuándo se aplica y cuándo no
+src/lib/presentacion/cronometro.ts PURO desfase de reloj, formato, arranque
+src/pages/api/presentacion.ts           + `espejo`, `inicio` y `ahora` en `?q=destino`
                                         + `accion: 'reiniciar-cronometro'`
-src/pages/presentacion.astro            + receptor del espejo (única adición)
-tests/presentacion-relevo.test.ts       quién publica y cuándo, sin DOM
+                                        + publicación al bus en cada cambio
+src/lib/present/client-sync.ts          reuso para el canal de la sala
+src/middleware.ts                       `/presentacion` entra en `isPresentView`
+tests/presentacion-espejo.test.ts       orden por `seq`, diapositiva ajena, sin canal
 tests/presentacion-cronometro.test.ts   desfase, formato, arranque idempotente
-tests/presentacion-espejo.test.ts       orden por `seq`, mensajes viejos, sin canal
 src/data/documentacion.ts               RF-716, `planeado` -> `implementado`
-docs/runbook-sustentacion.md            el montaje de dos ventanas del mismo navegador
+docs/runbook-sustentacion.md            montaje real y la regla del login de demo
 docs/plan-control-final.md              esta sección, marcada al entregar
 ```
 
-El único refactor de `/presentacion` que contempla el plan es **extraer** su
-descubrimiento a `lienzo.ts` sin cambiar su comportamiento, para que las dos
-ventanas descubran el mazo con el mismo código. Si al empezar resulta que
-extraerlo obliga a tocar su reconciliación, se duplica y se anota: no vale la
-pena arriesgar la ventana que ya funciona. Su única adición real es el receptor
-del espejo, que es un listener y una línea.
-
 ### 11.9. Verificación en vivo
 
-Con las dos ventanas abiertas en el mismo navegador, una en la pantalla
-extendida:
+Con `/present-admin` en el portátil, `/remote` en el móvil y `/presentacion`
+abierta en **dos equipos distintos**, uno de ellos un teléfono:
 
-1. Flecha en `/present-admin`: las dos ventanas se mueven, y el celular ve el
-   número nuevo.
-2. Clic en la lámina (fuera del iframe vivo): **no pasa nada**. Es la prueba de
+1. Flecha en el portátil: se mueven las tres pantallas, y el móvil ve el número.
+2. Clic en la lámina, fuera del iframe vivo: **no pasa nada**. Es la prueba de
    que `onStageClick` está tapado.
-3. Beat 14: clic dentro del formulario, se teclea, se entra. El proyector navega
-   al panel al mismo tiempo, sin volver al login.
+3. Beat de la demo: se entra por el enlace de demo pública, se navega el panel.
+   Los dos equipos de prueba navegan igual, sin ver el formulario de login.
 4. Con el foco dentro de la demo, flecha derecha: no cambia de diapositiva
-   (comportamiento esperado, 11.4). Se pasa desde el móvil.
-5. Rueda del ratón sobre `/status` (beat 16): el proyector sigue, y un "bajar"
-   posterior desde el celular continúa desde donde estaba, no desde arriba.
-6. Recarga de `/present-admin` a mitad de charla: vuelve a la diapositiva
-   correcta y **el cronómetro sigue donde iba**.
-7. Cerrar `/presentacion`, esperar 20 s: el celular sigue viendo la charla viva
-   y con notas (relevo, 11.2). Volver a abrirla: `/present-admin` se calla.
-8. Reiniciar el cronómetro y comprobar que arranca solo con el movimiento
-   siguiente, no al instante.
+   (esperado, 11.4). Se pasa desde el móvil.
+5. Rueda del ratón sobre `/status`: la sala sigue, y un "bajar" posterior desde
+   el celular continúa desde donde estaba.
+6. **Bloquear el teléfono espectador dos minutos y desbloquearlo**: se pone al
+   día y **no arrastra a nadie**. Es la prueba de 11.1 y la que justifica la
+   sección entera.
+7. Recarga de `/present-admin` a mitad de charla: vuelve a la diapositiva
+   correcta y el cronómetro sigue donde iba.
+8. Reiniciar el cronómetro: arranca con el movimiento siguiente, no al instante.
+9. Cortar el bus (token vacío en local): los seguidores caen al sondeo de 3 s y
+   la charla sigue, más lenta pero entera.
+10. Medir el bundle en un teléfono de gama baja. `final.html` es 1 MB con canvas
+    animados: si ahí no va fluido, la opción de la sala se cae y hay que
+    replantearla, no maquillarla.
 
 ### 11.10. Fuera de alcance
 
-- **Espejo del DOM.** Solo posición, scroll y URL (11.5.3).
-- **Proyección desde otra máquina.** La cookie de sesión del portal lo impide
-  para la demo autenticada; la posición y el scroll seguirían funcionando.
+- **Espejo del DOM.** Solo diapositiva, scroll y URL (11.5.4).
+- **Login real en la demo del portal.** Se entra por la demo pública o la sala
+  se queda mirando un formulario (11.5.1).
 - **Sin modo alternable de interacción.** Se activa sola en cuanto el beat trae
-  un iframe, y solo sobre él. No hay tecla que recordar ni indicador que mirar.
+  un iframe, y solo sobre él. No hay tecla que recordar.
 - **Sin control del vídeo.** Si el mazo se exporta con `DEMO_MODE=video`, no hay
   iframe que descubrir, la lámina queda inerte y el espejo no tiene nada que
   decir.
+- **La sala es prescindible por diseño.** Si el bus no conecta, si el WiFi del
+  salón se cae o si los teléfonos no aguantan el bundle, el ponente sigue con su
+  portátil y su móvil sin enterarse. Ninguna ruta del camino caliente depende de
+  que haya alguien mirando.

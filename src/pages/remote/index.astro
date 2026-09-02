@@ -370,8 +370,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
     <script>
       import { mazoPublicado, notaDeGlobal } from '../../lib/presentacion/guion'
+      import {
+        hayQueDesplazar,
+        type Geometria,
+      } from '../../lib/presentacion/desplazamiento'
 
-      type Geometria = { y: number; max: number; alto: number }
       type Actual = {
         pos: number
         total: number
@@ -464,10 +467,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
        * mirarla dejaría el botón encendido en el fondo de la página.
        */
       function pintarDesplazamiento(geo: Geometria | undefined, pedido: number) {
-        const hay = Boolean(geo && geo.max >= 1)
+        const hay = hayQueDesplazar(geo)
         el.desplaza.hidden = !hay
         el.saltos.hidden = hay
-        if (!geo || !hay) return
+        if (!hay) return
         el.subir.disabled = pedido <= 0
         el.bajar.disabled = pedido >= geo.max
         // La barra enseña la posición REAL, no la pedida: es la referencia de

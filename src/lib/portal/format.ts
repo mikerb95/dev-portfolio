@@ -1,5 +1,14 @@
-// Formateo para las vistas del portal. Puro y sin dependencias: es lo que ve
-// el cliente y por tanto merece tests, no confianza.
+// Formateo para las vistas del portal. Puro: es lo que ve el cliente y por
+// tanto merece tests, no confianza.
+//
+// Las fechas se formatean SIEMPRE en zona de Colombia. En Vercel el proceso
+// corre en UTC, y sin fijar la zona una factura emitida a las 19:30 de Bogotá
+// aparecía fechada al día siguiente. El complemento obligatorio de este cambio
+// está en el borde de escritura: los <input type="date"> se anclan con
+// `parseFechaCalendario` (lib/fecha-co.ts). Sin las dos mitades, arreglar solo
+// el formateo movería los vencimientos un día HACIA ATRÁS.
+
+import { TZ_COLOMBIA } from '../fecha-co'
 
 /**
  * Dinero desde centavos enteros. Nunca se hacen cuentas en float: los importes
@@ -19,7 +28,12 @@ export function formatMoney(cents: number, currency = 'COP'): string {
 export function formatDate(d: Date | number | null | undefined): string {
   if (d == null) return '-'
   const date = d instanceof Date ? d : new Date(d)
-  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: TZ_COLOMBIA,
+  }).format(date)
 }
 
 export function formatDateTime(d: Date | number | null | undefined): string {
@@ -31,6 +45,7 @@ export function formatDateTime(d: Date | number | null | undefined): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: TZ_COLOMBIA,
   }).format(date)
 }
 
