@@ -142,7 +142,7 @@ describe('siguientePuntero', () => {
   it('el seq sube y sale del anterior, no del reloj', () => {
     // Dos mensajes en el mismo milisegundo empatarían, y un empate es un
     // mensaje descartado por el seguidor.
-    const a = siguientePuntero(14, obj(), pnt({ seq: 3 }))
+    const a = siguientePuntero(14, obj({ ruta: [1] }), pnt({ seq: 3 }))
     expect(a?.seq).toBe(4)
     expect(siguientePuntero(14, obj({ ruta: [2] }), a)?.seq).toBe(5)
   })
