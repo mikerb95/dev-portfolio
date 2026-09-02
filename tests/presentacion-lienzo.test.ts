@@ -265,8 +265,16 @@ describe('geometriaDesde', () => {
   it('acota el rebote elástico de iOS en vez de descartar la geometría', () => {
     // Perder los controles a mitad de una demo por unos fotogramas de rebote
     // sería peor que corregir el número.
-    expect(geometriaDesde({ clientHeight: 800, scrollHeight: 2000, scrollTop: 5000 }).y).toBe(1200)
-    expect(geometriaDesde({ clientHeight: 800, scrollHeight: 2000, scrollTop: -80 }).y).toBe(0)
+    expect(geometriaDesde({ clientHeight: 800, scrollHeight: 2000, scrollTop: 5000 })).toEqual({
+      y: 1200,
+      max: 1200,
+      alto: 800,
+    })
+    expect(geometriaDesde({ clientHeight: 800, scrollHeight: 2000, scrollTop: -80 })).toEqual({
+      y: 0,
+      max: 1200,
+      alto: 800,
+    })
   })
 
   it('null si no hay altura que medir', () => {
