@@ -355,6 +355,40 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
        *  hablando. */
       const COBERTURA_MINIMA = 0.15
 
+      /**
+       * Cuánto de un elemento se está viendo de verdad, en píxeles del
+       * escenario.
+       *
+       * No basta con su `getBoundingClientRect`, y esto NO es teoría: el mazo
+       * monta las tres páginas desde el primer beat y las guarda en cajas
+       * plegadas de 400x260 con `overflow:hidden`. El rectángulo de un iframe
+       * ignora ese recorte y devuelve sus 1864x920 aunque de él solo se asome
+       * una esquina, así que sin subir por los ancestros los tres iframes
+       * parecerían estar en pantalla a la vez y el mando desplazaría el que no
+       * es. Se sube recortando contra cada caja que recorta y apagando el
+       * elemento en cuanto un ancestro está oculto.
+       */
+      function areaVisible(el: HTMLElement, W: number, H: number): number {
+        let r = el.getBoundingClientRect()
+        let izq = Math.max(r.left, 0)
+        let arr = Math.max(r.top, 0)
+        let der = Math.min(r.right, W)
+        let aba = Math.min(r.bottom, H)
+        for (let a: HTMLElement | null = el; a; a = a.parentElement) {
+          const s = estilo(a)
+          if (s.display === 'none' || s.visibility === 'hidden') return 0
+          if (Number(s.opacity) <= 0.5) return 0
+          if (a !== el && s.overflow !== 'visible') {
+            r = a.getBoundingClientRect()
+            izq = Math.max(izq, r.left)
+            arr = Math.max(arr, r.top)
+            der = Math.min(der, r.right)
+            aba = Math.min(aba, r.bottom)
+          }
+        }
+        return Math.max(der - izq, 0) * Math.max(aba - arr, 0)
+      }
+
       function iframeEnJuego(): HTMLIFrameElement | null {
         const d = iframe.contentDocument
         if (!d?.documentElement) return null
@@ -363,14 +397,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         let mejor: HTMLIFrameElement | null = null
         let mayor = 0
         for (const f of d.querySelectorAll('iframe')) {
-          if (!seVe(f)) continue
-          const r = f.getBoundingClientRect()
-          // Área VISIBLE, no la del elemento: el bundle deja los beats vecinos
-          // montados y desplazados fuera del escenario, y uno de ellos podría
-          // ser más grande que el que se está proyectando.
-          const ancho = Math.min(r.right, W) - Math.max(r.left, 0)
-          const alto = Math.min(r.bottom, H) - Math.max(r.top, 0)
-          const area = Math.max(ancho, 0) * Math.max(alto, 0)
+          const area = areaVisible(f, W, H)
           if (area > mayor) {
             mayor = area
             mejor = f
