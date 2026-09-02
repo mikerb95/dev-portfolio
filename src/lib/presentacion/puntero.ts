@@ -469,7 +469,6 @@ export function aplicarPuntero(
     apagarCursor(doc)
     return marcarHover(null, marcados)
   }
-  espejarHover(doc)
   pintarCursor(doc, el, o)
   return marcarHover(el, marcados)
 }
