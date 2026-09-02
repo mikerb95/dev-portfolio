@@ -620,8 +620,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
             // El botón puede apagarse a mitad de la repetición al llegar al
             // fondo: sin esto seguiría mandando toques que el servidor acota
             // contra el mismo número una y otra vez.
+            // Con la red lenta, una repetición por ciclo llenaría la cola de
+            // `enVuelo` y la página seguiría bajando un rato después de
+            // levantar el dedo. Un empujón en vuelo a la vez.
             if (boton.disabled) parar()
-            else mandar({ accion })
+            else if (!enVuelo) mandar({ accion })
           }, REPETIR_MS)
         })
         // `pointercancel` es el que importa en el móvil: el navegador se lleva
