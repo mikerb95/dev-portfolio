@@ -72,6 +72,7 @@ export const TRANSLATED_ROUTES: readonly string[] = [
   '/log',
   '/notes',
   '/paginas-web',
+  '/presentacion-end',
   '/contact',
   '/cv/descargar',
   '/engineering',

@@ -1286,6 +1286,36 @@ const es = {
     scheduleCall: 'Agendar llamada',
     waMessage: 'Hola Mike, nos vimos en la Platzi Conf 👋',
   },
+  presentacionEnd: {
+    title: 'Cierre de la sustentación - CodeByMike',
+    description: 'Cierre de la sustentación del proyecto: documentación completa, resumen del trabajo entregado y cómo seguir la conversación.',
+    eyebrow: 'Fin de la sustentación',
+    h1Line1: 'Eso fue lo que',
+    h1Line2: 'se construyó.',
+    intro:
+      'Todo lo mostrado corre en producción, no en una maqueta armada para hoy. Aquí queda la documentación completa del proyecto para revisar con calma cualquier decisión que no alcanzamos a profundizar en la sustentación.',
+    docsHeading: 'Documentación del proyecto',
+    docsIntro: 'Cada requerimiento, historia de usuario y diagrama vive como dato tipado, no como texto suelto - un cambio de alcance es un cambio de dato, no de prosa en cinco páginas distintas.',
+    docs: [
+      { title: 'Documentación completa', description: 'Requerimientos, casos de uso, historias, diagramas UML/BPMN y testing - todo en un solo mapa.' },
+      { title: 'Tablero kanban', description: 'Las iteraciones reales del proyecto, derivadas del historial de commits de GitHub.' },
+      { title: 'Arquitectura', description: 'Cómo está montado el sistema: capas, autenticación, base de datos y despliegue.' },
+      { title: 'Seguridad', description: 'El micro-SIEM propio: clasificador de amenazas, rate limiting durable y bitácora de eventos.' },
+      { title: 'Repositorio en GitHub', description: 'El código fuente completo, con el historial de commits que respalda cada iteración del kanban.' },
+      { title: 'Notas técnicas', description: 'Artículos de caso de estudio sobre las decisiones de ingeniería más grandes del proyecto.' },
+    ],
+    achievementsHeading: 'En números',
+    achievementsIntro: 'Un corte del tablero real, no una diapositiva aparte que se desactualiza sola.',
+    stats: {
+      iteraciones: 'Iteraciones',
+      historias: 'Historias de usuario',
+      aceptadas: 'Aceptadas',
+    },
+    closingHeading: 'Gracias por el tiempo',
+    closingBody: 'Si algo de esto te sirve para tu propio proyecto - o quieres profundizar en cómo se construyó - con gusto seguimos la conversación.',
+    contactCta: 'Hablemos de tu proyecto',
+    backHome: 'Volver al inicio',
+  },
 }
 
 export default es

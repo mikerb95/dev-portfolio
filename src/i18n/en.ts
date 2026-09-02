@@ -1278,6 +1278,36 @@ const en = {
     scheduleCall: 'Schedule a call',
     waMessage: 'Hi Mike, we met at Platzi Conf 👋',
   },
+  presentacionEnd: {
+    title: 'Defense closing - CodeByMike',
+    description: 'Closing page for the project defense: full documentation, a summary of what was delivered, and how to keep the conversation going.',
+    eyebrow: 'End of the defense',
+    h1Line1: 'That is what',
+    h1Line2: 'got built.',
+    intro:
+      'Everything shown runs in production, not in a mockup put together for today. Here is the full project documentation, to review at your own pace any decision we did not have time to dig into during the defense.',
+    docsHeading: 'Project documentation',
+    docsIntro: 'Every requirement, user story, and diagram lives as typed data, not loose prose - a scope change is a data change, not a rewrite across five different pages.',
+    docs: [
+      { title: 'Full documentation', description: 'Requirements, use cases, user stories, UML/BPMN diagrams, and testing - all in one map.' },
+      { title: 'Kanban board', description: "The project's real iterations, derived from the GitHub commit history." },
+      { title: 'Architecture', description: 'How the system is put together: layers, authentication, database, and deployment.' },
+      { title: 'Security', description: 'The in-house micro-SIEM: threat classifier, durable rate limiting, and event log.' },
+      { title: 'GitHub repository', description: 'The full source code, with the commit history backing every iteration on the kanban board.' },
+      { title: 'Technical notes', description: "Case-study articles on the project's biggest engineering decisions." },
+    ],
+    achievementsHeading: 'By the numbers',
+    achievementsIntro: 'A cut of the real board, not a separate slide that goes stale on its own.',
+    stats: {
+      iteraciones: 'Iterations',
+      historias: 'User stories',
+      aceptadas: 'Accepted',
+    },
+    closingHeading: 'Thanks for your time',
+    closingBody: "If any of this is useful for your own project - or you'd like to go deeper into how it was built - I'd be glad to keep the conversation going.",
+    contactCta: "Let's talk about your project",
+    backHome: 'Back to home',
+  },
 } satisfies typeof es
 
 export default en
