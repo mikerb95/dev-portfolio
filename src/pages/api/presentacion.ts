@@ -29,14 +29,14 @@ import { parsearPuntero, punteroPara, type Puntero } from '../../lib/presentacio
  * Estado del control remoto de `/final.html`, que no se toca ni se edita.
  *
  *   GET                             -> { destino, actual, viva, scroll }
- *   GET ?q=destino                  -> { destino, scroll, espejo, inicio, ahora }
+ *   GET ?q=destino                  -> { destino, scroll, espejo, puntero, inicio, ahora }
  *                                      (lo que sondea la pantalla y los seguidores)
  *   POST { accion: siguiente|anterior } -> mueve el destino    (el mando)
  *   POST { accion: reiniciar-cronometro } -> borra el arranque   (la isla)
  *   POST { accion: subir|bajar }    -> desplaza el iframe del beat (el mando)
  *   POST { accion: scroll, y: N }   -> deja el iframe del beat EN y (la rueda)
  *   POST { destino: N }             -> salto directo           (el mando)
- *   POST { pos, total, intro, outro, scroll, origen }
+ *   POST { pos, total, intro, outro, scroll, espejo, puntero, origen }
  *                                   -> la pantalla publica dónde está de verdad
  *
  * UNA CLAVE POR ESCRITOR. El mando escribe `destino` y `scroll`; la pantalla
@@ -396,7 +396,10 @@ export const POST: APIRoute = async ({ request, url }) => {
     // Al cambiar de diapositiva no hay espejo que valga: el de la anterior
     // pertenece a otra `pos`, así que la sala vuelve al arranque del beat nuevo
     // por construcción, sin escrituras extra ni limpieza.
-    if (destino !== previo) void anunciar({ destino, scroll, espejo: null })
+    // Y con él el puntero, por lo mismo: el ratón señalaba algo de la
+    // diapositiva anterior. `null` explícito y no ausente, que aquí significa
+    // "apaga el cursor" y es justo lo que toca.
+    if (destino !== previo) void anunciar({ destino, scroll, espejo: null, puntero: null })
 
     return json(200, { destino, actual, viva: esFresco(actual, Date.now()), scroll, inicio })
   } catch (e) {
