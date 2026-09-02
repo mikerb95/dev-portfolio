@@ -161,10 +161,11 @@ export const GET: APIRoute = async ({ url }) => {
       // veces por segundo y de aquí saca también hasta dónde desplazar el
       // iframe. Lo pedido para OTRA diapositiva vale 0, que es la vuelta
       // arriba automática al cambiar de beat.
-      const [destino, pedido, espejo, inicio] = await Promise.all([
+      const [destino, pedido, espejo, puntero, inicio] = await Promise.all([
         leerDestino(),
         leerScroll(),
         leerEspejo(url.origin),
+        leerPuntero(),
         leerInicio(),
       ])
       return json(200, {
