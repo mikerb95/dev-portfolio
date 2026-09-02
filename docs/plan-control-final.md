@@ -422,11 +422,22 @@ locales equivalentes (ver 10.1):
 
 ## 11. `/present-admin`: el mando con lienzo, y el público como público
 
-**Estado: en curso.** Hecho el cimiento (los tres módulos puros, el extracto de
-`lienzo.ts`, el lado servidor y la línea del middleware). Faltan las dos
-páginas, el runbook y `documentacion.ts`. Nada de lo entregado cambia todavía
-el comportamiento de `/presentacion`: las claves nuevas existen y nadie las
-lee aún.
+**Estado: entregada la ventana que conduce; la sala sigue detrás de su
+compuerta.** Hecho: los tres módulos puros, `lienzo.ts`, el lado servidor
+COMPLETO (lectura y escritura, incluido el scroll absoluto de la rueda), la
+línea del middleware, `src/pages/present-admin.astro` con sus seis capas
+(§12.5 a-f), el runbook y RF-717 en `documentacion.ts`.
+
+Falta el **paso 3** (§12.6): que `/presentacion` deje de publicar y pase a
+seguidor puro por el bus. Está detrás del **paso 0** (§12.3), que es una
+compuerta de diseño y no una verificación: medir `final.html` en un teléfono de
+gama baja. Si ahí no va fluido, el paso 3 entero se cae y no hay que
+construirlo. Mientras tanto `/presentacion` se queda como está - lo que impone
+el orden de §12.2: **no se abren `/present-admin` y `/presentacion` a la vez**,
+serían dos escritores de la misma clave.
+
+Falta también la vuelta en vivo de §11.9, que no se puede cerrar desde el
+portátil solo.
 
 Hasta aquí el sistema tenía una sola pantalla. Esta sección la desdobla en dos
 papeles que hoy están mezclados en `/presentacion`: quien **conduce** el mazo y
@@ -822,26 +833,28 @@ sin dejar el sistema roto entre paso y paso.
 | `lib/presentacion/espejo.ts` | ✅ puro | `seq`, vínculo con la diapositiva, cuándo navegar |
 | `lib/presentacion/cronometro.ts` | ✅ puro | desfase, formato, arranque |
 | `api/presentacion.ts`, lado LECTURA | ✅ | `?q=destino` ya devuelve `{ destino, scroll, espejo, inicio, ahora }` |
-| `api/presentacion.ts`, lado ESCRITURA | ❌ | ver abajo |
+| `api/presentacion.ts`, lado ESCRITURA | ✅ | espejo, arranque y reinicio del reloj, scroll absoluto y `anunciar()` |
 | `middleware.ts` | ✅ | `/presentacion` ya entra en `isPresentView` (CSP del bus) |
-| `src/pages/present-admin.astro` | ❌ | no existe |
-| `/presentacion` como seguidor puro | ❌ | sigue publicando `actual` |
-| RF-716, runbook, §11 marcada | ❌ | |
+| `src/pages/present-admin.astro` | ✅ | las seis capas de 12.5, sin verificar en vivo |
+| `/presentacion` como seguidor puro | ❌ | sigue publicando `actual`; **detrás del paso 0** |
+| `client-sync.ts` parametrizado | ❌ | hace falta solo para el paso 3 |
+| RF-717, runbook, §11 marcada | ✅ | el RF es el 717: el 716 ya estaba cogido |
 
-**El lado que lee está entero; el lado que escribe está sin empezar.** Las tres
-piezas puras existen, están probadas y **no las llama nadie**. En concreto, en
-`api/presentacion.ts`:
+**El lado servidor está entero.** La última pieza que faltaba era la escritura
+de scroll **absoluto** (`situar`, en `desplazamiento.ts`), que es por donde
+entra la rueda del ratón de `/present-admin` (11.5.3): hasta entonces solo
+existían `subir` y `bajar`, que van a saltos de un tercio de pantalla.
 
-- `K_ESPEJO` solo se lee. Ningún camino la escribe, y el `POST` ni siquiera
-  acepta un `href` en el cuerpo.
-- No hay escritura de scroll **absoluto**: solo existen `subir` y `bajar`, que
-  van a saltos de un tercio. La rueda del ratón (11.5.3) no tiene por dónde
-  entrar.
-- `reiniciar-cronometro` está en el comentario de cabecera y no en el código.
-- `inicio` no lo arranca nadie: `debeArrancar` se importa y no se usa.
-- `anunciar()` está escrita, comentada y **no se llama desde ningún sitio**. Sin
-  esa llamada no hay bus, y sin bus la sala entera cae al sondeo, que es
-  exactamente el fallo que 11.2 existe para evitar.
+Dos decisiones que se tomaron al cerrarlo y no estaban escritas:
+
+- **El acotado de frecuencia vive en el cliente**, no en el servidor. Un gesto
+  de rueda son cincuenta eventos, pero un servidor que descarta en silencio lo
+  que le mandan deja la sala en una posición que nadie puede explicar mirando
+  el estado. `/present-admin` escribe como mucho dos veces por segundo.
+- **`subir`/`bajar` también anuncian al bus.** No lo hacían: la sala se enteraba
+  igual, pero por rebote (la pantalla ve moverse la geometría y publica un
+  latido), que es un viaje de ida y vuelta de más y deja al seguidor por detrás
+  del propio proyector. Es la regla de 12.4.5 aplicada al camino que faltaba.
 
 ### 12.2. Dos hallazgos que corrigen a la sección 11
 
