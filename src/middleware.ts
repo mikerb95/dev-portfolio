@@ -653,7 +653,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // que necesita idéntica apertura de connect-src. Sin esto el EventSource se
     // bloquea y todos los seguidores caen al rescate por polling, con el único
     // rastro de un aviso en la consola de cada celular.
-    canonicalPath.startsWith('/sustentacion/seguir/')
+    canonicalPath.startsWith('/sustentacion/seguir/') ||
+    // `/presentacion` dejó de ser UNA pantalla para ser la vista que abre la
+    // sala entera en sus propios equipos, así que se suscribe al mismo bus por
+    // la misma razón de siempre. Sin esta línea la CSP bloquea su EventSource
+    // y los treinta teléfonos caen al sondeo de rescate a la vez, contra el
+    // paraguas de 600 peticiones por minuto y por IP que comparten en el WiFi
+    // del salón. El único rastro sería un aviso en la consola de cada uno.
+    //
+    // Es la ruta EXACTA: `/present-admin` no cae aquí (ni falta, conduce sin
+    // suscribirse) y `/presentacion/control` es la redirección 308 al mando.
+    canonicalPath === '/presentacion' ||
+    canonicalPath === '/presentacion/'
   const busOrigin = isPresentView ? presentBusOrigin() : null
   const connectSrc = busOrigin ? `connect-src 'self' ${busOrigin};` : "connect-src 'self';"
 
