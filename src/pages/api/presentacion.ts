@@ -129,6 +129,9 @@ const leerInicio = async (): Promise<number | null> =>
 const leerEspejo = async (base: string): Promise<Espejo | null> =>
   parsearEspejo(await presentStore().get(K_ESPEJO), base)
 
+const leerPuntero = async (): Promise<Puntero | null> =>
+  parsearPuntero(await presentStore().get(K_PUNTERO))
+
 /**
  * Lo que se le cuenta a la sala en cada cambio: exactamente lo mismo que
  * devuelve `?q=destino`, para que un seguidor por bus y uno caído al sondeo
