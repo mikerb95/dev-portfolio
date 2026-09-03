@@ -602,9 +602,29 @@ d.addEventListener('keydown', (e) => {
 
 **3. La página viva dentro del beat.** Sus teclas nacen en otro documento y no
 suben ni al bundle ni a nosotros, así que escribir en el login del portal
-funciona sin hacer nada. El precio es la otra cara de lo mismo y hay que saberlo
-antes de estar delante del tribunal: **con el foco dentro de la demo, las
-flechas no pasan de diapositiva**. Se sale clicando fuera, o se usa el móvil.
+funciona sin hacer nada.
+
+**Corregido el 3 sep 2026: tapar no basta, hay que ENRUTAR.** Tal como estaba
+escrito arriba, el listener de captura se comía la tecla y ahí terminaba todo:
+un `keydown` nacido dentro de un iframe no propaga al documento padre, así que
+el listener de la página que haría el `POST` no llegaba a ejecutarse. La flecha
+no es que moviera un beat por fuera del servidor, es que **no hacía nada, y sin
+ningún rastro**. Y se llegaba ahí clicando dentro de la demo viva, que es justo
+lo que 11.3 quiere que se pueda hacer: en el momento en que se acaba de tocar la
+demo y toca seguir.
+
+El mismo listener que intercepta la tecla la manda ahora por `mandar()`, que es
+la regla de esta sección aplicada entera: **un solo camino por el que se mueve la
+presentación**, esté el foco donde esté. Con dos cuidados:
+
+- Se engancha **también al documento de la página viva**, junto a
+  `engancharRueda` y `engancharPuntero`, que ya resuelven ese mismo problema
+  para la rueda y el ratón (con la misma marca `__enganchado` para no apilar un
+  listener por sondeo). El listener del bundle vive un nivel más arriba y el
+  evento de un iframe anidado tampoco sube hasta ahí.
+- Se salta `input`, `textarea`, `select` y `[contenteditable]`: `/portal/login`
+  es uno de los `ATAJOS` del panel, y una flecha dentro de un campo de texto es
+  del campo.
 
 ### 11.5. El espejo: que la sala vea lo que tocas
 
@@ -752,6 +772,19 @@ Sin fuente de siete segmentos: habría que alojarla (la CSP sirve
 nuevos en el camino de una presentación por un guiño tipográfico. La
 monoespaciada del sistema en rojo, con cifras tabulares, ya lee como un
 cronómetro.
+
+#### 11.6.4 bis. Y en el mando (3 sep 2026) ✅
+
+El reloj vivía **solo** en la isla del portátil, que es la pantalla que no se
+está mirando mientras se habla de pie. El celular, que es lo que se tiene en la
+mano, era el único de los tres que no sabía qué hora era.
+
+Se corrige sin estado nuevo: el `GET` sin `q` (el que sondea `/remote` una vez
+por segundo) pasa a devolver `inicio` y `ahora`, que ya existían y ya viajaban en
+las otras ramas. La cuenta la hace el mismo módulo puro, con el mismo tick propio
+de un segundo para que el reloj siga con el teléfono sin red. Va en la cabecera,
+a la derecha del estado del enlace, y lleva pegado el desvío contra el guion
+(`ritmo`, 11.6.5) porque el mando ya tiene el mazo publicado delante.
 
 #### 11.6.5. Ritmo contra el guion ✅ (entregado en 11.11)
 
@@ -1154,11 +1187,11 @@ sin dejar el sistema roto entre paso y paso.
 | `lib/presentacion/lienzo.ts` | ✅ | descubrimiento del mazo y del iframe vivo, con tests |
 | `lib/presentacion/espejo.ts` | ✅ puro | `seq`, vínculo con la diapositiva, cuándo navegar |
 | `lib/presentacion/cronometro.ts` | ✅ puro | desfase, formato, arranque |
-| `api/presentacion.ts`, lado LECTURA | ✅ | `?q=destino` ya devuelve `{ destino, scroll, espejo, inicio, ahora }` |
+| `api/presentacion.ts`, lado LECTURA | ✅ | `?q=destino` (sala), `?q=conducir` (pantalla) y el `GET` del mando, los tres con `inicio`/`ahora` |
 | `api/presentacion.ts`, lado ESCRITURA | ✅ | espejo, arranque y reinicio del reloj, scroll absoluto y `anunciar()` |
 | `middleware.ts` | ✅ | `/presentacion` ya entra en `isPresentView` (CSP del bus) |
 | `src/pages/present-admin.astro` | ✅ | las seis capas de 12.5, sin verificar en vivo |
-| `/presentacion` como seguidor puro | ❌ | sigue publicando `actual`; **detrás del paso 0** |
+| `/presentacion` como seguidor puro | 🟡 | ya no publica (bandera `?publicar=1`, §13); falta engancharla al bus, **detrás del paso 0** |
 | `client-sync.ts` parametrizado | ❌ | hace falta solo para el paso 3 |
 | RF-717, runbook, §11 marcada | ✅ | el RF es el 717: el 716 ya estaba cogido |
 
@@ -1275,12 +1308,16 @@ Ruta sin puerta y sin excepción en el middleware: el guion de `/present-admin`
 la deja fuera de `startsWith('/present/')` y de `isAdmin` por construcción.
 `Cache-Control: no-store`, `noindex, nofollow`, fuera de sitemap.
 
-### 12.6. Paso 3 ⛔: `/presentacion` pasa a seguidor puro
+### 12.6. Paso 3 🟡: `/presentacion` pasa a seguidor puro
 
-Solo si el paso 0 dio "sala sí".
+La mitad que no dependía de la compuerta se entregó el 3 sep 2026 (§13): la
+ventana ya no publica. Lo que sigue detrás del paso 0 es engancharla al bus, que
+es lo que la haría viable para treinta asistentes.
 
-- Quitar sus siete llamadas a `reportar`: cero `POST`, que es la corrección de
-  11.1 y el motivo de la sección.
+- ~~Quitar sus seis llamadas a `reportar`~~ ✅: cero `POST` por defecto, que es
+  la corrección de 11.1 y el motivo de la sección. Queda `?publicar=1` como
+  vuelta a la ventana escritora para ensayar sin portátil, nunca con
+  `/present-admin` abierta a la vez.
 - Engancharse al canal con el `client-sync` parametrizado (12.2), con rescate a
   3 s y solo lectura.
 - Conserva su `pointer-events: none`, que ahora tiene un motivo más: que un
@@ -1321,4 +1358,52 @@ entera: si ese no se hace, no se ha verificado nada.
   datos que ya existen y se puede añadir después sin tocar nada.
 - El espejo del DOM, el login real en la demo y la puerta siguen fuera, por lo
   que dice 11.10.
+
+## 13. Auditoría entre las tres ventanas (3 sep 2026)
+
+Los hallazgos completos, con su reproducción, están en
+[`hallazgos-presentacion.md`](./hallazgos-presentacion.md). Lo que sigue es qué
+se hizo con cada uno. No se auditó cada pieza por separado: se auditó el
+**protocolo** que las une, que es donde un fallo no degrada una función sino que
+deja la charla parada con el jurado delante.
+
+| # | Hallazgo | Estado |
+|---|---|---|
+| 1 | Dos escritores de `actual`: cualquier `/presentacion` secuestraba el destino | ✅ bandera |
+| 2 | `/api/presentacion` bajo el paraguas de 600/min: la sala tumba al mando | ⛔ paso 0 |
+| 3 | `anunciar()` publica al vacío y la CSP ya paga por él | ⛔ paso 0 |
+| 4 | Tras clicar en la demo viva, las flechas quedaban muertas | ✅ 11.4 |
+| 5 | `/remote` era el único de los tres sin cronómetro | ✅ 11.6.4 bis |
+| 6 | `/presentacion-end` no vuelve al mazo; la sala no cierra | ✅ runbook |
+| 7 | `?q=destino` tiraba dos lecturas por sondeo en la ventana que conduce | ✅ `?q=conducir` |
+
+**1. La bandera, que es la salida 2 de las tres que había.** `/presentacion`
+deja de publicar: sus llamadas a `reportar()` quedan detrás de `?publicar=1`,
+apagado por defecto. Es media corrección del paso 3 (12.6) sin tocar el servidor
+y sin esperar a la compuerta: la ventana pasa a ser un seguidor de sondeo, que es
+lo que hace falta. La regla de 12.2 ("no se abren las dos a la vez") existía,
+pero no estaba escrita en ningún sitio que la hiciera cumplir, y abrir la ruta
+desde el celular para comprobar la proyección es un gesto razonable.
+
+El precio, ahora escrito en el runbook: sin nadie que publique la forma del mazo,
+`/remote` se queda sin techo, sin rejilla y sin guion **salvo que
+`/present-admin` esté abierta**, que es el montaje real de la sustentación.
+
+**2 y 3 siguen detrás del paso 0, y hay que decirlo bien.** No son "pendientes
+menores": si el paso 0 dice **sala no**, no se amplían, se **retiran** - hay que
+quitar el `anunciar()` y la apertura de `connect-src` a Upstash de
+`middleware.ts`, que hoy es una relajación de CSP sin ningún suscriptor detrás.
+Si dice **sala sí**, el endpoint necesita cupo propio fuera del paraguas de
+`isRateLimitablePath`, como ya lo tiene `/api/present/*/snapshot`: con la sala
+compartiendo el NAT del salón, el 429 no cae solo sobre el público, cae sobre la
+misma IP que usa el portátil que conduce y el celular que lleva el mando. Entregar
+`/presentacion` a la sala sin el bus no es una versión reducida del plan, es una
+avería.
+
+**7. Un sondeo con su propia rama.** `/present-admin` pedía `?q=destino` dos
+veces por segundo y descartaba siempre el espejo y el puntero, que los escribe
+ella misma: 240 lecturas por minuto del almacén, toda la charla, para nada.
+`?q=conducir` devuelve `{ destino, scroll, inicio, ahora }` y deja `?q=destino`
+intacta para los seguidores. Son dos consumidores distintos de la misma clave, no
+uno con dos modos.
 
