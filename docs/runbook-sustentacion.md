@@ -257,7 +257,9 @@ URL es pasar una diapositiva de algo que ya está proyectado en la pared.
      `/presentacion-end`** a los cinco segundos, que es la página para
      compartir después. Retroceder dentro de esos cinco segundos lo cancela, y
      el panel avisa con una cuenta atrás. Si se llega al final por error, basta
-     con pulsar "anterior".
+     con pulsar "anterior". **Abrir o recargar la ventana no dispara nada**,
+     aunque el destino guardado de un ensayo la mande al final: la cuenta solo
+     se habilita cuando la ventana ya ha conducido de verdad.
    - Ahí están los tres botones de rescate, todos con confirmación de dos
      toques: **republicar** (refresca la posición sin robarle el viaje al
      mando), **reiniciar reloj** y **recargar lienzo** (si el mazo se queda sin

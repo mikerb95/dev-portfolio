@@ -568,10 +568,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       import { hayQueDesplazar } from '../lib/presentacion/desplazamiento'
       import {
         ESPERA_MS,
-        ordenDeCierre,
         RUTA_CIERRE,
         segundosParaCierre,
-        type Vigilancia,
+        siguienteFase,
+        type Fase,
       } from '../lib/presentacion/cierre'
       import { notaDeGlobal } from '../lib/presentacion/guion'
       import {
@@ -665,6 +665,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         ultimo = null
         geoViva = null
         urlViva = null
+        // El lienzo recargado vuelve a reconstruirse hacia el destino guardado,
+        // que puede ser el final: es exactamente el caso que la fase
+        // `esperando` protege, así que la vigilancia empieza de cero.
+        faseCierre = 'esperando'
+        if (cierreTimer) clearTimeout(cierreTimer)
+        cierreTimer = null
+        cierreVence = 0
         objetivoRaton = null
         // Ni el espejo ni el puntero se borran: sus claves del servidor
         // sobreviven a esta recarga y sus `seq` tienen que seguir subiendo, o el
@@ -752,33 +759,41 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       }
 
       /* ------------------------------------------------------------------ *
-       * §11.12. El final de la charla
+       * §11.13. El final de la charla
        *
        * En la última diapositiva del mazo la ventana espera unos segundos y se
        * va a `/presentacion-end`, que es lo que se comparte cuando esto acaba.
        * Las reglas viven en el módulo puro; aquí solo está el temporizador.
        *
-       * SE CANCELA SOLA al salir de la última, y esa es la parte que importa:
-       * la tecla `End` o un dígito de más en la rejilla no pueden llevarse por
-       * delante la ventana que conduce la charla.
+       * Las dos cosas que evitan que se vaya cuando no toca están explicadas
+       * allí: se cancela al salir de la última, y no se arma hasta que la
+       * ventana ha conducido de verdad (una recién cargada persiguiendo un
+       * destino viejo llega al final sin que la charla haya terminado).
        * ------------------------------------------------------------------ */
 
-      let vigilancia: Vigilancia = 'ocioso'
+      let faseCierre: Fase = 'esperando'
       let cierreVence = 0
       let cierreTimer: ReturnType<typeof setTimeout> | null = null
 
       function vigilarCierre(pos: number, total: number) {
+        // `moviendo` junta las dos formas de no estar quieto: el mazo
+        // reconciliando, y un destino que ya no es donde está. Lo segundo es lo
+        // que hace que "atrás" cancele en el acto, sin esperar a que el mazo se
+        // mueva de verdad.
         const enViaje = destinoServidor !== 0 && destinoServidor !== pos
-        const orden = ordenDeCierre(vigilancia, { pos, total, aplicando: aplicando || enViaje })
+        const { fase, orden } = siguienteFase(faseCierre, {
+          pos,
+          total,
+          moviendo: aplicando || enViaje,
+        })
+        faseCierre = fase
         if (orden === 'nada') return
         if (orden === 'cancelar') {
           if (cierreTimer) clearTimeout(cierreTimer)
           cierreTimer = null
           cierreVence = 0
-          vigilancia = 'ocioso'
           return
         }
-        vigilancia = 'armado'
         cierreVence = Date.now() + ESPERA_MS
         cierreTimer = setTimeout(() => {
           location.href = RUTA_CIERRE
@@ -1603,7 +1618,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         el.total.textContent = ultimo ? `/ ${ultimo.total}` : '/ -'
 
         const cierre =
-          vigilancia === 'armado' ? segundosParaCierre(cierreVence, Date.now()) : null
+          faseCierre === 'armado' ? segundosParaCierre(cierreVence, Date.now()) : null
         const s = salud({ hayMazo: Boolean(mazo), hayRed, aplicando, pos, destino, cierre })
         el.salud.dataset.estado = s.estado
         el.salud.textContent = s.texto

@@ -7,11 +7,25 @@
 // durante el turno de preguntas es el cierre con los enlaces, no una lámina
 // muerta.
 //
-// LA REGLA QUE HACE QUE ESTO NO SEA PELIGROSO ES LA CANCELACIÓN. Un salto al
-// final por equivocación (la tecla `End`, un dígito de más en la rejilla) no
-// puede secuestrar la ventana que conduce: mientras la cuenta corre, cualquier
-// movimiento que salga de la última diapositiva la desarma. Y no se rearma sola
-// por estar quieta ahí: solo al volver a entrar.
+// TODA LA DIFICULTAD ESTÁ EN NO IRSE CUANDO NO TOCA, y son dos casos distintos:
+//
+//  1. El ponente llega al final por error (la tecla `End`, un dígito de más en
+//     la rejilla). Lo resuelve la CANCELACIÓN: mientras la cuenta corre,
+//     cualquier movimiento que salga de la última la desarma.
+//
+//  2. La ventana llega al final RECONSTRUYÉNDOSE, que es un escenario de
+//     primera clase en este sistema (§11.1, origen `inicial`): el destino vive
+//     en el servidor con TTL de seis horas, así que abrirla después de un
+//     ensayo -o recargarla a mitad del turno de preguntas- la manda al final
+//     sola. Sin defensa, sería una ventana que se va a la página de cierre en
+//     cuanto se abre, y la única forma de recuperar el mazo sería pulsar
+//     "anterior" antes de que corran cinco segundos.
+//
+// Lo segundo es lo que obliga a la fase `esperando`: la cuenta no se arma hasta
+// que la ventana ha estado EN REPOSO fuera del final por lo menos una vez desde
+// que cargó. Un viaje de reconstrucción nunca lo está (va persiguiendo un
+// destino), y una charla de verdad lo está en cada diapositiva de la que se
+// habla. Esa es la diferencia entre "llegué al final" y "aparecí en el final".
 //
 // Módulo puro: la decisión se prueba sin temporizadores ni navegación.
 
@@ -25,29 +39,50 @@ export const RUTA_CIERRE = '/presentacion-end'
  */
 export const ESPERA_MS = 5_000
 
-/** Si hay una cuenta corriendo o no. */
-export type Vigilancia = 'ocioso' | 'armado'
+/**
+ * · `esperando` - recién cargada. No se va a ninguna parte todavía.
+ * · `listo`     - ha conducido de verdad; el final ya significa el final.
+ * · `armado`    - la cuenta corre.
+ */
+export type Fase = 'esperando' | 'listo' | 'armado'
 
-/** Qué hacer con la cuenta, mirando dónde está la pantalla. */
+/** Qué hacer con el temporizador. */
 export type Orden = 'armar' | 'cancelar' | 'nada'
 
 /**
- * La decisión, con la pantalla en `pos` de `total`.
+ * Una lectura de dónde está la pantalla.
  *
- * `aplicando` (el mazo moviéndose) cuenta como "no está en la última" aunque el
- * número ya coincida: si se está reconciliando es que alguien pidió otra cosa, y
- * armar la cuenta en mitad de un viaje sería irse justo cuando se acaba de
- * decidir volver.
+ * `moviendo` es cualquier cosa que signifique "esto no está quieto": el mazo
+ * reconciliando, o un destino que ya no es donde está. Van juntos y no por
+ * separado porque para esta decisión son lo mismo.
  */
-export function ordenDeCierre(
-  v: Vigilancia,
-  s: { pos: number; total: number; aplicando: boolean }
-): Orden {
-  const { pos, total, aplicando } = s
-  const enLaUltima =
-    Number.isInteger(pos) && Number.isInteger(total) && total >= 1 && pos >= total
-  if (enLaUltima && !aplicando) return v === 'armado' ? 'nada' : 'armar'
-  return v === 'armado' ? 'cancelar' : 'nada'
+export type Lectura = { pos: number; total: number; moviendo: boolean }
+
+const creible = (l: Lectura): boolean =>
+  Number.isInteger(l.pos) && Number.isInteger(l.total) && l.total >= 1
+
+const enElFinal = (l: Lectura): boolean => creible(l) && l.pos >= l.total
+
+/** Una posición creíble que no es la última: lo que hace falta para `listo`. */
+const fueraDelFinal = (l: Lectura): boolean => creible(l) && l.pos < l.total
+
+/**
+ * La transición, con la fase que hay y lo que se acaba de leer.
+ *
+ * Cancelar devuelve a `listo` y no a `esperando`: quien se arrepintió ya estaba
+ * conduciendo, y volver a entrar en la última tiene que volver a armar la
+ * cuenta. Sin eso, cancelar una vez desactivaría el cierre para el resto de la
+ * charla.
+ */
+export function siguienteFase(fase: Fase, l: Lectura): { fase: Fase; orden: Orden } {
+  const quieto = !l.moviendo
+  if (fase === 'armado') {
+    if (enElFinal(l) && quieto) return { fase, orden: 'nada' }
+    return { fase: 'listo', orden: 'cancelar' }
+  }
+  if (fase === 'listo' && enElFinal(l) && quieto) return { fase: 'armado', orden: 'armar' }
+  if (fase === 'esperando' && fueraDelFinal(l) && quieto) return { fase: 'listo', orden: 'nada' }
+  return { fase, orden: 'nada' }
 }
 
 /** Los segundos que quedan para irse, para poder decirlo. */

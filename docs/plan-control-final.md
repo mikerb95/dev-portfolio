@@ -194,10 +194,23 @@ recarga a mitad de charla dejaría la presentación clavada en la portada.
 
 Pantalla: 2 sondeos/s de `?q=destino`, que no arrastra el `actual` que ella
 misma escribió, más un latido cada 5 s. Mando: 1 sondeo/s solo mientras se
-mira. Cada sondeo son dos lecturas desde que existe la clave de scroll (ver
-10.3), así que sale del orden de 22.000 comandos por hora de charla contra
-Upstash. Ese es el techo del diseño: bajarlo es subir `SONDEO_MS`, a costa de
+mira. Ese es el techo del diseño: bajarlo es subir `SONDEO_MS`, a costa de
 latencia.
+
+**Cuentas al día (3 sep 2026).** Cada `?q=destino` son **cinco** lecturas, una
+por clave: `destino`, `scroll`, `espejo`, `puntero` e `inicio` (empezaron siendo
+dos, ver 10.3). Con la ventana que conduce sondeando dos veces por segundo eso
+es del orden de **36.000 lecturas por hora**, más lo que escriben sus reportes
+(entre uno y cinco comandos cada uno, según cuántas claves traigan novedad).
+Un reporte por latido son cinco cada 5 s; con el ratón moviéndose sobre la
+página viva (11.12) el reporte sube a su techo de dos por segundo, y la hora de
+charla se va al orden de **70.000 comandos**. Cada seguidor que sondee en vez de
+escuchar el bus suma otras 36.000 lecturas por hora él solo, que es exactamente
+por lo que la sala tiene que acabar en el bus y no en el sondeo (12.6, paso 3).
+
+Las dos palancas, por si un día importa: fusionar claves (cuesta lo que explica
+10.3, que cada reporte de la pantalla borre lo que acaba de pedir el pulgar) y
+subir el umbral del puntero, que cambia escrituras por precisión de la flecha.
 
 ## 7. Verificado en vivo (dev, 1 sep)
 
@@ -1026,11 +1039,15 @@ exactamente lo único que se toca.
 
 #### 11.12.4. Lo que costó, y el coste que no tiene
 
-- **Ni una escritura nueva por temblor de mano.** La lectura del ratón se acota a
-  60 ms (para no gastar el hilo del ponente resolviendo rutas que nadie va a
+- **Ni una petición nueva, pero sí más comandos.** La lectura del ratón se acota
+  a 60 ms (para no gastar el hilo del ponente resolviendo rutas que nadie va a
   mandar) y la publicación va montada en el reporte que ya se hacía dos veces por
   segundo, con un umbral de movimiento dentro del mismo elemento: un pulso quieto
-  sobre un botón no publica nada.
+  sobre un botón no publica nada. Lo que sí sube es el almacén, y conviene
+  decirlo con números en vez de con "es gratis": el sondeo pasa de cuatro a cinco
+  lecturas por vuelta, y mientras el ratón se mueve el reporte deja de llegar
+  cada cinco segundos para llegar dos veces por segundo. Las cuentas al día están
+  en la sección 6.
 - **`puntero` ausente y `puntero: null` significan cosas distintas** en el bus:
   ausente es "sin novedad", `null` es "apaga el cursor". Por eso el anuncio de la
   rueda no lleva el campo: si mandara `null` por no tenerlo a mano, el cursor de
@@ -1067,7 +1084,7 @@ estilo se dejan leer a través de esa frontera. El camino entero (hover en el
 portátil, hover en la sala) solo se puede cerrar desde producción, con dos
 equipos, y entra en la lista de 11.9.
 
-### 11.12. El final de la charla (2 sep 2026) ✅
+### 11.13. El final de la charla (2 sep 2026) ✅
 
 Al llegar a la última diapositiva del mazo, `/present-admin` espera cinco
 segundos y se va a `/presentacion-end`, la página que se comparte cuando la
@@ -1083,16 +1100,38 @@ no se pudiera deshacer, un despiste se llevaría por delante la ventana que
 conduce la charla, y recuperarla es volver a cargar el mazo y esperar a que
 reconcilie veintidós posiciones con la sala mirando.
 
-Las reglas, en `src/lib/presentacion/cierre.ts` y probadas sin temporizadores:
+Hay un segundo caso, que salió en la auditoría y no en el diseño: **la ventana
+llega al final reconstruyéndose**. El destino vive en el servidor con TTL de
+seis horas (sección 3), así que abrirla después de un ensayo -o recargarla a
+mitad del turno de preguntas- la manda al final sola, persiguiendo un destino
+viejo. Sin defensa, sería una ventana que se va a la página de cierre en cuanto
+se abre, y la única forma de recuperar el mazo sería pulsar "anterior" antes de
+que corran cinco segundos. Es el mismo escenario que el origen `inicial` de la
+sección 4 existe para proteger, y merece la misma prudencia.
 
-- Se arma **solo** en la última posición global y con el mazo en reposo.
-- Cualquier movimiento que salga de ahí la **desarma**. Un destino que ya no es
-  el final cuenta como movimiento aunque el mazo todavía no se haya movido: el
-  ponente que se arrepiente pulsa "atrás" y la ventana se queda, en el acto.
-- No se rearma sola por seguir ahí, solo al **volver a entrar**. Sin esto, una
-  cancelación duraría exactamente hasta el sondeo siguiente.
-- Sin total creíble (una pantalla que aún no descubrió el mazo) no se va a
-  ninguna parte.
+Las reglas, en `src/lib/presentacion/cierre.ts` y probadas sin temporizadores.
+Tres fases:
+
+- `esperando` (recién cargada): **no se va a ninguna parte**, llegue donde
+  llegue. Pasa a `listo` en cuanto la ventana se queda **en reposo fuera del
+  final** por lo menos una vez. Un viaje de reconstrucción nunca lo está (va
+  persiguiendo un destino) y una charla de verdad lo está en cada diapositiva de
+  la que se habla: esa es toda la diferencia entre "llegué al final" y "aparecí
+  en el final".
+- `listo`: la última posición global, con el mazo en reposo, **arma** la cuenta.
+- `armado`: cualquier movimiento que salga de ahí la **desarma**. Un destino que
+  ya no es el final cuenta como movimiento aunque el mazo todavía no se haya
+  movido: el ponente que se arrepiente pulsa "atrás" y la ventana se queda, en
+  el acto.
+
+Cancelar devuelve a `listo` y no a `esperando`: volver a entrar en la última
+tiene que volver a armar, o cancelar una vez desactivaría el cierre para el
+resto de la charla. Y una lectura que no se puede creer (sin total, o con una
+posición que no es un entero) no arma nunca y **desarma** si había cuenta: si no
+se sabe dónde está la pantalla, no se navega sola.
+
+Recargar el lienzo desde el panel devuelve la vigilancia a `esperando`, por lo
+mismo: el mazo vuelve a reconstruirse hacia el destino guardado.
 
 Manda la posición **real** y no el destino: lo que decide que la charla acabó es
 lo que hay proyectado, no lo que alguien acaba de pedir.

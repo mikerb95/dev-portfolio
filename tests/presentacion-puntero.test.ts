@@ -3,10 +3,13 @@ import {
   ATRIBUTO,
   combinarSelector,
   esMasNuevo,
+  espejarHover,
   mismoObjetivo,
   parsearPuntero,
   PROFUNDIDAD_MAX,
   punteroPara,
+  resolverRuta,
+  rutaDe,
   selectorEspejado,
   siguientePuntero,
   tieneHover,
@@ -66,7 +69,9 @@ describe('parsearPuntero', () => {
     expect(parsearPuntero(pnt({ objetivo: obj({ ruta: [] }) }))).toBeNull()
     expect(parsearPuntero(pnt({ objetivo: obj({ ruta: [1, -1] }) }))).toBeNull()
     expect(parsearPuntero(pnt({ objetivo: obj({ ruta: [1, 2.5] }) }))).toBeNull()
-    expect(parsearPuntero(pnt({ objetivo: obj({ ruta: ['1'] as unknown as number[] }) }))).toBeNull()
+    expect(
+      parsearPuntero(pnt({ objetivo: obj({ ruta: ['1'] as unknown as number[] }) }))
+    ).toBeNull()
     const honda = Array.from({ length: PROFUNDIDAD_MAX + 1 }, () => 0)
     expect(parsearPuntero(pnt({ objetivo: obj({ ruta: honda }) }))).toBeNull()
   })
@@ -208,5 +213,162 @@ describe('las reglas de CSS', () => {
     // `a,b` con `& .x` no es `a,b .x`: eso solo aplicaría el descendiente a `b`.
     expect(combinarSelector('a,b', '& .x')).toBe(':is(a,b) .x')
     expect(combinarSelector('a,b', '.x')).toBe(':is(a,b) .x')
+  })
+})
+
+/* ==================================================================== *
+ * La mitad que toca el DOM
+ *
+ * Los tests corren en `environment: 'node'` y no hay jsdom, así que el
+ * documento se finge: son objetos con lo justo que estas dos funciones miran.
+ * Fingirlo es exactamente el punto - lo que se quiere probar no es el
+ * navegador, es el aplanado de reglas anidadas y la ida y vuelta de la ruta,
+ * que es donde está el filo y lo que rompería en silencio.
+ * ==================================================================== */
+
+/** Un elemento con lo que `rutaDe` y `resolverRuta` necesitan. */
+type Nodo = {
+  tagName: string
+  children: Nodo[]
+  parentElement: Nodo | null
+  ownerDocument: { documentElement: Nodo }
+}
+
+function arbol(spec: string[]): { raiz: Nodo; nodo: (ruta: number[]) => Nodo } {
+  const doc = { documentElement: null as unknown as Nodo }
+  const crear = (tag: string): Nodo =>
+    ({
+      tagName: tag.toUpperCase(),
+      children: [],
+      parentElement: null,
+      ownerDocument: doc,
+    }) as Nodo
+  const raiz = crear('html')
+  doc.documentElement = raiz
+  // `spec` es una lista de rutas "1/0/2:tag" colgadas de la raíz, en orden.
+  for (const linea of spec) {
+    const [camino, tag] = linea.split(':')
+    const idx = camino.split('/').map(Number)
+    let n = raiz
+    for (let i = 0; i < idx.length; i++) {
+      const k = idx[i]
+      if (!n.children[k]) {
+        const hijo = crear(i === idx.length - 1 ? tag : 'div')
+        hijo.parentElement = n
+        n.children[k] = hijo
+      }
+      n = n.children[k]
+    }
+  }
+  const nodo = (ruta: number[]) => ruta.reduce((n, k) => n.children[k], raiz)
+  return { raiz, nodo }
+}
+
+describe('rutaDe y resolverRuta', () => {
+  const { raiz, nodo } = arbol(['1/3/0:tr', '0/0:link'])
+  const doc = { documentElement: raiz } as unknown as Document
+
+  it('la ruta va y vuelve al mismo elemento', () => {
+    const el = nodo([1, 3, 0])
+    const ruta = rutaDe(el as unknown as Element)
+    expect(ruta).toEqual([1, 3, 0])
+    expect(resolverRuta(doc, ruta as number[])).toBe(el)
+  })
+
+  it('la raíz no es un objetivo: no hay nada que señalar en el <html>', () => {
+    expect(rutaDe(raiz as unknown as Element)).toBeNull()
+  })
+
+  it('una ruta que no existe devuelve null en vez del elemento de al lado', () => {
+    // Es lo que pasa cuando el seguidor está en otra página, y es la diferencia
+    // entre no pintar nada y señalar la fila que no es.
+    expect(resolverRuta(doc, [1, 3, 9])).toBeNull()
+    expect(resolverRuta(doc, [1, 3, 0, 0])).toBeNull()
+  })
+
+  it('un elemento suelto, sin raíz encima, no da ruta', () => {
+    const huerfano = {
+      tagName: 'DIV',
+      children: [],
+      parentElement: null,
+      ownerDocument: { documentElement: raiz },
+    }
+    expect(rutaDe(huerfano as unknown as Element)).toBeNull()
+  })
+})
+
+/* Un CSSOM de mentira: `espejarHover` solo mira `cssRules`, `selectorText`,
+ * `style.cssText` y `cssText`, así que con eso basta para probar el aplanado. */
+const reglaEstilo = (selectorText: string, cssText: string, hijas: unknown[] = []) => ({
+  selectorText,
+  style: { cssText },
+  ...(hijas.length ? { cssRules: hijas } : {}),
+})
+
+class CSSMediaRule {
+  constructor(
+    public cssText: string,
+    public cssRules: unknown[]
+  ) {}
+}
+
+function docFalso(reglas: unknown[]) {
+  const inyectados: { dataset: Record<string, string>; textContent: string }[] = []
+  const doc = {
+    styleSheets: [{ ownerNode: null, cssRules: reglas }],
+    createElement: () => ({ dataset: {} as Record<string, string>, textContent: '' }),
+    head: {
+      appendChild: (n: { dataset: Record<string, string>; textContent: string }) => {
+        inyectados.push(n)
+      },
+    },
+    querySelectorAll: () => [] as unknown[],
+  }
+  return { doc: doc as unknown as Document, inyectados }
+}
+
+describe('espejarHover', () => {
+  it('duplica la regla plana y deja intacta la original', () => {
+    const { doc, inyectados } = docFalso([reglaEstilo('.fila:hover', 'background: #111')])
+    espejarHover(doc)
+    expect(inyectados).toHaveLength(1)
+    expect(inyectados[0].textContent).toBe(`.fila[${ATRIBUTO}]{background: #111}`)
+  })
+
+  it('no duplica lo que no tiene hover', () => {
+    const { doc, inyectados } = docFalso([reglaEstilo('.fila', 'background: #111')])
+    espejarHover(doc)
+    expect(inyectados).toHaveLength(0)
+  })
+
+  it('baja al anidamiento de Tailwind y conserva el @media de dentro', () => {
+    // `.hover\:underline { &:hover { @media (hover:hover) { ... } } }`, que es
+    // la forma real que emite Tailwind 4. Sin bajar por la regla padre -que no
+    // tiene hover ninguno- se perdería entera.
+    const dentro = reglaEstilo('&', 'text-decoration-line: underline')
+    const media = new CSSMediaRule('@media (hover: hover) { }', [dentro])
+    const padre = reglaEstilo(String.raw`.hover\:underline`, '', [
+      reglaEstilo('&:hover', '', [media]),
+    ])
+    const { doc, inyectados } = docFalso([padre])
+    espejarHover(doc)
+    expect(inyectados[0].textContent).toBe(
+      `@media (hover: hover){.hover\\:underline[${ATRIBUTO}]{text-decoration-line: underline}}`
+    )
+  })
+
+  it('una hoja que no se deja leer no se lleva por delante a las demás', () => {
+    // Una tipografía de Google lanza al tocar `cssRules`. Fail-open hoja por
+    // hoja: se pierde ella y solo ella.
+    const ajena = {
+      ownerNode: null,
+      get cssRules(): unknown[] {
+        throw new Error('cross-origin')
+      },
+    }
+    const { doc, inyectados } = docFalso([reglaEstilo('a:hover', 'color: red')])
+    ;(doc.styleSheets as unknown as unknown[]).unshift(ajena)
+    espejarHover(doc)
+    expect(inyectados[0].textContent).toBe(`a[${ATRIBUTO}]{color: red}`)
   })
 })
