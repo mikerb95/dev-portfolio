@@ -6,6 +6,7 @@ import {
   elegirContador,
   esTextoDeContador,
   estaOculto,
+  esVeloDecorativo,
   geometriaDesde,
   intersecar,
   mismaGeometria,
@@ -324,5 +325,55 @@ describe('mismaGeometria', () => {
   it('sin geometría, solo son iguales si faltan las dos', () => {
     expect(mismaGeometria(undefined, undefined)).toBe(true)
     expect(mismaGeometria(g, undefined)).toBe(false)
+  })
+})
+
+/* ==================================================================== *
+ * Lo que enseñó la iteración del mazo del 3 de septiembre de 2026.
+ *
+ * El bundle se reemplazó entero, como está previsto que pase, y trajo dos
+ * cambios que el descubrimiento no supo encajar: el contador pasó de
+ * `01 / 19` a `/01 · 25`, y apareció un velo de grano de película que se
+ * colaba como capa. El primero no degradaba el mando, lo apagaba.
+ * ==================================================================== */
+
+describe('contador con otra tipografía', () => {
+  it('lee la forma nueva del mazo, con la barra delante y punto medio', () => {
+    expect(parsearContador('/01 · 25')).toEqual({ pos: 1, total: 25 })
+    expect(esTextoDeContador('/01 · 25')).toBe(true)
+    expect(esTextoDeContador(' / 07 · 25 ')).toBe(true)
+  })
+
+  it('sigue leyendo la forma vieja, que es la que hay escrita en los planes', () => {
+    expect(parsearContador('07 / 19')).toEqual({ pos: 7, total: 19 })
+    expect(esTextoDeContador('07 / 19')).toBe(true)
+  })
+
+  it('no se cuelga de una cifra cualquiera de una diapositiva', () => {
+    // Textos REALES del mazo de septiembre. Si alguno pasara por contador, la
+    // presentación se movería siguiendo un número que no significa nada.
+    expect(esTextoDeContador('10/10 CONFORMES · 9/10 CON HU')).toBe(false)
+    expect(esTextoDeContador('8/8 documentos completos')).toBe(false)
+    expect(esTextoDeContador('69.79%')).toBe(false)
+    // El punto NO es separador justamente por esto: `8.1` es una sección del
+    // dossier, no la diapositiva 8 de 1.
+    expect(esTextoDeContador('8.1')).toBe(false)
+    expect(esTextoDeContador('2026')).toBe(false)
+  })
+
+  it('descarta el contador imposible aunque venga bien escrito', () => {
+    expect(parsearContador('/00 · 25')).toBeNull()
+    expect(parsearContador('/26 · 25')).toBeNull()
+  })
+})
+
+describe('esVeloDecorativo', () => {
+  it('descarta el grano de película, que cubre el escenario pero no es diapositiva', () => {
+    expect(esVeloDecorativo({ pointerEvents: 'none' })).toBe(true)
+  })
+
+  it('deja pasar las capas de verdad, que se pulsan para avanzar', () => {
+    expect(esVeloDecorativo({ pointerEvents: 'auto' })).toBe(false)
+    expect(esVeloDecorativo({ pointerEvents: '' })).toBe(false)
   })
 })

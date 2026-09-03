@@ -32,7 +32,9 @@
     "sustentacion:check": "node scripts/sustentacion-check.mjs",
     "sustentacion:precalentar": "node scripts/precalentar-sustentacion.mjs",
     "bpmn:export": "node scripts/export-bpmn.mjs",
-    "planteamiento:export": "node --experimental-strip-types scripts/export-planteamiento.mjs"
+    "planteamiento:export": "node --experimental-strip-types scripts/export-planteamiento.mjs",
+    "guion:sync": "node scripts/sync-guion.mjs",
+    "guion:check": "node scripts/sync-guion.mjs --check"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.3",

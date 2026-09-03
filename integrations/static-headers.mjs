@@ -1,5 +1,9 @@
 import { readFile, writeFile } from 'node:fs/promises'
 
+// La MISMA función que consulta el middleware, no una copia de su lista. Es
+// pura y sin dependencias, así que vite-node la resuelve al cargar la config.
+import { isFramablePath } from '../src/lib/security/paths.ts'
+
 // Cabeceras de seguridad para las páginas PRERENDERIZADAS.
 //
 // Por qué existe este archivo: src/middleware.ts pone HSTS, CSP y compañía en
@@ -25,11 +29,21 @@ import { readFile, writeFile } from 'node:fs/promises'
 // las cabeceras de vercel.json en un build normal: marcan la respuesta y dejan
 // que el archivo se sirva igual.
 
-/** CSP de páginas públicas. Copia literal de la que pone el middleware. */
-const CSP_PUBLICA =
+/**
+ * CSP de páginas públicas. Copia literal de la que pone el middleware, con el
+ * mismo `frame-ancestors` condicional.
+ *
+ * Que sea condicional NO es simetría por gusto: `/lab/site-check` y
+ * `/docs/kanban` estaban en la allowlist de `isFramablePath` y aun así salían
+ * con `'none'`, porque son las dos únicas rutas de esa lista que además están
+ * prerenderizadas y por tanto nunca ven el middleware. El síntoma era un
+ * iframe en blanco en mitad de la sustentación, sin más rastro que un aviso en
+ * la consola del portátil que proyecta.
+ */
+const cspPublica = (framable) =>
   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
   "img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; " +
-  "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; " +
+  `frame-ancestors ${framable ? "'self'" : "'none'"}; base-uri 'self'; form-action 'self'; ` +
   'report-to csp-endpoint; report-uri /api/security/csp-report;'
 
 const CABECERAS = {
@@ -39,8 +53,9 @@ const CABECERAS = {
   'Permissions-Policy':
     'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()',
   'Reporting-Endpoints': 'csp-endpoint="/api/security/csp-report"',
-  'Content-Security-Policy': CSP_PUBLICA,
 }
+
+const cabeceras = (framable) => ({ ...CABECERAS, 'Content-Security-Policy': cspPublica(framable) })
 
 /** `docs/kanban/` → `docs/kanban`; la raíz queda como cadena vacía. */
 const normaliza = (pathname) => pathname.replace(/^\/+/, '').replace(/\/+$/, '')
@@ -74,16 +89,29 @@ export default function staticHeaders() {
           )
         }
 
+        // Dos grupos, misma mecánica: las páginas que la presentación enmarca
+        // en vivo salen con `frame-ancestors 'self'` y el resto con 'none'.
         // `/` sale como cadena vacía en la alternancia; el `/?` final la cubre.
-        const alternancia = rutas.map(escapa).join('|')
-        config.routes.splice(i, 0, {
-          src: `^/(?:${alternancia})/?$`,
-          headers: CABECERAS,
-          continue: true,
-        })
+        const grupos = [
+          [rutas.filter((r) => !isFramablePath(`/${r}`)), false],
+          [rutas.filter((r) => isFramablePath(`/${r}`)), true],
+        ]
 
+        for (const [grupo, framable] of grupos) {
+          if (grupo.length === 0) continue
+          config.routes.splice(i, 0, {
+            src: `^/(?:${grupo.map(escapa).join('|')})/?$`,
+            headers: cabeceras(framable),
+            continue: true,
+          })
+        }
+
+        const enmarcables = rutas.filter((r) => isFramablePath(`/${r}`))
         await writeFile(configPath, JSON.stringify(config, null, 2))
-        logger.info(`cabeceras de seguridad inyectadas en ${rutas.length} páginas estáticas`)
+        logger.info(
+          `cabeceras de seguridad inyectadas en ${rutas.length} páginas estáticas` +
+            (enmarcables.length ? ` (${enmarcables.length} enmarcables: ${enmarcables.join(', ')})` : '')
+        )
       },
     },
   }
