@@ -159,7 +159,7 @@ export function formatearDesvio(ms: number | null): string {
  * La salud del enlace
  * ---------------------------------------------------------------------- */
 
-export type Estado = 'sin-mazo' | 'sin-red' | 'moviendo' | 'en-linea'
+export type Estado = 'sin-mazo' | 'sin-red' | 'cerrando' | 'moviendo' | 'en-linea'
 
 export type Salud = { estado: Estado; texto: string }
 
@@ -177,9 +177,16 @@ export function salud(v: {
   aplicando: boolean
   pos: number
   destino: number
+  /** Segundos para irse a la página de cierre, o `null` si no hay cuenta. */
+  cierre?: number | null
 }): Salud {
   if (!v.hayMazo) return { estado: 'sin-mazo', texto: 'montando el mazo' }
   if (!v.hayRed) return { estado: 'sin-red', texto: 'sin red, el mazo sigue' }
+  // Antes que el movimiento: mientras la cuenta corre lo único que importa
+  // saber es que la ventana se va a ir, y que retroceder la desarma.
+  if (typeof v.cierre === 'number') {
+    return { estado: 'cerrando', texto: `cierre en ${v.cierre}s · atrás lo cancela` }
+  }
   if (v.aplicando || v.destino !== v.pos) {
     const verbo = v.destino > v.pos ? 'avanzando' : 'volviendo'
     return { estado: 'moviendo', texto: `${verbo} a ${v.destino}` }

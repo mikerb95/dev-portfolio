@@ -1067,6 +1067,41 @@ estilo se dejan leer a través de esa frontera. El camino entero (hover en el
 portátil, hover en la sala) solo se puede cerrar desde producción, con dos
 equipos, y entra en la lista de 11.9.
 
+### 11.12. El final de la charla (2 sep 2026) ✅
+
+Al llegar a la última diapositiva del mazo, `/present-admin` espera cinco
+segundos y se va a `/presentacion-end`, la página que se comparte cuando la
+sustentación ya terminó (sección 11.8 de este plan la describe; RF-718 la
+documenta). El mazo acaba en "¿Preguntas?", así que lo que queda en pantalla
+durante el turno de preguntas es el cierre con la documentación, las cifras del
+kanban y el contacto, en vez de una lámina muerta.
+
+**Lo único delicado aquí es la cancelación**, y es lo que decide si la feature
+es útil o es una trampa: la última diapositiva se alcanza también por error (la
+tecla `End`, un dígito de más en la rejilla, un salto mal contado). Si la cuenta
+no se pudiera deshacer, un despiste se llevaría por delante la ventana que
+conduce la charla, y recuperarla es volver a cargar el mazo y esperar a que
+reconcilie veintidós posiciones con la sala mirando.
+
+Las reglas, en `src/lib/presentacion/cierre.ts` y probadas sin temporizadores:
+
+- Se arma **solo** en la última posición global y con el mazo en reposo.
+- Cualquier movimiento que salga de ahí la **desarma**. Un destino que ya no es
+  el final cuenta como movimiento aunque el mazo todavía no se haya movido: el
+  ponente que se arrepiente pulsa "atrás" y la ventana se queda, en el acto.
+- No se rearma sola por seguir ahí, solo al **volver a entrar**. Sin esto, una
+  cancelación duraría exactamente hasta el sondeo siguiente.
+- Sin total creíble (una pantalla que aún no descubrió el mazo) no se va a
+  ninguna parte.
+
+Manda la posición **real** y no el destino: lo que decide que la charla acabó es
+lo que hay proyectado, no lo que alguien acaba de pedir.
+
+Y lo dice antes de hacerlo. El panel (11.11) enseña `cierre en 5s · atrás lo
+cancela` en el sitio donde ya vive la salud del enlace. Una ventana que navega
+sola sin avisar se lee como una caída, que es lo último que hace falta parecer
+al terminar.
+
 ## 12. Entrega de la sección 11: inventario y orden
 
 La sección 11 es un diseño cerrado y a medio construir. Esta sección no lo

@@ -253,6 +253,11 @@ URL es pasar una diapositiva de algo que ya está proyectado en la pared.
      enlace, URL de la página viva y rescate). `Esc` lo guarda. El panel
      **empuja** al mazo, no lo tapa: el bundle se re-encaja solo. Se recuerda
      entre recargas, así que se deja como se quiera trabajar.
+   - **Al llegar a la última diapositiva la ventana se va sola a
+     `/presentacion-end`** a los cinco segundos, que es la página para
+     compartir después. Retroceder dentro de esos cinco segundos lo cancela, y
+     el panel avisa con una cuenta atrás. Si se llega al final por error, basta
+     con pulsar "anterior".
    - Ahí están los tres botones de rescate, todos con confirmación de dos
      toques: **republicar** (refresca la posición sin robarle el viaje al
      mando), **reiniciar reloj** y **recargar lienzo** (si el mazo se queda sin
@@ -388,6 +393,8 @@ Y a mano:
 - `docs/plan-control-final.md`: el control remoto de `/final.html` entero. La
   §11 es el reparto en tres ventanas y la §12 el orden de entrega. **No
   confundir con `src/lib/sustentacion/`**, que es el otro sistema.
+- `src/lib/presentacion/cierre.ts`: cuándo la charla se da por terminada y la
+  ventana se va al cierre, con la regla de cancelación.
 - `src/lib/presentacion/panel.ts`: la lógica del panel del ponente (modos,
   índice del mazo, ritmo contra el guion, salud del enlace), probada sin DOM.
 - `src/pages/present-admin.astro`: la ventana que conduce, con el porqué de cada

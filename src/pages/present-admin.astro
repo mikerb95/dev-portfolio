@@ -292,6 +292,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       #salud[data-estado='sin-mazo'] {
         color: #ffb27c;
       }
+      #salud[data-estado='cerrando'] {
+        color: #ff3b30;
+      }
       #desvio {
         font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
         font-variant-numeric: tabular-nums;
@@ -563,6 +566,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       } from '../lib/presentacion/puntero'
       import { desfase, formatear, transcurrido } from '../lib/presentacion/cronometro'
       import { hayQueDesplazar } from '../lib/presentacion/desplazamiento'
+      import {
+        ESPERA_MS,
+        ordenDeCierre,
+        RUTA_CIERRE,
+        segundosParaCierre,
+        type Vigilancia,
+      } from '../lib/presentacion/cierre'
       import { notaDeGlobal } from '../lib/presentacion/guion'
       import {
         ATAJOS,
@@ -739,6 +749,40 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         if (!mazo || !beat) return null
         mazo = { ...mazo, beats: beat.total }
         return puntoDesdeCapas(mazo, { ...puestas, beat: beat.pos })
+      }
+
+      /* ------------------------------------------------------------------ *
+       * §11.12. El final de la charla
+       *
+       * En la última diapositiva del mazo la ventana espera unos segundos y se
+       * va a `/presentacion-end`, que es lo que se comparte cuando esto acaba.
+       * Las reglas viven en el módulo puro; aquí solo está el temporizador.
+       *
+       * SE CANCELA SOLA al salir de la última, y esa es la parte que importa:
+       * la tecla `End` o un dígito de más en la rejilla no pueden llevarse por
+       * delante la ventana que conduce la charla.
+       * ------------------------------------------------------------------ */
+
+      let vigilancia: Vigilancia = 'ocioso'
+      let cierreVence = 0
+      let cierreTimer: ReturnType<typeof setTimeout> | null = null
+
+      function vigilarCierre(pos: number, total: number) {
+        const enViaje = destinoServidor !== 0 && destinoServidor !== pos
+        const orden = ordenDeCierre(vigilancia, { pos, total, aplicando: aplicando || enViaje })
+        if (orden === 'nada') return
+        if (orden === 'cancelar') {
+          if (cierreTimer) clearTimeout(cierreTimer)
+          cierreTimer = null
+          cierreVence = 0
+          vigilancia = 'ocioso'
+          return
+        }
+        vigilancia = 'armado'
+        cierreVence = Date.now() + ESPERA_MS
+        cierreTimer = setTimeout(() => {
+          location.href = RUTA_CIERRE
+        }, ESPERA_MS)
       }
 
       /* ------------------------------------------------------------------ *
@@ -1182,6 +1226,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         // sube solo cuando hay algo nuevo que contar: un mensaje que llegue
         // tarde se descarta en vez de deshacer una navegación buena.
         const nuevoEspejo = siguienteEspejo(actual.pos, urlViva, espejo)
+
+        // Con la posición REAL y no con el destino: lo que decide que la charla
+        // acabó es lo que hay proyectado, no lo que alguien acaba de pedir.
+        // Pero un destino que ya no es el final cuenta como movimiento y
+        // desarma la cuenta sin esperar a que el mazo se mueva: el ponente que
+        // se arrepiente pulsa "atrás" y la ventana se queda, en el acto.
+        vigilarCierre(actual.pos, actual.total)
         if (nuevoEspejo) espejo = nuevoEspejo
 
         // §11.12. Y el ratón, con la misma disciplina: `seq` que solo sube y un
@@ -1545,7 +1596,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         el.pos.textContent = pos ? String(pos) : '-'
         el.total.textContent = ultimo ? `/ ${ultimo.total}` : '/ -'
 
-        const s = salud({ hayMazo: Boolean(mazo), hayRed, aplicando, pos, destino })
+        const cierre =
+          vigilancia === 'armado' ? segundosParaCierre(cierreVence, Date.now()) : null
+        const s = salud({ hayMazo: Boolean(mazo), hayRed, aplicando, pos, destino, cierre })
         el.salud.dataset.estado = s.estado
         el.salud.textContent = s.texto
 
