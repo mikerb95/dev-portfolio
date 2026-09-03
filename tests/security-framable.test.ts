@@ -11,6 +11,7 @@ describe('isFramablePath', () => {
     expect(isFramablePath('/portal/facturas/3')).toBe(true)
     expect(isFramablePath('/status')).toBe(true)
     expect(isFramablePath('/engineering')).toBe(true)
+    expect(isFramablePath('/docs/kanban')).toBe(true)
     expect(isFramablePath('/lab/site-check')).toBe(true)
   })
 
@@ -19,6 +20,8 @@ describe('isFramablePath', () => {
     // y las vistas de admin del laboratorio siguen sin poder enmarcarse.
     expect(isFramablePath('/lab')).toBe(false)
     expect(isFramablePath('/lab/site-check/detalle')).toBe(false)
+    expect(isFramablePath('/docs')).toBe(false)
+    expect(isFramablePath('/docs/kanban/detalle')).toBe(false)
     expect(isFramablePath('/lab/fingerprint/sala')).toBe(false)
     expect(isFramablePath('/admin/lab/security')).toBe(false)
   })
