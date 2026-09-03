@@ -99,33 +99,53 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         z-index: 10;
         display: flex;
         justify-content: center;
-        padding: 0.5rem;
+        /* Sin margen: el notch cuelga del borde de la ventana, no flota. */
+        padding: 0;
         pointer-events: none;
       }
+      /* Un NOTCH colgado del borde de arriba, con las cifras en rojo de
+         cronómetro. Se lee de un vistazo desde la distancia a la que está el
+         portátil cuando se está hablando de pie, que es para lo que sirve.
+
+         Se mantiene estrecho a propósito, y no es estética: esta es la única
+         superficie que se come clics sobre el lienzo, y justo debajo pasa la
+         barra de navegación del portal durante la demo. De ahí que el
+         contenedor siga con `pointer-events: none` y el `auto` viva solo en
+         este botón. */
       #crono {
         pointer-events: auto;
-        border: 1px solid rgba(244, 246, 248, 0.18);
-        border-radius: 999px;
-        background: rgba(5, 7, 10, 0.55);
-        color: rgba(244, 246, 248, 0.75);
-        font: 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-        /* Sin esto las cifras bailan de ancho al pasar de 9 a 10 y la isla
+        border: 1px solid rgba(255, 59, 48, 0.28);
+        border-top: 0;
+        border-radius: 0 0 1rem 1rem;
+        background: rgba(3, 5, 8, 0.92);
+        color: #ff3b30;
+        font: 700 2.3rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        /* Sin esto las cifras bailan de ancho al pasar de 9 a 10 y el notch
            tiembla en el rabillo del ojo durante toda la charla. */
         font-variant-numeric: tabular-nums;
-        letter-spacing: 0.04em;
-        padding: 0.35rem 0.75rem;
+        letter-spacing: 0.06em;
+        padding: 0.5rem 1.6rem 0.6rem;
         cursor: pointer;
+        /* El halo es lo que lo hace legible sobre una lámina clara: el rojo a
+           secas se pierde contra la diapositiva de la matriz de resultados. */
+        text-shadow: 0 0 16px rgba(255, 59, 48, 0.45);
         backdrop-filter: blur(6px);
         transition: opacity 0.2s linear;
-        opacity: 0.35;
+        opacity: 0.82;
       }
       #crono:hover,
       #crono:focus-visible {
         opacity: 1;
       }
+      /* Confirmando cambia de tamaño y de color: la pregunta no cabe en el
+         cuerpo del reloj, y en rojo grande parecería una alarma en vez de una
+         pregunta. */
       #crono[data-confirmando='si'] {
         opacity: 1;
+        font-size: 1rem;
+        padding: 0.9rem 1.6rem 1rem;
         color: #ffd9d9;
+        text-shadow: none;
         border-color: rgba(255, 140, 140, 0.5);
       }
       /* ── El panel del ponente ──────────────────────────────────────────
@@ -225,9 +245,11 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         white-space: nowrap;
       }
       #barra .reloj {
-        font: 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        font: 700 24px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
         font-variant-numeric: tabular-nums;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.05em;
+        color: #ff3b30;
+        text-shadow: 0 0 12px rgba(255, 59, 48, 0.35);
       }
       #barra .cifra {
         font: 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
