@@ -15,14 +15,14 @@
 
 export type NotaGuion = {
   /** Cómo se llama la diapositiva en el mando. */
-  titulo: string
+  titulo: string;
   /** Segundos estimados, para saber si se va largo. 0 = sin estimación. */
-  dur?: number
+  dur?: number;
   /** La frase que el público está leyendo, para no repetirla en voz alta. */
-  enPantalla?: string
+  enPantalla?: string;
   /** El discurso: un párrafo por idea, en el orden en que se dicen. */
-  notas: string[]
-}
+  notas: string[];
+};
 
 /**
  * Capas de entrada, de la primera que se ve a la última. Con el mazo actual:
@@ -31,7 +31,8 @@ export type NotaGuion = {
 export const GUION_INTRO: NotaGuion[] = [
   {
     titulo: "Cita de apertura",
-    enPantalla: "Un buen test existe para intentar romper el código. Uno excelente, para saber cómo se recupera.",
+    enPantalla:
+      "Un buen test existe para intentar romper el código. Uno excelente, para saber cómo se recupera.",
     notas: [],
   },
   {
@@ -39,7 +40,7 @@ export const GUION_INTRO: NotaGuion[] = [
     enPantalla: "CodeByMike · SCRUM 2",
     notas: [],
   },
-]
+];
 
 /** Los beats, en orden. `GUION_BEATS[0]` es el beat 1.
  *
@@ -52,7 +53,8 @@ export const GUION_BEATS: NotaGuion[] = [
     // TODO(guion): notas heredadas del mazo, sin reescribir como discurso.
     titulo: "Planteamiento del problema",
     dur: 75,
-    enPantalla: "¿Y si la herramienta que opera el negocio fuera la prueba de que sé construirlo?",
+    enPantalla:
+      "¿Y si la herramienta que opera el negocio fuera la prueba de que sé construirlo?",
     notas: [
       "La pregunta que orienta el proyecto: cómo construir un solo sistema en el que la herramienta que opera el negocio sea, a la vez, la prueba pública y comprobable de la capacidad técnica de quien lo construyó.",
       "Ocho síntomas observados, no supuestos: cada uno tiene documentado cómo se constató y qué cuesta.",
@@ -289,7 +291,8 @@ export const GUION_BEATS: NotaGuion[] = [
     // TODO(guion): notas heredadas del mazo, sin reescribir como discurso.
     titulo: "Diagnóstico público de un sitio",
     dur: 90,
-    enPantalla: "La misma herramienta que uso para auditar, abierta a cualquiera",
+    enPantalla:
+      "La misma herramienta que uso para auditar, abierta a cualquiera",
     notas: [
       "Es una herramienta pública: cualquiera pega una URL y recibe el mismo informe. No es una captura preparada para hoy.",
       "Sale del mismo módulo de diagnóstico que uso yo, no de un servicio de pago.",
@@ -315,7 +318,7 @@ export const GUION_BEATS: NotaGuion[] = [
       "Cerrar con una invitación concreta: señalar dónde en /docs puede el jurado seguir verificando cualquier cifra después de la sustentación.",
     ],
   },
-]
+];
 
 /** Capas de cierre, de la primera que sale a la última. */
 export const GUION_OUTRO: NotaGuion[] = [
@@ -324,4 +327,4 @@ export const GUION_OUTRO: NotaGuion[] = [
     enPantalla: "¿Preguntas? · GRACIAS",
     notas: [],
   },
-]
+];
