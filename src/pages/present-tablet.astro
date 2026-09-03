@@ -203,6 +203,32 @@ const pinInvalido = huboIntento && !sesion
       #stage[data-estado='conectando'] #punto,
       #stage[data-estado='reintentando'] #punto { background: #f59e0b; }
       #stage[data-estado='terminada'] #punto { background: #6b7280; }
+
+      /* Toggle discreto: la tablet de apoyo se deja apoyada en la mesa, así
+         que no hace falta que llame la atención - basta con que esté ahí. */
+      #fullscreen-toggle {
+        position: fixed;
+        bottom: 14px;
+        right: 14px;
+        z-index: 5;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: transparent;
+        color: rgba(231, 231, 236, 0.22);
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      #fullscreen-toggle:active,
+      #fullscreen-toggle:focus-visible {
+        color: rgba(231, 231, 236, 0.75);
+        background: rgba(231, 231, 236, 0.08);
+        border-radius: 8px;
+      }
+      #fullscreen-toggle svg { width: 18px; height: 18px; }
     </style>
   </head>
 
@@ -242,6 +268,12 @@ const pinInvalido = huboIntento && !sesion
       </div>
     </main>
 
+    <button id="fullscreen-toggle" type="button" aria-label="Pantalla completa" title="Pantalla completa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4" />
+      </svg>
+    </button>
+
     {inicial && (
       <script
         type="application/json"
@@ -249,6 +281,20 @@ const pinInvalido = huboIntento && !sesion
         set:html={JSON.stringify({ sessionId: inicial.sessionId, beatInicial: inicial.beat, pin: pinBruto, bus })}
       />
     )}
+
+    <script>
+      const btnFullscreenApoyo = document.getElementById('fullscreen-toggle')
+      btnFullscreenApoyo?.addEventListener('click', () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.().catch(() => {})
+        } else {
+          document.documentElement.requestFullscreen?.().catch(() => {
+            // Denegado o no soportado (Safari en iPad a veces): no hay más
+            // que ofrecer desde un botón.
+          })
+        }
+      })
+    </script>
 
     <script>
       // Recordar el PIN en ESTE navegador de tablet: la próxima vez que se abra

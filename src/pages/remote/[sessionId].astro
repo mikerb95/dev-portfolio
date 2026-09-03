@@ -49,6 +49,11 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
             <span class="counter mono" id="counter">–/{session.totalSlides}</span>
             <span class="label" id="label">-</span>
             <span class="conn" id="conn" title="Estado de la conexión" aria-live="polite"></span>
+            <button type="button" class="fs-toggle" id="fullscreen-toggle" aria-label="Pantalla completa" title="Pantalla completa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4" />
+              </svg>
+            </button>
           </header>
           <div class="notes" id="notes" tabindex="0">
             <p class="notes-empty">Sin notas para este slide.</p>
@@ -182,6 +187,25 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
   }
   .conn[data-status='live'] { background: var(--lime); }
   .conn[data-status='polling'] { background: #ffb454; }
+
+  /* Discreto: en un móvil sostenido en la mano, un botón llamativo compite
+     con el pulgar por espacio en la barra de notas. */
+  .fs-toggle {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--ink-300);
+    cursor: pointer;
+    flex-shrink: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .fs-toggle:active { color: var(--ink-50); background: #17171f; border-radius: 8px; }
+  .fs-toggle svg { width: 16px; height: 16px; }
 
   /* Las notas son lo único que se lee en vivo: tamaño de lectura real, no de
      interfaz, y su propio scroll cuando son largas. */
@@ -383,6 +407,16 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
     nextBtn.addEventListener('click', () => send({ type: 'next' }))
     startBtn.addEventListener('click', () => send({ type: 'start' }))
     endBtn.addEventListener('click', () => send({ type: 'end' }))
+
+    document.getElementById('fullscreen-toggle')!.addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {})
+      } else {
+        document.documentElement.requestFullscreen?.().catch(() => {
+          // Denegado o no soportado: sin más que ofrecer desde un botón.
+        })
+      }
+    })
 
     document.getElementById('grid-open')!.addEventListener('click', () => { gridSheet.hidden = false })
     document.getElementById('grid-close')!.addEventListener('click', () => { gridSheet.hidden = true })

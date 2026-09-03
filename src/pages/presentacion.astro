@@ -132,10 +132,44 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         border-radius: 999px;
         cursor: pointer;
       }
+
+      /* Toggle discreto: casi invisible hasta que se busca. El iframe tiene
+         pointer-events:none, así que esto queda por encima con su propio
+         pointer-events y no interfiere con el mando de teclado del mazo. */
+      #fullscreen-toggle {
+        position: fixed;
+        bottom: 0.75rem;
+        right: 0.75rem;
+        z-index: 20;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: transparent;
+        color: rgba(244, 246, 248, 0.28);
+        cursor: pointer;
+        pointer-events: auto;
+        transition: color 0.15s ease, background 0.15s ease;
+      }
+      #fullscreen-toggle:hover,
+      #fullscreen-toggle:focus-visible {
+        color: rgba(244, 246, 248, 0.85);
+        background: rgba(244, 246, 248, 0.08);
+        border-radius: 8px;
+      }
+      #fullscreen-toggle svg { width: 16px; height: 16px; }
     </style>
   </head>
   <body>
     <iframe id="lienzo" src="/final.html" title="Presentación"></iframe>
+
+    <button id="fullscreen-toggle" type="button" aria-label="Pantalla completa" title="Pantalla completa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4" />
+      </svg>
+    </button>
 
     <div id="aviso-movil">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -202,6 +236,22 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       } from '../lib/presentacion/eco'
 
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
+
+      /* ------------------------------------------------------------------ *
+       * Toggle discreto de pantalla completa, para cualquier dispositivo (el
+       * aviso de más abajo ya cubre el caso móvil vertical con su propio
+       * botón; este es el de siempre, en la esquina, para el resto).
+       * ------------------------------------------------------------------ */
+      const btnToggle = document.getElementById('fullscreen-toggle') as HTMLButtonElement
+      btnToggle.addEventListener('click', () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.().catch(() => {})
+        } else {
+          document.documentElement.requestFullscreen?.().catch(() => {
+            // Denegado o no soportado: el botón no tiene más que ofrecer.
+          })
+        }
+      })
 
       /* ------------------------------------------------------------------ *
        * Aviso para móvil: girar a horizontal y sugerir pantalla completa.
