@@ -29,6 +29,11 @@
 // pasa por inyectar eventos en la página, que además dispararían sus menús y
 // sus tooltips en cada equipo de la sala.
 //
+// LO QUE NO ES HOVER DE CSS SE REPLICA APARTE. El detalle de las cards de
+// `/engineering` lo abre un script con `mouseenter` (`CardPopover.astro`), no
+// una regla: no hay gemela que escribir, así que el seguidor pone la misma
+// clase que pondría el componente. Ver `sincronizarPopover`.
+//
 // SOLO LA PÁGINA VIVA, no la lámina. En `/present-admin` el mazo tiene el
 // `body` inerte a propósito (§11.3): el ratón ni siquiera llega a sus
 // elementos, así que no hay hover del mazo que espejar. Lo que se refleja es lo
@@ -400,6 +405,80 @@ export function marcarHover(el: Element | null, marcados: Element[]): Element[] 
   return nuevos
 }
 
+/* -------------------------------------------------------------------- *
+ * El popover, que NO es hover de CSS
+ * -------------------------------------------------------------------- */
+
+/*
+ * Las cards de `/engineering` abren su detalle con `CardPopover.astro`, y ese
+ * componente no lo enciende con `:hover` sino con un `mouseenter` que añade una
+ * clase. La gemela de `[data-puntero]` no puede alcanzarlo: no hay regla de
+ * hover que duplicar, la decisión la tomó un script que en el seguidor nunca
+ * recibe el ratón. Por eso el ponente veía el panel abierto y la sala solo la
+ * card iluminada.
+ *
+ * Lo que se replica es el ESTADO, no el evento: se pone la misma clase que
+ * pondría el componente. Inyectar un `mouseenter` sintético habría vuelto a
+ * pasar por su temporizador de apertura y, sobre todo, habría despertado
+ * cualquier otro listener de la página en cada equipo de la sala.
+ *
+ * Las clases son un contrato con `src/components/CardPopover.astro`: si allí
+ * cambian, aquí también.
+ */
+
+/** El contenedor que abre y cierra el panel. */
+export const POPOVER = 'card-pop'
+/** El panel flotante, hermano del disparador dentro del contenedor. */
+export const POPOVER_PANEL = 'card-pop-panel'
+/** Abierto. */
+export const ABIERTO = 'is-open'
+/** Abierto hacia arriba, cuando debajo no cabe. */
+export const VOLTEADO = 'flip-up'
+/** Alto de reserva mientras el panel no ha maquetado, y holgura contra el
+ *  borde de la ventanilla. Los dos números salen de `CardPopover.astro`. */
+export const PANEL_ALTO = 220
+export const PANEL_HOLGURA = 20
+
+/** Caja mínima que hace falta para decidir el volteo. */
+export type Caja = { top: number; bottom: number }
+
+/**
+ * ¿El panel tiene que abrirse hacia arriba? Misma regla que el componente: solo
+ * se voltea si abajo no cabe Y arriba sí. Si no cabe en ningún lado se queda
+ * abajo, que es lo que hace el ponente y por tanto lo que tiene que verse.
+ */
+export function debeVoltear(caja: Caja, altoPanel: number, altoVentana: number): boolean {
+  const abajo = altoVentana - caja.bottom
+  return abajo < altoPanel + PANEL_HOLGURA && caja.top > altoPanel + PANEL_HOLGURA
+}
+
+/**
+ * Deja abierto el popover que contiene al elemento señalado, y cerrado
+ * cualquier otro. `null` los cierra todos, que es lo que toca cuando el ratón
+ * del ponente sale de la página viva.
+ *
+ * No se reescribe el que ya está abierto: esto corre dos veces por segundo, y
+ * volver a poner la clase reiniciaría la transición de entrada del panel en
+ * cada vuelta.
+ */
+export function sincronizarPopover(doc: Document, el: Element | null): void {
+  try {
+    const destino = el?.closest?.(`.${POPOVER}`) ?? null
+    for (const abierto of [...doc.querySelectorAll(`.${POPOVER}.${ABIERTO}`)]) {
+      if (abierto !== destino) abierto.classList.remove(ABIERTO, VOLTEADO)
+    }
+    if (!destino || destino.classList.contains(ABIERTO)) return
+    const panel = destino.querySelector(`.${POPOVER_PANEL}`) as HTMLElement | null
+    const alto = panel?.offsetHeight || PANEL_ALTO
+    const ventana = doc.defaultView?.innerHeight ?? 0
+    if (ventana && debeVoltear(destino.getBoundingClientRect(), alto, ventana))
+      destino.classList.add(VOLTEADO)
+    destino.classList.add(ABIERTO)
+  } catch {
+    // Documento a medio cargar o sin popovers: no hay nada que sincronizar.
+  }
+}
+
 /** Id del cursor pintado, dentro del documento de la página viva. */
 const ID_CURSOR = 'puntero-espejo-cursor'
 
@@ -496,6 +575,7 @@ export function aplicarPuntero(
   const el = o ? resolverRuta(doc, o.ruta) : null
   if (!o || !el || el.tagName.toLowerCase() !== o.tag) {
     apagarCursor(doc)
+    sincronizarPopover(doc, null)
     return marcarHover(null, marcados)
   }
   // La flecha sí se recoloca siempre (el elemento puede haberse movido por un
@@ -505,5 +585,8 @@ export function aplicarPuntero(
   // cambiado. `marcados[0]` es el elemento señalado porque `marcarHover` lo
   // apila antes que a sus ancestros.
   pintarCursor(doc, el, o)
+  // El popover no es una regla de `:hover` y la gemela no lo alcanza: se
+  // replica su clase aparte, con la misma idea de no reescribir lo que ya está.
+  sincronizarPopover(doc, el)
   return marcados[0] === el ? marcados : marcarHover(el, marcados)
 }

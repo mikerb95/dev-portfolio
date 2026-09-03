@@ -558,6 +558,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         type Capa,
       } from '../lib/presentacion/lienzo'
       import { siguienteEspejo, type Espejo } from '../lib/presentacion/espejo'
+      import { leerEco, siguienteEco, type Eco } from '../lib/presentacion/eco'
       import {
         objetivoDe,
         siguientePuntero,
@@ -1205,6 +1206,8 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let ultimoReporteEn = 0
       /** El último espejo publicado, que es de donde sale el `seq` siguiente. */
       let espejo: Espejo | null = null
+      /** Y el último eco: lo que la página viva de este beat tiene escrito. */
+      let eco: Eco | null = null
 
       /**
        * Publica la posición real, ya en índice global. Es lo único que escribe
@@ -1233,6 +1236,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           // lado. Va en el reporte que ya se hace y no en una petición propia,
           // que sería una escritura por temblor de mano.
           ...(puntero && puntero.pos === actual.pos ? { puntero } : {}),
+          // Y el eco, con la misma regla de la diapositiva: lo tecleado es de
+          // ESTA página viva. Solo lo tienen los beats que lo publican
+          // (`ESPEJO_VIVO`), que hoy es uno.
+          ...(eco && eco.pos === actual.pos ? { eco } : {}),
           origen,
         })) as { destino?: number } | null
         return typeof cuerpo?.destino === 'number' ? cuerpo.destino : null
@@ -1265,8 +1272,8 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
             }
             if (despues && mazo && ++desdeReporte >= REPORTE_CADA) {
               desdeReporte = 0
-              const eco = await reportar(posicionDe(mazo, despues), 'mando')
-              if (eco !== null) meta = eco
+              const respuesta = await reportar(posicionDe(mazo, despues), 'mando')
+              if (respuesta !== null) meta = respuesta
             }
           }
           const punto = puntoActual()
@@ -1324,6 +1331,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         const nuevoPuntero = siguientePuntero(actual.pos, objetivoRaton, puntero)
         if (nuevoPuntero) puntero = nuevoPuntero
 
+        // §11.13. Y lo que se escribe dentro. El beat del diagnóstico contesta
+        // sin navegar, así que ni la URL ni el ratón cuentan lo que pasa ahí:
+        // se le pregunta a la propia página (`ESPEJO_VIVO.leer()`), que
+        // devuelve `undefined` en las que no participan, que son casi todas.
+        const nuevoEco = siguienteEco(actual.pos, leerEco(dentro?.contentDocument ?? null), eco)
+        if (nuevoEco) eco = nuevoEco
+
         if (!ultimo) {
           await reportar(actual, 'inicial')
         } else if (actual.pos !== ultimo.pos || actual.total !== ultimo.total) {
@@ -1331,8 +1345,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           // algunos beats. Ya no puede ser el teclado del portátil, que §11.4
           // tapa, pero manda igual la realidad.
           await reportar(actual, 'ajena')
-        } else if (nuevoEspejo || nuevoPuntero) {
-          // La página de dentro navegó, o el ratón se movió a otro elemento. Es
+        } else if (nuevoEspejo || nuevoPuntero || nuevoEco) {
+          // La página de dentro navegó, el ratón se movió a otro elemento, o
+          // hay una tecla nueva en el formulario que se está enseñando. Es
           // un `latido` y no una `ajena`: no hay posición nueva que adoptar,
           // solo algo que la sala tiene que ver sin esperar a los cinco
           // segundos del latido normal.

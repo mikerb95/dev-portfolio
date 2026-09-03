@@ -24,23 +24,25 @@ import {
 import { debeArrancar, parsearInicio } from '../../lib/presentacion/cronometro'
 import { parsearEspejo, type Espejo } from '../../lib/presentacion/espejo'
 import { parsearPuntero, punteroPara, type Puntero } from '../../lib/presentacion/puntero'
+import { ecoPara, parsearEco, type Eco } from '../../lib/presentacion/eco'
 
 /**
  * Estado del control remoto de `/final.html`, que no se toca ni se edita.
  *
  *   GET                             -> { destino, actual, viva, scroll, inicio, ahora }
  *                                      (lo que sondea el mando)
- *   GET ?q=destino                  -> { destino, scroll, espejo, puntero, inicio, ahora }
+ *   GET ?q=destino                  -> { destino, scroll, espejo, puntero, eco, inicio, ahora }
  *                                      (lo que sondean los seguidores)
  *   GET ?q=conducir                 -> { destino, scroll, inicio, ahora }
  *                                      (lo que sondea la pantalla, que escribe
- *                                       el espejo y el puntero y no los aplica)
+ *                                       el espejo, el puntero y el eco, y no
+ *                                       los aplica)
  *   POST { accion: siguiente|anterior } -> mueve el destino    (el mando)
  *   POST { accion: reiniciar-cronometro } -> borra el arranque   (la isla)
  *   POST { accion: subir|bajar }    -> desplaza el iframe del beat (el mando)
  *   POST { accion: scroll, y: N }   -> deja el iframe del beat EN y (la rueda)
  *   POST { destino: N }             -> salto directo           (el mando)
- *   POST { pos, total, intro, outro, scroll, espejo, puntero, origen }
+ *   POST { pos, total, intro, outro, scroll, espejo, puntero, eco, origen }
  *                                   -> la pantalla publica dónde está de verdad
  *
  * UNA CLAVE POR ESCRITOR. El mando escribe `destino` y `scroll`; la pantalla
@@ -80,6 +82,18 @@ const K_ESPEJO = 'presentacion:espejo'
  * no sabe nada del ratón y no puede borrarlo cada cinco segundos.
  */
 const K_PUNTERO = 'presentacion:puntero'
+/**
+ * Lo que el ponente ESCRIBE en la página viva y lo que le contesta el servidor
+ * cuando la respuesta no pasa por una navegación (el diagnóstico de un sitio en
+ * `/lab/site-check`, que teclea un dominio y pinta el resultado en el mismo
+ * documento). Mismo escritor, mismo POST y clave aparte que los otros dos, y
+ * por lo mismo: el latido no sabe nada de lo que hay tecleado.
+ *
+ * Se guarda opaco: qué significa ese estado lo sabe la página que lo pinta, no
+ * el servidor. Lo que sí se valida al leerlo y al escribirlo es que sea JSON y
+ * que quepa (`ECO_MAX`).
+ */
+const K_ECO = 'presentacion:eco'
 /**
  * Cuándo arrancó la sustentación, en el reloj del servidor. La escribe el
  * SERVIDOR y nadie más, una sola vez, en el primer movimiento que saca la
@@ -136,6 +150,8 @@ const leerEspejo = async (base: string): Promise<Espejo | null> =>
 const leerPuntero = async (): Promise<Puntero | null> =>
   parsearPuntero(await presentStore().get(K_PUNTERO))
 
+const leerEco = async (): Promise<Eco | null> => parsearEco(await presentStore().get(K_ECO))
+
 /**
  * Lo que se le cuenta a la sala en cada cambio: exactamente lo mismo que
  * devuelve `?q=destino`, para que un seguidor por bus y uno caído al sondeo
@@ -187,13 +203,15 @@ export const GET: APIRoute = async ({ url }) => {
       // veces por segundo y de aquí saca también hasta dónde desplazar el
       // iframe. Lo pedido para OTRA diapositiva vale 0, que es la vuelta
       // arriba automática al cambiar de beat.
-      const [destino, pedido, espejo, puntero, inicio] = await Promise.all([
+      const [destino, pedido, espejo, puntero, eco, inicio] = await Promise.all([
         leerDestino(),
         leerScroll(),
         leerEspejo(url.origin),
         leerPuntero(),
+        leerEco(),
         leerInicio(),
       ])
+      const vigente = ecoPara(eco, destino)
       return json(200, {
         destino,
         scroll: desplazamientoPedido(pedido, destino),
@@ -205,6 +223,18 @@ export const GET: APIRoute = async ({ url }) => {
         // diapositiva no se aplica, así que cambiar de beat apaga el cursor de
         // la sala sin escribir nada.
         puntero: punteroPara(puntero, destino),
+        // Y lo que el ponente tiene tecleado en esa página, con la misma regla:
+        // el eco de otra diapositiva no se aplica, así que cambiar de beat
+        // devuelve el formulario de la sala a su estado de arranque.
+        //
+        // Con una diferencia: el eco es el único campo que puede pesar unos
+        // kilobytes, y esto se sondea dos veces por segundo por asistente. El
+        // seguidor manda en `?eco=` el `seq` que ya tiene y aquí se omite el
+        // campo si es el mismo, que para él significa "sin novedad" (igual que
+        // en el bus). Así el análisis viaja una vez y no doscientas.
+        ...(vigente && String(vigente.seq) === url.searchParams.get('eco')
+          ? {}
+          : { eco: vigente }),
         // El cronómetro va de gorra en un viaje que ya se hacía. `ahora` no es
         // adorno: `inicio` lo pone el reloj del servidor y la cuenta la hace el
         // portátil, así que sin este número un portátil dos minutos adelantado
@@ -260,6 +290,7 @@ export const POST: APIRoute = async ({ request, url }) => {
     scroll?: unknown
     espejo?: unknown
     puntero?: unknown
+    eco?: unknown
     origen?: unknown
     /** La posición absoluta de la rueda. Solo con `accion: 'scroll'`. */
     y?: unknown
@@ -312,6 +343,12 @@ export const POST: APIRoute = async ({ request, url }) => {
       const puntero = parsearPuntero(cuerpo.puntero)
       if (puntero) await presentStore().set(K_PUNTERO, JSON.stringify(puntero), TTL_SEGUNDOS)
 
+      // El eco, con la misma regla de "no borrar" y el mismo motivo: entre dos
+      // teclas hay varios latidos, y un latido que borrara lo escrito dejaría
+      // el formulario de la sala vacío a mitad de frase.
+      const eco = parsearEco(cuerpo.eco)
+      if (eco) await presentStore().set(K_ECO, JSON.stringify(eco), TTL_SEGUNDOS)
+
       const previo = await leerDestino()
       const destino = destinoTrasReporte(previo, actual, origen)
       if (destino !== previo) await guardarDestino(destino)
@@ -330,6 +367,9 @@ export const POST: APIRoute = async ({ request, url }) => {
         // el anuncio de la rueda mandara `null` por no tenerlo a mano, el
         // cursor de la sala parpadearía en cada giro.
         ...(puntero ? { puntero: punteroPara(puntero, destino) } : {}),
+        // Igual que el puntero: ausente es "sin novedad", y así el anuncio de
+        // la rueda no borra lo tecleado en la sala.
+        ...(eco ? { eco: ecoPara(eco, destino) } : {}),
       })
 
       return json(200, { destino, actual })
@@ -436,7 +476,10 @@ export const POST: APIRoute = async ({ request, url }) => {
     // Y con él el puntero, por lo mismo: el ratón señalaba algo de la
     // diapositiva anterior. `null` explícito y no ausente, que aquí significa
     // "apaga el cursor" y es justo lo que toca.
-    if (destino !== previo) void anunciar({ destino, scroll, espejo: null, puntero: null })
+    // Y el eco: lo tecleado pertenecía a la página viva de la diapositiva que
+    // se acaba de dejar.
+    if (destino !== previo)
+      void anunciar({ destino, scroll, espejo: null, puntero: null, eco: null })
 
     // `ahora` acompaña siempre a `inicio`: el mando corrige su desfase con él,
     // y una respuesta con arranque pero sin reloj del servidor le haría contar

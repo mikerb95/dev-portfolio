@@ -193,6 +193,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         punteroPara,
         type Puntero,
       } from '../lib/presentacion/puntero'
+      import {
+        aplicarEco,
+        ecoPara,
+        esMasNuevo as esMasNuevoEco,
+        parsearEco,
+        type Eco,
+      } from '../lib/presentacion/eco'
 
       const iframe = document.getElementById('lienzo') as HTMLIFrameElement
 
@@ -517,6 +524,19 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let marcados: Element[] = []
 
       /* ------------------------------------------------------------------ *
+       * El eco: lo que el ponente escribe en la página viva
+       *
+       * El espejo lleva la URL y el puntero lleva el ratón; en el beat del
+       * diagnóstico de un sitio no basta ninguno de los dos, porque ahí el
+       * resultado llega por un POST y la URL no cambia. Lo que viaja son los
+       * DATOS del análisis, y quien los pinta es la propia página con su
+       * renderizador (`ESPEJO_VIVO`, ver `lib/presentacion/eco.ts`): el canal
+       * es público, y espejar HTML sería XSS en todos los equipos de la sala.
+       * ------------------------------------------------------------------ */
+
+      let eco: Eco | null = null
+
+      /* ------------------------------------------------------------------ *
        * Publicación y reconciliación
        * ------------------------------------------------------------------ */
 
@@ -633,8 +653,8 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
             // cruzar el mazo entero puede acercarse a eso.
             if (despues && mazo && ++desdeReporte >= REPORTE_CADA) {
               desdeReporte = 0
-              const eco = await reportar(posicionDe(mazo, despues), 'mando')
-              if (eco !== null) meta = eco
+              const respuesta = await reportar(posicionDe(mazo, despues), 'mando')
+              if (respuesta !== null) meta = respuesta
             }
           }
           const punto = puntoActual()
@@ -682,13 +702,20 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         }
 
         try {
-          const res = await fetch('/api/presentacion?q=destino', { cache: 'no-store' })
+          // El `seq` del eco que ya se tiene viaja en la petición: el servidor
+          // omite el campo si no ha cambiado, y así el análisis del beat del
+          // diagnóstico -unos kilobytes- no vuelve en cada sondeo.
+          const res = await fetch(
+            `/api/presentacion?q=destino${eco ? `&eco=${eco.seq}` : ''}`,
+            { cache: 'no-store' }
+          )
           if (!res.ok) return
           const cuerpo = (await res.json()) as {
             destino: number
             scroll?: number
             espejo?: unknown
             puntero?: unknown
+            eco?: unknown
           }
           const { destino, scroll } = cuerpo
           if (typeof destino !== 'number') return
@@ -706,6 +733,14 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           else if (cuerpo.puntero !== undefined) {
             const p = parsearPuntero(cuerpo.puntero)
             if (p && esMasNuevoPuntero(p, puntero)) puntero = p
+          }
+
+          // El eco, con la misma distinción entre `null` (no hay nada escrito
+          // en esta diapositiva) y ausente (este mensaje no sabía nada de él).
+          if (cuerpo.eco === null) eco = null
+          else if (cuerpo.eco !== undefined) {
+            const e = parsearEco(cuerpo.eco)
+            if (e && esMasNuevoEco(e, eco)) eco = e
           }
 
           // El servidor ya acota contra el total que se le publicó, así que
@@ -726,6 +761,9 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
               punteroPara(puntero, actual.pos),
               marcados
             )
+            // Y lo escrito dentro, después de navegar: si el espejo acaba de
+            // cambiar de página, el eco que toca aplicar es el de la nueva.
+            aplicarEco(dentro?.contentDocument ?? null, ecoPara(eco, actual.pos))
           }
         } catch {
           // Sin red o Redis caído: se reintenta en el próximo ciclo y la

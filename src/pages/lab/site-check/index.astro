@@ -153,6 +153,8 @@ const L = (path: string) => localizedHref(path, locale)
 </script>
 
 <script>
+  import { ECO_MAX, serializar } from '../../../lib/presentacion/eco'
+
   type DiagnosticStatus = 'pass' | 'warn' | 'fail' | 'info'
   type DiagnosticResult = {
     id: string
@@ -162,6 +164,12 @@ const L = (path: string) => localizedHref(path, locale)
     details?: string[]
     ms: number
   }
+
+  /* Lo que se ha pintado, para poder contarlo. La página lo necesitaba solo
+     para el espejo de la presentación (ver el bloque ESPEJO_VIVO, al final):
+     sin esta lista, lo único que quedaba del análisis era el DOM ya renderizado
+     y espejar DOM no es una opción. */
+  let recibidos: DiagnosticResult[] = []
 
   const form = document.getElementById('site-check-form') as HTMLFormElement
   const input = document.getElementById('site-check-input') as HTMLInputElement
@@ -228,6 +236,7 @@ const L = (path: string) => localizedHref(path, locale)
 
     submit.disabled = true
     resultsEl.innerHTML = ''
+    recibidos = []
     statusEl.textContent = L.analyzing
 
     try {
@@ -267,6 +276,7 @@ const L = (path: string) => localizedHref(path, locale)
             statusEl.textContent = L.analyzingHost.replace('{host}', msg.target?.host ?? target).replace('{total}', String(total))
           } else if (msg.type === 'result') {
             done++
+            recibidos.push(msg.result)
             statusEl.textContent = L.analyzingProgress.replace('{done}', String(done)).replace('{total}', String(total))
             renderResult(msg.result)
           } else if (msg.type === 'done') {
@@ -282,4 +292,127 @@ const L = (path: string) => localizedHref(path, locale)
       submit.disabled = false
     }
   })
+
+  /* ==================================================================== *
+   * ESPEJO_VIVO: que la sala vea este análisis
+   *
+   * Este beat de la sustentación se proyecta como página viva dentro de la
+   * presentación. Las otras dos (`/status`, la demo del portal) se espejan
+   * solas con la URL, porque todo resultado suyo es una navegación. Aquí no:
+   * el ponente teclea un dominio y las tarjetas llegan por un POST en
+   * streaming sobre el mismo documento, así que la sala veía el formulario
+   * vacío durante el minuto que dura el análisis.
+   *
+   * El contrato está en `src/lib/presentacion/eco.ts`. Dos decisiones suyas
+   * mandan sobre cómo está escrito lo de aquí:
+   *
+   *  · lo que viaja son DATOS, no HTML. El canal de la presentación es
+   *    público; pintar con `innerHTML` lo que venga de ahí sería XSS en el
+   *    mismo origen y en todos los equipos de la sala. Por eso `aplicar`
+   *    sanea cada campo y llama al MISMO `renderResult` que usa el ponente,
+   *    que ya escapa lo que pinta.
+   *  · el análisis lo corre el ponente UNA vez. Mandar solo el dominio y
+   *    dejar que cada seguidor lo analizara serían treinta sondeos reales
+   *    contra el sitio y treinta llamadas a la cuota de PageSpeed Insights.
+   * ==================================================================== */
+
+  type EstadoEspejo = { valor: string; texto: string; res: DiagnosticResult[] }
+
+  /** Recortes de cordura para que el estado quepa en el canal. Son generosos
+   *  contra lo que produce `diagnosticSuite` (detalles de una línea corta) y
+   *  existen por lo que podría producir un día, no por lo que produce hoy. */
+  const MAX_RES = 16
+  const MAX_DETALLES = 8
+  const MAX_TEXTO = 300
+
+  const recortar = (v: unknown, n: number) => (typeof v === 'string' ? v.slice(0, n) : '')
+
+  function paraElEspejo(r: DiagnosticResult): DiagnosticResult {
+    return {
+      id: recortar(r.id, 40),
+      label: recortar(r.label, 100),
+      status: r.status,
+      summary: recortar(r.summary, MAX_TEXTO),
+      details: (r.details ?? []).slice(0, MAX_DETALLES).map((d) => recortar(d, MAX_TEXTO)),
+      ms: Number.isFinite(r.ms) ? Math.max(0, Math.round(r.ms)) : 0,
+    }
+  }
+
+  /**
+   * Qué contarle a la sala. Degrada en vez de rendirse: un estado que no quepa
+   * en el canal se descarta ENTERO al publicarlo, y quedarse sin espejo justo
+   * en el análisis largo sería el peor momento posible. Primero se sueltan los
+   * detalles, y si aún no cabe, las tarjetas más viejas: el ponente habla
+   * siempre de la última.
+   */
+  function estadoEspejo(): EstadoEspejo {
+    const base = {
+      valor: recortar(input.value, 120),
+      texto: recortar(statusEl.textContent, MAX_TEXTO),
+    }
+    const res = recibidos.slice(-MAX_RES).map(paraElEspejo)
+    if (cabe({ ...base, res })) return { ...base, res }
+    const sinDetalles = res.map((r) => ({ ...r, details: [] }))
+    if (cabe({ ...base, res: sinDetalles })) return { ...base, res: sinDetalles }
+    let recorte = sinDetalles
+    while (recorte.length && !cabe({ ...base, res: recorte })) recorte = recorte.slice(1)
+    return { ...base, res: recorte }
+  }
+
+  function cabe(e: EstadoEspejo): boolean {
+    const t = serializar(e)
+    return t !== null && t.length <= ECO_MAX
+  }
+
+  const ESTADOS: DiagnosticStatus[] = ['pass', 'warn', 'fail', 'info']
+
+  /** Saneado de lo que llega por el canal: viene de la red y no se le supone
+   *  nada, ni siquiera que `ms` sea un número (se interpola en el HTML de la
+   *  tarjeta sin escapar, porque hasta hoy siempre lo era). */
+  function saneado(v: unknown): DiagnosticResult | null {
+    if (!v || typeof v !== 'object') return null
+    const r = v as Record<string, unknown>
+    const ms = Number(r.ms)
+    return {
+      id: recortar(r.id, 40),
+      label: recortar(r.label, 100),
+      status: ESTADOS.includes(r.status as DiagnosticStatus) ? (r.status as DiagnosticStatus) : 'info',
+      summary: recortar(r.summary, MAX_TEXTO),
+      details: Array.isArray(r.details)
+        ? r.details.slice(0, MAX_DETALLES).map((d) => recortar(d, MAX_TEXTO))
+        : [],
+      ms: Number.isFinite(ms) ? Math.max(0, Math.round(ms)) : 0,
+    }
+  }
+
+  /** Lo último aplicado, para no reconstruir las tarjetas en cada vuelta del
+   *  seguidor: el sondeo llega dos veces por segundo y repintar el DOM a ese
+   *  ritmo parpadearía en la pared. */
+  let ultimoAplicado = ''
+
+  const ESPEJO_VIVO = {
+    leer: () => estadoEspejo(),
+    aplicar(estado: unknown) {
+      if (!estado || typeof estado !== 'object') return
+      const firma = serializar(estado)
+      if (firma === null || firma === ultimoAplicado) return
+      ultimoAplicado = firma
+      const e = estado as Record<string, unknown>
+      const valor = recortar(e.valor, 120)
+      // Solo si cambió: reescribir el `value` en cada vuelta mataría cualquier
+      // selección y movería el cursor del que mire esto en su propio equipo.
+      if (input.value !== valor) input.value = valor
+      statusEl.textContent = recortar(e.texto, MAX_TEXTO)
+      resultsEl.innerHTML = ''
+      const res = Array.isArray(e.res) ? e.res.slice(0, MAX_RES) : []
+      for (const r of res) {
+        const limpio = saneado(r)
+        if (limpio) renderResult(limpio)
+      }
+    },
+  }
+
+  // El nombre es el contrato; quien lo lee es la ventana que conduce la
+  // presentación, y solo cuando esta página va dentro de ella.
+  ;(window as Window & { ESPEJO_VIVO?: typeof ESPEJO_VIVO }).ESPEJO_VIVO = ESPEJO_VIVO
 </script>

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ABIERTO,
   ATRIBUTO,
   combinarSelector,
+  debeVoltear,
   esMasNuevo,
   espejarHover,
   mismoObjetivo,
@@ -10,10 +12,14 @@ import {
   punteroPara,
   resolverRuta,
   rutaDe,
+  PANEL_HOLGURA,
+  POPOVER,
   selectorEspejado,
+  sincronizarPopover,
   siguientePuntero,
   tieneHover,
   UMBRAL,
+  VOLTEADO,
   type Objetivo,
   type Puntero,
 } from '../src/lib/presentacion/puntero'
@@ -370,5 +376,110 @@ describe('espejarHover', () => {
     ;(doc.styleSheets as unknown as unknown[]).unshift(ajena)
     espejarHover(doc)
     expect(inyectados[0].textContent).toBe(`a[${ATRIBUTO}]{color: red}`)
+  })
+})
+
+/* Un popover de mentira, con lo poco que `sincronizarPopover` toca de él: la
+ * lista de clases, el ancestro más cercano y la caja. */
+function popoverFalso(caja: { top: number; bottom: number }, panelAlto = 200) {
+  const clases = new Set<string>()
+  const nodo = {
+    clases,
+    classList: {
+      add: (...c: string[]) => c.forEach((x) => clases.add(x)),
+      remove: (...c: string[]) => c.forEach((x) => clases.delete(x)),
+      contains: (c: string) => clases.has(c),
+    },
+    querySelector: () => ({ offsetHeight: panelAlto }),
+    getBoundingClientRect: () => caja,
+  }
+  const dentro = { closest: () => nodo }
+  return { nodo, dentro }
+}
+
+function docConPopovers(abiertos: unknown[], alto = 800) {
+  return {
+    defaultView: { innerHeight: alto },
+    querySelectorAll: () => abiertos,
+  } as unknown as Document
+}
+
+describe('debeVoltear', () => {
+  const caja = (top: number, bottom: number) => ({ top, bottom })
+
+  it('no voltea si el panel cabe debajo', () => {
+    expect(debeVoltear(caja(100, 200), 220, 800)).toBe(false)
+  })
+
+  it('voltea si no cabe debajo y sí encima', () => {
+    expect(debeVoltear(caja(500, 600), 220, 800)).toBe(true)
+  })
+
+  it('no voltea si no cabe en ninguno de los dos lados', () => {
+    // Es lo que hace el componente en el portátil del ponente, así que es lo
+    // que tiene que verse en la sala: abierto hacia abajo aunque se corte.
+    expect(debeVoltear(caja(100, 300), 220, 400)).toBe(false)
+  })
+
+  it('la holgura cuenta contra el borde', () => {
+    const justo = 800 - (220 + PANEL_HOLGURA)
+    expect(debeVoltear(caja(justo - 100, justo), 220, 800)).toBe(false)
+    expect(debeVoltear(caja(justo - 99, justo + 1), 220, 800)).toBe(true)
+  })
+})
+
+describe('sincronizarPopover', () => {
+  it('abre el popover que contiene al elemento señalado', () => {
+    const { nodo, dentro } = popoverFalso({ top: 100, bottom: 200 })
+    sincronizarPopover(docConPopovers([]), dentro as unknown as Element)
+    expect(nodo.clases.has(ABIERTO)).toBe(true)
+    expect(nodo.clases.has(VOLTEADO)).toBe(false)
+  })
+
+  it('voltea el panel cuando debajo no cabe', () => {
+    const { nodo, dentro } = popoverFalso({ top: 600, bottom: 700 })
+    sincronizarPopover(docConPopovers([]), dentro as unknown as Element)
+    expect(nodo.clases.has(VOLTEADO)).toBe(true)
+  })
+
+  it('cierra el que estaba abierto al señalar otro', () => {
+    const viejo = popoverFalso({ top: 100, bottom: 200 })
+    viejo.nodo.classList.add(ABIERTO, VOLTEADO)
+    const nuevo = popoverFalso({ top: 100, bottom: 200 })
+    sincronizarPopover(
+      docConPopovers([viejo.nodo]),
+      nuevo.dentro as unknown as Element
+    )
+    expect(viejo.nodo.clases.has(ABIERTO)).toBe(false)
+    expect(viejo.nodo.clases.has(VOLTEADO)).toBe(false)
+    expect(nuevo.nodo.clases.has(ABIERTO)).toBe(true)
+  })
+
+  it('sin objetivo cierra todo', () => {
+    const abierto = popoverFalso({ top: 100, bottom: 200 })
+    abierto.nodo.classList.add(ABIERTO)
+    sincronizarPopover(docConPopovers([abierto.nodo]), null)
+    expect(abierto.nodo.clases.has(ABIERTO)).toBe(false)
+  })
+
+  it('no reescribe el que ya está abierto', () => {
+    // Correría dos veces por segundo: volver a poner la clase reiniciaría la
+    // transición de entrada del panel en cada vuelta.
+    const { nodo, dentro } = popoverFalso({ top: 600, bottom: 700 })
+    nodo.classList.add(ABIERTO)
+    sincronizarPopover(docConPopovers([nodo]), dentro as unknown as Element)
+    expect(nodo.clases.has(VOLTEADO)).toBe(false)
+  })
+
+  it('un elemento fuera de cualquier popover no abre nada', () => {
+    const suelto = { closest: () => null }
+    const abierto = popoverFalso({ top: 100, bottom: 200 })
+    abierto.nodo.classList.add(ABIERTO)
+    sincronizarPopover(docConPopovers([abierto.nodo]), suelto as unknown as Element)
+    expect(abierto.nodo.clases.has(ABIERTO)).toBe(false)
+  })
+
+  it('la clase del contenedor es la del componente', () => {
+    expect(POPOVER).toBe('card-pop')
   })
 })
