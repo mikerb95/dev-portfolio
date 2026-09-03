@@ -26,6 +26,17 @@ describe('isFramablePath', () => {
     expect(isFramablePath('/admin/lab/security')).toBe(false)
   })
 
+  it('reconoce la ruta con barra final', () => {
+    // Astro sirve las dos formas; si solo una fuera enmarcable, el iframe se
+    // vería o no según cómo se hubiera escrito el enlace en el mazo.
+    expect(isFramablePath('/lab/site-check/')).toBe(true)
+    expect(isFramablePath('/status/')).toBe(true)
+    expect(isFramablePath('/docs/kanban/')).toBe(true)
+    expect(isFramablePath('/portal/')).toBe(true)
+    expect(isFramablePath('/')).toBe(false)
+    expect(isFramablePath('/lab/')).toBe(false)
+  })
+
   it('mantiene el panel y las APIs fuera', () => {
     expect(isFramablePath('/admin')).toBe(false)
     expect(isFramablePath('/api/portal/login')).toBe(false)

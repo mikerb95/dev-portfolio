@@ -144,7 +144,13 @@ const previo = guionActual(ts);
 const mazo = leerMazo();
 const { beats, huerfanos } = alinear(mazo, previo.GUION_BEATS);
 
-const salida = render(cabecera, previo.GUION_INTRO, beats, previo.GUION_OUTRO);
+// Se formatea aquí y no en un paso aparte para que `--check` compare contra
+// exactamente lo que se escribiría: sin esto, prettier reformatea el archivo
+// después de generarlo y la comprobación falla siempre.
+const salida = await prettier.format(render(cabecera, previo.GUION_INTRO, beats, previo.GUION_OUTRO), {
+  ...(await prettier.resolveConfig(RUTA)),
+  filepath: RUTA,
+});
 const check = process.argv.includes("--check");
 
 if (check) {
