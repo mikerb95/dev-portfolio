@@ -74,7 +74,47 @@ describe('?q=destino', () => {
   })
 })
 
+describe('?q=conducir', () => {
+  it('es lo mismo menos lo que la pantalla escribe y no aplica', async () => {
+    // `/present-admin` es quien publica el espejo y el puntero: pedírselos de
+    // vuelta eran dos lecturas del almacén por sondeo, 240 por minuto durante
+    // toda la charla, que se tiraban sin mirarlas.
+    await post({ destino: 9 })
+    const { cuerpo } = await get('?q=conducir')
+    expect(cuerpo).toMatchObject({ destino: 9, scroll: 0 })
+    expect(typeof cuerpo.ahora).toBe('number')
+    expect('espejo' in cuerpo).toBe(false)
+    expect('puntero' in cuerpo).toBe(false)
+  })
+
+  it('trae el cronómetro, que es lo que la isla pinta', async () => {
+    const { cuerpo: movimiento } = await post({ accion: 'siguiente' })
+    expect((await get('?q=conducir')).cuerpo.inicio).toBe(movimiento.inicio)
+  })
+
+  it('el desplazamiento pedido para OTRA diapositiva vale cero', async () => {
+    // La misma regla que `?q=destino`: es la vuelta arriba automática al
+    // cambiar de beat, sin escritura extra ni cron de limpieza.
+    await post(reporte({ pos: 4, scroll: { y: 0, max: 900, alto: 600 } }))
+    await post({ accion: 'bajar' })
+    expect((await get('?q=conducir')).cuerpo.scroll).toBeGreaterThan(0)
+    await post({ destino: 5 })
+    expect((await get('?q=conducir')).cuerpo.scroll).toBe(0)
+  })
+})
+
 describe('el cronómetro', () => {
+  it('viaja también en el GET del mando, que es el que se lleva en la mano', async () => {
+    // La isla del reloj vive en el portátil, que es justo la pantalla que no se
+    // está mirando mientras se habla de pie.
+    const { cuerpo: movimiento } = await post({ accion: 'siguiente' })
+    const { cuerpo } = await get()
+    expect(cuerpo.inicio).toBe(movimiento.inicio)
+    // Sin `ahora`, un teléfono dos minutos adelantado arrancaría el reloj en
+    // 02:00: el desfase se mide contra este número, no contra el del teléfono.
+    expect(typeof cuerpo.ahora).toBe('number')
+  })
+
   it('no arranca hasta que la presentación se mueve de la primera diapositiva', async () => {
     // Abrir la ventana para probar el proyector media hora antes no arranca
     // nada: lo que cuenta es el movimiento, no la carga.
