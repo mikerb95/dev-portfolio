@@ -449,9 +449,57 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let estado: Estado | null = null
       let totalPintado = 0
 
+      /* ------------------------------------------------------------------ *
+       * El cronómetro
+       *
+       * El reloj vivía solo en la isla de `/present-admin`, es decir en el
+       * portátil: la pantalla que NO se está mirando mientras se habla de pie.
+       * El celular, que es lo que se tiene en la mano, era el único de los tres
+       * que no sabía qué hora era.
+       *
+       * No crea estado nuevo. `inicio` lo escribe el servidor en el primer
+       * movimiento y `ahora` viaja con él en la misma respuesta que ya se pedía
+       * una vez por segundo; la corrección de desfase es el módulo puro que ya
+       * usa la isla. Aquí solo se pinta.
+       * ------------------------------------------------------------------ */
+
+      /** Arranque en el reloj DEL SERVIDOR, `null` mientras no haya arrancado. */
+      let inicioServidor: number | null = null
+      /** Cuánto adelanta el reloj de este teléfono respecto al del servidor. */
+      let desfaseMs = 0
+
+      function pintarReloj() {
+        const ms = transcurrido(inicioServidor, Date.now(), desfaseMs)
+        const mazo = estado?.actual ? mazoPublicado(estado.actual) : null
+        // El desvío se mide contra el DESTINO, igual que la nota: es la
+        // diapositiva de la que se va a hablar, y el guion estima por
+        // diapositiva. La posición confirmada llega hasta dos segundos tarde.
+        const r = mazo && estado ? ritmo(mazo, estado.destino, ms) : null
+        const desvio = r && (r.senal === 'largo' || r.senal === 'corto') ? r.desvioMs : null
+        el.reloj.textContent = desvio === null
+          ? formatear(ms)
+          : `${formatear(ms)} ${formatearDesvio(desvio)}`
+        if (r && (r.senal === 'largo' || r.senal === 'corto')) el.reloj.dataset.ritmo = r.senal
+        else delete el.reloj.dataset.ritmo
+      }
+
+      // Tick propio de un segundo, como el de la isla: la cuenta no depende del
+      // sondeo, así que con el teléfono sin red -o con Upstash caído- el reloj
+      // sigue corriendo en vez de congelarse en el último número que llegó.
+      setInterval(pintarReloj, 1_000)
+
       function pintar(nuevo: Estado, hayRed: boolean) {
         estado = nuevo
         const { destino, actual } = nuevo
+
+        // `ahora` solo viene de las respuestas del servidor, nunca del adelanto
+        // local del pulgar, así que el desfase no se recalcula con un número
+        // inventado aquí. Y `inicio` distingue tres cosas: ausente es "sin
+        // novedad" (la respuesta de un scroll no lo trae), `null` es "todavía
+        // no ha arrancado" y un número es el arranque.
+        if (typeof nuevo.ahora === 'number') desfaseMs = desfase(nuevo.ahora, Date.now())
+        if (nuevo.inicio !== undefined) inicioServidor = nuevo.inicio
+        pintarReloj()
         const viva = hayRed && Boolean(nuevo.viva)
 
         el.enlace.dataset.enlace = !hayRed ? 'caida' : viva ? 'viva' : 'sola'
@@ -615,7 +663,14 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           const tentativo =
             typeof cuerpo.destino === 'number' ? cuerpo.destino : estado.destino + delta
           const tope = estado.actual?.total ?? 999
-          pintar({ ...estado, destino: Math.min(Math.max(tentativo, 1), tope) }, true)
+          // Sin `ahora`: este repintado no viene del servidor, y reutilizar el
+          // de la respuesta anterior mediría un desfase contra un reloj de hace
+          // un rato. `undefined` es justo lo que `pintar` lee como "sin
+          // novedad", y el sondeo del segundo siguiente lo vuelve a traer.
+          pintar(
+            { ...estado, ahora: undefined, destino: Math.min(Math.max(tentativo, 1), tope) },
+            true
+          )
         }
         const tarea = (enVuelo ?? Promise.resolve()).then(() =>
           pedir({

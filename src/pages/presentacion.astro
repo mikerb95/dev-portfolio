@@ -5,9 +5,15 @@
 // (ni cuántos beats trae, ni cuántas capas, ni sus z-index). El bundle se monta
 // en un iframe y se descubre por su forma en cada carga.
 //
-// Esta página es la ÚNICA fuente de verdad del sistema: es la que sabe en qué
-// punto está la presentación y cuántos hay. El servidor solo guarda el destino
-// que pide el mando; aquí se cierra la diferencia y se publica el resultado.
+// Esta página sabe en qué punto está la presentación y cuántos hay: el servidor
+// solo guarda el destino que pide el mando, y aquí se cierra la diferencia.
+//
+// LO QUE YA NO HACE ES PUBLICARLO. Desde §11.1 la pantalla del sistema es
+// `/present-admin`, y esta ventana es un SEGUIDOR: obedece el destino y no
+// escribe nada. Dos escritores de `presentacion:actual` no son una redundancia,
+// son un secuestro: ver el comentario de `PUBLICA`, abajo, que es donde está
+// escrita la regla y su única excepción (`?publicar=1`, para ensayar sin
+// portátil).
 //
 // EL MAZO NO SON LOS BEATS. El bundle solo sabe contar beats, y su contador
 // dice "01 / 19" tanto en la cita como en la portada, y "19 / 19" en el cierre.
@@ -523,9 +529,42 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
        * que viene de vuelta en la misma respuesta: gratis, y es lo que permite
        * que un viaje largo se entere de un cambio de idea sin pedir nada más.
        */
+      /**
+       * ¿Esta copia tiene derecho a publicar?
+       *
+       * Por defecto NO, y ese defecto es la corrección de §11.1 corriendo hoy.
+       * Mientras el paso 3 (§12.6) sigue detrás de su compuerta, estas seis
+       * llamadas a `reportar()` hacían de CUALQUIER copia abierta en la sala un
+       * escritor de `presentacion:actual` con derecho de voto sobre el destino:
+       * un teléfono con la pestaña congelada publicaba su posición vieja, el
+       * servidor la adoptaba como movimiento ajeno y `/present-admin` rebobinaba
+       * la sala entera obedeciendo. Y con `actual` se pisaban también el `total`
+       * y el `scroll`, de donde el mando saca el techo del mazo y la barra de
+       * desplazamiento: un seguidor con el bundle a medio descubrir le apagaba
+       * los botones al mando.
+       *
+       * La regla de §12.2 ("no se abren las dos a la vez") existía, pero no
+       * estaba escrita en ningún sitio que la hiciera cumplir: esta es una ruta
+       * pública, sin puerta y sin aviso, y abrirla desde el celular para
+       * comprobar la proyección es un gesto razonable.
+       *
+       * EL PRECIO, que hay que conocer: sin nadie que publique la forma del
+       * mazo, `/remote` se queda sin techo, sin rejilla y sin guion. En el
+       * montaje real de la sustentación eso no pasa, porque quien conduce es
+       * `/present-admin` y es ella la que publica. Con `?publicar=1` esta
+       * ventana vuelve a ser la pantalla del sistema, que es el montaje viejo:
+       * está para el ensayo sin portátil, y **nunca** con `/present-admin`
+       * abierta a la vez.
+       */
+      const PUBLICA = new URLSearchParams(location.search).get('publicar') === '1'
+
       async function reportar(actual: Actual, origen: Origen): Promise<number | null> {
         ultimo = actual
         ultimoReporteEn = Date.now()
+        // Se apunta la posición igual que si se hubiera publicado: `ultimo` es
+        // lo que evita reportar (y ahora, recalcular) lo mismo en cada vuelta,
+        // y el bucle de reconciliación depende de que avance.
+        if (!PUBLICA) return null
         try {
           const res = await fetch('/api/presentacion', {
             method: 'POST',
