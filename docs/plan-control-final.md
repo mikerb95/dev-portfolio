@@ -1138,7 +1138,7 @@ vez de `src`.
 
 ```
 src/lib/presentacion/puntero.ts      reglas puras + lectura de DOM (nuevo)
-tests/presentacion-puntero.test.ts   24 casos (nuevo)
+tests/presentacion-puntero.test.ts   43 casos (nuevo)
 src/pages/api/presentacion.ts        clave `presentacion:puntero`, sondeo y anuncio
 src/pages/present-admin.astro        lectura del ratón en la página viva
 src/pages/presentacion.astro         aplica el espejo Y el puntero (seguidor)
@@ -1150,6 +1150,98 @@ absolutas a producción, o sea de otro origen, y ni el ratón ni las hojas de
 estilo se dejan leer a través de esa frontera. El camino entero (hover en el
 portátil, hover en la sala) solo se puede cerrar desde producción, con dos
 equipos, y entra en la lista de 11.9.
+
+#### 11.12.7. El popover de `/engineering`, que no es hover de CSS (3 sep 2026) ✅
+
+El beat de la salud de ingeniería enmarca `/engineering`, y sus cards abren un
+panel de detalle al pasar por encima: de dónde sale la cifra, contra qué se
+compara, cuándo se midió. En el portátil del ponente se abría; en la sala, no.
+La card se iluminaba (eso sí es `:hover`, y la gemela de `[data-puntero]` lo
+cubre) pero el panel no aparecía, así que la sala veía "312 ms" sin el párrafo
+que explica qué es TTFB.
+
+**La causa es una excepción a 11.12.2 que había que encontrar**: ese panel no lo
+abre una regla de CSS sino un `mouseenter` que añade una clase
+(`CardPopover.astro`, con su temporizador de apertura y su volteo hacia arriba
+cuando abajo no cabe). Duplicar reglas no puede alcanzarlo: no hay regla que
+duplicar, la decisión la tomó un script que en el seguidor nunca recibe el ratón.
+
+Se replica el **estado**, no el evento: `sincronizarPopover` pone la misma clase
+que pondría el componente, en el popover que contiene al elemento señalado, y la
+quita de los demás. Inyectar un `mouseenter` sintético habría vuelto a pasar por
+el temporizador y, sobre todo, habría despertado cualquier otro listener de la
+página en cada equipo de la sala. El volteo se recalcula igual que allí, con la
+caja del disparador y el alto de la ventanilla, y **no se reescribe lo que ya
+está abierto**: esto corre dos veces por segundo, y volver a poner la clase
+reiniciaría la transición del panel en cada vuelta.
+
+Las clases (`card-pop`, `is-open`, `flip-up`) son un contrato con
+`src/components/CardPopover.astro`, escrito en los dos sitios.
+
+### 11.14. El eco: que la sala vea lo que se ESCRIBE (3 sep 2026) ✅
+
+Tercer y último hueco del mismo montaje, y el más grande: el beat del
+**diagnóstico público de un sitio** (`/lab/site-check`). El espejo lleva la URL
+y el puntero lleva el ratón; ninguno de los dos cuenta lo que pasa ahí, porque
+ahí no pasa nada de eso. El ponente teclea un dominio, pulsa Analizar, y las
+doce tarjetas llegan por un `POST` en streaming sobre el mismo documento: la URL
+no cambia ni una letra. La sala se quedaba mirando un formulario vacío durante
+el minuto largo que dura el análisis, que es justo el minuto en el que se está
+hablando de él.
+
+#### 11.14.1. Las tres decisiones, y lo que se descartó en cada una
+
+- **No se espeja HTML.** El canal no tiene puerta (11.7): quien conozca la URL
+  puede escribir en él. Un `innerHTML` con lo que venga de ahí sería XSS en el
+  mismo origen y en todos los equipos de la sala a la vez. Lo que viaja son
+  **datos**, y quien los pinta es la página con su propio renderizador y su
+  propio escapado.
+- **No se repite el trabajo.** La alternativa fácil era mandar solo el dominio y
+  dejar que cada seguidor analizara por su cuenta: treinta navegadores lanzando
+  treinta sondeos reales contra el sitio y treinta llamadas a la cuota de
+  PageSpeed Insights. El análisis lo corre el ponente una vez; lo demás es
+  reparto.
+- **La página se descubre por su forma**, como todo lo demás en este sistema. Ni
+  `eco.ts` ni las dos ventanas saben qué es un diagnóstico: la página viva
+  publica `window.ESPEJO_VIVO` con `leer()` y `aplicar()`, y la que no lo publica
+  sencillamente no tiene eco. Otro beat interactivo mañana no toca nada del
+  transporte.
+
+#### 11.14.2. Lo que viaja, y lo que NO vuelve en cada sondeo
+
+Un `{ pos, seq, estado }` con las mismas dos reglas del espejo y el puntero: el
+`seq` solo sube (un mensaje atrasado no deshace lo tecleado) y el `pos` lo ata a
+su diapositiva (cambiar de beat devuelve el formulario de la sala a su arranque
+sin escribir nada).
+
+El `estado` es **opaco para el transporte**: validar su forma es cosa de quien lo
+va a pintar, que es la única que sabe cuál es. Lo que sí se valida aquí es que
+sea JSON y que quepa (`ECO_MAX`, 12 000 caracteres); la página degrada sola
+antes de llegar al techo -primero suelta los detalles, luego las tarjetas más
+viejas- porque un estado que no cabe se descarta entero y quedarse sin espejo
+justo en el análisis largo sería el peor momento posible.
+
+Y una diferencia con los otros dos, por tamaño: el eco es el único campo que
+pesa kilobytes, y `?q=destino` lo sondea dos veces por segundo **por
+asistente**. El seguidor manda en `?eco=` el `seq` que ya tiene y el servidor
+omite el campo si es el mismo. Ausente significa "sin novedad" y `null`
+significa "no hay nada escrito en esta diapositiva", igual que en el puntero: el
+análisis viaja una vez, no doscientas.
+
+#### 11.14.3. Archivos
+
+```
+src/lib/presentacion/eco.ts          transporte + contrato ESPEJO_VIVO (nuevo)
+tests/presentacion-eco.test.ts       31 casos (nuevo)
+src/pages/lab/site-check/index.astro implementa leer()/aplicar() con su saneado
+src/pages/api/presentacion.ts        clave `presentacion:eco`, sondeo condicional
+src/pages/present-admin.astro        lee el estado de la página viva y lo publica
+src/pages/presentacion.astro         lo aplica (seguidor)
+```
+
+Lo que **no** está verificado, por lo mismo que 11.12: en local la página viva es
+de otro origen y su `window` no se deja leer. El camino entero se cierra desde
+producción con dos equipos, y entra en la lista de 11.9.
 
 ### 11.13. El final de la charla (2 sep 2026) ✅
 
