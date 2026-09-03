@@ -28,9 +28,13 @@ import { parsearPuntero, punteroPara, type Puntero } from '../../lib/presentacio
 /**
  * Estado del control remoto de `/final.html`, que no se toca ni se edita.
  *
- *   GET                             -> { destino, actual, viva, scroll }
+ *   GET                             -> { destino, actual, viva, scroll, inicio, ahora }
+ *                                      (lo que sondea el mando)
  *   GET ?q=destino                  -> { destino, scroll, espejo, puntero, inicio, ahora }
- *                                      (lo que sondea la pantalla y los seguidores)
+ *                                      (lo que sondean los seguidores)
+ *   GET ?q=conducir                 -> { destino, scroll, inicio, ahora }
+ *                                      (lo que sondea la pantalla, que escribe
+ *                                       el espejo y el puntero y no los aplica)
  *   POST { accion: siguiente|anterior } -> mueve el destino    (el mando)
  *   POST { accion: reiniciar-cronometro } -> borra el arranque   (la isla)
  *   POST { accion: subir|bajar }    -> desplaza el iframe del beat (el mando)
@@ -156,7 +160,29 @@ export const GET: APIRoute = async ({ url }) => {
     // La pantalla sondea dos veces por segundo durante toda la charla y solo
     // necesita el destino. Pedir de paso el `actual` que ella misma escribió
     // duplicaría las lecturas del almacén sin darle nada.
-    if (url.searchParams.get('q') === 'destino') {
+    const q = url.searchParams.get('q')
+
+    // Lo que sondea la PANTALLA (`/present-admin`), dos veces por segundo
+    // durante toda la charla. Es `?q=destino` menos el espejo y el puntero:
+    // esa ventana es quien los escribe y no los aplica nunca, así que pedirlos
+    // eran 240 lecturas por minuto del almacén que se tiraban a la basura. No
+    // se recorta `?q=destino` en su lugar porque el seguidor sí los necesita:
+    // son dos consumidores distintos de la misma clave, no uno con dos modos.
+    if (q === 'conducir') {
+      const [destino, pedido, inicio] = await Promise.all([
+        leerDestino(),
+        leerScroll(),
+        leerInicio(),
+      ])
+      return json(200, {
+        destino,
+        scroll: desplazamientoPedido(pedido, destino),
+        inicio,
+        ahora: Date.now(),
+      })
+    }
+
+    if (q === 'destino') {
       // Un número más en un viaje que ya se hacía: la pantalla sondea esto dos
       // veces por segundo y de aquí saca también hasta dónde desplazar el
       // iframe. Lo pedido para OTRA diapositiva vale 0, que es la vuelta
@@ -187,20 +213,30 @@ export const GET: APIRoute = async ({ url }) => {
         ahora: Date.now(),
       })
     }
-    const [destino, actual, pedido] = await Promise.all([
+    const [destino, actual, pedido, inicio] = await Promise.all([
       leerDestino(),
       leerActual(),
       leerScroll(),
+      leerInicio(),
     ])
     // El mando necesita el desplazamiento PEDIDO, no solo el real: es lo que
     // decide si el botón de bajar sigue encendido. Misma regla que con el
     // destino del mazo, los topes se comparan contra la intención y se acotan
     // contra la realidad que publica la pantalla.
+    //
+    // Y el cronómetro, que hasta ahora solo viajaba en los `POST`. El mando es
+    // el celular que se lleva en la mano; la isla del reloj vive en el
+    // portátil, que es justo la pantalla que no se está mirando mientras se
+    // habla de pie. Es un campo más en un viaje que ya se hacía una vez por
+    // segundo, y `ahora` no es adorno: sin él, un teléfono dos minutos
+    // adelantado arrancaría el reloj en 02:00.
     return json(200, {
       destino,
       actual,
       viva: esFresco(actual, Date.now()),
       scroll: desplazamientoPedido(pedido, destino),
+      inicio,
+      ahora: Date.now(),
     })
   } catch (e) {
     return error(e)
@@ -359,6 +395,7 @@ export const POST: APIRoute = async ({ request, url }) => {
         actual,
         viva: esFresco(actual, Date.now()),
         inicio: null,
+        ahora: Date.now(),
       })
     }
 
@@ -401,7 +438,17 @@ export const POST: APIRoute = async ({ request, url }) => {
     // "apaga el cursor" y es justo lo que toca.
     if (destino !== previo) void anunciar({ destino, scroll, espejo: null, puntero: null })
 
-    return json(200, { destino, actual, viva: esFresco(actual, Date.now()), scroll, inicio })
+    // `ahora` acompaña siempre a `inicio`: el mando corrige su desfase con él,
+    // y una respuesta con arranque pero sin reloj del servidor le haría contar
+    // con el suyo, que es exactamente el error que `inicio` evita.
+    return json(200, {
+      destino,
+      actual,
+      viva: esFresco(actual, Date.now()),
+      scroll,
+      inicio,
+      ahora: Date.now(),
+    })
   } catch (e) {
     return error(e)
   }

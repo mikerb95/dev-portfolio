@@ -94,6 +94,27 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         background: #d2544a;
       }
 
+      /* El cronómetro, a la derecha del estado del enlace.
+         Es la ventana que se tiene EN LA MANO: la isla de `/present-admin`
+         vive en el portátil, que es la pantalla que no se está mirando
+         mientras se habla de pie. */
+      #reloj {
+        margin-left: auto;
+        flex: none;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.04em;
+        color: #7c93a6;
+      }
+      /* El desvío contra el guion, con el mismo criterio que la barra del
+         panel (§11.6.5): solo se colorea pasada la tolerancia de un minuto,
+         porque por debajo de eso el aviso hace acelerar sin motivo. */
+      #reloj[data-ritmo='largo'] {
+        color: #d8a13a;
+      }
+      #reloj[data-ritmo='corto'] {
+        color: #4f8fb8;
+      }
+
       /* Posición real, que es lo que de verdad importa mirar, y al lado el
          nombre de la diapositiva: el número dice dónde estás, el título dice
          de qué estás hablando. */
@@ -336,6 +357,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       <header id="enlace" data-enlace="">
         <span id="pulso" aria-hidden="true"></span>
         <span id="estado">conectando</span>
+        <span id="reloj" aria-label="Tiempo de la sustentación">--:--</span>
       </header>
 
       <p class="lectura">
@@ -370,10 +392,12 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
     <script>
       import { mazoPublicado, notaDeGlobal } from '../../lib/presentacion/guion'
+      import { formatearDesvio, ritmo } from '../../lib/presentacion/panel'
       import {
         hayQueDesplazar,
         type Geometria,
       } from '../../lib/presentacion/desplazamiento'
+      import { desfase, formatear, transcurrido } from '../../lib/presentacion/cronometro'
 
       type Actual = {
         pos: number
@@ -386,7 +410,17 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       /** `scroll` es el desplazamiento PEDIDO, el equivalente de `destino`
        *  para la página que hay dentro de la diapositiva. La geometría real
        *  viene dentro de `actual`. */
-      type Estado = { destino: number; actual: Actual | null; viva?: boolean; scroll?: number }
+      type Estado = {
+        destino: number
+        actual: Actual | null
+        viva?: boolean
+        scroll?: number
+        /** Cuándo arrancó la charla, en el reloj DEL SERVIDOR. Ausente = sin
+         *  novedad; `null` = todavía no ha arrancado. */
+        inicio?: number | null
+        /** Qué hora era en el servidor al responder, para el desfase. */
+        ahora?: number
+      }
 
       const el = {
         enlace: document.getElementById('enlace') as HTMLElement,
@@ -407,6 +441,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         subir: document.getElementById('subir') as HTMLButtonElement,
         bajar: document.getElementById('bajar') as HTMLButtonElement,
         avance: document.getElementById('avance') as HTMLElement,
+        reloj: document.getElementById('reloj') as HTMLElement,
       }
 
       const SONDEO_MS = 1_000

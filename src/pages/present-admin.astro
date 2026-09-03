@@ -843,6 +843,45 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
        * siguiente movería un beat POR FUERA del servidor: la sala se quedaría
        * atrás y el mando enseñaría un número que no es.
        */
+      /**
+       * Comerse la tecla no basta: hay que ENRUTARLA.
+       *
+       * Tapar sin más deja un agujero que muerde en mitad de la charla. Un
+       * `keydown` nacido dentro de un iframe no propaga al documento padre, así
+       * que la flecha no llega al listener de esta página y tampoco mueve un
+       * beat por dentro: no hace absolutamente nada, y sin ningún rastro. Se
+       * llega ahí clicando en la demo viva, que es justo lo que §11.3 quiere
+       * que se pueda hacer.
+       *
+       * Así que el mismo listener que la intercepta la manda por `mandar()`,
+       * que es la regla del propio §11.4: un solo camino por el que se mueve la
+       * presentación, esté el foco donde esté.
+       */
+      function taparEnrutando(d: Document) {
+        d.addEventListener(
+          'keydown',
+          (e) => {
+            // Las sintéticas -las que dispara la reconciliación- sí pasan: son
+            // la única forma que tiene esta página de mover el mazo.
+            if (!e.isTrusted) return
+            // Una flecha dentro de un campo de texto es del campo: `/portal/login`
+            // es uno de los ATAJOS del panel y ahí se escribe de verdad.
+            if (enCampo(e.target)) return
+            e.stopPropagation()
+            e.preventDefault()
+            enrutarTecla(e)
+          },
+          true
+        )
+      }
+
+      /** ¿El evento nace de algo donde se está escribiendo? */
+      function enCampo(t: EventTarget | null): boolean {
+        const el = t as HTMLElement | null
+        if (!el || typeof el.closest !== 'function') return false
+        return Boolean(el.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]'))
+      }
+
       function taparTeclado() {
         try {
           const d = iframe.contentDocument as
@@ -850,19 +889,33 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
             | null
           if (!d || d.__tecladoTapado) return
           d.__tecladoTapado = true
-          d.addEventListener(
-            'keydown',
-            (e) => {
-              // Las sintéticas -las que dispara la reconciliación- sí pasan: son
-              // la única forma que tiene esta página de mover el mazo.
-              if (!e.isTrusted) return
-              e.stopPropagation()
-              e.preventDefault()
-            },
-            true
-          )
+          taparEnrutando(d)
         } catch {
           // Otro origen o iframe a medio cargar: se reintenta en el sondeo.
+        }
+      }
+
+      /**
+       * Y lo mismo un nivel más adentro, en el documento de la página viva.
+       * `taparTeclado` vive en el documento del bundle y el evento de un iframe
+       * ANIDADO tampoco sube hasta ahí: sin esto, después de clicar dentro de
+       * la demo del portal las flechas se quedan muertas.
+       *
+       * Se marca el documento para no apilar un listener por sondeo, igual que
+       * la rueda y el puntero, y la marca se va sola con él cuando el bundle
+       * desmonta el iframe al cambiar de beat.
+       */
+      function engancharTeclado(dentro: HTMLIFrameElement | null) {
+        if (!dentro) return
+        try {
+          const d = dentro.contentDocument as
+            | (Document & { __tecladoEnganchado?: boolean })
+            | null
+          if (!d || d.__tecladoEnganchado) return
+          d.__tecladoEnganchado = true
+          taparEnrutando(d)
+        } catch {
+          // Otro origen (que es lo que pasa en local): no hay teclado que enrutar.
         }
       }
 
@@ -896,7 +949,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         if (Number.isInteger(n) && n >= 1) void mandar({ destino: n })
       }
 
-      document.addEventListener('keydown', (e) => {
+      function enrutarTecla(e: KeyboardEvent) {
         if (e.metaKey || e.ctrlKey || e.altKey) return
         const k = e.key
 
@@ -946,6 +999,14 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
           e.preventDefault()
           void mandar({ destino: totalGlobal(mazo) })
         }
+      }
+
+      // El teclado de esta ventana. Los dos documentos de dentro entran por el
+      // mismo sitio (`taparEnrutando`), así que la tecla hace lo mismo con el
+      // foco en el marco, en el mazo o en la demo viva.
+      document.addEventListener('keydown', (e) => {
+        if (enCampo(e.target)) return
+        enrutarTecla(e)
       })
 
       /* ------------------------------------------------------------------ *
@@ -1235,6 +1296,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         afirmarInteraccion(dentro)
         engancharRueda(dentro)
         engancharPuntero(dentro)
+        engancharTeclado(dentro)
 
         const geo = geometriaDe(dentro)
         const actual = posicionDe(mazo, punto, geo)
@@ -1282,7 +1344,10 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
         }
 
         try {
-          const res = await fetch('/api/presentacion?q=destino', { cache: 'no-store' })
+          // `conducir` y no `destino`: esa rama trae además el espejo y el
+          // puntero, que los escribe esta misma ventana y no los aplica nunca.
+          // Eran dos lecturas del almacén por vuelta, 240 por minuto, tiradas.
+          const res = await fetch('/api/presentacion?q=conducir', { cache: 'no-store' })
           // Un 503 es el almacén caído, no un fallo de esta ventana: se dice en
           // el panel y la charla sigue con lo último conocido.
           hayRed = res.ok
