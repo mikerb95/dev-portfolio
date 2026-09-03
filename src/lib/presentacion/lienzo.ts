@@ -51,23 +51,47 @@ export const COBERTURA_MINIMA = 0.15
 export const RUIDO_PX = 2
 
 /**
- * "07 / 19" -> { pos: 7, total: 19 }.
+ * Los separadores que un mazo puede poner entre la posición y el total.
  *
- * Acepta el número suelto dentro de un texto más largo porque el respaldo de
- * la lectura es el `innerText` del documento entero, pero se apoya en
- * `esTextoDeContador` para elegir de QUIÉN leerlo.
+ * La lista es explícita y `.` NO está dentro a propósito: con el punto, el
+ * `8.1` del índice del dossier sería un contador perfectamente válido y el
+ * sistema entero se colgaría de un número de sección.
+ *
+ * Que haya lista y no un solo carácter es la lección de la iteración del 3 de
+ * septiembre de 2026: el mazo pasó de pintar `01 / 19` a pintar `/01 · 25`, un
+ * cambio puramente tipográfico, y con la barra cableada el descubrimiento
+ * devolvía `null` para siempre. El mando no se degradaba: no arrancaba.
+ */
+const SEPARADORES = '\\s/·|'
+
+/** Solo cifras, separadores y espacios, con DOS números dentro: ni una letra. */
+const SOLO_CONTADOR = new RegExp(
+  `^[${SEPARADORES}]*\\d{1,3}[${SEPARADORES}]+\\d{1,3}[${SEPARADORES}]*$`
+)
+
+/**
+ * "07 / 19" -> { pos: 7, total: 19 }. También "/07 · 19", y cualquier otra
+ * decoración que el mazo le ponga alrededor mientras sean dos números.
+ *
+ * Si el texto es un contador y nada más, se leen sus dos números en orden. Si
+ * no lo es -el respaldo de la lectura es el `innerText` del documento entero-
+ * se cae a la forma clásica con barra, que es lo bastante estrecha para no
+ * confundir una cifra cualquiera de una diapositiva con la posición.
  */
 export function parsearContador(texto: string | null | undefined): Beat | null {
-  const m = texto?.match(/(\d{1,3})\s*\/\s*(\d{1,3})/)
-  if (!m) return null
-  const pos = Number(m[1])
-  const total = Number(m[2])
+  const t = (texto ?? '').trim()
+  const nums = esTextoDeContador(t)
+    ? t.match(/\d{1,3}/g)
+    : t.match(/(\d{1,3})\s*\/\s*(\d{1,3})/)?.slice(1)
+  if (!nums || nums.length < 2) return null
+  const pos = Number(nums[0])
+  const total = Number(nums[1])
   return pos >= 1 && total >= pos ? { pos, total } : null
 }
 
 /** ¿El texto ENTERO de este elemento es un contador y nada más? */
 export function esTextoDeContador(texto: string | null | undefined): boolean {
-  return /^\d{1,3}\s*\/\s*\d{1,3}$/.test((texto ?? '').trim())
+  return SOLO_CONTADOR.test((texto ?? '').trim())
 }
 
 /**
@@ -112,6 +136,23 @@ export function clasificarCapas(capas: { z: number; visible: boolean }[]): {
     intro: idx.filter((i) => capas[i].visible).sort((a, b) => capas[b].z - capas[a].z),
     outro: idx.filter((i) => !capas[i].visible).sort((a, b) => capas[a].z - capas[b].z),
   }
+}
+
+/**
+ * ¿Esta caja es un VELO decorativo y no una diapositiva?
+ *
+ * Un grano de película o una viñeta también son divs apilados que cubren el
+ * escenario entero, así que pasan todas las demás pruebas de `esCapa`. Lo que
+ * los delata es que no reciben clics: una diapositiva del mazo se pulsa para
+ * pasarla, un adorno se deja atravesar.
+ *
+ * Sin esta puerta, el `grano` que trajo el mazo de septiembre entraba como
+ * capa de cierre (su opacidad de 0.035 lo hacía pasar por oculto) y añadía al
+ * final una posición de más cuyo único efecto era subir el grano a opacidad 1
+ * y tapar la pantalla de textura delante del jurado.
+ */
+export function esVeloDecorativo(s: { pointerEvents: string }): boolean {
+  return s.pointerEvents === 'none'
 }
 
 /** ¿Esta caja está fuera de la vista? Media opacidad ya cuenta como ida. */
@@ -241,6 +282,7 @@ export const estiloEn =
 function esCapa(e: HTMLElement, estilo: (x: Element) => CSSStyleDeclaration): boolean {
   const s = estilo(e)
   if (s.position !== 'absolute' && s.position !== 'fixed') return false
+  if (esVeloDecorativo(s)) return false
   const z = Number(s.zIndex)
   if (!Number.isFinite(z) || z < 1) return false
   const padre = (e.offsetParent as HTMLElement | null) ?? e.parentElement
