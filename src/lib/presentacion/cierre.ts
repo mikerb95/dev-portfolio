@@ -53,8 +53,10 @@ export type Orden = 'armar' | 'cancelar' | 'nada'
  * Una lectura de dónde está la pantalla.
  *
  * `moviendo` es cualquier cosa que signifique "esto no está quieto": el mazo
- * reconciliando, o un destino que ya no es donde está. Van juntos y no por
- * separado porque para esta decisión son lo mismo.
+ * reconciliando, un destino que ya no es donde está, o -y esto es lo que hay
+ * que recordar al cablearlo- **no saber todavía cuál es el destino**. Estar
+ * quieto se afirma; deducirlo de no ver movimiento hace que el primer sondeo,
+ * antes de haber preguntado nada, parezca reposo.
  */
 export type Lectura = { pos: number; total: number; moviendo: boolean }
 

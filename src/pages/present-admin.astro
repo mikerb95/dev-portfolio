@@ -776,16 +776,16 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let cierreTimer: ReturnType<typeof setTimeout> | null = null
 
       function vigilarCierre(pos: number, total: number) {
-        // `moviendo` junta las dos formas de no estar quieto: el mazo
-        // reconciliando, y un destino que ya no es donde está. Lo segundo es lo
-        // que hace que "atrás" cancele en el acto, sin esperar a que el mazo se
-        // mueva de verdad.
-        const enViaje = destinoServidor !== 0 && destinoServidor !== pos
-        const { fase, orden } = siguienteFase(faseCierre, {
-          pos,
-          total,
-          moviendo: aplicando || enViaje,
-        })
+        // ESTAR QUIETO SE AFIRMA, NO SE DEDUCE DE NO VER MOVIMIENTO, y esto lo
+        // cazó una auditoría: hace falta SABER que el destino del servidor es
+        // esta posición. En el primer sondeo todavía no se ha preguntado
+        // (`destinoServidor` en 0), y leer eso como reposo bastaba para
+        // ascender la fase en la diapositiva 1 y dejar que una ventana recién
+        // abierta -persiguiendo el destino de un ensayo- se fuera sola al
+        // cierre. Que el destino ya no sea esta posición es además lo que hace
+        // que "atrás" cancele en el acto, sin esperar a que el mazo se mueva.
+        const quieto = destinoServidor !== 0 && destinoServidor === pos && !aplicando
+        const { fase, orden } = siguienteFase(faseCierre, { pos, total, moviendo: !quieto })
         faseCierre = fase
         if (orden === 'nada') return
         if (orden === 'cancelar') {
