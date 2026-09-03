@@ -1178,71 +1178,6 @@ reiniciaría la transición del panel en cada vuelta.
 Las clases (`card-pop`, `is-open`, `flip-up`) son un contrato con
 `src/components/CardPopover.astro`, escrito en los dos sitios.
 
-### 11.14. El eco: que la sala vea lo que se ESCRIBE (3 sep 2026) ✅
-
-Tercer y último hueco del mismo montaje, y el más grande: el beat del
-**diagnóstico público de un sitio** (`/lab/site-check`). El espejo lleva la URL
-y el puntero lleva el ratón; ninguno de los dos cuenta lo que pasa ahí, porque
-ahí no pasa nada de eso. El ponente teclea un dominio, pulsa Analizar, y las
-doce tarjetas llegan por un `POST` en streaming sobre el mismo documento: la URL
-no cambia ni una letra. La sala se quedaba mirando un formulario vacío durante
-el minuto largo que dura el análisis, que es justo el minuto en el que se está
-hablando de él.
-
-#### 11.14.1. Las tres decisiones, y lo que se descartó en cada una
-
-- **No se espeja HTML.** El canal no tiene puerta (11.7): quien conozca la URL
-  puede escribir en él. Un `innerHTML` con lo que venga de ahí sería XSS en el
-  mismo origen y en todos los equipos de la sala a la vez. Lo que viaja son
-  **datos**, y quien los pinta es la página con su propio renderizador y su
-  propio escapado.
-- **No se repite el trabajo.** La alternativa fácil era mandar solo el dominio y
-  dejar que cada seguidor analizara por su cuenta: treinta navegadores lanzando
-  treinta sondeos reales contra el sitio y treinta llamadas a la cuota de
-  PageSpeed Insights. El análisis lo corre el ponente una vez; lo demás es
-  reparto.
-- **La página se descubre por su forma**, como todo lo demás en este sistema. Ni
-  `eco.ts` ni las dos ventanas saben qué es un diagnóstico: la página viva
-  publica `window.ESPEJO_VIVO` con `leer()` y `aplicar()`, y la que no lo publica
-  sencillamente no tiene eco. Otro beat interactivo mañana no toca nada del
-  transporte.
-
-#### 11.14.2. Lo que viaja, y lo que NO vuelve en cada sondeo
-
-Un `{ pos, seq, estado }` con las mismas dos reglas del espejo y el puntero: el
-`seq` solo sube (un mensaje atrasado no deshace lo tecleado) y el `pos` lo ata a
-su diapositiva (cambiar de beat devuelve el formulario de la sala a su arranque
-sin escribir nada).
-
-El `estado` es **opaco para el transporte**: validar su forma es cosa de quien lo
-va a pintar, que es la única que sabe cuál es. Lo que sí se valida aquí es que
-sea JSON y que quepa (`ECO_MAX`, 12 000 caracteres); la página degrada sola
-antes de llegar al techo -primero suelta los detalles, luego las tarjetas más
-viejas- porque un estado que no cabe se descarta entero y quedarse sin espejo
-justo en el análisis largo sería el peor momento posible.
-
-Y una diferencia con los otros dos, por tamaño: el eco es el único campo que
-pesa kilobytes, y `?q=destino` lo sondea dos veces por segundo **por
-asistente**. El seguidor manda en `?eco=` el `seq` que ya tiene y el servidor
-omite el campo si es el mismo. Ausente significa "sin novedad" y `null`
-significa "no hay nada escrito en esta diapositiva", igual que en el puntero: el
-análisis viaja una vez, no doscientas.
-
-#### 11.14.3. Archivos
-
-```
-src/lib/presentacion/eco.ts          transporte + contrato ESPEJO_VIVO (nuevo)
-tests/presentacion-eco.test.ts       31 casos (nuevo)
-src/pages/lab/site-check/index.astro implementa leer()/aplicar() con su saneado
-src/pages/api/presentacion.ts        clave `presentacion:eco`, sondeo condicional
-src/pages/present-admin.astro        lee el estado de la página viva y lo publica
-src/pages/presentacion.astro         lo aplica (seguidor)
-```
-
-Lo que **no** está verificado, por lo mismo que 11.12: en local la página viva es
-de otro origen y su `window` no se deja leer. El camino entero se cierra desde
-producción con dos equipos, y entra en la lista de 11.9.
-
 ### 11.13. El final de la charla (2 sep 2026) ✅
 
 Al llegar a la última diapositiva del mazo, `/present-admin` espera cinco
@@ -1299,6 +1234,71 @@ Y lo dice antes de hacerlo. El panel (11.11) enseña `cierre en 5s · atrás lo
 cancela` en el sitio donde ya vive la salud del enlace. Una ventana que navega
 sola sin avisar se lee como una caída, que es lo último que hace falta parecer
 al terminar.
+
+### 11.14. El eco: que la sala vea lo que se ESCRIBE (3 sep 2026) ✅
+
+Tercer y último hueco del mismo montaje, y el más grande: el beat del
+**diagnóstico público de un sitio** (`/lab/site-check`). El espejo lleva la URL
+y el puntero lleva el ratón; ninguno de los dos cuenta lo que pasa ahí, porque
+ahí no pasa nada de eso. El ponente teclea un dominio, pulsa Analizar, y las
+doce tarjetas llegan por un `POST` en streaming sobre el mismo documento: la URL
+no cambia ni una letra. La sala se quedaba mirando un formulario vacío durante
+el minuto largo que dura el análisis, que es justo el minuto en el que se está
+hablando de él.
+
+#### 11.14.1. Las tres decisiones, y lo que se descartó en cada una
+
+- **No se espeja HTML.** El canal no tiene puerta (11.7): quien conozca la URL
+  puede escribir en él. Un `innerHTML` con lo que venga de ahí sería XSS en el
+  mismo origen y en todos los equipos de la sala a la vez. Lo que viaja son
+  **datos**, y quien los pinta es la página con su propio renderizador y su
+  propio escapado.
+- **No se repite el trabajo.** La alternativa fácil era mandar solo el dominio y
+  dejar que cada seguidor analizara por su cuenta: treinta navegadores lanzando
+  treinta sondeos reales contra el sitio y treinta llamadas a la cuota de
+  PageSpeed Insights. El análisis lo corre el ponente una vez; lo demás es
+  reparto.
+- **La página se descubre por su forma**, como todo lo demás en este sistema. Ni
+  `eco.ts` ni las dos ventanas saben qué es un diagnóstico: la página viva
+  publica `window.ESPEJO_VIVO` con `leer()` y `aplicar()`, y la que no lo publica
+  sencillamente no tiene eco. Otro beat interactivo mañana no toca nada del
+  transporte.
+
+#### 11.14.2. Lo que viaja, y lo que NO vuelve en cada sondeo
+
+Un `{ pos, seq, estado }` con las mismas dos reglas del espejo y el puntero: el
+`seq` solo sube (un mensaje atrasado no deshace lo tecleado) y el `pos` lo ata a
+su diapositiva (cambiar de beat devuelve el formulario de la sala a su arranque
+sin escribir nada).
+
+El `estado` es **opaco para el transporte**: validar su forma es cosa de quien lo
+va a pintar, que es la única que sabe cuál es. Lo que sí se valida aquí es que
+sea JSON y que quepa (`ECO_MAX`, 12 000 caracteres); la página degrada sola
+antes de llegar al techo -primero suelta los detalles, luego las tarjetas más
+viejas- porque un estado que no cabe se descarta entero y quedarse sin espejo
+justo en el análisis largo sería el peor momento posible.
+
+Y una diferencia con los otros dos, por tamaño: el eco es el único campo que
+pesa kilobytes, y `?q=destino` lo sondea dos veces por segundo **por
+asistente**. El seguidor manda en `?eco=` el `seq` que ya tiene y el servidor
+omite el campo si es el mismo. Ausente significa "sin novedad" y `null`
+significa "no hay nada escrito en esta diapositiva", igual que en el puntero: el
+análisis viaja una vez, no doscientas.
+
+#### 11.14.3. Archivos
+
+```
+src/lib/presentacion/eco.ts          transporte + contrato ESPEJO_VIVO (nuevo)
+tests/presentacion-eco.test.ts       27 casos (nuevo)
+src/pages/lab/site-check/index.astro implementa leer()/aplicar() con su saneado
+src/pages/api/presentacion.ts        clave `presentacion:eco`, sondeo condicional
+src/pages/present-admin.astro        lee el estado de la página viva y lo publica
+src/pages/presentacion.astro         lo aplica (seguidor)
+```
+
+Lo que **no** está verificado, por lo mismo que 11.12: en local la página viva es
+de otro origen y su `window` no se deja leer. El camino entero se cierra desde
+producción con dos equipos, y entra en la lista de 11.9.
 
 ## 12. Entrega de la sección 11: inventario y orden
 
