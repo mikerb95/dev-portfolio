@@ -935,6 +935,119 @@ producción). El bloque de página viva se comprobó de forma, no de
 funcionamiento: la navegación por atajo y los `↑/↓` con geometría real solo se
 pueden cerrar desde producción.
 
+### 11.12. El puntero: que la sala vea qué señalas (2 sep 2026) ✅
+
+El espejo lleva la URL, así que la sala ve la misma página. Lo que no veía era
+el **ratón**: el ponente pasa por encima de una fila de la tabla de facturas,
+esa fila se ilumina en su portátil, y en los equipos de la sala no pasa nada. Se
+habla de "esta fila" y cada quien mira la suya, que delante de un jurado es peor
+que no señalar.
+
+Esto NO es el espejo del DOM que 11.10 deja fuera, y la diferencia es lo que lo
+hace barato: no viaja un árbol, viaja **una ruta**.
+
+#### 11.12.1. Lo que viaja
+
+Clave `presentacion:puntero`, escrita por `/present-admin` en el mismo `POST`
+con el que ya publica su posición. Mismo escritor, misma vía, sin clave nueva en
+el camino caliente:
+
+```
+{ pos, seq, objetivo: { ruta: [1,3,0,5], tag: 'tr', fx: 0.4, fy: 0.6 } | null }
+```
+
+- **`ruta`** son índices de hijo ELEMENTO desde `documentElement`. El seguidor la
+  resuelve en SU copia de la misma página. Es independiente de la resolución: un
+  proyector 4:3 y un portátil 16:9 no comparten el píxel (240, 512), pero sí
+  comparten la fila tercera.
+- **`tag`** es el sello. Si no cuadra con lo que hay en esa ruta, no se pinta
+  nada: el seguidor está en otra página o en otra versión del bundle.
+- **`fx`/`fy`** es dónde cae el puntero dentro de la caja del elemento, de 0 a 1,
+  que es lo que permite dibujar la flecha en el punto equivalente.
+- **`objetivo: null`** no es un mensaje vacío: es "el ratón salió de la página" y
+  es lo único que apaga el cursor. Sin él, la última fila que se rozó se quedaría
+  encendida el resto del beat.
+- **`pos` y `seq`**, con las dos reglas del espejo: atado a SU diapositiva
+  (cambiar de beat apaga el cursor sin escribir nada) y monótono (un mensaje que
+  llegue tarde se descarta en vez de devolver el cursor medio segundo atrás).
+
+#### 11.12.2. El `:hover` no se puede falsificar, pero sus reglas sí se duplican
+
+`:hover` lo decide el navegador por dónde está el ratón **de verdad**: un
+`mouseover` sintético no lo mueve. Y disparar eventos de ratón en la página del
+seguidor sería peor que inútil, porque abriría sus menús y sus tooltips en cada
+equipo de la sala.
+
+Lo que sí se puede es leer las hojas de estilo del documento y, por cada regla
+que use `:hover`, escribir su **gemela** con `[data-puntero]`. Marcar el elemento
+señalado y sus ancestros con ese atributo enciende exactamente el mismo estilo.
+Dos recortes del regex que valen una regla rota cada uno, y las dos roturas
+estaban en la página que se enseña:
+
+- `(?<!\\)`: el `:hover` **escapado** de un nombre de clase de Tailwind
+  (`.md\:hover\:bg-x`) no es una pseudoclase. Sustituirlo ahí no da una regla de
+  más, da una regla rota.
+- `(?![\w-])`: un `:hover-intent` de terceros no es `:hover`.
+
+Y el anidamiento nativo hay que resolverlo, no ignorarlo: Tailwind 4 no emite
+`.hover\:underline:hover{...}` sino `.hover\:underline{&:hover{...}}`. Sin
+resolver el `&` se perdía el hover de casi toda la interfaz del portal.
+
+La especificidad de `[data-puntero]` es la misma que la de `:hover` (0,1,0), así
+que la gemela no gana ni pierde contra el resto de la hoja por serlo: gana los
+empates solo porque se inyecta al final. Una clase habría dado igual; un `#id` o
+un `!important` habrían reordenado la cascada y el resultado habría dejado de ser
+el que ve el ponente.
+
+#### 11.12.3. Solo la página viva, y por qué eso no es una limitación
+
+Del mazo no se lee nada, porque no hay nada que leer: su `body` está inerte a
+propósito (11.3) y el ratón no llega a sus elementos. Lo que se refleja es
+exactamente lo único que se toca.
+
+#### 11.12.4. Lo que costó, y el coste que no tiene
+
+- **Ni una escritura nueva por temblor de mano.** La lectura del ratón se acota a
+  60 ms (para no gastar el hilo del ponente resolviendo rutas que nadie va a
+  mandar) y la publicación va montada en el reporte que ya se hacía dos veces por
+  segundo, con un umbral de movimiento dentro del mismo elemento: un pulso quieto
+  sobre un botón no publica nada.
+- **`puntero` ausente y `puntero: null` significan cosas distintas** en el bus:
+  ausente es "sin novedad", `null` es "apaga el cursor". Por eso el anuncio de la
+  rueda no lleva el campo: si mandara `null` por no tenerlo a mano, el cursor de
+  la sala parpadearía en cada giro.
+
+#### 11.12.5. El seguidor, que hasta aquí no obedecía ni el espejo
+
+Al implementar esto salió un hueco real: `espejo.ts` estaba escrito, probado y
+publicándose, pero **nadie lo aplicaba**. `/presentacion` leía `destino` y
+`scroll` del sondeo y descartaba el resto, así que la sala seguía viendo el
+arranque del beat mientras el ponente navegaba la demo.
+
+Sin eso, el puntero no tiene sentido: una ruta solo resuelve si las dos ventanas
+están en la misma página. Así que el seguidor cierra las dos cosas de una vez,
+con los tres frenos que ya pedía 11.5.2: nunca contra la navegación guionizada
+del propio bundle (se espera a que el beat se asiente y se compara contra el
+`href` que ya hay), nunca a mitad de una reconciliación, y `location.replace` en
+vez de `src`.
+
+#### 11.12.6. Archivos
+
+```
+src/lib/presentacion/puntero.ts      reglas puras + lectura de DOM (nuevo)
+tests/presentacion-puntero.test.ts   24 casos (nuevo)
+src/pages/api/presentacion.ts        clave `presentacion:puntero`, sondeo y anuncio
+src/pages/present-admin.astro        lectura del ratón en la página viva
+src/pages/presentacion.astro         aplica el espejo Y el puntero (seguidor)
+tests/presentacion-endpoint.test.ts  5 casos de la costura con el almacén
+```
+
+Lo que **no** está verificado: en local las URLs de las páginas vivas son
+absolutas a producción, o sea de otro origen, y ni el ratón ni las hojas de
+estilo se dejan leer a través de esa frontera. El camino entero (hover en el
+portátil, hover en la sala) solo se puede cerrar desde producción, con dos
+equipos, y entra en la lista de 11.9.
+
 ## 12. Entrega de la sección 11: inventario y orden
 
 La sección 11 es un diseño cerrado y a medio construir. Esta sección no lo

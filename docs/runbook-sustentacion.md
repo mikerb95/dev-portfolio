@@ -288,6 +288,11 @@ o cualquiera de la sala.
 - **Un clic en la lámina no hace nada**, y eso es la señal de que está bien
   montado: el bundle avanza un beat con cualquier clic en el escenario, y por
   eso solo la página viva recibe el ratón.
+- **El ratón dentro de la ventanilla se ve en la sala**: se dibuja una flecha
+  sobre el mismo elemento y se enciende el mismo hover en cada equipo que tenga
+  `/presentacion` abierta. Sirve para señalar ("esta fila"), y conviene saber
+  que solo funciona **dentro** de la página viva: sobre la lámina no hay nada
+  que reflejar. Sacar el ratón de la ventanilla apaga la flecha.
 - **El cronómetro arranca solo**, con el primer movimiento que saca la
   presentación de la primera diapositiva. No hay botón de empezar. Un toque en
   la isla y un segundo toque para confirmar lo reinician - hace falta de
@@ -386,8 +391,11 @@ Y a mano:
 - `src/lib/presentacion/panel.ts`: la lógica del panel del ponente (modos,
   índice del mazo, ritmo contra el guion, salud del enlace), probada sin DOM.
 - `src/pages/present-admin.astro`: la ventana que conduce, con el porqué de cada
-  una de sus cinco piezas propias (interacción por dentro, teclado tapado en
-  fase de captura, rueda, espejo de URL y la isla del cronómetro).
+  una de sus seis piezas propias (interacción por dentro, teclado tapado en
+  fase de captura, rueda, espejo de URL, puntero y la isla del cronómetro).
+- `src/lib/presentacion/puntero.ts`: qué viaja cuando el ponente señala algo con
+  el ratón (una ruta de índices, no píxeles ni DOM) y por qué el `:hover` de CSS
+  se espeja duplicando reglas en vez de inyectando eventos.
 - `docs/runbook-cuota-turso.md`: por qué se agota la cuota y el plan general
   de "aguantar hasta el corte del ciclo" (no exclusivo de la sustentación).
 - `src/lib/portal/respaldo.ts`: el módulo de respaldo del portal, con la
