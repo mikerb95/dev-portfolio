@@ -238,6 +238,16 @@ abrir la que no toca es la forma de romperlo:
 | `/remote` | celular del ponente | 1 | manda: pasa diapositivas y enseña el guion |
 | `/presentacion` | equipo de cada asistente | N | mira: obedece y no dice nada |
 
+**`/presentacion` ya no puede conducir aunque se abra por error.** Desde el 3 de
+septiembre de 2026 no publica nada: es un seguidor y punto. Antes de eso,
+cualquier copia abierta en la sala tenía derecho de voto sobre el destino, y un
+teléfono con la pestaña congelada rebobinaba la charla entera. Sigue existiendo
+la vieja ventana escritora, pero hay que pedirla a mano con `?publicar=1`, y
+**solo** para ensayar sin portátil: con `/present-admin` abierta a la vez son
+dos escritores de la misma clave otra vez. La contrapartida de todos los días:
+si `/present-admin` no está abierta, `/remote` se queda sin techo, sin rejilla y
+sin guion, porque nadie está publicando la forma del mazo.
+
 Ninguna tiene puerta: no hay login que caduque el día de la charla. El estado
 completo del sistema es un número, y lo peor que puede hacer quien encuentre la
 URL es pasar una diapositiva de algo que ya está proyectado en la pared.
@@ -269,9 +279,22 @@ URL es pasar una diapositiva de algo que ya está proyectado en la pared.
    rejilla de saltos y los botones ↑/↓ para recorrer las páginas vivas.
 3. **`/presentacion` en los equipos de la sala**, si se usa. Solo mira.
 
-**Nunca dos ventanas conduciendo a la vez.** `/present-admin` y la vieja
-`/presentacion` escritora serían dos escritores de la misma clave, y el síntoma
-es una presentación que va y viene sola.
+**Nunca dos ventanas conduciendo a la vez.** `/present-admin` y
+`/presentacion?publicar=1` serían dos escritores de la misma clave, y el síntoma
+es una presentación que va y viene sola. Sin ese parámetro no hay forma de
+llegar ahí, que es justo el motivo de que exista.
+
+**Volver al mazo después del cierre se teclea a mano.** Cuando la charla termina,
+`/present-admin` se va sola a `/presentacion-end`, que es una página pública del
+sitio y no enlaza de vuelta a la ventana que conduce. Para el turno de preguntas
+se escribe `/present-admin` en la barra de direcciones: el destino vive en el
+servidor, así que el mazo se reconstruye solo hasta donde iba la charla, y abrir
+la ventana no vuelve a disparar el cierre.
+
+**La sala se queda en la última lámina, y es lo correcto.** `/presentacion` no
+implementa el cierre: el mazo termina en "¿Preguntas?", que es exactamente lo que
+tiene que estar proyectado durante las preguntas. El que se va a la página de
+enlaces es el portátil del ponente, no la pared.
 
 ### La regla del login de la demo, que no es un detalle
 
@@ -288,10 +311,12 @@ o cualquiera de la sala.
 
 ### Tres cosas que sorprenden si no se saben antes
 
-- **Con el foco dentro de la demo, las flechas no pasan de diapositiva.** Es
-  deliberado: el teclado del mazo está tapado para que una flecha no mueva un
-  beat por fuera del servidor y deje a la sala atrás. Se sale clicando en la
-  lámina, fuera de la ventanilla, o se pasa desde el móvil.
+- **Las flechas funcionan con el foco donde sea**, incluido dentro de la demo
+  viva. El teclado del mazo sigue tapado (una flecha no puede mover un beat por
+  fuera del servidor y dejar a la sala atrás), pero la tecla no se pierde: se
+  enruta por el mismo `POST` que hace el pulgar. La excepción es un campo de
+  texto - dentro de un `input` la flecha es del campo, que es lo que hace falta
+  para escribir en el formulario de la demo.
 - **Un clic en la lámina no hace nada**, y eso es la señal de que está bien
   montado: el bundle avanza un beat con cualquier clic en el escenario, y por
   eso solo la página viva recibe el ratón.
