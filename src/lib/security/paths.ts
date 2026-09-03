@@ -114,10 +114,10 @@ export function isPortalAuthPath(pathname: string): boolean {
  */
 export function isFramablePath(pathname: string): boolean {
   if (pathname.startsWith('/api/')) return false
-  // Astro sirve la misma pagina con y sin barra final (`trailingSlash: 'ignore'`
-  // por defecto), pero la comparacion literal solo reconoceria una de las dos
-  // formas: `/lab/site-check/` habria salido con `frame-ancestors 'none'` y el
-  // iframe en blanco, sin ningun error visible mas que el marco vacio.
+  // Astro sirve la misma página con y sin barra final (`trailingSlash: 'ignore'`
+  // por defecto), pero la comparación literal solo reconocería una de las dos
+  // formas: `/lab/site-check/` habría salido con `frame-ancestors 'none'` y el
+  // iframe en blanco, sin más error visible que el marco vacío.
   const ruta = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname
   return (
     ruta === '/portal' ||
