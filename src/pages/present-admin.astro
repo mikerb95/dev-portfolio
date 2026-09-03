@@ -1027,7 +1027,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       let ultimaLecturaRaton = 0
 
       function engancharPuntero(dentro: HTMLIFrameElement | null) {
-        if (!dentro) return
+        if (!dentro) {
+          // Esta diapositiva no tiene página viva. Lo que se estuviera
+          // señalando era de la anterior: publicarlo con la `pos` nueva sería
+          // mandar a la sala una ruta de una página que ya no está en pantalla.
+          objetivoRaton = null
+          return
+        }
         try {
           const d = dentro.contentDocument as (Document & { __punteroEnganchado?: boolean }) | null
           if (!d || d.__punteroEnganchado) return

@@ -413,14 +413,23 @@ const ID_CURSOR = 'puntero-espejo-cursor'
  * mano y volvería a descuadrarse con cada tamaño de pantalla. Pintado dentro,
  * lo escala la misma matriz que escala la página, gratis y exacto.
  *
- * Va al final del `body` a propósito: appendear detrás de todo no mueve el
- * índice de ningún hermano anterior, así que las rutas que llegan del ponente
- * -que se calcularon sobre un documento sin cursor- siguen resolviendo igual.
+ * Cuelga de `documentElement`, FUERA del `body`, y esas dos decisiones se
+ * pagaron con dos fallos posibles cada una:
+ *
+ *  · dentro del `body` sería un hermano más, y una página que apendice algo
+ *    suyo después (un portal, un modal, un aviso) tendría a partir de ahí un
+ *    hijo de más que el documento del ponente: las rutas de ese tramo
+ *    resolverían en el elemento de al lado. Colgando del `html`, los hijos del
+ *    `body` son exactamente los mismos en las dos ventanas, y el hijo extra
+ *    está en un nivel al que ninguna ruta llega (la del ponente tiene dos);
+ *  · un `body` con `transform` (o `filter`, o `contain`) sería el bloque
+ *    contenedor de un `position:fixed` descendiente suyo, y la flecha se
+ *    colocaría respecto a esa caja en vez de respecto a la ventanilla.
  */
 export function pintarCursor(doc: Document, el: Element, o: Objetivo): void {
   try {
-    const cuerpo = doc.body
-    if (!cuerpo) return
+    const raiz = doc.documentElement
+    if (!raiz) return
     let cursor = doc.getElementById(ID_CURSOR)
     if (!cursor) {
       cursor = doc.createElement('div')
@@ -436,7 +445,7 @@ export function pintarCursor(doc: Document, el: Element, o: Objetivo): void {
         // El movimiento se interpola porque la posición llega a saltos de medio
         // segundo: sin esto, la sala ve una flecha que teletransporta.
         'transition:transform .18s linear;will-change:transform'
-      cuerpo.appendChild(cursor)
+      raiz.appendChild(cursor)
     }
     const r = el.getBoundingClientRect()
     const x = Math.round(r.left + o.fx * r.width)
@@ -474,7 +483,11 @@ export function aplicarPuntero(
   p: Puntero | null,
   marcados: Element[]
 ): Element[] {
-  if (!doc) return []
+  // Sin página viva (la diapositiva no trae iframe, o es de otro origen) se
+  // apaga lo que hubiera quedado encendido en la anterior. Devolver `[]` sin
+  // más habría perdido la lista, y esa fila se quedaría iluminada para siempre
+  // en cuanto la diapositiva volviera a estar en pantalla.
+  if (!doc) return marcarHover(null, marcados)
   // Antes de decidir nada: las gemelas del hover tienen que existir para cuando
   // se marque el elemento, y esta llamada es barata mientras no haya hojas
   // nuevas que leer.
@@ -485,6 +498,12 @@ export function aplicarPuntero(
     apagarCursor(doc)
     return marcarHover(null, marcados)
   }
+  // La flecha sí se recoloca siempre (el elemento puede haberse movido por un
+  // scroll), pero el atributo no se reescribe si ya está donde toca: esto corre
+  // dos veces por segundo en cada equipo de la sala, y quitar y volver a poner
+  // un atributo invalida el estilo de todo el subárbol aunque nada haya
+  // cambiado. `marcados[0]` es el elemento señalado porque `marcarHover` lo
+  // apila antes que a sus ancestros.
   pintarCursor(doc, el, o)
-  return marcarHover(el, marcados)
+  return marcados[0] === el ? marcados : marcarHover(el, marcados)
 }
