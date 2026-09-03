@@ -39,6 +39,14 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      # `final.html` es un bundle exportado que se reemplaza entero cada vez que
+      # se itera la presentación, y el guion del mando vive fuera de él a
+      # propósito. Esta comprobación es la que avisa de que el mazo cambió de
+      # forma y el guion todavía no: sin ella, el desfase solo se nota leyendo
+      # la nota de la diapositiva de al lado delante del jurado.
+      - name: Guion alineado con el mazo
+        run: npm run guion:check
+
       - name: Tests con cobertura
         run: npx vitest run --coverage --reporter=default --reporter=json --outputFile=vitest-report.json
 

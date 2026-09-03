@@ -34,8 +34,8 @@ barra final que Astro sirve igual. Abrir el mando no puede abrir el panel.
 
 ## 2. El mazo no son los beats
 
-El bundle solo sabe contar beats. Su contador dice `01 / 19` en la cita, `01 /
-19` otra vez en la portada y `19 / 19` en el cierre: cuatro diapositivas reales
+El bundle solo sabe contar beats. Su contador repite el mismo número en la
+cita y en la portada, y el último en el cierre: cuatro diapositivas reales
 colapsadas en dos números. Derivar la posición de ese contador -que es lo que se
 hacía- daba dos fallos que se vieron en vivo:
 
@@ -50,7 +50,7 @@ La posición es ahora un **índice global** sobre las tres zonas del mazo:
 | Zona | Qué es | Quién manda |
 |---|---|---|
 | capas de entrada | cita, portada | `/presentacion`, por estilo |
-| beats | los que pinten `NN / MM` | el bundle, por teclas |
+| beats | los que su contador cuente | el bundle, por teclas |
 | capas de cierre | «¿Preguntas?», y lo que se añada detrás | `/presentacion`, por estilo |
 
 El reparto de mando es lo que hace la navegación **reversible**. El bundle no
@@ -133,6 +133,39 @@ delante de un tribunal no es gran cosa, pero es un cambio respecto a "lo peor
 que puede hacer quien la encuentre es pasar una diapositiva": si alguna vez
 importa, el sitio para poner la puerta sigue siendo el que dice la sección 8.
 
+## 2.3. Lo que el mazo de septiembre enseñó
+
+El 3 de septiembre de 2026 se reemplazó `final.html` por una iteración con más
+contenido, que es exactamente el caso para el que se diseñó todo esto. El
+descubrimiento de la forma aguantó lo que prometía: el mazo pasó de 19 a 25
+beats y ni una línea de este código tuvo que cambiar de número.
+
+Falló en otro sitio, y las tres cosas que se rompieron comparten causa: se
+había aislado el CÓDIGO del mazo, pero no la LECTURA del mazo.
+
+- **El contador cambió de tipografía**, de `01 / 19` a `/01 · 25`. La barra
+  estaba cableada en `esTextoDeContador`, así que `descubrirMazo` devolvía
+  `null` para siempre y el mando no se degradaba: no arrancaba. Ahora se
+  aceptan varios separadores y el punto queda fuera a propósito (`8.1` del
+  dossier sería un contador válido). Ver `SEPARADORES` en `lienzo.ts`.
+- **Apareció un velo de grano de película**, un div a pantalla completa con
+  `z-index` y opacidad 0.035. Pasaba por capa oculta, entraba en el cierre y
+  añadía una posición de más cuyo único efecto era subir el grano a opacidad 1.
+  Lo delata `pointer-events: none`: una diapositiva se pulsa, un adorno se deja
+  atravesar (`esVeloDecorativo`).
+- **El guion quedó corrido cuatro puestos**, porque cuatro de los seis beats
+  nuevos entraron por DELANTE. Las zonas protegen de que una capa nueva
+  desplace los beats, pero no de un beat insertado dentro de la zona de beats.
+
+Ese tercero es el que cambió el diseño. El guion ya no se mantiene a mano
+contra un mazo que se reemplaza entero: `npm run guion:sync` lo alinea leyendo
+`public/final.html` (que solo se LEE, nunca se escribe), empareja por título
+-lo único estable entre iteraciones- y por tanto conserva el discurso escrito
+aunque el beat cambie de número. Los beats nuevos entran con las notas que el
+propio mazo trae dentro, marcados con `delMazo: true` para saber que hay que
+reescribirlas. `npm run guion:check` corre en CI y falla si el guion y el mazo
+se separan.
+
 ## 3. Quién escribe qué, y por qué son dos claves
 
 El almacén no tiene CAS. Con una sola clave compartida, el toque del pulgar y
@@ -214,8 +247,9 @@ subir el umbral del puntero, que cambia escrituras por precisión de la flecha.
 
 ## 7. Verificado en vivo (dev, 1 sep)
 
-Contra el `final.html` real, ya con el mazo completo (22 posiciones: cita,
-portada, 19 beats, cierre):
+Contra el `final.html` real, con el mazo de agosto de 2026 (22 posiciones:
+cita, portada, 19 beats, cierre). El mazo de septiembre trae 28 (25 beats) y
+el sistema lo descubrió solo, sin tocar una cifra de este código:
 
 - descubrimiento correcto de las tres capas y del total, sin nada cableado;
 - `1 → 22` y `22 → 1` de punta a punta, con el cierre alcanzable y la cita

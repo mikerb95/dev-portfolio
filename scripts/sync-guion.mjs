@@ -57,6 +57,14 @@ const clave = (s) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
 
+/**
+ * El texto que se hereda del mazo, pasado por la regla de escritura del repo:
+ * ni em dashes ni en dashes. El mazo es contenido de diseño y los usa; el
+ * guion es código de este repo y no puede. Solo se toca lo HEREDADO: lo que
+ * ya estaba escrito a mano se copia tal cual, sin normalizar nada.
+ */
+const sinRayas = (t) => String(t).replace(/\s*[—–]\s*/g, ' - ')
+
 function alinear(mazo, previos) {
   const porTitulo = new Map(previos.map((n) => [clave(n.titulo), n]))
   const usados = new Set()
@@ -64,11 +72,21 @@ function alinear(mazo, previos) {
   const beats = mazo.map((b) => {
     const previo = porTitulo.get(clave(b.titulo))
     if (!previo) {
-      return { titulo: b.titulo, dur: b.dur, enPantalla: b.enPantalla, notas: b.notas, delMazo: true }
+      return {
+        titulo: sinRayas(b.titulo),
+        dur: b.dur,
+        enPantalla: b.enPantalla && sinRayas(b.enPantalla),
+        notas: b.notas.map(sinRayas),
+        delMazo: true,
+      }
     }
     usados.add(clave(b.titulo))
-    // La duración SÍ se refresca desde el mazo: es un dato suyo, no discurso.
-    return { ...previo, titulo: b.titulo, dur: b.dur || previo.dur }
+    // El TÍTULO se conserva del guion, no se refresca desde el mazo: puede
+    // haberse corregido a mano (el mazo escribe `Marco normativo — ISO...`
+    // con em dash, que aquí no se puede usar) y el emparejamiento ignora la
+    // puntuación, así que la corrección sobrevive a la próxima iteración.
+    // La duración SÍ se refresca: es un dato del mazo, no discurso.
+    return { ...previo, dur: b.dur || previo.dur }
   })
 
   return {

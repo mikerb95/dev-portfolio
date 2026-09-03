@@ -3,6 +3,8 @@ import { GUION_BEATS, GUION_INTRO, GUION_OUTRO } from '../src/data/guion-final'
 import { mazoPublicado, notaDeGlobal, notaDePunto } from '../src/lib/presentacion/guion'
 import { parsearActual, parsearForma } from '../src/lib/presentacion/estado'
 import type { Mazo } from '../src/lib/presentacion/mapa'
+// @ts-expect-error -- script .mjs sin tipos: lee la forma del bundle real.
+import { leerMazo } from '../scripts/leer-mazo.mjs'
 
 const MAZO: Mazo = { intro: 2, beats: 19, outro: 1 }
 
@@ -60,15 +62,23 @@ describe('nota de cada posición', () => {
   })
 
   it('una zona más larga que su guion devuelve null, no la nota de al lado', () => {
-    const crecido: Mazo = { intro: 2, beats: 25, outro: 1 }
-    expect(notaDeGlobal(crecido, 3 + 19)).toBeNull()
+    // El mazo real y el guion van sincronizados (`npm run guion:sync`), así
+    // que el hueco hay que fabricarlo: un mazo con más beats de los que hay
+    // escritos es exactamente lo que pasa entre que se reemplaza el bundle y
+    // se corre la sincronización.
+    const crecido: Mazo = { intro: 2, beats: GUION_BEATS.length + 6, outro: 1 }
+    expect(notaDeGlobal(crecido, 2 + GUION_BEATS.length + 1)).toBeNull()
     expect(notaDePunto({ zona: 'outro', idx: 3 })).toBeNull()
   })
 })
 
 describe('guion del mazo actual', () => {
-  it('cubre los 19 beats con título y notas', () => {
-    expect(GUION_BEATS).toHaveLength(19)
+  // La cifra NO se escribe aquí: sale del propio `public/final.html`. Es la
+  // prueba que faltaba el 3 de septiembre de 2026, cuando el mazo pasó de 19 a
+  // 25 beats con cuatro insertados por delante y el guion, que se leía por
+  // posición, quedó corrido cuatro puestos sin que nada fallara.
+  it('cubre todos los beats del mazo, con título y notas', () => {
+    expect(GUION_BEATS).toHaveLength(leerMazo().length)
     for (const [i, n] of GUION_BEATS.entries()) {
       expect(n.titulo, `beat ${i + 1} sin título`).not.toBe('')
       expect(n.notas.length, `beat ${i + 1} sin notas`).toBeGreaterThan(0)

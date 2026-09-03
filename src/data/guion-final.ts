@@ -22,6 +22,16 @@ export type NotaGuion = {
   enPantalla?: string
   /** El discurso: un párrafo por idea, en el orden en que se dicen. */
   notas: string[]
+  /**
+   * Estas notas salieron DEL MAZO, no se escribieron como discurso.
+   *
+   * `npm run guion:sync` lo pone en los beats que aparecieron en una
+   * iteración nueva de `final.html`: sirven para no quedarse mudo, pero son
+   * contenido de la diapositiva, no indicaciones de cómo darla. Se quita a
+   * mano al reescribirlas, y el mando lo enseña para que se note en el
+   * ensayo y no delante del jurado.
+   */
+  delMazo?: boolean
 }
 
 /**
@@ -41,8 +51,58 @@ export const GUION_INTRO: NotaGuion[] = [
   },
 ]
 
-/** Los beats, en orden. `GUION_BEATS[0]` es el beat 1. */
+/**
+ * Los beats, en orden. `GUION_BEATS[0]` es el beat 1.
+ *
+ * GENERADO por `npm run guion:sync` desde `public/final.html`: el orden y el
+ * número de entradas salen del mazo, el discurso se conserva de una corrida a
+ * otra emparejando por título. Se edita a mano sin miedo: la próxima corrida
+ * respeta lo que haya escrito y solo añade lo que el mazo traiga de nuevo.
+ */
 export const GUION_BEATS: NotaGuion[] = [
+  {
+    titulo: 'Planteamiento del problema',
+    dur: 75,
+    enPantalla: '¿Y si la herramienta que opera el negocio fuera la prueba de que sé construirlo?',
+    notas: [
+      'La pregunta que orienta el proyecto: cómo construir un solo sistema en el que la herramienta que opera el negocio sea, a la vez, la prueba pública y comprobable de la capacidad técnica de quien lo construyó.',
+      'Ocho síntomas observados, no supuestos: cada uno tiene documentado cómo se constató y qué cuesta.',
+      'S2 es el de peor relación entre probabilidad y daño: por eso el aislamiento entre clientes se verifica con pruebas y no con inspección visual.',
+    ],
+    delMazo: true,
+  },
+  {
+    titulo: 'Justificación',
+    dur: 75,
+    enPantalla: 'La operación diaria ES el argumento comercial',
+    notas: [
+      'Comercial: quien evalúa contratar no tiene que creer una afirmación, abre la página y mira el dato.',
+      'Técnica: construir todo dentro del mismo sistema obliga a compartir piezas (cobros reutiliza la máquina de estados de pagos, la vitrina de seguridad reutiliza los eventos del middleware). Esa presión es la que separa un ejercicio de un sistema mantenible.',
+      'Económica: monitoreo, SLOs, alertas y observabilidad de seguridad son desarrollo propio sobre capas gratuitas.',
+      'Riesgo: desde que un cliente entra al portal, el sistema custodia información que no es propia. El aislamiento y el cifrado no son mejoras del producto, son la condición para poder ofrecerlo.',
+    ],
+    delMazo: true,
+  },
+  {
+    titulo: 'Objetivo general',
+    dur: 75,
+    notas: [
+      'Las tres condiciones están para que el objetivo se pueda declarar incumplido. Un objetivo que no se puede fallar no dice nada.',
+      'Operativo de verdad: no es una maqueta con datos de ejemplo, es el sistema con el que cobro y con el que atiendo clientes.',
+    ],
+    delMazo: true,
+  },
+  {
+    titulo: 'Objetivos específicos',
+    dur: 75,
+    enPantalla: 'Siete objetivos, cada uno con su indicador y su meta',
+    notas: [
+      'Cada objetivo tiene indicador, meta y estado en /docs/planteamiento, y una tabla de trazabilidad que lo enlaza con los requisitos que lo realizan y con cómo se verifica.',
+      'OBJ-06 está en parcial y se dice: el rollback automático funciona, pero el laboratorio de carga tiene fases pendientes. Declararlo parcial es más creíble que pintarlo verde.',
+      'Los siete objetivos específicos son las secciones que recorre el resto de esta presentación, en el mismo orden en que aparecen.',
+    ],
+    delMazo: true,
+  },
   {
     titulo: 'Hook',
     dur: 60,
@@ -70,6 +130,20 @@ export const GUION_BEATS: NotaGuion[] = [
       'Los 3 sistemas de auth separados (admin/portal/demo) son decisión deliberada - RNF-03 en la documentación.',
       'src/lib/bpmn-layout.ts y los motores UML generan estos diagramas en el servidor, sin Mermaid (no tiene notación BPMN ni de despliegue).',
     ],
+  },
+  {
+    titulo: 'El viaje de una petición',
+    dur: 105,
+    enPantalla: 'Bogotá a Virginia, ida y vuelta',
+    notas: [
+      'El recorrido no es una metáfora: el pulso sigue la ruta física real - Bogotá, Cartagena, Miami, Virginia Beach y Ashburn, donde corre la función. El header x-vercel-id lo confirma: iad1.',
+      'iad1 y la base Turso están en la misma región (aws-us-east-1): la consulta de sesión cuesta milisegundos, el viaje caro es el del océano.',
+      'Cada punto que se enciende es un nodo real del grafo: vercel-edge, middleware, lib-security, auth-admin y db-turso-main. Se iluminan de uno en uno porque así se ejecutan, en cadena.',
+      'El salto a GitHub es de servidor a servidor: la función pide el token y después el perfil. El navegador nunca ve esas dos llamadas.',
+      'El login no escribe en la base: la identidad es el login de GitHub contra una allowlist. La fila en admin_sessions se crea en el primer request al panel.',
+      'Si preguntan por CSRF: aquí no hay parámetro state. La protección es PKCE (code_verifier) más el csrfToken de Auth.js.',
+    ],
+    delMazo: true,
   },
   {
     titulo: 'Cadena de defensa',
@@ -224,6 +298,17 @@ export const GUION_BEATS: NotaGuion[] = [
     ],
   },
   {
+    titulo: 'Diagnóstico público de un sitio',
+    dur: 90,
+    enPantalla: 'La misma herramienta que uso para auditar, abierta a cualquiera',
+    notas: [
+      'Es una herramienta pública: cualquiera pega una URL y recibe el mismo informe. No es una captura preparada para hoy.',
+      'Sale del mismo módulo de diagnóstico que uso yo, no de un servicio de pago.',
+      'Se puede desplazar desde el mando: la página entera es recorrible sin ir al portátil.',
+    ],
+    delMazo: true,
+  },
+  {
     titulo: 'Tecnologías',
     dur: 60,
     enPantalla: 'Simple porque tenía que ser trazable\\',
@@ -244,7 +329,7 @@ export const GUION_BEATS: NotaGuion[] = [
   },
 ]
 
-/** Capas de cierre, en el orden en que salen. */
+/** Capas de cierre, de la primera que sale a la última. */
 export const GUION_OUTRO: NotaGuion[] = [
   {
     titulo: 'Cierre · ¿Preguntas?',
