@@ -437,7 +437,11 @@ Y a mano:
   fase de captura, rueda, espejo de URL, puntero y la isla del cronómetro).
 - `src/lib/presentacion/puntero.ts`: qué viaja cuando el ponente señala algo con
   el ratón (una ruta de índices, no píxeles ni DOM) y por qué el `:hover` de CSS
-  se espeja duplicando reglas en vez de inyectando eventos.
+  se espeja duplicando reglas en vez de inyectando eventos (y qué se hace con
+  lo que no es hover de CSS, como el panel de detalle de `/engineering`).
+- `src/lib/presentacion/eco.ts`: qué viaja cuando el ponente ESCRIBE en la
+  página viva, por qué son datos y no HTML, y el contrato `ESPEJO_VIVO` con el
+  que una página se apunta al espejo.
 - `docs/runbook-cuota-turso.md`: por qué se agota la cuota y el plan general
   de "aguantar hasta el corte del ciclo" (no exclusivo de la sustentación).
 - `src/lib/portal/respaldo.ts`: el módulo de respaldo del portal, con la
