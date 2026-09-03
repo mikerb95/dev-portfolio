@@ -714,12 +714,31 @@ poder clicar. Si la isla comiera los clics de la franja superior, se llevaría
 por delante justo la barra de navegación del portal durante la demo.
 
 Por tanto: **`pointer-events: none` en el contenedor de la isla**, y `auto` solo
-en el pastillero del cronómetro, que es lo único que se pulsa. Es la misma regla
-que gobierna 11.3, aplicada a nuestra propia UI.
+en el cronómetro, que es lo único que se pulsa. Es la misma regla que gobierna
+11.3, aplicada a nuestra propia UI. Es también lo que obliga a que el reloj se
+mantenga **estrecho** por mucho que crezca de alto: cada píxel suyo es un píxel
+que la demo pierde.
 
 Lo demás: cifras tabulares (`font-variant-numeric: tabular-nums`) para que no
-bailen de ancho al pasar de `9` a `10`, `mm:ss` hasta la hora y `h:mm:ss`
-después, y peso visual bajo. Es un dato de apoyo, no el protagonista.
+bailen de ancho al pasar de `9` a `10`, y `mm:ss` hasta la hora, `h:mm:ss`
+después.
+
+**Forma (corregida el 2 sep 2026).** Nació como un pastillero flotante de 13 px
+al 35% de opacidad, con el argumento de que era un dato de apoyo y no el
+protagonista. Ensayando de pie no se leía: a la distancia a la que está el
+portátil cuando se habla, un dato que hay que acercarse a mirar es un dato que
+no se mira. Pasa a ser un **notch** colgado del borde superior, sin esquinas de
+arriba, con las cifras en rojo de cronómetro (2,3 rem) y un halo que lo despega
+de las láminas claras. El estado de confirmación baja a 16 px porque la pregunta
+no cabe en el cuerpo del reloj, y en rojo grande parecería una alarma en vez de
+una pregunta. El mismo rojo lo lleva el reloj de la barra del panel (11.11), que
+es el mismo dato en el otro estado.
+
+Sin fuente de siete segmentos: habría que alojarla (la CSP sirve
+`font-src 'self'`, ver `src/styles/sustentacion-fuentes.css`) y son kilobytes
+nuevos en el camino de una presentación por un guiño tipográfico. La
+monoespaciada del sistema en rojo, con cifras tabulares, ya lee como un
+cronómetro.
 
 #### 11.6.5. Ritmo contra el guion ✅ (entregado en 11.11)
 
