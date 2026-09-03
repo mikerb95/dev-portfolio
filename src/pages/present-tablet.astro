@@ -1,0 +1,383 @@
+---
+// Pantalla de apoyo para el presentador: la tablet que viaja al lado del
+// portátil que proyecta la sustentación. No es un espejo del escenario -
+// muestra una palabra clave gigante y un puñado de recordatorios por beat,
+// pensados para leerse de reojo mientras se habla, no para el jurado.
+//
+// Es la MISMA vía de sincronía que `/sustentacion/seguir/<pin>` (bus con
+// PIN de asistente, solo lectura): esta tablet no manda comandos, solo seguía
+// obedece el beat que ya está en Redis. Un PIN de asistente en esta pantalla
+// no compromete nada porque no autoriza a mover la presentación.
+//
+// Ruta fija sin segmento dinámico (a diferencia de `seguir/[pin]`) porque así
+// lo pidió el uso real: se abre una vez con `?pin=`, el PIN queda en
+// localStorage de la tablet, y desde ahí basta con abrir `/present-tablet` a
+// secas cada vez, sin volver a teclear nada delante del jurado.
+import { getSesionPorPin, toBeatSnapshot } from '../lib/sustentacion/bus'
+import { busCredentials } from '../lib/present/store'
+import '../styles/sustentacion-fuentes.css'
+
+const pinBruto = Astro.url.searchParams.get('pin') ?? ''
+
+let sesion: Awaited<ReturnType<typeof getSesionPorPin>> = null
+if (pinBruto) {
+  try {
+    sesion = await getSesionPorPin(pinBruto)
+  } catch {
+    sesion = null
+  }
+}
+
+// Estado vivo: nunca cacheable, y noindex porque el PIN viaja en la URL.
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+
+const inicial = sesion ? toBeatSnapshot(sesion) : null
+const credenciales = busCredentials()
+// `busCredentials()` expone `readonlyToken`; el cliente de sincronía
+// (`seguirSustentacion`) espera el campo `token`. Sin este mapeo el EventSource
+// se abre con un token vacío y la tablet cae a polling de 1 s en vez de la vía
+// rápida por bus.
+const bus = credenciales ? { url: credenciales.url, token: credenciales.readonlyToken } : null
+
+const huboIntento = pinBruto.length > 0
+const pinInvalido = huboIntento && !sesion
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0a0a0d" />
+    <title>Apoyo · Sustentación</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: #0a0a0d;
+        overscroll-behavior: none;
+        overflow: hidden;
+        height: 100%;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      /* ── Puerta de PIN ── */
+      #gate {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        padding: 24px;
+        text-align: center;
+        color: #e7e7ec;
+        font-family: 'Noto Sans', system-ui, sans-serif;
+      }
+      #gate h1 {
+        margin: 0;
+        font-family: 'Raleway', ui-monospace, monospace;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: #6b6b78;
+      }
+      #gate form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: min(420px, 100%);
+      }
+      #gate input {
+        height: 64px;
+        padding: 0 18px;
+        background: #14141a;
+        border: 1px solid #26262f;
+        color: #e7e7ec;
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 24px;
+        letter-spacing: 0.1em;
+        text-align: center;
+        text-transform: uppercase;
+        border-radius: 0;
+        -webkit-appearance: none;
+      }
+      #gate input:focus { outline: 2px solid #c9ff5b; outline-offset: -2px; }
+      #gate button {
+        height: 64px;
+        border: 2px solid #c9ff5b;
+        background: transparent;
+        color: #c9ff5b;
+        font-family: 'Raleway', ui-monospace, monospace;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+      }
+      #gate .error {
+        min-height: 22px;
+        font-size: 15px;
+        color: #fca5a5;
+      }
+      #gate .error:empty { visibility: hidden; }
+
+      /* ── Escenario de apoyo ── */
+      #stage {
+        position: fixed;
+        inset: 0;
+        background: #0a0a0d;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #contenido {
+        width: 1400px;
+        transform-origin: center center;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        padding: 60px 70px;
+        font-family: 'Noto Sans', system-ui, sans-serif;
+        color: #e7e7ec;
+      }
+      #primaria-envoltorio {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      #primaria {
+        font-family: 'Noto Sans', sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1.05;
+        color: #c9ff5b;
+        font-size: 120px;
+        text-wrap: balance;
+      }
+      .divisoria { height: 2px; background: #1c1c24; flex: 0 0 auto; }
+      #secundarias {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0;
+      }
+      #secundarias > div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px 30px;
+        border-top: 1px solid #171720;
+      }
+      #secundarias span {
+        font-family: 'Noto Sans', sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.005em;
+        line-height: 1.15;
+        color: #e7e7ec;
+        font-size: 52px;
+        text-wrap: balance;
+      }
+      #pie {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        font-family: 'Raleway', ui-monospace, Menlo, monospace;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        color: #3a3a46;
+      }
+      #punto {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #3a3a46;
+        flex: none;
+      }
+      #stage[data-estado='en-vivo'] #punto { background: #4ade80; }
+      #stage[data-estado='conectando'] #punto,
+      #stage[data-estado='reintentando'] #punto { background: #f59e0b; }
+      #stage[data-estado='terminada'] #punto { background: #6b7280; }
+    </style>
+  </head>
+
+  <body>
+    <main id="gate" hidden={Boolean(inicial)}>
+      <h1>APOYO · SUSTENTACIÓN</h1>
+      <form id="form" method="get" action="/present-tablet">
+        <input
+          id="pin"
+          name="pin"
+          type="text"
+          inputmode="text"
+          autocomplete="off"
+          autocapitalize="characters"
+          autocorrect="off"
+          spellcheck="false"
+          placeholder="PIN"
+          value={pinBruto}
+          aria-label="PIN de asistente de la sustentación"
+        />
+        <button type="submit">ENTRAR</button>
+      </form>
+      <div class="error" id="error">{pinInvalido ? 'PIN no encontrado' : ''}</div>
+    </main>
+
+    <main id="stage" data-estado="conectando" hidden={!inicial}>
+      <div id="contenido">
+        <div id="primaria-envoltorio">
+          <div id="primaria"></div>
+        </div>
+        <div class="divisoria"></div>
+        <div id="secundarias"></div>
+        <div id="pie">
+          <span id="punto" aria-hidden="true"></span>
+          <span id="beat-label"></span>
+        </div>
+      </div>
+    </main>
+
+    {inicial && (
+      <script
+        type="application/json"
+        id="cfg"
+        set:html={JSON.stringify({ sessionId: inicial.sessionId, beatInicial: inicial.beat, pin: pinBruto, bus })}
+      />
+    )}
+
+    <script>
+      // Recordar el PIN en ESTE navegador de tablet: la próxima vez que se abra
+      // `/present-tablet` a secas, se salta la puerta y se va directo al PIN
+      // guardado. Solo si hay uno guardado: sin él, la puerta se muestra igual.
+      const clave = 'sustentacion.tablet.pin'
+      const params = new URLSearchParams(location.search)
+      const pinUrl = params.get('pin')
+
+      if (pinUrl) {
+        try { localStorage.setItem(clave, pinUrl) } catch { /* almacenamiento no disponible: no es crítico */ }
+      } else {
+        let guardado: string | null = null
+        try { guardado = localStorage.getItem(clave) } catch { /* sin almacenamiento, se queda en la puerta */ }
+        if (guardado) {
+          location.replace(`/present-tablet?pin=${encodeURIComponent(guardado)}`)
+        }
+      }
+    </script>
+
+    <script define:vars={{ tienePin: Boolean(inicial) }}>
+      // Si el PIN de esta URL resultó inválido, no tiene sentido dejar el uno
+      // guardado apuntando a una sesión que ya no existe.
+      if (!tienePin) {
+        try { localStorage.removeItem('sustentacion.tablet.pin') } catch { /* no-op */ }
+      }
+    </script>
+
+    <script>
+      import { seguirSustentacion } from '../lib/sustentacion/seguir'
+
+      const cfgEl = document.getElementById('cfg')
+      if (cfgEl) {
+        const cfg = JSON.parse(cfgEl.textContent || '{}') as {
+          sessionId: string
+          beatInicial: number
+          bus: { url: string; token: string } | null
+        }
+
+        // El contenido de apoyo, agrupado por beat. Igual que el guion del
+        // escenario, es texto fijo de esta pantalla: no viaja por el bus, solo
+        // el índice de beat que decide cuál de estos grupos se muestra.
+        const BEATS_PALABRAS: string[][] = [
+          ["CONFIABILIDAD DEL SISTEMA","¿QUÉ GARANTIZA QUE NO SE CAIGA?","EVIDENCIA, NO CREENCIA","ALTA CONCURRENCIA","RIESGO DE CAÍDA","DEMOSTRAR, NO SUPONER","PUNTO DE PARTIDA","LA PREGUNTA CENTRAL"],
+          ["MIDDLEWARE","AUTENTICACIÓN Y AUTORIZACIÓN","PUNTO ÚNICO DE FALLA","CADA PETICIÓN PASA AQUÍ","¿A QUÉ PORTAL PERTENECES?","SI CEDE, CAE TODO","CUELLO DE BOTELLA","RIESGO CENTRAL DEL SISTEMA"],
+          ["32 NODOS · 42 ARISTAS","125 ENDPOINTS","143 PÁGINAS","61 TABLAS","NO SON MICROSERVICIOS","MONOLITO MODULAR","ASTRO SSR SOBRE VERCEL","BORDE → MIDDLEWARE → PORTALES → DATOS"],
+          ["LOGIN CON GITHUB","BOGOTÁ → ASHBURN","CABLE SUBMARINO","~140 MS IDA Y VUELTA","MISMA REGIÓN QUE LA BASE","OAUTH SERVIDOR A SERVIDOR","SESIÓN Y COOKIE","PKCE + CSRF"],
+          ["1258 PRUEBAS EN TOTAL","UNITARIAS","INTEGRACIÓN","CARGA","ESTRÉS","CUATRO NIVELES, CUATRO PREGUNTAS","¿LA LÓGICA ES CORRECTA?","¿CUÁNTO AGUANTA EL SISTEMA?"],
+          ["ISO/IEC/IEEE 29119","ESTÁNDAR INTERNACIONAL DE PRUEBAS","PROCESO DE PRUEBAS","DOCUMENTACIÓN DE PRUEBAS","TÉCNICAS DE DISEÑO DE CASOS","VERIFICACIÓN","VALIDACIÓN","PARTICIÓN DE EQUIVALENCIA"],
+          ["1125 PRUEBAS UNITARIAS","COBERTURA 69,79%","LÓGICA DE NEGOCIO","src/lib E i18n","AISLADA DE LA BASE DE DATOS","RÁPIDAS: 10,9 SEGUNDOS","MÓDULOS MÁS DÉBILES","HONESTIDAD EN LA MÉTRICA"],
+          ["133 PRUEBAS DE INTEGRACIÓN","BASE DE DATOS REAL","AISLAMIENTO ENTRE CLIENTES","UN CLIENTE NO VE AL OTRO","15 DE 42 CONEXIONES PROBADAS","TRANSACCIONES REALES","MÁS LENTAS, MÁS FIABLES","VERIFICA EL SQL REAL"],
+          ["TRÁFICO NORMAL","25 USUARIOS VIRTUALES","62 PETICIONES POR SEGUNDO","101 MS DE RESPUESTA","0% DE ERROR","RUTA PÚBLICA COMPLETA","SISTEMA SALUDABLE","LÍNEA BASE DE RENDIMIENTO"],
+          ["ROMPER EL SISTEMA A PROPÓSITO","ESCALERA DE CARGA CRECIENTE","PUNTO DE QUIEBRE: 100 REQ/S","TASA DE ERROR EN AUMENTO","CUELLO DE BOTELLA: CONCURRENCIA","NO ES LÍMITE DE CPU","RECUPERACIÓN AUTOMÁTICA","VUELVE MÁS RÁPIDO QUE ANTES"],
+          ["10 CASOS DE CAJA NEGRA","EJECUTADOS A MANO","TRAZABILIDAD A HISTORIAS DE USUARIO","CIERRE DE SESIÓN","ERROR DE CSRF","CAUSA RAÍZ IDENTIFICADA","CORRECCIÓN CON PRUEBA DE REGRESIÓN","TRANSPARENCIA EN LOS VACÍOS"],
+          ["PORTAL REAL EN PRODUCCIÓN","INICIO DE SESIÓN","FACTURAS DEL CLIENTE","AISLAMIENTO DE DATOS","NO VER FACTURAS DE OTROS","ALCANCE DE LA DEMO","MODO DE RESPALDO","DEGRADACIÓN CONTROLADA"],
+          ["INTEGRACIÓN Y ENTREGA CONTINUA","SEIS FLUJOS AUTOMATIZADOS","VERIFICACIÓN POST-DESPLIEGUE","CHEQUEO DE SALUD /api/health","ROLLBACK AUTOMÁTICO","SIN INTERVENCIÓN HUMANA","MIGRACIONES ADITIVAS","DESPLIEGUE SEGURO"],
+          ["ASTRO SSR","VERCEL","TURSO","REDIS","TECNOLOGÍA PROBADA","NO ES MODA, ES CRITERIO","VITEST PARA UNITARIAS","k6 PARA CARGA Y ESTRÉS"],
+          ["DOCUMENTACIÓN COMPLETA","OCHO DOCUMENTOS DEL CHECKLIST","DOCUMENTO DEL PRODUCTO FINAL","ARQUITECTURA, REQUISITOS, DATOS","HISTORIAS DE USUARIO","TRANSPARENCIA SOBRE LÍMITES","TODO VERIFICABLE EN /docs","CIERRE Y AGRADECIMIENTO"],
+        ]
+
+        const $stage = document.getElementById('stage')!
+        const $contenido = document.getElementById('contenido')!
+        const $primaria = document.getElementById('primaria')!
+        const $secundarias = document.getElementById('secundarias')!
+        const $beatLabel = document.getElementById('beat-label')!
+
+        const acotar = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v)
+        // El beat real del guion es 1-indexado y puede llegar más lejos que
+        // esta lista de apoyo (o quedarse corto): se acota, nunca se rompe.
+        const grupoDe = (beat: number) => acotar(beat - 1, 0, BEATS_PALABRAS.length - 1)
+
+        let idx = grupoDe(cfg.beatInicial)
+        let escala = 1
+
+        function pintar() {
+          const palabras = BEATS_PALABRAS[idx]
+          $primaria.textContent = palabras[0]
+          $secundarias.replaceChildren(
+            ...palabras.slice(1).map((t) => {
+              const fila = document.createElement('div')
+              const span = document.createElement('span')
+              span.textContent = t
+              fila.appendChild(span)
+              return fila
+            })
+          )
+          $beatLabel.textContent = `${String(idx + 1).padStart(2, '0')} / ${BEATS_PALABRAS.length}`
+        }
+
+        function ajustar() {
+          const prev = $contenido.style.transform
+          $contenido.style.transform = 'none'
+          const w = $contenido.scrollWidth
+          const h = $contenido.scrollHeight
+          $contenido.style.transform = prev
+          if (!w || !h) return
+          const s = Math.min(innerWidth / w, innerHeight / h, 1.8)
+          if (Math.abs(s - escala) > 0.005) {
+            escala = s
+            $contenido.style.transform = `scale(${escala})`
+          }
+        }
+
+        pintar()
+        requestAnimationFrame(ajustar)
+        setTimeout(ajustar, 50)
+        setTimeout(ajustar, 300)
+
+        addEventListener('resize', ajustar)
+        if ('ResizeObserver' in window) {
+          new ResizeObserver(ajustar).observe($contenido)
+        }
+
+        seguirSustentacion({
+          sessionId: cfg.sessionId,
+          bus: cfg.bus,
+          onSnapshot: (s) => {
+            const siguiente = grupoDe(s.beat)
+            if (siguiente !== idx) {
+              idx = siguiente
+              pintar()
+              requestAnimationFrame(ajustar)
+            }
+          },
+          onEstado: (e) => {
+            $stage.dataset.estado = e
+          },
+        })
+      }
+    </script>
+  </body>
+</html>

@@ -325,6 +325,14 @@ o cualquiera de la sala.
   `/presentacion` abierta. Sirve para señalar ("esta fila"), y conviene saber
   que solo funciona **dentro** de la página viva: sobre la lámina no hay nada
   que reflejar. Sacar el ratón de la ventanilla apaga la flecha.
+- **Lo que se teclea en el diagnóstico también se ve en la sala.** En el beat de
+  `/lab/site-check` el resultado no llega por una navegación sino por una
+  petición sobre la misma página, así que ahí no basta con la URL: viajan el
+  dominio escrito y las tarjetas del análisis, y cada equipo las pinta con su
+  propio renderizador. El análisis lo corre **solo** el portátil del ponente
+  (la sala no repite los sondeos ni gasta cuota de PageSpeed), así que las
+  tarjetas aparecen en la pared con el retraso del sondeo, medio segundo, y no
+  a la vez que en el portátil.
 - **El cronómetro arranca solo**, con el primer movimiento que saca la
   presentación de la primera diapositiva. No hay botón de empezar. Un toque en
   la isla y un segundo toque para confirmar lo reinician - hace falta de

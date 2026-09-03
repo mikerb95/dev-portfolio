@@ -31,7 +31,11 @@ if (!sesion) {
 }
 
 const inicial = toBeatSnapshot(sesion)
-const bus = busCredentials()
+const credenciales = busCredentials()
+// `busCredentials()` expone `readonlyToken`; `seguirSustentacion` espera
+// `token`. Sin este mapeo el EventSource se abre con un token vacío y esta
+// vista cae a polling de 1 s en vez de la vía rápida por bus.
+const bus = credenciales ? { url: credenciales.url, token: credenciales.readonlyToken } : null
 
 // El PIN es corto y es lo único que separa a cualquiera de esta vista. No hay
 // nada sensible detrás (un índice y un título), pero tampoco hay motivo para
