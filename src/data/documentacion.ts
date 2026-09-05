@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Documentación de ingeniería del portfolio (codebymike.tech / dev-portfolio).
+// Documentación de ingeniería del portfolio (codebymike.net / dev-portfolio).
 // Fuente de verdad para /docs/*. Ver docs/plan-documentacion.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -512,7 +512,7 @@ export const CASOS_DE_USO_EXTENDIDOS: CasoDeUsoExtendido[] = [
       'El administrador pulsa Presentar y confirma en una pantalla que muestra el deck, su número de slides y la caducidad de la sesión.',
       'El sistema crea la sesión en Redis en estado lobby, con slide 0 y un PIN de cuatro caracteres (dos letras y dos dígitos) comprobado contra las rutas reservadas del sitio y contra los PIN ya en uso.',
       'La pantalla de reparto ofrece las dos vistas: la pantalla principal para el proyector y el control remoto, este último también como QR para escanearlo con el celular.',
-      'La pantalla principal muestra a pantalla completa el QR hacia codebymike.tech/{pin} y el PIN escrito en grande; es la única vista que los muestra.',
+      'La pantalla principal muestra a pantalla completa el QR hacia codebymike.net/{pin} y el PIN escrito en grande; es la única vista que los muestra.',
       'El público escanea o teclea la dirección y ve la pantalla de espera con el título del deck.',
       'El administrador inicia desde el control remoto, que exige sesión de administrador y valida además el secreto de la sesión.',
       'Cada comando (anterior, siguiente, salto directo) se valida en el servidor contra el rango de slides, se persiste en Redis y se publica al bus.',

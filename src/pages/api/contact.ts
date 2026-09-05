@@ -84,7 +84,7 @@ export const POST: APIRoute = async ({ request }) => {
   await sendPush(
     `Nuevo mensaje de ${name}`,
     `${typeof subject === 'string' && subject ? `${subject}\n` : ''}${preview}\n- ${email}`,
-    { priority: 4, tags: 'envelope', click: 'https://codebymike.tech/admin/messages' },
+    { priority: 4, tags: 'envelope', click: 'https://codebymike.net/admin/messages' },
   ).catch(() => {})
 
   return json(201, { ok: true })

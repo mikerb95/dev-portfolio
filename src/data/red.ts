@@ -15,7 +15,7 @@ import type { RedModel } from '../lib/red-layout'
 
 const produccion: RedModel = {
   id: 'produccion',
-  titulo: 'Red de producción (codebymike.tech)',
+  titulo: 'Red de producción (codebymike.net)',
   desc:
     'Quién puede hablar con quién. Cuatro zonas de confianza y un único camino entre Internet y los datos: todo request atraviesa el perímetro antes de existir para la aplicación, y ningún origen externo alcanza la base de datos, ni siquiera la pasarela de pagos cuando devuelve un webhook.',
   origen: 'src/middleware.ts · src/lib/security/* · src/db/index.ts · src/lib/demo.ts',

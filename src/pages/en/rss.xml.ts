@@ -8,7 +8,7 @@ const escapeXml = (s: string) =>
   s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[c]!)
 
 export const GET: APIRoute = async ({ site }) => {
-  const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')
+  const base = (site ?? new URL('https://codebymike.net')).href.replace(/\/$/, '')
   const notes = await getNotes('en')
 
   const items = notes

@@ -10,7 +10,7 @@ import type { UmlDeploymentModel } from '../lib/uml-deployment'
 
 const produccion: UmlDeploymentModel = {
   id: 'produccion',
-  titulo: 'Despliegue de producción (codebymike.tech)',
+  titulo: 'Despliegue de producción (codebymike.net)',
   desc:
     'Qué corre dónde y por dónde viaja cada cosa. El sistema no tiene servidor propio: todo el cómputo vive en la red de borde de Vercel, la persistencia es un servicio gestionado y los disparadores periódicos vienen de fuera, no de un proceso residente.',
   origen: 'astro.config.mjs · src/middleware.ts · src/db/index.ts · .github/workflows/*',

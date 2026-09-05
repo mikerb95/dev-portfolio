@@ -3,8 +3,9 @@ import QRCode from 'qrcode'
 import { createRoom } from '../../../../lib/fingerprint'
 import { clientIp } from '../../../../lib/device-info'
 import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
+import { siteUrl } from '../../../../lib/site'
 
-const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
+const SITE_URL = siteUrl()
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })

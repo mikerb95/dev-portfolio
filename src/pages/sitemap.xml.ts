@@ -38,7 +38,7 @@ const STATIC_PATHS = [
 ]
 
 export const GET: APIRoute = async ({ site }) => {
-  const base = (site ?? new URL('https://codebymike.tech')).href.replace(/\/$/, '')
+  const base = (site ?? new URL('https://codebymike.net')).href.replace(/\/$/, '')
 
   const [visibleProjects, notes] = await Promise.all([
     db

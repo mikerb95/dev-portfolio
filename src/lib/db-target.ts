@@ -4,7 +4,7 @@
 // está leyendo de una base remota.
 //
 // El guardarraíl anterior solo miraba la URL del SERVIDOR ('nunca
-// codebymike.tech'), y eso deja pasar el caso que de verdad duele: k6 contra
+// codebymike.net'), y eso deja pasar el caso que de verdad duele: k6 contra
 // localhost, pero con el dev server conectado a la Turso de producción. Así se
 // agotó la cuota de lecturas (ago 2026).
 

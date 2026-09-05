@@ -1,8 +1,8 @@
 # RFC 9116 - Política de divulgación responsable de vulnerabilidades
-# https://codebymike.tech/security
+# https://codebymike.net/security
 
 Contact: mailto:mikedrb@proton.me
 Expires: 2027-07-09T00:00:00.000Z
 Preferred-Languages: es, en
-Canonical: https://codebymike.tech/.well-known/security.txt
-Policy: https://codebymike.tech/security
+Canonical: https://codebymike.net/.well-known/security.txt
+Policy: https://codebymike.net/security

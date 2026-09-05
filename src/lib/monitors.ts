@@ -40,7 +40,7 @@ export async function probe(m: MonitorInput): Promise<CheckOutcome> {
   try {
     const res = await fetch(m.url, {
       method: m.method ?? 'GET',
-      headers: { 'User-Agent': 'codebymike-monitor/1.0 (+https://codebymike.tech)' },
+      headers: { 'User-Agent': 'codebymike-monitor/1.0 (+https://codebymike.net)' },
       signal: controller.signal,
       redirect: 'follow',
     })

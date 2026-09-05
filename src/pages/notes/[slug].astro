@@ -35,7 +35,7 @@ const { Content } = await render(note)
 // timeZone UTC: la fecha del frontmatter es un día calendario, no un instante.
 const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 
-const site = Astro.site ?? new URL('https://codebymike.tech')
+const site = Astro.site ?? new URL('https://codebymike.net')
 const canonical = new URL(Astro.url.pathname, site).href
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',

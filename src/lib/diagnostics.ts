@@ -23,7 +23,7 @@ export type DiagnosticTarget = { url: string; host: string; hostname: string; or
 
 const HTTP_TIMEOUT_MS = 10_000
 const TLS_TIMEOUT_MS = 8_000
-const UA = 'codebymike-diagnostics/1.0 (+https://codebymike.tech)'
+const UA = 'codebymike-diagnostics/1.0 (+https://codebymike.net)'
 
 /** Normaliza texto libre (con o sin esquema) a un objetivo de pruebas. null si no es válido. */
 export function normalizeTarget(input?: string | null): DiagnosticTarget | null {

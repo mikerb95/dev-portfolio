@@ -361,7 +361,7 @@ export const PIPELINE: EtapaPipeline[] = [
     duracion: '~1-3 min',
     pasos: [
       'Build de Astro con el adaptador de Vercel',
-      'La versión nueva pasa a servir codebymike.tech',
+      'La versión nueva pasa a servir codebymike.net',
       '/api/health empieza a devolver el SHA del commit recién desplegado',
     ],
     siFalla: 'El deploy anterior sigue sirviendo. Vercel no promueve un build que no compila.',
@@ -455,7 +455,7 @@ export const ESCENARIOS: Escenario[] = [
       { etapa: 'local', estado: 'ok', texto: `${EJECUCION.total.pruebas} tests en verde. Todo correcto.` },
       { etapa: 'push', estado: 'ok', texto: 'CI arranca.' },
       { etapa: 'ci', estado: 'ok', texto: 'Suite completa en verde, build OK, e2e en verde.' },
-      { etapa: 'deploy', estado: 'ok', texto: 'Vercel publica la versión nueva en codebymike.tech.' },
+      { etapa: 'deploy', estado: 'ok', texto: 'Vercel publica la versión nueva en codebymike.net.' },
       { etapa: 'verify', estado: 'fail', texto: 'Health check: 0 de 3 con HTTP 200. Falta una variable de entorno que en local sí existía.' },
       { etapa: 'operacion', estado: 'warn', texto: 'npx vercel rollback revierte · push a ntfy con prioridad 5 · run registrado como rolled_back.' },
     ],

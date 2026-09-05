@@ -38,7 +38,7 @@ import { webauthnCredentials } from '../db/schema'
 
 // ── Relying Party ────────────────────────────────────────────────────────
 // rpID/origin se derivan del Host real de cada request en vez de hardcodear
-// dominio o puerto: así funcionan igual en prod (codebymike.tech), preview
+// dominio o puerto: así funcionan igual en prod (codebymike.net), preview
 // deployments de Vercel y `astro dev` en cualquier puerto libre. El origin
 // que manda el navegador en la ceremonia debe calzar exacto con este valor.
 

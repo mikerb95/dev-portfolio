@@ -8,8 +8,9 @@ import { sendEmail, sendPush } from '../../../lib/notify'
 import { isAllowedLogin } from '../../../lib/auth'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import { conRegistro } from '../../../lib/cron-runs'
+import { siteUrl } from '../../../lib/site'
 
-const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
+const SITE_URL = siteUrl()
 
 // Orden de severidad para decidir si un dominio "empeoró" desde el último aviso.
 const SEVERITY: Record<DomainAlertState, number> = { ok: 0, soon: 1, critical: 2, overdue: 3 }

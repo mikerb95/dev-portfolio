@@ -46,7 +46,7 @@ const fmtSize = (bytes: number) =>
     <span class="font-mono text-cyan">&lt;deck-stage&gt;</span> dentro. Al subirlo se extraen sus slides y
     las notas del presentador. <strong class="text-ink-100">Presentar</strong> abre una sesión con PIN:
     tú proyectas, controlas desde el celular y el público sigue en
-    <span class="font-mono text-cyan">codebymike.tech/{'{pin}'}</span>.
+    <span class="font-mono text-cyan">codebymike.net/{'{pin}'}</span>.
   </p>
 
   {!readiness.ok && (
@@ -76,7 +76,7 @@ const fmtSize = (bytes: number) =>
                   <span class="text-[14px] text-ink-50 truncate">{s.deckTitle}</span>
                 </div>
                 <div class="mt-1 text-[11px] font-mono text-ink-200">
-                  <span class="text-cyan">codebymike.tech/{s.pin}</span>
+                  <span class="text-cyan">codebymike.net/{s.pin}</span>
                   <span> · {s.state === 'lobby' ? 'en el lobby' : `slide ${s.currentSlide + 1} de ${s.totalSlides}`}</span>
                 </div>
               </div>

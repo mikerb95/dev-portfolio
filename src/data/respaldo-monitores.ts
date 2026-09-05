@@ -55,7 +55,7 @@ export function urlDe(destino: DestinoRespaldo, origen: string): string {
 export function origenPublico(): string {
   const url =
     (typeof process !== 'undefined' && (process.env.PUBLIC_SITE_URL || process.env.VERCEL_URL)) ||
-    'codebymike.tech'
+    'codebymike.net'
   return url.startsWith('http') ? url.replace(/\/$/, '') : `https://${url.replace(/\/$/, '')}`
 }
 

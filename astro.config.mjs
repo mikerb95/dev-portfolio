@@ -8,7 +8,7 @@ import staticHeaders from './integrations/static-headers.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://codebymike.tech',
+  site: 'https://codebymike.net',
   output: 'server',
   adapter: vercel({ imageService: true }),
   i18n: {

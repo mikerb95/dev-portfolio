@@ -14,7 +14,7 @@ if (!room) {
   return new Response(null, { status: 404 })
 }
 
-const site = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
+const site = import.meta.env.AUTH_URL ?? 'https://codebymike.net'
 // El QR lleva al visitante a la sala en el mismo idioma del tablero.
 const joinUrl = `${site}${localizedHref('/lab/fingerprint', locale)}/${roomId}`
 const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 260 })

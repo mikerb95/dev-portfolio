@@ -11,8 +11,9 @@ import { sweepSessions } from '../../../lib/device-sessions'
 import { sweepFpRooms } from '../../../lib/fingerprint'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import { conRegistro } from '../../../lib/cron-runs'
+import { siteUrl } from '../../../lib/site'
 
-const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
+const SITE_URL = siteUrl()
 
 const SEVERITY: Record<DomainAlertState, number> = { ok: 0, soon: 1, critical: 2, overdue: 3 }
 const SSL_REFRESH_MS = 12 * 60 * 60 * 1000 // refresca SSL como máximo cada 12h

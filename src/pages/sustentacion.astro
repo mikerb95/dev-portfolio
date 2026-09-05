@@ -760,7 +760,7 @@ Astro.response.headers.set('Cache-Control', 'no-store')
         <div class="panel demo" id="demo">
           <div class="demo-barra">
             <span class="punto" aria-hidden="true"></span>
-            <span id="demo-ruta">codebymike.tech/portal/login</span>
+            <span id="demo-ruta">codebymike.net/portal/login</span>
             <span class="paso" id="demo-paso">0-15s</span>
           </div>
           <div class="demo-marco" id="demo-marco"></div>
@@ -1459,7 +1459,7 @@ Astro.response.headers.set('Cache-Control', 'no-store')
         let t = 0.9
         cfg.pasosDemo.forEach((p, k) => {
           motor.tras(t, () => {
-            $('demo-ruta').textContent = `codebymike.tech${p.ruta}`
+            $('demo-ruta').textContent = `codebymike.net${p.ruta}`
             $('demo-paso').textContent = p.t
             if (k > 0 && p.ir && marco) marco.src = p.ir
           })
@@ -1677,7 +1677,7 @@ Astro.response.headers.set('Cache-Control', 'no-store')
       // Se monta al CARGAR, no en el beat 10: el portal necesita su tiempo para
       // arrancar y descubrir eso delante del jurado no es una opción. Ruta
       // RELATIVA, no absoluta: la CSP de esta página es `default-src 'self'` y
-      // un https://codebymike.tech desde un preview quedaría bloqueado sin más
+      // un https://codebymike.net desde un preview quedaría bloqueado sin más
       // rastro que un aviso en la consola.
       let marco: HTMLIFrameElement | null = null
       if (cfg.pasosDemo.length > 0) {

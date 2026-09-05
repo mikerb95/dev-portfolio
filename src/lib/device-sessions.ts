@@ -14,6 +14,7 @@ import { db } from '../db'
 import { adminSessions } from '../db/schema'
 import { describeDevice } from './device-info'
 import { sendPush } from './notify'
+import { siteUrl } from './site'
 
 // Re-export de los helpers puros para no romper los sitios que ya los importan.
 export { DEVICE_COOKIE, clientIp, describeDevice } from './device-info'
@@ -31,7 +32,7 @@ const IDLE_EXPIRY_MS = 24 * 60 * 60 * 1000
 // Las sesiones revocadas se conservan un tiempo (auditoría) y luego se purgan.
 const REVOKED_RETENTION_DAYS = 90
 
-const SITE_URL = process.env.AUTH_URL ?? 'https://codebymike.tech'
+const SITE_URL = siteUrl()
 
 export type RecordResult = { revoked: boolean }
 

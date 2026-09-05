@@ -39,7 +39,7 @@ interface Props {
   alternatePaths?: Partial<Record<'es' | 'en', string>>
 }
 
-const site = Astro.site ?? new URL('https://codebymike.tech')
+const site = Astro.site ?? new URL('https://codebymike.net')
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 const {

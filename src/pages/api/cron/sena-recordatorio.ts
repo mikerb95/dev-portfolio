@@ -35,7 +35,7 @@ export const GET: APIRoute = conRegistro('sena-recordatorio', async ({ request }
       const lineas = nuevos.map((h) => `- ${h.titulo}: ${fmt(h.fecha)}`).join('\n')
       const res = await sendEmail(
         `Etapa productiva SENA: ${nuevos.length} hito${nuevos.length === 1 ? '' : 's'} próximo${nuevos.length === 1 ? '' : 's'}`,
-        `Se acercan estos hitos de tu etapa productiva:\n\n${lineas}\n\nDetalle: https://codebymike.tech/ep?tipo=${sub.tipo}&inicio=${sub.inicio}`
+        `Se acercan estos hitos de tu etapa productiva:\n\n${lineas}\n\nDetalle: https://codebymike.net/ep?tipo=${sub.tipo}&inicio=${sub.inicio}`
       )
       if (res.ok) {
         avisados += nuevos.length

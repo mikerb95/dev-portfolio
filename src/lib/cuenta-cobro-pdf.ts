@@ -347,7 +347,7 @@ export async function generateCuentaCobroPdf(input: CuentaCobroPdfInput): Promis
   page.drawLine({ start: { x: marginX, y: firmaY }, end: { x: marginX + 200, y: firmaY }, thickness: 0.6, color: rgb(0.6, 0.6, 0.63) })
   text(e.nombre, marginX, firmaY - 14, { size: 10, f: bold })
   text(`C.C. ${e.cedula}`, marginX, firmaY - 26, { size: 9, color: MUTED })
-  textRight('codebymike.tech', right, firmaY - 26, { size: 8, color: MUTED })
+  textRight('codebymike.net', right, firmaY - 26, { size: 8, color: MUTED })
 
   return doc.save()
 }

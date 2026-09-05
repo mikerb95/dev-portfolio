@@ -49,7 +49,7 @@ export async function generateInvoicePdf({ invoice, items }: InvoicePdfInput): P
   text('CodeByMike', marginX, y, { size: 18, f: bold })
   text(invoice.number, width - marginX - mono.widthOfTextAtSize(invoice.number, 12), y - 2, { size: 12, f: mono, color: CYAN })
   y -= 20
-  text('codebymike.tech', marginX, y, { size: 9, color: MUTED })
+  text('codebymike.net', marginX, y, { size: 9, color: MUTED })
   y -= 30
   line(y)
   y -= 30

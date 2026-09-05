@@ -4,8 +4,9 @@ import { isAllowedLogin } from '../../../lib/auth'
 import { submitSitemapToIndexNow } from '../../../lib/indexnow'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import { conRegistro } from '../../../lib/cron-runs'
+import { siteUrl } from '../../../lib/site'
 
-const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
+const SITE_URL = siteUrl()
 
 // Reenvía diariamente el sitemap a IndexNow (Bing, Yandex, Seznam, Naver, Yep).
 // Como no hay deploy-hook, el cron garantiza que el contenido nuevo se anuncie

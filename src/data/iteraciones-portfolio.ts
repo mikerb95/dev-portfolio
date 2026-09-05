@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Iteraciones - Portfolio (codebymike.tech / dev-portfolio)
+// Iteraciones - Portfolio (codebymike.net / dev-portfolio)
 // Tablero XP derivado del historial REAL de GitHub (mikerb95/dev-portfolio).
 // Mismo formato que src/data/iteraciones.ts (DobleYo); se inyecta como props
 // en <IteracionesBoard> para reutilizar el mismo motor de render sin duplicar

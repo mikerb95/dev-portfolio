@@ -8,9 +8,11 @@
 // No-op si falta RESEND_API_KEY: en local no se envía nada y el flujo sigue
 // (los endpoints devuelven el enlace en dev para poder probar sin buzón).
 
+import { SITE_ORIGIN } from './site'
+
 const env = (k: string): string | undefined => (typeof process !== 'undefined' ? process.env?.[k] : undefined) ?? undefined
 
-export const SITE_URL = (env('AUTH_URL') ?? 'https://codebymike.tech').replace(/\/$/, '')
+export const SITE_URL = (env('AUTH_URL') ?? SITE_ORIGIN).replace(/\/$/, '')
 
 export type MailResult = { ok: boolean; skipped?: boolean; error?: string; id?: string }
 
@@ -103,7 +105,7 @@ ${footNote ? `<p style="margin:22px 0 0;padding-top:18px;border-top:1px solid #e
 </td></tr>
 </table>
 <p style="max-width:560px;margin:18px auto 0;font-size:11px;line-height:1.5;color:#9a9aa4;text-align:center;">
-Enviado por CodeByMike · <a href="${SITE_URL}" style="color:#9a9aa4;">codebymike.tech</a>
+Enviado por CodeByMike · <a href="${SITE_URL}" style="color:#9a9aa4;">codebymike.net</a>
 </p>
 </td></tr>
 </table>
@@ -113,7 +115,7 @@ Enviado por CodeByMike · <a href="${SITE_URL}" style="color:#9a9aa4;">codebymik
 
 /** Versión en texto plano. No es opcional: sin ella el spam score sube. */
 export const renderText = (heading: string, lines: string[], button?: Button): string =>
-  [heading, '', ...lines, ...(button ? ['', `${button.label}: ${button.url}`] : []), '', '-', 'CodeByMike · codebymike.tech'].join('\n')
+  [heading, '', ...lines, ...(button ? ['', `${button.label}: ${button.url}`] : []), '', '-', 'CodeByMike · codebymike.net'].join('\n')
 
 // ── Correos concretos ───────────────────────────────────────────────────────
 

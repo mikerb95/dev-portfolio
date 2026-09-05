@@ -20,12 +20,13 @@ import { isAllowedLogin } from '../../../lib/auth'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import { sendEmail, sendPush } from '../../../lib/notify'
 import { conRegistro } from '../../../lib/cron-runs'
+import { siteUrl } from '../../../lib/site'
 
 // Cron de seguridad. Ejecuta, en orden: auto-block (Fase 2), purga por retención,
 // rollups horarios/diarios y detección de anomalías con alertas (Fase 3).
 // Disparado por cron-job.org (GET + Bearer CRON_SECRET), como el resto de crons.
 
-const SITE_URL = import.meta.env.AUTH_URL ?? 'https://codebymike.tech'
+const SITE_URL = siteUrl()
 
 const EVENT_RETENTION_DAYS = 90
 

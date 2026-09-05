@@ -18,7 +18,9 @@ import exec from 'k6/execution'
  */
 export function objetivo() {
   const url = __ENV.TARGET ?? 'http://127.0.0.1:4400'
-  const prohibidos = ['codebymike.tech', 'dev-portfolio.vercel.app']
+  // El .tech sigue en la lista aunque el sitio viva en .net: redirige a
+  // producción con 308 y k6 sigue redirecciones.
+  const prohibidos = ['codebymike.net', 'codebymike.tech', 'dev-portfolio.vercel.app']
   for (const dominio of prohibidos) {
     if (url.includes(dominio)) {
       exec.test.abort(`Objetivo prohibido (${dominio}): la carga nunca va contra producción.`)

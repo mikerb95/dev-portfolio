@@ -13,4 +13,4 @@ Disallow: /feedback
 Disallow: /wp-login.php
 Disallow: /admin.php
 
-Sitemap: https://codebymike.tech/sitemap.xml
+Sitemap: https://codebymike.net/sitemap.xml

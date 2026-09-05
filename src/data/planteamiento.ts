@@ -74,7 +74,7 @@ export const PROBLEMA = {
     {
       dimension: 'Espacial',
       dentro:
-        'Un único despliegue en Vercel sirviendo codebymike.tech, con datos en Turso. Público objetivo en Colombia (facturación, retenciones e IVA locales), con el sitio de marca también en inglés bajo /en.',
+        'Un único despliegue en Vercel sirviendo codebymike.net, con datos en Turso. Público objetivo en Colombia (facturación, retenciones e IVA locales), con el sitio de marca también en inglés bajo /en.',
       fuera:
         'Infraestructura propia o servidores virtuales administrados, y presencia legal o fiscal fuera de Colombia.',
     },

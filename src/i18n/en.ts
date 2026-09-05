@@ -24,7 +24,7 @@ const en = {
   whatsapp: {
     label: 'Chat with me',
     aria: 'Message me on WhatsApp',
-    message: "Hi Mike, I'm coming from codebymike.tech and I'd like to talk about a project.",
+    message: "Hi Mike, I'm coming from codebymike.net and I'd like to talk about a project.",
   },
   nav: {
     diseno: 'Web Design',

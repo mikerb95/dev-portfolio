@@ -17,7 +17,7 @@ export function extractDomain(input?: string | null): string | null {
   let s = String(input).trim().toLowerCase()
   // Quita protocolo y todo lo que siga al host.
   s = s.replace(/^[a-z]+:\/\//, '').replace(/[/?#].*$/, '').replace(/:\d+$/, '')
-  // Toma el primer token que parezca un host con punto (p. ej. "Dominio codebymike.tech").
+  // Toma el primer token que parezca un host con punto (p. ej. "Dominio codebymike.net").
   const match = s.match(/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+/)
   if (!match) return null
   const host = match[0].replace(/\.$/, '')
