@@ -37,6 +37,7 @@ import {
   verificarPaseRespaldo,
 } from './lib/portal/respaldo'
 import { delocalizePath, isLocalizedPrivateRequest, untranslatedLocalizedTarget } from './i18n/routing'
+import { destinoCanonico } from './lib/canonical-host'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
 const AUTH_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
@@ -135,6 +136,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // prefijo de idioma - nunca `pathname` crudo - para que `/algo` y
   // `/en/algo` reciban idéntico trato de seguridad.
   const canonicalPath = delocalizePath(pathname)
+
+  // Dominio: el sitio vive en codebymike.net; el .tech (y los `www`) mandan
+  // aquí con 308. Va antes de los guardas para no gastar en un request que
+  // termina en redirect, y deja fuera `/api/*` para no romper webhooks ni
+  // crons que aún apuntan al dominio viejo. Ver src/lib/canonical-host.ts.
+  const destino = destinoCanonico({
+    host: context.request.headers.get('host'),
+    method: context.request.method,
+    pathname,
+    search: context.url.search,
+  })
+  if (destino) return context.redirect(destino, 308)
 
   // LAB · chaos engineering: fallos inyectados por flags con TTL (máx 15 min).
   // Fail-open y con /admin, /api/admin y /api/auth excluidos por código:
