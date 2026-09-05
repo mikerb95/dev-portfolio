@@ -97,7 +97,7 @@ jobs:
         env:
           GOOGLE_INDEXING_SA: ${{ secrets.GOOGLE_INDEXING_SA }}
         run: |
-          URLS=$(echo "${{ steps.detect.outputs.files }}" | sed -E 's#src/content/notes/(.*)\.md#https://codebymike.tech/notes/\1#')
+          URLS=$(echo "${{ steps.detect.outputs.files }}" | sed -E 's#src/content/notes/(.*)\.md#https://codebymike.net/notes/\1#')
           node scripts/social/google-indexing.mjs $URLS
 
       - name: Notificar si algo falló (ntfy)

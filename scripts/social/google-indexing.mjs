@@ -6,7 +6,7 @@
 //   GOOGLE_INDEXING_SA = JSON completo de la clave de la service account.
 // Sin ese secret, sale con gracia (exit 0).
 //
-// Uso: node scripts/social/google-indexing.mjs https://codebymike.tech/notes/x [...]
+// Uso: node scripts/social/google-indexing.mjs https://codebymike.net/notes/x [...]
 
 import crypto from 'node:crypto'
 

@@ -8,7 +8,7 @@
 # Secrets opcionales (degrada con gracia si faltan, igual que ci.yml):
 #   LAB_INGEST_TOKEN → habilita el reporte de npm audit al panel LAB
 # Variables opcionales:
-#   PROD_URL → default https://codebymike.tech
+#   PROD_URL → default https://codebymike.net
 
 name: Security
 
@@ -35,7 +35,7 @@ jobs:
 
       - name: Auditar dependencias y reportar al panel LAB
         env:
-          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.net' }}
           LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
         run: |
           if [ -z "$LAB_INGEST_TOKEN" ]; then

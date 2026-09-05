@@ -4,7 +4,7 @@
 
 import { readFile } from 'node:fs/promises'
 
-export const SITE = 'https://codebymike.tech'
+export const SITE = 'https://codebymike.net'
 
 /**
  * Separa el frontmatter YAML del cuerpo markdown y devuelve
@@ -111,5 +111,5 @@ export function buildLinkedIn(note) {
  * de canonical al final (además del campo canonical_url de la API).
  */
 export function buildArticleBody(note) {
-  return `${note.body}\n\n---\n\n*Publicado originalmente en [codebymike.tech](${note.url}).*`
+  return `${note.body}\n\n---\n\n*Publicado originalmente en [codebymike.net](${note.url}).*`
 }

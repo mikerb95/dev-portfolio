@@ -17,7 +17,7 @@
 # Secrets opcionales (degrada con gracia si faltan, igual que security.yml):
 #   LAB_INGEST_TOKEN → habilita el reporte al panel LAB
 # Variables opcionales:
-#   PROD_URL → default https://codebymike.tech (solo para construir la URL de ingesta)
+#   PROD_URL → default https://codebymike.net (solo para construir la URL de ingesta)
 
 name: DAST
 
@@ -89,7 +89,7 @@ jobs:
       - name: Reportar hallazgos al panel LAB
         if: always() && steps.preview.outputs.url
         env:
-          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.net' }}
           LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
         run: |
           if [ ! -f report_json.json ]; then

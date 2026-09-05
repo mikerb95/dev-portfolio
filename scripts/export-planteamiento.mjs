@@ -33,7 +33,7 @@ export const render = () => {
   l.push('> **Archivo generado.** No se edita a mano: sale de')
   l.push('> [`src/data/planteamiento.ts`](../src/data/planteamiento.ts) con')
   l.push('> `npm run planteamiento:export`, y se publica en')
-  l.push('> [`/docs/planteamiento`](https://codebymike.tech/docs/planteamiento).')
+  l.push('> [`/docs/planteamiento`](https://codebymike.net/docs/planteamiento).')
   l.push('> Para cambiar el texto se cambia el dato tipado y se regenera.')
   l.push('')
   l.push('## 1. Planteamiento del problema')

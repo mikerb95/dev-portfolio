@@ -48,7 +48,7 @@ if (!url) {
   process.exit(1)
 }
 
-const SITE = process.env.MONITOR_SITE_URL || 'https://codebymike.tech'
+const SITE = process.env.MONITOR_SITE_URL || 'https://codebymike.net'
 
 const MONITOR = {
   name: 'Portal de clientes',

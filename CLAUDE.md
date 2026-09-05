@@ -1,7 +1,7 @@
 # Instrucciones para Claude en este repositorio
 
 Portafolio + panel de control privado + portal de clientes + laboratorio de
-ingeniería de Mike (@mikerb95, codebymike.tech). Astro 7 (SSR) + Turso/libSQL +
+ingeniería de Mike (@mikerb95, codebymike.net). Astro 7 (SSR) + Turso/libSQL +
 Drizzle + Auth.js (GitHub OAuth) + Tailwind 4, desplegado en Vercel. Sin
 frameworks de frontend adicionales, sin servicios de pago de terceros más allá
 de Wompi: monitoreo, alertas, SLOs y observabilidad de seguridad son desarrollo
@@ -63,7 +63,7 @@ el siguiente paso obvio" cuando ese paso es un deploy o un commit.
   columnas + cambiar nullable" drizzle-kit puede generar un
   `INSERT...SELECT` que referencia columnas nuevas en la tabla vieja.
 - Dos proyectos de Vercel existen bajo la org `codebymike`: **`dev-portfolio`**
-  es el que sirve `codebymike.tech` (producción real); **`portfolio`** es otro
+  es el que sirve `codebymike.net` (producción real); **`portfolio`** es otro
   proyecto sin relación con el dominio. Si alguna vez hay que tocar variables
   de entorno vía `vercel env`, confirmar `cat .vercel/project.json` antes de
   escribir - el nombre del directorio local coincide por accidente con el

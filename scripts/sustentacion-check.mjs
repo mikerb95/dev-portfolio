@@ -23,7 +23,7 @@ const leer = (bandera, pordefecto) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : pordefecto
 }
 
-const BASE = leer('--base', 'https://codebymike.tech').replace(/\/+$/, '')
+const BASE = leer('--base', 'https://codebymike.net').replace(/\/+$/, '')
 const COOKIE = process.env.SUSTENTACION_COOKIE ?? ''
 const TIMEOUT_MS = 15_000
 

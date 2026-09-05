@@ -11,7 +11,7 @@
 // no hace falta para .ts si el runtime lo soporta); aquí replicamos el POST para
 // no depender del transpilado.
 
-const SITE = 'https://codebymike.tech'
+const SITE = 'https://codebymike.net'
 const KEY = 'eec9c30b0348b882cba9349b7fb125f2' // debe coincidir con public/<key>.txt y src/lib/indexnow.ts
 
 const args = process.argv.slice(2)

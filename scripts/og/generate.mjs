@@ -66,7 +66,7 @@ function ornamentHtml(kind) {
     case 'available':
       return `<div class="available-orn"><div class="pulse"></div><div class="wordmark" style="font-size:15px">DISPONIBLE</div></div>`
     case 'brand':
-      return `<div class="brand-orn"><div class="tag">codebymike.tech</div></div>`
+      return `<div class="brand-orn"><div class="tag">codebymike.net</div></div>`
     default:
       return ''
   }

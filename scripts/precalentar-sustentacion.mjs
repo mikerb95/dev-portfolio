@@ -13,7 +13,7 @@
  * enterarse diez minutos antes, no en mitad de la charla.
  *
  *   node scripts/precalentar-sustentacion.mjs
- *   node scripts/precalentar-sustentacion.mjs --base https://codebymike.tech
+ *   node scripts/precalentar-sustentacion.mjs --base https://codebymike.net
  *   node scripts/precalentar-sustentacion.mjs --base http://localhost:4321
  */
 
@@ -23,7 +23,7 @@ const leer = (bandera, pordefecto) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : pordefecto
 }
 
-const BASE = leer('--base', 'https://codebymike.tech').replace(/\/+$/, '')
+const BASE = leer('--base', 'https://codebymike.net').replace(/\/+$/, '')
 const TIMEOUT_MS = Number(leer('--timeout', '15000'))
 
 /**

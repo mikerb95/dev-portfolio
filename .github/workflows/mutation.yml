@@ -5,7 +5,7 @@
 # Secrets opcionales (degrada con gracia):
 #   LAB_INGEST_TOKEN → habilita el reporte del score al panel LAB
 # Variables opcionales:
-#   PROD_URL → default https://codebymike.tech
+#   PROD_URL → default https://codebymike.net
 
 name: Mutation testing
 
@@ -30,7 +30,7 @@ jobs:
 
       - name: Correr Stryker y reportar al panel LAB
         env:
-          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.net' }}
           LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
         run: |
           if [ -z "$LAB_INGEST_TOKEN" ]; then

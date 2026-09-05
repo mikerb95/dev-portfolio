@@ -3,7 +3,7 @@
 > **Archivo generado.** No se edita a mano: sale de
 > [`src/data/planteamiento.ts`](../src/data/planteamiento.ts) con
 > `npm run planteamiento:export`, y se publica en
-> [`/docs/planteamiento`](https://codebymike.tech/docs/planteamiento).
+> [`/docs/planteamiento`](https://codebymike.net/docs/planteamiento).
 > Para cambiar el texto se cambia el dato tipado y se regenera.
 
 ## 1. Planteamiento del problema
@@ -44,7 +44,7 @@ El portafolio de un desarrollador afirma lo que sabe hacer, pero no lo demuestra
 
 *Queda fuera:* Multiusuario con roles dentro del panel (hay un único administrador), aplicación móvil nativa, servicios de monitoreo o APM de pago, contenerización del runtime de producción y migraciones destructivas de esquema.
 
-**Espacial.** Un único despliegue en Vercel sirviendo codebymike.tech, con datos en Turso. Público objetivo en Colombia (facturación, retenciones e IVA locales), con el sitio de marca también en inglés bajo /en.
+**Espacial.** Un único despliegue en Vercel sirviendo codebymike.net, con datos en Turso. Público objetivo en Colombia (facturación, retenciones e IVA locales), con el sitio de marca también en inglés bajo /en.
 
 *Queda fuera:* Infraestructura propia o servidores virtuales administrados, y presencia legal o fiscal fuera de Colombia.
 

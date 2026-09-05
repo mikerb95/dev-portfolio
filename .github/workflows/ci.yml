@@ -7,7 +7,7 @@
 #   LAB_INGEST_TOKEN  → reporta métricas del run a /api/lab/ingest (panel LAB)
 #   NTFY_TOPIC        → push al teléfono cuando hay rollback
 # Variables opcionales (Settings → Variables):
-#   PROD_URL          → URL de producción (default https://codebymike.tech)
+#   PROD_URL          → URL de producción (default https://codebymike.net)
 
 name: CI
 
@@ -101,7 +101,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
-      PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+      PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.net' }}
       VERCEL_ORG_ID: team_GwKd4hurNRGdWHhXUHiQ9HeM
       VERCEL_PROJECT_ID: prj_vdfQibXACk3SvwYWEmKdEpZ4NaGh
     steps:

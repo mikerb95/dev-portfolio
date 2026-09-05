@@ -306,7 +306,7 @@ const html = `<title>Ejecución de pruebas</title>
 
 <div class="envoltura">
   <header>
-    <p class="eyebrow">codebymike.tech · informe de ejecución</p>
+    <p class="eyebrow">codebymike.net · informe de ejecución</p>
     <h1>Ejecución de pruebas</h1>
     <p class="sub">Suite completa de Vitest: ${total.pruebas} pruebas en ${suites.length} archivos,
       con el tiempo medido de cada caso. Generado desde el XML JUnit de la corrida del ${fecha}.</p>

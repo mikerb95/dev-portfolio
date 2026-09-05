@@ -8,7 +8,7 @@
 # Secrets opcionales (degrada con gracia):
 #   LAB_INGEST_TOKEN → habilita el reporte al panel LAB
 # Variables opcionales:
-#   PROD_URL → default https://codebymike.tech
+#   PROD_URL → default https://codebymike.net
 
 name: Accessibility
 
@@ -40,7 +40,7 @@ jobs:
 
       - name: Levantar el servidor y correr axe
         env:
-          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.tech' }}
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.net' }}
           LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
         run: |
           npm run dev -- --port 4321 &
