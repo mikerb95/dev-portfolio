@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Proyecto bajo prueba** | CodeByMike - `codebymike.tech` |
+| **Proyecto bajo prueba** | CodeByMike - `codebymike.net` |
 | **Módulos** | Portal de clientes (`/portal`: autenticación, facturas, cuenta) y Cobros de campo (`/cobrar → /c/[code] → /mis-pagos`) |
 | **Stack** | Astro 7 (SSR) · Turso/libSQL · Drizzle · Tailwind 4 · Vercel |
 | **Técnicas aplicadas** | Casos de prueba · Escenarios · Particiones de equivalencia · Valores límite (BVA) · Pruebas exploratorias · Trazabilidad |

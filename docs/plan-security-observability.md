@@ -1,7 +1,7 @@
 # Plan: Observabilidad de Seguridad (SecOps) - CodeByMike
 
 > Objetivo: construir un módulo de **observabilidad de seguridad** de nivel profesional que
-> registre, agregue y visualice la actividad hostil contra codebymike.tech (endpoints
+> registre, agregue y visualice la actividad hostil contra codebymike.net (endpoints
 > sondeados por atacantes, patrones de ataque, rate limiting, anomalías de comportamiento),
 > con alertas en tiempo real, SLOs de seguridad, y una **vitrina pública** (`/security` +
 > tarjetas en `/status` y `/tools`) que demuestre el nivel técnico sin filtrar información

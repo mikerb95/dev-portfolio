@@ -302,7 +302,7 @@ páginas: había que ir al portátil en mitad de la demo.
 
 ### 10.1. Por qué se puede
 
-Los tres iframes apuntan a `https://codebymike.tech/...`, que en producción es
+Los tres iframes apuntan a `https://codebymike.net/...`, que en producción es
 el MISMO origen que sirve `/presentacion`. La cadena entera (página → mazo →
 iframe interno) es de un solo origen y se puede mover con `scrollTo` desde
 fuera. `isFramablePath` ya les da `frame-ancestors 'self'`, que es lo que hace
@@ -673,7 +673,7 @@ Tres cosas, y solo una es trabajo nuevo:
 
 #### 11.5.1. El login del portal se resuelve solo
 
-El beat de la demo enmarca `codebymike.tech/portal/login`, y una sesión de
+El beat de la demo enmarca `codebymike.net/portal/login`, y una sesión de
 verdad sería intransferible: la sala vería el formulario vacío mientras el
 ponente enseña el panel.
 

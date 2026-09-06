@@ -3,8 +3,8 @@
 > Catálogo narrativo, actualizado el 24 jul 2026. Las historias con su DoD y su
 > anclaje al historial real de commits viven en
 > [`src/data/iteraciones-portfolio.ts`](../src/data/iteraciones-portfolio.ts) y
-> se ven en [`/docs/kanban`](https://codebymike.tech/docs/kanban) y
-> [`/docs/historias-de-usuario`](https://codebymike.tech/docs/historias-de-usuario).
+> se ven en [`/docs/kanban`](https://codebymike.net/docs/kanban) y
+> [`/docs/historias-de-usuario`](https://codebymike.net/docs/historias-de-usuario).
 
 ## Visitantes del sitio público
 

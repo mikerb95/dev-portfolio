@@ -77,7 +77,7 @@ público. Siendo el repo público "con fines de portafolio", el README es en sí
 una pieza del portafolio.
 
 Pasos:
-1. Hero: qué es (portafolio + panel + LAB + micro-SIEM), stack, link a codebymike.tech.
+1. Hero: qué es (portafolio + panel + LAB + micro-SIEM), stack, link a codebymike.net.
 2. Sección **"En vivo"** con tabla de superficies públicas: `/status`, `/tools`,
    `/notes`, `/docs`, `/security`, `/lab` (cuando exista, etapa 2), `/pay`.
 3. Sección **LAB / ingeniería**: qué demuestra cada módulo (CI+rollback, chaos,

@@ -605,7 +605,7 @@
         "api-portal->lib-portal",
         "lib-portal->db-turso-main"
       ],
-      "estado_visual": "El grafo se atenúa casi por completo y un iframe real ocupa el centro de la pantalla, mostrando codebymike.tech/portal en vivo: es el único momento de la charla que depende de la red.",
+      "estado_visual": "El grafo se atenúa casi por completo y un iframe real ocupa el centro de la pantalla, mostrando codebymike.net/portal en vivo: es el único momento de la charla que depende de la red.",
       "dato_destacado": null,
       "texto_pantalla": "",
       "vista_celular": {

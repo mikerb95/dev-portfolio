@@ -24,7 +24,7 @@
 ## 2. Contenido de la página (de arriba a abajo)
 
 1. **Hero** - el mensaje de apertura tal cual lo diste, más una línea de quién eres
-   (nombre, @mikerb95, codebymike.tech) y un dato de contexto: "nos vimos en Platzi Conf,
+   (nombre, @mikerb95, codebymike.net) y un dato de contexto: "nos vimos en Platzi Conf,
    Bogotá · 29 ago 2026".
 2. **Qué hago** - 3-4 líneas de bio técnica: full-stack, arquitectura, seguridad y
    observabilidad propia. Reutiliza el tono de `contact.astro`, no lo reinventa.
@@ -72,7 +72,7 @@
 No se construye un generador dentro del sitio - es un solo QR estático para imprimir en
 tarjeta o mostrar en el celular durante el evento:
 
-1. Una vez la página esté publicada en `codebymike.tech/platziconf`, generar el QR una
+1. Una vez la página esté publicada en `codebymike.net/platziconf`, generar el QR una
    sola vez con cualquier herramienta local (ej. `qrencode` por CLI o una librería npm
    de un solo uso) apuntando a esa URL exacta.
 2. Guardar el PNG resultante donde lo vayas a usar (tarjeta física, fondo de pantalla de

@@ -184,7 +184,7 @@ también quedan en el enum.
 6. Admin: toggle `visibleToClient` sobre entradas del feed, por si algo se emite y no debía verse.
 
 ### Fase C - Higiene ✅ (2026-07-24)
-1. ✅ Monitor **"Portal de clientes"** (id 10) sobre `https://codebymike.tech/portal/login`, con `expectedText: "Entra a tu portal"` - un 200 que devuelva otra página cuenta como caída - y umbral de latencia de 3000 ms (el login real tarda ~1 s; 2000 daría "degradado" en cada arranque en frío). 1 check cada 5 min contra un límite de 30/min por IP: sin riesgo de autobloqueo.
+1. ✅ Monitor **"Portal de clientes"** (id 10) sobre `https://codebymike.net/portal/login`, con `expectedText: "Entra a tu portal"` - un 200 que devuelva otra página cuenta como caída - y umbral de latencia de 3000 ms (el login real tarda ~1 s; 2000 daría "degradado" en cada arranque en frío). 1 check cada 5 min contra un límite de 30/min por IP: sin riesgo de autobloqueo.
 2. ✅ Artículo **[El clientId nunca viene de la URL](../src/content/notes/el-client-id-nunca-viene-de-la-url.md)**. Se descartó el tema de polling: describiría una Fase A que todavía no existe. El aislamiento multi-tenant sí está construido y es el corazón del diseño.
 3. ✅ A11y previa a la Fase A: región `role="status" aria-live="polite"` + helper `window.portalAnnounce()` (`is:inline`, porque los scripts empaquetados son módulos diferidos y podrían no existir cuando responde el primer formulario), skip link y `<main id="contenido">` en `PortalLayout`. Cableado el `flash()` de `/portal/cuenta` (mutaba en silencio y se borraba a los 4 s) y arreglado `/portal/olvide`, donde el formulario desaparecía bajo el foco sin anunciar nada.
 

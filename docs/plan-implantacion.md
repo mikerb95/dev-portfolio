@@ -19,18 +19,18 @@
 
 Documento que describe cómo pasar la integración del load testing (k6 → BD →
 panel admin) de código ya escrito y probado en local a una feature operando en
-`codebymike.tech`, con validación, soporte y reversa si algo falla.
+`codebymike.net`, con validación, soporte y reversa si algo falla.
 
 **Sistema**: portfolio + panel de control (Astro 7 SSR + Turso/libSQL +
 Drizzle), desplegado en Vercel (`dev-portfolio`).
-**Ambiente de destino**: producción (`codebymike.tech`), tras validar en un
+**Ambiente de destino**: producción (`codebymike.net`), tras validar en un
 preview deployment de Vercel.
 
 ## 2. Alcance
 
 | Incluido | Fuera de alcance | Restricciones |
 |---|---|---|
-| Migración aditiva: tabla `load_test_runs` | Scripts de escritura bajo carga contra `/api/payments/checkout` (pendiente, sin fecha) | La carga de k6 **nunca** apunta a `codebymike.tech` - solo a un preview desechable |
+| Migración aditiva: tabla `load_test_runs` | Scripts de escritura bajo carga contra `/api/payments/checkout` (pendiente, sin fecha) | La carga de k6 **nunca** apunta a `codebymike.net` - solo a un preview desechable |
 | `POST /api/lab/ingest` acepta `kind: 'load_test'` | Cluster/worker pool en Astro para subir el punto de quiebre (hallazgo H-02, es mejora de producto, no de este plan) | Job de k6 es `workflow_dispatch` manual, nunca en cada push (costo) |
 | `GET /api/admin/lab/load` + página `/admin/lab/load` | Alertas automáticas por SLO de carga (hoy los `monitors` existentes no cubren load testing) | Requiere `VERCEL_TOKEN` en secrets de GitHub Actions antes de activar `load-test.yml` |
 | Link "Load testing" en el sidebar del grupo LAB | Guardarraíl de dos mitades en `lab/k6/lib/perfil.js` (`objetivo()` + `exigirBaseLocal()`) | |
@@ -39,14 +39,14 @@ preview deployment de Vercel.
 
 **Objetivo general**: persistir y mostrar en el panel admin los resultados de
 las corridas de k6, garantizando que ninguna corrida pueda escribir en la
-base de producción ni ejecutarse contra `codebymike.tech`.
+base de producción ni ejecutarse contra `codebymike.net`.
 
 | Entregable | Criterio de aceptación |
 |---|---|
 | Migración `load_test_runs` | `npx drizzle-kit generate` + `migrate` aplicados contra Turso, SQL revisado a mano (regla del repo: solo aditivo) |
 | Ingesta `kind: 'load_test'` | Un `POST` con `Authorization: Bearer LAB_INGEST_TOKEN` y un `summary.json` de k6 real inserta una fila correcta; un token inválido devuelve 401 |
 | `/admin/lab/load` | Tarjetas con p50/p95/p99/RPS/error, gráfica por nivel de VUs, protegida por el guard admin existente (`isAdmin` en `middleware.ts`) |
-| `load-test.yml` | `workflow_dispatch` con `target_url`/`max_vus`; rechaza el job si `target_url` contiene `codebymike.tech` |
+| `load-test.yml` | `workflow_dispatch` con `target_url`/`max_vus`; rechaza el job si `target_url` contiene `codebymike.net` |
 | Tests | Parser puro del `summary.json` de k6 + validación del payload `load_test` en Vitest, sin BD real |
 
 ## 4. Cronograma de implantación
@@ -61,7 +61,7 @@ base de producción ni ejecutarse contra `codebymike.tech`.
 | 6 | Soporte | Primera corrida real vía `workflow_dispatch` contra un preview, confirmar ingesta y monitoreo de costos en Turso/Vercel | Soporte / DevOps | Corrida de referencia documentada en `plan-lab-fases-pendientes.md` |
 
 **Punto de control**: no se hace merge a `main` si el guard de
-`lab/k6/lib/perfil.js` no rechaza una URL de `codebymike.tech`, o si la
+`lab/k6/lib/perfil.js` no rechaza una URL de `codebymike.net`, o si la
 migración no es reversible (columna nueva sin `NOT NULL` sin default).
 
 ## 5. Gestión preventiva de riesgos

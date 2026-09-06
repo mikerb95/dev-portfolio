@@ -14,7 +14,7 @@
 
 | Tema | Decisión |
 |---|---|
-| Ubicación | `/portal` dentro del mismo proyecto Astro (codebymike.tech). Migrable a subdominio después. |
+| Ubicación | `/portal` dentro del mismo proyecto Astro (codebymike.net). Migrable a subdominio después. |
 | Autenticación | Email + contraseña, con invitación previa (no hay registro abierto). Passkey opcional en fase posterior. |
 | Multi-usuario | **Multi-usuario con roles desde el MVP**: una empresa cliente puede tener N usuarios (`owner`, `member`, `billing`). |
 | Módulos MVP | Estado del proyecto, Finanzas y facturas, Comunicación/mensajes, Documentos y entregables. |

@@ -8,7 +8,7 @@
 ## 1. Objetivo
 
 Centralizar en el panel admin la documentación de ingeniería del portfolio
-(codebymike.tech) con el mismo rigor que un proyecto formal: requerimientos,
+(codebymike.net) con el mismo rigor que un proyecto formal: requerimientos,
 casos de uso, diagramas UML y un tablero kanban XP del propio proyecto,
 replicando el patrón ya probado en DobleYo (`IteracionesBoard`).
 

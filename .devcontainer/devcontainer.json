@@ -1,5 +1,5 @@
 {
-  "name": "codebymike.tech",
+  "name": "codebymike.net",
   "dockerComposeFile": "compose.yaml",
   "service": "app",
   "workspaceFolder": "/workspace",

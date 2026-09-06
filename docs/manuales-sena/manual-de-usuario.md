@@ -12,7 +12,7 @@
 | | | | |
 |---|---|---|---|
 | **Organismo** | SENA - Centro de Servicios Financieros, Regional Distrito Capital | | |
-| **Proyecto** | CodeByMike - Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
+| **Proyecto** | CodeByMike - Portafolio, Panel de Control y Portal de Clientes (codebymike.net) | | |
 | **Entregable** | Manual de Usuario | | |
 | **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software - Ficha 3114731 - Trimestre 7 | | |
 | **Versión/Edición** | 0100 | **Fecha Versión** | 03/08/2026 |
@@ -115,7 +115,7 @@ rechazada.
 
 Para iniciar sesión, el administrador debe:
 
-1. Navegar a `https://codebymike.tech/admin`. Al no existir sesión activa, el
+1. Navegar a `https://codebymike.net/admin`. Al no existir sesión activa, el
    sistema redirige automáticamente a la pantalla de acceso.
 2. Pulsar el botón **Continuar con GitHub**. El navegador se dirige al
    proveedor de identidad.
@@ -525,7 +525,7 @@ administrador; no es posible reutilizar el anterior.
 
 ### 2.8.2 Iniciar sesión y recuperar la contraseña
 
-El acceso se realiza en `https://codebymike.tech/portal/login` con correo y
+El acceso se realiza en `https://codebymike.net/portal/login` con correo y
 contraseña. Tras varios intentos fallidos consecutivos, la cuenta se bloquea
 temporalmente; un inicio de sesión correcto limpia el contador.
 

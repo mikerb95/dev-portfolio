@@ -27,7 +27,7 @@ está en el repo). Cero configuración.
 
 ## 2. dev.to - el más fácil y el de más valor SEO
 
-Cross-postea el artículo completo con `canonical_url` → codebymike.tech. Backlink
+Cross-postea el artículo completo con `canonical_url` → codebymike.net. Backlink
 de un dominio con autoridad, sin penalización por duplicado.
 
 1. Entra a https://dev.to/settings/extensions
@@ -116,7 +116,7 @@ Complementa a IndexNow (que Google no usa).
 1. https://console.cloud.google.com → crea un proyecto (o usa uno).
 2. Habilita **Web Search Indexing API**.
 3. Crea una **Service Account** → **Keys** → **Add key → JSON**. Descarga el JSON.
-4. En **Google Search Console** → tu propiedad codebymike.tech → Settings →
+4. En **Google Search Console** → tu propiedad codebymike.net → Settings →
    **Users and permissions** → añade el email de la service account
    (`...@...iam.gserviceaccount.com`) como **Owner**.
 5. Secret:

@@ -140,7 +140,7 @@ No hay tablas nuevas. `paymentEvents` registra igual que hoy.
   siguiendo el patrón de script vanilla de `/pay`.
 
 ### `/c/[code]` (pública)
-- Monto en grande, concepto, "Cobro de CodeByMike - codebymike.tech", botón **Pagar**
+- Monto en grande, concepto, "Cobro de CodeByMike - codebymike.net", botón **Pagar**
   (mismo estilo del checkout actual). Estados vencido/anulado/pagado con mensaje claro y
   contacto de WhatsApp para pedir un link nuevo.
 

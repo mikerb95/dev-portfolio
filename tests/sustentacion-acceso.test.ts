@@ -162,7 +162,7 @@ describe('cuándo ofrecer la clave en /login', () => {
   it('un callbackUrl absoluto no cuela', () => {
     // `esRutaDeSustentacion` compara rutas exactas, así que una URL completa
     // (aunque apunte a nuestro propio dominio) no abre este formulario.
-    expect(debeOfrecerClave('https://codebymike.tech/admin/sustentacion', 'x')).toBe(false)
+    expect(debeOfrecerClave('https://codebymike.net/admin/sustentacion', 'x')).toBe(false)
     expect(debeOfrecerClave('//evil.example/admin/sustentacion', 'x')).toBe(false)
   })
 

@@ -4,7 +4,7 @@
   "project": {
     "name": "CodeByMike - Portafolio + Panel de Control + Portal de Clientes + Laboratorio de Ingeniería",
     "repo": "https://github.com/mikerb95/dev-portfolio.git",
-    "production_url": "https://codebymike.tech",
+    "production_url": "https://codebymike.net",
     "stack_summary": "Astro 7.1.3 (SSR, output: server) + Turso/libSQL + Drizzle ORM 0.45.2 + Auth.js (@auth/core 0.37.4, GitHub OAuth) + Tailwind 4.2.4, desplegado en Vercel (adapter @astrojs/vercel 11.0.3). Sin frameworks de frontend adicionales: las únicas dependencias de UI son lenis, gsap, mermaid y reveal.js. Monitoreo, alertas, SLOs y observabilidad de seguridad son desarrollo propio.",
     "source": "package.json, README.md, CLAUDE.md, astro.config.mjs"
   },
@@ -1557,7 +1557,7 @@
       "target": "http://127.0.0.1:4400",
       "run_at": "2026-08-10T05:26:20.277Z",
       "command": "npm run db:up && npm run dev:carga  # en otra terminal\nk6 run lab/k6/carga.js",
-      "guardrails": "setup() aborta si /api/health reporta una base remota; objetivo() aborta contra codebymike.tech y dev-portfolio.vercel.app",
+      "guardrails": "setup() aborta si /api/health reporta una base remota; objetivo() aborta contra codebymike.net y dev-portfolio.vercel.app",
       "results": {
         "http_reqs_total": 5229,
         "http_reqs_per_s": 23.24,
@@ -1840,7 +1840,7 @@
       "target": "http://127.0.0.1:4400",
       "run_at": "2026-08-27T15:10:31.684Z",
       "command": "npm run db:up && npm run dev:carga  # en otra terminal\nk6 run lab/k6/estres.js",
-      "guardrails": "setup() aborta si /api/health reporta una base remota; objetivo() aborta contra codebymike.tech y dev-portfolio.vercel.app",
+      "guardrails": "setup() aborta si /api/health reporta una base remota; objetivo() aborta contra codebymike.net y dev-portfolio.vercel.app",
       "results": {
         "http_reqs_total": 20426,
         "http_reqs_per_s": 74.01,
@@ -2587,7 +2587,7 @@
         "name": "dev-portfolio",
         "projectId": "prj_vdfQibXACk3SvwYWEmKdEpZ4NaGh",
         "orgId": "team_GwKd4hurNRGdWHhXUHiQ9HeM",
-        "domain": "codebymike.tech",
+        "domain": "codebymike.net",
         "source": ".vercel/project.json"
       },
       "warning": "Existe un segundo proyecto llamado `portfolio` en la misma org que NO sirve el dominio. El nombre del directorio local coincide por accidente con el proyecto equivocado: confirmar .vercel/project.json antes de tocar variables de entorno. (CLAUDE.md)"
@@ -2819,8 +2819,8 @@
       ]
     },
     "domains_dns_tls": {
-      "domain": "codebymike.tech",
-      "site_config": "https://codebymike.tech (astro.config.mjs:8)",
+      "domain": "codebymike.net",
+      "site_config": "https://codebymike.net (astro.config.mjs:8)",
       "tls": "Gestionado por Vercel",
       "hsts": "max-age=63072000; includeSubDomains; preload (src/middleware.ts:521)",
       "dns_registrar": null,
@@ -3114,7 +3114,7 @@
           "por_que_importa": "Monitoreo, SLOs y observabilidad de seguridad son desarrollo propio, no un SaaS."
         }
       ],
-      "plan_b": "Si no hay tiempo de levantar el stack, las cuatro rutas públicas (/demo, /status, /security, /lab) están en vivo en codebymike.tech y no requieren login.",
+      "plan_b": "Si no hay tiempo de levantar el stack, las cuatro rutas públicas (/demo, /status, /security, /lab) están en vivo en codebymike.net y no requieren login.",
       "advertencia": "No proyectar dentro de un iframe: frame-ancestors 'none' lo impide (ver demo.iframe_embebible)."
     }
   },
@@ -3283,7 +3283,7 @@
       "field": "deployment.region",
       "blocking": "bajo",
       "why": "No hay `regions` declarado en vercel.json ni en astro.config.mjs; la región es la del proyecto en el panel de Vercel, que no está versionada.",
-      "how_to_fill": "curl -s https://codebymike.tech/api/health | jq .region, o mirarlo en Vercel → Project Settings → Functions."
+      "how_to_fill": "curl -s https://codebymike.net/api/health | jq .region, o mirarlo en Vercel → Project Settings → Functions."
     },
     {
       "field": "deployment.ci_cd.workflows[].jobs[].typical_duration",

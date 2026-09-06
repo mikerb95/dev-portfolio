@@ -4,7 +4,7 @@
 > vigentes viven tipados en
 > [`src/data/documentacion.ts`](../src/data/documentacion.ts) (clasificados por
 > las categorías de ISO/IEC 25010) y se publican en
-> [`/docs/requerimientos-no-funcionales`](https://codebymike.tech/docs/requerimientos-no-funcionales).
+> [`/docs/requerimientos-no-funcionales`](https://codebymike.net/docs/requerimientos-no-funcionales).
 > Se conserva como registro del alcance inicial.
 
 ## RNF-01 - Rendimiento

@@ -30,7 +30,7 @@ function cookiesFalsas() {
 }
 
 async function llamar(body: unknown, cookies = cookiesFalsas()) {
-  const request = new Request('https://codebymike.tech/api/sustentacion/acceso', {
+  const request = new Request('https://codebymike.net/api/sustentacion/acceso', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-forwarded-for': '203.0.113.7' },
     body: JSON.stringify(body),

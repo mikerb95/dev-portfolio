@@ -23,7 +23,7 @@ vi.mock('../src/lib/email', () => ({
   sendNotificationEmail: vi.fn(async () => ({ ok: true })),
   sendMail: vi.fn(async () => ({ ok: true })),
   emailConfigured: () => false,
-  SITE_URL: 'https://codebymike.tech',
+  SITE_URL: 'https://codebymike.net',
   escapeHtml: (s: string) => s,
   renderEmail: () => '',
   renderText: () => '',

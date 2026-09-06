@@ -1,4 +1,4 @@
-# Plan de Implantación - Portfolio CodeByMike (codebymike.tech)
+# Plan de Implantación - Portfolio CodeByMike (codebymike.net)
 
 > **Producto**: puesta en operación controlada del sistema Portfolio +
 > Panel de control + Portal de clientes + Módulo LAB.
@@ -19,7 +19,7 @@ las tres cosas.
 | Elemento | Descripción |
 |---|---|
 | Nombre | Portfolio CodeByMike |
-| Dominio productivo | `codebymike.tech` |
+| Dominio productivo | `codebymike.net` |
 | Tipo | Aplicación web SSR multi-módulo (público + privado + portal de clientes) |
 | Stack | Astro 7 (SSR) · Turso/libSQL · Drizzle ORM · Auth.js (GitHub OAuth) · Tailwind 4 |
 | Hosting | Vercel (proyecto `dev-portfolio` bajo la org `codebymike`) |
@@ -59,7 +59,7 @@ Reglas de ambiente:
 - [ ] Base Turso principal y base Turso demo creadas y accesibles.
 - [ ] Migraciones Drizzle aplicadas (`npx drizzle-kit migrate`).
 - [ ] Variables de entorno cargadas en Vercel (ver §8.1).
-- [ ] Dominio `codebymike.tech` apuntando al proyecto `dev-portfolio`, TLS y HSTS activos.
+- [ ] Dominio `codebymike.net` apuntando al proyecto `dev-portfolio`, TLS y HSTS activos.
 - [ ] Crons dados de alta en cron-job.org con `CRON_SECRET`.
 - [ ] Canal ntfy suscrito en el móvil del responsable.
 - [ ] `npm test`, `npx astro check` y `npm run build` en verde.
@@ -72,7 +72,7 @@ Reglas de ambiente:
 
 | # | Ítem | Criterio de terminado |
 |---|---|---|
-| A-01 | Despliegue del sitio público en `codebymike.tech` | Home, `/notes`, `/tools`, `/status`, `/docs` responden 200 y con caché `s-maxage=300` |
+| A-01 | Despliegue del sitio público en `codebymike.net` | Home, `/notes`, `/tools`, `/status`, `/docs` responden 200 y con caché `s-maxage=300` |
 | A-02 | Panel admin operativo con GitHub OAuth + allowlist | Login exitoso solo con logins de `ALLOWED_GITHUB_LOGINS`; el resto recibe 404 |
 | A-03 | Bóveda de secretos cifrada (AES-256-GCM) | Ningún secreto aparece en listados ni en el HTML SSR; solo por endpoint de revelado |
 | A-04 | Portal de clientes en producción | Cliente entra, ve solo sus proyectos y facturas; `tests/portal-isolation.test.ts` en verde |
@@ -132,7 +132,7 @@ continuidad del servicio y la confidencialidad de los datos de clientes.
 
 | ID | Entregable | Formato | Verificación |
 |---|---|---|---|
-| E-01 | Aplicación desplegada en producción | URL `codebymike.tech` | Smoke test §7.3 |
+| E-01 | Aplicación desplegada en producción | URL `codebymike.net` | Smoke test §7.3 |
 | E-02 | Base de datos migrada | Migraciones `drizzle/00XX_*.sql` aplicadas | `drizzle-kit migrate` sin pendientes |
 | E-03 | Variables de entorno productivas | Vercel env (Production) | `vercel env ls` y arranque sin warnings |
 | E-04 | Crons externos activos | cron-job.org | Ejecución exitosa con `Bearer CRON_SECRET` |

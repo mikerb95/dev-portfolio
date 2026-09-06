@@ -8,7 +8,7 @@ import {
   type Espejo,
 } from '../src/lib/presentacion/espejo'
 
-const BASE = 'https://codebymike.tech'
+const BASE = 'https://codebymike.net'
 const esp = (p: Partial<Espejo> = {}): Espejo => ({
   pos: 14,
   href: `${BASE}/portal`,

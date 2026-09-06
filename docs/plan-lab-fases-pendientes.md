@@ -38,7 +38,7 @@ concurrentes) con gráficas p50/p95/p99, y contar la historia de "cómo se compo
 el sistema cuando lo aprietan". Casi nadie a nivel tecnólogo lo hace.
 
 ### ⚠️ Restricción de costo (crítica)
-La carga **NUNCA** va contra `codebymike.tech` (producción):
+La carga **NUNCA** va contra `codebymike.net` (producción):
 - Vercel factura por invocación + CPU activa; 1000 VUs contra prod = costo real + posible bloqueo del WAF/BotID.
 - Turso tiene límite de filas leídas/escritas en el plan gratuito.
 
@@ -133,7 +133,7 @@ El job de k6 es **manual** (`workflow_dispatch`), nunca en cada push.
 7. **Workflow** `.github/workflows/load-test.yml`:
    - `workflow_dispatch` con inputs `target_url` y `max_vus`.
    - Instala k6 (`grafana/setup-k6-action` o binario), corre los scripts, sube el summary a la ingesta.
-   - Guard: rechaza si `target_url` contiene `codebymike.tech`.
+   - Guard: rechaza si `target_url` contiene `codebymike.net`.
 
 ### Cómo se corre en la demo
 Opción A (recomendada, sin gastar en CI): correr k6 **localmente** contra un
@@ -289,7 +289,7 @@ necesita un target de preview estable que sigue sin existir.
 - ~~**Llaves Wompi reales** (Fase 2)~~: ✅ `WOMPI_PUBLIC_KEY`,
   `WOMPI_INTEGRITY_SECRET` y `WOMPI_EVENTS_SECRET` están en Vercel (Production)
   desde el 16 jul 2026. Falta confirmar el registro del webhook
-  `https://codebymike.tech/api/payments/webhook` en el panel de Wompi y hacer un
+  `https://codebymike.net/api/payments/webhook` en el panel de Wompi y hacer un
   cobro real de punta a punta.
 - **Dashboard `/admin` consolidado**: tarjetas resumen que ya tienen datos
   (badge CI, cobertura, SLO/error budget, último mutation score) en la portada del panel

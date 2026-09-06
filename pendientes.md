@@ -13,7 +13,7 @@
 
 ## 1. Variables de entorno faltantes en producción
 
-Estado real de `dev-portfolio` (proyecto de Vercel que sirve `codebymike.tech`)
+Estado real de `dev-portfolio` (proyecto de Vercel que sirve `codebymike.net`)
 consultado el 24 jul 2026. **Todo lo que falta degrada en silencio** - ese es el
 diseño, pero conviene saber qué está apagado:
 
@@ -61,7 +61,7 @@ base de archivo, dos corridas seguidas.
       Fase 5 (load testing con k6) no tiene un target de preview estable contra
       el que correr.
 - [ ] **Cron `security-rollup` en cron-job.org** - `GET
-      https://codebymike.tech/api/cron/security-rollup` con header
+      https://codebymike.net/api/cron/security-rollup` con header
       `Authorization: Bearer <CRON_SECRET>`, **cada 15 min** (`5,20,35,50 * * * *`).
 
       Es el único disparador de seis tareas del micro-SIEM (verificado por grep:
@@ -156,7 +156,7 @@ Los dos puntos de higiene del mismo plan ya están cubiertos:
 Dado de alta con `node scripts/register-portal-monitor.mjs` **después** de que
 el endpoint estuviera desplegado - ese orden importa: al revés, el primer
 chequeo habría dado 404 → caída → incidente y push a ntfy por un servicio sano.
-Verificado que `https://codebymike.tech/api/portal/health` responde 200 con el
+Verificado que `https://codebymike.net/api/portal/health` responde 200 con el
 `"ok":true` que el monitor espera.
 
 Al hacerlo aparecieron **dos** monitores del portal: otra sesión ya había creado

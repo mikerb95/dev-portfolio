@@ -5,7 +5,7 @@ describe('parseCspReports · formato legacy (application/csp-report)', () => {
   it('extrae los campos relevantes', () => {
     const body = {
       'csp-report': {
-        'document-uri': 'https://codebymike.tech/projects/x?ref=y',
+        'document-uri': 'https://codebymike.net/projects/x?ref=y',
         'violated-directive': "script-src 'self'",
         'blocked-uri': 'https://evil.example/script.js',
         disposition: 'enforce',
@@ -27,8 +27,8 @@ describe('parseCspReports · formato legacy (application/csp-report)', () => {
 describe('parseCspReports · Reporting API (application/reports+json)', () => {
   it('extrae varios reportes csp-violation de un array', () => {
     const body = [
-      { type: 'csp-violation', url: 'https://codebymike.tech/status', body: { effectiveDirective: 'img-src', blockedURL: 'https://x.test/a.png', disposition: 'enforce' } },
-      { type: 'deprecation', url: 'https://codebymike.tech/x' }, // debe ignorarse
+      { type: 'csp-violation', url: 'https://codebymike.net/status', body: { effectiveDirective: 'img-src', blockedURL: 'https://x.test/a.png', disposition: 'enforce' } },
+      { type: 'deprecation', url: 'https://codebymike.net/x' }, // debe ignorarse
     ]
     const out = parseCspReports(body)
     expect(out).toHaveLength(1)

@@ -10,7 +10,7 @@ import { createMemoryStore, __setPresentStore } from '../src/lib/present/store'
 import { GET, POST } from '../src/pages/api/presentacion'
 import { POS_INICIAL } from '../src/lib/presentacion/estado'
 
-const BASE = 'https://codebymike.tech'
+const BASE = 'https://codebymike.net'
 
 beforeEach(() => {
   __setPresentStore(createMemoryStore())

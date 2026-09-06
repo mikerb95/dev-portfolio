@@ -167,8 +167,8 @@ describe('los atajos de las páginas vivas', () => {
   it('resuelve contra la URL viva, no contra el origen de esta ventana', () => {
     // En local el mazo enmarca producción: un atajo relativo a localhost
     // llevaría a una página que no existe.
-    expect(destinoAtajo('https://codebymike.tech/portal/facturas', '/status')).toBe(
-      'https://codebymike.tech/status'
+    expect(destinoAtajo('https://codebymike.net/portal/facturas', '/status')).toBe(
+      'https://codebymike.net/status'
     )
   })
 
@@ -178,9 +178,9 @@ describe('los atajos de las páginas vivas', () => {
 
   it('todos los atajos resuelven y ninguno es absoluto a un dominio ajeno', () => {
     for (const a of ATAJOS) {
-      const url = destinoAtajo('https://codebymike.tech/portal/login', a.href)
+      const url = destinoAtajo('https://codebymike.net/portal/login', a.href)
       expect(url).not.toBeNull()
-      expect(new URL(url as string).origin).toBe('https://codebymike.tech')
+      expect(new URL(url as string).origin).toBe('https://codebymike.net')
     }
   })
 

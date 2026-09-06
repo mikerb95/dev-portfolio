@@ -8,12 +8,12 @@ import {
 
 describe('extractDomain', () => {
   it('extrae el dominio registrable de URLs completas', () => {
-    expect(extractDomain('https://codebymike.tech/about?x=1')).toBe('codebymike.tech')
+    expect(extractDomain('https://codebymike.net/about?x=1')).toBe('codebymike.net')
     expect(extractDomain('http://www.dobleyo.cafe:8080/menu')).toBe('dobleyo.cafe')
   })
 
   it('maneja texto libre con el dominio adentro', () => {
-    expect(extractDomain('Dominio codebymike.tech (Namecheap)')).toBe('codebymike.tech')
+    expect(extractDomain('Dominio codebymike.net (Namecheap)')).toBe('codebymike.net')
   })
 
   it('reduce subdominios al eTLD+1', () => {
@@ -84,26 +84,26 @@ describe('fetchDomainExpiry (RDAP, fetch mockeado)', () => {
         { eventAction: 'expiration', eventDate: '2027-01-07T05:00:00Z' },
       ]),
     ))
-    const d = await fetchDomainExpiry('https://codebymike.tech')
+    const d = await fetchDomainExpiry('https://codebymike.net')
     expect(d?.toISOString()).toBe('2027-01-07T05:00:00.000Z')
   })
 
   it('devuelve null si RDAP responde error, sin eventos o con fecha inválida', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 404 })))
-    expect(await fetchDomainExpiry('codebymike.tech')).toBeNull()
+    expect(await fetchDomainExpiry('codebymike.net')).toBeNull()
 
     vi.stubGlobal('fetch', vi.fn(async () => rdapResponse([])))
-    expect(await fetchDomainExpiry('codebymike.tech')).toBeNull()
+    expect(await fetchDomainExpiry('codebymike.net')).toBeNull()
 
     vi.stubGlobal('fetch', vi.fn(async () =>
       rdapResponse([{ eventAction: 'expiration', eventDate: 'no-es-fecha' }]),
     ))
-    expect(await fetchDomainExpiry('codebymike.tech')).toBeNull()
+    expect(await fetchDomainExpiry('codebymike.net')).toBeNull()
   })
 
   it('devuelve null si la red falla (nunca lanza)', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('ECONNRESET') }))
-    expect(await fetchDomainExpiry('codebymike.tech')).toBeNull()
+    expect(await fetchDomainExpiry('codebymike.net')).toBeNull()
   })
 
   it('devuelve null sin llamar a la red si el input no tiene dominio', async () => {

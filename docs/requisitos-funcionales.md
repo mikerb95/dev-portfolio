@@ -3,7 +3,7 @@
 > ⚠️ **Este archivo es una instantánea histórica (mayo 2026), no la fuente de
 > verdad.** Los requisitos vigentes viven tipados en
 > [`src/data/documentacion.ts`](../src/data/documentacion.ts) y se publican en
-> [`/docs/requerimientos-funcionales`](https://codebymike.tech/docs/requerimientos-funcionales),
+> [`/docs/requerimientos-funcionales`](https://codebymike.net/docs/requerimientos-funcionales),
 > donde cada requisito lleva además su estado, dónde vive en el código (`origen`)
 > y cómo se comprueba (`verificacion`).
 >

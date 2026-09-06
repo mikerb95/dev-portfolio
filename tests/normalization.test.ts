@@ -102,10 +102,10 @@ describe('normalizeServiceInput', () => {
 
 describe('normalizeTarget (diagnósticos)', () => {
   it('asume https cuando falta el esquema', () => {
-    const t = normalizeTarget('codebymike.tech/ruta?x=1')
-    expect(t?.origin).toBe('https://codebymike.tech')
-    expect(t?.hostname).toBe('codebymike.tech')
-    expect(t?.domain).toBe('codebymike.tech')
+    const t = normalizeTarget('codebymike.net/ruta?x=1')
+    expect(t?.origin).toBe('https://codebymike.net')
+    expect(t?.hostname).toBe('codebymike.net')
+    expect(t?.domain).toBe('codebymike.net')
   })
 
   it('deriva el dominio registrable de subdominios', () => {

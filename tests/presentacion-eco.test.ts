@@ -16,7 +16,7 @@ import {
 const eco = (p: Partial<Eco> = {}): Eco => ({
   pos: 23,
   seq: 3,
-  estado: { valor: 'codebymike.tech', res: [] },
+  estado: { valor: 'codebymike.net', res: [] },
   ...p,
 })
 

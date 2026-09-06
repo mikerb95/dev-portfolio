@@ -12,7 +12,7 @@
 | | | | |
 |---|---|---|---|
 | **Organismo** | SENA - Centro de Servicios Financieros, Regional Distrito Capital | | |
-| **Proyecto** | CodeByMike - Portafolio, Panel de Control y Portal de Clientes (codebymike.tech) | | |
+| **Proyecto** | CodeByMike - Portafolio, Panel de Control y Portal de Clientes (codebymike.net) | | |
 | **Entregable** | Manual Técnico | | |
 | **Autor** | Michael David Rodríguez Beltran<br>Análisis y Desarrollo de Software - Ficha 3114731 - Trimestre 7 | | |
 | **Versión/Edición** | 0100 | **Fecha Versión** | 03/08/2026 |
@@ -56,7 +56,7 @@
 # 1. PROPÓSITO
 
 Este documento describe la construcción interna del sistema publicado en
-`codebymike.tech`: sus módulos, sus interfaces, su modelo de datos, su despliegue
+`codebymike.net`: sus módulos, sus interfaces, su modelo de datos, su despliegue
 y los procedimientos técnicos necesarios para operarlo y mantenerlo.
 
 Está dirigido a personal técnico (desarrollo y operación) que deba intervenir el

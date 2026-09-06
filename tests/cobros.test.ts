@@ -170,16 +170,16 @@ describe('maskAmount', () => {
 describe('buildWhatsAppMessage', () => {
   const base = {
     amountCents: 15_000_000,
-    payUrl: 'https://codebymike.tech/c/AB3K9F',
-    historyUrl: 'https://codebymike.tech/mis-pagos?r=abc&t=def',
+    payUrl: 'https://codebymike.net/c/AB3K9F',
+    historyUrl: 'https://codebymike.net/mis-pagos?r=abc&t=def',
     expiresAt: new Date('2026-07-18T15:00:00Z'),
   }
 
   it('incluye monto, link de pago e historial', () => {
     const msg = buildWhatsAppMessage(base)
     expect(msg).toContain('$150.000')
-    expect(msg).toContain('https://codebymike.tech/c/AB3K9F')
-    expect(msg).toContain('https://codebymike.tech/mis-pagos?r=abc&t=def')
+    expect(msg).toContain('https://codebymike.net/c/AB3K9F')
+    expect(msg).toContain('https://codebymike.net/mis-pagos?r=abc&t=def')
     expect(msg).toContain('CodeByMike')
   })
 

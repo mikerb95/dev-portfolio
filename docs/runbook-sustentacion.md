@@ -126,7 +126,7 @@ la base de datos, ni GitHub, ni Redis.**
 cadena que no puede autorizarse con los PINes, porque es justamente lo que los
 acuña. Para no depender de GitHub tampoco ahí, hay una puerta por contraseña:
 
-    https://codebymike.tech/sustentacion/entrar
+    https://codebymike.net/sustentacion/entrar
 
 La contraseña vive en la variable de entorno **`SUSTENTACION_PASSWORD`**
 (configurada en Production). Al acertarla deja una cookie de 12 horas y lleva
@@ -363,7 +363,7 @@ No hay que cambiar nada a mano. El camino es automático:
 
 Verificarlo por adelantado:
 ```bash
-curl -s https://codebymike.tech/api/health | grep -o '"ok":[a-z]*'
+curl -s https://codebymike.net/api/health | grep -o '"ok":[a-z]*'
 npm run sustentacion:check   # el ítem "Modo respaldo del portal" confirma si cubre
 ```
 
