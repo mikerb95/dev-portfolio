@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 import auth from 'auth-astro';
 import staticHeaders from './integrations/static-headers.mjs';
+import canonicalRedirect from './integrations/canonical-redirect.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -40,7 +41,7 @@ export default defineConfig({
   },
   // staticHeaders va al final: reescribe el config.json que el adaptador de
   // Vercel acaba de generar, así que tiene que correr después de él.
-  integrations: [auth(), staticHeaders()],
+  integrations: [auth(), staticHeaders(), canonicalRedirect()],
   vite: {
     plugins: [tailwindcss()]
   },

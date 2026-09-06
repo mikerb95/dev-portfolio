@@ -24,15 +24,20 @@ export const HOST_CANONICO = 'codebymike.net'
 /**
  * Hosts que deben mandar a producción. `www` del dominio nuevo incluido: no
  * queremos dos URLs indexables del mismo contenido.
+ *
+ * Se exporta porque integrations/canonical-redirect.mjs la reutiliza para
+ * inyectar el mismo redirect en el CDN: una página prerenderizada es un archivo
+ * que sirve el borde sin invocar jamás la función, así que este módulo solo
+ * cubre lo que pasa por el middleware. Misma lista, dos capas, nunca dos copias.
  */
-const HOSTS_A_REDIRIGIR = new Set([
+export const HOSTS_A_REDIRIGIR = new Set([
   'codebymike.tech',
   'www.codebymike.tech',
   'www.codebymike.net',
 ])
 
 /** Prefijos que NUNCA se redirigen (ver cabecera). */
-const EXENTOS = ['/api/', '/_']
+export const EXENTOS = ['/api/', '/_']
 
 export type EntradaCanonica = {
   host: string | null | undefined

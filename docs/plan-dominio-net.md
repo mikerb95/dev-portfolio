@@ -23,6 +23,16 @@ alcanza también a `/api/*`, y ahí un 308 rompe tres cosas en silencio:
 las integraciones que aún llaman al `.tech` siguen funcionando sin tocarlas,
 mientras personas y crawlers acaban siempre en `.net`.
 
+**Y hace falta en dos capas.** El middleware no ve las páginas
+prerenderizadas: son archivos que sirve el CDN sin invocar la función. Con solo
+el middleware, el dominio viejo redirigía `/` y `/status` pero seguía sirviendo
+`/docs`, `/notes`, `/pay`, `/log` y otras 43 páginas como copia indexable
+(verificado en producción: `codebymike.tech/docs` respondía 200). Por eso
+`integrations/canonical-redirect.mjs` inyecta el mismo redirect en
+`.vercel/output/config.json`, antes de `handle: filesystem`, reutilizando la
+lista de hosts del módulo. Es el mismo agujero, y la misma solución, que
+`integrations/static-headers.mjs` para las cabeceras de seguridad.
+
 **Un solo literal del dominio.** `src/lib/site.ts` (`SITE_ORIGIN`, `siteUrl()`)
 concentra el origen para todo lo que arma enlaces **fuera** de un request:
 correos, alertas ntfy, IndexNow, PDFs y los fallbacks de `Astro.site`. Lo que sí
