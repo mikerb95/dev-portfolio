@@ -115,6 +115,51 @@ const en = {
       siem: 'classified by the SIEM · {dias} d',
       crons: 'green cron runs · 24 h',
       lcp: 'p75 LCP · 24 h',
+      paneles: {
+        sinDatos: 'no data',
+        haceDias: '{n} d ago',
+        hoy: 'today',
+        hace24h: '24 h ago',
+        ahora: 'now',
+        corridasHora: '{ok}/{total} green',
+        objetivo: '99.50%',
+        tramosLcp: ['< 1 s', '1-1.8 s', '1.8-2.5 s', '2.5-4 s', '> 4 s'],
+        uptime: {
+          titulo: 'Daily availability · {dias} days',
+          descripcion:
+            'Successful probes over each day total. A gap is not a perfect day: it is drawn as a gap.',
+          fuente: 'daily summary closed by the rollup cron, not the raw probe table',
+          resumen: ['worst day', 'perfect days', 'target'],
+        },
+        sondeos: {
+          titulo: 'Probes run · {dias} days',
+          descripcion:
+            'Every active monitor is called from outside, recording the response code and latency.',
+          fuente: 'external crons hitting the declared public endpoints',
+          resumen: ['probes', 'daily average', 'busiest day'],
+        },
+        siem: {
+          titulo: 'Hostile traffic classified · {dias} days',
+          descripcion:
+            'Requests the in-house classifier flagged as scanning, injection or abuse, grouped by day.',
+          fuente: 'micro-SIEM classifier in the middleware, aggregates only',
+          resumen: ['events', 'busiest day', 'daily average'],
+        },
+        crons: {
+          titulo: 'Automations · last 24 h',
+          descripcion:
+            'Every run is logged with its duration. An hour with a single failure is drawn red in full.',
+          fuente: 'run log, the same one /automatizaciones publishes',
+          resumen: ['failed', 'per hour', 'busiest hour'],
+        },
+        lcp: {
+          titulo: 'LCP distribution · last 24 h',
+          descripcion:
+            'How long the main element took to paint, on real visits. The cuts are the Web Vitals thresholds.',
+          fuente: "measured in the visitor's browser, not in a lab",
+          resumen: ['p50', 'p95', 'samples'],
+        },
+      },
     },
     bento: {
       sectionLabel: 'What I do',

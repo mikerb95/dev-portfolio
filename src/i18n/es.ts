@@ -115,6 +115,54 @@ const es = {
       siem: 'clasificados por el SIEM · {dias} d',
       crons: 'crons en verde · 24 h',
       lcp: 'p75 LCP · 24 h',
+      // Panel que se despliega al apuntar una señal: la serie que hay detrás
+      // de la cifra. `fuente` dice de dónde sale el dato sin nombrar tablas ni
+      // rutas internas (misma regla OPSEC que /status y /security).
+      paneles: {
+        sinDatos: 'sin datos',
+        haceDias: 'hace {n} d',
+        hoy: 'hoy',
+        hace24h: 'hace 24 h',
+        ahora: 'ahora',
+        corridasHora: '{ok}/{total} en verde',
+        objetivo: '99,50%',
+        tramosLcp: ['< 1 s', '1-1,8 s', '1,8-2,5 s', '2,5-4 s', '> 4 s'],
+        uptime: {
+          titulo: 'Disponibilidad diaria · {dias} días',
+          descripcion:
+            'Sondeos correctos sobre el total de cada día. Un hueco no es un día perfecto: se pinta como hueco.',
+          fuente: 'resumen diario que cierra el cron de rollup, no la tabla de sondeos en crudo',
+          resumen: ['peor día', 'días perfectos', 'objetivo'],
+        },
+        sondeos: {
+          titulo: 'Sondeos ejecutados · {dias} días',
+          descripcion:
+            'Cada monitor activo se consulta desde fuera y anota el código y la latencia de la respuesta.',
+          fuente: 'crons externos contra los endpoints públicos declarados',
+          resumen: ['sondeos', 'media diaria', 'día más alto'],
+        },
+        siem: {
+          titulo: 'Tráfico hostil clasificado · {dias} días',
+          descripcion:
+            'Peticiones que el clasificador propio marcó como sondeo, inyección o abuso, agrupadas por día.',
+          fuente: 'clasificador del micro-SIEM en el middleware, solo agregados',
+          resumen: ['eventos', 'día más movido', 'media diaria'],
+        },
+        crons: {
+          titulo: 'Automatizaciones · últimas 24 h',
+          descripcion:
+            'Cada corrida deja constancia con su duración. Una hora con un solo fallo se pinta en rojo entera.',
+          fuente: 'bitácora de ejecuciones, la misma que publica /automatizaciones',
+          resumen: ['fallidas', 'por hora', 'hora más activa'],
+        },
+        lcp: {
+          titulo: 'Reparto de LCP · últimas 24 h',
+          descripcion:
+            'Lo que tardó en pintarse el elemento principal, en visitas reales. Los cortes son los umbrales de Web Vitals.',
+          fuente: 'medición en el navegador de quien visita, no un laboratorio',
+          resumen: ['p50', 'p95', 'muestras'],
+        },
+      },
     },
     bento: {
       sectionLabel: 'Qué hago',
