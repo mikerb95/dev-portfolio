@@ -24,6 +24,7 @@ type Event =
   | { kind: 'down'; name: string; error: string }
   | { kind: 'recovery'; name: string; downSec: number }
   | { kind: 'ssl'; name: string; days: number }
+  | { kind: 'cron'; texto: string }
 
 const fmtDuration = (sec: number) => {
   if (sec < 60) return `${sec}s`
