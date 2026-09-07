@@ -5,7 +5,9 @@ import { describe, expect, it, vi } from 'vitest'
 // aritmética que convierte muestras crudas en la cifra que la portada afirma.
 vi.mock('../src/db', () => ({ db: {} }))
 
-const { percentil, truncar } = await import('../src/lib/pulso-publico')
+const { percentil, truncar, rellenarDias, agruparHoras, histograma } = await import(
+  '../src/lib/pulso-publico'
+)
 
 describe('percentil', () => {
   it('sin muestras no inventa un cero', () => {
@@ -58,5 +60,92 @@ describe('truncar', () => {
 
   it('con cero decimales devuelve el entero inferior', () => {
     expect(truncar(9.87, 0)).toBe(9)
+  })
+})
+
+describe('rellenarDias', () => {
+  const AHORA = Date.UTC(2026, 8, 7, 15, 0, 0) // 7 sep 2026
+
+  it('devuelve la ventana completa aunque solo haya una fila', () => {
+    const serie = rellenarDias([{ dia: '2026-09-07', valor: 1, total: 100 }], AHORA, 30)
+    expect(serie).toHaveLength(30)
+    expect(serie[29].dia).toBe('2026-09-07')
+    expect(serie[0].dia).toBe('2026-08-09')
+  })
+
+  it('marca como hueco los días sin fila, no como cero', () => {
+    // Un día sin sondeos no es un día al 0% ni al 100%: es un día sin datos, y
+    // solo `null` deja que el panel lo pinte como el agujero que fue.
+    const serie = rellenarDias([{ dia: '2026-09-07', valor: 1, total: 100 }], AHORA, 3)
+    expect(serie.map((d) => d.valor)).toEqual([null, null, 1])
+    expect(serie.map((d) => d.total)).toEqual([0, 0, 100])
+  })
+
+  it('ordena del más antiguo al más reciente pese al orden de entrada', () => {
+    const serie = rellenarDias(
+      [
+        { dia: '2026-09-07', valor: 3, total: 3 },
+        { dia: '2026-09-05', valor: 1, total: 1 },
+        { dia: '2026-09-06', valor: 2, total: 2 },
+      ],
+      AHORA,
+      3,
+    )
+    expect(serie.map((d) => d.valor)).toEqual([1, 2, 3])
+  })
+
+  it('ignora filas fuera de la ventana', () => {
+    const serie = rellenarDias([{ dia: '2026-01-01', valor: 1, total: 9 }], AHORA, 3)
+    expect(serie.every((d) => d.valor === null)).toBe(true)
+  })
+})
+
+describe('agruparHoras', () => {
+  const AHORA = Date.UTC(2026, 8, 7, 15, 30, 0)
+  const H = 3_600_000
+
+  it('la última casilla es la hora en curso', () => {
+    const serie = agruparHoras([{ at: AHORA - 60_000, ok: true }], AHORA, 24)
+    expect(serie).toHaveLength(24)
+    expect(serie[23].total).toBe(1)
+    expect(serie[23].hora).toBe(0)
+  })
+
+  it('reparte por distancia a ahora, no por hora del reloj', () => {
+    const serie = agruparHoras(
+      [
+        { at: AHORA - 30 * 60_000, ok: true },
+        { at: AHORA - 2.5 * H, ok: false },
+        { at: AHORA - 2.1 * H, ok: true },
+      ],
+      AHORA,
+      24,
+    )
+    expect(serie[23].total).toBe(1)
+    expect(serie[21].total).toBe(2)
+    expect(serie[21].ok).toBe(1)
+  })
+
+  it('descarta lo que cae fuera de la ventana en vez de amontonarlo en el borde', () => {
+    // Amontonar lo viejo en la primera casilla inventaría un pico que no
+    // existió a esa hora.
+    const serie = agruparHoras([{ at: AHORA - 40 * H, ok: true }], AHORA, 24)
+    expect(serie.reduce((n, c) => n + c.total, 0)).toBe(0)
+  })
+})
+
+describe('histograma', () => {
+  it('reparte por los umbrales de Web Vitals', () => {
+    const conteo = histograma([500, 900, 1200, 2000, 3000, 5000], [1000, 1800, 2500, 4000])
+    expect(conteo).toEqual([2, 1, 1, 1, 1])
+  })
+
+  it('el valor igual al corte cae en el tramo superior', () => {
+    // El umbral de Web Vitals es "hasta 2,5 s es bueno": 2500 exacto ya no lo es.
+    expect(histograma([2500], [1000, 1800, 2500, 4000])).toEqual([0, 0, 0, 1, 0])
+  })
+
+  it('sin muestras devuelve todos los tramos a cero', () => {
+    expect(histograma([], [1000, 2500])).toEqual([0, 0, 0])
   })
 })
