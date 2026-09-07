@@ -136,12 +136,20 @@ async function runCheck() {
   // 6c) Salas del LAB de fingerprinting: purga las vencidas (≤2h de vida).
   await sweepFpRooms(now).catch((e) => console.error('[uptime-check] sweepFpRooms', e))
 
+  // 6d) Crons en silencio: el vigilante de la bitácora viaja aquí porque este
+  // es el único cron con DOS disparadores independientes (Vercel a diario y
+  // cron-job.org cada 5 min). Si uno de los dos se cae, el otro sigue trayendo
+  // al vigilante, incluido el caso de que lo caído sea este mismo cron - un
+  // detector de silencio que solo corre cuando todo va bien no detecta nada.
+  const silencios = await silenciosPorAvisar(now)
+  for (const s of silencios) events.push({ kind: 'cron', texto: describirSilencio(s) })
+
   // 7) Notificar (solo transiciones, no cada sondeo).
   if (events.length === 0) {
     return { ok: true, monitors: rows.length, events: 0 }
   }
   await notify(events)
-  return { ok: true, monitors: rows.length, events: events.length }
+  return { ok: true, monitors: rows.length, events: events.length, cronsEnSilencio: silencios.length }
 }
 
 async function notify(events: Event[]) {
