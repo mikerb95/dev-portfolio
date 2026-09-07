@@ -56,6 +56,50 @@ base de archivo, dos corridas seguidas.
 
 ## 2. Acciones manuales fuera del repo
 
+### 🔴 Dominio: renovar `codebymike.tech` (vence 6 sep 2026, 23:59:59 UTC)
+
+Consultado por RDAP el 6 sep 2026: registrador **Namify** (no Vercel, por eso no
+aparece fecha en el panel), estado `client transfer prohibited`. Ya está cargado
+en `project_services` id 5 para que el cron de dominios avise, que hasta ahora no
+podía porque `renewal_date` estaba en NULL.
+
+`codebymike.net` es el sitio desde el 5 sep 2026, pero el `.tech` **no es
+prescindible**: es el que sostiene todo lo publicado antes del cambio.
+
+- [ ] **Renovar el `.tech`** (mínimo un año). Lo que se pierde si caduca:
+      enlaces y QR ya impresos que nadie puede editar, la consolidación SEO (los
+      308 tienen que seguir vivos meses para que Google traslade la autoridad al
+      dominio nuevo), cualquier buzón `@codebymike.tech` (su DNS tiene
+      `v=spf1 include:spf.titan.email`), y el propio nombre: tras el periodo de
+      gracia queda libre para que lo registre un tercero con la marca puesta y
+      heredando los backlinks.
+- [ ] Si la decisión es soltarlo, hacerlo **después** de la consolidación SEO y
+      habiendo migrado antes los buzones y cualquier cuenta registrada con una
+      dirección `@codebymike.tech`.
+
+### Resto del cambio de dominio
+
+- [ ] **Callback de GitHub OAuth** → `https://codebymike.net/api/auth/callback/github`
+      (y *Homepage URL* → `https://codebymike.net`). No se puede verificar desde
+      fuera: GitHub difiere la validación del `redirect_uri` hasta después del
+      login, así que la comprobación es entrar a `/admin`.
+- [ ] **Passkeys**: volver a registrarlas en `.net`. El `rpID` de WebAuthn es el
+      host, así que el autenticador no ofrece las del `.tech`. La puerta de
+      GitHub sigue funcionando mientras tanto.
+- [ ] Repuntar los jobs de **cron-job.org** a `https://codebymike.net/api/cron/*`
+      y la URL de eventos de **Wompi**. No es urgente: `/api` está exento del
+      redirect justamente para que un 308 no degrade un POST firmado ni tire la
+      cabecera `Authorization`.
+- [ ] **Search Console / Bing**: alta de `codebymike.net` y herramienta de
+      *cambio de dirección* desde la propiedad `.tech` (depende de que el `.tech`
+      siga vivo).
+- [ ] Menor: `mikerb95.vercel.app` sirve el sitio sin `noindex` (su canonical sí
+      apunta a `.net`). O se añade a `HOSTS_A_REDIRIGIR` o se quita el alias.
+- [ ] Menor: ni `.net` ni `.tech` están en la lista de **HSTS preload**, pese a
+      que la cabecera declara `preload`. Viene de antes del cambio de dominio.
+- [ ] Ajeno al dominio, detectado de paso: `tests/present-pin.test.ts` está en
+      rojo porque `present-tablet` no está en `RESERVED_ROOT_SEGMENTS`.
+
 - [ ] **`VERCEL_TOKEN` en GitHub Secrets.** Es el único bloqueo real que queda en
       el LAB: sin él, el rollback automático solo avisa en vez de revertir, y la
       Fase 5 (load testing con k6) no tiene un target de preview estable contra
