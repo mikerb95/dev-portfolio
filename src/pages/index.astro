@@ -218,29 +218,44 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
         </div>
       </div>
 
-      <!-- Cinta de señales del propio sitio (ver src/lib/pulso-publico.ts) -->
+      <!-- Cinta de señales del propio sitio (ver src/lib/pulso-publico.ts).
+           `pulso-wrap` es el área viva: la cinta abre el panel al apuntar una
+           señal y lo cierra al salir del conjunto, no de la cinta - si no, bajar
+           el cursor hacia el panel lo cerraría justo antes de llegar. -->
       {senales.length > 0 && (
-        <div class="ticker mt-20 -mx-6 md:-mx-12 lg:-mx-20 overflow-hidden border-y border-white/5 py-4">
-          <div class="ticker-track flex w-max">
-            {[0, 1].map((copia) => (
-              <div class="flex shrink-0" aria-hidden={copia === 1 ? 'true' : undefined}>
-                {senales.map((s) => (
-                  <a
-                    href={s.href}
-                    tabindex={copia === 1 ? -1 : undefined}
-                    class="group flex items-baseline gap-3 whitespace-nowrap"
-                  >
-                    <span class="text-[24px] md:text-[28px] tabular-nums tracking-[-.02em] text-ink-50 transition-colors group-hover:text-cyan">
-                      {s.valor}
-                    </span>
-                    <span class="text-[11px] font-mono uppercase tracking-[.16em] text-ink-200/60 transition-colors group-hover:text-ink-200">
-                      {s.etiqueta}
-                    </span>
-                    <span class="text-cyan/30 px-10 md:px-14" aria-hidden="true">·</span>
-                  </a>
-                ))}
-              </div>
-            ))}
+        <div class="pulso-wrap relative mt-20">
+          <div class="ticker -mx-6 md:-mx-12 lg:-mx-20 overflow-hidden border-y border-white/5 py-4">
+            <div class="ticker-track flex w-max">
+              {[0, 1].map((copia) => (
+                <div class="flex shrink-0" aria-hidden={copia === 1 ? 'true' : undefined}>
+                  {senales.map((s) => (
+                    <a
+                      href={s.href}
+                      data-senal={s.id}
+                      tabindex={copia === 1 ? -1 : undefined}
+                      class="group flex items-baseline gap-3 whitespace-nowrap"
+                    >
+                      <span class="text-[24px] md:text-[28px] tabular-nums tracking-[-.02em] text-ink-50 transition-colors group-hover:text-cyan">
+                        {s.valor}
+                      </span>
+                      <span class="text-[11px] font-mono uppercase tracking-[.16em] text-ink-200/60 transition-colors group-hover:text-ink-200">
+                        {s.etiqueta}
+                      </span>
+                      <span class="text-cyan/30 px-10 md:px-14" aria-hidden="true">·</span>
+                    </a>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- Los paneles se superponen en vez de empujar la página: abrir un
+               detalle al pasar el cursor no puede mover el contenido de abajo,
+               o el propio gesto de mirar reordena la página bajo el ratón.
+               Ocultos por debajo de `md`: sin cursor no hay hover que los abra
+               y el tap debe navegar a la página de la métrica, no desplegar. -->
+          <div class="pulso-paneles hidden md:block absolute left-0 right-0 top-full z-30 pt-3">
+            {senales.map((s) => <PulsoPanel senal={s} />)}
           </div>
         </div>
       )}
