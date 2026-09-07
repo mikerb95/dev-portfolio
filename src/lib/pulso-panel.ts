@@ -158,11 +158,14 @@ const porcentaje = (frac: number, locale: Locale) =>
     maximumFractionDigits: 2,
   })}%`
 
+// Los textos llegan tal cual del diccionario i18n, que infiere `string[]` para
+// las listas: describir aquí tuplas de longitud fija haría que el nodo del
+// diccionario dejara de encajar con su propio tipo.
 type TextosPanel = {
   titulo: string
   descripcion: string
   fuente: string
-  resumen: [string, string, string]
+  resumen: readonly string[]
 }
 
 /** Diccionario que necesita este módulo (el nodo `home.pulso` de i18n). */
@@ -180,7 +183,7 @@ export type TextosPulso = {
     ahora: string
     corridasHora: string
     objetivo: string
-    tramosLcp: string[]
+    tramosLcp: readonly string[]
     uptime: TextosPanel
     sondeos: TextosPanel
     siem: TextosPanel
