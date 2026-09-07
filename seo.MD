@@ -34,13 +34,13 @@ Todo lo crítico de la auditoría de abajo ya está implementado y verificado en
 ### 🔴 Acciones manuales pendientes (requieren tus cuentas - son EL paso que falta para indexación)
 
 1. **Google Search Console** → <https://search.google.com/search-console>
-   - Añadir propiedad de dominio `codebymike.tech` (verificación por DNS TXT en el registrador; cubre www y subdominios).
-   - Enviar `https://codebymike.tech/sitemap.xml`.
+   - Añadir propiedad de dominio `codebymike.net` (verificación por DNS TXT en el registrador; cubre www y subdominios).
+   - Enviar `https://codebymike.net/sitemap.xml`.
    - Pedir indexación manual de `/`, `/notes` y las 5 notas (Inspección de URLs → Solicitar indexación).
 2. **Bing Webmaster Tools** → <https://www.bing.com/webmasters> - con "Importar desde Google Search Console" es un clic. Bing alimenta también a DuckDuckGo, Ecosia y Yahoo.
 3. ~~Ejecutar `npm run seo:indexnow`~~ → **ya es automático** (cron diario `/api/cron/indexnow`). Solo asegúrate de que `CRON_SECRET` esté configurado en Vercel (ya lo está para los otros crons). Para publicar una nota y anunciarla al instante, `npm run seo:indexnow` sigue disponible.
 4. **Yandex Webmaster** (opcional) → <https://webmaster.yandex.com> si interesa ese mercado.
-5. Verificar en Vercel que `www.codebymike.tech` y `*.vercel.app` redirigen 308 al dominio canónico.
+5. Verificar que `www.codebymike.net` y los alias `*.vercel.app` redirigen 308 al dominio canónico (lo hace el propio sitio, en dos capas: `src/middleware.ts` y `integrations/canonical-redirect.mjs`; ver `docs/plan-dominio-net.md`).
 
 ### 📈 Plan de crecimiento orgánico (lo que realmente posiciona)
 
@@ -49,7 +49,7 @@ La capa técnica ya no es el cuello de botella. Para "top de Google" el ranking 
 | # | Acción | Por qué | Cadencia |
 |---|--------|---------|----------|
 | 1 | **Publicar 1 nota técnica cada 1–2 semanas** apuntando a búsquedas long-tail en español ("monitoreo uptime con Astro", "SLO error budget ejemplo", "sesiones revocables JWT") | Hay poquísimo contenido técnico de calidad en español; es el nicho ganable | Continua |
-| 2 | **Distribuir cada nota**: LinkedIn, dev.to / Hashnode (con `rel=canonical` apuntando a codebymike.tech), comunidades (r/devsarg, forocoches dev, Discords de Astro/Vercel) | Backlinks + tráfico de referencia = señales de autoridad | Por nota |
+| 2 | **Distribuir cada nota**: LinkedIn, dev.to / Hashnode (con `rel=canonical` apuntando a codebymike.net), comunidades (r/devsarg, forocoches dev, Discords de Astro/Vercel) | Backlinks + tráfico de referencia = señales de autoridad | Por nota |
 | 3 | **Backlinks de perfil**: URL del sitio en GitHub profile/repos README, LinkedIn, committers.top, dev.to, X | Enlaces fáciles y legítimos de dominios con autoridad | Una vez |
 | 4 | **Interlinking interno**: cada nota enlaza a proyectos/tools relacionados y viceversa | Distribuye PageRank interno y aumenta páginas/sesión | Por nota |
 | 5 | ~~**Título home con keywords buscables** - considerar variante EN~~ → hecho: `/en` en producción con `hreflang` recíproco (ver §15). Queda pendiente traducir las notas técnicas, que es donde vive el long-tail | La búsqueda de reclutadores es mayormente en inglés | ✅ + continua |
@@ -92,7 +92,7 @@ El `<head>` solo tiene charset, viewport, description y title. Al compartir cual
 
 ```astro
 ---
-const site = 'https://codebymike.tech'
+const site = 'https://codebymike.net'
 const canonical = new URL(Astro.url.pathname, site).href
 const { title, description = '...', image = `${site}/og-default.png` } = Astro.props
 ---
@@ -134,13 +134,13 @@ Y `public/robots.txt`:
 User-agent: *
 Disallow: /admin
 Disallow: /api
-Sitemap: https://codebymike.tech/sitemap.xml
+Sitemap: https://codebymike.net/sitemap.xml
 ```
 
 ### 3. Sin URL canónica ni `site` configurado
 **Dónde:** `astro.config.mjs` (falta `site:`), `BaseLayout.astro`
 
-Sin `<link rel="canonical">`, las variantes de URL (query params, trailing slash, dominio `.vercel.app` de los deploys preview) pueden indexarse como duplicados. Añadir `site: 'https://codebymike.tech'` en `astro.config.mjs` y el canonical del punto 1. Verificar también en Vercel que el dominio apex/www redirige 308 a la variante canónica (Vercel lo hace si el dominio secundario está marcado como redirect).
+Sin `<link rel="canonical">`, las variantes de URL (query params, trailing slash, dominio `.vercel.app` de los deploys preview) pueden indexarse como duplicados. Añadir `site: 'https://codebymike.net'` en `astro.config.mjs` y el canonical del punto 1. Verificar también en Vercel que el dominio apex/www redirige 308 a la variante canónica (Vercel lo hace si el dominio secundario está marcado como redirect).
 
 ### 4. Soft-404 en proyectos inexistentes
 **Dónde:** `src/pages/projects/[slug].astro:16` - `return Astro.redirect('/404')`
@@ -172,7 +172,7 @@ Para un portfolio personal, los schemas con mejor retorno son:
   "@type": "Person",
   "name": "Mike",
   "jobTitle": "Senior Software Engineer",
-  "url": "https://codebymike.tech",
+  "url": "https://codebymike.net",
   "sameAs": ["https://github.com/mikerb95", "https://www.linkedin.com/in/mdrb95/"]
 })} />
 ```

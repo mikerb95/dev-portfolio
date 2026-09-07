@@ -20,6 +20,10 @@ export const PORTAL_DEMO_TTL_SEC = 30 * 60
 
 // Identidad fija del usuario de la demo, sembrada por scripts/seed-demo.mjs en
 // la base de demo. No hay contraseña que recordar: el pase ES la sesión.
+// Se queda en .tech aunque el dominio se dé de baja: es la CLAVE con la que se
+// buscan las filas sembradas de la base demo, no una dirección que reciba
+// correo. Cambiarla obliga a actualizar la fila y el deploy en el mismo
+// instante, o el acceso a la demo se cae en la ventana intermedia.
 export const PORTAL_DEMO_EMAIL = 'demo@codebymike.tech'
 
 export function createPortalDemoToken(secret: string, nowMs = Date.now()): string {

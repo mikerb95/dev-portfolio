@@ -56,26 +56,42 @@ base de archivo, dos corridas seguidas.
 
 ## 2. Acciones manuales fuera del repo
 
-### 🔴 Dominio: renovar `codebymike.tech` (vence 6 sep 2026, 23:59:59 UTC)
+### 🔴 SEO tras dar de baja `codebymike.tech` (decidido: no se renueva)
 
-Consultado por RDAP el 6 sep 2026: registrador **Namify** (no Vercel, por eso no
-aparece fecha en el panel), estado `client transfer prohibited`. Ya está cargado
-en `project_services` id 5 para que el cron de dominios avise, que hasta ahora no
-podía porque `renewal_date` estaba en NULL.
+El `.tech` vencía el 6 sep 2026 23:59:59 UTC (registrador **Namify**) y se deja
+caer. El 308 sigue respondiendo mientras el registrador mantenga el DNS, y esa
+ventana es todo lo que hay para traspasar autoridad: sin dominio viejo vivo no
+existe mecanismo de traspaso, y los backlinks externos apuntan a la nada.
 
-`codebymike.net` es el sitio desde el 5 sep 2026, pero el `.tech` **no es
-prescindible**: es el que sostiene todo lo publicado antes del cambio.
+Prioridad, de más a menos urgente:
 
-- [ ] **Renovar el `.tech`** (mínimo un año). Lo que se pierde si caduca:
-      enlaces y QR ya impresos que nadie puede editar, la consolidación SEO (los
-      308 tienen que seguir vivos meses para que Google traslade la autoridad al
-      dominio nuevo), cualquier buzón `@codebymike.tech` (su DNS tiene
-      `v=spf1 include:spf.titan.email`), y el propio nombre: tras el periodo de
-      gracia queda libre para que lo registre un tercero con la marca puesta y
-      heredando los backlinks.
-- [ ] Si la decisión es soltarlo, hacerlo **después** de la consolidación SEO y
-      habiendo migrado antes los buzones y cualquier cuenta registrada con una
-      dirección `@codebymike.tech`.
+- [ ] **Search Console, mientras el 308 siga vivo.** Verificar propiedad de
+      `codebymike.net` (propiedad de DOMINIO, verificación por TXT en el DNS de
+      Vercel, que cubre www y subdominios) y, si `codebymike.tech` sigue
+      verificado, usar *Cambio de dirección* desde su propiedad. Es lo único
+      que le dice a Google explícitamente que el sitio se mudó.
+- [ ] Enviar `https://codebymike.net/sitemap.xml` y pedir indexación manual de
+      la portada, `/notes`, `/docs`, `/status`, `/tools`, `/paginas-web` y las
+      notas con tráfico.
+- [ ] **Bing Webmaster Tools**: alta de `codebymike.net` (se puede importar la
+      configuración desde GSC). IndexNow no necesita nada: el cron diario ya
+      manda el sitemap del dominio nuevo y el archivo de clave responde 200.
+- [ ] **Recuperar backlinks a mano**, que es lo que sustituye al 301 perdido.
+      Cada sitio de terceros que enlace al `.tech` hay que editarlo: perfil de
+      LinkedIn, cross-posts en dev.to / Hashnode / Medium (su `canonical_url`
+      apunta al `.tech`, ver `instrucciones-redes.md`), firmas, directorios,
+      material de Platzi. El campo *blog* del perfil de GitHub hoy tiene un
+      correo, no la web: es un enlace gratis que conviene aprovechar.
+      Ya hecho: `homepage` del repo `dev-portfolio` en GitHub → `.net`.
+- [ ] Vigilar cobertura e impresiones en GSC las primeras semanas. Un desplome
+      sostenido tras la baja del `.tech` es esperable; lo que hay que detectar
+      es que el `.net` no suba.
+- [ ] Cuando el `.tech` deje de resolver, quitarlo del proyecto en Vercel y de
+      `HOSTS_A_REDIRIGIR` (`src/lib/canonical-host.ts`), junto con su fila en
+      `project_services` (id 5). Mientras responda, se deja: cada 308 servido
+      es un enlace viejo que todavía funciona.
+- [ ] Si alguien registra el `.tech` después, no hay acción técnica: solo dejar
+      de referenciarlo en cualquier material propio.
 
 ### Resto del cambio de dominio
 
@@ -93,8 +109,8 @@ prescindible**: es el que sostiene todo lo publicado antes del cambio.
 - [ ] **Search Console / Bing**: alta de `codebymike.net` y herramienta de
       *cambio de dirección* desde la propiedad `.tech` (depende de que el `.tech`
       siga vivo).
-- [ ] Menor: `mikerb95.vercel.app` sirve el sitio sin `noindex` (su canonical sí
-      apunta a `.net`). O se añade a `HOSTS_A_REDIRIGIR` o se quita el alias.
+- [x] `mikerb95.vercel.app` servía una copia indexable del sitio: añadido a
+      `HOSTS_A_REDIRIGIR`, redirige 308 desde el siguiente despliegue.
 - [ ] Menor: ni `.net` ni `.tech` están en la lista de **HSTS preload**, pese a
       que la cabecera declara `preload`. Viene de antes del cambio de dominio.
 - [ ] Ajeno al dominio, detectado de paso: `tests/present-pin.test.ts` está en

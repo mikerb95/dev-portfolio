@@ -23,8 +23,8 @@ describe('inyectaRedirects (redirect del dominio viejo en el CDN)', () => {
     const iFs = config.routes.findIndex((r) => r.handle === 'filesystem')
     const redirects = config.routes.filter((r) => r.status === 308)
 
-    expect(n).toBe(3)
-    expect(redirects).toHaveLength(3)
+    expect(n).toBe(4)
+    expect(redirects).toHaveLength(4)
     for (const r of redirects) expect(config.routes.indexOf(r)).toBeLessThan(iFs)
   })
 
@@ -34,7 +34,7 @@ describe('inyectaRedirects (redirect del dominio viejo en el CDN)', () => {
     const hosts = config.routes.filter((r) => r.status === 308).map((r) => (r.has as { value: string }[])[0].value)
 
     expect(hosts.sort()).toEqual(
-      ['codebymike\\.tech', 'www\\.codebymike\\.net', 'www\\.codebymike\\.tech'].sort()
+      ['codebymike\\.tech', 'mikerb95\\.vercel\\.app', 'www\\.codebymike\\.net', 'www\\.codebymike\\.tech'].sort()
     )
     for (const r of config.routes.filter((x) => x.status === 308)) {
       expect((r.headers as { Location: string }).Location).toBe(`https://${HOST_CANONICO}$1`)

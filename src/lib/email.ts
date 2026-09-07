@@ -32,7 +32,7 @@ export async function sendMail(params: {
   const apiKey = env('RESEND_API_KEY')
   if (!apiKey) return { ok: false, skipped: true }
 
-  const from = env('PORTAL_EMAIL_FROM') ?? 'CodeByMike <portal@codebymike.tech>'
+  const from = env('PORTAL_EMAIL_FROM') ?? 'CodeByMike <portal@codebymike.net>'
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

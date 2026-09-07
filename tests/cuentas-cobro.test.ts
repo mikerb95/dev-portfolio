@@ -383,7 +383,7 @@ const emisorOk: Emisor = {
   direccion: 'Cra 1 #2-3',
   ciudad: 'Bogotá',
   telefono: '+573000000000',
-  email: 'mike@codebymike.tech',
+  email: 'mike@codebymike.net',
   banco: 'Bancolombia',
   tipoCuenta: 'Ahorros',
   numeroCuenta: '12345678901',

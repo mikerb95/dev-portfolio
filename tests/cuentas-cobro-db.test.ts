@@ -38,7 +38,7 @@ const EMISOR_OK: Record<string, string> = {
   emisor_direccion: 'Cra 1 #2-3',
   emisor_ciudad: 'Bogotá',
   emisor_telefono: '+573000000000',
-  emisor_email: 'mike@codebymike.tech',
+  emisor_email: 'mike@codebymike.net',
   emisor_banco: 'Bancolombia',
   emisor_tipo_cuenta: 'Ahorros',
   emisor_numero_cuenta: '12345678901',

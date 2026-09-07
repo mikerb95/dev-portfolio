@@ -4,8 +4,18 @@
 listados abajo, uno de ellos bloqueante.
 
 `codebymike.net` (registrado en Vercel, nameservers de Vercel, renueva el
-5 sep 2027) pasa a ser el dominio de producción. `codebymike.tech` **no se
-suelta**: sigue atado al proyecto `dev-portfolio` y redirige.
+5 sep 2027) pasa a ser el dominio de producción.
+
+**`codebymike.tech` se da de baja** (decisión del 7 sep 2026): venció el 6 sep y
+no se renueva. Sigue atado al proyecto y redirigiendo mientras su registrador
+mantenga el DNS, y se deja así a propósito: cada 308 servido en esa ventana es
+un enlace viejo que todavía funciona. El plan de SEO para la baja, que es lo
+único que el código no puede resolver solo, está en `pendientes.md` §2.
+
+La consecuencia que conviene tener escrita: sin dominio viejo vivo no hay
+mecanismo de traspaso de autoridad. El 301/308 es el único que Google acepta, y
+necesita meses de rastreo para completarse. Los backlinks externos que apunten
+al `.tech` dejarán de valer y hay que reemplazarlos a mano, uno por uno.
 
 ## Qué se decidió y por qué
 

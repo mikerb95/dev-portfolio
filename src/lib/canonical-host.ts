@@ -34,6 +34,11 @@ export const HOSTS_A_REDIRIGIR = new Set([
   'codebymike.tech',
   'www.codebymike.tech',
   'www.codebymike.net',
+  // Alias fijo del proyecto en Vercel. Servía el sitio entero con 200 y sin
+  // `noindex` (los previews sí lo llevan, este no): una copia indexable más.
+  // No confundir con las URL por despliegue (dev-portfolio-<hash>.vercel.app),
+  // que no están aquí porque el rollback de ci.yml las sondea.
+  'mikerb95.vercel.app',
 ])
 
 /** Prefijos que NUNCA se redirigen (ver cabecera). */

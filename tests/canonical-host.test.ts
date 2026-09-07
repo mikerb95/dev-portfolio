@@ -20,7 +20,13 @@ describe('destinoCanonico', () => {
     expect(get(HOST_CANONICO, '/status')).toBeNull()
   })
 
-  it('no toca previews, vercel.app ni localhost', () => {
+  it('recoge el alias fijo del proyecto, que servía una copia indexable', () => {
+    expect(get('mikerb95.vercel.app', '/notes')).toBe('https://codebymike.net/notes')
+  })
+
+  // Las URL por despliegue las sondea el rollback de ci.yml: redirigirlas sería
+  // hacerle creer que la versión nueva responde cuando no la ha visto.
+  it('no toca las URL por despliegue ni localhost', () => {
     expect(get('dev-portfolio-abc.vercel.app', '/status')).toBeNull()
     expect(get('localhost:4321', '/status')).toBeNull()
   })

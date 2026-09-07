@@ -372,7 +372,7 @@ const faqs = pw.faqs
     // El endpoint exige un email válido; si el cliente dejó un WhatsApp usamos
     // un placeholder y el número real viaja en el cuerpo del mensaje.
     const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacto)
-    const email = looksLikeEmail ? contacto : 'lead-paginas-web@codebymike.tech'
+    const email = looksLikeEmail ? contacto : 'lead-paginas-web@codebymike.net'
     const body =
       `${L.leadBodyIntro}\n` +
       `${L.leadBodyNegocio}: ${negocio || L.leadBodyNoIndico}\n` +

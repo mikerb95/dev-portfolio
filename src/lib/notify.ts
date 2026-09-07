@@ -26,7 +26,7 @@ export function headerSafe(s: string): string {
 export async function sendEmail(subject: string, text: string, html?: string): Promise<NotifyResult> {
   const apiKey = env('RESEND_API_KEY')
   const to = env('ALERT_EMAIL_TO')
-  const from = env('ALERT_EMAIL_FROM') ?? 'alertas@codebymike.tech'
+  const from = env('ALERT_EMAIL_FROM') ?? 'alertas@codebymike.net'
   if (!apiKey || !to) return { channel: 'email', ok: false, skipped: true }
   try {
     const res = await fetch('https://api.resend.com/emails', {
