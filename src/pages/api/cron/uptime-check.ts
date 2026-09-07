@@ -177,7 +177,11 @@ async function notify(events: Event[]) {
           ? `⚠ Alerta de certificados SSL`
           : `⏱ ${crons.length} tarea${crons.length === 1 ? '' : 's'} programada${crons.length === 1 ? '' : 's'} en silencio`
 
-  const text = `${subject}\n\n${lines.join('\n')}\n\nPanel: ${SITE_URL}/admin/monitors`
+  // Un silencio de cron se investiga en la bitácora, no en el panel de monitores.
+  const soloCrons = crons.length === events.length
+  const panel = soloCrons ? `${SITE_URL}/automatizaciones` : `${SITE_URL}/admin/monitors`
+
+  const text = `${subject}\n\n${lines.join('\n')}\n\nPanel: ${panel}`
   const html = `<h2 style="font-family:system-ui">Estado de servicios</h2><ul style="font-family:system-ui;font-size:14px">${lines
     .map((l) => `<li>${l}</li>`)
     .join('')}</ul><p><a href="${SITE_URL}/admin/monitors">Abrir panel →</a></p>`
