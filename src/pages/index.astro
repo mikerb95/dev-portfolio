@@ -5,10 +5,12 @@ import GithubProjects from '../components/GithubProjects.astro'
 import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
-import { formatNumber, getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 import { safeQuery } from '../lib/safe-query'
 import { proyectosInstantanea } from '../lib/fallback/instantanea'
-import { leerPulso, truncar } from '../lib/pulso-publico'
+import { leerPulso } from '../lib/pulso-publico'
+import { construirSenales } from '../lib/pulso-panel'
+import PulsoPanel from '../components/PulsoPanel.astro'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
