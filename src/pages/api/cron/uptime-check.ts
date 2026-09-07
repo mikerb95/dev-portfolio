@@ -184,14 +184,20 @@ async function notify(events: Event[]) {
   const text = `${subject}\n\n${lines.join('\n')}\n\nPanel: ${panel}`
   const html = `<h2 style="font-family:system-ui">Estado de servicios</h2><ul style="font-family:system-ui;font-size:14px">${lines
     .map((l) => `<li>${l}</li>`)
-    .join('')}</ul><p><a href="${SITE_URL}/admin/monitors">Abrir panel →</a></p>`
+    .join('')}</ul><p><a href="${panel}">Abrir panel →</a></p>`
 
   await Promise.all([
     sendEmail(subject, text, html),
     sendPush(subject, lines.join('\n'), {
       priority: downs.length > 0 ? 5 : 4,
-      tags: downs.length > 0 ? 'rotating_light' : recoveries.length > 0 ? 'white_check_mark' : 'warning',
-      click: `${SITE_URL}/admin/monitors`,
+      tags: downs.length > 0
+        ? 'rotating_light'
+        : recoveries.length > 0
+          ? 'white_check_mark'
+          : soloCrons
+            ? 'stopwatch'
+            : 'warning',
+      click: panel,
     }),
   ])
 }
