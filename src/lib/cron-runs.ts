@@ -136,16 +136,23 @@ export async function ultimasCorridas(desde: Date): Promise<Map<string, Date>> {
  */
 export async function silenciosPorAvisar(ahora: Date): Promise<Silencio[]> {
   try {
-    const desde = new Date(ahora.getTime() - ventanaMin(VIGILADOS) * 60_000)
-    const silencios = jobsEnSilencio(VIGILADOS, await ultimasCorridas(desde), ahora)
-
+    // El estado se lee ANTES que la bitácora, y no al revés: es una fila por
+    // clave primaria, y si dice que la revisión anterior es reciente se evita
+    // la consulta cara. `uptime-check` entra aquí cada 5 min; esta guarda es lo
+    // que hace que eso cueste una lectura trivial casi siempre.
     const [fila] = await db
       .select()
       .from(appSettings)
       .where(eq(appSettings.key, CLAVE_ESTADO))
       .limit(1)
 
-    const { avisos, estado } = decidirAvisos(silencios, parseEstado(fila?.value), ahora)
+    const previo = parseEstado(fila?.value)
+    if (!tocaChequear(previo, ahora)) return []
+
+    const desde = new Date(ahora.getTime() - ventanaMin(VIGILADOS) * 60_000)
+    const silencios = jobsEnSilencio(VIGILADOS, await ultimasCorridas(desde), ahora)
+
+    const { avisos, estado } = decidirAvisos(silencios, previo, ahora)
 
     // Se escribe siempre: el estado también sirve para OLVIDAR a los que se
     // recuperaron, y ese olvido es lo que hace que una recaída avise enseguida.
