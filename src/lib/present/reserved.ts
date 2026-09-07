@@ -57,6 +57,10 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   // por construcción, pero por eso mismo es una ruta raíz más y compite con el
   // espacio de los PIN igual que cualquier otra.
   'present-admin',
+  // Vista de la tablet que sigue el deck junto al ponente (notas + siguiente
+  // diapositiva). Mismo motivo que `present-admin`: guion en vez de barra, así
+  // que es una ruta raíz más y compite con el espacio de los PIN.
+  'present-tablet',
   // Visor público de `public/final.html` y su control remoto
   // (`/presentacion` y `/presentacion/control`). Cubre las dos: la página y el
   // directorio se normalizan al mismo segmento.
