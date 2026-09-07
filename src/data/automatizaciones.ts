@@ -174,7 +174,7 @@ export const CRONS: readonly Cron[] = [
   },
   {
     job: 'sena-recordatorio',
-    horario: 'diario',
+    horario: '12:00',
     cadaMin: 1440,
     origen: 'cron-job.org',
     hace: 'Recordatorio de la calculadora de etapa productiva.',

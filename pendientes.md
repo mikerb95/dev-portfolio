@@ -129,14 +129,20 @@ Prioridad, de más a menos urgente:
       guardado coincide con `CRON_SECRET`) y el método sigue en `GET` con zona
       America/Bogota. El scheduler ya muestra próxima ejecución para ambos.
 
-- [ ] **`sena-recordatorio` no está dado de alta en ninguna parte.** Lo destapó
-      el detector de silencio: el catálogo (`src/data/automatizaciones.ts`) lo
-      declara diario desde cron-job.org, pero no existe como job allí (solo hay
-      dos), no está en `vercel.json` y no tiene ni una fila en `cron_runs` desde
-      que existe la bitácora. O se da de alta
-      (`GET https://codebymike.net/api/cron/sena-recordatorio`, Bearer
-      `CRON_SECRET`, diario) o se quita del catálogo, pero las dos cosas a la vez
-      no: mientras siga declarado, el vigilante avisará de él todos los días.
+- [x] **`sena-recordatorio` no estaba dado de alta en ninguna parte.** Lo
+      destapó el detector de silencio antes incluso de estar desplegado: el
+      catálogo lo declaraba diario desde cron-job.org, pero no existía como job
+      allí (solo había dos), no estaba en `vercel.json` y no tenía ni una fila en
+      `cron_runs`. Nunca corrió, y por eso ninguna de las 0 suscripciones activas
+      había fallado todavía: el fallo estaba armado para el día que se creara la
+      primera.
+
+      **Resuelto el 7 sep**: job dado de alta en cron-job.org, diario a las 07:00
+      America/Bogota (12:00 UTC, sin choque con los crons de Vercel, que caen
+      entre las 03:00 y las 09:00 UTC). Se creó clonando `security-rollup`, así
+      que el header `Authorization` es literalmente el mismo valor ya probado.
+      Endpoint verificado antes de agendarlo: 401 sin cabecera y
+      `200 {"ok":true,"suscripciones":0,"avisados":0}` con ella.
 - [ ] Repuntar la URL de eventos de **Wompi** a `.net`. El mismo vencimiento se
       llevó la red de seguridad que hacía esto opcional (`/api` estaba exento del
       redirect para que un 308 no degradara un POST firmado): ahora un webhook

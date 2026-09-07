@@ -40,3 +40,23 @@ describe('percentil', () => {
     expect(muestras).toEqual([3, 1, 2])
   })
 })
+
+describe('truncar', () => {
+  it('no redondea un uptime imperfecto hasta el 100%', () => {
+    // 20.303 de 20.304 sondeos: hubo un fallo real y la cinta no puede
+    // presumir de que no lo hubo.
+    expect(truncar((20303 / 20304) * 100, 2)).toBe(99.99)
+  })
+
+  it('deja el 100% cuando de verdad no falló nada', () => {
+    expect(truncar(100, 2)).toBe(100)
+  })
+
+  it('enseña el peor valor del intervalo en segundos', () => {
+    expect(truncar(2969 / 1000, 1)).toBe(2.9)
+  })
+
+  it('con cero decimales devuelve el entero inferior', () => {
+    expect(truncar(9.87, 0)).toBe(9)
+  })
+})

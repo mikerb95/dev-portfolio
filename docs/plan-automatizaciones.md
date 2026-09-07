@@ -169,10 +169,19 @@ Lo que la página muestra sale de la misma función (`toleranciaMin`), no de una
 copia del criterio: si divergieran, la tabla diría que todo va bien mientras el
 push dice lo contrario, y se cree siempre a la que se está mirando.
 
-**Hallazgo de paso.** El detector señala `sena-recordatorio`: está en el catálogo
-como diario desde cron-job.org, pero no está en `vercel.json` ni existe como job
-en cron-job.org, y no tiene una sola fila en `cron_runs`. Nunca se dio de alta.
-Es exactamente el tipo de silencio que esto existe para hacer ruidoso.
+**Hallazgo de paso, y su cierre.** El detector señaló `sena-recordatorio` antes
+incluso de estar desplegado: figuraba en el catálogo como diario desde
+cron-job.org, pero no estaba en `vercel.json`, no existía como job allí, y no
+tenía una sola fila en `cron_runs`. Nunca se había dado de alta. No había fallado
+nada todavía porque hay 0 suscripciones activas: el fallo estaba armado para el
+día que se creara la primera, y habría sido silencioso (el panel diciendo
+"activa", el correo sin llegar nunca).
+
+Se dio de alta el 7 sep, diario a las 07:00 America/Bogota (12:00 UTC, sin choque
+con los crons de Vercel), clonando `security-rollup` para que el header
+`Authorization` fuera el mismo valor ya probado en vez de volver a escribirlo.
+Sirve como estreno del detector: el primer silencio que encontró no fue una
+avería, fue una automatización que llevaba meses anunciada y nunca conectada.
 
 ## 8. Archivos
 
