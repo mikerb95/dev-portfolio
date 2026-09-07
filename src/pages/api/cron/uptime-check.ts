@@ -10,7 +10,8 @@ import { isAllowedLogin } from '../../../lib/auth'
 import { sweepSessions } from '../../../lib/device-sessions'
 import { sweepFpRooms } from '../../../lib/fingerprint'
 import { cronSecretOk } from '../../../lib/cron-auth'
-import { conRegistro } from '../../../lib/cron-runs'
+import { conRegistro, silenciosPorAvisar } from '../../../lib/cron-runs'
+import { describirSilencio } from '../../../lib/cron-silencio'
 import { siteUrl } from '../../../lib/site'
 
 const SITE_URL = siteUrl()
