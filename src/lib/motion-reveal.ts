@@ -9,8 +9,31 @@ import { SplitText } from 'gsap/SplitText'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
+// Fail-open del motion: el reveal de cards arranca en opacity 0 (lo pinta el
+// fromTo con immediateRender), así que cualquier excepción a mitad de la
+// inicialización deja la página en blanco. Una animación que puede borrar el
+// contenido que decora no es decoración, es una caída - por eso el catch
+// devuelve las cards a su estado visible en vez de dejarlas escondidas.
+export function revealCards(selector = 'main .glass, main .glass-strong') {
+  document.querySelectorAll<HTMLElement>(selector).forEach((card) => {
+    card.style.removeProperty('clip-path')
+    card.style.removeProperty('opacity')
+    card.style.removeProperty('overflow')
+  })
+}
+
 export function initPageMotion(opts: { cardSelector?: string } = {}) {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null
+  try {
+    return initMotion(opts)
+  } catch (err) {
+    console.warn('[motion] reveal deshabilitado tras un fallo de init', err)
+    revealCards(opts.cardSelector)
+    return null
+  }
+}
+
+function initMotion(opts: { cardSelector?: string }) {
 
   const lenis = new Lenis()
   lenis.on('scroll', ScrollTrigger.update)
@@ -51,7 +74,13 @@ export function initPageMotion(opts: { cardSelector?: string } = {}) {
     card.appendChild(bar)
 
     const tl = gsap.timeline({
-      scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+      // Sin `once: true` a propósito: ScrollTrigger se auto-mata al dispararse
+      // con esa opción, y si el kill cae dentro del refresh que hace OTRO
+      // trigger al crearse, el índice del bucle interno de GSAP queda colgando
+      // (`Cannot read properties of undefined (reading 'end')`) y el resto de
+      // los reveals nunca corre: secciones enteras en blanco. El timeline ya
+      // corre una sola vez con el toggleAction por defecto.
+      scrollTrigger: { trigger: card, start: 'top 88%' },
       delay: (i % 4) * 0.05,
     })
     tl.fromTo(

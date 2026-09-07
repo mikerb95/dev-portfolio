@@ -122,8 +122,12 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   </div>
 
   <!-- ── Hero ── -->
-  <section id="hero" class="relative pt-28 pb-24 px-6 md:px-12 lg:px-20 overflow-hidden">
-    <div class="halo"></div>
+  <!-- `overflow-x-clip` y no `overflow-hidden`: el panel del pulso cuelga por
+       debajo del hero a propósito (se superpone al bento) y un recorte en
+       vertical lo cortaba a media altura. Lo horizontal sí hay que recortarlo,
+       por la cinta a sangre; el halo se recorta en su propia caja. -->
+  <section id="hero" class="relative pt-28 pb-24 px-6 md:px-12 lg:px-20 overflow-x-clip">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none z-0"><div class="halo"></div></div>
     <div class="relative max-w-[1280px] mx-auto">
 
       <!-- Availability badge -->
@@ -254,7 +258,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
                o el propio gesto de mirar reordena la página bajo el ratón.
                Ocultos por debajo de `md`: sin cursor no hay hover que los abra
                y el tap debe navegar a la página de la métrica, no desplegar. -->
-          <div class="pulso-paneles hidden md:block absolute left-0 right-0 top-full z-30 pt-3">
+          <div class="pulso-paneles hidden md:block absolute left-0 right-0 top-full z-30 mt-4">
             {senales.map((s) => <PulsoPanel senal={s} />)}
           </div>
         </div>
@@ -563,7 +567,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   // Todo detrás de prefers-reduced-motion: si el usuario lo pide, la página
   // queda completamente estática y funcional, sin perder contenido.
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
-  import { initPageMotion } from '../lib/motion-reveal'
+  import { initPageMotion, revealCards } from '../lib/motion-reveal'
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -597,15 +601,23 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       })
     }
 
-    sections.forEach((section, i) => {
-      ScrollTrigger.create({
-        trigger: section,
-        start: 'top 55%',
-        end: 'bottom 55%',
-        onEnter: () => setHud(i),
-        onEnterBack: () => setHud(i),
+    // El HUD es adorno; las cards que ya arrancaron en opacity 0 son el
+    // contenido. Si crear estos triggers falla, se devuelve la visibilidad en
+    // vez de dejar media home en negro (mismo criterio fail-open del resto).
+    try {
+      sections.forEach((section, i) => {
+        ScrollTrigger.create({
+          trigger: section,
+          start: 'top 55%',
+          end: 'bottom 55%',
+          onEnter: () => setHud(i),
+          onEnterBack: () => setHud(i),
+        })
       })
-    })
+    } catch (err) {
+      console.warn('[motion] HUD deshabilitado tras un fallo de init', err)
+      revealCards()
+    }
 
   }
 </script>

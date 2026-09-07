@@ -7,6 +7,10 @@ import type { Senal, Tono } from '../lib/pulso-panel'
 // alterna una clase. La alternativa (pedir la serie por fetch al abrir) metería
 // una petición y un estado de carga en el gesto más trivial de la página, y el
 // dato ya viajaba en la misma consulta que la cifra.
+//
+// El ancho es fijo y el panel se ancla bajo la señal apuntada (lo posiciona el
+// script del index): un panel a todo lo ancho obliga al ojo a buscar de qué
+// cifra habla, y a esta distancia del gesto eso ya es demasiado trabajo.
 interface Props {
   senal: Senal
 }
@@ -27,24 +31,33 @@ const TONOS: Record<Tono, string> = {
 ---
 
 <div class="pulso-panel" data-panel={senal.id} hidden>
-  <div class="rounded-2xl glass p-5 md:p-6 shadow-[0_24px_60px_-20px_rgba(0,0,0,.8)]">
-    <div class="flex items-start justify-between gap-6">
-      <div class="min-w-0">
-        <div class="text-[11px] font-mono uppercase tracking-[.16em] text-cyan">{panel.titulo}</div>
-        <p class="mt-2 text-[13px] leading-relaxed text-ink-100 max-w-xl">{panel.descripcion}</p>
+  <!-- Hilo y muesca: nacen en la señal apuntada y bajan hasta el panel. Sin
+       ellos el panel es una caja que aparece cerca; con ellos es la misma
+       señal desplegada, que es lo que de verdad está pasando. -->
+  <span class="pulso-hilo" aria-hidden="true"></span>
+  <span class="pulso-muesca" aria-hidden="true"></span>
+
+  <div class="pulso-card rounded-xl glass px-4 py-3.5 shadow-[0_20px_50px_-24px_rgba(0,0,0,.9)]">
+    <div class="flex items-start justify-between gap-4">
+      <div class="min-w-0 flex items-center gap-2">
+        <span class={`h-1.5 w-1.5 rounded-full shrink-0 ${TONOS[panel.barras[panel.barras.length - 1]?.tono ?? 'info']}`}></span>
+        <span class="pulso-titulo text-[10px] font-mono uppercase tracking-[.16em] text-cyan truncate">{panel.titulo}</span>
       </div>
-      <a href={senal.href} class="shrink-0 text-right group/val">
-        <div class="text-[26px] md:text-[30px] tabular-nums tracking-[-.02em] text-ink-50 group-hover/val:text-cyan transition-colors">
+      <a
+        href={senal.href}
+        aria-label={`${senal.valor} ${senal.etiqueta}`}
+        class="shrink-0 text-right group/val leading-none"
+      >
+        <span class="pulso-valor block text-[19px] tabular-nums tracking-[-.02em] text-ink-50 group-hover/val:text-cyan transition-colors" data-valor={senal.valor}>
           {senal.valor}
-        </div>
-        <div class="text-[10px] font-mono uppercase tracking-[.16em] text-ink-200/70">
-          {senal.etiqueta}
-        </div>
+        </span>
       </a>
     </div>
 
-    <div class="pulso-barras relative mt-5">
-      <div class="flex items-end gap-[3px] h-16">
+    <p class="pulso-desc mt-2 text-[12px] leading-snug text-ink-200">{panel.descripcion}</p>
+
+    <div class="pulso-barras relative mt-3">
+      <div class="flex items-end gap-[3px] h-12">
         {panel.barras.map((b, i) => (
           <div
             class={`pbar flex-1 rounded-[2px] ${TONOS[b.tono]}`}
@@ -55,24 +68,25 @@ const TONOS: Record<Tono, string> = {
           />
         ))}
       </div>
+      <!-- Barrido de osciloscopio: cruza el gráfico una sola vez al abrir,
+           en el mismo sentido en que se lee la serie. -->
+      <span class="pulso-scan" aria-hidden="true"></span>
       <span class="pulso-tooltip absolute hidden -top-1 -translate-x-1/2 -translate-y-full px-2 py-1 rounded-md bg-black/85 ring-1 ring-white/10 text-[10px] font-mono text-ink-50 whitespace-nowrap pointer-events-none z-10"></span>
     </div>
 
-    <div class="flex justify-between text-[10px] font-mono text-ink-300 mt-2">
+    <div class="flex justify-between text-[9px] font-mono text-ink-300/70 mt-1.5">
       <span>{panel.ejeIzq}</span>
       <span>{panel.ejeDer}</span>
     </div>
 
-    <div class="mt-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-      <div class="flex gap-8">
-        {panel.resumen.map((r) => (
-          <div>
-            <div class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-300">{r.k}</div>
-            <div class="mt-0.5 text-[15px] tabular-nums text-ink-50">{r.v}</div>
-          </div>
-        ))}
-      </div>
-      <p class="text-[10px] font-mono text-ink-300/80 max-w-md text-right">{panel.fuente}</p>
+    <div class="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-white/[.06] pt-2.5">
+      {panel.resumen.map((r) => (
+        <span class="pulso-dato inline-flex items-baseline gap-1.5">
+          <span class="text-[9px] font-mono uppercase tracking-[.12em] text-ink-300">{r.k}</span>
+          <span class="text-[12px] tabular-nums text-ink-50">{r.v}</span>
+        </span>
+      ))}
+      <span class="pulso-dato ml-auto text-[9px] font-mono text-ink-300/60">{panel.fuente}</span>
     </div>
   </div>
 </div>

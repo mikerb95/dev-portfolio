@@ -446,10 +446,14 @@ const faqs = pw.faqs
           duration: 0.6,
           ease: 'power2.out',
           delay: (i % 4) * 0.05, // stagger corto dentro de cada fila
+          // Sin `once: true`: ScrollTrigger se auto-mata al dispararse con esa
+          // opción y, si el kill ocurre dentro del refresh de otro trigger que
+          // se está creando, GSAP se queda con un índice inválido y aborta el
+          // resto de los reveals (secciones en blanco). El fromTo ya corre una
+          // sola vez con el toggleAction por defecto.
           scrollTrigger: {
             trigger: card,
             start: 'top 88%',
-            once: true,
           },
         }
       )
