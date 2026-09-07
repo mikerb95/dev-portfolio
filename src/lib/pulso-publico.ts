@@ -57,6 +57,19 @@ export function percentil(valores: number[], p: number): number | null {
   return orden[Math.min(Math.max(idx, 0), orden.length - 1)]
 }
 
+/**
+ * Trunca hacia abajo, NO redondea.
+ *
+ * 20.303 sondeos buenos de 20.304 son un 99,9951% que `toFixed(2)` convierte en
+ * "100,00%": la cinta acabaría afirmando que no ha fallado nada cuando sí falló
+ * algo. Un indicador de disponibilidad que redondea a su favor no es un
+ * indicador. Mismo criterio para el LCP: se enseña el peor valor del intervalo.
+ */
+export function truncar(valor: number, decimales: number): number {
+  const factor = 10 ** decimales
+  return Math.floor(valor * factor) / factor
+}
+
 export async function leerPulso(ahora = Date.now()): Promise<Pulso> {
   const desdeDia = dayKeyUTC(ahora - VENTANA_DIAS * DAY_MS)
   const desdeVentana = new Date(ahora - VENTANA_DIAS * DAY_MS)
