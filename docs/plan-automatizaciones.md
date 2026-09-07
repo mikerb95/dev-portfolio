@@ -117,21 +117,76 @@ seguridad si el externo cae.
 - [ ] Cascarón `src/pages/en/automatizaciones.astro` y alta en
       `TRANSLATED_ROUTES`. El texto ya sale del diccionario, pero mientras la
       ruta no esté declarada no debe anunciarse en inglés (publicaría un 404).
-- [ ] Aviso cuando un cron **falta**: hoy se ve su última corrida, pero nadie
-      avisa si lleva dos días sin aparecer. Es el paso natural sobre la misma
-      tabla, con `ntfy` y el umbral por job derivado de su propio horario.
+- [x] Aviso cuando un cron **falta**. Entregado el 7 sep 2026, tal como estaba
+      previsto aquí: mismo umbral derivado del horario de cada job, mismo `ntfy`,
+      misma tabla. Lo empujó el incidente descrito en la sección 7.
 
-## 7. Archivos
+## 7. El detector de silencio (7 sep 2026)
+
+La bitácora resolvió la mitad del problema: hizo visible el calendario real.
+Seguía faltando la otra, que es que alguien lo mirara. Un cron que se cae no
+falla, **desaparece**, y desaparecer no dispara nada.
+
+Lo forzó un caso concreto. Al vencer `codebymike.tech`, su registrador retiró los
+NS del dominio; los dos jobs de cron-job.org seguían apuntando ahí y empezaron a
+fallar por DNS, hasta que el scheduler los deshabilitó solo. A las 05:00 UTC el
+sitio se quedó sin sondeos cada 5 min y sin micro-SIEM, y ni el panel ni el
+correo ni ntfy dijeron nada: todo lo que quedaba vivo seguía respondiendo 200.
+El hueco se vio consultando `cron_runs` a mano.
+
+Cómo funciona:
+
+- **La cadencia se declara donde ya se publica.** `CRONS` gana un campo
+  `cadaMin` junto al `horario` que pinta la página. Una sola fuente: el horario
+  que se muestra y el que se vigila no pueden divergir.
+- **La decisión es pura** (`src/lib/cron-silencio.ts`), sin BD ni reloj propio,
+  porque "esto lleva demasiado callado" es exactamente lo que hay que poder
+  probar con un reloj de mentira.
+- **Tolerancia = triple del intervalo, con tope de 12 h extra.** El triple
+  aguanta dos ejecuciones perdidas seguidas (un despliegue a medias, el jitter
+  del scheduler) y salta a la tercera; el tope evita que un diario espere tres
+  días antes de abrir la boca (avisa a las 36 h).
+- **Con dos disparadores, manda el más estricto.** `uptime-check` es diario en
+  Vercel y cada 5 min en cron-job.org. Vigilar el laxo habría dejado pasar
+  justamente el incidente que motivó esto: el rápido muerto y el diario tapando
+  el hueco.
+- **El vigilante viaja dentro de `uptime-check`**, y no en un cron propio, por
+  esa misma razón al revés: es el único endpoint con dos disparadores
+  independientes, así que si uno cae el otro lo sigue trayendo. Un detector de
+  silencio que solo corre cuando todo va bien no detecta nada.
+- **Una revisión por hora como mucho**, con la marca guardada en `app_settings`.
+  El endpoint entra cada 5 min; sin la guarda serían 288 lecturas diarias de un
+  rango de la bitácora para responder casi siempre lo mismo, y en Turso se
+  factura lo escaneado. El precio es hasta 60 min de retraso sobre la
+  tolerancia, y por eso el aviso dice *desde cuándo* está callado.
+- **Un aviso por episodio**, repetido cada 24 h mientras dure. Un job que se
+  recupera se borra del estado, así que una recaída avisa enseguida en vez de
+  quedar tapada por la marca vieja: la misma idea que el dedup de SSL.
+- **Fail-open**, como todo lo demás: si el vigilante revienta, devuelve lista
+  vacía y el sondeo sigue.
+
+Lo que la página muestra sale de la misma función (`toleranciaMin`), no de una
+copia del criterio: si divergieran, la tabla diría que todo va bien mientras el
+push dice lo contrario, y se cree siempre a la que se está mirando.
+
+**Hallazgo de paso.** El detector señala `sena-recordatorio`: está en el catálogo
+como diario desde cron-job.org, pero no está en `vercel.json` ni existe como job
+en cron-job.org, y no tiene una sola fila en `cron_runs`. Nunca se dio de alta.
+Es exactamente el tipo de silencio que esto existe para hacer ruidoso.
+
+## 8. Archivos
 
 ```
-src/data/automatizaciones.ts    catálogo: WORKFLOWS, CRONS, AUTOMATISMOS
-src/lib/cron-runs.ts            registrarCronRun, conRegistro
+src/data/automatizaciones.ts    catálogo: WORKFLOWS, CRONS, AUTOMATISMOS, cadaMin
+src/lib/cron-runs.ts            registrarCronRun, conRegistro, silenciosPorAvisar
+src/lib/cron-silencio.ts        decisión pura: tolerancia, dedup, throttling
 src/lib/cron-auth.ts            cronSecretOk
 src/pages/automatizaciones.astro
 src/pages/api/cron/*.ts         los nueve, envueltos
 tests/crons.test.ts             vercel.json + cronSecretOk
+tests/cron-silencio.test.ts     tolerancia, avisos, catálogo vs. endpoints
 ```
 
-Requisitos: **RF-019** (página), **RF-407** (bitácora), **RNF-28** (crons
-verificables sin desplegar), **CU-20**. Iteración: Fase 43 en
+Requisitos: **RF-019** (página), **RF-407** (bitácora), **RF-408** (aviso de
+cron en silencio), **RNF-28** (crons verificables sin desplegar), **CU-20**. Iteración: Fase 43 en
 `src/data/iteraciones-portfolio.ts`.
