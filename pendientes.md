@@ -102,7 +102,7 @@ Prioridad, de más a menos urgente:
 - [ ] **Passkeys**: volver a registrarlas en `.net`. El `rpID` de WebAuthn es el
       host, así que el autenticador no ofrece las del `.tech`. La puerta de
       GitHub sigue funcionando mientras tanto.
-- [ ] **URGENTE - Repuntar los jobs de cron-job.org** a
+- [x] **Repuntar los jobs de cron-job.org** a
       `https://codebymike.net/api/cron/*`. Dejó de ser opcional el 7 sep: al
       vencer el `.tech` su registrador retiró los NS (una consulta pública ya no
       devuelve ningún NS del dominio), los dos jobs empezaron a fallar por DNS y
@@ -121,8 +121,22 @@ Prioridad, de más a menos urgente:
 
       Los dos endpoints quedaron verificados contra `.net` con el secreto de
       producción el 7 sep: `200 {"ok":true,"monitors":9,"events":0}` y
-      `200 {"ok":true,"candidates":1,...}`. El fallo está solo en la URL guardada
-      en el scheduler, no en el sitio ni en `CRON_SECRET`.
+      `200 {"ok":true,"candidates":1,...}`. El fallo estaba solo en la URL
+      guardada en el scheduler, no en el sitio ni en `CRON_SECRET`.
+
+      **Hecho el 7 sep**: las dos URLs repuntadas a `.net`, jobs habilitados de
+      nuevo, header `Authorization` confirmado intacto en los dos (el valor
+      guardado coincide con `CRON_SECRET`) y el método sigue en `GET` con zona
+      America/Bogota. El scheduler ya muestra próxima ejecución para ambos.
+
+- [ ] **`sena-recordatorio` no está dado de alta en ninguna parte.** Lo destapó
+      el detector de silencio: el catálogo (`src/data/automatizaciones.ts`) lo
+      declara diario desde cron-job.org, pero no existe como job allí (solo hay
+      dos), no está en `vercel.json` y no tiene ni una fila en `cron_runs` desde
+      que existe la bitácora. O se da de alta
+      (`GET https://codebymike.net/api/cron/sena-recordatorio`, Bearer
+      `CRON_SECRET`, diario) o se quita del catálogo, pero las dos cosas a la vez
+      no: mientras siga declarado, el vigilante avisará de él todos los días.
 - [ ] Repuntar la URL de eventos de **Wompi** a `.net`. El mismo vencimiento se
       llevó la red de seguridad que hacía esto opcional (`/api` estaba exento del
       redirect para que un 308 no degradara un POST firmado): ahora un webhook
