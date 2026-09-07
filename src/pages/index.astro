@@ -779,48 +779,215 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   // Paneles de la cinta de señales del hero.
   //
   // Sin framework y sin fetch: el marcado de los cinco paneles ya viene del
-  // servidor y esto solo decide cuál está abierto. La cinta se mueve, así que
-  // el estado se ancla a la SEÑAL (data-senal) y no al elemento apuntado: las
-  // dos copias del bucle comparten identificador y da igual cuál toque el
-  // cursor.
+  // servidor y esto solo decide cuál está abierto, dónde y con qué animación.
+  // La cinta se mueve, así que el estado se ancla a la SEÑAL (data-senal) y no
+  // al elemento apuntado: las dos copias del bucle comparten identificador y da
+  // igual cuál toque el cursor.
+  //
+  // El panel no ocupa el ancho entero: se coloca bajo la señal apuntada y se
+  // desliza de una a otra cuando el cursor recorre la cinta, en vez de
+  // apagarse y encenderse. Un parpadeo por cada señal que se cruza al mover el
+  // ratón es ruido; el deslizamiento cuenta que es el mismo panel mirando otra
+  // cosa. GSAP porque es una secuencia (caja, hilo, barras, barrido, cifra) que
+  // hay que poder reencadenar a media animación al cambiar de señal, y eso con
+  // transiciones de CSS son cinco `transition-delay` peleándose.
+  import { gsap } from 'gsap'
+
+  type Ficha = {
+    id: string
+    el: HTMLElement
+    card: HTMLElement
+    hilo: HTMLElement | null
+    muesca: HTMLElement | null
+    scan: HTMLElement | null
+    caja: HTMLElement | null
+    valor: HTMLElement | null
+    valorTexto: string
+    textos: HTMLElement[]
+    barras: HTMLElement[]
+    tl: gsap.core.Timeline | null
+  }
+
   {
     const wrap = document.querySelector<HTMLElement>('.pulso-wrap')
-    const paneles = wrap ? Array.from(wrap.querySelectorAll<HTMLElement>('.pulso-panel')) : []
+    const contenedor = wrap?.querySelector<HTMLElement>('.pulso-paneles') ?? null
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    if (wrap && paneles.length > 0) {
-      let abierto: string | null = null
-      let raf = 0
+    const fichas: Ficha[] = contenedor
+      ? Array.from(contenedor.querySelectorAll<HTMLElement>('.pulso-panel')).map((el) => {
+          const valor = el.querySelector<HTMLElement>('.pulso-valor')
+          return {
+            id: el.dataset.panel ?? '',
+            el,
+            card: el.querySelector<HTMLElement>('.pulso-card')!,
+            hilo: el.querySelector<HTMLElement>('.pulso-hilo'),
+            muesca: el.querySelector<HTMLElement>('.pulso-muesca'),
+            scan: el.querySelector<HTMLElement>('.pulso-scan'),
+            caja: el.querySelector<HTMLElement>('.pulso-barras'),
+            valor,
+            valorTexto: valor?.dataset.valor ?? valor?.textContent?.trim() ?? '',
+            textos: Array.from(el.querySelectorAll<HTMLElement>('.pulso-titulo, .pulso-desc, .pulso-dato')),
+            barras: Array.from(el.querySelectorAll<HTMLElement>('.pbar')),
+            tl: null,
+          }
+        })
+      : []
 
-      const cerrar = () => {
-        abierto = null
-        for (const panel of paneles) {
-          panel.classList.remove('is-open')
-          panel.hidden = true
-        }
+    if (wrap && contenedor && fichas.length > 0) {
+      const mapa = new Map(fichas.map((f) => [f.id, f]))
+      let activo: Ficha | null = null
+
+      // Centro de la señal apuntada, en píxeles desde el borde izquierdo del
+      // contenedor de paneles. Se mide sobre la cifra y no sobre el enlace
+      // entero: el enlace incluye el separador y su centro cae en el hueco.
+      const centroDe = (senal: HTMLElement): number => {
+        const cifra = senal.firstElementChild ?? senal
+        const r = cifra.getBoundingClientRect()
+        return r.left + r.width / 2 - contenedor.getBoundingClientRect().left
       }
 
-      const abrir = (id: string) => {
-        if (abierto === id) return
-        abierto = id
-        for (const panel of paneles) {
-          const suyo = panel.dataset.panel === id
-          if (!suyo) {
-            panel.classList.remove('is-open')
-            panel.hidden = true
-            continue
-          }
-          panel.hidden = false
-          // La transición necesita un frame con el elemento ya visible: pasar
-          // de `hidden` a `.is-open` en el mismo tick pinta el estado final de
-          // golpe y las barras aparecen sin crecer.
-          cancelAnimationFrame(raf)
-          raf = requestAnimationFrame(() => panel.classList.add('is-open'))
+      // Ancla el panel bajo ese centro sin dejar que se salga del ancho útil, y
+      // deja el hilo apuntando a la señal aunque la caja haya topado con el
+      // borde. Devuelve el `left` aplicado, que es lo que permite deslizar
+      // desde la posición del panel anterior.
+      const colocar = (f: Ficha, centro: number): number => {
+        const total = contenedor.clientWidth
+        const ancho = f.el.offsetWidth
+        const left = Math.min(Math.max(centro - ancho / 2, 0), Math.max(0, total - ancho))
+        f.el.style.left = `${left}px`
+        f.el.style.setProperty('--muesca', `${Math.round(centro - left)}px`)
+        return left
+      }
+
+      // La cifra se rebobina: los dígitos giran y se fijan de izquierda a
+      // derecha. Es el mismo gesto de "boot" del titular del hero, y sirve de
+      // acuse de recibo de que el panel trae un dato nuevo y no el de antes.
+      const rebobinar = (f: Ficha) => {
+        if (!f.valor || !f.valorTexto) return
+        const chars = Array.from(f.valorTexto)
+        const estado = { p: 0 }
+        gsap.killTweensOf(estado)
+        gsap.to(estado, {
+          p: 1,
+          duration: 0.4,
+          ease: 'power2.out',
+          onUpdate: () => {
+            const corte = estado.p * chars.length
+            f.valor!.textContent = chars
+              .map((c, i) => (i < corte || !/[0-9]/.test(c) ? c : String((Math.random() * 10) | 0)))
+              .join('')
+          },
+          onComplete: () => {
+            f.valor!.textContent = f.valorTexto
+          },
+        })
+      }
+
+      const ocultar = (f: Ficha, duracion: number) => {
+        f.tl?.kill()
+        f.tl = null
+        if (reducido) {
+          f.el.classList.remove('is-open')
+          f.el.hidden = true
+          return
         }
+        gsap.killTweensOf([f.el, f.card])
+        gsap.to(f.el, {
+          opacity: 0,
+          y: -4,
+          duration: duracion,
+          ease: 'power2.in',
+          onComplete: () => {
+            f.el.hidden = true
+            gsap.set(f.el, { clearProps: 'transform' })
+          },
+        })
+      }
+
+      const cerrar = () => {
+        if (!activo) return
+        ocultar(activo, 0.16)
+        activo = null
+      }
+
+      const abrir = (id: string, senal: HTMLElement) => {
+        const f = mapa.get(id)
+        if (!f || activo === f) return
+
+        const anterior = activo
+        activo = f
+
+        // Medir exige el panel en el flujo: oculto con `hidden` no tiene ancho.
+        f.el.hidden = false
+        const left = colocar(f, centroDe(senal))
+        const desde = anterior ? (parseFloat(anterior.el.style.left) || 0) - left : 0
+        if (anterior) ocultar(anterior, desde === 0 ? 0.16 : 0.1)
+
+        if (reducido) {
+          f.el.classList.add('is-open')
+          return
+        }
+
+        f.tl?.kill()
+        gsap.killTweensOf([f.el, f.card])
+
+        const ancho = f.caja?.clientWidth ?? 0
+        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+        f.tl = tl
+
+        tl.fromTo(
+          f.el,
+          { opacity: 0, x: desde, y: -6 },
+          { opacity: 1, x: 0, y: 0, duration: 0.34 },
+          0,
+        )
+          .fromTo(
+            f.card,
+            { clipPath: 'inset(0% 46% 0% 46% round 12px)' },
+            { clipPath: 'inset(0% 0% 0% 0% round 12px)', duration: 0.42 },
+            0,
+          )
+          .fromTo(f.hilo, { scaleY: 0, opacity: 0 }, { scaleY: 1, opacity: 1, duration: 0.24 }, 0.04)
+          .fromTo(
+            f.muesca,
+            { scale: 0, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.34, ease: 'back.out(3)' },
+            0.1,
+          )
+          .fromTo(
+            f.barras,
+            { scaleY: 0.06, opacity: 0.25 },
+            {
+              scaleY: 1,
+              opacity: 1,
+              duration: 0.5,
+              ease: 'back.out(1.6)',
+              stagger: { each: 0.012, from: 'start' },
+            },
+            0.08,
+          )
+          .fromTo(
+            f.textos,
+            { opacity: 0, y: 5 },
+            { opacity: 1, y: 0, duration: 0.3, stagger: 0.035 },
+            0.1,
+          )
+
+        if (f.scan && ancho > 0) {
+          tl.fromTo(
+            f.scan,
+            { x: 0, opacity: 0 },
+            { x: ancho, opacity: 0.9, duration: 0.5, ease: 'power1.inOut' },
+            0.08,
+          ).to(f.scan, { opacity: 0, duration: 0.18 }, 0.45)
+        }
+
+        tl.add(() => rebobinar(f), 0.08)
       }
 
       wrap.addEventListener('pointerover', (e) => {
         const senal = (e.target as HTMLElement).closest<HTMLElement>('[data-senal]')
-        if (senal?.dataset.senal) abrir(senal.dataset.senal)
+        if (senal?.dataset.senal) abrir(senal.dataset.senal, senal)
       })
 
       // Solo el puntero que puede pasear (ratón, trackpad) abre paneles al
@@ -832,7 +999,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       // ratón.
       wrap.addEventListener('focusin', (e) => {
         const senal = (e.target as HTMLElement).closest<HTMLElement>('[data-senal]')
-        if (senal?.dataset.senal) abrir(senal.dataset.senal)
+        if (senal?.dataset.senal) abrir(senal.dataset.senal, senal)
       })
       wrap.addEventListener('focusout', (e) => {
         const siguiente = e.relatedTarget as Node | null
@@ -841,16 +1008,20 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 
       // Escape cierra sin tener que mover el cursor fuera.
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && abierto) cerrar()
+        if (e.key === 'Escape' && activo) cerrar()
       })
+
+      // Al cambiar el ancho, el ancla medida deja de valer y el panel quedaría
+      // señalando a otra cifra: se cierra en vez de mentir.
+      window.addEventListener('resize', cerrar)
 
       // Tooltip de las barras. Un delegado por panel y no un listener por barra
       // (son 30 por panel), y `title` nativo no sirve: tarda cerca de un
       // segundo en aparecer y estas barras miden pocos píxeles de ancho. Es el
       // mismo patrón que ya usa el historial de /status.
-      for (const panel of paneles) {
-        const caja = panel.querySelector<HTMLElement>('.pulso-barras')
-        const tip = panel.querySelector<HTMLElement>('.pulso-tooltip')
+      for (const f of fichas) {
+        const caja = f.caja
+        const tip = f.el.querySelector<HTMLElement>('.pulso-tooltip')
         if (!caja || !tip) continue
 
         caja.addEventListener('pointerover', (e) => {
