@@ -63,7 +63,7 @@ const p = t.pulso
 
 const senales = [
   pulso.uptime !== null && {
-    valor: formatNumber(pulso.uptime * 100, locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%',
+    valor: formatNumber(truncar(pulso.uptime * 100, 2), locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%',
     etiqueta: interpolate(p.uptime, { dias: pulso.ventanaDias }),
     href: L('/status'),
   },
