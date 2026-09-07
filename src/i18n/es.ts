@@ -106,6 +106,16 @@ const es = {
       ctaCerts: 'Certificaciones',
       ctaContact: 'Hablemos',
     },
+    // Cinta de señales bajo el hero. Etiquetas cortas a propósito: la cifra es
+    // lo que se lee de un vistazo, la etiqueta solo dice de qué es y en qué
+    // ventana de tiempo.
+    pulso: {
+      uptime: 'uptime · {dias} d',
+      sondeos: 'sondeos · {dias} d',
+      siem: 'clasificados por el SIEM · {dias} d',
+      crons: 'crons en verde · 24 h',
+      lcp: 'p75 LCP · 24 h',
+    },
     bento: {
       sectionLabel: 'Qué hago',
       about: {
