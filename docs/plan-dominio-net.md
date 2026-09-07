@@ -78,9 +78,21 @@ se sigue derivando del Host real, que es lo que mantiene vivos los previews y
 2. **Passkeys.** El `rpID` de WebAuthn es el host: las llaves registradas bajo
    `.tech` no se ofrecen en `.net`. Hay que volver a registrarlas desde el panel
    una vez esté publicado. La puerta de GitHub sigue funcionando entre medias.
-3. **cron-job.org.** Repuntar los jobs a `https://codebymike.net/api/cron/*`.
-   No es urgente (el `.tech` está exento del redirect), pero deja el panel de
-   crons hablando del dominio real.
+3. **cron-job.org - BLOQUEANTE desde el 7 sep.** Repuntar los dos jobs a
+   `https://codebymike.net/api/cron/*` (`uptime-check` cada 5 min,
+   `security-rollup` cada 15 min), conservando el header
+   `Authorization: Bearer <CRON_SECRET>`, y volver a habilitarlos.
+
+   Se había anotado como "no urgente" porque `/api` está exento del redirect y
+   el `.tech` seguía recibiendo. Esa exención dejó de servir de nada cuando el
+   registrador retiró los NS del dominio vencido: sin DNS no hay a quién llamar,
+   los dos jobs fallaron seguido y cron-job.org los deshabilitó solo. Última
+   ejecución de ambos en `cron_runs`: 05:00 UTC del 7 sep (00:00 Bogotá). La
+   lección para el próximo cambio de dominio es que la exención de `/api`
+   protege del redirect, no de la muerte del dominio: un job externo hay que
+   repuntarlo **antes** de que el host viejo desaparezca, no después.
+
+   Los crons de `vercel.json` no se enteraron: van por la URL del despliegue.
 4. **Wompi.** URL de eventos del comercio → `.net`. Mismo caso: el `.tech`
    sigue recibiendo, pero conviene no depender de un dominio en retirada.
 5. **SEO.** Alta de `codebymike.net` en Search Console y Bing, envío del

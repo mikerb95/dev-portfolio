@@ -202,10 +202,13 @@ allowlist, tope de 500 y escalado de TTL. Cron `src/pages/api/cron/security-roll
 + alerta push si overflow; registrado en `vercel.json` (`0 * * * *`). `robots.txt` con
 Disallow de señuelos. Tests: `security-autoblock` + `security-honeypot` (255 totales
 verdes). Verificado e2e: honeypot→200/401 falso, cron bloquea la IP (`source='auto'`, TTL
-3600 s), request posterior→403. **Pendiente operativo**: dar de alta el cron en cron-job.org.
+3600 s), request posterior→403. **Pendiente operativo** (resuelto: el cron quedó dado de
+alta en cron-job.org y `cron_runs` lo registra cada 15 min desde el 1 sep 2026; ver la nota
+del 7 sep al final de esta fase).
 
 **Refuerzo (2026-07-19) - bloqueo inline de honeypots:** el auto-block dependía
-únicamente del cron, que nunca se dio de alta en cron-job.org y además se removió de
+únicamente del cron, que en esa fecha aún no se había dado de alta en cron-job.org (sí lo
+está desde entonces) y además se removió de
 `vercel.json` (posible límite de crons del plan) → los honeypots tocados no se bloqueaban
 en la práctica: se veían hits repetidos de la misma IP en `/admin/security` sin bloqueo.
 Como un hit a ruta señuelo es intención inequívoca (cero falsos positivos), se movió ese
@@ -222,6 +225,19 @@ alta `GET /api/cron/security-rollup` (Bearer CRON_SECRET) en cron-job.org, cada 
 Test nuevo con libSQL temporal: `tests/security-blocklist-db.test.ts` (escalado real sobre
 el `onConflictDoUpdate` de `blocked_ips` + veto vía `isBlocked`). Fail-open en todo el
 camino inline: si el insert falla, el request continúa.
+
+**Nota (2026-09-07) - el cron cayó con el dominio viejo.** `security-rollup` llevaba
+corriendo cada 15 min sin fallos (521 ejecuciones registradas en `cron_runs` desde el 1
+sep), hasta que el vencimiento de `codebymike.tech` dejó al job de cron-job.org apuntando a
+un host sin DNS: fallos seguidos y el scheduler lo deshabilitó solo, a las 05:00 UTC. El
+detalle que conviene recordar es que el redirect canónico exime `/api/*` a propósito, y esa
+exención se leyó como "los crons pueden seguir apuntando al `.tech` sin prisa" - protege
+del 308, no de que el dominio deje de existir. Como el auto-block por ráfaga, los rollups,
+la baseline, las alertas y la purga cuelgan solo de este cron, apagarlo apaga el micro-SIEM
+entero sin producir un error en ninguna parte: exactamente el modo de fallo silencioso que
+`cron_runs` se creó para hacer visible, y que aquí sí se vio de inmediato en la bitácora.
+Los honeypots siguieron bloqueando inline durante la ventana (por el refuerzo del 19 jul).
+
 
 1. Endpoints trampa que ningún usuario legítimo toca: `/wp-login.php`, `/.env`,
    `/admin.php`, `/api/v1/token` (rutas Astro reales que responden 200 con contenido

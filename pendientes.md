@@ -102,10 +102,31 @@ Prioridad, de más a menos urgente:
 - [ ] **Passkeys**: volver a registrarlas en `.net`. El `rpID` de WebAuthn es el
       host, así que el autenticador no ofrece las del `.tech`. La puerta de
       GitHub sigue funcionando mientras tanto.
-- [ ] Repuntar los jobs de **cron-job.org** a `https://codebymike.net/api/cron/*`
-      y la URL de eventos de **Wompi**. No es urgente: `/api` está exento del
-      redirect justamente para que un 308 no degrade un POST firmado ni tire la
-      cabecera `Authorization`.
+- [ ] **URGENTE - Repuntar los jobs de cron-job.org** a
+      `https://codebymike.net/api/cron/*`. Dejó de ser opcional el 7 sep: al
+      vencer el `.tech` su registrador retiró los NS (una consulta pública ya no
+      devuelve ningún NS del dominio), los dos jobs empezaron a fallar por DNS y
+      el scheduler los deshabilitó solo. La bitácora lo fecha: ni `uptime-check`
+      ni `security-rollup` vuelven a aparecer en `cron_runs` después de las
+      05:00 UTC del 7 sep (00:00 Bogotá), mientras los siete crons de
+      `vercel.json` siguieron corriendo (esos van por la URL del despliegue, no
+      por el dominio). Mientras siga así, el monitoreo baja de un sondeo cada
+      5 min a uno diario y el micro-SIEM se queda sin auto-block por ráfaga, sin
+      rollups, sin baseline y sin purga.
+
+      Los dos jobs a editar, ambos `GET` con `Authorization: Bearer <CRON_SECRET>`:
+      - `https://codebymike.net/api/cron/uptime-check` cada 5 min
+      - `https://codebymike.net/api/cron/security-rollup` cada 15 min
+        (`5,20,35,50 * * * *`)
+
+      Los dos endpoints quedaron verificados contra `.net` con el secreto de
+      producción el 7 sep: `200 {"ok":true,"monitors":9,"events":0}` y
+      `200 {"ok":true,"candidates":1,...}`. El fallo está solo en la URL guardada
+      en el scheduler, no en el sitio ni en `CRON_SECRET`.
+- [ ] Repuntar la URL de eventos de **Wompi** a `.net`. El mismo vencimiento se
+      llevó la red de seguridad que hacía esto opcional (`/api` estaba exento del
+      redirect para que un 308 no degradara un POST firmado): ahora un webhook
+      que siga apuntando al `.tech` no llega a ninguna parte.
 - [ ] **Search Console / Bing**: alta de `codebymike.net` y herramienta de
       *cambio de dirección* desde la propiedad `.tech` (depende de que el `.tech`
       siga vivo).
@@ -120,11 +141,17 @@ Prioridad, de más a menos urgente:
       el LAB: sin él, el rollback automático solo avisa en vez de revertir, y la
       Fase 5 (load testing con k6) no tiene un target de preview estable contra
       el que correr.
-- [ ] **Cron `security-rollup` en cron-job.org** - `GET
+- [x] **Cron `security-rollup` en cron-job.org** - `GET
       https://codebymike.net/api/cron/security-rollup` con header
       `Authorization: Bearer <CRON_SECRET>`, **cada 15 min** (`5,20,35,50 * * * *`).
 
-      Es el único disparador de seis tareas del micro-SIEM (verificado por grep:
+      **Ya estaba dado de alta**: `cron_runs` lo registra corriendo cada 15 min
+      desde que existe la bitácora (1 sep 2026), 521 ejecuciones sin un solo
+      fallo, hasta que el vencimiento del `.tech` lo deshabilitó el 7 sep.
+      Repuntarlo a `.net` es el punto de §2 de arriba, no un alta nueva.
+
+      Se deja escrito por qué importa, que es lo que hace urgente ese repunte:
+      es el único disparador de seis tareas del micro-SIEM (verificado por grep:
       nada más en el repo las ejecuta). Sin él quedan sin correr: el auto-block
       por **ráfaga** high/critical ≥ umbral, los rollups horarios/diarios que
       alimentan `/admin/security` y `/security`, la baseline sin la cual no hay
@@ -141,7 +168,9 @@ Prioridad, de más a menos urgente:
       hace delete-then-insert por `(bucket, at)` sobre una hora ya cerrada
       (idempotente) y `persistAnomalies` solo devuelve las nuevas, así que no
       re-alerta. Ya no está en `vercel.json` (se removió por el límite de crons
-      del plan), así que cron-job.org es el único disparador posible.
+      del plan), así que cron-job.org es el único disparador posible - y por eso
+      un job deshabilitado allí apaga el micro-SIEM entero sin producir un solo
+      error.
 
       Antes de agendarlo se puede probar el pipeline completo con el botón de
       disparo manual de `/admin/security` (el `PUT` del mismo endpoint, bajo
@@ -154,8 +183,10 @@ Prioridad, de más a menos urgente:
       hacer. Incluye dar de alta también la versión en inglés.
 - [ ] **App de ntfy en el celular** suscrita al topic. Las alertas se envían
       igual; sin suscripción no se ven.
-- [ ] Confirmar en el EDIT del job de uptime en cron-job.org que el header
+- [x] Confirmar en el EDIT del job de uptime en cron-job.org que el header
       `Authorization` quedó guardado (si falta, el HISTORY muestra 401 en rojo).
+      Quedó bien: 1570 ejecuciones anotadas en `cron_runs` entre el 1 y el 7 sep,
+      todas HTTP 200. Al repuntar la URL hay que conservar ese header.
 
 ## 3. Verificaciones pendientes en producción
 
