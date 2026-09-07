@@ -136,7 +136,7 @@ function barrasCrons(
   })
 }
 
-function barrasLcp(muestras: number[], locale: Locale, etiquetas: string[]): Barra[] {
+function barrasLcp(muestras: number[], locale: Locale, etiquetas: readonly string[]): Barra[] {
   const conteo = histograma(muestras, CORTES_LCP)
   const maximo = Math.max(...conteo, 0)
   return conteo.map((n, i) => ({
