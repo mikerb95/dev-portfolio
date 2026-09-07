@@ -32,15 +32,39 @@ export type Silencio = {
 }
 
 /** Estado que sobrevive entre ejecuciones, para no repetir el mismo aviso. */
+const MIN_MS = 60_000
+
 export type EstadoSilencio = {
   /** job → epoch en ms del último aviso enviado por este episodio. */
   avisados: Record<string, number>
+  /** Epoch en ms de la última revisión, para no revisar en cada sondeo. */
+  chequeadoEn?: number
 }
-
-const MIN_MS = 60_000
 
 /** Un aviso repetido cada 24 h mientras el silencio siga: recuerda sin agotar. */
 export const RE_AVISO_MIN = 24 * 60
+
+/**
+ * Cada cuánto se revisa la bitácora.
+ *
+ * El vigilante viaja dentro de `uptime-check`, que corre cada 5 min: revisar en
+ * cada sondeo serían 288 lecturas diarias de un rango de la bitácora para
+ * responder casi siempre lo mismo. Una vez por hora deja el retraso de
+ * detección muy por debajo de la tolerancia más corta (15 min de tolerancia
+ * frente a 60 de retraso peor caso... que es justo el motivo de que el aviso
+ * hable de "callado desde", y no de "acaba de pasar").
+ */
+export const CHEQUEO_CADA_MIN = 60
+
+/** ¿Toca revisar, o la revisión anterior es todavía reciente? */
+export function tocaChequear(estado: EstadoSilencio, ahora: Date): boolean {
+  const previo = estado.chequeadoEn
+  if (!previo) return true
+  // Un reloj que salta hacia atrás (o un valor futuro guardado por error) no
+  // puede dejar al vigilante mudo para siempre: se revisa y se reescribe.
+  if (previo > ahora.getTime()) return true
+  return ahora.getTime() - previo >= CHEQUEO_CADA_MIN * MIN_MS
+}
 
 // Tope de holgura por encima del intervalo. Sin él, el triple de un cron diario
 // serían tres días, y un backup que lleva dos sin correr ya es noticia.
@@ -138,7 +162,7 @@ export function decidirAvisos(
     if (toca) avisos.push(s)
     avisados[s.job] = toca ? ahora.getTime() : ultimoAviso
   }
-  return { avisos, estado: { avisados } }
+  return { avisos, estado: { avisados, chequeadoEn: ahora.getTime() } }
 }
 
 /** Lee el estado guardado sin confiar en él: es JSON de la BD, no un tipo. */
@@ -153,7 +177,11 @@ export function parseEstado(raw: string | null | undefined): EstadoSilencio {
     for (const [job, at] of Object.entries(v.avisados as Record<string, unknown>)) {
       if (typeof at === 'number' && Number.isFinite(at)) avisados[job] = at
     }
-    return { avisados }
+    const chequeadoEn = (v as { chequeadoEn?: unknown }).chequeadoEn
+    return {
+      avisados,
+      ...(typeof chequeadoEn === 'number' && Number.isFinite(chequeadoEn) ? { chequeadoEn } : {}),
+    }
   } catch {
     return { avisados: {} }
   }

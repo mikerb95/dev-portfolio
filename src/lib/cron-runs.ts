@@ -1,6 +1,16 @@
 import type { APIRoute } from 'astro'
 import { db } from '../db'
-import { cronRuns } from '../db/schema'
+import { appSettings, cronRuns } from '../db/schema'
+import { and, eq, gt, max, sql } from 'drizzle-orm'
+import { CRONS } from '../data/automatizaciones'
+import {
+  decidirAvisos,
+  jobsEnSilencio,
+  parseEstado,
+  ventanaMin,
+  type CronVigilado,
+  type Silencio,
+} from './cron-silencio'
 
 // Bitácora de ejecuciones de los crons.
 //
@@ -73,5 +83,80 @@ export function conRegistro(job: string, handler: APIRoute): APIRoute {
       await registrarCronRun(job, false, Date.now() - inicio, e instanceof Error ? e.message : e)
       throw e
     }
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// Detector de silencio (dead man's switch)
+//
+// La bitácora sola no avisa: hace falta alguien que la mire. Esto es esa parte,
+// y vive aquí, junto a la tabla que consulta. La decisión de qué cuenta como
+// silencio es pura y está en `cron-silencio.ts`, con sus pruebas.
+// ---------------------------------------------------------------------------
+
+/** Clave única en `app_settings` para el estado anti-repetición de los avisos. */
+const CLAVE_ESTADO = 'cron_silencio'
+
+const VIGILADOS: CronVigilado[] = CRONS.map((c) => ({
+  job: c.job,
+  cadaMin: c.cadaMin,
+  origen: c.origen,
+}))
+
+/**
+ * Última ejecución de cada job dentro de una ventana de tiempo.
+ *
+ * El `where` sobre la fecha no es un filtro cosmético: convierte la consulta en
+ * un rango sobre `cron_runs_created_idx` en vez de un escaneo de la tabla, que
+ * es lo que se factura en Turso. Un job que no aparezca en el resultado lleva
+ * callado, como mínimo, toda la ventana.
+ */
+export async function ultimasCorridas(desde: Date): Promise<Map<string, Date>> {
+  const filas = await db
+    .select({ job: cronRuns.job, ultima: max(cronRuns.createdAt) })
+    .from(cronRuns)
+    .where(gt(cronRuns.createdAt, desde))
+    .groupBy(cronRuns.job)
+
+  const m = new Map<string, Date>()
+  for (const f of filas) {
+    if (f.ultima) m.set(f.job, f.ultima instanceof Date ? f.ultima : new Date(Number(f.ultima) * 1000))
+  }
+  return m
+}
+
+/**
+ * Revisa la bitácora y devuelve los silencios que toca avisar ahora mismo.
+ *
+ * Devuelve lista vacía (nunca lanza) si algo falla: es observabilidad, y el
+ * fail-open del repo manda. Que el vigilante no pueda opinar no puede tumbar al
+ * cron que lo hospeda.
+ */
+export async function silenciosPorAvisar(ahora: Date): Promise<Silencio[]> {
+  try {
+    const desde = new Date(ahora.getTime() - ventanaMin(VIGILADOS) * 60_000)
+    const silencios = jobsEnSilencio(VIGILADOS, await ultimasCorridas(desde), ahora)
+
+    const [fila] = await db
+      .select()
+      .from(appSettings)
+      .where(eq(appSettings.key, CLAVE_ESTADO))
+      .limit(1)
+
+    const { avisos, estado } = decidirAvisos(silencios, parseEstado(fila?.value), ahora)
+
+    // Se escribe siempre: el estado también sirve para OLVIDAR a los que se
+    // recuperaron, y ese olvido es lo que hace que una recaída avise enseguida.
+    const valor = JSON.stringify(estado)
+    await db
+      .insert(appSettings)
+      .values({ key: CLAVE_ESTADO, value: valor, updatedAt: ahora })
+      .onConflictDoUpdate({ target: appSettings.key, set: { value: valor, updatedAt: ahora } })
+
+    return avisos
+  } catch (e) {
+    console.error('[cron-silencio]', e)
+    return []
   }
 }
