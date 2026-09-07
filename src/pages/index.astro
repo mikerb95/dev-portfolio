@@ -762,3 +762,100 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       })
   }
 </script>
+
+<script>
+  // Paneles de la cinta de señales del hero.
+  //
+  // Sin framework y sin fetch: el marcado de los cinco paneles ya viene del
+  // servidor y esto solo decide cuál está abierto. La cinta se mueve, así que
+  // el estado se ancla a la SEÑAL (data-senal) y no al elemento apuntado: las
+  // dos copias del bucle comparten identificador y da igual cuál toque el
+  // cursor.
+  {
+    const wrap = document.querySelector<HTMLElement>('.pulso-wrap')
+    const paneles = wrap ? Array.from(wrap.querySelectorAll<HTMLElement>('.pulso-panel')) : []
+
+    if (wrap && paneles.length > 0) {
+      let abierto: string | null = null
+      let raf = 0
+
+      const cerrar = () => {
+        abierto = null
+        for (const panel of paneles) {
+          panel.classList.remove('is-open')
+          panel.hidden = true
+        }
+      }
+
+      const abrir = (id: string) => {
+        if (abierto === id) return
+        abierto = id
+        for (const panel of paneles) {
+          const suyo = panel.dataset.panel === id
+          if (!suyo) {
+            panel.classList.remove('is-open')
+            panel.hidden = true
+            continue
+          }
+          panel.hidden = false
+          // La transición necesita un frame con el elemento ya visible: pasar
+          // de `hidden` a `.is-open` en el mismo tick pinta el estado final de
+          // golpe y las barras aparecen sin crecer.
+          cancelAnimationFrame(raf)
+          raf = requestAnimationFrame(() => panel.classList.add('is-open'))
+        }
+      }
+
+      wrap.addEventListener('pointerover', (e) => {
+        const senal = (e.target as HTMLElement).closest<HTMLElement>('[data-senal]')
+        if (senal?.dataset.senal) abrir(senal.dataset.senal)
+      })
+
+      // Solo el puntero que puede pasear (ratón, trackpad) abre paneles al
+      // salir: en un lápiz o un toque, `pointerleave` llega junto con el tap.
+      wrap.addEventListener('pointerleave', cerrar)
+
+      // Teclado: tabular por las señales abre el panel de la que tiene el foco.
+      // Es la misma información, no una versión reducida para quien no usa
+      // ratón.
+      wrap.addEventListener('focusin', (e) => {
+        const senal = (e.target as HTMLElement).closest<HTMLElement>('[data-senal]')
+        if (senal?.dataset.senal) abrir(senal.dataset.senal)
+      })
+      wrap.addEventListener('focusout', (e) => {
+        const siguiente = e.relatedTarget as Node | null
+        if (!siguiente || !wrap.contains(siguiente)) cerrar()
+      })
+
+      // Escape cierra sin tener que mover el cursor fuera.
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && abierto) cerrar()
+      })
+
+      // Tooltip de las barras. Un delegado por panel y no un listener por barra
+      // (son 30 por panel), y `title` nativo no sirve: tarda cerca de un
+      // segundo en aparecer y estas barras miden pocos píxeles de ancho. Es el
+      // mismo patrón que ya usa el historial de /status.
+      for (const panel of paneles) {
+        const caja = panel.querySelector<HTMLElement>('.pulso-barras')
+        const tip = panel.querySelector<HTMLElement>('.pulso-tooltip')
+        if (!caja || !tip) continue
+
+        caja.addEventListener('pointerover', (e) => {
+          const barra = (e.target as HTMLElement).closest<HTMLElement>('.pbar')
+          if (!barra) return
+          const etiqueta = barra.getAttribute('data-label')
+          if (!etiqueta) return
+          tip.textContent = etiqueta
+          tip.classList.remove('hidden')
+          // Anclado al centro de la barra y recortado contra los bordes: sin el
+          // clamp, las barras de los extremos sacan el tooltip fuera del panel.
+          const centro = barra.offsetLeft + barra.offsetWidth / 2
+          const mitad = tip.offsetWidth / 2
+          tip.style.left = Math.min(Math.max(centro, mitad), caja.clientWidth - mitad) + 'px'
+        })
+        caja.addEventListener('pointerleave', () => tip.classList.add('hidden'))
+      }
+    }
+  }
+</script>

@@ -336,15 +336,47 @@ body {
    palabras sueltas que se reconocen de golpe. */
 .ticker-track { animation: marquee 90s linear infinite; }
 /* Se detiene al apuntar y también al tabular hacia dentro: cada señal es un
-   enlace, y un enlace que se mueve mientras intentas pulsarlo no es un enlace. */
+   enlace, y un enlace que se mueve mientras intentas pulsarlo no es un enlace.
+   La pausa cuelga del contenedor entero y no solo de la cinta: con el cursor en
+   el panel abierto, una cinta que sigue corriendo cambia la señal de sitio y al
+   volver el cursor ya no está donde el ojo la dejó. */
+.pulso-wrap:hover .ticker-track,
+.pulso-wrap:focus-within .ticker-track,
 .ticker:hover .ticker-track,
 .ticker:focus-within .ticker-track { animation-play-state: paused; }
+
+/* Panel de detalle de una señal. Entra desde arriba, muy corto: es una
+   respuesta a un gesto de hover, no una transición de página. */
+.pulso-panel {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+.pulso-panel.is-open { opacity: 1; transform: none; }
+
+/* Las barras crecen desde su base, escalonadas por posición: el barrido deja
+   ver el eje temporal (izquierda vieja, derecha reciente) antes de leer una
+   sola cifra. El retardo se corta a 30 columnas para que el último tramo del
+   histograma de LCP no llegue tarde. */
+.pulso-panel .pbar {
+  transform: scaleY(.12);
+  transform-origin: bottom;
+  opacity: .3;
+  transition: transform .34s cubic-bezier(.2,.8,.2,1), opacity .34s ease;
+  transition-delay: calc(min(var(--i), 30) * 9ms);
+}
+.pulso-panel.is-open .pbar { transform: none; opacity: 1; }
+.pulso-panel .pbar:hover { filter: brightness(1.35); }
 
 /* Sin movimiento automático para quien lo pidió en el sistema: la cinta queda
    quieta y se puede recorrer con el gesto de scroll horizontal. */
 @media (prefers-reduced-motion: reduce) {
   .ticker { overflow-x: auto; }
   .ticker-track { animation: none; }
+  /* El panel sigue abriéndose (es información, no decoración); lo que se quita
+     es el desplazamiento y el crecimiento de las barras. */
+  .pulso-panel { transform: none; transition: opacity .12s ease; }
+  .pulso-panel .pbar { transform: none; opacity: 1; transition: none; }
 }
 
 /* Pulse dot */
