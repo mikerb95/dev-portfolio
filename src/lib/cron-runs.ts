@@ -1,12 +1,13 @@
 import type { APIRoute } from 'astro'
 import { db } from '../db'
 import { appSettings, cronRuns } from '../db/schema'
-import { and, eq, gt, max, sql } from 'drizzle-orm'
+import { eq, gt, max } from 'drizzle-orm'
 import { CRONS } from '../data/automatizaciones'
 import {
   decidirAvisos,
   jobsEnSilencio,
   parseEstado,
+  tocaChequear,
   ventanaMin,
   type CronVigilado,
   type Silencio,
