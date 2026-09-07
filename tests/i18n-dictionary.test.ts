@@ -111,6 +111,10 @@ describe('paridad del diccionario es/en', () => {
         'home.githubTop3Label',
         'home.githubTop3Value',
         'home.lab.p1strong',
+        // "uptime" y "p75 LCP" se escriben igual en ambos idiomas: son los
+        // nombres de las métricas, no texto traducible.
+        'home.pulso.uptime',
+        'home.pulso.lcp',
         'home.proceso.steps[3].t',
         'nav.loginAria',
         'notFound.eyebrow',
