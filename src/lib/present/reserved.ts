@@ -7,8 +7,11 @@
 // sí es real: que un PIN generado COINCIDA con una ruta que se añada mañana y
 // el público que escanee el QR aterrice en el portafolio en vez de en el deck.
 //
-// `tests/present-reserved.test.ts` cruza esta lista contra los archivos reales
-// de `src/pages` y falla si alguien añade una ruta raíz sin registrarla aquí.
+// `tests/present-pin.test.ts` cruza esta lista contra los archivos reales de
+// `src/pages` y falla si alguien añade una ruta raíz sin registrarla aquí. El
+// mismo test recorre `public/`, donde el criterio es distinto: esos archivos no
+// hace falta registrarlos uno a uno (los `og-*.png` serían puro ruido), basta
+// con que ninguno tenga forma de PIN.
 
 /**
  * Nombres tomados en la raíz: páginas, endpoints, directorios de `src/pages`,

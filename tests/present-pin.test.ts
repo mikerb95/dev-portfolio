@@ -142,6 +142,24 @@ describe('rutas reservadas', () => {
     }
   })
 
+  it('ningún archivo servido desde public/ tiene forma de PIN', async () => {
+    // `public/` se sirve en la raíz igual que una página, así que compite por el
+    // mismo espacio - pero registrar los 18 `og-*.png` sería ruido. Lo que de
+    // verdad importa es que nada de ahí PUEDA chocar con un PIN generado: hoy
+    // ninguno mezcla 2 letras y 2 dígitos en 4 caracteres, y este test es lo que
+    // avisa el día que alguien suba un `a7b3.png`.
+    const { readdirSync } = await import('node:fs')
+    const files = readdirSync(new URL('../public', import.meta.url), { withFileTypes: true })
+
+    for (const entry of files) {
+      const seg = entry.name.split('.')[0]
+      expect(
+        isPinShape(seg),
+        `"${entry.name}" en public/ tiene forma de PIN: renómbralo o resérvalo`
+      ).toBe(false)
+    }
+  })
+
   it('ninguna ruta reservada tiene forma de PIN (no se bloquean PINs válidos)', () => {
     // Si una ruta real tuviera forma de PIN, la lista estaría quitándole a la
     // generación un hueco legítimo - señal de que hay que renombrar la ruta.
