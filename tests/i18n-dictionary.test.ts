@@ -115,6 +115,10 @@ describe('paridad del diccionario es/en', () => {
         // nombres de las métricas, no texto traducible.
         'home.pulso.uptime',
         'home.pulso.lcp',
+        // Tramos extremos del histograma de LCP: sin decimal que separar, "< 1 s"
+        // y "> 4 s" se escriben igual. Los intermedios sí difieren (1,8 / 1.8).
+        'home.pulso.paneles.tramosLcp[0]',
+        'home.pulso.paneles.tramosLcp[4]',
         'home.proceso.steps[3].t',
         'nav.loginAria',
         'notFound.eyebrow',
