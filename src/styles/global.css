@@ -330,6 +330,23 @@ body {
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee-track { animation: marquee 40s linear infinite; }
 
+/* Cinta de señales del hero (index). El contenido va duplicado exactamente dos
+   veces, así que -50% cae justo en la costura y el bucle no salta.
+   Mucho más lenta que el marquee de stack: aquí hay cifras que se leen, no
+   palabras sueltas que se reconocen de golpe. */
+.ticker-track { animation: marquee 90s linear infinite; }
+/* Se detiene al apuntar y también al tabular hacia dentro: cada señal es un
+   enlace, y un enlace que se mueve mientras intentas pulsarlo no es un enlace. */
+.ticker:hover .ticker-track,
+.ticker:focus-within .ticker-track { animation-play-state: paused; }
+
+/* Sin movimiento automático para quien lo pidió en el sistema: la cinta queda
+   quieta y se puede recorrer con el gesto de scroll horizontal. */
+@media (prefers-reduced-motion: reduce) {
+  .ticker { overflow-x: auto; }
+  .ticker-track { animation: none; }
+}
+
 /* Pulse dot */
 @keyframes pulseDot { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
 .pulse-dot { animation: pulseDot 1.6s ease-in-out infinite; }
