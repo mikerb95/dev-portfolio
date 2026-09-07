@@ -120,7 +120,6 @@ export async function leerPulso(ahora = Date.now()): Promise<Pulso> {
     ),
   ])
 
-  console.log('[pulso-debug]', JSON.stringify({uptimeRow, eventosRow, cronsRow, n: lcpRows.length}))
   const total = Number(uptimeRow[0]?.total ?? 0)
   const ok = Number(uptimeRow[0]?.ok ?? 0)
 
