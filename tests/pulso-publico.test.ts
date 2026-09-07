@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 // aritmética que convierte muestras crudas en la cifra que la portada afirma.
 vi.mock('../src/db', () => ({ db: {} }))
 
-const { percentil } = await import('../src/lib/pulso-publico')
+const { percentil, truncar } = await import('../src/lib/pulso-publico')
 
 describe('percentil', () => {
   it('sin muestras no inventa un cero', () => {
