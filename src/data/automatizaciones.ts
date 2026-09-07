@@ -23,6 +23,14 @@ export type Cron = {
   job: string
   /** Horario declarado, en UTC. */
   horario: string
+  /**
+   * El mismo horario en minutos entre ejecuciones. Lo lee el detector de
+   * silencio (`src/lib/cron-silencio.ts`) para saber a partir de cuándo la
+   * ausencia de este job en la bitácora es una avería y no una pausa normal.
+   * Va aquí, y no en una tabla aparte, para que el horario que se publica y el
+   * que se vigila no puedan divergir.
+   */
+  cadaMin: number
   /** Quién lo dispara de verdad. */
   origen: 'vercel' | 'cron-job.org'
   hace: string
@@ -95,6 +103,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'backup',
     horario: '03:00',
+    cadaMin: 1440,
     origen: 'vercel',
     hace: 'Copia de seguridad diaria de la base.',
     siFalla: 'Se envejece la última copia disponible para restaurar.',
@@ -102,6 +111,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'portal-demo-reseed',
     horario: '04:00',
+    cadaMin: 1440,
     origen: 'vercel',
     hace: 'Repuebla la base de la demo pública con datos ficticios.',
     siFalla: 'La demo va acumulando lo que hayan dejado los visitantes.',
@@ -109,6 +119,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'monitor-rollup',
     horario: '05:00',
+    cadaMin: 1440,
     origen: 'vercel',
     hace: 'Resume los sondeos del día en una fila por monitor.',
     siFalla: 'El historial de disponibilidad deja de consolidarse y consultarlo se vuelve caro.',
@@ -116,6 +127,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'uptime-check',
     horario: '07:00',
+    cadaMin: 1440,
     origen: 'vercel',
     hace: 'Sondeo de disponibilidad, refresco de certificados, gestión de incidentes y purga de historial.',
     siFalla: 'Una caída deja de abrir incidente y nadie se entera.',
@@ -123,6 +135,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'domain-check',
     horario: '08:00',
+    cadaMin: 1440,
     origen: 'vercel',
     hace: 'Vigila el vencimiento de los dominios y avisa, sin repetir el aviso.',
     siFalla: 'Un dominio puede vencer sin previo aviso.',
@@ -130,6 +143,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'indexnow',
     horario: '08:30',
+    cadaMin: 1440,
     origen: 'vercel',
     hace: 'Reenvía el sitemap a los buscadores que admiten IndexNow.',
     siFalla: 'El contenido nuevo tarda más en indexarse.',
@@ -137,6 +151,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'invoices-overdue',
     horario: '09:00',
+    cadaMin: 1440,
     origen: 'vercel',
     hace: 'Marca facturas vencidas y notifica.',
     siFalla: 'Una factura vencida se queda figurando al día.',
@@ -144,6 +159,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'uptime-check',
     horario: 'cada ~5 min',
+    cadaMin: 5,
     origen: 'cron-job.org',
     hace: 'El mismo sondeo, a la frecuencia que la monitorización necesita de verdad.',
     siFalla: 'La resolución del monitoreo cae a una medición al día.',
@@ -151,6 +167,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'security-rollup',
     horario: 'cada ~15 min',
+    cadaMin: 15,
     origen: 'cron-job.org',
     hace: 'Agrega la última hora de eventos, contrasta contra la línea base y aplica el bloqueo automático.',
     siFalla: 'La detección de anomalías se queda sin agregados con los que comparar.',
@@ -158,6 +175,7 @@ export const CRONS: readonly Cron[] = [
   {
     job: 'sena-recordatorio',
     horario: 'diario',
+    cadaMin: 1440,
     origen: 'cron-job.org',
     hace: 'Recordatorio de la calculadora de etapa productiva.',
     siFalla: 'Se pierde el recordatorio del día.',
