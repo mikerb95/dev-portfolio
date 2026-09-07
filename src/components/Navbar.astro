@@ -181,7 +181,13 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
          y viven en el panel desplegable; el rótulo del CTA cede por debajo de
          380 px y queda la flecha con su aria-label. -->
     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-      <LangSwitch locale={locale} languageHref={languageHref} class="hidden sm:inline-flex" />
+      {/* Envuelto y no `class="hidden sm:..."` sobre el propio conmutador: su
+          clase base ya trae `inline-flex`, y entre dos utilidades de display
+          con la misma especificidad gana la que el CSS emite última, así que
+          el `hidden` no ocultaba nada. */}
+      <div class="hidden sm:block">
+        <LangSwitch locale={locale} languageHref={languageHref} />
+      </div>
       <a
         href="/login?callbackUrl=%2Fentrar"
         aria-label={t.nav.loginAria}
@@ -222,7 +228,7 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
         >
           <path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path>
         </svg>
-        <span class="hidden min-[380px]:inline">{t.nav.contactCta}</span>
+        <span class="hidden min-[360px]:inline">{t.nav.contactCta}</span>
       </a>
 
       <!-- Mobile menu button -->

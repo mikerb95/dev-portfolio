@@ -20,6 +20,7 @@ import { mapRunEstado } from '../lib/lab/pipeline-live'
 import { safeQuery } from '../lib/safe-query'
 import { serverEnv } from '../lib/env'
 import { WORKFLOWS, CRONS, AUTOMATISMOS } from '../data/automatizaciones'
+import { toleranciaMin } from '../lib/cron-silencio'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
