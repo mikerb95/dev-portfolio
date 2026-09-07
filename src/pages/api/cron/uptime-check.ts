@@ -160,18 +160,22 @@ async function notify(events: Event[]) {
   const downs = events.filter((e): e is Extract<Event, { kind: 'down' }> => e.kind === 'down')
   const recoveries = events.filter((e): e is Extract<Event, { kind: 'recovery' }> => e.kind === 'recovery')
   const ssls = events.filter((e): e is Extract<Event, { kind: 'ssl' }> => e.kind === 'ssl')
+  const crons = events.filter((e): e is Extract<Event, { kind: 'cron' }> => e.kind === 'cron')
 
   const lines: string[] = []
   for (const e of downs) lines.push(`🔴 ${e.name} CAÍDO - ${e.error}`)
   for (const e of recoveries) lines.push(`🟢 ${e.name} recuperado (caído ${fmtDuration(e.downSec)})`)
   for (const e of ssls) lines.push(`⚠ SSL de ${e.name} ${e.days < 0 ? `vencido hace ${Math.abs(e.days)}d` : `vence en ${e.days}d`}`)
+  for (const e of crons) lines.push(e.texto)
 
   const subject =
     downs.length > 0
       ? `🔴 ${downs.length} servicio${downs.length === 1 ? '' : 's'} caído${downs.length === 1 ? '' : 's'}`
       : recoveries.length > 0
         ? `🟢 ${recoveries.length} servicio${recoveries.length === 1 ? '' : 's'} recuperado${recoveries.length === 1 ? '' : 's'}`
-        : `⚠ Alerta de certificados SSL`
+        : ssls.length > 0
+          ? `⚠ Alerta de certificados SSL`
+          : `⏱ ${crons.length} tarea${crons.length === 1 ? '' : 's'} programada${crons.length === 1 ? '' : 's'} en silencio`
 
   const text = `${subject}\n\n${lines.join('\n')}\n\nPanel: ${SITE_URL}/admin/monitors`
   const html = `<h2 style="font-family:system-ui">Estado de servicios</h2><ul style="font-family:system-ui;font-size:14px">${lines
