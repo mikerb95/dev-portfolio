@@ -833,6 +833,10 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
         })
       : []
 
+    // Distancia mínima de la muesca a la esquina del panel, en píxeles: menos
+    // que esto y el rombo se come el redondeo del borde.
+    const MARGEN_MUESCA = 18
+
     if (wrap && contenedor && fichas.length > 0) {
       const mapa = new Map(fichas.map((f) => [f.id, f]))
       let activo: Ficha | null = null
@@ -854,8 +858,12 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
         const total = contenedor.clientWidth
         const ancho = f.el.offsetWidth
         const left = Math.min(Math.max(centro - ancho / 2, 0), Math.max(0, total - ancho))
+        // El hilo se queda dentro de la caja aunque la señal apuntada esté
+        // fuera del ancho útil: la cinta sangra por los lados y una señal a
+        // medio salir dejaría la muesca colgando en el vacío.
+        const muesca = Math.min(Math.max(centro - left, MARGEN_MUESCA), ancho - MARGEN_MUESCA)
         f.el.style.left = `${left}px`
-        f.el.style.setProperty('--muesca', `${Math.round(centro - left)}px`)
+        f.el.style.setProperty('--muesca', `${Math.round(muesca)}px`)
         return left
       }
 
@@ -912,7 +920,25 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 
       const abrir = (id: string, senal: HTMLElement) => {
         const f = mapa.get(id)
-        if (!f || activo === f) return
+        if (!f) return
+
+        // La misma señal, pero la otra copia del bucle: el panel ya trae el
+        // dato correcto y solo tiene que reengancharse bajo el cursor. Sin
+        // esto, apuntar la copia de la derecha dejaba el panel anclado a la
+        // de la izquierda, señalando una cifra que no era.
+        if (activo === f) {
+          if (f.tl?.isActive()) return
+          const previo = parseFloat(f.el.style.left) || 0
+          const left = colocar(f, centroDe(senal))
+          if (!reducido && Math.abs(previo - left) > 2) {
+            gsap.fromTo(
+              f.el,
+              { x: previo - left },
+              { x: 0, duration: 0.3, ease: 'power3.out' },
+            )
+          }
+          return
+        }
 
         const anterior = activo
         activo = f

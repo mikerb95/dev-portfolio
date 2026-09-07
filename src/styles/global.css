@@ -382,6 +382,11 @@ body {
 /* Sin GSAP (fallback y movimiento reducido) la clase basta para mostrarlo. */
 .pulso-panel.is-open { opacity: 1; }
 
+/* El panel cae sobre la sección siguiente, así que su fondo tiene que tapar de
+   verdad: con el cristal a .88 se leían los titulares del bento a través de la
+   descripción, y una descripción que se lee sobre otro texto no se lee. */
+.pulso-card { background: rgba(10,11,14,.97); }
+
 /* Hilo vertical del borde de la cinta a la muesca del panel, y la muesca en
    sí: ambos nacen en el centro de la señal apuntada (`--muesca`, en píxeles
    relativos al borde izquierdo del panel). */
