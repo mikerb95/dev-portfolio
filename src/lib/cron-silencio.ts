@@ -31,9 +31,9 @@ export type Silencio = {
   silencioMin: number | null
 }
 
-/** Estado que sobrevive entre ejecuciones, para no repetir el mismo aviso. */
 const MIN_MS = 60_000
 
+/** Estado que sobrevive entre ejecuciones, para no repetir el mismo aviso. */
 export type EstadoSilencio = {
   /** job → epoch en ms del último aviso enviado por este episodio. */
   avisados: Record<string, number>
@@ -49,10 +49,9 @@ export const RE_AVISO_MIN = 24 * 60
  *
  * El vigilante viaja dentro de `uptime-check`, que corre cada 5 min: revisar en
  * cada sondeo serían 288 lecturas diarias de un rango de la bitácora para
- * responder casi siempre lo mismo. Una vez por hora deja el retraso de
- * detección muy por debajo de la tolerancia más corta (15 min de tolerancia
- * frente a 60 de retraso peor caso... que es justo el motivo de que el aviso
- * hable de "callado desde", y no de "acaba de pasar").
+ * responder casi siempre lo mismo. A cambio, la revisión horaria añade hasta
+ * 60 min de retraso sobre la tolerancia, y por eso el aviso dice desde cuándo
+ * está callado en vez de dar a entender que acaba de pasar.
  */
 export const CHEQUEO_CADA_MIN = 60
 
