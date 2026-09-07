@@ -40,6 +40,11 @@ export const projects = sqliteTable('projects', {
   endDate: integer('end_date', { mode: 'timestamp' }),
   internalNotes: text('internal_notes'),
   clientId: integer('client_id').references(() => clients.id),
+  // Proyecto de Vercel que sirve este proyecto (`prj_...`). Es la llave con la
+  // que se reconcilia el consumo medido contra la factura real: sin ella, el
+  // dashboard de Vercel y esta base hablan de cosas distintas con el mismo
+  // nombre. Nullable: no todo proyecto de la ficha vive en Vercel.
+  vercelProjectId: text('vercel_project_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
@@ -1261,4 +1266,138 @@ export const cronRuns = sqliteTable('cron_runs', {
   // memoria a "última de cada job": con este índice son N filas escaneadas y
   // no la tabla entera (Turso factura filas escaneadas, no devueltas).
   createdIdx: index('cron_runs_created_idx').on(t.createdAt),
+}))
+
+// ---------------------------------------------------------------------------
+// Cómputo por proyecto: medición del consumo de Vercel para poder cobrárselo a
+// cada empresa. Plan y advertencias en `docs/plan-computo-clientes.md`.
+//
+// La fuente de los datos es telemetría propia (un instrumentador desplegado en
+// cada proyecto de cliente que reporta a /api/computo/ingest), y no la API de
+// Vercel: `/v1/usage` y `vercel metrics` exigen plan Pro y, en el caso de las
+// métricas, el add-on Observability Plus. La forma de estas tablas es la misma
+// que tendrían alimentadas por esa API, para que el día que se pase a Pro solo
+// cambie quién las llena.
+// ---------------------------------------------------------------------------
+
+// Consumo agregado por proyecto y hora. Una hora y no un minuto porque la
+// factura es mensual y una fila por minuto multiplicaría por 60 una tabla que
+// se escanea entera al cerrar el mes (Turso factura filas escaneadas).
+//
+// El instrumentador envía lotes acumulados en memoria del proceso Fluid, así
+// que un mismo lote puede llegar dos veces (reintento) o tarde (proceso que se
+// apaga): la escritura es un UPSERT que SUMA sobre `(project_id, hour)` y cada
+// lote trae un `batch_id` para descartar duplicados.
+export const computeUsageHourly = sqliteTable('compute_usage_hourly', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  // Inicio de la hora en UTC. Se guarda como timestamp y no como texto para
+  // poder acotar rangos con comparaciones numéricas al cerrar el periodo.
+  hour: integer('hour', { mode: 'timestamp' }).notNull(),
+  // Unidades pequeñas y enteras a propósito: sumar miles de flotantes ya
+  // convertidos a horas o gigabytes arrastra error. La conversión a la unidad
+  // de facturación la hace una sola vez `lib/computo/calculo.ts`.
+  cpuMs: real('cpu_ms').notNull().default(0),
+  gbMs: real('gb_ms').notNull().default(0),
+  invocations: integer('invocations').notNull().default(0),
+  transferBytes: real('transfer_bytes').notNull().default(0),
+  originTransferBytes: real('origin_transfer_bytes').notNull().default(0),
+  edgeRequests: integer('edge_requests').notNull().default(0),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+}, (t) => ({
+  // UNIQUE y no solo índice: es lo que hace que el UPSERT acumulativo sea
+  // seguro con dos procesos Fluid reportando la misma hora a la vez.
+  proyectoHora: uniqueIndex('compute_usage_project_hour_idx').on(t.projectId, t.hour),
+  horaIdx: index('compute_usage_hour_idx').on(t.hour),
+}))
+
+// Lotes ya aplicados, para que un reintento del instrumentador no cuente dos
+// veces el mismo consumo. Sin esto, una red inestable le cobraría de más a un
+// cliente, que es el peor error posible en este sistema.
+export const computeBatches = sqliteTable('compute_batches', {
+  // UUID que genera el instrumentador. PK de texto: el UNIQUE ES la defensa.
+  id: text('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  receivedAt: integer('received_at', { mode: 'timestamp' }),
+}, (t) => ({
+  // La limpieza de lotes viejos borra por fecha; sin índice sería un scan.
+  recibidoIdx: index('compute_batches_received_idx').on(t.receivedAt),
+}))
+
+// Tarifas de Vercel con fecha de vigencia. Ver el porqué de versionarlas en
+// `src/lib/computo/tarifas.ts`: un periodo cerrado tiene que poder recalcularse
+// con la tarifa que regía entonces, no con la de hoy.
+export const computeRates = sqliteTable('compute_rates', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // ISO YYYY-MM-DD. Texto y no timestamp porque se compara con `<=` contra la
+  // fecha del periodo, que también es una fecha de calendario sin hora.
+  vigenteDesde: text('vigente_desde').notNull().unique(),
+  cpuActivaHora: real('cpu_activa_hora').notNull(),
+  memoriaGbHora: real('memoria_gb_hora').notNull(),
+  invocacionesMillon: real('invocaciones_millon').notNull(),
+  transferenciaGb: real('transferencia_gb').notNull(),
+  transferenciaOrigenGb: real('transferencia_origen_gb').notNull(),
+  edgeRequestsMillon: real('edge_requests_millon').notNull(),
+  // De dónde salió el número y cuándo se verificó contra la página de precios.
+  // Sin esto, dentro de seis meses nadie sabe si la tarifa sigue siendo válida.
+  fuente: text('fuente'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+})
+
+// Condiciones de cobro por proyecto. Nullable en `project_id` no tiene sentido
+// aquí: si un cliente tiene varios proyectos, cada uno lleva las suyas, porque
+// el consumo se mide por proyecto y el margen puede diferir entre ellos.
+export const computeTerms = sqliteTable('compute_terms', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }).unique(),
+  margenPct: real('margen_pct').notNull().default(30),
+  minimoUsd: real('minimo_usd'),
+  // Cuota incluida, en las mismas unidades pequeñas que compute_usage_hourly.
+  // Absorbe el ruido de bots y del propio monitoreo sin discutirlo cada mes.
+  incluidoCpuMs: real('incluido_cpu_ms').notNull().default(0),
+  incluidoGbMs: real('incluido_gb_ms').notNull().default(0),
+  incluidoInvocaciones: integer('incluido_invocaciones').notNull().default(0),
+  incluidoTransferBytes: real('incluido_transfer_bytes').notNull().default(0),
+  // Secreto HMAC del instrumentador de ESTE proyecto, cifrado con AES-256-GCM
+  // (lib/crypto.ts), igual que la bóveda de project_services. Por proyecto y no
+  // global: filtrar el secreto de un cliente no debe permitir inyectar consumo
+  // en la factura de otro.
+  ingestSecret: text('ingest_secret'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+// Cierre mensual por proyecto. Congela el número que se le cobró al cliente:
+// las tarifas, el factor y los términos pueden cambiar después, y la factura
+// emitida no puede moverse por eso.
+export const computePeriods = sqliteTable('compute_periods', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  // Mes del periodo, ISO YYYY-MM.
+  periodo: text('periodo').notNull(),
+  // Consumo congelado del periodo, ya agregado desde compute_usage_hourly.
+  cpuMs: real('cpu_ms').notNull().default(0),
+  gbMs: real('gb_ms').notNull().default(0),
+  invocations: integer('invocations').notNull().default(0),
+  transferBytes: real('transfer_bytes').notNull().default(0),
+  originTransferBytes: real('origin_transfer_bytes').notNull().default(0),
+  edgeRequests: integer('edge_requests').notNull().default(0),
+  // Resultado del cálculo, congelado junto con sus entradas.
+  costoMedidoUsd: real('costo_medido_usd').notNull().default(0),
+  factorReconciliacion: real('factor_reconciliacion').notNull().default(1),
+  costoUsd: real('costo_usd').notNull().default(0),
+  margenPct: real('margen_pct').notNull().default(0),
+  totalUsd: real('total_usd').notNull().default(0),
+  // Lo que Vercel facturó de verdad ese mes por este proyecto, cargado a mano
+  // desde el dashboard. Es lo que convierte la telemetría propia en algo
+  // defendible: de aquí sale el factor que corrige los periodos siguientes.
+  facturaRealUsd: real('factura_real_usd'),
+  estado: text('estado', { enum: ['abierto', 'cerrado', 'facturado'] }).notNull().default('abierto'),
+  // Cuenta de cobro donde acabó esta línea, si ya se facturó.
+  invoiceId: integer('invoice_id').references(() => invoices.id),
+  cerradoAt: integer('cerrado_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+}, (t) => ({
+  proyectoPeriodo: uniqueIndex('compute_periods_project_periodo_idx').on(t.projectId, t.periodo),
 }))
