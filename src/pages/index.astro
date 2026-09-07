@@ -6,8 +6,10 @@ import { db } from '../db'
 import { projects } from '../db/schema'
 import { eq } from 'drizzle-orm'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
+import { formatNumber, interpolate } from '../i18n/format'
 import { safeQuery } from '../lib/safe-query'
 import { proyectosInstantanea } from '../lib/fallback/instantanea'
+import { leerPulso } from '../lib/pulso-publico'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
