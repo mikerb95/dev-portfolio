@@ -27,6 +27,10 @@
     {
       "path": "/api/cron/monitor-rollup",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/computo-rollup",
+      "schedule": "0 6 * * *"
     }
   ]
 }

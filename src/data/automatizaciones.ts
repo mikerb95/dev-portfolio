@@ -125,6 +125,14 @@ export const CRONS: readonly Cron[] = [
     siFalla: 'El historial de disponibilidad deja de consolidarse y consultarlo se vuelve caro.',
   },
   {
+    job: 'computo-rollup',
+    horario: '06:00',
+    cadaMin: 1440,
+    origen: 'vercel',
+    hace: 'Consolida el consumo de cómputo medido en cada proyecto de cliente y recalcula lo que se le factura.',
+    siFalla: 'El consumo se sigue midiendo, pero el periodo en curso deja de reflejarlo hasta la siguiente pasada.',
+  },
+  {
     job: 'uptime-check',
     horario: '07:00',
     cadaMin: 1440,
