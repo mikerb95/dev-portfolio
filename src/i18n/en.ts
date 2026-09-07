@@ -109,6 +109,13 @@ const en = {
       ctaCerts: 'Certifications',
       ctaContact: "Let's talk",
     },
+    pulso: {
+      uptime: 'uptime · {dias} d',
+      sondeos: 'probes · {dias} d',
+      siem: 'classified by the SIEM · {dias} d',
+      crons: 'green cron runs · 24 h',
+      lcp: 'p75 LCP · 24 h',
+    },
     bento: {
       sectionLabel: 'What I do',
       about: {
