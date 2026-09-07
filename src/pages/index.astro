@@ -85,7 +85,7 @@ const senales = [
     href: L('/automatizaciones'),
   },
   pulso.lcpP75 !== null && {
-    valor: formatNumber(pulso.lcpP75 / 1000, locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' s',
+    valor: formatNumber(truncar(pulso.lcpP75 / 1000, 1), locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' s',
     etiqueta: p.lcp,
     href: L('/engineering'),
   },
