@@ -145,11 +145,15 @@ async function runCheck() {
   for (const s of silencios) events.push({ kind: 'cron', texto: describirSilencio(s) })
 
   // 7) Notificar (solo transiciones, no cada sondeo).
-  if (events.length === 0) {
-    return { ok: true, monitors: rows.length, events: 0 }
+  const resumen = {
+    ok: true as const,
+    monitors: rows.length,
+    events: events.length,
+    cronsEnSilencio: silencios.length,
   }
+  if (events.length === 0) return resumen
   await notify(events)
-  return { ok: true, monitors: rows.length, events: events.length, cronsEnSilencio: silencios.length }
+  return resumen
 }
 
 async function notify(events: Event[]) {
