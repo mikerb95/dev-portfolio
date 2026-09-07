@@ -1,0 +1,78 @@
+---
+import type { Senal, Tono } from '../lib/pulso-panel'
+
+// Panel de detalle de una señal de la cinta del hero.
+//
+// Se renderiza en SSR junto a la cinta, oculto: al apuntar una señal solo se
+// alterna una clase. La alternativa (pedir la serie por fetch al abrir) metería
+// una petición y un estado de carga en el gesto más trivial de la página, y el
+// dato ya viajaba en la misma consulta que la cifra.
+interface Props {
+  senal: Senal
+}
+
+const { senal } = Astro.props
+const { panel } = senal
+
+// Un tono por significado, no por gusto: verde cumple, violeta roza el umbral,
+// naranja lo incumple, cian es volumen sin juicio de valor, y el gris es la
+// ausencia de dato (que nunca debe parecer un cero bajo).
+const TONOS: Record<Tono, string> = {
+  ok: 'bg-lime/70',
+  info: 'bg-cyan/55',
+  medio: 'bg-violet/70',
+  mal: 'bg-ember/80',
+  vacio: 'bg-ink-600',
+}
+---
+
+<div class="pulso-panel" data-panel={senal.id} hidden>
+  <div class="rounded-2xl glass p-5 md:p-6 shadow-[0_24px_60px_-20px_rgba(0,0,0,.8)]">
+    <div class="flex items-start justify-between gap-6">
+      <div class="min-w-0">
+        <div class="text-[11px] font-mono uppercase tracking-[.16em] text-cyan">{panel.titulo}</div>
+        <p class="mt-2 text-[13px] leading-relaxed text-ink-100 max-w-xl">{panel.descripcion}</p>
+      </div>
+      <a href={senal.href} class="shrink-0 text-right group/val">
+        <div class="text-[26px] md:text-[30px] tabular-nums tracking-[-.02em] text-ink-50 group-hover/val:text-cyan transition-colors">
+          {senal.valor}
+        </div>
+        <div class="text-[10px] font-mono uppercase tracking-[.16em] text-ink-200/70">
+          {senal.etiqueta}
+        </div>
+      </a>
+    </div>
+
+    <div class="pulso-barras relative mt-5">
+      <div class="flex items-end gap-[3px] h-16">
+        {panel.barras.map((b, i) => (
+          <div
+            class={`pbar flex-1 rounded-[2px] ${TONOS[b.tono]}`}
+            style={`height:${(b.alto * 100).toFixed(1)}%;--i:${i}`}
+            data-label={b.etiqueta}
+            role="img"
+            aria-label={b.etiqueta}
+          />
+        ))}
+      </div>
+      <span class="pulso-tooltip absolute hidden -top-1 -translate-x-1/2 -translate-y-full px-2 py-1 rounded-md bg-black/85 ring-1 ring-white/10 text-[10px] font-mono text-ink-50 whitespace-nowrap pointer-events-none z-10"></span>
+    </div>
+
+    <div class="flex justify-between text-[10px] font-mono text-ink-300 mt-2">
+      <span>{panel.ejeIzq}</span>
+      <span>{panel.ejeDer}</span>
+    </div>
+
+    <div class="mt-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+      <div class="flex gap-8">
+        {panel.resumen.map((r) => (
+          <div>
+            <div class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-300">{r.k}</div>
+            <div class="mt-0.5 text-[15px] tabular-nums text-ink-50">{r.v}</div>
+          </div>
+        ))}
+      </div>
+      <p class="text-[10px] font-mono text-ink-300/80 max-w-md text-right">{panel.fuente}</p>
+    </div>
+  </div>
+</div>

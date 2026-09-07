@@ -55,41 +55,15 @@ const visibleProjects = await safeQuery(
 // del array) y decía lo mismo que dice el portafolio de cualquiera; esto solo
 // puede escribirlo un sitio que de verdad se sondea, se clasifica y se mide.
 //
-// Una señal sin dato NO se pinta: sin base, la cinta encoge y, si no queda
-// ninguna, desaparece entera y el hero respira hasta el bento. Nada de ceros
-// de relleno - una portada que afirma "0 sondeos" miente sobre el sistema.
-const pulso = await leerPulso()
-const p = t.pulso
-
-const senales = [
-  pulso.uptime !== null && {
-    valor: formatNumber(truncar(pulso.uptime * 100, 2), locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%',
-    etiqueta: interpolate(p.uptime, { dias: pulso.ventanaDias }),
-    href: L('/status'),
-  },
-  pulso.sondeos > 0 && {
-    valor: formatNumber(pulso.sondeos, locale, { notation: 'compact', maximumFractionDigits: 1 }),
-    etiqueta: interpolate(p.sondeos, { dias: pulso.ventanaDias }),
-    href: L('/status'),
-  },
-  pulso.eventos > 0 && {
-    valor: formatNumber(pulso.eventos, locale, { notation: 'compact', maximumFractionDigits: 1 }),
-    etiqueta: interpolate(p.siem, { dias: pulso.ventanaDias }),
-    href: L('/security'),
-  },
-  pulso.crons.total > 0 && {
-    valor: `${formatNumber(pulso.crons.ok, locale)}/${formatNumber(pulso.crons.total, locale)}`,
-    etiqueta: p.crons,
-    // `/automatizaciones` no está traducida: `localizedHref` cae al español en
-    // vez de publicar un 404 bajo /en (ver src/i18n/routing.ts).
-    href: L('/automatizaciones'),
-  },
-  pulso.lcpP75 !== null && {
-    valor: formatNumber(truncar(pulso.lcpP75 / 1000, 1), locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' s',
-    etiqueta: p.lcp,
-    href: L('/engineering'),
-  },
-].filter(Boolean) as { valor: string; etiqueta: string; href: string }[]
+// Apuntar una señal despliega su serie completa (ver PulsoPanel.astro). El
+// desglose viaja en la MISMA consulta que la cifra, así que el panel no cuesta
+// ni una lectura más: la forma de la serie ya estaba en memoria y solo faltaba
+// enseñarla.
+//
+// Una señal sin dato NO se pinta, y la decisión vive en `construirSenales`:
+// sin base la cinta encoge y, si no queda ninguna, desaparece entera y el hero
+// respira hasta el bento.
+const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 ---
 
 <BaseLayout title={t.title} description={t.description}>
