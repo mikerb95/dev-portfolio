@@ -112,6 +112,17 @@ function haceCuanto(d: Date | null | undefined): string | null {
   return `hace ${Math.floor(h / 24)} d`
 }
 
+// La página y la alerta usan la MISMA definición de silencio (`toleranciaMin`):
+// si divergieran, la tabla diría que todo va bien mientras el push dice lo
+// contrario, y la que se cree es siempre la que se está mirando.
+//
+// Solo se juzga lo que se ve: con 150 filas la ventana ronda las horas, así que
+// un cron diario ausente sigue siendo "sin registro" y no una acusación.
+function enSilencio(cadaMin: number, ultima: Date | null | undefined): boolean {
+  if (!ultima) return false
+  return (Date.now() - ultima.getTime()) / 60000 > toleranciaMin(cadaMin)
+}
+
 // Mismo criterio cromático que /status y /engineering: lima lo sano, ámbar lo
 // que exige mirar, cian lo que está en curso. El acento no se inventa por página.
 const ESTADO_CLS: Record<string, string> = {
