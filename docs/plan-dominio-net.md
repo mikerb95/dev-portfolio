@@ -124,7 +124,12 @@ Consecuencias que esto cambia respecto de lo planeado:
   dirección* de Search Console necesita el dominio viejo verificado y
   respondiendo; ya no lo está. La recuperación de backlinks a mano deja de ser
   la mitad barata del trabajo y pasa a ser el único mecanismo que queda.
-- **`capacitaciones.codebymike.tech` cayó con la zona.** Ver abajo.
+- **`capacitaciones.codebymike.tech` cayó con la zona**, aunque es otro proyecto
+  de Vercel (`capacitaciones-ia`): la suspensión se lleva el dominio y TODOS sus
+  subdominios, no solo el host del sitio. Resuelto el 8 sep: el aula responde en
+  `capacitaciones.codebymike.net` (`/ingresar` y `/empresa`, 200) y desde este
+  repo la enlazan `/capacitacion-ia`, `/capacitacion`, el monitor de respaldo
+  9010 y el nodo del grafo de `/engineering`, todos ya repuntados.
 - **Correo:** si `PORTAL_EMAIL_FROM` o `ALERT_EMAIL_FROM` siguen puestos en
   Vercel con una dirección `@codebymike.tech`, sus envíos fallan desde el 7 sep
   (el dominio verificado en Resend perdió SPF/DKIM al perder la zona). Los
@@ -134,12 +139,8 @@ Consecuencias que esto cambia respecto de lo planeado:
 
 ## Lo que NO se movió
 
-- `capacitaciones.codebymike.tech`: es otro proyecto de Vercel
-  (`capacitaciones-ia`) con su propio despliegue. **Dejó de resolver el 7 sep
-  2026** como daño colateral de la suspensión de la zona: el despliegue sigue
-  vivo en su URL de Vercel, pero el dominio no lleva a él. Mudarlo a un
-  subdominio de `.net` (o a la URL de Vercel) es una decisión aparte, y ahora
-  urgente: la página `/capacitacion-ia` y el respaldo de monitores todavía lo
-  enlazan.
 - `demo@codebymike.tech`: es la identidad sembrada del portal demo, no una
   dirección que reciba correo. Cambiarla desincronizaría la base sembrada.
+- `UID:...@codebymike.tech` en los eventos iCal de `/ep`: un UID no es una URL,
+  es la identidad del evento. Cambiarlo duplicaría cada hito en los calendarios
+  ya suscritos en vez de actualizarlo.

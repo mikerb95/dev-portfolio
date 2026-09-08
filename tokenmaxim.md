@@ -231,7 +231,8 @@ vivo, lo dejaría mintiendo en la dirección contraria.
   reevalúa módulos. El destino vuelve a 1 y la pantalla obedece. No es un fallo
   del sistema: es `presentStore()` cacheado a nivel de módulo.
 - **En local los tres iframes del mazo son de otro origen**: sus URLs son
-  absolutas a `codebymike.tech`. Para probar el scroll o el espejo hay que
+  absolutas a `codebymike.net` (eran `.tech` hasta la baja del dominio, sep
+  2026). Para probar el scroll o el espejo hay que
   reapuntarlos a la ruta local equivalente, y ese apaño **no sobrevive** ni a
   una recarga ni a que el mazo remonte el iframe al reentrar en su beat.
 - **`astro check` deja 7 errores de tipos preexistentes** (`payments/webhook.ts`,
@@ -410,7 +411,7 @@ en la consola de cada uno.
 
 Es un `vercel env ls`. Antes, **confirmar `cat .vercel/project.json`**: el
 directorio local se llama `portfolio` y coincide por accidente con el proyecto
-de Vercel equivocado. El que sirve `codebymike.tech` es `dev-portfolio`.
+de Vercel equivocado. El que sirve `codebymike.net` es `dev-portfolio`.
 
 Si faltan, decidirlo pronto: es alta de variables y redespliegue, no código, y
 bloquea el sentido del paso 3 entero.

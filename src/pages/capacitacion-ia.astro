@@ -22,10 +22,13 @@ try {
 const WHATSAPP = '573104641228'
 const waLink = (text: string) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`
 
-// El aula vive en su propio dominio y su propio despliegue (Next.js), aparte de
-// este sitio: durante una sesión el grupo entra ahí y una caída del portafolio
-// no puede llevarse la capacitación por delante. Desde aquí solo se enlaza.
-const AULA = 'https://capacitaciones.codebymike.tech'
+// El aula vive en su propio subdominio y su propio despliegue (Next.js), aparte
+// de este sitio: durante una sesión el grupo entra ahí y una caída del
+// portafolio no puede llevarse la capacitación por delante. Desde aquí solo se
+// enlaza. Estuvo en capacitaciones.codebymike.tech hasta que la baja del .tech
+// se llevó por delante la zona entera (sep 2026); el despliegue no se movió,
+// solo el dominio con el que se le llega.
+const AULA = 'https://capacitaciones.codebymike.net'
 
 const AULA_PUNTOS = [
   {
@@ -117,7 +120,7 @@ const FAQS = [
   },
   {
     q: '¿Cómo sé quiénes de mi equipo asistieron y hasta dónde llegaron?',
-    a: 'En el panel de empresa del aula (capacitaciones.codebymike.tech/empresa), con una clave que se entrega a quien firma el contrato. Muestra quién se registró y qué módulos ha recorrido. Del asistente solo se guarda el nombre que escribe al entrar: ni correo, ni teléfono.',
+    a: 'En el panel de empresa del aula (capacitaciones.codebymike.net/empresa), con una clave que se entrega a quien firma el contrato. Muestra quién se registró y qué módulos ha recorrido. Del asistente solo se guarda el nombre que escribe al entrar: ni correo, ni teléfono.',
   },
   {
     q: '¿Qué queda después?',
@@ -296,7 +299,7 @@ const FAQS = [
             href={AULA}
             class="font-mono text-[11.5px] text-cyan hover:underline"
           >
-            capacitaciones.codebymike.tech
+            capacitaciones.codebymike.net
           </a>
         </div>
 

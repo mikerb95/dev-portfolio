@@ -67,12 +67,15 @@ autoridad, así que lo que queda es reemplazar backlinks a mano, uno por uno.
 
 Dos daños colaterales que la zona suspendida arrastró y no estaban previstos:
 
-- [ ] **`capacitaciones.codebymike.tech` dejó de resolver.** Es otro proyecto de
-      Vercel (`capacitaciones-ia`), vivo en su URL de despliegue, pero su
-      dominio cuelga de la zona caída. Decidir a dónde se muda (subdominio de
-      `.net`) y actualizar lo que lo enlaza: `src/pages/capacitacion-ia.astro`,
-      `src/pages/capacitacion/index.astro` y el monitor de respaldo de
-      `src/data/respaldo-monitores.ts` (hoy lo pintaría "Caído" en `/status`).
+- [x] **`capacitaciones.codebymike.tech` dejó de resolver** al caer la zona.
+      Resuelto el 8 sep 2026: el aula ya vive en
+      `capacitaciones.codebymike.net` (verificado: `/ingresar` y `/empresa`
+      responden 200) y todo lo que la enlazaba desde este repo quedó repuntado
+      - `src/pages/capacitacion-ia.astro`, `src/pages/capacitacion/index.astro`,
+      el monitor de respaldo de `src/data/respaldo-monitores.ts` y el nodo del
+      grafo de `/engineering`. Queda por revisar **dentro del proyecto
+      `capacitaciones-ia`**, que es otro repo: enlaces absolutos, `metadata`/OG
+      y cualquier callback de OAuth que siguiera en `.tech`.
 - [ ] **Correo:** si `PORTAL_EMAIL_FROM` o `ALERT_EMAIL_FROM` siguen puestos en
       Vercel con una dirección `@codebymike.tech`, sus envíos vienen fallando
       desde el 7 sep - el dominio verificado en Resend perdió SPF/DKIM con la

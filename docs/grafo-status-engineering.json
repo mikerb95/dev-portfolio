@@ -4,7 +4,7 @@
     { "id": "cron_external", "label": "cron-job.org", "type": "external_service", "tech": "cron HTTP externo", "layer": "external" },
     { "id": "github_actions", "label": "GitHub Actions (ci.yml)", "type": "external_service", "tech": "CI/CD", "layer": "external" },
     { "id": "monitored_targets", "label": "Servicios monitoreados (URLs en tabla monitors)", "type": "external_service", "tech": "HTTP(S) diverso, no documentado en repo", "layer": "external" },
-    { "id": "capacitaciones", "label": "capacitaciones.codebymike.tech", "type": "external_service", "tech": "despliegue propio, dominio aparte", "layer": "external" },
+    { "id": "capacitaciones", "label": "capacitaciones.codebymike.net", "type": "external_service", "tech": "despliegue propio, dominio aparte", "layer": "external" },
 
     { "id": "page_status", "label": "/status", "type": "page", "tech": "Astro SSR", "layer": "app" },
     { "id": "page_engineering", "label": "/engineering", "type": "page", "tech": "Astro SSR", "layer": "app" },
