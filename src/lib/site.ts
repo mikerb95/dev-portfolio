@@ -1,9 +1,10 @@
 // Origen canónico del sitio.
 //
 // Existe porque el dominio cambió: el sitio nació en codebymike.tech y desde
-// sep 2026 vive en codebymike.net (el .tech redirige con 308 y sigue siendo
-// válido en enlaces viejos). Antes de esto el literal estaba copiado en una
-// docena de módulos - crons, correos, PDFs, alertas - y una migración de
+// sep 2026 vive en codebymike.net. El .tech no se renovó y su registrador lo
+// suspendió el 7 sep 2026, así que los enlaces viejos ya no llegan a ninguna
+// parte: no hay redirect que los salve. Antes de esto el literal estaba copiado
+// en una docena de módulos - crons, correos, PDFs, alertas - y una migración de
 // dominio significaba cazar cadenas sueltas.
 //
 // Solo se usa donde NO hay un request del que derivar el origen: correos,

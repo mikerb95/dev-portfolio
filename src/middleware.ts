@@ -137,10 +137,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // `/en/algo` reciban idéntico trato de seguridad.
   const canonicalPath = delocalizePath(pathname)
 
-  // Dominio: el sitio vive en codebymike.net; el .tech (y los `www`) mandan
-  // aquí con 308. Va antes de los guardas para no gastar en un request que
-  // termina en redirect, y deja fuera `/api/*` para no romper webhooks ni
-  // crons que aún apuntan al dominio viejo. Ver src/lib/canonical-host.ts.
+  // Dominio: el sitio vive en codebymike.net; sus duplicados alcanzables (el
+  // `www` y el alias del proyecto en Vercel) mandan aquí con 308. Va antes de
+  // los guardas para no gastar en un request que termina en redirect, y deja
+  // fuera `/api/*` para no romper webhooks ni crons. Ver
+  // src/lib/canonical-host.ts.
   const destino = destinoCanonico({
     host: context.request.headers.get('host'),
     method: context.request.method,

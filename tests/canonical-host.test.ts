@@ -5,15 +5,19 @@ const get = (host: string, pathname = '/', search = '') =>
   destinoCanonico({ host, method: 'GET', pathname, search })
 
 describe('destinoCanonico', () => {
-  it('manda el dominio viejo al nuevo conservando ruta y query', () => {
-    expect(get('codebymike.tech', '/notes/slos', '?ref=x')).toBe(
+  it('manda el www al desnudo conservando ruta y query', () => {
+    expect(get('www.codebymike.net', '/notes/slos', '?ref=x')).toBe(
       'https://codebymike.net/notes/slos?ref=x'
     )
   })
 
-  it('cubre los www de ambos dominios', () => {
-    expect(get('www.codebymike.tech', '/status')).toBe('https://codebymike.net/status')
-    expect(get('www.codebymike.net', '/status')).toBe('https://codebymike.net/status')
+  // El .tech se suspendió el 7 sep 2026: su zona entera resuelve 127.0.0.1, así
+  // que ningún request con ese Host llega a Vercel. Se saca de la lista para no
+  // sostener la ilusión de que los enlaces viejos siguen vivos; si algún día
+  // vuelve a delegarse al proyecto, esto falla y obliga a decidirlo otra vez.
+  it('ya no redirige el dominio viejo, que dejó de resolver', () => {
+    expect(get('codebymike.tech', '/notes/slos')).toBeNull()
+    expect(get('www.codebymike.tech', '/status')).toBeNull()
   })
 
   it('deja quieto el host canónico', () => {
@@ -32,21 +36,21 @@ describe('destinoCanonico', () => {
   })
 
   it('ignora mayúsculas y puerto en el Host', () => {
-    expect(get('CodeByMike.Tech:443', '/')).toBe('https://codebymike.net/')
+    expect(get('WWW.CodeByMike.net:443', '/')).toBe('https://codebymike.net/')
   })
 
   // La razón de ser del módulo: un 308 sobre /api rompe webhooks firmados
   // (POST) y crons con Authorization (la cabecera se cae al cambiar de host).
   it('nunca redirige /api ni los internos de Astro', () => {
-    expect(get('codebymike.tech', '/api/portal/health')).toBeNull()
-    expect(get('codebymike.tech', '/api/cron/uptime-check')).toBeNull()
-    expect(get('codebymike.tech', '/_astro/index.js')).toBeNull()
-    expect(get('codebymike.tech', '/_image', '?href=x')).toBeNull()
+    expect(get('www.codebymike.net', '/api/portal/health')).toBeNull()
+    expect(get('www.codebymike.net', '/api/cron/uptime-check')).toBeNull()
+    expect(get('www.codebymike.net', '/_astro/index.js')).toBeNull()
+    expect(get('www.codebymike.net', '/_image', '?href=x')).toBeNull()
   })
 
-  it('no redirige métodos con cuerpo aunque vengan al dominio viejo', () => {
+  it('no redirige métodos con cuerpo aunque vengan a un host heredado', () => {
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
-      expect(destinoCanonico({ host: 'codebymike.tech', method, pathname: '/portal/login', search: '' })).toBeNull()
+      expect(destinoCanonico({ host: 'www.codebymike.net', method, pathname: '/portal/login', search: '' })).toBeNull()
     }
   })
 
@@ -57,6 +61,6 @@ describe('destinoCanonico', () => {
   // `/apix` empieza por "/api" pero no es una API: el guard compara prefijo con
   // barra justamente para no tragarse rutas vecinas.
   it('no confunde una ruta que empieza igual que /api', () => {
-    expect(get('codebymike.tech', '/apitest')).toBe('https://codebymike.net/apitest')
+    expect(get('www.codebymike.net', '/apitest')).toBe('https://codebymike.net/apitest')
   })
 })

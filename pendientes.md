@@ -58,14 +58,35 @@ base de archivo, dos corridas seguidas.
 
 ### 🔴 SEO tras dar de baja `codebymike.tech` (decidido: no se renueva)
 
-El `.tech` vencía el 6 sep 2026 23:59:59 UTC (registrador **Namify**) y se deja
-caer. El 308 sigue respondiendo mientras el registrador mantenga el DNS, y esa
-ventana es todo lo que hay para traspasar autoridad: sin dominio viejo vivo no
-existe mecanismo de traspaso, y los backlinks externos apuntan a la nada.
+El `.tech` vencía el 6 sep 2026 23:59:59 UTC (registrador **Namify**) y se dejó
+caer. Se contaba con una ventana de 308 mientras el registrador mantuviera el
+DNS; **duró un día**: el 7 sep la zona pasó a los nameservers de retención
+(`*.suspended-domain.com`), que responden 127.0.0.1 para el dominio y todos sus
+subdominios. Sin dominio viejo vivo no existe mecanismo de traspaso de
+autoridad, así que lo que queda es reemplazar backlinks a mano, uno por uno.
+
+Dos daños colaterales que la zona suspendida arrastró y no estaban previstos:
+
+- [ ] **`capacitaciones.codebymike.tech` dejó de resolver.** Es otro proyecto de
+      Vercel (`capacitaciones-ia`), vivo en su URL de despliegue, pero su
+      dominio cuelga de la zona caída. Decidir a dónde se muda (subdominio de
+      `.net`) y actualizar lo que lo enlaza: `src/pages/capacitacion-ia.astro`,
+      `src/pages/capacitacion/index.astro` y el monitor de respaldo de
+      `src/data/respaldo-monitores.ts` (hoy lo pintaría "Caído" en `/status`).
+- [ ] **Correo:** si `PORTAL_EMAIL_FROM` o `ALERT_EMAIL_FROM` siguen puestos en
+      Vercel con una dirección `@codebymike.tech`, sus envíos vienen fallando
+      desde el 7 sep - el dominio verificado en Resend perdió SPF/DKIM con la
+      zona. Los defaults del código ya son `.net`, así que la corrección es
+      **borrar** esas dos variables. No hay alerta que avise: `notify.ts` es
+      fail-open a propósito.
 
 Prioridad, de más a menos urgente:
 
-- [ ] **Search Console, mientras el 308 siga vivo.** Verificar propiedad de
+- [ ] ~~**Search Console, mientras el 308 siga vivo.**~~ La ventana se cerró el
+      7 sep, un día después de la baja: el *Cambio de dirección* exige el
+      dominio viejo verificado y respondiendo, y ya no responde. Queda solo dar
+      de alta `codebymike.net` y recuperar backlinks a mano (abajo).
+      Texto original: verificar propiedad de
       `codebymike.net` (propiedad de DOMINIO, verificación por TXT en el DNS de
       Vercel, que cubre www y subdominios) y, si `codebymike.tech` sigue
       verificado, usar *Cambio de dirección* desde su propiedad. Es lo único
@@ -86,10 +107,18 @@ Prioridad, de más a menos urgente:
 - [ ] Vigilar cobertura e impresiones en GSC las primeras semanas. Un desplome
       sostenido tras la baja del `.tech` es esperable; lo que hay que detectar
       es que el `.net` no suba.
-- [ ] Cuando el `.tech` deje de resolver, quitarlo del proyecto en Vercel y de
-      `HOSTS_A_REDIRIGIR` (`src/lib/canonical-host.ts`), junto con su fila en
-      `project_services` (id 5). Mientras responda, se deja: cada 308 servido
-      es un enlace viejo que todavía funciona.
+- [x] Quitado de `HOSTS_A_REDIRIGIR` (`src/lib/canonical-host.ts`) el 8 sep
+      2026, con sus tests. Ya no resolvía: la zona está delegada a
+      `*.suspended-domain.com` y responde 127.0.0.1 para el dominio y todos sus
+      subdominios, así que el 308 no se servía, solo constaba.
+      **Ojo con lo que se creía:** el dominio NO quedó libre. RDAP lo pone en
+      `auto renew period` con expiración 2027-09-06 - el registrador lo tiene
+      retenido y podría reactivarlo; nadie más puede registrarlo mientras tanto.
+- [ ] Queda fuera del repo: quitar el `.tech` del proyecto en Vercel y borrar su
+      fila en `project_services` (id 5), que hasta entonces sale en
+      `/admin/domains` como vencida. Si prefieres conservar el histórico de
+      costo, basta con desmarcarle *Activo*: `domainAlertState` devuelve `null`
+      para las inactivas y deja de contarla como alerta.
 - [ ] Si alguien registra el `.tech` después, no hay acción técnica: solo dejar
       de referenciarlo en cualquier material propio.
 
