@@ -54,16 +54,19 @@ se sigue derivando del Host real, que es lo que mantiene vivos los previews y
 
 - `astro.config.mjs → site`, canonical, JSON-LD, sitemap, RSS, `robots.txt`,
   `security.txt` y OG apuntan a `.net`.
-- Redirect 308 `codebymike.tech`, `www.codebymike.tech` y `www.codebymike.net`
+- Redirect 308 `www.codebymike.net` y el alias fijo del proyecto
   → `codebymike.net`, con ruta y query intactas (`tests/canonical-host.test.ts`).
+  Los dos hosts del `.tech` estuvieron en esa lista hasta el **8 sep 2026**;
+  ver *Baja del `.tech`* abajo.
 - `www.codebymike.net` y `www.codebymike.tech` dados de alta en `dev-portfolio`
   (certificado emitido; antes el `www` del `.tech` resolvía a Vercel sin
   proyecto detrás).
 - Monitores 8, 10 y 11 repuntados a `.net` en Turso, y el 8 renombrado.
 - `codebymike.net` dado de alta en el inventario de servicios (`project_services`),
   con renovación 5 sep 2027 y USD 13.5/año, para que el cron de dominios avise.
-- Guardarraíl de k6: `.net` añadido a los objetivos prohibidos, con el `.tech`
-  todavía en la lista porque redirige a producción y k6 sigue redirecciones.
+- Guardarraíl de k6: `.net` añadido a los objetivos prohibidos. El `.tech` se
+  queda ahí aunque ya no redirija: un guardarraíl que se relaja cuando el
+  peligro parece pasado es el que falta el día en que vuelva a apuntar a algo.
 - Defaults de los workflows de CI (`PROD_URL`), scripts de social/IndexNow/OG.
 - `/docs`: requisito **RNF-30**.
 
@@ -103,10 +106,41 @@ se sigue derivando del Host real, que es lo que mantiene vivos los previews y
    en Resend. Para mudarlos, verificar `codebymike.net` en Resend y poner
    `PORTAL_EMAIL_FROM` y `ALERT_EMAIL_FROM` en Vercel.
 
+## Baja del `.tech` (8 sep 2026)
+
+Se retiró `codebymike.tech` y `www.codebymike.tech` de `HOSTS_A_REDIRIGIR`, con
+sus tests. Lo que se comprobó antes de tocarlo, porque el plan y `pendientes.md`
+daban por hecho algo distinto:
+
+| Qué se creía | Qué dice el registro/DNS hoy |
+|---|---|
+| El registrador retiró los NS y el dominio quedó sin delegación | La zona está delegada a `ns1.verification-hold.suspended-domain.com`: responde **127.0.0.1** para el dominio y para **todos** sus subdominios |
+| El dominio se dejó caer y quedará libre | RDAP: estado `auto renew period`, expiración **2027-09-06**. No está libre ni lo puede registrar otro: el registrador lo tiene retenido y podría reactivarlo |
+| El 308 seguiría sirviendo enlaces viejos un tiempo | Ningún request con ese Host llega a Vercel desde el 7 sep. La regla no se servía: solo constaba |
+
+Consecuencias que esto cambia respecto de lo planeado:
+
+- **La ventana de traspaso de autoridad duró un día, no semanas.** El *Cambio de
+  dirección* de Search Console necesita el dominio viejo verificado y
+  respondiendo; ya no lo está. La recuperación de backlinks a mano deja de ser
+  la mitad barata del trabajo y pasa a ser el único mecanismo que queda.
+- **`capacitaciones.codebymike.tech` cayó con la zona**, aunque es otro proyecto
+  de Vercel (`capacitaciones-ia`): la suspensión se lleva el dominio y TODOS sus
+  subdominios, no solo el host del sitio. Resuelto el 8 sep: el aula responde en
+  `capacitaciones.codebymike.net` (`/ingresar` y `/empresa`, 200) y desde este
+  repo la enlazan `/capacitacion-ia`, `/capacitacion`, el monitor de respaldo
+  9010 y el nodo del grafo de `/engineering`, todos ya repuntados.
+- **Correo:** si `PORTAL_EMAIL_FROM` o `ALERT_EMAIL_FROM` siguen puestos en
+  Vercel con una dirección `@codebymike.tech`, sus envíos fallan desde el 7 sep
+  (el dominio verificado en Resend perdió SPF/DKIM al perder la zona). Los
+  defaults del código ya son `.net` (`src/lib/email.ts`, `src/lib/notify.ts`),
+  así que basta con **borrar** las dos variables si están puestas. Y por diseño
+  esto no grita: `notify.ts` es fail-open y un envío fallido no rompe nada.
+
 ## Lo que NO se movió
 
-- `capacitaciones.codebymike.tech`: es otro proyecto de Vercel
-  (`capacitaciones-ia`) con su propio despliegue. Sigue en `.tech` y sigue
-  funcionando; moverlo es una decisión aparte.
 - `demo@codebymike.tech`: es la identidad sembrada del portal demo, no una
   dirección que reciba correo. Cambiarla desincronizaría la base sembrada.
+- `UID:...@codebymike.tech` en los eventos iCal de `/ep`: un UID no es una URL,
+  es la identidad del evento. Cambiarlo duplicaría cada hito en los calendarios
+  ya suscritos en vez de actualizarlo.

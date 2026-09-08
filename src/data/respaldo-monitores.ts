@@ -95,7 +95,7 @@ export const DESTINOS_RESPALDO: DestinoRespaldo[] = [
   {
     id: 9010,
     nombre: 'Academia IA',
-    urlAbsoluta: 'https://capacitaciones.codebymike.tech/',
+    urlAbsoluta: 'https://capacitaciones.codebymike.net/',
     umbralMs: 2500,
   },
 ]

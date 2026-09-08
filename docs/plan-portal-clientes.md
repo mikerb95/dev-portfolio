@@ -215,7 +215,7 @@ Cambios a tablas existentes:
 - **Onboarding checklist** para clientes nuevos (pasos: firmar contrato, pagar anticipo, entregar accesos).
 - **Branding por tenant**: logo del cliente en el header del portal y en los PDFs de factura.
 - **i18n ES/EN** del portal.
-- Migración a subdominio `clientes.codebymike.tech` cuando haya volumen.
+- Migración a subdominio `clientes.codebymike.net` cuando haya volumen.
 
 ## 9. Riesgos y mitigaciones
 

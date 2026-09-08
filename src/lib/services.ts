@@ -18,7 +18,7 @@ export const CATEGORY_LABELS: Record<ServiceCategory, string> = {
 export const PROVIDERS = [
   'GitHub', 'GitLab', 'AWS', 'Azure', 'GCP', 'Vercel', 'Netlify', 'Cloudflare',
   'Turso', 'Supabase', 'Neon', 'PlanetScale', 'MongoDB Atlas', 'Upstash',
-  'Namecheap', 'GoDaddy', 'Google Workspace', 'Zoho', 'Resend', 'SendGrid',
+  'Namecheap', 'Name.com', 'GoDaddy', 'Google Workspace', 'Zoho', 'Resend', 'SendGrid',
   'Mailgun', 'Stripe', 'PayPal', 'Sentry', 'Otro',
 ] as const
 

@@ -1,6 +1,13 @@
 // Canonicalización de host: el sitio se mudó de codebymike.tech a
-// codebymike.net (sep 2026) y los dos dominios siguen apuntando al mismo
-// proyecto de Vercel.
+// codebymike.net (sep 2026). El .tech ya NO está en la lista: el 7 sep 2026 su
+// registrador lo suspendió al no renovarse y delegó la zona entera a los
+// nameservers de retención (`*.suspended-domain.com`), que responden 127.0.0.1
+// para el dominio y todos sus subdominios. Ningún request con ese Host puede
+// llegar ya a Vercel, así que redirigirlo no era una red de seguridad: era una
+// regla muerta que hacía creer que los enlaces viejos seguían funcionando.
+//
+// Lo que queda son los duplicados del dominio NUEVO (su `www` y el alias fijo
+// del proyecto), que sí resuelven y sí publicarían una copia indexable.
 //
 // El redirect se hace aquí y no en la configuración de dominios de Vercel a
 // propósito. Un redirect a nivel de dominio afecta TAMBIÉN a `/api/*`, y ahí
@@ -15,8 +22,10 @@
 //  · Los sondeos del propio monitor, que medirían la latencia del redirect en
 //    vez de la del sitio.
 //
-// Así, las integraciones viejas que aún llaman al .tech siguen funcionando tal
-// cual, mientras que personas y crawlers acaban siempre en el dominio nuevo.
+// La exención de `/api` se queda aunque el dominio viejo ya no exista: los
+// hosts que siguen en la lista son alcanzables hoy, y una integración apuntada
+// por error al alias del proyecto debe fallar de forma visible, no degradarse
+// en silencio a un GET sin cabecera de autorización.
 
 /** Host canónico de producción. */
 export const HOST_CANONICO = 'codebymike.net'
@@ -31,8 +40,6 @@ export const HOST_CANONICO = 'codebymike.net'
  * cubre lo que pasa por el middleware. Misma lista, dos capas, nunca dos copias.
  */
 export const HOSTS_A_REDIRIGIR = new Set([
-  'codebymike.tech',
-  'www.codebymike.tech',
   'www.codebymike.net',
   // Alias fijo del proyecto en Vercel. Servía el sitio entero con 200 y sin
   // `noindex` (los previews sí lo llevan, este no): una copia indexable más.

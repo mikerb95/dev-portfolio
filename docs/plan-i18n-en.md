@@ -170,7 +170,7 @@ Es decir: se construye desde cero, pero también sin deuda previa que desmontar.
 
 **Por qué y no las alternativas:**
 
-- *Subdominio `en.codebymike.tech`*: obliga a un segundo proyecto de Vercel o a
+- *Subdominio `en.codebymike.net`*: obliga a un segundo proyecto de Vercel o a
   reescrituras de dominio, parte la autoridad de dominio para SEO, y duplica la
   configuración de CSP/HSTS y de cookies (`portal_session`, `demo_session`
   quedarían en otro host). Descartado.

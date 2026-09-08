@@ -18,8 +18,9 @@ import exec from 'k6/execution'
  */
 export function objetivo() {
   const url = __ENV.TARGET ?? 'http://127.0.0.1:4400'
-  // El .tech sigue en la lista aunque el sitio viva en .net: redirige a
-  // producción con 308 y k6 sigue redirecciones.
+  // El .tech se queda en la lista aunque esté suspendido y ya no redirija:
+  // cuesta nada, y un guardarraíl que se relaja cuando el peligro parece pasado
+  // es justo el que falta el día en que el dominio vuelva a apuntar a algo.
   const prohibidos = ['codebymike.net', 'codebymike.tech', 'dev-portfolio.vercel.app']
   for (const dominio of prohibidos) {
     if (url.includes(dominio)) {
