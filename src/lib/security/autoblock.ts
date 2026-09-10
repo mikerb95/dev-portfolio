@@ -10,7 +10,7 @@
 
 import { and, gte, sql } from 'drizzle-orm'
 import { db } from '../../db'
-import { securityEvents, blockedIps } from '../../db/schema'
+import { securityEvents, blockedIps, adminSessions } from '../../db/schema'
 import { blockIp, blockIpEscalated, isAllowlisted } from './blocklist'
 
 export type AutoBlockOptions = {
@@ -115,28 +115,59 @@ export async function runAutoBlock(now = new Date(), options?: AutoBlockOptions)
   return { candidates: candidates.length, blocked: toApply.length, overflow }
 }
 
-export type BulkBlockResult = { candidates: number; blocked: number; skipped: number; overflow: number }
+export type BulkBlockResult = {
+  candidates: number
+  blocked: number
+  skipped: number
+  overflow: number
+  /** IPs descartadas por ser del operador o de una sesión admin (ver `protectedIps`). */
+  spared: number
+}
 
 /** Ventana por defecto del bloqueo masivo: 7 días. */
 const BULK_WINDOW_MS = 7 * 24 * 60 * 60_000
 
-export type BulkSelection = { toApply: string[]; candidates: number; skipped: number; overflow: number }
+export type BulkSelection = {
+  toApply: string[]
+  candidates: number
+  skipped: number
+  overflow: number
+  spared: number
+}
 
 /**
- * Decisión pura del bloqueo masivo: de las IPs candidatas descarta las de la
- * allowlist y las ya bloqueadas (skipped), y recorta al `capacity` disponible
- * bajo el tope (el resto es overflow). Testeable sin tocar la DB.
+ * Decisión pura del bloqueo masivo: de las IPs candidatas descarta las propias
+ * (`protectedIps`: la del operador y las de sesiones admin) y las de la
+ * allowlist, aparta las ya bloqueadas (skipped) y recorta al `capacity`
+ * disponible bajo el tope (el resto es overflow). Testeable sin tocar la DB.
+ *
+ * `protectedIps` es la salvaguarda que faltaba: la allowlist es una env var que
+ * hay que mantener a mano y que con IP residencial dinámica envejece en días,
+ * así que no basta para garantizar que el operador no se bloquee a sí mismo.
  */
 export function selectBulkBlockIps(
   ips: string[],
-  opts: { alreadyBlocked: Set<string>; capacity: number; allowlisted?: (ip: string) => boolean }
+  opts: {
+    alreadyBlocked: Set<string>
+    capacity: number
+    allowlisted?: (ip: string) => boolean
+    protectedIps?: Set<string>
+  }
 ): BulkSelection {
   const isAllowed = opts.allowlisted ?? (() => false)
-  const candidates = ips.filter((ip) => !!ip && !isAllowed(ip))
+  const isProtected = (ip: string) => opts.protectedIps?.has(ip) ?? false
+  const propias = ips.filter((ip) => !!ip && (isProtected(ip) || isAllowed(ip)))
+  const candidates = ips.filter((ip) => !!ip && !isProtected(ip) && !isAllowed(ip))
   const pending = candidates.filter((ip) => !opts.alreadyBlocked.has(ip))
   const skipped = candidates.length - pending.length
   const toApply = pending.slice(0, Math.max(0, opts.capacity))
-  return { toApply, candidates: candidates.length, skipped, overflow: pending.length - toApply.length }
+  return {
+    toApply,
+    candidates: candidates.length,
+    skipped,
+    overflow: pending.length - toApply.length,
+    spared: new Set(propias).size,
+  }
 }
 
 /**
@@ -147,6 +178,11 @@ export function selectBulkBlockIps(
  * Salvaguardas (igual que el auto-block):
  *  - Excluye eventos sintéticos de enforcement (category='blocklist'): son hits
  *    de IPs ya bloqueadas, no ataques nuevos.
+ *  - Excluye las IPs propias: la del operador que pulsa el botón (`selfIp`) y
+ *    las de cualquier sesión admin viva. El micro-SIEM registra también eventos
+ *    legítimos del panel (cuenta_cobro.created, consultas de la bóveda...), así
+ *    que "toda IP con eventos" incluía al admin: el 10-sep-2026 este botón se
+ *    bloqueó a sí mismo y dejó el sitio en 403 desde la única IP que importaba.
  *  - Respeta allowlist (vía blockIp) y bloqueos ya vigentes (no re-cuenta).
  *  - Respeta el tope de bloqueos activos (maxActiveBlocks); el resto = overflow.
  *  - TTL fijo elegido por el operador (24 h o 1 semana), no escalonado.
@@ -154,7 +190,7 @@ export function selectBulkBlockIps(
 export async function blockAllAttackerIps(
   ttlSec: number,
   now = new Date(),
-  options?: { windowMs?: number; maxActiveBlocks?: number }
+  options?: { windowMs?: number; maxActiveBlocks?: number; selfIp?: string | null }
 ): Promise<BulkBlockResult> {
   const windowMs = options?.windowMs ?? BULK_WINDOW_MS
   const maxActiveBlocks = options?.maxActiveBlocks ?? DEFAULTS.maxActiveBlocks
@@ -182,10 +218,11 @@ export async function blockAllAttackerIps(
     .where(sql`${blockedIps.expiresAt} > ${Math.floor(now.getTime() / 1000)}`)
   const alreadyBlocked = new Set(active.map((a) => a.ip))
 
-  const { toApply, candidates, skipped, overflow } = selectBulkBlockIps(ips, {
+  const { toApply, candidates, skipped, overflow, spared } = selectBulkBlockIps(ips, {
     alreadyBlocked,
     capacity: maxActiveBlocks - active.length,
     allowlisted: isAllowlisted,
+    protectedIps: await ownIps(options?.selfIp),
   })
 
   let blocked = 0
@@ -197,5 +234,30 @@ export async function blockAllAttackerIps(
     if (ok) blocked++
   }
 
-  return { candidates, blocked, skipped, overflow }
+  return { candidates, blocked, skipped, overflow, spared }
+}
+
+/**
+ * IPs que son del propio operador y por tanto nunca se bloquean en masa: la del
+ * request que dispara el botón más las de las sesiones admin no revocadas (las
+ * de `admin_sessions`, que solo se crean tras GitHub OAuth + allowlist de
+ * logins, así que una IP ahí es por definición mía y no de un atacante).
+ *
+ * Fail-safe al contrario que el resto del módulo: si la consulta falla, se
+ * devuelve al menos `selfIp`. Aquí el fallo peligroso no es dejar pasar a un
+ * atacante, es quedarme fuera de mi propio panel.
+ */
+async function ownIps(selfIp?: string | null): Promise<Set<string>> {
+  const out = new Set<string>()
+  if (selfIp) out.add(selfIp)
+  try {
+    const rows = await db
+      .select({ ip: adminSessions.ip })
+      .from(adminSessions)
+      .where(sql`${adminSessions.ip} is not null and ${adminSessions.revokedAt} is null`)
+    for (const r of rows) if (r.ip) out.add(r.ip)
+  } catch {
+    // Se queda con selfIp: mejor proteger una sola IP que ninguna.
+  }
+  return out
 }

@@ -112,4 +112,50 @@ describe('selectBulkBlockIps', () => {
     const out = selectBulkBlockIps(['', 'a'], { alreadyBlocked: new Set(), capacity })
     expect(out.toApply).toEqual(['a'])
   })
+
+  // Regresión del 10-sep-2026: el bloqueo masivo se llevó la IP del admin (el
+  // panel deja eventos legítimos en el micro-SIEM) y el sitio devolvió 403
+  // desde la única IP que hacía falta para deshacerlo.
+  it('nunca bloquea la IP del operador ni las de sesiones admin', () => {
+    const out = selectBulkBlockIps(['1.1.1.1', '191.107.4.33', '9.9.9.9'], {
+      alreadyBlocked: new Set(),
+      capacity,
+      protectedIps: new Set(['191.107.4.33', '9.9.9.9']),
+    })
+    expect(out.toApply).toEqual(['1.1.1.1'])
+    expect(out.candidates).toBe(1)
+    expect(out.spared).toBe(2)
+  })
+
+  it('una IP propia gana sobre todo lo demás aunque esté entre los candidatos', () => {
+    const out = selectBulkBlockIps(['2.2.2.2'], {
+      alreadyBlocked: new Set(),
+      capacity,
+      protectedIps: new Set(['2.2.2.2']),
+    })
+    expect(out.toApply).toHaveLength(0)
+    expect(out.overflow).toBe(0)
+    expect(out.skipped).toBe(0)
+    expect(out.spared).toBe(1)
+  })
+
+  it('cuenta como perdonadas tanto las propias como las de la allowlist, sin duplicar', () => {
+    const out = selectBulkBlockIps(['1.1.1.1', '10.0.0.1', '10.0.0.1', '7.7.7.7'], {
+      alreadyBlocked: new Set(),
+      capacity,
+      allowlisted: (ip) => ip === '10.0.0.1',
+      protectedIps: new Set(['7.7.7.7']),
+    })
+    expect(out.toApply).toEqual(['1.1.1.1'])
+    expect(out.spared).toBe(2)
+  })
+
+  it('sin protectedIps se comporta como antes', () => {
+    const out = selectBulkBlockIps(['1.1.1.1', '2.2.2.2'], {
+      alreadyBlocked: new Set(),
+      capacity,
+    })
+    expect(out.toApply).toEqual(['1.1.1.1', '2.2.2.2'])
+    expect(out.spared).toBe(0)
+  })
 })

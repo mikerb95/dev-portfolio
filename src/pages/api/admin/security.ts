@@ -4,6 +4,7 @@ import { db } from '../../../db'
 import { securityAnomalies } from '../../../db/schema'
 import { blockIp, unblockIp, BLOCK_TTL_STEPS_SEC } from '../../../lib/security/blocklist'
 import { blockAllAttackerIps } from '../../../lib/security/autoblock'
+import { clientIp } from '../../../lib/device-info'
 
 // TTLs permitidos para el bloqueo masivo: 24 h o 1 semana.
 const BULK_TTLS = new Set<number>([86_400, 604_800])
@@ -35,7 +36,12 @@ export const POST: APIRoute = async ({ request }) => {
   if (action === 'block-all') {
     const ttlSec = Number(body.ttlSec)
     if (!BULK_TTLS.has(ttlSec)) return json(400, { error: 'ttlSec debe ser 86400 (24 h) o 604800 (1 semana)' })
-    const result = await blockAllAttackerIps(ttlSec)
+    // La IP de quien pulsa viaja al bloqueo masivo para que nunca se incluya a
+    // sí misma: el panel registra eventos de seguridad legítimos y sin esto el
+    // botón puede dejar al operador fuera con un 403.
+    const result = await blockAllAttackerIps(ttlSec, new Date(), {
+      selfIp: clientIp(request.headers),
+    })
     return json(200, { ok: true, ...result })
   }
 

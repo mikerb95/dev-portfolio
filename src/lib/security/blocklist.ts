@@ -11,15 +11,24 @@
 import { gt, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { blockedIps } from '../../db/schema'
+import { serverEnv } from '../env'
 
 const CACHE_TTL_MS = 30_000
 
 // Escalones de TTL por reincidencia (segundos).
 export const BLOCK_TTL_STEPS_SEC = [3600, 86_400, 604_800] as const
 
-/** IPs que NUNCA se bloquean (la del admin, rangos de confianza). */
+/**
+ * IPs que NUNCA se bloquean (la del admin, rangos de confianza).
+ *
+ * Se lee con `serverEnv` y no con `import.meta.env` a propósito: Vercel inyecta
+ * las variables del proyecto solo en `process.env`, así que leyendo una sola
+ * fuente la allowlist quedaba vacía en producción y la salvaguarda no existía
+ * justo donde hace falta (el 10-sep-2026 el bloqueo masivo se llevó por delante
+ * la IP del admin).
+ */
 function allowlist(): Set<string> {
-  const raw = (import.meta.env.SECURITY_IP_ALLOWLIST as string | undefined) ?? ''
+  const raw = serverEnv('SECURITY_IP_ALLOWLIST') ?? ''
   return new Set(
     raw
       .split(',')
