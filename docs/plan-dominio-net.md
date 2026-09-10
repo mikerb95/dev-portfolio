@@ -3,14 +3,18 @@
 **Estado: código listo (sep 5, 2026).** Faltan pasos manuales fuera del repo,
 listados abajo, uno de ellos bloqueante.
 
-`codebymike.net` (registrado en Vercel, nameservers de Vercel, renueva el
-5 sep 2027) pasa a ser el dominio de producción.
+`codebymike.net` pasa a ser el dominio de producción. Datos del registro,
+confirmados en el panel de dominios de Vercel: registrado el **5 sep 2026**,
+registrador y nameservers de **Vercel**, CDN de Vercel activo, ECH en
+automático, **renovación automática activada** por USD **13.50**/año, próxima
+el **5 sep 2027**.
 
 **`codebymike.tech` se da de baja** (decisión del 7 sep 2026): venció el 6 sep y
-no se renueva. Sigue atado al proyecto y redirigiendo mientras su registrador
-mantenga el DNS, y se deja así a propósito: cada 308 servido en esa ventana es
-un enlace viejo que todavía funciona. El plan de SEO para la baja, que es lo
-único que el código no puede resolver solo, está en `pendientes.md` §2.
+no se renueva. Se contaba con dejarlo redirigiendo mientras su registrador
+mantuviera el DNS, porque cada 308 servido en esa ventana es un enlace viejo que
+todavía funciona; la ventana duró un día (ver *Baja del `.tech`* abajo). El plan
+de SEO para la baja, que es lo único que el código no puede resolver solo, está
+en `pendientes.md` §2.
 
 La consecuencia que conviene tener escrita: sin dominio viejo vivo no hay
 mecanismo de traspaso de autoridad. El 301/308 es el único que Google acepta, y
@@ -62,8 +66,11 @@ se sigue derivando del Host real, que es lo que mantiene vivos los previews y
   (certificado emitido; antes el `www` del `.tech` resolvía a Vercel sin
   proyecto detrás).
 - Monitores 8, 10 y 11 repuntados a `.net` en Turso, y el 8 renombrado.
-- `codebymike.net` dado de alta en el inventario de servicios (`project_services`),
-  con renovación 5 sep 2027 y USD 13.5/año, para que el cron de dominios avise.
+- `codebymike.net` dado de alta en el inventario de servicios (`project_services`,
+  fila 8), con proveedor `vercel`, renovación 5 sep 2027, USD 13.50/año y
+  auto-renovación activa, para que el cron de dominios avise. La fila del `.tech`
+  (id 5) quedó **inactiva**: el dominio ya no es nuestro y una fila activa con
+  fecha pasada deja `/admin/domains` y el cron en `overdue` para siempre.
 - Guardarraíl de k6: `.net` añadido a los objetivos prohibidos. El `.tech` se
   queda ahí aunque ya no redirija: un guardarraíl que se relaja cuando el
   peligro parece pasado es el que falta el día en que vuelva a apuntar a algo.

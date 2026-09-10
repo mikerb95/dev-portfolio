@@ -117,11 +117,12 @@ Prioridad, de más a menos urgente:
       **Ojo con lo que se creía:** el dominio NO quedó libre. RDAP lo pone en
       `auto renew period` con expiración 2027-09-06 - el registrador lo tiene
       retenido y podría reactivarlo; nadie más puede registrarlo mientras tanto.
-- [ ] Queda fuera del repo: quitar el `.tech` del proyecto en Vercel y borrar su
-      fila en `project_services` (id 5), que hasta entonces sale en
-      `/admin/domains` como vencida. Si prefieres conservar el histórico de
-      costo, basta con desmarcarle *Activo*: `domainAlertState` devuelve `null`
-      para las inactivas y deja de contarla como alerta.
+- [x] Fila 5 de `project_services` (el `.tech`) marcada como **inactiva** el 10
+      sep 2026, conservando el histórico de costo: `domainAlertState` devuelve
+      `null` para las inactivas, así que sale de `/admin/domains` como alerta y
+      el cron ya no la cuenta. Se borró también su marca `domain_alert:5` en
+      `app_settings`, que había quedado en `overdue`.
+- [ ] Queda fuera del repo: quitar el `.tech` del proyecto en Vercel.
 - [ ] Si alguien registra el `.tech` después, no hay acción técnica: solo dejar
       de referenciarlo en cualquier material propio.
 
