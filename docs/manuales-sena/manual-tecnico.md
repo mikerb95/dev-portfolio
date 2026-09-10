@@ -831,7 +831,7 @@ Parámetros fijados en código:
 
 | Nombre | Cargo | Módulo | Contacto |
 |---|---|---|---|
-| Michael David Rodríguez Beltran | Aprendiz - desarrollador y responsable técnico | Todos | 0368dev@gmail.com · @mikerb95 |
+| Michael David Rodríguez Beltran | Aprendiz - desarrollador y responsable técnico | Todos | mike@codebymike.net · @mikerb95 |
 | (Instructor asignado) | Instructor / supervisor | Documentación y sustentación | - |
 | Soporte de Vercel | Proveedor | Cómputo y despliegue | `vercel.com/support` |
 | Soporte de Turso | Proveedor | Base de datos | `turso.tech` |
