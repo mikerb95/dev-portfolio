@@ -1,6 +1,6 @@
 # Plan - Versión en inglés de la parte pública
 
-**Estado:** en implementación · **Creado:** 2026-07-24 · **Última actualización:** 2026-07-30
+**Estado:** en implementación · **Creado:** 2026-07-24 · **Última actualización:** 2026-09-10
 **Alcance:** todo lo que un visitante ve sin autenticarse. El panel `/admin`,
 el interior de `/portal` y `/cobrar` quedan en español (ver §9 para la
 excepción de sus puertas públicas).
@@ -121,6 +121,18 @@ excepción de sus puertas públicas).
   español. 881/883 tests (los 2 restantes son un flaky preexistente de
   `latency.test.ts`, ajeno a i18n), build limpio y `astro check` sin errores
   nuevos.
+- ✅ **Página nueva traducida (10 sep 2026) - `/capacitacion-ia`**: la landing
+  comercial de capacitación en IA nació después de la Fase 9 y quedó fuera del
+  inglés (el nav la enlazaba en español desde `/en`, vía la caída de
+  `localizedHref`). Traducida con los tres pasos de siempre: bloque
+  `capacitacionIa` en `es.ts`/`en.ts`, cascarón `src/pages/en/capacitacion-ia.astro`
+  (sin `prerender`: lee el catálogo público en cada request) y alta en
+  `TRANSLATED_ROUTES`. El catálogo (`training_programs`) sigue saliendo en
+  español porque es contenido de base sin columnas `*_en`; lo que sí se traduce
+  son las enumeraciones `format`/`level`, que ahora salen del diccionario en vez
+  de `ETIQUETA_FORMATO`/`ETIQUETA_NIVEL` (esas se quedan para el panel, que es
+  solo español). `Academia IA` entra en la lista de idénticos permitidos de
+  `tests/i18n-dictionary.test.ts`: es el nombre propio del aula.
 - ✅ **Documentación de sustentación** (§14, 29 jul): registrado en
   `src/data/documentacion.ts` (RF-013 sitio en inglés (estado *parcial*),
   RF-014 sugerencia de idioma, RNF-20 guardas ciegos al idioma, RNF-21 paridad

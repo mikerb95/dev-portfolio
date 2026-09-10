@@ -1360,6 +1360,115 @@ const en = {
     contactCta: "Let's talk about your project",
     backHome: 'Back to home',
   },
+  capacitacionIa: {
+    title: 'Artificial intelligence training for teams',
+    description: 'AI training programs built around the real processes of your organization: assessment, a session on your own cases, material that stays, and a 30-day review.',
+    jsonLdServiceType: 'Artificial intelligence training',
+    jsonLdDescription: 'AI training for leadership, non-technical and technical teams, built on the real processes of the organization.',
+    hero: {
+      badge: 'AI training for organizations',
+      h1Line1: 'Get your team using AI',
+      h1Line2: 'at work, not in a demo',
+      intro: 'Most artificial intelligence training teaches tools. A week later nobody uses them, because they were never connected to the work people already have on their plate. Here it goes the other way around: the processes of the organization first, the tools after.',
+      ctaWhatsapp: 'Talk on WhatsApp',
+      ctaAula: 'Tour the classroom',
+      ctaMaterial: 'See the public material',
+      waMessage: 'Hi Mike, I would like information about AI training for my team.',
+    },
+    perfilesHeading: 'Who it is for',
+    perfiles: [
+      {
+        titulo: 'Leadership and middle management',
+        detalle: 'What to decide, what not to hand over to a model, and how to measure whether any of this is paying off.',
+      },
+      {
+        titulo: 'Non-technical teams',
+        detalle: 'Sales, admin, customer service: AI applied to the tasks they already do.',
+      },
+      {
+        titulo: 'Technical teams',
+        detalle: 'API integration, evaluating results, costs and the real limits of a model.',
+      },
+    ],
+    programasHeading: 'Programs',
+    programaPara: 'For:',
+    verTemario: 'See the syllabus',
+    precioAConvenir: 'On request',
+    preguntar: 'Ask about it',
+    waProgramaMessage: 'Hi Mike, I am interested in the "{title}" program.',
+    formatos: { charla: 'Talk', taller: 'Workshop', programa: 'Program' },
+    niveles: { intro: 'Introductory', intermedio: 'Intermediate', avanzado: 'Advanced' },
+    procesoHeading: 'How it works',
+    pasos: [
+      {
+        titulo: 'Assessment',
+        detalle: 'A one-hour conversation with whoever knows the process. Without it, training ends up being a tool demo.',
+      },
+      {
+        titulo: 'A session on your own cases',
+        detalle: 'The exercises are built from the documents, emails and processes of the organization, not from textbook examples.',
+      },
+      {
+        titulo: 'Material that stays',
+        detalle: 'The group enters the classroom with the session code, and the guides, prompts and templates stay in the resource bank.',
+      },
+      {
+        titulo: '30-day review',
+        detalle: 'What stuck in the day to day and what did not. It is the part almost nobody does and the only one that tells you whether it worked.',
+      },
+    ],
+    aulaHeading: 'Where the training happens',
+    aulaNombre: 'Academia IA',
+    aulaIntro: 'On session day the team does not land on this site: they go into the classroom, a separate application with its own domain and its own deployment. That is where the modules, the attendance record and each person progress live. This portfolio keeps the commercial side and the resource bank.',
+    aulaPuntos: [
+      {
+        titulo: 'People attending',
+        detalle: 'They enter with the session code and their name. No email or phone is asked for, and when they come back they pick up where they left off.',
+        enlace: 'See the classroom entrance',
+      },
+      {
+        titulo: 'Whoever hired the training',
+        detalle: 'A dashboard with the attendance list and how far each person on the team has gone through the material, behind its own password.',
+        enlace: 'Company dashboard',
+      },
+      {
+        titulo: 'Anyone just looking around',
+        detalle: 'The portal can be browsed without a code: the Copilot, Claude, Gemini and ChatGPT modules are visible before hiring anything.',
+        enlace: 'Enter as a guest',
+      },
+    ],
+    aulaNotaPre: 'They are two different codes and they do not mix: the classroom one identifies whoever attends for the attendance list, and the',
+    aulaNotaEnlace: 'resource bank',
+    aulaNotaPost: 'one opens the material reserved for the group on this site.',
+    faqHeading: 'Questions',
+    faqs: [
+      {
+        q: 'Does the team need to know how to code?',
+        a: 'Not for the programs aimed at non-technical teams. We work with tools you use directly and with the processes that already exist.',
+      },
+      {
+        q: 'On site or remote?',
+        a: 'Both. On site in Bogota and nearby; remote anywhere, with the same material and the same exercises.',
+      },
+      {
+        q: 'Can a program be built to measure?',
+        a: 'That is the norm. The programs on this page are starting points: the final syllabus comes out of the assessment.',
+      },
+      {
+        q: 'How do I know who from my team attended and how far they got?',
+        a: 'In the company dashboard of the classroom (capacitaciones.codebymike.net/empresa), with a password handed to whoever signs the contract. It shows who registered and which modules they have gone through. The only thing stored about an attendee is the name they type on the way in: no email, no phone.',
+      },
+      {
+        q: 'What is left afterwards?',
+        a: 'The resource bank with code-based access for the group, plus the 30-day review. The material is updated when it stops being true.',
+      },
+    ],
+    ctaTitulo: 'Let us start with the assessment',
+    ctaBody: 'One hour, free, with whoever knows the process. That is where the real syllabus comes from, and whether the training makes sense at all.',
+    ctaWhatsapp: 'Book on WhatsApp',
+    ctaForm: 'Write through the form',
+    waCtaMessage: 'Hi Mike, I would like to book the AI training assessment.',
+  },
 } satisfies typeof es
 
 export default en

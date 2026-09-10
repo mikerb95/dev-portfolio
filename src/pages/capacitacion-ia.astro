@@ -5,10 +5,16 @@
 //
 // Los programas salen de la base (`training_programs` con isPublic): editar el
 // catálogo es trabajo del panel, no de este archivo. Solo el texto de marco
-// vive aquí.
+// vive aquí, y ese texto sale del diccionario (la página se sirve también bajo
+// /en desde el cascarón src/pages/en/capacitacion-ia.astro).
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
 import { listarProgramasPublicos } from '../lib/capacitacion/repo'
-import { ETIQUETA_FORMATO, ETIQUETA_NIVEL, formatearDuracion } from '../lib/capacitacion/tipos'
+import { formatearDuracion } from '../lib/capacitacion/tipos'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const c = t.capacitacionIa
 
 let programas: Awaited<ReturnType<typeof listarProgramasPublicos>> = []
 try {
@@ -30,110 +36,32 @@ const waLink = (text: string) => `https://wa.me/${WHATSAPP}?text=${encodeURIComp
 // solo el dominio con el que se le llega.
 const AULA = 'https://capacitaciones.codebymike.net'
 
-const AULA_PUNTOS = [
-  {
-    dot: 'bg-cyan',
-    texto: 'text-cyan',
-    titulo: 'Quien asiste',
-    detalle:
-      'Entra con el código de la sesión y su nombre. No se pide correo ni teléfono, y al volver retoma donde iba.',
-    enlace: { href: AULA, label: 'Ver la entrada del aula' },
-  },
-  {
-    dot: 'bg-lime',
-    texto: 'text-lime',
-    titulo: 'Quien contrató',
-    detalle:
-      'Panel con la lista de asistencia y hasta dónde ha recorrido el material cada persona del equipo, con una clave propia.',
-    enlace: { href: `${AULA}/empresa`, label: 'Panel de la empresa' },
-  },
-  {
-    dot: 'bg-violet',
-    texto: 'text-violet',
-    titulo: 'Quien solo quiere mirar',
-    detalle:
-      'El portal se puede recorrer sin código: los módulos de Copilot, Claude, Gemini y ChatGPT están a la vista antes de contratar nada.',
-    enlace: { href: AULA, label: 'Entrar como invitado' },
-  },
+// Clases de color explícitas (no interpoladas): Tailwind solo genera las clases
+// que ve escritas completas en el código fuente. Van aquí y no en el
+// diccionario porque son diseño, no texto.
+const AULA_COLORS = [
+  { dot: 'bg-cyan', texto: 'text-cyan', href: AULA },
+  { dot: 'bg-lime', texto: 'text-lime', href: `${AULA}/empresa` },
+  { dot: 'bg-violet', texto: 'text-violet', href: AULA },
 ]
+const aulaPuntos = c.aulaPuntos.map((p, i) => ({ ...p, ...AULA_COLORS[i] }))
 
-const PERFILES = [
-  {
-    dot: 'bg-ember',
-    texto: 'text-ember',
-    titulo: 'Dirección y mandos medios',
-    detalle: 'Qué decidir, qué no delegar en un modelo y cómo medir si esto está devolviendo algo.',
-  },
-  {
-    dot: 'bg-lime',
-    texto: 'text-lime',
-    titulo: 'Equipos no técnicos',
-    detalle: 'Ventas, administración, servicio al cliente: la IA aplicada a las tareas que ya hacen.',
-  },
-  {
-    dot: 'bg-violet',
-    texto: 'text-violet',
-    titulo: 'Equipos técnicos',
-    detalle: 'Integración por API, evaluación de resultados, costos y límites reales de un modelo.',
-  },
+const PERFIL_COLORS = [
+  { dot: 'bg-ember', texto: 'text-ember' },
+  { dot: 'bg-lime', texto: 'text-lime' },
+  { dot: 'bg-violet', texto: 'text-violet' },
 ]
+const perfiles = c.perfiles.map((p, i) => ({ ...p, ...PERFIL_COLORS[i] }))
 
-const PASOS = [
-  {
-    n: '01',
-    titulo: 'Diagnóstico',
-    detalle:
-      'Una conversación de una hora con quien conoce el proceso. Sin esto, la capacitación termina siendo una demo de herramientas.',
-  },
-  {
-    n: '02',
-    titulo: 'Sesión sobre casos propios',
-    detalle:
-      'Los ejercicios se arman con documentos, correos y procesos de la organización, no con ejemplos de manual.',
-  },
-  {
-    n: '03',
-    titulo: 'Material que se queda',
-    detalle:
-      'El grupo entra al aula con el código de la sesión, y las guías, prompts y plantillas quedan en el banco de recursos.',
-  },
-  {
-    n: '04',
-    titulo: 'Revisión a los 30 días',
-    detalle:
-      'Qué se quedó en el día a día y qué no. Es la parte que casi nadie hace y la única que dice si sirvió.',
-  },
-]
+const pasos = c.pasos.map((p, i) => ({ ...p, n: `0${i + 1}` }))
 
-const FAQS = [
-  {
-    q: '¿Hace falta que el equipo sepa programar?',
-    a: 'No para los programas dirigidos a equipos no técnicos. Se trabaja con herramientas de uso directo y con los procesos que ya existen.',
-  },
-  {
-    q: '¿Presencial o remoto?',
-    a: 'Ambos. Presencial en Bogotá y alrededores; remoto en cualquier parte, con el mismo material y los mismos ejercicios.',
-  },
-  {
-    q: '¿Se puede armar un programa a la medida?',
-    a: 'Es lo normal. Los programas de esta página son puntos de partida: el temario final sale del diagnóstico.',
-  },
-  {
-    q: '¿Cómo sé quiénes de mi equipo asistieron y hasta dónde llegaron?',
-    a: 'En el panel de empresa del aula (capacitaciones.codebymike.net/empresa), con una clave que se entrega a quien firma el contrato. Muestra quién se registró y qué módulos ha recorrido. Del asistente solo se guarda el nombre que escribe al entrar: ni correo, ni teléfono.',
-  },
-  {
-    q: '¿Qué queda después?',
-    a: 'El banco de recursos con acceso por código para el grupo, más la revisión a los 30 días. El material se actualiza cuando deja de ser cierto.',
-  },
-]
+// El catálogo vive en español en base de datos: format y level sí se traducen
+// (son enumeraciones nuestras), el texto que escribió el admin no.
+const etiquetaFormato = (f: keyof typeof c.formatos) => c.formatos[f]
+const etiquetaNivel = (n: keyof typeof c.niveles) => c.niveles[n]
 ---
 
-<BaseLayout
-  title="Capacitación en inteligencia artificial para equipos"
-  description="Programas de capacitación en IA armados sobre los procesos reales de la organización: diagnóstico, sesión con casos propios, material permanente y revisión a los 30 días."
-  image="/og-default.png"
->
+<BaseLayout title={c.title} description={c.description} image="/og-default.png">
   <script
     is:inline
     slot="head"
@@ -141,11 +69,10 @@ const FAQS = [
     set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Service',
-      serviceType: 'Capacitación en inteligencia artificial',
+      serviceType: c.jsonLdServiceType,
       provider: { '@type': 'Person', name: 'Mike', url: 'https://codebymike.net' },
       areaServed: { '@type': 'Country', name: 'Colombia' },
-      description:
-        'Capacitación en IA para equipos directivos, no técnicos y técnicos, sobre los procesos reales de la organización.',
+      description: c.jsonLdDescription,
     })}
   />
 
@@ -155,40 +82,37 @@ const FAQS = [
     <div class="relative max-w-[1000px] mx-auto text-center">
       <div class="inline-flex items-center gap-2.5 mb-8">
         <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
-        <span class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-100">Capacitación en IA para organizaciones</span>
+        <span class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-100">{c.hero.badge}</span>
       </div>
 
       <h1 class="font-sans font-medium tracking-[-.03em] leading-[1.02] text-[clamp(36px,6.5vw,74px)] text-ink-50">
-        Que tu equipo use IA<br />en su trabajo, no en una demo
+        {c.hero.h1Line1}<br />{c.hero.h1Line2}
       </h1>
 
       <p class="mt-7 text-[15.5px] text-ink-200 leading-relaxed max-w-[64ch] mx-auto">
-        La mayoría de las capacitaciones en inteligencia artificial enseñan herramientas. A la semana
-        siguiente nadie las usa, porque nunca se conectaron con el trabajo que la gente ya tiene
-        encima. Aquí se hace al revés: primero los procesos de la organización, después las
-        herramientas.
+        {c.hero.intro}
       </p>
 
       <div class="mt-9 flex flex-wrap justify-center gap-3">
         <a
-          href={waLink('Hola Mike, quiero información sobre capacitación en IA para mi equipo.')}
+          href={waLink(c.hero.waMessage)}
           target="_blank"
           rel="noopener noreferrer"
           class="rounded-xl bg-lime/[0.10] border border-lime/30 px-5 py-2.5 text-[13px] text-lime hover:bg-lime/[0.16] transition-colors"
         >
-          Hablar por WhatsApp
+          {c.hero.ctaWhatsapp}
         </a>
         <a
           href={AULA}
           class="rounded-xl border border-white/10 px-5 py-2.5 text-[13px] text-ink-100 hover:bg-white/5 transition-colors"
         >
-          Recorrer el aula
+          {c.hero.ctaAula}
         </a>
         <a
-          href="/capacitacion"
+          href={localizedHref('/capacitacion', locale)}
           class="rounded-xl border border-white/10 px-5 py-2.5 text-[13px] text-ink-100 hover:bg-white/5 transition-colors"
         >
-          Ver el material público
+          {c.hero.ctaMaterial}
         </a>
       </div>
     </div>
@@ -197,9 +121,9 @@ const FAQS = [
   <!-- Perfiles -->
   <section class="px-6 md:px-12 lg:px-20 pb-20">
     <div class="max-w-[1000px] mx-auto">
-      <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">Para quién</h2>
+      <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">{c.perfilesHeading}</h2>
       <div class="grid gap-3 md:grid-cols-3">
-        {PERFILES.map((p) => (
+        {perfiles.map((p) => (
           <div class="rounded-2xl glass p-6 lift">
             <div class="flex items-center gap-2">
               <span class={`w-1.5 h-1.5 rounded-full ${p.dot}`}></span>
@@ -216,19 +140,19 @@ const FAQS = [
   {programas.length > 0 && (
     <section class="px-6 md:px-12 lg:px-20 pb-20">
       <div class="max-w-[1000px] mx-auto">
-        <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">Programas</h2>
+        <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">{c.programasHeading}</h2>
         <div class="grid gap-3 md:grid-cols-2">
           {programas.map((p) => (
             <div class="rounded-2xl glass p-6 lift flex flex-col">
               <div class="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
-                <span>{ETIQUETA_FORMATO[p.format]}</span>
-                <span>· {ETIQUETA_NIVEL[p.level]}</span>
+                <span>{etiquetaFormato(p.format)}</span>
+                <span>· {etiquetaNivel(p.level)}</span>
                 {formatearDuracion(p.durationHours) && <span>· {formatearDuracion(p.durationHours)}</span>}
               </div>
 
               <h3 class="mt-3 text-[17px] text-ink-50 leading-snug">{p.title}</h3>
               {p.summary && <p class="mt-2 text-[12.5px] text-ink-200 leading-relaxed">{p.summary}</p>}
-              {p.audience && <div class="mt-3 text-[11.5px] text-ink-300">Para: {p.audience}</div>}
+              {p.audience && <div class="mt-3 text-[11.5px] text-ink-300">{c.programaPara} {p.audience}</div>}
 
               {p.outcomes.length > 0 && (
                 <ul class="mt-4 space-y-1.5">
@@ -243,7 +167,7 @@ const FAQS = [
 
               {p.modules.length > 0 && (
                 <details class="mt-4">
-                  <summary class="text-[12px] text-cyan cursor-pointer">Ver el temario</summary>
+                  <summary class="text-[12px] text-cyan cursor-pointer">{c.verTemario}</summary>
                   <ol class="mt-2 space-y-1 text-[12px] text-ink-200 list-decimal pl-5">
                     {p.modules.map((m) => <li>{m}</li>)}
                   </ol>
@@ -251,14 +175,14 @@ const FAQS = [
               )}
 
               <div class="mt-auto pt-5 flex items-center justify-between gap-3">
-                <span class="text-[12px] text-ink-100">{p.priceNote ?? 'A convenir'}</span>
+                <span class="text-[12px] text-ink-100">{p.priceNote ?? c.precioAConvenir}</span>
                 <a
-                  href={waLink(`Hola Mike, me interesa el programa "${p.title}".`)}
+                  href={waLink(interpolate(c.waProgramaMessage, { title: p.title }))}
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-[12px] rounded-lg border border-white/10 px-3 py-1.5 text-ink-100 hover:bg-white/5 transition-colors"
                 >
-                  Preguntar
+                  {c.preguntar}
                 </a>
               </div>
             </div>
@@ -271,9 +195,9 @@ const FAQS = [
   <!-- Proceso -->
   <section class="px-6 md:px-12 lg:px-20 pb-20">
     <div class="max-w-[1000px] mx-auto">
-      <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">Cómo funciona</h2>
+      <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">{c.procesoHeading}</h2>
       <div class="grid gap-3 md:grid-cols-4">
-        {PASOS.map((s) => (
+        {pasos.map((s) => (
           <div class="rounded-2xl glass p-6">
             <div class="font-mono text-[11px] text-cyan tracking-[.2em]">{s.n}</div>
             <div class="mt-3 text-[14px] text-ink-50">{s.titulo}</div>
@@ -288,13 +212,13 @@ const FAQS = [
   <section class="px-6 md:px-12 lg:px-20 pb-20">
     <div class="max-w-[1000px] mx-auto">
       <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">
-        Dónde ocurre la capacitación
+        {c.aulaHeading}
       </h2>
 
       <div class="rounded-2xl glass p-7">
         <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-          <span class="text-[15px] text-ink-50">Academia IA</span>
+          <span class="text-[15px] text-ink-50">{c.aulaNombre}</span>
           <a
             href={AULA}
             class="font-mono text-[11.5px] text-cyan hover:underline"
@@ -304,14 +228,11 @@ const FAQS = [
         </div>
 
         <p class="mt-4 text-[13px] text-ink-200 leading-relaxed max-w-[70ch]">
-          El día de la sesión el equipo no aterriza en este sitio: entra al aula, que es una
-          aplicación aparte, con su propio dominio y su propio despliegue. Ahí están los módulos, el
-          registro de asistencia y el avance de cada persona. Este portafolio se queda con lo
-          comercial y con el banco de recursos.
+          {c.aulaIntro}
         </p>
 
         <div class="mt-6 grid gap-3 md:grid-cols-3">
-          {AULA_PUNTOS.map((p) => (
+          {aulaPuntos.map((p) => (
             <div class="rounded-xl border border-white/8 p-5 flex flex-col">
               <div class="flex items-center gap-2">
                 <span class={`w-1.5 h-1.5 rounded-full ${p.dot}`}></span>
@@ -319,20 +240,19 @@ const FAQS = [
               </div>
               <p class="mt-3 text-[12.5px] text-ink-200 leading-relaxed">{p.detalle}</p>
               <a
-                href={p.enlace.href}
+                href={p.href}
                 class="mt-auto pt-4 text-[12px] text-ink-100 hover:text-ink-50 transition-colors"
               >
-                {p.enlace.label} →
+                {p.enlace} →
               </a>
             </div>
           ))}
         </div>
 
         <p class="mt-6 text-[12px] text-ink-300 leading-relaxed max-w-[70ch]">
-          Son dos códigos distintos y no se mezclan: el del aula identifica a quien asiste para la
-          lista de asistencia, y el del
-          <a href="/capacitacion/acceso" class="text-cyan hover:underline">banco de recursos</a>
-          abre el material reservado del grupo en este sitio.
+          {c.aulaNotaPre}
+          <a href={localizedHref('/capacitacion/acceso', locale)} class="text-cyan hover:underline">{c.aulaNotaEnlace}</a>
+          {c.aulaNotaPost}
         </p>
       </div>
     </div>
@@ -341,9 +261,9 @@ const FAQS = [
   <!-- FAQ -->
   <section class="px-6 md:px-12 lg:px-20 pb-24">
     <div class="max-w-[760px] mx-auto">
-      <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">Preguntas</h2>
+      <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">{c.faqHeading}</h2>
       <div class="space-y-2">
-        {FAQS.map((f) => (
+        {c.faqs.map((f) => (
           <details class="rounded-2xl glass p-5">
             <summary class="text-[13.5px] text-ink-50 cursor-pointer">{f.q}</summary>
             <p class="mt-3 text-[12.5px] text-ink-200 leading-relaxed">{f.a}</p>
@@ -352,25 +272,24 @@ const FAQS = [
       </div>
 
       <div class="mt-10 rounded-2xl glass p-7 text-center">
-        <div class="text-[15px] text-ink-50">Empecemos por el diagnóstico</div>
+        <div class="text-[15px] text-ink-50">{c.ctaTitulo}</div>
         <p class="mt-2 text-[12.5px] text-ink-200 leading-relaxed max-w-[52ch] mx-auto">
-          Una hora, sin costo, con quien conoce el proceso. De ahí sale el temario real y si la
-          capacitación tiene sentido o no.
+          {c.ctaBody}
         </p>
         <div class="mt-5 flex flex-wrap justify-center gap-3">
           <a
-            href={waLink('Hola Mike, quiero agendar el diagnóstico de capacitación en IA.')}
+            href={waLink(c.waCtaMessage)}
             target="_blank"
             rel="noopener noreferrer"
             class="rounded-xl bg-lime/[0.10] border border-lime/30 px-5 py-2.5 text-[13px] text-lime hover:bg-lime/[0.16] transition-colors"
           >
-            Agendar por WhatsApp
+            {c.ctaWhatsapp}
           </a>
           <a
-            href="/contact"
+            href={localizedHref('/contact', locale)}
             class="rounded-xl border border-white/10 px-5 py-2.5 text-[13px] text-ink-100 hover:bg-white/5 transition-colors"
           >
-            Escribir por el formulario
+            {c.ctaForm}
           </a>
         </div>
       </div>

@@ -150,6 +150,8 @@ describe('paridad del diccionario es/en', () => {
         'architecture.externals[3].name',
         'architecture.externals[4].name',
         'architecture.externals[0].name',
+        // Nombre propio del aula (aplicación aparte): no se traduce.
+        'capacitacionIa.aulaNombre',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal

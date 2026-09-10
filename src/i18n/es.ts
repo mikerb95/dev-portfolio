@@ -1374,6 +1374,115 @@ const es = {
     contactCta: 'Hablemos de tu proyecto',
     backHome: 'Volver al inicio',
   },
+  capacitacionIa: {
+    title: 'Capacitación en inteligencia artificial para equipos',
+    description: 'Programas de capacitación en IA armados sobre los procesos reales de la organización: diagnóstico, sesión con casos propios, material permanente y revisión a los 30 días.',
+    jsonLdServiceType: 'Capacitación en inteligencia artificial',
+    jsonLdDescription: 'Capacitación en IA para equipos directivos, no técnicos y técnicos, sobre los procesos reales de la organización.',
+    hero: {
+      badge: 'Capacitación en IA para organizaciones',
+      h1Line1: 'Que tu equipo use IA',
+      h1Line2: 'en su trabajo, no en una demo',
+      intro: 'La mayoría de las capacitaciones en inteligencia artificial enseñan herramientas. A la semana siguiente nadie las usa, porque nunca se conectaron con el trabajo que la gente ya tiene encima. Aquí se hace al revés: primero los procesos de la organización, después las herramientas.',
+      ctaWhatsapp: 'Hablar por WhatsApp',
+      ctaAula: 'Recorrer el aula',
+      ctaMaterial: 'Ver el material público',
+      waMessage: 'Hola Mike, quiero información sobre capacitación en IA para mi equipo.',
+    },
+    perfilesHeading: 'Para quién',
+    perfiles: [
+      {
+        titulo: 'Dirección y mandos medios',
+        detalle: 'Qué decidir, qué no delegar en un modelo y cómo medir si esto está devolviendo algo.',
+      },
+      {
+        titulo: 'Equipos no técnicos',
+        detalle: 'Ventas, administración, servicio al cliente: la IA aplicada a las tareas que ya hacen.',
+      },
+      {
+        titulo: 'Equipos técnicos',
+        detalle: 'Integración por API, evaluación de resultados, costos y límites reales de un modelo.',
+      },
+    ],
+    programasHeading: 'Programas',
+    programaPara: 'Para:',
+    verTemario: 'Ver el temario',
+    precioAConvenir: 'A convenir',
+    preguntar: 'Preguntar',
+    waProgramaMessage: 'Hola Mike, me interesa el programa "{title}".',
+    formatos: { charla: 'Charla', taller: 'Taller', programa: 'Programa' },
+    niveles: { intro: 'Introductorio', intermedio: 'Intermedio', avanzado: 'Avanzado' },
+    procesoHeading: 'Cómo funciona',
+    pasos: [
+      {
+        titulo: 'Diagnóstico',
+        detalle: 'Una conversación de una hora con quien conoce el proceso. Sin esto, la capacitación termina siendo una demo de herramientas.',
+      },
+      {
+        titulo: 'Sesión sobre casos propios',
+        detalle: 'Los ejercicios se arman con documentos, correos y procesos de la organización, no con ejemplos de manual.',
+      },
+      {
+        titulo: 'Material que se queda',
+        detalle: 'El grupo entra al aula con el código de la sesión, y las guías, prompts y plantillas quedan en el banco de recursos.',
+      },
+      {
+        titulo: 'Revisión a los 30 días',
+        detalle: 'Qué se quedó en el día a día y qué no. Es la parte que casi nadie hace y la única que dice si sirvió.',
+      },
+    ],
+    aulaHeading: 'Dónde ocurre la capacitación',
+    aulaNombre: 'Academia IA',
+    aulaIntro: 'El día de la sesión el equipo no aterriza en este sitio: entra al aula, que es una aplicación aparte, con su propio dominio y su propio despliegue. Ahí están los módulos, el registro de asistencia y el avance de cada persona. Este portafolio se queda con lo comercial y con el banco de recursos.',
+    aulaPuntos: [
+      {
+        titulo: 'Quien asiste',
+        detalle: 'Entra con el código de la sesión y su nombre. No se pide correo ni teléfono, y al volver retoma donde iba.',
+        enlace: 'Ver la entrada del aula',
+      },
+      {
+        titulo: 'Quien contrató',
+        detalle: 'Panel con la lista de asistencia y hasta dónde ha recorrido el material cada persona del equipo, con una clave propia.',
+        enlace: 'Panel de la empresa',
+      },
+      {
+        titulo: 'Quien solo quiere mirar',
+        detalle: 'El portal se puede recorrer sin código: los módulos de Copilot, Claude, Gemini y ChatGPT están a la vista antes de contratar nada.',
+        enlace: 'Entrar como invitado',
+      },
+    ],
+    aulaNotaPre: 'Son dos códigos distintos y no se mezclan: el del aula identifica a quien asiste para la lista de asistencia, y el del',
+    aulaNotaEnlace: 'banco de recursos',
+    aulaNotaPost: 'abre el material reservado del grupo en este sitio.',
+    faqHeading: 'Preguntas',
+    faqs: [
+      {
+        q: '¿Hace falta que el equipo sepa programar?',
+        a: 'No para los programas dirigidos a equipos no técnicos. Se trabaja con herramientas de uso directo y con los procesos que ya existen.',
+      },
+      {
+        q: '¿Presencial o remoto?',
+        a: 'Ambos. Presencial en Bogotá y alrededores; remoto en cualquier parte, con el mismo material y los mismos ejercicios.',
+      },
+      {
+        q: '¿Se puede armar un programa a la medida?',
+        a: 'Es lo normal. Los programas de esta página son puntos de partida: el temario final sale del diagnóstico.',
+      },
+      {
+        q: '¿Cómo sé quiénes de mi equipo asistieron y hasta dónde llegaron?',
+        a: 'En el panel de empresa del aula (capacitaciones.codebymike.net/empresa), con una clave que se entrega a quien firma el contrato. Muestra quién se registró y qué módulos ha recorrido. Del asistente solo se guarda el nombre que escribe al entrar: ni correo, ni teléfono.',
+      },
+      {
+        q: '¿Qué queda después?',
+        a: 'El banco de recursos con acceso por código para el grupo, más la revisión a los 30 días. El material se actualiza cuando deja de ser cierto.',
+      },
+    ],
+    ctaTitulo: 'Empecemos por el diagnóstico',
+    ctaBody: 'Una hora, sin costo, con quien conoce el proceso. De ahí sale el temario real y si la capacitación tiene sentido o no.',
+    ctaWhatsapp: 'Agendar por WhatsApp',
+    ctaForm: 'Escribir por el formulario',
+    waCtaMessage: 'Hola Mike, quiero agendar el diagnóstico de capacitación en IA.',
+  },
 }
 
 export default es
