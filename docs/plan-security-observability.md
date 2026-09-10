@@ -238,6 +238,37 @@ entero sin producir un error en ninguna parte: exactamente el modo de fallo sile
 `cron_runs` se creó para hacer visible, y que aquí sí se vio de inmediato en la bitácora.
 Los honeypots siguieron bloqueando inline durante la ventana (por el refuerzo del 19 jul).
 
+**Incidente (2026-09-10) - el bloqueo masivo se bloqueó a sí mismo.** Un clic en el botón
+de bloqueo masivo de `/admin/security` (24 h) metió 46 IPs en `blocked_ips`, y una de ellas
+era la del propio administrador: todo el sitio pasó a devolver `403 Forbidden` desde la
+única IP que podía entrar al panel a deshacerlo. La causa no es el botón, es el criterio:
+`blockAllAttackerIps` bloquea *toda* IP con eventos en `security_events` excluyendo solo
+`category='blocklist'`, y el micro-SIEM registra por diseño eventos **legítimos** del panel
+(aquí `cuenta_cobro.created`, `cuenta_cobro.issued` y un `secrets_probing.backups` del
+propio admin mirando la bóveda) - así que operar el panel te vuelve candidato a atacante
+de tu propio botón.
+
+La salvaguarda que debía cubrirlo falló dos veces:
+
+- `SECURITY_IP_ALLOWLIST` se leía con `import.meta.env`, que en Vercel llega vacío (es la
+  trampa que documenta `src/lib/env.ts`): la allowlist no existía en producción, solo en el
+  dev server. Corregido a `serverEnv`.
+- Aun funcionando, no habría servido: la variable no estaba dada de alta en el proyecto, y
+  con IP residencial dinámica una lista fija de IPs envejece en días. Una salvaguarda que
+  hay que recordar mantener a mano no es una salvaguarda.
+
+Arreglo: las IPs propias se **derivan de dato vivo**, no de configuración. `selectBulkBlockIps`
+acepta `protectedIps` y `blockAllAttackerIps` lo llena con la IP del request que pulsa el
+botón (`selfIp`, que pasa el endpoint con `clientIp`) más las de `admin_sessions` no
+revocadas - una IP que sostuvo sesión admin pasó por GitHub OAuth y la allowlist de logins,
+así que es mía por definición. La consulta de esas IPs es **fail-safe al revés** que el
+resto del módulo: si falla, se protege al menos `selfIp`, porque aquí el fallo caro no es
+dejar pasar a un atacante sino quedarme fuera del panel. El resultado reporta `spared` y el
+panel lo muestra en el resumen y en el `confirm` previo. Recuperación manual mientras tanto:
+`delete from blocked_ips where ip = ?` contra Turso; el 403 sobrevive hasta 30 s más por la
+cache en memoria de `blocklist.ts`. Requisito RF-608 en `/docs`; regresión en
+`tests/security-autoblock.test.ts`.
+
 
 1. Endpoints trampa que ningún usuario legítimo toca: `/wp-login.php`, `/.env`,
    `/admin.php`, `/api/v1/token` (rutas Astro reales que responden 200 con contenido
@@ -248,7 +279,8 @@ Los honeypots siguieron bloqueando inline durante la ventana (por el refuerzo de
    (ver refuerzo 2026-07-19 arriba); la ráfaga de ≥ N eventos `high` en 10 min sigue
    corriendo en el cron. Ambos → insert en `blocked_ips` con TTL 1 h; reincidencia → 24 h
    → 7 días. **Salvaguardas**: nunca auto-bloquear IPs de rangos de Vercel/cron-job.org
-   ni la IP del admin (allowlist en `app_settings`); tope de 500 IPs bloqueadas
+   ni las IPs propias (la del operador y las de `admin_sessions` vivas, más
+   `SECURITY_IP_ALLOWLIST`; ver el incidente del 10 sep); tope de 500 IPs bloqueadas
    simultáneas (si se excede, alerta en vez de bloquear - señal de ataque distribuido
    que se maneja en capa 0).
 3. Panel de gestión manual: bloquear/desbloquear desde `/admin/security`.
