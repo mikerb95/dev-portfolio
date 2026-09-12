@@ -735,10 +735,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // cachearse en el edge (x-vercel-cache: MISS permanente). Lo que sí hay que
   // respetar es la opción explícita de NO cachear (`no-store`/`private`), que
   // es como las rutas con datos personales se protegen del CDN compartido.
+  //
+  // Ojo: ese arreglo NO bastó. El MISS permanente sigue vivo en producción; ver
+  // la nota de `CDN-Cache-Control` más abajo, que es lo que lo desambigua.
   const prevCache = resHeaders.get('Cache-Control') ?? ''
   const optedOut = /no-store|private/i.test(prevCache)
   if (isPublicPage && res.status === 200 && !optedOut) {
-    resHeaders.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400')
+    const politica = 'public, s-maxage=300, stale-while-revalidate=86400'
+    resHeaders.set('Cache-Control', politica)
+    // `CDN-Cache-Control` va DUPLICADO a propósito, y es además la única sonda
+    // que tenemos sobre este código en producción. El borde de Vercel elimina
+    // `s-maxage` y `stale-while-revalidate` del `Cache-Control` antes de
+    // entregar la respuesta al navegador, así que desde fuera la cabecera se ve
+    // idéntica esté funcionando o no: `public, max-age=0, must-revalidate`. El
+    // único indicador real es `x-vercel-cache`, y lleva dando MISS en 11 de 11
+    // peticiones seguidas a `/` desde la misma región, con la parte estática
+    // haciendo HIT al lado. `CDN-Cache-Control` sí llega al navegador sin
+    // tocar, así que si tras desplegar esto la respuesta no lo trae, lo que
+    // corre en producción no es este archivo.
+    resHeaders.set('CDN-Cache-Control', politica)
   }
 
   return new Response(res.body, { status: res.status, headers: resHeaders })
