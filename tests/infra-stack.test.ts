@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  VERCEL, TURSO, CLAUDE, PROVEEDORES, ESCENARIOS, SELECCION_INICIAL,
+  VERCEL, TURSO, CLAUDE, WORKSPACE, PROVEEDORES, ESCENARIOS, SELECCION_INICIAL,
   calcularProveedor, calcularStack, planRecomendado, planDe, escenarioPorId,
 } from '../src/lib/infra-stack'
 import { TARIFAS_INICIALES } from '../src/lib/computo/tarifas'
@@ -31,6 +31,18 @@ describe('catálogo', () => {
     const pro = planDe(VERCEL, 'pro')
     expect(pro.excedente.cpuActiva).toBe(TARIFAS_INICIALES.cpuActivaHora)
     expect(pro.excedente.transferencia).toBe(TARIFAS_INICIALES.transferenciaGb)
+  })
+
+  it('la selección inicial es la tarifa más baja de cada proveedor', () => {
+    // La página abre con lo más barato a propósito: es el punto de partida real
+    // y el que muestra dónde se rompe el gratis. Si alguien añade un plan aún
+    // más barato y no mueve el default, este test lo dice.
+    for (const p of PROVEEDORES) {
+      const elegido = planDe(p, SELECCION_INICIAL[p.id])
+      const minimo = Math.min(...p.planes.map((pl) => pl.baseUsd))
+      expect(SELECCION_INICIAL[p.id]).toBeDefined()
+      expect(elegido.baseUsd).toBe(minimo)
+    }
   })
 
   it('todos los escenarios cubren todos los proveedores', () => {
@@ -95,11 +107,37 @@ describe('calcularProveedor', () => {
   })
 })
 
+describe('Google Workspace (precio por asiento)', () => {
+  it('cobra por buzón sin cargo fijo', () => {
+    const r = calcularProveedor(WORKSPACE, 'starter', { usuarios: 3 })
+    expect(r.baseUsd).toBe(0)
+    expect(r.totalUsd).toBe(21)
+    expect(r.topesDuros).toEqual([])
+  })
+
+  it('sin buzones no cuesta nada', () => {
+    expect(calcularProveedor(WORKSPACE, 'starter', { usuarios: 0 }).totalUsd).toBe(0)
+  })
+
+  it('Standard cuesta el doble por el mismo número de buzones', () => {
+    const starter = calcularProveedor(WORKSPACE, 'starter', { usuarios: 4 })
+    const standard = calcularProveedor(WORKSPACE, 'standard', { usuarios: 4 })
+    expect(standard.totalUsd).toBe(starter.totalUsd * 2)
+  })
+
+  it('recomienda el Starter: por asiento nunca hay tope duro que fuerce a subir', () => {
+    expect(planRecomendado(WORKSPACE, { usuarios: 25 }).planId).toBe('starter')
+  })
+})
+
 describe('calcularStack', () => {
-  it('suma los tres proveedores y proyecta el año', () => {
-    const r = calcularStack({ vercel: 'pro', turso: 'scaler', claude: 'pro' }, {})
-    expect(r.totalMensualUsd).toBe(20 + 29 + 20)
-    expect(r.totalAnualUsd).toBe((20 + 29 + 20) * 12)
+  it('suma los cuatro proveedores y proyecta el año', () => {
+    const r = calcularStack(
+      { vercel: 'pro', turso: 'scaler', claude: 'pro', workspace: 'starter' },
+      { workspace: { usuarios: 1 } },
+    )
+    expect(r.totalMensualUsd).toBe(20 + 29 + 20 + 7)
+    expect(r.totalAnualUsd).toBe((20 + 29 + 20 + 7) * 12)
   })
 
   it('cuenta los topes duros de todo el stack', () => {
@@ -107,9 +145,10 @@ describe('calcularStack', () => {
       vercel: { transferencia: 999, edgeRequests: 5 },
       turso: { filasLeidas: 5000 },
       claude: {},
+      workspace: { usuarios: 1 },
     })
     expect(r.topesDuros).toBe(3)
-    expect(r.totalMensualUsd).toBe(20) // la suscripción de Claude, nada más
+    expect(r.totalMensualUsd).toBe(7) // solo el buzón: lo demás es gratis o se corta
   })
 
   it('el escenario de arranque cabe entero en los planes gratuitos', () => {
