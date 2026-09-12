@@ -1,4 +1,10 @@
 ---
+// Página sin datos vivos: se genera en el build, no por request. Todo lo que
+// pinta sale de `src/data/`, que son módulos tipados que se resuelven al
+// compilar; no hay una sola consulta a la base. Si alguna cifra pasa a salir de
+// la BD (como en docs/testing.astro, que lee `ci_runs`), hay que quitar esto.
+export const prerender = true
+
 // Deck de sustentación: resumen de /docs en formato presentación.
 // Las cifras salen de las mismas fuentes que las páginas de documentación,
 // así que no hay números escritos a mano que se desincronicen.
