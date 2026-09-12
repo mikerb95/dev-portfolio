@@ -1,4 +1,14 @@
 ---
+// Página sin datos vivos: se genera en el build, no por request.
+//
+// La única lectura de entorno que queda es `demoAvailable`, y por eso esto es
+// seguro: no abre la base, solo mira si `TURSO_DEMO_URL` existe, y esa variable
+// está dada de alta en Production y Preview, así que el build ve el mismo valor
+// que vería la función. Si algún día este archivo pasa a consultar la BD o a
+// depender de algo que cambia entre build y request, hay que quitar el
+// prerender: si no, la página se queda congelada sin que nadie se entere.
+export const prerender = true
+
 import BaseLayout from '../layouts/BaseLayout.astro'
 import ToolMock from '../components/ToolMock.astro'
 import { demoAvailable } from '../db'
