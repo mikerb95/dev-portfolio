@@ -149,6 +149,28 @@ export const CLAUDE: ProveedorInfra = {
   ],
   planes: [
     {
+      id: 'api-haiku-45',
+      nombre: 'API · Haiku 4.5',
+      baseUsd: 0,
+      incluido: { entrada: 0, salida: 0 },
+      excedente: { entrada: 1, salida: 5 },
+      nota: 'La tarifa más baja del catálogo. Sin cargo fijo: se paga solo lo que se consume, y el caché de prompt recorta la entrada hasta ~10% de la tarifa.',
+    },
+    {
+      id: 'api-sonnet-5',
+      nombre: 'API · Sonnet 5',
+      baseUsd: 0,
+      incluido: { entrada: 0, salida: 0 },
+      excedente: { entrada: 2, salida: 10 },
+    },
+    {
+      id: 'api-opus-5',
+      nombre: 'API · Opus 5',
+      baseUsd: 0,
+      incluido: { entrada: 0, salida: 0 },
+      excedente: { entrada: 5, salida: 25 },
+    },
+    {
       id: 'pro',
       nombre: 'Suscripción Pro',
       baseUsd: 20,
@@ -164,32 +186,44 @@ export const CLAUDE: ProveedorInfra = {
       excedente: { entrada: null, salida: null },
       nota: 'Mismos límites del Pro multiplicados por 5. Sigue sin ser API.',
     },
+  ],
+}
+
+// Google Workspace no se factura por consumo sino por asiento, así que su única
+// dimensión son los buzones y el "excedente" es el precio por usuario sobre una
+// cuota incluida de cero. Sale el mismo número y no hace falta un caso especial
+// en el cálculo, que es lo que se quiere evitar: una rama aparte para un solo
+// proveedor es la que nadie vuelve a probar.
+export const WORKSPACE: ProveedorInfra = {
+  id: 'workspace',
+  nombre: 'Google Workspace',
+  url: 'https://workspace.google.com/pricing',
+  verificado: '2026-09-12',
+  fuente: 'Página de precios de Google Workspace, precio con compromiso anual (el flexible mes a mes cuesta alrededor de un 20% más).',
+  dimensiones: [
+    { id: 'usuarios', etiqueta: 'Buzones', unidad: 'usuarios' },
+  ],
+  planes: [
     {
-      id: 'api-opus-5',
-      nombre: 'API · Opus 5',
+      id: 'starter',
+      nombre: 'Business Starter',
       baseUsd: 0,
-      incluido: { entrada: 0, salida: 0 },
-      excedente: { entrada: 5, salida: 25 },
-      nota: 'Sin cargo fijo: se paga solo lo que se consume. El caché de prompt recorta la entrada hasta ~10% de la tarifa.',
+      incluido: { usuarios: 0 },
+      excedente: { usuarios: 7 },
+      nota: 'El plan más barato con correo en dominio propio: 30 GB por usuario y videollamadas de hasta 100 participantes. Precio por usuario con compromiso anual.',
     },
     {
-      id: 'api-sonnet-5',
-      nombre: 'API · Sonnet 5',
+      id: 'standard',
+      nombre: 'Business Standard',
       baseUsd: 0,
-      incluido: { entrada: 0, salida: 0 },
-      excedente: { entrada: 2, salida: 10 },
-    },
-    {
-      id: 'api-haiku-45',
-      nombre: 'API · Haiku 4.5',
-      baseUsd: 0,
-      incluido: { entrada: 0, salida: 0 },
-      excedente: { entrada: 1, salida: 5 },
+      incluido: { usuarios: 0 },
+      excedente: { usuarios: 14 },
+      nota: 'El doble de precio por usuario a cambio de 2 TB y grabación de reuniones. Solo se justifica cuando los 30 GB del Starter se llenan.',
     },
   ],
 }
 
-export const PROVEEDORES: ProveedorInfra[] = [VERCEL, TURSO, CLAUDE]
+export const PROVEEDORES: ProveedorInfra[] = [VERCEL, TURSO, CLAUDE, WORKSPACE]
 
 // ---------------------------------------------------------------------------
 // Cálculo
@@ -337,6 +371,7 @@ export const ESCENARIOS: Escenario[] = [
       vercel: { cpuActiva: 1.5, memoria: 120, invocaciones: 0.3, transferencia: 15, edgeRequests: 0.5 },
       turso: { filasLeidas: 300, filasEscritas: 3, almacenamiento: 1 },
       claude: { entrada: 0, salida: 0 },
+      workspace: { usuarios: 1 },
     },
   },
   {
@@ -347,6 +382,7 @@ export const ESCENARIOS: Escenario[] = [
       vercel: { cpuActiva: 8, memoria: 900, invocaciones: 2.5, transferencia: 220, edgeRequests: 6 },
       turso: { filasLeidas: 1800, filasEscritas: 30, almacenamiento: 5 },
       claude: { entrada: 40, salida: 6 },
+      workspace: { usuarios: 2 },
     },
   },
   {
@@ -357,15 +393,21 @@ export const ESCENARIOS: Escenario[] = [
       vercel: { cpuActiva: 35, memoria: 4000, invocaciones: 12, transferencia: 1400, edgeRequests: 30 },
       turso: { filasLeidas: 12_000, filasEscritas: 120, almacenamiento: 12 },
       claude: { entrada: 200, salida: 30 },
+      workspace: { usuarios: 3 },
     },
   },
 ]
 
-/** Planes con los que arranca la vista: lo que se paga hoy (todo gratis salvo la suscripción). */
+/**
+ * Planes con los que arranca la vista: la tarifa más baja de cada proveedor.
+ * Es el punto de partida real del stack, y además el más informativo - así la
+ * página abre mostrando dónde se rompe el gratis, que es la pregunta cara.
+ */
 export const SELECCION_INICIAL: SeleccionPlanes = {
   vercel: 'hobby',
   turso: 'free',
-  claude: 'pro',
+  claude: 'api-haiku-45',
+  workspace: 'starter',
 }
 
 export function escenarioPorId(id: string | null | undefined): Escenario {

@@ -1,8 +1,20 @@
 ---
+// Los artículos son ficheros de la colección de contenido: el build los conoce
+// enteros, así que renderizarlos por request era pagar una invocación de
+// función para devolver siempre lo mismo. `getStaticPaths` enumera los slugs
+// del idioma de ESTA ruta (el cascarón /en tiene el suyo con 'en'), y un slug
+// que no esté en la lista ya da 404 sin llegar aquí, igual que antes.
+export const prerender = true
+
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { render } from 'astro:content'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
-import { getNote, getTranslationSlug } from '../../lib/notes'
+import { getNote, getNotes, noteSlug, getTranslationSlug } from '../../lib/notes'
+
+export async function getStaticPaths() {
+  const notes = await getNotes('es')
+  return notes.map((note) => ({ params: { slug: noteSlug(note) } }))
+}
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
