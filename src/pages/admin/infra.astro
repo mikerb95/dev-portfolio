@@ -1,0 +1,305 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { appSettings } from '../../db/schema'
+import { parseRates, fmtUSD, fmtMoney } from '../../lib/money'
+import {
+  PROVEEDORES, ESCENARIOS, SELECCION_INICIAL,
+  calcularStack, planRecomendado, escenarioPorId,
+} from '../../lib/infra-stack'
+
+const settingsRows = await db.select().from(appSettings)
+const rates = parseRates(settingsRows)
+const copPorUsd = rates.COP ?? null
+
+// El servidor pinta el primer escenario ya calculado para que la página sirva
+// sin JS; el simulador del navegador recalcula sobre el mismo módulo.
+const escenario = escenarioPorId(ESCENARIOS[0].id)
+const resumen = calcularStack(SELECCION_INICIAL, escenario.uso)
+const porId = new Map(resumen.proveedores.map((r) => [r.proveedorId, r]))
+
+const fmtNum = (n: number, decimales: number) =>
+  new Intl.NumberFormat('es-CO', { maximumFractionDigits: decimales }).format(n)
+---
+
+<AdminLayout title="Infra básica">
+  <div id="sim" data-cop={copPorUsd ?? ''}>
+    <!-- Resumen -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Costo / mes</p>
+        <p class="text-2xl font-medium tracking-tight text-cyan" data-total="mes">{fmtUSD(resumen.totalMensualUsd, 2)}</p>
+        <p class="mt-1 text-[10px] font-mono text-ink-300" data-total="mes-cop">
+          {copPorUsd ? fmtMoney(resumen.totalMensualUsd * copPorUsd, 'COP', 0) : 'sin tasa COP'}
+        </p>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Costo / año</p>
+        <p class="text-2xl font-medium tracking-tight text-ink-50" data-total="anio">{fmtUSD(resumen.totalAnualUsd, 0)}</p>
+        <p class="mt-1 text-[10px] font-mono text-ink-300">12 meses al ritmo actual</p>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Cargo fijo</p>
+        <p class="text-2xl font-medium tracking-tight text-ink-50" data-total="base">{fmtUSD(resumen.proveedores.reduce((s, r) => s + r.baseUsd, 0), 2)}</p>
+        <p class="mt-1 text-[10px] font-mono text-ink-300">suscripciones, sin consumo</p>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Cuotas rotas</p>
+        <p class="text-2xl font-medium tracking-tight" data-total="topes" data-tone>{resumen.topesDuros}</p>
+        <p class="mt-1 text-[10px] font-mono text-ink-300">límites sin excedente que se cortan</p>
+      </div>
+    </div>
+
+    <!-- Escenarios -->
+    <div class="mt-6 rounded-2xl glass p-5">
+      <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Escenario</p>
+      <div class="flex flex-wrap gap-2">
+        {ESCENARIOS.map((e) => (
+          <button
+            type="button"
+            data-escenario={e.id}
+            class="h-8 px-3.5 rounded-full text-[12px] border transition-colors border-white/10 bg-white/[.03] text-ink-100 hover:bg-white/[.06] aria-[pressed=true]:border-cyan/30 aria-[pressed=true]:bg-cyan/10 aria-[pressed=true]:text-cyan"
+            aria-pressed={e.id === escenario.id}
+          >{e.nombre}</button>
+        ))}
+      </div>
+      <p class="mt-3 text-[12.5px] text-ink-100" data-escenario-desc>{escenario.descripcion}</p>
+      <p class="mt-1 text-[11px] text-ink-300">
+        Los números de cada escenario son un orden de magnitud, no una medición. Se pueden editar celda por celda abajo.
+      </p>
+    </div>
+
+    <!-- Proveedores -->
+    <div class="mt-6 space-y-4">
+      {PROVEEDORES.map((p) => {
+        const r = porId.get(p.id)!
+        const rec = planRecomendado(p, escenario.uso[p.id] ?? {})
+        return (
+          <section class="rounded-2xl glass p-5" data-prov={p.id}>
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan shrink-0"></span>
+                  <h2 class="text-[15px] font-medium text-ink-50">{p.nombre}</h2>
+                </div>
+                <p class="mt-1 text-[11px] font-mono text-ink-300">
+                  precios verificados el {p.verificado} ·
+                  <a href={p.url} target="_blank" rel="noopener" class="text-cyan hover:underline"> ver tarifas</a>
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300" for={`plan-${p.id}`}>Plan</label>
+                <select
+                  id={`plan-${p.id}`}
+                  data-plan={p.id}
+                  class="h-8 px-2.5 rounded-lg bg-ink-900 border border-white/10 text-[12.5px] text-ink-50"
+                >
+                  {p.planes.map((pl) => (
+                    <option value={pl.id} selected={pl.id === r.planId}>
+                      {pl.nombre} · {fmtUSD(pl.baseUsd, 0)}/mes
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <p class="mt-3 text-[12px] text-ink-200" data-nota={p.id}>
+              {p.planes.find((pl) => pl.id === r.planId)?.nota ?? ''}
+            </p>
+
+            <div class="mt-4 overflow-x-auto">
+              <table class="w-full text-[12.5px] border-collapse min-w-[560px]">
+                <thead>
+                  <tr class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+                    <th class="text-left font-normal pb-2">Dimensión</th>
+                    <th class="text-right font-normal pb-2">Uso estimado</th>
+                    <th class="text-right font-normal pb-2">Incluido</th>
+                    <th class="text-left font-normal pb-2 pl-4 w-[26%]">Consumo</th>
+                    <th class="text-right font-normal pb-2">Excedente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {p.dimensiones.map((d) => {
+                    const l = r.lineas.find((x) => x.dimension === d.id)!
+                    return (
+                      <tr class="border-t border-white/5" data-linea={`${p.id}:${d.id}`}>
+                        <td class="py-2.5 text-ink-50">
+                          {d.etiqueta}
+                          <span class="block text-[10px] font-mono text-ink-300">{d.unidad}</span>
+                        </td>
+                        <td class="py-2.5 text-right">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={l.uso}
+                            data-uso={`${p.id}:${d.id}`}
+                            class="w-24 h-7 px-2 text-right rounded-lg bg-ink-900 border border-white/10 text-ink-50 tabular-nums"
+                          />
+                        </td>
+                        <td class="py-2.5 text-right font-mono text-ink-200 tabular-nums" data-cuota>
+                          {fmtNum(l.incluido, d.decimales ?? 0)}
+                        </td>
+                        <td class="py-2.5 pl-4">
+                          <div class="h-1.5 rounded-full bg-white/[.06] overflow-hidden">
+                            <div class="h-full rounded-full bg-cyan" data-barra style="width:0%"></div>
+                          </div>
+                          <span class="block mt-1 text-[10px] font-mono text-ink-300" data-pct></span>
+                        </td>
+                        <td class="py-2.5 text-right font-mono tabular-nums" data-costo></td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr class="border-t border-white/10">
+                    <td colspan="4" class="pt-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">
+                      Total {p.nombre}
+                    </td>
+                    <td class="pt-3 text-right font-medium text-ink-50 tabular-nums" data-total-prov={p.id}></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <p class="mt-3 text-[12px] text-ink-200" data-reco={p.id}>
+              Plan mínimo que aguanta este uso: <span class="text-cyan">{rec.planNombre}</span> ({fmtUSD(rec.totalUsd, 2)}/mes).
+            </p>
+          </section>
+        )
+      })}
+    </div>
+
+    <p class="mt-6 text-[11.5px] text-ink-300 leading-relaxed">
+      Cuotas y tarifas son un punto de partida cargado a mano, no una lectura de la cuenta real: los tres
+      proveedores cambian precios sin avisar, así que antes de decidir con esta página hay que contrastar
+      contra las tarifas enlazadas en cada tarjeta. Los excedentes de Vercel salen de
+      <code class="font-mono text-ink-200">computo/tarifas.ts</code>, las mismas que se le facturan al cliente.
+      Lo que ya se paga de verdad, factura por factura, está en <a href="/admin/costs" class="text-cyan hover:underline">Costos</a>.
+    </p>
+  </div>
+</AdminLayout>
+
+<script>
+  import {
+    PROVEEDORES, ESCENARIOS, SELECCION_INICIAL,
+    calcularStack, planDe, planRecomendado, escenarioPorId,
+    type UsoStack, type SeleccionPlanes,
+  } from '../../lib/infra-stack'
+  import { fmtUSD, fmtMoney } from '../../lib/money'
+
+  const raiz = document.getElementById('sim')
+  if (raiz) {
+    const copCrudo = Number(raiz.dataset.cop)
+    const copPorUsd = Number.isFinite(copCrudo) && copCrudo > 0 ? copCrudo : null
+    const seleccion: SeleccionPlanes = { ...SELECCION_INICIAL }
+
+    const num = (n: number, decimales: number) =>
+      new Intl.NumberFormat('es-CO', { maximumFractionDigits: decimales }).format(n)
+
+    /** El uso sale SIEMPRE de los inputs: son la única fuente de verdad de la
+     * vista, así que editar una celda y cambiar de escenario no pueden discrepar. */
+    function usoActual(): UsoStack {
+      const uso: UsoStack = {}
+      for (const p of PROVEEDORES) {
+        uso[p.id] = {}
+        for (const d of p.dimensiones) {
+          const input = raiz!.querySelector<HTMLInputElement>(`[data-uso="${p.id}:${d.id}"]`)
+          const v = Number(input?.value)
+          uso[p.id][d.id] = Number.isFinite(v) && v > 0 ? v : 0
+        }
+      }
+      return uso
+    }
+
+    function pintar() {
+      const uso = usoActual()
+      const resumen = calcularStack(seleccion, uso)
+
+      raiz!.querySelector('[data-total="mes"]')!.textContent = fmtUSD(resumen.totalMensualUsd, 2)
+      raiz!.querySelector('[data-total="anio"]')!.textContent = fmtUSD(resumen.totalAnualUsd, 0)
+      raiz!.querySelector('[data-total="base"]')!.textContent =
+        fmtUSD(resumen.proveedores.reduce((s, r) => s + r.baseUsd, 0), 2)
+      const cop = raiz!.querySelector('[data-total="mes-cop"]')!
+      cop.textContent = copPorUsd ? fmtMoney(resumen.totalMensualUsd * copPorUsd, 'COP', 0) : 'sin tasa COP'
+
+      const topes = raiz!.querySelector('[data-total="topes"]') as HTMLElement
+      topes.textContent = String(resumen.topesDuros)
+      topes.className = `text-2xl font-medium tracking-tight ${resumen.topesDuros > 0 ? 'text-ember' : 'text-lime'}`
+
+      for (const p of PROVEEDORES) {
+        const r = resumen.proveedores.find((x) => x.proveedorId === p.id)!
+        const plan = planDe(p, seleccion[p.id])
+        raiz!.querySelector(`[data-nota="${p.id}"]`)!.textContent = plan.nota ?? ''
+        raiz!.querySelector(`[data-total-prov="${p.id}"]`)!.textContent = fmtUSD(r.totalUsd, 2)
+
+        for (const l of r.lineas) {
+          const fila = raiz!.querySelector(`[data-linea="${p.id}:${l.dimension}"]`)!
+          fila.querySelector('[data-cuota]')!.textContent = num(l.incluido, l.decimales)
+
+          const barra = fila.querySelector('[data-barra]') as HTMLElement
+          const pct = fila.querySelector('[data-pct]') as HTMLElement
+          if (l.consumoPct == null) {
+            barra.style.width = '0%'
+            barra.className = 'h-full rounded-full bg-white/10'
+            pct.textContent = 'sin cuota'
+          } else {
+            barra.style.width = `${Math.min(100, l.consumoPct)}%`
+            // El rojo es para el tope duro (se corta) y el ámbar para el
+            // excedente (se cobra): son problemas distintos y se leen distinto.
+            barra.className = `h-full rounded-full ${
+              l.topeDuro ? 'bg-ember' : l.exceso > 0 ? 'bg-violet' : 'bg-cyan'
+            }`
+            pct.textContent = `${num(l.consumoPct, 0)}% de la cuota`
+          }
+
+          const costo = fila.querySelector('[data-costo]') as HTMLElement
+          if (l.topeDuro) {
+            costo.textContent = 'se corta'
+            costo.className = 'py-2.5 text-right font-mono tabular-nums text-ember'
+          } else if (l.exceso > 0) {
+            costo.textContent = fmtUSD(l.costoUsd, 2)
+            costo.className = 'py-2.5 text-right font-mono tabular-nums text-violet'
+          } else {
+            costo.textContent = '-'
+            costo.className = 'py-2.5 text-right font-mono tabular-nums text-ink-300'
+          }
+        }
+
+        const rec = planRecomendado(p, uso[p.id])
+        raiz!.querySelector(`[data-reco="${p.id}"]`)!.innerHTML =
+          `Plan mínimo que aguanta este uso: <span class="text-cyan">${rec.planNombre}</span> (${fmtUSD(rec.totalUsd, 2)}/mes).`
+      }
+    }
+
+    function cargarEscenario(id: string) {
+      const e = escenarioPorId(id)
+      for (const p of PROVEEDORES) {
+        for (const d of p.dimensiones) {
+          const input = raiz!.querySelector<HTMLInputElement>(`[data-uso="${p.id}:${d.id}"]`)
+          if (input) input.value = String(e.uso[p.id]?.[d.id] ?? 0)
+        }
+      }
+      raiz!.querySelector('[data-escenario-desc]')!.textContent = e.descripcion
+      for (const b of raiz!.querySelectorAll<HTMLButtonElement>('[data-escenario]')) {
+        b.setAttribute('aria-pressed', String(b.dataset.escenario === e.id))
+      }
+      pintar()
+    }
+
+    for (const b of raiz.querySelectorAll<HTMLButtonElement>('[data-escenario]')) {
+      b.addEventListener('click', () => cargarEscenario(b.dataset.escenario!))
+    }
+    for (const s of raiz.querySelectorAll<HTMLSelectElement>('[data-plan]')) {
+      s.addEventListener('change', () => {
+        seleccion[s.dataset.plan!] = s.value
+        pintar()
+      })
+    }
+    for (const i of raiz.querySelectorAll<HTMLInputElement>('[data-uso]')) {
+      i.addEventListener('input', pintar)
+    }
+
+    cargarEscenario(ESCENARIOS[0].id)
+  }
+</script>
