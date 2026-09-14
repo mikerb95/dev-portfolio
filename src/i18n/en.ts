@@ -1469,6 +1469,56 @@ const en = {
     ctaForm: 'Write through the form',
     waCtaMessage: 'Hi Mike, I would like to book the AI training assessment.',
   },
+  automatizaciones: {
+    title: 'Automation - CodeByMike',
+    description:
+      'What runs on its own at codebymike.net: continuous integration, scheduled tasks and the automations traffic itself triggers, each with its last real result.',
+    eyebrow: 'Engineering',
+    h1Line1: 'What runs',
+    h1Line2: 'on its own.',
+    intro:
+      '{workflows} continuous integration workflows, {crons} scheduled tasks and the automations traffic itself triggers. Below is the',
+    introEm: 'last real result',
+    introMid: 'of each one, read from GitHub and from my own run log.',
+    introTail: 'It is not a description of how it ought to work.',
+    ci: {
+      heading: 'Continuous integration',
+      githubDown: 'GitHub is not answering',
+      intro:
+        'Nothing reaches production without going through here. The post-deploy verification can roll back what was just published, on its own.',
+    },
+    crons: {
+      heading: 'Scheduled tasks',
+      logUnavailable: 'run log unavailable',
+      intro:
+        'The plan I am on allows one run a day per task, so anything that needs more frequency is fired by an external scheduler against the same endpoint, with the same secret. Every authorized run is written down: a cron that stops firing does not produce an error, it produces silence.',
+      colTask: 'Task',
+      colWhen: 'When',
+      colSource: 'Source',
+      colWhat: 'What it does',
+      colLast: 'Last run',
+      ifFails: 'If it fails: {texto}',
+      silent: '{ago} · silent',
+      expected: 'Expected {horario}',
+      noRecord: 'no record',
+    },
+    product: {
+      heading: 'Product automations',
+      intro: 'These are fired by traffic itself, not by a calendar or a push.',
+    },
+    triggers: {
+      push: 'on every push',
+      pull_request: 'on every pull request',
+      semanal: 'weekly',
+      manual: 'by hand',
+      vercel: 'Vercel cron',
+      externo: 'external cron',
+    },
+    agoJustNow: 'just now',
+    agoMinutes: '{n} min ago',
+    agoHours: '{n} h ago',
+    agoDaysShort: '{n} d ago',
+  },
 } satisfies typeof es
 
 export default en

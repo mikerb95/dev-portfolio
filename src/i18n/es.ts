@@ -1483,6 +1483,57 @@ const es = {
     ctaForm: 'Escribir por el formulario',
     waCtaMessage: 'Hola Mike, quiero agendar el diagnóstico de capacitación en IA.',
   },
+  automatizaciones: {
+    title: 'Automatizaciones - CodeByMike',
+    description:
+      'Lo que corre solo en codebymike.net: integración continua, tareas programadas y los automatismos que dispara el propio tráfico, con su último resultado real.',
+    eyebrow: 'Ingeniería',
+    h1Line1: 'Lo que corre',
+    h1Line2: 'solo.',
+    // Las cifras salen del catálogo, no se escriben aquí (RNF-14).
+    intro:
+      '{workflows} workflows de integración continua, {crons} tareas programadas y los automatismos que dispara el propio tráfico. Abajo está el',
+    introEm: 'último resultado real',
+    introMid: 'de cada uno, leído de GitHub y de mi propia bitácora.',
+    introTail: 'No es una descripción de cómo debería funcionar.',
+    ci: {
+      heading: 'Integración continua',
+      githubDown: 'GitHub no responde',
+      intro:
+        'Nada llega a producción sin pasar por aquí. La verificación posterior al despliegue puede revertir sola lo que acaba de publicarse.',
+    },
+    crons: {
+      heading: 'Tareas programadas',
+      logUnavailable: 'bitácora no disponible',
+      intro:
+        'El plan que uso permite una ejecución diaria por tarea, así que lo que necesita más frecuencia lo dispara un programador externo contra el mismo endpoint, con el mismo secreto. Cada ejecución autorizada queda anotada: un cron que deja de dispararse no produce un error, produce silencio.',
+      colTask: 'Tarea',
+      colWhen: 'Cuándo',
+      colSource: 'Origen',
+      colWhat: 'Qué hace',
+      colLast: 'Última',
+      ifFails: 'Si falla: {texto}',
+      silent: '{ago} · en silencio',
+      expected: 'Se espera {horario}',
+      noRecord: 'sin registro',
+    },
+    product: {
+      heading: 'Automatismos del producto',
+      intro: 'Estos no los dispara un calendario ni un push, sino el propio tráfico.',
+    },
+    triggers: {
+      push: 'en cada push',
+      pull_request: 'en cada pull request',
+      semanal: 'semanal',
+      manual: 'a mano',
+      vercel: 'cron de Vercel',
+      externo: 'cron externo',
+    },
+    agoJustNow: 'hace un momento',
+    agoMinutes: 'hace {n} min',
+    agoHours: 'hace {n} h',
+    agoDaysShort: 'hace {n} d',
+  },
 }
 
 export default es
