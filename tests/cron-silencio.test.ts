@@ -13,6 +13,7 @@ import {
   type CronVigilado,
 } from '../src/lib/cron-silencio'
 import { CRONS } from '../src/data/automatizaciones'
+import { tx } from '../src/i18n/bilingual'
 
 const AHORA = new Date('2026-09-07T12:00:00Z')
 const haceMin = (min: number) => new Date(AHORA.getTime() - min * 60_000)
@@ -222,7 +223,7 @@ describe('catálogo de crons', () => {
   it('declara cadaMin coherente con el horario publicado en cada entrada', () => {
     for (const c of CRONS) {
       expect(c.cadaMin, `${c.job} sin cadencia`).toBeGreaterThan(0)
-      const m = c.horario.match(/cada ~?(\d+) min/)
+      const m = tx(c.horario, 'es').match(/cada ~?(\d+) min/)
       if (m) expect(c.cadaMin, `${c.job}`).toBe(Number(m[1]))
       else expect(c.cadaMin, `${c.job} declarado con horario fijo`).toBe(1440)
     }

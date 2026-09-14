@@ -16,6 +16,12 @@ import { docsSitemapPaths } from '../data/docs-paginas'
 // es '/capacitacion/acceso' (utilitaria, con noindex) ni ningún recurso
 // marcado con código, que además lleva noindex por página.
 //
+// '/automatizaciones' y '/paginas-web' entran porque son contenido propio con
+// intención de búsqueda: la primera es el catálogo público de lo que corre solo
+// (documentación de ingeniería, no una utilidad) y la segunda es la landing
+// comercial, que sin sitemap solo se alcanza desde el menú. Las dos existen en
+// los dos idiomas, así que se emiten con su hreflang recíproco.
+//
 // '/docs' y sus subpáginas entran completas: son la documentación de ingeniería
 // del proyecto, contenido propio y estable, no una utilidad. Lo que NO entra
 // está declarado con su motivo en src/data/docs-paginas.ts (el deck privado y

@@ -78,3 +78,10 @@ test.describe('simulador de infra', () => {
   })
 })
 
+
+test('DEBUG clic aislado', async ({ page }) => {
+  await entrarALaDemo(page)
+  await page.goto('/admin/infra')
+  await page.click('[data-escenario="pico"]', { timeout: 8000 })
+  console.log('OK clic normal')
+})
