@@ -79,9 +79,16 @@ test.describe('simulador de infra', () => {
 })
 
 
-test('DEBUG clic aislado', async ({ page }) => {
+test('DEBUG rAF', async ({ page }) => {
   await entrarALaDemo(page)
   await page.goto('/admin/infra')
-  await page.click('[data-escenario="pico"]', { timeout: 8000 })
-  console.log('OK clic normal')
+  const frames = await page.evaluate(() => new Promise<number>((res) => {
+    let n = 0
+    const t = setTimeout(() => res(n), 1000)
+    const tick = () => { n++; if (n < 100) requestAnimationFrame(tick); else { clearTimeout(t); res(n) } }
+    requestAnimationFrame(tick)
+  }))
+  console.log('frames en 1s:', frames)
+  const enOtra = await page.evaluate(() => document.querySelectorAll('[data-escenario]').length)
+  console.log('botones:', enOtra)
 })
