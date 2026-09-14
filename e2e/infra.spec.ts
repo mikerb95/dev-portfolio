@@ -83,10 +83,13 @@ test.describe('simulador de infra', () => {
 
     await page.selectOption('[data-plan="turso"]', 'scaler')
 
-    // Con Scaler el mismo uso cabe en la cuota: el tope duro desaparece y el
-    // costo pasa a ser el cargo fijo del plan, no un corte de servicio.
-    await expect(page.locator('[data-linea="turso:filasLeidas"] [data-costo]')).not.toHaveText('se corta')
-    expect(monto(await page.locator('[data-total-prov="turso"]').textContent())).toBe(29)
+    // Con Scaler las lecturas del pico caben en la cuota y las escrituras no,
+    // que es exactamente la diferencia que la página existe para enseñar: el
+    // mismo uso deja de cortar el servicio y pasa a costar dinero.
+    await expect(page.locator('[data-linea="turso:filasLeidas"] [data-costo]')).toHaveText('-')
+    await expect(page.locator('[data-linea="turso:filasEscritas"] [data-costo]')).toHaveText(/\d/)
+    // 29 de cargo fijo + 20 M de escrituras sobre la cuota a 0,1 por millón.
+    expect(monto(await page.locator('[data-total-prov="turso"]').textContent())).toBe(31)
   })
 })
 
