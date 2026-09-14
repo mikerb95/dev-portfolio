@@ -405,6 +405,7 @@ El bloque de mayor retorno: es lo que ve un reclutador o cliente internacional.
 | `cv/descargar.astro` | 70 | Ver §8 (CV en inglés) |
 | `hola.astro` | 157 | Tarjeta de presentación / enlace corto |
 | `platziconf.astro` | 221 | Evento local en español. **Se traduce igual** (el usuario pidió no dejar nada fuera), pero es la candidata natural a recortar si hay que priorizar |
+| `automatizaciones.astro` | 309 | Nació después de este plan (1 sep 2026). Traducida el 14 sep: el chrome al diccionario y el **catálogo** (`src/data/automatizaciones.ts`) a campos `Bilingual` con `tx()`, como los módulos de `/docs`, porque cambia cada vez que nace una automatización. NO se traducen los campos que además son identificadores (nombre del workflow en Actions, nombre del job, archivo): son la clave del cruce contra la API de GitHub y contra `cron_runs` |
 
 ### 6.1 Componentes compartidos
 `ProjectCard`, `CertCard`, `GithubProjects`, `EngineeringFeed`,
