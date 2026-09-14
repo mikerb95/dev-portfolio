@@ -62,44 +62,75 @@ export const WORKFLOWS: readonly Workflow[] = [
     nombre: 'CI',
     archivo: 'ci.yml',
     disparadores: ['push', 'pull_request'],
-    hace: 'Pruebas con cobertura, build, end to end con Playwright y verificación del despliegue.',
-    detalle:
-      'La etapa final espera hasta 8 minutos a que el endpoint de salud devuelva el commit recién desplegado, hace tres comprobaciones y revierte sola si dos de las tres salen insanas. También reporta sus métricas al panel del sitio.',
+    hace: {
+      es: 'Pruebas con cobertura, build, end to end con Playwright y verificación del despliegue.',
+      en: 'Tests with coverage, build, end to end with Playwright and post-deploy verification.',
+    },
+    detalle: {
+      es: 'La etapa final espera hasta 8 minutos a que el endpoint de salud devuelva el commit recién desplegado, hace tres comprobaciones y revierte sola si dos de las tres salen insanas. También reporta sus métricas al panel del sitio.',
+      en: 'The final stage waits up to 8 minutes for the health endpoint to report the commit that was just deployed, runs three checks and rolls back on its own if two of the three come back unhealthy. It also reports its metrics to the site dashboard.',
+    },
   },
   {
     nombre: 'Security',
     archivo: 'security.yml',
     disparadores: ['push', 'pull_request', 'semanal'],
-    hace: 'Auditoría de dependencias y análisis estático con CodeQL.',
-    detalle: 'Además del push, corre sola los domingos, para que una vulnerabilidad publicada después del último commit no espere al siguiente.',
+    hace: {
+      es: 'Auditoría de dependencias y análisis estático con CodeQL.',
+      en: 'Dependency audit and static analysis with CodeQL.',
+    },
+    detalle: {
+      es: 'Además del push, corre sola los domingos, para que una vulnerabilidad publicada después del último commit no espere al siguiente.',
+      en: 'Beyond the push, it also runs by itself on Sundays, so a vulnerability published after the last commit does not have to wait for the next one.',
+    },
   },
   {
     nombre: 'Accessibility',
     archivo: 'a11y.yml',
     disparadores: ['push', 'pull_request'],
-    hace: 'Auditoría de accesibilidad con axe sobre las páginas públicas.',
+    hace: {
+      es: 'Auditoría de accesibilidad con axe sobre las páginas públicas.',
+      en: 'Accessibility audit with axe over the public pages.',
+    },
   },
   {
     nombre: 'DAST',
     archivo: 'dast.yml',
     disparadores: ['pull_request'],
-    hace: 'Análisis dinámico con ZAP contra el despliegue de vista previa de la rama.',
-    detalle: 'Solo en pull request: necesita un sitio desplegado al que atacar, y ese es el preview que Vercel publica por rama.',
+    hace: {
+      es: 'Análisis dinámico con ZAP contra el despliegue de vista previa de la rama.',
+      en: 'Dynamic analysis with ZAP against the branch preview deployment.',
+    },
+    detalle: {
+      es: 'Solo en pull request: necesita un sitio desplegado al que atacar, y ese es el preview que Vercel publica por rama.',
+      en: 'Pull requests only: it needs a deployed site to attack, and that is the preview Vercel publishes per branch.',
+    },
   },
   {
     nombre: 'Mutation testing',
     archivo: 'mutation.yml',
     disparadores: ['semanal', 'manual'],
-    hace: 'Introduce fallos a propósito en el código y comprueba si alguna prueba se entera.',
-    detalle:
-      'La cobertura dice que una línea se ejecutó; esto dice si romperla se detecta. Corre los domingos porque es caro.',
+    hace: {
+      es: 'Introduce fallos a propósito en el código y comprueba si alguna prueba se entera.',
+      en: 'Injects faults into the code on purpose and checks whether any test notices.',
+    },
+    detalle: {
+      es: 'La cobertura dice que una línea se ejecutó; esto dice si romperla se detecta. Corre los domingos porque es caro.',
+      en: 'Coverage says a line ran; this says whether breaking it gets caught. It runs on Sundays because it is expensive.',
+    },
   },
   {
     nombre: 'Distribuir nota',
     archivo: 'distribute-note.yml',
     disparadores: ['push', 'manual'],
-    hace: 'Al publicar un artículo, lo anuncia y avisa a los buscadores.',
-    detalle: 'Solo se dispara si el push toca `src/content/notes/`.',
+    hace: {
+      es: 'Al publicar un artículo, lo anuncia y avisa a los buscadores.',
+      en: 'When an article ships, it announces it and pings the search engines.',
+    },
+    detalle: {
+      es: 'Solo se dispara si el push toca `src/content/notes/`.',
+      en: 'It only fires when the push touches `src/content/notes/`.',
+    },
   },
 ]
 
@@ -114,88 +145,145 @@ export const CRONS: readonly Cron[] = [
     horario: '03:00',
     cadaMin: 1440,
     origen: 'vercel',
-    hace: 'Copia de seguridad diaria de la base.',
-    siFalla: 'Se envejece la última copia disponible para restaurar.',
+    hace: { es: 'Copia de seguridad diaria de la base.', en: 'Daily backup of the database.' },
+    siFalla: {
+      es: 'Se envejece la última copia disponible para restaurar.',
+      en: 'The newest copy available to restore from keeps getting older.',
+    },
   },
   {
     job: 'portal-demo-reseed',
     horario: '04:00',
     cadaMin: 1440,
     origen: 'vercel',
-    hace: 'Repuebla la base de la demo pública con datos ficticios.',
-    siFalla: 'La demo va acumulando lo que hayan dejado los visitantes.',
+    hace: {
+      es: 'Repuebla la base de la demo pública con datos ficticios.',
+      en: 'Reseeds the public demo database with fictional data.',
+    },
+    siFalla: {
+      es: 'La demo va acumulando lo que hayan dejado los visitantes.',
+      en: 'The demo piles up whatever visitors left behind.',
+    },
   },
   {
     job: 'monitor-rollup',
     horario: '05:00',
     cadaMin: 1440,
     origen: 'vercel',
-    hace: 'Resume los sondeos del día en una fila por monitor.',
-    siFalla: 'El historial de disponibilidad deja de consolidarse y consultarlo se vuelve caro.',
+    hace: {
+      es: 'Resume los sondeos del día en una fila por monitor.',
+      en: "Rolls up the day's probes into one row per monitor.",
+    },
+    siFalla: {
+      es: 'El historial de disponibilidad deja de consolidarse y consultarlo se vuelve caro.',
+      en: 'The uptime history stops being consolidated and reading it turns expensive.',
+    },
   },
   {
     job: 'computo-rollup',
     horario: '06:00',
     cadaMin: 1440,
     origen: 'vercel',
-    hace: 'Consolida el consumo de cómputo medido en cada proyecto de cliente y recalcula lo que se le factura.',
-    siFalla: 'El consumo se sigue midiendo, pero el periodo en curso deja de reflejarlo hasta la siguiente pasada.',
+    hace: {
+      es: 'Consolida el consumo de cómputo medido en cada proyecto de cliente y recalcula lo que se le factura.',
+      en: 'Consolidates the compute usage measured on each client project and recalculates what gets billed for it.',
+    },
+    siFalla: {
+      es: 'El consumo se sigue midiendo, pero el periodo en curso deja de reflejarlo hasta la siguiente pasada.',
+      en: 'Usage is still measured, but the current period stops reflecting it until the next pass.',
+    },
   },
   {
     job: 'uptime-check',
     horario: '07:00',
     cadaMin: 1440,
     origen: 'vercel',
-    hace: 'Sondeo de disponibilidad, refresco de certificados, gestión de incidentes y purga de historial.',
-    siFalla: 'Una caída deja de abrir incidente y nadie se entera.',
+    hace: {
+      es: 'Sondeo de disponibilidad, refresco de certificados, gestión de incidentes y purga de historial.',
+      en: 'Uptime probe, certificate refresh, incident handling and history purge.',
+    },
+    siFalla: {
+      es: 'Una caída deja de abrir incidente y nadie se entera.',
+      en: 'An outage stops opening an incident and nobody finds out.',
+    },
   },
   {
     job: 'domain-check',
     horario: '08:00',
     cadaMin: 1440,
     origen: 'vercel',
-    hace: 'Vigila el vencimiento de los dominios y avisa, sin repetir el aviso.',
-    siFalla: 'Un dominio puede vencer sin previo aviso.',
+    hace: {
+      es: 'Vigila el vencimiento de los dominios y avisa, sin repetir el aviso.',
+      en: 'Watches domain expiry and warns once, without repeating itself.',
+    },
+    siFalla: {
+      es: 'Un dominio puede vencer sin previo aviso.',
+      en: 'A domain can expire with no warning at all.',
+    },
   },
   {
     job: 'indexnow',
     horario: '08:30',
     cadaMin: 1440,
     origen: 'vercel',
-    hace: 'Reenvía el sitemap a los buscadores que admiten IndexNow.',
-    siFalla: 'El contenido nuevo tarda más en indexarse.',
+    hace: {
+      es: 'Reenvía el sitemap a los buscadores que admiten IndexNow.',
+      en: 'Resubmits the sitemap to the search engines that support IndexNow.',
+    },
+    siFalla: {
+      es: 'El contenido nuevo tarda más en indexarse.',
+      en: 'New content takes longer to get indexed.',
+    },
   },
   {
     job: 'invoices-overdue',
     horario: '09:00',
     cadaMin: 1440,
     origen: 'vercel',
-    hace: 'Marca facturas vencidas y notifica.',
-    siFalla: 'Una factura vencida se queda figurando al día.',
+    hace: { es: 'Marca facturas vencidas y notifica.', en: 'Flags overdue invoices and notifies.' },
+    siFalla: {
+      es: 'Una factura vencida se queda figurando al día.',
+      en: 'An overdue invoice keeps showing up as current.',
+    },
   },
   {
     job: 'uptime-check',
-    horario: 'cada ~5 min',
+    horario: { es: 'cada ~5 min', en: 'every ~5 min' },
     cadaMin: 5,
     origen: 'cron-job.org',
-    hace: 'El mismo sondeo, a la frecuencia que la monitorización necesita de verdad.',
-    siFalla: 'La resolución del monitoreo cae a una medición al día.',
+    hace: {
+      es: 'El mismo sondeo, a la frecuencia que la monitorización necesita de verdad.',
+      en: 'The same probe, at the frequency monitoring actually needs.',
+    },
+    siFalla: {
+      es: 'La resolución del monitoreo cae a una medición al día.',
+      en: 'Monitoring resolution drops to one measurement a day.',
+    },
   },
   {
     job: 'security-rollup',
-    horario: 'cada ~15 min',
+    horario: { es: 'cada ~15 min', en: 'every ~15 min' },
     cadaMin: 15,
     origen: 'cron-job.org',
-    hace: 'Agrega la última hora de eventos, contrasta contra la línea base y aplica el bloqueo automático.',
-    siFalla: 'La detección de anomalías se queda sin agregados con los que comparar.',
+    hace: {
+      es: 'Agrega la última hora de eventos, contrasta contra la línea base y aplica el bloqueo automático.',
+      en: 'Aggregates the last hour of events, compares it against the baseline and applies automatic blocking.',
+    },
+    siFalla: {
+      es: 'La detección de anomalías se queda sin agregados con los que comparar.',
+      en: 'Anomaly detection is left without aggregates to compare against.',
+    },
   },
   {
     job: 'sena-recordatorio',
     horario: '12:00',
     cadaMin: 1440,
     origen: 'cron-job.org',
-    hace: 'Recordatorio de la calculadora de etapa productiva.',
-    siFalla: 'Se pierde el recordatorio del día.',
+    hace: {
+      es: 'Recordatorio de la calculadora de etapa productiva.',
+      en: 'Reminder from the apprenticeship-stage calculator.',
+    },
+    siFalla: { es: 'Se pierde el recordatorio del día.', en: "The day's reminder is lost." },
   },
 ]
 
@@ -205,33 +293,60 @@ export const CRONS: readonly Cron[] = [
  */
 export const AUTOMATISMOS: readonly Automatismo[] = [
   {
-    nombre: 'Apertura y cierre de incidentes',
-    hace: 'Un sondeo fallido abre incidente; el primero que vuelve a salir bien lo cierra.',
-    cuando: 'En cada sondeo',
+    nombre: { es: 'Apertura y cierre de incidentes', en: 'Opening and closing incidents' },
+    hace: {
+      es: 'Un sondeo fallido abre incidente; el primero que vuelve a salir bien lo cierra.',
+      en: 'A failed probe opens an incident; the first one that comes back healthy closes it.',
+    },
+    cuando: { es: 'En cada sondeo', en: 'On every probe' },
   },
   {
-    nombre: 'Bloqueo automático de abuso',
-    hace: 'Una intención inequívocamente maliciosa bloquea el origen, con salvaguardas para no bloquear a la propia infraestructura ni al administrador, y un tope por encima del cual avisa en vez de bloquear.',
-    cuando: 'En línea con el request, y al agregar cada hora',
+    nombre: { es: 'Bloqueo automático de abuso', en: 'Automatic abuse blocking' },
+    hace: {
+      es: 'Una intención inequívocamente maliciosa bloquea el origen, con salvaguardas para no bloquear a la propia infraestructura ni al administrador, y un tope por encima del cual avisa en vez de bloquear.',
+      en: 'Unmistakably malicious intent blocks the source, with safeguards against blocking the infrastructure itself or the administrator, and a ceiling above which it warns instead of blocking.',
+    },
+    cuando: {
+      es: 'En línea con el request, y al agregar cada hora',
+      en: 'Inline with the request, and on every hourly aggregation',
+    },
   },
   {
-    nombre: 'Detección de anomalías',
-    hace: 'Compara la hora cerrada contra la línea base histórica y señala lo que se sale de rango.',
-    cuando: 'Al cerrar cada hora',
+    nombre: { es: 'Detección de anomalías', en: 'Anomaly detection' },
+    hace: {
+      es: 'Compara la hora cerrada contra la línea base histórica y señala lo que se sale de rango.',
+      en: 'Compares the closed hour against the historical baseline and flags whatever falls out of range.',
+    },
+    cuando: { es: 'Al cerrar cada hora', en: 'As each hour closes' },
   },
   {
-    nombre: 'Modo respaldo del portal',
-    hace: 'Si la base no responde, el portal sirve un snapshot versionado y lo anuncia; se apaga solo cuando la base vuelve.',
-    cuando: 'Al detectar la base caída',
+    nombre: { es: 'Modo respaldo del portal', en: 'Portal fallback mode' },
+    hace: {
+      es: 'Si la base no responde, el portal sirve un snapshot versionado y lo anuncia; se apaga solo cuando la base vuelve.',
+      en: 'If the database stops answering, the portal serves a versioned snapshot and says so; it turns itself off when the database returns.',
+    },
+    cuando: {
+      es: 'Al detectar la base caída',
+      en: 'When the database is detected as down',
+    },
   },
   {
-    nombre: 'Reversión post-despliegue',
-    hace: 'Si el sitio recién publicado no responde sano, el pipeline revierte a la versión anterior y avisa.',
-    cuando: 'Después de cada despliegue a producción',
+    nombre: { es: 'Reversión post-despliegue', en: 'Post-deploy rollback' },
+    hace: {
+      es: 'Si el sitio recién publicado no responde sano, el pipeline revierte a la versión anterior y avisa.',
+      en: 'If the freshly published site does not answer healthy, the pipeline reverts to the previous version and warns.',
+    },
+    cuando: {
+      es: 'Después de cada despliegue a producción',
+      en: 'After every production deployment',
+    },
   },
   {
-    nombre: 'Purga de retención',
-    hace: 'El historial viejo se borra por capas para que la base no crezca sin límite.',
-    cuando: 'Dentro de los crons de resumen',
+    nombre: { es: 'Purga de retención', en: 'Retention purge' },
+    hace: {
+      es: 'El historial viejo se borra por capas para que la base no crezca sin límite.',
+      en: 'Old history is deleted in layers so the database does not grow without bound.',
+    },
+    cuando: { es: 'Dentro de los crons de resumen', en: 'Inside the rollup crons' },
   },
 ]
