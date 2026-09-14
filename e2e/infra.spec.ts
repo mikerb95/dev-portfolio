@@ -79,16 +79,22 @@ test.describe('simulador de infra', () => {
 })
 
 
-test('DEBUG rAF', async ({ page }) => {
+const rafProbe = () => new Promise<number>((res) => {
+  let n = 0
+  setTimeout(() => res(n), 1000)
+  const tick = () => { n++; requestAnimationFrame(tick) }
+  requestAnimationFrame(tick)
+})
+
+test('DEBUG rAF comparado', async ({ page }) => {
+  await page.goto('/')
+  console.log('publica /        ->', await page.evaluate(rafProbe))
+  await page.goto('/demo')
+  console.log('/demo            ->', await page.evaluate(rafProbe))
   await entrarALaDemo(page)
+  console.log('/admin           ->', await page.evaluate(rafProbe))
+  await page.goto('/admin/costs')
+  console.log('/admin/costs     ->', await page.evaluate(rafProbe))
   await page.goto('/admin/infra')
-  const frames = await page.evaluate(() => new Promise<number>((res) => {
-    let n = 0
-    const t = setTimeout(() => res(n), 1000)
-    const tick = () => { n++; if (n < 100) requestAnimationFrame(tick); else { clearTimeout(t); res(n) } }
-    requestAnimationFrame(tick)
-  }))
-  console.log('frames en 1s:', frames)
-  const enOtra = await page.evaluate(() => document.querySelectorAll('[data-escenario]').length)
-  console.log('botones:', enOtra)
+  console.log('/admin/infra     ->', await page.evaluate(rafProbe))
 })
