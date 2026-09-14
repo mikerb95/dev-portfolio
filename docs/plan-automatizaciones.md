@@ -111,12 +111,35 @@ seguridad si el externo cae.
 
 ## 6. Pendiente
 
-- [ ] `/automatizaciones` en `STATIC_PATHS` de `src/pages/sitemap.xml.ts`. Es
-      contenido propio y estable, no una utilidad: cumple el criterio de
-      inclusión, solo falta darla de alta.
-- [ ] Cascarón `src/pages/en/automatizaciones.astro` y alta en
-      `TRANSLATED_ROUTES`. El texto ya sale del diccionario, pero mientras la
-      ruta no esté declarada no debe anunciarse en inglés (publicaría un 404).
+- [x] `/automatizaciones` en `STATIC_PATHS` de `src/pages/sitemap.xml.ts`
+      (14 sep 2026). De paso entró `/paginas-web`, que existía en los dos
+      idiomas desde hacía semanas y tampoco estaba anunciada. `/log` sigue
+      fuera **a propósito**, y el motivo quedó escrito en el propio archivo.
+- [x] Cascarón `src/pages/en/automatizaciones.astro` y alta en
+      `TRANSLATED_ROUTES` (14 sep 2026). **El plan se equivocaba al decir que
+      "el texto ya sale del diccionario"**: la página tenía todo el texto
+      incrustado y el catálogo estaba solo en español, así que declarar la ruta
+      sin más habría publicado una página inglesa escrita en español. La
+      traducción fueron dos frentes:
+
+      - El **chrome** de la página (título, entradilla, encabezados, cabeceras
+        de tabla, etiquetas de disparador y los relativos "hace N min") pasó al
+        diccionario, bloque `automatizaciones` de `src/i18n/{es,en}.ts`.
+      - El **catálogo** (`src/data/automatizaciones.ts`) pasó a campos
+        `Bilingual` con `tx()`, el mismo mecanismo de los módulos de `/docs`, y
+        no a un archivo gemelo en inglés: aquí nace una entrada cada vez que
+        nace una automatización, y dos archivos se separarían en semanas.
+        Siguen SIN traducir los campos que además son identificadores -el
+        nombre del workflow tal como aparece en Actions, el nombre del job y el
+        del archivo-, porque son la clave con la que se cruza contra la API de
+        GitHub y contra `cron_runs`; traducirlos rompería el cruce en silencio.
+
+      Dos cosas que salieron al hacerlo: la entradilla escribía "seis" y "diez"
+      a mano, contra RNF-14, y ahora se cuentan del catálogo (los crons por job
+      distinto, porque `uptime-check` figura dos veces por tener dos
+      disparadores); y `tests/cron-silencio.test.ts`, que cruza el horario
+      publicado contra `cadaMin`, ahora lee el horario con `tx(..., 'es')` en
+      vez de tratarlo como string suelto.
 - [x] Aviso cuando un cron **falta**. Entregado el 7 sep 2026, tal como estaba
       previsto aquí: mismo umbral derivado del horario de cada job, mismo `ntfy`,
       misma tabla. Lo empujó el incidente descrito en la sección 7.
