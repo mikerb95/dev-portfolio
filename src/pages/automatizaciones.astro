@@ -20,6 +20,7 @@ import { mapRunEstado } from '../lib/lab/pipeline-live'
 import { safeQuery } from '../lib/safe-query'
 import { serverEnv } from '../lib/env'
 import { WORKFLOWS, CRONS, AUTOMATISMOS } from '../data/automatizaciones'
+import type { Bilingual, BilingualOptional } from '../i18n/bilingual'
 import { toleranciaMin } from '../lib/cron-silencio'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
@@ -27,7 +28,13 @@ const t = getDictionary(locale)
 const a = t.automatizaciones
 const L = (path: string) => localizedHref(path, locale)
 // Traduce un campo del catálogo al idioma de la página, cayendo al español.
-const T = (value: Parameters<typeof tx>[0]) => tx(value, locale)
+// Con sobrecargas para conservar la distinción de `tx`: un campo obligatorio
+// siempre devuelve texto, y solo uno opcional puede venir vacío.
+function T(value: Bilingual): string
+function T(value: BilingualOptional): string | undefined
+function T(value: BilingualOptional): string | undefined {
+  return tx(value, locale)
+}
 
 // Las dos cifras de la entradilla se cuentan, no se escriben (RNF-14). Los
 // crons se cuentan por job distinto y no por fila: `uptime-check` aparece dos
