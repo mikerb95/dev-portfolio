@@ -4,25 +4,34 @@
 // Lo que NO va aquí, por el mismo criterio OPSEC de /status y /security: rutas
 // señuelo, nombres exactos de reglas de detección y umbrales de bloqueo. Se
 // describe QUÉ hace cada automatismo, nunca cómo esquivarlo.
+//
+// Los textos son `Bilingual` (`tx()` los resuelve), como en los módulos de
+// /docs: el catálogo cambia cada vez que nace una automatización, y un archivo
+// gemelo en inglés se desincronizaría en semanas. Lo que NO se traduce es lo
+// que también es un identificador - el nombre del workflow en la pestaña
+// Actions, el nombre del job y el del archivo - porque son la clave con la que
+// se cruza contra GitHub y contra la bitácora, no prosa.
+
+import type { Bilingual, BilingualOptional } from '../i18n/bilingual'
 
 export type Disparador = 'push' | 'pull_request' | 'semanal' | 'manual' | 'vercel' | 'externo'
 
 export type Workflow = {
-  /** Nombre tal como aparece en la pestaña Actions. */
+  /** Nombre tal como aparece en la pestaña Actions. Es la clave del cruce. */
   nombre: string
   archivo: string
   disparadores: Disparador[]
   /** Qué hace, en una frase. */
-  hace: string
+  hace: Bilingual
   /** Lo que no es obvio leyendo el nombre. */
-  detalle?: string
+  detalle?: BilingualOptional
 }
 
 export type Cron = {
   /** Último segmento de `/api/cron/*`, y la clave con la que se registra. */
   job: string
   /** Horario declarado, en UTC. */
-  horario: string
+  horario: Bilingual
   /**
    * El mismo horario en minutos entre ejecuciones. Lo lee el detector de
    * silencio (`src/lib/cron-silencio.ts`) para saber a partir de cuándo la
@@ -33,15 +42,15 @@ export type Cron = {
   cadaMin: number
   /** Quién lo dispara de verdad. */
   origen: 'vercel' | 'cron-job.org'
-  hace: string
+  hace: Bilingual
   /** Qué se pierde si deja de correr. Es la columna que justifica la bitácora. */
-  siFalla: string
+  siFalla: Bilingual
 }
 
 export type Automatismo = {
-  nombre: string
-  hace: string
-  cuando: string
+  nombre: Bilingual
+  hace: Bilingual
+  cuando: Bilingual
 }
 
 /**

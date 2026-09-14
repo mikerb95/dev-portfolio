@@ -77,3 +77,14 @@ test.describe('simulador de infra', () => {
     expect(monto(await page.locator('[data-total-prov="turso"]').textContent())).toBe(29)
   })
 })
+
+test('DEBUG caja del botón', async ({ page }) => {
+  await entrarALaDemo(page)
+  await page.goto('/admin/infra')
+  const b = page.locator('[data-escenario="pico"]')
+  for (let i = 0; i < 6; i++) {
+    console.log(i, JSON.stringify(await b.boundingBox()))
+    await page.waitForTimeout(120)
+  }
+  console.log('visible', await b.isVisible(), 'enabled', await b.isEnabled())
+})
