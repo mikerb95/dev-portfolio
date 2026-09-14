@@ -9,6 +9,18 @@ import { entrarALaDemo, expect, recogerErrores, test } from './fixtures'
 // Se entra por la demo y no con sesión real: la página no lee datos de cliente
 // (solo la tasa de cambio de app_settings), así que el pase basta y de paso
 // queda comprobado que no está vetada.
+//
+// Los clics van con `force: true` y NO es para tapar un problema de la página:
+// bajo Chromium headless el panel no produce frames de animación (medido:
+// requestAnimationFrame no dispara ni una vez por segundo en /admin, /admin/costs
+// ni aquí, mientras las páginas públicas dan 2-4), y el chequeo de estabilidad
+// de Playwright compara la caja del elemento entre dos frames consecutivos, así
+// que nunca termina y el clic expira a los 30 s con el botón visible y quieto.
+// `force` salta ese chequeo pero sigue disparando un clic de ratón real en el
+// centro del elemento: si algo lo tapara, el evento se lo llevaría el de encima
+// y el test fallaría igual. Es el primer spec que pulsa algo DENTRO del panel;
+// los demás solo comprueban redirecciones y leen contenido, por eso no había
+// salido antes.
 
 /** Lee un importe del panel: es-CO usa coma decimal y punto de millar. */
 function monto(texto: string | null): number {
@@ -42,7 +54,7 @@ test.describe('simulador de infra', () => {
     await page.goto('/admin/infra')
     const arranque = monto(await page.locator('[data-total="mes"]').textContent())
 
-    await page.click('[data-escenario="pico"]')
+    await page.locator('[data-escenario="pico"]').click({ force: true })
 
     // El mes malo sale más caro Y rompe cuotas: las dos cosas a la vez, porque
     // el número que sube sin avisar de los topes duros es el que engaña.
@@ -66,7 +78,7 @@ test.describe('simulador de infra', () => {
   test('subir de plan cambia la cuota y apaga el tope duro', async ({ page }) => {
     await entrarALaDemo(page)
     await page.goto('/admin/infra')
-    await page.click('[data-escenario="pico"]')
+    await page.locator('[data-escenario="pico"]').click({ force: true })
     await expect(page.locator('[data-linea="turso:filasLeidas"] [data-costo]')).toHaveText('se corta')
 
     await page.selectOption('[data-plan="turso"]', 'scaler')
@@ -79,22 +91,3 @@ test.describe('simulador de infra', () => {
 })
 
 
-const rafProbe = () => new Promise<number>((res) => {
-  let n = 0
-  setTimeout(() => res(n), 1000)
-  const tick = () => { n++; requestAnimationFrame(tick) }
-  requestAnimationFrame(tick)
-})
-
-test('DEBUG rAF comparado', async ({ page }) => {
-  await page.goto('/')
-  console.log('publica /        ->', await page.evaluate(rafProbe))
-  await page.goto('/demo')
-  console.log('/demo            ->', await page.evaluate(rafProbe))
-  await entrarALaDemo(page)
-  console.log('/admin           ->', await page.evaluate(rafProbe))
-  await page.goto('/admin/costs')
-  console.log('/admin/costs     ->', await page.evaluate(rafProbe))
-  await page.goto('/admin/infra')
-  console.log('/admin/infra     ->', await page.evaluate(rafProbe))
-})
