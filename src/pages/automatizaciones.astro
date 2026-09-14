@@ -12,7 +12,7 @@
 // pudo leer. Una página de observabilidad que devuelve 500 cuando lo observado
 // falla no sirve para nada, que es justo cuando más se mira.
 import BaseLayout from '../layouts/BaseLayout.astro'
-import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref, tx } from '../i18n'
 import { db } from '../db'
 import { cronRuns } from '../db/schema'
 import { desc } from 'drizzle-orm'
@@ -24,7 +24,16 @@ import { toleranciaMin } from '../lib/cron-silencio'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
+const a = t.automatizaciones
 const L = (path: string) => localizedHref(path, locale)
+// Traduce un campo del catálogo al idioma de la página, cayendo al español.
+const T = (value: Parameters<typeof tx>[0]) => tx(value, locale)
+
+// Las dos cifras de la entradilla se cuentan, no se escriben (RNF-14). Los
+// crons se cuentan por job distinto y no por fila: `uptime-check` aparece dos
+// veces porque tiene dos disparadores, pero es una sola tarea.
+const totalWorkflows = WORKFLOWS.length
+const totalCrons = new Set(CRONS.map((c) => c.job)).size
 
 const REPO = 'mikerb95/dev-portfolio'
 
@@ -105,11 +114,11 @@ for (const f of filas) {
 function haceCuanto(d: Date | null | undefined): string | null {
   if (!d) return null
   const min = Math.floor((Date.now() - d.getTime()) / 60000)
-  if (min < 1) return 'hace un momento'
-  if (min < 60) return `hace ${min} min`
+  if (min < 1) return a.agoJustNow
+  if (min < 60) return interpolate(a.agoMinutes, { n: min })
   const h = Math.floor(min / 60)
-  if (h < 24) return `hace ${h} h`
-  return `hace ${Math.floor(h / 24)} d`
+  if (h < 24) return interpolate(a.agoHours, { n: h })
+  return interpolate(a.agoDaysShort, { n: Math.floor(h / 24) })
 }
 
 // La página y la alerta usan la MISMA definición de silencio (`toleranciaMin`):
@@ -133,23 +142,11 @@ const ESTADO_CLS: Record<string, string> = {
   skip: 'text-ink-300 border-white/10 bg-white/5',
 }
 
-const ETIQUETA_DISPARADOR: Record<string, string> = {
-  push: 'en cada push',
-  pull_request: 'en cada pull request',
-  semanal: 'semanal',
-  manual: 'a mano',
-  vercel: 'cron de Vercel',
-  externo: 'cron externo',
-}
-
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
 ---
 
 
-<BaseLayout
-  title="Automatizaciones"
-  description="Lo que corre solo en codebymike.net: integración continua, tareas programadas y los automatismos que dispara el propio tráfico, con su último resultado real."
->
+<BaseLayout title={a.title} description={a.description}>
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
     <a
       href={L('/')}
@@ -163,28 +160,26 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/automatizaciones</span>
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>Ingeniería</span>
+        <span>{a.eyebrow}</span>
       </div>
       <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        Lo que corre<br />solo.
+        {a.h1Line1}<br />{a.h1Line2}
       </h1>
       <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
-        Seis workflows de integración continua, diez tareas programadas y los automatismos que
-        dispara el propio tráfico. Abajo está el <em>último resultado real</em> de cada uno,
-        leído de GitHub y de mi propia bitácora.
-        <span class="text-ink-300"> No es una descripción de cómo debería funcionar.</span>
+        {interpolate(a.intro, { workflows: totalWorkflows, crons: totalCrons })}
+        <em>{a.introEm}</em> {a.introMid}
+        <span class="text-ink-300"> {a.introTail}</span>
       </p>
     </header>
 
     <!-- ── Integración continua ── -->
     <section class="mb-14">
       <div class="flex items-baseline justify-between gap-4 mb-5">
-        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">Integración continua</h2>
-        {!githubOk && <span class="text-[11px] font-mono text-ember">GitHub no responde</span>}
+        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">{a.ci.heading}</h2>
+        {!githubOk && <span class="text-[11px] font-mono text-ember">{a.ci.githubDown}</span>}
       </div>
       <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
-        Nada llega a producción sin pasar por aquí. La verificación posterior al despliegue puede
-        revertir sola lo que acaba de publicarse.
+        {a.ci.intro}
       </p>
 
       <div class="grid md:grid-cols-2 gap-3">
@@ -204,10 +199,10 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
                     </span>
                   )}
                 </div>
-                <p class="text-[13px] text-ink-100 leading-relaxed mb-2">{w.hace}</p>
-                {w.detalle && <p class="text-[12px] text-ink-300 leading-relaxed mb-3">{w.detalle}</p>}
+                <p class="text-[13px] text-ink-100 leading-relaxed mb-2">{T(w.hace)}</p>
+                {w.detalle && <p class="text-[12px] text-ink-300 leading-relaxed mb-3">{T(w.detalle)}</p>}
                 <div class="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[.12em] text-ink-400 pt-3 border-t border-white/[.06]">
-                  <span>{w.disparadores.map((d) => ETIQUETA_DISPARADOR[d] ?? d).join(' · ')}</span>
+                  <span>{w.disparadores.map((d) => a.triggers[d]).join(' · ')}</span>
                   {run?.created_at && <span class="text-ink-300">{haceCuanto(new Date(run.created_at))}</span>}
                   <span class="ml-auto normal-case tracking-normal">{w.archivo}</span>
                 </div>
@@ -221,25 +216,22 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
     <!-- ── Tareas programadas ── -->
     <section class="mb-14">
       <div class="flex items-baseline justify-between gap-4 mb-5">
-        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">Tareas programadas</h2>
-        {!bitacoraOk && <span class="text-[11px] font-mono text-ink-400">bitácora no disponible</span>}
+        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">{a.crons.heading}</h2>
+        {!bitacoraOk && <span class="text-[11px] font-mono text-ink-400">{a.crons.logUnavailable}</span>}
       </div>
       <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
-        El plan que uso permite una ejecución diaria por tarea, así que lo que necesita más
-        frecuencia lo dispara un programador externo contra el mismo endpoint, con el mismo secreto.
-        Cada ejecución autorizada queda anotada: un cron que deja de dispararse no produce un error,
-        produce silencio.
+        {a.crons.intro}
       </p>
 
       <div class="rounded-2xl glass overflow-x-auto">
         <table class="w-full min-w-[46rem] text-left">
           <thead>
             <tr class="border-b border-white/[.06]">
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-5 py-3">Tarea</th>
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">Cuándo</th>
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">Origen</th>
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">Qué hace</th>
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-5 py-3">Última</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-5 py-3">{a.crons.colTask}</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">{a.crons.colWhen}</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">{a.crons.colSource}</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">{a.crons.colWhat}</th>
+              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-5 py-3">{a.crons.colLast}</th>
             </tr>
           </thead>
           <tbody>
@@ -249,7 +241,7 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
                 return (
                   <tr class="border-b border-white/[.04] last:border-0">
                     <td class="px-5 py-4 align-top font-mono text-[12px] text-ink-50 whitespace-nowrap">{c.job}</td>
-                    <td class="px-3 py-4 align-top font-mono text-[12px] text-ink-200 whitespace-nowrap tabular-nums">{c.horario}</td>
+                    <td class="px-3 py-4 align-top font-mono text-[12px] text-ink-200 whitespace-nowrap tabular-nums">{T(c.horario)}</td>
                     <td class="px-3 py-4 align-top">
                       <span
                         class={`px-1.5 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border whitespace-nowrap ${
@@ -262,20 +254,20 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
                       </span>
                     </td>
                     <td class="px-3 py-4 align-top max-w-[30rem]">
-                      <span class="text-[13px] text-ink-100 leading-relaxed">{c.hace}</span>
-                      <span class="block text-[12px] text-ink-400 leading-relaxed mt-1">Si falla: {c.siFalla}</span>
+                      <span class="text-[13px] text-ink-100 leading-relaxed">{T(c.hace)}</span>
+                      <span class="block text-[12px] text-ink-400 leading-relaxed mt-1">{interpolate(a.crons.ifFails, { texto: T(c.siFalla) })}</span>
                     </td>
                     <td class="px-5 py-4 align-top font-mono text-[12px] whitespace-nowrap">
                       {u ? (
                         enSilencio(c.cadaMin, u.createdAt) ? (
-                          <span class="text-ember" title={`Se espera ${c.horario}`}>
-                            {haceCuanto(u.createdAt)} · en silencio
+                          <span class="text-ember" title={interpolate(a.crons.expected, { horario: T(c.horario) })}>
+                            {interpolate(a.crons.silent, { ago: haceCuanto(u.createdAt) ?? '' })}
                           </span>
                         ) : (
                           <span class={u.ok ? 'text-lime' : 'text-ember'}>{haceCuanto(u.createdAt)}</span>
                         )
                       ) : (
-                        <span class="text-ink-400">sin registro</span>
+                        <span class="text-ink-400">{a.crons.noRecord}</span>
                       )}
                     </td>
                   </tr>
@@ -289,17 +281,17 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
 
     <!-- ── Automatismos del producto ── -->
     <section>
-      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">Automatismos del producto</h2>
+      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{a.product.heading}</h2>
       <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
-        Estos no los dispara un calendario ni un push, sino el propio tráfico.
+        {a.product.intro}
       </p>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {
-          AUTOMATISMOS.map((a) => (
+          AUTOMATISMOS.map((auto) => (
             <div class="rounded-2xl glass p-5 hover:border-cyan/25 transition-colors">
-              <h3 class="text-[13px] font-medium text-ink-50 mb-2">{a.nombre}</h3>
-              <p class="text-[13px] text-ink-100 leading-relaxed mb-3">{a.hace}</p>
-              <span class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-400">{a.cuando}</span>
+              <h3 class="text-[13px] font-medium text-ink-50 mb-2">{T(auto.nombre)}</h3>
+              <p class="text-[13px] text-ink-100 leading-relaxed mb-3">{T(auto.hace)}</p>
+              <span class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-400">{T(auto.cuando)}</span>
             </div>
           ))
         }
