@@ -402,6 +402,7 @@ const en = {
           'Normalizes billing cycles (monthly, annual) into a comparable cost.',
           'Revenue in three states - collected, pending, projected - to separate real cash from expectation.',
           'The P&L and money-handling logic has its own battery of unit tests.',
+          'A separate simulator projects what the base infrastructure costs at different usage volumes, and tells a billable overage apart from a hard cap that cuts the service: a free plan does not overcharge you, it throttles you.',
         ],
         liveLabel: 'View the P&L in the panel demo',
       },

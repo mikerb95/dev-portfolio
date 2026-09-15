@@ -407,6 +407,7 @@ const es = {
           'Normalización de ciclos de facturación (mensual, anual) a costo comparable.',
           'Ingresos en tres estados - cobrado, pendiente, proyectado - para separar caja real de expectativa.',
           'La lógica de P&L y manejo de dinero tiene su propia batería de tests unitarios.',
+          'Un simulador aparte proyecta el costo de la infraestructura base a distintos volúmenes de uso, y distingue lo que se cobra como excedente de lo que corta el servicio: un plan gratuito no te cobra de más, te limita.',
         ],
         liveLabel: 'Ver el P&L en la demo del panel',
       },
