@@ -1976,6 +1976,64 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-simulador-infra',
+    fase: 'Fase 46 · Lo que cuesta operar esto',
+    nombre: 'Simulador de costos de la infraestructura básica',
+    rango: '12-15 sep 2026',
+    ghSince: '2026-09-12',
+    ghUntil: '2026-09-15',
+    commits: 10,
+    resumen:
+      'El panel sabía lo que YA se paga (RF-302, servicios reales con su ciclo de facturación) pero no lo que se PAGARÍA si el uso creciera, que es la pregunta que llega dos veces por la vía cara: en julio una consulta sin índice escaneó 62.000 filas y se comió el 93% de la cuota de lecturas de Turso, y en agosto una prueba de carga sin CDN delante la agotó del todo. La fase añade /admin/infra: cuatro proveedores, cuota incluida y excedente por dimensión, tres escenarios de crecimiento y recálculo en el navegador con el MISMO módulo puro que usa el servidor. La distinción que le da valor no es el precio sino el tipo de límite.',
+    historias: [
+      {
+        id: 'PF-IN-01', titulo: 'Como operador, quiero saber cuánto costaría mi stack si el tráfico creciera, y no solo lo que pago hoy',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-12', tags: ['costos', 'infraestructura', 'fase-46'],
+        dod: [
+          ok('UN EXCEDENTE Y UN TOPE DURO NO SON EL MISMO PROBLEMA y por eso no se pintan igual: uno cuesta dinero y se presupuesta, el otro corta el servicio. La celda dice "se corta" en vez de una cifra y el resumen lleva un contador de cuotas rotas aparte del total, porque un total que suma cero cuando significa "esto no funciona" es peor que no tener total.'),
+          ok('El plan recomendado es el más barato que NO choca contra un tope duro, no el más barato a secas: un gratis que se queda corto no cuesta cero, cuesta una caída. Cubierto en tests/infra-stack.test.ts.'),
+          ok('Las tarifas de excedente de Vercel se IMPORTAN de src/lib/computo/tarifas.ts, las mismas con las que se le factura el cómputo a un cliente. Con aritmética propia cotizaría con un número y facturaría con otro, y la diferencia solo se vería al reclamar una factura.'),
+          ok('Google Workspace no factura por consumo sino por asiento, y entra como cuota incluida cero con precio por unidad en vez de con una rama especial en el cálculo: una excepción escrita para un solo proveedor es la que nadie vuelve a probar.'),
+          ok('Cuotas y precios llevan fecha de verificación VISIBLE en cada tarjeta y enlace a la página de tarifas. Los tres proveedores cambian condiciones sin avisar y un simulador desactualizado no falla con un error: miente con confianza.'),
+        ],
+      },
+      {
+        id: 'PF-IN-02', titulo: 'Como operador, quiero mover el uso a mano y ver el efecto al instante, sin recargar ni esperar al servidor',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-13', tags: ['costos', 'fase-46'],
+        dod: [
+          ok('El módulo es PURO E ISOMORFO: el servidor pinta el primer escenario y el navegador recalcula importando el mismo archivo, sin BD ni node:crypto de por medio. Misma decisión que en computo/calculo.ts y por el mismo motivo.'),
+          ok('El uso sale SIEMPRE de los inputs, que son la única fuente de verdad de la vista: editar una celda y cambiar de escenario después no pueden discrepar.'),
+          ok('25 casos en tests/infra-stack.test.ts, incluida una comprobación estructural de que ningún plan deja una dimensión sin declarar cuota ni excedente: ese hueco se calcularía como gratis ilimitado, que es el error silencioso más caro de la página.'),
+          ok('Un test vigila que la selección inicial siga siendo la tarifa más baja de cada proveedor: si entra un plan más barato y nadie mueve el default, salta.'),
+        ],
+      },
+      {
+        id: 'PF-IN-03', titulo: 'Como desarrollador, quiero que el cableado del navegador esté probado y no solo la aritmética',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-14', tags: ['e2e', 'fase-46'],
+        dod: [
+          ok('e2e/infra.spec.ts entra por el pase de demo y comprueba lo que Vitest no puede ver: que la página abre sin errores de JS, que cambiar de escenario y editar una celda recalculan, y que subir Turso de plan convierte un tope duro en un excedente facturable.'),
+          ok('LOS CLICS VAN CON force:true Y NO ES PARA TAPAR NADA: bajo Chromium headless el panel no produce frames de animación (medido: requestAnimationFrame a 0/s en /admin, /admin/costs y esta página, frente a 2-4 en las públicas), y el chequeo de estabilidad de Playwright compara la caja entre dos frames consecutivos, así que el clic expira a los 30 s con el botón visible y quieto. force salta ese chequeo pero sigue disparando un clic de ratón real: un overlay de verdad seguiría robándose el evento.'),
+          ok('Es el primer spec que pulsa algo DENTRO del panel; los seis anteriores solo comprobaban redirecciones y leían contenido. Por eso el problema no había salido antes, y por eso queda documentado en la cabecera del spec.'),
+        ],
+      },
+      {
+        id: 'PF-IN-04', titulo: 'Como visitante, quiero entender el criterio detrás del simulador sin tener acceso al panel',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-15', tags: ['notes', 'i18n', 'fase-46'],
+        dod: [
+          ok('Nota bilingüe "Unos proveedores te cobran, otros te cortan" en /notes: la tesis del tope duro contra el excedente, apoyada en los dos incidentes reales de cuota y no en un anuncio de feature.'),
+          ok('SIN CIFRAS DE TARIFAS A PROPÓSITO. Las cuotas cargadas en el simulador son una estimación con fecha de verificación, y un precio mal citado en una página pública envejece fatal. La nota habla del método, que es lo que no caduca.'),
+          ok('El caso 02 de /tools (Costos y P&L) gana un detalle sobre el simulador en los dos diccionarios, en vez de un caso nuevo: es la misma pregunta de negocio, no un producto aparte.'),
+          pend('El caso propio en /tools con su mock visual, si alguna vez merece tarjeta independiente.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
