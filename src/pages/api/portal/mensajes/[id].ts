@@ -4,8 +4,8 @@ import { requireRole } from '../../../../lib/portal/session'
 import { audit } from '../../../../lib/portal/audit'
 import { clientIp } from '../../../../lib/device-info'
 import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
-import { sendPush } from '../../../../lib/notify'
-import { SITE_URL } from '../../../../lib/email'
+import { sendPush, sendEmail } from '../../../../lib/notify'
+import { SITE_URL, escapeHtml } from '../../../../lib/email'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -54,11 +54,20 @@ export const POST: APIRoute = async (context) => {
     ip: clientIp(context.request.headers),
   })
 
-  sendPush(
-    `Respuesta de ${session.client.company ?? session.client.name}`,
-    body.slice(0, 140),
-    { priority: 4, tags: 'speech_balloon', click: `${SITE_URL}/admin/portal/mensajes/${threadId}` }
-  ).catch(() => {})
+  const clientName = session.client.company ?? session.client.name
+  const panelUrl = `${SITE_URL}/admin/portal/mensajes/${threadId}`
+  Promise.all([
+    sendPush(`Respuesta de ${clientName}`, body.slice(0, 140), {
+      priority: 4,
+      tags: 'speech_balloon',
+      click: panelUrl,
+    }),
+    sendEmail(
+      `Respuesta de ${clientName} en conversación #${threadId}`,
+      `${body}\n\nAbrir conversación: ${panelUrl}`,
+      `<p style="font-family:system-ui;font-size:14px">${escapeHtml(body).replace(/\n/g, '<br>')}</p><p><a href="${panelUrl}">Abrir conversación →</a></p>`
+    ),
+  ]).catch(() => {})
 
   return json(201, { ok: true, id: message.id })
 }

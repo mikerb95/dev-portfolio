@@ -4,8 +4,8 @@ import { requireRole } from '../../../../lib/portal/session'
 import { audit } from '../../../../lib/portal/audit'
 import { clientIp } from '../../../../lib/device-info'
 import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
-import { sendPush } from '../../../../lib/notify'
-import { SITE_URL } from '../../../../lib/email'
+import { sendPush, sendEmail } from '../../../../lib/notify'
+import { SITE_URL, escapeHtml } from '../../../../lib/email'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -61,13 +61,22 @@ export const POST: APIRoute = async (context) => {
     ip: clientIp(context.request.headers),
   })
 
-  // Al teléfono: un cliente escribiendo merece respuesta rápida, y es de las
-  // pocas cosas del portal que no puede esperar a que yo mire el panel.
-  sendPush(
-    `Mensaje de ${session.client.company ?? session.client.name}`,
-    `${subject} - ${body.slice(0, 120)}`,
-    { priority: 4, tags: 'speech_balloon', click: `${SITE_URL}/admin/portal/mensajes/${thread.id}` }
-  ).catch(() => {})
+  // Push al teléfono + email de respaldo: un cliente escribiendo merece
+  // respuesta rápida, y el push solo no basta si falla ntfy o no lo veo.
+  const clientName = session.client.company ?? session.client.name
+  const panelUrl = `${SITE_URL}/admin/portal/mensajes/${thread.id}`
+  Promise.all([
+    sendPush(`Mensaje de ${clientName}`, `${subject} - ${body.slice(0, 120)}`, {
+      priority: 4,
+      tags: 'speech_balloon',
+      click: panelUrl,
+    }),
+    sendEmail(
+      `Mensaje de ${clientName}: ${subject}`,
+      `${body}\n\nAbrir conversación: ${panelUrl}`,
+      `<p style="font-family:system-ui;font-size:14px">${escapeHtml(body).replace(/\n/g, '<br>')}</p><p><a href="${panelUrl}">Abrir conversación →</a></p>`
+    ),
+  ]).catch(() => {})
 
   return json(201, { ok: true, redirect: `/portal/mensajes/${thread.id}` })
 }
