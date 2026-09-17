@@ -1,6 +1,6 @@
 ---
 title: Some providers bill you, others cut you off
-description: Going over a quota can only mean two things, and they cost very different things: money, or your site down. Why my infrastructure cost simulator paints them in different colors.
+description: "Going over a quota can only mean two things, and they cost very different things: money, or your site down. Why my infrastructure cost simulator paints them in different colors."
 date: 2026-09-15
 tags: [cost, infrastructure, turso, vercel]
 lang: en

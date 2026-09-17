@@ -1,6 +1,6 @@
 ---
 title: Unos proveedores te cobran, otros te cortan
-description: Al pasarse de una cuota solo pueden pasar dos cosas, y cuestan cosas distintas: dinero o el sitio caído. Por qué mi simulador de costos de infraestructura las pinta de colores distintos.
+description: "Al pasarse de una cuota solo pueden pasar dos cosas, y cuestan cosas distintas: dinero o el sitio caído. Por qué mi simulador de costos de infraestructura las pinta de colores distintos."
 date: 2026-09-15
 tags: [costos, infraestructura, turso, vercel]
 lang: es
