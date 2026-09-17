@@ -1997,6 +1997,7 @@ export const ITERACIONES: Iteracion[] = [
           ok('El plan recomendado es el más barato que NO choca contra un tope duro, no el más barato a secas: un gratis que se queda corto no cuesta cero, cuesta una caída. Cubierto en tests/infra-stack.test.ts.'),
           ok('Las tarifas de excedente de Vercel se IMPORTAN de src/lib/computo/tarifas.ts, las mismas con las que se le factura el cómputo a un cliente. Con aritmética propia cotizaría con un número y facturaría con otro, y la diferencia solo se vería al reclamar una factura.'),
           ok('Google Workspace no factura por consumo sino por asiento, y entra como cuota incluida cero con precio por unidad en vez de con una rama especial en el cálculo: una excepción escrita para un solo proveedor es la que nadie vuelve a probar.'),
+          ok('EL PRO DE VERCEL NO TIENE CUOTA POR RECURSO, tiene 20 dólares de crédito de uso, y modelarlo como cuotas (la primera versión) regalaba un terabyte de transferencia inexistente. El crédito se resta del consumo total y no se reparte entre dimensiones, para que la tabla siga enseñando lo que cuesta cada una y el descuento se vea como lo que es. Turso llegó con tres errores más y dos planes de menos; todo salió de abrir las páginas de precios, no de recordarlas.'),
           ok('Cuotas y precios llevan fecha de verificación VISIBLE en cada tarjeta y enlace a la página de tarifas. Los tres proveedores cambian condiciones sin avisar y un simulador desactualizado no falla con un error: miente con confianza.'),
         ],
       },

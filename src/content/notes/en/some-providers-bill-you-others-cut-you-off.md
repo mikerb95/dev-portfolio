@@ -28,6 +28,8 @@ When usage goes past the included quota, only two things can happen, and conflat
 
 A free plan never overcharges you. It cuts you off. So in my panel an overage and a hard cap show up in different colors, the cell reads "cut off" instead of a figure, and the summary carries a separate count of broken quotas next to the dollar total. A total that adds up to zero when it actually means "this doesn't work" is worse than having no total at all.
 
+There's a third shape worth not confusing with a quota: the usage credit. My host's paid plan costs twenty dollars a month **that include twenty dollars of usage**, and that is not the same as twenty dollars of free infrastructure: there is no per-resource quota, the credit is spent on whatever you consume, and past it you're billed from the very first unit. I modeled it wrong the first time, as if the plan included a generous transfer quota, and the simulator was handing out a terabyte that doesn't exist. The difference only shows up by reading the pricing page carefully, which is exactly the work this page exists to stop repeating.
+
 The plan recommendation follows from the same idea. The simulator doesn't propose the cheapest plan: it proposes **the cheapest one that doesn't hit a hard cap**. A free tier that falls short doesn't cost zero, it costs you an outage.
 
 ## The same rates I bill with

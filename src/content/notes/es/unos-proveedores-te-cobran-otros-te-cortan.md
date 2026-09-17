@@ -28,6 +28,8 @@ Cuando el uso se pasa de la cuota incluida solo pueden pasar dos cosas, y confun
 
 Un plan gratuito nunca te cobra de más. Te corta. Por eso en mi panel un excedente y un tope duro salen en colores distintos, la celda dice "se corta" en vez de una cifra, y el resumen lleva un contador aparte de cuotas rotas junto al total en dólares. Un total que suma cero cuando en realidad significa "esto no funciona" es peor que no tener total.
 
+Hay una tercera forma que conviene no confundir con una cuota: el crédito de uso. El plan de pago de mi proveedor de hosting cuesta veinte dólares al mes **que incluyen veinte dólares de consumo**, y eso no es lo mismo que veinte dólares de infraestructura regalada: no hay cuota por recurso, el crédito se gasta en lo que sea que consumas y a partir de ahí se factura desde la primera unidad. Yo lo modelé mal la primera vez, como si el plan incluyera una cuota generosa de transferencia, y el simulador regalaba un terabyte que no existe. La diferencia solo se ve leyendo la página de precios con cuidado, que es exactamente el trabajo que esta página existe para no repetir cada vez.
+
 De ahí sale también la recomendación de plan. El simulador no propone el plan más barato: propone **el más barato que no choca contra un tope duro**. Un gratis que se te queda corto no cuesta cero, cuesta una caída.
 
 ## Las mismas tarifas con las que facturo
