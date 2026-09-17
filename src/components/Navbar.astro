@@ -82,6 +82,7 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
 <header
   class="fixed top-4 inset-x-4 z-50 max-w-[1280px] mx-auto"
   aria-label={locale === 'en' ? 'Navigation' : 'Navegación'}
+  transition:name="site-navbar"
 >
   <div
     class="glass-strong rounded-full pl-3 pr-1.5 sm:pl-5 sm:pr-2 py-2 flex items-center justify-between gap-2 shadow-[0_8px_32px_rgba(0,0,0,.55)]"

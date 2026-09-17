@@ -483,6 +483,13 @@ body {
 @keyframes vt-fade-out { to { opacity: 0; transform: scale(.985); filter: blur(8px); } }
 @keyframes vt-fade-in  { from { opacity: 0; transform: scale(1.015); filter: blur(8px); } }
 
+/* La navbar (Navbar.astro) lleva `transition:name="site-navbar"` para salir
+   del grupo "root": es el único elemento fijo visible todo el tiempo durante
+   la navegación, y sale idéntica en la página vieja y en la nueva, así que
+   desenfocarla/escalarla junto con el resto se ve como un glitch en algo que
+   en realidad no cambió. Sin animación propia, el navegador solo hace un
+   cross-fade por defecto entre dos capturas casi iguales - imperceptible. */
+
 /* Inputs */
 .input-base {
   background: rgba(255,255,255,.02);
