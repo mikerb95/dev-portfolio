@@ -1757,6 +1757,18 @@ export const ITERACIONES: Iteracion[] = [
           ok('Fail-open como el resto de los crons de observabilidad: un fallo se registra en logs y responde 200 en vez de tumbar el cron.'),
         ],
       },
+      {
+        id: 'PF-SP-03', titulo: 'Como aprendiz, quiero saber cuánto me deben pagar en la etapa productiva y revisar que mi contrato lo diga',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-17', tags: ['sena', 'personal', 'fase-41'],
+        dod: [
+          ok('Sección Remuneración en /ep (entre "Cómo funciona la etapa" y Bitácoras, con ancla desde "Alternativas vigentes"): marco de la Ley 2466 de 2025, porcentaje del apoyo por modalidad, auxilio de transporte o de conectividad, prestaciones y un checklist de revisión del contrato con el mismo patrón persistido que el de cierre.'),
+          ok('src/lib/sena-remuneracion.ts (módulo puro e isomorfo) calcula el mes de arranque partido día a día (pensión solo sobre los días de práctica, salud sobre el mes completo), el mes típico, la prima por semestre, cesantías e intereses por año con su fecha legal o la liquidación, vacaciones compensadas y el total de la etapa. En dual, el paso al 100 % cae en el aniversario del contrato aunque sea a mitad de mes.'),
+          ok('SMMLV y auxilio por año en src/data/salario-minimo-co.ts, no en el componente. Un año sin decreto (2027) reutiliza el último conocido y el desglose lo marca como provisional, porque la etapa de la ficha cruza el cambio de año.'),
+          ok('tests/sena-remuneracion.test.ts: 21 casos con montos calculados a mano (mes partido, cruce de año con y sin decreto, febrero como mes comercial completo, aniversario dual, fechas inexistentes).'),
+          pend('Cargar SMMLV y auxilio de 2027 cuando salgan los decretos de diciembre de 2026 (TODO en salario-minimo-co.ts).'),
+        ],
+      },
     ],
   },
   // ───────────────────────────────────────────────────────────────────────

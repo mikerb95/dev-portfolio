@@ -98,7 +98,7 @@ while (cursorMes <= finD) {
   cursorMes.setMonth(cursorMes.getMonth() + 1)
 }
 
-const contexto = [
+const contexto: { titulo: string; cuerpo: string; enlace?: { href: string; label: string } }[] = [
   {
     titulo: 'Qué es',
     cuerpo:
@@ -108,6 +108,7 @@ const contexto = [
     titulo: 'Alternativas vigentes',
     cuerpo:
       'Contrato de aprendizaje, contrato de vínculo formativo, proyecto productivo, vínculo laboral, monitoría y prácticas en la economía popular o campesina. Las dos primeras formas de vínculo tienen remuneración obligatoria por ley; las demás pueden ser sin remuneración.',
+    enlace: { href: '#remuneracion', label: 'Cuánto se paga y cómo calcularlo' },
   },
   {
     titulo: 'Plazo',
@@ -228,6 +229,38 @@ const documentosCierre = [
     texto:
       'Soporte de presentación de las Pruebas de Estado Saber TyT (aplica únicamente para programas de nivel tecnólogo).',
   },
+]
+
+// Remuneración del contrato de aprendizaje. Los montos no se escriben aquí:
+// los calcula src/lib/sena-remuneracion.ts con los valores por año de
+// src/data/salario-minimo-co.ts. Esto es solo el texto de referencia.
+const apoyoPorModalidad = [
+  { modalidad: 'Formación tradicional', fases: [['Fase lectiva', '75 %'], ['Fase práctica', '100 %']] },
+  { modalidad: 'Formación dual', fases: [['Primer año', '75 %'], ['Segundo año', '100 %']] },
+  { modalidad: 'Aprendiz universitario', fases: [['Todo el contrato', '100 %']] },
+]
+
+const auxilios = [
+  { trabajo: 'Presencial', auxilio: 'Auxilio de transporte' },
+  { trabajo: 'Remoto', auxilio: 'Auxilio de conectividad digital (Ley 2088 de 2021, art. 10), mismo valor' },
+]
+
+const prestaciones = [
+  { titulo: 'Prima de servicios', cuando: '30 de junio y 20 de diciembre' },
+  { titulo: 'Cesantías', cuando: 'Consignadas al fondo antes del 14 de febrero' },
+  { titulo: 'Intereses a las cesantías', cuando: '12 % anual, pagados antes del 31 de enero' },
+  { titulo: 'Vacaciones', cuando: 'Compensadas en dinero si el contrato termina antes de causarlas' },
+  { titulo: 'Dotación', cuando: '30 de abril, 31 de agosto y 20 de diciembre, con 3 meses de servicio' },
+  { titulo: 'Subsidio familiar', cuando: 'Afiliación a caja de compensación' },
+]
+
+const revisionContrato = [
+  'Modalidad de formación marcada (dual o tradicional).',
+  'Porcentaje del apoyo de sostenimiento definido para cada fase.',
+  'AFP diligenciada. La pensión solo se cotiza en fase práctica y el fondo lo elige el aprendiz, no la empresa.',
+  'Fondo de cesantías diligenciado.',
+  'Centro de formación SENA identificado.',
+  'EPS y ARL con afiliación activa, verificable en la PILA.',
 ]
 
 const meta = [
@@ -430,10 +463,166 @@ const meta = [
               <div>
                 <h3 class="text-[13px] text-ink-50 font-medium mb-1.5">{c.titulo}</h3>
                 <p class="text-[13px] text-ink-200 leading-relaxed">{c.cuerpo}</p>
+                {c.enlace && (
+                  <a href={c.enlace.href} class="inline-block mt-2 text-cyan font-mono text-[11px] hover:underline">
+                    {c.enlace.label} ↓
+                  </a>
+                )}
               </div>
             ))}
           </div>
         </div>
+
+        <!-- Remuneración: referencia normativa + módulo de cálculo. El módulo
+             toma la fecha de inicio de la calculadora de cronograma (o la de
+             esta ficha si todavía no hay otra) y lo rellena el script. -->
+        <section id="remuneracion" class="rounded-2xl glass p-6 sm:col-span-2 scroll-mt-28" data-inicio={INICIO_ISO}>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
+            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Remuneración</span>
+          </div>
+          <p class="text-[13px] text-ink-200 leading-relaxed max-w-2xl mb-6">
+            La Ley 2466 de 2025 (art. 21, que modifica el art. 81 del CST) define el contrato de
+            aprendizaje como un contrato laboral especial a término fijo. En la etapa práctica
+            el aprendiz tiene prestaciones sociales plenas.
+          </p>
+
+          <div class="grid sm:grid-cols-2 gap-x-8 gap-y-6 mb-6">
+            <div>
+              <h3 class="text-[13px] text-ink-50 font-medium mb-2.5">Cuánto se paga (apoyo sobre el SMMLV)</h3>
+              <div class="grid gap-1.5">
+                {apoyoPorModalidad.map((m) => (
+                  <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+                    <div class="text-[12px] text-ink-100 mb-1">{m.modalidad}</div>
+                    {m.fases.map(([fase, pct]) => (
+                      <div class="flex items-baseline justify-between gap-3 text-[11px] font-mono">
+                        <span class="text-ink-300">{fase}</span>
+                        <span class="text-lime">{pct}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div class="grid gap-6 content-start">
+              <div>
+                <h3 class="text-[13px] text-ink-50 font-medium mb-2.5">Auxilio según modalidad de trabajo</h3>
+                <ul class="grid gap-1.5">
+                  {auxilios.map((a) => (
+                    <li class="flex items-baseline gap-3 text-[12px]">
+                      <span class="font-mono text-[11px] text-cyan shrink-0 w-[76px]">{a.trabajo}</span>
+                      <span class="text-ink-200 leading-relaxed">{a.auxilio}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p class="text-[12px] text-ink-300 leading-relaxed mt-2">
+                  No son acumulables. Si el desprendible de pago no trae ninguno de los dos, falta.
+                </p>
+              </div>
+
+              <p class="flex items-start gap-2 text-[12px] text-ember bg-ember/10 border border-ember/25 rounded-lg px-3 py-2.5 leading-relaxed">
+                <span aria-hidden="true" class="mt-0.5">▲</span>
+                <span>
+                  Muchos contratos traen los casilleros <span class="font-mono">[dual / tradicional]</span> y
+                  <span class="font-mono">[75% / 100%]</span> sin diligenciar. Si las fases lectiva y práctica
+                  van separadas y una después de la otra, la formación es tradicional, no dual. Ese
+                  casillero vacío es la diferencia entre cobrar el 75 % o el 100 % durante toda la práctica.
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <h3 class="text-[13px] text-ink-50 font-medium mb-2.5">Prestaciones que se causan desde el primer día de práctica</h3>
+          <ul class="grid sm:grid-cols-3 gap-1.5 mb-6">
+            {prestaciones.map((p) => (
+              <li class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+                <div class="text-[12px] text-ink-100">{p.titulo}</div>
+                <div class="text-[11px] text-ink-300 leading-snug mt-0.5">{p.cuando}</div>
+              </li>
+            ))}
+          </ul>
+
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4 mb-2.5">
+            <h3 class="text-[13px] text-ink-50 font-medium">Revisa tu contrato</h3>
+            <p id="contrato-progreso" class="text-[11px] font-mono text-ink-300"></p>
+          </div>
+          <ol id="contrato-checklist" class="grid sm:grid-cols-2 gap-2 mb-8">
+            {revisionContrato.map((texto, i) => (
+              <li class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+                <label class="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    data-key={String(i)}
+                    class="ep-check mt-0.5 w-3.5 h-3.5 shrink-0 rounded border-white/20 bg-white/5 accent-lime"
+                  />
+                  <span class="ep-check-texto text-[13px] text-ink-100 leading-relaxed">{texto}</span>
+                </label>
+              </li>
+            ))}
+          </ol>
+
+          <!-- Módulo de cálculo -->
+          <div id="pago" class="pt-6 border-t border-white/10">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+              <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Cálculo del pago</span>
+            </div>
+            <p class="text-[12px] text-ink-300 leading-relaxed mb-4 pl-3.5">
+              Usa la misma fecha de inicio que la <a href="#calc" class="text-cyan hover:underline">calculadora de cronograma</a>.
+              Estimación de referencia, no una liquidación oficial.
+            </p>
+
+            <div id="pago-form" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+              <label class="grid gap-1.5">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Inicio de fase práctica</span>
+                <input
+                  id="pago-inicio"
+                  type="date"
+                  value={INICIO_ISO}
+                  class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none [color-scheme:dark]"
+                />
+              </label>
+              <label class="grid gap-1.5">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Formación</span>
+                <select
+                  id="pago-formacion"
+                  class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+                >
+                  <option value="tradicional">Tradicional</option>
+                  <option value="dual">Dual</option>
+                  <option value="universitario">Universitario</option>
+                </select>
+              </label>
+              <label class="grid gap-1.5">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Trabajo</span>
+                <select
+                  id="pago-trabajo"
+                  class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+                >
+                  <option value="presencial">Presencial</option>
+                  <option value="remoto">Remoto</option>
+                  <option value="hibrido">Híbrido</option>
+                </select>
+              </label>
+              <label id="pago-contrato-campo" class="grid gap-1.5 hidden">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Inicio del contrato</span>
+                <input
+                  id="pago-contrato"
+                  type="date"
+                  class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none [color-scheme:dark]"
+                />
+              </label>
+              <label id="pago-lectiva-campo" class="flex items-center gap-2.5 h-11 self-end cursor-pointer select-none">
+                <input id="pago-lectiva" type="checkbox" checked class="w-3.5 h-3.5 shrink-0 rounded border-white/20 bg-white/5 accent-cyan" />
+                <span class="text-[12px] text-ink-100 leading-snug">Hubo fase lectiva pagada en el mismo mes</span>
+              </label>
+            </div>
+            <p id="pago-error" class="text-[12px] text-ember mb-3 hidden"></p>
+
+            <div id="pago-resultados"></div>
+          </div>
+        </section>
 
         <div class="rounded-2xl glass p-6">
           <div class="flex items-center gap-2 mb-1">
@@ -569,9 +758,9 @@ const meta = [
               <input
                 type="checkbox"
                 data-key={String(i)}
-                class="cierre-check mt-0.5 w-3.5 h-3.5 shrink-0 rounded border-white/20 bg-white/5 accent-lime"
+                class="ep-check mt-0.5 w-3.5 h-3.5 shrink-0 rounded border-white/20 bg-white/5 accent-lime"
               />
-              <span class="cierre-texto text-[13px] text-ink-100 leading-relaxed">{d.texto}</span>
+              <span class="ep-check-texto text-[13px] text-ink-100 leading-relaxed">{d.texto}</span>
             </label>
             {d.doc && (
               <a
@@ -853,7 +1042,8 @@ const meta = [
     /* Los checkbox de "entregado" se imprimen vacíos a propósito: la hoja
        sirve para ir marcando a mano lo que se va entregando. */
     #calc-timeline input[type='checkbox'],
-    #cierre-checklist input[type='checkbox'] {
+    #cierre-checklist input[type='checkbox'],
+    #contrato-checklist input[type='checkbox'] {
       -webkit-appearance: none;
       appearance: none;
       width: 11px;
@@ -873,6 +1063,13 @@ const meta = [
 
   import { computeHitos, type Hito as HitoBase, type TipoPrograma, type DocKey } from '../lib/sena-ep'
   import { diaInhabil, habilAnterior } from '../lib/festivos-co'
+  import {
+    calcularRemuneracion,
+    type Formacion,
+    type ResultadoRemuneracion,
+    type TramoMes,
+    type Trabajo,
+  } from '../lib/sena-remuneracion'
 
   const startOfDay = (d: Date) => {
     const x = new Date(d)
@@ -952,45 +1149,56 @@ const meta = [
     }
   }
 
-  // --- Checklist de documentos de cierre ---
-  const CIERRE_KEY = 'sena-ep-cierre:3114731'
-  const cierreChecklist = document.getElementById('cierre-checklist')
-  if (cierreChecklist) {
-    const progresoEl = document.getElementById('cierre-progreso')!
-    const checks = cierreChecklist.querySelectorAll<HTMLInputElement>('.cierre-check')
+  // --- Checklists fijos (documentos de cierre, revisión del contrato) ---
+  // Mismo patrón en los dos: marcas persistidas en localStorage con clave fija,
+  // porque son los documentos reales de esta ficha y no una simulación.
+  function montarChecklist(listaId: string, progresoId: string, clave: string, sufijo: string) {
+    const lista = document.getElementById(listaId)
+    const progresoEl = document.getElementById(progresoId)
+    if (!lista || !progresoEl) return
+    const checks = lista.querySelectorAll<HTMLInputElement>('.ep-check')
 
     const leer = (): Set<string> => {
       try {
-        return new Set(JSON.parse(localStorage.getItem(CIERRE_KEY) ?? '[]'))
+        return new Set(JSON.parse(localStorage.getItem(clave) ?? '[]'))
       } catch {
         return new Set()
       }
     }
+    const pintar = (cb: HTMLInputElement) => {
+      const texto = cb.closest('label')?.querySelector('.ep-check-texto')
+      texto?.classList.toggle('line-through', cb.checked)
+      texto?.classList.toggle('text-ink-300', cb.checked)
+    }
     const actualizar = () => {
-      const set = leer()
-      progresoEl.textContent = `${set.size}/${checks.length} documentos marcados como listos`
+      const marcados = [...checks].filter((c) => c.checked).length
+      progresoEl.textContent = `${marcados}/${checks.length} ${sufijo}`
     }
 
     const set = leer()
     checks.forEach((cb) => {
       const key = cb.dataset.key!
       cb.checked = set.has(key)
-      cb.closest('label')?.querySelector('.cierre-texto')?.classList.toggle('line-through', cb.checked)
-      cb.closest('label')?.querySelector('.cierre-texto')?.classList.toggle('text-ink-300', cb.checked)
+      pintar(cb)
 
       cb.addEventListener('change', () => {
         const actual = leer()
         if (cb.checked) actual.add(key)
         else actual.delete(key)
-        localStorage.setItem(CIERRE_KEY, JSON.stringify([...actual]))
-        const texto = cb.closest('label')?.querySelector('.cierre-texto')
-        texto?.classList.toggle('line-through', cb.checked)
-        texto?.classList.toggle('text-ink-300', cb.checked)
+        try {
+          localStorage.setItem(clave, JSON.stringify([...actual]))
+        } catch {
+          // Sin almacenamiento (modo privado) la marca vale solo para esta visita.
+        }
+        pintar(cb)
         actualizar()
       })
     })
     actualizar()
   }
+
+  montarChecklist('cierre-checklist', 'cierre-progreso', 'sena-ep-cierre:3114731', 'documentos marcados como listos')
+  montarChecklist('contrato-checklist', 'contrato-progreso', 'sena-ep-contrato:3114731', 'puntos revisados')
 
   // --- Calculadora ---
   type Estado = 'past' | 'next' | 'future'
@@ -1348,5 +1556,240 @@ const meta = [
       inicioEl.value = inicioParam
       calcular()
     }
+  }
+
+  // --- Cálculo del pago ---
+  // Va después de la calculadora a propósito: si un link compartido trajo la
+  // fecha, la calculadora ya la puso en #calc-inicio y aquí solo se copia.
+  const pagoRoot = document.getElementById('remuneracion')
+  if (pagoRoot) {
+    const inicioEl = document.getElementById('pago-inicio') as HTMLInputElement
+    const formacionEl = document.getElementById('pago-formacion') as HTMLSelectElement
+    const trabajoEl = document.getElementById('pago-trabajo') as HTMLSelectElement
+    const lectivaEl = document.getElementById('pago-lectiva') as HTMLInputElement
+    const lectivaCampo = document.getElementById('pago-lectiva-campo')!
+    const contratoEl = document.getElementById('pago-contrato') as HTMLInputElement
+    const contratoCampo = document.getElementById('pago-contrato-campo')!
+    const errorEl = document.getElementById('pago-error')!
+    const salidaEl = document.getElementById('pago-resultados')!
+    const cronogramaInicioEl = document.getElementById('calc-inicio') as HTMLInputElement | null
+
+    const MES_LARGO = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    ]
+    const cop = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
+    const $ = (n: number) => cop.format(n)
+    const pct = (p: number) => `${Math.round(p * 100)} %`
+    const nombreMes = (t: TramoMes) => `${MES_LARGO[t.mes]} ${t.anio}`
+    const fechaIso = (iso: string) => {
+      const [y, m, d] = iso.split('-').map(Number)
+      return `${d} de ${MES_LARGO[m - 1]} de ${y}`
+    }
+
+    const tile = (valor: string, etiqueta: string, acento = false) => `
+      <div class="rounded-lg ${acento ? 'bg-lime/[.06] border-lime/30' : 'bg-white/[.03] border-white/10'} border px-3 py-2.5 text-center">
+        <div class="text-[15px] ${acento ? 'text-lime' : 'text-ink-50'} font-medium font-mono">${valor}</div>
+        <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">${etiqueta}</div>
+      </div>`
+
+    type Tipo = 'suma' | 'resta' | 'total'
+    const linea = (concepto: string, detalle: string, monto: number, tipo: Tipo = 'suma') => `
+      <div class="flex items-baseline justify-between gap-3 py-1.5 ${tipo === 'total' ? 'border-t border-white/10 mt-1' : ''}">
+        <div class="min-w-0">
+          <div class="text-[12px] ${tipo === 'total' ? 'text-ink-50 font-medium' : 'text-ink-100'}">${concepto}</div>
+          ${detalle ? `<div class="text-[11px] text-ink-300 leading-snug">${detalle}</div>` : ''}
+        </div>
+        <span class="font-mono text-[12px] shrink-0 ${tipo === 'resta' ? 'text-ember' : tipo === 'total' ? 'text-lime' : 'text-ink-100'}">
+          ${tipo === 'resta' ? '−' : ''}${$(monto)}
+        </span>
+      </div>`
+
+    // Desglose de un mes: cada renglón dice de dónde sale, para que el
+    // aprendiz lo pueda contrastar con su desprendible.
+    function desglose(t: TramoMes, auxilio: string, titulo: string) {
+      const filas: string[] = []
+      if (t.diasLectiva > 0) {
+        filas.push(linea('Apoyo fase lectiva', `${t.diasLectiva} días × ${pct(t.pctLectiva)} del SMMLV`, t.apoyoLectiva))
+      }
+      const diario = t.valores.smmlv / 30
+      for (const g of t.practica) {
+        // Con un solo porcentaje se usa el total ya redondeado, para que el
+        // renglón cuadre al peso con el bruto.
+        const monto = t.practica.length === 1 ? t.apoyoPractica : Math.round(diario * g.pct * g.dias)
+        filas.push(linea('Apoyo fase práctica', `${g.dias} días × ${pct(g.pct)} del SMMLV`, monto))
+      }
+      filas.push(linea(auxilio, `${t.diasPractica} días de práctica`, t.auxilio))
+      filas.push(linea('Bruto', '', t.bruto, 'total'))
+      filas.push(linea('Salud 4 %', `Sobre ${$(t.apoyo)}${t.diasLectiva > 0 ? ', el apoyo del mes completo' : ''}, sin auxilio`, t.salud, 'resta'))
+      filas.push(linea('Pensión 4 %', `Sobre ${$(t.apoyoPractica)}${t.diasLectiva > 0 ? ', solo los días de práctica' : ''}`, t.pension, 'resta'))
+      filas.push(linea('Neto', '', t.neto, 'total'))
+      return `
+        <div class="rounded-xl bg-white/[.02] border border-white/10 p-4">
+          <div class="flex items-baseline justify-between gap-3 mb-2">
+            <span class="text-[11px] font-mono uppercase tracking-[.12em] text-ink-200">${titulo}</span>
+            <span class="text-[11px] font-mono text-cyan">${nombreMes(t)}${t.valores.provisional ? ' ▲' : ''}</span>
+          </div>
+          ${filas.join('')}
+        </div>`
+    }
+
+    function pintar(r: ResultadoRemuneracion) {
+      const pagos = [...r.prima, ...r.cesantias, ...r.intereses, r.vacaciones]
+      const provisionales = r.anios.filter((a) => a.provisional)
+
+      const filasPrestaciones = pagos
+        .map(
+          (p) => `
+          <tr class="border-t border-white/[.06]">
+            <td class="py-2 pr-3 text-ink-100">${p.concepto}</td>
+            <td class="py-2 pr-3 text-ink-300">${p.periodo}</td>
+            <td class="py-2 pr-3 text-ink-300">${p.fechaIso ? `Antes del ${fechaIso(p.fechaIso)}` : 'En la liquidación'}</td>
+            <td class="py-2 text-right font-mono text-ink-50">${$(p.monto)}</td>
+          </tr>`,
+        )
+        .join('')
+
+      const filasTramos = r.tramos
+        .map(
+          (t) => `
+          <tr class="border-t border-white/[.06]">
+            <td class="py-2 pr-3 text-ink-100 whitespace-nowrap">${nombreMes(t)}</td>
+            <td class="py-2 pr-3 font-mono text-ink-300">${t.diasLectiva > 0 ? `${t.diasLectiva} L + ` : ''}${t.diasPractica} P</td>
+            <td class="py-2 pr-3 font-mono ${t.valores.provisional ? 'text-ember' : 'text-ink-300'} whitespace-nowrap">${$(t.valores.smmlv)}${t.valores.provisional ? ' ▲' : ''}</td>
+            <td class="py-2 pr-3 text-right font-mono text-ink-100">${$(t.bruto)}</td>
+            <td class="py-2 pr-3 text-right font-mono text-ember">−${$(t.descuentos)}</td>
+            <td class="py-2 text-right font-mono text-ink-50">${$(t.neto)}</td>
+          </tr>`,
+        )
+        .join('')
+
+      const fuentes = r.anios
+        .map((a) =>
+          a.provisional
+            ? `<li><span class="text-ember">${a.anio}: sin decreto cargado todavía.</span> Se usan los valores de ${a.anioFuente} (${$(a.smmlv)} y ${$(a.auxilio)}) y los montos de ese año son provisionales.</li>`
+            : `<li>${a.anio}: SMMLV ${$(a.smmlv)} (${a.fuenteSmmlv}) · auxilio ${$(a.auxilio)} (${a.fuenteAuxilio}).</li>`,
+        )
+        .join('')
+
+      const tipico = r.mesTipico
+      salidaEl.innerHTML = `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+          ${tile(tipico ? $(tipico.neto) : '-', 'Neto mes típico')}
+          ${tile($(r.totales.prestaciones), 'Prestaciones')}
+          ${tile(String(r.totales.diasPractica), 'Días de práctica')}
+          ${tile($(r.totales.total), 'Total etapa', true)}
+        </div>
+        <p class="text-[11px] font-mono text-ink-300 mb-4">
+          Etapa del ${fechaIso(r.inicioIso)} al ${fechaIso(r.finIso)} · mes comercial de 30 días
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-3 mb-5">
+          ${desglose(r.mesArranque, r.nombreAuxilio, 'Mes de arranque')}
+          ${tipico ? desglose(tipico, r.nombreAuxilio, 'Mes completo típico') : ''}
+        </div>
+
+        <h4 class="text-[12px] text-ink-50 font-medium mb-2">Prestaciones proyectadas al cierre</h4>
+        <div class="overflow-x-auto -mx-1 px-1 mb-5">
+          <table class="w-full min-w-[520px] text-[12px]">
+            <thead>
+              <tr class="text-left text-[10px] font-mono uppercase tracking-wider text-ink-300">
+                <th class="pb-2 pr-3 font-normal">Concepto</th>
+                <th class="pb-2 pr-3 font-normal">Periodo</th>
+                <th class="pb-2 pr-3 font-normal">Pago</th>
+                <th class="pb-2 font-normal text-right">Monto</th>
+              </tr>
+            </thead>
+            <tbody>${filasPrestaciones}</tbody>
+            <tfoot>
+              <tr class="border-t border-white/15">
+                <td colspan="3" class="pt-2 text-ink-50 font-medium">Total prestaciones</td>
+                <td class="pt-2 text-right font-mono text-lime">${$(r.totales.prestaciones)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <h4 class="text-[12px] text-ink-50 font-medium mb-2">Mes a mes</h4>
+        <div class="overflow-x-auto -mx-1 px-1 mb-4">
+          <table class="w-full min-w-[560px] text-[12px]">
+            <thead>
+              <tr class="text-left text-[10px] font-mono uppercase tracking-wider text-ink-300">
+                <th class="pb-2 pr-3 font-normal">Mes</th>
+                <th class="pb-2 pr-3 font-normal">Días</th>
+                <th class="pb-2 pr-3 font-normal">SMMLV</th>
+                <th class="pb-2 pr-3 font-normal text-right">Bruto</th>
+                <th class="pb-2 pr-3 font-normal text-right">Descuentos</th>
+                <th class="pb-2 font-normal text-right">Neto</th>
+              </tr>
+            </thead>
+            <tbody>${filasTramos}</tbody>
+            <tfoot>
+              <tr class="border-t border-white/15">
+                <td colspan="3" class="pt-2 text-ink-50 font-medium">Etapa completa</td>
+                <td class="pt-2 pr-3 text-right font-mono text-ink-100">${$(r.totales.bruto)}</td>
+                <td class="pt-2 pr-3 text-right font-mono text-ember">−${$(r.totales.descuentos)}</td>
+                <td class="pt-2 text-right font-mono text-ink-50">${$(r.totales.neto)}</td>
+              </tr>
+              <tr>
+                <td colspan="5" class="pt-1.5 text-ink-50 font-medium">Neto + prestaciones</td>
+                <td class="pt-1.5 text-right font-mono text-lime">${$(r.totales.total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <p class="text-[10px] font-mono text-ink-300 mt-1.5">L = días de fase lectiva · P = días de fase práctica</p>
+        </div>
+
+        <ul class="grid gap-1 text-[11px] text-ink-300 leading-relaxed">
+          ${fuentes}
+          ${provisionales.length === 0 && r.anios.length > 1 ? '<li>La etapa cruza el cambio de año: cada mes usa el valor vigente en su año.</li>' : ''}
+          <li>Prima y cesantías incluyen el auxilio en la base; vacaciones y aportes, no. Dotación y subsidio familiar no se monetizan aquí.</li>
+        </ul>`
+    }
+
+    function recalcular() {
+      const dual = formacionEl.value === 'dual'
+      contratoCampo.classList.toggle('hidden', !dual)
+      lectivaCampo.classList.toggle('hidden', dual)
+
+      if (!inicioEl.value) {
+        errorEl.textContent = 'Selecciona la fecha de inicio de la fase práctica.'
+        errorEl.classList.remove('hidden')
+        salidaEl.innerHTML = ''
+        return
+      }
+      try {
+        const r = calcularRemuneracion({
+          inicioIso: inicioEl.value,
+          formacion: formacionEl.value as Formacion,
+          trabajo: trabajoEl.value as Trabajo,
+          lectivaMismoMes: lectivaEl.checked,
+          contratoInicioIso: dual ? contratoEl.value || undefined : undefined,
+        })
+        errorEl.classList.add('hidden')
+        pintar(r)
+      } catch (e) {
+        errorEl.textContent =
+          e instanceof Error && e.message.startsWith('el contrato')
+            ? 'El contrato no puede empezar después de la fase práctica.'
+            : 'Fecha inválida.'
+        errorEl.classList.remove('hidden')
+        salidaEl.innerHTML = ''
+      }
+    }
+
+    // La fecha de la calculadora de cronograma manda cuando existe; si no, se
+    // queda la de esta ficha que ya trae el HTML.
+    if (cronogramaInicioEl?.value) inicioEl.value = cronogramaInicioEl.value
+    cronogramaInicioEl?.addEventListener('change', () => {
+      if (!cronogramaInicioEl.value) return
+      inicioEl.value = cronogramaInicioEl.value
+      recalcular()
+    })
+
+    for (const el of [inicioEl, formacionEl, trabajoEl, lectivaEl, contratoEl]) {
+      el.addEventListener('change', recalcular)
+    }
+    recalcular()
   }
 </script>
