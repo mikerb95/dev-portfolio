@@ -240,7 +240,7 @@ const fmtNum = (n: number, decimales: number) =>
           fila.querySelector('[data-precio]')!.textContent =
             l.precioUnitario == null
               ? 'sin excedente'
-              : `${fmtUSD(l.precioUnitario, l.precioUnitario < 1 ? 3 : 2)} c/u`
+              : `${fmtUSD(l.precioUnitario, l.precioUnitario < 0.01 ? 4 : 2)} c/u`
 
           const barra = fila.querySelector('[data-barra]') as HTMLElement
           const pct = fila.querySelector('[data-pct]') as HTMLElement

@@ -88,8 +88,8 @@ test.describe('simulador de infra', () => {
     // mismo uso deja de cortar el servicio y pasa a costar dinero.
     await expect(page.locator('[data-linea="turso:filasLeidas"] [data-costo]')).toHaveText('-')
     await expect(page.locator('[data-linea="turso:filasEscritas"] [data-costo]')).toHaveText(/\d/)
-    // 29 de cargo fijo + 20 M de escrituras sobre la cuota a 0,1 por millón.
-    expect(monto(await page.locator('[data-total-prov="turso"]').textContent())).toBe(31)
+    // 24,92 de cargo fijo + 20 M de escrituras sobre la cuota a 0,80 por millón.
+    expect(monto(await page.locator('[data-total-prov="turso"]').textContent())).toBe(40.92)
   })
 })
 

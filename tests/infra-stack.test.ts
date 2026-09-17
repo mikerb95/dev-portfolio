@@ -69,7 +69,7 @@ describe('calcularProveedor', () => {
   })
 
   it('marca tope duro (y no cobra) cuando el plan gratuito se pasa', () => {
-    const r = calcularProveedor(TURSO, 'free', { filasLeidas: 1500 })
+    const r = calcularProveedor(TURSO, 'free', { filasLeidas: 1.5 })
     expect(r.totalUsd).toBe(0)
     expect(r.topesDuros).toEqual(['Filas leídas'])
     expect(r.lineas.find((l) => l.dimension === 'filasLeidas')!.topeDuro).toBe(true)
@@ -78,7 +78,7 @@ describe('calcularProveedor', () => {
   it('trata el uso ausente o negativo como cero', () => {
     const r = calcularProveedor(TURSO, 'scaler', { filasLeidas: -50 })
     expect(r.lineas.every((l) => l.uso === 0)).toBe(true)
-    expect(r.totalUsd).toBe(29)
+    expect(r.totalUsd).toBe(24.92)
   })
 
   it('la API de Claude no tiene cargo fijo: paga solo tokens', () => {
@@ -136,14 +136,14 @@ describe('calcularStack', () => {
       { vercel: 'pro', turso: 'scaler', claude: 'pro', workspace: 'starter' },
       { workspace: { usuarios: 1 } },
     )
-    expect(r.totalMensualUsd).toBe(20 + 29 + 20 + 7)
-    expect(r.totalAnualUsd).toBe((20 + 29 + 20 + 7) * 12)
+    expect(r.totalMensualUsd).toBeCloseTo(20 + 24.92 + 20 + 7, 10)
+    expect(r.totalAnualUsd).toBeCloseTo((20 + 24.92 + 20 + 7) * 12, 10)
   })
 
   it('cuenta los topes duros de todo el stack', () => {
     const r = calcularStack(SELECCION_INICIAL, {
       vercel: { transferencia: 999, edgeRequests: 5 },
-      turso: { filasLeidas: 5000 },
+      turso: { filasLeidas: 5 },
       claude: {},
       workspace: { usuarios: 1 },
     })
@@ -164,13 +164,16 @@ describe('calcularStack', () => {
 
 describe('planRecomendado', () => {
   it('prefiere el gratuito mientras aguante', () => {
-    expect(planRecomendado(TURSO, { filasLeidas: 100 }).planId).toBe('free')
+    expect(planRecomendado(TURSO, { filasLeidas: 0.1 }).planId).toBe('free')
   })
 
-  it('sube de plan en cuanto el gratuito se rompe, aunque cueste más', () => {
-    const r = planRecomendado(TURSO, { filasLeidas: 5000 })
-    expect(r.planId).toBe('scaler')
-    expect(r.totalUsd).toBe(29)
+  it('sube al siguiente escalón, no al primero que aguante de sobra', () => {
+    // 3 mil millones de lecturas rompen el Free (500 M) y caben casi enteras en
+    // el Developer: 4,99 + medio mil millones a dólar es más barato que los
+    // 24,92 del Scaler, así que el recomendado es el de en medio.
+    const r = planRecomendado(TURSO, { filasLeidas: 3 })
+    expect(r.planId).toBe('developer')
+    expect(r.totalUsd).toBeCloseTo(4.99 + 0.5, 10)
   })
 
   it('si ningún plan aguanta, devuelve el más barato en vez de nada', () => {

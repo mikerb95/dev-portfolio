@@ -111,28 +111,48 @@ export const TURSO: ProveedorInfra = {
   id: 'turso',
   nombre: 'Turso',
   url: 'https://turso.tech/pricing',
-  verificado: '2026-09-12',
-  fuente: 'Página de precios de Turso. La dimensión que manda aquí son las filas LEÍDAS (escaneadas, no devueltas).',
+  verificado: '2026-09-17',
+  fuente: 'turso.tech/pricing con facturación ANUAL, que es la columna barata: mes a mes Developer son 5,99, Scaler 29 y Pro 499. La dimensión que manda aquí son las filas LEÍDAS (escaneadas, no devueltas).',
   dimensiones: [
-    { id: 'filasLeidas', etiqueta: 'Filas leídas', unidad: 'M/mes' },
+    // Las lecturas van en miles de millones y no en millones como las
+    // escrituras porque así las factura Turso (1 dólar por cada mil millones).
+    // Con la unidad en millones, el precio unitario de Developer y el de Scaler
+    // se redondearían al mismo 0,001 en pantalla siendo distintos.
+    { id: 'filasLeidas', etiqueta: 'Filas leídas', unidad: 'mil M/mes', decimales: 2 },
     { id: 'filasEscritas', etiqueta: 'Filas escritas', unidad: 'M/mes', decimales: 1 },
     { id: 'almacenamiento', etiqueta: 'Almacenamiento', unidad: 'GB' },
+    { id: 'sincronizacion', etiqueta: 'Sincronización', unidad: 'GB/mes' },
   ],
   planes: [
     {
       id: 'free',
       nombre: 'Free',
       baseUsd: 0,
-      incluido: { filasLeidas: 1000, filasEscritas: 25, almacenamiento: 9 },
-      excedente: { filasLeidas: null, filasEscritas: null, almacenamiento: null },
-      nota: 'La cuota es por organización, no por base: la principal y la de la demo comparten el mismo billón de filas leídas.',
+      incluido: { filasLeidas: 0.5, filasEscritas: 10, almacenamiento: 5, sincronizacion: 3 },
+      excedente: { filasLeidas: null, filasEscritas: null, almacenamiento: null, sincronizacion: null },
+      nota: 'Tope de 100 bases y, sobre todo, cuota por ORGANIZACIÓN y no por base: la principal y la de la demo se reparten los mismos 500 millones de lecturas.',
+    },
+    {
+      id: 'developer',
+      nombre: 'Developer',
+      baseUsd: 4.99,
+      incluido: { filasLeidas: 2.5, filasEscritas: 25, almacenamiento: 9, sincronizacion: 10 },
+      excedente: { filasLeidas: 1, filasEscritas: 1, almacenamiento: 0.75, sincronizacion: 0.35 },
+      nota: 'El primer plan que cobra excedente en vez de cortar, y ahí está su valor: cinco dólares compran que un pico de tráfico salga en la factura y no en una caída.',
     },
     {
       id: 'scaler',
       nombre: 'Scaler',
-      baseUsd: 29,
-      incluido: { filasLeidas: 100_000, filasEscritas: 100, almacenamiento: 24 },
-      excedente: { filasLeidas: 1 / 1000, filasEscritas: 1 / 10, almacenamiento: 0.75 },
+      baseUsd: 24.92,
+      incluido: { filasLeidas: 100, filasEscritas: 100, almacenamiento: 24, sincronizacion: 24 },
+      excedente: { filasLeidas: 0.8, filasEscritas: 0.8, almacenamiento: 0.5, sincronizacion: 0.25 },
+    },
+    {
+      id: 'pro',
+      nombre: 'Pro',
+      baseUsd: 416.58,
+      incluido: { filasLeidas: 250, filasEscritas: 250, almacenamiento: 50, sincronizacion: 100 },
+      excedente: { filasLeidas: 0.75, filasEscritas: 0.75, almacenamiento: 0.45, sincronizacion: 0.15 },
     },
   ],
 }
@@ -369,7 +389,7 @@ export const ESCENARIOS: Escenario[] = [
     descripcion: 'El portafolio solo: tráfico bajo, crons cada 5 minutos y la demo pública.',
     uso: {
       vercel: { cpuActiva: 1.5, memoria: 120, invocaciones: 0.3, transferencia: 15, edgeRequests: 0.5 },
-      turso: { filasLeidas: 300, filasEscritas: 3, almacenamiento: 1 },
+      turso: { filasLeidas: 0.3, filasEscritas: 3, almacenamiento: 1, sincronizacion: 0 },
       claude: { entrada: 0, salida: 0 },
       workspace: { usuarios: 1 },
     },
@@ -380,7 +400,7 @@ export const ESCENARIOS: Escenario[] = [
     descripcion: 'Portafolio + portal activo + tres sitios de cliente sobre la misma cuenta.',
     uso: {
       vercel: { cpuActiva: 8, memoria: 900, invocaciones: 2.5, transferencia: 220, edgeRequests: 6 },
-      turso: { filasLeidas: 1800, filasEscritas: 30, almacenamiento: 5 },
+      turso: { filasLeidas: 1.8, filasEscritas: 30, almacenamiento: 5, sincronizacion: 0 },
       claude: { entrada: 40, salida: 6 },
       workspace: { usuarios: 2 },
     },
@@ -391,7 +411,7 @@ export const ESCENARIOS: Escenario[] = [
     descripcion: 'Una campaña o una prueba de carga sin el CDN por delante: el mes malo.',
     uso: {
       vercel: { cpuActiva: 35, memoria: 4000, invocaciones: 12, transferencia: 1400, edgeRequests: 30 },
-      turso: { filasLeidas: 12_000, filasEscritas: 120, almacenamiento: 12 },
+      turso: { filasLeidas: 12, filasEscritas: 120, almacenamiento: 12, sincronizacion: 0 },
       claude: { entrada: 200, salida: 30 },
       workspace: { usuarios: 3 },
     },
