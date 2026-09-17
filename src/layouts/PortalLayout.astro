@@ -7,6 +7,7 @@
 // defensivo que enmascararía el fallo.
 import '../styles/global.css'
 import { unreadCount } from '../lib/portal/notifications'
+import AmbientBlobs from '../components/AmbientBlobs.astro'
 
 interface Props {
   title: string
@@ -54,6 +55,7 @@ const initials = (user.name ?? user.email)
     <meta name="theme-color" content="#07070a" />
   </head>
   <body class="grain bg-ink-950 text-ink-50 min-h-screen flex flex-col">
+    <AmbientBlobs />
     <!--
       La navegación del portal se repite en cada página: sin este salto, quien
       navega por teclado tabula por logo, campana, menú y cinco secciones antes
