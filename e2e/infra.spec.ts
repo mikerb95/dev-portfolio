@@ -69,10 +69,10 @@ test.describe('simulador de infra', () => {
     await page.goto('/admin/infra')
     const antes = monto(await page.locator('[data-total="mes"]').textContent())
 
-    // Un buzón más en Workspace son siete dólares más, sin tocar nada más.
+    // Un buzón más en Workspace son 7,30 más, sin tocar nada más.
     await page.fill('[data-uso="workspace:usuarios"]', '2')
 
-    expect(monto(await page.locator('[data-total="mes"]').textContent())).toBe(antes + 7)
+    expect(monto(await page.locator('[data-total="mes"]').textContent())).toBeCloseTo(antes + 7.3, 10)
   })
 
   test('subir de plan cambia la cuota y apaga el tope duro', async ({ page }) => {
