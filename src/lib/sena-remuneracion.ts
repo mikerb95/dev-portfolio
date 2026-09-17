@@ -277,8 +277,8 @@ export function calcularRemuneracion(entrada: EntradaRemuneracion): ResultadoRem
       concepto: 'Prima de servicios',
       periodo: `${sem === 1 ? 'Primer' : 'Segundo'} semestre ${anio}`,
       monto: redondear(ts.reduce((s, t) => s + basePrestacional(t), 0) / 12),
-      // Si la etapa termina antes de la fecha legal, esa prima sale en la
-      // liquidación. Con fin == límite se paga en la fecha, que es igual.
+      // Si la etapa termina antes de la fecha legal (o ese mismo día), esa
+      // prima sale en la liquidación final.
       fechaIso: finIso > limite ? limite : null,
     })
   }
