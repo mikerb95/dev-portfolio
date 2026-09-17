@@ -273,8 +273,6 @@ export function calcularRemuneracion(entrada: EntradaRemuneracion): ResultadoRem
   for (const [clave, ts] of semestres) {
     const [anio, sem] = clave.split('-').map(Number)
     const limite = sem === 1 ? `${anio}-06-30` : `${anio}-12-20`
-    const primero = ts[0]
-    const ultimo = ts[ts.length - 1]
     prima.push({
       concepto: 'Prima de servicios',
       periodo: `${sem === 1 ? 'Primer' : 'Segundo'} semestre ${anio}`,
@@ -283,8 +281,6 @@ export function calcularRemuneracion(entrada: EntradaRemuneracion): ResultadoRem
       // liquidación. Con fin == límite se paga en la fecha, que es igual.
       fechaIso: finIso > limite ? limite : null,
     })
-    void primero
-    void ultimo
   }
 
   const cesantias: PagoPrestacion[] = []
