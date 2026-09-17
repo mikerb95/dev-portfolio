@@ -151,7 +151,7 @@ describe('portal · restablecimiento de contraseña', () => {
 
   it('pedir un segundo reset invalida el token anterior', async () => {
     await startPasswordReset({ email: 'ana@acme.com' })
-    const firstUrl = (sendResetEmail.mock.calls[0][0] as { url: string }).url
+    const firstUrl = sendResetEmail.mock.calls[0][0].url
     const firstToken = tokenFromUrl(firstUrl)
 
     await startPasswordReset({ email: 'ana@acme.com' })
@@ -161,7 +161,7 @@ describe('portal · restablecimiento de contraseña', () => {
 
   it('resuelve un token de reset válido', async () => {
     await startPasswordReset({ email: 'ana@acme.com' })
-    const url = (sendResetEmail.mock.calls[0][0] as { url: string }).url
+    const url = sendResetEmail.mock.calls[0][0].url
     const token = tokenFromUrl(url)
 
     const resolved = await resolveToken(token)
@@ -175,7 +175,7 @@ describe('portal · restablecimiento de contraseña', () => {
 
   it('un token caducado no resuelve', async () => {
     await startPasswordReset({ email: 'ana@acme.com', now: new Date(Date.now() - 60 * 60_000) })
-    const url = (sendResetEmail.mock.calls[0][0] as { url: string }).url
+    const url = sendResetEmail.mock.calls[0][0].url
     const token = tokenFromUrl(url)
 
     expect(await resolveToken(token)).toBeNull()
@@ -183,7 +183,7 @@ describe('portal · restablecimiento de contraseña', () => {
 
   it('un token ya consumido no vuelve a resolver', async () => {
     await startPasswordReset({ email: 'ana@acme.com' })
-    const url = (sendResetEmail.mock.calls[0][0] as { url: string }).url
+    const url = sendResetEmail.mock.calls[0][0].url
     const token = tokenFromUrl(url)
     const resolved = await resolveToken(token)
 
@@ -193,7 +193,7 @@ describe('portal · restablecimiento de contraseña', () => {
 
   it('un token no resuelve si mientras tanto se apagó el portal del cliente', async () => {
     await startPasswordReset({ email: 'ana@acme.com' })
-    const url = (sendResetEmail.mock.calls[0][0] as { url: string }).url
+    const url = sendResetEmail.mock.calls[0][0].url
     const token = tokenFromUrl(url)
 
     await db.update(clients).set({ portalEnabled: false }).where(eq(clients.id, acme))
@@ -202,7 +202,7 @@ describe('portal · restablecimiento de contraseña', () => {
 
   it('un token no resuelve si mientras tanto se desactivó al usuario', async () => {
     await startPasswordReset({ email: 'ana@acme.com' })
-    const url = (sendResetEmail.mock.calls[0][0] as { url: string }).url
+    const url = sendResetEmail.mock.calls[0][0].url
     const token = tokenFromUrl(url)
 
     await db.update(clientUsers).set({ status: 'disabled' }).where(eq(clientUsers.id, acmeUser))
@@ -212,7 +212,7 @@ describe('portal · restablecimiento de contraseña', () => {
   describe('consumeToken', () => {
     it('marca el token como aceptado y devuelve true la primera vez', async () => {
       await startPasswordReset({ email: 'ana@acme.com' })
-      const url = (sendResetEmail.mock.calls[0][0] as { url: string }).url
+      const url = sendResetEmail.mock.calls[0][0].url
       const token = tokenFromUrl(url)
       const resolved = await resolveToken(token)
 
@@ -221,7 +221,7 @@ describe('portal · restablecimiento de contraseña', () => {
 
     it('la segunda vez (dos clics simultáneos) pierde la carrera', async () => {
       await startPasswordReset({ email: 'ana@acme.com' })
-      const url = (sendResetEmail.mock.calls[0][0] as { url: string }).url
+      const url = sendResetEmail.mock.calls[0][0].url
       const token = tokenFromUrl(url)
       const resolved = await resolveToken(token)
 
