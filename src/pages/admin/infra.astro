@@ -153,6 +153,12 @@ const fmtNum = (n: number, decimales: number) =>
                   })}
                 </tbody>
                 <tfoot>
+                  <tr data-fila-credito hidden>
+                    <td colspan="4" class="pt-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">
+                      Crédito de uso del plan
+                    </td>
+                    <td class="pt-3 text-right font-mono tabular-nums text-lime" data-credito></td>
+                  </tr>
                   <tr class="border-t border-white/10">
                     <td colspan="4" class="pt-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">
                       Total {p.nombre}
@@ -233,6 +239,15 @@ const fmtNum = (n: number, decimales: number) =>
         const plan = planDe(p, seleccion[p.id])
         raiz!.querySelector(`[data-nota="${p.id}"]`)!.textContent = plan.nota ?? ''
         raiz!.querySelector(`[data-total-prov="${p.id}"]`)!.textContent = fmtUSD(r.totalUsd, 2)
+
+        // El crédito solo se enseña donde existe: sin esta fila, un Pro que
+        // consume 15 dólares y factura 20 parece una suma mal hecha.
+        const filaCredito = raiz!.querySelector(`[data-prov="${p.id}"] [data-fila-credito]`) as HTMLElement
+        filaCredito.hidden = r.creditoUsd === 0
+        if (r.creditoUsd > 0) {
+          raiz!.querySelector(`[data-prov="${p.id}"] [data-credito]`)!.textContent =
+            `-${fmtUSD(r.creditoAplicadoUsd, 2)} de ${fmtUSD(r.creditoUsd, 0)}`
+        }
 
         for (const l of r.lineas) {
           const fila = raiz!.querySelector(`[data-linea="${p.id}:${l.dimension}"]`)!

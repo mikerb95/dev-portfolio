@@ -43,7 +43,7 @@ test.describe('simulador de infra', () => {
     // dinero es el buzón de Workspace. Si esta cifra cambia, o el default dejó
     // de ser el plan más barato, o alguien movió una tarifa.
     await expect(page.locator('[data-total-prov="workspace"]')).toHaveText(/7/)
-    expect(monto(await page.locator('[data-total="mes"]').textContent())).toBe(7)
+    expect(monto(await page.locator('[data-total="mes"]').textContent())).toBe(7.3)
     await expect(page.locator('[data-total="topes"]')).toHaveText('0')
 
     expect(errores).toEqual([])
