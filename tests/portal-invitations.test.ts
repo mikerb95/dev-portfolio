@@ -15,12 +15,15 @@ vi.mock('../src/db', async () => {
   return { db: drizzle(client, { schema }), __client: client }
 })
 
-const sendInvitationEmail = vi.fn(async () => ({ ok: true }))
-const sendResetEmail = vi.fn(async () => ({ ok: true }))
+const mocks = vi.hoisted(() => ({
+  sendInvitationEmail: vi.fn(async (_params: { to: string; clientName: string; url: string; expiresHours: number }) => ({ ok: true })),
+  sendResetEmail: vi.fn(async (_params: { to: string; url: string; expiresMinutes: number }) => ({ ok: true })),
+}))
+const { sendInvitationEmail, sendResetEmail } = mocks
 
 vi.mock('../src/lib/email', () => ({
-  sendInvitationEmail: (...args: unknown[]) => sendInvitationEmail(...args),
-  sendResetEmail: (...args: unknown[]) => sendResetEmail(...args),
+  sendInvitationEmail: mocks.sendInvitationEmail,
+  sendResetEmail: mocks.sendResetEmail,
   sendNotificationEmail: vi.fn(async () => ({ ok: true })),
   sendMail: vi.fn(async () => ({ ok: true })),
   emailConfigured: () => false,
