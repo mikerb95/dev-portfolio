@@ -1,14 +1,53 @@
 ---
-// Blobs ambientales de fondo (cyan + lime), fijos detrás de todo el contenido.
+// Blobs ambientales de fondo, fijos detrás de todo el contenido.
 // Cada blob es su propia capa (antes eran 3 gradientes en un solo ::after
 // estático) para poder moverlos de forma independiente al hacer scroll.
 // El desplazamiento combina varias ondas senoidales de frecuencia irracional
 // entre sí por blob: con eso el patrón no se repite en un ciclo corto y no se
 // percibe "mecánico" (a diferencia de una sola función lineal u oscilación
 // simple), sin necesitar una librería de ruido. Respeta prefers-reduced-motion.
+//
+// Posición y paleta varían por ruta (hash determinista del pathname
+// canónico, sin prefijo de idioma, para que /en/notes y /notes compartan
+// variante): la misma página siempre pinta igual, pero navegar a otra
+// sección cambia dónde y de qué color aparecen los blobs. El sitio no usa
+// Astro View Transitions todavía (no hay <ClientRouter/>), pero el
+// contenedor lleva `transition:name` para que, si se adopta, el motor
+// morfee la posición/color de un blob al de la página siguiente en vez de
+// remontarlo (persistirlo con `transition:persist` congelaría la variante
+// vieja, que es justo lo contrario de "cambia entre páginas").
+import { delocalizePath } from '../i18n/routing'
+
+const canonical = delocalizePath(Astro.url.pathname)
+let hash = 0
+for (const ch of canonical) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
+
+// Cuatro combinaciones de posición, alternadas con cuatro combinaciones de
+// color: dos de las cuatro paletas llevan violeta como acento dominante para
+// que el morado se alterne con cyan/lima en vez de ser un cuarto color fijo
+// en la misma esquina siempre.
+const positions = [
+  ['55% 50% at 6% -4%', '50% 46% at 98% 6%', '48% 44% at 46% 102%'],
+  ['52% 48% at 94% -6%', '48% 44% at 2% 8%', '50% 46% at 54% 100%'],
+  ['50% 46% at 50% -8%', '54% 50% at 100% 62%', '46% 42% at 0% 94%'],
+  ['48% 44% at 4% 30%', '52% 48% at 96% 88%', '50% 46% at 40% -6%'],
+]
+
+const palettes = [
+  ['rgba(0, 242, 255, .26)', 'rgba(201, 255, 91, .20)', 'rgba(0, 242, 255, .14)'],
+  ['rgba(167, 139, 255, .24)', 'rgba(0, 242, 255, .18)', 'rgba(167, 139, 255, .14)'],
+  ['rgba(201, 255, 91, .20)', 'rgba(167, 139, 255, .22)', 'rgba(201, 255, 91, .14)'],
+  ['rgba(0, 242, 255, .22)', 'rgba(167, 139, 255, .20)', 'rgba(201, 255, 91, .16)'],
+]
+
+const posSet = positions[hash % positions.length]
+const colorSet = palettes[Math.floor(hash / positions.length) % palettes.length]
+
+const gradients = posSet.map((pos, i) => `radial-gradient(${pos}, ${colorSet[i]}, transparent 68%)`)
+const inlineVars = `--grad-a:${gradients[0]};--grad-b:${gradients[1]};--grad-c:${gradients[2]}`
 ---
 
-<div class="ambient-blobs" aria-hidden="true">
+<div class="ambient-blobs" aria-hidden="true" style={inlineVars} transition:name="ambient-blobs">
   <span class="blob blob-a"></span>
   <span class="blob blob-b"></span>
   <span class="blob blob-c"></span>
@@ -30,9 +69,9 @@
     transform: translate3d(var(--bx, 0), var(--by, 0), 0);
     transition: transform 1.6s cubic-bezier(.22, .61, .36, 1);
   }
-  .blob-a { background: radial-gradient(55% 50% at 6% -4%, rgba(0, 242, 255, .26), transparent 68%); }
-  .blob-b { background: radial-gradient(50% 46% at 98% 6%, rgba(201, 255, 91, .20), transparent 70%); }
-  .blob-c { background: radial-gradient(48% 44% at 46% 102%, rgba(0, 242, 255, .14), transparent 70%); }
+  .blob-a { background: var(--grad-a); }
+  .blob-b { background: var(--grad-b); }
+  .blob-c { background: var(--grad-c); }
 
   @media (prefers-reduced-motion: reduce) {
     .blob { transition: none; transform: none; }
