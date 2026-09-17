@@ -37,6 +37,13 @@ export interface PlanInfra {
    * excedente cuesta dinero, un tope duro tumba el sitio.
    */
   excedente: Record<string, number | null>
+  /**
+   * Crédito de uso en dólares que el plan regala cada mes, aplicado sobre el
+   * consumo total en vez de sobre una dimensión concreta. Es la forma del plan
+   * Pro de Vercel: no incluye 4 horas de CPU ni 100 GB de nada, incluye 20
+   * dólares que se van gastando en lo que se consuma.
+   */
+  creditoUsd?: number
   nota?: string
 }
 
@@ -69,14 +76,15 @@ export interface ProveedorInfra {
 export const VERCEL: ProveedorInfra = {
   id: 'vercel',
   nombre: 'Vercel',
-  url: 'https://vercel.com/docs/pricing',
-  verificado: '2026-09-12',
-  fuente: 'Tarifas de excedente compartidas con computo/tarifas.ts (TARIFAS_INICIALES).',
+  url: 'https://vercel.com/pricing',
+  verificado: '2026-09-17',
+  fuente: 'vercel.com/pricing y vercel.com/docs/pricing (actualizada el 3 sep 2026). Las tarifas bajo demanda son las de computo/tarifas.ts, las mismas con las que se le factura a un cliente, y coinciden con el "starting at" de la página: varían por región.',
   dimensiones: [
     { id: 'cpuActiva', etiqueta: 'CPU activa', unidad: 'h/mes', decimales: 1 },
     { id: 'memoria', etiqueta: 'Memoria aprovisionada', unidad: 'GB-h/mes' },
     { id: 'invocaciones', etiqueta: 'Invocaciones', unidad: 'M/mes', decimales: 2 },
-    { id: 'transferencia', etiqueta: 'Transferencia', unidad: 'GB/mes' },
+    { id: 'transferencia', etiqueta: 'Transferencia al visitante', unidad: 'GB/mes' },
+    { id: 'transferenciaOrigen', etiqueta: 'Transferencia función-edge', unidad: 'GB/mes' },
     { id: 'edgeRequests', etiqueta: 'Peticiones al edge', unidad: 'M/mes', decimales: 2 },
   ],
   planes: [
@@ -84,25 +92,40 @@ export const VERCEL: ProveedorInfra = {
       id: 'hobby',
       nombre: 'Hobby',
       baseUsd: 0,
-      incluido: { cpuActiva: 4, memoria: 360, invocaciones: 1, transferencia: 100, edgeRequests: 1 },
+      incluido: {
+        cpuActiva: 4, memoria: 360, invocaciones: 1,
+        transferencia: 100, transferenciaOrigen: 10, edgeRequests: 1,
+      },
       // Todo null: el Hobby no factura excedente, lo corta. Pasarse aquí no es
-      // una factura sorpresa, es el sitio caído hasta el mes siguiente.
-      excedente: { cpuActiva: null, memoria: null, invocaciones: null, transferencia: null, edgeRequests: null },
-      nota: 'Sin excedente facturable: al agotar una cuota el proyecto se limita, no se cobra de más. Tampoco permite uso comercial.',
+      // una factura sorpresa, es el sitio limitado hasta el mes siguiente.
+      excedente: {
+        cpuActiva: null, memoria: null, invocaciones: null,
+        transferencia: null, transferenciaOrigen: null, edgeRequests: null,
+      },
+      nota: 'El único plan con cuota incluida POR RECURSO, y sin excedente facturable: al agotar una se limita el proyecto, no se cobra de más. Tampoco permite uso comercial.',
     },
     {
       id: 'pro',
       nombre: 'Pro',
       baseUsd: 20,
-      incluido: { cpuActiva: 4, memoria: 360, invocaciones: 1, transferencia: 1000, edgeRequests: 10 },
+      // Cero en todas: el Pro NO incluye cuota por recurso. Lo que incluye son
+      // 20 dólares de crédito de uso, y en cuanto se agotan todo es bajo
+      // demanda desde la primera unidad. Modelarlo como cuotas (que fue mi
+      // primera versión) regalaba 1 TB de transferencia que no existe.
+      incluido: {
+        cpuActiva: 0, memoria: 0, invocaciones: 0,
+        transferencia: 0, transferenciaOrigen: 0, edgeRequests: 0,
+      },
       excedente: {
         cpuActiva: TARIFAS_INICIALES.cpuActivaHora,
         memoria: TARIFAS_INICIALES.memoriaGbHora,
         invocaciones: TARIFAS_INICIALES.invocacionesMillon,
         transferencia: TARIFAS_INICIALES.transferenciaGb,
+        transferenciaOrigen: TARIFAS_INICIALES.transferenciaOrigenGb,
         edgeRequests: TARIFAS_INICIALES.edgeRequestsMillon,
       },
-      nota: 'Precio por miembro del equipo. Es el plan mínimo para cobrarle a un cliente.',
+      creditoUsd: 20,
+      nota: 'Incluye 20 dólares de crédito de uso: pasado el crédito se cobra bajo demanda desde la primera unidad, sin cuota por recurso. El precio es por asiento de desarrollador (el segundo son otros 20). La transferencia y las peticiones al edge van en realidad por Flat Rate CDN, un producto de capacidad fija que aquí se aproxima con la tarifa bajo demanda.',
     },
   ],
 }
@@ -218,8 +241,11 @@ export const WORKSPACE: ProveedorInfra = {
   id: 'workspace',
   nombre: 'Google Workspace',
   url: 'https://workspace.google.com/pricing',
-  verificado: '2026-09-12',
-  fuente: 'Página de precios de Google Workspace, precio con compromiso anual (el flexible mes a mes cuesta alrededor de un 20% más).',
+  verificado: '2026-09-17',
+  // Google cobra Workspace en PESOS en Colombia, así que el precio nativo es el
+  // de COP y el dólar de aquí es una conversión a 4.000, no una tarifa. Si el
+  // dólar se mueve, la factura en pesos no: se mueve esta columna.
+  fuente: 'workspace.google.com/pricing con compromiso anual y precios en COP (Colombia): Starter 29.200, Standard 58.400 y Plus 90.900 por usuario al mes. Convertidos a USD a 4.000 COP/USD para poder sumarlos con el resto del stack.',
   dimensiones: [
     { id: 'usuarios', etiqueta: 'Buzones', unidad: 'usuarios' },
   ],
@@ -229,16 +255,24 @@ export const WORKSPACE: ProveedorInfra = {
       nombre: 'Business Starter',
       baseUsd: 0,
       incluido: { usuarios: 0 },
-      excedente: { usuarios: 7 },
-      nota: 'El plan más barato con correo en dominio propio: 30 GB por usuario y videollamadas de hasta 100 participantes. Precio por usuario con compromiso anual.',
+      excedente: { usuarios: 7.3 },
+      nota: 'El plan más barato con correo en dominio propio: 29.200 COP por usuario al mes, 30 GB de almacenamiento conjunto por persona y videollamadas de hasta 100 participantes. Hay un precio de lanzamiento de 26.280 durante 12 meses, pero solo para clientes nuevos y los primeros 20 usuarios, así que el catálogo usa el estándar.',
     },
     {
       id: 'standard',
       nombre: 'Business Standard',
       baseUsd: 0,
       incluido: { usuarios: 0 },
-      excedente: { usuarios: 14 },
-      nota: 'El doble de precio por usuario a cambio de 2 TB y grabación de reuniones. Solo se justifica cuando los 30 GB del Starter se llenan.',
+      excedente: { usuarios: 14.6 },
+      nota: '58.400 COP por usuario al mes: el doble de precio a cambio de 2 TB por persona y grabación de reuniones. Solo se justifica cuando los 30 GB del Starter se llenan.',
+    },
+    {
+      id: 'plus',
+      nombre: 'Business Plus',
+      baseUsd: 0,
+      incluido: { usuarios: 0 },
+      excedente: { usuarios: 22.73 },
+      nota: '90.900 COP por usuario al mes: 5 TB, Vault para retención y búsqueda, y administración avanzada de dispositivos.',
     },
   ],
 }
@@ -273,7 +307,12 @@ export interface ResumenProveedor {
   planId: string
   planNombre: string
   baseUsd: number
+  /** Lo que cuesta el consumo ANTES de aplicar el crédito del plan. */
   excedentesUsd: number
+  /** Crédito de uso que trae el plan (0 si no trae). */
+  creditoUsd: number
+  /** Parte del crédito que este consumo llega a gastar. */
+  creditoAplicadoUsd: number
   totalUsd: number
   lineas: LineaInfra[]
   /** Dimensiones donde el plan se rompe (tope duro alcanzado). */
@@ -322,7 +361,11 @@ export function calcularProveedor(
       consumoPct: incluido > 0 ? (cantidad / incluido) * 100 : null,
     }
   })
+  // El consumo se calcula SIEMPRE bruto y el crédito se resta después, en vez
+  // de repartirlo entre dimensiones: así la tabla sigue enseñando lo que cuesta
+  // de verdad cada una y el crédito se ve como lo que es, un descuento.
   const excedentesUsd = lineas.reduce((s, l) => s + l.costoUsd, 0)
+  const creditoAplicadoUsd = Math.min(plan.creditoUsd ?? 0, excedentesUsd)
   return {
     proveedorId: proveedor.id,
     nombre: proveedor.nombre,
@@ -330,7 +373,9 @@ export function calcularProveedor(
     planNombre: plan.nombre,
     baseUsd: plan.baseUsd,
     excedentesUsd,
-    totalUsd: plan.baseUsd + excedentesUsd,
+    creditoUsd: plan.creditoUsd ?? 0,
+    creditoAplicadoUsd,
+    totalUsd: plan.baseUsd + excedentesUsd - creditoAplicadoUsd,
     lineas,
     topesDuros: lineas.filter((l) => l.topeDuro).map((l) => l.etiqueta),
   }
@@ -388,7 +433,7 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Arranque',
     descripcion: 'El portafolio solo: tráfico bajo, crons cada 5 minutos y la demo pública.',
     uso: {
-      vercel: { cpuActiva: 1.5, memoria: 120, invocaciones: 0.3, transferencia: 15, edgeRequests: 0.5 },
+      vercel: { cpuActiva: 1.5, memoria: 120, invocaciones: 0.3, transferencia: 15, transferenciaOrigen: 2, edgeRequests: 0.5 },
       turso: { filasLeidas: 0.3, filasEscritas: 3, almacenamiento: 1, sincronizacion: 0 },
       claude: { entrada: 0, salida: 0 },
       workspace: { usuarios: 1 },
@@ -399,7 +444,7 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Con clientes',
     descripcion: 'Portafolio + portal activo + tres sitios de cliente sobre la misma cuenta.',
     uso: {
-      vercel: { cpuActiva: 8, memoria: 900, invocaciones: 2.5, transferencia: 220, edgeRequests: 6 },
+      vercel: { cpuActiva: 8, memoria: 900, invocaciones: 2.5, transferencia: 220, transferenciaOrigen: 20, edgeRequests: 6 },
       turso: { filasLeidas: 1.8, filasEscritas: 30, almacenamiento: 5, sincronizacion: 0 },
       claude: { entrada: 40, salida: 6 },
       workspace: { usuarios: 2 },
@@ -410,7 +455,7 @@ export const ESCENARIOS: Escenario[] = [
     nombre: 'Pico',
     descripcion: 'Una campaña o una prueba de carga sin el CDN por delante: el mes malo.',
     uso: {
-      vercel: { cpuActiva: 35, memoria: 4000, invocaciones: 12, transferencia: 1400, edgeRequests: 30 },
+      vercel: { cpuActiva: 35, memoria: 4000, invocaciones: 12, transferencia: 1400, transferenciaOrigen: 120, edgeRequests: 30 },
       turso: { filasLeidas: 12, filasEscritas: 120, almacenamiento: 12, sincronizacion: 0 },
       claude: { entrada: 200, salida: 30 },
       workspace: { usuarios: 3 },

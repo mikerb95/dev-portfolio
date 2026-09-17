@@ -53,19 +53,46 @@ describe('catálogo', () => {
 })
 
 describe('calcularProveedor', () => {
-  it('cobra solo la base cuando el uso cabe en la cuota', () => {
-    const r = calcularProveedor(VERCEL, 'pro', { cpuActiva: 2, transferencia: 500 })
+  it('no cobra nada cuando el uso cabe en la cuota incluida', () => {
+    const r = calcularProveedor(VERCEL, 'hobby', { cpuActiva: 2, transferencia: 50 })
     expect(r.excedentesUsd).toBe(0)
-    expect(r.totalUsd).toBe(20)
+    expect(r.totalUsd).toBe(0)
     expect(r.topesDuros).toEqual([])
   })
 
   it('factura el excedente por unidad sobre la cuota, no sobre el total', () => {
-    const r = calcularProveedor(VERCEL, 'pro', { transferencia: 1100 })
-    const linea = r.lineas.find((l) => l.dimension === 'transferencia')!
-    expect(linea.exceso).toBe(100)
-    expect(linea.costoUsd).toBeCloseTo(100 * TARIFAS_INICIALES.transferenciaGb, 10)
-    expect(r.totalUsd).toBeCloseTo(20 + 100 * TARIFAS_INICIALES.transferenciaGb, 10)
+    const r = calcularProveedor(TURSO, 'scaler', { filasEscritas: 120 })
+    const linea = r.lineas.find((l) => l.dimension === 'filasEscritas')!
+    expect(linea.exceso).toBe(20)
+    expect(linea.costoUsd).toBeCloseTo(20 * 0.8, 10)
+    expect(r.totalUsd).toBeCloseTo(24.92 + 20 * 0.8, 10)
+  })
+
+  it('el Pro de Vercel no tiene cuota por recurso: gasta crédito y luego cobra', () => {
+    // 100 GB de transferencia son 15 dólares, que caben en el crédito de 20:
+    // se paga la suscripción y nada más. Con el modelo viejo (cuotas por
+    // recurso) esos 100 GB salían gratis por estar "incluidos", que era falso.
+    const dentro = calcularProveedor(VERCEL, 'pro', { transferencia: 100 })
+    expect(dentro.excedentesUsd).toBeCloseTo(15, 10)
+    expect(dentro.creditoAplicadoUsd).toBeCloseTo(15, 10)
+    expect(dentro.totalUsd).toBe(20)
+
+    // 200 GB son 30: el crédito cubre 20 y los otros 10 se facturan.
+    const fuera = calcularProveedor(VERCEL, 'pro', { transferencia: 200 })
+    expect(fuera.creditoAplicadoUsd).toBe(20)
+    expect(fuera.totalUsd).toBeCloseTo(30, 10)
+  })
+
+  it('el crédito no se convierte en saldo a favor si no se gasta', () => {
+    const r = calcularProveedor(VERCEL, 'pro', {})
+    expect(r.creditoAplicadoUsd).toBe(0)
+    expect(r.totalUsd).toBe(20)
+  })
+
+  it('un plan sin crédito declarado no descuenta nada', () => {
+    const r = calcularProveedor(TURSO, 'scaler', {})
+    expect(r.creditoUsd).toBe(0)
+    expect(r.creditoAplicadoUsd).toBe(0)
   })
 
   it('marca tope duro (y no cobra) cuando el plan gratuito se pasa', () => {
@@ -100,7 +127,7 @@ describe('calcularProveedor', () => {
   })
 
   it('calcula el porcentaje de cuota consumida y lo deja en null si no hay cuota', () => {
-    const r = calcularProveedor(VERCEL, 'pro', { transferencia: 250 })
+    const r = calcularProveedor(VERCEL, 'hobby', { transferencia: 25 })
     expect(r.lineas.find((l) => l.dimension === 'transferencia')!.consumoPct).toBeCloseTo(25, 10)
     const api = calcularProveedor(CLAUDE, 'api-opus-5', { entrada: 3 })
     expect(api.lineas.find((l) => l.dimension === 'entrada')!.consumoPct).toBeNull()
@@ -111,7 +138,7 @@ describe('Google Workspace (precio por asiento)', () => {
   it('cobra por buzón sin cargo fijo', () => {
     const r = calcularProveedor(WORKSPACE, 'starter', { usuarios: 3 })
     expect(r.baseUsd).toBe(0)
-    expect(r.totalUsd).toBe(21)
+    expect(r.totalUsd).toBeCloseTo(21.9, 10)
     expect(r.topesDuros).toEqual([])
   })
 
@@ -136,8 +163,8 @@ describe('calcularStack', () => {
       { vercel: 'pro', turso: 'scaler', claude: 'pro', workspace: 'starter' },
       { workspace: { usuarios: 1 } },
     )
-    expect(r.totalMensualUsd).toBeCloseTo(20 + 24.92 + 20 + 7, 10)
-    expect(r.totalAnualUsd).toBeCloseTo((20 + 24.92 + 20 + 7) * 12, 10)
+    expect(r.totalMensualUsd).toBeCloseTo(20 + 24.92 + 20 + 7.3, 10)
+    expect(r.totalAnualUsd).toBeCloseTo((20 + 24.92 + 20 + 7.3) * 12, 10)
   })
 
   it('cuenta los topes duros de todo el stack', () => {
@@ -148,7 +175,7 @@ describe('calcularStack', () => {
       workspace: { usuarios: 1 },
     })
     expect(r.topesDuros).toBe(3)
-    expect(r.totalMensualUsd).toBe(7) // solo el buzón: lo demás es gratis o se corta
+    expect(r.totalMensualUsd).toBeCloseTo(7.3, 10) // solo el buzón: lo demás es gratis o se corta
   })
 
   it('el escenario de arranque cabe entero en los planes gratuitos', () => {
