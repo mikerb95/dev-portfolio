@@ -117,7 +117,7 @@ Cambios a tablas existentes:
 ### `/portal/mensajes` - Comunicación
 - Hilos por proyecto: lista con badge de no leídos, vista de conversación, respuesta con markdown limitado (negrita, listas, enlaces, código).
 - Adjuntos → `portal_documents` (aparecen también en Documentos).
-- Del lado admin: bandeja en `/admin/portal/mensajes` + push ntfy cuando el cliente escribe. Cliente recibe email Resend cuando tú respondes (con throttle: máx 1 email por hilo por hora).
+- Del lado admin: bandeja en `/admin/portal/mensajes` + push ntfy **y correo Resend de respaldo** cuando el cliente abre un hilo o responde (el correo se añadió el 17 sep 2026: con el push solo, un aviso perdido deja al cliente sin respuesta). Cliente recibe email Resend cuando tú respondes (con throttle: máx 1 email por hilo por hora).
 
 ### `/portal/documentos` - Documentos y entregables
 - Grid/lista filtrable por proyecto y categoría; versionado simple (subir nueva versión conserva historial).
@@ -177,7 +177,7 @@ Cambios a tablas existentes:
 > `/portal/mensajes`, `src/lib/portal/threads.ts`, bandeja admin en `/admin/portal/mensajes`.
 1. Migraciones `portal_threads`, `portal_messages`, `portal_message_reads`.
 2. UI portal (hilos, conversación, markdown sanitizado) + bandeja admin.
-3. Notificaciones cruzadas: ntfy hacia ti, email/in-app hacia el cliente (con throttle).
+3. Notificaciones cruzadas: ntfy + email hacia ti (en paralelo, fire-and-forget), email/in-app hacia el cliente (con throttle).
 
 ### Fase 4 - Documentos ✅
 > `/portal/documentos`, `src/lib/portal/documents.ts`, descarga con URL firmada y validación de tenant.

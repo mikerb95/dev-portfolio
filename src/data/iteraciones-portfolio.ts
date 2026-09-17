@@ -2032,6 +2032,17 @@ export const ITERACIONES: Iteracion[] = [
           pend('El caso propio en /tools con su mock visual, si alguna vez merece tarjeta independiente.'),
         ],
       },
+      {
+        id: 'PF-IN-05', titulo: 'Como operador, quiero que el simulador refleje las tarifas vigentes de Turso y no las de cuando lo escribí',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-17', tags: ['costos', 'turso', 'fase-46'],
+        dod: [
+          ok('LA FECHA DE VERIFICACIÓN CUMPLIÓ SU FUNCIÓN a los cinco días: la página de precios ya no decía lo mismo. La cuota gratuita de lecturas bajó de mil millones a 500 millones, apareció la dimensión de sincronización y entraron los planes Developer (el primero que cobra excedente en vez de cortar) y Pro.'),
+          ok('Se carga la columna de facturación ANUAL y la fuente de la tarjeta dice cuánto cuesta mes a mes, para que nadie compare el simulador con la factura y crea que está mal.'),
+          ok('Las lecturas pasan a miles de millones por mes, que es la unidad en la que Turso factura. En millones, el precio unitario de Developer y el de Scaler se redondeaban al mismo valor en pantalla siendo distintos; el formato ahora da cuatro decimales por debajo del centavo.'),
+          ok('tests/infra-stack.test.ts y e2e/infra.spec.ts ajustados a los nuevos topes y precios, con los tres escenarios reescritos en la unidad nueva.'),
+        ],
+      },
     ],
   },
 ]
