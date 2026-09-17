@@ -630,10 +630,16 @@ sustentación.
    y se promueven a `implementado` al entregar, con `origen` (`src/i18n/`,
    `middleware.ts`) y `verificacion` (los tests del §13).
 2. `src/data/iteraciones-portfolio.ts`: entrada de la iteración al cerrarla.
-3. `src/content/notes/`: artículo de caso de estudio. Título candidato -
-   *"Traducir un sitio sin duplicarlo (y sin abrir un bypass de seguridad)"*,
-   con el §3 como columna vertebral. Es exactamente el tipo de hallazgo que
-   merece nota propia. Se publica en ambos idiomas.
+3. ✅ `src/content/notes/`: artículo de caso de estudio, publicado el 16 sep
+   2026 en los dos idiomas como *"Traducir un sitio sin abrirle una puerta
+   trasera"* / *"Translating a site without opening a back door"*, con el §3
+   como columna vertebral. Lo que acabó siendo el eje del texto no es el
+   bypass en sí sino de dónde viene la seguridad después del arreglo: **no del
+   guarda, sino de la normalización que ocurre antes**. De ahí que el test que
+   más peso tiene sea el que afirma que el guarda SÍ es ciego
+   (`isDemoBlockedPath('/en/admin/backup') === false`): documenta que quitar la
+   normalización del middleware, o "arreglar" el guarda enseñándole idiomas,
+   son las dos formas de romper esto en silencio.
 4. Este plan se actualiza al implementar (fases ✅, decisiones que surgieron),
    no se deja estático.
 

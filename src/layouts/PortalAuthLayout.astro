@@ -3,6 +3,7 @@
 // Deliberadamente sin Navbar ni Footer del sitio público: quien llega aquí va a
 // hacer una cosa concreta, y todo lo demás es ruido que invita a irse.
 import '../styles/global.css'
+import AmbientBlobs from '../components/AmbientBlobs.astro'
 
 interface Props {
   title: string
@@ -23,6 +24,7 @@ const { title, subtitle } = Astro.props
     <meta name="theme-color" content="#07070a" />
   </head>
   <body class="grain bg-ink-950 text-ink-50 min-h-screen flex flex-col">
+    <AmbientBlobs />
     <div class="halo pointer-events-none absolute inset-x-0 top-0 h-[420px]"></div>
 
     <main class="flex-1 flex items-center justify-center px-4 py-12 relative">
