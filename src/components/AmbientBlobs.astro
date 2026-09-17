@@ -10,12 +10,17 @@
 // Posición y paleta varían por ruta (hash determinista del pathname
 // canónico, sin prefijo de idioma, para que /en/notes y /notes compartan
 // variante): la misma página siempre pinta igual, pero navegar a otra
-// sección cambia dónde y de qué color aparecen los blobs. El sitio no usa
-// Astro View Transitions todavía (no hay <ClientRouter/>), pero el
-// contenedor lleva `transition:name` para que, si se adopta, el motor
-// morfee la posición/color de un blob al de la página siguiente en vez de
-// remontarlo (persistirlo con `transition:persist` congelaría la variante
-// vieja, que es justo lo contrario de "cambia entre páginas").
+// sección cambia dónde y de qué color aparecen los blobs.
+//
+// El sitio usa View Transitions nativas del navegador (`@view-transition {
+// navigation: auto }` en global.css, sin ClientRouter de Astro), que
+// desvanecen TODA la página como un solo grupo "root" en .55s. El
+// contenedor va A PROPÓSITO sin `transition:name`: darle nombre propio lo
+// saca de ese grupo y el navegador le aplica su animación por defecto (~.25s,
+// con su propio timing) en vez de la ya afinada del root - eso es lo que
+// producía el parpadeo y el salto brusco de posición entre páginas. Sin
+// nombre, el blob se desvanece envuelto en el mismo fundido que el resto del
+// contenido, sincronizado.
 import { delocalizePath } from '../i18n/routing'
 
 const canonical = delocalizePath(Astro.url.pathname)
@@ -47,7 +52,7 @@ const gradients = posSet.map((pos, i) => `radial-gradient(${pos}, ${colorSet[i]}
 const inlineVars = `--grad-a:${gradients[0]};--grad-b:${gradients[1]};--grad-c:${gradients[2]}`
 ---
 
-<div class="ambient-blobs" aria-hidden="true" style={inlineVars} transition:name="ambient-blobs">
+<div class="ambient-blobs" aria-hidden="true" style={inlineVars}>
   <span class="blob blob-a"></span>
   <span class="blob blob-b"></span>
   <span class="blob blob-c"></span>
