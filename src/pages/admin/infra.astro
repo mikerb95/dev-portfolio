@@ -96,7 +96,7 @@ const fmtNum = (n: number, decimales: number) =>
                 >
                   {p.planes.map((pl) => (
                     <option value={pl.id} selected={pl.id === r.planId}>
-                      {pl.nombre} · {pl.baseUsd > 0 ? `${fmtUSD(pl.baseUsd, 0)}/mes` : 'por uso'}
+                      {pl.nombre} · {pl.baseUsd > 0 ? `${fmtUSD(pl.baseUsd, 2)}/mes` : 'por uso'}
                     </option>
                   ))}
                 </select>
