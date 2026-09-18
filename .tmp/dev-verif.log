@@ -26,3 +26,7 @@
 Failed to load url astro:server-app.js (resolved id: astro:server-app.js). Does the file exist?
 Error: Failed to load url astro:server-app.js (resolved id: astro:server-app.js). Does the file exist?
     at loadAndTransform (file:///home/mike/dev/work/github.com/portfolio/node_modules/vite/dist/node/chunks/node.js:20113:31)
+07:29:42 [200] /demo 307ms
+07:29:43 [204] POST /api/vitals 20ms
+07:29:44 [200] /demo 21ms
+07:29:44 [204] POST /api/vitals 12ms
