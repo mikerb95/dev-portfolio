@@ -11,7 +11,7 @@ export const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   hosting: 'Hosting', database: 'Base de datos', auth: 'Autenticación',
   cdn: 'CDN', email: 'Email', storage: 'Almacenamiento', dns: 'DNS',
   domain: 'Dominio', monitoring: 'Monitoreo', payment: 'Pagos',
-  repository: 'Repositorio', other: 'Otro',
+  repository: 'Repositorio', subscription: 'Suscripción', other: 'Otro',
 }
 
 // Proveedores sugeridos (texto libre; no es un enum estricto)
