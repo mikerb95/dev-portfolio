@@ -40,7 +40,7 @@ const split = Astro.slots.has('aside')
       <div class:list={['w-full', split ? 'max-w-[980px]' : 'max-w-[400px]']}>
         <div
           class:list={[
-            split && 'grid lg:grid-cols-[1fr_400px] gap-10 lg:gap-16 items-center',
+            split && 'grid lg:grid-cols-[1fr_400px] gap-7 lg:gap-16 items-center',
           ]}
         >
           <div class="auth-intro">
@@ -76,7 +76,7 @@ const split = Astro.slots.has('aside')
           <div
             class:list={[
               split
-                ? 'auth-card glass-strong border-accent rounded-3xl p-6 sm:p-7 mt-8 lg:mt-0'
+                ? 'auth-card glass-strong border-accent rounded-3xl p-6 sm:p-7'
                 : 'mt-7',
             ]}
           >
