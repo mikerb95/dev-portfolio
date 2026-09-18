@@ -64,7 +64,10 @@ jobs:
         # de apuntar mal.
         run: |
           TARGET="${{ inputs.target_url }}"
-          [ -z "$TARGET" ] && exit 0
+          if [ -z "$TARGET" ]; then
+            echo "Sin objetivo externo: se usará el servidor efímero del runner."
+            exit 0
+          fi
           for DOMINIO in codebymike.net codebymike.tech dev-portfolio.vercel.app; do
             case "$TARGET" in
               *"$DOMINIO"*)
