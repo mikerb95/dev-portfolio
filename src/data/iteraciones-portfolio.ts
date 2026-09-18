@@ -2058,6 +2058,55 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-load-testing',
+    fase: 'Fase 47 · Hasta dónde aguanta',
+    nombre: 'Load testing de punta a punta: del script de k6 al panel',
+    rango: '18 sep 2026',
+    ghSince: '2026-09-18',
+    ghUntil: '2026-09-18',
+    commits: 1,
+    resumen:
+      'Los scripts de k6 existían y habían corrido de verdad desde agosto, pero su evidencia vivía en archivos JSON dentro del repo: para contar cuánto aguanta el sistema había que abrir un archivo. La fase cierra la Fase 5 del LAB conectando esa evidencia al panel (tabla, ingesta por token, página con la escalera dibujada y tarjeta pública), y de paso deshace un bloqueo que llevaba dos meses mal diagnosticado: no faltaba una credencial de Vercel, faltaba caer en que un preview no puede ser el objetivo porque lee de la base real.',
+    historias: [
+      {
+        id: 'PF-LT-01', titulo: 'Como sustentante, quiero que la corrida de carga se lea en el panel y no en un archivo JSON del repo',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-18', tags: ['lab', 'k6', 'fase-47'],
+        dod: [
+          ok('SE PARSEA EL RESUMEN DEL SCRIPT, NO EL JSON CRUDO DE K6: el crudo pesa cientos de KB, cambia de forma entre versiones y mezcla las métricas de la rampa con las de la meseta, que es justo lo que los scripts ya habían separado. El parser vive en src/lib/lab/load-test.ts, sin BD ni red.'),
+          ok('La tabla guarda dos cifras que ningún percentil agregado responde: capacidad sostenida y punto de quiebre. La página las pinta con la escalera en SVG inline, barras de p95 coloreadas por estado y p50 como línea, sin librerías.'),
+          ok('"NO SE RECUPERÓ" Y "SE RECUPERÓ AL INSTANTE" SE DISTINGUEN: los dos podrían imprimirse como un número pequeño y significan lo contrario. Un tramo sin peticiones tampoco cuenta como recuperación, que era el modo de fallar del hallazgo H-04 (una muestra en cero leída como sistema sano).'),
+          ok('El escenario de carga mide en VUs y el de estrés en req/s, así que la tarjeta lee el quiebre de los escalones y no del campo en req/s: una corrida de carga que sí se rompió mostraba "no llegó", que es exactamente lo contrario de lo que pasó.'),
+          ok('21 tests sobre los JSON de corridas REALES de lab/k6/resultados/, no sobre fixtures inventados: si el formato del resumen cambia, los tests se enteran.'),
+        ],
+      },
+      {
+        id: 'PF-LT-02', titulo: 'Como operador, quiero que sea imposible que una prueba de carga acabe pegándole a producción',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-18', tags: ['lab', 'seguridad', 'fase-47'],
+        dod: [
+          ok('TRES CAPAS PARA LA MISMA REGLA, cada una donde la anterior ya no alcanza: el script (URL y base del objetivo), el workflow (antes de gastar un minuto de runner) y la ingesta (si alguien corre k6 a mano saltándose el script, el resultado no entra al panel).'),
+          ok('La lista de dominios prohibidos está DUPLICADA A PROPÓSITO porque perfil.js corre en el runtime de k6 y no puede importar TypeScript. Lo que la mantiene honesta es un test que lee el .js y compara ambas copias: relajar una sin la otra deja un agujero silencioso.'),
+          ok('EL BLOQUEO NO ERA VERCEL_TOKEN. El plan llevaba desde julio diciendo que la fase esperaba esa credencial para tener un preview donde correr; el guardarraíl de agosto exige que el objetivo lea de una base LOCAL y un preview lee Turso, así que la corrida abortaría en setup() con el secret o sin él. El workflow levanta el sitio en el propio runner contra bases libsql desechables, las mismas de los e2e.'),
+          ok('Se dice en el propio workflow qué mide y qué no: un runner de 2 vCPU caracteriza la aplicación, no la infraestructura de Vercel, y los números absolutos solo son comparables contra otras corridas del mismo tipo.'),
+          pend('Disparar load-test.yml una vez desde Actions: los scripts y la ingesta se probaron de punta a punta en local, pero los tiempos de arranque del servidor efímero en el runner solo los da una corrida real.'),
+        ],
+      },
+      {
+        id: 'PF-LT-03', titulo: 'Como visitante del /lab, quiero ver hasta dónde aguanta el sistema sin que eso sea un mapa para atacarlo',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-18', tags: ['lab', 'opsec', 'i18n', 'fase-47'],
+        dod: [
+          ok('La sección pública publica comportamiento (sostenido, quiebre, recuperación, p95) y NUNCA el objetivo: decir contra qué entorno se corre es decir dónde hay algo menos vigilado que producción.'),
+          ok('La tarjeta "en construcción" de k6 desaparece sola cuando hay una corrida ingerida, con el mismo mecanismo que ya usaban SAST y mutation: el estado de la página lo decide el dato, no una bandera escrita a mano.'),
+          ok('Una sola fila leída y no una agregación: la tabla crece una fila por corrida manual, así que la vitrina no repite el problema de coste que dejó escanear monitor_checks en una ruta pública.'),
+          ok('Texto en los dos diccionarios (es/en), verificado por el test de paridad.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
