@@ -19,3 +19,5 @@
 07:28:23 [401] POST /api/lab/ingest 2ms
 07:28:23 [400] POST /api/lab/ingest 2ms
 07:28:23 [400] POST /api/lab/ingest 1ms
+07:28:51 [302] /api/admin/lab/load 10ms
+07:28:53 [302] /admin/lab/load 4ms
