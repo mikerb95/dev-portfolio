@@ -263,6 +263,32 @@ const revisionContrato = [
   'EPS y ARL con afiliación activa, verificable en la PILA.',
 ]
 
+// Lineamiento del instructor de seguimiento para los correos de la etapa. El
+// formato del asunto de bitácoras y visitas no se repite aquí: sale de
+// src/lib/sena-correos.ts, que es lo que usa el generador de abajo.
+const lineamientosCorreo = [
+  {
+    titulo: 'Bitácoras',
+    regla: 'Asunto: Bitácora #, CC #, Ficha #, Nombre y Apellido',
+    ejemplo: 'Bitácora 4, CC 1234567890, Ficha 3114731, Ana Pérez',
+  },
+  {
+    titulo: 'Formato de visita',
+    regla: 'Asunto: Formato Visita #, CC #, Ficha #, Nombre y Apellido',
+    ejemplo: 'Formato Visita 2, CC 1234567890, Ficha 3114731, Ana Pérez',
+  },
+  {
+    titulo: 'Documentos de certificación',
+    regla: 'Responder sobre el mismo correo que envía el instructor cuando inicie ese proceso.',
+    enlace: { href: '#cierre', label: 'Qué documentos se piden' },
+  },
+  {
+    titulo: 'Dudas o inquietudes',
+    regla:
+      'Correo nuevo, indicando número de documento y ficha. No responder sobre correos informativos masivos.',
+  },
+]
+
 const meta = [
   { k: 'Ficha', v: '3114731 · 3114732 · 3114733' },
   { k: 'Programa', v: 'ADSO · Tecnólogo' },
@@ -724,6 +750,120 @@ const meta = [
 
     </div>
 
+    <!-- Correos al instructor: el lineamiento de asuntos y un generador que lo
+         aplica. CC, ficha y nombre se recuerdan solo en este navegador
+         (localStorage): nunca salen hacia el servidor. -->
+    <section id="correos" class="rounded-2xl glass p-6 md:p-7 mb-4 scroll-mt-28">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Correos al instructor</span>
+      </div>
+      <p class="text-[13px] text-ink-200 leading-relaxed mt-3 mb-6 max-w-2xl">
+        El instructor de seguimiento busca los correos por asunto, así que todos siguen el mismo
+        formato. Mantener cada caso en un solo hilo de correo le permite dar respuesta más rápido.
+      </p>
+
+      <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] gap-8">
+        <ol class="grid sm:grid-cols-2 gap-2 content-start">
+          {lineamientosCorreo.map((l, i) => (
+            <li class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
+              <div class="flex items-baseline gap-2 mb-1">
+                <span class="font-mono text-[11px] text-cyan">{i + 1}</span>
+                <h3 class="text-[13px] text-ink-50 font-medium">{l.titulo}</h3>
+              </div>
+              <p class="text-[12px] text-ink-200 leading-relaxed">{l.regla}</p>
+              {l.ejemplo && (
+                <p class="mt-1.5 text-[11px] font-mono text-ink-300 leading-relaxed break-words">
+                  Ej.: {l.ejemplo}
+                </p>
+              )}
+              {l.enlace && (
+                <a href={l.enlace.href} class="inline-block mt-1.5 text-cyan font-mono text-[11px] hover:underline">
+                  {l.enlace.label} ↓
+                </a>
+              )}
+            </li>
+          ))}
+        </ol>
+
+        <div id="correo-gen">
+          <h3 class="text-[13px] text-ink-50 font-medium mb-3">Generar asunto</h3>
+          <div class="grid grid-cols-[minmax(0,1fr)_88px] gap-3 mb-3">
+            <label class="grid gap-1.5">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Envío</span>
+              <select
+                id="correo-tipo"
+                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+              >
+                <option value="bitacora">Bitácora</option>
+                <option value="visita">Formato de visita</option>
+              </select>
+            </label>
+            <label class="grid gap-1.5">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Número</span>
+              <select
+                id="correo-numero"
+                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+              ></select>
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <label class="grid gap-1.5">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">CC</span>
+              <input
+                id="correo-cc"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="1234567890"
+                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 placeholder:text-ink-300/60 focus:border-cyan/40 outline-none"
+              />
+            </label>
+            <label class="grid gap-1.5">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Ficha</span>
+              <input
+                id="correo-ficha"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                value="3114731"
+                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+              />
+            </label>
+          </div>
+          <label class="grid gap-1.5 mb-4">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Nombre y apellido</span>
+            <input
+              id="correo-nombre"
+              type="text"
+              autocomplete="name"
+              placeholder="Ana Pérez"
+              class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 placeholder:text-ink-300/60 focus:border-cyan/40 outline-none"
+            />
+          </label>
+
+          <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5 mb-3">
+            <div class="text-[10px] font-mono uppercase tracking-wider text-ink-300 mb-1">Asunto</div>
+            <output id="correo-asunto" class="block text-[13px] font-mono text-ink-50 break-words min-h-[20px]"></output>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              id="correo-copiar"
+              type="button"
+              disabled
+              class="text-[12px] font-mono text-cyan border border-cyan/30 bg-cyan/10 rounded-full px-3 py-1.5 hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Copiar asunto
+            </button>
+            <span id="correo-estado" class="text-[11px] text-ink-300" aria-live="polite"></span>
+          </div>
+          <p class="text-[11px] text-ink-300 leading-relaxed mt-4">
+            CC, ficha y nombre se guardan solo en este navegador para no escribirlos cada mes.
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- Documentos de cierre: lo que pide el juicio de etapa productiva y la
          certificación académica, más allá de bitácoras y visitas. Checklist
          persistido en localStorage, igual patrón que la calculadora de abajo,
@@ -989,6 +1129,7 @@ const meta = [
     #calc-acciones,
     #calc-recordatorio,
     #calc-next,
+    #correo-gen,
     #ep-page [role='tablist'] {
       display: none !important;
     }
@@ -1060,6 +1201,7 @@ const meta = [
     type TramoMes,
     type Trabajo,
   } from '../lib/sena-remuneracion'
+  import { asuntoCorreo, TIPOS_CORREO, type TipoCorreo } from '../lib/sena-correos'
 
   const startOfDay = (d: Date) => {
     const x = new Date(d)
@@ -1189,6 +1331,87 @@ const meta = [
 
   montarChecklist('cierre-checklist', 'cierre-progreso', 'sena-ep-cierre:3114731', 'documentos marcados como listos')
   montarChecklist('contrato-checklist', 'contrato-progreso', 'sena-ep-contrato:3114731', 'puntos revisados')
+
+  // --- Generador de asunto de correos ---
+  const correoGen = document.getElementById('correo-gen')
+  if (correoGen) {
+    const CLAVE = 'sena-ep-correo'
+    const tipoEl = document.getElementById('correo-tipo') as HTMLSelectElement
+    const numeroEl = document.getElementById('correo-numero') as HTMLSelectElement
+    const ccEl = document.getElementById('correo-cc') as HTMLInputElement
+    const fichaEl = document.getElementById('correo-ficha') as HTMLInputElement
+    const nombreEl = document.getElementById('correo-nombre') as HTMLInputElement
+    const asuntoEl = document.getElementById('correo-asunto')!
+    const copiarBtn = document.getElementById('correo-copiar') as HTMLButtonElement
+    const estadoEl = document.getElementById('correo-estado')!
+
+    // Las opciones de número dependen del tipo (6 bitácoras, 3 visitas); se
+    // conserva el número elegido si sigue siendo válido al cambiar de tipo.
+    const llenarNumeros = () => {
+      const previo = Number(numeroEl.value) || 1
+      const max = TIPOS_CORREO[tipoEl.value as TipoCorreo].max
+      numeroEl.replaceChildren(
+        ...Array.from({ length: max }, (_, i) => new Option(String(i + 1), String(i + 1))),
+      )
+      numeroEl.value = String(Math.min(previo, max))
+    }
+
+    try {
+      const guardado = JSON.parse(localStorage.getItem(CLAVE) ?? '{}')
+      if (typeof guardado.cc === 'string') ccEl.value = guardado.cc
+      if (typeof guardado.ficha === 'string' && guardado.ficha) fichaEl.value = guardado.ficha
+      if (typeof guardado.nombre === 'string') nombreEl.value = guardado.nombre
+    } catch {
+      // Sin almacenamiento o JSON corrupto: se arranca con el formulario vacío.
+    }
+
+    let asuntoActual = ''
+    const actualizar = () => {
+      const r = asuntoCorreo({
+        tipo: tipoEl.value as TipoCorreo,
+        numero: Number(numeroEl.value),
+        cc: ccEl.value,
+        ficha: fichaEl.value,
+        nombre: nombreEl.value,
+      })
+      asuntoActual = r.ok ? r.asunto : ''
+      asuntoEl.textContent = r.ok ? r.asunto : `Falta: ${r.faltan.join(', ')}`
+      asuntoEl.classList.toggle('text-ink-300', !r.ok)
+      copiarBtn.disabled = !r.ok
+      estadoEl.textContent = ''
+    }
+    const guardar = () => {
+      try {
+        localStorage.setItem(CLAVE, JSON.stringify({ cc: ccEl.value, ficha: fichaEl.value, nombre: nombreEl.value }))
+      } catch {
+        // Modo privado: los datos valen solo para esta visita.
+      }
+    }
+
+    tipoEl.addEventListener('change', () => {
+      llenarNumeros()
+      actualizar()
+    })
+    numeroEl.addEventListener('change', actualizar)
+    for (const el of [ccEl, fichaEl, nombreEl]) {
+      el.addEventListener('input', () => {
+        guardar()
+        actualizar()
+      })
+    }
+    copiarBtn.addEventListener('click', async () => {
+      if (!asuntoActual) return
+      try {
+        await navigator.clipboard.writeText(asuntoActual)
+        estadoEl.textContent = 'Copiado'
+      } catch {
+        estadoEl.textContent = 'No se pudo copiar: selecciona el asunto a mano'
+      }
+    })
+
+    llenarNumeros()
+    actualizar()
+  }
 
   // --- Calculadora ---
   type Estado = 'past' | 'next' | 'future'
