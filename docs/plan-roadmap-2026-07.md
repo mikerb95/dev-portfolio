@@ -23,9 +23,8 @@
 ## Orden de ejecución
 
 > **Estado (31 jul 2026)**: etapas 1-6 ✅ implementadas y verificadas; la 8
-> quedó cerrada salvo sus dos acciones manuales. La etapa 7 (k6) sigue siendo
-> la única del LAB pendiente, bloqueada por falta de un target de
-> preview/staging estable (ver `VERCEL_TOKEN` en pendientes transversales).
+> quedó cerrada salvo sus dos acciones manuales. La etapa 7 (k6) se completó
+> el 18 sep 2026: el LAB ya no tiene fases pendientes.
 >
 > **Trabajo grande entregado fuera de este roadmap** (ver sus planes propios):
 > portal de clientes completo (`plan-portal-clientes.md`), cobros de campo por
@@ -291,8 +290,10 @@ habría visto sin ejecutar los scripts de verdad):
 - Encontré y borré un `.env.development.local` suelto (de una sesión de
   `/verify` anterior) que redirigía `TURSO_DATABASE_URL` a un archivo temporal
   inexistente - explicaba fallos de ingesta que parecían de auth.
-- ZAP/DAST (sub-fase 6b) **no se implementó**: sigue dependiendo de un preview
-  deployment estable, que no existe sin `VERCEL_TOKEN` (pendiente transversal).
+- ZAP/DAST (sub-fase 6b) **no se implementó**: depende de un preview
+  deployment estable. Ya no por `VERCEL_TOKEN` (cargado el 18 sep 2026), y a
+  diferencia de k6 aquí un preview sí sirve: ZAP escanea por HTTP y no le
+  importa contra qué base lee el objetivo.
 
 ### Diseño (referencia)
 
@@ -354,13 +355,17 @@ gastar tiempo depurando. La suite e2e (bases sqlite locales por corrida, sin
 Turso) sigue siendo la fuente de verdad para esta garantía - reconfirmada 36/36
 en un arranque limpio antes de que la contención empezara.
 
-**Etapa 7 = LAB Fase 5 (k6)**
-- Según plan original (scripts en `lab/k6/`, tabla `load_test_runs`, ingesta
-  `kind:'load_test'`, página admin, workflow manual con guard anti-prod).
-- Prerrequisito operativo: target de preview/staging estable. `VERCEL_TOKEN`
-  en GitHub Secrets ya está cargado (18 sep 2026), así que el prerrequisito
-  pasa a ser solo el target, no la credencial.
-- Encender tarjeta de load testing en `/lab` público.
+**Etapa 7 = LAB Fase 5 (k6)** ✅ COMPLETA (18 sep 2026)
+- Entregado: tabla `load_test_runs` (migración 0033, aplicada a las dos bases),
+  parser puro `src/lib/lab/load-test.ts` con 21 tests sobre corridas reales,
+  ingesta `kind:'load_test'`, `GET /api/admin/lab/load`, página
+  `/admin/lab/load` con gráfica SVG por escalón, `load-test.yml` manual con
+  guard anti-prod, y tarjeta de load testing encendida en `/lab` público.
+- El prerrequisito que este plan daba por operativo (un target de preview
+  estable) resultó ser imposible por diseño, no por falta de `VERCEL_TOKEN`: el
+  guardarraíl exige que el objetivo lea de una base local y un preview lee
+  Turso. El workflow levanta el sitio en el runner contra bases libsql
+  desechables, que sale gratis y no depende de ningún secret de Vercel.
 
 ## Etapa 8 - Remate vitrina de seguridad ✅ CÓDIGO COMPLETO
 
