@@ -180,7 +180,7 @@ const runBadge = {
 // La tarjeta de SAST/a11y solo aparece en "En construcción" mientras no haya
 // hallazgos ingeridos; en cuanto CI reporte, arriba se muestra la sección real.
 const upcoming = [
-  { title: lb.upcoming.k6Title, desc: lb.upcoming.k6Desc },
+  ...(lastLoad ? [] : [{ title: lb.upcoming.k6Title, desc: lb.upcoming.k6Desc }]),
   ...(hasFindings ? [] : [{ title: lb.upcoming.sastTitle, desc: lb.upcoming.sastDesc }]),
   ...(lastMutation ? [] : [{ title: lb.upcoming.mutationTitle, desc: lb.upcoming.mutationDesc }]),
 ]
