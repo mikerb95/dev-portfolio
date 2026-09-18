@@ -375,7 +375,7 @@ const upcoming = [
           </div>
           <div class="rounded-2xl glass p-5">
             <div class="font-mono text-[22px] leading-none text-ink-50">
-              {lastLoad.p95 === null ? '-' : `${Math.round(lastLoad.p95)}ms`}
+              {lastLoad.p95 === null ? '-' : lastLoad.p95 >= 1000 ? `${(lastLoad.p95 / 1000).toFixed(1)}s` : `${Math.round(lastLoad.p95)}ms`}
             </div>
             <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.p95}</div>
           </div>
