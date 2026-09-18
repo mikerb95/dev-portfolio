@@ -1455,6 +1455,13 @@ export const loadTestRuns = sqliteTable('load_test_runs', {
 }, (t) => ({
   // El panel lista por fecha de corrida descendente.
   ranAtIdx: index('load_test_runs_ran_at_idx').on(t.ranAt),
+  // Identidad de una corrida: su escenario y el instante en que corrió (el
+  // summary trae la fecha con milisegundos). Reingerir el mismo archivo no crea
+  // una corrida nueva, y eso importa porque el paso de reporte del workflow
+  // corre con `always()`: si el job falla antes de k6, vuelve a mandar los
+  // resúmenes que el repo versiona. Sin este índice, cada fallo duplicaba el
+  // historial del panel.
+  corridaUnica: uniqueIndex('load_test_runs_scenario_ran_at_idx').on(t.scenario, t.ranAt),
 }))
 
 // Costos de vida: la plantilla de gastos fijos del hogar (arriendo, servicios,

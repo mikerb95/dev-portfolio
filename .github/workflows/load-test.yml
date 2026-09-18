@@ -87,6 +87,16 @@ jobs:
 
       - uses: grafana/setup-k6-action@v1
 
+      - name: Vaciar resultados versionados
+        # El repo versiona corridas históricas en lab/k6/resultados/, y el paso
+        # de reporte corre con `always()`. Si esta limpieza viviera dentro del
+        # paso de k6 (donde estaba), un job que falla antes de llegar ahí
+        # reenviaría el histórico entero al panel. Pasó en la corrida del 18 sep
+        # 2026: cinco corridas de agosto ingeridas por un arranque fallido.
+        # La ingesta además es idempotente, así que son dos capas para el mismo
+        # accidente.
+        run: rm -f lab/k6/resultados/*.json
+
       - name: Levantar el sitio contra bases desechables
         if: inputs.target_url == ''
         env:
@@ -145,10 +155,6 @@ jobs:
         run: |
           if [ -z "$TARGET" ]; then TARGET="http://127.0.0.1:$PUERTO"; fi
           echo "Objetivo: $TARGET"
-          # El repo versiona corridas históricas en lab/k6/resultados/. Si no se
-          # limpian, el paso de reporte las volvería a ingerir en cada job y el
-          # panel se llenaría de duplicados de agosto.
-          rm -f lab/k6/resultados/*.json
           CODIGO=0
           case "${{ inputs.escenario }}" in
             carga)  k6 run lab/k6/carga.js  -e TARGET="$TARGET" || CODIGO=$? ;;

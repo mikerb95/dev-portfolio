@@ -1,8 +1,10 @@
 import type { APIRoute } from 'astro'
 import { timingSafeEqual } from 'node:crypto'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../../../db'
 import { ciRuns, loadTestRuns } from '../../../db/schema'
 import { parseK6Summary } from '../../../lib/lab/load-test'
+import { isUniqueViolation } from '../../../lib/db-unique'
 import { normalizeFinding, parseAxeViolations, parseNpmAudit, parseZapReport } from '../../../lib/lab/findings'
 import { autoResolveStale, ingestFindings } from '../../../lib/lab/findings-store'
 
@@ -118,35 +120,50 @@ async function ingestLoadTest(body: Record<string, unknown>): Promise<Response> 
   if (!parsed.ok) return json(400, { error: parsed.error })
 
   const r = parsed.run
-  const [row] = await db
-    .insert(loadTestRuns)
-    .values({
-      tool: r.tool,
-      scenario: r.scenario,
-      target: r.target,
-      vusMax: r.vusMax,
-      durationS: r.durationS,
-      requests: r.requests,
-      rps: r.rps,
-      p50: r.p50,
-      p95: r.p95,
-      p99: r.p99,
-      avgMs: r.avgMs,
-      maxMs: r.maxMs,
-      errorRatePct: r.errorRatePct,
-      checksPassed: r.checksPassed,
-      checksFailed: r.checksFailed,
-      thresholdsOk: r.thresholdsOk,
-      sustainedRps: r.sustainedRps,
-      breakingPointRps: r.breakingPointRps,
-      recoveredAfterS: r.recoveredAfterS,
-      stepsJson: JSON.stringify(r.steps),
-      findingsJson: JSON.stringify(r.findings),
-      rawJson: r.rawJson,
-      ranAt: r.ranAt,
-      createdAt: new Date(),
-    })
-    .returning({ id: loadTestRuns.id })
+  let row: { id: number }
+  try {
+    ;[row] = await db
+      .insert(loadTestRuns)
+      .values({
+        tool: r.tool,
+        scenario: r.scenario,
+        target: r.target,
+        vusMax: r.vusMax,
+        durationS: r.durationS,
+        requests: r.requests,
+        rps: r.rps,
+        p50: r.p50,
+        p95: r.p95,
+        p99: r.p99,
+        avgMs: r.avgMs,
+        maxMs: r.maxMs,
+        errorRatePct: r.errorRatePct,
+        checksPassed: r.checksPassed,
+        checksFailed: r.checksFailed,
+        thresholdsOk: r.thresholdsOk,
+        sustainedRps: r.sustainedRps,
+        breakingPointRps: r.breakingPointRps,
+        recoveredAfterS: r.recoveredAfterS,
+        stepsJson: JSON.stringify(r.steps),
+        findingsJson: JSON.stringify(r.findings),
+        rawJson: r.rawJson,
+        ranAt: r.ranAt,
+        createdAt: new Date(),
+      })
+      .returning({ id: loadTestRuns.id })
+  } catch (e) {
+    // Reingerir la misma corrida no es un error del que haya que enterarse: el
+    // paso de reporte del workflow corre con `always()` y reenvía los resúmenes
+    // que el repo versiona cuando el job falla antes de k6. Se responde con la
+    // fila que ya existía, igual que un replay de idempotencia en pagos.
+    if (!isUniqueViolation(e)) throw e
+    const [existente] = await db
+      .select({ id: loadTestRuns.id })
+      .from(loadTestRuns)
+      .where(and(eq(loadTestRuns.scenario, r.scenario), eq(loadTestRuns.ranAt, r.ranAt)))
+      .limit(1)
+    return json(200, { ok: true, id: existente?.id ?? null, escalones: r.steps.length, duplicate: true })
+  }
 
   return json(201, { ok: true, id: row.id, escalones: r.steps.length })
 }

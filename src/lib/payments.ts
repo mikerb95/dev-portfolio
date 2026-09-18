@@ -17,6 +17,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { payments, paymentEvents } from '../db/schema'
+import { isUniqueViolation } from './db-unique'
 import { sendPush } from './notify'
 import { canTransition, type PaymentStatus } from './payments-state'
 
@@ -100,15 +101,6 @@ export const isValidIdempotencyKey = (k: unknown): k is string =>
   typeof k === 'string' && IDEMPOTENCY_RE.test(k)
 
 export type Payment = typeof payments.$inferSelect
-
-/** Detecta violación de UNIQUE recorriendo la cadena de causas del error. */
-function isUniqueViolation(e: unknown): boolean {
-  for (let err = e, depth = 0; err && depth < 5; err = (err as { cause?: unknown }).cause, depth++) {
-    const { message, code } = err as { message?: string; code?: string }
-    if (/unique|constraint/i.test(message ?? '') || /CONSTRAINT/i.test(code ?? '')) return true
-  }
-  return false
-}
 
 /**
  * Un replay solo es válido si pide LO MISMO: misma clave con otro monto/moneda

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `load_test_runs_scenario_ran_at_idx` ON `load_test_runs` (`scenario`,`ran_at`);
