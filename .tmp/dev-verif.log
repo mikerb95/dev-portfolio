@@ -1,0 +1,7 @@
+
+> portfolio@0.0.1 dev
+> astro dev --port 4401 --ignore-lock
+
+07:27:57 [vite] connected.
+07:28:01 [types] Generated 1ms
+07:28:01 [vite] connected.
