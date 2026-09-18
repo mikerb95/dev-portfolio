@@ -1178,6 +1178,18 @@ const es = {
       securityBody: 'Micro-SIEM propio: intentos de intrusión detectados y bloqueados, en agregado y en vivo.',
       securityCta: 'Ver /security →',
     },
+    load: {
+      heading: 'Pruebas de carga',
+      bodyPre: 'Una escalera de carga creciente contra un entorno desechable hasta encontrar el punto donde el sistema',
+      breakWord: 'se rompe',
+      bodyPost: 'y cuánto tarda en volver cuando la carga cesa. Medido en meseta, no en la rampa: promediar las dos mezcla un nivel sano con uno saturado.',
+      sustained: 'Sostenido sin error',
+      breaking: 'Punto de quiebre',
+      recovery: 'Recuperación',
+      p95: 'p95 de la corrida',
+      noBreak: 'sin quiebre',
+      noRecovery: 'no volvió',
+    },
     upcoming: {
       heading: 'En construcción',
       k6Title: 'Load testing (k6)',
