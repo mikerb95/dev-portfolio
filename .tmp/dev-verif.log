@@ -30,3 +30,5 @@ Error: Failed to load url astro:server-app.js (resolved id: astro:server-app.js)
 07:29:43 [204] POST /api/vitals 20ms
 07:29:44 [200] /demo 21ms
 07:29:44 [204] POST /api/vitals 12ms
+07:30:05 [302] POST /demo 13ms
+07:30:05 [200] /admin 118ms
