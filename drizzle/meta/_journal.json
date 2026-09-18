@@ -239,6 +239,13 @@
       "when": 1789734204979,
       "tag": "0033_legal_sabra",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1789735732179,
+      "tag": "0034_unusual_arachne",
+      "breakpoints": true
     }
   ]
 }

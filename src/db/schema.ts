@@ -1456,3 +1456,54 @@ export const loadTestRuns = sqliteTable('load_test_runs', {
   // El panel lista por fecha de corrida descendente.
   ranAtIdx: index('load_test_runs_ran_at_idx').on(t.ranAt),
 }))
+
+// Costos de vida: la plantilla de gastos fijos del hogar (arriendo, servicios,
+// suscripciones personales). Va aparte de project_services a propósito: aquella
+// tabla es inventario de infraestructura con bóveda, cliente y P&L, y mezclar
+// ahí el arriendo ensuciaría el margen de cada proyecto.
+export const livingCosts = sqliteTable('living_costs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  category: text('category', {
+    enum: ['vivienda', 'servicios', 'alimentacion', 'transporte', 'salud', 'seguros', 'educacion', 'suscripciones', 'deudas', 'ocio', 'otros'],
+  }).notNull(),
+  // Monto esperado. En los fijos que varían (luz, agua) es una estimación: el
+  // valor real de cada mes vive en living_expenses.
+  amount: real('amount').notNull(),
+  currency: text('currency').notNull().default('COP'),
+  // Bimestral existe porque en Colombia el agua y el gas se facturan así.
+  cycle: text('cycle', { enum: ['monthly', 'bimonthly', 'quarterly', 'annual'] }).notNull().default('monthly'),
+  // Mes (1-12) en que cae el cobro de los ciclos no mensuales. Entero y no
+  // fecha: un "vence en marzo" no es un instante y así no hay zona horaria que
+  // lo corra al mes anterior.
+  anchorMonth: integer('anchor_month'),
+  dueDay: integer('due_day'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
+// Lo que se gastó de verdad en un mes. Si `livingCostId` apunta a un fijo, la
+// fila es el pago real de ese fijo en el periodo; si es null, es un gasto
+// variable (mercado, transporte, un imprevisto).
+export const livingExpenses = sqliteTable('living_expenses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Mes ISO YYYY-MM al que se imputa el gasto, que no siempre es el de la fecha
+  // de pago (el arriendo de octubre se paga el 30 de septiembre).
+  periodo: text('periodo').notNull(),
+  livingCostId: integer('living_cost_id').references(() => livingCosts.id, { onDelete: 'set null' }),
+  category: text('category', {
+    enum: ['vivienda', 'servicios', 'alimentacion', 'transporte', 'salud', 'seguros', 'educacion', 'suscripciones', 'deudas', 'ocio', 'otros'],
+  }).notNull(),
+  description: text('description').notNull(),
+  amount: real('amount').notNull(),
+  currency: text('currency').notNull().default('COP'),
+  // Fecha de calendario 'YYYY-MM-DD', texto por la misma razón que anchorMonth.
+  spentOn: text('spent_on'),
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+}, (t) => ({
+  // Toda lectura es "los gastos de este mes"; sin índice sería un scan (RNF-25).
+  periodoIdx: index('living_expenses_periodo_idx').on(t.periodo),
+}))
