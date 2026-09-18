@@ -1,0 +1,475 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { livingCosts, livingExpenses, appSettings } from '../../db/schema'
+import { eq, desc } from 'drizzle-orm'
+import { parseRates, fmtMoney, fmtUSD, CURRENCIES } from '../../lib/money'
+import {
+  LIVING_CATEGORIES, LIVING_CATEGORY_LABELS, LIVING_CYCLE_LABELS, esPeriodo,
+} from '../../lib/vida'
+import { resumenMensual, periodoActual, sumarMeses } from '../../lib/resumen-mensual'
+import { formatterCO } from '../../lib/fecha-co'
+
+const qMes = Astro.url.searchParams.get('mes')
+const periodo = esPeriodo(qMes) ? qMes : periodoActual()
+
+const [fijos, gastos, settingsRows] = await Promise.all([
+  db.select().from(livingCosts).orderBy(desc(livingCosts.active), livingCosts.dueDay, livingCosts.name),
+  db.select().from(livingExpenses).where(eq(livingExpenses.periodo, periodo)).orderBy(desc(livingExpenses.spentOn), desc(livingExpenses.id)),
+  db.select().from(appSettings),
+])
+const rates = parseRates(settingsRows)
+
+const vida = resumenMensual(periodo, {
+  servicios: [],
+  fijos: fijos.map((f) => ({ ...f, active: !!f.active })),
+  gastos,
+  rates,
+}).vida
+
+// Los montos de vida nacen en pesos: se muestran en COP si hay tasa, y en USD
+// solo si falta, para que el total no mienta con un cero.
+const cop = rates.COP
+const fmtTotal = (usd: number) => (cop ? fmtMoney(usd * cop, 'COP', 0) : fmtUSD(usd, 2))
+const fmtNativo = (monto: number, moneda: string) => fmtMoney(monto, moneda, moneda === 'COP' ? 0 : 2)
+
+const mesLargo = formatterCO({ month: 'long', year: 'numeric' })
+const nombreMes = (p: string) => mesLargo.format(new Date(`${p}-15T12:00:00-05:00`))
+const NOMBRES_MES = Array.from({ length: 12 }, (_, i) =>
+  formatterCO({ month: 'long' }).format(new Date(`2026-${String(i + 1).padStart(2, '0')}-15T12:00:00-05:00`)))
+
+const nombreFijo = new Map(fijos.map((f) => [f.id, f.name]))
+const ejecucion = vida.presupuestoUSD > 0 ? Math.round((vida.realUSD / vida.presupuestoUSD) * 100) : null
+const esMesActual = periodo === periodoActual()
+
+// Datos para los formularios (todo es del admin; aquí no hay secretos)
+const fijosJson = fijos.map((f) => ({
+  id: f.id, name: f.name, category: f.category, amount: f.amount, currency: f.currency,
+  cycle: f.cycle, anchorMonth: f.anchorMonth ?? '', dueDay: f.dueDay ?? '', active: !!f.active, notes: f.notes ?? '',
+}))
+const gastosJson = gastos.map((g) => ({
+  id: g.id, periodo: g.periodo, livingCostId: g.livingCostId ?? '', category: g.category,
+  description: g.description, amount: g.amount, currency: g.currency, spentOn: g.spentOn ?? '', notes: g.notes ?? '',
+}))
+---
+
+<AdminLayout title="Costos de vida">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div class="flex items-center gap-2">
+      <a href={`?mes=${sumarMeses(periodo, -1)}`} class="h-8 w-8 grid place-items-center rounded-full border border-white/10 text-ink-200 hover:bg-white/5" aria-label="Mes anterior">‹</a>
+      <h2 class="text-[15px] font-medium text-ink-50 capitalize min-w-[9.5rem] text-center">{nombreMes(periodo)}</h2>
+      <a href={`?mes=${sumarMeses(periodo, 1)}`} class="h-8 w-8 grid place-items-center rounded-full border border-white/10 text-ink-200 hover:bg-white/5" aria-label="Mes siguiente">›</a>
+      {!esMesActual && <a href="?" class="ml-1 text-[11px] font-mono text-cyan hover:underline">hoy</a>}
+    </div>
+    <div class="flex items-center gap-2">
+      <a href={`/admin/resumen?mes=${periodo}`} class="h-9 px-4 inline-flex items-center text-[13px] rounded-full border border-white/10 text-ink-200 hover:bg-white/5">Resumen del mes</a>
+      <button id="btn-fijo" class="h-9 px-4 text-[13px] rounded-full border border-white/10 text-ink-100 hover:bg-white/5">Nuevo fijo</button>
+      <button id="btn-gasto" class="h-9 px-4 text-[13px] font-medium rounded-full bg-cyan/15 text-cyan border border-cyan/30 hover:bg-cyan/25">Registrar gasto</button>
+    </div>
+  </div>
+
+  {!cop && (
+    <div class="mb-5 rounded-xl border border-ember/30 bg-ember/[.07] px-4 py-3 text-[12px] text-ink-100">
+      Falta la tasa COP, así que los totales se muestran en USD y los montos en pesos no se suman.
+      <a href="/admin/settings" class="text-cyan hover:underline ml-1">Configurar en Ajustes →</a>
+    </div>
+  )}
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Presupuesto fijo</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-ink-50 tracking-tight">{fmtTotal(vida.presupuestoUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">{vida.fijos.length} fijos caen este mes</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Gastado real</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-cyan tracking-tight">{fmtTotal(vida.realUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">{gastos.length} registros{ejecucion != null ? ` · ${ejecucion}% del fijo` : ''}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Por pagar</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${vida.pendienteUSD > 0 ? 'text-violet' : 'text-ink-50'}`}>{fmtTotal(vida.pendienteUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">{vida.fijos.filter((f) => f.estado === 'pendiente').length} fijos sin pago registrado</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Costo del mes</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-ink-50 tracking-tight">{fmtTotal(vida.totalUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">pagado + pendiente · prom. {fmtTotal(vida.equivalenteMensualUSD)}</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+    <!-- Fijos del mes -->
+    <section class="lg:col-span-2 rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Fijos de este mes</div>
+      {vida.fijos.length === 0 && <p class="text-[12px] font-mono text-ink-300">No hay fijos que caigan este mes. Da de alta el arriendo, los servicios y las suscripciones personales con "Nuevo fijo".</p>}
+      <ul class="divide-y divide-white/5">
+        {vida.fijos.map((f) => (
+          <li class="flex items-center gap-3 py-2.5">
+            <span class={`h-2 w-2 rounded-full shrink-0 ${f.estado === 'pagado' ? 'bg-cyan' : 'bg-white/20'}`} aria-hidden="true"></span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[13px] text-ink-50 truncate">{f.nombre}</div>
+              <div class="text-[10.5px] font-mono text-ink-300">
+                {LIVING_CATEGORY_LABELS[f.categoria]} · {LIVING_CYCLE_LABELS[f.ciclo]}{f.dia ? ` · día ${f.dia}` : ''}
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="text-[12.5px] font-mono text-ink-50">
+                {f.realUSD != null ? fmtTotal(f.realUSD) : fmtNativo(f.presupuesto, f.moneda)}
+              </div>
+              <div class="text-[10px] font-mono text-ink-300">
+                {f.estado === 'pagado' ? `pagado · presup. ${fmtNativo(f.presupuesto, f.moneda)}` : 'pendiente'}
+              </div>
+            </div>
+            {f.estado === 'pendiente' && (
+              <button class="pay-btn shrink-0 h-7 px-3 text-[11px] rounded-full border border-cyan/30 text-cyan hover:bg-cyan/10" data-fijo={f.id}>Pagar</button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- Por categoría -->
+    <section class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Por categoría</div>
+      {vida.porCategoria.length === 0 && <p class="text-[12px] font-mono text-ink-300">Sin datos.</p>}
+      <div class="space-y-3">
+        {vida.porCategoria.map((c) => {
+          const tope = Math.max(c.presupuestoUSD, c.realUSD) || 1
+          return (
+            <div>
+              <div class="flex items-center justify-between text-[12px]">
+                <span class="text-ink-100">{LIVING_CATEGORY_LABELS[c.categoria]}</span>
+                <span class="font-mono text-ink-50">{fmtTotal(c.realUSD)}</span>
+              </div>
+              <div class="mt-1 h-1.5 rounded-full bg-white/[.06] overflow-hidden" title={`Real ${fmtTotal(c.realUSD)} de ${fmtTotal(c.presupuestoUSD)} presupuestado`}>
+                <div class="h-full rounded-full bg-cyan/70" style={`width:${Math.min(100, (c.realUSD / tope) * 100)}%`}></div>
+              </div>
+              <div class="mt-0.5 text-[10px] font-mono text-ink-300">presupuesto {fmtTotal(c.presupuestoUSD)}</div>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  </div>
+
+  <!-- Gastos del mes -->
+  <section class="rounded-2xl glass p-5 mb-6">
+    <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Registro de {nombreMes(periodo)}</div>
+    {gastos.length === 0 && <p class="text-[12px] font-mono text-ink-300">Sin gastos registrados este mes.</p>}
+    {gastos.length > 0 && (
+      <div class="overflow-x-auto">
+        <table class="w-full text-[12.5px]">
+          <thead>
+            <tr class="text-left text-[10px] font-mono uppercase tracking-wider text-ink-300">
+              <th class="py-2 pr-3 font-normal">Fecha</th>
+              <th class="py-2 pr-3 font-normal">Descripción</th>
+              <th class="py-2 pr-3 font-normal">Categoría</th>
+              <th class="py-2 pr-3 font-normal text-right">Monto</th>
+              <th class="py-2 font-normal"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {gastos.map((g) => (
+              <tr>
+                <td class="py-2 pr-3 font-mono text-ink-300 whitespace-nowrap">{g.spentOn ?? '-'}</td>
+                <td class="py-2 pr-3 text-ink-50">
+                  {g.description}
+                  {g.livingCostId != null && nombreFijo.has(g.livingCostId) && (
+                    <span class="ml-2 text-[10px] font-mono text-cyan/80">fijo · {nombreFijo.get(g.livingCostId)}</span>
+                  )}
+                </td>
+                <td class="py-2 pr-3 text-ink-200">{LIVING_CATEGORY_LABELS[g.category]}</td>
+                <td class="py-2 pr-3 font-mono text-ink-50 text-right whitespace-nowrap">{fmtNativo(g.amount, g.currency)}</td>
+                <td class="py-2 text-right whitespace-nowrap">
+                  <button class="gasto-edit text-[11px] font-mono text-ink-200 hover:text-cyan" data-id={g.id}>editar</button>
+                  <button class="gasto-del ml-2 text-[11px] font-mono text-ink-300 hover:text-ember" data-id={g.id}>borrar</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </section>
+
+  <!-- Plantilla de fijos -->
+  <section class="rounded-2xl glass p-5">
+    <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Plantilla de gastos fijos</div>
+    {fijos.length === 0 && <p class="text-[12px] font-mono text-ink-300">Aún no hay fijos.</p>}
+    {fijos.length > 0 && (
+      <div class="overflow-x-auto">
+        <table class="w-full text-[12.5px]">
+          <thead>
+            <tr class="text-left text-[10px] font-mono uppercase tracking-wider text-ink-300">
+              <th class="py-2 pr-3 font-normal">Nombre</th>
+              <th class="py-2 pr-3 font-normal">Categoría</th>
+              <th class="py-2 pr-3 font-normal">Ciclo</th>
+              <th class="py-2 pr-3 font-normal text-right">Monto</th>
+              <th class="py-2 font-normal"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {fijos.map((f) => (
+              <tr class={f.active ? '' : 'opacity-50'}>
+                <td class="py-2 pr-3 text-ink-50">{f.name}{!f.active && <span class="ml-2 text-[10px] font-mono text-ink-300">inactivo</span>}</td>
+                <td class="py-2 pr-3 text-ink-200">{LIVING_CATEGORY_LABELS[f.category]}</td>
+                <td class="py-2 pr-3 text-ink-200 whitespace-nowrap">
+                  {LIVING_CYCLE_LABELS[f.cycle]}
+                  {f.anchorMonth && <span class="text-ink-300"> · desde {NOMBRES_MES[f.anchorMonth - 1]}</span>}
+                  {f.dueDay && <span class="text-ink-300"> · día {f.dueDay}</span>}
+                </td>
+                <td class="py-2 pr-3 font-mono text-ink-50 text-right whitespace-nowrap">{fmtNativo(f.amount, f.currency)}</td>
+                <td class="py-2 text-right whitespace-nowrap">
+                  <button class="fijo-edit text-[11px] font-mono text-ink-200 hover:text-cyan" data-id={f.id}>editar</button>
+                  <button class="fijo-del ml-2 text-[11px] font-mono text-ink-300 hover:text-ember" data-id={f.id}>borrar</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </section>
+
+  <script is:inline type="application/json" id="vida-json" set:html={JSON.stringify({ periodo, fijos: fijosJson, gastos: gastosJson })}></script>
+
+  <!-- Slide-over: gasto fijo -->
+  <div id="fijo-overlay" class="fixed inset-0 z-[60] hidden">
+    <div data-close="fijo" class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
+    <div class="absolute inset-y-0 right-0 w-full max-w-md glass-strong border-l border-white/10 overflow-y-auto">
+      <form id="fijo-form" class="p-5 md:p-6 space-y-4">
+        <h2 id="fijo-title" class="text-lg font-medium text-ink-50">Nuevo fijo</h2>
+        <input type="hidden" name="id" />
+        <div>
+          <label for="fx-name" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Nombre *</label>
+          <input id="fx-name" name="name" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Arriendo, Internet, Spotify…" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="fx-category" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Categoría</label>
+            <select id="fx-category" name="category" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {LIVING_CATEGORIES.map((c) => <option value={c}>{LIVING_CATEGORY_LABELS[c]}</option>)}
+            </select>
+          </div>
+          <div>
+            <label for="fx-cycle" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Ciclo</label>
+            <select id="fx-cycle" name="cycle" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {Object.entries(LIVING_CYCLE_LABELS).map(([v, l]) => <option value={v}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="fx-amount" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Monto *</label>
+            <input id="fx-amount" name="amount" type="number" step="any" min="0" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+          </div>
+          <div>
+            <label for="fx-currency" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Moneda</label>
+            <select id="fx-currency" name="currency" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {['COP', ...CURRENCIES.filter((c) => c !== 'COP')].map((c) => <option value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div id="fx-anchor-wrap">
+            <label for="fx-anchor" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Mes del cobro</label>
+            <select id="fx-anchor" name="anchorMonth" class="input-base w-full rounded-lg px-3 py-2 text-[13px] capitalize">
+              <option value="">-</option>
+              {NOMBRES_MES.map((m, i) => <option value={i + 1}>{m}</option>)}
+            </select>
+          </div>
+          <div>
+            <label for="fx-day" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Día de pago</label>
+            <input id="fx-day" name="dueDay" type="number" min="1" max="31" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-[12px] text-ink-100"><input name="active" type="checkbox" class="w-4 h-4 accent-cyan" checked /> Activo</label>
+        <div>
+          <label for="fx-notes" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Notas</label>
+          <textarea id="fx-notes" name="notes" rows="2" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea>
+        </div>
+        <p data-error class="hidden text-[12px] text-ember"></p>
+        <div class="flex items-center gap-2 pt-1">
+          <button type="submit" class="h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow">Guardar</button>
+          <button type="button" data-close="fijo" class="h-9 px-4 text-[13px] rounded-full border border-white/10 text-ink-200 hover:bg-white/5">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Slide-over: gasto real -->
+  <div id="gasto-overlay" class="fixed inset-0 z-[60] hidden">
+    <div data-close="gasto" class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
+    <div class="absolute inset-y-0 right-0 w-full max-w-md glass-strong border-l border-white/10 overflow-y-auto">
+      <form id="gasto-form" class="p-5 md:p-6 space-y-4">
+        <h2 id="gasto-title" class="text-lg font-medium text-ink-50">Registrar gasto</h2>
+        <input type="hidden" name="id" />
+        <div>
+          <label for="gx-desc" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Descripción *</label>
+          <input id="gx-desc" name="description" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Mercado, taxi, farmacia…" />
+        </div>
+        <div>
+          <label for="gx-fijo" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Pago de un fijo</label>
+          <select id="gx-fijo" name="livingCostId" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+            <option value="">- (gasto variable)</option>
+            {fijos.map((f) => <option value={f.id}>{f.name}</option>)}
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="gx-amount" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Monto *</label>
+            <input id="gx-amount" name="amount" type="number" step="any" min="0" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+          </div>
+          <div>
+            <label for="gx-currency" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Moneda</label>
+            <select id="gx-currency" name="currency" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {['COP', ...CURRENCIES.filter((c) => c !== 'COP')].map((c) => <option value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="gx-category" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Categoría</label>
+            <select id="gx-category" name="category" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">
+              {LIVING_CATEGORIES.map((c) => <option value={c}>{LIVING_CATEGORY_LABELS[c]}</option>)}
+            </select>
+          </div>
+          <div>
+            <label for="gx-date" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Fecha</label>
+            <input id="gx-date" name="spentOn" type="date" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+          </div>
+        </div>
+        <div>
+          <label for="gx-periodo" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Se imputa al mes</label>
+          <input id="gx-periodo" name="periodo" type="month" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" />
+        </div>
+        <div>
+          <label for="gx-notes" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Notas</label>
+          <textarea id="gx-notes" name="notes" rows="2" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea>
+        </div>
+        <p data-error class="hidden text-[12px] text-ember"></p>
+        <div class="flex items-center gap-2 pt-1">
+          <button type="submit" class="h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow">Guardar</button>
+          <button type="button" data-close="gasto" class="h-9 px-4 text-[13px] rounded-full border border-white/10 text-ink-200 hover:bg-white/5">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  type Row = Record<string, any>
+  const { periodo, fijos, gastos } = JSON.parse(document.getElementById('vida-json')!.textContent || '{}') as {
+    periodo: string; fijos: Row[]; gastos: Row[]
+  }
+  const fijoById = new Map<number, Row>(fijos.map((f) => [f.id, f]))
+  const gastoById = new Map<number, Row>(gastos.map((g) => [g.id, g]))
+
+  const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
+
+  function montar(nombre: 'fijo' | 'gasto', endpoint: string) {
+    const overlay = document.getElementById(`${nombre}-overlay`)!
+    const form = document.getElementById(`${nombre}-form`) as HTMLFormElement
+    const err = form.querySelector<HTMLElement>('[data-error]')!
+    const cerrar = () => overlay.classList.add('hidden')
+    overlay.querySelectorAll(`[data-close="${nombre}"]`).forEach((el) => el.addEventListener('click', cerrar))
+
+    function abrir(titulo: string, valores: Row) {
+      form.reset()
+      err.classList.add('hidden')
+      document.getElementById(`${nombre}-title`)!.textContent = titulo
+      for (const [k, v] of Object.entries(valores)) {
+        const el = form.elements.namedItem(k) as HTMLInputElement | null
+        if (!el) continue
+        if (el.type === 'checkbox') el.checked = !!v
+        else el.value = v == null ? '' : String(v)
+      }
+      form.dispatchEvent(new Event('change'))
+      overlay.classList.remove('hidden')
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const fd = new FormData(form)
+      const payload: Row = Object.fromEntries(fd.entries())
+      const active = form.elements.namedItem('active') as HTMLInputElement | null
+      if (active) payload.active = active.checked
+      const id = Number(payload.id)
+      if (!id) delete payload.id
+      const res = await fetch(endpoint, {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        err.textContent = j.error || 'No se pudo guardar.'
+        err.classList.remove('hidden')
+        return
+      }
+      location.reload()
+    })
+
+    return abrir
+  }
+
+  async function borrar(endpoint: string, id: number, pregunta: string) {
+    if (!confirm(pregunta)) return
+    await fetch(endpoint, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    location.reload()
+  }
+
+  const abrirFijo = montar('fijo', '/api/admin/vida/fijos')
+  const abrirGasto = montar('gasto', '/api/admin/vida/gastos')
+
+  // El mes del cobro solo tiene sentido en ciclos no mensuales.
+  const fijoForm = document.getElementById('fijo-form') as HTMLFormElement
+  const anchorWrap = document.getElementById('fx-anchor-wrap')!
+  fijoForm.addEventListener('change', () => {
+    const ciclo = (fijoForm.elements.namedItem('cycle') as HTMLSelectElement).value
+    anchorWrap.classList.toggle('invisible', ciclo === 'monthly')
+  })
+
+  // Elegir un fijo en el gasto copia su categoría y monto como punto de partida.
+  const gastoForm = document.getElementById('gasto-form') as HTMLFormElement
+  ;(gastoForm.elements.namedItem('livingCostId') as HTMLSelectElement).addEventListener('change', (e) => {
+    const f = fijoById.get(Number((e.target as HTMLSelectElement).value))
+    if (!f) return
+    const set = (k: string, v: unknown) => { (gastoForm.elements.namedItem(k) as HTMLInputElement).value = String(v) }
+    set('category', f.category)
+    set('currency', f.currency)
+    set('description', f.name)
+    const monto = gastoForm.elements.namedItem('amount') as HTMLInputElement
+    if (!monto.value) monto.value = String(f.amount)
+  })
+
+  const fechaPorDefecto = () => (hoy().startsWith(periodo) ? hoy() : '')
+
+  document.getElementById('btn-fijo')!.addEventListener('click', () => abrirFijo('Nuevo fijo', { active: true, currency: 'COP', cycle: 'monthly' }))
+  document.getElementById('btn-gasto')!.addEventListener('click', () =>
+    abrirGasto('Registrar gasto', { periodo, currency: 'COP', category: 'alimentacion', spentOn: fechaPorDefecto() }))
+
+  document.querySelectorAll<HTMLButtonElement>('.pay-btn').forEach((b) => b.addEventListener('click', () => {
+    const f = fijoById.get(Number(b.dataset.fijo))
+    if (!f) return
+    abrirGasto(`Pagar ${f.name}`, {
+      periodo, livingCostId: f.id, description: f.name, category: f.category,
+      amount: f.amount, currency: f.currency, spentOn: fechaPorDefecto(),
+    })
+  }))
+
+  document.querySelectorAll<HTMLButtonElement>('.fijo-edit').forEach((b) => b.addEventListener('click', () => {
+    const f = fijoById.get(Number(b.dataset.id))
+    if (f) abrirFijo('Editar fijo', f)
+  }))
+  document.querySelectorAll<HTMLButtonElement>('.gasto-edit').forEach((b) => b.addEventListener('click', () => {
+    const g = gastoById.get(Number(b.dataset.id))
+    if (g) abrirGasto('Editar gasto', g)
+  }))
+  document.querySelectorAll<HTMLButtonElement>('.fijo-del').forEach((b) => b.addEventListener('click', () =>
+    borrar('/api/admin/vida/fijos', Number(b.dataset.id), '¿Borrar este fijo? Sus pagos registrados se conservan como gastos variables.')))
+  document.querySelectorAll<HTMLButtonElement>('.gasto-del').forEach((b) => b.addEventListener('click', () =>
+    borrar('/api/admin/vida/gastos', Number(b.dataset.id), '¿Borrar este gasto?')))
+</script>
