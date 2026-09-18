@@ -76,8 +76,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
         <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${c.fill}" fill-opacity="0.75">
           <title>${esc(etiqueta)} · p50 ${ms(s.p50)} · p95 ${ms(s.p95)} · ${n1(s.errorPct)}% error</title>
         </rect>
-        <text x="${(i * ancho + ancho / 2).toFixed(1)}" y="${H - PAD_B + 14}" text-anchor="middle" font-size="10" fill="#71717a">${esc(etiqueta)}</text>
-        <text x="${(i * ancho + ancho / 2).toFixed(1)}" y="${H - PAD_B + 26}" text-anchor="middle" font-size="9" fill="${s.errorPct >= 1 ? c.fill : '#3f3f46'}">${n1(s.errorPct)}%</text>`
+        <text x="${(i * ancho + ancho / 2).toFixed(1)}" y="${H - PAD_B + 17}" text-anchor="middle" font-size="13" fill="#71717a">${esc(etiqueta)}</text>
+        <text x="${(i * ancho + ancho / 2).toFixed(1)}" y="${H - PAD_B + 33}" text-anchor="middle" font-size="12" fill="${s.errorPct >= 1 ? c.fill : '#3f3f46'}">${n1(s.errorPct)}%</text>`
     }).join('')
 
     const puntos = steps.map((s, i) => `${(i * ancho + ancho / 2).toFixed(1)},${(H - PAD_B - alto(s.p50)).toFixed(1)}`).join(' ')
