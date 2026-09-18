@@ -1166,6 +1166,18 @@ const en = {
       securityBody: 'My own micro-SIEM: intrusion attempts detected and blocked, in aggregate and live.',
       securityCta: 'See /security →',
     },
+    load: {
+      heading: 'Load testing',
+      bodyPre: 'A rising load ladder against a disposable environment until it finds the point where the system',
+      breakWord: 'breaks',
+      bodyPost: 'and how long it takes to come back once the load stops. Measured on the plateau, not the ramp: averaging both mixes a healthy level with a saturated one.',
+      sustained: 'Sustained, no errors',
+      breaking: 'Breaking point',
+      recovery: 'Recovery',
+      p95: 'Run p95',
+      noBreak: 'never broke',
+      noRecovery: 'never came back',
+    },
     upcoming: {
       heading: 'Under construction',
       k6Title: 'Load testing (k6)',
