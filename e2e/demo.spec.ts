@@ -53,7 +53,7 @@ test.describe('demo · aislamiento de datos', () => {
   test('ningún dato de la base principal aparece en la demo', async ({ page }) => {
     await entrarALaDemo(page)
 
-    for (const path of ['/admin', '/admin/clients', '/admin/projects', '/admin/costs', '/admin/monitors']) {
+    for (const path of ['/admin', '/admin/clients', '/admin/projects', '/admin/costs', '/admin/monitors', '/admin/vida', '/admin/resumen']) {
       await page.goto(path)
       const html = await page.content()
       expect(html, `${path} filtró datos de la base principal`).not.toContain(E2E.sentinel)
