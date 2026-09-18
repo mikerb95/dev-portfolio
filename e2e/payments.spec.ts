@@ -92,4 +92,12 @@ test.describe('checkout', () => {
     await expect(page.locator('h1').first()).toBeVisible()
     await expect(page.getByRole('tab', { name: 'Pagar un servicio' })).toHaveAttribute('aria-selected', 'true')
   })
+
+  test('/pay/gracias sin datos de Wompi se queda en el texto genérico', async ({ page }) => {
+    // Sin llaves de Wompi el endpoint responde unknown: la página no debe
+    // quedarse en "Confirmando" ni inventar un resultado.
+    await page.goto('/pay/gracias?id=1234-1668624561-38705')
+    await expect(page.locator('#r-eyebrow-text')).toHaveText('Pago enviado')
+    await expect(page.locator('#r-meta')).toBeHidden()
+  })
 })
