@@ -1,0 +1,172 @@
+# Load testing con k6 (LAB Fase 5). Manual siempre: `workflow_dispatch`, nunca
+# en push. Una prueba de carga que corre sola en cada commit es una factura
+# recurrente, no una medición.
+#
+# El objetivo por defecto NO es un preview de Vercel, aunque el plan original
+# lo asumía. El guardarraíl de `lab/k6/lib/perfil.js` exige que el target lea de
+# una base LOCAL (`checks.db.local` de /api/health) y un preview lee Turso: la
+# corrida abortaría en `setup()`. Y con razón - el incidente de agosto de 2026
+# fue exactamente eso, una corrida contra localhost que agotó la cuota de
+# lecturas de la base real porque el .env apuntaba a Turso.
+#
+# Así que el job levanta el sitio en el propio runner contra bases libsql
+# desechables (el mismo `scripts/seed-e2e.mjs` de los e2e) y corre k6 contra
+# ese localhost. Cuesta cero invocaciones de Vercel, cero filas de Turso, y no
+# necesita VERCEL_TOKEN.
+#
+# Lo que esto mide y lo que no: caracteriza la aplicación (dónde está el cuello
+# de botella, qué ruta es cara, cómo se recupera), no la infraestructura de
+# Vercel. Un runner de GitHub tiene 2 vCPU compartidas, así que los números
+# absolutos solo son comparables contra otras corridas del mismo tipo - que es
+# justo para lo que sirve tener la serie en el panel.
+#
+# Secrets opcionales (degrada con gracia si faltan, igual que dast.yml):
+#   LAB_INGEST_TOKEN → habilita el reporte a /admin/lab/load
+# Variables opcionales:
+#   PROD_URL → default https://codebymike.net (solo para construir la URL de ingesta)
+
+name: Load test (k6)
+
+on:
+  workflow_dispatch:
+    inputs:
+      escenario:
+        description: 'Escenario a correr'
+        type: choice
+        options: [carga, estres, ambos]
+        default: carga
+      target_url:
+        description: 'Objetivo alternativo (vacío = servidor efímero del runner). Nunca producción.'
+        type: string
+        default: ''
+      reportar:
+        description: 'Reportar el resultado al panel LAB'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  k6:
+    name: k6 ${{ inputs.escenario }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PUERTO: '4400'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rechazar objetivos de producción
+        # Tercera copia del mismo guardarraíl, a propósito: la primera está en
+        # el script de k6 y la segunda en la ingesta. Aquí corta antes de gastar
+        # un minuto de runner, y sobre todo antes de que exista la posibilidad
+        # de apuntar mal.
+        run: |
+          TARGET="${{ inputs.target_url }}"
+          [ -z "$TARGET" ] && exit 0
+          for DOMINIO in codebymike.net codebymike.tech dev-portfolio.vercel.app; do
+            case "$TARGET" in
+              *"$DOMINIO"*)
+                echo "::error::Objetivo prohibido ($DOMINIO): la carga nunca va contra producción."
+                exit 1
+                ;;
+            esac
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - uses: grafana/setup-k6-action@v1
+
+      - name: Levantar el sitio contra bases desechables
+        if: inputs.target_url == ''
+        env:
+          ASTRO_DEV_BACKGROUND: '0'
+          TURSO_DATABASE_URL: 'file:.tmp/carga-main.db'
+          TURSO_AUTH_TOKEN: ''
+          TURSO_DEMO_URL: 'file:.tmp/carga-demo.db'
+          TURSO_DEMO_AUTH_TOKEN: ''
+          AUTH_SECRET: 'carga-local-no-secreto'
+          ALLOWED_GITHUB_LOGINS: 'nadie-carga'
+          # La bóveda exige 64 hex o el módulo revienta al importarse.
+          ENCRYPTION_KEY: 'k6000000000000000000000000000000000000000000000000000000000000000'
+        run: |
+          mkdir -p .tmp
+          node scripts/seed-e2e.mjs
+          npm run dev -- --port "$PUERTO" --ignore-lock > dev-server.log 2>&1 &
+          echo "Esperando a que el servidor responda…"
+          for i in $(seq 1 60); do
+            SALUD=$(curl -sf --max-time 5 "http://127.0.0.1:$PUERTO/api/health" || true)
+            if [ -n "$SALUD" ]; then
+              echo "$SALUD"
+              # La segunda mitad del guardarraíl, verificada también aquí: si el
+              # servidor quedó conectado a una base remota, k6 abortaría en
+              # setup() y el job moriría con un mensaje mucho menos claro.
+              case "$SALUD" in
+                *'"local":true'*) echo "Base local confirmada."; exit 0 ;;
+                *) echo "::error::El servidor no está leyendo de una base local."; exit 1 ;;
+              esac
+            fi
+            sleep 2
+          done
+          echo "::error::El servidor no respondió en 120 s."
+          cat dev-server.log
+          exit 1
+
+      - name: Correr k6
+        env:
+          TARGET: ${{ inputs.target_url }}
+        run: |
+          [ -z "$TARGET" ] && TARGET="http://127.0.0.1:$PUERTO"
+          echo "Objetivo: $TARGET"
+          CODIGO=0
+          case "${{ inputs.escenario }}" in
+            carga)  k6 run lab/k6/carga.js  -e TARGET="$TARGET" || CODIGO=$? ;;
+            estres) k6 run lab/k6/estres.js -e TARGET="$TARGET" || CODIGO=$? ;;
+            ambos)
+              k6 run lab/k6/carga.js -e TARGET="$TARGET" || CODIGO=$?
+              # Enfriamiento entre corridas: sin él la fase de recuperación de
+              # estres.js mide un sistema que todavía venía drenando la carga
+              # anterior y reporta 100% de error (hallazgo H-03).
+              echo "Enfriando 60 s antes del escenario de estrés…"
+              sleep 60
+              k6 run lab/k6/estres.js -e TARGET="$TARGET" || CODIGO=$?
+              ;;
+          esac
+          # Un umbral incumplido hace que k6 salga con 99, y eso es un resultado
+          # de la prueba, no un fallo del job: el semáforo vive en el panel,
+          # igual que en security.yml y dast.yml.
+          if [ "$CODIGO" != "0" ]; then
+            echo "::warning::k6 salió con código $CODIGO (umbrales incumplidos o carga abortada)."
+          fi
+
+      - name: Reportar al panel LAB
+        if: always() && inputs.reportar
+        env:
+          PROD_URL: ${{ vars.PROD_URL || 'https://codebymike.net' }}
+          LAB_INGEST_TOKEN: ${{ secrets.LAB_INGEST_TOKEN }}
+        run: |
+          if [ -z "$LAB_INGEST_TOKEN" ]; then
+            echo "::warning::Sin LAB_INGEST_TOKEN: se corrió pero no se reporta al panel."
+          fi
+          for RESUMEN in lab/k6/resultados/*.json; do
+            case "$RESUMEN" in *.raw.json) continue ;; esac
+            INGEST_URL="$PROD_URL/api/lab/ingest" node scripts/k6-ingest.mjs "$RESUMEN"
+          done
+        continue-on-error: true
+
+      - name: Subir resultados como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-resultados-${{ inputs.escenario }}
+          path: |
+            lab/k6/resultados/
+            dev-server.log
+          retention-days: 30
