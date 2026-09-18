@@ -10,7 +10,10 @@ const key = () => `e2e-${crypto.randomUUID()}`
 const checkout = (idempotencyKey: string, amountCents = 25_000_00) => ({
   amountCents,
   idempotencyKey,
-  description: 'compra de prueba e2e',
+  kind: 'servicio',
+  payerName: 'Cliente e2e',
+  payerEmail: 'e2e@example.com',
+  concept: 'compra de prueba e2e',
 })
 
 test.describe('checkout', () => {
@@ -74,9 +77,19 @@ test.describe('checkout', () => {
     expect(claveMala.status()).toBe(400)
   })
 
+  test('rechaza un pago sin nombre ni correo', async ({ page }) => {
+    const res = await page.request.post('/api/payments/checkout', {
+      data: { ...checkout(key()), payerName: '', payerEmail: '' },
+      headers: ipDePrueba(),
+      failOnStatusCode: false,
+    })
+    expect(res.status()).toBe(400)
+  })
+
   test('/pay renderiza el formulario de pago', async ({ page }) => {
     const res = await page.goto('/pay')
     expect(res?.status()).toBe(200)
     await expect(page.locator('h1').first()).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Pagar un servicio' })).toHaveAttribute('aria-selected', 'true')
   })
 })

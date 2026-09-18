@@ -1,12 +1,17 @@
 import { entrarALaDemo, expect, test } from './fixtures'
 import { E2E } from '../playwright.config'
 
-test('DEBUG alcance de la fuga', async ({ page }) => {
+test('DEBUG contexto bajo concurrencia', async ({ page }) => {
   await entrarALaDemo(page)
-  for (const path of ['/admin', '/admin/clients', '/admin/projects', '/admin/costs', '/admin/monitors', '/admin/finances']) {
-    await page.goto(path)
-    const html = await page.content()
-    const n = html.split(E2E.sentinel).length - 1
-    console.log(`${path} -> centinela x${n}`)
-  }
+  // Ocho peticiones a la vez con la misma cookie de pase, que es lo que la
+  // corrida en paralelo provoca sin querer.
+  const htmls = await Promise.all(
+    Array.from({ length: 8 }, () => page.request.get('/admin').then((r) => r.text()))
+  )
+  htmls.forEach((h, i) => {
+    const ctx = h.match(/data-ctx="(\w+)"/)?.[1]
+    const loc = h.match(/data-locals="(\w+)"/)?.[1]
+    const n = h.split(E2E.sentinel).length - 1
+    console.log(`#${i} locals=${loc} contexto=${ctx} centinela=${n}`)
+  })
 })

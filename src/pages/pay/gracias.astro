@@ -3,20 +3,28 @@
 export const prerender = true
 
 import BaseLayout from '../../layouts/BaseLayout.astro'
-// Wompi redirige aquí tras el checkout con ?id=<transaction_id>.
-// El estado final llega por webhook; esta página es solo la confirmación visual.
+// Wompi redirige aquí tras el checkout (desde /pay y desde los cobros /c/[code])
+// sin importar si la transacción se aprobó: el texto no puede dar el pago por
+// hecho, solo explicar dónde ver el resultado.
 ---
 
 <BaseLayout title="Gracias - CodeByMike" description="Confirmación de pago." noindex>
-  <div class="max-w-[640px] mx-auto px-6 pt-40 pb-24 text-center">
-    <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300 mb-6">Pago recibido</div>
+  <div class="max-w-[560px] mx-auto px-6 pt-40 pb-24 text-center">
+    <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-200 mb-6">Pago enviado</div>
     <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] mb-6">
       ¡<span class="italic font-serif font-normal text-mask-cyan">Gracias</span>!
     </h1>
-    <p class="text-[15px] text-ink-100 leading-relaxed mb-10">
-      Tu pago está siendo procesado. Recibirás la confirmación de la pasarela;
-      el estado definitivo se registra automáticamente vía webhook.
+    <p class="text-[15px] text-ink-100 leading-relaxed mb-4">
+      Wompi te enviará el comprobante al correo en unos minutos. Con PSE o
+      billeteras digitales la confirmación del banco puede tardar un poco más.
     </p>
-    <a href="/" class="inline-flex items-center h-12 px-6 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all shadow-glow">Volver al inicio</a>
+    <p class="text-[14px] text-ink-200 leading-relaxed mb-10">
+      Si el pago fue rechazado, puedes intentarlo otra vez con otro medio. Si
+      necesitas cuenta de cobro o algo no cuadra, escríbeme.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="https://wa.me/573104641228" target="_blank" rel="noopener" class="inline-flex items-center justify-center h-12 px-6 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all shadow-glow">Escribirme por WhatsApp</a>
+      <a href="/" class="inline-flex items-center justify-center h-12 px-6 text-[14px] font-medium rounded-full border border-white/15 text-ink-100 hover:border-cyan/40 hover:text-cyan transition-colors">Volver al inicio</a>
+    </div>
   </div>
 </BaseLayout>

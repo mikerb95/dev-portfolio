@@ -41,6 +41,8 @@ beforeAll(async () => {
     provider text NOT NULL DEFAULT 'mock',
     gateway_tx_id text,
     payer_email text,
+    payer_name text,
+    payer_message text,
     invoice_id integer,
     payer_phone text,
     source text NOT NULL DEFAULT 'pay',

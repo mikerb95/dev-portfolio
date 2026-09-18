@@ -3,119 +3,364 @@
 export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { PAY_MAX_COP, PAY_MIN_COP, formatCop } from '../lib/pay-form'
+
+const WHATSAPP = 'https://wa.me/573104641228'
+const EMAIL = 'mike@codebymike.net'
+const METHODS = ['Tarjeta crédito o débito', 'PSE', 'Nequi', 'Daviplata', 'Bancolombia', 'Billeteras digitales']
+const PRESETS = [10_000, 25_000, 50_000]
 ---
 
 <BaseLayout
-  title="Apoya mi trabajo - CodeByMike"
-  description="Donaciones y pagos de desarrollo con checkout seguro (Wompi)."
+  title="Pagos - CodeByMike"
+  description="Paga un servicio de desarrollo o apoya mi trabajo con tarjeta, PSE, Nequi o Daviplata."
   noindex
 >
-  <div class="max-w-[640px] mx-auto px-6 pt-36 pb-24">
-    <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300 mb-4">Pagos / Donaciones</div>
-    <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] mb-4">
-      Apoya mi <span class="italic font-serif font-normal text-mask-cyan">trabajo</span>
-    </h1>
-    <p class="text-[15px] text-ink-100 leading-relaxed mb-10">
-      Donaciones o pagos de desarrollo. Procesado de forma segura; el monto se firma
-      en el servidor y los reintentos nunca generan doble cobro.
-    </p>
+  <div class="max-w-[1080px] mx-auto px-6 pt-32 md:pt-36 pb-24">
+    <div class="max-w-[620px] mb-10">
+      <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300 mb-4">Pagos</div>
+      <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] mb-4">
+        Paga de forma <span class="italic font-serif font-normal text-mask-cyan">sencilla</span>
+      </h1>
+      <p class="text-[15px] text-ink-100 leading-relaxed">
+        Salda un servicio de desarrollo o apoya lo que publico. Eliges cómo pagar
+        en el siguiente paso y el comprobante te llega al correo.
+      </p>
+    </div>
 
-    <form id="pay-form" class="space-y-6">
-      <div>
-        <div class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">Monto (COP)</div>
-        <div class="grid grid-cols-3 gap-2" id="presets">
-          <button type="button" data-cop="10000" class="preset h-11 rounded-xl border border-white/10 text-[14px] hover:border-cyan/40 transition-colors">$10.000</button>
-          <button type="button" data-cop="25000" class="preset h-11 rounded-xl border border-white/10 text-[14px] hover:border-cyan/40 transition-colors">$25.000</button>
-          <button type="button" data-cop="50000" class="preset h-11 rounded-xl border border-white/10 text-[14px] hover:border-cyan/40 transition-colors">$50.000</button>
+    <div class="grid lg:grid-cols-12 gap-8 items-start">
+      <!-- Formulario -->
+      <form id="pay-form" class="lg:col-span-7 rounded-2xl glass border-accent p-6 md:p-8 space-y-6" novalidate>
+        <div role="tablist" aria-label="Tipo de pago" class="grid grid-cols-2 gap-1 p-1 rounded-full bg-white/[.04] border border-white/10">
+          <button type="button" role="tab" data-kind="servicio" aria-selected="true" class="kind-tab h-10 rounded-full text-[13px] font-medium transition-colors">
+            Pagar un servicio
+          </button>
+          <button type="button" role="tab" data-kind="apoyo" aria-selected="false" class="kind-tab h-10 rounded-full text-[13px] font-medium transition-colors">
+            Apoyar mi trabajo
+          </button>
         </div>
-        <input
-          id="amount" type="number" min="1000" max="5000000" step="500" value="25000"
-          class="mt-3 w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-[14px] focus:border-cyan/50 focus:outline-none"
-          aria-label="Monto en pesos colombianos"
-        />
-      </div>
 
-      <div>
-        <label for="email" class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-300 block mb-2">Email (opcional)</label>
-        <input
-          id="email" type="email" placeholder="tu@email.com"
-          class="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-[14px] focus:border-cyan/50 focus:outline-none"
-        />
-      </div>
+        <p id="kind-intro" class="text-[13px] text-ink-200 leading-relaxed -mt-2">
+          Para anticipos, abonos o servicios puntuales que ya acordamos.
+        </p>
 
-      <button
-        id="btn-pay" type="submit"
-        class="w-full h-12 rounded-full bg-cyan text-ink-950 text-[15px] font-medium hover:brightness-110 transition-all shadow-glow disabled:opacity-60"
-      >
-        Pagar
-      </button>
-      <p id="status" class="text-[13px] text-ink-300 font-mono min-h-5" role="status"></p>
-    </form>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <label class="block">
+            <span class="field-label">Nombre</span>
+            <input id="name" type="text" autocomplete="name" required maxlength="120" placeholder="Como quieres que aparezca en el recibo" class="field" />
+          </label>
+          <label class="block">
+            <span class="field-label">Correo</span>
+            <input id="email" type="email" autocomplete="email" required maxlength="200" placeholder="tu@correo.com" class="field" />
+          </label>
+        </div>
+
+        <label class="block" data-only="servicio">
+          <span class="field-label">¿Qué estás pagando?</span>
+          <input id="concept" type="text" maxlength="200" placeholder="Ej: anticipo tienda online, cuenta de cobro 014" class="field" />
+        </label>
+
+        <div>
+          <label for="amount" class="field-label">Monto</label>
+          <div class="grid grid-cols-3 gap-2 mb-3" data-only="apoyo" hidden>
+            {PRESETS.map((cop) => (
+              <button type="button" data-cop={cop} class="preset h-11 rounded-xl border border-white/10 text-[14px] hover:border-cyan/40 transition-colors">
+                ${formatCop(cop)}
+              </button>
+            ))}
+          </div>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] text-ink-200 pointer-events-none">$</span>
+            <input
+              id="amount" type="text" inputmode="numeric" autocomplete="off" required placeholder="0"
+              class="field !h-12 !pl-8 !pr-16 !text-[17px] tabular-nums"
+            />
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-mono tracking-[.15em] text-ink-200 pointer-events-none">COP</span>
+          </div>
+          <p class="mt-2 text-[12px] text-ink-200">Entre ${formatCop(PAY_MIN_COP)} y ${formatCop(PAY_MAX_COP)}.</p>
+        </div>
+
+        <label class="block">
+          <span class="field-label"><span id="message-label">Nota</span> <span class="normal-case tracking-normal text-ink-200">(opcional)</span></span>
+          <textarea id="message" rows="3" maxlength="500" placeholder="Algo que deba saber sobre este pago" class="field !h-auto py-3 resize-none"></textarea>
+        </label>
+
+        <div class="pt-2">
+          <button
+            id="btn-pay" type="submit"
+            class="w-full h-12 rounded-full bg-cyan text-ink-950 text-[15px] font-medium hover:brightness-110 transition-all shadow-glow disabled:opacity-60 disabled:cursor-wait"
+          >
+            Continuar al pago
+          </button>
+          <p class="mt-3 text-[12px] text-ink-200 text-center leading-relaxed">
+            Te llevamos al checkout de Wompi (Bancolombia), donde eliges el medio de pago.
+          </p>
+          <p id="status" class="mt-3 text-[13px] text-center min-h-5" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <!-- Información para pagar con confianza -->
+      <aside class="lg:col-span-5 space-y-4">
+        <section class="glass rounded-2xl p-6">
+          <h2 class="info-title">Quién recibe el pago</h2>
+          <p class="text-[15px] text-ink-50 font-medium">Michael Rodriguez</p>
+          <p class="text-[13px] text-ink-200 mt-1 leading-relaxed">
+            Es el nombre que verás en el checkout y en tu comprobante.
+          </p>
+        </section>
+
+        <section class="glass rounded-2xl p-6">
+          <h2 class="info-title">Medios de pago</h2>
+          <ul class="flex flex-wrap gap-2">
+            {METHODS.map((m) => (
+              <li class="px-3 py-1.5 rounded-full bg-white/[.05] border border-white/10 text-[12px] text-ink-100">{m}</li>
+            ))}
+          </ul>
+        </section>
+
+        <section class="glass rounded-2xl p-6">
+          <h2 class="info-title">Después de pagar</h2>
+          <ul class="space-y-2.5 text-[13px] text-ink-200 leading-relaxed">
+            <li class="flex gap-2.5"><span class="dot"></span>Wompi te envía el comprobante al correo que escribiste.</li>
+            <li class="flex gap-2.5"><span class="dot"></span>Si necesitas cuenta de cobro, pídemela y te la envío.</li>
+            <li class="flex gap-2.5"><span class="dot"></span>Si hubo un error en el valor o un cobro que no reconoces, escríbeme y lo resolvemos, incluida la devolución si corresponde.</li>
+          </ul>
+        </section>
+
+        <section class="glass rounded-2xl p-6">
+          <h2 class="info-title">¿Necesitas ayuda?</h2>
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-2">
+            <a href={WHATSAPP} target="_blank" rel="noopener" class="help-link">
+              <svg class="w-4 h-4 text-cyan shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              WhatsApp +57 310 464 1228
+            </a>
+            <a href={`mailto:${EMAIL}`} class="help-link">
+              <svg class="w-4 h-4 text-cyan shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              {EMAIL}
+            </a>
+          </div>
+          <p class="text-[12px] text-ink-200 mt-4 leading-relaxed">
+            ¿Eres cliente y tienes una factura pendiente? Puedes pagarla desde
+            <a href="/portal" class="text-ink-100 underline decoration-white/20 hover:text-cyan hover:decoration-cyan/40">tu portal</a>.
+          </p>
+        </section>
+      </aside>
+    </div>
   </div>
 </BaseLayout>
 
+<style>
+  .field-label {
+    display: block;
+    margin-bottom: .5rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    color: var(--color-ink-200);
+  }
+  .field {
+    width: 100%;
+    height: 2.75rem;
+    padding: 0 1rem;
+    border-radius: .75rem;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    font-size: 14px;
+    transition: border-color .2s ease;
+  }
+  .field:focus { outline: none; border-color: rgba(0, 242, 255, .5); }
+  .field[aria-invalid='true'] { border-color: rgba(248, 113, 113, .6); }
+  .field::placeholder { color: var(--color-ink-300); }
+
+  .kind-tab { color: var(--color-ink-200); }
+  .kind-tab:hover { color: var(--color-ink-50); }
+  .kind-tab[aria-selected='true'] { background: rgba(0, 242, 255, .12); color: var(--color-cyan); }
+
+  .preset[aria-pressed='true'] { border-color: rgba(0, 242, 255, .5); background: rgba(0, 242, 255, .08); color: var(--color-cyan); }
+
+  .info-title {
+    margin-bottom: .75rem;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .2em;
+    color: var(--color-ink-200);
+  }
+  .dot {
+    flex-shrink: 0;
+    width: 5px;
+    height: 5px;
+    margin-top: .55rem;
+    border-radius: 9999px;
+    background: var(--color-cyan);
+  }
+  .help-link {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .7rem .9rem;
+    border-radius: .75rem;
+    font-size: 13px;
+    color: var(--color-ink-100);
+    background: rgba(255, 255, 255, .03);
+    transition: background .2s ease, color .2s ease;
+  }
+  .help-link:hover { background: rgba(0, 242, 255, .08); color: var(--color-cyan); }
+</style>
+
 <script>
+  import { formatCop, parseCop, parsePayForm, PAY_MAX_COP, PAY_MIN_COP, type PayFormField, type PayKind } from '../lib/pay-form'
+
   const form = document.getElementById('pay-form') as HTMLFormElement
   const amountEl = document.getElementById('amount') as HTMLInputElement
+  const nameEl = document.getElementById('name') as HTMLInputElement
   const emailEl = document.getElementById('email') as HTMLInputElement
+  const conceptEl = document.getElementById('concept') as HTMLInputElement
+  const messageEl = document.getElementById('message') as HTMLTextAreaElement
   const btn = document.getElementById('btn-pay') as HTMLButtonElement
   const status = document.getElementById('status')!
+  const intro = document.getElementById('kind-intro')!
+  const messageLabel = document.getElementById('message-label')!
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.kind-tab')
+  const presets = document.querySelectorAll<HTMLButtonElement>('.preset')
 
-  // Una clave de idempotencia por INTENTO de pago: se renueva ante CUALQUIER
-  // cambio de monto (tecleo o preset - ojo: asignar .value por JS no dispara
-  // eventos, hay que renovar en el click). Doble clic o reintentos de red
-  // reutilizan la misma clave → un solo cobro. Si la clave y el monto llegaran
-  // a divergir, el servidor responde 409 en vez de cobrar el valor viejo.
+  const COPY: Record<PayKind, { intro: string; message: string; placeholder: string }> = {
+    servicio: {
+      intro: 'Para anticipos, abonos o servicios puntuales que ya acordamos.',
+      message: 'Nota',
+      placeholder: 'Algo que deba saber sobre este pago',
+    },
+    apoyo: {
+      intro: 'Si algo de lo que publico te sirvió y quieres apoyarlo. Cualquier monto suma.',
+      message: 'Mensaje',
+      placeholder: 'Unas palabras, si quieres dejarlas',
+    },
+  }
+
+  // Una clave de idempotencia por INTENTO: cualquier cambio en el formulario
+  // abre un intento nuevo; el doble clic y los reintentos de red reutilizan la
+  // misma y el servidor devuelve el mismo pago en vez de crear otro.
   let idempotencyKey = crypto.randomUUID()
   const renewKey = () => { idempotencyKey = crypto.randomUUID() }
 
-  amountEl.addEventListener('input', renewKey)
-  document.querySelectorAll<HTMLButtonElement>('.preset').forEach((b) =>
+  let kind: PayKind = 'servicio'
+
+  const setStatus = (text: string, tone: 'info' | 'error' | 'ok' = 'info') => {
+    status.textContent = text
+    status.className = `mt-3 text-[13px] text-center min-h-5 ${
+      tone === 'error' ? 'text-red-400' : tone === 'ok' ? 'text-cyan' : 'text-ink-200'
+    }`
+  }
+
+  const syncPresets = () => {
+    const value = parseCop(amountEl.value)
+    presets.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.cop) === value)))
+  }
+
+  const setKind = (next: PayKind) => {
+    kind = next
+    tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.kind === next)))
+    document.querySelectorAll<HTMLElement>('[data-only]').forEach((el) => { el.hidden = el.dataset.only !== next })
+    conceptEl.required = next === 'servicio'
+    intro.textContent = COPY[next].intro
+    messageLabel.textContent = COPY[next].message
+    messageEl.placeholder = COPY[next].placeholder
+    setStatus('')
+    renewKey()
+  }
+
+  tabs.forEach((t) => t.addEventListener('click', () => setKind(t.dataset.kind as PayKind)))
+
+  // Enlace directo a la pestaña de apoyo: /pay?tipo=apoyo
+  if (new URLSearchParams(location.search).get('tipo') === 'apoyo') setKind('apoyo')
+
+  // El monto se muestra con separador de miles mientras se escribe.
+  amountEl.addEventListener('input', () => {
+    const value = parseCop(amountEl.value)
+    amountEl.value = value === null ? '' : formatCop(value)
+    syncPresets()
+  })
+
+  presets.forEach((b) =>
     b.addEventListener('click', () => {
-      amountEl.value = b.dataset.cop!
-      renewKey()
+      amountEl.value = formatCop(Number(b.dataset.cop))
+      syncPresets()
+      renewKey() // asignar .value por JS no dispara el evento input del form
     }),
   )
 
+  form.addEventListener('input', (e) => {
+    renewKey()
+    ;(e.target as HTMLElement).removeAttribute('aria-invalid')
+  })
+
+  const FIELDS: Partial<Record<PayFormField, HTMLElement>> = { name: nameEl, email: emailEl, concept: conceptEl }
+
+  const fail = (text: string, field?: HTMLElement) => {
+    setStatus(text, 'error')
+    if (field) {
+      field.setAttribute('aria-invalid', 'true')
+      field.focus()
+    }
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
+
+    const body = {
+      kind,
+      payerName: nameEl.value,
+      payerEmail: emailEl.value,
+      concept: kind === 'servicio' ? conceptEl.value : '',
+      message: messageEl.value,
+    }
+    const parsed = parsePayForm(body)
+    if (!parsed.ok) return fail(parsed.error, FIELDS[parsed.field])
+
+    const amount = parseCop(amountEl.value)
+    if (!amount || amount < PAY_MIN_COP || amount > PAY_MAX_COP) {
+      return fail(`El monto debe estar entre $${formatCop(PAY_MIN_COP)} y $${formatCop(PAY_MAX_COP)}.`, amountEl)
+    }
+
     btn.disabled = true
-    status.textContent = 'Creando pago…'
+    setStatus('Preparando tu pago…')
     try {
-      const amountCents = Math.round(Number(amountEl.value) * 100)
       const res = await fetch('/api/payments/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amountCents,
-          idempotencyKey,
-          payerEmail: emailEl.value || undefined,
-          description: 'Donación / pago dev - codebymike.net',
-        }),
+        body: JSON.stringify({ ...body, amountCents: amount * 100, idempotencyKey }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Error creando el pago')
+      const data = await res.json().catch(() => ({}))
+      if (res.status === 409) {
+        renewKey()
+        throw new Error('Los datos del pago cambiaron. Vuelve a intentarlo.')
+      }
+      if (!res.ok) throw new Error(data.error ?? 'No pudimos iniciar el pago. Inténtalo de nuevo.')
 
       if (data.checkout.provider === 'wompi') {
+        setStatus('Te estamos llevando al checkout…')
         const qs = new URLSearchParams(data.checkout.params)
         location.href = `${data.checkout.url}?${qs}`
         return
       }
 
-      // Modo demo (sin llaves Wompi): simula la pasarela por el mismo flujo de webhooks.
-      status.textContent = `Pago ${data.payment.reference} creado (demo). Confirmando…`
+      // Sin llaves de Wompi (desarrollo y pruebas): se simula la pasarela.
       const confirm = await fetch(data.checkout.confirmUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reference: data.payment.reference }),
       })
       const result = await confirm.json()
-      status.textContent = result.status === 'approved'
-        ? `✓ Pago aprobado (simulado) - ref ${data.payment.reference}`
-        : `Pago ${result.status} - ref ${data.payment.reference}`
-      renewKey() // el intento terminó: el próximo pago es uno nuevo
+      if (result.status === 'approved') setStatus(`Pago de prueba aprobado. Referencia ${data.payment.reference}`, 'ok')
+      else setStatus(`El pago de prueba quedó ${result.status}. Referencia ${data.payment.reference}`, 'error')
+      renewKey()
     } catch (err) {
-      status.textContent = err instanceof Error ? err.message : 'Error de conexión'
+      setStatus(
+        err instanceof TypeError ? 'No hay conexión. Revisa tu internet e inténtalo de nuevo.'
+          : err instanceof Error ? err.message : 'No pudimos iniciar el pago. Inténtalo de nuevo.',
+        'error',
+      )
     } finally {
       btn.disabled = false
     }

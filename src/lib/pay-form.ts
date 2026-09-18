@@ -24,18 +24,26 @@ export type PayForm = {
 const clean = (v: unknown, max: number): string =>
   typeof v === 'string' ? v.replace(/[\x00-\x1f\x7f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : ''
 
-export function parsePayForm(body: Record<string, unknown>): { ok: true; data: PayForm } | { ok: false; error: string } {
+export type PayFormField = 'kind' | 'name' | 'email' | 'concept'
+
+export type PayFormResult =
+  | { ok: true; data: PayForm }
+  | { ok: false; field: PayFormField; error: string }
+
+export function parsePayForm(body: Record<string, unknown>): PayFormResult {
   const kind = body.kind
-  if (kind !== 'servicio' && kind !== 'apoyo') return { ok: false, error: 'Elige qué tipo de pago vas a hacer.' }
+  if (kind !== 'servicio' && kind !== 'apoyo') return { ok: false, field: 'kind', error: 'Elige qué tipo de pago vas a hacer.' }
 
   const name = clean(body.payerName, 120)
-  if (name.length < 2) return { ok: false, error: 'Escribe tu nombre.' }
+  if (name.length < 2) return { ok: false, field: 'name', error: 'Escribe tu nombre.' }
 
   const email = clean(body.payerEmail, 200)
-  if (!EMAIL_RE.test(email)) return { ok: false, error: 'Escribe un correo válido para enviarte el comprobante.' }
+  if (!EMAIL_RE.test(email)) return { ok: false, field: 'email', error: 'Escribe un correo válido para enviarte el comprobante.' }
 
   const concept = clean(body.concept, 200) || null
-  if (kind === 'servicio' && !concept) return { ok: false, error: 'Cuéntame qué estás pagando (proyecto, cotización o cuenta de cobro).' }
+  if (kind === 'servicio' && !concept) {
+    return { ok: false, field: 'concept', error: 'Cuéntame qué estás pagando (proyecto, cotización o cuenta de cobro).' }
+  }
 
   // En el mensaje sí se respetan los saltos de línea que escribió la persona.
   const message = typeof body.message === 'string'

@@ -96,6 +96,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
                 <span class="text-zinc-600 font-mono">v${p.version} · ${esc(p.provider)}</span>
                 <span class="text-zinc-600 ml-auto font-mono">${p.createdAt ? fmt.format(new Date(p.createdAt)) : ''}</span>
               </div>
+              ${p.payerName || p.description ? `
+                <div class="mt-1.5 text-xs text-zinc-400">
+                  ${esc([p.payerName, p.payerEmail, p.description].filter(Boolean).join(' · '))}
+                  ${p.payerMessage ? `<div class="mt-1 text-zinc-500 whitespace-pre-line">${esc(p.payerMessage)}</div>` : ''}
+                </div>` : ''}
               ${evs.length ? `
                 <div class="mt-2 flex flex-wrap gap-1.5">
                   ${evs.map((ev: any) => `
