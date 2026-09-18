@@ -9,8 +9,8 @@
 
 ---
 
-> **Estado al 29 jul 2026** (credencial desbloqueada el 18 sep 2026, ver abajo):
-> el plan está ejecutado salvo la Fase 5 (load testing con k6). La tabla de abajo es la
+> **Estado al 18 sep 2026**: el plan está ejecutado **completo**, Fase 5 (load
+> testing con k6) incluida. La tabla de abajo es la
 > auditoría del punto de partida, conservada a propósito para poder comparar:
 > hoy hay 937 tests de Vitest y 47 e2e, seis workflows de GitHub Actions y
 > pipeline con rollback automático. El detalle de las fases 5-7 está en
@@ -19,10 +19,13 @@
 > **Actualización ago 2026**: los scripts k6 de la Fase 5 (`lab/k6/carga.js`,
 > `lab/k6/estres.js`) ya están implementados y corridos localmente (escalera
 > de niveles, fila R de recuperación, muestreo de CPU/heap del proceso y
-> bloque de hallazgos H-01..H-05). Lo que faltaba era la integración con el
-> panel (`load_test_runs`, ingesta, `/admin/lab/load`); con `VERCEL_TOKEN`
-> cargado el 18 sep 2026 ya no hay bloqueo de credencial, solo el trabajo
-> pendiente - detalle en `plan-lab-fases-pendientes.md`.
+> bloque de hallazgos H-01..H-05). La integración con el panel se cerró el 18
+> sep 2026: `load_test_runs` (migración 0033), ingesta `kind:'load_test'`,
+> `/admin/lab/load`, `load-test.yml` y tarjeta pública en `/lab`. El bloqueo
+> que este documento atribuía a `VERCEL_TOKEN` resultó no ser de credencial
+> sino de diseño: un preview de Vercel lee Turso y el guardarraíl exige base
+> local, así que la carga corre contra un servidor efímero levantado en el
+> propio runner - detalle en `plan-lab-fases-pendientes.md`.
 >
 > **Actualización 21-23 ago 2026**: los hallazgos de las corridas de k6 quedaron
 > publicados en `/docs` (RF-505, evidencia en `lab/k6/resultados/*.json`), y se
