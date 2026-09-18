@@ -454,11 +454,19 @@ pero un test que falla por reloj entrena a ignorar el rojo.
 
 - [ ] Darle timeout explícito a ese test (o bajar el volumen sembrado).
 
-### LAB - Fase 5: load testing con k6
+### LAB - Fase 5: load testing con k6 ✅ (18 sep 2026)
 
-Última fase del laboratorio. Ya no hay bloqueo de credencial (`VERCEL_TOKEN`
-cargado el 18 sep 2026, ver arriba): lo que queda es el trabajo de integración
-con el panel. Detalle en `docs/plan-lab-fases-pendientes.md`.
+Cerrada. Tabla `load_test_runs` (migración 0033, en las dos bases), parser puro
+con 21 tests sobre corridas reales, ingesta `kind:'load_test'`,
+`/admin/lab/load`, `load-test.yml` y tarjeta pública en `/lab`. El bloqueo que
+esta lista atribuía a `VERCEL_TOKEN` era en realidad de diseño: un preview de
+Vercel lee Turso y el guardarraíl de k6 exige base local, así que la carga corre
+contra un servidor efímero levantado en el runner. Detalle en
+`docs/plan-lab-fases-pendientes.md`.
+
+Queda una verificación que solo da una corrida real: disparar `load-test.yml`
+desde Actions y confirmar tiempos de arranque del servidor efímero en el runner.
+Los scripts y la ingesta sí se probaron de punta a punta en local.
 
 ### Panel de briefings - Fases 2 a 5
 
