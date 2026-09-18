@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css'
 import Sidebar from '../components/admin/Sidebar.astro'
-import { inDemoContext } from '../db' // DEBUG TEMPORAL
 
 interface Props {
   title: string
@@ -22,7 +21,7 @@ const isDemo = Astro.locals.demo === true
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title} - Admin · CodeByMike</title>
   </head>
-  <body data-ctx={String(inDemoContext())} data-locals={String(Astro.locals.demo === true)} class="grain bg-ink-950 text-ink-50 min-h-screen lg:h-screen lg:overflow-hidden lg:flex">
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen lg:h-screen lg:overflow-hidden lg:flex">
     <!-- Drawer toggle (CSS-only, sin JS) -->
     <input type="checkbox" id="nav-toggle" class="peer sr-only" aria-label="Alternar menú de navegación" />
 

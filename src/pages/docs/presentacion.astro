@@ -1,9 +1,12 @@
 ---
-// Página sin datos vivos: se genera en el build, no por request. Todo lo que
-// pinta sale de `src/data/`, que son módulos tipados que se resuelven al
-// compilar; no hay una sola consulta a la base. Si alguna cifra pasa a salir de
-// la BD (como en docs/testing.astro, que lee `ci_runs`), hay que quitar esto.
-export const prerender = true
+// NO se prerenderiza, aunque todos sus datos salgan de `src/data/` y sea el
+// candidato perfecto: esta página es PRIVADA (el deck de sustentación, solo
+// para el administrador) y el middleware sale antes de tocar ningún gate
+// cuando la ruta es prerenderizada - en producción ni siquiera pasa por él,
+// porque es un archivo que sirve el CDN. Prerenderizarla la publica entera
+// para cualquiera que acierte la URL. Lo cazó e2e/auth.spec.ts ("el deck
+// privado no es público"); ver tests/rutas-privadas.test.ts, que impide que
+// vuelva a colarse.
 
 // Deck de sustentación: resumen de /docs en formato presentación.
 // Las cifras salen de las mismas fuentes que las páginas de documentación,
