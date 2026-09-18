@@ -2,6 +2,14 @@
 // Layout de las pantallas sin sesión del portal (login, invitación, reset).
 // Deliberadamente sin Navbar ni Footer del sitio público: quien llega aquí va a
 // hacer una cosa concreta, y todo lo demás es ruido que invita a irse.
+//
+// Dos composiciones en el mismo layout:
+//   · columna estrecha centrada (invitación, reset, olvido): pantallas de paso,
+//     donde no hay nada que contar ni que vender.
+//   · partida en dos, cuando la página rellena el slot `aside`: la izquierda
+//     explica qué hay al otro lado de la puerta y la derecha es solo el
+//     formulario, en su propia tarjeta. Es la del login, la única de estas
+//     pantallas a la que alguien llega sin haber pulsado antes un enlace mío.
 import '../styles/global.css'
 import AmbientBlobs from '../components/AmbientBlobs.astro'
 
@@ -11,6 +19,7 @@ interface Props {
 }
 
 const { title, subtitle } = Astro.props
+const split = Astro.slots.has('aside')
 ---
 
 <!doctype html>
@@ -28,19 +37,51 @@ const { title, subtitle } = Astro.props
     <div class="halo pointer-events-none absolute inset-x-0 top-0 h-[420px]"></div>
 
     <main class="flex-1 flex items-center justify-center px-4 py-12 relative">
-      <div class="w-full max-w-[400px]">
-        <a href="/" class="inline-flex items-center gap-2 mb-8 group">
-          <span class="text-[15px] font-semibold tracking-tight text-ink-50">CodeByMike</span>
-          <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 border border-white/10 rounded-full px-2 py-0.5 group-hover:border-cyan/30 group-hover:text-cyan transition-colors">
-            Portal
-          </span>
-        </a>
+      <div class:list={['w-full', split ? 'max-w-[980px]' : 'max-w-[400px]']}>
+        <div
+          class:list={[
+            split && 'grid lg:grid-cols-[1fr_400px] gap-10 lg:gap-16 items-center',
+          ]}
+        >
+          <div class="auth-intro">
+            <a href="/" class="inline-flex items-center gap-2 mb-8 group">
+              <span class="text-[15px] font-semibold tracking-tight text-ink-50">CodeByMike</span>
+              <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 border border-white/10 rounded-full px-2 py-0.5 group-hover:border-cyan/30 group-hover:text-cyan transition-colors">
+                Portal
+              </span>
+            </a>
 
-        <h1 class="text-[26px] leading-tight font-medium tracking-tight text-ink-50">{title}</h1>
-        {subtitle && <p class="mt-2 text-[14px] leading-relaxed text-ink-200">{subtitle}</p>}
+            <h1
+              class:list={[
+                'leading-tight font-medium tracking-tight text-ink-50',
+                split ? 'text-[30px] lg:text-[38px]' : 'text-[26px]',
+              ]}
+            >
+              {title}
+            </h1>
+            {subtitle && (
+              <p
+                class:list={[
+                  'mt-2 leading-relaxed text-ink-200',
+                  split ? 'text-[15px] max-w-[42ch]' : 'text-[14px]',
+                ]}
+              >
+                {subtitle}
+              </p>
+            )}
 
-        <div class="mt-7">
-          <slot />
+            {split && <div class="mt-9 hidden lg:block"><slot name="aside" /></div>}
+          </div>
+
+          <div
+            class:list={[
+              split
+                ? 'auth-card glass-strong border-accent rounded-3xl p-6 sm:p-7 mt-8 lg:mt-0'
+                : 'mt-7',
+            ]}
+          >
+            <slot />
+          </div>
         </div>
       </div>
     </main>
@@ -51,5 +92,34 @@ const { title, subtitle } = Astro.props
         <a href="/" class="hover:text-cyan transition-colors">codebymike.net</a>
       </p>
     </footer>
+
+    <style>
+      /* Entrada escalonada y muy corta: es una puerta, no una presentación.
+         Sin librería (gsap solo se carga en las páginas públicas) y anulada
+         entera con prefers-reduced-motion. */
+      @keyframes auth-rise {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .auth-intro,
+      .auth-card {
+        animation: auth-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      .auth-card {
+        animation-delay: 0.08s;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .auth-intro,
+        .auth-card {
+          animation: none;
+        }
+      }
+    </style>
   </body>
 </html>
