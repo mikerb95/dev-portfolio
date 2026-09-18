@@ -57,7 +57,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
   function grafica(steps: Step[]): string {
     if (!steps.length) return '<p class="text-zinc-600 text-sm">Sin escalones registrados.</p>'
 
-    const W = 720, H = 200, PAD_B = 34, PAD_T = 10
+    // viewBox ancho y bajo a propósito: el SVG se escala al ancho de la
+    // tarjeta, así que la proporción del viewBox es lo que decide su altura
+    // final en pantalla y el tamaño relativo de las etiquetas.
+    const W = 1200, H = 260, PAD_B = 42, PAD_T = 12
     const maxP95 = Math.max(...steps.map((s) => s.p95 ?? 0), 1)
     const ancho = W / steps.length
     const alto = (v: number | null) => Math.max(1, ((v ?? 0) / maxP95) * (H - PAD_B - PAD_T))

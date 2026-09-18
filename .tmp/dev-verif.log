@@ -34,3 +34,6 @@ Error: Failed to load url astro:server-app.js (resolved id: astro:server-app.js)
 07:30:05 [200] /admin 118ms
 07:30:13 [200] /admin/lab/load 109ms
 07:30:13 [200] /api/admin/lab/load 7ms
+07:30:41 [watch] src/pages/admin/lab/load.astro
+07:30:42 [200] /admin/lab/load 168ms
+07:30:43 [200] /api/admin/lab/load 5ms
