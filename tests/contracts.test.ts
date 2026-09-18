@@ -96,7 +96,13 @@ describe('contrato · POST /api/payments/checkout', () => {
       makeContext('http://localhost/api/payments/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amountCents: 25_000_00, idempotencyKey: crypto.randomUUID() }),
+        body: JSON.stringify({
+          amountCents: 25_000_00,
+          idempotencyKey: crypto.randomUUID(),
+          kind: 'apoyo',
+          payerName: 'Contrato',
+          payerEmail: 'contrato@example.com',
+        }),
       })
     )
     expect(res.status).toBe(201)
