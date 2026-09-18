@@ -344,6 +344,45 @@ const upcoming = [
       </section>
     )}
 
+    <!-- Load testing -->
+    {lastLoad && (
+      <section class="mb-16">
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
+          <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
+          <span>{lb.load.heading}</span>
+        </div>
+        <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
+          {lb.load.bodyPre} <span class="text-ink-50">{lb.load.breakWord}</span> {lb.load.bodyPost}
+        </p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="rounded-2xl glass p-5">
+            <div class="font-mono text-[22px] leading-none text-lime">
+              {lastLoad.sustainedRps === null ? '-' : `${Math.round(lastLoad.sustainedRps)}/s`}
+            </div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.sustained}</div>
+          </div>
+          <div class="rounded-2xl glass p-5">
+            <div class="font-mono text-[22px] leading-none text-ember">
+              {lastLoad.breakingPointRps === null ? lb.load.noBreak : `${Math.round(lastLoad.breakingPointRps)}/s`}
+            </div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.breaking}</div>
+          </div>
+          <div class="rounded-2xl glass p-5">
+            <div class="font-mono text-[22px] leading-none text-ink-50">
+              {lastLoad.recoveredAfterS === null ? lb.load.noRecovery : `${lastLoad.recoveredAfterS}s`}
+            </div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.recovery}</div>
+          </div>
+          <div class="rounded-2xl glass p-5">
+            <div class="font-mono text-[22px] leading-none text-ink-50">
+              {lastLoad.p95 === null ? '-' : `${Math.round(lastLoad.p95)}ms`}
+            </div>
+            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.p95}</div>
+          </div>
+        </div>
+      </section>
+    )}
+
     <!-- Pasarela sandbox -->
     <section class="mb-16">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
