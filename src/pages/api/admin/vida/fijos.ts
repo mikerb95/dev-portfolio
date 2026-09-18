@@ -27,8 +27,9 @@ export const PUT: APIRoute = async ({ request }) => {
   return json({ ok: true })
 }
 
-// Borrar un fijo no borra sus pagos: la FK los deja en null y pasan a contar
-// como gasto variable. El dinero de meses pasados salió igual.
+// Borrar un fijo no borra sus pagos: la FK los deja en null (o con un id
+// huérfano si la conexión no aplica foreign keys) y el resumen los cuenta como
+// gasto variable en ambos casos. El dinero de meses pasados salió igual.
 export const DELETE: APIRoute = async ({ request }) => {
   const body = await request.json().catch(() => null)
   const id = Number(body?.id)
