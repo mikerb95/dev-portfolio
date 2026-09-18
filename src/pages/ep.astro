@@ -789,26 +789,26 @@ const meta = [
         <div id="correo-gen">
           <h3 class="text-[13px] text-ink-50 font-medium mb-3">Generar asunto</h3>
           <div class="grid grid-cols-[minmax(0,1fr)_88px] gap-3 mb-3">
-            <label class="grid gap-1.5">
+            <label class="grid gap-1.5 min-w-0">
               <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Envío</span>
               <select
                 id="correo-tipo"
-                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+                class="w-full min-w-0 h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
               >
                 <option value="bitacora">Bitácora</option>
                 <option value="visita">Formato de visita</option>
               </select>
             </label>
-            <label class="grid gap-1.5">
+            <label class="grid gap-1.5 min-w-0">
               <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Número</span>
               <select
                 id="correo-numero"
-                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+                class="w-full min-w-0 h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
               ></select>
             </label>
           </div>
           <div class="grid grid-cols-2 gap-3 mb-3">
-            <label class="grid gap-1.5">
+            <label class="grid gap-1.5 min-w-0">
               <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">CC</span>
               <input
                 id="correo-cc"
@@ -816,10 +816,10 @@ const meta = [
                 inputmode="numeric"
                 autocomplete="off"
                 placeholder="1234567890"
-                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 placeholder:text-ink-300/60 focus:border-cyan/40 outline-none"
+                class="w-full min-w-0 h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 placeholder:text-ink-300/60 focus:border-cyan/40 outline-none"
               />
             </label>
-            <label class="grid gap-1.5">
+            <label class="grid gap-1.5 min-w-0">
               <span class="text-[10px] font-mono uppercase tracking-wider text-ink-300">Ficha</span>
               <input
                 id="correo-ficha"
@@ -827,7 +827,7 @@ const meta = [
                 inputmode="numeric"
                 autocomplete="off"
                 value="3114731"
-                class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
+                class="w-full min-w-0 h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 focus:border-cyan/40 outline-none"
               />
             </label>
           </div>
@@ -838,7 +838,7 @@ const meta = [
               type="text"
               autocomplete="name"
               placeholder="Ana Pérez"
-              class="h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 placeholder:text-ink-300/60 focus:border-cyan/40 outline-none"
+              class="w-full min-w-0 h-11 px-3 rounded-lg bg-white/[.03] border border-white/10 text-[13px] text-ink-100 placeholder:text-ink-300/60 focus:border-cyan/40 outline-none"
             />
           </label>
 
