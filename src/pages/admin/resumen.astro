@@ -1,0 +1,324 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { db } from '../../db'
+import { projectServices, livingCosts, livingExpenses, appSettings } from '../../db/schema'
+import { and, gte, lte } from 'drizzle-orm'
+import { parseRates, fmtMoney, fmtUSD, BILLING_CYCLE_LABELS } from '../../lib/money'
+import { CATEGORY_LABELS } from '../../lib/services'
+import { LIVING_CATEGORY_LABELS, esPeriodo } from '../../lib/vida'
+import {
+  resumenMensual, proyeccion, periodoActual, sumarMeses,
+  type SeccionCargos, type MotivoCargo,
+} from '../../lib/resumen-mensual'
+import { formatterCO } from '../../lib/fecha-co'
+
+const qMes = Astro.url.searchParams.get('mes')
+const periodo = esPeriodo(qMes) ? qMes : periodoActual()
+
+// Ventana de la gráfica: cinco meses atrás para ver lo real y seis adelante
+// para ver venir las renovaciones.
+const desde = sumarMeses(periodo, -5)
+const hasta = sumarMeses(periodo, 6)
+
+const [servicios, fijos, gastos, settingsRows] = await Promise.all([
+  // Sin `secrets`: la bóveda no tiene nada que hacer en un resumen.
+  db.select({
+    id: projectServices.id,
+    name: projectServices.name,
+    category: projectServices.category,
+    provider: projectServices.provider,
+    cost: projectServices.cost,
+    currency: projectServices.currency,
+    billingCycle: projectServices.billingCycle,
+    renewalDate: projectServices.renewalDate,
+    active: projectServices.active,
+    payer: projectServices.payer,
+    createdAt: projectServices.createdAt,
+  }).from(projectServices),
+  db.select().from(livingCosts),
+  db.select().from(livingExpenses).where(and(gte(livingExpenses.periodo, desde), lte(livingExpenses.periodo, hasta))),
+  db.select().from(appSettings),
+])
+
+const entrada = {
+  servicios,
+  fijos: fijos.map((f) => ({ ...f, active: !!f.active })),
+  gastos,
+  rates: parseRates(settingsRows),
+}
+const r = resumenMensual(periodo, entrada)
+const anterior = resumenMensual(sumarMeses(periodo, -1), entrada)
+const meses = proyeccion(desde, 12, entrada)
+
+const cop = entrada.rates.COP
+const enCOP = (usd: number) => (cop ? fmtMoney(usd * cop, 'COP', 0) : null)
+const fmtNativo = (monto: number, moneda: string) => fmtMoney(monto, moneda, moneda === 'COP' ? 0 : 2)
+
+const delta = r.totalUSD - anterior.totalUSD
+const deltaPct = anterior.totalUSD > 0 ? Math.round((delta / anterior.totalUSD) * 100) : null
+const renovaciones = [...r.infra.lineas, ...r.suscripciones.lineas].filter((l) => l.motivo === 'renovacion' || l.motivo === 'pago_unico')
+const renovacionesUSD = renovaciones.reduce((s, l) => s + (l.montoUSD ?? 0), 0)
+const sinFecha = [...r.infra.lineas, ...r.suscripciones.lineas].filter((l) => l.motivo === 'sin_fecha')
+
+const mesLargo = formatterCO({ month: 'long', year: 'numeric' })
+const mesCorto = formatterCO({ month: 'short' })
+const fecha = (p: string) => new Date(`${p}-15T12:00:00-05:00`)
+const esMesActual = periodo === periodoActual()
+
+const MOTIVO: Record<MotivoCargo, string | null> = {
+  mensual: null,
+  renovacion: 'renueva este mes',
+  pago_unico: 'pago único',
+  uso: 'estimado por uso',
+  sin_fecha: 'sin fecha, prorrateado',
+}
+
+// ── Gráfica ──────────────────────────────────────────────────────────────
+// Paleta validada con el script de dataviz contra la superficie oscura del
+// panel. Los tonos neón de marca (cyan, violet, lime) se salen de la banda de
+// luminosidad, por eso van un paso más oscuros. El par tritan queda en 6.3: la
+// leyenda y las cifras en el tooltip son la codificación secundaria.
+const SERIES = [
+  { key: 'infraUSD', label: 'Infraestructura', color: '#00a9b4' },
+  { key: 'suscripcionesUSD', label: 'Suscripciones', color: '#9a7cf5' },
+  { key: 'vidaUSD', label: 'Costos de vida', color: '#739f1e' },
+] as const
+
+const W = 720, H = 200, PAD_B = 22, PAD_T = 8
+const slot = W / meses.length
+const barW = Math.min(34, slot - 14)
+const maxUSD = Math.max(...meses.map((m) => m.totalUSD), 1)
+const escala = (H - PAD_B - PAD_T) / maxUSD
+const GAP = 2
+
+// Rectángulo con solo las esquinas de arriba redondeadas: el extremo de datos
+// se redondea, la base queda recta sobre el eje.
+const topeRedondeado = (x: number, y: number, w: number, h: number, rr: number) => {
+  const r2 = Math.min(rr, h, w / 2)
+  return `M${x},${y + h}V${y + r2}Q${x},${y} ${x + r2},${y}H${x + w - r2}Q${x + w},${y} ${x + w},${y + r2}V${y + h}Z`
+}
+
+const barras = meses.map((m, i) => {
+  const x = i * slot + (slot - barW) / 2
+  let y = H - PAD_B
+  const visibles = SERIES.filter((s) => m[s.key] > 0)
+  const segmentos = visibles.map((s, j) => {
+    const alto = Math.max(m[s.key] * escala - (j > 0 ? GAP : 0), 1)
+    y -= alto + (j > 0 ? GAP : 0)
+    const esTope = j === visibles.length - 1
+    return { color: s.color, d: esTope ? topeRedondeado(x, y, barW, alto, 4) : `M${x},${y}h${barW}v${alto}h${-barW}Z` }
+  })
+  return { m, x, segmentos, etiqueta: mesCorto.format(fecha(m.periodo)).replace('.', ''), actual: m.periodo === periodo }
+})
+const tooltipData = meses.map((m) => ({
+  periodo: m.periodo,
+  mes: mesLargo.format(fecha(m.periodo)),
+  total: fmtUSD(m.totalUSD, 0),
+  totalCOP: enCOP(m.totalUSD),
+  series: SERIES.map((s) => ({ label: s.label, color: s.color, valor: fmtUSD(m[s.key], 0) })),
+}))
+
+const secciones: { titulo: string; href: string; color: string; s: SeccionCargos }[] = [
+  { titulo: 'Infraestructura', href: '/admin/costs', color: SERIES[0].color, s: r.infra },
+  { titulo: 'Suscripciones de trabajo', href: '/admin/costs', color: SERIES[1].color, s: r.suscripciones },
+]
+---
+
+<AdminLayout title="Resumen mensual">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div class="flex items-center gap-2">
+      <a href={`?mes=${sumarMeses(periodo, -1)}`} class="h-8 w-8 grid place-items-center rounded-full border border-white/10 text-ink-200 hover:bg-white/5" aria-label="Mes anterior">‹</a>
+      <h2 class="text-[15px] font-medium text-ink-50 capitalize min-w-[9.5rem] text-center">{mesLargo.format(fecha(periodo))}</h2>
+      <a href={`?mes=${sumarMeses(periodo, 1)}`} class="h-8 w-8 grid place-items-center rounded-full border border-white/10 text-ink-200 hover:bg-white/5" aria-label="Mes siguiente">›</a>
+      {!esMesActual && <a href="?" class="ml-1 text-[11px] font-mono text-cyan hover:underline">hoy</a>}
+    </div>
+    <p class="text-[12px] text-ink-200 max-w-md">Lo que sale del bolsillo este mes. Los anuales cuentan completos en el mes en que renuevan.</p>
+  </div>
+
+  {r.monedasSinTasa.length > 0 && (
+    <div class="mb-5 rounded-xl border border-ember/30 bg-ember/[.07] px-4 py-3 text-[12px] text-ink-100">
+      Faltan tasas de cambio para <span class="font-mono text-ember">{r.monedasSinTasa.join(', ')}</span>: esos montos no se suman.
+      <a href="/admin/settings" class="text-cyan hover:underline ml-1">Configurar en Ajustes →</a>
+    </div>
+  )}
+  {sinFecha.length > 0 && (
+    <div class="mb-5 rounded-xl border border-white/10 bg-white/[.03] px-4 py-3 text-[12px] text-ink-100">
+      {sinFecha.length === 1 ? 'Un servicio no mensual no tiene' : `${sinFecha.length} servicios no mensuales no tienen`} fecha de renovación
+      ({sinFecha.map((l) => l.nombre).join(', ')}), así que se prorratean en vez de caer en su mes.
+      <a href="/admin/costs" class="text-cyan hover:underline ml-1">Completar en Costos →</a>
+    </div>
+  )}
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Total del mes</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-cyan tracking-tight">{fmtUSD(r.totalUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">{enCOP(r.totalUSD) ?? 'USD'}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Promedio mensual</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-ink-50 tracking-tight">{fmtUSD(r.equivalenteMensualUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">recurrente prorrateado, sin variables</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Vs. mes anterior</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium text-ink-50 tracking-tight">{delta >= 0 ? '+' : '−'}{fmtUSD(Math.abs(delta))}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">{deltaPct != null ? `${deltaPct >= 0 ? '+' : ''}${deltaPct}% sobre ${fmtUSD(anterior.totalUSD)}` : 'sin mes anterior'}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Renovaciones</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${renovaciones.length ? 'text-violet' : 'text-ink-50'}`}>{fmtUSD(renovacionesUSD)}</div>
+      <div class="mt-1 text-[10px] font-mono text-ink-300">{renovaciones.length} cargos no mensuales</div>
+    </div>
+  </div>
+
+  <!-- 12 meses -->
+  <section class="rounded-2xl glass p-5 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">12 meses · USD</div>
+      <ul class="flex flex-wrap items-center gap-4 text-[11.5px] text-ink-100">
+        {SERIES.map((s) => (
+          <li class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm" style={`background:${s.color}`}></span>{s.label}</li>
+        ))}
+      </ul>
+    </div>
+    <div class="relative" id="chart">
+      <svg viewBox={`0 0 ${W} ${H}`} class="w-full h-auto block" role="img" aria-label={`Costo mensual de ${mesLargo.format(fecha(desde))} a ${mesLargo.format(fecha(hasta))}`}>
+        <line x1="0" x2={W} y1={H - PAD_B} y2={H - PAD_B} stroke="rgba(255,255,255,.12)" stroke-width="1" />
+        {barras.map((b, i) => (
+          <a href={`?mes=${b.m.periodo}`} data-i={i} class="chart-bar">
+            <rect x={i * slot} y="0" width={slot} height={H} fill="transparent" />
+            {b.actual && <rect x={b.x - 4} y={PAD_T - 4} width={barW + 8} height={H - PAD_B - PAD_T + 4} rx="6" fill="rgba(255,255,255,.05)" />}
+            {b.segmentos.map((s) => <path d={s.d} fill={s.color} />)}
+            <text x={b.x + barW / 2} y={H - 6} text-anchor="middle" font-size="11" class={b.actual ? 'fill-ink-50' : 'fill-ink-200'} font-weight={b.actual ? 600 : 400}>{b.etiqueta}</text>
+          </a>
+        ))}
+      </svg>
+      <div id="chart-tip" class="pointer-events-none absolute z-10 hidden min-w-[11rem] rounded-lg glass-strong border border-white/10 px-3 py-2 text-[11.5px]"></div>
+    </div>
+    <details class="mt-3">
+      <summary class="text-[11px] font-mono text-ink-300 cursor-pointer hover:text-ink-100">Ver como tabla</summary>
+      <div class="overflow-x-auto mt-2">
+        <table class="w-full text-[12px]">
+          <thead><tr class="text-left text-[10px] font-mono uppercase tracking-wider text-ink-300">
+            <th class="py-1.5 pr-3 font-normal">Mes</th>
+            {SERIES.map((s) => <th class="py-1.5 pr-3 font-normal text-right">{s.label}</th>)}
+            <th class="py-1.5 font-normal text-right">Total</th>
+          </tr></thead>
+          <tbody class="divide-y divide-white/5">
+            {meses.map((m) => (
+              <tr>
+                <td class="py-1.5 pr-3 text-ink-100 capitalize">{mesLargo.format(fecha(m.periodo))}</td>
+                {SERIES.map((s) => <td class="py-1.5 pr-3 font-mono text-ink-100 text-right">{fmtUSD(m[s.key], 0)}</td>)}
+                <td class="py-1.5 font-mono text-ink-50 text-right">{fmtUSD(m.totalUSD, 0)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <!-- Secciones -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    {secciones.map(({ titulo, href, color, s }) => (
+      <section class="rounded-2xl glass p-5">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <h3 class="flex items-center gap-2 text-[13px] font-medium text-ink-50">
+            <span class="h-2 w-2 rounded-full" style={`background:${color}`}></span>{titulo}
+          </h3>
+          <a href={href} class="text-[11px] font-mono text-ink-300 hover:text-cyan">editar →</a>
+        </div>
+        <div class="text-xl font-medium text-ink-50 tracking-tight">{fmtUSD(s.totalUSD, 2)}</div>
+        <div class="text-[10px] font-mono text-ink-300 mb-3">
+          prom. {fmtUSD(s.equivalenteMensualUSD, 2)}/mes{s.reembolsableUSD > 0 ? ` · ${fmtUSD(s.reembolsableUSD, 2)} reembolsable` : ''}
+        </div>
+        {s.lineas.length === 0 && <p class="text-[12px] font-mono text-ink-300">Nada que pagar este mes.</p>}
+        <ul class="divide-y divide-white/5">
+          {s.lineas.map((l) => (
+            <li class="py-2 flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-[12.5px] text-ink-50 truncate">{l.nombre}</div>
+                <div class="text-[10px] font-mono text-ink-300">
+                  {l.proveedor ?? (CATEGORY_LABELS[l.categoria as keyof typeof CATEGORY_LABELS] ?? l.categoria)}
+                  {' · '}{BILLING_CYCLE_LABELS[l.ciclo as keyof typeof BILLING_CYCLE_LABELS] ?? l.ciclo}
+                  {MOTIVO[l.motivo] && <span class={l.motivo === 'sin_fecha' ? 'text-ember' : 'text-violet'}> · {MOTIVO[l.motivo]}</span>}
+                  {l.reembolsable && <span> · reembolsable</span>}
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-[12.5px] font-mono text-ink-50">{fmtNativo(l.monto, l.moneda)}</div>
+                {l.moneda !== 'USD' && <div class="text-[10px] font-mono text-ink-300">{l.montoUSD != null ? fmtUSD(l.montoUSD, 2) : 'sin tasa'}</div>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+
+    <section class="rounded-2xl glass p-5">
+      <div class="flex items-center justify-between gap-2 mb-1">
+        <h3 class="flex items-center gap-2 text-[13px] font-medium text-ink-50">
+          <span class="h-2 w-2 rounded-full" style={`background:${SERIES[2].color}`}></span>Costos de vida
+        </h3>
+        <a href={`/admin/vida?mes=${periodo}`} class="text-[11px] font-mono text-ink-300 hover:text-cyan">registrar →</a>
+      </div>
+      <div class="text-xl font-medium text-ink-50 tracking-tight">{fmtUSD(r.vida.totalUSD, 2)}</div>
+      <div class="text-[10px] font-mono text-ink-300 mb-3">
+        {enCOP(r.vida.totalUSD) ? `${enCOP(r.vida.totalUSD)} · ` : ''}real {fmtUSD(r.vida.realUSD, 0)} + pendiente {fmtUSD(r.vida.pendienteUSD, 0)}
+      </div>
+      {r.vida.porCategoria.length === 0 && <p class="text-[12px] font-mono text-ink-300">Sin fijos ni gastos este mes.</p>}
+      <ul class="divide-y divide-white/5">
+        {r.vida.porCategoria.map((c) => (
+          <li class="py-2 flex items-center justify-between gap-3">
+            <span class="text-[12.5px] text-ink-50">{LIVING_CATEGORY_LABELS[c.categoria]}</span>
+            <span class="text-right">
+              <span class="block text-[12.5px] font-mono text-ink-50">{fmtUSD(c.realUSD, 0)}</span>
+              <span class="block text-[10px] font-mono text-ink-300">de {fmtUSD(c.presupuestoUSD, 0)} presup.</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {r.vida.fijos.some((f) => f.estado === 'pendiente') && (
+        <p class="mt-3 text-[11px] text-ink-300">
+          Pendientes: {r.vida.fijos.filter((f) => f.estado === 'pendiente').map((f) => f.nombre).join(', ')}.
+        </p>
+      )}
+    </section>
+  </div>
+
+  <script is:inline type="application/json" id="chart-json" set:html={JSON.stringify(tooltipData)}></script>
+</AdminLayout>
+
+<script>
+  type Punto = { mes: string; total: string; totalCOP: string | null; series: { label: string; color: string; valor: string }[] }
+  const datos: Punto[] = JSON.parse(document.getElementById('chart-json')!.textContent || '[]')
+  const chart = document.getElementById('chart')!
+  const tip = document.getElementById('chart-tip')!
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c))
+
+  function mostrar(i: number, ancla: Element) {
+    const d = datos[i]
+    if (!d) return
+    tip.innerHTML = `
+      <div class="text-ink-50 font-medium capitalize mb-1">${esc(d.mes)}</div>
+      ${d.series.map((s) => `<div class="flex items-center justify-between gap-4"><span class="flex items-center gap-1.5 text-ink-200"><span class="h-2 w-2 rounded-sm" style="background:${s.color}"></span>${esc(s.label)}</span><span class="font-mono text-ink-50">${esc(s.valor)}</span></div>`).join('')}
+      <div class="mt-1 pt-1 border-t border-white/10 flex items-center justify-between gap-4"><span class="text-ink-200">Total</span><span class="font-mono text-ink-50">${esc(d.total)}</span></div>
+      ${d.totalCOP ? `<div class="text-right text-[10px] font-mono text-ink-300">${esc(d.totalCOP)}</div>` : ''}`
+    tip.classList.remove('hidden')
+    const c = chart.getBoundingClientRect()
+    const b = ancla.getBoundingClientRect()
+    const x = Math.min(Math.max(b.left - c.left + b.width / 2 - tip.offsetWidth / 2, 0), c.width - tip.offsetWidth)
+    tip.style.left = `${x}px`
+    tip.style.top = `${-tip.offsetHeight - 6}px`
+  }
+
+  chart.querySelectorAll<SVGAElement>('.chart-bar').forEach((a) => {
+    const i = Number(a.dataset.i)
+    a.addEventListener('mouseenter', () => mostrar(i, a))
+    a.addEventListener('focus', () => mostrar(i, a))
+    a.addEventListener('mouseleave', () => tip.classList.add('hidden'))
+    a.addEventListener('blur', () => tip.classList.add('hidden'))
+  })
+</script>
