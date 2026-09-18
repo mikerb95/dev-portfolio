@@ -87,6 +87,8 @@ export type CheckoutInput = {
   currency?: string
   description?: string | null
   payerEmail?: string | null
+  payerName?: string | null
+  payerMessage?: string | null
   idempotencyKey: string
   provider: 'wompi' | 'mock'
 }
@@ -148,6 +150,8 @@ export async function createPaymentIdempotent(
         status: 'created',
         provider: input.provider,
         payerEmail: input.payerEmail ?? null,
+        payerName: input.payerName ?? null,
+        payerMessage: input.payerMessage ?? null,
         version: 0,
         createdAt: new Date(),
         updatedAt: new Date(),

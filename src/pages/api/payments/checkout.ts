@@ -5,9 +5,10 @@ import {
   wompiIntegritySignature,
 } from '../../../lib/payments'
 import { clientIp } from '../../../lib/ratelimit'
+import { PAY_MAX_COP, PAY_MIN_COP, formatCop, parsePayForm } from '../../../lib/pay-form'
 import { enforceLimit } from '../../../lib/security/ratelimit-durable'
 
-// Crea una intención de pago (donación/pago dev). Público: es el checkout.
+// Crea una intención de pago de /pay (servicio o apoyo). Público: es el checkout.
 // La clave de idempotencia la genera el cliente (UUID) y es obligatoria:
 // reintentos y dobles clics devuelven el MISMO pago (HTTP 200 en vez de 201).
 
@@ -17,15 +18,13 @@ const json = (status: number, body: unknown) =>
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   })
 
-const MIN_CENTS = 1_000_00 // $1.000 COP
-const MAX_CENTS = 5_000_000_00 // $5.000.000 COP
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+const MIN_CENTS = PAY_MIN_COP * 100
+const MAX_CENTS = PAY_MAX_COP * 100
 
 export const POST: APIRoute = async ({ request, url }) => {
   const { allowed } = await enforceLimit(`checkout:${clientIp(request)}`, { limit: 10, windowMs: 60_000 })
   if (!allowed) {
-    return json(429, { error: 'demasiados intentos, espera un minuto' })
+    return json(429, { error: 'Demasiados intentos seguidos. Espera un minuto y vuelve a intentarlo.' })
   }
 
   let body: Record<string, unknown>
@@ -37,18 +36,13 @@ export const POST: APIRoute = async ({ request, url }) => {
 
   const amountCents = Number(body.amountCents)
   if (!Number.isInteger(amountCents) || amountCents < MIN_CENTS || amountCents > MAX_CENTS) {
-    return json(400, { error: `amountCents debe ser un entero entre ${MIN_CENTS} y ${MAX_CENTS} (centavos de COP)` })
+    return json(400, { error: `El monto debe estar entre $${formatCop(PAY_MIN_COP)} y $${formatCop(PAY_MAX_COP)}.` })
   }
   if (!isValidIdempotencyKey(body.idempotencyKey)) {
     return json(400, { error: 'idempotencyKey requerida (8-128 chars: letras, números, ._-)' })
   }
-  const email =
-    typeof body.payerEmail === 'string' && EMAIL_RE.test(body.payerEmail) && body.payerEmail.length <= 200
-      ? body.payerEmail
-      : null
-  const description = typeof body.description === 'string'
-    ? body.description.replace(/[\x00-\x1f\x7f]/g, '').trim().slice(0, 300)
-    : null
+  const form = parsePayForm(body)
+  if (!form.ok) return json(400, { error: form.error })
 
   const wompiPublicKey = process.env.WOMPI_PUBLIC_KEY
   const wompiIntegrity = process.env.WOMPI_INTEGRITY_SECRET
@@ -57,8 +51,10 @@ export const POST: APIRoute = async ({ request, url }) => {
   const { payment, replayed, conflict } = await createPaymentIdempotent({
     amountCents,
     currency: 'COP',
-    description,
-    payerEmail: email,
+    description: form.data.description,
+    payerEmail: form.data.email,
+    payerName: form.data.name,
+    payerMessage: form.data.message,
     idempotencyKey: body.idempotencyKey,
     provider,
   })
@@ -86,6 +82,10 @@ export const POST: APIRoute = async ({ request, url }) => {
               wompiIntegrity,
             ),
             'redirect-url': new URL('/pay/gracias', url.origin).toString(),
+            // Prellena el checkout de Wompi: la persona ya escribió estos datos.
+            // No entran en la firma de integridad (solo referencia, monto y moneda).
+            'customer-data:email': form.data.email,
+            'customer-data:full-name': form.data.name,
           },
         }
       : { provider: 'mock' as const, confirmUrl: '/api/payments/mock/pay' }
