@@ -357,8 +357,9 @@ en un arranque limpio antes de que la contención empezara.
 **Etapa 7 = LAB Fase 5 (k6)**
 - Según plan original (scripts en `lab/k6/`, tabla `load_test_runs`, ingesta
   `kind:'load_test'`, página admin, workflow manual con guard anti-prod).
-- Prerrequisito operativo: target de preview/staging estable. Recordatorio:
-  `VERCEL_TOKEN` en GitHub Secrets sigue pendiente (transversal).
+- Prerrequisito operativo: target de preview/staging estable. `VERCEL_TOKEN`
+  en GitHub Secrets ya está cargado (17 sep 2026), así que el prerrequisito
+  pasa a ser solo el target, no la credencial.
 - Encender tarjeta de load testing en `/lab` público.
 
 ## Etapa 8 - Remate vitrina de seguridad ✅ CÓDIGO COMPLETO
@@ -460,7 +461,7 @@ Cada artículo: mismo formato del content collection actual, OG image
 > Lista consolidada y con el estado real de las env vars de producción en
 > [`pendientes.md`](../pendientes.md). Resumen al 24 jul 2026:
 
-- [ ] `VERCEL_TOKEN` en GitHub Secrets (rollback Fase 1 LAB + k6).
+- [x] `VERCEL_TOKEN` en GitHub Secrets (rollback Fase 1 LAB + k6). Hecho 17 sep 2026.
 - [ ] **`TURSO_DEMO_URL` + `TURSO_DEMO_AUTH_TOKEN` en Vercel (Production)** -
       confirmado que siguen sin subir: la demo no existe en prod (etapa 3).
 - [ ] `SECURITY_IP_SALT` en Vercel (sin ella el hash de IP del SIEM va sin salt).

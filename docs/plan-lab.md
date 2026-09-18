@@ -9,8 +9,8 @@
 
 ---
 
-> **Estado al 29 jul 2026**: el plan está ejecutado salvo la Fase 5 (load
-> testing con k6), bloqueada por `VERCEL_TOKEN`. La tabla de abajo es la
+> **Estado al 29 jul 2026** (credencial desbloqueada el 17 sep 2026, ver abajo):
+> el plan está ejecutado salvo la Fase 5 (load testing con k6). La tabla de abajo es la
 > auditoría del punto de partida, conservada a propósito para poder comparar:
 > hoy hay 937 tests de Vitest y 47 e2e, seis workflows de GitHub Actions y
 > pipeline con rollback automático. El detalle de las fases 5-7 está en
@@ -19,9 +19,10 @@
 > **Actualización ago 2026**: los scripts k6 de la Fase 5 (`lab/k6/carga.js`,
 > `lab/k6/estres.js`) ya están implementados y corridos localmente (escalera
 > de niveles, fila R de recuperación, muestreo de CPU/heap del proceso y
-> bloque de hallazgos H-01..H-05). Lo que sigue bloqueado por `VERCEL_TOKEN`
-> es solo la integración con el panel (`load_test_runs`, ingesta,
-> `/admin/lab/load`) - detalle en `plan-lab-fases-pendientes.md`.
+> bloque de hallazgos H-01..H-05). Lo que faltaba era la integración con el
+> panel (`load_test_runs`, ingesta, `/admin/lab/load`); con `VERCEL_TOKEN`
+> cargado el 17 sep 2026 ya no hay bloqueo de credencial, solo el trabajo
+> pendiente - detalle en `plan-lab-fases-pendientes.md`.
 >
 > **Actualización 21-23 ago 2026**: los hallazgos de las corridas de k6 quedaron
 > publicados en `/docs` (RF-505, evidencia en `lab/k6/resultados/*.json`), y se
@@ -117,8 +118,8 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
    después lo valide).
 
 > **Progreso**: Fase 0 ✅ (jul 3: 94 tests, 87% líneas en src/lib). Fase 1 ✅ (jul 4: workflow CI,
-> /api/health, ingest, tabla ci_runs, página /admin/lab/pipeline). Falta el secret VERCEL_TOKEN
-> en GitHub para habilitar el rollback automático (crear en vercel.com/account/tokens).
+> /api/health, ingest, tabla ci_runs, página /admin/lab/pipeline). El secret VERCEL_TOKEN
+> quedó cargado en GitHub el 17 sep 2026, así que el rollback automático ya puede revertir.
 > Fase 2 ✅ (jul 4: pasarela propia - /pay con checkout idempotente, webhook Wompi con verificación
 > de checksum, modo mock demo, máquina de estados con concurrencia optimista, panel
 > /admin/lab/payments-lab con 4 ataques en vivo, 18 tests contra BD en memoria; 112 tests totales).
