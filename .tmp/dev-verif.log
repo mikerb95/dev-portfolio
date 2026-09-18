@@ -50,3 +50,5 @@ Error: Failed to load url astro:server-app.js (resolved id: astro:server-app.js)
 07:31:54 [200] /api/admin/lab/load 18ms
 07:32:00 [200] /admin/lab/load 7ms
 07:32:00 [200] /api/admin/lab/load 5ms
+07:32:42 [vite] program reload
+07:32:51 [vite] program reload

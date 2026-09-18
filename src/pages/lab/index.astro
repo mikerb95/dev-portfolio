@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { db } from '../../db'
-import { ciRuns, labExperiments, payments, paymentEvents, securityFindings } from '../../db/schema'
+import { ciRuns, labExperiments, loadTestRuns, payments, paymentEvents, securityFindings } from '../../db/schema'
 import { desc, gte, sql } from 'drizzle-orm'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
 
@@ -71,6 +71,29 @@ const [findingsAgg] = await db
   })
   .from(securityFindings)
 const hasFindings = findingsAgg.total > 0
+
+// ── Load testing (k6) ───────────────────────────────────────────────────────
+// Solo la última corrida de estrés, que es la que responde las tres preguntas
+// (capacidad, quiebre, recuperación). Una fila, no una agregación: la tabla
+// crece una fila por corrida manual, así que esto no repite el problema de
+// coste de escanear monitor_checks en una ruta pública.
+//
+// OPSEC: se publica el comportamiento, nunca el objetivo. La URL del target es
+// un entorno desechable, pero decir en público contra qué se corre es decir
+// dónde hay un entorno menos vigilado que producción.
+const [lastLoad] = await db
+  .select({
+    scenario: loadTestRuns.scenario,
+    p95: loadTestRuns.p95,
+    sustainedRps: loadTestRuns.sustainedRps,
+    breakingPointRps: loadTestRuns.breakingPointRps,
+    recoveredAfterS: loadTestRuns.recoveredAfterS,
+    ranAt: loadTestRuns.ranAt,
+  })
+  .from(loadTestRuns)
+  .where(sql`${loadTestRuns.scenario} = 'estres'`)
+  .orderBy(desc(loadTestRuns.ranAt))
+  .limit(1)
 
 // ── Experimentos (chaos + ataques a la pasarela) ────────────────────────────
 // Agrupado por tipo: un mismo experimento se corre muchas veces (13 corridas de
