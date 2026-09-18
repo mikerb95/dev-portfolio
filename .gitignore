@@ -40,6 +40,11 @@ test-results/
 
 # mutation testing (Stryker)
 .stryker-tmp/
+
+# Bases libsql desechables y logs de servidores de prueba levantados a mano
+# (verificaciones locales, corridas de k6). El workflow load-test.yml usa esta
+# misma ruta en el runner.
+.tmp/
 reports/mutation/
 .env.development.local.bak
 .env*
