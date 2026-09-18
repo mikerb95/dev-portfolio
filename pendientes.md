@@ -1,6 +1,8 @@
 # Pendientes - CodeByMike
 
-> Estado al **29 jul 2026**. Este archivo es el inventario vivo de lo que falta:
+> Estado al **29 jul 2026**, con lo añadido el **17 sep 2026** en §4 (tres e2e en
+> rojo heredados y los límites del simulador de infra). Este archivo es el
+> inventario vivo de lo que falta:
 > acciones manuales (variables de entorno, altas en servicios externos,
 > verificaciones en producción) y trabajo de código todavía sin hacer. Lo ya
 > resuelto se resume al final, sin detalle, para no confundir historia con
@@ -250,6 +252,55 @@ Prioridad, de más a menos urgente:
       de WhatsApp → `/c/[code]` → pago → `/mis-pagos`).
 
 ## 4. Trabajo de código pendiente
+
+### 🔴 Tres e2e en rojo en `main` (detectados 14 sep 2026)
+
+Aparecieron al montar la suite del simulador de infra. **No son regresiones de
+ese trabajo**: se comprobaron en un worktree del commit `519da69` (HEAD antes de
+empezar esa sesión) y fallan exactamente igual allí, así que llevan rotos desde
+antes. Se reproducen con `npx playwright test e2e/auth.spec.ts e2e/demo.spec.ts
+e2e/portal.spec.ts`.
+
+- [ ] **La demo filtra datos de la base principal** (`demo.spec.ts:53`). Con pase
+      de demo, `/admin` pinta proyectos e ingresos de la base REAL: salen con el
+      prefijo centinela en la tarjeta de P&L, con enlaces a `/admin/projects/3`,
+      `/1` y `/4`. Rompe la primera de las tres garantías de `src/lib/demo.ts`
+      (los datos salen de otra base), que es de lo que cuelga toda la demo
+      pública. El test corta en la primera ruta, así que no se sabe si el resto
+      de la lista está igual. **Solo está localizado dónde se ve, no por qué**:
+      `/admin/clients` sí muestra los datos ficticios, y el contexto de demo se
+      aplica envolviendo `next()` en `runInDemoContext` en el middleware. Es el
+      más urgente de los tres: es el único con consecuencias hacia fuera.
+- [ ] **El deck privado no es público pero responde como si lo fuera**
+      (`auth.spec.ts:35`). `/docs/presentacion` devuelve 200 sin sesión en vez de
+      redirigir a `/login`. El deck de sustentación es solo del administrador.
+- [ ] **El botón de la demo en `/tools` no navega** (`portal.spec.ts:46`). Se
+      queda en `/tools` en vez de abrir `/portal` con la demo pública.
+
+> Un cuarto test (`auth.spec.ts:45`, control de presentaciones) falla solo en la
+> corrida paralela y pasa con `--workers=1`, en el árbol actual y en el de
+> referencia: eso sí es flake, no un fallo.
+
+### Simulador de costos de infra - lo que queda blando (17 sep 2026)
+
+`/admin/infra` (Fase 46) está entregado y con precios contrastados contra las
+páginas de tarifas de Vercel, Turso y Workspace el 17 sep. Quedan dos números
+que no son firmes, y la página enseña la fecha de verificación de cada tarjeta
+justo para que se note:
+
+- [ ] **Workspace va convertido a 4.000 COP/USD.** Google cobra en pesos en
+      Colombia (Starter 29.200, Standard 58.400, Plus 90.900 por usuario al mes
+      con compromiso anual), así que esa columna en dólares se mueve con el
+      dólar aunque la factura en pesos no. Se puede convertir con la tasa real
+      de `app_settings` (`fx_COP_per_USD`), que la página ya lee para el total
+      en pesos, en vez de con la de referencia del catálogo.
+- [ ] **Los precios de Claude no se contrastaron en el navegador** (su tarjeta
+      dice 12 sep, no 17). Salieron de la referencia oficial de modelos, no de
+      abrir la página de precios como con los otros tres.
+- [ ] Opcional: caso propio en `/tools` con su mock visual. Hoy el simulador
+      entra como un detalle del caso 02 (Costos y P&L), que es la misma pregunta
+      de negocio; un caso 08 pediría además su ilustración en `ToolMock.astro`.
+
 
 ### ✅ Portal en tiempo real - Fase A entregada (30 jul 2026)
 
