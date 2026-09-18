@@ -70,17 +70,27 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
   const MAX_TRIES = 10
   const EVERY_MS = 4_000
 
+  // Sin datos fiables se vuelve al texto genérico del HTML, que es correcto en
+  // cualquier caso. Si ya se había pintado un estado, ese se conserva.
+  let rendered = false
+  const giveUp = () => {
+    if (rendered) return
+    $('r-eyebrow-text').textContent = 'Pago enviado'
+    $('r-dot').className = 'w-1.5 h-1.5 rounded-full bg-cyan'
+  }
+
   const check = async (attempt: number): Promise<void> => {
     try {
       const res = await fetch(`/api/payments/resultado?id=${encodeURIComponent(id!)}`)
-      if (!res.ok) return // sin datos fiables: se queda el texto genérico
+      if (!res.ok) return giveUp()
       const r = (await res.json()) as PayResult
       render(r)
+      rendered = true
       if (isSettling(r.status) && attempt < MAX_TRIES) {
         setTimeout(() => check(attempt + 1), EVERY_MS)
       }
     } catch {
-      // Sin conexión: el texto genérico ya dice lo necesario.
+      giveUp()
     }
   }
 
