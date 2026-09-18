@@ -56,3 +56,7 @@ Error: Failed to load url astro:server-app.js (resolved id: astro:server-app.js)
 07:33:11 [vite] program reload
 07:33:21 [watch] /src/styles/global.css
 07:33:31 [watch] /src/styles/global.css
+07:33:51 [200] /lab 229ms
+07:33:52 [200] /lab 26ms
+07:33:52 [vite] dependencies optimized: gsap, gsap/ScrollTrigger, gsap/SplitText, lenis
+07:33:52 [204] POST /api/vitals 12ms
