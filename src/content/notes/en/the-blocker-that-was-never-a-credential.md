@@ -1,6 +1,6 @@
 ---
 title: The blocker that was never a credential
-description: Two months with the last lab phase waiting on a Vercel secret that, once added, opened no door at all. The load test didn't need a permission: it needed someone to reread its own guardrail.
+description: Two months with the last lab phase waiting on a Vercel secret that, once added, opened no door at all. The load test never needed a permission, it needed someone to reread its own guardrail.
 date: 2026-09-18
 tags: [k6, load-testing, ci-cd, lab, postmortem]
 lang: en

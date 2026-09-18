@@ -1,6 +1,6 @@
 ---
 title: El bloqueo que no era una credencial
-description: Dos meses con la última fase del laboratorio esperando un secreto de Vercel que, al ponerlo, no abría ninguna puerta. La prueba de carga no necesitaba un permiso: necesitaba que alguien releyera su propio guardarraíl.
+description: Dos meses con la última fase del laboratorio esperando un secreto de Vercel que, al ponerlo, no abría ninguna puerta. La prueba de carga no necesitaba un permiso, necesitaba que alguien releyera su propio guardarraíl.
 date: 2026-09-18
 tags: [k6, load-testing, ci-cd, lab, postmortem]
 lang: es
