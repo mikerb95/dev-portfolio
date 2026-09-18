@@ -125,6 +125,32 @@ const SERVICES = [
   [3, 3, 'Mapbox', 'cdn', 'mapbox', 50, 'USD', 'monthly', 'client_reimbursable', 50, 25],
   [3, 3, 'AWS EC2 t3.small', 'hosting', 'aws', 15, 'USD', 'monthly', 'me', 28, 60],
   [null, null, 'GitHub Team', 'repository', 'github', 4, 'USD', 'monthly', 'me', null, 150],
+  [null, null, 'Claude Max', 'subscription', 'Anthropic', 100, 'USD', 'monthly', 'me', null, 20],
+  [null, null, 'JetBrains All Products', 'subscription', 'JetBrains', 289, 'USD', 'annual', 'me', null, 40],
+]
+
+// Costos de vida: [nombre, categoría, monto COP, ciclo, mes ancla, día de pago]
+const LIVING_COSTS = [
+  ['Arriendo apartamento', 'vivienda', 1_800_000, 'monthly', null, 5],
+  ['Administración', 'vivienda', 280_000, 'monthly', null, 5],
+  ['Internet fibra', 'servicios', 95_000, 'monthly', null, 12],
+  ['Energía', 'servicios', 140_000, 'monthly', null, 20],
+  ['Acueducto', 'servicios', 110_000, 'bimonthly', 1, 18],
+  ['Plan de celular', 'servicios', 55_000, 'monthly', null, 8],
+  ['Medicina prepagada', 'salud', 320_000, 'monthly', null, 1],
+  ['SOAT moto', 'seguros', 480_000, 'annual', 3, 15],
+  ['Spotify', 'suscripciones', 17_000, 'monthly', null, 3],
+]
+
+// Gastos reales del mes en curso: [descripción, categoría, monto COP, día, índice del fijo o null]
+const LIVING_EXPENSES = [
+  ['Arriendo apartamento', 'vivienda', 1_800_000, 4, 1],
+  ['Administración', 'vivienda', 280_000, 4, 2],
+  ['Medicina prepagada', 'salud', 320_000, 1, 7],
+  ['Spotify', 'suscripciones', 17_000, 3, 9],
+  ['Mercado quincena', 'alimentacion', 420_000, 2, null],
+  ['Mercado quincena', 'alimentacion', 390_000, 15, null],
+  ['Transporte', 'transporte', 160_000, 10, null],
 ]
 
 const FINANCES = [
@@ -261,6 +287,26 @@ async function seed() {
     { sql: 'insert into app_settings (key, value, updated_at) values (?, ?, ?)', args: ['fx_COP_per_USD', '3401.62', sec(now)] },
     { sql: 'insert into app_settings (key, value, updated_at) values (?, ?, ?)', args: ['fx_EUR_per_USD', '0.8783', sec(now)] },
   ])
+
+  await db.batch(
+    LIVING_COSTS.map(([name, category, amount, cycle, anchor, day]) => ({
+      sql: `insert into living_costs (name, category, amount, currency, cycle, anchor_month, due_day, active, created_at, updated_at)
+            values (?, ?, ?, 'COP', ?, ?, ?, 1, ?, ?)`,
+      args: [PREFIX + name, category, amount, cycle, anchor, day, daysAgo(200), daysAgo(200)],
+    }))
+  )
+  // El mes en curso en Colombia, igual que lo calcula el panel: en UTC, la
+  // noche del último día ya sería el mes siguiente y el registro saldría vacío.
+  const hoyCO = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date(now))
+  const periodo = hoyCO.slice(0, 7)
+  const diaHoy = Number(hoyCO.slice(8, 10))
+  await db.batch(
+    LIVING_EXPENSES.filter(([, , , day]) => day <= diaHoy).map(([description, category, amount, day, fijo]) => ({
+      sql: `insert into living_expenses (periodo, living_cost_id, category, description, amount, currency, spent_on, created_at)
+            values (?, ?, ?, ?, ?, 'COP', ?, ?)`,
+      args: [periodo, fijo, category, PREFIX + description, amount, `${periodo}-${String(day).padStart(2, '0')}`, sec(now)],
+    }))
+  )
 
   console.log(`✓ Datos sembrados: ${CLIENTS.length} clientes · ${PROJECTS.length} proyectos · ` +
               `${SERVICES.length} servicios · ${MONITORS.length} monitores · ${checks.length} checks`)
