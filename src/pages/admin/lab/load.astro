@@ -151,7 +151,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
           ${metrica('p95', ms(r.p95))}
           ${metrica('p99', ms(r.p99))}
           ${metrica('sostenido', r.sustainedRps == null ? '-' : `${n1(r.sustainedRps)}/s`, 'text-emerald-400')}
-          ${metrica('quiebre', roto ? `${n1(r.breakingPointRps)}/s` : 'no llegó', roto ? 'text-red-400' : 'text-zinc-500')}
+          ${metrica('quiebre', quiebre.txt, quiebre.tono)}
           ${metrica('recuperación', recuperacion.txt, recuperacion.tono)}
         </div>
 
