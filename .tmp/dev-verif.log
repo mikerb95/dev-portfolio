@@ -5,3 +5,11 @@
 07:27:57 [vite] connected.
 07:28:01 [types] Generated 1ms
 07:28:01 [vite] connected.
+07:28:01 [content] Syncing content
+07:28:01 [content] Astro config changed
+07:28:01 [content] Clearing content store
+07:28:02 [content] Synced content
+ astro  v7.1.3 ready in 8476 ms
+┃ Local    http://localhost:4401/
+┃ Network  use --host to expose
+07:28:02 watching for file changes...
