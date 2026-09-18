@@ -13,3 +13,4 @@
 ┃ Local    http://localhost:4401/
 ┃ Network  use --host to expose
 07:28:02 watching for file changes...
+07:28:07 [200] /api/health 1310ms
