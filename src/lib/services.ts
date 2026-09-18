@@ -19,7 +19,7 @@ export const PROVIDERS = [
   'GitHub', 'GitLab', 'AWS', 'Azure', 'GCP', 'Vercel', 'Netlify', 'Cloudflare',
   'Turso', 'Supabase', 'Neon', 'PlanetScale', 'MongoDB Atlas', 'Upstash',
   'Namecheap', 'Name.com', 'GoDaddy', 'Google Workspace', 'Zoho', 'Resend', 'SendGrid',
-  'Mailgun', 'Stripe', 'PayPal', 'Sentry', 'Otro',
+  'Mailgun', 'Stripe', 'PayPal', 'Sentry', 'Anthropic', 'OpenAI', 'JetBrains', 'Otro',
 ] as const
 
 export const PAYERS = ['me', 'client_reimbursable', 'client_direct'] as const
