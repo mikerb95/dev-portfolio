@@ -106,15 +106,27 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
   function tarjeta(r: any): string {
     const steps: Step[] = JSON.parse(r.stepsJson ?? '[]')
     const hallazgos: { id: string; titulo: string; descripcion: string }[] = JSON.parse(r.findingsJson ?? '[]')
-    const roto = r.breakingPointRps != null
     const peor = steps.reduce<Step['estado']>((acc, s) => (s.estado === 'roto' ? 'roto' : s.estado === 'degradado' && acc === 'ok' ? 'degradado' : acc), 'ok')
     const c = ESTADO[peor]
 
-    // "No se recuperó" y "se recuperó al instante" son lecturas opuestas y las
-    // dos podrían imprimirse como un número pequeño; se distinguen a propósito.
-    const recuperacion = r.recoveredAfterS == null
-      ? { txt: 'no volvió', tono: 'text-red-400' }
-      : { txt: `${r.recoveredAfterS}s`, tono: 'text-zinc-300' }
+    // El quiebre se lee de los escalones y no solo de `breakingPointRps`: ese
+    // campo solo existe en req/s (escenario de estrés), y una corrida de carga
+    // medida en VUs que sí se rompió mostraría "no llegó", que es justo lo
+    // contrario de lo que pasó.
+    const primerRoto = steps.find((s) => s.estado === 'roto')
+    const quiebre = primerRoto
+      ? { txt: primerRoto.unidad === 'vus' ? `${primerRoto.carga} VUs` : `${n1(primerRoto.carga)}/s`, tono: 'text-red-400' }
+      : { txt: 'no llegó', tono: 'text-zinc-500' }
+
+    // Solo el escenario de estrés tiene fase de recuperación. En el de carga no
+    // hay nada que medir, y pintar "no volvió" sería inventar un fallo.
+    const recuperacion = r.scenario !== 'estres'
+      ? { txt: 'n/a', tono: 'text-zinc-600' }
+      // "No se recuperó" y "se recuperó al instante" son lecturas opuestas y
+      // las dos podrían imprimirse como un número pequeño: se distinguen.
+      : r.recoveredAfterS == null
+        ? { txt: 'no volvió', tono: 'text-red-400' }
+        : { txt: `${r.recoveredAfterS}s`, tono: 'text-zinc-300' }
 
     return `
       <article class="rounded-xl border border-zinc-800 p-5">
