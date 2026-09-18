@@ -102,23 +102,40 @@ jobs:
         run: |
           mkdir -p .tmp
           node scripts/seed-e2e.mjs
-          npm run dev -- --port "$PUERTO" --ignore-lock > dev-server.log 2>&1 &
+          # `--host 127.0.0.1` es obligatorio aquí, no cosmético: sin él Astro
+          # anuncia "localhost" y en el runner esa resolución no coincide con la
+          # interfaz que se sondea. La primera corrida (18 sep 2026) arrancó bien
+          # y aun así expiró sin registrar una sola petición.
+          npm run dev -- --host 127.0.0.1 --port "$PUERTO" --ignore-lock > dev-server.log 2>&1 &
           echo "Esperando a que el servidor responda…"
           for i in $(seq 1 60); do
-            SALUD=$(curl -sf --max-time 5 "http://127.0.0.1:$PUERTO/api/health" || true)
-            if [ -n "$SALUD" ]; then
-              echo "$SALUD"
+            CODIGO=$(curl -s -o salud.json -w '%{http_code}' --max-time 5 "http://127.0.0.1:$PUERTO/api/health" || echo 000)
+            if [ "$CODIGO" = "200" ]; then
+              cat salud.json; echo
               # La segunda mitad del guardarraíl, verificada también aquí: si el
               # servidor quedó conectado a una base remota, k6 abortaría en
               # setup() y el job moriría con un mensaje mucho menos claro.
-              case "$SALUD" in
-                *'"local":true'*) echo "Base local confirmada."; exit 0 ;;
-                *) echo "::error::El servidor no está leyendo de una base local."; exit 1 ;;
-              esac
+              if grep -q '"local":true' salud.json; then
+                echo "Base local confirmada."
+                exit 0
+              fi
+              echo "::error::El servidor no está leyendo de una base local."
+              exit 1
+            fi
+            # Un 000 repetido es "no hay nadie escuchando ahí"; un 500 es un
+            # servidor vivo que no arranca. Distinguirlos en el propio log
+            # ahorra una ronda entera de push para averiguarlo.
+            if [ $((i % 10)) = 0 ]; then
+              echo "  intento $i: HTTP $CODIGO $(head -c 200 salud.json 2>/dev/null)"
             fi
             sleep 2
           done
-          echo "::error::El servidor no respondió en 120 s."
+          echo "::error::El servidor no respondió en 120 s (último HTTP $CODIGO)."
+          echo "── puertos a la escucha ──"
+          ss -ltnp 2>/dev/null || true
+          echo "── últimos bytes de la respuesta ──"
+          head -c 500 salud.json 2>/dev/null || true
+          echo "── dev-server.log ──"
           cat dev-server.log
           exit 1
 
