@@ -473,6 +473,10 @@ export const payments = sqliteTable('payments', {
   provider: text('provider', { enum: ['wompi', 'mock'] }).notNull().default('mock'),
   gatewayTxId: text('gateway_tx_id'),
   payerEmail: text('payer_email'),
+  // Quién paga y su nota, tal como los escribió en /pay. Nullables: los pagos
+  // del portal y los cobros de campo ya identifican al pagador por otra vía.
+  payerName: text('payer_name'),
+  payerMessage: text('payer_message'),
   // Factura que este pago salda, si nació del portal de clientes. Null para los
   // pagos sueltos de /pay (la demo pública de la pasarela).
   invoiceId: integer('invoice_id'),

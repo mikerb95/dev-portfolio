@@ -225,6 +225,13 @@
       "when": 1788803826478,
       "tag": "0031_flaky_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1789706525518,
+      "tag": "0032_outstanding_talisman",
+      "breakpoints": true
     }
   ]
 }
