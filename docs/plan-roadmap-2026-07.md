@@ -443,18 +443,24 @@ briefing sin IA; test del recolector y del truncado.
 
 ## Transversal - Artículos `/notes` faltantes
 
-Publicados (14): monitor propio, micro-SIEM, chaos, SLOs, sesiones revocables,
+Publicados (15): monitor propio, micro-SIEM, chaos, SLOs, sesiones revocables,
 RAG, mutation testing, e2e, SAST ("no solo un scan verde"), bloqueo escalado de
 IPs, analizador de dominios, cobros por WhatsApp, el del `clientId` que nunca
-viene de la URL, y "Dos logins en el mismo sitio, y ninguno conoce al otro"
-(por qué el portal no reutiliza la auth del admin).
+viene de la URL, "Dos logins en el mismo sitio, y ninguno conoce al otro"
+(por qué el portal no reutiliza la auth del admin), y "El bloqueo que no era una
+credencial" (18 sep 2026, cierre de la etapa 7).
 
 Cola de artículos (escribir cada uno al cerrar su etapa):
 
 1. **Pasarela de pagos mock**: idempotencia, webhooks firmados, por qué mock.
 2. **Bóveda AES-256-GCM**: cifrado por servicio, revelado bajo demanda, qué NO hacer.
 3. **Demo read-only** (etapa 3, entregada): aislar por diseño (BD separada) vs filtrar por query.
-4. **k6** (tras etapa 7): carga contra preview, nunca contra prod facturado.
+4. ~~**k6** (tras etapa 7)~~ ✅ publicado como "El bloqueo que no era una
+   credencial". El ángulo cambió al implementarlo: el tema no acabó siendo
+   "carga contra preview, nunca contra prod facturado" sino por qué ese preview
+   era imposible y por qué el pendiente sobrevivió dos meses siendo falso. La
+   regla de no tocar producción sigue ahí, pero como parte de la historia y no
+   como tesis.
 5. **Briefing con IA** (tras etapa 11): IA con criterio, contratos de entrada, fail-open.
 
 Cada artículo: mismo formato del content collection actual, OG image
