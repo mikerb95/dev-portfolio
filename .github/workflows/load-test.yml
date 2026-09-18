@@ -126,8 +126,12 @@ jobs:
         env:
           TARGET: ${{ inputs.target_url }}
         run: |
-          [ -z "$TARGET" ] && TARGET="http://127.0.0.1:$PUERTO"
+          if [ -z "$TARGET" ]; then TARGET="http://127.0.0.1:$PUERTO"; fi
           echo "Objetivo: $TARGET"
+          # El repo versiona corridas históricas en lab/k6/resultados/. Si no se
+          # limpian, el paso de reporte las volvería a ingerir en cada job y el
+          # panel se llenaría de duplicados de agosto.
+          rm -f lab/k6/resultados/*.json
           CODIGO=0
           case "${{ inputs.escenario }}" in
             carga)  k6 run lab/k6/carga.js  -e TARGET="$TARGET" || CODIGO=$? ;;
