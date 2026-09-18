@@ -256,7 +256,10 @@ function seccionVida(fijos: FijoFila[], gastos: GastoFila[], periodo: string, ra
     const eq = toBaseUSD(f.amount / cada, f.currency, rates)
     if (eq != null) equivalenteMensualUSD += eq
 
-    if (!caeEnMes(cada, f.anchorMonth ?? mesDe(periodo), mesDe(periodo))) continue
+    // normalizarFijo exige el mes ancla a todo ciclo no mensual; si aun así
+    // falta, no se sabe cuándo cae y se omite antes que cobrarlo cada mes.
+    if (cada > 1 && f.anchorMonth == null) continue
+    if (!caeEnMes(cada, f.anchorMonth ?? 1, mesDe(periodo))) continue
     fijosDelMes.add(f.id)
 
     const presupuesto = usd(f.amount, f.currency)
