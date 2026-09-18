@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 
+// `runInDemoContext` no abre nada si la demo no está configurada (es la primera
+// defensa: sin base de demo, no hay demo). Para poder ejercitar el contexto
+// hace falta que la variable exista ANTES de importar el módulo; la URL no se
+// llega a abrir porque estos tests no consultan nada.
+process.env.TURSO_DEMO_URL = 'file:/tmp/contexto-recarga-no-se-abre.db'
+
 // El aislamiento de la demo y el modo respaldo del portal se sostienen sobre un
 // AsyncLocalStorage: el middleware abre el contexto y las consultas lo leen.
 // Si ese almacén vive en el módulo, basta con que el módulo se evalúe DOS veces
