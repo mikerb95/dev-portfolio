@@ -47,7 +47,14 @@ export const RESPALDO_USER_ID = -1
 
 // ── Contexto ────────────────────────────────────────────────────────────────
 
-const contexto = new AsyncLocalStorage<true>()
+// En `globalThis` por el mismo motivo que el contexto de demo (ver
+// src/db/index.ts): una recarga de módulo en desarrollo dejaría al middleware
+// abriendo el respaldo en una instancia y a las consultas leyéndolo en otra,
+// con lo que el portal saldría a buscar a la base la que se suponía caída.
+const contextos = globalThis as typeof globalThis & {
+  __respaldoContext?: AsyncLocalStorage<true>
+}
+const contexto = (contextos.__respaldoContext ??= new AsyncLocalStorage<true>())
 
 /** Corre `fn` con el portal en modo respaldo. Lo envuelve el middleware. */
 export function runInRespaldoContext<T>(fn: () => T): T {

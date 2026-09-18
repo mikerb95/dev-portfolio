@@ -70,7 +70,22 @@ const demoDbClient = (): Db | null => {
   return demoDbInstance
 }
 
-const demoContext = new AsyncLocalStorage<true>()
+// El AsyncLocalStorage vive en `globalThis` y no en el módulo A PROPÓSITO.
+// El dev server re-evalúa este archivo cada vez que se toca, y cada copia
+// traería su propia instancia: el middleware abriría el contexto en una y la
+// página lo leería en otra, con lo que `activeDb()` no vería store y la demo
+// pasaría a leer la base REAL. Sin un error, sin un aviso, con los datos de
+// clientes de verdad pintados en el panel público de demostración.
+//
+// No es teórico: reproducido 20 de 20 veces tocando este archivo mientras
+// corría `astro dev`. En producción el módulo se evalúa una sola vez y esto no
+// cambia nada; lo que arregla es que en desarrollo el aislamiento se pueda
+// verificar de verdad, en vez de depender de que nadie edite un fuente
+// mientras la suite corre.
+const contextos = globalThis as typeof globalThis & {
+  __demoContext?: AsyncLocalStorage<true>
+}
+const demoContext = (contextos.__demoContext ??= new AsyncLocalStorage<true>())
 
 /**
  * Corre `fn` con todas las lecturas apuntando a la base de demo. El contexto se
