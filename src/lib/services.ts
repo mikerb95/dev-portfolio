@@ -3,7 +3,7 @@ import { encryptJson } from './crypto'
 
 export const SERVICE_CATEGORIES = [
   'hosting', 'database', 'auth', 'cdn', 'email', 'storage',
-  'dns', 'domain', 'monitoring', 'payment', 'repository', 'other',
+  'dns', 'domain', 'monitoring', 'payment', 'repository', 'subscription', 'other',
 ] as const
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number]
 
