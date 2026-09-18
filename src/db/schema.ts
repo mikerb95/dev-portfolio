@@ -1405,3 +1405,54 @@ export const computePeriods = sqliteTable('compute_periods', {
 }, (t) => ({
   proyectoPeriodo: uniqueIndex('compute_periods_project_periodo_idx').on(t.projectId, t.periodo),
 }))
+
+// Corridas de carga de k6 (LAB Fase 5). Una fila por corrida de `lab/k6/*.js`,
+// ingerida por token de máquina desde el workflow o desde una corrida local.
+//
+// Guarda el resumen ya normalizado por el script y no el JSON crudo de k6: ese
+// crudo pesa cientos de KB por corrida, cambia de forma entre versiones de k6 y
+// mezcla las métricas de rampa con las de meseta, que es justo lo que el script
+// separó. `rawJson` conserva el resumen completo para poder repintar el detalle
+// sin volver a correr la prueba.
+export const loadTestRuns = sqliteTable('load_test_runs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  tool: text('tool').notNull().default('k6'),
+  scenario: text('scenario', { enum: ['carga', 'estres'] }).notNull(),
+  // URL contra la que se corrió. Nunca producción: lo impide el guardarraíl de
+  // lab/k6/lib/perfil.js y, por si alguien se lo salta, la propia ingesta.
+  target: text('target').notNull(),
+  vusMax: integer('vus_max'),
+  durationS: integer('duration_s'),
+  requests: integer('requests'),
+  rps: real('rps'),
+  p50: real('p50'),
+  p95: real('p95'),
+  p99: real('p99'),
+  avgMs: real('avg_ms'),
+  maxMs: real('max_ms'),
+  errorRatePct: real('error_rate_pct'),
+  checksPassed: integer('checks_passed'),
+  checksFailed: integer('checks_failed'),
+  thresholdsOk: integer('thresholds_ok', { mode: 'boolean' }),
+  // Las dos cifras que un percentil agregado no responde: cuánto sostiene el
+  // sistema y con cuánta carga se rompe. Null en `breakingPointRps` = nunca se
+  // rompió dentro de la escalera medida.
+  sustainedRps: real('sustained_rps'),
+  breakingPointRps: real('breaking_point_rps'),
+  // Segundos hasta el primer tramo sano tras cesar la carga. Null = no se
+  // recuperó dentro de la ventana medida, que no es lo mismo que 0.
+  recoveredAfterS: integer('recovered_after_s'),
+  // Escalones de la corrida (JSON), ya normalizados a la misma forma para los
+  // dos escenarios: la gráfica del panel no tiene que saber cuál corrió.
+  stepsJson: text('steps_json'),
+  // Hallazgos H-01..H-05 escritos a mano tras revisar la corrida. Son la parte
+  // que ningún número da solo, y la que se sustenta ante el jurado.
+  findingsJson: text('findings_json'),
+  rawJson: text('raw_json'),
+  // Cuándo corrió la prueba (del summary), distinto de cuándo se ingirió.
+  ranAt: integer('ran_at', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }),
+}, (t) => ({
+  // El panel lista por fecha de corrida descendente.
+  ranAtIdx: index('load_test_runs_ran_at_idx').on(t.ranAt),
+}))

@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro'
 import { timingSafeEqual } from 'node:crypto'
 import { db } from '../../../db'
-import { ciRuns } from '../../../db/schema'
+import { ciRuns, loadTestRuns } from '../../../db/schema'
+import { parseK6Summary } from '../../../lib/lab/load-test'
 import { normalizeFinding, parseAxeViolations, parseNpmAudit, parseZapReport } from '../../../lib/lab/findings'
 import { autoResolveStale, ingestFindings } from '../../../lib/lab/findings-store'
 
@@ -34,6 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   if (body.kind === 'security_finding') return ingestSecurityFindings(body)
+  if (body.kind === 'load_test') return ingestLoadTest(body)
 
   if (body.kind !== 'ci_run') return json(400, { error: `kind no soportado: ${body.kind}` })
 
@@ -99,4 +101,52 @@ async function ingestSecurityFindings(body: Record<string, unknown>): Promise<Re
   }
 
   return json(201, { ok: true, ...summary, autoResolved })
+}
+
+/**
+ * Ingesta de una corrida de carga de k6. El payload es el resumen que ya
+ * normaliza `handleSummary` en los scripts de `lab/k6/` (`{ kind, summary }`),
+ * no el JSON crudo de k6.
+ *
+ * Rechaza cualquier corrida cuyo objetivo sea producción. Es la tercera capa
+ * del mismo guardarraíl (la primera y la segunda están en `lib/perfil.js`: la
+ * URL y la base a la que el target está conectado), y la única que sigue en pie
+ * si alguien corre k6 a mano saltándose el script.
+ */
+async function ingestLoadTest(body: Record<string, unknown>): Promise<Response> {
+  const parsed = parseK6Summary(body.summary ?? body.resumen)
+  if (!parsed.ok) return json(400, { error: parsed.error })
+
+  const r = parsed.run
+  const [row] = await db
+    .insert(loadTestRuns)
+    .values({
+      tool: r.tool,
+      scenario: r.scenario,
+      target: r.target,
+      vusMax: r.vusMax,
+      durationS: r.durationS,
+      requests: r.requests,
+      rps: r.rps,
+      p50: r.p50,
+      p95: r.p95,
+      p99: r.p99,
+      avgMs: r.avgMs,
+      maxMs: r.maxMs,
+      errorRatePct: r.errorRatePct,
+      checksPassed: r.checksPassed,
+      checksFailed: r.checksFailed,
+      thresholdsOk: r.thresholdsOk,
+      sustainedRps: r.sustainedRps,
+      breakingPointRps: r.breakingPointRps,
+      recoveredAfterS: r.recoveredAfterS,
+      stepsJson: JSON.stringify(r.steps),
+      findingsJson: JSON.stringify(r.findings),
+      rawJson: r.rawJson,
+      ranAt: r.ranAt,
+      createdAt: new Date(),
+    })
+    .returning({ id: loadTestRuns.id })
+
+  return json(201, { ok: true, id: row.id, escalones: r.steps.length })
 }
