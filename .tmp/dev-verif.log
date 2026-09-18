@@ -16,3 +16,6 @@
 07:28:07 [200] /api/health 1310ms
 07:28:16 [201] POST /api/lab/ingest 16ms
 07:28:16 [201] POST /api/lab/ingest 14ms
+07:28:23 [401] POST /api/lab/ingest 2ms
+07:28:23 [400] POST /api/lab/ingest 2ms
+07:28:23 [400] POST /api/lab/ingest 1ms
