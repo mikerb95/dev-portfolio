@@ -53,7 +53,7 @@ base de producción ni ejecutarse contra `codebymike.net`.
 
 | # | Etapa | Actividad | Responsable | Producto esperado |
 |---|---|---|---|---|
-| 1 | Preparación | ~~Cargar `VERCEL_TOKEN` en secrets de GitHub Actions~~ (✅ 17 sep 2026); backup lógico de Turso (export) | DevOps | Secret disponible ✅, backup verificado |
+| 1 | Preparación | ~~Cargar `VERCEL_TOKEN` en secrets de GitHub Actions~~ (✅ 18 sep 2026); backup lógico de Turso (export) | DevOps | Secret disponible ✅, backup verificado |
 | 2 | Configuración | Migración `load_test_runs`; ampliar `ingest.ts` con `kind: 'load_test'` | Desarrollo / DBA | Migración aplicada en Turso (prod y demo) |
 | 3 | Migración | No aplica migración de datos (tabla nueva, sin datos previos que migrar) | - | - |
 | 4 | Pruebas | Vitest del parser + payload; corrida real de `k6` contra un preview, verificar que la fila llega a `/admin/lab/load` | QA (autovalidación) | Suite en verde + tarjeta visible en preview |

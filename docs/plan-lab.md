@@ -9,7 +9,7 @@
 
 ---
 
-> **Estado al 29 jul 2026** (credencial desbloqueada el 17 sep 2026, ver abajo):
+> **Estado al 29 jul 2026** (credencial desbloqueada el 18 sep 2026, ver abajo):
 > el plan está ejecutado salvo la Fase 5 (load testing con k6). La tabla de abajo es la
 > auditoría del punto de partida, conservada a propósito para poder comparar:
 > hoy hay 937 tests de Vitest y 47 e2e, seis workflows de GitHub Actions y
@@ -21,7 +21,7 @@
 > de niveles, fila R de recuperación, muestreo de CPU/heap del proceso y
 > bloque de hallazgos H-01..H-05). Lo que faltaba era la integración con el
 > panel (`load_test_runs`, ingesta, `/admin/lab/load`); con `VERCEL_TOKEN`
-> cargado el 17 sep 2026 ya no hay bloqueo de credencial, solo el trabajo
+> cargado el 18 sep 2026 ya no hay bloqueo de credencial, solo el trabajo
 > pendiente - detalle en `plan-lab-fases-pendientes.md`.
 >
 > **Actualización 21-23 ago 2026**: los hallazgos de las corridas de k6 quedaron
@@ -119,7 +119,7 @@ lab_experiments   (id, kind, params, result, notes, ranAt)  ← bitácora de exp
 
 > **Progreso**: Fase 0 ✅ (jul 3: 94 tests, 87% líneas en src/lib). Fase 1 ✅ (jul 4: workflow CI,
 > /api/health, ingest, tabla ci_runs, página /admin/lab/pipeline). El secret VERCEL_TOKEN
-> quedó cargado en GitHub el 17 sep 2026, así que el rollback automático ya puede revertir.
+> quedó cargado en GitHub el 18 sep 2026, así que el rollback automático ya puede revertir.
 > Fase 2 ✅ (jul 4: pasarela propia - /pay con checkout idempotente, webhook Wompi con verificación
 > de checksum, modo mock demo, máquina de estados con concurrencia optimista, panel
 > /admin/lab/payments-lab con 4 ataques en vivo, 18 tests contra BD en memoria; 112 tests totales).

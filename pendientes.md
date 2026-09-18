@@ -192,10 +192,15 @@ Prioridad, de más a menos urgente:
 - [ ] Ajeno al dominio, detectado de paso: `tests/present-pin.test.ts` está en
       rojo porque `present-tablet` no está en `RESERVED_ROOT_SEGMENTS`.
 
-- [ ] **`VERCEL_TOKEN` en GitHub Secrets.** Es el único bloqueo real que queda en
-      el LAB: sin él, el rollback automático solo avisa en vez de revertir, y la
-      Fase 5 (load testing con k6) no tiene un target de preview estable contra
-      el que correr.
+- [x] **`VERCEL_TOKEN` en GitHub Secrets.** Cargado el 18 sep 2026 con scope
+      del team `codebymike`, y verificado contra la API de Vercel (200 en
+      `/v2/user` y sobre el proyecto con el mismo `teamId` que usa el workflow).
+      `VERCEL_ORG_ID` y `VERCEL_PROJECT_ID` no hacen falta como secretos: van
+      escritos en duro en `.github/workflows/ci.yml`.
+
+      Queda una verificación que ningún push sano puede dar: el paso de rollback
+      solo corre si el health check post-deploy falla dos de tres intentos.
+      Hasta entonces, lo probado es la credencial, no el rollback completo.
 - [x] **Cron `security-rollup` en cron-job.org** - `GET
       https://codebymike.net/api/cron/security-rollup` con header
       `Authorization: Bearer <CRON_SECRET>`, **cada 15 min** (`5,20,35,50 * * * *`).
@@ -427,8 +432,9 @@ pero un test que falla por reloj entrena a ignorar el rojo.
 
 ### LAB - Fase 5: load testing con k6
 
-Última fase del laboratorio. Bloqueada por `VERCEL_TOKEN` (ver arriba). Detalle
-en `docs/plan-lab-fases-pendientes.md`.
+Última fase del laboratorio. Ya no hay bloqueo de credencial (`VERCEL_TOKEN`
+cargado el 18 sep 2026, ver arriba): lo que queda es el trabajo de integración
+con el panel. Detalle en `docs/plan-lab-fases-pendientes.md`.
 
 ### Panel de briefings - Fases 2 a 5
 

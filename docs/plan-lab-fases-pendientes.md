@@ -283,12 +283,17 @@ gratis, y la 5 resultó ser la más dependiente de infra externa (no la 6), porq
 necesita un target de preview estable que sigue sin existir.
 
 ## Trabajo transversal pendiente (no atado a una fase)
-- ~~**VERCEL_TOKEN en GitHub Secrets**~~: ✅ cargado el 17 sep 2026 (visible en
-  `gh secret list`). Token de scope de team, no de cuenta completa. Con él, el
-  rollback de la Fase 1 ya puede revertir en vez de solo avisar, y la Fase 5
-  deja de estar bloqueada por falta de credencial: lo que queda es el trabajo de
-  integración con el panel, no un permiso. Sin verificar todavía en una corrida
-  real: el paso de rollback solo se ejecuta si un health check post-deploy falla.
+- ~~**VERCEL_TOKEN en GitHub Secrets**~~: ✅ cargado el 18 sep 2026, con scope
+  del team `codebymike` y no de cuenta completa. Verificado contra la API de
+  Vercel: 200 en `/v2/user` y 200 sobre el proyecto `dev-portfolio` con el mismo
+  `teamId` que el workflow trae escrito en duro. El rollback de la Fase 1 ya
+  puede revertir en vez de solo avisar, y la Fase 5 deja de estar bloqueada por
+  falta de credencial: lo que queda es el trabajo de integración con el panel,
+  no un permiso.
+
+  Lo que la credencial no prueba es el rollback de punta a punta: ese paso solo
+  corre si el health check post-deploy falla dos de tres intentos, así que un
+  push sano nunca lo ejercita.
 - ~~**Llaves Wompi reales** (Fase 2)~~: ✅ `WOMPI_PUBLIC_KEY`,
   `WOMPI_INTEGRITY_SECRET` y `WOMPI_EVENTS_SECRET` están en Vercel (Production)
   desde el 16 jul 2026. Falta confirmar el registro del webhook
