@@ -46,7 +46,7 @@ const invitation = await resolveToken(token)
             value={invitation.email}
             disabled
             autocomplete="username"
-            class="input-base w-full opacity-60 cursor-not-allowed"
+            class="input-base w-full h-11 rounded-xl px-3.5 text-[14px] opacity-60 cursor-not-allowed"
           />
         </div>
 
@@ -59,7 +59,7 @@ const invitation = await resolveToken(token)
             value={invitation.userName ?? ''}
             required
             autocomplete="name"
-            class="input-base w-full"
+            class="input-base w-full h-11 rounded-xl px-3.5 text-[14px] placeholder:text-ink-300"
             placeholder="Nombre y apellido"
           />
         </div>
@@ -72,7 +72,7 @@ const invitation = await resolveToken(token)
             name="password"
             required
             autocomplete="new-password"
-            class="input-base w-full"
+            class="input-base w-full h-11 rounded-xl px-3.5 text-[14px] placeholder:text-ink-300"
             placeholder="Mínimo 10 caracteres"
           />
           <p class="mt-1.5 text-[11px] text-ink-300">Al menos 10 caracteres, combinando letras y números.</p>
@@ -86,7 +86,7 @@ const invitation = await resolveToken(token)
             name="password2"
             required
             autocomplete="new-password"
-            class="input-base w-full"
+            class="input-base w-full h-11 rounded-xl px-3.5 text-[14px] placeholder:text-ink-300"
           />
         </div>
 

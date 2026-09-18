@@ -20,12 +20,57 @@ const MESSAGES: Record<string, string> = {
 }
 const flashMessage = flash ? MESSAGES[flash] : null
 const demoUnavailable = flash === 'demo-unavailable'
+
+// Lo que hay al otro lado de la puerta. Sin cifras ni nombres de clientes:
+// esta página la ve cualquiera que teclee la URL.
+const dentro = [
+  {
+    titulo: 'El estado real de tu proyecto',
+    detalle: 'Hitos, avance y lo que está en mi mesa ahora mismo, sin tener que preguntar.',
+  },
+  {
+    titulo: 'Tus facturas y tus pagos',
+    detalle: 'Qué se pagó, qué falta y el comprobante de cada cobro, siempre a mano.',
+  },
+  {
+    titulo: 'Documentos y mensajes',
+    detalle: 'Entregables, contratos y la conversación del proyecto en un solo sitio.',
+  },
+]
 ---
 
-<PortalAuthLayout title="Entra a tu portal" subtitle="Consulta el estado de tus proyectos, tus facturas y tus documentos.">
+<PortalAuthLayout
+  title="Entra a tu portal"
+  subtitle="Tus proyectos, tus facturas y tus documentos, en el mismo sitio donde los dejaste."
+>
+  <div slot="aside">
+    <ul class="space-y-5">
+      {dentro.map((item) => (
+        <li class="flex gap-3.5">
+          <span class="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan shadow-[0_0_10px_rgba(0,242,255,.7)]"></span>
+          <div>
+            <p class="text-[14px] font-medium text-ink-50">{item.titulo}</p>
+            <p class="mt-0.5 text-[13px] leading-relaxed text-ink-200 max-w-[38ch]">{item.detalle}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+
+    <p class="mt-9 flex items-center gap-2 text-[11.5px] font-mono uppercase tracking-[.14em] text-ink-300">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-3.5 w-3.5 text-cyan" aria-hidden="true">
+        <rect x="4" y="10" width="16" height="10" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </svg>
+      Sesión propia por cliente, cifrada extremo a extremo
+    </p>
+  </div>
+
   {flashMessage && (
-    <div class="mb-5 rounded-xl border border-lime/25 bg-lime/[.07] px-4 py-3 text-[13px] text-lime">
-      {flashMessage}
+    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-lime/25 bg-lime/[.07] px-4 py-3 text-[13px] text-lime">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="mt-px h-4 w-4 shrink-0" aria-hidden="true">
+        <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>{flashMessage}</span>
     </div>
   )}
 
@@ -34,16 +79,29 @@ const demoUnavailable = flash === 'demo-unavailable'
 
     <div>
       <label for="email" class="block text-[12px] font-medium text-ink-100 mb-1.5">Correo electrónico</label>
-      <input
-        type="email"
-        id="email"
-        name="email"
-        required
-        autocomplete="username"
-        autofocus
-        class="input-base w-full"
-        placeholder="tu@empresa.com"
-      />
+      <div class="relative">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300"
+          aria-hidden="true"
+        >
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m3.5 7 8.5 6 8.5-6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          autocomplete="username"
+          autofocus
+          class="input-base w-full h-11 rounded-xl pl-10 pr-3.5 text-[14px] placeholder:text-ink-300"
+          placeholder="tu@empresa.com"
+        />
+      </div>
     </div>
 
     <div>
@@ -51,29 +109,77 @@ const demoUnavailable = flash === 'demo-unavailable'
         <label for="password" class="block text-[12px] font-medium text-ink-100">Contraseña</label>
         <a href="/portal/olvide" class="text-[11px] text-ink-300 hover:text-cyan transition-colors">¿La olvidaste?</a>
       </div>
-      <input
-        type="password"
-        id="password"
-        name="password"
-        required
-        autocomplete="current-password"
-        class="input-base w-full"
-        placeholder="••••••••••"
-      />
+      <div class="relative">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300"
+          aria-hidden="true"
+        >
+          <rect x="4" y="10" width="16" height="10" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+        </svg>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          autocomplete="current-password"
+          class="input-base w-full h-11 rounded-xl pl-10 pr-11 text-[14px] placeholder:text-ink-300"
+          placeholder="••••••••••"
+        />
+        <button
+          type="button"
+          id="toggle-password"
+          aria-label="Mostrar la contraseña"
+          aria-pressed="false"
+          class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-300 hover:text-ink-50 hover:bg-white/[.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan/40 transition-colors"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-4 w-4" aria-hidden="true">
+            <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" stroke-linecap="round" stroke-linejoin="round" />
+            <circle id="eye-pupil" cx="12" cy="12" r="3" />
+            <path id="eye-slash" class="hidden" d="m4 4 16 16" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <p id="caps" class="hidden mt-1.5 text-[11.5px] text-ink-200">Ojo: tienes el bloqueo de mayúsculas activado.</p>
     </div>
 
-    <p id="error" class="hidden text-[13px] text-ember" role="alert" aria-live="polite"></p>
+    <div
+      id="error"
+      class="hidden items-start gap-2.5 rounded-xl border border-ember/30 bg-ember/[.08] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-ember"
+      role="alert"
+      aria-live="polite"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="mt-px h-4 w-4 shrink-0" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7.5v5" stroke-linecap="round" />
+        <circle cx="12" cy="16.2" r=".9" fill="currentColor" stroke="none" />
+      </svg>
+      <span id="error-text"></span>
+    </div>
 
     <button
       type="submit"
       id="submit"
-      class="w-full h-11 rounded-full bg-cyan text-ink-950 text-[14px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="group relative w-full h-11 rounded-full bg-cyan text-ink-950 text-[14px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_10px_30px_-14px_rgba(0,242,255,.9)]"
     >
-      Entrar
+      <span id="submit-label" class="inline-flex items-center justify-center gap-2">
+        Entrar
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+          <path d="M5 12h13m-5-5 5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <span id="submit-spinner" class="hidden items-center justify-center gap-2">
+        <span class="spinner h-4 w-4 rounded-full border-2 border-ink-950/25 border-t-ink-950"></span>
+        Entrando…
+      </span>
     </button>
   </form>
 
-  <p class="mt-6 text-[12px] leading-relaxed text-ink-300">
+  <p class="mt-5 text-[12px] leading-relaxed text-ink-300">
     El acceso al portal es por invitación. Si aún no tienes cuenta y crees que deberías,
     <a href="/contact" class="text-cyan hover:underline">escríbeme</a>.
   </p>
@@ -85,28 +191,104 @@ const demoUnavailable = flash === 'demo-unavailable'
   )}
 
   {demoAvailable && (
-    <div class="mt-6 pt-5 border-t border-white/5">
+    <div class="mt-5 pt-5 border-t border-white/5">
       <p class="text-[12px] text-ink-300 mb-2.5">¿Solo quieres ver cómo es el portal?</p>
       <a
         href="/api/portal/demo"
-        class="inline-flex items-center gap-2 h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-50 text-[13px] hover:bg-white/[.06] transition-colors"
+        class="group inline-flex items-center gap-2 h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-50 text-[13px] hover:bg-white/[.06] hover:border-cyan/25 transition-colors"
       >
+        <span class="h-1.5 w-1.5 rounded-full bg-lime shadow-[0_0_8px_rgba(201,255,91,.8)]"></span>
         Entrar a la demo pública
       </a>
     </div>
   )}
 </PortalAuthLayout>
 
+<style>
+  @keyframes spin-loader {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .spinner {
+    animation: spin-loader 0.7s linear infinite;
+  }
+  /* Sacudida corta al fallar: la contraseña equivocada se reintenta en el
+     mismo sitio, sin recarga, y sin este golpe el cambio de texto pasa
+     desapercibido. */
+  @keyframes auth-shake {
+    10%, 90% { transform: translateX(-1.5px); }
+    30%, 70% { transform: translateX(3px); }
+    50% { transform: translateX(-3px); }
+  }
+  .shake {
+    animation: auth-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .spinner { animation-duration: 2s; }
+    .shake { animation: none; }
+  }
+</style>
+
 <script>
   const form = document.getElementById('form') as HTMLFormElement
-  const errorEl = document.getElementById('error') as HTMLParagraphElement
+  const errorEl = document.getElementById('error') as HTMLDivElement
+  const errorText = document.getElementById('error-text') as HTMLSpanElement
   const submit = document.getElementById('submit') as HTMLButtonElement
+  const label = document.getElementById('submit-label') as HTMLSpanElement
+  const spinner = document.getElementById('submit-spinner') as HTMLSpanElement
+  const password = document.getElementById('password') as HTMLInputElement
+  const toggle = document.getElementById('toggle-password') as HTMLButtonElement
+  const caps = document.getElementById('caps') as HTMLParagraphElement
+
+  // Mostrar/ocultar la contraseña: en el portal se entra tanto desde el móvil
+  // como desde un teclado prestado, y teclear a ciegas es la causa número uno
+  // de "no me deja entrar".
+  toggle.addEventListener('click', () => {
+    const revealed = password.type === 'text'
+    password.type = revealed ? 'password' : 'text'
+    toggle.setAttribute('aria-pressed', String(!revealed))
+    toggle.setAttribute('aria-label', revealed ? 'Mostrar la contraseña' : 'Ocultar la contraseña')
+    document.getElementById('eye-slash')?.classList.toggle('hidden', revealed)
+    document.getElementById('eye-pupil')?.classList.toggle('hidden', !revealed)
+    password.focus()
+  })
+
+  // El aviso de bloqueo de mayúsculas solo se puede detectar desde un evento de
+  // teclado, así que aparece al teclear y se va al salir del campo.
+  const checkCaps = (e: KeyboardEvent) => {
+    caps.classList.toggle('hidden', !e.getModifierState?.('CapsLock'))
+  }
+  password.addEventListener('keyup', checkCaps)
+  password.addEventListener('keydown', checkCaps)
+  password.addEventListener('blur', () => caps.classList.add('hidden'))
+
+  const setLoading = (loading: boolean) => {
+    submit.disabled = loading
+    label.classList.toggle('hidden', loading)
+    label.classList.toggle('inline-flex', !loading)
+    spinner.classList.toggle('hidden', !loading)
+    spinner.classList.toggle('inline-flex', loading)
+  }
+
+  const fail = (msg: string) => {
+    errorText.textContent = msg
+    errorEl.classList.remove('hidden')
+    errorEl.classList.add('flex')
+    // Reinicia la animación aunque el error anterior fuera el mismo.
+    errorEl.classList.remove('shake')
+    void errorEl.offsetWidth
+    errorEl.classList.add('shake')
+    setLoading(false)
+    password.focus()
+    password.select()
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
     errorEl.classList.add('hidden')
-    submit.disabled = true
-    submit.textContent = 'Entrando…'
+    errorEl.classList.remove('flex')
+    setLoading(true)
 
     const data = Object.fromEntries(new FormData(form))
     try {
@@ -120,13 +302,9 @@ const demoUnavailable = flash === 'demo-unavailable'
         window.location.href = body.redirect
         return
       }
-      errorEl.textContent = body.error ?? 'No se pudo iniciar sesión. Inténtalo de nuevo.'
-      errorEl.classList.remove('hidden')
+      fail(body.error ?? 'No se pudo iniciar sesión. Inténtalo de nuevo.')
     } catch {
-      errorEl.textContent = 'Error de conexión. Revisa tu red e inténtalo de nuevo.'
-      errorEl.classList.remove('hidden')
+      fail('Error de conexión. Revisa tu red e inténtalo de nuevo.')
     }
-    submit.disabled = false
-    submit.textContent = 'Entrar'
   })
 </script>
