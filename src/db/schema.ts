@@ -87,7 +87,7 @@ export const projectServices = sqliteTable('project_services', {
   clientId: integer('client_id').references(() => clients.id),
   name: text('name').notNull(),
   category: text('category', {
-    enum: ['hosting', 'database', 'auth', 'cdn', 'email', 'storage', 'dns', 'domain', 'monitoring', 'payment', 'repository', 'other'],
+    enum: ['hosting', 'database', 'auth', 'cdn', 'email', 'storage', 'dns', 'domain', 'monitoring', 'payment', 'repository', 'subscription', 'other'],
   }).notNull(),
   provider: text('provider'), // github, aws, azure, gcp, vercel, netlify, cloudflare, turso, ...
   url: text('url'),
