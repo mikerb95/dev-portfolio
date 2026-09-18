@@ -4,27 +4,89 @@ export const prerender = true
 
 import BaseLayout from '../../layouts/BaseLayout.astro'
 // Wompi redirige aquí tras el checkout (desde /pay y desde los cobros /c/[code])
-// sin importar si la transacción se aprobó: el texto no puede dar el pago por
-// hecho, solo explicar dónde ver el resultado.
+// sin importar si la transacción se aprobó. El HTML estático es el texto
+// genérico, correcto en cualquier caso; si llega ?id=, el script lo reemplaza
+// por el estado real que devuelve /api/payments/resultado.
 ---
 
 <BaseLayout title="Gracias - CodeByMike" description="Confirmación de pago." noindex>
   <div class="max-w-[560px] mx-auto px-6 pt-40 pb-24 text-center">
-    <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-200 mb-6">Pago enviado</div>
+    <div id="r-eyebrow" class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.28em] text-ink-200 mb-6">
+      <span id="r-dot" class="w-1.5 h-1.5 rounded-full bg-cyan" aria-hidden="true"></span>
+      <span id="r-eyebrow-text">Pago enviado</span>
+    </div>
     <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] mb-6">
-      ¡<span class="italic font-serif font-normal text-mask-cyan">Gracias</span>!
+      <span id="r-title" class="italic font-serif font-normal text-mask-cyan">Gracias</span>
     </h1>
-    <p class="text-[15px] text-ink-100 leading-relaxed mb-4">
-      Wompi te enviará el comprobante al correo en unos minutos. Con PSE o
-      billeteras digitales la confirmación del banco puede tardar un poco más.
-    </p>
+    <div id="r-live" aria-live="polite">
+      <p id="r-body" class="text-[15px] text-ink-100 leading-relaxed mb-4">
+        Wompi te enviará el comprobante al correo en unos minutos. Con PSE o
+        billeteras digitales la confirmación del banco puede tardar un poco más.
+      </p>
+      <p id="r-meta" class="text-[13px] font-mono text-ink-200 mb-4" hidden></p>
+    </div>
     <p class="text-[14px] text-ink-200 leading-relaxed mb-10">
-      Si el pago fue rechazado, puedes intentarlo otra vez con otro medio. Si
-      necesitas cuenta de cobro o algo no cuadra, escríbeme.
+      Si necesitas cuenta de cobro o algo no cuadra, escríbeme.
     </p>
     <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <a href="https://wa.me/573104641228" target="_blank" rel="noopener" class="inline-flex items-center justify-center h-12 px-6 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all shadow-glow">Escribirme por WhatsApp</a>
+      <a id="r-retry" href="/pay" class="inline-flex items-center justify-center h-12 px-6 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all shadow-glow" hidden>Intentar de nuevo</a>
+      <a href="https://wa.me/573104641228" target="_blank" rel="noopener" class="inline-flex items-center justify-center h-12 px-6 text-[14px] font-medium rounded-full border border-white/15 text-ink-100 hover:border-cyan/40 hover:text-cyan transition-colors">Escribirme por WhatsApp</a>
       <a href="/" class="inline-flex items-center justify-center h-12 px-6 text-[14px] font-medium rounded-full border border-white/15 text-ink-100 hover:border-cyan/40 hover:text-cyan transition-colors">Volver al inicio</a>
     </div>
   </div>
 </BaseLayout>
+
+<script>
+  import { isSettling, isValidTxId, resultView, type PayResult } from '../../lib/pay-result'
+  import { formatCop } from '../../lib/pay-form'
+
+  const id = new URLSearchParams(location.search).get('id')
+
+  const $ = (sel: string) => document.getElementById(sel)!
+  const DOT: Record<string, string> = { ok: 'bg-cyan', wait: 'bg-amber-400 pulse-dot', fail: 'bg-red-400' }
+
+  const render = (r: PayResult) => {
+    const v = resultView(r)
+    $('r-eyebrow-text').textContent = v.eyebrow
+    $('r-dot').className = `w-1.5 h-1.5 rounded-full ${DOT[v.tone]}`
+    $('r-title').textContent = v.title
+    $('r-body').textContent = v.body
+
+    const meta = $('r-meta')
+    const amount = r.amountCents !== null ? `$${formatCop(Math.round(r.amountCents / 100))} COP · ` : ''
+    meta.textContent = `${amount}Ref. ${r.reference}`
+    meta.hidden = false
+
+    const retry = $('r-retry') as HTMLAnchorElement
+    retry.hidden = !v.retry
+    if (v.retry) {
+      retry.href = v.retry.href
+      retry.textContent = v.retry.label
+    }
+  }
+
+  // PSE y las billeteras suelen quedar pendientes unos segundos o minutos: se
+  // vuelve a preguntar un rato y luego se deja el texto de "confirmando".
+  const MAX_TRIES = 10
+  const EVERY_MS = 4_000
+
+  const check = async (attempt: number): Promise<void> => {
+    try {
+      const res = await fetch(`/api/payments/resultado?id=${encodeURIComponent(id!)}`)
+      if (!res.ok) return // sin datos fiables: se queda el texto genérico
+      const r = (await res.json()) as PayResult
+      render(r)
+      if (isSettling(r.status) && attempt < MAX_TRIES) {
+        setTimeout(() => check(attempt + 1), EVERY_MS)
+      }
+    } catch {
+      // Sin conexión: el texto genérico ya dice lo necesario.
+    }
+  }
+
+  if (isValidTxId(id)) {
+    $('r-eyebrow-text').textContent = 'Confirmando'
+    $('r-dot').className = 'w-1.5 h-1.5 rounded-full bg-amber-400 pulse-dot'
+    check(1)
+  }
+</script>
