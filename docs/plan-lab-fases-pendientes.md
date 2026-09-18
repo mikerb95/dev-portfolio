@@ -145,9 +145,35 @@ Opción B: disparar el `workflow_dispatch` desde la pestaña Actions en vivo.
 - [x] `lab/k6/*.js` corren local con k6 y generan summary (`carga.js`, `estres.js`).
 - [x] Ningún script apunta a producción por defecto; guardarraíl de dos mitades
       en `lib/perfil.js` (URL del servidor + `checks.db.local` de `/api/health`).
-- [ ] `load_test_runs` poblada vía ingesta autenticada.
-- [ ] `/admin/lab/load` muestra p50/p95/p99 y gráfica por nivel de VUs.
-- [ ] Tests: parser del summary de k6 (función pura) + validación del payload de ingesta `load_test`.
+- [x] `load_test_runs` poblada vía ingesta autenticada (migración 0033, aplicada
+      a las dos bases Turso el 18 sep 2026).
+- [x] `/admin/lab/load` muestra p50/p95/p99 y gráfica por escalón (barras de p95
+      coloreadas por estado + p50 como línea, SVG inline sin librerías).
+- [x] Tests: `tests/load-test.test.ts`, 21 casos sobre los JSON de corridas
+      reales de `lab/k6/resultados/`, no fixtures inventados.
+
+### Lo que cambió respecto a este plan (18 sep 2026)
+El plan daba la fase por bloqueada en `VERCEL_TOKEN` porque asumía correr contra
+un preview de Vercel. Ese camino no existe, y no por falta de credencial: el
+guardarraíl de `lib/perfil.js` exige que el objetivo lea de una base **local**
+(`checks.db.local`) y un preview lee Turso, así que la corrida abortaría en
+`setup()` con el secret puesto o sin él.
+
+`load-test.yml` levanta el sitio en el propio runner contra bases libsql
+desechables (las mismas de los e2e, vía `scripts/seed-e2e.mjs`) y corre k6 contra
+ese localhost. Sale gratis en invocaciones y en filas de Turso, y no depende de
+ningún secret de Vercel. Lo que se pierde es medir la infraestructura: estos
+números caracterizan la aplicación y solo son comparables contra otras corridas
+del mismo tipo, cosa que la serie del panel sí da.
+
+Dos piezas nuevas que el plan no listaba:
+- `scripts/k6-ingest.mjs`, que postea el resumen (no el `*.raw.json` de k6) y,
+  sin `LAB_INGEST_TOKEN`, solo imprime: una corrida local no debe fallar por no
+  tener credencial.
+- Tercera copia del guardarraíl de objetivos, en la ingesta: si alguien corre k6
+  a mano saltándose el script, el resultado no entra al panel. La lista de
+  dominios está duplicada a propósito (el script corre en el runtime de k6 y no
+  puede importar TypeScript) y un test compara ambas copias.
 
 ### Esfuerzo estimado: ~2 días
 
