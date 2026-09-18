@@ -258,33 +258,57 @@ Prioridad, de más a menos urgente:
 
 ## 4. Trabajo de código pendiente
 
-### 🔴 Tres e2e en rojo en `main` (detectados 14 sep 2026)
+### ✅ Tres e2e en rojo, resueltos (18 sep 2026)
 
-Aparecieron al montar la suite del simulador de infra. **No son regresiones de
-ese trabajo**: se comprobaron en un worktree del commit `519da69` (HEAD antes de
-empezar esa sesión) y fallan exactamente igual allí, así que llevan rotos desde
-antes. Se reproducen con `npx playwright test e2e/auth.spec.ts e2e/demo.spec.ts
-e2e/portal.spec.ts`.
+Aparecieron el 14 sep al montar la suite del simulador de infra. **Escribí aquí
+que eran heredados y era falso**: los tres eran regresiones de esta misma
+semana. El error de método importa más que el bug, así que queda anotado.
 
-- [ ] **La demo filtra datos de la base principal** (`demo.spec.ts:53`). Con pase
-      de demo, `/admin` pinta proyectos e ingresos de la base REAL: salen con el
-      prefijo centinela en la tarjeta de P&L, con enlaces a `/admin/projects/3`,
-      `/1` y `/4`. Rompe la primera de las tres garantías de `src/lib/demo.ts`
-      (los datos salen de otra base), que es de lo que cuelga toda la demo
-      pública. El test corta en la primera ruta, así que no se sabe si el resto
-      de la lista está igual. **Solo está localizado dónde se ve, no por qué**:
-      `/admin/clients` sí muestra los datos ficticios, y el contexto de demo se
-      aplica envolviendo `next()` en `runInDemoContext` en el middleware. Es el
-      más urgente de los tres: es el único con consecuencias hacia fuera.
-- [ ] **El deck privado no es público pero responde como si lo fuera**
-      (`auth.spec.ts:35`). `/docs/presentacion` devuelve 200 sin sesión en vez de
-      redirigir a `/login`. El deck de sustentación es solo del administrador.
-- [ ] **El botón de la demo en `/tools` no navega** (`portal.spec.ts:46`). Se
-      queda en `/tools` en vez de abrir `/portal` con la demo pública.
+**Por qué me equivoqué.** Comprobé el "baseline" levantando un worktree del
+commit anterior y corriendo Playwright allí. Pero `playwright.config.ts` trae
+`reuseExistingServer: !process.env.CI`, así que al encontrar el 4331 ocupado
+reusó el dev server del árbol ACTUAL en vez de arrancar el del worktree: medí
+dos veces el mismo código y concluí "ya fallaba antes". Rehecho con el puerto
+libre, en `519da69` los 29 tests pasan. **Antes de culpar al pasado, comprobar
+que el servidor del baseline es el del baseline** (`ss -ltnp | grep 4331`).
 
-> Un cuarto test (`auth.spec.ts:45`, control de presentaciones) falla solo en la
-> corrida paralela y pasa con `--workers=1`, en el árbol actual y en el de
-> referencia: eso sí es flake, no un fallo.
+**1. El deck privado servido como archivo estático.** `/docs/presentacion`
+llevaba `export const prerender = true`, añadido el 12 sep en `22c424a`. El
+middleware sale en `if (context.isPrerendered) return next()` antes de tocar
+ningún gate, y en producción la página ni siquiera pasa por él: es un archivo
+que sirve el CDN. El deck de sustentación quedaba público para quien acertara
+la URL. Arreglado quitando el prerender, con el porqué escrito en la página.
+De las 51 páginas prerenderizadas del repo esa era la única privada.
+
+**2. La demo leyendo la base real.** Esta era la buena, y no reproducía: 95
+intentos en un día, en serie, en paralelo, con `request.get` y con navegación
+real, todos limpios. Reprodujo 20 de 20 al recrear la condición que faltaba:
+**editar un fuente mientras el dev server corre**, que es exactamente lo que
+pasaba el 14 sep (otra sesión estaba tocando archivos mientras mi suite
+corría). El mecanismo: `demoContext` era un `AsyncLocalStorage` de módulo, y al
+re-evaluar `src/db/index.ts` cada copia trae su propia instancia, así que el
+middleware abría el contexto en una y la página lo leía en otra. Sin store,
+`activeDb()` cae a la base REAL. Sin un error, sin un aviso, con datos de
+clientes de verdad pintados en el panel de demostración. Arreglado moviendo los
+dos contextos (demo y respaldo del portal) a `globalThis`, que sobrevive a la
+recarga. **Era un artefacto de desarrollo: en producción el módulo se evalúa una
+vez y esto nunca pudo pasar.** Lo que arregla es que el aislamiento se pueda
+verificar de verdad en dev, que es donde se comprueba.
+
+`tests/contexto-recarga.test.ts` lo cubre sin navegador: simula la recarga con
+`vi.resetModules()` y comprueba que el contexto abierto por una copia lo ve la
+otra. Verificado que falla con el bug puesto.
+
+**3. El botón de la demo en `/tools`.** Nunca volvió a fallar: solo cayó en las
+corridas en paralelo del 14 sep, junto a otros tests de puerta que también
+expiraron por carga del dev server. Queda una cosa que esa suite no puede ver:
+`/tools` sí está prerenderizada, y su `demoAvailable` se evalúa en el BUILD, no
+por request. Hoy funciona porque `TURSO_DEMO_URL` está dada de alta en
+Production y Preview; si algún día se quita de una de las dos, el botón
+desaparecerá en silencio y ningún test lo dirá.
+
+> Estado al 18 sep 2026: los 55 e2e en verde en serie, 2070 unitarios y build
+> completo.
 
 ### Simulador de costos de infra - lo que queda blando (17 sep 2026)
 
