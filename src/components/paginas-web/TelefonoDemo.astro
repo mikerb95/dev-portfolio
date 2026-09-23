@@ -1,0 +1,631 @@
+---
+// Celular del hero de /paginas-web: "la página se construye sola".
+//
+// Dentro del celular hay dos capas con la misma maqueta de un sitio de negocio:
+// el esqueleto (bloques grises, lo que existe antes de diseñar) y el sitio real
+// encima. Un cursor de diseñador va de bloque en bloque y pinta el sitio sobre
+// su esqueleto; al terminar llegan mensajes de clientes, y el ciclo sigue con el
+// siguiente negocio. Los cuatro negocios son los cuatro perfiles de "¿Esto es
+// para ti?", así que el visitante se ve en alguno antes de llegar a esa sección.
+//
+// Son ejemplos ficticios y la nota bajo el celular lo dice: más abajo están los
+// trabajos reales y no se pueden confundir.
+//
+// Sin JS (o con movimiento reducido) el celular muestra el primer negocio ya
+// terminado: el marcado del servidor ES el estado final.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).paginasWeb.demo
+
+// Color e ícono de cada negocio: diseño, no texto, por eso no van en el
+// diccionario. Tonos propios de cada rubro y no los de la marca del sitio: el
+// celular enseña la web DEL CLIENTE, no una página de CodeByMike.
+const ESTILOS = [
+  { c1: '#fbbf24', c2: '#9a3412', acento: '#c2410c', icono: 'pan' },
+  { c1: '#5eead4', c2: '#4338ca', acento: '#0f766e', icono: 'corazon' },
+  { c1: '#fda4af', c2: '#7e22ce', acento: '#be123c', icono: 'vela' },
+  { c1: '#7dd3fc', c2: '#065f46', acento: '#0369a1', icono: 'montana' },
+]
+const negocios = t.negocios.map((n, i) => ({ ...n, ...ESTILOS[i % ESTILOS.length] }))
+const p = negocios[0]
+const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
+---
+
+<div
+  class="tel"
+  data-telefono
+  data-negocios={JSON.stringify(negocios)}
+  data-nuevo={t.nuevoMensaje}
+  data-ahora={t.ahora}
+  aria-hidden="true"
+>
+  <div class="tel-marco">
+    <div class="tel-pantalla">
+      <div class="tel-estado">
+        <span>9:41</span>
+        <span class="tel-estado-iconos">
+          <svg viewBox="0 0 18 12" width="16" height="11"><rect x="0" y="8" width="3" height="4" rx="1" /><rect x="5" y="5" width="3" height="7" rx="1" /><rect x="10" y="2.5" width="3" height="9.5" rx="1" /><rect x="15" y="0" width="3" height="12" rx="1" /></svg>
+          <svg viewBox="0 0 26 12" width="22" height="11"><rect x="0.5" y="0.5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".45" /><rect x="2.5" y="2.5" width="16" height="7" rx="1.5" /><rect x="23.5" y="4" width="2" height="4" rx="1" opacity=".45" /></svg>
+        </span>
+      </div>
+      <span class="tel-isla"></span>
+
+      {['esqueleto', 'real'].map((capa) => (
+        <div class={`ts ts-${capa}`} data-capa={capa} style={vars}>
+          <div class="ts-nav" data-pieza>
+            <span class="ts-logo"></span>
+            <span class="ts-marca"><span data-campo="corto">{p.corto}</span></span>
+            <span class="ts-menu"><i></i><i></i></span>
+          </div>
+          <div class="ts-hero" data-pieza data-icono={p.icono}>
+            <span class="ts-hero-fondo"></span>
+            <svg class="ts-ico ts-ico-pan" viewBox="0 0 24 24"><path d="M4 12.5a8 5.5 0 0 1 16 0V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /><path d="M8.2 10.2 9.6 13M12 9.6 13.4 12.8M15.8 10.2 17 12.8" /></svg>
+            <svg class="ts-ico ts-ico-corazon" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10.1A4 4 0 0 1 12 7.6a4 4 0 0 1 7 2.3C19 15.6 12 20 12 20z" /><path d="M9.5 11.2h5M12 8.7v5" /></svg>
+            <svg class="ts-ico ts-ico-vela" viewBox="0 0 24 24"><path d="M12 3.5c1.6 2.3 3.4 3.7 3.4 6.2a3.4 3.4 0 0 1-6.8 0c0-1.3.7-2.3 1.4-3 0 1.3.7 2 1.4 2 0-1.9-.6-3.2.6-5.2z" /><path d="M8.5 15h7v5.5h-7z" /></svg>
+            <svg class="ts-ico ts-ico-montana" viewBox="0 0 24 24"><path d="M2.5 19.5 9 9l3.8 6 2.7-3.8 6 8.3z" /><circle cx="17.5" cy="6.5" r="2" /></svg>
+          </div>
+          <div class="ts-titulo" data-pieza><span data-campo="nombre">{p.nombre}</span></div>
+          <div class="ts-lema" data-pieza><span data-campo="lema">{p.lema}</span></div>
+          <div class="ts-boton" data-pieza>
+            <span data-campo="boton">{p.boton}</span>
+            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <span class="ts-insignia"></span>
+          </div>
+          <div class="ts-cards">
+            {[0, 1].map((k) => (
+              <div class="ts-card" data-pieza>
+                <span class="ts-card-img"></span>
+                <span class="ts-card-txt"><span data-campo={`servicio${k}`}>{p.servicios[k]}</span></span>
+              </div>
+            ))}
+          </div>
+          <div class="ts-resena" data-pieza>
+            <span class="ts-estrellas">★★★★★</span>
+            <span data-campo="resena">{p.resena}</span>
+          </div>
+        </div>
+      ))}
+
+      <div class="tel-avisos"></div>
+      <span class="tel-cursor"></span>
+    </div>
+  </div>
+  <p class="tel-nota">{t.ejemplo}</p>
+</div>
+
+<style>
+  .tel {
+    position: relative;
+    width: 300px;
+    margin-inline: auto;
+    perspective: 1200px;
+  }
+  .tel-marco {
+    position: relative;
+    height: 612px;
+    padding: 11px;
+    border-radius: 48px;
+    background: linear-gradient(150deg, #2b2b33, #0b0b0f 45%, #1b1b22);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+      0 60px 120px -40px rgba(0, 0, 0, 0.95),
+      0 0 90px -25px rgba(255, 107, 61, 0.45);
+  }
+  .tel-pantalla {
+    position: relative;
+    height: 100%;
+    border-radius: 38px;
+    overflow: hidden;
+    background: #faf7f2;
+    color: #1c1917;
+    font-family: var(--font-sans);
+  }
+  .tel-estado {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 26px 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    z-index: 3;
+  }
+  .tel-estado-iconos {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .tel-estado-iconos svg {
+    fill: currentColor;
+  }
+  .tel-isla {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 88px;
+    height: 25px;
+    margin-left: -44px;
+    border-radius: 999px;
+    background: #050506;
+    z-index: 4;
+  }
+
+  /* ── Maqueta del sitio (las dos capas comparten estas reglas) ── */
+  .ts {
+    position: absolute;
+    inset: 44px 0 0;
+    padding: 4px 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ts-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+  }
+  .ts-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--acento);
+  }
+  .ts-marca {
+    font-size: 12.5px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+  .ts-menu {
+    margin-left: auto;
+    display: grid;
+    gap: 4px;
+  }
+  .ts-menu i {
+    display: block;
+    width: 16px;
+    height: 2px;
+    border-radius: 2px;
+    background: #44403c;
+  }
+  .ts-hero {
+    position: relative;
+    height: 170px;
+    border-radius: 20px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+  .ts-hero-fondo {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(120% 90% at 20% 10%, color-mix(in srgb, var(--c1) 90%, #fff), transparent 55%),
+      linear-gradient(140deg, var(--c1), var(--c2));
+  }
+  .ts-ico {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: none;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.25));
+  }
+  .ts-hero[data-icono='pan'] .ts-ico-pan,
+  .ts-hero[data-icono='corazon'] .ts-ico-corazon,
+  .ts-hero[data-icono='vela'] .ts-ico-vela,
+  .ts-hero[data-icono='montana'] .ts-ico-montana {
+    display: block;
+  }
+  .ts-titulo {
+    margin-top: 2px;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+  }
+  .ts-lema {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #57534e;
+  }
+  .ts-boton {
+    position: relative;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--acento);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .ts-boton svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* Contador de mensajes nuevos: aparece cuando llegan los avisos. */
+  .ts-insignia {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #16a34a;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+    box-shadow: 0 0 0 2px #faf7f2;
+    transform: scale(0);
+  }
+  .ts-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .ts-card {
+    padding: 7px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.04),
+      0 8px 20px -10px rgba(0, 0, 0, 0.25);
+  }
+  .ts-card-img {
+    display: block;
+    height: 56px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    opacity: 0.85;
+  }
+  .ts-card:nth-child(2) .ts-card-img {
+    background: linear-gradient(200deg, var(--c1), var(--c2));
+  }
+  .ts-card-txt {
+    display: block;
+    margin-top: 6px;
+    font-size: 10.5px;
+    font-weight: 650;
+    line-height: 1.25;
+    color: #292524;
+  }
+  .ts-resena {
+    font-size: 11px;
+    color: #57534e;
+  }
+  .ts-estrellas {
+    color: #f59e0b;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Capa esqueleto: la misma maqueta, sin diseñar ── */
+  .ts-esqueleto [data-campo],
+  .ts-esqueleto .ts-estrellas {
+    color: transparent;
+    background: #e5e0d8;
+    border-radius: 6px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .ts-esqueleto .ts-logo,
+  .ts-esqueleto .ts-card-img {
+    background: #e5e0d8;
+    opacity: 1;
+  }
+  .ts-esqueleto .ts-menu i {
+    background: #d6d0c6;
+  }
+  .ts-esqueleto .ts-hero-fondo {
+    background: #ebe6de;
+  }
+  .ts-esqueleto .ts-ico {
+    display: none !important;
+  }
+  .ts-esqueleto .ts-boton {
+    background: #e5e0d8;
+    color: transparent;
+  }
+  .ts-esqueleto .ts-boton [data-campo] {
+    background: transparent;
+  }
+  .ts-esqueleto .ts-card {
+    background: #f1ede7;
+    box-shadow: none;
+  }
+  .ts-esqueleto .ts-insignia {
+    display: none;
+  }
+
+  /* ── Avisos de mensajes ── */
+  .tel-avisos {
+    position: absolute;
+    inset: 46px 10px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .tel-avisos :global(.aviso) {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 9px;
+    align-items: center;
+    padding: 9px 11px;
+    border-radius: 18px;
+    background: rgba(250, 250, 250, 0.86);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
+    color: #1c1917;
+  }
+  .tel-avisos :global(.aviso-app) {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #25d366;
+    color: #fff;
+  }
+  .tel-avisos :global(.aviso-cab) {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    font-weight: 650;
+  }
+  .tel-avisos :global(.aviso-cab small) {
+    font-weight: 500;
+    color: #78716c;
+  }
+  .tel-avisos :global(.aviso-txt) {
+    font-size: 11.5px;
+    line-height: 1.3;
+    color: #292524;
+  }
+
+  /* Cursor de diseñador: un aro con punto, del color de la marca del sitio. */
+  .tel-cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 22px;
+    height: 22px;
+    margin: -11px 0 0 -11px;
+    border-radius: 999px;
+    border: 1.5px solid #ff6b3d;
+    background: rgba(255, 107, 61, 0.12);
+    box-shadow: 0 0 0 4px rgba(255, 107, 61, 0.12);
+    opacity: 0;
+    z-index: 6;
+    pointer-events: none;
+  }
+  .tel-cursor::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border-radius: 999px;
+    background: #ff6b3d;
+  }
+
+  .tel-nota {
+    margin-top: 1.1rem;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+  }
+
+  @media (max-width: 420px) {
+    .tel {
+      transform: scale(0.88);
+      transform-origin: top center;
+      margin-bottom: -70px;
+    }
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+
+  type Negocio = {
+    nombre: string
+    corto: string
+    lema: string
+    boton: string
+    servicios: string[]
+    mensajes: string[]
+    resena: string
+    c1: string
+    c2: string
+    acento: string
+    icono: string
+  }
+
+  const WA = `<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8z"/></svg>`
+
+  const raiz = document.querySelector<HTMLElement>('[data-telefono]')
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (raiz && !reducido) {
+    try {
+      montar(raiz)
+    } catch (err) {
+      // Fail-open: el marcado del servidor ya muestra un sitio terminado.
+      console.warn('[telefono] demo quieta', err)
+      raiz.querySelectorAll<HTMLElement>('.ts-real [data-pieza]').forEach((p) => (p.style.clipPath = ''))
+    }
+  }
+
+  function montar(raiz: HTMLElement) {
+    const negocios = JSON.parse(raiz.dataset.negocios ?? '[]') as Negocio[]
+    const pantalla = raiz.querySelector<HTMLElement>('.tel-pantalla')!
+    const capas = Array.from(raiz.querySelectorAll<HTMLElement>('.ts'))
+    const real = raiz.querySelector<HTMLElement>('.ts-real')!
+    const piezas = Array.from(real.querySelectorAll<HTMLElement>('[data-pieza]'))
+    const avisos = raiz.querySelector<HTMLElement>('.tel-avisos')!
+    const cursor = raiz.querySelector<HTMLElement>('.tel-cursor')!
+    const insignia = real.querySelector<HTMLElement>('.ts-insignia')!
+    const titulo = real.querySelector<HTMLElement>('[data-campo="nombre"]')!
+    const textoNuevo = raiz.dataset.nuevo ?? ''
+    const textoAhora = raiz.dataset.ahora ?? ''
+    if (negocios.length === 0 || piezas.length === 0) return
+
+    const OCULTO = 'inset(0% 100% 0% 0% round 14px)'
+    const VISIBLE = 'inset(0% 0% 0% 0% round 14px)'
+
+    // Centro de una pieza en coordenadas de la pantalla. Con offsetTop y no
+    // con getBoundingClientRect: el celular se inclina con el puntero y las
+    // cajas transformadas darían posiciones torcidas para el cursor.
+    const centro = (el: HTMLElement) => {
+      let x = el.offsetWidth / 2
+      let y = el.offsetHeight / 2
+      let n: HTMLElement | null = el
+      while (n && n !== pantalla) {
+        x += n.offsetLeft
+        y += n.offsetTop
+        n = n.offsetParent as HTMLElement | null
+      }
+      return { x, y }
+    }
+
+    const aplicar = (capa: HTMLElement, n: Negocio) => {
+      capa.style.setProperty('--c1', n.c1)
+      capa.style.setProperty('--c2', n.c2)
+      capa.style.setProperty('--acento', n.acento)
+      capa.querySelector<HTMLElement>('.ts-hero')!.dataset.icono = n.icono
+      const campos: Record<string, string> = {
+        corto: n.corto,
+        nombre: n.nombre,
+        lema: n.lema,
+        boton: n.boton,
+        servicio0: n.servicios[0] ?? '',
+        servicio1: n.servicios[1] ?? '',
+        resena: n.resena,
+      }
+      capa.querySelectorAll<HTMLElement>('[data-campo]').forEach((c) => {
+        c.textContent = campos[c.dataset.campo ?? ''] ?? ''
+      })
+    }
+
+    const aviso = (texto: string) => {
+      const el = document.createElement('div')
+      el.className = 'aviso'
+      el.innerHTML = `<span class="aviso-app">${WA}</span><span><span class="aviso-cab"><span></span><small></small></span><span class="aviso-txt"></span></span>`
+      el.querySelector('.aviso-cab span')!.textContent = textoNuevo
+      el.querySelector('.aviso-cab small')!.textContent = textoAhora
+      el.querySelector('.aviso-txt')!.textContent = texto
+      avisos.appendChild(el)
+      return el
+    }
+
+    let actual = 0
+    let tl: gsap.core.Timeline | null = null
+    let visible = false
+
+    const ciclo = () => {
+      const n = negocios[actual % negocios.length]
+      capas.forEach((c) => aplicar(c, n))
+      avisos.innerHTML = ''
+      gsap.set(piezas, { clipPath: OCULTO })
+      gsap.set(insignia, { scale: 0 })
+      insignia.textContent = ''
+
+      tl = gsap.timeline({
+        paused: !visible,
+        onComplete: () => {
+          actual++
+          ciclo()
+        },
+      })
+
+      // 1 · El esqueleto respira un momento antes de que llegue el cursor.
+      const inicio = centro(piezas[0])
+      tl.set(cursor, { x: inicio.x, y: inicio.y - 40 })
+      tl.to(cursor, { opacity: 1, y: inicio.y, duration: 0.45, ease: 'power2.out' }, 0.5)
+
+      // 2 · Pinta pieza por pieza: el cursor viaja, "hace clic" y la pieza se
+      // destapa de izquierda a derecha sobre su esqueleto.
+      piezas.forEach((pieza) => {
+        const c = centro(pieza)
+        tl!
+          .to(cursor, { x: c.x, y: c.y, duration: 0.34, ease: 'power2.inOut' })
+          .to(cursor, { scale: 0.7, duration: 0.08, ease: 'power1.in' })
+          .to(cursor, { scale: 1, duration: 0.25, ease: 'back.out(3)' })
+          .to(pieza, { clipPath: VISIBLE, duration: 0.5, ease: 'power3.out' }, '<-0.05')
+        if (pieza.contains(titulo)) {
+          // El nombre del negocio se escribe letra a letra dentro de su bloque.
+          const texto = n.nombre
+          const estado = { i: 0 }
+          tl!.fromTo(
+            estado,
+            { i: 0 },
+            {
+              i: texto.length,
+              duration: Math.min(0.9, texto.length * 0.035),
+              ease: 'none',
+              onUpdate: () => (titulo.textContent = texto.slice(0, Math.round(estado.i))),
+            },
+            '<',
+          )
+        }
+      })
+      tl.to(cursor, { opacity: 0, scale: 0.6, duration: 0.3 }, '+=0.15')
+
+      // 3 · Llegan los clientes: avisos de WhatsApp y el contador del botón.
+      n.mensajes.forEach((m, i) => {
+        tl!.add(() => {
+          const el = aviso(m)
+          gsap.fromTo(el, { y: -70, opacity: 0, scale: 0.94 }, { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'expo.out' })
+          insignia.textContent = String(i + 1)
+          gsap.fromTo(insignia, { scale: 0.4 }, { scale: 1, duration: 0.5, ease: 'back.out(3)' })
+        }, i === 0 ? '+=0.35' : '+=1.1')
+      })
+
+      // 4 · Se deja ver, y se desarma para el siguiente negocio.
+      tl.to({}, { duration: 2.4 })
+      tl.add(() => {
+        gsap.to(avisos.children, { y: -40, opacity: 0, duration: 0.35, ease: 'power2.in', stagger: 0.05 })
+      })
+      tl.to(insignia, { scale: 0, duration: 0.25 }, '<')
+      tl.to([...piezas].reverse(), { clipPath: 'inset(0% 0% 0% 100% round 14px)', duration: 0.4, ease: 'power2.in', stagger: 0.05 }, '<0.15')
+      tl.to({}, { duration: 0.35 })
+    }
+
+    ciclo()
+
+    // Solo corre a la vista: fuera de pantalla, el ciclo queda en pausa donde
+    // iba y continúa desde ahí al volver.
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting && !document.hidden
+      if (visible) tl?.resume()
+      else tl?.pause()
+    }).observe(raiz)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) tl?.pause()
+      else if (visible) tl?.resume()
+    })
+
+    // Flota suave: sin esto el celular se lee como captura pegada en la página.
+    gsap.to(raiz.querySelector('.tel-marco'), { y: -10, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1 })
+  }
+</script>
