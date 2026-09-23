@@ -1,7 +1,17 @@
 import type { APIRoute } from 'astro'
 
+// Qué se PUBLICA y qué solo se CUENTA. El token ve también los repos privados y
+// los de organizaciones, y este endpoint alimenta páginas públicas (/log y la
+// portada). El trabajo privado es trabajo real, así que entra en las cifras
+// (horas, racha, total, gráfico), que solo necesitan la hora de cada commit;
+// pero su nombre de repo y su mensaje no salen nunca. Antes salían: /log
+// publicaba el historial de repos privados, incluidos los de clientes.
+
 interface GitHubEvent {
   type: string
+  // `false` en los eventos de repos privados, que la API solo devuelve porque
+  // el token es del propio usuario.
+  public?: boolean
   repo: { name: string }
   payload: {
     commits?: Array<{ message: string; sha: string }>
@@ -19,8 +29,12 @@ interface CommitSearchItem {
     author?: { date?: string }
     committer?: { date?: string }
   }
-  repository: { full_name: string }
+  repository: { full_name: string; private?: boolean }
 }
+
+// Ante la duda, privado: un repo cuya visibilidad no viene en la respuesta no
+// se publica. Solo `private: false` explícito abre la puerta.
+const esPublico = (repo: { private?: boolean }) => repo.private === false
 
 export interface FeedItem {
   repo: string
@@ -117,7 +131,13 @@ function isSkipped(msg: string): boolean {
   return SKIP_PATTERNS.some((p) => p.test(msg.trim()))
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
+  // La respuesta no depende de la query, pero la CDN cachea por URL completa:
+  // `?x=1`, `?x=2`… eran cada uno un MISS que rehacía el rastreo entero contra
+  // GitHub (cinco segundos y decenas de llamadas con el token). Cualquier query
+  // se manda a la URL limpia, que es la única que llega a cachearse.
+  if (url.search) return Response.redirect(new URL(url.pathname, url), 308)
+
   const token = import.meta.env.GITHUB_TOKEN
   const username = import.meta.env.GITHUB_USERNAME
 
@@ -146,7 +166,7 @@ export const GET: APIRoute = async () => {
   // 1) Discover repos touched within the window. Sorting by `pushed` descending
   //    lets us stop as soon as we reach a repo that hasn't been pushed since
   //    `thirtyDaysAgo` - everything after it is older too.
-  const activeRepos: Array<{ owner: string; name: string; full: string }> = []
+  const activeRepos: Array<{ owner: string; name: string; full: string; private?: boolean }> = []
   let repoPage = 1
   discover: while (repoPage <= 20) {
     const rr = await fetch(
@@ -162,6 +182,7 @@ export const GET: APIRoute = async () => {
         owner: repo.owner?.login ?? repo.full_name.split('/')[0],
         name: repo.name,
         full: repo.full_name,
+        private: repo.private,
       })
     }
     if (list.length < 100) break
@@ -175,6 +196,7 @@ export const GET: APIRoute = async () => {
     owner: string
     name: string
     full: string
+    private?: boolean
   }): Promise<CommitSearchItem[]> {
     const out: CommitSearchItem[] = []
     let cp = 1
@@ -192,7 +214,7 @@ export const GET: APIRoute = async () => {
         out.push({
           sha: c.sha,
           commit: c.commit,
-          repository: { full_name: repo.full },
+          repository: { full_name: repo.full, private: repo.private },
         })
       }
       if (cl.length < 100) break
@@ -247,17 +269,23 @@ export const GET: APIRoute = async () => {
     (e) => new Date(e.created_at).getTime() >= thirtyDaysAgo
   )
 
-  // Build feed
+  // Build feed. Todo cuenta para las cifras; solo lo público entra en `feed`.
   const seen = new Set<string>()
   const feed: FeedItem[] = []
   const commitTimes: number[] = []
+  // Hora de cada commit y PR fusionado, públicos o no, para el gráfico.
+  const activityTimes: string[] = []
+  let totalCommits = 0
 
   for (const c of searchItems) {
     const firstLine = c.commit.message.split('\n')[0].trim()
     if (isSkipped(firstLine) || seen.has(c.sha)) continue
     seen.add(c.sha)
+    totalCommits++
     const timestamp = c.commit.author?.date ?? c.commit.committer?.date ?? ''
     if (timestamp) commitTimes.push(new Date(timestamp).getTime())
+    activityTimes.push(timestamp)
+    if (!esPublico(c.repository)) continue
     feed.push({
       repo: c.repository.full_name.split('/')[1] ?? c.repository.full_name,
       repoFull: c.repository.full_name,
@@ -277,6 +305,8 @@ export const GET: APIRoute = async () => {
       const key = `pr-${event.repo.name}-${event.created_at}`
       if (!seen.has(key)) {
         seen.add(key)
+        activityTimes.push(event.created_at)
+        if (event.public !== true) continue
         feed.push({
           repo: event.repo.name.split('/')[1] ?? event.repo.name,
           repoFull: event.repo.name,
@@ -301,8 +331,8 @@ export const GET: APIRoute = async () => {
     d.setDate(d.getDate() - i)
     commitsByDay[d.toISOString().split('T')[0]] = 0
   }
-  for (const item of feed) {
-    const day = item.timestamp.split('T')[0]
+  for (const timestamp of activityTimes) {
+    const day = timestamp.split('T')[0]
     if (day in commitsByDay) commitsByDay[day]++
   }
 
@@ -311,7 +341,7 @@ export const GET: APIRoute = async () => {
       feed,
       deepWork,
       streak,
-      totalCommits: feed.filter((f) => f.type === 'commit').length,
+      totalCommits,
       sparkline: Object.values(commitsByDay),
     }),
     {
