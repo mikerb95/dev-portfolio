@@ -369,10 +369,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
             <span id="now-age" class="text-[10px] font-mono text-ink-300 tabular-nums"></span>
           </div>
           <div class="mt-3 min-h-[3.25rem]">
-            <div
-              id="now-body"
-              class="transition-opacity duration-300 motion-reduce:transition-none"
-            >
+            <div id="now-body">
               <div id="now-label" class="text-[14px] text-ink-50 leading-snug">
                 {t.bento.now.body}
               </div>
@@ -517,6 +514,27 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const hero = document.getElementById('hero')
 
+  // Hora de Bogotá en la tarjeta de ubicación. Es un dato, no decoración: se
+  // actualiza también con movimiento reducido. Un segundo exacto de desfase no
+  // importa; un reloj que se congela con la pestaña en segundo plano sí, por
+  // eso se repinta al volver.
+  {
+    const reloj = document.querySelector<HTMLElement>('[data-reloj]')
+    if (reloj) {
+      const fmt = new Intl.DateTimeFormat(reloj.dataset.locale === 'en' ? 'en-GB' : 'es-CO', {
+        timeZone: 'America/Bogota',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      })
+      const pintar = () => (reloj.textContent = fmt.format(new Date()))
+      pintar()
+      window.setInterval(pintar, 1000)
+      document.addEventListener('visibilitychange', () => !document.hidden && pintar())
+    }
+  }
+
   // ── Terreno ──
   {
     const lienzo = document.getElementById('isolineas') as HTMLCanvasElement | null
@@ -647,9 +665,15 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   //
   // Va en su propio script, fuera del bloque de prefers-reduced-motion: esto
   // es contenido, no decoración - quien pide menos animación igual merece el
-  // dato fresco, solo sin el cross-fade (lo apaga `motion-reduce:` en CSS).
+  // dato fresco, solo sin el descifrado (con movimiento reducido el texto
+  // cambia directamente).
   import { formatNumber, formatTimeAgo, interpolate } from '../i18n/format'
   import type { Locale } from '../i18n/config'
+  import gsap from 'gsap'
+  import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin'
+
+  gsap.registerPlugin(ScrambleTextPlugin)
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   type NowItem =
     | { kind: 'deploy'; at: number; sha: string; branch: string; conclusion: string }
@@ -713,13 +737,23 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 
     const advance = () => {
       index = (index + 1) % items.length
-      // Cross-fade corto: el contenido cambia a mitad de la transición para
-      // que no se vea el salto de texto.
-      bodyEl.style.opacity = '0'
-      window.setTimeout(() => {
+      const item = items[index]
+      if (reducido || !item) {
         paint()
-        bodyEl.style.opacity = '1'
-      }, 300)
+        return
+      }
+      // El dato nuevo se descifra sobre el anterior, como una lectura que se
+      // estabiliza: es el mismo gesto de "boot" del titular del hero y de las
+      // cifras de la cinta, y dice que el dato llegó, no que se cambió de slide.
+      ageEl.textContent = formatTimeAgo(item.at, locale)
+      gsap.to(labelEl, {
+        duration: 0.9,
+        scrambleText: { text: labels[item.kind] ?? '', chars: 'lowerCase', speed: 0.55, revealDelay: 0.15 },
+      })
+      gsap.to(metaEl, {
+        duration: 1.1,
+        scrambleText: { text: describe(item), chars: '0123456789abcdef', speed: 0.6, revealDelay: 0.25 },
+      })
     }
 
     const startRotation = () => {
