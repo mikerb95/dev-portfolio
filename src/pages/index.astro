@@ -583,28 +583,43 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 </BaseLayout>
 
 <script>
-  // Motion del index: Lenis (scroll suave) + GSAP ScrollTrigger. Tres piezas,
-  // todas atadas a la identidad de "monitoreo/SIEM" del sitio en vez de un
-  // fade-in genérico:
-  //   1. Hero: el headline se arma carácter por carácter, como un boot.
-  //   2. HUD fijo (#hud): va marcando "ok" sección por sección al scrollear.
-  //   3. Cards: reveal por "scan" (clip-path + barra de luz), no solo opacity.
-  // Todo detrás de prefers-reduced-motion: si el usuario lo pide, la página
-  // queda completamente estática y funcional, sin perder contenido.
+  // Motion de la portada. Cada sección tiene su propia coreografía en vez de
+  // compartir un único fade-in; lo común (scroll suave, boot del titular) sale
+  // de src/lib/motion-reveal.ts y las micro-interacciones de
+  // src/lib/motion/efectos.ts. Aquí solo se decide qué se monta y cuándo:
+  //   · Terreno de isolíneas del hero, que se aplana al hacer scroll.
+  //   · Titular: boot por carácter y, con ratón, peso variable por cercanía.
+  //   · Botones magnéticos, etiquetas de sección, titulares por líneas,
+  //     odómetros y la luz que sigue al cursor en el bento.
+  //   · HUD fijo que marca "ok" sección por sección.
+  // Con movimiento reducido la página queda quieta y completa: el terreno se
+  // pinta en un fotograma fijo y todo lo demás se muestra sin animar.
+  import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   import { initPageMotion, revealCards } from '../lib/motion-reveal'
   import { montarIsolineas } from '../lib/motion/isolineas'
+  import {
+    foco,
+    inclinar,
+    magnetico,
+    odometro,
+    pesoPorCercania,
+    punteroFino,
+    revelarEtiqueta,
+    revelarTitular,
+  } from '../lib/motion/efectos'
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const hero = document.getElementById('hero')
 
+  // ── Terreno ──
   {
-    const hero = document.getElementById('hero')
     const lienzo = document.getElementById('isolineas') as HTMLCanvasElement | null
     if (hero && lienzo) {
-      const iso = montarIsolineas(lienzo, { zona: hero, reducido: prefersReducedMotion })
+      const iso = montarIsolineas(lienzo, { zona: hero, reducido })
       if (iso) {
         hero.classList.add('con-isolineas')
-        if (!prefersReducedMotion) {
+        if (!reducido) {
           ScrollTrigger.create({
             trigger: hero,
             start: 'top top',
@@ -617,17 +632,62 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
     }
   }
 
-  if (!prefersReducedMotion) {
-    // Lenis + boot-reveal del hero + scan-reveal de cards: compartido con
-    // el resto de páginas públicas (ver src/lib/motion-reveal.ts).
-    initPageMotion()
+  if (!reducido) {
+    // Fail-open: cualquier excepción del motion devuelve la visibilidad de lo
+    // que pudo quedar escondido (cards del bento, líneas de titulares) en vez
+    // de dejar media portada en negro. Mismo criterio que motion-reveal.ts.
+    try {
+      initPageMotion({ cardSelector: '#bento .glass' })
+
+      // El titular se aleja por capas al salir del hero: cada línea a su
+      // velocidad, como planos a distinta profundidad sobre el terreno.
+      if (hero) {
+        document.querySelectorAll<HTMLElement>('#hero .hero-line').forEach((linea, i) => {
+          gsap.to(linea, {
+            yPercent: -18 - i * 16,
+            opacity: 0.15,
+            ease: 'none',
+            scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
+          })
+        })
+      }
+
+      document.querySelectorAll<HTMLElement>('[data-etiqueta]').forEach(revelarEtiqueta)
+      document.querySelectorAll<HTMLElement>('[data-titular]').forEach(revelarTitular)
+      document.querySelectorAll<HTMLElement>('[data-odometro]').forEach(odometro)
+
+      if (punteroFino()) {
+        document.querySelectorAll<HTMLElement>('[data-magnetico]').forEach((el) => magnetico(el))
+
+        const bento = document.querySelector<HTMLElement>('#bento [data-foco]')
+        if (bento) {
+          foco(bento)
+          bento.querySelectorAll<HTMLElement>('.foco').forEach((c) => inclinar(c, 2.2))
+        }
+
+        // El peso por cercanía entra cuando el boot del titular ya terminó: si
+        // arranca antes, mide las letras a media subida y los centros quedan
+        // desplazados para siempre.
+        window.setTimeout(() => {
+          const lineas = Array.from(document.querySelectorAll<HTMLElement>('#hero .hero-line'))
+          const letras = lineas.flatMap((l) => Array.from(l.children) as HTMLElement[])
+          const serif = lineas
+            .filter((l) => l.classList.contains('font-serif'))
+            .flatMap((l) => Array.from(l.children) as HTMLElement[])
+          if (letras.length) pesoPorCercania(letras, { levantar: serif })
+        }, 1800)
+      }
+    } catch (err) {
+      console.warn('[motion] portada sin animaciones tras un fallo de init', err)
+      revealCards('#bento .glass')
+      document.querySelectorAll<HTMLElement>('.titular-linea').forEach((l) => (l.style.transform = 'none'))
+    }
 
     // HUD de diagnóstico - un ScrollTrigger por sección que va marcando
     // el estado: pendiente (-) → activo (● parpadeando) → ok (✓ lima).
     const hudLines = Array.from(document.querySelectorAll<HTMLElement>('.hud-line'))
-    const sectionKeys = hudLines.map((l) => l.dataset.key)
-    const sections = sectionKeys
-      .map((key) => document.getElementById(key!))
+    const sections = hudLines
+      .map((l) => document.getElementById(l.dataset.key ?? ''))
       .filter((el): el is HTMLElement => el !== null)
 
     const setHud = (activeIndex: number) => {
@@ -647,9 +707,6 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       })
     }
 
-    // El HUD es adorno; las cards que ya arrancaron en opacity 0 son el
-    // contenido. Si crear estos triggers falla, se devuelve la visibilidad en
-    // vez de dejar media home en negro (mismo criterio fail-open del resto).
     try {
       sections.forEach((section, i) => {
         ScrollTrigger.create({
@@ -662,9 +719,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       })
     } catch (err) {
       console.warn('[motion] HUD deshabilitado tras un fallo de init', err)
-      revealCards()
     }
-
   }
 </script>
 
