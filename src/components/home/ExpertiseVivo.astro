@@ -1,0 +1,356 @@
+---
+// "Expertise técnico": tres tarjetas, cada una con una pantalla que muestra lo
+// que la tarjeta afirma (ver src/lib/motion/expertise.ts). El texto de cada
+// tarjeta sigue siendo el contenido; la pantalla es la prueba.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale).home.expertise
+
+// Archivos de tests/ que existen de verdad: la terminal no inventa nombres.
+// Solo nombres de archivo; cuántos tests trae cada uno cambia con cada commit
+// y un número desactualizado en la portada sería peor que ninguno.
+const ARCHIVOS_TEST = [
+  'payments',
+  'portal-isolation',
+  'security-ratelimit',
+  'security-classify',
+  'vault',
+  'cobros-db',
+  'slo',
+  'i18n-routing-guards',
+  'monitor-rollup',
+  'crypto',
+  'contracts',
+  'demo',
+  'security-honeypot',
+]
+
+const RECURSOS = ['document', 'styles.css', 'inter.woff2', 'page.js', 'hero.webp', '/api/now', 'vitals']
+
+// Nodos del grafo en coordenadas del viewBox (360×180). Las réplicas de la api
+// nacen encima de ella, invisibles, y el script las separa al apuntar.
+const NODOS = [
+  { id: 'edge', x: 48, y: 90, o: 1, texto: 'edge' },
+  { id: 'api1', x: 172, y: 90, o: 0, texto: 'api' },
+  { id: 'api2', x: 172, y: 90, o: 0, texto: 'api' },
+  { id: 'api', x: 172, y: 90, o: 1, texto: 'api' },
+  { id: 'auth', x: 306, y: 38, o: 1, texto: 'auth' },
+  { id: 'db', x: 306, y: 90, o: 1, texto: 'db' },
+  { id: 'cola', x: 306, y: 142, o: 1, texto: t.viz.cola },
+]
+const X = (s: number) => 78 + (s / 3) * (344 - 78)
+---
+
+<section id="expertise" class="px-6 md:px-12 lg:px-20 py-28 border-t border-white/5">
+  <div class="max-w-[1280px] mx-auto">
+    <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-10">
+      <span class="text-cyan">/04</span>
+      <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+      <span>{t.sectionLabel}</span>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4" data-expertise data-locale={locale}>
+      <!-- 1 · Arquitectura -->
+      <article class="exp-tarjeta rounded-2xl glass overflow-hidden" data-pantalla="grafo">
+        <div class="exp-pantalla">
+          <span class="exp-pista">{t.viz.pistas[0]}</span>
+          <svg viewBox="0 0 360 180" class="exp-svg" aria-hidden="true">
+            <g class="g-aristas"></g>
+            <g class="g-paquetes"></g>
+            {NODOS.map((n) => (
+              <g class="g-nodo" data-id={n.id} data-x={n.x} data-y={n.y} data-o={n.o} transform={`translate(${n.x} ${n.y})`} style={`opacity:${n.o}`}>
+                <rect x="-30" y="-12" width="60" height="24" rx="7"></rect>
+                <text text-anchor="middle" dy="3.5">{n.texto}</text>
+              </g>
+            ))}
+            <text class="g-replicas" x="172" y="172" text-anchor="middle">×3 {t.viz.replicas}</text>
+          </svg>
+        </div>
+        <div class="p-7">
+          <h3 class="text-xl font-medium text-ink-50 tracking-tight mb-2">{t.items[0].title}</h3>
+          <p class="text-[13px] text-ink-200 leading-relaxed">{t.items[0].body}</p>
+        </div>
+      </article>
+
+      <!-- 2 · Performance -->
+      <article class="exp-tarjeta rounded-2xl glass overflow-hidden" data-pantalla="cascada">
+        <div class="exp-pantalla">
+          <span class="exp-pista">{t.viz.pistas[1]}</span>
+          <svg viewBox="0 0 360 180" class="exp-svg" aria-hidden="true">
+            {[0, 1, 2, 3].map((s) => (
+              <g>
+                <line class="c-rejilla" x1={X(s)} x2={X(s)} y1="18" y2="150"></line>
+                <text class="c-eje" x={X(s)} y="166" text-anchor="middle">{s} s</text>
+              </g>
+            ))}
+            <line class="c-umbral" x1={X(2.5)} x2={X(2.5)} y1="18" y2="150"></line>
+            <text class="c-umbral-texto" x={X(2.5) - 4} y="14" text-anchor="end">{t.viz.umbral}</text>
+            {RECURSOS.map((r, i) => (
+              <g>
+                <text class="c-nombre" x="12" y={34 + i * 17}>{r}</text>
+                <rect class={`c-barra c-barra-${i}`} x={X(0)} y={27 + i * 17} width="0" height="8" rx="4"></rect>
+              </g>
+            ))}
+            <g class="c-lcp" style="opacity:0">
+              <line class="c-lcp-linea" x1="0" x2="0" y1="18" y2="150"></line>
+              <text class="c-lcp-texto" x="5" y="14"></text>
+            </g>
+          </svg>
+        </div>
+        <div class="p-7">
+          <h3 class="text-xl font-medium text-ink-50 tracking-tight mb-2">{t.items[1].title}</h3>
+          <p class="text-[13px] text-ink-200 leading-relaxed">{t.items[1].body}</p>
+        </div>
+      </article>
+
+      <!-- 3 · Calidad -->
+      <article class="exp-tarjeta rounded-2xl glass overflow-hidden" data-pantalla="terminal" data-archivos={JSON.stringify(ARCHIVOS_TEST)} data-resumen={t.viz.verde}>
+        <div class="exp-pantalla">
+          <span class="exp-pista">{t.viz.pistas[2]}</span>
+          <div class="t-caja" aria-hidden="true">
+            <div class="t-lineas"></div>
+          </div>
+        </div>
+        <div class="p-7">
+          <h3 class="text-xl font-medium text-ink-50 tracking-tight mb-2">{t.items[2].title}</h3>
+          <p class="text-[13px] text-ink-200 leading-relaxed">{t.items[2].body}</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .exp-tarjeta {
+    position: relative;
+    transition:
+      border-color 0.4s ease,
+      box-shadow 0.4s ease;
+  }
+  .exp-tarjeta:hover {
+    border-color: rgba(0, 242, 255, 0.18);
+    box-shadow: 0 30px 70px -40px rgba(0, 242, 255, 0.35);
+  }
+
+  /* Pantalla: un recuadro más oscuro con retícula de puntos, separado del
+     texto por una raya. Se lee como el visor de un instrumento. */
+  .exp-pantalla {
+    position: relative;
+    height: 190px;
+    background:
+      radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 16px 16px,
+      linear-gradient(180deg, rgba(8, 8, 12, 0.7), rgba(8, 8, 12, 0.35));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .exp-svg {
+    position: absolute;
+    inset: 6px 0 0;
+    width: 100%;
+    height: calc(100% - 6px);
+  }
+  .exp-pista {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    z-index: 2;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .exp-pista {
+      opacity: 1;
+    }
+    .exp-tarjeta:hover .exp-pista {
+      opacity: 0;
+    }
+  }
+
+  /* ── Grafo ── */
+  .exp-svg :global(.g-arista) {
+    stroke: rgba(255, 255, 255, 0.12);
+    stroke-width: 1;
+  }
+  .g-nodo rect {
+    fill: #121218;
+    stroke: rgba(255, 255, 255, 0.16);
+    stroke-width: 1;
+    transition: stroke 0.25s ease;
+  }
+  .g-nodo text {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    fill: var(--color-ink-100);
+  }
+  .g-nodo:global(.g-activo) rect {
+    stroke: var(--color-cyan);
+  }
+  .g-replicas {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    fill: var(--color-cyan);
+    opacity: 0;
+  }
+
+  /* ── Cascada ── */
+  .c-rejilla {
+    stroke: rgba(255, 255, 255, 0.05);
+  }
+  .c-eje,
+  .c-nombre {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.04em;
+    fill: var(--color-ink-300);
+  }
+  .c-nombre {
+    fill: var(--color-ink-200);
+  }
+  .c-umbral {
+    stroke: var(--color-ember);
+    stroke-opacity: 0.7;
+    stroke-dasharray: 3 4;
+  }
+  .c-umbral-texto {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    fill: var(--color-ember);
+  }
+  .c-barra {
+    fill: var(--color-ink-300);
+  }
+  .c-barra-0,
+  .c-barra-5 {
+    fill: #00b8c4;
+  }
+  .c-barra-1,
+  .c-barra-2 {
+    fill: var(--color-violet);
+  }
+  .c-barra-3 {
+    fill: var(--color-lime);
+  }
+  .c-barra-4 {
+    fill: var(--color-cyan);
+  }
+  .c-lcp-linea {
+    stroke: var(--color-cyan);
+    stroke-width: 1.4;
+  }
+  .c-lcp-texto {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    fill: var(--color-cyan);
+  }
+
+  /* ── Terminal ── */
+  .t-caja {
+    position: absolute;
+    inset: 16px 18px 14px;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--color-ink-100);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18%, #000 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 18%, #000 100%);
+  }
+  .t-lineas {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: transform 0.25s ease;
+  }
+  .t-lineas :global(.t-linea) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .t-lineas :global(.t-dim) {
+    color: var(--color-ink-300);
+  }
+  .t-lineas :global(.t-estado),
+  .t-lineas :global(.t-ok) {
+    display: inline-block;
+    width: 1ch;
+    color: var(--color-lime);
+  }
+  .t-lineas :global(.t-pendiente) {
+    color: var(--color-ink-300);
+  }
+  .t-lineas :global(.t-pendiente .t-estado) {
+    color: var(--color-cyan);
+    animation: pulseDot 0.6s ease-in-out infinite;
+  }
+  .t-lineas :global(.t-resumen) {
+    margin-top: 0.35em;
+    color: var(--color-lime);
+  }
+  .t-lineas :global(.t-cursor) {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    margin-left: 0.15em;
+    vertical-align: -0.15em;
+    background: var(--color-cyan);
+    animation: pulseDot 0.9s steps(2) infinite;
+  }
+</style>
+
+<script>
+  import { montarCascada, montarGrafo, montarTerminal, type Pantalla } from '../../lib/motion/expertise'
+
+  const rejilla = document.querySelector<HTMLElement>('[data-expertise]')
+  if (rejilla) {
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const locale = rejilla.dataset.locale ?? 'es'
+    rejilla.querySelectorAll<HTMLElement>('[data-pantalla]').forEach((tarjeta) => {
+      let p: Pantalla | null = null
+      try {
+        const svg = tarjeta.querySelector<SVGSVGElement>('svg')
+        switch (tarjeta.dataset.pantalla) {
+          case 'grafo':
+            p = svg ? montarGrafo(svg, reducido) : null
+            break
+          case 'cascada':
+            p = svg ? montarCascada(svg, reducido, locale) : null
+            break
+          case 'terminal':
+            p = montarTerminal(
+              tarjeta.querySelector<HTMLElement>('.t-caja')!,
+              JSON.parse(tarjeta.dataset.archivos ?? '[]'),
+              tarjeta.dataset.resumen ?? '',
+              reducido,
+            )
+            break
+        }
+      } catch (err) {
+        // Una pantalla que falla deja la tarjeta con su texto: es decoración
+        // con intención, no el contenido.
+        console.warn('[expertise] pantalla sin animar', err)
+        return
+      }
+      if (!p) return
+      const pantalla = p
+      // Solo se anima mientras la tarjeta está a la vista y la pestaña activa.
+      new IntersectionObserver(([e]) => pantalla.activar(e.isIntersecting && !document.hidden), {
+        rootMargin: '60px',
+      }).observe(tarjeta)
+      tarjeta.addEventListener('pointerenter', (e) => e.pointerType !== 'touch' && pantalla.intensificar(true))
+      tarjeta.addEventListener('pointerleave', (e) => e.pointerType !== 'touch' && pantalla.intensificar(false))
+    })
+  }
+</script>
