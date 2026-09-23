@@ -999,10 +999,32 @@ const es = {
     ctaQuieroPlan: 'Quiero este plan',
     planWaMessage: 'Hola Mike, me interesa el plan {plan} para mi página web. ¿Me cuentas más?',
     planesFootnote: '¿No sabes cuál elegir? Escríbeme y en 5 minutos te digo cuál te conviene.',
-    socialHeading: 'Negocios que confían',
-    socialYourBusiness: 'Tu negocio aquí',
-    socialComingSoon: 'Próximamente',
-    socialPlaceholder: 'Este espacio es para el testimonio de tu negocio. ¿Serás el primero?',
+    // Vitrina de trabajos reales (src/components/paginas-web/TrabajosReales.astro):
+    // reemplaza al marcador de testimonios. Solo se afirma lo que se ve en cada
+    // sitio publicado; nada de cifras de resultados que no se hayan medido.
+    trabajos: {
+      heading: 'Negocios que ya están en línea',
+      sub: 'Tres páginas reales, hechas por mí y funcionando hoy.',
+      visitar: 'Visitar el sitio',
+      proximo: 'El próximo puede ser el tuyo.',
+      items: [
+        {
+          tipo: 'Café de especialidad · Colombia',
+          resumen: 'Tienda en línea de café con suscripciones, regalos y la historia de cada lote, desde la finca hasta la taza.',
+          puntos: ['Tienda en línea', 'Suscripciones', 'Trazabilidad por lote'],
+        },
+        {
+          tipo: 'Taller de motos · Bogotá',
+          resumen: 'Los servicios del taller, un club para sus clientes y la opción de agendar o consultar el estado de la moto sin llamar.',
+          puntos: ['Agenda de servicios', 'Club de clientes', 'Tienda'],
+        },
+        {
+          tipo: 'Productora de eventos · Bogotá',
+          resumen: 'Página en español e inglés con sus paquetes, la galería de eventos y un panel para que el equipo la actualice sin ayuda.',
+          puntos: ['Bilingüe', 'Paquetes con precio', 'Panel propio'],
+        },
+      ],
+    },
     faqHeading: 'Preguntas frecuentes',
     faqs: [
       { q: '¿Tengo que hacer algo técnico?', a: 'No. Tú me mandas la información (fotos, textos, tus datos) y yo me encargo de todo lo demás: dominio, diseño y publicación.' },

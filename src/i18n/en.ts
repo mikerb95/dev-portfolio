@@ -976,10 +976,29 @@ const en = {
     ctaQuieroPlan: 'I want this plan',
     planWaMessage: "Hi Mike, I'm interested in the {plan} plan for my website. Can you tell me more?",
     planesFootnote: "Not sure which one? Message me and in 5 minutes I'll tell you which one fits.",
-    socialHeading: 'Businesses that trust me',
-    socialYourBusiness: 'Your business here',
-    socialComingSoon: 'Coming soon',
-    socialPlaceholder: "This spot is for your business's testimonial. Want to be the first?",
+    trabajos: {
+      heading: 'Businesses already online',
+      sub: 'Three real websites, built by me and working today.',
+      visitar: 'Visit the site',
+      proximo: 'The next one could be yours.',
+      items: [
+        {
+          tipo: 'Specialty coffee · Colombia',
+          resumen: 'An online coffee shop with subscriptions, gifts and the story of every batch, from the farm to the cup.',
+          puntos: ['Online store', 'Subscriptions', 'Batch traceability'],
+        },
+        {
+          tipo: 'Motorcycle workshop · Bogotá',
+          resumen: "The workshop's services, a members club and a way to book or check on a bike without calling.",
+          puntos: ['Service booking', 'Members club', 'Shop'],
+        },
+        {
+          tipo: 'Event production · Bogotá',
+          resumen: 'A Spanish and English site with its packages, an event gallery and a panel so the team can update it on their own.',
+          puntos: ['Bilingual', 'Priced packages', 'Own admin panel'],
+        },
+      ],
+    },
     faqHeading: 'Frequently asked questions',
     faqs: [
       { q: 'Do I need to do anything technical?', a: 'No. You send me the info (photos, text, your details) and I handle everything else: domain, design, and publishing.' },
