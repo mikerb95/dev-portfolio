@@ -81,13 +81,13 @@
 }
 .foco::before {
   padding: 1px;
-  background: radial-gradient(260px circle at var(--fx, -600px) var(--fy, -600px), rgba(0,242,255,.6), rgba(0,242,255,0) 70%);
+  background: radial-gradient(300px circle at var(--fx, -600px) var(--fy, -600px), rgba(0,242,255,.9), rgba(0,242,255,0) 70%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 .foco::after {
-  background: radial-gradient(420px circle at var(--fx, -600px) var(--fy, -600px), rgba(0,242,255,.06), rgba(0,242,255,0) 65%);
+  background: radial-gradient(440px circle at var(--fx, -600px) var(--fy, -600px), rgba(0,242,255,.075), rgba(0,242,255,0) 65%);
 }
 .foco-activo:hover .foco::before,
 .foco-activo:hover .foco::after { opacity: 1; }
