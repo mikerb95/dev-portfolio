@@ -33,8 +33,30 @@ test.describe('gate del panel', () => {
   })
 
   test('el deck privado no es público', async ({ page }) => {
-    await page.goto('/docs/presentacion')
-    await expect(page).toHaveURL(/\/login/)
+    // Con barra final también: Astro sirve las dos formas, y el guard exacto
+    // del middleware solo reconocía una. La otra servía el deck a cualquiera.
+    for (const path of ['/docs/presentacion', '/docs/presentacion/']) {
+      await page.goto(path)
+      await expect(page, path).toHaveURL(/\/login/)
+    }
+  })
+
+  // Las rutas de GitHub que usa /admin/repos vivieron en /api/github/, fuera
+  // del gate: el GET listaba los repos privados del token y el POST dejaba a
+  // cualquiera crear proyectos o cambiar su visibilidad.
+  test('las rutas de GitHub del panel están cerradas', async ({ request }) => {
+    const lista = await request.get('/api/admin/github/repos', { maxRedirects: 0 })
+    expect([302, 403]).toContain(lista.status())
+
+    const toggle = await request.post('/api/admin/github/toggle', {
+      data: { slug: 'intruso', visible: true },
+      maxRedirects: 0,
+    })
+    expect([302, 403]).toContain(toggle.status())
+
+    // Y las rutas viejas ya no existen: nada quedó escuchando fuera del gate.
+    expect((await request.get('/api/github/repos', { maxRedirects: 0 })).status()).toBe(404)
+    expect((await request.post('/api/github/toggle', { data: {}, maxRedirects: 0 })).status()).toBe(404)
   })
 
   // Dos sistemas distintos comparten vecindario en la raíz: `/remote` a secas

@@ -100,6 +100,11 @@ describe('demo · rutas vetadas aunque sean GET', () => {
       '/api/admin/webauthn/authenticate',
       '/api/admin/lab/chaos',
       '/api/admin/lab/chaos/experiment',
+      // El listado de repos sale de la API de GitHub con el token real (repos
+      // privados incluidos), no de Turso: la base de demo no lo aísla.
+      '/admin/repos',
+      '/api/admin/github/repos',
+      '/api/admin/github/toggle',
       // Credenciales vivas: el PIN de presentador y el secreto de publicación.
       // No las protege el cambio de base de datos, porque la sesión de
       // sustentación vive en Redis, que la demo comparte con lo real.
