@@ -62,3 +62,50 @@
 @media (prefers-reduced-motion: reduce) {
   .pista-mira::after { animation: none; opacity: 0; }
 }
+
+/* ── Bento: linterna que sigue al cursor (foco() en efectos.ts) ──
+   Dos capas por tarjeta: un anillo en el borde (máscara que deja solo el
+   contorno) y un tinte interior muy tenue. Las coordenadas llegan en --fx/--fy
+   desde un único listener en la rejilla, así que el halo también asoma en las
+   tarjetas vecinas al pasar cerca de su borde. */
+.foco { position: relative; }
+.foco::before,
+.foco::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+.foco::before {
+  padding: 1px;
+  background: radial-gradient(260px circle at var(--fx, -600px) var(--fy, -600px), rgba(0,242,255,.6), rgba(0,242,255,0) 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.foco::after {
+  background: radial-gradient(420px circle at var(--fx, -600px) var(--fy, -600px), rgba(0,242,255,.06), rgba(0,242,255,0) 65%);
+}
+.foco-activo:hover .foco::before,
+.foco-activo:hover .foco::after { opacity: 1; }
+
+/* ── Odómetro (odometro() en efectos.ts) ──
+   Cada dígito es una columna de una cifra de alto con una tira vertical de
+   0-9 dos veces dentro; los dígitos tabulares hacen que 1ch sirva de ancho
+   para cualquiera de ellos. */
+.odo-col {
+  display: inline-block;
+  height: 1.1em;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.odo-tira {
+  display: block;
+  width: 1ch;
+  line-height: 1.1;
+  word-break: break-all;
+  font-variant-numeric: tabular-nums;
+}
