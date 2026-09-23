@@ -1,0 +1,723 @@
+---
+// "Cómo funciona" de /paginas-web: los tres pasos contados como una historia.
+// Una ventana se queda fija mientras los pasos pasan a su lado, y en cada paso
+// muestra lo que de verdad ocurre en él, con el mismo negocio de ejemplo del
+// hero (la panadería):
+//   1 · Me cuentas: la conversación por WhatsApp, con las fotos incluidas.
+//   2 · Yo diseño: los bloques encajan en su sitio y se prueban los colores.
+//   3 · Publicamos: la página en línea con su dominio, y el negocio en Google.
+// En móvil la ventana se fija arriba y los pasos pasan por debajo. Sin JS o con
+// movimiento reducido, la ventana muestra la escena final y los pasos se leen
+// en orden como siempre.
+import { getDictionary, getLocaleFromUrl, interpolate } from '../../i18n'
+
+const pw = getDictionary(getLocaleFromUrl(Astro.url.pathname)).paginasWeb
+const k = pw.taller
+const pasos = pw.pasos
+const total = pasos.length
+// Dominio del ejemplo: dato del ejemplo, no texto a traducir.
+const DOMINIO = 'laespiga.co'
+const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
+---
+
+<section id="como-funciona" class="px-6 md:px-12 lg:px-20 py-20">
+  <div class="max-w-[1180px] mx-auto">
+    <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 text-center mb-3 leading-[1.05]">
+      {pw.pasosHeading}
+    </h2>
+    <p class="text-[15px] text-ink-200 text-center mb-14">{pw.pasosSub}</p>
+
+    <div class="tp-grid" data-taller data-paso={k.paso} data-total={total}>
+      <!-- Ventana fija con las tres escenas -->
+      <div class="tp-fijo">
+        <div class="tp-ventana" aria-hidden="true">
+          <div class="tp-barra">
+            <span class="tp-puntos"><i></i><i></i><i></i></span>
+            <span class="tp-barra-txt">{interpolate(k.paso, { n: total, total })}</span>
+            <span class="tp-progreso">
+              {pasos.map((_, i) => <i class="tp-seg" data-seg={i}></i>)}
+            </span>
+          </div>
+
+          <div class="tp-escenario">
+            <!-- 1 · Chat -->
+            <div class="tp-escena tp-chat" data-escena="0">
+              <div class="tp-chat-cab">
+                <span class="tp-avatar"></span>
+                <span>
+                  <strong>{k.contacto}</strong>
+                  <small>WhatsApp</small>
+                </span>
+              </div>
+              <div class="tp-chat-cuerpo">
+                <div class="tp-msg tp-entra">{k.chat[0]}</div>
+                <div class="tp-msg tp-sale">{k.chat[1]}</div>
+                <div class="tp-msg tp-entra tp-fotos">
+                  <span class="tp-fotos-rejilla"><i></i><i></i><i></i></span>
+                  {k.chat[2]}
+                </div>
+                <div class="tp-msg tp-sale">{k.chat[3]}</div>
+              </div>
+            </div>
+
+            <!-- 2 · Diseño -->
+            <div class="tp-escena tp-diseno" data-escena="1">
+              <div class="tp-lienzo">
+                <span class="tp-bloque tp-bl-nav"></span>
+                <span class="tp-bloque tp-bl-hero"></span>
+                <span class="tp-bloque tp-bl-t1"></span>
+                <span class="tp-bloque tp-bl-t2"></span>
+                <span class="tp-bloque tp-bl-boton"></span>
+                <span class="tp-bloque tp-bl-c1"></span>
+                <span class="tp-bloque tp-bl-c2"></span>
+              </div>
+              <div class="tp-panel">
+                <span class="tp-panel-tit">{k.colores}</span>
+                <span class="tp-muestras">
+                  {COLORES.map((c) => <i style={`background:${c}`} data-color={c}></i>)}
+                </span>
+                <span class="tp-panel-tit">{k.tipografia}</span>
+                <span class="tp-letras"><b>Aa</b><em>Aa</em></span>
+              </div>
+              <span class="tp-aviso"><span class="tp-aviso-ok">✓</span>{k.vistaPrevia}</span>
+            </div>
+
+            <!-- 3 · Publicado -->
+            <div class="tp-escena tp-publicado" data-escena="2">
+              <div class="tp-url">
+                <svg viewBox="0 0 24 24" width="11" height="11"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+                <span>{DOMINIO}</span>
+                <span class="tp-enlinea"><i></i>{k.enLinea}</span>
+              </div>
+              <div class="tp-sitio">
+                <span class="tp-sitio-hero"></span>
+                <span class="tp-sitio-t"></span>
+                <span class="tp-sitio-t corta"></span>
+              </div>
+              <div class="tp-google">
+                <span class="tp-google-q">
+                  <svg viewBox="0 0 24 24" width="11" height="11"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+                  {k.busqueda}
+                </span>
+                <span class="tp-google-url">{DOMINIO}</span>
+                <strong class="tp-google-tit">{k.contacto}</strong>
+                <span class="tp-google-meta"><span class="tp-google-est">★★★★★</span> 4,9 · {k.resultado}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pasos -->
+      <ol class="tp-pasos">
+        {pasos.map((paso, i) => (
+          <li class="tp-paso" data-paso-i={i}>
+            <span class="tp-num">{String(i + 1).padStart(2, '0')}</span>
+            <h3 class="tp-titulo">{paso.titulo}</h3>
+            <p class="tp-texto">{paso.texto}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tp-grid {
+    position: relative;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 1024px) {
+    .tp-grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: 5rem;
+      align-items: start;
+    }
+  }
+
+  /* ── Ventana fija ── */
+  .tp-fijo {
+    position: sticky;
+    top: 76px;
+    z-index: 2;
+    padding-bottom: 1rem;
+    background: linear-gradient(180deg, var(--color-ink-950) 88%, rgba(18, 18, 22, 0));
+  }
+  @media (min-width: 1024px) {
+    .tp-fijo {
+      top: calc(50vh - 210px);
+      padding: 0;
+      background: none;
+    }
+  }
+  .tp-ventana {
+    border-radius: 20px;
+    overflow: hidden;
+    background: #0d0d11;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 40px 90px -40px rgba(0, 0, 0, 0.9),
+      0 0 80px -30px rgba(255, 107, 61, 0.3);
+  }
+  .tp-barra {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 38px;
+    padding: 0 14px;
+    background: #16161c;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .tp-puntos {
+    display: flex;
+    gap: 6px;
+  }
+  .tp-puntos i {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .tp-barra-txt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-200);
+  }
+  .tp-progreso {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+  }
+  .tp-seg {
+    width: 26px;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    position: relative;
+  }
+  .tp-seg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--color-ember);
+    transform: scaleX(var(--lleno, 1));
+    transform-origin: left;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .tp-escenario {
+    position: relative;
+    height: 360px;
+  }
+  @media (max-width: 1023px) {
+    .tp-escenario {
+      height: 250px;
+    }
+  }
+  .tp-escena {
+    position: absolute;
+    inset: 0;
+  }
+  /* Sin JS se ve la última escena: el final de la historia es lo que importa. */
+  .tp-escena[data-escena='0'],
+  .tp-escena[data-escena='1'] {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  /* ── 1 · Chat (WhatsApp, modo oscuro) ── */
+  .tp-chat {
+    display: flex;
+    flex-direction: column;
+    background:
+      radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 12px 12px,
+      #0b141a;
+  }
+  .tp-chat-cab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #202c33;
+    font-size: 12.5px;
+    color: #e9edef;
+  }
+  .tp-chat-cab small {
+    display: block;
+    font-size: 10.5px;
+    color: #8696a0;
+  }
+  .tp-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: linear-gradient(140deg, #fbbf24, #9a3412);
+  }
+  .tp-chat-cuerpo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 7px;
+    padding: 14px;
+  }
+  .tp-msg {
+    max-width: 78%;
+    padding: 7px 11px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: #e9edef;
+  }
+  .tp-entra {
+    align-self: flex-start;
+    background: #202c33;
+    border-bottom-left-radius: 3px;
+  }
+  .tp-sale {
+    align-self: flex-end;
+    background: #005c4b;
+    border-bottom-right-radius: 3px;
+  }
+  .tp-fotos-rejilla {
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .tp-fotos-rejilla i {
+    height: 44px;
+    border-radius: 6px;
+    background: linear-gradient(140deg, #fbbf24, #9a3412);
+  }
+  .tp-fotos-rejilla i:nth-child(2) {
+    background: linear-gradient(200deg, #fde68a, #b45309);
+  }
+  .tp-fotos-rejilla i:nth-child(3) {
+    background: linear-gradient(120deg, #f59e0b, #7c2d12);
+  }
+
+  /* ── 2 · Diseño ── */
+  .tp-diseno {
+    display: grid;
+    grid-template-columns: 1fr 104px;
+    gap: 14px;
+    padding: 18px;
+    background:
+      radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 14px 14px,
+      #0d0d11;
+  }
+  .tp-lienzo {
+    position: relative;
+    border-radius: 12px;
+    background: #faf7f2;
+    overflow: hidden;
+  }
+  .tp-bloque {
+    position: absolute;
+    border-radius: 6px;
+    background: #e5e0d8;
+  }
+  .tp-bl-nav {
+    left: 6%;
+    top: 6%;
+    width: 88%;
+    height: 7%;
+  }
+  .tp-bl-hero {
+    left: 6%;
+    top: 17%;
+    width: 88%;
+    height: 34%;
+    background: var(--tp-color, #c2410c);
+    transition: background-color 0.4s ease;
+  }
+  .tp-bl-t1 {
+    left: 6%;
+    top: 56%;
+    width: 60%;
+    height: 6%;
+    background: #292524;
+  }
+  .tp-bl-t2 {
+    left: 6%;
+    top: 65%;
+    width: 44%;
+    height: 4%;
+  }
+  .tp-bl-boton {
+    left: 6%;
+    top: 73%;
+    width: 30%;
+    height: 8%;
+    border-radius: 999px;
+    background: var(--tp-color, #c2410c);
+    transition: background-color 0.4s ease;
+  }
+  .tp-bl-c1 {
+    left: 6%;
+    top: 85%;
+    width: 42%;
+    height: 11%;
+  }
+  .tp-bl-c2 {
+    left: 52%;
+    top: 85%;
+    width: 42%;
+    height: 11%;
+  }
+  .tp-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #16161c;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+  .tp-panel-tit {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+  }
+  .tp-muestras {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .tp-muestras i {
+    aspect-ratio: 1;
+    border-radius: 999px;
+    box-shadow: 0 0 0 2px transparent;
+    transition: box-shadow 0.25s ease;
+  }
+  .tp-muestras i.elegido {
+    box-shadow:
+      0 0 0 2px #16161c,
+      0 0 0 3.5px #fff;
+  }
+  .tp-letras {
+    display: flex;
+    gap: 8px;
+    font-size: 18px;
+    color: var(--color-ink-50);
+  }
+  .tp-letras em {
+    font-family: var(--font-serif);
+    color: var(--color-ink-200);
+  }
+  .tp-aviso {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #1c1c24;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 14px 30px -12px rgba(0, 0, 0, 0.8);
+    font-size: 12px;
+    color: var(--color-ink-50);
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .tp-aviso-ok {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--color-lime);
+    color: var(--color-ink-950);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* ── 3 · Publicado ── */
+  .tp-publicado {
+    display: flex;
+    flex-direction: column;
+    background: #0d0d11;
+  }
+  .tp-url {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 14px 0;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #1c1c24;
+    font-size: 12px;
+    color: var(--color-ink-50);
+  }
+  .tp-url svg {
+    fill: none;
+    stroke: var(--color-ink-200);
+    stroke-width: 2;
+  }
+  .tp-enlinea {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #4ade80;
+  }
+  .tp-enlinea i {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+  }
+  .tp-sitio {
+    flex: 1;
+    margin: 12px 14px 14px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #faf7f2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tp-sitio-hero {
+    flex: 1;
+    border-radius: 10px;
+    background:
+      radial-gradient(120% 90% at 20% 10%, #fde68a, transparent 55%),
+      linear-gradient(140deg, #fbbf24, #9a3412);
+  }
+  .tp-sitio-t {
+    height: 9px;
+    width: 58%;
+    border-radius: 5px;
+    background: #292524;
+  }
+  .tp-sitio-t.corta {
+    width: 38%;
+    background: #d6d0c6;
+  }
+  .tp-google {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    width: min(330px, 86%);
+    display: grid;
+    gap: 3px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #202124;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 24px 50px -16px rgba(0, 0, 0, 0.9);
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #bdc1c6;
+  }
+  .tp-google-q {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    color: #e8eaed;
+  }
+  .tp-google-q svg {
+    fill: none;
+    stroke: #9aa0a6;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .tp-google-url {
+    font-size: 10.5px;
+    color: #bdc1c6;
+  }
+  .tp-google-tit {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8ab4f8;
+  }
+  .tp-google-est {
+    color: #fbbc04;
+  }
+
+  /* ── Pasos ── */
+  .tp-pasos {
+    position: relative;
+  }
+  .tp-paso {
+    min-height: 62vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem 0;
+    transition: opacity 0.5s ease;
+  }
+  .tp-paso:last-child {
+    min-height: 52vh;
+  }
+  :global(.tp-vivo) .tp-paso {
+    opacity: 0.28;
+  }
+  :global(.tp-vivo) .tp-paso.activo {
+    opacity: 1;
+  }
+  .tp-num {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 64px;
+    line-height: 1;
+    color: var(--color-ember);
+  }
+  .tp-titulo {
+    margin-top: 1rem;
+    font-size: clamp(26px, 3vw, 38px);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    color: var(--color-ink-50);
+  }
+  .tp-texto {
+    margin-top: 0.8rem;
+    max-width: 34ch;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--color-ink-200);
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+  import { interpolate } from '../../i18n/format'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  const raiz = document.querySelector<HTMLElement>('[data-taller]')
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (raiz && !reducido) {
+    try {
+      montar(raiz)
+    } catch (err) {
+      // Fail-open: sin animación queda la escena final y los pasos legibles.
+      console.warn('[taller] sin animar', err)
+      raiz.classList.remove('tp-vivo')
+    }
+  }
+
+  function montar(raiz: HTMLElement) {
+    const escenas = Array.from(raiz.querySelectorAll<HTMLElement>('.tp-escena'))
+    const pasos = Array.from(raiz.querySelectorAll<HTMLElement>('.tp-paso'))
+    const segs = Array.from(raiz.querySelectorAll<HTMLElement>('.tp-seg'))
+    const etiqueta = raiz.querySelector<HTMLElement>('.tp-barra-txt')!
+    const plantilla = raiz.dataset.paso ?? ''
+    const total = Number(raiz.dataset.total ?? escenas.length)
+
+    // Línea de tiempo de cada escena: se reinicia cada vez que su paso entra.
+    const lineas: gsap.core.Timeline[] = [
+      // 1 · Chat: cada mensaje entra por su lado, con una pausa de lectura.
+      (() => {
+        const msgs = Array.from(escenas[0].querySelectorAll<HTMLElement>('.tp-msg'))
+        const tl = gsap.timeline({ paused: true })
+        tl.set(msgs, { opacity: 0, y: 10, scale: 0.92 })
+        msgs.forEach((m, i) => {
+          tl.to(
+            m,
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.45,
+              ease: 'back.out(1.8)',
+              transformOrigin: m.classList.contains('tp-sale') ? '100% 100%' : '0% 100%',
+            },
+            i === 0 ? 0.2 : '+=0.55',
+          )
+        })
+        return tl
+      })(),
+      // 2 · Diseño: los bloques llegan desordenados y encajan; luego se prueban
+      // colores hasta quedarse con el de la marca, y sale la vista previa.
+      (() => {
+        const esc = escenas[1]
+        const bloques = Array.from(esc.querySelectorAll<HTMLElement>('.tp-bloque'))
+        const muestras = Array.from(esc.querySelectorAll<HTMLElement>('.tp-muestras i'))
+        const lienzo = esc.querySelector<HTMLElement>('.tp-lienzo')!
+        const aviso = esc.querySelector<HTMLElement>('.tp-aviso')!
+        const elegir = (i: number) => {
+          muestras.forEach((m, k) => m.classList.toggle('elegido', k === i))
+          lienzo.style.setProperty('--tp-color', muestras[i].dataset.color ?? '')
+        }
+        const tl = gsap.timeline({ paused: true })
+        tl.call(() => elegir(2))
+          .set(aviso, { opacity: 0, y: 12 })
+          .fromTo(
+            bloques,
+            { opacity: 0, x: () => gsap.utils.random(-40, 40), y: () => gsap.utils.random(-30, 30), rotation: () => gsap.utils.random(-12, 12) },
+            { opacity: 1, x: 0, y: 0, rotation: 0, duration: 0.7, ease: 'back.out(1.4)', stagger: 0.07 },
+            0.1,
+          )
+          .call(() => elegir(1), [], '+=0.35')
+          .call(() => elegir(4), [], '+=0.45')
+          .call(() => elegir(0), [], '+=0.45')
+          .to(aviso, { opacity: 1, y: 0, duration: 0.45, ease: 'back.out(2)' }, '+=0.35')
+        return tl
+      })(),
+      // 3 · Publicado: el sitio aparece y el resultado de Google sube encima.
+      (() => {
+        const esc = escenas[2]
+        const sitio = esc.querySelector<HTMLElement>('.tp-sitio')!
+        const google = esc.querySelector<HTMLElement>('.tp-google')!
+        const enlinea = esc.querySelector<HTMLElement>('.tp-enlinea')!
+        const tl = gsap.timeline({ paused: true })
+        tl.fromTo(sitio, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.6, ease: 'expo.out' }, 0.1)
+          .fromTo(enlinea, { opacity: 0, x: 8 }, { opacity: 1, x: 0, duration: 0.4 }, 0.45)
+          .fromTo(google, { opacity: 0, y: 40, xPercent: -50 }, { opacity: 1, y: 0, xPercent: -50, duration: 0.7, ease: 'expo.out' }, 0.8)
+        return tl
+      })(),
+    ]
+
+    raiz.classList.add('tp-vivo')
+    let activa = -1
+
+    const mostrar = (i: number) => {
+      if (i === activa) return
+      const previa = activa
+      activa = i
+      pasos.forEach((p, k) => p.classList.toggle('activo', k === i))
+      segs.forEach((s, k) => s.style.setProperty('--lleno', k <= i ? '1' : '0'))
+      etiqueta.textContent = interpolate(plantilla, { n: i + 1, total })
+      if (previa >= 0) {
+        gsap.to(escenas[previa], { autoAlpha: 0, y: -12, duration: 0.35, ease: 'power2.in' })
+        lineas[previa].pause()
+      }
+      gsap.fromTo(escenas[i], { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: 'expo.out', delay: previa >= 0 ? 0.15 : 0 })
+      lineas[i].restart(true)
+    }
+
+    // Estado de partida: la escena 1, con los otros segmentos vacíos.
+    gsap.set(escenas, { autoAlpha: 0 })
+    mostrar(0)
+
+    pasos.forEach((p, i) => {
+      ScrollTrigger.create({
+        trigger: p,
+        start: 'top 58%',
+        end: 'bottom 58%',
+        onToggle: (st) => st.isActive && mostrar(i),
+      })
+    })
+  }
+</script>
