@@ -1,0 +1,64 @@
+/* Estilos exclusivos de la portada (src/pages/index.astro): el terreno del
+   hero y las piezas de motion de cada sección. Viven aparte de global.css
+   porque ninguna otra página los usa y no tienen por qué viajar en su CSS. */
+
+/* Terreno de isolíneas del hero (src/lib/motion/isolineas.ts). El lienzo
+   ocupa el hero entero y se funde por abajo con la sección siguiente. */
+.isolineas-lienzo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+}
+.con-isolineas .isolineas-lienzo { opacity: 1; }
+
+/* Velo bajo la columna de texto del hero: oscurece el terreno solo donde
+   compite con el párrafo, sin tapar el resto del lienzo. Es el mismo color del
+   fondo, así que no se lee como una caja sino como un claro en el terreno. */
+.hero-velo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(52% 44% at 22% 64%, rgba(18,18,22,.82), rgba(18,18,22,0) 72%),
+    radial-gradient(40% 30% at 18% 40%, rgba(18,18,22,.45), rgba(18,18,22,0) 70%);
+}
+
+/* Mira de la pista del hero: un retículo con un anillo que se expande, el
+   mismo gesto del pulso que emite el clic sobre el terreno. */
+.pista-mira {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,242,255,.6);
+}
+.pista-mira::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 999px;
+  background: #00f2ff;
+}
+.pista-mira::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 999px;
+  border: 1px solid rgba(201,255,91,.7);
+  animation: pistaPulso 2.4s cubic-bezier(.2,.7,.2,1) infinite;
+}
+@keyframes pistaPulso {
+  0% { transform: scale(1); opacity: .9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pista-mira::after { animation: none; opacity: 0; }
+}

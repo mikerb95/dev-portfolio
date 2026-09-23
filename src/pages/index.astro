@@ -11,6 +11,7 @@ import { proyectosInstantanea } from '../lib/fallback/instantanea'
 import { leerPulso } from '../lib/pulso-publico'
 import { construirSenales } from '../lib/pulso-panel'
 import PulsoPanel from '../components/PulsoPanel.astro'
+import '../styles/portada.css'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
@@ -201,39 +202,57 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           <div class="text-[14px] text-ink-50">{t.hero.stackLine1}</div>
           <div class="text-[14px] text-ink-50">{t.hero.stackLine2}</div>
         </div>
+        <!-- Botones magnéticos: se inclinan hacia el cursor al acercarse y el
+             texto se adelanta un poco más que la píldora, que es lo que da la
+             sensación de profundidad. El `data-magnetico` lo lee el script. -->
         <div class="md:col-span-3 flex md:justify-end gap-3 flex-wrap">
           {visibleProjects.length > 0 ? (
             <a
               href="#proyectos"
-              class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all shadow-glow"
+              data-magnetico
+              class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter] shadow-glow"
             >
-              {t.hero.ctaProjects}
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              <span data-magnetico-texto class="inline-flex items-center gap-2">
+                {t.hero.ctaProjects}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </span>
             </a>
           ) : (
             <a
               href={L('/certifications')}
-              class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all"
+              data-magnetico
+              class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter]"
             >
-              {t.hero.ctaCerts}
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              <span data-magnetico-texto class="inline-flex items-center gap-2">
+                {t.hero.ctaCerts}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </span>
             </a>
           )}
           <a
             href={L('/contact')}
-            class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-white/[.03] text-ink-50 border border-white/10 hover:bg-white/[.06] transition-all"
+            data-magnetico
+            class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-ink-950/60 backdrop-blur-md text-ink-50 border border-white/10 hover:bg-white/[.06] transition-colors"
           >
-            {t.hero.ctaContact}
+            <span data-magnetico-texto class="inline-flex items-center">{t.hero.ctaContact}</span>
           </a>
         </div>
       </div>
+
+      <!-- Pista de interacción: el terreno no es fondo, se puede tocar, y sin
+           decirlo casi nadie descubre el clic. Solo con puntero fino; en táctil
+           el terreno late solo y el toque también emite. -->
+      <p class="hero-pista mt-auto pt-14 hidden md:flex items-center gap-3 self-end text-[10.5px] font-mono uppercase tracking-[.2em] text-ink-200/70" aria-hidden="true">
+        <span class="pista-mira"></span>
+        {t.hero.pista}
+      </p>
 
       <!-- Cinta de señales del propio sitio (ver src/lib/pulso-publico.ts).
            `pulso-wrap` es el área viva: la cinta abre el panel al apuntar una
            señal y lo cierra al salir del conjunto, no de la cinta - si no, bajar
            el cursor hacia el panel lo cerraría justo antes de llegar. -->
       {senales.length > 0 && (
-        <div class="pulso-wrap relative mt-20">
+        <div class="pulso-wrap relative mt-6">
           <div class="ticker -mx-6 md:-mx-12 lg:-mx-20 overflow-hidden border-y border-white/5 py-4">
             <div class="ticker-track flex w-max">
               {[0, 1].map((copia) => (

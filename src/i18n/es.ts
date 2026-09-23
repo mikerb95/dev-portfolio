@@ -105,6 +105,8 @@ const es = {
       ctaProjects: 'Ver proyectos',
       ctaCerts: 'Certificaciones',
       ctaContact: 'Hablemos',
+      // Pista bajo el hero: el terreno de isolíneas responde al cursor y al clic.
+      pista: 'Mueve el cursor sobre el terreno · clic para emitir un sondeo',
     },
     // Cinta de señales bajo el hero. Etiquetas cortas a propósito: la cifra es
     // lo que se lee de un vistazo, la etiqueta solo dice de qué es y en qué

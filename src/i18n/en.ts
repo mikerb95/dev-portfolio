@@ -108,6 +108,7 @@ const en = {
       ctaProjects: 'View projects',
       ctaCerts: 'Certifications',
       ctaContact: "Let's talk",
+      pista: 'Move across the terrain · click to send a probe',
     },
     pulso: {
       uptime: 'uptime · {dias} d',
