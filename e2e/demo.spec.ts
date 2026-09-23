@@ -99,4 +99,25 @@ test.describe('demo · solo lectura', () => {
       expect(res.status(), `${path} debería ser 403`).toBe(403)
     }
   })
+
+  // Lo que no sale de Turso no lo aísla la base de demo: las presentaciones en
+  // vivo viven en Redis y los repos salen de GitHub con el token real.
+  test('las presentaciones en vivo y los repos quedan fuera', async ({ page }) => {
+    await entrarALaDemo(page)
+
+    for (const path of [
+      '/remote/0123456789abcdef0123456789abcdef',
+      '/api/admin/present/sessions',
+      '/admin/presentaciones/1/lanzar',
+      '/admin/repos',
+      '/api/admin/github/repos',
+    ]) {
+      const res = await page.request.get(path, { maxRedirects: 0, failOnStatusCode: false })
+      expect(res.status(), `${path} debería ser 403`).toBe(403)
+    }
+
+    // La biblioteca de decks sí se ve: es Turso, y en demo no consulta Redis.
+    const biblioteca = await page.request.get('/admin/presentaciones', { maxRedirects: 0, failOnStatusCode: false })
+    expect(biblioteca.status()).toBe(200)
+  })
 })

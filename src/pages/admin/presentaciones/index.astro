@@ -14,12 +14,18 @@ const decksList = await listDecks()
 
 // Redis puede no estar configurado (o caído): la biblioteca se lee de Turso y
 // debe seguir viéndose igual. Solo se pierde el aviso de sesión en curso.
+//
+// En la demo ni se consulta: la base ficticia solo sustituye a Turso, y las
+// sesiones viven en el MISMO Redis que las reales. Consultarlo aquí enseñaba a
+// cualquiera con pase de demo mis presentaciones en curso, con su PIN.
 let live: Awaited<ReturnType<typeof listLiveSessions>> = []
 let liveError: string | null = null
-try {
-  live = await listLiveSessions()
-} catch {
-  liveError = 'no se pudo consultar Redis: el estado de las sesiones en curso no está disponible'
+if (Astro.locals.demo !== true) {
+  try {
+    live = await listLiveSessions()
+  } catch {
+    liveError = 'no se pudo consultar Redis: el estado de las sesiones en curso no está disponible'
+  }
 }
 
 const readiness = storeReadiness()

@@ -1587,6 +1587,94 @@ const es = {
         detalle: 'Qué se quedó en el día a día y qué no. Es la parte que casi nadie hace y la única que dice si sirvió.',
       },
     ],
+    // Mesa de trabajo del hero (src/components/capacitacion/MesaTrabajo.astro):
+    // tres tareas reales de oficina pasando por el flujo que enseña la
+    // capacitación, con la revisión humana como último paso. Ejemplos
+    // ilustrativos y la página lo dice: no son clientes ni casos reales.
+    mesa: {
+      ejemplo: 'Ejemplo ilustrativo',
+      pasos: ['Lo que llega', 'Criterio de la empresa', 'Borrador', 'Revisión humana'],
+      entrada: 'Lo que llega',
+      borrador: 'Borrador',
+      aprobado: 'Aprobado',
+      tareas: [
+        {
+          proceso: 'Servicio al cliente · reclamos',
+          entrada: 'Buenas tardes, llevo tres semanas esperando el cambio de la nevera que compré el 12 de agosto (factura 4471) y nadie me responde. Ya llamé dos veces. Si no me solucionan esta semana pongo la queja en la Superintendencia.',
+          criterios: ['Tono cercano, sin tecnicismos', 'Siempre: número de caso y plazo', 'Nunca: prometer reembolsos'],
+          salida: 'Hola, Laura. Tienes razón: tres semanas es demasiado y lamento que hayas tenido que llamar dos veces. Abrí el caso 2231 con tu factura 4471 y el cambio queda programado para el próximo jueves. Te escribo ese día para confirmar la hora de entrega.',
+          ajuste: ['Te escribo', 'Te llamo'],
+          revisor: 'Andrés · Servicio al cliente',
+        },
+        {
+          proceso: 'Administración · actas de reunión',
+          entrada: 'reunión lunes: pedro dice q el proveedor de papelería subió precios 12%, hay q cotizar otros 2 antes del 30. marta revisa contrato de aseo, vence en oct. pendiente lo del parqueadero, nadie se hizo cargo',
+          criterios: ['Formato del acta de la empresa', 'Cada tarea con responsable y fecha', 'Marcar lo que quedó sin dueño'],
+          salida: 'Acta · reunión del lunes. 1) Cotizar dos proveedores de papelería (el actual subió 12 %). Responsable: Pedro, antes del 30. 2) Revisar el contrato de aseo, que vence en octubre. Responsable: Marta. 3) Parqueadero: sin responsable, se asigna en la próxima reunión.',
+          ajuste: ['se asigna en la próxima reunión', 'lo asigna la gerencia el viernes'],
+          revisor: 'Marta · Administración',
+        },
+        {
+          proceso: 'Ventas · solicitudes de cotización',
+          entrada: 'Hola, somos un colegio con 3 sedes en Chía. Necesitamos 40 portátiles para docentes antes de enero, con garantía de 2 años y que alguien los configure. El presupuesto está aprobado pero pasa por comité, así que la propuesta tiene que ser corta.',
+          criterios: ['Requisitos antes de cotizar', 'Qué falta preguntar', 'Máximo una página'],
+          salida: 'Requisitos: 40 portátiles, 3 sedes en Chía, entrega antes de enero, garantía de 2 años y configuración incluida. Falta preguntar: sistema operativo y programas que usan, y si la entrega es por sede. Siguiente paso: propuesta de una página para el comité.',
+          ajuste: ['propuesta de una página para el comité', 'llamada de 15 minutos y propuesta de una página'],
+          revisor: 'Camilo · Ventas',
+        },
+      ],
+    },
+    // Demostraciones de cada perfil (PerfilesDemo.astro).
+    perfilesDemo: {
+      direccion: {
+        titulo: 'Qué delegar',
+        ejes: ['volumen', 'costo del error'],
+        filas: [
+          { t: 'Clasificar correos entrantes', v: 'Automatizar' },
+          { t: 'Resumir contratos', v: 'IA + revisión' },
+          { t: 'Responder reclamos', v: 'IA + revisión' },
+          { t: 'Aprobar pagos', v: 'No se delega' },
+        ],
+      },
+      equipos: {
+        cabecera: ['Cliente', 'Fecha', 'Ciudad'],
+        // Fechas tal como llegan en una hoja de cálculo de verdad: cada quien las
+        // escribe a su manera. El resto de la tabla (nombres, ciudades) son datos
+        // y viven en el componente.
+        fechasSucias: ['3/9/26', 'sept 4 2026', '03-09-2026', '5 sep'],
+        duplicado: 'duplicado',
+        resumen: '3 clientes · 1 duplicado quitado',
+      },
+      tecnicos: {
+        texto: 'La nevera llegó rayada y el técnico nunca vino',
+        claves: ['categoria', 'urgencia', 'area', 'confianza'],
+        valores: ['reclamo', 'alta', 'servicio técnico'],
+        tokens: 'tokens',
+        latencia: 'latencia',
+        evaluacion: 'evaluación',
+        casos: '{ok}/{total} casos',
+      },
+    },
+    // Proceso como línea de tiempo (ProcesoDias.astro): del diagnóstico a la
+    // revisión del día 30.
+    dias: {
+      fases: ['Antes', 'Día 0', 'Desde el día 0', 'Día 30'],
+      mapa: ['Recibir', 'Revisar', 'Responder', 'Archivar'],
+      aqui: 'Aquí entra la IA',
+      ejercicio: 'Ejercicio 3',
+      ejercicioTitulo: 'Responder un reclamo real',
+      archivos: ['formato_reclamos.docx', 'politica_devoluciones.pdf'],
+      aula: 'Aula',
+      banco: 'Banco de recursos',
+      codigo: 'código del grupo',
+      revision: [
+        { t: 'Borradores de respuesta', ok: true },
+        { t: 'Actas de reunión', ok: true },
+        { t: 'Resumen de contratos', ok: false },
+      ],
+      seQuedo: 'se quedó',
+      ajustar: 'a ajustar',
+    },
     aulaHeading: 'Dónde ocurre la capacitación',
     aulaNombre: 'Academia IA',
     aulaIntro: 'El día de la sesión el equipo no aterriza en este sitio: entra al aula, que es una aplicación aparte, con su propio dominio y su propio despliegue. Ahí están los módulos, el registro de asistencia y el avance de cada persona. Este portafolio se queda con lo comercial y con el banco de recursos.',

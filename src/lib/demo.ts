@@ -77,6 +77,14 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   // token real, que incluye los repos privados. Cambiar de base no lo aísla.
   /^\/admin\/repos/,
   /^\/api\/admin\/github/,
+  // Presentaciones EN VIVO: las sesiones viven en Redis, no en Turso, así que
+  // la base de demo tampoco las aísla. El control remoto entrega además el
+  // secreto de presentador en su HTML, y la pantalla de lanzar enseña el PIN
+  // y el QR de la sesión real. La biblioteca de decks sí se ve (sale de Turso)
+  // y no consulta las sesiones en demo.
+  /^\/remote\//,
+  /^\/api\/admin\/present\//,
+  /^\/admin\/presentaciones\/\d+\/lanzar/,
   // Cobros de campo: herramienta operativa real (genera links de pago y expone
   // teléfonos de clientes). La demo enseña el panel, no mi caja registradora.
   /^\/cobrar/,

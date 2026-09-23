@@ -1,0 +1,552 @@
+---
+// "Para quién" de /capacitacion-ia: cada perfil con una pantalla que muestra
+// lo que aprende a hacer, en su propio idioma de trabajo:
+//   · Dirección: qué delegar. Cuatro tareas se ubican según volumen y costo del
+//     error, y cada una recibe su veredicto, incluida la que no se delega.
+//   · Equipos no técnicos: una hoja de cálculo desordenada que queda limpia
+//     (nombres, fechas y ciudades normalizados, y un duplicado fuera).
+//   · Equipos técnicos: una llamada al servicio de clasificación, la respuesta
+//     estructurada que llega por partes y las métricas que importan.
+// Cada pantalla se anima solo mientras está a la vista. Sin JS o con
+// movimiento reducido, muestra su estado final.
+import { getDictionary, getLocaleFromUrl, interpolate } from '../../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const c = getDictionary(locale).capacitacionIa
+const d = c.perfilesDemo
+
+// Posición de cada tarea en la matriz (0..1): volumen en x, costo del error en
+// y. Es diseño del ejemplo, no texto.
+const MATRIZ = [
+  { x: 0.86, y: 0.18, tono: 'lime' },
+  { x: 0.55, y: 0.6, tono: 'violet' },
+  { x: 0.74, y: 0.48, tono: 'violet' },
+  { x: 0.24, y: 0.9, tono: 'ember' },
+]
+const filas = d.direccion.filas.map((f, i) => ({ ...f, ...MATRIZ[i] }))
+
+// La tabla del ejemplo: nombres y ciudades son datos (iguales en los dos
+// idiomas); lo único que cambia por idioma es cómo llegan escritas las fechas.
+const SUCIO = [
+  ['juan PÉREZ', 'bogota'],
+  ['Ana  maría ruiz', 'MEDELLÍN'],
+  ['juan perez', 'Bogotá D.C.'],
+  ['CARLOS gómez', 'cali'],
+]
+const LIMPIO = [
+  ['Juan Pérez', '2026-09-03', 'Bogotá'],
+  ['Ana María Ruiz', '2026-09-04', 'Medellín'],
+  ['Juan Pérez', '2026-09-03', 'Bogotá'],
+  ['Carlos Gómez', '2026-09-05', 'Cali'],
+]
+const DUPLICADO = 2
+const tabla = LIMPIO.map((l, i) => ({
+  sucio: [SUCIO[i][0], d.equipos.fechasSucias[i], SUCIO[i][1]],
+  limpio: l,
+  dup: i === DUPLICADO,
+}))
+
+const t = d.tecnicos
+const casos = interpolate(t.casos, { ok: 47, total: 50 })
+---
+
+<section class="px-6 md:px-12 lg:px-20 pb-24">
+  <div class="max-w-[1180px] mx-auto">
+    <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 mb-10 leading-[1.05]">
+      {c.perfilesHeading}
+    </h2>
+
+    <div class="grid gap-4 md:grid-cols-3" data-perfiles data-entrada>
+      <!-- Dirección -->
+      <article class="pd-tarjeta glass rounded-3xl overflow-hidden" data-demo="direccion">
+        <div class="pd-pantalla pd-dir" aria-hidden="true">
+          <div class="pd-matriz">
+            <span class="pd-eje pd-eje-x">{d.direccion.ejes[0]} →</span>
+            <span class="pd-eje pd-eje-y">{d.direccion.ejes[1]} →</span>
+            <span class="pd-zona"></span>
+            {filas.map((f, i) => (
+              <span class={`pd-punto pd-${f.tono}`} style={`left:${f.x * 100}%;bottom:${f.y * 100}%`} data-x={f.x * 100} data-y={f.y * 100}></span>
+            ))}
+          </div>
+          <ul class="pd-veredictos">
+            {filas.map((f, i) => (
+              <li data-i={i}>
+                <span class={`pd-marca pd-${f.tono}`}></span>
+                <span class="pd-tarea">{f.t}</span>
+                <span class={`pd-veredicto pd-${f.tono}`}>{f.v}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-ember"></span>
+            <h3 class="text-[15px] font-medium text-ember">{c.perfiles[0].titulo}</h3>
+          </div>
+          <p class="mt-2.5 text-[13.5px] text-ink-200 leading-relaxed">{c.perfiles[0].detalle}</p>
+        </div>
+      </article>
+
+      <!-- Equipos no técnicos -->
+      <article class="pd-tarjeta glass rounded-3xl overflow-hidden" data-demo="equipos">
+        <div class="pd-pantalla pd-hoja" aria-hidden="true">
+          <table class="pd-tabla">
+            <thead>
+              <tr>
+                <th></th>
+                {d.equipos.cabecera.map((h) => <th>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {tabla.map((fila, i) => (
+                <tr class={fila.dup ? 'pd-dup' : ''} data-fila={i}>
+                  <td class="pd-n">{i + 2}</td>
+                  {fila.limpio.map((celda, k) => (
+                    <td data-sucio={fila.sucio[k]} data-limpio={celda}>{celda}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <span class="pd-dup-etq">{d.equipos.duplicado}</span>
+          <span class="pd-resumen">
+            <svg viewBox="0 0 24 24" width="11" height="11"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+            {d.equipos.resumen}
+          </span>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
+            <h3 class="text-[15px] font-medium text-lime">{c.perfiles[1].titulo}</h3>
+          </div>
+          <p class="mt-2.5 text-[13.5px] text-ink-200 leading-relaxed">{c.perfiles[1].detalle}</p>
+        </div>
+      </article>
+
+      <!-- Equipos técnicos -->
+      <article class="pd-tarjeta glass rounded-3xl overflow-hidden" data-demo="tecnicos">
+        <div class="pd-pantalla pd-term" aria-hidden="true">
+          <div class="pd-req">
+            <span class="pd-metodo">POST</span> /api/clasificar
+          </div>
+          <div class="pd-json">
+            <span class="pd-j">{'{'}</span>
+            <span class="pd-j pd-in">  "texto": "<span class="pd-str">{t.texto}</span>"</span>
+            <span class="pd-j">{'}'}</span>
+          </div>
+          <div class="pd-json pd-resp">
+            <span class="pd-j">{'{'}</span>
+            {t.valores.map((v, i) => (
+              <span class="pd-j pd-linea">  "<span class="pd-k">{t.claves[i]}</span>": "<span class="pd-str">{v}</span>",</span>
+            ))}
+            <span class="pd-j pd-linea">  "<span class="pd-k">{t.claves[3]}</span>": <span class="pd-num" data-conf>0.94</span></span>
+            <span class="pd-j pd-linea">{'}'}</span>
+          </div>
+          <div class="pd-metricas">
+            <span><em>{t.tokens}</em> <b data-tok>212</b></span>
+            <span><em>{t.latencia}</em> <b data-lat>640 ms</b></span>
+            <span class="pd-eval">
+              <em>{t.evaluacion}</em>
+              <i class="pd-barra"><i data-eval></i></i>
+              <b>{casos}</b>
+            </span>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-violet"></span>
+            <h3 class="text-[15px] font-medium text-violet">{c.perfiles[2].titulo}</h3>
+          </div>
+          <p class="mt-2.5 text-[13.5px] text-ink-200 leading-relaxed">{c.perfiles[2].detalle}</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pd-tarjeta {
+    transition:
+      border-color 0.4s ease,
+      transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .pd-tarjeta:hover {
+    border-color: rgba(201, 255, 91, 0.22);
+    transform: translateY(-3px);
+  }
+  .pd-pantalla {
+    position: relative;
+    height: 212px;
+    padding: 16px;
+    background: linear-gradient(180deg, rgba(8, 8, 12, 0.75), rgba(8, 8, 12, 0.35));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+
+  /* Colores por veredicto */
+  .pd-lime {
+    --tono: #c9ff5b;
+  }
+  .pd-violet {
+    --tono: #a78bff;
+  }
+  .pd-ember {
+    --tono: #ff6b3d;
+  }
+
+  /* ── Dirección: matriz y veredictos ── */
+  .pd-dir {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 14px;
+  }
+  .pd-matriz {
+    position: relative;
+    height: 100%;
+    border-left: 1px solid rgba(255, 255, 255, 0.18);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  /* Esquina de "alto volumen, bajo costo del error": donde conviene empezar. */
+  .pd-zona {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 50%;
+    height: 50%;
+    background: rgba(201, 255, 91, 0.07);
+    border-radius: 0 0 0 0;
+  }
+  .pd-eje {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: 7.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+    white-space: nowrap;
+  }
+  .pd-eje-x {
+    right: 0;
+    bottom: -13px;
+  }
+  .pd-eje-y {
+    left: -4px;
+    top: 0;
+    transform: rotate(-90deg) translate(-100%, -100%);
+    transform-origin: 0 0;
+  }
+  .pd-punto {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    margin: 0 0 -5.5px -5.5px;
+    border-radius: 999px;
+    background: var(--tono);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tono) 22%, transparent);
+  }
+  .pd-veredictos {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 9px;
+  }
+  .pd-veredictos li {
+    display: grid;
+    grid-template-columns: 7px 1fr;
+    gap: 2px 8px;
+    align-items: center;
+    font-size: 11px;
+    line-height: 1.25;
+    color: var(--color-ink-100);
+  }
+  .pd-marca {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--tono);
+  }
+  .pd-veredicto {
+    grid-column: 2;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tono);
+  }
+
+  /* ── Equipos no técnicos: hoja de cálculo ── */
+  .pd-hoja {
+    padding: 14px 12px;
+  }
+  .pd-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 10.5px;
+  }
+  .pd-tabla th {
+    padding: 5px 6px;
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+    text-align: left;
+    color: var(--color-ink-200);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .pd-tabla th:first-child,
+  .pd-n {
+    width: 20px;
+    text-align: center;
+    color: var(--color-ink-300);
+  }
+  .pd-tabla th:nth-child(2) {
+    width: 38%;
+  }
+  .pd-tabla td {
+    padding: 6px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--color-ink-50);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+  .pd-tabla td:global(.pd-sucia) {
+    color: #ffb199;
+    background: rgba(255, 107, 61, 0.08);
+  }
+  .pd-tabla td:global(.pd-limpia) {
+    background: rgba(201, 255, 91, 0.08);
+  }
+  .pd-dup td {
+    color: var(--color-ink-300);
+    text-decoration: line-through;
+  }
+  .pd-dup-etq {
+    position: absolute;
+    right: 14px;
+    top: 104px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(255, 107, 61, 0.15);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ember);
+  }
+  .pd-resumen {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-lime);
+  }
+  .pd-resumen svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── Equipos técnicos: terminal ── */
+  .pd-term {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1.5;
+    color: var(--color-ink-100);
+  }
+  .pd-metodo {
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: rgba(167, 139, 255, 0.16);
+    color: var(--color-violet);
+    font-weight: 600;
+  }
+  .pd-json {
+    display: flex;
+    flex-direction: column;
+  }
+  .pd-j {
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pd-in {
+    color: var(--color-ink-200);
+  }
+  .pd-resp {
+    padding-left: 8px;
+    border-left: 1.5px solid rgba(201, 255, 91, 0.35);
+  }
+  .pd-k {
+    color: var(--color-violet);
+  }
+  .pd-str {
+    color: var(--color-lime);
+  }
+  .pd-num {
+    color: #7dd3fc;
+  }
+  .pd-metricas {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    font-size: 9.5px;
+    color: var(--color-ink-50);
+  }
+  .pd-metricas em {
+    font-style: normal;
+    color: var(--color-ink-300);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .pd-metricas b {
+    font-weight: 600;
+  }
+  .pd-eval {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pd-barra {
+    display: inline-block;
+    width: 44px;
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+  }
+  .pd-barra i {
+    display: block;
+    height: 100%;
+    width: 94%;
+    background: var(--color-lime);
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const tarjetas = Array.from(document.querySelectorAll<HTMLElement>('[data-perfiles] [data-demo]'))
+
+  const construir: Record<string, (t: HTMLElement) => gsap.core.Timeline> = {
+    // Las tareas llegan al centro de la matriz y se ubican en su sitio; al
+    // llegar, su veredicto aparece al lado. "No se delega" pulsa al final.
+    direccion(t) {
+      const puntos = Array.from(t.querySelectorAll<HTMLElement>('.pd-punto'))
+      const filas = Array.from(t.querySelectorAll<HTMLElement>('.pd-veredictos li'))
+      const zona = t.querySelector<HTMLElement>('.pd-zona')!
+      const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.5, paused: true })
+      tl.set(filas, { opacity: 0.25 })
+        .set(zona, { opacity: 0 })
+        .set(puntos, { left: '50%', bottom: '50%', scale: 0, opacity: 0 })
+      puntos.forEach((p, i) => {
+        tl.to(p, { scale: 1, opacity: 1, duration: 0.25 }, 0.3 + i * 0.7)
+          .to(p, { left: `${p.dataset.x}%`, bottom: `${p.dataset.y}%`, duration: 0.7, ease: 'expo.inOut' }, '>')
+          .to(filas[i], { opacity: 1, duration: 0.3 }, '<0.35')
+      })
+      tl.to(zona, { opacity: 1, duration: 0.5 }, '+=0.2')
+        .fromTo(puntos[puntos.length - 1], { scale: 1 }, { scale: 1.5, duration: 0.25, yoyo: true, repeat: 3, ease: 'power1.inOut' })
+        .to({}, { duration: 2 })
+      return tl
+    },
+
+    // Cada celda aparece escrita "a la mala" y se corrige; al final el
+    // duplicado se tacha y sale el resumen.
+    equipos(t) {
+      const filas = Array.from(t.querySelectorAll<HTMLElement>('tbody tr'))
+      const celdas = Array.from(t.querySelectorAll<HTMLElement>('td[data-sucio]'))
+      const dup = t.querySelector<HTMLElement>('.pd-dup')
+      const etq = t.querySelector<HTMLElement>('.pd-dup-etq')!
+      const resumen = t.querySelector<HTMLElement>('.pd-resumen')!
+      // La etiqueta se alinea con la fila duplicada medida, no con un número
+      // fijo: la altura de las filas depende de la fuente.
+      if (dup) etq.style.top = `${dup.offsetTop + (t.querySelector('table')?.offsetTop ?? 0) + dup.offsetHeight / 2 - 8}px`
+      const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.4, paused: true })
+      tl.call(() => {
+        celdas.forEach((c) => {
+          c.textContent = c.dataset.sucio ?? ''
+          c.classList.add('pd-sucia')
+          c.classList.remove('pd-limpia')
+        })
+        dup?.classList.remove('pd-dup')
+      })
+        .set([etq, resumen], { opacity: 0 })
+        .set(filas, { opacity: 1 })
+        .to({}, { duration: 1.1 })
+      celdas.forEach((c, i) => {
+        tl.call(() => {
+          c.textContent = c.dataset.limpio ?? ''
+          c.classList.remove('pd-sucia')
+          c.classList.add('pd-limpia')
+        }, [], i === 0 ? '>' : '>+0.09')
+      })
+      tl.call(() => dup?.classList.add('pd-dup'), [], '+=0.4')
+        .fromTo(etq, { opacity: 0, x: 8 }, { opacity: 1, x: 0, duration: 0.35 })
+        .call(() => celdas.forEach((c) => c.classList.remove('pd-limpia')), [], '+=0.5')
+        .fromTo(resumen, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4 })
+        .to({}, { duration: 2.4 })
+      return tl
+    },
+
+    // La respuesta llega por partes, las métricas cuentan hasta su valor y la
+    // barra de evaluación se llena.
+    tecnicos(t) {
+      const lineas = Array.from(t.querySelectorAll<HTMLElement>('.pd-resp .pd-j'))
+      const tok = t.querySelector<HTMLElement>('[data-tok]')!
+      const lat = t.querySelector<HTMLElement>('[data-lat]')!
+      const conf = t.querySelector<HTMLElement>('[data-conf]')!
+      const evalBarra = t.querySelector<HTMLElement>('[data-eval]')!
+      const metricas = t.querySelector<HTMLElement>('.pd-metricas')!
+      const n = { tok: 0, lat: 0, conf: 0 }
+      const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, paused: true })
+      tl.set(lineas, { opacity: 0 })
+        .set(metricas, { opacity: 0 })
+        .set(evalBarra, { width: '0%' })
+        .to(lineas, { opacity: 1, duration: 0.2, stagger: 0.32, ease: 'none' }, 0.6)
+        .to(metricas, { opacity: 1, duration: 0.3 })
+        .fromTo(n, { tok: 0, lat: 0, conf: 0 }, {
+          tok: 212,
+          lat: 640,
+          conf: 0.94,
+          duration: 1.1,
+          ease: 'power2.out',
+          onUpdate: () => {
+            tok.textContent = String(Math.round(n.tok))
+            lat.textContent = `${Math.round(n.lat)} ms`
+            conf.textContent = n.conf.toFixed(2)
+          },
+        }, '<')
+        .to(evalBarra, { width: '94%', duration: 1.2, ease: 'expo.out' }, '<0.3')
+        .to({}, { duration: 2.6 })
+      return tl
+    },
+  }
+
+  if (!reducido) {
+    for (const t of tarjetas) {
+      const hacer = construir[t.dataset.demo ?? '']
+      if (!hacer) continue
+      let tl: gsap.core.Timeline
+      try {
+        tl = hacer(t)
+      } catch (err) {
+        console.warn('[perfiles]', err)
+        continue
+      }
+      new IntersectionObserver(([e]) => (e.isIntersecting ? tl.play() : tl.pause()), { rootMargin: '40px' }).observe(t)
+    }
+  }
+</script>

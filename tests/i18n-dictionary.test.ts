@@ -82,6 +82,8 @@ describe('paridad del diccionario es/en', () => {
         // son marcas (ficticias), y una marca no se traduce.
         'paginasWeb.demo.negocios[0].corto',
         'paginasWeb.demo.negocios[2].corto',
+        // Jerga técnica de la terminal de /capacitacion-ia, igual en los dos idiomas.
+        'capacitacionIa.perfilesDemo.tecnicos.tokens',
         'lab.pipeline.testsLabel',
         'lab.upcoming.k6Title',
         'lab.upcoming.mutationTitle',

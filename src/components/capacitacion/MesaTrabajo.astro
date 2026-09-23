@@ -1,0 +1,473 @@
+---
+// Mesa de trabajo del hero de /capacitacion-ia: "que tu equipo use IA en su
+// trabajo, no en una demo", mostrado en vez de dicho.
+//
+// Tres tareas de oficina (un reclamo, unas notas de reunión, una solicitud de
+// cotización) pasan por el flujo que enseña la capacitación:
+//   lo que llega → el criterio de la empresa → el borrador → la revisión humana.
+// El último paso es el argumento: una persona corrige una frase del borrador y
+// lo aprueba. La IA no responde sola; trabaja dentro del proceso.
+//
+// Las tres tareas se apilan en la misma celda de la rejilla, así la ventana
+// mide lo que mide la más larga y no salta al cambiar de una a otra. El
+// marcado del servidor es el estado final de la primera (borrador completo,
+// corrección hecha y sello de aprobado): es lo que ve quien no tiene JS o pidió
+// menos movimiento.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).capacitacionIa.mesa
+
+// Parte el borrador alrededor de la frase que corrige el revisor, y cada parte
+// en palabras: el script las revela una a una, como un texto que se genera.
+const palabras = (s: string) => s.split(/(?<=\s)/).filter(Boolean)
+const tareas = t.tareas.map((tarea) => {
+  const [de, a] = tarea.ajuste
+  const i = tarea.salida.indexOf(de)
+  const antes = i >= 0 ? tarea.salida.slice(0, i) : tarea.salida
+  const despues = i >= 0 ? tarea.salida.slice(i + de.length) : ''
+  return {
+    ...tarea,
+    antes: palabras(antes),
+    de: i >= 0 ? palabras(de) : [],
+    a: i >= 0 ? palabras(a + ' ') : [],
+    despues: palabras(despues),
+    inicial: tarea.revisor.trim().charAt(0),
+  }
+})
+---
+
+<div class="mesa" data-mesa aria-hidden="true">
+  <div class="mesa-barra">
+    <span class="mesa-puntos"><i></i><i></i><i></i></span>
+    <span class="mesa-proceso">{tareas[0].proceso}</span>
+    <span class="mesa-ejemplo">{t.ejemplo}</span>
+  </div>
+
+  <ol class="mesa-pasos">
+    {t.pasos.map((p) => (
+      <li class="mesa-paso hecho">
+        <span class="mesa-paso-punto"></span>
+        <span class="mesa-paso-txt">{p}</span>
+      </li>
+    ))}
+    <span class="mesa-pasos-linea"><span class="mesa-pasos-lleno"></span></span>
+  </ol>
+
+  <div class="mesa-capas">
+    {tareas.map((tarea, k) => (
+      <div class="mesa-capa" data-capa={k} data-proceso={tarea.proceso}>
+        <div class="mesa-entrada">
+          <span class="mesa-rotulo">{t.entrada}</span>
+          <p class="mesa-entrada-txt">{tarea.entrada}</p>
+          <span class="mesa-scan"></span>
+        </div>
+
+        <ul class="mesa-criterios">
+          {tarea.criterios.map((c) => (
+            <li class="mesa-criterio">
+              <svg viewBox="0 0 24 24" width="11" height="11"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+              {c}
+            </li>
+          ))}
+        </ul>
+
+        <div class="mesa-borrador">
+          <span class="mesa-rotulo">{t.borrador}</span>
+          <p class="mesa-salida">
+            {tarea.antes.map((w) => <span class="mw">{w}</span>)}
+            <span class="mesa-de">{tarea.de.map((w) => <span class="mw">{w}</span>)}</span>{' '}
+            <span class="mesa-a">{tarea.a.map((w) => <span class="mw">{w}</span>)}</span>
+            {tarea.despues.map((w) => <span class="mw">{w}</span>)}
+          </p>
+        </div>
+
+        <div class="mesa-sello">
+          <span class="mesa-avatar">{tarea.inicial}</span>
+          <span class="mesa-sello-txt">
+            <strong>{t.aprobado}</strong>
+            <span>{tarea.revisor}</span>
+          </span>
+          <svg class="mesa-sello-ok" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .mesa {
+    position: relative;
+    width: 100%;
+    max-width: 540px;
+    margin-inline: auto;
+    border-radius: 22px;
+    background: #0e0f13;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 50px 110px -45px rgba(0, 0, 0, 0.95),
+      0 0 100px -35px rgba(201, 255, 91, 0.35);
+    overflow: hidden;
+  }
+  .mesa-barra {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 42px;
+    padding: 0 16px;
+    background: #16171c;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .mesa-puntos {
+    display: flex;
+    gap: 6px;
+  }
+  .mesa-puntos i {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .mesa-proceso {
+    flex: 1;
+    min-width: 0;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--color-ink-50);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mesa-ejemplo {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+    white-space: nowrap;
+  }
+
+  /* ── Pasos del flujo ── */
+  .mesa-pasos {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 16px 16px 12px;
+  }
+  .mesa-pasos-linea {
+    position: absolute;
+    left: calc(16px + 12.5% - 4px);
+    right: calc(16px + 12.5% - 4px);
+    top: 21px;
+    height: 1.5px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .mesa-pasos-lleno {
+    position: absolute;
+    inset: 0;
+    background: var(--color-lime);
+    transform-origin: left;
+    transform: scaleX(var(--progreso, 1));
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .mesa-paso {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    text-align: center;
+  }
+  .mesa-paso-punto {
+    width: 11px;
+    height: 11px;
+    border-radius: 999px;
+    background: #0e0f13;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    transition:
+      background-color 0.35s ease,
+      border-color 0.35s ease,
+      box-shadow 0.35s ease;
+  }
+  .mesa-paso-txt {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+    transition: color 0.35s ease;
+  }
+  .mesa-paso.hecho .mesa-paso-punto {
+    background: var(--color-lime);
+    border-color: var(--color-lime);
+  }
+  .mesa-paso.hecho .mesa-paso-txt {
+    color: var(--color-ink-200);
+  }
+  .mesa-paso.activo .mesa-paso-punto {
+    background: #0e0f13;
+    border-color: var(--color-lime);
+    box-shadow: 0 0 0 5px rgba(201, 255, 91, 0.14);
+  }
+  .mesa-paso.activo .mesa-paso-txt {
+    color: var(--color-lime);
+  }
+
+  /* ── Capas apiladas: la ventana mide lo que la tarea más larga ── */
+  .mesa-capas {
+    display: grid;
+    padding: 4px 16px 16px;
+  }
+  .mesa-capa {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  /* Sin JS se ve solo la primera tarea, completa. */
+  .mesa-capa:not([data-capa='0']) {
+    visibility: hidden;
+  }
+  .mesa-rotulo {
+    display: block;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+  }
+  .mesa-entrada {
+    position: relative;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .mesa-entrada-txt {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--color-ink-200);
+  }
+  /* Barrido de lectura: la IA "lee" la entrada con el criterio de la empresa. */
+  .mesa-scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 34px;
+    background: linear-gradient(180deg, rgba(201, 255, 91, 0), rgba(201, 255, 91, 0.16), rgba(201, 255, 91, 0));
+    border-bottom: 1px solid rgba(201, 255, 91, 0.55);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .mesa-criterios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .mesa-criterio {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(167, 139, 255, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(167, 139, 255, 0.3);
+    font-size: 11px;
+    color: #d6ccff;
+  }
+  .mesa-criterio svg {
+    fill: none;
+    stroke: var(--color-violet);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mesa-borrador {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(201, 255, 91, 0.05), rgba(201, 255, 91, 0.015));
+    box-shadow: inset 0 0 0 1px rgba(201, 255, 91, 0.16);
+  }
+  .mesa-borrador .mesa-rotulo {
+    color: var(--color-lime);
+  }
+  .mesa-salida {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--color-ink-50);
+  }
+  .mw {
+    display: inline;
+  }
+  /* Corrección del revisor: lo tachado queda a la vista, como en un documento
+     con control de cambios, y lo nuevo entra en lima. */
+  .mesa-de {
+    color: var(--color-ink-300);
+    background: linear-gradient(currentColor, currentColor) 0 55% / var(--tachado, 100%) 1.5px no-repeat;
+  }
+  .mesa-a {
+    color: var(--color-lime);
+  }
+  .mesa-sello {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #16171c;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  }
+  .mesa-avatar {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: linear-gradient(140deg, var(--color-violet), #5b3fd6);
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .mesa-sello-txt {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: var(--color-ink-200);
+  }
+  .mesa-sello-txt strong {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-lime);
+  }
+  .mesa-sello-ok {
+    padding: 4px;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--color-lime);
+    fill: none;
+    stroke: var(--color-ink-950);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @media (max-width: 420px) {
+    .mesa-ejemplo {
+      display: none;
+    }
+    .mesa-paso-txt {
+      font-size: 8px;
+      letter-spacing: 0.04em;
+    }
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+
+  const raiz = document.querySelector<HTMLElement>('[data-mesa]')
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (raiz && !reducido) {
+    try {
+      montar(raiz)
+    } catch (err) {
+      // Fail-open: el marcado del servidor ya es una tarea completa y legible.
+      console.warn('[mesa] quieta', err)
+    }
+  }
+
+  function montar(raiz: HTMLElement) {
+    const capas = Array.from(raiz.querySelectorAll<HTMLElement>('.mesa-capa'))
+    const pasos = Array.from(raiz.querySelectorAll<HTMLElement>('.mesa-paso'))
+    const lleno = raiz.querySelector<HTMLElement>('.mesa-pasos-linea')!
+    const proceso = raiz.querySelector<HTMLElement>('.mesa-proceso')!
+    if (capas.length === 0) return
+
+    const marcarPaso = (i: number) => {
+      pasos.forEach((p, k) => {
+        p.classList.toggle('hecho', k < i)
+        p.classList.toggle('activo', k === i)
+      })
+      lleno.style.setProperty('--progreso', String(Math.min(1, Math.max(0, i) / (pasos.length - 1))))
+    }
+
+    let actual = 0
+    let tl: gsap.core.Timeline | null = null
+    let visible = false
+
+    const ciclo = () => {
+      const capa = capas[actual % capas.length]
+      const entrada = capa.querySelector<HTMLElement>('.mesa-entrada')!
+      const scan = capa.querySelector<HTMLElement>('.mesa-scan')!
+      const criterios = Array.from(capa.querySelectorAll<HTMLElement>('.mesa-criterio'))
+      const borrador = capa.querySelector<HTMLElement>('.mesa-borrador')!
+      const de = capa.querySelector<HTMLElement>('.mesa-de')!
+      const a = capa.querySelector<HTMLElement>('.mesa-a')!
+      const nuevas = Array.from(a.querySelectorAll<HTMLElement>('.mw'))
+      const sello = capa.querySelector<HTMLElement>('.mesa-sello')!
+      // Palabras del borrador en orden de lectura (querySelectorAll respeta el
+      // orden del documento), sin las de la corrección, que entran después.
+      const enOrden = Array.from(capa.querySelectorAll<HTMLElement>('.mesa-salida .mw')).filter((w) => !a.contains(w))
+
+      capas.forEach((c) => (c.style.visibility = c === capa ? 'visible' : 'hidden'))
+      proceso.textContent = capa.dataset.proceso ?? ''
+      gsap.set([entrada, borrador, sello], { opacity: 0, y: 10 })
+      gsap.set(criterios, { opacity: 0, scale: 0.85 })
+      gsap.set(enOrden, { opacity: 0, filter: 'blur(4px)' })
+      gsap.set(a, { display: 'none' })
+      de.style.setProperty('--tachado', '0%')
+      de.style.color = 'var(--color-ink-50)'
+      marcarPaso(0)
+
+      tl = gsap.timeline({
+        paused: !visible,
+        onComplete: () => {
+          actual++
+          ciclo()
+        },
+      })
+      tl.fromTo(proceso, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4 }, 0)
+        .to(entrada, { opacity: 1, y: 0, duration: 0.55, ease: 'expo.out' }, 0.1)
+        // 2 · El criterio de la empresa: se lee la entrada con esas reglas.
+        .call(() => marcarPaso(1), [], 1.1)
+        .fromTo(scan, { opacity: 1, y: -34 }, { y: () => entrada.offsetHeight, duration: 1.3, ease: 'power1.inOut' }, 1.1)
+        .to(scan, { opacity: 0, duration: 0.2 }, '>-0.15')
+        .to(criterios, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(2.2)', stagger: 0.28 }, 1.3)
+        // 3 · El borrador se genera palabra a palabra.
+        .call(() => marcarPaso(2), [], 2.7)
+        .to(borrador, { opacity: 1, y: 0, duration: 0.45, ease: 'expo.out' }, 2.7)
+        .to(enOrden, { opacity: 1, filter: 'blur(0px)', duration: 0.25, stagger: 0.032, ease: 'power1.out' }, 2.95)
+        // 4 · Revisión humana: una persona corrige una frase y aprueba.
+        .call(() => marcarPaso(3), [], '+=0.5')
+        .to(de, { '--tachado': '100%', color: '#4d4d5d', duration: 0.5, ease: 'power2.inOut' }, '<')
+        .set(a, { display: 'inline' })
+        .fromTo(nuevas, { opacity: 0, filter: 'blur(4px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.3, stagger: 0.06 })
+        .to(sello, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.8)' }, '+=0.25')
+        .call(() => marcarPaso(4))
+        .to({}, { duration: 2.6 })
+        .to([entrada, borrador, sello, ...criterios], { opacity: 0, y: -8, duration: 0.4, stagger: 0.04, ease: 'power2.in' })
+        .to(proceso, { opacity: 0, duration: 0.25 }, '<')
+    }
+
+    ciclo()
+
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting && !document.hidden
+      if (visible) tl?.resume()
+      else tl?.pause()
+    }).observe(raiz)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) tl?.pause()
+      else if (visible) tl?.resume()
+    })
+  }
+</script>

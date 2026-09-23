@@ -8,6 +8,8 @@
 // vive aquí, y ese texto sale del diccionario (la página se sirve también bajo
 // /en desde el cascarón src/pages/en/capacitacion-ia.astro).
 import BaseLayout from '../layouts/BaseLayout.astro'
+import MesaTrabajo from '../components/capacitacion/MesaTrabajo.astro'
+import PerfilesDemo from '../components/capacitacion/PerfilesDemo.astro'
 import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
 import { listarProgramasPublicos } from '../lib/capacitacion/repo'
 import { formatearDuracion } from '../lib/capacitacion/tipos'
@@ -46,12 +48,6 @@ const AULA_COLORS = [
 ]
 const aulaPuntos = c.aulaPuntos.map((p, i) => ({ ...p, ...AULA_COLORS[i] }))
 
-const PERFIL_COLORS = [
-  { dot: 'bg-ember', texto: 'text-ember' },
-  { dot: 'bg-lime', texto: 'text-lime' },
-  { dot: 'bg-violet', texto: 'text-violet' },
-]
-const perfiles = c.perfiles.map((p, i) => ({ ...p, ...PERFIL_COLORS[i] }))
 
 const pasos = c.pasos.map((p, i) => ({ ...p, n: `0${i + 1}` }))
 
@@ -77,64 +73,58 @@ const etiquetaNivel = (n: keyof typeof c.niveles) => c.niveles[n]
   />
 
   <!-- Hero -->
+  <!-- Hero: la promesa a la izquierda y, a la derecha, la mesa de trabajo que
+       la muestra (ver MesaTrabajo.astro). En móvil la mesa va debajo. -->
   <section class="relative pt-32 pb-20 px-6 md:px-12 lg:px-20 overflow-hidden">
     <div class="halo" style="filter: hue-rotate(60deg);"></div>
-    <div class="relative max-w-[1000px] mx-auto text-center">
-      <div class="inline-flex items-center gap-2.5 mb-8">
-        <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
-        <span class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-100">{c.hero.badge}</span>
+    <div class="relative max-w-[1180px] mx-auto grid lg:grid-cols-[1fr_1fr] gap-14 lg:gap-12 items-center">
+      <div>
+        <div class="inline-flex items-center gap-2.5 mb-8">
+          <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
+          <span class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-100">{c.hero.badge}</span>
+        </div>
+
+        <h1 class="ci-titular font-sans font-medium tracking-[-.035em] leading-[1.02] text-[clamp(38px,5.4vw,70px)] text-ink-50">
+          <span class="ci-linea block">{c.hero.h1Line1}</span>{' '}
+          <span class="ci-linea block text-lime">{c.hero.h1Line2}</span>
+        </h1>
+
+        <p class="ci-intro mt-7 text-[16px] md:text-[17px] text-ink-100 leading-relaxed max-w-[56ch]">
+          {c.hero.intro}
+        </p>
+
+        <div class="ci-botones mt-9 flex flex-wrap gap-3">
+          <a
+            href={waLink(c.hero.waMessage)}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-magnetico
+            class="inline-flex items-center h-12 px-6 rounded-full bg-lime text-ink-950 text-[14px] font-medium hover:brightness-105 transition-[filter] shadow-[0_0_0_1px_rgba(201,255,91,.35),0_0_32px_-8px_rgba(201,255,91,.55)]"
+          >
+            <span data-magnetico-texto>{c.hero.ctaWhatsapp}</span>
+          </a>
+          <a
+            href={AULA}
+            data-magnetico
+            class="inline-flex items-center h-12 px-6 rounded-full border border-white/15 text-[14px] text-ink-100 hover:border-lime/40 hover:text-lime transition-colors"
+          >
+            <span data-magnetico-texto>{c.hero.ctaAula}</span>
+          </a>
+          <a
+            href={localizedHref('/capacitacion', locale)}
+            class="inline-flex items-center h-12 px-3 text-[14px] text-ink-200 hover:text-ink-50 transition-colors"
+          >
+            {c.hero.ctaMaterial} →
+          </a>
+        </div>
       </div>
 
-      <h1 class="font-sans font-medium tracking-[-.03em] leading-[1.02] text-[clamp(36px,6.5vw,74px)] text-ink-50">
-        {c.hero.h1Line1}<br />{c.hero.h1Line2}
-      </h1>
-
-      <p class="mt-7 text-[15.5px] text-ink-200 leading-relaxed max-w-[64ch] mx-auto">
-        {c.hero.intro}
-      </p>
-
-      <div class="mt-9 flex flex-wrap justify-center gap-3">
-        <a
-          href={waLink(c.hero.waMessage)}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="rounded-xl bg-lime/[0.10] border border-lime/30 px-5 py-2.5 text-[13px] text-lime hover:bg-lime/[0.16] transition-colors"
-        >
-          {c.hero.ctaWhatsapp}
-        </a>
-        <a
-          href={AULA}
-          class="rounded-xl border border-white/10 px-5 py-2.5 text-[13px] text-ink-100 hover:bg-white/5 transition-colors"
-        >
-          {c.hero.ctaAula}
-        </a>
-        <a
-          href={localizedHref('/capacitacion', locale)}
-          class="rounded-xl border border-white/10 px-5 py-2.5 text-[13px] text-ink-100 hover:bg-white/5 transition-colors"
-        >
-          {c.hero.ctaMaterial}
-        </a>
-      </div>
+      <MesaTrabajo />
     </div>
   </section>
 
   <!-- Perfiles -->
-  <section class="px-6 md:px-12 lg:px-20 pb-20">
-    <div class="max-w-[1000px] mx-auto">
-      <h2 class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-300 mb-6">{c.perfilesHeading}</h2>
-      <div class="grid gap-3 md:grid-cols-3">
-        {perfiles.map((p) => (
-          <div class="rounded-2xl glass p-6 lift">
-            <div class="flex items-center gap-2">
-              <span class={`w-1.5 h-1.5 rounded-full ${p.dot}`}></span>
-              <span class={`text-[13px] ${p.texto}`}>{p.titulo}</span>
-            </div>
-            <p class="mt-3 text-[12.5px] text-ink-200 leading-relaxed">{p.detalle}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
+  <PerfilesDemo />
 
   <!-- Programas -->
   {programas.length > 0 && (

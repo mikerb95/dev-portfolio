@@ -105,6 +105,12 @@ describe('demo · rutas vetadas aunque sean GET', () => {
       '/admin/repos',
       '/api/admin/github/repos',
       '/api/admin/github/toggle',
+      // Presentaciones en vivo: viven en Redis, que la demo comparte con lo
+      // real. El control remoto entrega el secreto de presentador en su HTML.
+      '/remote/0123456789abcdef0123456789abcdef',
+      '/api/admin/present/sessions',
+      '/api/admin/present/0123456789abcdef0123456789abcdef/control',
+      '/admin/presentaciones/3/lanzar',
       // Credenciales vivas: el PIN de presentador y el secreto de publicación.
       // No las protege el cambio de base de datos, porque la sesión de
       // sustentación vive en Redis, que la demo comparte con lo real.
@@ -139,6 +145,10 @@ describe('demo · rutas vetadas aunque sean GET', () => {
       '/admin/monitors',
       '/admin/seguimiento',
       '/admin/lab/pipeline',
+      // La biblioteca de decks sí: sale de Turso, y en demo no consulta Redis.
+      '/admin/presentaciones',
+      '/admin/presentaciones/3',
+      '/api/admin/decks',
       '/api/admin/projects',
       '/api/admin/costs',
     ]) {
