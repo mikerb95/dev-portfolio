@@ -76,7 +76,7 @@ void main() {
   cresta = mix(cresta, 0.34, smoothstep(0.35, 0.7, fw));
 
   // Silueta del dedo: un óvalo algo más ancho arriba, de borde difuso.
-  vec2 e = (p - vec2(0.0, 0.0)) / vec2(0.37, 0.47);
+  vec2 e = (p - vec2(0.0, -0.02)) / vec2(0.37, 0.46);
   float borde = length(vec2(e.x * (1.0 + 0.1 * e.y), e.y));
   float mascara = 1.0 - smoothstep(0.8, 1.0, borde);
 
