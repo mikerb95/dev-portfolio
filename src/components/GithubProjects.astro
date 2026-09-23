@@ -7,18 +7,24 @@
 // Los textos que necesita el script viajan en data-attributes.
 import { getDictionary, getLocaleFromUrl } from '../i18n'
 
+interface Props {
+  /** Número de sección en la etiqueta: depende de la página que lo monte. */
+  numero?: string
+}
+
+const { numero = '/05' } = Astro.props
 const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).githubProjects
 const username = 'mikerb95'
 ---
 
 <section id="github" class="px-6 md:px-12 lg:px-20 py-24 border-t border-white/5">
   <div class="max-w-[1280px] mx-auto">
-    <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-      <span class="text-cyan">/05</span>
+    <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+      <span class="text-cyan">{numero}</span>
       <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
       <span>{t.eyebrow}</span>
     </div>
-    <h2 class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask max-w-2xl leading-[1]">
+    <h2 data-titular class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask max-w-2xl leading-[1.02]">
       {t.headline}
     </h2>
     <p class="mt-5 text-[15px] text-ink-200 max-w-xl">
@@ -112,6 +118,20 @@ const username = 'mikerb95'
         return
       }
       renderRepos(repos)
+      // Las tarjetas llegan por fetch, después de que el resto de la página ya
+      // montó sus animaciones de entrada: se animan aquí, cuando existen.
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([import('gsap'), import('gsap/ScrollTrigger')])
+        gsap.registerPlugin(ScrollTrigger)
+        gsap.from(grid.children, {
+          y: 28,
+          opacity: 0,
+          duration: 0.9,
+          ease: 'expo.out',
+          stagger: 0.07,
+          scrollTrigger: { trigger: grid, start: 'top 88%' },
+        })
+      }
     } catch {
       grid.innerHTML = `<p class="text-ink-300 text-sm py-4 col-span-full">${t.error}</p>`
     }

@@ -480,7 +480,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   <LabHuella />
 
   <!-- ── GitHub ── -->
-  <GithubProjects />
+  <GithubProjects numero="/06" />
 
 </BaseLayout>
 
@@ -587,6 +587,33 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           .from(cinta.querySelector('.ticker-track'), { yPercent: 60, opacity: 0, duration: 0.9, ease: 'power3.out' }, 0.15)
       }
 
+      // Entradas de las secciones con tarjetas propias: suben escalonadas
+      // desde abajo. Es contenido, así que va dentro del mismo try: si algo
+      // falla, el catch las devuelve a su sitio.
+      gsap.from('#expertise .exp-tarjeta', {
+        y: 48,
+        opacity: 0,
+        duration: 1.1,
+        ease: 'expo.out',
+        stagger: 0.1,
+        scrollTrigger: { trigger: '#expertise [data-expertise]', start: 'top 85%' },
+      })
+      gsap.from('#laboratorio .huella-visor', {
+        scale: 0.94,
+        opacity: 0,
+        duration: 1.3,
+        ease: 'expo.out',
+        scrollTrigger: { trigger: '#laboratorio .huella-visor', start: 'top 85%' },
+      })
+      gsap.from('#laboratorio .lab-punto', {
+        y: 24,
+        opacity: 0,
+        duration: 0.9,
+        ease: 'expo.out',
+        stagger: 0.08,
+        scrollTrigger: { trigger: '#laboratorio .lab-punto', start: 'top 92%' },
+      })
+
       document.querySelectorAll<HTMLElement>('[data-etiqueta]').forEach(revelarEtiqueta)
       document.querySelectorAll<HTMLElement>('[data-titular]').forEach(revelarTitular)
       document.querySelectorAll<HTMLElement>('[data-odometro]').forEach(odometro)
@@ -615,7 +642,9 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
     } catch (err) {
       console.warn('[motion] portada sin animaciones tras un fallo de init', err)
       revealCards('#bento .glass')
-      document.querySelectorAll<HTMLElement>('.titular-linea').forEach((l) => (l.style.transform = 'none'))
+      gsap.set('.titular-linea, #expertise .exp-tarjeta, #laboratorio .huella-visor, #laboratorio .lab-punto', {
+        clearProps: 'transform,opacity',
+      })
     }
 
     // HUD de diagnóstico - un ScrollTrigger por sección que va marcando
