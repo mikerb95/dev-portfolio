@@ -35,6 +35,10 @@ import type {
 } from '@simplewebauthn/server'
 import { db } from '../db'
 import { webauthnChallenges, webauthnCredentials } from '../db/schema'
+import { describeDevice } from './device-info'
+import { sendPush } from './notify'
+import { recordSecurityEvent } from './security/events'
+import { siteUrl } from './site'
 
 // ── Relying Party ────────────────────────────────────────────────────────
 // rpID/origin se derivan del Host real de cada request en vez de hardcodear
@@ -338,4 +342,37 @@ export async function deleteCredential(login: string, id: string): Promise<boole
     .returning({ id: webauthnCredentials.id })
   invalidateCredentialsCache(login)
   return deleted.length > 0
+}
+
+// ── Aviso de cambios en las llaves ──────────────────────────────────────
+// Una llave es una puerta de entrada permanente: quien añada una conserva el
+// acceso aunque después se revoquen todas las sesiones. Cada alta y cada baja
+// avisa al teléfono y queda en el micro-SIEM, para que una llave que yo no
+// puse no pase inadvertida. Fail-open, como toda notificación del repo.
+
+export async function notifyPasskeyChange(
+  change: 'added' | 'removed',
+  info: { login: string; nickname?: string | null; ip: string | null; userAgent: string | null }
+): Promise<void> {
+  const titulo = change === 'added' ? 'Llave de seguridad añadida' : 'Llave de seguridad eliminada'
+  const nombre = info.nickname ? `«${info.nickname}» · ` : ''
+  await Promise.allSettled([
+    sendPush(titulo, `${nombre}${describeDevice(info.userAgent)} · IP ${info.ip ?? 'desconocida'} · @${info.login}`, {
+      priority: 4,
+      tags: 'key',
+      click: `${siteUrl()}/admin/passkeys`,
+    }),
+    recordSecurityEvent({
+      ip: info.ip,
+      classification: {
+        category: 'admin_action',
+        severity: 'medium',
+        ruleId: change === 'added' ? 'passkey.registered' : 'passkey.removed',
+      },
+      method: change === 'added' ? 'POST' : 'DELETE',
+      path: change === 'added' ? '/api/admin/webauthn/registration/verify' : '/api/admin/webauthn/credentials',
+      userAgent: info.userAgent,
+      statusCode: 200,
+    }),
+  ])
 }
