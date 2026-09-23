@@ -1,0 +1,543 @@
+---
+// "Lo que consigues" de /paginas-web: cada beneficio con una pantalla que lo
+// muestra ocurriendo, en vez de un punto de color decorativo.
+//   1 · Apareces en Google: la búsqueda se escribe y "Tu negocio" sube del
+//       cuarto puesto al primero.
+//   2 · Te escriben por WhatsApp: llegan mensajes, cada uno precedido del
+//       "escribiendo" que todos reconocen.
+//   3 · Se ve profesional: la misma página se acomoda del computador al celular.
+//   4 · Tú no tocas nada técnico: la lista de tareas se completa sola.
+// Las pantallas usan el modo oscuro de cada app para no romper la página, y
+// cada una solo se anima mientras está a la vista. Sin JS o con movimiento
+// reducido, cada pantalla muestra su estado final.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+const pw = getDictionary(getLocaleFromUrl(Astro.url.pathname)).paginasWeb
+const v = pw.viz
+---
+
+<section class="px-6 md:px-12 lg:px-20 py-20">
+  <div class="max-w-[1180px] mx-auto">
+    <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 text-center mb-14 leading-[1.05]">
+      {pw.beneficiosHeading}
+    </h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5" data-beneficios>
+      <!-- 1 · Google -->
+      <article class="bv-tarjeta glass rounded-3xl overflow-hidden" data-viz="google">
+        <div class="bv-pantalla" aria-hidden="true">
+          <div class="bv-busqueda">
+            <svg viewBox="0 0 24 24" width="13" height="13"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+            <span class="bv-consulta" data-texto={v.busqueda}>{v.busqueda}</span>
+            <span class="bv-caret"></span>
+          </div>
+          <ol class="bv-resultados">
+            {[0, 1, 2].map((i) => (
+              <li class="bv-r" data-fila={i + 1}>
+                <span class="bv-pos">{i + 2}</span>
+                <span class="bv-lineas"><i></i><i class="corta"></i></span>
+              </li>
+            ))}
+            <li class="bv-r bv-r-tuyo" data-fila="0">
+              <span class="bv-pos">1</span>
+              <span class="bv-tuyo-txt">
+                <strong>{v.tuNegocio}</strong>
+                <span class="bv-estrellas">★★★★★</span>
+              </span>
+            </li>
+          </ol>
+        </div>
+        <div class="p-6">
+          <h3 class="text-[16px] font-medium text-ink-50 mb-2">{pw.beneficios[0].t}</h3>
+          <p class="text-[14px] text-ink-200 leading-relaxed">{pw.beneficios[0].d}</p>
+        </div>
+      </article>
+
+      <!-- 2 · WhatsApp -->
+      <article class="bv-tarjeta glass rounded-3xl overflow-hidden" data-viz="whatsapp" data-escribiendo={v.escribiendo}>
+        <div class="bv-pantalla bv-chat" aria-hidden="true">
+          {v.mensajes.map((m) => (
+            <div class="bv-burbuja">
+              {m}
+              <span class="bv-hora">9:4{Math.min(9, v.mensajes.indexOf(m) + 1)}</span>
+            </div>
+          ))}
+        </div>
+        <div class="p-6">
+          <h3 class="text-[16px] font-medium text-ink-50 mb-2">{pw.beneficios[1].t}</h3>
+          <p class="text-[14px] text-ink-200 leading-relaxed">{pw.beneficios[1].d}</p>
+        </div>
+      </article>
+
+      <!-- 3 · Responsive -->
+      <article class="bv-tarjeta glass rounded-3xl overflow-hidden" data-viz="responsive">
+        <div class="bv-pantalla bv-resp" aria-hidden="true">
+          <div class="bv-disp">
+            <span class="bv-b bv-b-nav"></span>
+            <span class="bv-b bv-b-hero"></span>
+            <span class="bv-b bv-b-c1"></span>
+            <span class="bv-b bv-b-c2"></span>
+          </div>
+          <div class="bv-modo">
+            <span class="bv-modo-a">{v.computador}</span>
+            <span class="bv-modo-sep"></span>
+            <span class="bv-modo-b">{v.celular}</span>
+          </div>
+        </div>
+        <div class="p-6">
+          <h3 class="text-[16px] font-medium text-ink-50 mb-2">{pw.beneficios[2].t}</h3>
+          <p class="text-[14px] text-ink-200 leading-relaxed">{pw.beneficios[2].d}</p>
+        </div>
+      </article>
+
+      <!-- 4 · Checklist -->
+      <article class="bv-tarjeta glass rounded-3xl overflow-hidden" data-viz="checklist">
+        <div class="bv-pantalla bv-check" aria-hidden="true">
+          <ul>
+            {v.checklist.map((c) => (
+              <li class="bv-item hecho">
+                <span class="bv-caja"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+                {c}
+              </li>
+            ))}
+          </ul>
+          <span class="bv-listo">{v.listo}</span>
+        </div>
+        <div class="p-6">
+          <h3 class="text-[16px] font-medium text-ink-50 mb-2">{pw.beneficios[3].t}</h3>
+          <p class="text-[14px] text-ink-200 leading-relaxed">{pw.beneficios[3].d}</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .bv-tarjeta {
+    transition:
+      border-color 0.4s ease,
+      transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .bv-tarjeta:hover {
+    border-color: rgba(255, 107, 61, 0.25);
+    transform: translateY(-3px);
+  }
+  .bv-pantalla {
+    position: relative;
+    height: 164px;
+    padding: 16px;
+    background: linear-gradient(180deg, rgba(8, 8, 12, 0.75), rgba(8, 8, 12, 0.35));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+
+  /* ── 1 · Google ── */
+  .bv-busqueda {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #2a2b2f;
+    font-size: 11.5px;
+    color: #e8eaed;
+  }
+  .bv-busqueda svg {
+    fill: none;
+    stroke: #9aa0a6;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .bv-caret {
+    width: 1px;
+    height: 13px;
+    background: #8ab4f8;
+    animation: pulseDot 0.9s steps(2) infinite;
+  }
+  .bv-resultados {
+    position: relative;
+    margin-top: 12px;
+    height: 100px;
+  }
+  .bv-r {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .bv-r[data-fila='0'] {
+    top: 0;
+  }
+  .bv-r[data-fila='1'] {
+    top: 26px;
+  }
+  .bv-r[data-fila='2'] {
+    top: 52px;
+  }
+  .bv-r[data-fila='3'] {
+    top: 78px;
+  }
+  .bv-pos {
+    width: 18px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-ink-300);
+    text-align: center;
+  }
+  .bv-lineas {
+    flex: 1;
+    display: grid;
+    gap: 4px;
+  }
+  .bv-lineas i {
+    display: block;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(138, 180, 248, 0.35);
+  }
+  .bv-lineas i.corta {
+    width: 62%;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .bv-r-tuyo {
+    padding-right: 8px;
+    border-radius: 8px;
+    background: rgba(255, 107, 61, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 107, 61, 0.35);
+  }
+  .bv-r-tuyo .bv-pos {
+    color: var(--color-ember);
+    font-weight: 700;
+  }
+  .bv-tuyo-txt {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #e8eaed;
+  }
+  .bv-tuyo-txt strong {
+    font-weight: 600;
+  }
+  .bv-estrellas {
+    color: #fbbc04;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── 2 · WhatsApp (modo oscuro) ── */
+  .bv-chat {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 6px;
+    background:
+      radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 12px 12px,
+      #0b141a;
+  }
+  .bv-burbuja,
+  .bv-chat :global(.bv-escribiendo) {
+    position: relative;
+    max-width: 84%;
+    padding: 6px 10px 6px;
+    border-radius: 10px 10px 10px 3px;
+    background: #202c33;
+    color: #e9edef;
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+  .bv-hora {
+    margin-left: 8px;
+    font-size: 9px;
+    color: #8696a0;
+  }
+  .bv-chat :global(.bv-escribiendo) {
+    display: inline-flex;
+    gap: 3px;
+    padding: 9px 11px;
+  }
+  .bv-chat :global(.bv-escribiendo i) {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: #8696a0;
+    animation: bvPunto 1s ease-in-out infinite;
+  }
+  .bv-chat :global(.bv-escribiendo i:nth-child(2)) {
+    animation-delay: 0.15s;
+  }
+  .bv-chat :global(.bv-escribiendo i:nth-child(3)) {
+    animation-delay: 0.3s;
+  }
+  @keyframes bvPunto {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    50% {
+      transform: translateY(-3px);
+      opacity: 1;
+    }
+  }
+
+  /* ── 3 · Responsive ── */
+  .bv-resp {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .bv-disp {
+    position: relative;
+    width: 190px;
+    height: 104px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .bv-b {
+    position: absolute;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .bv-b-nav {
+    left: 8px;
+    top: 8px;
+    width: 172px;
+    height: 9px;
+  }
+  .bv-b-hero {
+    left: 8px;
+    top: 23px;
+    width: 104px;
+    height: 70px;
+    background: linear-gradient(135deg, rgba(255, 107, 61, 0.75), rgba(167, 139, 255, 0.55));
+  }
+  .bv-b-c1 {
+    left: 118px;
+    top: 23px;
+    width: 62px;
+    height: 32px;
+  }
+  .bv-b-c2 {
+    left: 118px;
+    top: 61px;
+    width: 62px;
+    height: 32px;
+  }
+  .bv-modo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+  }
+  .bv-modo-sep {
+    width: 18px;
+    height: 1px;
+    background: currentColor;
+  }
+  .bv-modo-a {
+    color: var(--color-ember);
+  }
+
+  /* ── 4 · Checklist ── */
+  .bv-check ul {
+    display: grid;
+    gap: 9px;
+    margin-top: 2px;
+  }
+  .bv-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--color-ink-300);
+    transition: color 0.3s ease;
+  }
+  .bv-caja {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    transition:
+      background-color 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .bv-caja svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: var(--color-ink-950);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 22;
+    stroke-dashoffset: 22;
+  }
+  .bv-item.hecho {
+    color: var(--color-ink-50);
+  }
+  .bv-item.hecho .bv-caja {
+    background: var(--color-ember);
+    border-color: var(--color-ember);
+  }
+  .bv-item.hecho .bv-caja svg {
+    stroke-dashoffset: 0;
+  }
+  .bv-listo {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(201, 255, 91, 0.12);
+    color: var(--color-lime);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const tarjetas = Array.from(document.querySelectorAll<HTMLElement>('[data-beneficios] [data-viz]'))
+
+  type Bucle = { tl: gsap.core.Timeline }
+
+  // Cada pantalla es una línea de tiempo en bucle. Se construye pausada y solo
+  // avanza mientras su tarjeta está a la vista.
+  const construir: Record<string, (t: HTMLElement) => gsap.core.Timeline> = {
+    google(t) {
+      const consulta = t.querySelector<HTMLElement>('.bv-consulta')!
+      const texto = consulta.dataset.texto ?? ''
+      const tuyo = t.querySelector<HTMLElement>('.bv-r-tuyo')!
+      const posTuyo = tuyo.querySelector<HTMLElement>('.bv-pos')!
+      const otros = Array.from(t.querySelectorAll<HTMLElement>('.bv-r:not(.bv-r-tuyo)'))
+      const PASO = 26
+      const estado = { n: 0 }
+      const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, paused: true })
+      tl.call(() => {
+        consulta.textContent = ''
+        posTuyo.textContent = '4'
+      })
+        // El resultado propio empieza abajo y los demás arriba, corridos una fila.
+        .set(tuyo, { y: PASO * 3, opacity: 0 })
+        .set(otros, { y: -PASO, opacity: 0 })
+        .fromTo(estado, { n: 0 }, {
+          n: texto.length,
+          duration: texto.length * 0.045,
+          ease: 'none',
+          onUpdate: () => (consulta.textContent = texto.slice(0, Math.round(estado.n))),
+        })
+        .to([...otros, tuyo], { opacity: 1, duration: 0.3, stagger: 0.08 }, '+=0.15')
+        // Sube al primer puesto: los demás bajan una fila cada uno.
+        .to(tuyo, { y: 0, duration: 0.9, ease: 'expo.inOut' }, '+=0.5')
+        .to(otros, { y: 0, duration: 0.9, ease: 'expo.inOut' }, '<')
+        .call(() => (posTuyo.textContent = '1'), [], '<0.45')
+        .fromTo(tuyo, { scale: 1 }, { scale: 1.04, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' })
+        .to({}, { duration: 2.2 })
+        .to([...otros, tuyo], { opacity: 0, duration: 0.35 })
+      return tl
+    },
+
+    whatsapp(t) {
+      const chat = t.querySelector<HTMLElement>('.bv-chat')!
+      const burbujas = Array.from(chat.querySelectorAll<HTMLElement>('.bv-burbuja'))
+      const escribiendo = document.createElement('div')
+      escribiendo.className = 'bv-escribiendo'
+      escribiendo.innerHTML = '<i></i><i></i><i></i>'
+      escribiendo.setAttribute('aria-label', t.dataset.escribiendo ?? '')
+      const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.4, paused: true })
+      tl.call(() => {
+        burbujas.forEach((b) => (b.style.display = 'none'))
+        escribiendo.remove()
+      })
+      burbujas.forEach((b) => {
+        tl.call(() => chat.appendChild(escribiendo), [], '+=0.35')
+          .fromTo(escribiendo, { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.25, transformOrigin: '0% 100%' })
+          .call(() => {
+            escribiendo.remove()
+            b.style.display = ''
+            chat.appendChild(b)
+          }, [], '+=0.75')
+          .fromTo(b, { scale: 0.8, opacity: 0, y: 6 }, { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(2)', transformOrigin: '0% 100%' })
+      })
+      tl.to({}, { duration: 2.4 }).to(burbujas, { opacity: 0, y: -8, duration: 0.35, stagger: 0.05 })
+      return tl
+    },
+
+    responsive(t) {
+      const disp = t.querySelector<HTMLElement>('.bv-disp')!
+      const [nav, hero, c1, c2] = ['nav', 'hero', 'c1', 'c2'].map((k) => t.querySelector<HTMLElement>(`.bv-b-${k}`)!)
+      const a = t.querySelector<HTMLElement>('.bv-modo-a')!
+      const b = t.querySelector<HTMLElement>('.bv-modo-b')!
+      const tl = gsap.timeline({ repeat: -1, paused: true, defaults: { duration: 0.9, ease: 'expo.inOut' } })
+      // Del computador al celular: el marco se estrecha y los bloques pasan de
+      // dos columnas a una sola, que es exactamente lo que hace el sitio.
+      tl.to({}, { duration: 1.4 })
+        .to(disp, { width: 74, height: 132 }, 'celular')
+        .to(nav, { width: 58, left: 8, top: 8 }, 'celular')
+        .to(hero, { width: 58, height: 46, left: 8, top: 22 }, 'celular')
+        .to(c1, { width: 58, height: 26, left: 8, top: 73 }, 'celular')
+        .to(c2, { width: 58, height: 26, left: 8, top: 104 }, 'celular')
+        .to(a, { color: 'var(--color-ink-300)', duration: 0.3 }, 'celular+=0.3')
+        .to(b, { color: 'var(--color-ember)', duration: 0.3 }, '<')
+        .to({}, { duration: 1.6 })
+        .to(disp, { width: 190, height: 104 }, 'compu')
+        .to(nav, { width: 172, left: 8, top: 8 }, 'compu')
+        .to(hero, { width: 104, height: 70, left: 8, top: 23 }, 'compu')
+        .to(c1, { width: 62, height: 32, left: 118, top: 23 }, 'compu')
+        .to(c2, { width: 62, height: 32, left: 118, top: 61 }, 'compu')
+        .to(b, { color: 'var(--color-ink-300)', duration: 0.3 }, 'compu+=0.3')
+        .to(a, { color: 'var(--color-ember)', duration: 0.3 }, '<')
+      return tl
+    },
+
+    checklist(t) {
+      const items = Array.from(t.querySelectorAll<HTMLElement>('.bv-item'))
+      const listo = t.querySelector<HTMLElement>('.bv-listo')!
+      const tl = gsap.timeline({ repeat: -1, paused: true })
+      tl.call(() => items.forEach((i) => i.classList.remove('hecho')))
+        .set(listo, { scale: 0, opacity: 0 })
+      items.forEach((it) => tl.call(() => it.classList.add('hecho'), [], '+=0.55'))
+      tl.to(listo, { scale: 1, opacity: 1, duration: 0.45, ease: 'back.out(2.5)' }, '+=0.3')
+        .to({}, { duration: 2.2 })
+      return tl
+    },
+  }
+
+  if (!reducido) {
+    for (const t of tarjetas) {
+      const hacer = construir[t.dataset.viz ?? '']
+      if (!hacer) continue
+      let b: Bucle | null = null
+      try {
+        b = { tl: hacer(t) }
+      } catch (err) {
+        // Una pantalla que falla se queda en su estado final, que es legible.
+        console.warn('[beneficios]', err)
+        continue
+      }
+      const bucle = b
+      new IntersectionObserver(([e]) => (e.isIntersecting ? bucle.tl.play() : bucle.tl.pause()), {
+        rootMargin: '40px',
+      }).observe(t)
+    }
+  }
+</script>
