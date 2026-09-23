@@ -386,6 +386,7 @@ const v = pw.viz
     stroke-linejoin: round;
     stroke-dasharray: 22;
     stroke-dashoffset: 22;
+    transition: stroke-dashoffset 0.35s ease 0.05s;
   }
   .bv-item.hecho {
     color: var(--color-ink-50);
@@ -432,9 +433,12 @@ const v = pw.viz
       const PASO = 26
       const estado = { n: 0 }
       const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, paused: true })
+      const posOtros = otros.map((o) => o.querySelector<HTMLElement>('.bv-pos')!)
+      const numerar = (desde: number) => posOtros.forEach((p, i) => (p.textContent = String(desde + i)))
       tl.call(() => {
         consulta.textContent = ''
         posTuyo.textContent = '4'
+        numerar(1)
       })
         // El resultado propio empieza abajo y los demás arriba, corridos una fila.
         .set(tuyo, { y: PASO * 3, opacity: 0 })
@@ -449,7 +453,10 @@ const v = pw.viz
         // Sube al primer puesto: los demás bajan una fila cada uno.
         .to(tuyo, { y: 0, duration: 0.9, ease: 'expo.inOut' }, '+=0.5')
         .to(otros, { y: 0, duration: 0.9, ease: 'expo.inOut' }, '<')
-        .call(() => (posTuyo.textContent = '1'), [], '<0.45')
+        .call(() => {
+          posTuyo.textContent = '1'
+          numerar(2)
+        }, [], '<0.45')
         .fromTo(tuyo, { scale: 1 }, { scale: 1.04, duration: 0.18, yoyo: true, repeat: 1, ease: 'power1.inOut' })
         .to({}, { duration: 2.2 })
         .to([...otros, tuyo], { opacity: 0, duration: 0.35 })
@@ -487,6 +494,10 @@ const v = pw.viz
       const [nav, hero, c1, c2] = ['nav', 'hero', 'c1', 'c2'].map((k) => t.querySelector<HTMLElement>(`.bv-b-${k}`)!)
       const a = t.querySelector<HTMLElement>('.bv-modo-a')!
       const b = t.querySelector<HTMLElement>('.bv-modo-b')!
+      // Hex y no var(--color-…): GSAP interpola colores que puede leer, y una
+      // variable CSS la trataría como texto.
+      const GRIS = '#4d4d5d'
+      const EMBER = '#ff6b3d'
       const tl = gsap.timeline({ repeat: -1, paused: true, defaults: { duration: 0.9, ease: 'expo.inOut' } })
       // Del computador al celular: el marco se estrecha y los bloques pasan de
       // dos columnas a una sola, que es exactamente lo que hace el sitio.
@@ -496,16 +507,16 @@ const v = pw.viz
         .to(hero, { width: 58, height: 46, left: 8, top: 22 }, 'celular')
         .to(c1, { width: 58, height: 26, left: 8, top: 73 }, 'celular')
         .to(c2, { width: 58, height: 26, left: 8, top: 104 }, 'celular')
-        .to(a, { color: 'var(--color-ink-300)', duration: 0.3 }, 'celular+=0.3')
-        .to(b, { color: 'var(--color-ember)', duration: 0.3 }, '<')
+        .to(a, { color: GRIS, duration: 0.3 }, 'celular+=0.3')
+        .to(b, { color: EMBER, duration: 0.3 }, '<')
         .to({}, { duration: 1.6 })
         .to(disp, { width: 190, height: 104 }, 'compu')
         .to(nav, { width: 172, left: 8, top: 8 }, 'compu')
         .to(hero, { width: 104, height: 70, left: 8, top: 23 }, 'compu')
         .to(c1, { width: 62, height: 32, left: 118, top: 23 }, 'compu')
         .to(c2, { width: 62, height: 32, left: 118, top: 61 }, 'compu')
-        .to(b, { color: 'var(--color-ink-300)', duration: 0.3 }, 'compu+=0.3')
-        .to(a, { color: 'var(--color-ember)', duration: 0.3 }, '<')
+        .to(b, { color: GRIS, duration: 0.3 }, 'compu+=0.3')
+        .to(a, { color: EMBER, duration: 0.3 }, '<')
       return tl
     },
 
