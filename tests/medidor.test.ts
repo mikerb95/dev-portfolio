@@ -301,6 +301,14 @@ describe('adaptador web (Astro y handlers fetch)', () => {
     expect(b.medidor.estado().horas[0].invocaciones).toBe(3)
   })
 
+  it('ignora los renders del prerender: son el build, no visitas', async () => {
+    const b = banco()
+    const res = new Response('estática')
+    const salida = await b.medidor.astro()({ request: new Request('https://sitio.test/'), isPrerendered: true }, async () => res)
+    expect(salida).toBe(res)
+    expect(b.medidor.estado()).toEqual({ enVuelo: 0, horas: [], pendientes: 0 })
+  })
+
   it('un error del handler se propaga intacto y la petición queda cerrada', async () => {
     const b = banco()
     const h = b.medidor.fetch(async () => { throw new Error('falló la página') })
@@ -359,6 +367,30 @@ describe('adaptador Express', () => {
     b.medidor.express()({ headers: {} }, res, () => {})
     ee.emit('close')
     expect(b.medidor.estado().enVuelo).toBe(0)
+  })
+})
+
+describe('apagado', () => {
+  it('engancha SIGTERM con la primera petición, no al crearse, y vacía la cola al recibirlo', async () => {
+    const antes = process.listenerCount('SIGTERM')
+    const b = banco({ engancharApagado: true })
+    // El proceso del build importa el middleware sin atender visitas: no debe quedar escuchando.
+    expect(process.listenerCount('SIGTERM')).toBe(antes)
+    b.medidor.iniciar()(10)
+    b.medidor.iniciar()(10)
+    expect(process.listenerCount('SIGTERM')).toBe(antes + 1)
+
+    process.emit('SIGTERM')
+    await vi.waitFor(() => expect(b.envios).toHaveLength(1))
+    expect(cuerpo(b.envios[0]).muestras[0].invocaciones).toBe(2)
+    // `once`: el listener se va solo tras la señal.
+    expect(process.listenerCount('SIGTERM')).toBe(antes)
+  })
+
+  it('sin engancharApagado no toca las señales del proceso', () => {
+    const antes = process.listenerCount('SIGTERM')
+    banco().medidor.iniciar()(10)
+    expect(process.listenerCount('SIGTERM')).toBe(antes)
   })
 })
 
