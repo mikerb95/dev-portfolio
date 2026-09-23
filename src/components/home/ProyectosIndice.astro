@@ -1,0 +1,670 @@
+---
+// Índice cinético de proyectos de la portada.
+//
+// Una lista tipográfica en vez de una rejilla de tarjetas: con 13 proyectos y
+// solo 4 capturas, la rejilla era mayoritariamente cajas vacías. Aquí el
+// nombre es la pieza y la imagen aparece bajo demanda:
+//   · Con ratón, una ventana flotante sigue al cursor con inercia y enseña la
+//     captura del proyecto apuntado, o su portada generativa (un mapa de
+//     isolíneas propio, ver src/lib/motion/portadas.ts). Entre dos portadas
+//     generativas el mapa se transforma de uno al otro en vez de cortar.
+//   · En táctil (y con movimiento reducido) no hay nada que seguir: cada fila
+//     lleva su miniatura fija.
+// Sin JS la lista sigue siendo una lista de enlaces completa.
+import { Image } from 'astro:assets'
+import { parseTechStack } from '../../lib/tech-stack'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref, pickLocalized } from '../../i18n'
+import { paletaDe, semillaDe } from '../../lib/motion/portadas'
+
+type Proyecto = {
+  slug: string
+  title: string
+  titleEn?: string | null
+  description?: string | null
+  descriptionEn?: string | null
+  techStack?: string | null
+  screenshotUrl?: string | null
+}
+
+interface Props {
+  proyectos: Proyecto[]
+}
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale).home.proyectos
+
+const items = Astro.props.proyectos.map((p, i) => {
+  const stack = parseTechStack(p.techStack)
+  const semilla = semillaDe(p.slug)
+  const titulo = pickLocalized(p, 'title', locale)
+  return {
+    i,
+    num: String(i + 1).padStart(2, '0'),
+    href: localizedHref(`/projects/${p.slug}`, locale),
+    titulo,
+    // Los nombres de repositorio ("talento_tech_proyecto_final") no tienen
+    // espacios: sin puntos de corte explícitos, a este tamaño de letra se
+    // desbordan de su columna. Se parte después de cada guion o guion bajo.
+    partes: titulo.split(/(?<=[_-])/),
+    descripcion: pickLocalized(p, 'description', locale),
+    stack: stack.slice(0, 2),
+    captura: p.screenshotUrl ?? null,
+    semilla,
+    paleta: paletaDe(stack),
+  }
+})
+
+// Lo mínimo que el script necesita para dibujar y rotular cada portada; el
+// resto ya está en el marcado.
+const portadas = items.map((p) => ({
+  semilla: p.semilla,
+  paleta: p.paleta,
+  captura: !!p.captura,
+  titulo: p.titulo,
+  pie: p.captura ? t.captura : interpolate(t.generativa, { id: p.semilla.id }),
+}))
+const total = interpolate(t.total, { n: items.length })
+---
+
+<section id="proyectos" class="relative px-6 md:px-12 lg:px-20 py-28 border-t border-white/5">
+  <div class="max-w-[1280px] mx-auto">
+    <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+      <span class="text-cyan">/02</span>
+      <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+      <span>{t.sectionLabel}</span>
+    </div>
+
+    <div class="flex flex-wrap items-end justify-between gap-6 mb-14">
+      <h2 data-titular class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask max-w-2xl leading-[1.02]">
+        {t.title}
+      </h2>
+      <span class="font-mono text-[11px] uppercase tracking-[.2em] text-ink-300 tabular-nums">{total}</span>
+    </div>
+
+    <div class="proj-cabecera" aria-hidden="true">
+      <span>#</span>
+      <span>{t.cabecera.proyecto}</span>
+      <span>{t.cabecera.resumen}</span>
+      <span class="text-right">{t.cabecera.tecnologia}</span>
+      <span></span>
+    </div>
+
+    <ol class="proj-lista" data-portadas={JSON.stringify(portadas)}>
+      {items.map((p) => (
+        <li>
+          <a href={p.href} class="proj-fila" data-i={p.i}>
+            <span class="proj-raya" aria-hidden="true"></span>
+            <span class="proj-relleno" aria-hidden="true"></span>
+            <span class="proj-num tabular-nums">{p.num}</span>
+            <span class="proj-bloque">
+              <span class="proj-nombre">
+                <span class="proj-nombre-txt">
+                  {p.partes.map((parte, k) => (k < p.partes.length - 1 ? <>{parte}<wbr /></> : parte))}
+                </span>
+              </span>
+              {p.stack.length > 0 && <span class="proj-stack-movil">{p.stack.join(' · ')}</span>}
+            </span>
+            <span class="proj-desc">{p.descripcion}</span>
+            <span class="proj-stack">{p.stack.join(' · ')}</span>
+            <span class="proj-mini" aria-hidden="true">
+              {p.captura ? (
+                <Image src={p.captura} alt="" width={240} height={150} loading="lazy" decoding="async" />
+              ) : (
+                <canvas class="proj-mini-lienzo" data-i={p.i} width="240" height="150"></canvas>
+              )}
+            </span>
+            <svg class="proj-flecha" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+          </a>
+        </li>
+      ))}
+    </ol>
+    <span class="proj-raya proj-raya-final" aria-hidden="true"></span>
+  </div>
+
+  <!-- Ventana flotante: una sola para toda la lista. Las capturas se apilan
+       dentro y se destapan con un recorte; debajo, el lienzo con la portada
+       generativa, que queda a la vista cuando el proyecto no tiene captura. -->
+  <div class="proj-visor" aria-hidden="true">
+    <div class="proj-visor-marco">
+      <canvas class="proj-visor-lienzo"></canvas>
+      {items.filter((p) => p.captura).map((p) => (
+        <Image class="proj-visor-img" data-i={p.i} src={p.captura!} alt="" width={840} height={420} loading="lazy" decoding="async" />
+      ))}
+      <div class="proj-visor-pie">
+        <span class="proj-visor-num tabular-nums"></span>
+        <span class="proj-visor-meta"></span>
+      </div>
+    </div>
+    <span class="proj-visor-chip">
+      {t.viewProject}
+      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+    </span>
+  </div>
+</section>
+
+<style>
+  .proj-cabecera {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .proj-cabecera {
+      display: grid;
+      grid-template-columns: 4rem minmax(0, 1.25fr) minmax(0, 1fr) 9rem 1.5rem;
+      gap: 2.5rem;
+      padding-bottom: 0.9rem;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--color-ink-300);
+    }
+  }
+
+  .proj-lista {
+    position: relative;
+  }
+
+  .proj-fila {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    align-items: center;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 1.25rem;
+    gap: 1rem;
+    padding: 1.4rem 0;
+    transition: opacity 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+    outline: none;
+  }
+  @media (min-width: 1024px) {
+    .proj-fila {
+      grid-template-columns: 4rem minmax(0, 1.25fr) minmax(0, 1fr) 9rem 1.5rem;
+      gap: 2.5rem;
+      padding: 1.7rem 0;
+    }
+  }
+
+  .proj-raya {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    transform-origin: left center;
+  }
+  .proj-raya-final {
+    position: relative;
+    display: block;
+  }
+
+  /* Relleno que sube desde abajo al apuntar: un tinte de marca y no un borde,
+     y sobresale un poco de la fila para que el nombre no quede pegado al
+     canto del resaltado. */
+  .proj-relleno {
+    position: absolute;
+    inset: 0 -1.25rem;
+    z-index: -1;
+    border-radius: 16px;
+    background: linear-gradient(90deg, rgba(0, 242, 255, 0.075), rgba(0, 242, 255, 0.02) 55%, rgba(0, 242, 255, 0));
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .proj-fila:hover .proj-relleno,
+  .proj-fila:focus-visible .proj-relleno {
+    transform: scaleY(1);
+  }
+
+  .proj-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--color-ink-300);
+    transition: color 0.3s ease;
+  }
+
+  .proj-bloque {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  /* Máscara del nombre: recorta solo por abajo, para que en la entrada el
+     texto suba desde una ranura. Arriba y a los lados deja aire para acentos y
+     para el desplazamiento del hover. */
+  .proj-nombre {
+    display: block;
+    clip-path: inset(-0.5em -3em 0 -3em);
+    padding-bottom: 0.08em;
+    font-size: clamp(24px, 2.7vw, 38px);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+    color: var(--color-ink-50);
+    overflow-wrap: anywhere;
+  }
+  .proj-nombre-txt {
+    display: inline-block;
+    transition:
+      transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+      color 0.3s ease;
+  }
+
+  .proj-stack-movil {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-200);
+  }
+  .proj-desc,
+  .proj-stack {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .proj-stack-movil {
+      display: none;
+    }
+    .proj-desc {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--color-ink-200);
+      transition: color 0.3s ease;
+    }
+    .proj-stack {
+      display: block;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--color-ink-200);
+    }
+  }
+
+  .proj-flecha {
+    width: 20px;
+    height: 20px;
+    color: var(--color-ink-300);
+    transition:
+      transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+      color 0.3s ease;
+  }
+
+  .proj-fila:hover .proj-num,
+  .proj-fila:focus-visible .proj-num {
+    color: var(--color-cyan);
+  }
+  .proj-fila:hover .proj-nombre-txt,
+  .proj-fila:focus-visible .proj-nombre-txt {
+    transform: translateX(0.35em);
+    color: #fff;
+  }
+  .proj-fila:hover .proj-desc {
+    color: var(--color-ink-100);
+  }
+  .proj-fila:hover .proj-flecha,
+  .proj-fila:focus-visible .proj-flecha {
+    color: var(--color-cyan);
+    transform: rotate(45deg);
+  }
+
+  /* Foco: al apuntar una fila, las demás se apagan. Con :has() y no con
+     :hover sobre la lista, para que el hueco entre dos filas no apague todo. */
+  .proj-lista:has(.proj-fila:hover) .proj-fila:not(:hover) {
+    opacity: 0.32;
+  }
+
+  /* Miniaturas: solo en modo táctil/movimiento reducido (lo decide el script).
+     Sin JS no se muestran: la lista de enlaces basta. */
+  .proj-mini {
+    display: none;
+  }
+  :global(.modo-miniaturas) .proj-fila {
+    grid-template-columns: 2.5rem minmax(0, 1fr) 5.5rem 1.25rem;
+  }
+  :global(.modo-miniaturas) .proj-mini {
+    display: block;
+    width: 5.5rem;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #0c0c10;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+  @media (min-width: 1024px) {
+    :global(.modo-miniaturas) .proj-fila {
+      grid-template-columns: 4rem minmax(0, 1.25fr) minmax(0, 1fr) 9rem 7rem 1.5rem;
+    }
+    :global(.modo-miniaturas) .proj-mini {
+      width: 7rem;
+    }
+  }
+  .proj-mini :global(img),
+  .proj-mini canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  /* ── Ventana flotante ── */
+  .proj-visor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 45;
+    width: 400px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    will-change: transform, opacity;
+  }
+  .proj-visor-marco {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #0c0c10;
+    box-shadow:
+      0 40px 90px -30px rgba(0, 0, 0, 0.9),
+      0 0 0 1px rgba(255, 255, 255, 0.09);
+  }
+  .proj-visor-lienzo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .proj-visor-marco :global(.proj-visor-img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    clip-path: inset(100% 0 0 0);
+  }
+  .proj-visor-pie {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.6rem 0.85rem 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-100);
+    background: linear-gradient(180deg, rgba(8, 8, 12, 0), rgba(8, 8, 12, 0.88));
+  }
+  .proj-visor-meta {
+    color: var(--color-ink-200);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .proj-visor-chip {
+    position: absolute;
+    top: -0.7rem;
+    right: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: var(--color-cyan);
+    color: var(--color-ink-950);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    box-shadow: 0 10px 30px -10px rgba(0, 242, 255, 0.7);
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+  import { montarPortadas, type Portada } from '../../lib/motion/portadas-gl'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  type Dato = Portada & { captura: boolean; titulo: string; pie: string }
+
+  const seccion = document.getElementById('proyectos')
+  const lista = seccion?.querySelector<HTMLElement>('.proj-lista')
+
+  if (seccion && lista) {
+    const datos: Dato[] = JSON.parse(lista.dataset.portadas ?? '[]')
+    const filas = Array.from(lista.querySelectorAll<HTMLElement>('.proj-fila'))
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const fino = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
+    // ── Entrada ──
+    // Las rayas se dibujan de izquierda a derecha y cada nombre sube desde su
+    // ranura justo detrás: se lee como un índice que se va imprimiendo.
+    if (!reducido) {
+      try {
+        const rayas = Array.from(seccion.querySelectorAll<HTMLElement>('.proj-raya'))
+        gsap.set(rayas, { scaleX: 0 })
+        ScrollTrigger.batch(filas, {
+          start: 'top 92%',
+          once: true,
+          onEnter: (lote) => {
+            const els = lote as HTMLElement[]
+            gsap.to(
+              els.map((f) => f.querySelector('.proj-raya')),
+              { scaleX: 1, duration: 1.1, ease: 'expo.out', stagger: 0.06 },
+            )
+            gsap.from(
+              els.map((f) => f.querySelector('.proj-nombre-txt')),
+              { yPercent: 110, duration: 1, ease: 'expo.out', stagger: 0.06, delay: 0.08 },
+            )
+            gsap.from(
+              els.flatMap((f) => Array.from(f.querySelectorAll('.proj-num, .proj-desc, .proj-stack, .proj-stack-movil, .proj-flecha'))),
+              { opacity: 0, y: 8, duration: 0.8, ease: 'power3.out', stagger: 0.015, delay: 0.2 },
+            )
+          },
+        })
+        ScrollTrigger.create({
+          trigger: seccion.querySelector('.proj-raya-final'),
+          start: 'top 95%',
+          once: true,
+          onEnter: () => gsap.to('.proj-raya-final', { scaleX: 1, duration: 1.1, ease: 'expo.out' }),
+        })
+      } catch (err) {
+        console.warn('[proyectos] entrada deshabilitada', err)
+        gsap.set(seccion.querySelectorAll('.proj-raya'), { scaleX: 1 })
+      }
+    }
+
+    if (fino && !reducido) {
+      montarVisor()
+    } else {
+      montarMiniaturas()
+    }
+
+    function montarVisor() {
+      const visor = seccion!.querySelector<HTMLElement>('.proj-visor')
+      const lienzo = seccion!.querySelector<HTMLCanvasElement>('.proj-visor-lienzo')
+      const num = seccion!.querySelector<HTMLElement>('.proj-visor-num')
+      const meta = seccion!.querySelector<HTMLElement>('.proj-visor-meta')
+      if (!visor || !lienzo || !num || !meta) return
+      const imgs = new Map(
+        Array.from(seccion!.querySelectorAll<HTMLElement>('.proj-visor-img')).map((el) => [Number(el.dataset.i), el]),
+      )
+      const portadas = montarPortadas(lienzo)
+      if (!portadas) {
+        // Sin WebGL2 no hay portadas generativas que flotar: miniaturas fijas
+        // con las capturas que sí existen.
+        montarMiniaturas()
+        return
+      }
+
+      const ANCHO = 400
+      const ALTO = ANCHO / 1.6
+      const SEPARACION = 34
+      gsap.set(visor, { x: -9999, y: -9999, scale: 0.7, transformOrigin: '0% 50%' })
+      const xTo = gsap.quickTo(visor, 'x', { duration: 0.65, ease: 'power3.out' })
+      const yTo = gsap.quickTo(visor, 'y', { duration: 0.65, ease: 'power3.out' })
+      const rotTo = gsap.quickTo(visor, 'rotation', { duration: 0.9, ease: 'power3.out' })
+
+      let actual = -1
+      let visible = false
+      let ultimoX = 0
+      let calma: gsap.core.Tween | null = null
+      const total = datos.length
+
+      // Destino de la ventana: a la derecha del cursor y centrada en su altura;
+      // si no cabe, a la izquierda. Se recorta contra los bordes de la ventana
+      // del navegador para que nunca asome a medias.
+      const destino = (cx: number, cy: number) => {
+        let x = cx + SEPARACION
+        let origen = '0% 50%'
+        if (x + ANCHO > window.innerWidth - 16) {
+          x = cx - SEPARACION - ANCHO
+          origen = '100% 50%'
+        }
+        const y = Math.min(Math.max(cy - ALTO / 2, 16), window.innerHeight - ALTO - 16)
+        return { x, y, origen }
+      }
+
+      const mostrarProyecto = (i: number) => {
+        if (i === actual) return
+        const previo = actual
+        actual = i
+        const d = datos[i]
+        num.textContent = `${String(i + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`
+        meta.textContent = d.pie
+
+        portadas.mostrar(d)
+
+        // La captura nueva se destapa de abajo arriba por encima de todo; la
+        // anterior sale por arriba. Si el destino es una portada generativa, lo
+        // que se destapa es el lienzo, que ya se está transformando debajo.
+        const imgPrevia = imgs.get(previo)
+        const imgNueva = imgs.get(i)
+        if (imgNueva) {
+          gsap.killTweensOf(imgNueva)
+          gsap.set(imgNueva, { zIndex: 2 })
+          gsap.fromTo(
+            imgNueva,
+            { clipPath: 'inset(100% 0% 0% 0%)', scale: 1.12 },
+            { clipPath: 'inset(0% 0% 0% 0%)', scale: 1, duration: 0.75, ease: 'expo.out' },
+          )
+        }
+        if (imgPrevia && imgPrevia !== imgNueva) {
+          gsap.killTweensOf(imgPrevia)
+          gsap.set(imgPrevia, { zIndex: 1 })
+          gsap.to(imgPrevia, {
+            clipPath: 'inset(0% 0% 100% 0%)',
+            duration: imgNueva ? 0.75 : 0.6,
+            ease: 'expo.inOut',
+            delay: imgNueva ? 0.15 : 0,
+          })
+        }
+      }
+
+      const abrir = () => {
+        if (visible) return
+        visible = true
+        portadas.animar(true)
+        gsap.to(visor, { autoAlpha: 1, scale: 1, duration: 0.55, ease: 'expo.out', overwrite: 'auto' })
+      }
+      const cerrar = () => {
+        if (!visible) return
+        visible = false
+        gsap.to(visor, {
+          autoAlpha: 0,
+          scale: 0.8,
+          duration: 0.35,
+          ease: 'power2.in',
+          overwrite: 'auto',
+          onComplete: () => portadas.animar(false),
+        })
+      }
+
+      lista!.addEventListener('pointermove', (e) => {
+        const fila = (e.target as HTMLElement).closest<HTMLElement>('.proj-fila')
+        if (!fila) return
+        const { x, y, origen } = destino(e.clientX, e.clientY)
+        if (!visible) {
+          // Primera aparición: nace ya en su sitio, sin volar desde la última
+          // posición conocida (que puede estar al otro lado de la pantalla).
+          gsap.set(visor, { x, y, transformOrigin: origen })
+          xTo.tween.invalidate()
+          yTo.tween.invalidate()
+        }
+        xTo(x)
+        yTo(y)
+        visor.style.transformOrigin = origen
+        // Inclinación por velocidad horizontal, que se endereza al parar: es
+        // lo que hace que la ventana parezca arrastrada y no pegada al cursor.
+        const v = e.clientX - ultimoX
+        ultimoX = e.clientX
+        rotTo(Math.max(-7, Math.min(7, v * 0.45)))
+        calma?.kill()
+        calma = gsap.delayedCall(0.12, () => rotTo(0))
+        mostrarProyecto(Number(fila.dataset.i))
+        abrir()
+      })
+      lista!.addEventListener('pointerleave', cerrar)
+
+      // Teclado: tabular por las filas coloca la ventana junto a la fila con el
+      // foco. Es la misma información que ve quien usa ratón.
+      lista!.addEventListener('focusin', (e) => {
+        const fila = (e.target as HTMLElement).closest<HTMLElement>('.proj-fila')
+        if (!fila || !fila.matches(':focus-visible')) return
+        const r = fila.getBoundingClientRect()
+        const { x, y, origen } = destino(Math.min(r.left + r.width * 0.55, window.innerWidth - ANCHO - 60), r.top + r.height / 2)
+        gsap.set(visor, { x, y, rotation: 0, transformOrigin: origen })
+        mostrarProyecto(Number(fila.dataset.i))
+        abrir()
+      })
+      lista!.addEventListener('focusout', (e) => {
+        if (!lista!.contains(e.relatedTarget as Node | null)) cerrar()
+      })
+
+      // Con scroll la fila bajo el cursor cambia sin que el cursor se mueva:
+      // se cierra para no enseñar la portada de un proyecto que ya no se apunta.
+      window.addEventListener('scroll', () => visible && !lista!.matches(':hover') && cerrar(), { passive: true })
+    }
+
+    function montarMiniaturas() {
+      seccion!.classList.add('modo-miniaturas')
+      const lienzos = Array.from(seccion!.querySelectorAll<HTMLCanvasElement>('.proj-mini-lienzo'))
+      if (!lienzos.length) return
+      // Se pintan al acercarse la lista y se suelta el contexto WebGL al
+      // terminar: las miniaturas son imágenes fijas, no hace falta tenerlo vivo.
+      const io = new IntersectionObserver(
+        (entradas) => {
+          if (!entradas.some((e) => e.isIntersecting)) return
+          io.disconnect()
+          const auxiliar = document.createElement('canvas')
+          const portadas = montarPortadas(auxiliar)
+          if (!portadas) return
+          const dpr = Math.min(window.devicePixelRatio || 1, 2)
+          for (const c of lienzos) {
+            c.width = Math.round(c.clientWidth * dpr) || 240
+            c.height = Math.round(c.clientHeight * dpr) || 150
+            portadas.pintarEn(datos[Number(c.dataset.i)], c)
+          }
+          portadas.destruir()
+        },
+        { rootMargin: '300px' },
+      )
+      io.observe(lista!)
+    }
+  }
+</script>
