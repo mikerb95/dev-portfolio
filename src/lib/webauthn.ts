@@ -19,7 +19,7 @@
 //    entrada alternativa, no una verificación posterior.
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, gt, lt } from 'drizzle-orm'
 import type { AstroCookies } from 'astro'
 import {
   generateRegistrationOptions,
@@ -34,7 +34,7 @@ import type {
   WebAuthnCredential,
 } from '@simplewebauthn/server'
 import { db } from '../db'
-import { webauthnCredentials } from '../db/schema'
+import { webauthnChallenges, webauthnCredentials } from '../db/schema'
 
 // ── Relying Party ────────────────────────────────────────────────────────
 // rpID/origin se derivan del Host real de cada request en vez de hardcodear
@@ -47,18 +47,59 @@ function rpConfig(requestUrl: string): { rpID: string; rpName: string; origin: s
   return { rpID: url.hostname, rpName: 'CodeByMike Admin', origin: url.origin }
 }
 
-// ── Cookies de ceremonia (challenge) ─────────────────────────────────────
+// ── Challenge de la ceremonia ─────────────────────────────────────────────
 // El navegador tarda hasta ~2 min en una ceremonia (esperar el toque físico
-// de la llave). El challenge vive en una cookie httpOnly de corta vida; si se
-// manipula, la verificación simplemente falla (fail-closed, no hace falta
-// firmarla: no concede nada por sí sola).
+// de la llave). El challenge viaja en una cookie httpOnly de corta vida, que
+// ata la ceremonia al navegador que la empezó, PERO la cookie no basta: la
+// escribe el cliente y el servidor aceptaba el challenge que trajera. El
+// challenge es la defensa contra la repetición, y con passkeys sincronizadas
+// (iCloud, Google) el contador vale siempre 0, así que era la ÚNICA: quien
+// capturara una aserción válida podía repetirla sin límite poniendo su propia
+// cookie. Por eso además se guarda en la base al emitirse y la verificación lo
+// consume allí: solo vale si lo emitió el servidor, antes de vencer y una vez.
 
 const CHALLENGE_COOKIE = 'wan_challenge'
 const CHALLENGE_TTL_SEC = 5 * 60
 
-type ChallengeData = { challenge: string; login: string; kind: 'reg' | 'auth' }
+export type ChallengeData = { challenge: string; login: string; kind: 'reg' | 'auth' }
 
-function setChallenge(cookies: AstroCookies, data: ChallengeData): void {
+/**
+ * Registra un challenge recién emitido. De paso barre los vencidos: el
+ * endpoint de opciones del login es público, y sin el barrido cada ceremonia
+ * abandonada dejaría una fila para siempre.
+ */
+export async function storeChallenge(data: ChallengeData, now = new Date()): Promise<void> {
+  await db.delete(webauthnChallenges).where(lt(webauthnChallenges.expiresAt, now))
+  await db.insert(webauthnChallenges).values({
+    challenge: data.challenge,
+    kind: data.kind,
+    login: data.login,
+    expiresAt: new Date(now.getTime() + CHALLENGE_TTL_SEC * 1000),
+  })
+}
+
+/**
+ * ¿Emitió el servidor este challenge, para esta ceremonia y este login, y
+ * sigue vivo? Lo borra en la misma sentencia: dos verificaciones simultáneas
+ * con el mismo challenge no pueden ganar las dos.
+ */
+export async function consumeChallenge(data: ChallengeData, now = new Date()): Promise<boolean> {
+  const rows = await db
+    .delete(webauthnChallenges)
+    .where(
+      and(
+        eq(webauthnChallenges.challenge, data.challenge),
+        eq(webauthnChallenges.kind, data.kind),
+        eq(webauthnChallenges.login, data.login),
+        gt(webauthnChallenges.expiresAt, now)
+      )
+    )
+    .returning({ challenge: webauthnChallenges.challenge })
+  return rows.length > 0
+}
+
+async function setChallenge(cookies: AstroCookies, data: ChallengeData): Promise<void> {
+  await storeChallenge(data)
   cookies.set(CHALLENGE_COOKIE, JSON.stringify(data), {
     path: '/',
     httpOnly: true,
@@ -68,17 +109,18 @@ function setChallenge(cookies: AstroCookies, data: ChallengeData): void {
   })
 }
 
-function takeChallenge(cookies: AstroCookies, kind: 'reg' | 'auth', login: string): string | null {
+async function takeChallenge(cookies: AstroCookies, kind: 'reg' | 'auth', login: string): Promise<string | null> {
   const raw = cookies.get(CHALLENGE_COOKIE)?.value
   cookies.delete(CHALLENGE_COOKIE, { path: '/' }) // un solo uso, siempre se consume
   if (!raw) return null
+  let data: ChallengeData
   try {
-    const data = JSON.parse(raw) as ChallengeData
-    if (data.kind !== kind || data.login !== login) return null
-    return data.challenge
+    data = JSON.parse(raw) as ChallengeData
   } catch {
     return null
   }
+  if (typeof data?.challenge !== 'string' || data.kind !== kind || data.login !== login) return null
+  return (await consumeChallenge(data)) ? data.challenge : null
 }
 
 // ── Proof firmado para el provider 'passkey' de Auth.js ─────────────────
@@ -187,7 +229,7 @@ export async function buildRegistrationOptions(login: string, cookies: AstroCook
       userVerification: 'preferred',
     },
   })
-  setChallenge(cookies, { challenge: options.challenge, login, kind: 'reg' })
+  await setChallenge(cookies, { challenge: options.challenge, login, kind: 'reg' })
   return options
 }
 
@@ -199,7 +241,7 @@ export async function finishRegistration(
   requestUrl: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const { rpID, origin } = rpConfig(requestUrl)
-  const expectedChallenge = takeChallenge(cookies, 'reg', login)
+  const expectedChallenge = await takeChallenge(cookies, 'reg', login)
   if (!expectedChallenge) return { ok: false, error: 'challenge expirado o inválido, intenta de nuevo' }
 
   let verification
@@ -247,7 +289,7 @@ export async function buildPrimaryAuthenticationOptions(cookies: AstroCookies, r
     // Sin allowCredentials: el autenticador ofrece sus llaves discoverable
     // para este rpID (flujo usernameless/passwordless).
   })
-  setChallenge(cookies, { challenge: options.challenge, login: '', kind: 'auth' })
+  await setChallenge(cookies, { challenge: options.challenge, login: '', kind: 'auth' })
   return options
 }
 
@@ -257,7 +299,7 @@ export async function finishPrimaryAuthentication(
   requestUrl: string
 ): Promise<{ ok: true; login: string } | { ok: false; error: string }> {
   const { rpID, origin } = rpConfig(requestUrl)
-  const expectedChallenge = takeChallenge(cookies, 'auth', '')
+  const expectedChallenge = await takeChallenge(cookies, 'auth', '')
   if (!expectedChallenge) return { ok: false, error: 'challenge expirado o inválido, intenta de nuevo' }
 
   const [row] = await db
