@@ -1,5 +1,6 @@
 // GENERADO desde instrumentacion/medidor.ts (CommonJS) por scripts/build-medidor.mjs.
 // No editar a mano: cambia el .ts y corre `npm run medidor:build` en el portafolio.
+/* eslint-disable */
 "use strict";
 // Medidor de cómputo para los proyectos de cliente desplegados en Vercel.
 //

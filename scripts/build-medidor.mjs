@@ -30,6 +30,9 @@ const cabecera = (formato) =>
   [
     `// GENERADO desde instrumentacion/medidor.ts (${formato}) por scripts/build-medidor.mjs.`,
     '// No editar a mano: cambia el .ts y corre `npm run medidor:build` en el portafolio.',
+    // Código generado: el lint del proyecto que lo copia no tiene nada que
+    // corregir aquí, y sus avisos de estilo solo serían ruido en su CI.
+    '/* eslint-disable */',
     '',
   ].join('\n')
 
