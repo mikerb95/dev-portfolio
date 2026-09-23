@@ -1,9 +1,9 @@
 ---
-import TelefonoDemo from '../components/paginas-web/TelefonoDemo.astro'
 // Página sin datos vivos: se genera en el build, no por request.
 export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
+import TelefonoDemo from '../components/paginas-web/TelefonoDemo.astro'
 import { getDictionary, getLocaleFromUrl, interpolate } from '../i18n'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
