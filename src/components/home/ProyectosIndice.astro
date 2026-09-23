@@ -108,7 +108,7 @@ const total = interpolate(t.total, { n: items.length })
             <span class="proj-stack">{p.stack.join(' · ')}</span>
             <span class="proj-mini" aria-hidden="true">
               {p.captura ? (
-                <Image src={p.captura} alt="" width={240} height={150} loading="lazy" decoding="async" />
+                <Image src={p.captura} alt="" width={240} height={150} quality={75} loading="lazy" decoding="async" />
               ) : (
                 <canvas class="proj-mini-lienzo" data-i={p.i} width="240" height="150"></canvas>
               )}
@@ -128,7 +128,7 @@ const total = interpolate(t.total, { n: items.length })
     <div class="proj-visor-marco">
       <canvas class="proj-visor-lienzo"></canvas>
       {items.filter((p) => p.captura).map((p) => (
-        <Image class="proj-visor-img" data-i={p.i} src={p.captura!} alt="" width={840} height={420} loading="lazy" decoding="async" />
+        <Image class="proj-visor-img" data-i={p.i} src={p.captura!} alt="" width={840} height={420} quality={78} loading="lazy" decoding="async" />
       ))}
       <div class="proj-visor-pie">
         <span class="proj-visor-num tabular-nums"></span>

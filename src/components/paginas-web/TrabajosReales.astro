@@ -54,6 +54,7 @@ const items = t.items.map((it, i) => ({ ...it, ...SITIOS[i] }))
                   height={3400}
                   widths={[600, 1200]}
                   sizes="(min-width: 1024px) 640px, 92vw"
+                  quality={75}
                   loading="lazy"
                   decoding="async"
                 />
@@ -334,7 +335,9 @@ const items = t.items.map((it, i) => ({ ...it, ...SITIOS[i] }))
         // La tarjeta de atrás se hunde y se apaga cuando la siguiente la tapa:
         // es lo que da profundidad al mazo.
         if (siguiente) {
-          gsap.to(tarjeta, {
+          // fromTo y no to: desde `filter: none` GSAP no tiene número del que
+          // partir y arranca en brightness(0), con la tarjeta ya en negro.
+          gsap.fromTo(tarjeta, { scale: 1, filter: 'brightness(1)' }, {
             scale: 0.94,
             filter: 'brightness(0.55)',
             ease: 'none',

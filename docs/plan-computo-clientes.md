@@ -60,6 +60,17 @@ Archivo único, sin dependencias ni imports, que se copia al proyecto del
 cliente. TypeScript solo con sintaxis borrable, para que lo acepten tal cual
 Vite (Astro), el builder de Vercel (Express) y el `strip-types` de Node.
 
+Para proyectos en JavaScript puro hay dos versiones **generadas** desde el
+`.ts` con `npm run medidor:build` (`scripts/build-medidor.mjs`, usa
+`ts.transpileModule` de la dependencia `typescript`): `medidor.mjs` para los
+que usan `import` y `medidor.cjs` para los que usan `require`. Existen porque
+Node 20 no entiende TypeScript y un proyecto CommonJS no puede cargar un
+módulo con `export`. Solo se edita el `.ts`: `tests/medidor-js.test.ts`
+regenera en memoria y falla si los archivos del repo quedaron desalineados, y
+además pasa lo que envía cada versión por `verificarLote` y `validarLote`.
+Llevan `/* eslint-disable */` porque son código generado: el lint del
+proyecto que los copia no tiene nada que corregir ahí.
+
 ### Qué mide y qué no
 
 Modelo de cobro de Vercel Fluid (vercel.com/docs/functions/usage-and-pricing,
@@ -170,10 +181,40 @@ duración por visita, peso de la respuesta) y responde:
   `tests/computo-cuota.test.ts`).
 - ✅ **Fase 4** (22 sep): cotizador de hosting fijo (`cotizador.ts`,
   `e2e/computo.spec.ts`).
-- **Fase 5** (pendiente): instalar el medidor en el primer sitio de cliente y
+- **Fase 5** (en curso): instalar el medidor en los sitios de cliente y
   en el propio portafolio, y contrastar una semana contra el dashboard de
   Vercel. Sin el portafolio medido, el porcentaje de la cuota excluye a
   codebymike.net.
+  - ✅ Código instalado el 23 sep en tres repos locales, sin commits ni
+    despliegues (eso es del dueño):
+    - **toledo-producciones** (Astro 5 en modo servidor): `src/lib/medidor.ts`
+      y `src/middleware.ts` con `sequence(medidor, auth)`, así el login queda
+      igual. Build y `astro check` limpios. Probado con `astro dev` y el
+      medidor forzado: el logout sigue borrando su cookie y el 404 sale igual.
+    - **dobleyo** (Astro 5 con páginas `prerender = false` + API Express 4
+      en Node 20): `src/lib/medidor.ts` con un `src/middleware.ts` nuevo, y
+      `server/medidor.mjs` enganchado primero en `api/index.js`. El
+      `middleware.ts` de la raíz es el de enrutamiento de Vercel
+      (subdominio en.) y no se tocó. Build limpio y ESLint sin errores; los
+      974 errores de `astro check` son previos y de otras páginas.
+    - **gorillaz-motorbikes** (Express 5 + EJS en CommonJS): `medidor.cjs`
+      enganchado primero en `app.js`. No tiene pruebas; se verificó la
+      sintaxis y que el `require` resuelve.
+    - Prueba de humo de las dos APIs con SU Express real (4.22 en Node 20 y
+      5.1 en Node 22) y una ingesta falsa que verifica la firma: respuestas
+      intactas, incluidos 500 y 404, y bytes exactos (3572 y 3529).
+  - Pendiente del dueño: generar el secreto de cada uno en `/admin/computo`
+    y poner `COMPUTO_PROYECTO` y `COMPUTO_SECRETO` en cada proyecto de Vercel.
+    Sin esas dos variables el medidor no hace nada.
+  - **Sin medir, conscientemente:** el middleware de enrutamiento de DobleYo
+    (corre en cada página del subdominio en. y es una invocación propia) y
+    sus funciones Python de `api/ml/`. Si la cuota muestra algo que no
+    cuadra con el tablero de Vercel, esos son los primeros sospechosos.
+  - Arreglos del medidor que salieron al revisar esos repos: el adaptador de
+    Astro ignora los renders del prerender (Astro corre el middleware también
+    en el build, y se habrían contado como visitas), y el listener de
+    `SIGTERM` se engancha con la primera petición real y no al crear el
+    medidor, para que el proceso del build no quede escuchando la señal.
 - **Fase 6** (pendiente, solo si la Fase 5 muestra que importa): punto ciego de
   estáticos con un beacon en el navegador (Resource Timing: peticiones y
   `transferSize` del mismo origen por página vista).

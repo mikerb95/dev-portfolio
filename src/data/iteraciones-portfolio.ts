@@ -2140,7 +2140,9 @@ export const ITERACIONES: Iteracion[] = [
           ok('LA MEMORIA SE MIDE COMO LA COBRA VERCEL: por vida de la instancia mientras tiene peticiones en curso. Dos peticiones solapadas pagan el tiempo una vez, y la CPU se lee del proceso entero por la misma razón.'),
           ok('La firma y el formato del lote están escritos dos veces (el medidor no puede importar nada del portafolio): lo que los mantiene iguales es una prueba que pasa lo que envía el medidor por verificarLote y validarLote.'),
           ok('Punto ciego declarado en el panel y en el plan: lo que el CDN sirve sin despertar la función. Transferencia al visitante y peticiones al edge se pintan como cota inferior.'),
-          pend('Instalarlo en el primer sitio de cliente y contrastar una semana contra el tablero Usage de Vercel (Fase 5 del plan).'),
+          ok('INSTALADO EN TRES REPOS DE CLIENTE (23 sep): Toledo (Astro en modo servidor, en secuencia con su login), DobleYo (páginas Astro de servidor y API Express 4 en Node 20) y Gorillaz (Express 5 en CommonJS). Para los dos últimos hacía falta JavaScript: medidor.mjs y medidor.cjs se GENERAN desde el .ts, y una prueba falla si quedan desalineados. Prueba de humo con el Express real de cada repo: respuestas intactas y bytes exactos.'),
+          ok('Revisar esos repos destapó dos fallos del medidor antes de que llegaran a producción: Astro corre el middleware también al prerenderizar en el build, y esos renders se habrían contado como visitas; y el listener de SIGTERM se enganchaba al importar el módulo, así que el proceso del build también quedaba escuchando la señal.'),
+          pend('Poner COMPUTO_PROYECTO y COMPUTO_SECRETO en los tres proyectos de Vercel y contrastar una semana contra el tablero Usage (Fase 5 del plan). Queda sin medir, a sabiendas, el middleware de enrutamiento de DobleYo.'),
         ],
       },
       {

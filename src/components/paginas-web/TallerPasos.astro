@@ -568,6 +568,15 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
   .tp-paso:last-child {
     min-height: 52vh;
   }
+  /* En móvil la ventana fija ocupa la parte de arriba: pasos más cortos, para
+     que cada uno quepa entero en la franja visible que queda debajo. */
+  @media (max-width: 1023px) {
+    .tp-paso,
+    .tp-paso:last-child {
+      min-height: 46vh;
+      padding: 1.5rem 0;
+    }
+  }
   :global(.tp-vivo) .tp-paso {
     opacity: 0.28;
   }
@@ -711,11 +720,20 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     gsap.set(escenas, { autoAlpha: 0 })
     mostrar(0)
 
+    // La línea de activación depende de dónde se lee el paso. En escritorio,
+    // a media pantalla, junto a la ventana. En móvil, cerca del borde de abajo:
+    // el paso se activa al entrar y deja de estarlo antes de meterse bajo la
+    // ventana fija, así el que está activo siempre se puede leer.
+    // En móvil se mide por el CENTRO del paso: el texto va centrado en su caja
+    // y la caja asoma bastante antes que él, así que con el borde superior la
+    // escena cambiaba con el texto todavía fuera de pantalla. Entre inicio y
+    // fin hay justo el alto de un paso (46vh), para que no queden huecos.
+    const movil = window.matchMedia('(max-width: 1023px)').matches
     pasos.forEach((p, i) => {
       ScrollTrigger.create({
         trigger: p,
-        start: 'top 58%',
-        end: 'bottom 58%',
+        start: movil ? 'center 92%' : 'top 58%',
+        end: movil ? 'center 46%' : 'bottom 58%',
         onToggle: (st) => st.isActive && mostrar(i),
       })
     })

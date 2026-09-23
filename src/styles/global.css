@@ -486,11 +486,16 @@ body {
    Cada dígito es una columna de una cifra de alto con una tira vertical de
    0-9 dos veces dentro; los dígitos tabulares hacen que 1ch sirva de ancho
    para cualquiera de ellos. */
+/* El contenedor fija el interlineado al alto de la columna y las columnas se
+   alinean por arriba: así cada dígito queda exactamente donde quedaría como
+   texto normal, a la altura de los caracteres fijos ("desde $", "COP", "+").
+   Alineadas por abajo, los dígitos bajaban respecto a su línea base. */
+[data-odometro] { line-height: 1.1; }
 .odo-col {
   display: inline-block;
   height: 1.1em;
   overflow: hidden;
-  vertical-align: bottom;
+  vertical-align: top;
 }
 .odo-tira {
   display: block;
