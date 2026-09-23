@@ -99,7 +99,21 @@ const items = rows.map((r) => ({
       addBtn.textContent = 'Esperando llave…'
       try {
         const optRes = await fetch('/api/admin/webauthn/registration/options')
-        if (!optRes.ok) throw new Error((await optRes.json().catch(() => ({}))).error ?? 'no se pudo iniciar')
+        if (!optRes.ok) {
+          const err = await optRes.json().catch(() => ({}))
+          // El alta exige haber entrado hace poco. El login devuelve aquí
+          // mismo, así que reconfirmar es un rodeo de un clic.
+          if (err.reauth) {
+            if (confirm(`${err.error}\n\n¿Ir a iniciar sesión ahora?`)) {
+              window.location.href = '/login?callbackUrl=%2Fadmin%2Fpasskeys'
+              return
+            }
+            addBtn.disabled = false
+            addBtn.textContent = '+ Añadir llave'
+            return
+          }
+          throw new Error(err.error ?? 'no se pudo iniciar')
+        }
         const options = await optRes.json()
 
         const regResponse = await startRegistration({ optionsJSON: options })
