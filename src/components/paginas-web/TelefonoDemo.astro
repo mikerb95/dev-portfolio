@@ -315,6 +315,16 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
     letter-spacing: 0.05em;
   }
 
+  /* Las piezas de texto del sitio real llevan el fondo del sitio: tapan su
+     barra de esqueleto al destaparse, en vez de dejarla asomar detrás de las
+     letras. */
+  .ts-real .ts-nav,
+  .ts-real .ts-titulo,
+  .ts-real .ts-lema,
+  .ts-real .ts-resena {
+    background: #faf7f2;
+  }
+
   /* ── Capa esqueleto: la misma maqueta, sin diseñar ── */
   .ts-esqueleto [data-campo],
   .ts-esqueleto .ts-estrellas {
@@ -490,8 +500,13 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
     const textoAhora = raiz.dataset.ahora ?? ''
     if (negocios.length === 0 || piezas.length === 0) return
 
-    const OCULTO = 'inset(0% 100% 0% 0% round 14px)'
-    const VISIBLE = 'inset(0% 0% 0% 0% round 14px)'
+    // Recorte ampliado un 20% por fuera de cada pieza: así no se comen la
+    // sombra de las tarjetas ni el contador que asoma por la esquina del
+    // botón. Todo en porcentajes: GSAP interpola número a número y una mezcla
+    // de % y px lo haría saltar.
+    const OCULTO = 'inset(-20% 100% -20% -20% round 14px)'
+    const VISIBLE = 'inset(-20% -20% -20% -20% round 14px)'
+    const SALIDA = 'inset(-20% -20% -20% 100% round 14px)'
 
     // Centro de una pieza en coordenadas de la pantalla. Con offsetTop y no
     // con getBoundingClientRect: el celular se inclina con el puntero y las
@@ -607,7 +622,7 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
         gsap.to(avisos.children, { y: -40, opacity: 0, duration: 0.35, ease: 'power2.in', stagger: 0.05 })
       })
       tl.to(insignia, { scale: 0, duration: 0.25 }, '<')
-      tl.to([...piezas].reverse(), { clipPath: 'inset(0% 0% 0% 100% round 14px)', duration: 0.4, ease: 'power2.in', stagger: 0.05 }, '<0.15')
+      tl.to([...piezas].reverse(), { clipPath: SALIDA, duration: 0.4, ease: 'power2.in', stagger: 0.05 }, '<0.15')
       tl.to({}, { duration: 0.35 })
     }
 
