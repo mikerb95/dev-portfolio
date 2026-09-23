@@ -227,6 +227,9 @@ const en = {
         { t: 'Prototype', d: 'Real React, real data, real constraints. Tested with end users.', time: 'Wk 4–8' },
         { t: 'Ship & mentoring', d: 'I build alongside your team. I leave them a system they can scale.', time: 'Wk 9+' },
       ],
+      estados: { pendiente: 'queued', corriendo: 'running', listo: 'done' },
+      consola: 'pipeline · stage {n} of {total}',
+      desplegado: 'In production',
     },
     expertise: {
       sectionLabel: 'Technical expertise',

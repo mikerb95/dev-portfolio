@@ -236,6 +236,11 @@ const es = {
         { t: 'Prototipo', d: 'React real, datos reales, límites reales. Testeado con los usuarios finales.', time: 'Sem 4–8' },
         { t: 'Ship & mentoring', d: 'Construyo junto a tu equipo. Les dejo un sistema que pueden escalar.', time: 'Sem 9+' },
       ],
+      // Pipeline animado (src/components/home/ProcesoPipeline.astro): cada etapa
+      // pasa por los mismos estados que un job de CI.
+      estados: { pendiente: 'en cola', corriendo: 'en curso', listo: 'listo' },
+      consola: 'pipeline · etapa {n} de {total}',
+      desplegado: 'En producción',
     },
     expertise: {
       sectionLabel: 'Expertise técnico',
