@@ -78,6 +78,10 @@ describe('paridad del diccionario es/en', () => {
         'lab.kpi.mutationScore',
         'lab.methodology.failOpenWord',
         'lab.pipeline.badgeRollback',
+        // Nombres cortos de los negocios de ejemplo del celular de /paginas-web:
+        // son marcas (ficticias), y una marca no se traduce.
+        'paginasWeb.demo.negocios[0].corto',
+        'paginasWeb.demo.negocios[2].corto',
         'lab.pipeline.testsLabel',
         'lab.upcoming.k6Title',
         'lab.upcoming.mutationTitle',
