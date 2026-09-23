@@ -1,0 +1,460 @@
+---
+// "Dónde ocurre la capacitación" de /capacitacion-ia: el aula real, vista por
+// cada tipo de visitante, con capturas de capacitaciones.codebymike.net en su modo
+// oscuro (public/assets/aula/).
+//
+// Tres pestañas, una por perfil de "aulaPuntos": quien asiste ve la entrada
+// por código, quien contrató ve el panel de su empresa y quien solo quiere
+// mirar recorre la portada con el temario (la captura se desplaza dentro del
+// marco). Las pestañas avanzan solas con una barra de progreso, se detienen al
+// apuntar la vitrina y se eligen con clic o teclado.
+//
+// Sin JS se ve la primera pestaña y los enlaces de las tres; con movimiento
+// reducido las pestañas funcionan pero sin avance automático ni barridos.
+import { Image } from 'astro:assets'
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
+
+interface Props {
+  aula: string
+}
+const { aula } = Astro.props
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const c = getDictionary(locale).capacitacionIa
+
+// Captura, dirección y color de cada vista: datos del aula, no texto.
+const VISTAS = [
+  { captura: '/assets/aula/ingresar.webp', alto: 467, ruta: '/ingresar', href: `${aula}/ingresar`, tono: 'cyan', corta: true },
+  { captura: '/assets/aula/empresa.webp', alto: 467, ruta: '/empresa', href: `${aula}/empresa`, tono: 'lime', corta: true },
+  { captura: '/assets/aula/inicio.webp', alto: 3606, ruta: '/', href: aula, tono: 'violet', corta: false },
+]
+const vistas = c.aulaPuntos.map((p, i) => ({ ...p, ...VISTAS[i] }))
+const dominio = aula.replace(/^https?:\/\//, '')
+---
+
+<section class="px-6 md:px-12 lg:px-20 pb-24">
+  <div class="max-w-[1180px] mx-auto">
+    <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 mb-4 leading-[1.05]">
+      {c.aulaHeading}
+    </h2>
+    <p class="max-w-[68ch] text-[15px] text-ink-200 leading-relaxed mb-10">{c.aulaIntro}</p>
+
+    <div class="av" data-aula>
+      <div class="av-pestanas" role="tablist" aria-label={c.aulaNombre}>
+        {vistas.map((v, i) => (
+          <button
+            class={`av-pestana av-${v.tono}`}
+            role="tab"
+            id={`av-tab-${i}`}
+            aria-controls={`av-panel-${i}`}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            tabindex={i === 0 ? 0 : -1}
+            data-i={i}
+          >
+            <span class="av-punto"></span>
+            <span class="av-pestana-txt">
+              <strong>{v.titulo}</strong>
+              <span>{v.detalle}</span>
+            </span>
+            <span class="av-progreso"><i></i></span>
+          </button>
+        ))}
+      </div>
+
+      <div class="av-marco">
+        <div class="av-barra" aria-hidden="true">
+          <span class="av-puntos"><i></i><i></i><i></i></span>
+          <span class="av-url">
+            <svg viewBox="0 0 24 24" width="11" height="11"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+            <span>{dominio}</span><span class="av-ruta">{vistas[0].ruta}</span>
+          </span>
+        </div>
+        <div class="av-vistas">
+          {vistas.map((v, i) => (
+            <div
+              class="av-vista"
+              role="tabpanel"
+              id={`av-panel-${i}`}
+              aria-labelledby={`av-tab-${i}`}
+              data-i={i}
+              data-ruta={v.ruta}
+              hidden={i !== 0}
+            >
+              <Image
+                class={`av-captura ${v.corta ? 'av-corta' : ''}`}
+                src={v.captura}
+                alt=""
+                width={1200}
+                height={v.alto}
+                widths={[700, 1200]}
+                sizes="(min-width: 1024px) 760px, 92vw"
+                quality={80}
+                loading="lazy"
+                decoding="async"
+              />
+              <a href={v.href} class="av-ir">
+                {v.enlace}
+                <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg>
+              </a>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <p class="mt-8 text-[13px] text-ink-300 leading-relaxed max-w-[76ch]">
+      {c.aulaNotaPre}
+      <a href={localizedHref('/capacitacion/acceso', locale)} class="text-lime hover:underline">{c.aulaNotaEnlace}</a>
+      {c.aulaNotaPost}
+    </p>
+  </div>
+</section>
+
+<style>
+  .av {
+    display: grid;
+    gap: 1.25rem;
+  }
+  @media (min-width: 1024px) {
+    .av {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+      gap: 2rem;
+      align-items: start;
+    }
+  }
+
+  /* ── Pestañas ── */
+  .av-pestanas {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .av-cyan {
+    --tono: #00f2ff;
+  }
+  .av-lime {
+    --tono: #c9ff5b;
+  }
+  .av-violet {
+    --tono: #a78bff;
+  }
+  .av-pestana {
+    position: relative;
+    display: grid;
+    grid-template-columns: 10px 1fr;
+    gap: 12px;
+    padding: 16px 18px 18px;
+    border-radius: 18px;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.02);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+      background-color 0.35s ease,
+      box-shadow 0.35s ease;
+  }
+  .av-pestana:hover {
+    background: rgba(255, 255, 255, 0.035);
+  }
+  .av-pestana[aria-selected='true'] {
+    background: color-mix(in srgb, var(--tono) 7%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tono) 35%, transparent);
+  }
+  .av-pestana:focus-visible {
+    outline: 2px solid var(--tono);
+    outline-offset: 2px;
+  }
+  .av-punto {
+    width: 8px;
+    height: 8px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: var(--tono);
+    opacity: 0.45;
+    transition: opacity 0.3s ease;
+  }
+  .av-pestana[aria-selected='true'] .av-punto {
+    opacity: 1;
+    box-shadow: 0 0 10px var(--tono);
+  }
+  .av-pestana-txt {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .av-pestana-txt strong {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-ink-100);
+  }
+  .av-pestana[aria-selected='true'] .av-pestana-txt strong {
+    color: var(--tono);
+  }
+  .av-pestana-txt span {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--color-ink-300);
+    transition: color 0.3s ease;
+  }
+  .av-pestana[aria-selected='true'] .av-pestana-txt span {
+    color: var(--color-ink-200);
+  }
+  /* Barra de avance automático de la pestaña activa. */
+  .av-progreso {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 8px;
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    opacity: 0;
+  }
+  .av-pestana[aria-selected='true'] .av-progreso {
+    opacity: 1;
+  }
+  .av-progreso i {
+    display: block;
+    height: 100%;
+    background: var(--tono);
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+
+  /* ── Marco de navegador ── */
+  .av-marco {
+    border-radius: 18px;
+    overflow: hidden;
+    background: #0b0e1a;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.09),
+      0 50px 100px -45px rgba(0, 0, 0, 0.95),
+      0 0 90px -40px rgba(201, 255, 91, 0.3);
+  }
+  .av-barra {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 36px;
+    padding: 0 12px;
+    background: #16171c;
+  }
+  .av-puntos {
+    display: flex;
+    gap: 6px;
+  }
+  .av-puntos i {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+  .av-url {
+    flex: 1;
+    max-width: 380px;
+    margin-inline: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 23px;
+    border-radius: 999px;
+    background: #24252c;
+    font-size: 11px;
+    color: var(--color-ink-100);
+  }
+  .av-url svg {
+    fill: none;
+    stroke: var(--color-ink-200);
+    stroke-width: 2;
+  }
+  .av-ruta {
+    margin-left: -6px;
+    color: var(--color-ink-300);
+  }
+  .av-vistas {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+  }
+  .av-vista {
+    position: absolute;
+    inset: 0;
+  }
+  .av-vista[hidden] {
+    display: block;
+    visibility: hidden;
+  }
+  .av-vista :global(.av-captura) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+  }
+  /* Las vistas de una sola pantalla (entrada por código, panel de empresa)
+     llenan el marco recortando los lados, que en esas páginas son fondo: el
+     formulario queda centrado y a buen tamaño en vez de flotar pequeño. */
+  .av-vista :global(.av-corta) {
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .av-ir {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(11, 14, 26, 0.85);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    font-size: 12.5px;
+    color: var(--color-ink-50);
+    transition:
+      box-shadow 0.3s ease,
+      color 0.3s ease;
+  }
+  .av-ir:hover {
+    color: var(--color-lime);
+    box-shadow: inset 0 0 0 1px rgba(201, 255, 91, 0.5);
+  }
+  .av-ir svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+
+  const raiz = document.querySelector<HTMLElement>('[data-aula]')
+  if (raiz) {
+    try {
+      montar(raiz)
+    } catch (err) {
+      console.warn('[aula] pestañas sin animar', err)
+    }
+  }
+
+  function montar(raiz: HTMLElement) {
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const pestanas = Array.from(raiz.querySelectorAll<HTMLButtonElement>('.av-pestana'))
+    const vistas = Array.from(raiz.querySelectorAll<HTMLElement>('.av-vista'))
+    const ruta = raiz.querySelector<HTMLElement>('.av-ruta')!
+    const DURACION = 7
+
+    let actual = 0
+    let progreso: gsap.core.Tween | null = null
+    let recorrido: gsap.core.Tween | null = null
+    let enPausa = false
+    let visible = false
+
+    // La portada del aula es larga: mientras está a la vista, la captura se
+    // desplaza sola dentro del marco, como si alguien la recorriera.
+    const recorrer = (vista: HTMLElement) => {
+      recorrido?.kill()
+      const img = vista.querySelector<HTMLElement>('.av-captura')!
+      gsap.set(img, { y: 0 })
+      const alto = img.offsetHeight - vista.clientHeight
+      if (reducido || alto <= 4) return
+      recorrido = gsap.to(img, { y: -alto, duration: DURACION - 0.8, ease: 'sine.inOut', delay: 0.6, paused: enPausa || !visible })
+    }
+
+    const avanzar = () => mostrar((actual + 1) % vistas.length, false)
+
+    const iniciarProgreso = () => {
+      progreso?.kill()
+      const barra = pestanas[actual].querySelector<HTMLElement>('.av-progreso i')!
+      pestanas.forEach((p) => gsap.set(p.querySelector('.av-progreso i'), { scaleX: 0 }))
+      if (reducido) return
+      progreso = gsap.to(barra, { scaleX: 1, duration: DURACION, ease: 'none', onComplete: avanzar, paused: enPausa || !visible })
+    }
+
+    const mostrar = (i: number, conFoco: boolean) => {
+      const previa = vistas[actual]
+      const nueva = vistas[i]
+      pestanas.forEach((p, k) => {
+        p.setAttribute('aria-selected', String(k === i))
+        p.tabIndex = k === i ? 0 : -1
+      })
+      if (conFoco) pestanas[i].focus()
+      ruta.textContent = nueva.dataset.ruta ?? ''
+      if (previa !== nueva) {
+        nueva.hidden = false
+        if (reducido) {
+          previa.hidden = true
+        } else {
+          gsap.killTweensOf([previa, nueva])
+          gsap.set(nueva, { zIndex: 2 })
+          gsap.set(previa, { zIndex: 1 })
+          gsap.fromTo(
+            nueva,
+            { clipPath: 'inset(0% 0% 0% 100%)' },
+            {
+              clipPath: 'inset(0% 0% 0% 0%)',
+              duration: 0.8,
+              ease: 'expo.inOut',
+              onComplete: () => {
+                previa.hidden = true
+                gsap.set(nueva, { clearProps: 'clipPath' })
+              },
+            },
+          )
+          gsap.fromTo(nueva.querySelector('.av-captura'), { scale: 1.06 }, { scale: 1, duration: 1.1, ease: 'expo.out' })
+        }
+      }
+      actual = i
+      recorrer(nueva)
+      iniciarProgreso()
+    }
+
+    pestanas.forEach((p, i) => {
+      p.addEventListener('click', () => mostrar(i, false))
+      p.addEventListener('keydown', (e) => {
+        const n = pestanas.length
+        const destino =
+          e.key === 'ArrowDown' || e.key === 'ArrowRight' ? (i + 1) % n
+          : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? (i - 1 + n) % n
+          : e.key === 'Home' ? 0
+          : e.key === 'End' ? n - 1
+          : -1
+        if (destino < 0) return
+        e.preventDefault()
+        mostrar(destino, true)
+      })
+    })
+
+    const pausar = (si: boolean) => {
+      enPausa = si
+      const correr = !enPausa && visible
+      if (correr) {
+        progreso?.resume()
+        recorrido?.resume()
+      } else {
+        progreso?.pause()
+        recorrido?.pause()
+      }
+    }
+    // Se detiene mientras alguien mira o interactúa con la vitrina: una pestaña
+    // que cambia bajo el cursor es una pestaña que no se deja leer.
+    raiz.addEventListener('pointerenter', () => pausar(true))
+    raiz.addEventListener('pointerleave', () => pausar(false))
+    raiz.addEventListener('focusin', () => pausar(true))
+    raiz.addEventListener('focusout', (e) => !raiz.contains(e.relatedTarget as Node | null) && pausar(false))
+
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting && !document.hidden
+      pausar(enPausa)
+    }).observe(raiz)
+
+    mostrar(0, false)
+  }
+</script>

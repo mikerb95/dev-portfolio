@@ -108,7 +108,6 @@ const casos = interpolate(t.casos, { ok: 47, total: 50 })
               ))}
             </tbody>
           </table>
-          <span class="pd-dup-etq">{d.equipos.duplicado}</span>
           <span class="pd-resumen">
             <svg viewBox="0 0 24 24" width="11" height="11"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
             {d.equipos.resumen}
@@ -176,7 +175,7 @@ const casos = interpolate(t.casos, { ok: 47, total: 50 })
   }
   .pd-pantalla {
     position: relative;
-    height: 212px;
+    height: 236px;
     padding: 16px;
     background: linear-gradient(180deg, rgba(8, 8, 12, 0.75), rgba(8, 8, 12, 0.35));
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -323,19 +322,6 @@ const casos = interpolate(t.casos, { ok: 47, total: 50 })
     color: var(--color-ink-300);
     text-decoration: line-through;
   }
-  .pd-dup-etq {
-    position: absolute;
-    right: 14px;
-    top: 104px;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: rgba(255, 107, 61, 0.15);
-    font-family: var(--font-mono);
-    font-size: 8.5px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-ember);
-  }
   .pd-resumen {
     position: absolute;
     left: 12px;
@@ -464,16 +450,13 @@ const casos = interpolate(t.casos, { ok: 47, total: 50 })
     },
 
     // Cada celda aparece escrita "a la mala" y se corrige; al final el
-    // duplicado se tacha y sale el resumen.
+    // duplicado se tacha (sin etiqueta encima: tapaba la ciudad, y el resumen
+    // ya lo cuenta) y sale el resumen.
     equipos(t) {
       const filas = Array.from(t.querySelectorAll<HTMLElement>('tbody tr'))
       const celdas = Array.from(t.querySelectorAll<HTMLElement>('td[data-sucio]'))
       const dup = t.querySelector<HTMLElement>('.pd-dup')
-      const etq = t.querySelector<HTMLElement>('.pd-dup-etq')!
       const resumen = t.querySelector<HTMLElement>('.pd-resumen')!
-      // La etiqueta se alinea con la fila duplicada medida, no con un número
-      // fijo: la altura de las filas depende de la fuente.
-      if (dup) etq.style.top = `${dup.offsetTop + (t.querySelector('table')?.offsetTop ?? 0) + dup.offsetHeight / 2 - 8}px`
       const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.4, paused: true })
       tl.call(() => {
         celdas.forEach((c) => {
@@ -483,7 +466,7 @@ const casos = interpolate(t.casos, { ok: 47, total: 50 })
         })
         dup?.classList.remove('pd-dup')
       })
-        .set([etq, resumen], { opacity: 0 })
+        .set(resumen, { opacity: 0 })
         .set(filas, { opacity: 1 })
         .to({}, { duration: 1.1 })
       celdas.forEach((c, i) => {
@@ -494,7 +477,6 @@ const casos = interpolate(t.casos, { ok: 47, total: 50 })
         }, [], i === 0 ? '>' : '>+0.09')
       })
       tl.call(() => dup?.classList.add('pd-dup'), [], '+=0.4')
-        .fromTo(etq, { opacity: 0, x: 8 }, { opacity: 1, x: 0, duration: 0.35 })
         .call(() => celdas.forEach((c) => c.classList.remove('pd-limpia')), [], '+=0.5')
         .fromTo(resumen, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4 })
         .to({}, { duration: 2.4 })

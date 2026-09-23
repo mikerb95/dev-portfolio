@@ -1,0 +1,613 @@
+---
+// "Cómo funciona" de /capacitacion-ia como una línea de tiempo en días, del
+// diagnóstico a la revisión del día 30.
+//
+// En escritorio la sección se fija y el scroll vertical desplaza las cuatro
+// fases en horizontal sobre una regla de días; un contador grande dice en qué
+// punto va ("Antes", "Día 0" … "Día 30"). Cada fase trae la pieza que produce:
+//   · Diagnóstico: el mapa del proceso, con el paso donde entra la IA.
+//   · Sesión: el ejercicio, armado con documentos de la propia empresa.
+//   · Material: el aula y el banco de recursos, unidos por el código del grupo.
+//   · Revisión: qué se quedó en el día a día y qué hay que ajustar.
+// Es la forma que cuenta el argumento de la página: la capacitación no termina
+// el día de la sesión, termina el día 30.
+//
+// Sin JS, o en móvil, o con movimiento reducido, las fases son una rejilla
+// normal y cada pieza está en su estado final: el desplazamiento horizontal es
+// una mejora que activa el script, no la maqueta de partida.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+const c = getDictionary(getLocaleFromUrl(Astro.url.pathname)).capacitacionIa
+const d = c.dias
+const fases = c.pasos.map((p, i) => ({ ...p, fase: d.fases[i], n: String(i + 1).padStart(2, '0') }))
+const TICKS = 31
+---
+
+<section id="proceso" class="pr">
+  <div class="pr-escena px-6 md:px-12 lg:px-20" data-dias data-antes={d.fases[0]} data-dia={d.fases[1].replace(/\s*\d+\s*$/, '')}>
+    <div class="max-w-[1180px] mx-auto w-full">
+      <div class="pr-cabecera">
+        <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05]">
+          {c.procesoHeading}
+        </h2>
+        <div class="pr-contador" aria-hidden="true">
+          <span class="pr-contador-txt">{d.fases[3]}</span>
+        </div>
+      </div>
+
+      <div class="pr-ventana">
+        <ol class="pr-pista">
+          {fases.map((f, i) => (
+            <li class="pr-panel" data-panel={i}>
+              <div class="pr-meta">
+                <span class="pr-n">{f.n}</span>
+                <span class="pr-fase">{f.fase}</span>
+              </div>
+              <h3 class="pr-titulo">{f.titulo}</h3>
+              <p class="pr-detalle">{f.detalle}</p>
+
+              <div class="pr-pieza" aria-hidden="true" data-pieza={i}>
+                {i === 0 && (
+                  <div class="pz-mapa">
+                    {d.mapa.map((m, k) => (
+                      <>
+                        <span class={`pz-nodo ${k === 2 ? 'pz-ia' : ''}`}>{m}</span>
+                        {k < d.mapa.length - 1 && <span class="pz-flecha"></span>}
+                      </>
+                    ))}
+                    <span class="pz-aqui">{d.aqui}</span>
+                  </div>
+                )}
+                {i === 1 && (
+                  <div class="pz-ejercicio">
+                    <span class="pz-ej-n">{d.ejercicio}</span>
+                    <strong class="pz-ej-t">{d.ejercicioTitulo}</strong>
+                    <span class="pz-archivos">
+                      {d.archivos.map((a) => (
+                        <span class="pz-archivo">
+                          <svg viewBox="0 0 24 24" width="12" height="12"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
+                          {a}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                )}
+                {i === 2 && (
+                  <div class="pz-material">
+                    <span class="pz-caja">
+                      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 10 12 5l9 5-9 5z" /><path d="M7 12v4c0 1.2 2.2 2.5 5 2.5s5-1.3 5-2.5v-4" /></svg>
+                      {d.aula}
+                    </span>
+                    <span class="pz-llave">
+                      <svg viewBox="0 0 24 24" width="12" height="12"><circle cx="8" cy="15" r="4" /><path d="m11 12 8-8M16 7l2 2M14 9l2 2" /></svg>
+                      {d.codigo}
+                    </span>
+                    <span class="pz-caja">
+                      <svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M8 9h8M8 13h8M8 17h5" /></svg>
+                      {d.banco}
+                    </span>
+                  </div>
+                )}
+                {i === 3 && (
+                  <ul class="pz-revision">
+                    {d.revision.map((r) => (
+                      <li class={r.ok ? 'pz-ok' : 'pz-no'}>
+                        <span class="pz-check">
+                          {r.ok ? (
+                            <svg viewBox="0 0 24 24" width="11" height="11"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" width="11" height="11"><path d="M12 7v6M12 17h.01" /></svg>
+                          )}
+                        </span>
+                        <span class="pz-rt">{r.t}</span>
+                        <span class="pz-estado">{r.ok ? d.seQuedo : d.ajustar}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div class="pr-regla" aria-hidden="true">
+        <span class="pr-antes">{d.fases[0]}</span>
+        <span class="pr-ticks">
+          {Array.from({ length: TICKS }, (_, k) => (
+            <i class={k % 5 === 0 ? 'mayor' : ''}></i>
+          ))}
+          <span class="pr-rotulo" style="left:0%">0</span>
+          <span class="pr-rotulo" style="left:100%">30</span>
+        </span>
+        <span class="pr-cursor"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pr-escena {
+    position: relative;
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+  .pr-cabecera {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  .pr-contador {
+    display: none;
+  }
+
+  /* ── Maqueta de partida: rejilla (sin JS, móvil, movimiento reducido) ── */
+  .pr-pista {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .pr-pista {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .pr-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 1.75rem;
+    border-radius: 24px;
+    background: #101014;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
+    transition: opacity 0.5s ease;
+  }
+  .pr-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pr-n {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 44px;
+    line-height: 1;
+    color: var(--color-lime);
+  }
+  .pr-fase {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(201, 255, 91, 0.1);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-lime);
+  }
+  .pr-titulo {
+    margin-top: 1.1rem;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-ink-50);
+  }
+  .pr-detalle {
+    margin-top: 0.6rem;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--color-ink-200);
+  }
+  .pr-pieza {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    min-height: 118px;
+    display: flex;
+    align-items: flex-end;
+  }
+  .pr-regla {
+    display: none;
+  }
+
+  /* ── Modo horizontal: lo activa el script en escritorio ── */
+  :global(.pr-vivo) .pr-escena {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    padding-top: 4.5rem;
+    padding-bottom: 2rem;
+  }
+  :global(.pr-vivo) .pr-contador {
+    display: block;
+  }
+  /* Los bordes de la pista se desvanecen: el panel que entra o sale asoma en
+     vez de quedar cortado a cuchillo. */
+  :global(.pr-vivo) .pr-ventana {
+    overflow: hidden;
+    margin-inline: -1rem;
+    padding: 0.5rem 1rem;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 92%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 92%, transparent 100%);
+  }
+  :global(.pr-vivo) .pr-pista {
+    display: flex;
+    gap: 1.25rem;
+    width: max-content;
+    will-change: transform;
+  }
+  :global(.pr-vivo) .pr-panel {
+    width: min(460px, 38vw);
+    min-height: 400px;
+  }
+  :global(.pr-vivo) .pr-panel:not(.activo) {
+    opacity: 0.38;
+  }
+  :global(.pr-vivo) .pr-regla {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 2.25rem;
+  }
+
+  .pr-contador-txt {
+    display: block;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(44px, 5vw, 72px);
+    line-height: 1;
+    color: var(--color-lime);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .pr-antes {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-300);
+  }
+  .pr-ticks {
+    position: relative;
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 16px;
+  }
+  .pr-ticks i {
+    width: 1px;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .pr-ticks i.mayor {
+    height: 14px;
+    background: rgba(255, 255, 255, 0.35);
+  }
+  .pr-rotulo {
+    position: absolute;
+    top: 20px;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-ink-300);
+  }
+  .pr-cursor {
+    position: absolute;
+    left: 0;
+    top: -6px;
+    width: 3px;
+    height: 28px;
+    margin-left: -1.5px;
+    border-radius: 3px;
+    background: var(--color-lime);
+    box-shadow: 0 0 16px rgba(201, 255, 91, 0.7);
+  }
+
+  /* ── Piezas ── */
+  .pz-mapa {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 22px;
+  }
+  .pz-nodo {
+    padding: 7px 11px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    color: var(--color-ink-100);
+  }
+  .pz-ia {
+    background: rgba(201, 255, 91, 0.12);
+    box-shadow:
+      inset 0 0 0 1px rgba(201, 255, 91, 0.6),
+      0 0 0 5px rgba(201, 255, 91, 0.08);
+    color: var(--color-lime);
+  }
+  .pz-flecha {
+    width: 14px;
+    height: 1.5px;
+    background: rgba(255, 255, 255, 0.25);
+    position: relative;
+  }
+  .pz-flecha::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -3px;
+    border: 4px solid transparent;
+    border-left-color: rgba(255, 255, 255, 0.35);
+    border-right-width: 0;
+  }
+  .pz-aqui {
+    position: absolute;
+    top: 0;
+    left: var(--aqui, 50%);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-lime);
+    white-space: nowrap;
+  }
+
+  .pz-ejercicio {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(167, 139, 255, 0.07);
+    box-shadow: inset 0 0 0 1px rgba(167, 139, 255, 0.25);
+  }
+  .pz-ej-n {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-violet);
+  }
+  .pz-ej-t {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-ink-50);
+  }
+  .pz-archivos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .pz-archivo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-ink-100);
+  }
+  .pz-archivo svg,
+  .pz-caja svg,
+  .pz-llave svg,
+  .pz-check svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .pz-material {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .pz-caja {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    text-align: center;
+    color: var(--color-ink-50);
+  }
+  .pz-caja svg {
+    color: var(--color-lime);
+  }
+  .pz-llave {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: rgba(201, 255, 91, 0.1);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--color-lime);
+    white-space: nowrap;
+  }
+
+  .pz-revision {
+    width: 100%;
+    display: grid;
+    gap: 8px;
+  }
+  .pz-revision li {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--color-ink-50);
+  }
+  .pz-check {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 7px;
+  }
+  .pz-ok .pz-check {
+    background: var(--color-lime);
+    color: var(--color-ink-950);
+  }
+  .pz-no .pz-check {
+    background: rgba(255, 107, 61, 0.18);
+    color: var(--color-ember);
+  }
+  .pz-estado {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .pz-ok .pz-estado {
+    color: var(--color-lime);
+  }
+  .pz-no .pz-estado {
+    color: var(--color-ember);
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  const escena = document.querySelector<HTMLElement>('[data-dias]')
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (escena && !reducido) {
+    try {
+      montar(escena)
+    } catch (err) {
+      // Fail-open: sin el modo horizontal queda la rejilla, completa.
+      console.warn('[dias] rejilla quieta', err)
+      escena.closest('.pr')?.classList.remove('pr-vivo')
+    }
+  }
+
+  function montar(escena: HTMLElement) {
+    const seccion = escena.closest<HTMLElement>('.pr')!
+    const paneles = Array.from(escena.querySelectorAll<HTMLElement>('.pr-panel'))
+    const piezas = paneles.map((p) => p.querySelector<HTMLElement>('.pr-pieza')!)
+    const antes = escena.dataset.antes ?? ''
+    const diaTxt = escena.dataset.dia ?? ''
+
+    // Ubica la etiqueta "aquí entra la IA" sobre el nodo marcado.
+    const mapa = escena.querySelector<HTMLElement>('.pz-mapa')
+    const nodoIa = mapa?.querySelector<HTMLElement>('.pz-ia')
+    const ubicarAqui = () => {
+      if (mapa && nodoIa) mapa.style.setProperty('--aqui', `${nodoIa.offsetLeft}px`)
+    }
+    ubicarAqui()
+
+    // Línea de tiempo de cada pieza: se reproduce cuando su fase queda activa.
+    const lineas: gsap.core.Timeline[] = piezas.map((pieza, i) => {
+      const tl = gsap.timeline({ paused: true })
+      if (i === 0) {
+        const nodos = pieza.querySelectorAll('.pz-nodo, .pz-flecha')
+        tl.from(nodos, { opacity: 0, x: -10, duration: 0.35, stagger: 0.09 })
+          .from(pieza.querySelector('.pz-ia'), { boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.1), 0 0 0 0px rgba(201,255,91,0)', backgroundColor: 'rgba(255,255,255,0.04)', color: '#c4c4cc', duration: 0.45 })
+          .from(pieza.querySelector('.pz-aqui'), { opacity: 0, y: 6, duration: 0.35 }, '<0.1')
+      } else if (i === 1) {
+        tl.from(pieza.querySelector('.pz-ejercicio'), { opacity: 0, y: 14, duration: 0.5, ease: 'expo.out' })
+          .from(pieza.querySelectorAll('.pz-archivo'), { opacity: 0, scale: 0.8, duration: 0.35, stagger: 0.12, ease: 'back.out(2)' }, '-=0.15')
+      } else if (i === 2) {
+        const cajas = pieza.querySelectorAll('.pz-caja')
+        tl.from(cajas, { opacity: 0, y: 14, duration: 0.45, stagger: 0.12, ease: 'expo.out' })
+          .from(pieza.querySelector('.pz-llave'), { opacity: 0, scale: 0.5, duration: 0.45, ease: 'back.out(2.5)' }, '-=0.1')
+      } else {
+        const filas = pieza.querySelectorAll('li')
+        tl.from(filas, { opacity: 0, x: -12, duration: 0.4, stagger: 0.18, ease: 'expo.out' })
+          .from(pieza.querySelectorAll('.pz-check'), { scale: 0, duration: 0.35, stagger: 0.18, ease: 'back.out(3)' }, 0.1)
+      }
+      return tl
+    })
+
+    const mm = gsap.matchMedia()
+
+    // Escritorio con alto suficiente: pista horizontal fijada.
+    mm.add('(min-width: 1024px) and (min-height: 700px)', () => {
+      seccion.classList.add('pr-vivo')
+      ubicarAqui()
+      const ventana = escena.querySelector<HTMLElement>('.pr-ventana')!
+      const pista = escena.querySelector<HTMLElement>('.pr-pista')!
+      const cursor = escena.querySelector<HTMLElement>('.pr-cursor')!
+      const ticks = escena.querySelector<HTMLElement>('.pr-ticks')!
+      const contador = escena.querySelector<HTMLElement>('.pr-contador-txt')!
+      const recorrido = () => Math.max(0, pista.scrollWidth - ventana.clientWidth)
+
+      let activo = -1
+      let textoPrevio = ''
+      const activar = (i: number) => {
+        if (i === activo) return
+        activo = i
+        paneles.forEach((p, k) => p.classList.toggle('activo', k === i))
+        lineas[i].restart()
+      }
+
+      // Regla: la primera cuarta parte del recorrido es "antes" (el
+      // diagnóstico); de ahí al final corren los días 0 a 30.
+      const pintar = (p: number) => {
+        const t = Math.min(1, Math.max(0, (p - 1 / 3) / (2 / 3)))
+        const reglaIzq = ticks.offsetLeft
+        const x = p < 1 / 3 ? reglaIzq * (p * 3) : reglaIzq + ticks.offsetWidth * t
+        cursor.style.transform = `translateX(${x.toFixed(1)}px)`
+        const texto = p < 0.3 ? antes : `${diaTxt} ${String(Math.round(t * 30)).padStart(2, '0')}`
+        if (texto !== textoPrevio) {
+          contador.textContent = texto
+          textoPrevio = texto
+        }
+        activar(Math.min(paneles.length - 1, Math.round(p * (paneles.length - 1))))
+      }
+
+      const tween = gsap.to(pista, {
+        x: () => -recorrido(),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: seccion,
+          start: 'top top',
+          end: () => `+=${Math.round(recorrido() * 1.25)}`,
+          pin: escena,
+          scrub: 0.7,
+          invalidateOnRefresh: true,
+          onUpdate: (st) => pintar(st.progress),
+          onRefresh: (st) => pintar(st.progress),
+        },
+      })
+      pintar(0)
+
+      return () => {
+        tween.scrollTrigger?.kill()
+        tween.kill()
+        seccion.classList.remove('pr-vivo')
+        paneles.forEach((p) => p.classList.remove('activo'))
+        gsap.set(pista, { clearProps: 'transform' })
+      }
+    })
+
+    // Móvil o pantallas bajas: rejilla, y cada pieza se anima al entrar.
+    mm.add('(max-width: 1023px), (max-height: 699px)', () => {
+      const triggers = piezas.map((pieza, i) =>
+        ScrollTrigger.create({ trigger: pieza, start: 'top 88%', once: true, onEnter: () => lineas[i].restart() }),
+      )
+      return () => triggers.forEach((t) => t.kill())
+    })
+  }
+</script>

@@ -77,16 +77,16 @@ const faqs = pw.faqs
           <span class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-100">{pw.hero.badge}</span>
         </div>
 
-        <h1 class="pw-titular font-sans font-medium tracking-[-.035em] leading-[1.02] text-[clamp(38px,5.6vw,72px)] text-ink-50">
-          <span class="pw-linea block">{pw.hero.h1Line1}</span>{' '}
-          <span class="pw-linea block text-ember">{pw.hero.h1Line2}</span>
+        <h1 class="font-sans font-medium tracking-[-.035em] leading-[1.02] text-[clamp(38px,5.6vw,72px)] text-ink-50">
+          <span data-hero-linea class="block">{pw.hero.h1Line1}</span>{' '}
+          <span data-hero-linea class="block text-ember">{pw.hero.h1Line2}</span>
         </h1>
 
-        <p class="mt-7 text-[17px] md:text-[19px] text-ink-100 leading-relaxed max-w-xl">
+        <p data-hero-sigue class="mt-7 text-[17px] md:text-[19px] text-ink-100 leading-relaxed max-w-xl">
           {pw.hero.intro}
         </p>
 
-        <div class="mt-10 flex flex-wrap items-center gap-3">
+        <div data-hero-sigue class="mt-10 flex flex-wrap items-center gap-3">
           <a
             href={waLink(pw.hero.waMessage)}
             target="_blank"
@@ -105,7 +105,7 @@ const faqs = pw.faqs
           </a>
         </div>
 
-        <p class="mt-6 text-[13px] text-ink-300">
+        <p data-hero-sigue class="mt-6 text-[13px] text-ink-300">
           {pw.hero.trust}
         </p>
       </div>
@@ -367,113 +367,10 @@ const faqs = pw.faqs
 </script>
 
 <script>
-  // Motion de /paginas-web. Las piezas grandes viven en sus componentes
-  // (celular del hero, beneficios, taller, trabajos); aquí va lo transversal:
-  // scroll suave, titular del hero por palabras, titulares de sección por
-  // líneas, entradas escalonadas por rejilla, precios en odómetro, botones
-  // magnéticos, luz que sigue al cursor y el acordeón de preguntas.
-  // Con movimiento reducido no se monta nada: la página se lee completa y
-  // quieta, y las preguntas abren con el comportamiento nativo del navegador.
-  import Lenis from 'lenis'
-  import gsap from 'gsap'
-  import { ScrollTrigger } from 'gsap/ScrollTrigger'
-  import { SplitText } from 'gsap/SplitText'
-  import { foco, inclinar, magnetico, odometro, punteroFino, revelarTitular } from '../lib/motion/efectos'
+  // Motion transversal de la landing (scroll suave, titulares, entradas,
+  // botones magnéticos, luz, acordeón): src/lib/motion/landing.ts. Las piezas
+  // grandes (celular, beneficios, taller, trabajos) viven en sus componentes.
+  import { montarLanding } from '../lib/motion/landing'
 
-  gsap.registerPlugin(ScrollTrigger, SplitText)
-
-  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  if (!reducido) {
-    const lenis = new Lenis()
-    lenis.on('scroll', ScrollTrigger.update)
-    gsap.ticker.add((time) => lenis.raf(time * 1000))
-    gsap.ticker.lagSmoothing(0)
-
-    // Fail-open: si algo falla a medio montar, se devuelve todo lo que pudo
-    // quedar escondido a su sitio. Una animación de entrada que deja una
-    // sección en blanco no es decoración, es una caída.
-    try {
-      // Titular del hero: cada palabra sube desde su ranura, línea tras línea.
-      const lineas = Array.from(document.querySelectorAll<HTMLElement>('.pw-linea'))
-      lineas.forEach((l, i) => {
-        const split = new SplitText(l, { type: 'words', mask: 'words' })
-        gsap.from(split.words, { yPercent: 110, duration: 1.1, ease: 'expo.out', stagger: 0.06, delay: 0.1 + i * 0.18 })
-      })
-      gsap.from('.pw-titular ~ p, .pw-titular ~ div, .pw-titular ~ p ~ p', {
-        y: 18,
-        opacity: 0,
-        duration: 0.9,
-        ease: 'expo.out',
-        stagger: 0.08,
-        delay: 0.55,
-        clearProps: 'transform,opacity',
-      })
-      gsap.from('[data-telefono]', { y: 60, opacity: 0, rotation: 4, duration: 1.4, ease: 'expo.out', delay: 0.35, clearProps: 'transform,opacity' })
-
-      document.querySelectorAll<HTMLElement>('[data-titular]').forEach(revelarTitular)
-
-      document.querySelectorAll<HTMLElement>('[data-entrada]').forEach((rejilla) => {
-        gsap.from(rejilla.children, {
-          y: 34,
-          opacity: 0,
-          duration: 0.9,
-          ease: 'expo.out',
-          stagger: 0.08,
-          clearProps: 'transform,opacity',
-          scrollTrigger: { trigger: rejilla, start: 'top 86%' },
-        })
-      })
-      // Las tarjetas de beneficios traen su propia pantalla animada; aquí solo
-      // entran, igual que las demás rejillas.
-      gsap.from('[data-beneficios] > *', {
-        y: 34,
-        opacity: 0,
-        duration: 0.9,
-        ease: 'expo.out',
-        stagger: 0.08,
-        clearProps: 'transform,opacity',
-        scrollTrigger: { trigger: '[data-beneficios]', start: 'top 86%' },
-      })
-
-      document.querySelectorAll<HTMLElement>('[data-odometro]').forEach(odometro)
-
-      if (punteroFino()) {
-        document.querySelectorAll<HTMLElement>('[data-magnetico]').forEach((el) => magnetico(el))
-        document.querySelectorAll<HTMLElement>('[data-foco]').forEach((el) => foco(el))
-        const tel = document.querySelector<HTMLElement>('[data-telefono]')
-        if (tel) inclinar(tel, 5)
-      }
-
-      // Preguntas frecuentes: abren y cierran deslizando en vez de saltar.
-      // <details> sigue siendo el elemento (teclado, lectores de pantalla y
-      // búsqueda del navegador funcionan igual); solo se anima la altura.
-      document.querySelectorAll<HTMLDetailsElement>('[data-faq] details').forEach((d) => {
-        const resumen = d.querySelector('summary')
-        const cuerpo = d.querySelector<HTMLElement>('.faq-cuerpo')
-        if (!resumen || !cuerpo) return
-        resumen.addEventListener('click', (e) => {
-          e.preventDefault()
-          if (d.open) {
-            gsap.to(cuerpo, {
-              height: 0,
-              opacity: 0,
-              duration: 0.35,
-              ease: 'power2.inOut',
-              onComplete: () => {
-                d.open = false
-                gsap.set(cuerpo, { clearProps: 'height,opacity' })
-              },
-            })
-          } else {
-            d.open = true
-            gsap.fromTo(cuerpo, { height: 0, opacity: 0 }, { height: 'auto', opacity: 1, duration: 0.5, ease: 'expo.out', clearProps: 'height' })
-          }
-        })
-      })
-    } catch (err) {
-      console.warn('[paginas-web] motion deshabilitado tras un fallo', err)
-      gsap.set('[data-entrada] > *, [data-beneficios] > *, [data-telefono], .titular-linea', { clearProps: 'transform,opacity' })
-    }
-  }
+  montarLanding({ inclinarPieza: 5 })
 </script>

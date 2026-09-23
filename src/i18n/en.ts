@@ -1599,7 +1599,6 @@ const en = {
       equipos: {
         cabecera: ['Customer', 'Date', 'City'],
         fechasSucias: ['9/3/26', 'Sept 4, 2026', '09-03-2026', 'Sep 5'],
-        duplicado: 'duplicate',
         resumen: '3 customers · 1 duplicate removed',
       },
       tecnicos: {

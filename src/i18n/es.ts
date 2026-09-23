@@ -1642,7 +1642,6 @@ const es = {
         // escribe a su manera. El resto de la tabla (nombres, ciudades) son datos
         // y viven en el componente.
         fechasSucias: ['3/9/26', 'sept 4 2026', '03-09-2026', '5 sep'],
-        duplicado: 'duplicado',
         resumen: '3 clientes · 1 duplicado quitado',
       },
       tecnicos: {
