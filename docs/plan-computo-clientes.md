@@ -155,16 +155,21 @@ duración por visita, peso de la respuesta) y responde:
 ## 6. Fases
 
 - ✅ **Fase 0** (7 sep): cálculo, tarifas, ingesta, rollup, migración 0031.
-- **Fase 1**: medidor con adaptadores Astro, Express y `fetch`; pruebas de
-  contrato contra `validarLote` y `verificarLote`, y de punta a punta contra
-  la ingesta real con libSQL temporal. Ingesta atómica: marca de lote y horas
-  en un solo `db.batch`, y un error que no sea UNIQUE responde 503 para que el
-  medidor reintente (antes cualquier fallo se tomaba como "duplicado" y el
-  lote se perdía).
-- **Fase 2**: alta de proyectos medidos (generar y rotar el secreto, activar o
-  pausar) y panel `/admin/computo` con la cuota compartida.
-- **Fase 3**: avisos de cuota por ntfy desde `computo-rollup`.
-- **Fase 4**: cotizador de hosting fijo.
+- ✅ **Fase 1** (22 sep): medidor con adaptadores Astro, Express y `fetch`
+  (`tests/medidor.test.ts`, 28 casos, con el contrato contra `validarLote` y
+  `verificarLote`), y de punta a punta contra la ingesta real con libSQL
+  temporal (`tests/medidor-ingesta.test.ts`). Ingesta atómica: marca de lote y
+  horas en un solo `db.batch`, y un error que no sea UNIQUE responde 503 para
+  que el medidor reintente. Antes cualquier fallo se tomaba como "duplicado" y
+  el lote se perdía; la prueba de atomicidad falla contra esa versión.
+- ✅ **Fase 2** (22 sep): alta de proyectos medidos en
+  `POST/PATCH /api/admin/computo/proyectos` (`tests/computo-alta.test.ts`) y
+  panel `/admin/computo` con la cuota compartida.
+- ✅ **Fase 3** (22 sep): avisos de cuota por ntfy desde `computo-rollup`
+  (`src/lib/computo/avisos.ts`; decisión pura en `cuota.ts`,
+  `tests/computo-cuota.test.ts`).
+- ✅ **Fase 4** (22 sep): cotizador de hosting fijo (`cotizador.ts`,
+  `e2e/computo.spec.ts`).
 - **Fase 5** (pendiente): instalar el medidor en el primer sitio de cliente y
   en el propio portafolio, y contrastar una semana contra el dashboard de
   Vercel. Sin el portafolio medido, el porcentaje de la cuota excluye a
@@ -172,6 +177,28 @@ duración por visita, peso de la respuesta) y responde:
 - **Fase 6** (pendiente, solo si la Fase 5 muestra que importa): punto ciego de
   estáticos con un beacon en el navegador (Resource Timing: peticiones y
   `transferSize` del mismo origen por página vista).
+
+### Decisiones que surgieron al implementar
+
+- **El cotizador estima desde visitas, no desde invocaciones.** `Estimacion` y
+  `usoDesdeEstimacion` de `calculo.ts` parten de las invocaciones y no pueden
+  representar un sitio estático, que tiene cero invocaciones y es justo el que
+  más transferencia gasta. `usoDesdeVisitas` (`cotizador.ts`) las reemplaza en
+  el panel; las viejas se dejaron donde estaban porque tienen pruebas propias.
+- **La cuota sugerida sale del asiento Pro.** Con el cómputo a cero, el piso
+  defendible es la parte de cada cliente en los 20 USD del asiento Pro que el
+  uso comercial exigiría (`ASIENTO_PRO_USD` del catálogo de `infra-stack.ts`,
+  repartido entre el número de clientes). Para el sitio SSR de la plantilla el
+  cómputo equivalente en Pro es ~1 USD al mes, casi todo transferencia, y manda
+  el asiento.
+- **El reinicio del mes se pinta en UTC** ("1 oct (UTC)"): el corte vive en
+  UTC en `periodo.ts`, y en hora de Bogotá las 00:00 UTC del 1 de octubre
+  todavía son 30 de septiembre.
+- **Verificación en vivo** (22 sep): un servidor `http` de Node 24 cargando
+  `medidor.ts` sin compilar, con el adaptador Express, contra la ingesta del
+  servidor de desarrollo sobre una base libSQL en archivo. 5 peticiones (2
+  concurrentes) llegaron como 5 invocaciones, 150 bytes y 784 ms de memoria
+  ocupada: las concurrentes contaron el tiempo una vez.
 
 ## 7. Seguridad
 
