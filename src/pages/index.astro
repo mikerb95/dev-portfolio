@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
-import ProjectCard from '../components/ProjectCard.astro'
+import ProyectosIndice from '../components/home/ProyectosIndice.astro'
 import GithubProjects from '../components/GithubProjects.astro'
 import { db } from '../db'
 import { projects } from '../db/schema'
@@ -453,33 +453,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   </section>
 
   <!-- ── Proyectos ── -->
-  {visibleProjects.length > 0 && (
-    <section id="proyectos" class="px-6 md:px-12 lg:px-20 py-24 border-t border-white/5">
-      <div class="max-w-[1280px] mx-auto">
-        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-          <span class="text-cyan">/02</span>
-          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-          <span>{t.proyectos.sectionLabel}</span>
-        </div>
-        <h2 class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask max-w-2xl leading-[1] mb-12">
-          {t.proyectos.title}
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {visibleProjects.map((p) => (
-            <ProjectCard
-              slug={p.slug}
-              title={p.title}
-              titleEn={p.titleEn}
-              description={p.description}
-              descriptionEn={p.descriptionEn}
-              techStack={p.techStack}
-              screenshotUrl={p.screenshotUrl}
-            />
-          ))}
-        </div>
-      </div>
-    </section>
-  )}
+  {visibleProjects.length > 0 && <ProyectosIndice proyectos={visibleProjects} />}
 
   <!-- ── Proceso ── -->
   <section id="proceso" class="section-tint px-6 md:px-12 lg:px-20 py-24 border-t border-white/5">

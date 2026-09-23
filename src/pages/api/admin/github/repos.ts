@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
-import { db } from '../../../db'
-import { projects } from '../../../db/schema'
+import { db } from '../../../../db'
+import { projects } from '../../../../db/schema'
 
 export const GET: APIRoute = async () => {
   const token = import.meta.env.GITHUB_TOKEN
