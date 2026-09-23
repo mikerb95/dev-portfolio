@@ -73,6 +73,10 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   /^\/(api\/)?admin\/sessions/,
   /^\/api\/admin\/webauthn/,
   /^\/api\/admin\/lab\/chaos/,
+  // Repositorios: el listado no sale de Turso sino de la API de GitHub con el
+  // token real, que incluye los repos privados. Cambiar de base no lo aísla.
+  /^\/admin\/repos/,
+  /^\/api\/admin\/github/,
   // Cobros de campo: herramienta operativa real (genera links de pago y expone
   // teléfonos de clientes). La demo enseña el panel, no mi caja registradora.
   /^\/cobrar/,

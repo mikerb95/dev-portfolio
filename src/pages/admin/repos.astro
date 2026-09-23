@@ -32,7 +32,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro'
     const status = document.getElementById('repos-status')!
     const list = document.getElementById('repos-list')!
     try {
-      const res = await fetch('/api/github/repos')
+      const res = await fetch('/api/admin/github/repos')
       if (!res.ok) throw new Error('GitHub API')
       const repos: Repo[] = await res.json()
       if (!repos.length) { status.textContent = 'No se encontraron repositorios.'; return }
@@ -71,7 +71,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro'
         cb.addEventListener('change', async () => {
           const stateEl = cb.closest('.glass')!.querySelector('.repo-state') as HTMLElement
           stateEl.textContent = '…'
-          await fetch('/api/github/toggle', {
+          await fetch('/api/admin/github/toggle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

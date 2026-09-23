@@ -3,6 +3,10 @@ import { db } from '../../../../db'
 import { projects } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
 
+// Vive bajo /api/admin/ para heredar el gate del middleware. En /api/github/
+// no pedía sesión: cualquiera podía crear proyectos que salen en la home o
+// cambiar `visible` de uno ajeno por su slug, incluidos los de clientes, cuya
+// página pública muestra nombre y empresa del cliente.
 export const POST: APIRoute = async ({ request }) => {
   const { slug, visible, title, description, repoUrl, previewUrl, language, topics } = await request.json()
 
