@@ -6,6 +6,11 @@
 // `strip-types` de Node sin configuración. Plan y límites de precisión en
 // `docs/plan-computo-clientes.md` del portafolio.
 //
+// Los proyectos en JavaScript puro (Express sobre Node 20, `require`) usan
+// `medidor.mjs` o `medidor.cjs`, GENERADOS desde este archivo con
+// `npm run medidor:build`. Se edita solo este; una prueba falla si los
+// generados quedan desalineados.
+//
 // Mide lo que la función ve (CPU del proceso, tiempo con peticiones en curso,
 // invocaciones, bytes de respuesta), lo acumula por hora en memoria y lo envía
 // firmado con HMAC a `/api/computo/ingest`. Lo que el CDN sirve sin despertar
@@ -77,6 +82,12 @@ export interface OpcionesMedidor {
    * de la petición igual que lo hace ese paquete.
    */
   waitUntil?: (promesa: Promise<unknown>) => void
+  /**
+   * Vaciar la cola al recibir SIGTERM. Se engancha con la primera petición
+   * real y no al crear el medidor: el proceso que construye el sitio también
+   * importa el middleware, y ese no debe quedar escuchando la señal.
+   */
+  engancharApagado?: boolean
   // Inyectables para las pruebas: reloj, CPU acumulada del proceso en ms,
   // transporte y generador de ids.
   reloj?: () => number
@@ -117,7 +128,7 @@ export interface Medidor {
     handler: (req: Request, ...resto: A) => Response | Promise<Response>,
   ): (req: Request, ...resto: A) => Promise<Response>
   /** Middleware de Astro: `export const onRequest = medidor.astro()`. */
-  astro(): (contexto: { request: Request }, next: () => Promise<Response>) => Promise<Response>
+  astro(): (contexto: { request: Request; isPrerendered?: boolean }, next: () => Promise<Response>) => Promise<Response>
   /** Middleware de Express: `app.use(medidor.express())`, antes que las rutas. */
   express(): (req: PeticionNode, res: RespuestaNode, next: (err?: unknown) => void) => void
   /** Sella lo acumulado y envía la cola. Nunca lanza. */
@@ -220,6 +231,7 @@ export function crearMedidor(op: OpcionesMedidor): Medidor {
   let ultimoEnvio = reloj()
   let enviando: Promise<void> | null = null
   let clave: Promise<CryptoKey> | null = null
+  let apagadoEnganchado = !op.engancharApagado
 
   const cubo = (t: number): MuestraHora => {
     const h = horaDe(t)
@@ -269,6 +281,10 @@ export function crearMedidor(op: OpcionesMedidor): Medidor {
 
   function iniciar(bytesEntrada = 0): CerrarPeticion {
     try {
+      if (!apagadoEnganchado) {
+        apagadoEnganchado = true
+        proceso()?.once?.('SIGTERM', () => void vaciar({ timeoutMs: TIMEOUT_APAGADO_MS }))
+      }
       const ahora = reloj()
       marcarCpu(ahora)
       cerrarHuerfanas(ahora)
@@ -486,7 +502,10 @@ export function crearMedidor(op: OpcionesMedidor): Medidor {
       return (req, ...resto) => envolverHandlerWeb(req, () => handler(req, ...resto))
     },
     astro() {
-      return (contexto, next) => envolverHandlerWeb(contexto.request, next)
+      // Astro corre el middleware también al prerenderizar, en el proceso del
+      // build: esos renders no son visitas ni gastan cuota, y contarlos
+      // inflaría las invocaciones de cada despliegue.
+      return (contexto, next) => (contexto.isPrerendered ? next() : envolverHandlerWeb(contexto.request, next))
     },
     express() {
       return (req, res, next) => {
@@ -592,11 +611,11 @@ export function medidorDesdeEnv(opciones: OpcionesEntorno = {}): Medidor {
       secreto,
       memoriaMb: positivo(Number(env.COMPUTO_MEMORIA_MB)) || undefined,
       waitUntil: opciones.waitUntil,
+      // Solo en Vercel: fuera de ahí, un listener de SIGTERM cambiaría cómo se
+      // apaga la app (Node deja de salir solo al recibir la señal).
+      engancharApagado: enVercel,
     })
     existentes.set(clave, medidor)
-    // Solo en Vercel: fuera de ahí, un listener de SIGTERM cambiaría cómo se
-    // apaga la app (Node deja de salir solo al recibir la señal).
-    if (enVercel) proceso()?.once?.('SIGTERM', () => void medidor.vaciar({ timeoutMs: TIMEOUT_APAGADO_MS }))
     return medidor
   } catch {
     return INERTE
