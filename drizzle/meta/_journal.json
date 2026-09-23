@@ -253,6 +253,13 @@
       "when": 1789742416444,
       "tag": "0035_omniscient_toro",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1790164645824,
+      "tag": "0036_wet_rictor",
+      "breakpoints": true
     }
   ]
 }

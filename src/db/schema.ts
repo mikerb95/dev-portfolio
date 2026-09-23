@@ -613,6 +613,19 @@ export const webauthnCredentials = sqliteTable('webauthn_credentials', {
   loginIdx: index('webauthn_credentials_login_idx').on(t.login),
 }))
 
+// Challenges de WebAuthn emitidos y todavía sin usar. La verificación borra la
+// fila con DELETE ... RETURNING, así que cada challenge vale UNA vez y solo si
+// lo emitió el servidor. Antes vivían solo en una cookie sin firmar y el
+// servidor aceptaba el que llegara: con passkeys sincronizadas (contador
+// siempre 0) una aserción capturada se podía repetir sin límite.
+export const webauthnChallenges = sqliteTable('webauthn_challenges', {
+  challenge: text('challenge').primaryKey(),
+  kind: text('kind', { enum: ['reg', 'auth'] }).notNull(),
+  // Login dueño de la ceremonia; '' en el login usernameless (aún no se sabe).
+  login: text('login').notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+})
+
 // ── Observabilidad de seguridad (micro-SIEM propio) ─────────────────────────
 // Sensor de superficie de ataque: el middleware y el 404 clasifican cada
 // request hostil y lo registran aquí. Ver docs/plan-security-observability.md.
