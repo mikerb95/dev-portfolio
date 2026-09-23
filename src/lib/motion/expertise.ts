@@ -209,9 +209,11 @@ export function montarCascada(svg: SVGSVGElement, estatico: boolean, locale: str
     })
     // El marcador cae cuando termina de pintarse la imagen del LCP: la línea
     // crece de abajo arriba sobre la cascada, como un corte en la línea de
-    // tiempo de la pestaña de red.
+    // tiempo de la pestaña de red. Se anima el atributo y no un scaleY: en una
+    // línea de ancho cero GSAP no puede calcular el origen de la escala y la
+    // desplaza fuera del lienzo.
     tl.to(lcp, { opacity: 1, duration: 0.35, ease: 'power2.out' }, RECURSOS[INDICE_LCP].fin * f * 1.35)
-      .fromTo(lcpLinea, { scaleY: 0 }, { scaleY: 1, transformOrigin: '50% 100%', duration: 0.6, ease: 'expo.out' }, '<')
+      .fromTo(lcpLinea, { attr: { y1: 150 } }, { attr: { y1: 18 }, duration: 0.6, ease: 'expo.out' }, '<')
       .to({}, { duration: 2.6 })
       .to(barras, { opacity: 0.15, duration: 0.5, ease: 'power2.in' })
       .to(lcp, { opacity: 0, duration: 0.4 }, '<')

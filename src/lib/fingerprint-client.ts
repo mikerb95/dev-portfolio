@@ -145,8 +145,14 @@ async function libFingerprint(): Promise<string | null> {
   }
 }
 
-/** Recolecta las señales del dispositivo y calcula hash + entropía estimada. */
-export async function collectFingerprint(): Promise<FingerprintResult> {
+/**
+ * Recolecta las señales del dispositivo y calcula el hash propio + entropía,
+ * sin la segunda opinión de FingerprintJS. Es lo que usa la portada para
+ * dibujar la huella del visitante: el mismo hash que el laboratorio (así la
+ * huella que ve en la portada es la que lo reconoce en /lab/fingerprint), sin
+ * cargar la librería en una página que no la necesita.
+ */
+export async function collectSignals(): Promise<Omit<FingerprintResult, 'libFpHash'>> {
   const nav = navigator as Navigator & { deviceMemory?: number }
   const canvas = canvasSignal()
   const webgl = webglSignal()
@@ -181,10 +187,16 @@ export async function collectFingerprint(): Promise<FingerprintResult> {
   }))
 
   const combined = signals.map((s) => `${s.key}:${s.value}`).join('||')
-  const [hash, libFpHash] = await Promise.all([sha256Hex(combined), libFingerprint()])
+  const hash = await sha256Hex(combined)
   const entropyBits = signals.reduce((acc, s) => acc + s.bits, 0)
 
-  return { hash, signals, entropyBits, libFpHash }
+  return { hash, signals, entropyBits }
+}
+
+/** Recolecta las señales del dispositivo y calcula hash + entropía estimada. */
+export async function collectFingerprint(): Promise<FingerprintResult> {
+  const [base, libFpHash] = await Promise.all([collectSignals(), libFingerprint()])
+  return { ...base, libFpHash }
 }
 
 /** Instala listeners de comportamiento y devuelve un snapshot bajo demanda. */
