@@ -367,55 +367,113 @@ const faqs = pw.faqs
 </script>
 
 <script>
-  // Scroll suave (Lenis) + animaciones de entrada ancladas al scroll (GSAP
-  // ScrollTrigger). Envuelto en matchMedia(prefers-reduced-motion) porque el
-  // efecto es cosmético: quien pida menos movimiento debe recibir la página
-  // estática de siempre, sin perder ninguna funcionalidad.
+  // Motion de /paginas-web. Las piezas grandes viven en sus componentes
+  // (celular del hero, beneficios, taller, trabajos); aquí va lo transversal:
+  // scroll suave, titular del hero por palabras, titulares de sección por
+  // líneas, entradas escalonadas por rejilla, precios en odómetro, botones
+  // magnéticos, luz que sigue al cursor y el acordeón de preguntas.
+  // Con movimiento reducido no se monta nada: la página se lee completa y
+  // quieta, y las preguntas abren con el comportamiento nativo del navegador.
   import Lenis from 'lenis'
   import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
+  import { SplitText } from 'gsap/SplitText'
+  import { foco, inclinar, magnetico, odometro, punteroFino, revelarTitular } from '../lib/motion/efectos'
 
-  gsap.registerPlugin(ScrollTrigger)
+  gsap.registerPlugin(ScrollTrigger, SplitText)
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  if (!prefersReducedMotion) {
+  if (!reducido) {
     const lenis = new Lenis()
-    // ScrollTrigger necesita enterarse de cada frame de Lenis para no
-    // desincronizarse con la posición real del scroll.
     lenis.on('scroll', ScrollTrigger.update)
     gsap.ticker.add((time) => lenis.raf(time * 1000))
     gsap.ticker.lagSmoothing(0)
 
-    // Cualquier tarjeta dentro de las secciones de contenido entra con un
-    // fade + leve desplazamiento vertical al cruzar el viewport. Un solo
-    // selector genérico cubre perfiles, beneficios, pasos y planes sin
-    // repetir la animación sección por sección.
-    const cards = document.querySelectorAll<HTMLElement>(
-      'section .glass, section .glass-strong'
-    )
+    // Fail-open: si algo falla a medio montar, se devuelve todo lo que pudo
+    // quedar escondido a su sitio. Una animación de entrada que deja una
+    // sección en blanco no es decoración, es una caída.
+    try {
+      // Titular del hero: cada palabra sube desde su ranura, línea tras línea.
+      const lineas = Array.from(document.querySelectorAll<HTMLElement>('.pw-linea'))
+      lineas.forEach((l, i) => {
+        const split = new SplitText(l, { type: 'words', mask: 'words' })
+        gsap.from(split.words, { yPercent: 110, duration: 1.1, ease: 'expo.out', stagger: 0.06, delay: 0.1 + i * 0.18 })
+      })
+      gsap.from('.pw-titular ~ p, .pw-titular ~ div, .pw-titular ~ p ~ p', {
+        y: 18,
+        opacity: 0,
+        duration: 0.9,
+        ease: 'expo.out',
+        stagger: 0.08,
+        delay: 0.55,
+        clearProps: 'transform,opacity',
+      })
+      gsap.from('[data-telefono]', { y: 60, opacity: 0, rotation: 4, duration: 1.4, ease: 'expo.out', delay: 0.35, clearProps: 'transform,opacity' })
 
-    cards.forEach((card, i) => {
-      gsap.fromTo(
-        card,
-        { opacity: 0, y: 28 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          ease: 'power2.out',
-          delay: (i % 4) * 0.05, // stagger corto dentro de cada fila
-          // Sin `once: true`: ScrollTrigger se auto-mata al dispararse con esa
-          // opción y, si el kill ocurre dentro del refresh de otro trigger que
-          // se está creando, GSAP se queda con un índice inválido y aborta el
-          // resto de los reveals (secciones en blanco). El fromTo ya corre una
-          // sola vez con el toggleAction por defecto.
-          scrollTrigger: {
-            trigger: card,
-            start: 'top 88%',
-          },
-        }
-      )
-    })
+      document.querySelectorAll<HTMLElement>('[data-titular]').forEach(revelarTitular)
+
+      document.querySelectorAll<HTMLElement>('[data-entrada]').forEach((rejilla) => {
+        gsap.from(rejilla.children, {
+          y: 34,
+          opacity: 0,
+          duration: 0.9,
+          ease: 'expo.out',
+          stagger: 0.08,
+          clearProps: 'transform,opacity',
+          scrollTrigger: { trigger: rejilla, start: 'top 86%' },
+        })
+      })
+      // Las tarjetas de beneficios traen su propia pantalla animada; aquí solo
+      // entran, igual que las demás rejillas.
+      gsap.from('[data-beneficios] > *', {
+        y: 34,
+        opacity: 0,
+        duration: 0.9,
+        ease: 'expo.out',
+        stagger: 0.08,
+        clearProps: 'transform,opacity',
+        scrollTrigger: { trigger: '[data-beneficios]', start: 'top 86%' },
+      })
+
+      document.querySelectorAll<HTMLElement>('[data-odometro]').forEach(odometro)
+
+      if (punteroFino()) {
+        document.querySelectorAll<HTMLElement>('[data-magnetico]').forEach((el) => magnetico(el))
+        document.querySelectorAll<HTMLElement>('[data-foco]').forEach((el) => foco(el))
+        const tel = document.querySelector<HTMLElement>('[data-telefono]')
+        if (tel) inclinar(tel, 5)
+      }
+
+      // Preguntas frecuentes: abren y cierran deslizando en vez de saltar.
+      // <details> sigue siendo el elemento (teclado, lectores de pantalla y
+      // búsqueda del navegador funcionan igual); solo se anima la altura.
+      document.querySelectorAll<HTMLDetailsElement>('[data-faq] details').forEach((d) => {
+        const resumen = d.querySelector('summary')
+        const cuerpo = d.querySelector<HTMLElement>('.faq-cuerpo')
+        if (!resumen || !cuerpo) return
+        resumen.addEventListener('click', (e) => {
+          e.preventDefault()
+          if (d.open) {
+            gsap.to(cuerpo, {
+              height: 0,
+              opacity: 0,
+              duration: 0.35,
+              ease: 'power2.inOut',
+              onComplete: () => {
+                d.open = false
+                gsap.set(cuerpo, { clearProps: 'height,opacity' })
+              },
+            })
+          } else {
+            d.open = true
+            gsap.fromTo(cuerpo, { height: 0, opacity: 0 }, { height: 'auto', opacity: 1, duration: 0.5, ease: 'expo.out', clearProps: 'height' })
+          }
+        })
+      })
+    } catch (err) {
+      console.warn('[paginas-web] motion deshabilitado tras un fallo', err)
+      gsap.set('[data-entrada] > *, [data-beneficios] > *, [data-telefono], .titular-linea', { clearProps: 'transform,opacity' })
+    }
   }
 </script>
