@@ -385,17 +385,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // (`docs/plan-control-final.md`), que no tiene sesión ni PIN porque lo único
   // que puede hacer quien lo encuentre es pasar una diapositiva de algo que ya
   // está proyectado en la pared. La comparación de abajo es por prefijo CON
-  // barra y con la excepción explícita de la ruta exacta: cualquier
-  // `/remote/<algo>` sigue exigiendo sesión, y `/remote/` con barra final (que
-  // Astro sirve igual que `/remote`) no puede caer del lado del gate, o el
-  // mando rebotaría a /login con la sala mirando.
-  const esMandoFinal = canonicalPath === '/remote' || canonicalPath === '/remote/'
+  // barra: cualquier `/remote/<algo>` sigue exigiendo sesión, y `/remote/` con
+  // barra final (que Astro sirve igual que `/remote`) llega aquí ya como
+  // `/remote`, porque la ruta canónica no lleva barra final. Si cayera del lado
+  // del gate, el mando rebotaría a /login con la sala mirando.
   const isAdmin =
     canonicalPath.startsWith('/admin') ||
     canonicalPath.startsWith('/api/admin') ||
     canonicalPath === '/cobrar' ||
     canonicalPath.startsWith('/cobrar/') ||
-    (canonicalPath.startsWith('/remote/') && !esMandoFinal)
+    canonicalPath.startsWith('/remote/')
 
   // El deck de sustentación tiene URL bajo /docs (la sección es pública) pero no
   // es público: solo lo ve la sesión del administrador. Se trata como ruta
@@ -680,8 +679,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     //
     // Es la ruta EXACTA: `/present-admin` no cae aquí (ni falta, conduce sin
     // suscribirse) y `/presentacion/control` es la redirección 308 al mando.
-    canonicalPath === '/presentacion' ||
-    canonicalPath === '/presentacion/'
+    canonicalPath === '/presentacion'
   const busOrigin = isPresentView ? presentBusOrigin() : null
   const connectSrc = busOrigin ? `connect-src 'self' ${busOrigin};` : "connect-src 'self';"
 
