@@ -1,0 +1,267 @@
+---
+// Sección "Laboratorio en vivo" de la portada, con la huella del visitante.
+//
+// A la derecha se dibuja una huella dactilar generada a partir del hash que
+// calcula el recolector del laboratorio de fingerprinting en ESTE navegador
+// (collectSignals). Es el gancho del laboratorio contado sin palabras: "esto
+// eres tú, sin cookies". Se calcula solo cuando la sección se acerca a la
+// pantalla, no al cargar la portada, y el resultado no sale del navegador: ni
+// fetch, ni almacenamiento. Si el navegador bloquea las señales, se dice.
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale).home.lab
+const h = t.huella
+
+const ICONOS = [
+  { color: 'text-cyan', icon: `<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>` },
+  { color: 'text-ember', icon: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>` },
+  { color: 'text-lime', icon: `<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>` },
+]
+---
+
+<section id="laboratorio" class="section-tint px-6 md:px-12 lg:px-20 py-28 border-t border-white/5">
+  <div class="max-w-[1280px] mx-auto">
+    <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-10">
+      <span class="text-cyan">/05</span>
+      <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+      <span>{t.sectionLabel}</span>
+    </div>
+
+    <div class="grid lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-20 items-center">
+      <div>
+        <div class="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-[.18em] text-ember mb-6">
+          <span class="w-1.5 h-1.5 rounded-full bg-ember pulse-dot"></span>
+          {t.badge}
+        </div>
+        <h2 data-titular class="font-sans text-4xl md:text-5xl font-medium tracking-[-.03em] text-mask max-w-xl leading-[1.04] mb-6">
+          {t.titleLine1}<br />{t.titleLine2}
+        </h2>
+        <p class="text-[15px] text-ink-100 leading-relaxed max-w-xl mb-4">
+          {t.p1a}<strong class="text-ink-50">{t.p1strong}</strong>{t.p1b}<strong class="text-ink-50">{t.p1strong2}</strong>{t.p1c}
+        </p>
+        <p class="text-[15px] text-ink-100 leading-relaxed max-w-xl mb-9">
+          {t.p2a}<em class="text-ink-50 not-italic font-medium">{t.p2em}</em>{t.p2b}
+        </p>
+        <div class="flex flex-wrap items-center gap-4">
+          <a
+            href={localizedHref('/lab/fingerprint', locale)}
+            data-magnetico
+            class="inline-flex items-center h-12 px-6 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium hover:bg-zinc-100 transition-colors"
+          >
+            <span data-magnetico-texto class="inline-flex items-center gap-2">
+              {t.cta}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </span>
+          </a>
+          <span class="text-[12px] font-mono text-ink-300">{t.note}</span>
+        </div>
+      </div>
+
+      <!-- Visor de la huella. Las esquinas son un marco de lector, no una
+           tarjeta: la huella flota sobre el fondo de la sección. -->
+      <figure class="huella-visor" data-huella data-detalle={h.detalle} data-bloqueada={h.bloqueada}>
+        <span class="huella-esquina huella-esquina-a" aria-hidden="true"></span>
+        <span class="huella-esquina huella-esquina-b" aria-hidden="true"></span>
+        <span class="huella-esquina huella-esquina-c" aria-hidden="true"></span>
+        <span class="huella-esquina huella-esquina-d" aria-hidden="true"></span>
+        <canvas class="huella-lienzo" aria-hidden="true"></canvas>
+        <figcaption class="huella-pie">
+          <span class="huella-titulo">{h.titulo}</span>
+          <span class="huella-estado" aria-live="polite">
+            <span class="huella-punto"></span>
+            <span class="huella-estado-txt">{h.leyendo}</span>
+          </span>
+          <span class="huella-privacidad">{h.privacidad} <span class="text-ink-100">{h.reto}</span></span>
+        </figcaption>
+      </figure>
+    </div>
+
+    <ul class="mt-20 grid md:grid-cols-3 gap-x-10 gap-y-8">
+      {ICONOS.map((visual, i) => (
+        <li class="lab-punto">
+          <svg class={`w-5 h-5 ${visual.color}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={visual.icon} />
+          <h3 class="mt-4 text-[15px] font-medium text-ink-50 tracking-tight">{t.points[i].title}</h3>
+          <p class="mt-1.5 text-[13px] text-ink-200 leading-relaxed">{t.points[i].body}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .huella-visor {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    aspect-ratio: 1;
+    justify-self: center;
+    margin: 0;
+  }
+  .huella-lienzo {
+    position: absolute;
+    inset: 0 0 16%;
+    width: 100%;
+    height: 84%;
+  }
+  .huella-esquina {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: rgba(0, 242, 255, 0.45);
+    border-style: solid;
+    border-width: 0;
+  }
+  .huella-esquina-a {
+    top: 0;
+    left: 0;
+    border-top-width: 1.5px;
+    border-left-width: 1.5px;
+    border-top-left-radius: 6px;
+  }
+  .huella-esquina-b {
+    top: 0;
+    right: 0;
+    border-top-width: 1.5px;
+    border-right-width: 1.5px;
+    border-top-right-radius: 6px;
+  }
+  .huella-esquina-c {
+    bottom: 16%;
+    left: 0;
+    border-bottom-width: 1.5px;
+    border-left-width: 1.5px;
+    border-bottom-left-radius: 6px;
+  }
+  .huella-esquina-d {
+    bottom: 16%;
+    right: 0;
+    border-bottom-width: 1.5px;
+    border-right-width: 1.5px;
+    border-bottom-right-radius: 6px;
+  }
+
+  .huella-pie {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 16%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-content: end;
+    gap: 0.35rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-200);
+  }
+  .huella-titulo {
+    color: var(--color-ink-50);
+  }
+  .huella-estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    justify-self: end;
+    color: var(--color-cyan);
+    white-space: nowrap;
+  }
+  .huella-punto {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    animation: pulseDot 1s ease-in-out infinite;
+  }
+  :global(.huella-lista) .huella-estado {
+    color: var(--color-lime);
+  }
+  :global(.huella-lista) .huella-punto {
+    animation: none;
+  }
+  :global(.huella-bloqueada) .huella-estado {
+    color: var(--color-ember);
+  }
+  .huella-privacidad {
+    grid-column: 1 / -1;
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    line-height: 1.5;
+    color: var(--color-ink-200);
+  }
+
+  /* Puntos del lab: sin caja, separados por una raya superior que se enciende
+     del color de su icono al apuntar. */
+  .lab-punto {
+    padding-top: 1.4rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    transition: border-color 0.35s ease;
+  }
+  .lab-punto:hover {
+    border-top-color: rgba(0, 242, 255, 0.35);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .huella-punto {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  import { montarHuella } from '../../lib/motion/huella-gl'
+  import { idCorto, parametrosDe } from '../../lib/motion/huella'
+  import { interpolate } from '../../i18n/format'
+
+  const visor = document.querySelector<HTMLElement>('[data-huella]')
+  const lienzo = visor?.querySelector<HTMLCanvasElement>('.huella-lienzo')
+  const estado = visor?.querySelector<HTMLElement>('.huella-estado-txt')
+
+  if (visor && lienzo && estado) {
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const huella = montarHuella(lienzo, { reducido })
+
+    let leida = false
+    const leer = async () => {
+      if (leida) return
+      leida = true
+      try {
+        // Import dinámico: el recolector (canvas, audio, fuentes) solo se
+        // descarga y corre si el visitante llega hasta aquí.
+        const { collectSignals } = await import('../../lib/fingerprint-client')
+        const r = await collectSignals()
+        const aportan = r.signals.filter((s) => s.bits > 0).length
+        huella?.fijar(parametrosDe(r.hash))
+        estado.textContent = interpolate(visor.dataset.detalle ?? '', {
+          n: aportan,
+          bits: r.entropyBits,
+          id: idCorto(r.hash),
+        })
+        visor.classList.add('huella-lista')
+      } catch {
+        // Sin crypto.subtle (contexto no seguro) o con las APIs bloqueadas por
+        // un navegador endurecido: la huella neutra se queda y se dice por qué.
+        estado.textContent = visor.dataset.bloqueada ?? ''
+        visor.classList.add('huella-bloqueada')
+      }
+    }
+
+    // Se calcula al acercarse la sección y se anima solo mientras se ve.
+    new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) void leer()
+      },
+      { rootMargin: '400px' },
+    ).observe(visor)
+    if (huella) {
+      new IntersectionObserver(([e]) => huella.activar(e.isIntersecting && !document.hidden), {
+        rootMargin: '40px',
+      }).observe(visor)
+    } else {
+      lienzo.hidden = true
+    }
+  }
+</script>
