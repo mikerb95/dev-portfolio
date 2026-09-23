@@ -19,6 +19,7 @@
 // Sin dependencias: WebGL2 directo. Módulo solo de navegador.
 
 import { mezclar, multiplicar, perspectiva, rayoAlSuelo, vista, type Camara } from './camara'
+import { LINEA, programa as enlazar, RUIDO } from './glsl'
 
 // ── Shaders ────────────────────────────────────────────────────────────────
 
@@ -32,49 +33,7 @@ uniform float uAmplitud;
 uniform vec3 uPico;       // x, z, intensidad (0..1)
 uniform vec4 uPulsos[4];  // x, z, edad en segundos, intensidad
 
-// Hash entero (PCG 2D). Con senos el ruido se degrada a coordenadas grandes, y
-// aquí la coordenada z crece sin parar mientras el terreno avanza.
-uvec2 pcg2d(uvec2 v) {
-  v = v * 1664525u + 1013904223u;
-  v.x += v.y * 1664525u; v.y += v.x * 1664525u;
-  v = v ^ (v >> 16u);
-  v.x += v.y * 1664525u; v.y += v.x * 1664525u;
-  v = v ^ (v >> 16u);
-  return v;
-}
-
-vec2 gradiente(vec2 celda) {
-  uvec2 h = pcg2d(uvec2(ivec2(celda) + ivec2(4096)));
-  float a = float(h.x) * (6.2831853 / 4294967295.0);
-  return vec2(cos(a), sin(a));
-}
-
-// Ruido de gradiente con interpolación quíntica (continuidad C2: sin ella, las
-// curvas de nivel hacen codos visibles en los bordes de cada celda).
-float ruido(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
-  float a = dot(gradiente(i), f);
-  float b = dot(gradiente(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0));
-  float c = dot(gradiente(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0));
-  float d = dot(gradiente(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0));
-  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-float fbm(vec2 p) {
-  float s = 0.0;
-  float a = 0.55;
-  // Rotación entre octavas: sin ella las octavas se alinean con la rejilla y el
-  // relieve deja ver direcciones preferentes.
-  mat2 r = mat2(0.8, -0.6, 0.6, 0.8);
-  for (int i = 0; i < 4; i++) {
-    s += a * ruido(p);
-    p = r * p * 2.03;
-    a *= 0.5;
-  }
-  return s;
-}
+${RUIDO}
 
 float terreno(vec2 xz) {
   vec2 p = vec2(xz.x, xz.y + uAvance) * 0.17;
@@ -135,11 +94,7 @@ uniform float uBrillo;
 out vec4 color;
 ${CAMPO}
 
-float linea(float v, float grosor) {
-  float fw = max(fwidth(v), 1e-4);
-  float d = 0.5 - abs(fract(v) - 0.5);
-  return 1.0 - smoothstep(0.0, fw * grosor, d);
-}
+${LINEA}
 
 void main() {
   float h = terreno(vXZ);
@@ -221,18 +176,6 @@ type Opciones = {
   reducido?: boolean
 }
 
-function compilar(gl: WebGL2RenderingContext, tipo: number, fuente: string): WebGLShader {
-  const s = gl.createShader(tipo)!
-  gl.shaderSource(s, fuente)
-  gl.compileShader(s)
-  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-    const log = gl.getShaderInfoLog(s)
-    gl.deleteShader(s)
-    throw new Error(`[isolineas] shader: ${log}`)
-  }
-  return s
-}
-
 function malla(n: number): { uv: Float32Array; indices: Uint16Array } {
   const lado = n + 1
   const uv = new Float32Array(lado * lado * 2)
@@ -284,17 +227,9 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
 
   let programa: WebGLProgram
   try {
-    const vs = compilar(gl, gl.VERTEX_SHADER, VERTEX)
-    const fs = compilar(gl, gl.FRAGMENT_SHADER, FRAGMENT)
-    programa = gl.createProgram()!
-    gl.attachShader(programa, vs)
-    gl.attachShader(programa, fs)
-    gl.linkProgram(programa)
-    if (!gl.getProgramParameter(programa, gl.LINK_STATUS)) {
-      throw new Error(`[isolineas] link: ${gl.getProgramInfoLog(programa)}`)
-    }
+    programa = enlazar(gl, VERTEX, FRAGMENT)
   } catch (err) {
-    console.warn(err)
+    console.warn('[isolineas]', err)
     return null
   }
 
