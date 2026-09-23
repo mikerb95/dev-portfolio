@@ -276,6 +276,17 @@ const es = {
         ': entra en incógnito, borra tus cookies y vuelve a entrar. Te reconoce igual. Y termina enseñándote cómo defenderte. Un demo para explicar privacidad y rastreo sin diapositivas.',
       cta: 'Entrar al laboratorio',
       note: 'Efímero · sin PII · las salas se borran en 2h',
+      // Huella generativa (src/components/home/LabHuella.astro): se calcula en
+      // el navegador del visitante con el mismo recolector del laboratorio y no
+      // se envía a ningún lado. Los textos tienen que decirlo sin letra chica.
+      huella: {
+        titulo: 'Tu huella en este navegador',
+        leyendo: 'Leyendo señales',
+        detalle: '{n} señales · ~{bits} bits · id {id}',
+        privacidad: 'Calculada aquí, en tu equipo. No se envía a ningún lado.',
+        reto: 'Ábrela en incógnito: será la misma.',
+        bloqueada: 'Tu navegador no dejó leer las señales. Buena señal.',
+      },
       points: [
         { title: 'Escanea y entra', body: 'Varios dispositivos se enlazan a la misma sala por un QR - como un aula o un evento en vivo.' },
         { title: 'Te reconoce, no te loguea', body: 'Recolector propio contrastado con FingerprintJS. Si vuelves en incógnito, el contador de revisitas sube.' },

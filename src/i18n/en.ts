@@ -263,6 +263,14 @@ const en = {
         ' it: go incognito, clear your cookies, and come back. It recognizes you all the same. And it ends by teaching you how to defend yourself. A demo that explains privacy and tracking without slides.',
       cta: 'Enter the lab',
       note: 'Ephemeral · no PII · rooms are wiped after 2h',
+      huella: {
+        titulo: 'Your fingerprint in this browser',
+        leyendo: 'Reading signals',
+        detalle: '{n} signals · ~{bits} bits · id {id}',
+        privacidad: 'Computed here, on your device. Nothing is sent anywhere.',
+        reto: 'Open it in incognito: it will be the same.',
+        bloqueada: "Your browser didn't let the signals be read. Good sign.",
+      },
       points: [
         { title: 'Scan and join', body: 'Several devices link to the same room via a QR code - like a classroom or a live event.' },
         { title: 'It recognizes you, it does not log you in', body: 'A custom collector cross-checked against FingerprintJS. Come back incognito and the revisit counter still goes up.' },
