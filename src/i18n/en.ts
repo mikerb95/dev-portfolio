@@ -238,6 +238,13 @@ const en = {
         { title: 'Performance First', body: 'Speed is a feature. I optimize Core Web Vitals, API response times, and database efficiency.' },
         { title: 'Code Quality', body: 'Rigorous testing (Unit, E2E), strict static typing, and clear documentation. Maintainable code is profitable code.' },
       ],
+      viz: {
+        cola: 'queue',
+        replicas: 'replicas',
+        umbral: 'threshold 2.5 s',
+        verde: 'all green · 0 failures',
+        pistas: ['Hover: scale to 3 replicas', 'Hover: repeat visit, cached', 'Hover: run it again'],
+      },
     },
     lab: {
       sectionLabel: 'Live lab',

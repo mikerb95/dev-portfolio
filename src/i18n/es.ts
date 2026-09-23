@@ -249,6 +249,15 @@ const es = {
         { title: 'Performance First', body: 'La velocidad es una feature. Optimizo Core Web Vitals, tiempos de respuesta de API y eficiencia en bases de datos.' },
         { title: 'Calidad de Código', body: 'Testing riguroso (Unit, E2E), tipado estático estricto y documentación clara. Código mantenible es código rentable.' },
       ],
+      // Pantallas animadas de cada tarjeta (src/components/home/ExpertiseVivo.astro).
+      // Las pistas solo se ven con ratón: dicen qué pasa al apuntar la tarjeta.
+      viz: {
+        cola: 'cola',
+        replicas: 'réplicas',
+        umbral: 'umbral 2,5 s',
+        verde: 'todo en verde · 0 fallos',
+        pistas: ['Apunta: escala a 3 réplicas', 'Apunta: segunda visita, con caché', 'Apunta: vuelve a correr'],
+      },
     },
     lab: {
       sectionLabel: 'Laboratorio en vivo',
