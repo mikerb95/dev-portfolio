@@ -64,7 +64,7 @@ const casos = interpolate(t.casos, { ok: 47, total: 50 })
             <span class="pd-eje pd-eje-x">{d.direccion.ejes[0]} →</span>
             <span class="pd-eje pd-eje-y">{d.direccion.ejes[1]} →</span>
             <span class="pd-zona"></span>
-            {filas.map((f, i) => (
+            {filas.map((f) => (
               <span class={`pd-punto pd-${f.tono}`} style={`left:${f.x * 100}%;bottom:${f.y * 100}%`} data-x={f.x * 100} data-y={f.y * 100}></span>
             ))}
           </div>

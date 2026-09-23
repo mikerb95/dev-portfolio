@@ -81,7 +81,7 @@ const etiquetaNivel = (n: keyof typeof c.niveles) => c.niveles[n]
           <span class="text-[11px] font-mono uppercase tracking-[.22em] text-ink-100">{c.hero.badge}</span>
         </div>
 
-        <h1 class="font-sans font-medium tracking-[-.035em] leading-[1.02] text-[clamp(38px,5.4vw,70px)] text-ink-50">
+        <h1 class="font-sans font-medium tracking-[-.035em] leading-[1.02] text-[clamp(38px,5.4vw,70px)] text-ink-50 [&>span]:[text-wrap:balance]">
           <span data-hero-linea class="block">{c.hero.h1Line1}</span>{' '}
           <span data-hero-linea class="block text-lime">{c.hero.h1Line2}</span>
         </h1>
