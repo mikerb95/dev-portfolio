@@ -66,8 +66,9 @@ const ICONOS = [
         <span class="huella-esquina huella-esquina-c" aria-hidden="true"></span>
         <span class="huella-esquina huella-esquina-d" aria-hidden="true"></span>
         <canvas class="huella-lienzo" aria-hidden="true"></canvas>
+        <span class="huella-titulo" aria-hidden="true">{h.titulo}</span>
         <figcaption class="huella-pie">
-          <span class="huella-titulo">{h.titulo}</span>
+          <span class="sr-only">{h.titulo}</span>
           <span class="huella-estado" aria-live="polite">
             <span class="huella-punto"></span>
             <span class="huella-estado-txt">{h.leyendo}</span>
@@ -141,30 +142,36 @@ const ICONOS = [
     border-bottom-right-radius: 6px;
   }
 
+  .huella-titulo {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-200);
+  }
   .huella-pie {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
     height: 16%;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-content: end;
-    gap: 0.35rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.45rem;
     font-family: var(--font-mono);
     font-size: 10px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--color-ink-200);
   }
-  .huella-titulo {
-    color: var(--color-ink-50);
-  }
   .huella-estado {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    justify-self: end;
+    gap: 0.5rem;
     color: var(--color-cyan);
     white-space: nowrap;
   }
@@ -185,7 +192,6 @@ const ICONOS = [
     color: var(--color-ember);
   }
   .huella-privacidad {
-    grid-column: 1 / -1;
     font-size: 10.5px;
     letter-spacing: 0.02em;
     text-transform: none;
