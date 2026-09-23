@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures'
+import { E2E } from '../playwright.config'
 
 // El gate de /admin. Si algo de esto se pone verde por accidente, el panel
 // quedó abierto: son los tests que más importa que fallen ruidosamente.
@@ -78,7 +79,11 @@ test.describe('gate del panel', () => {
   // el request pasaba de largo hasta buscar la llave. Ahora tiene que morir
   // en el challenge, que solo vale si lo emitió el servidor.
   test('el login con llave no acepta un challenge inventado por el cliente', async ({ request }) => {
-    const opciones = await request.post('/api/auth/webauthn/options')
+    // Con `Origin`, como lo manda el navegador: sin él, el checkOrigin de Astro
+    // rechaza cualquier POST sin cuerpo antes de llegar al endpoint.
+    const opciones = await request.post('/api/auth/webauthn/options', {
+      headers: { origin: new URL(E2E.baseURL).origin },
+    })
     expect(opciones.status()).toBe(200)
 
     const cookie = JSON.stringify({ challenge: 'inventado-por-el-cliente', login: '', kind: 'auth' })
