@@ -118,7 +118,8 @@ describe('memoria por tiempo ocupado', () => {
   })
 
   it('parte un intervalo que cruza el cambio de hora', () => {
-    const b = banco()
+    // Intervalo largo: a los 10 min el medidor ya habría enviado el lote.
+    const b = banco({ intervaloMs: 10 * HORA })
     b.avanzar(HORA - 300)
     const c = b.medidor.iniciar()
     b.avanzar(800)
@@ -248,7 +249,7 @@ describe('envío y reintentos', () => {
 
 describe('peticiones huérfanas', () => {
   it('una petición que nunca se cierra se barre sin contar memoria hasta el barrido', () => {
-    const b = banco()
+    const b = banco({ intervaloMs: 10 * HORA })
     b.medidor.iniciar() // nunca se cierra
     b.avanzar(1_000)
     b.avanzar(16 * 60_000)
@@ -300,7 +301,7 @@ describe('adaptador web (Astro y handlers fetch)', () => {
     expect(b.medidor.estado().horas[0].invocaciones).toBe(3)
   })
 
-  it('un error del handler se propagan intacto y la petición queda cerrada', async () => {
+  it('un error del handler se propaga intacto y la petición queda cerrada', async () => {
     const b = banco()
     const h = b.medidor.fetch(async () => { throw new Error('falló la página') })
     await expect(h(new Request('https://sitio.test/'))).rejects.toThrow('falló la página')

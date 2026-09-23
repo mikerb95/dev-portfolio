@@ -206,7 +206,13 @@ const es = {
           'Testing · Unit · E2E · TypeScript',
         ],
       },
-      location: { badge: 'Base', country: 'Colombia', tz: 'GMT−5 · Remoto global' },
+      location: {
+        badge: 'Base',
+        country: 'Colombia',
+        tz: 'GMT−5 · Remoto global',
+        hora: 'hora local',
+        coords: '4,71° N · 74,07° O · Bogotá',
+      },
       contactMicro: {
         badge: 'Inbound',
         body: 'Primera respuesta en 24 h · L–V.',
