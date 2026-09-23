@@ -22,6 +22,7 @@ import {
   isPortalAuthPath,
   isPresentSnapshotPath,
   isRateLimitablePath,
+  withoutTrailingSlash,
 } from './lib/security/paths'
 import { presentBusOrigin } from './lib/present/store'
 import { DEMO_COOKIE, isDemoAllowedMethod, isDemoBlockedPath, verifyDemoToken } from './lib/demo'
@@ -133,9 +134,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect(`${untranslated}${context.url.search}`, 302)
   }
   // A partir de aquí, todo guard que clasifique la ruta usa la versión SIN
-  // prefijo de idioma - nunca `pathname` crudo - para que `/algo` y
-  // `/en/algo` reciban idéntico trato de seguridad.
-  const canonicalPath = delocalizePath(pathname)
+  // prefijo de idioma y SIN barra final - nunca `pathname` crudo - para que
+  // `/algo`, `/algo/` y `/en/algo` reciban idéntico trato de seguridad. La
+  // barra importa tanto como el idioma: Astro sirve ambas formas, y cada guard
+  // exacto de abajo (el deck privado, el escenario) solo reconocía una.
+  const canonicalPath = withoutTrailingSlash(delocalizePath(pathname))
 
   // Dominio: el sitio vive en codebymike.net; sus duplicados alcanzables (el
   // `www` y el alias del proyecto en Vercel) mandan aquí con 308. Va antes de
