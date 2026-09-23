@@ -2107,6 +2107,64 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-computo-cuota',
+    fase: 'Fase 48 · La cuota que se comparte',
+    nombre: 'Cómputo por proyecto: de facturar a vigilar la cuota gratis',
+    rango: '7 y 22 sep 2026',
+    ghSince: '2026-09-07',
+    ghUntil: '2026-09-22',
+    commits: 15,
+    resumen:
+      'El 7 sep se construyó la base para facturarle a cada cliente su cómputo de Vercel (cálculo, tarifas, ingesta firmada, cierre mensual), pero faltaba el medidor que la alimentara y nadie había mirado el plan de la cuenta. Al retomarla, el 22 sep, se confirmó que el equipo está en Hobby: el cómputo no se cobra, se corta, y la cuota es una sola para toda la cuenta. La fase reencauza el sistema a lo que sí importa en ese plan: medir cuánto de la bolsa compartida se come cada proyecto, avisar antes del tope y cotizar el hosting con un número defendible.',
+    historias: [
+      {
+        id: 'PF-CO-01', titulo: 'Como operador, quiero saber cuánto de la cuota gratis se come cada proyecto, porque pasarse no cobra: apaga la cuenta entera',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-22', tags: ['costos', 'vercel', 'fase-48'],
+        dod: [
+          ok('LA PREMISA SE VERIFICÓ ANTES DE CONSTRUIR: el plan de la cuenta con la API de Vercel (hobby), la API de costos con la CLI (404 en Hobby) y el modelo de cobro de Fluid en la documentación. Cobrar "costo más margen" en Hobby da siempre cero, así que el sistema pasó de facturar a vigilar.'),
+          ok('Las cuotas se importan del catálogo VERCEL de infra-stack.ts, el mismo que simula /admin/infra: una sola lista de límites para las dos páginas.'),
+          ok('La proyección usa el ritmo OBSERVADO y no el mes entero: con el medidor instalado el día 20, dividir por 20 días diluiría el ritmo a menos de la mitad.'),
+          ok('Avisos por ntfy al 70, 90 y 100 % y por proyección, solo el umbral más alto recién cruzado y una vez por mes, con el estado en app_settings como el detector de crons en silencio. Diario y no por sondeo: una cuota mensual no se agota en horas salvo un ataque, y eso ya lo ve el micro-SIEM.'),
+          pend('Medir también el propio portafolio: mientras no tenga medidor, el porcentaje de la cuota excluye a codebymike.net.'),
+        ],
+      },
+      {
+        id: 'PF-CO-02', titulo: 'Como operador, quiero medir el cómputo de un sitio de cliente sin exigirle dependencias ni arriesgar sus peticiones',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-22', tags: ['computo', 'fase-48'],
+        dod: [
+          ok('UN SOLO ARCHIVO SIN IMPORTS (instrumentacion/medidor.ts) que se copia al proyecto, en TypeScript de sintaxis borrable: Node 24 lo cargó sin compilar en la verificación en vivo.'),
+          ok('LA MEMORIA SE MIDE COMO LA COBRA VERCEL: por vida de la instancia mientras tiene peticiones en curso. Dos peticiones solapadas pagan el tiempo una vez, y la CPU se lee del proceso entero por la misma razón.'),
+          ok('La firma y el formato del lote están escritos dos veces (el medidor no puede importar nada del portafolio): lo que los mantiene iguales es una prueba que pasa lo que envía el medidor por verificarLote y validarLote.'),
+          ok('Punto ciego declarado en el panel y en el plan: lo que el CDN sirve sin despertar la función. Transferencia al visitante y peticiones al edge se pintan como cota inferior.'),
+          pend('Instalarlo en el primer sitio de cliente y contrastar una semana contra el tablero Usage de Vercel (Fase 5 del plan).'),
+        ],
+      },
+      {
+        id: 'PF-CO-03', titulo: 'Como operador, quiero que un reintento o una caída de la base nunca cuenten dos veces ni pierdan un lote',
+        tipo: 'bug', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-22', tags: ['computo', 'idempotencia', 'fase-48'],
+        dod: [
+          ok('LA INGESTA DEL 7 SEP PERDÍA LOTES: marcaba el lote y después sumaba las horas en pasos sueltos, y tomaba CUALQUIER error de la marca como "duplicado". Una caída entre los dos pasos dejaba la marca sin su consumo y el reintento se daba por entregado.'),
+          ok('Marca y horas van ahora en un solo db.batch, que libSQL aplica como transacción, y solo un UNIQUE se lee como duplicado (isUniqueViolation); cualquier otro fallo responde 503 para que el medidor reintente.'),
+          ok('La prueba de punta a punta renombra la tabla horaria a mitad del lote, y se comprobó que falla contra la versión anterior de la ingesta y pasa con la nueva.'),
+        ],
+      },
+      {
+        id: 'PF-CO-04', titulo: 'Como operador, quiero cotizar el hosting de un cliente nuevo con un número defendible aunque el cómputo me cueste cero',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-22', tags: ['costos', 'e2e', 'fase-48'],
+        dod: [
+          ok('El precio sugerido cubre el día en que el uso comercial obligue a pasar a Pro: el mayor entre su cómputo a tarifa Pro con margen y su parte del asiento Pro. Para un sitio pequeño el cómputo son centavos y manda el asiento, y la página lo dice.'),
+          ok('Estima desde visitas y no desde invocaciones: un sitio estático tiene cero invocaciones y aun así gasta la transferencia, que es la cuota que primero se agota en un sitio con imágenes.'),
+          ok('Módulo puro e isomorfo con la misma calcularCobro que habría facturado el modelo anterior; e2e/computo.spec.ts prueba el recálculo en el navegador por el pase de demo.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
