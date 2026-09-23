@@ -6,6 +6,19 @@ const ASSET_PREFIXES = ['/_astro/', '/_image', '/fonts/', '/favicon']
 const ASSET_EXT_RE = /\.(js|css|map|svg|png|jpe?g|webp|avif|gif|ico|woff2?|ttf|txt|xml|json|webmanifest)$/i
 
 /**
+ * Quita la barra final (salvo en la raíz). El middleware lo aplica UNA vez al
+ * calcular la ruta canónica, antes de cualquier guard.
+ *
+ * Astro sirve la misma página con y sin barra (`trailingSlash: 'ignore'`), así
+ * que un guard que compara por ruta exacta solo reconocía una de las dos
+ * formas: `/docs/presentacion` pedía login y `/docs/presentacion/` servía el
+ * deck privado a cualquiera, con caché pública en la CDN encima.
+ */
+export function withoutTrailingSlash(pathname: string): string {
+  return pathname.length > 1 ? pathname.replace(/\/+$/, '') || '/' : pathname
+}
+
+/**
  * ¿Esta ruta debe contar para el rate limit por IP? Excluye assets estáticos
  * para no inflar el contador con recursos legítimos de una sola visita.
  */
