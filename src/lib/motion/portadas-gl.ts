@@ -62,7 +62,7 @@ float fbm(vec2 p) {
   float s = 0.0;
   float a = 0.55;
   mat2 r = mat2(0.8, -0.6, 0.6, 0.8);
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 4; i++) {
     s += a * ruido(p);
     p = r * p * 2.03;
     a *= 0.5;
@@ -91,7 +91,7 @@ void main() {
   vec3 cl = mix(uLineaA, uLineaB, t);
   vec3 ch = mix(uHaloA, uHaloB, t);
 
-  float v = h * 26.0;
+  float v = h * 20.0;
   float menor = linea(v, 1.0);
   float mayor = linea(v / 5.0, 1.8);
 
@@ -112,7 +112,7 @@ void main() {
   fondo += cl * tinte;
 
   vec3 c = fondo;
-  c += cl * menor * 0.34;
+  c += cl * menor * 0.3;
   c += mix(cl, vec3(1.0), 0.25) * mayor * 0.78;
   c += vec3(1.0) * reticula * 0.025;
 

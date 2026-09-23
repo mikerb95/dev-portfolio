@@ -205,7 +205,7 @@ const total = interpolate(t.total, { n: items.length })
     inset: 0 -1.25rem;
     z-index: -1;
     border-radius: 16px;
-    background: linear-gradient(90deg, rgba(0, 242, 255, 0.075), rgba(0, 242, 255, 0.02) 55%, rgba(0, 242, 255, 0));
+    background: linear-gradient(90deg, rgba(0, 242, 255, 0.05), rgba(0, 242, 255, 0.012) 50%, rgba(0, 242, 255, 0));
     transform: scaleY(0);
     transform-origin: bottom;
     transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -368,6 +368,7 @@ const total = interpolate(t.total, { n: items.length })
   }
   .proj-visor-marco {
     position: relative;
+    isolation: isolate;
     aspect-ratio: 16 / 10;
     border-radius: 14px;
     overflow: hidden;
@@ -415,6 +416,7 @@ const total = interpolate(t.total, { n: items.length })
   }
   .proj-visor-chip {
     position: absolute;
+    z-index: 3;
     top: -0.7rem;
     right: 0.9rem;
     display: inline-flex;
