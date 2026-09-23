@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm'
 import { db } from '../../../db'
 import { computeBatches, computeTerms, computeUsageHourly, projects } from '../../../db/schema'
 import { decrypt } from '../../../lib/crypto'
+import { isUniqueViolation } from '../../../lib/db-unique'
 import { recordSecurityEvent } from '../../../lib/security/events'
 import { validarLote } from '../../../lib/computo/lote'
 import { verificarLote } from '../../../lib/computo/firma'
@@ -10,8 +11,8 @@ import { verificarLote } from '../../../lib/computo/firma'
 export const prerender = false
 
 // Ingesta de telemetría de cómputo desde los proyectos de cliente. Cada
-// proyecto despliega el instrumentador de `instrumentacion/` y le pega aquí con
-// lotes firmados por HMAC. Ver `docs/plan-computo-clientes.md`.
+// proyecto despliega el medidor de `instrumentacion/medidor.ts` y le pega aquí
+// con lotes firmados por HMAC. Ver `docs/plan-computo-clientes.md`.
 //
 // Este endpoint NO es fail-open, y es la excepción consciente a la regla del
 // repo: si la firma no valida o el proyecto no existe, se rechaza. La razón es
@@ -95,27 +96,18 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (!validacion.ok) return problema(400, validacion.motivo)
   const { batchId, muestras } = validacion.lote
 
-  // Marca de lote ANTES de acumular: si el insert choca con el UNIQUE, este
-  // lote ya se aplicó y reintentarlo duplicaría el consumo. Al revés (acumular
-  // primero) una caída entre ambos pasos cobraría dos veces.
-  try {
-    await db.insert(computeBatches).values({
-      id: `${fila.projectId}:${batchId}`,
-      projectId: fila.projectId,
-      receivedAt: new Date(),
-    })
-  } catch {
-    // 200 y no 409: para el instrumentador el lote está entregado, que es la
-    // verdad. Un 4xx aquí lo haría reintentar en bucle.
-    return new Response(JSON.stringify({ ok: true, duplicado: true, horas: 0 }), {
-      status: 200,
-      headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
-    })
-  }
-
+  // Marca de lote y horas en UN solo batch, que libSQL aplica como una
+  // transacción: o entra todo o no entra nada. Con dos pasos sueltos, una
+  // caída entre la marca y las horas dejaba el lote marcado sin su consumo, y
+  // el reintento del medidor recibía "duplicado" y lo daba por entregado.
   const ahora = new Date()
-  for (const m of muestras) {
-    await db
+  const marca = db.insert(computeBatches).values({
+    id: `${fila.projectId}:${batchId}`,
+    projectId: fila.projectId,
+    receivedAt: ahora,
+  })
+  const horas = muestras.map((m) =>
+    db
       .insert(computeUsageHourly)
       .values({
         projectId: fila.projectId,
@@ -141,7 +133,25 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           edgeRequests: sql`${computeUsageHourly.edgeRequests} + ${m.edgeRequests}`,
           updatedAt: ahora,
         },
+      }),
+  )
+
+  try {
+    await db.batch([marca, ...horas])
+  } catch (err) {
+    // El único UNIQUE que puede chocar es el de la marca (las horas son
+    // UPSERT): el lote ya se aplicó. 200 y no 409, porque para el medidor el
+    // lote SÍ está entregado, y un 4xx lo descartaría con un error en consola.
+    if (isUniqueViolation(err)) {
+      return new Response(JSON.stringify({ ok: true, duplicado: true, horas: 0 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
       })
+    }
+    // Cualquier otro fallo revirtió el batch entero: 503 para que el medidor
+    // reintente el mismo lote, que esta vez no chocará con ninguna marca.
+    console.error('[computo/ingest] no se pudo aplicar el lote de', slug, err)
+    return problema(503, 'ingesta no disponible')
   }
 
   return new Response(JSON.stringify({ ok: true, horas: muestras.length }), {
