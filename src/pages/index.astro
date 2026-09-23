@@ -247,12 +247,24 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
         {t.hero.pista}
       </p>
 
+    </div>
+  </section>
+
+  <!-- ── Cinta de señales ── -->
+  <!-- Vive fuera del hero, justo debajo: es lo primero que aparece al empezar
+       el scroll, cuando el terreno se aplana. La línea en que se convierte el
+       relieve continúa aquí como la cinta de cifras reales del sitio.
+       `overflow-x-clip` y no `overflow-hidden`: el panel de cada señal cuelga
+       por debajo a propósito (se superpone al bento) y un recorte vertical lo
+       cortaba a media altura. -->
+  {senales.length > 0 && (
+    <section id="pulso" class="relative z-20 px-6 md:px-12 lg:px-20 overflow-x-clip">
+      <div class="max-w-[1280px] mx-auto">
       <!-- Cinta de señales del propio sitio (ver src/lib/pulso-publico.ts).
            `pulso-wrap` es el área viva: la cinta abre el panel al apuntar una
            señal y lo cierra al salir del conjunto, no de la cinta - si no, bajar
            el cursor hacia el panel lo cerraría justo antes de llegar. -->
-      {senales.length > 0 && (
-        <div class="pulso-wrap relative mt-6">
+        <div class="pulso-wrap relative">
           <div class="ticker -mx-6 md:-mx-12 lg:-mx-20 overflow-hidden border-y border-white/5 py-4">
             <div class="ticker-track flex w-max">
               {[0, 1].map((copia) => (
@@ -287,9 +299,9 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
             {senales.map((s) => <PulsoPanel senal={s} />)}
           </div>
         </div>
-      )}
-    </div>
-  </section>
+      </div>
+    </section>
+  )}
 
   <!-- ── Bento ── -->
   <section id="bento" class="px-6 md:px-12 lg:px-20 pb-24">
