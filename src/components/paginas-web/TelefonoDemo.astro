@@ -392,6 +392,10 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
   .ts-real .ts-lema,
   .ts-real .ts-resena {
     background: #faf7f2;
+    /* El fondo de una línea de texto en línea se sale un poco de la caja del
+       bloque (el área de la letra es más alta que el interlineado): sin este
+       margen, la barra del esqueleto asomaba como una raya sobre el título. */
+    box-shadow: 0 0 0 4px #faf7f2;
   }
 
   /* ── Capa esqueleto: la misma maqueta, sin diseñar ── */
