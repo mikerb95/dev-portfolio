@@ -1,0 +1,365 @@
+---
+// Vitrina de trabajos reales de /paginas-web: tres sitios de clientes que están
+// en línea hoy. Reemplaza al marcador de testimonios: una página hecha y
+// funcionando convence más que un "tu negocio aquí".
+//
+// Cada sitio va en un marco de navegador con su dominio real, y al hacer scroll
+// la captura se desplaza DENTRO del marco, como si alguien lo recorriera. En
+// escritorio las tarjetas se apilan: cada una se queda fija mientras la
+// siguiente sube encima y la anterior se hunde un poco.
+//
+// Las capturas son de página completa, tomadas de los sitios publicados
+// (public/assets/trabajos/, ~200 KB cada una) y servidas optimizadas por
+// astro:assets. Los textos solo describen lo que se ve en cada sitio.
+import { Image } from 'astro:assets'
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+const pw = getDictionary(getLocaleFromUrl(Astro.url.pathname)).paginasWeb
+const t = pw.trabajos
+
+// Nombre, dominio y captura: datos de cada cliente, no texto a traducir.
+const SITIOS = [
+  { nombre: 'DobleYo Café', dominio: 'dobleyo.cafe', url: 'https://dobleyo.cafe/', captura: '/assets/trabajos/dobleyo.webp', tono: '#b45309' },
+  { nombre: 'Gorillaz Motorbikes', dominio: 'gorillazmotorbikes.com', url: 'https://gorillazmotorbikes.com/', captura: '/assets/trabajos/gorillaz-motorbikes.webp', tono: '#ea580c' },
+  { nombre: 'Toledo Producciones', dominio: 'toledoproducciones.org', url: 'https://toledoproducciones.org/', captura: '/assets/trabajos/web-toledo-producciones.webp', tono: '#eab308' },
+]
+const items = t.items.map((it, i) => ({ ...it, ...SITIOS[i] }))
+---
+
+<section id="trabajos" class="px-6 md:px-12 lg:px-20 py-20">
+  <div class="max-w-[1180px] mx-auto">
+    <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 text-center mb-3 leading-[1.05]">
+      {t.heading}
+    </h2>
+    <p class="text-[15px] text-ink-200 text-center mb-14">{t.sub}</p>
+
+    <div class="tr-pila" data-trabajos>
+      {items.map((it, i) => (
+        <article class="tr-tarjeta" style={`--i:${i};--tono:${it.tono}`}>
+          <div class="tr-grid">
+            <a href={it.url} target="_blank" rel="noopener" class="tr-navegador" aria-label={`${it.nombre} · ${it.dominio}`}>
+              <span class="tr-barra" aria-hidden="true">
+                <span class="tr-puntos"><i></i><i></i><i></i></span>
+                <span class="tr-url">
+                  <svg viewBox="0 0 24 24" width="11" height="11"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+                  {it.dominio}
+                </span>
+              </span>
+              <span class="tr-vista">
+                <Image
+                  class="tr-captura"
+                  src={it.captura}
+                  alt=""
+                  width={1200}
+                  height={3400}
+                  widths={[600, 1200]}
+                  sizes="(min-width: 1024px) 640px, 92vw"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </span>
+            </a>
+
+            <div class="tr-texto">
+              <span class="tr-indice">{String(i + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}</span>
+              <span class="tr-tipo"><i></i>{it.tipo}</span>
+              <h3 class="tr-nombre">{it.nombre}</h3>
+              <p class="tr-resumen">{it.resumen}</p>
+              <ul class="tr-puntos-lista">
+                {it.puntos.map((p) => <li>{p}</li>)}
+              </ul>
+              <a href={it.url} target="_blank" rel="noopener" class="tr-visitar" data-magnetico>
+                <span data-magnetico-texto class="inline-flex items-center gap-2">
+                  {t.visitar}
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg>
+                </span>
+              </a>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <p class="tr-proximo">{t.proximo}</p>
+  </div>
+</section>
+
+<style>
+  .tr-pila {
+    position: relative;
+    display: grid;
+    gap: 2rem;
+  }
+  .tr-tarjeta {
+    position: relative;
+    border-radius: 28px;
+    padding: 1.25rem;
+    background: #101014;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.07),
+      0 -20px 60px -30px rgba(0, 0, 0, 0.9);
+    transform-origin: 50% 0%;
+  }
+  /* Pila en escritorio: cada tarjeta se fija un poco más abajo que la
+     anterior, así asoma el borde de las de atrás como un mazo de cartas. */
+  @media (min-width: 1024px) {
+    .tr-pila {
+      gap: 22vh;
+      padding-bottom: 6vh;
+    }
+    .tr-tarjeta {
+      position: sticky;
+      top: calc(96px + var(--i) * 18px);
+      padding: 1.75rem;
+    }
+  }
+  .tr-grid {
+    display: grid;
+    gap: 1.75rem;
+    align-items: center;
+  }
+  @media (min-width: 1024px) {
+    .tr-grid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: 3rem;
+    }
+  }
+
+  /* ── Marco de navegador ── */
+  .tr-navegador {
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #1c1c22;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 30px 60px -30px rgba(0, 0, 0, 0.9);
+    transition: box-shadow 0.4s ease;
+  }
+  .tr-navegador:hover {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--tono) 55%, transparent),
+      0 30px 70px -30px color-mix(in srgb, var(--tono) 45%, transparent);
+  }
+  .tr-barra {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 34px;
+    padding: 0 12px;
+    background: #1c1c22;
+  }
+  .tr-puntos {
+    display: flex;
+    gap: 6px;
+  }
+  .tr-puntos i {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+  .tr-url {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    max-width: 320px;
+    margin-inline: auto;
+    height: 22px;
+    border-radius: 999px;
+    background: #2a2a32;
+    font-size: 11px;
+    color: var(--color-ink-100);
+  }
+  .tr-url svg {
+    fill: none;
+    stroke: var(--color-ink-200);
+    stroke-width: 2;
+  }
+  .tr-vista {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #0c0c10;
+  }
+  .tr-vista :global(.tr-captura) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    will-change: transform;
+  }
+
+  /* ── Texto ── */
+  .tr-indice {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--color-ink-300);
+  }
+  .tr-tipo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-200);
+  }
+  .tr-tipo i {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--tono);
+    box-shadow: 0 0 12px var(--tono);
+  }
+  .tr-nombre {
+    margin-top: 0.6rem;
+    font-size: clamp(28px, 3.2vw, 42px);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--color-ink-50);
+  }
+  .tr-resumen {
+    margin-top: 1rem;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--color-ink-100);
+  }
+  .tr-puntos-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1.25rem;
+  }
+  .tr-puntos-lista li {
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    font-size: 12.5px;
+    color: var(--color-ink-100);
+  }
+  .tr-visitar {
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    margin-top: 1.75rem;
+    padding: 0 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-ink-50);
+    transition:
+      border-color 0.3s ease,
+      color 0.3s ease;
+  }
+  .tr-visitar:hover {
+    border-color: var(--color-ember);
+    color: var(--color-ember);
+  }
+  .tr-visitar svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .tr-proximo {
+    margin-top: 3rem;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(24px, 3vw, 34px);
+    color: var(--color-ember);
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  const pila = document.querySelector<HTMLElement>('[data-trabajos]')
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (pila && !reducido) {
+    try {
+      montar(pila)
+    } catch (err) {
+      console.warn('[trabajos] sin animar', err)
+    }
+  }
+
+  function montar(pila: HTMLElement) {
+    const tarjetas = Array.from(pila.querySelectorAll<HTMLElement>('.tr-tarjeta'))
+    const mm = gsap.matchMedia()
+
+    tarjetas.forEach((tarjeta, i) => {
+      const vista = tarjeta.querySelector<HTMLElement>('.tr-vista')!
+      const captura = tarjeta.querySelector<HTMLElement>('.tr-captura')!
+
+      // Recorrido del sitio dentro del marco: de la cabecera hasta el final de
+      // la captura, atado al scroll. Se mide al refrescar porque la captura
+      // carga en diferido y su alto real llega tarde.
+      const recorrido = () => Math.max(0, captura.offsetHeight - vista.clientHeight)
+      mm.add('(min-width: 1024px)', () => {
+        const siguiente = tarjetas[i + 1]
+        gsap.fromTo(
+          captura,
+          { y: 0 },
+          {
+            y: () => -recorrido(),
+            ease: 'none',
+            scrollTrigger: {
+              trigger: tarjeta,
+              start: () => `top ${96 + i * 18}px`,
+              // Mientras la tarjeta está fija y aún no la tapa la siguiente.
+              end: () => (siguiente ? `+=${siguiente.offsetTop - tarjeta.offsetTop}` : '+=60%'),
+              scrub: 0.6,
+              invalidateOnRefresh: true,
+            },
+          },
+        )
+        // La tarjeta de atrás se hunde y se apaga cuando la siguiente la tapa:
+        // es lo que da profundidad al mazo.
+        if (siguiente) {
+          gsap.to(tarjeta, {
+            scale: 0.94,
+            filter: 'brightness(0.55)',
+            ease: 'none',
+            scrollTrigger: {
+              trigger: siguiente,
+              start: 'top bottom',
+              end: () => `top ${96 + (i + 1) * 18}px`,
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          })
+        }
+      })
+      mm.add('(max-width: 1023px)', () => {
+        gsap.fromTo(
+          captura,
+          { y: 0 },
+          {
+            y: () => -recorrido() * 0.6,
+            ease: 'none',
+            scrollTrigger: { trigger: vista, start: 'top 85%', end: 'bottom 15%', scrub: 0.6, invalidateOnRefresh: true },
+          },
+        )
+      })
+      captura.addEventListener('load', () => ScrollTrigger.refresh(), { once: true })
+    })
+  }
+</script>
