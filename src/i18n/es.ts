@@ -1033,6 +1033,82 @@ const es = {
       { q: '¿Cuánto se demora?', a: 'Depende del plan: entre 3 días y un par de semanas. En la primera conversación te doy una fecha clara.' },
       { q: '¿Y si ya tengo dominio o redes?', a: 'Mejor aún. Trabajamos sobre lo que ya tienes y lo conectamos todo. No empiezas de cero.' },
     ],
+    // Celular del hero (src/components/paginas-web/TelefonoDemo.astro): cuatro
+    // negocios de ejemplo, uno por perfil de "¿Esto es para ti?". Son ficticios
+    // y la página lo dice debajo del celular: al lado hay trabajos reales y no
+    // se pueden confundir.
+    demo: {
+      ejemplo: 'Ejemplos ilustrativos',
+      nuevoMensaje: 'Nuevo mensaje',
+      ahora: 'ahora',
+      negocios: [
+        {
+          nombre: 'Panadería La Espiga',
+          corto: 'La Espiga',
+          lema: 'Pan de masa madre, horneado cada mañana',
+          boton: 'Pedir por WhatsApp',
+          servicios: ['Pan del día', 'Tortas por encargo'],
+          mensajes: ['¿Tienen pan integral hoy?', 'Quiero encargar una torta para el sábado'],
+          resena: '4,9 en Google',
+        },
+        {
+          nombre: 'Laura Gómez, psicóloga',
+          corto: 'Laura Gómez',
+          lema: 'Terapia individual y de pareja, presencial y en línea',
+          boton: 'Agendar una cita',
+          servicios: ['Terapia individual', 'Terapia de pareja'],
+          mensajes: ['¿Tienes espacio el jueves en la tarde?', 'Quisiera agendar una primera sesión'],
+          resena: '5,0 en Google',
+        },
+        {
+          nombre: 'Nido, velas artesanales',
+          corto: 'Nido',
+          lema: 'Hechas a mano en Medellín, con envío a todo el país',
+          boton: 'Ver el catálogo',
+          servicios: ['Aromas de temporada', 'Regalos para empresas'],
+          mensajes: ['¿Hacen envíos a Cali?', 'Me encantó la de lavanda, ¿hay de 300 g?'],
+          resena: '4,8 en Google',
+        },
+        {
+          nombre: 'Andes Travel',
+          corto: 'Andes Travel',
+          lema: 'Tours por Colombia con reserva y pago en línea',
+          boton: 'Reservar un tour',
+          servicios: ['Eje cafetero', 'Caño Cristales'],
+          mensajes: ['Quiero reservar para 4 personas', '¿Puedo pagar con Nequi?'],
+          resena: '4,9 en Google',
+        },
+      ],
+    },
+    // Mini animaciones de "Lo que consigues" (BeneficiosVivos.astro).
+    viz: {
+      busqueda: 'panadería cerca de mí',
+      tuNegocio: 'Tu negocio',
+      escribiendo: 'escribiendo',
+      mensajes: ['Hola, ¿hacen domicilios?', '¿Hasta qué hora abren?', 'Quiero hacer un pedido'],
+      checklist: ['Dominio', 'Diseño', 'Publicación', 'En Google'],
+      listo: '¡Lista!',
+      computador: 'computador',
+      celular: 'celular',
+    },
+    // Escenas de "Cómo funciona" (TallerPasos.astro): la conversación, el
+    // diseño y la página publicada, con el mismo negocio de ejemplo.
+    taller: {
+      chat: [
+        'Hola, tengo una panadería y quiero una página',
+        '¡Hola! Cuéntame qué vendes y mándame unas fotos',
+        'Abrimos de 6 a 8. Ahí van las fotos',
+        'Perfecto, mañana te muestro la primera versión',
+      ],
+      contacto: 'Panadería La Espiga',
+      colores: 'Colores',
+      tipografia: 'Letra',
+      vistaPrevia: 'Vista previa enviada',
+      enLinea: 'En línea',
+      busqueda: 'panadería la espiga',
+      resultado: 'Panadería · Abierto hasta las 8',
+      paso: 'Paso {n} de {total}',
+    },
     finalCta: {
       heading: 'Hablemos de tu página.',
       body: 'Cuéntame qué haces y qué te gustaría lograr. Te respondo el mismo día, sin compromiso y sin palabras técnicas.',
