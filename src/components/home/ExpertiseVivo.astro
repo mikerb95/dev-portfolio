@@ -93,7 +93,9 @@ const X = (s: number) => 78 + (s / 3) * (344 - 78)
             ))}
             <g class="c-lcp" style="opacity:0">
               <line class="c-lcp-linea" x1="0" x2="0" y1="18" y2="150"></line>
-              <text class="c-lcp-texto" x="5" y="14"></text>
+              <!-- A la izquierda de la línea: a la derecha chocaba con la
+                   etiqueta del umbral cuando el LCP pasa del segundo. -->
+              <text class="c-lcp-texto" x="-5" y="14" text-anchor="end"></text>
             </g>
           </svg>
         </div>

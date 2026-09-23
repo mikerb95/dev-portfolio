@@ -5,6 +5,7 @@ import { cronSecretOk } from '../../../lib/cron-auth'
 import { conRegistro } from '../../../lib/cron-runs'
 import { limpiarLotes, recalcularPeriodo } from '../../../lib/computo/store'
 import { esClaveValida, ultimosPeriodos } from '../../../lib/computo/periodo'
+import { avisarCuota } from '../../../lib/computo/avisos'
 
 export const prerender = false
 
@@ -37,7 +38,12 @@ async function correr(url: URL) {
     resultados.push(await recalcularPeriodo(clave))
   }
   await limpiarLotes(Date.now())
-  return { periodos: resultados }
+  // La cuota gratis se vigila aquí, una vez al día, y no en cada sondeo de
+  // uptime: una cuota mensual no se agota en horas salvo un ataque, y los
+  // ataques ya los ve el micro-SIEM. Revisar cada hora serían 24 veces más
+  // lecturas de Turso para responder casi siempre lo mismo.
+  const cuota = await avisarCuota(Date.now())
+  return { periodos: resultados, cuota }
 }
 
 export const GET: APIRoute = conRegistro('computo-rollup', async ({ request, url }) => {

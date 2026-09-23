@@ -10,6 +10,7 @@ import {
 import { calcularCobro, factorDesdeFactura, type TerminosCobro, type UsoComputo } from './calculo'
 import { tarifasVigentes, type FilaTarifas } from './tarifas'
 import { clavePeriodo, inicioISO, periodoAnterior, rangoPeriodo, type ClavePeriodo } from './periodo'
+import type { ConsumoMedido } from './cuota'
 
 /** Consumo agregado de un proyecto en un periodo, leído de las filas horarias. */
 export interface ConsumoProyecto extends UsoComputo {
@@ -208,6 +209,55 @@ export async function recalcularPeriodo(clave: ClavePeriodo): Promise<ResultadoR
  */
 export async function limpiarLotes(ahora: number, dias = 40): Promise<void> {
   await db.delete(computeBatches).where(lt(computeBatches.receivedAt, new Date(ahora - dias * 86_400_000)))
+}
+
+/** Consumo del mes con lo que necesita el panel además de lo que pide `estadoCuota`. */
+export interface ConsumoDelMes extends ConsumoMedido {
+  /** Último lote recibido este mes. Solo del mes: buscarlo en toda la tabla la escanearía entera. */
+  ultimoReporte: Date | null
+}
+
+/**
+ * Consumo por proyecto del mes de `ahora`, para la cuota compartida.
+ *
+ * Una sola consulta agrupada y acotada al mes por `compute_usage_hour_idx`: son
+ * como mucho 744 filas por proyecto, y Turso factura las escaneadas.
+ */
+export async function consumoDelMes(ahora: number): Promise<ConsumoDelMes[]> {
+  const { desde, hasta } = rangoPeriodo(clavePeriodo(ahora))
+  const filas = await db
+    .select({
+      projectId: computeUsageHourly.projectId,
+      nombre: projects.title,
+      cpuMs: sql<number>`sum(${computeUsageHourly.cpuMs})`,
+      gbMs: sql<number>`sum(${computeUsageHourly.gbMs})`,
+      invocaciones: sql<number>`sum(${computeUsageHourly.invocations})`,
+      transferenciaBytes: sql<number>`sum(${computeUsageHourly.transferBytes})`,
+      transferenciaOrigenBytes: sql<number>`sum(${computeUsageHourly.originTransferBytes})`,
+      edgeRequests: sql<number>`sum(${computeUsageHourly.edgeRequests})`,
+      // Crudos en segundos: los agregados no pasan por el `mode: 'timestamp'`.
+      primeraHora: sql<number>`min(${computeUsageHourly.hour})`,
+      ultimoReporte: sql<number | null>`max(${computeUsageHourly.updatedAt})`,
+    })
+    .from(computeUsageHourly)
+    .innerJoin(projects, eq(projects.id, computeUsageHourly.projectId))
+    .where(and(gte(computeUsageHourly.hour, new Date(desde)), lt(computeUsageHourly.hour, new Date(hasta))))
+    .groupBy(computeUsageHourly.projectId, projects.title)
+
+  return filas.map((f) => ({
+    projectId: f.projectId,
+    nombre: f.nombre,
+    uso: {
+      cpuMs: Number(f.cpuMs) || 0,
+      gbMs: Number(f.gbMs) || 0,
+      invocaciones: Number(f.invocaciones) || 0,
+      transferenciaBytes: Number(f.transferenciaBytes) || 0,
+      transferenciaOrigenBytes: Number(f.transferenciaOrigenBytes) || 0,
+      edgeRequests: Number(f.edgeRequests) || 0,
+    },
+    desde: Number(f.primeraHora) * 1000,
+    ultimoReporte: f.ultimoReporte ? new Date(Number(f.ultimoReporte) * 1000) : null,
+  }))
 }
 
 /** Proyectos con medición activa, para el panel. */
