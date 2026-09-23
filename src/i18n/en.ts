@@ -209,7 +209,15 @@ const en = {
       },
       github: { user: 'mikerb95', note: 'Open source · daily commits', cta: 'View profile' },
     },
-    proyectos: { sectionLabel: 'Selected work', title: 'Projects in production.', viewProject: 'View project' },
+    proyectos: {
+      sectionLabel: 'Selected work',
+      title: 'Projects in production.',
+      viewProject: 'View project',
+      total: '{n} projects',
+      cabecera: { proyecto: 'Project', resumen: "What it's about", tecnologia: 'Tech' },
+      captura: 'Site capture',
+      generativa: 'Generative cover · seed {id}',
+    },
     proceso: {
       sectionLabel: 'How I work',
       title: 'A four-step process, calibrated to your pace.',

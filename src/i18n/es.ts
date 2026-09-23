@@ -215,7 +215,18 @@ const es = {
       },
       github: { user: 'mikerb95', note: 'Open source · commits diarios', cta: 'Ver perfil' },
     },
-    proyectos: { sectionLabel: 'Trabajo seleccionado', title: 'Proyectos en producción.', viewProject: 'Ver proyecto' },
+    proyectos: {
+      sectionLabel: 'Trabajo seleccionado',
+      title: 'Proyectos en producción.',
+      viewProject: 'Ver proyecto',
+      // Índice cinético (src/components/home/ProyectosIndice.astro).
+      total: '{n} proyectos',
+      cabecera: { proyecto: 'Proyecto', resumen: 'De qué trata', tecnologia: 'Tecnología' },
+      // Pie de la ventana flotante: dice qué se está viendo. Una portada
+      // generativa se anuncia como tal para no hacerla pasar por una captura.
+      captura: 'Captura del sitio',
+      generativa: 'Portada generativa · semilla {id}',
+    },
     proceso: {
       sectionLabel: 'Cómo trabajo',
       title: 'Un proceso en cuatro pasos, calibrado a tu velocidad.',
