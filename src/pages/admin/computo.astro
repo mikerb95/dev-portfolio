@@ -1,0 +1,478 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { count } from 'drizzle-orm'
+import { db } from '../../db'
+import { appSettings, clients, projects } from '../../db/schema'
+import { parseRates, fmtUSD, fmtMoney } from '../../lib/money'
+import { consumoDelMes, proyectosMedidos, type ConsumoDelMes } from '../../lib/computo/store'
+import { estadoCuota } from '../../lib/computo/cuota'
+import { CONDICIONES_INICIALES, PLANTILLAS, cotizar } from '../../lib/computo/cotizador'
+
+const ahora = Date.now()
+
+// Fail-open: la base de demo o un entorno sin la migración 0031 no tienen las
+// tablas de cómputo, y eso no debe tumbar la página, solo vaciarla.
+let consumos: ConsumoDelMes[] = []
+let medidos: Awaited<ReturnType<typeof proyectosMedidos>> = []
+let sinDatos = false
+try {
+  ;[consumos, medidos] = await Promise.all([consumoDelMes(ahora), proyectosMedidos()])
+} catch (e) {
+  console.error('[admin/computo]', e)
+  sinDatos = true
+}
+
+const [todos, settingsRows, [{ n: numClientes }]] = await Promise.all([
+  db.select({ id: projects.id, title: projects.title, slug: projects.slug }).from(projects).orderBy(projects.title),
+  db.select().from(appSettings),
+  db.select({ n: count() }).from(clients),
+])
+const copPorUsd = parseRates(settingsRows).COP ?? null
+
+const cuota = estadoCuota(consumos, ahora)
+const porId = new Map(consumos.map((c) => [c.projectId, c]))
+const conMedicion = new Set(medidos.map((m) => m.id))
+const sinMedir = todos.filter((p) => !conMedicion.has(p.id))
+const manda = cuota.dimensiones.find((d) => d.dimension === cuota.manda) ?? null
+const diasRestantes = Math.ceil((cuota.finMes - ahora) / 86_400_000)
+
+// Lo que la cuenta ya proyecta consumir: el cotizador suma encima al cliente nuevo.
+const ocupado = Object.fromEntries(cuota.dimensiones.map((d) => [d.dimension, d.proyectado]))
+const condiciones = { ...CONDICIONES_INICIALES, clientesPorAsiento: Number(numClientes) || CONDICIONES_INICIALES.clientesPorAsiento }
+const plantilla = PLANTILLAS[1]
+const cot = cotizar(plantilla.estimacion, condiciones, ocupado)
+
+const fmtNum = (n: number) =>
+  new Intl.NumberFormat('es-CO', { maximumFractionDigits: n === 0 ? 0 : n < 1 ? 3 : n < 10 ? 2 : 0 }).format(n)
+const fmtFecha = (t: number | Date) =>
+  new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' }).format(new Date(t))
+const fmtDia = (t: number) =>
+  new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' }).format(new Date(t))
+const tono = (pct: number) => (pct >= 90 ? 'bg-ember' : pct >= 70 ? 'bg-ember/60' : 'bg-cyan')
+
+const CAMPOS = [
+  { id: 'visitasMes', etiqueta: 'Páginas vistas al mes', paso: '100' },
+  { id: 'pctSsr', etiqueta: '% que pasa por una función', paso: '1' },
+  { id: 'peticionesPorVisita', etiqueta: 'Peticiones por visita', paso: '1' },
+  { id: 'kbPorVisita', etiqueta: 'KB descargados por visita', paso: '10' },
+  { id: 'kbHtml', etiqueta: 'KB del HTML generado', paso: '1' },
+  { id: 'cpuMsPorRender', etiqueta: 'CPU por render (ms)', paso: '1' },
+  { id: 'duracionMsPorRender', etiqueta: 'Duración por render (ms)', paso: '10' },
+  { id: 'memoriaMb', etiqueta: 'Memoria de la función (MB)', paso: '1024' },
+] as const
+---
+
+<AdminLayout title="Cómputo">
+  <div id="computo" data-ocupado={JSON.stringify(ocupado)} data-cop={copPorUsd ?? ''}>
+    <p class="text-[12.5px] text-ink-100 leading-relaxed max-w-3xl">
+      La cuenta de Vercel está en plan gratis: el cómputo no se cobra, se <strong class="text-ink-50 font-medium">corta</strong>.
+      Y la cuota es una sola para todos los proyectos, así que un cliente con mucho tráfico puede apagar a los demás.
+      Esta página mide cuánto de esa bolsa se come cada proyecto y cotiza cuánto cobrarle a un cliente nuevo.
+    </p>
+
+    <!-- Resumen -->
+    <div class="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Se agota primero</p>
+        {manda ? (
+          <>
+            <p class="text-xl font-medium tracking-tight text-ink-50">{manda.etiqueta}</p>
+            <p class="mt-1 text-[10px] font-mono text-ink-300">{Math.round(manda.pctProyectado)} % proyectado al cierre</p>
+          </>
+        ) : (
+          <p class="text-xl font-medium tracking-tight text-ink-300">sin datos</p>
+        )}
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Proyectos medidos</p>
+        <p class="text-2xl font-medium tracking-tight text-ink-50">{medidos.filter((m) => m.activo).length}</p>
+        <p class="mt-1 text-[10px] font-mono text-ink-300">{consumos.length} reportaron este mes</p>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Observado desde</p>
+        <p class="text-xl font-medium tracking-tight text-ink-50">{cuota.desde ? fmtDia(cuota.desde) : '...'}</p>
+        <p class="mt-1 text-[10px] font-mono text-ink-300">{cuota.proyeccionFiable ? 'proyección fiable' : 'menos de 3 días: proyección orientativa'}</p>
+      </div>
+      <div class="rounded-2xl glass p-5">
+        <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Fin de mes</p>
+        <p class="text-2xl font-medium tracking-tight text-ink-50">{diasRestantes} días</p>
+        <p class="mt-1 text-[10px] font-mono text-ink-300">la cuota se reinicia el {fmtDia(cuota.finMes)}</p>
+      </div>
+    </div>
+
+    {sinDatos && (
+      <p class="mt-4 text-[12px] text-ember">No se pudieron leer las tablas de cómputo en esta base. La cuota se muestra vacía.</p>
+    )}
+
+    <!-- Cuota compartida -->
+    <section class="mt-6 rounded-2xl glass p-5">
+      <div class="flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan shrink-0"></span>
+        <h2 class="text-[15px] font-medium text-ink-50">Cuota gratis de la cuenta, {cuota.periodo}</h2>
+      </div>
+      <p class="mt-1 text-[11px] font-mono text-ink-300">
+        suma de los proyectos medidos · barra sólida = consumido, tenue = proyección al cierre
+      </p>
+
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-[12.5px] border-collapse min-w-[640px]">
+          <thead>
+            <tr class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+              <th class="text-left font-normal pb-2">Dimensión</th>
+              <th class="text-right font-normal pb-2">Consumido</th>
+              <th class="text-left font-normal pb-2 pl-4 w-[28%]">De la cuota</th>
+              <th class="text-right font-normal pb-2">Al cierre</th>
+              <th class="text-left font-normal pb-2 pl-4">Quién la consume</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cuota.dimensiones.map((d) => (
+              <tr class="border-t border-white/5 align-top">
+                <td class="py-2.5 text-ink-50">
+                  {d.etiqueta}
+                  {d.cotaInferior && (
+                    <span class="block text-[10px] font-mono text-ink-300" title="El medidor no ve lo que el CDN sirve sin despertar la función: el consumo real es mayor.">
+                      sin estáticos: el real es mayor
+                    </span>
+                  )}
+                </td>
+                <td class="py-2.5 text-right font-mono tabular-nums text-ink-100">
+                  {fmtNum(d.consumido)}
+                  <span class="block text-[10px] text-ink-300">de {fmtNum(d.cuota)} {d.unidad}</span>
+                </td>
+                <td class="py-2.5 pl-4">
+                  <div class="relative h-1.5 rounded-full bg-white/[.06] overflow-hidden">
+                    <div class="absolute inset-y-0 left-0 rounded-full bg-white/15" style={`width:${Math.min(100, d.pctProyectado)}%`}></div>
+                    <div class={`absolute inset-y-0 left-0 rounded-full ${tono(d.pct)}`} style={`width:${Math.min(100, d.pct)}%`}></div>
+                  </div>
+                  <span class="block mt-1 text-[10px] font-mono text-ink-300">{fmtNum(d.pct)} %</span>
+                </td>
+                <td class="py-2.5 text-right font-mono tabular-nums">
+                  <span class={d.pctProyectado >= 100 ? 'text-ember' : 'text-ink-100'}>{Math.round(d.pctProyectado)} %</span>
+                  <span class="block text-[10px] text-ink-300">
+                    {d.agotada ? 'agotada' : d.agotaEn ? `se agota el ${fmtDia(d.agotaEn)}` : 'llega a fin de mes'}
+                  </span>
+                </td>
+                <td class="py-2.5 pl-4 text-[11.5px] text-ink-200">
+                  {d.proyectos.length === 0 ? '...' : d.proyectos.slice(0, 3).map((p) => `${p.nombre} ${fmtNum(p.pctCuota)} %`).join(' · ')}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-3 text-[11.5px] text-ink-300 leading-relaxed">
+        El porcentaje es de lo medido: proyectos sin medidor (incluido este portafolio mientras no lo tenga) y lo que se
+        consumió antes de instalarlo no cuentan. Contrastar con el tablero Usage de Vercel.
+        Un aviso llega por ntfy al cruzar el 70, el 90 y el 100 %, o si la proyección pasa del 100 %.
+      </p>
+    </section>
+
+    <!-- Proyectos medidos -->
+    <section class="mt-6 rounded-2xl glass p-5">
+      <div class="flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan shrink-0"></span>
+        <h2 class="text-[15px] font-medium text-ink-50">Proyectos medidos</h2>
+      </div>
+
+      {medidos.length === 0 ? (
+        <p class="mt-3 text-[12.5px] text-ink-200">Ningún proyecto tiene medidor todavía.</p>
+      ) : (
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-[12.5px] border-collapse min-w-[560px]">
+            <thead>
+              <tr class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+                <th class="text-left font-normal pb-2">Proyecto</th>
+                <th class="text-left font-normal pb-2">Estado</th>
+                <th class="text-left font-normal pb-2">Último reporte</th>
+                <th class="text-right font-normal pb-2">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {medidos.map((m) => {
+                const ultimo = porId.get(m.id)?.ultimoReporte
+                return (
+                  <tr class="border-t border-white/5">
+                    <td class="py-2.5 text-ink-50">
+                      {m.title}
+                      <span class="block text-[10px] font-mono text-ink-300">{m.slug}</span>
+                    </td>
+                    <td class="py-2.5 text-[12px]">
+                      <span class={m.activo ? 'text-lime' : 'text-ink-300'}>{m.activo ? 'midiendo' : 'pausado'}</span>
+                      {!m.tieneSecreto && <span class="block text-[10px] font-mono text-ember">sin secreto</span>}
+                    </td>
+                    <td class="py-2.5 font-mono text-[11.5px] text-ink-200">{ultimo ? fmtFecha(ultimo) : 'nada este mes'}</td>
+                    <td class="py-2.5 text-right whitespace-nowrap">
+                      <button type="button" data-secreto={m.id} data-rotar={m.tieneSecreto ? '1' : '0'} data-nombre={m.title}
+                        class="h-7 px-3 rounded-full text-[11.5px] border border-white/10 bg-white/[.03] text-ink-100 hover:bg-white/[.06]">
+                        {m.tieneSecreto ? 'Rotar secreto' : 'Generar secreto'}
+                      </button>
+                      <button type="button" data-pausa={m.id} data-activo={m.activo ? '1' : '0'}
+                        class="ml-1.5 h-7 px-3 rounded-full text-[11.5px] border border-white/10 bg-white/[.03] text-ink-100 hover:bg-white/[.06]">
+                        {m.activo ? 'Pausar' : 'Reanudar'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {sinMedir.length > 0 && (
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <label for="nuevo-medido" class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300">Medir</label>
+          <select id="nuevo-medido" class="h-8 px-2.5 rounded-lg bg-ink-900 border border-white/10 text-[12.5px] text-ink-50">
+            {sinMedir.map((p) => <option value={p.id}>{p.title}</option>)}
+          </select>
+          <button type="button" data-secreto="nuevo"
+            class="h-8 px-3.5 rounded-full text-[12px] border border-cyan/30 bg-cyan/10 text-cyan hover:bg-cyan/15">
+            Generar secreto
+          </button>
+        </div>
+      )}
+
+      <div id="revelado" hidden class="mt-4 rounded-xl bg-cyan/[.06] p-4">
+        <p class="text-[12.5px] text-ink-50">
+          Copia esto ahora en las variables de entorno del proyecto en Vercel: <strong class="font-medium">no se vuelve a mostrar</strong>.
+        </p>
+        <pre class="mt-2 p-3 rounded-lg bg-ink-900 text-[12px] font-mono text-ink-50 overflow-x-auto select-all" data-env></pre>
+        <p class="mt-2 text-[11.5px] text-ink-200 leading-relaxed">
+          Luego copia <code class="font-mono text-ink-100">instrumentacion/medidor.ts</code> al proyecto y engánchalo:
+          en Astro, <code class="font-mono text-ink-100">export const onRequest = medidorDesdeEnv().astro()</code> en
+          <code class="font-mono text-ink-100">src/middleware.ts</code>; en Express,
+          <code class="font-mono text-ink-100">app.use(medidorDesdeEnv().express())</code> antes de las rutas.
+          Detalle en <code class="font-mono text-ink-100">docs/plan-computo-clientes.md</code>.
+        </p>
+        <button type="button" data-cerrar-revelado class="mt-3 h-7 px-3 rounded-full text-[11.5px] border border-white/10 bg-white/[.03] text-ink-100 hover:bg-white/[.06]">
+          Ya lo copié
+        </button>
+      </div>
+      <p class="mt-3 text-[11.5px] text-ember" data-error-alta hidden></p>
+    </section>
+
+    <!-- Cotizador -->
+    <section class="mt-6 rounded-2xl glass p-5" id="cotizador">
+      <div class="flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan shrink-0"></span>
+        <h2 class="text-[15px] font-medium text-ink-50">Cotizar un cliente nuevo</h2>
+      </div>
+      <p class="mt-1 text-[12px] text-ink-200 max-w-3xl">
+        Cuánto de la cuota se comería, si cabe junto a lo que ya hay, y cuánto cobrarle al mes. El precio sugerido cubre el
+        día en que haya que pasar a Pro: su cómputo a tarifa Pro con margen, o su parte del asiento Pro si el cómputo son centavos.
+      </p>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        {PLANTILLAS.map((p) => (
+          <button type="button" data-plantilla={p.id} aria-pressed={p.id === plantilla.id}
+            class="h-8 px-3.5 rounded-full text-[12px] border transition-colors border-white/10 bg-white/[.03] text-ink-100 hover:bg-white/[.06] aria-[pressed=true]:border-cyan/30 aria-[pressed=true]:bg-cyan/10 aria-[pressed=true]:text-cyan">
+            {p.nombre}
+          </button>
+        ))}
+      </div>
+      <p class="mt-2 text-[12px] text-ink-200" data-plantilla-desc>{plantilla.descripcion}</p>
+
+      <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {CAMPOS.map((c) => (
+          <label class="block">
+            <span class="block text-[10px] font-mono uppercase tracking-[.14em] text-ink-300 mb-1">{c.etiqueta}</span>
+            <input type="number" min="0" step={c.paso} value={plantilla.estimacion[c.id]} data-campo={c.id}
+              class="w-full h-8 px-2 text-right rounded-lg bg-ink-900 border border-white/10 text-ink-50 tabular-nums" />
+          </label>
+        ))}
+        <label class="block">
+          <span class="block text-[10px] font-mono uppercase tracking-[.14em] text-ink-300 mb-1">Margen (%)</span>
+          <input type="number" min="0" step="1" value={condiciones.margenPct} data-condicion="margenPct"
+            class="w-full h-8 px-2 text-right rounded-lg bg-ink-900 border border-white/10 text-ink-50 tabular-nums" />
+        </label>
+        <label class="block">
+          <span class="block text-[10px] font-mono uppercase tracking-[.14em] text-ink-300 mb-1">Clientes por asiento Pro</span>
+          <input type="number" min="1" step="1" value={condiciones.clientesPorAsiento} data-condicion="clientesPorAsiento"
+            class="w-full h-8 px-2 text-right rounded-lg bg-ink-900 border border-white/10 text-ink-50 tabular-nums" />
+        </label>
+      </div>
+
+      <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="rounded-xl bg-white/[.03] p-4">
+          <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Su cómputo en Pro</p>
+          <p class="text-xl font-medium text-ink-50 tabular-nums" data-res="pro">{fmtUSD(cot.costoPro.costoUsd, 2)}</p>
+          <p class="mt-1 text-[10px] font-mono text-ink-300">al mes, sin margen</p>
+        </div>
+        <div class="rounded-xl bg-white/[.03] p-4">
+          <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Su parte del asiento</p>
+          <p class="text-xl font-medium text-ink-50 tabular-nums" data-res="asiento">{fmtUSD(cot.parteAsientoUsd, 2)}</p>
+          <p class="mt-1 text-[10px] font-mono text-ink-300">Pro cuesta 20 USD al mes por asiento</p>
+        </div>
+        <div class="rounded-xl bg-cyan/[.06] p-4">
+          <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Cuota sugerida</p>
+          <p class="text-2xl font-medium text-cyan tabular-nums" data-res="sugerida">{fmtUSD(cot.sugerida.totalUsd, 2)}</p>
+          <p class="mt-1 text-[10px] font-mono text-ink-300" data-res="sugerida-cop">
+            {copPorUsd ? `${fmtMoney(cot.sugerida.totalUsd * copPorUsd, 'COP', 0)} al mes` : 'sin tasa COP'}
+          </p>
+        </div>
+      </div>
+      <p class="mt-3 text-[12px] text-ink-100" data-res="razon"></p>
+
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-[12.5px] border-collapse min-w-[560px]">
+          <thead>
+            <tr class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
+              <th class="text-left font-normal pb-2">Dimensión</th>
+              <th class="text-right font-normal pb-2">Al mes</th>
+              <th class="text-right font-normal pb-2">De la cuota</th>
+              <th class="text-right font-normal pb-2">Con la cuenta</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cot.lineas.map((l) => (
+              <tr class="border-t border-white/5" data-linea={l.dimension}>
+                <td class="py-2 text-ink-50">{l.etiqueta}</td>
+                <td class="py-2 text-right font-mono tabular-nums text-ink-100">
+                  <span data-cantidad>{fmtNum(l.cantidad)}</span> <span class="text-[10px] text-ink-300">{l.unidad}</span>
+                </td>
+                <td class="py-2 text-right font-mono tabular-nums text-ink-100" data-pct>{fmtNum(l.pctCuota)} %</td>
+                <td class="py-2 text-right font-mono tabular-nums" data-con-cuenta>{Math.round(l.pctConCuenta)} %</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-3 text-[11.5px] text-ink-300 leading-relaxed">
+        "Con la cuenta" suma al cliente nuevo lo que los proyectos medidos proyectan consumir este mes. La memoria se estima
+        como si ningún render se solapara, así que va por arriba. La tarifa Pro de transferencia y peticiones al edge es la bajo
+        demanda de <code class="font-mono text-ink-200">computo/tarifas.ts</code>; un equipo Pro nuevo las paga con Flat Rate CDN.
+      </p>
+    </section>
+  </div>
+</AdminLayout>
+
+<script>
+  import { PLANTILLAS, cotizar, type EstimacionVisitas, type CondicionesCotizacion } from '../../lib/computo/cotizador'
+  import { fmtUSD, fmtMoney } from '../../lib/money'
+
+  const raiz = document.getElementById('computo')
+  if (raiz) {
+    const ocupado = JSON.parse(raiz.dataset.ocupado || '{}') as Record<string, number>
+    const copCrudo = Number(raiz.dataset.cop)
+    const copPorUsd = Number.isFinite(copCrudo) && copCrudo > 0 ? copCrudo : null
+    const fmtNum = (n: number) =>
+      new Intl.NumberFormat('es-CO', { maximumFractionDigits: n === 0 ? 0 : n < 1 ? 3 : n < 10 ? 2 : 0 }).format(n)
+    const valor = (el: HTMLInputElement | null) => {
+      const v = Number(el?.value)
+      return Number.isFinite(v) && v > 0 ? v : 0
+    }
+
+    // ----- Cotizador: los inputs son la única fuente de verdad de la vista.
+    function recalcular() {
+      const estimacion = {} as EstimacionVisitas
+      raiz!.querySelectorAll<HTMLInputElement>('[data-campo]').forEach((el) => {
+        estimacion[el.dataset.campo as keyof EstimacionVisitas] = valor(el)
+      })
+      const condiciones: CondicionesCotizacion = {
+        margenPct: valor(raiz!.querySelector('[data-condicion="margenPct"]')),
+        clientesPorAsiento: valor(raiz!.querySelector('[data-condicion="clientesPorAsiento"]')),
+      }
+      const c = cotizar(estimacion, condiciones, ocupado)
+      const res = (k: string) => raiz!.querySelector(`[data-res="${k}"]`)!
+      res('pro').textContent = fmtUSD(c.costoPro.costoUsd, 2)
+      res('asiento').textContent = fmtUSD(c.parteAsientoUsd, 2)
+      res('sugerida').textContent = fmtUSD(c.sugerida.totalUsd, 2)
+      res('sugerida-cop').textContent = copPorUsd ? `${fmtMoney(c.sugerida.totalUsd * copPorUsd, 'COP', 0)} al mes` : 'sin tasa COP'
+
+      const linea = c.lineas.find((l) => l.dimension === c.manda)!
+      const encaje = c.cabe
+        ? `Cabe en la cuota gratis junto a lo que ya hay. Donde más pesa: ${linea.etiqueta.toLowerCase()}, ${fmtNum(linea.pctCuota)} % de la cuota.`
+        : `NO cabe: con este cliente la cuenta pasaría del 100 % en ${c.lineas.filter((l) => !l.cabe).map((l) => l.etiqueta.toLowerCase()).join(', ')}.`
+      const precio = c.sugerida.aplicoMinimo
+        ? 'Su cómputo son centavos: manda su parte del asiento Pro.'
+        : 'Manda su cómputo a tarifa Pro con el margen.'
+      res('razon').textContent = `${encaje} ${precio}`
+
+      for (const l of c.lineas) {
+        const fila = raiz!.querySelector(`[data-linea="${l.dimension}"]`)!
+        fila.querySelector('[data-cantidad]')!.textContent = fmtNum(l.cantidad)
+        fila.querySelector('[data-pct]')!.textContent = `${fmtNum(l.pctCuota)} %`
+        const conCuenta = fila.querySelector('[data-con-cuenta]') as HTMLElement
+        conCuenta.textContent = `${Math.round(l.pctConCuenta)} %`
+        conCuenta.className = `py-2 text-right font-mono tabular-nums ${l.cabe ? 'text-ink-100' : 'text-ember'}`
+      }
+    }
+
+    raiz.querySelectorAll<HTMLButtonElement>('[data-plantilla]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const p = PLANTILLAS.find((x) => x.id === b.dataset.plantilla)
+        if (!p) return
+        raiz.querySelectorAll('[data-plantilla]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+        raiz.querySelector('[data-plantilla-desc]')!.textContent = p.descripcion
+        raiz.querySelectorAll<HTMLInputElement>('[data-campo]').forEach((el) => {
+          el.value = String(p.estimacion[el.dataset.campo as keyof EstimacionVisitas])
+        })
+        recalcular()
+      })
+    })
+    raiz.querySelectorAll('#cotizador input').forEach((el) => el.addEventListener('input', recalcular))
+    recalcular()
+
+    // ----- Alta de proyectos medidos
+    const revelado = raiz.querySelector('#revelado') as HTMLElement
+    const errorAlta = raiz.querySelector('[data-error-alta]') as HTMLElement
+    const mostrarError = (msg: string) => {
+      errorAlta.textContent = msg
+      errorAlta.hidden = false
+    }
+
+    raiz.querySelectorAll<HTMLButtonElement>('[data-secreto]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const nuevo = b.dataset.secreto === 'nuevo'
+        const projectId = nuevo
+          ? Number((raiz.querySelector('#nuevo-medido') as HTMLSelectElement).value)
+          : Number(b.dataset.secreto)
+        if (b.dataset.rotar === '1' && !confirm(`¿Rotar el secreto de "${b.dataset.nombre}"? El actual deja de valer al instante y el proyecto no reportará hasta que lo redespliegues con el nuevo.`)) return
+        b.disabled = true
+        errorAlta.hidden = true
+        try {
+          const res = await fetch('/api/admin/computo/proyectos', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ projectId }),
+          })
+          const datos = await res.json().catch(() => ({}))
+          if (!res.ok) return mostrarError(datos.error ?? `error ${res.status}`)
+          revelado.querySelector('[data-env]')!.textContent = `COMPUTO_PROYECTO=${datos.slug}\nCOMPUTO_SECRETO=${datos.secreto}`
+          revelado.hidden = false
+        } catch {
+          mostrarError('no se pudo contactar al servidor')
+        } finally {
+          b.disabled = false
+        }
+      })
+    })
+
+    // Recargar solo al cerrar el aviso: recargar antes borraría el secreto de
+    // la pantalla, y no hay forma de volver a verlo.
+    raiz.querySelector('[data-cerrar-revelado]')?.addEventListener('click', () => location.reload())
+
+    raiz.querySelectorAll<HTMLButtonElement>('[data-pausa]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        b.disabled = true
+        try {
+          const res = await fetch('/api/admin/computo/proyectos', {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ projectId: Number(b.dataset.pausa), activo: b.dataset.activo !== '1' }),
+          })
+          if (!res.ok) {
+            const datos = await res.json().catch(() => ({}))
+            return mostrarError(datos.error ?? `error ${res.status}`)
+          }
+          location.reload()
+        } catch {
+          mostrarError('no se pudo contactar al servidor')
+        } finally {
+          b.disabled = false
+        }
+      })
+    })
+  }
+</script>
