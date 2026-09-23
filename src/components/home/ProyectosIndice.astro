@@ -455,9 +455,18 @@ const total = interpolate(t.total, { n: items.length })
     // Las rayas se dibujan de izquierda a derecha y cada nombre sube desde su
     // ranura justo detrás: se lee como un índice que se va imprimiendo.
     if (!reducido) {
+      const rayas = Array.from(seccion.querySelectorAll<HTMLElement>('.proj-raya'))
+      const nombres = filas.map((f) => f.querySelector<HTMLElement>('.proj-nombre-txt'))
+      const detalles = filas.flatMap((f) =>
+        Array.from(f.querySelectorAll<HTMLElement>('.proj-num, .proj-desc, .proj-stack, .proj-stack-movil, .proj-flecha')),
+      )
       try {
-        const rayas = Array.from(seccion.querySelectorAll<HTMLElement>('.proj-raya'))
+        // Estado de partida fijado antes del trigger: con un `from` dentro de
+        // onEnter, las filas ya visibles se pintarían un fotograma en su sitio
+        // y luego saltarían a la ranura para volver a subir.
         gsap.set(rayas, { scaleX: 0 })
+        gsap.set(nombres, { yPercent: 110 })
+        gsap.set(detalles, { opacity: 0, y: 8 })
         ScrollTrigger.batch(filas, {
           start: 'top 92%',
           once: true,
@@ -467,13 +476,13 @@ const total = interpolate(t.total, { n: items.length })
               els.map((f) => f.querySelector('.proj-raya')),
               { scaleX: 1, duration: 1.1, ease: 'expo.out', stagger: 0.06 },
             )
-            gsap.from(
+            gsap.to(
               els.map((f) => f.querySelector('.proj-nombre-txt')),
-              { yPercent: 110, duration: 1, ease: 'expo.out', stagger: 0.06, delay: 0.08 },
+              { yPercent: 0, duration: 1, ease: 'expo.out', stagger: 0.06, delay: 0.08 },
             )
-            gsap.from(
+            gsap.to(
               els.flatMap((f) => Array.from(f.querySelectorAll('.proj-num, .proj-desc, .proj-stack, .proj-stack-movil, .proj-flecha'))),
-              { opacity: 0, y: 8, duration: 0.8, ease: 'power3.out', stagger: 0.015, delay: 0.2 },
+              { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.015, delay: 0.2 },
             )
           },
         })
@@ -484,8 +493,9 @@ const total = interpolate(t.total, { n: items.length })
           onEnter: () => gsap.to('.proj-raya-final', { scaleX: 1, duration: 1.1, ease: 'expo.out' }),
         })
       } catch (err) {
+        // Fail-open: la lista es el contenido, no la decoración.
         console.warn('[proyectos] entrada deshabilitada', err)
-        gsap.set(seccion.querySelectorAll('.proj-raya'), { scaleX: 1 })
+        gsap.set([...rayas, ...nombres, ...detalles], { clearProps: 'transform,opacity' })
       }
     }
 
@@ -603,8 +613,6 @@ const total = interpolate(t.total, { n: items.length })
           // Primera aparición: nace ya en su sitio, sin volar desde la última
           // posición conocida (que puede estar al otro lado de la pantalla).
           gsap.set(visor, { x, y, transformOrigin: origen })
-          xTo.tween.invalidate()
-          yTo.tween.invalidate()
         }
         xTo(x)
         yTo(y)
