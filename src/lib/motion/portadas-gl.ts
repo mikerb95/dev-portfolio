@@ -92,8 +92,10 @@ void main() {
   vec3 ch = mix(uHaloA, uHaloB, t);
 
   float v = h * 20.0;
-  float menor = linea(v, 1.0);
-  float mayor = linea(v / 5.0, 1.8);
+  // Donde la pendiente apiña las curvas por debajo de un píxel, se apagan en
+  // vez de romperse en puntos sueltos (el mismo criterio del hero).
+  float menor = linea(v, 1.0) * (1.0 - smoothstep(0.3, 0.7, fwidth(v)));
+  float mayor = linea(v / 5.0, 1.8) * (1.0 - smoothstep(0.3, 0.7, fwidth(v / 5.0)));
 
   // Tinte hipsométrico: bandas de altura con un escalón de luminancia muy
   // leve, como en un mapa impreso. Da volumen sin necesidad de sombreado.
