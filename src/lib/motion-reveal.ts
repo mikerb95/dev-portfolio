@@ -47,6 +47,10 @@ function initMotion(opts: { cardSelector?: string }) {
     const maskClass = line.classList.contains('text-mask-cyan') ? 'text-mask-cyan' : 'text-mask'
     const split = new SplitText(line, { type: 'chars' })
     split.chars.forEach((c) => c.classList.add(maskClass))
+    // El degradado de la línea sobra una vez que cada letra lleva el suyo, y
+    // además rompe: Chromium (Brave 153) pinta el recorte del padre con las
+    // letras transformadas amontonadas al inicio de la línea.
+    line.style.backgroundImage = 'none'
     gsap.set(split.chars, { opacity: 0, yPercent: 100 })
     gsap.to(split.chars, {
       opacity: 1,
