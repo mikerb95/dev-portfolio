@@ -73,6 +73,23 @@ test.describe('gate del panel', () => {
     }
   })
 
+  // El challenge del login con llave venía de una cookie que escribe el
+  // cliente, y el servidor aceptaba el que trajera: con un challenge inventado
+  // el request pasaba de largo hasta buscar la llave. Ahora tiene que morir
+  // en el challenge, que solo vale si lo emitió el servidor.
+  test('el login con llave no acepta un challenge inventado por el cliente', async ({ request }) => {
+    const opciones = await request.post('/api/auth/webauthn/options')
+    expect(opciones.status()).toBe(200)
+
+    const cookie = JSON.stringify({ challenge: 'inventado-por-el-cliente', login: '', kind: 'auth' })
+    const res = await request.post('/api/auth/webauthn/verify', {
+      headers: { cookie: `wan_challenge=${encodeURIComponent(cookie)}` },
+      data: { id: 'llave-x', rawId: 'llave-x', type: 'public-key', response: {} },
+    })
+    expect(res.status()).toBe(400)
+    expect((await res.json()).error).toMatch(/challenge/)
+  })
+
   test('el mando de la presentación sí es público', async ({ page }) => {
     for (const path of ['/remote', '/remote/']) {
       const res = await page.goto(path)
