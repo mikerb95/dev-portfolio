@@ -4,6 +4,9 @@ export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
 import TelefonoDemo from '../components/paginas-web/TelefonoDemo.astro'
+import BeneficiosVivos from '../components/paginas-web/BeneficiosVivos.astro'
+import TallerPasos from '../components/paginas-web/TallerPasos.astro'
+import TrabajosReales from '../components/paginas-web/TrabajosReales.astro'
 import { getDictionary, getLocaleFromUrl, interpolate } from '../i18n'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
@@ -139,43 +142,14 @@ const faqs = pw.faqs
   </section>
 
   <!-- ── Qué logras (beneficios) ── -->
-  <section class="px-6 md:px-12 lg:px-20 py-16">
-    <div class="max-w-[1100px] mx-auto">
-      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
-        {pw.beneficiosHeading}
-      </h2>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {pw.beneficios.map((b) => (
-          <div class="glass lift rounded-3xl p-6">
-            <div class="w-10 h-10 rounded-2xl bg-ember/10 border border-ember/25 flex items-center justify-center mb-4">
-              <span class="w-2 h-2 rounded-full bg-ember"></span>
-            </div>
-            <h3 class="text-[16px] font-medium text-ink-50 mb-2">{b.t}</h3>
-            <p class="text-[14px] text-ink-200 leading-relaxed">{b.d}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
+  <BeneficiosVivos />
 
   <!-- ── Cómo funciona ── -->
-  <section class="px-6 md:px-12 lg:px-20 py-16">
-    <div class="max-w-[1000px] mx-auto">
-      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
-        {pw.pasosHeading}
-      </h2>
-      <p class="text-[15px] text-ink-200 text-center mb-12">{pw.pasosSub}</p>
-      <div class="grid md:grid-cols-3 gap-5">
-        {pasos.map((paso) => (
-          <div class="glass lift rounded-3xl p-7">
-            <div class="font-serif italic text-[40px] text-ember/70 leading-none mb-4">{paso.n}</div>
-            <h3 class="text-[18px] font-medium text-ink-50 mb-2">{paso.titulo}</h3>
-            <p class="text-[14px] text-ink-200 leading-relaxed">{paso.texto}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
+  <TallerPasos />
+
+  <!-- ── Trabajos reales ── -->
+  <!-- Antes de los precios: primero se ve que funciona, después cuánto cuesta. -->
+  <TrabajosReales />
 
   <!-- ── Planes ── -->
   <section id="planes" class="px-6 md:px-12 lg:px-20 py-16 scroll-mt-24">
@@ -231,33 +205,6 @@ const faqs = pw.faqs
       <p class="text-[13px] text-ink-300 text-center mt-8">
         {pw.planesFootnote}
       </p>
-    </div>
-  </section>
-
-  <!-- ── Prueba social (placeholder honesto) ── -->
-  <section class="px-6 md:px-12 lg:px-20 py-16">
-    <div class="max-w-[1100px] mx-auto">
-      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
-        {pw.socialHeading}
-      </h2>
-      <div class="grid sm:grid-cols-3 gap-5">
-        {[1, 2, 3].map(() => (
-          <div class="glass rounded-3xl p-7 border border-dashed border-white/10">
-            <div class="flex items-center gap-3 mb-4">
-              <span class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-ink-300">
-                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
-              </span>
-              <div>
-                <div class="text-[14px] text-ink-100">{pw.socialYourBusiness}</div>
-                <div class="text-[12px] text-ink-300">{pw.socialComingSoon}</div>
-              </div>
-            </div>
-            <p class="text-[14px] text-ink-300 leading-relaxed italic">
-              {pw.socialPlaceholder}
-            </p>
-          </div>
-        ))}
-      </div>
     </div>
   </section>
 
