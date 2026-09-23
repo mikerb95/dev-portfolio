@@ -42,12 +42,18 @@ const condiciones = { ...CONDICIONES_INICIALES, clientesPorAsiento: Number(numCl
 const plantilla = PLANTILLAS[1]
 const cot = cotizar(plantilla.estimacion, condiciones, ocupado)
 
+// Cifras significativas por debajo de 1: un sitio pequeño consume 0,0002 h de
+// CPU, y con decimales fijos eso se pinta como un 0 que parece "no midió nada".
 const fmtNum = (n: number) =>
-  new Intl.NumberFormat('es-CO', { maximumFractionDigits: n === 0 ? 0 : n < 1 ? 3 : n < 10 ? 2 : 0 }).format(n)
+  new Intl.NumberFormat('es-CO', n > 0 && n < 1 ? { maximumSignificantDigits: 2 } : { maximumFractionDigits: n < 10 ? 2 : 0 }).format(n)
 const fmtFecha = (t: number | Date) =>
   new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' }).format(new Date(t))
 const fmtDia = (t: number) =>
   new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' }).format(new Date(t))
+// El mes se corta en UTC (periodo.ts): en hora de Bogotá el 1 de octubre a las
+// 00:00 UTC todavía es 30 de septiembre, y pintarlo así confunde.
+const fmtDiaUtc = (t: number) =>
+  new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(t))
 const tono = (pct: number) => (pct >= 90 ? 'bg-ember' : pct >= 70 ? 'bg-ember/60' : 'bg-cyan')
 
 const CAMPOS = [
@@ -96,7 +102,7 @@ const CAMPOS = [
       <div class="rounded-2xl glass p-5">
         <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-1.5">Fin de mes</p>
         <p class="text-2xl font-medium tracking-tight text-ink-50">{diasRestantes} días</p>
-        <p class="mt-1 text-[10px] font-mono text-ink-300">la cuota se reinicia el {fmtDia(cuota.finMes)}</p>
+        <p class="mt-1 text-[10px] font-mono text-ink-300">la cuota se reinicia el {fmtDiaUtc(cuota.finMes)} (UTC)</p>
       </div>
     </div>
 
@@ -357,7 +363,7 @@ const CAMPOS = [
     const copCrudo = Number(raiz.dataset.cop)
     const copPorUsd = Number.isFinite(copCrudo) && copCrudo > 0 ? copCrudo : null
     const fmtNum = (n: number) =>
-      new Intl.NumberFormat('es-CO', { maximumFractionDigits: n === 0 ? 0 : n < 1 ? 3 : n < 10 ? 2 : 0 }).format(n)
+      new Intl.NumberFormat('es-CO', n > 0 && n < 1 ? { maximumSignificantDigits: 2 } : { maximumFractionDigits: n < 10 ? 2 : 0 }).format(n)
     const valor = (el: HTMLInputElement | null) => {
       const v = Number(el?.value)
       return Number.isFinite(v) && v > 0 ? v : 0

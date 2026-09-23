@@ -185,12 +185,12 @@ export const CRONS: readonly Cron[] = [
     cadaMin: 1440,
     origen: 'vercel',
     hace: {
-      es: 'Consolida el consumo de cómputo medido en cada proyecto de cliente y recalcula lo que se le factura.',
-      en: 'Consolidates the compute usage measured on each client project and recalculates what gets billed for it.',
+      es: 'Consolida el consumo de cómputo medido en cada proyecto de cliente y avisa si la cuota gratis compartida de la cuenta va camino de agotarse.',
+      en: 'Consolidates the compute usage measured on each client project and warns if the account’s shared free quota is on track to run out.',
     },
     siFalla: {
-      es: 'El consumo se sigue midiendo, pero el periodo en curso deja de reflejarlo hasta la siguiente pasada.',
-      en: 'Usage is still measured, but the current period stops reflecting it until the next pass.',
+      es: 'El consumo se sigue midiendo, pero el mes en curso deja de reflejarlo y los avisos de cuota no salen hasta la siguiente pasada.',
+      en: 'Usage is still measured, but the current month stops reflecting it and quota warnings are not sent until the next pass.',
     },
   },
   {
