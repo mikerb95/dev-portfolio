@@ -1009,6 +1009,7 @@ const en = {
     ],
     demo: {
       ejemplo: 'Illustrative examples',
+      comoLlegar: 'Get directions',
       nuevoMensaje: 'New message',
       ahora: 'now',
       negocios: [

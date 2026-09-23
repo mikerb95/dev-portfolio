@@ -83,6 +83,12 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
             <span class="ts-estrellas">★★★★★</span>
             <span data-campo="resena">{p.resena}</span>
           </div>
+          <div class="ts-mapa" data-pieza>
+            <span class="ts-mapa-fondo"></span>
+            <svg class="ts-mapa-ruta" viewBox="0 0 260 64" preserveAspectRatio="none"><path d="M18 50 C70 50 70 18 120 18 S190 44 236 22" /></svg>
+            <span class="ts-pin"></span>
+            <span class="ts-mapa-txt"><span data-campo="comoLlegar">{t.comoLlegar}</span></span>
+          </div>
         </div>
       ))}
 
@@ -193,7 +199,7 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
   }
   .ts-hero {
     position: relative;
-    height: 170px;
+    height: 188px;
     border-radius: 20px;
     overflow: hidden;
     display: grid;
@@ -310,6 +316,69 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
     font-size: 11px;
     color: #57534e;
   }
+  /* Bloque de mapa: lo que casi todo negocio local pone al final de su página.
+     Calles dibujadas con dos degradados repetidos, ruta y pin del color del
+     negocio. */
+  .ts-mapa {
+    position: relative;
+    height: 64px;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .ts-mapa-fondo {
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 38px, rgba(255, 255, 255, 0.9) 38px 41px),
+      repeating-linear-gradient(0deg, transparent 0 22px, rgba(255, 255, 255, 0.9) 22px 25px),
+      #e8e2d6;
+  }
+  .ts-mapa-ruta {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: var(--acento);
+    stroke-width: 2.5;
+    stroke-dasharray: 5 5;
+    stroke-linecap: round;
+    opacity: 0.8;
+  }
+  .ts-pin {
+    position: absolute;
+    right: 18px;
+    top: 10px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--acento);
+    transform: rotate(-45deg);
+    box-shadow: 0 4px 10px -3px rgba(0, 0, 0, 0.4);
+  }
+  .ts-pin::after {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border-radius: 999px;
+    background: #fff;
+  }
+  .ts-mapa-txt {
+    position: absolute;
+    left: 10px;
+    bottom: 8px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #fff;
+    font-size: 10.5px;
+    font-weight: 650;
+    color: #292524;
+    box-shadow: 0 2px 8px -3px rgba(0, 0, 0, 0.25);
+  }
+  .ts-esqueleto .ts-mapa-txt {
+    background: transparent;
+    box-shadow: none;
+  }
   .ts-estrellas {
     color: #f59e0b;
     letter-spacing: 0.05em;
@@ -334,10 +403,18 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
   }
+  /* Especificidad igual o mayor que la de la segunda tarjeta, que lleva su
+     propio degradado: si no, esa imagen salía a color en pleno esqueleto. */
   .ts-esqueleto .ts-logo,
-  .ts-esqueleto .ts-card-img {
+  .ts-esqueleto .ts-card .ts-card-img,
+  .ts-esqueleto .ts-card:nth-child(2) .ts-card-img,
+  .ts-esqueleto .ts-mapa-fondo {
     background: #e5e0d8;
     opacity: 1;
+  }
+  .ts-esqueleto .ts-pin,
+  .ts-esqueleto .ts-mapa-ruta {
+    display: none;
   }
   .ts-esqueleto .ts-menu i {
     background: #d6d0c6;
@@ -536,6 +613,7 @@ const vars = `--c1:${p.c1};--c2:${p.c2};--acento:${p.acento}`
         servicio0: n.servicios[0] ?? '',
         servicio1: n.servicios[1] ?? '',
         resena: n.resena,
+        comoLlegar: capa.querySelector<HTMLElement>('[data-campo="comoLlegar"]')?.textContent ?? '',
       }
       capa.querySelectorAll<HTMLElement>('[data-campo]').forEach((c) => {
         c.textContent = campos[c.dataset.campo ?? ''] ?? ''

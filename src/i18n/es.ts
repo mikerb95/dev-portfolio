@@ -1039,6 +1039,7 @@ const es = {
     // se pueden confundir.
     demo: {
       ejemplo: 'Ejemplos ilustrativos',
+      comoLlegar: 'Cómo llegar',
       nuevoMensaje: 'Nuevo mensaje',
       ahora: 'ahora',
       negocios: [
