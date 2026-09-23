@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro'
 import { getSession } from 'auth-astro/server'
 import { isAllowedLogin } from '../../../../lib/auth'
-import { listCredentials, deleteCredential } from '../../../../lib/webauthn'
+import { listCredentials, deleteCredential, notifyPasskeyChange } from '../../../../lib/webauthn'
+import { clientIp } from '../../../../lib/device-info'
 
 async function currentLogin(request: Request): Promise<string | null> {
   const session = await getSession(request)
@@ -36,5 +37,12 @@ export const DELETE: APIRoute = async ({ request }) => {
   if (!id) return new Response(JSON.stringify({ error: 'id requerido' }), { status: 400 })
 
   const ok = await deleteCredential(login, id)
+  if (ok) {
+    await notifyPasskeyChange('removed', {
+      login,
+      ip: clientIp(request.headers),
+      userAgent: request.headers.get('user-agent'),
+    })
+  }
   return new Response(JSON.stringify({ ok }), { status: ok ? 200 : 404 })
 }

@@ -1,7 +1,7 @@
 import GitHub from '@auth/core/providers/github'
 import Credentials from '@auth/core/providers/credentials'
 import { defineConfig } from 'auth-astro'
-import { isAllowedLogin } from './src/lib/auth'
+import { isAllowedGithubId, isAllowedLogin } from './src/lib/auth'
 import { serverEnv } from './src/lib/env'
 import { verifyPasskeyProof } from './src/lib/webauthn'
 
@@ -39,7 +39,13 @@ export default defineConfig({
       if (account?.provider === 'passkey') {
         return isAllowedLogin((user as { login?: string } | undefined)?.login)
       }
-      return isAllowedLogin(profile?.login as string | undefined)
+      // El id decide (no cambia nunca); el login se sigue exigiendo porque es
+      // la identidad con la que el resto del panel guarda sesiones y llaves.
+      // Ver ALLOWED_GITHUB_IDS en src/lib/auth.ts.
+      return (
+        isAllowedGithubId(profile?.id as number | string | undefined) &&
+        isAllowedLogin(profile?.login as string | undefined)
+      )
     },
     async jwt({ token, profile, user, account }) {
       if (profile) {
@@ -48,9 +54,13 @@ export default defineConfig({
         // Id único por sesión/dispositivo: permite listar y revocar sesiones
         // desde el panel. Va firmado dentro del JWT, así que no se puede eludir.
         token.sid = crypto.randomUUID()
+        // Cuándo se probó la identidad de verdad. Las acciones que dan acceso
+        // permanente (dar de alta una llave) exigen que sea reciente.
+        token.authTime = Date.now()
       } else if (account?.provider === 'passkey' && user) {
         token.login = (user as { login?: string }).login
         token.sid = crypto.randomUUID()
+        token.authTime = Date.now()
       }
       return token
     },
@@ -61,6 +71,7 @@ export default defineConfig({
         if (token.picture) session.user.image = token.picture as string
       }
       if (token.sid) (session as { sid?: string }).sid = token.sid as string
+      if (typeof token.authTime === 'number') (session as { authTime?: number }).authTime = token.authTime
       return session
     },
   },
