@@ -260,10 +260,10 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   {senales.length > 0 && (
     <section id="pulso" class="relative z-20 px-6 md:px-12 lg:px-20 overflow-x-clip">
       <div class="max-w-[1280px] mx-auto">
-      <!-- Cinta de señales del propio sitio (ver src/lib/pulso-publico.ts).
-           `pulso-wrap` es el área viva: la cinta abre el panel al apuntar una
-           señal y lo cierra al salir del conjunto, no de la cinta - si no, bajar
-           el cursor hacia el panel lo cerraría justo antes de llegar. -->
+        <!-- Cinta de señales del propio sitio (ver src/lib/pulso-publico.ts).
+             `pulso-wrap` es el área viva: la cinta abre el panel al apuntar una
+             señal y lo cierra al salir del conjunto, no de la cinta - si no,
+             bajar el cursor hacia el panel lo cerraría justo antes de llegar. -->
         <div class="pulso-wrap relative">
           <div class="ticker -mx-6 md:-mx-12 lg:-mx-20 overflow-hidden border-y border-white/5 py-4">
             <div class="ticker-track flex w-max">
@@ -304,7 +304,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   )}
 
   <!-- ── Bento ── -->
-  <section id="bento" class="px-6 md:px-12 lg:px-20 pb-24">
+  <section id="bento" class="px-6 md:px-12 lg:px-20 pt-20 pb-24">
     <div class="max-w-[1280px] mx-auto">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="text-cyan">/01</span>
@@ -662,6 +662,18 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
             scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
           })
         })
+      }
+
+      // La cinta entra cuando empieza el scroll: las dos rayas se abren desde
+      // el centro (la línea en que acaba de convertirse el terreno) y las
+      // cifras suben detrás. Queda justo bajo el pliegue, así que es lo primero
+      // que aparece al bajar.
+      const cinta = document.querySelector<HTMLElement>('#pulso .ticker')
+      if (cinta) {
+        gsap
+          .timeline({ scrollTrigger: { trigger: cinta, start: 'top 98%' } })
+          .from(cinta, { clipPath: 'inset(0% 50% 0% 50%)', duration: 1.1, ease: 'expo.out' })
+          .from(cinta.querySelector('.ticker-track'), { yPercent: 60, opacity: 0, duration: 0.9, ease: 'power3.out' }, 0.15)
       }
 
       document.querySelectorAll<HTMLElement>('[data-etiqueta]').forEach(revelarEtiqueta)
