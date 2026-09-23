@@ -167,6 +167,21 @@ function num(v: unknown): number {
 }
 
 /**
+ * Consumo en la unidad de facturación de cada dimensión (h-CPU, GB-h,
+ * millones, GB). Es también la unidad en la que Vercel expresa la cuota
+ * gratis, y por eso `cuota.ts` usa esta función en vez de repetir divisores.
+ */
+export function enUnidades(uso: Partial<UsoComputo>): Record<Dimension, number> {
+  const total = sumarUso(uso)
+  const r = {} as Record<Dimension, number>
+  for (const d of DIMENSIONES) r[d] = total[CONVERSION[d].campo] / CONVERSION[d].divisor
+  return r
+}
+
+/** Unidad de facturación de una dimensión, para rotular. */
+export const unidadDe = (d: Dimension): string => CONVERSION[d].unidad
+
+/**
  * Desglose y total de un periodo.
  *
  * El margen se aplica sobre el costo YA reconciliado y no sobre el medido: el
