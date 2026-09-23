@@ -319,6 +319,22 @@ body {
   filter: blur(20px);
 }
 
+/* Terreno de isolíneas del hero (src/lib/motion/isolineas.ts). El lienzo
+   ocupa el hero entero y se funde por abajo con la sección siguiente. */
+.isolineas-lienzo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+}
+.con-isolineas .isolineas-lienzo { opacity: 1; }
+
 /* Dotted grid */
 .grid-bg {
   background-image: radial-gradient(rgba(255,255,255,.045) 1px, transparent 1px);
