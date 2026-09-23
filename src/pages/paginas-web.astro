@@ -46,7 +46,6 @@ const PERFIL_COLORS = [
 ]
 const perfiles = pw.perfiles.map((p, i) => ({ ...p, ...PERFIL_COLORS[i] }))
 
-const pasos = pw.pasos.map((p, i) => ({ ...p, n: `0${i + 1}` }))
 const faqs = pw.faqs
 ---
 
@@ -118,15 +117,15 @@ const faqs = pw.faqs
   <!-- ── ¿Esto es para ti? ── -->
   <section class="px-6 md:px-12 lg:px-20 py-16">
     <div class="max-w-[1100px] mx-auto">
-      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
+      <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 text-center mb-3 leading-[1.05]">
         {pw.perfilesHeading}
       </h2>
       <p class="text-[15px] text-ink-200 text-center max-w-xl mx-auto mb-12">
         {pw.perfilesSub}
       </p>
-      <div class="grid sm:grid-cols-2 gap-5">
+      <div class="grid sm:grid-cols-2 gap-5" data-foco data-entrada>
         {perfiles.map((p) => (
-          <div class="glass lift rounded-3xl p-7">
+          <div class="glass foco rounded-3xl p-7">
             <div class="flex items-center gap-2.5 mb-4">
               <span class={`w-2.5 h-2.5 rounded-full ${p.dot}`}></span>
               <h3 class="text-[17px] font-medium text-ink-50">{p.titulo}</h3>
@@ -154,16 +153,16 @@ const faqs = pw.faqs
   <!-- ── Planes ── -->
   <section id="planes" class="px-6 md:px-12 lg:px-20 py-16 scroll-mt-24">
     <div class="max-w-[1150px] mx-auto">
-      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-3">
+      <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 text-center mb-3 leading-[1.05]">
         {pw.planesHeading}
       </h2>
       <p class="text-[15px] text-ink-200 text-center max-w-xl mx-auto mb-12">
         {pw.planesSub}
       </p>
-      <div class="grid md:grid-cols-3 gap-5 items-start">
+      <div class="grid md:grid-cols-3 gap-5 items-start" data-foco data-entrada>
         {planes.map((plan) => (
           <div
-            class={`lift rounded-3xl p-7 flex flex-col h-full ${
+            class={`foco rounded-3xl p-7 flex flex-col h-full ${
               plan.destacado
                 ? 'glass-strong border border-ember/30 shadow-[0_0_40px_-12px_rgba(255,107,61,.4)]'
                 : 'glass'
@@ -177,7 +176,7 @@ const faqs = pw.faqs
             )}
             <h3 class="text-[20px] font-medium text-ink-50 mb-1">{plan.nombre}</h3>
             <p class="text-[13px] text-ink-200 mb-5">{plan.para}</p>
-            <div class="mb-1 text-[26px] font-medium text-ink-50">{plan.precio ?? pw.cotizacion}</div>
+            <div class="mb-1 text-[26px] font-medium text-ink-50 tabular-nums" data-odometro={plan.precio ? '' : undefined}>{plan.precio ?? pw.cotizacion}</div>
             <div class="text-[13px] text-ember mb-6">{plan.tiempo}</div>
             <ul class="space-y-2.5 mb-7 flex-1">
               {plan.incluye.map((item) => (
@@ -191,7 +190,8 @@ const faqs = pw.faqs
               href={waLink(interpolate(pw.planWaMessage, { plan: plan.nombre }))}
               target="_blank"
               rel="noopener"
-              class={`inline-flex items-center justify-center gap-2 h-11 px-5 text-[14px] font-medium rounded-full transition-all ${
+              data-magnetico
+              class={`inline-flex items-center justify-center gap-2 h-11 px-5 text-[14px] font-medium rounded-full transition-colors ${
                 plan.destacado
                   ? 'bg-ember text-ink-950 hover:brightness-110'
                   : 'border border-white/15 text-ink-100 hover:border-ember/40 hover:text-ember'
@@ -211,17 +211,17 @@ const faqs = pw.faqs
   <!-- ── FAQ ── -->
   <section class="px-6 md:px-12 lg:px-20 py-16">
     <div class="max-w-[800px] mx-auto">
-      <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 text-center mb-12">
+      <h2 data-titular class="font-sans text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 text-center mb-12 leading-[1.05]">
         {pw.faqHeading}
       </h2>
-      <div class="space-y-3">
+      <div class="space-y-3" data-faq data-entrada>
         {faqs.map((faq) => (
-          <details class="group glass rounded-2xl px-6 py-5">
+          <details class="group glass rounded-2xl px-6 py-5 transition-colors hover:border-ember/20">
             <summary class="flex items-center justify-between cursor-pointer list-none text-[16px] font-medium text-ink-50">
               {faq.q}
-              <svg class="w-5 h-5 text-ink-300 transition-transform group-open:rotate-45 shrink-0 ml-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              <svg class="w-5 h-5 text-ink-300 transition-transform duration-300 group-open:rotate-45 group-open:text-ember shrink-0 ml-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             </summary>
-            <p class="mt-3 text-[14px] text-ink-200 leading-relaxed">{faq.a}</p>
+            <div class="faq-cuerpo"><p class="pt-3 text-[14px] text-ink-200 leading-relaxed">{faq.a}</p></div>
           </details>
         ))}
       </div>
@@ -230,7 +230,8 @@ const faqs = pw.faqs
 
   <!-- ── CTA final: WhatsApp + formulario ── -->
   <section class="px-6 md:px-12 lg:px-20 py-20">
-    <div class="max-w-[1000px] mx-auto glass-strong rounded-[2rem] p-8 md:p-12">
+    <div class="max-w-[1000px] mx-auto" data-foco>
+    <div class="glass-strong foco rounded-[2rem] p-8 md:p-12">
       <div class="grid md:grid-cols-2 gap-10 items-center">
         <div>
           <h2 class="font-sans text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 mb-4 leading-[1.1]">
@@ -243,7 +244,8 @@ const faqs = pw.faqs
             href={waLink(pw.hero.waMessage)}
             target="_blank"
             rel="noopener"
-            class="inline-flex items-center gap-2.5 h-12 px-6 text-[15px] font-medium rounded-full bg-ember text-ink-950 hover:brightness-110 transition-all"
+            data-magnetico
+            class="inline-flex items-center gap-2.5 h-12 px-6 text-[15px] font-medium rounded-full bg-ember text-ink-950 hover:brightness-110 transition-[filter]"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.359.101 11.945c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652a11.9 11.9 0 0 0 5.71 1.454h.006c6.585 0 11.946-5.359 11.949-11.945a11.9 11.9 0 0 0-3.48-8.408"/></svg>
             {pw.hero.ctaWhatsapp}
