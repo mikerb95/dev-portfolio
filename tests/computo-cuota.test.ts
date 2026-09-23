@@ -124,7 +124,7 @@ describe('avisos de cuota', () => {
   it('no avisa proyecciones sin observación suficiente', () => {
     const desde = SEP_1 + 9 * DIA
     const e = estadoCuota([medido(1, 'Acme', { gbMs: gbh(40) }, desde)], desde + DIA)
-    expect(e.dimensions === undefined && e.proyeccionFiable).toBe(false)
+    expect(e.proyeccionFiable).toBe(false)
     expect(decidirAvisos(e, null).avisos).toEqual([])
   })
 
@@ -166,7 +166,9 @@ describe('cotizador', () => {
 
   it('cuando el cómputo son centavos, manda la parte del asiento Pro', () => {
     const c = cotizar(ssr, { margenPct: 30, clientesPorAsiento: 4 })
-    expect(c.costoPro.totalUsd).toBeLessThan(1)
+    // ~1 USD al mes en Pro, casi todo transferencia: con margen sigue lejos
+    // de los 5 USD de su parte del asiento.
+    expect(c.costoPro.totalUsd * 1.3).toBeLessThan(c.parteAsientoUsd)
     expect(c.parteAsientoUsd).toBe(ASIENTO_PRO_USD / 4)
     expect(c.sugerida.totalUsd).toBe(ASIENTO_PRO_USD / 4)
     expect(c.sugerida.aplicoMinimo).toBe(true)
@@ -182,8 +184,9 @@ describe('cotizador', () => {
   it('dice si cabe junto a lo que la cuenta ya proyecta', () => {
     const solo = cotizar(ssr, { margenPct: 30, clientesPorAsiento: 4 })
     expect(solo.cabe).toBe(true)
-    // La cuenta ya proyecta 355 de 360 GB-h: el cliente nuevo no entra.
-    const lleno = cotizar(ssr, { margenPct: 30, clientesPorAsiento: 4 }, { memoria: 355 })
+    // El sitio SSR pide 0,5 GB-h al mes; con la cuenta proyectando 359,8 de
+    // 360 ya no entra.
+    const lleno = cotizar(ssr, { margenPct: 30, clientesPorAsiento: 4 }, { memoria: 359.8 })
     expect(lleno.cabe).toBe(false)
     expect(lleno.lineas.find((l) => l.dimension === 'memoria')!.cabe).toBe(false)
   })
