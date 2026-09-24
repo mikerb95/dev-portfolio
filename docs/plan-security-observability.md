@@ -418,6 +418,32 @@ Vercel → Project → Firewall:
 
 ---
 
+### Auditoría del panel separada de las amenazas ✅ IMPLEMENTADA (2026-09-23)
+
+Salió de la auditoría de seguridad del módulo admin (22 sep 2026). La tabla
+`security_events` guardaba ataques y rastro de acciones legítimas sin
+distinguirlos, y del panel casi nada dejaba rastro.
+
+- **Categorías de rastro** en `src/lib/security/audit.ts` (`AUDIT_CATEGORIES`:
+  `admin_action`, `cobro`, `cuenta_cobro`, `computo`, `capacitacion`). Quedan
+  fuera de `/security`, del pulso de la portada, de `/api/now`, de los rollups
+  (y con ello de las anomalías) y del bloqueo masivo. Antes `/security` las
+  publicaba como amenazas y "bloquear todo" habría bloqueado a clientes y
+  alumnos legítimos.
+- **Rastro nuevo** (`recordAdminEvent`, con `await`): login al panel (desde el
+  alta de sesión en `recordSession`), revelado de bóveda y de variables de
+  entorno, ver como cliente, revocación de sesiones, backup manual, cambios de
+  blocklist, alta y baja de llaves, entrada a la sustentación con contraseña.
+- **Intentos fallidos** como `auth_probing`: login con GitHub rechazado (sin IP:
+  Auth.js no pasa el request a sus callbacks), login con llave fallido y
+  contraseña de la sustentación incorrecta (sin `await`: esa puerta existe para
+  funcionar con Turso caído).
+- `/admin/security`: las tarjetas cuentan solo amenazas; la sección nueva
+  "Auditoría del panel" lista rastro e intentos fallidos de los últimos 7 días.
+- **Revocación de sesiones fail-closed** (excepción deliberada al fail-open): si
+  `recordSession` no puede LEER la sesión, el panel responde 503. Las
+  escrituras siguen siendo fail-open. Las rutas de la sustentación quedan fuera.
+
 ## Métricas y SLOs del módulo (los que se publican)
 
 | Métrica | Objetivo | Medición |
