@@ -40,6 +40,9 @@ test.describe('demo · acceso', () => {
     const res = await page.request.get('/admin')
     expect(res.status()).toBe(200)
     expect(res.headers()['x-robots-tag']).toContain('noindex')
+    // Ni en la caché del navegador ni en un proxy compartido: el middleware
+    // pone `private, no-store` a toda respuesta privada que no diga otra cosa.
+    expect(res.headers()['cache-control']).toContain('no-store')
   })
 })
 
