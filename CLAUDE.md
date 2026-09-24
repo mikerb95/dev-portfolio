@@ -131,7 +131,11 @@ cookies ni lógica:
 - **Fail-open en todo lo relacionado con seguridad/observabilidad**: si el
   sensor, el rate limiter o el registro de eventos fallan, el request sigue
   su curso. Un sistema de defensa que puede tumbar el sitio que protege es
-  una superficie de ataque nueva, no una defensa.
+  una superficie de ataque nueva, no una defensa. **Excepción deliberada**: la
+  revocación de sesiones admin falla CERRADA (`src/middleware.ts`). Es
+  autorización, no observabilidad: si no se puede leer si una sesión fue
+  revocada, el panel responde 503 (salvo las rutas de la sustentación, que no
+  usan Turso). No "arreglarla" de vuelta a fail-open.
 - **Notificaciones opcionales**: `src/lib/notify.ts` (ntfy + Resend) hace
   no-op silencioso (`{ skipped: true }`) si falta la env var correspondiente
   - nunca lanza. Mismo patrón para cualquier integración opcional nueva.
@@ -195,8 +199,14 @@ cookies ni lógica:
   privada - ya los pone el middleware, no hay que replicarlos por página.
 - Todo evento sensible (login, fallo de auth, invitación, pago, anulación,
   consulta de histórico) se registra en el micro-SIEM
-  (`recordSecurityEvent`, tabla `security_events`) - fire-and-forget, nunca
-  bloquea el response.
+  (`recordSecurityEvent`, tabla `security_events`) - nunca lanza ni bloquea el
+  response. Las acciones del panel usan `recordAdminEvent` (con `await`).
+- **Auditoría no es amenaza.** La misma tabla guarda ataques y rastro de
+  acciones legítimas (mías, de clientes, de alumnos). Las categorías de rastro
+  viven en `AUDIT_CATEGORIES` (`src/lib/security/audit.ts`) y quedan fuera de
+  `/security`, del pulso de la portada, de las anomalías y del bloqueo masivo.
+  Una categoría nueva de rastro se añade ahí, o se publicará como ataque (y su
+  gráfico diario delataría cuándo uso el panel).
 - **El identificador de cliente nunca viene del request.** En cualquier consulta
   del portal, `clientId` sale de `requirePortalSession()` y viaja en el `WHERE`
   aunque la query ya lleve un `projectId` o un `invoiceId` que "ya implica" al
