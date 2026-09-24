@@ -616,7 +616,32 @@ export const onRequest = defineMiddleware(async (context, next) => {
           return context.redirect('/entrar?revoked=1')
         }
       } catch {
-        // Fail-open: un fallo del registro de sesiones no debe tumbar el panel.
+        // FAIL-CLOSED, a diferencia del resto de la seguridad del repo. Esto no
+        // es observabilidad, es autorización: si la base no responde, no hay
+        // forma de saber si esta sesión fue revocada, y dejarla pasar
+        // convertía cada caída de Turso (o una cuota agotada a propósito) en
+        // una amnistía para las cookies robadas. Tampoco cuesta nada: el panel
+        // no funciona sin Turso, así que quien pasara vería errores igual.
+        //
+        // Única excepción, las rutas de la sustentación: son las únicas del
+        // panel que no tocan Turso (viven en Redis) y existen precisamente para
+        // funcionar con la base caída el día de la charla.
+        if (!esRutaDeSustentacion(canonicalPath)) {
+          const esApi = pathname.startsWith('/api/')
+          return new Response(
+            esApi
+              ? JSON.stringify({ error: 'no se puede verificar la sesión ahora; intenta en un minuto' })
+              : 'El panel no puede verificar tu sesión ahora mismo porque la base de datos no responde. Intenta de nuevo en un minuto.',
+            {
+              status: 503,
+              headers: {
+                'Content-Type': esApi ? 'application/json' : 'text/plain; charset=utf-8',
+                'Retry-After': '60',
+                'Cache-Control': 'no-store',
+              },
+            }
+          )
+        }
       }
 
       // Nota: WebAuthn (llave de seguridad) es una puerta de entrada ALTERNATIVA

@@ -1,4 +1,5 @@
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, notInArray, sql } from 'drizzle-orm'
+import { AUDIT_CATEGORIES } from './security/audit'
 import { db } from '../db'
 import { cronRuns, monitorDaily, monitors, securityEvents, webVitals } from '../db/schema'
 import { dayKeyUTC } from './monitor-rollup'
@@ -208,7 +209,9 @@ export async function leerPulso(ahora = Date.now()): Promise<Pulso> {
             total: sql<number>`coalesce(sum(${securityEvents.hits}), 0)`,
           })
           .from(securityEvents)
-          .where(gte(securityEvents.at, desdeVentana))
+          // Solo amenazas: el rastro de acciones legítimas (lib/security/audit.ts)
+          // no es un ataque y delataría cuándo uso el panel.
+          .where(and(gte(securityEvents.at, desdeVentana), notInArray(securityEvents.category, AUDIT_CATEGORIES)))
           .groupBy(sql`1`),
       [] as { dia: string; total: number }[],
       'pulso/siem',

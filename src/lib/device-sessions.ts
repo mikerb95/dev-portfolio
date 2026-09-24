@@ -40,6 +40,13 @@ export type RecordResult = { revoked: boolean }
 /**
  * Registra/actualiza la sesión del dispositivo actual y devuelve si está
  * revocada. Una sola lectura por request; escritura con throttle.
+ *
+ * Solo LANZA si no puede leer la fila, que es el único caso en que no se sabe
+ * si la sesión fue revocada: el middleware responde a eso cerrando el panel.
+ * Las escrituras (última actividad, alta, expiración) son contabilidad y se
+ * tragan sus fallos: con la cuota de escrituras de Turso agotada la lectura
+ * sigue funcionando, y dejar fuera al admin por no poder anotar la hora de su
+ * visita sería cerrar el panel sin motivo.
  */
 export async function recordSession(params: {
   id: string
@@ -59,19 +66,32 @@ export async function recordSession(params: {
   // Expiración por inactividad: si el dispositivo vuelve tras >24h sin
   // actividad, la sesión se revoca aquí mismo aunque el cron no haya barrido.
   if (existing?.lastSeen && now.getTime() - existing.lastSeen.getTime() > IDLE_EXPIRY_MS) {
-    await db.update(adminSessions).set({ revokedAt: now }).where(eq(adminSessions.id, params.id))
+    await db
+      .update(adminSessions)
+      .set({ revokedAt: now })
+      .where(eq(adminSessions.id, params.id))
+      .catch(() => {})
     return { revoked: true }
   }
 
   if (!existing) {
-    await db.insert(adminSessions).values({
-      id: params.id,
-      login: params.login ?? null,
-      userAgent: params.userAgent,
-      ip: params.ip,
-      firstSeen: now,
-      lastSeen: now,
-    })
+    const registrada = await db
+      .insert(adminSessions)
+      .values({
+        id: params.id,
+        login: params.login ?? null,
+        userAgent: params.userAgent,
+        ip: params.ip,
+        firstSeen: now,
+        lastSeen: now,
+      })
+      .then(
+        () => true,
+        () => false
+      )
+    // Sin fila no hay aviso: el siguiente request reintenta el alta, y avisar
+    // en cada uno llenaría el teléfono de "Nueva sesión" por un solo login.
+    if (!registrada) return { revoked: false }
     // Alerta de seguridad: dispositivo nunca visto con sesión de admin.
     // Best-effort: un fallo del push no debe bloquear el request.
     await sendPush(
@@ -100,6 +120,7 @@ export async function recordSession(params: {
       .update(adminSessions)
       .set({ lastSeen: now, userAgent: params.userAgent, ip: params.ip, login: params.login ?? existing.login })
       .where(eq(adminSessions.id, params.id))
+      .catch(() => {})
   }
   return { revoked: false }
 }

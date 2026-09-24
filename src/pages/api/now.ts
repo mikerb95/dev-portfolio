@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, notInArray, sql } from 'drizzle-orm'
+import { AUDIT_CATEGORIES } from '../../lib/security/audit'
 import { db } from '../../db'
 import { ciRuns, monitorChecks, monitorDaily, monitors, securityEvents } from '../../db/schema'
 import { budgetHealth, computeSloFromCounts } from '../../lib/slo'
@@ -57,7 +58,8 @@ export const GET: APIRoute = async () => {
     const [siem] = await db
       .select({ hits: sql<number>`coalesce(sum(${securityEvents.hits}), 0)` })
       .from(securityEvents)
-      .where(gte(securityEvents.at, new Date(now - DAY_MS)))
+      // Solo amenazas, igual que /security (ver lib/security/audit.ts).
+      .where(and(gte(securityEvents.at, new Date(now - DAY_MS)), notInArray(securityEvents.category, AUDIT_CATEGORIES)))
 
     // Presupuesto de error global (30 d) sobre los monitores activos.
     //

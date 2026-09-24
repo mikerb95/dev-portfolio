@@ -1,10 +1,11 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro'
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, notInArray, or, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { securityEvents, securityAnomalies } from '../../db/schema'
 import { THREAT_CATEGORY_LABELS } from '../../lib/security/classify'
 import { listActiveBlocks } from '../../lib/security/blocklist'
+import { ADMIN_ACCESS_FAILURE_RULES, AUDIT_CATEGORIES, AUDIT_RULE_LABELS } from '../../lib/security/audit'
 
 // Panel privado de observabilidad de seguridad (micro-SIEM). Solo lectura +
 // gestión manual de la blocklist. Ver docs/plan-security-observability.md.
@@ -34,29 +35,33 @@ const SEV_DOT: Record<string, string> = {
 
 const sumHits = sql<number>`coalesce(sum(${securityEvents.hits}), 0)`
 
-const [total24Row] = await db.select({ v: sumHits }).from(securityEvents).where(gte(securityEvents.at, d1))
-const [total7Row] = await db.select({ v: sumHits }).from(securityEvents).where(gte(securityEvents.at, d7))
+// Las tarjetas y rankings miden la superficie de ataque, así que cuentan solo
+// amenazas. El rastro de acciones legítimas va a su propia sección, más abajo.
+const soloAmenazas = notInArray(securityEvents.category, AUDIT_CATEGORIES)
+
+const [total24Row] = await db.select({ v: sumHits }).from(securityEvents).where(and(gte(securityEvents.at, d1), soloAmenazas))
+const [total7Row] = await db.select({ v: sumHits }).from(securityEvents).where(and(gte(securityEvents.at, d7), soloAmenazas))
 const total24 = n(total24Row?.v)
 const total7 = n(total7Row?.v)
 
 const byCat = await db
   .select({ category: securityEvents.category, count: sumHits, ips: sql<number>`count(distinct ${securityEvents.ip})` })
   .from(securityEvents)
-  .where(gte(securityEvents.at, d1))
+  .where(and(gte(securityEvents.at, d1), soloAmenazas))
   .groupBy(securityEvents.category)
   .orderBy(sql`2 desc`)
 
 const bySev = await db
   .select({ severity: securityEvents.severity, count: sumHits })
   .from(securityEvents)
-  .where(gte(securityEvents.at, d1))
+  .where(and(gte(securityEvents.at, d1), soloAmenazas))
   .groupBy(securityEvents.severity)
 const sevCount = (s: string) => n(bySev.find((r) => r.severity === s)?.count)
 
 const topPaths = await db
   .select({ path: securityEvents.path, count: sumHits })
   .from(securityEvents)
-  .where(gte(securityEvents.at, d1))
+  .where(and(gte(securityEvents.at, d1), soloAmenazas))
   .groupBy(securityEvents.path)
   .orderBy(sql`2 desc`)
   .limit(10)
@@ -64,7 +69,7 @@ const topPaths = await db
 const topCountries = await db
   .select({ country: securityEvents.country, count: sumHits })
   .from(securityEvents)
-  .where(and(gte(securityEvents.at, d1), sql`${securityEvents.country} is not null`))
+  .where(and(gte(securityEvents.at, d1), soloAmenazas, sql`${securityEvents.country} is not null`))
   .groupBy(securityEvents.country)
   .orderBy(sql`2 desc`)
   .limit(8)
@@ -90,6 +95,25 @@ const recent = await db
   .where(and(...conds))
   .orderBy(desc(securityEvents.at))
   .limit(60)
+
+// Auditoría del panel (7 d): lo que hice yo (y cualquiera con mi sesión) más
+// los intentos fallidos de entrar. Es el rastro que responde "¿entró alguien?".
+const auditoria = await db
+  .select()
+  .from(securityEvents)
+  .where(
+    and(
+      gte(securityEvents.at, d7),
+      or(
+        inArray(securityEvents.category, AUDIT_CATEGORIES),
+        inArray(securityEvents.ruleId, ADMIN_ACCESS_FAILURE_RULES)
+      )
+    )
+  )
+  .orderBy(desc(securityEvents.at))
+  .limit(40)
+const esFalloDeAcceso = (ruleId: string) => ADMIN_ACCESS_FAILURE_RULES.includes(ruleId)
+const auditLabel = (ruleId: string) => AUDIT_RULE_LABELS[ruleId] ?? ruleId
 
 const catMax = Math.max(1, ...byCat.map((c) => n(c.count)))
 const pathMax = Math.max(1, ...topPaths.map((p) => n(p.count)))
@@ -273,6 +297,41 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
       )}
     </div>
 
+    <!-- Auditoría del panel -->
+    <div class="rounded-2xl glass p-5">
+      <h2 class="text-base font-medium text-ink-50">Auditoría del panel (7 d)</h2>
+      <p class="text-[12px] text-ink-300 mt-1 mb-3">
+        Inicios de sesión, intentos fallidos y acciones sensibles: bóveda, ver como cliente,
+        sesiones, llaves, backups y bloqueos. No cuentan como amenazas en las tarjetas de arriba.
+      </p>
+      {auditoria.length === 0 ? (
+        <p class="text-[13px] text-ink-400">Sin actividad registrada en los últimos 7 días.</p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-[12px]">
+            <thead>
+              <tr class="text-ink-400 text-left border-b border-white/5">
+                <th class="py-2 font-medium">Cuándo</th><th class="py-2 font-medium">Qué</th>
+                <th class="py-2 font-medium">Detalle</th><th class="py-2 font-medium">IP</th>
+                <th class="py-2 font-medium">País</th>
+              </tr>
+            </thead>
+            <tbody>
+              {auditoria.map((e) => (
+                <tr class="border-b border-white/[.03]">
+                  <td class="py-2 font-mono text-ink-400 whitespace-nowrap"><span class="rel-time" data-ts={e.at ? e.at.getTime() : ''}></span></td>
+                  <td class:list={['py-2', esFalloDeAcceso(e.ruleId) ? 'text-ember' : 'text-ink-100']}>{auditLabel(e.ruleId)}{e.hits > 1 ? ` ×${e.hits}` : ''}</td>
+                  <td class="py-2 font-mono text-ink-300 max-w-[260px] truncate" title={e.path}>{e.path}</td>
+                  <td class="py-2 font-mono text-ink-300">{e.ip ?? '-'}</td>
+                  <td class="py-2 font-mono text-ink-300">{e.country ?? '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
     <!-- Explorador de eventos -->
     <div class="rounded-2xl glass p-5">
       <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -280,7 +339,7 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
         <form method="get" class="flex items-center gap-2">
           <select name="cat" class="h-8 px-2 text-[12px] rounded-lg bg-white/[.03] border border-white/10 text-ink-100">
             <option value="">Toda categoría</option>
-            {[...new Set(byCat.map((c) => c.category))].map((c) => (
+            {[...new Set([...byCat.map((c) => c.category), ...AUDIT_CATEGORIES])].map((c) => (
               <option value={c} selected={c === fCat}>{catLabel(c)}</option>
             ))}
           </select>

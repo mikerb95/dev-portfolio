@@ -15,9 +15,24 @@ export const AUDIT_CATEGORIES: string[] = ['admin_action', 'cobro', 'cuenta_cobr
 
 export const isAuditCategory = (category: string): boolean => AUDIT_CATEGORIES.includes(category)
 
+/**
+ * Intentos fallidos de entrar al panel. Son amenazas (cuentan como sondeo de
+ * autenticación en todas partes), pero la sección de auditoría del panel las
+ * enseña junto a los accesos buenos: "entré yo" y "alguien intentó entrar" se
+ * leen mejor en la misma lista.
+ */
+export const ADMIN_ACCESS_FAILURE_RULES: string[] = [
+  'admin.login_rejected',
+  'passkey.login_failed',
+  'sustentacion.password_failed',
+]
+
 /** Etiqueta legible de las acciones del panel, para la sección de auditoría. */
 export const AUDIT_RULE_LABELS: Record<string, string> = {
   'admin.login': 'Inicio de sesión en el panel',
+  'admin.login_rejected': 'Login con GitHub rechazado',
+  'passkey.login_failed': 'Login con llave fallido',
+  'sustentacion.password_failed': 'Contraseña de la sustentación incorrecta',
   'vault.revealed': 'Credenciales de un servicio reveladas',
   'envvar.revealed': 'Variable de entorno revelada',
   'client.impersonated': 'Vista como cliente',

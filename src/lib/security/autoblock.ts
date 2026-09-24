@@ -8,9 +8,10 @@
 //  - Tope de bloqueos activos: si se supera, NO se bloquea más y se marca overflow
 //    (un ataque distribuido se maneja en capa 0 / WAF, no llenando la tabla).
 
-import { and, gte, sql } from 'drizzle-orm'
+import { and, gte, notInArray, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { securityEvents, blockedIps, adminSessions } from '../../db/schema'
+import { AUDIT_CATEGORIES } from './audit'
 import { blockIp, blockIpEscalated, isAllowlisted } from './blocklist'
 
 export type AutoBlockOptions = {
@@ -204,7 +205,10 @@ export async function blockAllAttackerIps(
       and(
         gte(securityEvents.at, since),
         sql`${securityEvents.ip} is not null`,
-        sql`${securityEvents.category} <> 'blocklist'`
+        // Ni los hits de IPs ya bloqueadas ni el rastro de acciones legítimas
+        // (clientes consultando sus pagos, alumnos canjeando un código): tener
+        // un evento de auditoría no convierte a nadie en atacante.
+        notInArray(securityEvents.category, ['blocklist', ...AUDIT_CATEGORIES])
       )
     )
     .groupBy(securityEvents.ip)

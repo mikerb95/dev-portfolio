@@ -2,7 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { db } from '../db'
 import { securityEvents, blockedIps } from '../db/schema'
-import { and, gte, sql } from 'drizzle-orm'
+import { and, gte, notInArray, sql } from 'drizzle-orm'
+import { AUDIT_CATEGORIES } from '../lib/security/audit'
 import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizedHref } from '../i18n'
 import { safeQuery } from '../lib/safe-query'
 
@@ -30,10 +31,16 @@ const CAT_LABELS: Record<string, string> = s.secops.categoryLabels
 
 const sumHits = sql<number>`coalesce(sum(${securityEvents.hits}), 0)`
 
+// Solo amenazas. La tabla guarda también rastro de acciones legítimas (mis
+// entradas al panel, clientes consultando sus pagos, alumnos canjeando un
+// código): contarlas aquí las publicaba como ataques, y el gráfico diario
+// habría enseñado qué días entro al panel. Ver lib/security/audit.ts.
+const soloAmenazas = notInArray(securityEvents.category, AUDIT_CATEGORIES)
+
 // Los agregados del micro-SIEM son un extra de esta página: el catálogo de
 // hallazgos OWASP es estático y debe verse aunque la base no responda.
 const [totalRow] = await safeQuery(
-  () => db.select({ v: sumHits }).from(securityEvents).where(gte(securityEvents.at, secOpsSince)),
+  () => db.select({ v: sumHits }).from(securityEvents).where(and(gte(securityEvents.at, secOpsSince), soloAmenazas)),
   [] as { v: number }[],
   'security/total-detectado',
 )
@@ -44,7 +51,7 @@ const byCategory = await safeQuery(
     db
       .select({ category: securityEvents.category, count: sumHits })
       .from(securityEvents)
-      .where(gte(securityEvents.at, secOpsSince))
+      .where(and(gte(securityEvents.at, secOpsSince), soloAmenazas))
       .groupBy(securityEvents.category)
       .orderBy(sql`2 desc`)
       .limit(8),
@@ -58,7 +65,7 @@ const byCountry = await safeQuery(
     db
       .select({ country: securityEvents.country, count: sumHits })
       .from(securityEvents)
-      .where(and(gte(securityEvents.at, secOpsSince), sql`${securityEvents.country} is not null`))
+      .where(and(gte(securityEvents.at, secOpsSince), soloAmenazas, sql`${securityEvents.country} is not null`))
       .groupBy(securityEvents.country)
       .orderBy(sql`2 desc`)
       .limit(6),
@@ -85,7 +92,7 @@ const dailyRaw = await safeQuery(
     db
       .select({ day: dayExpr, count: sumHits })
       .from(securityEvents)
-      .where(gte(securityEvents.at, new Date(Date.now() - 14 * DAY_MS)))
+      .where(and(gte(securityEvents.at, new Date(Date.now() - 14 * DAY_MS)), soloAmenazas))
       .groupBy(dayExpr),
   [] as { day: string; count: number }[],
   'security/tendencia-diaria',

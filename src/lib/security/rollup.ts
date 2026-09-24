@@ -2,9 +2,10 @@
 // alimentan los dashboards (sin escanear millones de filas crudas) y son la
 // baseline para la detección de anomalías. Ver docs/plan-security-observability.
 
-import { and, gte, lt, sql } from 'drizzle-orm'
+import { and, gte, lt, notInArray, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { securityEvents, securityRollups } from '../../db/schema'
+import { AUDIT_CATEGORIES, isAuditCategory } from './audit'
 
 export type RawEvent = {
   ip: string | null
@@ -46,6 +47,10 @@ export function aggregateByCategory(events: RawEvent[]): CategoryAgg[] {
     { count: number; ips: Set<string>; paths: Map<string, number>; countries: Map<string, number> }
   >()
   for (const e of events) {
+    // El rastro de acciones legítimas no es tráfico hostil: agregarlo aquí lo
+    // metería en la detección de anomalías, que leería mis días de mucho
+    // trabajo en el panel como un ataque. Ver lib/security/audit.ts.
+    if (isAuditCategory(e.category)) continue
     let g = byCat.get(e.category)
     if (!g) {
       g = { count: 0, ips: new Set(), paths: new Map(), countries: new Map() }
@@ -174,7 +179,16 @@ export async function currentTopPaths(now = Date.now(), limit = 20): Promise<{ p
   const rows = await db
     .select({ path: securityEvents.path, count: sql<number>`coalesce(sum(${securityEvents.hits}), 0)` })
     .from(securityEvents)
-    .where(and(gte(securityEvents.at, new Date(hourStart)), lt(securityEvents.at, new Date(hourStart + HOUR_MS))))
+    .where(
+      and(
+        gte(securityEvents.at, new Date(hourStart)),
+        lt(securityEvents.at, new Date(hourStart + HOUR_MS)),
+        // Mismo criterio que aggregateByCategory: la baseline de rutas sale de
+        // los rollups, que ya excluyen la auditoría, así que sin esto cada
+        // acción del panel aparecería como "patrón nuevo".
+        notInArray(securityEvents.category, AUDIT_CATEGORIES)
+      )
+    )
     .groupBy(securityEvents.path)
     .orderBy(sql`2 desc`)
     .limit(limit)
