@@ -7,6 +7,7 @@ import AmbientBlobs from '../components/AmbientBlobs.astro'
 import LanguageSuggestModal from '../components/LanguageSuggestModal.astro'
 import WhatsappFab from '../components/WhatsappFab.astro'
 import { DEFAULT_LOCALE, alternateUrls, getDictionary, getLocaleFromUrl, translatedAlternates } from '../i18n'
+import { jsonEnScript } from '../lib/json-script'
 
 interface Props {
   title: string
@@ -95,7 +96,7 @@ const ogImage = new URL(localizedImage, site).href
 const OG_LOCALE = { es: 'es_CO', en: 'en_US' } as const
 const rssHref = locale === DEFAULT_LOCALE ? '/rss.xml' : '/en/rss.xml'
 
-const websiteJsonLd = JSON.stringify({
+const websiteJsonLd = jsonEnScript({
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'CodeByMike',

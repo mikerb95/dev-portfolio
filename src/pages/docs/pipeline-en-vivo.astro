@@ -5,6 +5,7 @@ export const prerender = true
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import DocsNav from '../../components/DocsNav.astro'
 import { ESCENARIOS, PIPELINE } from '../../data/testing'
+import { jsonEnScript } from '../../lib/json-script'
 
 // Página "híbrida": el cliente hace polling a /api/lab/pipeline-live (datos
 // reales de la API de Actions/Deployments de GitHub + ci_runs + monitors).
@@ -81,8 +82,8 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
   </div>
 
   {/* Datos del escenario simulado, embebidos como JSON para que el script no reimplemente ESCENARIOS. */}
-  <script type="application/json" id="escenario-idle" set:html={JSON.stringify(ESCENARIO_IDLE)} />
-  <script type="application/json" id="pipeline-meta" set:html={JSON.stringify(PIPELINE.map((p) => ({ id: p.id, nombre: p.nombre })))} />
+  <script type="application/json" id="escenario-idle" set:html={jsonEnScript(ESCENARIO_IDLE)} />
+  <script type="application/json" id="pipeline-meta" set:html={jsonEnScript(PIPELINE.map((p) => ({ id: p.id, nombre: p.nombre })))} />
 </BaseLayout>
 
 <style>

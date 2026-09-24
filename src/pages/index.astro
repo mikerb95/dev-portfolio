@@ -15,6 +15,7 @@ import { leerPulso } from '../lib/pulso-publico'
 import { construirSenales } from '../lib/pulso-panel'
 import PulsoPanel from '../components/PulsoPanel.astro'
 import '../styles/portada.css'
+import { jsonEnScript } from '../lib/json-script'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
@@ -77,7 +78,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
     is:inline
     slot="head"
     type="application/ld+json"
-    set:html={JSON.stringify({
+    set:html={jsonEnScript({
       '@context': 'https://schema.org',
       '@type': 'Person',
       // @id estable para que el nodo Person sea el mismo en ES y EN y en

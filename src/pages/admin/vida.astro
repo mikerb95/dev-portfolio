@@ -9,6 +9,7 @@ import {
 } from '../../lib/vida'
 import { resumenMensual, periodoActual, sumarMeses } from '../../lib/resumen-mensual'
 import { formatterCO } from '../../lib/fecha-co'
+import { jsonEnScript } from '../../lib/json-script'
 
 const qMes = Astro.url.searchParams.get('mes')
 const periodo = esPeriodo(qMes) ? qMes : periodoActual()
@@ -233,7 +234,7 @@ const gastosJson = gastos.map((g) => ({
     )}
   </section>
 
-  <script is:inline type="application/json" id="vida-json" set:html={JSON.stringify({ periodo, fijos: fijosJson, gastos: gastosJson })}></script>
+  <script is:inline type="application/json" id="vida-json" set:html={jsonEnScript({ periodo, fijos: fijosJson, gastos: gastosJson })}></script>
 
   <!-- Slide-over: gasto fijo -->
   <div id="fijo-overlay" class="fixed inset-0 z-[60] hidden">

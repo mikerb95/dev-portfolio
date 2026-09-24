@@ -20,6 +20,7 @@ import {
   type Columna,
   type Iteracion,
 } from '../data/iteraciones'
+import { jsonEnScript } from '../lib/json-script'
 
 // Por defecto renderiza el tablero de DobleYo (uso original en /projects/[slug]);
 // con props se reutiliza el mismo motor para otros proyectos (p. ej. el kanban
@@ -55,7 +56,7 @@ const iterData = {
 
 <div class="dy-iter">
 
-  <script type="application/json" id="iterData" set:html={JSON.stringify(iterData)} />
+  <script type="application/json" id="iterData" set:html={jsonEnScript(iterData)} />
 
   <!-- ── Barra superior: descripción + toggle ── -->
   <div class="iter-headbar">

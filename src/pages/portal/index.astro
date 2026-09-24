@@ -14,6 +14,7 @@ import { clientInvoiceSummary } from '../../lib/portal/invoices'
 import { unreadThreadCount } from '../../lib/portal/threads'
 import { clientActivity } from '../../lib/portal/activity'
 import { formatMoney } from '../../lib/portal/format'
+import { urlSegura } from '../../lib/safe-url'
 
 const { user, client } = Astro.locals.portal!
 
@@ -193,9 +194,9 @@ const canSeeMessages = user.role !== 'billing'
               >Hay actividad nueva · Actualizar</button>
             </div>
 
-            {current.previewUrl && (
+            {urlSegura(current.previewUrl) && (
               <a
-                href={current.previewUrl}
+                href={urlSegura(current.previewUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="glass rounded-2xl p-4 block lift group"

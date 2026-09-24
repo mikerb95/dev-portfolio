@@ -6,6 +6,7 @@ import { db } from '../../db'
 import { interactions, projects, clients } from '../../db/schema'
 import { and, desc, eq, isNotNull } from 'drizzle-orm'
 import { INTERACTION_TYPES, TYPE_LABELS, TYPE_ICONS } from '../../lib/interactions'
+import { jsonEnScript } from '../../lib/json-script'
 
 const params = Astro.url.searchParams
 const fType = params.get('type') || ''
@@ -166,7 +167,7 @@ const hasFilters = !!(fType || fProject || fClient)
 
   <InteractionTimeline rows={timelineRows} />
 
-  <script is:inline type="application/json" id="int-json" set:html={JSON.stringify(formData)}></script>
+  <script is:inline type="application/json" id="int-json" set:html={jsonEnScript(formData)}></script>
 
   <!-- Slide-over: formulario -->
   <div id="int-overlay" class="fixed inset-0 z-[60] hidden">

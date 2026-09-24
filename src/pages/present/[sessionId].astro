@@ -9,6 +9,7 @@ import ClosingScreen from '../../components/present/ClosingScreen.astro'
 import Qr from '../../components/present/Qr.astro'
 import { getSession, toPublicSnapshot } from '../../lib/present/session'
 import { busCredentials } from '../../lib/present/store'
+import { jsonEnScript } from '../../lib/json-script'
 
 const { sessionId } = Astro.params
 const session = sessionId ? await getSession(sessionId) : null
@@ -128,7 +129,7 @@ const feedbackUrl = `${origin}/feedback`
   <script
     type="application/json"
     id="present-config"
-    set:html={JSON.stringify({ snapshot, bus })}
+    set:html={jsonEnScript({ snapshot, bus })}
   />
 )}
 

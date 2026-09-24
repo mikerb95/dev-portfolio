@@ -4,6 +4,7 @@ import { db } from '../../db'
 import { clients, clientUsers, projects, interactions } from '../../db/schema'
 import { desc, eq, sql } from 'drizzle-orm'
 import { formatPhone } from '../../lib/phone'
+import { jsonEnScript } from '../../lib/json-script'
 
 const rows = await db
   .select({
@@ -140,7 +141,7 @@ const formData = rows.map(({ id, name, email, phone, company, notes, logoUrl, bi
     </div>
   )}
 
-  <script is:inline type="application/json" id="clients-json" set:html={JSON.stringify(formData).replaceAll('<', '\\u003c')}></script>
+  <script is:inline type="application/json" id="clients-json" set:html={jsonEnScript(formData)}></script>
 
   <!-- Slide-over: formulario de cliente -->
   <div id="cl-overlay" class="fixed inset-0 z-[60] hidden">

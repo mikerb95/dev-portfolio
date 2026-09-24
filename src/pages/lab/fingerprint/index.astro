@@ -4,6 +4,7 @@ export const prerender = true
 
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../../../i18n'
+import { jsonEnScript } from '../../../lib/json-script'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -62,7 +63,7 @@ const L = (path: string) => localizedHref(path, locale)
   <script
     id="fingerprint-i18n"
     type="application/json"
-    set:html={JSON.stringify({ creating: fp.creating, createError: fp.createError, boardPath: L('/lab/fingerprint') })}
+    set:html={jsonEnScript({ creating: fp.creating, createError: fp.createError, boardPath: L('/lab/fingerprint') })}
   />
 </BaseLayout>
 

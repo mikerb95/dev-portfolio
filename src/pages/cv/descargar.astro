@@ -4,6 +4,7 @@ export const prerender = true
 
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { getDictionary, getLocaleFromUrl } from '../../i18n'
+import { jsonEnScript } from '../../lib/json-script'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const cv = getDictionary(locale).cvDownload
@@ -28,7 +29,7 @@ const cv = getDictionary(locale).cvDownload
     </div>
   </div>
 
-  <script id="cv-i18n" type="application/json" set:html={JSON.stringify({ starting: cv.starting })} />
+  <script id="cv-i18n" type="application/json" set:html={jsonEnScript({ starting: cv.starting })} />
 </BaseLayout>
 
 <script>

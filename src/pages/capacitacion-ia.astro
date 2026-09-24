@@ -15,6 +15,7 @@ import AulaVitrina from '../components/capacitacion/AulaVitrina.astro'
 import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
 import { listarProgramasPublicos } from '../lib/capacitacion/repo'
 import { formatearDuracion } from '../lib/capacitacion/tipos'
+import { jsonEnScript } from '../lib/json-script'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -59,7 +60,7 @@ const etiquetaNivel = (n: keyof typeof c.niveles) => c.niveles[n]
     is:inline
     slot="head"
     type="application/ld+json"
-    set:html={JSON.stringify({
+    set:html={jsonEnScript({
       '@context': 'https://schema.org',
       '@type': 'Service',
       serviceType: c.jsonLdServiceType,

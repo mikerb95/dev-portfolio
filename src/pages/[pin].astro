@@ -15,6 +15,7 @@ import ClosingScreen from '../components/present/ClosingScreen.astro'
 import { isPinShape } from '../lib/present/pin'
 import { getSessionByPin, toPublicSnapshot } from '../lib/present/session'
 import { busCredentials } from '../lib/present/store'
+import { jsonEnScript } from '../lib/json-script'
 
 const { pin } = Astro.params
 
@@ -72,7 +73,7 @@ const feedbackUrl = `${origin}/feedback`
         <script
           type="application/json"
           id="present-config"
-          set:html={JSON.stringify({ snapshot, bus })}
+          set:html={jsonEnScript({ snapshot, bus })}
         />
     </>
   )}

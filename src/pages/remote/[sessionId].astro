@@ -16,6 +16,7 @@ import ClosingScreen from '../../components/present/ClosingScreen.astro'
 import { getDeckSlides } from '../../lib/present/decks'
 import { getSession, presenterSecretFor, toPublicSnapshot } from '../../lib/present/session'
 import { busCredentials } from '../../lib/present/store'
+import { jsonEnScript } from '../../lib/json-script'
 
 const { sessionId } = Astro.params
 const session = sessionId ? await getSession(sessionId) : null
@@ -102,7 +103,7 @@ const feedbackUrl = `${Astro.url.origin}/feedback`
       <script
         type="application/json"
         id="present-config"
-        set:html={JSON.stringify({
+        set:html={jsonEnScript({
           snapshot,
           bus,
           // El secreto vive en el HTML de una página que ya está detrás del

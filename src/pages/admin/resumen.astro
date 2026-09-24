@@ -11,6 +11,7 @@ import {
   type SeccionCargos, type MotivoCargo,
 } from '../../lib/resumen-mensual'
 import { formatterCO } from '../../lib/fecha-co'
+import { jsonEnScript } from '../../lib/json-script'
 
 const qMes = Astro.url.searchParams.get('mes')
 const periodo = esPeriodo(qMes) ? qMes : periodoActual()
@@ -288,7 +289,7 @@ const secciones: { titulo: string; href: string; color: string; s: SeccionCargos
     </section>
   </div>
 
-  <script is:inline type="application/json" id="chart-json" set:html={JSON.stringify(tooltipData)}></script>
+  <script is:inline type="application/json" id="chart-json" set:html={jsonEnScript(tooltipData)}></script>
 </AdminLayout>
 
 <script>

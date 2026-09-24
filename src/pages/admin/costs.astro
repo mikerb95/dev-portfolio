@@ -12,6 +12,7 @@ import {
 import {
   CATEGORY_LABELS, PAYER_LABELS, PROVIDERS, SERVICE_CATEGORIES, PAYERS,
 } from '../../lib/services'
+import { jsonEnScript } from '../../lib/json-script'
 
 const [raw, projectsList, clientsList, settingsRows] = await Promise.all([
   db.select({
@@ -220,7 +221,7 @@ const missingRates = [...usedCurrenciesNoRate]
   <CostTable rows={tableRows} />
 
   <!-- Datos para el formulario (sin secretos) -->
-  <script is:inline type="application/json" id="costs-json" set:html={JSON.stringify(formData)}></script>
+  <script is:inline type="application/json" id="costs-json" set:html={jsonEnScript(formData)}></script>
 
   <!-- Slide-over: formulario -->
   <div id="cost-overlay" class="fixed inset-0 z-[60] hidden">

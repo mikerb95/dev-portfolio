@@ -47,6 +47,7 @@ import { ACCESO_COOKIE, verificarAcceso } from '../lib/sustentacion/acceso'
 import { isAllowedLogin } from '../lib/auth'
 import { serverEnv } from '../lib/env'
 import { getSession } from 'auth-astro/server'
+import { jsonEnScript } from '../lib/json-script'
 
 // Redis caído no puede tumbar la proyección: se entra al vestíbulo y desde ahí
 // se explica qué pasa. El `try` es la diferencia entre eso y un 500 sin estilos.
@@ -824,7 +825,7 @@ Astro.response.headers.set('Cache-Control', 'no-store')
       </div>
     </div>
 
-    <script type="application/json" id="cfg" set:html={JSON.stringify(cfg)} />
+    <script type="application/json" id="cfg" set:html={jsonEnScript(cfg)} />
 
     <script>
       import {

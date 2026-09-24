@@ -16,6 +16,7 @@
 import { getSesionPorPin, toBeatSnapshot } from '../lib/sustentacion/bus'
 import { busCredentials } from '../lib/present/store'
 import '../styles/sustentacion-fuentes.css'
+import { jsonEnScript } from '../lib/json-script'
 
 const pinBruto = Astro.url.searchParams.get('pin') ?? ''
 
@@ -278,7 +279,7 @@ const pinInvalido = huboIntento && !sesion
       <script
         type="application/json"
         id="cfg"
-        set:html={JSON.stringify({ sessionId: inicial.sessionId, beatInicial: inicial.beat, pin: pinBruto, bus })}
+        set:html={jsonEnScript({ sessionId: inicial.sessionId, beatInicial: inicial.beat, pin: pinBruto, bus })}
       />
     )}
 

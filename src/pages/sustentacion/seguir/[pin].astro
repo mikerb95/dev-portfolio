@@ -12,6 +12,7 @@
 // el HTML.
 import { getSesionPorPin, toBeatSnapshot } from '../../../lib/sustentacion/bus'
 import { busCredentials } from '../../../lib/present/store'
+import { jsonEnScript } from '../../../lib/json-script'
 
 const pin = String(Astro.params.pin ?? '')
 
@@ -153,7 +154,7 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
       </div>
     </main>
 
-    <script type="application/json" id="cfg" set:html={JSON.stringify({ sessionId: inicial.sessionId, bus })} />
+    <script type="application/json" id="cfg" set:html={jsonEnScript({ sessionId: inicial.sessionId, bus })} />
 
     <script>
       import { seguirSustentacion } from '../../../lib/sustentacion/seguir'

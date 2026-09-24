@@ -7,6 +7,8 @@ import { projects, clients, educationMilestones } from '../../db/schema'
 import { eq, and } from 'drizzle-orm'
 import { parseTechStack } from '../../lib/tech-stack'
 import { getDictionary, getLocaleFromUrl, hasRowTranslation, localizedHref, pickLocalized } from '../../i18n'
+import { jsonEnScript } from '../../lib/json-script'
+import { urlSegura } from '../../lib/safe-url'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -72,7 +74,7 @@ const statusColor: Record<string, string> = {
     is:inline
     slot="head"
     type="application/ld+json"
-    set:html={JSON.stringify({
+    set:html={jsonEnScript({
       '@context': 'https://schema.org',
       '@graph': [
         {
@@ -164,9 +166,9 @@ const statusColor: Record<string, string> = {
       <div class="rounded-2xl glass p-6">
         <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-3">{pj.linksHeading}</div>
         <div class="flex flex-col gap-2">
-          {project.repoUrl && (
+          {urlSegura(project.repoUrl) && (
             <a
-              href={project.repoUrl}
+              href={urlSegura(project.repoUrl)}
               target="_blank"
               rel="noopener"
               class="inline-flex items-center gap-2 text-[13px] text-ink-100 hover:text-cyan transition-colors"
@@ -175,9 +177,9 @@ const statusColor: Record<string, string> = {
               {pj.repoLink}
             </a>
           )}
-          {project.previewUrl && (
+          {urlSegura(project.previewUrl) && (
             <a
-              href={project.previewUrl}
+              href={urlSegura(project.previewUrl)}
               target="_blank"
               rel="noopener"
               class="inline-flex items-center gap-2 text-[13px] text-cyan hover:underline"

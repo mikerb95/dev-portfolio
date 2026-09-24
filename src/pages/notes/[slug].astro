@@ -10,6 +10,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import { render } from 'astro:content'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
 import { getNote, getNotes, noteSlug, getTranslationSlug } from '../../lib/notes'
+import { jsonEnScript } from '../../lib/json-script'
 
 export async function getStaticPaths() {
   const notes = await getNotes('es')
@@ -49,7 +50,7 @@ const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { d
 
 const site = Astro.site ?? new URL('https://codebymike.net')
 const canonical = new URL(Astro.url.pathname, site).href
-const jsonLd = JSON.stringify({
+const jsonLd = jsonEnScript({
   '@context': 'https://schema.org',
   '@graph': [
     {
