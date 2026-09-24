@@ -112,8 +112,8 @@ const auditoria = await db
   )
   .orderBy(desc(securityEvents.at))
   .limit(40)
-const esFalloDeAcceso = (ruleId: string) => ADMIN_ACCESS_FAILURE_RULES.includes(ruleId)
-const auditLabel = (ruleId: string) => AUDIT_RULE_LABELS[ruleId] ?? ruleId
+const esFalloDeAcceso = (ruleId: string | null) => !!ruleId && ADMIN_ACCESS_FAILURE_RULES.includes(ruleId)
+const auditLabel = (ruleId: string | null) => (ruleId ? (AUDIT_RULE_LABELS[ruleId] ?? ruleId) : '-')
 
 const catMax = Math.max(1, ...byCat.map((c) => n(c.count)))
 const pathMax = Math.max(1, ...topPaths.map((p) => n(p.count)))
