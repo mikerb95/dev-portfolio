@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { and, desc, eq, isNull, ne } from 'drizzle-orm'
 import { db } from '../../../db'
 import { adminSessions } from '../../../db/schema'
+import { recordAdminEvent } from '../../../lib/security/events'
 
 /** Sesiones de admin activas (no revocadas), más reciente primero. */
 export const GET: APIRoute = async () => {
@@ -36,6 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
           currentId ? ne(adminSessions.id, currentId) : undefined
         )
       )
+    await recordAdminEvent(request, 'sessions.revoked_others', { severity: 'medium' })
     return new Response(JSON.stringify({ ok: true }), { status: 200 })
   }
 
@@ -45,5 +47,6 @@ export const POST: APIRoute = async ({ request }) => {
     .update(adminSessions)
     .set({ revokedAt: now })
     .where(and(eq(adminSessions.id, id), isNull(adminSessions.revokedAt)))
+  await recordAdminEvent(request, 'session.revoked', { severity: 'medium' })
   return new Response(JSON.stringify({ ok: true }), { status: 200 })
 }

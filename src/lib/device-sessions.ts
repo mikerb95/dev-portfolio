@@ -15,6 +15,7 @@ import { adminSessions } from '../db/schema'
 import { describeDevice } from './device-info'
 import { sendPush } from './notify'
 import { siteUrl } from './site'
+import { recordSecurityEvent } from './security/events'
 
 // Re-export de los helpers puros para no romper los sitios que ya los importan.
 export { DEVICE_COOKIE, clientIp, describeDevice } from './device-info'
@@ -78,6 +79,18 @@ export async function recordSession(params: {
       `${describeDevice(params.userAgent)} · IP ${params.ip ?? 'desconocida'} · @${params.login ?? '?'}`,
       { priority: 4, tags: 'key', click: `${SITE_URL}/admin/sessions` }
     ).catch(() => {})
+    // Y al micro-SIEM, que es donde queda el historial: el push se pierde en el
+    // teléfono. Una sesión nueva es un login nuevo (GitHub o llave), porque el
+    // `sid` nace al firmar el JWT. El login va tras la almohadilla de la ruta:
+    // la tabla no tiene columna de detalle.
+    await recordSecurityEvent({
+      ip: params.ip,
+      classification: { category: 'admin_action', severity: 'low', ruleId: 'admin.login' },
+      method: 'GET',
+      path: `/admin#@${params.login ?? '?'}`,
+      userAgent: params.userAgent,
+      statusCode: 200,
+    })
     return { revoked: false }
   }
 

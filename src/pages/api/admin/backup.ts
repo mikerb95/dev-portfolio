@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { list } from '@vercel/blob'
 import { runBackup } from '../../../lib/backup'
+import { recordAdminEvent } from '../../../lib/security/events'
 
 // Cara del panel: listar los backups existentes y crear uno a mano. La sesión
 // la exige el middleware por vivir bajo /api/admin/.
@@ -9,9 +10,12 @@ import { runBackup } from '../../../lib/backup'
 // sesión es exactamente lo que impedía que el cron llegara (ver lib/backup.ts).
 
 /** Creación manual desde /admin/backup. */
-export const PUT: APIRoute = async () => {
+export const PUT: APIRoute = async ({ request }) => {
   try {
-    return new Response(JSON.stringify({ ok: true, ...(await runBackup()) }), { status: 200 })
+    const result = await runBackup()
+    // Un backup es la base entera en un archivo: queda rastro de quién lo pidió.
+    await recordAdminEvent(request, 'backup.created')
+    return new Response(JSON.stringify({ ok: true, ...result }), { status: 200 })
   } catch (err) {
     console.error('[backup]', err)
     return new Response(JSON.stringify({ error: 'backup fallido' }), { status: 500 })

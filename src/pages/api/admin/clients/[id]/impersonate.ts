@@ -6,6 +6,7 @@ import { clientUsers, clients } from '../../../../../db/schema'
 import { createSession, setSessionCookie } from '../../../../../lib/portal/session'
 import { audit } from '../../../../../lib/portal/audit'
 import { clientIp } from '../../../../../lib/device-info'
+import { recordAdminEvent } from '../../../../../lib/security/events'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -58,6 +59,10 @@ export const POST: APIRoute = async (context) => {
     detail: `admin: ${login}`,
     ip: clientIp(context.request.headers),
   })
+  // Además del audit del cliente, al micro-SIEM: allí es donde miro si alguien
+  // entró al panel, y ver los datos de un cliente es de lo más sensible que
+  // se puede hacer desde él.
+  await recordAdminEvent(context.request, 'client.impersonated', { severity: 'medium' })
 
   return json(200, { ok: true, redirect: '/portal' })
 }

@@ -5,6 +5,7 @@ import { securityAnomalies } from '../../../db/schema'
 import { blockIp, unblockIp, BLOCK_TTL_STEPS_SEC } from '../../../lib/security/blocklist'
 import { blockAllAttackerIps } from '../../../lib/security/autoblock'
 import { clientIp } from '../../../lib/device-info'
+import { recordAdminEvent } from '../../../lib/security/events'
 
 // TTLs permitidos para el bloqueo masivo: 24 h o 1 semana.
 const BULK_TTLS = new Set<number>([86_400, 604_800])
@@ -30,6 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
     const reason = typeof body.reason === 'string' ? body.reason.slice(0, 200) : 'bloqueo manual'
     const ok = await blockIp({ ip, reason, ttlSec, source: 'manual' })
     if (!ok) return json(409, { error: 'IP en allowlist o inválida' })
+    await recordAdminEvent(request, 'blocklist.manual_block')
     return json(200, { ok: true })
   }
 
@@ -42,6 +44,7 @@ export const POST: APIRoute = async ({ request }) => {
     const result = await blockAllAttackerIps(ttlSec, new Date(), {
       selfIp: clientIp(request.headers),
     })
+    await recordAdminEvent(request, 'blocklist.block_all', { severity: 'medium' })
     return json(200, { ok: true, ...result })
   }
 
@@ -49,6 +52,7 @@ export const POST: APIRoute = async ({ request }) => {
     const ip = typeof body.ip === 'string' ? body.ip.trim() : ''
     if (!ip) return json(400, { error: 'IP requerida' })
     await unblockIp(ip)
+    await recordAdminEvent(request, 'blocklist.unblock')
     return json(200, { ok: true })
   }
 
