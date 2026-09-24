@@ -4,8 +4,9 @@ import { projectEnvVars } from '../../../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { encrypt, decrypt } from '../../../../../lib/crypto'
 import { sinValorCifrado } from '../../../../../lib/vault'
+import { recordAdminEvent } from '../../../../../lib/security/events'
 
-export const GET: APIRoute = async ({ params, url }) => {
+export const GET: APIRoute = async ({ params, url, request }) => {
   const envId = Number(url.searchParams.get('id'))
   if (!envId) return new Response(JSON.stringify({ error: 'id requerido' }), { status: 400 })
 
@@ -16,7 +17,14 @@ export const GET: APIRoute = async ({ params, url }) => {
     return new Response(JSON.stringify({ error: 'no autorizado' }), { status: 403 })
   }
 
-  return new Response(JSON.stringify({ value: decrypt(row.value) }), { status: 200 })
+  const value = decrypt(row.value)
+  await recordAdminEvent(request, 'envvar.revealed', { severity: 'medium' })
+  // no-store igual que la bóveda: es un secreto descifrado, y sin esto la
+  // respuesta podía quedar en la caché del navegador.
+  return new Response(JSON.stringify({ value }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  })
 }
 
 export const POST: APIRoute = async ({ params, request }) => {

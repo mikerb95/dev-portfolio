@@ -3,10 +3,11 @@ import { db } from '../../../../../db'
 import { projectServices } from '../../../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { decryptJson } from '../../../../../lib/crypto'
+import { recordAdminEvent } from '../../../../../lib/security/events'
 
 // Revela las credenciales cifradas de un servicio bajo demanda.
 // El middleware ya exige sesión válida en /api/admin/*.
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
   const id = Number(params.id)
   if (!id) return new Response(JSON.stringify({ error: 'id inválido' }), { status: 400 })
 
@@ -20,7 +21,10 @@ export const GET: APIRoute = async ({ params }) => {
   if (!row.secrets) return new Response(JSON.stringify({ secrets: {} }), { status: 200 })
 
   try {
-    return new Response(JSON.stringify({ secrets: decryptJson(row.secrets) }), {
+    const secrets = decryptJson(row.secrets)
+    // Solo se registra el revelado que de verdad entregó algo descifrado.
+    await recordAdminEvent(request, 'vault.revealed', { severity: 'medium' })
+    return new Response(JSON.stringify({ secrets }), {
       status: 200,
       headers: { 'Cache-Control': 'no-store' },
     })

@@ -13,6 +13,7 @@ import { db } from '../../db'
 import { securityEvents } from '../../db/schema'
 import type { Severity } from './classify'
 import { hashIp, truncate } from './redact'
+import { clientIp } from '../device-info'
 
 const IP_SALT = import.meta.env.SECURITY_IP_SALT as string | undefined
 
@@ -101,6 +102,32 @@ export async function recordSecurityEvent(input: SecurityEventInput): Promise<vo
   } catch {
     // Fail-open: el sensor jamás tumba el request.
   }
+}
+
+/**
+ * Rastro de una acción sensible del panel (revelar la bóveda, ver como
+ * cliente, revocar sesiones…). Va con categoría de auditoría, así que no
+ * cuenta como amenaza en ninguna vista (ver lib/security/audit.ts).
+ *
+ * Quien llama la espera (`await`) a propósito: son acciones raras, el insert
+ * es uno solo, y en una función serverless una promesa suelta puede morir
+ * cuando se congela la instancia tras responder. Nunca lanza.
+ */
+export function recordAdminEvent(
+  request: Request,
+  ruleId: string,
+  opts: { severity?: Severity; statusCode?: number } = {}
+): Promise<void> {
+  const url = new URL(request.url)
+  return recordSecurityEvent({
+    ip: clientIp(request.headers),
+    classification: { category: 'admin_action', severity: opts.severity ?? 'low', ruleId },
+    method: request.method,
+    path: url.pathname,
+    query: url.search.replace(/^\?/, '') || null,
+    userAgent: request.headers.get('user-agent'),
+    statusCode: opts.statusCode ?? 200,
+  })
 }
 
 /** Solo para tests: limpia el estado de deduplicación entre casos. */
