@@ -4,6 +4,7 @@ import { defineConfig } from 'auth-astro'
 import { isAllowedGithubId, isAllowedLogin } from './src/lib/auth'
 import { serverEnv } from './src/lib/env'
 import { verifyPasskeyProof } from './src/lib/webauthn'
+import { recordSecurityEvent } from './src/lib/security/events'
 
 export default defineConfig({
   providers: [
@@ -42,10 +43,22 @@ export default defineConfig({
       // El id decide (no cambia nunca); el login se sigue exigiendo porque es
       // la identidad con la que el resto del panel guarda sesiones y llaves.
       // Ver ALLOWED_GITHUB_IDS en src/lib/auth.ts.
-      return (
+      const permitido =
         isAllowedGithubId(profile?.id as number | string | undefined) &&
         isAllowedLogin(profile?.login as string | undefined)
-      )
+      if (!permitido) {
+        // Auth.js no pasa el request a sus callbacks, así que va sin IP. La
+        // cuenta rechazada (login e id) va tras la almohadilla de la ruta: la
+        // tabla no tiene columna de detalle.
+        await recordSecurityEvent({
+          ip: null,
+          classification: { category: 'auth_probing', severity: 'medium', ruleId: 'admin.login_rejected' },
+          method: 'GET',
+          path: `/api/auth/callback/github#@${String(profile?.login ?? '?')}:${String(profile?.id ?? '?')}`,
+          statusCode: 403,
+        })
+      }
+      return permitido
     },
     async jwt({ token, profile, user, account }) {
       if (profile) {

@@ -6,7 +6,10 @@
 // variable configurada no se abra nada. Es la parte que un test de módulo puro
 // no puede cubrir y que, si está mal, no se descubre hasta el día de la charla.
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// El registro de intentos escribe en Turso: fuera de este test.
+vi.mock('../src/lib/security/events', () => ({ recordSecurityEvent: vi.fn(async () => {}) }))
 import { POST } from '../src/pages/api/sustentacion/acceso'
 import { ACCESO_COOKIE, verificarAcceso } from '../src/lib/sustentacion/acceso'
 

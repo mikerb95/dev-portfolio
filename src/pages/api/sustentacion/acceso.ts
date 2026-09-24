@@ -8,6 +8,7 @@ import {
   firmarAcceso,
 } from '../../../lib/sustentacion/acceso'
 import { serverEnv } from '../../../lib/env'
+import { recordSecurityEvent } from '../../../lib/security/events'
 
 /**
  * Cambia la contraseña de `SUSTENTACION_PASSWORD` por acceso al panel de la
@@ -51,6 +52,28 @@ async function excedido(ip: string): Promise<boolean> {
   }
 }
 
+/**
+ * Rastro de cada intento en el micro-SIEM: esta contraseña abre rutas bajo
+ * /admin sin GitHub, así que quién la acierta y quién la falla importa.
+ *
+ * SIN `await`, a diferencia del resto del panel: esta puerta existe para
+ * funcionar con Turso caído, y el registro escribe en Turso. Si la base no
+ * responde, el intento se pierde; la entrada, no.
+ */
+function registrar(request: Request, ok: boolean): void {
+  const ip = clientIp(request)
+  void recordSecurityEvent({
+    ip: ip === 'unknown' ? null : ip,
+    classification: ok
+      ? { category: 'admin_action', severity: 'low', ruleId: 'sustentacion.access_granted' }
+      : { category: 'auth_probing', severity: 'medium', ruleId: 'sustentacion.password_failed' },
+    method: 'POST',
+    path: '/api/sustentacion/acceso',
+    userAgent: request.headers.get('user-agent'),
+    statusCode: ok ? 200 : 403,
+  })
+}
+
 export const POST: APIRoute = async ({ request, cookies }) => {
   const esperada = serverEnv('SUSTENTACION_PASSWORD')
   if (!esperada) {
@@ -77,6 +100,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   if (!contrasenaCorrecta(password, esperada)) {
+    registrar(request, false)
     return json(403, { error: 'contraseña incorrecta' })
   }
 
@@ -85,6 +109,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return json(503, { error: 'falta AUTH_SECRET: no se puede firmar el acceso' })
   }
 
+  registrar(request, true)
   cookies.set(ACCESO_COOKIE, firmarAcceso(secreto), {
     path: '/',
     httpOnly: true,
