@@ -120,4 +120,15 @@ test.describe('demo · solo lectura', () => {
     const biblioteca = await page.request.get('/admin/presentaciones', { maxRedirects: 0, failOnStatusCode: false })
     expect(biblioteca.status()).toBe(200)
   })
+
+  // El panel de seguridad separa amenazas y auditoría con consultas propias
+  // (lib/security/audit.ts); que cargue contra una base migrada de verdad es
+  // lo que demuestra que esas consultas son válidas.
+  test('el panel de seguridad carga con su sección de auditoría', async ({ page }) => {
+    await entrarALaDemo(page)
+
+    const seguridad = await page.request.get('/admin/security', { maxRedirects: 0, failOnStatusCode: false })
+    expect(seguridad.status()).toBe(200)
+    expect(await seguridad.text()).toContain('Auditoría del panel')
+  })
 })
