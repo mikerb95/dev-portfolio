@@ -49,6 +49,16 @@ describe('aggregateByCategory', () => {
     const [agg] = aggregateByCategory([ev({ country: null }), ev({ country: null })])
     expect(agg!.topCountry).toBeNull()
   })
+
+  it('deja fuera el rastro de auditoría: no es tráfico hostil', () => {
+    // Sin esto, un día de mucho trabajo en el panel saldría como anomalía.
+    const out = aggregateByCategory([
+      ev({ category: 'injection' }),
+      ev({ category: 'admin_action', path: '/admin#@mikerb95' }),
+      ev({ category: 'cobro', path: '/api/mis-pagos/lookup' }),
+    ])
+    expect(out.map((o) => o.category)).toEqual(['injection'])
+  })
 })
 
 describe('floorHour / floorDay', () => {
