@@ -723,6 +723,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // contradictorio: algunos aplican la más restrictiva y el iframe queda en
     // blanco sin más pista que un aviso en consola. Manda la CSP.
     if (!framable) resHeaders.set('X-Frame-Options', 'DENY')
+    // Nada privado en ninguna caché. Sin esto la respuesta salía con el
+    // `public, max-age=0, must-revalidate` que Vercel pone por defecto: un
+    // proxy compartido podía guardarla, y el navegador conservaba páginas del
+    // panel (o un secreto recién revelado) tras cerrar sesión. Se respeta lo
+    // que la ruta ya decidió si ya es no-store o private.
+    if (!/no-store|private/i.test(resHeaders.get('Cache-Control') ?? '')) {
+      resHeaders.set('Cache-Control', 'private, no-store')
+    }
     resHeaders.set('X-Content-Type-Options', 'nosniff')
     resHeaders.set('Referrer-Policy', 'no-referrer')
     resHeaders.set('X-Robots-Tag', 'noindex, nofollow')

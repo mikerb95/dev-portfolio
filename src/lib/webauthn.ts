@@ -143,12 +143,18 @@ function hmacSecret(): string {
   return s
 }
 
+// El prefijo separa dominios: AUTH_SECRET firma también los pases de demo, el
+// de respaldo del portal y el acceso de la sustentación. Sin él, cualquier
+// otra firma futura de `<algo>.<número>` con esa clave valdría como proof de
+// login del admin.
+const firmaProof = (payload: string) =>
+  createHmac('sha256', hmacSecret()).update(`passkey:proof:v1:${payload}`).digest('hex')
+
 /** Firma un proof de "este login verificó su llave" válido por PROOF_TTL_MS. */
 export function signPasskeyProof(login: string): string {
   const expiresAtMs = Date.now() + PROOF_TTL_MS
   const payload = `${login}.${expiresAtMs}`
-  const sig = createHmac('sha256', hmacSecret()).update(payload).digest('hex')
-  return `${payload}.${sig}`
+  return `${payload}.${firmaProof(payload)}`
 }
 
 /** Verifica el proof (firma + vigencia) y devuelve el login, o null si no es válido. */
@@ -159,7 +165,7 @@ export function verifyPasskeyProof(proof: string | undefined | null): string | n
   const [login, expStr, sig] = parts
   const expiresAtMs = Number(expStr)
   if (!login || !Number.isFinite(expiresAtMs) || Date.now() > expiresAtMs) return null
-  const expected = createHmac('sha256', hmacSecret()).update(`${login}.${expStr}`).digest('hex')
+  const expected = firmaProof(`${login}.${expStr}`)
   const a = Buffer.from(sig, 'hex')
   const b = Buffer.from(expected, 'hex')
   if (a.length !== b.length) return null

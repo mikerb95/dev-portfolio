@@ -7,6 +7,9 @@ import { parseK6Summary } from '../../../lib/lab/load-test'
 import { isUniqueViolation } from '../../../lib/db-unique'
 import { normalizeFinding, parseAxeViolations, parseNpmAudit, parseZapReport } from '../../../lib/lab/findings'
 import { autoResolveStale, ingestFindings } from '../../../lib/lab/findings-store'
+import { urlSegura } from '../../../lib/safe-url'
+
+const RAMA_RE = /^[\w./-]{1,100}$/
 
 // Recibe artefactos generados por CI (métricas de runs, y a futuro k6/ZAP/Stryker).
 // Autenticado por token de máquina (LAB_INGEST_TOKEN), no por sesión: lo llama
@@ -51,9 +54,12 @@ export const POST: APIRoute = async ({ request }) => {
     .insert(ciRuns)
     .values({
       sha,
-      branch: typeof body.branch === 'string' ? body.branch : null,
+      // Rama y URL acaban en enlaces e innerHTML del panel y de páginas
+      // públicas: se aceptan solo con forma de rama y de URL http(s), no lo que
+      // mande quien tenga el token.
+      branch: typeof body.branch === 'string' && RAMA_RE.test(body.branch) ? body.branch : null,
       runId: body.runId != null ? String(body.runId) : null,
-      url: typeof body.url === 'string' ? body.url : null,
+      url: typeof body.url === 'string' ? urlSegura(body.url) : null,
       conclusion: conclusion as (typeof CONCLUSIONS)[number],
       testsPassed: num(body.testsPassed),
       testsFailed: num(body.testsFailed),

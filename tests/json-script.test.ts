@@ -7,14 +7,14 @@ describe('jsonEnScript', () => {
   const peligroso = {
     titulo: '</script><script>alert(document.cookie)</script>',
     nota: '<!-- comentario --> & <b>negrita</b>',
-    separadores: 'línea párrafo fin',
+    separadores: 'línea\u2028párrafo\u2029fin',
   }
 
   it('no deja nada que cierre la etiqueta ni abra otra', () => {
     const salida = jsonEnScript(peligroso)
     expect(salida).not.toMatch(/<|>|&/)
     expect(salida.toLowerCase()).not.toContain('</script')
-    expect(salida).not.toMatch(/[  ]/)
+    expect(salida).not.toMatch(/[\u2028\u2029]/)
   })
 
   it('JSON.parse devuelve exactamente el mismo valor', () => {

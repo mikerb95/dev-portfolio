@@ -13,11 +13,20 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 export const DEMO_COOKIE = 'demo_session'
 export const DEMO_TTL_SEC = 2 * 60 * 60
 
+/**
+ * Qué demo abre el pase. Va DENTRO de lo firmado: antes los pases del admin y
+ * del portal se firmaban igual con la misma clave, así que uno valía como el
+ * otro y la separación dependía solo de que viajaran en cookies distintas.
+ */
+export type DemoScope = 'admin' | 'portal'
+
+const firmaDemo = (secret: string, payload: string, scope: DemoScope) =>
+  createHmac('sha256', secret).update(`demo:${scope}:v1:${payload}`).digest('hex')
+
 /** Firma el pase: `<expUnixSec>.<hmac>`. El TTL va DENTRO de lo firmado. */
-export function signDemoToken(secret: string, expiresAtSec: number): string {
+export function signDemoToken(secret: string, expiresAtSec: number, scope: DemoScope = 'admin'): string {
   const payload = String(Math.floor(expiresAtSec))
-  const sig = createHmac('sha256', secret).update(payload).digest('hex')
-  return `${payload}.${sig}`
+  return `${payload}.${firmaDemo(secret, payload, scope)}`
 }
 
 export function createDemoToken(secret: string, nowMs = Date.now()): string {
@@ -31,7 +40,8 @@ export function createDemoToken(secret: string, nowMs = Date.now()): string {
 export function verifyDemoToken(
   secret: string | undefined,
   token: string | undefined | null,
-  nowMs = Date.now()
+  nowMs = Date.now(),
+  scope: DemoScope = 'admin'
 ): boolean {
   if (!secret || !token) return false
 
@@ -42,7 +52,7 @@ export function verifyDemoToken(
   const sig = token.slice(dot + 1)
   if (!/^\d+$/.test(payload) || !/^[0-9a-f]+$/i.test(sig)) return false
 
-  const expected = createHmac('sha256', secret).update(payload).digest('hex')
+  const expected = firmaDemo(secret, payload, scope)
   // Comparación en tiempo constante; longitudes distintas ⇒ rechazo directo
   // (timingSafeEqual lanza si difieren).
   if (sig.length !== expected.length) return false

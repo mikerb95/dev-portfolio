@@ -33,18 +33,15 @@ describe('portal · demo pública', () => {
     })
 
     it('el pase del portal y el del admin no son intercambiables', async () => {
-      // Comparten el mismo esquema HMAC (createPortalDemoToken reexporta la
-      // firma de lib/demo.ts), así que la separación de privilegios depende
-      // por completo de que viajen en cookies DISTINTAS, no en el formato del
-      // token. Este test documenta esa dependencia: con el MISMO secreto, un
-      // token de portal también "verificaría" como token de admin si alguien
-      // los mezclara. La defensa real está en middleware.ts (dos cookies, dos
-      // funciones de resolución, nunca la misma ruta de código).
+      // Hasta la auditoría del 22 sep 2026 compartían firma y clave, así que un
+      // pase de portal "verificaba" como pase de admin y la separación
+      // dependía solo de que viajaran en cookies distintas. Ahora el dominio
+      // va dentro de lo firmado: la misma clave ya no basta.
       const { createDemoToken, verifyDemoToken } = await import('../src/lib/demo')
       const portalToken = createPortalDemoToken(SECRET)
-      expect(verifyDemoToken(SECRET, portalToken)).toBe(true)
+      expect(verifyDemoToken(SECRET, portalToken)).toBe(false)
       const adminToken = createDemoToken(SECRET)
-      expect(verifyPortalDemoToken(SECRET, adminToken)).toBe(true)
+      expect(verifyPortalDemoToken(SECRET, adminToken)).toBe(false)
     })
   })
 

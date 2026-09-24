@@ -27,10 +27,14 @@ export const PORTAL_DEMO_TTL_SEC = 30 * 60
 export const PORTAL_DEMO_EMAIL = 'demo@codebymike.tech'
 
 export function createPortalDemoToken(secret: string, nowMs = Date.now()): string {
-  return signDemoToken(secret, Math.floor(nowMs / 1000) + PORTAL_DEMO_TTL_SEC)
+  return signDemoToken(secret, Math.floor(nowMs / 1000) + PORTAL_DEMO_TTL_SEC, 'portal')
 }
 
-export const verifyPortalDemoToken = verifyDemoToken
+export const verifyPortalDemoToken = (
+  secret: string | undefined,
+  token: string | undefined | null,
+  nowMs = Date.now()
+): boolean => verifyDemoToken(secret, token, nowMs, 'portal')
 
 /**
  * Solo lectura, con una única excepción: el simulador de pago. Sin él, la

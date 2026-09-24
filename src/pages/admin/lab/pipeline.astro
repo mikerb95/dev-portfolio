@@ -39,6 +39,11 @@ const WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/ci.yml`
     success: 'Éxito', failure: 'Falló', rolled_back: 'Rollback',
   }
 
+  // Escapa lo que venga de la base antes de meterlo en innerHTML (las filas se
+  // ingieren con un token de máquina; la ingesta ya filtra rama y URL, esto
+  // cubre las filas anteriores a ese filtro).
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
+
   type Run = {
     id: number; sha: string; branch: string | null; url: string | null
     conclusion: string; testsPassed: number | null; testsFailed: number | null
@@ -120,12 +125,12 @@ const WORKFLOW_URL = `https://github.com/${REPO}/actions/workflows/ci.yml`
             ${runs.map((r) => `
               <tr class="text-zinc-300">
                 <td class="py-2.5 pr-4">
-                  <a href="${r.url ?? `${REPO_URL}/commit/${r.sha}`}" target="_blank" rel="noopener"
-                     class="font-mono text-xs text-zinc-400 hover:text-zinc-100 transition-colors">${r.sha.slice(0, 7)}</a>
-                  ${r.branch ? `<span class="ml-2 text-[10px] text-zinc-600 font-mono">${r.branch}</span>` : ''}
+                  <a href="${esc(r.url ?? `${REPO_URL}/commit/${r.sha}`)}" target="_blank" rel="noopener"
+                     class="font-mono text-xs text-zinc-400 hover:text-zinc-100 transition-colors">${esc(r.sha.slice(0, 7))}</a>
+                  ${r.branch ? `<span class="ml-2 text-[10px] text-zinc-600 font-mono">${esc(r.branch)}</span>` : ''}
                 </td>
                 <td class="py-2.5 pr-4">
-                  <span class="inline-block px-2 py-0.5 rounded-md border text-xs ${CHIP[r.conclusion] ?? ''}">${LABEL[r.conclusion] ?? r.conclusion}</span>
+                  <span class="inline-block px-2 py-0.5 rounded-md border text-xs ${CHIP[r.conclusion] ?? ''}">${LABEL[r.conclusion] ?? esc(r.conclusion)}</span>
                 </td>
                 <td class="py-2.5 pr-4 text-xs font-mono">
                   ${r.testsPassed != null ? `<span class="text-emerald-400">${r.testsPassed} ✓</span>` : '-'}
