@@ -202,11 +202,11 @@ cookies ni lógica:
   (`recordSecurityEvent`, tabla `security_events`) - nunca lanza ni bloquea el
   response. Las acciones del panel usan `recordAdminEvent` (con `await`).
 - **Auditoría no es amenaza.** La misma tabla guarda ataques y rastro de
-  acciones legítimas (mías, de clientes, de alumnos). Las categorías de rastro
+  acciones legítimas (del admin, de clientes, de alumnos). Las categorías de rastro
   viven en `AUDIT_CATEGORIES` (`src/lib/security/audit.ts`) y quedan fuera de
   `/security`, del pulso de la portada, de las anomalías y del bloqueo masivo.
   Una categoría nueva de rastro se añade ahí, o se publicará como ataque (y su
-  gráfico diario delataría cuándo uso el panel).
+  gráfico diario delataría cuándo se usa el panel).
 - **El identificador de cliente nunca viene del request.** En cualquier consulta
   del portal, `clientId` sale de `requirePortalSession()` y viaja en el `WHERE`
   aunque la query ya lleve un `projectId` o un `invoiceId` que "ya implica" al
