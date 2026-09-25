@@ -71,7 +71,10 @@ export const POST: APIRoute = async ({ request }) => {
     .values({ projectId, ingestSecret: cifrado, active: true, createdAt: ahora, updatedAt: ahora })
     .onConflictDoUpdate({ target: computeTerms.projectId, set: { ingestSecret: cifrado, active: true, updatedAt: ahora } })
 
-  void recordSecurityEvent({
+  // Con `await`, como toda acción del panel: una promesa suelta puede morir
+  // cuando la instancia se congela tras responder. `computo` es categoría de
+  // auditoría (lib/security/audit.ts), no cuenta como amenaza.
+  await recordSecurityEvent({
     classification: { category: 'computo', severity: 'low', ruleId: previo ? 'computo.secreto_rotado' : 'computo.secreto_emitido' },
     ip: clientIp(request),
     method: 'POST',
