@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import CardPopover from '../components/CardPopover.astro'
 import InstrumentoVisita from '../components/engineering/InstrumentoVisita.astro'
 import { db } from '../db'
-import { webVitals, ciRuns, monitorChecks, monitorIncidents, monitors } from '../db/schema'
+import { webVitals, ciRuns, monitorChecks, monitorDaily, monitorIncidents, monitors } from '../db/schema'
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm'
 import {
   p75,
@@ -19,7 +19,7 @@ import {
 } from '../lib/vitals'
 import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizedHref } from '../i18n'
 import { safeQuery } from '../lib/safe-query'
-import { histograma, tablaCuantiles, topeEscala } from '../lib/motion/medicion'
+import { alturaDia, claveDia, diasDisponibilidad, enEscala, histograma, tablaCuantiles, topeEscala } from '../lib/motion/medicion'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -156,56 +156,64 @@ const coverageDelta =
     : null
 
 // ── Disponibilidad agregada (90 días) ────────────────────────────────────
-const uptimeSince = new Date(now - 90 * DAY_MS)
-const [uptimeAgg] = await safeQuery(
+// Del resumen diario (monitor_daily, una fila por monitor y día que escribe el
+// cron de rollup), NUNCA del crudo: agregar 90 días de monitor_checks en una
+// página pública escaneaba decenas de miles de filas por render, y Turso
+// factura filas escaneadas (ver docs/runbook-cuota-turso.md). Así son ~90
+// filas por monitor, las mismas que ya lee /status.
+const UPTIME_DIAS = 90
+const uptimeSince = new Date(now - UPTIME_DIAS * DAY_MS)
+const monitoresActivos = await safeQuery(
   () =>
     db
-      .select({
-        total: sql<number>`count(*)`,
-        ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
-      })
-      .from(monitorChecks)
-      .where(gte(monitorChecks.at, uptimeSince)),
-  [] as { total: number; ok: number }[],
-  'engineering/uptime-agregado',
-)
-const [monCount] = await safeQuery(
-  () =>
-    db
-      .select({ n: sql<number>`count(*)` })
+      .select({ id: monitors.id, name: monitors.name })
       .from(monitors)
-      .where(and(eq(monitors.active, true), eq(monitors.paused, false))),
-  [] as { n: number }[],
+      .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
+      .orderBy(monitors.name),
+  [] as { id: number; name: string }[],
   'engineering/monitores-activos',
 )
-const uptime90 =
-  uptimeAgg && uptimeAgg.total > 0 ? Math.round((uptimeAgg.ok / uptimeAgg.total) * 10000) / 100 : null
-
-// Desglose por monitor: uptime % y latencia media en la ventana de 90d.
-const perMonitor = await safeQuery(
+const dailyRows = await safeQuery(
   () =>
     db
       .select({
-        id: monitors.id,
-        name: monitors.name,
-        total: sql<number>`count(${monitorChecks.id})`,
-        ok: sql<number>`coalesce(sum(${monitorChecks.ok}), 0)`,
-        avgMs: sql<number>`coalesce(avg(${monitorChecks.responseMs}), 0)`,
+        monitorId: monitorDaily.monitorId,
+        dia: monitorDaily.day,
+        total: monitorDaily.total,
+        ok: monitorDaily.ok,
+        sumMs: monitorDaily.sumMs,
       })
-      .from(monitors)
-      .leftJoin(monitorChecks, and(eq(monitorChecks.monitorId, monitors.id), gte(monitorChecks.at, uptimeSince)))
-      .where(and(eq(monitors.active, true), eq(monitors.paused, false)))
-      .groupBy(monitors.id)
-      .orderBy(monitors.name),
-  [] as { id: number; name: string; total: number; ok: number; avgMs: number }[],
-  'engineering/uptime-por-monitor',
+      .from(monitorDaily)
+      .innerJoin(monitors, eq(monitors.id, monitorDaily.monitorId))
+      .where(
+        and(
+          gte(monitorDaily.day, claveDia(now - (UPTIME_DIAS - 1) * DAY_MS)),
+          eq(monitors.active, true),
+          eq(monitors.paused, false),
+        ),
+      ),
+  [] as { monitorId: number; dia: string; total: number; ok: number; sumMs: number }[],
+  'engineering/monitor-daily',
 )
+const uptimeAgg = dailyRows.reduce((acc, r) => ({ total: acc.total + r.total, ok: acc.ok + r.ok }), { total: 0, ok: 0 })
+const monCount = { n: monitoresActivos.length }
+const uptime90 = uptimeAgg.total > 0 ? Math.round((uptimeAgg.ok / uptimeAgg.total) * 10000) / 100 : null
 
-const monitorRows = perMonitor.map((m) => ({
-  name: m.name,
-  uptime: m.total > 0 ? Math.round((m.ok / m.total) * 10000) / 100 : null,
-  avgMs: m.total > 0 ? Math.round(m.avgMs) : null,
-}))
+// Desglose por monitor: uptime % y latencia media en la ventana.
+const monitorRows = monitoresActivos.map((m) => {
+  const filas = dailyRows.filter((r) => r.monitorId === m.id)
+  const total = filas.reduce((a, r) => a + r.total, 0)
+  const ok = filas.reduce((a, r) => a + r.ok, 0)
+  const sumMs = filas.reduce((a, r) => a + r.sumMs, 0)
+  return {
+    name: m.name,
+    uptime: total > 0 ? Math.round((ok / total) * 10000) / 100 : null,
+    avgMs: total > 0 ? Math.round(sumMs / total) : null,
+  }
+})
+
+// La tira: un día por barra, con los huecos a la vista.
+const tira = diasDisponibilidad(dailyRows, now, UPTIME_DIAS)
 
 // Incidentes en la ventana: conteo y MTTR (solo los ya resueltos).
 const incidentRows = await safeQuery(
@@ -218,6 +226,7 @@ const incidentRows = await safeQuery(
   'engineering/incidentes',
 )
 const resolvedIncidents = incidentRows.filter((i) => i.resolvedAt != null)
+const diasConIncidente = new Set(incidentRows.map((i) => claveDia(i.startedAt.getTime())))
 const mttrMin =
   resolvedIncidents.length > 0
     ? Math.round(
@@ -229,7 +238,7 @@ const mttrMin =
 
 // Presupuesto de error traducido a tiempo: 90 días completos menos el % de uptime.
 const downtimeMin =
-  uptime90 != null ? Math.round(90 * 24 * 60 * (1 - uptime90 / 100)) : null
+  uptime90 != null ? Math.round(UPTIME_DIAS * 24 * 60 * (1 - uptime90 / 100)) : null
 const fmtDowntime = (min: number | null) => {
   if (min == null) return '-'
   if (min < 60) return `${min} min`
@@ -275,6 +284,73 @@ const ratingLabel: Record<VitalRating, string> = {
 }
 
 const VITAL_EXPLAIN: Record<VitalMetric, string> = e.vitals.explain
+
+// ── Lo que pintan las secciones con motion ───────────────────────────────
+// Todo el estado FINAL sale del servidor (alturas, posición de la aguja,
+// colores): el script solo anima desde cero hasta aquí, así que sin JS o con
+// movimiento reducido la página ya está completa.
+const medidores = vitals.map((v) => {
+  const tope = topeEscala(v.metric)
+  const barras = histosVitals[v.metric] ?? []
+  return {
+    ...v,
+    tope,
+    topeDisplay: formatVital(v.metric, tope),
+    barras: barras.map((h, i) => {
+      const centro = ((i + 0.5) / barras.length) * tope
+      return { h, rating: rateVital(v.metric, centro) }
+    }),
+    aguja: v.p75 == null ? null : enEscala(v.p75, tope) * 100,
+    corteBueno: (v.goodThreshold / tope) * 100,
+    corteMejorable: (v.niThreshold / tope) * 100,
+  }
+})
+const barraCls: Record<VitalRating, string> = {
+  good: 'bg-lime/55',
+  'needs-improvement': 'bg-ember/45',
+  poor: 'bg-ember/75',
+}
+
+const conclusionCls: Record<string, string> = {
+  success: 'bg-lime/70',
+  failure: 'bg-ember/85',
+  rolled_back: 'bg-violet/80',
+}
+const conclusionTxt = e.pipeline.conclusiones as Record<string, string>
+const runsTira = [...recentRuns].reverse().map((r) => ({
+  h: r.durationMs != null ? Math.max(0.06, r.durationMs / maxDuration) : 0.06,
+  cls: conclusionCls[r.conclusion] ?? 'bg-ink-300',
+  titulo: [
+    r.sha.slice(0, 7),
+    r.createdAt ? fmtDate.format(r.createdAt) : null,
+    fmtDuration(r.durationMs),
+    conclusionTxt[r.conclusion] ?? r.conclusion,
+  ]
+    .filter(Boolean)
+    .join(' · '),
+}))
+
+const fmtDia = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' })
+const pctFmt = new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: 2 })
+const tiraDias = tira.map((d) => {
+  const dia = fmtDia.format(new Date(`${d.dia}T12:00:00Z`))
+  return {
+    ...d,
+    alto: alturaDia(d.pct),
+    incidente: diasConIncidente.has(d.dia),
+    lectura:
+      d.pct == null
+        ? interpolate(e.uptime.tiraHueco, { day: dia })
+        : interpolate(e.uptime.tiraLectura, {
+            day: dia,
+            pct: `${pctFmt.format(d.pct)}%`,
+            n: d.total.toLocaleString(intlLocale(locale)),
+          }),
+    color: d.pct == null ? '' : d.pct >= 99.5 ? 'bg-lime/75' : d.pct >= 98 ? 'bg-ember/60' : 'bg-ember',
+  }
+})
+const ultimoConDatos = [...tiraDias].reverse().find((d) => d.pct != null)
+const statusMini = tiraDias.slice(-30)
 ---
 
 <BaseLayout title={e.title} description={e.description} image="/og-engineering.png">

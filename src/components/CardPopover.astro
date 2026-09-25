@@ -6,11 +6,12 @@
 interface Props {
   id: string
   panelClass?: string
+  class?: string
 }
-const { id, panelClass = '' } = Astro.props
+const { id, panelClass = '', class: clase = '' } = Astro.props
 ---
 
-<div class="card-pop relative" data-pop-id={id} tabindex="0" aria-describedby={`${id}-panel`}>
+<div class={`card-pop relative ${clase}`} data-pop-id={id} tabindex="0" aria-describedby={`${id}-panel`}>
   <slot />
   <div
     id={`${id}-panel`}
