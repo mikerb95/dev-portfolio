@@ -604,6 +604,7 @@ const es = {
       byCountryEmpty: 'Sin datos de geolocalización en la ventana.',
       trendHeading: 'Tendencia diaria (14 días)',
       trendTooltipSuffix: 'eventos',
+      actualizado: 'Calculado {hace} · se renueva cada {horas} h',
       howItWorksHeading: 'Cómo funciona (4 capas)',
       layers: [
         'Mitigación DDoS automática y firewall de la plataforma (Vercel).',

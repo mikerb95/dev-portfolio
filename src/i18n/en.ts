@@ -588,6 +588,7 @@ const en = {
       byCountryEmpty: 'No geolocation data in this window.',
       trendHeading: 'Daily trend (14 days)',
       trendTooltipSuffix: 'events',
+      actualizado: 'Computed {hace} · refreshed every {horas} h',
       howItWorksHeading: 'How it works (4 layers)',
       layers: [
         'Automatic DDoS mitigation and the platform firewall (Vercel).',

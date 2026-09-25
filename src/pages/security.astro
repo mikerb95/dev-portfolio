@@ -1,15 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
-import { db } from '../db'
-import { securityEvents, blockedIps } from '../db/schema'
-import { and, gte, notInArray, sql } from 'drizzle-orm'
-import { AUDIT_CATEGORIES } from '../lib/security/audit'
 import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizedHref } from '../i18n'
-import { safeQuery } from '../lib/safe-query'
 import FiltroCapas from '../components/security/FiltroCapas.astro'
 import HallazgosCommits from '../components/security/HallazgosCommits.astro'
 import ControlesVivos from '../components/security/ControlesVivos.astro'
 import { destinoDe, repartoHostil, resumenCapas } from '../lib/motion/filtro'
+import { leerVitrina, tendenciaCompleta, VENTANA_DIAS, VITRINA_TTL_MS } from '../lib/security/vitrina'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -21,98 +17,42 @@ const L = (path: string) => localizedHref(path, locale)
 // aplicó cada corrección. Contenido 100% estático y verificable en el
 // historial de git público.
 //
-// La sección "Security Operations" expone en vivo agregados del micro-SIEM
-// propio (docs/plan-security-observability.md). OPSEC deliberada: SOLO
-// agregados - nunca IPs completas, nunca nombres de reglas exactos, nunca se
-// revela cuáles rutas son endpoints señuelo. El filtrado ocurre aquí mismo, en
-// el servidor: esta página nunca lee ip/path crudos de security_events.
+// La sección "Security Operations" expone agregados del micro-SIEM propio
+// (docs/plan-security-observability.md). OPSEC deliberada: SOLO agregados -
+// nunca IPs completas, nunca nombres de reglas exactos, nunca se revela cuáles
+// rutas son endpoints señuelo. El filtrado ocurre en el servidor: esta página
+// nunca lee ip/path crudos de security_events.
+//
+// Los agregados salen de una foto que se recalcula como mucho cada pocas horas
+// (lib/security/vitrina.ts): sumar 30 días de eventos crudos en cada render era
+// el patrón que ya agotó la cuota de Turso. Si no hay foto, los paneles pintan
+// su estado vacío; el catálogo de hallazgos es estático y se ve igual.
 
-const SECOPS_WINDOW_DAYS = 30
-const DAY_MS = 86_400_000
-const secOpsSince = new Date(Date.now() - SECOPS_WINDOW_DAYS * DAY_MS)
-
+const SECOPS_WINDOW_DAYS = VENTANA_DIAS
 const CAT_LABELS: Record<string, string> = s.secops.categoryLabels
 
-const sumHits = sql<number>`coalesce(sum(${securityEvents.hits}), 0)`
+const { foto } = await leerVitrina()
+const totalDetected = foto?.total ?? 0
+const byCategory = foto?.porCategoria ?? []
+const byCountry = foto?.porPais ?? []
+const autoBlocks30d = foto?.bloqueosAuto ?? 0
+const trend = foto?.tendencia ?? tendenciaCompleta([], Date.now())
 
-// Solo amenazas. La tabla guarda también rastro de acciones legítimas (mis
-// entradas al panel, clientes consultando sus pagos, alumnos canjeando un
-// código): contarlas aquí las publicaba como ataques, y el gráfico diario
-// habría enseñado qué días entro al panel. Ver lib/security/audit.ts.
-const soloAmenazas = notInArray(securityEvents.category, AUDIT_CATEGORIES)
-
-// Los agregados del micro-SIEM son un extra de esta página: el catálogo de
-// hallazgos OWASP es estático y debe verse aunque la base no responda.
-const [totalRow] = await safeQuery(
-  () => db.select({ v: sumHits }).from(securityEvents).where(and(gte(securityEvents.at, secOpsSince), soloAmenazas)),
-  [] as { v: number }[],
-  'security/total-detectado',
-)
-const totalDetected = Number(totalRow?.v ?? 0)
-
-const byCategory = await safeQuery(
-  () =>
-    db
-      .select({ category: securityEvents.category, count: sumHits })
-      .from(securityEvents)
-      .where(and(gte(securityEvents.at, secOpsSince), soloAmenazas))
-      .groupBy(securityEvents.category)
-      .orderBy(sql`2 desc`)
-      // Hay 10 categorías posibles: con el tope anterior (8) el señuelo, que
-      // suele ser la más pequeña, desaparecía del reparto y del hero. Subir el
-      // tope no lee más filas: el escaneo es el mismo, solo cambia el corte.
-      .limit(12),
-  [] as { category: string; count: number }[],
-  'security/por-categoria',
-)
-const catMax = Math.max(1, ...byCategory.map((c) => Number(c.count)))
-// El hero no hace consultas propias: reparte los mismos agregados de arriba.
+const catMax = Math.max(1, ...byCategory.map((c) => c.count))
+const countryMax = Math.max(1, ...byCountry.map((c) => c.count))
+const trendMax = Math.max(1, ...trend.map((d) => d.count))
+// El hero no hace consultas propias: reparte los mismos agregados.
 const reparto = repartoHostil(byCategory)
-
-const byCountry = await safeQuery(
-  () =>
-    db
-      .select({ country: securityEvents.country, count: sumHits })
-      .from(securityEvents)
-      .where(and(gte(securityEvents.at, secOpsSince), soloAmenazas, sql`${securityEvents.country} is not null`))
-      .groupBy(securityEvents.country)
-      .orderBy(sql`2 desc`)
-      .limit(6),
-  [] as { country: string | null; count: number }[],
-  'security/por-pais',
-)
-const countryMax = Math.max(1, ...byCountry.map((c) => Number(c.count)))
-
-const [blocksRow] = await safeQuery(
-  () =>
-    db
-      .select({ n: sql<number>`count(*)` })
-      .from(blockedIps)
-      .where(and(gte(blockedIps.createdAt, secOpsSince), sql`${blockedIps.source} = 'auto'`)),
-  [] as { n: number }[],
-  'security/bloqueos-automaticos',
-)
-const autoBlocks30d = Number(blocksRow?.n ?? 0)
 const resumen = resumenCapas(byCategory, totalDetected, autoBlocks30d)
 
-// Tendencia: eventos por día (14 días), para el mini-gráfico de barras.
-const dayExpr = sql<string>`date(${securityEvents.at}, 'unixepoch')`
-const dailyRaw = await safeQuery(
-  () =>
-    db
-      .select({ day: dayExpr, count: sumHits })
-      .from(securityEvents)
-      .where(and(gte(securityEvents.at, new Date(Date.now() - 14 * DAY_MS)), soloAmenazas))
-      .groupBy(dayExpr),
-  [] as { day: string; count: number }[],
-  'security/tendencia-diaria',
-)
-const dailyMap = new Map(dailyRaw.map((r) => [r.day, Number(r.count)]))
-const trend = Array.from({ length: 14 }, (_, i) => {
-  const day = new Date(Date.now() - (13 - i) * DAY_MS).toISOString().slice(0, 10)
-  return { day, count: dailyMap.get(day) ?? 0 }
-})
-const trendMax = Math.max(1, ...trend.map((t) => t.count))
+// Antigüedad real de la foto, dicha en la página: si el recálculo falló y se
+// sirve una vieja, el visitante lo lee en vez de creer que es de hace un rato.
+const hace = (() => {
+  if (!foto) return null
+  const rtf = new Intl.RelativeTimeFormat(intlLocale(locale), { numeric: 'auto' })
+  const min = Math.max(0, Math.round((Date.now() - foto.calculadaEn) / 60_000))
+  return min < 90 ? rtf.format(-min, 'minute') : rtf.format(-Math.round(min / 60), 'hour')
+})()
 
 type Severity = 'alta' | 'media'
 
@@ -186,9 +126,16 @@ const slo = [
         <h2 id="sec-secops" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] max-w-2xl">
           {m.secopsTitle}
         </h2>
-        <p class="max-w-md text-[14px] text-ink-300 leading-relaxed">
-          {interpolate(s.secops.intro, { days: SECOPS_WINDOW_DAYS })}
-        </p>
+        <div class="max-w-md">
+          <p class="text-[14px] text-ink-300 leading-relaxed">
+            {interpolate(s.secops.intro, { days: SECOPS_WINDOW_DAYS })}
+          </p>
+          {hace && (
+            <p class="text-[11px] font-mono text-ink-400 mt-2">
+              {interpolate(s.secops.actualizado, { hace, horas: VITRINA_TTL_MS / 3_600_000 })}
+            </p>
+          )}
+        </div>
       </div>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4" data-entrada>
@@ -221,10 +168,10 @@ const slo = [
                 <li>
                   <div class="flex items-center justify-between gap-4 text-[12px] mb-1.5">
                     <span class="text-ink-100 truncate">{CAT_LABELS[c.category] ?? c.category}</span>
-                    <span class="font-mono text-ink-300 tabular-nums">{fmt(Number(c.count))}</span>
+                    <span class="font-mono text-ink-300 tabular-nums">{fmt(c.count)}</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-white/[.05] overflow-hidden">
-                    <div class={`so-barra h-full rounded-full ${barraCls[destinoDe(c.category)]}`} style={`width:${(Number(c.count) / catMax) * 100}%`}></div>
+                    <div class={`so-barra h-full rounded-full ${barraCls[destinoDe(c.category)]}`} style={`width:${(c.count / catMax) * 100}%`}></div>
                   </div>
                 </li>
               ))}
@@ -242,10 +189,10 @@ const slo = [
                 <li>
                   <div class="flex items-center justify-between text-[12px] mb-1.5">
                     <span class="text-ink-100 font-mono">{c.country}</span>
-                    <span class="font-mono text-ink-300 tabular-nums">{fmt(Number(c.count))}</span>
+                    <span class="font-mono text-ink-300 tabular-nums">{fmt(c.count)}</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-white/[.05] overflow-hidden">
-                    <div class="so-barra h-full rounded-full bg-cyan/70" style={`width:${(Number(c.count) / countryMax) * 100}%`}></div>
+                    <div class="so-barra h-full rounded-full bg-cyan/70" style={`width:${(c.count / countryMax) * 100}%`}></div>
                   </div>
                 </li>
               ))}

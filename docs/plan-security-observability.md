@@ -372,11 +372,15 @@ que vale la pena conservar: la proporción de tráfico limpio es ilustrativa y l
 dice (el sitio no cuenta visitas limpias); la capa de la plataforma va punteada y sin
 cifra porque no se mide desde aquí. Corrección de paso: el desglose tenía `limit(8)`
 para 10 categorías posibles y el señuelo, la más pequeña, no aparecía; ahora
-`limit(12)`, que no lee más filas. **Pendiente de revisar**: estas consultas agregan
-30 días de `security_events` crudo en cada render público, justo el patrón que la regla
-de costos de Turso desaconseja; `security_rollups` (bucket `day`) podría servir el
-desglose y la tendencia si el cron de rollups corre en producción, pero no guarda el
-desglose por país.
+`limit(12)`, que no lee más filas. **Lecturas acotadas (mismo día)**: las cinco
+consultas de la vitrina sumaban 30 días de `security_events` crudo en cada render, el
+patrón que la regla de costos de Turso prohíbe. Ahora `src/lib/security/vitrina.ts` las
+corre como mucho cada 3 h y guarda el resultado como una foto JSON en `app_settings`
+(clave `cache_security_vitrina`, mismo patrón que el estado de `cron-runs.ts`, sin
+migración); un render lee esa fila por clave primaria, o nada si la instancia ya la
+tiene en memoria. Se descartó leer de `security_rollups`: depende de que el cron de
+rollups corra y no guarda el desglose por país. Si recalcular falla, se sirve la foto
+vieja y la página enseña su antigüedad; nunca se guarda un cálculo fallido como ceros.
 
 ### Fase 5 (referencia original) - Vitrina pública ~1 sesión
 
