@@ -383,13 +383,23 @@ const statusMini = tiraDias.slice(-30)
       <InstrumentoVisita tablas={tablasVitals} histos={histosVitals} p75s={p75Vitals} muestras={totalSamples} dias={VITALS_DAYS} />
     </header>
 
-    <!-- ── Core Web Vitals (RUM) ── -->
-    <section class="mb-14">
-      <div class="flex items-baseline justify-between mb-5">
-        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">{e.vitals.heading}</h2>
-        <span class="text-[11px] font-mono text-ink-400">
-          {interpolate(e.vitals.meta, { days: VITALS_DAYS, samples: totalSamples.toLocaleString(intlLocale(locale)) })}
-        </span>
+    <!-- ── /01 Core Web Vitals (RUM) ── -->
+    <section class="mb-28" aria-labelledby="sec-vitals">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/01</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>{e.secciones.vitals.label}</span>
+      </div>
+      <div class="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 mb-10">
+        <h2 id="sec-vitals" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] max-w-2xl">
+          {e.secciones.vitals.titulo}
+        </h2>
+        <div class="max-w-md">
+          <p class="text-[14px] text-ink-300 leading-relaxed">{e.secciones.vitals.sub}</p>
+          <p class="text-[11px] font-mono text-ink-400 mt-2">
+            {interpolate(e.vitals.meta, { days: VITALS_DAYS, samples: totalSamples.toLocaleString(intlLocale(locale)) })}
+          </p>
+        </div>
       </div>
 
       {totalSamples === 0 ? (
@@ -397,10 +407,10 @@ const statusMini = tiraDias.slice(-30)
           <p class="text-[13px] text-ink-300">{e.vitals.empty}</p>
         </div>
       ) : (
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {vitals.map((v) => (
-            <CardPopover id={`vital-${v.metric}`}>
-              <div class="rounded-2xl glass p-4 cursor-default hover:border-cyan/25 transition-colors">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3" data-foco data-entrada data-medidores>
+          {medidores.map((v, i) => (
+            <CardPopover id={`vital-${v.metric}`} class={i === 0 ? 'col-span-2 lg:col-span-1' : ''}>
+              <div class="medidor foco rounded-2xl glass p-4 cursor-default" data-medidor={v.metric} data-tope={v.tope}>
                 <div class="flex items-center justify-between mb-3">
                   <span class="text-[12px] font-mono font-semibold text-ink-50">{v.metric}</span>
                   {v.rating && (
@@ -409,8 +419,29 @@ const statusMini = tiraDias.slice(-30)
                     </span>
                   )}
                 </div>
-                <div class="text-2xl font-medium tracking-tight text-ink-50 tabular-nums">{v.display}</div>
+                <div class="text-2xl font-medium tracking-tight text-ink-50 tabular-nums" data-odometro>{v.display}</div>
                 <div class="text-[10px] text-ink-400 mt-1 leading-tight">{v.label}</div>
+
+                <div class="medidor-escala" aria-hidden="true">
+                  <div class="medidor-barras">
+                    {v.barras.map((b) => (
+                      <span class={barraCls[b.rating]} style={`height:${Math.max(b.h > 0 ? 6 : 0, b.h * 100)}%`}></span>
+                    ))}
+                  </div>
+                  <div class="medidor-zonas">
+                    <span class="bg-lime/70" style={`width:${v.corteBueno}%`}></span>
+                    <span class="bg-ember/50" style={`width:${v.corteMejorable - v.corteBueno}%`}></span>
+                    <span class="bg-ember/85 flex-1"></span>
+                  </div>
+                  {v.aguja != null && (
+                    <span class="medidor-aguja" style={`left:${v.aguja}%`} data-aguja><span>p75</span></span>
+                  )}
+                  <span class="medidor-tu" data-tu><span>{e.instrumento.tu}</span></span>
+                </div>
+                <div class="flex justify-between text-[9.5px] font-mono text-ink-400 mt-1.5">
+                  <span>0</span>
+                  <span>{v.topeDisplay}</span>
+                </div>
               </div>
               <Fragment slot="panel">
                 <div class="flex items-center justify-between mb-2">
@@ -421,18 +452,9 @@ const statusMini = tiraDias.slice(-30)
 
                 {v.p75 != null && (
                   <>
-                    <div class="mb-3">
-                      <div class="flex justify-between text-[11px] font-mono text-ink-400 mb-1">
-                        <span>0</span>
-                        <span>{interpolate(e.vitals.goodThreshold, { value: formatVital(v.metric, v.goodThreshold) })}</span>
-                        <span>{interpolate(e.vitals.poorThreshold, { value: formatVital(v.metric, v.niThreshold) })}</span>
-                      </div>
-                      <svg viewBox="0 0 300 14" class="w-full h-3.5" preserveAspectRatio="none">
-                        <rect x="0" y="4" width={`${(v.goodThreshold / v.niThreshold) * 100 * 0.82}`} height="6" rx="3" fill="var(--color-lime)" opacity="0.35" />
-                        <rect x={`${(v.goodThreshold / v.niThreshold) * 100 * 0.82}`} y="4" width={`${82 - (v.goodThreshold / v.niThreshold) * 100 * 0.82}`} height="6" rx="3" fill="var(--color-ember)" opacity="0.28" />
-                        <rect x="82" y="4" width="18" height="6" rx="3" fill="var(--color-ember)" opacity="0.45" />
-                        <circle cx={`${Math.min(98, (v.p75 / (v.niThreshold * 1.2)) * 100)}`} cy="7" r="4" fill="var(--color-cyan)" />
-                      </svg>
+                    <div class="flex justify-between text-[11px] font-mono text-ink-400 mb-3">
+                      <span>{interpolate(e.vitals.goodThreshold, { value: formatVital(v.metric, v.goodThreshold) })}</span>
+                      <span>{interpolate(e.vitals.poorThreshold, { value: formatVital(v.metric, v.niThreshold) })}</span>
                     </div>
 
                     <div class="grid grid-cols-3 gap-2 mb-3 text-center">
@@ -450,11 +472,6 @@ const statusMini = tiraDias.slice(-30)
                       </div>
                     </div>
 
-                    <div class="flex gap-2 mb-3 h-1.5 rounded-full overflow-hidden">
-                      <div style={`width:${v.dist.good}%`} class="bg-lime/70" title={`${v.dist.good}% ${e.vitals.good.toLowerCase()}`}></div>
-                      <div style={`width:${v.dist.needsImprovement}%`} class="bg-ember/50" title={`${v.dist.needsImprovement}% ${e.vitals.needsImprovement.toLowerCase()}`}></div>
-                      <div style={`width:${v.dist.poor}%`} class="bg-ember/80" title={`${v.dist.poor}% ${e.vitals.poor.toLowerCase()}`}></div>
-                    </div>
                     <div class="text-[11px] text-ink-400 mb-3">
                       {v.dist.good}% {e.vitals.good.toLowerCase()} · {v.dist.needsImprovement}% {e.vitals.needsImprovement.toLowerCase()} · {v.dist.poor}% {e.vitals.poor.toLowerCase()}
                     </div>
@@ -492,28 +509,106 @@ const statusMini = tiraDias.slice(-30)
       )}
     </section>
 
-    <!-- ── Pipeline CI + disponibilidad ── -->
-    <section class="mb-14 grid md:grid-cols-2 gap-3">
+    <!-- ── /02 Pipeline CI/CD ── -->
+    <section class="mb-28" aria-labelledby="sec-pipeline">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/02</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>{e.secciones.pipeline.label}</span>
+      </div>
+      <div class="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 mb-10">
+        <h2 id="sec-pipeline" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] max-w-2xl">
+          {e.secciones.pipeline.titulo}
+        </h2>
+        <p class="text-[14px] text-ink-300 leading-relaxed max-w-md">{e.secciones.pipeline.sub}</p>
+      </div>
+
       <CardPopover id="ci-pipeline">
-        <div class="rounded-2xl glass p-6 cursor-default hover:border-cyan/25 transition-colors">
-          <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{e.pipeline.heading}</h2>
+        <div class="rounded-2xl glass p-6 md:p-8 cursor-default" data-pipeline>
           {lastSuccess ? (
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-10 lg:gap-14">
               <div>
-                <div class="text-3xl font-medium text-lime tabular-nums">{lastSuccess.testsPassed ?? '-'}</div>
-                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.testsLabel}</div>
+                <h3 class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-200 mb-8">{e.pipeline.heading}</h3>
+                <div class="pipe" data-pipe>
+                  <span class="pipe-riel" aria-hidden="true"></span>
+                  <span class="pipe-avance" aria-hidden="true" data-pipe-avance></span>
+                  <span class="pipe-paquete" aria-hidden="true" data-pipe-paquete></span>
+                  <ol class="pipe-etapas">
+                    <li class="pipe-etapa" data-etapa>
+                      <span class="pipe-nodo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+                      <span class="pipe-nombre">{e.pipeline.etapas.commit}</span>
+                      <span class="pipe-detalle">{lastSuccess.sha.slice(0, 7)}</span>
+                    </li>
+                    <li class="pipe-etapa" data-etapa>
+                      <span class="pipe-nodo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+                      <span class="pipe-nombre">{e.pipeline.etapas.tests}</span>
+                      <span class="pipe-detalle">
+                        {interpolate(e.pipeline.testsDetalle, {
+                          n: lastSuccess.testsPassed ?? '-',
+                          cov: lastSuccess.coveragePct != null ? `${Math.round(lastSuccess.coveragePct)}%` : '-',
+                        })}
+                      </span>
+                    </li>
+                    <li class="pipe-etapa" data-etapa>
+                      <span class="pipe-nodo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+                      <span class="pipe-nombre">{e.pipeline.etapas.deploy}</span>
+                      <span class="pipe-detalle">Vercel</span>
+                    </li>
+                    <li class={`pipe-etapa ${lastSuccess.healthOk === false ? 'pipe-falla' : ''}`} data-etapa>
+                      <span class="pipe-nodo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+                      <span class="pipe-nombre">{e.pipeline.etapas.health}</span>
+                      <span class="pipe-detalle">{lastSuccess.healthOk ? e.pipeline.healthOk : e.pipeline.healthFail}</span>
+                    </li>
+                  </ol>
+                  <span class="pipe-rollback" data-pipe-rollback>
+                    <span class="pipe-rollback-punto" aria-hidden="true"></span>
+                    {e.pipeline.etapas.rollback}
+                  </span>
+                </div>
+
+                <div class="mt-10 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <span class="text-4xl md:text-5xl font-medium tracking-tight text-ink-50 tabular-nums" data-odometro>{fmtDuration(lastSuccess.durationMs)}</span>
+                  <span class="text-[12px] font-mono text-ink-400">{e.pipeline.totalLabel}</span>
+                </div>
+                <div class="mt-3 text-[11px] font-mono text-ink-400">
+                  {greenStreak > 1 ? interpolate(e.pipeline.streak, { n: greenStreak }) : e.pipeline.lastRun}
+                  {lastSuccess.createdAt && <> · {fmtDate.format(lastSuccess.createdAt)}</>}
+                </div>
               </div>
-              <div>
-                <div class="text-3xl font-medium text-ink-50 tabular-nums">{lastSuccess.coveragePct != null ? `${Math.round(lastSuccess.coveragePct)}%` : '-'}</div>
-                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.coverageLabel}</div>
-              </div>
-              <div>
-                <div class="text-3xl font-medium text-ink-50 tabular-nums">{fmtDuration(lastSuccess.durationMs)}</div>
-                <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.durationLabel}</div>
-              </div>
-              <div class="col-span-3 pt-3 mt-1 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-ink-400">
-                <span>{greenStreak > 1 ? interpolate(e.pipeline.streak, { n: greenStreak }) : e.pipeline.lastRun}</span>
-                <span>{lastSuccess.createdAt ? fmtDate.format(lastSuccess.createdAt) : ''}</span>
+
+              <div class="lg:border-l lg:border-white/5 lg:pl-12 flex flex-col">
+                <div class="grid grid-cols-3 gap-4">
+                  <div>
+                    <div class="text-3xl font-medium text-lime tabular-nums" data-odometro>{lastSuccess.testsPassed ?? '-'}</div>
+                    <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.testsLabel}</div>
+                  </div>
+                  <div>
+                    <div class="text-3xl font-medium text-ink-50 tabular-nums" data-odometro>{lastSuccess.coveragePct != null ? `${Math.round(lastSuccess.coveragePct)}%` : '-'}</div>
+                    <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{e.pipeline.coverageLabel}</div>
+                  </div>
+                  <div>
+                    <div class="text-3xl font-medium text-ink-50 tabular-nums" data-odometro>{successRate != null ? `${successRate}%` : '-'}</div>
+                    <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mt-1">{conclusionTxt.success}</div>
+                  </div>
+                </div>
+
+                {runsTira.length > 1 && (
+                  <div class="mt-auto pt-10">
+                    <div class="text-[10px] font-mono uppercase tracking-wider text-ink-400 mb-3">
+                      {interpolate(e.pipeline.runsStrip, { n: runsTira.length })}
+                    </div>
+                    <div class="runs" data-runs>
+                      {runsTira.map((r) => (
+                        <span class={r.cls} style={`height:${r.h * 100}%`} title={r.titulo}></span>
+                      ))}
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[10.5px] font-mono text-ink-400">
+                      <span class="inline-flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-lime/70"></i>{conclusionTxt.success}</span>
+                      <span class="inline-flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-ember/85"></i>{conclusionTxt.failure}</span>
+                      <span class="inline-flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-violet/80"></i>{conclusionTxt.rolled_back}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -525,32 +620,7 @@ const statusMini = tiraDias.slice(-30)
             <span class="font-mono text-[12px] uppercase tracking-wider text-ink-50">{e.pipeline.panelTitle}</span>
             {successRate != null && <span class="font-mono text-[11px] text-ink-400">{interpolate(e.pipeline.successRate, { pct: successRate, n: recentRuns.length })}</span>}
           </div>
-          <p class="text-ink-200 mb-3">
-            {e.pipeline.desc}
-          </p>
-
-          {durationSeries.length > 1 && (
-            <div class="mb-3">
-              <div class="text-[11px] font-mono uppercase text-ink-400 mb-1">{interpolate(e.pipeline.durationChart, { n: durationSeries.length })}</div>
-              <svg viewBox={`0 0 ${durationSeries.length * 14} 32`} class="w-full h-8" preserveAspectRatio="none">
-                {durationSeries.map((d, i) => {
-                  const h = d.ms != null ? Math.max(2, (d.ms / maxDuration) * 30) : 2
-                  return (
-                    <rect
-                      x={i * 14 + 2}
-                      y={32 - h}
-                      width="9"
-                      height={h}
-                      rx="1.5"
-                      fill={d.ok ? 'var(--color-lime)' : 'var(--color-ember)'}
-                      opacity={d.ok ? '0.7' : '0.85'}
-                    />
-                  )
-                })}
-              </svg>
-            </div>
-          )}
-
+          <p class="text-ink-200 mb-3">{e.pipeline.desc}</p>
           {coverageDelta != null && (
             <div class="text-[12px] text-ink-300 mb-2">
               {interpolate(e.pipeline.coverageDelta, { value: `${coverageDelta > 0 ? '+' : ''}${coverageDelta}` })}
@@ -577,22 +647,63 @@ const statusMini = tiraDias.slice(-30)
           </div>
         </Fragment>
       </CardPopover>
+    </section>
+
+    <!-- ── /03 Disponibilidad ── -->
+    <section class="mb-28" aria-labelledby="sec-uptime">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/03</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>{e.secciones.uptime.label}</span>
+      </div>
+      <div class="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 mb-10">
+        <h2 id="sec-uptime" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] max-w-2xl">
+          {e.secciones.uptime.titulo}
+        </h2>
+        <p class="text-[14px] text-ink-300 leading-relaxed max-w-md">{e.secciones.uptime.sub}</p>
+      </div>
 
       <CardPopover id="uptime">
-        <div class="rounded-2xl glass p-6 flex flex-col cursor-default hover:border-cyan/25 transition-colors">
-          <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{e.uptime.heading}</h2>
-          <div class="flex-1 flex items-center">
-            <div>
-              <div class="text-4xl font-medium tabular-nums text-lime">{uptime90 != null ? `${uptime90}%` : '-'}</div>
-              <div class="text-[11px] font-mono text-ink-400 mt-2">
-                {interpolate(e.uptime.meta, {
-                  services: monCount?.n ?? 0,
-                  checks: (uptimeAgg?.total ?? 0).toLocaleString(intlLocale(locale)),
-                })}
-              </div>
+        <div class="rounded-2xl glass p-6 md:p-8 cursor-default grid lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] gap-10 lg:gap-14" data-disponibilidad>
+          <div>
+            <h3 class="text-[12px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{e.uptime.heading}</h3>
+            <div class="text-5xl font-medium tabular-nums text-lime tracking-tight" data-odometro>{uptime90 != null ? `${uptime90}%` : '-'}</div>
+            <div class="text-[11px] font-mono text-ink-400 mt-3">
+              {interpolate(e.uptime.meta, {
+                services: monCount.n,
+                checks: uptimeAgg.total.toLocaleString(intlLocale(locale)),
+              })}
+            </div>
+            {downtimeMin != null && (
+              <div class="text-[12px] text-ink-300 mt-2">{interpolate(e.uptime.presupuesto, { time: fmtDowntime(downtimeMin) })}</div>
+            )}
+            <a href={L('/status')} class="inline-block text-[11px] font-mono text-cyan hover:underline mt-5">{e.uptime.viewStatusCta}</a>
+          </div>
+
+          <div class="min-w-0">
+            <div class="tira-lectura" data-tira-lectura aria-hidden="true">{ultimoConDatos?.lectura ?? ''}</div>
+            <div class="tira" data-tira role="img" aria-label={`${e.uptime.heading}: ${uptime90 != null ? `${uptime90}%` : '-'}`}>
+              <span class="tira-barrido" aria-hidden="true" data-tira-barrido></span>
+              {tiraDias.map((d) => (
+                <span
+                  class={`tira-dia ${d.pct == null ? 'hueco' : ''} ${d.incidente ? 'con-incidente' : ''}`}
+                  data-lectura={d.lectura}
+                >
+                  <span class={`tira-barra ${d.color}`} style={`height:${d.pct == null ? 100 : Math.max(4, d.alto * 100)}%`}></span>
+                </span>
+              ))}
+            </div>
+            <div class="flex justify-between text-[10px] font-mono text-ink-400 mt-2">
+              <span>{e.uptime.tiraDesde}</span>
+              <span class="inline-flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5"><i class="tira-leyenda-hueco"></i>{interpolate(e.uptime.tiraHueco, { day: '' }).replace(/^\s*·\s*/, '')}</span>
+                {diasConIncidente.size > 0 && (
+                  <span class="inline-flex items-center gap-1.5"><i class="w-1.5 h-1.5 rounded-full bg-ember"></i>{e.uptime.incidentWord}</span>
+                )}
+                <span>{e.uptime.tiraHoy}</span>
+              </span>
             </div>
           </div>
-          <a href={L('/status')} class="text-[11px] font-mono text-cyan hover:underline mt-3">{e.uptime.viewStatusCta}</a>
         </div>
         <Fragment slot="panel">
           <div class="flex items-center justify-between mb-2">
@@ -630,19 +741,47 @@ const statusMini = tiraDias.slice(-30)
       </CardPopover>
     </section>
 
-    <!-- ── Verificable ── -->
-    <section>
-      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{e.verifiable.heading}</h2>
-      <div class="grid sm:grid-cols-3 gap-3">
-        <a href={L('/security')} class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
+    <!-- ── /04 Compruébalo tú mismo ── -->
+    <section aria-labelledby="sec-verify">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/04</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>{e.secciones.verify.label}</span>
+      </div>
+      <h2 id="sec-verify" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] mb-10">
+        {e.verifiable.heading}
+      </h2>
+      <div class="grid sm:grid-cols-3 gap-3" data-foco data-entrada>
+        <a href={L('/security')} class="fuente foco rounded-2xl glass p-5 group">
+          <div class="fuente-vista" aria-hidden="true">
+            <svg viewBox="0 0 120 64" class="fuente-escudo">
+              <path d="M60 6 L86 15 V32 C86 45 75 54 60 59 C45 54 34 45 34 32 V15 Z" />
+              <path d="M49 32 l7.5 7.5 L72 24" class="fuente-escudo-ok" />
+            </svg>
+            <span class="fuente-escaneo"></span>
+          </div>
           <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">{e.verifiable.security.title}</div>
           <div class="text-[11px] text-ink-400 leading-relaxed">{e.verifiable.security.body}</div>
         </a>
-        <a href={L('/status')} class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
+        <a href={L('/status')} class="fuente foco rounded-2xl glass p-5 group">
+          <div class="fuente-vista fuente-status" aria-hidden="true">
+            {statusMini.map((d, i) => (
+              <span class={d.pct == null ? 'hueco' : d.color} style={`height:${d.pct == null ? 100 : Math.max(8, d.alto * 100)}%;--i:${i};transform-origin:50% 100%`}></span>
+            ))}
+          </div>
           <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">{e.verifiable.status.title}</div>
           <div class="text-[11px] text-ink-400 leading-relaxed">{e.verifiable.status.body}</div>
         </a>
-        <a href={L('/tools')} class="rounded-2xl glass p-5 hover:border-cyan/30 transition-colors group">
+        <a href={L('/tools')} class="fuente foco rounded-2xl glass p-5 group">
+          <div class="fuente-vista fuente-terminal" aria-hidden="true">
+            <span><b>$</b> npm test</span>
+            {lastSuccess?.testsPassed != null ? (
+              <span class="text-lime">✓ {lastSuccess.testsPassed} tests</span>
+            ) : (
+              <span class="text-ink-400">…</span>
+            )}
+            <span><b>$</b> <i class="fuente-cursor"></i></span>
+          </div>
           <div class="text-[13px] text-ink-50 mb-1 group-hover:text-cyan transition-colors">{e.verifiable.tools.title}</div>
           <div class="text-[11px] text-ink-400 leading-relaxed">{e.verifiable.tools.body}</div>
         </a>
@@ -683,6 +822,453 @@ const statusMini = tiraDias.slice(-30)
   @media (prefers-reduced-motion: reduce) {
     .live-dot {
       animation: none;
+    }
+  }
+
+  /* ── Medidores de Web Vitals ── */
+  .medidor-escala {
+    position: relative;
+    height: 58px;
+    margin-top: 18px;
+  }
+  .medidor-barras {
+    position: absolute;
+    inset: 12px 0 6px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .medidor-barras span {
+    flex: 1;
+    border-radius: 1.5px 1.5px 0 0;
+  }
+  .medidor-zonas {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    display: flex;
+    gap: 2px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .medidor-aguja {
+    position: absolute;
+    top: 0;
+    bottom: -3px;
+    width: 1.5px;
+    margin-left: -0.75px;
+    background: #e7fdff;
+    box-shadow: 0 0 8px #00f2ff;
+  }
+  .medidor-aguja span {
+    position: absolute;
+    top: -5px;
+    left: 5px;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    color: #9bfaff;
+  }
+  .medidor-tu {
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 9px;
+    height: 9px;
+    margin-left: -4.5px;
+    border-radius: 9999px;
+    background: #00f2ff;
+    box-shadow:
+      0 0 0 3px rgba(0, 242, 255, 0.2),
+      0 0 12px #00f2ff;
+    opacity: 0;
+  }
+  .medidor-tu span {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9bfaff;
+    text-shadow: 0 0 4px #0a0a0d, 0 0 2px #0a0a0d;
+  }
+
+  /* ── Pipeline: riel de nodo a nodo ── */
+  .pipe {
+    position: relative;
+  }
+  .pipe-riel,
+  .pipe-avance {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: calc((100% - 36px) / 4 - 14px);
+    height: 1px;
+    pointer-events: none;
+  }
+  .pipe-riel {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .pipe-avance {
+    height: 2px;
+    margin-top: -0.5px;
+    background: linear-gradient(90deg, #00f2ff, #c9ff5b);
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.45);
+  }
+  .pipe.vertical .pipe-riel {
+    width: 1px;
+  }
+  .pipe.vertical .pipe-avance {
+    width: 2px;
+    margin: 0 0 0 -0.5px;
+    background: linear-gradient(180deg, #00f2ff, #c9ff5b);
+  }
+  .pipe-paquete {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow:
+      0 0 0 4px rgba(0, 242, 255, 0.25),
+      0 0 18px 4px #00f2ff;
+    opacity: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .pipe-etapas {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .pipe-etapa {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .pipe-nodo {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-bottom: 10px;
+    border-radius: 9999px;
+    background: #0e0e12;
+    border: 1.5px solid rgba(201, 255, 91, 0.65);
+    color: #c9ff5b;
+    transition:
+      border-color 0.3s ease,
+      color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  .pipe-nodo svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .pipe-nombre {
+    font-size: 13.5px;
+    color: #e7e7ec;
+    line-height: 1.3;
+  }
+  .pipe-detalle {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #85858f;
+  }
+  .pipe-etapa.pipe-falla .pipe-nodo {
+    border-color: #ff6b3d;
+    color: #ff6b3d;
+  }
+  .pipe-etapa[data-estado='pendiente'] .pipe-nodo {
+    border-color: rgba(255, 255, 255, 0.14);
+    color: transparent;
+  }
+  .pipe-etapa[data-estado='pendiente'] .pipe-nombre,
+  .pipe-etapa[data-estado='pendiente'] .pipe-detalle {
+    opacity: 0.4;
+  }
+  .pipe-etapa[data-estado='corriendo'] .pipe-nodo {
+    border-color: #00f2ff;
+    color: transparent;
+    box-shadow: 0 0 0 5px rgba(0, 242, 255, 0.14);
+    animation: pipe-giro 0.7s linear infinite;
+    border-top-color: transparent;
+  }
+  .pipe-nombre,
+  .pipe-detalle {
+    transition: opacity 0.3s ease;
+  }
+  @keyframes pipe-giro {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .pipe-rollback {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    margin-left: calc((100% - 36px) / 4 * 3 + 36px);
+    padding: 4px 10px;
+    border: 1px dashed rgba(255, 107, 61, 0.45);
+    border-radius: 9999px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: rgba(255, 107, 61, 0.9);
+    white-space: nowrap;
+  }
+  .pipe-rollback-punto {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: #ff6b3d;
+  }
+  @media (max-width: 1023px) and (min-width: 640px) {
+    .pipe-rollback {
+      margin-left: 0;
+    }
+  }
+  @media (max-width: 639px) {
+    .pipe-etapas {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 22px;
+    }
+    .pipe-etapa {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      column-gap: 14px;
+      row-gap: 2px;
+    }
+    .pipe-nodo {
+      grid-row: span 2;
+      margin: 0;
+    }
+    .pipe-rollback {
+      margin-left: 42px;
+    }
+  }
+
+  .runs {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 64px;
+  }
+  .runs span {
+    flex: 1;
+    min-height: 3px;
+    border-radius: 2px 2px 0 0;
+    transition: filter 0.2s ease;
+  }
+  .runs span:hover {
+    filter: brightness(1.45);
+  }
+
+  /* ── Tira de 90 días ── */
+  .tira-lectura {
+    height: 16px;
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #c4c4cc;
+  }
+  .tira {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 104px;
+    cursor: crosshair;
+  }
+  .tira-dia {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+  }
+  .tira-barra {
+    display: block;
+    width: 100%;
+    border-radius: 1.5px;
+  }
+  .tira-dia.hueco .tira-barra,
+  .tira-leyenda-hueco,
+  .fuente-status .hueco {
+    background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 5px);
+  }
+  .tira-leyenda-hueco {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .tira-dia.con-incidente::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    margin-left: -2px;
+    border-radius: 9999px;
+    background: #ff6b3d;
+  }
+  .tira-dia.activa .tira-barra {
+    filter: brightness(1.5);
+    box-shadow: 0 0 0 1px #e7fdff;
+  }
+  .tira-barrido {
+    position: absolute;
+    top: -8px;
+    bottom: -8px;
+    left: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: #e7fdff;
+    box-shadow: 0 0 14px 2px #00f2ff;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @media (max-width: 639px) {
+    .tira {
+      gap: 1px;
+      height: 84px;
+    }
+  }
+
+  /* ── Fuentes: vistas previas de lo que abre cada enlace ── */
+  .fuente {
+    display: block;
+    transition: border-color 0.3s ease;
+  }
+  .fuente-vista {
+    position: relative;
+    height: 68px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    background: #0a0a0d;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .fuente-escudo {
+    width: 100%;
+    height: 100%;
+  }
+  .fuente-escudo path {
+    fill: none;
+    stroke: rgba(0, 242, 255, 0.55);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+  .fuente-escudo .fuente-escudo-ok {
+    stroke: #c9ff5b;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  .fuente-escaneo {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #00f2ff 50%, transparent);
+    box-shadow: 0 0 10px #00f2ff;
+    opacity: 0.8;
+  }
+  .fuente-status {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 12px;
+  }
+  .fuente-status span {
+    flex: 1;
+    border-radius: 1px;
+  }
+  .fuente-terminal {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 14px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: #c4c4cc;
+  }
+  .fuente-terminal b {
+    font-weight: 400;
+    color: #00f2ff;
+  }
+  .fuente-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 11px;
+    vertical-align: -2px;
+    background: #00f2ff;
+  }
+  /* Las vistas solo se mueven con la tarjeta en pantalla (la clase la pone un
+     IntersectionObserver) y nunca con movimiento reducido. */
+  @media (prefers-reduced-motion: no-preference) {
+    .fuente-vista.en-vista .fuente-escaneo {
+      animation: fuente-escaneo 2.8s ease-in-out infinite;
+    }
+    .fuente-vista.en-vista .fuente-cursor {
+      animation: fuente-parpadeo 1s steps(1) infinite;
+    }
+    .fuente-vista.en-vista .fuente-escudo-ok {
+      stroke-dasharray: 40;
+      animation: fuente-trazo 2.8s ease-in-out infinite;
+    }
+    .fuente:hover .fuente-status span {
+      animation: fuente-latido 0.9s ease-in-out;
+      animation-delay: calc(var(--i, 0) * 18ms);
+    }
+  }
+  @keyframes fuente-escaneo {
+    0%,
+    100% {
+      top: 8%;
+    }
+    50% {
+      top: 92%;
+    }
+  }
+  @keyframes fuente-parpadeo {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes fuente-trazo {
+    0% {
+      stroke-dashoffset: 40;
+    }
+    40%,
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes fuente-latido {
+    50% {
+      transform: scaleY(0.4);
     }
   }
 </style>
@@ -835,6 +1421,8 @@ const statusMini = tiraDias.slice(-30)
   // visita no es animación, solo se salta la repetición.
   import { montarLanding } from '../lib/motion/landing'
   import { montarInstrumento } from '../lib/motion/instrumento'
+  import { montarSecciones } from '../lib/motion/engineering'
+  import { revelarEtiqueta } from '../lib/motion/efectos'
 
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const instrumento = document.querySelector<HTMLElement>('[data-instrumento]')
@@ -847,4 +1435,12 @@ const statusMini = tiraDias.slice(-30)
     }
   }
   montarLanding()
+  montarSecciones({ reducido })
+  if (!reducido) {
+    try {
+      document.querySelectorAll<HTMLElement>('[data-etiqueta]').forEach(revelarEtiqueta)
+    } catch (err) {
+      console.warn('[engineering] etiquetas sin motion', err)
+    }
+  }
 </script>
