@@ -437,6 +437,8 @@ export const VOLTEADO = 'flip-up'
 /** Alto de reserva mientras el panel no ha maquetado, y holgura contra el
  *  borde de la ventanilla. Los dos números salen de `CardPopover.astro`. */
 export const PANEL_ALTO = 220
+/** Variable CSS con el corrimiento horizontal del panel (ver `desplazamientoPanel`). */
+export const DESPLAZAMIENTO = '--pop-dx'
 export const PANEL_HOLGURA = 20
 
 /** Caja mínima que hace falta para decidir el volteo. */
@@ -450,6 +452,21 @@ export type Caja = { top: number; bottom: number }
 export function debeVoltear(caja: Caja, altoPanel: number, altoVentana: number): boolean {
   const abajo = altoVentana - caja.bottom
   return abajo < altoPanel + PANEL_HOLGURA && caja.top > altoPanel + PANEL_HOLGURA
+}
+
+/**
+ * Cuánto hay que correr el panel hacia la izquierda (px, cero o negativo) para
+ * que no se salga por la derecha de la ventana. El panel nace alineado al borde
+ * izquierdo de su card, así que en la última columna de la rejilla (y en
+ * cualquier card de la derecha en un celular) asomaba fuera y ensanchaba la
+ * página. Nunca se corre más allá del margen izquierdo: si no cabe en ningún
+ * lado, que se corte por la derecha y no por donde empieza el texto.
+ */
+export function desplazamientoPanel(izquierda: number, anchoPanel: number, anchoVentana: number): number {
+  if (!Number.isFinite(izquierda) || !(anchoPanel > 0) || !(anchoVentana > 0)) return 0
+  const sobra = izquierda + anchoPanel - (anchoVentana - PANEL_HOLGURA)
+  if (sobra <= 0) return 0
+  return -Math.max(0, Math.min(sobra, izquierda - PANEL_HOLGURA))
 }
 
 /**
@@ -474,6 +491,11 @@ export function sincronizarPopover(doc: Document, el: Element | null): void {
     if (ventana && debeVoltear(destino.getBoundingClientRect(), alto, ventana))
       destino.classList.add(VOLTEADO)
     destino.classList.add(ABIERTO)
+    // Mismo corrimiento horizontal que aplica el componente al abrir: en la
+    // sala la ventana tiene otro ancho que la del ponente, así que se calcula
+    // aquí con la caja local y no se copia el número de allá.
+    const dx = desplazamientoPanel(destino.getBoundingClientRect().left, panel?.offsetWidth ?? 0, doc.defaultView?.innerWidth ?? 0)
+    ;(destino as HTMLElement).style?.setProperty?.(DESPLAZAMIENTO, `${dx}px`)
   } catch {
     // Documento a medio cargar o sin popovers: no hay nada que sincronizar.
   }
