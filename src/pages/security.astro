@@ -6,6 +6,8 @@ import { and, gte, notInArray, sql } from 'drizzle-orm'
 import { AUDIT_CATEGORIES } from '../lib/security/audit'
 import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizedHref } from '../i18n'
 import { safeQuery } from '../lib/safe-query'
+import FiltroCapas from '../components/security/FiltroCapas.astro'
+import { repartoHostil, resumenCapas } from '../lib/motion/filtro'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -54,11 +56,16 @@ const byCategory = await safeQuery(
       .where(and(gte(securityEvents.at, secOpsSince), soloAmenazas))
       .groupBy(securityEvents.category)
       .orderBy(sql`2 desc`)
-      .limit(8),
+      // Hay 10 categorías posibles: con el tope anterior (8) el señuelo, que
+      // suele ser la más pequeña, desaparecía del reparto y del hero. Subir el
+      // tope no lee más filas: el escaneo es el mismo, solo cambia el corte.
+      .limit(12),
   [] as { category: string; count: number }[],
   'security/por-categoria',
 )
 const catMax = Math.max(1, ...byCategory.map((c) => Number(c.count)))
+// El hero no hace consultas propias: reparte los mismos agregados de arriba.
+const reparto = repartoHostil(byCategory)
 
 const byCountry = await safeQuery(
   () =>
@@ -84,6 +91,7 @@ const [blocksRow] = await safeQuery(
   'security/bloqueos-automaticos',
 )
 const autoBlocks30d = Number(blocksRow?.n ?? 0)
+const resumen = resumenCapas(byCategory, totalDetected, autoBlocks30d)
 
 // Tendencia: eventos por día (14 días), para el mini-gráfico de barras.
 const dayExpr = sql<string>`date(${securityEvents.at}, 'unixepoch')`
@@ -134,18 +142,22 @@ const severityCls: Record<Severity, string> = {
       {t.common.back}
     </a>
 
-    <header class="mb-12">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="text-cyan">/security</span>
-        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>{s.eyebrow}</span>
+    <header class="mb-24 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] gap-12 lg:gap-16 items-center">
+      <div>
+        <div data-hero-sigue class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+          <span class="text-cyan">/security</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span>{s.eyebrow}</span>
+        </div>
+        <h1 class="text-5xl md:text-6xl xl:text-7xl font-medium tracking-[-.035em] leading-[.98] mb-8 [&>span]:[text-wrap:balance]">
+          <span data-hero-linea class="block text-ink-50">{s.h1Line1}</span>{' '}
+          <span data-hero-linea class="block text-cyan">{s.h1Line2}</span>
+        </h1>
+        <p data-hero-sigue class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
+          {s.intro}
+        </p>
       </div>
-      <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        {s.h1Line1}<br/>{s.h1Line2}
-      </h1>
-      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        {s.intro}
-      </p>
+      <FiltroCapas reparto={reparto} resumen={resumen} dias={SECOPS_WINDOW_DAYS} />
     </header>
 
     <!-- Security Operations: micro-SIEM propio en vivo -->
@@ -350,6 +362,19 @@ const severityCls: Record<Severity, string> = {
 </BaseLayout>
 
 <script>
-  import { initPageMotion } from '../lib/motion-reveal'
-  initPageMotion()
+  import { montarLanding } from '../lib/motion/landing'
+  import { montarFiltro } from '../lib/motion/filtro-lienzo'
+
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const filtro = document.querySelector<HTMLElement>('[data-filtro]')
+  if (filtro) {
+    try {
+      montarFiltro(filtro, { reducido })
+    } catch (err) {
+      // Fail-open: la instantánea del servidor sigue ahí.
+      console.warn('[security] filtro sin motion', err)
+      delete filtro.dataset.vivo
+    }
+  }
+  montarLanding()
 </script>

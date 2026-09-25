@@ -49,7 +49,7 @@ const datos = {
   tramos,
   catLabels,
   yBitacora: Y_BITACORA,
-  textos: { tu: t.tu, tuLlego: t.tuLlego, sondeo: t.sondeo, destinos: t.destinos, pista: t.pista, pistaTactil: t.pistaTactil },
+  textos: { tu: t.tu, tuLlego: t.tuLlego, sondeo: t.sondeo, sondeoCorto: t.sondeoCorto, sinInspeccionar: t.sinInspeccionar, destinos: t.destinos, pista: t.pista, pistaTactil: t.pistaTactil },
 }
 ---
 
@@ -92,7 +92,7 @@ const datos = {
         ></rect>
       ))}
       {puntos.map((p) => (
-        <circle cx={p.x * W} cy={p.y * H} r={p.destino === 'limpia' ? 2.6 : 3.2} class={`fc-punto fc-punto-${p.destino}`}></circle>
+        <circle cx={p.x * W} cy={p.y * H} r={p.destino === 'limpia' || p.x < CAPAS_X[1] ? 2.6 : 3.2} class={`fc-punto fc-punto-${p.x < CAPAS_X[1] ? 'limpia' : p.destino}`}></circle>
       ))}
     </svg>
     <canvas class="fc-lienzo" data-lienzo aria-hidden="true"></canvas>
@@ -144,9 +144,10 @@ const datos = {
   }
   .fc-cabeza {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 4px 12px;
     margin-bottom: 12px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 11px;
@@ -172,13 +173,15 @@ const datos = {
     box-shadow: 0 0 10px #ff6b3d;
     flex-shrink: 0;
   }
+  /* Renglón propio y reservado: la frase de la visita aparece a los pocos
+     segundos y, en la misma línea que el título, lo empujaba y lo cortaba. */
   .fc-estado {
+    flex-basis: 100%;
     color: #00f2ff;
     text-transform: none;
     letter-spacing: 0;
-    text-align: right;
     font-size: 11px;
-    min-height: 1em;
+    min-height: 1.35em;
   }
   .fc-escena {
     position: relative;

@@ -1,0 +1,351 @@
+---
+// Hallazgos corregidos como una historia de commits. A la izquierda corre una
+// línea con un nodo por commit real; al bajar, cuando la línea alcanza un
+// nodo, su hallazgo pasa de "vulnerable" a "corregido": la etiqueta del
+// problema se tacha, la corrección se destapa y el commit se enciende. La
+// evidencia de la página es justo ese enlace entre el fallo y el commit que lo
+// cerró, así que es lo que se anima.
+//
+// El servidor pinta todo ya corregido (es el estado real). El script
+// (src/lib/motion/security.ts) devuelve a "vulnerable" los que aún no se ven y
+// los cierra al pasar; sin JS o con movimiento reducido no hay nada que abrir.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+type Severity = 'alta' | 'media'
+interface Props {
+  findings: {
+    id: string
+    owasp: string
+    severity: Severity
+    file: string
+    commit: string
+    date: string
+    title: string
+    problema: string
+    solucion: string
+  }[]
+}
+const { findings } = Astro.props
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const s = getDictionary(locale).security
+const m = s.motion
+const REPO = 'https://github.com/mikerb95/dev-portfolio/commit/'
+---
+
+<ol class="hc" data-hallazgos data-abierto={m.estado.abierto} data-corregido={m.estado.corregido}>
+  <span class="hc-linea" aria-hidden="true"><span class="hc-linea-luz" data-linea-luz></span></span>
+  {findings.map((f) => (
+    <li class="hc-item" data-hallazgo data-estado="corregido">
+      <div class="hc-riel">
+        <span class="hc-nodo" data-nodo aria-hidden="true"></span>
+        <a class="hc-hash" href={`${REPO}${f.commit}`} target="_blank" rel="noopener">
+          <span class="hc-hash-id">{f.commit}</span>
+          <span class="hc-hash-fecha">{f.date}</span>
+        </a>
+      </div>
+
+      <article class="hc-card rounded-2xl">
+        <header class="hc-cabeza">
+          <h3 class="hc-titulo">{f.title}</h3>
+          <div class="hc-chips">
+            <span class={`hc-sev hc-sev-${f.severity}`}>{s.severity[f.severity]}</span>
+            <span class="hc-chip" data-chip>{m.estado.corregido}</span>
+          </div>
+        </header>
+        <div class="hc-clasif">
+          <span class="text-cyan">{f.owasp}</span>
+          <span class="hc-archivo">{f.file}</span>
+        </div>
+
+        <div class="hc-cuerpo">
+          <div class="hc-bloque hc-problema">
+            <div class="hc-rotulo"><span class="hc-tachable">{s.problemLabel}</span></div>
+            <p>{f.problema}</p>
+          </div>
+          <div class="hc-bloque hc-fix" data-fix>
+            <div class="hc-rotulo">{s.fixLabel}</div>
+            <p>{f.solucion}</p>
+          </div>
+        </div>
+
+        <a class="hc-commit-movil" href={`${REPO}${f.commit}`} target="_blank" rel="noopener">
+          {f.date} · {s.commitPrefix} {f.commit} ↗
+        </a>
+      </article>
+    </li>
+  ))}
+</ol>
+
+<style is:global>
+  /* Prefijo `hc-` y global: el estado lo cambia el script con un atributo, y
+     las transiciones de cada estado viven aquí para que el script solo
+     decida CUÁNDO, nunca CÓMO se ve. */
+  .hc {
+    position: relative;
+    display: grid;
+    gap: 22px;
+    --hc-riel: 150px;
+    --hc-x: 9px;
+  }
+  .hc-linea {
+    position: absolute;
+    left: var(--hc-x);
+    top: 14px;
+    bottom: 14px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(-0.5px);
+  }
+  .hc-linea-luz {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #c9ff5b, rgba(201, 255, 91, 0.35));
+    transform-origin: top center;
+  }
+  .hc-item {
+    display: grid;
+    grid-template-columns: var(--hc-riel) minmax(0, 1fr);
+    align-items: start;
+  }
+  .hc-riel {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding-top: 22px;
+  }
+  .hc-nodo {
+    position: relative;
+    flex-shrink: 0;
+    width: 19px;
+    height: 19px;
+    border-radius: 999px;
+    background: #0e0e12;
+    border: 2px solid #c9ff5b;
+    box-shadow: 0 0 0 4px #121216;
+    transition: border-color 0.4s ease, background-color 0.4s ease;
+  }
+  .hc-nodo::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 999px;
+    background: #c9ff5b;
+    transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.4), background-color 0.4s ease;
+  }
+  .hc-hash {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+    line-height: 1.2;
+    padding-top: 1px;
+  }
+  .hc-hash-id {
+    color: #c9ff5b;
+    transition: color 0.4s ease;
+  }
+  .hc-hash:hover .hc-hash-id {
+    text-decoration: underline;
+  }
+  .hc-hash-fecha {
+    color: #4d4d5d;
+    font-size: 11px;
+  }
+
+  .hc-card {
+    position: relative;
+    padding: 22px 24px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+  }
+  .hc-cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+  }
+  .hc-titulo {
+    font-size: 17px;
+    font-weight: 500;
+    color: #e7e7ec;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .hc-chips {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .hc-sev,
+  .hc-chip {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .hc-sev-alta {
+    color: #ff6b3d;
+    border-color: rgba(255, 107, 61, 0.4);
+    background: rgba(255, 107, 61, 0.12);
+  }
+  .hc-sev-media {
+    color: rgba(255, 107, 61, 0.85);
+    border-color: rgba(255, 107, 61, 0.25);
+    background: rgba(255, 107, 61, 0.07);
+  }
+  .hc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #c9ff5b;
+    border-color: rgba(201, 255, 91, 0.35);
+    background: rgba(201, 255, 91, 0.08);
+    transition: color 0.4s ease, border-color 0.4s ease, background-color 0.4s ease;
+  }
+  .hc-chip::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  .hc-clasif {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 8px 0 16px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+  }
+  .hc-archivo {
+    color: #4d4d5d;
+    overflow-wrap: anywhere;
+  }
+  .hc-cuerpo {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .hc-bloque {
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .hc-bloque p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #c4c4cc;
+    transition: color 0.5s ease;
+  }
+  .hc-rotulo {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .hc-problema .hc-rotulo {
+    color: #ff6b3d;
+  }
+  .hc-fix .hc-rotulo {
+    color: #c9ff5b;
+  }
+  /* El tachado es un fondo de 1 px que crece, no text-decoration: así se
+     puede animar su largo de izquierda a derecha. */
+  .hc-tachable {
+    background: linear-gradient(currentColor, currentColor) 0 55% / 100% 1px no-repeat;
+    transition: background-size 0.6s cubic-bezier(0.6, 0, 0.2, 1);
+  }
+  .hc-problema p {
+    color: #85858f;
+  }
+  .hc-fix {
+    clip-path: inset(0 0 0 0 round 12px);
+    transition: clip-path 0.8s cubic-bezier(0.6, 0, 0.2, 1) 0.15s, opacity 0.5s ease 0.15s;
+  }
+  .hc-commit-movil {
+    display: none;
+    margin-top: 14px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: #c9ff5b;
+  }
+
+  /* ── Estado "vulnerable" ── */
+  .hc-item[data-estado='abierto'] .hc-card {
+    background: radial-gradient(120% 140% at 0% 0%, rgba(255, 107, 61, 0.08), transparent 55%), rgba(255, 255, 255, 0.025);
+    border-color: rgba(255, 107, 61, 0.22);
+  }
+  .hc-item[data-estado='abierto'] .hc-chip {
+    color: #ff6b3d;
+    border-color: rgba(255, 107, 61, 0.4);
+    background: rgba(255, 107, 61, 0.1);
+  }
+  .hc-item[data-estado='abierto'] .hc-chip::before {
+    animation: hc-latido 1.2s ease-in-out infinite;
+  }
+  .hc-item[data-estado='abierto'] .hc-tachable {
+    background-size: 0% 1px;
+  }
+  .hc-item[data-estado='abierto'] .hc-problema p {
+    color: #e7e7ec;
+  }
+  .hc-item[data-estado='abierto'] .hc-fix {
+    clip-path: inset(0 100% 0 0 round 12px);
+    opacity: 0.3;
+    transition-delay: 0s;
+  }
+  .hc-item[data-estado='abierto'] .hc-nodo {
+    border-color: #ff6b3d;
+  }
+  .hc-item[data-estado='abierto'] .hc-nodo::after {
+    transform: scale(0);
+    background: #ff6b3d;
+  }
+  .hc-item[data-estado='abierto'] .hc-hash-id {
+    color: #4d4d5d;
+  }
+  /* Al cerrarse, un destello verde recorre la tarjeta una vez. */
+  .hc-item[data-cerrando] .hc-card {
+    box-shadow: 0 0 0 1px rgba(201, 255, 91, 0.35), 0 0 40px -10px rgba(201, 255, 91, 0.35);
+  }
+  @keyframes hc-latido {
+    50% {
+      opacity: 0.25;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .hc {
+      --hc-riel: 30px;
+      gap: 16px;
+    }
+    .hc-hash {
+      display: none;
+    }
+    .hc-card {
+      padding: 18px 16px;
+    }
+    .hc-cuerpo {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .hc-commit-movil {
+      display: inline-block;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hc-item[data-estado='abierto'] .hc-chip::before {
+      animation: none;
+    }
+  }
+</style>

@@ -708,6 +708,8 @@ const es = {
         pista: 'Apunta a un punto para leerlo · clic para lanzar un sondeo simulado',
         pistaTactil: 'Toca para lanzar un sondeo simulado',
         sondeo: 'Sondeo simulado: detectado en la capa 2. No se envió nada.',
+        sondeoCorto: 'sondeo simulado',
+        sinInspeccionar: 'aún sin inspeccionar',
         nota: 'Reparto entre categorías: real, últimos {days} días. La cantidad de tráfico limpio es ilustrativa: el sitio no cuenta las visitas limpias.',
         vacio: 'Sin actividad hostil en la ventana: solo cruza tráfico limpio.',
         destinos: {

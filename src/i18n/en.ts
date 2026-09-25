@@ -690,6 +690,8 @@ const en = {
         pista: 'Point at a dot to read it · click to launch a simulated probe',
         pistaTactil: 'Tap to launch a simulated probe',
         sondeo: 'Simulated probe: detected at layer 2. Nothing was sent.',
+        sondeoCorto: 'simulated probe',
+        sinInspeccionar: 'not inspected yet',
         nota: 'Mix between categories: real, last {days} days. The amount of clean traffic is illustrative: the site does not count clean visits.',
         vacio: 'No hostile activity in this window: only clean traffic goes through.',
         destinos: {

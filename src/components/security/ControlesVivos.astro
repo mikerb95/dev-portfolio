@@ -1,0 +1,330 @@
+---
+// Controles ya vigentes, cada uno con una demostración mínima de lo que su
+// texto afirma: una firma que rechaza un evento alterado, un secreto que se
+// cifra antes de llegar a la base, una sesión que se revalida en cada
+// petición y una inyección que viaja como dato. Son ejemplos ilustrativos (y
+// lo dicen): los montos, la consulta y el secreto son inventados; lo que es
+// real es el mecanismo, que es el del código del sitio.
+//
+// El marcado es la demostración ya terminada. El script (src/lib/motion/
+// security.ts) la repite en bucle solo mientras está en pantalla; sin JS o con
+// movimiento reducido se lee el resultado quieto.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const s = getDictionary(locale).security
+const d = s.motion.demos
+const controles = s.controls
+
+// Datos de ejemplo (no traducibles, no reales). El cifrado sigue el formato
+// real de src/lib/crypto.ts: iv (12 bytes) : tag (16 bytes) : texto cifrado,
+// todo en hex.
+const MONTO = locale === 'en' ? '50,000' : '50.000'
+const MONTO_ALTERADO = locale === 'en' ? '5,000' : '5.000'
+const SECRETO = locale === 'en' ? 'SMTP_PASSWORD = "example-not-real"' : 'SMTP_PASSWORD = "ejemplo-no-real"'
+const CIFRADO = '9f2ce07b51d4a41e0c3b8e72:c51a0e7d9b24f3aa6e18d0c947b208bd:7b0d4e1fa98c3e62d5'
+const INYECCION = "' OR 1=1 --"
+const TABLA = locale === 'en' ? 'clients' : 'clientes'
+---
+
+<div class="cv grid md:grid-cols-2 gap-4" data-entrada data-foco>
+  {controles.map((c, i) => (
+    <article class="cv-card rounded-2xl foco">
+      <h3 class="cv-titulo">{c.title}</h3>
+      <p class="cv-detalle">{c.detail}</p>
+
+      <div class="cv-demo" data-demo={['webhook', 'boveda', 'admin', 'sql'][i]} aria-hidden="true">
+        {i === 0 && (
+          <Fragment>
+            <div class="cv-fila" data-fila="ok">
+              <span class="cv-sobre" data-sobre>{d.webhook.evento} · <b data-monto>{MONTO}</b> COP</span>
+              <span class="cv-flecha" data-flecha></span>
+              <span class="cv-pill cv-ok" data-veredicto>✓ {d.webhook.valido} · {d.webhook.aplicado}</span>
+            </div>
+            <div class="cv-fila" data-fila="mal">
+              <span class="cv-sobre cv-sobre-mal" data-sobre>{d.webhook.evento} · <b data-monto data-alterado={MONTO_ALTERADO}>{MONTO_ALTERADO}</b> COP</span>
+              <span class="cv-flecha" data-flecha></span>
+              <span class="cv-pill cv-mal" data-veredicto>✕ {d.webhook.rechazado}</span>
+            </div>
+            <span class="cv-nota-fila" data-nota>{d.webhook.alterado}</span>
+          </Fragment>
+        )}
+
+        {i === 1 && (
+          <Fragment>
+            <div class="cv-etq">{d.boveda.claro}</div>
+            <code class="cv-code" data-claro>{SECRETO}</code>
+            <div class="cv-paso" data-paso><span>AES-256-GCM</span></div>
+            <div class="cv-etq">{d.boveda.cifrado}</div>
+            <code class="cv-code cv-cifra" data-cifra data-original={SECRETO}>{CIFRADO}</code>
+            <div class="cv-llave">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="m21 2-9.6 9.6"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path></svg>
+              {d.boveda.clave}
+            </div>
+          </Fragment>
+        )}
+
+        {i === 2 && (
+          <ul class="cv-log">
+            <li data-linea><span>{d.admin.login}</span><span class="cv-dim">GitHub OAuth</span><b class="cv-ok-t">✓</b></li>
+            <li data-linea><span>{d.admin.peticion} /admin</span><span class="cv-dim">{d.admin.revalida}</span><b class="cv-ok-t">✓</b></li>
+            <li data-linea><span>{d.admin.peticion} /admin</span><span class="cv-dim">{d.admin.revalida}</span><b class="cv-ok-t">✓</b></li>
+            <li data-linea><span>{d.admin.peticion} /admin</span><span class="cv-dim">{d.admin.revalida}</span><b class="cv-ok-t">✓</b></li>
+            <li data-linea class="cv-log-mal"><span>{d.admin.sinClaim}</span><span class="cv-dim">403</span><b class="cv-mal-t">✕ {d.admin.rechazo}</b></li>
+          </ul>
+        )}
+
+        {i === 3 && (
+          <Fragment>
+            <div class="cv-etq">{d.sql.entrada}</div>
+            <div class="cv-input"><span data-tecleo data-texto={INYECCION}>{INYECCION}</span><span class="cv-cursor" data-cursor></span></div>
+            <div class="cv-etq">{d.sql.consulta}</div>
+            <code class="cv-code">SELECT * FROM {TABLA} WHERE email = <b class="cv-hueco">?</b></code>
+            <div class="cv-param" data-param><span class="cv-dim">{d.sql.parametro} 1 →</span> <b>"{INYECCION}"</b></div>
+            <div class="cv-resultado" data-resultado>{d.sql.resultado}</div>
+          </Fragment>
+        )}
+
+        <span class="cv-ilustrativo">{s.motion.ilustrativo}</span>
+      </div>
+    </article>
+  ))}
+</div>
+
+<style is:global>
+  .cv-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 22px 22px 18px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+  }
+  /* Luz que sigue al cursor (efectos.ts escribe --fx/--fy en cada .foco). */
+  .cv-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(360px circle at var(--fx, -999px) var(--fy, -999px), rgba(0, 242, 255, 0.07), transparent 60%);
+  }
+  .cv-titulo {
+    font-size: 15px;
+    font-weight: 500;
+    color: #e7e7ec;
+    margin-bottom: 6px;
+  }
+  .cv-detalle {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #85858f;
+    margin-bottom: 18px;
+  }
+  .cv-demo {
+    position: relative;
+    margin-top: auto;
+    border-radius: 12px;
+    padding: 14px 14px 30px;
+    background: rgba(8, 8, 11, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: #c4c4cc;
+    min-height: 178px;
+  }
+  .cv-ilustrativo {
+    position: absolute;
+    right: 12px;
+    bottom: 9px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #4d4d5d;
+  }
+  .cv-dim {
+    color: #4d4d5d;
+  }
+  .cv-etq {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #85858f;
+    margin: 0 0 5px;
+  }
+  .cv-code {
+    display: block;
+    padding: 7px 9px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #e7e7ec;
+    overflow-wrap: anywhere;
+    margin-bottom: 8px;
+  }
+  .cv-cifra {
+    color: #a78bff;
+  }
+  .cv-paso {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: -2px 0 8px 10px;
+    color: #00f2ff;
+    font-size: 10px;
+  }
+  .cv-paso::before {
+    content: '';
+    width: 1px;
+    height: 16px;
+    background: linear-gradient(#00f2ff, transparent);
+  }
+  .cv-llave {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #85858f;
+    font-size: 10px;
+  }
+
+  /* Webhook */
+  .cv-fila {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .cv-sobre {
+    padding: 6px 9px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+  }
+  .cv-sobre b {
+    color: #e7e7ec;
+    font-weight: 500;
+  }
+  .cv-sobre-mal b {
+    color: #ff6b3d;
+  }
+  .cv-flecha {
+    width: 18px;
+    height: 1px;
+    background: #4d4d5d;
+    position: relative;
+  }
+  .cv-flecha::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -3px;
+    border: 3.5px solid transparent;
+    border-left-color: #4d4d5d;
+    border-right: 0;
+  }
+  .cv-pill {
+    padding: 5px 9px;
+    border-radius: 999px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .cv-ok {
+    color: #c9ff5b;
+    border-color: rgba(201, 255, 91, 0.35);
+    background: rgba(201, 255, 91, 0.07);
+  }
+  .cv-mal {
+    color: #ff6b3d;
+    border-color: rgba(255, 107, 61, 0.35);
+    background: rgba(255, 107, 61, 0.07);
+  }
+  .cv-nota-fila {
+    display: block;
+    color: #85858f;
+    font-size: 10px;
+  }
+  .cv-nota-fila::before {
+    content: '↳ ';
+    color: #ff6b3d;
+  }
+
+  /* Admin */
+  .cv-log {
+    display: grid;
+    gap: 6px;
+  }
+  .cv-log li {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.025);
+  }
+  .cv-log li span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cv-log-mal {
+    background: rgba(255, 107, 61, 0.06) !important;
+  }
+  .cv-ok-t {
+    color: #c9ff5b;
+    font-weight: 500;
+  }
+  .cv-mal-t {
+    color: #ff6b3d;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* SQL */
+  .cv-input {
+    display: flex;
+    align-items: center;
+    padding: 7px 9px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 107, 61, 0.35);
+    color: #ff6b3d;
+    margin-bottom: 8px;
+    min-height: 31px;
+  }
+  .cv-cursor {
+    width: 6px;
+    height: 13px;
+    margin-left: 2px;
+    background: #ff6b3d;
+    opacity: 0;
+  }
+  .cv-hueco {
+    color: #00f2ff;
+    font-weight: 600;
+  }
+  .cv-param {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 7px;
+    border: 1px dashed rgba(0, 242, 255, 0.4);
+    margin-bottom: 8px;
+  }
+  .cv-param b {
+    color: #00f2ff;
+    font-weight: 500;
+  }
+  .cv-resultado {
+    color: #c9ff5b;
+  }
+  .cv-resultado::before {
+    content: '→ ';
+  }
+
+  @media (max-width: 420px) {
+    .cv-demo {
+      font-size: 10px;
+      padding: 12px 10px 28px;
+    }
+  }
+</style>
