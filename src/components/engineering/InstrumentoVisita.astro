@@ -66,8 +66,8 @@ const datos = {
   <figcaption class="inst-cabeza">
     <span class="inst-titulo">
       <span class="inst-led" aria-hidden="true"></span>
-      <span class="text-ink-50">{t.titulo}</span>
-      <span class="text-ink-300">· {t.sub}</span>
+      <span class="text-ink-50 shrink-0">{t.titulo}</span>
+      <span class="inst-sub text-ink-300">· {t.sub}</span>
     </span>
     <span class="inst-estado" data-estado>{t.midiendo}</span>
   </figcaption>
@@ -156,6 +156,11 @@ const datos = {
     align-items: center;
     gap: 8px;
     min-width: 0;
+    white-space: nowrap;
+  }
+  .inst-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .inst-led {
     width: 7px;
@@ -236,6 +241,12 @@ const datos = {
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10px;
     letter-spacing: 0.04em;
+    /* Contorno del color de la pantalla: la etiqueta se lee aunque caiga
+       encima de un pico de la traza. */
+    paint-order: stroke;
+    stroke: #0a0a0d;
+    stroke-width: 4px;
+    stroke-linejoin: round;
   }
   .inst-ejes {
     position: absolute;
@@ -306,6 +317,10 @@ const datos = {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+  }
+  .inst-leyenda .inst-total {
+    margin-left: auto;
+    color: #4d4d5d;
   }
   .inst-leyenda i {
     width: 10px;
