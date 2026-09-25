@@ -1,0 +1,355 @@
+---
+// Pieza central del hero de /security: el "filtro de capas". Las peticiones
+// cruzan de izquierda a derecha las capas de defensa del sitio y cada una
+// termina donde el sistema la dejaría de verdad: la limpia llega al sitio, la
+// hostil se marca en el clasificador y, según su categoría, se frena ahí, cae
+// a la bitácora o queda atrapada en un señuelo. El cron horario no está en el
+// camino del request: barre la bitácora y devuelve bloqueos al clasificador.
+//
+// El servidor pinta una instantánea quieta de esa escena (SVG) con el reparto
+// real de categorías; el script (src/lib/motion/filtro-lienzo.ts) la cambia
+// por un lienzo animado que arranca de la misma semilla. Sin JS o con
+// movimiento reducido, la instantánea y las cifras de cada capa ya cuentan la
+// historia completa.
+//
+// OPSEC: la escena usa los mismos agregados por categoría que ya publica la
+// página. Ninguna ruta, IP ni nombre de regla llega aquí.
+import { CAPAS_X, SITIO_X, escenaEstatica, tramosBitacora, type Reparto, type ResumenCapas } from '../../lib/motion/filtro'
+import { getDictionary, getLocaleFromUrl, interpolate, intlLocale } from '../../i18n'
+import { jsonEnScript } from '../../lib/json-script'
+
+interface Props {
+  reparto: Reparto
+  resumen: ResumenCapas
+  dias: number
+}
+const { reparto, resumen, dias } = Astro.props
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const s = getDictionary(locale).security
+const t = s.motion.filtro
+const catLabels: Record<string, string> = { ...s.secops.categoryLabels, otros: t.otros }
+const fmt = (n: number) => n.toLocaleString(intlLocale(locale))
+
+// Misma semilla que usa el lienzo para su primer fotograma.
+const SEMILLA = 20260925
+const W = 1000
+const H = 640
+const Y_BITACORA = 0.88
+const puntos = escenaEstatica(reparto, SEMILLA, 150)
+const tramos = tramosBitacora(reparto)
+const bitX0 = CAPAS_X[1]
+const bitX1 = SITIO_X
+
+const cifras = [null, resumen.detectados, resumen.senuelos, resumen.bloqueos]
+
+const datos = {
+  semilla: SEMILLA,
+  reparto,
+  tramos,
+  catLabels,
+  yBitacora: Y_BITACORA,
+  textos: { tu: t.tu, tuLlego: t.tuLlego, sondeo: t.sondeo, destinos: t.destinos, pista: t.pista, pistaTactil: t.pistaTactil },
+}
+---
+
+<figure class="fc glass-strong rounded-2xl" data-filtro data-hero-pieza>
+  <script type="application/json" data-filtro-datos set:html={jsonEnScript(datos)} />
+
+  <figcaption class="fc-cabeza">
+    <span class="fc-titulo">
+      <span class="fc-led" aria-hidden="true"></span>
+      <span class="text-ink-50 shrink-0">{t.titulo}</span>
+      <span class="fc-sub text-ink-300">· {interpolate(t.sub, { days: dias })}</span>
+    </span>
+    <span class="fc-estado" data-estado aria-live="polite"></span>
+  </figcaption>
+
+  <div class="fc-escena" data-escena>
+    <svg class="fc-svg" data-svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+      <defs>
+        <linearGradient id="fc-sitio" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00f2ff" stop-opacity="0"></stop>
+          <stop offset="50%" stop-color="#00f2ff" stop-opacity="0.9"></stop>
+          <stop offset="100%" stop-color="#00f2ff" stop-opacity="0"></stop>
+        </linearGradient>
+      </defs>
+      {CAPAS_X.map((x, i) => (
+        <line
+          x1={x * W} x2={x * W} y1={H * 0.06} y2={H * 0.78}
+          class={`fc-membrana fc-membrana-${i + 1}`}
+        ></line>
+      ))}
+      <rect x={SITIO_X * W - 2} y={H * 0.06} width="4" height={H * 0.72} rx="2" fill="url(#fc-sitio)"></rect>
+      {tramos.map((tr) => (
+        <rect
+          x={(bitX0 + tr.desde * (bitX1 - bitX0)) * W + 1}
+          y={Y_BITACORA * H - 5}
+          width={Math.max(1, tr.ancho * (bitX1 - bitX0) * W - 2)}
+          height="10"
+          rx="2"
+          class={`fc-tramo fc-tramo-${tr.destino}`}
+        ></rect>
+      ))}
+      {puntos.map((p) => (
+        <circle cx={p.x * W} cy={p.y * H} r={p.destino === 'limpia' ? 2.6 : 3.2} class={`fc-punto fc-punto-${p.destino}`}></circle>
+      ))}
+    </svg>
+    <canvas class="fc-lienzo" data-lienzo aria-hidden="true"></canvas>
+
+    <!-- Rótulos en HTML y no dentro del SVG ni del lienzo: el texto de un SVG
+         escalado cambia de tamaño con la pieza, y en móvil quedaba ilegible. -->
+    <div class="fc-rotulos" aria-hidden="true">
+      {CAPAS_X.map((x, i) => (
+        <span class="fc-rotulo" style={`left:${x * 100}%`}>{String(i + 1).padStart(2, '0')}</span>
+      ))}
+      <span class="fc-rotulo fc-rotulo-sitio" style={`left:${SITIO_X * 100}%`}>{t.sitio}</span>
+      <span class="fc-rotulo fc-rotulo-bitacora" style={`left:${bitX0 * 100}%;top:${Y_BITACORA * 100}%`}>04 · {t.bitacora}</span>
+    </div>
+
+    <div class="fc-etiqueta" data-etiqueta-punto hidden></div>
+    <div class="fc-aviso" data-aviso hidden></div>
+  </div>
+
+  <ol class="fc-capas">
+    {t.capas.map((c, i) => (
+      <li class={`fc-capa fc-capa-${i + 1}`}>
+        <span class="fc-capa-num">{String(i + 1).padStart(2, '0')}</span>
+        <span class="fc-capa-nombre">{c.nombre}</span>
+        <span class="fc-capa-dato">
+          {cifras[i] == null ? c.dato : (
+            <Fragment>
+              <span class="tabular-nums text-ink-50" data-odometro>{fmt(cifras[i]!)}</span>{' '}
+              {interpolate(c.dato, { n: '' }).trim()}
+            </Fragment>
+          )}
+        </span>
+      </li>
+    ))}
+  </ol>
+
+  <p class="fc-nota">
+    {reparto.length === 0 ? t.vacio : interpolate(t.nota, { days: dias })}
+    <span class="fc-pista" data-pista hidden></span>
+  </p>
+</figure>
+
+<style is:global>
+  /* Prefijo `fc-` y estilos globales: la etiqueta, el aviso y el estado los
+     rellena el script, y el CSS con ámbito de Astro no llega a lo que no está
+     en la plantilla. */
+  .fc {
+    padding: 18px 18px 16px;
+    font-size: 12px;
+  }
+  .fc-cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .fc-titulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .fc-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fc-led {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #ff6b3d;
+    box-shadow: 0 0 10px #ff6b3d;
+    flex-shrink: 0;
+  }
+  .fc-estado {
+    color: #00f2ff;
+    text-transform: none;
+    letter-spacing: 0;
+    text-align: right;
+    font-size: 11px;
+    min-height: 1em;
+  }
+  .fc-escena {
+    position: relative;
+    aspect-ratio: 1000 / 640;
+    border-radius: 12px;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 90% at 92% 40%, rgba(0, 242, 255, 0.07), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 32px),
+      rgba(8, 8, 11, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .fc-svg,
+  .fc-lienzo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .fc-lienzo {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .fc[data-vivo] .fc-lienzo {
+    opacity: 1;
+  }
+  .fc[data-vivo] .fc-svg {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .fc-membrana {
+    stroke-width: 2;
+  }
+  .fc-membrana-1 {
+    stroke: #4d4d5d;
+    stroke-dasharray: 3 7;
+  }
+  .fc-membrana-2 {
+    stroke: #00f2ff;
+    stroke-opacity: 0.75;
+  }
+  .fc-membrana-3 {
+    stroke: #a78bff;
+    stroke-opacity: 0.7;
+  }
+  .fc-punto-limpia { fill: #c4c4cc; fill-opacity: 0.55; }
+  .fc-punto-registrada,
+  .fc-punto-frenada { fill: #ff6b3d; }
+  .fc-punto-senuelo { fill: #a78bff; }
+  .fc-tramo-registrada { fill: #ff6b3d; fill-opacity: 0.55; }
+  .fc-tramo-frenada { fill: #ff6b3d; }
+  .fc-tramo-senuelo { fill: #a78bff; }
+
+  .fc-rotulos {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #85858f;
+  }
+  .fc-rotulo {
+    position: absolute;
+    top: 1.2%;
+    transform: translateX(-50%);
+  }
+  .fc-rotulo-sitio {
+    color: #00f2ff;
+  }
+  .fc-rotulo-bitacora {
+    transform: translate(0, 9px);
+    color: #85858f;
+  }
+
+  .fc-etiqueta,
+  .fc-aviso {
+    position: absolute;
+    pointer-events: none;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    line-height: 1.35;
+    border-radius: 8px;
+    background: rgba(10, 10, 13, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 9px;
+    color: #e7e7ec;
+    white-space: nowrap;
+    z-index: 2;
+  }
+  .fc-etiqueta small {
+    display: block;
+    color: #85858f;
+    font-size: 10px;
+  }
+  .fc-aviso {
+    left: 50%;
+    bottom: 22%;
+    transform: translateX(-50%);
+    border-color: rgba(255, 107, 61, 0.35);
+    white-space: normal;
+    width: max-content;
+    max-width: 88%;
+    text-align: center;
+  }
+
+  .fc-capas {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .fc-capa {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .fc-capa-num {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #85858f;
+  }
+  /* El punto de color de cada capa es el mismo trazo que la dibuja en la
+     escena: así la lista funciona como leyenda sin decir "leyenda". */
+  .fc-capa-num::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+  }
+  .fc-capa-1 .fc-capa-num::before { border: 1px dashed #85858f; }
+  .fc-capa-2 .fc-capa-num::before { background: #00f2ff; }
+  .fc-capa-3 .fc-capa-num::before { background: #a78bff; }
+  .fc-capa-4 .fc-capa-num::before { background: #c9ff5b; }
+  .fc-capa-nombre {
+    font-size: 13px;
+    color: #e7e7ec;
+    font-weight: 500;
+  }
+  .fc-capa-dato {
+    font-size: 12px;
+    color: #85858f;
+  }
+  .fc-nota {
+    margin-top: 12px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #6e6e7c;
+  }
+  .fc-pista {
+    display: block;
+    margin-top: 4px;
+    color: #85858f;
+  }
+
+  @media (max-width: 640px) {
+    .fc {
+      padding: 14px 12px 12px;
+    }
+    .fc-capas {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 12px;
+    }
+    .fc-rotulo-bitacora {
+      font-size: 9px;
+    }
+  }
+</style>
