@@ -361,6 +361,23 @@ visual: las barras de tendencia no renderizaban por falta de `h-full` en el cont
 flex (porcentaje de altura sin base de referencia). **Pendiente**: caso de estudio en
 `/tools` y artículo en `/notes` (contenido, no bloqueante - se puede añadir después).
 
+**Rediseño con motion (2026-09-25, RF-024)**: la vitrina pasó a mostrar el pipeline
+en vez de describirlo. El hero es un "filtro de capas" (`FiltroCapas.astro` +
+`src/lib/motion/filtro.ts`, `filtro-lienzo.ts`) que reparte los MISMOS agregados por
+categoría de esta fase: sin consultas nuevas y con la misma OPSEC. Cada categoría tiene
+el destino que el sistema le da de verdad (`blocklist` y `api_abuse` se frenan en el
+clasificador, `honeypot` queda en el señuelo, el resto va a la bitácora) y el cron se
+dibuja fuera del camino del request, devolviendo bloqueos al clasificador. Decisiones
+que vale la pena conservar: la proporción de tráfico limpio es ilustrativa y la pieza lo
+dice (el sitio no cuenta visitas limpias); la capa de la plataforma va punteada y sin
+cifra porque no se mide desde aquí. Corrección de paso: el desglose tenía `limit(8)`
+para 10 categorías posibles y el señuelo, la más pequeña, no aparecía; ahora
+`limit(12)`, que no lee más filas. **Pendiente de revisar**: estas consultas agregan
+30 días de `security_events` crudo en cada render público, justo el patrón que la regla
+de costos de Turso desaconseja; `security_rollups` (bucket `day`) podría servir el
+desglose y la tendencia si el cron de rollups corre en producción, pero no guarda el
+desglose por país.
+
 ### Fase 5 (referencia original) - Vitrina pública ~1 sesión
 
 1. **`/security` (rediseño de la página existente)** → "Security Operations":
