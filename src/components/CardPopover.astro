@@ -14,7 +14,7 @@ const { id, panelClass = '' } = Astro.props
   <slot />
   <div
     id={`${id}-panel`}
-    class={`card-pop-panel absolute left-0 top-[calc(100%+10px)] w-[min(400px,calc(100vw-2rem))] rounded-xl p-4 text-[13px] leading-relaxed text-ink-100 opacity-0 invisible translate-y-1 transition-[opacity,transform] duration-150 ease-out z-30 ${panelClass}`}
+    class={`card-pop-panel absolute top-[calc(100%+10px)] w-[min(400px,calc(100vw-2rem))] rounded-xl p-4 text-[13px] leading-relaxed text-ink-100 opacity-0 invisible translate-y-1 transition-[opacity,transform] duration-150 ease-out z-30 ${panelClass}`}
     role="tooltip"
   >
     <slot name="panel" />
@@ -26,6 +26,9 @@ const { id, panelClass = '' } = Astro.props
     outline: none;
   }
   .card-pop-panel {
+    /* Anclado al borde izquierdo de la card, corrido lo justo para no salirse
+       de la ventana (lo calcula el script al abrir: ver desplazamientoPanel). */
+    left: var(--pop-dx, 0px);
     pointer-events: none;
     /* Fondo casi opaco a propósito: el panel se superpone a texto de la página
        y con transparencia (glass) el contenido de atrás se cuela y estorba. */
@@ -56,6 +59,8 @@ const { id, panelClass = '' } = Astro.props
 </style>
 
 <script>
+  import { DESPLAZAMIENTO, desplazamientoPanel } from '../lib/presentacion/puntero'
+
   const OPEN_DELAY = 130
   const CLOSE_DELAY = 200
 
@@ -77,6 +82,7 @@ const { id, panelClass = '' } = Astro.props
     if (spaceBelow < panelH + 20 && rect.top > panelH + 20) {
       el.classList.add('flip-up')
     }
+    el.style.setProperty(DESPLAZAMIENTO, `${desplazamientoPanel(rect.left, panel.offsetWidth, window.innerWidth)}px`)
   }
 
   function open(el: HTMLElement) {
