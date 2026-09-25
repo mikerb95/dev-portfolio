@@ -209,15 +209,19 @@ export function montarInstrumento(raiz: HTMLElement, opciones: { reducido: boole
   function pintarMarcas(ocultas: boolean) {
     const alto = H - PIE
     const presentes = MARCAS.filter((m) => medidas[m] != null).sort((a, b) => medidas[a]! - medidas[b]!)
-    let ultimaX = -1e9
-    let fila = 0
+    // Hasta tres renglones de etiquetas: cada una baja al primero donde no
+    // pisa a la anterior. El ancho se estima por caracteres (la fuente es
+    // monoespaciada), sin medir el DOM en cada repintado.
+    const finRenglon = [-1e9, -1e9, -1e9]
     gMarcas.replaceChildren(
       ...presentes.map((m) => {
         const v = medidas[m]!
         const px = x(v)
-        // Etiquetas escalonadas cuando dos marcas caen demasiado cerca.
-        fila = px - ultimaX < 78 ? (fila + 1) % 3 : 0
-        ultimaX = px
+        const ancho = `${m} ${formatVital(m, v)}`.length * 6.2
+        const inicio = px > W - 90 ? px - 5 - ancho : px + 5
+        let fila = finRenglon.findIndex((fin) => inicio > fin + 8)
+        if (fila < 0) fila = finRenglon.indexOf(Math.min(...finRenglon))
+        finRenglon[fila] = inicio + ancho
         const g = document.createElementNS(SVG, 'g')
         g.classList.add('inst-marca')
         g.dataset.metrica = m
