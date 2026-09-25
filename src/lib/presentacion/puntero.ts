@@ -466,7 +466,8 @@ export function desplazamientoPanel(izquierda: number, anchoPanel: number, ancho
   if (!Number.isFinite(izquierda) || !(anchoPanel > 0) || !(anchoVentana > 0)) return 0
   const sobra = izquierda + anchoPanel - (anchoVentana - PANEL_HOLGURA)
   if (sobra <= 0) return 0
-  return -Math.max(0, Math.min(sobra, izquierda - PANEL_HOLGURA))
+  const corrimiento = Math.max(0, Math.min(sobra, izquierda - PANEL_HOLGURA))
+  return corrimiento > 0 ? -corrimiento : 0
 }
 
 /**
