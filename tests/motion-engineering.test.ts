@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   alturaDia,
+  areaHistograma,
+  bytesHasta,
   claveDia,
   diasDisponibilidad,
   enEscala,
@@ -225,5 +227,30 @@ describe('corrimiento horizontal del popover', () => {
   it('con medidas imposibles no se mueve', () => {
     expect(desplazamientoPanel(Number.NaN, 400, 1440)).toBe(0)
     expect(desplazamientoPanel(100, 0, 1440)).toBe(0)
+  })
+})
+
+describe('siluetas y lecturas del instrumento', () => {
+  it('la silueta del histograma se cierra contra el suelo y no se sale de la caja', () => {
+    const d = areaHistograma([0, 1, 0.5, 0], 100, 20)
+    expect(d.startsWith('M0 20')).toBe(true)
+    expect(d.endsWith('L100 20 Z')).toBe(true)
+    const nums = [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map((m) => Number(m[0]))
+    for (const v of nums) {
+      expect(v).toBeGreaterThanOrEqual(0)
+      expect(v).toBeLessThanOrEqual(100)
+    }
+    expect(areaHistograma([], 100, 20)).toBe('')
+  })
+
+  it('los bytes acumulados cuentan lo terminado y la parte ya recibida de lo que está en curso', () => {
+    const r = [
+      { inicio: 0, fin: 100, bytes: 1000 },
+      { inicio: 100, fin: 300, bytes: 2000 },
+    ]
+    expect(bytesHasta(r, 50)).toBe(500)
+    expect(bytesHasta(r, 200)).toBe(2000)
+    expect(bytesHasta(r, 999)).toBe(3000)
+    expect(bytesHasta(r, 0)).toBe(0)
   })
 })

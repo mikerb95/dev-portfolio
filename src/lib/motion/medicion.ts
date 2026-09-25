@@ -260,3 +260,36 @@ export function alturaDia(pct: number | null): number {
   // 95 → 0,18 ; 99 → 0,7 ; 100 → 1 (tramo lineal a trozos)
   return pct >= 99 ? 0.7 + (pct - 99) * 0.3 : 0.18 + ((pct - 95) / 4) * 0.52
 }
+
+/**
+ * Silueta rellena de un histograma (la "montaña" de visitantes de cada fila del
+ * instrumento): una curva por el centro de cada barra, cerrada contra el suelo.
+ * Los extremos arrancan y mueren en el suelo para que la forma no empiece con
+ * un escalón vertical en el borde.
+ */
+export function areaHistograma(alturas: number[], ancho: number, alto: number): string {
+  const n = alturas.length
+  if (n === 0) return ''
+  const pts = alturas.map((h, i) => [((i + 0.5) / n) * ancho, alto - Math.max(0, Math.min(1, h)) * alto * 0.92] as const)
+  let d = `M0 ${alto} L${pts[0]![0].toFixed(1)} ${pts[0]![1].toFixed(1)}`
+  // Curva cuadrática por los puntos medios: suave, sin sobrepasar la altura
+  // real de ninguna barra (una spline cúbica sí se pasaría en los picos).
+  for (let i = 1; i < n; i++) {
+    const [x0, y0] = pts[i - 1]!
+    const [x1, y1] = pts[i]!
+    d += ` Q${x0.toFixed(1)} ${y0.toFixed(1)} ${((x0 + x1) / 2).toFixed(1)} ${((y0 + y1) / 2).toFixed(1)}`
+  }
+  const [xu, yu] = pts[n - 1]!
+  d += ` L${xu.toFixed(1)} ${yu.toFixed(1)} L${ancho} ${alto} Z`
+  return d
+}
+
+/** Bytes acumulados que llegaron hasta el instante `t` (para la lectura del cursor). */
+export function bytesHasta(recursos: { inicio: number; fin: number; bytes: number }[], t: number): number {
+  let total = 0
+  for (const r of recursos) {
+    if (t >= r.fin) total += r.bytes
+    else if (t > r.inicio && r.fin > r.inicio) total += (r.bytes * (t - r.inicio)) / (r.fin - r.inicio)
+  }
+  return total
+}

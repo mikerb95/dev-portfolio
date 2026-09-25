@@ -1,0 +1,460 @@
+---
+// Pieza central del hero de /engineering: un osciloscopio que mide LA VISITA
+// ACTUAL. La página promete "medida, no afirmada", y la prueba más directa es
+// medir al que está mirando: su navegador ya calcula TTFB, FCP y LCP (el mismo
+// web-vitals que alimenta la telemetría del sitio), así que aquí se dibuja esa
+// carga como una traza y se la ubica frente a los visitantes reales.
+//
+// El servidor pinta lo que sabe sin el visitante: la distribución de las
+// visitas reales de cada métrica y su p75. El script (src/lib/motion/
+// instrumento.ts) añade la traza, las marcas y el punto "tú". Sin JS, la
+// pantalla explica qué se vería y las filas siguen mostrando datos reales.
+//
+// Privacidad: no se envía nada nuevo. La comparación se hace en el navegador
+// contra una tabla de 21 cuantiles por métrica, que no expone ninguna muestra.
+import { THRESHOLDS, formatVital, type VitalMetric } from '../../lib/vitals'
+import { areaHistograma, enEscala, topeEscala } from '../../lib/motion/medicion'
+import { getDictionary, getLocaleFromUrl, interpolate, intlLocale } from '../../i18n'
+import { jsonEnScript } from '../../lib/json-script'
+
+interface Props {
+  tablas: Partial<Record<VitalMetric, number[]>>
+  histos: Partial<Record<VitalMetric, number[]>>
+  p75s: Partial<Record<VitalMetric, number | null>>
+  muestras: number
+  dias: number
+}
+const { tablas, histos, p75s, muestras, dias } = Astro.props
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const e = getDictionary(locale).engineering
+const t = e.instrumento
+
+const FILAS: VitalMetric[] = ['TTFB', 'FCP', 'LCP']
+const filas = FILAS.map((m) => {
+  const tope = topeEscala(m)
+  const [bueno, mejorable] = THRESHOLDS[m]
+  const p75 = p75s[m] ?? null
+  return {
+    m,
+    tope,
+    area: areaHistograma(histos[m] ?? [], 100, 24),
+    p75,
+    p75Pos: p75 == null ? null : enEscala(p75, tope) * 100,
+    corteBueno: (bueno / tope) * 100,
+    corteMejorable: (mejorable / tope) * 100,
+  }
+})
+
+// Lo que el script necesita y el HTML no lleva: las tablas para ubicar la
+// visita y los textos con marcadores que se rellenan en el navegador.
+const datos = {
+  tablas,
+  locale: intlLocale(locale),
+  textos: {
+    ...t,
+    good: e.vitals.good,
+    needsImprovement: e.vitals.needsImprovement,
+    poor: e.vitals.poor,
+  },
+}
+---
+
+<figure class="inst glass-strong rounded-2xl" data-instrumento data-hero-pieza>
+  <script type="application/json" data-instrumento-datos set:html={jsonEnScript(datos)} />
+
+  <figcaption class="inst-cabeza">
+    <span class="inst-titulo">
+      <span class="inst-led" aria-hidden="true"></span>
+      <span class="text-ink-50">{t.titulo}</span>
+      <span class="text-ink-300">· {t.sub}</span>
+    </span>
+    <span class="inst-estado" data-estado>{t.midiendo}</span>
+  </figcaption>
+
+  <div class="inst-pantalla" data-pantalla aria-hidden="true">
+    <svg class="inst-svg" data-svg>
+      <defs>
+        <linearGradient id="inst-relleno" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00f2ff" stop-opacity="0.32"></stop>
+          <stop offset="100%" stop-color="#00f2ff" stop-opacity="0"></stop>
+        </linearGradient>
+        <clipPath id="inst-recorte"><rect data-recorte x="0" y="0" width="0" height="100%"></rect></clipPath>
+      </defs>
+      <g data-fases></g>
+      <g clip-path="url(#inst-recorte)">
+        <path data-area fill="url(#inst-relleno)"></path>
+        <path data-traza-halo class="inst-traza-halo"></path>
+        <path data-traza class="inst-traza"></path>
+      </g>
+      <g data-marcas></g>
+      <line data-haz class="inst-haz" x1="0" x2="0" y1="0" y2="0"></line>
+      <line data-cursor class="inst-cursor" x1="0" x2="0" y1="0" y2="0"></line>
+    </svg>
+    <div class="inst-ejes" data-ejes></div>
+    <div class="inst-lectura" data-lectura></div>
+    <p class="inst-sinjs">{t.sinJs}</p>
+  </div>
+
+  <div class="inst-leyenda" data-leyenda aria-hidden="true"></div>
+
+  <div class="inst-filas">
+    {filas.map((f) => (
+      <div class="inst-fila" data-fila={f.m} data-tope={f.tope}>
+        <span class="inst-met">{f.m}</span>
+        <span class="inst-val" data-valor>-</span>
+        <div class="inst-dist" aria-hidden="true">
+          <svg viewBox="0 0 100 24" preserveAspectRatio="none" class="inst-dist-svg">
+            <path d={f.area} class="inst-dist-area"></path>
+          </svg>
+          <span class="inst-zonas">
+            <span class="bg-lime/60" style={`width:${f.corteBueno}%`}></span>
+            <span class="bg-ember/45" style={`width:${f.corteMejorable - f.corteBueno}%`}></span>
+            <span class="bg-ember/80 flex-1"></span>
+          </span>
+          {f.p75Pos != null && <span class="inst-p75" style={`left:${f.p75Pos}%`}></span>}
+          <span class="inst-tu" data-tu><span>{t.tu}</span></span>
+        </div>
+        <span class="inst-rank" data-rank>
+          {f.p75 != null ? interpolate(t.p75Real, { value: formatVital(f.m, f.p75) }) : t.sinMuestras}
+        </span>
+      </div>
+    ))}
+  </div>
+
+  <div class="inst-pie">
+    <p aria-live="polite" data-inp>{t.inpPedir}</p>
+    <p aria-live="polite" data-cls></p>
+    <p class="text-ink-400">
+      {muestras > 0 && <>{interpolate(t.frente, { n: muestras.toLocaleString(intlLocale(locale)), days: dias })}. </>}
+      {t.privacidad}
+    </p>
+  </div>
+</figure>
+
+<style is:global>
+  /* Estilos globales con prefijo `inst-`: buena parte de la pieza (marcas,
+     fases, ejes) la crea el script en tiempo de ejecución, y el CSS con
+     ámbito de Astro no llega a los nodos que no están en la plantilla. */
+  .inst {
+    padding: 18px 18px 16px;
+    font-size: 12px;
+  }
+  .inst-cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .inst-titulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .inst-led {
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: #00f2ff;
+    box-shadow: 0 0 10px #00f2ff;
+    flex-shrink: 0;
+  }
+  .inst[data-fase='midiendo'] .inst-led {
+    animation: inst-parpadeo 0.9s ease-in-out infinite;
+  }
+  .inst[data-fase='listo'] .inst-led {
+    background: #c9ff5b;
+    box-shadow: 0 0 10px #c9ff5b;
+  }
+  @keyframes inst-parpadeo {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  .inst-estado {
+    color: #85858f;
+    white-space: nowrap;
+  }
+
+  /* La pantalla: retícula de osciloscopio (10 divisiones × 4) pintada con
+     degradados, así existe antes del script y no cuesta nodos. */
+  .inst-pantalla {
+    position: relative;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 100% 25%,
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 10% 100%,
+      radial-gradient(120% 90% at 50% 40%, rgba(0, 242, 255, 0.07), transparent 70%),
+      #0a0a0d;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .inst-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .inst-traza {
+    fill: none;
+    stroke: #9bfaff;
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+  }
+  .inst-traza-halo {
+    fill: none;
+    stroke: #00f2ff;
+    stroke-width: 6;
+    stroke-opacity: 0.22;
+    filter: blur(3px);
+  }
+  .inst-haz {
+    stroke: #e7fdff;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 6px #00f2ff) drop-shadow(0 0 14px #00f2ff);
+    opacity: 0;
+  }
+  .inst-cursor {
+    stroke: rgba(231, 231, 236, 0.55);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    opacity: 0;
+  }
+  .inst-marca line {
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+  }
+  .inst-marca text {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+  .inst-ejes {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 4px;
+    height: 12px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9.5px;
+    color: #4d4d5d;
+  }
+  .inst-ejes span {
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .inst-ejes span:first-child {
+    transform: none;
+    padding-left: 6px;
+  }
+  .inst-ejes span:last-child {
+    transform: translateX(-100%);
+    padding-right: 6px;
+  }
+  .inst-lectura {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: rgba(10, 10, 13, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10.5px;
+    color: #c4c4cc;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  .inst-lectura.visible {
+    opacity: 1;
+  }
+  .inst-sinjs {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 0 28px;
+    text-align: center;
+    color: #85858f;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .inst[data-fase] .inst-sinjs {
+    display: none;
+  }
+  .inst-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    min-height: 16px;
+    margin: 9px 2px 4px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10.5px;
+    color: #85858f;
+  }
+  .inst-leyenda span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .inst-leyenda i {
+    width: 10px;
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  /* Filas: cada métrica contra la distribución real. */
+  .inst-filas {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .inst-fila {
+    display: grid;
+    grid-template-columns: 38px 64px minmax(0, 1fr);
+    grid-template-areas: 'met val dist' '. . rank';
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 2px;
+  }
+  .inst-met {
+    grid-area: met;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    font-weight: 600;
+    color: #e7e7ec;
+  }
+  .inst-val {
+    grid-area: val;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: #c4c4cc;
+    white-space: nowrap;
+  }
+  .inst-val.good {
+    color: #c9ff5b;
+  }
+  .inst-val.needs-improvement,
+  .inst-val.poor {
+    color: #ff6b3d;
+  }
+  .inst-dist {
+    grid-area: dist;
+    position: relative;
+    height: 30px;
+  }
+  .inst-dist-svg {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    width: 100%;
+    height: 24px;
+  }
+  .inst-dist-area {
+    fill: rgba(196, 196, 204, 0.16);
+    stroke: rgba(196, 196, 204, 0.35);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .inst-zonas {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 2px;
+    height: 3px;
+    display: flex;
+    gap: 2px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .inst-p75 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(231, 231, 236, 0.5);
+  }
+  .inst-p75::after {
+    content: 'p75';
+    position: absolute;
+    top: -2px;
+    left: 4px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 8.5px;
+    color: #85858f;
+  }
+  .inst-tu {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 11px;
+    height: 11px;
+    margin: -8px 0 0 -5.5px;
+    border-radius: 9999px;
+    background: #00f2ff;
+    box-shadow:
+      0 0 0 3px rgba(0, 242, 255, 0.18),
+      0 0 14px #00f2ff;
+    opacity: 0;
+  }
+  .inst-tu span {
+    position: absolute;
+    bottom: 13px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9px;
+    color: #9bfaff;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .inst-rank {
+    grid-area: rank;
+    font-size: 11px;
+    color: #85858f;
+  }
+  .inst-rank strong {
+    color: #e7e7ec;
+    font-weight: 500;
+  }
+  .inst-pie {
+    display: grid;
+    gap: 4px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #c4c4cc;
+  }
+  .inst-pie p:empty {
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    .inst {
+      padding: 14px 12px 12px;
+    }
+    .inst-pantalla {
+      height: 170px;
+    }
+    .inst-fila {
+      grid-template-columns: 34px 58px minmax(0, 1fr);
+      column-gap: 8px;
+    }
+  }
+</style>
