@@ -187,12 +187,19 @@ const TABLA = locale === 'en' ? 'clients' : 'clientes'
   }
 
   /* Webhook */
+  /* Rejilla y no flex con salto: con salto, el veredicto largo bajaba solo a
+     otra línea y la flecha quedaba apuntando a nada. */
   .cv-fila {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 18px minmax(0, 1fr);
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
     margin-bottom: 10px;
+  }
+  .cv-fila .cv-pill {
+    justify-self: start;
+    white-space: normal;
+    border-radius: 10px;
   }
   .cv-sobre {
     padding: 6px 9px;

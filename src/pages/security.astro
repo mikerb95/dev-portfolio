@@ -7,7 +7,9 @@ import { AUDIT_CATEGORIES } from '../lib/security/audit'
 import { getDictionary, getLocaleFromUrl, interpolate, intlLocale, localizedHref } from '../i18n'
 import { safeQuery } from '../lib/safe-query'
 import FiltroCapas from '../components/security/FiltroCapas.astro'
-import { repartoHostil, resumenCapas } from '../lib/motion/filtro'
+import HallazgosCommits from '../components/security/HallazgosCommits.astro'
+import ControlesVivos from '../components/security/ControlesVivos.astro'
+import { destinoDe, repartoHostil, resumenCapas } from '../lib/motion/filtro'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -125,24 +127,37 @@ const FINDINGS_META: { id: string; owasp: string; severity: Severity; file: stri
 ]
 
 const findings = FINDINGS_META.map((meta, i) => ({ ...meta, ...s.findings[i] }))
-const good = s.controls
+const m = s.motion
+const fmt = (n: number) => n.toLocaleString(intlLocale(locale))
 
-const severityCls: Record<Severity, string> = {
-  alta: 'text-ember border-ember/40 bg-ember/15',
-  media: 'text-ember/80 border-ember/25 bg-ember/10',
-}
+// Mismo código de color que el hero: lo frenado y lo registrado en ember, el
+// señuelo en violeta. Así el desglose se lee como la bitácora del filtro.
+const barraCls: Record<string, string> = { frenada: 'bg-ember', senuelo: 'bg-violet', registrada: 'bg-ember/60' }
+
+// Colores de las capas, los mismos puntos de la leyenda del filtro.
+const capaPunto = ['border border-dashed border-ink-200', 'bg-cyan', 'bg-violet', 'bg-lime']
+
+const slo = [
+  { label: s.secops.slo.overhead, valor: '≤ 5 ms' },
+  { label: s.secops.slo.detectionToBlock, valor: '≤ 60 min' },
+  { label: s.secops.slo.detectionToAlert, valor: '≤ 60 s' },
+  { label: s.secops.slo.falsePositives, valor: '< 0.1%' },
+  { label: s.secops.slo.retention, valor: s.secops.slo.retentionValue },
+]
 ---
 
 <BaseLayout title={s.title} description={s.description} image="/og-security.png">
+  <!-- overflow-x: clip y no hidden: recorta lo que asome por los lados sin
+       crear un contenedor de scroll, que rompería el scroll suave. -->
+  <div class="overflow-x-clip">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
-    <!-- Back -->
     <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
       {t.common.back}
     </a>
 
-    <header class="mb-24 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] gap-12 lg:gap-16 items-center">
+    <header class="mb-28 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] gap-12 lg:gap-16 items-center">
       <div>
         <div data-hero-sigue class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
           <span class="text-cyan">/security</span>
@@ -160,52 +175,56 @@ const severityCls: Record<Severity, string> = {
       <FiltroCapas reparto={reparto} resumen={resumen} dias={SECOPS_WINDOW_DAYS} />
     </header>
 
-    <!-- Security Operations: micro-SIEM propio en vivo -->
-    <section class="mb-20">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-        <span>{s.secops.badge}</span>
+    <!-- ── /01 Security Operations: micro-SIEM propio en vivo ── -->
+    <section class="mb-28" aria-labelledby="sec-secops">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/01</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>{s.secops.badge}</span>
+      </div>
+      <div class="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 mb-10">
+        <h2 id="sec-secops" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] max-w-2xl">
+          {m.secopsTitle}
+        </h2>
+        <p class="max-w-md text-[14px] text-ink-300 leading-relaxed">
+          {interpolate(s.secops.intro, { days: SECOPS_WINDOW_DAYS })}
+        </p>
       </div>
 
-      <p class="text-[14px] text-ink-100 max-w-2xl leading-relaxed mb-8">
-        {interpolate(s.secops.intro, { days: SECOPS_WINDOW_DAYS })}
-      </p>
-
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-        <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{s.secops.detected}</div>
-          <div class="mt-1.5 text-3xl font-medium text-ink-50 tabular-nums">{totalDetected.toLocaleString(intlLocale(locale))}</div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4" data-entrada>
+        <div class="so-kpi">
+          <div class="so-kpi-etq">{s.secops.detected}</div>
+          <div class="so-kpi-num text-ink-50" data-odometro>{fmt(totalDetected)}</div>
         </div>
-        <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{s.secops.autoBlocks}</div>
-          <div class="mt-1.5 text-3xl font-medium text-cyan tabular-nums">{autoBlocks30d.toLocaleString(intlLocale(locale))}</div>
+        <div class="so-kpi">
+          <div class="so-kpi-etq">{s.secops.autoBlocks}</div>
+          <div class="so-kpi-num text-lime" data-odometro>{fmt(autoBlocks30d)}</div>
         </div>
-        <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{s.secops.owaspCategories}</div>
-          <div class="mt-1.5 text-3xl font-medium text-ink-50 tabular-nums">{byCategory.length}</div>
+        <div class="so-kpi">
+          <div class="so-kpi-etq">{s.secops.owaspCategories}</div>
+          <div class="so-kpi-num text-ink-50" data-odometro>{byCategory.length}</div>
         </div>
-        <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">{s.secops.overheadP99}</div>
-          <div class="mt-1.5 text-3xl font-medium text-lime tabular-nums">≤5ms</div>
+        <div class="so-kpi">
+          <div class="so-kpi-etq">{s.secops.overheadP99}</div>
+          <div class="so-kpi-num text-cyan">≤5ms</div>
         </div>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-4 mb-4">
-        <!-- Desglose OWASP -->
-        <div class="rounded-2xl glass p-6">
-          <h3 class="text-[13px] font-medium text-ink-50 mb-4">{s.secops.byCategoryHeading}</h3>
+      <div class="grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] gap-4 mb-4">
+        <div class="so-panel" data-barras>
+          <h3 class="so-panel-titulo">{s.secops.byCategoryHeading}</h3>
           {byCategory.length === 0 ? (
             <p class="text-[13px] text-ink-400">{s.secops.byCategoryEmpty}</p>
           ) : (
-            <ul class="space-y-2.5">
+            <ul class="space-y-3">
               {byCategory.map((c) => (
                 <li>
-                  <div class="flex items-center justify-between text-[12px] mb-1">
-                    <span class="text-ink-100">{CAT_LABELS[c.category] ?? c.category}</span>
-                    <span class="font-mono text-ink-300">{Number(c.count)}</span>
+                  <div class="flex items-center justify-between gap-4 text-[12px] mb-1.5">
+                    <span class="text-ink-100 truncate">{CAT_LABELS[c.category] ?? c.category}</span>
+                    <span class="font-mono text-ink-300 tabular-nums">{fmt(Number(c.count))}</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-white/[.05] overflow-hidden">
-                    <div class="h-full rounded-full bg-cyan" style={`width:${(Number(c.count) / catMax) * 100}%`}></div>
+                    <div class={`so-barra h-full rounded-full ${barraCls[destinoDe(c.category)]}`} style={`width:${(Number(c.count) / catMax) * 100}%`}></div>
                   </div>
                 </li>
               ))}
@@ -213,21 +232,20 @@ const severityCls: Record<Severity, string> = {
           )}
         </div>
 
-        <!-- Origen geográfico -->
-        <div class="rounded-2xl glass p-6">
-          <h3 class="text-[13px] font-medium text-ink-50 mb-4">{s.secops.byCountryHeading}</h3>
+        <div class="so-panel" data-barras>
+          <h3 class="so-panel-titulo">{s.secops.byCountryHeading}</h3>
           {byCountry.length === 0 ? (
             <p class="text-[13px] text-ink-400">{s.secops.byCountryEmpty}</p>
           ) : (
-            <ul class="space-y-2.5">
+            <ul class="space-y-3">
               {byCountry.map((c) => (
                 <li>
-                  <div class="flex items-center justify-between text-[12px] mb-1">
+                  <div class="flex items-center justify-between text-[12px] mb-1.5">
                     <span class="text-ink-100 font-mono">{c.country}</span>
-                    <span class="font-mono text-ink-300">{Number(c.count)}</span>
+                    <span class="font-mono text-ink-300 tabular-nums">{fmt(Number(c.count))}</span>
                   </div>
                   <div class="h-1.5 rounded-full bg-white/[.05] overflow-hidden">
-                    <div class="h-full rounded-full bg-lime" style={`width:${(Number(c.count) / countryMax) * 100}%`}></div>
+                    <div class="so-barra h-full rounded-full bg-cyan/70" style={`width:${(Number(c.count) / countryMax) * 100}%`}></div>
                   </div>
                 </li>
               ))}
@@ -237,20 +255,16 @@ const severityCls: Record<Severity, string> = {
       </div>
 
       <!-- Tendencia 14 días -->
-      <div class="rounded-2xl glass p-6 mb-8">
-        <h3 class="text-[13px] font-medium text-ink-50 mb-4">{s.secops.trendHeading}</h3>
-        <div class="flex items-end gap-1 h-20">
-          {trend.map((pt) => (
-            <div class="flex-1 h-full group relative flex items-end">
-              <div
-                class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-lg border border-cyan/30 bg-ink-950 px-2.5 py-1.5 text-[11px] font-mono text-ink-50 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-10"
-              >
+      <div class="so-panel mb-4" data-tendencia>
+        <h3 class="so-panel-titulo">{s.secops.trendHeading}</h3>
+        <div class="so-tend" data-tend>
+          <span class="so-barrido" data-barrido aria-hidden="true"></span>
+          {trend.map((pt, i) => (
+            <div class={`so-dia ${i < 3 ? 'so-dia-izq' : i > trend.length - 4 ? 'so-dia-der' : ''}`}>
+              <div class="so-tip">
                 <span class="text-ink-300">{pt.day}:</span> <span class="text-cyan">{pt.count}</span> {s.secops.trendTooltipSuffix}
               </div>
-              <div
-                class="w-full rounded-t bg-cyan/60 hover:bg-cyan transition-colors"
-                style={`height:${Math.max(3, (pt.count / trendMax) * 100)}%`}
-              ></div>
+              <div class="so-col" style={`height:${Math.max(3, (pt.count / trendMax) * 100)}%`}></div>
             </div>
           ))}
         </div>
@@ -260,110 +274,331 @@ const severityCls: Record<Severity, string> = {
         </div>
       </div>
 
-      <!-- Cómo funciona -->
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="rounded-2xl glass p-6">
-          <h3 class="text-[13px] font-medium text-ink-50 mb-4">{s.secops.howItWorksHeading}</h3>
-          <ol class="space-y-3 text-[13px] text-ink-100 leading-relaxed">
+      <!-- Cómo funciona: las mismas cuatro capas del filtro del hero -->
+      <div class="grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] gap-4">
+        <div class="so-panel">
+          <h3 class="so-panel-titulo">{s.secops.howItWorksHeading}</h3>
+          <ol class="so-ruta" data-ruta>
+            <span class="so-ruta-linea" aria-hidden="true"><span data-ruta-luz></span></span>
             {s.secops.layers.map((layer, i) => (
-              <li><span class="text-cyan font-mono text-[11px] mr-2">{String(i + 1).padStart(2, '0')}</span>{layer}</li>
+              <li class="so-ruta-paso">
+                <span class={`so-ruta-punto ${capaPunto[i]}`} aria-hidden="true"></span>
+                <span class="text-cyan font-mono text-[11px] mr-2">{String(i + 1).padStart(2, '0')}</span>
+                <span class="text-[13px] text-ink-100 leading-relaxed">{layer}</span>
+              </li>
             ))}
           </ol>
         </div>
-        <div class="rounded-2xl glass p-6">
-          <h3 class="text-[13px] font-medium text-ink-50 mb-4">{s.secops.sloHeading}</h3>
-          <ul class="space-y-2.5 text-[13px] text-ink-100">
-            <li class="flex justify-between"><span>{s.secops.slo.overhead}</span><span class="font-mono text-lime">≤ 5 ms</span></li>
-            <li class="flex justify-between"><span>{s.secops.slo.detectionToBlock}</span><span class="font-mono text-lime">≤ 60 min</span></li>
-            <li class="flex justify-between"><span>{s.secops.slo.detectionToAlert}</span><span class="font-mono text-lime">≤ 60 s</span></li>
-            <li class="flex justify-between"><span>{s.secops.slo.falsePositives}</span><span class="font-mono text-lime">&lt; 0.1%</span></li>
-            <li class="flex justify-between"><span>{s.secops.slo.retention}</span><span class="font-mono text-ink-200">{s.secops.slo.retentionValue}</span></li>
+        <div class="so-panel">
+          <h3 class="so-panel-titulo">{s.secops.sloHeading}</h3>
+          <ul class="space-y-2.5 text-[13px] text-ink-100" data-slo>
+            {slo.map((r) => (
+              <li class="so-slo">
+                <span>{r.label}</span>
+                <span class="so-slo-guia" aria-hidden="true"></span>
+                <span class="font-mono text-lime whitespace-nowrap" data-slo-valor>{r.valor}</span>
+              </li>
+            ))}
           </ul>
-          <p class="text-[11px] text-ink-400 mt-4 leading-relaxed">
-            {s.secops.opsecNote}
-          </p>
+          <p class="text-[11px] text-ink-400 mt-5 leading-relaxed">{s.secops.opsecNote}</p>
         </div>
       </div>
     </section>
 
-    <!-- Hallazgos corregidos -->
-    <section class="mb-20">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
+    <!-- ── /02 Hallazgos corregidos ── -->
+    <section class="mb-28" aria-labelledby="sec-hallazgos">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/02</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
         <span>{s.findingsHeading} · {findings.length}</span>
       </div>
-
-      <div class="space-y-4">
-        {findings.map((f) => (
-          <div class="rounded-2xl glass p-6 lift">
-            <div class="flex flex-wrap items-center gap-3 mb-4">
-              <h2 class="text-[15px] font-medium">{f.title}</h2>
-              <span class={`text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${severityCls[f.severity]}`}>
-                {s.severity[f.severity]}
-              </span>
-              <span class="text-[11px] font-mono text-cyan">{f.owasp}</span>
-              <span class="ml-auto text-[11px] font-mono text-ink-300">{f.file}</span>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
-              <div class="rounded-xl bg-white/[.02] border border-white/5 p-4">
-                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-2">{s.problemLabel}</div>
-                <p class="text-[13px] text-ink-100 leading-relaxed">{f.problema}</p>
-              </div>
-              <div class="rounded-xl bg-white/[.02] border border-white/5 p-4">
-                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-2">{s.fixLabel}</div>
-                <p class="text-[13px] text-ink-100 leading-relaxed">{f.solucion}</p>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3 text-[11px] font-mono text-ink-300">
-              <span>{f.date}</span>
-              <a
-                href={`https://github.com/mikerb95/dev-portfolio/commit/${f.commit}`}
-                target="_blank"
-                rel="noopener"
-                class="inline-flex items-center gap-1.5 text-cyan hover:underline"
-              >
-                {s.commitPrefix} {f.commit} ↗
-              </a>
-            </div>
-          </div>
-        ))}
+      <div class="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 mb-12">
+        <h2 id="sec-hallazgos" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] max-w-2xl">
+          {m.findingsTitle}
+        </h2>
+        <p class="max-w-md text-[14px] text-ink-300 leading-relaxed">{m.findingsHint}</p>
       </div>
+      <HallazgosCommits findings={findings} />
     </section>
 
-    <!-- Controles ya vigentes -->
-    <section class="mb-20">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+    <!-- ── /03 Controles ya vigentes ── -->
+    <section class="mb-28" aria-labelledby="sec-controles">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/03</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
         <span>{s.controlsHeading}</span>
       </div>
-      <div class="grid md:grid-cols-2 gap-4">
-        {good.map((g) => (
-          <div class="rounded-2xl glass p-6">
-            <h3 class="text-[14px] font-medium mb-2">{g.title}</h3>
-            <p class="text-[13px] text-ink-100 leading-relaxed">{g.detail}</p>
-          </div>
-        ))}
-      </div>
+      <h2 id="sec-controles" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] max-w-2xl mb-10">
+        {m.controlsTitle}
+      </h2>
+      <ControlesVivos />
     </section>
 
-    <!-- Metodología -->
-    <section class="rounded-2xl glass p-8">
-      <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">{s.methodology.heading}</div>
-      <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
-        <p>{s.methodology.p1}</p>
-        <p>{s.methodology.p2}</p>
-        <p>{s.methodology.p3}</p>
+    <!-- ── /04 Metodología ── -->
+    <section aria-labelledby="sec-metodo">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/04</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>{s.methodology.heading}</span>
       </div>
+      <h2 id="sec-metodo" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] max-w-2xl mb-12">
+        {m.methodologyTitle}
+      </h2>
+      <ol class="me-pasos" data-metodo>
+        <span class="me-linea" aria-hidden="true"><span data-metodo-luz></span></span>
+        {[s.methodology.p1, s.methodology.p2, s.methodology.p3].map((p, i) => (
+          <li class="me-paso">
+            <span class="me-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h3 class="me-titulo">{m.pasos[i]}</h3>
+            <p class="me-texto">{p}</p>
+          </li>
+        ))}
+      </ol>
     </section>
 
   </div>
+  </div>
 </BaseLayout>
 
+<style is:global>
+  .so-kpi,
+  .so-panel {
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .so-kpi {
+    padding: 18px 20px;
+  }
+  .so-kpi-etq {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #85858f;
+  }
+  .so-kpi-num {
+    margin-top: 6px;
+    font-size: 34px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .so-panel {
+    padding: 22px 24px;
+  }
+  .so-panel-titulo {
+    font-size: 13px;
+    font-weight: 500;
+    color: #e7e7ec;
+    margin-bottom: 16px;
+  }
+  .so-barra {
+    transform-origin: left center;
+  }
+  .so-tend {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 96px;
+  }
+  .so-dia {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+  }
+  .so-col {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, rgba(255, 107, 61, 0.9), rgba(255, 107, 61, 0.25));
+    transform-origin: bottom center;
+    transition: filter 0.15s ease;
+  }
+  .so-dia:hover .so-col {
+    filter: brightness(1.35);
+  }
+  .so-tip {
+    pointer-events: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    white-space: nowrap;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    background: #121216;
+    padding: 5px 9px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: #e7e7ec;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 3;
+  }
+  /* Los extremos alinean el tooltip hacia dentro: centrado, el del último
+     día se salía de la página y abría scroll horizontal en móvil. */
+  .so-dia-izq .so-tip {
+    left: 0;
+    transform: none;
+  }
+  .so-dia-der .so-tip {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+  .so-dia:hover .so-tip {
+    opacity: 1;
+  }
+  .so-barrido {
+    position: absolute;
+    top: -6px;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    background: #c9ff5b;
+    box-shadow: 0 0 14px 2px rgba(201, 255, 91, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .so-ruta {
+    position: relative;
+    display: grid;
+    gap: 16px;
+  }
+  .so-ruta-linea {
+    position: absolute;
+    left: 3.5px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .so-ruta-linea > span {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #85858f, #00f2ff 35%, #a78bff 65%, #c9ff5b);
+    transform-origin: top center;
+  }
+  .so-ruta-paso {
+    position: relative;
+    padding-left: 22px;
+  }
+  .so-ruta-punto {
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 3px #16161c;
+  }
+  .so-slo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .so-slo-guia {
+    flex: 1;
+    min-width: 12px;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.14);
+    transform-origin: left center;
+  }
+
+  .me-pasos {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px;
+  }
+  .me-linea {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 19px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .me-linea > span {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #00f2ff, #c9ff5b);
+    transform-origin: left center;
+  }
+  .me-paso {
+    position: relative;
+  }
+  .me-num {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    background: #121216;
+    border: 1px solid rgba(0, 242, 255, 0.35);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: #00f2ff;
+    margin-bottom: 18px;
+  }
+  .me-titulo {
+    font-size: 18px;
+    font-weight: 500;
+    color: #e7e7ec;
+    margin-bottom: 8px;
+  }
+  .me-texto {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #85858f;
+  }
+  @media (max-width: 767px) {
+    .me-pasos {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 26px;
+    }
+    .me-linea {
+      left: 19px;
+      right: auto;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      height: auto;
+    }
+    .me-linea > span {
+      background: linear-gradient(180deg, #00f2ff, #c9ff5b);
+      transform-origin: top center;
+    }
+    .me-paso {
+      padding-left: 58px;
+    }
+    .me-num {
+      position: absolute;
+      left: 0;
+      top: -8px;
+    }
+    .so-panel {
+      padding: 18px 16px;
+    }
+    .so-kpi-num {
+      font-size: 28px;
+    }
+  }
+</style>
+
 <script>
+  // Mismo lenguaje que las demás páginas con motion (Lenis + GSAP, montaje
+  // común en src/lib/motion/landing.ts) más las piezas de esta página.
   import { montarLanding } from '../lib/motion/landing'
   import { montarFiltro } from '../lib/motion/filtro-lienzo'
+  import { montarSecciones } from '../lib/motion/security'
+  import { revelarEtiqueta } from '../lib/motion/efectos'
 
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const filtro = document.querySelector<HTMLElement>('[data-filtro]')
@@ -377,4 +612,12 @@ const severityCls: Record<Severity, string> = {
     }
   }
   montarLanding()
+  montarSecciones({ reducido })
+  if (!reducido) {
+    try {
+      document.querySelectorAll<HTMLElement>('[data-etiqueta]').forEach(revelarEtiqueta)
+    } catch (err) {
+      console.warn('[security] etiquetas sin motion', err)
+    }
+  }
 </script>
