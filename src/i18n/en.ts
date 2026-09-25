@@ -388,6 +388,7 @@ const en = {
       },
       testsDetalle: '{n} tests · {cov} coverage',
       totalLabel: 'from push to verified production',
+      exitoLabel: 'green runs',
       runsStrip: 'Last {n} runs · height = duration',
       conclusiones: { success: 'green', failure: 'failed', rolled_back: 'rolled back' },
     },

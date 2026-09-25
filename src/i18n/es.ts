@@ -404,6 +404,7 @@ const es = {
       },
       testsDetalle: '{n} tests · {cov} cobertura',
       totalLabel: 'del push a producción verificada',
+      exitoLabel: 'runs verdes',
       runsStrip: 'Últimos {n} runs · alto = duración',
       conclusiones: { success: 'verde', failure: 'falló', rolled_back: 'revertido' },
     },
