@@ -359,7 +359,8 @@ OPSEC vs. el borrador original**: se cambió "top 5 rutas señuelo más atacadas
 no revelar cuáles endpoints son honeypots. Bug encontrado y corregido en verificación
 visual: las barras de tendencia no renderizaban por falta de `h-full` en el contenedor
 flex (porcentaje de altura sin base de referencia). **Pendiente**: caso de estudio en
-`/tools` y artículo en `/notes` (contenido, no bloqueante - se puede añadir después).
+`/tools` (contenido, no bloqueante). ✅ Artículo en `/notes` publicado el 2026-09-26:
+`una-vitrina-de-seguridad-no-puede-mentir-ni-por-accidente` (y su versión en inglés).
 
 **Rediseño con motion (2026-09-25, RF-024)**: la vitrina pasó a mostrar el pipeline
 en vez de describirlo. El hero es un "filtro de capas" (`FiltroCapas.astro` +
