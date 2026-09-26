@@ -597,7 +597,6 @@ const es = {
       detected: 'Detectados (30d)',
       autoBlocks: 'Bloqueos automáticos',
       owaspCategories: 'Categorías OWASP',
-      overheadP99: 'Overhead p99',
       byCategoryHeading: 'Desglose por categoría (OWASP)',
       byCategoryEmpty: 'Sin actividad hostil en la ventana.',
       byCountryHeading: 'Origen geográfico',
@@ -659,6 +658,60 @@ const es = {
         title: 'Faltaban CSP y HSTS en las respuestas',
         problema: 'El middleware ya fijaba varios headers de seguridad (nosniff, Referrer-Policy, X-Frame-Options en admin) pero no incluía Content-Security-Policy ni Strict-Transport-Security en ninguna ruta.',
         solucion: 'Se agregó CSP restrictiva (default-src self, frame-ancestors none) y HSTS con preload a todas las respuestas, públicas y de admin.',
+      },
+      {
+        title: 'Dos endpoints del panel respondían sin sesión',
+        problema:
+          'La página de repositorios del panel usaba dos endpoints que vivían en /api/github/, fuera de la ruta que protege el middleware. Sin iniciar sesión, uno listaba los repositorios privados a los que llega el token del servidor y el otro creaba proyectos o cambiaba su visibilidad.',
+        solucion: 'Los dos se movieron bajo /api/admin/github/, donde el middleware exige la sesión de administrador. Desde entonces, toda ruta que usa el panel vive bajo /api/admin.',
+      },
+      {
+        title: 'Una barra al final de la URL saltaba el login',
+        problema:
+          'Los guardas del middleware comparan rutas literales. Con una barra final, /docs/presentacion/ no coincidía con la ruta privada y la presentación privada se servía sin iniciar sesión.',
+        solucion: 'El middleware calcula la ruta canónica una sola vez (sin barra final y sin prefijo de idioma) y todos los guardas comparan contra ella. Un test fija que la ruta llega igual con barra, sin ella y bajo /en.',
+      },
+      {
+        title: 'El reto de las llaves de acceso lo controlaba el navegador',
+        problema:
+          'El reto (challenge) de WebAuthn viajaba en una cookie sin firmar. Quien tuviera una respuesta de llave capturada podía volver a presentarla escribiendo en la cookie el reto viejo: el servidor no recordaba qué reto había emitido.',
+        solucion: 'El reto se guarda en el servidor, en una tabla propia y con vencimiento, y se consume una sola vez. Un reto inventado o repetido ya no existe en la base y la verificación falla.',
+      },
+      {
+        title: 'Registrar una llave de acceso no pedía volver a entrar',
+        problema:
+          'Con una cookie de sesión robada bastaba para registrar una llave de acceso propia en la cuenta, y esa llave seguía abriendo el panel aunque después se revocara la sesión.',
+        solucion: 'Dar de alta una llave exige haber iniciado sesión hace menos de 10 minutos. Cada alta o baja envía un aviso inmediato y queda registrada en el micro-SIEM.',
+      },
+      {
+        title: 'La allowlist confiaba en el nombre de usuario de GitHub',
+        problema:
+          'El acceso al panel se decidía por el nombre de usuario de GitHub, que se puede cambiar y deja libre el nombre anterior. Quien registrara ese nombre liberado pasaría la allowlist.',
+        solucion: 'El login exige además el id numérico de la cuenta, que GitHub no reasigna nunca.',
+      },
+      {
+        title: 'La actividad pública mostraba repositorios privados',
+        problema:
+          'El endpoint que alimenta /log y la portada usa un token que también ve los repositorios privados, y publicaba sus nombres y mensajes de commit, incluidos los de proyectos de clientes.',
+        solucion: 'Lo privado cuenta en las cifras pero nunca sale por nombre ni por mensaje: solo se publica un repositorio marcado explícitamente como público. Una URL con parámetros redirige a la limpia, para que nadie se salte la caché.',
+      },
+      {
+        title: 'La vitrina de seguridad publicaba el uso del panel como ataques',
+        problema:
+          'La tabla de eventos guarda también el rastro de acciones legítimas (entradas al panel, clientes consultando sus pagos). Esta misma página las contaba como amenazas, su gráfico diario delataba qué días se usaba el panel, y el bloqueo masivo podía bloquear a clientes y alumnos.',
+        solucion: 'Las categorías de rastro se separaron de las de amenaza en un solo lugar del código y quedan fuera de esta página, de las anomalías y del bloqueo masivo. El rastro se consulta aparte, solo en el panel.',
+      },
+      {
+        title: 'Una sesión revocada volvía a entrar con la base caída',
+        problema:
+          'El middleware comprobaba si una sesión del panel estaba revocada, pero si la base de datos no respondía la dejaba pasar. Una caída, o una cuota agotada a propósito, volvía válida cualquier cookie robada y ya revocada.',
+        solucion: 'Esa comprobación falla cerrada: si no se puede saber si la sesión fue revocada, el panel responde 503. Es la excepción deliberada a la regla de fallar abierto del resto de la seguridad del sitio.',
+      },
+      {
+        title: 'JSON incrustado en <script> sin escapar',
+        problema:
+          'Veinticinco sitios incrustaban JSON en etiquetas <script>, entre ellos los datos estructurados públicos con títulos de proyecto leídos de la base. Un título con "</script>" cerraba la etiqueta y lo que siguiera se ejecutaba como código.',
+        solucion: 'Todos pasan por una sola función que escapa <, > y & antes de incrustar, y los enlaces que salen de la base se validan para aceptar solo http y https.',
       },
     ],
     problemLabel: 'Problema',
@@ -725,6 +778,7 @@ const es = {
       findingsTitle: 'Cada hallazgo, cerrado por un commit.',
       findingsHint: 'Al bajar, cada commit cierra su hallazgo.',
       estado: { abierto: 'vulnerable', corregido: 'corregido' },
+      auditorias: { 'sep-2026': 'Auditoría del panel · septiembre 2026', 'jul-2026': 'Primera auditoría · julio 2026' },
       controlsTitle: 'Lo que ya estaba bien, demostrado.',
       ilustrativo: 'Ejemplo ilustrativo',
       demos: {

@@ -581,7 +581,6 @@ const en = {
       detected: 'Detected (30d)',
       autoBlocks: 'Automatic blocks',
       owaspCategories: 'OWASP categories',
-      overheadP99: 'p99 overhead',
       byCategoryHeading: 'Breakdown by category (OWASP)',
       byCategoryEmpty: 'No hostile activity in this window.',
       byCountryHeading: 'Geographic origin',
@@ -643,6 +642,60 @@ const en = {
         title: 'CSP and HSTS were missing from responses',
         problema: 'The middleware already set several security headers (nosniff, Referrer-Policy, X-Frame-Options on admin) but included no Content-Security-Policy or Strict-Transport-Security on any route.',
         solucion: 'A restrictive CSP (default-src self, frame-ancestors none) and HSTS with preload were added to every response, public and admin alike.',
+      },
+      {
+        title: 'Two panel endpoints answered without a session',
+        problema:
+          'The panel\'s repositories page used two endpoints that lived under /api/github/, outside the path the middleware protects. Without signing in, one listed the private repositories the server\'s token can reach and the other created projects or changed their visibility.',
+        solucion: 'Both moved under /api/admin/github/, where the middleware requires the admin session. Since then, every route the panel uses lives under /api/admin.',
+      },
+      {
+        title: 'A trailing slash bypassed the login',
+        problema:
+          'The middleware guards compare literal paths. With a trailing slash, /docs/presentacion/ did not match the private route and the private deck was served without signing in.',
+        solucion: 'The middleware computes the canonical path once (no trailing slash, no language prefix) and every guard compares against it. A test pins that the path arrives the same with a slash, without it, and under /en.',
+      },
+      {
+        title: 'The browser controlled the passkey challenge',
+        problema:
+          'The WebAuthn challenge traveled in an unsigned cookie. Anyone holding a captured passkey response could replay it by writing the old challenge into the cookie: the server did not remember which challenge it had issued.',
+        solucion: 'The challenge is stored server-side, in its own table with an expiry, and consumed exactly once. An invented or replayed challenge no longer exists in the database and verification fails.',
+      },
+      {
+        title: 'Registering a passkey did not require signing in again',
+        problema:
+          'A stolen session cookie was enough to register the attacker\'s own passkey on the account, and that passkey kept opening the panel even after the session was revoked.',
+        solucion: 'Adding a passkey requires a sign-in from less than 10 minutes ago. Every addition or removal sends an immediate alert and is recorded in the micro-SIEM.',
+      },
+      {
+        title: 'The allowlist trusted the GitHub username',
+        problema:
+          'Panel access was decided by the GitHub username, which can be changed and leaves the old name free. Whoever registered that freed name would pass the allowlist.',
+        solucion: 'The login also requires the account\'s numeric id, which GitHub never reassigns.',
+      },
+      {
+        title: 'Public activity showed private repositories',
+        problema:
+          'The endpoint behind /log and the home page uses a token that also sees private repositories, and it published their names and commit messages, including client projects.',
+        solucion: 'Private work counts in the totals but never appears by name or message: only a repository explicitly marked public is published. A URL with parameters redirects to the clean one, so nobody can bypass the cache.',
+      },
+      {
+        title: 'The security showcase published panel use as attacks',
+        problema:
+          'The events table also keeps an audit trail of legitimate actions (panel sign-ins, clients checking their payments). This very page counted them as threats, its daily chart revealed which days the panel was used, and bulk blocking could block clients and students.',
+        solucion: 'Audit categories were split from threat categories in a single place in the code and are excluded from this page, from anomaly detection, and from bulk blocking. The trail is reviewed separately, only in the panel.',
+      },
+      {
+        title: 'A revoked session got back in when the database was down',
+        problema:
+          'The middleware checked whether a panel session had been revoked, but let it through if the database did not answer. An outage, or a quota exhausted on purpose, made any stolen and already revoked cookie valid again.',
+        solucion: 'That check fails closed: if it cannot tell whether the session was revoked, the panel answers 503. It is the deliberate exception to the fail-open rule of the rest of the site\'s security.',
+      },
+      {
+        title: 'JSON embedded in <script> without escaping',
+        problema:
+          'Twenty-five places embedded JSON in <script> tags, including the public structured data with project titles read from the database. A title containing "</script>" closed the tag and whatever followed ran as code.',
+        solucion: 'All of them go through a single function that escapes <, > and & before embedding, and links coming from the database are validated to accept only http and https.',
       },
     ],
     problemLabel: 'Problem',
@@ -707,6 +760,7 @@ const en = {
       findingsTitle: 'Every finding, closed by a commit.',
       findingsHint: 'As you scroll, each commit closes its finding.',
       estado: { abierto: 'vulnerable', corregido: 'fixed' },
+      auditorias: { 'sep-2026': 'Panel audit · September 2026', 'jul-2026': 'First audit · July 2026' },
       controlsTitle: 'What was already right, demonstrated.',
       ilustrativo: 'Illustrative example',
       demos: {

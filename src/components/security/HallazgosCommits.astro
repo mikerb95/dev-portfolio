@@ -12,9 +12,11 @@
 import { getDictionary, getLocaleFromUrl } from '../../i18n'
 
 type Severity = 'alta' | 'media'
+type Auditoria = 'jul-2026' | 'sep-2026'
 interface Props {
   findings: {
     id: string
+    auditoria: Auditoria
     owasp: string
     severity: Severity
     file: string
@@ -31,11 +33,26 @@ const locale = getLocaleFromUrl(Astro.url.pathname)
 const s = getDictionary(locale).security
 const m = s.motion
 const REPO = 'https://github.com/mikerb95/dev-portfolio/commit/'
+
+// Grupos consecutivos por auditoría, en el orden que llegan (la página ya los
+// ordena). El rótulo de cada grupo va sobre la misma línea de commits.
+const grupos: { auditoria: Auditoria; items: Props['findings'] }[] = []
+for (const f of findings) {
+  const ultimo = grupos[grupos.length - 1]
+  if (ultimo?.auditoria === f.auditoria) ultimo.items.push(f)
+  else grupos.push({ auditoria: f.auditoria, items: [f] })
+}
 ---
 
 <ol class="hc" data-hallazgos data-abierto={m.estado.abierto} data-corregido={m.estado.corregido}>
   <span class="hc-linea" aria-hidden="true"><span class="hc-linea-luz" data-linea-luz></span></span>
-  {findings.map((f) => (
+  {grupos.map((g) => (
+    <Fragment>
+    <li class="hc-grupo">
+      <span class="hc-grupo-marca" aria-hidden="true"></span>
+      <h3 class="hc-grupo-titulo">{m.auditorias[g.auditoria]} <span class="hc-grupo-n">· {g.items.length}</span></h3>
+    </li>
+    {g.items.map((f) => (
     <li class="hc-item" data-hallazgo data-estado="corregido">
       <div class="hc-riel">
         <span class="hc-nodo" data-nodo aria-hidden="true"></span>
@@ -47,7 +64,7 @@ const REPO = 'https://github.com/mikerb95/dev-portfolio/commit/'
 
       <article class="hc-card rounded-2xl">
         <header class="hc-cabeza">
-          <h3 class="hc-titulo">{f.title}</h3>
+          <h4 class="hc-titulo">{f.title}</h4>
           <div class="hc-chips">
             <span class={`hc-sev hc-sev-${f.severity}`}>{s.severity[f.severity]}</span>
             <span class="hc-chip" data-chip>{m.estado.corregido}</span>
@@ -74,6 +91,8 @@ const REPO = 'https://github.com/mikerb95/dev-portfolio/commit/'
         </a>
       </article>
     </li>
+    ))}
+    </Fragment>
   ))}
 </ol>
 
@@ -102,6 +121,37 @@ const REPO = 'https://github.com/mikerb95/dev-portfolio/commit/'
     inset: 0;
     background: linear-gradient(180deg, #c9ff5b, rgba(201, 255, 91, 0.35));
     transform-origin: top center;
+  }
+  .hc-grupo {
+    display: grid;
+    grid-template-columns: var(--hc-riel) minmax(0, 1fr);
+    align-items: center;
+    position: relative;
+  }
+  .hc-grupo:not(:first-of-type) {
+    margin-top: 26px;
+  }
+  /* Un rombo sobre la línea: marca de corte entre auditorías, distinto del
+     nodo redondo de cada commit. */
+  .hc-grupo-marca {
+    width: 11px;
+    height: 11px;
+    margin-left: calc(var(--hc-x) - 5.5px);
+    transform: rotate(45deg);
+    background: #121216;
+    border: 1px solid #00f2ff;
+    box-shadow: 0 0 0 5px #121216;
+  }
+  .hc-grupo-titulo {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #00f2ff;
+    font-weight: 400;
+  }
+  .hc-grupo-n {
+    color: #4d4d5d;
   }
   .hc-item {
     display: grid;
