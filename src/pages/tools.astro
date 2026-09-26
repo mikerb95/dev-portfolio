@@ -10,7 +10,8 @@
 export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
-import ToolMock from '../components/ToolMock.astro'
+import EscenaCaso from '../components/tools/EscenaCaso.astro'
+import CircuitoOperacion from '../components/tools/CircuitoOperacion.astro'
 import { demoAvailable } from '../db'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 
@@ -46,6 +47,18 @@ const CASES_META: CaseMeta[] = [
 ]
 
 const tools = CASES_META.map((meta, i) => ({ ...meta, ...t.tools.cases[i] }))
+
+// Ruta del panel que "enseña" la ventana en cada caso. Son rutas reales de
+// /admin (no se enlazan: el panel es privado).
+const RUTAS_PANEL: Record<CaseMeta['mock'], string> = {
+  monitors: '/admin/monitors',
+  pnl: '/admin/projects',
+  seguimiento: '/admin/seguimiento',
+  vault: '/admin/costs',
+  pipeline: '/admin/lab/pipeline',
+  chaos: '/admin/lab/chaos',
+  security: '/admin/security',
+}
 ---
 
 <BaseLayout title={t.tools.title} description={t.tools.description} image="/og-tools.png">
@@ -57,78 +70,109 @@ const tools = CASES_META.map((meta, i) => ({ ...meta, ...t.tools.cases[i] }))
       {t.common.back}
     </a>
 
-    <header class="mb-20">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="text-cyan">/tools</span>
-        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>{t.tools.eyebrow}</span>
+    <header class="tl-hero mb-24">
+      <div class="tl-hero-texto">
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6" data-hero-sigue>
+          <span class="text-cyan">/tools</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span>{t.tools.eyebrow}</span>
+        </div>
+        <h1 class="text-[42px] sm:text-5xl xl:text-[56px] font-medium tracking-[-.035em] leading-[.98] mb-8">
+          <span data-hero-linea class="block text-ink-50 tl-balance">{t.tools.h1Line1}</span>{' '}
+          <span data-hero-linea class="block text-cyan tl-balance">{t.tools.h1Line2}</span>
+        </h1>
+        <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed" data-hero-sigue>
+          {t.tools.intro}
+        </p>
       </div>
-      <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        {t.tools.h1Line1}<br/>{t.tools.h1Line2}
-      </h1>
-      <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
-        {t.tools.intro}
-      </p>
+      <div class="tl-hero-pieza" data-hero-pieza>
+        <CircuitoOperacion />
+      </div>
     </header>
 
-    <div class="space-y-8">
-      {tools.map((tool) => (
-        <article class="rounded-2xl glass p-8 md:p-10 lift">
-          <div class="flex items-start gap-6 mb-8">
-            <span class="font-serif italic text-4xl text-ink-300 leading-none select-none">{tool.num}</span>
-            <div>
-              <h2 class="text-2xl md:text-3xl font-medium tracking-[-.02em] text-ink-50 mb-1.5">{tool.title}</h2>
-              <p class="text-[13px] font-mono text-cyan">{tool.tagline}</p>
-            </div>
-          </div>
-
-          <div class="grid lg:grid-cols-[1fr_400px] gap-6 mb-8 items-start">
-            <div class="space-y-6">
-              <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
-                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ember mb-3">{t.tools.problemLabel}</div>
-                <p class="text-[14px] text-ink-100 leading-relaxed">{tool.problema}</p>
+    <!-- Casos: en escritorio, el texto corre a la izquierda y la ventana fija
+         de la derecha muestra la herramienta del caso que se está leyendo. El
+         script mueve cada escena de su caso a la ventana; sin JS, con
+         movimiento reducido o en móvil, cada escena se queda dentro de su caso. -->
+    <section class="cs" data-casos>
+      <div class="cs-lista">
+        {tools.map((tool) => (
+          <article id={`caso-${tool.num}`} class="cs-caso" data-caso={tool.num}>
+            <header class="cs-cab">
+              <span class="cs-num" aria-hidden="true">{tool.num}</span>
+              <div>
+                <h2 class="cs-titulo">{tool.title}</h2>
+                <p class="cs-tagline">{tool.tagline}</p>
               </div>
-              <div class="rounded-xl bg-white/[.02] border border-white/5 p-5">
-                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-lime mb-3">{t.tools.solutionLabel}</div>
-                <p class="text-[14px] text-ink-100 leading-relaxed">{tool.solucion}</p>
+            </header>
+
+            <div class="cs-cuerpo">
+              <div class="cs-texto">
+                <div class="cs-bloque">
+                  <div class="cs-rotulo"><span class="cs-punto cs-punto-problema"></span>{t.tools.problemLabel}</div>
+                  <p>{tool.problema}</p>
+                </div>
+                <div class="cs-bloque">
+                  <div class="cs-rotulo"><span class="cs-punto cs-punto-solucion"></span>{t.tools.solutionLabel}</div>
+                  <p>{tool.solucion}</p>
+                </div>
+                <div>
+                  <div class="cs-rotulo cs-rotulo-tenue">{t.tools.inProductionLabel}</div>
+                  <ul class="cs-detalle">
+                    {tool.detalle.map((d) => (
+                      <li><span class="cs-vineta" aria-hidden="true"></span><span>{d}</span></li>
+                    ))}
+                  </ul>
+                </div>
+                <div class="cs-pie">
+                  {tool.stack.map((s) => <span class="cs-stack">{s}</span>)}
+                  {tool.liveHref && tool.liveLabel && (
+                    <a href={L(tool.liveHref)} class="cs-vivo">
+                      <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
+                      {tool.liveLabel} →
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div class="cs-slot" data-slot={tool.num}>
+                <div class="cs-marco">
+                  <div class="cs-cromo" aria-hidden="true">
+                    <span class="cs-luces"><i></i><i></i><i></i></span>
+                    <span class="cs-ruta">{RUTAS_PANEL[tool.mock]}</span>
+                    <span class="cs-ilustrativo">{t.tools.motion.ventana.etiqueta}</span>
+                  </div>
+                  <div class="cs-escena" data-escena-caja={tool.num}>
+                    <EscenaCaso kind={tool.mock} />
+                  </div>
+                </div>
+                <p class="cs-pie-escena">{t.tools.mockCaption}</p>
               </div>
             </div>
-            <div>
-              <ToolMock kind={tool.mock} />
-              <p class="text-[10px] font-mono text-ink-300 mt-2 text-center">
-                {t.tools.mockCaption}
-              </p>
-            </div>
-          </div>
+          </article>
+        ))}
+      </div>
 
-          <div class="mb-8">
-            <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-300 mb-4">{t.tools.inProductionLabel}</div>
-            <ul class="space-y-2.5">
-              {tool.detalle.map((d) => (
-                <li class="flex items-start gap-3 text-[14px] text-ink-100 leading-relaxed">
-                  <span class="w-1 h-1 rounded-full bg-cyan mt-2.5 shrink-0"></span>
-                  <span>{d}</span>
-                </li>
-              ))}
-            </ul>
+      <aside class="cs-ventana" data-ventana>
+        <div class="cs-marco">
+          <div class="cs-cromo" aria-hidden="true">
+            <span class="cs-luces"><i></i><i></i><i></i></span>
+            <span class="cs-ruta" data-ventana-ruta></span>
+            <span class="cs-ilustrativo">{t.tools.motion.ventana.etiqueta}</span>
           </div>
-
-          <div class="flex flex-wrap items-center gap-1.5">
-            {tool.stack.map((s) => (
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider border bg-cyan/10 text-cyan border-cyan/30">
-                {s}
-              </span>
-            ))}
-            {tool.liveHref && tool.liveLabel && (
-              <a href={L(tool.liveHref)} class="ml-auto inline-flex items-center gap-2 text-[13px] text-cyan hover:underline">
-                <span class="w-1.5 h-1.5 rounded-full bg-lime pulse-dot"></span>
-                {tool.liveLabel} →
-              </a>
-            )}
-          </div>
-        </article>
-      ))}
-    </div>
+          <div class="cs-pila" data-pila aria-hidden="true"></div>
+        </div>
+        <nav class="cs-indice" aria-label={t.tools.motion.ventana.indice}>
+          {tools.map((tool) => (
+            <a href={`#caso-${tool.num}`} data-indice={tool.num} data-ruta={RUTAS_PANEL[tool.mock]}>
+              <span class="cs-indice-num">{tool.num}</span>
+              <span class="cs-indice-barra" aria-hidden="true"><span></span></span>
+            </a>
+          ))}
+        </nav>
+        <p class="cs-pie-escena">{t.tools.mockCaption}</p>
+      </aside>
+    </section>
 
     {demoAvailable && (
       <section class="mt-16 rounded-2xl glass p-8 md:p-10">
@@ -174,6 +218,110 @@ const tools = CASES_META.map((meta, i) => ({ ...meta, ...t.tools.cases[i] }))
 </BaseLayout>
 
 <script>
-  import { initPageMotion } from '../lib/motion-reveal'
-  initPageMotion()
+  // Mismo lenguaje que las demás páginas con motion (Lenis + GSAP, montaje
+  // común en src/lib/motion/landing.ts) más las piezas de esta página.
+  import { montarLanding } from '../lib/motion/landing'
+  import { montarCircuito } from '../lib/motion/circuito-vivo'
+  import { montarCasos } from '../lib/motion/tools-escenas'
+
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const circuito = document.querySelector<HTMLElement>('[data-circuito]')
+  if (circuito) {
+    try {
+      montarCircuito(circuito, { reducido })
+    } catch (err) {
+      // Fail-open: el mapa en reposo y la bitácora del servidor siguen ahí.
+      console.warn('[tools] circuito sin motion', err)
+      delete circuito.dataset.vivo
+    }
+  }
+  const casos = document.querySelector<HTMLElement>('[data-casos]')
+  if (casos) {
+    try {
+      montarCasos(casos, { reducido })
+    } catch (err) {
+      // Fail-open: cada escena vuelve a su caso, completa y quieta.
+      console.warn('[tools] casos sin motion', err)
+      casos.classList.remove('modo-ventana')
+      casos.querySelectorAll<HTMLElement>('[data-escena]').forEach((el) => {
+        el.style.removeProperty('clip-path')
+        const caja = casos.querySelector(`[data-escena-caja="${el.dataset.caso}"]`)
+        if (caja && el.parentElement !== caja) caja.appendChild(el)
+      })
+    }
+  }
+  montarLanding({ anclas: true })
 </script>
+
+<style>
+  .tl-hero { display: grid; gap: 56px; grid-template-columns: minmax(0, 1fr); align-items: center; }
+  .tl-balance { text-wrap: balance; }
+  @media (min-width: 1200px) {
+    .tl-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 620px); gap: 48px; }
+  }
+
+  /* ── Casos ── */
+  .cs-lista { display: grid; gap: 0; }
+  .cs-caso { scroll-margin-top: 104px; padding-block: 72px; }
+  .cs-caso:first-child { padding-top: 0; }
+  .cs-caso + .cs-caso { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+  .cs-cab { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 28px; }
+  .cs-num { font-family: var(--font-serif, Georgia, serif); font-style: italic; font-size: 44px; line-height: 0.9; color: #4d4d5d; user-select: none; }
+  .cs-titulo { margin: 0 0 6px; font-size: 26px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.15; color: #e7e7ec; text-wrap: balance; }
+  .cs-tagline { margin: 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 13px; color: #00f2ff; }
+  .cs-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .cs-texto { display: grid; gap: 22px; align-content: start; }
+  .cs-bloque p { margin: 0; font-size: 15px; line-height: 1.7; color: #c4c4cc; }
+  .cs-rotulo { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #85858f; }
+  .cs-rotulo-tenue { color: #4d4d5d; margin-bottom: 12px; }
+  .cs-punto { width: 6px; height: 6px; border-radius: 99px; }
+  .cs-punto-problema { background: #ff6b3d; box-shadow: 0 0 10px rgba(255, 107, 61, 0.6); }
+  .cs-punto-solucion { background: #c9ff5b; box-shadow: 0 0 10px rgba(201, 255, 91, 0.5); }
+  .cs-detalle { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .cs-detalle li { display: grid; grid-template-columns: 4px minmax(0, 1fr); gap: 12px; font-size: 14px; line-height: 1.6; color: #c4c4cc; }
+  .cs-vineta { width: 4px; height: 4px; margin-top: 10px; border-radius: 99px; background: #00f2ff; }
+  .cs-pie { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .cs-stack { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #00f2ff; background: rgba(0, 242, 255, 0.08); border: 1px solid rgba(0, 242, 255, 0.25); }
+  .cs-vivo { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #00f2ff; }
+  .cs-vivo:hover { text-decoration: underline; }
+
+  .cs-marco { border-radius: 16px; background: rgba(10, 10, 13, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8); }
+  .cs-cromo { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: #0e0e12; border-radius: 16px 16px 0 0; }
+  .cs-luces { display: inline-flex; gap: 6px; }
+  .cs-luces i { width: 8px; height: 8px; border-radius: 99px; background: rgba(255, 107, 61, 0.6); }
+  .cs-luces i:nth-child(2) { background: rgba(201, 255, 91, 0.5); }
+  .cs-luces i:nth-child(3) { background: rgba(0, 242, 255, 0.5); }
+  .cs-ruta { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: #85858f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cs-ilustrativo { margin-left: auto; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #4d4d5d; white-space: nowrap; }
+  .cs-escena { padding: 16px; }
+  .cs-pie-escena { margin: 8px 0 0; text-align: center; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #4d4d5d; }
+  .cs-ventana { display: none; }
+
+  /* Móvil: la escena justo bajo el título, antes del texto largo. */
+  @media (max-width: 1023px) {
+    .cs-slot { order: -1; }
+    .cs-caso { padding-block: 56px; }
+  }
+  @media (min-width: 768px) {
+    .cs-titulo { font-size: 30px; }
+  }
+  /* Escritorio sin JS (o con movimiento reducido): texto y escena lado a lado. */
+  @media (min-width: 1024px) {
+    .cs-cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 420px); align-items: start; }
+
+    .cs.modo-ventana { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 450px); gap: 64px; align-items: start; }
+    .cs.modo-ventana .cs-cuerpo { grid-template-columns: minmax(0, 1fr); }
+    .cs.modo-ventana .cs-slot { display: none; }
+    .cs.modo-ventana .cs-caso { min-height: 78vh; }
+    .cs.modo-ventana .cs-ventana { display: block; position: sticky; top: 104px; }
+    .cs-pila { display: grid; padding: 18px; }
+    .cs-pila > :global(.es) { grid-area: 1 / 1; }
+    .cs-pila > :global(.es:not(.is-activa)) { pointer-events: none; }
+  }
+  .cs-indice { display: flex; gap: 6px; margin-top: 14px; }
+  .cs-indice a { flex: 1; display: grid; gap: 6px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: #4d4d5d; transition: color 0.25s ease; }
+  .cs-indice a:hover, .cs-indice a.is-activo { color: #00f2ff; }
+  .cs-indice a:focus-visible { outline: 2px solid rgba(0, 242, 255, 0.6); outline-offset: 3px; border-radius: 4px; }
+  .cs-indice-barra { display: block; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .cs-indice-barra > span { display: block; height: 100%; background: #00f2ff; transform-origin: left; transform: scaleX(0); }
+</style>

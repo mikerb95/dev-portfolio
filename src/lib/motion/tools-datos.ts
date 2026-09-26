@@ -9,6 +9,7 @@
 import { monthlyEquivalent, toBaseUSD, type BillingCycle, type Rates } from '../money'
 import { projectPnL } from '../pnl'
 import { computeSloFromCounts } from '../slo'
+import { detectSpikes, mean, stddev, zScore } from '../security/anomaly'
 
 // ── P&L ────────────────────────────────────────────────────────────────────
 
@@ -97,4 +98,29 @@ export function alterarCifrado(guardado: string, cual = 0.5): { alterado: string
   const nuevo = original === 'f' ? '0' : (parseInt(original, 16) + 1).toString(16)
   const ct2 = ct.slice(0, i) + nuevo + ct.slice(i + 1)
   return { alterado: `${iv}:${tag}:${ct2}`, indice: iv.length + 1 + tag.length + 1 + i }
+}
+
+// ── Anomalías ──────────────────────────────────────────────────────────────
+
+/**
+ * Eventos por hora de un día ilustrativo. La última hora se pasa por el MISMO
+ * detector del cron de seguridad (detectSpikes, z-score sobre la base), así
+ * que la maqueta marca como anomalía solo lo que el sistema marcaría.
+ */
+export const HORAS_EJEMPLO = [9, 11, 8, 12, 10, 9, 13, 11, 10, 8, 12, 11, 9, 10, 12, 11, 27]
+
+export function datosAnomalia(horas = HORAS_EJEMPLO, umbral = 3) {
+  const base = horas.slice(0, -1)
+  const observado = horas[horas.length - 1]
+  const media = mean(base)
+  const sd = stddev(base, media)
+  const [pico] = detectSpikes([{ category: 'secrets_probing', observed: observado, baseline: base }], umbral)
+  return {
+    horas,
+    media,
+    // Banda "normal": hasta media + umbral·σ, lo que el detector deja pasar.
+    techo: media + umbral * sd,
+    z: zScore(observado, base) ?? 0,
+    anomalia: Boolean(pico),
+  }
 }

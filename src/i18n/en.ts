@@ -462,7 +462,6 @@ const en = {
           seg: 'Tracking',
           boveda: 'Vault',
           ntfy: 'Phone',
-          status: 'Public status',
           portal: 'Client portal',
         },
         lecturas: {
@@ -551,7 +550,6 @@ const en = {
         hoy: 'today',
         slo: 'SLO {obj} % · 30 days',
         presupuesto: 'error budget left',
-        burn: 'burn rate',
         incidente: 'incident open',
         cerrado: 'closed · 6 min',
         toast: 'unexpected content: returned 200 with another page',

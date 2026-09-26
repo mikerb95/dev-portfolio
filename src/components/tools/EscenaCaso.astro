@@ -1,0 +1,540 @@
+---
+// Escena viva de cada caso de estudio de /tools: la herramienta haciendo lo
+// que su texto afirma. El monitor ve una página que responde 200 con el
+// contenido equivocado, el P&L normaliza ciclos y monedas, el seguimiento
+// esconde lo interno al cliente, la bóveda cifra y rechaza un byte alterado, el
+// pipeline revierte solo, el caos rompe una ruta sin tocar /admin y el SIEM
+// escala un bloqueo.
+//
+// Los datos son de ejemplo (y el pie de la ventana lo dice), pero las cifras
+// que se derivan de ellos salen de las funciones reales del panel, y el
+// cifrado de la bóveda es AES-256-GCM de verdad, hecho en el build con una
+// clave de un solo uso que se descarta.
+//
+// El marcado es la escena ya terminada; el script (src/lib/motion/
+// tools-escenas.ts) la repite en bucle solo mientras se ve. Decorativa:
+// aria-hidden, el contenido está en el texto del caso.
+import { randomBytes } from 'node:crypto'
+import { getDictionary, getLocaleFromUrl, formatNumber, interpolate } from '../../i18n'
+import { encryptWith, decryptWith } from '../../lib/crypto'
+import { MAX_TTL_S } from '../../lib/chaos'
+import { mmss } from '../../lib/motion/circuito'
+import { alterarCifrado, datosAnomalia, datosPnl, datosSlo, INGRESOS_EJEMPLO, SLO_OBJETIVO } from '../../lib/motion/tools-datos'
+
+export type EscenaKind = 'monitors' | 'pnl' | 'seguimiento' | 'vault' | 'pipeline' | 'chaos' | 'security'
+interface Props {
+  kind: EscenaKind
+}
+const { kind } = Astro.props
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const d = getDictionary(locale)
+const m = d.tools.motion
+const n = (v: number, dec = 0) => formatNumber(v, locale, { minimumFractionDigits: dec, maximumFractionDigits: dec })
+
+// ── Monitores ───────────────────────────────────────────────────────────
+const hosts = d.toolMock.monitorHosts
+const latencias = ['182 ms', '240 ms', '311 ms']
+const slo = datosSlo()
+const barras = (caidas: number[]) => Array.from({ length: 30 }, (_, i) => (caidas.includes(i) ? 'caida' : 'ok'))
+const tiras = [barras([]), barras([11]), barras([6, 22])]
+
+// ── P&L ─────────────────────────────────────────────────────────────────
+const pnl = datosPnl()
+const origen = (f: (typeof pnl.filas)[number]) =>
+  f.billingCycle === 'free' ? m.pnl.ciclos.free : `${f.currency} ${n(f.cost)} · ${m.pnl.ciclos[f.billingCycle as 'annual' | 'monthly']}`
+const ingreso = (estado: string) => INGRESOS_EJEMPLO.find((f) => f.status === estado)?.amount ?? 0
+const divisor = (f: (typeof pnl.filas)[number]) =>
+  f.billingCycle === 'annual' ? (f.currency === 'COP' ? '÷12 ÷4.000' : '÷12') : f.billingCycle === 'monthly' ? '×1' : '×0'
+
+// ── Bóveda ──────────────────────────────────────────────────────────────
+// Cifrado real con la función del panel y una clave que no sale de este build.
+const SECRETO_NOMBRE = 'RESEND_API_KEY'
+const claveUnUso = randomBytes(32)
+const guardado = encryptWith(claveUnUso, m.boveda.valorEjemplo)
+const [ivHex, tagHex, ctHex] = guardado.split(':')
+const { alterado, indice } = alterarCifrado(guardado)
+// La escena afirma que un byte alterado no se descifra. Si algún día no fuera
+// así, el build falla en vez de publicar una demostración falsa.
+let rechazado = false
+try {
+  decryptWith(claveUnUso, alterado)
+} catch {
+  rechazado = true
+}
+if (!rechazado || decryptWith(claveUnUso, guardado) !== m.boveda.valorEjemplo) {
+  throw new Error('EscenaCaso: el cifrado de la bóveda no se comporta como afirma la escena')
+}
+const ctIndice = indice - ivHex.length - tagHex.length - 2
+
+// ── Pipeline ────────────────────────────────────────────────────────────
+const ETAPAS = ['push', 'tests', 'build', 'deploy', 'health check']
+const historial = [
+  { sha: 'f51d0ac', res: 'revertido', t: '4 min' },
+  { sha: 'a3f9e21', res: 'exito', t: '2 min' },
+  { sha: '8c04b77', res: 'exito', t: '2 min' },
+]
+
+// ── Caos ────────────────────────────────────────────────────────────────
+const ttl = mmss(MAX_TTL_S)
+
+// ── Seguridad ───────────────────────────────────────────────────────────
+const anomalia = datosAnomalia()
+const maxHora = Math.max(...anomalia.horas, anomalia.techo) * 1.1
+const eventos = [
+  { sev: 'high', ip: '203.0.x.x', pais: 'CN' },
+  { sev: 'medium', ip: '198.51.x.x', pais: 'US' },
+  { sev: 'critical', ip: '192.0.x.x', pais: 'BR' },
+  { sev: 'high', ip: '203.0.x.x', pais: 'CN' },
+].map((e, i) => ({ ...e, cat: m.security.eventos[i] }))
+const ESCALERA = ['1 h', '24 h', '7 d']
+---
+
+<div class={`es es-${kind}`} data-escena={kind} aria-hidden="true">
+  {kind === 'monitors' && (
+    <Fragment>
+      {hosts.map((h, i) => (
+        <div class="es-mon-fila" data-fila={i} data-estado="ok">
+          <div class="es-mon-cab">
+            <span class="es-dot"></span>
+            <span class="es-host">{h}</span>
+            <span class="es-inc" data-incidente data-cerrado={m.monitors.cerrado}>{m.monitors.incidente}</span>
+            <span class="es-ms" data-ms>{latencias[i]}</span>
+          </div>
+          <div class="es-checks">
+            <span class="es-check" data-check="http">HTTP <b>200</b></span>
+            <span class="es-check" data-check="contenido">{m.monitors.contenido} <b data-marca>✓</b></span>
+            <span class="es-check" data-check="lat">{m.monitors.latencia} <b>✓</b></span>
+          </div>
+          <div class="es-tira">
+            {tiras[i].map((b, j) => <span class={`es-barra es-barra-${b}`} data-hoy={j === 29 ? '' : undefined}></span>)}
+          </div>
+        </div>
+      ))}
+      <div class="es-slo">
+        <div class="es-slo-cab">
+          <span>{interpolate(m.monitors.slo, { obj: n(SLO_OBJETIVO, 1) })}</span>
+          <span>burn rate <b data-burn data-despues={`${n(slo.despues.burnRate ?? 0, 2)}×`}>{n(slo.antes.burnRate ?? 0, 2)}×</b></span>
+        </div>
+        <div class="es-slo-barra">
+          <span data-presupuesto data-antes={slo.antes.budgetRemainingPct} data-despues={slo.despues.budgetRemainingPct} style={`width:${slo.antes.budgetRemainingPct}%`}></span>
+        </div>
+        <div class="es-slo-pie">
+          <span>{m.monitors.presupuesto}</span>
+          <b data-restante data-despues={`${n(slo.despues.budgetRemainingPct ?? 0, 1)} %`}>{n(slo.antes.budgetRemainingPct ?? 0, 1)} %</b>
+        </div>
+      </div>
+      <div class="es-toast" data-toast>
+        <span class="es-toast-app">ntfy</span>
+        <span><b>{hosts[2]}</b> · {m.monitors.toast}</span>
+      </div>
+    </Fragment>
+  )}
+
+  {kind === 'pnl' && (
+    <Fragment>
+      <div class="es-pnl-cab"><span>{m.pnl.proyecto}</span><span class="es-mono es-tenue">USD</span></div>
+      <div class="es-pnl-filas">
+        {pnl.filas.map((f, i) => (
+          <div class="es-pnl-fila" data-fila>
+            <span class="es-pnl-nombre">{m.pnl.servicios[i]}</span>
+            <span class="es-pnl-origen es-mono">{origen(f)}</span>
+            <span class="es-pnl-div es-mono" data-div>{divisor(f)}</span>
+            <span class="es-pnl-mes es-mono" data-mes={n(f.mensualUSD, 2)}>{n(f.mensualUSD, 2)}</span>
+          </div>
+        ))}
+        <div class="es-pnl-fila es-pnl-total">
+          <span>{m.pnl.costoMensual}</span>
+          <span></span>
+          <span></span>
+          <span class="es-mono" data-total={n(pnl.antes.costoMensualUSD, 2)}>{n(pnl.antes.costoMensualUSD, 2)}</span>
+        </div>
+      </div>
+      <div class="es-pnl-ing">
+        <div class="es-etq">{m.pnl.ingresos}</div>
+        <div class="es-pnl-barra">
+          <span class="es-seg-cob" data-parte="cobrado" style={`width:${pnl.partes.cobrado * 100}%`}></span>
+          <span class="es-seg-pen" data-parte="pendiente" style={`width:${pnl.partes.pendiente * 100}%`}></span>
+          <span class="es-seg-pro" data-parte="proyectado" style={`width:${pnl.partes.proyectado * 100}%`}></span>
+        </div>
+        <div class="es-pnl-ley es-mono">
+          <span><i class="es-cob"></i>{m.pnl.cobrado} {n(ingreso('cobrado'))}</span>
+          <span data-ley-pendiente><i class="es-pen"></i>{m.pnl.pendiente} {n(ingreso('pendiente'))}</span>
+          <span><i class="es-pro"></i>{m.pnl.proyectado} {n(ingreso('proyectado'))}</span>
+        </div>
+      </div>
+      <div class="es-pnl-margen">
+        <span class="es-etq">{m.pnl.margen}</span>
+        <span class="es-pill es-pill-ok" data-pagada>✓ {m.pnl.pagada}</span>
+        <b class="es-pnl-cifra" data-margen data-despues={n(pnl.despues.margenEstimado, 2)}>{n(pnl.antes.margenEstimado, 2)}</b>
+      </div>
+      <p class="es-nota">{m.pnl.nota}: <code>monthlyEquivalent · projectPnL</code></p>
+    </Fragment>
+  )}
+
+  {kind === 'seguimiento' && (
+    <Fragment>
+      <div class="es-seg-cab">
+        <span class="es-etq">{m.seg.vista}</span>
+        <span class="es-toggle" data-toggle>
+          <span class="es-toggle-luz" data-toggle-luz></span>
+          <span class="es-toggle-op is-on" data-op="panel">{m.seg.panel}</span>
+          <span class="es-toggle-op" data-op="cliente">{m.seg.cliente}</span>
+        </span>
+      </div>
+      <ol class="es-seg-lista">
+        <li class="es-seg-item es-seg-prox" data-item>
+          <span class="es-seg-punto es-pulso"></span>
+          <span class="es-seg-texto">{m.seg.proximo.t}</span>
+          <span class="es-vis es-vis-cliente">{m.seg.vis.cliente}</span>
+          <span class="es-seg-fecha es-mono">{m.seg.proximo.d}</span>
+        </li>
+        {m.seg.items.map((it, i) => {
+          const vis = i === 0 ? 'publico' : i === 1 ? 'interno' : 'cliente'
+          return (
+            <li class="es-seg-item" data-item data-interno={vis === 'interno' ? '' : undefined}>
+              <span class="es-seg-punto"></span>
+              <span class="es-seg-texto">{it.t}</span>
+              <span class={`es-vis es-vis-${vis}`}>{m.seg.vis[vis]}</span>
+              <span class="es-seg-fecha es-mono">{it.d}</span>
+              {vis === 'interno' && <span class="es-seg-oculto" data-oculto>{m.seg.oculto}</span>}
+            </li>
+          )
+        })}
+      </ol>
+    </Fragment>
+  )}
+
+  {kind === 'vault' && (
+    <Fragment>
+      <div class="es-bov-form">
+        <span class="es-etq">{m.boveda.nombre}</span>
+        <code class="es-bov-campo">{SECRETO_NOMBRE}</code>
+        <span class="es-etq">{m.boveda.valor}</span>
+        <code class="es-bov-campo"><span data-claro data-texto={m.boveda.valorEjemplo}>{m.boveda.valorEjemplo}</span><i class="es-cursor" data-cursor></i></code>
+        <span class="es-bov-guardar" data-guardar>{m.boveda.guardar}</span>
+      </div>
+      <div class="es-bov-paso" data-paso><span>AES-256-GCM</span></div>
+      <div class="es-etq">{m.boveda.enBase}</div>
+      <code class="es-bov-cifra" data-cifra>
+        <span class="es-iv" data-parte>{ivHex}</span>:<span class="es-tag" data-parte>{tagHex}</span>:<span class="es-ct" data-parte><span data-ct-a>{ctHex.slice(0, ctIndice)}</span><span class="es-byte" data-byte data-alterado={alterado[indice]}>{ctHex[ctIndice]}</span><span data-ct-b>{ctHex.slice(ctIndice + 1)}</span></span>
+      </code>
+      <div class="es-bov-partes es-mono">
+        <span><i class="es-iv-c"></i>iv · 12 B</span>
+        <span><i class="es-tag-c"></i>tag · 16 B</span>
+        <span><i class="es-ct-c"></i>ct</span>
+      </div>
+      <div class="es-bov-alt" data-alt>
+        <span class="es-mono es-tenue">{m.boveda.alterado}</span>
+        <span class="es-mono">{m.boveda.descifrar} →</span>
+        <span class="es-pill es-pill-mal" data-rechazo>✕ {m.boveda.rechazo}</span>
+      </div>
+      <div class="es-bov-llave">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="m21 2-9.6 9.6"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path></svg>
+        {m.boveda.llave}
+      </div>
+      <p class="es-nota">{m.boveda.real}: <code>encryptWith · decryptWith</code></p>
+    </Fragment>
+  )}
+
+  {kind === 'pipeline' && (
+    <Fragment>
+      <div class="es-ci-run es-mono">
+        <span class="es-tenue">run</span> <b data-run-sha>f51d0ac</b>
+        <span class="es-ci-prod">{m.pipeline.enVivo}: <b data-prod>a3f9e21</b></span>
+      </div>
+      <ol class="es-ci-etapas" data-etapas>
+        <span class="es-ci-linea" aria-hidden="true"><span data-ci-luz></span></span>
+        {ETAPAS.map((e, i) => (
+          <li class="es-ci-etapa" data-etapa data-estado={i === ETAPAS.length - 1 ? 'fallo' : 'listo'}>
+            <span class="es-ci-nodo"></span>
+            <span class="es-ci-nombre es-mono">{e}</span>
+          </li>
+        ))}
+      </ol>
+      <div class="es-ci-rollback es-mono" data-rollback>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+        {interpolate(m.pipeline.revirtiendo, { sha: 'a3f9e21' })}
+      </div>
+      <div class="es-etq">{m.pipeline.historial}</div>
+      <ol class="es-ci-hist" data-historial data-exito={m.pipeline.exito} data-revertido={m.pipeline.revertido}>
+        {historial.map((h) => (
+          <li class="es-ci-fila es-mono">
+            <span class={`es-dot es-dot-${h.res}`}></span>
+            <span>{h.sha}</span>
+            <span class="es-tenue">deploy → health check</span>
+            <span class={`es-pill ${h.res === 'exito' ? 'es-pill-ok' : 'es-pill-mal'}`}>{m.pipeline[h.res as 'exito' | 'revertido']}</span>
+            <span class="es-tenue">{h.t}</span>
+          </li>
+        ))}
+      </ol>
+    </Fragment>
+  )}
+
+  {kind === 'chaos' && (
+    <Fragment>
+      <div class="es-caos-flags">
+        <div class="es-caos-flag" data-flag data-on="">
+          <span class="es-switch"><span></span></span>
+          <span>HTTP 500</span>
+          <span class="es-mono es-tenue">/tienda</span>
+          <span class="es-mono es-caos-ttl" data-ttl={ttl}>TTL {ttl}</span>
+        </div>
+        <div class="es-caos-flag">
+          <span class="es-switch"><span></span></span>
+          <span>{m.caos.latencia}</span>
+          <span class="es-mono es-tenue">/api/*</span>
+          <span class="es-mono es-caos-ttl">TTL -</span>
+        </div>
+      </div>
+      <div class="es-caos-carriles">
+        <div class="es-caos-carril" data-carril="tienda" data-estado="mal">
+          <span class="es-mono es-caos-ruta">/tienda</span>
+          <span class="es-caos-resp" data-resp>
+            {Array.from({ length: 7 }, () => <span class="es-resp es-resp-mal">500</span>)}
+          </span>
+        </div>
+        <div class="es-caos-carril" data-carril="admin">
+          <span class="es-mono es-caos-ruta">/admin <i class="es-candado">🔒</i></span>
+          <span class="es-caos-resp" data-resp>
+            {Array.from({ length: 7 }, () => <span class="es-resp es-resp-ok">200</span>)}
+          </span>
+        </div>
+        <span class="es-caos-prot es-mono">/admin · {m.caos.protegida}</span>
+      </div>
+      <div class="es-caos-det es-mono" data-detectado>● {m.caos.detectado}</div>
+      <div class="es-caos-pie">
+        <span class="es-mono es-tenue">{interpolate(m.caos.ttlNota, { ttl })}</span>
+        <span class="es-panico" data-panico>■ {m.caos.panico}</span>
+      </div>
+    </Fragment>
+  )}
+
+  {kind === 'security' && (
+    <Fragment>
+      <ol class="es-sec-eventos" data-eventos>
+        {eventos.map((e) => (
+          <li class="es-sec-ev" data-ip={e.ip}>
+            <span class={`es-sev es-sev-${e.sev}`}></span>
+            <span class="es-sec-cat">{e.cat}</span>
+            <span class="es-mono es-tenue">{e.ip}</span>
+            <span class="es-mono es-tenue">{e.pais}</span>
+          </li>
+        ))}
+      </ol>
+      <div class="es-sec-z">
+        <div class="es-etq">{m.security.linea}</div>
+        <div class="es-sec-graf" data-grafica>
+          <span class="es-sec-techo" style={`bottom:${(anomalia.techo / maxHora) * 100}%`}><i class="es-mono">μ + 3σ</i></span>
+          {anomalia.horas.map((h, i) => (
+            <span
+              class:list={['es-sec-col', { 'es-sec-pico': i === anomalia.horas.length - 1 }]}
+              data-col
+              style={`height:${(h / maxHora) * 100}%`}
+            ></span>
+          ))}
+          <span class="es-sec-marca es-mono" data-marca-anomalia>{m.security.anomalia} · z = {n(anomalia.z, 1)}</span>
+        </div>
+      </div>
+      <div class="es-sec-esc">
+        <span class="es-etq">{m.security.escalera} <span class="es-mono es-tenue">203.0.x.x</span></span>
+        <ol class="es-sec-pasos">
+          {ESCALERA.map((p) => <li class="es-sec-paso is-on" data-escalon><span class="es-mono">{p}</span></li>)}
+        </ol>
+        <span class="es-mono es-tenue es-sec-nunca">{m.security.nunca}</span>
+      </div>
+    </Fragment>
+  )}
+</div>
+
+<style is:global>
+  /* Prefijo `es-` y global: el script mueve estas escenas de su caso a la
+     ventana fija y les cambia estados por atributo. */
+  .es {
+    --es-cyan: #00f2ff;
+    --es-lime: #c9ff5b;
+    --es-ember: #ff6b3d;
+    --es-amber: #fbbf24;
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    font-size: 12.5px;
+    color: #e7e7ec;
+  }
+  .es-mono { font-family: var(--font-mono, ui-monospace, monospace); }
+  .es-tenue { color: #6b6b78; }
+  .es-etq { font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #6b6b78; }
+  .es-nota { margin: 0; font-size: 10.5px; color: #6b6b78; }
+  .es-nota code { font-family: var(--font-mono, ui-monospace, monospace); color: #85858f; }
+  .es-dot { width: 6px; height: 6px; border-radius: 99px; background: var(--es-lime); flex: none; }
+  .es-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; border: 1px solid; white-space: nowrap; }
+  .es-pill-ok { color: var(--es-lime); border-color: rgba(201, 255, 91, 0.3); background: rgba(201, 255, 91, 0.08); }
+  .es-pill-mal { color: var(--es-ember); border-color: rgba(255, 107, 61, 0.35); background: rgba(255, 107, 61, 0.08); }
+  .es-caja { border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); }
+
+  /* Monitores */
+  .es-mon-fila { display: grid; gap: 7px; padding: 10px 11px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); transition: border-color 0.3s ease, background-color 0.3s ease; }
+  .es-mon-fila[data-estado='error'] { border-color: rgba(255, 107, 61, 0.45); background: rgba(255, 107, 61, 0.05); }
+  .es-mon-fila[data-estado='error'] .es-dot { background: var(--es-ember); box-shadow: 0 0 10px var(--es-ember); }
+  .es-mon-cab { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .es-host { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .es-ms { margin-left: auto; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: #85858f; white-space: nowrap; }
+  .es-inc { display: none; padding: 1px 7px; border-radius: 99px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; color: var(--es-ember); border: 1px solid rgba(255, 107, 61, 0.35); white-space: nowrap; }
+  .es-inc.is-on { display: inline-block; }
+  .es-inc.is-cerrado { color: var(--es-lime); border-color: rgba(201, 255, 91, 0.3); }
+  .es-checks { display: flex; flex-wrap: wrap; gap: 5px; }
+  .es-check { padding: 2px 7px; border-radius: 6px; background: rgba(255, 255, 255, 0.04); font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #85858f; }
+  .es-check b { color: var(--es-lime); font-weight: 500; }
+  .es-check.is-mal { background: rgba(255, 107, 61, 0.12); color: #f3c6b8; }
+  .es-check.is-mal b { color: var(--es-ember); }
+  .es-tira { display: flex; gap: 2px; height: 12px; }
+  .es-barra { flex: 1; border-radius: 1px; background: var(--es-lime); opacity: 0.75; }
+  .es-barra-caida { background: var(--es-ember); }
+  .es-slo { display: grid; gap: 6px; padding: 10px 11px; border-radius: 10px; background: rgba(0, 242, 255, 0.03); border: 1px solid rgba(0, 242, 255, 0.14); }
+  .es-slo-cab, .es-slo-pie { display: flex; justify-content: space-between; gap: 8px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: #85858f; }
+  .es-slo-cab b, .es-slo-pie b { color: #e7e7ec; font-weight: 500; }
+  .es-slo-barra { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+  .es-slo-barra > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #00b8c4, #00f2ff); }
+  /* Llega como una notificación del sistema: flota sobre la barra de la ventana, no sobre los datos. */
+  .es-toast { position: absolute; z-index: 3; right: -10px; top: -44px; display: flex; gap: 8px; align-items: flex-start; max-width: 260px; padding: 9px 11px; border-radius: 12px; background: #1b1b23; border: 1px solid rgba(255, 107, 61, 0.35); box-shadow: 0 16px 34px -12px rgba(0, 0, 0, 0.8); font-size: 11px; line-height: 1.35; color: #c4c4cc; opacity: 0; visibility: hidden; }
+  .es-toast b { color: #e7e7ec; font-weight: 500; }
+  .es-toast-app { flex: none; padding: 1px 6px; border-radius: 5px; background: var(--es-ember); color: #121216; font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; font-weight: 600; }
+
+  /* P&L */
+  .es-pnl-cab { display: flex; justify-content: space-between; font-size: 13px; }
+  .es-pnl-filas { display: grid; gap: 4px; }
+  .es-pnl-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto 64px 52px; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); font-size: 12px; }
+  .es-pnl-nombre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .es-pnl-origen { font-size: 10.5px; color: #85858f; white-space: nowrap; }
+  .es-pnl-div { font-size: 10px; color: var(--es-cyan); text-align: right; opacity: 0.8; }
+  .es-pnl-mes { text-align: right; }
+  .es-pnl-total { background: transparent; border-top: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0; font-weight: 500; }
+  .es-pnl-total .es-mono { text-align: right; color: var(--es-ember); }
+  .es-pnl-ing { display: grid; gap: 7px; }
+  .es-pnl-barra { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: rgba(255, 255, 255, 0.05); }
+  .es-pnl-barra > span { display: block; height: 100%; transform-origin: left; }
+  .es-seg-cob, .es-cob { background: var(--es-lime); }
+  .es-seg-pen, .es-pen { background: var(--es-amber); }
+  .es-seg-pro, .es-pro { background: repeating-linear-gradient(135deg, rgba(0, 242, 255, 0.55) 0 3px, rgba(0, 242, 255, 0.12) 3px 6px); }
+  .es-pnl-barra .es-seg-pen.is-cobrado { background: var(--es-lime); }
+  .es-pnl-ley { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 10.5px; color: #85858f; }
+  .es-pnl-ley i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+  .es-pnl-margen { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 11px; border-radius: 10px; background: rgba(201, 255, 91, 0.04); border: 1px solid rgba(201, 255, 91, 0.16); }
+  .es-pnl-cifra { margin-left: auto; font-family: var(--font-mono, ui-monospace, monospace); font-size: 20px; font-weight: 500; color: var(--es-lime); }
+  .es-pnl-margen .es-pill { visibility: hidden; }
+
+  /* Seguimiento */
+  .es-seg-cab { display: flex; align-items: center; justify-content: space-between; }
+  .es-toggle { position: relative; display: inline-flex; padding: 3px; border-radius: 99px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); }
+  .es-toggle-op { position: relative; z-index: 1; padding: 3px 12px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: #85858f; transition: color 0.3s ease; }
+  .es-toggle-op.is-on { color: #121216; }
+  .es-toggle-luz { position: absolute; top: 3px; bottom: 3px; left: 3px; border-radius: 99px; background: var(--es-cyan); }
+  .es-seg-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .es-seg-item { position: relative; display: grid; grid-template-columns: 8px minmax(0, 1fr) auto 44px; gap: 9px; align-items: center; padding: 8px 10px; border-radius: 9px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); overflow: hidden; }
+  .es-seg-punto { width: 7px; height: 7px; border-radius: 99px; background: var(--es-lime); }
+  .es-seg-prox .es-seg-punto { background: var(--es-cyan); }
+  .es-seg-texto { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .es-seg-fecha { font-size: 10px; color: #6b6b78; text-align: right; }
+  .es-vis { padding: 1px 7px; border-radius: 99px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; border: 1px solid; }
+  .es-vis-publico { color: var(--es-lime); border-color: rgba(201, 255, 91, 0.3); }
+  .es-vis-cliente { color: var(--es-cyan); border-color: rgba(0, 242, 255, 0.3); }
+  .es-vis-interno { color: var(--es-amber); border-color: rgba(251, 191, 36, 0.35); }
+  .es-seg-item[data-interno] { background: rgba(251, 191, 36, 0.04); }
+  .es-seg-oculto { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(18, 18, 22, 0.85); font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: var(--es-amber); opacity: 0; }
+  .es-pulso { animation: es-pulso 1.8s ease-in-out infinite; }
+  @keyframes es-pulso { 50% { box-shadow: 0 0 0 5px rgba(0, 242, 255, 0); opacity: 0.55; } }
+
+  /* Bóveda */
+  .es-bov-form { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; }
+  .es-bov-campo { display: flex; align-items: center; min-height: 28px; padding: 5px 9px; border-radius: 7px; background: #0b0b0f; border: 1px solid rgba(255, 255, 255, 0.08); font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; color: #e7e7ec; overflow: hidden; white-space: nowrap; }
+  .es-cursor { display: inline-block; width: 1px; height: 13px; margin-left: 2px; background: var(--es-cyan); opacity: 0; }
+  .es-bov-guardar { grid-column: 2; justify-self: end; padding: 4px 12px; border-radius: 99px; background: var(--es-cyan); color: #121216; font-size: 11px; font-weight: 500; }
+  .es-bov-paso { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: var(--es-cyan); }
+  .es-bov-paso::before, .es-bov-paso::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.4), transparent); }
+  .es-bov-cifra { display: block; padding: 9px 10px; border-radius: 8px; background: #0b0b0f; border: 1px solid rgba(255, 255, 255, 0.08); font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; line-height: 1.55; word-break: break-all; color: #6b6b78; }
+  .es-iv, .es-iv-c { color: var(--es-cyan); }
+  .es-tag, .es-tag-c { color: var(--es-lime); }
+  .es-ct, .es-ct-c { color: #c4c4cc; }
+  .es-byte { border-radius: 2px; }
+  .es-byte.is-alterado { background: var(--es-ember); color: #121216; }
+  .es-bov-partes { display: flex; gap: 14px; font-size: 10px; color: #85858f; }
+  .es-bov-partes i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 5px; background: currentColor; }
+  .es-bov-partes span:nth-child(1) i { background: var(--es-cyan); }
+  .es-bov-partes span:nth-child(2) i { background: var(--es-lime); }
+  .es-bov-partes span:nth-child(3) i { background: #c4c4cc; }
+  .es-bov-alt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 10.5px; }
+  .es-bov-llave { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #85858f; }
+  .es-bov-llave svg { color: var(--es-cyan); flex: none; }
+
+  /* Pipeline */
+  .es-ci-run { display: flex; align-items: baseline; gap: 6px; font-size: 11px; }
+  .es-ci-run b { font-weight: 500; }
+  .es-ci-prod { margin-left: auto; color: #85858f; }
+  .es-ci-prod b { color: var(--es-lime); }
+  .es-ci-etapas { position: relative; list-style: none; margin: 0; padding: 10px 0 2px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .es-ci-linea { position: absolute; left: 10%; right: 10%; top: 17px; height: 2px; background: rgba(255, 255, 255, 0.08); }
+  .es-ci-linea > span { position: absolute; inset: 0; background: var(--es-cyan); transform-origin: left; transform: scaleX(1); }
+  .es-ci-etapa { position: relative; display: grid; justify-items: center; gap: 8px; }
+  .es-ci-nodo { width: 16px; height: 16px; border-radius: 99px; background: #121216; border: 2px solid #3a3a48; transition: border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease; }
+  .es-ci-etapa[data-estado='curso'] .es-ci-nodo { border-color: var(--es-cyan); box-shadow: 0 0 0 4px rgba(0, 242, 255, 0.15); }
+  .es-ci-etapa[data-estado='listo'] .es-ci-nodo { border-color: var(--es-lime); background: var(--es-lime); }
+  .es-ci-etapa[data-estado='fallo'] .es-ci-nodo { border-color: var(--es-ember); background: var(--es-ember); box-shadow: 0 0 14px rgba(255, 107, 61, 0.6); }
+  .es-ci-nombre { font-size: 10px; color: #85858f; text-align: center; }
+  .es-ci-etapa[data-estado='fallo'] .es-ci-nombre { color: var(--es-ember); }
+  .es-ci-rollback { display: flex; align-items: center; gap: 7px; justify-content: center; padding: 7px; border-radius: 8px; background: rgba(255, 107, 61, 0.07); border: 1px dashed rgba(255, 107, 61, 0.4); font-size: 11px; color: #f3c6b8; }
+  .es-ci-rollback svg { color: var(--es-ember); }
+  .es-ci-hist { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+  .es-ci-fila { display: grid; grid-template-columns: 6px auto minmax(0, 1fr) auto auto; gap: 9px; align-items: center; padding: 7px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); font-size: 11px; }
+  .es-ci-fila > span:nth-child(3) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .es-dot-revertido { background: var(--es-ember); }
+
+  /* Caos */
+  .es-caos-flags { display: grid; gap: 5px; }
+  .es-caos-flag { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 8px 10px; border-radius: 9px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); font-size: 12px; transition: border-color 0.3s ease; }
+  .es-caos-flag[data-on] { border-color: rgba(255, 107, 61, 0.35); }
+  .es-caos-ttl { font-size: 10.5px; color: #85858f; }
+  .es-caos-flag[data-on] .es-caos-ttl { color: var(--es-ember); }
+  .es-switch { position: relative; width: 26px; height: 15px; border-radius: 99px; background: #2e2e3a; transition: background-color 0.3s ease; }
+  .es-switch > span { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 99px; background: #e7e7ec; transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1); }
+  .es-caos-flag[data-on] .es-switch { background: rgba(255, 107, 61, 0.7); }
+  .es-caos-flag[data-on] .es-switch > span { transform: translateX(11px); }
+  .es-caos-carriles { display: grid; gap: 6px; padding: 10px; border-radius: 10px; background: #0b0b0f; border: 1px solid rgba(255, 255, 255, 0.06); }
+  .es-caos-carril { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 8px; align-items: center; }
+  .es-caos-ruta { font-size: 11px; color: #c4c4cc; white-space: nowrap; }
+  .es-candado { font-style: normal; font-size: 9px; }
+  .es-caos-resp { display: flex; gap: 4px; overflow: hidden; }
+  .es-resp { flex: none; padding: 2px 6px; border-radius: 5px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; }
+  .es-resp-ok { color: var(--es-lime); background: rgba(201, 255, 91, 0.08); }
+  .es-resp-mal { color: var(--es-ember); background: rgba(255, 107, 61, 0.1); }
+  .es-caos-prot { font-size: 10px; color: #6b6b78; }
+  .es-caos-det { font-size: 11px; color: var(--es-amber); }
+  .es-caos-pie { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; font-size: 10.5px; }
+  .es-panico { padding: 5px 12px; border-radius: 99px; border: 1px solid rgba(255, 107, 61, 0.45); background: rgba(255, 107, 61, 0.1); color: var(--es-ember); font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* Seguridad */
+  .es-sec-eventos { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+  .es-sec-ev { display: grid; grid-template-columns: 7px minmax(0, 1fr) auto auto; gap: 9px; align-items: center; padding: 7px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); font-size: 12px; }
+  .es-sec-ev .es-mono { font-size: 10.5px; }
+  .es-sec-cat { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .es-sev { width: 7px; height: 7px; border-radius: 99px; }
+  .es-sev-medium { background: var(--es-amber); }
+  .es-sev-high { background: #f97316; }
+  .es-sev-critical { background: #ef4444; }
+  .es-sec-z { display: grid; gap: 8px; }
+  .es-sec-graf { position: relative; display: flex; align-items: flex-end; gap: 3px; height: 74px; padding-top: 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+  .es-sec-col { flex: 1; border-radius: 2px 2px 0 0; background: rgba(0, 242, 255, 0.45); transform-origin: bottom; }
+  .es-sec-pico { background: var(--es-ember); box-shadow: 0 0 14px rgba(255, 107, 61, 0.5); }
+  .es-sec-techo { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed rgba(251, 191, 36, 0.55); }
+  .es-sec-techo i { position: absolute; left: 0; top: -15px; font-style: normal; font-size: 9.5px; color: var(--es-amber); }
+  .es-sec-marca { position: absolute; right: 0; top: -2px; padding: 1px 7px; border-radius: 99px; background: rgba(255, 107, 61, 0.14); color: var(--es-ember); font-size: 10px; }
+  .es-sec-esc { display: grid; gap: 8px; }
+  .es-sec-pasos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+  .es-sec-paso { position: relative; padding: 6px 0; text-align: center; font-size: 11px; color: #6b6b78; border: 1px solid rgba(255, 255, 255, 0.07); transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease; }
+  .es-sec-paso:first-child { border-radius: 8px 0 0 8px; }
+  .es-sec-paso:last-child { border-radius: 0 8px 8px 0; }
+  .es-sec-paso.is-on { color: #121216; background: var(--es-ember); border-color: var(--es-ember); }
+  .es-sec-paso:nth-child(1).is-on { background: var(--es-amber); border-color: var(--es-amber); }
+  .es-sec-paso:nth-child(2).is-on { background: #f97316; border-color: #f97316; }
+  .es-sec-nunca { font-size: 10px; }
+</style>

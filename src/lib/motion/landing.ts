@@ -23,10 +23,12 @@ import { foco, inclinar, magnetico, odometro, punteroFino, revelarTitular } from
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
-export function montarLanding(opciones: { inclinarPieza?: number } = {}) {
+export function montarLanding(opciones: { inclinarPieza?: number; anclas?: boolean } = {}) {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-  const lenis = new Lenis()
+  // Con `anclas`, los enlaces a #id de la misma página se desplazan con Lenis
+  // en vez de saltar, y se detienen bajo la barra de navegación fija.
+  const lenis = new Lenis(opciones.anclas ? { anchors: { offset: -96 } } : {})
   lenis.on('scroll', ScrollTrigger.update)
   gsap.ticker.add((time) => lenis.raf(time * 1000))
   gsap.ticker.lagSmoothing(0)

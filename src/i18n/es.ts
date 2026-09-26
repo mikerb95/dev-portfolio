@@ -481,7 +481,6 @@ const es = {
           seg: 'Seguimiento',
           boveda: 'Bóveda',
           ntfy: 'Celular',
-          status: 'Status público',
           portal: 'Portal cliente',
         },
         lecturas: {
@@ -570,7 +569,6 @@ const es = {
         hoy: 'hoy',
         slo: 'SLO {obj} % · 30 días',
         presupuesto: 'presupuesto de error restante',
-        burn: 'burn rate',
         incidente: 'incidente abierto',
         cerrado: 'cerrado · 6 min',
         toast: 'contenido inesperado: respondió 200 con otra página',

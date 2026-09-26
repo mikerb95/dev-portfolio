@@ -46,16 +46,18 @@ const BASE: Partial<Record<NodoId, string>> = {
   seg: lecturas.hitos,
   boveda: lecturas.cifrados,
   ntfy: lecturas.silencio,
-  status: lecturas.operativo,
   portal: lecturas.alDia,
+  rutas: 'v1.4',
   'r-home': '200',
+  'r-status': '200',
   'r-tienda': '200',
-  'r-api': '200',
   admin: '',
 }
 
-const nombreDe = (id: NodoId): string =>
-  id === 'r-home' ? '/' : id === 'r-tienda' ? '/tienda' : id === 'r-api' ? '/api' : id === 'admin' ? '/admin' : (c.nodos as Record<string, string>)[id]
+// Nombres de las rutas y franjas: son rutas, no prosa, y no se traducen.
+const RUTAS: Partial<Record<NodoId, string>> = { 'r-home': '/', 'r-status': '/status', 'r-tienda': '/tienda', rutas: 'SSR', admin: '/admin' }
+const nombres = { ...c.nodos, ...RUTAS } as Record<string, string>
+const nombreDe = (id: NodoId): string => nombres[id] ?? id
 
 // Pista bajo el cursor: la frase de cada caso, del mismo diccionario que los casos.
 const tipDe = (id: NodoId) => {
@@ -66,12 +68,16 @@ const tipDe = (id: NodoId) => {
 type Nodo = { id: NodoId; num?: string; nombre: string; base: string; tip: string }
 const nodo = (id: NodoId): Nodo => ({ id, num: CASO_DE[id], nombre: nombreDe(id), base: BASE[id] ?? '', tip: tipDe(id) })
 
-const entradas = (['internet', 'ci', 'monitor'] as NodoId[]).map(nodo)
-const salidas = (['ntfy', 'status', 'portal'] as NodoId[]).map(nodo)
+// Cada nodo de fuera queda a la altura de la franja con la que habla (subgrid),
+// así casi todos los cables son rectos: el tráfico entra por el middleware, el
+// deploy reemplaza las rutas, el monitor sondea /tienda (la última ruta) y el
+// portal lee del panel.
+const entradas = (['internet', 'ci'] as NodoId[]).map(nodo)
+const salidas = (['ntfy', 'monitor', 'portal'] as NodoId[]).map(nodo)
 const bandas = [
-  { id: 'mw', etiqueta: 'middleware', nodos: (['siem', 'caos'] as NodoId[]).map(nodo) },
-  { id: 'rutas', etiqueta: 'SSR', nodos: (['r-home', 'r-tienda', 'r-api'] as NodoId[]).map(nodo) },
-  { id: 'admin', etiqueta: '/admin', nodos: (['pnl', 'seg', 'boveda'] as NodoId[]).map(nodo) },
+  { id: 'mw', etiqueta: 'middleware', nodo: undefined, nodos: (['siem', 'caos'] as NodoId[]).map(nodo) },
+  { id: 'rutas', etiqueta: 'SSR', nodo: 'rutas' as NodoId, nodos: (['r-home', 'r-status', 'r-tienda'] as NodoId[]).map(nodo) },
+  { id: 'admin', etiqueta: '/admin', nodo: 'admin' as NodoId, nodos: (['pnl', 'seg', 'boveda'] as NodoId[]).map(nodo) },
 ]
 
 // Bitácora del servidor: el primer escenario terminado, últimas 4 líneas.
@@ -88,7 +94,7 @@ const tiempoDe = (i: number, linea: number) => {
   data-circuito
   data-escenarios={JSON.stringify(escenarios)}
   data-lecturas={JSON.stringify(lecturas)}
-  data-nodos={JSON.stringify(c.nodos)}
+  data-nodos={JSON.stringify(nombres)}
   aria-label={c.etiqueta}
 >
   <div class="co-mapa" data-mapa>
@@ -118,10 +124,10 @@ const tiempoDe = (i: number, linea: number) => {
         <span class="co-sitio-sub">{c.sitio}</span>
       </div>
       {bandas.map((b) => (
-        <div class={`co-banda co-banda-${b.id}`} data-nodo={b.id === 'admin' ? 'admin' : undefined} data-estado={b.id === 'admin' ? 'reposo' : undefined}>
+        <div class={`co-banda co-banda-${b.id}`} data-nodo={b.nodo} data-estado={b.nodo ? 'reposo' : undefined}>
           <span class="co-banda-rot">
             {b.etiqueta}
-            {b.id === 'admin' && <span class="co-lectura co-banda-lectura" data-lectura data-base=""></span>}
+            {b.nodo && <span class="co-lectura co-banda-lectura" data-lectura data-base={BASE[b.nodo]}>{BASE[b.nodo]}</span>}
           </span>
           <div class="co-banda-nodos">
             {b.nodos.map((n) => (
@@ -162,7 +168,7 @@ const tiempoDe = (i: number, linea: number) => {
     {inicial.map((l) => (
       <li class="co-linea" data-tono={l.tono}>
         <span class="co-linea-t">{tiempoDe(0, l.linea)}</span>
-        <span class="co-linea-nodo">{(c.nodos as Record<string, string>)[l.nodo]}</span>
+        <span class="co-linea-nodo">{nombres[l.nodo]}</span>
         <span class="co-linea-txt">{escenarios[0].lineas[l.linea]}</span>
       </li>
     ))}
@@ -198,8 +204,9 @@ const tiempoDe = (i: number, linea: number) => {
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 118px) minmax(0, 1fr) minmax(0, 118px);
-    gap: 34px;
-    align-items: stretch;
+    grid-template-rows: auto repeat(3, auto);
+    column-gap: 34px;
+    row-gap: 8px;
   }
   .co-cables {
     position: absolute;
@@ -218,14 +225,17 @@ const tiempoDe = (i: number, linea: number) => {
   }
   .co-cable.is-luz { stroke: rgba(0, 242, 255, 0.45); }
   .co-traza { fill: none; stroke-width: 1.5; stroke-linecap: round; }
-  .co-col {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    gap: 14px;
-  }
+  /* En escritorio las columnas se disuelven en la rejilla del mapa y cada
+     nodo de fuera se sienta en la fila de su franja (el sitio es subgrid). */
+  .co-col { display: contents; }
+  /* Abajo y con el mismo margen que el relleno de la franja: así el centro
+     del nodo cae a la altura de los chips, no del rótulo de la franja. */
+  .co-col > .co-nodo { align-self: end; margin-bottom: 8px; }
+  .co-nodo[data-nodo='internet'] { grid-area: 2 / 1; }
+  .co-nodo[data-nodo='ci'] { grid-area: 3 / 1; }
+  .co-nodo[data-nodo='ntfy'] { grid-area: 2 / 3; }
+  .co-nodo[data-nodo='monitor'] { grid-area: 3 / 3; }
+  .co-nodo[data-nodo='portal'] { grid-area: 4 / 3; }
 
   /* Nodos: fondo opaco a propósito, los cables pasan POR DEBAJO. */
   .co-nodo {
@@ -290,9 +300,10 @@ const tiempoDe = (i: number, linea: number) => {
   .co-sitio {
     position: relative;
     z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    display: grid;
+    grid-template-rows: subgrid;
     padding: 10px;
     border-radius: 16px;
     border: 1px solid rgba(0, 242, 255, 0.18);
@@ -421,9 +432,10 @@ const tiempoDe = (i: number, linea: number) => {
   /* Móvil: el flujo pasa de izquierda-derecha a arriba-abajo. Mismas piezas,
      misma lógica de cables (el conector elige el eje por la distancia). */
   @media (max-width: 767px) {
-    .co-mapa { grid-template-columns: minmax(0, 1fr); gap: 26px; }
-    .co-col { flex-direction: row; gap: 6px; }
-    .co-col > .co-nodo { flex: 1 1 0; min-width: 0; }
+    .co-mapa { display: flex; flex-direction: column; gap: 26px; }
+    .co-col { display: flex; flex-direction: row; gap: 6px; }
+    .co-col > .co-nodo { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
+    .co-sitio { display: flex; flex-direction: column; gap: 8px; }
     .co-nodo { padding: 6px 7px 7px; }
     .co-nombre { font-size: 11px; }
     .co-lectura { font-size: 9.5px; }

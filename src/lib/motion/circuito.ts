@@ -1,8 +1,8 @@
 // Guion y geometría del hero de /tools: el "circuito de operación".
 //
 // La pieza dibuja el sitio con sus tres franjas (middleware, rutas y /admin),
-// lo que entra desde fuera (tráfico, despliegues, monitores) y lo que sale
-// (el celular, /status, el portal del cliente). Sobre ese mapa se reproducen
+// lo que llega desde fuera (tráfico, despliegues) y lo que lo vigila y avisa
+// (el monitor, el celular, el portal del cliente). Sobre ese mapa se reproducen
 // cuatro escenarios en bucle, y cada uno cruza las herramientas que intervienen
 // de verdad en ese caso: nada viaja por un cable que no exista en el código.
 //   · caos: un flag rompe /tienda, el monitor lo ve, la alerta llega y el pánico
@@ -18,23 +18,23 @@
 // Módulo puro, probado en tests/motion-tools.test.ts.
 
 export const NODOS = [
-  // Entradas (columna izquierda en escritorio, fila de arriba en móvil).
+  // Lo que llega (columna izquierda en escritorio, fila de arriba en móvil).
   'internet',
   'ci',
-  'monitor',
   // Franjas del sitio.
   'siem',
   'caos',
+  'rutas',
   'r-home',
+  'r-status',
   'r-tienda',
-  'r-api',
   'admin',
   'pnl',
   'seg',
   'boveda',
-  // Salidas.
+  // Vigilancia y avisos (columna derecha, fila de abajo en móvil).
+  'monitor',
   'ntfy',
-  'status',
   'portal',
 ] as const
 
@@ -115,15 +115,13 @@ export const ESCENARIOS: Escenario[] = [
       l(3.4, 'monitor', 1, 'error'),
       e(3.4, 'monitor', 'error', { k: 'caida' }),
       l(4.0, 'monitor', 2, 'error'),
-      // La alerta no sale del monitor: la manda el cron que corre en /api, en
-      // el mismo sitio. Por eso el paquete pasa por la ruta antes del celular.
-      v(4.4, 'monitor', 'r-api', 'dato'),
-      v(5.2, 'r-api', 'ntfy', 'error'),
-      e(6.0, 'ntfy', 'error', { k: 'alertaRecibida' }),
-      l(6.0, 'ntfy', 3, 'error'),
-      v(6.4, 'r-api', 'status', 'error'),
-      e(7.2, 'status', 'alerta', { k: 'incidente' }),
-      l(7.2, 'status', 4, 'alerta'),
+      v(4.6, 'monitor', 'ntfy', 'error'),
+      e(5.4, 'ntfy', 'error', { k: 'alertaRecibida' }),
+      l(5.4, 'ntfy', 3, 'error'),
+      // /status es una ruta más del sitio y lee el mismo historial del monitor.
+      v(6.2, 'monitor', 'r-status', 'error'),
+      e(7.0, 'r-status', 'alerta', { k: 'incidente' }),
+      l(7.0, 'r-status', 4, 'alerta'),
       l(8.2, 'caos', 5, 'ok'),
       e(8.2, 'caos', 'reposo'),
       v(8.4, 'caos', 'r-tienda', 'ok'),
@@ -133,7 +131,7 @@ export const ESCENARIOS: Escenario[] = [
       e(11.0, 'monitor', 'ok', { k: 'arriba' }),
       l(11.0, 'monitor', 6, 'ok'),
       e(11.0, 'ntfy', 'reposo'),
-      e(11.0, 'status', 'reposo'),
+      e(11.0, 'r-status', 'reposo'),
       l(11.8, 'monitor', 7, 'ok'),
       e(12.8, 'monitor', 'reposo'),
     ],
@@ -145,28 +143,30 @@ export const ESCENARIOS: Escenario[] = [
     pasos: [
       l(0, 'ci', 0, 'dato'),
       e(0, 'ci', 'activo', { c: 'push' }),
-      v(0.9, 'ci', 'r-home', 'dato'),
+      // Un deploy reemplaza el sitio entero: el paquete va a la franja de
+      // rutas, no a una ruta.
+      v(0.9, 'ci', 'rutas', 'dato'),
       l(0.9, 'ci', 1, 'dato'),
-      e(1.7, 'r-home', 'activo', { c: 'v1.5' }),
+      e(1.7, 'rutas', 'activo', { c: 'v1.5' }),
       e(1.7, 'ci', 'activo', { c: 'v1.5' }),
       // El health check es contra el sitio real, no contra un mock: ida y vuelta.
-      v(2.5, 'ci', 'r-home', 'dato'),
-      v(3.3, 'r-home', 'ci', 'error'),
+      v(2.5, 'ci', 'rutas', 'dato'),
+      v(3.3, 'rutas', 'ci', 'error'),
       l(4.1, 'ci', 2, 'error'),
-      e(4.1, 'r-home', 'error', { c: 'v1.5 ✕' }),
+      e(4.1, 'rutas', 'error', { c: 'v1.5 ✕' }),
       e(4.1, 'ci', 'error', { k: 'healthFalla' }),
       l(5.0, 'ci', 3, 'ok'),
-      v(5.0, 'ci', 'r-home', 'ok'),
-      e(5.8, 'r-home', 'ok', { c: 'v1.4' }),
+      v(5.0, 'ci', 'rutas', 'ok'),
+      e(5.8, 'rutas', 'ok', { c: 'v1.4' }),
       e(5.8, 'ci', 'ok', { c: 'v1.4' }),
-      v(6.4, 'ci', 'r-home', 'dato'),
-      v(7.2, 'r-home', 'ci', 'ok'),
+      v(6.4, 'ci', 'rutas', 'dato'),
+      v(7.2, 'rutas', 'ci', 'ok'),
       l(8.0, 'ci', 4, 'ok'),
       v(8.5, 'ci', 'admin', 'dato'),
       e(9.3, 'admin', 'activo', { k: 'runRegistrado' }),
       l(9.3, 'ci', 5, 'dato'),
       e(10.8, 'ci', 'reposo'),
-      e(10.8, 'r-home', 'reposo'),
+      e(10.8, 'rutas', 'reposo'),
       e(10.8, 'admin', 'reposo'),
     ],
   },
@@ -197,11 +197,9 @@ export const ESCENARIOS: Escenario[] = [
       l(6.6, 'siem', 4, 'error'),
       l(7.6, 'siem', 5, 'error'),
       e(7.6, 'siem', 'error', { k: 'bloqueo1h' }),
-      // Como la alerta del monitor: la manda el cron del sitio, no la capa.
-      v(8.6, 'siem', 'r-api', 'dato'),
-      v(9.4, 'r-api', 'ntfy', 'alerta'),
-      e(10.2, 'ntfy', 'alerta', { k: 'anomalia' }),
-      l(10.2, 'ntfy', 6, 'alerta'),
+      v(8.6, 'siem', 'ntfy', 'alerta', { dur: 1 }),
+      e(9.6, 'ntfy', 'alerta', { k: 'anomalia' }),
+      l(9.6, 'ntfy', 6, 'alerta'),
       e(11.6, 'siem', 'reposo'),
       e(11.6, 'ntfy', 'reposo'),
     ],
@@ -292,6 +290,10 @@ const r1 = (n: number) => Math.round(n * 10) / 10
  * mismo mapa sirve en columnas (escritorio) y en filas (móvil) sin rutas
  * escritas a mano.
  */
+/** Desfase por debajo del cual un conector se endereza en vez de hacer codo. */
+export const ENDEREZAR = 10
+const dentro = (v: number, desde: number, largo: number) => v >= desde + 4 && v <= desde + largo - 4
+
 export function conector(a: Caja, b: Caja): Punto[] {
   const ca = { x: a.x + a.w / 2, y: a.y + a.h / 2 }
   const cb = { x: b.x + b.w / 2, y: b.y + b.h / 2 }
@@ -306,13 +308,16 @@ export function conector(a: Caja, b: Caja): Punto[] {
   if (horizontal) {
     const s = { x: dx >= 0 ? a.x + a.w : a.x, y: ca.y }
     const f = { x: dx >= 0 ? b.x : b.x + b.w, y: cb.y }
-    if (Math.abs(s.y - f.y) < 0.5) return [s, { x: f.x, y: s.y }]
+    // Un codo de pocos píxeles se lee como un error de alineación, no como un
+    // giro: si el desfase cabe dentro de las dos cajas, la recta va a la
+    // altura del destino.
+    if (Math.abs(s.y - f.y) < ENDEREZAR && dentro(f.y, a.y, a.h)) return [{ x: s.x, y: f.y }, f]
     const mx = (s.x + f.x) / 2
     return [s, { x: mx, y: s.y }, { x: mx, y: f.y }, f]
   }
   const s = { x: ca.x, y: dy >= 0 ? a.y + a.h : a.y }
   const f = { x: cb.x, y: dy >= 0 ? b.y : b.y + b.h }
-  if (Math.abs(s.x - f.x) < 0.5) return [s, { x: s.x, y: f.y }]
+  if (Math.abs(s.x - f.x) < ENDEREZAR && dentro(f.x, a.x, a.w)) return [{ x: f.x, y: s.y }, f]
   const my = (s.y + f.y) / 2
   return [s, { x: s.x, y: my }, { x: f.x, y: my }, f]
 }
