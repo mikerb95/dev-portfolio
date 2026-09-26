@@ -107,7 +107,7 @@ export function alterarCifrado(guardado: string, cual = 0.5): { alterado: string
  * detector del cron de seguridad (detectSpikes, z-score sobre la base), así
  * que la maqueta marca como anomalía solo lo que el sistema marcaría.
  */
-export const HORAS_EJEMPLO = [9, 11, 8, 12, 10, 9, 13, 11, 10, 8, 12, 11, 9, 10, 12, 11, 27]
+export const HORAS_EJEMPLO = [9, 11, 8, 12, 10, 9, 13, 11, 10, 8, 12, 11, 9, 10, 12, 11, 19]
 
 export function datosAnomalia(horas = HORAS_EJEMPLO, umbral = 3) {
   const base = horas.slice(0, -1)

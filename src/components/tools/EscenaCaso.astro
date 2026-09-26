@@ -33,7 +33,7 @@ const m = d.tools.motion
 const n = (v: number, dec = 0) => formatNumber(v, locale, { minimumFractionDigits: dec, maximumFractionDigits: dec })
 
 // ── Monitores ───────────────────────────────────────────────────────────
-const hosts = d.toolMock.monitorHosts
+const hosts = m.monitors.hosts
 const latencias = ['182 ms', '240 ms', '311 ms']
 const slo = datosSlo()
 const barras = (caidas: number[]) => Array.from({ length: 30 }, (_, i) => (caidas.includes(i) ? 'caida' : 'ok'))
