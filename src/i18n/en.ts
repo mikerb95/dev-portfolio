@@ -753,8 +753,8 @@ const en = {
       intro: 'This site runs its own security observability engine (a "micro-SIEM"): an OWASP-aligned threat classifier runs in the middleware on every request, decoy endpoints confirm malicious intent, and an hourly cron applies temporary blocks and statistically detects anomalies (z-score over a 30-day baseline). The numbers below are real aggregates from the last {days} days.',
       detected: 'Detected (30d)',
       autoBlocks: 'Automatic blocks',
-      owaspCategories: 'OWASP categories',
-      byCategoryHeading: 'Breakdown by category (OWASP)',
+      categoriesDetected: 'Categories detected',
+      byCategoryHeading: 'Breakdown by category',
       byCategoryEmpty: 'No hostile activity in this window.',
       byCountryHeading: 'Geographic origin',
       byCountryEmpty: 'No geolocation data in this window.',
@@ -895,9 +895,9 @@ const en = {
     ],
     methodology: {
       heading: 'Methodology',
-      p1: "The review covered authentication and access control, file uploads, public endpoints, secret handling, payment webhooks, and response headers - this repository's real code, not a theoretical exercise.",
-      p2: 'Every finding was classified against the OWASP Top 10 (2021), fixed in a dedicated commit, and verified with the test suite and a full build before merging.',
-      p3: 'This page is updated every time an audit finds or fixes something new. What you see here is the real state of the code in production.',
+      p1: "Two reviews of this repository's real code, not a theoretical exercise. July's covered access control, file uploads, public endpoints, secrets, payment webhooks, and response headers; September's covered the panel: passkeys, sessions and their revocation, the audit trail, and what the site publishes from the database.",
+      p2: 'Every finding was classified against the OWASP Top 10 (2021) and links to the commit that closed it. Some commits close two findings, and one carries other changes alongside the fix: the link points to the real commit, not one staged for this page. Every fix went through the test suite and a full build.',
+      p3: 'This page is updated with every audit. Only fixed findings are published: whatever a review leaves open does not appear here until it is closed. What you see is the real state of the code in production.',
     },
     severity: { alta: 'high', media: 'medium' },
     motion: {

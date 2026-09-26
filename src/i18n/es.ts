@@ -772,8 +772,10 @@ const es = {
       intro: 'Este sitio corre su propio motor de observabilidad de seguridad (un "micro-SIEM"): un clasificador de amenazas alineado con OWASP corre en el middleware de cada request, endpoints señuelo confirman intención maliciosa, y un cron horario aplica bloqueos temporales y detecta anomalías por estadística (z-score sobre una baseline de 30 días). Los números de abajo son agregados reales de los últimos {days} días.',
       detected: 'Detectados (30d)',
       autoBlocks: 'Bloqueos automáticos',
-      owaspCategories: 'Categorías OWASP',
-      byCategoryHeading: 'Desglose por categoría (OWASP)',
+      // No solo OWASP: el clasificador también cuenta bots, reincidencias,
+      // señuelos y abuso de API. El rótulo dice lo que la cifra cuenta.
+      categoriesDetected: 'Categorías detectadas',
+      byCategoryHeading: 'Desglose por categoría',
       byCategoryEmpty: 'Sin actividad hostil en la ventana.',
       byCountryHeading: 'Origen geográfico',
       byCountryEmpty: 'Sin datos de geolocalización en la ventana.',
@@ -914,9 +916,9 @@ const es = {
     ],
     methodology: {
       heading: 'Metodología',
-      p1: 'La revisión cubrió autenticación y control de acceso, subida de archivos, endpoints públicos, manejo de secretos, webhooks de pago y headers de respuesta - el código real de este repositorio, no un ejercicio teórico.',
-      p2: 'Cada hallazgo se clasificó contra OWASP Top 10 (2021), se corrigió en un commit dedicado y se verificó con la suite de tests y un build completo antes de mergear.',
-      p3: 'Esta página se actualiza cada vez que una auditoría encuentra o corrige algo nuevo. Lo que ves aquí es el estado real del código en producción.',
+      p1: 'Dos revisiones del código real de este repositorio, no un ejercicio teórico. La de julio cubrió control de acceso, subida de archivos, endpoints públicos, secretos, webhooks de pago y headers de respuesta; la de septiembre, el panel: llaves de acceso, sesiones y su revocación, el rastro de auditoría y lo que el sitio publica a partir de la base.',
+      p2: 'Cada hallazgo se clasificó contra OWASP Top 10 (2021) y enlaza el commit que lo cerró. Algunos commits cierran dos hallazgos, y alguno trae otros cambios junto al arreglo: el enlace lleva al commit real, no a uno preparado para esta página. Cada corrección pasó por la suite de tests y un build completo.',
+      p3: 'Esta página se actualiza con cada auditoría. Solo se publica lo corregido: lo que una revisión deja pendiente no aparece aquí hasta que se cierra. Lo que ves es el estado real del código en producción.',
     },
     severity: { alta: 'alta', media: 'media' },
     // Textos de las piezas animadas del rediseño (RF-024). Los datos de ejemplo
