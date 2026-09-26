@@ -12,7 +12,15 @@ function getKey(): Buffer {
 }
 
 export function encrypt(plaintext: string): string {
-  const key = getKey()
+  return encryptWith(getKey(), plaintext)
+}
+
+/**
+ * El cifrado con la clave como parámetro. La bóveda siempre pasa por
+ * `encrypt`; esta variante existe para que la maqueta pública de /tools cifre
+ * con el MISMO código y una clave de un solo uso, en vez de imitar el formato.
+ */
+export function encryptWith(key: Buffer, plaintext: string): string {
   const iv = randomBytes(12)
   const cipher = createCipheriv(ALGORITHM, key, iv)
   const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()])
@@ -22,7 +30,11 @@ export function encrypt(plaintext: string): string {
 
 export function decrypt(stored: string): string {
   if (!ENCRYPTED_RE.test(stored)) return stored // valor legacy sin cifrar
-  const key = getKey()
+  return decryptWith(getKey(), stored)
+}
+
+/** Descifrado con la clave como parámetro (ver `encryptWith`). Lanza si el valor fue alterado. */
+export function decryptWith(key: Buffer, stored: string): string {
   const [ivHex, tagHex, encHex] = stored.split(':')
   const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(ivHex, 'hex'))
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'))
