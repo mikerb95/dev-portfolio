@@ -358,8 +358,8 @@ OPSEC vs. el borrador original**: se cambió "top 5 rutas señuelo más atacadas
 "categoría más atacada" - listar rutas señuelo específicas contradice el principio de
 no revelar cuáles endpoints son honeypots. Bug encontrado y corregido en verificación
 visual: las barras de tendencia no renderizaban por falta de `h-full` en el contenedor
-flex (porcentaje de altura sin base de referencia). **Pendiente**: caso de estudio en
-`/tools` (contenido, no bloqueante). ✅ Artículo en `/notes` publicado el 2026-09-26:
+flex (porcentaje de altura sin base de referencia). ✅ Caso de estudio en `/tools`
+(caso 07, commit `a52664d` del 2026-07-10). ✅ Artículo en `/notes` publicado el 2026-09-26:
 `una-vitrina-de-seguridad-no-puede-mentir-ni-por-accidente` (y su versión en inglés).
 
 **Rediseño con motion (2026-09-25, RF-024)**: la vitrina pasó a mostrar el pipeline
