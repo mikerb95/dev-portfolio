@@ -1,0 +1,438 @@
+---
+// Hero de /tools: el "circuito de operación". El sitio al centro con sus tres
+// franjas (middleware, rutas, /admin), lo que entra desde fuera a la izquierda
+// y lo que sale a la derecha. Sobre ese mapa se reproducen cuatro escenarios
+// (caos, deploy roto, sondeo hostil, proyecto nuevo) que cruzan solo los
+// cables que existen en el código: la página promete que todo corre sobre el
+// mismo sistema, y esto lo enseña.
+//
+// El guion vive en src/lib/motion/circuito.ts y el motor en
+// src/lib/motion/circuito-vivo.ts. El servidor pinta el mapa en reposo y la
+// bitácora del primer escenario ya escrita; sin JS o con movimiento reducido
+// eso es lo que queda (las pestañas siguen cambiando la bitácora).
+import { getDictionary, getLocaleFromUrl, interpolate, formatNumber } from '../../i18n'
+import { CASO_DE, ESCENARIOS, lineasHasta, mmss, type NodoId } from '../../lib/motion/circuito'
+import { datosPnl } from '../../lib/motion/tools-datos'
+import { MAX_TTL_S } from '../../lib/chaos'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale).tools
+const c = t.motion.circuito
+
+// Los textos con datos se completan aquí, con los mismos valores que usa el
+// resto de la página: el TTL máximo real del motor de caos y el costo mensual
+// del hosting de la maqueta de P&L.
+const hosting = datosPnl().filas[0].mensualUSD
+const vars = {
+  ttl: mmss(MAX_TTL_S),
+  mensual: formatNumber(hosting, locale, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
+}
+const escenarios = ESCENARIOS.map((esc, i) => ({
+  id: esc.id,
+  nombre: c.escenarios[i].nombre,
+  lineas: c.escenarios[i].lineas.map((l) => interpolate(l, vars)),
+}))
+const lecturas = Object.fromEntries(Object.entries(c.lecturas).map(([k, v]) => [k, interpolate(v, vars)]))
+
+// Lo que muestra cada nodo en reposo. Las rutas enseñan su código HTTP, que
+// no se traduce.
+const BASE: Partial<Record<NodoId, string>> = {
+  internet: lecturas.trafico,
+  ci: lecturas.ciBase,
+  monitor: lecturas.arriba,
+  siem: lecturas.vigilando,
+  caos: lecturas.sinFlags,
+  pnl: lecturas.alDia,
+  seg: lecturas.hitos,
+  boveda: lecturas.cifrados,
+  ntfy: lecturas.silencio,
+  status: lecturas.operativo,
+  portal: lecturas.alDia,
+  'r-home': '200',
+  'r-tienda': '200',
+  'r-api': '200',
+  admin: '',
+}
+
+const nombreDe = (id: NodoId): string =>
+  id === 'r-home' ? '/' : id === 'r-tienda' ? '/tienda' : id === 'r-api' ? '/api' : id === 'admin' ? '/admin' : (c.nodos as Record<string, string>)[id]
+
+// Pista bajo el cursor: la frase de cada caso, del mismo diccionario que los casos.
+const tipDe = (id: NodoId) => {
+  const num = CASO_DE[id]
+  return num ? t.cases[Number(num) - 1].tagline : ''
+}
+
+type Nodo = { id: NodoId; num?: string; nombre: string; base: string; tip: string }
+const nodo = (id: NodoId): Nodo => ({ id, num: CASO_DE[id], nombre: nombreDe(id), base: BASE[id] ?? '', tip: tipDe(id) })
+
+const entradas = (['internet', 'ci', 'monitor'] as NodoId[]).map(nodo)
+const salidas = (['ntfy', 'status', 'portal'] as NodoId[]).map(nodo)
+const bandas = [
+  { id: 'mw', etiqueta: 'middleware', nodos: (['siem', 'caos'] as NodoId[]).map(nodo) },
+  { id: 'rutas', etiqueta: 'SSR', nodos: (['r-home', 'r-tienda', 'r-api'] as NodoId[]).map(nodo) },
+  { id: 'admin', etiqueta: '/admin', nodos: (['pnl', 'seg', 'boveda'] as NodoId[]).map(nodo) },
+]
+
+// Bitácora del servidor: el primer escenario terminado, últimas 4 líneas.
+const FILAS = 4
+const inicial = lineasHasta(ESCENARIOS[0], Infinity).slice(-FILAS)
+const tiempoDe = (i: number, linea: number) => {
+  const p = ESCENARIOS[i].pasos.find((x) => x.tipo === 'log' && x.linea === linea)
+  return mmss(p?.t ?? 0)
+}
+---
+
+<figure
+  class="co"
+  data-circuito
+  data-escenarios={JSON.stringify(escenarios)}
+  data-lecturas={JSON.stringify(lecturas)}
+  data-nodos={JSON.stringify(c.nodos)}
+  aria-label={c.etiqueta}
+>
+  <div class="co-mapa" data-mapa>
+    <svg class="co-cables" data-cables aria-hidden="true"></svg>
+
+    <div class="co-col co-entradas">
+      {entradas.map((n) => (
+        n.num ? (
+          <a class="co-nodo co-herramienta" href={`#caso-${n.num}`} data-nodo={n.id} data-estado="reposo" data-tip={n.tip}>
+            <span class="co-num">{n.num}</span>
+            <span class="co-nombre">{n.nombre}</span>
+            <span class="co-lectura" data-lectura data-base={n.base}>{n.base}</span>
+          </a>
+        ) : (
+          <div class="co-nodo co-externo" data-nodo={n.id} data-estado="reposo">
+            <span class="co-nombre">{n.nombre}</span>
+            <span class="co-lectura" data-lectura data-base={n.base}>{n.base}</span>
+          </div>
+        )
+      ))}
+    </div>
+
+    <div class="co-sitio">
+      <div class="co-sitio-cab">
+        <span class="co-led" aria-hidden="true"></span>
+        <span class="co-dominio">codebymike.net</span>
+        <span class="co-sitio-sub">{c.sitio}</span>
+      </div>
+      {bandas.map((b) => (
+        <div class={`co-banda co-banda-${b.id}`} data-nodo={b.id === 'admin' ? 'admin' : undefined} data-estado={b.id === 'admin' ? 'reposo' : undefined}>
+          <span class="co-banda-rot">
+            {b.etiqueta}
+            {b.id === 'admin' && <span class="co-lectura co-banda-lectura" data-lectura data-base=""></span>}
+          </span>
+          <div class="co-banda-nodos">
+            {b.nodos.map((n) => (
+              n.num ? (
+                <a class="co-nodo co-herramienta co-chip" href={`#caso-${n.num}`} data-nodo={n.id} data-estado="reposo" data-tip={n.tip}>
+                  <span class="co-num">{n.num}</span>
+                  <span class="co-nombre">{n.nombre}</span>
+                  <span class="co-lectura" data-lectura data-base={n.base}>{n.base}</span>
+                </a>
+              ) : (
+                <div class="co-nodo co-chip co-ruta" data-nodo={n.id} data-estado="reposo">
+                  <span class="co-nombre">{n.nombre}</span>
+                  <span class="co-lectura" data-lectura data-base={n.base}>{n.base}</span>
+                </div>
+              )
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div class="co-col co-salidas">
+      {salidas.map((n) => (
+        <div class="co-nodo co-externo" data-nodo={n.id} data-estado="reposo">
+          <span class="co-nombre">{n.nombre}</span>
+          <span class="co-lectura" data-lectura data-base={n.base}>{n.base}</span>
+        </div>
+      ))}
+    </div>
+
+    <div class="co-tip" data-tip-caja aria-hidden="true">
+      <span class="co-tip-texto" data-tip-texto></span>
+      <span class="co-tip-ir">{c.verCaso} ↓</span>
+    </div>
+  </div>
+
+  <ol class="co-bitacora" data-bitacora aria-live="off">
+    {inicial.map((l) => (
+      <li class="co-linea" data-tono={l.tono}>
+        <span class="co-linea-t">{tiempoDe(0, l.linea)}</span>
+        <span class="co-linea-nodo">{(c.nodos as Record<string, string>)[l.nodo]}</span>
+        <span class="co-linea-txt">{escenarios[0].lineas[l.linea]}</span>
+      </li>
+    ))}
+  </ol>
+
+  <div class="co-escenarios" role="group" aria-label={c.escenariosLabel}>
+    {escenarios.map((esc, i) => (
+      <button type="button" class="co-esc" data-esc={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+        <span class="co-esc-nombre">{esc.nombre}</span>
+        <span class="co-esc-barra" aria-hidden="true"><span data-esc-progreso></span></span>
+      </button>
+    ))}
+  </div>
+
+  <figcaption class="co-pie">{c.pie}</figcaption>
+</figure>
+
+<style is:global>
+  /* Prefijo `co-` y global: el script cambia estados con atributos, y cómo se
+     ve cada estado vive aquí. El script decide CUÁNDO, nunca CÓMO. */
+  .co {
+    --co-cyan: #00f2ff;
+    --co-lime: #c9ff5b;
+    --co-ember: #ff6b3d;
+    --co-amber: #fbbf24;
+    --co-borde: rgba(255, 255, 255, 0.09);
+    position: relative;
+    margin: 0;
+    width: 100%;
+    max-width: 640px;
+  }
+  .co-mapa {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 118px) minmax(0, 1fr) minmax(0, 118px);
+    gap: 34px;
+    align-items: stretch;
+  }
+  .co-cables {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .co-cable {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+    transition: stroke 0.3s ease;
+  }
+  .co-cable.is-luz { stroke: rgba(0, 242, 255, 0.45); }
+  .co-traza { fill: none; stroke-width: 1.5; stroke-linecap: round; }
+  .co-col {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 14px;
+  }
+
+  /* Nodos: fondo opaco a propósito, los cables pasan POR DEBAJO. */
+  .co-nodo {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 6px;
+    align-items: baseline;
+    padding: 7px 9px 8px;
+    border-radius: 10px;
+    background: #111117;
+    border: 1px solid var(--co-borde);
+    color: #e7e7ec;
+    text-decoration: none;
+    transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .co-num {
+    font-family: var(--font-serif, Georgia, serif);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1;
+    color: #85858f;
+  }
+  .co-nombre {
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .co-externo .co-nombre, .co-ruta .co-nombre { grid-column: 1 / -1; }
+  .co-lectura {
+    grid-column: 1 / -1;
+    margin-top: 3px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    line-height: 1.2;
+    color: #85858f;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .co-externo { border-style: dashed; background: #0e0e12; }
+  .co-herramienta { cursor: pointer; }
+  .co-herramienta:hover, .co-herramienta:focus-visible, .co-herramienta.is-foco {
+    border-color: rgba(0, 242, 255, 0.55);
+    background: #0f1a1d;
+    outline: none;
+  }
+  .co-nodo[data-estado='activo'] { border-color: rgba(0, 242, 255, 0.7); box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.08), 0 0 22px -6px rgba(0, 242, 255, 0.55); }
+  .co-nodo[data-estado='activo'] .co-lectura { color: var(--co-cyan); }
+  .co-nodo[data-estado='ok'] { border-color: rgba(201, 255, 91, 0.65); box-shadow: 0 0 22px -8px rgba(201, 255, 91, 0.5); }
+  .co-nodo[data-estado='ok'] .co-lectura { color: var(--co-lime); }
+  .co-nodo[data-estado='alerta'] { border-color: rgba(251, 191, 36, 0.7); box-shadow: 0 0 22px -8px rgba(251, 191, 36, 0.55); }
+  .co-nodo[data-estado='alerta'] .co-lectura { color: var(--co-amber); }
+  .co-nodo[data-estado='error'] { border-color: rgba(255, 107, 61, 0.8); background: #1a100d; box-shadow: 0 0 0 3px rgba(255, 107, 61, 0.08), 0 0 24px -6px rgba(255, 107, 61, 0.6); }
+  .co-nodo[data-estado='error'] .co-lectura { color: var(--co-ember); }
+
+  /* El sitio */
+  .co-sitio {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 242, 255, 0.18);
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(0, 242, 255, 0.06), transparent 60%),
+      rgba(12, 12, 16, 0.55);
+  }
+  .co-sitio-cab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 2px 4px 4px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+  }
+  .co-led { width: 6px; height: 6px; border-radius: 99px; background: var(--co-lime); box-shadow: 0 0 10px var(--co-lime); }
+  .co-dominio { color: #e7e7ec; }
+  .co-sitio-sub { margin-left: auto; color: #85858f; font-size: 10px; }
+  .co-banda {
+    display: grid;
+    gap: 6px;
+    padding: 7px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+  }
+  .co-banda[data-estado='activo'] { border-color: rgba(0, 242, 255, 0.45); background: rgba(0, 242, 255, 0.04); }
+  .co-banda-rot {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6b6b78;
+  }
+  .co-banda-lectura { margin: 0 0 0 auto; letter-spacing: 0; text-transform: none; color: var(--co-cyan); }
+  .co-banda-nodos { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; }
+  .co-chip { padding: 6px 7px 7px; }
+  .co-ruta { background: #0d0d12; }
+  .co-ruta .co-nombre { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; }
+
+  /* Pista bajo el cursor */
+  .co-tip {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    top: 0;
+    width: max-content;
+    max-width: 230px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #16161d;
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7);
+    font-size: 12px;
+    line-height: 1.35;
+    color: #e7e7ec;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+  }
+  .co-tip-ir { display: block; margin-top: 5px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: var(--co-cyan); }
+
+  /* Bitácora: cuatro filas fijas, la más nueva abajo */
+  .co-bitacora {
+    list-style: none;
+    margin: 22px 0 0;
+    padding: 10px 12px;
+    height: calc(4 * 22px + 20px);
+    overflow: hidden;
+    border-radius: 12px;
+    background: #0b0b0f;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .co-linea {
+    display: grid;
+    grid-template-columns: 38px 86px minmax(0, 1fr);
+    gap: 8px;
+    height: 22px;
+    align-items: center;
+    flex: none;
+    color: #c4c4cc;
+  }
+  .co-linea-t { color: #4d4d5d; }
+  .co-linea-nodo { color: #85858f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .co-linea-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .co-linea[data-tono='dato'] .co-linea-nodo { color: var(--co-cyan); }
+  .co-linea[data-tono='ok'] .co-linea-nodo { color: var(--co-lime); }
+  .co-linea[data-tono='alerta'] .co-linea-nodo { color: var(--co-amber); }
+  .co-linea[data-tono='error'] .co-linea-nodo { color: var(--co-ember); }
+  .co-linea[data-tono='error'] .co-linea-txt { color: #f3c6b8; }
+
+  /* Escenarios */
+  .co-escenarios { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+  .co-esc {
+    display: grid;
+    gap: 7px;
+    padding: 8px 9px 9px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+    color: #85858f;
+    font-size: 11.5px;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+  }
+  .co-esc:hover { color: #e7e7ec; }
+  .co-esc:focus-visible { outline: 2px solid rgba(0, 242, 255, 0.6); outline-offset: 2px; }
+  .co-esc[aria-pressed='true'] { color: #e7e7ec; border-color: rgba(0, 242, 255, 0.28); background: rgba(0, 242, 255, 0.04); }
+  .co-esc-nombre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .co-esc-barra { display: block; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .co-esc-barra > span { display: block; height: 100%; background: var(--co-cyan); transform-origin: left; transform: scaleX(0); }
+  .co-esc[aria-pressed='true'] .co-esc-barra > span { transform: scaleX(1); }
+  .co[data-vivo] .co-esc[aria-pressed='true'] .co-esc-barra > span { transform: scaleX(0); }
+  .co-pie { margin-top: 10px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #4d4d5d; }
+
+  /* Móvil: el flujo pasa de izquierda-derecha a arriba-abajo. Mismas piezas,
+     misma lógica de cables (el conector elige el eje por la distancia). */
+  @media (max-width: 767px) {
+    .co-mapa { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+    .co-col { flex-direction: row; gap: 6px; }
+    .co-col > .co-nodo { flex: 1 1 0; min-width: 0; }
+    .co-nodo { padding: 6px 7px 7px; }
+    .co-nombre { font-size: 11px; }
+    .co-lectura { font-size: 9.5px; }
+    .co-sitio { padding: 8px; }
+    .co-banda { padding: 6px; }
+    .co-banda-nodos { gap: 5px; }
+    .co-sitio-sub { display: none; }
+    .co-linea { grid-template-columns: 34px minmax(0, 1fr); row-gap: 0; height: 22px; }
+    .co-linea-nodo { display: none; }
+    .co-escenarios { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>
