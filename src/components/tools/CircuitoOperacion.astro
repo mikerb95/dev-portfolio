@@ -444,7 +444,12 @@ const tiempoDe = (i: number, linea: number) => {
     .co-banda-nodos { gap: 5px; }
     .co-sitio-sub { display: none; }
     .co-linea { grid-template-columns: 34px minmax(0, 1fr); row-gap: 0; height: 22px; }
+    /* Sin la columna del nodo, el tono pasa a la hora de la línea. */
     .co-linea-nodo { display: none; }
+    .co-linea[data-tono='dato'] .co-linea-t { color: var(--co-cyan); }
+    .co-linea[data-tono='ok'] .co-linea-t { color: var(--co-lime); }
+    .co-linea[data-tono='alerta'] .co-linea-t { color: var(--co-amber); }
+    .co-linea[data-tono='error'] .co-linea-t { color: var(--co-ember); }
     .co-escenarios { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 </style>

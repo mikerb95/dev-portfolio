@@ -445,22 +445,33 @@ export function montarCasos(raiz: HTMLElement, opciones: { reducido: boolean }):
   // Escenas en pantalla en modo móvil, para reanudarlas al volver a la pestaña.
   const enPantalla = new Set<Bucle>()
 
+  // El barrido en curso de cada escena, para cortarlo si otra toma su lugar.
+  const cortina = new WeakMap<HTMLElement, gsap.core.Tween>()
+
   function activar(i: number, animar = true) {
     if (i === activa) return
     const prev = escenas[activa]
     const sig = escenas[i]
     activa = i
     if (!sig?.el) return
-    prev?.tl?.pause()
-    if (prev?.el) {
-      prev.el.classList.remove('is-activa')
-      if (animar) gsap.to(prev.el, { clipPath: 'inset(0% 0% 100% 0%)', duration: 0.45, ease: 'power3.in' })
-      else gsap.set(prev.el, { clipPath: 'inset(0% 0% 100% 0%)' })
+    // Al bajar rápido se cruzan varios casos en un segundo: cada barrido
+    // pendiente se corta y toda escena que no es la activa queda cerrada, o una
+    // entrada retrasada terminaría encima de la escena correcta.
+    for (const e of escenas) {
+      if (!e.el || e === sig) continue
+      cortina.get(e.el)?.kill()
+      e.tl?.pause()
+      e.el.classList.remove('is-activa')
+      if (animar && e === prev) cortina.set(e.el, gsap.to(e.el, { clipPath: 'inset(0% 0% 100% 0%)', duration: 0.4, ease: 'power3.in' }))
+      else gsap.set(e.el, { clipPath: 'inset(0% 0% 100% 0%)' })
     }
+    cortina.get(sig.el)?.kill()
     sig.el.classList.add('is-activa')
     // Barrido de abajo hacia arriba, como una vista del panel que se carga.
-    if (animar) gsap.fromTo(sig.el, { clipPath: 'inset(100% 0% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.6, ease: 'power3.out', delay: 0.15 })
-    else gsap.set(sig.el, { clipPath: 'inset(0% 0% 0% 0%)' })
+    if (animar) {
+      gsap.set(sig.el, { clipPath: 'inset(100% 0% 0% 0%)' })
+      cortina.set(sig.el, gsap.to(sig.el, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.6, ease: 'power3.out', delay: 0.12 }))
+    } else gsap.set(sig.el, { clipPath: 'inset(0% 0% 0% 0%)' })
     const ruta = indice[i]?.dataset.ruta ?? ''
     if (rutaVentana) {
       if (animar) gsap.to(rutaVentana, { duration: 0.5, scrambleText: { text: ruta, chars: 'lowerCase' } })
