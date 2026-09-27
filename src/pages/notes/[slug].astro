@@ -8,8 +8,11 @@ export const prerender = true
 
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { render } from 'astro:content'
-import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
-import { getNote, getNotes, noteSlug, getTranslationSlug } from '../../lib/notes'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../../i18n'
+import { getNote, getNotes, noteSlug, getTranslationSlug, notaVista } from '../../lib/notes'
+import { hex, PALETA_FAMILIA, relacionadas } from '../../lib/notes-meta'
+import { semillaDe } from '../../lib/motion/portadas'
+import DecisionCorta from '../../components/notes/DecisionCorta.astro'
 import { jsonEnScript } from '../../lib/json-script'
 
 export async function getStaticPaths() {
@@ -44,7 +47,18 @@ const alternatePaths = {
   ...(enSlug ? { en: `/en/notes/${enSlug}` } : {}),
 }
 
-const { Content } = await render(note)
+const { Content, headings } = await render(note)
+
+// Lo derivado de la nota: minutos, familia, mapa y relacionadas. Todo en el
+// build (la página está prerenderizada).
+const vista = notaVista(note)
+const m = n.motion
+const familia = vista.familias[0]
+const color = hex(PALETA_FAMILIA[familia].linea)
+const semilla = semillaDe(vista.claveMapa)
+const mapa = { semilla, paleta: PALETA_FAMILIA[familia] }
+const indice = headings.filter((h) => h.depth === 2)
+const cercanas = relacionadas(vista, (await getNotes(locale)).map(notaVista), 3)
 // timeZone UTC: la fecha del frontmatter es un día calendario, no un instante.
 const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 
@@ -84,7 +98,8 @@ const jsonLd = jsonEnScript({
   alternatePaths={alternatePaths}
 >
   <script is:inline slot="head" type="application/ld+json" set:html={jsonLd} />
-  <div class="max-w-[820px] mx-auto px-6 md:px-12 pt-32 pb-24">
+  <span class="na-progreso" aria-hidden="true" style={`background:${color}`}></span>
+  <div class="na max-w-[1180px] mx-auto px-6 md:px-12 pt-32 pb-24" data-minutos={vista.minutos} data-t={JSON.stringify({ quedan: m.lectura.quedan, terminada: m.lectura.terminada })} style={`--na:${color}`}>
 
     <!-- Back -->
     <a href={L('/notes')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
@@ -92,34 +107,231 @@ const jsonLd = jsonEnScript({
       {n.backToNotes}
     </a>
 
-    <header class="mb-12">
-      <div class="flex flex-wrap items-center gap-3 mb-5">
-        <span class="text-[11px] font-mono text-ink-300">{fmtDate.format(note.data.date)}</span>
-        {note.data.tags.map((t) => (
-          <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/10 text-ink-200">{t}</span>
-        ))}
+    <div class="na-rejilla">
+      <div class="na-principal">
+        <header class="mb-12">
+          <!-- El mismo mapa de su ficha y de su entrada en la bitácora: la nota
+               se reconoce de una página a otra. -->
+          <div class="na-mapa" aria-hidden="true">
+            <canvas class="na-lienzo" data-mapa={JSON.stringify(mapa)}></canvas>
+            <div class="na-mapa-pie">
+              <span>{interpolate(m.lectura.mapa, { id: semilla.id })}</span>
+              <span class="na-familia"><i></i>{m.familias[familia]}</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 mb-5">
+            <span class="text-[11px] font-mono text-ink-300">{fmtDate.format(note.data.date)}</span>
+            <span class="text-[11px] font-mono text-ink-300">· {interpolate(m.lectura.minutos, { n: vista.minutos })}</span>
+            {note.data.tags.map((t) => (
+              <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/10 text-ink-200">{t}</span>
+            ))}
+          </div>
+          <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] text-mask leading-[1.05] mb-5">
+            {note.data.title}
+          </h1>
+          <p class="text-[16px] text-ink-200 leading-relaxed">{note.data.description}</p>
+        </header>
+
+        {vista.decision && <DecisionCorta decision={vista.decision} color={color} />}
+
+        <article class="note-prose">
+          <Content />
+        </article>
+
+        {cercanas.length > 0 && (
+          <section class="na-rel" aria-labelledby="na-rel-titulo">
+            <h2 id="na-rel-titulo" class="na-rel-titulo">{m.lectura.relacionadas}</h2>
+            <ul class="na-rel-lista">
+              {cercanas.map((r) => {
+                const f = r.familias[0]
+                return (
+                  <li style={`--c:${hex(PALETA_FAMILIA[f].linea)}`}>
+                    <a class="na-rel-enlace" href={L(`/notes/${r.slug}`)}>
+                      <span class="na-rel-mapa" aria-hidden="true">
+                        <canvas class="na-rel-lienzo" data-mapa={JSON.stringify({ semilla: semillaDe(r.claveMapa), paleta: PALETA_FAMILIA[f] })}></canvas>
+                      </span>
+                      <span class="na-rel-meta">{m.familias[f]} · {interpolate(m.bitacora.minutos, { n: r.minutos })}</span>
+                      <span class="na-rel-nombre">{r.title}</span>
+                    </a>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
+
+        <div class="mt-16 pt-8 border-t border-white/5 flex flex-wrap items-center gap-4">
+          <a href={L('/notes')} class="text-[13px] font-mono text-ink-200 hover:text-cyan transition-colors">{n.allNotes}</a>
+          <a href={L('/tools')} class="ml-auto text-[13px] font-mono text-cyan hover:underline">{n.seeTools}</a>
+        </div>
       </div>
-      <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] text-mask leading-[1.05] mb-5">
-        {note.data.title}
-      </h1>
-      <p class="text-[16px] text-ink-200 leading-relaxed">{note.data.description}</p>
-    </header>
 
-    <article class="note-prose">
-      <Content />
-    </article>
-
-    <div class="mt-16 pt-8 border-t border-white/5 flex flex-wrap items-center gap-4">
-      <a href={L('/notes')} class="text-[13px] font-mono text-ink-200 hover:text-cyan transition-colors">{n.allNotes}</a>
-      <a href={L('/tools')} class="ml-auto text-[13px] font-mono text-cyan hover:underline">{n.seeTools}</a>
+      {indice.length > 1 && (
+        <nav class="na-indice" aria-label={m.lectura.enEstaNota}>
+          <p class="na-indice-cab">{m.lectura.enEstaNota}</p>
+          <div class="na-indice-cuerpo">
+            <span class="na-indice-riel" aria-hidden="true"><span class="na-indice-relleno"></span></span>
+            <ol class="na-indice-lista">
+              {indice.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}
+            </ol>
+          </div>
+          <p class="na-quedan" aria-hidden="true">{interpolate(m.lectura.minutos, { n: vista.minutos })}</p>
+        </nav>
+      )}
     </div>
 
   </div>
 </BaseLayout>
 
+<style>
+  .na-rejilla { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .na-principal { max-width: 760px; min-width: 0; }
+  @media (min-width: 1024px) {
+    .na-rejilla { grid-template-columns: minmax(0, 760px) 220px; justify-content: space-between; gap: 64px; }
+  }
+
+  .na-mapa {
+    position: relative;
+    height: 200px;
+    margin-bottom: 32px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background:
+      radial-gradient(120% 140% at 25% 20%, color-mix(in srgb, var(--na) 22%, transparent), transparent 60%),
+      #0c0c10;
+  }
+  /* Más alto que la banda y recortado: a 200 px las curvas se apiñaban. */
+  .na-lienzo { position: absolute; left: 0; top: 50%; width: 100%; height: 220%; transform: translateY(-50%); display: block; }
+  .na-mapa::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(10, 10, 13, 0) 40%, rgba(10, 10, 13, 0.85));
+  }
+  .na-mapa-pie {
+    position: absolute;
+    z-index: 1;
+    inset: auto 18px 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #85858f;
+  }
+  .na-familia { display: inline-flex; align-items: center; gap: 8px; color: #c4c4cc; flex: none; }
+  .na-familia i { width: 7px; height: 7px; border-radius: 50%; background: var(--na); box-shadow: 0 0 10px var(--na); }
+
+  /* Barra de progreso superior: solo donde no hay índice lateral. */
+  .na-progreso {
+    position: fixed;
+    z-index: 60;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    pointer-events: none;
+  }
+  @media (min-width: 1024px) { .na-progreso { display: none; } }
+
+  .na-indice { display: none; }
+  @media (min-width: 1024px) {
+    .na-indice {
+      display: block;
+      position: sticky;
+      top: 120px;
+      align-self: start;
+      margin-top: 232px;
+    }
+  }
+  .na-indice-cab, .na-quedan {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #85858f;
+  }
+  .na-indice-cab { margin-bottom: 16px; }
+  .na-quedan { margin-top: 18px; color: #c4c4cc; }
+  .na-indice-cuerpo { position: relative; padding-left: 18px; }
+  .na-indice-riel { position: absolute; left: 0; top: 4px; bottom: 4px; width: 1px; background: rgba(255, 255, 255, 0.08); }
+  .na-indice-relleno {
+    position: absolute;
+    inset: 0;
+    background: var(--na);
+    transform-origin: 50% 0;
+    transform: scaleY(0);
+  }
+  /* Sin JS el relleno no significa nada: se oculta. */
+  .na:not(.leyendo) .na-indice-relleno { display: none; }
+  .na-indice-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .na-indice-lista a {
+    display: block;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #85858f;
+    transition: color 0.25s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .na-indice-lista a:hover { color: #e7e7ec; }
+  .na-indice-lista a[aria-current] { color: #e7e7ec; transform: translateX(3px); }
+  .na-indice-lista a:focus-visible { outline: 2px solid #00f2ff; outline-offset: 3px; border-radius: 4px; }
+
+  .na-rel { margin-top: 72px; }
+  .na-rel-titulo {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #c4c4cc;
+    margin-bottom: 18px;
+  }
+  .na-rel-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) { .na-rel-lista { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .na-rel-enlace {
+    display: grid;
+    gap: 10px;
+    padding: 10px 10px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.015);
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  .na-rel-enlace:hover, .na-rel-enlace:focus-visible {
+    background: color-mix(in srgb, var(--c) 6%, transparent);
+    border-color: color-mix(in srgb, var(--c) 28%, transparent);
+  }
+  .na-rel-mapa {
+    position: relative;
+    aspect-ratio: 1.8;
+    border-radius: 10px;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 140% at 25% 20%, color-mix(in srgb, var(--c) 22%, transparent), transparent 60%),
+      #0c0c10;
+  }
+  .na-rel-lienzo {
+    position: absolute; left: -50%; top: -50%; width: 200%; height: 200%; display: block;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .na-rel-enlace:hover .na-rel-lienzo { transform: scale(1.06); }
+  .na-rel-meta { padding: 0 4px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; color: #85858f; }
+  .na-rel-nombre { padding: 0 4px; font-size: 15px; font-weight: 500; line-height: 1.35; color: #e7e7ec; text-wrap: balance; }
+</style>
+
+<script>
+  import { montarLectura } from '../../lib/motion/lectura'
+  document.querySelectorAll<HTMLElement>('.na').forEach((raiz) => montarLectura(raiz))
+</script>
+
 <style is:global>
   .note-prose { color: #c4c4cc; font-size: 16px; line-height: 1.75; }
   .note-prose h2 {
+    scroll-margin-top: 110px;
     color: #e7e7ec; font-size: 24px; font-weight: 550; letter-spacing: -0.02em;
     margin: 2.2em 0 0.7em;
   }

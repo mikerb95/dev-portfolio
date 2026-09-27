@@ -65,3 +65,14 @@ export type FichaDato = {
   semilla: Semilla
   paleta: Paleta
 }
+
+/**
+ * Minutos que quedan de un artículo de `total` minutos con una fracción
+ * `progreso` (0 a 1) ya leída. Redondea hacia arriba: "quedan ~0 min" con
+ * media página por delante sería mentira; el 0 solo aparece al terminar.
+ */
+export function minutosRestantes(total: number, progreso: number): number {
+  const p = Math.min(1, Math.max(0, progreso))
+  if (p >= 0.98) return 0
+  return Math.max(1, Math.ceil(total * (1 - p)))
+}
