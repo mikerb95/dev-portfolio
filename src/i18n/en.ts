@@ -735,6 +735,7 @@ const en = {
           "Z-score anomaly detection over a 30-day baseline, not a black box: every alert can be explained in a sentence.",
           'Blocks with mandatory TTL and escalation by recurrence (1h → 24h → 7d), never permanent by default.',
           'The public showcase shows real aggregates with deliberate OPSEC: never full IPs, never rule names, never which routes are decoys.',
+          'Audit is not a threat: the trail of legitimate actions (panel sign-ins, clients checking their payments) lives in separate categories, kept out of the showcase, anomaly detection and bulk blocking. Before that, using the panel counted as an attack.',
         ],
         liveLabel: 'View Security Operations live',
       },

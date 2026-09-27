@@ -754,6 +754,7 @@ const es = {
           'Detección de anomalías con z-score sobre una baseline de 30 días, no una caja negra: cada alerta se puede explicar con una frase.',
           'Bloqueos con TTL obligatorio y escalado por reincidencia (1h → 24h → 7d), nunca eternos por defecto.',
           'La vitrina pública muestra agregados reales con OPSEC deliberada: nunca IPs completas, nunca nombres de reglas, nunca qué rutas son señuelo.',
+          'Auditoría no es amenaza: el rastro de acciones legítimas (entradas al panel, clientes consultando sus pagos) va en categorías aparte, fuera de la vitrina, de las anomalías y del bloqueo masivo. Antes, usar el panel contaba como un ataque.',
         ],
         liveLabel: 'Ver Security Operations en vivo',
       },
