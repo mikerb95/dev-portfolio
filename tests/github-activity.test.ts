@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { GET } from '../src/pages/api/github/activity'
+import { redondearMarca, trabajoProfundo } from '../src/lib/actividad'
 
 // /api/github/activity alimenta /log y la portada, que son públicas, pero el
 // token ve también los repos privados. Lo privado cuenta para las cifras y
@@ -83,6 +84,25 @@ describe('/api/github/activity: lo privado cuenta pero no se publica', () => {
     expect(data.totalCommits).toBe(3)
     expect(data.sparkline.reduce((a: number, n: number) => a + n, 0)).toBe(5)
     expect(data.streak).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('/api/github/activity: la hora de lo privado alimenta el reloj de /log', () => {
+  it('publica la hora de los commits privados redondeada a 5 min, y nada de lo público', async () => {
+    const data = await (await llamar('https://codebymike.net/api/github/activity')).json()
+    // El privado del repo propio y el de la búsqueda (sin visibilidad declarada).
+    expect(data.privateCommitTimes).toHaveLength(2)
+    for (const t of data.privateCommitTimes) expect(t % 300_000).toBe(0)
+    expect(typeof data.generatedAt).toBe('number')
+  })
+
+  it('con la lista pública y las horas privadas, el navegador rehace las mismas cifras', async () => {
+    const data = await (await llamar('https://codebymike.net/api/github/activity')).json()
+    const publicos = data.feed
+      .filter((f: { type: string }) => f.type === 'commit')
+      .map((f: { timestamp: string }) => redondearMarca(new Date(f.timestamp).getTime()))
+    const dw = trabajoProfundo([...publicos, ...data.privateCommitTimes], data.generatedAt)
+    expect(dw).toEqual(data.deepWork)
   })
 })
 

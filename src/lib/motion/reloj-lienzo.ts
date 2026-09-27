@@ -185,7 +185,9 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
 
   function animando(): boolean {
     if (!modelo) return !op.reducido // cabezal de "leyendo"
-    if (tEscaneo !== null && !escaneado) return true
+    // Escaneo en curso o pendiente: si los datos llegaron con el reloj fuera
+    // de pantalla, el escaneo espera a que entre y arranca entonces.
+    if (!escaneado) return true
     if (tFinal !== null && tiempo - tFinal < 1.6) return true
     if (Math.abs(mezcla - (resalte ? 1 : 0)) > 0.01) return true
     return ondas.length > 0

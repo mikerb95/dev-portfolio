@@ -40,8 +40,8 @@ const cifras = [
     <div class="lg-reloj-cab">
       <div class="lg-reloj-titulo">
         <span class="lg-punto" aria-hidden="true"></span>
-        <span class="text-ink-50">{mo.reloj.eyebrow}</span>
-        <span class="text-ink-300">· {mo.reloj.ventana}</span>
+        <span class="text-ink-50 whitespace-nowrap">{mo.reloj.eyebrow}</span>
+        <span class="text-ink-300 whitespace-nowrap"><span class="hidden sm:inline">· </span>{mo.reloj.ventana}</span>
       </div>
       <ul class="lg-leyenda" aria-hidden="true">
         <li><span class="lg-ley-pub"></span>{mo.reloj.leyenda.publico}</li>
@@ -153,8 +153,9 @@ const cifras = [
   }
   .lg-reloj-titulo {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 4px 8px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 11px;
     letter-spacing: 0.14em;

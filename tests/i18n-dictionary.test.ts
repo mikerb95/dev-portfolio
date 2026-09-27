@@ -55,6 +55,12 @@ describe('paridad del diccionario es/en', () => {
         'log.h1',
         'log.oneCommit',
         'log.nCommits',
+        // Tipos de cambio que son préstamo técnico en los dos idiomas, y la
+        // lectura de una sesión, que es solo cifras, "h" y "commits".
+        'log.motion.bitacora.tipos.docs',
+        'log.motion.bitacora.tipos.refactor',
+        'log.motion.reloj.sesionDetalle',
+        'log.motion.reloj.sesionUno',
         // 'Status' y 'Security Operations' son nombres de página/sección ya en
         // inglés en el original español (jerga SRE de uso corriente); 'Error
         // budget' idem; 'uptimeShort' es solo un placeholder de número.

@@ -1208,14 +1208,10 @@ const es = {
     loadMoreBtn: 'Cargar más actividad',
     remainingCommits: 'commits restantes',
     noActivity: 'Sin actividad reciente.',
-    live: 'En tiempo real',
     connectError: 'Error al conectar con GitHub',
     loadError: 'No se pudo cargar la actividad de GitHub.',
     oneCommit: '1 commit',
     nCommits: '{n} commits',
-    justNowMinutes: 'hace {n}m',
-    justNowHours: 'hace {n}h',
-    justNowDays: 'hace {n}d',
     // Reloj de sesiones y bitácora (RF-028). Los datos de ejemplo no existen:
     // todo lo que se dibuja sale de la respuesta de GitHub.
     motion: {
