@@ -5,6 +5,10 @@ date: 2026-07-09
 tags: [security, auth, astro]
 lang: en
 translationOf: sesiones-revocables-sobre-jwt-stateless
+decision:
+  problem: "A stolen admin cookie was unstoppable until it expired."
+  rejected: "Moving to database sessions"
+  chosen: "A signed sid inside the JWT, revoked on the next click"
 ---
 
 This site's admin panel authenticates with GitHub OAuth and a JWT session. It's a comfortable design - no session store, no server state - but it has an uncomfortable blind spot: **the server doesn't know how many sessions exist, or where**. If someone steals the cookie (a lost device, a shared laptop, a moment of carelessness), that session is invisible and unstoppable until the token expires on its own.

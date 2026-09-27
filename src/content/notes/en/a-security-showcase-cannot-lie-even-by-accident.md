@@ -5,6 +5,10 @@ date: 2026-09-26
 tags: [security, opsec, turso, motion]
 lang: en
 translationOf: una-vitrina-de-seguridad-no-puede-mentir-ni-por-accidente
+decision:
+  problem: "A page titled “with evidence” said five things that weren’t true."
+  rejected: "Inventing a clean-traffic ratio"
+  chosen: "Every figure says what it counts; the unmeasured is dotted, with no number"
 ---
 
 This site's [security page](/en/security) is titled "Security, with evidence". Since July it had been a headline, a paragraph and almost twenty identical cards: numbers from the [micro-SIEM](/en/notes/building-a-micro-siem-for-my-portfolio), four findings from an audit and a list of controls. Everything it said was true, but nothing proved it. The four layers of defense, for instance, were a numbered list.

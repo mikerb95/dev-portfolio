@@ -5,6 +5,10 @@ date: 2026-07-17
 tags: [testing, quality, ci-cd]
 lang: en
 translationOf: mutar-el-codigo-para-saber-si-mis-tests-sirven
+decision:
+  problem: "High coverage doesn’t say whether the tests catch a bug."
+  rejected: "Taking coverage as proof"
+  chosen: "Mutate the code on purpose and count the mutants that die"
 ---
 
 This site has more than 400 tests and coverage that looks good on any badge. For a long time that was enough for me as proof the suite was solid. But coverage measures a very limited question: did this line execute at least once during the tests? An `if` that runs but whose condition never matters to the outcome counts as "covered" exactly like one that's genuinely being verified. High coverage with weak assertions is a number that lies with a clear conscience.

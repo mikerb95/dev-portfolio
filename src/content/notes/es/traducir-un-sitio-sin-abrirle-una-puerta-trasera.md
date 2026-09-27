@@ -5,6 +5,10 @@ date: 2026-09-16
 tags: [seguridad, i18n, arquitectura, astro]
 lang: es
 translationOf: translating-a-site-without-opening-a-back-door
+decision:
+  problem: "Un prefijo /en le da un segundo nombre a cada ruta, y los guardas comparan nombres."
+  rejected: "Enseñarle idiomas a cada guarda"
+  chosen: "Normalizar la ruta una sola vez, arriba de todo"
 ---
 
 Traducir el sitio al inglés empezó como una tarea de contenido: extraer los textos a diccionarios, montar las rutas bajo `/en/` y ponerse a escribir. El plan se torció en la primera hora, antes de traducir una sola frase, cuando fui a mirar cómo clasificaba las rutas el middleware.

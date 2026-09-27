@@ -5,6 +5,10 @@ date: 2026-09-16
 tags: [security, i18n, architecture, astro]
 lang: en
 translationOf: traducir-un-sitio-sin-abrirle-una-puerta-trasera
+decision:
+  problem: "An /en prefix gives every route a second name, and the guards compare names."
+  rejected: "Teaching every guard about languages"
+  chosen: "Normalize the path once, above everything else"
 ---
 
 Translating the site into English started out as a content job: pull the copy into dictionaries, set up the routes under `/en/` and start writing. The plan went sideways in the first hour, before a single sentence got translated, when I went to look at how the middleware classifies routes.

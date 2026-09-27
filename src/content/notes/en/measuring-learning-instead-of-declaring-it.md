@@ -5,6 +5,10 @@ date: 2026-08-09
 tags: [learning, architecture, testing]
 lang: en
 translationOf: medir-el-aprendizaje-en-vez-de-declararlo
+decision:
+  problem: "A checkbox can’t tell daily practice from one afternoon’s look."
+  rejected: "A checkbox per topic"
+  chosen: "The session as the only fact, dated by calendar day"
 ---
 
 I decided to specialize in .NET and C#. The reason is prosaic: enterprise backends in Colombia (banking, healthcare, public sector) run on C#, and a portfolio that only speaks TypeScript opens half the doors. The interesting part isn't that decision, it's what I found when I went to record it in my own panel.

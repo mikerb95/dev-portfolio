@@ -5,6 +5,10 @@ date: 2026-07-05
 tags: [chaos-engineering, resiliencia, sre]
 lang: es
 translationOf: chaos-engineering-that-cannot-hurt-you
+decision:
+  problem: "¿Cómo saber que el monitoreo detecta una caída que nunca has visto?"
+  rejected: "Creer que las alertas funcionan"
+  chosen: "Romperlo a propósito, con TTL de 15 minutos y botón de pánico"
 ---
 
 ¿Cómo sabes que tu monitoreo detecta una caída si nunca has visto una? Confiar en alertas que jamás se han disparado es fe, no ingeniería. La única forma de saber que la cadena completa funciona - el monitor detecta, el incidente se registra, la push llega al móvil - es romper algo a propósito y mirar.

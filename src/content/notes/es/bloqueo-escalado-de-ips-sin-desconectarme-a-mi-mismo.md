@@ -5,6 +5,10 @@ date: 2026-07-19
 tags: [seguridad, observabilidad, sre]
 lang: es
 translationOf: escalating-ip-blocks-without-locking-myself-out
+decision:
+  problem: "Un honeypot tocado esperaba a un cron que nunca se disparaba."
+  rejected: "Esperar al próximo cron"
+  chosen: "Bloquear en el propio request, con TTL de 1 h, 24 h y 7 días"
 ---
 
 [El micro-SIEM de este sitio](/notes/construyendo-un-micro-siem-para-mi-portfolio) llevaba semanas detectando y clasificando tráfico hostil, pero se quedaba corto en la parte que más importa: actuar. Un scanner que tocaba un honeypot generaba un evento, el evento esperaba al cron de auto-block, y entre que el cron corría y decidía bloquear podían pasar minutos en los que la misma IP seguía golpeando el sitio sin fricción. Detectar sin bloquear es la mitad del trabajo.

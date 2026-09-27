@@ -5,6 +5,10 @@ date: 2026-07-10
 tags: [security, observability, sre]
 lang: en
 translationOf: construyendo-un-micro-siem-para-mi-portfolio
+decision:
+  problem: "Scanners hit every public IP, this site included."
+  rejected: "Ignoring the 404s as noise"
+  chosen: "My own micro-SIEM, fail-open at every layer"
 ---
 
 Any site with a public IP gets hostile traffic from the first minute, personal portfolios included. Automated scanners try `/wp-login.php`, `/.env`, `/.git/config`, injections in every query parameter - not because they picked you, but because they scan the entire internet and you happen to be in range. The normal reaction is to ignore it: they're 404s, nothing breaks, why look?

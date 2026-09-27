@@ -5,6 +5,10 @@ date: 2026-08-09
 tags: [aprendizaje, arquitectura, testing]
 lang: es
 translationOf: measuring-learning-instead-of-declaring-it
+decision:
+  problem: "Un checkbox no distingue practicar a diario de abrir el tema una tarde."
+  rejected: "Una casilla por tema"
+  chosen: "La sesión como único hecho, fechada por día de calendario"
 ---
 
 Decidí especializarme en .NET y C#. La razón es prosaica: el backend empresarial en Colombia (banca, salud, sector público) corre sobre C#, y un portafolio que solo habla TypeScript abre la mitad de las puertas. Lo interesante no es esa decisión, sino lo que descubrí al ir a registrarla en mi propio panel.

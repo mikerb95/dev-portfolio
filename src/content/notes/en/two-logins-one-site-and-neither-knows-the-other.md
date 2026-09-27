@@ -5,6 +5,10 @@ date: 2026-07-24
 tags: [security, auth, architecture, astro]
 lang: en
 translationOf: dos-logins-en-el-mismo-sitio-y-ninguno-conoce-al-otro
+decision:
+  problem: "The client portal needed a login, and the admin already had a proven one."
+  rejected: "Reusing Auth.js with a role in the token"
+  chosen: "Its own login, cookie and sessions, not one shared line"
 ---
 
 This site's admin panel authenticates with GitHub OAuth, a one-name allowlist, and an Auth.js JWT. It works, it's tested, and it's been in production for months. When I built the client portal - where each client logs in to see their invoices, their documents, and their project's progress - the obvious move was to hang off that infrastructure: same `auth-astro`, another provider, a role field in the token, done.

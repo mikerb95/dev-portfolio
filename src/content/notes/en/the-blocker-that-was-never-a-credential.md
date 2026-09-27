@@ -5,6 +5,10 @@ date: 2026-09-18
 tags: [k6, load-testing, ci-cd, lab, postmortem]
 lang: en
 translationOf: el-bloqueo-que-no-era-una-credencial
+decision:
+  problem: "Two months of load tests “blocked” on a Vercel token."
+  rejected: "Running k6 against a Vercel preview"
+  chosen: "k6 against the site running in the CI runner, on throwaway databases"
 ---
 
 For two months, every to-do list in this project opened with the same line: `VERCEL_TOKEN` is missing from the GitHub secrets. Underneath it, the consequence: without it, the automatic rollback only warns instead of reverting, and Phase 5 of the lab (load testing with k6) has no preview environment to run against.

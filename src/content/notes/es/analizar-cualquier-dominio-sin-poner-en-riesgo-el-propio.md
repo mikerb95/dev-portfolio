@@ -5,6 +5,10 @@ date: 2026-07-17
 tags: [seguridad, ssrf, rate-limiting, accesibilidad, lab]
 lang: es
 translationOf: scanning-any-domain-without-risking-your-own
+decision:
+  problem: "Abrirle a cualquiera un analizador que acepta URLs arbitrarias."
+  rejected: "Copiar el endpoint y quitarle la autenticación"
+  chosen: "Filtro anti-SSRF y 5 análisis por minuto, antes que el análisis"
 ---
 
 Un compañero de clase pidió algo simple: un lugar donde pegar la URL de su proyecto y ver qué tan bien está armado - cabeceras, TLS, SEO, accesibilidad. Yo ya tenía casi todo eso escrito. Vivía en `src/lib/diagnostics.ts`, detrás del panel de administración, usado solo para diagnosticar mis propios monitores. La tentación fue copiar el endpoint, quitarle el `middleware` de auth y llamarlo terminado. No lo hice, porque ahí es donde empieza el problema real: en cuanto un endpoint acepta una URL arbitraria de un visitante anónimo, deja de ser una herramienta de diagnóstico y pasa a ser una superficie de ataque.

@@ -5,6 +5,10 @@ date: 2026-07-17
 tags: [security, accessibility, sast, testing, ci-cd]
 lang: en
 translationOf: no-solo-un-scan-verde
+decision:
+  problem: "A CI scan that reports nowhere is a green badge nobody opens."
+  rejected: "Letting npm audit and axe live and die in the job"
+  chosen: "A panel with history, a stable fingerprint and a lifecycle per finding"
 ---
 
 A security scanner that runs in CI and reports nowhere is decorative noise: it shows green on a badge, nobody opens it, and the day it finds something real it gets lost among a hundred GitHub notifications that are also ignored. What makes an automated scan valuable isn't that it exists - it's that someone can look at it six months later and see the whole story: this was found, this was fixed, this was knowingly accepted.

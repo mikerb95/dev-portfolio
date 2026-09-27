@@ -5,6 +5,10 @@ date: 2026-09-15
 tags: [costos, infraestructura, turso, vercel]
 lang: es
 translationOf: some-providers-bill-you-others-cut-you-off
+decision:
+  problem: "Un presupuesto hecho de cabeza no ve lo que de verdad factura cada proveedor."
+  rejected: "Sumar el precio de cada plan"
+  chosen: "Un simulador que separa excedente (dinero) de tope duro (caída)"
 ---
 
 "¿Cuánto cuesta mantener esto al mes?" tiene una respuesta aburrida y una útil. La aburrida es sumar lo que pagas por cada plan. La útil responde a otra pregunta: qué pasa el mes que el tráfico se dispara, y qué se rompe primero cuando pasa.

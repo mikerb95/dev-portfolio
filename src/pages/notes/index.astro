@@ -3,8 +3,10 @@
 export const prerender = true
 
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import FichaDecision, { type FichaEntrada } from '../../components/notes/FichaDecision.astro'
+import BitacoraNotas from '../../components/notes/BitacoraNotas.astro'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
-import { getNotes, noteSlug } from '../../lib/notes'
+import { getNotes, notaVista } from '../../lib/notes'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -13,16 +15,21 @@ const L = (path: string) => localizedHref(path, locale)
 
 // Solo las notas del idioma que se está viendo: un índice en inglés con
 // artículos en español sería peor que un índice corto.
-const notes = await getNotes(locale)
+const notas = (await getNotes(locale)).map(notaVista)
 
-// timeZone UTC: la fecha del frontmatter es un día calendario, no un instante;
-// sin esto, America/Bogota (-5) la retrocede al día anterior.
-const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-})
+// La ficha recorre las decisiones de la más reciente a la más antigua; una
+// nota sin `decision` en su frontmatter simplemente no entra.
+const fichas: FichaEntrada[] = notas.flatMap((x) =>
+  x.decision
+    ? [{ href: L(`/notes/${x.slug}`), titulo: x.title, familia: x.familias[0], minutos: x.minutos, claveMapa: x.claveMapa, ...x.decision }]
+    : [],
+)
+
+// Cifras del resumen, todas derivadas del contenido: cuántas notas, cuánto
+// se tarda en leerlas todas y desde cuándo se escriben.
+const minutosTotales = notas.reduce((s, x) => s + x.minutos, 0)
+const primera = notas[notas.length - 1]?.date
+const fmtDesde = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 ---
 
 <BaseLayout title={n.title} description={n.description} image="/og-notes.png">
@@ -34,47 +41,110 @@ const fmtDate = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', {
       {t.common.back}
     </a>
 
-    <header class="mb-16">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="text-cyan">/notes</span>
-        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>{n.eyebrow}</span>
+    <header class="nt-hero">
+      <div class="nt-hero-texto">
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6" data-hero-sigue>
+          <span class="text-cyan">/notes</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span>{n.eyebrow}</span>
+        </div>
+        <h1 class="text-[46px] sm:text-6xl xl:text-[68px] font-medium tracking-[-.04em] leading-[.95] mb-8">
+          <span data-hero-linea class="block text-ink-50">{n.h1Line1}</span>{' '}
+          <span data-hero-linea class="block text-cyan">{n.h1Line2}</span>
+        </h1>
+        <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed" data-hero-sigue>
+          {n.introPre} <a href={L('/tools')} class="text-cyan hover:underline">{n.introLink}</a>{n.introPost}
+        </p>
+        {notas.length > 0 && (
+          <dl class="nt-resumen" data-hero-sigue>
+            <div><dt>{n.motion.resumen.notas}</dt><dd data-odometro data-odometro-inicio="top bottom">{notas.length}</dd></div>
+            <div><dt>{n.motion.resumen.minutos}</dt><dd data-odometro data-odometro-inicio="top bottom">{minutosTotales}</dd></div>
+            {primera && <div><dt>{n.motion.resumen.desde}</dt><dd class="nt-resumen-fecha">{fmtDesde.format(primera)}</dd></div>}
+          </dl>
+        )}
       </div>
-      <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        {n.h1Line1}<br/>{n.h1Line2}
-      </h1>
-      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        {n.introPre} <a href={L('/tools')} class="text-cyan hover:underline">{n.introLink}</a>{n.introPost}
-      </p>
+      {fichas.length > 0 && (
+        <div class="nt-hero-pieza" data-hero-pieza>
+          <FichaDecision fichas={fichas} />
+        </div>
+      )}
     </header>
 
-    {notes.length === 0 && (
+    {notas.length === 0 ? (
       <div class="rounded-2xl glass p-12 text-center">
         <p class="text-[13px] font-mono text-ink-300">{n.empty}</p>
       </div>
+    ) : (
+      <BitacoraNotas notas={notas} />
     )}
-
-    <div class="space-y-4">
-      {notes.map((note) => (
-        <a href={L(`/notes/${noteSlug(note)}`)} class="block rounded-2xl glass p-7 lift group">
-          <div class="flex flex-wrap items-center gap-3 mb-3">
-            <span class="text-[11px] font-mono text-ink-300">{fmtDate.format(note.data.date)}</span>
-            {note.data.tags.map((tag) => (
-              <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/10 text-ink-200">{tag}</span>
-            ))}
-          </div>
-          <h2 class="text-xl md:text-2xl font-medium tracking-[-.02em] text-ink-50 group-hover:text-cyan transition-colors mb-2">
-            {note.data.title}
-          </h2>
-          <p class="text-[14px] text-ink-200 leading-relaxed max-w-2xl">{note.data.description}</p>
-        </a>
-      ))}
-    </div>
 
   </div>
 </BaseLayout>
 
+<style>
+  .nt-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 56px;
+    margin-bottom: 112px;
+  }
+  @media (min-width: 1024px) {
+    .nt-hero {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 470px);
+      gap: 72px;
+      align-items: center;
+      margin-bottom: 140px;
+    }
+  }
+  .nt-hero h1 span { text-wrap: balance; }
+
+  /* Tres cifras en fila, separadas por un filete: se leen como la ficha
+     técnica de la colección. */
+  .nt-resumen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-top: 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    padding-top: 20px;
+  }
+  .nt-resumen > div {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 4px;
+    padding-right: 28px;
+    margin-right: 28px;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .nt-resumen > div:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+  .nt-resumen dt {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #85858f;
+  }
+  .nt-resumen dd {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: #e7e7ec;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .nt-resumen dd.nt-resumen-fecha { font-size: 17px; line-height: 1.95; letter-spacing: -0.01em; }
+  @media (max-width: 479px) {
+    .nt-resumen > div { padding-right: 18px; margin-right: 18px; }
+    .nt-resumen dd { font-size: 26px; }
+  }
+
+</style>
+
 <script>
-  import { initPageMotion } from '../../lib/motion-reveal'
-  initPageMotion()
+  // Mismo lenguaje que las demás páginas con motion (Lenis + GSAP, montaje
+  // común en src/lib/motion/landing.ts). La ficha y la bitácora se montan
+  // solas desde sus componentes.
+  import { montarLanding } from '../../lib/motion/landing'
+  montarLanding()
 </script>

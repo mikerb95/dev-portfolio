@@ -1,0 +1,355 @@
+---
+// Bitácora de /notes: todas las notas en orden, agrupadas por mes sobre un
+// riel que se enciende al bajar, cada una con su mapa generativo (el mismo de
+// su ficha y de la cabecera del artículo) y filtros por familia temática.
+//
+// Sin JS: la lista completa, con los meses fijos a la izquierda (sticky es
+// CSS) y sin filtros (se muestran solo si el script puede aplicarlos).
+import { agruparPorMes, conteoFamilias, FAMILIAS, hex, PALETA_FAMILIA } from '../../lib/notes-meta'
+import { semillaDe } from '../../lib/motion/portadas'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../../i18n'
+import type { NotaVista } from '../../lib/notes'
+
+interface Props {
+  notas: NotaVista[]
+}
+
+const { notas } = Astro.props
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale).notes.motion
+const b = t.bitacora
+const L = (path: string) => localizedHref(path, locale)
+
+const grupos = agruparPorMes(notas)
+const conteo = conteoFamilias(notas)
+const intl = locale === 'en' ? 'en-US' : 'es-CO'
+const fmtMes = new Intl.DateTimeFormat(intl, { month: 'long', timeZone: 'UTC' })
+const fmtDia = new Intl.DateTimeFormat(intl, { day: '2-digit', timeZone: 'UTC' })
+const fmtFecha = new Intl.DateTimeFormat(intl, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+
+// Lo mínimo para pintar las miniaturas: semilla y paleta por índice.
+const mapas = notas.map((n) => ({ semilla: semillaDe(n.claveMapa), paleta: PALETA_FAMILIA[n.familias[0]] }))
+let indice = 0
+---
+
+<section class="bit" aria-labelledby="bit-titulo" data-mapas={JSON.stringify(mapas)} data-total={notas.length} data-t={JSON.stringify({ mostrando: b.mostrando, notaMes: b.notaMes, notasMes: b.notasMes })}>
+  <header class="bit-cab">
+    <div>
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-5">
+        <span class="text-cyan">{String(notas.length).padStart(2, '0')}</span>
+        <span class="h-px w-10 bg-gradient-to-r from-white/15 to-transparent"></span>
+        <span>{b.eyebrow}</span>
+      </div>
+      <h2 id="bit-titulo" class="bit-h2" data-titular>{b.titulo}</h2>
+    </div>
+    <div class="bit-filtros-caja" hidden>
+      <div class="bit-filtros" role="group" aria-label={b.filtrar}>
+        <button type="button" class="bit-filtro" data-familia="" aria-pressed="true">
+          {b.todas} <span class="bit-filtro-n">{notas.length}</span>
+        </button>
+        {FAMILIAS.filter((f) => conteo[f] > 0).map((f) => (
+          <button type="button" class="bit-filtro" data-familia={f} aria-pressed="false" style={`--c:${hex(PALETA_FAMILIA[f].linea)}`}>
+            <i class="bit-filtro-punto" aria-hidden="true"></i>{t.familias[f]} <span class="bit-filtro-n">{conteo[f]}</span>
+          </button>
+        ))}
+      </div>
+      <p class="bit-contador" aria-live="polite">{interpolate(b.mostrando, { n: notas.length, total: notas.length })}</p>
+    </div>
+  </header>
+
+  <div class="bit-cuerpo">
+    <span class="bit-riel" aria-hidden="true"><span class="bit-riel-luz"></span></span>
+
+    {grupos.map((g) => {
+      const d0 = g.notas[0].date
+      return (
+        <section class="bit-mes" aria-label={`${fmtMes.format(d0)} ${d0.getUTCFullYear()}`}>
+          <div class="bit-mes-rot" aria-hidden="true">
+            <span class="bit-mes-nombre">{fmtMes.format(d0)}</span>
+            <span class="bit-mes-anio">{d0.getUTCFullYear()}</span>
+            <span class="bit-mes-n">{g.notas.length === 1 ? b.notaMes : interpolate(b.notasMes, { n: g.notas.length })}</span>
+          </div>
+          <ol class="bit-lista">
+            {g.notas.map((n) => {
+              const i = indice++
+              return (
+                <li class="bit-entrada" data-familias={n.familias.join(' ')} style={`--c:${hex(PALETA_FAMILIA[n.familias[0]].linea)}`}>
+                  <a class="bit-enlace" href={L(`/notes/${n.slug}`)}>
+                    <time class="bit-dia" datetime={n.date.toISOString().slice(0, 10)} title={fmtFecha.format(n.date)}>{fmtDia.format(n.date)}</time>
+                    <span class="bit-nodo" aria-hidden="true"></span>
+                    <span class="bit-mapa" aria-hidden="true"><canvas class="bit-lienzo" data-i={i}></canvas></span>
+                    <span class="bit-texto">
+                      <span class="bit-titulo"><span class="bit-titulo-txt">{n.title}</span></span>
+                      <span class="bit-desc">{n.description}</span>
+                      <span class="bit-meta">
+                        <span class="bit-fecha-movil">{fmtFecha.format(n.date)} · </span>
+                        <span>{interpolate(b.minutos, { n: n.minutos })}</span>
+                        {n.tags.map((tag) => <span class="bit-tag">{tag}</span>)}
+                      </span>
+                    </span>
+                    <span class="bit-flecha" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </span>
+                  </a>
+                </li>
+              )
+            })}
+          </ol>
+        </section>
+      )
+    })}
+  </div>
+</section>
+
+<style>
+  .bit { --mes: 150px; --dia: 40px; --nodo: 22px; }
+
+  .bit-cab {
+    display: grid;
+    gap: 28px;
+    margin-bottom: 44px;
+  }
+  @media (min-width: 1024px) {
+    .bit-cab { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+  }
+  .bit-h2 {
+    font-size: clamp(30px, 4.2vw, 46px);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    color: #e7e7ec;
+    text-wrap: balance;
+  }
+
+  .bit-filtros-caja[hidden] { display: none; }
+  .bit-filtros { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bit-filtro {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px 7px 13px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: #c4c4cc;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.02);
+    transition: color 0.25s, border-color 0.25s, background-color 0.25s;
+  }
+  .bit-filtro:hover { border-color: rgba(255, 255, 255, 0.2); color: #e7e7ec; }
+  .bit-filtro:focus-visible { outline: 2px solid #00f2ff; outline-offset: 2px; }
+  .bit-filtro[aria-pressed='true'] {
+    color: #0a0a0d;
+    background: #e7e7ec;
+    border-color: #e7e7ec;
+  }
+  .bit-filtro[aria-pressed='true'][data-familia]:not([data-familia='']) {
+    background: color-mix(in srgb, var(--c) 16%, #0e0e12);
+    border-color: color-mix(in srgb, var(--c) 55%, transparent);
+    color: #e7e7ec;
+  }
+  .bit-filtro-punto { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+  .bit-filtro-n { font-family: var(--font-mono); font-size: 11px; opacity: 0.6; }
+  .bit-contador {
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: #85858f;
+  }
+  @media (min-width: 1024px) { .bit-contador { text-align: right; } }
+
+  /* ── Riel y meses ── */
+  .bit-cuerpo { position: relative; }
+  .bit-riel {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: calc(var(--mes) + var(--dia) + var(--nodo) / 2);
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .bit-riel-luz {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 242, 255, 0), #00f2ff 12%, #00f2ff);
+    transform-origin: 50% 0;
+    transform: scaleY(0);
+    box-shadow: 0 0 12px rgba(0, 242, 255, 0.5);
+  }
+  /* Sin JS no hay nada que encienda el riel: se deja la línea tenue. */
+  .bit:not(.vivo) .bit-riel-luz { display: none; }
+
+  .bit-mes {
+    display: grid;
+    grid-template-columns: var(--mes) minmax(0, 1fr);
+  }
+  .bit-mes + .bit-mes { margin-top: 18px; }
+  .bit-mes-rot {
+    position: sticky;
+    top: 112px;
+    align-self: start;
+    display: grid;
+    padding-top: 22px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+  .bit-mes-nombre { font-size: 12px; letter-spacing: 0.2em; color: #e7e7ec; }
+  .bit-mes-anio { font-size: 11px; letter-spacing: 0.2em; color: #4d4d5d; margin-top: 2px; }
+  .bit-mes-n { font-size: 10.5px; letter-spacing: 0.12em; color: #85858f; margin-top: 12px; }
+
+  .bit-lista { list-style: none; margin: 0; padding: 0; }
+  .bit-entrada.fuera { display: none; }
+  .bit-mes.vacio { display: none; }
+
+  .bit-enlace {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--dia) var(--nodo) 176px minmax(0, 1fr) 28px;
+    column-gap: 0;
+    align-items: start;
+    padding: 18px 16px 18px 0;
+    border-radius: 18px;
+    transition: background-color 0.35s;
+  }
+  .bit-enlace:hover, .bit-enlace:focus-visible {
+    background: color-mix(in srgb, var(--c) 5%, transparent);
+  }
+  .bit-enlace:focus-visible { outline: 2px solid #00f2ff; outline-offset: -2px; }
+
+  .bit-dia {
+    padding-top: 2px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #85858f;
+    text-align: right;
+    padding-right: 10px;
+  }
+  .bit-nodo {
+    justify-self: center;
+    margin-top: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #0a0a0d;
+    border: 1.5px solid #4d4d5d;
+    position: relative;
+    z-index: 1;
+    transition: background-color 0.4s, border-color 0.4s, box-shadow 0.4s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  /* Nodo encendido: el riel ya pasó por aquí. Sin JS, todos encendidos. */
+  .bit:not(.vivo) .bit-nodo,
+  .bit-entrada.encendida .bit-nodo {
+    background: var(--c);
+    border-color: var(--c);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent), 0 0 14px color-mix(in srgb, var(--c) 60%, transparent);
+  }
+  .bit-enlace:hover .bit-nodo { transform: scale(1.35); }
+
+  .bit-mapa {
+    position: relative;
+    margin: 0 22px 0 14px;
+    aspect-ratio: 1.6;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background:
+      radial-gradient(120% 140% at 25% 20%, color-mix(in srgb, var(--c) 22%, transparent), transparent 60%),
+      #0c0c10;
+  }
+  /* Lienzo al doble del marco y recortado: el mapa se dibuja en unidades de
+     su altura, y a tamaño de miniatura las curvas se apiñaban como estática. */
+  .bit-lienzo {
+    position: absolute;
+    left: -50%;
+    top: -50%;
+    width: 200%;
+    height: 200%;
+    display: block;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s;
+    filter: brightness(0.85) saturate(0.9);
+  }
+  .bit-enlace:hover .bit-lienzo { transform: scale(1.08); filter: brightness(1.15) saturate(1.1); }
+
+  .bit-texto { display: grid; gap: 8px; min-width: 0; }
+  .bit-titulo {
+    display: block;
+    overflow: hidden;
+    font-size: clamp(19px, 1.9vw, 23px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: #e7e7ec;
+    text-wrap: balance;
+    transition: color 0.3s;
+    padding-bottom: 2px;
+  }
+  .bit-titulo-txt { display: inline-block; }
+  .bit-enlace:hover .bit-titulo { color: #fff; }
+  .bit-desc {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #85858f;
+    max-width: 62ch;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .bit-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #c4c4cc;
+  }
+  .bit-tag { color: #85858f; }
+  .bit-tag::before { content: '#'; color: #4d4d5d; }
+  .bit-fecha-movil { display: none; }
+
+  .bit-flecha {
+    justify-self: end;
+    margin-top: 4px;
+    color: #4d4d5d;
+    transition: color 0.3s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .bit-enlace:hover .bit-flecha { color: var(--c); transform: translateX(4px); }
+
+  @media (max-width: 1023px) {
+    .bit { --mes: 112px; }
+    .bit-enlace { grid-template-columns: var(--dia) var(--nodo) 132px minmax(0, 1fr) 20px; }
+  }
+
+  /* Móvil: el mes pasa a ser un rótulo encima de sus notas y el riel corre
+     pegado al borde; el mapa queda como una ficha pequeña a la derecha. */
+  @media (max-width: 767px) {
+    .bit { --mes: 0px; --dia: 0px; --nodo: 20px; }
+    .bit-riel { left: 10px; }
+    .bit-mes { grid-template-columns: minmax(0, 1fr); }
+    .bit-mes-rot {
+      position: static;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 8px 0 4px 32px;
+    }
+    .bit-mes-n { margin: 0 0 0 auto; }
+    .bit-enlace {
+      grid-template-columns: var(--nodo) minmax(0, 1fr) 64px;
+      column-gap: 12px;
+      padding: 16px 0;
+    }
+    .bit-dia, .bit-flecha { display: none; }
+    .bit-mapa { order: 3; margin: 2px 0 0; aspect-ratio: 1; border-radius: 10px; }
+    .bit-titulo { font-size: 18px; }
+    .bit-desc { font-size: 13.5px; }
+    .bit-fecha-movil { display: inline; }
+    .bit-tag { display: none; }
+  }
+</style>
+
+<script>
+  import { montarBitacora } from '../../lib/motion/bitacora'
+  document.querySelectorAll<HTMLElement>('.bit').forEach((raiz) => montarBitacora(raiz))
+</script>

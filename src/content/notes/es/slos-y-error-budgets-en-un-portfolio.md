@@ -5,6 +5,10 @@ date: 2026-07-05
 tags: [sre, slo, observabilidad]
 lang: es
 translationOf: slos-and-error-budgets-in-a-portfolio
+decision:
+  problem: "“99.2 % de uptime” no dice si eso es aceptable o una crisis."
+  rejected: "Perseguir cero caídas"
+  chosen: "Un presupuesto de error con burn rate que avisa antes de incumplir"
 ---
 
 "99.2% de uptime este mes" suena bien hasta que haces la cuenta: son casi seis horas caído. ¿Eso es aceptable? ¿Es una crisis? El porcentaje solo no lo dice. La disciplina SRE de Google resolvió esto hace años con tres conceptos que casi nadie aplica fuera de las empresas grandes, y que funcionan igual de bien en un portfolio de proyectos pequeños.

@@ -5,6 +5,10 @@ date: 2026-09-15
 tags: [cost, infrastructure, turso, vercel]
 lang: en
 translationOf: unos-proveedores-te-cobran-otros-te-cortan
+decision:
+  problem: "A back-of-the-envelope budget misses what each provider really bills."
+  rejected: "Adding up the price of each plan"
+  chosen: "A simulator that splits overage (money) from hard caps (downtime)"
 ---
 
 "What does this cost to run per month?" has a boring answer and a useful one. The boring one is adding up what you pay for each plan. The useful one answers a different question: what happens the month traffic spikes, and what breaks first when it does.

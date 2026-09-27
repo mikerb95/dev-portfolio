@@ -5,6 +5,10 @@ date: 2026-09-26
 tags: [seguridad, opsec, turso, motion]
 lang: es
 translationOf: a-security-showcase-cannot-lie-even-by-accident
+decision:
+  problem: "Una página titulada “con evidencia” decía cinco cosas que no eran ciertas."
+  rejected: "Inventar una proporción de tráfico limpio"
+  chosen: "Cada cifra dice lo que cuenta; lo no medido va punteado y sin cifra"
 ---
 
 La [página de seguridad](/security) de este sitio se titula "Seguridad, con evidencia". Desde julio fue un titular, un párrafo y casi veinte tarjetas iguales: cifras del [micro-SIEM](/notes/construyendo-un-micro-siem-para-mi-portfolio), cuatro hallazgos de una auditoría y una lista de controles. Todo lo que decía era verdad, pero nada lo demostraba. Las cuatro capas de defensa, por ejemplo, eran una lista numerada.

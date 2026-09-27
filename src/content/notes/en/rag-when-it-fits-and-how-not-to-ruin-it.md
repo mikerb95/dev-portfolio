@@ -5,6 +5,10 @@ date: 2026-07-09
 tags: [rag, llm, architecture, ai]
 lang: en
 translationOf: rag-cuando-conviene-y-como-no-arruinarlo
+decision:
+  problem: "Getting an LLM to know your own documents."
+  rejected: "Fine-tuning to give it knowledge"
+  chosen: "RAG with hybrid search and citable fragments"
 ---
 
 Every time someone wants an LLM to "know" about their own data, the same fork shows up: do I retrain the model, or hand it the information at question time? The second option is RAG - Retrieval-Augmented Generation - and in the vast majority of cases it's the right answer. Not because it's fashionable, but because the trade-offs almost always fall on its side.

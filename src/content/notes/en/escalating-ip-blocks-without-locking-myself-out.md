@@ -5,6 +5,10 @@ date: 2026-07-19
 tags: [security, observability, sre]
 lang: en
 translationOf: bloqueo-escalado-de-ips-sin-desconectarme-a-mi-mismo
+decision:
+  problem: "A touched honeypot waited on a cron that never fired."
+  rejected: "Waiting for the next cron"
+  chosen: "Block in the same request, with a 1 h, 24 h and 7 day TTL"
 ---
 
 [This site's micro-SIEM](/en/notes/building-a-micro-siem-for-my-portfolio) had spent weeks detecting and classifying hostile traffic, but it fell short on the part that matters most: acting. A scanner that touched a honeypot generated an event, the event waited for the auto-block cron, and between the cron running and deciding to block, minutes could pass in which the same IP kept hitting the site with no friction. Detecting without blocking is half the job.

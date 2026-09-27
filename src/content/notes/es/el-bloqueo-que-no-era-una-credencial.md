@@ -5,6 +5,10 @@ date: 2026-09-18
 tags: [k6, load-testing, ci-cd, lab, postmortem]
 lang: es
 translationOf: the-blocker-that-was-never-a-credential
+decision:
+  problem: "Dos meses de pruebas de carga “bloqueadas” por un token de Vercel."
+  rejected: "Correr k6 contra un preview de Vercel"
+  chosen: "k6 contra el sitio levantado en el runner, con bases desechables"
 ---
 
 Durante dos meses, cada lista de pendientes de este proyecto empezaba con la misma línea: falta `VERCEL_TOKEN` en los secretos de GitHub. Debajo, la consecuencia: sin él, el rollback automático solo avisa en vez de revertir, y la Fase 5 del laboratorio (las pruebas de carga con k6) no tiene un entorno de preview contra el que correr.

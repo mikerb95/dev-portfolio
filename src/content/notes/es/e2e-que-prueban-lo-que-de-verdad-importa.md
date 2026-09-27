@@ -5,6 +5,10 @@ date: 2026-07-16
 tags: [testing, playwright, e2e, calidad]
 lang: es
 translationOf: e2e-tests-that-check-what-actually-matters
+decision:
+  problem: "Los tests unitarios no ven las costuras entre las piezas."
+  rejected: "Correr los e2e contra la base de siempre"
+  chosen: "Bases desechables, un centinela y una IP por test"
 ---
 
 Tengo más de 400 tests unitarios sobre la lógica de este sitio: idempotencia de pagos, cálculo de P&L, clasificación de amenazas, detección de anomalías. Todos corren en milisegundos y ninguno abre un navegador. Son excelentes para lo que hacen - y ciegos para lo que no.

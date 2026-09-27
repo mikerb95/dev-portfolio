@@ -5,6 +5,10 @@ date: 2026-07-10
 tags: [seguridad, observabilidad, sre]
 lang: es
 translationOf: building-a-micro-siem-for-my-portfolio
+decision:
+  problem: "Los scanners atacan cualquier IP pública, incluido este sitio."
+  rejected: "Ignorar los 404 como ruido"
+  chosen: "Un micro-SIEM propio, fail-open en cada capa"
 ---
 
 Cualquier sitio con una IP pública recibe tráfico hostil desde el primer minuto, portfolio personal incluido. Scanners automáticos prueban `/wp-login.php`, `/.env`, `/.git/config`, inyecciones en cada parámetro de query - no porque te hayan elegido, sino porque escanean internet entero y tú simplemente estás en el rango. La reacción normal es ignorarlo: son 404, no rompen nada, ¿para qué mirar?

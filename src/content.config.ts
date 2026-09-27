@@ -24,6 +24,20 @@ const notes = defineCollection({
     lang: z.enum(['es', 'en']).default('es'),
     /** Slug (sin prefijo de idioma) del artículo equivalente en el otro idioma. */
     translationOf: z.string().optional(),
+    /**
+     * La decisión del artículo en tres líneas: el problema, lo que se
+     * descartó y lo que se eligió. La ficha del hero de /notes y el resumen
+     * al inicio de cada nota la leen de aquí, así que el texto vive junto al
+     * artículo que resume y se traduce con él. Opcional: una nota sin
+     * decisión simplemente no entra en la ficha.
+     */
+    decision: z
+      .object({
+        problem: z.string(),
+        rejected: z.string(),
+        chosen: z.string(),
+      })
+      .optional(),
   }),
 })
 

@@ -5,6 +5,10 @@ date: 2026-07-16
 tags: [payments, security, product]
 lang: en
 translationOf: cobrar-un-trabajo-de-campo-sin-api-de-whatsapp
+decision:
+  problem: "Charging for on-site support from my phone, over WhatsApp."
+  rejected: "Paying for the WhatsApp Business API"
+  chosen: "A short code; the server signs the amount on click"
 ---
 
 Not everything I do is writing software. I also fix computers, install networks, do on-site support - work that gets charged at the end of the visit, standing up, with the client next to you. The real way to charge for that isn't a checkout with a cart: it's a number, a link, and "pay me here". I wanted that link to arrive over WhatsApp, without paying for the WhatsApp Business API (designed for volume, not for a freelancer sending three messages a day) and without giving up anything I'd already built into the gateway that runs `/pay`: real idempotency, Wompi signature verification, and a state machine that never lets an approved payment go backwards.

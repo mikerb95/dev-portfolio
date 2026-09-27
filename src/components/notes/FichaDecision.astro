@@ -1,0 +1,375 @@
+---
+// Ficha de decisiones del hero de /notes. La página promete "decisiones, no
+// tutoriales"; la ficha lo enseña ocurriendo: el problema de una nota real,
+// la opción que se descartó tachándose y la elegida escribiéndose, y el mapa
+// generativo de la nota (el mismo de su entrada en la bitácora) arriba.
+//
+// El servidor pinta la primera ficha completa: sin JS o con movimiento
+// reducido es una tarjeta quieta y legible. El script añade el mazo y los
+// controles; con movimiento reducido, los controles cambian de ficha sin
+// animar y no hay avance automático.
+import { hex, PALETA_FAMILIA, type Familia } from '../../lib/notes-meta'
+import { semillaDe } from '../../lib/motion/portadas'
+import type { FichaDato } from '../../lib/motion/notas'
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+
+export type FichaEntrada = {
+  href: string
+  titulo: string
+  familia: Familia
+  minutos: number
+  claveMapa: string
+  problem: string
+  rejected: string
+  chosen: string
+}
+
+interface Props {
+  fichas: FichaEntrada[]
+}
+
+const { fichas } = Astro.props
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale).notes.motion
+const f = t.ficha
+
+// Lo que el script necesita para cambiar de ficha: textos, color y semilla.
+// Se calcula aquí para que el navegador no tenga que conocer las familias.
+const datos: FichaDato[] = fichas.map((x) => ({
+  ...x,
+  tema: t.familias[x.familia],
+  color: hex(PALETA_FAMILIA[x.familia].linea),
+  semilla: semillaDe(x.claveMapa),
+  paleta: PALETA_FAMILIA[x.familia],
+}))
+const primera = datos[0]
+const total = datos.length
+const dos = (n: number) => String(n).padStart(2, '0')
+---
+
+{primera && (
+  <figure
+    class="fd"
+    aria-label={f.region}
+    data-fichas={JSON.stringify(datos)}
+    data-t={JSON.stringify({ ficha: f.ficha, pausar: f.pausar, reanudar: f.reanudar, min: t.bitacora.minutos })}
+    style={`--fd-color:${primera.color}`}
+  >
+    <div class="fd-pila">
+    <div class="fd-mazo" aria-hidden="true">
+      <span class="fd-fantasma fd-f2"></span>
+      <span class="fd-fantasma fd-f1"></span>
+    </div>
+
+    <article class="fd-carta">
+      <div class="fd-mapa">
+        <canvas class="fd-lienzo" aria-hidden="true"></canvas>
+        <div class="fd-mapa-pie">
+          <span class="fd-num">{f.ficha} <b>{dos(1)}</b> / {dos(total)}</span>
+          <span class="fd-tema"><i class="fd-punto" aria-hidden="true"></i><span class="fd-tema-txt">{primera.tema}</span></span>
+        </div>
+      </div>
+
+      <dl class="fd-cuerpo">
+        <div class="fd-bloque">
+          <dt class="fd-rot">{f.problema}</dt>
+          <dd class="fd-problema">{primera.problem}</dd>
+        </div>
+        <div class="fd-bloque fd-fila">
+          <dt class="fd-rot">{f.descartado}</dt>
+          <dd class="fd-descartado">
+            <s class="fd-desc-txt">{primera.rejected}</s>
+          </dd>
+        </div>
+        <div class="fd-bloque fd-fila">
+          <dt class="fd-rot fd-rot-dec">{f.decidido}</dt>
+          <dd class="fd-decidido"><span class="fd-dec-txt">{primera.chosen}</span><span class="fd-caret" aria-hidden="true"></span></dd>
+        </div>
+      </dl>
+
+      <a class="fd-leer" href={primera.href}>
+        <span class="fd-titulo">{primera.titulo}</span>
+        <span class="fd-leer-pie">
+          <span class="fd-min">{t.bitacora.minutos.replace('{n}', String(primera.minutos))}</span>
+          <span class="fd-cta">{f.leer} <span aria-hidden="true">→</span></span>
+        </span>
+      </a>
+    </article>
+    </div>
+
+    <div class="fd-controles" hidden>
+      <button type="button" class="fd-btn fd-prev" aria-label={f.anterior}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <div class="fd-regla" aria-hidden="true">
+        {datos.map((_, i) => <span class="fd-marca" data-i={i}></span>)}
+        <span class="fd-avance"></span>
+      </div>
+      <button type="button" class="fd-btn fd-pausa" aria-pressed="false" aria-label={f.pausar}>
+        <svg class="fd-ico-pausa" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="4.5" height="16" rx="1"/><rect x="14.5" y="4" width="4.5" height="16" rx="1"/></svg>
+        <svg class="fd-ico-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z"/></svg>
+      </button>
+      <button type="button" class="fd-btn fd-next" aria-label={f.siguiente}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+  </figure>
+)}
+
+<style>
+  .fd {
+    position: relative;
+    margin: 0;
+    --fd-color: #00f2ff;
+  }
+
+  /* Mazo: dos cartas detrás, algo giradas. Solo con JS (el mazo anuncia que
+     hay más fichas, y sin JS no se puede pasar a ellas). */
+  .fd-pila { position: relative; }
+  .fd-mazo { display: none; }
+  .fd.vivo .fd-mazo { display: block; }
+  .fd-fantasma {
+    position: absolute;
+    inset: 10px 6px -10px 6px;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
+    transform-origin: 50% 100%;
+  }
+  .fd-f1 { transform: rotate(2.2deg) translateY(6px); }
+  .fd-f2 { transform: rotate(-3.4deg) translateY(12px); opacity: 0.6; }
+
+  .fd-carta {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 22px;
+    overflow: hidden;
+    background: #0e0e12;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.3);
+  }
+
+  .fd-mapa {
+    position: relative;
+    height: 132px;
+    /* Respaldo sin WebGL: un halo del color de la familia, no una caja vacía. */
+    background:
+      radial-gradient(120% 140% at 25% 20%, color-mix(in srgb, var(--fd-color) 22%, transparent), transparent 60%),
+      #0c0c10;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  /* El lienzo mide más que la banda y se recorta: el mapa se dibuja en
+     unidades de su altura, y a 132 px las curvas quedaban apiñadas como
+     estática. Así la banda muestra una franja de un mapa más holgado. */
+  .fd-mapa { overflow: hidden; }
+  .fd-lienzo { position: absolute; left: 0; top: 50%; width: 100%; height: 260%; transform: translateY(-50%); display: block; }
+  .fd-mapa::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(14, 14, 18, 0) 35%, rgba(14, 14, 18, 0.85));
+    pointer-events: none;
+  }
+  .fd-mapa-pie {
+    position: absolute;
+    z-index: 1;
+    inset: auto 16px 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #c4c4cc;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
+  }
+  .fd-num b { color: #e7e7ec; font-weight: 500; }
+  .fd-tema {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(10, 10, 13, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .fd-punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--fd-color);
+    box-shadow: 0 0 10px var(--fd-color);
+  }
+
+  .fd-cuerpo {
+    margin: 0;
+    padding: 22px 24px 6px;
+    display: grid;
+    gap: 16px;
+  }
+  .fd-bloque { margin: 0; }
+  .fd-fila {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
+  }
+  .fd-rot {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #85858f;
+  }
+  .fd-bloque:first-child .fd-rot { margin-bottom: 8px; }
+  .fd-rot-dec { color: var(--fd-color); }
+  dd { margin: 0; }
+
+  /* Alturas mínimas en líneas: al cambiar de ficha la carta no salta con
+     cada texto de distinto largo. */
+  .fd-problema {
+    font-size: 17px;
+    line-height: 1.45;
+    color: #e7e7ec;
+    letter-spacing: -0.01em;
+    min-height: 3lh;
+    text-wrap: pretty;
+  }
+  .fd-descartado { position: relative; font-size: 14.5px; line-height: 1.45; min-height: 2lh; }
+  /* El tachado es propio (no text-decoration) para poder dibujarlo: un fondo
+     de 2 px a media altura que crece de izquierda a derecha, línea por
+     línea, porque el span es inline y el fondo se parte con el texto. */
+  .fd-desc-txt {
+    text-decoration: none;
+    color: #85858f;
+    background-image: linear-gradient(#c4c4cc, #c4c4cc);
+    background-repeat: no-repeat;
+    background-position: 0 58%;
+    background-size: 100% 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .fd-decidido {
+    font-size: 15.5px;
+    line-height: 1.45;
+    color: #e7e7ec;
+    min-height: 2lh;
+  }
+  .fd-caret {
+    display: none;
+    width: 2px;
+    height: 1.05em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    background: var(--fd-color);
+    animation: fd-parpadeo 1s steps(1) infinite;
+  }
+  .fd.tecleando .fd-caret { display: inline-block; }
+  @keyframes fd-parpadeo { 50% { opacity: 0; } }
+
+  .fd-leer {
+    display: grid;
+    gap: 10px;
+    margin: 10px 12px 12px;
+    padding: 14px 14px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  .fd-leer:hover, .fd-leer:focus-visible {
+    background: color-mix(in srgb, var(--fd-color) 8%, transparent);
+    border-color: color-mix(in srgb, var(--fd-color) 30%, transparent);
+  }
+  .fd-titulo {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #e7e7ec;
+    line-height: 1.35;
+    min-height: 2lh;
+    text-wrap: balance;
+  }
+  .fd-leer-pie {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #85858f;
+  }
+  .fd-cta { color: var(--fd-color); transition: transform 0.3s; }
+  .fd-leer:hover .fd-cta { transform: translateX(3px); }
+
+  .fd-controles {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 26px;
+  }
+  .fd-controles[hidden] { display: none; }
+  .fd-btn {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: #c4c4cc;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+  }
+  .fd-btn:hover { color: #e7e7ec; border-color: rgba(255, 255, 255, 0.22); }
+  .fd-btn:focus-visible { outline: 2px solid #00f2ff; outline-offset: 2px; }
+  .fd-ico-play { display: none; }
+  .fd-pausa[aria-pressed='true'] .fd-ico-pausa { display: none; }
+  .fd-pausa[aria-pressed='true'] .fd-ico-play { display: block; }
+
+  /* Regla: una marca por ficha, como las de una escala; la actual se alarga
+     y toma el color de su familia. Debajo, la línea de avance hasta la
+     siguiente. */
+  .fd-regla {
+    position: relative;
+    flex: 1;
+    height: 26px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0 2px;
+    cursor: pointer;
+  }
+  .fd-marca {
+    width: 2px;
+    height: 8px;
+    margin-top: 4px;
+    border-radius: 1px;
+    background: #3a3a48;
+    transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.35s, margin 0.35s;
+  }
+  .fd-marca:hover { background: #85858f; }
+  .fd-marca.actual { height: 16px; margin-top: 0; background: var(--fd-color); }
+  .fd-avance {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    height: 1px;
+    background: var(--fd-color);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    opacity: 0.8;
+  }
+
+  @media (max-width: 639px) {
+    .fd-mapa { height: 108px; }
+    .fd-cuerpo { padding: 18px 18px 4px; gap: 14px; }
+    .fd-fila { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .fd-problema { font-size: 16px; }
+  }
+</style>
+
+<script>
+  import { montarFicha } from '../../lib/motion/ficha-viva'
+  document.querySelectorAll<HTMLElement>('.fd').forEach((raiz) => montarFicha(raiz))
+</script>

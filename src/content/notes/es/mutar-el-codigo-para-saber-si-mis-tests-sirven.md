@@ -5,6 +5,10 @@ date: 2026-07-17
 tags: [testing, calidad, ci-cd]
 lang: es
 translationOf: mutating-my-code-to-find-out-if-my-tests-work
+decision:
+  problem: "Una cobertura alta no dice si los tests detectan un bug."
+  rejected: "Tomar la cobertura como prueba"
+  chosen: "Mutar el código a propósito y contar los mutantes que mueren"
 ---
 
 Este sitio tiene más de 400 tests y una cobertura que se ve bien en cualquier badge. Durante mucho tiempo eso me bastó como prueba de que la suite era sólida. Pero cobertura mide una pregunta muy limitada: ¿esta línea se ejecutó al menos una vez durante los tests? Un `if` que se ejecuta pero cuya condición nunca importa para el resultado cuenta como "cubierto" exactamente igual que uno que de verdad se está verificando. Cobertura alta con aserciones débiles es un número que miente con la conciencia tranquila.

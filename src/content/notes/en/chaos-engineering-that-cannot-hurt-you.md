@@ -5,6 +5,10 @@ date: 2026-07-05
 tags: [chaos-engineering, resilience, sre]
 lang: en
 translationOf: chaos-engineering-que-no-puede-hacerte-dano
+decision:
+  problem: "How do you know monitoring catches an outage you’ve never seen?"
+  rejected: "Believing the alerts work"
+  chosen: "Break it on purpose, with a 15-minute TTL and a panic button"
 ---
 
 How do you know your monitoring detects an outage if you've never seen one? Trusting alerts that have never fired is faith, not engineering. The only way to know the full chain works - the monitor detects, the incident is recorded, the push lands on your phone - is to break something on purpose and watch.

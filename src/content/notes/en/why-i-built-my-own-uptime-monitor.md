@@ -5,6 +5,10 @@ date: 2026-07-05
 tags: [observability, astro, sre]
 lang: en
 translationOf: por-que-construi-mi-propio-monitor
+decision:
+  problem: "The uptime service said 200 while production served the wrong page."
+  rejected: "A ping that only checks the HTTP status"
+  chosen: "My own engine that checks status, content and latency"
 ---
 
 A generic uptime service answers exactly one question: did the server return 200? And that's the wrong question. A broken deploy can return 200 with a blank page, with an uncompiled bundle, or with another project's HTML. The site is "up" and completely down for anyone visiting it, at the same time.

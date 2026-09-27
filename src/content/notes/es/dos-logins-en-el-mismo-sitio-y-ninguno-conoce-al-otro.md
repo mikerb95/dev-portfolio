@@ -5,6 +5,10 @@ date: 2026-07-24
 tags: [seguridad, auth, arquitectura, astro]
 lang: es
 translationOf: two-logins-one-site-and-neither-knows-the-other
+decision:
+  problem: "El portal de clientes necesitaba login, y el admin ya tenía uno probado."
+  rejected: "Reutilizar Auth.js con un rol en el token"
+  chosen: "Login, cookie y sesiones propias, sin una línea compartida"
 ---
 
 El panel de administración de este sitio se autentica con OAuth de GitHub, una allowlist de un solo nombre y un JWT de Auth.js. Funciona, está probado y lleva meses en producción. Cuando construí el portal de clientes (donde cada cliente entra a ver sus facturas, sus documentos y el avance de su proyecto) lo obvio era colgarme de esa infraestructura: mismo `auth-astro`, otro provider, un campo de rol en el token y listo.

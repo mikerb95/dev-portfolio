@@ -5,6 +5,10 @@ date: 2026-07-24
 tags: [seguridad, multi-tenant, arquitectura, astro]
 lang: es
 translationOf: the-client-id-never-comes-from-the-url
+decision:
+  problem: "Clientes autenticados de verdad podían pedir los datos de otro."
+  rejected: "Aceptar el clientId como parámetro"
+  chosen: "El clientId sale de la sesión y va en cada WHERE; lo ajeno da 404"
 ---
 
 Un portal de clientes tiene una superficie de ataque incómoda: casi todo el que lo usa está **legítimamente autenticado**. El login puede ser perfecto - contraseñas con scrypt, sesiones revocables, rate limiting - y aun así basta un `WHERE` mal escrito para que una empresa vea la factura de otra. Ese fallo no dispara ninguna alarma de seguridad, porque desde fuera parece una consulta normal de un usuario normal.

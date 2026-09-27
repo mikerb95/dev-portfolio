@@ -5,6 +5,10 @@ date: 2026-07-24
 tags: [security, multi-tenant, architecture, astro]
 lang: en
 translationOf: el-client-id-nunca-viene-de-la-url
+decision:
+  problem: "Properly signed-in clients could ask for someone else’s data."
+  rejected: "Accepting clientId as a parameter"
+  chosen: "clientId comes from the session and rides in every WHERE; others’ data is a 404"
 ---
 
 A client portal has an uncomfortable attack surface: almost everyone using it is **legitimately authenticated**. The login can be perfect - scrypt password hashing, revocable sessions, rate limiting - and one badly written `WHERE` is still enough for one company to see another's invoice. That failure trips no security alarm, because from the outside it looks like a normal query from a normal user.

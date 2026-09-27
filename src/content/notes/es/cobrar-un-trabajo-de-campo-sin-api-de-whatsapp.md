@@ -5,6 +5,10 @@ date: 2026-07-16
 tags: [pagos, seguridad, producto]
 lang: es
 translationOf: charging-for-field-work-without-the-whatsapp-api
+decision:
+  problem: "Cobrar un soporte en la calle, desde el celular, por WhatsApp."
+  rejected: "Pagar la API de WhatsApp Business"
+  chosen: "Un código corto; el servidor firma el monto al hacer clic"
 ---
 
 No todo lo que hago es escribir software. También arreglo computadores, instalo redes, hago soporte in situ - trabajo que se cobra al final de la visita, de pie, con el cliente al lado. La forma real de cobrar eso no es un checkout con carrito: es un número, un link, y "págame por aquí". Quería que ese link llegara por WhatsApp, sin pagar la API de WhatsApp Business (pensada para volumen, no para un freelance que manda tres mensajes al día) y sin sacrificar nada de lo que ya construí en la pasarela que corre `/pay`: idempotencia real, verificación de firma de Wompi, y una máquina de estados que nunca deja retroceder un pago aprobado.

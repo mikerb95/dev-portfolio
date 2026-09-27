@@ -10,6 +10,7 @@
 import { getCollection, getEntry } from 'astro:content'
 import type { CollectionEntry } from 'astro:content'
 import type { Locale } from '../i18n'
+import { claveMapa, enlacesANotas, familiasDe, minutosLectura, type Familia } from './notes-meta'
 
 export type Note = CollectionEntry<'notes'>
 
@@ -53,4 +54,40 @@ export async function getTranslationSlug(note: Note): Promise<string | null> {
     ({ data }) => !data.draft && data.lang === otherLocale && data.translationOf === slug
   )
   return candidates.length > 0 ? noteSlug(candidates[0]) : null
+}
+
+/**
+ * Lo que las páginas de /notes pintan de cada nota, ya derivado: tiempo de
+ * lectura, familias, enlaces a otras notas y la clave de su mapa generativo.
+ * Se calcula en el build (las páginas están prerenderizadas), así que leer el
+ * cuerpo entero de cada nota aquí no cuesta nada por visita.
+ */
+export type NotaVista = {
+  slug: string
+  title: string
+  description: string
+  date: Date
+  tags: string[]
+  familias: Familia[]
+  minutos: number
+  enlaces: string[]
+  claveMapa: string
+  decision?: { problem: string; rejected: string; chosen: string }
+}
+
+export function notaVista(note: Note): NotaVista {
+  const slug = noteSlug(note)
+  const cuerpo = note.body ?? ''
+  return {
+    slug,
+    title: note.data.title,
+    description: note.data.description,
+    date: note.data.date,
+    tags: note.data.tags,
+    familias: familiasDe(note.data.tags),
+    minutos: minutosLectura(cuerpo),
+    enlaces: enlacesANotas(cuerpo),
+    claveMapa: claveMapa({ slug, lang: note.data.lang, translationOf: note.data.translationOf }),
+    decision: note.data.decision,
+  }
 }

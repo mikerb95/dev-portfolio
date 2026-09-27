@@ -5,6 +5,10 @@ date: 2026-07-16
 tags: [testing, playwright, e2e, quality]
 lang: en
 translationOf: e2e-que-prueban-lo-que-de-verdad-importa
+decision:
+  problem: "Unit tests can’t see the seams between the pieces."
+  rejected: "Running e2e against the usual database"
+  chosen: "Throwaway databases, a sentinel and one IP per test"
 ---
 
 I have more than 400 unit tests over this site's logic: payment idempotency, P&L calculation, threat classification, anomaly detection. They all run in milliseconds and none of them opens a browser. They're excellent at what they do - and blind to what they don't.
