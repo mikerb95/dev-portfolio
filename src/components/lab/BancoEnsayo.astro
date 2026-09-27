@@ -68,6 +68,15 @@ const experimentos = EXPERIMENTOS.map((id, i) => {
   return { id, nombre: b.experimentos[i], esperado: b.esperado[i], sello, selloTexto, corridasTexto }
 })
 
+// La descripción larga de cada experimento, la misma que usa el panel.
+const LARGO: Record<Experimento, string> = {
+  'payments:double_click': lb.experiments.labels.doubleClick,
+  'payments:duplicate_webhook': lb.experiments.labels.duplicateWebhook,
+  'payments:out_of_order': lb.experiments.labels.outOfOrder,
+  'payments:race_condition': lb.experiments.labels.raceCondition,
+  'chaos:db_fail_midtx': lb.experiments.labels.dbFailMidtx,
+}
+
 // Primer experimento, resuelto.
 const g0 = guionDe(EXPERIMENTOS[0])
 const c0 = cuadroFinal(g0)
@@ -147,7 +156,7 @@ const textos = { lecturas: b.lecturas, estados: b.estados, de: b.registro.de, ba
 
   <div class="be-tabs" role="group" aria-label={b.escenariosLabel}>
     {experimentos.map((e, i) => (
-      <button type="button" class="be-tab" data-exp={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+      <button type="button" class="be-tab" data-exp={i} aria-pressed={i === 0 ? 'true' : 'false'} title={LARGO[e.id]}>
         <span class="be-tab-nombre">{e.nombre}</span>
         <span class="be-tab-barra" aria-hidden="true"><span data-exp-progreso></span></span>
       </button>
@@ -193,11 +202,12 @@ const textos = { lecturas: b.lecturas, estados: b.estados, de: b.registro.de, ba
   .be-mapa {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 112px) minmax(0, 1fr) minmax(0, 112px);
-    column-gap: 30px;
+    /* Los huecos entre columnas son los carriles por donde viajan las fichas. */
+    grid-template-columns: minmax(0, 104px) minmax(0, 1fr) minmax(0, 104px);
+    column-gap: 72px;
     align-items: center;
     /* Aire a la derecha: los arcos de la máquina de estados se curvan hacia fuera. */
-    padding-right: 30px;
+    padding-right: 26px;
   }
   .be-trazos { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
   .be-arco { fill: none; stroke-width: 1.5; stroke-linecap: round; }
@@ -224,6 +234,8 @@ const textos = { lecturas: b.lecturas, estados: b.estados, de: b.registro.de, ba
   }
   .be-emisor { border-style: dashed; background: #0e0e12; }
   .be-emisor .be-nombre { grid-column: 1 / -1; }
+  /* Lo que manda cada emisor es corto pero no cabe en una línea de 104 px. */
+  .be-emisor .be-lectura { white-space: normal; }
   .be-num { font-family: var(--font-serif, Georgia, serif); font-style: italic; font-size: 13px; line-height: 1; color: #85858f; }
   .be-nombre { font-size: 12px; line-height: 1.2; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .be-lectura {
@@ -370,7 +382,7 @@ const textos = { lecturas: b.lecturas, estados: b.estados, de: b.registro.de, ba
      rejilla y la máquina de estados en fila; los arcos se curvan hacia abajo. */
   @media (max-width: 767px) {
     .be { padding: 12px; }
-    .be-mapa { display: flex; flex-direction: column; gap: 22px; padding-right: 0; padding-bottom: 26px; align-items: stretch; }
+    .be-mapa { display: flex; flex-direction: column; gap: 26px; padding-right: 0; padding-bottom: 26px; align-items: stretch; }
     .be-emisores { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
     .be-guardas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
     .be-guardas > :last-child { grid-column: 1 / -1; }

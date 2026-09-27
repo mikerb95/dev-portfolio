@@ -4,6 +4,8 @@ import { db } from '../../db'
 import { ciRuns, labExperiments, loadTestRuns, payments, paymentEvents, securityFindings } from '../../db/schema'
 import { desc, gte, sql } from 'drizzle-orm'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
+import BancoEnsayo from '../../components/lab/BancoEnsayo.astro'
+import type { Corridas, Experimento } from '../../lib/motion/ensayo'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -117,17 +119,12 @@ const [expAgg] = await db
   })
   .from(labExperiments)
 
-// Etiquetas amigables por tipo de experimento; el detalle crudo se queda en el
-// panel. El `kind` es la clave técnica que escribe el experimento - no se
-// traduce; lo que se traduce es su etiqueta legible.
-const EXPERIMENT_LABELS: Record<string, string> = {
-  'chaos:db_fail_midtx': lb.experiments.labels.dbFailMidtx,
-  'payments:double_click': lb.experiments.labels.doubleClick,
-  'payments:duplicate_webhook': lb.experiments.labels.duplicateWebhook,
-  'payments:out_of_order': lb.experiments.labels.outOfOrder,
-  'payments:race_condition': lb.experiments.labels.raceCondition,
-}
-const expLabel = (kind: string) => EXPERIMENT_LABELS[kind] ?? kind.replace(/[_:]/g, ' ')
+// El banco de ensayo del hero reproduce cada experimento y sella con sus
+// corridas reales, agrupadas por `kind` (la clave técnica que escribe el
+// experimento).
+const corridas: Partial<Record<Experimento, Corridas>> = Object.fromEntries(
+  experiments.map((e) => [e.kind, { runs: Number(e.runs), ok: Number(e.ok), lastRunAt: e.lastRunAt ? Number(e.lastRunAt) : null }]),
+)
 
 // ── Pasarela sandbox: agregados de resiliencia ──────────────────────────────
 const [payAgg] = await db
@@ -194,53 +191,62 @@ const upcoming = [
       {t.common.back}
     </a>
 
-    <header class="mb-12">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="text-cyan">/lab</span>
-        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>{lb.eyebrow}</span>
+    <header class="lb-hero mb-14">
+      <div>
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6" data-hero-sigue>
+          <span class="text-cyan">/lab</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span>{lb.eyebrow}</span>
+        </div>
+        <h1 class="text-[42px] sm:text-5xl xl:text-[56px] font-medium tracking-[-.035em] leading-[.98] mb-8">
+          <span data-hero-linea class="block text-ink-50 lb-balance">{lb.h1Line1}</span>{' '}
+          <span data-hero-linea class="block text-cyan lb-balance">{lb.h1Line2}</span>
+        </h1>
+        <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed mb-5" data-hero-sigue>
+          {lb.intro}
+        </p>
+        <p class="text-[13px] text-ink-300 max-w-xl leading-relaxed" data-hero-sigue>
+          {lb.experiments.body}
+        </p>
       </div>
-      <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        {lb.h1Line1}<br/>{lb.h1Line2}
-      </h1>
-      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        {lb.intro}
-      </p>
+      <div class="lb-hero-pieza" data-hero-pieza>
+        <BancoEnsayo corridas={corridas} />
+      </div>
     </header>
 
-    <!-- KPIs -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-      <div class="rounded-2xl glass p-5">
-        <div class={`font-mono text-[26px] leading-none tracking-tight ${successRate30 !== null && successRate30 >= 90 ? 'text-lime' : 'text-ember'}`}>
+    <!-- KPIs: una sola franja de lecturas, como la cara de un instrumento. -->
+    <dl class="lb-kpis mb-20" style={`--kpis: ${lastMutation ? 5 : 4}`} data-entrada>
+      <div class="lb-kpi">
+        <dt class="lb-kpi-rot">{lb.kpi.pipelines}</dt>
+        <dd class={`lb-kpi-valor ${successRate30 !== null && successRate30 >= 90 ? 'text-lime' : 'text-ember'}`} data-odometro>
           {successRate30 === null ? '-' : `${successRate30}%`}
-        </div>
-        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.pipelines}</div>
+        </dd>
       </div>
-      <div class="rounded-2xl glass p-5">
-        <div class="font-mono text-[26px] leading-none tracking-tight text-ink-50">
+      <div class="lb-kpi">
+        <dt class="lb-kpi-rot">{lb.kpi.coverage}</dt>
+        <dd class="lb-kpi-valor text-ink-50" data-odometro>
           {lastCoverage === null ? '-' : `${Math.round(lastCoverage * 10) / 10}%`}
-        </div>
-        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.coverage}</div>
+        </dd>
       </div>
-      <div class="rounded-2xl glass p-5">
-        <div class={`font-mono text-[26px] leading-none tracking-tight ${expAgg.total > 0 && expAgg.ok === expAgg.total ? 'text-lime' : 'text-ink-50'}`}>
+      <div class="lb-kpi">
+        <dt class="lb-kpi-rot">{lb.kpi.experiments}</dt>
+        <dd class={`lb-kpi-valor ${expAgg.total > 0 && expAgg.ok === expAgg.total ? 'text-lime' : 'text-ink-50'}`} data-odometro>
           {expAgg.ok}/{expAgg.total}
-        </div>
-        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.experiments}</div>
+        </dd>
       </div>
-      <div class="rounded-2xl glass p-5">
-        <div class="font-mono text-[26px] leading-none tracking-tight text-cyan">{absorbed}</div>
-        <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.absorbed}</div>
+      <div class="lb-kpi">
+        <dt class="lb-kpi-rot">{lb.kpi.absorbed}</dt>
+        <dd class="lb-kpi-valor text-cyan" data-odometro>{absorbed}</dd>
       </div>
       {lastMutation && (
-        <div class="rounded-2xl glass p-5" title={lb.kpi.mutationTitle}>
-          <div class={`font-mono text-[26px] leading-none tracking-tight ${lastMutation.mutationScore! >= 80 ? 'text-lime' : lastMutation.mutationScore! >= 60 ? 'text-cyan' : 'text-ember'}`}>
+        <div class="lb-kpi" title={lb.kpi.mutationTitle}>
+          <dt class="lb-kpi-rot">{lb.kpi.mutationScore}</dt>
+          <dd class={`lb-kpi-valor ${lastMutation.mutationScore! >= 80 ? 'text-lime' : lastMutation.mutationScore! >= 60 ? 'text-cyan' : 'text-ember'}`} data-odometro>
             {Math.round(lastMutation.mutationScore! * 10) / 10}%
-          </div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.kpi.mutationScore}</div>
+          </dd>
         </div>
       )}
-    </div>
+    </dl>
 
     <!-- Pipeline CI/CD -->
     <section class="mb-16">
@@ -272,42 +278,6 @@ const upcoming = [
                 <span class="font-mono text-[11px] text-ink-300 hidden sm:inline">{runMeta(r)}</span>
                 <span class="ml-auto font-mono text-[11px] text-ink-300">
                   {fmtDuration(r.durationMs)} · {r.createdAt ? fmtDate.format(r.createdAt) : '-'}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </section>
-
-    <!-- Experimentos -->
-    <section class="mb-16">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-3">
-        <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-        <span>{lb.experiments.heading}</span>
-      </div>
-      <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
-        {lb.experiments.body}
-      </p>
-      {experiments.length === 0 ? (
-        <div class="rounded-2xl glass p-8">
-          <p class="text-[13px] font-mono text-ink-300">{lb.experiments.empty}</p>
-        </div>
-      ) : (
-        <div class="rounded-2xl glass divide-y divide-white/5">
-          {experiments.map((e) => {
-            const allOk = e.ok === e.runs
-            return (
-              <div class="p-4 md:px-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
-                <span class={`w-1.5 h-1.5 rounded-full shrink-0 ${allOk ? 'bg-lime' : 'bg-ember'}`}></span>
-                <span class="text-ink-50">{expLabel(e.kind)}</span>
-                <span class={`text-[10px] font-mono uppercase tracking-[.15em] ${allOk ? 'text-lime' : 'text-ember'}`}>
-                  {allOk
-                    ? `${e.runs} ${e.runs === 1 ? lb.experiments.runOne : lb.experiments.runMany} · ${lb.experiments.passed}`
-                    : `${e.ok}/${e.runs} ${lb.experiments.passedRatio}`}
-                </span>
-                <span class="ml-auto font-mono text-[11px] text-ink-300">
-                  {lb.experiments.last} {e.lastRunAt ? fmtDate.format(new Date(e.lastRunAt * 1000)) : '-'}
                 </span>
               </div>
             )
@@ -495,6 +465,46 @@ const upcoming = [
 </BaseLayout>
 
 <script>
-  import { initPageMotion } from '../../lib/motion-reveal'
-  initPageMotion()
+  // Mismo lenguaje que las demás páginas con motion (Lenis + GSAP, montaje
+  // común en src/lib/motion/landing.ts) más las piezas de esta página.
+  import { montarLanding } from '../../lib/motion/landing'
+  import { montarBanco } from '../../lib/motion/ensayo-vivo'
+
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const banco = document.querySelector<HTMLElement>('[data-banco]')
+  if (banco) {
+    try {
+      montarBanco(banco, { reducido })
+    } catch (err) {
+      // Fail-open: el experimento resuelto que pintó el servidor sigue ahí.
+      console.warn('[lab] banco sin motion', err)
+      delete banco.dataset.vivo
+    }
+  }
+  montarLanding()
 </script>
+
+<style>
+  .lb-hero { display: grid; gap: 48px; grid-template-columns: minmax(0, 1fr); align-items: center; }
+  .lb-balance { text-wrap: balance; }
+  @media (min-width: 1200px) {
+    .lb-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 620px); gap: 48px; }
+  }
+  .lb-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  @media (min-width: 768px) {
+    .lb-kpis { grid-template-columns: repeat(var(--kpis, 4), minmax(0, 1fr)); }
+  }
+  .lb-kpi { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 10px; padding: 20px 22px 22px; background: #0d0d12; min-width: 0; }
+  .lb-kpi-valor { margin: 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 30px; line-height: 1; letter-spacing: -0.02em; }
+  .lb-kpi-rot { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #85858f; line-height: 1.4; }
+</style>
+
