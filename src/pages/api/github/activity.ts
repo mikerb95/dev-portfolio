@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro'
+import { porDia, racha, redondearMarca, trabajoProfundo, type DeepWork } from '../../../lib/actividad'
 
 // Qué se PUBLICA y qué solo se CUENTA. El token ve también los repos privados y
 // los de organizaciones, y este endpoint alimenta páginas públicas (/log y la
@@ -6,6 +7,12 @@ import type { APIRoute } from 'astro'
 // (horas, racha, total, gráfico), que solo necesitan la hora de cada commit;
 // pero su nombre de repo y su mensaje no salen nunca. Antes salían: /log
 // publicaba el historial de repos privados, incluidos los de clientes.
+//
+// De lo privado sí sale la HORA de cada commit, redondeada a 5 minutos
+// (`privateCommitTimes`): el reloj de /log dibuja las sesiones con ella, y sin
+// ella las horas de trabajo profundo no cuadrarían con lo dibujado. Las cifras
+// se calculan con esas mismas horas redondeadas, así el navegador puede
+// rehacer la cuenta y llegar al mismo número.
 
 interface GitHubEvent {
   type: string
@@ -45,79 +52,7 @@ export interface FeedItem {
   type: 'commit' | 'pr_merged'
 }
 
-export interface DeepWorkStats {
-  weekHours: number
-  monthHours: number
-  sessions: number
-}
-
-// Merge commit timestamps within 90-min gaps into sessions, +30 min per commit minimum
-function calcDeepWork(commitTimes: number[]): DeepWorkStats {
-  const pushTimes = [...commitTimes].sort((a, b) => a - b)
-
-  if (!pushTimes.length) return { weekHours: 0, monthHours: 0, sessions: 0 }
-
-  type Session = { start: number; end: number }
-  const sessions: Session[] = []
-  let start = pushTimes[0]
-  let end = pushTimes[0]
-
-  for (let i = 1; i < pushTimes.length; i++) {
-    const gapMin = (pushTimes[i] - end) / 60_000
-    if (gapMin <= 90) {
-      end = pushTimes[i]
-    } else {
-      sessions.push({ start, end })
-      start = pushTimes[i]
-      end = pushTimes[i]
-    }
-  }
-  sessions.push({ start, end })
-
-  const durationMin = (s: Session) =>
-    Math.max((s.end - s.start) / 60_000 + 30, 30)
-
-  const now = Date.now()
-  const weekMs = 7 * 86_400_000
-  const monthMs = 30 * 86_400_000
-
-  const weekHours = sessions
-    .filter((s) => s.end >= now - weekMs)
-    .reduce((acc, s) => acc + durationMin(s) / 60, 0)
-
-  const monthHours = sessions
-    .filter((s) => s.end >= now - monthMs)
-    .reduce((acc, s) => acc + durationMin(s) / 60, 0)
-
-  return {
-    weekHours: Math.round(weekHours * 10) / 10,
-    monthHours: Math.round(monthHours * 10) / 10,
-    sessions: sessions.length,
-  }
-}
-
-function calcStreak(commitTimes: number[]): number {
-  const activeDays = new Set(
-    commitTimes.map((t) => {
-      const d = new Date(t)
-      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-    })
-  )
-
-  let streak = 0
-  const today = new Date()
-  for (let i = 0; i < 60; i++) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-    if (activeDays.has(key)) {
-      streak++
-    } else if (i > 0) {
-      break
-    }
-  }
-  return streak
-}
+export type DeepWorkStats = DeepWork
 
 const SKIP_PATTERNS = [
   /^merge/i,
@@ -273,6 +208,7 @@ export const GET: APIRoute = async ({ url }) => {
   const seen = new Set<string>()
   const feed: FeedItem[] = []
   const commitTimes: number[] = []
+  const privateCommitTimes: number[] = []
   // Hora de cada commit y PR fusionado, públicos o no, para el gráfico.
   const activityTimes: string[] = []
   let totalCommits = 0
@@ -283,9 +219,13 @@ export const GET: APIRoute = async ({ url }) => {
     seen.add(c.sha)
     totalCommits++
     const timestamp = c.commit.author?.date ?? c.commit.committer?.date ?? ''
-    if (timestamp) commitTimes.push(new Date(timestamp).getTime())
+    const marca = timestamp ? redondearMarca(new Date(timestamp).getTime()) : NaN
+    if (Number.isFinite(marca)) commitTimes.push(marca)
     activityTimes.push(timestamp)
-    if (!esPublico(c.repository)) continue
+    if (!esPublico(c.repository)) {
+      if (Number.isFinite(marca)) privateCommitTimes.push(marca)
+      continue
+    }
     feed.push({
       repo: c.repository.full_name.split('/')[1] ?? c.repository.full_name,
       repoFull: c.repository.full_name,
@@ -321,20 +261,18 @@ export const GET: APIRoute = async ({ url }) => {
 
   feed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
-  const deepWork = calcDeepWork(commitTimes)
-  const streak = calcStreak(commitTimes)
+  // Un solo "ahora" para todas las cifras, y se publica: la respuesta vive
+  // media hora en la CDN, y el navegador rehace la cuenta con este instante,
+  // no con el suyo.
+  const generatedAt = Date.now()
+  const deepWork = trabajoProfundo(commitTimes, generatedAt)
+  const streak = racha(commitTimes, generatedAt).dias
 
-  // Commits per day for sparkline (last 14 days)
-  const commitsByDay: Record<string, number> = {}
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    commitsByDay[d.toISOString().split('T')[0]] = 0
-  }
-  for (const timestamp of activityTimes) {
-    const day = timestamp.split('T')[0]
-    if (day in commitsByDay) commitsByDay[day]++
-  }
+  // Actividad por día (commits y PRs, públicos o no) de los últimos 14 días.
+  const sparkline = porDia(
+    activityTimes.filter(Boolean).map((t) => new Date(t).getTime()),
+    generatedAt,
+  )
 
   return new Response(
     JSON.stringify({
@@ -342,7 +280,9 @@ export const GET: APIRoute = async ({ url }) => {
       deepWork,
       streak,
       totalCommits,
-      sparkline: Object.values(commitsByDay),
+      sparkline,
+      generatedAt,
+      privateCommitTimes: privateCommitTimes.sort((a, b) => a - b),
     }),
     {
       status: 200,

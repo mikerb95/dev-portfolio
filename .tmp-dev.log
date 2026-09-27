@@ -1,0 +1,25 @@
+14:42:16 [vite] connected.
+14:42:19 [types] Generated 1ms
+14:42:19 [vite] connected.
+14:42:20 [content] Syncing content
+14:42:20 [content] Astro config changed
+14:42:20 [content] Clearing content store
+14:42:21 [content] Synced content
+14:42:21 [vite] Re-optimizing dependencies because vite config has changed
+ astro  v7.1.3 ready in 6405 ms
+┃ Local    http://localhost:4330/
+┃ Network  use --host to expose
+14:42:21 watching for file changes...
+14:42:31 [200] /log 3336ms
+14:42:44 [200] /api/github/activity 6208ms
+14:42:55 [200] /log 13ms
+14:42:56 [200] /log 13ms
+14:42:57 [204] POST /api/vitals 32ms
+14:42:57 [vite] dependencies optimized: gsap, gsap/ScrollTrigger, gsap/SplitText, lenis, web-vitals
+14:42:57 [204] POST /api/vitals 17ms
+14:43:03 [200] /api/github/activity 5785ms
+14:43:16 [200] /log 12ms
+14:43:16 [204] POST /api/vitals 13ms
+14:43:17 [204] POST /api/vitals 10ms
+14:43:21 [200] /api/github/activity 5468ms
+14:49:55 [watch] /src/styles/global.css
