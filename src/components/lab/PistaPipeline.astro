@@ -24,8 +24,10 @@ interface Props {
 const { filas } = Astro.props
 const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).lab.motion.pista
 
-// Lo que hace cada etapa en ci.yml. Son nombres de código y no se traducen.
+// Lo que hace cada etapa en ci.yml. "Deploy" y "Health check" son los nombres
+// de los pasos del workflow y no se traducen; "calidad" sí.
 const SUB = { calidad: 'tests · build · e2e', deploy: 'Vercel', health: '/api/health ×3' }
+const NOMBRE = { calidad: t.calidad, deploy: 'Deploy', health: 'Health check' }
 const ETAPAS = ['calidad', 'deploy', 'health'] as const
 ---
 
@@ -35,7 +37,7 @@ const ETAPAS = ['calidad', 'deploy', 'health'] as const
     <div class="pp-cab-pista">
       {ETAPAS.map((e) => (
         <span class="pp-cab-etapa">
-          {t.etapas[e]}
+          {NOMBRE[e]}
           <em>{SUB[e]}</em>
         </span>
       ))}

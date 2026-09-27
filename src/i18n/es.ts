@@ -1700,7 +1700,7 @@ const es = {
         pie: 'Reproducción en tu navegador con la máquina de estados real (payments-state.ts). El sello y las corridas salen de lab_experiments: si una corrida real falla, el sello lo dice.',
       },
       pista: {
-        etapas: { calidad: 'Calidad', deploy: 'Deploy', health: 'Health check' },
+        calidad: 'Calidad',
         vuelve: 'vuelve a la versión anterior',
         etiqueta: 'Últimas corridas del pipeline, etapa por etapa',
       },
@@ -1719,7 +1719,6 @@ const es = {
         cesa: 'la carga cesa',
         vuelve: 'vuelve en {s} s',
         noVuelve: 'no volvió',
-        unidad: { rps: 'req/s', vus: 'VUs' },
       },
       pasarela: { montos: 'Verificación de monto', defensa: 'defensa' },
       analizador: {

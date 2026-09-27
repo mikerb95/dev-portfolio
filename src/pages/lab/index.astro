@@ -241,30 +241,30 @@ const upcoming = [
     <dl class="lb-kpis mb-20" style={`--kpis: ${lastMutation ? 5 : 4}`}>
       <div class="lb-kpi">
         <dt class="lb-kpi-rot">{lb.kpi.pipelines}</dt>
-        <dd class={`lb-kpi-valor ${successRate30 !== null && successRate30 >= 90 ? 'text-lime' : 'text-ember'}`} data-odometro>
+        <dd class={`lb-kpi-valor ${successRate30 !== null && successRate30 >= 90 ? 'text-lime' : 'text-ember'}`} data-odometro data-odometro-inicio="top bottom">
           {successRate30 === null ? '-' : `${successRate30}%`}
         </dd>
       </div>
       <div class="lb-kpi">
         <dt class="lb-kpi-rot">{lb.kpi.coverage}</dt>
-        <dd class="lb-kpi-valor text-ink-50" data-odometro>
+        <dd class="lb-kpi-valor text-ink-50" data-odometro data-odometro-inicio="top bottom">
           {lastCoverage === null ? '-' : `${Math.round(lastCoverage * 10) / 10}%`}
         </dd>
       </div>
       <div class="lb-kpi">
         <dt class="lb-kpi-rot">{lb.kpi.experiments}</dt>
-        <dd class={`lb-kpi-valor ${expAgg.total > 0 && expAgg.ok === expAgg.total ? 'text-lime' : 'text-ink-50'}`} data-odometro>
+        <dd class={`lb-kpi-valor ${expAgg.total > 0 && expAgg.ok === expAgg.total ? 'text-lime' : 'text-ink-50'}`} data-odometro data-odometro-inicio="top bottom">
           {expAgg.ok}/{expAgg.total}
         </dd>
       </div>
       <div class="lb-kpi">
         <dt class="lb-kpi-rot">{lb.kpi.absorbed}</dt>
-        <dd class="lb-kpi-valor text-cyan" data-odometro>{absorbed}</dd>
+        <dd class="lb-kpi-valor text-cyan" data-odometro data-odometro-inicio="top bottom">{absorbed}</dd>
       </div>
       {lastMutation && (
         <div class="lb-kpi" title={lb.kpi.mutationTitle}>
           <dt class="lb-kpi-rot">{lb.kpi.mutationScore}</dt>
-          <dd class={`lb-kpi-valor ${lastMutation.mutationScore! >= 80 ? 'text-lime' : lastMutation.mutationScore! >= 60 ? 'text-cyan' : 'text-ember'}`} data-odometro>
+          <dd class={`lb-kpi-valor ${lastMutation.mutationScore! >= 80 ? 'text-lime' : lastMutation.mutationScore! >= 60 ? 'text-cyan' : 'text-ember'}`} data-odometro data-odometro-inicio="top bottom">
             {Math.round(lastMutation.mutationScore! * 10) / 10}%
           </dd>
         </div>
@@ -397,7 +397,7 @@ const upcoming = [
              aquí no se analiza nada, y un rojo o un verde serían inventados. -->
         <div class="lb-an-panel" data-analizador aria-hidden="true">
           <div class="lb-an-cab">
-            <span class="lb-an-host">ejemplo.com</span>
+            <span class="lb-an-host">{t.siteCheck.inputPlaceholder}</span>
             <span class="lb-an-cuenta" data-an-cuenta>{interpolate(mo.analizador.pruebas, { n: PRUEBAS.length, total: PRUEBAS.length })}</span>
           </div>
           <div class="lb-an-rejilla">

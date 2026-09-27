@@ -1664,7 +1664,7 @@ const en = {
         pie: 'Replayed in your browser with the real state machine (payments-state.ts). The stamp and the runs come from lab_experiments: if a real run fails, the stamp says so.',
       },
       pista: {
-        etapas: { calidad: 'Quality', deploy: 'Deploy', health: 'Health check' },
+        calidad: 'Quality',
         vuelve: 'back to the previous version',
         etiqueta: 'Latest pipeline runs, stage by stage',
       },
@@ -1683,7 +1683,6 @@ const en = {
         cesa: 'load stops',
         vuelve: 'back in {s} s',
         noVuelve: 'did not recover',
-        unidad: { rps: 'req/s', vus: 'VUs' },
       },
       pasarela: { montos: 'Amount check', defensa: 'defense' },
       analizador: {

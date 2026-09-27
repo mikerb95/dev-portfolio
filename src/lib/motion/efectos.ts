@@ -269,7 +269,9 @@ export function odometro(el: HTMLElement): Desmontar {
   }
   const st = ScrollTrigger.create({
     trigger: el,
-    start: 'top 90%',
+    // `data-odometro-inicio` adelanta el disparo para cifras que asoman en el
+    // borde del primer pantallazo: un "00%" quieto ahí se lee como el dato.
+    start: el.dataset.odometroInicio ?? 'top 90%',
     onEnter: () => {
       tiras.forEach(({ tira, digito }, i) => {
         gsap.fromTo(
