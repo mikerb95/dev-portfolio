@@ -297,7 +297,7 @@ export function montarLog(opciones: { reducido: boolean }) {
       const rects = tramos
         .map(
           (t) =>
-            `<rect x="${t.h0.toFixed(3)}" y="${t.previo ? 3 : 2}" width="${Math.max(0.12, t.h1 - t.h0).toFixed(3)}" height="${t.previo ? 4 : 6}" rx=".4" fill="${t.previo ? 'rgba(0,242,255,.22)' : 'rgba(0,242,255,.55)'}"/>`,
+            `<rect x="${t.h0.toFixed(3)}" y="${t.previo ? 3 : 2}" width="${Math.max(0.12, t.h1 - t.h0).toFixed(3)}" height="${t.previo ? 4 : 6}" rx=".4" fill="${t.previo ? 'rgba(0,242,255,.3)' : 'rgba(0,242,255,.8)'}"/>`,
         )
         .join('')
       const ticks = [6, 12, 18].map((h) => `<rect x="${h - 0.03}" y="0" width=".06" height="10" fill="rgba(255,255,255,.12)"/>`).join('')
@@ -306,7 +306,9 @@ export function montarLog(opciones: { reducido: boolean }) {
 
     function cabeceraDia(dia: number): string {
       const fecha = new Intl.DateTimeFormat(intl, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(fechaDeDia(dia))
-      const n = feed.filter((f) => f.type === 'commit' && diaBogota(new Date(f.timestamp).getTime()) === dia).length
+      // Con filtro, la cuenta es la de lo que se ve; las horas son las del día
+      // entero, porque una sesión no es de un proyecto ni de un tipo.
+      const n = lista.filter((f) => diaBogota(new Date(f.timestamp).getTime()) === dia).length
       const fila = modeloB ? dia - modeloB.dias[0] : -1
       const horas = modeloB && fila >= 0 && fila < modeloB.dias.length ? modeloB.horasFila[fila] : 0
       const dato = [n === 1 ? T.oneCommit : interpolar(T.nCommits, { n }), horas > 0 ? `${num1.format(horas)} h` : '']
