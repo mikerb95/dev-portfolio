@@ -86,12 +86,12 @@ const interpolar = (plantilla: string, v: Record<string, string | number>) =>
 /** Sprite del brillo de un commit público: un drawImage por punto en vez de shadowBlur. */
 function spriteBrillo(dpr: number): HTMLCanvasElement {
   const c = document.createElement('canvas')
-  const r = Math.round(9 * dpr)
+  const r = Math.round(6 * dpr)
   c.width = c.height = r * 2
   const g = c.getContext('2d')!
   const grad = g.createRadialGradient(r, r, 0, r, r, r)
-  grad.addColorStop(0, `rgba(${CIAN}, 0.55)`)
-  grad.addColorStop(0.35, `rgba(${CIAN}, 0.16)`)
+  grad.addColorStop(0, `rgba(${CIAN}, 0.3)`)
+  grad.addColorStop(0.4, `rgba(${CIAN}, 0.08)`)
   grad.addColorStop(1, `rgba(${CIAN}, 0)`)
   g.fillStyle = grad
   g.fillRect(0, 0, r * 2, r * 2)
@@ -392,7 +392,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
     }
 
     // Commits.
-    const r = m.compacto ? 1.6 : 2.1
+    const r = m.compacto ? 1.5 : 1.9
     const tam = brillo.width / dpr
     for (const p of modelo.puntos) {
       const fase = faseFila(cab, p.fila)

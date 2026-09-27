@@ -33,7 +33,7 @@ const L = (path: string) => localizedHref(path, locale)
             <span id="feed-status-text">{l.loadingStatus}</span>
           </span>
         </div>
-        <h1 class="text-[42px] sm:text-5xl xl:text-[60px] font-medium tracking-[-.035em] leading-[1] mb-0">
+        <h1 class="text-[42px] sm:text-5xl xl:text-[56px] font-medium tracking-[-.035em] leading-[1] mb-0">
           <span data-hero-linea class="block text-ink-50 lg-balance">{l.h1}</span>{' '}
           <span data-hero-linea class="block text-cyan lg-balance">{l.h1Linea2}</span>
         </h1>
@@ -84,6 +84,6 @@ const L = (path: string) => localizedHref(path, locale)
   .lg-hero { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr); align-items: end; }
   .lg-balance { text-wrap: balance; }
   @media (min-width: 1024px) {
-    .lg-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 56px; }
+    .lg-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 56px; }
   }
 </style>
