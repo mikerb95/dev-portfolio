@@ -1,0 +1,143 @@
+---
+// Pruebas de carga de /lab: la escalera de la última corrida de estrés,
+// dibujada con sus escalones reales (load_test_runs.steps_json). Por escalón:
+// lo que se ofreció (contorno), lo que el sitio sirvió sin error (relleno, del
+// color de su estado) y el p95 (línea, eje logarítmico a la derecha). Marca
+// dónde se rompe, qué sostiene y cuánto tardó en volver cuando cesó la carga.
+//
+// OPSEC: igual que el resto de la sección, se publica el comportamiento y
+// nunca el objetivo contra el que corrió.
+import { getDictionary, getLocaleFromUrl, interpolate } from '../../i18n'
+import { ESCALERA, ESCALERA_MOVIL, escalera, type Lienzo } from '../../lib/motion/lab-datos'
+import type { LoadStep } from '../../lib/lab/load-test'
+
+interface Props {
+  pasos: LoadStep[]
+  recuperadoS: number | null
+}
+const { pasos, recuperadoS } = Astro.props
+const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).lab.motion.escalera
+
+const unidad = t.unidad[pasos[0]?.unidad ?? 'rps']
+const fmtMs = (ms: number) => (ms >= 1000 ? `${ms / 1000} s` : `${ms} ms`)
+const fmtN = (n: number) => (n >= 10 ? String(Math.round(n)) : String(Math.round(n * 10) / 10))
+const recuperacion = recuperadoS == null ? t.noVuelve : interpolate(t.vuelve, { s: recuperadoS })
+
+const variantes: { clase: string; lienzo: Lienzo; letra: number }[] = [
+  { clase: 'ec-escritorio', lienzo: ESCALERA, letra: 11 },
+  { clase: 'ec-movil', lienzo: ESCALERA_MOVIL, letra: 10 },
+]
+---
+
+<figure class="ec" data-escalera aria-label={t.etiqueta}>
+  {variantes.map(({ clase, lienzo, letra }) => {
+    const e = escalera(pasos, lienzo)
+    const q = e.quiebre != null ? e.escalones[e.quiebre] : null
+    const sos = e.sostenido != null ? e.escalones[e.sostenido] : null
+    const xCesa = e.xRecuperacion - e.anchoColumna / 2
+    return (
+      <svg class={`ec-svg ${clase}`} viewBox={`0 0 ${lienzo.ancho} ${lienzo.alto}`} style={`--letra:${letra}px`} aria-hidden="true">
+        {e.marcas.map((m) => (
+          <g class="ec-marca">
+            <line x1={lienzo.izq} x2={lienzo.ancho - lienzo.der} y1={m.y} y2={m.y} />
+            <text x={lienzo.izq - 8} y={m.y + 4} text-anchor="end">{fmtN(m.valor)}</text>
+          </g>
+        ))}
+        {e.marcasP95.map((m) => (
+          <text class="ec-marca-p95" x={lienzo.ancho - lienzo.der + 8} y={m.y + 4}>{fmtMs(m.ms)}</text>
+        ))}
+        <text class="ec-eje" x={lienzo.izq - 8} y={lienzo.arriba - 14} text-anchor="end">{unidad}</text>
+        <text class="ec-eje ec-eje-p95" x={lienzo.ancho - lienzo.der + 8} y={lienzo.arriba - 14}>{t.p95}</text>
+
+        {e.escalones.map((s, i) => (
+          <g class="ec-escalon" data-escalon={i} data-estado={s.estado}>
+            <rect class="ec-ofrecido" data-of x={s.x} y={s.yOfrecido} width={s.ancho} height={e.base - s.yOfrecido} data-y={s.yOfrecido} data-h={e.base - s.yOfrecido} />
+            {s.yServido != null && (
+              <rect class="ec-servido" data-sv x={s.x} y={s.yServido} width={s.ancho} height={Math.max(0, e.base - s.yServido)} data-y={s.yServido} data-h={Math.max(0, e.base - s.yServido)} />
+            )}
+            <text class="ec-carga" x={s.x + s.ancho / 2} y={e.base + 18} text-anchor="middle">{fmtN(s.carga)}</text>
+          </g>
+        ))}
+
+        <line class="ec-base" x1={lienzo.izq} x2={lienzo.ancho - lienzo.der} y1={e.base} y2={e.base} />
+        {e.lineaP95 && <path class="ec-p95" data-p95 d={e.lineaP95} />}
+        {e.escalones.map((s, i) => s.yP95 != null && <circle class="ec-p95-punto" data-pt={i} cx={s.x + s.ancho / 2} cy={s.yP95} r="3.2" />)}
+
+        {sos && sos.yServido != null && (
+          <text class="ec-sostiene" data-sostiene x={sos.x + sos.ancho / 2} y={sos.yServido - 8} text-anchor="middle">
+            {t.sostiene} {fmtN(sos.servido ?? 0)}
+          </text>
+        )}
+        {q && (
+          <g class="ec-quiebre" data-quiebre>
+            <line x1={q.x - (e.anchoColumna - q.ancho) / 2} x2={q.x - (e.anchoColumna - q.ancho) / 2} y1={lienzo.arriba - 10} y2={e.base} />
+            <text x={q.x - (e.anchoColumna - q.ancho) / 2} y={lienzo.arriba - 14} text-anchor="middle">{t.seRompe} · {fmtN(q.carga)} {unidad}</text>
+          </g>
+        )}
+        <g class={`ec-recupera ${recuperadoS == null ? 'ec-recupera-no' : ''}`} data-recupera>
+          <line class="ec-cesa" x1={xCesa} x2={xCesa} y1={lienzo.arriba + 18} y2={e.base} />
+          <text class="ec-cesa-rot" x={xCesa + 5} y={e.base - 8}>{t.cesa}</text>
+          {/* Una llave que marca el tramo, no una curva: la latencia durante la
+              recuperación no se guarda por escalón, y una curva inventada se
+              leería como dato. */}
+          <path class="ec-recupera-arco" d={`M${xCesa + 6},${e.base - 48} v-6 H${xCesa + e.anchoColumna - 6} v6`} />
+          <text class="ec-recupera-rot" x={e.xRecuperacion} y={e.base - 62} text-anchor="middle">{recuperacion}</text>
+        </g>
+      </svg>
+    )
+  })}
+  <figcaption class="ec-leyenda">
+    <span><i class="ec-ley-of"></i>{t.ofrecido}</span>
+    <span><i class="ec-ley-sv"></i>{t.servido}</span>
+    <span><i class="ec-ley-p95"></i>{t.p95}</span>
+  </figcaption>
+</figure>
+
+<style is:global>
+  .ec {
+    --ec-lime: #c9ff5b;
+    --ec-amber: #fbbf24;
+    --ec-ember: #ff6b3d;
+    --ec-cyan: #00f2ff;
+    margin: 0 0 18px;
+    padding: 18px 18px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(12, 12, 16, 0.55);
+  }
+  .ec-svg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--letra); }
+  .ec-movil { display: none; }
+  @media (max-width: 639px) {
+    .ec { padding: 14px 10px 12px; }
+    .ec-escritorio { display: none; }
+    .ec-movil { display: block; }
+  }
+  .ec-marca line { stroke: rgba(255, 255, 255, 0.05); }
+  .ec-marca text, .ec-marca-p95, .ec-carga { fill: #6b6b78; }
+  .ec-eje { fill: #85858f; letter-spacing: 0.1em; }
+  .ec-eje-p95, .ec-marca-p95 { fill: rgba(0, 242, 255, 0.55); }
+  .ec-base { stroke: rgba(255, 255, 255, 0.15); }
+  .ec-ofrecido { fill: rgba(255, 255, 255, 0.015); stroke: rgba(255, 255, 255, 0.22); stroke-dasharray: 3 3; }
+  .ec-servido { stroke: none; }
+  .ec-escalon[data-estado='ok'] .ec-servido { fill: var(--ec-lime); fill-opacity: 0.8; }
+  .ec-escalon[data-estado='degradado'] .ec-servido { fill: var(--ec-amber); fill-opacity: 0.8; }
+  .ec-escalon[data-estado='roto'] .ec-servido { fill: var(--ec-ember); fill-opacity: 0.85; }
+  .ec-escalon[data-estado='roto'] .ec-ofrecido { stroke: rgba(255, 107, 61, 0.45); }
+  .ec-p95 { fill: none; stroke: var(--ec-cyan); stroke-width: 1.6; stroke-linejoin: round; }
+  .ec-p95-punto { fill: #0c0c10; stroke: var(--ec-cyan); stroke-width: 1.5; }
+  .ec-sostiene { fill: var(--ec-lime); }
+  .ec-quiebre line { stroke: var(--ec-ember); stroke-dasharray: 4 4; }
+  .ec-quiebre text { fill: var(--ec-ember); letter-spacing: 0.04em; }
+  .ec-cesa { stroke: rgba(255, 255, 255, 0.25); stroke-dasharray: 2 4; }
+  .ec-cesa-rot { fill: #6b6b78; }
+  .ec-recupera-arco { fill: none; stroke: var(--ec-lime); stroke-width: 1.4; }
+  .ec-recupera-rot { fill: var(--ec-lime); }
+  .ec-recupera-no .ec-recupera-arco { stroke: var(--ec-ember); }
+  .ec-recupera-no .ec-recupera-rot { fill: var(--ec-ember); }
+  .ec-leyenda { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: #85858f; }
+  .ec-leyenda span { display: inline-flex; align-items: center; gap: 7px; }
+  .ec-leyenda i { display: inline-block; width: 12px; height: 9px; }
+  .ec-ley-of { border: 1px dashed rgba(255, 255, 255, 0.35); }
+  .ec-ley-sv { background: linear-gradient(90deg, var(--ec-lime) 33%, var(--ec-amber) 33% 66%, var(--ec-ember) 66%); }
+  .ec-ley-p95 { height: 2px !important; background: var(--ec-cyan); }
+</style>

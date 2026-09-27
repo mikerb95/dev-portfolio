@@ -1663,6 +1663,33 @@ const en = {
         escenariosLabel: 'Experiments',
         pie: 'Replayed in your browser with the real state machine (payments-state.ts). The stamp and the runs come from lab_experiments: if a real run fails, the stamp says so.',
       },
+      pista: {
+        etapas: { calidad: 'Quality', deploy: 'Deploy', health: 'Health check' },
+        vuelve: 'back to the previous version',
+        etiqueta: 'Latest pipeline runs, stage by stage',
+      },
+      ciclo: {
+        etiqueta: 'Findings by status: all are born open and tracked until closed',
+        porPunto: '1 dot = {n} findings',
+        nacen: 'every finding starts here',
+      },
+      escalera: {
+        etiqueta: 'Staircase of the latest stress test: offered load, load served without errors and p95 per step',
+        ofrecido: 'offered',
+        servido: 'served without error',
+        p95: 'p95',
+        seRompe: 'breaks',
+        sostiene: 'holds',
+        cesa: 'load stops',
+        vuelve: 'back in {s} s',
+        noVuelve: 'did not recover',
+        unidad: { rps: 'req/s', vus: 'VUs' },
+      },
+      pasarela: { montos: 'Amount check', defensa: 'defense' },
+      analizador: {
+        pruebas: '{n}/{total} checks',
+        ilustrativo: 'illustrative: in a real scan the order changes',
+      },
     },
     methodology: {
       heading: 'How this page works',

@@ -1699,6 +1699,33 @@ const es = {
         escenariosLabel: 'Experimentos',
         pie: 'Reproducción en tu navegador con la máquina de estados real (payments-state.ts). El sello y las corridas salen de lab_experiments: si una corrida real falla, el sello lo dice.',
       },
+      pista: {
+        etapas: { calidad: 'Calidad', deploy: 'Deploy', health: 'Health check' },
+        vuelve: 'vuelve a la versión anterior',
+        etiqueta: 'Últimas corridas del pipeline, etapa por etapa',
+      },
+      ciclo: {
+        etiqueta: 'Hallazgos por estado: todos nacen abiertos y se siguen hasta cerrarse',
+        porPunto: '1 punto = {n} hallazgos',
+        nacen: 'todo hallazgo nace aquí',
+      },
+      escalera: {
+        etiqueta: 'Escalera de la última prueba de estrés: carga ofrecida, carga servida sin error y p95 por escalón',
+        ofrecido: 'ofrecido',
+        servido: 'servido sin error',
+        p95: 'p95',
+        seRompe: 'se rompe',
+        sostiene: 'sostiene',
+        cesa: 'la carga cesa',
+        vuelve: 'vuelve en {s} s',
+        noVuelve: 'no volvió',
+        unidad: { rps: 'req/s', vus: 'VUs' },
+      },
+      pasarela: { montos: 'Verificación de monto', defensa: 'defensa' },
+      analizador: {
+        pruebas: '{n}/{total} pruebas',
+        ilustrativo: 'ilustrativo: en un análisis real el orden cambia',
+      },
     },
     methodology: {
       heading: 'Cómo funciona esta página',

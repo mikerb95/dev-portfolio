@@ -1,0 +1,89 @@
+---
+// Hallazgos de seguridad/accesibilidad de /lab como ciclo: todo hallazgo que
+// ingiere CI nace abierto (security_findings.status = 'open' por defecto) y se
+// sigue hasta quedar resuelto o aceptado. El servidor pinta cada punto en su
+// estado actual; el script los junta en "abiertos" y, al entrar en pantalla,
+// los deja ir a donde terminaron. Solo el conteo: ni título ni ruta (OPSEC).
+import { getDictionary, getLocaleFromUrl, interpolate } from '../../i18n'
+import { puntosCiclo, type Conteo } from '../../lib/motion/lab-datos'
+
+interface Props {
+  conteo: Conteo
+}
+const { conteo } = Astro.props
+const t = getDictionary(getLocaleFromUrl(Astro.url.pathname))
+const f = t.lab.findings
+const c = t.lab.motion.ciclo
+const { porPunto, puntos } = puntosCiclo(conteo)
+
+const cajas = [
+  { id: 'open', rotulo: f.open, n: conteo.open, puntos: puntos.open },
+  { id: 'resolved', rotulo: f.resolved, n: conteo.resolved, puntos: puntos.resolved },
+  { id: 'accepted', rotulo: f.accepted, n: conteo.accepted, puntos: puntos.accepted },
+] as const
+---
+
+<div class="ch" data-ciclo aria-label={c.etiqueta}>
+  {cajas.map((k) => (
+    <div class={`ch-caja ch-${k.id}`} data-caja={k.id}>
+      <div class="ch-cab">
+        <span class="ch-n" data-ciclo-n={k.n}>{k.n}</span>
+        <span class="ch-rot">{k.rotulo}</span>
+      </div>
+      <div class="ch-puntos" data-puntos aria-hidden="true">
+        {Array.from({ length: k.puntos }, () => <span class="ch-punto" data-destino={k.id}></span>)}
+      </div>
+      {k.id === 'open' && <span class="ch-nota">{c.nacen}</span>}
+    </div>
+  ))}
+  {porPunto > 1 && <p class="ch-leyenda">{interpolate(c.porPunto, { n: porPunto })}</p>}
+</div>
+
+<style is:global>
+  .ch {
+    --ch-ember: #ff6b3d;
+    --ch-lime: #c9ff5b;
+    --ch-cyan: #00f2ff;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    max-width: 760px;
+  }
+  .ch-caja {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    padding: 16px 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(12, 12, 16, 0.55);
+    min-height: 150px;
+  }
+  .ch-cab { display: flex; align-items: baseline; gap: 10px; }
+  .ch-n { font-family: var(--font-mono, ui-monospace, monospace); font-size: 26px; line-height: 1; }
+  .ch-rot { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #85858f; }
+  .ch-open .ch-n { color: var(--ch-ember); }
+  .ch-resolved .ch-n { color: var(--ch-lime); }
+  .ch-accepted .ch-n { color: var(--ch-cyan); }
+  .ch-puntos { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; min-height: 20px; }
+  .ch-punto { width: 9px; height: 9px; border-radius: 99px; flex: none; }
+  /* El color lo da la caja donde está el punto, no el punto: al cambiar de
+     caja cambia de color, que es lo que cuenta la pieza. */
+  .ch-open .ch-punto { background: var(--ch-ember); box-shadow: 0 0 8px -1px rgba(255, 107, 61, 0.7); }
+  .ch-resolved .ch-punto { background: var(--ch-lime); box-shadow: 0 0 8px -1px rgba(201, 255, 91, 0.6); }
+  .ch-accepted .ch-punto { background: transparent; border: 1.5px solid var(--ch-cyan); }
+  /* En vuelo, el punto conserva el color de donde salió hasta aterrizar. */
+  .ch .ch-punto[data-vuelo] { background: var(--ch-ember); border: 0; box-shadow: 0 0 10px 0 rgba(255, 107, 61, 0.8); }
+  .ch-nota { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #4d4d5d; }
+  .ch-leyenda { grid-column: 1 / -1; margin: 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #6b6b78; }
+  @media (max-width: 639px) {
+    .ch { gap: 8px; }
+    .ch-caja { padding: 12px; min-height: 130px; }
+    .ch-n { font-size: 22px; }
+    .ch-cab { flex-direction: column; gap: 6px; }
+    .ch-punto { width: 8px; height: 8px; }
+    .ch-puntos { gap: 5px; }
+  }
+</style>

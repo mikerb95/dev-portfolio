@@ -3,13 +3,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import { db } from '../../db'
 import { ciRuns, labExperiments, loadTestRuns, payments, paymentEvents, securityFindings } from '../../db/schema'
 import { desc, gte, sql } from 'drizzle-orm'
-import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../../i18n'
 import BancoEnsayo from '../../components/lab/BancoEnsayo.astro'
+import PistaPipeline, { type FilaPista } from '../../components/lab/PistaPipeline.astro'
+import CicloHallazgos from '../../components/lab/CicloHallazgos.astro'
+import EscaleraCarga from '../../components/lab/EscaleraCarga.astro'
+import { leerEscalones } from '../../lib/motion/lab-datos'
 import type { Corridas, Experimento } from '../../lib/motion/ensayo'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 const lb = t.lab
+const mo = lb.motion
 const L = (path: string) => localizedHref(path, locale)
 
 // Vitrina pública del LAB. Expone SOLO datos agregados o públicos por naturaleza
@@ -90,12 +95,16 @@ const [lastLoad] = await db
     sustainedRps: loadTestRuns.sustainedRps,
     breakingPointRps: loadTestRuns.breakingPointRps,
     recoveredAfterS: loadTestRuns.recoveredAfterS,
+    stepsJson: loadTestRuns.stepsJson,
     ranAt: loadTestRuns.ranAt,
   })
   .from(loadTestRuns)
   .where(sql`${loadTestRuns.scenario} = 'estres'`)
   .orderBy(desc(loadTestRuns.ranAt))
   .limit(1)
+
+// La escalera se dibuja con los escalones de esa misma fila (unos pocos KB).
+const escalones = leerEscalones(lastLoad?.stepsJson ?? null)
 
 // ── Experimentos (chaos + ataques a la pasarela) ────────────────────────────
 // Agrupado por tipo: un mismo experimento se corre muchas veces (13 corridas de
@@ -168,11 +177,23 @@ const runMeta = (r: (typeof runs)[number]) =>
     .filter(Boolean)
     .join(' · ')
 
-const runBadge = {
-  success: { label: lb.pipeline.badgeOk, cls: 'text-lime border-lime/30 bg-lime/10' },
-  failure: { label: lb.pipeline.badgeFailure, cls: 'text-ember border-ember/40 bg-ember/15' },
-  rolled_back: { label: lb.pipeline.badgeRollback, cls: 'text-ember border-ember/30 bg-ember/10' },
-} as const
+const badgeDe: Record<string, string> = {
+  success: lb.pipeline.badgeOk,
+  failure: lb.pipeline.badgeFailure,
+  rolled_back: lb.pipeline.badgeRollback,
+}
+const filasPista: FilaPista[] = runs.map((r) => ({
+  sha: r.sha,
+  url: r.url,
+  conclusion: r.conclusion,
+  healthOk: r.healthOk,
+  badge: badgeDe[r.conclusion] ?? lb.pipeline.badgeFailure,
+  meta: runMeta(r),
+  cuando: `${fmtDuration(r.durationMs)} · ${r.createdAt ? fmtDate.format(r.createdAt) : '-'}`,
+}))
+
+// Las 12 pruebas del analizador, por el nombre corto que usa su código.
+const PRUEBAS = ['http', 'tls', 'https', 'headers', 'dns', 'rdap', 'robots', 'sitemap', 'seo', 'perf', 'a11y', 'lighthouse']
 
 // La tarjeta de SAST/a11y solo aparece en "En construcción" mientras no haya
 // hallazgos ingeridos; en cuanto CI reporte, arriba se muestra la sección real.
@@ -214,8 +235,10 @@ const upcoming = [
       </div>
     </header>
 
-    <!-- KPIs: una sola franja de lecturas, como la cara de un instrumento. -->
-    <dl class="lb-kpis mb-20" style={`--kpis: ${lastMutation ? 5 : 4}`} data-entrada>
+    <!-- KPIs: una sola franja de lecturas, como la cara de un instrumento. Sin
+         entrada escalonada: las celdas escondidas dejarían ver la franja vacía,
+         y el odómetro ya es la entrada. -->
+    <dl class="lb-kpis mb-20" style={`--kpis: ${lastMutation ? 5 : 4}`}>
       <div class="lb-kpi">
         <dt class="lb-kpi-rot">{lb.kpi.pipelines}</dt>
         <dd class={`lb-kpi-valor ${successRate30 !== null && successRate30 >= 90 ? 'text-lime' : 'text-ember'}`} data-odometro>
@@ -262,27 +285,7 @@ const upcoming = [
           <p class="text-[13px] font-mono text-ink-300">{lb.pipeline.empty}</p>
         </div>
       ) : (
-        <div class="rounded-2xl glass divide-y divide-white/5 overflow-hidden">
-          {runs.map((r) => {
-            const badge = runBadge[r.conclusion] ?? runBadge.failure
-            return (
-              <div class="p-4 md:px-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
-                <span class={`text-[10px] font-mono uppercase tracking-[.15em] px-2.5 py-1 rounded-full border ${badge.cls}`}>
-                  {badge.label}
-                </span>
-                <span class="font-mono text-[12px] text-ink-100">
-                  {r.url
-                    ? <a href={r.url} target="_blank" rel="noopener" class="hover:text-cyan transition-colors">{r.sha.slice(0, 7)} ↗</a>
-                    : r.sha.slice(0, 7)}
-                </span>
-                <span class="font-mono text-[11px] text-ink-300 hidden sm:inline">{runMeta(r)}</span>
-                <span class="ml-auto font-mono text-[11px] text-ink-300">
-                  {fmtDuration(r.durationMs)} · {r.createdAt ? fmtDate.format(r.createdAt) : '-'}
-                </span>
-              </div>
-            )
-          })}
-        </div>
+        <PistaPipeline filas={filasPista} />
       )}
     </section>
 
@@ -297,20 +300,7 @@ const upcoming = [
           {lb.findings.bodyPre} <span class="text-ink-50">{lb.findings.resolvedWord}</span>{' '}
           {lb.findings.bodyMid} <span class="text-ink-50">{lb.findings.acceptedWord}</span>.
         </p>
-        <div class="grid grid-cols-3 gap-4 max-w-lg">
-          <div class="rounded-2xl glass p-5">
-            <div class={`font-mono text-[22px] leading-none ${findingsAgg.open > 0 ? 'text-ember' : 'text-lime'}`}>{findingsAgg.open}</div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.findings.open}</div>
-          </div>
-          <div class="rounded-2xl glass p-5">
-            <div class="font-mono text-[22px] leading-none text-lime">{findingsAgg.resolved}</div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.findings.resolved}</div>
-          </div>
-          <div class="rounded-2xl glass p-5">
-            <div class="font-mono text-[22px] leading-none text-cyan">{findingsAgg.accepted}</div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.findings.accepted}</div>
-          </div>
-        </div>
+        <CicloHallazgos conteo={{ open: Number(findingsAgg.open), resolved: Number(findingsAgg.resolved), accepted: Number(findingsAgg.accepted) }} />
       </section>
     )}
 
@@ -324,32 +314,33 @@ const upcoming = [
         <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
           {lb.load.bodyPre} <span class="text-ink-50">{lb.load.breakWord}</span> {lb.load.bodyPost}
         </p>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="rounded-2xl glass p-5">
-            <div class="font-mono text-[22px] leading-none text-lime">
+        {escalones.length > 0 && <EscaleraCarga pasos={escalones} recuperadoS={lastLoad.recoveredAfterS} />}
+        <dl class="lb-kpis" style="--kpis: 4">
+          <div class="lb-kpi">
+            <dt class="lb-kpi-rot">{lb.load.sustained}</dt>
+            <dd class="lb-kpi-valor lb-kpi-sm text-lime" data-odometro>
               {lastLoad.sustainedRps === null ? '-' : `${Math.round(lastLoad.sustainedRps)}/s`}
-            </div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.sustained}</div>
+            </dd>
           </div>
-          <div class="rounded-2xl glass p-5">
-            <div class="font-mono text-[22px] leading-none text-ember">
+          <div class="lb-kpi">
+            <dt class="lb-kpi-rot">{lb.load.breaking}</dt>
+            <dd class="lb-kpi-valor lb-kpi-sm text-ember" data-odometro>
               {lastLoad.breakingPointRps === null ? lb.load.noBreak : `${Math.round(lastLoad.breakingPointRps)}/s`}
-            </div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.breaking}</div>
+            </dd>
           </div>
-          <div class="rounded-2xl glass p-5">
-            <div class="font-mono text-[22px] leading-none text-ink-50">
+          <div class="lb-kpi">
+            <dt class="lb-kpi-rot">{lb.load.recovery}</dt>
+            <dd class="lb-kpi-valor lb-kpi-sm text-ink-50" data-odometro>
               {lastLoad.recoveredAfterS === null ? lb.load.noRecovery : `${lastLoad.recoveredAfterS}s`}
-            </div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.recovery}</div>
+            </dd>
           </div>
-          <div class="rounded-2xl glass p-5">
-            <div class="font-mono text-[22px] leading-none text-ink-50">
+          <div class="lb-kpi">
+            <dt class="lb-kpi-rot">{lb.load.p95}</dt>
+            <dd class="lb-kpi-valor lb-kpi-sm text-ink-50" data-odometro>
               {lastLoad.p95 === null ? '-' : lastLoad.p95 >= 1000 ? `${(lastLoad.p95 / 1000).toFixed(1)}s` : `${Math.round(lastLoad.p95)}ms`}
-            </div>
-            <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.load.p95}</div>
+            </dd>
           </div>
-        </div>
+        </dl>
       </section>
     )}
 
@@ -362,24 +353,25 @@ const upcoming = [
       <p class="text-[13px] text-ink-200 max-w-2xl leading-relaxed mb-6">
         {lb.gateway.bodyPre} <span class="text-ink-50">{lb.gateway.neutralizedWord}</span>{lb.gateway.bodyPost}
       </p>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="rounded-2xl glass p-5">
-          <div class="font-mono text-[22px] leading-none text-ink-50">{payAgg.total}</div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.gateway.payments}</div>
+      <!-- Cada contador nombra la defensa que lo neutralizó, con el mismo
+           número que tiene en el banco de ensayo del hero. -->
+      <dl class="lb-kpis" style="--kpis: 4">
+        <div class="lb-kpi">
+          <dt class="lb-kpi-rot">{lb.gateway.payments}</dt>
+          <dd class="lb-kpi-valor lb-kpi-sm text-ink-50" data-odometro>{payAgg.total}</dd>
         </div>
-        <div class="rounded-2xl glass p-5">
-          <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.duplicates}</div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.gateway.duplicates}</div>
-        </div>
-        <div class="rounded-2xl glass p-5">
-          <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.outOfOrder}</div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.gateway.outOfOrder}</div>
-        </div>
-        <div class="rounded-2xl glass p-5">
-          <div class="font-mono text-[22px] leading-none text-lime">{evtAgg.mismatches}</div>
-          <div class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mt-2">{lb.gateway.mismatches}</div>
-        </div>
-      </div>
+        {[
+          { n: evtAgg.duplicates, rot: lb.gateway.duplicates, defensa: `2 · ${mo.banco.guardas.visto}` },
+          { n: evtAgg.outOfOrder, rot: lb.gateway.outOfOrder, defensa: `3 · ${mo.banco.guardas.legal}` },
+          { n: evtAgg.mismatches, rot: lb.gateway.mismatches, defensa: mo.pasarela.montos },
+        ].map((c) => (
+          <div class="lb-kpi">
+            <dt class="lb-kpi-rot">{c.rot}</dt>
+            <dd class="lb-kpi-valor lb-kpi-sm text-lime" data-odometro>{c.n}</dd>
+            <dd class="lb-defensa"><span aria-hidden="true"></span>{mo.pasarela.defensa} {c.defensa}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
 
     <!-- Analizador de sitios -->
@@ -392,34 +384,47 @@ const upcoming = [
         {lb.siteCheck.bodyPre} <span class="text-ink-50">{lb.siteCheck.lighthouseWord}</span>{' '}
         {lb.siteCheck.bodyPost}
       </p>
-      <a href={L('/lab/site-check')} class="inline-flex rounded-2xl glass p-6 lift group max-w-sm">
-        <div>
+      <a href={L('/lab/site-check')} class="lb-analizador rounded-2xl glass lift group">
+        <div class="p-6">
           <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">{lb.siteCheck.cardTitle}</h3>
           <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
             {lb.siteCheck.cardBody}
           </p>
           <span class="text-[13px] text-cyan group-hover:underline">{lb.siteCheck.cardCta}</span>
         </div>
+        <!-- Las 12 pruebas corriendo en paralelo y llegando en desorden, como
+             las transmite el analizador (streaming NDJSON). Sin resultados:
+             aquí no se analiza nada, y un rojo o un verde serían inventados. -->
+        <div class="lb-an-panel" data-analizador aria-hidden="true">
+          <div class="lb-an-cab">
+            <span class="lb-an-host">ejemplo.com</span>
+            <span class="lb-an-cuenta" data-an-cuenta>{interpolate(mo.analizador.pruebas, { n: PRUEBAS.length, total: PRUEBAS.length })}</span>
+          </div>
+          <div class="lb-an-rejilla">
+            {PRUEBAS.map((p) => <span class="lb-an-prueba" data-an-prueba data-hecha="">{p}</span>)}
+          </div>
+          <span class="lb-an-nota">{mo.analizador.ilustrativo}</span>
+        </div>
       </a>
     </section>
 
     <!-- Demo interactiva + enlaces -->
-    <section class="grid md:grid-cols-3 gap-4 mb-16">
-      <a href={L('/lab/fingerprint')} class="rounded-2xl glass p-6 lift group">
+    <section class="grid md:grid-cols-3 gap-4 mb-16" data-foco data-entrada>
+      <a href={L('/lab/fingerprint')} class="foco rounded-2xl glass p-6 lift group">
         <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">{lb.cards.fingerprintTitle}</h3>
         <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
           {lb.cards.fingerprintBody}
         </p>
         <span class="text-[13px] text-cyan group-hover:underline">{lb.cards.fingerprintCta}</span>
       </a>
-      <a href={L('/status')} class="rounded-2xl glass p-6 lift group">
+      <a href={L('/status')} class="foco rounded-2xl glass p-6 lift group">
         <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">{lb.cards.statusTitle}</h3>
         <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
           {lb.cards.statusBody}
         </p>
         <span class="text-[13px] text-cyan group-hover:underline">{lb.cards.statusCta}</span>
       </a>
-      <a href={L('/security')} class="rounded-2xl glass p-6 lift group">
+      <a href={L('/security')} class="foco rounded-2xl glass p-6 lift group">
         <h3 class="text-[14px] font-medium text-ink-50 mb-1.5">{lb.cards.securityTitle}</h3>
         <p class="text-[12px] text-ink-300 leading-relaxed mb-3">
           {lb.cards.securityBody}
@@ -429,6 +434,7 @@ const upcoming = [
     </section>
 
     <!-- Próximamente -->
+    {upcoming.length > 0 && (
     <section class="mb-16">
       <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
         <span class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
@@ -443,11 +449,12 @@ const upcoming = [
         ))}
       </div>
     </section>
+    )}
 
     <!-- Metodología -->
     <section class="rounded-2xl glass p-8">
       <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">{lb.methodology.heading}</div>
-      <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
+      <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed" data-entrada>
         <p>
           {lb.methodology.p1}
         </p>
@@ -469,6 +476,7 @@ const upcoming = [
   // común en src/lib/motion/landing.ts) más las piezas de esta página.
   import { montarLanding } from '../../lib/motion/landing'
   import { montarBanco } from '../../lib/motion/ensayo-vivo'
+  import { montarSecciones } from '../../lib/motion/lab'
 
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const banco = document.querySelector<HTMLElement>('[data-banco]')
@@ -481,6 +489,7 @@ const upcoming = [
       delete banco.dataset.vivo
     }
   }
+  montarSecciones({ reducido })
   montarLanding()
 </script>
 
@@ -494,7 +503,6 @@ const upcoming = [
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1px;
-    margin: 0;
     border-radius: 18px;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.06);
@@ -503,8 +511,40 @@ const upcoming = [
   @media (min-width: 768px) {
     .lb-kpis { grid-template-columns: repeat(var(--kpis, 4), minmax(0, 1fr)); }
   }
-  .lb-kpi { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 10px; padding: 20px 22px 22px; background: #0d0d12; min-width: 0; }
-  .lb-kpi-valor { margin: 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 30px; line-height: 1; letter-spacing: -0.02em; }
+  .lb-kpi { display: flex; flex-direction: column; gap: 10px; padding: 20px 22px 22px; background: #0d0d12; min-width: 0; }
+  .lb-kpi-valor { order: -1; margin: 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 30px; line-height: 1; letter-spacing: -0.02em; }
+  .lb-kpi-sm { font-size: 24px; }
+  .lb-defensa { margin: 4px 0 0; display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #6b6b78; }
+  .lb-defensa span { width: 6px; height: 6px; border-radius: 99px; background: #c9ff5b; box-shadow: 0 0 8px #c9ff5b; flex: none; }
+
+  .lb-analizador { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 760px; overflow: hidden; }
+  @media (min-width: 768px) { .lb-analizador { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); } }
+  .lb-an-panel { display: grid; gap: 10px; padding: 18px 20px; background: rgba(0, 0, 0, 0.25); border-top: 1px solid rgba(255, 255, 255, 0.05); }
+  @media (min-width: 768px) { .lb-an-panel { border-top: 0; border-left: 1px solid rgba(255, 255, 255, 0.05); } }
+  .lb-an-cab { display: flex; justify-content: space-between; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; }
+  .lb-an-host { color: #c4c4cc; }
+  .lb-an-cuenta { color: #00f2ff; }
+  .lb-an-rejilla { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+  .lb-an-prueba {
+    position: relative;
+    padding: 5px 6px 5px 17px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    color: #4d4d5d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+  }
+  .lb-an-prueba::before { content: ''; position: absolute; left: 6px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 99px; border: 1px solid currentColor; }
+  .lb-an-prueba[data-corre] { color: #85858f; border-color: rgba(0, 242, 255, 0.25); }
+  .lb-an-prueba[data-corre]::before { border-color: #00f2ff; border-right-color: transparent; animation: lb-gira 0.7s linear infinite; }
+  .lb-an-prueba[data-hecha] { color: #c4c4cc; border-color: rgba(0, 242, 255, 0.2); background: rgba(0, 242, 255, 0.04); }
+  .lb-an-prueba[data-hecha]::before { background: #00f2ff; border-color: #00f2ff; }
+  .lb-an-nota { font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; color: #4d4d5d; }
+  @keyframes lb-gira { to { transform: rotate(360deg); } }
   .lb-kpi-rot { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #85858f; line-height: 1.4; }
 </style>
 

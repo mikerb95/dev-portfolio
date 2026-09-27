@@ -1,0 +1,198 @@
+---
+// Sección del pipeline en /lab como pista de etapas: cada corrida es una fila
+// que cruza calidad, deploy y health check. Un rollback se ve como un desvío
+// que vuelve a la versión anterior. Qué se afirma de cada etapa lo decide
+// pistaDe() (src/lib/motion/pista.ts) a partir de lo que reporta ci.yml.
+//
+// El servidor pinta la pista completa; el script la apaga y la recorre con una
+// luz al entrar en pantalla (src/lib/motion/lab.ts).
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+import { pistaDe } from '../../lib/motion/pista'
+
+export type FilaPista = {
+  sha: string
+  url: string | null
+  conclusion: string
+  healthOk: boolean | null
+  badge: string
+  meta: string
+  cuando: string
+}
+interface Props {
+  filas: FilaPista[]
+}
+const { filas } = Astro.props
+const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).lab.motion.pista
+
+// Lo que hace cada etapa en ci.yml. Son nombres de código y no se traducen.
+const SUB = { calidad: 'tests · build · e2e', deploy: 'Vercel', health: '/api/health ×3' }
+const ETAPAS = ['calidad', 'deploy', 'health'] as const
+---
+
+<ol class="pp" data-pista aria-label={t.etiqueta}>
+  <li class="pp-cab" aria-hidden="true">
+    <span class="pp-cab-sha"></span>
+    <div class="pp-cab-pista">
+      {ETAPAS.map((e) => (
+        <span class="pp-cab-etapa">
+          {t.etapas[e]}
+          <em>{SUB[e]}</em>
+        </span>
+      ))}
+    </div>
+  </li>
+  {filas.map((f) => {
+    const p = pistaDe(f)
+    return (
+      <li class="pp-fila" data-desenlace={p.desenlace}>
+        <span class="pp-sha">
+          {f.url ? <a href={f.url} target="_blank" rel="noopener">{f.sha.slice(0, 7)} ↗</a> : f.sha.slice(0, 7)}
+        </span>
+        <div class="pp-pista" aria-hidden="true">
+          <span class="pp-riel" aria-hidden="true"><span class="pp-riel-luz" data-riel></span></span>
+          {ETAPAS.map((e) => (
+            <span class="pp-nodo" data-etapa={e} data-estado={p[e]} aria-hidden="true"></span>
+          ))}
+          {p.vuelve && (
+            <span class="pp-desvio" aria-hidden="true">
+              <svg viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M100,0 C100,18 0,18 0,0" data-desvio /></svg>
+              <em data-desvio-rot>↩ {t.vuelve}</em>
+            </span>
+          )}
+          <span class="pp-chispa" data-chispa></span>
+        </div>
+        <span class={`pp-badge pp-badge-${p.desenlace}`}>{f.badge}</span>
+        <span class="pp-meta">{f.meta}</span>
+        <span class="pp-cuando">{f.cuando}</span>
+      </li>
+    )
+  })}
+</ol>
+
+<style is:global>
+  .pp {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    --pp-cyan: #00f2ff;
+    --pp-lime: #c9ff5b;
+    --pp-ember: #ff6b3d;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(12, 12, 16, 0.55);
+    overflow: hidden;
+  }
+  .pp-cab, .pp-fila {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 96px minmax(0, 210px) 150px;
+    column-gap: 22px;
+    align-items: center;
+    padding: 0 22px;
+  }
+  .pp-cab { padding-top: 16px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+  .pp-cab-pista { display: flex; justify-content: space-between; grid-column: 2; }
+  .pp-cab-etapa {
+    display: grid;
+    gap: 3px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #85858f;
+    text-align: center;
+    width: 0;
+    justify-items: center;
+    white-space: nowrap;
+  }
+  .pp-cab-etapa em { font-style: normal; letter-spacing: 0; text-transform: none; color: #4d4d5d; font-size: 10px; }
+  .pp-fila { height: 46px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); transition: background-color 0.25s ease; }
+  .pp-fila:last-child { border-bottom: 0; }
+  .pp-fila:hover { background: rgba(0, 242, 255, 0.025); }
+  .pp-fila[data-desenlace='rollback'] { height: 58px; }
+  .pp-sha { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; color: #c4c4cc; white-space: nowrap; }
+  .pp-sha a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
+  .pp-sha a:hover { color: var(--pp-cyan); }
+
+  /* La pista: un riel con tres nodos (inicio, centro, fin) y la luz encima. */
+  .pp-pista { position: relative; height: 14px; }
+  .pp-riel { position: absolute; left: 0; right: 0; top: 50%; height: 1px; margin-top: -0.5px; background: rgba(255, 255, 255, 0.08); }
+  .pp-riel-luz { position: absolute; inset: 0; transform-origin: left center; background: linear-gradient(90deg, rgba(201, 255, 91, 0.25), rgba(201, 255, 91, 0.7)); }
+  .pp-fila[data-desenlace='fallo'] .pp-riel-luz, .pp-fila[data-desenlace='rollback'] .pp-riel-luz { background: linear-gradient(90deg, rgba(201, 255, 91, 0.3), rgba(201, 255, 91, 0.6) 50%, rgba(255, 107, 61, 0.8)); }
+  .pp-nodo {
+    position: absolute;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    margin: -5.5px 0 0 -5.5px;
+    border-radius: 99px;
+    border: 1.5px solid #4d4d5d;
+    background: #0d0d12;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .pp-nodo[data-etapa='calidad'] { left: 0; }
+  .pp-nodo[data-etapa='deploy'] { left: 50%; }
+  .pp-nodo[data-etapa='health'] { left: 100%; }
+  .pp-nodo[data-estado='ok'] { border-color: var(--pp-lime); background: var(--pp-lime); box-shadow: 0 0 10px -2px var(--pp-lime); }
+  .pp-nodo[data-estado='fallo'] { border-color: var(--pp-ember); background: #1f110c; box-shadow: 0 0 12px -2px var(--pp-ember); }
+  .pp-nodo[data-estado='fallo']::after { content: '✕'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 8px; line-height: 1; color: var(--pp-ember); }
+  .pp-nodo[data-estado='sin-dato'] { border-style: dashed; }
+  .pp-nodo[data-apagado] { border-color: #34343f; background: #0d0d12; box-shadow: none; }
+  .pp-nodo[data-apagado]::after { opacity: 0; }
+
+  /* El desvío del rollback: de health check de vuelta al inicio, por debajo. */
+  .pp-desvio { position: absolute; left: 0; right: 0; top: 50%; height: 16px; pointer-events: none; }
+  .pp-desvio svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .pp-desvio path { fill: none; stroke: var(--pp-ember); stroke-width: 1.2; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
+  .pp-desvio em { position: absolute; left: 50%; top: 13px; transform: translateX(-50%); font-style: normal; font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; color: var(--pp-ember); white-space: nowrap; background: #0e0e13; padding: 0 6px; }
+
+  .pp-chispa {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    margin: -3.5px 0 0 -3.5px;
+    border-radius: 99px;
+    background: #fff;
+    box-shadow: 0 0 8px 2px rgba(0, 242, 255, 0.9), 0 0 18px 4px rgba(0, 242, 255, 0.45);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .pp-badge {
+    justify-self: start;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .pp-badge-ok { color: var(--pp-lime); border-color: rgba(201, 255, 91, 0.3); background: rgba(201, 255, 91, 0.08); }
+  .pp-badge-fallo, .pp-badge-rollback { color: var(--pp-ember); border-color: rgba(255, 107, 61, 0.35); background: rgba(255, 107, 61, 0.1); }
+  .pp-meta, .pp-cuando { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: #6b6b78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pp-cuando { text-align: right; }
+
+  /* Móvil: sha, veredicto y fecha arriba; la pista ocupa el ancho abajo. */
+  @media (max-width: 899px) {
+    .pp-cab, .pp-fila { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; padding: 0 16px; }
+    .pp-cab-sha { display: none; }
+    .pp-cab-pista { grid-column: 1 / -1; padding: 0 6px; }
+    .pp-fila, .pp-fila[data-desenlace='rollback'] { height: auto; row-gap: 12px; padding-top: 12px; padding-bottom: 16px; grid-template-areas: 'sha badge' 'pista pista' 'cuando cuando'; }
+    .pp-fila[data-desenlace='rollback'] { padding-bottom: 30px; }
+    .pp-sha { grid-area: sha; }
+    .pp-badge { grid-area: badge; justify-self: end; }
+    .pp-pista { grid-area: pista; margin: 0 6px; }
+    .pp-meta { display: none; }
+    .pp-cuando { grid-area: cuando; text-align: left; margin-top: -4px; }
+    .pp-fila[data-desenlace='rollback'] .pp-cuando { margin-top: 10px; }
+    .pp-cab-etapa em { display: none; }
+    /* Los rótulos de los extremos se alinean hacia dentro: centrados sobre su
+       nodo, el último se saldría por la derecha. */
+    .pp-cab-pista { padding: 0; }
+    .pp-cab-etapa:first-child { width: auto; justify-items: start; }
+    .pp-cab-etapa:last-child { width: auto; justify-items: end; }
+  }
+</style>
