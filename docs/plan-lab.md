@@ -16,6 +16,15 @@
 > pipeline con rollback automático. El detalle de las fases 5-7 está en
 > `plan-lab-fases-pendientes.md`.
 >
+> **Actualización 26 sep 2026 (vitrina pública)**: `/lab` pasó a tener motion
+> propio (RF-026). El hero es un banco de ensayo que reproduce los cinco
+> experimentos de `lab_experiments` decidiendo cada transición con la
+> `canTransition` real, y sella con las corridas de producción; el pipeline es
+> una pista por corrida, los hallazgos un ciclo abierto → resuelto/aceptado y la
+> carga dibuja la escalera real de `steps_json`. Queda anotado que `ci_runs`
+> solo recibe corridas que ya pasaron calidad (`verify-production` corre con
+> `needs: quality`), así que un push con tests rotos no aparece en `/lab`.
+>
 > **Actualización ago 2026**: los scripts k6 de la Fase 5 (`lab/k6/carga.js`,
 > `lab/k6/estres.js`) ya están implementados y corridos localmente (escalera
 > de niveles, fila R de recuperación, muestreo de CPU/heap del proceso y
