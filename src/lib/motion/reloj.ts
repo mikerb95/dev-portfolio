@@ -258,6 +258,13 @@ export function leerEn(modelo: ModeloReloj, m: Medidas, x: number, y: number, ra
   return { tipo: 'fila', fila }
 }
 
+/**
+ * Fecha del día `dia` de Bogotá, para formatear con `timeZone: 'UTC'`: el
+ * índice ya es el día local, así que en UTC da la fecha y el día de la semana
+ * de Bogotá sin depender de la zona horaria de quien mira.
+ */
+export const fechaDeDia = (dia: number) => new Date(dia * DIA_MS)
+
 /** Formato "13:05" de una hora decimal. */
 export function reloj24(h: number): string {
   const min = Math.round(h * 60)

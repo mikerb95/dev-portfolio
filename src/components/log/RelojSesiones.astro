@@ -1,0 +1,261 @@
+---
+// Instrumento del hero de /log: las cuatro cifras como la cara de un
+// instrumento y, pegado debajo, el reloj de sesiones que las demuestra. Cada
+// cifra es también un interruptor que ilumina en el reloj lo que cuenta.
+// Todo llega del navegador (la página está prerenderizada y los datos son de
+// GitHub), así que el marcado reserva el alto final y no salta al cargar.
+import { getDictionary, type Locale } from '../../i18n'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const l = getDictionary(locale).log
+const mo = l.motion
+
+const cifras = [
+  { modo: 'semana', rot: l.stats.week, unidad: l.stats.focusHours },
+  { modo: 'mes', rot: l.stats.month, unidad: l.stats.focusHours },
+  { modo: 'commits', rot: l.stats.commits, unidad: l.stats.contributions },
+  { modo: 'racha', rot: l.stats.streak, unidad: l.stats.consecutiveDays },
+]
+---
+
+<section class="lg-instrumento" data-instrumento>
+  <dl class="lg-kpis">
+    {cifras.map((c) => (
+      <div class="lg-kpi" data-kpi-celda={c.modo}>
+        <dt class="lg-kpi-rot">{c.rot}</dt>
+        <dd class="lg-kpi-valor" data-kpi={c.modo}>-</dd>
+        <dd class="lg-kpi-unidad">{c.unidad}</dd>
+        <button type="button" class="lg-kpi-boton" data-resalta={c.modo} aria-pressed="false">
+          <span class="sr-only">{mo.verEnReloj}: {c.rot}</span>
+        </button>
+      </div>
+    ))}
+  </dl>
+
+  <div class="lg-reloj">
+    <div class="lg-reloj-cab">
+      <div class="lg-reloj-titulo">
+        <span class="lg-punto" aria-hidden="true"></span>
+        <span class="text-ink-50">{mo.reloj.eyebrow}</span>
+        <span class="text-ink-300">· {mo.reloj.ventana}</span>
+      </div>
+      <ul class="lg-leyenda" aria-hidden="true">
+        <li><span class="lg-ley-pub"></span>{mo.reloj.leyenda.publico}</li>
+        <li><span class="lg-ley-priv"></span>{mo.reloj.leyenda.privado}</li>
+        <li><span class="lg-ley-sesion"></span>{mo.reloj.leyenda.sesion}</li>
+        <li><span class="lg-ley-previo"></span>{mo.reloj.leyenda.previo}</li>
+      </ul>
+    </div>
+
+    <div class="lg-lienzo" data-reloj>
+      <canvas aria-hidden="true"></canvas>
+      <span class="lg-ahora" data-reloj-ahora hidden aria-hidden="true"><span>{mo.reloj.ahora}</span></span>
+      <div class="lg-tip" data-reloj-tip hidden aria-hidden="true"></div>
+    </div>
+
+    <p class="lg-regla">{mo.reloj.regla}</p>
+    <p class="lg-pista" data-pista>{mo.resalta}</p>
+    <p class="sr-only" data-reloj-resumen aria-live="polite"></p>
+  </div>
+</section>
+
+<style>
+  .lg-instrumento {
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: #0d0d12;
+    box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Cifras: una franja con separadores de 1 px. Sin entrada escalonada: la
+     cifra se va sumando con el reloj y esa ya es su entrada. */
+  .lg-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  @media (min-width: 768px) {
+    .lg-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .lg-kpi {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 22px 20px;
+    background: #0d0d12;
+    min-width: 0;
+    transition: background-color 0.25s ease;
+  }
+  .lg-kpi-rot {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #85858f;
+  }
+  .lg-kpi-valor {
+    order: -1;
+    margin: 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: #e7e7ec;
+    font-variant-numeric: tabular-nums;
+  }
+  .lg-kpi-unidad {
+    margin: -4px 0 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    color: #4d4d5d;
+  }
+  .lg-kpi[data-kpi-celda='racha'] .lg-kpi-valor { color: #c9ff5b; }
+  /* El botón cubre la celda entera: la cifra sigue siendo texto de la lista
+     de definiciones, y el interruptor es un control aparte para el teclado. */
+  .lg-kpi-boton {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+  }
+  .lg-kpi-boton:focus-visible { outline: 1px solid #00f2ff; outline-offset: -3px; }
+  .lg-kpi:hover,
+  .lg-kpi:has(.lg-kpi-boton[aria-pressed='true']) {
+    background: color-mix(in srgb, #00f2ff 5%, #0d0d12);
+  }
+  .lg-kpi[data-kpi-celda='racha']:hover,
+  .lg-kpi[data-kpi-celda='racha']:has(.lg-kpi-boton[aria-pressed='true']) {
+    background: color-mix(in srgb, #c9ff5b 5%, #0d0d12);
+  }
+
+  .lg-reloj { padding: 18px 22px 20px; }
+  @media (max-width: 639px) {
+    .lg-reloj { padding: 16px 12px 18px; }
+  }
+  .lg-reloj-cab {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 24px;
+    margin-bottom: 14px;
+  }
+  .lg-reloj-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .lg-punto {
+    width: 6px;
+    height: 6px;
+    border-radius: 99px;
+    background: #00f2ff;
+    box-shadow: 0 0 10px #00f2ff;
+  }
+  .lg-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    color: #85858f;
+  }
+  .lg-leyenda li { display: inline-flex; align-items: center; gap: 7px; }
+  .lg-ley-pub,
+  .lg-ley-priv { width: 6px; height: 6px; border-radius: 99px; }
+  .lg-ley-pub { background: #9bfaff; box-shadow: 0 0 8px rgba(0, 242, 255, 0.7); }
+  .lg-ley-priv { background: #85858f; }
+  .lg-ley-sesion,
+  .lg-ley-previo { width: 18px; height: 7px; border-radius: 2px; }
+  .lg-ley-sesion { background: rgba(0, 242, 255, 0.24); box-shadow: inset 0 1px 0 rgba(0, 242, 255, 0.75); }
+  .lg-ley-previo {
+    background: repeating-linear-gradient(135deg, rgba(0, 242, 255, 0.45) 0 1px, rgba(0, 242, 255, 0.07) 1px 4px);
+  }
+
+  /* El alto final se reserva antes de que llegue el script: 31 filas con las
+     mismas medidas que usa medidasReloj(), que decide por el ancho del
+     lienzo (no de la ventana). Los cortes son la ventana en que el lienzo
+     cruza 640 y 1000 px con los márgenes de la página. */
+  .lg-lienzo { position: relative; height: 396px; }
+  @media (min-width: 780px) { .lg-lienzo { height: 515px; } }
+  @media (min-width: 1204px) { .lg-lienzo { height: 577px; } }
+  .lg-lienzo canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+
+  .lg-ahora {
+    position: absolute;
+    width: 1px;
+    background: #00f2ff;
+    box-shadow: 0 0 8px #00f2ff;
+    pointer-events: none;
+    animation: lg-parpadeo 1.1s steps(1) infinite;
+  }
+  .lg-ahora > span {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #00f2ff;
+    white-space: nowrap;
+  }
+  @keyframes lg-parpadeo { 50% { opacity: 0.25; } }
+
+  .lg-tip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: min(320px, calc(100% - 8px));
+    padding: 9px 11px;
+    border-radius: 10px;
+    background: rgba(8, 8, 12, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+  }
+  .lg-tip :global(.lg-tip-fecha) {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #85858f;
+  }
+  .lg-tip :global(.lg-tip-texto) { font-size: 12.5px; line-height: 1.4; color: #e7e7ec; }
+  .lg-tip :global(.lg-tip-meta) { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: #00f2ff; }
+  .lg-tip :global(.lg-tip-nota) { font-size: 11px; line-height: 1.4; color: #85858f; }
+
+  .lg-regla { margin: 14px 0 0; max-width: 780px; font-size: 13px; line-height: 1.6; color: #c4c4cc; }
+  .lg-pista {
+    margin: 6px 0 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10.5px;
+    color: #4d4d5d;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lg-ahora { animation: none; }
+  }
+</style>

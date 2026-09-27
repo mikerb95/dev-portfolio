@@ -1222,6 +1222,7 @@ const es = {
       actualizado: 'Actualizado hace {n} min',
       actualizadoAhora: 'Actualizado hace un momento',
       resalta: 'Apunta o toca una cifra para ver qué cuenta en el reloj.',
+      verEnReloj: 'Resaltar en el reloj',
       reloj: {
         eyebrow: 'Reloj de sesiones',
         ventana: '30 días · hora de Colombia',

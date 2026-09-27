@@ -1194,6 +1194,7 @@ const en = {
       actualizado: 'Updated {n} min ago',
       actualizadoAhora: 'Updated a moment ago',
       resalta: 'Point at or tap a figure to see what it counts on the clock.',
+      verEnReloj: 'Highlight on the clock',
       reloj: {
         eyebrow: 'Session clock',
         ventana: '30 days · Colombia time',
