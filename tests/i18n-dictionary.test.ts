@@ -153,6 +153,8 @@ describe('paridad del diccionario es/en', () => {
         'capacitacionIa.aulaNombre',
         // Estado de un hallazgo en /security: la palabra es la misma en inglés.
         'security.motion.estado.abierto',
+        // "{n} min" en /notes: la abreviatura es la misma en los dos idiomas.
+        'notes.motion.bitacora.minutos',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal

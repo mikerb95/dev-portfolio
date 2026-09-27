@@ -89,12 +89,15 @@ export function montarFicha(raiz: HTMLElement) {
 
   let salida: gsap.core.Timeline | null = null
   let reloj: gsap.core.Tween | null = null
-
-  /** Representa la ficha `i`: sale la anterior, entra esta y se escribe. */
-  const representar = (i: number, direccion: 1 | -1, entrada: boolean) => {
+  const detener = () => {
     salida?.kill()
     secuencia?.kill()
     reloj?.kill()
+  }
+
+  /** Representa la ficha `i`: sale la anterior, entra esta y se escribe. */
+  const representar = (i: number, direccion: 1 | -1, entrada: boolean) => {
+    detener()
     const previa = actual
     actual = i
     const d = datos[i]
@@ -105,7 +108,19 @@ export function montarFicha(raiz: HTMLElement) {
       return
     }
 
-    salida = gsap.timeline({ onComplete: () => entrar(d, direccion, entrada, previa) })
+    salida = gsap.timeline({
+      onComplete: () => {
+        // Fail-open también en los cambios posteriores al montaje: si una
+        // ficha falla a medio entrar, se queda pintada y quieta.
+        try {
+          entrar(d, direccion, entrada, previa)
+        } catch (err) {
+          console.warn('[ficha] cambio sin animar', err)
+          detener()
+          restaurar()
+        }
+      },
+    })
     // Salida de la carta anterior (no en la primera: el servidor ya la pintó).
     if (!entrada) {
       salida.to(carta, { x: -26 * direccion, rotation: -2.2 * direccion, autoAlpha: 0, duration: 0.3, ease: 'power2.in' })
@@ -243,9 +258,7 @@ export function montarFicha(raiz: HTMLElement) {
   } catch (err) {
     // Fail-open: la ficha pintada por el servidor es el contenido.
     console.warn('[ficha] animación deshabilitada', err)
-    salida?.kill()
-    secuencia?.kill()
-    reloj?.kill()
+    detener()
     restaurar()
   }
 }
