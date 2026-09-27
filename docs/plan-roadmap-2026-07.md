@@ -367,7 +367,7 @@ en un arranque limpio antes de que la contención empezara.
   Turso. El workflow levanta el sitio en el runner contra bases libsql
   desechables, que sale gratis y no depende de ningún secret de Vercel.
 
-## Etapa 8 - Remate vitrina de seguridad ✅ CÓDIGO COMPLETO
+## Etapa 8 - Remate vitrina de seguridad ✅ COMPLETA
 
 El micro-SIEM está implementado (Fases 0-6, ver plan propio).
 
@@ -375,9 +375,8 @@ El micro-SIEM está implementado (Fases 0-6, ver plan propio).
    Operations en vivo" → `/security`.
 2. ✅ El artículo del micro-SIEM en `/notes` enlaza a la vitrina viva y explica
    por qué solo publica agregados.
-3. ⏳ **Acción manual de Mike** (no código, sigue pendiente): 3 custom rules del
-   WAF en el dashboard de Vercel + alta del cron `security-rollup` en
-   cron-job.org (detalle en `docs/plan-security-observability.md`, Fase 6).
+3. ✅ Acciones manuales cerradas el 27 sep 2026: las 3 reglas del WAF publicadas por CLI
+   y el cron `security-rollup` (ya corría cada 15 min). Detalle en `pendientes.md`.
 
 ## Etapa 9 - Changelog público
 
@@ -477,8 +476,8 @@ Cada artículo: mismo formato del content collection actual, OG image
       confirmado que siguen sin subir: la demo no existe en prod (etapa 3).
 - [ ] `SECURITY_IP_SALT` en Vercel (sin ella el hash de IP del SIEM va sin salt).
 - [ ] Altas en Google Search Console y Bing Webmaster (capa SEO ya lista).
-- [ ] 3 custom rules WAF en dashboard Vercel (etapa 8).
-- [ ] Cron `security-rollup` en cron-job.org con `CRON_SECRET`.
+- [x] 3 custom rules WAF en Vercel (etapa 8). Hecho el 27 sep 2026 por CLI; detalle en `pendientes.md`.
+- [x] Cron `security-rollup` en cron-job.org con `CRON_SECRET` (corre cada 15 min; comprobado en `cron_runs` el 27 sep 2026).
 - [ ] App ntfy en el celular suscrita al topic.
 - [ ] Verificar bóveda/P&L COP en prod (pendientes.md).
 - [ ] (Opcional) limpiar `DEV_USER`/`DEV_PASSWORD` de env.

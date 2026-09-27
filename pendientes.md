@@ -235,8 +235,20 @@ Prioridad, de más a menos urgente:
       Antes de agendarlo se puede probar el pipeline completo con el botón de
       disparo manual de `/admin/security` (el `PUT` del mismo endpoint, bajo
       sesión admin): si devuelve `{ok:true, anomalies:N}`, solo falta agendarlo.
-- [ ] **3 reglas custom del WAF** en el dashboard de Vercel (detalle en
-      `docs/plan-security-observability.md`, Fase 6).
+- [x] **3 reglas custom del WAF** (detalle en `docs/plan-security-observability.md`,
+      Fase 6): reglas del WAF de Vercel publicadas el 2026-09-27 por CLI (`vercel firewall`, proyecto
+      `dev-portfolio`): (1) **Deny: scanner user agents**, bloqueo en el borde de las herramientas
+      de ataque del clasificador (misma lista que `BAD_BOT_UA` de `classify.ts`, con variantes de
+      mayúsculas porque el motor de regex de Vercel no admite `(?i)`); verificado en producción:
+      sqlmap y Nikto reciben 403 con `x-vercel-mitigated: deny` y un navegador normal, 200.
+      (2) **Rate limit: auth endpoints**, 30 peticiones/60 s por IP con respuesta 429 en los
+      endpoints de login, restablecimiento e invitación del portal y de WebAuthn (llevaba más de
+      una semana en modo registro sin un solo exceso). (3) **Log: exploit probe paths** se queda
+      en modo registro A PROPÓSITO: registra ~5 peticiones al día, bloquearla no ahorraba casi
+      nada, dejaba al sensor propio sin ver esos sondeos y su lista incluye `/wp-login.php`, que
+      es un señuelo del sitio. Consecuencia aceptada de (1): esas herramientas ya no llegan al
+      clasificador, así que la categoría "bot ofensivo" de `/security` cuenta menos. Límite del
+      plan Hobby: 3 reglas, todas en uso.
 - [ ] **Altas en Google Search Console y Bing Webmaster Tools.** La capa técnica
       de SEO (JSON-LD, sitemap, RSS, IndexNow, manifest, `hreflang`) está
       completa desde jul 2026; falta el alta manual que ningún código puede

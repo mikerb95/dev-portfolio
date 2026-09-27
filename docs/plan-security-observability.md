@@ -400,7 +400,7 @@ vieja y la página enseña su antigüedad; nunca se guarda un cálculo fallido c
    que ya usas para mostrar conocimiento.
 4. OG image propia, identidad CodeByMike.
 
-### Fase 6 - Capa 0 (Vercel WAF free) + endurecimiento ✅ CÓDIGO IMPLEMENTADO (2026-07-10)
+### Fase 6 - Capa 0 (Vercel WAF free) + endurecimiento ✅ COMPLETA (código 2026-07-10, WAF 2026-09-27)
 
 **Corrección al borrador**: la auditoría mostró que la CSP ya corría en modo **enforce**
 (no report-only) tanto en `/admin` como en público desde antes de esta fase - el punto 2
@@ -424,19 +424,19 @@ Entregado (código, ya committeado):
   Reporting-Endpoints), POST de prueba al endpoint → 204 + evento `csp_violation`
   registrado con el `document-uri` y `blocked-uri` correctos. Datos de prueba limpiados.
 
-**Pendiente - acción manual en el dashboard de Vercel (no ejecutable desde el agente):**
-las 3 custom rules gratis del WAF. Con el motor propio ya cubriendo detección/bloqueo,
-estas reglas son un respaldo de plataforma (capa 0) para cuando el propio origen esté
-sobrecargado o el ataque sea volumétrico. Sugerencia concreta a configurar en
-Vercel → Project → Firewall:
-1. **Deny** a paths que matcheen patrones de CMS/secrets (`/wp-*`, `/.git/*`, `/.env*`)
-   - con excepción explícita de las rutas propias `/wp-login.php`, `/admin.php`,
-   `/api/v1/token` (son honeypots reales del proyecto, deben seguir respondiendo).
-2. **Challenge** (o Deny) a User-Agents que contengan `sqlmap|nikto|nuclei|masscan|nmap`
-   (mismo patrón que `classify.ts`, como defensa redundante antes de que el request
-   llegue a la función).
-3. **Rate limit** de respaldo en `/api/*` (p. ej. 300 req/10s por IP) - red de seguridad
-   por si el limiter durable propio fallara (fail-open) bajo un ataque muy agresivo.
+**✅ Capa 0 configurada (2026-09-27).** Lo que el plan sugería y lo que se hizo:
+1. Deny a rutas de CMS/secretos: **no se bloquea, se registra**. La regla existía en modo
+   registro y veía ~5 peticiones al día; bloquear en el borde ahorraba casi nada, dejaba al
+   sensor propio sin esa señal y su lista incluye `/wp-login.php`, que es un señuelo.
+2. Herramientas de ataque por user-agent: **deny** en el borde, misma lista que
+   `BAD_BOT_UA` de `classify.ts` (variantes de mayúsculas explícitas: el motor de regex de
+   Vercel no admite `(?i)`). Verificado: 403 con `x-vercel-mitigated: deny`.
+3. Rate limit de respaldo: en vez de `/api/*`, **429 a 30 peticiones/60 s por IP** en los
+   endpoints de autenticación (portal y WebAuthn), que es donde el limiter propio falla
+   abierto con más consecuencias. Más de una semana en modo registro sin excesos.
+
+Se gestionan con `vercel firewall rules ...` desde el repo (proyecto `dev-portfolio`);
+Hobby permite 3 reglas y están las 3 en uso.
 
 ---
 
