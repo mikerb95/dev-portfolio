@@ -1,0 +1,390 @@
+---
+// Hero de /lab: el "banco de ensayo". Tres emisores a la izquierda (el
+// navegador, la pasarela, el motor de caos), las cinco defensas de la
+// pasarela al centro y la máquina de estados de un pago a la derecha. Sobre
+// ese banco se reproducen los cinco experimentos que registra lab_experiments,
+// cada uno decidido por el modelo de src/lib/motion/ensayo.ts, que usa la
+// misma canTransition que cobra dinero de verdad.
+//
+// El servidor pinta el primer experimento ya resuelto: sin JS o con
+// movimiento reducido eso es lo que se ve (y las pestañas lo cambian de golpe).
+// El sello NO lo pone la reproducción: sale de las corridas reales.
+import { getDictionary, getLocaleFromUrl, interpolate, intlLocale } from '../../i18n'
+import {
+  EMISORES,
+  ESTADOS,
+  EXPERIMENTOS,
+  GUARDAS,
+  cuadroFinal,
+  guionDe,
+  selloDe,
+  type Corridas,
+  type Experimento,
+  type Lectura,
+} from '../../lib/motion/ensayo'
+
+interface Props {
+  corridas: Partial<Record<Experimento, Corridas>>
+}
+const { corridas } = Astro.props
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const b = t.lab.motion.banco
+const lb = t.lab
+
+// Lo que muestra cada pieza en reposo: el sitio del código donde vive esa
+// defensa. Son nombres de código, no prosa, y no se traducen.
+const BASE_GUARDA = {
+  llave: 'UNIQUE idempotency_key',
+  visto: 'payment_events',
+  legal: 'canTransition()',
+  version: 'WHERE version = ?',
+  tx: 'db.transaction()',
+} as const
+const BASE_EMISOR = { navegador: 'POST /checkout', pasarela: 'webhook', caos: 'chaos' } as const
+
+// Los estados que viajan en una variable se nombran en el idioma de la página;
+// el estado crudo del webhook ({estado}) se deja como llega, porque es el payload.
+const texto = (l: Lectura) => {
+  const vars = { ...(l.vars ?? {}) }
+  for (const k of ['de', 'a'] as const) {
+    const v = vars[k]
+    if (typeof v === 'string' && v in b.estados) vars[k] = b.estados[v as keyof typeof b.estados]
+  }
+  return interpolate(b.lecturas[l.clave as keyof typeof b.lecturas] ?? l.clave, vars)
+}
+
+const fecha = new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: 'America/Bogota' })
+
+const experimentos = EXPERIMENTOS.map((id, i) => {
+  const c = corridas[id]
+  const sello = selloDe(c)
+  const selloTexto =
+    sello === 'superado' ? b.sello.superado : sello === 'parcial' ? interpolate(b.sello.parcial, { ok: c!.ok, runs: c!.runs }) : b.sello.sinCorridas
+  const corridasTexto = c && c.runs > 0
+    ? `${c.runs} ${c.runs === 1 ? lb.experiments.runOne : lb.experiments.runMany}${c.lastRunAt ? ` · ${lb.experiments.last} ${fecha.format(new Date(c.lastRunAt * 1000))}` : ''}`
+    : b.sinCorridas
+  return { id, nombre: b.experimentos[i], esperado: b.esperado[i], sello, selloTexto, corridasTexto }
+})
+
+// Primer experimento, resuelto.
+const g0 = guionDe(EXPERIMENTOS[0])
+const c0 = cuadroFinal(g0)
+const r0 = c0.registro
+const e0 = experimentos[0]
+
+// El script recibe los textos ya resueltos por clave y los interpola él.
+const textos = { lecturas: b.lecturas, estados: b.estados, de: b.registro.de, baseGuarda: BASE_GUARDA, baseEmisor: BASE_EMISOR }
+---
+
+<figure class="be" data-banco data-textos={JSON.stringify(textos)} data-experimentos={JSON.stringify(experimentos)} aria-label={b.etiqueta}>
+  <div class="be-cab">
+    <span class="be-led" aria-hidden="true"></span>
+    <span class="be-titulo">{b.titulo}</span>
+    <span class="be-sub">{b.sub}</span>
+    <span class="be-cab-exp" data-exp-nombre>{e0.nombre}</span>
+  </div>
+
+  <div class="be-mapa" data-mapa>
+    <svg class="be-trazos" data-trazos aria-hidden="true"></svg>
+
+    <div class="be-col be-emisores">
+      {EMISORES.map((e) => {
+        const l = g0.emisores[e]
+        return (
+          <div class="be-nodo be-emisor" data-emisor={e} data-v={l ? 'activo' : undefined}>
+            <span class="be-nombre">{b.emisores[e]}</span>
+            <span class="be-lectura" data-lectura>{l ? texto(l) : BASE_EMISOR[e]}</span>
+          </div>
+        )
+      })}
+    </div>
+
+    <div class="be-col be-guardas">
+      {GUARDAS.map((gd, i) => {
+        const f = c0.guardas[gd]
+        return (
+          <div class="be-nodo be-guarda" data-guarda={gd} data-v={f?.veredicto}>
+            <span class="be-num">{i + 1}</span>
+            <span class="be-nombre">{b.guardas[gd]}</span>
+            <span class="be-lectura" data-lectura>{f ? texto(f.lectura) : BASE_GUARDA[gd]}</span>
+          </div>
+        )
+      })}
+    </div>
+
+    <div class="be-col be-maquina" data-maquina>
+      <span class="be-maquina-rot">{b.pago}</span>
+      {ESTADOS.map((s) => (
+        <div class="be-estado" data-estado-id={s} data-actual={c0.actual === s ? '' : undefined}>
+          <span class="be-estado-punto" aria-hidden="true"></span>
+          <span>{b.estados[s]}</span>
+        </div>
+      ))}
+    </div>
+
+    <div class="be-fichas" data-fichas aria-hidden="true"></div>
+  </div>
+
+  <dl class="be-registro" data-registro>
+    <div><dt>{b.registro.pagos}</dt><dd data-reg="pagos">{r0.pagos}</dd></div>
+    <div><dt>{b.registro.estado}</dt><dd data-reg="estado">{r0.estado ? b.estados[r0.estado] : '-'}</dd></div>
+    <div><dt>{b.registro.version}</dt><dd data-reg="version">v{r0.version}</dd></div>
+    <div><dt>{b.registro.eventos}</dt><dd data-reg="eventos">{r0.aplicados} {b.registro.de} {r0.recibidos}</dd></div>
+  </dl>
+
+  <div class="be-veredicto">
+    <div class="be-esperado">
+      <span class="be-esperado-rot">{b.esperadoRotulo}</span>
+      <p data-esperado>{e0.esperado}</p>
+    </div>
+    <div class="be-sello-caja">
+      <span class="be-sello" data-sello data-tipo={e0.sello}>{e0.selloTexto}</span>
+      <span class="be-corridas" data-corridas>{e0.corridasTexto}</span>
+    </div>
+  </div>
+
+  <div class="be-tabs" role="group" aria-label={b.escenariosLabel}>
+    {experimentos.map((e, i) => (
+      <button type="button" class="be-tab" data-exp={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+        <span class="be-tab-nombre">{e.nombre}</span>
+        <span class="be-tab-barra" aria-hidden="true"><span data-exp-progreso></span></span>
+      </button>
+    ))}
+  </div>
+
+  <figcaption class="be-pie">{b.pie}</figcaption>
+</figure>
+
+<style is:global>
+  /* Prefijo `be-` y global: el script cambia atributos (data-v, data-actual,
+     data-tentativo) y cómo se ve cada estado vive aquí. */
+  .be {
+    --be-cyan: #00f2ff;
+    --be-lime: #c9ff5b;
+    --be-ember: #ff6b3d;
+    --be-amber: #fbbf24;
+    --be-borde: rgba(255, 255, 255, 0.09);
+    position: relative;
+    margin: 0;
+    width: 100%;
+    max-width: 640px;
+    padding: 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background:
+      radial-gradient(120% 70% at 70% 0%, rgba(0, 242, 255, 0.05), transparent 60%),
+      rgba(12, 12, 16, 0.6);
+  }
+  .be-cab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px 14px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+  }
+  .be-led { width: 6px; height: 6px; border-radius: 99px; background: var(--be-lime); box-shadow: 0 0 10px var(--be-lime); }
+  .be-titulo { color: #e7e7ec; letter-spacing: 0.02em; }
+  .be-sub { color: #6b6b78; font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; }
+  .be-cab-exp { margin-left: auto; color: var(--be-cyan); font-size: 10.5px; }
+
+  .be-mapa {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 112px) minmax(0, 1fr) minmax(0, 112px);
+    column-gap: 30px;
+    align-items: center;
+    /* Aire a la derecha: los arcos de la máquina de estados se curvan hacia fuera. */
+    padding-right: 30px;
+  }
+  .be-trazos { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
+  .be-arco { fill: none; stroke-width: 1.5; stroke-linecap: round; }
+  .be-arco[data-tipo='aplicada'] { stroke: var(--be-lime); }
+  .be-arco[data-tipo='frenada'] { stroke: var(--be-ember); stroke-dasharray: 3 4; }
+  .be-arco[data-tipo='tentativa'] { stroke: var(--be-amber); stroke-dasharray: 5 4; }
+  .be-arco-x { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; fill: var(--be-ember); }
+  .be-arco-punta { fill: var(--be-lime); }
+  .be-arco-punta[data-tipo='tentativa'] { fill: var(--be-amber); }
+
+  .be-col { display: grid; gap: 8px; position: relative; z-index: 1; }
+  .be-nodo {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 6px;
+    align-items: baseline;
+    padding: 7px 9px 8px;
+    border-radius: 10px;
+    background: #111117;
+    border: 1px solid var(--be-borde);
+    color: #e7e7ec;
+    transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .be-emisor { border-style: dashed; background: #0e0e12; }
+  .be-emisor .be-nombre { grid-column: 1 / -1; }
+  .be-num { font-family: var(--font-serif, Georgia, serif); font-style: italic; font-size: 13px; line-height: 1; color: #85858f; }
+  .be-nombre { font-size: 12px; line-height: 1.2; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .be-lectura {
+    grid-column: 1 / -1;
+    margin-top: 3px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    line-height: 1.25;
+    color: #6b6b78;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .be-nodo[data-v='activo'] { border-color: rgba(0, 242, 255, 0.45); }
+  .be-nodo[data-v='activo'] .be-lectura { color: #a9eef2; }
+  .be-nodo[data-v='pasa'] { border-color: rgba(0, 242, 255, 0.35); background: #0f1619; }
+  .be-nodo[data-v='pasa'] .be-lectura { color: #9fdde2; }
+  .be-nodo[data-v='frena'] { border-color: rgba(201, 255, 91, 0.7); background: #131a0c; box-shadow: 0 0 0 3px rgba(201, 255, 91, 0.07), 0 0 24px -6px rgba(201, 255, 91, 0.5); }
+  .be-nodo[data-v='frena'] .be-lectura { color: var(--be-lime); }
+  .be-nodo[data-v='aviso'] { border-color: rgba(251, 191, 36, 0.7); background: #1a150a; box-shadow: 0 0 22px -8px rgba(251, 191, 36, 0.5); }
+  .be-nodo[data-v='aviso'] .be-lectura { color: var(--be-amber); }
+
+  .be-maquina { gap: 10px; }
+  .be-maquina-rot {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6b6b78;
+  }
+  .be-estado {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 9px;
+    border-radius: 99px;
+    border: 1px solid var(--be-borde);
+    background: #0f0f14;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: #85858f;
+    transition: border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease;
+  }
+  .be-estado-punto { width: 7px; height: 7px; border-radius: 99px; border: 1px solid currentColor; flex: none; transition: background-color 0.3s ease; }
+  .be-estado[data-actual] { color: var(--be-lime); border-color: rgba(201, 255, 91, 0.55); background: #121809; }
+  .be-estado[data-actual] .be-estado-punto { background: var(--be-lime); box-shadow: 0 0 10px var(--be-lime); }
+  .be-estado[data-tentativo] { color: var(--be-amber); border-color: rgba(251, 191, 36, 0.6); border-style: dashed; background: #16120a; }
+  .be-estado[data-tentativo] .be-estado-punto { background: transparent; }
+  .be-mapa.is-caida .be-maquina, .be-mapa.is-caida [data-guarda='tx'] { filter: saturate(0.3) brightness(0.7); }
+
+  /* Fichas: los eventos que viajan. Centradas en su punto con xPercent/yPercent. */
+  .be-fichas { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+  .be-ficha {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 2px 7px 3px;
+    border-radius: 99px;
+    border: 1px solid rgba(0, 242, 255, 0.7);
+    background: #0c1b1e;
+    color: var(--be-cyan);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9.5px;
+    line-height: 1.3;
+    white-space: nowrap;
+    box-shadow: 0 0 16px -4px rgba(0, 242, 255, 0.7);
+    opacity: 0;
+  }
+  .be-ficha[data-tono='ok'] { border-color: rgba(201, 255, 91, 0.8); background: #141d0b; color: var(--be-lime); box-shadow: 0 0 16px -4px rgba(201, 255, 91, 0.7); }
+  .be-ficha[data-tono='error'] { border-color: rgba(255, 107, 61, 0.85); background: #1f110c; color: var(--be-ember); box-shadow: 0 0 16px -4px rgba(255, 107, 61, 0.7); }
+  .be-ficha[data-tono='aviso'] { border-color: rgba(251, 191, 36, 0.85); background: #1c160a; color: var(--be-amber); }
+
+  .be-registro {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    margin: 18px 0 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .be-registro > div { background: #0b0b0f; padding: 9px 11px 10px; min-width: 0; }
+  .be-registro dt { font-family: var(--font-mono, ui-monospace, monospace); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #6b6b78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .be-registro dd { margin: 5px 0 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 15px; line-height: 1; color: #e7e7ec; white-space: nowrap; transition: color 0.3s ease; }
+  .be-registro[data-tentativo] dd { color: var(--be-amber); font-style: italic; }
+
+  .be-veredicto {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    margin-top: 12px;
+    padding: 12px 12px 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .be-esperado-rot { font-family: var(--font-mono, ui-monospace, monospace); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: #6b6b78; }
+  .be-esperado p { margin: 4px 0 0; font-size: 12.5px; line-height: 1.45; color: #c4c4cc; min-height: 2.9em; }
+  .be-sello-caja { display: grid; justify-items: end; gap: 6px; }
+  .be-sello {
+    display: inline-block;
+    padding: 5px 10px 6px;
+    border-radius: 6px;
+    border: 1.5px solid currentColor;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transform: rotate(-4deg);
+    white-space: nowrap;
+  }
+  .be-sello[data-tipo='superado'] { color: var(--be-lime); box-shadow: inset 0 0 12px -6px var(--be-lime); }
+  .be-sello[data-tipo='parcial'] { color: var(--be-ember); }
+  .be-sello[data-tipo='sin-corridas'] { color: #85858f; border-style: dashed; }
+  .be-corridas { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #6b6b78; white-space: nowrap; }
+
+  .be-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+  .be-tab {
+    display: grid;
+    gap: 7px;
+    padding: 8px 9px 9px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+    color: #85858f;
+    font-size: 11.5px;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+  }
+  .be-tab:hover { color: #e7e7ec; }
+  .be-tab:focus-visible { outline: 2px solid rgba(0, 242, 255, 0.6); outline-offset: 2px; }
+  .be-tab[aria-pressed='true'] { color: #e7e7ec; border-color: rgba(0, 242, 255, 0.28); background: rgba(0, 242, 255, 0.04); }
+  .be-tab-nombre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .be-tab-barra { display: block; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .be-tab-barra > span { display: block; height: 100%; background: var(--be-cyan); transform-origin: left; transform: scaleX(0); }
+  .be-tab[aria-pressed='true'] .be-tab-barra > span { transform: scaleX(1); }
+  .be[data-vivo] .be-tab[aria-pressed='true'] .be-tab-barra > span { transform: scaleX(0); }
+  .be-pie { margin-top: 10px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; line-height: 1.5; color: #4d4d5d; }
+
+  /* Móvil: de izquierda-derecha a arriba-abajo. Emisores en fila, defensas en
+     rejilla y la máquina de estados en fila; los arcos se curvan hacia abajo. */
+  @media (max-width: 767px) {
+    .be { padding: 12px; }
+    .be-mapa { display: flex; flex-direction: column; gap: 22px; padding-right: 0; padding-bottom: 26px; align-items: stretch; }
+    .be-emisores { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .be-guardas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .be-guardas > :last-child { grid-column: 1 / -1; }
+    .be-maquina { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .be-maquina-rot { grid-column: 1 / -1; }
+    .be-estado { justify-content: center; padding: 6px 4px; font-size: 10px; gap: 5px; }
+    .be-nodo { padding: 6px 7px 7px; }
+    .be-nombre { font-size: 11px; }
+    .be-lectura { font-size: 9.5px; }
+    .be-registro { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .be-veredicto { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .be-sello-caja { justify-items: start; }
+    .be-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .be-tabs > :last-child { grid-column: 1 / -1; }
+    .be-cab-exp { display: none; }
+  }
+</style>
