@@ -55,6 +55,7 @@ const cifras = [
       <canvas aria-hidden="true"></canvas>
       <span class="lg-ahora" data-reloj-ahora hidden aria-hidden="true"><span>{mo.reloj.ahora}</span></span>
       <div class="lg-tip" data-reloj-tip hidden aria-hidden="true"></div>
+      <p class="lg-error" data-reloj-error hidden>{l.loadError}</p>
     </div>
 
     <p class="lg-regla">{mo.reloj.regla}</p>
@@ -197,6 +198,18 @@ const cifras = [
   @media (min-width: 780px) { .lg-lienzo { height: 515px; } }
   @media (min-width: 1204px) { .lg-lienzo { height: 577px; } }
   .lg-lienzo canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+
+  .lg-error {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+    color: #85858f;
+  }
+  .lg-error[hidden] { display: none; }
 
   .lg-ahora {
     position: absolute;

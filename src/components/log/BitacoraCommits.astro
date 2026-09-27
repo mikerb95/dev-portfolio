@@ -195,9 +195,11 @@ const bi = l.motion.bitacora
   .lg-limpiar:hover { text-decoration: underline; }
 
   /* ── Lista ───────────────────────────────────────────────────────────── */
+  /* clip y no hidden: hidden convierte la lista en contenedor de scroll y
+     las cabeceras de día dejarían de quedarse pegadas arriba. */
   .lg-feed {
     border-radius: 18px;
-    overflow: hidden;
+    overflow: clip;
     border: 1px solid rgba(255, 255, 255, 0.07);
     background: #0d0d12;
   }
@@ -207,7 +209,8 @@ const bi = l.motion.bitacora
 
   .lg-feed :global(.lg-dia) {
     position: sticky;
-    top: 0;
+    top: 84px;
+    z-index: 2;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;

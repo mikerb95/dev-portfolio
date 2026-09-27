@@ -1,8 +1,11 @@
 ---
-// Página sin datos vivos: se genera en el build, no por request.
+// Página sin datos vivos en el servidor: se genera en el build y los datos de
+// GitHub los pide el navegador (/api/github/activity, cacheado en la CDN).
 export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
+import RelojSesiones from '../components/log/RelojSesiones.astro'
+import BitacoraCommits from '../components/log/BitacoraCommits.astro'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
 import { jsonEnScript } from '../lib/json-script'
 
@@ -15,125 +18,40 @@ const L = (path: string) => localizedHref(path, locale)
 <BaseLayout title={l.title} description={l.description} image="/og-log.png" noindex>
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24" data-locale={locale}>
 
-    <!-- Back -->
     <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
       {t.common.back}
     </a>
 
-    <header class="mb-12">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="text-cyan">/log</span>
-        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span class="flex items-center gap-2" id="feed-status">
-          <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-          <span id="feed-status-text">{l.loadingStatus}</span>
-        </span>
+    <header class="lg-hero mb-10">
+      <div>
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6" data-hero-sigue>
+          <span class="text-cyan">/log</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span class="flex items-center gap-2" id="feed-status">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
+            <span id="feed-status-text">{l.loadingStatus}</span>
+          </span>
+        </div>
+        <h1 class="text-[42px] sm:text-5xl xl:text-[60px] font-medium tracking-[-.035em] leading-[1] mb-0">
+          <span data-hero-linea class="block text-ink-50 lg-balance">{l.h1}</span>{' '}
+          <span data-hero-linea class="block text-cyan lg-balance">{l.h1Linea2}</span>
+        </h1>
       </div>
-      <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        {l.h1}
-      </h1>
-      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
+      <p class="text-[15.5px] text-ink-100 max-w-xl leading-relaxed" data-hero-sigue>
         {l.intro}
       </p>
     </header>
 
-    <!-- Stats bento -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-      {[
-        { label: l.stats.week, id: 'stat-week', unit: l.stats.focusHours },
-        { label: l.stats.month, id: 'stat-month', unit: l.stats.focusHours },
-        { label: l.stats.commits, id: 'stat-commits', unit: l.stats.contributions },
-        { label: l.stats.streak, id: 'stat-streak', unit: l.stats.consecutiveDays },
-      ].map((s) => (
-        <div class="rounded-2xl glass p-5">
-          <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">{s.label}</div>
-          <div class="text-3xl font-medium text-ink-50 tracking-tight animate-pulse stat-value" id={s.id}>-</div>
-          <div class="text-[10px] font-mono text-ink-300 mt-1">{s.unit}</div>
-        </div>
-      ))}
+    <div class="mb-24" data-hero-pieza>
+      <RelojSesiones locale={locale} />
     </div>
 
-    <!-- Sparkline -->
-    <div class="rounded-2xl glass p-5 mb-10 relative">
-      <div class="flex justify-between text-[10px] font-mono text-ink-300 mb-3" id="sparkline-labels"></div>
-      <div class="flex items-end gap-1 h-12" id="sparkline">
-        {Array.from({ length: 14 }).map(() => (
-          <div class="flex-1 bg-white/5 rounded-sm animate-pulse" style="height:35%"></div>
-        ))}
-      </div>
-      <div
-        id="sparkline-tip"
-        class="pointer-events-none absolute z-20 hidden -translate-x-1/2 -translate-y-full rounded-lg border border-white/10 bg-black/90 px-2.5 py-1.5 text-center shadow-lg backdrop-blur"
-      >
-        <div class="text-[13px] font-medium text-ink-50 leading-none" id="sparkline-tip-count"></div>
-        <div class="text-[9px] font-mono uppercase tracking-[.15em] text-ink-300 mt-1" id="sparkline-tip-date"></div>
-      </div>
-    </div>
+    <BitacoraCommits locale={locale} />
 
-    <!-- Activity feed -->
-    <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-      <span class="text-cyan">/feed</span>
-      <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-      <span>{l.feedEyebrow}</span>
-    </div>
-
-    <div id="feed-wrap" class="relative">
-      <div id="log-feed" class="rounded-2xl glass overflow-hidden">
-        {Array.from({ length: 6 }).map(() => (
-          <div class="px-5 py-3.5 border-b border-white/[.03] flex gap-4 animate-pulse">
-            <div class="w-16 h-3 bg-white/5 rounded mt-1 shrink-0"></div>
-            <div class="flex-1 h-3 bg-white/5 rounded"></div>
-            <div class="w-12 h-3 bg-white/5 rounded mt-1 shrink-0"></div>
-          </div>
-        ))}
-      </div>
-
-      <!-- Bottom fade: dissolves the last rows into the page background while
-           there are still older commits left to load. -->
-      <div
-        id="feed-fade"
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-28 rounded-b-2xl opacity-0 transition-opacity duration-300"
-        style="background:linear-gradient(to bottom, rgba(7,7,10,0) 0%, rgba(7,7,10,.55) 52%, #07070a 100%)"
-      ></div>
-
-      <!-- Loader: small dots pinned to the bottom-center, shown only while an
-           older batch is being fetched into view. -->
-      <div
-        id="feed-loader"
-        class="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center opacity-0 transition-opacity duration-300"
-      >
-        <span class="feed-loader-pill">
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        </span>
-      </div>
-    </div>
-
-    <!-- Load-more gate: after a run of auto-loaded batches we pause and ask
-         before pulling in more of the older history, so an endless month of
-         commits doesn't scroll on forever unprompted. -->
-    <div id="feed-more" class="hidden mt-6">
-      <div class="rounded-2xl glass p-7 flex flex-col items-center text-center gap-4">
-        <div class="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">
-          <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
-          {l.loadPause}
-        </div>
-        <p class="text-[14.5px] text-ink-100 max-w-md leading-relaxed">
-          {l.loadPauseBodyPrefix} <span id="feed-more-count" class="text-ink-50 font-medium">-</span> {l.loadPauseBodySuffix}
-        </p>
-        <button
-          id="feed-more-btn"
-          type="button"
-          class="inline-flex items-center gap-2 h-10 px-5 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
-          {l.loadMoreBtn}
-        </button>
-        <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300">
-          <span id="feed-more-remaining">-</span> {l.remainingCommits}
-        </div>
-      </div>
-    </div>
+    <noscript>
+      <p class="mt-6 text-[12px] font-mono text-ink-300">{l.loadError}</p>
+    </noscript>
   </div>
 
   <script
@@ -144,337 +62,28 @@ const L = (path: string) => localizedHref(path, locale)
       nCommits: l.nCommits,
       today: l.today,
       noActivity: l.noActivity,
-      live: l.live,
       connectError: l.connectError,
       loadError: l.loadError,
-      justNowMinutes: l.justNowMinutes,
-      justNowHours: l.justNowHours,
-      justNowDays: l.justNowDays,
+      motion: l.motion,
     })}
   />
 </BaseLayout>
 
+<script>
+  // Mismo lenguaje que las demás páginas con motion (Lenis + GSAP, montaje
+  // común en src/lib/motion/landing.ts) más el reloj y la bitácora.
+  import { montarLanding } from '../lib/motion/landing'
+  import { montarLog } from '../lib/motion/log'
+
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  montarLog({ reducido })
+  montarLanding()
+</script>
+
 <style>
-  .feed-loader-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 7px 13px;
-    border-radius: 9999px;
-    background: rgba(8, 8, 12, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  .feed-loader-pill .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 9999px;
-    background: var(--color-cyan, #00f2ff);
-    animation: feed-bounce 1s ease-in-out infinite;
-  }
-  .feed-loader-pill .dot:nth-child(2) {
-    animation-delay: 0.15s;
-  }
-  .feed-loader-pill .dot:nth-child(3) {
-    animation-delay: 0.3s;
-  }
-  @keyframes feed-bounce {
-    0%, 80%, 100% {
-      transform: translateY(0);
-      opacity: 0.4;
-    }
-    40% {
-      transform: translateY(-5px);
-      opacity: 1;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .feed-loader-pill .dot {
-      animation: none;
-      opacity: 0.7;
-    }
+  .lg-hero { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr); align-items: end; }
+  .lg-balance { text-wrap: balance; }
+  @media (min-width: 1024px) {
+    .lg-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 56px; }
   }
 </style>
-
-<script>
-  import { initPageMotion } from '../lib/motion-reveal'
-  initPageMotion()
-
-  type FeedItem = {
-    repo: string
-    repoFull: string
-    message: string
-    sha: string
-    timestamp: string
-    type: 'commit' | 'pr_merged'
-  }
-
-  type ActivityData = {
-    feed: FeedItem[]
-    deepWork: { weekHours: number; monthHours: number; sessions: number }
-    streak: number
-    totalCommits: number
-    sparkline: number[]
-  }
-
-  // El locale sale del data-attribute que puso el servidor (misma técnica que
-  // GithubProjects): este script se ejecuta en el navegador y no puede
-  // importar el diccionario sin arrastrar todo el i18n al bundle del cliente.
-  const root = document.querySelector<HTMLElement>('[data-locale]')
-  const locale = root?.dataset.locale === 'en' ? 'en' : 'es'
-  const intlLocale = locale === 'en' ? 'en-US' : 'es-CO'
-  const L = JSON.parse(document.getElementById('log-i18n')!.textContent!) as Record<string, any>
-
-  function relativeTime(iso: string): string {
-    const diff = (Date.now() - new Date(iso).getTime()) / 1000
-    if (diff < 3600) return L.justNowMinutes.replace('{n}', String(Math.floor(diff / 60)))
-    if (diff < 86400) return L.justNowHours.replace('{n}', String(Math.floor(diff / 3600)))
-    if (diff < 86400 * 7) return L.justNowDays.replace('{n}', String(Math.floor(diff / 86400)))
-    return new Date(iso).toLocaleDateString(intlLocale, { day: 'numeric', month: 'short' })
-  }
-
-  function escapeHtml(s: string) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  }
-
-  function renderSparkline(data: number[]) {
-    const bar = document.getElementById('sparkline')!
-    const labels = document.getElementById('sparkline-labels')!
-    const max = Math.max(...data, 1)
-    const n = data.length
-
-    bar.innerHTML = data
-      .map((v, i) => {
-        const pct = Math.round((v / max) * 100)
-        const color = v > 0 ? 'bg-cyan/60' : 'bg-white/5'
-        const d = new Date()
-        d.setDate(d.getDate() - (n - 1 - i))
-        const label = d.toLocaleDateString(intlLocale, { weekday: 'short', day: 'numeric', month: 'short' })
-        return `<div class="flex-1 ${color} rounded-sm transition-all hover:bg-cyan cursor-default" style="height:${Math.max(pct, 3)}%" data-count="${v}" data-date="${label}"></div>`
-      })
-      .join('')
-
-    const tip = document.getElementById('sparkline-tip')!
-    const tipCount = document.getElementById('sparkline-tip-count')!
-    const tipDate = document.getElementById('sparkline-tip-date')!
-    const container = bar.parentElement!
-
-    bar.addEventListener('pointermove', (e) => {
-      const target = (e.target as HTMLElement).closest<HTMLElement>('[data-count]')
-      if (!target) {
-        tip.classList.add('hidden')
-        return
-      }
-      const count = Number(target.dataset.count)
-      tipCount.textContent = count === 1 ? L.oneCommit : L.nCommits.replace('{n}', String(count))
-      tipDate.textContent = target.dataset.date ?? ''
-      const cRect = container.getBoundingClientRect()
-      const bRect = target.getBoundingClientRect()
-      tip.style.left = `${bRect.left - cRect.left + bRect.width / 2}px`
-      tip.style.top = `${bRect.top - cRect.top - 8}px`
-      tip.classList.remove('hidden')
-    })
-    bar.addEventListener('pointerleave', () => tip.classList.add('hidden'))
-
-    const today = new Date()
-    const start = new Date(today)
-    start.setDate(start.getDate() - 13)
-    labels.innerHTML = `
-      <span>${start.toLocaleDateString(intlLocale, { day: 'numeric', month: 'short' })}</span>
-      <span>${L.today}</span>`
-  }
-
-  function dayLabel(iso: string): string {
-    return new Date(iso).toLocaleDateString(intlLocale, {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-    })
-  }
-
-  function rowHtml(c: FeedItem): string {
-    const leftBadge = c.type === 'pr_merged'
-      ? `<span class="text-violet text-[10px] font-mono shrink-0 w-14 text-right">PR</span>`
-      : `<span class="font-mono text-ink-300 text-[10.5px] shrink-0 w-14 text-right">${c.sha}</span>`
-
-    return `
-      <div class="flex items-baseline gap-4 px-5 py-3 border-b border-white/[.03] hover:bg-white/[.02]">
-        ${leftBadge}
-        <span class="text-ink-50 text-[13px] leading-snug flex-1">${escapeHtml(c.message)}</span>
-        <span class="text-ink-300 text-[10.5px] font-mono shrink-0 hidden sm:inline">${c.repo}</span>
-        <span class="text-ink-300 text-[10.5px] font-mono shrink-0">${relativeTime(c.timestamp)}</span>
-      </div>`
-  }
-
-  function dayHeaderHtml(day: string): string {
-    return `
-      <div class="px-5 py-2.5 border-b border-white/[.03] bg-white/[.01]">
-        <span class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 capitalize">${day}</span>
-      </div>`
-  }
-
-  const BATCH_SIZE = 60
-  const LOAD_DELAY_MS = 450
-  const AUTO_LOAD_LIMIT = 5
-  let allItems: FeedItem[] = []
-  let cursor = 0
-  let lastDay = ''
-  let loading = false
-  let autoLoads = 0
-  let feedObserver: IntersectionObserver | null = null
-
-  function hasMore() {
-    return cursor < allItems.length
-  }
-
-  // Show the bottom fade only while older commits remain; hide the loader once
-  // everything is mounted so the final rows stay fully readable.
-  function updateBottomUi() {
-    document.getElementById('feed-fade')?.classList.toggle('opacity-0', !hasMore())
-    if (!hasMore()) document.getElementById('feed-loader')?.classList.add('opacity-0')
-  }
-
-  function renderNextBatch() {
-    const el = document.getElementById('log-feed')!
-    const end = Math.min(cursor + BATCH_SIZE, allItems.length)
-    let html = ''
-    for (let i = cursor; i < end; i++) {
-      const c = allItems[i]
-      const day = dayLabel(c.timestamp)
-      if (day !== lastDay) {
-        html += dayHeaderHtml(day)
-        lastDay = day
-      }
-      html += rowHtml(c)
-    }
-    el.insertAdjacentHTML('beforeend', html)
-    cursor = end
-
-    if (!hasMore()) {
-      feedObserver?.disconnect()
-      feedObserver = null
-      document.getElementById('feed-sentinel')?.remove()
-    }
-  }
-
-  // Pause auto-loading and ask the user before pulling in more of the older
-  // history. The observer is only disconnected (not dropped) so it can be
-  // re-attached to the same sentinel on resume.
-  function showLoadMorePrompt() {
-    feedObserver?.disconnect()
-    document.getElementById('feed-fade')?.classList.add('opacity-0')
-    document.getElementById('feed-loader')?.classList.add('opacity-0')
-    const el = document.getElementById('feed-more')!
-    document.getElementById('feed-more-count')!.textContent = String(cursor)
-    document.getElementById('feed-more-remaining')!.textContent = String(allItems.length - cursor)
-    el.classList.remove('hidden')
-  }
-
-  // Reveal the loader, wait a beat so the "loading older data" animation is
-  // actually perceptible, then mount the next batch. `auto` marks batches
-  // pulled in by the scroll observer, which are the ones we cap.
-  function loadMore(auto: boolean) {
-    if (loading || !hasMore()) return
-    loading = true
-    document.getElementById('feed-loader')?.classList.remove('opacity-0')
-    setTimeout(() => {
-      renderNextBatch()
-      loading = false
-      document.getElementById('feed-loader')?.classList.add('opacity-0')
-      updateBottomUi()
-
-      if (auto && hasMore()) {
-        autoLoads++
-        if (autoLoads >= AUTO_LOAD_LIMIT) showLoadMorePrompt()
-      }
-    }, LOAD_DELAY_MS)
-  }
-
-  // Resume after the user confirms: mount one batch straightaway, reset the
-  // auto-load budget and hand control back to the scroll observer.
-  function resumeLoadMore() {
-    document.getElementById('feed-more')!.classList.add('hidden')
-    autoLoads = 0
-    renderNextBatch()
-    updateBottomUi()
-    if (hasMore() && feedObserver) {
-      const sentinel = document.getElementById('feed-sentinel')
-      if (sentinel) feedObserver.observe(sentinel)
-    }
-  }
-
-  function renderFeed(items: FeedItem[]) {
-    const el = document.getElementById('log-feed')!
-    allItems = items
-    cursor = 0
-    lastDay = ''
-    loading = false
-    autoLoads = 0
-    feedObserver?.disconnect()
-    feedObserver = null
-    document.getElementById('feed-more')?.classList.add('hidden')
-
-    if (!items.length) {
-      el.innerHTML = `<p class="px-5 py-10 text-center text-[12px] font-mono text-ink-300">${L.noActivity}</p>`
-      updateBottomUi()
-      return
-    }
-
-    el.innerHTML = ''
-    renderNextBatch()
-    updateBottomUi()
-
-    // Infinite scroll: a sentinel just below the feed triggers the next batch
-    // whenever it scrolls into view, so thousands of commits never all mount at
-    // once.
-    if (hasMore()) {
-      const sentinel = document.createElement('div')
-      sentinel.id = 'feed-sentinel'
-      sentinel.className = 'h-2'
-      el.after(sentinel)
-      feedObserver = new IntersectionObserver(
-        (entries) => {
-          if (entries.some((e) => e.isIntersecting)) loadMore(true)
-        },
-        { rootMargin: '600px 0px' }
-      )
-      feedObserver.observe(sentinel)
-    }
-
-    document.getElementById('feed-more-btn')?.addEventListener('click', resumeLoadMore, { once: false })
-  }
-
-  function setFeedStatus(text: string, ok: boolean) {
-    document.getElementById('feed-status-text')!.textContent = text
-    document.getElementById('feed-status')!.querySelector('.pulse-dot')?.classList.toggle('bg-red-400', !ok)
-  }
-
-  function stopStatPulse() {
-    document.querySelectorAll('.stat-value').forEach((el) => el.classList.remove('animate-pulse'))
-  }
-
-  async function load() {
-    try {
-      const res = await fetch('/api/github/activity')
-      if (!res.ok) throw new Error()
-      const data: ActivityData = await res.json()
-
-      document.getElementById('stat-week')!.textContent = `${data.deepWork.weekHours}h`
-      document.getElementById('stat-month')!.textContent = `${data.deepWork.monthHours}h`
-      document.getElementById('stat-commits')!.textContent = String(data.totalCommits)
-      document.getElementById('stat-streak')!.textContent = `${data.streak}d`
-      stopStatPulse()
-
-      renderSparkline(data.sparkline)
-      renderFeed(data.feed)
-      setFeedStatus(L.live, true)
-    } catch {
-      stopStatPulse()
-      setFeedStatus(L.connectError, false)
-      document.getElementById('log-feed')!.innerHTML =
-        `<p class="px-5 py-10 text-center text-[12px] font-mono text-ink-300">${L.loadError}</p>`
-    }
-  }
-
-  load()
-</script>
