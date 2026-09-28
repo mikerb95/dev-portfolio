@@ -155,7 +155,9 @@ const reversion: Constructor = (el) => {
   const v42 = $(el, '[data-v="42"]')
   const checks = $$(el, '.esc-checks i')
   const rot = $(el, '.esc-rot-checks')
-  const curva = el.querySelector<SVGPathElement>('.esc-vuelta path')!
+  // Se destapa con clip-path de derecha a izquierda (de v42 a v41): el trazo
+  // punteado con `pathLength` no se lleva bien con `vector-effect`.
+  const curva = el.querySelector<SVGSVGElement>('.esc-vuelta')!
   const insanos = $(el, '[data-insanos]')
   const revertido = $(el, '[data-revertido]')
   const tl = nueva()
@@ -163,7 +165,7 @@ const reversion: Constructor = (el) => {
     .set(v42, { opacity: 0, x: 16, color: GRIS, borderColor: 'rgba(255,255,255,.14)' })
     .set(checks, { opacity: 0, scale: 0.4 })
     .set(rot, { opacity: 0 })
-    .set(curva, { strokeDashoffset: 1 })
+    .set(curva, { clipPath: 'inset(-20% 0% -20% 100%)', opacity: 1 })
     .set([insanos, revertido], { opacity: 0, y: 5 })
     .to(v42, { opacity: 1, x: 0, duration: 0.5, ease: 'expo.out' }, 0.3)
     .to(v41, { color: GRIS, borderColor: 'rgba(255,255,255,.14)', duration: 0.4 }, 0.6)
@@ -172,14 +174,13 @@ const reversion: Constructor = (el) => {
   checks.forEach((c, i) => tl.to(c, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(3)' }, 1.3 + i * 0.55))
   tl.to(insanos, { opacity: 1, y: 0, duration: 0.3 }, 2.5)
     .to(v42, { color: EMBER, borderColor: 'rgba(255,107,61,.6)', duration: 0.3 }, 2.5)
-    .to(curva, { strokeDashoffset: 0, duration: 0.9, ease: 'power2.inOut' }, 3)
+    .to(curva, { clipPath: 'inset(-20% 0% -20% 0%)', duration: 0.9, ease: 'power2.inOut' }, 3)
     .to(v41, { color: LIMA, borderColor: 'rgba(201,255,91,.45)', duration: 0.3 }, 3.8)
     .to(v42, { opacity: 0.25, duration: 0.4 }, 3.9)
     .to(insanos, { opacity: 0, duration: 0.25 }, 3.9)
     .to(revertido, { opacity: 1, y: 0, duration: 0.3 }, 4.1)
     .to({}, { duration: 1.8 })
-    .to([checks, rot, revertido, curva], { opacity: 0, duration: 0.4 })
-    .set([curva], { opacity: 1 })
+    .to([...checks, rot, revertido, curva], { opacity: 0, duration: 0.4 })
   return tl
 }
 
