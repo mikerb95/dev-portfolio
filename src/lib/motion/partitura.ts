@@ -337,10 +337,12 @@ export function pathFantasmas(xs: readonly number[]): string {
 }
 
 /** Rótulos del eje de tiempo: cada `cadaH` horas en punto (UTC), dentro de la ventana. */
-export function marcasEje(desde: number, hasta: number, cadaH = 3): { x: number; hora: string }[] {
+export function marcasEje(desde: number, hasta: number, cadaH = 3, maxX = 0.93): { x: number; hora: string }[] {
   const out: { x: number; hora: string }[] = []
   const paso = cadaH * HORA_MS
   for (let t = Math.ceil(desde / paso) * paso; t <= hasta; t += paso) {
+    // Cerca del borde derecho el rótulo chocaría con el de "ahora".
+    if (posicion(t, desde, hasta) > maxX) continue
     const h = new Date(t).getUTCHours()
     out.push({ x: posicion(t, desde, hasta), hora: `${String(h).padStart(2, '0')}:00` })
   }

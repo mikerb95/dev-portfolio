@@ -386,6 +386,7 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
   .au-corte b { left: 4px; top: -14px; bottom: auto; color: #ff6b3d; }
   .au-revision { border-left: 1px solid rgba(167, 139, 255, 0.6); }
   .au-revision b { left: 4px; top: -14px; bottom: auto; color: #a78bff; }
+  .au-revision[data-izquierda] b { left: auto; right: 4px; }
   .au-revision[data-aviso] { border-left-color: #ff6b3d; box-shadow: 0 0 12px 1px rgba(255, 107, 61, 0.6); }
   .au-revision[data-aviso] b { color: #ff6b3d; }
   .au-cabezal {
@@ -412,8 +413,6 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
     color: #4d4d5d;
     font-variant-numeric: tabular-nums;
   }
-  /* El último rótulo cerca de "ahora" se taparía con él. */
-  .au-eje span:last-child { display: var(--au-ultimo, inline); }
 
   .au-pie {
     display: flex;

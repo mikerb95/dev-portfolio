@@ -54,7 +54,23 @@ function peorSeveridad(lista: string | null): Severity {
   return sevs.reduce<Severity>((peor, s) => (severityRank(s) > severityRank(peor) ? s : peor), 'low')
 }
 
-export function crearServidorSiem(seudonimos: Seudonimos) {
+/**
+ * Recibe una copia de lo que devuelve cada herramienta. La pantalla del
+ * escenario la usa para pintar cifras mientras el agente trabaja; el modelo
+ * sigue recibiendo exactamente lo mismo.
+ */
+export type Observador = (herramienta: string, datos: unknown) => void
+
+export function crearServidorSiem(seudonimos: Seudonimos, observar?: Observador) {
+  const responder = (herramienta: string, datos: unknown) => {
+    try {
+      observar?.(herramienta, datos)
+    } catch {
+      // La vista es accesoria: si falla, el agente sigue.
+    }
+    return json(datos)
+  }
+
   const resumenActividad = tool(
     'resumen_actividad',
     'Panorama de la actividad hostil en la ventana: totales, orígenes únicos y desglose por categoría, severidad y acción tomada (logged, rate_limited, blocked, honeypot). Empieza por aquí.',
@@ -82,7 +98,7 @@ export function crearServidorSiem(seudonimos: Seudonimos) {
         .where(filtro)
         .groupBy(securityEvents.category, securityEvents.severity, securityEvents.action)
         .orderBy(desc(sql`sum(${securityEvents.hits})`))
-      return json({ desde: inicio.toISOString(), ...totales, desglose })
+      return responder('resumen_actividad', { desde: inicio.toISOString(), ...totales, desglose })
     },
     lectura
   )
@@ -125,7 +141,8 @@ export function crearServidorSiem(seudonimos: Seudonimos) {
         : []
       const bloqueo = new Map(vigentes.map((b) => [b.ip, b.expira]))
 
-      return json(
+      return responder(
+        'top_origenes',
         filas.map(({ ip, severidades, primeraVez, ultimaVez, ...resto }) => ({
           origen: seudonimos.alias(ip),
           ...resto,
@@ -169,7 +186,7 @@ export function crearServidorSiem(seudonimos: Seudonimos) {
         .where(and(gt(securityEvents.at, desde(args.horas)), sql`${securityEvents.ip} = ${ip}`))
         .orderBy(desc(securityEvents.at))
         .limit(args.limite ?? 40)
-      return json({ origen: args.origen, protegido: isAllowlisted(ip), eventos })
+      return responder('eventos_de_origen', { origen: args.origen, protegido: isAllowlisted(ip), eventos })
     },
     lectura
   )
@@ -193,7 +210,7 @@ export function crearServidorSiem(seudonimos: Seudonimos) {
         .where(gt(securityAnomalies.at, desde(args.horas)))
         .orderBy(desc(securityAnomalies.at))
         .limit(50)
-      return json(filas)
+      return responder('anomalias', filas)
     },
     lectura
   )
@@ -204,7 +221,8 @@ export function crearServidorSiem(seudonimos: Seudonimos) {
     {},
     async () => {
       const filas = await listActiveBlocks()
-      return json(
+      return responder(
+        'bloqueos_vigentes',
         filas.map((b) => ({
           origen: seudonimos.alias(b.ip),
           motivo: b.reason,
@@ -249,7 +267,7 @@ export function crearServidorSiem(seudonimos: Seudonimos) {
         .select({ hasta: blockedIps.expiresAt, reincidencias: blockedIps.hits })
         .from(blockedIps)
         .where(sql`${blockedIps.ip} = ${ip}`)
-      return json({ origen: args.origen, bloqueado: true, hasta: fila?.hasta.toISOString(), reincidencias: fila?.reincidencias })
+      return responder('bloquear_origen', { origen: args.origen, bloqueado: true, hasta: fila?.hasta.toISOString(), reincidencias: fila?.reincidencias })
     },
     { annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } }
   )

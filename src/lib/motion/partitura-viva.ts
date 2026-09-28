@@ -106,7 +106,9 @@ function montar(fig: HTMLElement, carga: Carga, reducido: boolean) {
   const dur = (min: number) => {
     const h = Math.floor(min / 60)
     const m = Math.floor(min % 60)
-    return h > 0 ? interpolate(textos.dur, { h, m }) : interpolate(textos.durMin, { m })
+    if (h === 0) return interpolate(textos.durMin, { m })
+    // "36 h 0 min" se lee como un dato de relleno: sin minutos, solo horas.
+    return m === 0 ? interpolate(textos.dur, { h, m }).replace(/\s*0\s*min$/, '') : interpolate(textos.dur, { h, m })
   }
 
   // El modelo en pantalla. Empieza siendo el mismo que pintó el servidor.
@@ -324,6 +326,7 @@ function montar(fig: HTMLElement, carga: Carga, reducido: boolean) {
           el.className = 'au-revision'
           el.style.left = `${(posicion(r.at, desde, t) * 100).toFixed(3)}%`
           if (r.avisos.length) el.dataset.aviso = ''
+          if (posicion(r.at, desde, t) > 0.85) el.dataset.izquierda = ''
           const b = document.createElement('b')
           b.textContent = ts.revision
           el.appendChild(b)
