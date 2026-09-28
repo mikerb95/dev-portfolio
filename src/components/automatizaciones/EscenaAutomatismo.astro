@@ -40,8 +40,8 @@ const DIAS = 9
             <i data-s={s} />
           ))}
           <span class="esc-tramo" style={`--i0:${SONDEOS.indexOf('fallo')};--n:${SONDEOS.filter((s) => s === 'fallo').length}`} />
+          <span class="esc-cabeza" />
         </div>
-        <span class="esc-cabeza" />
         <span class="esc-chip esc-chip-ember" data-abierto>
           {e.incidentes.abierto}
         </span>
@@ -97,7 +97,7 @@ const DIAS = 9
           <i />
           <i />
         </span>
-        <span class="esc-nodo esc-nodo-base" data-base>
+        <span class="esc-nodo esc-nodo-base" data-base data-caido>
           {e.respaldo.base}
         </span>
         <span class="esc-chip esc-chip-violeta esc-chip-snapshot" data-snapshot>
@@ -217,9 +217,9 @@ const DIAS = 9
   }
   .esc-cabeza {
     position: absolute;
-    top: 38px;
+    top: -18px;
     height: 46px;
-    left: 18px;
+    left: 0;
     width: 1px;
     background: #00f2ff;
     box-shadow: 0 0 10px 1px rgba(0, 242, 255, 0.6);
@@ -321,8 +321,8 @@ const DIAS = 9
     opacity: 0;
   }
   .esc-chip-snapshot { left: 18px; top: 14px; }
-  .esc-rot-base { right: 18px; bottom: 16px; color: #ff6b3d; opacity: 0; }
-  .esc-rot-vuelta { color: #c9ff5b; }
+  .esc-rot-base { right: 18px; bottom: 16px; color: #ff6b3d; }
+  .esc-rot-vuelta { color: #c9ff5b; opacity: 0; }
 
   /* ── Reversión ── */
   .esc-version {
