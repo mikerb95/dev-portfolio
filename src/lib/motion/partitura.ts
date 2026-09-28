@@ -315,3 +315,40 @@ export function duracionCorta(min: number): { h: number; m: number } {
   const total = Math.max(0, Math.floor(min))
   return { h: Math.floor(total / 60), m: total % 60 }
 }
+
+// ---------------------------------------------------------------------------
+// Geometría del SVG (compartida por el servidor y el navegador)
+// ---------------------------------------------------------------------------
+
+/** Ancho del viewBox de cada renglón. El alto es fijo y el SVG se estira. */
+export const ANCHO = 1000
+export const ALTO = 24
+
+const fx = (x: number) => (x * ANCHO).toFixed(1)
+
+/** Una raya vertical por corrida, en un solo `d`: 300 marcas son un nodo, no 300. */
+export function pathMarcas(xs: readonly number[]): string {
+  return xs.map((x) => `M${fx(x)} 5V19`).join('')
+}
+
+/** Horas declaradas: una raya más alta y punteada por CSS. */
+export function pathFantasmas(xs: readonly number[]): string {
+  return xs.map((x) => `M${fx(x)} 1V23`).join('')
+}
+
+/** Rótulos del eje de tiempo: cada `cadaH` horas en punto (UTC), dentro de la ventana. */
+export function marcasEje(desde: number, hasta: number, cadaH = 3): { x: number; hora: string }[] {
+  const out: { x: number; hora: string }[] = []
+  const paso = cadaH * HORA_MS
+  for (let t = Math.ceil(desde / paso) * paso; t <= hasta; t += paso) {
+    const h = new Date(t).getUTCHours()
+    out.push({ x: posicion(t, desde, hasta), hora: `${String(h).padStart(2, '0')}:00` })
+  }
+  return out
+}
+
+/** "14:05" en UTC. */
+export function horaUTC(at: number): string {
+  const d = new Date(at)
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+}
