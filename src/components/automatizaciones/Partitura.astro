@@ -414,6 +414,11 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
     font-variant-numeric: tabular-nums;
   }
 
+  /* En móvil, un rótulo cada 6 h: cada 3 h se pisan. */
+  @media (max-width: 767px) {
+    .au-eje span:nth-child(2n) { display: none; }
+  }
+
   .au-pie {
     display: flex;
     flex-direction: column;
@@ -504,7 +509,7 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
   }
   .au-sim-panel { min-height: 0; font-family: var(--font-mono, ui-monospace, monospace); }
   .au-sim-panel:not(.au-activo) { display: none; }
-  .au-sim-reloj { margin: 0 0 10px; font-size: 26px; letter-spacing: -0.02em; color: #e7e7ec; font-variant-numeric: tabular-nums; }
+  .au-sim-reloj { margin: 0 0 10px; font-size: clamp(19px, 5.4vw, 26px); letter-spacing: -0.02em; color: #e7e7ec; font-variant-numeric: tabular-nums; }
   .au-sim-callados { margin: 0 0 10px; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12px; }
   .au-sim-callados li { color: #85858f; transition: color 0.3s ease; }
   .au-sim-callados li[data-fuera] { color: #ff6b3d; }
