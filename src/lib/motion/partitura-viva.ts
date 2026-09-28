@@ -61,7 +61,7 @@ const HORA = 60 * MIN
 const VENTANA = 24 * HORA
 // Holgura tras la alarma para que se vea la revisión que avisó y un poco de
 // lo que sigue, en vez de congelar el cabezal justo encima.
-const COLA_TRAS_ALARMA = 45 * MIN
+const COLA_TRAS_ALARMA = 12 * MIN
 // Píxeles alrededor del cursor en los que una marca cuenta como "apuntada".
 const RADIO_PX = 7
 
