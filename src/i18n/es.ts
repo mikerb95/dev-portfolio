@@ -2249,6 +2249,93 @@ const es = {
     agoMinutes: 'hace {n} min',
     agoHours: 'hace {n} h',
     agoDaysShort: 'hace {n} d',
+    // Motion de la página. Los nombres de job, de workflow y de archivo no
+    // pasan por aquí: son identificadores y viven en el catálogo.
+    motion: {
+      dur: '{h} h {m} min',
+      durMin: '{m} min',
+      partitura: {
+        aria: 'Partitura de las tareas programadas: cada marca es una ejecución real de las últimas 24 horas',
+        kpis: {
+          corridas: 'corridas · 24 h',
+          verdes: 'en verde',
+          conPulso: 'tareas con pulso',
+          silencio: 'en silencio ahora',
+        },
+        leyenda: {
+          corrida: 'corrida',
+          fallida: 'fallida',
+          declarada: 'hora declarada',
+          hueco: 'silencio mayor a lo tolerado',
+        },
+        cada: 'cada {n} min',
+        diario: 'diario {hora}',
+        ahora: 'ahora',
+        leido: 'leída a las {hora} UTC',
+        lecturaInicial:
+          'Cada marca es una ejecución real anotada en la bitácora. Apunta un renglón para leerla.',
+        lecturaCorrida: '{job} · {hora} UTC · {estado}{dur}',
+        lecturaHueco: '{job} · {dur} sin sonar, desde las {hora} UTC · tolera {tol}',
+        lecturaCarril: '{job} · {n} corridas en 24 h · {fallidas} fallidas · tolera {tol} de silencio',
+        lecturaVacia: '{job} · ninguna corrida en 24 h',
+        ok: 'ok',
+        fallo: 'falló',
+        vacia:
+          'La bitácora no respondió y la partitura se queda sin notas. Eso también es un dato: es justo lo que la página mira.',
+      },
+      simulacro: {
+        boton: 'Simulacro: cortar el programador externo',
+        restaurar: 'Volver a los datos reales',
+        etiqueta: 'Simulacro sobre la bitácora real · nada se corta de verdad',
+        explica:
+          'Lo que pasó el 7 de septiembre, repetido sobre los datos de hoy. Las tareas del programador externo se callan, y el vigilante de silencio (el mismo código que corre en producción) decide cuándo avisar.',
+        reloj: '+{dur} tras el corte',
+        corte: 'corte',
+        revision: 'revisión',
+        callado: '{job} · {dur} callado · tolera {tol}',
+        espera:
+          'El vigilante vive dentro de uptime-check. Sin el disparador rápido, solo despierta con la corrida diaria de Vercel, a las {hora} UTC.',
+        sinCheck: 'Revisión a las {hora} UTC: la anterior es de hace menos de una hora y no toca mirar.',
+        alarma: 'Aviso enviado a las {hora} UTC, {dur} después del corte',
+        alarmaNota: 'Texto real del aviso: lo escribe la misma función que en producción.',
+        sinAlarma: 'En {h} h el vigilante no llegó a avisar.',
+      },
+      ci: {
+        titulo: '¿Qué despierta a cada workflow?',
+        eventos: {
+          push: { nombre: 'push a main', hace: 'Cada commit que entra a la rama principal.' },
+          pull_request: { nombre: 'pull request', hace: 'Cada rama que pide entrar.' },
+          semanal: { nombre: 'domingo', hace: 'Sin que nadie toque nada, una vez por semana.' },
+          manual: { nombre: 'a mano', hace: 'Cuando se lanza desde la pestaña Actions.' },
+        },
+        despiertan: '{n} de {total} workflows',
+        dormido: 'no despierta',
+        corriendo: 'corriendo',
+        listo: 'listo',
+        ultimaReal: 'última real',
+        soloPush: 'solo en push a main',
+        chequeos: 'chequeos',
+        nota: 'El recorrido es ilustrativo; la insignia de cada fila es el último resultado real en GitHub.',
+      },
+      crons: {
+        titulo: 'El calendario, contra la bitácora.',
+        colMedidor: 'Silencio',
+        medidor: 'Tiempo desde la última corrida, sobre el silencio que tolera ({tol})',
+        silencioSinRegistro: 'sin registro en {h} h · en silencio',
+      },
+      producto: {
+        titulo: 'Lo que dispara el propio tráfico.',
+        nota: 'Ejemplos ilustrativos: cada escena muestra el mecanismo, no un evento real.',
+        escenas: {
+          incidentes: { sondeo: 'sondeos', abierto: 'incidente abierto', cerrado: 'cerrado' },
+          bloqueo: { malicioso: 'intención inequívoca', bloqueado: 'origen bloqueado', propio: 'infraestructura propia', salvaguarda: 'salvaguarda: pasa' },
+          anomalias: { base: 'línea base', fuera: 'fuera de rango' },
+          respaldo: { base: 'base', portal: 'portal', caida: 'sin respuesta', snapshot: 'snapshot versionado', vuelta: 'base de vuelta' },
+          reversion: { chequeos: 'chequeos', insanos: '2 de 3 insanos', revertido: 'revertido y avisado' },
+          purga: { crudo: 'crudo', resumen: 'resumen diario', purgado: 'lo viejo se purga, el resumen queda' },
+        },
+      },
+    },
   },
 }
 
