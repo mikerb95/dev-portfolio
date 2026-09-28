@@ -105,6 +105,14 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
               <path class="au-ok" d={pathMarcas(c.marcas.filter((mk) => mk.ok).map((mk) => mk.x))} data-ok />
               <path class="au-fallo" d={pathMarcas(c.marcas.filter((mk) => !mk.ok).map((mk) => mk.x))} data-fallo />
             </svg>
+            {/* Los diarios son pocas notas sueltas: una raya de 1 px se pierde,
+                así que llevan cabeza de nota. El pulso denso no la necesita. */}
+            <span data-notas>
+              {c.cadaMin >= 60 &&
+                c.marcas.map((mk) => (
+                  <span class="au-nota" data-fallo={mk.ok ? undefined : ''} style={`left:${(mk.x * 100).toFixed(2)}%`} />
+                ))}
+            </span>
             <span data-rotulos>
               {c.huecos
                 .filter((h) => h.x1 - h.x0 > 0.035)
@@ -233,7 +241,7 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
   }
   @media (min-width: 768px) {
     .au-rejilla {
-      grid-template-columns: 13.5rem minmax(0, 1fr);
+      grid-template-columns: 15.5rem minmax(0, 1fr);
       padding: 22px 28px 38px 12px;
       row-gap: 3px;
     }
@@ -309,6 +317,19 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
   }
   .au-hueco { fill: rgba(255, 107, 61, 0.1); }
   .au-hueco-abierto { fill: rgba(255, 107, 61, 0.18); }
+  .au-nota {
+    position: absolute;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin: -4px 0 0 -4px;
+    border-radius: 50%;
+    background: #c9ff5b;
+    box-shadow: 0 0 0 3px #0d0d12, 0 0 12px rgba(201, 255, 91, 0.45);
+    pointer-events: none;
+  }
+  .au-nota[data-fallo] { background: #ff6b3d; box-shadow: 0 0 0 3px #0d0d12, 0 0 12px rgba(255, 107, 61, 0.6); }
+  .au-rejilla.au-enfoque .au-pista:not(.au-activo) .au-nota { opacity: 0.35; }
   .au-rotulo {
     position: absolute;
     top: 50%;
@@ -341,7 +362,7 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
     right: 16px;
   }
   @media (min-width: 768px) {
-    .au-capa { top: 22px; bottom: 38px; left: calc(12px + 13.5rem); right: 28px; }
+    .au-capa { top: 22px; bottom: 38px; left: calc(12px + 15.5rem); right: 28px; }
   }
   .au-ahora, .au-cursor, .au-corte, .au-cabezal, .au-revision {
     position: absolute;
@@ -382,7 +403,7 @@ const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
     height: 12px;
   }
   @media (min-width: 768px) {
-    .au-eje { left: calc(12px + 13.5rem); right: 28px; bottom: 14px; }
+    .au-eje { left: calc(12px + 15.5rem); right: 28px; bottom: 14px; }
   }
   .au-eje span {
     position: absolute;

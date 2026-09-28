@@ -132,6 +132,16 @@ function montar(fig: HTMLElement, carga: Carga, reducido: boolean) {
         return r
       })
     )
+    const notas = pista.querySelector('[data-notas]')!
+    notas.replaceChildren(
+      ...(c.cadaMin >= 60 ? c.marcas : []).map((mk) => {
+        const n = document.createElement('span')
+        n.className = 'au-nota'
+        if (!mk.ok) n.dataset.fallo = ''
+        n.style.left = `${(mk.x * 100).toFixed(2)}%`
+        return n
+      })
+    )
     const rot = pista.querySelector('[data-rotulos]')!
     rot.replaceChildren(
       ...c.huecos

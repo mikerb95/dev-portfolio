@@ -235,6 +235,7 @@ const ESTADO_CLS: Record<string, string> = {
   .au-checks { display: flex; gap: 5px; margin-top: 2px; }
   .au-checks i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.18); transition: background-color 0.25s ease, border-color 0.25s ease; }
   .au-wf[data-despierto='si'] .au-checks i { background: #c9ff5b; border-color: #c9ff5b; }
+  .au-wf[data-corriendo] .au-checks i:not([data-hecho]) { background: transparent; border-color: rgba(255, 255, 255, 0.18); }
   .au-solo-push { display: none; font: 10px/1.3 var(--font-mono, ui-monospace, monospace); color: #85858f; }
   /* La verificación solo corre en push a main: con otro evento la etapa se
      apaga y dice por qué, en vez de desaparecer. */
