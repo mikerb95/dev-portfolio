@@ -1,0 +1,253 @@
+---
+// Selector "¿qué despierta a cada workflow?". Cuatro eventos (push, pull
+// request, domingo, a mano) y los seis workflows; al elegir un evento se
+// encienden y corren solo los que lo declaran en su YAML. La relación sale de
+// `disparadores` en el catálogo (src/lib/motion/disparos.ts), no de la página.
+//
+// El recorrido animado es ilustrativo; la insignia de cada fila es el último
+// resultado real en GitHub, con enlace a la corrida. El servidor pinta el
+// evento "push" ya terminado: sin JS es un estado completo y legible, y las
+// etiquetas de disparadores de cada fila siguen diciendo el resto.
+import { getDictionary, getLocaleFromUrl, interpolate, tx } from '../../i18n'
+import { WORKFLOWS } from '../../data/automatizaciones'
+import { EVENTOS_CI, workflowsDe } from '../../lib/motion/disparos'
+
+interface Props {
+  ultimos: Record<string, { estado: string; hace: string | null; url: string | null }>
+}
+const { ultimos } = Astro.props
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const a = getDictionary(locale).automatizaciones
+const c = a.motion.ci
+const inicial = EVENTOS_CI[0]
+
+// Mismo criterio cromático que /status y /engineering: lima lo sano, ámbar lo
+// que exige mirar, cian lo que está en curso.
+const ESTADO_CLS: Record<string, string> = {
+  ok: 'text-lime border-lime/30 bg-lime/10',
+  fail: 'text-ember border-ember/40 bg-ember/15',
+  in_progress: 'text-cyan border-cyan/30 bg-cyan/10',
+  pending: 'text-ink-200 border-white/10 bg-white/5',
+  skip: 'text-ink-300 border-white/10 bg-white/5',
+}
+---
+
+<div class="au-ci" data-ci>
+  <div class="au-ci-eventos" role="tablist" aria-label={c.titulo}>
+    {
+      EVENTOS_CI.map((ev) => (
+        <button
+          type="button"
+          role="tab"
+          class="au-ev"
+          id={`au-ev-${ev}`}
+          aria-controls="au-ci-lista"
+          aria-selected={ev === inicial ? 'true' : 'false'}
+          tabindex={ev === inicial ? 0 : -1}
+          data-evento={ev}
+        >
+          <span class="au-ev-nombre">{c.eventos[ev].nombre}</span>
+          <span class="au-ev-hace">{c.eventos[ev].hace}</span>
+          <span class="au-ev-n">{interpolate(c.despiertan, { n: workflowsDe(ev, WORKFLOWS).length, total: WORKFLOWS.length })}</span>
+          <i class="au-ev-progreso" aria-hidden="true" />
+        </button>
+      ))
+    }
+  </div>
+
+  <ol class="au-ci-lista" id="au-ci-lista" role="tabpanel" aria-labelledby={`au-ev-${inicial}`}>
+    {
+      WORKFLOWS.map((w) => {
+        const real = ultimos[w.nombre]
+        const despierto = w.disparadores.includes(inicial)
+        return (
+          <li class="au-wf" data-wf={w.nombre} data-disparadores={w.disparadores.join(' ')} data-despierto={despierto ? 'si' : 'no'}>
+            <div class="au-wf-cab">
+              <span class="au-wf-luz" aria-hidden="true" />
+              <span class="au-wf-nombre">{w.nombre}</span>
+              <span class="au-wf-archivo">{w.archivo}</span>
+              {real && (
+                <a
+                  class={`au-wf-real ${ESTADO_CLS[real.estado] ?? ESTADO_CLS.pending}`}
+                  href={real.url ?? undefined}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {c.ultimaReal} · {real.estado}
+                  {real.hace && <span class="au-wf-hace"> · {real.hace}</span>}
+                </a>
+              )}
+            </div>
+            <p class="au-wf-hace-txt">{tx(w.hace, locale)}</p>
+            {w.etapas ? (
+              <div class="au-etapas">
+                {w.etapas.map((e) => (
+                  <div class="au-etapa" data-etapa={e.nombre} data-tras={e.tras ?? ''} data-solo-push={e.soloPush ? 'si' : undefined}>
+                    <span class="au-etapa-nombre">{e.nombre}</span>
+                    <span class="au-etapa-hace">{tx(e.hace, locale)}</span>
+                    <span class="au-barra" aria-hidden="true">
+                      <i />
+                    </span>
+                    {e.soloPush && (
+                      <span class="au-checks" aria-label={c.chequeos}>
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    )}
+                    {e.soloPush && <span class="au-solo-push">{c.soloPush}</span>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span class="au-barra au-barra-sola" aria-hidden="true">
+                <i />
+              </span>
+            )}
+            <div class="au-wf-pie">
+              <span class="au-wf-trig">{w.disparadores.map((d) => a.triggers[d]).join(' · ')}</span>
+              <span class="au-wf-estado" data-estado-txt>
+                {despierto ? c.listo : c.dormido}
+              </span>
+            </div>
+            {w.detalle && <p class="au-wf-detalle">{tx(w.detalle, locale)}</p>}
+          </li>
+        )
+      })
+    }
+  </ol>
+</div>
+<p class="au-ci-nota">{c.nota}</p>
+
+<script
+  id="au-ci-i18n"
+  type="application/json"
+  set:html={JSON.stringify({ corriendo: c.corriendo, listo: c.listo, dormido: c.dormido })}
+/>
+
+<style is:global>
+  .au-ci {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  @media (min-width: 1024px) {
+    .au-ci { grid-template-columns: 17rem minmax(0, 1fr); gap: 28px; align-items: start; }
+  }
+  .au-ci-eventos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  @media (min-width: 1024px) {
+    .au-ci-eventos { grid-template-columns: minmax(0, 1fr); position: sticky; top: 110px; }
+  }
+  .au-ev {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.02);
+    text-align: left;
+    overflow: hidden;
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+  }
+  .au-ev:hover { background: rgba(255, 255, 255, 0.04); }
+  .au-ev:focus-visible { outline: 2px solid #00f2ff; outline-offset: 2px; }
+  .au-ev[aria-selected='true'] { border-color: rgba(0, 242, 255, 0.35); background: rgba(0, 242, 255, 0.06); }
+  .au-ev-nombre { font: 600 13px/1.2 var(--font-mono, ui-monospace, monospace); color: #e7e7ec; }
+  .au-ev[aria-selected='true'] .au-ev-nombre { color: #00f2ff; }
+  .au-ev-hace { font-size: 12px; line-height: 1.45; color: #85858f; }
+  .au-ev-n { font: 10px/1 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.1em; text-transform: uppercase; color: #4d4d5d; margin-top: 4px; }
+  .au-ev-progreso {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background: #00f2ff;
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .au-ci-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .au-wf {
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(13, 13, 18, 0.7);
+    transition: opacity 0.35s ease, border-color 0.35s ease, background-color 0.35s ease;
+  }
+  .au-wf[data-despierto='no'] { opacity: 0.42; }
+  .au-wf[data-despierto='si'] { border-color: rgba(255, 255, 255, 0.1); }
+  .au-wf-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .au-wf-luz { width: 8px; height: 8px; border-radius: 50%; background: #3a3a48; transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+  .au-wf[data-despierto='si'] .au-wf-luz { background: #c9ff5b; box-shadow: 0 0 10px rgba(201, 255, 91, 0.6); }
+  .au-wf[data-corriendo] .au-wf-luz { background: #00f2ff; box-shadow: 0 0 10px rgba(0, 242, 255, 0.7); }
+  .au-wf-nombre { font: 600 13px/1.2 var(--font-mono, ui-monospace, monospace); color: #e7e7ec; }
+  .au-wf-archivo { font: 11px/1 var(--font-mono, ui-monospace, monospace); color: #4d4d5d; }
+  .au-wf-real {
+    margin-left: auto;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border-width: 1px;
+    font: 9.5px/1.2 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .au-wf-hace { text-transform: none; letter-spacing: 0; opacity: 0.8; }
+  .au-wf-hace-txt { margin: 8px 0 12px; font-size: 13px; line-height: 1.55; color: #c4c4cc; }
+  .au-wf-detalle { margin: 10px 0 0; font-size: 12px; line-height: 1.55; color: #4d4d5d; }
+  .au-wf[data-despierto='si'] .au-wf-detalle { color: #85858f; }
+
+  .au-barra {
+    position: relative;
+    display: block;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .au-barra i {
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background: #c9ff5b;
+    opacity: 0.75;
+    transform-origin: left center;
+    transform: scaleX(0);
+  }
+  .au-wf[data-despierto='si'] .au-barra i { transform: scaleX(1); }
+  .au-wf[data-corriendo] .au-barra i { background: #00f2ff; }
+
+  .au-etapas { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  @media (min-width: 768px) {
+    .au-etapas { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  }
+  .au-etapa { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .au-etapa-nombre { font: 11px/1.2 var(--font-mono, ui-monospace, monospace); color: #c4c4cc; }
+  .au-etapa-hace { font-size: 11.5px; line-height: 1.4; color: #85858f; }
+  .au-checks { display: flex; gap: 5px; margin-top: 2px; }
+  .au-checks i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.18); transition: background-color 0.25s ease, border-color 0.25s ease; }
+  .au-wf[data-despierto='si'] .au-checks i { background: #c9ff5b; border-color: #c9ff5b; }
+  .au-solo-push { display: none; font: 10px/1.3 var(--font-mono, ui-monospace, monospace); color: #85858f; }
+  /* La verificación solo corre en push a main: con otro evento la etapa se
+     apaga y dice por qué, en vez de desaparecer. */
+  .au-wf[data-evento-activo]:not([data-evento-activo='push']) .au-etapa[data-solo-push] .au-barra i,
+  .au-wf[data-evento-activo]:not([data-evento-activo='push']) .au-etapa[data-solo-push] .au-checks i { transform: scaleX(0); background: transparent; border-color: rgba(255, 255, 255, 0.18); }
+  .au-wf[data-evento-activo]:not([data-evento-activo='push']) .au-etapa[data-solo-push] .au-solo-push { display: block; }
+  .au-wf[data-evento-activo]:not([data-evento-activo='push']) .au-etapa[data-solo-push] .au-etapa-nombre { color: #4d4d5d; }
+
+  .au-wf-pie { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; margin-top: 12px; font: 10px/1.3 var(--font-mono, ui-monospace, monospace); text-transform: uppercase; letter-spacing: 0.1em; color: #4d4d5d; }
+  .au-wf-estado { color: #85858f; }
+  .au-wf[data-despierto='si'] .au-wf-estado { color: #c9ff5b; }
+  .au-wf[data-corriendo] .au-wf-estado { color: #00f2ff; }
+  .au-ci-nota { margin: 14px 0 0; font: 10.5px/1.5 var(--font-mono, ui-monospace, monospace); color: #4d4d5d; }
+  @media (min-width: 1024px) {
+    .au-ci-nota { margin-left: calc(17rem + 28px); }
+  }
+</style>
