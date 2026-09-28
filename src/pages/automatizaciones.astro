@@ -19,6 +19,7 @@ import { desc, gte } from 'drizzle-orm'
 import { mapRunEstado } from '../lib/lab/pipeline-live'
 import { safeQuery } from '../lib/safe-query'
 import { serverEnv } from '../lib/env'
+import { jsonEnScript } from '../lib/json-script'
 import { WORKFLOWS, CRONS, AUTOMATISMOS } from '../data/automatizaciones'
 import type { Bilingual, BilingualOptional } from '../i18n/bilingual'
 import { toleranciaMin } from '../lib/cron-silencio'
@@ -170,6 +171,14 @@ const durTol = (min: number) =>
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
 
 const m = a.motion
+// Lo que el selector de CI pinta como "última real" de cada workflow, ya
+// resuelto: estado, hace cuánto y el enlace a la corrida en GitHub.
+const ultimosCI = Object.fromEntries(
+  [...ultimoRun].map(([nombre, r]) => [
+    nombre,
+    { estado: mapRunEstado(r.status, r.conclusion), hace: haceCuanto(new Date(r.created_at).getTime()), url: r.html_url },
+  ])
+)
 // Lo que necesita el navegador para que "hace 3 min" siga contando mientras la
 // página está abierta: el instante de la última corrida y la tolerancia.
 const ESTADO_FILA_CLS = { ok: 'text-lime', fallo: 'text-ember', silencio: 'text-ember', 'sin-registro': 'text-ink-400' } as const
@@ -219,7 +228,7 @@ const ESTADO_FILA_CLS = { ok: 'text-lime', fallo: 'text-ember', silencio: 'text-
         {m.ci.titulo}
       </h2>
       <p class="text-[14px] text-ink-300 max-w-2xl leading-relaxed mb-10">{a.ci.intro}</p>
-      <DisparadoresCI ultimos={Object.fromEntries(ultimoRun)} githubOk={githubOk} />
+      <DisparadoresCI ultimos={ultimosCI} />
     </section>
 
     <!-- ── Tareas programadas ── -->
