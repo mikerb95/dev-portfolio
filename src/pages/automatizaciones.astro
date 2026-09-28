@@ -15,13 +15,17 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import { getDictionary, getLocaleFromUrl, interpolate, localizedHref, tx } from '../i18n'
 import { db } from '../db'
 import { cronRuns } from '../db/schema'
-import { desc } from 'drizzle-orm'
+import { desc, gte } from 'drizzle-orm'
 import { mapRunEstado } from '../lib/lab/pipeline-live'
 import { safeQuery } from '../lib/safe-query'
 import { serverEnv } from '../lib/env'
 import { WORKFLOWS, CRONS, AUTOMATISMOS } from '../data/automatizaciones'
 import type { Bilingual, BilingualOptional } from '../i18n/bilingual'
 import { toleranciaMin } from '../lib/cron-silencio'
+import { consumoTolerancia, construirPartitura, estadoFila, type Corrida } from '../lib/motion/partitura'
+import Partitura from '../components/automatizaciones/Partitura.astro'
+import DisparadoresCI from '../components/automatizaciones/DisparadoresCI.astro'
+import EscenaAutomatismo from '../components/automatizaciones/EscenaAutomatismo.astro'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
