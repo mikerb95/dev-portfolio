@@ -168,11 +168,16 @@ const durTol = (min: number) =>
     : interpolate(a.motion.durMin, { m: min })
 
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+
+const m = a.motion
+// Lo que necesita el navegador para que "hace 3 min" siga contando mientras la
+// página está abierta: el instante de la última corrida y la tolerancia.
+const ESTADO_FILA_CLS = { ok: 'text-lime', fallo: 'text-ember', silencio: 'text-ember', 'sin-registro': 'text-ink-400' } as const
 ---
 
 
 <BaseLayout title={a.title} description={a.description}>
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24" data-locale={locale}>
     <a
       href={L('/')}
       class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12"
@@ -181,93 +186,77 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
       {t.common.back}
     </a>
 
-    <header class="mb-12">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="text-cyan">/automatizaciones</span>
-        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>{a.eyebrow}</span>
+    <header class="au-hero mb-10">
+      <div>
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6" data-hero-sigue>
+          <span class="text-cyan">/automatizaciones</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span>{a.eyebrow}</span>
+        </div>
+        <h1 class="text-5xl md:text-6xl xl:text-[68px] font-medium tracking-[-.035em] leading-[.95]">
+          <span data-hero-linea class="block text-ink-50">{a.h1Line1}</span>{' '}
+          <span data-hero-linea class="block text-cyan">{a.h1Line2}</span>
+        </h1>
       </div>
-      <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        {a.h1Line1}<br />{a.h1Line2}
-      </h1>
-      <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
-        {interpolate(a.intro, { workflows: totalWorkflows, crons: totalCrons })}
-        <em>{a.introEm}</em> {a.introMid}
+      <p class="text-[15.5px] text-ink-100 max-w-xl leading-relaxed" data-hero-sigue>
+        {interpolate(a.intro, { workflows: totalWorkflows, crons: totalCrons })}{' '}
+        <em>{a.introEm}</em>{' '}{a.introMid}
         <span class="text-ink-300"> {a.introTail}</span>
       </p>
     </header>
 
+    <div class="mb-28" data-hero-pieza>
+      <Partitura partitura={partitura} corridas={corridas} ok={bitacoraOk} />
+    </div>
+
     <!-- ── Integración continua ── -->
-    <section class="mb-14">
-      <div class="flex items-baseline justify-between gap-4 mb-5">
-        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">{a.ci.heading}</h2>
+    <section class="mb-28" aria-labelledby="au-ci-titulo">
+      <div class="flex items-baseline justify-between gap-4 mb-4">
+        <p class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-200">{a.ci.heading}</p>
         {!githubOk && <span class="text-[11px] font-mono text-ember">{a.ci.githubDown}</span>}
       </div>
-      <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
-        {a.ci.intro}
-      </p>
-
-      <div class="grid md:grid-cols-2 gap-3">
-        {
-          WORKFLOWS.map((w) => {
-            const run = ultimoRun.get(w.nombre)
-            const estado = run ? mapRunEstado(run.status, run.conclusion) : null
-            return (
-              <div class="rounded-2xl glass p-5 hover:border-cyan/25 transition-colors">
-                <div class="flex items-center justify-between gap-3 mb-3">
-                  <span class="text-[13px] font-mono font-semibold text-ink-50">{w.nombre}</span>
-                  {estado && (
-                    <span
-                      class={`px-1.5 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border ${ESTADO_CLS[estado] ?? ESTADO_CLS.pending}`}
-                    >
-                      {estado}
-                    </span>
-                  )}
-                </div>
-                <p class="text-[13px] text-ink-100 leading-relaxed mb-2">{T(w.hace)}</p>
-                {w.detalle && <p class="text-[12px] text-ink-300 leading-relaxed mb-3">{T(w.detalle)}</p>}
-                <div class="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[.12em] text-ink-400 pt-3 border-t border-white/[.06]">
-                  <span>{w.disparadores.map((d) => a.triggers[d]).join(' · ')}</span>
-                  {run?.created_at && <span class="text-ink-300">{haceCuanto(new Date(run.created_at))}</span>}
-                  <span class="ml-auto normal-case tracking-normal">{w.archivo}</span>
-                </div>
-              </div>
-            )
-          })
-        }
-      </div>
+      <h2 id="au-ci-titulo" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] mb-5 max-w-3xl">
+        {m.ci.titulo}
+      </h2>
+      <p class="text-[14px] text-ink-300 max-w-2xl leading-relaxed mb-10">{a.ci.intro}</p>
+      <DisparadoresCI ultimos={Object.fromEntries(ultimoRun)} githubOk={githubOk} />
     </section>
 
     <!-- ── Tareas programadas ── -->
-    <section class="mb-14">
-      <div class="flex items-baseline justify-between gap-4 mb-5">
-        <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">{a.crons.heading}</h2>
+    <section class="mb-28" aria-labelledby="au-crons-titulo">
+      <div class="flex items-baseline justify-between gap-4 mb-4">
+        <p class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-200">{a.crons.heading}</p>
         {!bitacoraOk && <span class="text-[11px] font-mono text-ink-400">{a.crons.logUnavailable}</span>}
       </div>
-      <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
-        {a.crons.intro}
-      </p>
+      <h2 id="au-crons-titulo" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] mb-5 max-w-3xl">
+        {m.crons.titulo}
+      </h2>
+      <p class="text-[14px] text-ink-300 max-w-2xl leading-relaxed mb-10">{a.crons.intro}</p>
 
-      <div class="rounded-2xl glass overflow-x-auto">
-        <table class="w-full min-w-[46rem] text-left">
+      <div class="au-tabla rounded-2xl glass" data-tabla-crons>
+        <table class="w-full text-left">
           <thead>
-            <tr class="border-b border-white/[.06]">
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-5 py-3">{a.crons.colTask}</th>
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">{a.crons.colWhen}</th>
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">{a.crons.colSource}</th>
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-3 py-3">{a.crons.colWhat}</th>
-              <th class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-400 font-medium px-5 py-3">{a.crons.colLast}</th>
+            <tr>
+              <th class="au-th pl-5">{a.crons.colTask}</th>
+              <th class="au-th">{a.crons.colWhen}</th>
+              <th class="au-th">{a.crons.colSource}</th>
+              <th class="au-th">{a.crons.colWhat}</th>
+              <th class="au-th">{m.crons.colMedidor}</th>
+              <th class="au-th pr-5">{a.crons.colLast}</th>
             </tr>
           </thead>
           <tbody>
             {
               CRONS.map((c) => {
-                const u = ultimaEjecucion.get(c.job)
+                const u = ultimaEjecucion.get(c.job) ?? null
+                const estado = estadoFila(c.cadaMin, u, ventanaLeidaMin, ahora)
+                const tol = toleranciaMin(c.cadaMin)
+                const consumo = consumoTolerancia(c.cadaMin, u?.at ?? null, ahora)
                 return (
-                  <tr class="border-b border-white/[.04] last:border-0">
-                    <td class="px-5 py-4 align-top font-mono text-[12px] text-ink-50 whitespace-nowrap">{c.job}</td>
-                    <td class="px-3 py-4 align-top font-mono text-[12px] text-ink-200 whitespace-nowrap tabular-nums">{T(c.horario)}</td>
-                    <td class="px-3 py-4 align-top">
+                  <tr data-fila={c.job} data-at={u?.at ?? ''} data-tol={tol} data-cada={c.cadaMin} data-ok={u?.ok ? '1' : '0'}>
+                    <td class="au-td pl-5 font-mono text-[12px] text-ink-50 whitespace-nowrap" data-rotulo={a.crons.colTask}>{c.job}</td>
+                    <td class="au-td font-mono text-[12px] text-ink-200 whitespace-nowrap tabular-nums" data-rotulo={a.crons.colWhen}>{T(c.horario)}</td>
+                    <td class="au-td" data-rotulo={a.crons.colSource}>
                       <span
                         class={`px-1.5 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border whitespace-nowrap ${
                           c.origen === 'vercel'
@@ -278,22 +267,33 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
                         {c.origen}
                       </span>
                     </td>
-                    <td class="px-3 py-4 align-top max-w-[30rem]">
+                    <td class="au-td au-td-que">
                       <span class="text-[13px] text-ink-100 leading-relaxed">{T(c.hace)}</span>
                       <span class="block text-[12px] text-ink-400 leading-relaxed mt-1">{interpolate(a.crons.ifFails, { texto: T(c.siFalla) })}</span>
                     </td>
-                    <td class="px-5 py-4 align-top font-mono text-[12px] whitespace-nowrap">
-                      {u ? (
-                        enSilencio(c.cadaMin, u.createdAt) ? (
-                          <span class="text-ember" title={interpolate(a.crons.expected, { horario: T(c.horario) })}>
-                            {interpolate(a.crons.silent, { ago: haceCuanto(u.createdAt) ?? '' })}
-                          </span>
-                        ) : (
-                          <span class={u.ok ? 'text-lime' : 'text-ember'}>{haceCuanto(u.createdAt)}</span>
-                        )
-                      ) : (
-                        <span class="text-ink-400">{a.crons.noRecord}</span>
-                      )}
+                    <td class="au-td" data-rotulo={m.crons.colMedidor}>
+                      <span
+                        class="au-medidor"
+                        data-medidor
+                        data-estado={estado}
+                        style={`--consumo:${Math.min(1, consumo).toFixed(3)};--cada:${Math.min(1, c.cadaMin / tol).toFixed(3)}`}
+                        title={interpolate(m.crons.medidor, { tol: durTol(tol) })}
+                        role="img"
+                        aria-label={interpolate(m.crons.medidor, { tol: durTol(tol) })}
+                      >
+                        <i></i>
+                      </span>
+                    </td>
+                    <td class="au-td pr-5 font-mono text-[12px] whitespace-nowrap" data-rotulo={a.crons.colLast}>
+                      <span class={ESTADO_FILA_CLS[estado]} data-hace title={interpolate(a.crons.expected, { horario: T(c.horario) })}>
+                        {estado === 'silencio'
+                          ? u
+                            ? interpolate(a.crons.silent, { ago: haceCuanto(u.at) ?? '' })
+                            : interpolate(m.crons.silencioSinRegistro, { h: Math.round(ventanaLeidaMin / 60) })
+                          : estado === 'sin-registro'
+                            ? a.crons.noRecord
+                            : haceCuanto(u?.at)}
+                      </span>
                     </td>
                   </tr>
                 )
@@ -305,22 +305,130 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-r
     </section>
 
     <!-- ── Automatismos del producto ── -->
-    <section>
-      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{a.product.heading}</h2>
-      <p class="text-[13px] text-ink-300 max-w-2xl leading-relaxed mb-5">
-        {a.product.intro}
-      </p>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <section aria-labelledby="au-prod-titulo">
+      <p class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-200 mb-4">{a.product.heading}</p>
+      <h2 id="au-prod-titulo" data-titular class="text-3xl md:text-5xl font-medium tracking-[-.025em] text-ink-50 leading-[1.05] mb-5 max-w-3xl">
+        {m.producto.titulo}
+      </h2>
+      <p class="text-[14px] text-ink-300 max-w-2xl leading-relaxed mb-2">{a.product.intro}</p>
+      <p class="text-[10.5px] font-mono uppercase tracking-[.14em] text-ink-400 mb-10">{m.producto.nota}</p>
+      <div class="grid grid-cols-[minmax(0,1fr)] sm:grid-cols-2 lg:grid-cols-3 gap-3" data-entrada data-foco>
         {
           AUTOMATISMOS.map((auto) => (
-            <div class="rounded-2xl glass p-5 hover:border-cyan/25 transition-colors">
-              <h3 class="text-[13px] font-medium text-ink-50 mb-2">{T(auto.nombre)}</h3>
-              <p class="text-[13px] text-ink-100 leading-relaxed mb-3">{T(auto.hace)}</p>
-              <span class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-400">{T(auto.cuando)}</span>
-            </div>
+            <article class="foco au-auto rounded-2xl glass overflow-hidden">
+              <EscenaAutomatismo id={auto.id} />
+              <div class="p-5">
+                <h3 class="text-[14px] font-medium text-ink-50 mb-2">{T(auto.nombre)}</h3>
+                <p class="text-[13px] text-ink-100 leading-relaxed mb-3">{T(auto.hace)}</p>
+                <span class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-400">{T(auto.cuando)}</span>
+              </div>
+            </article>
           ))
         }
       </div>
     </section>
   </div>
+
+  <script
+    id="au-i18n"
+    type="application/json"
+    set:html={jsonEnScript({
+      agoJustNow: a.agoJustNow,
+      agoMinutes: a.agoMinutes,
+      agoHours: a.agoHours,
+      agoDaysShort: a.agoDaysShort,
+      silent: a.crons.silent,
+    })}
+  />
 </BaseLayout>
+
+<script>
+  // Mismo lenguaje que las demás páginas con motion (Lenis + GSAP, montaje
+  // común en src/lib/motion/landing.ts) más las piezas de esta página.
+  import { montarLanding } from '../lib/motion/landing'
+  import { montarAutomatizaciones } from '../lib/motion/automatizaciones'
+
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  montarAutomatizaciones({ reducido })
+  montarLanding()
+</script>
+
+<style is:global>
+  .au-hero {
+    display: grid;
+    gap: 28px;
+  }
+  @media (min-width: 1024px) {
+    .au-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 48px; }
+  }
+  .au-hero h1 span { text-wrap: balance; }
+
+  /* Tabla de crons: tabla de verdad en escritorio; en móvil cada fila es una
+     ficha, con el rótulo de la columna delante de cada dato. */
+  .au-th {
+    font: 500 10px/1 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #3a3a48;
+    padding: 14px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .au-td { padding: 16px 12px; vertical-align: top; }
+  .au-tabla tbody tr { border-bottom: 1px solid rgba(255, 255, 255, 0.04); transition: background-color 0.2s ease; }
+  .au-tabla tbody tr:last-child { border-bottom: 0; }
+  .au-tabla tbody tr.au-activo { background: rgba(0, 242, 255, 0.04); }
+  .au-td-que { max-width: 28rem; }
+  @media (max-width: 1023px) {
+    .au-tabla thead { display: none; }
+    .au-tabla table, .au-tabla tbody { display: block; }
+    .au-tabla tbody tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px 12px;
+      padding: 16px 18px;
+    }
+    .au-tabla .au-td { padding: 0; }
+    .au-tabla .au-td:nth-child(1) { grid-column: 1; }
+    .au-tabla .au-td:nth-child(2) { grid-column: 2; text-align: right; }
+    .au-tabla .au-td:nth-child(3) { grid-column: 1; }
+    .au-tabla .au-td:nth-child(6) { grid-column: 2; grid-row: 2; text-align: right; }
+    .au-tabla .au-td-que { grid-column: 1 / -1; max-width: none; }
+    .au-tabla .au-td:nth-child(5) { grid-column: 1 / -1; }
+    .au-tabla .au-td:nth-child(5) .au-medidor { width: 100%; }
+  }
+
+  /* Medidor de silencio: cuánto de lo que se tolera ya se consumió desde la
+     última corrida. La raya marca el intervalo declarado: a su izquierda es
+     puntualidad, entre ella y el final es retraso tolerado, y el final es
+     silencio. */
+  .au-medidor {
+    position: relative;
+    display: block;
+    width: 7.5rem;
+    height: 6px;
+    margin-top: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .au-medidor i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--consumo, 0) * 100%);
+    border-radius: 3px;
+    background: #c9ff5b;
+    opacity: 0.8;
+    transition: width 0.6s ease;
+  }
+  .au-medidor::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    left: calc(var(--cada, 0.33) * 100%);
+    border-left: 1px solid rgba(231, 231, 236, 0.5);
+  }
+  .au-medidor[data-estado='fallo'] i { background: #ff6b3d; }
+  .au-medidor[data-estado='silencio'] i, .au-medidor[data-estado='sin-registro'] i { background: #ff6b3d; opacity: 0.9; }
+  .au-medidor[data-estado='sin-registro'] i { background: #3a3a48; }
+</style>
