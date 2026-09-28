@@ -1,0 +1,387 @@
+---
+// Escena de un automatismo del producto. Cada una enseña el MECANISMO que su
+// tarjeta describe (un sondeo que abre y cierra incidente, una puerta que
+// frena una intención y deja pasar a la infraestructura propia...), no un
+// evento real: la sección lo declara como ejemplo ilustrativo.
+//
+// OPSEC, como el resto de la página: ninguna escena lleva umbrales, reglas ni
+// cifras de detección. Los números que aparecen (versiones, minutos) son de la
+// maqueta y viven aquí, no en el diccionario.
+//
+// El servidor pinta cada escena en su fotograma más explicativo; el bucle lo
+// monta src/lib/motion/automatizaciones-escenas.ts y solo corre en pantalla.
+import { getDictionary, getLocaleFromUrl, interpolate } from '../../i18n'
+import type { Automatismo } from '../../data/automatizaciones'
+
+interface Props {
+  id: Automatismo['id']
+}
+const { id } = Astro.props
+const a = getDictionary(getLocaleFromUrl(Astro.url.pathname)).automatizaciones
+const e = a.motion.producto.escenas
+
+// Maqueta: 12 sondeos, tres fallidos seguidos a partir del sexto.
+const SONDEOS = ['ok', 'ok', 'ok', 'ok', 'ok', 'fallo', 'fallo', 'fallo', 'ok', 'ok', 'ok', 'ok'] as const
+const MIN_POR_SONDEO = 5
+const minIncidente = SONDEOS.filter((s) => s === 'fallo').length * MIN_POR_SONDEO
+// Maqueta: 12 horas; la última se sale de la banda.
+const HORAS = [0.42, 0.5, 0.38, 0.55, 0.47, 0.52, 0.44, 0.58, 0.49, 0.41, 0.53, 0.94]
+const BANDA = { bajo: 0.3, alto: 0.66 }
+const DIAS = 9
+---
+
+<div class={`esc esc-${id}`} data-escena={id} aria-hidden="true">
+  {
+    id === 'incidentes' && (
+      <>
+        <span class="esc-rot esc-rot-arriba">{e.incidentes.sondeo}</span>
+        <div class="esc-sondeos">
+          {SONDEOS.map((s) => (
+            <i data-s={s} />
+          ))}
+          <span class="esc-tramo" style={`--i0:${SONDEOS.indexOf('fallo')};--n:${SONDEOS.filter((s) => s === 'fallo').length}`} />
+        </div>
+        <span class="esc-cabeza" />
+        <span class="esc-chip esc-chip-ember" data-abierto>
+          {e.incidentes.abierto}
+        </span>
+        <span class="esc-chip esc-chip-lima" data-cerrado>
+          {e.incidentes.cerrado} · {interpolate(a.motion.durMin, { m: minIncidente })}
+        </span>
+      </>
+    )
+  }
+  {
+    id === 'bloqueo' && (
+      <>
+        <span class="esc-carril" />
+        <span class="esc-puerta" />
+        {[0, 1, 2, 3].map((n) => (
+          <span class="esc-peticion" data-p={n} />
+        ))}
+        <span class="esc-peticion esc-peticion-mala" data-mala />
+        <span class="esc-peticion esc-peticion-propia" data-propia />
+        <span class="esc-chip esc-chip-ember esc-chip-puerta" data-bloqueado>
+          {e.bloqueo.bloqueado}
+        </span>
+        <span class="esc-chip esc-chip-violeta esc-chip-puerta" data-salvaguarda>
+          {e.bloqueo.salvaguarda}
+        </span>
+        <span class="esc-rot esc-rot-mala">{e.bloqueo.malicioso}</span>
+        <span class="esc-rot esc-rot-propia">{e.bloqueo.propio}</span>
+      </>
+    )
+  }
+  {
+    id === 'anomalias' && (
+      <>
+        <span class="esc-banda" style={`--bajo:${BANDA.bajo};--alto:${BANDA.alto}`} />
+        <span class="esc-rot esc-rot-banda">{e.anomalias.base}</span>
+        <div class="esc-barras">
+          {HORAS.map((h, i) => (
+            <i style={`--h:${h}`} data-fuera={i === HORAS.length - 1 ? '' : undefined} />
+          ))}
+        </div>
+        <span class="esc-chip esc-chip-ember esc-chip-anomalia" data-fuera-chip>
+          {e.anomalias.fuera}
+        </span>
+      </>
+    )
+  }
+  {
+    id === 'respaldo' && (
+      <>
+        <span class="esc-nodo esc-nodo-portal">{e.respaldo.portal}</span>
+        <span class="esc-enlace">
+          <i />
+          <i />
+          <i />
+        </span>
+        <span class="esc-nodo esc-nodo-base" data-base>
+          {e.respaldo.base}
+        </span>
+        <span class="esc-chip esc-chip-violeta esc-chip-snapshot" data-snapshot>
+          {e.respaldo.snapshot} · v12
+        </span>
+        <span class="esc-rot esc-rot-base" data-caida>
+          {e.respaldo.caida}
+        </span>
+        <span class="esc-rot esc-rot-base esc-rot-vuelta" data-vuelta>
+          {e.respaldo.vuelta}
+        </span>
+      </>
+    )
+  }
+  {
+    id === 'reversion' && (
+      <>
+        <span class="esc-version" data-v="41">v41</span>
+        <span class="esc-flecha" />
+        <span class="esc-version esc-version-nueva" data-v="42">v42</span>
+        <span class="esc-rot esc-rot-checks">{e.reversion.chequeos}</span>
+        <span class="esc-checks">
+          <i data-c="ok" />
+          <i data-c="fallo" />
+          <i data-c="fallo" />
+        </span>
+        <svg class="esc-vuelta" viewBox="0 0 100 30" preserveAspectRatio="none">
+          <path d="M84 4 C 70 28, 30 28, 16 4" pathLength="1" />
+        </svg>
+        <span class="esc-chip esc-chip-ember esc-chip-insanos" data-insanos>
+          {e.reversion.insanos}
+        </span>
+        <span class="esc-chip esc-chip-lima esc-chip-revertido" data-revertido>
+          {e.reversion.revertido}
+        </span>
+      </>
+    )
+  }
+  {
+    id === 'purga' && (
+      <>
+        <span class="esc-rot esc-rot-crudo">{e.purga.crudo}</span>
+        <div class="esc-crudo">
+          {Array.from({ length: DIAS }, (_, d) => (
+            <span class="esc-dia" data-dia={d}>
+              {Array.from({ length: 6 }, () => (
+                <i />
+              ))}
+            </span>
+          ))}
+        </div>
+        <span class="esc-rot esc-rot-resumen">{e.purga.resumen}</span>
+        <div class="esc-resumen">
+          {Array.from({ length: DIAS }, (_, d) => (
+            <i data-dia={d} />
+          ))}
+        </div>
+        <span class="esc-rot esc-rot-purgado">{e.purga.purgado}</span>
+      </>
+    )
+  }
+</div>
+
+<style is:global>
+  .esc {
+    position: relative;
+    height: 138px;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(0, 242, 255, 0.05), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 24px);
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+  .esc-rot {
+    position: absolute;
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4d4d5d;
+    white-space: nowrap;
+  }
+  .esc-chip {
+    position: absolute;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid;
+    font-size: 10px;
+    white-space: nowrap;
+    background: #0d0d12;
+  }
+  .esc-chip-ember { color: #ff6b3d; border-color: rgba(255, 107, 61, 0.45); }
+  .esc-chip-lima { color: #c9ff5b; border-color: rgba(201, 255, 91, 0.4); }
+  .esc-chip-violeta { color: #a78bff; border-color: rgba(167, 139, 255, 0.45); }
+
+  /* ── Incidentes ── */
+  .esc-incidentes .esc-rot-arriba { left: 18px; top: 16px; }
+  .esc-sondeos {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 56px;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    justify-items: center;
+  }
+  .esc-sondeos i { width: 10px; height: 10px; border-radius: 50%; background: #c9ff5b; opacity: 0.85; }
+  .esc-sondeos i[data-s='fallo'] { background: #ff6b3d; box-shadow: 0 0 10px rgba(255, 107, 61, 0.5); }
+  .esc-tramo {
+    position: absolute;
+    top: 18px;
+    height: 2px;
+    background: #ff6b3d;
+    left: calc(var(--i0) / 12 * 100% + 100% / 24 - 5px);
+    width: calc((var(--n) - 1) / 12 * 100% + 10px);
+    transform-origin: left center;
+  }
+  .esc-cabeza {
+    position: absolute;
+    top: 38px;
+    height: 46px;
+    left: 18px;
+    width: 1px;
+    background: #00f2ff;
+    box-shadow: 0 0 10px 1px rgba(0, 242, 255, 0.6);
+    opacity: 0;
+  }
+  .esc-incidentes [data-abierto] { left: 18px; bottom: 16px; opacity: 0; }
+  .esc-incidentes [data-cerrado] { left: 18px; bottom: 16px; }
+
+  /* ── Bloqueo ── */
+  .esc-carril { position: absolute; left: 0; right: 0; top: 69px; border-top: 1px dashed rgba(255, 255, 255, 0.1); }
+  .esc-puerta {
+    position: absolute;
+    left: 62%;
+    top: 40px;
+    height: 58px;
+    width: 3px;
+    border-radius: 2px;
+    background: #85858f;
+  }
+  .esc-peticion {
+    position: absolute;
+    top: 65px;
+    left: 0;
+    width: 22px;
+    height: 9px;
+    border-radius: 5px;
+    background: #85858f;
+    opacity: 0;
+  }
+  .esc-peticion-mala { background: #ff6b3d; box-shadow: 0 0 10px rgba(255, 107, 61, 0.6); left: calc(62% - 26px); opacity: 1; }
+  .esc-peticion-propia { background: #a78bff; }
+  .esc-chip-puerta { left: calc(62% + 12px); top: 16px; }
+  .esc-bloqueo [data-salvaguarda] { opacity: 0; }
+  .esc-rot-mala { left: 18px; bottom: 14px; color: #ff6b3d; opacity: 0.85; }
+  .esc-rot-propia { left: 18px; bottom: 14px; color: #a78bff; opacity: 0; }
+
+  /* ── Anomalías ── */
+  .esc-banda {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: calc(18px + var(--bajo) * 96px);
+    height: calc((var(--alto) - var(--bajo)) * 96px);
+    background: rgba(0, 242, 255, 0.06);
+    border-top: 1px dashed rgba(0, 242, 255, 0.35);
+    border-bottom: 1px dashed rgba(0, 242, 255, 0.35);
+  }
+  .esc-rot-banda { left: 22px; top: 12px; color: #007a82; }
+  .esc-barras {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+    height: 96px;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 5px;
+    align-items: end;
+  }
+  .esc-barras i {
+    display: block;
+    height: calc(var(--h) * 100%);
+    border-radius: 2px 2px 0 0;
+    background: rgba(196, 196, 204, 0.35);
+    transform-origin: bottom center;
+  }
+  .esc-barras i[data-fuera] { background: #ff6b3d; box-shadow: 0 0 12px rgba(255, 107, 61, 0.45); }
+  .esc-chip-anomalia { right: 18px; top: 10px; }
+
+  /* ── Respaldo ── */
+  .esc-nodo {
+    position: absolute;
+    top: 52px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: #13131a;
+    font-size: 11px;
+    color: #c4c4cc;
+  }
+  .esc-nodo-portal { left: 18px; }
+  .esc-nodo-base { right: 18px; border-color: rgba(201, 255, 91, 0.45); color: #c9ff5b; }
+  .esc-nodo-base[data-caido] { border-color: rgba(255, 107, 61, 0.6); color: #ff6b3d; }
+  .esc-enlace {
+    position: absolute;
+    left: 96px;
+    right: 88px;
+    top: 67px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.18);
+  }
+  .esc-enlace i {
+    position: absolute;
+    top: -3px;
+    left: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #00f2ff;
+    opacity: 0;
+  }
+  .esc-chip-snapshot { left: 18px; top: 14px; }
+  .esc-rot-base { right: 18px; bottom: 16px; color: #ff6b3d; opacity: 0; }
+  .esc-rot-vuelta { color: #c9ff5b; }
+
+  /* ── Reversión ── */
+  .esc-version {
+    position: absolute;
+    top: 30px;
+    padding: 6px 12px;
+    border-radius: 9px;
+    border: 1px solid rgba(201, 255, 91, 0.45);
+    color: #c9ff5b;
+    background: #13131a;
+    font-size: 12px;
+  }
+  .esc-version[data-v='41'] { left: 18px; }
+  .esc-version-nueva { right: 18px; border-color: rgba(255, 255, 255, 0.14); color: #85858f; }
+  .esc-flecha {
+    position: absolute;
+    top: 45px;
+    left: 80px;
+    right: 80px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .esc-rot-checks { right: 18px; top: 76px; }
+  .esc-checks { position: absolute; right: 18px; top: 92px; display: flex; gap: 6px; }
+  .esc-checks i { width: 11px; height: 11px; border-radius: 50%; background: #c9ff5b; }
+  .esc-checks i[data-c='fallo'] { background: #ff6b3d; }
+  .esc-vuelta { position: absolute; left: 30px; right: 30px; top: 50px; height: 34px; width: calc(100% - 60px); overflow: visible; }
+  .esc-vuelta path { fill: none; stroke: #c9ff5b; stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; }
+  .esc-chip-insanos { left: 18px; bottom: 14px; opacity: 0; }
+  .esc-chip-revertido { left: 18px; bottom: 14px; }
+
+  /* ── Purga ── */
+  .esc-rot-crudo { left: 18px; top: 12px; }
+  .esc-crudo {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 28px;
+    height: 34px;
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .esc-dia { display: flex; justify-content: space-around; align-items: stretch; border-radius: 3px; background: rgba(255, 255, 255, 0.02); }
+  .esc-dia i { width: 1px; background: rgba(201, 255, 91, 0.6); }
+  .esc-dia i:nth-child(2n) { margin-top: 6px; }
+  .esc-dia i:nth-child(3n) { margin-bottom: 8px; }
+  /* Estado del servidor: los tres días más viejos ya purgados. */
+  .esc-dia[data-dia='0'] i, .esc-dia[data-dia='1'] i, .esc-dia[data-dia='2'] i { opacity: 0.08; }
+  .esc-rot-resumen { left: 18px; top: 72px; }
+  .esc-resumen {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 88px;
+    height: 12px;
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .esc-resumen i { border-radius: 3px; background: rgba(0, 242, 255, 0.45); }
+  .esc-rot-purgado { left: 18px; bottom: 12px; color: #85858f; text-transform: none; letter-spacing: 0; font-size: 10.5px; }
+</style>
