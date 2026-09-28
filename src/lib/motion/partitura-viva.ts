@@ -280,22 +280,23 @@ function montar(fig: HTMLElement, carga: Carga, reducido: boolean) {
   }
 
   function fotograma(s: Simulacro, todas: Corrida[], t: number) {
+    // El panel se congela en la revisión que avisa: lo que cuenta es lo que el
+    // vigilante vio al mirar. Después, la corrida diaria que lo hospeda ya
+    // quedó anotada y el silencio de ese job, para la bitácora, se rompió.
+    const tPanel = s.alarma ? Math.min(t, s.alarma.at) : t
     const visibles = todas.filter((c) => c.at <= t)
     pintar(construirPartitura(visibles, CRONS, t))
     const desde = t - VENTANA
     corteEl.hidden = false
     corteEl.style.left = `${(posicion(s.corte, desde, t) * 100).toFixed(3)}%`
     ahoraEl.textContent = `${horaUTC(t)} UTC`
-    reloj.textContent = interpolate(ts.reloj, { dur: dur((t - s.corte) / MIN) })
+    reloj.textContent = interpolate(ts.reloj, { dur: dur((tPanel - s.corte) / MIN) })
 
     callados.replaceChildren(
       ...vigiladosSim(s).map((job) => {
         const cron = modelo.carriles.find((c) => c.job === job)!
         const u = ultimaAntes(todas, job, s.corte) ?? s.corte
-        // En la pantalla se cuenta el silencio del disparador que se cortó: la
-        // corrida diaria de las 07:00 no lo rompe para el vigilante, que la
-        // anota después de mirar.
-        const silencio = (t - u) / MIN
+        const silencio = (tPanel - u) / MIN
         const li = document.createElement('li')
         li.textContent = interpolate(ts.callado, { job, dur: dur(silencio), tol: dur(cron.toleranciaMin) })
         if (silencio > cron.toleranciaMin) li.dataset.fuera = ''
