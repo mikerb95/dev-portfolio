@@ -9,7 +9,9 @@
 // máquina del administrador, no en Vercel: la SDK levanta el binario de
 // Claude Code como subproceso, y eso no tiene sitio en una función serverless.
 
-import { readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import { stdin, stdout } from 'node:process'
 import { query, type CanUseTool } from '@anthropic-ai/claude-agent-sdk'
@@ -55,6 +57,18 @@ const { crearServidorSiem, SERVIDOR, HERRAMIENTAS_LECTURA, HERRAMIENTA_BLOQUEO }
 const seudonimos = new Seudonimos(flag('--ips-reales'))
 const rl = createInterface({ input: stdin, output: stdout })
 
+// Las lecturas van en allowedTools a propósito (no hay nada que aprobar en
+// una consulta), así que el aviso de que canUseTool no las verá es esperado.
+process.removeAllListeners('warning')
+process.on('warning', (w) => {
+  if ((w as { code?: string }).code !== 'CLAUDE_SDK_CAN_USE_TOOL_SHADOWED') console.warn(w)
+})
+
+// Directorio de trabajo vacío: con cwd en el repo, Claude Code cargaba la
+// memoria del proyecto y el agente "sabía" cosas que no salían de los datos.
+// Un analista que cita fuentes que no puede mostrar no sirve para una demo.
+const cwdAgente = mkdtempSync(join(tmpdir(), 'analista-siem-'))
+
 const gris = (s: string) => `\x1b[2m${s}\x1b[0m`
 const ambar = (s: string) => `\x1b[33m${s}\x1b[0m`
 
@@ -81,7 +95,7 @@ const canUseTool: CanUseTool = async (toolName, input) => {
   const { origen, motivo } = input as { origen: string; motivo: string }
   console.log(ambar(`\n  ¿Bloquear ${origen}?`))
   console.log(ambar(`  Motivo: ${motivo}`))
-  const respuesta = (await rl.question(ambar('  Aprobar [s/N]: '))).trim().toLowerCase()
+  const respuesta = (await rl.question(ambar('  Aprobar [s/N]: ')).catch(() => '')).trim().toLowerCase()
   if (respuesta === 's' || respuesta === 'si' || respuesta === 'sí') return { behavior: 'allow', updatedInput: input }
   return { behavior: 'deny', message: 'El administrador rechazó el bloqueo. No lo vuelvas a proponer en esta sesión.' }
 }
@@ -110,6 +124,7 @@ async function turno(prompt: string, sesion?: string): Promise<string | undefine
       permissionMode: 'default',
       canUseTool,
       maxTurns: 30,
+      cwd: cwdAgente,
       env: envAgente,
       ...(sesion ? { resume: sesion } : {}),
     },
@@ -136,9 +151,14 @@ async function turno(prompt: string, sesion?: string): Promise<string | undefine
 console.log(gris(`Analista del micro-SIEM · base ${base}${flag('--ips-reales') ? ' · IPs en claro' : ''}`))
 console.log(`\n> ${pregunta}`)
 
+// Con la entrada cerrada (EOF, o un pipe que se acabó) no hay a quién
+// preguntar: se termina la sesión en vez de reventar.
+let entradaCerrada = false
+rl.on('close', () => (entradaCerrada = true))
+
 let sesion = await turno(pregunta)
-while (true) {
-  const siguiente = (await rl.question('\n> ')).trim()
+while (!entradaCerrada) {
+  const siguiente = (await rl.question('\n> ').catch(() => '')).trim()
   if (!siguiente || siguiente === 'salir') break
   sesion = await turno(siguiente, sesion)
 }

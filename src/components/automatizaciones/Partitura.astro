@@ -1,0 +1,509 @@
+---
+// Hero de /automatizaciones: la "partitura" de las tareas programadas. Un
+// renglón por job y una raya por cada ejecución real de las últimas 24 h. El
+// pulso de cada 5 min se lee como textura, los diarios como notas sueltas, y el
+// silencio (lo que la página existe para enseñar) como un compás vacío teñido.
+//
+// El servidor pinta la partitura completa: sin JS o con movimiento reducido es
+// el estado final y se lee igual. El navegador añade la entrada, la lectura al
+// apuntar y el simulacro de corte (src/lib/motion/partitura-viva.ts).
+import { getDictionary, getLocaleFromUrl, interpolate, formatNumber } from '../../i18n'
+import {
+  ALTO,
+  ANCHO,
+  horaUTC,
+  marcasEje,
+  pathFantasmas,
+  pathMarcas,
+  type Corrida,
+  type Partitura,
+} from '../../lib/motion/partitura'
+import { jsonEnScript } from '../../lib/json-script'
+
+interface Props {
+  partitura: Partitura
+  /** Toda la historia leída (hasta 48 h): el simulacro y los huecos la necesitan. */
+  corridas: Corrida[]
+  /** false si la bitácora no respondió. */
+  ok: boolean
+}
+const { partitura: p, corridas, ok } = Astro.props
+
+const loc = getLocaleFromUrl(Astro.url.pathname)
+const m = getDictionary(loc).automatizaciones.motion
+const tp = m.partitura
+
+const dur = (min: number) => {
+  const h = Math.floor(min / 60)
+  const mm = Math.round(min % 60)
+  return h > 0 ? interpolate(m.dur, { h, m: mm }) : interpolate(m.durMin, { m: mm })
+}
+
+const conPulso = p.carriles.filter((c) => c.total > 0).length
+const pctVerde = p.corridas ? (p.verdes / p.corridas) * 100 : 0
+// Un 99,97 % redondeado a 100 % miente justo sobre la corrida que falló: se
+// trunca, no se redondea.
+const verdeTxt = formatNumber(Math.floor(pctVerde * 10) / 10, loc, { maximumFractionDigits: 1 }) + '%'
+const eje = marcasEje(p.desde, p.hasta)
+
+// Lo que viaja al navegador: la historia compacta (job por índice, segundos
+// relativos a `hasta`) y los textos. Sin detalle de la bitácora: esta página
+// es pública y el detalle puede llevar mensajes de error.
+const jobs = p.carriles.map((c) => c.job)
+const datos = {
+  hasta: p.hasta,
+  jobs,
+  c: corridas
+    .filter((c) => jobs.includes(c.job))
+    .map((c) => [jobs.indexOf(c.job), Math.round((c.at - p.hasta) / 1000), c.ok ? 1 : 0, c.ms ?? -1]),
+}
+const textos = { dur: m.dur, durMin: m.durMin, p: tp, s: m.simulacro }
+---
+
+<figure class="au-part" data-partitura aria-label={tp.aria}>
+  <dl class="au-kpis">
+    <div class="au-kpi">
+      <dt>{tp.kpis.corridas}</dt>
+      <dd data-odometro data-odometro-inicio="top bottom">{formatNumber(p.corridas, loc)}</dd>
+    </div>
+    <div class="au-kpi">
+      <dt>{tp.kpis.verdes}</dt>
+      <dd data-odometro data-odometro-inicio="top bottom">{verdeTxt}</dd>
+    </div>
+    <div class="au-kpi">
+      <dt>{tp.kpis.conPulso}</dt>
+      <dd data-odometro data-odometro-inicio="top bottom">{conPulso}/{p.carriles.length}</dd>
+    </div>
+    <div class="au-kpi" data-kpi-silencio={p.enSilencio.length > 0 ? 'si' : 'no'}>
+      <dt>{tp.kpis.silencio}</dt>
+      <dd data-odometro data-odometro-inicio="top bottom">{p.enSilencio.length}</dd>
+    </div>
+  </dl>
+
+  <div class="au-rejilla" data-rejilla>
+    {
+      p.carriles.map((c) => (
+        <>
+          <button type="button" class="au-nombre" data-carril={c.job} aria-describedby="au-lectura">
+            <span class="au-job">{c.job}</span>
+            <span class="au-meta">
+              {c.cadaMin < 1440 ? interpolate(tp.cada, { n: c.cadaMin }) : interpolate(tp.diario, { hora: c.horarios.map((h) => horaUTC(h * 60_000)).join(' · ') })}
+              {c.origenes.map((o) => (
+                <i class={`au-origen au-origen-${o === 'vercel' ? 'v' : 'x'}`} title={o} />
+              ))}
+            </span>
+          </button>
+          <div class="au-pista" data-pista={c.job} data-silencio={p.enSilencio.includes(c.job) ? 'si' : 'no'}>
+            <svg viewBox={`0 0 ${ANCHO} ${ALTO}`} preserveAspectRatio="none" aria-hidden="true">
+              <line class="au-guia" x1="0" x2={ANCHO} y1={ALTO / 2} y2={ALTO / 2} />
+              <g data-huecos>
+                {c.huecos.map((h) => (
+                  <rect class:list={['au-hueco', { 'au-hueco-abierto': h.abierto }]} x={h.x0 * ANCHO} width={(h.x1 - h.x0) * ANCHO} y="0" height={ALTO} />
+                ))}
+              </g>
+              <path class="au-fantasma" d={pathFantasmas(c.fantasmas)} data-fantasmas />
+              <path class="au-ok" d={pathMarcas(c.marcas.filter((mk) => mk.ok).map((mk) => mk.x))} data-ok />
+              <path class="au-fallo" d={pathMarcas(c.marcas.filter((mk) => !mk.ok).map((mk) => mk.x))} data-fallo />
+            </svg>
+            <span data-rotulos>
+              {c.huecos
+                .filter((h) => h.x1 - h.x0 > 0.035)
+                .map((h) => (
+                  <span class="au-rotulo" style={`left:${(((h.x0 + h.x1) / 2) * 100).toFixed(2)}%`}>
+                    {dur(h.min)}
+                  </span>
+                ))}
+            </span>
+          </div>
+        </>
+      ))
+    }
+    <div class="au-capa" data-capa aria-hidden="true">
+      <span class="au-ahora" data-ahora><b>{tp.ahora}</b></span>
+      <span class="au-corte" data-corte hidden><b>{m.simulacro.corte}</b></span>
+      <span class="au-cabezal" data-cabezal></span>
+      <span class="au-cursor" data-cursor hidden><b data-cursor-hora></b></span>
+      <span data-revisiones></span>
+    </div>
+    <div class="au-eje" data-eje aria-hidden="true">
+      {eje.map((e) => <span style={`left:${(e.x * 100).toFixed(2)}%`}>{e.hora}</span>)}
+    </div>
+  </div>
+
+  <figcaption class="au-pie">
+    <p class="au-lectura" id="au-lectura" data-lectura aria-live="polite">
+      {ok ? tp.lecturaInicial : tp.vacia}
+    </p>
+    <ul class="au-leyenda" aria-hidden="true">
+      <li><i class="lg-ok"></i>{tp.leyenda.corrida}</li>
+      <li><i class="lg-fallo"></i>{tp.leyenda.fallida}</li>
+      <li><i class="lg-fantasma"></i>{tp.leyenda.declarada}</li>
+      <li><i class="lg-hueco"></i>{tp.leyenda.hueco}</li>
+      <li class="au-leido">{interpolate(tp.leido, { hora: horaUTC(p.hasta) })}</li>
+    </ul>
+  </figcaption>
+
+  {
+    ok && (
+      <div class="au-sim" data-sim hidden>
+        <div class="au-sim-mando">
+          <button type="button" class="au-sim-boton" data-sim-boton aria-pressed="false">
+            <span class="au-sim-icono" aria-hidden="true" />
+            <span data-sim-rotulo>{m.simulacro.boton}</span>
+          </button>
+          <p class="au-sim-explica">{m.simulacro.explica}</p>
+          <p class="au-sim-etiqueta">{m.simulacro.etiqueta}</p>
+        </div>
+        <div class="au-sim-panel" data-sim-panel aria-live="polite">
+          <p class="au-sim-reloj" data-sim-reloj />
+          <ul class="au-sim-callados" data-sim-callados />
+          <p class="au-sim-espera" data-sim-espera />
+          <div class="au-sim-aviso" data-sim-aviso hidden>
+            <p class="au-sim-aviso-titulo" data-sim-aviso-titulo />
+            <pre data-sim-aviso-texto />
+            <p class="au-sim-aviso-nota">{m.simulacro.alarmaNota}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  <script id="au-datos" type="application/json" set:html={jsonEnScript({ datos, textos })} />
+</figure>
+
+<style is:global>
+  .au-part {
+    margin: 0;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: #0d0d12;
+    box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+  }
+
+  /* Cifras: franja con separadores de 1 px. Sin entrada escalonada: el
+     odómetro ya es la entrada. */
+  .au-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  @media (min-width: 768px) {
+    .au-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .au-kpi {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 6px;
+    padding: 16px 22px 18px;
+    background: #0d0d12;
+    min-width: 0;
+  }
+  .au-kpi dt {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #85858f;
+  }
+  .au-kpi dd {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: #e7e7ec;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .au-kpi[data-kpi-silencio='si'] dd { color: #ff6b3d; }
+  .au-kpi[data-kpi-silencio='no'] dd { color: #c9ff5b; }
+
+  /* Rejilla: nombre a la izquierda, pista a la derecha. Los renglones no
+     tienen caja propia (se reparten en la rejilla) para que la capa del
+     cursor pueda cubrir todas las pistas con una sola columna. */
+  .au-rejilla {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 18px 16px 34px;
+    row-gap: 2px;
+  }
+  @media (min-width: 768px) {
+    .au-rejilla {
+      grid-template-columns: 13.5rem minmax(0, 1fr);
+      padding: 22px 28px 38px 12px;
+      row-gap: 3px;
+    }
+  }
+  .au-nombre {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 10px 0;
+    border-radius: 8px;
+    text-align: left;
+    min-width: 0;
+    cursor: default;
+    transition: background-color 0.2s ease;
+  }
+  @media (min-width: 768px) {
+    .au-nombre { padding: 5px 12px; }
+  }
+  .au-nombre:focus-visible { outline: 1px solid #00f2ff; outline-offset: -1px; }
+  .au-job {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+    color: #c4c4cc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+  }
+  .au-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    color: #4d4d5d;
+    white-space: nowrap;
+  }
+  .au-origen {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .au-origen-v { background: #85858f; }
+  .au-origen-x { background: #a78bff; }
+
+  .au-pista {
+    position: relative;
+    height: 26px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+  }
+  @media (min-width: 768px) {
+    .au-pista { height: 28px; }
+  }
+  .au-pista svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .au-guia { stroke: rgba(255, 255, 255, 0.05); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .au-ok { stroke: #c9ff5b; stroke-opacity: 0.55; stroke-width: 1.4; vector-effect: non-scaling-stroke; transition: stroke-opacity 0.2s ease; }
+  .au-fallo { stroke: #ff6b3d; stroke-width: 2.2; vector-effect: non-scaling-stroke; }
+  .au-fantasma {
+    stroke: #85858f;
+    stroke-opacity: 0.55;
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+    vector-effect: non-scaling-stroke;
+  }
+  .au-hueco { fill: rgba(255, 107, 61, 0.1); }
+  .au-hueco-abierto { fill: rgba(255, 107, 61, 0.18); }
+  .au-rotulo {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9.5px;
+    color: #ff6b3d;
+    background: #0d0d12;
+    padding: 0 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* Resalte de un renglón: su nombre y su pista, que en la rejilla son dos
+     celdas. Al resaltar uno, los demás bajan. */
+  .au-rejilla.au-enfoque .au-pista:not(.au-activo) .au-ok { stroke-opacity: 0.22; }
+  .au-rejilla.au-enfoque .au-nombre:not(.au-activo) .au-job { color: #4d4d5d; }
+  .au-nombre.au-activo, .au-pista.au-activo { background: rgba(0, 242, 255, 0.045); }
+  .au-nombre.au-activo .au-job { color: #e7e7ec; }
+  .au-pista.au-activo .au-ok { stroke-opacity: 0.95; }
+
+  /* Capa de cursor, cabezal y "ahora": cubre la columna de las pistas. */
+  .au-capa {
+    position: absolute;
+    pointer-events: none;
+    top: 18px;
+    bottom: 34px;
+    left: 16px;
+    right: 16px;
+  }
+  @media (min-width: 768px) {
+    .au-capa { top: 22px; bottom: 38px; left: calc(12px + 13.5rem); right: 28px; }
+  }
+  .au-ahora, .au-cursor, .au-corte, .au-cabezal, .au-revision {
+    position: absolute;
+    top: -6px;
+    bottom: -6px;
+    width: 0;
+  }
+  .au-ahora { right: 0; border-right: 1px solid rgba(0, 242, 255, 0.55); }
+  .au-ahora b, .au-cursor b, .au-corte b, .au-revision b {
+    position: absolute;
+    bottom: -20px;
+    font: 500 9.5px/1 var(--font-mono, ui-monospace, monospace);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .au-ahora b { right: -1px; color: #00f2ff; }
+  .au-cursor { border-left: 1px solid rgba(231, 231, 236, 0.5); }
+  .au-cursor b { left: 0; transform: translateX(-50%); color: #e7e7ec; background: #0d0d12; padding: 0 4px; z-index: 1; }
+  .au-corte { border-left: 1px dashed rgba(255, 107, 61, 0.8); }
+  .au-corte b { left: 4px; top: -14px; bottom: auto; color: #ff6b3d; }
+  .au-revision { border-left: 1px solid rgba(167, 139, 255, 0.6); }
+  .au-revision b { left: 4px; top: -14px; bottom: auto; color: #a78bff; }
+  .au-revision[data-aviso] { border-left-color: #ff6b3d; box-shadow: 0 0 12px 1px rgba(255, 107, 61, 0.6); }
+  .au-revision[data-aviso] b { color: #ff6b3d; }
+  .au-cabezal {
+    left: 0;
+    opacity: 0;
+    border-left: 1px solid #00f2ff;
+    box-shadow: 0 0 14px 2px rgba(0, 242, 255, 0.45);
+  }
+
+  .au-eje {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 10px;
+    height: 12px;
+  }
+  @media (min-width: 768px) {
+    .au-eje { left: calc(12px + 13.5rem); right: 28px; bottom: 14px; }
+  }
+  .au-eje span {
+    position: absolute;
+    transform: translateX(-50%);
+    font: 9.5px/1 var(--font-mono, ui-monospace, monospace);
+    color: #4d4d5d;
+    font-variant-numeric: tabular-nums;
+  }
+  /* El último rótulo cerca de "ahora" se taparía con él. */
+  .au-eje span:last-child { display: var(--au-ultimo, inline); }
+
+  .au-pie {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 22px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  @media (min-width: 1024px) {
+    .au-pie { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+  .au-lectura {
+    margin: 0;
+    font: 12px/1.5 var(--font-mono, ui-monospace, monospace);
+    color: #c4c4cc;
+    min-height: 1.5em;
+  }
+  .au-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font: 10px/1 var(--font-mono, ui-monospace, monospace);
+    color: #85858f;
+  }
+  .au-leyenda li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .au-leyenda i { display: inline-block; width: 10px; height: 10px; }
+  .lg-ok { border-left: 1.5px solid #c9ff5b; margin-left: 4px; width: 1px !important; }
+  .lg-fallo { border-left: 2.5px solid #ff6b3d; margin-left: 4px; width: 1px !important; }
+  .lg-fantasma { border-left: 1px dashed #85858f; margin-left: 4px; width: 1px !important; }
+  .lg-hueco { background: rgba(255, 107, 61, 0.25); border-radius: 2px; }
+  .au-leido { color: #4d4d5d; }
+
+  /* Simulacro */
+  .au-sim {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding: 20px 22px 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgba(255, 107, 61, 0.03), transparent 60%);
+  }
+  @media (min-width: 1024px) {
+    .au-sim { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 32px; }
+  }
+  .au-sim[hidden] { display: none; }
+  .au-sim-boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 107, 61, 0.45);
+    background: rgba(255, 107, 61, 0.08);
+    color: #ffd2c3;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .au-sim-boton:hover { background: rgba(255, 107, 61, 0.16); border-color: rgba(255, 107, 61, 0.7); }
+  .au-sim-boton:focus-visible { outline: 2px solid #ff6b3d; outline-offset: 2px; }
+  .au-sim-boton[aria-pressed='true'] { border-color: rgba(0, 242, 255, 0.45); background: rgba(0, 242, 255, 0.07); color: #bffcff; }
+  .au-sim-icono {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    position: relative;
+  }
+  .au-sim-icono::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -3px;
+    height: 7px;
+    border-left: 1.5px solid currentColor;
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 2px #0d0d12;
+  }
+  .au-sim-explica { margin: 12px 0 0; font-size: 13px; line-height: 1.6; color: #c4c4cc; max-width: 34rem; }
+  .au-sim-etiqueta {
+    margin: 10px 0 0;
+    font: 10px/1.4 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #85858f;
+  }
+  .au-sim-panel { min-height: 0; font-family: var(--font-mono, ui-monospace, monospace); }
+  .au-sim-panel:not(.au-activo) { display: none; }
+  .au-sim-reloj { margin: 0 0 10px; font-size: 26px; letter-spacing: -0.02em; color: #e7e7ec; font-variant-numeric: tabular-nums; }
+  .au-sim-callados { margin: 0 0 10px; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12px; }
+  .au-sim-callados li { color: #85858f; transition: color 0.3s ease; }
+  .au-sim-callados li[data-fuera] { color: #ff6b3d; }
+  .au-sim-espera { margin: 0; font-size: 12px; line-height: 1.55; color: #c4c4cc; }
+  .au-sim-aviso {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 107, 61, 0.4);
+    background: rgba(255, 107, 61, 0.07);
+  }
+  .au-sim-aviso[hidden] { display: none; }
+  .au-sim-aviso-titulo { margin: 0 0 8px; font-size: 12px; color: #ff6b3d; }
+  .au-sim-aviso pre {
+    margin: 0;
+    font: 12px/1.55 var(--font-mono, ui-monospace, monospace);
+    color: #e7e7ec;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .au-sim-aviso-nota { margin: 8px 0 0; font-size: 10.5px; color: #85858f; }
+</style>
