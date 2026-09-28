@@ -119,6 +119,10 @@ async function turno(prompt: string, sesion?: string): Promise<string | undefine
       // del repo o la configuración personal no cambien su comportamiento.
       tools: [],
       settingSources: [],
+      // Ni los conectores de la cuenta de claude.ai ni otros MCP del disco:
+      // el único servidor que ve es el del micro-SIEM.
+      strictMcpConfig: true,
+      settings: { disableClaudeAiConnectors: true, autoMemoryEnabled: false },
       mcpServers: { [SERVIDOR]: crearServidorSiem(seudonimos) },
       allowedTools: HERRAMIENTAS_LECTURA,
       permissionMode: 'default',
