@@ -25,6 +25,21 @@ export type Workflow = {
   hace: Bilingual
   /** Lo que no es obvio leyendo el nombre. */
   detalle?: BilingualOptional
+  /**
+   * Jobs del workflow, con el nombre que les da el YAML (es la clave con la
+   * que aparecen en la pestaña Actions, no se traduce). Solo se declaran donde
+   * el recorrido por etapas dice algo que el nombre no dice.
+   */
+  etapas?: Etapa[]
+}
+
+export type Etapa = {
+  nombre: string
+  /** Etapa de la que depende (`needs:`); sin ella, arranca con el workflow. */
+  tras?: string
+  /** Solo corre en push a main (`if:` del YAML). */
+  soloPush?: boolean
+  hace: Bilingual
 }
 
 export type Cron = {
@@ -48,6 +63,8 @@ export type Cron = {
 }
 
 export type Automatismo = {
+  /** Clave de la escena que lo ilustra en /automatizaciones. */
+  id: 'incidentes' | 'bloqueo' | 'anomalias' | 'respaldo' | 'reversion' | 'purga'
   nombre: Bilingual
   hace: Bilingual
   cuando: Bilingual
@@ -70,6 +87,25 @@ export const WORKFLOWS: readonly Workflow[] = [
       es: 'La etapa final espera hasta 8 minutos a que el endpoint de salud devuelva el commit recién desplegado, hace tres comprobaciones y revierte sola si dos de las tres salen insanas. También reporta sus métricas al panel del sitio.',
       en: 'The final stage waits up to 8 minutes for the health endpoint to report the commit that was just deployed, runs three checks and rolls back on its own if two of the three come back unhealthy. It also reports its metrics to the site dashboard.',
     },
+    // Espejo de los jobs de `.github/workflows/ci.yml`: `quality` y `e2e` no
+    // dependen entre sí y corren en paralelo; la verificación espera a
+    // `quality` y solo corre en push a main.
+    etapas: [
+      {
+        nombre: 'Test + Build',
+        hace: { es: 'Pruebas con cobertura y build', en: 'Tests with coverage and build' },
+      },
+      {
+        nombre: 'E2E (Playwright)',
+        hace: { es: 'Navegador real contra bases desechables', en: 'Real browser against throwaway databases' },
+      },
+      {
+        nombre: 'Verificar deploy + rollback',
+        tras: 'Test + Build',
+        soloPush: true,
+        hace: { es: 'Tres comprobaciones; dos insanas revierten', en: 'Three checks; two unhealthy ones roll back' },
+      },
+    ],
   },
   {
     nombre: 'Security',
@@ -293,6 +329,7 @@ export const CRONS: readonly Cron[] = [
  */
 export const AUTOMATISMOS: readonly Automatismo[] = [
   {
+    id: 'incidentes',
     nombre: { es: 'Apertura y cierre de incidentes', en: 'Opening and closing incidents' },
     hace: {
       es: 'Un sondeo fallido abre incidente; el primero que vuelve a salir bien lo cierra.',
@@ -301,6 +338,7 @@ export const AUTOMATISMOS: readonly Automatismo[] = [
     cuando: { es: 'En cada sondeo', en: 'On every probe' },
   },
   {
+    id: 'bloqueo',
     nombre: { es: 'Bloqueo automático de abuso', en: 'Automatic abuse blocking' },
     hace: {
       es: 'Una intención inequívocamente maliciosa bloquea el origen, con salvaguardas para no bloquear a la propia infraestructura ni al administrador, y un tope por encima del cual avisa en vez de bloquear.',
@@ -312,6 +350,7 @@ export const AUTOMATISMOS: readonly Automatismo[] = [
     },
   },
   {
+    id: 'anomalias',
     nombre: { es: 'Detección de anomalías', en: 'Anomaly detection' },
     hace: {
       es: 'Compara la hora cerrada contra la línea base histórica y señala lo que se sale de rango.',
@@ -320,6 +359,7 @@ export const AUTOMATISMOS: readonly Automatismo[] = [
     cuando: { es: 'Al cerrar cada hora', en: 'As each hour closes' },
   },
   {
+    id: 'respaldo',
     nombre: { es: 'Modo respaldo del portal', en: 'Portal fallback mode' },
     hace: {
       es: 'Si la base no responde, el portal sirve un snapshot versionado y lo anuncia; se apaga solo cuando la base vuelve.',
@@ -331,6 +371,7 @@ export const AUTOMATISMOS: readonly Automatismo[] = [
     },
   },
   {
+    id: 'reversion',
     nombre: { es: 'Reversión post-despliegue', en: 'Post-deploy rollback' },
     hace: {
       es: 'Si el sitio recién publicado no responde sano, el pipeline revierte a la versión anterior y avisa.',
@@ -342,6 +383,7 @@ export const AUTOMATISMOS: readonly Automatismo[] = [
     },
   },
   {
+    id: 'purga',
     nombre: { es: 'Purga de retención', en: 'Retention purge' },
     hace: {
       es: 'El historial viejo se borra por capas para que la base no crezca sin límite.',
