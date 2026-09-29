@@ -7,11 +7,30 @@
 // personal y el análisis no la necesita para razonar) y OPSEC (el agente se
 // enseña en vivo, en pantalla, y la regla del repo es no publicar IPs).
 //
+// En producción la tabla de alias se guarda en la base con la ejecución (una
+// aprobación puede llegar horas después, en otra función), pero solo del lado
+// del servidor: nunca viaja al navegador ni al modelo.
+//
 // Módulo puro: sin BD ni red, para poder probarlo aislado.
 
 export class Seudonimos {
   private porIp = new Map<string, string>()
   private porAlias = new Map<string, string>()
+
+  /** Reconstruye la tabla guardada (alias → IP) de una ejecución anterior. */
+  static desde(guardado: Record<string, string> | null | undefined, enClaro = false): Seudonimos {
+    const s = new Seudonimos(enClaro)
+    for (const [alias, ip] of Object.entries(guardado ?? {})) {
+      s.porAlias.set(alias, ip)
+      s.porIp.set(ip, alias)
+    }
+    return s
+  }
+
+  /** Tabla alias → IP para guardarla con la ejecución. */
+  exportar(): Record<string, string> {
+    return Object.fromEntries(this.porAlias)
+  }
 
   /**
    * @param enClaro si es true, el alias ES la IP (modo depuración local,
