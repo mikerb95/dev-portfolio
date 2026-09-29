@@ -35,6 +35,9 @@ coverage/
 
 # e2e: bases desechables y reportes de Playwright
 .e2e/
+# Bases de desarrollo (file:), separadas de las de e2e: la suite borra .e2e/
+# en cada corrida, y con ella las llaves de seguridad registradas en local.
+.dev-db/
 playwright-report/
 test-results/
 
