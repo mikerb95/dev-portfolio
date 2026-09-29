@@ -78,6 +78,24 @@ describe('classify · búsqueda de secretos', () => {
   }
 })
 
+describe('classify · backups: rutas propias vs sondeo', () => {
+  // El panel de backups, su API y el cron no son ataques (falso positivo que
+  // marcaba el backup nocturno como búsqueda de secretos de severidad alta).
+  for (const path of ['/admin/backup', '/api/admin/backup', '/api/cron/backup', '/api/cron/backup/']) {
+    it(`no marca la ruta propia ${path}`, () => {
+      expect(classify(req({ path }))).toBeNull()
+    })
+  }
+  // Cualquier otra forma de buscar backups sigue siendo sondeo.
+  for (const path of ['/backup', '/backup/', '/files/backup/db', '/admin/backup.zip', '/api/cron/backup.sql', '/old/backup/site.tar.gz']) {
+    it(`sigue marcando ${path}`, () => {
+      const c = classify(req({ path }))
+      expect(c?.category).toBe('secrets_probing')
+      expect(c?.severity).toBe('high')
+    })
+  }
+})
+
 describe('classify · path traversal (incluye codificado)', () => {
   const cases = [
     '/files/../../etc/passwd',

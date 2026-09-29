@@ -9,6 +9,17 @@
 
 export type Severity = 'low' | 'medium' | 'high' | 'critical'
 
+/**
+ * Rutas del propio sitio que contienen "backup" y NO son sondeo: el panel de
+ * backups, su API y el cron que lo dispara. La regla de backups las marcaba
+ * como búsqueda de secretos de severidad alta, así que cada backup nocturno y
+ * cada visita al panel quedaban como ataque (lo encontró el analista del
+ * micro-SIEM en su primer análisis, 28 sep 2026). Con una regla de autobloqueo
+ * por severidad, el sitio habría podido bloquear su propio cron. Lista exacta y
+ * no prefijo: `/api/cron/backup.sql` sigue siendo sondeo.
+ */
+const RUTAS_PROPIAS_DE_BACKUP = new Set(['/admin/backup', '/api/admin/backup', '/api/cron/backup'])
+
 export type ThreatCategory =
   | 'recon_cms'
   | 'secrets_probing'
@@ -156,7 +167,9 @@ const RULES: Rule[] = [
     id: 'secrets_probing.backups',
     category: 'secrets_probing',
     severity: 'high',
-    test: (f) => /\.(sql|bak|old|backup|dump|tar\.gz|zip|7z)$/.test(f.path) || /\/backup\b/.test(f.path),
+    test: (f) =>
+      !RUTAS_PROPIAS_DE_BACKUP.has(f.path.replace(/\/+$/, '')) &&
+      (/\.(sql|bak|old|backup|dump|tar\.gz|zip|7z)$/.test(f.path) || /\/backup\b/.test(f.path)),
   },
   // Path traversal / LFI (OWASP A01/A03).
   {
