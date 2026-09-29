@@ -159,7 +159,7 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
             <button type="button" class="sugerencia" data-pregunta="Revisa la última semana y dime qué merece mi atención.">¿Qué pasó esta semana?</button>
             <button type="button" class="sugerencia" data-pregunta="¿Alguien ha intentado entrar a cuentas o paneles del sitio en la última semana? Explica cómo lo hizo.">¿Intentaron entrar a mis cuentas?</button>
             <button type="button" class="sugerencia" data-pregunta="¿Cuál ha sido el origen más insistente de la última semana y qué buscaba?">¿Quién es el más insistente?</button>
-            <button type="button" class="sugerencia" data-pregunta="De lo que viste, ¿hay algún origen que valga la pena bloquear? Si lo hay, propón el bloqueo.">Propón un bloqueo</button>
+            <button type="button" class="sugerencia" data-pregunta="Revisa la última semana: ¿hay algún origen persistente que valga la pena bloquear? Si lo hay, propón el bloqueo.">Propón un bloqueo</button>
           </div>
           <form id="form" class="flex gap-3">
             <label for="pregunta" class="sr-only">Pregunta para el analista</label>
@@ -515,7 +515,17 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
             if (!ev.length) return void cuerpo.append(el('div', 'cifra', 'Sin movimientos en esta ventana'))
             const tiempos = ev.map((e) => new Date(e.at).getTime()).filter(Number.isFinite)
             const categorias = [...new Set(ev.map((e) => CATEGORIAS[e.categoria] ?? e.categoria))].slice(0, 2)
-            cuerpo.append(el('div', 'cifra', `${num.format(ev.length)} movimientos, del ${fecha.format(Math.min(...tiempos))} al ${fecha.format(Math.max(...tiempos))}`))
+            const desde = Math.min(...tiempos)
+            const hasta = Math.max(...tiempos)
+            cuerpo.append(
+              el(
+                'div',
+                'cifra',
+                ev.length === 1
+                  ? `1 movimiento, el ${fecha.format(desde)}`
+                  : `${num.format(ev.length)} movimientos, del ${fecha.format(desde)} al ${fecha.format(hasta)}`
+              )
+            )
             cuerpo.append(el('div', 'tecnico', categorias.join(' · ')))
           } else if (herramienta === 'anomalias') {
             const n = (datos as any[]).length
