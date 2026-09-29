@@ -100,6 +100,7 @@ const defensas = [
             <button type="button" role="tab" class="fd-tab" data-defensa={x.id} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1}>{x.rotulo}</button>
           ))}
         </div>
+        <div class="fd-cuerpo">
         <div class="fd-huellas">
           {EJEMPLOS_DEFENSA.map((id, i) => (
             <figure class="fd-huella" data-ejemplo data-id={id}>
@@ -111,8 +112,11 @@ const defensas = [
             </figure>
           ))}
         </div>
-        <p class="fd-cuenta" data-cuenta aria-live="polite"></p>
-        <p class="fd-texto" data-texto></p>
+        <div class="fd-lectura">
+          <p class="fd-cuenta" data-cuenta aria-live="polite"></p>
+          <p class="fd-texto" data-texto></p>
+        </div>
+        </div>
       </div>
     </section>
   </div>
@@ -152,19 +156,21 @@ const defensas = [
   .fd-tab:hover { border-color: rgba(0, 242, 255, 0.4); }
   .fd-tab[aria-selected='true'] { background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.55); color: var(--color-ink-50); }
   .fd-tab:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
-  .fd-huellas { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
+  .fd-cuerpo { display: grid; gap: 28px 56px; grid-template-columns: minmax(0, 1fr); align-items: center; }
+  @media (min-width: 1024px) { .fd-cuerpo { grid-template-columns: minmax(0, 640px) minmax(0, 1fr); } }
+  .fd-huellas { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   @media (min-width: 640px) { .fd-huellas { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   .fd-huella { margin: 0; display: grid; gap: 10px; }
   .fd-huella :global(svg) { max-width: 120px; margin: 0 auto; }
   .fd-huella figcaption { display: grid; gap: 4px; justify-items: center; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-300); }
   .fd-cookie { padding: 2px 8px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.12); letter-spacing: 0.04em; text-transform: none; color: var(--color-ink-200); transition: color 0.3s ease, border-color 0.3s ease; }
   .fd-cookie[data-borrada] { color: var(--color-ember); border-color: rgba(255, 107, 61, 0.45); text-decoration: line-through; }
-  .fd-cuenta { margin: 26px 0 8px; font-family: var(--font-mono); font-size: 13px; color: var(--color-cyan); font-variant-numeric: tabular-nums; }
+  .fd-cuenta { margin: 0 0 12px; font-family: var(--font-mono); font-size: clamp(20px, 2.4vw, 30px); letter-spacing: -0.01em; color: var(--color-cyan); font-variant-numeric: tabular-nums; }
   .fd-texto { margin: 0; max-width: 62ch; font-size: 13px; line-height: 1.7; color: var(--color-ink-100); min-height: 4.5em; }
 
   /* Tarjeta de dispositivo: la huella a un lado y los datos al otro. */
   :global(.fp-card) { display: flex; align-items: center; gap: 18px; }
-  :global(.fp-card .fp-print) { width: 64px; flex: none; }
+  :global(.fp-card .fp-print) { width: 88px; flex: none; }
   :global(.fp-card .fp-info) { min-width: 0; flex: 1; }
   :global(.fp-card .fp-reco) { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-ember); }
 </style>
@@ -255,7 +261,7 @@ const defensas = [
     // Fail-open: si el SVG no se puede crear, la tarjeta sigue con sus datos.
     let huella: HuellaSvg | null = null
     try {
-      huella = crearHuellaSvg(parametrosDeId(d.idShort), { etiqueta: L.huellaDe?.replace('{n}', String(d.label)) })
+      huella = crearHuellaSvg(parametrosDeId(d.idShort), { etiqueta: L.huellaDe?.replace('{n}', String(d.label)), anillos: 12 })
       print.appendChild(huella.svg)
     } catch (err) {
       console.warn('[fingerprint] huella sin dibujar', err)

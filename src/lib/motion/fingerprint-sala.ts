@@ -168,7 +168,7 @@ export function crestas(p: ParametrosHuella, { anillos = 15, puntos = 72 }: Opci
       let radio =
         t *
         (1 +
-          0.07 * Math.sin(3 * th + p.fase + i * 0.22) +
+          0.045 * Math.sin(3 * th + p.fase + i * 0.22) +
           0.025 * Math.sin(5 * th + p.rx * 0.1) * t +
           0.025 * Math.sin(7 * th + p.ry * 0.1) * t)
       radio += (p.espiral * (th / (Math.PI * 2))) / anillos
