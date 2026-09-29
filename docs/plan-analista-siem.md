@@ -1,6 +1,6 @@
 # Plan: analista del micro-SIEM (agente de IA en producción)
 
-Estado: **aprobado** el 28 sep 2026. Fases 0 a 3 ✅. Siguiente: fase 4 (meetup).
+Estado: **aprobado** el 28 sep 2026. Fases 0 a 4 ✅. Pendiente: `ANTHROPIC_API_KEY` en Vercel; fases 5 y 6 opcionales.
 
 ## Qué es
 
@@ -130,7 +130,7 @@ Retención: el cron de purga existente borra ejecuciones de más de 30 días.
 | 1 ✅ | Herramientas neutrales + adaptador API + bucle con pausa/reanudación + tabla y migración | Tests puros del bucle (cliente falso: pausa, reanudación, rechazo, `refusal`, `max_tokens`) e integración con libSQL temporal |
 | 2 ✅ | Rutas y pantalla en producción (SSE, aprobación asíncrona, historial de ejecuciones) | E2E Playwright con el modelo simulado; build sin la Agent SDK en el bundle |
 | 3 ✅ | Seguridad y costos: test adversarial, topes, veto en demo, rate limit, auditoría | Tests + una corrida real con la API key |
-| 4 | Meetup: adaptador Agent SDK sobre las mismas herramientas; modo copia (foto de la última semana en la base local) y modo en vivo | Ensayo completo en la laptop |
+| 4 ✅ | Meetup: adaptador Agent SDK sobre las mismas herramientas; modo copia (foto de la última semana en la base local) y modo en vivo | Ensayo completo en la laptop |
 | 5 | Opcional: análisis automático cada mañana por cron + ntfy | Tests del cron |
 | 6 | `/docs` (requisito en `documentacion.ts`), nota en `/notes`, este plan al día | `npm run sustentacion:check` |
 
@@ -197,6 +197,32 @@ herramientas y el mismo prompt.
 - Rate limit: el paraguas global del middleware ya cubre `/api/admin/*`; con
   un análisis a la vez y el tope diario no hace falta un límite propio.
 - Credencial: la API key de Claude Platform está en `.env`; falta en Vercel.
+
+## Fase 4: qué quedó (29 sep 2026)
+
+- **La charla se da sobre producción** (codebymike.net/admin/analista). La
+  Agent SDK, que exige el meetup, se muestra en la terminal
+  (`npm run analista`) o en la pantalla local con el selector de motor.
+- `npm run analista:copia` (`scripts/analista-copia.mjs`): trae la semana real
+  de producción (solo SELECT) a la base local; se niega a escribir en una base
+  que no sea de esta máquina. La pantalla lo indica con el chip violeta
+  "Copia de los datos reales", y el diálogo aclara que aprobar no toca el
+  sitio.
+- Selector de motor, solo en `astro dev`: API de Claude (producción) o Claude
+  Agent SDK (prototipo, `src/pages/api/admin/analista/_agent-sdk.ts`). Con la
+  Agent SDK la aprobación espera en memoria (10 min máximo) y no deja
+  ejecución en la base ni cuenta para el tope diario.
+- Entorno local: la base de desarrollo pasó de `.e2e/` (la suite e2e la
+  borraba) a `.dev-db/`; login local con YubiKey registrada para
+  `localhost`. Dos bugs encontrados y arreglados en el camino:
+  `webauthn.ts` leía `AUTH_SECRET` solo de `process.env` (login con llave roto
+  en local), y el dev server recargaba la página en cada escritura a la base
+  local (`vite.server.watch.ignored` en `astro.config.mjs`).
+- Probado en pantalla con el modelo real, los dos motores (US$0.06 a US$0.22
+  por análisis). Proponer o no un bloqueo depende de lo que vea el agente: con
+  los mismos datos, una corrida lo propuso y otra concluyó que no hacía falta.
+- Guion: `docs/guion-meetup-analista.md`. Video de respaldo (71 s, con el
+  diálogo de bloqueo): `~/Videos/analista-respaldo.webm`.
 
 ## Decisiones tomadas
 
