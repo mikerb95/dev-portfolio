@@ -1,6 +1,6 @@
 # Plan: analista del micro-SIEM (agente de IA en producción)
 
-Estado: **aprobado** el 28 sep 2026. Fases 0 y 1 ✅. Siguiente: fase 2.
+Estado: **aprobado** el 28 sep 2026. Fases 0, 1 y 2 ✅. Siguiente: fase 3.
 
 ## Qué es
 
@@ -128,7 +128,7 @@ Retención: el cron de purga existente borra ejecuciones de más de 30 días.
 |---|---|---|
 | 0 | Este plan | Aprobación del administrador |
 | 1 ✅ | Herramientas neutrales + adaptador API + bucle con pausa/reanudación + tabla y migración | Tests puros del bucle (cliente falso: pausa, reanudación, rechazo, `refusal`, `max_tokens`) e integración con libSQL temporal |
-| 2 | Rutas y pantalla en producción (SSE, aprobación asíncrona, historial de ejecuciones) | E2E Playwright con el modelo simulado; build sin la Agent SDK en el bundle |
+| 2 ✅ | Rutas y pantalla en producción (SSE, aprobación asíncrona, historial de ejecuciones) | E2E Playwright con el modelo simulado; build sin la Agent SDK en el bundle |
 | 3 | Seguridad y costos: test adversarial, topes, veto en demo, rate limit, auditoría | Tests + una corrida real con la API key |
 | 4 | Meetup: adaptador Agent SDK sobre las mismas herramientas; modo copia (foto de la última semana en la base local) y modo en vivo | Ensayo completo en la laptop |
 | 5 | Opcional: análisis automático cada mañana por cron + ntfy | Tests del cron |
@@ -157,6 +157,34 @@ Migración `drizzle/0037_free_darkhawk.sql` (solo `CREATE TABLE` + 2 índices),
 
 El prototipo del meetup (`agents/analista-siem/`) ya usa estas mismas
 herramientas y el mismo prompt.
+
+## Fase 2: qué quedó (28 sep 2026)
+
+- `/admin/analista` funciona en producción (sin la restricción de solo
+  local), detrás del gate `isAdmin`, con historial (los últimos 15, sin IPs) y
+  retoma de un bloqueo pendiente al volver a la página.
+- Rutas: `POST /api/admin/analista` (prepara y transmite) y
+  `POST /api/admin/analista/decision` (reclama la propuesta y retoma).
+  Responden 503/409/429 con mensaje claro ANTES de abrir la transmisión
+  (falta la API key, otro análisis en curso, tope diario). Si el navegador se
+  desconecta, el análisis termina igual y queda guardado (`lib/analista/sse.ts`).
+- Auditoría: `analista.analisis`, `analista.bloqueo_aprobado`,
+  `analista.bloqueo_rechazado` en `AUDIT_RULE_LABELS`.
+- Vetado en modo demo (`lib/demo.ts`, con su test).
+- Purga a 30 días dentro del cron `security-rollup`.
+- **E2E con una API de Claude falsa** (`e2e/fake-anthropic.mjs`, el mismo
+  protocolo de streaming, con guion fijo) que el servidor de pruebas alcanza
+  por `ANTHROPIC_BASE_URL`: la suite no gasta créditos. `e2e/analista.spec.ts`
+  cubre rechazo, aprobación con auditoría, retoma tras recargar y doble
+  decisión (409). Puertos configurables con `E2E_PORT` y
+  `E2E_FAKE_ANTHROPIC_PORT`, para no reutilizar un `astro dev` ajeno que no
+  tenga la API falsa (y que podría gastar créditos reales).
+- Build: la Agent SDK no entra al bundle de Vercel; funciones de 33 a 36 MB.
+- Fuera de este trabajo: `e2e/public.spec.ts` › "/lab publica datos reales"
+  falla porque `/lab` se rediseñó el 26 sep y el test busca textos viejos.
+
+Adelantado de la fase 3: veto en demo, auditoría y topes (diario e
+iteraciones). Falta: test adversarial con el modelo real y rate limit propio.
 
 ## Decisiones tomadas
 
