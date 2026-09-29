@@ -1,6 +1,6 @@
 # Plan: analista del micro-SIEM (agente de IA en producción)
 
-Estado: **aprobado** el 28 sep 2026. Fases 0 a 4 ✅. Pendiente: `ANTHROPIC_API_KEY` en Vercel; fases 5 y 6 opcionales.
+Estado: **aprobado** el 28 sep 2026. Fases 0 a 4 ✅; fase 6 a medias (falta la nota en /notes). `ANTHROPIC_API_KEY` ya está en Vercel (`dev-portfolio`, Production). Fase 5 opcional.
 
 ## Qué es
 
@@ -33,9 +33,10 @@ producción.
 - `motor.ts` + `index.ts`: motor con Agent SDK y CLI (`npm run analista`).
 - `src/pages/admin/analista.astro` + `src/pages/api/admin/analista/*`:
   pantalla con el design system, hoy limitada a `astro dev`.
-- Primer hallazgo real: `secrets_probing.backups` (`classify.ts:159`,
-  `/\/backup\b/`) marca como severidad alta el cron legítimo
-  `/api/cron/backup`. Se corrige aparte, con su test.
+- Primer hallazgo real: `secrets_probing.backups` (`/\/backup\b/`) marcaba
+  como severidad alta el cron legítimo `/api/cron/backup`, y también el panel
+  `/admin/backup` y su API. ✅ Corregido el 29 sep 2026 con una lista exacta
+  de rutas propias (`RUTAS_PROPIAS_DE_BACKUP` en `classify.ts`), con tests.
 
 ## Decisiones de diseño
 
@@ -132,7 +133,7 @@ Retención: el cron de purga existente borra ejecuciones de más de 30 días.
 | 3 ✅ | Seguridad y costos: test adversarial, topes, veto en demo, rate limit, auditoría | Tests + una corrida real con la API key |
 | 4 ✅ | Meetup: adaptador Agent SDK sobre las mismas herramientas; modo copia (foto de la última semana en la base local) y modo en vivo | Ensayo completo en la laptop |
 | 5 | Opcional: análisis automático cada mañana por cron + ntfy | Tests del cron |
-| 6 | `/docs` (requisito en `documentacion.ts`), nota en `/notes`, este plan al día | `npm run sustentacion:check` |
+| 6 (a medias) | `/docs` (requisito en `documentacion.ts`), nota en `/notes`, este plan al día | `npm run sustentacion:check` |
 
 Para el 1 oct son imprescindibles las fases 1 a 4. La 5 y la 6 pueden ir
 después.
@@ -223,6 +224,14 @@ herramientas y el mismo prompt.
   los mismos datos, una corrida lo propuso y otra concluyó que no hacía falta.
 - Guion: `docs/guion-meetup-analista.md`. Video de respaldo (71 s, con el
   diálogo de bloqueo): `~/Videos/analista-respaldo.webm`.
+
+## Fase 6: qué quedó (29 sep 2026)
+
+- `/docs`: requisito **RF-613** en `src/data/documentacion.ts` (grupo
+  "Seguridad (micro-SIEM)"), implementado, con origen, verificación y las
+  decisiones en notas. `npm run sustentacion:check` en verde.
+- Falta: la nota en `/notes` (es y en), sin video. El video de respaldo no se
+  publica: nombra rutas de las trampas y fechas de ataques reales (OPSEC).
 
 ## Decisiones tomadas
 
