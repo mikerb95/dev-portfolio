@@ -31,6 +31,13 @@ const db = createClient({ url: E2E.mainDbUrl })
 
 test.describe.configure({ mode: 'serial' })
 
+// La base es un archivo SQLite que el servidor escribe a la vez que este test:
+// sin espera, una escritura concurrente falla con SQLITE_BUSY en vez de
+// esperar su turno.
+test.beforeAll(async () => {
+  await db.execute('PRAGMA busy_timeout = 5000')
+})
+
 test.beforeEach(async ({ context }) => {
   await db.execute('DELETE FROM analista_ejecuciones')
   await db.execute(`DELETE FROM blocked_ips WHERE rule_id = 'analista.propuesta'`)
