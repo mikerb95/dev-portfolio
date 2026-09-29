@@ -2,14 +2,32 @@
 import '../styles/global.css'
 import { debeOfrecerClave } from '../lib/sustentacion/acceso'
 import { serverEnv } from '../lib/env'
-// Punto de entrada del login: dos puertas independientes, cualquiera basta.
+import { demoAvailable } from '../db'
+import LoginForm from '../components/portal/LoginForm.astro'
+// Puerta única de entrada del sitio, con dos pestañas: "Cliente" (el portal,
+// email + contraseña) y "Admin" (el panel). Son sistemas de autenticación
+// separados que solo comparten la pantalla: cada pestaña habla con sus propios
+// endpoints y ninguna cookie de una sirve para la otra.
+//
+// Pestaña del admin: dos puertas independientes, cualquiera basta.
 // - GitHub OAuth (como siempre): signIn() de auth-astro/client hace el POST
 //   con token CSRF que Auth.js exige (un GET directo a /api/auth/signin/github
 //   lanza UnknownAction).
 // - Llave de seguridad (passwordless): ceremonia WebAuthn contra
 //   /api/auth/webauthn/{options,verify} y luego signIn('passkey', { proof }).
-const callbackUrl =
-  new URL(Astro.request.url).searchParams.get('callbackUrl') ?? '/entrar'
+const params = new URL(Astro.request.url).searchParams
+const callbackUrl = params.get('callbackUrl') ?? '/entrar'
+
+// Qué pestaña se abre. Cliente por defecto: es quien llega sin saber a dónde
+// ir, desde el botón del navbar. Se abre en Admin cuando hay un `callbackUrl`,
+// porque eso solo lo pone el middleware al rebotar a alguien de una ruta del
+// panel (o de la sustentación) y ofrecerle ahí un formulario de cliente sería
+// mandarlo por la puerta equivocada. `?como=` fuerza cualquiera de las dos.
+type Pestana = 'cliente' | 'admin'
+const como = params.get('como')
+const forzada: Pestana | null =
+  como === 'cliente' || como === 'admin' ? como : params.has('callbackUrl') ? 'admin' : null
+const pestana: Pestana = forzada ?? 'cliente'
 
 // Tercera puerta, y solo para la sustentación: la contraseña de
 // SUSTENTACION_PASSWORD. Aparece aquí porque es donde el middleware deja a
@@ -29,21 +47,39 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" data-login-tab={pestana}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Entrar - CodeByMike</title>
+    {/* Sin pestaña forzada, la que eligió la última vez en este navegador
+        (en los equipos de Mike, Admin). Va inline y en el head para decidirla
+        antes del primer pintado: resolverla desde el módulo haría parpadear el
+        formulario del cliente en cada entrada al panel. */}
+    {!forzada && (
+      <script is:inline>
+        try {
+          var guardada = localStorage.getItem('login-pestana')
+          if (guardada === 'admin' || guardada === 'cliente') {
+            document.documentElement.dataset.loginTab = guardada
+          }
+        } catch (e) {}
+      </script>
+    )}
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#07070a" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <!-- Sin JS: caemos al signin de Auth.js con GitHub por defecto. -->
-    <noscript>
-      <meta
-        http-equiv="refresh"
-        content={`0;url=/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-      />
-    </noscript>
+    {/* Sin JS y rumbo al panel: caemos al signin de Auth.js con GitHub. En la
+        pestaña del cliente no, que lo mandaría a una pantalla de GitHub que no
+        es para él. */}
+    {pestana === 'admin' && (
+      <noscript>
+        <meta
+          http-equiv="refresh"
+          content={`0;url=/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+        />
+      </noscript>
+    )}
   </head>
 
   <body class="grain bg-ink-950 text-ink-50">
@@ -52,57 +88,106 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
 
       <section class="login-card glass-strong">
         <span class="login-kicker">/auth</span>
-        <h1 class="login-title">Entrar al panel</h1>
+        <h1 class="login-title">Entrar</h1>
 
-        <div class="login-options">
-          <button id="btn-github" class="login-btn login-btn-primary" type="button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 5.02 3.26 9.28 7.77 10.78.57.1.78-.25.78-.55v-2.15c-3.16.7-3.83-1.35-3.83-1.35-.52-1.3-1.26-1.66-1.26-1.66-1.03-.7.08-.68.08-.68 1.14.08 1.74 1.18 1.74 1.18 1.02 1.73 2.67 1.23 3.32.95.1-.74.4-1.24.72-1.52-2.52-.29-5.17-1.26-5.17-5.6 0-1.24.44-2.25 1.17-3.04-.12-.29-.5-1.45.11-3.03 0 0 .96-.31 3.14 1.16a10.9 10.9 0 0 1 5.72 0c2.18-1.47 3.13-1.16 3.13-1.16.62 1.58.23 2.74.11 3.03.73.79 1.17 1.8 1.17 3.04 0 4.35-2.65 5.31-5.18 5.59.41.35.77 1.04.77 2.1v3.12c0 .3.2.66.79.55 4.5-1.5 7.76-5.76 7.76-10.78C23.02 5.24 18.27.5 12 .5z"/>
-            </svg>
-            Continuar con GitHub
+        <div class="login-tabs" role="tablist" aria-label="Tipo de cuenta">
+          <span class="login-tabs-pill" aria-hidden="true"></span>
+          <button
+            id="tab-cliente"
+            class="login-tab"
+            type="button"
+            role="tab"
+            data-tab="cliente"
+            aria-controls="panel-cliente"
+            aria-selected={pestana === 'cliente' ? 'true' : 'false'}
+            tabindex={pestana === 'cliente' ? 0 : -1}
+          >
+            Cliente
           </button>
-
-          <div class="login-or"><span>o</span></div>
-
-          <button id="btn-passkey" class="login-btn login-btn-ghost" type="button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            <span id="passkey-label">Usar mi llave de seguridad</span>
+          <button
+            id="tab-admin"
+            class="login-tab"
+            type="button"
+            role="tab"
+            data-tab="admin"
+            aria-controls="panel-admin"
+            aria-selected={pestana === 'admin' ? 'true' : 'false'}
+            tabindex={pestana === 'admin' ? 0 : -1}
+          >
+            Admin
           </button>
         </div>
 
-        {
-          ofreceClaveSustentacion && (
-            <form id="form-sustentacion" class="login-sust">
-              <div class="login-or"><span>o</span></div>
-              <label class="login-sust-label" for="clave-sustentacion">
-                Clave de la sustentación
-              </label>
-              <input
-                id="clave-sustentacion"
-                class="login-sust-input"
-                type="password"
-                autocomplete="current-password"
-                autocapitalize="off"
-                autocorrect="off"
-                spellcheck="false"
-                placeholder="Contraseña"
-              />
-              <button class="login-btn login-btn-ghost" type="submit">Entrar a la sustentación</button>
-              <p class="login-sust-nota">
-                Solo abre el escenario y el panel de la sustentación, nada más del panel.
+        <div id="panel-cliente" class="login-panel login-panel-cliente" role="tabpanel" aria-labelledby="tab-cliente">
+          <p class="login-lead">Tus proyectos, facturas y documentos.</p>
+
+          <LoginForm next="/portal" />
+
+          <p class="login-demo">
+            El acceso es por invitación. ¿Crees que deberías tener cuenta?
+            <a href="/contact">Escríbeme</a>.
+          </p>
+          {
+            demoAvailable && (
+              <p class="login-demo login-demo-sep">
+                ¿Solo mirando? <a href="/api/portal/demo">Entra a la demo del portal</a>.
               </p>
-            </form>
-          )
-        }
+            )
+          }
+        </div>
 
-        <p id="login-status" class="login-status" role="status" aria-live="polite"></p>
+        <div id="panel-admin" class="login-panel" role="tabpanel" aria-labelledby="tab-admin">
+          <p class="login-lead">El panel de control.</p>
 
-        <p class="login-demo">
-          ¿Solo mirando? <a href="/demo">Entra a la demo</a> - el panel completo con datos
-          ficticios, sin cuenta.
-        </p>
+          <div class="login-options">
+            <button id="btn-github" class="login-btn login-btn-primary" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 .5C5.73.5.98 5.24.98 11.520c0 5.02 3.26 9.28 7.77 10.78.57.1.78-.25.78-.55v-2.15c-3.160.7-3.830-1.350-3.830-1.350-.52-1.3-1.26-1.66-1.26-1.66-1.030-.7.08-.68.08-.68 1.14.08 1.74 1.180 1.74 1.180 1.020 1.730 2.670 1.230 3.320.95.1-.74.4-1.240.72-1.520-2.520-.29-5.170-1.260-5.170-5.6 0-1.24.44-2.25 1.17-3.04-.12-.29-.5-1.45.11-3.03 0 0 .96-.31 3.14 1.16a10.9 10.9 0 0 1 5.72 0c2.18-1.47 3.13-1.16 3.13-1.16.62 1.58.23 2.74.11 3.03.73.79 1.17 1.8 1.17 3.04 0 4.35-2.65 5.31-5.18 5.59.41.35.77 1.04.77 2.1v3.12c0 .3.2.66.79.55 4.5-1.5 7.76-5.76 7.76-10.78C23.02 5.24 18.27.5 12 .5z"/>
+              </svg>
+              Continuar con GitHub
+            </button>
+
+            <div class="login-or"><span>o</span></div>
+
+            <button id="btn-passkey" class="login-btn login-btn-ghost" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span id="passkey-label">Usar mi llave de seguridad</span>
+            </button>
+          </div>
+          {
+            ofreceClaveSustentacion && (
+              <form id="form-sustentacion" class="login-sust">
+                <div class="login-or"><span>o</span></div>
+                <label class="login-sust-label" for="clave-sustentacion">
+                  Clave de la sustentación
+                </label>
+                <input
+                  id="clave-sustentacion"
+                  class="login-sust-input"
+                  type="password"
+                  autocomplete="current-password"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  spellcheck="false"
+                  placeholder="Contraseña"
+                />
+                <button class="login-btn login-btn-ghost" type="submit">Entrar a la sustentación</button>
+                <p class="login-sust-nota">
+                  Solo abre el escenario y el panel de la sustentación, nada más del panel.
+                </p>
+              </form>
+            )
+          }
+
+          <p id="login-status" class="login-status" role="status" aria-live="polite"></p>
+
+          <p class="login-demo">
+            ¿Solo mirando? <a href="/demo">Entra a la demo</a> - el panel completo con datos
+            ficticios, sin cuenta.
+          </p>
+        </div>
       </section>
     </main>
 
