@@ -2,7 +2,6 @@ import { encode } from '@auth/core/jwt'
 import { createClient } from '@libsql/client'
 import type { BrowserContext } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
 import { E2E } from '../playwright.config'
 import { expect, recogerErrores, test } from './fixtures'
 
@@ -11,26 +10,15 @@ import { expect, recogerErrores, test } from './fixtures'
 // que la suite no gasta créditos. El guion de la API falsa consulta
 // top_origenes, propone bloquear origen-01 y cierra con un veredicto.
 
-// El servidor lee sus secretos con `serverEnv`, que prefiere los .env locales
-// (import.meta.env) a lo que le pasa Playwright. En CI no hay .env y manda el
-// valor de E2E; en una máquina de desarrollo, el del .env. La cookie tiene que
-// firmarse con el que el servidor vaya a usar.
-function delServidor(nombre: string, porDefecto: string): string {
-  for (const archivo of ['.env.development.local', '.env.local', '.env.development', '.env']) {
-    if (!existsSync(archivo)) continue
-    const m = new RegExp(`^${nombre}=(.*)$`, 'm').exec(readFileSync(archivo, 'utf8'))
-    if (m) return m[1]!.trim().replace(/^["']|["']$/g, '')
-  }
-  return porDefecto
-}
-
 const COOKIE = 'authjs.session-token'
 
 async function sesionAdmin(context: BrowserContext) {
-  const login = delServidor('ALLOWED_GITHUB_LOGINS', 'nadie-e2e').split(',')[0]!.trim().toLowerCase()
+  // Mismos valores que playwright.config.ts le pasa al servidor: las variables
+  // del proceso pisan los .env locales (así carga el entorno Vite).
+  const login = 'nadie-e2e'
   const token = await encode({
     token: { name: login, sub: 'e2e-analista', login, sid: `e2e-analista-${randomUUID()}`, authTime: Date.now() },
-    secret: delServidor('AUTH_SECRET', E2E.authSecret),
+    secret: E2E.authSecret,
     salt: COOKIE,
   })
   await context.addCookies([{ name: COOKIE, value: token, url: E2E.baseURL, httpOnly: true }])
