@@ -140,6 +140,15 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
         class="h-8 px-3 text-[12px] rounded-lg bg-white/[.06] border border-white/10 text-ink-100 hover:bg-white/[.08] transition disabled:opacity-50"
       >Ejecutar rollup ahora</button>
       <span id="rollup-result" class="text-[12px] text-ink-300" role="status" aria-live="polite"></span>
+      <!-- Los números de esta página dicen qué pasó; el analista dice qué
+           importa de todo eso (docs/plan-analista-siem.md). -->
+      <a
+        href="/admin/analista"
+        class="ml-auto inline-flex items-center gap-2 h-8 px-3 text-[12px] rounded-lg bg-cyan/10 border border-cyan/30 text-ink-50 hover:bg-cyan/15 transition"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        Pregúntale al analista
+      </a>
     </div>
 
     <!-- KPIs -->
