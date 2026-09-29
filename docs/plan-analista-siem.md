@@ -1,6 +1,6 @@
 # Plan: analista del micro-SIEM (agente de IA en producción)
 
-Estado: **aprobado** el 28 sep 2026. Fases 0 a 4 ✅; fase 6 a medias (falta la nota en /notes). `ANTHROPIC_API_KEY` ya está en Vercel (`dev-portfolio`, Production). Fase 5 ✅.
+Estado: **aprobado** el 28 sep 2026. Fases 0 a 6 ✅. `ANTHROPIC_API_KEY` ya está en Vercel (`dev-portfolio`, Production). Fase 5 ✅.
 
 ## Qué es
 
@@ -133,7 +133,7 @@ Retención: el cron de purga existente borra ejecuciones de más de 30 días.
 | 3 ✅ | Seguridad y costos: test adversarial, topes, veto en demo, rate limit, auditoría | Tests + una corrida real con la API key |
 | 4 ✅ | Meetup: adaptador Agent SDK sobre las mismas herramientas; modo copia (foto de la última semana en la base local) y modo en vivo | Ensayo completo en la laptop |
 | 5 ✅ | Opcional: análisis automático cada mañana por cron + ntfy | Tests del cron |
-| 6 (a medias) | `/docs` (requisito en `documentacion.ts`), nota en `/notes`, este plan al día | `npm run sustentacion:check` |
+| 6 ✅ | `/docs` (requisito en `documentacion.ts`), nota en `/notes`, este plan al día | `npm run sustentacion:check` |
 
 Para el 1 oct son imprescindibles las fases 1 a 4. La 5 y la 6 pueden ir
 después.
@@ -242,9 +242,31 @@ herramientas y el mismo prompt.
 - `/docs`: requisito **RF-613** en `src/data/documentacion.ts` (grupo
   "Seguridad (micro-SIEM)"), implementado, con origen, verificación y las
   decisiones en notas. `npm run sustentacion:check` en verde.
-- Nota escrita en `/notes` (es: `un-analista-que-propone-pero-no-decide`, en:
-  `an-analyst-that-proposes-but-does-not-decide`), en `draft: true` hasta
-  que exista la regla contra la fuerza bruta lenta que su cierre menciona. Sin video. El video de respaldo no se
+- Nota publicada en `/notes` (es: `un-analista-que-propone-pero-no-decide`,
+  en: `an-analyst-that-proposes-but-does-not-decide`). Sin video, sin rutas de
+  trampas ni umbrales (OPSEC).
+
+## Decisión: no se agrega la regla contra la fuerza bruta lenta (29 sep 2026)
+
+El analista recomendó, en tres análisis, bloquear por volumen de eventos
+graves en 24 h, porque el rate limit no ve intentos muy espaciados. Antes de
+implementarla se simuló (solo lectura) contra 30 días de producción:
+
+- 342 IPs; 21 con 5 o más eventos graves en alguna ventana de 24 h.
+- Umbrales de 10, 15, 20 y 30: la regla tocaría entre 14 y 5 IPs, y **todas**
+  ya las habían bloqueado las reglas actuales (casi siempre por tocar una
+  trampa; el resto, por ráfaga).
+- El "atacante lento" señalado (63 eventos en 16 horas distintas) estaba
+  bloqueado: tocó una trampa y sus eventos posteriores son rebotes de la
+  blocklist. El analista acertó en que el rate limit no lo frenaba y no vio
+  que el autobloqueo sí.
+- La única IP que ninguna regla atrapó tenía 7 eventos graves: por debajo de
+  cualquier umbral razonable.
+
+No se implementa: sería una vía nueva de bloqueo en producción, con riesgo de
+falsos positivos, sin un solo caso real que la justifique. El hueco teórico
+(ataque lento contra rutas que no son trampa) lo vigila el análisis de cada
+mañana. Se revisa si aparece un caso real. El video de respaldo no se
   publica: nombra rutas de las trampas y fechas de ataques reales (OPSEC).
 
 ## Decisiones tomadas

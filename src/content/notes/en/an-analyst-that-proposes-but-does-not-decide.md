@@ -5,7 +5,6 @@ date: 2026-09-29
 tags: [security, ai, agents, llm, opsec]
 lang: en
 translationOf: un-analista-que-propone-pero-no-decide
-draft: true
 decision:
   problem: "Hundreds of security events a week that nobody has time to read."
   rejected: "An agent that blocks on its own, or one that runs in a single pass inside a serverless function"
@@ -62,6 +61,8 @@ The loop tests use a simulated model that returns hand-written responses: pause,
 
 In its first analysis over real data, the agent pointed out something no alert had flagged: the site's own nightly backup was being recorded as a high-severity attack. A detection rule for backup-file probing also matched the legitimate routes of the backup panel, so every night the site accused itself. With an auto-block rule based on severity, it could have blocked its own backup. That is fixed now, with tests that tell the site's own routes apart from the ones an attacker probes.
 
-In three other analyses, without being asked, it also pointed out a slow attack pattern that deserved a rule of its own. It has one now.
+In three other analyses, without being asked, it also pointed out a slow attacker: many attempts spread across a day, too far apart for the rate limit to stop them. It recommended a new rule for that pattern. Before writing it I simulated it against a month of real data, and the simulation did not find a single origin the new rule would catch that the current ones let through. The slow attacker it had flagged was in fact blocked: it had walked into a trap, and its later attempts were bouncing off. The agent was right that the rate limit could not see it; it missed that another defense could. The rule was never written.
+
+That is the part of the design I find most convincing. The agent proposes with evidence, but the evidence gets checked, and sometimes the best answer to a good recommendation is to do nothing.
 
 The agent does not replace the micro-SIEM or me. It reads what was already written, with more patience than I have at seven in the morning, and when it thinks something needs to be done it tells me, with evidence. The last word is still mine.

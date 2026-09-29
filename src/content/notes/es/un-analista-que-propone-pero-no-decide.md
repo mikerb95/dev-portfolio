@@ -5,7 +5,6 @@ date: 2026-09-29
 tags: [seguridad, ia, agentes, llm, opsec]
 lang: es
 translationOf: an-analyst-that-proposes-but-does-not-decide
-draft: true
 decision:
   problem: "Cientos de eventos de seguridad por semana que nadie tiene tiempo de leer."
   rejected: "Un agente que bloquea solo, o uno que corre de un tirón en una función serverless"
@@ -62,6 +61,8 @@ Los tests del bucle usan un modelo simulado que devuelve respuestas escritas a m
 
 En su primer análisis sobre datos reales, el agente señaló algo que ninguna alerta había marcado: el backup nocturno del propio sitio aparecía registrado como un ataque de severidad alta. Una regla de detección de búsqueda de copias de seguridad coincidía también con las rutas legítimas del panel de backups, así que cada noche el sitio se acusaba a sí mismo. Con una regla de autobloqueo por severidad, habría podido bloquear su propio backup. Ya está corregido, con pruebas que distinguen las rutas propias de las que busca un atacante.
 
-En otros tres análisis distintos, sin que nadie se lo pidiera, señaló también un patrón de ataque lento que merecía una regla propia. Ya la tiene.
+En otros tres análisis, sin que nadie se lo pidiera, señaló también a un atacante lento: muchos intentos repartidos a lo largo de un día, demasiado espaciados para que el límite de velocidad los frenara. Recomendó una regla nueva para ese patrón. Antes de escribirla la simulé contra un mes de datos reales, y la simulación no encontró ni un solo origen que la regla nueva fuera a atrapar y las actuales dejaran pasar. El atacante lento que había señalado sí estaba bloqueado: había caído en una trampa, y sus intentos posteriores rebotaban. El agente acertó en que el límite de velocidad no lo veía; se le escapó que otra defensa sí. La regla no se escribió.
+
+Es la parte del diseño que más me convence. El agente propone con evidencia, pero la evidencia se comprueba, y a veces la mejor respuesta a una buena recomendación es no hacer nada.
 
 El agente no sustituye al micro-SIEM ni a mí. Lee lo que ya estaba escrito, con más paciencia de la que yo tengo a las siete de la mañana, y cuando cree que hay que actuar me lo dice con evidencia. La última palabra sigue siendo mía.
