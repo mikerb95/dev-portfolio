@@ -9,8 +9,13 @@
 //
 // Solo funciona con `npm run dev` (ver api/admin/analista/index.ts).
 import '../../styles/global.css'
+import { serverEnv } from '../../lib/env'
 
 const disponible = import.meta.env.DEV
+// El analista solo paga con una API key de Claude Platform (ver
+// agents/analista-siem/credencial.ts). Sin ella, la pantalla lo dice de
+// entrada en vez de fallar a mitad de la charla.
+const conApiKey = disponible && (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().startsWith('sk-ant-')
 ---
 
 <!doctype html>
@@ -47,6 +52,17 @@ const disponible = import.meta.env.DEV
               <span class="w-2 h-2 rounded-full bg-lime pulse-dot"></span>
               Datos reales del sitio
             </span>
+            {conApiKey ? (
+              <span class="chip" id="facturacion" title="El agente usa una API key de Claude Platform, nunca una cuenta personal">
+                <span class="w-2 h-2 rounded-full bg-cyan"></span>
+                Pagado con créditos de Claude Platform
+              </span>
+            ) : (
+              <span class="chip chip-alerta">
+                <span class="w-2 h-2 rounded-full bg-ember"></span>
+                Falta la API key
+              </span>
+            )}
             <span class="chip">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
               Las IPs no salen de esta máquina
@@ -89,7 +105,14 @@ const disponible = import.meta.env.DEV
           </section>
         </main>
 
-        <footer class="px-6 md:px-10 pb-6">
+        <footer class="px-6 md:px-10 pb-6" data-con-api-key={conApiKey ? 'si' : 'no'}>
+          {!conApiKey && (
+            <p class="fallo mb-3">
+              Falta <code class="font-mono">ANTHROPIC_API_KEY</code> en el <code class="font-mono">.env</code>. Créala en
+              platform.claude.com → API keys y reinicia <code class="font-mono">npm run dev</code>. Sin ella el analista no
+              arranca: nunca usa una cuenta personal de claude.ai.
+            </p>
+          )}
           <div id="sugerencias" class="flex flex-wrap gap-2 mb-3">
             <button type="button" class="sugerencia" data-pregunta="Revisa la última semana y dime qué merece mi atención.">¿Qué pasó esta semana?</button>
             <button type="button" class="sugerencia" data-pregunta="¿Alguien ha intentado entrar a cuentas o paneles del sitio en la última semana? Explica cómo lo hizo.">¿Intentaron entrar a mis cuentas?</button>
@@ -145,6 +168,10 @@ const disponible = import.meta.env.DEV
         background: rgb(255 255 255 / .03); border: 1px solid rgb(255 255 255 / .08);
         color: var(--color-ink-100);
       }
+      .chip-alerta { border-color: rgb(255 107 61 / .35); color: var(--color-ink-50); }
+      /* La barra de desarrollo de Astro se montaba encima del campo de
+         pregunta, y en una charla se proyecta todo lo que está en pantalla. */
+      :global(astro-dev-toolbar) { display: none !important; }
       .panel {
         border-radius: 1.25rem;
         background: linear-gradient(180deg, rgb(255 255 255 / .025), rgb(255 255 255 / .01));
@@ -245,6 +272,7 @@ const disponible = import.meta.env.DEV
     <script>
       type Evento =
         | { tipo: 'sesion'; id: string }
+        | { tipo: 'facturacion'; fuente: string }
         | { tipo: 'paso'; id: string; herramienta: string; entrada: Record<string, unknown> }
         | { tipo: 'dato'; herramienta: string; datos: any }
         | { tipo: 'texto'; texto: string }
@@ -267,6 +295,7 @@ const disponible = import.meta.env.DEV
         const estadisticas = $<HTMLSpanElement>('estadisticas')!
         const dialogo = $<HTMLDialogElement>('aprobacion')!
         const sugerencias = [...document.querySelectorAll<HTMLButtonElement>('.sugerencia')]
+        const conApiKey = form.closest('footer')?.dataset.conApiKey === 'si'
 
         // Nombres pensados para quien no es del oficio. Lo que no esté aquí se
         // muestra tal cual.
@@ -566,6 +595,7 @@ const disponible = import.meta.env.DEV
           estadisticas.textContent = ''
           input.focus()
         })
+        if (!conApiKey) bloquear(true)
         $('ap-aprobar')!.addEventListener('click', () => decidir(true))
         $('ap-rechazar')!.addEventListener('click', () => decidir(false))
         // Esc cierra el diálogo: se trata como rechazo, nunca como aprobación.

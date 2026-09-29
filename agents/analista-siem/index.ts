@@ -67,6 +67,7 @@ const turno = (prompt: string, sesion?: string) =>
     seudonimos,
     formato: 'terminal',
     emitir: (e) => {
+      if (e.tipo === 'facturacion') console.log(gris(`  Pagado con: ${e.fuente}`))
       if (e.tipo === 'texto') console.log(`\n${e.texto}`)
       if (e.tipo === 'paso') console.log(gris(`  → ${e.herramienta} ${JSON.stringify(e.entrada)}`))
       if (e.tipo === 'aprobacion') {
@@ -88,7 +89,15 @@ const turno = (prompt: string, sesion?: string) =>
 console.log(gris(`Analista del micro-SIEM · base ${base}${flag('--ips-reales') ? ' · IPs en claro' : ''}`))
 console.log(`\n> ${pregunta}`)
 
-let sesion = await turno(pregunta)
+let sesion: string | undefined
+try {
+  sesion = await turno(pregunta)
+} catch (err) {
+  // Sin API key (o con otra credencial) no hay análisis: se explica y se sale.
+  console.error(ambar(`\n  ${err instanceof Error ? err.message : String(err)}`))
+  rl.close()
+  process.exit(1)
+}
 while (!entradaCerrada) {
   const siguiente = (await rl.question('\n> ').catch(() => '')).trim()
   if (!siguiente || siguiente === 'salir') break

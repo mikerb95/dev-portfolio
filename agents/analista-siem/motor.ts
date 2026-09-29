@@ -33,7 +33,7 @@ const INDICACIONES_FORMATO: Record<Formato, string> = {
   terminal:
     'Responde en español, en texto plano apto para una terminal (sin tablas markdown). Estructura: un veredicto de una línea, los hallazgos ordenados por importancia con sus cifras, y las acciones recomendadas.',
   pantalla:
-    'Tu respuesta se proyecta en una charla ante público que no es técnico. Responde en español, claro y sin jerga innecesaria (si usas un término técnico, explícalo en pocas palabras). Formato: la primera línea es un veredicto corto, de una frase. Luego secciones con un título en una línea que empiece por "## ", y debajo párrafos breves o listas con "- ". Sin tablas ni negritas. Máximo unas 250 palabras: es una pantalla, no un informe.',
+    'Tu respuesta se proyecta en una charla ante público que no es técnico. Responde en español, claro y sin jerga innecesaria (si usas un término técnico, explícalo en pocas palabras). Formato: la primera línea es un veredicto corto, de una frase. Luego secciones con un título en una línea que empiece por "## ", y debajo párrafos breves o listas con "- ". Sin tablas ni negritas. Máximo unas 150 palabras: es una pantalla, no un informe.',
 }
 
 function systemPrompt(formato: Formato): string {
