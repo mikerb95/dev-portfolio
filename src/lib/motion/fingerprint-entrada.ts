@@ -13,7 +13,7 @@
 import gsap from 'gsap'
 import { montarHuella } from './huella-gl'
 import { idCorto, parametrosDe } from './huella'
-import { BITS_MAX, estadoLibro, unosEn } from './fingerprint-sala'
+import { estadoLibro, unosEn } from './fingerprint-sala'
 import { interpolate } from '../../i18n/format'
 
 type Textos = Record<string, string>
