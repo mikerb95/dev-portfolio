@@ -177,6 +177,20 @@ export const WORKFLOWS: readonly Workflow[] = [
  */
 export const CRONS: readonly Cron[] = [
   {
+    job: 'analista-matutino',
+    horario: '11:30',
+    cadaMin: 1440,
+    origen: 'vercel',
+    hace: {
+      es: 'Un agente de IA revisa la seguridad de las últimas 24 horas y manda el resumen al celular.',
+      en: 'An AI agent reviews the last 24 hours of security events and sends the summary to my phone.',
+    },
+    siFalla: {
+      es: 'Nadie lee la noche con criterio: los eventos siguen registrados, pero sin resumen.',
+      en: 'Nobody reads the night with judgment: events are still recorded, just without a summary.',
+    },
+  },
+  {
     job: 'backup',
     horario: '03:00',
     cadaMin: 1440,

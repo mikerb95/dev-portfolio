@@ -1,6 +1,6 @@
 # Plan: analista del micro-SIEM (agente de IA en producción)
 
-Estado: **aprobado** el 28 sep 2026. Fases 0 a 4 ✅; fase 6 a medias (falta la nota en /notes). `ANTHROPIC_API_KEY` ya está en Vercel (`dev-portfolio`, Production). Fase 5 opcional.
+Estado: **aprobado** el 28 sep 2026. Fases 0 a 4 ✅; fase 6 a medias (falta la nota en /notes). `ANTHROPIC_API_KEY` ya está en Vercel (`dev-portfolio`, Production). Fase 5 ✅.
 
 ## Qué es
 
@@ -132,7 +132,7 @@ Retención: el cron de purga existente borra ejecuciones de más de 30 días.
 | 2 ✅ | Rutas y pantalla en producción (SSE, aprobación asíncrona, historial de ejecuciones) | E2E Playwright con el modelo simulado; build sin la Agent SDK en el bundle |
 | 3 ✅ | Seguridad y costos: test adversarial, topes, veto en demo, rate limit, auditoría | Tests + una corrida real con la API key |
 | 4 ✅ | Meetup: adaptador Agent SDK sobre las mismas herramientas; modo copia (foto de la última semana en la base local) y modo en vivo | Ensayo completo en la laptop |
-| 5 | Opcional: análisis automático cada mañana por cron + ntfy | Tests del cron |
+| 5 ✅ | Opcional: análisis automático cada mañana por cron + ntfy | Tests del cron |
 | 6 (a medias) | `/docs` (requisito en `documentacion.ts`), nota en `/notes`, este plan al día | `npm run sustentacion:check` |
 
 Para el 1 oct son imprescindibles las fases 1 a 4. La 5 y la 6 pueden ir
@@ -225,12 +225,26 @@ herramientas y el mismo prompt.
 - Guion: `docs/guion-meetup-analista.md`. Video de respaldo (71 s, con el
   diálogo de bloqueo): `~/Videos/analista-respaldo.webm`.
 
+## Fase 5: qué quedó (29 sep 2026)
+
+- `GET /api/cron/analista-matutino`, disparado por **Vercel** a las 11:30 UTC
+  (6:30 Bogotá), no por cron-job.org: un análisis tarda 15-60 s y cron-job.org
+  corta a los 30. Registrado en `vercel.json` y en el catálogo de
+  `src/data/automatizaciones.ts` (vigilancia de silencio incluida).
+- Manda el veredicto por ntfy (`src/lib/analista/aviso.ts`, puro, con tests);
+  si propone un bloqueo, el análisis queda pausado y el aviso es para entrar a
+  decidirlo. Sin API key, con otro análisis en curso o sin presupuesto, no
+  hace nada y lo deja en la bitácora.
+- Probado en local con el modelo real: 14 s, US$0.05, fila en `cron_runs`.
+
 ## Fase 6: qué quedó (29 sep 2026)
 
 - `/docs`: requisito **RF-613** en `src/data/documentacion.ts` (grupo
   "Seguridad (micro-SIEM)"), implementado, con origen, verificación y las
   decisiones en notas. `npm run sustentacion:check` en verde.
-- Falta: la nota en `/notes` (es y en), sin video. El video de respaldo no se
+- Nota escrita en `/notes` (es: `un-analista-que-propone-pero-no-decide`, en:
+  `an-analyst-that-proposes-but-does-not-decide`), en `draft: true` hasta
+  que exista la regla contra la fuerza bruta lenta que su cierre menciona. Sin video. El video de respaldo no se
   publica: nombra rutas de las trampas y fechas de ataques reales (OPSEC).
 
 ## Decisiones tomadas
