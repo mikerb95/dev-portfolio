@@ -3,71 +3,171 @@
 export const prerender = true
 
 import BaseLayout from '../../../layouts/BaseLayout.astro'
+import HuellaVisor from '../../../components/HuellaVisor.astro'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../../../i18n'
 import { jsonEnScript } from '../../../lib/json-script'
+import { BITS_MAX, LIBRO } from '../../../lib/motion/fingerprint-sala'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 const fp = t.fingerprint
+const mo = fp.motion
 const L = (path: string) => localizedHref(path, locale)
 ---
 
 <BaseLayout title={fp.title} description={fp.description} image="/og-default.png">
-  <div class="max-w-[900px] mx-auto px-6 md:px-12 pt-32 pb-24">
-    <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
+  <div class="max-w-[1180px] mx-auto px-6 md:px-12 pt-32 pb-24">
+    <a href={L('/')} data-hero-sigue class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
       {t.common.back}
     </a>
 
-    <header class="mb-12">
-      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="text-cyan">/lab/fingerprint</span>
-        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>{fp.eyebrow}</span>
+    <header class="fp-hero mb-16">
+      <div>
+        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6" data-hero-sigue>
+          <span class="text-cyan">/lab/fingerprint</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+          <span>{fp.eyebrow}</span>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] leading-[.95] mb-8 fp-balance">
+          <span data-hero-linea class="block text-mask">{fp.h1Line1}</span>
+          <span data-hero-linea class="block text-cyan">{fp.h1Line2}</span>
+        </h1>
+        <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed" data-hero-sigue>
+          {fp.introPre} <strong class="text-ink-50">{fp.introStrong}</strong>{fp.introPost}
+        </p>
       </div>
-      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        {fp.h1Line1}<br/>{fp.h1Line2}
-      </h1>
-      <p class="text-[16px] text-ink-100 max-w-xl leading-relaxed">
-        {fp.introPre} <strong class="text-ink-50">{fp.introStrong}</strong>{fp.introPost}
-      </p>
+
+      <div data-hero-pieza>
+        <HuellaVisor
+          titulo={mo.visor.titulo}
+          leyendo={mo.visor.leyendo}
+          privacidad={mo.visor.privacidad}
+          reto={mo.visor.reto}
+          detalle={mo.visor.detalleCompleto}
+          bloqueada={mo.visor.bloqueada}
+        />
+      </div>
     </header>
 
-    <section class="rounded-2xl glass p-6 mb-8">
-      <h2 class="text-[13px] font-medium text-ink-50 mb-3">{fp.collectHeading}</h2>
-      <ul class="space-y-2 text-[13px] text-ink-100 leading-relaxed list-disc list-inside">
-        {fp.collect.map((item) => <li>{item}</li>)}
-      </ul>
-      <p class="text-[12px] text-ink-400 mt-4 leading-relaxed">
-        {fp.collectNote}
-      </p>
-    </section>
+    <div class="fp-cuerpo">
+      <div>
+        <section class="rounded-2xl glass p-6 mb-8">
+          <h2 class="text-[13px] font-medium text-ink-50 mb-1">{fp.collectHeading}</h2>
+          <p class="fl-sub" aria-hidden="true">{mo.libro.titulo}</p>
+          <ul class="fl-lista" data-libro aria-label={mo.libro.etiqueta}>
+            {fp.collect.map((item, i) => (
+              <li class="fl-fila" data-fila>
+                <span class="fl-txt">{item}</span>
+                <span class="fl-meta">
+                  <span class="fl-puntos" aria-hidden="true">
+                    {(LIBRO[i] ?? []).map((clave) => <i data-clave={clave}></i>)}
+                  </span>
+                  <span class="fl-estado" data-estado></span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p class="fl-nota">{mo.libro.nota}</p>
+          <p class="text-[12px] text-ink-400 mt-4 leading-relaxed">
+            {fp.collectNote}
+          </p>
+        </section>
+      </div>
 
-    <section class="rounded-2xl glass p-6 mb-10">
-      <label class="flex items-start gap-3 text-[13px] text-ink-100 leading-relaxed cursor-pointer">
-        <input id="consent" type="checkbox" class="mt-1 accent-cyan" />
-        {fp.consentLabel}
-      </label>
-    </section>
+      <div>
+        <section class="fm rounded-2xl glass p-6 mb-8" data-medidor aria-label={mo.unicidad.etiqueta}>
+          <div class="text-[10px] font-mono uppercase tracking-[.18em] text-ink-300 mb-2">{mo.unicidad.titulo}</div>
+          <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <span class="text-3xl font-medium text-cyan tabular-nums" data-bits></span>
+            <span class="text-[12px] font-mono text-ink-200 tabular-nums" data-uno-en></span>
+          </div>
+          <div class="fm-marcas" aria-hidden="true">
+            {Array.from({ length: BITS_MAX }, () => <i data-marca></i>)}
+          </div>
+          <p class="text-[11px] text-ink-400 mt-4 leading-relaxed">{mo.unicidad.nota}</p>
+        </section>
 
-    <button
-      id="create-room"
-      disabled
-      class="w-full h-14 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100 transition-colors"
-    >
-      {fp.createRoom}
-    </button>
-    <p id="status" class="text-[12px] font-mono text-ink-400 mt-3 min-h-4"></p>
+        <section class="rounded-2xl glass p-6 mb-8">
+          <label class="flex items-start gap-3 text-[13px] text-ink-100 leading-relaxed cursor-pointer">
+            <input id="consent" type="checkbox" class="mt-1 accent-cyan" />
+            {fp.consentLabel}
+          </label>
+        </section>
+
+        <button
+          id="create-room"
+          disabled
+          class="w-full h-14 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100 transition-colors"
+        >
+          {fp.createRoom}
+        </button>
+        <p id="status" class="text-[12px] font-mono text-ink-400 mt-3 min-h-4"></p>
+      </div>
+    </div>
   </div>
 
   <script
     id="fingerprint-i18n"
     type="application/json"
-    set:html={jsonEnScript({ creating: fp.creating, createError: fp.createError, boardPath: L('/lab/fingerprint') })}
+    set:html={jsonEnScript({
+      creating: fp.creating,
+      createError: fp.createError,
+      boardPath: L('/lab/fingerprint'),
+      detalleBasico: mo.visor.detalleBasico,
+      detalleCompleto: mo.visor.detalleCompleto,
+      bloqueada: mo.visor.bloqueada,
+      estadoLeida: mo.libro.estadoLeida,
+      estadoParcial: mo.libro.estadoParcial,
+      estadoEspera: mo.libro.estadoEspera,
+      estadoSala: mo.libro.estadoSala,
+      bits: mo.unicidad.bits,
+      unoEn: mo.unicidad.unoEn,
+    })}
   />
 </BaseLayout>
 
+<style>
+  .fp-hero { display: grid; gap: 40px; grid-template-columns: minmax(0, 1fr); align-items: center; }
+  .fp-balance span { text-wrap: balance; }
+  .fp-cuerpo { display: grid; gap: 0 32px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @media (min-width: 1024px) {
+    .fp-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 64px; }
+    .fp-cuerpo { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  }
+
+  /* Libro de señales. Sin JS es la lista de siempre; con JS (clase fl-vivo,
+     puesta por el script) cada línea muestra sus puntos y su estado. */
+  .fl-sub { margin: 0 0 14px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-ink-300); }
+  .fl-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .fl-fila { display: grid; gap: 6px 16px; grid-template-columns: minmax(0, 1fr); padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 13px; line-height: 1.5; color: var(--color-ink-100); }
+  .fl-fila:first-child { border-top: 0; }
+  .fl-meta { display: none; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-ink-300); }
+  .fl-vivo .fl-meta { display: inline-flex; }
+  .fl-puntos { display: inline-flex; gap: 5px; }
+  .fl-puntos i { width: 8px; height: 8px; border-radius: 99px; border: 1.5px solid rgba(255, 255, 255, 0.28); transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease; }
+  .fl-puntos i[data-leida] { background: var(--color-cyan); border-color: var(--color-cyan); box-shadow: 0 0 8px -1px rgba(0, 242, 255, 0.7); }
+  .fl-fila[data-estado='leida'] .fl-estado { color: var(--color-lime); }
+  .fl-fila[data-estado='parcial'] .fl-estado { color: var(--color-cyan); }
+  .fl-fila[data-estado='sala'] .fl-estado { color: var(--color-ink-400); }
+  /* Tinte de fondo en la fila que ya se leyó por completo. */
+  .fl-fila[data-estado='leida'] { background: linear-gradient(90deg, rgba(0, 242, 255, 0.05), transparent 70%); }
+  .fl-nota { margin: 14px 0 0; font-family: var(--font-mono); font-size: 10.5px; color: var(--color-ink-400); }
+  @media (min-width: 640px) {
+    .fl-fila { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  }
+
+  /* Medidor de bits: 38 marcas, una por bit posible; se enciende con lo leído. */
+  .fm:not(.fl-vivo) { display: none; }
+  .fm-marcas { display: flex; gap: 3px; margin-top: 16px; }
+  .fm-marcas i { flex: 1 1 0; min-width: 0; height: 14px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+  .fm-marcas i[data-lleno] { background: var(--color-cyan); box-shadow: 0 0 8px -2px rgba(0, 242, 255, 0.8); }
+</style>
+
 <script>
+  import { montarLanding } from '../../../lib/motion/landing'
+  import { montarEntrada } from '../../../lib/motion/fingerprint-entrada'
+
   const consent = document.getElementById('consent') as HTMLInputElement
   const btn = document.getElementById('create-room') as HTMLButtonElement
   const status = document.getElementById('status')!
@@ -90,4 +190,13 @@ const L = (path: string) => localizedHref(path, locale)
       btn.disabled = false
     }
   })
+
+  // Fail-open: si el motion falla, queda la lista de lo que se recolecta y el
+  // consentimiento, que es lo que la página necesita para funcionar.
+  try {
+    montarEntrada({ reducido: window.matchMedia('(prefers-reduced-motion: reduce)').matches, textos: L })
+  } catch (err) {
+    console.warn('[fingerprint] entrada sin motion', err)
+  }
+  montarLanding()
 </script>
