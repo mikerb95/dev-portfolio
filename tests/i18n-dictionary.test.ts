@@ -161,6 +161,14 @@ describe('paridad del diccionario es/en', () => {
         'security.motion.estado.abierto',
         // "{n} min" en /notes: la abreviatura es la misma en los dos idiomas.
         'notes.motion.bitacora.minutos',
+        // /automatizaciones: duraciones hechas de cifras y abreviaturas, la
+        // lectura de una corrida (solo marcadores), el evento "pull request"
+        // (nombre del evento en GitHub) y "portal", igual en los dos idiomas.
+        'automatizaciones.motion.dur',
+        'automatizaciones.motion.durMin',
+        'automatizaciones.motion.partitura.lecturaCorrida',
+        'automatizaciones.motion.ci.eventos.pull_request.nombre',
+        'automatizaciones.motion.producto.escenas.respaldo.portal',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal
