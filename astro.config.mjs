@@ -43,6 +43,14 @@ export default defineConfig({
   // Vercel acaba de generar, así que tiene que correr después de él.
   integrations: [auth(), staticHeaders(), canonicalRedirect()],
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    server: {
+      watch: {
+        // Las bases SQLite de desarrollo y de e2e viven dentro del proyecto, y
+        // cada escritura (un análisis del analista, un login) recargaba la
+        // página abierta: a mitad de una demo, la pantalla volvía al inicio.
+        ignored: ['**/.dev-db/**', '**/.e2e/**'],
+      },
+    },
   },
 });

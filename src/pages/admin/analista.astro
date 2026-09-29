@@ -464,6 +464,7 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           ondas.append(el('span'), el('span'), el('span'))
           pensando.append(ondas, el('span', '', 'Pensando…'))
           bitacora.append(pensando)
+          pensando.scrollIntoView({ block: 'end', behavior: 'smooth' })
         }
 
         function resumirDato(herramienta: string, datos: any, cuerpo: HTMLElement) {
