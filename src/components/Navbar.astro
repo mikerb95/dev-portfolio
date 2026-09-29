@@ -190,7 +190,7 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
         <LangSwitch locale={locale} languageHref={languageHref} />
       </div>
       <a
-        href="/login?callbackUrl=%2Fentrar"
+        href="/login"
         aria-label={t.nav.loginAria}
         class="hidden sm:inline-flex items-center gap-2 h-8 px-3 text-[12px] font-medium rounded-full bg-white/5 text-ink-100 hover:bg-white/10 transition-colors"
       >
@@ -205,9 +205,10 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <path
-            d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6.1 0-1.3-.5-2.4-1.3-3.2.1-.3.5-1.5-.1-3.2 0 0-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1c-.6 1.7-.2 2.9-.1 3.2A4.9 4.9 0 0 0 4 9.9c0 4.7 2.7 5.8 5.5 6.1-.6.5-1 1.4-1 2.8V21"
-          ></path>
+          {/* Una persona y no el logo de GitHub: /login es también la puerta
+              de los clientes, y el logo les decía "esto no es para ti". */}
+          <circle cx="12" cy="8" r="4"></circle>
+          <path d="M4 21a8 8 0 0 1 16 0"></path>
         </svg>
         <span class="hidden lg:inline">{t.nav.loginAria}</span>
       </a>
@@ -316,7 +317,7 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
     }
     <div class="h-px bg-white/10 my-1"></div>
     <a
-      href="/login?callbackUrl=%2Fentrar"
+      href="/login"
       class="sm:hidden px-4 py-2.5 rounded-full text-[13px] font-mono text-ink-100 transition-colors hover:bg-white/5"
     >
       {t.nav.loginAria}

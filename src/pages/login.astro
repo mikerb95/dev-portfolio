@@ -192,24 +192,71 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
     </main>
 
     <style>
-      .login-stage { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; overflow: hidden; }
+      /* Con el formulario del cliente la tarjeta ya no cabe siempre en un
+         móvil apaisado: el escenario hace scroll y la tarjeta se centra con
+         margin:auto, que a diferencia de place-items no la corta por arriba
+         cuando es más alta que la pantalla. */
+      .login-stage { position: fixed; inset: 0; display: grid; padding: 24px; overflow-x: hidden; overflow-y: auto; }
       .login-aura {
-        position: absolute; width: 720px; height: 720px; max-width: 120vw; max-height: 120vh;
+        position: fixed; left: 50%; top: 50%; translate: -50% -50%;
+        width: 720px; height: 720px; max-width: 120vw; max-height: 120vh;
         border-radius: 50%;
         background:
           radial-gradient(closest-side, rgba(0, 242, 255, 0.14), rgba(0, 242, 255, 0) 70%),
           radial-gradient(closest-side, rgba(167, 139, 255, 0.12), rgba(167, 139, 255, 0) 70%);
         filter: blur(8px);
+        pointer-events: none;
       }
       .login-card {
-        position: relative; width: min(380px, 100%); border-radius: 28px; padding: 36px 30px 30px;
+        position: relative; margin: auto; width: min(400px, 100%); border-radius: 28px; padding: 36px 30px 30px;
         text-align: center;
         box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
       }
       .login-kicker {
         font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: #00f2ff;
       }
-      .login-title { margin: 8px 0 26px; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: #e7e7ec; }
+      .login-title { margin: 8px 0 20px; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: #e7e7ec; }
+
+      /* Selector de pestañas. Qué panel se ve lo decide el atributo del <html>
+         y no el `hidden` de cada panel, porque el script inline del head lo
+         fija antes de que exista el DOM de la tarjeta. */
+      .login-tabs {
+        position: relative; display: grid; grid-template-columns: 1fr 1fr;
+        padding: 4px; margin-bottom: 22px; border-radius: 999px;
+        background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .login-tabs-pill {
+        position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px);
+        border-radius: 999px; background: rgba(0, 242, 255, 0.1);
+        box-shadow: inset 0 0 0 1px rgba(0, 242, 255, 0.28), 0 6px 20px -10px rgba(0, 242, 255, 0.6);
+      }
+      :root[data-login-tab='admin'] .login-tabs-pill { translate: 100% 0; }
+      /* La transición se arma después del primer pintado: si no, la píldora
+         viajaría de Cliente a Admin al cargar en los equipos que abren en Admin. */
+      .login-tabs.listo .login-tabs-pill { transition: translate 0.32s cubic-bezier(0.2, 0.7, 0.2, 1); }
+      .login-tab {
+        position: relative; height: 36px; border: 0; border-radius: 999px; background: none;
+        font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase;
+        color: #7c7c8a; cursor: pointer; transition: color 0.2s ease;
+      }
+      .login-tab:hover { color: #c4c4cc; }
+      .login-tab:focus-visible { outline: 2px solid #00f2ff; outline-offset: 2px; }
+      :root[data-login-tab='cliente'] #tab-cliente,
+      :root[data-login-tab='admin'] #tab-admin { color: #e7e7ec; }
+
+      :root[data-login-tab='cliente'] #panel-admin,
+      :root[data-login-tab='admin'] #panel-cliente { display: none; }
+      .login-panel.entra { animation: login-entra 0.28s cubic-bezier(0.2, 0.7, 0.2, 1); }
+      @keyframes login-entra {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: none; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .login-tabs.listo .login-tabs-pill { transition: none; }
+        .login-panel.entra { animation: none; }
+      }
+      .login-panel-cliente { text-align: left; }
+      .login-lead { margin: 0 0 18px; font-size: 12.5px; color: #85858f; text-align: center; }
 
       .login-options { display: grid; gap: 12px; }
       .login-btn {
@@ -231,6 +278,8 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
 
       .login-status { margin-top: 18px; font-size: 12px; color: #85858f; min-height: 16px; }
       .login-status.err { color: #ff8a65; }
+      .login-panel-cliente .login-demo { margin-top: 18px; text-align: center; }
+      .login-demo-sep { padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
       .login-demo { margin-top: 14px; font-size: 12px; line-height: 1.6; color: #85858f; }
       .login-demo a { color: #00f2ff; text-decoration: none; }
       .login-demo a:hover { text-decoration: underline; }
@@ -272,6 +321,64 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
       }
 
       const callbackUrl = new URL(window.location.href).searchParams.get('callbackUrl') ?? '/entrar'
+
+      // Pestañas. La visible la marca `data-login-tab` en el <html> (puesto por
+      // el servidor, o por el script inline si hay una elección guardada); aquí
+      // solo se sincroniza la accesibilidad y se atienden los cambios.
+      type Pestana = 'cliente' | 'admin'
+      const raiz = document.documentElement
+      const lista = document.querySelector('.login-tabs') as HTMLElement
+      const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.login-tab'))
+
+      function mostrar(pestana: Pestana, opciones: { enfocar?: boolean; animar?: boolean } = {}) {
+        raiz.dataset.loginTab = pestana
+        for (const tab of tabs) {
+          const activa = tab.dataset.tab === pestana
+          tab.setAttribute('aria-selected', String(activa))
+          tab.tabIndex = activa ? 0 : -1
+        }
+        const panel = document.getElementById(`panel-${pestana}`) as HTMLElement
+        if (opciones.animar) {
+          panel.classList.remove('entra')
+          void panel.offsetWidth
+          panel.classList.add('entra')
+        }
+        if (opciones.enfocar) {
+          // Al primer campo útil, para que cambiar de pestaña y escribir sea un
+          // solo gesto.
+          const destino = pestana === 'cliente'
+            ? document.getElementById('portal-email')
+            : document.getElementById('clave-sustentacion') ?? document.getElementById('btn-github')
+          destino?.focus()
+        }
+      }
+
+      function elegir(pestana: Pestana, enfocarTab = false) {
+        if (raiz.dataset.loginTab === pestana) return
+        mostrar(pestana, { enfocar: !enfocarTab, animar: true })
+        if (enfocarTab) tabs.find((t) => t.dataset.tab === pestana)?.focus()
+        // Se recuerda solo lo que se elige a mano: así un rebote del middleware
+        // (que abre en Admin) no le cambia la pestaña a nadie para la próxima.
+        try { localStorage.setItem('login-pestana', pestana) } catch {}
+      }
+
+      mostrar((raiz.dataset.loginTab as Pestana) ?? 'cliente')
+      requestAnimationFrame(() => lista.classList.add('listo'))
+
+      for (const tab of tabs) {
+        tab.addEventListener('click', () => elegir(tab.dataset.tab as Pestana))
+        // Patrón de tablist del WAI-ARIA: flechas entre pestañas, Inicio/Fin a
+        // los extremos. Con dos pestañas las cuatro teclas se reducen a "la otra".
+        tab.addEventListener('keydown', (e) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
+          e.preventDefault()
+          const destino: Pestana =
+            e.key === 'Home' ? 'cliente'
+            : e.key === 'End' ? 'admin'
+            : tab.dataset.tab === 'cliente' ? 'admin' : 'cliente'
+          elegir(destino, true)
+        })
+      }
       const status = document.getElementById('login-status') as HTMLElement
       const githubBtn = document.getElementById('btn-github') as HTMLButtonElement
       const passkeyBtn = document.getElementById('btn-passkey') as HTMLButtonElement
