@@ -1,6 +1,7 @@
 # Automatizaciones: publicar lo que corre solo, y anotar que corrió
 
 Estado: **implementado** (1 sep 2026). Pendientes de alta declarados en §6.
+Rediseño con motion y corrección de la ventana de la bitácora: §9 (28 sep 2026).
 
 Este proyecto hace tres cosas sin que nadie las pida: seis workflows de GitHub
 Actions, nueve endpoints de tarea programada y media docena de automatismos que
@@ -206,6 +207,48 @@ con los crons de Vercel), clonando `security-rollup` para que el header
 Sirve como estreno del detector: el primer silencio que encontró no fue una
 avería, fue una automatización que llevaba meses anunciada y nunca conectada.
 
+## 9. Motion y la ventana de 48 h (28 sep 2026)
+
+**El bug que destapó.** La tabla leía las últimas 150 filas de `cron_runs`.
+Con el sondeo cada 5 min y el agregado cada 15 entran ~16 filas por hora, así
+que la ventana real era de unas 9 h: en producción, 7 de las 11 tareas salían
+"sin registro" aunque corrían todos los días, justo en la página que promete
+"el último resultado real". Ahora se lee un **rango de 48 h** sobre el índice
+de fecha (techo de 1400 filas). 48 h cubren la tolerancia más larga (36 h de un
+diario), así que la tabla ya puede acusar un silencio de verdad; si el techo
+cortara la consulta, la ventana efectiva se mide y nadie se acusa sin historia
+suficiente (`estadoFila`). Coste: ~800 filas por render, cacheadas 5 min en la
+CDN, la misma magnitud que la cinta de la portada con 24 h.
+
+**Las piezas** (RF-029):
+
+- **Partitura** (hero). Un renglón por job, una marca por corrida real de las
+  últimas 24 h, la hora declarada como raya punteada y cada silencio mayor a
+  lo tolerado como tramo teñido con su duración. Modelo puro en
+  `src/lib/motion/partitura.ts`, compartido por el servidor (pinta el SVG en
+  reposo) y el navegador.
+- **Simulacro de corte.** Reproduce el 7 sep sobre los datos del día: se
+  callan los disparadores de cron-job.org, siguen los de Vercel a su hora, y
+  el aviso sale cuando el vigilante real saldría. No hay lógica copiada:
+  `simularCorte` llama a `tocaChequear`, `jobsEnSilencio`, `decidirAvisos` y
+  `describirSilencio` de `cron-silencio.ts`, y respeta que `conRegistro`
+  anota la corrida del vigilante DESPUÉS de revisar.
+- **Selector de eventos de CI.** Push, pull request, domingo y a mano; cada uno
+  despierta los workflows que lo declaran en `disparadores`. CI muestra sus
+  tres jobs (`etapas` en el catálogo, espejo de `ci.yml`), con la verificación
+  que solo corre en push a main.
+- **Tabla** con medidor de silencio consumido (raya en el intervalo declarado,
+  final en la tolerancia) que sigue contando con el reloj de quien mira.
+- **Escenas** ilustrativas de los seis automatismos (`id` en el catálogo).
+
+**Lo que el simulacro enseña sin adornar.** El vigilante vive dentro de
+`uptime-check` porque es el único endpoint con dos disparadores. Si muere el
+rápido, lo despierta el diario de las 07:00 UTC: un corte a las 23:30 se avisa
+~7,5 h después, y uno a las 06:58 al día siguiente (la revisión horaria de las
+07:00 no toca porque la anterior es de hace dos minutos). Es el comportamiento
+real, no un fallo de la animación; si algún día molesta, la mejora es darle al
+vigilante un segundo disparador independiente, no retocar la página.
+
 ## 8. Archivos
 
 ```
@@ -214,11 +257,16 @@ src/lib/cron-runs.ts            registrarCronRun, conRegistro, silenciosPorAvisa
 src/lib/cron-silencio.ts        decisión pura: tolerancia, dedup, throttling
 src/lib/cron-auth.ts            cronSecretOk
 src/pages/automatizaciones.astro
+src/components/automatizaciones/  Partitura, DisparadoresCI, EscenaAutomatismo
+src/lib/motion/partitura.ts     modelo puro de la partitura y del simulacro
+src/lib/motion/disparos.ts      evento de CI -> workflows
+src/lib/motion/{partitura-viva,automatizaciones,automatizaciones-escenas}.ts
+tests/motion-automatizaciones.test.ts
 src/pages/api/cron/*.ts         los nueve, envueltos
 tests/crons.test.ts             vercel.json + cronSecretOk
 tests/cron-silencio.test.ts     tolerancia, avisos, catálogo vs. endpoints
 ```
 
-Requisitos: **RF-019** (página), **RF-407** (bitácora), **RF-408** (aviso de
+Requisitos: **RF-019** (página), **RF-029** (motion), **RF-407** (bitácora), **RF-408** (aviso de
 cron en silencio), **RNF-28** (crons verificables sin desplegar), **CU-20**. Iteración: Fase 43 en
 `src/data/iteraciones-portfolio.ts`.
