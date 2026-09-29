@@ -30,35 +30,3 @@
     radial-gradient(52% 44% at 22% 64%, rgba(18,18,22,.82), rgba(18,18,22,0) 72%),
     radial-gradient(40% 30% at 18% 40%, rgba(18,18,22,.45), rgba(18,18,22,0) 70%);
 }
-
-/* Mira de la pista del hero: un retículo con un anillo que se expande, el
-   mismo gesto del pulso que emite el clic sobre el terreno. */
-.pista-mira {
-  position: relative;
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,242,255,.6);
-}
-.pista-mira::before {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border-radius: 999px;
-  background: #00f2ff;
-}
-.pista-mira::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: 999px;
-  border: 1px solid rgba(201,255,91,.7);
-  animation: pistaPulso 2.4s cubic-bezier(.2,.7,.2,1) infinite;
-}
-@keyframes pistaPulso {
-  0% { transform: scale(1); opacity: .9; }
-  100% { transform: scale(2.6); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .pista-mira::after { animation: none; opacity: 0; }
-}
