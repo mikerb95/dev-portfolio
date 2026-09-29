@@ -39,6 +39,7 @@ import { describeDevice } from './device-info'
 import { sendPush } from './notify'
 import { recordSecurityEvent } from './security/events'
 import { siteUrl } from './site'
+import { serverEnv } from './env'
 
 // ── Relying Party ────────────────────────────────────────────────────────
 // rpID/origin se derivan del Host real de cada request en vez de hardcodear
@@ -137,8 +138,11 @@ async function takeChallenge(cookies: AstroCookies, kind: 'reg' | 'auth', login:
 
 const PROOF_TTL_MS = 30_000
 
+// serverEnv y no process.env: en `astro dev` el .env solo llega a
+// import.meta.env, y leer una sola fuente dejaba el login con llave roto en
+// local ("AUTH_SECRET no configurado") aunque en Vercel funcionara.
 function hmacSecret(): string {
-  const s = process.env.AUTH_SECRET
+  const s = serverEnv('AUTH_SECRET')
   if (!s) throw new Error('AUTH_SECRET no configurado (requerido por auth-astro)')
   return s
 }
