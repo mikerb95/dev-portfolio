@@ -1,0 +1,73 @@
+---
+// Huella dactilar en SVG desde los parámetros de src/lib/motion/huella.ts.
+// La pintan el servidor (huella fantasma del tablero vacío, dispositivos de
+// ejemplo de la comprobación) y el navegador (una por dispositivo que entra,
+// src/lib/motion/fingerprint-svg.ts): el marcado es el mismo, por eso la
+// hoja de estilos es global y compartida.
+import { LIENZO, YEMA, crestas } from '../../lib/motion/fingerprint-sala'
+import type { ParametrosHuella } from '../../lib/motion/huella'
+
+interface Props {
+  params: ParametrosHuella
+  /** Id único de la página para el recorte (varias huellas en la misma página). */
+  uid: string
+  etiqueta?: string
+  class?: string
+}
+const { params, uid, etiqueta, class: clase } = Astro.props
+const trazos = crestas(params)
+---
+
+<svg
+  class:list={['hc', clase]}
+  viewBox={`0 0 ${LIENZO.ancho} ${LIENZO.alto}`}
+  role={etiqueta ? 'img' : undefined}
+  aria-label={etiqueta}
+  aria-hidden={etiqueta ? undefined : 'true'}
+>
+  <defs>
+    <clipPath id={uid}><ellipse cx={YEMA.cx} cy={YEMA.cy} rx={YEMA.rx} ry={YEMA.ry}></ellipse></clipPath>
+  </defs>
+  <g clip-path={`url(#${uid})`}>
+    {trazos.map((d, i) => <path d={d} pathLength="1" style={`opacity:${(0.95 - i * 0.03).toFixed(2)}`}></path>)}
+    <line class="hc-barrido" x1="-5" x2="105" y1="0" y2="0"></line>
+  </g>
+</svg>
+
+<style is:global>
+  .hc {
+    display: block;
+    width: 100%;
+    height: auto;
+    color: var(--color-cyan);
+    overflow: visible;
+  }
+  .hc path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.15px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+  /* Línea de lectura: se apaga si nadie la anima (sin JS o en reposo). */
+  .hc-barrido {
+    stroke: currentColor;
+    stroke-width: 1.6px;
+    vector-effect: non-scaling-stroke;
+    opacity: 0;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+  .hc-tenue path { stroke-dasharray: 0.02 0.02; opacity: 0.4; }
+  .hc-ember { color: var(--color-ember); }
+  .hc-lime { color: var(--color-lime); }
+  /* Huella fantasma del tablero vacío: la línea de lectura pasa sola. */
+  .hc-espera .hc-barrido { opacity: 0.85; animation: hcBarrido 3.6s ease-in-out infinite; }
+  @keyframes hcBarrido {
+    0%, 100% { transform: translateY(8px); }
+    50% { transform: translateY(112px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hc-espera .hc-barrido { animation: none; opacity: 0; }
+  }
+</style>

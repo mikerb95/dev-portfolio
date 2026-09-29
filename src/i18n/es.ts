@@ -1899,6 +1899,35 @@ const es = {
     createRoom: 'Crear sala y generar QR',
     creating: 'Creando sala…',
     createError: 'Error creando la sala, intenta de nuevo.',
+    // Motion de la entrada: el visor lee tu navegador en dos tiempos (lo que
+    // cualquier sitio lee sin pedirte nada, y lo que se suma cuando aceptas).
+    motion: {
+      visor: {
+        titulo: 'Tu huella en este navegador',
+        leyendo: 'Leyendo señales',
+        detalleBasico: '{n} señales · ~{bits} bits · sin que aceptaras nada',
+        detalleCompleto: '{n} señales · ~{bits} bits · id {id}',
+        privacidad: 'Calculada aquí, en tu equipo. Hasta que crees la sala no sale nada.',
+        reto: 'Ábrela en incógnito: será la misma.',
+        bloqueada: 'Tu navegador no dejó leer las señales. Buena señal.',
+      },
+      libro: {
+        titulo: 'Lo que ya sabemos de ti',
+        etiqueta: 'Señales leídas en este navegador',
+        estadoLeida: 'leída',
+        estadoParcial: '{n} de {total} leídas',
+        estadoEspera: 'espera tu sí',
+        estadoSala: 'solo dentro de la sala',
+        nota: 'Cada punto es una señal de esa línea: lleno, ya se leyó en este navegador.',
+      },
+      unicidad: {
+        titulo: 'Unicidad estimada',
+        bits: '~{bits} bits',
+        unoEn: '1 en {n} dispositivos',
+        nota: 'Estimación educativa con pesos de estudios publicados (EFF Panopticlick / AmIUnique), no una medición poblacional.',
+        etiqueta: 'Bits de entropía leídos',
+      },
+    },
   },
   fpRoom: {
     title: 'Tu dispositivo - Laboratorio de Fingerprinting',
@@ -1940,6 +1969,28 @@ const es = {
     ownId: 'id propio:',
     entropyBits: 'bits de entropía',
     incognitoWarning: 'El modo incógnito no protege.',
+    roomLive: 'Sala {id} · en vivo',
+    // Motion del tablero: la huella de cada dispositivo y la comprobación de
+    // las tres defensas con cuatro dispositivos de ejemplo.
+    motion: {
+      reconocido: 'reconocido de nuevo',
+      huellaDe: 'Huella del dispositivo {n}',
+      esperando: 'Aún no hay huellas: escanea el QR',
+      demo: {
+        titulo: 'Compruébalo',
+        etiqueta: 'Ejemplo ilustrativo: cuatro dispositivos inventados, no son de esta sala.',
+        tabsEtiqueta: 'Defensa a probar',
+        sin: 'Sin defensa',
+        incognito: 'Incógnito',
+        tor: 'Tor Browser',
+        firefox: 'Firefox',
+        distintas: '{n} de {total} huellas distintas',
+        cookie: 'cookie',
+        cookieBorrada: 'borrada',
+        dispositivo: 'Dispositivo {n}',
+        sinTexto: 'Sin defensa, cada dispositivo tiene su propia huella. Elige una defensa y mira qué pasa.',
+      },
+    },
   },
   cvDownload: {
     title: 'Preparando tu descarga - CodeByMike',
