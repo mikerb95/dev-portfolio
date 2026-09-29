@@ -1,6 +1,6 @@
 # Plan: analista del micro-SIEM (agente de IA en producción)
 
-Estado: **propuesto, pendiente de aprobación** (28 sep 2026).
+Estado: **aprobado** el 28 sep 2026. Fase 0 ✅. En curso: fase 1.
 
 ## Qué es
 
@@ -136,10 +136,13 @@ Retención: el cron de purga existente borra ejecuciones de más de 30 días.
 Para el 1 oct son imprescindibles las fases 1 a 4. La 5 y la 6 pueden ir
 después.
 
-## Pendiente de decidir por el administrador
+## Decisiones tomadas
 
-1. Modelo: Opus 5.5 (más capaz, ~2x costo) o Sonnet 5.5 (más barato).
-2. Tope diario en USD.
-3. Poner `ANTHROPIC_API_KEY` en `.env` y en Vercel.
-4. Si el prototipo local actual se reemplaza por completo o se conserva como
-   motor del meetup (el plan asume que se conserva).
+1. Modelo: **Opus 5.5** (`claude-opus-5-5`), decidido por el administrador.
+2. Tope diario: **US$3** (`ANALISTA_TOPE_DIARIO_USD`), aprobado por el administrador.
+3. El prototipo local se conserva como motor del meetup.
+
+## Pendiente del administrador
+
+- Poner `ANTHROPIC_API_KEY` en `.env` y, antes de desplegar, en Vercel.
+- Aprobar la aplicación de la migración a Turso (local y producción).
