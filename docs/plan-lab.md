@@ -25,6 +25,13 @@
 > solo recibe corridas que ya pasaron calidad (`verify-production` corre con
 > `needs: quality`), así que un push con tests rotos no aparece en `/lab`.
 >
+> **Actualización 28 sep 2026 (`/lab/fingerprint`)**: la demo de fingerprinting
+> tiene motion propio (RF-030). La entrada lee el navegador en dos tiempos (lo
+> que cualquier sitio lee sin pedir nada y, tras el consentimiento, canvas,
+> audio y fuentes) y dibuja la huella; el tablero pinta una huella en SVG por
+> dispositivo, la barre con una línea de lectura cuando vuelve y cierra con una
+> comprobación ilustrativa de incógnito, Tor y Firefox.
+>
 > **Actualización ago 2026**: los scripts k6 de la Fase 5 (`lab/k6/carga.js`,
 > `lab/k6/estres.js`) ya están implementados y corridos localmente (escalera
 > de niveles, fila R de recuperación, muestreo de CPU/heap del proceso y
