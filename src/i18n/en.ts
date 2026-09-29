@@ -2222,7 +2222,7 @@ const en = {
         lecturaInicial: 'Each mark is a real run written to the log. Point at a row to read it.',
         lecturaCorrida: '{job} · {hora} UTC · {estado}{dur}',
         lecturaHueco: '{job} · {dur} without a sound, since {hora} UTC · tolerates {tol}',
-        lecturaCarril: '{job} · {n} runs in 24 h · {fallidas} failed · tolerates {tol} of silence',
+        lecturaCarril: '{job} · runs in 24 h: {n} · failed: {fallidas} · tolerates {tol} of silence',
         lecturaVacia: '{job} · no runs in 24 h',
         ok: 'ok',
         fallo: 'failed',

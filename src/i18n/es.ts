@@ -2276,7 +2276,7 @@ const es = {
           'Cada marca es una ejecución real anotada en la bitácora. Apunta un renglón para leerla.',
         lecturaCorrida: '{job} · {hora} UTC · {estado}{dur}',
         lecturaHueco: '{job} · {dur} sin sonar, desde las {hora} UTC · tolera {tol}',
-        lecturaCarril: '{job} · {n} corridas en 24 h · {fallidas} fallidas · tolera {tol} de silencio',
+        lecturaCarril: '{job} · corridas en 24 h: {n} · fallidas: {fallidas} · tolera {tol} de silencio',
         lecturaVacia: '{job} · ninguna corrida en 24 h',
         ok: 'ok',
         fallo: 'falló',
