@@ -103,3 +103,53 @@ test.describe('gate del panel', () => {
     }
   })
 })
+
+// /login es la puerta de los dos mundos: clientes (portal) y admin (panel).
+// Lo que no puede pasar es que un cliente aterrice en la pestaña de GitHub, o
+// que un rebote del panel le ofrezca a quien iba a /admin el formulario del
+// cliente.
+test.describe('login · pestañas', () => {
+  test('sin contexto abre en Cliente', async ({ page }) => {
+    await page.goto('/login')
+    await expect(page.getByRole('tab', { name: 'Cliente' })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByLabel('Correo electrónico')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Continuar con GitHub' })).toBeHidden()
+  })
+
+  test('el rebote del panel abre en Admin', async ({ page }) => {
+    await page.goto('/admin')
+    await expect(page).toHaveURL(/\/login\?callbackUrl=/)
+    await expect(page.getByRole('tab', { name: 'Admin' })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByRole('button', { name: 'Continuar con GitHub' })).toBeVisible()
+    await expect(page.getByLabel('Correo electrónico')).toBeHidden()
+  })
+
+  test('recuerda la pestaña elegida a mano', async ({ page }) => {
+    await page.goto('/login')
+    await page.getByRole('tab', { name: 'Admin' }).click()
+    await expect(page.getByRole('button', { name: 'Continuar con GitHub' })).toBeVisible()
+
+    await page.reload()
+    await expect(page.getByRole('tab', { name: 'Admin' })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByLabel('Correo electrónico')).toBeHidden()
+  })
+
+  test('las flechas cambian de pestaña', async ({ page }) => {
+    await page.goto('/login')
+    await page.getByRole('tab', { name: 'Cliente' }).focus()
+    await page.keyboard.press('ArrowRight')
+    await expect(page.getByRole('tab', { name: 'Admin' })).toBeFocused()
+    await expect(page.getByRole('button', { name: 'Continuar con GitHub' })).toBeVisible()
+  })
+
+  test('el formulario del cliente habla con el endpoint del portal', async ({ page }) => {
+    await page.goto('/login')
+    await page.getByLabel('Correo electrónico').fill('nadie@ejemplo.com')
+    await page.getByLabel('Contraseña', { exact: true }).fill('no-es-la-clave')
+    const respuesta = page.waitForResponse('**/api/portal/login')
+    await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+    expect((await respuesta).status()).toBe(401)
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page).toHaveURL(/\/login$/)
+  })
+})
