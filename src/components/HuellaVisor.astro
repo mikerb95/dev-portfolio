@@ -1,0 +1,152 @@
+---
+// Visor de la huella dactilar generativa: marco de lector, lienzo del shader
+// (src/lib/motion/huella-gl.ts) y pie con el estado. Solo marcado y estilo;
+// quien lo usa monta la huella y decide cuándo y qué señales lee (la portada
+// las lee todas al acercarse, la entrada del lab en dos tiempos).
+//
+// Las esquinas son un marco de lector, no una tarjeta: la huella flota sobre
+// el fondo de la sección.
+interface Props {
+  titulo: string
+  leyendo: string
+  privacidad: string
+  reto: string
+  /** Plantilla del estado al terminar: {n} señales, {bits}, {id}. */
+  detalle: string
+  bloqueada: string
+}
+const { titulo, leyendo, privacidad, reto, detalle, bloqueada } = Astro.props
+---
+
+<figure class="huella-visor" data-huella data-detalle={detalle} data-bloqueada={bloqueada}>
+  <span class="huella-esquina huella-esquina-a" aria-hidden="true"></span>
+  <span class="huella-esquina huella-esquina-b" aria-hidden="true"></span>
+  <span class="huella-esquina huella-esquina-c" aria-hidden="true"></span>
+  <span class="huella-esquina huella-esquina-d" aria-hidden="true"></span>
+  <canvas class="huella-lienzo" aria-hidden="true"></canvas>
+  <span class="huella-titulo" aria-hidden="true">{titulo}</span>
+  <figcaption class="huella-pie">
+    <span class="sr-only">{titulo}</span>
+    <span class="huella-estado" aria-live="polite">
+      <span class="huella-punto"></span>
+      <span class="huella-estado-txt">{leyendo}</span>
+    </span>
+    <span class="huella-privacidad">{privacidad} <span class="text-ink-100">{reto}</span></span>
+  </figcaption>
+</figure>
+
+<style>
+  .huella-visor {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    aspect-ratio: 1;
+    justify-self: center;
+    margin: 0;
+  }
+  .huella-lienzo {
+    position: absolute;
+    inset: 0 0 16%;
+    width: 100%;
+    height: 84%;
+  }
+  .huella-esquina {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: rgba(0, 242, 255, 0.45);
+    border-style: solid;
+    border-width: 0;
+  }
+  .huella-esquina-a {
+    top: 0;
+    left: 0;
+    border-top-width: 1.5px;
+    border-left-width: 1.5px;
+    border-top-left-radius: 6px;
+  }
+  .huella-esquina-b {
+    top: 0;
+    right: 0;
+    border-top-width: 1.5px;
+    border-right-width: 1.5px;
+    border-top-right-radius: 6px;
+  }
+  .huella-esquina-c {
+    bottom: 16%;
+    left: 0;
+    border-bottom-width: 1.5px;
+    border-left-width: 1.5px;
+    border-bottom-left-radius: 6px;
+  }
+  .huella-esquina-d {
+    bottom: 16%;
+    right: 0;
+    border-bottom-width: 1.5px;
+    border-right-width: 1.5px;
+    border-bottom-right-radius: 6px;
+  }
+
+  .huella-titulo {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-200);
+  }
+  .huella-pie {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 16%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-200);
+  }
+  .huella-estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-cyan);
+    white-space: nowrap;
+  }
+  .huella-punto {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    animation: pulseDot 1s ease-in-out infinite;
+  }
+  :global(.huella-lista) .huella-estado {
+    color: var(--color-lime);
+  }
+  :global(.huella-lista) .huella-punto {
+    animation: none;
+  }
+  :global(.huella-bloqueada) .huella-estado {
+    color: var(--color-ember);
+  }
+  .huella-privacidad {
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    line-height: 1.5;
+    color: var(--color-ink-200);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .huella-punto {
+      animation: none;
+    }
+  }
+</style>

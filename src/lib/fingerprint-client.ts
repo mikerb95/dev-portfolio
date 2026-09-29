@@ -153,11 +153,25 @@ async function libFingerprint(): Promise<string | null> {
  * cargar la librería en una página que no la necesita.
  */
 export async function collectSignals(): Promise<Omit<FingerprintResult, 'libFpHash'>> {
+  return armarSenales(true)
+}
+
+/**
+ * Solo lo que cualquier página lee sin pedir nada: propiedades de `navigator`
+ * y `screen` y el vendor de la GPU. Sin canvas, sin audio y sin sondear
+ * fuentes (lo pesado, lo que la entrada del lab deja para después del sí).
+ * Su hash NO es el de la sala: es el de un subconjunto de señales.
+ */
+export async function collectBasicSignals(): Promise<Omit<FingerprintResult, 'libFpHash'>> {
+  return armarSenales(false)
+}
+
+async function armarSenales(pesadas: boolean): Promise<Omit<FingerprintResult, 'libFpHash'>> {
   const nav = navigator as Navigator & { deviceMemory?: number }
-  const canvas = canvasSignal()
+  const canvas = pesadas ? canvasSignal() : ''
   const webgl = webglSignal()
-  const audio = await audioSignal()
-  const fonts = fontsSignal()
+  const audio = pesadas ? await audioSignal() : ''
+  const fonts = pesadas ? fontsSignal() : ''
   const screenSig = `${screen.width}x${screen.height}x${screen.colorDepth}@${window.devicePixelRatio}`
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
   const langs = nav.languages?.join(',') ?? nav.language
@@ -178,7 +192,10 @@ export async function collectSignals(): Promise<Omit<FingerprintResult, 'libFpHa
     { key: 'ua', label: 'User-Agent', value: nav.userAgent, display: nav.userAgent, weight: 3 },
   ]
 
-  const signals: FingerprintSignal[] = raw.map((s) => ({
+  // En la lectura básica las pesadas no se calcularon: no existen, no valen
+  // "0 bits" (eso sería decir que se midieron y no aportaron).
+  const PESADAS = new Set(['canvas', 'audio', 'fonts'])
+  const signals: FingerprintSignal[] = raw.filter((s) => pesadas || !PESADAS.has(s.key)).map((s) => ({
     key: s.key,
     label: s.label,
     value: s.value,

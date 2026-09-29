@@ -149,9 +149,9 @@ export function crestas(p: ParametrosHuella, { anillos = 15, puntos = 72 }: Opci
       radio += (p.espiral * (th / (Math.PI * 2))) / anillos
       // Lazo: por la parte baja las crestas exteriores se estiran, como en un
       // patrón en lazo; con lazo = 0 queda un verticilo cerrado.
-      const estirar = seno > 0 ? 1 + p.lazo * 0.55 * t * t * seno : 1
+      const estirar = seno > 0 ? 1 + p.lazo * 0.4 * t * t * seno : 1
       const x = cx + radio * 40 * p.aniso * Math.cos(th) * 1.15
-      const y = cy + radio * 46 * seno * estirar
+      const y = cy + radio * 43 * seno * estirar
       d += `${k === 0 ? 'M' : 'L'}${r1(x)} ${r1(y)}`
     }
     salida.push(d)
