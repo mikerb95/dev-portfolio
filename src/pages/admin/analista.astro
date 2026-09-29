@@ -329,14 +329,13 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
 
     <script>
       type Evento =
-        | { tipo: 'sesion'; id: string }
-        | { tipo: 'facturacion'; fuente: string }
+        | { tipo: 'ejecucion'; id: string }
         | { tipo: 'paso'; id: string; herramienta: string; entrada: Record<string, unknown> }
         | { tipo: 'dato'; herramienta: string; datos: any }
         | { tipo: 'texto'; texto: string }
         | { tipo: 'aprobacion'; origen: string; motivo: string }
         | { tipo: 'decision'; origen: string; aprobado: boolean }
-        | { tipo: 'fin'; ok: boolean; motivo: string; turnos: number; segundos: number; costoUsd: number }
+        | { tipo: 'fin'; estado: 'terminada' | 'fallida' | 'corriendo' | 'esperando_aprobacion'; iteraciones: number; costoUsd: number; error: string | null }
         | { tipo: 'error'; mensaje: string }
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null
@@ -346,14 +345,15 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
       function iniciar(form: HTMLFormElement) {
         const input = $<HTMLInputElement>('pregunta')!
         const enviar = $<HTMLButtonElement>('enviar')!
-        const nueva = $<HTMLButtonElement>('nueva')!
         const bitacora = $<HTMLOListElement>('bitacora')!
         const respuesta = $<HTMLDivElement>('respuesta')!
         const contador = $<HTMLSpanElement>('contador')!
         const estadisticas = $<HTMLSpanElement>('estadisticas')!
         const dialogo = $<HTMLDialogElement>('aprobacion')!
+        const historial = $<HTMLDialogElement>('historial')!
         const sugerencias = [...document.querySelectorAll<HTMLButtonElement>('.sugerencia')]
-        const conApiKey = form.closest('footer')?.dataset.conApiKey === 'si'
+        const pie = form.closest('footer')!
+        const conApiKey = pie.dataset.conApiKey === 'si'
 
         // Nombres pensados para quien no es del oficio. Lo que no esté aquí se
         // muestra tal cual.
@@ -379,7 +379,6 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           eventos_de_origen: (e) => `Siguiendo los pasos de ${String(e.origen ?? 'un origen')}`,
           anomalias: () => 'Buscando comportamientos fuera de lo normal',
           bloqueos_vigentes: () => 'Revisando quién ya está bloqueado',
-          bloquear_origen: (e) => `Bloqueando a ${String(e.origen ?? 'un origen')}`,
         }
 
         const num = new Intl.NumberFormat('es-CO')
@@ -404,13 +403,14 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           return { li, cuerpo }
         }
 
-        // ── Estado de una pregunta ──────────────────────────────────────────
+        // ── Estado de la pantalla ───────────────────────────────────────────
+        let ejecucionId: string | null = null
         let pasos: { herramienta: string; li: HTMLLIElement; cuerpo: HTMLDivElement; conDato: boolean }[] = []
         let ultimaNota: { li: HTMLLIElement; texto: string } | null = null
         let pensando: HTMLLIElement | null = null
         let reloj: number | undefined
         let inicio = 0
-        let ocupado = false
+        let esperandoDecision = false
 
         function mostrarPensando() {
           pensando?.remove()
@@ -477,17 +477,14 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           } else if (herramienta === 'bloqueos_vigentes') {
             const n = (datos as any[]).length
             cuerpo.append(el('div', 'cifra', n ? `${n} ${n === 1 ? 'origen bloqueado' : 'orígenes bloqueados'} ahora mismo` : 'Nadie bloqueado ahora mismo'))
-          } else if (herramienta === 'bloquear_origen' && datos.hasta) {
-            cuerpo.append(el('div', 'cifra', `Bloqueado hasta el ${fecha.format(new Date(datos.hasta))}`))
           }
         }
 
         function pintarRespuesta(texto: string) {
           respuesta.replaceChildren()
-          const lineas = texto.split('\n').map((l) => l.trim())
           let lista: HTMLUListElement | null = null
           let veredicto = false
-          for (const linea of lineas) {
+          for (const linea of texto.split('\n').map((l) => l.trim())) {
             if (!linea) { lista = null; continue }
             if (!veredicto) {
               respuesta.append(el('p', 'veredicto item-entra', linea.replace(/^veredicto:\s*/i, '')))
@@ -508,12 +505,13 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           respuesta.scrollTop = 0
         }
 
-        function mostrarEspera() {
+        function mostrarEspera(etiqueta = 'Investigando') {
+          window.clearInterval(reloj)
           respuesta.replaceChildren()
           const caja = el('div', 'esperando')
-          caja.append(el('p', 'etiqueta', 'Investigando'))
+          caja.append(el('p', 'etiqueta', etiqueta))
           const cifra = el('p', 'reloj mt-3', '0:00')
-          caja.append(cifra, el('p', 'parrafo', 'El agente está leyendo el registro. Mira a la izquierda cómo decide qué revisar.'))
+          caja.append(cifra, el('p', 'parrafo', 'El agente está leyendo el registro. A la izquierda se ve cómo decide qué revisar.'))
           respuesta.append(caja)
           inicio = Date.now()
           reloj = window.setInterval(() => {
@@ -522,16 +520,27 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           }, 250)
         }
 
+        function mostrarFallo(mensaje: string) {
+          respuesta.append(el('p', 'fallo', mensaje))
+        }
+
         function bloquear(si: boolean) {
-          ocupado = si
-          input.disabled = si
-          enviar.disabled = si
-          nueva.disabled = si
-          sugerencias.forEach((b) => (b.disabled = si))
+          const off = si || !conApiKey
+          input.disabled = off
+          enviar.disabled = off
+          sugerencias.forEach((b) => (b.disabled = off))
+        }
+
+        function abrirAprobacion(origen: string, motivo: string) {
+          $('ap-origen')!.textContent = origen
+          $('ap-motivo')!.textContent = motivo
+          dialogo.showModal()
         }
 
         function manejar(e: Evento) {
-          if (e.tipo === 'paso') {
+          if (e.tipo === 'ejecucion') {
+            ejecucionId = e.id
+          } else if (e.tipo === 'paso') {
             ultimaNota = null
             const titulo = (PASOS[e.herramienta] ?? (() => e.herramienta))(e.entrada)
             const { li, cuerpo } = item('', titulo, e.herramienta)
@@ -539,6 +548,10 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
             contador.textContent = `${pasos.length} ${pasos.length === 1 ? 'paso' : 'pasos'}`
             mostrarPensando()
           } else if (e.tipo === 'dato') {
+            if (e.herramienta === 'bloquear_origen') {
+              if (e.datos?.hasta) item('hecho', `Bloqueado hasta el ${fecha.format(new Date(e.datos.hasta))}`)
+              return
+            }
             const paso = pasos.find((p) => p.herramienta === e.herramienta && !p.conDato)
             if (!paso) return
             paso.conDato = true
@@ -551,33 +564,80 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
             ultimaNota = { li, texto: e.texto }
             mostrarPensando()
           } else if (e.tipo === 'aprobacion') {
+            ultimaNota = null
+            pensando?.remove()
+            esperandoDecision = true
             item('alerta', `Propone bloquear a ${e.origen}`, 'Esperando tu decisión')
-            $('ap-origen')!.textContent = e.origen
-            $('ap-motivo')!.textContent = e.motivo
-            dialogo.showModal()
+            abrirAprobacion(e.origen, e.motivo)
           } else if (e.tipo === 'decision') {
+            esperandoDecision = false
             item(e.aprobado ? 'hecho' : '', e.aprobado ? `Aprobaste el bloqueo de ${e.origen}` : `Rechazaste el bloqueo de ${e.origen}`)
+            mostrarPensando()
           } else if (e.tipo === 'fin') {
             pensando?.remove()
             window.clearInterval(reloj)
-            if (ultimaNota) {
+            if (e.estado === 'terminada' && ultimaNota) {
               ultimaNota.li.remove()
               pintarRespuesta(ultimaNota.texto)
-            } else if (!e.ok) {
-              respuesta.replaceChildren(el('p', 'fallo', 'El agente no terminó su análisis. Intenta de nuevo con una pregunta más concreta.'))
+            } else if (e.estado === 'fallida') {
+              respuesta.replaceChildren()
+              mostrarFallo(e.error ?? 'El agente no terminó su análisis.')
             }
-            const consultas = pasos.length
-            estadisticas.textContent = `${consultas} ${consultas === 1 ? 'consulta' : 'consultas'} · ${e.segundos} s · US$${e.costoUsd.toFixed(2)}`
+            const segundos = Math.round((Date.now() - inicio) / 1000)
+            estadisticas.textContent = `${e.iteraciones} ${e.iteraciones === 1 ? 'turno' : 'turnos'} · ${segundos} s · US$${e.costoUsd.toFixed(2)}`
           } else if (e.tipo === 'error') {
             pensando?.remove()
             window.clearInterval(reloj)
-            respuesta.append(el('p', 'fallo', `Algo falló: ${e.mensaje}`))
+            mostrarFallo(`Algo falló: ${e.mensaje}`)
           }
         }
 
-        async function preguntar(pregunta: string, reiniciar = false) {
-          if (ocupado || !pregunta.trim()) return
+        async function consumir(res: Response) {
+          if (!res.ok || !res.body) {
+            const cuerpo = await res.json().catch(() => ({}))
+            throw new Error(cuerpo.error ?? `HTTP ${res.status}`)
+          }
+          const lector = res.body.pipeThrough(new TextDecoderStream()).getReader()
+          let bufer = ''
+          while (true) {
+            const { value, done } = await lector.read()
+            if (done) break
+            bufer += value
+            let corte: number
+            while ((corte = bufer.indexOf('\n\n')) >= 0) {
+              const bloque = bufer.slice(0, corte)
+              bufer = bufer.slice(corte + 2)
+              for (const linea of bloque.split('\n')) {
+                if (linea.startsWith('data: ')) manejar(JSON.parse(linea.slice(6)) as Evento)
+              }
+            }
+          }
+        }
+
+        // Una transmisión termina al acabar el análisis o al pausarse por un
+        // bloqueo; en el segundo caso la pantalla sigue bloqueada hasta decidir.
+        async function transmision(peticion: () => Promise<Response>) {
           bloquear(true)
+          try {
+            await consumir(await peticion())
+          } catch (err) {
+            pensando?.remove()
+            window.clearInterval(reloj)
+            mostrarFallo(err instanceof Error ? err.message : String(err))
+            esperandoDecision = false
+          } finally {
+            if (!esperandoDecision) {
+              pensando?.remove()
+              window.clearInterval(reloj)
+              bloquear(false)
+              input.focus()
+            }
+          }
+        }
+
+        function preguntar(pregunta: string) {
+          if (!pregunta.trim() || input.disabled) return
+          ejecucionId = null
           pasos = []
           ultimaNota = null
           bitacora.replaceChildren()
@@ -587,73 +647,33 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           mostrarPensando()
           mostrarEspera()
           input.value = ''
-          try {
-            const res = await fetch('/api/admin/analista', {
+          return transmision(() =>
+            fetch('/api/admin/analista', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pregunta, nueva: reiniciar }),
+              body: JSON.stringify({ pregunta }),
             })
-            if (!res.ok || !res.body) {
-              const cuerpo = await res.json().catch(() => ({}))
-              throw new Error(cuerpo.error ?? `HTTP ${res.status}`)
-            }
-            const lector = res.body.pipeThrough(new TextDecoderStream()).getReader()
-            let bufer = ''
-            while (true) {
-              const { value, done } = await lector.read()
-              if (done) break
-              bufer += value
-              let corte: number
-              while ((corte = bufer.indexOf('\n\n')) >= 0) {
-                const bloque = bufer.slice(0, corte)
-                bufer = bufer.slice(corte + 2)
-                for (const linea of bloque.split('\n')) {
-                  if (linea.startsWith('data: ')) manejar(JSON.parse(linea.slice(6)) as Evento)
-                }
-              }
-            }
-          } catch (err) {
-            manejar({ tipo: 'error', mensaje: err instanceof Error ? err.message : String(err) })
-          } finally {
-            pensando?.remove()
-            window.clearInterval(reloj)
-            if (dialogo.open) dialogo.close()
-            bloquear(false)
-            input.focus()
-          }
+          )
         }
 
-        async function decidir(aprobado: boolean) {
-          dialogo.close()
-          await fetch('/api/admin/analista/decision', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ aprobado }),
-          }).catch(() => {})
+        function decidir(aprobado: boolean) {
+          if (dialogo.open) dialogo.close()
+          const id = ejecucionId
+          if (!id) return
+          return transmision(() =>
+            fetch('/api/admin/analista/decision', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id, aprobado }),
+            })
+          )
         }
 
-        // "Nueva" no llama al servidor: marca que la próxima pregunta reinicia
-        // la conversación (seudónimos y memoria del agente incluidos).
-        let siguienteNueva = false
-        const tomarNueva = () => {
-          const v = siguienteNueva
-          siguienteNueva = false
-          return v
-        }
         form.addEventListener('submit', (ev) => {
           ev.preventDefault()
-          preguntar(input.value, tomarNueva())
+          preguntar(input.value)
         })
-        sugerencias.forEach((b) => b.addEventListener('click', () => preguntar(b.dataset.pregunta ?? '', tomarNueva())))
-        nueva.addEventListener('click', () => {
-          siguienteNueva = true
-          pasos = []
-          bitacora.replaceChildren(el('li', 'text-ink-200 text-[17px] pt-2', 'Conversación nueva. El agente empieza sin recordar lo anterior.'))
-          contador.textContent = ''
-          estadisticas.textContent = ''
-          input.focus()
-        })
-        if (!conApiKey) bloquear(true)
+        sugerencias.forEach((b) => b.addEventListener('click', () => preguntar(b.dataset.pregunta ?? '')))
         $('ap-aprobar')!.addEventListener('click', () => decidir(true))
         $('ap-rechazar')!.addEventListener('click', () => decidir(false))
         // Esc cierra el diálogo: se trata como rechazo, nunca como aprobación.
@@ -661,6 +681,34 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           ev.preventDefault()
           decidir(false)
         })
+        $('abrir-historial')!.addEventListener('click', () => historial.showModal())
+        $('cerrar-historial')!.addEventListener('click', () => historial.close())
+
+        bloquear(false)
+
+        // Un bloqueo que quedó esperando (pestaña cerrada, o propuesto desde
+        // otro dispositivo) se retoma aquí: la ejecución vive en la base.
+        const { pendienteId, pendienteOrigen, pendienteMotivo, pendientePregunta } = pie.dataset
+        if (pendienteId && pendienteOrigen && pendienteMotivo) {
+          ejecucionId = pendienteId
+          esperandoDecision = true
+          bloquear(true)
+          bitacora.replaceChildren()
+          item('pregunta', pendientePregunta ?? 'Análisis anterior')
+          item('alerta', `Propone bloquear a ${pendienteOrigen}`, 'Quedó esperando tu decisión')
+          respuesta.replaceChildren()
+          const caja = el('div', 'esperando')
+          caja.append(
+            el('p', 'etiqueta', 'Pendiente'),
+            el('p', 'veredicto mt-3', 'Un análisis anterior quedó esperando tu decisión.'),
+          )
+          const boton = el('button', 'mt-6 h-12 px-6 rounded-xl bg-ember text-ink-950 font-semibold text-[16px]', 'Revisar el bloqueo')
+          boton.type = 'button'
+          boton.addEventListener('click', () => abrirAprobacion(pendienteOrigen, pendienteMotivo))
+          caja.append(boton)
+          respuesta.append(caja)
+          inicio = Date.now()
+        }
       }
     </script>
   </body>
