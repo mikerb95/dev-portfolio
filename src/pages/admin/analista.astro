@@ -1,21 +1,39 @@
 ---
-// Pantalla del analista del micro-SIEM, pensada para proyectar en una charla
-// ante público que no es técnico. Mismo agente que `npm run analista`, con la
-// bitácora de pasos, las cifras y el bloqueo con aprobación a la vista.
+// Analista del micro-SIEM: agente de IA que lee los ataques registrados,
+// explica lo que encontró y puede PROPONER bloqueos, que siempre decide el
+// administrador. Plan y decisiones en docs/plan-analista-siem.md.
 //
-// No usa AdminLayout a propósito: el sidebar del panel enseñaría a la sala la
-// lista de módulos privados (finanzas, bóveda, clientes). Toma los tokens del
-// sitio desde global.css y nada más.
-//
-// Solo funciona con `npm run dev` (ver api/admin/analista/index.ts).
+// Pantalla completa y sin AdminLayout a propósito: se usa también para
+// proyectar en charlas, y el sidebar del panel enseñaría a la sala la lista
+// de módulos privados (finanzas, bóveda, clientes). Toma los tokens del sitio
+// desde global.css y nada más.
 import '../../styles/global.css'
 import { serverEnv } from '../../lib/env'
+import { listarEjecuciones, topeDiarioUsd, type ResumenEjecucion } from '../../lib/analista/ejecuciones'
 
-const disponible = import.meta.env.DEV
-// El analista solo paga con una API key de Claude Platform (ver
-// agents/analista-siem/credencial.ts). Sin ella, la pantalla lo dice de
-// entrada en vez de fallar a mitad de la charla.
-const conApiKey = disponible && (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().startsWith('sk-ant-')
+// Solo paga con una API key de Claude Platform (lib/analista/credencial.ts).
+// Sin ella, la pantalla lo dice de entrada en vez de fallar a mitad.
+const conApiKey = (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().startsWith('sk-ant-')
+
+// El historial es accesorio: si la base no responde, la pantalla carga igual.
+let historial: ResumenEjecucion[] = []
+try {
+  historial = await listarEjecuciones(15)
+} catch {
+  historial = []
+}
+const pendiente = historial.find((h) => h.estado === 'esperando_aprobacion' && h.pendiente)
+const tope = topeDiarioUsd()
+
+const fecha = new Intl.DateTimeFormat('es-CO', {
+  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota',
+})
+const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
+  corriendo: 'En curso',
+  esperando_aprobacion: 'Espera tu decisión',
+  terminada: 'Terminado',
+  fallida: 'Falló',
+}
 ---
 
 <!doctype html>
@@ -26,19 +44,6 @@ const conApiKey = disponible && (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().st
     <title>Analista de seguridad · CodeByMike</title>
   </head>
   <body class="grain bg-ink-950 text-ink-50 h-screen overflow-hidden">
-    {!disponible ? (
-      <main class="h-full grid place-items-center px-6 text-center">
-        <div class="max-w-lg">
-          <p class="font-mono text-[12px] uppercase tracking-[.22em] text-ink-200">Analista del micro-SIEM</p>
-          <h1 class="mt-4 font-serif text-5xl text-ink-50">Solo en local</h1>
-          <p class="mt-4 text-ink-100 text-lg leading-relaxed">
-            El agente corre en la máquina del administrador, no en producción. Arranca el sitio con
-            <code class="font-mono text-cyan">npm run dev</code> y abre esta página ahí.
-          </p>
-          <a href="/admin" class="mt-8 inline-flex h-10 items-center px-5 rounded-full border border-white/10 bg-white/[.03] text-sm hover:bg-white/[.06]">Volver al panel</a>
-        </div>
-      </main>
-    ) : (
       <div class="analista h-full grid grid-rows-[auto_minmax(0,1fr)_auto]">
         <header class="px-6 md:px-10 pt-6 pb-5 flex flex-wrap items-end justify-between gap-4 border-b border-white/5">
           <div>
@@ -65,8 +70,11 @@ const conApiKey = disponible && (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().st
             )}
             <span class="chip">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-              Las IPs no salen de esta máquina
+              El modelo nunca ve una IP
             </span>
+            <button type="button" id="abrir-historial" class="chip chip-boton">
+              Historial{historial.length > 0 && <span class="font-mono text-ink-200">{historial.length}</span>}
+            </button>
           </div>
         </header>
 
@@ -105,11 +113,18 @@ const conApiKey = disponible && (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().st
           </section>
         </main>
 
-        <footer class="px-6 md:px-10 pb-6" data-con-api-key={conApiKey ? 'si' : 'no'}>
+        <footer
+          class="px-6 md:px-10 pb-6"
+          data-con-api-key={conApiKey ? 'si' : 'no'}
+          data-pendiente-id={pendiente?.id}
+          data-pendiente-origen={pendiente?.pendiente?.origen}
+          data-pendiente-motivo={pendiente?.pendiente?.motivo}
+          data-pendiente-pregunta={pendiente?.pregunta}
+        >
           {!conApiKey && (
             <p class="fallo mb-3">
-              Falta <code class="font-mono">ANTHROPIC_API_KEY</code> en el <code class="font-mono">.env</code>. Créala en
-              platform.claude.com → API keys y reinicia <code class="font-mono">npm run dev</code>. Sin ella el analista no
+              Falta <code class="font-mono">ANTHROPIC_API_KEY</code> en las variables de entorno (Vercel, o el
+              <code class="font-mono">.env</code> en local). Créala en platform.claude.com → API keys. Sin ella el analista no
               arranca: nunca usa una cuenta personal de claude.ai.
             </p>
           )}
@@ -131,9 +146,6 @@ const conApiKey = disponible && (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().st
             />
             <button id="enviar" type="submit" class="h-14 px-7 rounded-2xl bg-cyan text-ink-950 font-semibold text-[16px] hover:bg-cyan-glow disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               Preguntar
-            </button>
-            <button id="nueva" type="button" class="h-14 px-5 rounded-2xl border border-white/10 bg-white/[.03] text-ink-100 text-[15px] hover:bg-white/[.06] disabled:opacity-40 transition-colors" title="Empezar una conversación nueva">
-              Nueva
             </button>
           </form>
         </footer>
@@ -157,8 +169,35 @@ const conApiKey = disponible && (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().st
             <button type="button" id="ap-aprobar" class="h-12 px-6 rounded-xl bg-ember text-ink-950 font-semibold text-[16px] hover:brightness-110 transition">Aprobar bloqueo</button>
           </div>
         </dialog>
+
+        <dialog id="historial" class="historial" aria-labelledby="t-historial">
+          <div class="flex items-center justify-between gap-4">
+            <h2 id="t-historial" class="font-serif text-[36px] leading-none">Historial</h2>
+            <button type="button" id="cerrar-historial" class="chip chip-boton">Cerrar</button>
+          </div>
+          <p class="mt-2 text-[14px] text-ink-200">Últimos análisis. Tope de gasto: US${tope.toFixed(2)} cada 24 horas. Se borran solos a los 30 días.</p>
+          {historial.length === 0 ? (
+            <p class="mt-8 text-ink-200">Todavía no hay análisis.</p>
+          ) : (
+            <ol class="mt-6 grid gap-3">
+              {historial.map((h) => (
+                <li>
+                  <details class="registro">
+                    <summary>
+                      <span class={`estado estado-${h.estado}`}>{ETIQUETA_ESTADO[h.estado]}</span>
+                      <span class="min-w-0 flex-1 truncate text-ink-50">{h.pregunta}</span>
+                      <span class="font-mono text-[12px] text-ink-200 shrink-0">{fecha.format(h.creada)} · US${h.costoUsd.toFixed(2)}</span>
+                    </summary>
+                    <div class="mt-3 text-[15px] leading-relaxed text-ink-100 whitespace-pre-line">
+                      {h.respuesta ?? h.error ?? (h.pendiente ? `Propone bloquear a ${h.pendiente.origen}: ${h.pendiente.motivo}` : 'Sin respuesta todavía.')}
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ol>
+          )}
+        </dialog>
       </div>
-    )}
 
     <style>
       .analista { font-size: 17px; }
@@ -168,6 +207,25 @@ const conApiKey = disponible && (serverEnv('ANTHROPIC_API_KEY') ?? '').trim().st
         background: rgb(255 255 255 / .03); border: 1px solid rgb(255 255 255 / .08);
         color: var(--color-ink-100);
       }
+      .chip-boton { cursor: pointer; transition: background .2s, border-color .2s; }
+      .chip-boton:hover { background: rgb(0 242 255 / .08); border-color: rgb(0 242 255 / .3); }
+      .historial {
+        margin: auto; width: min(820px, calc(100vw - 2rem)); max-height: min(80vh, 760px);
+        padding: 2rem; border-radius: 1.5rem; overflow-y: auto;
+        background: var(--color-ink-850); color: var(--color-ink-50);
+        border: 1px solid rgb(255 255 255 / .08); box-shadow: 0 30px 80px -20px rgb(0 0 0 / .6);
+      }
+      .historial::backdrop { background: rgb(7 7 10 / .72); backdrop-filter: blur(6px); }
+      .registro { border-radius: 1rem; padding: .85rem 1rem; background: rgb(255 255 255 / .025); border: 1px solid rgb(255 255 255 / .06); }
+      .registro summary { display: flex; align-items: center; gap: .75rem; cursor: pointer; list-style: none; font-size: 15px; }
+      .registro summary::-webkit-details-marker { display: none; }
+      .estado { flex: none; display: inline-flex; align-items: center; gap: .4rem; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-ink-200); }
+      .estado::before { content: ''; width: .45rem; height: .45rem; border-radius: 999px; background: var(--color-ink-300); }
+      .estado-terminada::before { background: var(--color-lime); }
+      .estado-fallida::before { background: var(--color-ember); }
+      .estado-esperando_aprobacion { color: var(--color-ember); }
+      .estado-esperando_aprobacion::before { background: var(--color-ember); }
+      .estado-corriendo::before { background: var(--color-cyan); }
       .chip-alerta { border-color: rgb(255 107 61 / .35); color: var(--color-ink-50); }
       /* La barra de desarrollo de Astro se montaba encima del campo de
          pregunta, y en una charla se proyecta todo lo que está en pantalla. */
