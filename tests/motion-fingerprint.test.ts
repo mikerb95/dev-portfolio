@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  BITS_MAX,
   CLAVES_BASICAS,
   LIBRO,
   LIENZO,
@@ -39,6 +42,20 @@ describe('libro de señales', () => {
 
   it('las claves básicas nunca incluyen las pesadas', () => {
     for (const pesada of ['canvas', 'audio', 'fonts']) expect(CLAVES_BASICAS).not.toContain(pesada)
+  })
+})
+
+describe('fondo de escala del medidor', () => {
+  it('BITS_MAX es la suma real de los pesos del recolector', () => {
+    const fuente = readFileSync(join(__dirname, '../src/lib/fingerprint-client.ts'), 'utf8')
+    const pesos = [...fuente.matchAll(/weight: (\d+) \}/g)].map((m) => Number(m[1]))
+    expect(pesos).toHaveLength(12)
+    expect(pesos.reduce((a, b) => a + b, 0)).toBe(BITS_MAX)
+  })
+
+  it('las claves básicas del libro existen entre las del recolector', () => {
+    const fuente = readFileSync(join(__dirname, '../src/lib/fingerprint-client.ts'), 'utf8')
+    for (const clave of [...CLAVES_BASICAS, ...LIBRO.flat()]) expect(fuente).toContain(`key: '${clave}'`)
   })
 })
 

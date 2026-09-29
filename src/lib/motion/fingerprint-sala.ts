@@ -31,6 +31,14 @@ export const CLAVES_BASICAS = [
   'webgl', 'screen', 'timezone', 'hwConcurrency', 'deviceMemory', 'platform', 'languages', 'touch', 'ua',
 ] as const
 
+/**
+ * Suma de los pesos de las 12 señales de `collectSignals`: el fondo de
+ * escala del medidor. Es una copia a propósito (el recolector solo corre en
+ * el navegador y no se importa desde aquí); un test la compara contra el
+ * código del recolector para que no se desalineen.
+ */
+export const BITS_MAX = 38
+
 export type EstadoLinea = { leidas: number; total: number; soloSala: boolean }
 
 /** Por cada línea del libro, cuántas de sus señales ya se leyeron. */
