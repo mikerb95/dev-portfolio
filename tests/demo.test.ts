@@ -135,6 +135,12 @@ describe('demo · rutas vetadas aunque sean GET', () => {
     }
   })
 
+  it('bloquea el analista del micro-SIEM: gasta créditos reales de la API', () => {
+    for (const p of ['/admin/analista', '/api/admin/analista', '/api/admin/analista/decision']) {
+      expect(isDemoBlockedPath(p), p).toBe(true)
+    }
+  })
+
   it('deja pasar las páginas que la demo existe para mostrar', () => {
     for (const p of [
       '/admin',

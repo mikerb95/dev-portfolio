@@ -120,6 +120,10 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   // panel donde se leen los PINes vivos.
   /^\/api\/sustentacion\/acceso/,
   /^\/sustentacion\/entrar/,
+  // Analista del micro-SIEM: cada análisis gasta créditos reales de la API de
+  // Claude y lee la base de seguridad real por sus herramientas. Un visitante
+  // de la demo no gasta mi dinero ni ve mis ataques.
+  /^\/(api\/)?admin\/analista/,
 ]
 
 /** ¿La ruta está vetada en modo demo (aun siendo GET)? */
