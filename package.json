@@ -28,6 +28,7 @@
     "test:contracts": "vitest run tests/contracts.test.ts",
     "seed:demo": "node scripts/seed-demo.mjs",
     "analista": "tsx agents/analista-siem/index.ts",
+    "analista:copia": "node scripts/analista-copia.mjs",
     "analista:prueba-real": "tsx scripts/analista-prueba-real.ts",
     "medidor:build": "node scripts/build-medidor.mjs",
     "seo:indexnow": "node scripts/submit-indexnow.mjs",

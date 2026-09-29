@@ -9,6 +9,7 @@
 // desde global.css y nada más.
 import '../../styles/global.css'
 import { serverEnv } from '../../lib/env'
+import { realDbIsLocal } from '../../db'
 import { listarEjecuciones, topeDiarioUsd, type ResumenEjecucion } from '../../lib/analista/ejecuciones'
 
 // Solo paga con una API key de Claude Platform (lib/analista/credencial.ts).
@@ -24,6 +25,10 @@ try {
 }
 const pendiente = historial.find((h) => h.estado === 'esperando_aprobacion' && h.pendiente)
 const tope = topeDiarioUsd()
+// En la laptop (npm run dev) la base es local: con `npm run analista:copia`
+// trae la semana real de producción. La pantalla lo dice, y un bloqueo
+// aprobado ahí no toca el sitio.
+const esCopia = realDbIsLocal
 
 const fecha = new Intl.DateTimeFormat('es-CO', {
   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota',
@@ -53,10 +58,17 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
             </h1>
           </div>
           <div class="flex flex-wrap items-center gap-2 text-[13px]">
-            <span class="chip">
-              <span class="w-2 h-2 rounded-full bg-lime pulse-dot"></span>
-              Datos reales del sitio
-            </span>
+            {esCopia ? (
+              <span class="chip" title="Base local con la semana real copiada de producción (npm run analista:copia)">
+                <span class="w-2 h-2 rounded-full bg-violet pulse-dot"></span>
+                Copia de los datos reales
+              </span>
+            ) : (
+              <span class="chip">
+                <span class="w-2 h-2 rounded-full bg-lime pulse-dot"></span>
+                Datos reales del sitio
+              </span>
+            )}
             {conApiKey ? (
               <span class="chip" id="facturacion" title="El agente usa una API key de Claude Platform, nunca una cuenta personal">
                 <span class="w-2 h-2 rounded-full bg-cyan"></span>
@@ -161,8 +173,9 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           <p class="mt-5 text-[13px] font-mono uppercase tracking-[.18em] text-ink-200">Su argumento</p>
           <p id="ap-motivo" class="mt-2 rounded-xl bg-white/[.03] border border-white/10 px-5 py-4 text-[19px] leading-relaxed text-ink-50"></p>
           <p class="mt-4 text-[15px] leading-relaxed text-ink-200">
-            Si lo apruebas, ese origen no podrá entrar al sitio durante 1 hora. Si reincide, el castigo sube a 24 horas y
-            después a 7 días. Nunca es permanente.
+            {esCopia
+              ? 'Estás sobre una copia: aprobar bloquea en la base local y no afecta al sitio real. En producción, ese origen no podría entrar durante 1 hora (24 horas si reincide, luego 7 días; nunca es permanente).'
+              : 'Si lo apruebas, ese origen no podrá entrar al sitio durante 1 hora. Si reincide, el castigo sube a 24 horas y después a 7 días. Nunca es permanente.'}
           </p>
           <div class="mt-7 flex justify-end gap-3">
             <button type="button" id="ap-rechazar" class="h-12 px-6 rounded-xl border border-white/10 bg-white/[.03] text-ink-50 text-[16px] hover:bg-white/[.07] transition-colors">Rechazar</button>

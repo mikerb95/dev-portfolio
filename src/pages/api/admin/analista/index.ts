@@ -8,6 +8,7 @@ import {
 } from '../../../../lib/analista/motor-api'
 import { transmitir } from '../../../../lib/analista/sse'
 import { recordAdminEvent } from '../../../../lib/security/events'
+import { correrConAgentSdk } from './_agent-sdk'
 
 // Lanza un análisis del micro-SIEM y transmite en vivo lo que hace el agente.
 // Protegido por el middleware de /api/admin y vetado en modo demo
@@ -20,6 +21,14 @@ export const POST: APIRoute = async ({ request }) => {
   const body = await request.json().catch(() => ({}))
   const pregunta = typeof body?.pregunta === 'string' ? body.pregunta.trim().slice(0, 500) : ''
   if (!pregunta) return json(400, { error: 'Falta la pregunta.' })
+
+  // Prototipo del meetup (Agent SDK): solo en local. Mismas herramientas y
+  // mismo prompt, otro motor; no deja ejecución en la base.
+  if (body?.motor === 'agent-sdk') {
+    if (!import.meta.env.DEV) return json(404, { error: 'El motor Agent SDK solo corre en local (npm run dev).' })
+    await recordAdminEvent(request, 'analista.analisis')
+    return transmitir((enviar) => correrConAgentSdk(pregunta, enviar))
+  }
 
   let ejecucion
   try {
