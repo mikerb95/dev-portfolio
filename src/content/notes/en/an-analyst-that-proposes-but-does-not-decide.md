@@ -7,7 +7,7 @@ lang: en
 translationOf: un-analista-que-propone-pero-no-decide
 decision:
   problem: "Hundreds of security events a week that nobody has time to read."
-  rejected: "An agent that blocks on its own, or one that runs in a single pass inside a serverless function"
+  rejected: "An agent that blocks alone or runs in one pass"
   chosen: "A custom loop that pauses on every block and resumes when I decide"
 ---
 

@@ -7,7 +7,7 @@ lang: es
 translationOf: an-analyst-that-proposes-but-does-not-decide
 decision:
   problem: "Cientos de eventos de seguridad por semana que nadie tiene tiempo de leer."
-  rejected: "Un agente que bloquea solo, o uno que corre de un tirón en una función serverless"
+  rejected: "Un agente que bloquea solo o que corre de un tirón"
   chosen: "Un bucle propio que se pausa ante cada bloqueo y lo retoma cuando decido yo"
 ---
 
