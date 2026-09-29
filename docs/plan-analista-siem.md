@@ -1,6 +1,6 @@
 # Plan: analista del micro-SIEM (agente de IA en producción)
 
-Estado: **aprobado** el 28 sep 2026. Fase 0 ✅. En curso: fase 1.
+Estado: **aprobado** el 28 sep 2026. Fases 0 y 1 ✅. Siguiente: fase 2.
 
 ## Qué es
 
@@ -51,8 +51,9 @@ se ejecuta; rechazado: `is_error` con el motivo).
 Reglas del bucle (Opus 5.5):
 - Historial **solo por anexión**: `response.content` se guarda tal cual,
   bloques de thinking incluidos. Editar turnos previos invalida el thinking.
-- Sin `tool_choice` forzado (400 en Opus 5.5); `strict: true` en las
-  herramientas.
+- Sin `tool_choice` forzado (400 en Opus 5.5). La entrada de cada
+  herramienta se valida con su esquema Zod antes de ejecutar (en vez de
+  `strict: true`, que no admite todas las restricciones de los esquemas).
 - `stop_reason`: `end_turn` termina, `tool_use` ejecuta, `refusal` y
   `max_tokens` terminan con error visible; nunca se ejecutan herramientas de
   un turno cortado.
@@ -126,7 +127,7 @@ Retención: el cron de purga existente borra ejecuciones de más de 30 días.
 | Fase | Entrega | Verificación |
 |---|---|---|
 | 0 | Este plan | Aprobación del administrador |
-| 1 | Herramientas neutrales + adaptador API + bucle con pausa/reanudación + tabla y migración | Tests puros del bucle (cliente falso: pausa, reanudación, rechazo, `refusal`, `max_tokens`) e integración con libSQL temporal |
+| 1 ✅ | Herramientas neutrales + adaptador API + bucle con pausa/reanudación + tabla y migración | Tests puros del bucle (cliente falso: pausa, reanudación, rechazo, `refusal`, `max_tokens`) e integración con libSQL temporal |
 | 2 | Rutas y pantalla en producción (SSE, aprobación asíncrona, historial de ejecuciones) | E2E Playwright con el modelo simulado; build sin la Agent SDK en el bundle |
 | 3 | Seguridad y costos: test adversarial, topes, veto en demo, rate limit, auditoría | Tests + una corrida real con la API key |
 | 4 | Meetup: adaptador Agent SDK sobre las mismas herramientas; modo copia (foto de la última semana en la base local) y modo en vivo | Ensayo completo en la laptop |
@@ -135,6 +136,27 @@ Retención: el cron de purga existente borra ejecuciones de más de 30 días.
 
 Para el 1 oct son imprescindibles las fases 1 a 4. La 5 y la 6 pueden ir
 después.
+
+## Fase 1: qué quedó (28 sep 2026)
+
+Todo en `src/lib/analista/`:
+
+| Módulo | Qué hace |
+|---|---|
+| `herramientas.ts` | Las 6 herramientas, sin atarse a ningún motor. Los campos que escribe el atacante viajan dentro de `controladoPorElAtacante` con un aviso. |
+| `prompt.ts` | System prompt único para los dos motores, con la regla de datos hostiles. |
+| `bucle.ts` | Bucle con pausa ante `bloquear_origen` y `decidir()` para retomar. Sin BD ni red. |
+| `ejecuciones.ts` | Tabla `analista_ejecuciones`, reclamo atómico de la propuesta, tope de 24 h, historial sin IPs, purga a 30 días. |
+| `motor-api.ts` | Conecta todo con la API (Opus 5.5, thinking adaptativo, effort high, caché de system + herramientas, fallback de servidor). |
+| `costo.ts`, `credencial.ts`, `seudonimos.ts` | Tarifa y costo, solo API key, alias persistibles. |
+
+Migración `drizzle/0037_free_darkhawk.sql` (solo `CREATE TABLE` + 2 índices),
+**generada pero no aplicada**. Tests: `tests/analista-bucle.test.ts`,
+`analista-ejecuciones.test.ts` (libSQL con la migración real),
+`analista-seudonimos.test.ts`, `analista-credencial.test.ts`.
+
+El prototipo del meetup (`agents/analista-siem/`) ya usa estas mismas
+herramientas y el mismo prompt.
 
 ## Decisiones tomadas
 
