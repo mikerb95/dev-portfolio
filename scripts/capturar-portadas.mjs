@@ -32,8 +32,9 @@ const env = Object.fromEntries(
 )
 const db = createClient({ url: env.TURSO_DATABASE_URL, authToken: env.TURSO_AUTH_TOKEN })
 
-// Proyectos ocultos o cuyo dominio ya no existe no se capturan.
-const EXCLUIR = new Set(['eko', 'residentialaccess', 'capacitaciones-ia'])
+// Proyectos ocultos, con dominio muerto o con el sitio devolviendo 500 no se capturan:
+// una portada de error es peor que no tener portada.
+const EXCLUIR = new Set(['eko', 'residentialaccess', 'capacitaciones-ia', 'sena-uptime'])
 const { rows } = await db.execute('select id, slug, preview_url from projects where visible = 1 and preview_url is not null order by id')
 // slidehub y SlideHub apuntan al mismo sitio y comparten archivo en minúsculas.
 const porArchivo = new Map()
@@ -55,6 +56,7 @@ if (!APLICAR) {
     try {
       const res = await page.goto(p.url, { waitUntil: 'load', timeout: 30000 })
       await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {})
+      await page.getByRole('button', { name: /^aceptar$/i }).first().click({ timeout: 1500 }).catch(() => {})
       await page.waitForTimeout(3000)
       const png = await page.screenshot({ type: 'png' })
       await sharp(png).webp({ quality: 82 }).toFile(join(TMP, `portada_${p.slug}.webp`))
