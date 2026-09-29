@@ -21,6 +21,7 @@ import { cronSecretOk } from '../../../lib/cron-auth'
 import { sendEmail, sendPush } from '../../../lib/notify'
 import { conRegistro } from '../../../lib/cron-runs'
 import { siteUrl } from '../../../lib/site'
+import { purgarEjecuciones } from '../../../lib/analista/ejecuciones'
 
 // Cron de seguridad. Ejecuta, en orden: auto-block (Fase 2), purga por retención,
 // rollups horarios/diarios y detección de anomalías con alertas (Fase 3).
@@ -78,6 +79,14 @@ async function runRollup() {
   const cutoff = new Date(now.getTime() - EVENT_RETENTION_DAYS * 86_400_000)
   await db.delete(securityEvents).where(lt(securityEvents.at, cutoff))
 
+  // 5b) Análisis del analista de IA de más de 30 días. Guardan la tabla
+  //     alias → IP de cada análisis: no hay motivo para conservarla. Fail-soft:
+  //     que falle esta limpieza no debe tumbar el resto del cron.
+  const analisisPurgados = await purgarEjecuciones(now).catch((e) => {
+    console.error('[security-rollup] purga del analista', e)
+    return 0
+  })
+
   // 6) Alertas. El overflow del auto-block es crítico (posible ataque
   //    distribuido → hace falta la capa 0 / WAF). Las anomalías nuevas se
   //    agrupan en una sola notificación (anti-fatiga ya aplicado en persist).
@@ -107,7 +116,7 @@ async function runRollup() {
     ]).catch(() => {})
   }
 
-  return { ok: true, ...auto, anomalies: freshAnomalies.length }
+  return { ok: true, ...auto, anomalies: freshAnomalies.length, analisisPurgados }
 }
 
 // Disparo por cron-job.org / Vercel cron.

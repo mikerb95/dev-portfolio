@@ -15,7 +15,11 @@ import { join } from 'node:path'
 // 2. **`astro dev`, no `astro preview`.** El adaptador de Vercel no soporta
 //    `astro preview`; levantar el build requeriría `vercel dev`. El middleware
 //    (que es lo que estos tests verifican) corre igual en dev.
-const PORT = 4331
+// Configurable para poder correr la suite con otro `astro dev` ocupando el
+// puerto por defecto: con `reuseExistingServer`, Playwright reutilizaría ese
+// servidor ajeno, que no tiene el entorno de abajo (ni la API de Claude falsa).
+const PORT = Number(process.env.E2E_PORT ?? 4331)
+const FAKE_ANTHROPIC_PORT = Number(process.env.E2E_FAKE_ANTHROPIC_PORT ?? 4599)
 const E2E_DIR = join(process.cwd(), '.e2e')
 
 // Dos modos de base, mismo suite de tests:
@@ -44,6 +48,8 @@ export const E2E = {
   /** Prefijo de los datos de la base "principal": jamás debe verse en la demo. */
   sentinel: 'CENTINELA-REAL ',
   authSecret: 'e2e-auth-secret-no-usado-en-produccion-0123456789',
+  /** API de Claude falsa (e2e/fake-anthropic.mjs): el analista nunca gasta créditos en los e2e. */
+  fakeAnthropicURL: `http://127.0.0.1:${FAKE_ANTHROPIC_PORT}`,
 }
 
 export default defineConfig({
@@ -63,7 +69,16 @@ export default defineConfig({
 
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 
-  webServer: {
+  webServer: [
+  {
+    // API de Claude falsa para el analista del micro-SIEM. Va primero para que
+    // esté arriba cuando el sitio arranque.
+    command: `node e2e/fake-anthropic.mjs`,
+    url: `${E2E.fakeAnthropicURL}/salud`,
+    reuseExistingServer: !process.env.CI,
+    env: { FAKE_ANTHROPIC_PORT: String(FAKE_ANTHROPIC_PORT) },
+  },
+  {
     // La siembra va aquí y no en globalSetup a propósito: Playwright levanta el
     // webServer ANTES de ejecutar globalSetup, así que sembrar allí llegaría
     // tarde y el servidor arrancaría contra una base que no existe.
@@ -103,6 +118,12 @@ export default defineConfig({
       ALLOWED_GITHUB_LOGINS: 'nadie-e2e',
       // La bóveda necesita una clave válida (64 hex) o el módulo revienta al importarse.
       ENCRYPTION_KEY: 'e2e'.padEnd(64, '0'),
+      // El SDK de Anthropic lee ANTHROPIC_BASE_URL de process.env: el analista
+      // habla con la API falsa. La clave es de mentira; si el .env local trae
+      // una real, igual solo viaja a 127.0.0.1.
+      ANTHROPIC_BASE_URL: E2E.fakeAnthropicURL,
+      ANTHROPIC_API_KEY: 'sk-ant-e2e-falsa',
     },
   },
+  ],
 })
