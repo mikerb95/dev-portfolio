@@ -39,6 +39,7 @@
     "guion:check": "node scripts/sync-guion.mjs --check"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
     "@astrojs/vercel": "^11.0.3",
     "@auth/core": "^0.37.4",
     "@fingerprintjs/fingerprintjs": "^5.2.0",
