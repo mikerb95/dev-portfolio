@@ -10,6 +10,8 @@ import { existsSync, mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { query, type CanUseTool } from '@anthropic-ai/claude-agent-sdk'
+import { serverEnv } from '../../src/lib/env'
+import { entornoAislado, exigirApiKey, verificarFuente } from './credencial'
 import { crearServidorSiem, HERRAMIENTA_BLOQUEO, HERRAMIENTAS_LECTURA, SERVIDOR } from './herramientas'
 import { Seudonimos } from './seudonimos'
 
@@ -17,6 +19,7 @@ export { Seudonimos }
 
 export type EventoAnalista =
   | { tipo: 'sesion'; id: string }
+  | { tipo: 'facturacion'; fuente: string }
   | { tipo: 'paso'; id: string; herramienta: string; entrada: Record<string, unknown> }
   | { tipo: 'dato'; herramienta: string; datos: unknown }
   | { tipo: 'texto'; texto: string }
@@ -48,20 +51,19 @@ Cómo trabajar:
 ${INDICACIONES_FORMATO[formato]}`
 }
 
-// Claves del .env del sitio (credenciales de Turso, secretos de cifrado…). El
-// subproceso de Claude Code no las necesita: las consultas corren en este
+// Claves de los .env del sitio (credenciales de Turso, secretos de cifrado…).
+// El subproceso de Claude Code no las necesita: las consultas corren en este
 // proceso, dentro del servidor MCP.
-function envAgente(): Record<string, string | undefined> {
-  const delSitio = new Set<string>()
-  if (existsSync('.env')) {
-    for (const linea of readFileSync('.env', 'utf8').split('\n')) {
+function clavesDelSitio(): Set<string> {
+  const claves = new Set<string>()
+  for (const archivo of ['.env', '.env.local', '.env.development.local']) {
+    if (!existsSync(archivo)) continue
+    for (const linea of readFileSync(archivo, 'utf8').split('\n')) {
       const m = /^\s*([A-Z0-9_]+)\s*=/.exec(linea)
-      if (m && !m[1]!.startsWith('ANTHROPIC_')) delSitio.add(m[1]!)
+      if (m) claves.add(m[1]!)
     }
   }
-  return Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !delSitio.has(k) && !k.startsWith('TURSO_'))
-  )
+  return claves
 }
 
 // Directorio de trabajo vacío: con cwd en el repo, Claude Code cargaba la
@@ -69,6 +71,11 @@ function envAgente(): Record<string, string | undefined> {
 // Un analista que cita fuentes que no puede mostrar no sirve para una demo.
 let cwdAgente: string | undefined
 const directorioAgente = () => (cwdAgente ??= mkdtempSync(join(tmpdir(), 'analista-siem-')))
+
+// Configuración de Claude Code propia y vacía: ahí no existe el login de
+// claude.ai de esta máquina, así que el agente no tiene cómo pagar con él.
+let configAgente: string | undefined
+const configuracionAgente = () => (configAgente ??= mkdtempSync(join(tmpdir(), 'analista-siem-config-')))
 
 export type Consulta = {
   pregunta: string
@@ -84,6 +91,8 @@ export type Consulta = {
 
 /** Corre un turno del agente. Devuelve el id de sesión para seguir la conversación. */
 export async function consultar(c: Consulta): Promise<string | undefined> {
+  // Antes que nada: sin API key no se arranca (ver credencial.ts).
+  const apiKey = exigirApiKey(serverEnv('ANTHROPIC_API_KEY'))
   let sesion = c.sesion
 
   // Las lecturas van en allowedTools y nunca llegan aquí. Lo que llega es el
@@ -125,12 +134,19 @@ export async function consultar(c: Consulta): Promise<string | undefined> {
       canUseTool,
       maxTurns: 30,
       cwd: directorioAgente(),
-      env: envAgente(),
+      env: entornoAislado(process.env, { apiKey, configDir: configuracionAgente(), clavesDelSitio: clavesDelSitio() }),
       abortController: abort,
       ...(c.sesion ? { resume: c.sesion } : {}),
     },
   })) {
     if (msg.type === 'system' && msg.subtype === 'init') {
+      try {
+        verificarFuente(msg.apiKeySource)
+      } catch (err) {
+        abort.abort()
+        throw err
+      }
+      c.emitir({ tipo: 'facturacion', fuente: 'Créditos de Claude Platform (API key)' })
       sesion = msg.session_id
       c.emitir({ tipo: 'sesion', id: msg.session_id })
     }
