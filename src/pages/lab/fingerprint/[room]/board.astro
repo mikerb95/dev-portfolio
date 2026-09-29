@@ -1,12 +1,16 @@
 ---
 import BaseLayout from '../../../../layouts/BaseLayout.astro'
+import HuellaCrestas from '../../../../components/lab/HuellaCrestas.astro'
 import { getRoom } from '../../../../lib/fingerprint'
 import QRCode from 'qrcode'
-import { getDictionary, getLocaleFromUrl, localizedHref } from '../../../../i18n'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../../../../i18n'
 import { jsonEnScript } from '../../../../lib/json-script'
+import { EJEMPLOS_DEFENSA, PARAMETROS_TOR, parametrosDeId } from '../../../../lib/motion/fingerprint-sala'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const b = getDictionary(locale).fpBoard
+const m = b.motion
+const d = m.demo
 
 const roomId = Astro.params.room!
 const room = await getRoom(roomId)
@@ -19,13 +23,20 @@ const site = import.meta.env.AUTH_URL ?? 'https://codebymike.net'
 // El QR lleva al visitante a la sala en el mismo idioma del tablero.
 const joinUrl = `${site}${localizedHref('/lab/fingerprint', locale)}/${roomId}`
 const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 260 })
+
+const defensas = [
+  { id: 'sin', rotulo: d.sin },
+  { id: 'incognito', rotulo: d.incognito },
+  { id: 'tor', rotulo: d.tor },
+  { id: 'firefox', rotulo: d.firefox },
+] as const
 ---
 
-<BaseLayout title={`Tablero - Sala ${roomId}`} description="Tablero en vivo del laboratorio de fingerprinting." noindex>
+<BaseLayout title={`${b.title} · ${roomId}`} description="Tablero en vivo del laboratorio de fingerprinting." noindex>
   <div id="fp-board" data-room={roomId} class="max-w-[1400px] mx-auto px-6 md:px-12 pt-28 md:pt-32 pb-24">
-    <div class="grid lg:grid-cols-[300px_1fr] gap-8">
+    <div class="grid lg:grid-cols-[300px_minmax(0,1fr)] gap-8">
       <!-- QR + info -->
-      <div class="lg:sticky lg:top-28 lg:self-start">
+      <div class="lg:sticky lg:top-28 lg:self-start" data-hero-sigue>
         <div class="rounded-2xl glass p-6 text-center mb-4">
           <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-4">{b.scanToEnter}</div>
           <div class="bg-white rounded-xl p-3 [&_svg]:w-full [&_svg]:h-auto" set:html={qrSvg} />
@@ -40,12 +51,14 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
       <!-- Tablero -->
       <div>
         <header class="mb-8">
-          <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">
+          <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4" data-hero-sigue>
             <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-            <span>Sala {roomId} · en vivo</span>
+            <span>{interpolate(b.roomLive, { id: roomId })}</span>
           </div>
-          <h1 class="text-4xl font-medium tracking-[-.03em] text-mask mb-2">{b.hallOfMirrors}</h1>
-          <p class="text-[14px] text-ink-100 max-w-2xl leading-relaxed">
+          <h1 class="text-4xl md:text-5xl font-medium tracking-[-.03em] mb-3 leading-[1]">
+            <span data-hero-linea class="block text-ink-50">{b.hallOfMirrors}</span>
+          </h1>
+          <p class="text-[14px] text-ink-100 max-w-2xl leading-relaxed" data-hero-sigue>
             {b.boardIntroPre} <span class="text-ember">{b.revisitsWord}</span> {b.boardIntroPost}
           </p>
         </header>
@@ -54,19 +67,52 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
           {b.expired}
         </p>
 
-        <div id="devices" class="grid md:grid-cols-2 gap-4">
-          <p id="devices-empty" class="text-ink-400 text-[13px]">{b.waiting}</p>
+        <div id="devices" class="fp-tablero">
+          <!-- Sala vacía: una huella fantasma con la línea de lectura esperando. -->
+          <div id="devices-empty" class="fp-vacio">
+            <div class="fp-fantasma">
+              <HuellaCrestas params={PARAMETROS_TOR} uid="hc-fantasma" class="hc-tenue hc-espera" />
+            </div>
+            <div>
+              <p class="text-ink-200 text-[13px]">{b.waiting}</p>
+              <p class="text-ink-400 text-[12px] font-mono mt-1">{m.esperando}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Cierre pedagógico -->
-    <section class="mt-16 rounded-2xl glass p-8">
+    <!-- Cierre pedagógico: sin JS son los tres párrafos de siempre; con JS se
+         convierten en una comprobación con cuatro dispositivos de ejemplo. -->
+    <section class="mt-16 rounded-2xl glass p-6 md:p-8" data-defensas>
       <h2 class="text-[13px] font-mono uppercase tracking-[.18em] text-ink-200 mb-4">{b.howToDefend}</h2>
-      <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed">
-        <p><strong class="text-ink-50">{b.incognitoWarning}</strong> {b.incognitoText}</p>
-        <p><strong class="text-ink-50">Tor Browser</strong> {b.torText}</p>
-        <p><strong class="text-ink-50">Firefox + resistFingerprinting</strong> {b.firefoxText}</p>
+
+      <div class="grid md:grid-cols-3 gap-6 text-[13px] text-ink-100 leading-relaxed" data-textos>
+        <p data-defensa="incognito"><strong class="text-ink-50">{b.incognitoWarning}</strong> {b.incognitoText}</p>
+        <p data-defensa="tor"><strong class="text-ink-50">Tor Browser</strong> {b.torText}</p>
+        <p data-defensa="firefox"><strong class="text-ink-50">Firefox + resistFingerprinting</strong> {b.firefoxText}</p>
+      </div>
+
+      <div class="fd-banco" data-banco hidden>
+        <p class="fd-etiqueta"><span class="text-ember">{d.titulo}</span> · {d.etiqueta}</p>
+        <div class="fd-tabs" role="tablist" aria-label={d.tabsEtiqueta}>
+          {defensas.map((x, i) => (
+            <button type="button" role="tab" class="fd-tab" data-defensa={x.id} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1}>{x.rotulo}</button>
+          ))}
+        </div>
+        <div class="fd-huellas">
+          {EJEMPLOS_DEFENSA.map((id, i) => (
+            <figure class="fd-huella" data-ejemplo data-id={id}>
+              <HuellaCrestas params={parametrosDeId(id)} uid={`hc-ej-${i}`} etiqueta={interpolate(d.dispositivo, { n: i + 1 })} />
+              <figcaption>
+                <span>{interpolate(d.dispositivo, { n: i + 1 })}</span>
+                <span class="fd-cookie" data-cookie>{d.cookie} · {id.slice(0, 4)}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+        <p class="fd-cuenta" data-cuenta aria-live="polite"></p>
+        <p class="fd-texto" data-texto></p>
       </div>
     </section>
   </div>
@@ -80,13 +126,59 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
       revisitMany: b.revisitMany,
       ownId: b.ownId,
       entropyBits: b.entropyBits,
+      reconocido: m.reconocido,
+      huellaDe: m.huellaDe,
+      distintas: d.distintas,
+      cookie: d.cookie,
+      cookieBorrada: d.cookieBorrada,
+      sinTexto: d.sinTexto,
     })}
   />
 </BaseLayout>
 
+<style>
+  .fp-tablero { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 768px) { .fp-tablero { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .fp-vacio { grid-column: 1 / -1; display: flex; align-items: center; gap: 22px; padding: 22px; border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; }
+  .fp-vacio.hidden { display: none; }
+  .fp-fantasma { width: 84px; flex: none; }
+
+  /* Comprobación de defensas. Sin JS no existe (hidden); con JS sustituye a
+     los tres párrafos, que pasan a ser el texto de cada pestaña. */
+  .fd-banco { margin-top: 4px; }
+  .fd-etiqueta { margin: 0 0 16px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--color-ink-300); line-height: 1.6; }
+  .fd-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+  .fd-tab { height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: transparent; color: var(--color-ink-100); font-size: 12.5px; cursor: pointer; transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease; }
+  .fd-tab:hover { border-color: rgba(0, 242, 255, 0.4); }
+  .fd-tab[aria-selected='true'] { background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.55); color: var(--color-ink-50); }
+  .fd-tab:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
+  .fd-huellas { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
+  @media (min-width: 640px) { .fd-huellas { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .fd-huella { margin: 0; display: grid; gap: 10px; }
+  .fd-huella :global(svg) { max-width: 120px; margin: 0 auto; }
+  .fd-huella figcaption { display: grid; gap: 4px; justify-items: center; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-300); }
+  .fd-cookie { padding: 2px 8px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.12); letter-spacing: 0.04em; text-transform: none; color: var(--color-ink-200); transition: color 0.3s ease, border-color 0.3s ease; }
+  .fd-cookie[data-borrada] { color: var(--color-ember); border-color: rgba(255, 107, 61, 0.45); text-decoration: line-through; }
+  .fd-cuenta { margin: 26px 0 8px; font-family: var(--font-mono); font-size: 13px; color: var(--color-cyan); font-variant-numeric: tabular-nums; }
+  .fd-texto { margin: 0; max-width: 62ch; font-size: 13px; line-height: 1.7; color: var(--color-ink-100); min-height: 4.5em; }
+
+  /* Tarjeta de dispositivo: la huella a un lado y los datos al otro. */
+  :global(.fp-card) { display: flex; align-items: center; gap: 18px; }
+  :global(.fp-card .fp-print) { width: 64px; flex: none; }
+  :global(.fp-card .fp-info) { min-width: 0; flex: 1; }
+  :global(.fp-card .fp-reco) { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-ember); }
+</style>
+
 <script>
+  import gsap from 'gsap'
+  import { montarLanding } from '../../../../lib/motion/landing'
+  import { crearHuellaSvg, type HuellaSvg } from '../../../../lib/motion/fingerprint-svg'
+  import { montarDefensas } from '../../../../lib/motion/fingerprint-defensas'
+  import { parametrosDeId } from '../../../../lib/motion/fingerprint-sala'
+
   const L = JSON.parse(document.getElementById('fp-board-i18n')!.textContent!) as Record<string, string>
   const roomId = (document.getElementById('fp-board') as HTMLElement).dataset.room!
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
@@ -102,18 +194,21 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
     lastSeen: string
   }
 
+  type Tarjeta = { card: HTMLElement; info: HTMLElement; huella: HuellaSvg | null; revisits: number; reco: number | null }
+
   const container = document.getElementById('devices')!
   const empty = document.getElementById('devices-empty')!
   const expired = document.getElementById('board-expired')!
+  const contador = document.getElementById('device-count')!
   // Reconciliamos por idShort (único por dispositivo) para no reconstruir todo
   // el DOM en cada tick (evita el parpadeo y que se pierda el hover en el
   // proyector). No por label: bajo joins concurrentes el label (maxLabel+1, sin
   // transacción) puede repetirse entre dos dispositivos distintos, y keyear por
   // label haría que uno sobrescribiera al otro y desapareciera del tablero.
-  const cards = new Map<string, HTMLElement>()
+  const cards = new Map<string, Tarjeta>()
   let stopped = false
 
-  function cardHtml(d: Device): string {
+  function infoHtml(d: Device): string {
     const b = d.behaviorSig
     const behaviorLine = b
       ? [
@@ -129,7 +224,7 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
       ? `<div class="text-[11px] font-mono text-ink-400 mt-2">FingerprintJS: <span class="text-cyan">${esc(d.libFpHash.slice(0, 12))}</span></div>`
       : ''
     return `
-      <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center justify-between gap-2 mb-3">
         <span class="text-[15px] font-medium text-mask">${L.deviceLabel} #${esc(d.label)}</span>
         ${revisitBadge}
       </div>
@@ -137,34 +232,81 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
       <div class="text-[12px] font-mono text-ink-300 mb-2">≈ ${d.entropyBits ?? '?'} ${L.entropyBits}</div>
       <div class="text-[12px] text-ink-100">${esc(behaviorLine)}</div>
       ${libLine}
+      <div class="fp-reco mt-2" data-reco hidden>${esc(L.reconocido)}</div>
     `
   }
 
+  // Contador que sube en vez de saltar.
+  const vista = { n: 0 }
+  function contarHasta(n: number) {
+    if (reducido) { contador.textContent = String(n); return }
+    gsap.to(vista, { n, duration: 0.7, ease: 'expo.out', onUpdate: () => { contador.textContent = String(Math.round(vista.n)) } })
+  }
+
+  function nuevaTarjeta(d: Device, orden: number): Tarjeta {
+    const card = document.createElement('div')
+    card.className = 'fp-card rounded-2xl glass p-5 lift'
+    const print = document.createElement('div')
+    print.className = 'fp-print'
+    const info = document.createElement('div')
+    info.className = 'fp-info'
+    card.append(print, info)
+
+    // Fail-open: si el SVG no se puede crear, la tarjeta sigue con sus datos.
+    let huella: HuellaSvg | null = null
+    try {
+      huella = crearHuellaSvg(parametrosDeId(d.idShort), { etiqueta: L.huellaDe?.replace('{n}', String(d.label)) })
+      print.appendChild(huella.svg)
+    } catch (err) {
+      console.warn('[fingerprint] huella sin dibujar', err)
+    }
+
+    if (!reducido) {
+      gsap.from(card, { y: 26, opacity: 0, duration: 0.8, ease: 'expo.out', delay: orden * 0.08, clearProps: 'transform,opacity' })
+      huella?.dibujar({ retraso: 0.15 + orden * 0.08 })
+    }
+    return { card, info, huella, revisits: d.revisits, reco: null }
+  }
+
   function render(devices: Device[]) {
-    document.getElementById('device-count')!.textContent = String(devices.length)
+    contarHasta(devices.length)
     empty.classList.toggle('hidden', devices.length > 0)
 
     const seen = new Set<string>()
+    let orden = 0
     for (const d of devices) {
       seen.add(d.idShort)
-      const html = cardHtml(d)
-      let card = cards.get(d.idShort)
-      if (!card) {
-        card = document.createElement('div')
-        card.className = 'rounded-2xl glass p-5 lift'
-        cards.set(d.idShort, card)
-        container.appendChild(card)
+      let t = cards.get(d.idShort)
+      if (!t) {
+        t = nuevaTarjeta(d, orden++)
+        cards.set(d.idShort, t)
+        container.appendChild(t.card)
+      } else if (d.revisits > t.revisits) {
+        // Mismo dispositivo, otra visita: la línea de lectura barre la huella
+        // y las crestas parpadean en ember. Es la demostración del tablero.
+        t.revisits = d.revisits
+        if (!reducido) t.huella?.reconocer()
+        const aviso = t.info.querySelector<HTMLElement>('[data-reco]')
+        if (aviso) {
+          aviso.hidden = false
+          if (t.reco) clearTimeout(t.reco)
+          t.reco = window.setTimeout(() => { aviso.hidden = true }, 4000)
+        }
       }
-      // Solo tocamos el DOM si el contenido cambió (firma en dataset).
-      if (card.dataset.sig !== html) {
-        card.innerHTML = html
-        card.dataset.sig = html
+      // Solo tocamos el DOM si el contenido cambió (firma en dataset). Al
+      // reescribir se pierde el aviso de "reconocido": se vuelve a mostrar.
+      const html = infoHtml(d)
+      if (t.card.dataset.sig !== html) {
+        const habiaAviso = t.info.querySelector<HTMLElement>('[data-reco]')?.hidden === false
+        t.info.innerHTML = html
+        t.card.dataset.sig = html
+        if (habiaAviso) t.info.querySelector<HTMLElement>('[data-reco]')!.hidden = false
       }
     }
     // Quita tarjetas de dispositivos que ya no están (no debería pasar en la
     // vida de una sala, pero mantiene el DOM en sincronía).
-    for (const [id, card] of cards) {
-      if (!seen.has(id)) { card.remove(); cards.delete(id) }
+    for (const [id, t] of cards) {
+      if (!seen.has(id)) { t.card.remove(); cards.delete(id) }
     }
   }
 
@@ -191,4 +333,13 @@ const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 26
     if (stopped) { clearInterval(timer); return }
     poll()
   }, 1500)
+
+  // La comprobación de defensas es motion: si falla, quedan los tres párrafos.
+  try {
+    const raiz = document.querySelector<HTMLElement>('[data-defensas]')
+    if (raiz) montarDefensas(raiz, { reducido, textos: L })
+  } catch (err) {
+    console.warn('[fingerprint] defensas sin motion', err)
+  }
+  montarLanding()
 </script>

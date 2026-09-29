@@ -3,6 +3,9 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   BITS_MAX,
+  EJEMPLOS_DEFENSA,
+  PASO_FIREFOX,
+  huellasDistintas,
   CLAVES_BASICAS,
   LIBRO,
   LIENZO,
@@ -157,6 +160,24 @@ describe('crestas', () => {
     const [xf, yf] = punto(d[3]!, true)
     const [xi, yi] = punto(d[4]!, false)
     expect(Math.hypot(xf! - xi!, yf! - yi!)).toBeLessThan(3)
+  })
+})
+
+describe('comprobación de defensas del tablero', () => {
+  const originales = EJEMPLOS_DEFENSA.map((i) => parametrosDeId(i))
+
+  it('sin defensa las cuatro huellas de ejemplo son distintas', () => {
+    expect(huellasDistintas(originales)).toBe(4)
+  })
+
+  it('Tor deja una sola', () => {
+    expect(huellasDistintas(originales.map(() => PARAMETROS_TOR))).toBe(1)
+  })
+
+  it('Firefox junta algunas pero no todas: es la historia que cuenta la pieza', () => {
+    const n = huellasDistintas(originales.map((p) => reducirPrecision(p, PASO_FIREFOX)))
+    expect(n).toBeGreaterThan(1)
+    expect(n).toBeLessThan(4)
   })
 })
 

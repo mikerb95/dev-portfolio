@@ -3,6 +3,8 @@ import { encode } from '@auth/core/jwt'
 import { chromium } from 'playwright'
 import { randomUUID } from 'node:crypto'
 
+// En dev manda .env.development.local; loadEnvFile no pisa lo ya cargado.
+process.loadEnvFile('.env.development.local')
 process.loadEnvFile('.env')
 const BASE = 'http://localhost:4420'
 const OUT = process.argv[2]

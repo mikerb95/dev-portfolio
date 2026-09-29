@@ -169,6 +169,12 @@ describe('paridad del diccionario es/en', () => {
         'automatizaciones.motion.partitura.lecturaCorrida',
         'automatizaciones.motion.ci.eventos.pull_request.nombre',
         'automatizaciones.motion.producto.escenas.respaldo.portal',
+        // /lab/fingerprint: "~N bits" y la palabra "cookie" se escriben igual
+        // en los dos idiomas; Tor Browser y Firefox son nombres propios.
+        'fingerprint.motion.unicidad.bits',
+        'fpBoard.motion.demo.cookie',
+        'fpBoard.motion.demo.tor',
+        'fpBoard.motion.demo.firefox',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal
