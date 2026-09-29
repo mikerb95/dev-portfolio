@@ -29,6 +29,8 @@ const tope = topeDiarioUsd()
 // trae la semana real de producción. La pantalla lo dice, y un bloqueo
 // aprobado ahí no toca el sitio.
 const esCopia = realDbIsLocal
+// El prototipo con la Agent SDK solo existe en local (no cabe en Vercel).
+const conAgentSdk = import.meta.env.DEV
 
 const fecha = new Intl.DateTimeFormat('es-CO', {
   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota',
@@ -140,6 +142,19 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
               arranca: nunca usa una cuenta personal de claude.ai.
             </p>
           )}
+          {conAgentSdk && (
+            <div class="motores mb-3" role="radiogroup" aria-label="Motor del agente">
+              <span class="etiqueta mr-2">Motor</span>
+              <label class="motor">
+                <input type="radio" name="motor" value="api" checked />
+                <span>API de Claude <small>producción</small></span>
+              </label>
+              <label class="motor">
+                <input type="radio" name="motor" value="agent-sdk" />
+                <span>Claude Agent SDK <small>prototipo</small></span>
+              </label>
+            </div>
+          )}
           <div id="sugerencias" class="flex flex-wrap gap-2 mb-3">
             <button type="button" class="sugerencia" data-pregunta="Revisa la última semana y dime qué merece mi atención.">¿Qué pasó esta semana?</button>
             <button type="button" class="sugerencia" data-pregunta="¿Alguien ha intentado entrar a cuentas o paneles del sitio en la última semana? Explica cómo lo hizo.">¿Intentaron entrar a mis cuentas?</button>
@@ -220,6 +235,18 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
         background: rgb(255 255 255 / .03); border: 1px solid rgb(255 255 255 / .08);
         color: var(--color-ink-100);
       }
+      .motores { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+      .motor { position: relative; cursor: pointer; }
+      .motor input { position: absolute; opacity: 0; pointer-events: none; }
+      .motor span {
+        display: inline-flex; align-items: baseline; gap: .45rem; height: 2.25rem; padding: 0 .95rem; align-items: center;
+        border-radius: 999px; font-size: 14px; color: var(--color-ink-100);
+        background: rgb(255 255 255 / .03); border: 1px solid rgb(255 255 255 / .08);
+        transition: background .2s, border-color .2s, color .2s;
+      }
+      .motor small { font-family: var(--font-mono); font-size: 11px; color: var(--color-ink-200); letter-spacing: .06em; }
+      .motor input:checked + span { background: rgb(0 242 255 / .1); border-color: rgb(0 242 255 / .45); color: var(--color-ink-50); }
+      .motor input:focus-visible + span { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
       .chip-boton { cursor: pointer; transition: background .2s, border-color .2s; }
       .chip-boton:hover { background: rgb(0 242 255 / .08); border-color: rgb(0 242 255 / .3); }
       .historial {
@@ -424,6 +451,11 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
         let reloj: number | undefined
         let inicio = 0
         let esperandoDecision = false
+        // Motor del análisis en curso: con la Agent SDK la decisión no abre una
+        // transmisión nueva (el análisis sigue en la suya, esperando en memoria).
+        let motorActual: 'api' | 'agent-sdk' = 'api'
+        const motorElegido = () =>
+          (document.querySelector<HTMLInputElement>('input[name="motor"]:checked')?.value as 'api' | 'agent-sdk' | undefined) ?? 'api'
 
         function mostrarPensando() {
           pensando?.remove()
@@ -542,6 +574,7 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           input.disabled = off
           enviar.disabled = off
           sugerencias.forEach((b) => (b.disabled = off))
+          document.querySelectorAll<HTMLInputElement>('input[name="motor"]').forEach((r) => (r.disabled = off))
         }
 
         function abrirAprobacion(origen: string, motivo: string) {
@@ -660,11 +693,12 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           mostrarPensando()
           mostrarEspera()
           input.value = ''
+          motorActual = motorElegido()
           return transmision(() =>
             fetch('/api/admin/analista', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pregunta }),
+              body: JSON.stringify({ pregunta, motor: motorActual }),
             })
           )
         }
@@ -673,6 +707,15 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
           if (dialogo.open) dialogo.close()
           const id = ejecucionId
           if (!id) return
+          if (motorActual === 'agent-sdk') {
+            return fetch('/api/admin/analista/decision', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id, aprobado }),
+            }).then(async (r) => {
+              if (!r.ok) mostrarFallo((await r.json().catch(() => ({}))).error ?? `HTTP ${r.status}`)
+            })
+          }
           return transmision(() =>
             fetch('/api/admin/analista/decision', {
               method: 'POST',
