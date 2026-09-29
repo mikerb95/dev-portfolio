@@ -46,4 +46,7 @@ export const AUDIT_RULE_LABELS: Record<string, string> = {
   'passkey.removed': 'Llave de seguridad eliminada',
   'sustentacion.access_granted': 'Entrada a la sustentación con contraseña',
   'present.session_created': 'Sesión de presentación abierta',
+  'analista.analisis': 'Análisis del analista de IA',
+  'analista.bloqueo_aprobado': 'Bloqueo propuesto por el analista, aprobado',
+  'analista.bloqueo_rechazado': 'Bloqueo propuesto por el analista, rechazado',
 }

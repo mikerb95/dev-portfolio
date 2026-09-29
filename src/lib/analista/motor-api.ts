@@ -12,13 +12,7 @@ import { serverEnv } from '../env'
 import { avanzar, decidir, nuevaEjecucion, type Dependencias, type Ejecucion, type EventoBucle } from './bucle'
 import { MODELO } from './costo'
 import { exigirApiKey } from './credencial'
-import {
-  crearEjecucion,
-  guardarEjecucion,
-  hayEnCurso,
-  presupuestoRestante,
-  reclamarPropuesta,
-} from './ejecuciones'
+import { crearEjecucion, guardarEjecucion, hayEnCurso, presupuestoRestante, reclamarPropuesta } from './ejecuciones'
 import { ejecutar, HERRAMIENTA_BLOQUEO, herramienta, HERRAMIENTAS } from './herramientas'
 import { systemPrompt } from './prompt'
 
@@ -96,24 +90,38 @@ export class SinPresupuesto extends Error {
   }
 }
 
-/** Arranca un análisis nuevo. Lanza si falta la API key, si hay otro en curso o si no queda presupuesto. */
-export async function iniciarAnalisis(pregunta: string, emitir: (e: EventoBucle) => void): Promise<Ejecucion> {
-  const deps = dependencias(emitir)
+/**
+ * Crea un análisis nuevo sin arrancarlo. Lanza SinApiKey, AnalistaOcupado o
+ * SinPresupuesto, para que la ruta responda con un error claro ANTES de abrir
+ * la transmisión en vivo.
+ */
+export async function prepararAnalisis(pregunta: string): Promise<Ejecucion> {
+  exigirApiKey(serverEnv('ANTHROPIC_API_KEY'))
   if (await hayEnCurso()) throw new AnalistaOcupado()
   if ((await presupuestoRestante()) <= 0) throw new SinPresupuesto()
   const e = nuevaEjecucion(randomUUID(), pregunta)
   await crearEjecucion(e)
-  return avanzar(e, deps)
+  return e
 }
 
-/** Aplica la decisión sobre un bloqueo pendiente y retoma el análisis. null si ya estaba decidido. */
-export async function decidirPropuesta(
-  id: string,
+/** Corre un análisis preparado hasta que termina, falla o se pausa. Nunca lanza. */
+export async function correrAnalisis(e: Ejecucion, emitir: (e: EventoBucle) => void): Promise<Ejecucion> {
+  return avanzar(e, dependencias(emitir))
+}
+
+/**
+ * Reclama un bloqueo pendiente para decidirlo (atómico). null si ya se
+ * decidió o no existe. Tras reclamar, llamar a continuarDecision.
+ */
+export async function reclamarDecision(id: string): Promise<Ejecucion | null> {
+  exigirApiKey(serverEnv('ANTHROPIC_API_KEY'))
+  return reclamarPropuesta(id)
+}
+
+export async function continuarDecision(
+  e: Ejecucion,
   aprobado: boolean,
   emitir: (e: EventoBucle) => void
-): Promise<Ejecucion | null> {
-  const deps = dependencias(emitir)
-  const e = await reclamarPropuesta(id)
-  if (!e) return null
-  return decidir(e, aprobado, deps)
+): Promise<Ejecucion> {
+  return decidir(e, aprobado, dependencias(emitir))
 }
