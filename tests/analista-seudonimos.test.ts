@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Seudonimos } from '../agents/analista-siem/seudonimos'
+import { Seudonimos } from '../src/lib/analista/seudonimos'
 
 describe('Seudonimos del analista del micro-SIEM', () => {
   it('asigna alias estables en orden de aparición', () => {
@@ -28,6 +28,16 @@ describe('Seudonimos del analista del micro-SIEM', () => {
     const s = new Seudonimos()
     expect(s.alias(null)).toBe('desconocido')
     expect(s.alias('203.0.113.7')).toBe('origen-01')
+  })
+
+  it('se guarda y se recupera sin perder alias ni numeración', () => {
+    const s = new Seudonimos()
+    s.alias('203.0.113.7')
+    s.alias('198.51.100.2')
+    const r = Seudonimos.desde(JSON.parse(JSON.stringify(s.exportar())))
+    expect(r.ip('origen-02')).toBe('198.51.100.2')
+    expect(r.alias('203.0.113.7')).toBe('origen-01')
+    expect(r.alias('192.0.2.9')).toBe('origen-03')
   })
 
   it('en modo en claro el alias es la IP', () => {

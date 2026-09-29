@@ -1527,3 +1527,36 @@ export const livingExpenses = sqliteTable('living_expenses', {
   // Toda lectura es "los gastos de este mes"; sin índice sería un scan (RNF-25).
   periodoIdx: index('living_expenses_periodo_idx').on(t.periodo),
 }))
+
+// ── Analista del micro-SIEM ─────────────────────────────────────────────────
+// Una fila por análisis del agente (docs/plan-analista-siem.md). Existe porque
+// un análisis puede quedar PAUSADO horas esperando que el administrador apruebe
+// un bloqueo, y la función que lo empezó ya no está viva cuando llega la
+// decisión: todo lo necesario para retomarlo vive aquí.
+export const analistaEjecuciones = sqliteTable('analista_ejecuciones', {
+  id: text('id').primaryKey(),
+  creada: integer('creada', { mode: 'timestamp' }).notNull(),
+  actualizada: integer('actualizada', { mode: 'timestamp' }).notNull(),
+  estado: text('estado', { enum: ['corriendo', 'esperando_aprobacion', 'terminada', 'fallida'] }).notNull(),
+  pregunta: text('pregunta').notNull(),
+  // Historial para la API de Claude, en JSON y solo por anexión (el thinking
+  // de Opus 5.5 se invalida si se edita un turno anterior).
+  mensajes: text('mensajes').notNull(),
+  // Alias → IP real. Solo servidor: nunca se envía al navegador ni al modelo.
+  seudonimos: text('seudonimos').notNull().default('{}'),
+  // Bloqueo pendiente de aprobación (JSON) o null.
+  propuesta: text('propuesta'),
+  respuesta: text('respuesta'),
+  error: text('error'),
+  iteraciones: integer('iteraciones').notNull().default(0),
+  tokensEntrada: integer('tokens_entrada').notNull().default(0),
+  tokensSalida: integer('tokens_salida').notNull().default(0),
+  tokensCacheLectura: integer('tokens_cache_lectura').notNull().default(0),
+  tokensCacheEscritura: integer('tokens_cache_escritura').notNull().default(0),
+  costoUsd: real('costo_usd').notNull().default(0),
+}, (t) => ({
+  // El tope diario suma el gasto de las últimas 24 h y el historial lista por
+  // fecha: las dos lecturas barren por `actualizada`/`creada`.
+  actualizadaIdx: index('analista_ejecuciones_actualizada_idx').on(t.actualizada),
+  creadaIdx: index('analista_ejecuciones_creada_idx').on(t.creada),
+}))

@@ -5,7 +5,7 @@ import {
   FuenteIncorrecta,
   SinApiKey,
   verificarFuente,
-} from '../agents/analista-siem/credencial'
+} from '../src/lib/analista/credencial'
 
 describe('credencial del analista del micro-SIEM', () => {
   it('sin API key no arranca', () => {
