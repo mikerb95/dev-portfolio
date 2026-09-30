@@ -12,7 +12,7 @@ const es = {
   meta: {
     siteName: 'CodeByMike',
     defaultDescription:
-      'Software Engineer especializado en escalabilidad, rendimiento y experiencia de usuario de clase mundial.',
+      'Desarrollo de páginas web, software a la medida y apps para negocios y empresas en Colombia. Cotiza sin compromiso.',
   },
   langPrompt: {
     title: '¿Cambiar a inglés?',
@@ -79,7 +79,7 @@ const es = {
     // ≤155 caracteres: por encima de eso Google corta el snippet y la última
     // frase no llega nunca al resultado de búsqueda.
     description:
-      'Mike - Software Engineer en Colombia (remoto). TypeScript, React, Next.js, Astro y PostgreSQL. Productos escalables con arquitectura robusta.',
+      'Desarrollo de páginas web, software a la medida y apps para negocios y empresas en Colombia. Te cuento cómo, yo lo construyo. Cotiza sin compromiso.',
     badge: 'Disponible · Colombia · Remoto',
     githubTop3Label: 'GitHub Colombia',
     githubTop3Value: 'Contributor',
