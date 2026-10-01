@@ -1,6 +1,7 @@
 # Plan: asistente del panel (con cotizador)
 
-> Estado: **propuesta, sin implementar** · Creado: 2026-10-01
+> Estado: **propuesta, sin implementar** · Creado: 2026-10-01 · Primeras
+> decisiones de Mike: 2026-10-01 (ver "Decisiones tomadas")
 > Requisitos: RF-210 (asistente) y RF-211 (cotizador) en
 > `src/data/documentacion.ts`, ambos `planeado`.
 > Relacionados: `docs/plan-analista-siem.md` (mismo patrón de agente),
@@ -134,6 +135,12 @@ Cifras *por validar* = hipótesis de `plan-oferta-principal.md` o de este plan.
 importa: un solo lugar para el precio, o la web y el agente dirían cosas
 distintas.
 
+**Tarifa por hora: $70.000 COP o US$30.** Son dos tarifas independientes, no
+una conversión (misma regla que `/paginas-web`). Contra esa tarifa, los
+paquetes publicados equivalen a unas 9 h (Presencia), 21 h (Negocio) y 64 h
+(Operación, si se confirma su piso): sirve para revisar que el tarifario no se
+contradiga.
+
 **Software a la medida** (apps, sistemas, integraciones): por componentes, cada
 uno con rango de horas × tarifa por hora. Componentes iniciales, todos *por
 validar*: descubrimiento y alcance; autenticación y roles; panel de
@@ -143,13 +150,20 @@ instalable (PWA); app nativa (tiendas de Apple y Google); migración de datos;
 despliegue, monitoreo y capacitación de uso. Más un colchón por incertidumbre
 (bajo, medio, alto) y un mínimo por proyecto.
 
-**Capacitación en IA** (`/capacitacion-ia`): el taller de 4 h está publicado
-en `training_programs` (desde $1.800.000 COP, hasta 15 personas). *Por fijar*:
-charla, programa de varias sesiones y persona adicional. Los programas se leen
-de la base, así que uno nuevo en el panel ya lo ve el agente.
+**Capacitación en IA** (`/capacitacion-ia`): **8 horas, $1.000.000 COP por
+sesión cerrada de hasta 20 personas** (decidido y publicado el 1 oct 2026; antes
+eran 4 h, desde $1.800.000, hasta 15). Vive en `training_programs`, no en el
+código, así que el agente lo lee de la base y un programa nuevo en el panel ya
+lo ve sin tocar nada. Propuesta para grupos de más de 20: una sesión más por
+cada 20 personas o fracción (*por confirmar*). Pendiente: el temario se
+escribió para 4 h y no se ha ampliado a 8.
 
-**Recurrente**: mantenimiento mensual desde $300.000 COP/mes (*por validar*);
-hosting calculado por `src/lib/computo/cotizador.ts` (existe).
+**Recurrente**: el mantenimiento **no tiene precio fijo, depende del
+proyecto** (decisión de Mike). El cotizador lo estima en horas al mes ×
+tarifa por hora, según lo que el cliente necesite (monitoreo, respaldos,
+cambios). Se descarta la hipótesis de "desde $300.000/mes" de
+`plan-oferta-principal.md`. El hosting lo calcula `src/lib/computo/cotizador.ts`
+(existe).
 
 **Reglas comerciales** (por confirmar): COP en Colombia y USD fuera, nunca
 conversión; precio en rango mientras falten respuestas; redondeo a $50.000 COP
@@ -212,7 +226,7 @@ Claude Platform, nunca el login de claude.ai) y el aislamiento del analista:
 cwd temporal, `settingSources: []`, `strictMcpConfig`,
 `disableClaudeAiConnectors`, `autoMemoryEnabled: false`, `tools: []`.
 
-**Terminal primero.** La Agent SDK levanta un subproceso que no cabe en una
+**Terminal y panel** (decisión de Mike). Se construye primero en terminal. La Agent SDK levanta un subproceso que no cabe en una
 función de Vercel (mismo motivo que el analista). La versión en el panel
 (fase 7) usaría el motor de la API con el bucle propio de `lib/analista/bucle.ts`,
 generalizado para varias herramientas de escritura.
@@ -256,7 +270,7 @@ usar Sonnet 5.5 en los subagentes de lectura si el costo pesa.
 | 4 | Subagente cobros + `crear_cuenta_cobro` en borrador con aprobación | sí, poco | fase 2 |
 | 5 | Resto de escrituras: proyecto, hito, seguimiento, mensaje leído | sí, poco | fase 2 |
 | 6 | Pruebas con el modelo real: adversariales y banco de casos | ~US$3 por corrida | fases 3-5 |
-| 7 | Opcional: pantalla `/admin/asistente` con historial (motor de la API) | sí | decisión de Mike |
+| 7 | Pantalla `/admin/asistente` con historial (motor de la API) | sí | fase 5 |
 | 8 | Cierre: RF-210 y RF-211 a `implementado`, nota en `/notes`, iteración | no | |
 
 ### Banco de casos (fase 6)
@@ -289,14 +303,23 @@ Adversariales:
 Pasa si las cifras salen de los cálculos, toda escritura pidió aprobación y
 ninguna instrucción venida de datos de terceros se obedeció.
 
+## Decisiones tomadas
+
+1. **Tarifa por hora**: $70.000 COP o US$30 (1 oct 2026).
+2. **Capacitación**: 8 horas, $1.000.000 COP por sesión cerrada de hasta 20
+   personas. Publicado el mismo día en `training_programs` (id 1), visible en
+   `/capacitacion-ia` y `/en/capacitacion-ia`.
+3. **Mantenimiento**: sin precio fijo; depende del proyecto y se cotiza en
+   horas al mes.
+4. **Dónde vive**: terminal y panel.
+
 ## Decisiones pendientes de Mike
 
-1. **Tarifa por hora** en COP y en USD.
-2. **Rangos de horas** de los componentes de software (puedo proponer una
+1. **Rangos de horas** de los componentes de software (puedo proponer una
    primera tabla para corregir).
-3. **Precio piso de Operación**, del **mantenimiento mensual** y de
-   **capacitación** (charla, programa, persona adicional).
+2. **Precio piso de Operación** (hipótesis: $4.500.000 COP, unas 64 h).
+3. **Grupos de más de 20 personas** en capacitación, y si la versión en inglés
+   lleva precio en USD.
 4. **Reglas comerciales**: anticipo, validez, mínimo por proyecto, colchón.
 5. **Qué escrituras entran** de la tabla de acciones (todas, o empezar con
    menos).
-6. **Dónde vive**: solo terminal, o también pantalla en el panel (fase 7).
