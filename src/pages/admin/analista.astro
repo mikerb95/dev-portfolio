@@ -191,6 +191,15 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
             <ol id="bitacora" class="min-h-0 flex-1 overflow-y-auto px-6 pb-6 space-y-3" aria-live="polite">
               <li class="vacio text-ink-200 text-[17px] leading-relaxed pt-2">
                 Aquí vas a ver, paso a paso, qué decide revisar el agente y qué encuentra. Nadie le dice el orden: lo elige él.
+                {/* El esqueleto del recorrido en reposo: la forma que tomará la columna,
+                    apenas visible. Desaparece con el primer paso real. */}
+                <div class="esqueleto" aria-hidden="true">
+                  <span>panorama</span>
+                  <span>quién insiste más</span>
+                  <span class="rama">origen-01</span>
+                  <span class="rama">origen-02</span>
+                  <span>veredicto</span>
+                </div>
               </li>
             </ol>
           </section>
@@ -207,10 +216,51 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
                   Cada vez que alguien intenta atacar codebymike.net, el sitio lo anota. Este agente de IA lee ese registro, decide
                   qué investigar y explica lo que encontró.
                 </p>
-                <ol class="mt-8 grid gap-3 sm:grid-cols-3">
-                  <li class="paso-intro"><span class="num">1</span>Lee el registro de ataques con herramientas de solo lectura.</li>
-                  <li class="paso-intro"><span class="num">2</span>Elige qué revisar a fondo, como lo haría un analista.</li>
-                  <li class="paso-intro"><span class="num">3</span>Puede proponer un bloqueo, pero siempre lo decide una persona.</li>
+                <ol class="mt-8 grid gap-3 sm:grid-cols-3 items-start">
+                  <li>
+                    <details class="paso-intro">
+                      <summary><span class="num">1</span><span class="flex-1">Lee el registro de ataques con herramientas de solo lectura.</span><span class="mas" aria-hidden="true"></span></summary>
+                      <div class="paso-cuerpo">
+                        <ul class="herramientas">
+                          <li>Panorama de la actividad <code>resumen_actividad</code></li>
+                          <li>Quién insiste más <code>top_origenes</code></li>
+                          <li>Los pasos de un origen <code>eventos_de_origen</code></li>
+                          <li>Lo que se sale de lo normal <code>anomalias</code></li>
+                          <li>Quién ya está bloqueado <code>bloqueos_vigentes</code></li>
+                          <li class="propone">Proponer un bloqueo, con tu aprobación <code>bloquear_origen</code></li>
+                        </ul>
+                        <p class="paso-nota">Ninguna borra ni cambia datos, y la ventana más larga que puede pedir es una semana.</p>
+                      </div>
+                    </details>
+                  </li>
+                  <li>
+                    <details class="paso-intro">
+                      <summary><span class="num">2</span><span class="flex-1">Elige qué revisar a fondo, como lo haría un analista.</span><span class="mas" aria-hidden="true"></span></summary>
+                      <div class="paso-cuerpo">
+                        <ol class="mini-recorrido" aria-label="Recorrido de ejemplo">
+                          <li>Mira el panorama de la semana</li>
+                          <li>Busca quién insiste más</li>
+                          <li class="rama">Sigue a origen-03</li>
+                          <li class="rama">Sigue a origen-01</li>
+                          <li>Escribe su veredicto</li>
+                        </ol>
+                        <p class="paso-nota">Ejemplo ilustrativo. El orden cambia con cada pregunta: lo que encuentra en un paso decide el siguiente.</p>
+                      </div>
+                    </details>
+                  </li>
+                  <li>
+                    <details class="paso-intro">
+                      <summary><span class="num">3</span><span class="flex-1">Puede proponer un bloqueo, pero siempre lo decide una persona.</span><span class="mas" aria-hidden="true"></span></summary>
+                      <div class="paso-cuerpo">
+                        <div class="mini-dialogo" aria-hidden="true">
+                          <p class="mini-titulo">Propone bloquear a origen-04</p>
+                          <p class="mini-motivo">Cayó en una trampa y volvió tres veces con otra técnica.</p>
+                          <p class="mini-botones"><span>Rechazar</span><span class="aprobar">Aprobar bloqueo</span></p>
+                        </div>
+                        <p class="paso-nota">Ejemplo ilustrativo. Sin tu clic no pasa nada, y si cierras la pestaña el análisis queda esperando tu decisión.</p>
+                      </div>
+                    </details>
+                  </li>
                 </ol>
               </div>
             </div>
@@ -380,10 +430,90 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
         text-transform: uppercase; color: var(--color-ink-200);
       }
       .paso-intro {
-        display: flex; gap: .75rem; align-items: flex-start;
         padding: 1rem 1.1rem; border-radius: 1rem;
         background: rgb(255 255 255 / .025); border: 1px solid rgb(255 255 255 / .06);
         color: var(--color-ink-100); font-size: 16px; line-height: 1.45;
+        transition: background .25s, border-color .25s;
+      }
+      .paso-intro summary { display: flex; gap: .75rem; align-items: flex-start; cursor: pointer; list-style: none; }
+      .paso-intro summary::-webkit-details-marker { display: none; }
+      .paso-intro:hover, .paso-intro[open] { background: rgb(0 242 255 / .035); border-color: rgb(0 242 255 / .16); }
+      .paso-cuerpo { margin-top: .9rem; padding-top: .9rem; border-top: 1px solid rgb(255 255 255 / .06); }
+      .paso-nota { margin-top: .75rem; font-size: 13px; line-height: 1.5; color: var(--color-ink-200); }
+      .herramientas { display: grid; gap: .45rem; font-size: 14px; color: var(--color-ink-50); }
+      .herramientas li { display: grid; gap: .1rem; }
+      .herramientas code { font-family: var(--font-mono); font-size: 11px; color: var(--color-ink-300); }
+      .herramientas .propone { color: var(--color-ember); }
+
+      /* "+" que gira a "×" al abrir: el mismo gesto en chips y pasos. */
+      .mas { position: relative; flex: none; width: .7rem; height: .7rem; margin-top: .35rem; opacity: .55; transition: transform .3s cubic-bezier(.2, .8, .2, 1), opacity .2s; }
+      .chip .mas { margin-top: 0; width: .55rem; height: .55rem; }
+      .mas::before, .mas::after { content: ''; position: absolute; inset: 50% 0 auto; height: 1.5px; margin-top: -.75px; border-radius: 2px; background: currentColor; }
+      .mas::after { transform: rotate(90deg); }
+      details[open] > summary .mas { transform: rotate(45deg); opacity: 1; }
+
+      /* Apertura con altura animada donde el navegador sabe interpolar a auto
+         (Chrome 131+); en el resto se abre de golpe, que también vale. */
+      .paso-intro { interpolate-size: allow-keywords; }
+      .paso-intro::details-content { block-size: 0; overflow: hidden; transition: block-size .4s cubic-bezier(.2, .8, .2, 1), content-visibility .4s allow-discrete; }
+      .paso-intro[open]::details-content { block-size: auto; }
+
+      .chip-detalle { position: relative; }
+      .chip-detalle > summary { list-style: none; }
+      .chip-detalle > summary::-webkit-details-marker { display: none; }
+      .chip-detalle[open] > summary { background: rgb(0 242 255 / .08); border-color: rgb(0 242 255 / .3); color: var(--color-ink-50); }
+      .tarjeta {
+        position: absolute; right: 0; top: calc(100% + .6rem); z-index: 30; width: min(340px, calc(100vw - 2rem));
+        padding: 1.1rem 1.2rem 1.2rem; border-radius: 1.1rem; text-align: left;
+        background: var(--color-ink-850); border: 1px solid rgb(255 255 255 / .09);
+        box-shadow: 0 24px 60px -18px rgb(0 0 0 / .7);
+        animation: entra .3s cubic-bezier(.2, .8, .2, 1) both;
+      }
+      .tarjeta-cifra { margin-top: .6rem; font-family: var(--font-serif); font-size: 34px; line-height: 1; color: var(--color-ink-50); }
+      .tarjeta-cifra small { display: block; margin-top: .35rem; font-family: var(--font-sans); font-size: 14px; color: var(--color-ink-100); }
+      .tarjeta-sub { margin-top: .3rem; font-family: var(--font-mono); font-size: 12px; color: var(--color-ink-300); }
+      .tarjeta-texto { margin-top: .8rem; font-size: 14px; line-height: 1.55; color: var(--color-ink-100); }
+      .medidor { margin-top: .8rem; height: .45rem; border-radius: 999px; background: rgb(255 255 255 / .06); overflow: hidden; }
+      .medidor span { display: block; height: 100%; width: calc(var(--uso) * 100%); min-width: 3px; border-radius: 999px; background: var(--color-cyan); transform-origin: left; animation: crece .8s .15s cubic-bezier(.2, .8, .2, 1) both; }
+      .seudonimo { margin-top: .75rem; display: flex; align-items: center; gap: .6rem; font-family: var(--font-mono); font-size: 17px; }
+      .seudonimo .ip { color: var(--color-ink-300); text-decoration: line-through; text-decoration-color: rgb(255 107 61 / .6); }
+      .seudonimo .flecha { color: var(--color-ink-300); }
+      .seudonimo .alias { color: var(--color-cyan-glow); }
+      @media (max-width: 767px) {
+        .tarjeta { position: static; width: 100%; margin-top: .5rem; }
+      }
+
+      /* Ejemplos dentro de los pasos 2 y 3: el mismo dibujo que la columna real. */
+      .mini-recorrido { position: relative; display: grid; gap: .55rem; font-size: 14px; color: var(--color-ink-50); }
+      .mini-recorrido::before { content: ''; position: absolute; left: .3rem; top: .5rem; bottom: .5rem; width: 2px; margin-left: -1px; background: rgb(0 242 255 / .22); }
+      .mini-recorrido li { position: relative; padding-left: 1.3rem; }
+      .mini-recorrido li::before { content: ''; position: absolute; left: 0; top: .45em; width: .6rem; height: .6rem; border-radius: 999px; background: var(--color-lime); }
+      .mini-recorrido li.rama { padding-left: 2.3rem; font-family: var(--font-mono); font-size: 13px; color: var(--color-ink-100); }
+      .mini-recorrido li.rama::before { left: 1rem; background: var(--color-cyan); }
+      .mini-recorrido li.rama::after { content: ''; position: absolute; left: .3rem; top: calc(.45em + .3rem - 1px); width: .7rem; height: 2px; background: rgb(0 242 255 / .22); }
+      .mini-dialogo { padding: .85rem .95rem; border-radius: .85rem; border: 1px solid rgb(255 107 61 / .3); background: rgb(255 107 61 / .04); }
+      .mini-titulo { font-size: 15px; color: var(--color-ink-50); }
+      .mini-motivo { margin-top: .3rem; font-size: 13px; line-height: 1.45; color: var(--color-ink-200); }
+      .mini-botones { margin-top: .75rem; display: flex; justify-content: flex-end; gap: .4rem; font-size: 12px; }
+      .mini-botones span { padding: .3rem .65rem; border-radius: .55rem; border: 1px solid rgb(255 255 255 / .1); color: var(--color-ink-50); }
+      .mini-botones .aprobar { border-color: transparent; background: var(--color-ember); color: var(--color-ink-950); font-weight: 600; }
+
+      /* Esqueleto en reposo: la forma del recorrido, con un pulso que baja por
+         los nodos como si el agente pasara por ellos. */
+      .esqueleto { position: relative; margin-top: 1.6rem; display: grid; gap: 1.05rem; font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; color: var(--color-ink-300); opacity: .7; }
+      .esqueleto::before { content: ''; position: absolute; left: .3rem; top: .4rem; bottom: .4rem; width: 2px; margin-left: -1px; background: linear-gradient(rgb(255 255 255 / .1), rgb(255 255 255 / .03)); }
+      .esqueleto span { position: relative; padding-left: 1.4rem; }
+      .esqueleto span::before { content: ''; position: absolute; left: 0; top: .2em; width: .6rem; height: .6rem; border-radius: 999px; background: var(--color-ink-700, #2a2a33); border: 1px solid rgb(255 255 255 / .12); animation: recorre 7.5s ease-in-out infinite; }
+      .esqueleto span.rama { padding-left: 2.4rem; }
+      .esqueleto span.rama::before { left: 1rem; }
+      .esqueleto span.rama::after { content: ''; position: absolute; left: .3rem; top: calc(.2em + .3rem - 1px); width: .7rem; height: 2px; background: rgb(255 255 255 / .08); }
+      .esqueleto span:nth-child(2)::before { animation-delay: 1.2s; }
+      .esqueleto span:nth-child(3)::before { animation-delay: 2.4s; }
+      .esqueleto span:nth-child(4)::before { animation-delay: 3.3s; }
+      .esqueleto span:nth-child(5)::before { animation-delay: 4.5s; }
+      @keyframes recorre {
+        0%, 22%, 100% { background: var(--color-ink-700, #2a2a33); box-shadow: none; }
+        6% { background: var(--color-cyan); box-shadow: 0 0 0 .3rem rgb(0 242 255 / .12); }
       }
       .paso-intro .num {
         flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem;
@@ -415,6 +545,33 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
       }
       :global(.item-entra) { animation: entra .45s cubic-bezier(.2, .8, .2, 1) both; }
       :global(.item .punto) { width: .6rem; height: .6rem; margin-top: .5rem; border-radius: 999px; background: var(--color-cyan); }
+
+      /* El recorrido: un riel une los puntos de la bitácora en el orden en que
+         el agente decidió, las visitas a un origen salen como ramas y el paso
+         en curso late. --cy es la altura del centro del punto en cada tipo. */
+      :global(#bitacora .item) { position: relative; --cy: 1.75rem; }
+      :global(#bitacora .item.nota) { --cy: 1.175rem; }
+      :global(#bitacora .item .punto) { justify-self: center; position: relative; z-index: 1; }
+      :global(#bitacora .item + .item::before),
+      :global(#bitacora .item:has(+ .item)::after) {
+        content: ''; position: absolute; left: calc(1.625rem - 1px); width: 2px; background: rgb(0 242 255 / .22);
+      }
+      :global(#bitacora .item + .item::before) { top: -.75rem; height: calc(.75rem + var(--cy)); }
+      :global(#bitacora .item:has(+ .item)::after) { top: var(--cy); bottom: 0; }
+      :global(#bitacora .item:has(+ .pensando)::after) {
+        content: ''; position: absolute; left: calc(1.625rem - 1px); top: var(--cy); bottom: -.75rem;
+        border-left: 2px dashed rgb(0 242 255 / .3);
+      }
+      :global(#bitacora .item.rama) { grid-template-columns: 2.35rem minmax(0, 1fr); }
+      :global(#bitacora .item.rama .punto) { justify-self: end; }
+      :global(#bitacora .item.rama .punto::before) {
+        content: ''; position: absolute; right: 100%; top: 50%; width: 1.125rem; height: 2px; margin-top: -1px; background: rgb(0 242 255 / .22);
+      }
+      :global(#bitacora .item.activo .punto) { animation: latido 1.6s ease-in-out infinite; }
+      @keyframes latido {
+        0% { box-shadow: 0 0 0 0 rgb(0 242 255 / .55); }
+        70%, 100% { box-shadow: 0 0 0 .5rem rgb(0 242 255 / 0); }
+      }
       :global(.item.hecho .punto) { background: var(--color-lime); }
       :global(.item.alerta .punto) { background: var(--color-ember); }
       :global(.item.nota) { background: transparent; border-color: transparent; padding-top: .35rem; padding-bottom: .35rem; }
@@ -463,6 +620,8 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
       @keyframes onda { 0%, 100% { opacity: .25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-4px); } }
       @media (prefers-reduced-motion: reduce) {
         :global(.item-entra), :global(.barra span), :global(.ranking .pista span), :global(.pensando .ondas span) { animation: none; }
+        :global(#bitacora .item.activo .punto), .esqueleto span::before, .tarjeta, .medidor span { animation: none; }
+        .paso-intro::details-content, .mas { transition: none; }
       }
     </style>
 
@@ -480,6 +639,51 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null
       const form = $<HTMLFormElement>('form')
       if (form) iniciar(form)
+      tarjetas()
+
+      // Las tarjetas de los chips: una abierta a la vez, y se cierran con Escape
+      // o con un clic fuera, como cualquier menú. Al abrir la de los seudónimos,
+      // el alias se "descifra" desde caracteres al azar: es lo que hace el
+      // servidor con cada IP antes de mandarla al modelo.
+      function tarjetas() {
+        const todas = [...document.querySelectorAll<HTMLDetailsElement>('.chip-detalle')]
+        const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        for (const d of todas) {
+          d.addEventListener('toggle', () => {
+            if (!d.open) return
+            for (const otra of todas) if (otra !== d) otra.open = false
+            const alias = d.querySelector<HTMLElement>('[data-alias]')
+            if (alias && !quieto) descifrar(alias, alias.dataset.alias!)
+          })
+        }
+        document.addEventListener('click', (ev) => {
+          for (const d of todas) if (d.open && !d.contains(ev.target as Node)) d.open = false
+        })
+        document.addEventListener('keydown', (ev) => {
+          if (ev.key !== 'Escape') return
+          const abierta = todas.find((d) => d.open)
+          if (!abierta) return
+          abierta.open = false
+          abierta.querySelector('summary')?.focus()
+        })
+      }
+
+      function descifrar(nodo: HTMLElement, final: string) {
+        const signos = '0123456789abcdef.:'
+        const pasos = 16
+        let i = 0
+        const tic = window.setInterval(() => {
+          i++
+          const fijos = Math.floor((i / pasos) * final.length)
+          nodo.textContent =
+            final.slice(0, fijos) +
+            [...final.slice(fijos)].map((c) => (c === '-' ? c : signos[Math.floor(Math.random() * signos.length)])).join('')
+          if (i >= pasos) {
+            window.clearInterval(tic)
+            nodo.textContent = final
+          }
+        }, 40)
+      }
 
       function iniciar(form: HTMLFormElement) {
         const input = $<HTMLInputElement>('pregunta')!
@@ -555,6 +759,10 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
         let motorActual: 'api' | 'agent-sdk' = 'api'
         const motorElegido = () =>
           (document.querySelector<HTMLInputElement>('input[name="motor"]:checked')?.value as 'api' | 'agent-sdk' | undefined) ?? 'api'
+
+        function apagarActivo() {
+          bitacora.querySelectorAll('.activo').forEach((n) => n.classList.remove('activo'))
+        }
 
         function mostrarPensando() {
           pensando?.remove()
@@ -698,8 +906,10 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
             ejecucionId = e.id
           } else if (e.tipo === 'paso') {
             ultimaNota = null
+            apagarActivo()
             const titulo = (PASOS[e.herramienta] ?? (() => e.herramienta))(e.entrada)
-            const { li, cuerpo } = item('', titulo, e.herramienta)
+            // Seguir a un origen concreto es una rama del recorrido, no un paso más.
+            const { li, cuerpo } = item(e.herramienta === 'eventos_de_origen' ? 'rama activo' : 'activo', titulo, e.herramienta)
             pasos.push({ herramienta: e.herramienta, li, cuerpo, conDato: false })
             contador.textContent = `${pasos.length} ${pasos.length === 1 ? 'paso' : 'pasos'}`
             mostrarPensando()
@@ -711,6 +921,7 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
             const paso = pasos.find((p) => p.herramienta === e.herramienta && !p.conDato)
             if (!paso) return
             paso.conDato = true
+            paso.li.classList.remove('activo')
             paso.li.classList.add('hecho')
             resumirDato(e.herramienta, e.datos, paso.cuerpo)
           } else if (e.tipo === 'texto') {
@@ -731,6 +942,7 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
             mostrarPensando()
           } else if (e.tipo === 'fin') {
             pensando?.remove()
+            apagarActivo()
             window.clearInterval(reloj)
             if (e.estado === 'terminada' && ultimaNota) {
               ultimaNota.li.remove()
@@ -743,6 +955,7 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
             estadisticas.textContent = `${e.iteraciones} ${e.iteraciones === 1 ? 'turno' : 'turnos'} · ${segundos} s · US$${e.costoUsd.toFixed(2)}`
           } else if (e.tipo === 'error') {
             pensando?.remove()
+            apagarActivo()
             window.clearInterval(reloj)
             mostrarFallo(`Algo falló: ${e.mensaje}`)
           }
