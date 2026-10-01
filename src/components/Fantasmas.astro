@@ -53,6 +53,7 @@ const SILUETA =
         data-dir={f.dir === 1 ? 'der' : 'izq'}
       >
         <svg class="fantasma-cuerpo" viewBox="0 0 60 72" fill="none">
+          <path d={SILUETA} class="brillo" />
           <path d={SILUETA} class="anillo anillo-1" />
           <path d={SILUETA} class="anillo anillo-2" transform="translate(30 38) scale(.74) translate(-30 -38)" />
           <path d={SILUETA} class="anillo anillo-3" transform="translate(30 38) scale(.48) translate(-30 -38)" />
@@ -93,10 +94,13 @@ const SILUETA =
     width: 100%;
     height: auto;
     overflow: visible;
-    filter: drop-shadow(0 0 10px currentColor);
     animation: flotar var(--flotar) ease-in-out infinite alternate;
   }
 
+  /* El brillo es un trazo ancho y muy tenue y no un filter: drop-shadow en un
+     elemento que se mueve obliga a recomponerlo en cada fotograma y le
+     quitaba fotogramas al terreno de debajo. */
+  .brillo { stroke: currentColor; stroke-width: 7; stroke-opacity: .08; stroke-linejoin: round; }
   .anillo { stroke: currentColor; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
   .anillo-1 { fill: currentColor; fill-opacity: .06; stroke-opacity: .9; }
   .anillo-2 { stroke-opacity: .5; }
