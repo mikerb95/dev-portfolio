@@ -578,14 +578,15 @@ const avisoEspectros =
       // el tráfico real); el navegador solo recorta el número en pantallas
       // táctiles, donde el terreno es más angosto y siete se amontonan.
       const tactil = window.matchMedia('(pointer: coarse)').matches
+      const total = Math.min(Number(lienzo.dataset.espectros ?? 0), tactil ? MAX_ESPECTROS_MOVIL : MAX_ESPECTROS)
+      const contador = document.querySelector<HTMLElement>('[data-hud-espectros]')
+      if (contador) contador.textContent = `0/${total}`
       const halloween =
         lienzo.dataset.halloween !== undefined
           ? {
-              espectros: Math.min(Number(lienzo.dataset.espectros ?? 0), tactil ? MAX_ESPECTROS_MOVIL : MAX_ESPECTROS),
+              espectros: total,
               alDisipar: (() => {
                 const aviso = document.getElementById('aviso-espectros')
-                const contador = document.querySelector<HTMLElement>('[data-hud-espectros]')
-                const total = Number(lienzo.dataset.espectros ?? 0)
                 let disipados = 0
                 return () => {
                   disipados++
