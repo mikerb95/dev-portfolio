@@ -9,8 +9,11 @@
 // desde global.css y nada más.
 import '../../styles/global.css'
 import { serverEnv } from '../../lib/env'
-import { realDbIsLocal } from '../../db'
-import { listarEjecuciones, topeDiarioUsd, type ResumenEjecucion } from '../../lib/analista/ejecuciones'
+import { and, gt, notInArray, sql } from 'drizzle-orm'
+import { db, realDbIsLocal } from '../../db'
+import { securityEvents } from '../../db/schema'
+import { AUDIT_CATEGORIES } from '../../lib/security/audit'
+import { gastoUltimas24h, listarEjecuciones, topeDiarioUsd, type ResumenEjecucion } from '../../lib/analista/ejecuciones'
 
 // Solo paga con una API key de Claude Platform (lib/analista/credencial.ts).
 // Sin ella, la pantalla lo dice de entrada en vez de fallar a mitad.
@@ -25,6 +28,31 @@ try {
 }
 const pendiente = historial.find((h) => h.estado === 'esperando_aprobacion' && h.pendiente)
 const tope = topeDiarioUsd()
+// Cifras de los chips del encabezado. Accesorias como el historial: si la base
+// no responde, el chip se abre sin la cifra. La ventana es la misma semana que
+// el agente puede mirar (MAX_HORAS), y el rastro de auditoría queda fuera
+// porque no es un ataque.
+let semana: { hits: number; origenes: number } | null = null
+try {
+  const [f] = await db
+    .select({
+      hits: sql<number>`coalesce(sum(${securityEvents.hits}), 0)`,
+      origenes: sql<number>`count(distinct ${securityEvents.ip})`,
+    })
+    .from(securityEvents)
+    .where(and(gt(securityEvents.at, new Date(Date.now() - 7 * 86_400_000)), notInArray(securityEvents.category, AUDIT_CATEGORIES)))
+  semana = { hits: Number(f?.hits ?? 0), origenes: Number(f?.origenes ?? 0) }
+} catch {
+  semana = null
+}
+let gastado: number | null = null
+try {
+  gastado = await gastoUltimas24h()
+} catch {
+  gastado = null
+}
+const usoTope = gastado === null || tope <= 0 ? 0 : Math.min(1, gastado / tope)
+const cifra = new Intl.NumberFormat('es-CO')
 // En la laptop (npm run dev) la base es local: con `npm run analista:copia`
 // trae la semana real de producción. La pantalla lo dice, y un bloqueo
 // aprobado ahí no toca el sitio.
@@ -70,32 +98,84 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
             </h1>
           </div>
           <div class="flex flex-wrap items-center gap-2 text-[13px]">
-            {esCopia ? (
-              <span class="chip" title="Base local con la semana real copiada de producción (npm run analista:copia)">
-                <span class="w-2 h-2 rounded-full bg-violet pulse-dot"></span>
-                Copia de los datos reales
-              </span>
-            ) : (
-              <span class="chip">
-                <span class="w-2 h-2 rounded-full bg-lime pulse-dot"></span>
-                Datos reales del sitio
-              </span>
-            )}
+            {/* Cada garantía del encabezado se abre y muestra cómo se cumple. */}
+            <details class="chip-detalle">
+              <summary class="chip chip-boton">
+                {esCopia ? (
+                  <>
+                    <span class="w-2 h-2 rounded-full bg-violet pulse-dot"></span>
+                    Copia de los datos reales
+                  </>
+                ) : (
+                  <>
+                    <span class="w-2 h-2 rounded-full bg-lime pulse-dot"></span>
+                    Datos reales del sitio
+                  </>
+                )}
+                <span class="mas" aria-hidden="true"></span>
+              </summary>
+              <div class="tarjeta">
+                <p class="etiqueta">Lo que lee</p>
+                {semana ? (
+                  <p class="tarjeta-cifra">{cifra.format(semana.hits)} <small>intentos de ataque esta semana</small></p>
+                ) : null}
+                {semana ? <p class="tarjeta-sub">desde {cifra.format(semana.origenes)} {semana.origenes === 1 ? 'origen distinto' : 'orígenes distintos'}</p> : null}
+                <p class="tarjeta-texto">
+                  {esCopia
+                    ? 'Es la semana real copiada de producción a esta laptop. Un bloqueo aprobado aquí no toca el sitio.'
+                    : 'Sale del mismo registro que alimenta la defensa del sitio, sin muestras ni datos de ejemplo. Las acciones del panel quedan fuera: no son ataques.'}
+                </p>
+              </div>
+            </details>
             {conApiKey ? (
-              <span class="chip" id="facturacion" title="El agente usa una API key de Claude Platform, nunca una cuenta personal">
-                <span class="w-2 h-2 rounded-full bg-cyan"></span>
-                Pagado con créditos de Claude Platform
-              </span>
+              <details class="chip-detalle">
+                <summary class="chip chip-boton" id="facturacion">
+                  <span class="w-2 h-2 rounded-full bg-cyan"></span>
+                  Pagado con créditos de Claude Platform
+                  <span class="mas" aria-hidden="true"></span>
+                </summary>
+                <div class="tarjeta">
+                  <p class="etiqueta">Tope de gasto</p>
+                  {gastado !== null ? (
+                    <p class="tarjeta-cifra">US${gastado.toFixed(2)} <small>de US${tope.toFixed(2)} en 24 horas</small></p>
+                  ) : null}
+                  {gastado !== null ? (
+                    <div class="medidor" aria-hidden="true"><span style={`--uso: ${usoTope}`}></span></div>
+                  ) : null}
+                  <p class="tarjeta-texto">
+                    Usa una API key de Claude Platform, nunca una cuenta personal. Al llegar al tope el analista se detiene: no hay
+                    forma de gastar más.
+                  </p>
+                </div>
+              </details>
             ) : (
               <span class="chip chip-alerta">
                 <span class="w-2 h-2 rounded-full bg-ember"></span>
                 Falta la API key
               </span>
             )}
-            <span class="chip">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-              El modelo nunca ve una IP
-            </span>
+            <details class="chip-detalle">
+              <summary class="chip chip-boton">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                El modelo nunca ve una IP
+                <span class="mas" aria-hidden="true"></span>
+              </summary>
+              <div class="tarjeta">
+                <p class="etiqueta">Seudónimos</p>
+                {/* IP de documentación (RFC 5737): nunca una real en una pantalla que se proyecta. */}
+                <p class="seudonimo">
+                  <span class="ip">203.0.113.7</span>
+                  <span class="flecha" aria-hidden="true">→</span>
+                  <span class="alias" data-alias="origen-01">origen-01</span>
+                </p>
+                <p class="tarjeta-sub">Ejemplo ilustrativo</p>
+                <p class="tarjeta-texto">
+                  Antes de mandarle nada al modelo, cada IP se cambia por un alias. La tabla de equivalencias se queda en el
+                  servidor: el modelo razona sobre origen-01 sin saber quién es, y al proponer un bloqueo el servidor traduce el
+                  alias de vuelta.
+                </p>
+              </div>
+            </details>
             <button type="button" id="abrir-historial" class="chip chip-boton">
               Historial{historial.length > 0 && <span class="font-mono text-ink-200">{historial.length}</span>}
             </button>
