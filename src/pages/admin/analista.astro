@@ -213,7 +213,7 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
             <h2 id="t-historial" class="font-serif text-[36px] leading-none">Historial</h2>
             <button type="button" id="cerrar-historial" class="chip chip-boton">Cerrar</button>
           </div>
-          <p class="mt-2 text-[14px] text-ink-200">Últimos análisis. Los <span class="text-cyan">automáticos</span> corren solos cada mañana a las 6:30, sin nadie delante; los de <span class="text-ink-100">terminal</span> vienen de la Agent SDK. Tope de gasto: US${tope.toFixed(2)} cada 24 horas, para todos. Se borran solos a los 30 días.</p>
+          <p class="mt-2 text-[14px] text-ink-200">Últimos análisis. Los <span class="text-cyan">automáticos</span> corren solos cada mañana, sin nadie delante; los de <span class="text-ink-100">terminal</span> vienen de la Agent SDK. Tope de gasto: US${tope.toFixed(2)} cada 24 horas, para todos. Se borran solos a los 30 días.</p>
           {historial.length === 0 ? (
             <p class="mt-8 text-ink-200">Todavía no hay análisis.</p>
           ) : (
