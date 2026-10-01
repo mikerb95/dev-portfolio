@@ -5,13 +5,19 @@
 //   npm run analista -- --base demo          # contra la base de la demo
 //   npm run analista -- --ips-reales         # sin seudónimos (solo local)
 //
+// Cada turno queda en el historial de /admin/analista (marcado "Terminal"),
+// para revisarlo después desde el panel. Con --ips-reales no se guarda: el
+// historial se proyecta en charlas y nunca debe mostrar una IP.
+//
 // Lee la base con las mismas consultas y módulos del sitio, pero corre en la
 // máquina del administrador, no en Vercel: la SDK levanta el binario de
 // Claude Code como subproceso, y eso no tiene sitio en una función serverless.
 // La versión para proyectar en una charla es /admin/analista (mismo motor).
 
+import { randomUUID } from 'node:crypto'
 import { createInterface } from 'node:readline/promises'
 import { stdin, stdout } from 'node:process'
+import type { EventoAnalista } from './motor'
 
 const args = process.argv.slice(2)
 const flag = (nombre: string) => args.includes(nombre)
@@ -48,6 +54,8 @@ process.on('warning', (w) => {
 })
 
 const { consultar, Seudonimos } = await import('./motor')
+const { registrarTurnoTerminal } = await import('../../src/lib/analista/ejecuciones')
+const guardarEnHistorial = !flag('--ips-reales')
 
 const seudonimos = new Seudonimos(flag('--ips-reales'))
 const rl = createInterface({ input: stdin, output: stdout })
@@ -60,8 +68,10 @@ rl.on('close', () => (entradaCerrada = true))
 const gris = (s: string) => `\x1b[2m${s}\x1b[0m`
 const ambar = (s: string) => `\x1b[33m${s}\x1b[0m`
 
-const turno = (prompt: string, sesion?: string) =>
-  consultar({
+async function turno(prompt: string, sesion?: string) {
+  let fin: Extract<EventoAnalista, { tipo: 'fin' }> | undefined
+  const decisiones: string[] = []
+  const siguiente = await consultar({
     pregunta: prompt,
     sesion,
     seudonimos,
@@ -74,7 +84,9 @@ const turno = (prompt: string, sesion?: string) =>
         console.log(ambar(`\n  ¿Bloquear ${e.origen}?`))
         console.log(ambar(`  Motivo: ${e.motivo}`))
       }
+      if (e.tipo === 'decision') decisiones.push(`- ${e.origen}: ${e.aprobado ? 'aprobado' : 'rechazado'}`)
       if (e.tipo === 'fin') {
+        fin = e
         console.log(gris(`\n  ${e.turnos} turnos · ${e.segundos} s · US$${e.costoUsd.toFixed(3)}`))
         if (!e.ok) console.log(ambar(`  El agente terminó con: ${e.motivo}`))
       }
@@ -85,6 +97,31 @@ const turno = (prompt: string, sesion?: string) =>
       return r === 's' || r === 'si' || r === 'sí'
     },
   })
+  if (fin && guardarEnHistorial) await guardarTurno(prompt, fin, decisiones)
+  return siguiente
+}
+
+// Fail-open: si la base no responde, el análisis ya se vio en la terminal y
+// no se pierde nada más que la copia en el historial.
+async function guardarTurno(prompt: string, fin: Extract<EventoAnalista, { tipo: 'fin' }>, decisiones: string[]) {
+  const respuesta = [fin.resultado, decisiones.length ? `Bloqueos propuestos en la terminal:\n${decisiones.join('\n')}` : null]
+    .filter(Boolean)
+    .join('\n\n')
+  try {
+    await registrarTurnoTerminal({
+      id: randomUUID(),
+      pregunta: prompt,
+      respuesta: respuesta || null,
+      error: fin.ok ? null : `El agente terminó con: ${fin.motivo}`,
+      iteraciones: fin.turnos,
+      uso: fin.uso,
+      costoUsd: fin.costoUsd,
+    })
+    console.log(gris(`  Guardado en el historial de /admin/analista (base ${base})`))
+  } catch (err) {
+    console.log(ambar(`  No se pudo guardar en el historial: ${err instanceof Error ? err.message : String(err)}`))
+  }
+}
 
 console.log(gris(`Analista del micro-SIEM · base ${base}${flag('--ips-reales') ? ' · IPs en claro' : ''}`))
 console.log(`\n> ${pregunta}`)

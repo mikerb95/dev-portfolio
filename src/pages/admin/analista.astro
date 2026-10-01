@@ -41,6 +41,12 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
   terminada: 'Terminado',
   fallida: 'Falló',
 }
+// Lo lanzado desde el panel no lleva etiqueta: es el caso normal. Las otras
+// dos marcan lo que corrió sin la pantalla abierta.
+const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
+  automatico: 'Automático',
+  terminal: 'Terminal',
+}
 ---
 
 <!doctype html>
@@ -217,6 +223,7 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
                   <details class="registro">
                     <summary>
                       <span class={`estado estado-${h.estado}`}>{ETIQUETA_ESTADO[h.estado]}</span>
+                      {ETIQUETA_ORIGEN[h.origen] && <span class={`origen origen-${h.origen}`}>{ETIQUETA_ORIGEN[h.origen]}</span>}
                       <span class="min-w-0 flex-1 truncate text-ink-50">{h.pregunta}</span>
                       <span class="font-mono text-[12px] text-ink-200 shrink-0">{fecha.format(h.creada)} · US${h.costoUsd.toFixed(2)}</span>
                     </summary>
@@ -272,6 +279,9 @@ const ETIQUETA_ESTADO: Record<ResumenEjecucion['estado'], string> = {
       .estado-esperando_aprobacion { color: var(--color-ember); }
       .estado-esperando_aprobacion::before { background: var(--color-ember); }
       .estado-corriendo::before { background: var(--color-cyan); }
+      .origen { flex: none; padding: .15rem .5rem; border-radius: 999px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+      .origen-automatico { background: rgb(0 242 255 / .08); color: var(--color-cyan); }
+      .origen-terminal { background: rgb(255 255 255 / .06); color: var(--color-ink-100); }
       .chip-alerta { border-color: rgb(255 107 61 / .35); color: var(--color-ink-50); }
       /* La barra de desarrollo de Astro se montaba encima del campo de
          pregunta, y en una charla se proyecta todo lo que está en pantalla. */

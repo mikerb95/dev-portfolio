@@ -8,6 +8,7 @@ import { serverEnv } from '../env'
 import type { Ejecucion, EstadoEjecucion } from './bucle'
 
 type Fila = typeof analistaEjecuciones.$inferSelect
+export type OrigenEjecucion = Fila['origen']
 
 const DIA_MS = 86_400_000
 /** Una ejecución `corriendo` sin actividad en este tiempo se da por muerta (la función expiró). */
@@ -60,8 +61,44 @@ function aFila(e: Ejecucion, ahora: Date) {
   }
 }
 
-export async function crearEjecucion(e: Ejecucion, ahora = new Date()): Promise<void> {
-  await db.insert(analistaEjecuciones).values({ id: e.id, creada: ahora, ...aFila(e, ahora) })
+export async function crearEjecucion(e: Ejecucion, ahora = new Date(), origen: OrigenEjecucion = 'panel'): Promise<void> {
+  await db.insert(analistaEjecuciones).values({ id: e.id, creada: ahora, origen, ...aFila(e, ahora) })
+}
+
+export type TurnoTerminal = {
+  id: string
+  pregunta: string
+  respuesta: string | null
+  error: string | null
+  iteraciones: number
+  uso: Ejecucion['uso']
+  costoUsd: number
+}
+
+/**
+ * Deja en el historial un turno que corrió en la terminal (Agent SDK). Se
+ * inserta ya terminado y nunca como `corriendo`: si la terminal se cerrara a
+ * mitad, una fila viva bloquearía el panel con "ya hay un análisis en curso".
+ * Sin mensajes ni seudónimos: no hay nada que retomar desde la página.
+ */
+export async function registrarTurnoTerminal(t: TurnoTerminal, ahora = new Date()): Promise<void> {
+  await db.insert(analistaEjecuciones).values({
+    id: t.id,
+    creada: ahora,
+    actualizada: ahora,
+    origen: 'terminal',
+    estado: t.error ? 'fallida' : 'terminada',
+    pregunta: t.pregunta,
+    mensajes: '[]',
+    respuesta: t.respuesta,
+    error: t.error,
+    iteraciones: t.iteraciones,
+    tokensEntrada: t.uso.entrada,
+    tokensSalida: t.uso.salida,
+    tokensCacheLectura: t.uso.cacheLectura,
+    tokensCacheEscritura: t.uso.cacheEscritura,
+    costoUsd: t.costoUsd,
+  })
 }
 
 export async function guardarEjecucion(e: Ejecucion, ahora = new Date()): Promise<void> {
@@ -123,6 +160,7 @@ export type ResumenEjecucion = {
   respuesta: string | null
   error: string | null
   costoUsd: number
+  origen: OrigenEjecucion
   /** Origen y motivo del bloqueo pendiente, si lo hay. Nunca la IP. */
   pendiente: { origen: string; motivo: string } | null
 }
@@ -138,6 +176,7 @@ export async function listarEjecuciones(limite = 20): Promise<ResumenEjecucion[]
       respuesta: analistaEjecuciones.respuesta,
       error: analistaEjecuciones.error,
       costoUsd: analistaEjecuciones.costoUsd,
+      origen: analistaEjecuciones.origen,
       propuesta: analistaEjecuciones.propuesta,
     })
     .from(analistaEjecuciones)

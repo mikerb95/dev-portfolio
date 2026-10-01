@@ -26,7 +26,17 @@ export type EventoAnalista =
   | { tipo: 'texto'; texto: string }
   | { tipo: 'aprobacion'; origen: string; motivo: string }
   | { tipo: 'decision'; origen: string; aprobado: boolean }
-  | { tipo: 'fin'; ok: boolean; motivo: string; turnos: number; segundos: number; costoUsd: number }
+  | {
+      tipo: 'fin'
+      ok: boolean
+      motivo: string
+      turnos: number
+      segundos: number
+      costoUsd: number
+      /** Respuesta final del agente (solo si terminó bien). */
+      resultado: string | null
+      uso: { entrada: number; salida: number; cacheLectura: number; cacheEscritura: number }
+    }
 
 // Claves de los .env del sitio (credenciales de Turso, secretos de cifrado…).
 // El subproceso de Claude Code no las necesita: las consultas corren en este
@@ -148,6 +158,13 @@ export async function consultar(c: Consulta): Promise<string | undefined> {
         turnos: msg.num_turns,
         segundos: Math.round(msg.duration_ms / 1000),
         costoUsd: msg.total_cost_usd,
+        resultado: msg.subtype === 'success' ? msg.result : null,
+        uso: {
+          entrada: msg.usage.input_tokens ?? 0,
+          salida: msg.usage.output_tokens ?? 0,
+          cacheLectura: msg.usage.cache_read_input_tokens ?? 0,
+          cacheEscritura: msg.usage.cache_creation_input_tokens ?? 0,
+        },
       })
     }
   }

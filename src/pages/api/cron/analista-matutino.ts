@@ -32,7 +32,7 @@ export const GET: APIRoute = conRegistro('analista-matutino', async ({ request }
 
   let ejecucion
   try {
-    ejecucion = await prepararAnalisis(PREGUNTA)
+    ejecucion = await prepararAnalisis(PREGUNTA, 'automatico')
   } catch (err) {
     if (err instanceof SinApiKey) return json({ ok: true, omitido: 'sin API key' })
     if (err instanceof AnalistaOcupado) return json({ ok: true, omitido: 'otro análisis en curso' })

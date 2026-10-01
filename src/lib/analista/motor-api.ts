@@ -12,7 +12,7 @@ import { serverEnv } from '../env'
 import { avanzar, decidir, nuevaEjecucion, type Dependencias, type Ejecucion, type EventoBucle } from './bucle'
 import { MODELO } from './costo'
 import { exigirApiKey } from './credencial'
-import { crearEjecucion, guardarEjecucion, hayEnCurso, presupuestoRestante, reclamarPropuesta } from './ejecuciones'
+import { crearEjecucion, guardarEjecucion, type OrigenEjecucion, hayEnCurso, presupuestoRestante, reclamarPropuesta } from './ejecuciones'
 import { ejecutar, HERRAMIENTA_BLOQUEO, herramienta, HERRAMIENTAS } from './herramientas'
 import { systemPrompt } from './prompt'
 
@@ -95,12 +95,12 @@ export class SinPresupuesto extends Error {
  * SinPresupuesto, para que la ruta responda con un error claro ANTES de abrir
  * la transmisión en vivo.
  */
-export async function prepararAnalisis(pregunta: string): Promise<Ejecucion> {
+export async function prepararAnalisis(pregunta: string, origen: OrigenEjecucion = 'panel'): Promise<Ejecucion> {
   exigirApiKey(serverEnv('ANTHROPIC_API_KEY'))
   if (await hayEnCurso()) throw new AnalistaOcupado()
   if ((await presupuestoRestante()) <= 0) throw new SinPresupuesto()
   const e = nuevaEjecucion(randomUUID(), pregunta)
-  await crearEjecucion(e)
+  await crearEjecucion(e, new Date(), origen)
   return e
 }
 

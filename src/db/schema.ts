@@ -1554,6 +1554,9 @@ export const analistaEjecuciones = sqliteTable('analista_ejecuciones', {
   tokensCacheLectura: integer('tokens_cache_lectura').notNull().default(0),
   tokensCacheEscritura: integer('tokens_cache_escritura').notNull().default(0),
   costoUsd: real('costo_usd').notNull().default(0),
+  // Quién lo lanzó: el panel, el cron de la mañana o la terminal (Agent SDK).
+  // El historial lo muestra para distinguir lo que corrió sin nadie delante.
+  origen: text('origen', { enum: ['panel', 'automatico', 'terminal'] }).notNull().default('panel'),
 }, (t) => ({
   // El tope diario suma el gasto de las últimas 24 h y el historial lista por
   // fecha: las dos lecturas barren por `actualizada`/`creada`.

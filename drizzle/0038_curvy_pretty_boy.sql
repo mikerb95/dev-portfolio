@@ -1,0 +1,1 @@
+ALTER TABLE `analista_ejecuciones` ADD `origen` text DEFAULT 'panel' NOT NULL;
