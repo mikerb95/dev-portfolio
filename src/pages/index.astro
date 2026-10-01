@@ -600,6 +600,9 @@ const avisoEspectros =
             }
           : undefined
       const iso = montarIsolineas(lienzo, { zona: hero, reducido, halloween })
+      // Sin terreno (sin WebGL2) no hay espectros: el contador del HUD se quita
+      // en vez de quedarse marcando 0 de algo que nadie puede ver.
+      if (!iso) document.querySelector('.hud-espectros')?.remove()
       if (iso) {
         hero.classList.add('con-isolineas')
         if (!reducido) {
