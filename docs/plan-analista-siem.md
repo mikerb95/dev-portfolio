@@ -275,7 +275,36 @@ mañana. Se revisa si aparece un caso real. El video de respaldo no se
 2. Tope diario: **US$3** (`ANALISTA_TOPE_DIARIO_USD`), aprobado por el administrador.
 3. El prototipo local se conserva como motor del meetup.
 
+## Origen de cada análisis en el historial (1 oct 2026) ✅
+
+Para enseñar en el meetup que el analista trabaja aunque el administrador no
+esté y su equipo esté apagado, el historial de `/admin/analista` marca quién
+lanzó cada análisis:
+
+- **Automático**: el cron de las 6:30 (`analista-matutino`), en Vercel.
+- **Terminal**: cada turno de `npm run analista` (Agent SDK) se guarda al
+  terminar, con su respuesta, su costo y los bloqueos que se aprobaron o
+  rechazaron en la terminal.
+- Sin etiqueta: lo lanzado desde el propio panel.
+
+Decisiones:
+
+- Columna `origen` en `analista_ejecuciones` con valor por defecto `panel`
+  (migración aditiva `drizzle/0038_curvy_pretty_boy.sql`). El código anterior
+  sigue funcionando con la columna ya creada, así que se puede aplicar antes
+  del deploy.
+- El turno de la terminal se inserta ya `terminada` o `fallida`, nunca
+  `corriendo`: una terminal cerrada a mitad dejaría una fila viva que bloquea
+  el panel con "ya hay un análisis en curso".
+- Su costo cuenta para el mismo tope de US$3 cada 24 h: es la misma API key.
+  La terminal no consulta el tope antes de correr (nunca lo hizo); solo suma.
+- Guardar es fail-open: si la base no responde, el análisis ya se vio en la
+  terminal y solo se pierde la copia.
+- Con `--ips-reales` no se guarda nada: el historial se proyecta en charlas.
+- Ojo: la terminal usa el `.env`, que apunta a la base de producción. Un
+  bloqueo aprobado en la terminal se aplica de verdad en el sitio.
+
 ## Pendiente del administrador
 
-- Poner `ANTHROPIC_API_KEY` en `.env` y, antes de desplegar, en Vercel.
-- Aprobar la aplicación de la migración a Turso (local y producción).
+Nada del plan original: la API key está en Vercel y las migraciones 0037 y
+0038 se aplican a Turso con su aprobación.
