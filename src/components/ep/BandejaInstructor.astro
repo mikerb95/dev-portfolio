@@ -1,0 +1,214 @@
+---
+// "Así busca el instructor": una bandeja de ejemplo junto al generador de
+// asuntos. Cuando el asunto generado está completo, cae arriba como correo
+// nuevo, el buscador escribe el primer tramo ("Bitácora 4") y la bandeja se
+// filtra con la misma regla de src/lib/motion/ep-datos.ts. Lo que se apaga es
+// lo que no aparecería en esa búsqueda: el argumento del lineamiento, visto.
+//
+// Los correos son inventados y la pieza lo dice; los nombres y cédulas no son
+// de nadie. Sin JS se ve la bandeja completa, sin filtro.
+
+const correos = [
+  { de: 'LG', nombre: 'Laura Gómez', asunto: 'Bitácora 4, CC 1012345678, Ficha 3114731, Laura Gómez', hora: '08:12' },
+  { de: 'JR', nombre: 'Juan Rojas', asunto: 'bitacora mes 4 juan', hora: '07:55' },
+  { de: 'AR', nombre: 'Andrés Ruiz', asunto: 'Formato Visita 2, CC 1023456789, Ficha 3114732, Andrés Ruiz', hora: 'ayer' },
+  { de: 'SM', nombre: 'Sofía Martínez', asunto: 'Bitácora 4, CC 1034567890, Ficha 3114733, Sofía Martínez', hora: 'ayer' },
+  { de: 'DC', nombre: 'Diana Castro', asunto: 'RE: RE: RE: información etapa productiva', hora: 'lun' },
+  { de: 'KP', nombre: 'Kevin Peña', asunto: 'Envío bitácora!!', hora: 'lun' },
+]
+---
+
+<div class="bj" data-bandeja>
+  <div class="bj-barra">
+    <span class="bj-titulo">Bandeja del instructor</span>
+    <span class="bj-ejemplo">Ejemplo ilustrativo</span>
+  </div>
+  <div class="bj-buscar">
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <span class="bj-q" data-bandeja-q><span class="bj-q-vacio">Buscar en el correo</span></span>
+    <span class="bj-cursor" aria-hidden="true"></span>
+    <span class="bj-cuenta" data-bandeja-cuenta></span>
+  </div>
+  <ul class="bj-lista" aria-label="Correos de ejemplo">
+    <li class="bj-correo bj-tuyo" data-bandeja-tuyo hidden>
+      <span class="bj-av bj-av-tu" aria-hidden="true">TÚ</span>
+      <span class="bj-cuerpo">
+        <span class="bj-de">Tu correo <em>nuevo</em></span>
+        <span class="bj-asunto" data-bandeja-asunto></span>
+      </span>
+      <span class="bj-hora">ahora</span>
+    </li>
+    {correos.map((c) => (
+      <li class="bj-correo" data-asunto={c.asunto}>
+        <span class="bj-av" aria-hidden="true">{c.de}</span>
+        <span class="bj-cuerpo">
+          <span class="bj-de">{c.nombre}</span>
+          <span class="bj-asunto">{c.asunto}</span>
+        </span>
+        <span class="bj-hora">{c.hora}</span>
+      </li>
+    ))}
+  </ul>
+  <p class="bj-nota" data-bandeja-nota>
+    Completa el asunto y verás cómo lo encuentra el instructor.
+  </p>
+</div>
+
+<style>
+  .bj {
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 10, 13, 0.55);
+    overflow: hidden;
+  }
+  .bj-barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    font: 10px/1 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .bj-titulo {
+    color: #c4c4cc;
+  }
+  .bj-ejemplo {
+    color: #85858f;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    padding: 4px 8px;
+    letter-spacing: 0.08em;
+  }
+  .bj-buscar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 12px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    color: #85858f;
+    font: 12px/1 var(--font-mono, ui-monospace, monospace);
+    transition: border-color 0.3s;
+  }
+  .bj[data-filtrando] .bj-buscar {
+    border-color: rgba(0, 242, 255, 0.4);
+  }
+  .bj-q {
+    color: #e7e7ec;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .bj-q-vacio {
+    color: #85858f;
+  }
+  .bj-cursor {
+    width: 1px;
+    height: 14px;
+    margin-left: -6px;
+    background: #00f2ff;
+    opacity: 0;
+  }
+  .bj[data-escribiendo] .bj-cursor {
+    opacity: 1;
+  }
+  .bj-cuenta {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: #00f2ff;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .bj-lista {
+    display: grid;
+  }
+  .bj-correo {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    transition: opacity 0.45s, background-color 0.45s, filter 0.45s;
+  }
+  .bj-correo[hidden] {
+    display: none;
+  }
+  .bj-av {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    color: #c4c4cc;
+    font: 10px/1 var(--font-mono, ui-monospace, monospace);
+    letter-spacing: 0.04em;
+  }
+  .bj-av-tu {
+    background: #c9ff5b;
+    color: #0a0a0d;
+  }
+  .bj-cuerpo {
+    display: grid;
+    min-width: 0;
+  }
+  .bj-de {
+    font-size: 12px;
+    color: #e7e7ec;
+  }
+  .bj-de em {
+    font-style: normal;
+    font: 9px/1 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #c9ff5b;
+    margin-left: 6px;
+  }
+  .bj-asunto {
+    font: 11px/1.5 var(--font-mono, ui-monospace, monospace);
+    color: #85858f;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bj-hora {
+    font: 10px/1 var(--font-mono, ui-monospace, monospace);
+    color: #85858f;
+  }
+  .bj-tuyo {
+    background: rgba(201, 255, 91, 0.06);
+  }
+
+  /* Con la búsqueda aplicada: lo encontrado se ilumina, lo demás se apaga. */
+  .bj[data-filtrando] .bj-correo.encontrado {
+    background: rgba(0, 242, 255, 0.06);
+  }
+  .bj[data-filtrando] .bj-correo.encontrado .bj-asunto {
+    color: #c4c4cc;
+  }
+  .bj :global(.bj-marca) {
+    color: #00f2ff;
+    background: rgba(0, 242, 255, 0.14);
+    border-radius: 3px;
+  }
+  .bj[data-filtrando] .bj-correo:not(.encontrado) {
+    opacity: 0.28;
+    filter: grayscale(1);
+  }
+  .bj-nota {
+    padding: 10px 14px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 11px;
+    line-height: 1.5;
+    color: #85858f;
+  }
+</style>

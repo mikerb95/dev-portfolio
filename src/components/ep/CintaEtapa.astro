@@ -1,0 +1,524 @@
+---
+// Pieza central de /ep: el estado de la etapa y la cinta de días en una sola
+// tarjeta. Antes eran dos (una banda de cifras y una barra con cajas) y la
+// barra no dejaba ver lo que la página promete: que son 180 días concretos,
+// con fines de semana y festivos que mueven las entregas.
+//
+// El servidor pinta la cinta entera y quieta (es el estado final legible sin
+// JS); "hoy", lo transcurrido y la lectura al apuntar los pone el navegador,
+// porque la página es prerenderizada y "hoy" caducaría en el HTML.
+import { htmlCinta, type Cinta, type EntradaCinta } from '../../lib/motion/cinta-ep'
+import { jsonEnScript } from '../../lib/json-script'
+
+interface Props {
+  cinta: Cinta
+  entrada: EntradaCinta
+  rango: string
+}
+const { cinta, entrada, rango } = Astro.props
+---
+
+<section
+  id="ep-estado"
+  data-inicio={cinta.inicioIso}
+  data-fin={cinta.finIso}
+  class="ep-cinta rounded-2xl glass border-accent p-5 sm:p-6 md:p-8 mb-4"
+>
+  <div class="grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end gap-6 mb-8">
+    <div class="flex flex-wrap items-end gap-x-7 gap-y-3">
+      <div>
+        <div class="flex items-center gap-2.5 mb-2">
+          <span class="w-2 h-2 rounded-full bg-lime pulse-dot shrink-0"></span>
+          <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-200">Estado</span>
+        </div>
+        <div class="ep-contador" aria-hidden="true">
+          <span id="ep-dia" class="ep-contador-num">{cinta.total}</span>
+          <span id="ep-dia-de" class="ep-contador-de">días<br />de etapa</span>
+        </div>
+      </div>
+      <div class="min-w-0 pb-1.5">
+        <p id="ep-fase" class="text-[17px] md:text-[19px] text-ink-50 font-medium tracking-[-.02em] leading-tight">
+          {rango}
+        </p>
+        <p id="ep-proximo" class="text-[12px] font-mono text-ink-200 mt-1.5">
+          6 meses de etapa productiva · 864 horas
+        </p>
+      </div>
+    </div>
+
+    <div class="grid gap-4 justify-items-start lg:justify-items-end">
+      <div class="grid grid-cols-3 gap-2 sm:gap-3">
+        {[
+          { id: 'ep-stat-avance', label: 'Avance' },
+          { id: 'ep-stat-dias', label: 'Restantes' },
+          { id: 'ep-stat-bitacora', label: 'Bitácora' },
+        ].map((s) => (
+          <div class="rounded-xl bg-white/[.03] border border-white/10 px-3 sm:px-4 py-3 text-center min-w-[84px]">
+            <div id={s.id} class="font-mono text-[18px] leading-none text-ink-50">-</div>
+            <div class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-200 mt-2">{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- La cinta es la traducción visual de las tablas de bitácoras y visitas
+       de abajo, que son la versión accesible del mismo dato. Aquí el lector
+       de pantalla recibe la lectura del día (región aria-live), no 181 rayas. -->
+  <div
+    class="ct"
+    data-cinta-raiz
+    tabindex="0"
+    role="group"
+    aria-label="Cinta de los días de la etapa. Usa las flechas izquierda y derecha para leer cada día."
+    aria-describedby="ep-cinta-lectura"
+  >
+    <script type="application/json" data-cinta-entrada set:html={jsonEnScript(entrada)} />
+    <div aria-hidden="true" set:html={htmlCinta(cinta)} />
+  </div>
+
+  <div class="ct-pie">
+    <p id="ep-cinta-lectura" class="ct-lectura" aria-live="polite">
+      <span class="ct-lectura-t">Apunta un día de la cinta para leerlo</span>
+    </p>
+    <ul class="ct-leyenda" aria-hidden="true">
+      <li><i class="ley-dia"></i> Hábil</li>
+      <li><i class="ley-finde"></i> Fin de semana</li>
+      <li><i class="ley-festivo"></i> Festivo</li>
+      <li><i class="ley-cierre"></i> Entrega de bitácora</li>
+      <li><i class="ley-visita"></i> Visita</li>
+      <li><i class="ley-hoy"></i> Hoy</li>
+    </ul>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-3 mt-7 pt-6 border-t border-white/[.07]">
+    <button
+      id="ep-cta"
+      type="button"
+      data-magnetico
+      class="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:brightness-110 transition-[filter]"
+    >
+      Crear mi cronograma
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+    </button>
+    <p id="ep-cta-nota" class="text-[12px] text-ink-200 max-w-md leading-relaxed">
+      ¿Eres otro aprendiz? Esta cinta es la de esta ficha. Abajo, la calculadora arma la
+      tuya a partir de tu propia fecha de inicio.
+    </p>
+  </div>
+</section>
+
+<style is:global>
+  /* Va global: la calculadora inyecta la misma cinta (htmlCinta) desde el
+     navegador, fuera del alcance de los estilos con ámbito del componente. */
+
+  .ep-contador {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.6rem;
+  }
+  .ep-contador-num {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: clamp(56px, 9vw, 92px);
+    line-height: 0.82;
+    letter-spacing: -0.06em;
+    color: #e7e7ec;
+    font-variant-numeric: tabular-nums;
+  }
+  .ep-contador-de {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    line-height: 1.35;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #85858f;
+    padding-bottom: 0.2rem;
+  }
+
+  /* ── La cinta ─────────────────────────────────────────────────────────── */
+
+  .ct {
+    position: relative;
+    outline: none;
+    border-radius: 12px;
+  }
+  .ct:focus-visible {
+    box-shadow: 0 0 0 1px rgba(0, 242, 255, 0.45), 0 0 0 6px rgba(0, 242, 255, 0.08);
+  }
+
+  .ct-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    grid-template-rows: 18px 46px 66px 42px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .ct-meses,
+  .ct-pines,
+  .ct-dias,
+  .ct-bits {
+    display: contents;
+  }
+
+  /* Regla de meses: la etiqueta arriba y su guía atraviesa la cinta entera. */
+  .ct-mes {
+    grid-row: 1 / -1;
+    grid-column: var(--col) / span var(--span);
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+    padding-left: 6px;
+    font: 10px/18px var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #85858f;
+    white-space: nowrap;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Visitas: una banda del ancho de su ventana y la etiqueta encima. */
+  .ct-pin {
+    grid-row: 2;
+    grid-column: var(--col) / span var(--span);
+    position: relative;
+    align-self: end;
+    height: 3px;
+    margin-bottom: 6px;
+    border-radius: 2px;
+    background: rgba(167, 139, 255, 0.55);
+    min-width: 3px;
+  }
+  .ct-pin-et {
+    position: absolute;
+    bottom: 9px;
+    white-space: nowrap;
+    font: 10px/1 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #c9b9ff;
+    background: rgba(167, 139, 255, 0.12);
+    border: 1px solid rgba(167, 139, 255, 0.38);
+    border-radius: 6px;
+    padding: 5px 7px;
+  }
+  .ct-pin-et b {
+    font-weight: 500;
+    color: #a78bff;
+  }
+  .ct-pin-et em {
+    font-style: normal;
+    color: #85858f;
+    margin-left: 4px;
+  }
+  .ct-pin[data-alinear='start'] .ct-pin-et { left: 0; }
+  .ct-pin[data-alinear='center'] .ct-pin-et { left: 50%; transform: translateX(-50%); }
+  .ct-pin[data-alinear='end'] .ct-pin-et { right: 0; }
+  .ct-pin.lee {
+    background: #a78bff;
+  }
+
+  /* Días. La celda entera recibe el puntero (la raya visible mide 3 px). */
+  .ct-d {
+    grid-row: 3;
+    grid-column: var(--col);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    cursor: crosshair;
+    padding-bottom: 2px;
+  }
+  .ct-d i {
+    display: block;
+    width: max(2px, min(3px, 62%));
+    height: 30px;
+    border-radius: 2px;
+    background: rgba(231, 231, 236, 0.17);
+    transform-origin: 50% 100%;
+    transition: height 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.3s, box-shadow 0.3s;
+  }
+  .ct-d[data-inh] i {
+    height: 15px;
+    background: rgba(231, 231, 236, 0.08);
+  }
+  .ct-d[data-inh='festivo'] i {
+    background: rgba(255, 107, 61, 0.6);
+  }
+  .ct-d[data-v] i {
+    background: rgba(167, 139, 255, 0.42);
+  }
+  .ct-d[data-entrega] i {
+    height: 40px;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px rgba(0, 242, 255, 0.85);
+  }
+  .ct-d[data-cierre] i {
+    height: 50px;
+    background: #00f2ff;
+  }
+  .ct-d[data-cierre][data-inh] i {
+    background: linear-gradient(#ff6b3d 0 8px, #00b8c4 8px);
+  }
+
+  /* Transcurrido: lo pone el script (la página no sabe qué día es hoy). */
+  .ct-d.pasado i {
+    background: rgba(155, 250, 255, 0.62);
+  }
+  .ct-d.pasado[data-inh] i {
+    background: rgba(155, 250, 255, 0.26);
+  }
+  .ct-d.pasado[data-cierre] i {
+    background: #00b8c4;
+  }
+  .ct-d.hoy i {
+    height: 60px;
+    background: #c9ff5b;
+    box-shadow: 0 0 14px rgba(201, 255, 91, 0.7);
+    animation: ct-late 2.4s ease-in-out infinite;
+  }
+  .ct-d.lee i {
+    height: 58px;
+    background: #fff;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+  }
+  .ct-grid.leyendo .ct-d:not(.lee):not(.en-b) i {
+    opacity: 0.55;
+  }
+  @keyframes ct-late {
+    50% {
+      box-shadow: 0 0 22px rgba(201, 255, 91, 0.95);
+    }
+  }
+  .ct-pausada .ct-d.hoy i {
+    animation-play-state: paused;
+  }
+
+  /* Ventanas de bitácora: corchete bajo los días. */
+  .ct-b {
+    grid-row: 4;
+    grid-column: var(--col) / span var(--span);
+    position: relative;
+    margin: 7px 2px 0;
+    padding-top: 7px;
+    border-top: 1px solid rgba(0, 242, 255, 0.4);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    font: 10px/1 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    transform-origin: 0 0;
+    transition: border-color 0.3s;
+  }
+  .ct-b::before,
+  .ct-b::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    width: 1px;
+    height: 7px;
+    background: rgba(0, 242, 255, 0.4);
+  }
+  .ct-b::before { left: 0; }
+  .ct-b::after { right: 0; }
+  .ct-b b {
+    font-weight: 500;
+    color: #00f2ff;
+  }
+  .ct-b em {
+    font-style: normal;
+    color: #85858f;
+  }
+  .ct-b-aviso {
+    color: #ff6b3d;
+  }
+  .ct-b.lee {
+    border-top-color: #00f2ff;
+  }
+  .ct-b.lee em {
+    color: #e7e7ec;
+  }
+  .ct-b-cola {
+    display: none;
+  }
+
+  /* Hoy y el cabezal de la entrada: capas sueltas sobre la rejilla. */
+  .ct-hoy,
+  .ct-cabeza {
+    position: absolute;
+    left: 0;
+    pointer-events: none;
+    display: none;
+  }
+  .ct-grid.con-hoy .ct-hoy {
+    display: block;
+    top: 26px;
+    height: 104px;
+    width: 1px;
+    background: linear-gradient(rgba(201, 255, 91, 0), rgba(201, 255, 91, 0.9) 35%);
+  }
+  .ct-hoy em {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font: 9px/1 var(--font-mono, ui-monospace, monospace);
+    font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #0a0a0d;
+    background: #c9ff5b;
+    border-radius: 4px;
+    padding: 3px 5px;
+  }
+  .ct-cabeza {
+    top: 64px;
+    height: 66px;
+    width: 2px;
+    background: linear-gradient(rgba(155, 250, 255, 0), #9bfaff);
+    box-shadow: 0 0 18px 2px rgba(0, 242, 255, 0.55);
+  }
+  .ct-grid.barriendo .ct-cabeza {
+    display: block;
+  }
+
+  /* ── Pie: lectura y leyenda ───────────────────────────────────────────── */
+  .ct-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-top: 14px;
+  }
+  .ct-lectura {
+    min-height: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    font: 12px/1.5 var(--font-mono, ui-monospace, monospace);
+    color: #c4c4cc;
+  }
+  .ct-lectura-t {
+    color: #e7e7ec;
+  }
+  .ct-lectura [data-tono] {
+    white-space: nowrap;
+  }
+  .ct-lectura [data-tono]::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background: currentColor;
+    vertical-align: 1px;
+  }
+  .ct-lectura [data-tono='cyan'] { color: #00f2ff; }
+  .ct-lectura [data-tono='violet'] { color: #a78bff; }
+  .ct-lectura [data-tono='ember'] { color: #ff6b3d; }
+  .ct-lectura [data-tono='lime'] { color: #c9ff5b; }
+  .ct-lectura [data-tono='ink'] { color: #85858f; }
+
+  .ct-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font: 10px/1 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #85858f;
+  }
+  .ct-leyenda li {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .ct-leyenda i {
+    display: block;
+    width: 3px;
+    height: 12px;
+    border-radius: 1px;
+    background: rgba(231, 231, 236, 0.3);
+  }
+  .ct-leyenda .ley-finde { height: 7px; background: rgba(231, 231, 236, 0.14); }
+  .ct-leyenda .ley-festivo { height: 7px; background: #ff6b3d; }
+  .ct-leyenda .ley-cierre { height: 14px; background: #00f2ff; }
+  .ct-leyenda .ley-visita { background: #a78bff; }
+  .ct-leyenda .ley-hoy { height: 14px; background: #c9ff5b; }
+
+  /* ── Celular: una fila por mes de bitácora ───────────────────────────────
+     181 rayas en 360 px medirían 2 px cada una y no se podrían tocar. En filas
+     de 31 columnas cada día es un blanco de ~10 px, y la fila es justo una
+     ventana de bitácora: el mes que el aprendiz reporta. */
+  @media (max-width: 639px) {
+    .ct-grid {
+      grid-template-columns: 30px repeat(31, minmax(0, 1fr));
+      grid-template-rows: repeat(var(--filas), 30px) auto;
+      row-gap: 4px;
+    }
+    .ct-meses {
+      display: none;
+    }
+    .ct-d {
+      grid-row: var(--fila);
+      grid-column: var(--colm);
+      padding-bottom: 4px;
+    }
+    .ct-d i {
+      width: max(3px, 46%);
+      height: 16px;
+    }
+    .ct-d[data-inh] i { height: 8px; }
+    .ct-d[data-entrega] i { height: 20px; }
+    .ct-d[data-cierre] i { height: 24px; }
+    .ct-d.hoy i, .ct-d.lee i { height: 26px; }
+    .ct-d[data-cierre][data-inh] i {
+      background: linear-gradient(#ff6b3d 0 5px, #00b8c4 5px);
+    }
+    .ct-b {
+      grid-row: var(--fila);
+      grid-column: 1;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      align-self: center;
+    }
+    .ct-b::before,
+    .ct-b::after,
+    .ct-b em {
+      display: none;
+    }
+    .ct-b-cola {
+      display: flex;
+    }
+    .ct-b-cola b {
+      color: #85858f;
+    }
+    .ct-pines {
+      grid-row: -2 / -1;
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 10px;
+    }
+    .ct-pin {
+      height: auto;
+      margin: 0;
+      background: none;
+    }
+    .ct-pin-et {
+      position: static;
+      display: inline-block;
+      transform: none !important;
+    }
+    .ct-grid.con-hoy .ct-hoy,
+    .ct-grid.barriendo .ct-cabeza {
+      display: none;
+    }
+  }
+</style>

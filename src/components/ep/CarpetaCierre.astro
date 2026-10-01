@@ -1,0 +1,142 @@
+---
+// El cierre pide "consolidar todos los soportes en PDF". La carpeta muestra
+// ese PDF armándose: cada documento marcado en la lista entra como página, en
+// el orden de la lista (que es el orden en que el centro los pide), y con los
+// ocho dentro aparece el sello de listo para enviar.
+//
+// Las marcas viven en localStorage y las lee el script, así que el servidor
+// pinta la carpeta vacía: los huecos punteados son lo que falta, que sin JS
+// también es verdad.
+
+interface Props {
+  paginas: string[]
+}
+const { paginas } = Astro.props
+---
+
+<div class="pdf" data-carpeta aria-hidden="true">
+  <div class="pdf-cab">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
+    <span class="pdf-nombre">cierre-etapa-productiva.pdf</span>
+  </div>
+  <ol class="pdf-hojas">
+    {paginas.map((p, i) => (
+      <li class="pdf-hoja" data-k={String(i)}>
+        <span class="pdf-n">{String(i + 1).padStart(2, '0')}</span>
+        <span class="pdf-et">{p}</span>
+        <span class="pdf-renglones"><i></i><i></i><i></i></span>
+      </li>
+    ))}
+  </ol>
+  <div class="pdf-pie">
+    <span><b data-carpeta-n>0</b> de {paginas.length} páginas</span>
+    <span class="pdf-sello" data-carpeta-sello>Listo para enviar</span>
+  </div>
+</div>
+
+<style>
+  .pdf {
+    position: relative;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 10, 13, 0.55);
+    padding: 12px;
+  }
+  .pdf-cab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ff6b3d;
+    padding: 2px 2px 10px;
+  }
+  .pdf-nombre {
+    font: 11px/1 var(--font-mono, ui-monospace, monospace);
+    color: #c4c4cc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pdf-hojas {
+    display: grid;
+    gap: 5px;
+  }
+  .pdf-hoja {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 34px;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 5px;
+    border: 1px dashed rgba(255, 255, 255, 0.13);
+    color: #85858f;
+    font: 11px/1 var(--font-mono, ui-monospace, monospace);
+    transition: background-color 0.35s, border-color 0.35s, color 0.35s, box-shadow 0.35s;
+  }
+  .pdf-n {
+    font-size: 9px;
+    opacity: 0.7;
+  }
+  .pdf-et {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pdf-renglones {
+    display: grid;
+    gap: 3px;
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+  .pdf-renglones i {
+    display: block;
+    height: 2px;
+    border-radius: 1px;
+    background: rgba(18, 18, 22, 0.25);
+  }
+  .pdf-renglones i:nth-child(2) { width: 80%; }
+  .pdf-renglones i:nth-child(3) { width: 55%; }
+
+  /* Página dentro del PDF: papel claro, como se verá al abrirlo. Leve giro
+     alterno para que la pila se lea como hojas y no como una lista. */
+  .pdf-hoja.dentro {
+    border: 1px solid transparent;
+    background: #ececf1;
+    color: #16181c;
+    box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.8);
+  }
+  .pdf-hoja.dentro:nth-child(odd) { transform: rotate(-0.5deg); }
+  .pdf-hoja.dentro:nth-child(even) { transform: rotate(0.4deg); }
+  .pdf-hoja.dentro .pdf-renglones {
+    opacity: 1;
+  }
+
+  .pdf-pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 2px 2px;
+    font: 10px/1 var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #85858f;
+  }
+  .pdf-pie b {
+    font-weight: 500;
+    color: #e7e7ec;
+  }
+  .pdf-sello {
+    color: #0a0a0d;
+    background: #c9ff5b;
+    border-radius: 999px;
+    padding: 5px 9px;
+    opacity: 0;
+    transform: scale(0.6) rotate(-6deg);
+    transition: opacity 0.3s, transform 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  .pdf.completa .pdf-sello {
+    opacity: 1;
+    transform: rotate(-4deg);
+  }
+</style>

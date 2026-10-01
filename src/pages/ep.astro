@@ -7,6 +7,10 @@ export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { diaInhabil, habilAnterior } from '../lib/festivos-co'
+import { htmlMini, modeloCinta, type EntradaCinta } from '../lib/motion/cinta-ep'
+import CintaEtapa from '../components/ep/CintaEtapa.astro'
+import BandejaInstructor from '../components/ep/BandejaInstructor.astro'
+import CarpetaCierre from '../components/ep/CarpetaCierre.astro'
 
 const INICIO_ISO = '2026-09-09'
 const FIN_ISO = '2027-03-08'
@@ -34,18 +38,9 @@ const fCorto = (x: Date) => `${String(x.getDate()).padStart(2, '0')}-${MES_CORTO
 const DIA_CORTO = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 const fLargo = (x: Date) => `${fCorto(x)}-${x.getFullYear()}`
 
-// Posición de una fecha dentro de la línea de tiempo, en % del ancho total.
-const spanMs = finD.getTime() - inicioD.getTime()
-const pctDe = (x: Date) => ((x.getTime() - inicioD.getTime()) / spanMs) * 100
-const clamp = (n: number) => Math.min(100, Math.max(0, n))
-const banda = (desde: Date, hasta: Date) => {
-  const izq = clamp(pctDe(desde))
-  return { left: izq, width: Math.max(1.5, clamp(pctDe(hasta)) - izq) }
-}
-
 // Las seis ventanas de bitácora se derivan de la fecha de inicio en vez de
 // escribirse a mano: una por mes, cerrando el día antes de que abra la
-// siguiente. Cambiar INICIO_ISO recoloca la tabla y la línea de tiempo.
+// siguiente. Cambiar INICIO_ISO recoloca la tabla y la cinta.
 const bitacoras = Array.from({ length: MESES }, (_, i) => {
   const desde = addMonths(inicioD, i)
   const hasta = addDays(addMonths(inicioD, i + 1), -1)
@@ -58,7 +53,6 @@ const bitacoras = Array.from({ length: MESES }, (_, i) => {
     hasta,
     inhabil,
     sugerido: inhabil ? habilAnterior(hasta) : null,
-    ...banda(desde, hasta),
   }
 })
 
@@ -84,19 +78,20 @@ const visitas = [
     hasta: finD,
     detalle: 'Evaluación final, paz y salvo y cierre, unos tres meses después de la visita 2.',
   },
-].map((v) => ({ ...v, ...banda(v.desde, v.hasta) }))
+]
 
-// Marcas de mes de la regla superior. El primer mes empieza antes del inicio
-// de la etapa (09-sep), así que su marca se pega al borde izquierdo.
-const marcasMes: { label: string; left: number }[] = []
-const cursorMes = new Date(inicioD.getFullYear(), inicioD.getMonth(), 1)
-while (cursorMes <= finD) {
-  marcasMes.push({
-    label: cursorMes.getMonth() === 0 ? `${MES_CORTO[0]} ${cursorMes.getFullYear()}` : MES_CORTO[cursorMes.getMonth()],
-    left: clamp(pctDe(cursorMes)),
-  })
-  cursorMes.setMonth(cursorMes.getMonth() + 1)
+// La cinta de días (src/lib/motion/cinta-ep.ts) recibe las mismas ventanas que
+// pintan las tablas de abajo, en ISO: si una fecha cambia aquí, cambian las
+// dos a la vez.
+const iso = (x: Date) =>
+  `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+const entradaCinta: EntradaCinta = {
+  inicioIso: INICIO_ISO,
+  finIso: FIN_ISO,
+  bitacoras: bitacoras.map((b) => ({ n: b.n, desdeIso: iso(b.desde), hastaIso: iso(b.hasta) })),
+  visitas: visitas.map((v) => ({ n: v.n, titulo: v.titulo, desdeIso: iso(v.desde), hastaIso: iso(v.hasta) })),
 }
+const cinta = modeloCinta(entradaCinta)
 
 const contexto: { titulo: string; cuerpo: string; enlace?: { href: string; label: string } }[] = [
   {
@@ -205,27 +200,32 @@ const docLinks = {
 // Checklist de cierre: los documentos que pide el juicio de etapa productiva
 // y la certificación académica (infografía SENA - Centro de Servicios
 // Financieros, Regional Distrito Capital). Se reutilizan los links de
-// `recursos` para los dos formatos que ya existen ahí (F-147 y F-023).
+// `recursos` para los dos formatos que ya existen ahí (F-147 y F-023). El
+// `corto` es el rótulo de la página en la carpeta PDF de la sección.
 const documentosCierre = [
-  { texto: 'Fotocopia del documento de identidad ampliada al 150 %.' },
-  { texto: 'Carta donde se indique que no le fue entregado carné por parte del Centro de Formación.' },
-  { texto: 'Certificado de inscripción en la Agencia Pública de Empleo.' },
-  { texto: 'Pantallazo de actualización de datos en SENA Sofía Plus.' },
+  { corto: 'Documento de identidad', texto: 'Fotocopia del documento de identidad ampliada al 150 %.' },
+  { corto: 'Carta sin carné', texto: 'Carta donde se indique que no le fue entregado carné por parte del Centro de Formación.' },
+  { corto: 'Agencia Pública de Empleo', texto: 'Certificado de inscripción en la Agencia Pública de Empleo.' },
+  { corto: 'Datos en Sofía Plus', texto: 'Pantallazo de actualización de datos en SENA Sofía Plus.' },
   {
+    corto: 'Certificación de la empresa',
     texto:
       'Certificación expedida por la empresa, indicando las fechas exactas de inicio y finalización de la Etapa Productiva.',
   },
   {
+    corto: 'Bitácoras GFPI-F-147',
     texto:
       'Formato GFPI-F-147 V5 (Bitácora de Seguimiento de Etapa Productiva), debidamente diligenciada, firmada y organizada en orden cronológico.',
     doc: recursos.find((r) => r.label.startsWith('Bitácora')),
   },
   {
+    corto: 'Visitas GFPI-F-023',
     texto:
       'Formato GFPI-F-023 V6 (Planeación, Seguimiento y Evaluación de Etapa Productiva), correspondiente a las visitas de concertación, evaluación parcial y evaluación final.',
     doc: recursos.find((r) => r.label === 'Visita 1 (GFPI-F-023)'),
   },
   {
+    corto: 'Saber TyT',
     texto:
       'Soporte de presentación de las Pruebas de Estado Saber TyT (aplica únicamente para programas de nivel tecnólogo).',
   },
@@ -323,17 +323,17 @@ const meta = [
 
       <div class="grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end gap-8">
         <div>
-          <h1 class="font-sans text-4xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[1] mb-5">
+          <h1 data-ep-titulo class="font-sans text-4xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[1] mb-5">
             Etapa <span class="font-serif italic font-normal text-mask-cyan">productiva</span>
           </h1>
-          <p class="text-[15px] md:text-[16px] text-ink-100 leading-relaxed max-w-xl">
+          <p data-hero-sigue class="text-[15px] md:text-[16px] text-ink-100 leading-relaxed max-w-xl">
             Seis meses, seis bitácoras y tres visitas de seguimiento, con sus fechas
             exactas y los formatos que pide cada hito. Abajo hay una calculadora que
-            proyecta el mismo cronograma para cualquier otra ficha.
+            arma la misma cinta para cualquier otra ficha.
           </p>
         </div>
 
-        <dl class="grid grid-cols-2 gap-x-8 gap-y-4 lg:text-right shrink-0">
+        <dl data-hero-sigue class="grid grid-cols-2 gap-x-8 gap-y-4 lg:text-right shrink-0">
           {meta.map((m) => (
             <div>
               <dt class="text-[10px] font-mono uppercase tracking-[.15em] text-ink-300 mb-1">{m.k}</dt>
@@ -344,147 +344,19 @@ const meta = [
       </div>
     </header>
 
-    <!-- Banda de estado. Los números dependen de "hoy" y la página es
-         prerenderizada, así que los rellena el script: el HTML estático solo
-         lleva las fechas fijas, que no caducan. -->
-    <section
-      id="ep-estado"
-      data-inicio={INICIO_ISO}
-      data-fin={FIN_ISO}
-      class="rounded-2xl glass border-accent p-6 md:p-7 mb-4"
-    >
-      <div class="grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center gap-6">
-        <div>
-          <div class="flex items-center gap-2.5 mb-3">
-            <span class="w-2 h-2 rounded-full bg-lime pulse-dot shrink-0"></span>
-            <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-200">Estado</span>
-          </div>
-          <p id="ep-fase" class="text-[19px] md:text-[22px] text-ink-50 font-medium tracking-[-.02em] leading-tight">
-            {fLargo(inicioD)} → {fLargo(finD)}
-          </p>
-          <p id="ep-proximo" class="text-[12px] font-mono text-ink-300 mt-2">
-            6 meses de etapa productiva · 864 horas
-          </p>
-          <button
-            id="ep-cta"
-            type="button"
-            class="inline-flex items-center gap-2 h-10 mt-5 px-5 rounded-full bg-cyan text-ink-950 text-[13px] font-medium hover:brightness-110 transition-all"
-          >
-            Crear mi cronograma
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
-          </button>
-          <p id="ep-cta-nota" class="text-[11px] text-ink-300 mt-2.5 max-w-sm leading-relaxed">
-            ¿Eres otro aprendiz? Las fechas de arriba son de esta ficha; abajo puedes
-            proyectar las tuyas a partir de tu propia fecha de inicio.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3 sm:gap-4 shrink-0">
-          {[
-            { id: 'ep-stat-avance', label: 'Avance' },
-            { id: 'ep-stat-dias', label: 'Días restantes' },
-            { id: 'ep-stat-bitacora', label: 'Bitácora' },
-          ].map((s) => (
-            <div class="rounded-xl bg-white/[.03] border border-white/10 px-4 py-3 text-center min-w-[92px]">
-              <div id={s.id} class="font-mono text-[20px] leading-none text-ink-50">-</div>
-              <div class="text-[10px] font-mono uppercase tracking-[.12em] text-ink-300 mt-2">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-
-    <!-- Línea de tiempo. Es la traducción visual de las dos tablas de abajo
-         (bitácoras y visitas), que son la versión accesible del mismo dato:
-         por eso el gráfico va marcado como decorativo. -->
-    <figure class="rounded-2xl glass border-accent p-6 md:p-7 mb-4">
-      <figcaption class="flex flex-wrap items-center gap-x-5 gap-y-2 mb-6">
-        <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-200">Cronograma</span>
-        <span class="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[.12em] text-ink-300">
-          <span class="w-2.5 h-2.5 rounded-[3px] bg-cyan/40 border border-cyan/50"></span> Bitácoras
-        </span>
-        <span class="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[.12em] text-ink-300">
-          <span class="w-2.5 h-2.5 rounded-[3px] bg-violet/40 border border-violet/50"></span> Visitas
-        </span>
-        <span class="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[.12em] text-ink-300">
-          <span class="w-px h-3 bg-lime"></span> Hoy
-        </span>
-      </figcaption>
-
-      <div class="overflow-x-auto -mx-1 px-1">
-        <div id="ep-track" class="relative min-w-[640px] h-[186px]" aria-hidden="true">
-
-          <!-- Regla de meses -->
-          {marcasMes.map((m) => (
-            <>
-              <div class="absolute top-5 bottom-0 w-px bg-white/[.055]" style={`left:${m.left}%`}></div>
-              <span
-                class="absolute top-0 text-[10px] font-mono uppercase tracking-[.12em] text-ink-300 pl-1.5"
-                style={`left:${m.left}%`}
-              >{m.label}</span>
-            </>
-          ))}
-
-          <!-- Carril de visitas. Van como pin y no como banda: las ventanas 2 y
-               3 duran una semana, y a esa escala la banda mide 20px - no cabe
-               la etiqueta dentro. El pin se alinea al borde más cercano para no
-               desbordar el gráfico en los extremos. -->
-          {visitas.map((v) => {
-            const centro = v.left + v.width / 2
-            const desplazamiento = centro > 70 ? '-100%' : centro < 12 ? '0' : '-50%'
-            return (
-              <>
-                <div class="absolute top-[52px] bottom-[64px] w-px bg-violet/25" style={`left:${centro}%`}></div>
-                <div
-                  class="ep-pin absolute top-[32px] rounded-md bg-violet/15 border border-violet/40 px-2 py-1 whitespace-nowrap"
-                  style={`left:${centro}%;transform:translateX(${desplazamiento})`}
-                >
-                  <span class="text-[10px] font-mono uppercase tracking-[.1em] text-violet">V{v.n} · {v.titulo}</span>
-                </div>
-              </>
-            )
-          })}
-
-          <!-- Vía principal + progreso -->
-          <div class="absolute left-0 right-0 top-[104px] h-2.5 rounded-full bg-white/[.06] overflow-hidden">
-            <div
-              id="ep-progreso"
-              class="h-full rounded-full bg-gradient-to-r from-cyan-deep via-cyan to-cyan-glow"
-              style="width:0%"
-            ></div>
-          </div>
-
-          <!-- Carril de bitácoras -->
-          {bitacoras.map((b) => (
-            <div class="absolute top-[126px]" style={`left:${b.left}%;width:${b.width}%`}>
-              <div class="ep-bar h-8 rounded-md bg-cyan/12 border border-cyan/30 flex items-center justify-center">
-                <span class="text-[10px] font-mono uppercase tracking-[.1em] text-cyan">B{b.n}</span>
-              </div>
-              <span class="block text-[10px] font-mono text-ink-300 mt-1.5 whitespace-nowrap">{fCorto(b.hasta)}</span>
-            </div>
-          ))}
-
-          <!-- Marcador de hoy: lo coloca el script y solo si cae dentro de la etapa -->
-          <div id="ep-hoy" class="absolute top-4 bottom-0 w-px bg-lime hidden" style="left:0%">
-            <span class="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-mono uppercase tracking-[.12em] text-lime whitespace-nowrap">Hoy</span>
-            <span class="absolute top-[86px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-lime"></span>
-          </div>
-
-        </div>
-      </div>
-    </figure>
+    <CintaEtapa cinta={cinta} entrada={entradaCinta} rango={`${fLargo(inicioD)} → ${fLargo(finD)}`} />
 
     <!-- Detalle + barra lateral -->
-    <div id="ep-detalle" class="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start mb-4">
+    <div id="ep-detalle" class="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start mb-4">
 
-      <div class="grid sm:grid-cols-2 gap-4">
+      <div class="grid grid-cols-[minmax(0,1fr)] sm:grid-cols-2 gap-4">
 
         <div class="rounded-2xl glass p-6 sm:col-span-2">
           <div class="flex items-center gap-2 mb-5">
             <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
             <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Cómo funciona la etapa</span>
           </div>
-          <div class="grid sm:grid-cols-2 gap-x-8 gap-y-6">
+          <div data-entrada class="grid sm:grid-cols-2 gap-x-8 gap-y-6">
             {contexto.map((c) => (
               <div>
                 <h3 class="text-[13px] text-ink-50 font-medium mb-1.5">{c.titulo}</h3>
@@ -521,9 +393,16 @@ const meta = [
                   <div class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
                     <div class="text-[12px] text-ink-100 mb-1">{m.modalidad}</div>
                     {m.fases.map(([fase, pct]) => (
-                      <div class="flex items-baseline justify-between gap-3 text-[11px] font-mono">
-                        <span class="text-ink-300">{fase}</span>
-                        <span class="text-lime">{pct}</span>
+                      <div class="text-[11px] font-mono">
+                        <div class="flex items-baseline justify-between gap-3">
+                          <span class="text-ink-200">{fase}</span>
+                          <span class="text-lime">{pct}</span>
+                        </div>
+                        <!-- El medidor es la fracción del SMMLV: una barra llena es
+                             un salario mínimo entero. -->
+                        <span class="ep-medidor" data-medidor aria-hidden="true">
+                          <i style={`--p:${parseInt(pct, 10) / 100}`}></i>
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -650,13 +529,14 @@ const meta = [
             Las fechas de cierre que caen en fin de semana o festivo colombiano quedan marcadas
             con el último día hábil para entregar.
           </p>
-          <ol class="space-y-1.5">
+          <ol data-entrada class="space-y-1.5">
             {bitacoras.map((b) => (
               <li class="text-[13px] rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
                 <div class="flex items-baseline justify-between gap-3">
                   <span class="text-ink-100 shrink-0">Bitácora {b.n}</span>
-                  <span class="text-ink-300 font-mono text-[11px] text-right">{fCorto(b.desde)} → {fCorto(b.hasta)}</span>
+                  <span class="text-ink-200 font-mono text-[11px] text-right">{fCorto(b.desde)} → {fCorto(b.hasta)}</span>
                 </div>
+                <span class="ep-mini" data-mini aria-hidden="true" set:html={htmlMini(cinta, b.n)} />
                 {b.inhabil && b.sugerido && (
                   <p class="flex items-start gap-1.5 text-[11px] font-mono text-ember mt-1.5 leading-relaxed">
                     <span aria-hidden="true">▲</span>
@@ -674,7 +554,7 @@ const meta = [
             <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Visitas</span>
           </div>
           <p class="text-[11px] font-mono text-ink-300 mb-4 pl-3.5">3 · trimestrales · GFPI-F-023</p>
-          <ol class="space-y-2.5">
+          <ol data-entrada class="space-y-2.5">
             {visitas.map((v) => (
               <li class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
                 <div class="flex items-baseline justify-between gap-3 text-[13px] mb-1">
@@ -763,8 +643,7 @@ const meta = [
         formato. Mantener cada caso en un solo hilo de correo le permite dar respuesta más rápido.
       </p>
 
-      <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] gap-8">
-        <ol class="grid sm:grid-cols-2 gap-2 content-start">
+      <ol data-entrada class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-8">
           {lineamientosCorreo.map((l, i) => (
             <li class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
               <div class="flex items-baseline gap-2 mb-1">
@@ -784,8 +663,9 @@ const meta = [
               )}
             </li>
           ))}
-        </ol>
+      </ol>
 
+      <div class="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] gap-8 items-start">
         <div id="correo-gen">
           <h3 class="text-[13px] text-ink-50 font-medium mb-3">Generar asunto</h3>
           <div class="grid grid-cols-[minmax(0,1fr)_88px] gap-3 mb-3">
@@ -861,6 +741,7 @@ const meta = [
             CC, ficha y nombre se guardan solo en este navegador para no escribirlos cada mes.
           </p>
         </div>
+        <BandejaInstructor />
       </div>
     </section>
 
@@ -879,9 +760,10 @@ const meta = [
         Centro de Servicios Financieros (Regional Distrito Capital) pide consolidar estos
         soportes.
       </p>
-      <p id="cierre-progreso" class="text-[11px] font-mono text-ink-300 mb-5"></p>
+      <p id="cierre-progreso" class="text-[11px] font-mono text-ink-200 mb-5"></p>
 
-      <ol id="cierre-checklist" class="grid sm:grid-cols-2 gap-2 mb-5">
+      <div class="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_280px] gap-5 items-start mb-5">
+      <ol id="cierre-checklist" class="grid sm:grid-cols-2 gap-2">
         {documentosCierre.map((d, i) => (
           <li class="rounded-lg bg-white/[.03] border border-white/10 px-3 py-2.5">
             <label class="flex items-start gap-2.5 cursor-pointer select-none">
@@ -905,6 +787,8 @@ const meta = [
           </li>
         ))}
       </ol>
+      <CarpetaCierre paginas={documentosCierre.map((d) => d.corto)} />
+      </div>
 
       <p class="flex items-start gap-2 text-[12px] text-ember bg-ember/10 border border-ember/25 rounded-lg px-3 py-2.5 leading-relaxed">
         <span aria-hidden="true" class="mt-0.5">▲</span>
@@ -1010,7 +894,14 @@ const meta = [
               <span class="w-2 h-2 rounded-full bg-lime shrink-0"></span>
               <span class="text-[12px] text-ink-100"><strong class="text-lime font-medium">Próximo hito:</strong> <span id="calc-next-text"></span></span>
             </div>
-            <p id="calc-progreso" class="text-[11px] font-mono text-ink-300 mb-4"></p>
+            <p id="calc-progreso" class="text-[11px] font-mono text-ink-200 mb-4"></p>
+
+            <!-- La misma cinta de arriba, rearmada con la fecha de este cálculo
+                 (la pinta src/lib/motion/ep.ts al recibir el cronograma). -->
+            <div id="calc-cinta" class="ct ep-calc-cinta mb-5" tabindex="0" role="group" aria-label="Cinta de tu etapa. Usa las flechas para leer cada día." aria-describedby="calc-cinta-lectura" hidden>
+              <div aria-hidden="true" data-cinta-dibujo></div>
+              <p id="calc-cinta-lectura" class="ct-lectura mt-3" aria-live="polite"></p>
+            </div>
 
             <div class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Filtrar hitos">
               <button type="button" data-filter="all" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-cyan/40 bg-cyan/10 text-cyan">Todos</button>
@@ -1057,6 +948,73 @@ const meta = [
 </BaseLayout>
 
 <style is:global>
+  /* ── Piezas pequeñas del motion (src/lib/motion/ep.ts) ─────────────────── */
+
+  /* Miniatura de una ventana de bitácora: sus días, con la entrega y los
+     inhábiles marcados como en la cinta grande. */
+  .ep-mini {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+    margin-top: 8px;
+  }
+  .ep-mini i {
+    flex: 1 1 0;
+    max-width: 4px;
+    height: 9px;
+    border-radius: 1px;
+    background: rgba(231, 231, 236, 0.16);
+  }
+  .ep-mini i[data-inh] { height: 5px; background: rgba(231, 231, 236, 0.07); }
+  .ep-mini i[data-inh='festivo'] { background: rgba(255, 107, 61, 0.65); }
+  .ep-mini i.pasado { background: rgba(155, 250, 255, 0.55); }
+  .ep-mini i.pasado[data-inh] { background: rgba(155, 250, 255, 0.22); }
+  .ep-mini i[data-entrega] { height: 13px; background: transparent; box-shadow: inset 0 0 0 1px #00f2ff; }
+  .ep-mini i[data-cierre] { height: 16px; background: #00f2ff; }
+  .ep-mini i[data-cierre][data-inh] { background: linear-gradient(#ff6b3d 0 4px, #00b8c4 4px); }
+  .ep-mini i.hoy { height: 16px; background: #c9ff5b; box-shadow: 0 0 8px rgba(201, 255, 91, 0.7); }
+
+  /* Fracción del SMMLV: una barra llena es un salario mínimo. */
+  .ep-medidor {
+    display: block;
+    height: 3px;
+    margin: 4px 0 6px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .ep-medidor i {
+    display: block;
+    height: 100%;
+    width: calc(var(--p) * 100%);
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(201, 255, 91, 0.35), #c9ff5b);
+    transform-origin: 0 50%;
+  }
+
+  /* Ítem marcado de una lista de verificación, y el anillo que lo sella. */
+  #ep-page li:has(> label > .ep-check) {
+    transition: background-color 0.35s, border-color 0.35s;
+  }
+  #ep-page li.marcada {
+    background-color: rgba(201, 255, 91, 0.05);
+    border-color: rgba(201, 255, 91, 0.28);
+  }
+  .ep-check + .ep-sello,
+  .ep-sello {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    margin: 2px 0 0 0;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #c9ff5b;
+    pointer-events: none;
+  }
+  #ep-page label:has(> .ep-check) {
+    position: relative;
+  }
+
   /* Hoja imprimible. El botón "Imprimir / PDF" existía desde antes pero sin
      estilos de impresión salía el tema oscuro con navbar, barra lateral y
      formularios: papel gastado en cosas que en papel no sirven. Aquí queda
@@ -1140,34 +1098,67 @@ const meta = [
       display: block !important;
     }
 
-    #ep-track {
-      min-width: 0 !important;
-      width: 100% !important;
-    }
-
-    /* El cronograma es el motivo de imprimir la hoja: sus fondos tienen que
-       sobrevivir al "no imprimir colores de fondo" del navegador. */
-    #ep-track,
-    #ep-track * {
+    /* La cinta es el motivo de imprimir la hoja: sus rayas son fondos y
+       tienen que sobrevivir al "no imprimir colores de fondo" del navegador.
+       En papel va con tinta: lo transcurrido no se imprime (la hoja sirve
+       también otro día), solo la estructura de la etapa. */
+    #ep-page .ct-grid,
+    #ep-page .ct-grid *,
+    #ep-page .ep-mini i {
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
-    #ep-track .ep-bar {
-      background: #d7f4f7 !important;
+    #ep-page .ct-d i,
+    #ep-page .ct-d.pasado i {
+      background: #b9bcc4 !important;
+      box-shadow: none !important;
+      animation: none !important;
+    }
+    #ep-page .ct-d[data-inh] i {
+      background: #e1e3e8 !important;
+    }
+    #ep-page .ct-d[data-inh='festivo'] i {
+      background: #d9643f !important;
+    }
+    #ep-page .ct-d[data-v] i {
+      background: #8f7fd0 !important;
+    }
+    #ep-page .ct-d[data-cierre] i {
+      background: #06707a !important;
+    }
+    #ep-page .ct-d[data-entrega] i {
+      background: transparent !important;
+      box-shadow: inset 0 0 0 1px #06707a !important;
+    }
+    #ep-page .ct-b,
+    #ep-page .ct-b::before,
+    #ep-page .ct-b::after {
       border-color: #06707a !important;
+      background-color: transparent;
     }
-    #ep-track .ep-bar span {
-      color: #06707a !important;
+    #ep-page .ct-b::before,
+    #ep-page .ct-b::after {
+      background: #06707a !important;
     }
-    #ep-track .ep-pin {
+    #ep-page .ct-pin {
+      background: #5b46a8 !important;
+    }
+    #ep-page .ct-pin-et {
       background: #ece7ff !important;
       border-color: #5b46a8 !important;
     }
-    #ep-track .ep-pin span {
+    #ep-page .ct-pin-et,
+    #ep-page .ct-pin-et * {
       color: #5b46a8 !important;
     }
-    #ep-progreso {
-      background: #06707a !important;
+    #ep-page .ct-hoy,
+    #ep-page .ct-cabeza,
+    #ep-page .ct-lectura,
+    #ep-page .ep-contador,
+    #ep-page [data-bandeja],
+    #ep-page [data-carpeta],
+    #ep-page .ep-calc-cinta {
+      display: none !important;
     }
 
     /* Los checkbox de "entregado" se imprimen vacíos a propósito: la hoja
@@ -1186,9 +1177,9 @@ const meta = [
 </style>
 
 <script>
-  // Dos piezas comparten este script: la banda de estado + el marcador de "hoy"
-  // de la línea de tiempo (que dependen de la fecha actual y por eso no pueden
-  // prerenderizarse), y la calculadora de cronograma. La proyección de hitos
+  // Varias piezas comparten este script: las cifras del estado (que dependen
+  // de la fecha actual y por eso no pueden prerenderizarse), los checklists,
+  // el generador de asuntos, el pago y la calculadora de cronograma. La proyección de hitos
   // vive en src/lib/sena-ep.ts (módulo puro isomorfo) para que este script y el
   // cron de recordatorios (api/cron/sena-recordatorio) no dupliquen la fórmula.
 
@@ -1202,6 +1193,15 @@ const meta = [
     type Trabajo,
   } from '../lib/sena-remuneracion'
   import { asuntoCorreo, TIPOS_CORREO, type TipoCorreo } from '../lib/sena-correos'
+  import { escucharEp, montarEp } from '../lib/motion/ep'
+
+  // El motion escucha antes de que el resto del script pinte nada: lo que
+  // sigue avisa con eventos `ep:*` (cronograma, pago, asunto, checklist) y la
+  // animación reacciona a ellos sin meterse en la lógica de cada pieza.
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  escucharEp({ reducido })
+  const avisar = (nombre: string, detalle: unknown) =>
+    document.dispatchEvent(new CustomEvent(`ep:${nombre}`, { detail: detalle }))
 
   const startOfDay = (d: Date) => {
     const x = new Date(d)
@@ -1256,7 +1256,7 @@ const meta = [
         corte.setMonth(corte.getMonth() + i)
         if (hoy >= corte) enCurso = i + 1
       }
-      faseEl.textContent = `En curso · ${plural(transcurridos, 'día')} de ${total}`
+      faseEl.textContent = `En curso hasta el ${fmtLargo(fin)}`
       setStat('ep-stat-avance', `${Math.round(avance * 100)}%`)
       setStat('ep-stat-dias', String(total - transcurridos))
       setStat('ep-stat-bitacora', `${Math.min(enCurso, 6)}/6`)
@@ -1269,15 +1269,6 @@ const meta = [
       const delta = diasEntre(hoy, proximo.fecha)
       const cuando = delta === 0 ? 'hoy' : `en ${plural(delta, 'día')}`
       proximoEl.textContent = `Próximo hito: ${proximo.titulo} · ${fmtCorto(proximo.fecha)} (${cuando})`
-    }
-
-    const progresoBar = document.getElementById('ep-progreso') as HTMLElement | null
-    if (progresoBar) progresoBar.style.width = `${avance * 100}%`
-
-    const hoyEl = document.getElementById('ep-hoy')
-    if (hoyEl && transcurridos >= 0 && transcurridos <= total) {
-      hoyEl.style.left = `${avance * 100}%`
-      hoyEl.classList.remove('hidden')
     }
   }
 
@@ -1302,9 +1293,14 @@ const meta = [
       texto?.classList.toggle('line-through', cb.checked)
       texto?.classList.toggle('text-ink-300', cb.checked)
     }
-    const actualizar = () => {
-      const marcados = [...checks].filter((c) => c.checked).length
-      progresoEl.textContent = `${marcados}/${checks.length} ${sufijo}`
+    const actualizar = (cambio?: HTMLInputElement) => {
+      const marcados = [...checks].filter((c) => c.checked)
+      progresoEl.textContent = `${marcados.length}/${checks.length} ${sufijo}`
+      avisar('checklist', {
+        lista: listaId,
+        marcados: marcados.map((c) => c.dataset.key!),
+        cambio: cambio ? { key: cambio.dataset.key!, marcado: cambio.checked } : null,
+      })
     }
 
     const set = leer()
@@ -1323,7 +1319,7 @@ const meta = [
           // Sin almacenamiento (modo privado) la marca vale solo para esta visita.
         }
         pintar(cb)
-        actualizar()
+        actualizar(cb)
       })
     })
     actualizar()
@@ -1379,6 +1375,7 @@ const meta = [
       asuntoEl.classList.toggle('text-ink-300', !r.ok)
       copiarBtn.disabled = !r.ok
       estadoEl.textContent = ''
+      avisar('asunto', r.ok ? { ok: true, asunto: r.asunto } : { ok: false, asunto: '' })
     }
     const guardar = () => {
       try {
@@ -1591,6 +1588,7 @@ const meta = [
 
       vacioEl.classList.add('hidden')
       resultadosEl.classList.remove('hidden')
+      avisar('cronograma', { inicio: valor, hitos: hitosBase })
       resultadosEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       actualizarEstadoRecordatorio()
     }
@@ -1802,13 +1800,13 @@ const meta = [
 
     const tile = (valor: string, etiqueta: string, acento = false) => `
       <div class="rounded-lg ${acento ? 'bg-lime/[.06] border-lime/30' : 'bg-white/[.03] border-white/10'} border px-3 py-2.5 text-center">
-        <div class="text-[15px] ${acento ? 'text-lime' : 'text-ink-50'} font-medium font-mono">${valor}</div>
+        <div data-cifra class="text-[15px] ${acento ? 'text-lime' : 'text-ink-50'} font-medium font-mono">${valor}</div>
         <div class="text-[10px] font-mono uppercase text-ink-300 mt-1">${etiqueta}</div>
       </div>`
 
     type Tipo = 'suma' | 'resta' | 'total'
     const linea = (concepto: string, detalle: string, monto: number, tipo: Tipo = 'suma') => `
-      <div class="flex items-baseline justify-between gap-3 py-1.5 ${tipo === 'total' ? 'border-t border-white/10 mt-1' : ''}">
+      <div data-renglon="${tipo}" class="flex items-baseline justify-between gap-3 py-1.5 ${tipo === 'total' ? 'border-t border-white/10 mt-1' : ''}">
         <div class="min-w-0">
           <div class="text-[12px] ${tipo === 'total' ? 'text-ink-50 font-medium' : 'text-ink-100'}">${concepto}</div>
           ${detalle ? `<div class="text-[11px] text-ink-300 leading-snug">${detalle}</div>` : ''}
@@ -1838,7 +1836,7 @@ const meta = [
       filas.push(linea('Pensión 4 %', `Sobre ${$(t.apoyoPractica)}${t.diasLectiva > 0 ? ', solo los días de práctica' : ''}`, t.pension, 'resta'))
       filas.push(linea('Neto', '', t.neto, 'total'))
       return `
-        <div class="rounded-xl bg-white/[.02] border border-white/10 p-4">
+        <div data-recibo class="rounded-xl bg-white/[.02] border border-white/10 p-4">
           <div class="flex items-baseline justify-between gap-3 mb-2">
             <span class="text-[11px] font-mono uppercase tracking-[.12em] text-ink-200">${titulo}</span>
             <span class="text-[11px] font-mono text-cyan">${nombreMes(t)}${t.valores.provisional ? ' ▲' : ''}</span>
@@ -1958,6 +1956,7 @@ const meta = [
           ${provisionales.length === 0 && r.anios.length > 1 ? '<li>La etapa cruza el cambio de año: cada mes usa el valor vigente en su año.</li>' : ''}
           <li>Prima y cesantías incluyen el auxilio en la base; vacaciones y aportes, no. Dotación y subsidio familiar no se monetizan aquí.</li>
         </ul>`
+      avisar('pago', null)
     }
 
     function recalcular() {
@@ -2005,4 +2004,7 @@ const meta = [
     }
     recalcular()
   }
+
+  // Al final, con todas las cifras ya escritas por el código de arriba.
+  montarEp({ reducido })
 </script>
