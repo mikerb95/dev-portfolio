@@ -30,3 +30,33 @@
     radial-gradient(52% 44% at 22% 64%, rgba(18,18,22,.82), rgba(18,18,22,0) 72%),
     radial-gradient(40% 30% at 18% 40%, rgba(18,18,22,.45), rgba(18,18,22,0) 70%);
 }
+
+/* Halloween (src/lib/temporada.ts). El aviso de los espectros entra solo
+   cuando el visitante disipa el primero; hasta entonces lleva `hidden`. */
+.aviso-espectros {
+  z-index: 1;
+  display: flex;
+  gap: .6rem;
+  align-items: baseline;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .9s ease, transform .9s cubic-bezier(.16,1,.3,1);
+}
+.aviso-espectros.visible { opacity: 1; transform: none; }
+.aviso-espectros-punto {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #e6dcff;
+  box-shadow: 0 0 10px rgba(230,220,255,.8);
+  transform: translateY(-1px);
+}
+.hud-espectros {
+  color: rgba(255,107,61,.75);
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Sin movimiento no hay espectros que contar. */
+  .hud-espectros { display: none; }
+}
