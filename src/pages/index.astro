@@ -16,6 +16,8 @@ import { construirSenales } from '../lib/pulso-panel'
 import PulsoPanel from '../components/PulsoPanel.astro'
 import '../styles/portada.css'
 import { jsonEnScript } from '../lib/json-script'
+import { espectrosPara, temporadaActual } from '../lib/temporada'
+import { formatNumber, interpolate } from '../i18n/format'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
@@ -70,7 +72,19 @@ const visibleProjects = await safeQuery(
 // Una señal sin dato NO se pinta, y la decisión vive en `construirSenales`:
 // sin base la cinta encoge y, si no queda ninguna, desaparece entera y el hero
 // respira hasta el bento.
-const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
+const pulso = await leerPulso()
+const senales = construirSenales(pulso, t.pulso, locale, L)
+
+// Halloween (todo octubre, ver src/lib/temporada.ts). Los espectros salen de
+// la misma lectura del pulso: cuántos cruzan el terreno depende del tráfico
+// hostil que el SIEM clasificó de verdad, sin una sola consulta más. Solo se
+// publica el total, que ya está en la cinta.
+const halloween = temporadaActual() === 'halloween'
+const espectros = halloween ? espectrosPara(pulso.eventos) : 0
+const avisoEspectros =
+  espectros > 0
+    ? interpolate(t.halloween.aviso, { n: formatNumber(pulso.eventos, locale), dias: pulso.ventanaDias })
+    : ''
 ---
 
 <BaseLayout title={t.title} description={t.description}>
@@ -124,6 +138,13 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="laboratorio">
       <span>{t.hud.lab}</span><span class="hud-status">-</span>
     </div>
+    {espectros > 0 && (
+      <!-- Fuera de `.hud-line` a propósito: esas líneas se emparejan por índice
+           con las secciones y una más desplazaría todas las marcas. -->
+      <div class="hud-espectros flex items-center justify-between gap-6 mt-1 pt-1.5">
+        <span>{t.halloween.hud}</span><span data-hud-espectros>0/{espectros}</span>
+      </div>
+    )}
   </div>
 
   <!-- ── Hero ── -->
@@ -137,7 +158,13 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
        párrafo. Sin WebGL2 el lienzo nunca se muestra y queda el halo de siempre. -->
   <section id="hero" class="relative min-h-[100svh] flex flex-col pt-28 pb-12 px-6 md:px-12 lg:px-20 overflow-x-clip">
     <div class="absolute inset-0 overflow-hidden pointer-events-none z-0"><div class="halo"></div></div>
-    <canvas id="isolineas" class="isolineas-lienzo" aria-hidden="true"></canvas>
+    <canvas
+      id="isolineas"
+      class="isolineas-lienzo"
+      aria-hidden="true"
+      data-halloween={halloween ? '' : undefined}
+      data-espectros={espectros || undefined}
+    ></canvas>
     <div class="hero-velo" aria-hidden="true"></div>
     <div class="relative flex-1 flex flex-col w-full max-w-[1280px] mx-auto">
 
@@ -242,6 +269,20 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           </a>
         </div>
       </div>
+
+      {espectros > 0 && (
+        <!-- Solo aparece al disipar el primer espectro: el efecto es para quien
+             lo descubre, no un rótulo que explique la broma de entrada. -->
+        <p
+          id="aviso-espectros"
+          class="aviso-espectros mt-8 md:mt-0 md:absolute md:right-0 md:bottom-0 max-w-sm font-mono text-[11px] leading-relaxed text-ink-200"
+          aria-live="polite"
+          hidden
+        >
+          <span class="aviso-espectros-punto" aria-hidden="true"></span>
+          {avisoEspectros}
+        </p>
+      )}
 
     </div>
   </section>
@@ -493,6 +534,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   import { initPageMotion, revealCards } from '../lib/motion-reveal'
   import { montarIsolineas } from '../lib/motion/isolineas'
+  import { MAX_ESPECTROS, MAX_ESPECTROS_MOVIL } from '../lib/temporada'
   import {
     foco,
     inclinar,
@@ -532,7 +574,31 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   {
     const lienzo = document.getElementById('isolineas') as HTMLCanvasElement | null
     if (hero && lienzo) {
-      const iso = montarIsolineas(lienzo, { zona: hero, reducido })
+      // Temporada: el servidor decide si hay Halloween y cuántos espectros (por
+      // el tráfico real); el navegador solo recorta el número en pantallas
+      // táctiles, donde el terreno es más angosto y siete se amontonan.
+      const tactil = window.matchMedia('(pointer: coarse)').matches
+      const halloween =
+        lienzo.dataset.halloween !== undefined
+          ? {
+              espectros: Math.min(Number(lienzo.dataset.espectros ?? 0), tactil ? MAX_ESPECTROS_MOVIL : MAX_ESPECTROS),
+              alDisipar: (() => {
+                const aviso = document.getElementById('aviso-espectros')
+                const contador = document.querySelector<HTMLElement>('[data-hud-espectros]')
+                const total = Number(lienzo.dataset.espectros ?? 0)
+                let disipados = 0
+                return () => {
+                  disipados++
+                  if (contador) contador.textContent = `${Math.min(disipados, total)}/${total}`
+                  if (aviso?.hidden) {
+                    aviso.hidden = false
+                    requestAnimationFrame(() => aviso.classList.add('visible'))
+                  }
+                }
+              })(),
+            }
+          : undefined
+      const iso = montarIsolineas(lienzo, { zona: hero, reducido, halloween })
       if (iso) {
         hero.classList.add('con-isolineas')
         if (!reducido) {
