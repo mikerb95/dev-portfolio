@@ -2281,35 +2281,33 @@ export const ITERACIONES: Iteracion[] = [
   // ───────────────────────────────────────────────────────────────────────
   {
     id: 'pf-halloween',
-    fase: 'Fase 50 · Una temporada que sale de los datos',
-    nombre: 'Halloween en la portada: los ataques reales rondan el terreno',
+    fase: 'Fase 50 · Una temporada sin tocar lo que ya funciona',
+    nombre: 'Fantasmas de Halloween en la portada',
     rango: '1 oct 2026',
     ghSince: '2026-10-01',
     ghUntil: '2026-10-01',
     resumen:
-      'Un efecto de temporada que no fuera el de cualquier sitio: en vez de calabazas, el terreno de la portada se tiñe de ember, se llena de niebla en los valles y lo cruzan espectros cuyo número sale del tráfico hostil que el micro-SIEM clasificó de verdad. Se enciende y se apaga solo con el mes, sin interruptor ni despliegue. Fuera de la portada son solo tres detalles de color.',
+      'Un detalle de temporada para octubre. La primera versión metió espectros y niebla dentro del shader del terreno, ligados al tráfico hostil del micro-SIEM, y recoloreó hero, navbar y footer: el hero se volvió lento y se descartó entera. La que queda es una capa aparte, solo CSS, que pasa por detrás del terreno sin cambiar una línea del hero, el navbar ni el footer.',
     historias: [
       {
-        id: 'PF-HW-01', titulo: 'Como visitante, quiero encontrar en octubre un detalle de Halloween que solo este sitio podría tener',
+        id: 'PF-HW-01', titulo: 'Como visitante, quiero encontrar en octubre unos fantasmas en la portada sin que la página cambie ni se ponga lenta',
         tipo: 'historia', valor: 'bajo', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-01', tags: ['motion', 'webgl', 'temporada', 'fase-50'],
+        fecha: '2026-10-01', tags: ['motion', 'temporada', 'fase-50'],
         dod: [
-          ok('Antes de construir, el usuario eligió concepto, alcance, fechas e intensidad: terreno embrujado más espectros con datos reales, portada más toques leves, todo octubre, sutil (RF-031).'),
-          ok('El shader del terreno suma paleta ember, niebla en los valles que el cursor y los pulsos despejan, y hasta 7 espectros (3 en táctil) que se disipan al tocarlos.'),
-          ok('El aviso que explica los espectros solo aparece al disipar el primero: es para quien lo descubre.'),
-          ok('Sin consultas nuevas: la cifra es la misma lectura del pulso y solo se publica el total que la cinta ya mostraba. Sin dato del SIEM no hay espectros.'),
-          ok('Primera versión descartada tras las capturas: los espectros altos y angostos se veían como pirámides oscuras. Quedaron como cúpulas bajas con halo.'),
-          pend('Aceptación del usuario sobre el sitio en producción durante octubre.'),
+          ok('Seis fantasmas (tres en móvil) dibujados como curvas de nivel, en blanco violáceo y violeta, que cruzan despacio por detrás del lienzo y del velo del texto (RF-031).'),
+          ok('Capa aparte en src/components/Fantasmas.astro, montada desde BaseLayout solo en la portada: hero, shader, navbar y footer idénticos a como estaban.'),
+          ok('Solo transform y opacity, sin requestAnimationFrame ni filtros animados; fotogramas del hero medidos con y sin la capa, sin diferencia apreciable.'),
+          ok('Con movimiento reducido quedan quietos y tenues; sin desbordamiento horizontal en móvil.'),
+          pend('Aceptación del usuario sobre el sitio en producción.'),
         ],
       },
       {
         id: 'PF-HW-02', titulo: 'Como operador, quiero que la temporada se encienda y se apague sola sin tocar el código',
         tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-01', tags: ['temporada', 'i18n', 'fase-50'],
+        fecha: '2026-10-01', tags: ['temporada', 'fase-50'],
         dod: [
-          ok('src/lib/temporada.ts, puro: decide por el mes en hora de Bogotá y BaseLayout marca el <html> con data-temporada; los toques de fuera de la portada son solo CSS.'),
-          ok('tests/temporada.test.ts (7 casos): octubre entero, la frontera en hora de Bogotá y no en UTC, escala logarítmica de espectros con techo propio en móvil.'),
-          ok('Con movimiento reducido solo cambia la paleta; sin WebGL2 el contador del HUD se retira.'),
+          ok('src/lib/temporada.ts, puro: decide por el mes en hora de Bogotá; el 1 de noviembre los fantasmas desaparecen sin desplegar.'),
+          ok('tests/temporada.test.ts (3 casos), con la frontera en hora de Bogotá y no en UTC.'),
         ],
       },
     ],

@@ -32,12 +32,12 @@ type Fantasma = {
 
 // Los tres primeros son los que quedan en móvil.
 const FANTASMAS: Fantasma[] = [
-  { y: 30, tam: 54, dur: 46, retraso: -8, dir: 1, quieto: 72, tono: 'claro' },
-  { y: 58, tam: 40, dur: 58, retraso: -31, dir: -1, quieto: 86, tono: 'violeta' },
-  { y: 44, tam: 66, dur: 64, retraso: -50, dir: 1, quieto: 58, tono: 'violeta' },
-  { y: 22, tam: 34, dur: 52, retraso: -22, dir: -1, quieto: 92, tono: 'claro' },
-  { y: 68, tam: 48, dur: 42, retraso: -14, dir: 1, quieto: 44, tono: 'claro' },
-  { y: 38, tam: 30, dur: 70, retraso: -60, dir: -1, quieto: 80, tono: 'violeta' },
+  { y: 30, tam: 70, dur: 46, retraso: -8, dir: 1, quieto: 72, tono: 'claro' },
+  { y: 58, tam: 52, dur: 58, retraso: -31, dir: -1, quieto: 86, tono: 'violeta' },
+  { y: 44, tam: 86, dur: 64, retraso: -50, dir: 1, quieto: 58, tono: 'violeta' },
+  { y: 22, tam: 44, dur: 52, retraso: -22, dir: -1, quieto: 92, tono: 'claro' },
+  { y: 68, tam: 62, dur: 42, retraso: -14, dir: 1, quieto: 44, tono: 'claro' },
+  { y: 38, tam: 39, dur: 70, retraso: -60, dir: -1, quieto: 80, tono: 'violeta' },
 ]
 
 const SILUETA =
@@ -111,16 +111,16 @@ const SILUETA =
      golpe en el canto de la pantalla se lee como un error de carga. */
   @keyframes deriva {
     0% { transform: translate3d(-12vw, 0, 0); opacity: 0; }
-    10% { opacity: .55; }
-    50% { opacity: .38; }
-    90% { opacity: .55; }
+    10% { opacity: .72; }
+    50% { opacity: .5; }
+    90% { opacity: .72; }
     100% { transform: translate3d(108vw, 0, 0); opacity: 0; }
   }
   @keyframes deriva-izq {
     0% { transform: translate3d(108vw, 0, 0); opacity: 0; }
-    10% { opacity: .55; }
-    50% { opacity: .38; }
-    90% { opacity: .55; }
+    10% { opacity: .72; }
+    50% { opacity: .5; }
+    90% { opacity: .72; }
     100% { transform: translate3d(-12vw, 0, 0); opacity: 0; }
   }
   @keyframes flotar {
@@ -129,6 +129,7 @@ const SILUETA =
   }
 
   @media (max-width: 767px) {
+    .fantasma { width: calc(var(--tam) * .7); }
     .fantasma:nth-child(n + 4) { display: none; }
   }
 
