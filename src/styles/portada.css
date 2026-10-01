@@ -60,3 +60,10 @@
   /* Sin movimiento no hay espectros que contar. */
   .hud-espectros { display: none; }
 }
+/* El halo del hero sigue al terreno: sin esto quedaba un resplandor cian
+   sobre un suelo ember, dos temperaturas peleando en el mismo plano. */
+[data-temporada="halloween"] .halo {
+  background:
+    radial-gradient(60% 50% at 50% 30%, rgba(255,107,61,.11), rgba(255,107,61,0) 70%),
+    radial-gradient(40% 30% at 80% 50%, rgba(167,139,255,.14), rgba(167,139,255,0) 70%);
+}

@@ -36,16 +36,17 @@ uniform vec4 uEspectros[7]; // x, z, intensidad (0..1), dirección en x (±1)
 
 ${RUIDO}
 
-// Espectro de temporada: una gota estrecha que flota sobre el suelo con la
-// estela hacia atrás de su marcha. Estrecha a propósito: en una colina ancha
-// las curvas se separan y se lee como relieve; en una angosta se apiñan en
-// anillos y se lee como algo que no es terreno.
+// Espectro de temporada: una cúpula baja con la estela hacia atrás de su
+// marcha, devuelta en 0..1 (la altura la pone quien la usa). Baja a propósito:
+// una gota alta y angosta apiña tanto las curvas que se funden y queda un cono
+// oscuro que tapa el terreno de detrás, como una pirámide. Baja, conserva
+// anillos legibles y el brillo hace el resto.
 float espectro(vec2 xz, vec4 E) {
   vec2 d = xz - E.xy;
   float atras = max(0.0, -d.x * E.w);
-  float cabeza = exp(-dot(d, d) / 0.28);
-  float estela = exp(-(atras * atras) / 1.6 - (d.y * d.y) / 0.12) * step(0.0, -d.x * E.w);
-  return E.z * (cabeza * 0.85 + estela * 0.32);
+  float cabeza = exp(-dot(d, d) / 0.7);
+  float estela = exp(-(atras * atras) / 2.4 - (d.y * d.y) / 0.22) * step(0.0, -d.x * E.w);
+  return E.z * max(cabeza, estela * 0.55);
 }
 
 float terreno(vec2 xz) {
@@ -70,7 +71,7 @@ float terreno(vec2 xz) {
 
   for (int i = 0; i < 7; i++) {
     if (uEspectros[i].z <= 0.0) continue;
-    h += espectro(xz, uEspectros[i]);
+    h += espectro(xz, uEspectros[i]) * 0.42;
   }
   return h;
 }
@@ -179,17 +180,17 @@ void main() {
   // las colinas de delante la tapan como tapan las curvas.
   float niebla = 0.0;
   if (uTemporada > 0.0) {
-    float valle = 1.0 - smoothstep(-0.38, 0.06, h);
+    float valle = 1.0 - smoothstep(-0.3, 0.14, h);
     float deriva = ruido(vXZ * 0.22 + vec2(uTiempo * 0.05, -uTiempo * 0.03)) * 0.5 + 0.5;
-    niebla = valle * mix(0.35, 1.0, deriva);
+    niebla = valle * mix(0.25, 1.0, deriva);
     niebla *= 1.0 - clamp(brilloPico * 1.3 + brilloPulso * 1.6, 0.0, 1.0);
     niebla *= smoothstep(1.5, 5.0, vDist) * (1.0 - smoothstep(uLejos * 0.35, uLejos * 0.7, vDist));
     niebla *= 1.0 - smoothstep(uAncho * 0.5, uAncho, abs(vXZ.x));
-    niebla = niebla * 0.13 * uTemporada * uBrillo;
+    niebla = niebla * 0.24 * uTemporada * uBrillo;
   }
   // Halo del espectro: un velo del mismo blanco violáceo alrededor de la gota,
   // para que se lea como una presencia y no solo como un nudo de curvas.
-  float halo = presencia * 0.16 * uBrillo;
+  float halo = pow(presencia, 1.5) * 0.42 * uBrillo;
   vec3 tonoNiebla = mix(vec3(0.42, 0.3, 0.75), vec3(0.75, 0.32, 0.22), cerca);
   vec3 rgb = c * a + tonoNiebla * niebla + vec3(0.9, 0.86, 1.0) * halo;
   color = vec4(rgb, clamp(a + niebla + halo, 0.0, 1.0));
