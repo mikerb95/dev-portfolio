@@ -1046,7 +1046,6 @@ const es = {
         asi: 'Así me llega',
         llego: 'Le llegó a Mike',
         idioma: '',
-        app: 'CodeByMike',
         ahora: 'ahora',
         nombreVacio: '…',
         cuerpoVacio: 'Escribe tu mensaje y aquí verás el aviso.',

@@ -1024,7 +1024,6 @@ const en = {
         asi: 'This is how it reaches me',
         llego: 'Mike got it',
         idioma: 'It arrives in Spanish, the way I read it.',
-        app: 'CodeByMike',
         ahora: 'now',
         nombreVacio: '…',
         cuerpoVacio: 'Write your message and the alert shows up here.',
