@@ -62,6 +62,11 @@ describe('ventanaMin', () => {
     expect(ventanaMin(VIGILADOS)).toBe(toleranciaMin(1440) + 720)
   })
 
+  it('no se estira por un cron semanal: ese se lee fuera de la bitácora', () => {
+    const conSemanal = [...VIGILADOS, { job: 'semanal', cadaMin: 7 * 1440, origen: 'vercel' as const }]
+    expect(ventanaMin(conSemanal)).toBe(ventanaMin(VIGILADOS))
+  })
+
   it('no revienta con la lista vacía', () => {
     expect(ventanaMin([])).toBe(0)
   })
@@ -208,6 +213,11 @@ describe('describirSilencio', () => {
     expect(describirSilencio(ausente)).toContain('sin ninguna ejecución registrada')
   })
 
+  it('nombra la cadencia semanal como tal', () => {
+    const [semanal] = jobsEnSilencio([{ job: 'semanal', cadaMin: 7 * 1440, origen: 'vercel' }], new Map(), AHORA)
+    expect(describirSilencio(semanal)).toContain('(semanal, vercel)')
+  })
+
   // La alerta llega por ntfy y por correo, donde no hay contexto: tiene que
   // decir qué job es y quién debería estar disparándolo.
   it('nombra el job y su disparador', () => {
@@ -224,7 +234,9 @@ describe('catálogo de crons', () => {
     for (const c of CRONS) {
       expect(c.cadaMin, `${c.job} sin cadencia`).toBeGreaterThan(0)
       const m = tx(c.horario, 'es').match(/cada ~?(\d+) min/)
+      const semanal = /^(lunes|martes|miércoles|jueves|viernes|sábado|domingo) \d{2}:\d{2}$/.test(tx(c.horario, 'es'))
       if (m) expect(c.cadaMin, `${c.job}`).toBe(Number(m[1]))
+      else if (semanal) expect(c.cadaMin, `${c.job} declarado semanal`).toBe(7 * 1440)
       else expect(c.cadaMin, `${c.job} declarado con horario fijo`).toBe(1440)
     }
   })

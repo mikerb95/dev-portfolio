@@ -13,6 +13,7 @@ import { cronSecretOk } from '../../../lib/cron-auth'
 import { conRegistro, silenciosPorAvisar } from '../../../lib/cron-runs'
 import { describirSilencio } from '../../../lib/cron-silencio'
 import { siteUrl } from '../../../lib/site'
+import { avisarRachaSiToca } from '../../../lib/racha-aviso'
 
 const SITE_URL = siteUrl()
 
@@ -151,6 +152,9 @@ async function runCheck() {
     events: events.length,
     cronsEnSilencio: silencios.length,
   }
+  // De noche, el empujón de la racha de aprendizaje (no toca la base fuera
+  // de la franja; nunca lanza).
+  await avisarRachaSiToca()
   if (events.length === 0) return resumen
   await notify(events)
   return resumen

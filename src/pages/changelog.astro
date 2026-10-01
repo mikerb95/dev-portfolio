@@ -1,0 +1,122 @@
+---
+// Changelog público: lo que cambió en el sitio, semana a semana, sacado de los
+// commits reales de main (etapa 9 del roadmap, docs/plan-roadmap-2026-07.md).
+//
+// Qué sale y qué no lo decide src/lib/changelog.ts (puro y testeado): solo
+// feat/fix/perf, y un mensaje que roce algo sensible se descarta entero.
+// FAIL-OPEN: si GitHub no responde, la página lo dice y enlaza al repositorio.
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
+import { agruparPorSemana, lunesDe } from '../lib/changelog'
+import { commitsRecientes } from '../lib/changelog-github'
+import Fila from '../components/changelog/Fila.astro'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale)
+const c = t.changelog
+const L = (path: string) => localizedHref(path, locale)
+const REPO_URL = 'https://github.com/mikerb95/dev-portfolio'
+
+const commits = await commitsRecientes(8)
+const semanas = commits ? agruparPorSemana(commits, 8) : []
+const estaSemana = lunesDe(new Date().toISOString())
+const fechaSemana = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+
+// Unos 90 cambios por semana: se ven los 20 más recientes y el resto se abre aparte.
+const VISIBLES = 20
+---
+
+<BaseLayout title={c.title} description={c.description}>
+  <div class="max-w-[1080px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24" data-locale={locale}>
+    <a
+      href={L('/')}
+      class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      {t.common.back}
+    </a>
+
+    <header class="mb-14">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/changelog</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>{c.eyebrow}</span>
+      </div>
+      <h1 class="text-5xl md:text-6xl xl:text-[68px] font-medium tracking-[-.035em] leading-[.95]">
+        <span class="block text-ink-50">{c.headingA}</span>
+        <span class="block text-cyan">{c.headingB}</span>
+      </h1>
+      <p class="mt-6 text-[15.5px] text-ink-100 max-w-xl leading-relaxed">{c.lead}</p>
+    </header>
+
+    {commits === null ? (
+      <p class="aviso">{c.sinDatos} <a href={REPO_URL} class="text-cyan hover:underline" rel="noopener">{c.repo}</a></p>
+    ) : semanas.length === 0 ? (
+      <p class="aviso">{c.vacio}</p>
+    ) : (
+      <ol class="semanas">
+        {semanas.map((s, i) => (
+          <li class="semana">
+            <details open={i === 0}>
+              <summary>
+                <span class="punto" aria-hidden="true"></span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[19px] text-ink-50">
+                    {s.inicio === estaSemana ? c.estaSemana : interpolate(c.semanaDe, { fecha: fechaSemana.format(new Date(`${s.inicio}T12:00:00Z`)) })}
+                  </span>
+                  <span class="block mt-1 font-mono text-[12px] text-ink-300">{interpolate(c.conteo, s.conteo)}</span>
+                </span>
+                <span class="mas" aria-hidden="true"></span>
+              </summary>
+              <ul class="cambios">
+                {s.cambios.slice(0, VISIBLES).map((x) => <Fila x={x} />)}
+              </ul>
+              {s.cambios.length > VISIBLES && (
+                <details class="resto">
+                  <summary>{interpolate(c.verResto, { n: s.cambios.length - VISIBLES })}</summary>
+                  <ul class="cambios">
+                    {s.cambios.slice(VISIBLES).map((x) => <Fila x={x} />)}
+                  </ul>
+                </details>
+              )}
+            </details>
+          </li>
+        ))}
+      </ol>
+    )}
+
+    <p class="mt-14 text-[13px] text-ink-300">
+      <a href={REPO_URL} class="text-cyan hover:underline" rel="noopener">{c.repo}</a>
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .aviso { padding: 1rem 1.2rem; border-radius: 1rem; background: rgb(255 255 255 / .03); border: 1px solid rgb(255 255 255 / .07); color: var(--color-ink-100); }
+  /* Un riel une las semanas, como el recorrido del analista: el mismo gesto
+     para "esto pasó en este orden". */
+  .semanas { position: relative; display: grid; gap: .75rem; }
+  .semanas::before { content: ''; position: absolute; left: 1.55rem; top: 1.5rem; bottom: 1.5rem; width: 2px; margin-left: -1px; background: linear-gradient(rgb(0 242 255 / .3), rgb(0 242 255 / .05)); }
+  .semana details { border-radius: 1.1rem; background: rgb(255 255 255 / .02); border: 1px solid rgb(255 255 255 / .06); transition: background .25s, border-color .25s; interpolate-size: allow-keywords; }
+  .semana details[open], .semana details:hover { background: rgb(0 242 255 / .025); border-color: rgb(0 242 255 / .14); }
+  .semana details::details-content { block-size: 0; overflow: hidden; transition: block-size .4s cubic-bezier(.2, .8, .2, 1), content-visibility .4s allow-discrete; }
+  .semana details[open]::details-content { block-size: auto; }
+  summary { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.25rem; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .punto { position: relative; z-index: 1; flex: none; width: .7rem; height: .7rem; margin-left: 0; border-radius: 999px; background: var(--color-ink-700); border: 2px solid var(--color-cyan); }
+  details[open] .punto { background: var(--color-cyan); }
+  .mas { position: relative; flex: none; width: .7rem; height: .7rem; opacity: .55; transition: transform .3s cubic-bezier(.2, .8, .2, 1), opacity .2s; }
+  .mas::before, .mas::after { content: ''; position: absolute; inset: 50% 0 auto; height: 1.5px; margin-top: -.75px; border-radius: 2px; background: currentColor; }
+  .mas::after { transform: rotate(90deg); }
+  details[open] .mas { transform: rotate(45deg); opacity: 1; }
+  .cambios { display: grid; gap: .1rem; padding: 0 1.25rem 1.1rem 3rem; }
+  /* En móvil el texto arranca a la derecha del riel, no encima. */
+  @media (max-width: 640px) {
+    .cambios { padding-left: 2.6rem; }
+  }
+  .resto > summary { padding: .6rem 1.25rem 1rem 3rem; font-size: 13px; color: var(--color-cyan); }
+  @media (max-width: 640px) { .resto > summary { padding-left: 2.6rem; } }
+  @media (prefers-reduced-motion: reduce) {
+    .semana details::details-content, .mas { transition: none; }
+  }
+</style>

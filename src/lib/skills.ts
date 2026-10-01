@@ -415,3 +415,13 @@ export function formatMinutes(min: number): string {
   if (rest === 0) return `${h}h`
   return `${h}h ${rest}m`
 }
+
+/** Evidencia de un hito: solo enlaces http(s), porque se pinta como <a href>. */
+export function esUrlWeb(valor: string): boolean {
+  try {
+    const u = new URL(valor.trim())
+    return u.protocol === 'https:' || u.protocol === 'http:'
+  } catch {
+    return false
+  }
+}

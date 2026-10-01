@@ -35,6 +35,7 @@ const STATIC_PATHS = [
   '/demo',
   '/status',
   '/automatizaciones',
+  '/changelog',
   '/notes',
   '/paginas-web',
   '/security',

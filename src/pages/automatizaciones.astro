@@ -22,7 +22,8 @@ import { serverEnv } from '../lib/env'
 import { jsonEnScript } from '../lib/json-script'
 import { WORKFLOWS, CRONS, AUTOMATISMOS } from '../data/automatizaciones'
 import type { Bilingual, BilingualOptional } from '../i18n/bilingual'
-import { toleranciaMin } from '../lib/cron-silencio'
+import { CADENCIA_MAX_BITACORA_MIN, toleranciaMin } from '../lib/cron-silencio'
+import { ultimasFueraDeBitacora } from '../lib/cron-largos'
 import { consumoTolerancia, construirPartitura, estadoFila, type Corrida } from '../lib/motion/partitura'
 import Partitura from '../components/automatizaciones/Partitura.astro'
 import DisparadoresCI from '../components/automatizaciones/DisparadoresCI.astro'
@@ -148,6 +149,13 @@ const partitura = construirPartitura(corridas, CRONS, ahora)
 const ultimaEjecucion = new Map<string, Corrida>()
 for (const c of corridas) {
   if (!ultimaEjecucion.has(c.job)) ultimaEjecucion.set(c.job, c)
+}
+// Los de más de un día casi nunca caen en las 48 h leídas: su última corrida
+// sale de lo que guarda el propio job (una fila por clave primaria), no de
+// estirar la ventana de la bitácora para todos.
+const largos = CRONS.filter((c) => c.cadaMin > CADENCIA_MAX_BITACORA_MIN && !ultimaEjecucion.has(c.job)).map((c) => c.job)
+if (largos.length) {
+  for (const [job, d] of await ultimasFueraDeBitacora(largos)) ultimaEjecucion.set(job, { job, at: d.getTime(), ok: true, ms: null })
 }
 
 function haceCuanto(at: number | null | undefined): string | null {

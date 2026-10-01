@@ -1,0 +1,37 @@
+---
+// Una línea del changelog: tipo, título y enlace al commit.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+import type { Cambio } from '../../lib/changelog'
+
+interface Props {
+  x: Cambio
+}
+const { x } = Astro.props
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const c = getDictionary(locale).changelog
+const fechaDia = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' })
+---
+
+<li>
+  <span class={`tipo tipo-${x.tipo}`}>{c.tipos[x.tipo]}</span>
+  <span class="titulo">{x.titulo}</span>
+  <a class="sha" href={`https://github.com/mikerb95/dev-portfolio/commit/${x.sha}`} rel="noopener" title={c.verCommit}>
+    {fechaDia.format(new Date(x.fecha))} · {x.sha.slice(0, 7)}
+  </a>
+</li>
+
+<style>
+  li { display: flex; align-items: baseline; gap: .75rem; padding: .45rem 0; border-top: 1px solid rgb(255 255 255 / .04); font-size: 15px; line-height: 1.45; }
+  .tipo { flex: none; width: 6.5rem; font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+  .tipo-feat { color: var(--color-cyan); }
+  .tipo-fix { color: var(--color-lime); }
+  .tipo-perf { color: var(--color-violet); }
+  .titulo { min-width: 0; flex: 1; color: var(--color-ink-100); }
+  .sha { flex: none; font-family: var(--font-mono); font-size: 11px; color: var(--color-ink-300); text-decoration: none; transition: color .2s; }
+  .sha:hover { color: var(--color-cyan); }
+  @media (max-width: 640px) {
+    li { flex-wrap: wrap; gap: .25rem .75rem; }
+    .tipo { width: auto; }
+    .titulo { flex-basis: 100%; order: 3; }
+  }
+</style>

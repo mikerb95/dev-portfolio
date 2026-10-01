@@ -41,11 +41,22 @@ describe('paridad del diccionario es/en', () => {
       const esVal = getPath(es as unknown as Json, p)
       const enVal = getPath(en as unknown as Json, p)
       if (typeof esVal !== 'string' || esVal.length < 4) return false
+      // Un `href` es una ruta del sitio, no prosa: es la misma en los dos idiomas
+      // y la página la localiza al pintarla.
+      if (p.endsWith('.href')) return false
       // Nombres propios / marca que sí deben ser idénticos a propósito.
       // Jerga técnica, marcas y nombres propios que son legítimamente iguales
       // en los dos idiomas - no son traducciones olvidadas.
       const ALLOWED_IDENTICAL = new Set([
         'meta.siteName',
+        // /architecture: servicios y piezas con nombre propio.
+        'architecture.externals[5].name',
+        'architecture.externals[6].name',
+        'architecture.externals[7].name',
+        'architecture.externals[8].name',
+        'architecture.layers[2].nodes[0].name',
+        'architecture.layers[2].nodes[3].name',
+        'architecture.layers[4].title',
         // 'Open source' es igual en los dos idiomas.
         'githubProjects.eyebrow',
         // '/architecture' es una ruta, no prosa. 'commit' es préstamo técnico

@@ -388,6 +388,28 @@ if (!track || stats.sessionCount === 0) {
                                 Cerrado el {fmtDay(m.completedOn)}
                               </p>
                             )}
+                            {/* La prueba de que el hito está cerrado de verdad: un repo, un PR,
+                                un endpoint desplegado. Solo http(s): la API rechaza el resto. */}
+                            {m.evidenceUrl && (
+                              <a href={m.evidenceUrl} target="_blank" rel="noopener noreferrer" class="inline-block mt-1.5 text-xs text-cyan hover:underline break-all">
+                                Evidencia ↗
+                              </a>
+                            )}
+                            {m.status === 'hecho' && (
+                              <form class="evidencia-form mt-2 flex gap-2" data-id={m.id} data-track={track.id}>
+                                <input
+                                  type="url"
+                                  name="url"
+                                  value={m.evidenceUrl ?? ''}
+                                  placeholder="https://github.com/… (repo, PR o endpoint)"
+                                  aria-label={`Evidencia de ${m.title}`}
+                                  class="min-w-0 flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600"
+                                />
+                                <button type="submit" class="shrink-0 rounded-lg border border-zinc-700 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800">
+                                  {m.evidenceUrl ? 'Cambiar' : 'Guardar'}
+                                </button>
+                              </form>
+                            )}
                           </div>
                           <select
                             class="milestone-status shrink-0 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-zinc-500"
@@ -607,6 +629,19 @@ if (!track || stats.sessionCount === 0) {
       milestoneId: fd.get('milestoneId') || null,
     })
     if (ok) location.reload()
+  })
+
+  document.querySelectorAll<HTMLFormElement>('.evidencia-form').forEach((form) => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const url = String(new FormData(form).get('url') ?? '').trim()
+      const ok = await post(
+        '/api/admin/skills/milestones',
+        { id: Number(form.dataset.id), trackId: Number(form.dataset.track), evidenceUrl: url || null },
+        'PATCH'
+      )
+      if (ok) location.reload()
+    })
   })
 
   document.querySelectorAll<HTMLSelectElement>('.milestone-status').forEach((sel) => {

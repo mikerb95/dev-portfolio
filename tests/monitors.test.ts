@@ -1,4 +1,17 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
+
+// El guardia anti-SSRF resuelve DNS de verdad; aquí se simula para que los
+// tests no dependan de la red. `.interno.test` hace de host privado.
+vi.mock('../src/lib/ssrf-guard', async (original) => {
+  const real = await original<typeof import('../src/lib/ssrf-guard')>()
+  return {
+    ...real,
+    assertPublicHost: vi.fn(async (host: string) => {
+      if (host.endsWith('.interno.test') || host === '169.254.169.254') throw new real.PrivateHostError(host)
+    }),
+  }
+})
+
 import { probe, fetchSslExpiry } from '../src/lib/monitors'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -71,3 +84,43 @@ describe('fetchSslExpiry', () => {
     expect(await fetchSslExpiry('no es una url')).toBeNull()
   })
 })
+
+describe('probe contra SSRF', () => {
+  it('no sondea un host privado', async () => {
+    const f = vi.fn(async () => new Response('ok'))
+    vi.stubGlobal('fetch', f)
+    const r = await probe({ url: 'http://panel.interno.test/' })
+    expect(r).toMatchObject({ ok: false, state: 'down' })
+    expect(r.error).toMatch(/no permitido/i)
+    expect(f).not.toHaveBeenCalled()
+  })
+
+  it('valida cada redirección: una 302 hacia la red interna no se sigue', async () => {
+    const f = vi.fn(async () => new Response(null, { status: 302, headers: { location: 'http://169.254.169.254/latest/meta-data' } }))
+    vi.stubGlobal('fetch', f)
+    const r = await probe({ url: 'https://example.com' })
+    expect(r.state).toBe('down')
+    expect(f).toHaveBeenCalledTimes(1)
+  })
+
+  it('sigue redirecciones públicas hasta el destino', async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 301, headers: { location: '/nuevo' } }))
+      .mockResolvedValueOnce(new Response('ok', { status: 200 }))
+    vi.stubGlobal('fetch', f)
+    const r = await probe({ url: 'https://example.com/viejo' })
+    expect(r).toMatchObject({ ok: true, statusCode: 200 })
+    expect(f.mock.calls[1]![0]).toBe('https://example.com/nuevo')
+  })
+
+  it('corta un bucle de redirecciones', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 302, headers: { location: '/otra' } })))
+    const r = await probe({ url: 'https://example.com' })
+    expect(r.error).toMatch(/Demasiadas redirecciones/)
+  })
+
+  it('no abre el socket TLS contra un host privado', async () => {
+    expect(await fetchSslExpiry('https://db.interno.test')).toBeNull()
+  })
+})
+

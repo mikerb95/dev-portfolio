@@ -145,14 +145,18 @@ recargar, sirve tal cual desde un `<script>`.
 
 ### Pendiente / ideas
 
-- [ ] Recalcular racha y meta en el cliente tras registrar una sesión, en vez
-      de `location.reload()`. El módulo ya es puro, así que es cambiar el
-      script de la página, no la lógica.
-- [ ] Recordatorio por ntfy cuando la racha está en riesgo y quedan pocas horas
-      del día. Reutilizaría `src/lib/notify.ts` (no-op silencioso si falta la
-      env var) y un cron existente, sin infraestructura nueva.
-- [ ] Enlazar un hito cerrado con el proyecto o el repositorio que lo demuestra
-      (el campo `evidence_url` ya existe, falta exponerlo en la UI).
+- [ ] ~~Recalcular racha y meta en el cliente tras registrar una sesión, en vez
+      de `location.reload()`.~~ Revisado el 1 oct 2026 y **no se hace por
+      ahora**: una sesión cambia también el mapa de calor, los logros y las
+      listas, y actualizar solo las cifras dejaría la pantalla incoherente. La
+      recarga tarda menos de un segundo. Decisión abierta para Mike.
+- [x] Recordatorio por ntfy cuando la racha está en riesgo (1 oct 2026):
+      `src/lib/racha-aviso.ts`, colgado del sondeo de uptime. Solo actúa de
+      20:00 a 23:00 de Bogotá (fuera de la franja no toca la base), una vez por
+      día (`app_settings.aviso_racha`) y por cada track activo en riesgo.
+- [x] Evidencia de un hito cerrado (1 oct 2026): campo en cada hito "Hecho" y
+      enlace "Evidencia ↗". La API solo acepta http(s) (`esUrlWeb` en
+      `src/lib/skills.ts`): un `javascript:` guardado se ejecutaría en el panel.
 
 ## Notas de operación
 
