@@ -217,7 +217,7 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
           {historial.length === 0 ? (
             <p class="mt-8 text-ink-200">Todavía no hay análisis.</p>
           ) : (
-            <ol class="mt-6 grid gap-3">
+            <ol class="mt-6 grid grid-cols-1 gap-3">
               {historial.map((h) => (
                 <li>
                   <details class="registro">
@@ -227,7 +227,7 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
                       <span class="min-w-0 flex-1 truncate text-ink-50">{h.pregunta}</span>
                       <span class="font-mono text-[12px] text-ink-200 shrink-0">{fecha.format(h.creada)} · US${h.costoUsd.toFixed(2)}</span>
                     </summary>
-                    <div class="mt-3 text-[15px] leading-relaxed text-ink-100 whitespace-pre-line">
+                    <div class="mt-3 text-[15px] leading-relaxed text-ink-100 whitespace-pre-line [overflow-wrap:anywhere]">
                       {h.respuesta ?? h.error ?? (h.pendiente ? `Propone bloquear a ${h.pendiente.origen}: ${h.pendiente.motivo}` : 'Sin respuesta todavía.')}
                     </div>
                   </details>
@@ -269,6 +269,9 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
         border: 1px solid rgb(255 255 255 / .08); box-shadow: 0 30px 80px -20px rgb(0 0 0 / .6);
       }
       .historial::backdrop { background: rgb(7 7 10 / .72); backdrop-filter: blur(6px); }
+      /* La lista del historial lleva grid-cols-1 (minmax(0, 1fr)) a propósito: con
+         la columna implícita (auto) medía lo que la pregunta más larga en una sola
+         línea, aunque se viera recortada, y el diálogo se iba en scroll horizontal. */
       .registro { border-radius: 1rem; padding: .85rem 1rem; background: rgb(255 255 255 / .025); border: 1px solid rgb(255 255 255 / .06); }
       .registro summary { display: flex; align-items: center; gap: .75rem; cursor: pointer; list-style: none; font-size: 15px; }
       .registro summary::-webkit-details-marker { display: none; }
