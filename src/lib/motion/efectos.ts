@@ -322,6 +322,29 @@ export function revelarTitular(h: HTMLElement): Desmontar {
 }
 
 /**
+ * Titular de hero palabra a palabra desde una máscara. Cada palabra recibe el
+ * degradado del bloque que la contiene (`text-mask` o un `text-mask-cyan`
+ * anidado, como "productiva" en /ep): el recorte de `background-clip: text`
+ * no llega a los hijos transformados, y sin esto el texto queda transparente.
+ */
+export function revelarPalabras(h: HTMLElement, retraso = 0.1): Desmontar {
+  const split = new SplitText(h, { type: 'words', mask: 'words' })
+  split.words.forEach((w) => {
+    w.classList.add(w.closest('.text-mask-cyan') ? 'text-mask-cyan' : 'text-mask')
+  })
+  h.style.backgroundImage = 'none'
+  h.querySelectorAll<HTMLElement>('.text-mask-cyan').forEach((el) => {
+    if (!split.words.includes(el)) el.style.backgroundImage = 'none'
+  })
+  const tw = gsap.from(split.words, { yPercent: 115, duration: 1.15, ease: 'expo.out', stagger: 0.09, delay: retraso })
+  return () => {
+    tw.kill()
+    split.revert()
+    h.style.removeProperty('background-image')
+  }
+}
+
+/**
  * Etiqueta "/02 ─── Trabajo seleccionado": el número se descifra, la raya se
  * dibuja de izquierda a derecha y el rótulo entra después. Es el mismo gesto
  * de "boot" del titular del hero, a escala de etiqueta.

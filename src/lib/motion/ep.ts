@@ -15,15 +15,14 @@
 
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { SplitText } from 'gsap/SplitText'
 import { claveFecha } from '../festivos-co'
 import type { Hito } from '../sena-ep'
 import { entradaDesdeHitos, htmlCinta, indiceDe, lecturaDia, modeloCinta, type Cinta, type EntradaCinta } from './cinta-ep'
 import { coincideBandeja, consultaBandeja } from './ep-datos'
-import { odometro } from './efectos'
+import { odometro, revelarPalabras } from './efectos'
 import { montarLanding } from './landing'
 
-gsap.registerPlugin(ScrollTrigger, SplitText)
+gsap.registerPlugin(ScrollTrigger)
 
 let reducido = false
 const hoyIso = () => claveFecha(new Date())
@@ -554,25 +553,6 @@ export function escucharEp(o: { reducido: boolean }) {
   })
 }
 
-/**
- * Titular del hero palabra a palabra. "productiva" lleva su propio degradado
- * (text-mask-cyan) dentro del de la línea: cada palabra recibe el del bloque
- * que la contiene, porque el recorte de `background-clip: text` no llega a
- * los hijos transformados.
- */
-function revelarTitulo(h: HTMLElement) {
-  const split = new SplitText(h, { type: 'words', mask: 'words' })
-  split.words.forEach((w) => {
-    const cyan = w.closest('.text-mask-cyan')
-    w.classList.add(cyan ? 'text-mask-cyan' : 'text-mask')
-  })
-  h.style.backgroundImage = 'none'
-  h.querySelectorAll<HTMLElement>('.text-mask-cyan').forEach((el) => {
-    if (!split.words.includes(el)) el.style.backgroundImage = 'none'
-  })
-  gsap.from(split.words, { yPercent: 115, duration: 1.15, ease: 'expo.out', stagger: 0.09, delay: 0.1 })
-}
-
 export function montarEp(o: { reducido: boolean }) {
   reducido = o.reducido
 
@@ -607,7 +587,7 @@ export function montarEp(o: { reducido: boolean }) {
 
   try {
     const titulo = document.querySelector<HTMLElement>('[data-ep-titulo]')
-    if (titulo) revelarTitulo(titulo)
+    if (titulo) revelarPalabras(titulo)
     ;['ep-dia', 'ep-stat-avance', 'ep-stat-dias', 'ep-stat-bitacora'].forEach((id) => {
       const el = document.getElementById(id)
       if (el) {
