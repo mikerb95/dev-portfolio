@@ -138,9 +138,9 @@ const avisoEspectros =
     <div class="hud-line flex items-center justify-between gap-6 text-ink-400" data-key="laboratorio">
       <span>{t.hud.lab}</span><span class="hud-status">-</span>
     </div>
+    <!-- Fuera de `.hud-line` a propósito: esas líneas se emparejan por índice
+         con las secciones y una más desplazaría todas las marcas. -->
     {espectros > 0 && (
-      <!-- Fuera de `.hud-line` a propósito: esas líneas se emparejan por índice
-           con las secciones y una más desplazaría todas las marcas. -->
       <div class="hud-espectros flex items-center justify-between gap-6 mt-1 pt-1.5">
         <span>{t.halloween.hud}</span><span data-hud-espectros>0/{espectros}</span>
       </div>
@@ -270,9 +270,9 @@ const avisoEspectros =
         </div>
       </div>
 
+      <!-- Solo aparece al disipar el primer espectro: el efecto es para quien
+           lo descubre, no un rótulo que explique la broma de entrada. -->
       {espectros > 0 && (
-        <!-- Solo aparece al disipar el primer espectro: el efecto es para quien
-             lo descubre, no un rótulo que explique la broma de entrada. -->
         <p
           id="aviso-espectros"
           class="aviso-espectros mt-8 md:mt-0 md:absolute md:right-0 md:bottom-0 max-w-sm font-mono text-[11px] leading-relaxed text-ink-200"
