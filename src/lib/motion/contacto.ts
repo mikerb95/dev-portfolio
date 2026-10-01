@@ -146,6 +146,12 @@ export function montarRuta(c: TextosContacto, reducido: boolean): RutaContacto {
 
     enviar() {
       congelada = true
+      // En celular la ruta queda debajo del formulario: si no se ve, se baja
+      // hasta ella para que el aviso no llegue fuera de pantalla.
+      const caja = raiz.getBoundingClientRect()
+      if (caja.top < 0 || caja.bottom > window.innerHeight) {
+        raiz.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'end' })
+      }
       raiz.removeAttribute('data-preparado')
       falla.hidden = true
       estado(0, 'listo')
