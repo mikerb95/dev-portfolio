@@ -7,12 +7,17 @@
 // del velo del texto: las curvas cruzan por delante de los fantasmas y el
 // párrafo nunca queda tapado.
 //
-// Solo CSS (transform y opacity), sin requestAnimationFrame: el compositor los
-// mueve sin tocar el hilo principal, que es el que ya usa el terreno.
-//
 // El fantasma se dibuja como curvas de nivel (el contorno y dos anillos
-// interiores), el mismo lenguaje de isolíneas del hero, en vez de una sábana
-// rellena.
+// interiores que respiran), el mismo lenguaje de isolíneas del hero, con la
+// cola ondeando y ojos que parpadean.
+//
+// Tres capas de movimiento por fantasma, cada una en su propio elemento para
+// que no se pisen:
+//   · .fantasma           la deriva de borde a borde (CSS).
+//   · .fantasma-reaccion  lo que hace el cursor: huir, acercarse, el susto (JS).
+//   · .fantasma-cuerpo    el flotar en su sitio (CSS).
+// Como la capa está detrás del hero, no recibe el puntero: el script escucha
+// el puntero en la ventana y solo escribe transform, opacity y dos variables.
 
 type Fantasma = {
   /** Altura dentro del primer pantallazo (% de 100svh). */
@@ -40,8 +45,13 @@ const FANTASMAS: Fantasma[] = [
   { y: 38, tam: 39, dur: 70, retraso: -60, dir: -1, quieto: 80, tono: 'violeta' },
 ]
 
-const SILUETA =
-  'M6 32 C6 15 16 4 30 4 C44 4 54 15 54 32 L54 64 Q48 72 42 64 Q36 56 30 64 Q24 72 18 64 Q12 56 6 64 Z'
+// Dos fases de la cola: la segunda invierte las ondas del borde inferior y la
+// animación va y vuelve entre ambas, así la tela ondea sin desplazarse.
+const COLA_A = 'L54 64 Q48 72 42 64 Q36 56 30 64 Q24 72 18 64 Q12 56 6 64 Z'
+const COLA_B = 'L54 65 Q48 57 42 65 Q36 73 30 65 Q24 57 18 65 Q12 73 6 65 Z'
+const CABEZA = 'M6 32 C6 15 16 4 30 4 C44 4 54 15 54 32 '
+const SILUETA_A = CABEZA + COLA_A
+const SILUETA_B = CABEZA + COLA_B
 ---
 
 <div class="fantasmas" aria-hidden="true">
@@ -49,20 +59,70 @@ const SILUETA =
     FANTASMAS.map((f, i) => (
       <span
         class:list={['fantasma', `fantasma-${f.tono}`]}
-        style={`--y:${f.y}svh;--tam:${f.tam}px;--dur:${f.dur}s;--retraso:${f.retraso}s;--quieto:${f.quieto}vw;--flotar:${3.6 + (i % 3) * 0.7}s`}
+        style={`--y:${f.y}svh;--tam:${f.tam}px;--dur:${f.dur}s;--retraso:${f.retraso}s;--quieto:${f.quieto}vw;--flotar:${3.6 + (i % 3) * 0.7}s;--parpadeo:${4.2 + i * 1.3}s;--respiro:${2.8 + (i % 4) * 0.5}s`}
         data-dir={f.dir === 1 ? 'der' : 'izq'}
       >
-        <svg class="fantasma-cuerpo" viewBox="0 0 60 72" fill="none">
-          <path d={SILUETA} class="brillo" />
-          <path d={SILUETA} class="anillo anillo-1" />
-          <path d={SILUETA} class="anillo anillo-2" transform="translate(30 38) scale(.74) translate(-30 -38)" />
-          <path d={SILUETA} class="anillo anillo-3" transform="translate(30 38) scale(.48) translate(-30 -38)" />
-          <ellipse cx="23" cy="28" rx="2.4" ry="3.4" class="ojo" />
-          <ellipse cx="37" cy="28" rx="2.4" ry="3.4" class="ojo" />
-        </svg>
+        <span class="fantasma-reaccion">
+          <span class="fantasma-susto">
+            <svg class="fantasma-cuerpo" viewBox="0 0 60 72" fill="none">
+              <use href={i % 2 ? '#fantasma-silueta-b' : '#fantasma-silueta-a'} class="brillo" />
+              <use href={i % 2 ? '#fantasma-silueta-b' : '#fantasma-silueta-a'} class="anillo anillo-1" />
+              <use href={i % 2 ? '#fantasma-silueta-b' : '#fantasma-silueta-a'} class="anillo anillo-2" />
+              <use href={i % 2 ? '#fantasma-silueta-b' : '#fantasma-silueta-a'} class="anillo anillo-3" />
+              <g class="ojos">
+                <ellipse cx="23" cy="28" rx="2.4" ry="3.4" class="ojo" />
+                <ellipse cx="37" cy="28" rx="2.4" ry="3.4" class="ojo" />
+              </g>
+              <ellipse cx="30" cy="40" rx="2.6" ry="3.6" class="boca" />
+            </svg>
+          </span>
+        </span>
       </span>
     ))
   }
+
+  <!-- El tímido: no cruza la pantalla. Espera fuera, en un borde, y solo se
+       asoma cuando el visitante deja el puntero quieto unos segundos. -->
+  <span class="timido" data-borde="der">
+    <svg class="fantasma-cuerpo" viewBox="0 0 60 72" fill="none">
+      <use href="#fantasma-silueta-a" class="brillo" />
+      <use href="#fantasma-silueta-a" class="anillo anillo-1" />
+      <use href="#fantasma-silueta-a" class="anillo anillo-2" />
+      <g class="ojos">
+        <ellipse cx="23" cy="28" rx="2.4" ry="3.4" class="ojo" />
+        <ellipse cx="37" cy="28" rx="2.4" ry="3.4" class="ojo" />
+      </g>
+    </svg>
+  </span>
+
+  <!-- Siluetas compartidas: cada <use> hereda la cola animada, así hay dos
+       animaciones SMIL para toda la capa y no una por anillo. -->
+  <svg class="fantasmas-defs" width="0" height="0" focusable="false">
+    <defs>
+      <path id="fantasma-silueta-a" d={SILUETA_A}>
+        <animate
+          attributeName="d"
+          dur="1.7s"
+          repeatCount="indefinite"
+          calcMode="spline"
+          keyTimes="0;0.5;1"
+          keySplines=".45 0 .55 1;.45 0 .55 1"
+          values={`${SILUETA_A};${SILUETA_B};${SILUETA_A}`}
+        />
+      </path>
+      <path id="fantasma-silueta-b" d={SILUETA_B}>
+        <animate
+          attributeName="d"
+          dur="2.3s"
+          repeatCount="indefinite"
+          calcMode="spline"
+          keyTimes="0;0.5;1"
+          keySplines=".45 0 .55 1;.45 0 .55 1"
+          values={`${SILUETA_B};${SILUETA_A};${SILUETA_B}`}
+        />
+      </path>
+    </defs>
+  </svg>
 </div>
 
 <style>
@@ -74,6 +134,7 @@ const SILUETA =
     pointer-events: none;
     z-index: 0;
   }
+  .fantasmas-defs { position: absolute; }
 
   .fantasma {
     position: absolute;
@@ -89,6 +150,10 @@ const SILUETA =
   .fantasma[data-dir='izq'] { animation-name: deriva-izq; }
   .fantasma[data-dir='izq'] .fantasma-cuerpo { scale: -1 1; }
 
+  .fantasma-reaccion,
+  .fantasma-susto { display: block; }
+  .fantasma-reaccion { will-change: transform, opacity; }
+
   .fantasma-cuerpo {
     display: block;
     width: 100%;
@@ -101,11 +166,47 @@ const SILUETA =
      elemento que se mueve obliga a recomponerlo en cada fotograma y le
      quitaba fotogramas al terreno de debajo. */
   .brillo { stroke: currentColor; stroke-width: 7; stroke-opacity: .08; stroke-linejoin: round; }
-  .anillo { stroke: currentColor; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .anillo { stroke: currentColor; stroke-width: 1.4; vector-effect: non-scaling-stroke; transform-origin: 30px 38px; }
   .anillo-1 { fill: currentColor; fill-opacity: .06; stroke-opacity: .9; }
-  .anillo-2 { stroke-opacity: .5; }
-  .anillo-3 { stroke-opacity: .28; }
-  .ojo { fill: currentColor; fill-opacity: .85; }
+  /* Los anillos interiores respiran desfasados, como curvas de nivel de un
+     relieve que sube y baja por dentro. */
+  .anillo-2 { stroke-opacity: .5; animation: respirar-2 var(--respiro, 3s) ease-in-out infinite alternate; }
+  .anillo-3 { stroke-opacity: .28; animation: respirar-3 var(--respiro, 3s) ease-in-out calc(var(--respiro, 3s) * -.5) infinite alternate; }
+
+  /* Los ojos los mueve el script (--ox, --oy, en unidades del viewBox); el
+     parpadeo es CSS y cada fantasma lleva su propio ritmo. */
+  .ojos { transform: translate(calc(var(--ox, 0) * 1px), calc(var(--oy, 0) * 1px)); }
+  .ojo {
+    fill: currentColor;
+    fill-opacity: .85;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: parpadear var(--parpadeo, 5s) linear infinite;
+  }
+  .boca { fill: currentColor; fill-opacity: 0; transform-box: fill-box; transform-origin: center; scale: .3; transition: fill-opacity .2s, scale .2s; }
+
+  /* Susto: salta, se desvanece y vuelve. El script lo reubica mientras es
+     invisible, así "reaparece más lejos". */
+  .asustado { animation: susto 1.5s cubic-bezier(.2, .8, .2, 1); }
+  .asustado .boca { fill-opacity: .8; scale: 1; }
+  .asustado .ojo { animation: none; scale: 1.25; }
+
+  /* El tímido espera fuera del borde y entra despacio; al irse, sale rápido
+     (cada estado lleva la transición con la que se LLEGA a él). */
+  .timido {
+    position: absolute;
+    top: 50%;
+    width: 72px;
+    color: #e6dcff;
+    opacity: .8;
+    transition: transform .35s cubic-bezier(.5, 0, .9, .4);
+  }
+  .timido[data-borde='der'] { right: 0; transform: translateX(115%) rotate(-6deg); }
+  .timido[data-borde='izq'] { left: 0; transform: translateX(-115%) rotate(6deg); }
+  .timido[data-borde='izq'] .fantasma-cuerpo { scale: -1 1; }
+  .timido.asomado { transition: transform 1.6s cubic-bezier(.16, 1, .3, 1); }
+  .timido.asomado[data-borde='der'] { transform: translateX(42%) rotate(-16deg); }
+  .timido.asomado[data-borde='izq'] { transform: translateX(-42%) rotate(16deg); }
 
   /* Entran y salen con un fundido en los bordes: un fantasma que aparece de
      golpe en el canto de la pantalla se lee como un error de carga. */
@@ -127,17 +228,255 @@ const SILUETA =
     from { transform: translate3d(0, -7px, 0) rotate(-3deg); }
     to { transform: translate3d(0, 7px, 0) rotate(3deg); }
   }
+  @keyframes respirar-2 { from { scale: .7; } to { scale: .8; } }
+  @keyframes respirar-3 { from { scale: .42; } to { scale: .56; } }
+  @keyframes parpadear {
+    0%, 94%, 100% { scale: 1 1; }
+    96% { scale: 1 .1; }
+  }
+  @keyframes susto {
+    0% { transform: none; opacity: 1; }
+    14% { transform: translateY(-18px) scale(1.18); opacity: 1; }
+    34% { transform: translateY(-26px) scale(.9); opacity: 0; }
+    62% { transform: translateY(8px) scale(.9); opacity: 0; }
+    100% { transform: none; opacity: 1; }
+  }
 
   @media (max-width: 767px) {
     .fantasma { width: calc(var(--tam) * .7); }
     .fantasma:nth-child(n + 4) { display: none; }
+    .timido { width: 54px; }
   }
 
-  /* Sin movimiento: se quedan quietos en su sitio, visibles pero tenues. */
+  /* Sin movimiento: se quedan quietos en su sitio, visibles pero tenues, y el
+     script no se monta. */
   @media (prefers-reduced-motion: reduce) {
     .fantasma,
-    .fantasma-cuerpo { animation: none; }
+    .fantasma-cuerpo,
+    .anillo,
+    .ojo { animation: none; }
     .fantasma { transform: translate3d(var(--quieto), 0, 0); opacity: .35; }
     .fantasma:nth-child(n + 4) { display: none; }
+    .timido { display: none; }
   }
 </style>
+
+<script>
+  // Reacciones de los fantasmas al puntero. Un solo bucle para toda la capa,
+  // que solo corre mientras el primer pantallazo está a la vista y la pestaña
+  // visible. Lee la caja de cada fantasma (la deriva es CSS y no la conoce el
+  // script) y escribe transform y opacity en su capa de reacción.
+  const capa = document.querySelector<HTMLElement>('.fantasmas')
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  if (capa && !reducido) {
+    // Distancias en px de pantalla.
+    const RADIO_HUIDA = 210
+    const HUIDA_MAX = 150
+    const RADIO_SUSTO = 320
+    const QUIETO_CURIOSO = 2500 // ms sin mover el puntero para que se acerquen
+    const QUIETO_TIMIDO = 4000 // ms para que el tímido se asome
+    const CERCA_CURIOSO = 125 // hasta dónde se acercan (no lo tocan)
+    const RIGIDEZ = 38
+    const AMORTIGUACION = 11
+
+    type Estado = {
+      el: HTMLElement
+      reaccion: HTMLElement
+      susto: HTMLElement
+      cuerpo: SVGSVGElement
+      espejo: number
+      x: number
+      y: number
+      vx: number
+      vy: number
+      alfa: number
+      ox: number
+      oy: number
+      /** 0..1: tras un susto el resorte se afloja y recupera poco a poco. */
+      calma: number
+    }
+
+    const fantasmas: Estado[] = Array.from(capa.querySelectorAll<HTMLElement>('.fantasma')).map((el) => ({
+      el,
+      reaccion: el.querySelector<HTMLElement>('.fantasma-reaccion')!,
+      susto: el.querySelector<HTMLElement>('.fantasma-susto')!,
+      cuerpo: el.querySelector<SVGSVGElement>('.fantasma-cuerpo')!,
+      espejo: el.dataset.dir === 'izq' ? -1 : 1,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      alfa: 1,
+      ox: 0,
+      oy: 0,
+      calma: 1,
+    }))
+
+    const timido = capa.querySelector<HTMLElement>('.timido')
+    const timidoCuerpo = timido?.querySelector<SVGSVGElement>('.fantasma-cuerpo') ?? null
+
+    const puntero = { x: 0, y: 0, activo: false, ultimoMov: performance.now() }
+    let visible = true
+    let raf = 0
+    let anterior = performance.now()
+
+    const esconderTimido = () => timido?.classList.remove('asomado')
+    const asomarTimido = () => {
+      if (!timido || timido.classList.contains('asomado')) return
+      timido.dataset.borde = Math.random() < 0.5 ? 'der' : 'izq'
+      timido.style.top = `${25 + Math.random() * 45}%`
+      // Un fotograma para que el cambio de borde se aplique antes de entrar.
+      requestAnimationFrame(() => timido.classList.add('asomado'))
+    }
+
+    const mirar = (cuerpo: SVGSVGElement, ox: number, oy: number) => {
+      cuerpo.style.setProperty('--ox', ox.toFixed(2))
+      cuerpo.style.setProperty('--oy', oy.toFixed(2))
+    }
+
+    const paso = (ahora: number) => {
+      raf = 0
+      const dt = Math.min(0.05, (ahora - anterior) / 1000)
+      anterior = ahora
+      const quieto = ahora - puntero.ultimoMov
+
+      // Primero todas las lecturas y después todas las escrituras: intercalar
+      // obligaría al navegador a recalcular el estilo por cada fantasma.
+      const cajas = fantasmas.map((f) => f.el.getBoundingClientRect())
+
+      fantasmas.forEach((f, i) => {
+        const caja = cajas[i]
+        if (caja.width === 0) return // oculto en móvil
+        const cx = caja.left + caja.width / 2 + f.x
+        const cy = caja.top + caja.height / 2 + f.y
+
+        let tx = 0
+        let ty = 0
+        let alfaObjetivo = 1
+        let ox = 0
+        let oy = 0
+
+        if (puntero.activo) {
+          const dx = cx - puntero.x
+          const dy = cy - puntero.y
+          const d = Math.max(1, Math.hypot(dx, dy))
+          if (quieto < QUIETO_CURIOSO) {
+            // Huyen: más lejos y más transparentes cuanto más cerca pasa el puntero.
+            if (d < RADIO_HUIDA) {
+              const k = 1 - d / RADIO_HUIDA
+              tx = (dx / d) * HUIDA_MAX * k
+              ty = (dy / d) * HUIDA_MAX * k
+              alfaObjetivo = 0.3 + 0.7 * (d / RADIO_HUIDA)
+            }
+          } else if (d < 520) {
+            // Curiosos: con el puntero quieto se acercan, sin llegar a tocarlo.
+            const acercar = Math.min(90, Math.max(0, (d - CERCA_CURIOSO) * 0.45))
+            tx = (-dx / d) * acercar
+            ty = (-dy / d) * acercar
+          }
+          // Los ojos miran al puntero (el fantasma espejado ve al revés).
+          const mira = Math.min(1, d / 60)
+          ox = (-dx / d) * 2.4 * mira * f.espejo
+          oy = (-dy / d) * 2 * mira
+        }
+
+        f.calma = Math.min(1, f.calma + dt * 0.35)
+        const rigidez = RIGIDEZ * (0.06 + 0.94 * f.calma * f.calma)
+        f.vx += ((tx - f.x) * rigidez - f.vx * AMORTIGUACION) * dt
+        f.vy += ((ty - f.y) * rigidez - f.vy * AMORTIGUACION) * dt
+        f.x += f.vx * dt
+        f.y += f.vy * dt
+        f.alfa += (alfaObjetivo - f.alfa) * Math.min(1, dt * 6)
+        f.ox += (ox - f.ox) * Math.min(1, dt * 8)
+        f.oy += (oy - f.oy) * Math.min(1, dt * 8)
+
+        f.reaccion.style.transform = `translate3d(${f.x.toFixed(1)}px, ${f.y.toFixed(1)}px, 0)`
+        f.reaccion.style.opacity = f.alfa.toFixed(3)
+        mirar(f.cuerpo, f.ox, f.oy)
+      })
+
+      if (timido && timidoCuerpo) {
+        if (quieto > QUIETO_TIMIDO) asomarTimido()
+        if (timido.classList.contains('asomado') && puntero.activo) {
+          const caja = timido.getBoundingClientRect()
+          const dx = caja.left + caja.width / 2 - puntero.x
+          const dy = caja.top + caja.height / 2 - puntero.y
+          const d = Math.max(1, Math.hypot(dx, dy))
+          const espejo = timido.dataset.borde === 'izq' ? -1 : 1
+          mirar(timidoCuerpo, (-dx / d) * 2.4 * espejo, (-dy / d) * 2)
+        }
+      }
+
+      if (visible && !document.hidden) raf = requestAnimationFrame(paso)
+    }
+
+    const arrancar = () => {
+      if (raf || !visible || document.hidden) return
+      anterior = performance.now()
+      raf = requestAnimationFrame(paso)
+    }
+
+    const asustar = (px: number, py: number) => {
+      fantasmas.forEach((f) => {
+        const caja = f.el.getBoundingClientRect()
+        if (caja.width === 0) return
+        const dx = caja.left + caja.width / 2 + f.x - px
+        const dy = caja.top + caja.height / 2 + f.y - py
+        const d = Math.max(1, Math.hypot(dx, dy))
+        if (d > RADIO_SUSTO) return
+        // Reinicia la animación aunque ya estuviera asustado.
+        f.susto.classList.remove('asustado')
+        void f.susto.offsetWidth
+        f.susto.classList.add('asustado')
+        f.vx += (dx / d) * 900
+        f.vy += (dy / d) * 900 - 250
+        f.calma = 0
+        // A mitad del susto está invisible: ahí se reubica, más lejos.
+        window.setTimeout(() => {
+          f.x += (dx / d) * (140 + Math.random() * 120)
+          f.y += (Math.random() - 0.5) * 120
+          f.vx = 0
+          f.vy = 0
+        }, 520)
+        window.setTimeout(() => f.susto.classList.remove('asustado'), 1500)
+      })
+    }
+
+    const alMover = (e: PointerEvent) => {
+      puntero.x = e.clientX
+      puntero.y = e.clientY
+      puntero.activo = true
+      puntero.ultimoMov = performance.now()
+      esconderTimido()
+    }
+
+    window.addEventListener('pointermove', alMover, { passive: true })
+    window.addEventListener(
+      'pointerdown',
+      (e) => {
+        alMover(e)
+        if (e.clientY < capa.getBoundingClientRect().bottom) asustar(e.clientX, e.clientY)
+      },
+      { passive: true },
+    )
+    window.addEventListener(
+      'scroll',
+      () => {
+        puntero.ultimoMov = performance.now()
+        esconderTimido()
+      },
+      { passive: true },
+    )
+    document.documentElement.addEventListener('pointerleave', () => (puntero.activo = false))
+    document.addEventListener('visibilitychange', () => (document.hidden ? undefined : arrancar()))
+
+    new IntersectionObserver(([entrada]) => {
+      visible = entrada.isIntersecting
+      if (visible) arrancar()
+      else esconderTimido()
+    }).observe(capa)
+
+    arrancar()
+  }
+</script>
