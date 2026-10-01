@@ -1,0 +1,138 @@
+---
+// Fantasmas de Halloween sobre la portada (solo en octubre, ver
+// src/lib/temporada.ts y BaseLayout).
+//
+// Capa aparte y no parte del terreno: el hero y su shader no se tocan. Va en
+// el DOM antes de <main>, así que se pinta DETRÁS del lienzo de isolíneas y
+// del velo del texto: las curvas cruzan por delante de los fantasmas y el
+// párrafo nunca queda tapado.
+//
+// Solo CSS (transform y opacity), sin requestAnimationFrame: el compositor los
+// mueve sin tocar el hilo principal, que es el que ya usa el terreno.
+//
+// El fantasma se dibuja como curvas de nivel (el contorno y dos anillos
+// interiores), el mismo lenguaje de isolíneas del hero, en vez de una sábana
+// rellena.
+
+type Fantasma = {
+  /** Altura dentro del primer pantallazo (% de 100svh). */
+  y: number
+  /** Ancho en px. */
+  tam: number
+  /** Segundos en cruzar la pantalla. */
+  dur: number
+  /** Desfase negativo para que arranquen repartidos y no todos desde el borde. */
+  retraso: number
+  /** Sentido de la marcha. */
+  dir: 1 | -1
+  /** Posición quieta con movimiento reducido (% del ancho). */
+  quieto: number
+  tono: 'claro' | 'violeta'
+}
+
+// Los tres primeros son los que quedan en móvil.
+const FANTASMAS: Fantasma[] = [
+  { y: 30, tam: 54, dur: 46, retraso: -8, dir: 1, quieto: 72, tono: 'claro' },
+  { y: 58, tam: 40, dur: 58, retraso: -31, dir: -1, quieto: 86, tono: 'violeta' },
+  { y: 44, tam: 66, dur: 64, retraso: -50, dir: 1, quieto: 58, tono: 'violeta' },
+  { y: 22, tam: 34, dur: 52, retraso: -22, dir: -1, quieto: 92, tono: 'claro' },
+  { y: 68, tam: 48, dur: 42, retraso: -14, dir: 1, quieto: 44, tono: 'claro' },
+  { y: 38, tam: 30, dur: 70, retraso: -60, dir: -1, quieto: 80, tono: 'violeta' },
+]
+
+const SILUETA =
+  'M6 32 C6 15 16 4 30 4 C44 4 54 15 54 32 L54 64 Q48 72 42 64 Q36 56 30 64 Q24 72 18 64 Q12 56 6 64 Z'
+---
+
+<div class="fantasmas" aria-hidden="true">
+  {
+    FANTASMAS.map((f, i) => (
+      <span
+        class:list={['fantasma', `fantasma-${f.tono}`]}
+        style={`--y:${f.y}svh;--tam:${f.tam}px;--dur:${f.dur}s;--retraso:${f.retraso}s;--quieto:${f.quieto}vw;--flotar:${3.6 + (i % 3) * 0.7}s`}
+        data-dir={f.dir === 1 ? 'der' : 'izq'}
+      >
+        <svg class="fantasma-cuerpo" viewBox="0 0 60 72" fill="none">
+          <path d={SILUETA} class="anillo anillo-1" />
+          <path d={SILUETA} class="anillo anillo-2" transform="translate(30 38) scale(.74) translate(-30 -38)" />
+          <path d={SILUETA} class="anillo anillo-3" transform="translate(30 38) scale(.48) translate(-30 -38)" />
+          <ellipse cx="23" cy="28" rx="2.4" ry="3.4" class="ojo" />
+          <ellipse cx="37" cy="28" rx="2.4" ry="3.4" class="ojo" />
+        </svg>
+      </span>
+    ))
+  }
+</div>
+
+<style>
+  .fantasmas {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 100svh;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .fantasma {
+    position: absolute;
+    top: var(--y);
+    left: 0;
+    width: var(--tam);
+    color: #e6dcff;
+    opacity: 0;
+    will-change: transform;
+    animation: deriva var(--dur) linear var(--retraso) infinite;
+  }
+  .fantasma-violeta { color: #a78bff; }
+  .fantasma[data-dir='izq'] { animation-name: deriva-izq; }
+  .fantasma[data-dir='izq'] .fantasma-cuerpo { scale: -1 1; }
+
+  .fantasma-cuerpo {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    filter: drop-shadow(0 0 10px currentColor);
+    animation: flotar var(--flotar) ease-in-out infinite alternate;
+  }
+
+  .anillo { stroke: currentColor; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .anillo-1 { fill: currentColor; fill-opacity: .06; stroke-opacity: .9; }
+  .anillo-2 { stroke-opacity: .5; }
+  .anillo-3 { stroke-opacity: .28; }
+  .ojo { fill: currentColor; fill-opacity: .85; }
+
+  /* Entran y salen con un fundido en los bordes: un fantasma que aparece de
+     golpe en el canto de la pantalla se lee como un error de carga. */
+  @keyframes deriva {
+    0% { transform: translate3d(-12vw, 0, 0); opacity: 0; }
+    10% { opacity: .55; }
+    50% { opacity: .38; }
+    90% { opacity: .55; }
+    100% { transform: translate3d(108vw, 0, 0); opacity: 0; }
+  }
+  @keyframes deriva-izq {
+    0% { transform: translate3d(108vw, 0, 0); opacity: 0; }
+    10% { opacity: .55; }
+    50% { opacity: .38; }
+    90% { opacity: .55; }
+    100% { transform: translate3d(-12vw, 0, 0); opacity: 0; }
+  }
+  @keyframes flotar {
+    from { transform: translate3d(0, -7px, 0) rotate(-3deg); }
+    to { transform: translate3d(0, 7px, 0) rotate(3deg); }
+  }
+
+  @media (max-width: 767px) {
+    .fantasma:nth-child(n + 4) { display: none; }
+  }
+
+  /* Sin movimiento: se quedan quietos en su sitio, visibles pero tenues. */
+  @media (prefers-reduced-motion: reduce) {
+    .fantasma,
+    .fantasma-cuerpo { animation: none; }
+    .fantasma { transform: translate3d(var(--quieto), 0, 0); opacity: .35; }
+    .fantasma:nth-child(n + 4) { display: none; }
+  }
+</style>

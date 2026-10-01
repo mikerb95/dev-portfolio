@@ -6,9 +6,10 @@ import WebVitals from '../components/WebVitals.astro'
 import AmbientBlobs from '../components/AmbientBlobs.astro'
 import LanguageSuggestModal from '../components/LanguageSuggestModal.astro'
 import WhatsappFab from '../components/WhatsappFab.astro'
-import { DEFAULT_LOCALE, alternateUrls, getDictionary, getLocaleFromUrl, translatedAlternates } from '../i18n'
+import { DEFAULT_LOCALE, alternateUrls, delocalizePath, getDictionary, getLocaleFromUrl, translatedAlternates } from '../i18n'
 import { jsonEnScript } from '../lib/json-script'
 import { temporadaActual } from '../lib/temporada'
+import Fantasmas from '../components/Fantasmas.astro'
 
 interface Props {
   title: string
@@ -104,12 +105,16 @@ const websiteJsonLd = jsonEnScript({
   url: site.href,
   inLanguage: locale,
 })
+
+// Los fantasmas de octubre solo van en la portada (en los dos idiomas).
+const temporada = temporadaActual()
+const fantasmas = temporada === 'halloween' && delocalizePath(Astro.url.pathname) === '/'
 ---
 
 <!doctype html>
 <!-- La temporada marca el <html> y el CSS hace el resto (global.css): los
      toques de fuera de la portada son solo color, sin script. -->
-<html lang={locale} data-temporada={temporadaActual() ?? undefined}>
+<html lang={locale} data-temporada={temporada ?? undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -163,6 +168,7 @@ const websiteJsonLd = jsonEnScript({
   </head>
   <body class="grain">
     <AmbientBlobs />
+    {fantasmas && <Fantasmas />}
     <Navbar languageHref={alt[locale === 'en' ? 'es' : 'en']} />
     <main>
       <slot />
