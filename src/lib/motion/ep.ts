@@ -149,7 +149,25 @@ function montarCinta(raiz: HTMLElement, c: Cinta, lecturaEl: HTMLElement, o: Opc
   // El pulso de hoy es CSS: fuera de pantalla se congela.
   const io = new IntersectionObserver(([e]) => grid.classList.toggle('ct-pausada', !e.isIntersecting))
   io.observe(grid)
+  // Etiquetas de visitas que se pisan (cintas angostas, visitas cercanas):
+  // la que choca con la anterior sube a un segundo carril. Se mide en el
+  // navegador porque el ancho de la etiqueta depende de la fuente.
+  const acomodarPines = () => {
+    let fin = -Infinity
+    let dos = false
+    for (const p of pines) {
+      p.removeAttribute('data-carril')
+      const et = p.firstElementChild as HTMLElement
+      const izq = p.offsetLeft + et.offsetLeft
+      if (izq < fin + 6) {
+        p.setAttribute('data-carril', '2')
+        dos = true
+      } else fin = izq + et.offsetWidth
+    }
+    grid.classList.toggle('dos-carriles', dos)
+  }
   const ro = new ResizeObserver(() => {
+    acomodarPines()
     if (iHoy !== null) hoyEl.style.left = `${xDe(iHoy)}px`
   })
   ro.observe(grid)

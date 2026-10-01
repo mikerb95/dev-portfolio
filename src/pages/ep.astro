@@ -896,13 +896,6 @@ const meta = [
             </div>
             <p id="calc-progreso" class="text-[11px] font-mono text-ink-200 mb-4"></p>
 
-            <!-- La misma cinta de arriba, rearmada con la fecha de este cálculo
-                 (la pinta src/lib/motion/ep.ts al recibir el cronograma). -->
-            <div id="calc-cinta" class="ct ep-calc-cinta mb-5" tabindex="0" role="group" aria-label="Cinta de tu etapa. Usa las flechas para leer cada día." aria-describedby="calc-cinta-lectura" hidden>
-              <div aria-hidden="true" data-cinta-dibujo></div>
-              <p id="calc-cinta-lectura" class="ct-lectura mt-3" aria-live="polite"></p>
-            </div>
-
             <div class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Filtrar hitos">
               <button type="button" data-filter="all" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-cyan/40 bg-cyan/10 text-cyan">Todos</button>
               <button type="button" data-filter="visita" class="calc-chip text-[11px] font-mono uppercase px-3 py-1.5 rounded-full border border-white/10 text-ink-200">Visitas</button>
@@ -935,6 +928,17 @@ const meta = [
           </div>
         </div>
 
+      </div>
+      <!-- La misma cinta de arriba, rearmada con la fecha de este cálculo (la
+           pinta src/lib/motion/ep.ts al recibir el cronograma). Va a todo el
+           ancho de la sección: en la columna de resultados 186 días no caben. -->
+      <div id="calc-cinta" class="ct ep-calc-cinta mt-8 pt-7 border-t border-white/[.07]" tabindex="0" role="group" aria-label="Cinta de tu etapa. Usa las flechas para leer cada día." aria-describedby="calc-cinta-lectura" hidden>
+        <div class="flex items-center gap-2 mb-5">
+          <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
+          <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Tu cinta</span>
+        </div>
+        <div aria-hidden="true" data-cinta-dibujo></div>
+        <p id="calc-cinta-lectura" class="ct-lectura mt-3" aria-live="polite"></p>
       </div>
     </section>
 

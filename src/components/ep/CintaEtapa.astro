@@ -213,6 +213,12 @@ const { cinta, entrada, rango } = Astro.props
   .ct-pin[data-alinear='start'] .ct-pin-et { left: 0; }
   .ct-pin[data-alinear='center'] .ct-pin-et { left: 50%; transform: translateX(-50%); }
   .ct-pin[data-alinear='end'] .ct-pin-et { right: 0; }
+  .ct-pin[data-carril='2'] .ct-pin-et {
+    bottom: 45px;
+  }
+  .ct-grid.dos-carriles {
+    grid-template-rows: 18px 84px 66px 42px;
+  }
   .ct-pin.lee {
     background: #a78bff;
   }
@@ -510,6 +516,9 @@ const { cinta, entrada, rango } = Astro.props
       height: auto;
       margin: 0;
       background: none;
+    }
+    .ct-grid.dos-carriles {
+      grid-template-rows: repeat(var(--filas), 30px) auto;
     }
     .ct-pin-et {
       position: static;
