@@ -9,6 +9,7 @@ import TallerPasos from '../components/paginas-web/TallerPasos.astro'
 import TrabajosReales from '../components/paginas-web/TrabajosReales.astro'
 import { getDictionary, getLocaleFromUrl, interpolate } from '../i18n'
 import { jsonEnScript } from '../lib/json-script'
+import { etiquetaDesde, PAQUETES_WEB } from '../data/tarifario'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
@@ -21,19 +22,15 @@ const WHATSAPP = '573104641228'
 const waLink = (text: string) =>
   `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`
 
-// Precios y tiempos viven aquí arriba, en un solo lugar, para ajustarlos sin
-// tocar el diseño. El precio sí cambia con el idioma: el visitante en inglés
-// no es local a Colombia, así que ve una tarifa en USD, no una conversión de
-// pesos. El flag "destacado" no sale del diccionario porque es una decisión de
-// producto, no de texto.
-const PRICES: Record<typeof locale, (string | null)[]> = {
-  es: ['desde $650.000 COP', 'desde $1.500.000 COP', null],
-  en: ['from $250 USD', 'from $500 USD', null],
-}
+// Los precios vienen del tarifario (src/data/tarifario.ts), el mismo que usa
+// el cotizador del asistente: un solo lugar para el precio. Cambian con el
+// idioma: el visitante en inglés no es local a Colombia, así que ve una tarifa
+// en USD, no una conversión de pesos. El flag "destacado" no sale del
+// diccionario porque es una decisión de producto, no de texto.
 const DESTACADO = [false, true, false]
 const planes = pw.planes.map((p, i) => ({
   ...p,
-  precio: PRICES[locale][i],
+  precio: PAQUETES_WEB[i] ? etiquetaDesde(PAQUETES_WEB[i], locale) : null,
   destacado: DESTACADO[i],
 }))
 
