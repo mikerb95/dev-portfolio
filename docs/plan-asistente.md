@@ -68,7 +68,7 @@ filas escaneadas; ver memoria del proyecto): el historial de páginas sale de
 | `mensajes` | `messages` (formulario de contacto) y `portal_threads` sin leer | "¿qué no he contestado?" |
 | `seguimiento` | `interactions` con pendientes y vencidos | "¿qué tengo pendiente esta semana?" |
 | `paginas` | `monitors`, `monitor_daily`, `monitor_incidents`, `cron_runs` | "¿se cayó algo?", "¿corrieron los crons?" |
-| `finanzas` | `finances`, `costs` (resumen por mes) | "¿cuánto entró este mes y cuánto gasté?" |
+| `finanzas` | `finances` y costos de `project_services` (resumen por mes, sin los secretos de la bóveda) | "¿cuánto entró este mes y cuánto gasté?" |
 | `cuentas_cobro` | `invoices` (estado, vencimiento, total) | "¿qué cuentas están vencidas?" |
 | `briefings` | `briefings`, `briefing_items` | "¿qué cotizaciones están en borrador?" |
 | `documentacion` | `src/data/documentacion.ts` y demás datos de `/docs` | "¿qué hace mi sitio con los pagos duplicados?" |

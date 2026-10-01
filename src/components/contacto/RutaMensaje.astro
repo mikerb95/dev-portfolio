@@ -39,6 +39,7 @@ const r = getDictionary(loc).contact.ruta
     ))}
     <span class="rm-paquete" aria-hidden="true"></span>
   </ol>
+  <p class="rm-falla" data-falla hidden></p>
 
   <!-- Celular. Decorativo para lectores de pantalla: el resultado del envío
        se anuncia en el estado del formulario, que es aria-live. -->
@@ -183,6 +184,15 @@ const r = getDictionary(loc).contact.ruta
     color: #85858f;
   }
   .rm-tramo[data-estado='fallo'] .rm-d {
+    color: var(--rm-ember);
+  }
+  /* Motivo del fallo en una línea propia: solo en celular, donde los tramos
+     no muestran su descripción. */
+  .rm-falla {
+    display: none;
+    margin-top: -6px;
+    font-size: 12px;
+    line-height: 1.45;
     color: var(--rm-ember);
   }
   .rm-pips {
@@ -377,15 +387,8 @@ const r = getDictionary(loc).contact.ruta
     .rm-d {
       display: none;
     }
-    .rm-tramo[data-estado='fallo'] .rm-d {
+    .rm-falla:not([hidden]) {
       display: block;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: max-content;
-      max-width: 70vw;
-      text-align: left;
-      margin-top: 4px;
     }
     .rm-t {
       font-size: 11px;
