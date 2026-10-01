@@ -2295,8 +2295,9 @@ export const ITERACIONES: Iteracion[] = [
         fecha: '2026-10-01', tags: ['motion', 'temporada', 'fase-50'],
         dod: [
           ok('Seis fantasmas (tres en móvil) dibujados como curvas de nivel, en blanco violáceo y violeta, que cruzan despacio por detrás del lienzo y del velo del texto (RF-031).'),
+          ok('Segunda pasada a pedido del usuario ("están extremadamente sencillos"): anillos que respiran, cola que ondea, parpadeo; miran al cursor, huyen de él, se acercan curiosos con el cursor quieto y se asustan con el clic; y un fantasma tímido que solo se asoma con el puntero quieto.'),
           ok('Capa aparte en src/components/Fantasmas.astro, montada desde BaseLayout solo en la portada: hero, shader, navbar y footer idénticos a como estaban.'),
-          ok('Solo transform y opacity, sin requestAnimationFrame ni filtros animados; fotogramas del hero medidos con y sin la capa, sin diferencia apreciable.'),
+          ok('Sin filtros animados; un solo bucle de reacciones que se detiene fuera de pantalla y solo escribe transform, opacity y dos variables. Fotogramas del hero medidos con el cursor en movimiento, con y sin la capa, sin diferencia apreciable.'),
           ok('Con movimiento reducido quedan quietos y tenues; sin desbordamiento horizontal en móvil.'),
           pend('Aceptación del usuario sobre el sitio en producción.'),
         ],
