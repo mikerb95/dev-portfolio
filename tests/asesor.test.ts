@@ -116,7 +116,7 @@ describe('herramientas del asesor', () => {
   it('descarta el resumen del modelo si trae una cifra de dinero', () => {
     const m = mensajeWhatsapp({ necesidad: 'Una tienda por $300.000' }, null, 'es')
     expect(m).not.toContain('300.000')
-    expect(m).not.toContain('Lo que necesito')
+    expect(m).not.toContain('Una tienda')
   })
 
   it('describe un rango en una frase', () => {
@@ -153,6 +153,16 @@ describe('validarEntrada', () => {
     expect(validarEntrada({ ...ok, mensajes })).toEqual({ error: 'limite' })
   })
 
+  it('acepta la página comercial y rechaza cualquier otra', () => {
+    expect(validarEntrada({ ...ok, pagina: 'capacitacion-ia' })).toMatchObject({ pagina: 'capacitacion-ia' })
+    expect(validarEntrada({ ...ok, pagina: 'admin' })).toEqual({ error: 'formato' })
+  })
+
+  it('el prompt sitúa la pregunta en la página abierta', () => {
+    expect(systemPrompt('es', 'capacitacion-ia')).toContain('asume que habla de la capacitación')
+    expect(systemPrompt('es')).not.toContain('asume que habla')
+  })
+
   it('rechaza textos largos, idiomas desconocidos y campos de más', () => {
     expect(validarEntrada({ ...ok, mensajes: [{ rol: 'usuario', texto: 'x'.repeat(501) }] })).toEqual({ error: 'formato' })
     expect(validarEntrada({ ...ok, locale: 'fr' })).toEqual({ error: 'formato' })
@@ -173,6 +183,8 @@ describe('atender', () => {
     expect(r.texto).toContain(formatearMonto(c.precio[0], 'COP'))
     expect(r.calculos).toHaveLength(1)
     expect(r.uso.entrada).toBe(2000)
+    // Las dos cifras del rango salen marcadas como calculadas.
+    expect(r.cifras).toEqual([formatearMonto(c.precio[0], 'COP'), formatearMonto(c.precio[1], 'COP')])
   })
 
   it('rechaza un precio inventado tras un reintento', async () => {
@@ -194,9 +206,11 @@ describe('atender', () => {
     expect(r.respaldo).toBeNull()
   })
 
-  it('los "desde" publicados pasan sin calcular', async () => {
+  it('los "desde" publicados pasan sin calcular, pero no se marcan como calculados', async () => {
     const { deps } = modelo([texto('Presencia va desde $650.000 COP y Negocio desde $1.500.000 COP.')])
-    expect((await atender(entrada('Precios'), deps)).respaldo).toBeNull()
+    const r = await atender(entrada('Precios'), deps)
+    expect(r.respaldo).toBeNull()
+    expect(r.cifras).toEqual([])
   })
 
   it('un precio de una vuelta anterior vale porque el pedido se recalcula', async () => {
@@ -246,6 +260,26 @@ describe('atender', () => {
     expect(r.respaldo).toBeNull()
     expect(r.whatsapp).toContain('Capacitación en IA para ventas')
     expect(r.whatsapp).toContain('$1.400.000 COP')
+  })
+
+  it('conserva la respuesta escrita junto a la llamada de WhatsApp', async () => {
+    const c = calcular({ tipo: 'capacitacion', personas: 30 }, 'es')
+    const { deps } = modelo([
+      herramienta('calcular_precio', { tipo: 'capacitacion', personas: 30 }),
+      respuesta(
+        [
+          { type: 'text', text: 'Para 30 personas son $1.400.000 COP.' },
+          { type: 'tool_use', id: 'tu_w', name: 'preparar_whatsapp', input: { necesidad: 'Necesito una capacitación' } },
+        ],
+        'tool_use'
+      ),
+      respuesta([]),
+    ])
+    const r = await atender(entrada('Capacitación para 30'), deps)
+    expect(r.respaldo).toBeNull()
+    expect(r.texto).toBe('Para 30 personas son $1.400.000 COP.')
+    expect(r.cifras).toEqual([formatearMonto(c.precio[0], 'COP')])
+    expect(r.whatsapp).toContain('Necesito una capacitación')
   })
 
   it('devuelve el error de entrada al modelo para que corrija', async () => {

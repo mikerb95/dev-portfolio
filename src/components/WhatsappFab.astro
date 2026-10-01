@@ -40,6 +40,9 @@ const textos = JSON.stringify({
   errorNoDisponible: a.errorNoDisponible,
   noDisponible: a.noDisponible,
   pensando: a.pensando,
+  calculado: a.calculado,
+  verMensaje: a.verMensaje,
+  ocultarMensaje: a.ocultarMensaje,
 })
 ---
 
@@ -68,6 +71,7 @@ const textos = JSON.stringify({
     id="asesor"
     class="asesor"
     data-locale={locale}
+    data-pagina={ruta.slice(1)}
     data-wa-base={`https://wa.me/${PHONE.replace(/\D/g, '')}`}
     data-max={MAX_PREGUNTAS}
     data-textos={textos}
@@ -96,7 +100,7 @@ const textos = JSON.stringify({
           href={href}
           target="_blank"
           rel="noopener"
-          class="flex items-center gap-3 rounded-xl px-3 py-3 bg-[#25D366]/12 hover:bg-[#25D366]/20 focus-visible:outline-2 focus-visible:outline-[#25D366]"
+          class="asesor-opcion flex items-center gap-3 rounded-xl px-3 py-3 bg-[#25D366]/12 hover:bg-[#25D366]/20 focus-visible:outline-2 focus-visible:outline-[#25D366]"
           data-analytics="asesor-menu-whatsapp"
         >
           <span class="grid place-items-center h-9 w-9 shrink-0 rounded-full bg-[#25D366] text-[#062e16]" aria-hidden="true">
@@ -110,7 +114,7 @@ const textos = JSON.stringify({
         <button
           type="button"
           id="asesor-abrir"
-          class="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-ink-700 focus-visible:outline-2 focus-visible:outline-cyan disabled:opacity-60 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
+          class="asesor-opcion mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-ink-700 focus-visible:outline-2 focus-visible:outline-cyan disabled:opacity-60 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
           data-analytics="asesor-menu-ia"
         >
           <span class="asesor-chispa grid place-items-center h-9 w-9 shrink-0 rounded-full border border-cyan/40 text-cyan" aria-hidden="true">
@@ -157,7 +161,7 @@ const textos = JSON.stringify({
         ))}
       </div>
 
-      <div id="asesor-cierre" class="px-4 pb-3" hidden>
+      <div id="asesor-cierre" class="border-t border-ink-600/80 px-4 pt-3 pb-3" hidden>
         <a
           id="asesor-enviar-mike"
           href={href}
@@ -169,7 +173,18 @@ const textos = JSON.stringify({
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"></path><path d="M12.04 2C6.6 2 2.18 6.42 2.18 11.86c0 1.74.46 3.44 1.32 4.94L2 22l5.36-1.4a9.83 9.83 0 0 0 4.68 1.19h.01c5.43 0 9.85-4.42 9.85-9.86 0-2.63-1.02-5.11-2.88-6.97A9.79 9.79 0 0 0 12.04 2Zm0 17.94h-.01a8.2 8.2 0 0 1-4.17-1.14l-.3-.18-3.1.81.83-3.02-.2-.31a8.13 8.13 0 0 1-1.25-4.34c0-4.52 3.68-8.2 8.2-8.2a8.14 8.14 0 0 1 5.79 2.4 8.14 8.14 0 0 1 2.4 5.8c0 4.52-3.68 8.18-8.19 8.18Z"></path></svg>
           {a.enviarMike}
         </a>
-        <p class="mt-1.5 text-center text-[11.5px] text-ink-200">{a.enviarMikeNota}</p>
+        <div class="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-[11.5px]">
+          <span class="text-ink-200">{a.enviarMikeNota}</span>
+          <button type="button" id="asesor-ver" class="inline-flex items-center gap-1 text-ink-100 hover:text-ink-50 focus-visible:outline-2 focus-visible:outline-cyan rounded cursor-pointer" aria-expanded="false" aria-controls="asesor-vista">
+            <span id="asesor-ver-texto">{a.verMensaje}</span>
+            <svg class="asesor-ver-flecha" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+        </div>
+        <div id="asesor-vista" class="asesor-vista" inert>
+          <div class="min-h-0 overflow-hidden">
+            <p id="asesor-vista-texto" class="asesor-wa"></p>
+          </div>
+        </div>
       </div>
 
       <form id="asesor-form" class="border-t border-ink-600/80 px-3 pt-3 pb-2.5">
@@ -245,6 +260,110 @@ const textos = JSON.stringify({
       opacity: 0;
       transform: translateY(8px) scale(0.97);
     }
+  }
+
+  /* El menú sale de la burbuja: la tarjeta crece desde la esquina del botón
+     verde y las dos opciones entran una tras otra, WhatsApp primero, que es
+     también el orden de importancia. */
+  .asesor-menu:not([hidden]) {
+    animation: asesor-desplegar 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes asesor-desplegar {
+    from {
+      opacity: 0;
+      transform: translateY(14px) scale(0.6);
+    }
+  }
+  .asesor-menu:not([hidden]) .asesor-opcion {
+    animation: asesor-opcion 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .asesor-menu:not([hidden]) .asesor-opcion:nth-child(1) {
+    animation-delay: 0.08s;
+  }
+  .asesor-menu:not([hidden]) .asesor-opcion:nth-child(2) {
+    animation-delay: 0.16s;
+  }
+  @keyframes asesor-opcion {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  /* El botón de WhatsApp sube al aparecer, un instante después de la
+     respuesta que lo trajo. */
+  #asesor-cierre:not([hidden]) {
+    animation: asesor-opcion 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  }
+
+  /* Vista previa del mensaje: se pliega con una fila de rejilla de 0fr a 1fr,
+     que anima la altura real del contenido sin medirlo con JS. */
+  .asesor-vista {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .asesor-vista[data-abierta] {
+    grid-template-rows: 1fr;
+  }
+  .asesor-ver-flecha {
+    transition: transform 0.3s ease;
+  }
+  #asesor-ver[aria-expanded='true'] .asesor-ver-flecha {
+    transform: rotate(180deg);
+  }
+  /* El mensaje se ve como saldrá en WhatsApp: burbuja verde de envío, con la
+     esquina de la "cola" arriba a la derecha. */
+  .asesor-wa {
+    margin-top: 0.6rem;
+    max-height: 7rem;
+    overflow-y: auto;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.8rem;
+    border-top-right-radius: 0.2rem;
+    background: #005c4b;
+    color: #e9edef;
+    font-size: 12.5px;
+    line-height: 1.45;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  /* Precio calculado: dígitos tabulares siempre, así el odómetro y el texto
+     final miden lo mismo y la línea no salta al terminar de rodar. Las
+     columnas usan el interlineado de la burbuja y no el 1.1 global. */
+  .asesor-log :global(.asesor-precio) {
+    /* Cada dígito del odómetro es una columna aparte, y el navegador podía
+       partir la cifra entre dos renglones mientras rodaba ("$70" / "0.000"). */
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-cyan-glow);
+  }
+  .asesor-log :global(.asesor-precio .odo-col) {
+    height: 1.5em;
+  }
+  .asesor-log :global(.asesor-precio .odo-tira) {
+    line-height: 1.5;
+    /* La tira es una columna de dígitos que se apilan al partirse; sin esto
+       hereda el nowrap de la cifra, queda en una sola línea y cada dígito
+       aparece corrido hacia arriba. */
+    white-space: normal;
+  }
+  .asesor-log :global(.asesor-marca) {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: -0.35rem;
+    padding-left: 0.35rem;
+    font-size: 11.5px;
+    color: var(--color-ink-100);
+  }
+  .asesor-log :global(.asesor-marca-punto) {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--color-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.14);
   }
 
   .asesor-log :global(.asesor-burbuja) {
@@ -324,10 +443,14 @@ const textos = JSON.stringify({
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .wa-fab {
+    .wa-fab,
+    .asesor-vista,
+    .asesor-ver-flecha {
       transition: none;
     }
     .asesor-menu:not([hidden]),
+    .asesor-menu:not([hidden]) .asesor-opcion,
+    #asesor-cierre:not([hidden]),
     .asesor-chat:not([hidden]),
     .asesor-pulso,
     .asesor-log :global(.asesor-pensando i) {
@@ -337,13 +460,40 @@ const textos = JSON.stringify({
 </style>
 
 <script>
+  import { pintarRespuesta } from '../lib/motion/palabras'
+
   type Rol = 'usuario' | 'asesor'
   type Mensaje = { rol: Rol; texto: string }
-  type Estado = { mensajes: Mensaje[]; calculos: unknown[]; whatsapp: string | null }
+  type Estado = {
+    mensajes: Mensaje[]
+    calculos: unknown[]
+    whatsapp: string | null
+    /** Cifras calculadas de cada respuesta, por índice del mensaje: pintan la marca. */
+    marcas: Record<string, string[]>
+  }
   type Textos = Record<
-    'restantes' | 'restanteUna' | 'agotado' | 'errorLimite' | 'errorFallo' | 'errorNoDisponible' | 'noDisponible' | 'pensando',
+    | 'restantes'
+    | 'restanteUna'
+    | 'agotado'
+    | 'errorLimite'
+    | 'errorFallo'
+    | 'errorNoDisponible'
+    | 'noDisponible'
+    | 'pensando'
+    | 'calculado'
+    | 'verMensaje'
+    | 'ocultarMensaje',
     string
   >
+  type Motion = typeof import('../lib/motion/asesor')
+
+  const sinMovimiento = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  // El motion del chat se descarga al abrirlo, no con la página: la burbuja
+  // está en todo el sitio y casi nadie abre el chat. Si la descarga falla, el
+  // chat sigue igual, solo que sin animar.
+  let motion: Promise<Motion | null> | null = null
+  const cargarMotion = () => (motion ??= import('../lib/motion/asesor').catch(() => null))
 
   function iniciar() {
     const raiz = document.getElementById('asesor')
@@ -366,8 +516,13 @@ const textos = JSON.stringify({
     const enviar = $<HTMLButtonElement>('asesor-enviar')
     const restantes = $('asesor-restantes')
     const reiniciar = $<HTMLButtonElement>('asesor-reiniciar')
+    const ver = $<HTMLButtonElement>('asesor-ver')
+    const verTexto = $('asesor-ver-texto')
+    const vista = $('asesor-vista')
+    const vistaTexto = $('asesor-vista-texto')
 
     const locale = raiz.dataset.locale ?? 'es'
+    const pagina = raiz.dataset.pagina
     const waBase = raiz.dataset.waBase ?? ''
     const max = Number(raiz.dataset.max ?? 8)
     const t = JSON.parse(raiz.dataset.textos ?? '{}') as Textos
@@ -377,7 +532,7 @@ const textos = JSON.stringify({
     // La conversación se recuerda solo en esta pestaña, para no perderla al
     // pasar de /paginas-web a /contact. Nunca sale del navegador salvo en la
     // propia pregunta. Si el almacenamiento falla, el chat funciona igual.
-    const vacio = (): Estado => ({ mensajes: [], calculos: [], whatsapp: null })
+    const vacio = (): Estado => ({ mensajes: [], calculos: [], whatsapp: null, marcas: {} })
     let estado: Estado = vacio()
     try {
       const guardado = JSON.parse(sessionStorage.getItem(clave) ?? 'null') as Estado | null
@@ -400,11 +555,23 @@ const textos = JSON.stringify({
 
     // Texto plano siempre (textContent): lo que escribe el modelo nunca se
     // interpreta como HTML. Solo se quitan los ** de negrita de markdown.
+    const sinNegritas = (texto: string) => texto.replace(/\*\*(.+?)\*\*/g, '$1')
     const burbuja = (m: Mensaje) => {
       const p = document.createElement('p')
       p.className = `asesor-burbuja asesor-burbuja--${m.rol === 'usuario' ? 'yo' : 'ia'}`
-      p.textContent = m.rol === 'asesor' ? m.texto.replace(/\*\*(.+?)\*\*/g, '$1') : m.texto
+      p.textContent = m.rol === 'asesor' ? sinNegritas(m.texto) : m.texto
       return p
+    }
+    // La marca es un div y no un p: el desplazamiento busca la última burbuja
+    // con :last-of-type, y otro p detrás la taparía.
+    const marca = () => {
+      const d = document.createElement('div')
+      d.className = 'asesor-marca'
+      const punto = document.createElement('span')
+      punto.className = 'asesor-marca-punto'
+      punto.setAttribute('aria-hidden', 'true')
+      d.append(punto, t.calculado)
+      return d
     }
     const nota = (texto: string) => {
       const p = document.createElement('p')
@@ -419,7 +586,13 @@ const textos = JSON.stringify({
 
     function pintar() {
       log.innerHTML = saludo
-      estado.mensajes.forEach((m) => log.append(burbuja(m)))
+      estado.mensajes.forEach((m, i) => {
+        const p = burbuja(m)
+        const cifras = m.rol === 'asesor' ? estado.marcas[i] : undefined
+        if (cifras?.length) pintarRespuesta(p, sinNegritas(m.texto), cifras)
+        log.append(p)
+        if (cifras?.length) log.append(marca())
+      })
       const hechas = preguntas()
       const quedan = Math.max(0, max - hechas)
       sugerencias.hidden = hechas > 0
@@ -427,9 +600,11 @@ const textos = JSON.stringify({
       restantes.textContent = quedan === 1 ? t.restanteUna : t.restantes.replace('{n}', String(quedan))
       if (estado.whatsapp) {
         enviarMike.href = `${waBase}?text=${encodeURIComponent(estado.whatsapp)}`
+        vistaTexto.textContent = estado.whatsapp
         cierre.hidden = false
       } else {
         cierre.hidden = true
+        verVista(false)
       }
       const agotado = quedan === 0
       input.disabled = agotado || ocupado
@@ -445,6 +620,14 @@ const textos = JSON.stringify({
       }
     }
 
+    function verVista(si: boolean) {
+      ver.setAttribute('aria-expanded', String(si))
+      verTexto.textContent = si ? t.ocultarMensaje : t.verMensaje
+      vista.toggleAttribute('data-abierta', si)
+      // Plegada, la vista no se enfoca ni se lee: es contenido escondido.
+      vista.inert = !si
+    }
+
     function abrirMenu(si: boolean) {
       menu.hidden = !si
       fab.setAttribute('aria-expanded', String(si))
@@ -454,6 +637,7 @@ const textos = JSON.stringify({
       chat.hidden = !si
       if (si) {
         abrirMenu(false)
+        if (!sinMovimiento()) void cargarMotion()
         pintar()
         if (!input.disabled) input.focus()
       } else {
@@ -495,12 +679,13 @@ const textos = JSON.stringify({
         const r = await fetch('/api/asesor', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locale, mensajes: estado.mensajes, calculos: estado.calculos }),
+          body: JSON.stringify({ locale, pagina, mensajes: estado.mensajes, calculos: estado.calculos }),
         })
         if (r.ok) {
-          const d = (await r.json()) as { texto: string; whatsapp: string | null; calculos: unknown[] }
+          const d = (await r.json()) as { texto: string; whatsapp: string | null; calculos: unknown[]; cifras?: string[] }
           estado.mensajes.push({ rol: 'asesor', texto: d.texto })
           estado.calculos = d.calculos ?? []
+          if (d.cifras?.length) estado.marcas[estado.mensajes.length - 1] = d.cifras
           if (d.whatsapp) estado.whatsapp = d.whatsapp
         } else {
           error = r.status === 429 ? t.errorLimite : r.status === 503 ? t.errorNoDisponible : t.errorFallo
@@ -517,7 +702,19 @@ const textos = JSON.stringify({
       }
       ocupado = false
       guardar()
+      // El módulo de motion se espera ANTES de pintar: si se pintara primero,
+      // la respuesta completa asomaría un fotograma antes de empezar a
+      // escribirse. Ya se pidió al abrir el chat, así que casi nunca espera.
+      const m = !error && !sinMovimiento() ? await cargarMotion() : null
       pintar()
+      if (m) {
+        const ultima = estado.mensajes.at(-1)!
+        const burbujas = log.querySelectorAll<HTMLElement>('.asesor-burbuja--ia')
+        const p = burbujas[burbujas.length - 1]
+        const siguiente = p?.nextElementSibling
+        const laMarca = siguiente?.classList.contains('asesor-marca') ? (siguiente as HTMLElement) : null
+        if (p) m.animarRespuesta(p, sinNegritas(ultima.texto), estado.marcas[estado.mensajes.length - 1] ?? [], laMarca)
+      }
       if (error) nota(error)
       if (!input.disabled) input.focus()
     }
@@ -532,6 +729,7 @@ const textos = JSON.stringify({
       abrirMenu(menu.hidden)
     })
     abrir.addEventListener('click', () => abrirChat(true))
+    ver.addEventListener('click', () => verVista(ver.getAttribute('aria-expanded') !== 'true'))
     cerrar.addEventListener('click', () => abrirChat(false))
     reiniciar.addEventListener('click', () => {
       estado = vacio()

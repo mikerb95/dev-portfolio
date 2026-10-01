@@ -372,6 +372,7 @@ const tareas = t.tareas.map((tarea) => {
 
 <script>
   import gsap from 'gsap'
+  import { GENERADO } from '../../lib/motion/texto-generado'
 
   const raiz = document.querySelector<HTMLElement>('[data-mesa]')
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -422,7 +423,7 @@ const tareas = t.tareas.map((tarea) => {
       proceso.textContent = capa.dataset.proceso ?? ''
       gsap.set([entrada, borrador, sello], { opacity: 0, y: 10 })
       gsap.set(criterios, { opacity: 0, scale: 0.85 })
-      gsap.set(enOrden, { opacity: 0, filter: 'blur(4px)' })
+      gsap.set(enOrden, GENERADO.desde)
       gsap.set(a, { display: 'none' })
       de.style.setProperty('--tachado', '0%')
       de.style.color = 'var(--color-ink-50)'
@@ -445,12 +446,12 @@ const tareas = t.tareas.map((tarea) => {
         // 3 · El borrador se genera palabra a palabra.
         .call(() => marcarPaso(2), [], 2.7)
         .to(borrador, { opacity: 1, y: 0, duration: 0.45, ease: 'expo.out' }, 2.7)
-        .to(enOrden, { opacity: 1, filter: 'blur(0px)', duration: 0.25, stagger: 0.032, ease: 'power1.out' }, 2.95)
+        .to(enOrden, { ...GENERADO.hasta, duration: GENERADO.duracion, stagger: GENERADO.paso, ease: GENERADO.ease }, 2.95)
         // 4 · Revisión humana: una persona corrige una frase y aprueba.
         .call(() => marcarPaso(3), [], '+=0.5')
         .to(de, { '--tachado': '100%', color: '#4d4d5d', duration: 0.5, ease: 'power2.inOut' }, '<')
         .set(a, { display: 'inline' })
-        .fromTo(nuevas, { opacity: 0, filter: 'blur(4px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.3, stagger: 0.06 })
+        .fromTo(nuevas, GENERADO.desde, { ...GENERADO.hasta, duration: 0.3, stagger: 0.06 })
         .to(sello, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.8)' }, '+=0.25')
         .call(() => marcarPaso(4))
         .to({}, { duration: 2.6 })

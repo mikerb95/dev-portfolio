@@ -14,7 +14,7 @@ import {
   EntradaInvalida,
   type Cotizacion,
 } from '../asistente/calculo-cotizacion'
-import { verificarCifras } from '../asistente/guardia'
+import { extraerCifras, verificarCifras } from '../asistente/guardia'
 import type { Locale } from '../../i18n'
 import { cifrasPublicas, monedaDe } from './conocimiento'
 
@@ -151,7 +151,8 @@ export function mensajeWhatsapp(p: PedidoWhatsapp, ultima: Cotizacion | null, lo
       ? 'Hola Mike, vengo de codebymike.net. Hablé con tu asistente y quiero seguir contigo.'
       : 'Hi Mike, I come from codebymike.net. I talked to your assistant and want to continue with you.',
   ]
-  if (necesidad) lineas.push('', `${es ? 'Lo que necesito' : 'What I need'}: ${necesidad}`)
+  // Sin etiqueta delante: el modelo ya lo escribe en primera persona.
+  if (necesidad) lineas.push('', necesidad)
   if (ultima) {
     lineas.push(`${es ? 'Estimado del asistente' : 'Assistant estimate'}: ${precioEnFrase(ultima, locale)}`)
   }
@@ -162,6 +163,20 @@ export function mensajeWhatsapp(p: PedidoWhatsapp, ultima: Cotizacion | null, lo
 /** Todas las cifras que el asesor puede escribir: las públicas más las de sus cálculos. */
 export function permitidas(cotizaciones: readonly Cotizacion[], locale: Locale): number[] {
   return [...new Set([...cifrasPublicas(locale), ...cifrasPermitidas(cotizaciones)])]
+}
+
+/**
+ * Cifras del texto que salieron de un cálculo de esta conversación, tal como
+ * están escritas. El chat las marca ("Calculado con el tarifario") y las hace
+ * rodar; los "desde" dichos de memoria no cuentan, aunque sean correctos,
+ * porque la marca afirma que hubo cálculo.
+ */
+export function cifrasCalculadas(texto: string, cotizaciones: readonly Cotizacion[]): string[] {
+  const calculadas = cifrasPermitidas(cotizaciones)
+  if (!calculadas.length) return []
+  return extraerCifras(texto)
+    .filter((c) => calculadas.some((v) => Math.abs(v - c.valor) <= c.tolerancia))
+    .map((c) => c.texto)
 }
 
 function esquemaApi(esquema: z.ZodType): Record<string, unknown> {
@@ -192,9 +207,11 @@ export function definiciones() {
       name: 'preparar_whatsapp',
       description:
         'Prepara el botón "Enviarle esto a Mike", que abre WhatsApp con un resumen ya escrito. Úsala cuando la persona ' +
-        'quiera avanzar, pida hablar con Mike, o cuando ya diste un estimado. "necesidad": qué quiere la persona, en una ' +
-        'o dos frases y en su idioma, SIN precios ni cifras de dinero (el precio lo agrega el sistema). "pendiente": la ' +
-        'duda que quedó abierta, si la hay. No incluyas nombres, teléfonos ni correos.',
+        'quiera avanzar, pida hablar con Mike, o cuando ya diste un estimado. El mensaje lo envía la persona, así que ' +
+        'escribe en PRIMERA persona, como si ella le escribiera a Mike ("Necesito una tienda en línea...", nunca "Quiere..."). ' +
+        '"necesidad": qué necesita, en una o dos frases y en su idioma, SIN precios ni cifras de dinero (el precio lo agrega ' +
+        'el sistema). "pendiente": la duda que le quedó, también en primera persona, si la hay. No incluyas nombres, ' +
+        'teléfonos ni correos.',
       input_schema: esquemaApi(EsquemaWhatsapp),
     },
   ]

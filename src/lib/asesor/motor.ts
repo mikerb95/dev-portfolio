@@ -59,7 +59,7 @@ export async function responder(e: Entrada): Promise<Respuesta> {
     ...(i === todas.length - 1 ? { cache_control: { type: 'ephemeral' as const } } : {}),
   }))
   const system: Anthropic.TextBlockParam[] = [
-    { type: 'text', text: systemPrompt(e.locale), cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: systemPrompt(e.locale, e.pagina), cache_control: { type: 'ephemeral' } },
   ]
 
   const r = await atender(e, {

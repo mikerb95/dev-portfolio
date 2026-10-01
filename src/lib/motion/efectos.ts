@@ -9,6 +9,7 @@ import gsap from 'gsap'
 import { SplitText } from 'gsap/SplitText'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin'
+import { armarOdometro, rodarOdometro } from './odometro'
 
 gsap.registerPlugin(SplitText, ScrollTrigger, ScrambleTextPlugin)
 
@@ -243,48 +244,15 @@ export function inclinar(el: HTMLElement, maxGrados = 3.5): Desmontar {
  */
 export function odometro(el: HTMLElement): Desmontar {
   const valor = el.textContent?.trim() ?? ''
-  if (!/\d/.test(valor)) return () => {}
-  el.setAttribute('aria-label', valor)
-  el.textContent = ''
-  const tiras: { tira: HTMLElement; digito: number }[] = []
-  for (const ch of valor) {
-    if (/\d/.test(ch)) {
-      const col = document.createElement('span')
-      col.className = 'odo-col'
-      col.setAttribute('aria-hidden', 'true')
-      const tira = document.createElement('span')
-      tira.className = 'odo-tira'
-      // Dos vueltas de 0-9: la columna recorre más de una decena antes de
-      // asentarse, que es lo que se lee como "rodar" y no como "cambiar".
-      tira.textContent = '01234567890123456789'
-      col.appendChild(tira)
-      el.appendChild(col)
-      tiras.push({ tira, digito: Number(ch) })
-    } else {
-      const s = document.createElement('span')
-      s.setAttribute('aria-hidden', 'true')
-      s.textContent = ch
-      el.appendChild(s)
-    }
-  }
+  const tiras = armarOdometro(el)
+  if (!tiras.length) return () => {}
   const st = ScrollTrigger.create({
     trigger: el,
     // `data-odometro-inicio` adelanta el disparo para cifras que asoman en el
     // borde del primer pantallazo: un "00%" quieto ahí se lee como el dato.
     start: el.dataset.odometroInicio ?? 'top 90%',
     onEnter: () => {
-      tiras.forEach(({ tira, digito }, i) => {
-        gsap.fromTo(
-          tira,
-          { yPercent: 0 },
-          {
-            yPercent: -((10 + digito) / 20) * 100,
-            duration: 1.6 + i * 0.25,
-            ease: 'expo.out',
-            delay: 0.1 + i * 0.08,
-          },
-        )
-      })
+      rodarOdometro(tiras)
     },
   })
   return () => {

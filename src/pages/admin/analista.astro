@@ -84,8 +84,8 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Analista de seguridad · CodeByMike</title>
   </head>
-  <body class="grain bg-ink-950 text-ink-50 h-screen overflow-hidden">
-      <div class="analista h-full grid grid-rows-[auto_minmax(0,1fr)_auto]">
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen lg:h-screen lg:overflow-hidden">
+      <div class="analista min-h-screen lg:min-h-0 lg:h-full grid grid-cols-1 lg:grid-rows-[auto_minmax(0,1fr)_auto]">
         <header class="px-6 md:px-10 pt-6 pb-5 flex flex-wrap items-end justify-between gap-4 border-b border-white/5">
           <div>
             <p class="font-mono text-[12px] uppercase tracking-[.24em] text-ink-200">
@@ -240,8 +240,8 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
                         <ol class="mini-recorrido" aria-label="Recorrido de ejemplo">
                           <li>Mira el panorama de la semana</li>
                           <li>Busca quién insiste más</li>
-                          <li class="rama">Sigue a origen-03</li>
-                          <li class="rama">Sigue a origen-01</li>
+                          <li class="rama">Sigue a <code>origen-03</code></li>
+                          <li class="rama">Sigue a <code>origen-01</code></li>
                           <li>Escribe su veredicto</li>
                         </ol>
                         <p class="paso-nota">Ejemplo ilustrativo. El orden cambia con cada pregunta: lo que encuentra en un paso decide el siguiente.</p>
@@ -458,6 +458,9 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
       .paso-intro::details-content { block-size: 0; overflow: hidden; transition: block-size .4s cubic-bezier(.2, .8, .2, 1), content-visibility .4s allow-discrete; }
       .paso-intro[open]::details-content { block-size: auto; }
 
+      /* Pantalla fija (sin scroll de página) solo desde lg: es la que se proyecta.
+         En un celular la página fluye y cada panel crece con su contenido; con
+         la altura fija, el encabezado envuelto aplastaba a los paneles. */
       .chip-detalle { position: relative; }
       .chip-detalle > summary { list-style: none; }
       .chip-detalle > summary::-webkit-details-marker { display: none; }
@@ -488,14 +491,15 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
       .mini-recorrido::before { content: ''; position: absolute; left: .3rem; top: .5rem; bottom: .5rem; width: 2px; margin-left: -1px; background: rgb(0 242 255 / .22); }
       .mini-recorrido li { position: relative; padding-left: 1.3rem; }
       .mini-recorrido li::before { content: ''; position: absolute; left: 0; top: .45em; width: .6rem; height: .6rem; border-radius: 999px; background: var(--color-lime); }
-      .mini-recorrido li.rama { padding-left: 2.3rem; font-family: var(--font-mono); font-size: 13px; color: var(--color-ink-100); }
+      .mini-recorrido li.rama { padding-left: 2.3rem; color: var(--color-ink-100); }
+      .mini-recorrido code { font-family: var(--font-mono); font-size: 12px; color: var(--color-cyan-glow); }
       .mini-recorrido li.rama::before { left: 1rem; background: var(--color-cyan); }
       .mini-recorrido li.rama::after { content: ''; position: absolute; left: .3rem; top: calc(.45em + .3rem - 1px); width: .7rem; height: 2px; background: rgb(0 242 255 / .22); }
       .mini-dialogo { padding: .85rem .95rem; border-radius: .85rem; border: 1px solid rgb(255 107 61 / .3); background: rgb(255 107 61 / .04); }
       .mini-titulo { font-size: 15px; color: var(--color-ink-50); }
       .mini-motivo { margin-top: .3rem; font-size: 13px; line-height: 1.45; color: var(--color-ink-200); }
-      .mini-botones { margin-top: .75rem; display: flex; justify-content: flex-end; gap: .4rem; font-size: 12px; }
-      .mini-botones span { padding: .3rem .65rem; border-radius: .55rem; border: 1px solid rgb(255 255 255 / .1); color: var(--color-ink-50); }
+      .mini-botones { margin-top: .75rem; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; font-size: 12px; }
+      .mini-botones span { white-space: nowrap; padding: .3rem .65rem; border-radius: .55rem; border: 1px solid rgb(255 255 255 / .1); color: var(--color-ink-50); }
       .mini-botones .aprobar { border-color: transparent; background: var(--color-ember); color: var(--color-ink-950); font-weight: 600; }
 
       /* Esqueleto en reposo: la forma del recorrido, con un pulso que baja por

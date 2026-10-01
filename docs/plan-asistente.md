@@ -492,6 +492,35 @@ Decisiones que surgieron al construirlo:
 - **Pendiente**: guardar el resumen como cotización en borrador y avisar con
   ntfy (el "Opcional (después)" de la capacidad 3).
 
+### Motion del chat (1 oct 2026, con la skill motion-landing)
+
+| Pieza | Qué hace | Dónde |
+|---|---|---|
+| Respuesta que se genera | Palabras de borrosas a nítidas, el mismo gesto del borrador de la mesa de trabajo de `/capacitacion-ia`; tope de 2,2 s por larga que sea la respuesta | `src/lib/motion/texto-generado.ts` (valores compartidos con `MesaTrabajo.astro`) |
+| Precio calculado | Las cifras que salieron de `calcular_precio` (el servidor las devuelve en `cifras`) se resaltan, ruedan como odómetro (recorrido corto de 5 dígitos, todas las columnas a la vez) y aparece la marca "Calculado con el tarifario". Los "desde" dichos sin calcular no se marcan | `src/lib/motion/asesor.ts`, `src/lib/motion/odometro.ts` (sacado de `efectos.ts`), `src/lib/motion/palabras.ts` |
+| Vista previa del mensaje | "Ver el mensaje" despliega, como burbuja verde de WhatsApp, lo que se va a enviar | `WhatsappFab.astro` |
+| Menú desde la burbuja | La tarjeta crece desde el botón y las opciones entran escalonadas, WhatsApp primero | `WhatsappFab.astro` (CSS) |
+
+El motion se descarga al abrir el chat (567 B + 490 B gzip; GSAP ya está en
+esas páginas). Con movimiento reducido todo aparece quieto, con los mismos
+resaltados y la misma marca. Verificado con video de Playwright en GPU real
+(fotogramas extraídos con ffmpeg), en celular y escritorio, español e inglés.
+
+Lo que destapó la verificación (corregido):
+
+- **Se perdía la respuesta con el precio.** El modelo escribe la respuesta en
+  el mismo mensaje en que llama a `preparar_whatsapp` y luego cierra sin
+  texto; el bucle descartaba ese texto y salía "toca el botón" o el texto de
+  respaldo. Ahora se junta todo lo escrito en la vuelta (hay prueba).
+- **El asesor no sabía en qué página estaba**: "¿cuánto para 30 personas?" en
+  `/capacitacion-ia` le parecía ambiguo. El chat envía la página (`pagina`,
+  lista cerrada) y el prompt la usa para resolver ambigüedades.
+- El modelo prometió un diagnóstico "sin costo" que no está publicado; el
+  prompt ahora prohíbe decir que algo es gratis si no está en la información.
+- El resumen de WhatsApp va en primera persona, sin la etiqueta "Lo que
+  necesito".
+- El modelo ya no usa rayas en los rangos.
+
 ## Decisiones tomadas
 
 Todas del 1 oct 2026.

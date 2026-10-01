@@ -21,6 +21,7 @@ import { verificarCifras } from '../asistente/guardia'
 import { sumarUso, USO_CERO, type Uso } from './costo'
 import {
   calcular,
+  cifrasCalculadas,
   EsquemaCalculo,
   EsquemaWhatsapp,
   mensajeWhatsapp,
@@ -28,7 +29,7 @@ import {
   resultadoParaModelo,
   type PedidoCalculo,
 } from './herramientas'
-import { MAX_PREGUNTAS } from './prompt'
+import { MAX_PREGUNTAS, PAGINAS, type Pagina } from './prompt'
 
 export const MAX_TEXTO_USUARIO = 500
 export const MAX_TEXTO_ASESOR = 2_000
@@ -39,6 +40,7 @@ export const MAX_LLAMADAS = 4
 const EsquemaEntrada = z
   .object({
     locale: z.string().refine(isLocale),
+    pagina: z.enum(PAGINAS).optional(),
     mensajes: z
       .array(
         z
@@ -56,6 +58,7 @@ const EsquemaEntrada = z
 
 export type Entrada = {
   locale: Locale
+  pagina?: Pagina
   mensajes: { rol: 'usuario' | 'asesor'; texto: string }[]
   calculos: PedidoCalculo[]
 }
@@ -78,7 +81,7 @@ export function validarEntrada(cuerpo: unknown): Entrada | ErrorEntrada {
   if (!alterna || mensajes.at(-1)!.rol !== 'usuario') return { error: 'formato' }
   const excede = mensajes.some((m) => m.texto.length > (m.rol === 'usuario' ? MAX_TEXTO_USUARIO : MAX_TEXTO_ASESOR))
   if (excede) return { error: 'formato' }
-  return { locale: r.data.locale as Locale, mensajes, calculos: r.data.calculos }
+  return { locale: r.data.locale as Locale, pagina: r.data.pagina, mensajes, calculos: r.data.calculos }
 }
 
 export type Dependencias = {
@@ -92,6 +95,8 @@ export type Respuesta = {
   /** Pedidos de cálculo de toda la conversación, para que el navegador los reenvíe. */
   calculos: PedidoCalculo[]
   uso: Uso
+  /** Cifras del texto que salieron de un cálculo, tal como están escritas. */
+  cifras: string[]
   /** Por qué se devolvió el texto de respaldo en vez de la respuesta del modelo. */
   respaldo: 'guardia' | 'negativa' | 'vueltas' | null
 }
@@ -132,11 +137,17 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
   let uso = USO_CERO
   let whatsapp: string | null = null
   let reintentoGuardia = false
+  // Texto escrito junto a una llamada a herramienta. El modelo suele dar la
+  // respuesta completa en el mismo mensaje en que pide preparar WhatsApp, y
+  // después cierra sin decir nada más: si ese texto se descartara, se perdería
+  // justo la respuesta con el precio.
+  let previo: string[] = []
   const cerrar = (texto: string, respaldo: Respuesta['respaldo']): Respuesta => ({
     texto,
     whatsapp,
     calculos,
     uso,
+    cifras: respaldo ? [] : cifrasCalculadas(texto, cotizaciones),
     respaldo,
   })
 
@@ -147,6 +158,8 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
 
     const usos = r.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
     if (usos.length) {
+      const dicho = textoDe(r)
+      if (dicho) previo.push(dicho)
       mensajes.push({ role: 'assistant', content: r.content })
       const resultados: Anthropic.ToolResultBlockParam[] = usos.map((u) => {
         const salida = ejecutarHerramienta(u, e.locale, cotizaciones, calculos)
@@ -157,13 +170,15 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
       continue
     }
 
-    const texto = textoDe(r)
+    const texto = [...previo, textoDe(r)].filter(Boolean).join('\n\n')
     if (!texto) return cerrar(RESPALDO[e.locale], 'vueltas')
     const g = verificarCifras(texto, permitidas(cotizaciones, e.locale))
     if (g.ok) return cerrar(texto, null)
     if (reintentoGuardia) return cerrar(RESPALDO[e.locale], 'guardia')
     // Una oportunidad de corregir, con las cifras problemáticas a la vista.
     reintentoGuardia = true
+    // El reintento reescribe la respuesta completa: lo dicho antes no se suma.
+    previo = []
     mensajes.push({ role: 'assistant', content: r.content })
     mensajes.push({
       role: 'user',
