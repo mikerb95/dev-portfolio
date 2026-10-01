@@ -359,8 +359,7 @@ Decisiones que surgieron al implementar:
   salía en $4.1M, por debajo del piso de "A medida". Con la web Negocio de
   base, la misma tienda sale entre $5.6M y $8.65M.
 - **El redondeo va siempre hacia arriba** (múltiplo de $50.000 o US$50):
-  cotizar por debajo es perder plata. Mike no lo discutió; es fácil de cambiar
-  en `REGLAS.redondeo`.
+  cotizar por debajo es perder plata. Confirmado por Mike.
 - **Mínimo en USD: US$250**, el precio de Presencia en dólares, igual que en
   pesos el mínimo es el precio de Presencia.
 - La guardia admite abreviaturas ("4,8 millones") con la precisión escrita,
@@ -387,8 +386,12 @@ Todas del 1 oct 2026.
 ## Pendiente
 
 - El temario de la capacitación se escribió para 4 h; ahora son 8.
-- Confirmar el precio en USD de "A medida" (US$1,500, sale de
-  `plan-oferta-principal.md`, no se discutió aparte).
-- Confirmar el redondeo hacia arriba a $50.000 COP o US$50.
-- Las condiciones de pago (mitad y mitad) se publicaron solo en
-  `/paginas-web`. ¿Aplican también a la capacitación?
+Confirmado por Mike el 1 oct 2026, después de la fase 1:
+
+- "A medida" en USD: **US$1,500**.
+- Redondeo **hacia arriba** a $50.000 COP o US$50.
+- Mitad y mitad **también en la capacitación**: publicado en las preguntas
+  frecuentes de `/capacitacion-ia` (la mitad al confirmar la fecha, la otra
+  después de la sesión; validez de 15 días).
+- "A medida" se entrega en **3 a 6 semanas** (antes decía "Según el
+  proyecto"); la pregunta "¿Cuánto se demora?" lo dice igual.

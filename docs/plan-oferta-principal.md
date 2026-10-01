@@ -115,7 +115,7 @@ capacidad transaccional en el precio base**. Tienda **o** reservas, no ambas.
 ## 3. Precio piso
 
 **Decidido el 1 oct 2026: `desde $4.500.000 COP` · `from $1,500 USD` para `/en`.**
-El USD lo propone este plan y no se discutió aparte: confirmarlo.
+El USD también lo confirmó Mike ese día. Tiempo de entrega publicado: 3 a 6 semanas.
 
 Cómo sale el número, para poder discutirlo:
 
