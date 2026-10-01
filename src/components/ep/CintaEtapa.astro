@@ -73,7 +73,7 @@ const { cinta, entrada, rango } = Astro.props
     aria-label="Cinta de los días de la etapa. Usa las flechas izquierda y derecha para leer cada día."
     aria-describedby="ep-cinta-lectura"
   >
-    <script type="application/json" data-cinta-entrada set:html={jsonEnScript(entrada)} />
+    <script is:inline type="application/json" data-cinta-entrada set:html={jsonEnScript(entrada)} />
     <div aria-hidden="true" set:html={htmlCinta(cinta)} />
   </div>
 
