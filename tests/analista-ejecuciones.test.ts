@@ -27,6 +27,7 @@ import {
   presupuestoRestante,
   purgarEjecuciones,
   reclamarPropuesta,
+  registrarTurnoTerminal,
   RETENCION_DIAS,
 } from '../src/lib/analista/ejecuciones'
 
@@ -35,9 +36,11 @@ let client: { execute: (sql: string) => Promise<unknown> }
 beforeAll(async () => {
   const mod = (await import('../src/db')) as unknown as { __client: typeof client }
   client = mod.__client
-  const sql = readFileSync('drizzle/0037_free_darkhawk.sql', 'utf8')
-  for (const sentencia of sql.split('--> statement-breakpoint')) {
-    if (sentencia.trim()) await client.execute(sentencia)
+  for (const migracion of ['0037_free_darkhawk', '0038_curvy_pretty_boy']) {
+    const sql = readFileSync(`drizzle/${migracion}.sql`, 'utf8')
+    for (const sentencia of sql.split('--> statement-breakpoint')) {
+      if (sentencia.trim()) await client.execute(sentencia)
+    }
   }
 })
 
@@ -117,5 +120,27 @@ describe('ejecuciones del analista (libSQL)', () => {
     await crearEjecucion(nuevaEjecucion('nueva', 'y'), ahora)
     expect(await purgarEjecuciones(ahora)).toBe(1)
     expect(await obtenerEjecucion('nueva')).not.toBeNull()
+  })
+
+  it('marca quién lanzó cada análisis (panel por defecto)', async () => {
+    const ahora = new Date('2026-10-01T11:30:00Z')
+    await crearEjecucion(nuevaEjecucion('p', 'x'), new Date(ahora.getTime() - 2000))
+    await crearEjecucion(nuevaEjecucion('a', 'y'), new Date(ahora.getTime() - 1000), 'automatico')
+    const [a, p] = await listarEjecuciones()
+    expect([a!.origen, p!.origen]).toEqual(['automatico', 'panel'])
+  })
+
+  it('un turno de la terminal entra terminado y cuenta para el tope, sin bloquear el panel', async () => {
+    const ahora = new Date('2026-10-01T12:00:00Z')
+    const uso = { entrada: 10, salida: 5, cacheLectura: 0, cacheEscritura: 0 }
+    await registrarTurnoTerminal({ id: 't', pregunta: 'q', respuesta: 'r', error: null, iteraciones: 3, uso, costoUsd: 0.2 }, ahora)
+    await registrarTurnoTerminal({ id: 'f', pregunta: 'q', respuesta: null, error: 'error_max_turns', iteraciones: 30, uso, costoUsd: 0.1 }, ahora)
+    const filas = await listarEjecuciones()
+    expect(filas.map((f) => [f.id, f.origen, f.estado]).sort()).toEqual([
+      ['f', 'terminal', 'fallida'],
+      ['t', 'terminal', 'terminada'],
+    ])
+    expect(await hayEnCurso(ahora)).toBe(false)
+    expect(await gastoUltimas24h(ahora)).toBeCloseTo(0.3)
   })
 })
