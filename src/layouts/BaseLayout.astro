@@ -106,15 +106,13 @@ const websiteJsonLd = jsonEnScript({
   inLanguage: locale,
 })
 
-// Los fantasmas de octubre solo van en la portada (en los dos idiomas).
-const temporada = temporadaActual()
-const fantasmas = temporada === 'halloween' && delocalizePath(Astro.url.pathname) === '/'
+// Los fantasmas de octubre solo van en la portada (en los dos idiomas), como
+// una capa aparte: ni el hero ni el resto de la página cambian.
+const fantasmas = temporadaActual() === 'halloween' && delocalizePath(Astro.url.pathname) === '/'
 ---
 
 <!doctype html>
-<!-- La temporada marca el <html> y el CSS hace el resto (global.css): los
-     toques de fuera de la portada son solo color, sin script. -->
-<html lang={locale} data-temporada={temporada ?? undefined}>
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

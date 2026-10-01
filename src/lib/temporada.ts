@@ -1,9 +1,9 @@
 // Temporadas del sitio: hoy solo Halloween (todo octubre).
 //
-// Módulo puro: lo usa el layout en el servidor para marcar el <html> y decidir
-// si la portada lleva sus fantasmas. Sin fecha fija en
-// el código ni interruptor manual: se enciende el 1 de octubre y se apaga el
-// 1 de noviembre solo, sin que haya que desplegar nada.
+// Módulo puro: lo usa el layout en el servidor para decidir si la portada lleva
+// sus fantasmas (src/components/Fantasmas.astro). Sin fecha fija en el código ni
+// interruptor manual: se enciende el 1 de octubre y se apaga el 1 de noviembre
+// solo, sin que haya que desplegar nada.
 
 export type Temporada = 'halloween' | null
 
