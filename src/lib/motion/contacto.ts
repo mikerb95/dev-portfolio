@@ -151,8 +151,13 @@ export function montarRuta(c: TextosContacto, reducido: boolean): RutaContacto {
       estado(0, 'listo')
       estado(1, 'activo')
       descripcion(1, r.revisando)
+      for (let i = 2; i < tramos.length; i++) {
+        estado(i, 'espera')
+        descripcion(i, r.tramos[i].d)
+      }
       gsap.killTweensOf(paquete)
-      gsap.set(paquete, { ...centro(0), opacity: 1 })
+      paquete.style.removeProperty('background')
+      gsap.set(paquete, { ...centro(0), opacity: 1, scale: 1 })
       viaje = mover(1, 0.55)
     },
 
@@ -178,7 +183,10 @@ export function montarRuta(c: TextosContacto, reducido: boolean): RutaContacto {
           descripcion(1, r.tramos[1].d)
           await mover(2, 0.4)
         }
-        for (let i = k + 1; i < tramos.length; i++) estado(i, 'espera')
+        for (let i = k + 1; i < tramos.length; i++) {
+          estado(i, 'espera')
+          descripcion(i, r.tramos[i].d)
+        }
         if (k === 0) gsap.set(paquete, { opacity: 0 })
         else paquete.style.background = '#ff6b3d'
         estado(k, 'fallo')
