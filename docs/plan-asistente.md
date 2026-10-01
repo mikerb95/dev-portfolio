@@ -2,7 +2,8 @@
 
 > Estado: **propuesta, sin implementar** · Creado: 2026-10-01 · Primeras
 > decisiones de Mike: 2026-10-01 (ver "Decisiones tomadas")
-> Requisitos: RF-210 (asistente) y RF-211 (cotizador) en
+> Requisitos: RF-210 (asistente), RF-211 (cotizador) y RF-212 (asesor
+> público) en
 > `src/data/documentacion.ts`, ambos `planeado`.
 > Relacionados: `docs/plan-analista-siem.md` (mismo patrón de agente),
 > `docs/plan-oferta-principal.md` (oferta y precios piso),
@@ -217,6 +218,84 @@ el subagente busca cliente y proyecto, arma los conceptos, llama a
 lo dice en vez de inventarlo. Al aprobar, la cuenta queda en **borrador** en
 `/admin/cuentas-cobro`; revisarla, emitirla y enviarla sigue siendo de Mike.
 
+## Capacidad 3: asesor público (burbuja de WhatsApp)
+
+Propuesto por Mike el 1 oct 2026. Es el único agente que habla con
+visitantes, así que es **otro agente**, separado del asistente del panel: no
+comparte herramientas, ni prompt, ni acceso a la base privada.
+
+### Para qué
+
+El visitante típico de `/paginas-web` es dueño de un negocio, entra desde el
+celular, muchas veces de noche, y tiene dudas antes de escribir. El asesor:
+
+1. **Responde dudas generales** sobre los servicios: qué incluye cada plan,
+   cuánto se demora, cómo se paga, si sirve el dominio que ya tiene, qué pasa
+   después de la entrega, cómo es la capacitación, presencial o remota, etc.
+2. **Calcula un precio estimado** cuando la persona lo pide, con 3 o 4
+   preguntas sencillas y la calculadora de la fase 1 (nunca una cifra
+   inventada: misma guardia).
+3. **Cierra en WhatsApp**: un botón "Enviarle esto a Mike" abre WhatsApp con
+   el resumen ya escrito (qué necesita, el rango calculado, las dudas que
+   quedaron). La IA prepara la conversación; la venta la cierra Mike.
+
+### Cómo se ve
+
+La burbuja de WhatsApp (`src/components/WhatsappFab.astro`), **solo en las
+páginas comerciales** (`/paginas-web`, `/capacitacion-ia`, `/contact` y sus
+versiones `/en`), abre dos opciones:
+
+- **"Escribirle a Mike por WhatsApp"**: la de siempre, primera y destacada.
+- **"Resolver mis dudas con IA"**: abre un chat pequeño en la misma página.
+
+En el resto del sitio (portada, `/notes`, `/lab`...) la burbuja sigue igual:
+ahí la visita suele ser técnica o de reclutadores. La IA nunca es paso
+obligatorio antes de WhatsApp: el comprador de esta oferta prefiere hablar
+con una persona, y forzarlo espanta justo al que paga.
+
+### Qué sabe (solo lo público)
+
+| Fuente | Qué aporta |
+|---|---|
+| `src/data/tarifario.ts` | Planes, componentes, capacitación, reglas de pago |
+| Diccionarios `paginasWeb` y `capacitacionIa` (`src/i18n/es.ts`, `en.ts`) | Qué incluye cada plan, tiempos, proceso, preguntas frecuentes |
+| `training_programs` con `isPublic` | Programas de capacitación publicados |
+| Trabajos reales de `/paginas-web` | Ejemplos de lo que ya está hecho, sin cifras de resultados |
+
+Nada del panel: ni clientes, ni proyectos privados, ni cobros, ni mensajes.
+Si le preguntan algo fuera de los servicios de Mike, lo dice y ofrece
+WhatsApp; no es un chat general gratis.
+
+### Reglas
+
+- Dice desde el primer mensaje que es una IA y que Mike confirma todo.
+- **No pide** nombre, correo ni teléfono: los datos de contacto solo viajan
+  si la persona decide escribir por WhatsApp. No hay conversación guardada con
+  datos personales (Ley 1581).
+- No promete descuentos, fechas exactas ni alcance fuera del tarifario.
+- Lo que escribe el visitante es dato no confiable: no puede cambiar
+  precios, reglas ni instrucciones.
+- Responde en el idioma de la página.
+
+### Contra el abuso (es un endpoint público que gasta créditos)
+
+- Máximo de unas 8 preguntas por conversación y respuestas cortas.
+- Rate limit durable por IP con `isRateLimitablePath` (`src/lib/security/paths.ts`),
+  sin crear un limitador nuevo; el micro-SIEM registra los excesos.
+- Tope de gasto diario propio (`ASESOR_TOPE_DIARIO_USD`, propuesta US$1) que
+  falla cerrado: sin presupuesto, la burbuja solo ofrece WhatsApp.
+- Modelo económico (Haiku 4.5, `claude-haiku-4-5-20251001`); precio exacto
+  por conversación a verificar con la documentación al construirlo
+  (estimado: menos de US$0.02).
+- Corre en Vercel con la API de Claude (no la Agent SDK, que no cabe en una
+  función), con transmisión en vivo como el analista.
+
+### Opcional (después)
+
+Al tocar "Enviarle esto a Mike", guardar el resumen (sin datos personales)
+como cotización en borrador en `briefings` y avisar con ntfy, para llegar a
+WhatsApp con el desglose hecho.
+
 ## Arquitectura
 
 ```
@@ -298,7 +377,8 @@ usar Sonnet 5.5 en los subagentes de lectura si el costo pesa.
 | 5 | Resto de escrituras: proyecto, hito, seguimiento, mensaje leído | sí, poco | fase 2 |
 | 6 | Pruebas con el modelo real: adversariales y banco de casos | ~US$3 por corrida | fases 3-5 |
 | 7 | Pantalla `/admin/asistente` con historial (motor de la API) | sí | fase 5 |
-| 8 | Cierre: RF-210 y RF-211 a `implementado`, nota en `/notes`, iteración | no | |
+| 8 | Asesor público en la burbuja de WhatsApp (capacidad 3): chat, cálculo, cierre en WhatsApp, límites | sí, poco | fase 1 |
+| 9 | Cierre: RF-210, RF-211 y RF-212 a `implementado`, nota en `/notes`, iteración | no | |
 
 ### Banco de casos (fase 6)
 
