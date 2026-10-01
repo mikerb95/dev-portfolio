@@ -19,7 +19,7 @@ const CORREO = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g
 // Celular (3xx) o fijo nacional (60x), con o sin +57, con espacios o guiones.
 const TELEFONO = /(?:\+?57[\s-]?)?(?:3\d{2}|60\d)[\s-]?\d{3}[\s-]?\d{4}\b/g
 // Cédula, NIT o documento: solo con la palabra delante.
-const DOCUMENTO = /\b(c\.?\s?c\.?|c[ée]dula|nit|documento|identificaci[óo]n)(\s*(?:n[°ºo.]?|número|#|:)?\s*)[\d][\d.\s-]{4,}\d/gi
+const DOCUMENTO = /\b(c\.?\s?c\.?|c[ée]dula|nit|documento|identificaci[óo]n)(\s*(?:n[°ºo.]?|número|#|:)?\s*)\d[\d.-]{4,}\d/gi
 
 export function limpiarDatosPersonales(texto: string): Limpieza {
   let correos = 0

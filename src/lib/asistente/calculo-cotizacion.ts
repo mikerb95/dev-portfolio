@@ -38,8 +38,10 @@ export type Condiciones = {
 export type CotizacionSoftware = {
   tipo: 'software'
   moneda: Moneda
+  /** Plan web del que parte (la web en sí: secciones, diseño, SEO), si aplica. */
+  base: { paquete: PaqueteWeb['id']; nombre: string; precio: number } | null
   lineas: LineaCotizacion[]
-  /** Suma de horas, sin colchón. */
+  /** Suma de horas de los componentes, sin colchón. */
   horasBase: Rango
   /** Horas con el colchón aplicado (redondeadas hacia arriba). */
   horas: Rango
@@ -115,6 +117,12 @@ function cantidadValida(n: unknown): number {
 export type PedidoSoftware = {
   componentes: readonly { id: string; cantidad?: number }[]
   moneda: Moneda
+  /**
+   * Plan web sobre el que se monta el desarrollo. Una tienda o unas reservas
+   * van dentro de una web, y los componentes no la incluyen: sin base, una
+   * tienda completa saldría por debajo del piso de "A medida".
+   */
+  base?: PaqueteWeb['id']
 }
 
 export function cotizarSoftware(p: PedidoSoftware): CotizacionSoftware {
@@ -135,12 +143,25 @@ export function cotizarSoftware(p: PedidoSoftware): CotizacionSoftware {
   const horas: Rango = [Math.ceil(horasBase[0] * factor), Math.ceil(horasBase[1] * factor)]
   const tarifa = TARIFA_HORA[p.moneda]
   const minimo = REGLAS.minimo[p.moneda]
-  const bruto: Rango = [redondear(horas[0] * tarifa, p.moneda), redondear(horas[1] * tarifa, p.moneda)]
+  let base: CotizacionSoftware['base'] = null
+  if (p.base) {
+    const paquete = PAQUETES_WEB.find((x) => x.id === p.base)
+    if (!paquete || paquete.id === 'a-medida') {
+      throw new EntradaInvalida(`base inválida: ${p.base}. Válidas: presencia, negocio (A medida se arma con componentes)`)
+    }
+    base = { paquete: paquete.id, nombre: paquete.nombre, precio: paquete.desde[p.moneda] }
+  }
+  const extra = base?.precio ?? 0
+  const bruto: Rango = [
+    redondear(horas[0] * tarifa, p.moneda) + extra,
+    redondear(horas[1] * tarifa, p.moneda) + extra,
+  ]
   const precio: Rango = [Math.max(bruto[0], minimo), Math.max(bruto[1], minimo)]
 
   return {
     tipo: 'software',
     moneda: p.moneda,
+    base,
     lineas,
     horasBase,
     horas,
@@ -204,6 +225,7 @@ export function cifrasPermitidas(cotizaciones: readonly Cotizacion[]): number[] 
   for (const c of cotizaciones) {
     if (c.tipo === 'software') {
       sumar(...c.precio, ...c.condiciones.anticipo, c.tarifaHora)
+      if (c.base) sumar(c.base.precio)
     } else if (c.tipo === 'capacitacion') {
       sumar(...c.precio, ...c.condiciones.anticipo, c.precioSesion, c.precioPersonaAdicional)
     } else if (c.tipo === 'paquete') {

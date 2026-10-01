@@ -42,9 +42,10 @@ puerta aparte** que traduzca todo a resultados.
   técnico, para diferenciar sin salir del sistema de tokens.
 - **Prueba social**: tarjetas placeholder honestas ("Tu negocio aquí ·
   Próximamente"), sin testimonios inventados.
-- Precios/tiempos de referencia hardcodeados en un array al inicio del `.astro`
-  (Presencia $650k/3-5d · Negocio $1.5M/1-2sem · A medida cotización) - ajustar
-  ahí sin tocar el diseño.
+- Precios: desde el 1 oct 2026 salen de `src/data/tarifario.ts` (Presencia
+  $650k · Negocio $1.5M · A medida desde $4.5M; en USD $250 · $500 · $1.500),
+  el mismo tarifario que usa el cotizador del asistente
+  (`docs/plan-asistente.md`). Los tiempos siguen en el diccionario.
 
 ## Estructura de la página `/diseno-web`
 

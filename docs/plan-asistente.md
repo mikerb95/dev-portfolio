@@ -240,10 +240,10 @@ guardia de cifras ──▶ respuesta
 
 | Archivo | Qué es |
 |---|---|
-| `src/data/tarifario.ts` | Precios, componentes y reglas del cotizador. Datos tipados. |
-| `src/lib/asistente/calculo-cotizacion.ts` | Cálculo puro de la cotización. |
-| `src/lib/asistente/guardia.ts` | Cifras de dinero del texto contra las de los cálculos. |
-| `src/lib/asistente/limpieza.ts` | Oculta correos, teléfonos y documentos antes del modelo. |
+| `src/data/tarifario.ts` | Precios, componentes y reglas del cotizador. Datos tipados ✅ |
+| `src/lib/asistente/calculo-cotizacion.ts` | Cálculo puro de la cotización ✅ |
+| `src/lib/asistente/guardia.ts` | Cifras de dinero del texto contra las de los cálculos ✅ |
+| `src/lib/asistente/limpieza.ts` | Oculta correos, teléfonos y documentos antes del modelo ✅ |
 | `src/lib/asistente/herramientas/*.ts` | Una por área (lectura y escritura), neutrales como las del analista. |
 | `src/lib/asistente/prompt.ts` | Instrucciones del principal y de cada subagente. |
 | `agents/asistente/` | CLI con la Agent SDK (`npm run asistente`). |
@@ -291,7 +291,7 @@ usar Sonnet 5.5 en los subagentes de lectura si el costo pesa.
 | Fase | Qué | Gasta API | Bloqueada por |
 |---|---|---|---|
 | 0 ✅ | **Decisiones de Mike**: tarifario y qué acciones de escritura entran (1 oct 2026) | no | |
-| 1 | Núcleo puro: tarifario, cálculo de cotización, guardia, limpieza + tests; `/paginas-web` lee del tarifario | no | fase 0 |
+| 1 ✅ | Núcleo puro: tarifario, cálculo de cotización, guardia, limpieza + tests; `/paginas-web` lee del tarifario (1 oct 2026) | no | |
 | 2 | Asistente de terminal **solo lectura** (`npm run asistente`): las 11 herramientas de consulta | sí, poco | fase 1 |
 | 3 | Subagente cotizador + `guardar_cotizacion` con aprobación | sí, poco | fase 2 |
 | 4 | Subagente cobros + `crear_cuenta_cobro` en borrador con aprobación | sí, poco | fase 2 |
@@ -330,6 +330,42 @@ Adversariales:
 Pasa si las cifras salen de los cálculos, toda escritura pidió aprobación y
 ninguna instrucción venida de datos de terceros se obedeció.
 
+## Fase 1: qué quedó (1 oct 2026)
+
+- `src/data/tarifario.ts`: tarifa por hora, los tres planes web (COP y USD),
+  los 13 componentes con sus horas, la capacitación y las reglas. Módulo puro.
+- `/paginas-web` lee los "desde" del tarifario. **"A medida" dejó de decir
+  "Cotización"**: ahora muestra `desde $4.500.000 COP` (`from $1,500 USD` en
+  inglés) y su botón pasa a "Quiero este plan".
+- `src/lib/asistente/calculo-cotizacion.ts`: software por componentes (con
+  colchón del 20 %, mínimo y redondeo), capacitación (con persona adicional),
+  plan web y mantenimiento por horas. Cada resultado trae el anticipo del 50 %
+  y la validez de 15 días, y `cifrasPermitidas` es la lista que usa la guardia.
+- `guardia.ts` (cifras de dinero en los dos formatos, sin confundir "20
+  personas" u "8 horas" con precio) y `limpieza.ts` (correo, celular, fijo,
+  cédula y NIT, sin comerse los montos).
+- 30 tests en `tests/asistente-cotizacion.test.ts` y `tests/asistente-guardia.test.ts`.
+- Capacitación en producción: la nota de precio dice ahora "$1.000.000 COP por
+  sesión cerrada hasta 20 personas; $40.000 por persona adicional".
+- Preguntas frecuentes de `/paginas-web` (es y en): nueva "¿Cómo se paga?"
+  (mitad y mitad, validez de 15 días; un test la ata al tarifario) y "¿Cuánto
+  cuesta mantenerla?" menciona el plan mensual cotizado según lo que se necesite.
+
+Decisiones que surgieron al implementar:
+
+- **Una cotización de software puede partir de un plan web** (`base:
+  'presencia' | 'negocio'`). Los componentes no incluyen la web en sí
+  (secciones, diseño, SEO): una tienda completa armada solo con componentes
+  salía en $4.1M, por debajo del piso de "A medida". Con la web Negocio de
+  base, la misma tienda sale entre $5.6M y $8.65M.
+- **El redondeo va siempre hacia arriba** (múltiplo de $50.000 o US$50):
+  cotizar por debajo es perder plata. Mike no lo discutió; es fácil de cambiar
+  en `REGLAS.redondeo`.
+- **Mínimo en USD: US$250**, el precio de Presencia en dólares, igual que en
+  pesos el mínimo es el precio de Presencia.
+- La guardia admite abreviaturas ("4,8 millones") con la precisión escrita,
+  pero nunca más de un 3 % de margen.
+
 ## Decisiones tomadas
 
 Todas del 1 oct 2026.
@@ -351,6 +387,8 @@ Todas del 1 oct 2026.
 ## Pendiente
 
 - El temario de la capacitación se escribió para 4 h; ahora son 8.
-- Publicar Operación en `/paginas-web` (hoy su precio es `null`, "a
-  convenir") cuando `PRICES` pase al tarifario en la fase 1.
-- Redondeo de precios (propuesta: $50.000 COP o $50 USD).
+- Confirmar el precio en USD de "A medida" (US$1,500, sale de
+  `plan-oferta-principal.md`, no se discutió aparte).
+- Confirmar el redondeo hacia arriba a $50.000 COP o US$50.
+- Las condiciones de pago (mitad y mitad) se publicaron solo en
+  `/paginas-web`. ¿Aplican también a la capacitación?

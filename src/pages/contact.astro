@@ -4,7 +4,6 @@ export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { getDictionary, getLocaleFromUrl, interpolate, localizedHref } from '../i18n'
-import RutaMensaje from '../components/contacto/RutaMensaje.astro'
 
 const CALENDLY_URL = 'https://calendly.com/codebymike/30min'
 const locale = getLocaleFromUrl(Astro.url.pathname)
@@ -14,7 +13,7 @@ const L = (path: string) => localizedHref(path, locale)
 ---
 
 <BaseLayout title={c.title} description={c.description} image="/og-contact.png">
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12 xl:px-16 pt-32 pb-24">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
     <!-- Back -->
     <a href={L('/')} class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
@@ -22,152 +21,44 @@ const L = (path: string) => localizedHref(path, locale)
       {t.common.back}
     </a>
 
-    <!-- Orden del DOM = orden en celular: titular, formulario con su ruta y
-         después las alternativas. En escritorio la rejilla sube las
-         alternativas a la columna del titular. -->
-    <div class="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] gap-x-12 gap-y-10">
+    <div class="grid md:grid-cols-12 gap-10">
 
-      <header class="lg:col-start-1 lg:row-start-1">
-        <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+      <!-- Left rail -->
+      <div class="md:col-span-5">
+        <div data-ct-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
           <span class="text-cyan">/contact</span>
           <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
           <span>{c.eyebrow}</span>
         </div>
-        <h1 data-contacto-titulo class="font-sans text-5xl md:text-6xl lg:text-[44px] xl:text-[54px] font-medium tracking-[-.03em] text-mask leading-[1.02] max-w-md mb-5 [text-wrap:balance]">
+        <h1 data-ct-titulo class="font-sans text-5xl md:text-6xl font-medium tracking-[-.03em] text-mask leading-[1] max-w-md mb-5">
           {c.h1}
         </h1>
-        <p data-hero-sigue class="text-[15px] text-ink-100 leading-relaxed max-w-md">
+        <p data-hero-sigue class="text-[15px] text-ink-100 leading-relaxed max-w-md mb-10">
           {c.intro}
         </p>
-      </header>
 
-      <section class="lg:col-start-2 lg:row-start-1 lg:row-span-2">
-        <div class="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_250px] gap-x-8 gap-y-8 items-start">
-          <div data-hero-sigue class="rounded-2xl glass border-accent p-6 md:p-7 relative">
-            <div class="flex items-center justify-between mb-6">
-              <div class="flex items-center gap-3">
-                <span class="w-2 h-2 rounded-full bg-cyan pulse-dot"></span>
-                <span class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-100">{c.form.badge}</span>
-              </div>
-              <span class="text-[11px] font-mono text-ink-200" id="field-count">{interpolate(c.form.fieldCount, { n: 0, total: 3 })}</span>
-            </div>
-
-            <form id="contact-form" class="grid md:grid-cols-2 gap-4">
-              <label class="block">
-                <div class="flex items-center justify-between mb-1.5">
-                  <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.nameLabel}</span>
-                  <span class="text-[10px] font-mono text-ink-300" id="hint-name"></span>
-                </div>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  placeholder={c.form.namePlaceholder}
-                  class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
-                />
-              </label>
-
-              <label class="block">
-                <div class="flex items-center justify-between mb-1.5">
-                  <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.emailLabel}</span>
-                  <span class="text-[10px] font-mono text-ink-300" id="hint-email"></span>
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  placeholder={c.form.emailPlaceholder}
-                  class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
-                />
-              </label>
-
-              <label class="block">
-                <div class="flex items-center justify-between mb-1.5">
-                  <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.subjectLabel}</span>
-                  <span class="text-[10px] font-mono text-ink-300" id="hint-subject"></span>
-                </div>
-                <input
-                  id="subject"
-                  name="subject"
-                  type="text"
-                  placeholder={c.form.subjectPlaceholder}
-                  class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
-                />
-              </label>
-
-              <div class="md:col-span-2 block">
-                <div class="flex items-center justify-between mb-1.5">
-                  <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.messageLabel}</span>
-                  <span class="text-[10px] font-mono text-ink-300" id="hint-body"></span>
-                </div>
-                <textarea
-                  id="body"
-                  name="body"
-                  required
-                  rows="5"
-                  placeholder={c.form.messagePlaceholder}
-                  class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300 resize-none leading-relaxed"
-                ></textarea>
-              </div>
-
-              <div class="md:col-span-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 pt-2">
-                <div class="flex items-center gap-2 text-[11px] font-mono text-ink-300">
-                  <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="11" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  {c.form.tlsNote}
-                </div>
-                <button
-                  type="submit"
-                  id="submit-btn"
-                  data-magnetico
-                  class="inline-flex items-center gap-2 h-12 px-5 whitespace-nowrap text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter,opacity] disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                  {c.form.submitCta}
-                </button>
-              </div>
-            </form>
-
-          <p id="form-status" class="mt-4 text-[13px] font-mono hidden" aria-live="polite"></p>
-          </div>
-
-          <div data-hero-sigue>
-            <RutaMensaje />
-          </div>
-        </div>
-      </section>
-
-      <aside data-entrada class="lg:col-start-1 lg:row-start-2 grid gap-4 content-start">
-        <!-- La promesa de respuesta, con el reloj de quien responde. El HTML
-             prerenderizado trae la frase fija; la hora y el plazo los pone el
-             script (src/lib/motion/contacto.ts), que sabe qué hora es. -->
-        <div class="cf-franja glass rounded-2xl p-5" data-franja>
-          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-mono uppercase tracking-[.14em] text-ink-200">
-            <span class="cf-punto" aria-hidden="true"></span>
-            <span data-franja-hora>Colombia · GMT−5</span>
-            <span data-franja-dia class="before:content-['·'] before:mr-2 empty:hidden"></span>
-          </div>
-          <p class="text-[15px] text-ink-50 leading-snug mt-2.5" data-franja-limite>{c.bullets[1]}</p>
-        </div>
-
-        <ul class="grid gap-3 px-1 py-1">
-          <li class="flex items-start gap-3 text-[13px] text-ink-200">
+        <div data-ct-lista class="space-y-4 max-w-md mb-10">
+          <div class="flex items-start gap-3 text-[13px] text-ink-200">
             <svg class="w-4 h-4 mt-0.5 text-cyan shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
             <span>{c.bullets[0]}</span>
-          </li>
-          <li class="flex items-start gap-3 text-[13px] text-ink-200">
+          </div>
+          <div class="flex items-start gap-3 text-[13px] text-ink-200">
+            <svg class="w-4 h-4 mt-0.5 text-cyan shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>{c.bullets[1]}</span>
+          </div>
+          <div class="flex items-start gap-3 text-[13px] text-ink-200">
             <svg class="w-4 h-4 mt-0.5 text-cyan shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             <span>{c.bullets[2]}</span>
-          </li>
-        </ul>
+          </div>
+        </div>
 
         <!-- Alternativa al formulario: quien ya sabe qué necesita prefiere reservar hora directo -->
         <a
+          data-hero-sigue
           href={CALENDLY_URL}
           target="_blank"
           rel="noopener"
-          class="group flex items-center gap-4 rounded-2xl glass border-accent p-5 hover:brightness-110 transition-all"
+          class="group max-w-md mb-4 flex items-center gap-4 rounded-2xl glass border-accent p-5 hover:brightness-110 transition-all"
         >
           <span class="grid place-items-center w-11 h-11 shrink-0 rounded-full bg-cyan/10 text-cyan group-hover:bg-cyan group-hover:text-ink-950 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -178,8 +69,7 @@ const L = (path: string) => localizedHref(path, locale)
           </span>
         </a>
 
-
-        <div class="glass rounded-2xl p-5">
+        <div data-hero-sigue class="glass rounded-2xl p-5 max-w-md">
           <div class="text-[10px] font-mono uppercase tracking-[.2em] text-ink-200 mb-3">{c.directContact}</div>
           <ul class="space-y-2 text-[13px] text-ink-100">
             <li>
@@ -203,54 +93,121 @@ const L = (path: string) => localizedHref(path, locale)
           </ul>
         </div>
 
-
         <a
+          data-hero-sigue
           href={L('/cv/descargar')}
-          class="w-full inline-flex items-center justify-center gap-2 h-11 px-5 text-[13px] font-medium rounded-full border border-white/15 text-ink-100 hover:border-cyan/40 hover:text-cyan transition-colors"
+          class="mt-4 w-full inline-flex items-center justify-center gap-2 h-11 px-5 text-[13px] font-medium rounded-full border border-white/15 text-ink-100 hover:border-cyan/40 hover:text-cyan transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
           {c.downloadCv}
         </a>
-      </aside>
+      </div>
+
+      <!-- Form -->
+      <div class="md:col-span-7">
+        <div data-ct-form class="rounded-2xl glass border-accent p-7 relative">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <span class="w-2 h-2 rounded-full bg-cyan pulse-dot"></span>
+              <span class="text-[11px] font-mono uppercase tracking-[.2em] text-ink-100">{c.form.badge}</span>
+            </div>
+            <span class="text-[11px] font-mono text-ink-300" id="field-count">{interpolate(c.form.fieldCount, { n: 0, total: 3 })}</span>
+          </div>
+
+          <form id="contact-form" class="grid md:grid-cols-2 gap-4">
+            <label class="block">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.nameLabel}</span>
+                <span class="text-[10px] font-mono text-ink-300" id="hint-name"></span>
+              </div>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                placeholder={c.form.namePlaceholder}
+                class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
+              />
+            </label>
+
+            <label class="block">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.emailLabel}</span>
+                <span class="text-[10px] font-mono text-ink-300" id="hint-email"></span>
+              </div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                placeholder={c.form.emailPlaceholder}
+                class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
+              />
+            </label>
+
+            <label class="block">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.subjectLabel}</span>
+                <span class="text-[10px] font-mono text-ink-300" id="hint-subject"></span>
+              </div>
+              <input
+                id="subject"
+                name="subject"
+                type="text"
+                placeholder={c.form.subjectPlaceholder}
+                class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300"
+              />
+            </label>
+
+            <div class="md:col-span-2 block">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">{c.form.messageLabel}</span>
+                <span class="text-[10px] font-mono text-ink-300" id="hint-body"></span>
+              </div>
+              <textarea
+                id="body"
+                name="body"
+                required
+                rows="5"
+                placeholder={c.form.messagePlaceholder}
+                class="input-base w-full rounded-lg px-3 py-2.5 text-[13px] placeholder:text-ink-300 resize-none leading-relaxed"
+              ></textarea>
+            </div>
+
+            <div class="md:col-span-2 flex items-center justify-between gap-4 pt-2">
+              <div class="flex items-center gap-2 text-[11px] font-mono text-ink-300">
+                <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="11" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                {c.form.tlsNote}
+              </div>
+              <button
+                type="submit"
+                id="submit-btn"
+                data-magnetico
+                class="inline-flex items-center gap-2 h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                {c.form.submitCta}
+              </button>
+            </div>
+          </form>
+
+          <p id="form-status" class="mt-4 text-[13px] font-mono hidden"></p>
+        </div>
+      </div>
     </div>
   </div>
 </BaseLayout>
 
-<style>
-  .cf-punto {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #85858f;
-  }
-  [data-franja][data-vivo='habil'] .cf-punto {
-    background: #c9ff5b;
-    box-shadow: 0 0 0 3px rgba(201, 255, 91, 0.15);
-  }
-  [data-franja][data-vivo='finde'] .cf-punto {
-    background: #a78bff;
-  }
-</style>
-
 <script>
-  // El formulario y su envío viven aquí; la ruta del mensaje, el celular y
-  // la hora de Bogotá, en src/lib/motion/contacto.ts. Este script le cuenta a
-  // la ruta lo que pasa (campos listos, salida, respuesta del servidor) y la
-  // ruta lo dibuja: no hay estados inventados.
   import { getDictionary, getLocaleFromUrl, interpolate } from '../i18n'
-  import { campoValido, CAMPOS_REQUERIDOS, MIN_MENSAJE, type CampoRequerido } from '../lib/motion/contacto-datos'
-  import { montarContacto } from '../lib/motion/contacto'
+  import { montarContactoMotion } from '../lib/motion/contacto'
 
   const locale = getLocaleFromUrl(location.pathname)
-  const c = getDictionary(locale).contact
-  const cf = c.form
-  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const ruta = montarContacto(c, reducido)
+  const cf = getDictionary(locale).contact.form
 
   const form = document.getElementById('contact-form') as HTMLFormElement
   const status = document.getElementById('form-status') as HTMLParagraphElement
   const fieldCount = document.getElementById('field-count') as HTMLSpanElement
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement
 
   const inputs = {
     name: document.getElementById('name') as HTMLInputElement,
@@ -263,55 +220,60 @@ const L = (path: string) => localizedHref(path, locale)
     name: document.getElementById('hint-name') as HTMLSpanElement,
     email: document.getElementById('hint-email') as HTMLSpanElement,
     body: document.getElementById('hint-body') as HTMLSpanElement,
+    subject: document.getElementById('hint-subject') as HTMLSpanElement,
   }
 
-  // Las reglas son las de contacto-datos.ts, las mismas con que la ruta
-  // enciende sus marcas de "campo listo".
-  function validateField(id: CampoRequerido, value: string): boolean {
-    const input = inputs[id]
-    const hint = hints[id]
-    const ok = campoValido(id, value)
+  function validateField(id: string, value: string): boolean {
+    const input = inputs[id as keyof typeof inputs]
+    const hint = hints[id as keyof typeof hints]
+    if (!input) return true
+
+    let ok = false
     let msg = ''
-    if (id === 'name') msg = ok ? cf.okShort : value ? cf.nameTooShort : ''
-    else if (id === 'email') msg = ok ? cf.okShort : value ? cf.emailInvalid : ''
-    else
-      msg = ok
-        ? interpolate(cf.messageCharCount, { n: value.length })
-        : value
-          ? interpolate(cf.messageTooShort, { n: value.length, min: MIN_MENSAJE })
-          : ''
+
+    if (id === 'name') {
+      ok = value.length >= 2
+      msg = ok ? cf.okShort : value ? cf.nameTooShort : ''
+    } else if (id === 'email') {
+      ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+      msg = ok ? cf.okShort : value ? cf.emailInvalid : ''
+    } else if (id === 'body') {
+      ok = value.length >= 20
+      msg = ok ? interpolate(cf.messageCharCount, { n: value.length }) : value ? interpolate(cf.messageTooShort, { n: value.length, min: 20 }) : ''
+    } else if (id === 'subject') {
+      return true
+    }
 
     input.classList.remove('input-ok', 'input-bad')
-    if (value) input.classList.add(ok ? 'input-ok' : 'input-bad')
-    hint.textContent = msg
-    hint.className = `text-[10px] font-mono ${ok ? 'text-cyan' : 'text-ember'}`
+    if (value) {
+      input.classList.add(ok ? 'input-ok' : 'input-bad')
+    }
+
+    if (hint) {
+      hint.textContent = msg
+      hint.className = `text-[10px] font-mono ${ok ? 'text-cyan' : 'text-ember'}`
+    }
+
     return ok
   }
 
-  function actualizar() {
-    const validos = Object.fromEntries(
-      CAMPOS_REQUERIDOS.map((id) => [id, validateField(id, inputs[id].value)]),
-    ) as Record<CampoRequerido, boolean>
-    const okCount = Object.values(validos).filter(Boolean).length
-    fieldCount.textContent = interpolate(cf.fieldCount, { n: okCount, total: CAMPOS_REQUERIDOS.length })
-    ruta.campos(validos, {
-      name: inputs.name.value.trim(),
-      email: inputs.email.value.trim(),
-      subject: inputs.subject.value.trim(),
-      body: inputs.body.value,
-    })
+  function updateCount() {
+    const required = ['name', 'email', 'body']
+    const okCount = required.filter(id => validateField(id, inputs[id as keyof typeof inputs]?.value ?? '')).length
+    fieldCount.textContent = interpolate(cf.fieldCount, { n: okCount, total: required.length })
   }
 
-  Object.values(inputs).forEach((input) => input.addEventListener('input', actualizar))
-  // El autocompletado del navegador no siempre dispara `input`.
-  actualizar()
+  Object.keys(inputs).forEach(id => {
+    const input = inputs[id as keyof typeof inputs]
+    input?.addEventListener('input', () => {
+      validateField(id, input.value)
+      updateCount()
+    })
+  })
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
     const data = { ...Object.fromEntries(new FormData(form)), locale }
-    // Un segundo clic mientras viaja el primero duplicaría el mensaje.
-    submitBtn.disabled = true
-    ruta.enviar()
 
     try {
       const res = await fetch('/api/contact', {
@@ -321,32 +283,25 @@ const L = (path: string) => localizedHref(path, locale)
       })
 
       if (res.ok) {
-        ruta.resultado(res.status)
         form.reset()
-        Object.values(inputs).forEach((el) => el.classList.remove('input-ok', 'input-bad'))
-        Object.values(hints).forEach((el) => {
-          el.textContent = ''
-        })
-        fieldCount.textContent = interpolate(cf.fieldCount, { n: 0, total: CAMPOS_REQUERIDOS.length })
+        Object.values(inputs).forEach(el => el.classList.remove('input-ok', 'input-bad'))
+        Object.values(hints).forEach(el => { el.textContent = ''; })
+        fieldCount.textContent = interpolate(cf.fieldCount, { n: 0, total: 3 })
         status.textContent = cf.successStatus
         status.className = 'mt-4 text-[13px] font-mono text-cyan'
       } else {
-        // El endpoint explica el rechazo en el idioma de la página (campo
-        // inválido, demasiados intentos): mejor eso que un error genérico.
-        const cuerpo = (await res.json().catch(() => null)) as { error?: string } | null
-        const motivo = cuerpo?.error ? `✗ ${cuerpo.error}` : cf.errorStatus
-        ruta.resultado(res.status, motivo)
-        status.textContent = motivo
+        status.textContent = cf.errorStatus
         status.className = 'mt-4 text-[13px] font-mono text-ember'
       }
     } catch {
-      ruta.resultado('red')
       status.textContent = cf.networkErrorStatus
       status.className = 'mt-4 text-[13px] font-mono text-ember'
-    } finally {
-      submitBtn.disabled = false
     }
 
     status.classList.remove('hidden')
   })
+
+  // Motion de la página (entradas, pistas y estado del envío). Solo anima lo
+  // que ya está: no cambia textos, estilos ni el envío.
+  montarContactoMotion()
 </script>

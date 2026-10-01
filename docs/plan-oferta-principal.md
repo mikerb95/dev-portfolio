@@ -1,6 +1,10 @@
 # Plan: definición de la oferta principal
 
-> Estado: **propuesta v1, sin validar con el usuario** · Creado: 2026-08-08
+> Estado: **propuesta v1, validada en parte** · Creado: 2026-08-08
+> Actualización 2026-10-01: Mike fijó el precio piso de §3 ($4.500.000 COP,
+> publicado en `/paginas-web` desde `src/data/tarifario.ts`) y descartó el
+> plan mensual fijo de §4 (el mantenimiento se cotiza por horas, según el
+> proyecto). El nombre (§1) sigue siendo "A medida". Ver `docs/plan-asistente.md`.
 > Depende de: `docs/plan-diseno-web.md` (que este documento reordena).
 
 ## Decisión de posicionamiento
@@ -110,7 +114,8 @@ capacidad transaccional en el precio base**. Tienda **o** reservas, no ambas.
 
 ## 3. Precio piso
 
-**Hipótesis: `desde $4.500.000 COP` · `from $1.500 USD` para `/en`.**
+**Decidido el 1 oct 2026: `desde $4.500.000 COP` · `from $1,500 USD` para `/en`.**
+El USD lo propone este plan y no se discutió aparte: confirmarlo.
 
 Cómo sale el número, para poder discutirlo:
 
@@ -133,7 +138,11 @@ Vender proyectos de una sola vez desperdicia el activo más caro que ya está
 construido: todo el aparato de monitoreo, SLOs y observabilidad **es un
 producto de mantenimiento**, no de entrega.
 
-**Propuesta: plan mensual, desde `$300.000 COP/mes`.** Incluye:
+**Descartado el 1 oct 2026**: Mike no quiere un precio fijo; el mantenimiento
+"depende" y el cotizador lo calcula en horas al mes × $70.000. Lo que sigue
+queda como referencia de qué puede incluir.
+
+~~Propuesta: plan mensual, desde `$300.000 COP/mes`.~~ Incluye:
 
 - Monitoreo y alertas del sitio (ya operando, coste marginal cercano a cero).
 - Respaldos y actualizaciones de seguridad.

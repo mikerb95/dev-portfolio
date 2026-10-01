@@ -13,7 +13,7 @@
 export type CifraEncontrada = {
   texto: string
   valor: number
-  /** Precisión con la que se escribió: "4,8 millones" admite ±50.000. */
+  /** Margen por la precisión con que se escribió: "4,8 millones" admite ±50.000. */
   tolerancia: number
 }
 
@@ -51,7 +51,9 @@ export function extraerCifras(texto: string): CifraEncontrada[] {
     if (!Number.isFinite(base)) continue
     const factor = mult ? MULTIPLICADOR[mult.toLowerCase()] ?? 1 : 1
     const valor = Math.round(base * factor)
-    const tolerancia = mult ? (factor / 10 ** decimales) / 2 : 0
+    // La precisión escrita da el margen ("4,8 millones" cubre ±50.000), pero
+    // nunca más del 3 %: "5 millones" no puede pasar por un precio de 4,5.
+    const tolerancia = mult ? Math.min(factor / 10 ** decimales / 2, valor * 0.03) : 0
     out.push({ texto: entero.trim(), valor, tolerancia })
   }
   return out
