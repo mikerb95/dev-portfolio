@@ -2167,6 +2167,153 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-motion',
+    fase: 'Fase 49 · Que cada página muestre lo que dice',
+    nombre: 'Motion propio en la portada y en las páginas públicas de ingeniería',
+    rango: '22 al 28 sep 2026',
+    ghSince: '2026-09-22',
+    ghUntil: '2026-09-28',
+    commits: 97,
+    resumen:
+      'Las páginas públicas afirmaban cosas (que el sitio se mide, se defiende, se prueba y se opera solo) con texto y tarjetas iguales. Esta fase hace que cada una lo muestre ocurriendo, con datos reales o con las mismas funciones del panel: la portada como un terreno de isolíneas en WebGL, y nueve páginas más con una pieza central que trabaja delante del visitante. Regla de toda la fase: sin dependencias nuevas, sin consultas que no existieran (o con menos lecturas que antes), lo ilustrativo dice que lo es, y con movimiento reducido todo queda completo y quieto. Cada página se verificó con capturas reales en Chromium con GPU antes de darla por terminada.',
+    historias: [
+      {
+        id: 'PF-MO-01', titulo: 'Como visitante, quiero que la portada se sienta como un instrumento vivo y no como una plantilla de portafolio',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-22', tags: ['motion', 'webgl', 'portada', 'fase-49'],
+        dod: [
+          ok('Terreno de isolíneas en WebGL2 directo: el cursor levanta un pico, el clic emite un pulso y el scroll lo aplana hasta continuar en la cinta de señales (RF-022).'),
+          ok('Índice cinético de proyectos con portadas generativas, proceso como pipeline de CI, expertise con pantallas animadas y la huella del visitante en la sección del laboratorio.'),
+          ok('tests/motion-portada.test.ts (13 casos): el rayo del cursor es el inverso exacto de la proyección del shader, semillas deterministas y huellas siempre plausibles.'),
+          ok('Falla abierto: sin WebGL2 queda el halo de CSS, un error del motion devuelve la visibilidad de lo escondido y el terreno baja su resolución si los fotogramas se alargan.'),
+        ],
+      },
+      {
+        id: 'PF-MO-02', titulo: 'Como visitante, quiero que /engineering mida mi propia visita delante de mí',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-25', tags: ['motion', 'web-vitals', 'fase-49'],
+        dod: [
+          ok('Osciloscopio de la visita con las fases de la carga y las marcas de TTFB, FCP y LCP, ubicada frente a la distribución real ("más rápida que el X % de las visitas") (RF-023).'),
+          ok('No se envía nada nuevo: la comparación se hace en el navegador contra 21 cuantiles por métrica, sin muestras.'),
+          ok('De paso: la disponibilidad de 90 días leía monitor_checks crudo en cada render y ahora lee monitor_daily; los paneles de detalle ya no desbordan en móvil.'),
+          ok('tests/motion-engineering.test.ts (27 casos) y capturas a 1440x900 y 390x844 en español e inglés.'),
+        ],
+      },
+      {
+        id: 'PF-MO-03', titulo: 'Como visitante, quiero ver a /security defender el sitio y no solo leer que lo hace',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-25', tags: ['motion', 'siem', 'opsec', 'fase-49'],
+        dod: [
+          ok('Filtro de capas: cada petición termina donde el sistema la dejaría de verdad, todas grises hasta el clasificador (RF-024).'),
+          ok('Hallazgos corregidos como una línea de commits reales que se cierran al bajar, incluidos los 9 de la auditoría del 22 al 24 sep.'),
+          ok('LECTURAS ACOTADAS: los agregados se recalculan como mucho cada 3 h y se guardan en app_settings; antes eran cinco consultas sobre security_events crudo en cada render.'),
+          ok('Sin consultas nuevas ni datos nuevos publicados: la OPSEC no cambia. tests/motion-security.test.ts (14 casos) y tests/security-vitrina-db.test.ts (8 casos).'),
+        ],
+      },
+      {
+        id: 'PF-MO-04', titulo: 'Como visitante, quiero ver las herramientas del panel trabajando y no siete maquetas quietas',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-26', tags: ['motion', 'tools', 'fase-49'],
+        dod: [
+          ok('Circuito de operación con cuatro escenarios en bucle (caos, deploy roto, sondeo hostil, proyecto nuevo) y una ventana fija con la escena del caso que se lee (RF-025).'),
+          ok('Las cifras de las escenas salen del código real: monthlyEquivalent, projectPnL, computeSloFromCounts, detectSpikes y cifrado AES-256-GCM hecho en el build.'),
+          ok('Si un byte alterado llegara a descifrarse, el build falla en vez de publicar una demostración falsa.'),
+          ok('tests/motion-tools.test.ts (17 casos); la página sigue prerenderizada.'),
+        ],
+      },
+      {
+        id: 'PF-MO-05', titulo: 'Como visitante, quiero ver cada experimento del laboratorio ocurrir sobre la pasarela de pagos',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-26', tags: ['motion', 'lab', 'pagos', 'fase-49'],
+        dod: [
+          ok('Banco de ensayo con las cinco defensas de la pasarela: la decisión de cada transición la toma canTransition de payments-state.ts importada tal cual (RF-026).'),
+          ok('Pista de CI por corrida, ciclo de hallazgos y escalera de carga con los escalones reales de la última corrida de estrés.'),
+          ok('tests/motion-lab.test.ts (21 casos): con una máquina de estados permisiva el webhook tardío deja de superarse, lo que prueba que el guion depende del código real.'),
+        ],
+      },
+      {
+        id: 'PF-MO-06', titulo: 'Como lector, quiero ver en /notes la decisión de cada artículo antes de leerlo',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-27', tags: ['motion', 'notes', 'fase-49'],
+        dod: [
+          ok('Ficha que recorre las decisiones reales (problema, opción descartada, opción elegida) sobre el mapa generativo de cada nota (RF-027).'),
+          ok('Bitácora por meses con filtros por familia en la URL, índice lateral con minutos restantes y tres notas relacionadas.'),
+          ok('Cada nota publicada trae su campo decision en los dos idiomas; tests/motion-notas.test.ts (21 casos) lo exige.'),
+        ],
+      },
+      {
+        id: 'PF-MO-07', titulo: 'Como visitante, quiero ver en /log cómo se suman las horas de trabajo',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-27', tags: ['motion', 'github', 'fase-49'],
+        dod: [
+          ok('Reloj de sesiones de 30 días por 24 horas: las cifras de arriba se suman con lo que se dibuja y el navegador llega al mismo número que el servidor (RF-028).'),
+          ok('DATO NUEVO PUBLICADO, decidido explícitamente: la hora de cada commit privado redondeada a 5 min, sin repositorio ni mensaje.'),
+          ok('De paso: el gráfico por día y la racha contaban días en UTC; ahora van en hora de Bogotá.'),
+          ok('tests/motion-log.test.ts (23 casos).'),
+        ],
+      },
+      {
+        id: 'PF-MO-08', titulo: 'Como operador, quiero que /automatizaciones haga visible el silencio de un cron',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-28', tags: ['motion', 'crons', 'fase-49'],
+        dod: [
+          ok('Partitura de 24 h con una marca por ejecución real y cada silencio mayor a lo tolerado teñido con su duración (RF-029).'),
+          ok('Simulacro del corte del 7 sep sobre los datos de hoy: el aviso llega cuando llegaría el detector real, con el texto real del push.'),
+          ok('BUG CORREGIDO: siete de once tareas salían "sin registro" porque la página leía las últimas 150 filas (unas 9 h); ahora lee un rango de 48 h.'),
+          ok('tests/motion-automatizaciones.test.ts (13 casos).'),
+        ],
+      },
+      {
+        id: 'PF-MO-09', titulo: 'Como visitante, quiero ver mi huella leerse en dos tiempos y reconocerse cuando vuelvo',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-09-28', tags: ['motion', 'fingerprint', 'privacidad', 'fase-49'],
+        dod: [
+          ok('La huella se lee primero con lo que cualquier sitio ve sin pedir nada, y solo tras el consentimiento se suman canvas, audio y fuentes (RF-030).'),
+          ok('En el tablero, cada dispositivo trae su huella en SVG y al volver se marca "reconocido de nuevo"; el visor se comparte con la portada (HuellaVisor.astro).'),
+          ok('Comprobación de defensas con cuatro dispositivos de ejemplo, ilustrativa y declarada como tal.'),
+          ok('tests/motion-fingerprint.test.ts (23 casos).'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-halloween',
+    fase: 'Fase 50 · Una temporada que sale de los datos',
+    nombre: 'Halloween en la portada: los ataques reales rondan el terreno',
+    rango: '1 oct 2026',
+    ghSince: '2026-10-01',
+    ghUntil: '2026-10-01',
+    resumen:
+      'Un efecto de temporada que no fuera el de cualquier sitio: en vez de calabazas, el terreno de la portada se tiñe de ember, se llena de niebla en los valles y lo cruzan espectros cuyo número sale del tráfico hostil que el micro-SIEM clasificó de verdad. Se enciende y se apaga solo con el mes, sin interruptor ni despliegue. Fuera de la portada son solo tres detalles de color.',
+    historias: [
+      {
+        id: 'PF-HW-01', titulo: 'Como visitante, quiero encontrar en octubre un detalle de Halloween que solo este sitio podría tener',
+        tipo: 'historia', valor: 'bajo', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-01', tags: ['motion', 'webgl', 'temporada', 'fase-50'],
+        dod: [
+          ok('Antes de construir, el usuario eligió concepto, alcance, fechas e intensidad: terreno embrujado más espectros con datos reales, portada más toques leves, todo octubre, sutil (RF-031).'),
+          ok('El shader del terreno suma paleta ember, niebla en los valles que el cursor y los pulsos despejan, y hasta 7 espectros (3 en táctil) que se disipan al tocarlos.'),
+          ok('El aviso que explica los espectros solo aparece al disipar el primero: es para quien lo descubre.'),
+          ok('Sin consultas nuevas: la cifra es la misma lectura del pulso y solo se publica el total que la cinta ya mostraba. Sin dato del SIEM no hay espectros.'),
+          ok('Primera versión descartada tras las capturas: los espectros altos y angostos se veían como pirámides oscuras. Quedaron como cúpulas bajas con halo.'),
+          pend('Aceptación del usuario sobre el sitio en producción durante octubre.'),
+        ],
+      },
+      {
+        id: 'PF-HW-02', titulo: 'Como operador, quiero que la temporada se encienda y se apague sola sin tocar el código',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-01', tags: ['temporada', 'i18n', 'fase-50'],
+        dod: [
+          ok('src/lib/temporada.ts, puro: decide por el mes en hora de Bogotá y BaseLayout marca el <html> con data-temporada; los toques de fuera de la portada son solo CSS.'),
+          ok('tests/temporada.test.ts (7 casos): octubre entero, la frontera en hora de Bogotá y no en UTC, escala logarítmica de espectros con techo propio en móvil.'),
+          ok('Con movimiento reducido solo cambia la paleta; sin WebGL2 el contador del HUD se retira.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
@@ -2174,6 +2321,7 @@ export const COMMITS_POR_MES = [
   { mes: 'may', commits: 21 },
   { mes: 'jun', commits: 104 },
   { mes: 'jul', commits: 1631 },
-  { mes: 'ago', commits: 462 },
-  { mes: 'sep', commits: 70 },
+  { mes: 'ago', commits: 568 },
+  { mes: 'sep', commits: 634 },
+  { mes: 'oct', commits: 8 },
 ]
