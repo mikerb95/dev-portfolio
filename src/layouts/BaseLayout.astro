@@ -8,6 +8,7 @@ import LanguageSuggestModal from '../components/LanguageSuggestModal.astro'
 import WhatsappFab from '../components/WhatsappFab.astro'
 import { DEFAULT_LOCALE, alternateUrls, getDictionary, getLocaleFromUrl, translatedAlternates } from '../i18n'
 import { jsonEnScript } from '../lib/json-script'
+import { temporadaActual } from '../lib/temporada'
 
 interface Props {
   title: string
@@ -106,7 +107,9 @@ const websiteJsonLd = jsonEnScript({
 ---
 
 <!doctype html>
-<html lang={locale}>
+<!-- La temporada marca el <html> y el CSS hace el resto (global.css): los
+     toques de fuera de la portada son solo color, sin script. -->
+<html lang={locale} data-temporada={temporadaActual() ?? undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

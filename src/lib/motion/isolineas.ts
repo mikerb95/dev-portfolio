@@ -32,8 +32,21 @@ uniform float uAvance;
 uniform float uAmplitud;
 uniform vec3 uPico;       // x, z, intensidad (0..1)
 uniform vec4 uPulsos[4];  // x, z, edad en segundos, intensidad
+uniform vec4 uEspectros[7]; // x, z, intensidad (0..1), dirección en x (±1)
 
 ${RUIDO}
+
+// Espectro de temporada: una gota estrecha que flota sobre el suelo con la
+// estela hacia atrás de su marcha. Estrecha a propósito: en una colina ancha
+// las curvas se separan y se lee como relieve; en una angosta se apiñan en
+// anillos y se lee como algo que no es terreno.
+float espectro(vec2 xz, vec4 E) {
+  vec2 d = xz - E.xy;
+  float atras = max(0.0, -d.x * E.w);
+  float cabeza = exp(-dot(d, d) / 0.28);
+  float estela = exp(-(atras * atras) / 1.6 - (d.y * d.y) / 0.12) * step(0.0, -d.x * E.w);
+  return E.z * (cabeza * 0.85 + estela * 0.32);
+}
 
 float terreno(vec2 xz) {
   vec2 p = vec2(xz.x, xz.y + uAvance) * 0.17;
@@ -53,6 +66,11 @@ float terreno(vec2 xz) {
     float frente = P.z * 3.4;
     float onda = exp(-pow((r - frente) / 0.6, 2.0));
     h += P.w * 0.6 * onda * exp(-P.z * 0.75);
+  }
+
+  for (int i = 0; i < 7; i++) {
+    if (uEspectros[i].z <= 0.0) continue;
+    h += espectro(xz, uEspectros[i]);
   }
   return h;
 }
@@ -91,6 +109,8 @@ uniform float uBarrido;   // posición z del barrido
 uniform float uLejos;     // distancia a la que el terreno termina de fundirse
 uniform float uAncho;     // semiancho útil de la malla
 uniform float uBrillo;
+uniform float uTemporada; // 0 = paleta de siempre, 1 = Halloween
+uniform float uTiempo;
 out vec4 color;
 ${CAMPO}
 
@@ -112,7 +132,10 @@ void main() {
   float cerca = exp(-vDist * 0.07);
   vec3 cian = vec3(0.0, 0.949, 1.0);
   vec3 violeta = vec3(0.655, 0.545, 1.0);
-  vec3 c = mix(violeta, cian, smoothstep(0.05, 0.55, cerca));
+  // En temporada el primer plano pasa del cian al ember, el otro acento de la
+  // paleta: Halloween sale de los colores del sitio, no de un naranja nuevo.
+  vec3 ember = vec3(1.0, 0.42, 0.24);
+  vec3 c = mix(violeta, mix(cian, ember, uTemporada), smoothstep(0.05, 0.55, cerca));
 
   vec2 dp = vXZ - uPico.xy;
   float brilloPico = uPico.z * exp(-dot(dp, dp) / 2.0);
@@ -127,18 +150,49 @@ void main() {
 
   float barrido = exp(-pow((vXZ.y - uBarrido) / 0.9, 2.0));
 
+  float presencia = 0.0;
+  for (int i = 0; i < 7; i++) {
+    if (uEspectros[i].z <= 0.0) continue;
+    presencia += espectro(vXZ, uEspectros[i]);
+  }
+  presencia = clamp(presencia, 0.0, 1.0);
+
   float a = (menor * 0.2 + mayor * 0.42) * separables;
   a *= mix(0.35, 1.0, cerca);
   a *= 1.0 - smoothstep(uLejos * 0.3, uLejos * 0.78, vDist);
   a *= 1.0 - smoothstep(uAncho * 0.6, uAncho, abs(vXZ.x));
-  a *= 1.0 + barrido * 1.6 + brilloPico * 1.5 + brilloPulso * 2.2;
+  a *= 1.0 + barrido * 1.6 + brilloPico * 1.5 + brilloPulso * 2.2 + presencia * 1.8;
 
-  c = mix(c, vec3(0.85, 1.0, 1.0), clamp(barrido * 0.5 + brilloPico * 0.45 + brilloPulso * 0.6, 0.0, 1.0));
+  vec3 claro = mix(vec3(0.85, 1.0, 1.0), vec3(1.0, 0.86, 0.74), uTemporada);
+  c = mix(c, claro, clamp(barrido * 0.5 + brilloPico * 0.45 + brilloPulso * 0.6, 0.0, 1.0));
   // Lima en la cresta del pulso: el sondeo que vuelve en verde.
   c = mix(c, vec3(0.79, 1.0, 0.36), clamp(brilloPulso * 0.55, 0.0, 0.7));
+  // Los espectros brillan en un blanco violáceo: la única luz fría del
+  // terreno en temporada, así se distinguen de las colinas ember sin contorno.
+  c = mix(c, vec3(0.9, 0.86, 1.0), presencia * 0.85);
 
   a = clamp(a * uBrillo, 0.0, 1.0);
-  color = vec4(c * a, a);
+
+  // Niebla de temporada: se acumula en los valles (alturas bajas), deriva con
+  // un ruido lento y la despejan el pico del cursor y los pulsos. Es un relleno
+  // tenue sobre la superficie, no una capa aparte: así respeta el relieve y
+  // las colinas de delante la tapan como tapan las curvas.
+  float niebla = 0.0;
+  if (uTemporada > 0.0) {
+    float valle = 1.0 - smoothstep(-0.38, 0.06, h);
+    float deriva = ruido(vXZ * 0.22 + vec2(uTiempo * 0.05, -uTiempo * 0.03)) * 0.5 + 0.5;
+    niebla = valle * mix(0.35, 1.0, deriva);
+    niebla *= 1.0 - clamp(brilloPico * 1.3 + brilloPulso * 1.6, 0.0, 1.0);
+    niebla *= smoothstep(1.5, 5.0, vDist) * (1.0 - smoothstep(uLejos * 0.35, uLejos * 0.7, vDist));
+    niebla *= 1.0 - smoothstep(uAncho * 0.5, uAncho, abs(vXZ.x));
+    niebla = niebla * 0.13 * uTemporada * uBrillo;
+  }
+  // Halo del espectro: un velo del mismo blanco violáceo alrededor de la gota,
+  // para que se lea como una presencia y no solo como un nudo de curvas.
+  float halo = presencia * 0.16 * uBrillo;
+  vec3 tonoNiebla = mix(vec3(0.42, 0.3, 0.75), vec3(0.75, 0.32, 0.22), cerca);
+  vec3 rgb = c * a + tonoNiebla * niebla + vec3(0.9, 0.86, 1.0) * halo;
+  color = vec4(rgb, clamp(a + niebla + halo, 0.0, 1.0));
 }
 `
 
@@ -154,6 +208,12 @@ const VELOCIDAD = 0.55 // unidades de mundo por segundo
 const PERIODO_BARRIDO = 8.5
 const MAX_PULSOS = 4
 const ALTURA_PICO = 1.05
+const MAX_ESPECTROS = 7 // tamaño del arreglo uEspectros del shader
+// Franja de suelo por la que cruzan los espectros: lo bastante cerca para que
+// la gota se lea, lo bastante lejos para no pasar por debajo del titular.
+const ESPECTRO_Z: [number, number] = [5, 14]
+const ESPECTRO_BORDE = 13 // |x| a partir del cual el espectro sale de cuadro
+const ESPECTRO_RADIO = 1.15 // distancia en el suelo a la que el cursor lo disipa
 
 // Cámara en reposo y cámara "aplanada" (al final del scroll del hero): baja
 // hasta rozar el suelo y levanta la mirada al horizonte, así el terreno se
@@ -174,6 +234,33 @@ type Opciones = {
   zona: HTMLElement
   /** Movimiento reducido: un solo fotograma quieto, sin bucle ni cursor. */
   reducido?: boolean
+  /**
+   * Temporada de Halloween (src/lib/temporada.ts): paleta ember, niebla en los
+   * valles y `espectros` cruzando el suelo. Con movimiento reducido solo cambia
+   * la paleta; los espectros necesitan moverse para leerse como tales.
+   */
+  halloween?: {
+    espectros: number
+    /** Se llama cada vez que el visitante disipa un espectro. */
+    alDisipar?: () => void
+  }
+}
+
+type Espectro = {
+  x: number
+  z: number
+  zBase: number
+  dir: 1 | -1
+  velocidad: number
+  fase: number
+  /** Presencia acumulada: sube al entrar y baja al disiparse (0..1). */
+  intensidad: number
+  /** Lo que llega al shader: presencia × respiración × fundido en el borde. */
+  brillo: number
+  /** Segundo en que empezó a disiparse, o null si sigue entero. */
+  disipado: number | null
+  /** Segundo a partir del cual vuelve a entrar por un borde. */
+  regreso: number
 }
 
 function malla(n: number): { uv: Float32Array; indices: Uint16Array } {
@@ -261,6 +348,9 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
     lejos: u('uLejos'),
     ancho: u('uAncho'),
     brillo: u('uBrillo'),
+    temporada: u('uTemporada'),
+    tiempo: u('uTiempo'),
+    espectros: u('uEspectros'),
   }
 
   gl.useProgram(programa)
@@ -269,6 +359,7 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
   gl.uniform1f(U.densidad, DENSIDAD)
   gl.uniform1f(U.lejos, LEJOS)
   gl.uniform1f(U.ancho, TAM[0] / 2)
+  gl.uniform1f(U.temporada, opciones.halloween ? 1 : 0)
   gl.enable(gl.DEPTH_TEST)
   gl.depthFunc(gl.LESS)
   gl.enable(gl.BLEND)
@@ -332,6 +423,81 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
     pulsos.push({ x: p.x, z: p.z, t0: segundos(), intensidad })
   }
 
+  // Espectros de temporada. Arrancan repartidos a lo ancho (no todos desde el
+  // borde) para que el primer vistazo ya los encuentre en escena.
+  const espectros: Espectro[] = []
+  const totalEspectros = reducido ? 0 : Math.min(MAX_ESPECTROS, Math.max(0, opciones.halloween?.espectros ?? 0))
+  const nuevoEspectro = (enEscena: boolean): Omit<Espectro, 'regreso' | 'disipado' | 'brillo'> => {
+    const dir: 1 | -1 = Math.random() < 0.5 ? 1 : -1
+    const zBase = ESPECTRO_Z[0] + Math.random() * (ESPECTRO_Z[1] - ESPECTRO_Z[0])
+    return {
+      dir,
+      zBase,
+      z: zBase,
+      x: enEscena ? (Math.random() * 2 - 1) * ESPECTRO_BORDE * 0.7 : -dir * ESPECTRO_BORDE,
+      velocidad: 0.45 + Math.random() * 0.4,
+      fase: Math.random() * Math.PI * 2,
+      intensidad: enEscena ? 1 : 0,
+    }
+  }
+  for (let i = 0; i < totalEspectros; i++) {
+    espectros.push({ ...nuevoEspectro(true), brillo: 0, disipado: null, regreso: 0 })
+  }
+  const espectrosUniform = new Float32Array(MAX_ESPECTROS * 4)
+
+  const disipar = (e: Espectro, t: number) => {
+    if (e.disipado !== null) return
+    e.disipado = t
+    if (pulsos.length >= MAX_PULSOS) pulsos.shift()
+    pulsos.push({ x: e.x, z: e.z, t0: t, intensidad: 0.8 })
+    try {
+      opciones.halloween?.alDisipar?.()
+    } catch {
+      // Un fallo en quien escucha no puede detener el terreno.
+    }
+  }
+
+  const moverEspectros = (t: number, dt: number) => {
+    for (const e of espectros) {
+      if (e.disipado !== null) {
+        // Se deshace en menos de un segundo y vuelve más tarde por un borde:
+        // la cifra que representa no baja porque alguien lo haya tocado.
+        e.intensidad = Math.max(0, e.intensidad - dt * 1.6)
+        // Al disiparse se ensancha un poco además de apagarse: se deshace, no
+        // se apaga como un foco.
+        e.brillo = e.intensidad * e.intensidad
+        if (e.intensidad === 0 && e.regreso === 0) e.regreso = t + 7 + Math.random() * 6
+        if (e.regreso && t > e.regreso) Object.assign(e, nuevoEspectro(false), { disipado: null, regreso: 0 })
+        continue
+      }
+      e.x += e.dir * e.velocidad * dt
+      // Ondula en profundidad y respira en altura: el vaivén lento es lo que lo
+      // separa de una colina más que el terreno arrastra.
+      e.z = e.zBase + Math.sin(t * 0.5 + e.fase) * 0.9
+      e.intensidad = Math.min(1, e.intensidad + dt * 0.8)
+      const respiro = 0.82 + Math.sin(t * 1.7 + e.fase) * 0.18
+      const borde = 1 - Math.min(1, Math.max(0, (Math.abs(e.x) - ESPECTRO_BORDE * 0.75) / (ESPECTRO_BORDE * 0.25)))
+      e.brillo = e.intensidad * respiro * borde
+      if (Math.abs(e.x) > ESPECTRO_BORDE) Object.assign(e, nuevoEspectro(false))
+
+      if (cursor.dentro && pico.intensidad > 0.4 && Math.hypot(pico.x - e.x, pico.z - e.z) < ESPECTRO_RADIO) {
+        disipar(e, t)
+      }
+    }
+  }
+
+  const tocarEspectro = (ndcX: number, ndcY: number) => {
+    const p = rayoAlSuelo(camara, ndcX, ndcY, 0.5)
+    if (!p) return
+    const t = segundos()
+    for (const e of espectros) {
+      if (e.disipado === null && e.intensidad > 0.3 && Math.hypot(p.x - e.x, p.z - e.z) < ESPECTRO_RADIO * 1.4) {
+        disipar(e, t)
+        return
+      }
+    }
+  }
+
   // Latido: un sondeo automático cada pocos segundos en un punto al azar de la
   // mitad baja, para que el terreno se vea vivo también sin cursor (móvil).
   let proximoLatido = 2.2
@@ -359,6 +525,18 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
       pulsosUniform[i * 4 + 3] = p.intensidad
     })
     gl!.uniform4fv(U.pulsos, pulsosUniform)
+
+    espectrosUniform.fill(0)
+    espectros.forEach((e, i) => {
+      espectrosUniform[i * 4] = e.x
+      espectrosUniform[i * 4 + 1] = e.z
+      // Con el terreno aplanado no quedan espectros: la cinta de cifras que
+      // sigue debajo es seria y no lleva fantasmas.
+      espectrosUniform[i * 4 + 2] = e.brillo * (1 - aplanado)
+      espectrosUniform[i * 4 + 3] = e.dir
+    })
+    gl!.uniform4fv(U.espectros, espectrosUniform)
+    gl!.uniform1f(U.tiempo, t)
 
     const fase = (t % PERIODO_BARRIDO) / PERIODO_BARRIDO
     // El barrido solo cruza en el primer 60% del ciclo; el resto del tiempo
@@ -405,6 +583,8 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
       proximoLatido = t + 4.5 + Math.random() * 3
     }
 
+    if (espectros.length) moverEspectros(t, dt)
+
     dibujar(t)
 
     // Adaptación de resolución con una ventana de 40 fotogramas.
@@ -444,6 +624,9 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
     // Un clic en un enlace o botón es para navegar, no para sondear el suelo.
     if ((e.target as HTMLElement).closest('a, button, input, [role="button"]')) return
     const n = aNDC(e.clientX, e.clientY)
+    // En táctil no hay cursor que pase por encima: tocar el espectro es la
+    // única forma de disiparlo.
+    if (espectros.length) tocarEspectro(n.x, n.y)
     emitir(n.x, n.y, 1)
   }
 

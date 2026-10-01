@@ -85,6 +85,11 @@ const es = {
     githubTop3Value: 'Contributor',
     githubDevProgramLabel: 'Miembro oficial',
     githubDevProgramValue: 'Developer Program',
+    halloween: {
+      hud: 'espectros',
+      // {n} y {dias} los rellena la portada con la cifra real del pulso.
+      aviso: 'Cada espectro es tráfico hostil real: {n} peticiones clasificadas por el micro-SIEM en {dias} días.',
+    },
     hud: {
       title: 'sys.monitor',
       boot: 'boot',
