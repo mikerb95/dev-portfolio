@@ -525,18 +525,6 @@ body {
 .hud-line[data-state="ok"] { color: rgba(255,255,255,.4); }
 .hud-line[data-state="ok"] .hud-status { color: #c9ff5b; }
 
-/* Temporada (src/lib/temporada.ts marca el <html> en BaseLayout). Fuera de la
-   portada Halloween es solo esto: tres detalles de color que pasan del cian o
-   la lima al ember, el acento cálido que la paleta ya tenía. Sin script, sin
-   imágenes, y nada que estorbe leer. Van sin @layer para ganarle a las
-   utilidades de Tailwind sin !important. */
-[data-temporada="halloween"] .estado-punto {
-  background-color: var(--color-ember);
-  box-shadow: 0 0 12px rgba(255,107,61,.75);
-}
-[data-temporada="halloween"] .nav-avatar { box-shadow: 0 0 18px rgba(255,107,61,.5); }
-[data-temporada="halloween"] .nav-by { color: var(--color-ember); }
-
 /* View transitions */
 @view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) {
