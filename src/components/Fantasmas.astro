@@ -170,8 +170,8 @@ const SILUETA_B = CABEZA + COLA_B
   .anillo-1 { fill: currentColor; fill-opacity: .06; stroke-opacity: .9; }
   /* Los anillos interiores respiran desfasados, como curvas de nivel de un
      relieve que sube y baja por dentro. */
-  .anillo-2 { stroke-opacity: .5; animation: respirar-2 var(--respiro, 3s) ease-in-out infinite alternate; }
-  .anillo-3 { stroke-opacity: .28; animation: respirar-3 var(--respiro, 3s) ease-in-out calc(var(--respiro, 3s) * -.5) infinite alternate; }
+  .anillo-2 { stroke-opacity: .5; scale: .74; animation: respirar-2 var(--respiro, 3s) ease-in-out infinite alternate; }
+  .anillo-3 { stroke-opacity: .28; scale: .48; animation: respirar-3 var(--respiro, 3s) ease-in-out calc(var(--respiro, 3s) * -.5) infinite alternate; }
 
   /* Los ojos los mueve el script (--ox, --oy, en unidades del viewBox); el
      parpadeo es CSS y cada fantasma lleva su propio ritmo. */
