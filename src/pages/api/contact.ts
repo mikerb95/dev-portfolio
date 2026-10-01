@@ -5,6 +5,7 @@ import { clientIp } from '../../lib/ratelimit'
 import { enforceLimit } from '../../lib/security/ratelimit-durable'
 import { sendPush } from '../../lib/notify'
 import { isLocale, type Locale } from '../../i18n'
+import { avisoContacto } from '../../lib/contacto-aviso'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_LEN = { name: 200, email: 200, subject: 200, body: 5000 }
@@ -80,12 +81,14 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Notificación push al teléfono vía ntfy. No bloquea la respuesta ni la rompe
   // si falla (sendPush ya captura errores y es no-op sin NTFY_TOPIC).
-  const preview = body.length > 140 ? `${body.slice(0, 140)}…` : body
-  await sendPush(
-    `Nuevo mensaje de ${name}`,
-    `${typeof subject === 'string' && subject ? `${subject}\n` : ''}${preview}\n- ${email}`,
-    { priority: 4, tags: 'envelope', click: 'https://codebymike.net/admin/messages' },
-  ).catch(() => {})
+  // El texto sale de avisoContacto, la misma función con la que /contact
+  // dibuja el aviso en su celular de ejemplo.
+  const aviso = avisoContacto({ name, email, subject: typeof subject === 'string' ? subject : null, body })
+  await sendPush(aviso.titulo, aviso.cuerpo, {
+    priority: 4,
+    tags: 'envelope',
+    click: 'https://codebymike.net/admin/messages',
+  }).catch(() => {})
 
   return json(201, { ok: true })
 }
