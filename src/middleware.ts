@@ -14,6 +14,7 @@ import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
 import { isBlocked, blockIpEscalated } from './lib/security/blocklist'
 import { enforceLimit } from './lib/security/ratelimit-durable'
 import {
+  isAsesorPath,
   isAuthPath,
   isCobroLinkPath,
   isFramablePath,
@@ -300,6 +301,29 @@ export const onRequest = defineMiddleware(async (context, next) => {
         return new Response(JSON.stringify({ error: 'demasiados intentos, espera un minuto' }), {
           status: 429,
           headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+
+    // Asesor con IA: cada POST es una llamada pagada a la API. El GET (¿está
+    // disponible?) no gasta y no cuenta.
+    if (isAsesorPath(canonicalPath) && method === 'POST') {
+      const r = await enforceLimit(`asesor:${ip}`, { limit: 20, windowMs: 600_000, deferUntil: 0.5 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'api_abuse',
+          severity: 'medium',
+          ruleId: 'ratelimit.asesor',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers: reqHeaders,
+        })
+        return new Response(JSON.stringify({ error: 'limite_ip' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '600' },
         })
       }
     }
