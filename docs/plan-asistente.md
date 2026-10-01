@@ -129,7 +129,7 @@ Cifras *por validar* = hipótesis de `plan-oferta-principal.md` o de este plan.
 |---|---|---|---|
 | Presencia | desde $650.000 | desde $250 | publicado |
 | Negocio | desde $1.500.000 | desde $500 | publicado |
-| Operación (tienda **o** reservas, pagos Wompi, panel, monitoreo) | desde $4.500.000 | desde $1.500 | *por validar* |
+| Operación (tienda **o** reservas, pagos Wompi, panel, monitoreo) | desde $4.500.000 | desde $1.500 | decidido (1 oct), sin publicar aún |
 
 `PRICES` de `src/pages/paginas-web.astro` se mueve al tarifario y la página lo
 importa: un solo lugar para el precio, o la web y el agente dirían cosas
@@ -137,25 +137,45 @@ distintas.
 
 **Tarifa por hora: $70.000 COP o US$30.** Son dos tarifas independientes, no
 una conversión (misma regla que `/paginas-web`). Contra esa tarifa, los
-paquetes publicados equivalen a unas 9 h (Presencia), 21 h (Negocio) y 64 h
-(Operación, si se confirma su piso): sirve para revisar que el tarifario no se
-contradiga.
+paquetes equivalen a unas 9 h (Presencia), 21 h (Negocio) y 64 h
+(Operación): sirve para revisar que el tarifario no se contradiga.
+
+Ojo con Operación: sumada con la tabla de componentes de abajo da entre 69 y
+106 h ($4.8M a $7.4M). Mike eligió igual el piso de $4.500.000 a sabiendas;
+el piso es lo que se publica, y el cotizador calcula cada caso con la tabla,
+así que un proyecto real casi nunca saldrá en el piso.
 
 **Software a la medida** (apps, sistemas, integraciones): por componentes, cada
-uno con rango de horas × tarifa por hora. Componentes iniciales, todos *por
-validar*: descubrimiento y alcance; autenticación y roles; panel de
-administración; pagos Wompi; reservas y agenda; tienda y catálogo; integración
-con API de terceros; facturación electrónica; reportes y tableros; app web
-instalable (PWA); app nativa (tiendas de Apple y Google); migración de datos;
-despliegue, monitoreo y capacitación de uso. Más un colchón por incertidumbre
-(bajo, medio, alto) y un mínimo por proyecto.
+uno con rango de horas × tarifa por hora. Tabla aprobada por Mike el 1 oct
+2026:
+
+| Componente | Horas |
+|---|---|
+| Descubrimiento y alcance | 4 - 8 |
+| Usuarios y permisos (autenticación, roles) | 8 - 16 |
+| Panel de administración (por cada tipo de dato administrado) | 6 - 12 |
+| Pagos en línea (Wompi, con idempotencia) | 12 - 20 |
+| Reservas y agenda | 20 - 35 |
+| Tienda y catálogo | 20 - 35 |
+| Conexión con otro sistema (API de terceros) | 10 - 25 |
+| Facturación electrónica | 16 - 30 |
+| Reportes y tableros | 8 - 20 |
+| App instalable desde la web (PWA) | 8 - 16 |
+| App en las tiendas de Apple y Google | 80 - 160 |
+| Pasar datos de otro sistema (migración) | 6 - 20 |
+| Publicar, vigilar y enseñar a usarlo | 6 - 10 |
+
+Más un colchón fijo del 20 % y un mínimo de $650.000 por proyecto (ver
+reglas).
 
 **Capacitación en IA** (`/capacitacion-ia`): **8 horas, $1.000.000 COP por
 sesión cerrada de hasta 20 personas** (decidido y publicado el 1 oct 2026; antes
 eran 4 h, desde $1.800.000, hasta 15). Vive en `training_programs`, no en el
 código, así que el agente lo lee de la base y un programa nuevo en el panel ya
-lo ve sin tocar nada. Propuesta para grupos de más de 20: una sesión más por
-cada 20 personas o fracción (*por confirmar*). Pendiente: el temario se
+lo ve sin tocar nada. Grupos de más de 20: **$40.000 COP por cada persona
+adicional** en la misma sesión (25 personas = $1.200.000). La versión en inglés
+de la página sigue mostrando el precio en pesos (decisión de Mike: la
+capacitación es para empresas en Colombia). Pendiente: el temario se
 escribió para 4 h y no se ha ampliado a 8.
 
 **Recurrente**: el mantenimiento **no tiene precio fijo, depende del
@@ -165,10 +185,17 @@ cambios). Se descarta la hipótesis de "desde $300.000/mes" de
 `plan-oferta-principal.md`. El hosting lo calcula `src/lib/computo/cotizador.ts`
 (existe).
 
-**Reglas comerciales** (por confirmar): COP en Colombia y USD fuera, nunca
-conversión; precio en rango mientras falten respuestas; redondeo a $50.000 COP
-o $50 USD; anticipo y validez de la cotización; sin IVA (persona natural no
-responsable, `src/lib/cuentas-cobro.ts`); **descuentos solo los decide Mike**.
+**Reglas comerciales** (decididas el 1 oct 2026, salvo donde se indica):
+
+- COP en Colombia y USD fuera, nunca conversión.
+- Precio en rango mientras falten respuestas del cliente.
+- **Colchón fijo del 20 %** sobre las horas de software a la medida.
+- **Mínimo de $650.000** por cualquier trabajo a la medida.
+- **Pago: 50 % antes de empezar y 50 % al entregar.**
+- **La cotización vale 15 días.**
+- Redondeo a $50.000 COP o $50 USD (propuesta, no discutida).
+- Sin IVA (persona natural no responsable, `src/lib/cuentas-cobro.ts`).
+- **Descuentos: solo los decide Mike.**
 
 ### Herramientas propias del cotizador
 
@@ -263,7 +290,7 @@ usar Sonnet 5.5 en los subagentes de lectura si el costo pesa.
 
 | Fase | Qué | Gasta API | Bloqueada por |
 |---|---|---|---|
-| 0 | **Decisiones de Mike**: tarifario y qué acciones de escritura entran | no | Mike |
+| 0 ✅ | **Decisiones de Mike**: tarifario y qué acciones de escritura entran (1 oct 2026) | no | |
 | 1 | Núcleo puro: tarifario, cálculo de cotización, guardia, limpieza + tests; `/paginas-web` lee del tarifario | no | fase 0 |
 | 2 | Asistente de terminal **solo lectura** (`npm run asistente`): las 11 herramientas de consulta | sí, poco | fase 1 |
 | 3 | Subagente cotizador + `guardar_cotizacion` con aprobación | sí, poco | fase 2 |
@@ -305,21 +332,25 @@ ninguna instrucción venida de datos de terceros se obedeció.
 
 ## Decisiones tomadas
 
-1. **Tarifa por hora**: $70.000 COP o US$30 (1 oct 2026).
-2. **Capacitación**: 8 horas, $1.000.000 COP por sesión cerrada de hasta 20
-   personas. Publicado el mismo día en `training_programs` (id 1), visible en
-   `/capacitacion-ia` y `/en/capacitacion-ia`.
-3. **Mantenimiento**: sin precio fijo; depende del proyecto y se cotiza en
-   horas al mes.
-4. **Dónde vive**: terminal y panel.
+Todas del 1 oct 2026.
 
-## Decisiones pendientes de Mike
+1. **Tarifa por hora**: $70.000 COP o US$30.
+2. **Horas por componente**: la tabla de "Software a la medida".
+3. **Operación**: desde $4.500.000 COP (por debajo de la suma mínima de la
+   tabla, elegido a sabiendas).
+4. **Capacitación**: 8 horas, $1.000.000 COP por sesión cerrada de hasta 20
+   personas, y $40.000 por persona adicional. Publicado en `training_programs`
+   (id 1), visible en `/capacitacion-ia`. En inglés sigue en pesos.
+5. **Mantenimiento**: sin precio fijo; se cotiza en horas al mes.
+6. **Reglas**: 50 % / 50 %, validez de 15 días, mínimo de $650.000, colchón
+   fijo del 20 %.
+7. **Escrituras**: entran las cuatro (cuentas de cobro, cotizaciones,
+   proyectos e hitos, seguimiento y mensajes), todas con aprobación.
+8. **Dónde vive**: terminal y panel.
 
-1. **Rangos de horas** de los componentes de software (puedo proponer una
-   primera tabla para corregir).
-2. **Precio piso de Operación** (hipótesis: $4.500.000 COP, unas 64 h).
-3. **Grupos de más de 20 personas** en capacitación, y si la versión en inglés
-   lleva precio en USD.
-4. **Reglas comerciales**: anticipo, validez, mínimo por proyecto, colchón.
-5. **Qué escrituras entran** de la tabla de acciones (todas, o empezar con
-   menos).
+## Pendiente
+
+- El temario de la capacitación se escribió para 4 h; ahora son 8.
+- Publicar Operación en `/paginas-web` (hoy su precio es `null`, "a
+  convenir") cuando `PRICES` pase al tarifario en la fase 1.
+- Redondeo de precios (propuesta: $50.000 COP o $50 USD).
