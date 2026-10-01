@@ -3,6 +3,7 @@
 // Sin dependencias externas: usa fetch + node:tls.
 
 import tls from 'node:tls'
+import { assertPublicHost } from './ssrf-guard'
 
 export type MonitorState = 'up' | 'degraded' | 'down' | 'unknown'
 
@@ -29,6 +30,11 @@ export type MonitorInput = {
 }
 
 const REQUEST_TIMEOUT_MS = 12_000
+// Las redirecciones se siguen a mano para validar CADA destino: con
+// redirect: 'follow', una URL pública que responde 302 a 169.254.169.254
+// convertía al monitor en un proxy hacia la red interna (SSRF). La URL la
+// escribe el admin, pero un sitio vigilado puede cambiar su redirección.
+const MAX_SALTOS = 5
 const SSL_TIMEOUT_MS = 8_000
 
 /** Sondea una URL una vez. Nunca lanza: cualquier fallo se devuelve como caída. */
@@ -38,12 +44,27 @@ export async function probe(m: MonitorInput): Promise<CheckOutcome> {
   const timeout = setTimeout(() => controller.abort(), techo)
   const started = Date.now()
   try {
-    const res = await fetch(m.url, {
-      method: m.method ?? 'GET',
-      headers: { 'User-Agent': 'codebymike-monitor/1.0 (+https://codebymike.net)' },
-      signal: controller.signal,
-      redirect: 'follow',
-    })
+    let url = m.url
+    let metodo = m.method ?? 'GET'
+    let res: Response
+    for (let salto = 0; ; salto++) {
+      const destino = new URL(url)
+      if (destino.protocol !== 'http:' && destino.protocol !== 'https:') throw new Error(`Protocolo no permitido: ${destino.protocol}`)
+      await assertPublicHost(destino.hostname)
+      res = await fetch(url, {
+        method: metodo,
+        headers: { 'User-Agent': 'codebymike-monitor/1.0 (+https://codebymike.net)' },
+        signal: controller.signal,
+        redirect: 'manual',
+      })
+      const location = res.headers.get('location')
+      if (res.status < 300 || res.status >= 400 || !location) break
+      if (salto >= MAX_SALTOS) throw new Error(`Demasiadas redirecciones (>${MAX_SALTOS})`)
+      await res.body?.cancel().catch(() => {})
+      url = new URL(location, url).href
+      // Como hace el navegador: tras una redirección, un POST pasa a GET.
+      if (metodo !== 'HEAD') metodo = 'GET'
+    }
     const responseMs = Date.now() - started
     const expected = m.expectedStatus ?? 200
 
@@ -81,7 +102,17 @@ export async function probe(m: MonitorInput): Promise<CheckOutcome> {
 }
 
 /** Lee la fecha de expiración del certificado TLS abriendo un socket. null si falla o no es https. */
-export function fetchSslExpiry(rawUrl: string): Promise<Date | null> {
+export async function fetchSslExpiry(rawUrl: string): Promise<Date | null> {
+  // Abrir un socket es tan SSRF como un fetch: el mismo guardia, antes.
+  try {
+    await assertPublicHost(new URL(rawUrl).hostname)
+  } catch {
+    return null
+  }
+  return leerExpiracion(rawUrl)
+}
+
+function leerExpiracion(rawUrl: string): Promise<Date | null> {
   let host: string
   let port: number
   try {

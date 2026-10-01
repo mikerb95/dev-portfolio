@@ -4,14 +4,17 @@ import { appSettings, cronRuns } from '../db/schema'
 import { eq, gt, max } from 'drizzle-orm'
 import { CRONS } from '../data/automatizaciones'
 import {
+  CADENCIA_MAX_BITACORA_MIN,
   decidirAvisos,
   jobsEnSilencio,
   parseEstado,
   tocaChequear,
   ventanaMin,
+  vigiladosUnicos,
   type CronVigilado,
   type Silencio,
 } from './cron-silencio'
+import { ultimasFueraDeBitacora } from './cron-largos'
 
 // Bitácora de ejecuciones de los crons.
 //
@@ -150,7 +153,10 @@ export async function silenciosPorAvisar(ahora: Date): Promise<Silencio[]> {
     if (!tocaChequear(previo, ahora)) return []
 
     const desde = new Date(ahora.getTime() - ventanaMin(VIGILADOS) * 60_000)
-    const silencios = jobsEnSilencio(VIGILADOS, await ultimasCorridas(desde), ahora)
+    const ultimas = await ultimasCorridas(desde)
+    const largos = vigiladosUnicos(VIGILADOS).filter((v) => v.cadaMin > CADENCIA_MAX_BITACORA_MIN).map((v) => v.job)
+    for (const [job, d] of await ultimasFueraDeBitacora(largos)) ultimas.set(job, d)
+    const silencios = jobsEnSilencio(VIGILADOS, ultimas, ahora)
 
     const { avisos, estado } = decidirAvisos(silencios, previo, ahora)
 

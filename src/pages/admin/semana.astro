@@ -1,0 +1,121 @@
+---
+// Resumen semanal de operación (etapa 11 del roadmap). Lo escribe el cron de
+// los lunes (/api/cron/resumen-semanal) y se guarda en app_settings: las
+// últimas 12 semanas, sin tabla nueva. El botón genera el de la semana pasada
+// a mano con el mismo flujo.
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { leerHistorial } from '../../lib/resumen-semanal-db'
+import { nombreCategoria, type Resumen } from '../../lib/resumen-semanal'
+
+let historial: Resumen[] = []
+let errorBase = false
+try {
+  historial = await leerHistorial()
+} catch {
+  errorBase = true
+}
+const [ultimo, ...anteriores] = historial
+const fecha = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+const rango = (r: Resumen) => `${fecha.format(new Date(`${r.desde}T12:00:00Z`))} al ${fecha.format(new Date(`${r.hasta}T12:00:00Z`))}`
+const num = new Intl.NumberFormat('es-CO')
+
+// El texto llega como encabezados "## " y viñetas "- ": se pinta como bloques,
+// sin interpretar HTML (Astro escapa todo lo que va entre llaves).
+type Bloque = { tipo: 'h'; texto: string } | { tipo: 'li'; texto: string } | { tipo: 'p'; texto: string }
+function bloques(texto: string): Bloque[] {
+  return texto
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => (l.startsWith('## ') ? { tipo: 'h', texto: l.slice(3) } : /^[-*•]\s+/.test(l) ? { tipo: 'li', texto: l.replace(/^[-*•]\s+/, '') } : { tipo: 'p', texto: l }))
+}
+---
+
+<AdminLayout title="Resumen semanal">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <p class="text-[13px] text-ink-200 max-w-2xl">
+      Cada lunes a las 7:00 una IA redacta la semana anterior a partir de cifras agregadas (sin IPs ni rutas) y el titular llega
+      al celular. Si no hay API key o la API falla, el resumen se arma igual, sin IA.
+    </p>
+    <button id="generar" type="button" class="h-10 px-4 rounded-xl bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow disabled:opacity-40 transition-colors">
+      Generar el de la semana pasada
+    </button>
+  </div>
+  <p id="estado" class="text-[12px] font-mono text-ink-300 mb-4" aria-live="polite"></p>
+
+  {errorBase && <p class="rounded-2xl glass p-5 text-ember text-[14px]">No se pudo leer el historial.</p>}
+  {!errorBase && !ultimo && <p class="rounded-2xl glass p-5 text-ink-200 text-[14px]">Todavía no hay resúmenes. El primero llega el próximo lunes, o genéralo con el botón.</p>}
+
+  {ultimo && (
+    <article class="rounded-2xl glass p-6 md:p-8">
+      <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Semana del {rango(ultimo)}</p>
+      <h2 class="mt-3 text-2xl md:text-3xl font-medium tracking-tight text-ink-50 max-w-3xl">{ultimo.titular}</h2>
+      <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="cifra"><b>{ultimo.datos.uptime.length}</b><span>sitios vigilados</span></div>
+        <div class="cifra"><b>{ultimo.datos.incidentes.total}</b><span>incidentes · {num.format(ultimo.datos.incidentes.minutos)} min</span></div>
+        <div class="cifra"><b>{num.format(ultimo.datos.seguridad.intentos)}</b><span>intentos de ataque</span></div>
+        <div class="cifra"><b>{ultimo.datos.crons.fallos}</b><span>fallos en tareas programadas</span></div>
+      </div>
+      <div class="cuerpo mt-6">
+        {bloques(ultimo.texto).map((b) => (b.tipo === 'h' ? <h3>{b.texto}</h3> : b.tipo === 'li' ? <p class="li">{b.texto}</p> : <p>{b.texto}</p>))}
+      </div>
+      {ultimo.datos.seguridad.porCategoria.length > 0 && (
+        <p class="mt-5 text-[12px] text-ink-300">
+          Ataques por tipo: {ultimo.datos.seguridad.porCategoria.slice(0, 5).map((c) => `${nombreCategoria(c.categoria)} (${num.format(c.intentos)})`).join(' · ')}
+        </p>
+      )}
+      <p class="mt-4 text-[11px] font-mono text-ink-300">
+        {ultimo.conIa ? `Redactado por Claude · US$${ultimo.costoUsd.toFixed(3)}` : 'Armado sin IA'} · generado {new Date(ultimo.creado).toLocaleString('es-CO', { timeZone: 'America/Bogota' })}
+      </p>
+    </article>
+  )}
+
+  {anteriores.length > 0 && (
+    <section class="mt-8">
+      <p class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Semanas anteriores</p>
+      <div class="grid gap-2">
+        {anteriores.map((r) => (
+          <details class="rounded-2xl glass">
+            <summary class="flex flex-wrap items-baseline gap-x-4 gap-y-1 p-4 cursor-pointer">
+              <span class="font-mono text-[12px] text-ink-300">{rango(r)}</span>
+              <span class="text-[14px] text-ink-50">{r.titular}</span>
+            </summary>
+            <div class="cuerpo px-4 pb-4">
+              {bloques(r.texto).map((b) => (b.tipo === 'h' ? <h3>{b.texto}</h3> : b.tipo === 'li' ? <p class="li">{b.texto}</p> : <p>{b.texto}</p>))}
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
+  )}
+</AdminLayout>
+
+<style>
+  .cifra { padding: .9rem 1rem; border-radius: 1rem; background: rgb(255 255 255 / .03); border: 1px solid rgb(255 255 255 / .06); }
+  .cifra b { display: block; font-size: 22px; font-weight: 500; color: var(--color-ink-50); }
+  .cifra span { font-size: 12px; color: var(--color-ink-200); }
+  .cuerpo h3 { margin-top: 1.1rem; font-family: var(--font-mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--color-cyan); }
+  .cuerpo p { margin-top: .45rem; font-size: 15px; line-height: 1.55; color: var(--color-ink-100); max-width: 70ch; }
+  .cuerpo p.li { position: relative; padding-left: 1.1rem; }
+  .cuerpo p.li::before { content: ''; position: absolute; left: 0; top: .7em; width: .5rem; height: 2px; background: var(--color-lime); }
+  details summary { list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+</style>
+
+<script>
+  const boton = document.getElementById('generar') as HTMLButtonElement | null
+  const estado = document.getElementById('estado')
+  boton?.addEventListener('click', async () => {
+    boton.disabled = true
+    if (estado) estado.textContent = 'Generando… (hasta un minuto si redacta la IA)'
+    try {
+      const res = await fetch('/api/admin/semana', { method: 'POST' })
+      const r = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(r.error ?? `HTTP ${res.status}`)
+      location.reload()
+    } catch (err) {
+      if (estado) estado.textContent = `No se pudo: ${err instanceof Error ? err.message : err}`
+      boton.disabled = false
+    }
+  })
+</script>

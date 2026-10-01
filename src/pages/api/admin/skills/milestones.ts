@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro'
 import { db } from '../../../../db'
 import { skillMilestones } from '../../../../db/schema'
 import { and, eq, sql } from 'drizzle-orm'
-import { dayKeyOf } from '../../../../lib/skills'
+import { dayKeyOf, esUrlWeb } from '../../../../lib/skills'
 
 const STATUSES = ['pendiente', 'en_curso', 'hecho'] as const
 type Status = (typeof STATUSES)[number]
@@ -51,6 +51,11 @@ export const PATCH: APIRoute = async ({ request }) => {
   }
   if (status !== undefined && !STATUSES.includes(status as Status)) {
     return json({ error: 'Estado inválido' }, 400)
+  }
+  // La evidencia se pinta como enlace: solo http(s). Un `javascript:` guardado
+  // aquí sería código ejecutándose en el panel con sesión de admin.
+  if (evidenceUrl && !esUrlWeb(String(evidenceUrl))) {
+    return json({ error: 'La evidencia tiene que ser un enlace http(s)' }, 400)
   }
 
   // La fecha de cierre se pone al pasar a "hecho" y se limpia al salir: es la

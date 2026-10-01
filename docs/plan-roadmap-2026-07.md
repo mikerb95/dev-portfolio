@@ -53,11 +53,11 @@
 | 4 | ✅ Playwright e2e | infra de calidad | ~1-2 sesiones |
 | 5 | ✅ LAB Fase 6 - SAST + a11y (+ DAST, 23 jul) | LAB | ~2-3 días |
 | 6 | ✅ LAB Fase 7 - Mutation + contratos | LAB | ~2 días |
-| 7 | LAB Fase 5 - Load testing k6 | LAB | ~2 días |
+| 7 | ✅ LAB Fase 5 - Load testing k6 (18 sep) | LAB | ~2 días |
 | 8 | ✅ Remate vitrina seguridad (código) | remate | ~1 h |
-| 9 | Changelog público | feature | ~½ sesión |
-| 10 | Página `/architecture` renovada | mejora | ~½ sesión |
-| 11 | Briefing semanal con IA | feature | ~1 sesión |
+| 9 | ✅ Changelog público (1 oct) | feature | ~½ sesión |
+| 10 | ✅ Página `/architecture` renovada (1 oct) | mejora | ~½ sesión |
+| 11 | ✅ Briefing semanal con IA (1 oct) | feature | ~1 sesión |
 | T | Artículos `/notes` faltantes | transversal | 1 por etapa |
 
 Racional del orden: primero lo barato y visible (1-2), luego el feature estrella
@@ -378,7 +378,16 @@ El micro-SIEM está implementado (Fases 0-6, ver plan propio).
 3. ✅ Acciones manuales cerradas el 27 sep 2026: las 3 reglas del WAF publicadas por CLI
    y el cron `security-rollup` (ya corría cada 15 min). Detalle en `pendientes.md`.
 
-## Etapa 9 - Changelog público
+## Etapa 9 - Changelog público ✅ (1 oct 2026)
+
+Entregada como RF-034. Decisiones que surgieron al implementarla:
+- Unos 20 commits al día: cada semana muestra sus 20 cambios más recientes y el
+  resto en un desplegable, y solo la semana actual va abierta.
+- Las páginas de la API se piden en paralelo leyendo la cabecera `Link` de la
+  primera; en serie eran 9 s en frío.
+- Un mensaje sensible se descarta entero (no se recorta). Ojo: los títulos son
+  los del auto-commit tal cual, y algunos exageran lo que hizo el commit.
+
 
 **Objetivo**: `/changelog` generado desde los commits de main - barato porque la
 integración GitHub ya existe (`/api/github`).
@@ -399,7 +408,14 @@ Pasos:
 Aceptación: refleja los últimos commits reales; un commit `chore:` no aparece;
 test del parser.
 
-## Etapa 10 - `/architecture` renovada ("cómo está construido esto")
+## Etapa 10 - `/architecture` renovada ("cómo está construido esto") ✅ (1 oct 2026)
+
+Entregada como RF-035. No se dibujó un SVG nuevo: la estructura de capas ya
+existente es el diagrama del camino de una petición, y el diagrama formal es el
+UML de despliegue de `/docs` (motor propio), enlazado desde la página para no
+tener dos fuentes de verdad. El middleware quedó como capa propia y se añadió
+una sección de límites conocidos.
+
 
 Revisar `src/pages/architecture.astro` (176 líneas actuales) y convertirla en el
 tour guiado del sistema:
@@ -413,7 +429,20 @@ tour guiado del sistema:
 3. Sección de decisiones/trade-offs (fail-open, Turso free tier, sin frameworks
    de front, crons externos vs Vercel cron) - honesta, con límites conocidos.
 
-## Etapa 11 - Briefing semanal con IA
+## Etapa 11 - Briefing semanal con IA ✅ (1 oct 2026)
+
+Entregada como RF-409 (`/admin/semana`, cron `resumen-semanal` los lunes 12:00 UTC
+desde vercel.json). Decisiones que cambiaron respecto al plan de abajo:
+- Modelo: Opus 5.5 con esfuerzo bajo, el mismo del analista, y no Haiku 4.5. A
+  una llamada por semana (unos US$0,02) la diferencia es de centavos y se
+  reutiliza la regla de credencial y el respaldo ante negativas.
+- Sin tabla nueva ni reutilizar `briefings` (son cotizaciones de clientes): el
+  historial de 12 semanas vive en `app_settings`.
+- Fuera web vitals (sin rollup, escanear una semana es caro) y hallazgos SAST.
+- Un cron semanal no puede juzgarse con la bitácora de 48 h: los de más de un
+  día dicen su última corrida desde `app_settings` (`src/lib/cron-largos.ts`).
+- Pendiente: el artículo de `/notes` de la cola (punto 5).
+
 
 **Objetivo**: uso de IA con criterio - pequeño, útil, sobre infra propia, sin
 chatbot genérico.

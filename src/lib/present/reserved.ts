@@ -29,6 +29,7 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   'capacitacion',
   'capacitacion-ia',
   'certifications',
+  'changelog',
   'cobrar',
   'contact',
   'cv',

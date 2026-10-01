@@ -98,6 +98,14 @@ export function vigiladosUnicos(vigilados: readonly CronVigilado[]): CronVigilad
 }
 
 /**
+ * Cadencia más larga que se juzga leyendo la bitácora. Un cron semanal
+ * estiraría la ventana a 8 días (cuatro veces las filas escaneadas en cada
+ * chequeo, para un job que corre una vez); los de más de un día dicen su
+ * última corrida desde app_settings (ver `src/lib/cron-largos.ts`).
+ */
+export const CADENCIA_MAX_BITACORA_MIN = 1440
+
+/**
  * Ventana de bitácora que hay que leer para poder juzgar a todos: la tolerancia
  * más larga, más un margen.
  *
@@ -105,7 +113,7 @@ export function vigiladosUnicos(vigilados: readonly CronVigilado[]): CronVigilad
  * escaneo de la tabla entera: Turso factura filas escaneadas, y esto corre solo.
  */
 export function ventanaMin(vigilados: readonly CronVigilado[]): number {
-  const unicos = vigiladosUnicos(vigilados)
+  const unicos = vigiladosUnicos(vigilados).filter((v) => v.cadaMin <= CADENCIA_MAX_BITACORA_MIN)
   if (unicos.length === 0) return 0
   return Math.max(...unicos.map((v) => toleranciaMin(v.cadaMin))) + TOPE_EXTRA_MIN
 }
@@ -194,6 +202,6 @@ export function describirSilencio(s: Silencio): string {
       : s.silencioMin >= 120
         ? `callado ${Math.round(s.silencioMin / 60)}h`
         : `callado ${s.silencioMin}min`
-  const esperado = s.cadaMin >= 1440 ? 'diario' : `cada ${s.cadaMin}min`
+  const esperado = s.cadaMin >= 7 * 1440 ? 'semanal' : s.cadaMin >= 1440 ? 'diario' : `cada ${s.cadaMin}min`
   return `⏱ cron ${s.job} ${cuanto} (${esperado}, ${s.origen})`
 }

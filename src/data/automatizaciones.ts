@@ -191,6 +191,20 @@ export const CRONS: readonly Cron[] = [
     },
   },
   {
+    job: 'resumen-semanal',
+    horario: { es: 'lunes 12:00', en: 'Mondays 12:00' },
+    cadaMin: 7 * 1440,
+    origen: 'vercel',
+    hace: {
+      es: 'Junta las cifras de la semana anterior, una IA las redacta en un resumen corto y el titular llega al celular.',
+      en: 'Gathers the previous week, an AI writes it up as a short summary and the headline reaches my phone.',
+    },
+    siFalla: {
+      es: 'La semana no se resume; las cifras siguen en cada panel.',
+      en: 'The week goes unsummarized; the numbers are still in each panel.',
+    },
+  },
+  {
     job: 'backup',
     horario: '03:00',
     cadaMin: 1440,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
+import { esUrlWeb,
   addDays,
   buildHeatmap,
   computeAchievements,
@@ -267,5 +267,17 @@ describe('formato', () => {
     expect(formatMinutes(45)).toBe('45m')
     expect(formatMinutes(60)).toBe('1h')
     expect(formatMinutes(150)).toBe('2h 30m')
+  })
+})
+
+describe('esUrlWeb (evidencia de un hito)', () => {
+  it('acepta http y https', () => {
+    expect(esUrlWeb('https://github.com/mikerb95/x/pull/3')).toBe(true)
+    expect(esUrlWeb('http://localhost:3000/api')).toBe(true)
+  })
+  it('rechaza lo que ejecutaría código o no es un enlace', () => {
+    for (const v of ['javascript:alert(1)', 'data:text/html,<script>', 'vbscript:x', 'github.com/x', '', '   ']) {
+      expect(esUrlWeb(v)).toBe(false)
+    }
   })
 })

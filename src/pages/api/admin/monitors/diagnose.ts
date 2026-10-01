@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { normalizeTarget, diagnosticSuite } from '../../../../lib/diagnostics'
+import { assertPublicHost } from '../../../../lib/ssrf-guard'
 
 export const prerender = false
 
@@ -16,6 +17,14 @@ export const POST: APIRoute = async ({ request }) => {
 
   const target = normalizeTarget(input)
   if (!target) return json({ error: 'Dominio o URL inválida' }, 400)
+
+  // Mismo guardia que el diagnóstico público (/api/lab/site-check): que la
+  // ruta sea solo del admin no impide pedirle que sondee la red interna.
+  try {
+    await assertPublicHost(target.hostname)
+  } catch {
+    return json({ error: 'Ese destino apunta a una red privada o reservada' }, 400)
+  }
 
   const suite = diagnosticSuite(target)
   const enc = new TextEncoder()
