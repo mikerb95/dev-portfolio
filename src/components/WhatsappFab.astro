@@ -137,12 +137,15 @@ const textos = JSON.stringify({
           <h2 id="asesor-titulo" class="text-[14px] font-semibold text-ink-50 leading-tight">{a.titulo}</h2>
           <p class="text-[12px] text-ink-200 leading-snug">{a.subtitulo}</p>
         </div>
+        <button type="button" id="asesor-reiniciar" class="grid place-items-center h-8 w-8 rounded-lg text-ink-200 hover:text-ink-50 hover:bg-ink-700 focus-visible:outline-2 focus-visible:outline-cyan cursor-pointer" aria-label={a.reiniciar} title={a.reiniciar} hidden>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>
+        </button>
         <button type="button" id="asesor-cerrar" class="-mr-1 grid place-items-center h-8 w-8 rounded-lg text-ink-200 hover:text-ink-50 hover:bg-ink-700 focus-visible:outline-2 focus-visible:outline-cyan cursor-pointer" aria-label={a.cerrar}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
         </button>
       </header>
 
-      <div id="asesor-log" class="asesor-log flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3" aria-live="polite">
+      <div id="asesor-log" class="asesor-log relative flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3" aria-live="polite">
         <p class="asesor-burbuja asesor-burbuja--ia">{a.saludo}</p>
       </div>
 
@@ -183,12 +186,9 @@ const textos = JSON.stringify({
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
           </button>
         </div>
-        <div class="mt-2 flex items-center justify-between gap-3 text-[11.5px]">
+        <div class="mt-2 flex items-center justify-between gap-3 text-[11.5px] whitespace-nowrap">
           <span id="asesor-restantes" class="text-ink-200"></span>
-          <span class="flex items-center gap-3">
-            <button type="button" id="asesor-reiniciar" class="text-ink-200 hover:text-ink-50 underline-offset-2 hover:underline cursor-pointer" hidden>{a.reiniciar}</button>
-            <a href={href} target="_blank" rel="noopener" class="text-[#5ee08f] hover:underline underline-offset-2" data-analytics="asesor-hablar-mike">{a.hablarMike}</a>
-          </span>
+          <a href={href} target="_blank" rel="noopener" class="text-[#5ee08f] hover:underline underline-offset-2" data-analytics="asesor-hablar-mike">{a.hablarMike}</a>
         </div>
       </form>
     </section>
@@ -227,6 +227,14 @@ const textos = JSON.stringify({
   }
   .asesor-chat {
     height: min(36rem, calc(100dvh - var(--wa-bottom) - 6rem));
+  }
+  /* Con la modal de idioma abierta, el chat no la sigue hacia arriba (en el
+     celular terminaba encima de la barra de navegación): se queda abajo, por
+     encima de la modal y de la burbuja, y se cierra con su propia X. */
+  :global(html[data-lang-suggest='open']) .asesor-chat {
+    bottom: var(--wa-gap);
+    height: min(36rem, calc(100dvh - var(--wa-gap) - 6rem));
+    z-index: 80;
   }
   .asesor-menu:not([hidden]),
   .asesor-chat:not([hidden]) {
@@ -427,7 +435,14 @@ const textos = JSON.stringify({
       input.disabled = agotado || ocupado
       enviar.disabled = agotado || ocupado
       if (agotado) nota(t.agotado)
-      bajar()
+      // Una respuesta larga se muestra desde su comienzo, no desde el final:
+      // si no, quien lee en el celular cae en la última frase.
+      const ultima = log.querySelector<HTMLElement>('.asesor-burbuja:last-of-type')
+      if (estado.mensajes.at(-1)?.rol === 'asesor' && ultima && !agotado) {
+        log.scrollTop = Math.max(0, ultima.offsetTop - 12)
+      } else {
+        bajar()
+      }
     }
 
     function abrirMenu(si: boolean) {

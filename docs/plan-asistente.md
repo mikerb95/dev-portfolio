@@ -1,10 +1,11 @@
 # Plan: asistente del panel (con cotizador)
 
-> Estado: **propuesta, sin implementar** · Creado: 2026-10-01 · Primeras
-> decisiones de Mike: 2026-10-01 (ver "Decisiones tomadas")
+> Estado: **fase 1 y fase 8 (asesor público) implementadas**; el asistente
+> del panel sigue sin construir · Creado: 2026-10-01 · Primeras decisiones de
+> Mike: 2026-10-01 (ver "Decisiones tomadas")
 > Requisitos: RF-210 (asistente), RF-211 (cotizador) y RF-212 (asesor
 > público) en
-> `src/data/documentacion.ts`, ambos `planeado`.
+> `src/data/documentacion.ts`: RF-212 `implementado`, RF-210 y RF-211 `planeado`.
 > Relacionados: `docs/plan-analista-siem.md` (mismo patrón de agente),
 > `docs/plan-oferta-principal.md` (oferta y precios piso),
 > `docs/plan-briefings.md`, `docs/plan-cuentas-de-cobro.md`,
@@ -377,7 +378,7 @@ usar Sonnet 5.5 en los subagentes de lectura si el costo pesa.
 | 5 | Resto de escrituras: proyecto, hito, seguimiento, mensaje leído | sí, poco | fase 2 |
 | 6 | Pruebas con el modelo real: adversariales y banco de casos | ~US$3 por corrida | fases 3-5 |
 | 7 | Pantalla `/admin/asistente` con historial (motor de la API) | sí | fase 5 |
-| 8 | Asesor público en la burbuja de WhatsApp (capacidad 3): chat, cálculo, cierre en WhatsApp, límites | sí, poco | fase 1 |
+| 8 ✅ | Asesor público en la burbuja de WhatsApp (capacidad 3): chat, cálculo, cierre en WhatsApp, límites (1 oct 2026) | sí, poco | fase 1 |
 | 9 | Cierre: RF-210, RF-211 y RF-212 a `implementado`, nota en `/notes`, iteración | no | |
 
 ### Banco de casos (fase 6)
@@ -444,6 +445,52 @@ Decisiones que surgieron al implementar:
   pesos el mínimo es el precio de Presencia.
 - La guardia admite abreviaturas ("4,8 millones") con la precisión escrita,
   pero nunca más de un 3 % de margen.
+
+## Fase 8: qué quedó (1 oct 2026)
+
+Ojo con el historial: el commit `6fc375f` ("add public advisor capability in
+WhatsApp bubble") solo agregó la sección "Capacidad 3" de este plan y el
+RF-212 en `planeado`. No tenía código. Lo que sigue es lo que se construyó
+después, ese mismo día.
+
+| Archivo | Qué es |
+|---|---|
+| `src/components/WhatsappFab.astro` | En `/paginas-web`, `/capacitacion-ia` y `/contact` (y `/en`) la burbuja abre un menú: WhatsApp primero, "Resolver mis dudas con IA" después. En el resto del sitio sigue siendo el enlace de siempre. El chat es texto plano (`textContent`), recuerda la conversación solo en la pestaña (`sessionStorage`) y pinta el botón "Enviarle esto a Mike" cuando el asesor prepara el resumen. |
+| `src/lib/asesor/conocimiento.ts` | Lo que sabe, armado del tarifario y de los diccionarios de las dos páginas comerciales. Sin tarifa por hora ni horas por componente. |
+| `src/lib/asesor/herramientas.ts` | `calcular_precio` (plan, a la medida, capacitación) y `preparar_whatsapp`. El precio del mensaje de WhatsApp sale de la última cotización, nunca del texto del modelo. |
+| `src/lib/asesor/bucle.ts` | Valida el request, corre el modelo (máximo 4 llamadas), ejecuta herramientas y pasa la guardia de cifras con un reintento. |
+| `src/lib/asesor/prompt.ts`, `costo.ts`, `presupuesto.ts`, `motor.ts` | Instrucciones, costo con tarifa de Haiku 4.5, tope diario y conexión con la API. |
+| `src/pages/api/asesor.ts` | `GET` (¿disponible?) y `POST` (una pregunta). |
+| `src/lib/security/paths.ts` + `src/middleware.ts` | `isAsesorPath`: 20 preguntas por IP cada 10 minutos, con evento `ratelimit.asesor` en el micro-SIEM. |
+| `tests/asesor.test.ts`, `tests/asesor-presupuesto.test.ts` | 32 pruebas: conocimiento, herramientas, validación, bucle con modelo falso (precio inventado, historial manipulado, negativa, vueltas) y el contador de gasto contra SQLite real. |
+
+Decisiones que surgieron al construirlo:
+
+- **Sin transmisión palabra a palabra.** La guardia revisa la respuesta
+  completa antes de mostrarla; transmitirla enseñaría justo lo que la guardia
+  podría rechazar. Las respuestas tardan de 2 a 4 s, con indicador de "pensando".
+- **El historial lo guarda el navegador, y no se le cree.** Del historial
+  solo se toma texto, y los cálculos previos viajan como *pedidos* que el
+  servidor vuelve a ejecutar contra el tarifario. Un precio que solo existe en
+  un historial manipulado no pasa la guardia (hay prueba).
+- **Los "desde" publicados y la capacitación se pueden decir sin calcular**:
+  ya están en las páginas. Cualquier otra cifra sale de `calcular_precio`.
+- **Descubrimiento y entrega se suman solos** a todo proyecto a la medida: el
+  modelo tendía a olvidarlos y el rango salía por debajo de lo real.
+- **Sin mantenimiento en el asesor**: no tiene precio fijo y estimar las horas
+  al mes sería inventar alcance. Lo responde con la pregunta frecuente y
+  WhatsApp.
+- **El tope diario vive en una sola fila** de `app_settings` (`asesor_gasto`,
+  valor `AAAA-MM-DD|usd`, día de Bogotá), con suma atómica. Una fila por día
+  engordaría las diez páginas del panel que leen `app_settings` completa.
+  Falla cerrado: si no se puede leer, el asesor no responde.
+- **Costo medido** con la API real el 1 oct 2026: unos US$0,006 por pregunta
+  (8 preguntas = US$0,048). Una conversación completa de 8 preguntas ronda los
+  US$0,05, más que el estimado inicial de US$0,02. Con el tope por defecto de
+  US$1 alcanzan unas 170 preguntas al día. El prompt (~3.000 tokens) no llega
+  al mínimo de caché de Haiku, así que no se abarata con caché.
+- **Pendiente**: guardar el resumen como cotización en borrador y avisar con
+  ntfy (el "Opcional (después)" de la capacidad 3).
 
 ## Decisiones tomadas
 
