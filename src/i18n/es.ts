@@ -1350,7 +1350,7 @@ const es = {
       {
         nombre: 'A medida',
         para: 'Para negocios que venden y quieren crecer.',
-        tiempo: 'Según el proyecto',
+        tiempo: 'Lista en 3–6 semanas',
         incluye: [
           'Tienda en línea o sistema de reservas/citas',
           'Pagos en línea (tarjeta, PSE, Nequi)',
@@ -1398,7 +1398,7 @@ const es = {
       { q: '¿Cuánto cuesta mantenerla?', a: 'El dominio se renueva una vez al año (bajo costo). Si prefieres que yo me encargue de cuidarla y actualizarla cada mes, te cotizo un plan según lo que necesites. Los cambios grandes se cotizan aparte. Sin sorpresas.' },
       { q: '¿Puedo editarla después?', a: 'Sí. Podemos dejarla para que hagas cambios sencillos tú mismo, o me la dejas a mí y yo la mantengo. Como prefieras.' },
       { q: '¿Cómo se paga?', a: 'La mitad para empezar y la otra mitad cuando tu página está lista. La cotización que te mando vale 15 días.' },
-      { q: '¿Cuánto se demora?', a: 'Depende del plan: entre 3 días y un par de semanas. En la primera conversación te doy una fecha clara.' },
+      { q: '¿Cuánto se demora?', a: 'Depende del plan: desde 3 días para la más sencilla hasta 6 semanas para una tienda o un sistema de reservas. En la primera conversación te doy una fecha clara.' },
       { q: '¿Y si ya tengo dominio o redes?', a: 'Mejor aún. Trabajamos sobre lo que ya tienes y lo conectamos todo. No empiezas de cero.' },
     ],
     // Celular del hero (src/components/paginas-web/TelefonoDemo.astro): cuatro
@@ -2237,6 +2237,10 @@ const es = {
       {
         q: '¿Cómo sé quiénes de mi equipo asistieron y hasta dónde llegaron?',
         a: 'En el panel de empresa del aula (capacitaciones.codebymike.net/empresa), con una clave que se entrega a quien firma el contrato. Muestra quién se registró y qué módulos ha recorrido. Del asistente solo se guarda el nombre que escribe al entrar: ni correo, ni teléfono.',
+      },
+      {
+        q: '¿Cómo se paga?',
+        a: 'La mitad al confirmar la fecha y la otra mitad después de la sesión. La cotización vale 15 días.',
       },
       {
         q: '¿Qué queda después?',

@@ -1323,7 +1323,7 @@ const en = {
       {
         nombre: 'Custom',
         para: 'For businesses that sell and want to grow.',
-        tiempo: 'Depends on the project',
+        tiempo: 'Ready in 3–6 weeks',
         incluye: [
           'Online store or booking/appointment system',
           'Online payments (card, PSE, Nequi)',
@@ -1368,7 +1368,7 @@ const en = {
       { q: 'How much does it cost to maintain?', a: 'The domain renews once a year (low cost). If you would rather have me look after it and update it every month, I will quote a plan based on what you need. Major changes are quoted separately. No surprises.' },
       { q: 'Can I edit it later?', a: 'Yes. We can set it up so you can make simple changes yourself, or leave it with me and I maintain it. Whichever you prefer.' },
       { q: 'How do I pay?', a: 'Half to get started and the other half when your site is ready. The quote I send you is valid for 15 days.' },
-      { q: 'How long does it take?', a: "It depends on the plan: between 3 days and a couple of weeks. I'll give you a clear date in our first conversation." },
+      { q: 'How long does it take?', a: "It depends on the plan: from 3 days for the simplest one to 6 weeks for an online store or a booking system. I'll give you a clear date in our first conversation." },
       { q: 'What if I already have a domain or social media?', a: "Even better. We work with what you already have and connect it all. You don't start from zero." },
     ],
     demo: {
@@ -2184,6 +2184,10 @@ const en = {
       {
         q: 'How do I know who from my team attended and how far they got?',
         a: 'In the company dashboard of the classroom (capacitaciones.codebymike.net/empresa), with a password handed to whoever signs the contract. It shows who registered and which modules they have gone through. The only thing stored about an attendee is the name they type on the way in: no email, no phone.',
+      },
+      {
+        q: 'How do I pay?',
+        a: 'Half when the date is confirmed and the other half after the session. The quote is valid for 15 days.',
       },
       {
         q: 'What is left afterwards?',

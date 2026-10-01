@@ -36,11 +36,13 @@ describe('tarifario', () => {
     expect(etiquetaDesde(PAQUETES_WEB[2]!, 'en')).toBe('from $1,500 USD')
   })
 
-  it('las preguntas frecuentes de /paginas-web dicen las mismas condiciones de pago que el tarifario', () => {
+  it('las preguntas frecuentes de /paginas-web y /capacitacion-ia dicen las mismas condiciones de pago que el tarifario', () => {
     const pct = Math.round(REGLAS.anticipo * 100)
     expect(pct).toBe(50) // "la mitad" / "half" en el texto
     expect(es.paginasWeb.faqs.find((f) => f.q === '¿Cómo se paga?')?.a).toContain(`${REGLAS.validezDias} días`)
     expect(en.paginasWeb.faqs.find((f) => f.q === 'How do I pay?')?.a).toContain(`${REGLAS.validezDias} days`)
+    expect(es.capacitacionIa.faqs.find((f) => f.q === '¿Cómo se paga?')?.a).toContain(`${REGLAS.validezDias} días`)
+    expect(en.capacitacionIa.faqs.find((f) => f.q === 'How do I pay?')?.a).toContain(`${REGLAS.validezDias} days`)
   })
 
   it('cada componente tiene un rango de horas con sentido y un id único', () => {
