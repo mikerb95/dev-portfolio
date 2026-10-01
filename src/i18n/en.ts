@@ -88,10 +88,6 @@ const en = {
     githubTop3Value: 'Contributor',
     githubDevProgramLabel: 'Official member',
     githubDevProgramValue: 'Developer Program',
-    halloween: {
-      hud: 'specters',
-      aviso: 'Each specter is real hostile traffic: {n} requests classified by the micro-SIEM in {dias} days.',
-    },
     hud: {
       title: 'sys.monitor',
       boot: 'boot',
