@@ -265,6 +265,7 @@ describe('atender', () => {
 
   it('conserva la respuesta escrita junto a la llamada de WhatsApp', async () => {
     const c = calcular({ tipo: 'capacitacion', personas: 30 }, 'es')
+    if (c.tipo !== 'capacitacion') throw new Error('tipo')
     const { deps } = modelo([
       herramienta('calcular_precio', { tipo: 'capacitacion', personas: 30 }),
       respuesta(
