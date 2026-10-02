@@ -55,6 +55,7 @@ const es = {
     errorFallo: 'No pude responder esta vez. Intenta de nuevo o escríbele a Mike por WhatsApp.',
     errorNoDisponible: 'El asistente se tomó un descanso por hoy. Mike te responde por WhatsApp.',
     sugerenciasWeb: ['¿Qué incluye cada plan?', '¿Cuánto cuesta una tienda en línea?', '¿Cómo se paga?'],
+    sugerenciasGeneral: ['¿Qué servicios ofrece Mike?', '¿Cuánto cuesta una página web?', '¿Cómo se paga?'],
     sugerenciasCapacitacion: ['¿Cuánto cuesta la capacitación para 30 personas?', '¿Es presencial o remota?', '¿Cómo funciona?'],
   },
   nav: {

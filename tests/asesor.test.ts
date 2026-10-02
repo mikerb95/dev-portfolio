@@ -155,6 +155,7 @@ describe('validarEntrada', () => {
 
   it('acepta la página comercial y rechaza cualquier otra', () => {
     expect(validarEntrada({ ...ok, pagina: 'capacitacion-ia' })).toMatchObject({ pagina: 'capacitacion-ia' })
+    expect(validarEntrada({ ...ok, pagina: 'sitio' })).toMatchObject({ pagina: 'sitio' })
     expect(validarEntrada({ ...ok, pagina: 'admin' })).toEqual({ error: 'formato' })
   })
 

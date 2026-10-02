@@ -54,6 +54,7 @@ const en = {
     errorFallo: "I couldn't answer this time. Try again or message Mike on WhatsApp.",
     errorNoDisponible: 'The assistant is resting for today. Mike will answer you on WhatsApp.',
     sugerenciasWeb: ['What does each plan include?', 'How much does an online store cost?', 'How do payments work?'],
+    sugerenciasGeneral: ['What services does Mike offer?', 'How much does a website cost?', 'How do payments work?'],
     sugerenciasCapacitacion: ['How much is the training for 30 people?', 'In person or remote?', 'How does it work?'],
   },
   nav: {

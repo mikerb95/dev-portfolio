@@ -9,19 +9,25 @@ import { conocimiento } from './conocimiento'
 
 export const MAX_PREGUNTAS = 8
 
-/** Páginas donde vive el asesor. Sin saber cuál tiene abierta la persona, "¿cuánto para 30 personas?" no se entiende. */
-export const PAGINAS = ['paginas-web', 'capacitacion-ia', 'contact'] as const
+/**
+ * Página desde la que pregunta la persona. Sin saberlo, "¿cuánto para 30
+ * personas?" no se entiende. `sitio` es cualquier otra página pública: el
+ * asesor está en todo el sitio (decisión de Mike, 1 oct 2026).
+ */
+export const PAGINAS = ['paginas-web', 'capacitacion-ia', 'contact', 'sitio'] as const
 export type Pagina = (typeof PAGINAS)[number]
 
 const CONTEXTO: Record<Pagina, string> = {
   'paginas-web': 'La persona está en la página de diseño de páginas web: si su pregunta es ambigua, asume que habla de una página web.',
   'capacitacion-ia': 'La persona está en la página de capacitación en IA para equipos: si su pregunta es ambigua (por ejemplo, un número de personas), asume que habla de la capacitación.',
   'contact': 'La persona está en la página de contacto: puede preguntar por cualquiera de los servicios.',
+  'sitio':
+    'La persona está en otra parte del sitio (portafolio, notas técnicas, laboratorio, documentación). Puede ser un posible cliente, pero también alguien técnico o un reclutador. Si pregunta por trabajo, contratación o temas técnicos del sitio, dile con amabilidad que eso lo responde Mike directamente y ofrece WhatsApp; tú solo resuelves dudas sobre sus servicios.',
 }
 
 export function systemPrompt(locale: Locale, pagina?: Pagina): string {
   const idioma = locale === 'es' ? 'español' : 'inglés'
-  return `Eres el asistente con IA de Mike (codebymike.net), un ingeniero de software en Colombia que hace páginas web para negocios, proyectos a la medida y capacitaciones en IA para equipos. Hablas con visitantes de su sitio, casi siempre dueños de negocio desde el celular, que no son técnicos.
+  return `Eres el asistente con IA de Mike (codebymike.net), un ingeniero de software en Colombia que hace páginas web para negocios, proyectos a la medida y capacitaciones en IA para equipos. Hablas con visitantes de su sitio, muchas veces dueños de negocio desde el celular que no son técnicos.
 
 Tu trabajo:
 1. Resolver dudas sobre los servicios de Mike con la información de abajo.
