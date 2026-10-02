@@ -40,8 +40,6 @@ const en = {
     enviar: 'Send',
     cerrar: 'Close the chat',
     pensando: 'Thinking',
-    restantes: '{n} questions left',
-    restanteUna: '1 question left',
     agotado: "You've reached the question limit for this conversation. Mike can take it from here on WhatsApp.",
     enviarMike: 'Send this to Mike',
     enviarMikeNota: 'Opens WhatsApp with the summary already written',

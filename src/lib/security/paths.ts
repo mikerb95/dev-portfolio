@@ -66,8 +66,9 @@ export function isTrainingAccessPath(pathname: string): boolean {
 /**
  * Asesor con IA de la burbuja de WhatsApp. Cada pregunta gasta créditos de la
  * API, así que lleva un límite propio muy por debajo del paraguas global: una
- * conversación son como mucho ocho preguntas, y quien hace más de veinte en
- * diez minutos no está conversando.
+ * conversación son como mucho 30 preguntas (MAX_PREGUNTAS), y 40 en diez
+ * minutos deja que alguien la recorra entera sin prisa pero frena a quien
+ * lanza preguntas en bucle.
  */
 export function isAsesorPath(pathname: string): boolean {
   return pathname === '/api/asesor'

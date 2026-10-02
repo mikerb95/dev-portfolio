@@ -283,7 +283,8 @@ WhatsApp; no es un chat general gratis.
 
 ### Contra el abuso (es un endpoint público que gasta créditos)
 
-- Máximo de unas 8 preguntas por conversación y respuestas cortas.
+- Máximo de 30 preguntas por conversación (eran 8; Mike lo subió el 1 oct
+  2026 y pidió no mostrar el contador) y respuestas cortas.
 - Rate limit durable por IP con `isRateLimitablePath` (`src/lib/security/paths.ts`),
   sin crear un limitador nuevo; el micro-SIEM registra los excesos.
 - Tope de gasto diario propio (`ASESOR_TOPE_DIARIO_USD`, propuesta US$1) que
@@ -464,7 +465,7 @@ después, ese mismo día.
 | `src/lib/asesor/bucle.ts` | Valida el request, corre el modelo (máximo 4 llamadas), ejecuta herramientas y pasa la guardia de cifras con un reintento. |
 | `src/lib/asesor/prompt.ts`, `costo.ts`, `presupuesto.ts`, `motor.ts` | Instrucciones, costo con tarifa de Haiku 4.5, tope diario y conexión con la API. |
 | `src/pages/api/asesor.ts` | `GET` (¿disponible?) y `POST` (una pregunta). |
-| `src/lib/security/paths.ts` + `src/middleware.ts` | `isAsesorPath`: 20 preguntas por IP cada 10 minutos, con evento `ratelimit.asesor` en el micro-SIEM. |
+| `src/lib/security/paths.ts` + `src/middleware.ts` | `isAsesorPath`: 40 preguntas por IP cada 10 minutos (eran 20, con el tope de 8 por conversación), con evento `ratelimit.asesor` en el micro-SIEM. |
 | `tests/asesor.test.ts`, `tests/asesor-presupuesto.test.ts` | 32 pruebas: conocimiento, herramientas, validación, bucle con modelo falso (precio inventado, historial manipulado, negativa, vueltas) y el contador de gasto contra SQLite real. |
 
 Decisiones que surgieron al construirlo:

@@ -41,8 +41,6 @@ const es = {
     enviar: 'Enviar',
     cerrar: 'Cerrar el chat',
     pensando: 'Pensando',
-    restantes: 'Te quedan {n} preguntas',
-    restanteUna: 'Te queda 1 pregunta',
     agotado: 'Llegaste al máximo de preguntas de esta conversación. Mike sigue contigo por WhatsApp.',
     enviarMike: 'Enviarle esto a Mike',
     enviarMikeNota: 'Abre WhatsApp con el resumen ya escrito',

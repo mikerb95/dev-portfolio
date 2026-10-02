@@ -34,8 +34,6 @@ const sugerencias =
 
 // Lo que el script necesita del diccionario, en un solo atributo.
 const textos = JSON.stringify({
-  restantes: a.restantes,
-  restanteUna: a.restanteUna,
   agotado: a.agotado,
   errorLimite: a.errorLimite,
   errorFallo: a.errorFallo,
@@ -182,8 +180,7 @@ const textos = JSON.stringify({
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
         </button>
       </div>
-      <div class="mt-2 flex items-center justify-between gap-3 text-[11.5px] whitespace-nowrap">
-        <span id="asesor-restantes" class="text-ink-200"></span>
+      <div class="mt-2 flex items-center justify-end text-[11.5px] whitespace-nowrap">
         <a href={href} target="_blank" rel="noopener" class="text-[#5ee08f] hover:underline underline-offset-2" data-analytics="asesor-hablar-mike">{a.hablarMike}</a>
       </div>
     </form>
@@ -452,8 +449,6 @@ const textos = JSON.stringify({
     marcas: Record<string, string[]>
   }
   type Textos = Record<
-    | 'restantes'
-    | 'restanteUna'
     | 'agotado'
     | 'errorLimite'
     | 'errorFallo'
@@ -494,7 +489,6 @@ const textos = JSON.stringify({
     const form = $<HTMLFormElement>('asesor-form')
     const input = $<HTMLTextAreaElement>('asesor-input')
     const enviar = $<HTMLButtonElement>('asesor-enviar')
-    const restantes = $('asesor-restantes')
     const reiniciar = $<HTMLButtonElement>('asesor-reiniciar')
     const ver = $<HTMLButtonElement>('asesor-ver')
     const verTexto = $('asesor-ver-texto')
@@ -574,10 +568,11 @@ const textos = JSON.stringify({
         if (cifras?.length) log.append(marca())
       })
       const hechas = preguntas()
+      // El límite no se muestra mientras se conversa (decisión de Mike): solo
+      // aparece el aviso si alguien de verdad llega al final.
       const quedan = Math.max(0, max - hechas)
       sugerencias.hidden = hechas > 0
       reiniciar.hidden = hechas === 0
-      restantes.textContent = quedan === 1 ? t.restanteUna : t.restantes.replace('{n}', String(quedan))
       if (estado.whatsapp) {
         enviarMike.href = `${waBase}?text=${encodeURIComponent(estado.whatsapp)}`
         vistaTexto.textContent = estado.whatsapp

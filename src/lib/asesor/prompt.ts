@@ -7,7 +7,7 @@
 import type { Locale } from '../../i18n'
 import { conocimiento } from './conocimiento'
 
-export const MAX_PREGUNTAS = 8
+export const MAX_PREGUNTAS = 30
 
 /**
  * Página desde la que pregunta la persona. Sin saberlo, "¿cuánto para 30

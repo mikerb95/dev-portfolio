@@ -308,7 +308,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Asesor con IA: cada POST es una llamada pagada a la API. El GET (¿está
     // disponible?) no gasta y no cuenta.
     if (isAsesorPath(canonicalPath) && method === 'POST') {
-      const r = await enforceLimit(`asesor:${ip}`, { limit: 20, windowMs: 600_000, deferUntil: 0.5 })
+      const r = await enforceLimit(`asesor:${ip}`, { limit: 40, windowMs: 600_000, deferUntil: 0.5 })
       if (!r.allowed) {
         recordEnforcementEvent({
           category: 'api_abuse',
