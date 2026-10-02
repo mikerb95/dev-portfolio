@@ -106,6 +106,19 @@ const RESPALDO: Record<Locale, string> = {
   en: "I'd rather not give you an answer I can't back up. Message Mike on WhatsApp and he'll confirm, usually the same day.",
 }
 
+/**
+ * Quita las rayas (— y –) del texto del modelo. El sitio no las usa en ningún
+ * texto de interfaz, y la instrucción del prompt no basta: Haiku las copia de
+ * la información publicada ("3–5 días") o las pone por costumbre. Un rango
+ * numérico pasa a "3 a 5" / "3 to 5"; cualquier otra raya, a coma.
+ */
+export function sinRayas(texto: string, locale: Locale): string {
+  const a = locale === 'es' ? 'a' : 'to'
+  return texto
+    .replace(/(\d)\s*[–—]\s*(?=[$\d])/g, `$1 ${a} `)
+    .replace(/\s*[—–]\s*/g, ', ')
+}
+
 function textoDe(m: Anthropic.Message): string {
   return m.content
     .filter((b): b is Anthropic.TextBlock => b.type === 'text')
@@ -170,7 +183,7 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
       continue
     }
 
-    const texto = [...previo, textoDe(r)].filter(Boolean).join('\n\n')
+    const texto = sinRayas([...previo, textoDe(r)].filter(Boolean).join('\n\n'), e.locale)
     if (!texto) return cerrar(RESPALDO[e.locale], 'vueltas')
     const g = verificarCifras(texto, permitidas(cotizaciones, e.locale))
     if (g.ok) return cerrar(texto, null)

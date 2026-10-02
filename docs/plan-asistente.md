@@ -249,8 +249,11 @@ versiones `/en`), abre dos opciones:
 - **"Escribirle a Mike por WhatsApp"**: la de siempre, primera y destacada.
 - **"Resolver mis dudas con IA"**: abre un chat pequeño en la misma página.
 
-En el resto del sitio (portada, `/notes`, `/lab`...) la burbuja sigue igual:
-ahí la visita suele ser técnica o de reclutadores. La IA nunca es paso
+**Cambio del 1 oct 2026 (Mike): el asesor está en todo el sitio**, no solo en
+las páginas comerciales. Fuera de ellas el chat envía `pagina: 'sitio'`, las
+sugerencias son generales ("¿Qué servicios ofrece Mike?") y el prompt sabe que
+la visita puede ser técnica o de un reclutador: a quien pregunta por trabajo
+o contratación lo manda con Mike por WhatsApp. La IA nunca es paso
 obligatorio antes de WhatsApp: el comprador de esta oferta prefiere hablar
 con una persona, y forzarlo espanta justo al que paga.
 
@@ -519,7 +522,9 @@ Lo que destapó la verificación (corregido):
   prompt ahora prohíbe decir que algo es gratis si no está en la información.
 - El resumen de WhatsApp va en primera persona, sin la etiqueta "Lo que
   necesito".
-- El modelo ya no usa rayas en los rangos.
+- El modelo ya no usa rayas en los rangos. La instrucción no bastaba (las
+  copiaba de "3–5 días"), así que el servidor las reemplaza (`sinRayas`):
+  "3 a 5", o coma.
 
 ## Decisiones tomadas
 

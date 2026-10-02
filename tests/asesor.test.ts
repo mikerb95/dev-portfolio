@@ -1,6 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { describe, expect, it } from 'vitest'
-import { atender, validarEntrada, type Entrada, MAX_LLAMADAS } from '../src/lib/asesor/bucle'
+import { atender, sinRayas, validarEntrada, type Entrada, MAX_LLAMADAS } from '../src/lib/asesor/bucle'
 import { conocimiento, cifrasPublicas } from '../src/lib/asesor/conocimiento'
 import { calcular, definiciones, mensajeWhatsapp, precioEnFrase } from '../src/lib/asesor/herramientas'
 import { gastoDelValor, hoyBogota } from '../src/lib/asesor/presupuesto'
@@ -306,6 +306,15 @@ describe('atender', () => {
     const r = await atender(entrada('x'), deps)
     expect(r.respaldo).toBe('vueltas')
     expect(vistos).toHaveLength(MAX_LLAMADAS)
+  })
+})
+
+describe('sinRayas', () => {
+  it('convierte rangos y quita rayas sueltas', () => {
+    expect(sinRayas('Lista en 3–5 días', 'es')).toBe('Lista en 3 a 5 días')
+    expect(sinRayas('from $2,050–$3,150 USD', 'en')).toBe('from $2,050 to $3,150 USD')
+    expect(sinRayas('getting started—ready in days', 'en')).toBe('getting started, ready in days')
+    expect(sinRayas('Presencia — la más sencilla', 'es')).toBe('Presencia, la más sencilla')
   })
 })
 
