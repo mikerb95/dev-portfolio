@@ -304,6 +304,29 @@ Decisiones:
 - Ojo: la terminal usa el `.env`, que apunta a la base de producción. Un
   bloqueo aprobado en la terminal se aplica de verdad en el sitio.
 
+## IP real al decidir un bloqueo (1 oct 2026) ✅
+
+El agente sigue sin ver IPs, pero el humano que aprueba sí necesita verlas:
+decidir solo con el argumento del agente es decidir a ciegas.
+
+- `src/lib/analista/detalle-origen.ts`: detalle de una IP en 7 días (la
+  ventana máxima de las herramientas): país, red, eventos e intentos, qué
+  hizo, primera y última vez, bloqueos previos y si está en la allowlist.
+  Solo amenazas, sin el rastro de auditoría. Usa el índice por IP.
+- **Terminal**: al pedir la aprobación imprime la IP y su detalle. La
+  traducción del alias ocurre en el proceso local y el resultado no vuelve al
+  agente. Fail-open: si la base no responde, se decide como antes.
+- **Panel**: botón "Ver IP real" en el diálogo de aprobación. La propuesta
+  sigue llegando sin IP (la pantalla se proyecta); la IP se pide a
+  `GET /api/admin/analista/origen?id=&alias=`, que solo resuelve alias que
+  salieron de ESE análisis (de `analista_ejecuciones.seudonimos`, o de la
+  tabla en memoria del motor Agent SDK mientras corre). `no-store`, vetado en
+  demo por el patrón de `/api/admin/analista`, y cada revelado queda en el
+  rastro (`analista.ip_revelada`) con el alias pedido, nunca con la IP.
+  "Ocultar" y cerrar el diálogo borran la IP del DOM, no solo la esconden.
+- `/admin/security` acepta `?ip=` en el explorador de eventos: el diálogo
+  enlaza ahí en otra pestaña.
+
 ## Pendiente del administrador
 
 Nada del plan original: la API key está en Vercel y las migraciones 0037 y

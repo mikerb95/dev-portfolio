@@ -327,6 +327,18 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
           </h2>
           <p class="mt-5 text-[13px] font-mono uppercase tracking-[.18em] text-ink-200">Su argumento</p>
           <p id="ap-motivo" class="mt-2 rounded-xl bg-white/[.03] border border-white/10 px-5 py-4 text-[19px] leading-relaxed text-ink-50"></p>
+          <!-- La IP real no viaja con la propuesta (la pantalla se proyecta):
+               se carga solo al pedirla y se borra al cerrar el diálogo. -->
+          <div class="mt-4">
+            <button type="button" id="ap-ver-ip" class="chip chip-boton">Ver IP real</button>
+            <div id="ap-ip" class="ap-ip" hidden>
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-[13px] font-mono uppercase tracking-[.18em] text-ink-200">Detrás del alias</p>
+                <button type="button" id="ap-ocultar-ip" class="chip chip-boton">Ocultar</button>
+              </div>
+              <div id="ap-ip-cuerpo" class="mt-3"></div>
+            </div>
+          </div>
           <p class="mt-4 text-[15px] leading-relaxed text-ink-200">
             {esCopia
               ? 'Estás sobre una copia: aprobar bloquea en la base local y no afecta al sitio real. En producción, ese origen no podría entrar durante 1 hora (24 horas si reincide, luego 7 días; nunca es permanente).'
@@ -540,6 +552,19 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
         box-shadow: 0 0 0 1px rgb(255 107 61 / .08), 0 30px 80px -20px rgb(255 107 61 / .35);
       }
       .aprobacion::backdrop { background: rgb(7 7 10 / .72); backdrop-filter: blur(6px); }
+      /* .chip fija display y le ganaría al atributo hidden. */
+      #ap-ver-ip[hidden] { display: none; }
+      .ap-ip { padding:1rem 1.25rem; border-radius: .75rem; background: rgb(255 255 255 / .03); border: 1px solid rgb(255 255 255 / .1); }
+      :global(.ap-ip .ip) { font-family: var(--font-mono); font-size: 24px; color: var(--color-ink-50); word-break: break-all; }
+      :global(.ap-ip dl) { margin-top: .8rem; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .4rem 1rem; font-size: 14px; }
+      :global(.ap-ip dt) { color: var(--color-ink-300); }
+      :global(.ap-ip dd) { color: var(--color-ink-50); }
+      @media (max-width: 480px) {
+        :global(.ap-ip dl) { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
+        :global(.ap-ip dd) { margin-bottom: .55rem; }
+      }
+      :global(.ap-ip .aviso) { margin-top: .8rem; font-size: 14px; color: var(--color-ember); }
+      :global(.ap-ip a) { display: inline-block; margin-top: .8rem; font-size: 14px; color: var(--color-cyan-glow); text-decoration: underline; text-underline-offset: 3px; }
 
       /* Piezas que pinta el script (fuera del scope de Astro). */
       :global(.item) {
@@ -899,9 +924,74 @@ const ETIQUETA_ORIGEN: Partial<Record<ResumenEjecucion['origen'], string>> = {
           document.querySelectorAll<HTMLInputElement>('input[name="motor"]').forEach((r) => (r.disabled = off))
         }
 
+        // ── IP real del origen propuesto ────────────────────────────────────
+        const verIp = $<HTMLButtonElement>('ap-ver-ip')!
+        const cajaIp = $<HTMLDivElement>('ap-ip')!
+        const cuerpoIp = $<HTMLDivElement>('ap-ip-cuerpo')!
+        let origenPropuesto = ''
+
+        // Se borra del DOM, no solo se esconde: con la pantalla proyectada, una
+        // IP que sigue en la página es una IP a un clic del inspector.
+        function ocultarIp() {
+          cuerpoIp.replaceChildren()
+          cajaIp.hidden = true
+          verIp.hidden = false
+          verIp.disabled = false
+          verIp.textContent = 'Ver IP real'
+        }
+
+        type Detalle = {
+          ip: string; pais: string | null; asn: string | null; eventos: number; hits: number; categorias: string[]
+          primeraVez: string | null; ultimaVez: string | null; bloqueadoHasta: string | null; bloqueosPrevios: number; protegido: boolean
+        }
+
+        async function mostrarIp() {
+          const id = ejecucionId
+          if (!id || !origenPropuesto) return
+          verIp.disabled = true
+          verIp.textContent = 'Cargando…'
+          const r = await fetch(`/api/admin/analista/origen?${new URLSearchParams({ id, alias: origenPropuesto })}`).catch(() => null)
+          const datos = r ? await r.json().catch(() => ({})) : {}
+          // El diálogo pudo cerrarse mientras llegaba la respuesta.
+          if (!dialogo.open) return ocultarIp()
+          if (!r?.ok) {
+            verIp.disabled = false
+            verIp.textContent = datos.error ?? 'No se pudo cargar. Reintentar'
+            return
+          }
+          const d = datos as Detalle
+          const filas: [string, string][] = [
+            ['País', d.pais ?? 'Sin dato'],
+            ['Red', d.asn ?? 'Sin dato'],
+            ['Últimos 7 días', `${num.format(d.eventos)} eventos (${num.format(d.hits)} intentos)`],
+            ['Qué hizo', d.categorias.length ? d.categorias.map((c) => CATEGORIAS[c] ?? c).join(' · ') : 'Nada en 7 días'],
+            ['Visto', d.primeraVez && d.ultimaVez ? `${fecha.format(new Date(d.primeraVez))} → ${fecha.format(new Date(d.ultimaVez))}` : 'Sin registro'],
+            ['Bloqueos previos', String(d.bloqueosPrevios)],
+            ['Ahora', d.bloqueadoHasta ? `Bloqueado hasta ${fecha.format(new Date(d.bloqueadoHasta))}` : 'Sin bloqueo vigente'],
+          ]
+          const dl = el('dl')
+          for (const [k, v] of filas) dl.append(el('dt', '', k), el('dd', '', v))
+          cuerpoIp.replaceChildren(el('p', 'ip', d.ip), dl)
+          if (d.protegido) cuerpoIp.append(el('p', 'aviso', 'Está en la allowlist: el bloqueo se rechazará aunque lo apruebes.'))
+          const enlace = el('a', '', 'Ver sus eventos en Seguridad')
+          enlace.href = `/admin/security?${new URLSearchParams({ ip: d.ip })}`
+          // Pestaña nueva: el análisis sigue esperando en esta.
+          enlace.target = '_blank'
+          enlace.rel = 'noopener'
+          cuerpoIp.append(enlace)
+          verIp.hidden = true
+          cajaIp.hidden = false
+        }
+
+        verIp.addEventListener('click', mostrarIp)
+        $('ap-ocultar-ip')!.addEventListener('click', ocultarIp)
+        dialogo.addEventListener('close', ocultarIp)
+
         function abrirAprobacion(origen: string, motivo: string) {
           $('ap-origen')!.textContent = origen
           $('ap-motivo')!.textContent = motivo
+          origenPropuesto = origen
+          ocultarIp()
           dialogo.showModal()
         }
 

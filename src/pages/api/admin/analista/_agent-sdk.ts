@@ -11,6 +11,7 @@
 // El prefijo `_` evita que Astro lo publique como ruta.
 
 import { randomUUID } from 'node:crypto'
+import type { Seudonimos } from '../../../../lib/analista/seudonimos'
 
 const ESPERA_MAX_MS = 10 * 60_000
 
@@ -18,6 +19,15 @@ const ESPERA_MAX_MS = 10 * 60_000
 // editarlos, y la decisión resolvería una promesa que nadie espera.
 const global = globalThis as typeof globalThis & { __analistaSdk?: Map<string, (aprobado: boolean) => void> }
 const pendientes = (global.__analistaSdk ??= new Map())
+
+// Tabla de alias de cada análisis vivo, para que el administrador pueda ver la
+// IP real antes de decidir (/api/admin/analista/origen). Vive lo que dura el
+// análisis: este motor no deja nada en la base.
+const globalSeudonimos = globalThis as typeof globalThis & { __analistaSdkSeudonimos?: Map<string, Seudonimos> }
+const seudonimosVivos = (globalSeudonimos.__analistaSdkSeudonimos ??= new Map())
+
+/** IP real detrás de un alias de un análisis de la Agent SDK en curso. */
+export const ipSdk = (id: string, alias: string): string | null => seudonimosVivos.get(id)?.ip(alias) ?? null
 
 export const esEjecucionSdk = (id: string) => id.startsWith('sdk-')
 
@@ -38,11 +48,13 @@ export async function correrConAgentSdk(pregunta: string, enviar: (evento: unkno
   if (!motor) throw new Error('La Agent SDK solo corre en local (npm run dev).')
 
   const id = `sdk-${randomUUID()}`
+  const seudonimos = new motor.Seudonimos()
+  seudonimosVivos.set(id, seudonimos)
   enviar({ tipo: 'ejecucion', id })
   try {
     await motor.consultar({
       pregunta,
-      seudonimos: new motor.Seudonimos(),
+      seudonimos,
       formato: 'pantalla',
       emitir: (e) => {
         if (e.tipo === 'sesion' || e.tipo === 'facturacion') return
@@ -68,5 +80,6 @@ export async function correrConAgentSdk(pregunta: string, enviar: (evento: unkno
     })
   } finally {
     decidirSdk(id, false)
+    seudonimosVivos.delete(id)
   }
 }

@@ -55,6 +55,7 @@ process.on('warning', (w) => {
 
 const { consultar, Seudonimos } = await import('./motor')
 const { registrarTurnoTerminal } = await import('../../src/lib/analista/ejecuciones')
+const { detalleOrigen, DIAS_DETALLE } = await import('../../src/lib/analista/detalle-origen')
 const guardarEnHistorial = !flag('--ips-reales')
 
 const seudonimos = new Seudonimos(flag('--ips-reales'))
@@ -67,6 +68,30 @@ rl.on('close', () => (entradaCerrada = true))
 
 const gris = (s: string) => `\x1b[2m${s}\x1b[0m`
 const ambar = (s: string) => `\x1b[33m${s}\x1b[0m`
+const hora = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+
+// La IP real se imprime aquí y en ningún otro sitio: la traducción del alias
+// ocurre en este proceso y el resultado no vuelve al agente. Fail-open: si la
+// base no responde, se decide con el argumento del agente, como antes.
+async function mostrarDetalle(alias: string) {
+  const ip = seudonimos.ip(alias)
+  if (!ip) {
+    console.log(ambar(`  ${alias} no salió de los datos de esta sesión: no hay IP que mostrar.`))
+    return
+  }
+  try {
+    const d = await detalleOrigen(ip)
+    const red = [d.pais, d.asn].filter(Boolean).join(' · ')
+    console.log(`  IP real: ${d.ip}${red ? ` · ${red}` : ''}  ${gris('(solo en esta terminal; el agente no la ve)')}`)
+    console.log(`  ${DIAS_DETALLE} días: ${d.eventos} eventos (${d.hits} hits)${d.categorias.length ? ` · ${d.categorias.join(', ')}` : ''}`)
+    if (d.primeraVez && d.ultimaVez) console.log(`  Visto: ${hora.format(new Date(d.primeraVez))} → ${hora.format(new Date(d.ultimaVez))}`)
+    const estado = d.bloqueadoHasta ? `bloqueado hasta ${hora.format(new Date(d.bloqueadoHasta))}` : 'sin bloqueo vigente'
+    console.log(`  Bloqueos previos: ${d.bloqueosPrevios} · ${estado}`)
+    if (d.protegido) console.log(ambar('  Está en la allowlist: el bloqueo se rechazará aunque lo apruebes.'))
+  } catch (err) {
+    console.log(ambar(`  IP real: ${ip} (no se pudo leer su detalle: ${err instanceof Error ? err.message : String(err)})`))
+  }
+}
 
 async function turno(prompt: string, sesion?: string) {
   let fin: Extract<EventoAnalista, { tipo: 'fin' }> | undefined
@@ -91,8 +116,9 @@ async function turno(prompt: string, sesion?: string) {
         if (!e.ok) console.log(ambar(`  El agente terminó con: ${e.motivo}`))
       }
     },
-    aprobar: async () => {
+    aprobar: async ({ origen }) => {
       if (entradaCerrada) return false
+      await mostrarDetalle(origen)
       const r = (await rl.question(ambar('  Aprobar [s/N]: ')).catch(() => '')).trim().toLowerCase()
       return r === 's' || r === 'si' || r === 'sí'
     },

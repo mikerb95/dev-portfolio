@@ -49,4 +49,5 @@ export const AUDIT_RULE_LABELS: Record<string, string> = {
   'analista.analisis': 'Análisis del analista de IA',
   'analista.bloqueo_aprobado': 'Bloqueo propuesto por el analista, aprobado',
   'analista.bloqueo_rechazado': 'Bloqueo propuesto por el analista, rechazado',
+  'analista.ip_revelada': 'IP real de un origen del analista revelada',
 }

@@ -89,6 +89,52 @@ test('aprobar el bloqueo: se aplica con TTL y queda auditado', async ({ page }) 
   expect(await page.content()).not.toContain(IP)
 })
 
+test('ver la IP real: solo al pedirla, auditada, y se borra al cerrar', async ({ page }) => {
+  const errores = recogerErrores(page)
+  await db.execute(`DELETE FROM security_events WHERE rule_id = 'analista.ip_revelada'`)
+  await page.goto('/admin/analista')
+  await page.getByRole('button', { name: '¿Qué pasó esta semana?' }).click({ force: true })
+  await expect(page.locator('#aprobacion')).toBeVisible({ timeout: 20_000 })
+  // La propuesta llega sin IP: la pantalla se proyecta.
+  expect(await page.content()).not.toContain(IP)
+
+  await page.locator('#ap-ver-ip').click({ force: true })
+  const caja = page.locator('#ap-ip')
+  await expect(caja).toBeVisible()
+  await expect(caja.locator('.ip')).toHaveText(IP)
+  await expect(caja).toContainText('1 eventos (5.000 intentos)')
+  await expect(caja).toContainText('Intentando entrar a cuentas')
+  await expect(caja.locator('a')).toHaveAttribute('href', `/admin/security?ip=${encodeURIComponent(IP)}`)
+  const rastro = await db.execute(`SELECT path FROM security_events WHERE rule_id = 'analista.ip_revelada'`)
+  expect(rastro.rows.map((r) => r.path)).toEqual(['/api/admin/analista/origen'])
+  // El rastro guarda el alias que se pidió, nunca la IP revelada.
+  expect(JSON.stringify(rastro.rows)).not.toContain(IP)
+
+  await page.locator('#ap-ocultar-ip').click({ force: true })
+  await expect(caja).toBeHidden()
+  expect(await page.content()).not.toContain(IP)
+
+  // Revelada otra vez y cerrado el diálogo: tampoco queda en la página.
+  await page.locator('#ap-ver-ip').click({ force: true })
+  await expect(caja.locator('.ip')).toHaveText(IP)
+  await page.locator('#ap-rechazar').click({ force: true })
+  await expect(page.locator('.veredicto')).toContainText('bloqueo rechazado', { timeout: 20_000 })
+  expect(await page.content()).not.toContain(IP)
+  expect(errores).toEqual([])
+})
+
+test('ver la IP real: un alias que no salió del análisis no se resuelve', async ({ page }) => {
+  await page.goto('/admin/analista')
+  await page.getByRole('button', { name: '¿Qué pasó esta semana?' }).click({ force: true })
+  await expect(page.locator('#aprobacion')).toBeVisible({ timeout: 20_000 })
+  const fila = (await db.execute(`SELECT id FROM analista_ejecuciones LIMIT 1`)).rows[0]
+  const r = await page.request.get(`/api/admin/analista/origen?id=${fila!.id}&alias=origen-99`)
+  expect(r.status()).toBe(404)
+  expect(await r.text()).not.toContain(IP)
+  await page.locator('#ap-rechazar').click({ force: true })
+  await expect(page.locator('.veredicto')).toContainText('bloqueo rechazado', { timeout: 20_000 })
+})
+
 test('cerrar la pestaña a mitad: el bloqueo pendiente se retoma al volver', async ({ page }) => {
   await page.goto('/admin/analista')
   await page.getByRole('button', { name: '¿Qué pasó esta semana?' }).click({ force: true })

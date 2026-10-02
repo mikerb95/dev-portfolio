@@ -83,11 +83,14 @@ const anomalies = await db
   .orderBy(desc(securityAnomalies.at))
   .limit(20)
 
-// Explorador con filtros (?cat=&sev=) sobre los últimos 7 días.
+// Explorador con filtros (?cat=&sev=&ip=) sobre los últimos 7 días. El de IP
+// lo usa el enlace del diálogo de aprobación del analista.
 const fCat = Astro.url.searchParams.get('cat') ?? ''
 const fSev = Astro.url.searchParams.get('sev') ?? ''
+const fIp = (Astro.url.searchParams.get('ip') ?? '').trim()
 const conds = [gte(securityEvents.at, d7)]
 if (fCat) conds.push(eq(securityEvents.category, fCat))
+if (fIp) conds.push(eq(securityEvents.ip, fIp))
 if (fSev) conds.push(eq(securityEvents.severity, fSev as 'low' | 'medium' | 'high' | 'critical'))
 const recent = await db
   .select()
@@ -345,7 +348,14 @@ const fmtTtl = (sec: number) => (sec < 3600 ? `${Math.round(sec / 60)}min` : sec
     <div class="rounded-2xl glass p-5">
       <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
         <h2 class="text-base font-medium text-ink-50">Eventos recientes (7 d)</h2>
-        <form method="get" class="flex items-center gap-2">
+        <form method="get" class="flex flex-wrap items-center gap-2">
+          {fIp && (
+            <span class="inline-flex items-center gap-2 h-8 px-3 text-[12px] rounded-lg bg-white/[.06] border border-white/10 text-ink-100">
+              <span class="font-mono">{fIp}</span>
+              <input type="hidden" name="ip" value={fIp} />
+              <a href={`?${new URLSearchParams({ ...(fCat ? { cat: fCat } : {}), ...(fSev ? { sev: fSev } : {}) })}`} class="text-ink-300 hover:text-ink-50" aria-label="Quitar el filtro de IP">×</a>
+            </span>
+          )}
           <select name="cat" class="h-8 px-2 text-[12px] rounded-lg bg-white/[.03] border border-white/10 text-ink-100">
             <option value="">Toda categoría</option>
             {[...new Set([...byCat.map((c) => c.category), ...AUDIT_CATEGORIES])].map((c) => (
