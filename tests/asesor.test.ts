@@ -72,6 +72,14 @@ describe('conocimiento del asesor', () => {
     expect(conocimiento('en')).toMatch(/Hourly rate: \$30 USD\. Used ONLY for extra changes/)
   })
 
+  it('en español habla de tú, como en Colombia, y su información no trae voseo', () => {
+    expect(systemPrompt('es')).toContain('español de Colombia')
+    expect(systemPrompt('es')).toMatch(/NUNCA uses voseo/)
+    expect(systemPrompt('en')).not.toMatch(/voseo/)
+    const voseo = /(?<!\p{L})(vos|sos|podés|querés|tenés|sentís|sabés|necesitás|mirá|contame|decime|fijate)(?!\p{L})/u
+    expect(conocimiento('es')).not.toMatch(voseo)
+  })
+
   it('el perfil sale de lo publicado y lista proyectos sin repetir ni vacíos', () => {
     const base = { titleEn: null, descriptionEn: null, techStack: null, screenshotUrl: null }
     const lista = proyectosPublicos('es', [

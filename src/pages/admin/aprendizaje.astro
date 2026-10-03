@@ -88,7 +88,7 @@ const statusLabels: Record<string, string> = {
 }
 
 // Frase de cabecera según el estado real de la racha. El tablero habla
-// distinto si venís de 12 días seguidos o si llevás tres semanas sin abrirlo.
+// distinto si vienes de 12 días seguidos o si llevas tres semanas sin abrirlo.
 let pulse: { text: string; tone: 'good' | 'warn' | 'idle' }
 if (!track || stats.sessionCount === 0) {
   pulse = { text: 'Sin sesiones todavía. La primera es la que cuesta.', tone: 'idle' }
@@ -110,7 +110,7 @@ if (!track || stats.sessionCount === 0) {
         <h1 class="text-xl font-bold text-white">Tracker de especialización</h1>
         <p class="text-zinc-400 text-sm mt-2 max-w-lg mx-auto">
           Mide la práctica real en el tiempo: racha, horas contra una meta semanal, temario con
-          hitos y bitácora. Empezá sembrando el track de {DOTNET_TRACK.name} con su temario
+          hitos y bitácora. Empieza sembrando el track de {DOTNET_TRACK.name} con su temario
           de {DOTNET_TRACK.milestones.length} hitos.
         </p>
         <button

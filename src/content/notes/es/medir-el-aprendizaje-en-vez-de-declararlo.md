@@ -15,7 +15,7 @@ Decidí especializarme en .NET y C#. La razón es prosaica: el backend empresari
 
 Ya tenía dos sitios donde debería haber encajado. `/admin/certifications` lleva el inventario de cursos y certificaciones, con estado y fecha. El Evolution Path lleva rutas de labs con un checkbox por cada uno. Puse la intención en el primero, marqué un par de casillas en el segundo, y me quedé mirando la pantalla con la sensación de no haber registrado absolutamente nada.
 
-El problema es que las dos herramientas responden **"qué hice"**, y la pregunta que importa cuando querés aprender un stack nuevo mientras trabajás en otro es **"cuánto tiempo llevo invirtiendo de verdad, y el hábito se está sosteniendo"**. Un checkbox marcado en enero no distingue entre alguien que practica cuarenta minutos diarios y alguien que abrió el tema una tarde y no volvió. Las dos cosas se ven idénticas: una casilla azul.
+El problema es que las dos herramientas responden **"qué hice"**, y la pregunta que importa cuando quieres aprender un stack nuevo mientras trabajas en otro es **"cuánto tiempo llevo invirtiendo de verdad, y el hábito se está sosteniendo"**. Un checkbox marcado en enero no distingue entre alguien que practica cuarenta minutos diarios y alguien que abrió el tema una tarde y no volvió. Las dos cosas se ven idénticas: una casilla azul.
 
 Así que construí una tercera cosa. Y lo interesante es que las decisiones difíciles no estuvieron en el tablero, sino en cómo se guarda una fecha.
 
@@ -23,7 +23,7 @@ Así que construí una tercera cosa. Y lo interesante es que las decisiones dif�
 
 El modelo entero se apoya en una idea: **la sesión de práctica es el único hecho**. Día, minutos, tema y qué entendí. Todo lo demás (racha, horas acumuladas, avance contra la meta semanal, mapa de calor, porcentaje del temario, logros) se calcula a partir de eso.
 
-Esto no es minimalismo por gusto. Cada cifra derivada que decidís persistir es una cifra que puede quedar desincronizada de los datos que la produjeron. Y ese caso no es hipotético: te equivocás al registrar una sesión, la borrás, y ahora tenés un contador de horas que incluye una sesión que ya no existe.
+Esto no es minimalismo por gusto. Cada cifra derivada que decides persistir es una cifra que puede quedar desincronizada de los datos que la produjeron. Y ese caso no es hipotético: te equivocas al registrar una sesión, la borras, y ahora tienes un contador de horas que incluye una sesión que ya no existe.
 
 Del mismo modo, el temario del track (28 hitos en 8 áreas, de fundamentos de C# a desplegar una API real) sí vive en base de datos, porque quiero editarlo desde el panel a medida que descubra que un área estaba mal partida. Pero la plantilla con la que se siembra vive en código, y la siembra es idempotente por título: volver a dispararla añade los hitos nuevos de la plantilla sin duplicar ni pisar el estado de los que ya cerré.
 
@@ -61,7 +61,7 @@ expect(dayKeyOf(new Date('2026-08-09T01:30:00Z'))).toBe('2026-08-08')
 
 La segunda decisión fue cuándo se rompe una racha.
 
-La implementación obvia (si no hay sesión hoy, la racha es cero) produce esto: abrís el panel un martes a las nueve de la mañana y ves tu racha de doce días en cero, porque todavía no estudiaste en un día que lleva nueve horas de existir. Es técnicamente cierto y motivacionalmente desastroso.
+La implementación obvia (si no hay sesión hoy, la racha es cero) produce esto: abres el panel un martes a las nueve de la mañana y ves tu racha de doce días en cero, porque todavía no estudiaste en un día que lleva nueve horas de existir. Es técnicamente cierto y motivacionalmente desastroso.
 
 La racha se mantiene viva si la última sesión fue **ayer**, y solo se corta a los dos días. Pero mantenerla viva en silencio tampoco sirve, así que el cálculo devuelve un campo aparte:
 
@@ -85,7 +85,7 @@ Diez logros: la primera sesión, rachas de 7 y 30 días, la primera semana cumpl
 
 No hay tabla de badges desbloqueados. Se recalculan en cada render sobre las sesiones y los hitos que la página ya cargó.
 
-La razón es la misma de antes llevada al extremo. Una tabla de logros obliga a escribir en cada `POST` de sesión, con la lógica de "¿este insert desbloqueó algo?" duplicada dentro del endpoint. Y se corrompe en cuanto borrás una sesión mal registrada: te quedan badges concedidos por datos que ya no existen. Recalcular sobre datos que ya están en memoria cuesta nada y no puede mentir.
+La razón es la misma de antes llevada al extremo. Una tabla de logros obliga a escribir en cada `POST` de sesión, con la lógica de "¿este insert desbloqueó algo?" duplicada dentro del endpoint. Y se corrompe en cuanto borras una sesión mal registrada: te quedan badges concedidos por datos que ya no existen. Recalcular sobre datos que ya están en memoria cuesta nada y no puede mentir.
 
 La parte que no es trivial es el fechado. Un logro tiene que decir **el día en que se cumplió**, no el día en que abrí el panel. Para los umbrales de horas eso significa recorrer las sesiones en orden y ver en cuál cruzó la suma acumulada:
 
@@ -120,6 +120,6 @@ Y un track sembrado sin sesiones se filtra antes de llegar a la página. Cero ho
 
 Esperaba que la parte difícil de un tracker fuera el tablero: el mapa de calor, las barras, los colores. Resultó ser lo más rápido.
 
-Lo que costó pensar fue lo invisible. Que una fecha sin hora es un tipo de dato distinto de una fecha con hora, y confundirlos rompe la única métrica que le importa al usuario. Que un cálculo derivado no debería persistirse salvo que puedas pagar el coste de que se desincronice. Y que la diferencia entre una herramienta que usás y una que abandonás en dos semanas puede estar en un campo booleano que decide si el mensaje de arriba dice "llevás doce días" o "tu racha está en juego".
+Lo que costó pensar fue lo invisible. Que una fecha sin hora es un tipo de dato distinto de una fecha con hora, y confundirlos rompe la única métrica que le importa al usuario. Que un cálculo derivado no debería persistirse salvo que puedas pagar el coste de que se desincronice. Y que la diferencia entre una herramienta que usas y una que abandonas en dos semanas puede estar en un campo booleano que decide si el mensaje de arriba dice "llevas doce días" o "tu racha está en juego".
 
 El próximo paso es que ese mensaje llegue solo, por notificación, cuando la racha esté en riesgo y queden pocas horas del día. La infraestructura ya está: notificaciones opcionales que hacen no-op silencioso si falta la configuración, y crons que ya corren. No hace falta nada nuevo, que suele ser la señal de que la decisión anterior estaba bien tomada.

@@ -29,7 +29,7 @@ export const educationPaths: EducationPath[] = [
     slug: 'linux-real',
     order: 1,
     title: 'Linux Real',
-    tagline: 'Linux no es la estética de una distro. Es cómo entendés sistemas.',
+    tagline: 'Linux no es la estética de una distro. Es cómo entiendes sistemas.',
     topics: [
       'Filesystem y rutas',
       'Usuarios y grupos',
@@ -55,7 +55,7 @@ export const educationPaths: EducationPath[] = [
       {
         slug: 'permisos-usuarios-procesos',
         title: 'Permisos, usuarios y procesos: la base real de Linux',
-        description: 'Quién sos, qué podés tocar y qué se está ejecutando: los tres ejes que explican casi todo en Linux.',
+        description: 'Quién eres, qué puedes tocar y qué se está ejecutando: los tres ejes que explican casi todo en Linux.',
         durationMin: 35,
         level: 'Inicial',
         tags: ['linux', 'permisos'],
@@ -88,7 +88,7 @@ export const educationPaths: EducationPath[] = [
       {
         slug: 'una-request-no-es-magia',
         title: 'Una request no es magia: DNS, TCP, HTTP y logs',
-        description: 'Qué pasa de verdad entre que escribís una URL y ves una respuesta, y dónde mirar cuando falla.',
+        description: 'Qué pasa de verdad entre que escribes una URL y ves una respuesta, y dónde mirar cuando falla.',
         durationMin: 30,
         level: 'Inicial',
         tags: ['redes', 'dns'],
@@ -157,7 +157,7 @@ export const educationPaths: EducationPath[] = [
       {
         slug: 'jwt-no-es-autorizacion',
         title: 'JWT no es autorización',
-        description: 'Un token válido dice quién sos, no qué podés hacer. La diferencia entre autenticación y autorización.',
+        description: 'Un token válido dice quién eres, no qué puedes hacer. La diferencia entre autenticación y autorización.',
         durationMin: 30,
         level: 'Intermedio',
         tags: ['backend', 'auth'],
@@ -258,7 +258,7 @@ export const educationPaths: EducationPath[] = [
       {
         slug: 'blast-radius-costo',
         title: 'Blast radius y costo: game day con incidente sintético',
-        description: 'Pensar producción: qué se rompe, cuánto cuesta, cómo se limita el impacto y qué evidencia necesitás para decidir.',
+        description: 'Pensar producción: qué se rompe, cuánto cuesta, cómo se limita el impacto y qué evidencia necesitas para decidir.',
         durationMin: 45,
         level: 'Avanzado',
         tags: ['cloud', 'produccion'],
@@ -317,7 +317,7 @@ export const educationPaths: EducationPath[] = [
       {
         slug: 'threat-modeling-app-chica',
         title: 'Threat modeling de una app chica',
-        description: 'Con cuatro preguntas y un diagrama de flujo de datos, encontrás los riesgos reales de tu app antes de escribir una línea de defensa.',
+        description: 'Con cuatro preguntas y un diagrama de flujo de datos, encuentras los riesgos reales de tu app antes de escribir una línea de defensa.',
         durationMin: 30,
         level: 'Intermedio',
         tags: ['ciberseguridad', 'threat-modeling'],

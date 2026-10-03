@@ -25,7 +25,7 @@ export const DOTNET_TRACK: TrackSeed = {
     {
       area: 'C# fundamentos',
       title: 'Tipos, structs vs clases y el modelo de memoria',
-      description: 'Value types en stack, reference types en heap, y por qué eso cambia cómo escribís un método.',
+      description: 'Value types en stack, reference types en heap, y por qué eso cambia cómo escribes un método.',
     },
     {
       area: 'C# fundamentos',
