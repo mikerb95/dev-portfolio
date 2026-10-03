@@ -96,7 +96,11 @@ const textos = JSON.stringify({
   <div id="asesor-globo" class="asesor-globo fixed right-4 sm:right-5 z-[45]" hidden>
     <button type="button" id="asesor-globo-abrir" class="asesor-globo-texto cursor-pointer" aria-label={globo} data-analytics="asesor-globo">
       <span aria-hidden="true">
-        {globo.split(' ').map((p, i) => <span class="asesor-globo-palabra" style={`--i:${i}`}>{p} </span>)}
+        {globo.split(' ').map((p, i) => (
+          <>
+            <span class="asesor-globo-palabra" style={`--i:${i}`}>{p}</span>{' '}
+          </>
+        ))}
       </span>
     </button>
     <button type="button" id="asesor-globo-cerrar" class="asesor-globo-cerrar cursor-pointer" aria-label={a.globoCerrar}>
@@ -623,8 +627,157 @@ const textos = JSON.stringify({
     background: rgba(0, 242, 255, 0.06);
   }
 
+  /* Burbuja doble: el verde y el logo siguen diciendo WhatsApp, y el círculo
+     oscuro con la chispa cian (la misma de la opción del menú) dice que
+     adentro también hay un asistente con IA. Cada tanto la chispa da un
+     octavo de vuelta y brilla; la chispa es simétrica cada 45°, así que el
+     salto de 90° a 0° al reiniciar el ciclo no se ve. */
+  .wa-fab-raya {
+    width: 1px;
+    height: 1.4rem;
+    background: rgba(6, 46, 22, 0.3);
+  }
+  .wa-fab-ia {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--color-ink-900);
+    color: var(--color-cyan);
+    box-shadow: inset 0 0 0 1px rgba(0, 242, 255, 0.35);
+    transition: box-shadow 0.3s ease;
+  }
+  .wa-fab-ia svg {
+    animation: wa-chispa 7s ease-in-out infinite;
+  }
+  @keyframes wa-chispa {
+    0%,
+    80% {
+      transform: rotate(0deg) scale(1);
+      filter: none;
+    }
+    88% {
+      transform: rotate(45deg) scale(1.18);
+      filter: drop-shadow(0 0 4px var(--color-cyan));
+    }
+    96%,
+    100% {
+      transform: rotate(90deg) scale(1);
+      filter: none;
+    }
+  }
+  /* Con el globo afuera, el círculo de IA se enciende: es de donde habla. */
+  .wa-fab[data-globo] .wa-fab-ia {
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 242, 255, 0.6),
+      0 0 0 3px rgba(0, 242, 255, 0.22);
+  }
+
+  /* Globo que sale de la burbuja invitando al asistente. Nace de la esquina
+     del círculo de IA (la cola apunta a su centro: 6 px de relleno + 18 px de
+     radio desde el borde derecho) y las palabras aparecen con el mismo gesto
+     de "texto que se genera" de las respuestas del asesor
+     (lib/motion/texto-generado.ts), en CSS para no cargar GSAP en todas las
+     páginas solo por un aviso. */
+  .asesor-globo {
+    bottom: calc(var(--wa-bottom) + 3.6rem);
+    width: max-content;
+    max-width: min(16.5rem, calc(100vw - 2rem));
+    transform-origin: calc(100% - 1.5rem) 100%;
+  }
+  :global(html[data-lang-suggest='open']) .asesor-globo {
+    z-index: 70;
+  }
+  .asesor-globo:not([hidden]) {
+    animation: asesor-globo-entrar 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .asesor-globo[data-saliendo] {
+    animation: asesor-globo-salir 0.22s ease-in forwards;
+  }
+  @keyframes asesor-globo-entrar {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.55);
+    }
+  }
+  @keyframes asesor-globo-salir {
+    to {
+      opacity: 0;
+      transform: translateY(6px) scale(0.85);
+    }
+  }
+  .asesor-globo-texto {
+    position: relative;
+    display: block;
+    padding: 0.65rem 2.1rem 0.7rem 0.9rem;
+    border-radius: 1rem;
+    border-bottom-right-radius: 0.4rem;
+    border: 1px solid rgba(0, 242, 255, 0.32);
+    background: var(--color-ink-800);
+    color: var(--color-ink-50);
+    font-size: 13.5px;
+    line-height: 1.4;
+    text-align: left;
+    box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.75);
+    transition: border-color 0.2s ease;
+  }
+  .asesor-globo-texto:hover {
+    border-color: rgba(0, 242, 255, 0.6);
+  }
+  .asesor-globo-texto:focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+  }
+  .asesor-globo-texto::after {
+    content: '';
+    position: absolute;
+    right: calc(1.5rem - 6px);
+    bottom: -6px;
+    width: 11px;
+    height: 11px;
+    background: inherit;
+    border-right: inherit;
+    border-bottom: inherit;
+    border-bottom-right-radius: 2px;
+    transform: rotate(45deg);
+  }
+  .asesor-globo-palabra {
+    display: inline-block;
+  }
+  .asesor-globo:not([hidden]) .asesor-globo-palabra {
+    animation: asesor-globo-palabra 0.3s ease-out both;
+    animation-delay: calc(0.3s + var(--i) * 70ms);
+  }
+  @keyframes asesor-globo-palabra {
+    from {
+      opacity: 0;
+      filter: blur(4px);
+    }
+  }
+  .asesor-globo-cerrar {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.45rem;
+    color: var(--color-ink-200);
+  }
+  .asesor-globo-cerrar:hover {
+    color: var(--color-ink-50);
+    background: var(--color-ink-700);
+  }
+  .asesor-globo-cerrar:focus-visible {
+    outline: 2px solid var(--color-cyan);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .wa-fab,
+    .wa-fab-ia,
     .asesor-vista,
     .asesor-ver-flecha {
       transition: none;
@@ -636,6 +789,10 @@ const textos = JSON.stringify({
     .asesor-pulso,
     .asesor-contacto,
     .wa-fab[data-nuevo]::after,
+    .wa-fab-ia svg,
+    .asesor-globo:not([hidden]),
+    .asesor-globo[data-saliendo],
+    .asesor-globo:not([hidden]) .asesor-globo-palabra,
     .asesor-log :global(.asesor-sistema),
     .asesor-log :global(.asesor-pensando i) {
       animation: none;
@@ -736,6 +893,9 @@ const textos = JSON.stringify({
     const vistaTexto = $('asesor-vista-texto')
     const subtitulo = $('asesor-subtitulo')
     const subtituloIa = subtitulo.textContent ?? ''
+    const globoEl = $('asesor-globo')
+    const globoAbrir = $<HTMLButtonElement>('asesor-globo-abrir')
+    const globoCerrar = $<HTMLButtonElement>('asesor-globo-cerrar')
 
     const locale = raiz.dataset.locale ?? 'es'
     const pagina = raiz.dataset.pagina
@@ -882,6 +1042,7 @@ const textos = JSON.stringify({
     }
 
     function abrirMenu(si: boolean) {
+      if (si) ocultarGlobo(true)
       menu.hidden = !si
       fab.setAttribute('aria-expanded', String(si))
       if (si && disponible === null) consultarDisponible()
@@ -889,6 +1050,7 @@ const textos = JSON.stringify({
     function abrirChat(si: boolean) {
       chat.hidden = !si
       if (si) {
+        ocultarGlobo(true)
         avisoFab(false)
         abrirMenu(false)
         if (!sinMovimiento()) void cargarMotion()
@@ -1116,6 +1278,63 @@ const textos = JSON.stringify({
       input.style.height = `${Math.min(input.scrollHeight, 112)}px`
     }
 
+    // Globo de invitación al asistente: sale de la burbuja a los 6 s en cada
+    // página (Mike lo pidió así el 2 oct 2026) y se va solo a los 8 s. No sale
+    // si la persona ya está conversando, si Mike le escribió (la burbuja ya
+    // avisa con su punto), ni encima de la modal de idioma. Si la pestaña está
+    // oculta cuando toca, espera a que vuelva: nadie lo vería.
+    let globoReloj: ReturnType<typeof setTimeout> | null = null
+    const GLOBO_ESPERA = 6_000
+    const GLOBO_VISIBLE = 8_000
+    function programarSalidaGlobo(ms: number) {
+      if (globoReloj !== null) clearTimeout(globoReloj)
+      globoReloj = setTimeout(() => ocultarGlobo(false), ms)
+    }
+    function mostrarGlobo() {
+      if (document.hidden) {
+        document.addEventListener('visibilitychange', () => setTimeout(mostrarGlobo, 1_500), { once: true })
+        return
+      }
+      const ocupada =
+        !menu.hidden ||
+        !chat.hidden ||
+        preguntas() > 0 ||
+        estado.conversacion ||
+        fab.hasAttribute('data-nuevo') ||
+        document.documentElement.dataset.langSuggest === 'open'
+      if (ocupada) return
+      globoEl.hidden = false
+      fab.toggleAttribute('data-globo', true)
+      programarSalidaGlobo(GLOBO_VISIBLE)
+    }
+    /** `ya`: sin animación de salida, porque lo reemplaza el menú o el chat. */
+    function ocultarGlobo(ya: boolean) {
+      if (globoReloj !== null) clearTimeout(globoReloj)
+      globoReloj = null
+      if (globoEl.hidden) return
+      fab.removeAttribute('data-globo')
+      if (ya || sinMovimiento()) {
+        globoEl.hidden = true
+        globoEl.removeAttribute('data-saliendo')
+        return
+      }
+      globoEl.setAttribute('data-saliendo', '')
+      setTimeout(() => {
+        globoEl.hidden = true
+        globoEl.removeAttribute('data-saliendo')
+      }, 220)
+    }
+    setTimeout(mostrarGlobo, GLOBO_ESPERA)
+    // Con el puntero encima no se va: puede estar a mitad de leerlo.
+    globoEl.addEventListener('pointerenter', () => {
+      if (globoReloj !== null) clearTimeout(globoReloj)
+    })
+    globoEl.addEventListener('pointerleave', () => {
+      if (!globoEl.hidden && !globoEl.hasAttribute('data-saliendo')) programarSalidaGlobo(3_000)
+    })
+    globoAbrir.addEventListener('click', () => abrirChat(true))
+    globoCerrar.addEventListener('click', () => ocultarGlobo(false))
+
     fab.addEventListener('click', () => {
       if (!chat.hidden) return abrirChat(false)
       // Mike escribió: la burbuja lleva directo a su mensaje, sin pasar por el menú.
@@ -1217,6 +1436,7 @@ const textos = JSON.stringify({
     })
     document.addEventListener('keydown', (ev) => {
       if (ev.key !== 'Escape') return
+      if (!globoEl.hidden) ocultarGlobo(false)
       if (!chat.hidden) abrirChat(false)
       else if (!menu.hidden) {
         abrirMenu(false)
