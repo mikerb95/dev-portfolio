@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CAPACITACION, COMPONENTES, etiquetaDesde, PAQUETES_WEB, REGLAS, TARIFA_HORA } from '../src/data/tarifario'
+import { CAPACITACION, COMPONENTES, ENTREGA, etiquetaDesde, formatearMonto, HOSTING_ANUAL, PAQUETES_WEB, REGLAS, TARIFA_HORA } from '../src/data/tarifario'
 import es from '../src/i18n/es'
 import en from '../src/i18n/en'
 import {
@@ -43,6 +43,23 @@ describe('tarifario', () => {
     expect(en.paginasWeb.faqs.find((f) => f.q === 'How do I pay?')?.a).toContain(`${REGLAS.validezDias} days`)
     expect(es.capacitacionIa.faqs.find((f) => f.q === '¿Cómo se paga?')?.a).toContain(`${REGLAS.validezDias} días`)
     expect(en.capacitacionIa.faqs.find((f) => f.q === 'How do I pay?')?.a).toContain(`${REGLAS.validezDias} days`)
+  })
+
+  it('las preguntas frecuentes de /paginas-web dicen el mismo hosting, tarifa, rondas y garantía que el tarifario', () => {
+    const faq = (dic: typeof es, q: string) => dic.paginasWeb.faqs.find((f) => f.q === q)?.a ?? ''
+    const m = (v: number, mon: 'COP' | 'USD') => formatearMonto(v, mon).replace(` ${mon}`, '')
+    const mantener = faq(es, '¿Cuánto cuesta mantenerla?')
+    expect(mantener).toContain(m(HOSTING_ANUAL.presencia.COP, 'COP'))
+    expect(mantener).toContain(m(HOSTING_ANUAL.negocio.COP, 'COP'))
+    expect(mantener).toContain(m(TARIFA_HORA.COP, 'COP'))
+    const maintain = faq(en, 'How much does it cost to maintain?')
+    expect(maintain).toContain(m(HOSTING_ANUAL.presencia.USD, 'USD'))
+    expect(maintain).toContain(m(HOSTING_ANUAL.negocio.USD, 'USD'))
+    expect(maintain).toContain(m(TARIFA_HORA.USD, 'USD'))
+    expect(ENTREGA.rondasCambios).toBe(2) // "dos rondas" / "two rounds" en el texto
+    expect(faq(es, '¿Qué pasa después de entregarla?')).toContain(`${ENTREGA.garantiaDias} días de garantía`)
+    expect(faq(en, 'What happens after delivery?')).toContain(`${ENTREGA.garantiaDias}-day warranty`)
+    expect(faq(es, '¿Puedo editarla después?')).toContain(`primeros ${ENTREGA.garantiaDias} días`)
   })
 
   it('cada componente tiene un rango de horas con sentido y un id único', () => {

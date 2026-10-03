@@ -43,6 +43,15 @@ const textos = JSON.stringify({
   calculado: a.calculado,
   verMensaje: a.verMensaje,
   ocultarMensaje: a.ocultarMensaje,
+  contactoListo: a.contactoListo,
+  contactoEnviar: a.contactoEnviar,
+  contactoEnviando: a.contactoEnviando,
+  contactoErrorMedio: a.contactoErrorMedio,
+  contactoErrorTelefono: a.contactoErrorTelefono,
+  contactoErrorCorreo: a.contactoErrorCorreo,
+  contactoErrorAutoriza: a.contactoErrorAutoriza,
+  contactoErrorFallo: a.contactoErrorFallo,
+  errorLimite: a.errorLimite,
 })
 ---
 
@@ -112,6 +121,7 @@ const textos = JSON.stringify({
     class="asesor-chat fixed right-4 sm:right-5 z-[60] flex flex-col w-[min(23.5rem,calc(100vw-2rem))] rounded-2xl border border-ink-500/70 bg-ink-850/97 backdrop-blur-md shadow-[0_24px_70px_-16px_rgba(0,0,0,.8)] overflow-hidden"
     role="dialog"
     aria-labelledby="asesor-titulo"
+    data-lenis-prevent
     hidden
   >
     <header class="flex items-start gap-3 px-4 pt-3.5 pb-3 border-b border-ink-600/80">
@@ -180,11 +190,42 @@ const textos = JSON.stringify({
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
         </button>
       </div>
-      <div class="mt-2 flex items-center justify-end text-[11.5px] whitespace-nowrap">
+      <div class="mt-2 flex items-center justify-between gap-3 text-[11.5px] whitespace-nowrap">
+        <button type="button" id="asesor-contacto-abrir" class="text-ink-100 hover:text-ink-50 hover:underline underline-offset-2 cursor-pointer disabled:opacity-50 disabled:no-underline disabled:cursor-default" data-analytics="asesor-contacto-abrir">{a.contactoAbrir}</button>
         <a href={href} target="_blank" rel="noopener" class="text-[#5ee08f] hover:underline underline-offset-2" data-analytics="asesor-hablar-mike">{a.hablarMike}</a>
       </div>
     </form>
   </section>
+
+  <!-- Formulario de contacto: el script lo mueve al final de la conversación
+       cuando el asesor lo ofrece o la persona toca "Que Mike me contacte". Es
+       el mismo nodo siempre, así lo escrito no se pierde al repintar el chat. -->
+  <form id="asesor-contacto" class="asesor-contacto" novalidate hidden>
+    <p class="asesor-contacto-titulo">{a.contactoTitulo}</p>
+    <label class="asesor-campo">
+      <span>{a.contactoNombre}</span>
+      <input name="nombre" type="text" autocomplete="name" maxlength="120" required />
+    </label>
+    <label class="asesor-campo">
+      <span>{a.contactoTelefono}</span>
+      <input name="telefono" type="tel" autocomplete="tel" inputmode="tel" maxlength="40" />
+    </label>
+    <label class="asesor-campo">
+      <span>{a.contactoCorreo}</span>
+      <input name="correo" type="email" autocomplete="email" maxlength="200" />
+    </label>
+    <label class="asesor-campo">
+      <span>{a.contactoEmpresa}</span>
+      <input name="empresa" type="text" autocomplete="organization" maxlength="120" />
+    </label>
+    <p class="asesor-contacto-ayuda">{a.contactoAyuda}</p>
+    <label class="asesor-autoriza">
+      <input name="autoriza" type="checkbox" required />
+      <span>{a.contactoAutoriza}</span>
+    </label>
+    <p class="asesor-contacto-error" role="alert" hidden></p>
+    <button type="submit" class="asesor-contacto-enviar">{a.contactoEnviar}</button>
+  </form>
 </div>
 
 <style>
@@ -419,6 +460,93 @@ const textos = JSON.stringify({
     }
   }
 
+  /* Formulario de contacto dentro de la conversación: una tarjeta como las
+     burbujas del asesor, con campos del mismo estilo que la caja de texto. */
+  .asesor-contacto {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.85rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(0, 242, 255, 0.22);
+    background: var(--color-ink-750);
+    animation: asesor-opcion 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .asesor-contacto[hidden] {
+    display: none;
+  }
+  .asesor-contacto-titulo {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--color-ink-50);
+  }
+  .asesor-campo {
+    display: grid;
+    gap: 0.2rem;
+    font-size: 11.5px;
+    color: var(--color-ink-200);
+  }
+  .asesor-campo input {
+    width: 100%;
+    border-radius: 0.65rem;
+    border: 1px solid var(--color-ink-500);
+    background: var(--color-ink-800);
+    padding: 0.45rem 0.65rem;
+    /* 16 px en el celular: con menos, iOS hace zoom al enfocar el campo. */
+    font-size: 16px;
+    color: var(--color-ink-50);
+  }
+  @media (min-width: 640px) {
+    .asesor-campo input {
+      font-size: 13.5px;
+    }
+  }
+  .asesor-campo input:focus {
+    outline: none;
+    border-color: rgba(0, 242, 255, 0.7);
+  }
+  .asesor-contacto-ayuda {
+    font-size: 11.5px;
+    color: var(--color-ink-200);
+  }
+  .asesor-autoriza {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--color-ink-100);
+  }
+  .asesor-autoriza input {
+    margin-top: 0.15rem;
+    accent-color: var(--color-cyan);
+    flex-shrink: 0;
+  }
+  .asesor-contacto-error {
+    font-size: 12px;
+    color: var(--color-ember);
+  }
+  .asesor-contacto-enviar {
+    border-radius: 0.75rem;
+    background: var(--color-cyan);
+    color: var(--color-ink-900);
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+  }
+  .asesor-contacto-enviar:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .asesor-log :global(.asesor-listo) {
+    font-size: 13px;
+    color: var(--color-ink-50);
+    padding: 0.6rem 0.8rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(0, 242, 255, 0.22);
+    background: rgba(0, 242, 255, 0.06);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .wa-fab,
     .asesor-vista,
@@ -430,6 +558,7 @@ const textos = JSON.stringify({
     #asesor-cierre:not([hidden]),
     .asesor-chat:not([hidden]),
     .asesor-pulso,
+    .asesor-contacto,
     .asesor-log :global(.asesor-pensando i) {
       animation: none;
     }

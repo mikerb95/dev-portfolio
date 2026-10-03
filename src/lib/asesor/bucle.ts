@@ -53,6 +53,7 @@ const EsquemaEntrada = z
       .min(1)
       .max(MAX_PREGUNTAS * 2 - 1),
     calculos: z.array(EsquemaCalculo).max(MAX_CALCULOS).default([]),
+    contactoDado: z.boolean().optional(),
   })
   .strict()
 
@@ -61,6 +62,8 @@ export type Entrada = {
   pagina?: Pagina
   mensajes: { rol: 'usuario' | 'asesor'; texto: string }[]
   calculos: PedidoCalculo[]
+  /** La persona ya dejó sus datos en el formulario: no hay que volver a pedirlos. */
+  contactoDado?: boolean
 }
 
 export type ErrorEntrada = { error: 'formato' | 'limite' }
@@ -81,7 +84,13 @@ export function validarEntrada(cuerpo: unknown): Entrada | ErrorEntrada {
   if (!alterna || mensajes.at(-1)!.rol !== 'usuario') return { error: 'formato' }
   const excede = mensajes.some((m) => m.texto.length > (m.rol === 'usuario' ? MAX_TEXTO_USUARIO : MAX_TEXTO_ASESOR))
   if (excede) return { error: 'formato' }
-  return { locale: r.data.locale as Locale, pagina: r.data.pagina, mensajes, calculos: r.data.calculos }
+  return {
+    locale: r.data.locale as Locale,
+    pagina: r.data.pagina,
+    mensajes,
+    calculos: r.data.calculos,
+    contactoDado: r.data.contactoDado,
+  }
 }
 
 export type Dependencias = {
@@ -92,6 +101,8 @@ export type Respuesta = {
   texto: string
   /** Mensaje para precargar en WhatsApp, si el modelo lo preparó en esta vuelta. */
   whatsapp: string | null
+  /** El modelo pidió mostrar el formulario de contacto en esta vuelta. */
+  contacto: boolean
   /** Pedidos de cálculo de toda la conversación, para que el navegador los reenvíe. */
   calculos: PedidoCalculo[]
   uso: Uso
@@ -142,13 +153,19 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
     }
   }
 
-  const mensajes: Anthropic.MessageParam[] = e.mensajes.map((m) => ({
+  const mensajes: Anthropic.MessageParam[] = e.mensajes.map((m, i) => ({
     role: m.rol === 'usuario' ? 'user' : 'assistant',
-    content: m.texto,
+    // El aviso va pegado a la última pregunta y no en el system prompt: así
+    // el prompt fijo sigue igual y se sigue leyendo de la caché.
+    content:
+      e.contactoDado && i === e.mensajes.length - 1
+        ? `${m.texto}\n\n[Nota del sistema, no del visitante: esta persona ya dejó sus datos en el formulario. No se los vuelvas a pedir.]`
+        : m.texto,
   }))
 
   let uso = USO_CERO
   let whatsapp: string | null = null
+  let contacto = false
   let reintentoGuardia = false
   // Texto escrito junto a una llamada a herramienta. El modelo suele dar la
   // respuesta completa en el mismo mensaje en que pide preparar WhatsApp, y
@@ -158,6 +175,7 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
   const cerrar = (texto: string, respaldo: Respuesta['respaldo']): Respuesta => ({
     texto,
     whatsapp,
+    contacto,
     calculos,
     uso,
     cifras: respaldo ? [] : cifrasCalculadas(texto, cotizaciones),
@@ -177,6 +195,7 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
       const resultados: Anthropic.ToolResultBlockParam[] = usos.map((u) => {
         const salida = ejecutarHerramienta(u, e.locale, cotizaciones, calculos)
         if (salida.whatsapp) whatsapp = salida.whatsapp
+        if (salida.contacto) contacto = true
         return { type: 'tool_result', tool_use_id: u.id, content: salida.contenido, is_error: salida.error }
       })
       mensajes.push({ role: 'user', content: resultados })
@@ -204,7 +223,7 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
   return cerrar(RESPALDO[e.locale], 'vueltas')
 }
 
-type Salida = { contenido: string; error: boolean; whatsapp?: string }
+type Salida = { contenido: string; error: boolean; whatsapp?: string; contacto?: boolean }
 
 function ejecutarHerramienta(
   u: Anthropic.ToolUseBlock,
@@ -236,6 +255,13 @@ function ejecutarHerramienta(
       contenido: 'Listo: el botón "Enviarle esto a Mike" ya está visible para el visitante.',
       error: false,
       whatsapp: mensajeWhatsapp(p.data, ultima, locale),
+    }
+  }
+  if (u.name === 'pedir_contacto') {
+    return {
+      contenido: 'Listo: el formulario de contacto ya está visible para el visitante debajo de tu respuesta.',
+      error: false,
+      contacto: true,
     }
   }
   return { contenido: `Herramienta desconocida: ${u.name}`, error: true }

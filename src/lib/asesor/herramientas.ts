@@ -214,5 +214,14 @@ export function definiciones() {
         'teléfonos ni correos.',
       input_schema: esquemaApi(EsquemaWhatsapp),
     },
+    {
+      name: 'pedir_contacto',
+      description:
+        'Muestra en el chat un formulario para que la persona deje nombre, teléfono, correo y empresa, y Mike la ' +
+        'contacte después. Úsala cuando la persona quiera que Mike la llame o le escriba, o cuando ya tiene su ' +
+        'estimado y no quiere escribir por WhatsApp. Ofrécelo una sola vez por conversación. Tú no ves lo que ' +
+        'escriba en el formulario.',
+      input_schema: { type: 'object', properties: {}, additionalProperties: false },
+    },
   ]
 }

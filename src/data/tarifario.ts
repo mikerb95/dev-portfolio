@@ -75,6 +75,29 @@ export const CAPACITACION = {
   personaAdicionalCOP: 40_000,
 } as const
 
+/**
+ * Lo que trae cada página web después del precio (decisiones de Mike, 2 oct
+ * 2026). Se publica en las preguntas frecuentes de /paginas-web y lo dice el
+ * asesor de la burbuja; tests/asistente-cotizacion.test.ts comprueba que el
+ * texto de la página diga estas mismas cifras.
+ */
+export const ENTREGA = {
+  /** Rondas de cambios incluidas antes de publicar. Las demás, por hora. */
+  rondasCambios: 2,
+  /** Días después de publicar en que se arreglan errores sin costo (solo errores). */
+  garantiaDias: 30,
+} as const
+
+/**
+ * Dominio y hosting por año, DESDE EL SEGUNDO: el primero va incluido en el
+ * precio de la página. "A medida" no tiene cifra fija: depende del uso
+ * (usuarios, archivos guardados, redundancia) y lo cotiza Mike.
+ */
+export const HOSTING_ANUAL: Record<'presencia' | 'negocio', Monto> = {
+  presencia: { COP: 250_000, USD: 100 },
+  negocio: { COP: 400_000, USD: 150 },
+}
+
 /** Reglas comerciales (1 oct 2026). */
 export const REGLAS = {
   /** Margen de seguridad sobre las horas de software a la medida. */

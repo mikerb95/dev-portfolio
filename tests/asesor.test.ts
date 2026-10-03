@@ -1,7 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { describe, expect, it } from 'vitest'
 import { atender, sinRayas, validarEntrada, type Entrada, MAX_LLAMADAS } from '../src/lib/asesor/bucle'
-import { conocimiento, cifrasPublicas } from '../src/lib/asesor/conocimiento'
+import { conocimiento, cifrasPublicas, proyectosPublicos } from '../src/lib/asesor/conocimiento'
 import { calcular, definiciones, mensajeWhatsapp, precioEnFrase } from '../src/lib/asesor/herramientas'
 import { gastoDelValor, hoyBogota } from '../src/lib/asesor/presupuesto'
 import { MAX_PREGUNTAS, systemPrompt } from '../src/lib/asesor/prompt'
@@ -61,13 +61,28 @@ describe('conocimiento del asesor', () => {
     expect(conocimiento('en')).toContain('$40.000 COP')
   })
 
-  it('no revela la tarifa por hora ni las horas por componente', () => {
+  it('no revela las horas por componente; la tarifa por hora solo con su uso permitido', () => {
     for (const l of ['es', 'en'] as const) {
       const t = systemPrompt(l)
-      expect(t).not.toContain('70.000')
-      expect(t).not.toMatch(/\$30 USD/)
       expect(t).not.toMatch(/\b20 - 35\b/)
+      expect(t).not.toMatch(/\[20, 35\]/)
     }
+    expect(conocimiento('es')).toMatch(/Tarifa por hora: \$70\.000 COP\. Se usa SOLO para cambios adicionales/)
+    expect(conocimiento('en')).toMatch(/Hourly rate: \$30 USD\. Used ONLY for extra changes/)
+  })
+
+  it('el perfil sale de lo publicado y lista proyectos sin repetir ni vacíos', () => {
+    const base = { titleEn: null, descriptionEn: null, techStack: null, screenshotUrl: null }
+    const lista = proyectosPublicos('es', [
+      { ...base, slug: 'a', title: 'SlideHub', description: 'Sistema de presentaciones' },
+      { ...base, slug: 'b', title: 'SlideHub', description: 'Copia repetida' },
+      { ...base, slug: 'c', title: 'ResidentialAccess', description: null },
+      { ...base, slug: 'd', title: 'Largo', description: 'x '.repeat(300) },
+    ])
+    expect(lista.map((p) => p.titulo)).toEqual(['SlideHub', 'Largo'])
+    expect(lista[1]!.descripcion.length).toBeLessThanOrEqual(223)
+    expect(conocimiento('es')).toContain('abierto a oportunidades')
+    expect(conocimiento('es')).toContain('lo único presencial es la capacitación')
   })
 
   it('las cifras públicas incluyen los "desde" y la capacitación', () => {

@@ -27,7 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const r = await responder(entrada)
-    return json(200, { texto: r.texto, whatsapp: r.whatsapp, calculos: r.calculos, cifras: r.cifras })
+    return json(200, { texto: r.texto, whatsapp: r.whatsapp, contacto: r.contacto, calculos: r.calculos, cifras: r.cifras })
   } catch (err) {
     if (err instanceof AsesorNoDisponible) return json(503, { error: 'no_disponible' })
     console.error('[asesor]', err instanceof Error ? err.message : err)

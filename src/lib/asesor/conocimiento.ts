@@ -5,14 +5,45 @@
 // fuente, tarde o temprano le diría al visitante algo distinto de lo que dice
 // la página que tiene abierta detrás del chat.
 //
-// Nada del panel entra aquí: ni clientes, ni proyectos, ni la tabla de horas
-// por componente con la tarifa por hora (esa la usa la calculadora, pero no se
-// publica: el visitante recibe el rango, y el desglose se lo da Mike).
+// Nada del panel entra aquí: ni clientes, ni proyectos privados, ni la tabla
+// de horas por componente (esa la usa la calculadora, pero no se publica: el
+// visitante recibe el rango, y el desglose se lo da Mike). La tarifa por hora
+// sí es pública desde el 2 oct 2026, solo para cambios extra y mantenimiento.
+//
+// El perfil sale de lo que ya publica el sitio: la portada y la copia de los
+// proyectos visibles (instantanea.json), que no consulta la base. Así cada
+// pregunta no suma una lectura a Turso.
 //
 // Módulo PURO.
 
 import { getDictionary, type Locale } from '../../i18n'
-import { CAPACITACION, PAQUETES_WEB, REGLAS, formatearMonto, type Moneda } from '../../data/tarifario'
+import { CAPACITACION, ENTREGA, HOSTING_ANUAL, PAQUETES_WEB, REGLAS, TARIFA_HORA, formatearMonto, type Moneda } from '../../data/tarifario'
+import { proyectosInstantanea, type ProyectoInstantanea } from '../fallback/instantanea'
+
+/** Largo máximo de la descripción de cada proyecto en el prompt. */
+const MAX_DESCRIPCION = 220
+
+/**
+ * Proyectos publicados con descripción, sin repetidos por título. Los que no
+ * tienen descripción no dicen nada que el asesor pueda contar (y alguno, como
+ * ResidentialAccess, ya ni existe).
+ */
+export function proyectosPublicos(
+  locale: Locale,
+  fuente: readonly ProyectoInstantanea[] = proyectosInstantanea
+): { titulo: string; descripcion: string }[] {
+  const vistos = new Set<string>()
+  const out: { titulo: string; descripcion: string }[] = []
+  for (const p of fuente) {
+    const titulo = (locale === 'en' ? p.titleEn : null) ?? p.title
+    const crudo = ((locale === 'en' ? p.descriptionEn : null) ?? p.description ?? '').replace(/\s+/g, ' ').trim()
+    if (!crudo || vistos.has(titulo.toLowerCase())) continue
+    vistos.add(titulo.toLowerCase())
+    const descripcion = crudo.length > MAX_DESCRIPCION ? `${crudo.slice(0, MAX_DESCRIPCION).replace(/\s+\S*$/, '')}...` : crudo
+    out.push({ titulo, descripcion })
+  }
+  return out
+}
 
 /** Moneda de los planes web según el idioma de la página: COP en español, USD en inglés. */
 export function monedaDe(locale: Locale): Moneda {
@@ -22,6 +53,7 @@ export function monedaDe(locale: Locale): Moneda {
 /** Texto de referencia que va en el system prompt, en el idioma de la página. */
 export function conocimiento(locale: Locale): string {
   const t = getDictionary(locale)
+  const home = t.home
   const pw = t.paginasWeb
   const ci = t.capacitacionIa
   const moneda = monedaDe(locale)
@@ -46,9 +78,24 @@ export function conocimiento(locale: Locale): string {
   const sesion = formatearMonto(CAPACITACION.sesionCOP, 'COP')
   const adicional = formatearMonto(CAPACITACION.personaAdicionalCOP, 'COP')
   const minimo = formatearMonto(REGLAS.minimo[moneda], moneda)
+  const hora = formatearMonto(TARIFA_HORA[moneda], moneda)
+  const proyectos = proyectosPublicos(locale)
+    .map((p) => `- ${p.titulo}: ${p.descripcion}`)
+    .join('\n')
+  const stack = `${home.hero.stackLine1} · ${home.hero.stackLine2}`
 
   return es
-    ? `# Páginas web (/paginas-web)
+    ? `# Quién es Mike
+
+Primero lo que hace por los negocios: páginas web, sistemas a la medida y capacitación en IA para equipos, con un solo responsable de punta a punta (diseño, código, publicación y cuidado después). Después, la experiencia técnica. En su portada se presenta así: "${home.hero.lead}" Stack principal ${stack}, Top #3 de contribuidores de GitHub en Colombia y miembro del GitHub Developer Program. Su propio sitio, codebymike.net, muestra en público cómo lo vigila y lo protege.
+
+Trabaja de forma remota con clientes de cualquier ciudad; lo único presencial es la capacitación. Está abierto a oportunidades laborales y colaboraciones: quien pregunte por eso, que le escriba por WhatsApp.
+
+## Proyectos publicados en el sitio
+Cuéntalos con su nombre y lo que dice su descripción, sin agruparlos en categorías ni agregarles adjetivos.
+${proyectos}
+
+# Páginas web (/paginas-web)
 
 ${pw.hero.intro}
 
@@ -57,10 +104,16 @@ ${planes}
 
 Proyectos a la medida (apps, sistemas, tiendas o reservas con cosas especiales): se calculan por partes con la herramienta. El mínimo de cualquier trabajo a la medida es ${minimo}.
 
+Tarifa por hora: ${hora}. Se usa SOLO para cambios adicionales (después de las ${ENTREGA.rondasCambios} rondas incluidas) y para el mantenimiento mensual, que se cobra por horas usadas. Nunca para explicar un estimado.
+
+La garantía de ${ENTREGA.garantiaDias} días cubre SOLO errores (algo que no funciona como se acordó). Cambiar fotos, textos o agregar cosas no es un error: es un cambio y se cobra por hora, también dentro de esos ${ENTREGA.garantiaDias} días.
+
 ## Preguntas frecuentes
+(Escritas en la voz de Mike: "lo arreglo" es "Mike lo arregla". Al usarlas, pásalas a tercera persona.)
 ${faqsWeb}
 
 ## Trabajos reales publicados
+Son tres de los proyectos de la lista de arriba (el café, el taller de motos y la productora): no los cuentes dos veces.
 ${trabajos}
 
 # Capacitación en IA para equipos (/capacitacion-ia)
@@ -76,13 +129,24 @@ ${perfilesCap}
 ${pasosCap}
 
 ## Preguntas frecuentes
+(También en la voz de Mike: pásalas a tercera persona.)
 ${faqsCap}
 
 # Reglas de pago (todos los servicios)
 - ${Math.round(REGLAS.anticipo * 100)} % para empezar y el resto al entregar.
 - La cotización formal que manda Mike vale ${REGLAS.validezDias} días.
 - Los descuentos solo los decide Mike.`
-    : `# Websites (/en/paginas-web)
+    : `# Who Mike is
+
+First, what he does for businesses: websites, custom systems and AI training for teams, with one person responsible end to end (design, code, publishing and care afterwards). Then, the technical background. His homepage introduces him like this: "${home.hero.lead}" Main stack ${stack}, Top #3 GitHub contributor in Colombia and member of the GitHub Developer Program. His own site, codebymike.net, shows in public how it is monitored and protected.
+
+He works remotely with clients anywhere; only the training is in person. He is open to job opportunities and collaborations: anyone asking about that should message him on WhatsApp.
+
+## Projects published on the site
+Mention them by name and what their description says, without grouping them into categories or adding adjectives.
+${proyectos}
+
+# Websites (/en/paginas-web)
 
 ${pw.hero.intro}
 
@@ -91,10 +155,16 @@ ${planes}
 
 Custom projects (apps, systems, stores or bookings with special needs) are estimated part by part with the tool. The minimum for any custom work is ${minimo}.
 
+Hourly rate: ${hora}. Used ONLY for extra changes (after the ${ENTREGA.rondasCambios} included rounds) and for monthly maintenance, billed by hours used. Never to explain an estimate.
+
+The ${ENTREGA.garantiaDias}-day warranty covers ONLY bugs (something that does not work as agreed). Changing photos or text, or adding things, is not a bug: it is a change billed by the hour, also within those ${ENTREGA.garantiaDias} days.
+
 ## FAQ
+(Written in Mike's voice: "I fix it" means "Mike fixes it". Rephrase them in the third person.)
 ${faqsWeb}
 
 ## Real published work
+These are three of the projects listed above (the coffee shop, the motorcycle workshop and the event producer): do not count them twice.
 ${trabajos}
 
 # AI training for teams (/en/capacitacion-ia)
@@ -110,6 +180,7 @@ ${perfilesCap}
 ${pasosCap}
 
 ## FAQ
+(Also in Mike's voice: rephrase them in the third person.)
 ${faqsCap}
 
 # Payment rules (all services)
@@ -120,8 +191,8 @@ ${faqsCap}
 
 /**
  * Cifras públicas que el asesor puede decir sin haber llamado a la
- * calculadora: los "desde" de los planes, el mínimo y la capacitación, porque
- * ya están escritos en las páginas. Cualquier otra cifra tiene que salir de un
+ * calculadora: los "desde" de los planes, el mínimo, la tarifa por hora, el
+ * hosting anual y la capacitación, porque ya están escritos en las páginas. Cualquier otra cifra tiene que salir de un
  * cálculo de esta conversación (lo comprueba la guardia).
  */
 export function cifrasPublicas(locale: Locale): number[] {
@@ -129,6 +200,9 @@ export function cifrasPublicas(locale: Locale): number[] {
   return [
     ...PAQUETES_WEB.map((p) => p.desde[moneda]),
     REGLAS.minimo[moneda],
+    TARIFA_HORA[moneda],
+    HOSTING_ANUAL.presencia[moneda],
+    HOSTING_ANUAL.negocio[moneda],
     CAPACITACION.sesionCOP,
     CAPACITACION.personaAdicionalCOP,
   ]
