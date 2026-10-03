@@ -123,6 +123,9 @@ export default defineConfig({
       // una real, igual solo viaja a 127.0.0.1.
       ANTHROPIC_BASE_URL: E2E.fakeAnthropicURL,
       ANTHROPIC_API_KEY: 'sk-ant-e2e-falsa',
+      // El asesor en vivo avisa por ntfy en cuanto da un precio: vacío, la
+      // suite nunca le manda una notificación real al celular.
+      NTFY_TOPIC: '',
     },
   },
   ],

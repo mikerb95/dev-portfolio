@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// API de Claude FALSA para los e2e del analista (e2e/analista.spec.ts).
+// API de Claude FALSA para los e2e del analista (e2e/analista.spec.ts) y del
+// asesor público (e2e/asesor-vivo.spec.ts).
 //
 // Los e2e no pueden gastar créditos ni depender de la red, pero sí tienen que
 // ejercitar el flujo real: el SDK oficial, el streaming, la pausa ante un
@@ -45,6 +46,24 @@ function guion(mensajes) {
   }
 }
 
+// Asesor público de la burbuja (e2e/asesor-vivo.spec.ts). Sin streaming, como
+// el motor real (lib/asesor/motor.ts). Una pregunta con "cuánto" pide
+// calcular_precio y la respuesta copia la cifra que devolvió el tarifario, así
+// pasa la guardia de cifras como pasaría una respuesta buena de verdad.
+function guionAsesor(mensajes) {
+  const ultimo = mensajes.at(-1)
+  const resultado = Array.isArray(ultimo?.content) ? ultimo.content.find((b) => b.type === 'tool_result') : null
+  if (resultado) {
+    const r = JSON.parse(typeof resultado.content === 'string' ? resultado.content : resultado.content[0].text)
+    return { stop: 'end_turn', bloques: [texto(`El plan ${r.plan} cuesta desde ${r.desde}.`)] }
+  }
+  const pregunta = typeof ultimo?.content === 'string' ? ultimo.content : ''
+  if (/cu[aá]nto/i.test(pregunta)) {
+    return { stop: 'tool_use', bloques: [uso(`toolu_asesor_${Date.now()}`, 'calcular_precio', { tipo: 'plan', plan: 'negocio' })] }
+  }
+  return { stop: 'end_turn', bloques: [texto('Respuesta de prueba del asesor, sin precios.')] }
+}
+
 function sse(res, evento, datos) {
   res.write(`event: ${evento}\ndata: ${JSON.stringify({ type: evento, ...datos })}\n\n`)
 }
@@ -57,6 +76,22 @@ createServer((req, res) => {
   req.on('data', (c) => (cuerpo += c))
   req.on('end', () => {
     const peticion = JSON.parse(cuerpo)
+    if (peticion.tools?.some((t) => t.name === 'calcular_precio')) {
+      const { stop, bloques } = guionAsesor(peticion.messages ?? [])
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      return res.end(
+        JSON.stringify({
+          id: `msg_e2e_${Date.now()}`,
+          type: 'message',
+          role: 'assistant',
+          model: peticion.model,
+          content: bloques,
+          stop_reason: stop,
+          stop_sequence: null,
+          usage: { input_tokens: 900, output_tokens: 60, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 },
+        })
+      )
+    }
     const { stop, bloques } = guion(peticion.messages ?? [])
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
     sse(res, 'message_start', {

@@ -1095,6 +1095,8 @@ const textos = JSON.stringify({
 
     fab.addEventListener('click', () => {
       if (!chat.hidden) return abrirChat(false)
+      // Mike escribió: la burbuja lleva directo a su mensaje, sin pasar por el menú.
+      if (fab.hasAttribute('data-nuevo')) return abrirChat(true)
       abrirMenu(menu.hidden)
     })
     abrir.addEventListener('click', () => abrirChat(true))
