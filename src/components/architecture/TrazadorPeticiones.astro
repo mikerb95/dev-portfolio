@@ -1,0 +1,508 @@
+---
+// Trazador de peticiones: el diagrama de capas de /architecture con una
+// petición de verdad atravesándolo. Se elige quién llega (un visitante, un
+// escáner, el panel, un cliente, la demo) y un punto de luz baja capa por capa
+// hasta donde el sitio lo deja llegar; dos interruptores rompen el sensor de
+// seguridad o Turso y la petición se vuelve a lanzar.
+//
+// El recorrido no está escrito a mano: lo calcula src/lib/motion/trazado.ts
+// en el build con las funciones del middleware. Aquí solo se pinta.
+//
+// Sin JS (o con movimiento reducido) se lee igual: cada caso lleva su lista de
+// pasos en texto, que es la evidencia; el diagrama es la imagen de esa lista.
+// El script (src/lib/motion/arquitectura.ts) añade el recorrido animado.
+import { getDictionary, getLocaleFromUrl, localizedHref } from '../../i18n'
+import {
+  CASOS,
+  FALLOS,
+  NODOS_POR_CAPA,
+  claveFallos,
+  todosLosGuiones,
+  type NodoId,
+} from '../../lib/motion/trazado'
+import { pasadasHtml, type TextosTrazado } from '../../lib/motion/trazado-html'
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const a = getDictionary(locale).architecture
+const tz = a.trazador
+const L = (path: string) => localizedHref(path, locale)
+
+const nombres = {} as Record<NodoId, string>
+NODOS_POR_CAPA.forEach((ids, c) => ids.forEach((id, n) => (nombres[id] = a.layers[c].nodes[n].name)))
+
+const textos: TextosTrazado = {
+  notas: tz.notas,
+  finales: tz.finales,
+  pasadas: tz.pasadas,
+  nombres,
+  sinCodigo: tz.sinCodigo,
+}
+const guiones = todosLosGuiones()
+const sinFallos = claveFallos({ sensor: false, turso: false })
+const datos = JSON.stringify({ guiones, textos })
+---
+
+<section class="tz-seccion mb-20" aria-labelledby="arch-camino" data-trazador data-datos={datos}>
+  <div class="flex flex-wrap items-baseline justify-between gap-3 mb-4">
+    <h2 id="arch-camino" class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200" data-titular>{a.pathHeading}</h2>
+    <a href={L('/docs/diagrama-despliegue')} class="text-[12px] text-cyan hover:underline">{a.umlLabel} →</a>
+  </div>
+  <p class="text-[14.5px] text-ink-100 max-w-2xl leading-relaxed mb-8">{tz.intro}</p>
+
+  <div class="tz">
+    <!-- Selector compacto: solo en pantallas sin el diagrama fijo al lado. -->
+    <div class="tz-tabs" role="group" aria-label={tz.casosLabel}>
+      {CASOS.map((c) => (
+        <button type="button" class="tz-tab" data-tab={c} aria-pressed="false">{tz.casos[c].titulo}</button>
+      ))}
+    </div>
+
+    <div class="tz-casos">
+      {CASOS.map((c, i) => (
+        <article class="tz-caso" id={`caso-${c}`} data-caso={c}>
+          <button type="button" class="tz-caso-cab" data-jugar={c}>
+            <span class="tz-caso-num">{String(i + 1).padStart(2, '0')}</span>
+            <span class="tz-caso-textos">
+              <span class="tz-caso-titulo">{tz.casos[c].titulo}</span>
+              <span class="tz-caso-resumen">{tz.casos[c].resumen}</span>
+            </span>
+            <span class="tz-caso-play" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+            </span>
+          </button>
+          <div class="tz-pasadas" data-pasadas set:html={pasadasHtml(guiones[c][sinFallos], textos)} />
+        </article>
+      ))}
+    </div>
+
+    <div class="tz-escena">
+      <div class="tz-panel rounded-2xl">
+        <!-- Consola: la petición en curso y su respuesta. -->
+        <div class="tz-consola" aria-live="polite">
+          <div class="tz-consola-linea">
+            <span class="tz-consola-punto" aria-hidden="true"></span>
+            <span class="tz-consola-quien" data-consola-quien>{tz.casos.visitante.titulo}</span>
+            <span class="tz-consola-etiqueta" data-consola-etiqueta></span>
+          </div>
+          <div class="tz-consola-linea tz-consola-grande">
+            <code class="tz-consola-peticion" data-consola-peticion>GET /status</code>
+            <span class="tz-consola-flecha" aria-hidden="true">→</span>
+            <span class="tz-status" data-consola-status data-tono="ok">200</span>
+          </div>
+          <p class="tz-consola-nota" data-consola-nota>{tz.finales.guardadaEnBorde}</p>
+        </div>
+
+        <!-- Diagrama: las seis capas con sus piezas. El trazo se dibuja encima. -->
+        <div class="tz-diagrama" data-diagrama>
+          <svg class="tz-trazo" data-trazo aria-hidden="true">
+            <path class="tz-trazo-viejo" data-trazo-viejo d="" />
+            <path class="tz-trazo-linea" data-trazo-linea d="" />
+            <circle class="tz-trazo-halo" data-paquete-halo r="11" cx="-40" cy="-40" />
+            <circle class="tz-trazo-paquete" data-paquete r="4.5" cx="-40" cy="-40" />
+          </svg>
+          {NODOS_POR_CAPA.map((ids, c) => (
+            <div class="tz-capa">
+              <span class="tz-capa-tag">{a.layers[c].tag}</span>
+              <div class="tz-capa-nodos">
+                {ids.map((id) => (
+                  <a class="tz-nodo" data-nodo={id} href={`#pieza-${id}`}>
+                    <span class="tz-nodo-nombre">{nombres[id]}</span>
+                    <span class="tz-nodo-caido">{tz.caida}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <!-- Romper piezas y servicios tocados. -->
+        <div class="tz-pie">
+          <div class="tz-fallos" role="group" aria-label={tz.fallosTitulo}>
+            <span class="tz-pie-rotulo">{tz.fallosTitulo}</span>
+            {FALLOS.map((f) => (
+              <button type="button" class="tz-fallo" data-fallo={f} aria-pressed="false">
+                <span class="tz-fallo-caja" aria-hidden="true"></span>
+                {tz.fallos[f]}
+              </button>
+            ))}
+          </div>
+          <div class="tz-externos">
+            <span class="tz-pie-rotulo">{tz.toco}</span>
+            <span class="tz-externo" data-externo="vercel">Vercel</span>
+            <span class="tz-externo" data-externo="turso">Turso</span>
+          </div>
+        </div>
+        <p class="tz-fallos-nota">{tz.fallosNota}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  /* Prefijo `tz-` y global: el script cambia estados con atributos y clases, y
+     cómo se ve cada estado vive aquí. El script decide CUÁNDO, nunca CÓMO. */
+  .tz {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .tz-tabs { display: none; }
+  .tz-casos { display: grid; gap: 14px; }
+
+  @media (min-width: 1024px) {
+    .tz {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 40px;
+      align-items: start;
+    }
+    .tz-escena { position: sticky; top: 92px; }
+    /* Con JS cada caso ocupa casi una pantalla: el scroll los pasa de uno en
+       uno y cada uno lanza su recorrido. Sin JS se quedan compactos. */
+    .tz-vivo .tz-caso { min-height: 62vh; }
+    .tz-vivo .tz-casos { padding-bottom: 18vh; }
+  }
+
+  /* En pantallas sin diagrama fijo, con JS: pestañas arriba, diagrama y luego
+     solo el caso activo. Sin JS se ven todos los casos, uno tras otro. */
+  @media (max-width: 1023.98px) {
+    .tz-vivo .tz-tabs { display: flex; flex-wrap: wrap; gap: 8px; order: 1; }
+    .tz-vivo .tz-escena { order: 2; }
+    .tz-vivo .tz-casos { order: 3; }
+    .tz-vivo .tz-caso:not(.tz-activo) { display: none; }
+    .tz-vivo .tz-caso-cab { display: none; }
+  }
+  .tz-tab {
+    font: 500 12.5px/1 var(--font-sans, inherit);
+    color: var(--color-ink-100);
+    padding: 9px 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    background: rgba(255, 255, 255, .02);
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .tz-tab[aria-pressed='true'] {
+    color: #061014;
+    background: var(--color-cyan);
+    border-color: var(--color-cyan);
+  }
+
+  /* ── Casos ─────────────────────────────────────────────────────────── */
+  .tz-caso {
+    border-radius: 18px;
+    padding: 6px;
+    transition: background .35s;
+  }
+  .tz-caso.tz-activo { background: rgba(0, 242, 255, .035); }
+  .tz-caso-cab {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+    text-align: left;
+    padding: 12px 12px 10px;
+    border-radius: 14px;
+    cursor: pointer;
+  }
+  .tz-caso-cab:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
+  .tz-caso-num {
+    font: 500 11px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--color-ink-300);
+    letter-spacing: .1em;
+    padding-top: 3px;
+    transition: color .3s;
+  }
+  .tz-activo .tz-caso-num { color: var(--color-cyan); }
+  .tz-caso-textos { display: grid; gap: 3px; flex: 1; min-width: 0; }
+  .tz-caso-titulo { font-size: 17px; font-weight: 500; color: var(--color-ink-50); letter-spacing: -.01em; }
+  .tz-caso-resumen { font-size: 13px; color: var(--color-ink-200); line-height: 1.5; }
+  .tz-caso-play {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    color: var(--color-ink-200);
+    transition: color .25s, border-color .25s, background .25s;
+  }
+  .tz-caso-cab:hover .tz-caso-play,
+  .tz-activo .tz-caso-play {
+    color: #061014;
+    background: var(--color-cyan);
+    border-color: var(--color-cyan);
+  }
+
+  .tz-pasadas { display: grid; gap: 14px; padding: 2px 12px 12px 12px; }
+  @media (min-width: 1024px) { .tz-pasadas { padding-left: 46px; } }
+  .tz-pasada-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 8px; }
+  .tz-pasada-etiqueta {
+    font: 500 10.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--color-ink-200);
+  }
+  .tz-peticion {
+    font: 500 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--color-cyan-glow);
+    overflow-wrap: anywhere;
+  }
+  .tz-pasos { display: grid; gap: 6px; counter-reset: paso; }
+  .tz-paso {
+    display: grid;
+    grid-template-columns: 9px minmax(0, 1fr);
+    column-gap: 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--color-ink-200);
+    transition: color .3s, opacity .3s;
+  }
+  .tz-paso::before {
+    content: '';
+    grid-row: 1 / span 2;
+    width: 7px;
+    height: 7px;
+    margin-top: 6px;
+    border-radius: 999px;
+    border: 1px solid var(--color-ink-300);
+    transition: background .3s, border-color .3s, box-shadow .3s;
+  }
+  .tz-paso-nodo {
+    font: 500 10.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: .06em;
+    color: var(--color-ink-100);
+  }
+  .tz-paso-nota { color: var(--color-ink-200); }
+  /* El color del punto dice qué hizo la pieza. */
+  .tz-paso[data-estado='pasa']::before { border-color: var(--color-cyan-dim); }
+  .tz-paso[data-estado='registra']::before { border-color: var(--color-violet); }
+  .tz-paso[data-estado='corta']::before { border-color: var(--color-ember); background: var(--color-ember); }
+  .tz-paso[data-estado='falla']::before { border-color: var(--color-ember); border-style: dashed; }
+  /* Mientras corre el recorrido: lo pendiente se apaga y lo recorrido se enciende. */
+  .tz-corriendo .tz-paso { opacity: .38; }
+  .tz-corriendo .tz-paso.tz-hecho { opacity: 1; }
+  .tz-paso.tz-ahora .tz-paso-nota { color: var(--color-ink-50); }
+  .tz-paso.tz-ahora[data-estado='pasa']::before { background: var(--color-cyan); box-shadow: 0 0 10px var(--color-cyan); }
+  .tz-paso.tz-ahora[data-estado='registra']::before { background: var(--color-violet); box-shadow: 0 0 10px var(--color-violet); }
+  .tz-paso.tz-ahora[data-estado='corta']::before,
+  .tz-paso.tz-ahora[data-estado='falla']::before { box-shadow: 0 0 10px var(--color-ember); }
+
+  .tz-final {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 10px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-ink-100);
+    transition: opacity .3s;
+  }
+  .tz-corriendo .tz-final { opacity: .3; }
+  .tz-corriendo .tz-final.tz-hecho { opacity: 1; }
+
+  .tz-status {
+    display: inline-flex;
+    align-items: center;
+    font: 600 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: .04em;
+    padding: 5px 8px;
+    border-radius: 7px;
+    white-space: nowrap;
+  }
+  .tz-status[data-tono='ok'] { color: var(--color-cyan); background: rgba(0, 242, 255, .1); }
+  .tz-status[data-tono='desvio'] { color: var(--color-violet); background: rgba(167, 139, 255, .12); }
+  .tz-status[data-tono='corte'] { color: var(--color-ember); background: rgba(255, 107, 61, .12); }
+
+  /* ── Panel del diagrama ────────────────────────────────────────────── */
+  .tz-panel {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .012));
+    border: 1px solid rgba(255, 255, 255, .07);
+    padding: 18px;
+    display: grid;
+    gap: 16px;
+  }
+  @media (min-width: 768px) { .tz-panel { padding: 22px 24px; } }
+
+  .tz-consola {
+    display: grid;
+    gap: 6px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    min-height: 96px;
+  }
+  .tz-consola-linea { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+  .tz-consola-punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--color-cyan);
+    box-shadow: 0 0 10px var(--color-cyan);
+  }
+  .tz-consola-quien { font-size: 13px; color: var(--color-ink-100); }
+  .tz-consola-etiqueta {
+    font: 500 10.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--color-ink-200);
+  }
+  .tz-consola-grande { gap: 12px; }
+  .tz-consola-peticion {
+    font: 500 clamp(17px, 2.1vw, 22px)/1.25 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--color-ink-50);
+    letter-spacing: -.01em;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .tz-consola-flecha { color: var(--color-ink-300); font-size: 18px; }
+  .tz-consola .tz-status { font-size: 13px; padding: 6px 9px; }
+  .tz-consola-nota { font-size: 13px; color: var(--color-ink-200); line-height: 1.5; min-height: 2.9em; }
+
+  .tz-diagrama {
+    position: relative;
+    display: grid;
+    gap: 7px;
+  }
+  .tz-trazo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .tz-trazo path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .tz-trazo-linea { stroke: var(--color-cyan); stroke-width: 1.6; filter: drop-shadow(0 0 4px rgba(0, 242, 255, .55)); }
+  .tz-trazo-viejo { stroke: var(--color-cyan-deep); stroke-width: 1.2; stroke-dasharray: 3 5; opacity: .7; }
+  .tz-trazo-paquete { fill: #eaffff; }
+  .tz-trazo-halo { fill: rgba(0, 242, 255, .22); }
+
+  .tz-capa {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    padding: 9px 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .015);
+    border: 1px solid rgba(255, 255, 255, .04);
+  }
+  @media (min-width: 640px) {
+    .tz-capa { grid-template-columns: 92px minmax(0, 1fr); align-items: center; }
+  }
+  .tz-capa-tag {
+    font: 500 9.5px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    color: var(--color-cyan-dim);
+  }
+  .tz-capa-nodos { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tz-nodo {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--color-ink-100);
+    padding: 7px 10px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    background: var(--color-ink-900);
+    transition: opacity .3s, color .3s, border-color .3s, box-shadow .3s, background .3s;
+  }
+  .tz-nodo:hover { color: var(--color-ink-50); border-color: rgba(0, 242, 255, .35); }
+  .tz-nodo:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
+  .tz-nodo-caido {
+    display: none;
+    font: 600 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--color-ember);
+  }
+  /* Estados del recorrido. */
+  .tz-recorriendo .tz-nodo { opacity: .42; }
+  .tz-recorriendo .tz-nodo[data-estado] { opacity: 1; }
+  .tz-nodo[data-estado='pasa'] {
+    color: var(--color-ink-50);
+    border-color: rgba(0, 242, 255, .55);
+    box-shadow: 0 0 0 1px rgba(0, 242, 255, .15), 0 0 18px -4px rgba(0, 242, 255, .6);
+  }
+  .tz-nodo[data-estado='registra'] {
+    color: var(--color-ink-50);
+    border-color: rgba(167, 139, 255, .7);
+    box-shadow: 0 0 18px -4px rgba(167, 139, 255, .7);
+  }
+  .tz-nodo[data-estado='corta'] {
+    color: #fff;
+    border-color: var(--color-ember);
+    background: rgba(255, 107, 61, .16);
+    box-shadow: 0 0 22px -4px rgba(255, 107, 61, .8);
+  }
+  .tz-nodo[data-estado='falla'] {
+    color: var(--color-ink-50);
+    border-color: var(--color-ember);
+    border-style: dashed;
+  }
+  /* Pieza rota por un interruptor: se ve rota aunque el recorrido no la pise. */
+  .tz-nodo.tz-roto { border-style: dashed; border-color: rgba(255, 107, 61, .7); opacity: 1; }
+  .tz-nodo.tz-roto .tz-nodo-caido { display: inline; }
+
+  .tz-pie {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px 20px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, .06);
+  }
+  .tz-fallos, .tz-externos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .tz-pie-rotulo {
+    font: 500 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    color: var(--color-ink-200);
+    margin-right: 2px;
+  }
+  .tz-fallo {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--color-ink-100);
+    padding: 7px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    transition: color .2s, border-color .2s, background .2s;
+  }
+  .tz-fallo:hover { border-color: rgba(255, 107, 61, .5); }
+  .tz-fallo:focus-visible { outline: 2px solid var(--color-ember); outline-offset: 2px; }
+  .tz-fallo-caja {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    border: 1px solid var(--color-ink-300);
+    transition: background .2s, border-color .2s;
+  }
+  .tz-fallo[aria-pressed='true'] { color: #fff; border-color: var(--color-ember); background: rgba(255, 107, 61, .14); }
+  .tz-fallo[aria-pressed='true'] .tz-fallo-caja { background: var(--color-ember); border-color: var(--color-ember); }
+  .tz-fallos-nota { font-size: 11.5px; color: var(--color-ink-200); margin-top: -6px; }
+  /* Los interruptores solo tienen sentido con el script. */
+  .tz-seccion:not(.tz-vivo) .tz-fallos,
+  .tz-seccion:not(.tz-vivo) .tz-fallos-nota,
+  .tz-seccion:not(.tz-vivo) .tz-consola,
+  .tz-seccion:not(.tz-vivo) .tz-externos { display: none; }
+  .tz-seccion:not(.tz-vivo) .tz-pie { display: none; }
+
+  .tz-externo {
+    font: 500 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--color-ink-300);
+    padding: 6px 9px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, .06);
+    transition: color .3s, border-color .3s, background .3s;
+  }
+  .tz-externo.tz-tocado { color: var(--color-cyan); border-color: rgba(0, 242, 255, .35); background: rgba(0, 242, 255, .06); }
+  .tz-externo.tz-roto { color: var(--color-ember); border-color: rgba(255, 107, 61, .45); border-style: dashed; }
+</style>
