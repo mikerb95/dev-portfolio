@@ -276,6 +276,7 @@ const datos = JSON.stringify({ guiones, textos })
   /* El color del punto dice qué hizo la pieza. */
   .tz-paso[data-estado='pasa']::before { border-color: var(--color-cyan-dim); }
   .tz-paso[data-estado='registra']::before { border-color: var(--color-violet); }
+  .tz-paso[data-estado='responde']::before { border-color: var(--color-cyan); background: var(--color-cyan); }
   .tz-paso[data-estado='corta']::before { border-color: var(--color-ember); background: var(--color-ember); }
   .tz-paso[data-estado='falla']::before { border-color: var(--color-ember); border-style: dashed; }
   /* Mientras corre el recorrido: lo pendiente se apaga y lo recorrido se enciende. */
@@ -283,6 +284,7 @@ const datos = JSON.stringify({ guiones, textos })
   .tz-corriendo .tz-paso.tz-hecho { opacity: 1; }
   .tz-paso.tz-ahora .tz-paso-nota { color: var(--color-ink-50); }
   .tz-paso.tz-ahora[data-estado='pasa']::before { background: var(--color-cyan); box-shadow: 0 0 10px var(--color-cyan); }
+  .tz-paso.tz-ahora[data-estado='responde']::before { box-shadow: 0 0 10px var(--color-cyan); }
   .tz-paso.tz-ahora[data-estado='registra']::before { background: var(--color-violet); box-shadow: 0 0 10px var(--color-violet); }
   .tz-paso.tz-ahora[data-estado='corta']::before,
   .tz-paso.tz-ahora[data-estado='falla']::before { box-shadow: 0 0 10px var(--color-ember); }
@@ -370,7 +372,9 @@ const datos = JSON.stringify({ guiones, textos })
     height: 100%;
     overflow: visible;
     pointer-events: none;
-    z-index: 2;
+    /* Debajo de las piezas (que tienen fondo opaco): la línea solo asoma en
+       los huecos y nunca tacha un nombre. */
+    z-index: 0;
   }
   .tz-trazo path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
   .tz-trazo-linea { stroke: var(--color-cyan); stroke-width: 1.6; filter: drop-shadow(0 0 4px rgba(0, 242, 255, .55)); }
@@ -433,6 +437,12 @@ const datos = JSON.stringify({ guiones, textos })
     color: var(--color-ink-50);
     border-color: rgba(167, 139, 255, .7);
     box-shadow: 0 0 18px -4px rgba(167, 139, 255, .7);
+  }
+  .tz-nodo[data-estado='responde'] {
+    color: #061014;
+    border-color: var(--color-cyan);
+    background: var(--color-cyan);
+    box-shadow: 0 0 24px -4px rgba(0, 242, 255, .85);
   }
   .tz-nodo[data-estado='corta'] {
     color: #fff;

@@ -77,10 +77,11 @@ export const COMBINACIONES: Fallos[] = [
 /**
  * - pasa: la pieza deja seguir la petición.
  * - registra: deja seguir, pero la anota (el sensor ante un sondeo).
- * - corta: la pieza responde y la petición no baja más.
+ * - responde: la pieza contesta ella misma con lo pedido (la CDN con un HIT).
+ * - corta: la pieza responde con un rechazo y la petición no baja más.
  * - falla: la pieza está rota; lo que pase después depende de cómo falla.
  */
-export type Estado = 'pasa' | 'registra' | 'corta' | 'falla'
+export type Estado = 'pasa' | 'registra' | 'responde' | 'corta' | 'falla'
 
 /** Los textos viven en el diccionario (`architecture.trazador.notas`). */
 export type NotaId =
@@ -234,7 +235,7 @@ function visitante(f: Fallos): Pasada[] {
       pasos: [
         { nodo: 'html', estado: 'pasa', nota: 'navegadorPide' },
         { nodo: 'waf', estado: 'pasa', nota: 'wafPasa' },
-        { nodo: 'cdn', estado: 'corta', nota: 'cdnHit' },
+        { nodo: 'cdn', estado: 'responde', nota: 'cdnHit' },
       ],
       final: f.turso ? 'hitConTursoCaido' : 'hitSinFuncion',
     }),

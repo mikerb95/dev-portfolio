@@ -244,7 +244,8 @@ export function montarTrazador(raiz: HTMLElement, opciones: { reducido: boolean 
         tl!.to({}, { duration: paso.estado === 'pasa' ? 0.42 : 0.95 })
       })
       const ultimo = p.pasos[p.pasos.length - 1]
-      if (ultimo.estado === 'corta' || ultimo.estado === 'falla') {
+      if (ultimo.estado !== 'pasa' && ultimo.estado !== 'registra') {
+        // La pieza que contesta (con lo pedido o con un rechazo) absorbe el paquete.
         tl!.fromTo(halo, { attr: { r: 11 }, opacity: 0.9 }, { attr: { r: 34 }, opacity: 0, duration: 0.7, ease: 'expo.out' })
         tl!.to(paquete, { opacity: 0, duration: 0.3 }, '<')
       } else {
