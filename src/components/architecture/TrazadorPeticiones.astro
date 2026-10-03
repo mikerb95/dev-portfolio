@@ -426,8 +426,9 @@ const datos = JSON.stringify({ guiones, textos })
     color: var(--color-ember);
   }
   /* Estados del recorrido. */
-  .tz-recorriendo .tz-nodo { opacity: .42; }
-  .tz-recorriendo .tz-nodo[data-estado] { opacity: 1; }
+  /* Lo que el recorrido no pisa se apaga con color, no con opacidad: una pieza
+     translúcida dejaría ver la línea que pasa por debajo, como un tachón. */
+  .tz-recorriendo .tz-nodo:not([data-estado]) { color: var(--color-ink-300); border-color: rgba(255, 255, 255, .045); }
   .tz-nodo[data-estado='pasa'] {
     color: var(--color-ink-50);
     border-color: rgba(0, 242, 255, .55);
