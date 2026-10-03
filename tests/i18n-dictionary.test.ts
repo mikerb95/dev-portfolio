@@ -49,6 +49,8 @@ describe('paridad del diccionario es/en', () => {
       // en los dos idiomas - no son traducciones olvidadas.
       const ALLOWED_IDENTICAL = new Set([
         'meta.siteName',
+        // Etiqueta de las burbujas de Mike en el asesor en vivo: un nombre propio.
+        'asesor.vivoMike',
         // /architecture: servicios y piezas con nombre propio.
         'architecture.externals[5].name',
         'architecture.externals[6].name',
