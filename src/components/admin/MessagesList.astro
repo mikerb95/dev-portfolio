@@ -32,11 +32,17 @@ const { messages } = Astro.props
         {m.read && <span class="w-1.5 h-1.5 rounded-full bg-ink-600 shrink-0"></span>}
         <span class="text-[13px] text-ink-50 font-medium truncate">{m.name}</span>
       </div>
-      <div class="text-[12px] font-mono text-ink-300 truncate">{m.email}</div>
-      <div class="min-w-0">
-        {m.subject && <div class="text-[13px] text-ink-100 truncate mb-0.5">{m.subject}</div>}
-        <p class="text-[12px] text-ink-300 line-clamp-2 leading-relaxed">{m.body}</p>
-      </div>
+      <div class="text-[12px] font-mono text-ink-300 truncate">{m.email || '-'}</div>
+      <!-- El mensaje completo se despliega al tocarlo: los que deja el asesor
+           de la burbuja traen teléfono, empresa y resumen, y en dos líneas no
+           se veían. -->
+      <details class="min-w-0 group/msg">
+        <summary class="list-none cursor-pointer">
+          {m.subject && <div class="text-[13px] text-ink-100 truncate mb-0.5">{m.subject}</div>}
+          <p class="text-[12px] text-ink-300 line-clamp-2 leading-relaxed group-open/msg:hidden">{m.body}</p>
+        </summary>
+        <p class="text-[12px] text-ink-200 leading-relaxed whitespace-pre-line">{m.body}</p>
+      </details>
       <div class="text-[10.5px] font-mono text-ink-300 text-right">
         {m.createdAt ? m.createdAt.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : '-'}
       </div>
