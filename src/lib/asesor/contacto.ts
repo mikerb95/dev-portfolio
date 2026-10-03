@@ -96,7 +96,8 @@ export function filaMensaje(c: Contacto, ahora: Date): { name: string; email: st
     `Teléfono: ${c.telefono ?? 'no lo dejó'}`,
     `Correo: ${c.correo ?? 'no lo dejó'}`,
     `Empresa: ${c.empresa ?? 'no la dijo'}`,
-    `Autorizó el tratamiento de sus datos: sí, ${fecha}.`,
+    // Entre paréntesis: la hora en es-CO termina en "p. m." y un punto final quedaría doble.
+    `Autorizó el tratamiento de sus datos: sí (${fecha})`,
   ]
   if (c.resumen) lineas.push('', 'Resumen que preparó el asistente:', c.resumen)
   if (c.preguntas.length) lineas.push('', 'Lo que preguntó:', ...c.preguntas.map((p) => `- ${p}`))
