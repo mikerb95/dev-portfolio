@@ -51,7 +51,6 @@ const textos = JSON.stringify({
   contactoErrorCorreo: a.contactoErrorCorreo,
   contactoErrorAutoriza: a.contactoErrorAutoriza,
   contactoErrorFallo: a.contactoErrorFallo,
-  errorLimite: a.errorLimite,
 })
 ---
 
@@ -734,7 +733,7 @@ const textos = JSON.stringify({
       } else {
         contactoForm.hidden = true
         if (estado.contacto === 'enviado') {
-          const listo = document.createElement('p')
+          const listo = document.createElement('div')
           listo.className = 'asesor-listo'
           listo.textContent = t.contactoListo.replace('{nombre}', estado.contactoNombre ?? '')
           log.append(listo)

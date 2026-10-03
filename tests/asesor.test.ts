@@ -4,6 +4,7 @@ import { atender, sinRayas, validarEntrada, type Entrada, MAX_LLAMADAS } from '.
 import { conocimiento, cifrasPublicas, proyectosPublicos } from '../src/lib/asesor/conocimiento'
 import { calcular, definiciones, mensajeWhatsapp, precioEnFrase } from '../src/lib/asesor/herramientas'
 import { gastoDelValor, hoyBogota } from '../src/lib/asesor/presupuesto'
+import { aviso, filaMensaje, validarContacto } from '../src/lib/asesor/contacto'
 import { MAX_PREGUNTAS, systemPrompt } from '../src/lib/asesor/prompt'
 import { isAsesorPath } from '../src/lib/security/paths'
 import { formatearMonto } from '../src/data/tarifario'
@@ -353,5 +354,54 @@ describe('isAsesorPath', () => {
     expect(isAsesorPath('/api/asesor')).toBe(true)
     expect(isAsesorPath('/api/asesorx')).toBe(false)
     expect(isAsesorPath('/api/contact')).toBe(false)
+  })
+})
+
+describe('contacto del asesor', () => {
+  const base = { locale: 'es', pagina: 'paginas-web', nombre: 'Laura Gómez', autoriza: true }
+
+  it('acepta celular colombiano y lo normaliza', () => {
+    const c = validarContacto({ ...base, telefono: '310 464 1228', empresa: 'Panadería La Espiga' })
+    expect(c).toMatchObject({ telefono: '+573104641228', correo: null, empresa: 'Panadería La Espiga' })
+  })
+
+  it('exige al menos un medio, autorización y datos válidos', () => {
+    expect(validarContacto(base)).toEqual({ error: 'sin_medio' })
+    expect(validarContacto({ ...base, correo: 'laura@', telefono: undefined })).toEqual({ error: 'correo' })
+    expect(validarContacto({ ...base, telefono: '1234' })).toEqual({ error: 'telefono' })
+    expect(validarContacto({ ...base, correo: 'laura@correo.co', autoriza: false })).toEqual({ error: 'autorizacion' })
+    expect(validarContacto({ ...base, correo: 'laura@correo.co', admin: true })).toEqual({ error: 'formato' })
+  })
+
+  it('arma el mensaje del panel con lo que preguntó y la autorización', () => {
+    const c = validarContacto({
+      ...base,
+      correo: 'laura@correo.co',
+      resumen: 'Necesito una página para mi consultorio.',
+      preguntas: Array.from({ length: 14 }, (_, i) => `pregunta ${i + 1}`),
+    })
+    if ('error' in c) throw new Error(c.error)
+    const f = filaMensaje(c, new Date('2026-10-02T15:00:00Z'))
+    expect(f.name).toBe('Laura Gómez')
+    expect(f.email).toBe('laura@correo.co')
+    expect(f.subject).toBe('Asistente IA: Laura Gómez')
+    expect(f.body).toContain('Autorizó el tratamiento de sus datos: sí')
+    expect(f.body).toContain('Teléfono: no lo dejó')
+    expect(f.body).toContain('- pregunta 14')
+    expect(f.body).not.toContain('- pregunta 4\n')
+    expect(aviso(c).titulo).toBe('Nuevo contacto del asistente: Laura Gómez')
+  })
+
+  it('el modelo puede pedir el formulario y el aviso de datos dados llega a la última pregunta', async () => {
+    const { deps, vistos } = modelo([
+      respuesta([{ type: 'tool_use', id: 'tu_c', name: 'pedir_contacto', input: {} }], 'tool_use'),
+      texto('Listo, deja tus datos en el formulario y Mike te contacta.'),
+    ])
+    const r = await atender(entrada('Quiero que Mike me llame'), deps)
+    expect(r.contacto).toBe(true)
+    const otra = modelo([texto('Perfecto.')])
+    await atender({ ...entrada('Gracias'), contactoDado: true }, otra.deps)
+    expect(JSON.stringify(otra.vistos[0]!.at(-1))).toContain('ya dejó sus datos')
+    expect(vistos[0]!.length).toBe(1)
   })
 })
