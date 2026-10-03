@@ -273,9 +273,13 @@ WhatsApp; no es un chat general gratis.
 ### Reglas
 
 - Dice desde el primer mensaje que es una IA y que Mike confirma todo.
-- **No pide** nombre, correo ni teléfono: los datos de contacto solo viajan
-  si la persona decide escribir por WhatsApp. No hay conversación guardada con
-  datos personales (Ley 1581).
+- **No pide datos dentro del chat.** Desde el 2 oct 2026 (pedido de Mike)
+  puede ofrecer un **formulario aparte** (`pedir_contacto`): nombre, celular,
+  correo y empresa, con casilla de autorización obligatoria (Ley 1581:
+  finalidad dicha, y cómo pedir el borrado). El modelo nunca ve lo que se
+  escribe ahí. El contacto llega al buzón del panel (`messages`, el mismo de
+  `/contact`) con lo que preguntó la persona, y avisa por ntfy. La
+  conversación en sí sigue sin guardarse.
 - No promete descuentos, fechas exactas ni alcance fuera del tarifario.
 - Lo que escribe el visitante es dato no confiable: no puede cambiar
   precios, reglas ni instrucciones.
@@ -495,6 +499,42 @@ Decisiones que surgieron al construirlo:
   al mínimo de caché de Haiku, así que no se abarata con caché.
 - **Pendiente**: guardar el resumen como cotización en borrador y avisar con
   ntfy (el "Opcional (después)" de la capacidad 3).
+
+### Cerebro ampliado y contacto (2 oct 2026)
+
+Decisiones de Mike, una a una, el 2 oct 2026:
+
+| Tema | Decisión | Dónde vive |
+|---|---|---|
+| Cambios | 2 rondas incluidas antes de publicar; las demás por hora | `ENTREGA` en `tarifario.ts` + pregunta frecuente |
+| Garantía | 30 días después de publicar, solo errores | `ENTREGA` + preguntas frecuentes |
+| Propiedad | Dominio a nombre del cliente desde el inicio; código y diseño suyos al pagar completo | pregunta "¿De quién es la página?" |
+| Edición | Solo A medida trae panel; en Presencia y Negocio los cambios los hace Mike | pregunta "¿Puedo editarla después?" (antes decía que sí en todos) |
+| Hosting | Primer año incluido; luego Presencia $250.000 / US$100 y Negocio $400.000 / US$150 al año; A medida según uso | `HOSTING_ANUAL` + pregunta "¿Cuánto cuesta mantenerla?" |
+| Mantenimiento | Por horas usadas, $70.000 / US$30 la hora (la tarifa por hora pasa a ser pública solo para esto y los cambios extra) | idem |
+| Respuesta | Errores el mismo día; cambios en 1 o 2 días hábiles | pregunta "¿Qué pasa después de entregarla?" |
+| Pagos | Tarjeta, PSE, Nequi o transferencia; sin efectivo; cuenta de cobro sin IVA | "¿Cómo se paga?" de `/paginas-web` y `/capacitacion-ia` |
+| Perfil | Primero lo que hace por los negocios, después lo técnico; remoto salvo la capacitación; abierto a oportunidades | `conocimiento.ts`, con los proyectos de `instantanea.json` (sin consultar la base) |
+
+Todo se publicó también en las preguntas frecuentes de `/paginas-web`: si el
+asesor dijera cosas que la página no dice, parecería inventado. Una prueba ata
+cada cifra de esas preguntas al tarifario.
+
+Con el perfil y los proyectos, el prompt pasó de los 4.096 tokens que exige
+Haiku 4.5 para la caché: la primera pregunta lo escribe y las demás lo leen.
+Costo medido con 14 preguntas: **US$0,0026 por pregunta** (antes ~US$0,006).
+
+Lo que destapó la prueba con el modelo real (corregido): decía que cambiar
+fotos era gratis dentro de la garantía (ahora: la garantía cubre solo
+errores); hablaba como si fuera Mike al copiar las preguntas frecuentes (ahora
+habla de Mike en tercera persona, con un desliz ocasional); contaba dos veces
+los proyectos de la vitrina y les inventaba categorías.
+
+El buzón del panel (`MessagesList.astro`) ahora despliega cada mensaje
+completo: en dos líneas no se veían el teléfono ni el resumen.
+
+El scroll del chat no funcionaba con el cursor encima: Lenis capturaba la
+rueda en toda la página. El chat lleva `data-lenis-prevent`.
 
 ### Motion del chat (1 oct 2026, con la skill motion-landing)
 
