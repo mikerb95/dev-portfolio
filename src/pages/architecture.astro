@@ -3,7 +3,9 @@
 export const prerender = true
 
 import BaseLayout from '../layouts/BaseLayout.astro'
+import TrazadorPeticiones from '../components/architecture/TrazadorPeticiones.astro'
 import { getDictionary, getLocaleFromUrl, localizedHref } from '../i18n'
+import { CASO_DE_DECISION, NODOS_POR_CAPA } from '../lib/motion/trazado'
 
 // Página estática: arquitectura del propio sitio. Un diagrama de capas y las
 // decisiones de diseño con su trade-off. Es lo que un ingeniero senior busca
@@ -16,6 +18,7 @@ const a = t.architecture
 const L = (path: string) => localizedHref(path, locale)
 
 const { layers, externals, decisions, limits } = a
+const tz = a.trazador
 // Cada pieza enlaza a su versión viva y a la nota que la cuenta: la página es
 // el índice narrativo del sitio (etapa 10 del roadmap). El slug de la nota ya
 // viene en el idioma de la página desde el diccionario.
@@ -36,51 +39,47 @@ type Nodo = { name: string; detail: string; href?: string; note?: string }
         <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
         <span>{a.eyebrow}</span>
       </div>
-      <h1 class="hero-line text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">
-        {a.h1Line1}<br/>{a.h1Line2}
+      <h1 class="text-5xl md:text-6xl font-medium tracking-[-.035em] leading-[.98] mb-8 [&>span]:[text-wrap:balance]">
+        <span data-hero-linea class="block text-ink-50">{a.h1Line1}</span>{' '}
+        <span data-hero-linea class="block text-cyan">{a.h1Line2}</span>
       </h1>
-      <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
+      <p data-hero-sigue class="text-[16px] text-ink-100 max-w-2xl leading-relaxed">
         {a.intro}
       </p>
     </header>
 
-    <!-- Diagrama de capas: el camino de una petición, de arriba abajo -->
-    <section class="mb-16" aria-labelledby="arch-camino">
-      <div class="flex flex-wrap items-baseline justify-between gap-3 mb-5">
-        <h2 id="arch-camino" class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200">{a.pathHeading}</h2>
-        <a href={L('/docs/diagrama-despliegue')} class="text-[12px] text-cyan hover:underline">{a.umlLabel} →</a>
-      </div>
-      <div class="space-y-3">
+    <!-- El camino de una petición: el diagrama con recorridos reales. -->
+    <TrazadorPeticiones />
+
+    <!-- Pieza por pieza: el detalle de cada nodo del diagrama, con su versión
+         viva y su nota. Cada pieza tiene ancla: los nodos del trazador
+         enlazan aquí. -->
+    <section class="mb-16" aria-labelledby="arch-piezas">
+      <h2 id="arch-piezas" class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5" data-titular>{tz.anatomiaHeading}</h2>
+      <div class="space-y-3" data-entrada>
         {layers.map((layer, i) => (
-          <div>
-            <div class="rounded-2xl glass p-5 md:p-6">
-              <div class="flex flex-col md:flex-row md:items-center gap-4">
-                <div class="md:w-40 shrink-0">
-                  <div class="text-[10px] font-mono uppercase tracking-[.2em] text-cyan mb-1">{layer.tag}</div>
-                  <div class="text-[14px] text-ink-50 font-medium leading-tight">{layer.title}</div>
-                </div>
-                <div class="flex-1 grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                  {(layer.nodes as readonly Nodo[]).map((n) => (
-                    <div class="nodo rounded-xl border border-white/5 bg-white/[.02] px-3.5 py-2.5">
-                      <div class="text-[12.5px] text-ink-50">{n.name}</div>
-                      {/* ink-200 y no ink-400: con el contraste de antes, el detalle no pasaba WCAG AA. */}
-                      <div class="text-[11.5px] text-ink-200 mt-0.5 leading-snug">{n.detail}</div>
-                      {(n.href || n.note) && (
-                        <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-mono">
-                          {n.href && <a href={L(n.href)} class="text-cyan hover:underline">{a.verVivo} ↗</a>}
-                          {n.note && <a href={notaHref(n.note)} class="text-ink-100 hover:text-cyan">{a.leerNota} →</a>}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+          <div class="arch-capa rounded-2xl glass p-5 md:p-6">
+            <div class="flex flex-col md:flex-row md:items-start gap-4">
+              <div class="md:w-40 shrink-0">
+                <div class="text-[10px] font-mono uppercase tracking-[.2em] text-cyan mb-1">{layer.tag}</div>
+                <div class="text-[14px] text-ink-50 font-medium leading-tight">{layer.title}</div>
+              </div>
+              <div class="flex-1 grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                {(layer.nodes as readonly Nodo[]).map((n, j) => (
+                  <div id={`pieza-${NODOS_POR_CAPA[i][j]}`} class="arch-pieza rounded-xl border border-white/5 bg-white/[.02] px-3.5 py-2.5">
+                    <div class="text-[12.5px] text-ink-50">{n.name}</div>
+                    {/* ink-200 y no ink-400: con el contraste de antes, el detalle no pasaba WCAG AA. */}
+                    <div class="text-[11.5px] text-ink-200 mt-0.5 leading-snug">{n.detail}</div>
+                    {(n.href || n.note) && (
+                      <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-mono">
+                        {n.href && <a href={L(n.href)} class="text-cyan hover:underline">{a.verVivo} ↗</a>}
+                        {n.note && <a href={notaHref(n.note)} class="text-ink-100 hover:text-cyan">{a.leerNota} →</a>}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-            {i < layers.length - 1 && (
-              <div class="flex justify-center py-1.5" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-ink-500"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -88,10 +87,10 @@ type Nodo = { name: string; detail: string; href?: string; note?: string }
 
     <!-- Servicios externos -->
     <section class="mb-16">
-      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{a.externalsHeading}</h2>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5" data-titular>{a.externalsHeading}</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" data-entrada>
         {externals.map((e) => (
-          <div class="rounded-2xl glass p-4">
+          <div class="rounded-2xl arch-tarjeta p-4">
             <div class="text-[13px] text-ink-50 font-mono">{e.name}</div>
             <div class="text-[11.5px] text-ink-200 mt-1.5 leading-relaxed">{e.role}</div>
           </div>
@@ -101,26 +100,40 @@ type Nodo = { name: string; detail: string; href?: string; note?: string }
 
     <!-- Decisiones de diseño -->
     <section>
-      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{a.decisionsHeading}</h2>
-      <div class="space-y-3">
-        {decisions.map((d) => (
-          <div class="rounded-2xl glass p-5 md:p-6">
-            <div class="flex items-start gap-3">
-              <span class="text-cyan font-mono text-[13px] mt-0.5 shrink-0">→</span>
-              <div>
-                <div class="text-[15px] text-ink-50 font-medium mb-1.5">{d.q}</div>
-                <p class="text-[13px] text-ink-200 leading-relaxed">{d.a}</p>
+      <h2 class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5" data-titular>{a.decisionsHeading}</h2>
+      <div class="space-y-3" data-entrada>
+        {decisions.map((d, i) => {
+          const ver = CASO_DE_DECISION[i]
+          return (
+            <div class="rounded-2xl arch-tarjeta p-5 md:p-6">
+              <div class="flex items-start gap-3">
+                <span class="text-cyan font-mono text-[13px] mt-0.5 shrink-0">→</span>
+                <div>
+                  <div class="text-[15px] text-ink-50 font-medium mb-1.5">{d.q}</div>
+                  <p class="text-[13px] text-ink-200 leading-relaxed">{d.a}</p>
+                  {ver && (
+                    <a
+                      href={`#caso-${ver.caso}`}
+                      class="arch-ver mt-3 inline-flex items-center gap-2 text-[11.5px] font-mono text-cyan"
+                      data-ver-caso={ver.caso}
+                      data-ver-fallo={ver.fallo ?? undefined}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
+                      {tz.verPasar}: {tz.casos[ver.caso].titulo}{ver.fallo && <span class="text-ember">{' '}· {tz.fallos[ver.fallo]} {tz.caida}</span>}
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </section>
 
     <!-- Límites conocidos: lo que este diseño todavía no resuelve -->
     <section class="mt-16" aria-labelledby="arch-limites">
-      <h2 id="arch-limites" class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5">{a.limitsHeading}</h2>
-      <ul class="grid gap-2.5 max-w-3xl">
+      <h2 id="arch-limites" class="text-[13px] font-mono uppercase tracking-[.2em] text-ink-200 mb-5" data-titular>{a.limitsHeading}</h2>
+      <ul class="grid gap-2.5 max-w-3xl" data-entrada>
         {limits.map((l) => (
           <li class="flex gap-3 text-[13.5px] text-ink-100 leading-relaxed">
             <span class="text-ember font-mono shrink-0" aria-hidden="true">!</span>
@@ -135,7 +148,34 @@ type Nodo = { name: string; detail: string; href?: string; note?: string }
   </div>
 </BaseLayout>
 
+<style>
+  /* Ancla de las piezas: deja sitio a la barra fija y marca la pieza a la que
+     se llegó desde un nodo del trazador. */
+  .arch-pieza { scroll-margin-top: 110px; transition: border-color .4s, background .4s; }
+  .arch-pieza:target { border-color: rgba(0, 242, 255, .45); background: rgba(0, 242, 255, .05); }
+  .arch-tarjeta {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .015));
+    border: 1px solid rgba(255, 255, 255, .06);
+  }
+  .arch-ver:hover { text-decoration: underline; }
+</style>
+
 <script>
-  import { initPageMotion } from '../lib/motion-reveal'
-  initPageMotion()
+  // Mismo lenguaje que las demás páginas con motion (Lenis + GSAP, montaje
+  // común en src/lib/motion/landing.ts) más el trazador de peticiones.
+  import { montarLanding } from '../lib/motion/landing'
+  import { montarTrazador } from '../lib/motion/arquitectura'
+
+  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  montarLanding({ anclas: true })
+  const trazador = document.querySelector<HTMLElement>('[data-trazador]')
+  if (trazador) {
+    try {
+      montarTrazador(trazador, { reducido })
+    } catch (err) {
+      // Fail-open: las listas de pasos del servidor siguen ahí, completas.
+      console.warn('[architecture] trazador sin motion', err)
+      trazador.classList.remove('tz-vivo')
+    }
+  }
 </script>
