@@ -58,6 +58,8 @@ describe('paridad del diccionario es/en', () => {
         'architecture.externals[8].name',
         'architecture.layers[2].nodes[0].name',
         'architecture.layers[2].nodes[3].name',
+        // El trazador nombra a Turso como pieza que se puede romper: nombre propio.
+        'architecture.trazador.fallos.turso',
         'architecture.layers[4].title',
         // 'Open source' es igual en los dos idiomas.
         'githubProjects.eyebrow',
