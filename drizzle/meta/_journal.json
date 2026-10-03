@@ -281,6 +281,13 @@
       "when": 1790996575796,
       "tag": "0039_blue_tarot",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1790999526404,
+      "tag": "0040_square_alex_power",
+      "breakpoints": true
     }
   ]
 }

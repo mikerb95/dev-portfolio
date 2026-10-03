@@ -1,7 +1,7 @@
 // Persistencia del asesor en vivo (lib/asesor/vivo.ts). Solo servidor.
 
 import { createHash, randomBytes } from 'node:crypto'
-import { and, asc, count, desc, eq, gt, inArray, lt } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gt, inArray, isNull, lt } from 'drizzle-orm'
 import { db } from '../../db'
 import { asesorConversaciones, asesorMensajes } from '../../db/schema'
 import type { Locale } from '../../i18n'
@@ -37,6 +37,8 @@ export async function abrirConversacion(c: {
   pagina?: Pagina
   motivo: Motivo
   mensajes: { autor: Autor; texto: string }[]
+  /** La última respuesta del asesor lleva la pregunta fija por el WhatsApp. */
+  pidioNumero?: boolean
   ahora?: Date
 }): Promise<{ id: number; token: string }> {
   const ahora = c.ahora ?? new Date()
@@ -50,6 +52,7 @@ export async function abrirConversacion(c: {
       locale: c.locale,
       pagina: c.pagina ?? null,
       motivo: c.motivo,
+      pidioNumero: c.pidioNumero ?? false,
       vistoVisitante: ahora,
     })
     .returning({ id: asesorConversaciones.id })
@@ -70,6 +73,20 @@ export async function anexar(conversacionId: number, mensajes: { autor: Autor; t
   await db.insert(asesorMensajes).values(mensajes.map((m) => ({ conversacionId, autor: m.autor, texto: m.texto, creado: ahora })))
   await db.update(asesorConversaciones).set({ actualizada: ahora }).where(eq(asesorConversaciones.id, conversacionId))
   return true
+}
+
+/**
+ * Guarda el número que dejó la persona. Solo el primero: la condición va en el
+ * mismo UPDATE, así dos mensajes casi simultáneos no avisan dos veces. true si
+ * esta llamada fue la que lo guardó.
+ */
+export async function guardarTelefono(conversacionId: number, e164: string): Promise<boolean> {
+  const filas = await db
+    .update(asesorConversaciones)
+    .set({ telefono: e164 })
+    .where(and(eq(asesorConversaciones.id, conversacionId), isNull(asesorConversaciones.telefono)))
+    .returning({ id: asesorConversaciones.id })
+  return filas.length > 0
 }
 
 /** Mike entra: desde aquí el asesor se calla en esa conversación. */

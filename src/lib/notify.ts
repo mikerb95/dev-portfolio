@@ -42,7 +42,11 @@ export async function sendEmail(subject: string, text: string, html?: string): P
 }
 
 /** Envía un push al teléfono vía ntfy.sh. No-op si falta NTFY_TOPIC. */
-export async function sendPush(title: string, message: string, opts?: { priority?: number; tags?: string; click?: string }): Promise<NotifyResult> {
+export async function sendPush(
+  title: string,
+  message: string,
+  opts?: { priority?: number; tags?: string; click?: string; actions?: string }
+): Promise<NotifyResult> {
   const topic = env('NTFY_TOPIC')
   if (!topic) return { channel: 'push', ok: false, skipped: true }
   const base = env('NTFY_SERVER') ?? 'https://ntfy.sh'
@@ -50,6 +54,9 @@ export async function sendPush(title: string, message: string, opts?: { priority
   if (opts?.priority) headers.Priority = String(opts.priority)
   if (opts?.tags) headers.Tags = opts.tags
   if (opts?.click) headers.Click = opts.click
+  // Botones de la notificación, en el formato corto de ntfy:
+  // "view, Etiqueta, https://...; view, Otra, https://...".
+  if (opts?.actions) headers.Actions = headerSafe(opts.actions)
   const token = env('NTFY_TOKEN')
   if (token) headers.Authorization = `Bearer ${token}`
   try {
