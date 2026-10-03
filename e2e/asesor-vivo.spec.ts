@@ -70,6 +70,7 @@ test('el visitante pide un precio, Mike entra desde el panel y conversan en el m
   await expect(log.locator('.asesor-burbuja--mike')).toContainText('Hola, soy Mike', { timeout: 15_000 })
   await expect(log.locator('.asesor-sistema').last()).toContainText('Mike entró')
   await expect(page.locator('#asesor-chat')).toHaveAttribute('data-mike', '')
+  await expect(page.locator('#asesor-subtitulo')).toHaveText('Estás hablando con Mike.')
 
   // Lo que responde ahora le llega a Mike y no al modelo.
   await page.locator('#asesor-input').fill('Es para un restaurante')

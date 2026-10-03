@@ -64,6 +64,7 @@ const en = {
     vivoMikeEntro: 'Mike joined the conversation. He will answer you from now on.',
     vivoMike: 'Mike',
     vivoNuevo: 'Mike wrote to you',
+    vivoSubtitulo: "You're talking with Mike.",
     calculado: 'Calculated from the rate card',
     verMensaje: 'See the message',
     ocultarMensaje: 'Hide the message',

@@ -65,6 +65,7 @@ const es = {
     vivoMikeEntro: 'Mike entró a la conversación. Desde ahora te responde él.',
     vivoMike: 'Mike',
     vivoNuevo: 'Mike te escribió',
+    vivoSubtitulo: 'Estás hablando con Mike.',
     calculado: 'Calculado con el tarifario',
     verMensaje: 'Ver el mensaje',
     ocultarMensaje: 'Ocultar el mensaje',
