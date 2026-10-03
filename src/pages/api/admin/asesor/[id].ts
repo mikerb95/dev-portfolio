@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro'
-import { leerDesde, validarMensajeMike, visitantePresente } from '../../../../lib/asesor/vivo'
+import type { Locale } from '../../../../i18n'
+import { enlaceWhatsapp, leerDesde, validarMensajeMike, visitantePresente } from '../../../../lib/asesor/vivo'
 import { anexar, mensajesDesde, porId, tomar } from '../../../../lib/asesor/vivo-db'
+import { formatPhone } from '../../../../lib/phone'
 import { recordAdminEvent } from '../../../../lib/security/events'
 
 // Lado de Mike del asesor en vivo (lib/asesor/vivo.ts). Protegido por el
@@ -26,6 +28,7 @@ export const GET: APIRoute = async ({ params, url }) => {
   return json(200, {
     estado: conv.estado,
     presente: visitantePresente(conv.vistoVisitante, new Date()),
+    telefono: conv.telefono ? { texto: formatPhone(conv.telefono), enlace: enlaceWhatsapp(conv.telefono, conv.locale as Locale) } : null,
     mensajes: mensajes.map((m) => ({ id: m.id, autor: m.autor, texto: m.texto, creado: m.creado.getTime() })),
   })
 }

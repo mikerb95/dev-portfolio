@@ -60,7 +60,7 @@ const en = {
     contactoErrorCorreo: 'Check the email address.',
     contactoErrorAutoriza: 'Check the authorization box so your details can be saved.',
     contactoErrorFallo: "They couldn't be sent. Try again or message Mike on WhatsApp.",
-    vivoAvisado: "I let Mike know: if he's free, he can read this conversation and write to you right here. It's kept for 48 hours for that.",
+    vivoAvisado: "Mike can read this conversation and write to you right here. It's kept for 48 hours for that.",
     vivoMikeEntro: 'Mike joined the conversation. He will answer you from now on.',
     vivoMike: 'Mike',
     vivoNuevo: 'Mike wrote to you',

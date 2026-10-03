@@ -1,9 +1,21 @@
 import type { APIRoute } from 'astro'
+import { db } from '../../db'
+import { messages } from '../../db/schema'
 import { validarEntrada, type Entrada } from '../../lib/asesor/bucle'
 import { AsesorNoDisponible, disponible, responder } from '../../lib/asesor/motor'
-import { avisoVivo, motivoAviso } from '../../lib/asesor/vivo'
-import { abrirConversacion, anexar, porToken, purgar, type Conversacion } from '../../lib/asesor/vivo-db'
+import {
+  avisoVivo,
+  buscarTelefono,
+  debePedirNumero,
+  enlaceWhatsapp,
+  filaNumero,
+  motivoAviso,
+  PIDE_NUMERO,
+  taparTelefonos,
+} from '../../lib/asesor/vivo'
+import { abrirConversacion, anexar, guardarTelefono, porToken, purgar, type Conversacion } from '../../lib/asesor/vivo-db'
 import { sendPush } from '../../lib/notify'
+import { formatPhone } from '../../lib/phone'
 
 // Asesor público de la burbuja de WhatsApp (docs/plan-asistente.md, capacidad
 // 3). El límite por IP lo pone el middleware (isAsesorPath); el tope de gasto
@@ -40,16 +52,27 @@ export const POST: APIRoute = async ({ request }) => {
     return json(200, { mike: true })
   }
 
+  // El número que pidió el asesor se le pasa a Mike antes de llamar al modelo:
+  // si el modelo falla, Mike igual lo tiene.
+  if (conv?.pidioNumero && !conv.telefono) await recibirTelefono(entrada, conv)
+
+  // Ningún número de teléfono llega al modelo, pedido o no, en todo el
+  // historial: el navegador reenvía los mensajes viejos en cada pregunta.
+  const paraModelo: Entrada = {
+    ...entrada,
+    mensajes: entrada.mensajes.map((m) => (m.rol === 'usuario' ? { ...m, texto: taparTelefonos(m.texto, !!conv?.pidioNumero) } : m)),
+  }
+
   try {
-    const r = await responder(entrada)
+    const r = await responder(paraModelo)
     const vivo = await guardarVivo(entrada, conv, r)
     return json(200, {
-      texto: r.texto,
+      texto: vivo.texto,
       whatsapp: r.whatsapp,
       contacto: r.contacto,
       calculos: r.calculos,
       cifras: r.cifras,
-      ...vivo,
+      ...(vivo.conversacion ? { conversacion: vivo.conversacion } : {}),
     })
   } catch (err) {
     if (err instanceof AsesorNoDisponible) return json(503, { error: 'no_disponible' })
@@ -59,15 +82,41 @@ export const POST: APIRoute = async ({ request }) => {
 }
 
 /**
+ * Si la última pregunta trae el número que pidió el asesor: lo guarda, lo deja
+ * en el buzón del panel como un contacto más y avisa con un botón para
+ * escribirle por WhatsApp. Falla abierto.
+ */
+async function recibirTelefono(e: Entrada, conv: Conversacion): Promise<void> {
+  try {
+    const telefono = buscarTelefono(e.mensajes.at(-1)!.texto)
+    if (!telefono || !(await guardarTelefono(conv.id, telefono))) return
+    const ahora = new Date()
+    const preguntas = e.mensajes.filter((m) => m.rol === 'usuario').map((m) => m.texto)
+    await db
+      .insert(messages)
+      .values({ ...filaNumero({ id: conv.id, telefono, locale: e.locale, pagina: e.pagina, preguntas }, ahora), createdAt: ahora })
+    await sendPush(`Te dejó su WhatsApp: ${formatPhone(telefono)}`, 'Si no alcanzas a entrar al chat, escríbele por WhatsApp.', {
+      priority: 4,
+      tags: 'iphone',
+      click: `https://codebymike.net/admin/asesor/${conv.id}`,
+      actions: `view, Escribirle por WhatsApp, ${enlaceWhatsapp(telefono, e.locale)}, clear=true`,
+    }).catch(() => {})
+  } catch (err) {
+    console.error('[asesor/telefono]', err instanceof Error ? err.message : err)
+  }
+}
+
+/**
  * Guarda la vuelta en la conversación en vivo, o la abre si esta respuesta
- * mostró interés. Falla abierto: si la base no contesta, la respuesta llega
- * igual y Mike simplemente no se entera.
+ * mostró interés; al abrirla, la respuesta lleva además la pregunta fija por
+ * el WhatsApp. Falla abierto: si la base no contesta, la respuesta llega igual
+ * (sin la pregunta) y Mike simplemente no se entera.
  */
 async function guardarVivo(
   e: Entrada,
   conv: Conversacion | null,
   r: { texto: string; cifras: string[]; whatsapp: string | null; contacto: boolean }
-): Promise<{ conversacion?: string }> {
+): Promise<{ texto: string; conversacion?: string }> {
   try {
     const pregunta = e.mensajes.at(-1)!.texto
     if (conv) {
@@ -75,30 +124,33 @@ async function guardarVivo(
         { autor: 'visitante', texto: pregunta },
         { autor: 'asesor', texto: r.texto },
       ])
-      return {}
+      return { texto: r.texto }
     }
     const motivo = motivoAviso(r)
-    if (!motivo) return {}
+    if (!motivo) return { texto: r.texto }
+    const pedir = debePedirNumero(motivo, !!e.contactoDado)
+    const texto = pedir ? `${r.texto}\n\n${PIDE_NUMERO[e.locale]}` : r.texto
     await purgar().catch(() => {})
     const { id, token } = await abrirConversacion({
       locale: e.locale,
       pagina: e.pagina,
       motivo,
+      pidioNumero: pedir,
       mensajes: [
         ...e.mensajes.map((m) => ({ autor: m.rol === 'usuario' ? ('visitante' as const) : ('asesor' as const), texto: m.texto })),
-        { autor: 'asesor', texto: r.texto },
+        { autor: 'asesor', texto },
       ],
     })
-    const { titulo, texto } = avisoVivo({
+    const { titulo, texto: aviso } = avisoVivo({
       motivo,
       locale: e.locale,
       pagina: e.pagina,
       preguntas: e.mensajes.filter((m) => m.rol === 'usuario').map((m) => m.texto),
     })
-    await sendPush(titulo, texto, { priority: 4, tags: 'speech_balloon', click: `https://codebymike.net/admin/asesor/${id}` }).catch(() => {})
-    return { conversacion: token }
+    await sendPush(titulo, aviso, { priority: 4, tags: 'speech_balloon', click: `https://codebymike.net/admin/asesor/${id}` }).catch(() => {})
+    return { texto, conversacion: token }
   } catch (err) {
     console.error('[asesor/vivo]', err instanceof Error ? err.message : err)
-    return {}
+    return { texto: r.texto }
   }
 }

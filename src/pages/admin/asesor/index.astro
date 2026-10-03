@@ -46,6 +46,7 @@ const hora = (d: Date) =>
                     {c.pagina ?? 'sitio'}{c.locale === 'en' ? ' · en' : ''} · {c.total} mensajes
                   </span>
                   {c.estado === 'mike' && <span class="text-[11px] font-mono text-[#5ee08f]">ya entraste</span>}
+                  {c.telefono && <span class="text-[11px] font-mono text-[#5ee08f]">dejó su WhatsApp</span>}
                 </span>
                 {c.ultimo && <span class="mt-1 block text-[12.5px] text-ink-200 line-clamp-2">{c.ultimo}</span>}
               </span>

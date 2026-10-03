@@ -61,7 +61,7 @@ const es = {
     contactoErrorCorreo: 'Revisa el correo.',
     contactoErrorAutoriza: 'Marca la autorización para poder guardar tus datos.',
     contactoErrorFallo: 'No se pudieron enviar. Intenta de nuevo o escríbele a Mike por WhatsApp.',
-    vivoAvisado: 'Le avisé a Mike: si está libre, puede leer esta conversación y escribirte aquí mismo. Para eso se guarda 48 horas.',
+    vivoAvisado: 'Mike puede leer esta conversación y escribirte aquí mismo. Para eso se guarda 48 horas.',
     vivoMikeEntro: 'Mike entró a la conversación. Desde ahora te responde él.',
     vivoMike: 'Mike',
     vivoNuevo: 'Mike te escribió',

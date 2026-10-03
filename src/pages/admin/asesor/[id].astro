@@ -4,7 +4,9 @@
 // chat y nada más. Mike lee lo que va pasando y, si escribe, toma la
 // conversación y el asesor se calla.
 import AdminLayout from '../../../layouts/AdminLayout.astro'
-import { visitantePresente, MAX_TEXTO_MIKE, type Motivo } from '../../../lib/asesor/vivo'
+import type { Locale } from '../../../i18n'
+import { enlaceWhatsapp, visitantePresente, MAX_TEXTO_MIKE, type Motivo } from '../../../lib/asesor/vivo'
+import { formatPhone } from '../../../lib/phone'
 import { mensajesDesde, porId } from '../../../lib/asesor/vivo-db'
 
 const id = Number(Astro.params.id)
@@ -48,6 +50,23 @@ const AUTOR = { visitante: 'Visitante', asesor: 'Asesor IA', mike: 'Tú' } as co
           </p>
         </div>
       </header>
+
+      <!-- El WhatsApp que dejó la persona cuando el asesor se lo pidió. Aparece
+           solo (por el sondeo) en cuanto lo escribe. -->
+      <div id="vivo-telefono" class="vivo-telefono flex items-center gap-3 px-4 py-2.5 border-b border-white/5" hidden={!conv.telefono}>
+        <span class="min-w-0 flex-1 text-[12.5px] text-ink-100">
+          Dejó su WhatsApp: <span id="vivo-telefono-texto" class="font-mono text-ink-50">{conv.telefono ? formatPhone(conv.telefono) : ''}</span>
+        </span>
+        <a
+          id="vivo-telefono-enlace"
+          href={conv.telefono ? enlaceWhatsapp(conv.telefono, conv.locale as Locale) : '#'}
+          target="_blank"
+          rel="noopener"
+          class="shrink-0 rounded-lg bg-[#25D366] px-3 py-1.5 text-[12.5px] font-semibold text-[#062e16] hover:brightness-110"
+        >
+          Escribirle
+        </a>
+      </div>
 
       <div id="vivo-log" class="vivo-log flex-1 overflow-y-auto px-4 py-4 space-y-3" aria-live="polite">
         {mensajes.map((m) => (
@@ -94,6 +113,12 @@ const AUTOR = { visitante: 'Visitante', asesor: 'Asesor IA', mike: 'Tú' } as co
     .vivo {
       height: calc(100vh - 11rem);
     }
+  }
+  .vivo-telefono {
+    background: rgba(37, 211, 102, 0.07);
+  }
+  .vivo-telefono[hidden] {
+    display: none;
   }
   .vivo-presencia {
     display: inline-block;
@@ -172,6 +197,9 @@ const AUTOR = { visitante: 'Visitante', asesor: 'Asesor IA', mike: 'Tú' } as co
     const aviso = document.getElementById('vivo-aviso')!
     const presencia = document.getElementById('vivo-presencia')!
     const presenciaTexto = document.getElementById('vivo-presencia-texto')!
+    const telefono = document.getElementById('vivo-telefono')!
+    const telefonoTexto = document.getElementById('vivo-telefono-texto')!
+    const telefonoEnlace = document.getElementById('vivo-telefono-enlace') as HTMLAnchorElement
 
     const abajo = () => {
       log.scrollTop = log.scrollHeight
@@ -200,7 +228,12 @@ const AUTOR = { visitante: 'Visitante', asesor: 'Asesor IA', mike: 'Tú' } as co
       try {
         const r = await fetch(`/api/admin/asesor/${id}?desde=${ultimo}`, { headers: { Accept: 'application/json' } })
         if (r.ok) {
-          const d = (await r.json()) as { estado: string; presente: boolean; mensajes: Msg[] }
+          const d = (await r.json()) as {
+            estado: string
+            presente: boolean
+            telefono: { texto: string; enlace: string } | null
+            mensajes: Msg[]
+          }
           const cerca = log.scrollHeight - log.scrollTop - log.clientHeight < 80
           d.mensajes.forEach(pintar)
           if (d.mensajes.length) {
@@ -210,6 +243,11 @@ const AUTOR = { visitante: 'Visitante', asesor: 'Asesor IA', mike: 'Tú' } as co
           }
           presencia.classList.toggle('is-presente', d.presente)
           presenciaTexto.textContent = d.presente ? 'Tiene el chat abierto' : 'No está mirando ahora'
+          if (d.telefono) {
+            telefonoTexto.textContent = d.telefono.texto
+            telefonoEnlace.href = d.telefono.enlace
+            telefono.hidden = false
+          }
           if (d.estado === 'mike') aviso.textContent = 'Estás en la conversación: el asesor ya no responde.'
         }
       } catch {

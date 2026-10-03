@@ -30,6 +30,7 @@ test.beforeAll(async () => {
   await db.execute('PRAGMA busy_timeout = 5000')
   await db.execute('DELETE FROM asesor_mensajes')
   await db.execute('DELETE FROM asesor_conversaciones')
+  await db.execute(`DELETE FROM messages WHERE subject LIKE 'Asistente IA: WhatsApp%'`)
 })
 
 test('el visitante pide un precio, Mike entra desde el panel y conversan en el mismo chat', async ({ page, browser }) => {
@@ -45,21 +46,34 @@ test('el visitante pide un precio, Mike entra desde el panel y conversan en el m
   await page.locator('#asesor-input').fill('¿Cuánto cuesta el plan Negocio?')
   await page.locator('#asesor-input').press('Enter')
 
-  // El precio sale del tarifario y, por ser una señal de interés, el chat
-  // avisa que Mike puede leer la conversación.
+  // El precio sale del tarifario y, por ser una señal de interés, el asesor
+  // pide el WhatsApp con la pregunta fija y el chat avisa que Mike puede leer.
   const log = page.locator('#asesor-log')
   await expect(log.locator('.asesor-burbuja--ia').last()).toContainText('desde $', { timeout: 20_000 })
-  await expect(log.locator('.asesor-sistema')).toContainText('Le avisé a Mike')
+  await expect(log.locator('.asesor-burbuja--ia').last()).toContainText('¿me dejas tu número de WhatsApp')
+  await expect(log.locator('.asesor-sistema')).toContainText('Mike puede leer esta conversación')
 
   const { rows } = await db.execute('SELECT id, motivo, estado FROM asesor_conversaciones')
   expect(rows).toHaveLength(1)
   expect(rows[0].motivo).toBe('precio')
   const id = Number(rows[0].id)
 
-  // Mike abre el enlace de la notificación.
+  // Mike abre el enlace de la notificación. Todavía no hay número.
   const mike = await panelDeMike(browser)
   await mike.goto(`/admin/asesor/${id}`)
   await expect(mike.locator('#vivo-log')).toContainText('¿Cuánto cuesta el plan Negocio?')
+  await expect(mike.locator('#vivo-telefono')).toBeHidden()
+
+  // La persona deja su número respondiendo a la pregunta: el asesor sigue la
+  // conversación y el panel lo muestra solo, con el botón para escribirle.
+  await page.locator('#asesor-input').fill('Sí, es el 310 464 1228')
+  await page.locator('#asesor-input').press('Enter')
+  await expect(log.locator('.asesor-burbuja--ia').last()).toContainText('Respuesta de prueba', { timeout: 20_000 })
+  await expect(mike.locator('#vivo-telefono-texto')).toHaveText('+57 310 464 1228', { timeout: 10_000 })
+  await expect(mike.locator('#vivo-telefono-enlace')).toHaveAttribute('href', /^https:\/\/wa\.me\/573104641228\?text=/)
+  const buzon = await db.execute(`SELECT count(*) AS n FROM messages WHERE subject = 'Asistente IA: WhatsApp +57 310 464 1228'`)
+  expect(Number(buzon.rows[0].n)).toBe(1)
+
   await expect(mike.locator('#vivo-presencia-texto')).toHaveText('Tiene el chat abierto')
   await mike.locator('#vivo-input').fill('Hola, soy Mike. ¿Para qué negocio es la página?')
   // El panel no produce frames en headless: el clic va forzado.
@@ -77,7 +91,7 @@ test('el visitante pide un precio, Mike entra desde el panel y conversan en el m
   await page.locator('#asesor-input').press('Enter')
   await expect(mike.locator('#vivo-log')).toContainText('Es para un restaurante', { timeout: 10_000 })
   const asesor = await db.execute({ sql: `SELECT count(*) AS n FROM asesor_mensajes WHERE conversacion_id = ? AND autor = 'asesor'`, args: [id] })
-  expect(Number(asesor.rows[0].n)).toBe(1)
+  expect(Number(asesor.rows[0].n)).toBe(2)
 
   // Con el chat cerrado, la burbuja avisa que Mike escribió.
   await page.locator('#asesor-cerrar').click()
