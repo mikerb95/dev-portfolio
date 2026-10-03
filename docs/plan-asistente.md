@@ -273,7 +273,8 @@ WhatsApp; no es un chat general gratis.
 ### Reglas
 
 - Dice desde el primer mensaje que es una IA y que Mike confirma todo.
-- **No pide datos dentro del chat.** Desde el 2 oct 2026 (pedido de Mike)
+- **No pide datos dentro del chat**, con una excepción: al avisarle a Mike,
+  pide el WhatsApp con una pregunta fija (ver "Asesor en vivo"). Desde el 2 oct 2026 (pedido de Mike)
   puede ofrecer un **formulario aparte** (`pedir_contacto`): nombre, celular,
   correo y empresa, con casilla de autorización obligatoria (Ley 1581:
   finalidad dicha, y cómo pedir el borrado). El modelo nunca ve lo que se
@@ -572,7 +573,7 @@ Cómo funciona:
 | `src/pages/api/asesor/conversacion.ts` | Lado del visitante: sondeo (`GET`) y mensajes a Mike (`POST`). |
 | `src/pages/admin/asesor/` + `src/pages/api/admin/asesor/[id].ts` | Lista de vigentes y pantalla de la conversación, pensada para abrirse desde la notificación en el celular. |
 | `src/components/WhatsappFab.astro` | Token en `sessionStorage`, sondeo, burbujas de Mike, avisos y punto en la burbuja. |
-| `tests/asesor-vivo.test.ts`, `e2e/asesor-vivo.spec.ts` | 15 pruebas de lógica, base y endpoints; y el flujo completo en navegador con la API de Claude falsa. |
+| `tests/asesor-vivo.test.ts`, `e2e/asesor-vivo.spec.ts` | 23 pruebas de lógica, base y endpoints (con el número de WhatsApp); y el flujo completo en navegador con la API de Claude falsa. |
 
 Decisiones:
 
@@ -597,6 +598,40 @@ Decisiones:
   igual y Mike simplemente no se entera (hay prueba).
 - **Vetado en la demo** (`/admin/asesor`): son conversaciones de personas
   reales y un canal para escribirles.
+
+#### Pedir el WhatsApp mientras Mike se conecta (2 oct 2026)
+
+Pedido de Mike: mientras él se conecta, que el asesor le pida a la persona su
+WhatsApp "en conversación normal", por si no alcanza a entrar. Chocaba con la
+regla de no pedir datos dentro del chat; de tres formas (pregunta fija con el
+número tapado para el modelo, pregunta redactada por el modelo, o pedirlo por
+el formulario que ya existe) Mike eligió la primera.
+
+- Al abrir la conversación en vivo, la respuesta del asesor termina con un
+  texto **fijo**, no del modelo (`PIDE_NUMERO` en `vivo.ts`): "Le avisé a
+  Mike. Si no alcanza a conectarse ahora, ¿me dejas tu número de WhatsApp para
+  que te escriba? Solo lo usará para responderte sobre esto." Dice para qué es
+  el número antes de que la persona lo dé (Ley 1581), y queda guardado en la
+  conversación como constancia. Va dentro del mismo mensaje del asesor para no
+  romper la alternancia del historial que valida `bucle.ts`.
+- No se pide si el motivo del aviso es el formulario de contacto (ya está a la
+  vista) ni si la persona ya lo llenó. Se pide una sola vez (`pidio_numero`,
+  migración 0040).
+- Si la siguiente pregunta trae un número (`buscarTelefono`: tiene que
+  normalizar como móvil con `normalizePhone`, y se descarta con "$" delante o
+  una moneda detrás, así "1.500.000" o "$3.500.000.000" no cuentan), se guarda
+  una sola vez (UPDATE condicional), entra al buzón de Mensajes con la pregunta
+  exacta como constancia y avisa por ntfy con un botón "Escribirle por
+  WhatsApp" (`wa.me` con un saludo que da contexto). La pantalla de la
+  conversación lo muestra sola, con el mismo botón.
+- **El número nunca llega al modelo**: el servidor tapa todo número de
+  teléfono en todo el historial antes de cada llamada (el navegador reenvía los
+  mensajes viejos). Con la pregunta hecha, el modelo ve una nota de que la
+  persona lo dejó y Mike ya lo tiene; sin ella, solo "número omitido", y no se
+  guarda en ninguna parte.
+- Ahora el aviso gris del chat dice solo "Mike puede leer esta conversación y
+  escribirte aquí mismo. Para eso se guarda 48 horas.", porque el "Le avisé a
+  Mike" ya va en la pregunta.
 
 ### Motion del chat (1 oct 2026, con la skill motion-landing)
 
