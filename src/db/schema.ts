@@ -1587,6 +1587,11 @@ export const asesorConversaciones = sqliteTable('asesor_conversaciones', {
   motivo: text('motivo', { enum: ['precio', 'whatsapp', 'contacto'] }).notNull(),
   // Último sondeo del visitante: el panel lo usa para decir si sigue ahí.
   vistoVisitante: integer('visto_visitante', { mode: 'timestamp' }),
+  // El asesor le pidió su WhatsApp con la pregunta fija (vivo.ts, PIDE_NUMERO).
+  // Sin esa pregunta, un número escrito en el chat se tapa y no se guarda aparte.
+  pidioNumero: integer('pidio_numero', { mode: 'boolean' }).notNull().default(false),
+  // El número que dejó, en E.164.
+  telefono: text('telefono'),
 }, (t) => ({
   tokenIdx: uniqueIndex('asesor_conversaciones_token_idx').on(t.tokenHash),
   // La purga de 48 h y el listado del panel barren por fecha.
