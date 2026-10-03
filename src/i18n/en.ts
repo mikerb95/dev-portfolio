@@ -1391,7 +1391,7 @@ const en = {
       {
         nombre: 'Presence',
         para: 'For local businesses and personal brands just getting started.',
-        tiempo: 'Ready in 3–5 days',
+        tiempo: 'Ready in 3 to 5 days',
         incluye: [
           'One page, everything in one place',
           'Your own domain (yourbusiness.com)',
@@ -1403,7 +1403,7 @@ const en = {
       {
         nombre: 'Business',
         para: 'For independent professionals and small businesses.',
-        tiempo: 'Ready in 1–2 weeks',
+        tiempo: 'Ready in 1 to 2 weeks',
         incluye: [
           'Multiple sections (services, gallery, about you…)',
           'Catalog or service list',
@@ -1415,7 +1415,7 @@ const en = {
       {
         nombre: 'Custom',
         para: 'For businesses that sell and want to grow.',
-        tiempo: 'Ready in 3–6 weeks',
+        tiempo: 'Ready in 3 to 6 weeks',
         incluye: [
           'Online store or booking/appointment system',
           'Online payments (card, PSE, Nequi)',

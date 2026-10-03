@@ -120,7 +120,7 @@ const RESPALDO: Record<Locale, string> = {
 /**
  * Quita las rayas (— y –) del texto del modelo. El sitio no las usa en ningún
  * texto de interfaz, y la instrucción del prompt no basta: Haiku las copia de
- * la información publicada ("3–5 días") o las pone por costumbre. Un rango
+ * textos con rangos o las pone por costumbre. Un rango
  * numérico pasa a "3 a 5" / "3 to 5"; cualquier otra raya, a coma.
  */
 export function sinRayas(texto: string, locale: Locale): string {

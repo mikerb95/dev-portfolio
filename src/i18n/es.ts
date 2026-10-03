@@ -1420,7 +1420,7 @@ const es = {
       {
         nombre: 'Presencia',
         para: 'Para negocios locales y marcas personales que arrancan.',
-        tiempo: 'Lista en 3–5 días',
+        tiempo: 'Lista en 3 a 5 días',
         incluye: [
           'Una página, todo en un solo lugar',
           'Tu dominio propio (tunegocio.com)',
@@ -1432,7 +1432,7 @@ const es = {
       {
         nombre: 'Negocio',
         para: 'Para profesionales independientes y pymes.',
-        tiempo: 'Lista en 1–2 semanas',
+        tiempo: 'Lista en 1 a 2 semanas',
         incluye: [
           'Varias secciones (servicios, galería, sobre ti…)',
           'Catálogo o lista de servicios',
@@ -1444,7 +1444,7 @@ const es = {
       {
         nombre: 'A medida',
         para: 'Para negocios que venden y quieren crecer.',
-        tiempo: 'Lista en 3–6 semanas',
+        tiempo: 'Lista en 3 a 6 semanas',
         incluye: [
           'Tienda en línea o sistema de reservas/citas',
           'Pagos en línea (tarjeta, PSE, Nequi)',
