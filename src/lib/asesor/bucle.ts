@@ -2,9 +2,9 @@
 // navegador, llama al modelo, ejecuta sus herramientas y pasa la respuesta por
 // la guardia de cifras antes de devolverla.
 //
-// No se guarda la conversación en ninguna parte (plan: nada de datos
-// personales almacenados), así que el navegador reenvía el historial en cada
-// pregunta. Eso abre una puerta: un historial manipulado podría traer una
+// El servidor no usa ninguna conversación guardada para responder (las del
+// asesor en vivo, vivo.ts, solo existen para que Mike las lea), así que el
+// navegador reenvía el historial en cada pregunta. Eso abre una puerta: un historial manipulado podría traer una
 // "respuesta del asesor" con un precio falso. Por eso del historial solo se
 // toma texto plano, y los cálculos previos llegan como PEDIDOS que el servidor
 // vuelve a ejecutar contra el tarifario: un pedido inventado solo produce
@@ -30,6 +30,7 @@ import {
   type PedidoCalculo,
 } from './herramientas'
 import { MAX_PREGUNTAS, PAGINAS, type Pagina } from './prompt'
+import { TOKEN_RE } from './vivo'
 
 export const MAX_TEXTO_USUARIO = 500
 export const MAX_TEXTO_ASESOR = 2_000
@@ -54,6 +55,8 @@ const EsquemaEntrada = z
       .max(MAX_PREGUNTAS * 2 - 1),
     calculos: z.array(EsquemaCalculo).max(MAX_CALCULOS).default([]),
     contactoDado: z.boolean().optional(),
+    // Token del asesor en vivo (vivo.ts), si esta conversación ya se guarda.
+    conversacion: z.string().regex(TOKEN_RE).optional(),
   })
   .strict()
 
@@ -64,6 +67,7 @@ export type Entrada = {
   calculos: PedidoCalculo[]
   /** La persona ya dejó sus datos en el formulario: no hay que volver a pedirlos. */
   contactoDado?: boolean
+  conversacion?: string
 }
 
 export type ErrorEntrada = { error: 'formato' | 'limite' }
@@ -90,6 +94,7 @@ export function validarEntrada(cuerpo: unknown): Entrada | ErrorEntrada {
     mensajes,
     calculos: r.data.calculos,
     contactoDado: r.data.contactoDado,
+    conversacion: r.data.conversacion,
   }
 }
 

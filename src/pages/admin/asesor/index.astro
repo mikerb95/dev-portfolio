@@ -1,0 +1,59 @@
+---
+// Conversaciones del asesor público en las que la persona mostró interés
+// (lib/asesor/vivo.ts). Cada una avisa por ntfy con enlace directo a la suya;
+// esta lista es para volver a las que siguen vigentes (48 h).
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { visitantePresente, type Motivo } from '../../../lib/asesor/vivo'
+import { listarVigentes } from '../../../lib/asesor/vivo-db'
+
+const ahora = new Date()
+const conversaciones = await listarVigentes(ahora)
+
+const MOTIVO: Record<Motivo, string> = {
+  precio: 'Le dio un precio',
+  whatsapp: 'Preparó el WhatsApp',
+  contacto: 'Ofreció el formulario',
+}
+const hora = (d: Date) =>
+  new Intl.DateTimeFormat('es-CO', { timeZone: 'America/Bogota', weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(d)
+---
+
+<AdminLayout title="Asesor en vivo">
+  <p class="max-w-2xl text-[13px] text-ink-200 leading-relaxed mb-6">
+    Conversaciones del asesor de la burbuja en las que la persona mostró interés. Entra a una y escribe: el asesor
+    deja de responder y tus mensajes le llegan en el mismo chat. Se borran a las 48 horas.
+  </p>
+
+  {conversaciones.length === 0 ? (
+    <div class="rounded-2xl glass px-5 py-10 text-center text-[12px] font-mono text-ink-300">
+      Nadie ha llegado a un precio en las últimas 48 horas.
+    </div>
+  ) : (
+    <ul class="rounded-2xl glass overflow-hidden divide-y divide-white/[.04]">
+      {conversaciones.map((c) => {
+        const presente = visitantePresente(c.vistoVisitante, ahora)
+        return (
+          <li>
+            <a href={`/admin/asesor/${c.id}`} class="flex items-start gap-3 px-5 py-4 hover:bg-white/[.03]">
+              <span
+                class:list={['mt-1.5 h-2 w-2 shrink-0 rounded-full', presente ? 'bg-[#25D366] pulse-dot' : 'bg-ink-600']}
+                title={presente ? 'Tiene el chat abierto' : 'No está mirando'}
+              ></span>
+              <span class="min-w-0 flex-1">
+                <span class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span class="text-[13.5px] font-medium text-ink-50">{MOTIVO[c.motivo]}</span>
+                  <span class="text-[11px] font-mono text-ink-300">
+                    {c.pagina ?? 'sitio'}{c.locale === 'en' ? ' · en' : ''} · {c.total} mensajes
+                  </span>
+                  {c.estado === 'mike' && <span class="text-[11px] font-mono text-[#5ee08f]">ya entraste</span>}
+                </span>
+                {c.ultimo && <span class="mt-1 block text-[12.5px] text-ink-200 line-clamp-2">{c.ultimo}</span>}
+              </span>
+              <span class="shrink-0 text-[11px] font-mono text-ink-300">{hora(c.actualizada)}</span>
+            </a>
+          </li>
+        )
+      })}
+    </ul>
+  )}
+</AdminLayout>

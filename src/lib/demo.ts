@@ -124,6 +124,9 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   // Claude y lee la base de seguridad real por sus herramientas. Un visitante
   // de la demo no gasta mi dinero ni ve mis ataques.
   /^\/(api\/)?admin\/analista/,
+  // Asesor en vivo: conversaciones de visitantes reales y un canal para
+  // escribirles. La demo enseña el panel, no a quién atiendo.
+  /^\/(api\/)?admin\/asesor/,
 ]
 
 /** ¿La ruta está vetada en modo demo (aun siendo GET)? */

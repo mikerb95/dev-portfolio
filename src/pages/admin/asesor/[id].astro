@@ -1,0 +1,263 @@
+---
+// Una conversación del asesor en vivo (lib/asesor/vivo.ts). Aquí llega el
+// enlace de la notificación, casi siempre desde el celular: la pantalla es un
+// chat y nada más. Mike lee lo que va pasando y, si escribe, toma la
+// conversación y el asesor se calla.
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { visitantePresente, MAX_TEXTO_MIKE, type Motivo } from '../../../lib/asesor/vivo'
+import { mensajesDesde, porId } from '../../../lib/asesor/vivo-db'
+
+const id = Number(Astro.params.id)
+const conv = Number.isSafeInteger(id) && id > 0 ? await porId(id) : null
+const mensajes = conv ? await mensajesDesde(conv.id, 0) : []
+const ultimo = mensajes.at(-1)?.id ?? 0
+
+const MOTIVO: Record<Motivo, string> = {
+  precio: 'el asesor le dio un precio',
+  whatsapp: 'el asesor le preparó el WhatsApp',
+  contacto: 'el asesor le ofreció el formulario de contacto',
+}
+const AUTOR = { visitante: 'Visitante', asesor: 'Asesor IA', mike: 'Tú' } as const
+---
+
+<AdminLayout title="Conversación del asesor">
+  {!conv ? (
+    <div class="rounded-2xl glass px-5 py-10 text-center">
+      <p class="text-[13px] text-ink-100">Esta conversación ya no existe: se borran a las 48 horas.</p>
+      <a href="/admin/asesor" class="mt-3 inline-block text-[12px] font-mono text-cyan hover:underline">Ver las vigentes</a>
+    </div>
+  ) : (
+    <section
+      id="vivo"
+      class="vivo mx-auto flex max-w-2xl flex-col rounded-2xl glass overflow-hidden"
+      data-id={conv.id}
+      data-ultimo={ultimo}
+      data-estado={conv.estado}
+    >
+      <header class="flex items-center gap-3 px-4 py-3 border-b border-white/5">
+        <a href="/admin/asesor" class="grid place-items-center h-8 w-8 rounded-lg text-ink-200 hover:text-ink-50 hover:bg-white/5" aria-label="Volver a la lista">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        </a>
+        <div class="min-w-0 flex-1">
+          <p class="text-[13.5px] font-medium text-ink-50 leading-tight">
+            <span id="vivo-presencia" class:list={['vivo-presencia', { 'is-presente': visitantePresente(conv.vistoVisitante, new Date()) }]}></span>
+            <span id="vivo-presencia-texto">{visitantePresente(conv.vistoVisitante, new Date()) ? 'Tiene el chat abierto' : 'No está mirando ahora'}</span>
+          </p>
+          <p class="text-[11.5px] font-mono text-ink-300 truncate">
+            Avisó porque {MOTIVO[conv.motivo]} · {conv.pagina ?? 'sitio'}{conv.locale === 'en' ? ' · en inglés' : ''}
+          </p>
+        </div>
+      </header>
+
+      <div id="vivo-log" class="vivo-log flex-1 overflow-y-auto px-4 py-4 space-y-3" aria-live="polite">
+        {mensajes.map((m) => (
+          <div class={`vivo-msg vivo-msg--${m.autor}`} data-id={m.id}>
+            <span class="vivo-autor">{AUTOR[m.autor]}</span>
+            <p class="vivo-texto">{m.texto}</p>
+          </div>
+        ))}
+      </div>
+
+      <form id="vivo-form" class="border-t border-white/5 px-3 pt-3 pb-3">
+        <p id="vivo-aviso" class="mb-2 text-[11.5px] text-ink-300">
+          {conv.estado === 'mike'
+            ? 'Estás en la conversación: el asesor ya no responde.'
+            : 'Si escribes, el asesor deja de responder y tus mensajes le llegan en el mismo chat.'}
+        </p>
+        <div class="flex items-end gap-2">
+          <label for="vivo-input" class="sr-only">Tu mensaje</label>
+          <textarea
+            id="vivo-input"
+            rows="2"
+            maxlength={MAX_TEXTO_MIKE}
+            placeholder="Escribe como Mike..."
+            class="min-h-11 max-h-40 flex-1 resize-none rounded-xl border border-ink-500 bg-ink-800 px-3 py-2.5 text-[16px] sm:text-[14px] text-ink-50 placeholder:text-ink-300 focus:border-[#25D366]/70 focus:outline-none"
+          ></textarea>
+          <button type="submit" id="vivo-enviar" class="h-11 shrink-0 rounded-xl bg-[#25D366] px-4 text-[13.5px] font-semibold text-[#062e16] hover:brightness-110 disabled:opacity-50 cursor-pointer disabled:cursor-default">
+            Enviar
+          </button>
+        </div>
+        <p id="vivo-error" class="mt-2 text-[12px] text-ember" role="alert" hidden></p>
+      </form>
+    </section>
+  )}
+</AdminLayout>
+
+<style>
+  .vivo {
+    /* En el celular el chat ocupa la pantalla bajo la barra del panel; en
+       escritorio, una columna de altura cómoda. */
+    height: calc(100dvh - 9rem);
+    min-height: 24rem;
+  }
+  @media (min-width: 1024px) {
+    .vivo {
+      height: calc(100vh - 11rem);
+    }
+  }
+  .vivo-presencia {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 0.45rem;
+    border-radius: 999px;
+    background: var(--color-ink-600);
+    vertical-align: 0.05em;
+  }
+  .vivo-presencia.is-presente {
+    background: #25d366;
+    box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.18);
+  }
+  .vivo-log :global(.vivo-msg) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    max-width: 85%;
+  }
+  /* Del lado de Mike van el asesor y él mismo: los dos responden por el sitio. */
+  .vivo-log :global(.vivo-msg--asesor),
+  .vivo-log :global(.vivo-msg--mike) {
+    margin-left: auto;
+    align-items: flex-end;
+  }
+  .vivo-log :global(.vivo-autor) {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-300);
+    padding: 0 0.35rem;
+  }
+  .vivo-log :global(.vivo-texto) {
+    padding: 0.55rem 0.8rem;
+    border-radius: 1rem;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    color: var(--color-ink-50);
+  }
+  .vivo-log :global(.vivo-msg--visitante .vivo-texto) {
+    background: var(--color-ink-750);
+    border: 1px solid var(--color-ink-600);
+    border-bottom-left-radius: 0.35rem;
+  }
+  .vivo-log :global(.vivo-msg--asesor .vivo-texto) {
+    background: rgba(0, 242, 255, 0.07);
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    border-bottom-right-radius: 0.35rem;
+  }
+  .vivo-log :global(.vivo-msg--mike .vivo-texto) {
+    background: #005c4b;
+    border: 1px solid rgba(37, 211, 102, 0.35);
+    border-bottom-right-radius: 0.35rem;
+  }
+</style>
+
+<script>
+  // Sondeo cada 3 s mientras la pestaña está a la vista. Polling y no SSE: es
+  // una pantalla que se abre de vez en cuando, y una conexión abierta por cada
+  // una en una función de Vercel cuesta más que unas lecturas por índice.
+  type Msg = { id: number; autor: 'visitante' | 'asesor' | 'mike'; texto: string }
+  const AUTOR = { visitante: 'Visitante', asesor: 'Asesor IA', mike: 'Tú' } as const
+
+  const raiz = document.getElementById('vivo')
+  if (raiz) {
+    const id = raiz.dataset.id
+    let ultimo = Number(raiz.dataset.ultimo ?? 0)
+    const log = document.getElementById('vivo-log')!
+    const form = document.getElementById('vivo-form') as HTMLFormElement
+    const input = document.getElementById('vivo-input') as HTMLTextAreaElement
+    const enviar = document.getElementById('vivo-enviar') as HTMLButtonElement
+    const error = document.getElementById('vivo-error')!
+    const aviso = document.getElementById('vivo-aviso')!
+    const presencia = document.getElementById('vivo-presencia')!
+    const presenciaTexto = document.getElementById('vivo-presencia-texto')!
+
+    const abajo = () => {
+      log.scrollTop = log.scrollHeight
+    }
+    abajo()
+
+    const pintar = (m: Msg) => {
+      if (log.querySelector(`[data-id="${m.id}"]`)) return
+      const d = document.createElement('div')
+      d.className = `vivo-msg vivo-msg--${m.autor}`
+      d.dataset.id = String(m.id)
+      const autor = document.createElement('span')
+      autor.className = 'vivo-autor'
+      autor.textContent = AUTOR[m.autor]
+      const p = document.createElement('p')
+      p.className = 'vivo-texto'
+      p.textContent = m.texto
+      d.append(autor, p)
+      log.append(d)
+    }
+
+    let pidiendo = false
+    async function sondear() {
+      if (pidiendo || document.hidden) return
+      pidiendo = true
+      try {
+        const r = await fetch(`/api/admin/asesor/${id}?desde=${ultimo}`, { headers: { Accept: 'application/json' } })
+        if (r.ok) {
+          const d = (await r.json()) as { estado: string; presente: boolean; mensajes: Msg[] }
+          const cerca = log.scrollHeight - log.scrollTop - log.clientHeight < 80
+          d.mensajes.forEach(pintar)
+          if (d.mensajes.length) {
+            ultimo = d.mensajes.at(-1)!.id
+            // Solo baja si ya estaba abajo: no le arranca la lectura a quien subió.
+            if (cerca) abajo()
+          }
+          presencia.classList.toggle('is-presente', d.presente)
+          presenciaTexto.textContent = d.presente ? 'Tiene el chat abierto' : 'No está mirando ahora'
+          if (d.estado === 'mike') aviso.textContent = 'Estás en la conversación: el asesor ya no responde.'
+        }
+      } catch {
+        // Sin red: el siguiente sondeo lo intenta otra vez.
+      } finally {
+        pidiendo = false
+      }
+    }
+    setInterval(sondear, 3000)
+    document.addEventListener('visibilitychange', () => void sondear())
+
+    async function mandar() {
+      const texto = input.value.trim()
+      if (!texto || enviar.disabled) return
+      enviar.disabled = true
+      error.hidden = true
+      try {
+        const r = await fetch(`/api/admin/asesor/${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ texto }),
+        })
+        if (r.ok) {
+          input.value = ''
+          await sondear()
+          abajo()
+        } else {
+          const d = (await r.json().catch(() => ({}))) as { error?: string }
+          error.textContent = d.error ?? 'No se pudo enviar.'
+          error.hidden = false
+        }
+      } catch {
+        error.textContent = 'No se pudo enviar. Revisa la conexión.'
+        error.hidden = false
+      } finally {
+        enviar.disabled = false
+        input.focus()
+      }
+    }
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault()
+      void mandar()
+    })
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) {
+        ev.preventDefault()
+        void mandar()
+      }
+    })
+  }
+</script>
