@@ -576,6 +576,9 @@ const textos = JSON.stringify({
     whatsapp: string | null
     /** Cifras calculadas de cada respuesta, por índice del mensaje: pintan la marca. */
     marcas: Record<string, string[]>
+    /** Formulario de contacto: escondido, a la vista, o ya enviado (con el nombre). */
+    contacto: 'no' | 'visible' | 'enviado'
+    contactoNombre?: string
   }
   type Textos = Record<
     | 'agotado'
@@ -586,7 +589,15 @@ const textos = JSON.stringify({
     | 'pensando'
     | 'calculado'
     | 'verMensaje'
-    | 'ocultarMensaje',
+    | 'ocultarMensaje'
+    | 'contactoListo'
+    | 'contactoEnviar'
+    | 'contactoEnviando'
+    | 'contactoErrorMedio'
+    | 'contactoErrorTelefono'
+    | 'contactoErrorCorreo'
+    | 'contactoErrorAutoriza'
+    | 'contactoErrorFallo',
     string
   >
   type Motion = typeof import('../lib/motion/asesor')
@@ -622,6 +633,10 @@ const textos = JSON.stringify({
     const ver = $<HTMLButtonElement>('asesor-ver')
     const verTexto = $('asesor-ver-texto')
     const vista = $('asesor-vista')
+    const contactoForm = $<HTMLFormElement>('asesor-contacto')
+    const contactoAbrir = $<HTMLButtonElement>('asesor-contacto-abrir')
+    const contactoError = contactoForm.querySelector<HTMLElement>('.asesor-contacto-error')!
+    const contactoBoton = contactoForm.querySelector<HTMLButtonElement>('.asesor-contacto-enviar')!
     const vistaTexto = $('asesor-vista-texto')
 
     const locale = raiz.dataset.locale ?? 'es'
@@ -635,7 +650,7 @@ const textos = JSON.stringify({
     // La conversación se recuerda solo en esta pestaña, para no perderla al
     // pasar de /paginas-web a /contact. Nunca sale del navegador salvo en la
     // propia pregunta. Si el almacenamiento falla, el chat funciona igual.
-    const vacio = (): Estado => ({ mensajes: [], calculos: [], whatsapp: null, marcas: {} })
+    const vacio = (): Estado => ({ mensajes: [], calculos: [], whatsapp: null, marcas: {}, contacto: 'no' })
     let estado: Estado = vacio()
     try {
       const guardado = JSON.parse(sessionStorage.getItem(clave) ?? 'null') as Estado | null
@@ -710,6 +725,21 @@ const textos = JSON.stringify({
         cierre.hidden = true
         verVista(false)
       }
+      // El formulario va al final de la conversación; si ya se envió, queda
+      // la confirmación en su lugar.
+      contactoAbrir.disabled = estado.contacto === 'enviado'
+      if (estado.contacto === 'visible') {
+        contactoForm.hidden = false
+        log.append(contactoForm)
+      } else {
+        contactoForm.hidden = true
+        if (estado.contacto === 'enviado') {
+          const listo = document.createElement('p')
+          listo.className = 'asesor-listo'
+          listo.textContent = t.contactoListo.replace('{nombre}', estado.contactoNombre ?? '')
+          log.append(listo)
+        }
+      }
       const agotado = quedan === 0
       input.disabled = agotado || ocupado
       enviar.disabled = agotado || ocupado
@@ -783,10 +813,23 @@ const textos = JSON.stringify({
         const r = await fetch('/api/asesor', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locale, pagina, mensajes: estado.mensajes, calculos: estado.calculos }),
+          body: JSON.stringify({
+            locale,
+            pagina,
+            mensajes: estado.mensajes,
+            calculos: estado.calculos,
+            contactoDado: estado.contacto === 'enviado',
+          }),
         })
         if (r.ok) {
-          const d = (await r.json()) as { texto: string; whatsapp: string | null; calculos: unknown[]; cifras?: string[] }
+          const d = (await r.json()) as {
+            texto: string
+            whatsapp: string | null
+            contacto?: boolean
+            calculos: unknown[]
+            cifras?: string[]
+          }
+          if (d.contacto && estado.contacto === 'no') estado.contacto = 'visible'
           estado.mensajes.push({ rol: 'asesor', texto: d.texto })
           estado.calculos = d.calculos ?? []
           if (d.cifras?.length) estado.marcas[estado.mensajes.length - 1] = d.cifras
@@ -833,6 +876,74 @@ const textos = JSON.stringify({
       abrirMenu(menu.hidden)
     })
     abrir.addEventListener('click', () => abrirChat(true))
+    contactoAbrir.addEventListener('click', () => {
+      if (estado.contacto === 'enviado') return
+      estado.contacto = 'visible'
+      guardar()
+      pintar()
+      contactoForm.scrollIntoView({ block: 'nearest' })
+      contactoForm.querySelector<HTMLInputElement>('input[name="nombre"]')?.focus()
+    })
+    contactoForm.addEventListener('submit', async (ev) => {
+      ev.preventDefault()
+      const datos = new FormData(contactoForm)
+      const texto = (k: string) => String(datos.get(k) ?? '').trim()
+      const mostrarError = (m: string) => {
+        contactoError.textContent = m
+        contactoError.hidden = false
+      }
+      contactoError.hidden = true
+      // Lo mismo que valida el servidor, para no hacer esperar a nadie por un
+      // error obvio. El servidor vuelve a validar todo.
+      if (!texto('nombre') || (!texto('telefono') && !texto('correo'))) return mostrarError(t.contactoErrorMedio)
+      if (!datos.get('autoriza')) return mostrarError(t.contactoErrorAutoriza)
+      contactoBoton.disabled = true
+      contactoBoton.textContent = t.contactoEnviando
+      try {
+        const r = await fetch('/api/asesor/contacto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            locale,
+            pagina,
+            nombre: texto('nombre'),
+            telefono: texto('telefono') || undefined,
+            correo: texto('correo') || undefined,
+            empresa: texto('empresa') || undefined,
+            autoriza: true,
+            resumen: estado.whatsapp ?? undefined,
+            preguntas: estado.mensajes.filter((m) => m.rol === 'usuario').map((m) => m.texto),
+          }),
+        })
+        if (r.ok) {
+          estado.contacto = 'enviado'
+          estado.contactoNombre = texto('nombre').split(/\s+/)[0]
+          contactoForm.reset()
+          guardar()
+          pintar()
+          return
+        }
+        const d = (await r.json().catch(() => ({}))) as { error?: string }
+        mostrarError(
+          r.status === 429
+            ? t.errorLimite
+            : d.error === 'telefono'
+              ? t.contactoErrorTelefono
+              : d.error === 'correo'
+                ? t.contactoErrorCorreo
+                : d.error === 'sin_medio'
+                  ? t.contactoErrorMedio
+                  : d.error === 'autorizacion'
+                    ? t.contactoErrorAutoriza
+                    : t.contactoErrorFallo
+        )
+      } catch {
+        mostrarError(t.contactoErrorFallo)
+      } finally {
+        contactoBoton.disabled = false
+        contactoBoton.textContent = t.contactoEnviar
+      }
+    })
     ver.addEventListener('click', () => verVista(ver.getAttribute('aria-expanded') !== 'true'))
     cerrar.addEventListener('click', () => abrirChat(false))
     reiniciar.addEventListener('click', () => {
