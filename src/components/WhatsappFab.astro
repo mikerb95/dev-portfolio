@@ -841,7 +841,9 @@ const textos = JSON.stringify({
       // Una respuesta larga se muestra desde su comienzo, no desde el final:
       // si no, quien lee en el celular cae en la última frase.
       const ultima = log.querySelector<HTMLElement>('.asesor-burbuja:last-of-type')
-      if (estado.mensajes.at(-1)?.rol === 'asesor' && ultima && !agotado) {
+      // El aviso del asesor en vivo va detrás de la respuesta y no cuenta.
+      const ultimoRol = estado.mensajes.filter((m) => m.rol !== 'sistema').at(-1)?.rol
+      if (ultimoRol === 'asesor' && ultima && !agotado) {
         log.scrollTop = Math.max(0, ultima.offsetTop - 12)
       } else {
         bajar()
