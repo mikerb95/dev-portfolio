@@ -51,6 +51,10 @@ const textos = JSON.stringify({
   contactoErrorCorreo: a.contactoErrorCorreo,
   contactoErrorAutoriza: a.contactoErrorAutoriza,
   contactoErrorFallo: a.contactoErrorFallo,
+  vivoAvisado: a.vivoAvisado,
+  vivoMikeEntro: a.vivoMikeEntro,
+  vivoMike: a.vivoMike,
+  vivoNuevo: a.vivoNuevo,
 })
 ---
 
@@ -406,6 +410,60 @@ const textos = JSON.stringify({
     color: var(--color-ink-50);
     border-bottom-right-radius: 0.35rem;
   }
+  /* Asesor en vivo. Mike escribe con el verde de envío de WhatsApp, el mismo
+     de la vista previa del mensaje: es la persona a la que la burbuja lleva. */
+  .asesor-log :global(.asesor-burbuja--mike) {
+    background: #005c4b;
+    border: 1px solid rgba(37, 211, 102, 0.35);
+    color: #e9edef;
+    border-bottom-left-radius: 0.35rem;
+  }
+  .asesor-log :global(.asesor-quien) {
+    display: block;
+    margin-bottom: 0.1rem;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #5ee08f;
+  }
+  .asesor-log :global(.asesor-sistema) {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--color-ink-200);
+    text-align: center;
+    padding: 0 0.75rem;
+    animation: asesor-opcion 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  /* Con Mike dentro, el punto del encabezado pasa del cian del asesor al verde. */
+  .asesor-chat[data-mike] .asesor-pulso {
+    background: #25d366;
+    animation-name: asesor-pulso-mike;
+  }
+  @keyframes asesor-pulso-mike {
+    70% {
+      box-shadow: 0 0 0 7px rgba(37, 211, 102, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+    }
+  }
+  /* Mike escribió con el chat cerrado: un punto sobre la burbuja. */
+  .wa-fab[data-nuevo]::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--color-ember);
+    border: 2px solid var(--color-ink-950);
+    animation: asesor-latido 1.6s ease-in-out infinite;
+  }
+  @keyframes asesor-latido {
+    50% {
+      transform: scale(1.18);
+    }
+  }
   .asesor-log :global(.asesor-nota) {
     font-size: 12.5px;
     line-height: 1.45;
@@ -558,6 +616,8 @@ const textos = JSON.stringify({
     .asesor-chat:not([hidden]),
     .asesor-pulso,
     .asesor-contacto,
+    .wa-fab[data-nuevo]::after,
+    .asesor-log :global(.asesor-sistema),
     .asesor-log :global(.asesor-pensando i) {
       animation: none;
     }
@@ -567,7 +627,9 @@ const textos = JSON.stringify({
 <script>
   import { pintarRespuesta } from '../lib/motion/palabras'
 
-  type Rol = 'usuario' | 'asesor'
+  // 'mike' y 'sistema' solo existen en el navegador (asesor en vivo,
+  // lib/asesor/vivo.ts): nunca se le reenvían al modelo.
+  type Rol = 'usuario' | 'asesor' | 'mike' | 'sistema'
   type Mensaje = { rol: Rol; texto: string }
   type Estado = {
     mensajes: Mensaje[]
@@ -578,6 +640,12 @@ const textos = JSON.stringify({
     /** Formulario de contacto: escondido, a la vista, o ya enviado (con el nombre). */
     contacto: 'no' | 'visible' | 'enviado'
     contactoNombre?: string
+    /** Token del asesor en vivo: la conversación se guarda para que Mike la lea. */
+    conversacion?: string
+    /** Mike entró: las preguntas ya no van al modelo sino a él. */
+    mike?: boolean
+    /** Id del último mensaje de Mike recibido, para pedir solo lo nuevo. */
+    ultimoMike?: number
   }
   type Textos = Record<
     | 'agotado'
@@ -596,7 +664,11 @@ const textos = JSON.stringify({
     | 'contactoErrorTelefono'
     | 'contactoErrorCorreo'
     | 'contactoErrorAutoriza'
-    | 'contactoErrorFallo',
+    | 'contactoErrorFallo'
+    | 'vivoAvisado'
+    | 'vivoMikeEntro'
+    | 'vivoMike'
+    | 'vivoNuevo',
     string
   >
   type Motion = typeof import('../lib/motion/asesor')
@@ -608,6 +680,11 @@ const textos = JSON.stringify({
   // chat sigue igual, solo que sin animar.
   let motion: Promise<Motion | null> | null = null
   const cargarMotion = () => (motion ??= import('../lib/motion/asesor').catch(() => null))
+
+  // Sondeo del asesor en vivo, fuera de iniciar(): uno solo por página aunque
+  // iniciar() corra otra vez con astro:page-load.
+  let sondeo: ReturnType<typeof setTimeout> | null = null
+  let sondeando = false
 
   function iniciar() {
     const raiz = document.getElementById('asesor')
@@ -674,7 +751,23 @@ const textos = JSON.stringify({
     // interpreta como HTML. Solo se quitan los ** de negrita de markdown.
     const sinNegritas = (texto: string) => texto.replace(/\*\*(.+?)\*\*/g, '$1')
     const burbuja = (m: Mensaje) => {
+      // Los avisos del sistema van en div y no en p: el desplazamiento busca la
+      // última burbuja con :last-of-type y un p de más la taparía.
+      if (m.rol === 'sistema') {
+        const d = document.createElement('div')
+        d.className = 'asesor-sistema'
+        d.textContent = m.texto
+        return d
+      }
       const p = document.createElement('p')
+      if (m.rol === 'mike') {
+        p.className = 'asesor-burbuja asesor-burbuja--mike'
+        const quien = document.createElement('span')
+        quien.className = 'asesor-quien'
+        quien.textContent = t.vivoMike
+        p.append(quien, m.texto)
+        return p
+      }
       p.className = `asesor-burbuja asesor-burbuja--${m.rol === 'usuario' ? 'yo' : 'ia'}`
       p.textContent = m.rol === 'asesor' ? sinNegritas(m.texto) : m.texto
       return p
@@ -716,6 +809,7 @@ const textos = JSON.stringify({
       const quedan = Math.max(0, max - hechas)
       sugerencias.hidden = hechas > 0
       reiniciar.hidden = hechas === 0
+      chat.toggleAttribute('data-mike', !!estado.mike)
       if (estado.whatsapp) {
         enviarMike.href = `${waBase}?text=${encodeURIComponent(estado.whatsapp)}`
         vistaTexto.textContent = estado.whatsapp
@@ -739,7 +833,8 @@ const textos = JSON.stringify({
           log.append(listo)
         }
       }
-      const agotado = quedan === 0
+      // Con Mike dentro el tope de preguntas al modelo ya no aplica.
+      const agotado = !estado.mike && quedan === 0
       input.disabled = agotado || ocupado
       enviar.disabled = agotado || ocupado
       if (agotado) nota(t.agotado)
@@ -769,6 +864,7 @@ const textos = JSON.stringify({
     function abrirChat(si: boolean) {
       chat.hidden = !si
       if (si) {
+        avisoFab(false)
         abrirMenu(false)
         if (!sinMovimiento()) void cargarMotion()
         pintar()
@@ -792,9 +888,45 @@ const textos = JSON.stringify({
       }
     }
 
+    // Con Mike dentro, lo que escribe la persona le llega a él y no al modelo.
+    async function escribirleAMike(limpio: string) {
+      ocupado = true
+      estado.mensajes.push({ rol: 'usuario', texto: limpio })
+      input.value = ''
+      ajustarAlto()
+      pintar()
+      let error: string | null = null
+      try {
+        const r = await fetch('/api/asesor/conversacion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ t: estado.conversacion, texto: limpio }),
+        })
+        if (r.status === 404) {
+          // La conversación venció: lo que siga lo responde otra vez el asesor.
+          estado.conversacion = undefined
+          estado.mike = false
+        }
+        if (!r.ok) error = r.status === 429 ? t.errorLimite : t.errorFallo
+      } catch {
+        error = t.errorFallo
+      }
+      if (error) {
+        estado.mensajes.pop()
+        input.value = limpio
+      }
+      ocupado = false
+      guardar()
+      pintar()
+      if (error) nota(error)
+      if (!input.disabled) input.focus()
+    }
+
     async function preguntar(texto: string) {
       const limpio = texto.trim().slice(0, 500)
-      if (!limpio || ocupado || preguntas() >= max) return
+      if (!limpio || ocupado) return
+      if (estado.mike && estado.conversacion) return escribirleAMike(limpio)
+      if (preguntas() >= max) return
       ocupado = true
       estado.mensajes.push({ rol: 'usuario', texto: limpio })
       input.value = ''
@@ -808,6 +940,8 @@ const textos = JSON.stringify({
       bajar()
 
       let error: string | null = null
+      // Índice de la respuesta del asesor, si llegó: detrás puede ir un aviso.
+      let respuesta: number | null = null
       try {
         const r = await fetch('/api/asesor', {
           method: 'POST',
@@ -815,24 +949,38 @@ const textos = JSON.stringify({
           body: JSON.stringify({
             locale,
             pagina,
-            mensajes: estado.mensajes,
+            mensajes: estado.mensajes.filter((m) => m.rol === 'usuario' || m.rol === 'asesor'),
             calculos: estado.calculos,
             contactoDado: estado.contacto === 'enviado',
+            conversacion: estado.conversacion,
           }),
         })
         if (r.ok) {
           const d = (await r.json()) as {
-            texto: string
-            whatsapp: string | null
+            texto?: string
+            whatsapp?: string | null
             contacto?: boolean
-            calculos: unknown[]
+            calculos?: unknown[]
             cifras?: string[]
+            conversacion?: string
+            mike?: boolean
           }
-          if (d.contacto && estado.contacto === 'no') estado.contacto = 'visible'
-          estado.mensajes.push({ rol: 'asesor', texto: d.texto })
-          estado.calculos = d.calculos ?? []
-          if (d.cifras?.length) estado.marcas[estado.mensajes.length - 1] = d.cifras
-          if (d.whatsapp) estado.whatsapp = d.whatsapp
+          if (d.mike) {
+            // Mike entró justo antes de esta pregunta: le llegó a él.
+            entroMike()
+          } else {
+            if (d.contacto && estado.contacto === 'no') estado.contacto = 'visible'
+            estado.mensajes.push({ rol: 'asesor', texto: d.texto ?? '' })
+            respuesta = estado.mensajes.length - 1
+            estado.calculos = d.calculos ?? []
+            if (d.cifras?.length) estado.marcas[respuesta] = d.cifras
+            if (d.whatsapp) estado.whatsapp = d.whatsapp
+            if (d.conversacion && !estado.conversacion) {
+              estado.conversacion = d.conversacion
+              estado.mensajes.push({ rol: 'sistema', texto: t.vivoAvisado })
+              arrancarSondeo()
+            }
+          }
         } else {
           error = r.status === 429 ? t.errorLimite : r.status === 503 ? t.errorNoDisponible : t.errorFallo
         }
@@ -851,19 +999,92 @@ const textos = JSON.stringify({
       // El módulo de motion se espera ANTES de pintar: si se pintara primero,
       // la respuesta completa asomaría un fotograma antes de empezar a
       // escribirse. Ya se pidió al abrir el chat, así que casi nunca espera.
-      const m = !error && !sinMovimiento() ? await cargarMotion() : null
+      const m = respuesta !== null && !sinMovimiento() ? await cargarMotion() : null
       pintar()
-      if (m) {
-        const ultima = estado.mensajes.at(-1)!
+      if (m && respuesta !== null) {
+        const ultima = estado.mensajes[respuesta]
         const burbujas = log.querySelectorAll<HTMLElement>('.asesor-burbuja--ia')
         const p = burbujas[burbujas.length - 1]
         const siguiente = p?.nextElementSibling
         const laMarca = siguiente?.classList.contains('asesor-marca') ? (siguiente as HTMLElement) : null
-        if (p) m.animarRespuesta(p, sinNegritas(ultima.texto), estado.marcas[estado.mensajes.length - 1] ?? [], laMarca)
+        if (p) m.animarRespuesta(p, sinNegritas(ultima.texto), estado.marcas[respuesta] ?? [], laMarca)
       }
       if (error) nota(error)
       if (!input.disabled) input.focus()
     }
+
+    function entroMike() {
+      if (estado.mike) return
+      estado.mike = true
+      estado.mensajes.push({ rol: 'sistema', texto: t.vivoMikeEntro })
+    }
+
+    const textoFab = fab.getAttribute('aria-label') ?? ''
+    function avisoFab(si: boolean) {
+      fab.toggleAttribute('data-nuevo', si)
+      fab.setAttribute('aria-label', si ? `${textoFab} · ${t.vivoNuevo}` : textoFab)
+    }
+
+    // Asesor en vivo: pregunta cada 4 s si Mike escribió mientras el chat está
+    // abierto, y cada 15 s con el chat cerrado (la burbuja avisa con un punto).
+    // Con la pestaña oculta no pregunta. Sin conversación guardada, se detiene.
+    async function sondear() {
+      // Una consulta a la vez: la que está en curso ya programa la siguiente.
+      if (sondeando) return
+      sondeo = null
+      const token = estado.conversacion
+      if (!token) return
+      sondeando = true
+      if (!document.hidden && !ocupado) {
+        try {
+          const r = await fetch(`/api/asesor/conversacion?desde=${estado.ultimoMike ?? 0}`, {
+            headers: { Accept: 'application/json', 'X-Asesor-Token': token },
+          })
+          if (r.status === 404) {
+            // Venció (48 h) o se reinició: el chat vuelve a ser solo del asesor.
+            estado.conversacion = undefined
+            estado.mike = false
+            guardar()
+            if (!chat.hidden) pintar()
+            return
+          }
+          if (r.ok && estado.conversacion === token) {
+            const d = (await r.json()) as { mike: boolean; mensajes: { id: number; texto: string }[] }
+            const antes = estado.mensajes.length
+            if (d.mike) entroMike()
+            for (const m of d.mensajes) {
+              estado.mensajes.push({ rol: 'mike', texto: m.texto })
+              estado.ultimoMike = m.id
+            }
+            if (estado.mensajes.length !== antes) {
+              guardar()
+              if (chat.hidden) {
+                if (d.mensajes.length) avisoFab(true)
+              } else if (!ocupado) pintar()
+            }
+          }
+        } catch {
+          // Sin red: se reintenta en el siguiente turno.
+        } finally {
+          sondeando = false
+        }
+      } else {
+        sondeando = false
+      }
+      if (sondeo === null) sondeo = setTimeout(sondear, chat.hidden ? 15_000 : 4_000)
+    }
+    function arrancarSondeo() {
+      if (sondeando) return
+      if (sondeo !== null) clearTimeout(sondeo)
+      sondeo = setTimeout(sondear, 4_000)
+    }
+    if (estado.conversacion) arrancarSondeo()
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && estado.conversacion) {
+        if (sondeo !== null) clearTimeout(sondeo)
+        void sondear()
+      }
+    })
 
     function ajustarAlto() {
       input.style.height = 'auto'
