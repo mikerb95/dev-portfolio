@@ -1252,7 +1252,7 @@ const es = {
       caida: 'caído',
       repetir: 'Repetir',
       respuesta: 'Respuesta',
-      sinCodigo: 'error',
+      sinCodigo: 'falla',
       toco: 'Servicios que tocó',
       verPasar: 'Verlo pasar',
       anatomiaHeading: 'Pieza por pieza',
