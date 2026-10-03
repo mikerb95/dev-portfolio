@@ -28,7 +28,10 @@ const es = {
   // Asesor con IA de la burbuja (WhatsappFab.astro), solo en las páginas
   // comerciales. WhatsApp va primero en el menú: la IA nunca es paso obligado.
   asesor: {
-    menuAria: 'Opciones de contacto',
+    menuAria: 'Opciones de contacto: WhatsApp o asistente con IA',
+    globoGeneral: '¿Dudas? Pregúntale a mi asistente con IA',
+    globoWeb: '¿Cuánto costaría tu página? Pregúntale a la IA',
+    globoCerrar: 'Cerrar el aviso',
     opcionWhatsapp: 'Escribirle a Mike por WhatsApp',
     opcionWhatsappNota: 'Te responde él, normalmente el mismo día',
     opcionIa: 'Resolver mis dudas con IA',

@@ -31,6 +31,9 @@ const ruta = delocalizePath(Astro.url.pathname).replace(/\/+$/, '') || '/'
 const pagina: Pagina = (PAGINAS as readonly string[]).includes(ruta.slice(1)) ? (ruta.slice(1) as Pagina) : 'sitio'
 const sugerencias =
   pagina === 'capacitacion-ia' ? a.sugerenciasCapacitacion : pagina === 'sitio' ? a.sugerenciasGeneral : a.sugerenciasWeb
+// El globo que sale de la burbuja: en la landing de páginas web va directo al
+// precio, que es lo que esa visita viene a averiguar.
+const globo = pagina === 'paginas-web' ? a.globoWeb : a.globoGeneral
 
 // Lo que el script necesita del diccionario, en un solo atributo.
 const textos = JSON.stringify({
@@ -81,10 +84,25 @@ const textos = JSON.stringify({
       <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.47 0 1.46 1.06 2.87 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"></path>
       <path d="M12.04 2C6.6 2 2.18 6.42 2.18 11.86c0 1.74.46 3.44 1.32 4.94L2 22l5.36-1.4a9.83 9.83 0 0 0 4.68 1.19h.01c5.43 0 9.85-4.42 9.85-9.86 0-2.63-1.02-5.11-2.88-6.97A9.79 9.79 0 0 0 12.04 2Zm0 17.94h-.01a8.2 8.2 0 0 1-4.17-1.14l-.3-.18-3.1.81.83-3.02-.2-.31a8.13 8.13 0 0 1-1.25-4.34c0-4.52 3.68-8.2 8.2-8.2a8.14 8.14 0 0 1 5.79 2.4 8.14 8.14 0 0 1 2.4 5.8c0 4.52-3.68 8.18-8.19 8.18Z"></path>
     </svg>
-    <span class="hidden sm:inline text-[13px] font-medium whitespace-nowrap max-w-0 opacity-0 overflow-hidden transition-all duration-300 group-hover:max-w-[10rem] group-hover:opacity-100">
+    <span class="hidden sm:inline -ml-2.5 text-[13px] font-medium whitespace-nowrap max-w-0 opacity-0 overflow-hidden transition-all duration-300 group-hover:ml-0 group-hover:max-w-[10rem] group-hover:opacity-100">
       {t.whatsapp.label}
     </span>
+    <span class="wa-fab-raya" aria-hidden="true"></span>
+    <span class="wa-fab-ia" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6.3 6.3l2.1 2.1M15.6 15.6l2.1 2.1M6.3 17.7l2.1-2.1M15.6 8.4l2.1-2.1"></path></svg>
+    </span>
   </button>
+
+  <div id="asesor-globo" class="asesor-globo fixed right-4 sm:right-5 z-[45]" hidden>
+    <button type="button" id="asesor-globo-abrir" class="asesor-globo-texto cursor-pointer" aria-label={globo} data-analytics="asesor-globo">
+      <span aria-hidden="true">
+        {globo.split(' ').map((p, i) => <span class="asesor-globo-palabra" style={`--i:${i}`}>{p} </span>)}
+      </span>
+    </button>
+    <button type="button" id="asesor-globo-cerrar" class="asesor-globo-cerrar cursor-pointer" aria-label={a.globoCerrar}>
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+  </div>
 
   <div id="asesor-menu" class="asesor-menu fixed right-4 sm:right-5 z-[60] w-[min(20rem,calc(100vw-2rem))]" hidden>
     <div class="rounded-2xl border border-ink-500/70 bg-ink-800/95 backdrop-blur-md p-1.5 shadow-[0_18px_50px_-12px_rgba(0,0,0,.7)]">

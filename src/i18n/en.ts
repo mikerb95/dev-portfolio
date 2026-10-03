@@ -27,7 +27,10 @@ const en = {
     message: "Hi Mike, I'm coming from codebymike.net and I'd like to talk about a project.",
   },
   asesor: {
-    menuAria: 'Contact options',
+    menuAria: 'Contact options: WhatsApp or AI assistant',
+    globoGeneral: 'Questions? Ask my AI assistant',
+    globoWeb: 'What would your website cost? Ask the AI',
+    globoCerrar: 'Dismiss',
     opcionWhatsapp: 'Message Mike on WhatsApp',
     opcionWhatsappNota: 'He answers himself, usually the same day',
     opcionIa: 'Ask the AI assistant',
