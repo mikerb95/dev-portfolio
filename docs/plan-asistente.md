@@ -279,7 +279,8 @@ WhatsApp; no es un chat general gratis.
   finalidad dicha, y cómo pedir el borrado). El modelo nunca ve lo que se
   escribe ahí. El contacto llega al buzón del panel (`messages`, el mismo de
   `/contact`) con lo que preguntó la persona, y avisa por ntfy. La
-  conversación en sí sigue sin guardarse.
+  conversación en sí no se guarda, salvo desde el momento en que la persona
+  muestra interés: ver "Asesor en vivo" más abajo.
 - No promete descuentos, fechas exactas ni alcance fuera del tarifario.
 - Lo que escribe el visitante es dato no confiable: no puede cambiar
   precios, reglas ni instrucciones.
@@ -535,6 +536,67 @@ completo: en dos líneas no se veían el teléfono ni el resumen.
 
 El scroll del chat no funcionaba con el cursor encima: Lenis capturaba la
 rueda en toda la página. El chat lleva `data-lenis-prevent`.
+
+### Asesor en vivo: Mike entra a la conversación (2 oct 2026)
+
+Pedido de Mike: que el agente le avise cuando una conversación se pone
+interesante (como cuando acaba de dar un precio) y que él pueda intervenir.
+La idea inicial era mandarle un WhatsApp con `wa.me`, pero eso no puede
+funcionar: un enlace `wa.me` solo abre WhatsApp en el celular **del
+visitante** con un texto que él tiene que enviar. De tres opciones (solo
+aviso; aviso y entrar al chat; aviso por la API de WhatsApp de Meta o un
+servicio no oficial), Mike eligió la segunda.
+
+Cómo funciona:
+
+1. Cuando una respuesta trae una señal de interés (precio calculado, mensaje
+   de WhatsApp preparado o formulario de contacto ofrecido, `motivoAviso` en
+   `src/lib/asesor/vivo.ts`), `/api/asesor` empieza a guardar la conversación
+   (`asesor_conversaciones` y `asesor_mensajes`, migración 0039), avisa por
+   ntfy con enlace a `/admin/asesor/<id>` y le devuelve al navegador un token.
+   El chat lo dice en ese momento: "Le avisé a Mike: si está libre, puede leer
+   esta conversación y escribirte aquí mismo. Para eso se guarda 48 horas."
+2. Las vueltas siguientes se anexan. Mike ve la conversación en vivo
+   (sondeo cada 3 s) y si el visitante tiene el chat abierto.
+3. Si Mike escribe, toma la conversación: el asesor se calla, el chat del
+   visitante muestra "Mike entró a la conversación", el punto del encabezado
+   pasa a verde y lo que escriba la persona le llega a él
+   (`/api/asesor/conversacion`). Con el chat cerrado, la burbuja muestra un
+   punto y al tocarla abre directo el mensaje de Mike.
+
+| Archivo | Qué es |
+|---|---|
+| `src/lib/asesor/vivo.ts` | Puro: cuándo avisar, validaciones, texto del aviso, presencia. |
+| `src/lib/asesor/vivo-db.ts` | Abrir, anexar, tomar, sondear, listar y purgar. |
+| `src/pages/api/asesor.ts` | Guarda la vuelta o abre la conversación (falla abierto). |
+| `src/pages/api/asesor/conversacion.ts` | Lado del visitante: sondeo (`GET`) y mensajes a Mike (`POST`). |
+| `src/pages/admin/asesor/` + `src/pages/api/admin/asesor/[id].ts` | Lista de vigentes y pantalla de la conversación, pensada para abrirse desde la notificación en el celular. |
+| `src/components/WhatsappFab.astro` | Token en `sessionStorage`, sondeo, burbujas de Mike, avisos y punto en la burbuja. |
+| `tests/asesor-vivo.test.ts`, `e2e/asesor-vivo.spec.ts` | 15 pruebas de lógica, base y endpoints; y el flujo completo en navegador con la API de Claude falsa. |
+
+Decisiones:
+
+- **Solo desde que hay interés, y avisado.** El plan decía "la conversación
+  no se guarda". Se mantiene para cualquier charla de curiosidad; se guarda
+  solo cuando hay una señal de compra, y el visitante lo lee en ese momento.
+  Se borra a las 48 h (purga al abrir cada conversación nueva y `porToken`
+  ignora las vencidas aunque la purga no haya corrido): es para atender en
+  caliente, no un archivo de clientes.
+- **Token del visitante, id numérico para Mike.** La notificación de ntfy
+  lleva el id, que sin la sesión del panel no abre nada; el token (32 bytes,
+  solo su SHA-256 en la base) viaja en un header y no en la URL, para que no
+  quede en logs.
+- **Polling y no SSE ni WebSockets.** Una conexión abierta por visitante en una
+  función de Vercel cuesta más que unas lecturas por índice. El visitante
+  sondea cada 4 s con el chat abierto, cada 15 s cerrado, y nunca con la
+  pestaña oculta; la marca de presencia solo se escribe si tiene más de 20 s.
+- **Mike entra una vez y el asesor no vuelve.** No hay botón de "devolverle
+  la conversación al asesor": nadie lo pidió y obligaría a reconstruir para el
+  modelo un historial con mensajes de Mike en medio.
+- **Falla abierto.** Si la base no responde, la respuesta del asesor llega
+  igual y Mike simplemente no se entera (hay prueba).
+- **Vetado en la demo** (`/admin/asesor`): son conversaciones de personas
+  reales y un canal para escribirles.
 
 ### Motion del chat (1 oct 2026, con la skill motion-landing)
 
