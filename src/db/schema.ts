@@ -1563,3 +1563,43 @@ export const analistaEjecuciones = sqliteTable('analista_ejecuciones', {
   actualizadaIdx: index('analista_ejecuciones_actualizada_idx').on(t.actualizada),
   creadaIdx: index('analista_ejecuciones_creada_idx').on(t.creada),
 }))
+
+// ── Asesor público en vivo ──────────────────────────────────────────────────
+// Conversaciones del asesor de la burbuja en las que Mike puede entrar a
+// escribir (pedido de Mike, 2 oct 2026). Solo se guardan desde que la persona
+// muestra interés de verdad (le dio un precio, preparó el WhatsApp o le ofreció
+// el formulario de contacto), y el chat se lo dice en ese momento. Se borran a
+// las 48 h: es un canal para atender en caliente, no un archivo de clientes
+// (para eso está el buzón de mensajes).
+export const asesorConversaciones = sqliteTable('asesor_conversaciones', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // SHA-256 del token que guarda el navegador del visitante. El token es la
+  // llave para leer lo que escribe Mike; el id numérico es el que viaja en la
+  // notificación de ntfy, que no debe abrir nada sin la sesión del panel.
+  tokenHash: text('token_hash').notNull(),
+  creada: integer('creada', { mode: 'timestamp' }).notNull(),
+  actualizada: integer('actualizada', { mode: 'timestamp' }).notNull(),
+  locale: text('locale').notNull(),
+  pagina: text('pagina'),
+  // 'ia' mientras responde el asesor; 'mike' desde que Mike escribe y el
+  // asesor se calla.
+  estado: text('estado', { enum: ['ia', 'mike'] }).notNull().default('ia'),
+  motivo: text('motivo', { enum: ['precio', 'whatsapp', 'contacto'] }).notNull(),
+  // Último sondeo del visitante: el panel lo usa para decir si sigue ahí.
+  vistoVisitante: integer('visto_visitante', { mode: 'timestamp' }),
+}, (t) => ({
+  tokenIdx: uniqueIndex('asesor_conversaciones_token_idx').on(t.tokenHash),
+  // La purga de 48 h y el listado del panel barren por fecha.
+  creadaIdx: index('asesor_conversaciones_creada_idx').on(t.creada),
+}))
+
+export const asesorMensajes = sqliteTable('asesor_mensajes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  conversacionId: integer('conversacion_id').notNull().references(() => asesorConversaciones.id),
+  autor: text('autor', { enum: ['visitante', 'asesor', 'mike'] }).notNull(),
+  texto: text('texto').notNull(),
+  creado: integer('creado', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  // Los dos sondeos piden "lo nuevo de esta conversación": (conversación, id > n).
+  conversacionIdx: index('asesor_mensajes_conversacion_idx').on(t.conversacionId, t.id),
+}))
