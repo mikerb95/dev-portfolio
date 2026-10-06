@@ -158,6 +158,17 @@ describe('actualizar_hito', () => {
   })
 })
 
+describe('buscar el proyecto por uno de sus hitos', () => {
+  it('"proyecto" encuentra el proyecto con el título de un hito y devuelve el id del hito', async () => {
+    const { ejecutar: leer } = await import('../src/lib/asistente/herramientas')
+    const r = await leer('proyecto', { buscar: 'Diseño aprob' })
+    if (!r.ok) throw new Error(r.error)
+    const d = r.datos as any
+    expect(d.id).toBe(ids.proyecto)
+    expect(d.hitos.find((h: { titulo: string }) => h.titulo === 'Diseño aprobado').id).toBe(ids.visible)
+  })
+})
+
 describe('regla compartida de hitos (panel y asistente)', () => {
   it('solo avisa en la transición a completado y si el hito queda visible', () => {
     expect(avisaAlCliente({ status: 'en_curso', visibleToClient: true }, { status: 'completado' })).toBe(true)

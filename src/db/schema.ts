@@ -1842,3 +1842,83 @@ export const asistenteConversaciones = sqliteTable('asistente_conversaciones', {
   creadaIdx: index('asistente_conversaciones_creada_idx').on(t.creada),
   actualizadaIdx: index('asistente_conversaciones_actualizada_idx').on(t.actualizada),
 }))
+
+// ── Marketing: correos promocionales (docs/plan-marketing.md) ───────────────
+// Lista propia, no la de Resend: el consentimiento es un dato legal (Ley 1581
+// pide poder demostrar cuándo y cómo aceptó cada persona) y tiene que vivir
+// junto al resto de los datos personales, no en un proveedor.
+//
+// Nadie entra a esta tabla sin pedirlo: ni los clientes, ni los contactos de
+// proyecto, ni quien escribió por /contact sin marcar la casilla.
+export const marketingSuscriptores = sqliteTable('marketing_suscriptores', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Siempre en minúsculas y sin espacios (normalizarEmail): es la llave.
+  email: text('email').notNull().unique(),
+  nombre: text('nombre'),
+  // Por dónde llegó. El portal entra activo directo (el correo ya está
+  // verificado por la invitación); los formularios públicos pasan por doble
+  // confirmación, o cualquiera podría suscribir un correo ajeno.
+  origen: text('origen', { enum: ['formulario', 'contacto', 'portal'] }).notNull(),
+  estado: text('estado', { enum: ['pendiente', 'activo', 'baja'] }).notNull(),
+  // Texto exacto que aceptó: si el aviso cambia, el de cada persona sigue
+  // siendo el que vio.
+  textoConsentimiento: text('texto_consentimiento').notNull(),
+  // Hash del token de confirmación (doble opt-in); null una vez usado.
+  tokenConfirmacionHash: text('token_confirmacion_hash'),
+  // Último correo de confirmación enviado. Frena a quien escribe un correo
+  // ajeno en el formulario una y otra vez para llenarle el buzón.
+  confirmacionEnviada: integer('confirmacion_enviada', { mode: 'timestamp' }),
+  clientUserId: integer('client_user_id'),
+  creado: integer('creado', { mode: 'timestamp' }).notNull(),
+  confirmado: integer('confirmado', { mode: 'timestamp' }),
+  baja: integer('baja', { mode: 'timestamp' }),
+  // Campaña desde la que se dio de baja (null si fue desde el portal o a mano).
+  bajaCampanaId: integer('baja_campana_id'),
+}, (t) => ({
+  estadoIdx: index('marketing_suscriptores_estado_idx').on(t.estado),
+  tokenIdx: index('marketing_suscriptores_token_idx').on(t.tokenConfirmacionHash),
+}))
+
+export const marketingCampanas = sqliteTable('marketing_campanas', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  asunto: text('asunto').notNull(),
+  // Texto que los clientes de correo muestran junto al asunto.
+  preheader: text('preheader'),
+  titulo: text('titulo').notNull(),
+  // Párrafos separados por línea en blanco; admite **negrita** y
+  // [enlaces](https://...). Ver lib/marketing/contenido.ts.
+  cuerpo: text('cuerpo').notNull(),
+  botonTexto: text('boton_texto'),
+  botonUrl: text('boton_url'),
+  estado: text('estado', { enum: ['borrador', 'enviando', 'enviada', 'cancelada'] }).notNull(),
+  creada: integer('creada', { mode: 'timestamp' }).notNull(),
+  actualizada: integer('actualizada', { mode: 'timestamp' }).notNull(),
+  disparada: integer('disparada', { mode: 'timestamp' }),
+  terminada: integer('terminada', { mode: 'timestamp' }),
+  ultimoError: text('ultimo_error'),
+})
+
+// Un envío por (campaña, suscriptor). El UNIQUE es lo que hace idempotente
+// disparar dos veces la misma campaña: la segunda no encola a nadie.
+export const marketingEnvios = sqliteTable('marketing_envios', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  campanaId: integer('campana_id').notNull().references(() => marketingCampanas.id, { onDelete: 'cascade' }),
+  suscriptorId: integer('suscriptor_id').notNull().references(() => marketingSuscriptores.id, { onDelete: 'cascade' }),
+  // 'enviando' = reclamado por un lote que aún no confirma Resend.
+  // 'omitido'  = la persona se dio de baja después de que se disparó.
+  estado: text('estado', { enum: ['pendiente', 'enviando', 'enviado', 'fallido', 'omitido'] }).notNull(),
+  // Lote que lo reclamó. Si la función muere a mitad, el lote se reintenta con
+  // la misma llave de idempotencia y Resend no lo duplica.
+  lote: text('lote'),
+  loteAt: integer('lote_at', { mode: 'timestamp' }),
+  resendId: text('resend_id'),
+  error: text('error'),
+  creado: integer('creado', { mode: 'timestamp' }).notNull(),
+  enviado: integer('enviado', { mode: 'timestamp' }),
+}, (t) => ({
+  unico: uniqueIndex('marketing_envios_campana_suscriptor_uq').on(t.campanaId, t.suscriptorId),
+  estadoIdx: index('marketing_envios_estado_idx').on(t.estado),
+  loteIdx: index('marketing_envios_lote_idx').on(t.lote),
+  // El límite semanal busca "lo último enviado a esta persona".
+  suscriptorEnviadoIdx: index('marketing_envios_suscriptor_enviado_idx').on(t.suscriptorId, t.enviado),
+}))

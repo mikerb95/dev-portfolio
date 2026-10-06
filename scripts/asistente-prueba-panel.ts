@@ -8,6 +8,9 @@
 // prueba (la cuenta y las conversaciones) para dejar la demo como estaba.
 // Usa el mismo motor que /api/admin/asistente, sin la transmisión al navegador.
 
+// Módulo explícito: sin esto TypeScript lo trata como script y rechaza el `await` de primer nivel.
+export {}
+
 process.loadEnvFile('.env')
 // La base se fija ANTES de importar src/db (lee la URL al importarse).
 process.env.TURSO_DATABASE_URL = process.env.TURSO_DEMO_URL

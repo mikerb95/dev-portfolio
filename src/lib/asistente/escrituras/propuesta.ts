@@ -52,7 +52,7 @@ export const esquemaPropuesta = z.object({
 })
 
 export const DESCRIPCION_CREAR_PROPUESTA =
-  'Crea una propuesta en BORRADOR en Plano (el cotizador del panel) a partir del mensaje de un cliente que pide precio, y la IA de Plano lo lee para elegir los componentes. No se ejecuta sola: Mike ve el texto que se va a leer y decide. Tú no calculas precios ni eliges componentes: lo hace Plano. Úsala cuando Mike pegue lo que le escribió un cliente y pida cotizarlo.'
+  'Crea una propuesta en BORRADOR en Plano (el cotizador del panel) a partir del mensaje de un cliente que pide precio, y la IA de Plano lo lee para elegir los componentes. No se ejecuta sola: Mike ve el texto que se va a leer y decide. Tú no calculas precios ni eliges componentes: lo hace Plano. Úsala cuando Mike pegue lo que le escribió un cliente y pida cotizar una página, una app o un sistema. NO para capacitaciones en IA ni planes de mantenimiento: Plano solo cotiza desarrollo.'
 
 type Preparada =
   | { ok: true; entrada: z.infer<typeof esquemaPropuesta>; cliente: { id: number; nombre: string; empresa: string | null } | null; vista: VistaCambio }
@@ -99,7 +99,8 @@ export type ResultadoPropuesta = Hecho & {
   iaLeyo: boolean
   motivoSinIa: string | null
   componentes: number
-  rango: { desde: string; hasta: string } | null
+  /** En la forma { valor, moneda, texto } de las herramientas: así la guardia de cifras la reconoce. */
+  rango: { desde: ReturnType<typeof dinero>; hasta: ReturnType<typeof dinero> } | null
   preguntasAbiertas: string[]
 }
 
@@ -152,7 +153,7 @@ export async function crearPropuestaAprobada(entrada: unknown): Promise<{ ok: tr
   let rango: ResultadoPropuesta['rango'] = null
   try {
     const s = armarPropuesta(resultadoIa.config, await cargarReglas(), hoy)
-    rango = { desde: dinero(s.rango[0], s.moneda).texto, hasta: dinero(s.rango[1], s.moneda).texto }
+    rango = { desde: dinero(s.rango[0], s.moneda), hasta: dinero(s.rango[1], s.moneda) }
   } catch (err) {
     if (!(err instanceof PropuestaVacia)) console.error('[asistente] crear_propuesta: no se pudo calcular el rango', err)
   }
