@@ -30,3 +30,163 @@
     radial-gradient(52% 44% at 22% 64%, rgba(18,18,22,.82), rgba(18,18,22,0) 72%),
     radial-gradient(40% 30% at 18% 40%, rgba(18,18,22,.45), rgba(18,18,22,0) 70%);
 }
+
+/* ── Hero: titular y líneas de venta (RF-037) ──
+   Archivo condensada al 78 % de anchura: a 128 px la versión normal no cabe en
+   tres líneas sobre la mitad izquierda del terreno. Color plano y no
+   degradado: el blanco-a-gris era el gesto más repetido de las landings
+   generadas con IA. */
+.hero-titular {
+  font-stretch: 78%;
+  color: #fff;
+  text-wrap: balance;
+}
+.hero-titular .hero-acento { color: var(--color-cyan); }
+
+.hero-venta-punto {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.42rem;
+  border-radius: 999px;
+  background: var(--color-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.14);
+}
+
+/* ── Cotizador del hero ──
+   Tarjeta sobre el terreno. El borde se enciende mientras se calcula (es la
+   misma luz cian del pulso de la cinta) y vuelve a apagarse al llegar la
+   respuesta: la tarjeta "trabaja" en vez de quedarse muda. */
+.cotizador {
+  --borde: rgba(255, 255, 255, 0.07);
+  border-color: var(--borde);
+  transition: border-color 0.5s ease, box-shadow 0.5s ease;
+}
+.cotizador[data-estado='pensando'] {
+  --borde: rgba(0, 242, 255, 0.45);
+  box-shadow: 0 0 0 1px rgba(0, 242, 255, 0.18), 0 0 48px -12px rgba(0, 242, 255, 0.55), 0 4px 32px rgba(0, 0, 0, 0.55);
+}
+.cotizador-chispa {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-cyan);
+  box-shadow: 0 0 12px var(--color-cyan);
+}
+.cotizador[data-estado='pensando'] .cotizador-chispa { animation: pulseDot 1.1s ease-in-out infinite; }
+
+.cotizador-caja {
+  position: relative;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+.cotizador-caja:focus-within {
+  border-color: rgba(0, 242, 255, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+.cotizador-input {
+  display: block;
+  width: 100%;
+  min-height: 4.4rem;
+  padding: 0.85rem 1rem;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  resize: none;
+  color: #fff;
+  font-size: 16px; /* 16 px o más: iOS hace zoom al enfocar campos más pequeños */
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+/* Ejemplo "escrito" por detrás del campo: solo se ve con la caja vacía. */
+.cotizador-ejemplo {
+  position: absolute;
+  inset: 0.85rem 1rem auto 1rem;
+  color: var(--color-ink-300);
+  font-size: 16px;
+  line-height: 1.5;
+  pointer-events: none;
+  white-space: pre-wrap;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+.cotizador-ejemplo::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.18em;
+  background: var(--color-cyan);
+  animation: cotizadorCursor 1s steps(2, start) infinite;
+}
+.cotizador-caja[data-con-texto] .cotizador-ejemplo,
+.cotizador-caja:focus-within .cotizador-ejemplo::after { opacity: 0; }
+@keyframes cotizadorCursor { to { visibility: hidden; } }
+
+.cotizador-pensando {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.cotizador-pensando-puntos { display: inline-flex; gap: 4px; }
+.cotizador-pensando-puntos i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-cyan);
+  animation: cotizadorPunto 1.1s ease-in-out infinite;
+}
+.cotizador-pensando-puntos i:nth-child(2) { animation-delay: 0.15s; }
+.cotizador-pensando-puntos i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes cotizadorPunto {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+
+.cotizador-texto {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--color-ink-50);
+  white-space: pre-line;
+}
+/* Mismo resaltado que la burbuja: la cifra calculada en cian tabular y
+   rodando como odómetro (odo-col / odo-tira viven en global.css). */
+.cotizador-texto .asesor-precio {
+  display: inline-block;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-cyan-glow);
+}
+.cotizador-texto .asesor-precio .odo-col { height: 1.6em; }
+.cotizador-texto .asesor-precio .odo-tira { line-height: 1.6; white-space: normal; }
+.cotizador-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 11.5px;
+  color: var(--color-ink-100);
+}
+.cotizador-marca-punto {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.14);
+}
+
+/* El HUD fijo tapaba el final del texto del hero en 1440x900: dentro del hero
+   no aporta (su primera línea es el propio hero) y se enciende al salir. */
+.hud-panel { transition: opacity 0.4s ease, transform 0.4s ease; }
+.hud-panel[data-en-hero] { opacity: 0; transform: translateY(8px); pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cotizador-chispa,
+  .cotizador-pensando-puntos i,
+  .cotizador-ejemplo::after { animation: none; }
+  .hud-panel { transition: none; }
+}
