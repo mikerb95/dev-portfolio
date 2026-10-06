@@ -34,6 +34,8 @@ export const POST: APIRoute = async ({ request }) => {
     if (err instanceof ConversacionLarga) return json(409, { error: err.message, nueva: true })
     // Sin poder leer el gasto del día no se arranca: es dinero, no
     // observabilidad, así que aquí no aplica el fail-open del resto.
+    // El mensaje al panel es genérico; la causa real queda en los logs.
+    console.error('[asistente] no se pudo preparar la conversación', err)
     return json(503, { error: 'No se pudo preparar la pregunta. Intenta de nuevo en un momento.' })
   }
   if (!conversacion) return json(409, { error: 'Esa conversación ya no se puede seguir. Empieza una nueva.', nueva: true })

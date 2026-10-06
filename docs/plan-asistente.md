@@ -1,11 +1,12 @@
 # Plan: asistente del panel (con cotizador)
 
-> Estado: **fases 1, 2 y 8 implementadas**: el asistente del panel ya responde
-> preguntas en la terminal (solo consulta); faltan las escrituras · Creado:
+> Estado: **fases 1, 2, 4, 7 y 8 implementadas**: el asistente responde en la
+> terminal y en la caja del dashboard, y crea cuentas de cobro en borrador con
+> aprobación; faltan el cotizador (3) y las demás escrituras (5) · Creado:
 > 2026-10-01 · Primeras decisiones de Mike: 2026-10-01 (ver "Decisiones tomadas")
 > Requisitos: RF-210 (asistente), RF-211 (cotizador) y RF-212 (asesor
 > público) en
-> `src/data/documentacion.ts`: RF-212 `implementado`, RF-210 `parcial` (fase 2) y RF-211 `planeado`.
+> `src/data/documentacion.ts`: RF-212 y RF-219 (caja del dashboard) `implementado`, RF-210 `parcial` (fases 2, 4 y 7) y RF-211 `planeado`.
 > Relacionados: `docs/plan-analista-siem.md` (mismo patrón de agente),
 > `docs/plan-oferta-principal.md` (oferta y precios piso),
 > `docs/plan-briefings.md`, `docs/plan-cuentas-de-cobro.md`,
@@ -386,10 +387,10 @@ US$0,13 por pregunta.
 | 1 ✅ | Núcleo puro: tarifario, cálculo de cotización, guardia, limpieza + tests; `/paginas-web` lee del tarifario (1 oct 2026) | no | |
 | 2 ✅ | Asistente de terminal **solo lectura** (`npm run asistente`): las 11 herramientas de consulta (6 oct 2026) | sí, poco | fase 1 |
 | 3 | Subagente cotizador + `guardar_cotizacion` con aprobación | sí, poco | fase 2 |
-| 4 | Subagente cobros + `crear_cuenta_cobro` en borrador con aprobación | sí, poco | fase 2 |
+| 4 ✅ | `crear_cuenta_cobro` en borrador con aprobación, en el panel (6 oct 2026; sin subagente, ver abajo) | sí, poco | fase 2 |
 | 5 | Resto de escrituras: proyecto, hito, seguimiento, mensaje leído | sí, poco | fase 2 |
 | 6 | Pruebas con el modelo real: adversariales y banco de casos | ~US$3 por corrida | fases 3-5 |
-| 7 | Pantalla `/admin/asistente` con historial (motor de la API) | sí | fase 5 |
+| 7 ✅ | Caja "Pregunta o busca algo" en el dashboard con historial (motor de la API) (6 oct 2026, adelantada a la fase 5 por pedido de Mike) | sí | fase 2 |
 | 8 ✅ | Asesor público en la burbuja de WhatsApp (capacidad 3): chat, cálculo, cierre en WhatsApp, límites (1 oct 2026) | sí, poco | fase 1 |
 | 9 | Cierre: RF-210, RF-211 y RF-212 a `implementado`, nota en `/notes`, iteración | no | |
 
@@ -513,6 +514,57 @@ Probado con el modelo real el 6 oct 2026 (unos US$0,24 en total):
 Límite conocido: como en `npm run analista`, pasarle varias preguntas por
 pipe no sirve (las líneas llegan mientras responde la primera y se pierden).
 En uso interactivo no pasa.
+
+## Fases 4 y 7: qué quedó (6 oct 2026)
+
+Pedido de Mike: rediseñar el dashboard para que abra con una sección para
+preguntar, como la portada de Notion, que encuentre cosas del sitio y que
+sepa hacer una cuenta de cobro de principio a fin, además de responder
+"¿quién me debe?", "¿quién me pagó?" y "¿qué dominios vencen?". Decidió las
+tres cosas en una sola respuesta: la cuenta queda en **borrador** (emitirla
+sigue siendo suyo), las tarjetas de hoy se quedan debajo, y todo en una pasada.
+
+| Archivo | Qué es |
+|---|---|
+| `src/components/admin/AsistenteCaja.astro` | Saludo, caja, atajos, hilo y recientes del dashboard. |
+| `src/components/admin/asistente-cliente.ts` | Lee la transmisión en vivo y pinta pasos, respuesta y la tarjeta de aprobación. Solo nodos y `textContent`. |
+| `src/components/admin/buscador-cliente.ts` + `PaletaPanel.astro` | Resultados instantáneos bajo la caja y la paleta de Ctrl+K del resto del panel. |
+| `src/data/panel-nav.ts` | El menú del panel, con palabras clave; lo comparten el sidebar y el buscador. |
+| `src/lib/asistente/buscar.ts` / `buscar-db.ts` | Búsqueda pura (normalizar, puntuar, menú) y fichas de la base. `GET /api/admin/buscar`. |
+| `src/lib/asistente/herramientas/pagos.ts`, `vencimientos.ts`, `panel.ts` | Consultas nuevas: `pagos_recibidos`, `vencimientos`, `buscar_en_panel`. La terminal también las tiene. |
+| `src/lib/asistente/escrituras/` | `crear_cuenta_cobro`: `preparar` (sin escribir) y `ejecutar` (solo tras aprobar). Fuera del catálogo de lectura: la terminal no la ve. |
+| `src/lib/asistente/motor-api.ts` | Motor del panel sobre el bucle del analista. Opus 5.5, esfuerzo medium, tope compartido con la terminal. |
+| `src/lib/asistente/conversaciones.ts` + `turnos.ts` | Tabla `asistente_conversaciones` (migración 0044) y la reconstrucción de turnos desde el historial. |
+| `src/pages/api/admin/asistente/` | `index.ts` (preguntar o seguir) y `decision.ts` (aprobar o descartar). |
+
+Decisiones que surgieron al construirlo:
+
+- **El bucle del analista se generalizó en vez de copiarse.** Ya sabía pausarse
+  y retomar horas después; ahora recibe `herramientasAprobacion`,
+  `prepararPropuesta` y `rechazo`. Sin ellas se comporta como antes (las 10
+  pruebas del bucle del analista siguen intactas).
+- **Sin subagente de cobros.** El plan lo proponía para mantener cortos los
+  prompts; con una sola escritura, cinco pasos en el prompt del panel bastan y
+  ahorran una delegación por cuenta. Se retoma si llegan más escrituras.
+- **La tarjeta la arma el servidor.** `preparar` calcula líneas, retenciones,
+  neto y lo que falta para emitir (`validateCuentaCobro`); el modelo no repite
+  cifras. Al aprobar se prepara otra vez, no se reutiliza la vista guardada.
+- **Escribir con una propuesta en pantalla es "pedir cambios".** Viaja como
+  rechazo con la indicación (`PREFIJO_CAMBIOS`), y `turnos.ts` la recupera para
+  pintarla como un turno más al reabrir la conversación.
+- **Una conversación fallida no se sigue**: pudo cortarse con herramientas sin
+  respuesta y anexarle una pregunta haría inválido el historial. Tope de 12
+  preguntas por conversación (cada pregunta reenvía todo).
+- **Búsqueda sin tildes contra SQLite**: LIKE no pliega acentos, así que cada
+  vocal y la n viajan como `_` y la puntuación en JS descarta lo que sobra.
+- **Seguridad del sitio en el panel**: no tiene las herramientas del SIEM;
+  remite a `/admin/analista`. La terminal sigue delegando en el analista.
+- **Fail-soft en el dashboard**: sin la migración, sin API key o con Turso
+  caído, la página carga igual (sin recientes, la caja solo busca).
+
+Probado con la API de Claude falsa (`e2e/asistente.spec.ts`, 5 casos) y con
+capturas reales en escritorio y móvil. **Pendiente**: aplicar la migración
+0044 en las dos bases de Turso y la primera corrida contra la API real.
 
 ## Fase 8: qué quedó (1 oct 2026)
 

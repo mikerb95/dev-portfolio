@@ -54,7 +54,7 @@ const cita = (v: unknown, max = 40) => {
 // Lo que se lee en pantalla mientras el asistente consulta. Pensado para
 // leerse de corrido, no como nombres de funciones.
 const PASOS: Record<string, (e: Record<string, unknown>) => string> = {
-  clientes: () => 'Revisando quién te debe',
+  clientes: () => 'Revisando tus clientes y lo que deben',
   cuentas_cobro: () => 'Mirando las cuentas de cobro',
   pagos_recibidos: (e) => (e.mes ? `Buscando quién te pagó en ${e.mes}` : 'Buscando quién te pagó'),
   vencimientos: (e) => (e.tipo === 'dominios' ? 'Revisando qué dominios vencen' : 'Revisando qué vence pronto'),

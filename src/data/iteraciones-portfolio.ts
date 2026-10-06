@@ -2369,6 +2369,42 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  {
+    id: 'pf-dashboard-asistente',
+    fase: 'Fase 52 · Preguntarle al panel',
+    nombre: 'Dashboard con caja para preguntar y buscar',
+    rango: '6 oct 2026',
+    ghSince: '2026-10-06',
+    ghUntil: '2026-10-06',
+    resumen:
+      'El dashboard abre con una caja "Pregunta o busca algo": busca páginas y fichas sin IA mientras se escribe, y con Enter le pregunta al asistente, que ya sabe quién debe, quién pagó y qué dominios vencen. Puede armar una cuenta de cobro completa y dejarla en borrador después de que Mike la aprueba en una tarjeta con los totales del servidor.',
+    historias: [
+      {
+        id: 'PF-DA-01', titulo: 'Como Mike, quiero preguntarle al panel en lenguaje normal y encontrar cualquier cosa sin navegar el menú',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'ia', 'fase-52'],
+        dod: [
+          ok('Caja al estilo de Notion con búsqueda instantánea sin costo y Ctrl+K en todo el panel (RF-219).'),
+          ok('Consultas nuevas del asistente: pagos recibidos, vencimientos y búsqueda en el panel, sin datos personales (RF-210).'),
+          ok('Respuesta con pasos visibles y solo enlaces internos; conversaciones recientes que se pueden retomar.'),
+          ok('Capturas en escritorio y móvil con GPU real.'),
+          pend('Primera corrida del panel contra la API real (requiere aprobar el gasto, unos centavos por pregunta).'),
+        ],
+      },
+      {
+        id: 'PF-DA-02', titulo: 'Como Mike, quiero pedirle una cuenta de cobro y que haga todo el proceso hasta el borrador',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'cuentas-de-cobro', 'fase-52'],
+        dod: [
+          ok('Busca cliente y proyecto, pregunta lo que falte y propone; la tarjeta muestra líneas, retenciones, neto y lo que falta para emitir.'),
+          ok('Nada se escribe sin "Aprobar"; "Pedir cambios" vuelve al modelo como indicación; la propuesta sobrevive a recargar.'),
+          ok('Borrador creado con createCuentaCobro y auditado; emitirla sigue siendo un clic de Mike.'),
+          ok('e2e/asistente.spec.ts recorre aprobar y descartar con la API de Claude falsa.'),
+          pend('Aplicar la migración 0044 en las bases de Turso.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
