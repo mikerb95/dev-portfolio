@@ -11,7 +11,7 @@
 // Módulo puro: lo importan páginas públicas, crons y el panel.
 
 /** Categorías de rastro. Todo lo que no esté aquí se trata como amenaza. */
-export const AUDIT_CATEGORIES: string[] = ['admin_action', 'cobro', 'cuenta_cobro', 'computo', 'capacitacion']
+export const AUDIT_CATEGORIES: string[] = ['admin_action', 'cobro', 'cuenta_cobro', 'computo', 'capacitacion', 'propuesta']
 
 export const isAuditCategory = (category: string): boolean => AUDIT_CATEGORIES.includes(category)
 
@@ -51,4 +51,9 @@ export const AUDIT_RULE_LABELS: Record<string, string> = {
   'analista.bloqueo_rechazado': 'Bloqueo propuesto por el analista, rechazado',
   'analista.ip_revelada': 'IP real de un origen del analista revelada',
   'asesor.conversacion_tomada': 'Conversación del asesor público tomada por Mike',
+  'plano.creada': 'Propuesta de Plano creada',
+  'plano.enviada': 'Propuesta de Plano enviada al cliente',
+  'plano.descartada': 'Propuesta de Plano descartada',
+  'plano.ajustes': 'Reglas de pago de Plano cambiadas',
+  'plano.ia': 'Análisis con IA de una propuesta',
 }
