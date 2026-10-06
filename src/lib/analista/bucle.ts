@@ -217,8 +217,9 @@ export async function avanzar(e: Ejecucion, deps: Dependencias): Promise<Ejecuci
         }
         propuesta = {
           toolUseId: uso.id,
-          // El analista no la guardaba: sus filas viejas se siguen leyendo con `herramientaBloqueo`.
-          ...(uso.name !== deps.herramientaBloqueo ? { herramienta: uso.name } : {}),
+          // Solo con varias escrituras posibles hace falta saber cuál fue. El
+          // analista nunca la guardó: sus filas se leen con `herramientaBloqueo`.
+          ...(deps.herramientasAprobacion ? { herramienta: uso.name } : {}),
           origen: preparada.origen,
           motivo: preparada.motivo,
           ...(preparada.vista !== undefined ? { vista: preparada.vista } : {}),
