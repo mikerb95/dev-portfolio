@@ -114,8 +114,25 @@ function cantidadValida(n: unknown): number {
   return v
 }
 
+/**
+ * Franja del rango de horas de un componente, en fracciones de 0 a 1: [0, 1]
+ * es el rango entero de la tabla y [0, 0.4] su parte baja. La usa Plano para
+ * cerrar el rango a medida que se responden preguntas, sin poder sacar nunca
+ * un componente de las horas que Mike aprobó.
+ */
+export type Ajuste = readonly [number, number]
+
+function ajusteValido(aj: Ajuste | undefined): Ajuste {
+  if (aj === undefined) return [0, 1]
+  const [a, b] = aj
+  if (!(Number.isFinite(a) && Number.isFinite(b) && a >= 0 && b <= 1 && a <= b)) {
+    throw new EntradaInvalida(`ajuste inválido: [${a}, ${b}] (fracciones entre 0 y 1, la primera menor)`)
+  }
+  return [a, b]
+}
+
 export type PedidoSoftware = {
-  componentes: readonly { id: string; cantidad?: number }[]
+  componentes: readonly { id: string; cantidad?: number; ajuste?: Ajuste }[]
   moneda: Moneda
   /**
    * Plan web sobre el que se monta el desarrollo. Una tienda o unas reservas
@@ -135,7 +152,13 @@ export function cotizarSoftware(p: PedidoSoftware): CotizacionSoftware {
     vistos.add(c.id)
     const cantidad = cantidadValida(c.cantidad)
     if (cantidad > 1 && !def.unidad) throw new EntradaInvalida(`${c.id} no se cobra por unidad: su cantidad es 1`)
-    return { id: def.id, nombre: def.nombre, cantidad, horas: [def.horas[0] * cantidad, def.horas[1] * cantidad] }
+    const [a, b] = ajusteValido(c.ajuste)
+    const ancho = def.horas[1] - def.horas[0]
+    // Medias horas: con fracciones arbitrarias saldrían 13,37 h, una precisión
+    // que nadie tiene al estimar y que solo ensucia el desglose.
+    const media = (x: number) => Math.round(x * 2) / 2
+    const horas: Rango = [media((def.horas[0] + ancho * a) * cantidad), media((def.horas[0] + ancho * b) * cantidad)]
+    return { id: def.id, nombre: def.nombre, cantidad, horas }
   })
 
   const horasBase: Rango = [lineas.reduce((t, l) => t + l.horas[0], 0), lineas.reduce((t, l) => t + l.horas[1], 0)]
