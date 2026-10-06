@@ -69,6 +69,8 @@ function guionAsesor(mensajes) {
 // único que trae la herramienta crear_cuenta_cobro.
 //  - "cuenta de cobro": busca el cliente con `clientes` y propone la cuenta; al
 //    volver la decisión, confirma con el número que devolvió el servidor.
+//  - "leído": busca el mensaje con `mensajes` y propone marcarlo como leído
+//    (tarjeta de antes y después de la fase 5).
 //  - cualquier otra pregunta: consulta `vencimientos` y responde con un enlace.
 function resultadoDe(mensaje) {
   const r = Array.isArray(mensaje?.content) ? mensaje.content.find((b) => b.type === 'tool_result') : null
@@ -85,6 +87,15 @@ function guionAsistente(mensajes) {
   const primera = typeof mensajes[0]?.content === 'string' ? mensajes[0].content : ''
   const ultimo = mensajes.at(-1)
   const r = resultadoDe(ultimo)
+  if (/le[ií]do/i.test(primera)) {
+    if (!r) return { stop: 'tool_use', bloques: [uso(`toolu_asis_${Date.now()}`, 'mensajes', {})] }
+    if (r.datos?.formulario) {
+      const m = r.datos.formulario.find((x) => x.escritoPorTerceros?.nombre === 'Remitente E2E')
+      return { stop: 'tool_use', bloques: [uso(`toolu_asis_${Date.now()}`, 'marcar_mensaje_leido', { mensajeIds: [m.id] })] }
+    }
+    if (r.error) return { stop: 'end_turn', bloques: [texto('Entendido, lo dejo sin leer.')] }
+    return { stop: 'end_turn', bloques: [texto(`Listo: ${r.datos.resumen}. [Ver mensajes](${r.datos.enlace}).`)] }
+  }
   if (!/cuenta de cobro/i.test(primera)) {
     if (!r) return { stop: 'tool_use', bloques: [uso(`toolu_asis_${Date.now()}`, 'vencimientos', { tipo: 'dominios' })] }
     return {

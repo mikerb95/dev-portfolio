@@ -136,6 +136,32 @@ test('descartar la propuesta no crea nada', async ({ page }) => {
   expect(Number(cuentas.rows[0]!.n)).toBe(0)
 })
 
+test('marcar un mensaje como leído: tarjeta de antes y después, sin el correo', async ({ page }) => {
+  await db.execute(`DELETE FROM messages WHERE name = 'Remitente E2E'`)
+  await db.execute({
+    sql: 'INSERT INTO messages (name, email, subject, body, read, created_at) VALUES (?, ?, ?, ?, 0, ?)',
+    args: ['Remitente E2E', 'remitente@e2e.test', 'Quiero una página', 'Hola', Math.floor(Date.now() / 1000)],
+  })
+  await page.goto('/admin')
+  await page.locator('#asis-input').fill('Marca como leído el mensaje de Remitente E2E')
+  await page.locator('#asis-input').press('Enter')
+
+  const tarjeta = page.locator('.turno-tarjeta')
+  await expect(tarjeta.locator('.tarjeta-cambio')).toBeVisible({ timeout: 60_000 })
+  await expect(tarjeta.locator('.tm-fila')).toContainText('Remitente E2E')
+  await expect(tarjeta.locator('.tm-antes')).toHaveText('Quiero una página')
+  await expect(tarjeta.locator('.tm-despues')).toHaveText('Leído')
+  await expect(tarjeta).not.toContainText('@e2e.test')
+  let fila = await db.execute(`SELECT read FROM messages WHERE name = 'Remitente E2E'`)
+  expect(Number(fila.rows[0]!.read)).toBe(0)
+
+  await tarjeta.getByRole('button', { name: 'Aprobar y marcar' }).click({ force: true })
+  await expect(page.locator('.turno-hecho')).toContainText('1 mensaje marcado como leído', { timeout: 60_000 })
+  await expect(page.locator('.turno-hecho a')).toHaveAttribute('href', '/admin/messages')
+  fila = await db.execute(`SELECT read FROM messages WHERE name = 'Remitente E2E'`)
+  expect(Number(fila.rows[0]!.read)).toBe(1)
+})
+
 test('Ctrl+K en otra página abre la paleta y busca', async ({ page }) => {
   await page.goto('/admin/costs')
   await page.keyboard.press('Control+k')

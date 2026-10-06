@@ -62,7 +62,7 @@ const entrada = (extra: Record<string, unknown> = {}) => ({
 describe('crear_cuenta_cobro', () => {
   it('no está en el catálogo de lectura (la terminal no la ve)', () => {
     expect(HERRAMIENTAS.map((h) => h.nombre)).not.toContain('crear_cuenta_cobro')
-    expect(ESCRITURAS.map((e) => e.nombre)).toEqual(['crear_cuenta_cobro'])
+    expect(ESCRITURAS.map((e) => e.nombre)).toContain('crear_cuenta_cobro')
   })
 
   it('preparar calcula la cuenta con las funciones del panel y no escribe nada', async () => {

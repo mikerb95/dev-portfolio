@@ -341,6 +341,21 @@ const hace = (d: Date) => {
   .tc-faltan { margin: .75rem 0 .3rem; padding: .6rem .75rem; border-radius: .6rem; background: rgba(255, 107, 61, .07); }
   .tc-faltan ul { margin-top: .3rem; display: flex; flex-direction: column; gap: .15rem; font-size: 12.5px; color: var(--color-ink-100); }
   .tc-faltan li::before { content: '· '; color: var(--color-ember); }
+  /* Tarjeta de cambio (proyecto, hito, seguimiento, mensajes): antes tachado, después en claro. */
+  .tarjeta-cambio { padding: 1rem 1.1rem .7rem; }
+  .tm-titulo { margin-top: .25rem; font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: var(--color-ink-50); }
+  .tm-avisos { margin-top: .75rem; padding: .65rem .8rem; border-radius: .6rem; background: rgba(255, 107, 61, .09); display: flex; flex-direction: column; gap: .3rem; }
+  .tm-avisos p { position: relative; padding-left: 1rem; font-size: 13px; line-height: 1.45; color: var(--color-ink-50); }
+  .tm-avisos p::before { content: ''; position: absolute; left: .1rem; top: .5em; width: 6px; height: 6px; border-radius: 999px; background: var(--color-ember); }
+  .tm-cambios { margin-top: .75rem; display: flex; flex-direction: column; }
+  .tm-fila { display: grid; grid-template-columns: minmax(7rem, 11rem) 1fr; gap: .8rem; padding: .45rem 0; border-top: 1px solid rgba(255, 255, 255, .05); font-size: 13px; }
+  .tm-fila:first-child { border-top: 0; }
+  .tm-fila dt { color: var(--color-ink-200); }
+  .tm-valores { display: flex; flex-wrap: wrap; align-items: baseline; gap: .45rem; min-width: 0; overflow-wrap: anywhere; }
+  .tm-antes { color: var(--color-ink-300); text-decoration-color: rgba(255, 255, 255, .25); }
+  .tm-flecha { font-family: var(--font-mono); font-size: 12px; color: var(--color-ink-300); }
+  .tm-despues { color: var(--color-ink-50); white-space: pre-line; }
+  .tm-vacio { color: var(--color-ink-300); font-style: italic; }
   .tarjeta-pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .7rem; padding: .75rem 1.1rem; background: rgba(255, 255, 255, .02); border-top: 1px solid rgba(255, 255, 255, .05); }
   .tarjeta-nota { font-size: 11.5px; color: var(--color-ink-200); }
   .tarjeta-acciones { display: flex; flex-wrap: wrap; gap: .45rem; margin-left: auto; }
@@ -373,6 +388,7 @@ const hace = (d: Date) => {
     .tc-cab { flex-direction: column; }
     .tc-total { text-align: left; }
     .tc-lineas th:nth-child(2), .tc-lineas td:nth-child(2), .tc-lineas th:nth-child(3), .tc-lineas td:nth-child(3) { display: none; }
+    .tm-fila { grid-template-columns: 1fr; gap: .2rem; }
   }
   @media (prefers-reduced-motion: reduce) {
     .entra, .pensando .ondas i, .asis-caja.ocupada .asis-chispa, .paso.activo .paso-punto { animation: none; }
