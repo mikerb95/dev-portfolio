@@ -27,7 +27,9 @@ describe('contexto de la portada en el prompt', () => {
     expect(p).toContain('tres frases')
     // Lo publicado manda sobre lo que el modelo "sabe" del tiempo de entrega.
     expect(p).toContain('según lo publicado')
-    expect(p).not.toMatch(VOSEO)
+    // Solo el párrafo nuevo: la regla anti-voseo del prompt nombra "vos" a propósito.
+    const parrafo = p.slice(p.indexOf('La persona escribió en la portada'), p.indexOf('<informacion_publica>'))
+    expect(parrafo).not.toMatch(VOSEO)
     // El contexto es solo de la portada: las demás páginas no lo heredan.
     expect(systemPrompt('es', 'sitio')).not.toContain('Cuéntame qué necesitas')
     expect(systemPrompt('es')).not.toContain('Cuéntame qué necesitas')

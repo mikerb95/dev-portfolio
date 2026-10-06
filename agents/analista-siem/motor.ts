@@ -41,7 +41,7 @@ export type EventoAnalista =
 // Claves de los .env del sitio (credenciales de Turso, secretos de cifrado…).
 // El subproceso de Claude Code no las necesita: las consultas corren en este
 // proceso, dentro del servidor MCP.
-function clavesDelSitio(): Set<string> {
+export function clavesDelSitio(): Set<string> {
   const claves = new Set<string>()
   for (const archivo of ['.env', '.env.local', '.env.development.local']) {
     if (!existsSync(archivo)) continue
