@@ -9,6 +9,23 @@
 import { clientIp } from '../device-info'
 import { classify, type Classification, type Severity } from './classify'
 import { recordSecurityEvent } from './events'
+import { waitUntil as vercelWaitUntil } from '@vercel/functions'
+
+type WaitUntil = (p: Promise<unknown>) => void
+
+// El adapter de Astro para Vercel no pone `waitUntil` en el contexto del
+// middleware, así que sin esto la escritura quedaba suelta (`void promise`) y
+// Vercel podía congelar la función antes de que llegara a Turso: se perdían
+// eventos justo en los picos de ataque. El de @vercel/functions lee el contexto
+// del request que inyecta el runtime; fuera de Vercel (dev, tests) es no-op y
+// la promesa sigue su curso igual.
+function keepAlive(promise: Promise<unknown>, waitUntil: WaitUntil = vercelWaitUntil): void {
+  try {
+    waitUntil(promise)
+  } catch {
+    // Fail-open: sin waitUntil la promesa corre igual, solo sin garantía.
+  }
+}
 
 export type ObserveInput = {
   method: string
@@ -26,12 +43,12 @@ export type ObserveInput = {
  * Devuelve la clasificación (o null) de forma síncrona para que el llamador
  * pueda reaccionar. NUNCA lanza: cualquier fallo = sin observación (fail-open).
  *
- * `waitUntil`, si se pasa (Vercel lo expone en el contexto), mantiene viva la
- * escritura tras enviar la respuesta sin bloquearla.
+ * `waitUntil` mantiene viva la escritura tras enviar la respuesta sin
+ * bloquearla; por defecto es el de @vercel/functions (ver `keepAlive`).
  */
 export function observeRequest(
   input: ObserveInput,
-  waitUntil?: (p: Promise<unknown>) => void
+  waitUntil?: WaitUntil
 ): Classification | null {
   let classification: Classification | null = null
   try {
@@ -55,8 +72,7 @@ export function observeRequest(
       statusCode: input.statusCode ?? null,
       action: input.action ?? (classification.category === 'honeypot' ? 'honeypot' : 'logged'),
     })
-    if (waitUntil) waitUntil(promise)
-    else void promise
+    keepAlive(promise, waitUntil)
   } catch {
     // Fail-open.
   }
@@ -81,7 +97,7 @@ export type EnforcementEvent = {
  */
 export function recordEnforcementEvent(e: EnforcementEvent): void {
   try {
-    void recordSecurityEvent({
+    keepAlive(recordSecurityEvent({
       classification: { category: e.category, severity: e.severity, ruleId: e.ruleId },
       ip: clientIp(e.headers),
       method: e.method,
@@ -92,7 +108,7 @@ export function recordEnforcementEvent(e: EnforcementEvent): void {
       asn: e.headers.get('x-vercel-ip-as-number'),
       statusCode: e.statusCode,
       action: e.action,
-    })
+    }))
   } catch {
     // Fail-open.
   }

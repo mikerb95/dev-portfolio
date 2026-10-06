@@ -297,6 +297,8 @@ describe('portal · aislamiento entre clientes', () => {
       expect(noExiste).toEqual(malPass)
     })
 
+    // Once scrypt seguidos: aislado pasa holgado, pero con la suite en paralelo
+    // rozaba los 5 s por defecto y fallaba por reloj, no por el código.
     it('bloquea la cuenta tras 10 intentos fallidos', async () => {
       for (let i = 0; i < 9; i++) {
         expect((await attemptLogin({ email: 'ana@acme.com', password: 'mala12345' })).ok).toBe(false)
@@ -308,7 +310,7 @@ describe('portal · aislamiento entre clientes', () => {
       // el bloqueo no serviría de nada contra un diccionario que acaba acertando.
       const conBuena = await attemptLogin({ email: 'ana@acme.com', password: 'contrasena123' })
       expect(conBuena).toMatchObject({ ok: false, reason: 'locked' })
-    })
+    }, 30_000)
 
     it('un login correcto limpia el contador de fallos', async () => {
       await attemptLogin({ email: 'ana@acme.com', password: 'mala12345' })
