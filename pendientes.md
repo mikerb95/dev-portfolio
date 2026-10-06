@@ -1,7 +1,9 @@
 # Pendientes - CodeByMike
 
 > Estado al **29 jul 2026**, con lo añadido el **17 sep 2026** en §4 (tres e2e en
-> rojo heredados y los límites del simulador de infra). Este archivo es el
+> rojo heredados y los límites del simulador de infra) y la revisión del
+> **6 oct 2026** (variables de Vercel y monitores consultados de verdad, ítems
+> ya resueltos cerrados, pendientes del Plano y del hero). Este archivo es el
 > inventario vivo de lo que falta:
 > acciones manuales (variables de entorno, altas en servicios externos,
 > verificaciones en producción) y trabajo de código todavía sin hacer. Lo ya
@@ -16,18 +18,30 @@
 ## 1. Variables de entorno faltantes en producción
 
 Estado real de `dev-portfolio` (proyecto de Vercel que sirve `codebymike.net`)
-consultado el 24 jul 2026. **Todo lo que falta degrada en silencio** - ese es el
-diseño, pero conviene saber qué está apagado:
+consultado el 6 oct 2026 con `vercel env ls production`. **Todo lo que falta
+degrada en silencio** - ese es el diseño, pero conviene saber qué está apagado:
 
 | Variable | Qué pasa sin ella | Prioridad |
 |---|---|---|
-| `SECURITY_IP_SALT` | Los eventos del micro-SIEM guardan el hash de la IP sin salt: sigue sin haber IPs en claro, pero el hash es reversible por diccionario (hay ~4.300 millones de IPv4). | Media |
-| `RESEND_API_KEY` + `ALERT_EMAIL_TO` | Las alertas solo salen por ntfy, sin canal de email de respaldo. | Baja |
 | `PSI_API_KEY` | El analizador de sitios (`/lab/site-check`) pierde los datos de PageSpeed Insights. | Baja |
 
 Ya están puestas y verificadas: `ENCRYPTION_KEY`, `CRON_SECRET`, `NTFY_TOPIC`,
-`LAB_INGEST_TOKEN`, `COBRO_HISTORY_SECRET`, las tres de Wompi, las de GitHub
-OAuth y las de Turso.
+`LAB_INGEST_TOKEN`, `COBRO_HISTORY_SECRET`, `SECURITY_IP_SALT`,
+`TRAINING_ACCESS_SECRET`, `ANTHROPIC_API_KEY`, las tres de Wompi, las de GitHub
+OAuth y las de Turso (principal y demo).
+
+### ✅ Correo con Resend (6 oct 2026)
+
+`RESEND_API_KEY` (clave `dev-portfolio-produccion` en Resend: solo envío,
+solo `codebymike.net`), `ALERT_EMAIL_TO` y `PORTAL_EMAIL_REPLY_TO` puestas en
+producción. El dominio estaba verificado desde el 16 sep. Prueba real con el
+remitente del portal: entregada a `mikedrb@proton.me`.
+
+- [ ] **Cuando Google Workspace esté pagado**, pasar `ALERT_EMAIL_TO` y
+      `PORTAL_EMAIL_REPLY_TO` a `mike@codebymike.net`. Hoy ese buzón no existe:
+      la primera prueba rebotó y Resend lo dejó en *Suppressions*, así que
+      además hay que **quitarlo de esa lista** (resend.com → Emails →
+      Suppressions) o Resend no le volverá a enviar.
 
 ### ✅ Demo pública encendida (29 jul 2026)
 
@@ -46,7 +60,8 @@ pragma se perdía y los `drop table` fallaban por FOREIGN KEY. Arreglado con
 transacción SQLite ignora ese pragma). Verificado en los dos backends: Turso y
 base de archivo, dos corridas seguidas.
 
-- [ ] Verificar tras el próximo build: `/demo` responde 200 (hoy 404), el POST
+- [x] `/demo` responde 200 en producción (comprobado el 6 oct 2026). Sigue
+      sin comprobar a mano el resto: el POST
       deja la cookie `demo_session` y redirige a `/admin` con datos ficticios, y
       el revelador de secretos (`…/secrets`) da 403 aunque sea GET.
       `demoAvailable` se evalúa al cargar `src/db/index.ts`, así que la demo
@@ -78,7 +93,9 @@ Dos daños colaterales que la zona suspendida arrastró y no estaban previstos:
       grafo de `/engineering`. Queda por revisar **dentro del proyecto
       `capacitaciones-ia`**, que es otro repo: enlaces absolutos, `metadata`/OG
       y cualquier callback de OAuth que siguiera en `.tech`.
-- [ ] **Correo:** si `PORTAL_EMAIL_FROM` o `ALERT_EMAIL_FROM` siguen puestos en
+- [x] **Correo** (cerrado el 6 oct 2026: ninguna de las dos variables existe en
+      Vercel, así que rigen los defaults `.net` del código). Era: si
+      `PORTAL_EMAIL_FROM` o `ALERT_EMAIL_FROM` siguen puestos en
       Vercel con una dirección `@codebymike.tech`, sus envíos vienen fallando
       desde el 7 sep - el dominio verificado en Resend perdió SPF/DKIM con la
       zona. Los defaults del código ya son `.net`, así que la corrección es
@@ -189,8 +206,9 @@ Prioridad, de más a menos urgente:
       `HOSTS_A_REDIRIGIR`, redirige 308 desde el siguiente despliegue.
 - [ ] Menor: ni `.net` ni `.tech` están en la lista de **HSTS preload**, pese a
       que la cabecera declara `preload`. Viene de antes del cambio de dominio.
-- [ ] Ajeno al dominio, detectado de paso: `tests/present-pin.test.ts` está en
-      rojo porque `present-tablet` no está en `RESERVED_ROOT_SEGMENTS`.
+- [x] Ajeno al dominio, detectado de paso: `tests/present-pin.test.ts` estaba
+      en rojo porque `present-tablet` no estaba en `RESERVED_ROOT_SEGMENTS`.
+      En verde al 6 oct 2026.
 
 - [x] **`VERCEL_TOKEN` en GitHub Secrets.** Cargado el 18 sep 2026 con scope
       del team `codebymike`, y verificado contra la API de Vercel (200 en
@@ -362,7 +380,7 @@ en el digest y `/admin/portal/actividad` para apagar entradas sin borrarlas.
       tiene `projectId` (es el CI de este repo, no el de los proyectos de
       clientes). Hace falta decidir entre añadir esa columna y que cada proyecto
       reporte su CI, o derivar "hay movimiento" de `monitors`, que sí lo tienen.
-- [ ] **Documentos e incidentes en el feed**: no hay dónde cablearlos todavía
+- [ ] (Sin fuente todavía, no es trabajo del feed.) **Documentos e incidentes en el feed**: no hay dónde cablearlos todavía
       porque ninguno de los dos notifica hoy (no existe endpoint de subida de
       documentos ni emisión de incidentes al cliente).
 - [ ] e2e del anuncio en vivo (`aria-live`) - los specs nuevos de
@@ -404,7 +422,7 @@ porque cazan fallos distintos, y `/status` es público:
 | 10 | `Portal (página de login)` | `/portal/login` | que esa página concreta renderice con su contenido |
 | 11 | `Portal de clientes` | `/api/portal/health` | que la cadena de datos del portal funcione |
 
-- [ ] Confirmar en `/status` que el id 11 pasa de `unknown` a verde tras el
+- [x] (6 oct 2026: `last_status = 'up'` en Turso.) Confirmar en `/status` que el id 11 pasa de `unknown` a verde tras el
       primer disparo del cron (~5 min).
 - [x] Cifra de monitores sincronizada en `README.md`, `src/data/testing.ts`,
       `src/data/documentacion.ts` y `plan-testing-docs.md`. **Son 9 visibles**
@@ -422,49 +440,70 @@ conserva sus **6.447 chequeos y 6 incidentes** desde el 2 jul. El monitor está
 atado al proyecto 5 del CRM, así que su historial es el registro de
 disponibilidad de ese proyecto.
 
-- [ ] Decidir el destino del proyecto: si se retoma, arreglar el 500 y despausar
-      el monitor; si se archiva, borrar la fila (`delete from monitors where
-      id=5`, que arrastra chequeos e incidentes por cascada).
+- [ ] Decidir si se borra la fila. El proyecto de Vercel se eliminó a
+      propósito en sep 2026 (limpieza por cuota), así que ya no hay nada que
+      retomar: la fila sigue en Turso con `paused=1` solo como historial.
+      Borrarla es `delete from monitors where id=5`, que arrastra chequeos e
+      incidentes por cascada (destructivo, decisión de Mike).
 
-### Versión en inglés - Fases 2 (resto) a 8
+### ✅ Versión en inglés (cerrada; revisado el 6 oct 2026)
 
-`/en` está en producción con la infraestructura completa (Fases 0 y 1) y 7
-páginas de marca traducidas: `/`, `/engineering`, `/tools`, `/security`,
-`/contact`, `/certifications` y `/architecture`. Falta el grueso del contenido,
-detallado en `docs/plan-i18n-en.md`:
-
-- **Resto de páginas de marca** (`/status`, `/log`, `/demo`, `/hola`,
-  `/platziconf`, `/cv/descargar`, `/paginas-web`).
-- **Contenido en BD** (Fase 3): columnas `_en` en `projects` y
-  `education_milestones` con fallback al español. Migración aditiva, sin
-  empezar.
-- **Notas técnicas** (Fase 4): 14 artículos, 11 383 palabras. Es el activo de
-  más valor internacional y el más caro; hoy `/en/rss.xml` es un canal vacío
-  a propósito.
-- **LAB y `/docs`** (Fases 5 y 6): incluyen refactor real -los textos de
-  `src/lib/lab/findings.ts` deben pasar a claves de diccionario, no a frases.
-- **Assets** (Fase 8): imágenes OG y CV en inglés sin generar.
-
-> Regla operativa que salió de la corrección del 29 jul: traducir una página son
-> **tres** pasos, no dos - texto al diccionario, cascarón en `src/pages/en/` y
-> alta en `TRANSLATED_ROUTES`. Sin el tercero la página queda invisible; el
-> tercero sin el segundo publica un 404 en el sitemap. `tests/i18n-routing.test.ts`
-> cruza la lista contra los archivos reales para que no se separen.
+Esta sección llevaba desde jul 2026 describiendo el plan como si siguiera en
+la Fase 1. El estado real (`docs/plan-i18n-en.md` y el código): Fases 0 a 5, 7,
+8 y 9 entregadas, 22 rutas en `TRANSLATED_ROUTES`, las 21 notas con su versión
+en inglés, columnas `_en` en la base, OG en inglés. La Fase 6 (`/docs`) se
+descartó el 30 jul 2026. El artículo sobre los guardas ciegos al prefijo ya
+está publicado ("Traducir un sitio sin abrirle una puerta trasera").
 
 - [ ] Alta de la propiedad en inglés en Search Console y Bing (ver §2).
-- [ ] Artículo de `/notes` sobre el hallazgo de los guardas ciegos al prefijo
-      (§14 del plan) - pendiente, con el riesgo de bypass como columna
-      vertebral.
 
-### Test lento en `tests/latency.test.ts`
+### Asistente del panel - fases abiertas (`docs/plan-asistente.md`)
 
-`«supera el techo de 50 términos por compound SELECT de Turso»` siembra bastantes
-filas en libSQL y tarda ~5 s, justo en el límite del `testTimeout` por defecto de
-Vitest: falla de forma intermitente en `npm test` y pasa con
-`--testTimeout=30000`. No es un fallo del código (la función se comporta bien),
-pero un test que falla por reloj entrena a ignorar el rojo.
+Hechas: 0, 1, 2, 4, 7 y 8. Faltan:
 
-- [ ] Darle timeout explícito a ese test (o bajar el volumen sembrado).
+- [ ] **Fase 3**: subagente cotizador + `guardar_cotizacion` con aprobación.
+- [ ] **Fase 5**: resto de escrituras (proyecto, hito, seguimiento, mensaje
+      leído).
+- [ ] **Fase 6**: pruebas adversariales y banco de casos con el modelo real
+      (~US$3 por corrida).
+- [ ] **Fase 9**: cierre (RF-210 a RF-212 a `implementado`, nota en `/notes`,
+      iteración).
+- [ ] Asesor público: guardar el resumen como cotización en borrador y avisar
+      por ntfy.
+- [ ] El temario de la capacitación se escribió para 4 h; ahora son 8.
+
+### SIEM multiproyecto (`docs/plan-siem-multiproyecto.md`)
+
+Fases 0 y 1 hechas (la 1 es el `waitUntil` del sensor, 6 oct 2026). Faltan las
+2 a 8: sensor portable, migración, endpoint de ingesta firmado, alta de
+proyectos vigilados, instalación en un sitio real una semana, y el artículo.
+
+### ✅ Tests que fallaban por reloj (6 oct 2026)
+
+`tests/latency.test.ts` («supera el techo de 50 términos…») y
+`tests/portal-isolation.test.ts` («bloquea la cuenta tras 10 intentos
+fallidos», once scrypt seguidos) rozaban los 5 s por defecto con la suite en
+paralelo. Los dos llevan ahora timeout explícito de 30 s. `npm test`: 170
+archivos, 2756 tests en verde.
+
+### Errores de `astro check` heredados
+
+22 errores al 6 oct 2026, ninguno nuevo de esta revisión: 12 en
+`scripts/asistente-prueba-panel.ts`, 5 en `tests/indexnow.test.ts`, y uno en
+`src/pages/api/payments/webhook.ts`, `src/pages/docs/presentacion.astro`,
+`src/pages/en/notes/[slug].astro`, `tests/canonical-redirect.test.ts` y
+`tests/presentacion-guion.test.ts`. No rompen el build (Vite no tipa), pero
+esconden los errores nuevos entre los viejos.
+
+- [ ] Limpiarlos, empezando por el del webhook de pagos.
+
+### IA del Plano y del hero sin probar contra la API real (6 oct 2026)
+
+- [ ] **Cotizador del hero** (RF-037): solo se ha visto con el guion de
+      `e2e/fake-anthropic.mjs`.
+- [ ] **Plano** (`/admin/plano` + `/propuesta/<token>`): primera corrida real
+      de la IA (Opus 5.5, centavos), revisión de las cláusulas por un abogado y
+      versión en inglés. Detalle en `docs/plan-plano.md`.
 
 ### LAB - Fase 5: load testing con k6 ✅ (18 sep 2026)
 
@@ -496,17 +535,17 @@ La Fase 1 (checklist de ítems, soft delete, timeline de actividad) se entregó 
 > antes de implementarlo y decidir qué se comparte con el portal y qué sigue
 > siendo un link público sin sesión.
 
-### Etapas del roadmap sin empezar
+### Paleta vieja `zinc-*` en seis páginas del panel
 
-De `docs/plan-roadmap-2026-07.md`, quedan las etapas 9 a 11:
-`/changelog` público generado desde los commits, `/architecture` renovada como
-tour guiado del sistema, y el briefing semanal con IA.
+No es la mejora menor que parecía: al 6 oct 2026 quedan ~200 clases `zinc-*` en
+`src/pages/admin/projects/[id].astro` y también en `aprendizaje.astro` (131),
+`education.astro` (96), `briefings.astro` (65), `certifications.astro` (49) y
+`backup.astro` (13). Las páginas ya migradas no se pasaron con un reemplazo
+mecánico (la escala `ink-*` no es 1:1 con `zinc-*`): `projects/index.astro` se
+rediseñó a mano con `glass`, tipografía mono y botones cian. Hacerlo bien es
+rediseño con capturas por página, no un `sed`.
 
-### Mejora menor arrastrada
-
-- [ ] `src/pages/admin/projects/[id].astro`: quedan grises `zinc-*` internos sin
-      migrar a la paleta `ink-*` (visualmente cercanos; los badges de estado y
-      los tabs ya se migraron).
+- [ ] Migrar página por página, con captura antes y después.
 
 ---
 
@@ -540,7 +579,12 @@ pipeline en vivo, diagramas BPMN con versión imprimible) · landing comercial
 `/paginas-web` · infraestructura de internacionalización con `/en` y 7 páginas
 de marca traducidas · optimización de las consultas de latencia de `/status`
 (índices compuestos en `monitor_checks` y `ci_runs`, lectura por lotes que
-respeta el techo de 50 ramas por compound SELECT de Turso).
+respeta el techo de 50 ramas por compound SELECT de Turso) · etapas 9 a 11 del
+roadmap (`/changelog`, `/architecture` como tour guiado, briefing semanal) ·
+sensor del micro-SIEM con `waitUntil` de `@vercel/functions` (6 oct 2026: antes
+la escritura del evento quedaba suelta y Vercel podía congelar la función antes
+de llegar a Turso, perdiendo eventos justo en los picos; cubierto por
+`tests/security-sensor.test.ts`).
 
 El historial narrado de cada iteración vive en
 `src/data/iteraciones-portfolio.ts` y se ve en `/docs/kanban`.

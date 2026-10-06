@@ -21,6 +21,7 @@
 export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   // Páginas y directorios de src/pages
   '404',
+  'acuerdo',
   'admin',
   'api',
   'architecture',
@@ -32,6 +33,7 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   'changelog',
   'cobrar',
   'contact',
+  'cotiza',
   'cv',
   'decks',
   'demo',

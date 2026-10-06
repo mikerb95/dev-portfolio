@@ -137,6 +137,8 @@ describe('recentLatency', () => {
     expect(out.get(1)!.length).toBe(10)
   })
 
+  // 360 inserts sembrados uno a uno: con la suite en paralelo rozaba los 5 s
+  // por defecto y fallaba por reloj, no por el código.
   it('supera el techo de 50 términos por compound SELECT de Turso', async () => {
     // Turso corta los UNION ALL en 50 ramas. Con un monitor por rama, sin lotes
     // esto sería un 500 en /status el día que existan 51 monitores.
@@ -146,7 +148,7 @@ describe('recentLatency', () => {
     const out = await recentLatency(ids, 40)
     expect(out.size).toBe(120)
     expect([...out.values()].every((pts) => pts.length === 3)).toBe(true)
-  })
+  }, 30_000)
 
   it('usa el índice en vez de escanear la tabla (la regresión que agotó la cuota)', async () => {
     await seed(1, 200)

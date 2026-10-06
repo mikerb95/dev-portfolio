@@ -8,6 +8,14 @@ declare namespace App {
     demo?: boolean
 
     /**
+     * El request entró a Cotiza con el PIN y sin sesión admin (RF-220). Las
+     * páginas de Cotiza lo usan para pintar la vista aislada, sin el menú del
+     * panel, y las acciones que tocan finanzas lo rechazan. Ver
+     * src/lib/cotiza/acceso.ts.
+     */
+    cotizaPin?: boolean
+
+    /**
      * Sesión del portal de clientes, resuelta por el middleware para todo
      * request bajo /portal. Las páginas la leen de aquí en vez de volver a
      * consultar la base: el middleware ya pagó ese coste y ya validó que el

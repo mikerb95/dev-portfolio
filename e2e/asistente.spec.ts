@@ -71,6 +71,30 @@ test('una pregunta muestra los pasos, la respuesta y solo enlaces internos', asy
   expect(errores).toEqual([])
 })
 
+test('con conversación abierta la caja baja al final del hilo y vuelve al cerrarla', async ({ page }) => {
+  await page.goto('/admin')
+  const debajoDelHilo = () => page.evaluate(() => document.getElementById('asis-hilo')!.nextElementSibling?.id === 'asis-form')
+  expect(await debajoDelHilo()).toBe(false)
+
+  await page.getByRole('button', { name: '¿Qué dominios vencen?' }).click({ force: true })
+  await expect(page.locator('.turno-respuesta').first()).toContainText('dominios por vencer', { timeout: 60_000 })
+  expect(await debajoDelHilo()).toBe(true)
+  await expect(page.locator('.asis-chips')).toBeHidden()
+  const turno = await page.locator('.turno').last().boundingBox()
+  const caja = await page.locator('#asis-form').boundingBox()
+  expect(caja!.y).toBeGreaterThan(turno!.y + turno!.height)
+
+  // Al reabrirla desde Recientes, la caja ya está abajo.
+  await page.reload()
+  await expect(page.locator('.turno')).toHaveCount(1)
+  expect(await debajoDelHilo()).toBe(true)
+
+  await page.getByRole('button', { name: 'Nueva conversación' }).click({ force: true })
+  expect(await debajoDelHilo()).toBe(false)
+  await expect(page.locator('.asis-chips')).toBeVisible()
+  await expect(page.locator('#asis-input')).toBeFocused()
+})
+
 test('crear una cuenta de cobro: tarjeta, aprobación y borrador en la base', async ({ page }) => {
   await page.goto('/admin')
   await page.locator('#asis-input').fill(`Ayúdame a crear una cuenta de cobro para ${CLIENTE} por el hito 2`)

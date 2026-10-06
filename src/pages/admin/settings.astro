@@ -5,6 +5,8 @@ import { appSettings } from '../../db/schema'
 import { CURRENCIES, BASE_CURRENCY } from '../../lib/money'
 import { ALLOWED_GITHUB_LOGINS } from '../../lib/auth'
 import { CONCEPTOS_DEFAULT, UVT_2026_CENTS } from '../../lib/cuentas-cobro'
+import { estadoPuerta, type EstadoPuerta } from '../../lib/cotiza/pin-db'
+import { formatFechaCorta } from '../../lib/fecha-co'
 
 const settingsRows = await db.select().from(appSettings)
 const map = Object.fromEntries(settingsRows.map((r) => [r.key, r.value]))
@@ -60,6 +62,18 @@ const rateOf = (cur: string) => map[`fx_${cur}_per_USD`] ?? ''
 // Estado de seguridad (no se expone el valor de la clave)
 const encKey = import.meta.env.ENCRYPTION_KEY as string | undefined
 const encKeyOk = !!encKey && encKey.length === 64
+
+// Puerta del PIN de Cotiza (RF-220). Si no se puede leer, la sección lo dice y
+// no ofrece botones: actuar a ciegas sobre un control de acceso confunde más
+// de lo que ayuda.
+let puertaCotiza: EstadoPuerta | null = null
+try {
+  puertaCotiza = await estadoPuerta()
+} catch {
+  puertaCotiza = null
+}
+const horaCo = (d: Date) =>
+  new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' }).format(d)
 ---
 
 <AdminLayout title="Ajustes">
@@ -124,6 +138,68 @@ const encKeyOk = !!encKey && encKey.length === 64
         </div>
         <p class="text-[11px] font-mono text-ink-300 mt-2">Edítalos con la variable <span class="text-ink-100">ALLOWED_GITHUB_LOGINS</span> (separados por coma).</p>
       </div>
+    </div>
+
+    <!-- Acceso a Cotiza con PIN -->
+    <div class="rounded-2xl glass p-5 md:p-6">
+      <h2 class="text-base font-medium text-ink-50">Acceso a Cotiza con PIN</h2>
+      <p class="text-[12px] text-ink-300 mt-1 mb-4">
+        Abre solo <span class="font-mono text-ink-100">/cotiza</span>, sin GitHub ni llave, y nada más del panel.
+        5 fallos frenan esa IP 15 minutos; 10 fallos en una hora apagan el PIN una hora. Cada entrada te avisa por ntfy.
+      </p>
+      {puertaCotiza === null ? (
+        <p class="text-[12.5px] text-ember">No se pudo leer el estado del PIN. Intenta recargar.</p>
+      ) : (
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            {puertaCotiza.configurado ? (
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono bg-lime/10 text-lime border border-lime/30">
+                ✓ configurado{puertaCotiza.actualizado ? ` · ${formatFechaCorta(puertaCotiza.actualizado)}` : ''}
+              </span>
+            ) : (
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono bg-white/5 text-ink-200 border border-white/10">
+                sin PIN · la puerta no existe
+              </span>
+            )}
+            {puertaCotiza.cerradaHasta && (
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono bg-ember/10 text-ember border border-ember/30">
+                apagado por intentos hasta las {horaCo(puertaCotiza.cerradaHasta)}
+              </span>
+            )}
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label for="cotiza-pin" class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">
+                {puertaCotiza.configurado ? 'PIN nuevo' : 'PIN'}
+              </label>
+              <input
+                id="cotiza-pin"
+                type="password"
+                inputmode="numeric"
+                autocomplete="new-password"
+                maxlength="4"
+                pattern="[0-9]{4}"
+                class="input-base w-32 rounded-lg px-3 py-2 text-[15px] font-mono tracking-[.4em] text-center"
+              />
+            </div>
+            <button id="cotiza-pin-guardar" class="h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors">
+              {puertaCotiza.configurado ? 'Cambiar PIN' : 'Activar PIN'}
+            </button>
+            {puertaCotiza.cerradaHasta && (
+              <button id="cotiza-pin-reabrir" class="h-9 px-4 text-[13px] rounded-full bg-white/[.03] text-ink-100 border border-white/10 hover:bg-white/[.06] transition-colors">
+                Reabrir ya
+              </button>
+            )}
+            {puertaCotiza.configurado && (
+              <button id="cotiza-pin-quitar" class="h-9 px-4 text-[13px] rounded-full bg-white/[.03] text-ember border border-ember/30 hover:bg-ember/10 transition-colors">
+                Quitar PIN
+              </button>
+            )}
+          </div>
+          <p id="cotiza-pin-estado" class="mt-3 min-h-[1rem] text-[12px] font-mono" role="status" aria-live="polite"></p>
+          <p class="text-[11px] text-ink-300 mt-1">Cambiarlo cierra al instante las entradas abiertas con el PIN anterior.</p>
+        </div>
+      )}
     </div>
 
     <!-- Cuentas de cobro: datos del emisor -->
@@ -212,6 +288,36 @@ const encKeyOk = !!encKey && encKey.length === 64
 </AdminLayout>
 
 <script>
+  {
+    const estado = document.getElementById('cotiza-pin-estado')
+    const decir = (texto: string, ok: boolean) => {
+      if (!estado) return
+      estado.textContent = texto
+      estado.className = `mt-3 min-h-[1rem] text-[12px] font-mono ${ok ? 'text-lime' : 'text-ember'}`
+    }
+    const llamar = async (method: 'POST' | 'DELETE', body?: unknown) => {
+      const res = await fetch('/api/admin/settings/cotiza-pin', {
+        method,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      })
+      if (res.ok) {
+        location.reload()
+        return
+      }
+      const cuerpo = (await res.json().catch(() => null)) as { error?: string } | null
+      decir(cuerpo?.error ?? 'No se pudo guardar.', false)
+    }
+    document.getElementById('cotiza-pin-guardar')?.addEventListener('click', () => {
+      const pin = (document.getElementById('cotiza-pin') as HTMLInputElement | null)?.value.trim() ?? ''
+      void llamar('POST', { pin })
+    })
+    document.getElementById('cotiza-pin-reabrir')?.addEventListener('click', () => void llamar('POST', { accion: 'reabrir' }))
+    document.getElementById('cotiza-pin-quitar')?.addEventListener('click', () => {
+      if (confirm('¿Quitar el PIN? La entrada a Cotiza quedará solo con GitHub o la llave.')) void llamar('DELETE')
+    })
+  }
+
   document.getElementById('save-rates')?.addEventListener('click', async () => {
     const settings: Record<string, string | null> = {}
     document.querySelectorAll<HTMLInputElement>('.rate-input').forEach((el) => {

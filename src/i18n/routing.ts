@@ -142,7 +142,7 @@ export function translatedAlternates(pathname: string): Partial<Record<Locale, s
 // ruta canónica - un `/en/remote/...` sin cortar sería el control remoto sin
 // gate de sesión.
 const PRIVATE_EXACT = new Set(['/login', '/logout', '/entrar', '/docs/presentacion'])
-const PRIVATE_PREFIXES = ['/admin', '/api', '/portal', '/cobrar', '/present', '/remote', '/decks']
+const PRIVATE_PREFIXES = ['/admin', '/api', '/portal', '/cobrar', '/cotiza', '/acuerdo', '/present', '/remote', '/decks']
 
 /** ¿Esta ruta CANÓNICA (ya sin prefijo de idioma) es privada? */
 export function isPrivateCanonicalPath(canonicalPath: string): boolean {

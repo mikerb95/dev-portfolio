@@ -1695,6 +1695,121 @@ export const propuestaHoras = sqliteTable('propuesta_horas', {
   componenteIdx: uniqueIndex('propuesta_horas_componente_idx').on(t.propuestaId, t.componenteId),
 }))
 
+// ── Cotiza: consultoría con alcance controlado ──────────────────────────────
+// Ver docs/plan-cotiza.md. Un encargo guarda su configuración editable mientras
+// es borrador; al congelarse guarda el RESULTADO completo (con las tarifas y
+// los cupos del día) y su huella. Desde ahí el precio no se toca: todo lo que
+// llegue después vive en las tablas de bitácora y en los adicionales.
+export const cotizaEncargos = sqliteTable('cotiza_encargos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  titulo: text('titulo').notNull(),
+  clienteNombre: text('cliente_nombre').notNull().default(''),
+  clienteEmpresa: text('cliente_empresa'),
+  // Correo o teléfono, texto libre: es para que Mike sepa a quién escribir.
+  clienteContacto: text('cliente_contacto'),
+  moneda: text('moneda').notNull().default('COP'),
+  estado: text('estado', { enum: ['borrador', 'enviado', 'aceptado', 'cerrado', 'descartado'] }).notNull().default('borrador'),
+  // ConfigEncargo en JSON (lib/cotiza/encargo.ts): lo que edita Mike.
+  config: text('config').notNull(),
+  // CotizacionConsultoria congelada (lib/cotiza/motor.ts) y su SHA-256
+  // canónico. Null mientras es borrador.
+  snapshot: text('snapshot'),
+  huella: text('huella'),
+  // Precio congelado, redundante a propósito: el listado no abre el snapshot.
+  precio: integer('precio'),
+  enviadoEl: integer('enviado_el', { mode: 'timestamp' }),
+  aceptadoEl: integer('aceptado_el', { mode: 'timestamp' }),
+  cerradoEl: integer('cerrado_el', { mode: 'timestamp' }),
+  creadoEl: integer('creado_el', { mode: 'timestamp' }).notNull(),
+  actualizadoEl: integer('actualizado_el', { mode: 'timestamp' }).notNull(),
+  // ── Enlace del cliente (/acuerdo/<token>, Fase 4, migración 0046) ─────────
+  // Se busca por el SHA-256 del token, nunca por el token: un volcado de la
+  // base no abre ningún enlace. El token va además cifrado (AES-GCM, la misma
+  // clave de la bóveda) para que Mike pueda volver a copiarlo desde el panel.
+  tokenHash: text('token_hash'),
+  tokenCifrado: text('token_cifrado'),
+  vistaPrimera: integer('vista_primera', { mode: 'timestamp' }),
+  vistas: integer('vistas').notNull().default(0),
+  // Constancia de aceptación por el cliente: quién, con qué documento y la
+  // huella de (propuesta congelada + nombre + documento + instante).
+  aceptadoPor: text('aceptado_por'),
+  aceptadoDocumento: text('aceptado_documento'),
+  aceptacionHuella: text('aceptacion_huella'),
+}, (t) => ({
+  estadoIdx: index('cotiza_encargos_estado_idx').on(t.estado),
+  tokenIdx: uniqueIndex('cotiza_encargos_token_idx').on(t.tokenHash),
+}))
+
+// Cada pedido del cliente después de aceptar, con su clasificación. Es la
+// respuesta escrita al "eso lo hablamos".
+export const cotizaSolicitudes = sqliteTable('cotiza_solicitudes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  encargoId: integer('encargo_id').notNull().references(() => cotizaEncargos.id, { onDelete: 'cascade' }),
+  // Cuándo lo pidió el cliente (no cuándo se anotó): decide si fue fuera de horario.
+  pedidoEl: integer('pedido_el', { mode: 'timestamp' }).notNull(),
+  canal: text('canal', { enum: ['whatsapp', 'correo', 'llamada', 'reunion', 'otro'] }).notNull(),
+  texto: text('texto').notNull(),
+  clasificacion: text('clasificacion', { enum: ['dentro', 'cupo', 'adicional'] }).notNull(),
+  fueraDeHorario: integer('fuera_de_horario', { mode: 'boolean' }).notNull().default(false),
+  creadoEl: integer('creado_el', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  encargoIdx: index('cotiza_solicitudes_encargo_idx').on(t.encargoId),
+}))
+
+export const cotizaReuniones = sqliteTable('cotiza_reuniones', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  encargoId: integer('encargo_id').notNull().references(() => cotizaEncargos.id, { onDelete: 'cascade' }),
+  // Día de la reunión en Colombia ('YYYY-MM-DD').
+  fecha: text('fecha').notNull(),
+  minutos: integer('minutos').notNull(),
+  resumen: text('resumen').notNull().default(''),
+  // Hasta cuándo puede el cliente corregir el resumen; después vale lo escrito.
+  plazoCorreccion: text('plazo_correccion').notNull(),
+  creadoEl: integer('creado_el', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  encargoIdx: index('cotiza_reuniones_encargo_idx').on(t.encargoId),
+}))
+
+// Una fila por ronda de cambios pedida, en el entregable (posición en la
+// propuesta congelada) al que corresponde.
+export const cotizaRondas = sqliteTable('cotiza_rondas', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  encargoId: integer('encargo_id').notNull().references(() => cotizaEncargos.id, { onDelete: 'cascade' }),
+  entregable: integer('entregable').notNull(),
+  nota: text('nota').notNull().default(''),
+  creadoEl: integer('creado_el', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  encargoIdx: index('cotiza_rondas_encargo_idx').on(t.encargoId),
+}))
+
+// Lo que no cabe en el precio pactado. El monto se calcula con las tarifas
+// CONGELADAS del encargo y se guarda: aprobar en marzo lo propuesto en enero
+// cobra lo que se propuso.
+export const cotizaAdicionales = sqliteTable('cotiza_adicionales', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  encargoId: integer('encargo_id').notNull().references(() => cotizaEncargos.id, { onDelete: 'cascade' }),
+  origen: text('origen', { enum: ['reunion_extra', 'reunion_larga', 'ronda_extra', 'solicitud', 'manual'] }).notNull(),
+  // Qué fila lo originó (reunión, ronda o solicitud), si alguna.
+  referenciaId: integer('referencia_id'),
+  descripcion: text('descripcion').notNull(),
+  horas: real('horas').notNull(),
+  nivel: text('nivel').notNull(),
+  urgente: integer('urgente', { mode: 'boolean' }).notNull().default(false),
+  tarifa: integer('tarifa').notNull(),
+  recargo: integer('recargo').notNull().default(0),
+  monto: integer('monto').notNull(),
+  estado: text('estado', { enum: ['propuesto', 'aprobado', 'rechazado'] }).notNull().default('propuesto'),
+  decididoEl: integer('decidido_el', { mode: 'timestamp' }),
+  creadoEl: integer('creado_el', { mode: 'timestamp' }).notNull(),
+  // Quién decidió: Mike en el panel o el cliente desde su enlace (Fase 4).
+  decididoPor: text('decidido_por', { enum: ['mike', 'cliente'] }),
+  decididoNombre: text('decidido_nombre'),
+  // SHA-256 de (encargo + adicional + monto + decisión + nombre + instante).
+  constancia: text('constancia'),
+}, (t) => ({
+  encargoIdx: index('cotiza_adicionales_encargo_idx').on(t.encargoId),
+}))
+
 // ── Asistente del panel (RF-210, fase 7) ────────────────────────────────────
 // Conversaciones de la caja "Pregunta o busca algo" del dashboard. Tabla
 // propia y no la del analista: el tope de gasto del analista se calcula

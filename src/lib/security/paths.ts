@@ -36,6 +36,10 @@ export function isAuthPath(pathname: string): boolean {
     pathname.startsWith('/api/auth/') ||
     pathname === '/login' ||
     pathname === '/entrar' ||
+    // La entrada con PIN de Cotiza: esta capa en memoria va por delante de los
+    // frenos propios del endpoint, que son los que de verdad cuentan fallos.
+    pathname === '/cotiza/entrar' ||
+    pathname.startsWith('/api/cotiza/') ||
     // Portal de clientes: mismo tratamiento que el login del admin. El bloqueo
     // por cuenta (lib/portal/login.ts) es la otra capa; esta acota el volumen
     // por IP antes de que llegue a tocar la base.
@@ -61,6 +65,15 @@ export function isCobroLinkPath(pathname: string): boolean {
  */
 export function isPropuestaPath(pathname: string): boolean {
   return pathname.startsWith('/propuesta/') || pathname.startsWith('/api/propuesta/')
+}
+
+/**
+ * Enlace del cliente de Cotiza (/acuerdo/<token>) y su API (aceptar, decidir
+ * adicionales). Mismo razonamiento que el de Plano: el token tiene 128 bits, el
+ * límite frena bucles de aceptaciones o decisiones.
+ */
+export function isAcuerdoPath(pathname: string): boolean {
+  return pathname.startsWith('/acuerdo/') || pathname.startsWith('/api/acuerdo/')
 }
 
 /**

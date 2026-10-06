@@ -1,0 +1,299 @@
+---
+import '../../styles/global.css'
+import { formatearMonto, type Moneda } from '../../data/tarifario'
+import { detalle } from '../../lib/cotiza/db'
+import { encargoPorToken, estaVencida, registrarVista, vigenteHasta } from '../../lib/cotiza/enlace'
+import { jsonEnScript } from '../../lib/json-script'
+import { fechaCorta, fechaLarga } from '../../lib/plano/fechas'
+import { fechaISOEnColombia } from '../../lib/fecha-co'
+
+// Enlace del cliente de Cotiza (RF-224). Público pero noindex y sin caché (lo
+// pone el middleware): es un documento personal con precios. Muestra lo que el
+// cliente aceptó o va a aceptar, sus cupos, los resúmenes de reunión y los
+// adicionales por decidir. Nunca las notas privadas ni los pedidos internos.
+
+const e = await encargoPorToken(Astro.params.token)
+Astro.response.headers.set('Cache-Control', 'no-store')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+if (!e) Astro.response.status = 404
+
+const d = e ? await detalle(e.id) : null
+if (e) await registrarVista(e)
+
+const s = d?.snapshot ?? null
+const c = s?.cotizacion ?? null
+const moneda = (e?.moneda ?? 'COP') as Moneda
+const m = (v: number) => formatearMonto(v, moneda)
+const vencida = e ? estaVencida(e) : false
+const hasta = e ? vigenteHasta(e) : null
+const hastaTxt = hasta ? fechaLarga(fechaISOEnColombia(hasta)) : ''
+const primerNombre = s?.cliente.nombre?.split(' ')[0] ?? ''
+
+const TIPO: Record<string, string> = { presentacion: 'Presentación', revision: 'Revisión de documentos', libre: 'Consultoría' }
+const pendientes = d?.adicionales.filter((a) => a.estado === 'propuesto') ?? []
+const decididos = d?.adicionales.filter((a) => a.estado !== 'propuesto') ?? []
+const fechaHora = new Intl.DateTimeFormat('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+
+const datos = e && s ? { huella: e.huella, nombre: e.aceptadoPor ?? s.cliente.nombre ?? '' } : null
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{s ? `${s.titulo} · Propuesta` : 'Enlace no disponible'} · Mike Rodríguez</title>
+  </head>
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen">
+    <main class="mx-auto max-w-3xl px-5 py-10 md:py-14">
+      <div class="font-mono text-[11px] tracking-[.22em] uppercase text-ink-300">
+        Mike Rodríguez · Consultoría en logística y operaciones
+      </div>
+
+      {!e || !s || !c ? (
+        <div class="mt-10">
+          <h1 class="text-2xl font-medium">Este enlace no está disponible</h1>
+          <p class="mt-3 text-[14px] text-ink-200">Puede que haya cambiado. Pídele a Mike el enlace actualizado.</p>
+        </div>
+      ) : (
+        <>
+          <h1 class="mt-4 text-3xl md:text-4xl font-medium tracking-tight leading-tight">{s.titulo}</h1>
+          <p class="mt-3 text-[14px] text-ink-200">
+            Para {[s.cliente.nombre, s.cliente.empresa].filter(Boolean).join(', ')}
+          </p>
+
+          {e.estado === 'enviado' && !vencida && (
+            <p class="mt-5 inline-flex items-center gap-2 rounded-full bg-cyan/10 px-3 py-1.5 text-[12.5px] text-cyan">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>Propuesta vigente hasta el {hastaTxt}
+            </p>
+          )}
+          {vencida && (
+            <p class="mt-5 rounded-xl bg-ember/10 px-4 py-3 text-[13px] text-ink-100">
+              Esta propuesta venció el {hastaTxt}. Si te sigue interesando, escríbele a Mike para enviarte una actualizada.
+            </p>
+          )}
+          {e.estado !== 'enviado' && e.aceptadoEl && (
+            <p class="mt-5 inline-flex flex-wrap items-center gap-2 rounded-full bg-lime/10 px-3 py-1.5 text-[12.5px] text-lime">
+              <span class="w-1.5 h-1.5 rounded-full bg-lime"></span>
+              {e.aceptadoPor ? `Aceptada por ${e.aceptadoPor}` : 'Aceptada'} el {fechaHora.format(e.aceptadoEl)}
+              {e.aceptacionHuella && <span class="font-mono text-[11px] text-lime/70" title={e.aceptacionHuella}>constancia {e.aceptacionHuella.slice(0, 12)}</span>}
+            </p>
+          )}
+          {e.estado === 'cerrado' && <p class="mt-3 text-[13px] text-ink-300">Este trabajo ya se entregó y está cerrado.</p>}
+
+          {/* Adicionales por decidir: lo primero que tiene que ver el cliente */}
+          {pendientes.length > 0 && e.estado === 'aceptado' && (
+            <section class="mt-10 rounded-2xl glass p-5 md:p-6">
+              <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-ember"></span><h2 class="text-lg font-medium">Por aprobar</h2></div>
+              <p class="mt-1 text-[13px] text-ink-200">
+                Esto no estaba en lo acordado. Mike no lo empieza hasta que lo apruebes. Si lo rechazas, todo lo demás sigue igual.
+              </p>
+              <label class="mt-4 block max-w-sm">
+                <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Tu nombre</span>
+                <input id="decide-nombre" class="input-base w-full rounded-lg px-3 py-2 text-[14px]" autocomplete="name" />
+              </label>
+              <ul class="mt-4 space-y-3">
+                {pendientes.map((a) => (
+                  <li class="rounded-xl bg-white/[.03] border border-white/5 p-4">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                      <div class="min-w-0 flex-1">
+                        <div class="text-[14px] text-ink-50">{a.descripcion}</div>
+                        <div class="mt-0.5 text-[12px] text-ink-300">{a.horas} h de trabajo{a.urgente ? ' · pedido fuera del horario acordado' : ''}</div>
+                      </div>
+                      <div class="font-mono text-[16px] text-ink-50">{m(a.monto)}</div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                      <button data-decidir="aprobado" data-id={a.id} class="h-9 px-4 rounded-full bg-lime text-ink-950 text-[13px] font-semibold">Aprobar</button>
+                      <button data-decidir="rechazado" data-id={a.id} class="h-9 px-4 rounded-full bg-white/[.04] border border-white/10 text-[13px] text-ink-100 hover:bg-white/[.08]">No por ahora</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p id="decide-estado" class="mt-3 min-h-[1rem] text-[13px]" role="status" aria-live="polite"></p>
+            </section>
+          )}
+
+          <section class="mt-10">
+            <h2 class="text-lg font-medium">Qué incluye</h2>
+            <ul class="mt-3 divide-y divide-white/5 border-y border-white/5">
+              {c.lineas.map((l) => (
+                <li class="py-3 flex items-baseline justify-between gap-4">
+                  <span class="text-[14.5px] text-ink-50">{l.nombre}</span>
+                  <span class="shrink-0 text-[12px] font-mono text-ink-300">{TIPO[l.tipo] ?? ''}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <div class="mt-8 grid gap-8 md:grid-cols-2">
+            {s.exclusiones.length > 0 && (
+              <section>
+                <h2 class="text-[15px] font-medium">No incluye</h2>
+                <ul class="mt-2 space-y-1.5 text-[13.5px] text-ink-200">{s.exclusiones.map((x) => <li>{x}</li>)}</ul>
+              </section>
+            )}
+            {s.supuestos.length > 0 && (
+              <section>
+                <h2 class="text-[15px] font-medium">Se da por hecho que</h2>
+                <ul class="mt-2 space-y-1.5 text-[13.5px] text-ink-200">{s.supuestos.map((x) => <li>{x}</li>)}</ul>
+              </section>
+            )}
+          </div>
+
+          <section class="mt-10 rounded-2xl glass p-5 md:p-6">
+            <h2 class="text-lg font-medium">Dentro del precio</h2>
+            <ul class="mt-3 space-y-2.5 text-[13.5px] text-ink-100">
+              <li class="flex justify-between gap-4">
+                <span>{c.cupos.reuniones} reuniones de {c.cupos.minutosPorReunion} minutos</span>
+                {d!.consumo && e.estado !== 'enviado' && <span class="font-mono text-ink-300">usadas {d!.consumo.reuniones.usadas}</span>}
+              </li>
+              <li class="flex justify-between gap-4">
+                <span>{c.cupos.rondasDeCambios} rondas de cambios por entregable</span>
+              </li>
+              <li>Atención de {c.cupos.horario.dias}, de {c.cupos.horario.desde} a {c.cupos.horario.hasta}, con respuesta en {c.cupos.respuestaDiasHabiles} día hábil</li>
+              <li>Después de cada reunión recibes un resumen escrito; tienes {c.cupos.diasParaCorregirResumen} día hábil para corregirlo y, si no, queda como lo acordado</li>
+            </ul>
+            <p class="mt-4 text-[12.5px] text-ink-300 leading-relaxed">
+              Lo que se pida por fuera de esto se cotiza aparte y solo se hace con tu aprobación, aquí mismo. Lo que se pida fuera del horario lleva un recargo del {Math.round(c.cupos.recargoUrgencia * 100)} %.
+            </p>
+          </section>
+
+          <section class="mt-10">
+            <div class="flex items-baseline justify-between gap-4 border-b border-white/10 pb-3">
+              <h2 class="text-lg font-medium">Valor</h2>
+              <span class="font-mono text-2xl md:text-3xl text-ink-50">{m(c.precio)}</span>
+            </div>
+            <ul class="mt-3 space-y-1.5 text-[13.5px]">
+              {c.pagos.map((p) => (
+                <li class="flex justify-between gap-4"><span class="text-ink-200">{p.concepto} ({p.pct} %)</span><span class="font-mono text-ink-100">{m(p.monto)}</span></li>
+              ))}
+            </ul>
+            {d!.total && d!.total.aprobados > 0 && (
+              <p class="mt-3 text-[13px] text-ink-200">Con los adicionales aprobados, el total va en <span class="font-mono text-ink-50">{m(d!.total.total)}</span>.</p>
+            )}
+          </section>
+
+          {e.estado === 'enviado' && !vencida && (
+            <section class="mt-10 rounded-2xl glass p-5 md:p-6">
+              <h2 class="text-lg font-medium">Aceptar la propuesta</h2>
+              <p class="mt-1 text-[13px] text-ink-200">Queda registro de quién la aceptó y cuándo. Mike te escribe para coordinar el primer pago y el arranque.</p>
+              <form id="aceptar" class="mt-4 grid gap-3 sm:grid-cols-2">
+                <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Nombre completo</span><input name="nombre" required autocomplete="name" class="input-base w-full rounded-lg px-3 py-2 text-[14px]" /></label>
+                <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cédula o NIT</span><input name="documento" required class="input-base w-full rounded-lg px-3 py-2 text-[14px]" /></label>
+                <label class="sm:col-span-2 flex items-start gap-2.5 text-[13px] text-ink-100">
+                  <input name="acepto" type="checkbox" required class="mt-0.5 accent-cyan" />
+                  <span>Acepto la propuesta con lo que incluye y no incluye, y que lo que se pida por fuera se cotiza aparte con mi aprobación previa.</span>
+                </label>
+                <div class="sm:col-span-2 flex flex-wrap items-center gap-3">
+                  <button class="h-10 px-5 rounded-full bg-cyan text-ink-950 text-[14px] font-semibold hover:bg-cyan-glow">Acepto la propuesta</button>
+                  <span id="aceptar-estado" class="text-[13px]" role="status" aria-live="polite"></span>
+                </div>
+              </form>
+            </section>
+          )}
+
+          {d!.reuniones.length > 0 && (
+            <section class="mt-10">
+              <h2 class="text-lg font-medium">Resúmenes de reunión</h2>
+              <ul class="mt-3 space-y-3">
+                {d!.reuniones.map((r) => (
+                  <li class="rounded-xl bg-white/[.03] border border-white/5 p-4">
+                    <div class="text-[12px] font-mono text-ink-300">
+                      {fechaCorta(r.fecha)} · {r.minutos} min ·{' '}
+                      {r.plazoCorreccion >= fechaISOEnColombia(new Date()) ? `puedes corregirlo hasta el ${fechaCorta(r.plazoCorreccion)}` : 'quedó como lo acordado'}
+                    </div>
+                    {r.resumen && <div class="mt-1.5 text-[13.5px] text-ink-100 whitespace-pre-line">{r.resumen}</div>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {decididos.length > 0 && (
+            <section class="mt-10">
+              <h2 class="text-lg font-medium">Adicionales ya decididos</h2>
+              <ul class="mt-3 divide-y divide-white/5 border-y border-white/5">
+                {decididos.map((a) => (
+                  <li class="py-3 flex flex-wrap items-baseline justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                      <div class="text-[13.5px] text-ink-100">{a.descripcion}</div>
+                      <div class="text-[11.5px] text-ink-300">
+                        {a.estado === 'aprobado' ? 'Aprobado' : 'Rechazado'}
+                        {a.decididoNombre ? ` por ${a.decididoNombre}` : ''}
+                        {a.decididoEl ? ` el ${fechaHora.format(a.decididoEl)}` : ''}
+                        {a.constancia ? ` · constancia ${a.constancia.slice(0, 12)}` : ''}
+                      </div>
+                    </div>
+                    <span class={`font-mono text-[13px] ${a.estado === 'aprobado' ? 'text-ink-50' : 'text-ink-400 line-through'}`}>{m(a.monto)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <p class="mt-12 text-[12px] text-ink-400">
+            {primerNombre ? `${primerNombre}, ` : ''}si tienes cualquier duda, respóndele a Mike por el mismo medio por el que te llegó este enlace.
+          </p>
+        </>
+      )}
+    </main>
+
+    {datos && <script type="application/json" id="acuerdo-datos" set:html={jsonEnScript(datos)} />}
+
+    <script>
+      const nodo = document.getElementById('acuerdo-datos')
+      const datos = nodo ? (JSON.parse(nodo.textContent || 'null') as { huella: string; nombre: string }) : null
+      const enviar = async (cuerpo: Record<string, unknown>) => {
+        const res = await fetch(location.pathname.replace(/^\/acuerdo\//, '/api/acuerdo/'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cuerpo),
+        })
+        const r = (await res.json().catch(() => null)) as { error?: string } | null
+        if (!res.ok) throw new Error(r?.error ?? 'No se pudo completar. Intenta de nuevo.')
+      }
+      const decir = (id: string, texto: string, ok: boolean) => {
+        const el = document.getElementById(id)
+        if (!el) return
+        el.textContent = texto
+        el.classList.toggle('text-ember', !ok)
+      }
+
+      const nombreDecide = document.getElementById('decide-nombre') as HTMLInputElement | null
+      if (nombreDecide && datos) nombreDecide.value = datos.nombre
+
+      document.querySelectorAll<HTMLButtonElement>('[data-decidir]').forEach((b) =>
+        b.addEventListener('click', async () => {
+          const decision = b.dataset.decidir
+          if (decision === 'aprobado' && !confirm('¿Apruebas este adicional por el valor indicado?')) return
+          b.disabled = true
+          try {
+            await enviar({ accion: 'decidir', adicionalId: Number(b.dataset.id), decision, nombre: nombreDecide?.value ?? '' })
+            decir('decide-estado', decision === 'aprobado' ? 'Listo, quedó aprobado. Mike ya recibió el aviso.' : 'Listo, quedó registrado.', true)
+            setTimeout(() => location.reload(), 1200)
+          } catch (err) {
+            decir('decide-estado', (err as Error).message, false)
+            b.disabled = false
+          }
+        })
+      )
+
+      document.getElementById('aceptar')?.addEventListener('submit', async (ev) => {
+        ev.preventDefault()
+        const f = ev.currentTarget as HTMLFormElement
+        const fd = new FormData(f)
+        const boton = f.querySelector('button')
+        if (boton) boton.disabled = true
+        try {
+          await enviar({ accion: 'aceptar', nombre: fd.get('nombre'), documento: fd.get('documento'), acepto: fd.get('acepto') === 'on', huella: datos?.huella })
+          decir('aceptar-estado', '¡Gracias! La propuesta quedó aceptada.', true)
+          setTimeout(() => location.reload(), 1200)
+        } catch (err) {
+          decir('aceptar-estado', (err as Error).message, false)
+          if (boton) boton.disabled = false
+        }
+      })
+    </script>
+  </body>
+</html>

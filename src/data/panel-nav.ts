@@ -80,6 +80,12 @@ export const GRUPOS_PANEL: GrupoPanel[] = [
         label: "Plano · propuestas",
       },
       {
+        href: "/admin/cotiza",
+        claves: "consultoría logística comercio exterior compras operaciones alcance cupos pin",
+        icon: "M9 11l3 3 8-8 M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9",
+        label: "Cotiza · consultoría",
+      },
+      {
         href: "/admin/briefings",
         claves: "requerimientos alcance cotizaciones",
         icon: "M9 12h6 M9 16h6 M17 3H7a2 2 0 0 0-2 2v16l3-3 2 2 2-2 2 2 2-2 3 3V5a2 2 0 0 0-2-2z",

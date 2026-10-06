@@ -1,0 +1,957 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import CotizaLayout from '../../../layouts/CotizaLayout.astro'
+import { NIVELES } from '../../../data/cotiza'
+import { formatearMonto, type Moneda } from '../../../data/tarifario'
+import { detalle, type DetalleEncargo } from '../../../lib/cotiza/db'
+import { nivelDelEncargo } from '../../../lib/cotiza/motor'
+import { jsonEnScript } from '../../../lib/json-script'
+import { tokenDe } from '../../../lib/cotiza/enlace'
+import { fechaCorta } from '../../../lib/plano/fechas'
+
+// Ficha de un encargo de Cotiza (docs/plan-cotiza.md, Fase 2). Tres caras
+// según el estado: el editor (borrador, con el precio en vivo calculado en el
+// navegador con el MISMO motor que el servidor), la propuesta congelada
+// (enviado) y la bitácora con cupos y adicionales (aceptado y cerrado).
+const porPin = Astro.locals.cotizaPin === true
+const isDemo = Astro.locals.demo === true
+const Layout = porPin ? CotizaLayout : AdminLayout
+
+const id = Number(Astro.params.id)
+let d: DetalleEncargo | null = null
+let sinTablas = false
+if (Number.isInteger(id) && id > 0) {
+  try {
+    d = await detalle(id)
+  } catch {
+    sinTablas = true
+  }
+}
+if (!d && !sinTablas) return new Response('Encargo no encontrado', { status: 404 })
+
+const e = d?.encargo
+const estado = e?.estado ?? 'borrador'
+const snap = d?.snapshot ?? null
+const c = snap?.cotizacion ?? null
+const moneda = (e?.moneda ?? 'COP') as Moneda
+const m = (v: number) => formatearMonto(v, moneda)
+const editable = estado === 'borrador' && !isDemo
+const enCurso = estado === 'aceptado' && !isDemo
+const nivelNombre = (id: string) => NIVELES.find((n) => n.id === id)?.nombre ?? id
+const nivelEncargo = c ? nivelDelEncargo(c) : null
+
+const ESTADO: Record<string, { label: string; dot: string; text: string }> = {
+  borrador: { label: 'Borrador', dot: 'bg-ink-200', text: 'text-ink-200' },
+  enviado: { label: 'Propuesta enviada', dot: 'bg-cyan', text: 'text-cyan' },
+  aceptado: { label: 'En curso', dot: 'bg-lime', text: 'text-lime' },
+  cerrado: { label: 'Cerrado', dot: 'bg-violet', text: 'text-violet' },
+  descartado: { label: 'Descartado', dot: 'bg-ink-400', text: 'text-ink-300' },
+}
+const est = ESTADO[estado] ?? ESTADO.borrador
+
+const CANAL: Record<string, string> = { whatsapp: 'WhatsApp', correo: 'Correo', llamada: 'Llamada', reunion: 'En reunión', otro: 'Otro' }
+const CLASIF: Record<string, { label: string; text: string }> = {
+  dentro: { label: 'Dentro del alcance', text: 'text-lime' },
+  cupo: { label: 'Usa un cupo', text: 'text-cyan' },
+  adicional: { label: 'Adicional', text: 'text-ember' },
+}
+const ESTADO_AD: Record<string, { label: string; text: string }> = {
+  propuesto: { label: 'Por decidir', text: 'text-ember' },
+  aprobado: { label: 'Aprobado', text: 'text-lime' },
+  rechazado: { label: 'Rechazado', text: 'text-ink-300' },
+}
+const horaBogota = new Intl.DateTimeFormat('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+
+const token = e ? tokenDe(e) : null
+const rutaEnlace = token ? `/acuerdo/${token}` : null
+const conEnlace = estado === 'enviado' || estado === 'aceptado'
+const fechaHora = new Intl.DateTimeFormat('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+
+const rondasPorEntregable = c ? c.lineas.map((_, i) => d!.rondas.filter((r) => r.entregable === i).length) : []
+
+// Lo que necesita el script. Sin notas privadas fuera del editor y sin nada
+// que el navegador pueda devolver como cifra: el servidor recalcula todo.
+const datos = d
+  ? {
+      id,
+      estado,
+      config: estado === 'borrador' ? d.config : null,
+      snapshot: snap,
+      nivelEncargo,
+      rondasPorEntregable,
+      rutaEnlace,
+      reuniones: d.reuniones.map((r) => ({ id: r.id, fecha: r.fecha, minutos: r.minutos, resumen: r.resumen, plazo: r.plazoCorreccion })),
+      adicionales: d.adicionales.map((a) => ({ id: a.id, descripcion: a.descripcion, horas: a.horas, monto: a.monto, urgente: a.urgente })),
+    }
+  : null
+---
+
+<Layout title={e ? e.titulo : 'Cotiza'}>
+  <div class="max-w-5xl space-y-6">
+    <a href="/admin/cotiza" class="inline-flex text-[12.5px] text-ink-300 hover:text-cyan transition-colors">← Encargos</a>
+
+    {sinTablas && (
+      <div class="rounded-xl border border-ember/25 bg-ember/[.06] px-4 py-3 text-[13px] text-ink-100">
+        Faltan las tablas de Cotiza en esta base: hay que aplicar las migraciones <span class="font-mono text-ember">0045 y 0046</span>.
+      </div>
+    )}
+
+    {d && e && (
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span class={`inline-flex items-center gap-1.5 text-[11.5px] font-mono ${est.text}`}>
+          <span class={`w-1.5 h-1.5 rounded-full ${est.dot}`}></span>{est.label}
+        </span>
+        <span class="text-[12.5px] text-ink-300">{[e.clienteNombre, e.clienteEmpresa, e.clienteContacto].filter(Boolean).join(' · ') || 'Sin cliente todavía'}</span>
+        {e.huella && <span class="text-[11px] font-mono text-ink-400" title={e.huella}>huella {e.huella.slice(0, 10)}</span>}
+      </div>
+    )}
+
+    {/* ── Editor ─────────────────────────────────────────────────────────── */}
+    {d && editable && (
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
+        <div class="space-y-6 min-w-0">
+          <section class="rounded-2xl glass p-5 md:p-6">
+            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-violet"></span><h2 class="text-base font-medium">Leer el pedido con IA</h2></div>
+            <p class="mt-1 text-[12px] text-ink-300">Pega el mensaje, el correo o tus notas de la llamada. La IA propone entregables contables, lo que no incluye, supuestos y las preguntas para hacerle al cliente antes de cotizar. Se agrega al borrador; nada se borra y el precio lo sigue poniendo la tabla.</p>
+            <textarea id="ia-pedido" rows="4" class="input-base mt-3 w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Hola Mike, necesito que me ayudes con unas presentaciones para la junta y revisar unos contratos..."></textarea>
+            <div class="mt-2 flex flex-wrap items-center gap-3">
+              <button id="ia-alcance" class="h-8 px-3 rounded-full bg-violet/20 text-violet text-[12.5px] font-medium hover:bg-violet/30">Leer pedido con IA</button>
+              <span id="ia-alcance-estado" class="text-[12px] font-mono" role="status" aria-live="polite"></span>
+            </div>
+          </section>
+
+          <section class="rounded-2xl glass p-5 md:p-6 space-y-4">
+            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-cyan"></span><h2 class="text-base font-medium">Encargo y cliente</h2></div>
+            <label class="block">
+              <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Título</span>
+              <input data-campo="titulo" class="input-base w-full rounded-lg px-3 py-2 text-[13.5px]" placeholder="Presentaciones para la junta de importaciones" />
+            </label>
+            <div class="grid gap-3 sm:grid-cols-3">
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cliente</span><input data-campo="cliente.nombre" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Empresa</span><input data-campo="cliente.empresa" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Contacto</span><input data-campo="cliente.contacto" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Celular o correo" /></label>
+            </div>
+            <label class="block w-40">
+              <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Moneda</span>
+              <select data-campo="moneda" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"><option value="COP">Pesos (COP)</option><option value="USD">Dólares (USD)</option></select>
+            </label>
+          </section>
+
+          <section class="rounded-2xl glass p-5 md:p-6">
+            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-lime"></span><h2 class="text-base font-medium">Entregables</h2></div>
+            <p class="mt-1 text-[12px] text-ink-300">Cosas contables, no "ayuda": cuántas diapositivas, cuántos documentos, cuántas horas.</p>
+            <div id="entregables" class="mt-4 space-y-3"></div>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button data-agregar="presentacion" class="h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12.5px] text-ink-100 hover:bg-white/[.06]">+ Presentación</button>
+              <button data-agregar="revision" class="h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12.5px] text-ink-100 hover:bg-white/[.06]">+ Revisión de documentos</button>
+              <button data-agregar="libre" class="h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12.5px] text-ink-100 hover:bg-white/[.06]">+ Otro trabajo (en horas)</button>
+            </div>
+          </section>
+
+          <section class="rounded-2xl glass p-5 md:p-6 grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">No incluye (una por línea)</span>
+              <textarea data-campo="exclusiones" rows="5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Negociación directa con proveedores&#10;Trámites ante la DIAN"></textarea>
+            </label>
+            <label class="block">
+              <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Supuestos (uno por línea)</span>
+              <textarea data-campo="supuestos" rows="5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="El cliente entrega la información en los primeros 2 días"></textarea>
+            </label>
+            <label class="block sm:col-span-2">
+              <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Notas privadas (no salen al cliente)</span>
+              <textarea data-campo="notas" rows="7" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea>
+            </label>
+          </section>
+        </div>
+
+        <aside class="rounded-2xl glass p-5 lg:sticky lg:top-4 space-y-4">
+          <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-violet"></span><h2 class="text-base font-medium">Precio</h2></div>
+          <div id="resumen" class="space-y-2 text-[13px]"></div>
+          <p id="editor-estado" class="min-h-[1rem] text-[12px] font-mono" role="status" aria-live="polite"></p>
+          <div class="flex flex-col gap-2">
+            <button id="guardar" class="h-9 rounded-full bg-white/[.04] border border-white/10 text-[13px] text-ink-50 hover:bg-white/[.08]">Guardar borrador</button>
+            <button id="congelar" class="h-9 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow">Congelar propuesta</button>
+            <button data-accion="descartar" class="h-8 rounded-full text-[12px] text-ink-300 hover:text-ember">Descartar encargo</button>
+          </div>
+          <p class="text-[11px] text-ink-300 leading-relaxed">Al congelar, el servidor recalcula el precio con las tarifas de hoy y lo fija. Desde ahí no se edita: lo nuevo entra como adicional.</p>
+        </aside>
+      </div>
+    )}
+
+    {/* ── Enlace del cliente ─────────────────────────────────────────────── */}
+    {d && e && (conEnlace || e.aceptadoPor) && (
+      <section class="rounded-2xl glass p-5 md:p-6">
+        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-lime"></span><h2 class="text-base font-medium">Enlace del cliente</h2></div>
+        <p class="mt-1 text-[12px] text-ink-300">El cliente ve la propuesta, sus cupos y los resúmenes de reunión, la acepta y aprueba o rechaza los adicionales. Cada decisión queda con constancia.</p>
+        {conEnlace && !isDemo && (
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            {rutaEnlace ? (
+              <>
+                <input id="enlace-url" readonly data-ruta={rutaEnlace} class="input-base min-w-0 flex-1 rounded-lg px-3 py-2 text-[12.5px] font-mono" />
+                <button id="enlace-copiar" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold">Copiar enlace</button>
+                <button id="enlace-generar" data-rotar="1" class="h-9 px-3 rounded-full text-[12.5px] text-ink-300 border border-white/10 hover:text-ink-50">Generar uno nuevo</button>
+              </>
+            ) : (
+              <button id="enlace-generar" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold">{e.tokenHash ? 'Generar enlace nuevo' : 'Crear enlace'}</button>
+            )}
+          </div>
+        )}
+        <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] font-mono text-ink-300">
+          {e.tokenHash ? <span>abierto {e.vistas} {e.vistas === 1 ? 'vez' : 'veces'}{e.vistaPrimera ? `, la primera el ${fechaHora.format(e.vistaPrimera)}` : ''}</span> : <span>sin enlace todavía</span>}
+          {e.aceptadoPor && e.aceptadoEl && (
+            <span class="text-lime" title={e.aceptacionHuella ?? ''}>aceptada por {e.aceptadoPor} ({e.aceptadoDocumento}) el {fechaHora.format(e.aceptadoEl)}{e.aceptacionHuella ? ` · constancia ${e.aceptacionHuella.slice(0, 12)}` : ''}</span>
+          )}
+        </div>
+        <p id="enlace-estado" class="mt-2 min-h-[1rem] text-[12px] font-mono" role="status" aria-live="polite"></p>
+      </section>
+    )}
+
+    {/* ── Propuesta congelada ────────────────────────────────────────────── */}
+    {d && c && snap && (
+      <section class="rounded-2xl glass p-5 md:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-cyan"></span><h2 class="text-base font-medium">Propuesta congelada</h2></div>
+          <div class="flex flex-wrap gap-2">
+            <button data-copiar="propuesta" class="h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12.5px] text-ink-100 hover:bg-white/[.06]">Copiar para WhatsApp</button>
+            {estado === 'enviado' && !isDemo && (
+              <>
+                <button data-accion="aceptar" class="h-8 px-3 rounded-full bg-lime text-ink-950 text-[12.5px] font-semibold">El cliente aceptó</button>
+                <button data-accion="reabrir" class="h-8 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12.5px] text-ink-100 hover:bg-white/[.06]">Volver a borrador</button>
+                <button data-accion="descartar" class="h-8 px-3 rounded-full text-[12px] text-ink-300 hover:text-ember">Descartar</button>
+              </>
+            )}
+          </div>
+        </div>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-[13px]">
+            <thead>
+              <tr class="text-left text-[10.5px] font-mono uppercase tracking-wider text-ink-300">
+                <th class="py-2 pr-3 font-normal">Entregable</th><th class="py-2 pr-3 font-normal hidden sm:table-cell">Nivel</th><th class="py-2 pr-3 font-normal text-right">Horas</th><th class="py-2 font-normal text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {c.lineas.map((l) => (
+                <tr>
+                  <td class="py-2.5 pr-3"><div class="text-ink-50">{l.nombre}</div><div class="text-[11px] text-ink-300"><span class="sm:hidden">{nivelNombre(l.nivel)} · </span>{l.regla}</div></td>
+                  <td class="py-2.5 pr-3 text-ink-200 hidden sm:table-cell">{nivelNombre(l.nivel)}</td>
+                  <td class="py-2.5 pr-3 text-right font-mono text-ink-100">{l.horas}</td>
+                  <td class="py-2.5 text-right font-mono text-ink-100">{m(l.subtotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-4 grid gap-6 md:grid-cols-2">
+          <dl class="space-y-1.5 text-[13px]">
+            <div class="flex justify-between"><dt class="text-ink-300">Subtotal ({c.horas} h)</dt><dd class="font-mono text-ink-100">{m(c.subtotal)}</dd></div>
+            <div class="flex justify-between"><dt class="text-ink-300">Coordinación ({Math.round(c.reglas.colchon * 100)} %)</dt><dd class="font-mono text-ink-100">{m(Math.round(c.colchon))}</dd></div>
+            <div class="flex justify-between pt-1.5 border-t border-white/5"><dt class="text-ink-50">Precio pactado</dt><dd class="font-mono text-ink-50 text-[15px]">{m(c.precio)}</dd></div>
+            {c.pagos.map((p) => (
+              <div class="flex justify-between text-[12px]"><dt class="text-ink-300">{p.concepto} ({p.pct} %)</dt><dd class="font-mono text-ink-200">{m(p.monto)}</dd></div>
+            ))}
+          </dl>
+          <div class="space-y-3 text-[12.5px]">
+            {snap.exclusiones.length > 0 && (
+              <div><div class="text-[10.5px] font-mono uppercase tracking-wider text-ink-300 mb-1">No incluye</div><ul class="space-y-0.5 text-ink-100">{snap.exclusiones.map((x) => <li>{x}</li>)}</ul></div>
+            )}
+            {snap.supuestos.length > 0 && (
+              <div><div class="text-[10.5px] font-mono uppercase tracking-wider text-ink-300 mb-1">Supuestos</div><ul class="space-y-0.5 text-ink-100">{snap.supuestos.map((x) => <li>{x}</li>)}</ul></div>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* ── Encargo en curso ───────────────────────────────────────────────── */}
+    {d && c && d.total && d.consumo && (estado === 'aceptado' || estado === 'cerrado') && (
+      <>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="rounded-2xl glass p-4"><div class="text-[10.5px] font-mono uppercase tracking-wider text-ink-300">Precio pactado</div><div class="mt-1 font-mono text-lg text-ink-50">{m(d.total.base)}</div><div class="text-[11px] text-ink-300">no cambia</div></div>
+          <div class="rounded-2xl glass p-4"><div class="text-[10.5px] font-mono uppercase tracking-wider text-ink-300">Adicionales aprobados</div><div class="mt-1 font-mono text-lg text-lime">{m(d.total.aprobados)}</div><div class="text-[11px] text-ink-300">total vigente {m(d.total.total)}</div></div>
+          <div class="rounded-2xl glass p-4"><div class="text-[10.5px] font-mono uppercase tracking-wider text-ink-300">Por decidir</div><div class={`mt-1 font-mono text-lg ${d.total.propuestos ? 'text-ember' : 'text-ink-200'}`}>{m(d.total.propuestos)}</div><div class="text-[11px] text-ink-300">no se hace hasta que el cliente apruebe</div></div>
+        </div>
+
+        <div class="grid gap-6 md:grid-cols-2">
+          <section class="rounded-2xl glass p-5">
+            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-violet"></span><h2 class="text-base font-medium">Cupos</h2></div>
+            <div class="mt-4 space-y-3 text-[13px]">
+              <div>
+                <div class="flex justify-between"><span class="text-ink-100">Reuniones de {c.cupos.minutosPorReunion} min</span><span class="font-mono text-ink-200">{d.consumo.reuniones.usadas}/{d.consumo.reuniones.incluidas}</span></div>
+                <div class="mt-1.5 h-1.5 rounded-full bg-white/5 overflow-hidden"><div class={`h-full rounded-full ${d.consumo.reuniones.usadas >= d.consumo.reuniones.incluidas ? 'bg-ember' : 'bg-violet'}`} style={`width:${Math.min(100, (d.consumo.reuniones.usadas / Math.max(1, d.consumo.reuniones.incluidas)) * 100)}%`}></div></div>
+              </div>
+              {d.consumo.rondas.map((r) => (
+                <div>
+                  <div class="flex justify-between gap-3"><span class="text-ink-100 truncate">Rondas · {c.lineas[r.entregable]?.nombre}</span><span class="font-mono text-ink-200 shrink-0">{r.usadas}/{r.incluidas}</span></div>
+                  <div class="mt-1.5 h-1.5 rounded-full bg-white/5 overflow-hidden"><div class={`h-full rounded-full ${r.usadas >= r.incluidas ? 'bg-ember' : 'bg-violet'}`} style={`width:${Math.min(100, (r.usadas / Math.max(1, r.incluidas)) * 100)}%`}></div></div>
+                </div>
+              ))}
+              <p class="text-[11.5px] text-ink-300">Horario pactado: {c.cupos.horario.dias}, {c.cupos.horario.desde} a {c.cupos.horario.hasta}. Fuera de eso, +{Math.round(c.cupos.recargoUrgencia * 100)} %.</p>
+            </div>
+          </section>
+
+          <section class="rounded-2xl glass p-5">
+            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-ember"></span><h2 class="text-base font-medium">Adicionales</h2></div>
+            {d.adicionales.length === 0 ? (
+              <p class="mt-3 text-[13px] text-ink-300">Nada por fuera de lo pactado, por ahora.</p>
+            ) : (
+              <ul class="mt-3 divide-y divide-white/5">
+                {d.adicionales.map((a) => (
+                  <li class="py-2.5">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <div class="text-[13px] text-ink-50">{a.descripcion}</div>
+                        <div class="text-[11px] text-ink-300">{a.horas} h · {nivelNombre(a.nivel)}{a.urgente ? ' · fuera de horario (+recargo)' : ''}</div>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <div class="font-mono text-[13px] text-ink-100">{m(a.monto)}</div>
+                        <div class={`text-[11px] font-mono ${ESTADO_AD[a.estado].text}`} title={a.constancia ?? ''}>
+                          {ESTADO_AD[a.estado].label}{a.decididoPor === 'cliente' ? ` por ${a.decididoNombre ?? 'el cliente'}` : a.decididoPor === 'mike' ? ' (marcado por ti)' : ''}
+                        </div>
+                      </div>
+                    </div>
+                    {a.estado === 'propuesto' && enCurso && (
+                      <div class="mt-2 flex flex-wrap gap-2">
+                        <button data-copiar="adicional" data-id={a.id} class="h-7 px-3 rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-100 hover:bg-white/[.06]">Copiar mensaje</button>
+                        <button data-decidir="aprobado" data-id={a.id} class="h-7 px-3 rounded-full bg-lime/15 text-lime text-[12px] hover:bg-lime/25">Aprobado</button>
+                        <button data-decidir="rechazado" data-id={a.id} class="h-7 px-3 rounded-full bg-white/[.03] text-ink-300 text-[12px] hover:text-ember">Rechazado</button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        {enCurso && (
+          <section class="rounded-2xl glass p-5 md:p-6">
+            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-cyan"></span><h2 class="text-base font-medium">Anotar</h2></div>
+            <div class="mt-3 flex flex-wrap gap-2" role="tablist">
+              {[['solicitud', 'Pedido del cliente'], ['reunion', 'Reunión'], ['ronda', 'Ronda de cambios'], ['adicional', 'Adicional a mano']].map(([k, t], i) => (
+                <button data-pestana={k} role="tab" aria-selected={i === 0 ? 'true' : 'false'} class="h-8 px-3 rounded-full border border-white/10 text-[12.5px] text-ink-100 aria-selected:bg-cyan/15 aria-selected:text-cyan aria-selected:border-cyan/30">{t}</button>
+              ))}
+            </div>
+
+            <form data-form="solicitud" class="mt-4 grid gap-3 sm:grid-cols-4">
+              <label class="block sm:col-span-2"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cuándo lo pidió</span><input name="pedidoEl" type="datetime-local" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Por dónde</span><select name="canal" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">{Object.entries(CANAL).map(([k, v]) => <option value={k}>{v}</option>)}</select></label>
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Es</span><select name="clasificacion" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">{Object.entries(CLASIF).map(([k, v]) => <option value={k}>{v.label}</option>)}</select></label>
+              <label class="block sm:col-span-4"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Qué pidió (tal cual)</span><textarea name="texto" rows="2" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea></label>
+              <div data-si-adicional class="hidden sm:col-span-4 grid gap-3 sm:grid-cols-4">
+                <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Horas</span><input name="horas" type="number" min="0.5" step="0.5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+                <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Nivel</span><select name="nivel" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">{NIVELES.map((n) => <option value={n.id} selected={n.id === nivelEncargo}>{n.nombre}</option>)}</select></label>
+                <p class="sm:col-span-2 self-end text-[11.5px] text-ink-300">Si llegó fuera de horario, el recargo se suma solo.</p>
+              </div>
+              <div id="ia-sugerencia" class="hidden sm:col-span-4 rounded-xl bg-violet/[.06] border border-violet/20 p-3 text-[12.5px] space-y-1.5"></div>
+              <div class="sm:col-span-4 flex flex-wrap gap-2">
+                <button class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold">Anotar pedido</button>
+                <button type="button" id="ia-clasificar" class="h-9 px-4 rounded-full bg-violet/20 text-violet text-[13px] font-medium hover:bg-violet/30">Sugerir con IA</button>
+              </div>
+            </form>
+
+            <form data-form="reunion" class="hidden mt-4 grid gap-3 sm:grid-cols-4">
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Fecha</span><input name="fecha" type="date" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Minutos</span><input name="minutos" type="number" min="1" max="600" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <p class="sm:col-span-2 self-end text-[11.5px] text-ink-300">Quedan {d.consumo.reuniones.restantes} incluidas. Si no cabe, nace el adicional solo.</p>
+              <label class="block sm:col-span-4"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Resumen: qué se acordó y qué quedó fuera</span><textarea name="resumen" rows="4" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea></label>
+              <div class="sm:col-span-4 flex flex-wrap gap-2">
+                <button class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold">Anotar reunión</button>
+                <button type="button" id="ia-resumen" class="h-9 px-4 rounded-full bg-violet/20 text-violet text-[13px] font-medium hover:bg-violet/30" title="Escribe tus notas sueltas en el resumen y la IA las ordena">Ordenar con IA</button>
+                <button type="button" id="ia-resumen-deshacer" class="hidden h-9 px-3 rounded-full text-[12.5px] text-ink-300 hover:text-ink-50">Deshacer</button>
+              </div>
+            </form>
+
+            <form data-form="ronda" class="hidden mt-4 grid gap-3 sm:grid-cols-4">
+              <label class="block sm:col-span-2"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Entregable</span><select name="entregable" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">{c.lineas.map((l, i) => <option value={i}>{l.nombre} ({rondasPorEntregable[i]}/{c.cupos.rondasDeCambios})</option>)}</select></label>
+              <label data-si-ronda-extra class="hidden block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Horas (es de más)</span><input name="horas" type="number" min="0.5" step="0.5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <label class="block sm:col-span-4"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Qué cambios pidió</span><input name="nota" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <div class="sm:col-span-4"><button class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold">Anotar ronda</button></div>
+            </form>
+
+            <form data-form="adicional" class="hidden mt-4 grid gap-3 sm:grid-cols-4">
+              <label class="block sm:col-span-4"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Descripción</span><input name="descripcion" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Horas</span><input name="horas" type="number" min="0.5" step="0.5" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
+              <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Nivel</span><select name="nivel" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">{NIVELES.map((n) => <option value={n.id} selected={n.id === nivelEncargo}>{n.nombre}</option>)}</select></label>
+              <label class="flex items-end gap-2 pb-2 text-[12.5px] text-ink-100"><input name="urgente" type="checkbox" class="accent-cyan" /> Fuera de horario</label>
+              <div class="sm:col-span-4"><button class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold">Proponer adicional</button></div>
+            </form>
+            <p id="anotar-estado" class="mt-3 min-h-[1rem] text-[12px] font-mono" role="status" aria-live="polite"></p>
+          </section>
+        )}
+
+        <div class="grid gap-6 md:grid-cols-2">
+          <section class="rounded-2xl glass p-5">
+            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-lime"></span><h2 class="text-base font-medium">Pedidos del cliente</h2></div>
+            {d.solicitudes.length === 0 ? <p class="mt-3 text-[13px] text-ink-300">Sin pedidos anotados.</p> : (
+              <ul class="mt-3 divide-y divide-white/5">
+                {d.solicitudes.map((s) => (
+                  <li class="py-2.5">
+                    <div class="flex flex-wrap items-center gap-x-2 text-[11px] font-mono text-ink-300">
+                      <span>{horaBogota.format(s.pedidoEl)}</span><span>· {CANAL[s.canal]}</span>
+                      <span class={CLASIF[s.clasificacion].text}>· {CLASIF[s.clasificacion].label}</span>
+                      {s.fueraDeHorario && <span class="text-ember">· fuera de horario</span>}
+                    </div>
+                    <div class="mt-0.5 text-[13px] text-ink-100 whitespace-pre-line">{s.texto}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section class="rounded-2xl glass p-5">
+            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-violet"></span><h2 class="text-base font-medium">Reuniones</h2></div>
+            {d.reuniones.length === 0 ? <p class="mt-3 text-[13px] text-ink-300">Sin reuniones anotadas.</p> : (
+              <ul class="mt-3 divide-y divide-white/5">
+                {d.reuniones.map((r) => (
+                  <li class="py-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="text-[11px] font-mono text-ink-300">{fechaCorta(r.fecha)} · {r.minutos} min · corregible hasta {fechaCorta(r.plazoCorreccion)}</div>
+                      <button data-copiar="reunion" data-id={r.id} class="h-7 px-2.5 rounded-full bg-white/[.03] border border-white/10 text-[11.5px] text-ink-100 hover:bg-white/[.06] shrink-0">Copiar resumen</button>
+                    </div>
+                    {r.resumen && <div class="mt-1 text-[13px] text-ink-100 whitespace-pre-line">{r.resumen}</div>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        {enCurso && (
+          <div class="flex justify-end">
+            <button data-accion="cerrar" class="h-8 px-3 rounded-full text-[12.5px] text-ink-300 border border-white/10 hover:text-ink-50">Cerrar encargo (terminado)</button>
+          </div>
+        )}
+      </>
+    )}
+
+    {d && estado === 'descartado' && <p class="text-[13px] text-ink-300">Este encargo se descartó.</p>}
+  </div>
+
+  {datos && <script type="application/json" id="cotiza-datos" set:html={jsonEnScript(datos)} />}
+</Layout>
+
+<script>
+  import { NIVELES, type NivelConsultoria } from '../../../data/cotiza'
+  import { formatearMonto } from '../../../data/tarifario'
+  import { cotizar, horasDe, ErrorCotiza, type Entregable } from '../../../lib/cotiza/motor'
+  import type { ConfigEncargo } from '../../../lib/cotiza/encargo'
+  import type { SnapshotEncargo } from '../../../lib/cotiza/db'
+
+  type Datos = {
+    id: number
+    estado: string
+    config: ConfigEncargo | null
+    snapshot: SnapshotEncargo | null
+    nivelEncargo: NivelConsultoria | null
+    rondasPorEntregable: number[]
+    rutaEnlace: string | null
+    reuniones: { id: number; fecha: string; minutos: number; resumen: string; plazo: string }[]
+    adicionales: { id: number; descripcion: string; horas: number; monto: number; urgente: boolean }[]
+  }
+
+  // Cambios sin guardar en el editor: el navegador avisa antes de cerrar o
+  // recargar. Las acciones que recargan a propósito lo bajan antes.
+  let sucio = false
+
+  const nodo = document.getElementById('cotiza-datos')
+  const datos: Datos | null = nodo ? JSON.parse(nodo.textContent || 'null') : null
+
+  const api = async (cuerpo: Record<string, unknown>) => {
+    const res = await fetch(`/api/admin/cotiza/encargos/${datos!.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo),
+    })
+    const r = (await res.json().catch(() => null)) as { error?: string } | null
+    if (!res.ok) throw new Error(r?.error ?? `error ${res.status}`)
+    return r
+  }
+
+  const decir = (id: string, texto: string, ok: boolean) => {
+    const el = document.getElementById(id)
+    if (!el) return
+    el.textContent = texto
+    el.className = `${el.className.replace(/text-(lime|ember)/g, '')} ${ok ? 'text-lime' : 'text-ember'}`
+  }
+
+  // Fecha y hora de ahora en Bogotá, para precargar los formularios.
+  const partesBogota = () => {
+    const p = Object.fromEntries(
+      new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+        .formatToParts(new Date())
+        .map((x) => [x.type, x.value])
+    )
+    return { fecha: `${p.year}-${p.month}-${p.day}`, local: `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}` }
+  }
+
+  function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, hijos: (Node | string)[] = []): HTMLElementTagNameMap[K] {
+    const n = document.createElement(tag)
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v)
+    for (const h of hijos) n.append(h)
+    return n
+  }
+
+  // ── Acciones de estado ────────────────────────────────────────────────────
+  const CONFIRMAR: Record<string, string> = {
+    descartar: '¿Descartar este encargo?',
+    aceptar: '¿El cliente aceptó la propuesta? Desde aquí el precio queda pactado.',
+    reabrir: '¿Volver a borrador? Se borra lo congelado y tendrás que congelar de nuevo.',
+    cerrar: '¿Cerrar el encargo? Ya no se podrá anotar nada.',
+  }
+  document.querySelectorAll<HTMLButtonElement>('[data-accion]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const accion = b.dataset.accion!
+      if (CONFIRMAR[accion] && !confirm(CONFIRMAR[accion])) return
+      try {
+        await api({ accion })
+        sucio = false
+        location.reload()
+      } catch (err) {
+        alert((err as Error).message)
+      }
+    })
+  )
+
+  document.querySelectorAll<HTMLButtonElement>('[data-decidir]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      try {
+        await api({ accion: 'decidir', adicionalId: Number(b.dataset.id), decision: b.dataset.decidir })
+        location.reload()
+      } catch (err) {
+        alert((err as Error).message)
+      }
+    })
+  )
+
+  // ── Textos para copiar ────────────────────────────────────────────────────
+  const snap = datos?.snapshot
+  const fm = (v: number) => formatearMonto(v, snap?.cotizacion.moneda ?? 'COP')
+  const saludo = () => (snap?.cliente.nombre ? `Hola ${snap.cliente.nombre.split(' ')[0]}` : 'Hola')
+
+  function textoPropuesta(): string {
+    const c = snap!.cotizacion
+    const k = c.cupos
+    const nivel = datos!.nivelEncargo ?? 'documental'
+    const l = [
+      `${saludo()}, te comparto la propuesta para *${snap!.titulo}*.`,
+      '',
+      '*Incluye:*',
+      ...c.lineas.map((x) => `• ${x.nombre}`),
+    ]
+    if (snap!.exclusiones.length) l.push('', '*No incluye:*', ...snap!.exclusiones.map((x) => `• ${x}`))
+    if (snap!.supuestos.length) l.push('', '*Supuestos:*', ...snap!.supuestos.map((x) => `• ${x}`))
+    l.push(
+      '',
+      '*Dentro del precio:*',
+      `• ${k.reuniones} reuniones de ${k.minutosPorReunion} minutos`,
+      `• ${k.rondasDeCambios} rondas de cambios por entregable`,
+      `• Atención de ${k.horario.dias}, de ${k.horario.desde} a ${k.horario.hasta}, con respuesta en ${k.respuestaDiasHabiles} día hábil`,
+      `• Después de cada reunión te envío un resumen escrito; tienes ${k.diasParaCorregirResumen} día hábil para corregirlo y, si no, queda como lo acordado`,
+      '',
+      `Lo que se pida por fuera de esto lo cotizo aparte, a ${fm(c.tarifas.hora[nivel])} la hora, y lo hago solo con tu aprobación previa. Lo que se pida fuera del horario lleva un recargo del ${Math.round(k.recargoUrgencia * 100)} %.`,
+      '',
+      `*Valor: ${fm(c.precio)}*`,
+      ...c.pagos.map((p) => `• ${p.concepto}: ${fm(p.monto)} (${p.pct} %)`),
+      '',
+      `La propuesta es válida por ${c.validezDias} días.`
+    )
+    if (datos!.rutaEnlace) l.push('', `Aquí la puedes ver completa y aceptarla: ${location.origin}${datos!.rutaEnlace}`)
+    return l.join('\n')
+  }
+
+  function textoAdicional(id: number): string {
+    const a = datos!.adicionales.find((x) => x.id === id)!
+    return [
+      `${saludo()}, lo que me pides (${a.descripcion}) no está dentro de lo que acordamos.`,
+      `Te propongo hacerlo como adicional: ${a.horas} h, por ${fm(a.monto)}${a.urgente ? ', con el recargo por ser fuera del horario acordado' : ''}.`,
+      datos!.rutaEnlace
+        ? `Puedes aprobarlo o rechazarlo aquí: ${location.origin}${datos!.rutaEnlace}. Hasta tener tu aprobación no lo inicio.`
+        : '¿Me confirmas para empezar? Hasta tener tu aprobación no lo inicio.',
+    ].join('\n')
+  }
+
+  function textoReunion(id: number): string {
+    const r = datos!.reuniones.find((x) => x.id === id)!
+    const fecha = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+    return [
+      `Resumen de la reunión del ${fecha(r.fecha)} (${r.minutos} min):`,
+      '',
+      r.resumen || '(sin resumen)',
+      '',
+      `Si algo no quedó como lo hablamos, me avisas hasta el ${fecha(r.plazo)}. Si no, tomamos esto como lo acordado.`,
+    ].join('\n')
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-copiar]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const tipo = b.dataset.copiar
+      const texto = tipo === 'propuesta' ? textoPropuesta() : tipo === 'adicional' ? textoAdicional(Number(b.dataset.id)) : textoReunion(Number(b.dataset.id))
+      const antes = b.textContent
+      try {
+        await navigator.clipboard.writeText(texto)
+        b.textContent = 'Copiado'
+      } catch {
+        b.textContent = 'No se pudo copiar'
+      }
+      setTimeout(() => (b.textContent = antes), 1800)
+    })
+  )
+
+  // ── Enlace del cliente ────────────────────────────────────────────────────
+  const urlEnlace = document.getElementById('enlace-url') as HTMLInputElement | null
+  if (urlEnlace) urlEnlace.value = `${location.origin}${urlEnlace.dataset.ruta}`
+  document.getElementById('enlace-copiar')?.addEventListener('click', async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement
+    await navigator.clipboard.writeText(urlEnlace!.value).catch(() => {})
+    b.textContent = 'Copiado'
+    setTimeout(() => (b.textContent = 'Copiar enlace'), 1600)
+  })
+  document.getElementById('enlace-generar')?.addEventListener('click', async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement
+    if (b.dataset.rotar && !confirm('¿Generar un enlace nuevo? El anterior deja de funcionar en el acto.')) return
+    try {
+      await api({ accion: 'enlace' })
+      location.reload()
+    } catch (err) {
+      decir('enlace-estado', (err as Error).message, false)
+    }
+  })
+
+  // ── Anotar (pestañas y formularios) ───────────────────────────────────────
+  const pestanas = document.querySelectorAll<HTMLButtonElement>('[data-pestana]')
+  pestanas.forEach((p) =>
+    p.addEventListener('click', () => {
+      pestanas.forEach((x) => x.setAttribute('aria-selected', String(x === p)))
+      document.querySelectorAll<HTMLFormElement>('[data-form]').forEach((f) => f.classList.toggle('hidden', f.dataset.form !== p.dataset.pestana))
+    })
+  )
+
+  const ahora = partesBogota()
+  document.querySelectorAll<HTMLInputElement>('input[name="pedidoEl"]').forEach((i) => (i.value = ahora.local))
+  document.querySelectorAll<HTMLInputElement>('input[name="fecha"]').forEach((i) => {
+    i.value = ahora.fecha
+    i.max = ahora.fecha
+  })
+
+  const fSolicitud = document.querySelector<HTMLFormElement>('[data-form="solicitud"]')
+  const siAdicional = fSolicitud?.querySelector<HTMLElement>('[data-si-adicional]')
+  fSolicitud?.querySelector<HTMLSelectElement>('select[name="clasificacion"]')?.addEventListener('change', (ev) => {
+    siAdicional?.classList.toggle('hidden', (ev.target as HTMLSelectElement).value !== 'adicional')
+  })
+
+  const fRonda = document.querySelector<HTMLFormElement>('[data-form="ronda"]')
+  const actualizarRonda = () => {
+    if (!fRonda || !snap) return
+    const i = Number(fRonda.querySelector<HTMLSelectElement>('select[name="entregable"]')!.value)
+    const deMas = (datos!.rondasPorEntregable[i] ?? 0) + 1 > snap.cotizacion.cupos.rondasDeCambios
+    fRonda.querySelector('[data-si-ronda-extra]')?.classList.toggle('hidden', !deMas)
+  }
+  fRonda?.querySelector('select[name="entregable"]')?.addEventListener('change', actualizarRonda)
+  actualizarRonda()
+
+  document.querySelectorAll<HTMLFormElement>('[data-form]').forEach((f) =>
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault()
+      const fd = new FormData(f)
+      const cuerpo: Record<string, unknown> = { accion: f.dataset.form }
+      for (const [k, v] of fd.entries()) cuerpo[k] = typeof v === 'string' ? v : ''
+      for (const k of ['horas', 'minutos', 'entregable']) if (cuerpo[k] !== undefined && cuerpo[k] !== '') cuerpo[k] = Number(cuerpo[k])
+      cuerpo.urgente = fd.get('urgente') === 'on'
+      const boton = f.querySelector('button')
+      if (boton) boton.disabled = true
+      try {
+        const r = (await api(cuerpo)) as { adicional?: { monto: number } | null }
+        decir('anotar-estado', r?.adicional ? `Anotado. Nació un adicional por ${fm(r.adicional.monto)}: queda por decidir.` : 'Anotado.', true)
+        setTimeout(() => location.reload(), r?.adicional ? 1600 : 500)
+      } catch (err) {
+        decir('anotar-estado', (err as Error).message, false)
+        if (boton) boton.disabled = false
+      }
+    })
+  )
+
+  // ── IA ────────────────────────────────────────────────────────────────────
+  const ia = async (cuerpo: Record<string, unknown>) => {
+    const res = await fetch(`/api/admin/cotiza/encargos/${datos!.id}/ia`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo),
+    })
+    const r = (await res.json().catch(() => null)) as (Record<string, unknown> & { error?: string; costoUsd?: number }) | null
+    if (!res.ok) throw new Error(r?.error ?? `error ${res.status}`)
+    return r!
+  }
+  const centavos = (usd?: number) => (typeof usd === 'number' ? ` · US$${usd.toFixed(3).replace('.', ',')}` : '')
+
+  const nivelNombre = (id: string) => NIVELES.find((n) => n.id === id)?.nombre ?? id
+  const CLASIF_TXT: Record<string, string> = { dentro: 'Dentro del alcance', cupo: 'Usa un cupo', adicional: 'Adicional' }
+
+  document.getElementById('ia-clasificar')?.addEventListener('click', async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement
+    const f = document.querySelector<HTMLFormElement>('[data-form="solicitud"]')!
+    const caja = document.getElementById('ia-sugerencia')!
+    const textoPedido = f.querySelector<HTMLTextAreaElement>('textarea[name="texto"]')!.value
+    b.disabled = true
+    caja.classList.remove('hidden')
+    caja.replaceChildren(el('p', { class: 'text-ink-300' }, ['Leyendo el pedido contra el alcance...']))
+    try {
+      const r = (await ia({ modo: 'clasificar', texto: textoPedido, pedidoEl: f.querySelector<HTMLInputElement>('input[name="pedidoEl"]')!.value })) as {
+        clasificacion: string; razon: string; citaAlcance: string; horas: number; nivel: string; respuesta: string; respuestaDescartada: boolean; estimado: number | null; urgente: boolean; costoUsd: number
+      }
+      // Llena el formulario; anotar sigue siendo un clic de Mike.
+      const sel = f.querySelector<HTMLSelectElement>('select[name="clasificacion"]')!
+      sel.value = r.clasificacion
+      sel.dispatchEvent(new Event('change'))
+      if (r.clasificacion === 'adicional') {
+        f.querySelector<HTMLInputElement>('input[name="horas"]')!.value = String(r.horas)
+        f.querySelector<HTMLSelectElement>('select[name="nivel"]')!.value = r.nivel
+      }
+      const hijos: Node[] = [
+        el('p', {}, [el('span', { class: 'text-violet font-medium' }, [CLASIF_TXT[r.clasificacion] ?? r.clasificacion]), r.razon ? `. ${r.razon}` : '']),
+      ]
+      if (r.citaAlcance) hijos.push(el('p', { class: 'text-ink-300' }, [`En el alcance: "${r.citaAlcance}"`]))
+      if (r.estimado !== null) hijos.push(el('p', { class: 'text-ink-100' }, [`Estimado: ${r.horas} h ${nivelNombre(r.nivel)} = ${fm(r.estimado)}${r.urgente ? ' (con recargo por fuera de horario)' : ''}. Puedes cambiar las horas antes de anotar.`]))
+      if (r.respuesta) {
+        const copiar = el('button', { type: 'button', class: 'h-7 px-2.5 rounded-full bg-white/[.04] border border-white/10 text-[11.5px] text-ink-100' }, ['Copiar respuesta'])
+        const mensaje = r.estimado !== null ? `${r.respuesta}\n\nValor del adicional: ${fm(r.estimado)}.` : r.respuesta
+        copiar.addEventListener('click', async () => {
+          await navigator.clipboard.writeText(mensaje).catch(() => {})
+          copiar.textContent = 'Copiado'
+        })
+        hijos.push(el('p', { class: 'whitespace-pre-line text-ink-100 pt-1' }, [mensaje]), copiar)
+      } else if (r.respuestaDescartada) {
+        hijos.push(el('p', { class: 'text-ember' }, ['La respuesta sugerida traía una cifra que no salía del pedido y se descartó.']))
+      }
+      hijos.push(el('p', { class: 'text-[11px] font-mono text-ink-400' }, [`IA${centavos(r.costoUsd)}`]))
+      caja.replaceChildren(...hijos)
+    } catch (err) {
+      caja.replaceChildren(el('p', { class: 'text-ember' }, [(err as Error).message]))
+    } finally {
+      b.disabled = false
+    }
+  })
+
+  let resumenAnterior: string | null = null
+  document.getElementById('ia-resumen')?.addEventListener('click', async (ev) => {
+    const b = ev.currentTarget as HTMLButtonElement
+    const area = document.querySelector<HTMLTextAreaElement>('[data-form="reunion"] textarea[name="resumen"]')!
+    b.disabled = true
+    decir('anotar-estado', 'Ordenando las notas...', true)
+    try {
+      const r = (await ia({ modo: 'resumen', notas: area.value })) as { resumen: string; descartadas: number; costoUsd: number }
+      resumenAnterior = area.value
+      area.value = r.resumen
+      document.getElementById('ia-resumen-deshacer')?.classList.remove('hidden')
+      decir('anotar-estado', `Listo, revísalo antes de anotar${r.descartadas ? ` (se quitaron ${r.descartadas} líneas con cifras que no estaban en tus notas)` : ''}${centavos(r.costoUsd)}`, true)
+    } catch (err) {
+      decir('anotar-estado', (err as Error).message, false)
+    } finally {
+      b.disabled = false
+    }
+  })
+  document.getElementById('ia-resumen-deshacer')?.addEventListener('click', (ev) => {
+    const area = document.querySelector<HTMLTextAreaElement>('[data-form="reunion"] textarea[name="resumen"]')!
+    if (resumenAnterior !== null) area.value = resumenAnterior
+    ;(ev.currentTarget as HTMLElement).classList.add('hidden')
+  })
+
+  // ── Editor (borrador) ─────────────────────────────────────────────────────
+  if (datos?.config) {
+    const config: ConfigEncargo = datos.config
+    const lista = document.getElementById('entregables')!
+    const resumen = document.getElementById('resumen')!
+
+    const campo = (ruta: string) => document.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(`[data-campo="${ruta}"]`)!
+    const lineas = (t: string) => t.split('\n').map((x) => x.trim()).filter(Boolean)
+
+    campo('titulo').value = config.titulo
+    campo('cliente.nombre').value = config.cliente.nombre
+    campo('cliente.empresa').value = config.cliente.empresa
+    campo('cliente.contacto').value = config.cliente.contacto
+    campo('moneda').value = config.moneda
+    campo('exclusiones').value = config.exclusiones.join('\n')
+    campo('supuestos').value = config.supuestos.join('\n')
+    campo('notas').value = config.notas
+
+    const leerCampos = () => {
+      config.titulo = campo('titulo').value.trim()
+      config.cliente = { nombre: campo('cliente.nombre').value.trim(), empresa: campo('cliente.empresa').value.trim(), contacto: campo('cliente.contacto').value.trim() }
+      config.moneda = campo('moneda').value === 'USD' ? 'USD' : 'COP'
+      config.exclusiones = lineas(campo('exclusiones').value)
+      config.supuestos = lineas(campo('supuestos').value)
+      config.notas = campo('notas').value
+    }
+
+    const NUEVO: Record<Entregable['tipo'], () => Entregable> = {
+      presentacion: () => ({ tipo: 'presentacion', nombre: '', diapositivas: 10, anexos: false, documentosFuente: 2, cantidad: 1 }),
+      revision: () => ({ tipo: 'revision', nombre: '', documentos: 3, paginasPorDocumento: 20 }),
+      libre: () => ({ tipo: 'libre', nombre: '', nivel: datos.nivelEncargo ?? 'operativa', horas: 2 }),
+    }
+    const TITULO: Record<Entregable['tipo'], string> = { presentacion: 'Presentación', revision: 'Revisión de documentos', libre: 'Otro trabajo' }
+
+    const numeroCampo = (etiqueta: string, valor: number, alCambiar: (v: number) => void, attrs: Record<string, string> = {}) => {
+      const input = el('input', { type: 'number', class: 'input-base w-full rounded-lg px-2.5 py-1.5 text-[13px]', value: String(valor), ...attrs })
+      input.addEventListener('input', () => {
+        alCambiar(input.value === '' ? Number.NaN : Number(input.value))
+        recalcular()
+      })
+      return el('label', { class: 'block' }, [el('span', { class: 'block text-[10.5px] font-mono uppercase tracking-wider text-ink-300 mb-1' }, [etiqueta]), input])
+    }
+
+    function pintarEntregables() {
+      lista.replaceChildren()
+      config.entregables.forEach((e, i) => {
+        const nombre = el('input', { class: 'input-base w-full rounded-lg px-2.5 py-1.5 text-[13px]', placeholder: 'Nombre del entregable', value: e.nombre })
+        nombre.addEventListener('input', () => {
+          e.nombre = nombre.value
+          recalcular()
+        })
+        const quitar = el('button', { type: 'button', class: 'text-[12px] text-ink-300 hover:text-ember shrink-0', 'aria-label': 'Quitar entregable' }, ['Quitar'])
+        quitar.addEventListener('click', () => {
+          config.entregables.splice(i, 1)
+          pintarEntregables()
+          recalcular()
+        })
+        const campos = el('div', { class: 'mt-2 grid gap-2 grid-cols-2 sm:grid-cols-4' })
+        if (e.tipo === 'presentacion') {
+          campos.append(
+            numeroCampo('Diapositivas', e.diapositivas, (v) => (e.diapositivas = v), { min: '1', max: '500' }),
+            numeroCampo('Documentos de base', e.documentosFuente, (v) => (e.documentosFuente = v), { min: '0', max: '200' }),
+            numeroCampo('Cantidad', e.cantidad ?? 1, (v) => (e.cantidad = v), { min: '1', max: '50' })
+          )
+          const anexos = el('input', { type: 'checkbox', class: 'accent-cyan' })
+          anexos.checked = e.anexos
+          anexos.addEventListener('change', () => {
+            e.anexos = anexos.checked
+            recalcular()
+          })
+          campos.append(el('label', { class: 'flex items-end gap-2 pb-2 text-[12.5px] text-ink-100' }, [anexos, 'Con anexos']))
+        } else if (e.tipo === 'revision') {
+          campos.append(
+            numeroCampo('Documentos', e.documentos, (v) => (e.documentos = v), { min: '1', max: '200' }),
+            numeroCampo('Páginas c/u', e.paginasPorDocumento, (v) => (e.paginasPorDocumento = v), { min: '1', max: '2000' })
+          )
+        } else {
+          const nivel = el('select', { class: 'input-base w-full rounded-lg px-2.5 py-1.5 text-[13px]' }, NIVELES.map((n) => el('option', { value: n.id }, [n.nombre])))
+          nivel.value = e.nivel
+          nivel.addEventListener('change', () => {
+            e.nivel = nivel.value as NivelConsultoria
+            recalcular()
+          })
+          campos.append(
+            el('label', { class: 'block col-span-2' }, [el('span', { class: 'block text-[10.5px] font-mono uppercase tracking-wider text-ink-300 mb-1' }, ['Nivel']), nivel]),
+            numeroCampo('Horas', e.horas, (v) => (e.horas = v), { min: '0.5', max: '200', step: '0.5' })
+          )
+        }
+        const regla = el('p', { class: 'mt-2 text-[11.5px] text-ink-300', 'data-regla': String(i) })
+        lista.append(
+          el('div', { class: 'rounded-xl bg-white/[.02] border border-white/5 p-3' }, [
+            el('div', { class: 'flex items-center justify-between gap-3' }, [el('span', { class: 'text-[10.5px] font-mono uppercase tracking-wider text-cyan' }, [TITULO[e.tipo]]), quitar]),
+            el('div', { class: 'mt-2' }, [nombre]),
+            campos,
+            regla,
+          ])
+        )
+      })
+      if (!config.entregables.length) lista.append(el('p', { class: 'text-[13px] text-ink-300' }, ['Agrega el primer entregable con los botones de abajo.']))
+    }
+
+    let listo = false
+    window.addEventListener('beforeunload', (ev) => {
+      if (sucio) ev.preventDefault()
+    })
+
+    function recalcular() {
+      if (listo) sucio = true
+      leerCampos()
+      config.entregables.forEach((e, i) => {
+        const p = lista.querySelector<HTMLElement>(`[data-regla="${i}"]`)
+        if (!p) return
+        try {
+          const h = horasDe(e)
+          p.textContent = `${h.horas} h · ${h.regla}`
+          p.className = 'mt-2 text-[11.5px] text-ink-300'
+        } catch (err) {
+          p.textContent = (err as Error).message
+          p.className = 'mt-2 text-[11.5px] text-ember'
+        }
+      })
+      resumen.replaceChildren()
+      if (!config.entregables.length) {
+        resumen.append(el('p', { class: 'text-ink-300' }, ['Sin entregables todavía.']))
+        return
+      }
+      try {
+        const entregables = config.entregables.map((e, i) => ({ ...e, nombre: e.nombre.trim() || `Entregable ${i + 1}` }))
+        const c = cotizar({ moneda: config.moneda, entregables })
+        const f = (v: number) => formatearMonto(Math.round(v), c.moneda)
+        const fila = (a: string, b: string, clase = 'text-ink-300') => el('div', { class: 'flex justify-between gap-3' }, [el('span', { class: clase }, [a]), el('span', { class: 'font-mono text-ink-100' }, [b])])
+        resumen.append(
+          fila(`Subtotal (${c.horas} h)`, f(c.subtotal)),
+          fila(`Coordinación (${Math.round(c.reglas.colchon * 100)} %)`, f(c.colchon)),
+          el('div', { class: 'flex justify-between gap-3 pt-2 border-t border-white/5' }, [el('span', { class: 'text-ink-50' }, ['Precio']), el('span', { class: 'font-mono text-[17px] text-ink-50' }, [f(c.precio)])]),
+          ...c.pagos.map((p) => fila(`${p.concepto} (${p.pct} %)`, f(p.monto)))
+        )
+      } catch (err) {
+        resumen.append(el('p', { class: 'text-ember text-[12.5px]' }, [err instanceof ErrorCotiza ? err.message : 'No se pudo calcular.']))
+      }
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('[data-agregar]').forEach((b) =>
+      b.addEventListener('click', () => {
+        config.entregables.push(NUEVO[b.dataset.agregar as Entregable['tipo']]())
+        pintarEntregables()
+        recalcular()
+        lista.querySelectorAll<HTMLInputElement>('input[placeholder="Nombre del entregable"]').item(config.entregables.length - 1)?.focus()
+      })
+    )
+    document.querySelectorAll('[data-campo]').forEach((n) => n.addEventListener('input', recalcular))
+
+    const guardar = async () => {
+      leerCampos()
+      await api({ accion: 'guardar', config })
+    }
+    document.getElementById('guardar')!.addEventListener('click', async () => {
+      try {
+        await guardar()
+        sucio = false
+        decir('editor-estado', 'Guardado.', true)
+      } catch (err) {
+        decir('editor-estado', (err as Error).message, false)
+      }
+    })
+    document.getElementById('congelar')!.addEventListener('click', async () => {
+      if (!confirm('¿Congelar la propuesta? El precio queda fijo y ya no se edita.')) return
+      try {
+        await guardar()
+        sucio = false
+        await api({ accion: 'congelar' })
+        location.reload()
+      } catch (err) {
+        decir('editor-estado', (err as Error).message, false)
+      }
+    })
+
+    document.getElementById('ia-alcance')?.addEventListener('click', async (ev) => {
+      const b = ev.currentTarget as HTMLButtonElement
+      const pedido = (document.getElementById('ia-pedido') as HTMLTextAreaElement).value
+      b.disabled = true
+      decir('ia-alcance-estado', 'Leyendo el pedido...', true)
+      try {
+        // Lo que Mike ya escribió se guarda primero: la IA suma sobre el borrador guardado.
+        await guardar()
+        const r = (await ia({ modo: 'alcance', pedido })) as { agregados: number; preguntas: string[]; citasDescartadas: string[]; costoUsd: number }
+        sucio = false
+        decir('ia-alcance-estado', `Agregué ${r.agregados} entregable(s) y ${r.preguntas.length} pregunta(s) en las notas privadas${centavos(r.costoUsd)}. Recargando...`, true)
+        setTimeout(() => location.reload(), 1400)
+      } catch (err) {
+        decir('ia-alcance-estado', (err as Error).message, false)
+        b.disabled = false
+      }
+    })
+
+    pintarEntregables()
+    recalcular()
+    listo = true
+  }
+</script>

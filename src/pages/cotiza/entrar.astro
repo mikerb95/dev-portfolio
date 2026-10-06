@@ -1,0 +1,132 @@
+---
+import '../../styles/global.css'
+import { getSession } from 'auth-astro/server'
+import { isAllowedLogin } from '../../lib/auth'
+import { serverEnv } from '../../lib/env'
+import { COTIZA_COOKIE } from '../../lib/cotiza/acceso'
+import { accesoCotizaVigente, leerPin } from '../../lib/cotiza/pin-db'
+
+// Entrada a Cotiza (RF-220). Si ya hay con qué entrar, no se pregunta nada.
+const session = await getSession(Astro.request)
+const login = (session?.user as { login?: string } | undefined)?.login
+if (session && isAllowedLogin(login)) return Astro.redirect('/admin/cotiza')
+if (await accesoCotizaVigente(Astro.cookies.get(COTIZA_COOKIE)?.value, serverEnv('AUTH_SECRET'))) {
+  return Astro.redirect('/admin/cotiza')
+}
+
+// Si no hay PIN configurado, el campo no se pinta: teclear un PIN que va a
+// fallar siempre es peor que leer que hay que entrar con GitHub.
+let pinDisponible = false
+try {
+  pinDisponible = (await leerPin()) !== null
+} catch {
+  pinDisponible = false
+}
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Cotiza · CodeByMike</title>
+  </head>
+  <body class="grain bg-ink-950 text-ink-50 min-h-screen flex items-center justify-center px-5">
+    <main class="w-full max-w-sm">
+      <div class="font-mono text-[12px] tracking-[.2em] uppercase text-ink-200">
+        Code<span class="text-cyan">By</span>Mike
+      </div>
+      <h1 class="mt-3 text-3xl font-medium tracking-tight">Cotiza</h1>
+      <p class="mt-2 text-[14px] text-ink-200">Consultoría en logística, comercio exterior y operaciones.</p>
+
+      {pinDisponible ? (
+        <form id="form-pin" class="mt-8 rounded-2xl glass p-5" novalidate>
+          <label for="pin" class="block text-[11px] font-mono uppercase tracking-[.2em] text-ink-300">PIN</label>
+          <input
+            id="pin"
+            name="pin"
+            type="password"
+            inputmode="numeric"
+            autocomplete="off"
+            pattern="[0-9]{4}"
+            maxlength="4"
+            required
+            autofocus
+            class="input-base mt-2 w-full rounded-xl px-4 py-3 text-center font-mono text-3xl tracking-[.6em]"
+            aria-describedby="pin-estado"
+          />
+          <p id="pin-estado" class="mt-3 min-h-[1.25rem] text-[13px] text-ember" role="status" aria-live="polite"></p>
+          <button
+            type="submit"
+            class="mt-2 h-11 w-full rounded-full bg-cyan text-ink-950 text-[14px] font-medium hover:bg-cyan-glow transition-colors disabled:opacity-50"
+          >
+            Entrar
+          </button>
+        </form>
+      ) : (
+        <p class="mt-8 rounded-2xl glass p-5 text-[13px] text-ink-100">
+          El acceso con PIN no está disponible. Entra con tu cuenta.
+        </p>
+      )}
+
+      <a
+        href="/login?callbackUrl=%2Fadmin%2Fcotiza"
+        class="mt-4 inline-flex text-[13px] text-ink-200 hover:text-cyan transition-colors"
+      >
+        Entrar con GitHub o llave de seguridad
+      </a>
+    </main>
+
+    <script>
+      const form = document.getElementById('form-pin') as HTMLFormElement | null
+      const input = document.getElementById('pin') as HTMLInputElement | null
+      const estado = document.getElementById('pin-estado')
+
+      let enviando = false
+      async function enviar() {
+        if (!form || !input || !estado || enviando) return
+        const pin = input.value.trim()
+        if (!/^[0-9]{4}$/.test(pin)) {
+          estado.textContent = 'El PIN son 4 dígitos.'
+          return
+        }
+        enviando = true
+        const boton = form.querySelector('button')
+        if (boton) boton.disabled = true
+        estado.textContent = ''
+        try {
+          const res = await fetch('/api/cotiza/pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin }),
+          })
+          if (res.ok) {
+            location.assign('/admin/cotiza')
+            return
+          }
+          const cuerpo = (await res.json().catch(() => null)) as { error?: string } | null
+          estado.textContent = cuerpo?.error ?? 'No se pudo entrar.'
+          input.value = ''
+          input.focus()
+        } catch {
+          estado.textContent = 'Sin conexión. Intenta de nuevo.'
+        } finally {
+          enviando = false
+          if (boton) boton.disabled = false
+        }
+      }
+
+      form?.addEventListener('submit', (e) => {
+        e.preventDefault()
+        void enviar()
+      })
+      // Con el cuarto dígito se envía solo: es un PIN, no una contraseña larga.
+      input?.addEventListener('input', () => {
+        if (!input) return
+        input.value = input.value.replace(/[^0-9]/g, '').slice(0, 4)
+        if (input.value.length === 4) void enviar()
+      })
+    </script>
+  </body>
+</html>

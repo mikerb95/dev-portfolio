@@ -1,0 +1,6 @@
+---
+// Atajo fácil de teclear desde el celular. La puerta la decide el middleware
+// en /admin/cotiza: con sesión entra directo, con cookie de PIN entra a la
+// vista aislada y sin nada rebota a /cotiza/entrar.
+return Astro.redirect('/admin/cotiza')
+---

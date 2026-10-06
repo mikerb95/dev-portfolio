@@ -242,9 +242,14 @@ del valor.
 
 - ✅ **Fase 0** (23 sep 2026): auditoría del alcance actual y de la portabilidad
   módulo por módulo (§2), y este plan.
-- **Fase 1**: arreglar el `waitUntil` del sensor (§2). Va primero y sola, porque
+- ✅ **Fase 1** (6 oct 2026): arreglar el `waitUntil` del sensor (§2). Va primero y sola, porque
   es lo único que cambia comportamiento en producción hoy y conviene poder
-  atribuirle cualquier efecto sin ruido de otros cambios.
+  atribuirle cualquier efecto sin ruido de otros cambios. Lo que salió al
+  hacerla: el adapter `@astrojs/vercel` 11 no pone `waitUntil` en el contexto
+  del middleware, así que no había nada que "pasar". Se usa el de
+  `@vercel/functions` (dependencia directa, ~3.4.x) como default dentro de
+  `sensor.ts`, lo que cubre también `recordEnforcementEvent` sin tocar las
+  llamadas del middleware. Test: `tests/security-sensor.test.ts`.
 - **Fase 2**: `instrumentacion/sensor.ts` con su test de contrato contra
   `classify.ts`. Archivo nuevo que no importa nadie de `src/`: no puede afectar
   al build ni al runtime de este sitio.

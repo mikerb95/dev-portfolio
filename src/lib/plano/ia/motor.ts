@@ -22,13 +22,14 @@ export const MODELO = 'claude-opus-5-5'
 export const TARIFA = { entrada: 4, salida: 20, cacheLectura: 0.2, cacheEscritura: 5 } as const
 
 export class IaNoDisponible extends Error {
-  constructor(public motivo: 'sin_clave' | 'rechazo' | 'formato' | 'api') {
+  constructor(public motivo: 'sin_clave' | 'rechazo' | 'formato' | 'api' | 'solicitud') {
     super(
       {
         sin_clave: 'Falta ANTHROPIC_API_KEY en el entorno.',
         rechazo: 'Claude no quiso procesar este contenido.',
         formato: 'La respuesta de Claude no tuvo el formato esperado. Inténtalo otra vez.',
         api: 'La API de Claude no respondió. Inténtalo en un momento.',
+        solicitud: 'La API de Claude rechazó la solicitud. Si es por el límite de uso, hay que revisar la cuenta de Anthropic.',
       }[motivo],
     )
     this.name = 'IaNoDisponible'
@@ -81,6 +82,9 @@ export async function pedirJson<T>(opts: { system: string; usuario: string; esqu
       messages: [{ role: 'user', content: opts.usuario }],
     })
   } catch (e) {
+    // Un 400 no se arregla reintentando (el caso real del 6 oct 2026: la cuenta
+    // llegó a su límite de uso). Decir "no respondió" mandaba a reintentar.
+    if (e instanceof Anthropic.BadRequestError) throw new IaNoDisponible('solicitud')
     if (e instanceof Anthropic.APIError) throw new IaNoDisponible('api')
     throw e
   }

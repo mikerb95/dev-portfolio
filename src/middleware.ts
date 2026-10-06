@@ -7,6 +7,8 @@ import {
   verificarAcceso,
 } from './lib/sustentacion/acceso'
 import { serverEnv } from './lib/env'
+import { COTIZA_COOKIE, RUTA_ENTRADA as COTIZA_ENTRADA, esRutaDeCotiza } from './lib/cotiza/acceso'
+import { accesoCotizaVigente } from './lib/cotiza/pin-db'
 import { maybeChaos } from './lib/chaos'
 import { clientIp, resolveDeviceSessionId } from './lib/device-info'
 import { recordSession } from './lib/device-sessions'
@@ -18,6 +20,7 @@ import {
   isAuthPath,
   isCobroLinkPath,
   isPropuestaPath,
+  isAcuerdoPath,
   isFramablePath,
   isPinPath,
   isTrainingAccessPath,
@@ -305,6 +308,29 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
     }
 
+    // Enlace del cliente de Cotiza: lo abre una persona, acepta una vez y
+    // decide unos pocos adicionales. 60/min no lo roza nadie de buena fe.
+    if (isAcuerdoPath(canonicalPath)) {
+      const r = await enforceLimit(`acuerdo:${ip}`, { limit: 60, windowMs: 60_000, deferUntil: 0.5 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'enumeration',
+          severity: 'medium',
+          ruleId: 'ratelimit.acuerdo',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers: reqHeaders,
+        })
+        return new Response(JSON.stringify({ error: 'demasiadas solicitudes, espera un minuto' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+
     // Canje del código de grupo del banco de capacitación. Más estrecho que el
     // de cobros porque nadie canjea dos veces: quien acaba de salir de la
     // capacitación teclea su código una vez y ya. Diez intentos por minuto
@@ -472,7 +498,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // caché en la CDN), pero con una auth completamente distinta - ni comparte
   // cookie con el admin ni pasa por Auth.js. Ver docs/plan-portal-clientes.md.
   const isPortal = isPortalPath(canonicalPath)
-  const isPrivate = isAdmin || isPrivateDeck || isPortal || isEscenario
+
+  // La entrada con PIN de Cotiza (`/cotiza`, `/cotiza/entrar`, `/api/cotiza/*`)
+  // y el enlace del cliente (`/acuerdo/<token>`) son públicos para el gate (son
+  // puertas en sí mismas) pero privados para los headers: noindex y fuera de la
+  // caché de la CDN, que serviría a cualquiera una propuesta con precios.
+  const isCotizaPuerta =
+    canonicalPath === '/cotiza' ||
+    canonicalPath.startsWith('/cotiza/') ||
+    canonicalPath.startsWith('/api/cotiza/') ||
+    isAcuerdoPath(canonicalPath)
+  const isPrivate = isAdmin || isPrivateDeck || isPortal || isEscenario || isCotizaPuerta
 
   let portalDemoMode = false
   let portalRespaldoMode = false
@@ -620,7 +656,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if ((isAdmin || isPrivateDeck) && !accesoPorContrasena) {
     const session = await getSession(context.request)
 
-    if (!session) {
+    // Cotiza con PIN (RF-220). Solo se mira si no hay sesión: con la sesión
+    // admin abierta se entra directo y con el panel completo. La cookie solo
+    // vale en las rutas de `esRutaDeCotiza`; en cualquier otra de /admin ni se
+    // consulta, así que ahí este navegador es uno sin sesión y va a /login.
+    // `accesoCotizaVigente` falla cerrada: si la base no responde, no abre.
+    const cotizaPorPin =
+      !session &&
+      esRutaDeCotiza(canonicalPath) &&
+      (await accesoCotizaVigente(context.cookies.get(COTIZA_COOKIE)?.value, serverEnv('AUTH_SECRET')))
+
+    if (cotizaPorPin) {
+      context.locals.cotizaPin = true
+    } else if (!session) {
       // Sin sesión, el pase de demo es la única alternativa: datos ficticios y
       // solo lectura. Nunca aplica al deck privado ni si ya hay sesión real.
       const demo = isAdmin ? resolveDemoPass(context, pathname, method) : false
@@ -637,6 +685,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
         const vuelveASiMisma =
           isPrivateDeck || (esRutaDeSustentacion(canonicalPath) && !pathname.startsWith('/api/'))
         const callbackUrl = vuelveASiMisma ? encodeURIComponent(canonicalPath) : '%2Fentrar'
+        // Cotiza tiene su propia puerta (PIN o GitHub). Sus APIs reciben un 401
+        // y no un redirect: las llama un `fetch`, que no tiene adónde volver.
+        if (esRutaDeCotiza(canonicalPath)) {
+          if (pathname.startsWith('/api/')) {
+            return new Response(JSON.stringify({ error: 'sesión vencida, vuelve a entrar' }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+            })
+          }
+          return context.redirect(COTIZA_ENTRADA)
+        }
         return context.redirect(`/login?callbackUrl=${callbackUrl}`)
       }
       demoMode = true
