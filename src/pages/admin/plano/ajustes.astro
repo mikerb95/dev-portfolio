@@ -1,0 +1,275 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { jsonEnScript } from '../../../lib/json-script'
+import { cargarReglas, hoyCO } from '../../../lib/plano/db'
+import { REGLAS_DEFAULT } from '../../../data/plano'
+
+// Reglas de pago de Plano, editables (docs/plan-plano.md). Las de fábrica son
+// las que Mike aprobó el 6 oct 2026; esto las sobrescribe en app_settings.
+
+const reglas = await cargarReglas()
+const isDemo = Astro.locals.demo === true
+---
+
+<AdminLayout title="Plano · reglas de pago">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <a href="/admin/plano" class="text-[12px] text-ink-300 hover:text-cyan transition-colors">← Propuestas</a>
+    <span id="aj-estado" class="text-[11px] font-mono text-ink-300"></span>
+  </div>
+
+  <div id="ajustes" class="aj grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px] items-start">
+    <div class="space-y-4">
+      <section class="aj-card">
+        <h2>Pagos por entregas, según el monto</h2>
+        <p class="aj-sub">Cada tramo aplica hasta su techo (inclusive). El primer pago es siempre al firmar y los porcentajes suman 100.</p>
+        <div id="aj-tramos" class="space-y-3 mt-3"></div>
+      </section>
+
+      <section class="aj-card">
+        <h2>Cuotas con recargo</h2>
+        <label class="aj-check"><input type="checkbox" data-r="cuotas.activas" /> Ofrecer cuotas</label>
+        <div class="aj-campos mt-3">
+          <label><span>Recargo mensual sobre saldo (%)</span><input type="number" step="0.1" min="0" max="10" data-r="cuotas.recargoMensualPct" data-n /></label>
+          <label><span>Máximo de cuotas</span><input type="number" min="1" max="24" data-r="cuotas.maxCuotas" data-n /></label>
+          <label><span>Anticipo al firmar (%)</span><input type="number" min="0" max="99" data-r="cuotas.anticipoPct" data-n /></label>
+          <label><span>Desde (COP, más de)</span><input type="number" step="50000" min="0" data-r="cuotas.minimo.COP" data-n /></label>
+          <label><span>Desde (USD, más de)</span><input type="number" step="50" min="0" data-r="cuotas.minimo.USD" data-n /></label>
+          <label><span>Tasa de usura vigente (% efectivo anual)</span><input type="number" step="0.01" min="0" max="99" data-r="usuraEAPct" data-n data-nulo placeholder="La publica la Superfinanciera" /></label>
+        </div>
+        <p id="aj-usura" class="aj-sub mt-2"></p>
+      </section>
+
+      <section class="aj-card">
+        <h2>Fechas y tiempos</h2>
+        <div class="aj-campos">
+          <label><span>Días hábiles entre la entrega y el vencimiento</span><input type="number" min="0" max="30" data-r="diasHabilesVencimiento" data-n /></label>
+          <label><span>Horas por semana para un proyecto</span><input type="number" min="1" max="60" data-r="horasSemana" data-n /></label>
+          <label><span>Capacidad total por semana (h)</span><input type="number" min="1" max="80" data-r="capacidadSemana" data-n /></label>
+          <label><span>Descuento por contado (%)</span><input type="number" step="0.5" min="0" max="30" data-r="descuentoContadoPct" data-n /></label>
+        </div>
+        <label class="aj-check mt-3"><input type="checkbox" data-r="quincenaPersonas" /> Si paga una persona, correr el vencimiento a la quincena</label>
+      </section>
+    </div>
+
+    <aside class="aj-card xl:sticky xl:top-0">
+      <h2>Así queda</h2>
+      <label class="aj-campos-1"><span>Proyecto de ejemplo</span>
+        <input id="aj-monto" type="range" min="500000" max="15000000" step="50000" value="4500000" />
+      </label>
+      <div id="aj-preview" class="mt-3"></div>
+      <ul id="aj-errores" class="mt-3 space-y-1 text-[12.5px] text-ember"></ul>
+      {!isDemo && (
+        <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/[.06]">
+          <button id="aj-guardar" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors disabled:opacity-40">Guardar reglas</button>
+          <button id="aj-restaurar" class="h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-[13px] text-ink-100 hover:bg-white/[.06]">Volver a las de fábrica</button>
+        </div>
+      )}
+    </aside>
+  </div>
+
+  <script is:inline type="application/json" id="aj-datos" set:html={jsonEnScript({ reglas, defecto: REGLAS_DEFAULT, hoy: hoyCO(), demo: isDemo })}></script>
+</AdminLayout>
+
+<script>
+  import { HITOS, type HitoId, type ReglasPlano } from '../../../data/plano'
+  import { formatearMonto } from '../../../data/tarifario'
+  import { armarPlan, estadoUsura, validarReglas } from '../../../lib/plano/pagos'
+  import { fechaCorta, sumarHabiles } from '../../../lib/plano/fechas'
+
+  const datos = JSON.parse(document.getElementById('aj-datos')!.textContent!) as { reglas: ReglasPlano; defecto: ReglasPlano; hoy: string; demo: boolean }
+  let r: ReglasPlano = structuredClone(datos.reglas)
+  const raiz = document.getElementById('ajustes')!
+  const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
+  const leer = (o: unknown, ruta: string) => ruta.split('.').reduce<unknown>((x, k) => (x as Record<string, unknown>)?.[k], o)
+  function escribir(o: Record<string, unknown>, ruta: string, v: unknown) {
+    const ps = ruta.split('.')
+    let x = o
+    for (const k of ps.slice(0, -1)) x = x[k] as Record<string, unknown>
+    x[ps[ps.length - 1]] = v
+  }
+
+  function rellenar() {
+    for (const el of raiz.querySelectorAll<HTMLInputElement>('[data-r]')) {
+      const v = leer(r, el.dataset.r!)
+      if (el.type === 'checkbox') el.checked = Boolean(v)
+      else el.value = v == null ? '' : String(v)
+      if (datos.demo) el.disabled = true
+    }
+  }
+
+  function pintarTramos() {
+    const el = document.getElementById('aj-tramos')!
+    el.innerHTML = r.tramos
+      .map(
+        (t, i) => `<div class="aj-tramo">
+        <div class="aj-tramo__cab">
+          <b>Tramo ${i + 1}</b>
+          ${
+            t.hasta
+              ? `<label>hasta <input type="number" step="50000" min="0" value="${t.hasta.COP}" data-t="${i}" data-c="COP"/> COP</label>
+                 <label><input type="number" step="50" min="0" value="${t.hasta.USD}" data-t="${i}" data-c="USD"/> USD</label>`
+              : '<span class="aj-sub">sin techo</span>'
+          }
+        </div>
+        ${t.pagos
+          .map(
+            (p, j) => `<div class="aj-pago">
+            <select data-t="${i}" data-p="${j}" data-k="hito" ${j === 0 ? 'disabled' : ''}>${(Object.keys(HITOS) as HitoId[])
+              .map((h) => `<option value="${h}" ${p.hito === h ? 'selected' : ''}>${esc(HITOS[h].nombre)}</option>`)
+              .join('')}</select>
+            <input type="number" min="1" max="100" value="${p.pct}" data-t="${i}" data-p="${j}" data-k="pct"/> %
+            ${j > 0 ? `<button type="button" data-quitar="${i}:${j}" aria-label="Quitar pago">×</button>` : ''}
+          </div>`,
+          )
+          .join('')}
+        <button type="button" class="aj-mas" data-agregar="${i}">+ pago</button>
+        <span class="aj-suma ${Math.abs(t.pagos.reduce((a, b) => a + b.pct, 0) - 100) > 0.001 ? 'aj-suma--mal' : ''}">suma ${t.pagos.reduce((a, b) => a + b.pct, 0)} %</span>
+      </div>`,
+      )
+      .join('')
+    if (datos.demo) for (const i of el.querySelectorAll<HTMLInputElement>('input,select,button')) i.disabled = true
+  }
+
+  function pintarPreview() {
+    const monto = Number((document.getElementById('aj-monto') as HTMLInputElement).value)
+    const errores = validarReglas(r)
+    document.getElementById('aj-errores')!.innerHTML = errores.map((e) => `<li>${esc(e)}</li>`).join('')
+    const btn = document.getElementById('aj-guardar') as HTMLButtonElement | null
+    if (btn) btn.disabled = errores.length > 0
+    const u = estadoUsura(r.cuotas.recargoMensualPct, r.usuraEAPct)
+    document.getElementById('aj-usura')!.innerHTML =
+      u.estado === 'ok'
+        ? `<span class="text-lime">El recargo queda por debajo de la usura (${u.usuraMensualPct} % mensual).</span>`
+        : u.estado === 'excede'
+          ? `<span class="text-ember">El recargo supera la usura (${u.usuraMensualPct} % mensual).</span>`
+          : 'Sin tasa de usura, el recargo se muestra como "sin verificar" en cada propuesta.'
+    if (errores.length) {
+      document.getElementById('aj-preview')!.innerHTML = ''
+      return
+    }
+    const h = datos.hoy
+    const hitos = { firma: h, diseno: sumarHabiles(h, 10), hito1: sumarHabiles(h, 15), hito2: sumarHabiles(h, 28), publicacion: sumarHabiles(h, 38) }
+    const planes = (['hitos', 'cuotas'] as const).map((tipo) => armarPlan({ precio: monto, moneda: 'COP', reglas: r, tipo, hitos, cliente: { tipo: 'persona' } }))
+    document.getElementById('aj-preview')!.innerHTML =
+      `<div class="aj-monto">${esc(formatearMonto(monto, 'COP'))}</div>` +
+      planes
+        .filter((p, i) => i === 0 || p.tipo === 'cuotas')
+        .map(
+          (p) => `<div class="aj-plan"><span class="aj-sub">${p.tipo === 'cuotas' ? `En cuotas · recargo ${esc(formatearMonto(p.recargoTotal, 'COP'))}` : 'Por entregas'}</span>
+          <ol>${p.pagos.map((x) => `<li><span>${esc(x.concepto)}</span><span class="font-mono text-ink-200">${esc(fechaCorta(x.vence))}</span><b>${esc(formatearMonto(x.monto, 'COP'))}</b></li>`).join('')}</ol></div>`,
+        )
+        .join('')
+  }
+
+  function todo() {
+    pintarTramos()
+    pintarPreview()
+  }
+
+  raiz.addEventListener('input', (ev) => {
+    const el = ev.target as HTMLInputElement | HTMLSelectElement
+    if (el.id === 'aj-monto') return pintarPreview()
+    if ('r' in el.dataset) {
+      const inp = el as HTMLInputElement
+      let v: unknown = inp.type === 'checkbox' ? inp.checked : inp.value
+      if ('n' in inp.dataset) v = inp.value === '' ? ('nulo' in inp.dataset ? null : 0) : Number(inp.value)
+      escribir(r as unknown as Record<string, unknown>, inp.dataset.r!, v)
+      return pintarPreview()
+    }
+    const t = Number(el.dataset.t)
+    if (Number.isInteger(t) && el.dataset.c) {
+      r.tramos[t].hasta![el.dataset.c as 'COP' | 'USD'] = Number(el.value)
+      return pintarPreview()
+    }
+    if (Number.isInteger(t) && el.dataset.k) {
+      const p = r.tramos[t].pagos[Number(el.dataset.p)]
+      if (el.dataset.k === 'pct') p.pct = Number(el.value)
+      else p.hito = el.value as HitoId
+      // La suma se repinta sin perder el foco del campo que se está tecleando.
+      const suma = el.closest('.aj-tramo')?.querySelector('.aj-suma')
+      const total = r.tramos[t].pagos.reduce((a, b) => a + b.pct, 0)
+      if (suma) {
+        suma.textContent = `suma ${total} %`
+        suma.classList.toggle('aj-suma--mal', Math.abs(total - 100) > 0.001)
+      }
+      pintarPreview()
+    }
+  })
+
+  raiz.addEventListener('change', (ev) => {
+    const el = ev.target as HTMLInputElement
+    if ('r' in el.dataset && el.type === 'checkbox') {
+      escribir(r as unknown as Record<string, unknown>, el.dataset.r!, el.checked)
+      pintarPreview()
+    }
+  })
+
+  raiz.addEventListener('click', (ev) => {
+    const b = ev.target as HTMLElement
+    if (b.dataset.agregar) {
+      const t = r.tramos[Number(b.dataset.agregar)]
+      const usados = new Set(t.pagos.map((p) => p.hito))
+      const libre = (Object.keys(HITOS) as HitoId[]).find((h) => !usados.has(h)) ?? 'publicacion'
+      t.pagos.push({ hito: libre, pct: 0 })
+      t.pagos.sort((a, c) => HITOS[a.hito].avance - HITOS[c.hito].avance)
+      todo()
+    }
+    if (b.dataset.quitar) {
+      const [i, j] = b.dataset.quitar.split(':').map(Number)
+      r.tramos[i].pagos.splice(j, 1)
+      todo()
+    }
+  })
+
+  async function guardar(cuerpo: unknown) {
+    const est = document.getElementById('aj-estado')!
+    est.textContent = 'Guardando…'
+    const res = await fetch('/api/admin/plano/ajustes', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
+    const j = await res.json()
+    if (!res.ok) {
+      est.textContent = 'No se pudo guardar'
+      document.getElementById('aj-errores')!.innerHTML = (j.errores ?? [j.error]).map((e: string) => `<li>${esc(e)}</li>`).join('')
+      return
+    }
+    r = j.reglas
+    rellenar()
+    todo()
+    est.textContent = 'Guardado'
+  }
+
+  document.getElementById('aj-guardar')?.addEventListener('click', () => guardar(r))
+  document.getElementById('aj-restaurar')?.addEventListener('click', () => {
+    if (confirm('¿Volver a las reglas de fábrica?')) guardar({ restaurar: true })
+  })
+
+  rellenar()
+  todo()
+</script>
+
+<style is:global>
+  .aj-card { border-radius: 1.1rem; padding: 1.25rem; background: rgba(255, 255, 255, 0.018); border: 1px solid rgba(255, 255, 255, 0.07); }
+  .aj-card h2 { font-size: 15px; font-weight: 500; color: var(--color-ink-50); margin-bottom: 0.4rem; }
+  .aj-sub { font-size: 12px; color: var(--color-ink-200); line-height: 1.5; }
+  .aj-campos { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .aj-campos label, .aj-campos-1 { display: flex; flex-direction: column; gap: 0.35rem; font-size: 12px; color: var(--color-ink-100); }
+  .aj input[type='number'], .aj select { border-radius: 0.6rem; padding: 0.45rem 0.65rem; font-size: 13px; color: var(--color-ink-50); background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); }
+  .aj input[type='range'] { accent-color: var(--color-cyan); }
+  .aj-check { display: flex; align-items: center; gap: 0.5rem; font-size: 13px; color: var(--color-ink-100); }
+  .aj-check input { accent-color: var(--color-cyan); }
+  .aj-tramo { border-radius: 0.85rem; padding: 0.85rem; background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 0.45rem; }
+  .aj-tramo__cab { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; font-size: 12.5px; color: var(--color-ink-100); }
+  .aj-tramo__cab b { color: var(--color-cyan); font-weight: 500; font-size: 13px; }
+  .aj-tramo__cab input { width: 9rem; }
+  .aj-pago { display: flex; align-items: center; gap: 0.5rem; font-size: 12.5px; color: var(--color-ink-200); }
+  .aj-pago input { width: 5rem; }
+  .aj-pago button { width: 1.6rem; height: 1.6rem; border-radius: 999px; color: var(--color-ink-200); }
+  .aj-pago button:hover { color: var(--color-ember); background: rgba(255, 107, 61, 0.1); }
+  .aj-mas { align-self: flex-start; font-size: 12px; color: var(--color-cyan); }
+  .aj-suma { font-family: ui-monospace, monospace; font-size: 11px; color: var(--color-lime); }
+  .aj-suma--mal { color: var(--color-ember); }
+  .aj-monto { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; color: var(--color-ink-50); }
+  .aj-plan { margin-top: 0.75rem; }
+  .aj-plan ol { margin-top: 0.3rem; display: flex; flex-direction: column; gap: 0.2rem; }
+  .aj-plan li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 0.6rem; font-size: 12px; color: var(--color-ink-100); padding: 0.3rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+  .aj-plan b { font-weight: 500; color: var(--color-ink-50); }
+</style>
