@@ -132,11 +132,13 @@ export async function prepararConversacion(pregunta: string): Promise<Ejecucion>
 /**
  * Toma una conversación existente para seguirla con otra pregunta. Si había
  * una propuesta esperando, la pregunta cuenta como "no apruebo, cambia esto".
- * null si la conversación no existe o está corriendo en otra pestaña.
+ * null si no existe, está corriendo en otra pestaña o se cortó con un error.
  */
 export async function reclamarParaSeguir(id: string): Promise<Ejecucion | null> {
   await exigirPresupuesto()
-  const e = await reclamar(id, ['terminada', 'fallida', 'esperando_aprobacion'])
+  // Una fallida no se sigue: pudo cortarse con herramientas sin respuesta, y
+  // anexar una pregunta encima haría inválido el historial. Se empieza otra.
+  const e = await reclamar(id, ['terminada', 'esperando_aprobacion'])
   if (!e) return null
   if (contarTurnos(e.mensajes as never) >= MAX_TURNOS && !e.propuesta) {
     // Se devuelve a su estado: reclamarla no debe dejarla "corriendo" para siempre.
@@ -161,14 +163,14 @@ export function correr(e: Ejecucion, emitir: (e: EventoBucle) => void): Promise<
 /** Sigue una conversación reclamada con la pregunta nueva de Mike. Nunca lanza. */
 export async function seguir(e: Ejecucion, pregunta: string, emitir: (e: EventoBucle) => void): Promise<Ejecucion> {
   const deps = dependencias(emitir)
+  // El tope de pasos es por pregunta, no por conversación.
+  e.iteraciones = 0
   // Con una propuesta pendiente, escribir otra cosa es pedir cambios.
   if (e.propuesta) return decidir(e, false, deps, pregunta)
   e.mensajes.push({ role: 'user', content: pregunta })
   e.estado = 'corriendo'
   e.respuesta = null
   e.error = null
-  // El tope de pasos es por pregunta, no por conversación.
-  e.iteraciones = 0
   return avanzar(e, deps)
 }
 
