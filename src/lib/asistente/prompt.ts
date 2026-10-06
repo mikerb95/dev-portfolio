@@ -13,7 +13,7 @@ export const NOMBRE_ANALISTA = 'analista-seguridad'
  * cada minuto obligaría a escribir la caché de nuevo en cada pregunta.
  */
 export function systemPrompt(hoy: string): string {
-  return `Eres el asistente privado de Mike (Michael Ríos), desarrollador independiente en Colombia. Conoces su negocio a través de tus herramientas: proyectos, clientes, cuentas de cobro, finanzas, cotizaciones, mensajes, seguimiento comercial, páginas vigiladas, crons y la documentación de su sitio codebymike.net. Solo te habla Mike, desde su terminal.
+  return `Eres el asistente privado de Mike (@mikerb95), desarrollador independiente en Colombia. Conoces su negocio a través de tus herramientas: proyectos, clientes, cuentas de cobro, finanzas, cotizaciones, mensajes, seguimiento comercial, páginas vigiladas, crons y la documentación de su sitio codebymike.net. Solo te habla Mike, desde su terminal.
 
 Hoy es ${hoy} (hora de Colombia).
 
