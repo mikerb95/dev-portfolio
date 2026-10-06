@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// API de Claude FALSA para los e2e del analista (e2e/analista.spec.ts) y del
-// asesor público (e2e/asesor-vivo.spec.ts).
+// API de Claude FALSA para los e2e del analista (e2e/analista.spec.ts), del
+// asesor público (e2e/asesor-vivo.spec.ts) y del asistente del dashboard
+// (e2e/asistente.spec.ts).
 //
 // Los e2e no pueden gastar créditos ni depender de la red, pero sí tienen que
 // ejercitar el flujo real: el SDK oficial, el streaming, la pausa ante un
@@ -64,6 +65,51 @@ function guionAsesor(mensajes) {
   return { stop: 'end_turn', bloques: [texto('Respuesta de prueba del asesor, sin precios.')] }
 }
 
+// Asistente del dashboard (e2e/asistente.spec.ts). Se reconoce porque es el
+// único que trae la herramienta crear_cuenta_cobro.
+//  - "cuenta de cobro": busca el cliente con `clientes` y propone la cuenta; al
+//    volver la decisión, confirma con el número que devolvió el servidor.
+//  - cualquier otra pregunta: consulta `vencimientos` y responde con un enlace.
+function resultadoDe(mensaje) {
+  const r = Array.isArray(mensaje?.content) ? mensaje.content.find((b) => b.type === 'tool_result') : null
+  if (!r) return null
+  const crudo = typeof r.content === 'string' ? r.content : r.content?.[0]?.text
+  try {
+    return { error: !!r.is_error, datos: JSON.parse(crudo) }
+  } catch {
+    return { error: !!r.is_error, datos: null, texto: crudo }
+  }
+}
+
+function guionAsistente(mensajes) {
+  const primera = typeof mensajes[0]?.content === 'string' ? mensajes[0].content : ''
+  const ultimo = mensajes.at(-1)
+  const r = resultadoDe(ultimo)
+  if (!/cuenta de cobro/i.test(primera)) {
+    if (!r) return { stop: 'tool_use', bloques: [uso(`toolu_asis_${Date.now()}`, 'vencimientos', { tipo: 'dominios' })] }
+    return {
+      stop: 'end_turn',
+      bloques: [texto(`Tienes **${r.datos.total}** dominios por vencer.\n\n- Revisa la lista completa en [Dominios](/admin/domains).\n- Este enlace no debe salir: [afuera](https://ejemplo.com).`)],
+    }
+  }
+  if (!r) return { stop: 'tool_use', bloques: [texto('Busco al cliente.'), uso(`toolu_asis_${Date.now()}`, 'clientes', {})] }
+  if (r.datos?.clientes) {
+    const c = r.datos.clientes.find((x) => x.nombre === 'Cliente E2E Asistente')
+    return {
+      stop: 'tool_use',
+      bloques: [
+        uso(`toolu_asis_${Date.now()}`, 'crear_cuenta_cobro', {
+          clienteId: c.id,
+          conceptos: [{ descripcion: 'Hito 2 de prueba', cantidad: 1, valorUnitario: 1200000 }],
+          concepto: 'Desarrollo del hito 2 de prueba',
+        }),
+      ],
+    }
+  }
+  if (r.error) return { stop: 'end_turn', bloques: [texto('Entendido, no la creo. ¿Qué le cambio?')] }
+  return { stop: 'end_turn', bloques: [texto(`Listo: la **${r.datos.numero}** quedó en borrador. [Ábrela aquí](${r.datos.enlace}).`)] }
+}
+
 function sse(res, evento, datos) {
   res.write(`event: ${evento}\ndata: ${JSON.stringify({ type: evento, ...datos })}\n\n`)
 }
@@ -92,7 +138,8 @@ createServer((req, res) => {
         })
       )
     }
-    const { stop, bloques } = guion(peticion.messages ?? [])
+    const esAsistente = peticion.tools?.some((t) => t.name === 'crear_cuenta_cobro')
+    const { stop, bloques } = (esAsistente ? guionAsistente : guion)(peticion.messages ?? [])
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
     sse(res, 'message_start', {
       message: {
