@@ -24,6 +24,7 @@ import {
   messages,
   monitorDaily,
   monitors,
+  payments,
   portalMessages,
   portalThreads,
   projectContacts,
@@ -75,6 +76,22 @@ async function sembrar() {
     // Otro cliente, en dólares.
     { clientId: b!.id, number: 'INV-2026-002', docType: 'factura', status: 'overdue', currency: 'USD', totalCents: 30_000, dueAt: dias(-1), createdAt: AHORA },
   ])
+  // Pagada hace 5 días, y otra pagada hace 3 meses (fuera de la ventana por defecto).
+  const [pagada] = await db
+    .insert(invoices)
+    .values({ clientId: a!.id, number: 'CC-2026-003', docType: 'cuenta_cobro', status: 'paid', currency: 'COP', totalCents: 80_000_000, netCents: 70_000_000, retentionsCents: 10_000_000, paidAt: dias(-5), createdAt: AHORA })
+    .returning()
+  await db.insert(invoices).values({ clientId: b!.id, number: 'CC-2026-004', docType: 'cuenta_cobro', status: 'paid', currency: 'COP', totalCents: 10_000_000, netCents: 10_000_000, paidAt: dias(-90), createdAt: AHORA })
+
+  await db.insert(payments).values([
+    // Pago del portal que salda la CC-2026-003: no se suma dos veces.
+    { reference: 'R-1', idempotencyKey: 'k1', amountCents: 80_000_000, currency: 'COP', status: 'approved', provider: 'wompi', source: 'portal', invoiceId: pagada!.id, clientId: a!.id, createdAt: dias(-5), updatedAt: dias(-5) },
+    // Cobro de campo suelto, con datos personales del pagador que no pueden salir.
+    { reference: 'R-2', idempotencyKey: 'k2', amountCents: 15_000_000, currency: 'COP', status: 'approved', provider: 'wompi', source: 'cobro', payerName: 'Laura', payerPhone: '+573105551234', payerEmail: CORREO, description: `Corte de pelo, escríbeme al ${CELULAR}`, createdAt: dias(-2), updatedAt: dias(-2) },
+    // Simulado del laboratorio y rechazado: ninguno es dinero.
+    { reference: 'R-3', idempotencyKey: 'k3', amountCents: 99_900_000, currency: 'COP', status: 'approved', provider: 'mock', source: 'pay', createdAt: dias(-1), updatedAt: dias(-1) },
+    { reference: 'R-4', idempotencyKey: 'k4', amountCents: 99_900_000, currency: 'COP', status: 'declined', provider: 'wompi', source: 'pay', createdAt: dias(-1), updatedAt: dias(-1) },
+  ])
 
   await db.insert(messages).values({
     name: 'Visitante',
@@ -100,6 +117,11 @@ async function sembrar() {
   await db.insert(projectServices).values([
     { name: 'Turso', category: 'database', cost: 9, currency: 'USD', billingCycle: 'monthly', payer: 'me', secrets: SECRETO, createdAt: AHORA },
     { name: 'Dominio', category: 'domain', cost: 120_000, currency: 'COP', billingCycle: 'annual', payer: 'me', createdAt: AHORA },
+    // Vencimientos: uno en 12 días, uno vencido, uno lejano y un hosting que se renueva en 20.
+    { name: 'barberianorte.co', category: 'domain', cost: 90_000, currency: 'COP', billingCycle: 'annual', renewalDate: dias(12), clientId: a!.id, username: 'usuario-registrador', secrets: SECRETO, createdAt: AHORA },
+    { name: 'viejo.com', category: 'domain', cost: 15, currency: 'USD', billingCycle: 'annual', renewalDate: dias(-2), autoRenew: false, createdAt: AHORA },
+    { name: 'lejano.dev', category: 'domain', cost: 12, currency: 'USD', billingCycle: 'annual', renewalDate: dias(200), createdAt: AHORA },
+    { name: 'Vercel Pro', category: 'hosting', cost: 20, currency: 'USD', billingCycle: 'monthly', renewalDate: dias(20), createdAt: AHORA },
     // Lo paga el cliente directo: no es costo propio.
     { name: 'Hosting del cliente', category: 'hosting', cost: 20, currency: 'USD', billingCycle: 'monthly', payer: 'client_direct', createdAt: AHORA },
   ])
@@ -119,10 +141,17 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-  for (const t of [portalMessages, portalThreads, messages, interactions, invoices, finances, projectServices, projectContacts, projectMilestones, monitorDaily, monitors, projects, clients, appSettings])
+  for (const t of [payments, portalMessages, portalThreads, messages, interactions, invoices, finances, projectServices, projectContacts, projectMilestones, monitorDaily, monitors, projects, clients, appSettings])
     await db.delete(t)
   ids = await sembrar()
 })
+
+/** Entrada mínima válida de cada herramienta (las que no exigen nada, vacía). */
+const ENTRADAS: Record<string, unknown> = {
+  proyecto: { buscar: 'Reservas' },
+  documentacion: { consulta: 'cliente' },
+  buscar_en_panel: { consulta: 'barberia' },
+}
 
 const datos = async (nombre: string, entrada: unknown = {}) => {
   const r = await ejecutar(nombre, entrada)
@@ -131,9 +160,23 @@ const datos = async (nombre: string, entrada: unknown = {}) => {
 }
 
 describe('catálogo', () => {
-  it('son exactamente las diez consultas de la fase 2, sin ninguna escritura', () => {
+  it('son exactamente las trece consultas, sin ninguna escritura', () => {
     expect(HERRAMIENTAS.map((h) => h.nombre).sort()).toEqual(
-      ['briefings', 'clientes', 'cuentas_cobro', 'documentacion', 'finanzas', 'mensajes', 'paginas', 'proyecto', 'proyectos', 'seguimiento'].sort()
+      [
+        'briefings',
+        'buscar_en_panel',
+        'clientes',
+        'cuentas_cobro',
+        'documentacion',
+        'finanzas',
+        'mensajes',
+        'pagos_recibidos',
+        'paginas',
+        'proyecto',
+        'proyectos',
+        'seguimiento',
+        'vencimientos',
+      ].sort()
     )
   })
 
@@ -144,8 +187,7 @@ describe('catálogo', () => {
     }
     const antes = await cambios()
     for (const h of HERRAMIENTAS) {
-      const entrada = h.nombre === 'proyecto' ? { buscar: 'Reservas' } : h.nombre === 'documentacion' ? { consulta: 'pagos' } : {}
-      const r = await ejecutar(h.nombre, entrada)
+      const r = await ejecutar(h.nombre, ENTRADAS[h.nombre] ?? {})
       expect(r.ok, `${h.nombre}: ${r.ok ? '' : r.error}`).toBe(true)
     }
     expect(await cambios()).toBe(antes)
@@ -162,11 +204,10 @@ describe('privacidad', () => {
   it('ningún correo, teléfono, NIT, dirección ni secreto sale de ninguna herramienta', async () => {
     const salida: string[] = []
     for (const h of HERRAMIENTAS) {
-      const entrada = h.nombre === 'proyecto' ? { buscar: 'Reservas' } : h.nombre === 'documentacion' ? { consulta: 'cliente' } : {}
-      salida.push(JSON.stringify(await datos(h.nombre, entrada)))
+      salida.push(JSON.stringify(await datos(h.nombre, ENTRADAS[h.nombre] ?? {})))
     }
     const todo = salida.join('\n')
-    for (const prohibido of [CORREO, 'visitante@correo.com', 'sur@ejemplo.co', CELULAR, '3105551234', '+573105551234', NIT, 'Calle 1 # 2-3', '1.234.567.890', SECRETO])
+    for (const prohibido of [CORREO, 'visitante@correo.com', 'sur@ejemplo.co', CELULAR, '3105551234', '+573105551234', NIT, 'Calle 1 # 2-3', '1.234.567.890', SECRETO, 'usuario-registrador'])
       expect(todo, prohibido).not.toContain(prohibido)
   })
 
@@ -250,6 +291,47 @@ describe('consultas', () => {
     expect((await datos('documentacion', { consulta: 'RF-210' })).requisitos[0].titulo).toMatch(/Asistente/)
     const r = await datos('documentacion', { consulta: 'rate limiting durable' })
     expect(r.requisitos.map((x: any) => x.id)).toContain('RF-603')
+  })
+})
+
+describe('vencimientos, pagos y búsqueda', () => {
+  it('vencimientos trae dominios por vencer y vencidos, no los lejanos', async () => {
+    const d = await datos('vencimientos', { tipo: 'dominios' })
+    expect(d.servicios.map((s: any) => s.nombre)).toEqual(['viejo.com', 'barberianorte.co'])
+    expect(d.vencidos).toBe(1)
+    expect(d.servicios[0]).toMatchObject({ estado: 'vencido', seRenuevaSolo: false })
+    expect(d.servicios[1]).toMatchObject({ diasQueFaltan: 12, cliente: 'Barbería Norte' })
+    expect(d.enlace).toBe('/admin/domains')
+    // Con "todos" entra también el hosting que se renueva en 20 días.
+    expect((await datos('vencimientos')).servicios.map((s: any) => s.nombre)).toContain('Vercel Pro')
+  })
+
+  it('pagos_recibidos no suma dos veces el pago que salda una cuenta, ni cuenta simulados o rechazados', async () => {
+    const d = await datos('pagos_recibidos')
+    expect(d.cuentasPagadas.cuentas.map((c: any) => c.numero)).toEqual(['CC-2026-003'])
+    expect(d.cuentasPagadas.suma[0].texto).toContain('800.000')
+    expect(d.cuentasPagadas.cuentas[0].netoRecibido.texto).toContain('700.000')
+    expect(d.pagosEnLinea.total).toBe(2)
+    expect(d.pagosEnLinea.pagos.find((p: any) => p.referencia === 'R-1')).toMatchObject({ saldaCuenta: 'CC-2026-003', yaContadoArriba: true })
+    expect(d.pagosEnLinea.sumaSinRepetir).toHaveLength(1)
+    expect(d.pagosEnLinea.sumaSinRepetir[0].texto).toContain('150.000')
+    expect(JSON.stringify(d)).toContain('[teléfono oculto]')
+  })
+
+  it('pagos_recibidos por mes usa el calendario de Bogotá', async () => {
+    const mes = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(dias(-90)).slice(0, 7)
+    const d = await datos('pagos_recibidos', { mes })
+    expect(d.cuentasPagadas.cuentas.map((c: any) => c.numero)).toContain('CC-2026-004')
+  })
+
+  it('buscar_en_panel encuentra fichas sin tildes y páginas por sus palabras clave', async () => {
+    const d = await datos('buscar_en_panel', { consulta: 'barberia' })
+    expect(d.resultados.map((r: any) => r.titulo)).toContain('Barbería Norte')
+    expect(d.resultados.map((r: any) => r.href)).toContain('/admin/projects/' + (await db.select().from(projects)).find((p) => p.slug === 'barberia-reservas')!.id)
+    const paginas = await datos('buscar_en_panel', { consulta: 'qué dominios vencen' })
+    expect(paginas.resultados[0]).toMatchObject({ tipo: 'pagina', href: '/admin/domains' })
+    const cuenta = await datos('buscar_en_panel', { consulta: 'CC-2026-003' })
+    expect(cuenta.resultados[0]).toMatchObject({ tipo: 'cuenta', titulo: 'CC-2026-003' })
   })
 })
 

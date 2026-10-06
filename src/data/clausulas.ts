@@ -248,7 +248,7 @@ export const CLAUSULAS: readonly Clausula[] = [
     motivo: null,
     aplica: siempre,
     formal: (c) =>
-      `La comunicación del proyecto se hará por ${CANAL_LABEL[c.contacto.canal]}${c.contacto.contacto.nombre ? `, con ${c.contacto.contacto.nombre} como punto único de contacto de EL CLIENTE` : ''}, en el horario de ${c.contacto.horario}. EL DESARROLLADOR responderá en un máximo de ${c.contacto.respuestaMikeHoras} horas hábiles, y el seguimiento se hará con ${SEGUIMIENTO_LABEL[c.contacto.seguimiento]}.`,
+      `La comunicación del proyecto se hará por ${CANAL_LABEL[c.contacto.canal]}${c.contacto.contacto.nombre ? `, con ${c.contacto.contacto.nombre} como punto único de contacto de EL CLIENTE` : ''}, en el horario de ${c.contacto.horario.replace(/\.+$/, '')}. EL DESARROLLADOR responderá en un máximo de ${c.contacto.respuestaMikeHoras} horas hábiles, y el seguimiento se hará con ${SEGUIMIENTO_LABEL[c.contacto.seguimiento]}.`,
     simple: (c) =>
       `Hablamos por ${CANAL_LABEL[c.contacto.canal]}${c.contacto.contacto.nombre ? ` y tu persona de contacto es ${c.contacto.contacto.nombre}` : ''}. Te respondo en máximo ${c.contacto.respuestaMikeHoras} horas hábiles y nos vemos con ${SEGUIMIENTO_LABEL[c.contacto.seguimiento]}.`,
   },
