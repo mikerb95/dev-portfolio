@@ -52,7 +52,7 @@ export const esquemaPropuesta = z.object({
 })
 
 export const DESCRIPCION_CREAR_PROPUESTA =
-  'Crea una propuesta en BORRADOR en Plano (el cotizador del panel) a partir del mensaje de un cliente que pide precio, y la IA de Plano lo lee para elegir los componentes. No se ejecuta sola: Mike ve el texto que se va a leer y decide. Tú no calculas precios ni eliges componentes: lo hace Plano. Úsala cuando Mike pegue lo que le escribió un cliente y pida cotizarlo.'
+  'Crea una propuesta en BORRADOR en Plano (el cotizador del panel) a partir del mensaje de un cliente que pide precio, y la IA de Plano lo lee para elegir los componentes. No se ejecuta sola: Mike ve el texto que se va a leer y decide. Tú no calculas precios ni eliges componentes: lo hace Plano. Úsala cuando Mike pegue lo que le escribió un cliente y pida cotizar una página, una app o un sistema. NO para capacitaciones en IA ni planes de mantenimiento: Plano solo cotiza desarrollo.'
 
 type Preparada =
   | { ok: true; entrada: z.infer<typeof esquemaPropuesta>; cliente: { id: number; nombre: string; empresa: string | null } | null; vista: VistaCambio }

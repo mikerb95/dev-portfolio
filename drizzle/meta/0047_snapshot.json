@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6b2bcfe7-7552-4ef7-959b-216d6f2e924b",
+  "id": "b961eb78-3059-4210-8d99-a82e9fd598a4",
   "prevId": "6be7e912-e1d3-4229-98de-fa9c89a96633",
   "tables": {
     "admin_sessions": {
@@ -4550,6 +4550,13 @@
         "token_confirmacion_hash": {
           "name": "token_confirmacion_hash",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "confirmacion_enviada": {
+          "name": "confirmacion_enviada",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

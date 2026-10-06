@@ -1865,6 +1865,9 @@ export const marketingSuscriptores = sqliteTable('marketing_suscriptores', {
   textoConsentimiento: text('texto_consentimiento').notNull(),
   // Hash del token de confirmación (doble opt-in); null una vez usado.
   tokenConfirmacionHash: text('token_confirmacion_hash'),
+  // Último correo de confirmación enviado. Frena a quien escribe un correo
+  // ajeno en el formulario una y otra vez para llenarle el buzón.
+  confirmacionEnviada: integer('confirmacion_enviada', { mode: 'timestamp' }),
   clientUserId: integer('client_user_id'),
   creado: integer('creado', { mode: 'timestamp' }).notNull(),
   confirmado: integer('confirmado', { mode: 'timestamp' }),

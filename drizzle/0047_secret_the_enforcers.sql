@@ -41,6 +41,7 @@ CREATE TABLE `marketing_suscriptores` (
 	`estado` text NOT NULL,
 	`texto_consentimiento` text NOT NULL,
 	`token_confirmacion_hash` text,
+	`confirmacion_enviada` integer,
 	`client_user_id` integer,
 	`creado` integer NOT NULL,
 	`confirmado` integer,
