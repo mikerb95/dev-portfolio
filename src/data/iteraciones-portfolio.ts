@@ -2405,6 +2405,79 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  {
+    id: 'pf-cotiza',
+    fase: 'Fase 53 · El precio pactado no se toca',
+    nombre: 'Cotiza: consultoría con alcance controlado',
+    rango: '6 oct 2026',
+    ghSince: '2026-10-06',
+    ghUntil: '2026-10-06',
+    resumen:
+      'Los encargos de consultoría en logística empezaban pequeños y terminaban en reuniones y pedidos que nadie pagó. Cotiza fija el precio al inicio y nunca lo reabre: lo incluido son cupos que se descuentan, lo nuevo nace como adicional con su precio y el cliente lo aprueba desde su enlace con constancia. Entra con la sesión del panel o con un PIN que solo abre esta herramienta, y la IA ayuda a contar sin poder escribir cifras.',
+    historias: [
+      {
+        id: 'PF-CO-01', titulo: 'Como Mike, quiero entrar a Cotiza con un PIN sin que ese PIN abra el resto del panel',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'seguridad', 'fase-53'],
+        dod: [
+          ok('Rutas abiertas por el PIN con patrones anclados; cualquier otra de /admin va a /login (RF-220).'),
+          ok('Frenos por IP y general, falla cerrada, aviso por ntfy en cada entrada y PIN triviales rechazados.'),
+          ok('tests/cotiza-acceso.test.ts y tests/cotiza-pin-db.test.ts (30 casos) y recorrido real de 34 comprobaciones.'),
+          pend('Fijar el PIN en /admin/settings en producción.'),
+        ],
+      },
+      {
+        id: 'PF-CO-02', titulo: 'Como Mike, quiero cotizar por entregables contables con un precio que se congela',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'pagos', 'fase-53'],
+        dod: [
+          ok('Motor puro e isomorfo: horas por entregable, colchón, redondeo, tramos de pago de Plano, cupos y adicionales (RF-221).'),
+          ok('Al congelar, el servidor recalcula y guarda tarifas, cupos y reglas del día con huella SHA-256.'),
+          ok('tests/cotiza-motor.test.ts (29 casos con cifras a mano), en UTC, Bogotá y Tokio.'),
+          pend('Confirmar el reparto 60/70/80, las horas de revisión de documentos y el mínimo por encargo.'),
+        ],
+      },
+      {
+        id: 'PF-CO-03', titulo: 'Como Mike, quiero que la bitácora decida sola cuándo algo ya no cabe en lo pactado',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'fase-53'],
+        dod: [
+          ok('Pedidos, reuniones y rondas anotados en una transacción con su adicional; recargo por la hora del pedido en Bogotá (RF-222).'),
+          ok('Textos para WhatsApp de la propuesta, de cada adicional y de cada resumen de reunión.'),
+          ok('tests/cotiza-encargos.test.ts (20 casos con el SQL real de las migraciones) y recorrido en el navegador con capturas.'),
+          pend('Aplicar las migraciones 0045 y 0046 en Turso, principal y demo.'),
+        ],
+      },
+      {
+        id: 'PF-CO-04', titulo: 'Como Mike, quiero que la IA convierta el pedido en alcance, clasifique pedidos nuevos y ordene mis notas',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'ia', 'fase-53'],
+        dod: [
+          ok('Esquemas sin campos de dinero, citas literales verificadas y guardia que quita cifras que no venían en el texto (RF-223).'),
+          ok('tests/cotiza-ia.test.ts (14 casos) y recorrido contra una API falsa con citas y cifras inventadas a propósito.'),
+          pend('Primera corrida contra el modelo real: la cuenta de Anthropic está sin cupo hasta el 1 de noviembre.'),
+        ],
+      },
+      {
+        id: 'PF-CO-05', titulo: 'Como cliente, quiero ver mi propuesta, aceptarla y aprobar adicionales desde un enlace',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'fase-53'],
+        dod: [
+          ok('Token de 128 bits guardado como huella y cifrado; aceptación con la huella de lo que se vio y monto en el WHERE (RF-224).'),
+          ok('Constancias SHA-256 recalculables y aviso por ntfy en cada decisión.'),
+          ok('tests/cotiza-enlace.test.ts (14 casos) y recorrido real en celular: acepta, aprueba y el enlace no abre el panel.'),
+        ],
+      },
+      {
+        id: 'PF-CO-06', titulo: 'Como lector, quiero entender cómo se cotiza consultoría sin que el alcance se descontrole',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'notes', 'fase-53'],
+        dod: [
+          ok('Nota /notes/el-precio-pactado-no-se-toca en español e inglés, sin tarifas, rutas del panel ni umbrales de los frenos.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [
