@@ -44,13 +44,22 @@ function initMotion(opts: { cardSelector?: string }) {
   // clase de degradado (text-mask / text-mask-cyan) porque background-clip:
   // text no se propaga a los hijos que crea SplitText.
   document.querySelectorAll<HTMLElement>('.hero-line').forEach((line, i) => {
-    const maskClass = line.classList.contains('text-mask-cyan') ? 'text-mask-cyan' : 'text-mask'
+    // Una línea sin degradado (el titular de la portada desde oct 2026 va en
+    // color plano) se queda como está: ponerle text-mask a sus letras la
+    // volvería a pintar en gris.
+    const maskClass = line.classList.contains('text-mask-cyan')
+      ? 'text-mask-cyan'
+      : line.classList.contains('text-mask')
+        ? 'text-mask'
+        : null
     const split = new SplitText(line, { type: 'chars' })
-    split.chars.forEach((c) => c.classList.add(maskClass))
-    // El degradado de la línea sobra una vez que cada letra lleva el suyo, y
-    // además rompe: Chromium (Brave 153) pinta el recorte del padre con las
-    // letras transformadas amontonadas al inicio de la línea.
-    line.style.backgroundImage = 'none'
+    if (maskClass) {
+      split.chars.forEach((c) => c.classList.add(maskClass))
+      // El degradado de la línea sobra una vez que cada letra lleva el suyo, y
+      // además rompe: Chromium (Brave 153) pinta el recorte del padre con las
+      // letras transformadas amontonadas al inicio de la línea.
+      line.style.backgroundImage = 'none'
+    }
     gsap.set(split.chars, { opacity: 0, yPercent: 100 })
     gsap.to(split.chars, {
       opacity: 1,

@@ -150,16 +150,42 @@ const es = {
       lab: 'lab',
     },
     hero: {
-      line1: 'Ingeniería de',
-      line2: 'software',
-      line3: 'con propósito.',
-      lead: 'Soy Mike - un Software Engineer construyendo productos escalables para equipos que no pueden permitirse adivinar. Arquitectura robusta, rendimiento obsesivo, experiencias de clase mundial.',
-      stackLabel: 'Stack principal',
-      stackLine1: 'TypeScript · React · Next.js',
-      stackLine2: 'Astro · Node.js · PostgreSQL',
+      line1: 'Tu página, tu app',
+      line2: 'o tu sistema,',
+      line3: 'a la medida.',
+      // Tres líneas de venta en vez de un párrafo de ingeniería: qué puedes
+      // pedir, cómo se trabaja y la prueba (clientes en línea).
+      ventas: [
+        { t: 'Hecho para tu negocio', d: 'Páginas web, apps y software construidos desde cero para lo que necesitas, no una plantilla.' },
+        { t: 'Sin sorpresas', d: 'Precio claro antes de empezar, avances cada semana y un ingeniero al otro lado del WhatsApp.' },
+      ],
+      clientesLabel: 'Ya en línea',
       ctaProjects: 'Ver proyectos',
       ctaCerts: 'Certificaciones',
       ctaContact: 'Hablemos',
+    },
+    // Campo "Cuéntame qué necesitas" del hero (RF-037): primera vuelta del
+    // asesor con IA, con el estimado al momento.
+    cotizador: {
+      titulo: 'Cuéntame qué necesitas',
+      ejemplos: [
+        'Una página para mi restaurante con el menú y pedidos por WhatsApp',
+        'Una app para agendar citas en mi barbería',
+        'Un sistema para controlar el inventario de mi ferretería',
+        'Una tienda en línea para vender mis productos',
+      ],
+      nota: 'Te responde una IA con los precios publicados. Mike confirma todo.',
+      enviar: 'Ver estimado',
+      pensando: 'Calculando con el tarifario',
+      respuestaLabel: 'Lo que haría Mike',
+      marca: 'Calculado con el tarifario',
+      whatsapp: 'Enviarle esto a Mike',
+      continuar: 'Seguir preguntando',
+      otra: 'Probar con otra idea',
+      errorLimite: 'Muchas preguntas seguidas. Espera unos minutos o escríbele a Mike por WhatsApp.',
+      errorNoDisponible: 'El estimado con IA no está disponible ahora. Escríbele a Mike por WhatsApp.',
+      errorFallo: 'No pude responder. Inténtalo de nuevo o escríbele a Mike.',
+      sinJs: 'Para pedir un estimado al momento hace falta JavaScript. También puedes escribirle a Mike.',
     },
     // Cinta de señales bajo el hero. Etiquetas cortas a propósito: la cifra es
     // lo que se lee de un vistazo, la etiqueta solo dice de qué es y en qué
