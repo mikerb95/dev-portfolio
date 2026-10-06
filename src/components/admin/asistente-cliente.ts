@@ -76,6 +76,7 @@ const PASOS: Record<string, (e: Record<string, unknown>) => string> = {
   actualizar_hito: () => 'Guardando el cambio en el hito',
   registrar_seguimiento: () => 'Anotando en el seguimiento',
   marcar_mensaje_leido: () => 'Marcando los mensajes',
+  crear_propuesta: () => 'Creando la propuesta y leyéndola con la IA de Plano',
 }
 const pasoDe = (h: string, e: Record<string, unknown> = {}) => (PASOS[h] ?? (() => `Consultando ${h}`))(e)
 

@@ -95,7 +95,6 @@ export async function prepararPropuesta(entrada: unknown): Promise<Preparada> {
 }
 
 export type ResultadoPropuesta = Hecho & {
-  creada: false
   id: number
   iaLeyo: boolean
   motivoSinIa: string | null
@@ -119,7 +118,7 @@ export async function crearPropuestaAprobada(entrada: unknown): Promise<{ ok: tr
   const prop = await crearPropuesta(inicial, p.cliente?.id ?? null)
   await guardarConversacion(prop.id, p.entrada.conversacion)
 
-  const base = { hecho: true as const, creada: false as const, id: prop.id, enlace: `/admin/plano/${prop.id}` }
+  const base = { hecho: true as const, id: prop.id, enlace: `/admin/plano/${prop.id}` }
 
   let resultadoIa
   try {

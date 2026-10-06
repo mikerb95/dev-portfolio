@@ -42,7 +42,22 @@ const vistaSeg = {
   nota: 'Queda en tu seguimiento. El cliente no lo ve.',
 }
 
+const vistaProp = {
+  tipo: 'cambio',
+  rotulo: 'Propuesta nueva en Plano · borrador',
+  titulo: 'Tienda de La Espiga',
+  contexto: 'Cliente nuevo (no está en el panel)',
+  cambios: [
+    { campo: 'Lo que lee la IA de Plano', antes: null, despues: '[10:02] Laura: Hola Mike, tengo una panadería y quiero vender mis tortas por internet.\n[10:03] Laura: Que la gente pague con PSE y me llegue el pedido. Mi número es [teléfono oculto].\n[10:06] Laura: Unos 30 productos, sin inventario por ahora.' },
+    { campo: 'Largo del texto', antes: null, despues: '231 caracteres' },
+  ],
+  avisos: ['Al aprobar, la IA de Plano lee la conversación para elegir los componentes. Cuesta unos centavos y se suma al tope diario del asistente.'],
+  boton: 'Aprobar y crear',
+  nota: 'Queda en borrador en Plano. Revisarla y enviarla sigue siendo tuyo.',
+}
+
 for (const [nombre, vista, pregunta] of [
+  ['propuesta', vistaProp, 'Cotízame esto que me escribió Laura'],
   ['hito', vistaHito, 'Marca como completado el hito de diseño de Reservas y muévelo al 15'],
   ['seguimiento', vistaSeg, 'Anota que llamé a Laura y que le mando la segunda versión el 20'],
 ] as const) {

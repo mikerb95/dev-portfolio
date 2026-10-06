@@ -29,6 +29,7 @@ import {
   NOMBRE_ACTUALIZAR_PROYECTO,
   prepararProyecto,
 } from './proyecto'
+import { crearPropuestaAprobada, DESCRIPCION_CREAR_PROPUESTA, esquemaPropuesta, NOMBRE_CREAR_PROPUESTA, prepararPropuesta } from './propuesta'
 import {
   DESCRIPCION_REGISTRAR_SEGUIMIENTO,
   esquemaSeguimiento,
@@ -129,6 +130,7 @@ export const ESCRITURAS: Escritura[] = [
     registrarSeguimientoAprobado
   ),
   deCambio(NOMBRE_MARCAR_LEIDO, DESCRIPCION_MARCAR_LEIDO, esquema(esquemaMensaje), 'marcar los mensajes', prepararMensajes, marcarLeidosAprobado),
+  deCambio(NOMBRE_CREAR_PROPUESTA, DESCRIPCION_CREAR_PROPUESTA, esquema(esquemaPropuesta), 'crear la propuesta', prepararPropuesta, crearPropuestaAprobada),
 ]
 
 export const escritura = (nombre: string) => ESCRITURAS.find((e) => e.nombre === nombre)
