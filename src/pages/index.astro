@@ -193,7 +193,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       <!-- Titular en Archivo condensada, color plano: el degradado gris y la
            palabra en cursiva serif se fueron el 6 oct 2026 (RF-037). Habla
            del cliente ("tu página") y no de la disciplina. -->
-      <h1 class="hero-titular font-display font-black tracking-[-.025em] leading-[.88] text-[clamp(46px,8.4vw,128px)]">
+      <h1 class="hero-titular font-display font-black tracking-[-.025em] leading-[.88] text-[clamp(46px,7.9vw,120px)]">
         {/* Los espacios entre spans son intencionales: al ser `block` no se
             ven, pero sin ellos el texto plano que extrae un buscador (o un
             lector de pantalla) queda pegado - "tu appo tu sistema". */}
@@ -202,7 +202,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
         <span class="hero-line hero-acento block">{t.hero.line3}</span>
       </h1>
 
-      <div class="mt-10 lg:mt-12 grid lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+      <div class="mt-9 lg:mt-10 grid lg:grid-cols-12 gap-9 lg:gap-12 items-start">
         <!-- Tres líneas de venta: qué puedes pedir, cómo se trabaja y la
              prueba (clientes en línea, con enlace al sitio real). -->
         <div class="lg:col-span-5 flex flex-col gap-8">
@@ -714,6 +714,15 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       const t = JSON.parse(form.dataset.textos ?? '{}') as Record<string, string> & { ejemplos: string[] }
       const locale = form.dataset.locale ?? 'es'
       const waBase = form.dataset.waBase ?? ''
+
+      // Mientras la tarjeta está a la vista, la burbuja no saca su globo de
+      // invitación (le tapaba el botón de enviar y repite lo que esta ya dice).
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(([e]) => {
+          if (e?.isIntersecting) form.dataset.visible = ''
+          else delete form.dataset.visible
+        }).observe(form)
+      }
 
       if (input && caja && ejemplo && enviar && respuesta && pensando && plan && texto && marca && wa && continuar && otra && error) {
         // Ejemplos que se escriben solos mientras la caja está vacía. Se
