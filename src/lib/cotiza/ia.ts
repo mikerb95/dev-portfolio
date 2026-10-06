@@ -153,6 +153,8 @@ Cómo trabajar:
 3. "preguntas": hasta 6 preguntas concretas para hacerle al cliente ANTES de cotizar, en el orden en que más mueven el precio (cuántas diapositivas, cuántos documentos y de cuántas páginas, para cuándo, quién entrega la información, cuántas reuniones espera).
 4. "exclusiones": lo que el cliente podría dar por incluido y no lo está (negociar con proveedores, trámites, ejecutar el proceso, reuniones con terceros, viajes, traducción). Mínimo dos, solo las que vienen al caso. Esto es lo que después le permite a Mike decir "eso no estaba".
 5. "supuestos": lo que se da por hecho (el cliente entrega la información en tal plazo, el formato es tal, una sola persona aprueba).
+   No escribas supuestos ni exclusiones sobre número de reuniones, rondas de cambios, horario de atención o tiempos de respuesta: eso ya lo fija la herramienta con los cupos de Mike, y repetirlo aquí puede contradecirlos.
+   Las exclusiones y los supuestos los lee el cliente en su propuesta: escríbelos en tercera persona o impersonales ("Carolina entrega los informes", "Se usa la plantilla de la empresa"), nunca dirigidos a Mike ("recibes...").
 6. "titulo": corto y concreto ("Presentaciones para la junta de importaciones").
 7. Datos del cliente solo si aparecen en el texto; si no, cadena vacía. "moneda": "USD" solo si el cliente está fuera de Colombia o pide dólares (en dólares Mike cobra una sola tarifa para todo).
 
