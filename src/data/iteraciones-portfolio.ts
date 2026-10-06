@@ -2344,7 +2344,7 @@ export const ITERACIONES: Iteracion[] = [
         dod: [
           ok('Salida estructurada sin campos de dinero; solo componentes de la tabla; citas verificadas como literales (RF-216).'),
           ok('Hallazgos con cifras inventadas descartados por la guardia de cifras del asistente.'),
-          pend('Primera corrida contra la API real (requiere aprobar el gasto, unos centavos).'),
+          ok('Probado con el modelo real el 6 oct 2026: conversación de una panadería a 6 componentes con sus 4 citas verificadas, exclusiones y preguntas útiles (US$0,06).'),
         ],
       },
       {
@@ -2455,7 +2455,7 @@ export const ITERACIONES: Iteracion[] = [
         dod: [
           ok('Esquemas sin campos de dinero, citas literales verificadas y guardia que quita cifras que no venían en el texto (RF-223).'),
           ok('tests/cotiza-ia.test.ts (14 casos) y recorrido contra una API falsa con citas y cifras inventadas a propósito.'),
-          pend('Primera corrida contra el modelo real: la cuenta de Anthropic está sin cupo hasta el 1 de noviembre.'),
+          ok('Probado con el modelo real el 6 oct 2026: 4 entregables con citas literales, un pedido de noche clasificado como adicional citando la exclusión y un resumen limpio (US$0,11 las tres consultas). Corregido el prompt para que los supuestos no contradigan los cupos ni se dirijan a Mike.'),
         ],
       },
       {
