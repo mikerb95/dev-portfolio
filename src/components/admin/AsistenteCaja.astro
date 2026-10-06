@@ -1,0 +1,346 @@
+---
+// Portada del dashboard: saludo, la caja "Pregunta o busca algo" y el hilo con
+// el asistente (RF-210, fases 4 y 7). Mientras se escribe, la caja busca sin
+// IA (páginas y fichas); con Enter, pregunta al asistente. La lógica vive en
+// buscador-cliente.ts y asistente-cliente.ts; aquí solo el marco.
+import type { ConversacionReciente } from '../../lib/asistente/conversaciones'
+import type { EstadoInicial } from './asistente-cliente'
+
+interface Props {
+  saludo: string
+  fecha: string
+  recientes: ConversacionReciente[]
+  inicial: EstadoInicial | null
+  /** Por qué no se puede preguntar (demo, sin API key). null = se puede. */
+  iaApagada: string | null
+  /** Pregunta que llega desde Ctrl+K en otra página. */
+  preguntar: string | null
+}
+
+const { saludo, fecha, recientes, inicial, iaApagada, preguntar } = Astro.props
+
+const CHIPS: { texto: string; pregunta?: string; rellenar?: string }[] = [
+  { texto: '¿Quién me debe?', pregunta: '¿Quién me debe y cuánto? ¿Hay algo vencido?' },
+  { texto: '¿Quién me pagó este mes?', pregunta: '¿Quién me pagó este mes?' },
+  { texto: '¿Qué dominios vencen?', pregunta: '¿Qué dominios van a vencer pronto?' },
+  { texto: 'Crear una cuenta de cobro', rellenar: 'Ayúdame a crear una cuenta de cobro para ' },
+  { texto: '¿Qué tengo pendiente?', pregunta: '¿Qué pendientes tengo esta semana y cuáles están vencidos?' },
+]
+
+const hace = (d: Date) => {
+  const min = Math.round((Date.now() - d.getTime()) / 60_000)
+  if (min < 1) return 'ahora'
+  if (min < 60) return `hace ${min} min`
+  const h = Math.round(min / 60)
+  if (h < 24) return `hace ${h} h`
+  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' })
+}
+---
+
+<section class="asis" id="asistente" data-ia-apagada={iaApagada ?? ''} data-preguntar={preguntar ?? ''}>
+  <div class="asis-cabeza">
+    <p class="asis-fecha">{fecha}</p>
+    <h2 class="asis-saludo">{saludo}, <em>Mike</em>.</h2>
+    <p class="asis-sub">Pregunta por tu negocio, busca cualquier página o pídeme que prepare una cuenta de cobro.</p>
+  </div>
+
+  <form class="asis-caja" id="asis-form" autocomplete="off">
+    <span class="asis-chispa" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z M19 16v5 M16.5 18.5h5"></path></svg>
+    </span>
+    <label for="asis-input" class="sr-only">Pregunta o busca algo</label>
+    <textarea id="asis-input" rows="1" maxlength="1000" placeholder="Pregunta o busca algo…"></textarea>
+    <kbd class="asis-kbd" aria-hidden="true">Ctrl K</kbd>
+    <button type="submit" class="asis-enviar" id="asis-enviar" aria-label="Preguntar" disabled={!!iaApagada}>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5 M5 12l7-7 7 7"></path></svg>
+    </button>
+    <ul id="asis-resultados" class="buscador-lista" hidden></ul>
+  </form>
+
+  {iaApagada && <p class="asis-apagada">{iaApagada}</p>}
+
+  <div class="asis-chips" role="group" aria-label="Sugerencias">
+    {CHIPS.map((c) => (
+      <button type="button" class="asis-chip" data-pregunta={c.pregunta} data-rellenar={c.rellenar} disabled={!!iaApagada && !c.rellenar}>
+        {c.texto}
+      </button>
+    ))}
+  </div>
+
+  <div class="asis-barra" id="asis-barra" hidden>
+    <span>Conversación</span>
+    <button type="button" class="boton-sec" id="asis-nueva">Nueva conversación</button>
+  </div>
+  <div id="asis-hilo" class="asis-hilo" hidden aria-live="polite"></div>
+
+  {recientes.length > 0 && (
+    <nav class="asis-recientes" aria-label="Conversaciones recientes">
+      <span class="asis-rotulo">Recientes</span>
+      <ul>
+        {recientes.map((r) => (
+          <li>
+            <a href={`/admin?c=${r.id}#asistente`} class={r.pendiente ? 'pendiente' : ''}>
+              <span class="rec-punto" aria-hidden="true"></span>
+              <span class="rec-texto">{r.pregunta}</span>
+              <span class="rec-meta">{r.pendiente ? 'Espera tu decisión' : hace(r.actualizada)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )}
+
+  <script type="application/json" id="asis-inicial" set:html={JSON.stringify(inicial).replace(/</g, '\\u003c')} />
+</section>
+
+<script>
+  import { crearBuscador } from './buscador-cliente'
+  import { crearHilo, type EstadoInicial } from './asistente-cliente'
+
+  const seccion = document.getElementById('asistente')
+  if (seccion) iniciar(seccion)
+
+  function iniciar(seccion: HTMLElement) {
+    const form = document.getElementById('asis-form') as HTMLFormElement
+    const input = document.getElementById('asis-input') as HTMLTextAreaElement
+    const enviar = document.getElementById('asis-enviar') as HTMLButtonElement
+    const lista = document.getElementById('asis-resultados') as HTMLUListElement
+    const hiloEl = document.getElementById('asis-hilo') as HTMLDivElement
+    const barra = document.getElementById('asis-barra') as HTMLDivElement
+    const iaApagada = seccion.dataset.iaApagada || null
+    const placeholder = input.placeholder
+
+    // La caja crece con el texto hasta seis líneas, como la de Notion.
+    const crecer = () => {
+      input.style.height = 'auto'
+      input.style.height = `${Math.min(input.scrollHeight, 168)}px`
+    }
+    input.addEventListener('input', crecer)
+
+    const hilo = crearHilo({
+      hilo: hiloEl,
+      alCambiarId(id) {
+        barra.hidden = !id && hiloEl.hidden
+        const url = new URL(location.href)
+        if (id) url.searchParams.set('c', id)
+        else url.searchParams.delete('c')
+        url.searchParams.delete('preguntar')
+        history.replaceState(null, '', url)
+      },
+      alOcupar(ocupado) {
+        enviar.disabled = ocupado || !!iaApagada
+        form.classList.toggle('ocupada', ocupado)
+        barra.hidden = hiloEl.hidden
+      },
+      pedirCambios() {
+        input.placeholder = '¿Qué le cambio? Por ejemplo: "que venza el 30" o "agrega la retención de honorarios"'
+        input.focus()
+      },
+    })
+
+    const preguntar = (texto: string) => {
+      const q = texto.trim()
+      if (!q || iaApagada || hilo.ocupado) return
+      buscador.limpiar()
+      input.value = ''
+      input.placeholder = placeholder
+      crecer()
+      barra.hidden = false
+      void hilo.preguntar(q)
+    }
+
+    const buscador = crearBuscador({ input, lista, preguntar, iaApagada })
+
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault()
+      preguntar(input.value)
+    })
+
+    document.getElementById('asis-nueva')!.addEventListener('click', () => {
+      hilo.nueva()
+      barra.hidden = true
+      input.placeholder = placeholder
+      input.focus()
+    })
+
+    for (const chip of seccion.querySelectorAll<HTMLButtonElement>('.asis-chip')) {
+      chip.addEventListener('click', () => {
+        if (chip.dataset.rellenar) {
+          input.value = chip.dataset.rellenar
+          crecer()
+          input.focus()
+          input.setSelectionRange(input.value.length, input.value.length)
+          return
+        }
+        if (chip.dataset.pregunta) preguntar(chip.dataset.pregunta)
+      })
+    }
+
+    const inicial = JSON.parse(document.getElementById('asis-inicial')?.textContent || 'null') as EstadoInicial | null
+    if (inicial) {
+      hilo.cargar(inicial)
+      barra.hidden = false
+      requestAnimationFrame(() => seccion.scrollIntoView({ block: 'start' }))
+    }
+
+    // Desde Ctrl+K en otra página: llega la pregunta en la URL.
+    const pendiente = seccion.dataset.preguntar
+    if (pendiente) preguntar(pendiente)
+  }
+</script>
+
+<style is:global>
+  .asis { max-width: 46rem; margin: 0 auto 2.5rem; padding-top: clamp(.5rem, 3vw, 2.25rem); }
+  .asis-cabeza { text-align: center; margin-bottom: 1.4rem; }
+  .asis-fecha { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--color-ink-200); }
+  .asis-saludo {
+    margin-top: .55rem; font-size: clamp(28px, 4.2vw, 40px); line-height: 1.08; letter-spacing: -.025em;
+    color: var(--color-ink-50); font-weight: 500;
+  }
+  .asis-saludo em { font-family: var(--font-serif); font-style: italic; font-weight: 400; color: var(--color-cyan-glow); letter-spacing: -.01em; }
+  .asis-sub { margin-top: .55rem; font-size: 13.5px; color: var(--color-ink-200); }
+
+  .asis-caja {
+    position: relative; display: flex; align-items: flex-end; gap: .6rem;
+    padding: .8rem .8rem .8rem 1rem; border-radius: 1.1rem;
+    background: rgba(255, 255, 255, .035); border: 1px solid rgba(255, 255, 255, .09);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 24px 60px -32px rgba(0, 0, 0, .8);
+    transition: border-color .25s, box-shadow .25s, background .25s;
+  }
+  .asis-caja:focus-within {
+    border-color: rgba(0, 242, 255, .35); background: rgba(255, 255, 255, .05);
+    box-shadow: 0 0 0 4px rgba(0, 242, 255, .07), 0 28px 70px -30px rgba(0, 242, 255, .28);
+  }
+  .asis-caja.ocupada .asis-chispa { color: var(--color-cyan); animation: asis-giro 2.4s linear infinite; }
+  .asis-chispa { color: var(--color-ink-200); padding-bottom: .42rem; transition: color .25s; }
+  .asis-caja:focus-within .asis-chispa { color: var(--color-cyan); }
+  #asis-input {
+    flex: 1; min-width: 0; resize: none; background: transparent; border: 0; outline: none;
+    font-size: 15.5px; line-height: 1.5; color: var(--color-ink-50); padding: .3rem 0; max-height: 168px;
+  }
+  #asis-input::placeholder { color: var(--color-ink-200); }
+  .asis-kbd {
+    font-family: var(--font-mono); font-size: 10.5px; color: var(--color-ink-200); padding: .2rem .45rem; margin-bottom: .38rem;
+    border: 1px solid rgba(255, 255, 255, .1); border-radius: .4rem; white-space: nowrap;
+  }
+  .asis-caja:focus-within .asis-kbd { display: none; }
+  .asis-enviar {
+    width: 2.15rem; height: 2.15rem; flex-shrink: 0; display: grid; place-items: center; border-radius: 999px;
+    background: var(--color-cyan); color: var(--color-ink-950); transition: transform .2s, opacity .2s, background .2s;
+  }
+  .asis-enviar:hover:not(:disabled) { background: var(--color-cyan-glow); transform: translateY(-1px); }
+  .asis-enviar:disabled { opacity: .3; cursor: not-allowed; }
+  .asis-apagada { margin-top: .6rem; text-align: center; font-size: 12px; color: var(--color-ink-200); font-family: var(--font-mono); }
+
+  .asis-chips { margin-top: .9rem; display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem; }
+  .asis-chip {
+    font-size: 12.5px; color: var(--color-ink-100); padding: .38rem .8rem; border-radius: 999px;
+    background: rgba(255, 255, 255, .025); border: 1px solid rgba(255, 255, 255, .08);
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .asis-chip:hover:not(:disabled) { background: rgba(0, 242, 255, .08); border-color: rgba(0, 242, 255, .25); color: var(--color-ink-50); }
+  .asis-chip:disabled { opacity: .4; cursor: not-allowed; }
+
+  .asis-barra { margin-top: 1.6rem; display: flex; align-items: center; justify-content: space-between; }
+  .asis-barra > span, .asis-rotulo { font-family: var(--font-mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--color-ink-200); }
+
+  .asis-hilo { margin-top: .9rem; display: flex; flex-direction: column; gap: 1.1rem; }
+  .turno { border-radius: 1rem; background: rgba(255, 255, 255, .02); border: 1px solid rgba(255, 255, 255, .06); padding: 1rem 1.15rem 1.05rem; scroll-margin-top: 6rem; }
+  .turno-pregunta { display: flex; gap: .7rem; align-items: baseline; padding-bottom: .8rem; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+  .turno-quien { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--color-ink-200); flex-shrink: 0; }
+  .turno-pregunta p { font-size: 14.5px; color: var(--color-ink-50); white-space: pre-wrap; }
+  .turno-cuerpo { padding-top: .75rem; }
+  .turno-pasos { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .55rem; }
+  .turno-pasos:empty { display: none; }
+  .paso { display: flex; align-items: center; gap: .55rem; font-family: var(--font-mono); font-size: 11.5px; color: var(--color-ink-200); }
+  .paso-punto { width: 6px; height: 6px; border-radius: 999px; background: var(--color-lime); opacity: .75; flex-shrink: 0; }
+  .paso.activo { color: var(--color-ink-100); }
+  .paso.activo .paso-punto { background: var(--color-cyan); box-shadow: 0 0 10px var(--color-cyan); animation: pulseDot 1.2s ease-in-out infinite; }
+  .turno-respuesta { font-size: 14.5px; line-height: 1.65; color: var(--color-ink-100); }
+  .resp-bloque + .resp-bloque, .resp-bloque + .turno-tarjeta, .turno-tarjeta + .resp-bloque, .turno-hecho + .resp-bloque { margin-top: .7rem; }
+  .resp-p + .resp-p, .resp-p + .resp-lista, .resp-lista + .resp-p { margin-top: .55rem; }
+  .resp-fuerte, .turno-respuesta strong { color: var(--color-ink-50); font-weight: 600; }
+  .resp-lista { margin-top: .35rem; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .25rem; }
+  ul.resp-lista { list-style: none; padding-left: 0; }
+  ul.resp-lista li { position: relative; padding-left: 1rem; }
+  ul.resp-lista li::before { content: ''; position: absolute; left: .1rem; top: .68em; width: 5px; height: 5px; border-radius: 999px; background: var(--color-cyan); opacity: .7; }
+  ol.resp-lista { list-style: decimal; }
+  ol.resp-lista li::marker { color: var(--color-ink-200); font-family: var(--font-mono); font-size: 12px; }
+  .turno-respuesta .enlace { color: var(--color-cyan); text-decoration: none; background-image: linear-gradient(currentColor, currentColor); background-size: 0 1px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size .25s; }
+  .turno-respuesta .enlace:hover { background-size: 100% 1px; }
+  .turno-hecho { margin-top: .7rem; font-family: var(--font-mono); font-size: 12px; padding: .5rem .75rem; border-radius: .6rem; background: rgba(201, 255, 91, .07); }
+  .turno-hecho .enlace { color: var(--color-lime) !important; }
+  .turno-aviso { margin-top: .6rem; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; font-size: 13px; color: var(--color-ink-100); padding: .6rem .8rem; border-radius: .7rem; background: rgba(255, 107, 61, .08); }
+  .turno-pie { margin-top: .7rem; display: flex; justify-content: flex-end; gap: .8rem; font-family: var(--font-mono); font-size: 10.5px; color: var(--color-ink-300); }
+  .turno-pie:empty { display: none; }
+  .pie-espera { color: var(--color-violet); }
+
+  .pensando { margin-top: .5rem; display: flex; align-items: center; gap: .6rem; font-family: var(--font-mono); font-size: 11.5px; color: var(--color-ink-200); }
+  .pensando .ondas { display: inline-flex; gap: 3px; }
+  .pensando .ondas i { width: 4px; height: 4px; border-radius: 999px; background: var(--color-cyan); animation: asis-onda 1.1s ease-in-out infinite; }
+  .pensando .ondas i:nth-child(2) { animation-delay: .15s; }
+  .pensando .ondas i:nth-child(3) { animation-delay: .3s; }
+
+  .turno-tarjeta { margin-top: .8rem; border-radius: .9rem; background: rgba(10, 10, 13, .55); border: 1px solid rgba(255, 255, 255, .08); overflow: hidden; transition: opacity .3s, border-color .3s; }
+  .turno-tarjeta.estado-descartada, .turno-tarjeta.estado-cambios { opacity: .55; }
+  .turno-tarjeta.estado-aprobada { border-color: rgba(201, 255, 91, .25); }
+  .tarjeta-cuenta { padding: 1rem 1.1rem .4rem; }
+  .tc-cab { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+  .tc-rotulo { display: block; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--color-ink-200); }
+  .tc-cliente { margin-top: .25rem; font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -.01em; color: var(--color-ink-50); }
+  .tc-proyecto { font-size: 12px; color: var(--color-ink-200); }
+  .tc-total { text-align: right; }
+  .tc-total strong { display: block; margin-top: .2rem; font-family: var(--font-mono); font-size: 18px; font-weight: 500; color: var(--color-cyan-glow); white-space: nowrap; }
+  .tc-concepto { margin-top: .6rem; font-size: 13px; color: var(--color-ink-100); }
+  .tc-lineas { margin-top: .8rem; width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .tc-lineas th { text-align: left; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 400; color: var(--color-ink-200); padding: 0 .4rem .35rem 0; }
+  .tc-lineas td { padding: .4rem .4rem .4rem 0; border-top: 1px solid rgba(255, 255, 255, .05); color: var(--color-ink-100); vertical-align: top; }
+  .tc-lineas .num, .tc-lineas th:not(:first-child) { text-align: right; font-family: var(--font-mono); white-space: nowrap; }
+  .tc-resumen { margin-top: .6rem; display: flex; flex-direction: column; gap: .25rem; font-size: 12.5px; }
+  .tc-resumen > div { display: flex; justify-content: space-between; gap: 1rem; }
+  .tc-resumen dt { color: var(--color-ink-200); }
+  .tc-resumen dd { font-family: var(--font-mono); color: var(--color-ink-100); }
+  .tc-ret dd { color: var(--color-ink-200); }
+  .tc-neto { padding-top: .35rem; margin-top: .15rem; border-top: 1px dashed rgba(255, 255, 255, .1); }
+  .tc-neto dt, .tc-neto dd { color: var(--color-ink-50); }
+  .tc-datos { margin-top: .6rem; font-size: 11.5px; font-family: var(--font-mono); color: var(--color-ink-200); }
+  .tc-faltan { margin: .75rem 0 .3rem; padding: .6rem .75rem; border-radius: .6rem; background: rgba(255, 107, 61, .07); }
+  .tc-faltan ul { margin-top: .3rem; display: flex; flex-direction: column; gap: .15rem; font-size: 12.5px; color: var(--color-ink-100); }
+  .tc-faltan li::before { content: '· '; color: var(--color-ember); }
+  .tarjeta-pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .7rem; padding: .75rem 1.1rem; background: rgba(255, 255, 255, .02); border-top: 1px solid rgba(255, 255, 255, .05); }
+  .tarjeta-nota { font-size: 11.5px; color: var(--color-ink-200); }
+  .tarjeta-acciones { display: flex; flex-wrap: wrap; gap: .45rem; margin-left: auto; }
+  .tarjeta-sello { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-ink-200); }
+  .estado-aprobada .tarjeta-sello { color: var(--color-lime); }
+
+  .boton-pri, .boton-sec { height: 2rem; padding: 0 .9rem; border-radius: 999px; font-size: 12.5px; transition: background .2s, color .2s, border-color .2s; }
+  .boton-pri { background: var(--color-cyan); color: var(--color-ink-950); font-weight: 600; }
+  .boton-pri:hover { background: var(--color-cyan-glow); }
+  .boton-sec { color: var(--color-ink-100); border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .02); }
+  .boton-sec:hover { background: rgba(255, 255, 255, .06); color: var(--color-ink-50); }
+
+  .asis-recientes { margin-top: 1.6rem; }
+  .asis-recientes ul { margin-top: .5rem; display: flex; flex-direction: column; }
+  .asis-recientes a { display: flex; align-items: center; gap: .7rem; padding: .5rem .6rem; border-radius: .6rem; font-size: 13px; color: var(--color-ink-100); transition: background .2s; }
+  .asis-recientes a:hover { background: rgba(255, 255, 255, .04); }
+  .rec-punto { width: 6px; height: 6px; border-radius: 999px; background: var(--color-ink-300); flex-shrink: 0; }
+  .asis-recientes a.pendiente .rec-punto { background: var(--color-violet); box-shadow: 0 0 10px rgba(167, 139, 255, .6); }
+  .rec-texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rec-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--color-ink-200); flex-shrink: 0; }
+  .asis-recientes a.pendiente .rec-meta { color: var(--color-violet); }
+
+  .entra { animation: asis-entra .45s cubic-bezier(.2, .7, .2, 1) both; }
+  @keyframes asis-entra { from { opacity: 0; transform: translateY(6px); } }
+  @keyframes asis-onda { 0%, 100% { opacity: .25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+  @keyframes asis-giro { to { transform: rotate(360deg); } }
+
+  @media (max-width: 640px) {
+    .asis-kbd { display: none; }
+    .tc-cab { flex-direction: column; }
+    .tc-total { text-align: left; }
+    .tc-lineas th:nth-child(2), .tc-lineas td:nth-child(2), .tc-lineas th:nth-child(3), .tc-lineas td:nth-child(3) { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .entra, .pensando .ondas i, .asis-caja.ocupada .asis-chispa, .paso.activo .paso-punto { animation: none; }
+  }
+</style>

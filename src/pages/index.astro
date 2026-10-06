@@ -615,7 +615,6 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
     inclinar,
     magnetico,
     odometro,
-    pesoPorCercania,
     punteroFino,
     revelarEtiqueta,
     revelarTitular,
@@ -948,17 +947,9 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           bento.querySelectorAll<HTMLElement>('.foco').forEach((c) => inclinar(c, 2.2))
         }
 
-        // El peso por cercanía entra cuando el boot del titular ya terminó: si
-        // arranca antes, mide las letras a media subida y los centros quedan
-        // desplazados para siempre.
-        window.setTimeout(() => {
-          const lineas = Array.from(document.querySelectorAll<HTMLElement>('#hero .hero-line'))
-          const letras = lineas.flatMap((l) => Array.from(l.children) as HTMLElement[])
-          const serif = lineas
-            .filter((l) => l.classList.contains('font-serif'))
-            .flatMap((l) => Array.from(l.children) as HTMLElement[])
-          if (letras.length) pesoPorCercania(letras, { levantar: serif })
-        }, 1800)
+        // Sin peso por cercanía en el titular desde RF-037: va en Archivo black
+        // (900, el tope del eje), así que no queda peso hacia donde engordar y
+        // el efecto solo podía adelgazar todas las letras al primer movimiento.
       }
     } catch (err) {
       console.warn('[motion] portada sin animaciones tras un fallo de init', err)

@@ -6,6 +6,48 @@ import { eq, count, desc, and, isNotNull } from 'drizzle-orm'
 import { parseRates, fmtUSD } from '../../lib/money'
 import { monthlyCostUSD, projectPnL, type FinanceLike, type ServiceLike } from '../../lib/pnl'
 import { domainAlertState, daysUntil } from '../../lib/domains'
+import AsistenteCaja from '../../components/admin/AsistenteCaja.astro'
+import type { EstadoInicial, Vista } from '../../components/admin/asistente-cliente'
+import { listarRecientes, obtenerConversacion } from '../../lib/asistente/conversaciones'
+import { turnosDe } from '../../lib/asistente/turnos'
+import { serverEnv } from '../../lib/env'
+
+// ── Caja del asistente ──────────────────────────────────────────────────────
+// Fail-soft: si la tabla de conversaciones aún no existe (migración sin
+// aplicar) o Turso falla, el dashboard carga igual, sin recientes.
+const isDemo = Astro.locals.demo === true
+const iaApagada = isDemo
+  ? 'En la demo la IA está apagada: aquí solo se busca.'
+  : !serverEnv('ANTHROPIC_API_KEY')
+    ? 'Falta ANTHROPIC_API_KEY: por ahora la caja solo busca.'
+    : null
+const idConversacion = Astro.url.searchParams.get('c')
+const preguntarDesdePaleta = iaApagada ? null : Astro.url.searchParams.get('preguntar')?.slice(0, 1000) || null
+const [recientes, conversacion] = await Promise.all([
+  isDemo ? [] : listarRecientes(5).catch(() => []),
+  idConversacion && !isDemo ? obtenerConversacion(idConversacion).catch(() => null) : null,
+])
+const inicial: EstadoInicial | null = conversacion
+  ? {
+      id: conversacion.id,
+      estado: conversacion.estado,
+      turnos: turnosDe(conversacion.mensajes as never),
+      propuesta: conversacion.propuesta
+        ? {
+            origen: conversacion.propuesta.origen,
+            motivo: conversacion.propuesta.motivo,
+            herramienta: conversacion.propuesta.herramienta,
+            vista: conversacion.propuesta.vista as Vista | undefined,
+          }
+        : null,
+      error: conversacion.error,
+    }
+  : null
+
+const ahoraBogota = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }))
+const hora = ahoraBogota.getHours()
+const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches'
+const fechaHoy = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Bogota' })
 
 const [
   visibleProjectsCount, unreadCount, clientsCount,
@@ -88,6 +130,55 @@ const evolutionPct = completados + enCurso > 0 ? Math.round((completados / (comp
 ---
 
 <AdminLayout title="Dashboard">
+  <AsistenteCaja saludo={saludo} fecha={fechaHoy} recientes={recientes} inicial={inicial} iaApagada={iaApagada} preguntar={preguntarDesdePaleta} />
+
+  <div class="flex items-center gap-3 mb-3">
+    <span class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 shrink-0">Tu negocio hoy</span>
+    <span class="h-px flex-1 bg-white/5"></span>
+  </div>
+
+  {(domainAlerts.length > 0 || overduePend > 0 || upcomingPend > 0 || unreadMessages > 0) && (
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+      {domainAlerts.length > 0 && (
+        <a href="/admin/domains" class={`flex items-center justify-between gap-3 rounded-2xl border px-5 py-3.5 transition-colors ${domainOverdue > 0 ? 'border-ember/30 bg-ember/[.07] hover:bg-ember/[.12]' : 'border-violet/25 bg-violet/[.06] hover:bg-violet/[.1]'}`}>
+          <div class="flex items-center gap-3 min-w-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class={`shrink-0 ${domainOverdue > 0 ? 'text-ember' : 'text-violet'}`}><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>
+            <div class="text-[13px] text-ink-100 min-w-0">
+              {domainOverdue > 0 && <span class="text-ember font-medium">{domainOverdue} dominio{domainOverdue === 1 ? '' : 's'} vencido{domainOverdue === 1 ? '' : 's'}</span>}
+              {domainOverdue > 0 && domainSoon > 0 && <span class="text-ink-400"> · </span>}
+              {domainSoon > 0 && <span class="text-violet">{domainSoon} por vencer ≤30d</span>}
+              <span class="text-ink-400 hidden sm:inline"> - </span>
+              <span class="text-ink-300 hidden sm:inline">{domainAlerts[0].name} {domainAlerts[0].state === 'overdue' ? `(vencido)` : `(${domainAlerts[0].days}d)`}</span>
+            </div>
+          </div>
+          <span class={`text-[11px] font-mono shrink-0 ${domainOverdue > 0 ? 'text-ember' : 'text-violet'}`}>Dominios →</span>
+        </a>
+      )}
+      {(overduePend > 0 || upcomingPend > 0) && (
+        <a href="/admin/seguimiento" class="flex items-center justify-between gap-3 rounded-2xl glass px-5 py-3.5 hover:bg-white/[.03] transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-ink-200 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <div class="text-[13px] text-ink-100">
+              {overduePend > 0 && <span class="text-ember font-medium">{overduePend} pendiente{overduePend === 1 ? '' : 's'} vencido{overduePend === 1 ? '' : 's'}</span>}
+              {overduePend > 0 && upcomingPend > 0 && <span class="text-ink-400"> · </span>}
+              {upcomingPend > 0 && <span class="text-violet">{upcomingPend} próximo{upcomingPend === 1 ? '' : 's'}</span>}
+            </div>
+          </div>
+          <span class="text-[11px] font-mono text-cyan shrink-0">Seguimiento →</span>
+        </a>
+      )}
+      {unreadMessages > 0 && (
+        <a href="/admin/messages" class="flex items-center justify-between gap-3 rounded-2xl glass px-5 py-3.5 hover:bg-white/[.03] transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-2 h-2 rounded-full bg-cyan pulse-dot shrink-0"></span>
+            <div class="text-[13px] text-ink-100"><span class="text-cyan font-medium">{unreadMessages} mensaje{unreadMessages === 1 ? '' : 's'}</span> sin leer</div>
+          </div>
+          <span class="text-[11px] font-mono text-cyan shrink-0">Bandeja →</span>
+        </a>
+      )}
+    </div>
+  )}
+
   <!-- KPI bento -->
   <div class="grid grid-cols-12 gap-3 md:gap-4 mb-4">
     <!-- Cobrado - big tile -->
@@ -147,36 +238,6 @@ const evolutionPct = completados + enCurso > 0 ? Math.round((completados / (comp
       <div class="mt-1 text-[10px] font-mono text-cyan">ver costos →</div>
     </a>
   </div>
-
-  {domainAlerts.length > 0 && (
-    <a href="/admin/domains" class={`flex items-center justify-between gap-3 rounded-2xl border px-5 py-3.5 mb-4 transition-colors ${domainOverdue > 0 ? 'border-ember/30 bg-ember/[.07] hover:bg-ember/[.12]' : 'border-violet/25 bg-violet/[.06] hover:bg-violet/[.1]'}`}>
-      <div class="flex items-center gap-3 min-w-0">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class={`shrink-0 ${domainOverdue > 0 ? 'text-ember' : 'text-violet'}`}><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>
-        <div class="text-[13px] text-ink-100 min-w-0">
-          {domainOverdue > 0 && <span class="text-ember font-medium">{domainOverdue} dominio{domainOverdue === 1 ? '' : 's'} vencido{domainOverdue === 1 ? '' : 's'}</span>}
-          {domainOverdue > 0 && domainSoon > 0 && <span class="text-ink-400"> · </span>}
-          {domainSoon > 0 && <span class="text-violet">{domainSoon} por vencer ≤30d</span>}
-          <span class="text-ink-400 hidden sm:inline"> - </span>
-          <span class="text-ink-300 hidden sm:inline">{domainAlerts[0].name} {domainAlerts[0].state === 'overdue' ? `(vencido)` : `(${domainAlerts[0].days}d)`}</span>
-        </div>
-      </div>
-      <span class={`text-[11px] font-mono shrink-0 ${domainOverdue > 0 ? 'text-ember' : 'text-violet'}`}>Dominios →</span>
-    </a>
-  )}
-
-  {(overduePend > 0 || upcomingPend > 0) && (
-    <a href="/admin/seguimiento" class="flex items-center justify-between gap-3 rounded-2xl glass px-5 py-3.5 mb-6 hover:bg-white/[.03] transition-colors">
-      <div class="flex items-center gap-3 min-w-0">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-ink-200 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        <div class="text-[13px] text-ink-100">
-          {overduePend > 0 && <span class="text-ember font-medium">{overduePend} pendiente{overduePend === 1 ? '' : 's'} vencido{overduePend === 1 ? '' : 's'}</span>}
-          {overduePend > 0 && upcomingPend > 0 && <span class="text-ink-400"> · </span>}
-          {upcomingPend > 0 && <span class="text-violet">{upcomingPend} próximo{upcomingPend === 1 ? '' : 's'}</span>}
-        </div>
-      </div>
-      <span class="text-[11px] font-mono text-cyan shrink-0">Seguimiento →</span>
-    </a>
-  )}
 
   <!-- Evolution + rentabilidad -->
   <div class="grid grid-cols-12 gap-4 mb-6">

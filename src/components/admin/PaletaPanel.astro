@@ -1,0 +1,102 @@
+---
+// Ctrl+K (o Cmd+K) desde cualquier página del panel. En el dashboard enfoca la
+// caja del asistente; en el resto abre esta paleta, que busca lo mismo sin IA.
+// "Preguntarle a la IA" lleva al dashboard con la pregunta: la conversación
+// vive allí, con sus aprobaciones y su historial.
+interface Props {
+  iaApagada: string | null
+}
+const { iaApagada } = Astro.props
+---
+
+<dialog id="paleta" class="paleta" aria-label="Buscar en el panel" data-ia-apagada={iaApagada ?? ''}>
+  <form method="dialog" class="paleta-caja" autocomplete="off">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    <label for="paleta-input" class="sr-only">Pregunta o busca algo</label>
+    <input id="paleta-input" type="text" maxlength="1000" placeholder="Pregunta o busca algo…" />
+    <kbd>Esc</kbd>
+  </form>
+  <ul id="paleta-resultados" class="buscador-lista en-paleta" hidden></ul>
+  <p class="paleta-pista">Escribe para buscar páginas, clientes, proyectos o cuentas. Enter en la primera fila le pregunta a la IA.</p>
+</dialog>
+
+<script>
+  import { crearBuscador } from './buscador-cliente'
+
+  const dialogo = document.getElementById('paleta') as HTMLDialogElement | null
+  if (dialogo) {
+    const input = document.getElementById('paleta-input') as HTMLInputElement
+    const lista = document.getElementById('paleta-resultados') as HTMLUListElement
+    const buscador = crearBuscador({
+      input,
+      lista,
+      iaApagada: dialogo.dataset.iaApagada || null,
+      preguntar: (texto) => {
+        location.href = `/admin?preguntar=${encodeURIComponent(texto)}#asistente`
+      },
+    })
+
+    const abrir = () => {
+      const caja = document.getElementById('asis-input') as HTMLTextAreaElement | null
+      // En el dashboard ya hay caja: no se abre una segunda.
+      if (caja) {
+        caja.focus()
+        caja.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        return
+      }
+      if (dialogo.open) return
+      input.value = ''
+      buscador.limpiar()
+      dialogo.showModal()
+      input.focus()
+    }
+
+    document.addEventListener('keydown', (ev) => {
+      if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && ev.key.toLowerCase() === 'k') {
+        ev.preventDefault()
+        abrir()
+      }
+    })
+    document.querySelectorAll<HTMLElement>('[data-abrir-paleta]').forEach((b) => b.addEventListener('click', abrir))
+    // Clic en el fondo cierra.
+    dialogo.addEventListener('click', (ev) => {
+      if (ev.target === dialogo) dialogo.close()
+    })
+  }
+</script>
+
+<style is:global>
+  .paleta {
+    width: min(40rem, calc(100vw - 2rem)); margin: 12vh auto auto; padding: 0; border-radius: 1rem; color: var(--color-ink-50);
+    background: rgba(19, 19, 26, .96); border: 1px solid rgba(255, 255, 255, .1);
+    box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .9), 0 0 0 1px rgba(0, 242, 255, .06);
+  }
+  .paleta::backdrop { background: rgba(10, 10, 13, .6); backdrop-filter: blur(6px); }
+  .paleta[open] { animation: paleta-entra .2s cubic-bezier(.2, .7, .2, 1); }
+  @keyframes paleta-entra { from { opacity: 0; transform: translateY(-6px) scale(.985); } }
+  .paleta-caja { display: flex; align-items: center; gap: .7rem; padding: .95rem 1.1rem; color: var(--color-ink-200); border-bottom: 1px solid rgba(255, 255, 255, .07); }
+  .paleta-caja input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; font-size: 15px; color: var(--color-ink-50); }
+  .paleta-caja input::placeholder { color: var(--color-ink-200); }
+  .paleta-caja kbd { font-family: var(--font-mono); font-size: 10.5px; padding: .15rem .4rem; border: 1px solid rgba(255, 255, 255, .1); border-radius: .35rem; }
+  .paleta-pista { padding: .7rem 1.1rem .85rem; font-size: 11.5px; color: var(--color-ink-200); }
+  .paleta .buscador-lista:not([hidden]) + .paleta-pista { display: none; }
+
+  /* Lista de resultados: la comparten la caja del dashboard y la paleta. */
+  .buscador-lista {
+    position: absolute; left: 0; right: 0; top: calc(100% + .5rem); z-index: 20; max-height: min(24rem, 60vh); overflow-y: auto;
+    padding: .35rem; border-radius: .9rem; background: rgba(19, 19, 26, .97); border: 1px solid rgba(255, 255, 255, .09);
+    box-shadow: 0 30px 80px -24px rgba(0, 0, 0, .85); backdrop-filter: blur(16px);
+  }
+  .buscador-lista.en-paleta { position: static; border: 0; box-shadow: none; background: transparent; max-height: min(26rem, 56vh); }
+  .buscador-fila { display: flex; align-items: center; gap: .7rem; padding: .55rem .65rem; border-radius: .6rem; cursor: pointer; color: var(--color-ink-100); }
+  .buscador-fila[aria-selected='true'] { background: rgba(0, 242, 255, .08); color: var(--color-ink-50); }
+  .buscador-fila[aria-disabled='true'] { cursor: default; opacity: .6; }
+  .buscador-icono { width: 1.75rem; height: 1.75rem; display: grid; place-items: center; border-radius: .5rem; background: rgba(255, 255, 255, .04); color: var(--color-ink-200); flex-shrink: 0; }
+  .buscador-fila[aria-selected='true'] .buscador-icono { color: var(--color-cyan); }
+  .buscador-fila.es-ia .buscador-icono { background: rgba(0, 242, 255, .1); color: var(--color-cyan); }
+  .buscador-fila.es-ia { margin-bottom: .2rem; }
+  .buscador-cuerpo { display: flex; flex-direction: column; min-width: 0; }
+  .buscador-titulo { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .buscador-detalle { font-family: var(--font-mono); font-size: 10.5px; color: var(--color-ink-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { .paleta[open] { animation: none; } }
+</style>

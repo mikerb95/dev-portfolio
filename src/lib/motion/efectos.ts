@@ -87,8 +87,12 @@ export function pesoPorCercania(
   letras: HTMLElement[],
   opciones: { base?: number; maximo?: number; radio?: number; levantar?: HTMLElement[] } = {},
 ): Desmontar {
-  const base = opciones.base ?? 500
-  const maximo = opciones.maximo ?? 760
+  // El peso base sale del CSS, no de una constante: si el titular cambia de
+  // peso y el efecto no se entera, el primer movimiento del cursor reescribe
+  // todas las letras con el peso viejo.
+  const base = opciones.base ?? (Number(letras[0] && getComputedStyle(letras[0]).fontWeight) || 500)
+  const maximo = Math.min(opciones.maximo ?? base + 260, 900)
+  if (maximo <= base && !opciones.levantar?.length) return () => {}
   const radio = opciones.radio ?? 220
   const levantar = new Set(opciones.levantar ?? [])
 

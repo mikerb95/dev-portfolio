@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css'
 import Sidebar from '../components/admin/Sidebar.astro'
+import PaletaPanel from '../components/admin/PaletaPanel.astro'
 
 interface Props {
   title: string
@@ -52,6 +53,15 @@ const isDemo = Astro.locals.demo === true
           </div>
         </div>
         <div class="flex items-center gap-2 md:gap-3 shrink-0">
+          <button
+            type="button"
+            data-abrir-paleta
+            class="hidden md:inline-flex items-center gap-2 h-8 pl-3 pr-2 text-[12px] rounded-full bg-white/[.03] text-ink-200 border border-white/10 hover:bg-white/[.06] hover:text-ink-50 transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            Buscar
+            <kbd class="font-mono text-[10px] px-1.5 py-0.5 rounded border border-white/10">Ctrl K</kbd>
+          </button>
           {isDemo ? (
             <div class="hidden sm:flex items-center gap-2 px-1 text-cyan text-[11px] font-mono">
               <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
@@ -87,5 +97,6 @@ const isDemo = Astro.locals.demo === true
         <slot />
       </main>
     </div>
+    <PaletaPanel iaApagada={isDemo ? 'En la demo la IA está apagada: aquí solo se busca.' : null} />
   </body>
 </html>
