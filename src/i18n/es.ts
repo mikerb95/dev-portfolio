@@ -186,6 +186,8 @@ const es = {
       errorNoDisponible: 'El estimado con IA no está disponible ahora. Escríbele a Mike por WhatsApp.',
       errorFallo: 'No pude responder. Inténtalo de nuevo o escríbele a Mike.',
       sinJs: 'Para pedir un estimado al momento hace falta JavaScript. También puedes escribirle a Mike.',
+      // Mensaje de WhatsApp cuando el asesor no preparó uno (respuesta sin precio).
+      waTexto: 'Hola Mike, vi tu página y necesito esto: {idea}',
     },
     // Cinta de señales bajo el hero. Etiquetas cortas a propósito: la cifra es
     // lo que se lee de un vistazo, la etiqueta solo dice de qué es y en qué

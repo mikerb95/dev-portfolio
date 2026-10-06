@@ -183,6 +183,7 @@ const en = {
       errorNoDisponible: 'The AI estimate is not available right now. Message Mike on WhatsApp.',
       errorFallo: "I couldn't answer. Try again or message Mike.",
       sinJs: 'Getting an instant estimate needs JavaScript. You can also message Mike.',
+      waTexto: 'Hi Mike, I saw your site and I need this: {idea}',
     },
     pulso: {
       uptime: 'uptime · {dias} d',
