@@ -56,4 +56,7 @@ export const AUDIT_RULE_LABELS: Record<string, string> = {
   'plano.descartada': 'Propuesta de Plano descartada',
   'plano.ajustes': 'Reglas de pago de Plano cambiadas',
   'plano.ia': 'Análisis con IA de una propuesta',
+  'asistente.pregunta': 'Pregunta al asistente del dashboard',
+  'asistente.propuesta_aprobada': 'Acción propuesta por el asistente, aprobada',
+  'asistente.propuesta_rechazada': 'Acción propuesta por el asistente, rechazada',
 }

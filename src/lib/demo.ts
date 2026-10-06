@@ -127,6 +127,10 @@ const DEMO_BLOCKED_PATTERNS: RegExp[] = [
   // Asesor en vivo: conversaciones de visitantes reales y un canal para
   // escribirles. La demo enseña el panel, no a quién atiendo.
   /^\/(api\/)?admin\/asesor/,
+  // Asistente del dashboard: gasta créditos de la API de Claude y puede crear
+  // cuentas de cobro. Ya es POST (la demo lo rechaza), y se veta igual para
+  // que un GET futuro no lo abra en silencio.
+  /^\/api\/admin\/asistente/,
 ]
 
 /** ¿La ruta está vetada en modo demo (aun siendo GET)? */

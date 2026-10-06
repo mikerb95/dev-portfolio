@@ -22,6 +22,7 @@ import { sendEmail, sendPush } from '../../../lib/notify'
 import { conRegistro } from '../../../lib/cron-runs'
 import { siteUrl } from '../../../lib/site'
 import { purgarEjecuciones } from '../../../lib/analista/ejecuciones'
+import { purgarConversaciones } from '../../../lib/asistente/conversaciones'
 
 // Cron de seguridad. Ejecuta, en orden: auto-block (Fase 2), purga por retención,
 // rollups horarios/diarios y detección de anomalías con alertas (Fase 3).
@@ -86,6 +87,11 @@ async function runRollup() {
     console.error('[security-rollup] purga del analista', e)
     return 0
   })
+  // 5c) Conversaciones del asistente del dashboard, con la misma retención.
+  const conversacionesPurgadas = await purgarConversaciones(now).catch((e) => {
+    console.error('[security-rollup] purga del asistente', e)
+    return 0
+  })
 
   // 6) Alertas. El overflow del auto-block es crítico (posible ataque
   //    distribuido → hace falta la capa 0 / WAF). Las anomalías nuevas se
@@ -116,7 +122,7 @@ async function runRollup() {
     ]).catch(() => {})
   }
 
-  return { ok: true, ...auto, anomalies: freshAnomalies.length, analisisPurgados }
+  return { ok: true, ...auto, anomalies: freshAnomalies.length, analisisPurgados, conversacionesPurgadas }
 }
 
 // Disparo por cron-job.org / Vercel cron.
