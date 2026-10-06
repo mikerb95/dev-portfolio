@@ -23,7 +23,7 @@ import {
   projectServices,
 } from '../../../db/schema'
 import { monthlyEquivalent } from '../../money'
-import { AVISO_TERCEROS, centavos, dinero, fallo, fecha, ok, sumarPorMoneda, textoSeguro, type Herramienta } from './tipos'
+import { centavos, dinero, fallo, fecha, ok, sumarPorMoneda, textoSeguro, type Herramienta } from './tipos'
 
 const ESTADOS_PROYECTO = ['activo', 'pausado', 'completado', 'archivado'] as const
 
@@ -489,6 +489,3 @@ const briefingsTool: Herramienta = {
 }
 
 export const HERRAMIENTAS_NEGOCIO = [proyectosTool, proyectoTool, clientesTool, cuentasTool, finanzasTool, briefingsTool]
-
-// Se reexporta para que bandeja.ts use la misma advertencia sin importarla dos veces.
-export { AVISO_TERCEROS }

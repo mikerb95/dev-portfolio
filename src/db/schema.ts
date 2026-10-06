@@ -1626,6 +1626,11 @@ export const propuestas = sqliteTable('propuestas', {
   config: text('config').notNull(),
   // Último número de versión congelada (0 = ninguna todavía).
   versionActual: integer('version_actual').notNull().default(0),
+  // Precio ofrecido en la última versión, en unidades enteras de la moneda.
+  // Redundante a propósito: el listado lo muestra y no debe abrir un snapshot
+  // de varios KB por fila (en Turso se pagan las filas leídas).
+  precio: integer('precio'),
+  moneda: text('moneda').notNull().default('COP'),
   // Conversación pegada para "del chat al plano". Privada: nunca sale al
   // enlace del cliente ni al PDF.
   conversacion: text('conversacion'),

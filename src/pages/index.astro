@@ -607,7 +607,9 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   import { initPageMotion, revealCards } from '../lib/motion-reveal'
-  import { montarIsolineas } from '../lib/motion/isolineas'
+  import { montarIsolineas, type Isolineas } from '../lib/motion/isolineas'
+  import { pintarRespuesta } from '../lib/motion/palabras'
+  import { armarTraspaso, EVENTO_TRASPASO, type RespuestaAsesor } from '../lib/asesor/traspaso'
   import {
     foco,
     inclinar,
@@ -644,10 +646,14 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   }
 
   // ── Terreno ──
+  // Queda a mano del cotizador: cuando llega el estimado, el terreno emite un
+  // pulso desde la tarjeta, como si la respuesta cayera sobre él.
+  let terreno: Isolineas | null = null
   {
     const lienzo = document.getElementById('isolineas') as HTMLCanvasElement | null
     if (hero && lienzo) {
       const iso = montarIsolineas(lienzo, { zona: hero, reducido })
+      terreno = iso
       if (iso) {
         hero.classList.add('con-isolineas')
         if (!reducido) {
@@ -659,6 +665,204 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
             onUpdate: (s) => iso.aplanar(s.progress),
           })
         }
+      }
+    }
+  }
+
+  // ── HUD fuera del hero ──
+  // El panel fijo tapaba el final del texto del hero en 1440x900. Dentro del
+  // hero no aporta (su primera línea ES el hero), así que se enciende al
+  // salir. IntersectionObserver y no ScrollTrigger: también aplica con
+  // movimiento reducido, porque el solape no es cosa del motion.
+  {
+    const hud = document.getElementById('hud')
+    if (hud && hero && 'IntersectionObserver' in window) {
+      hud.dataset.enHero = ''
+      new IntersectionObserver(
+        ([e]) => {
+          if (!e) return
+          if (e.isIntersecting && e.intersectionRatio > 0.25) hud.dataset.enHero = ''
+          else delete hud.dataset.enHero
+        },
+        { threshold: [0, 0.25, 0.5] }
+      ).observe(hero)
+    }
+  }
+
+  // ── Cotizador del hero (RF-037) ──
+  // Primera vuelta del asesor de la burbuja, con su mismo endpoint: límite por
+  // IP, tope diario y guardia de cifras ya están puestos allá. Aquí solo se
+  // pinta. Fail-open: si algo de esto falla, el formulario sigue siendo un
+  // formulario y manda a /contact.
+  {
+    const form = document.getElementById('cotizador') as HTMLFormElement | null
+    if (form) {
+      const q = <T extends HTMLElement>(sel: string) => form.querySelector<T>(sel)
+      const input = q<HTMLTextAreaElement>('#cotizador-input')
+      const caja = q('[data-cotizador-caja]')
+      const ejemplo = q('[data-cotizador-ejemplo]')
+      const enviar = q<HTMLButtonElement>('[data-cotizador-enviar]')
+      const respuesta = q('[data-cotizador-respuesta]')
+      const pensando = q('[data-cotizador-pensando]')
+      const plan = q('[data-cotizador-plan]')
+      const texto = q('[data-cotizador-texto]')
+      const marca = q('[data-cotizador-marca]')
+      const wa = q<HTMLAnchorElement>('[data-cotizador-wa]')
+      const continuar = q<HTMLButtonElement>('[data-cotizador-continuar]')
+      const otra = q<HTMLButtonElement>('[data-cotizador-otra]')
+      const error = q('[data-cotizador-error]')
+      const t = JSON.parse(form.dataset.textos ?? '{}') as Record<string, string> & { ejemplos: string[] }
+      const locale = form.dataset.locale ?? 'es'
+      const waBase = form.dataset.waBase ?? ''
+
+      if (input && caja && ejemplo && enviar && respuesta && pensando && plan && texto && marca && wa && continuar && otra && error) {
+        // Ejemplos que se escriben solos mientras la caja está vacía. Se
+        // detienen al escribir o al enfocar (nada cambia bajo el cursor de
+        // quien está leyendo) y con movimiento reducido queda el primero fijo.
+        const ejemplos = Array.isArray(t.ejemplos) && t.ejemplos.length ? t.ejemplos : [ejemplo.textContent ?? '']
+        let girando = 0
+        const detenerEjemplos = () => window.clearTimeout(girando)
+        const escribirEjemplo = (n: number) => {
+          const frase = ejemplos[n % ejemplos.length] ?? ''
+          let i = 0
+          const paso = () => {
+            if (document.activeElement === input || input.value) return
+            i++
+            ejemplo.textContent = frase.slice(0, i)
+            if (i < frase.length) girando = window.setTimeout(paso, 28 + Math.random() * 30)
+            else girando = window.setTimeout(() => escribirEjemplo(n + 1), 3200)
+          }
+          girando = window.setTimeout(paso, 500)
+        }
+        if (!reducido) escribirEjemplo(1)
+        input.addEventListener('focus', () => {
+          detenerEjemplos()
+          if (!input.value) ejemplo.textContent = ejemplos[0] ?? ''
+        })
+        input.addEventListener('blur', () => {
+          if (!reducido && !input.value) escribirEjemplo(1)
+        })
+        input.addEventListener('input', () => {
+          if (input.value) caja.dataset.conTexto = ''
+          else delete caja.dataset.conTexto
+          input.style.height = 'auto'
+          input.style.height = `${Math.min(input.scrollHeight, 160)}px`
+        })
+        // Enter envía; Shift+Enter hace salto de línea (igual que la burbuja).
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) {
+            ev.preventDefault()
+            form.requestSubmit()
+          }
+        })
+
+        // ¿Hay asesor hoy? Se pregunta al primer foco, no al cargar: la mayoría
+        // de visitas no escribe nada y no hay por qué gastar una función.
+        let disponible: boolean | null = null
+        const consultar = async () => {
+          if (disponible !== null) return
+          try {
+            const r = await fetch('/api/asesor', { headers: { Accept: 'application/json' } })
+            disponible = ((await r.json()) as { disponible?: boolean }).disponible === true
+          } catch {
+            disponible = false
+          }
+          if (!disponible) mostrarError(t.errorNoDisponible)
+        }
+        input.addEventListener('focus', () => void consultar(), { once: true })
+
+        const mostrarError = (m: string) => {
+          respuesta.hidden = false
+          pensando.hidden = true
+          plan.hidden = true
+          error.textContent = m
+          error.hidden = false
+        }
+        const estado = (e: 'quieto' | 'pensando' | 'listo') => {
+          if (e === 'quieto') delete form.dataset.estado
+          else form.dataset.estado = e
+          enviar.disabled = e === 'pensando'
+          input.readOnly = e !== 'quieto'
+        }
+
+        let ultima: { pregunta: string; r: RespuestaAsesor } | null = null
+        let ocupado = false
+
+        form.addEventListener('submit', async (ev) => {
+          ev.preventDefault()
+          const pregunta = input.value.trim().slice(0, 500)
+          if (!pregunta || ocupado) return
+          if (disponible === false) return mostrarError(t.errorNoDisponible)
+          ocupado = true
+          estado('pensando')
+          error.hidden = true
+          plan.hidden = true
+          respuesta.hidden = false
+          pensando.hidden = false
+
+          try {
+            const r = await fetch('/api/asesor', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ locale, pagina: 'inicio', mensajes: [{ rol: 'usuario', texto: pregunta }], calculos: [] }),
+            })
+            if (!r.ok) {
+              mostrarError(r.status === 429 ? t.errorLimite : r.status === 503 ? t.errorNoDisponible : t.errorFallo)
+              estado('quieto')
+              return
+            }
+            const d = (await r.json()) as RespuestaAsesor
+            ultima = { pregunta, r: d }
+            await pintarPlan(d, pregunta)
+            estado('listo')
+          } catch {
+            mostrarError(t.errorFallo)
+            estado('quieto')
+          } finally {
+            ocupado = false
+          }
+        })
+
+        async function pintarPlan(d: RespuestaAsesor, pregunta: string) {
+          pensando.hidden = true
+          plan.hidden = false
+          const cifras = d.cifras ?? []
+          marca.hidden = cifras.length === 0
+          const mensaje = d.whatsapp ?? (t.waTexto ?? '{idea}').replace('{idea}', pregunta)
+          wa.href = `${waBase}?text=${encodeURIComponent(mensaje)}`
+          // Pulso en el terreno desde el botón: la respuesta "cae" sobre él.
+          const b = enviar.getBoundingClientRect()
+          terreno?.pulso(b.left + b.width / 2, b.top + b.height / 2, 1)
+          if (reducido) {
+            pintarRespuesta(texto, d.texto, cifras)
+            return
+          }
+          try {
+            // Mismo gesto que el chat de la burbuja: palabras que pasan de
+            // borrosas a nítidas y la cifra rodando como odómetro.
+            const { animarRespuesta } = await import('../lib/motion/asesor')
+            animarRespuesta(texto, d.texto, cifras, marca)
+            gsap.from(plan, { y: 14, opacity: 0, duration: 0.6, ease: 'power3.out', clearProps: 'transform,opacity' })
+          } catch {
+            pintarRespuesta(texto, d.texto, cifras)
+          }
+        }
+
+        continuar.addEventListener('click', () => {
+          if (!ultima) return
+          document.dispatchEvent(new CustomEvent(EVENTO_TRASPASO, { detail: armarTraspaso(ultima.pregunta, ultima.r) }))
+        })
+        otra.addEventListener('click', () => {
+          ultima = null
+          respuesta.hidden = true
+          plan.hidden = true
+          error.hidden = true
+          input.value = ''
+          delete caja.dataset.conTexto
+          input.style.height = ''
+          estado('quieto')
+          input.focus()
+        })
       }
     }
   }

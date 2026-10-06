@@ -819,6 +819,7 @@ const textos = JSON.stringify({
 
 <script>
   import { pintarRespuesta } from '../lib/motion/palabras'
+  import { EVENTO_TRASPASO, type EstadoTraspaso } from '../lib/asesor/traspaso'
 
   // 'mike' y 'sistema' solo existen en el navegador (asesor en vivo,
   // lib/asesor/vivo.ts): nunca se le reenvían al modelo.
@@ -879,6 +880,10 @@ const textos = JSON.stringify({
   // iniciar() corra otra vez con astro:page-load.
   let sondeo: ReturnType<typeof setTimeout> | null = null
   let sondeando = false
+  // Oyente del traspaso desde el cotizador de la portada: uno solo, el de la
+  // página actual (con view transitions, el anterior apuntaría a elementos
+  // que ya no están en el documento).
+  let traspasoAnterior: ((ev: Event) => void) | null = null
 
   function iniciar() {
     const raiz = document.getElementById('asesor')
@@ -1283,6 +1288,25 @@ const textos = JSON.stringify({
       sondeo = setTimeout(sondear, 4_000)
     }
     if (estado.conversacion) arrancarSondeo()
+
+    // El cotizador del hero de la portada (RF-037) ya hizo la primera vuelta
+    // con el asesor; "Seguir preguntando" la entrega aquí entera (pregunta,
+    // respuesta, cálculos, cifras marcadas y el token del asesor en vivo) y
+    // el chat se abre como si esa vuelta hubiera ocurrido dentro.
+    if (traspasoAnterior) document.removeEventListener(EVENTO_TRASPASO, traspasoAnterior)
+    traspasoAnterior = (ev: Event) => {
+      const d = (ev as CustomEvent<EstadoTraspaso>).detail
+      if (!d || !Array.isArray(d.mensajes) || !d.mensajes.length) return
+      estado = { ...vacio(), ...d }
+      if (d.conversacion) {
+        estado.mensajes.push({ rol: 'sistema', texto: t.vivoAvisado })
+        arrancarSondeo()
+      }
+      guardar()
+      abrirChat(true)
+    }
+    document.addEventListener(EVENTO_TRASPASO, traspasoAnterior)
+
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && estado.conversacion) {
         if (sondeo !== null) clearTimeout(sondeo)
