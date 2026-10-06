@@ -13,6 +13,14 @@ describe('guardia de cifras', () => {
     expect(valores('Total: US$1,500 or $450 USD')).toEqual([1_500, 450])
   })
 
+  it('lee miles con centavos en las dos convenciones, como los formatea dinero()', () => {
+    // Caso real del banco de casos (6 oct 2026): el modelo citó tal cual el
+    // rango de Plano y la guardia leía "00 USD" como una cifra aparte.
+    const texto = 'un rango de **US$ 2.250,00 USD a US$ 3.600,00 USD**, o US$2,250.50 en inglés'
+    expect(extraerCifras(texto).map((c) => c.valor)).toEqual([2250, 3600, 2251])
+    expect(verificarCifras(texto, [2250, 3600, 2250.5, 2251]).ok).toBe(true)
+  })
+
   it('lee millones abreviados', () => {
     expect(valores('entre 4,8 millones y $7.4M')).toEqual([4_800_000, 7_400_000])
   })

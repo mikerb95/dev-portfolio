@@ -28,11 +28,14 @@ export async function sendMail(params: {
   html: string
   text: string
   replyTo?: string
+  /** Remitente distinto del del portal (marketing usa el suyo). */
+  from?: string
+  headers?: Record<string, string>
 }): Promise<MailResult> {
   const apiKey = env('RESEND_API_KEY')
   if (!apiKey) return { ok: false, skipped: true }
 
-  const from = env('PORTAL_EMAIL_FROM') ?? 'CodeByMike <portal@codebymike.net>'
+  const from = params.from ?? env('PORTAL_EMAIL_FROM') ?? 'CodeByMike <portal@codebymike.net>'
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -44,6 +47,7 @@ export async function sendMail(params: {
         html: params.html,
         text: params.text,
         reply_to: params.replyTo ?? env('PORTAL_EMAIL_REPLY_TO') ?? undefined,
+        headers: params.headers,
       }),
     })
     if (!res.ok) return { ok: false, error: `Resend ${res.status}: ${await res.text().catch(() => '')}` }
@@ -72,8 +76,13 @@ export function renderEmail(params: {
   blocks: string[]
   button?: Button
   footNote?: string
+  /** Etiqueta junto a la marca en la cabecera. */
+  label?: string
+  /** HTML del pie, bajo la tarjeta (marketing pone ahí la baja). */
+  footer?: string
+  /** Los bloques ya vienen en HTML seguro (marketing los arma con contenido.ts). */
 }): string {
-  const { preheader, heading, blocks, button, footNote } = params
+  const { preheader, heading, blocks, button, footNote, label = 'Portal de clientes', footer } = params
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -88,7 +97,7 @@ export function renderEmail(params: {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e4e4e9;">
 <tr><td style="background:${BRAND};padding:22px 32px;">
 <span style="color:#ffffff;font-size:16px;font-weight:600;letter-spacing:-.01em;">CodeByMike</span>
-<span style="color:#8a8a95;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding-left:10px;">Portal de clientes</span>
+<span style="color:#8a8a95;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding-left:10px;">${escapeHtml(label)}</span>
 </td></tr>
 <tr><td style="padding:32px;">
 <h1 style="margin:0 0 18px;font-size:21px;line-height:1.3;color:#0a0a0d;font-weight:600;letter-spacing:-.02em;">${escapeHtml(heading)}</h1>
@@ -105,7 +114,7 @@ ${footNote ? `<p style="margin:22px 0 0;padding-top:18px;border-top:1px solid #e
 </td></tr>
 </table>
 <p style="max-width:560px;margin:18px auto 0;font-size:11px;line-height:1.5;color:#9a9aa4;text-align:center;">
-Enviado por CodeByMike · <a href="${SITE_URL}" style="color:#9a9aa4;">codebymike.net</a>
+${footer ?? `Enviado por CodeByMike · <a href="${SITE_URL}" style="color:#9a9aa4;">codebymike.net</a>`}
 </p>
 </td></tr>
 </table>
@@ -198,4 +207,4 @@ export function sendNotificationEmail(params: {
   })
 }
 
-export { escapeHtml }
+export { escapeHtml, ACCENT }
