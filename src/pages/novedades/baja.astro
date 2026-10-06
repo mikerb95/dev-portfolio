@@ -11,7 +11,7 @@ const estado = q.get('estado')
 const s = q.get('s') ?? ''
 const t = q.get('t') ?? ''
 const c = q.get('c') ?? ''
-const accion = `/api/marketing/baja?s=${encodeURIComponent(s)}&t=${encodeURIComponent(t)}&c=${encodeURIComponent(c)}&desde=pagina`
+const accion = `/api/marketing/baja?s=${encodeURIComponent(s)}&t=${encodeURIComponent(t)}&c=${encodeURIComponent(c)}`
 const mensajes: Record<string, string> = {
   hecho: 'Listo: no vas a recibir más correos de novedades. Los avisos del portal de clientes (si eres cliente) siguen llegando, porque esos no son publicidad.',
   invalido: 'Ese enlace no es válido. Si sigues recibiendo correos que no quieres, responde a cualquiera de ellos y te saco de la lista a mano.',

@@ -9,7 +9,7 @@ import { isUniqueViolation } from '../db-unique'
 import { renderEmail, renderText, sendMail, SITE_URL } from '../email'
 import { serverEnv } from '../env'
 import { TEXTO_CONSENTIMIENTO, validarCampana, type CampanaContenido } from './contenido'
-import { armarCorreo, enviarLote, remitenteMarketing, urlBaja, urlBajaUnClic } from './envio'
+import { armarCorreo, enviarLote, remitenteMarketing, urlBaja } from './envio'
 import { CUPO_DIARIO_DEFECTO, DIAS_ENTRE_ENVIOS, TAMANO_LOTE, cupoRestante, inicioDiaCO, ventanaLegal } from './reglas'
 import { hashToken, nuevoTokenConfirmacion, secretoMarketing } from './tokens'
 
@@ -369,9 +369,7 @@ async function despacharLote(lote: string, secreto: string, ahora: Date): Promis
     const c = await obtenerCampana(id)
     if (c) campanas.set(id, c)
   }
-  const correos = filas.map((f) =>
-    armarCorreo(campanas.get(f.campanaId)!, f.email, { web: urlBaja(f.suscriptorId, secreto, f.campanaId), unClic: urlBajaUnClic(f.suscriptorId, secreto, f.campanaId) })
-  )
+  const correos = filas.map((f) => armarCorreo(campanas.get(f.campanaId)!, f.email, urlBaja(f.suscriptorId, secreto, f.campanaId)))
   const res = await enviarLote(correos, `marketing-${lote}`)
   if (!res.ok) {
     // Error de red o 5xx: las filas se quedan en 'enviando' y el próximo
