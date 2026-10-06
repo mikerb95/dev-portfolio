@@ -81,7 +81,7 @@ async function sembrar() {
     .insert(invoices)
     .values({ clientId: a!.id, number: 'CC-2026-003', docType: 'cuenta_cobro', status: 'paid', currency: 'COP', totalCents: 80_000_000, netCents: 70_000_000, retentionsCents: 10_000_000, paidAt: dias(-5), createdAt: AHORA })
     .returning()
-  await db.insert(invoices).values({ clientId: b!.id, number: 'CC-2026-004', docType: 'cuenta_cobro', status: 'paid', currency: 'COP', totalCents: 10_000_000, netCents: 10_000_000, paidAt: dias(-90), createdAt: AHORA })
+  await db.insert(invoices).values({ clientId: a!.id, number: 'CC-2026-004', docType: 'cuenta_cobro', status: 'paid', currency: 'COP', totalCents: 10_000_000, netCents: 10_000_000, paidAt: dias(-90), createdAt: AHORA })
 
   await db.insert(payments).values([
     // Pago del portal que salda la CC-2026-003: no se suma dos veces.
@@ -117,11 +117,6 @@ async function sembrar() {
   await db.insert(projectServices).values([
     { name: 'Turso', category: 'database', cost: 9, currency: 'USD', billingCycle: 'monthly', payer: 'me', secrets: SECRETO, createdAt: AHORA },
     { name: 'Dominio', category: 'domain', cost: 120_000, currency: 'COP', billingCycle: 'annual', payer: 'me', createdAt: AHORA },
-    // Vencimientos: uno en 12 días, uno vencido, uno lejano y un hosting que se renueva en 20.
-    { name: 'barberianorte.co', category: 'domain', cost: 90_000, currency: 'COP', billingCycle: 'annual', renewalDate: dias(12), clientId: a!.id, username: 'usuario-registrador', secrets: SECRETO, createdAt: AHORA },
-    { name: 'viejo.com', category: 'domain', cost: 15, currency: 'USD', billingCycle: 'annual', renewalDate: dias(-2), autoRenew: false, createdAt: AHORA },
-    { name: 'lejano.dev', category: 'domain', cost: 12, currency: 'USD', billingCycle: 'annual', renewalDate: dias(200), createdAt: AHORA },
-    { name: 'Vercel Pro', category: 'hosting', cost: 20, currency: 'USD', billingCycle: 'monthly', renewalDate: dias(20), createdAt: AHORA },
     // Lo paga el cliente directo: no es costo propio.
     { name: 'Hosting del cliente', category: 'hosting', cost: 20, currency: 'USD', billingCycle: 'monthly', payer: 'client_direct', createdAt: AHORA },
   ])
@@ -207,7 +202,7 @@ describe('privacidad', () => {
       salida.push(JSON.stringify(await datos(h.nombre, ENTRADAS[h.nombre] ?? {})))
     }
     const todo = salida.join('\n')
-    for (const prohibido of [CORREO, 'visitante@correo.com', 'sur@ejemplo.co', CELULAR, '3105551234', '+573105551234', NIT, 'Calle 1 # 2-3', '1.234.567.890', SECRETO, 'usuario-registrador'])
+    for (const prohibido of [CORREO, 'visitante@correo.com', 'sur@ejemplo.co', CELULAR, '3105551234', '+573105551234', NIT, 'Calle 1 # 2-3', '1.234.567.890', SECRETO])
       expect(todo, prohibido).not.toContain(prohibido)
   })
 
@@ -296,11 +291,20 @@ describe('consultas', () => {
 
 describe('vencimientos, pagos y búsqueda', () => {
   it('vencimientos trae dominios por vencer y vencidos, no los lejanos', async () => {
+    // Aquí y no en sembrar(): cambiarían los costos que mide la prueba de finanzas.
+    await db.insert(projectServices).values([
+      { name: 'barberianorte.co', category: 'domain', cost: 90_000, currency: 'COP', billingCycle: 'annual', renewalDate: dias(12), clientId: ids.a.id, username: 'usuario-registrador', secrets: SECRETO, createdAt: AHORA },
+      { name: 'viejo.com', category: 'domain', cost: 15, currency: 'USD', billingCycle: 'annual', renewalDate: dias(-2), autoRenew: false, createdAt: AHORA },
+      { name: 'lejano.dev', category: 'domain', cost: 12, currency: 'USD', billingCycle: 'annual', renewalDate: dias(200), createdAt: AHORA },
+      { name: 'Vercel Pro', category: 'hosting', cost: 20, currency: 'USD', billingCycle: 'monthly', renewalDate: dias(20), createdAt: AHORA },
+    ])
     const d = await datos('vencimientos', { tipo: 'dominios' })
     expect(d.servicios.map((s: any) => s.nombre)).toEqual(['viejo.com', 'barberianorte.co'])
     expect(d.vencidos).toBe(1)
     expect(d.servicios[0]).toMatchObject({ estado: 'vencido', seRenuevaSolo: false })
     expect(d.servicios[1]).toMatchObject({ diasQueFaltan: 12, cliente: 'Barbería Norte' })
+    expect(JSON.stringify(d)).not.toContain(SECRETO)
+    expect(JSON.stringify(d)).not.toContain('usuario-registrador')
     expect(d.enlace).toBe('/admin/domains')
     // Con "todos" entra también el hosting que se renueva en 20 días.
     expect((await datos('vencimientos')).servicios.map((s: any) => s.nombre)).toContain('Vercel Pro')
