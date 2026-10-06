@@ -74,7 +74,11 @@ function renglones(nombre: string, ancho: number, size: number): string[] {
   return out.slice(0, 3)
 }
 
-export function renderPlano(v: VistaCliente, puedeTocar: (id: string) => boolean): string {
+/**
+ * `cambiadas`: ids de habitaciones que acaban de construirse o quitarse. Solo
+ * esas se animan al repintar; el resto de la casa no se vuelve a trazar.
+ */
+export function renderPlano(v: VistaCliente, puedeTocar: (id: string) => boolean, cambiadas?: ReadonlySet<string>): string {
   const W = 640
   const H = 400
   const pad = 46
@@ -97,9 +101,9 @@ export function renderPlano(v: VistaCliente, puedeTocar: (id: string) => boolean
       // Puerta: un arco en la esquina inferior izquierda de cada habitación
       // construida. Detalle de plano, sin información.
       const puerta = p.incluida && w > 60 && h > 50 ? `<path class="pv-puerta" d="M ${x + 10} ${y + h} a 18 18 0 0 1 18 -18" />` : ''
-      return `<g class="pv-cuarto ${p.incluida ? 'pv-cuarto--hecho' : 'pv-cuarto--posible'} ${tocar ? 'pv-cuarto--tocable' : ''}" style="--i:${i}" ${tocar ? `data-linea="${esc(p.id)}" role="button" tabindex="0" aria-pressed="${p.incluida}" aria-label="${esc(p.incluida ? `Quitar ${p.nombre}` : `Agregar ${p.nombre}`)}"` : ''}>
+      return `<g class="pv-cuarto ${p.incluida ? 'pv-cuarto--hecho' : 'pv-cuarto--posible'} ${tocar ? 'pv-cuarto--tocable' : ''} ${cambiadas?.has(p.id) ? 'pv-cuarto--cambio' : ''}" style="--i:${i}" ${tocar ? `data-linea="${esc(p.id)}" role="button" tabindex="0" aria-pressed="${p.incluida}" aria-label="${esc(p.incluida ? `Quitar ${p.nombre}` : `Agregar ${p.nombre}`)}"` : ''}>
         <rect class="pv-cuarto__piso" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" />
-        <rect class="pv-cuarto__muro" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" pathLength="100" />
+        <rect class="pv-cuarto__muro" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" ${p.incluida ? 'pathLength="100"' : ''} />
         ${puerta}
         <text class="pv-cuarto__nombre" x="${(x + w / 2).toFixed(1)}" y="${ty.toFixed(1)}" font-size="${size.toFixed(1)}">${lineas
           .map((l, k) => `<tspan x="${(x + w / 2).toFixed(1)}" dy="${k === 0 ? 0 : size + 3}">${esc(l)}</tspan>`)
