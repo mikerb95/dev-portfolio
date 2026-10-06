@@ -1342,11 +1342,15 @@ const textos = JSON.stringify({
         preguntas() > 0 ||
         estado.conversacion ||
         fab.hasAttribute('data-nuevo') ||
-        document.documentElement.dataset.langSuggest === 'open' ||
-        // En la portada, el cotizador del hero ya es la invitación a la IA, y
-        // el globo le tapaba el botón "Ver estimado" (RF-037).
-        !!document.querySelector('#cotizador[data-visible]')
+        document.documentElement.dataset.langSuggest === 'open'
       if (ocupada) return
+      // En la portada, el cotizador del hero ya es la invitación a la IA y el
+      // globo le tapaba el botón "Ver estimado" (RF-037): mientras la tarjeta
+      // esté a la vista, el globo espera; sale cuando la persona baja.
+      if (document.querySelector('#cotizador[data-visible]')) {
+        globoReloj = setTimeout(mostrarGlobo, GLOBO_ESPERA)
+        return
+      }
       globoEl.hidden = false
       fab.toggleAttribute('data-globo', true)
       programarSalidaGlobo(GLOBO_VISIBLE)

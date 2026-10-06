@@ -140,7 +140,7 @@ test('el cotizador del hero hace la primera vuelta y "Seguir preguntando" la pas
   await expect(page.locator('#asesor-chat')).toBeVisible()
   const log = page.locator('#asesor-log')
   await expect(log.locator('.asesor-burbuja--yo')).toContainText('restaurante')
-  await expect(log.locator('.asesor-burbuja--ia')).toContainText('Respuesta de prueba del asesor')
+  await expect(log.locator('.asesor-burbuja--ia').last()).toContainText('Respuesta de prueba del asesor')
 
   // Y sobrevive a una recarga, como cualquier conversación de la burbuja.
   await page.reload()

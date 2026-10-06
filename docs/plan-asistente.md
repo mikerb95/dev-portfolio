@@ -722,6 +722,40 @@ Lo que destapó la verificación (corregido):
   copiaba de "3–5 días"), así que el servidor las reemplaza (`sinRayas`):
   "3 a 5", o coma.
 
+### Cotizador en el hero de la portada (6 oct 2026, RF-037)
+
+El hero de la portada dejó de presentar a un ingeniero ("Ingeniería de
+software con propósito") y pasó a venderle al cliente: "Tu página, tu app o tu
+sistema, a la medida.", tres líneas de venta y los tres clientes en línea. A la
+derecha, un campo "Cuéntame qué necesitas" que es la **primera vuelta del
+asesor** (capacidad 3), no un agente nuevo:
+
+| Pieza | Qué hace | Dónde |
+|---|---|---|
+| Página `inicio` | Contexto del prompt: no entrevistar, asumir lo típico del negocio, calcular y responder en tres frases (qué haría Mike, tiempo según lo publicado, rango) | `src/lib/asesor/prompt.ts` |
+| Mismo endpoint | `POST /api/asesor` con `pagina: 'inicio'`: límite por IP, tope diario, guardia de cifras y aviso a Mike se heredan sin tocar nada | `src/pages/index.astro` |
+| Traspaso | "Seguir preguntando" entrega la vuelta (pregunta, respuesta, cálculos, cifras marcadas, token del asesor en vivo) a la burbuja por un evento del documento; el chat se abre como si hubiera ocurrido dentro | `src/lib/asesor/traspaso.ts` (puro), oyente en `WhatsappFab.astro` |
+| Motion | Ejemplos que se escriben solos en el campo vacío, borde que se enciende mientras calcula, pulso en el terreno de isolíneas al llegar la respuesta, palabras de borrosas a nítidas y odómetro con la marca "Calculado con el tarifario" (mismos módulos que el chat) | `src/styles/portada.css`, `src/lib/motion/asesor.ts` |
+
+Decisiones:
+
+- La disponibilidad del asesor se consulta al primer foco del campo, no al
+  cargar: la mayoría de visitas no escribe y no hay por qué gastar una función.
+- Cuando la respuesta trae precio, llega con la pregunta fija por el WhatsApp
+  (asesor en vivo): se muestra tal cual en el hero, y "Seguir preguntando" es
+  donde la persona la responde.
+- El globo de invitación de la burbuja espera mientras el cotizador está a la
+  vista: tapaba el botón "Ver estimado" y repetía la invitación.
+- El HUD fijo de la portada se esconde dentro del hero (tapaba el texto).
+- La letra del titular (Archivo, condensada al 78 %) la eligió Mike entre
+  cinco muestras montadas sobre el hero real.
+
+Verificación: `tests/asesor-portada.test.ts`, dos casos nuevos en
+`e2e/asesor-vivo.spec.ts` con la API falsa, y capturas en GPU real (escritorio,
+móvil, movimiento reducido, inglés). Pendiente: probar con la API real cuando
+Mike lo autorice (preguntas de `references/pruebas.md` de la skill chat-ia
+escritas como ideas de negocio, no como preguntas).
+
 ## Decisiones tomadas
 
 Todas del 1 oct 2026.
