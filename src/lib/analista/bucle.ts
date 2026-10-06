@@ -145,7 +145,7 @@ export async function avanzar(e: Ejecucion, deps: Dependencias): Promise<Ejecuci
 
   while (true) {
     if (e.iteraciones >= MAX_ITERACIONES) {
-      return terminar(e, deps, 'fallida', `El análisis superó el máximo de ${MAX_ITERACIONES} pasos.`)
+      return terminar(e, deps, 'fallida', `Se superó el máximo de ${MAX_ITERACIONES} pasos.`)
     }
     let restante: number
     try {
@@ -153,7 +153,7 @@ export async function avanzar(e: Ejecucion, deps: Dependencias): Promise<Ejecuci
     } catch {
       return terminar(e, deps, 'fallida', 'No se pudo comprobar el gasto del día; por seguridad no se sigue gastando.')
     }
-    if (restante <= 0) return terminar(e, deps, 'fallida', 'Se alcanzó el tope de gasto diario del analista.')
+    if (restante <= 0) return terminar(e, deps, 'fallida', 'Se alcanzó el tope de gasto diario.')
 
     let msg: Mensaje
     try {
@@ -178,7 +178,7 @@ export async function avanzar(e: Ejecucion, deps: Dependencias): Promise<Ejecuci
         await deps.guardar(e)
         continue
       case 'refusal':
-        return terminar(e, deps, 'fallida', 'El modelo declinó continuar con este análisis.')
+        return terminar(e, deps, 'fallida', 'El modelo declinó continuar.')
       case 'max_tokens':
         return terminar(e, deps, 'fallida', 'La respuesta del modelo se cortó por longitud.')
       case 'tool_use':
