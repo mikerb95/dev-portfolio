@@ -14,13 +14,20 @@ export const MAX_PREGUNTAS = 30
  * personas?" no se entiende. `sitio` es cualquier otra página pública: el
  * asesor está en todo el sitio (decisión de Mike, 1 oct 2026).
  */
-export const PAGINAS = ['paginas-web', 'capacitacion-ia', 'contact', 'sitio'] as const
+export const PAGINAS = ['paginas-web', 'capacitacion-ia', 'contact', 'sitio', 'inicio'] as const
 export type Pagina = (typeof PAGINAS)[number]
 
 const CONTEXTO: Record<Pagina, string> = {
   'paginas-web': 'La persona está en la página de diseño de páginas web: si su pregunta es ambigua, asume que habla de una página web.',
   'capacitacion-ia': 'La persona está en la página de capacitación en IA para equipos: si su pregunta es ambigua (por ejemplo, un número de personas), asume que habla de la capacitación.',
   'contact': 'La persona está en la página de contacto: puede preguntar por cualquiera de los servicios.',
+  // El campo "Cuéntame qué necesitas" del hero de la portada (RF-037). Aquí
+  // la persona escribe su idea una sola vez y espera un estimado al momento, no
+  // una entrevista: el asesor asume lo más común para ese tipo de negocio,
+  // calcula y responde en tres frases. Las preguntas de precisión vienen
+  // después, si sigue la conversación en la burbuja.
+  'inicio':
+    'La persona escribió en la portada, en un campo que dice "Cuéntame qué necesitas", lo que quiere construir. NO le hagas preguntas: con lo que escribió, asume lo más común para ese tipo de negocio (si no dice qué quiere que haga, asume lo típico: que la encuentren, que le escriban por WhatsApp y, si vende, un catálogo) y llama a calcular_precio de una vez. Responde en tres frases cortas, en este orden: qué le construiría Mike, en cuánto tiempo según lo publicado abajo, y el rango estimado tal como salió del cálculo. Termina con una frase que la invite a seguir preguntando aquí o a escribirle a Mike. Si lo que escribió no es un proyecto de software (una duda general, un saludo, otro tema), responde en una o dos frases y ofrécele contar qué necesita.',
   'sitio':
     'La persona está en otra parte del sitio (portafolio, notas técnicas, laboratorio, documentación). Puede ser un posible cliente, pero también alguien técnico o un reclutador. Si pregunta por empleo, contratación o colaboraciones, dile que Mike está abierto a oportunidades y que le escriba por WhatsApp. Si pregunta por detalles técnicos del sitio que no están en la información de abajo, dile que eso lo responde Mike directamente.',
 }
