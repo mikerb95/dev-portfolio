@@ -7,7 +7,7 @@ lang: en
 translationOf: el-precio-pactado-no-se-toca
 decision:
   problem: "Engagements that started small and ended in hours nobody paid for."
-  rejected: "Recalculating the price at the end based on what was done"
+  rejected: "Re-pricing at the end based on the work done"
   chosen: "A frozen price, counted allowances and add-ons approved up front"
 ---
 
