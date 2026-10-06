@@ -92,10 +92,8 @@ export async function prepararSeguimiento(entrada: unknown): Promise<Preparada> 
     { forInsert: true }
   )
 
-  const campos: CampoCambio[] = [
-    { campo: 'Tipo', antes: null, despues: TYPE_LABELS[e.tipo] },
-    { campo: 'Qué', antes: null, despues: e.titulo },
-  ]
+  // El título ya va en la cabecera de la tarjeta: aquí solo lo demás.
+  const campos: CampoCambio[] = [{ campo: 'Tipo', antes: null, despues: TYPE_LABELS[e.tipo] }]
   if (e.detalle) campos.push({ campo: 'Detalle', antes: null, despues: e.detalle })
   if (e.siguientePaso) campos.push({ campo: 'Pendiente', antes: null, despues: e.siguientePaso })
   if (vence) campos.push({ campo: 'Para el', antes: null, despues: formatFechaCorta(vence) })
