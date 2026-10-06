@@ -1,6 +1,6 @@
 # Plan: vigía del repo con Claude Managed Agents
 
-Estado: **fase 1 en curso** (6 oct 2026). Material del workshop de Managed
+Estado: **fase 1 ✅** (6 oct 2026); fases 2 a 6 pendientes. Material del workshop de Managed
 Agents de la comunidad Claude Bogotá (sábado 24 oct 2026; propuestas hasta el
 domingo 11 oct).
 
@@ -88,7 +88,7 @@ orden garantizado, y se **pierden** tras tres intentos fallidos. Por eso:
 
 | Fase | Qué | Estado |
 |---|---|---|
-| 1 | Agente + entorno con `ant apply`, corrida manual con tope, informe real | en curso |
+| 1 | Agente + entorno con `ant apply`, corrida manual con tope, informe real | ✅ 6 oct 2026 |
 | 2 | Webhook `/api/managed/webhook` (firma con `client.beta.webhooks.unwrap`, dedupe por `webhook-id`), registro en `cron_runs`, costo en tabla nueva, informe a `/admin/lab/security` vía la ingesta existente, aviso ntfy | pendiente |
 | 3 | Deployment programado cada noche (`America/Bogota`, fuera de la franja 1-3 a. m.), con tope por corrida; kickoff con `user.define_outcome` y rúbrica para que el evaluador lo haga iterar hasta que el informe cumpla | pendiente |
 | 4 | Escritura con aprobación: token de GitHub en vault, MCP de GitHub en `always_ask` para abrir issues o PRs en borrador; aprobar o rechazar desde el panel (el webhook recibe `session.status_idled` con `requires_action`) | pendiente |
@@ -108,4 +108,25 @@ orden garantizado, y se **pierden** tras tres intentos fallidos. Por eso:
 - Agente `agent_01VQEHvBqYrvnGc2CGSfdfgR` (v1) y entorno
   `env_01F5UhGfQe4GPNCwKY8PKRg6`, creados el 6 oct 2026 con `ant apply` en el
   workspace Default.
-- Primera corrida: sesión `sesn_01SQcrKSjaDPKkgB9WtDL8k3`, tope US$2.
+- Primera corrida ✅: sesión `sesn_01SQcrKSjaDPKkgB9WtDL8k3`, tope US$2,
+  gasto real US$1,91, unos 10 minutos de contenedor. Terminó con `end_turn`
+  (no por el tope) y dejó `informe.md` (12 KB) e `informe.json` (8 KB).
+- Estado del informe: **amarillo**. Hallazgos principales:
+  1. Alta: `/docs/presentacion` muestra "NaN commits" en cuatro lugares. Tres
+     iteraciones nuevas (`pf-halloween`, `pf-plano`, `pf-dashboard-asistente`)
+     no tienen `commits` y `presentacion.astro:40` los suma sin `?? 0`.
+     Verificado a mano contra el código.
+  2. Media: `npm audit fix` (sin `--force`) sube Astro a 7.3.6 y quita el
+     crítico de AVIF. El agente lo probó en una copia: tests, tipos y build en
+     verde, y los avisos de producción bajan de 21 a 6. En Vercel no era
+     explotable (el servicio de imágenes no usa sharp).
+  3. Media: el 302 de `/admin` y los demás `return` tempranos del gate salen
+     sin los headers endurecidos (`src/middleware.ts:699`).
+  4. Baja: 22 errores de `astro check` (12 del script de prueba del asistente),
+     `@auth/core` bloqueado por el peer de `auth-astro`, `X-Frame-Options` en
+     páginas públicas.
+- Lección para el prompt: con `effort: high` el agente se va a fondo (simuló
+  el arreglo completo) y casi llega al tope. Se le mandó un `user.message`
+  pidiendo cerrar, que entró en cola y lo atendió en el siguiente turno. Para
+  la corrida nocturna: tope de US$3 o pedir en el prompt que no valide
+  arreglos, solo los proponga.
