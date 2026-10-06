@@ -80,7 +80,6 @@ export function renderEmail(params: {
   label?: string
   /** HTML del pie, bajo la tarjeta (marketing pone ahí la baja). */
   footer?: string
-  /** Los bloques ya vienen en HTML seguro (marketing los arma con contenido.ts). */
 }): string {
   const { preheader, heading, blocks, button, footNote, label = 'Portal de clientes', footer } = params
   return `<!doctype html>
