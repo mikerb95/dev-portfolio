@@ -82,6 +82,7 @@ const RUTA: Record<Pagina, string> = {
   'capacitacion-ia': '/capacitacion-ia',
   contact: '/contact',
   sitio: 'otra página del sitio',
+  inicio: 'la portada (cotizador del hero)',
 }
 
 /** Fila para la tabla `messages` del panel. */

@@ -75,6 +75,7 @@ const PAGINA_TEXTO: Record<Pagina, string> = {
   'capacitacion-ia': '/capacitacion-ia',
   contact: '/contact',
   sitio: 'otra página',
+  inicio: 'la portada',
 }
 
 /** Título y texto de la notificación de ntfy. */

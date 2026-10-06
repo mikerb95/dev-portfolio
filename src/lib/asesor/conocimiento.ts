@@ -82,12 +82,16 @@ export function conocimiento(locale: Locale): string {
   const proyectos = proyectosPublicos(locale)
     .map((p) => `- ${p.titulo}: ${p.descripcion}`)
     .join('\n')
-  const stack = `${home.hero.stackLine1} · ${home.hero.stackLine2}`
+  // El hero ya no lista el stack (desde el 6 oct 2026 le habla al cliente), pero
+  // sigue siendo información pública del perfil: se mantiene aquí.
+  const stack = 'TypeScript · React · Next.js · Astro · Node.js · PostgreSQL'
+  const titular = `${home.hero.line1} ${home.hero.line2} ${home.hero.line3}`
+  const promesas = home.hero.ventas.map((v) => `${v.t}: ${v.d}`).join(' ')
 
   return es
     ? `# Quién es Mike
 
-Primero lo que hace por los negocios: páginas web, sistemas a la medida y capacitación en IA para equipos, con un solo responsable de punta a punta (diseño, código, publicación y cuidado después). Después, la experiencia técnica. En su portada se presenta así: "${home.hero.lead}" Stack principal ${stack}, Top #3 de contribuidores de GitHub en Colombia y miembro del GitHub Developer Program. Su propio sitio, codebymike.net, muestra en público cómo lo vigila y lo protege.
+Primero lo que hace por los negocios: páginas web, sistemas a la medida y capacitación en IA para equipos, con un solo responsable de punta a punta (diseño, código, publicación y cuidado después). Después, la experiencia técnica. Su portada dice "${titular}" y promete: ${promesas} Stack principal ${stack}, Top #3 de contribuidores de GitHub en Colombia y miembro del GitHub Developer Program. Su propio sitio, codebymike.net, muestra en público cómo lo vigila y lo protege.
 
 Trabaja de forma remota con clientes de cualquier ciudad; lo único presencial es la capacitación. Está abierto a oportunidades laborales y colaboraciones: quien pregunte por eso, que le escriba por WhatsApp.
 
@@ -138,7 +142,7 @@ ${faqsCap}
 - Los descuentos solo los decide Mike.`
     : `# Who Mike is
 
-First, what he does for businesses: websites, custom systems and AI training for teams, with one person responsible end to end (design, code, publishing and care afterwards). Then, the technical background. His homepage introduces him like this: "${home.hero.lead}" Main stack ${stack}, Top #3 GitHub contributor in Colombia and member of the GitHub Developer Program. His own site, codebymike.net, shows in public how it is monitored and protected.
+First, what he does for businesses: websites, custom systems and AI training for teams, with one person responsible end to end (design, code, publishing and care afterwards). Then, the technical background. His homepage says "${titular}" and promises: ${promesas} Main stack ${stack}, Top #3 GitHub contributor in Colombia and member of the GitHub Developer Program. His own site, codebymike.net, shows in public how it is monitored and protected.
 
 He works remotely with clients anywhere; only the training is in person. He is open to job opportunities and collaborations: anyone asking about that should message him on WhatsApp.
 

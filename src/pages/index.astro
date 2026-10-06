@@ -785,6 +785,31 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           input.readOnly = e !== 'quieto'
         }
 
+        const pintarPlan = async (d: RespuestaAsesor, pregunta: string) => {
+          pensando.hidden = true
+          plan.hidden = false
+          const cifras = d.cifras ?? []
+          marca.hidden = cifras.length === 0
+          const mensaje = d.whatsapp ?? (t.waTexto ?? '{idea}').replace('{idea}', pregunta)
+          wa.href = `${waBase}?text=${encodeURIComponent(mensaje)}`
+          // Pulso en el terreno desde el botón: la respuesta "cae" sobre él.
+          const b = enviar.getBoundingClientRect()
+          terreno?.pulso(b.left + b.width / 2, b.top + b.height / 2, 1)
+          if (reducido) {
+            pintarRespuesta(texto, d.texto, cifras)
+            return
+          }
+          try {
+            // Mismo gesto que el chat de la burbuja: palabras que pasan de
+            // borrosas a nítidas y la cifra rodando como odómetro.
+            const { animarRespuesta } = await import('../lib/motion/asesor')
+            animarRespuesta(texto, d.texto, cifras, marca)
+            gsap.from(plan, { y: 14, opacity: 0, duration: 0.6, ease: 'power3.out', clearProps: 'transform,opacity' })
+          } catch {
+            pintarRespuesta(texto, d.texto, cifras)
+          }
+        }
+
         let ultima: { pregunta: string; r: RespuestaAsesor } | null = null
         let ocupado = false
 
@@ -822,31 +847,6 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
             ocupado = false
           }
         })
-
-        async function pintarPlan(d: RespuestaAsesor, pregunta: string) {
-          pensando.hidden = true
-          plan.hidden = false
-          const cifras = d.cifras ?? []
-          marca.hidden = cifras.length === 0
-          const mensaje = d.whatsapp ?? (t.waTexto ?? '{idea}').replace('{idea}', pregunta)
-          wa.href = `${waBase}?text=${encodeURIComponent(mensaje)}`
-          // Pulso en el terreno desde el botón: la respuesta "cae" sobre él.
-          const b = enviar.getBoundingClientRect()
-          terreno?.pulso(b.left + b.width / 2, b.top + b.height / 2, 1)
-          if (reducido) {
-            pintarRespuesta(texto, d.texto, cifras)
-            return
-          }
-          try {
-            // Mismo gesto que el chat de la burbuja: palabras que pasan de
-            // borrosas a nítidas y la cifra rodando como odómetro.
-            const { animarRespuesta } = await import('../lib/motion/asesor')
-            animarRespuesta(texto, d.texto, cifras, marca)
-            gsap.from(plan, { y: 14, opacity: 0, duration: 0.6, ease: 'power3.out', clearProps: 'transform,opacity' })
-          } catch {
-            pintarRespuesta(texto, d.texto, cifras)
-          }
-        }
 
         continuar.addEventListener('click', () => {
           if (!ultima) return
