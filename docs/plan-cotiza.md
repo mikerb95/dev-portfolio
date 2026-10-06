@@ -189,9 +189,9 @@ no-store`, token guardado solo como hash y rate limit por ruta.
 |---|---|---|
 | 0 | Puerta con PIN, redirección de `/cotiza`, layout aislado, tests de que el PIN no abre nada más | ✅ 6 oct 2026 |
 | 1 | Motor puro de alcance, cupos, adicionales y precio (`src/lib/cotiza/`), con tests sin base de datos | ✅ 6 oct 2026 |
-| 2 | Migración, encargos, bitácora de solicitudes y reuniones, consumo de cupos | ✅ 6 oct 2026 (falta aplicar 0045 en Turso) |
+| 2 | Migración, encargos, bitácora de solicitudes y reuniones, consumo de cupos | ✅ 6 oct 2026 (0045 aplicada en Turso) |
 | 3 | IA: pedido → alcance, clasificador, resumen de reunión | ✅ 6 oct 2026 (sin probar contra el modelo real: cuenta sin cupo hasta el 1 nov) |
-| 4 | Enlace del cliente y aprobación de adicionales | ✅ 6 oct 2026 (falta aplicar 0046 en Turso) |
+| 4 | Enlace del cliente y aprobación de adicionales | ✅ 6 oct 2026 (0046 aplicada en Turso) |
 | 5 | Requisitos promovidos en `/docs`, nota en `/notes` | ✅ 6 oct 2026 |
 
 ## Fase 0 entregada (6 oct 2026)
@@ -399,7 +399,7 @@ adicionales no lleven colchón y el nivel con que se cobran las reuniones.
    que el redondeo sube a $100.000).
 6. ¿Cobrar el anticipo con Wompi desde el enlace, como Plano, o solo por
    transferencia?
-7. Aplicar las migraciones 0045 y 0046 en Turso (principal y demo).
+7. ~~Aplicar las migraciones 0045 y 0046 en Turso~~: aplicadas en principal y demo el 6 oct 2026.
 8. Subir o quitar el límite de uso de la cuenta de Anthropic (consola) y
    probar la IA de Cotiza con el modelo real.
 9. Revisar la `ENCRYPTION_KEY` del `.env` local (llega con 61 caracteres).

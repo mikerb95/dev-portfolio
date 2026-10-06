@@ -2445,7 +2445,7 @@ export const ITERACIONES: Iteracion[] = [
           ok('Pedidos, reuniones y rondas anotados en una transacción con su adicional; recargo por la hora del pedido en Bogotá (RF-222).'),
           ok('Textos para WhatsApp de la propuesta, de cada adicional y de cada resumen de reunión.'),
           ok('tests/cotiza-encargos.test.ts (20 casos con el SQL real de las migraciones) y recorrido en el navegador con capturas.'),
-          pend('Aplicar las migraciones 0045 y 0046 en Turso, principal y demo.'),
+          ok('Migraciones 0045 y 0046 aplicadas en Turso, principal y demo, el 6 oct 2026.'),
         ],
       },
       {

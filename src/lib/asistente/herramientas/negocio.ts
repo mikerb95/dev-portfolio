@@ -130,6 +130,8 @@ const proyectoTool: Herramienta = {
     const [hitos, contactos, adrs, cotizaciones, cuentas, pendientes] = await Promise.all([
       db
         .select({
+          // El id lo necesita actualizar_hito (panel); no dice nada del cliente.
+          id: projectMilestones.id,
           titulo: projectMilestones.title,
           estado: projectMilestones.status,
           vence: projectMilestones.dueAt,
@@ -167,7 +169,7 @@ const proyectoTool: Herramienta = {
         .orderBy(desc(invoices.createdAt))
         .limit(20),
       db
-        .select({ titulo: interactions.title, siguientePaso: interactions.nextAction, vence: interactions.dueDate })
+        .select({ id: interactions.id, titulo: interactions.title, siguientePaso: interactions.nextAction, vence: interactions.dueDate })
         .from(interactions)
         .where(and(eq(interactions.projectId, p.id), eq(interactions.done, false)))
         .orderBy(asc(interactions.dueDate))
