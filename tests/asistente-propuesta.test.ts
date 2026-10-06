@@ -78,8 +78,11 @@ describe('crear_propuesta (fase 3, sobre Plano)', () => {
     expect(d).toMatchObject({ hecho: true, iaLeyo: true, enlace: `/admin/plano/${d.id}` })
     expect(d.componentes).toBeGreaterThanOrEqual(2)
     // El rango sale formateado por el motor: el modelo lo cita, no lo calcula.
-    expect(d.rango.desde).toMatch(/COP$/)
-    expect(d.rango.hasta).toMatch(/COP$/)
+    expect(d.rango.desde.texto).toMatch(/COP$/)
+    expect(d.rango.hasta.texto).toMatch(/COP$/)
+    // Y en la forma que la guardia de cifras reconoce como dinero de una herramienta.
+    const { recogerCifras } = await import('../src/lib/asistente/cifras')
+    expect(recogerCifras(d).has(d.rango.hasta.valor)).toBe(true)
 
     const [fila] = await db.select().from(propuestas).where(eq(propuestas.id, d.id))
     expect(fila).toMatchObject({ estado: 'borrador', clientId: cliente, conversacion: CONV })

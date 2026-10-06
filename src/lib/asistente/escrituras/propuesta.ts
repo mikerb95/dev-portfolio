@@ -99,7 +99,8 @@ export type ResultadoPropuesta = Hecho & {
   iaLeyo: boolean
   motivoSinIa: string | null
   componentes: number
-  rango: { desde: string; hasta: string } | null
+  /** En la forma { valor, moneda, texto } de las herramientas: así la guardia de cifras la reconoce. */
+  rango: { desde: ReturnType<typeof dinero>; hasta: ReturnType<typeof dinero> } | null
   preguntasAbiertas: string[]
 }
 
@@ -152,7 +153,7 @@ export async function crearPropuestaAprobada(entrada: unknown): Promise<{ ok: tr
   let rango: ResultadoPropuesta['rango'] = null
   try {
     const s = armarPropuesta(resultadoIa.config, await cargarReglas(), hoy)
-    rango = { desde: dinero(s.rango[0], s.moneda).texto, hasta: dinero(s.rango[1], s.moneda).texto }
+    rango = { desde: dinero(s.rango[0], s.moneda), hasta: dinero(s.rango[1], s.moneda) }
   } catch (err) {
     if (!(err instanceof PropuestaVacia)) console.error('[asistente] crear_propuesta: no se pudo calcular el rango', err)
   }
