@@ -459,15 +459,17 @@ está publicado ("Traducir un sitio sin abrirle una puerta trasera").
 
 ### Asistente del panel - fases abiertas (`docs/plan-asistente.md`)
 
-Hechas: 0, 1, 2, 4, 7 y 8. Faltan:
+Hechas: 0, 1, 2, 3, 4, 5, 7 y 8 (la 3 y la 5 el 6 oct 2026: cotizar dejando
+la propuesta en Plano, y cambios en proyectos, hitos, seguimiento y mensajes).
+Faltan:
 
-- [ ] **Fase 3**: subagente cotizador + `guardar_cotizacion` con aprobación.
-- [ ] **Fase 5**: resto de escrituras (proyecto, hito, seguimiento, mensaje
-      leído).
 - [ ] **Fase 6**: pruebas adversariales y banco de casos con el modelo real
-      (~US$3 por corrida).
-- [ ] **Fase 9**: cierre (RF-210 a RF-212 a `implementado`, nota en `/notes`,
-      iteración).
+      (~US$3 por corrida). Incluye la primera corrida real de
+      `crear_propuesta` y de las cuatro escrituras nuevas.
+- [ ] **Fase 9**: cierre (RF-210 y RF-211 a `implementado`, nota en
+      `/notes`, iteración).
+- [ ] Decidir si completar un hito visible desde el asistente debe avisar al
+      cliente (hoy sí, igual que desde el panel, y la tarjeta lo dice).
 - [ ] Asesor público: guardar el resumen como cotización en borrador y avisar
       por ntfy.
 - [ ] El temario de la capacitación se escribió para 4 h; ahora son 8.

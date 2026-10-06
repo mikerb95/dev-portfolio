@@ -1,12 +1,14 @@
 # Plan: asistente del panel (con cotizador)
 
-> Estado: **fases 1, 2, 4, 7 y 8 implementadas**: el asistente responde en la
-> terminal y en la caja del dashboard, y crea cuentas de cobro en borrador con
-> aprobación; faltan el cotizador (3) y las demás escrituras (5) · Creado:
+> Estado: **fases 1, 2, 3, 4, 5, 7 y 8 implementadas**: el asistente responde
+> en la terminal y en la caja del dashboard, y propone con aprobación cuentas
+> de cobro en borrador, cambios en proyectos e hitos, seguimiento, mensajes
+> leídos y propuestas en Plano; faltan las pruebas con el modelo real (6) y el
+> cierre (9) · Creado:
 > 2026-10-01 · Primeras decisiones de Mike: 2026-10-01 (ver "Decisiones tomadas")
 > Requisitos: RF-210 (asistente), RF-211 (cotizador) y RF-212 (asesor
 > público) en
-> `src/data/documentacion.ts`: RF-212 y RF-219 (caja del dashboard) `implementado`, RF-210 `parcial` (fases 2, 4 y 7) y RF-211 `planeado`.
+> `src/data/documentacion.ts`: RF-212 y RF-219 (caja del dashboard) `implementado`, RF-210 y RF-211 `parcial` (falta la fase 6).
 > Relacionados: `docs/plan-analista-siem.md` (mismo patrón de agente),
 > `docs/plan-oferta-principal.md` (oferta y precios piso),
 > `docs/plan-briefings.md`, `docs/plan-cuentas-de-cobro.md`,
@@ -87,7 +89,7 @@ filas escaneadas; ver memoria del proyecto): el historial de páginas sale de
 | `actualizar_hito` | `project_milestones` | Ojo: un hito con `visibleToClient` lo ve el cliente en `/portal`; la aprobación lo dice en grande. |
 | `registrar_seguimiento` | `interactions` | Nota, llamada o pendiente con fecha. |
 | `marcar_mensaje_leido` | `messages` | |
-| `guardar_cotizacion` | `briefings` + `briefing_items` en **borrador** | La usa el cotizador. |
+| ~~`guardar_cotizacion`~~ `crear_propuesta` | Plano: `crearPropuesta` + la lectura del chat | Cambió el 6 oct 2026: la cotización queda en Plano, no en `briefings` (ver "Fases 3 y 5"). |
 
 Cada escritura aprobada se registra con `recordAdminEvent` (rastro de
 auditoría, categoría en `AUDIT_CATEGORIES`, fuera de `/security`).
@@ -386,9 +388,9 @@ US$0,13 por pregunta.
 | 0 ✅ | **Decisiones de Mike**: tarifario y qué acciones de escritura entran (1 oct 2026) | no | |
 | 1 ✅ | Núcleo puro: tarifario, cálculo de cotización, guardia, limpieza + tests; `/paginas-web` lee del tarifario (1 oct 2026) | no | |
 | 2 ✅ | Asistente de terminal **solo lectura** (`npm run asistente`): las 11 herramientas de consulta (6 oct 2026) | sí, poco | fase 1 |
-| 3 | Subagente cotizador + `guardar_cotizacion` con aprobación | sí, poco | fase 2 |
+| 3 ✅ | Cotizar: `crear_propuesta` deja la propuesta en Plano con aprobación (6 oct 2026; sin subagente, ver abajo) | sí, poco | fase 2 |
 | 4 ✅ | `crear_cuenta_cobro` en borrador con aprobación, en el panel (6 oct 2026; sin subagente, ver abajo) | sí, poco | fase 2 |
-| 5 | Resto de escrituras: proyecto, hito, seguimiento, mensaje leído | sí, poco | fase 2 |
+| 5 ✅ | Resto de escrituras: proyecto, hito, seguimiento, mensaje leído (6 oct 2026) | sí, poco | fase 2 |
 | 6 | Pruebas con el modelo real: adversariales y banco de casos | ~US$3 por corrida | fases 3-5 |
 | 7 ✅ | Caja "Pregunta o busca algo" en el dashboard con historial (motor de la API) (6 oct 2026, adelantada a la fase 5 por pedido de Mike) | sí | fase 2 |
 | 8 ✅ | Asesor público en la burbuja de WhatsApp (capacidad 3): chat, cálculo, cierre en WhatsApp, límites (1 oct 2026) | sí, poco | fase 1 |
@@ -578,6 +580,62 @@ US$0,06 en total:
 
 Mike ya había usado la caja desde local antes de la prueba ("¿Quién me debe
 y cuánto?", US$0,044).
+
+## Fases 3 y 5: qué quedó (6 oct 2026)
+
+Pedido de Mike: seguir con las fases abiertas del asistente. Al retomarlas, el
+plan de la fase 3 (subagente cotizador que guarda la cotización como briefing)
+ya había quedado viejo: ese mismo día se construyó Plano, que lee la
+conversación con la IA, elige componentes con citas verificadas y calcula con
+el mismo motor. Mike eligió entre tres opciones: **que el asistente use
+Plano**, no un segundo cotizador ni saltarse la fase.
+
+| Archivo | Qué es |
+|---|---|
+| `src/lib/asistente/escrituras/cambio.ts` | La vista común de las escrituras nuevas: antes y después por campo, avisos de lo que sale del panel, texto del botón y del pie. Puro, lo importa también el navegador. |
+| `escrituras/proyecto.ts` | `actualizar_proyecto`: estado, inicio, fin y una nota interna que se agrega al final con su fecha. |
+| `escrituras/hito.ts` | `actualizar_hito`: estado, fecha límite, título, descripción. |
+| `escrituras/seguimiento.ts` | `registrar_seguimiento`: llamada, reunión, nota o tarea con su pendiente, y cierra en la misma transacción el pendiente que resuelve. Reutiliza `normalizeInteractionInput`. |
+| `escrituras/mensaje.ts` | `marcar_mensaje_leido`: hasta 30 mensajes del formulario. Hoy es la única forma de hacerlo: `/admin/messages` no tiene botón. |
+| `escrituras/propuesta.ts` | `crear_propuesta`: borrador en Plano + lectura del chat + rango del motor. |
+| `src/lib/portal/hitos.ts` | La regla de actualizar un hito y avisar al cliente, sacada de `PATCH /api/admin/portal/hitos` para que el panel y el asistente no avisen distinto. |
+| `src/components/admin/asistente-cliente.ts` + `AsistenteCaja.astro` | La tarjeta de cambio: lo anterior tachado, lo nuevo en claro, y los avisos arriba con tinte ámbar. |
+| `tests/asistente-escrituras.test.ts`, `tests/asistente-propuesta.test.ts` | 22 casos contra libSQL temporal (la IA de Plano, falsa). |
+
+Decisiones que surgieron al construirlas:
+
+- **Completar un hito visible avisa al cliente**, igual que desde el panel, y
+  la tarjeta lo dice en grande antes de aprobar. Callarlo dejaría el hito
+  completado en el portal sin que el cliente se entere, y el panel solo avisa
+  en la transición: no habría forma de mandar el aviso después. Es la única
+  escritura que sale del panel; el principio 2 se lee como "nada sale sin que
+  Mike lo vea en la tarjeta". Si Mike prefiere que el asistente nunca avise,
+  se resuelve con una opción en `actualizarHito` que el asistente pase y el
+  panel no.
+- **Lo público queda fuera.** `actualizar_proyecto` no toca título, slug,
+  descripción, visibilidad ni URLs (salen publicados en el portafolio), y
+  `actualizar_hito` no cambia la visibilidad para el cliente. Zod descarta esos
+  campos aunque el modelo los mande, y hay un test que lo comprueba.
+- **El stack del proyecto tampoco**: hoy se guarda como JSON desde el panel y
+  el portal lo lee partiendo por comas. Un tercer escritor no arregla eso.
+- **Las notas internas solo crecen**: la nota nueva va al final con su fecha
+  (principio 4, nunca borra).
+- **La IA de Plano corre al aprobar, no al preparar.** Preparar es gratis y la
+  tarjeta enseña el texto que se va a leer (sin teléfonos ni correos); si Mike
+  descarta, no se gastó nada. El gasto se suma a la propuesta y al tope diario
+  del asistente.
+- **Si la IA de Plano falla, la propuesta queda igual** con la conversación
+  guardada, y el resultado le dice a Mike que la lea desde el constructor.
+- **Sin subagente cotizador.** Plano ya hace ese trabajo con su propio prompt y
+  su esquema; un subagente encima sería una segunda opinión sobre los mismos
+  precios.
+- **Una acción por propuesta.** El bucle se pausa en la primera escritura; si
+  Mike pide dos cosas, el prompt pide proponer la primera y luego la siguiente.
+
+Probado con la API de Claude falsa (`e2e/asistente.spec.ts`, ahora 7 casos,
+con un mensaje marcado como leído de punta a punta) y con capturas reales de
+las tarjetas de hito, seguimiento y propuesta en escritorio y móvil. Sin
+probar todavía con el modelo real: es la fase 6.
 
 ## Fase 8: qué quedó (1 oct 2026)
 
