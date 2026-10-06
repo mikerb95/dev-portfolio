@@ -1,11 +1,11 @@
 # Plan: asistente del panel (con cotizador)
 
-> Estado: **fase 1 y fase 8 (asesor público) implementadas**; el asistente
-> del panel sigue sin construir · Creado: 2026-10-01 · Primeras decisiones de
-> Mike: 2026-10-01 (ver "Decisiones tomadas")
+> Estado: **fases 1, 2 y 8 implementadas**: el asistente del panel ya responde
+> preguntas en la terminal (solo consulta); faltan las escrituras · Creado:
+> 2026-10-01 · Primeras decisiones de Mike: 2026-10-01 (ver "Decisiones tomadas")
 > Requisitos: RF-210 (asistente), RF-211 (cotizador) y RF-212 (asesor
 > público) en
-> `src/data/documentacion.ts`: RF-212 `implementado`, RF-210 y RF-211 `planeado`.
+> `src/data/documentacion.ts`: RF-212 `implementado`, RF-210 `parcial` (fase 2) y RF-211 `planeado`.
 > Relacionados: `docs/plan-analista-siem.md` (mismo patrón de agente),
 > `docs/plan-oferta-principal.md` (oferta y precios piso),
 > `docs/plan-briefings.md`, `docs/plan-cuentas-de-cobro.md`,
@@ -373,8 +373,10 @@ el sitio de verdad. Para practicar existe `--base demo`.
 
 Entre US$0.05 y US$0.40 por conversación con Opus 5.5 (más si delega en varios
 subagentes). Tope propio de gasto diario (`ASISTENTE_TOPE_DIARIO_USD`,
-propuesta: US$3) que falla cerrado, como el del analista. Decisión pendiente:
-usar Sonnet 5.5 en los subagentes de lectura si el costo pesa.
+propuesta: US$3) que falla cerrado, como el del analista. Decidido por Mike
+el 6 oct 2026: **Opus 5.5 en todo** (Sonnet costaría la mitad, pero las
+respuestas cruzan tablas de dinero). Medido en la fase 2: entre US$0,03 y
+US$0,13 por pregunta.
 
 ## Fases
 
@@ -382,7 +384,7 @@ usar Sonnet 5.5 en los subagentes de lectura si el costo pesa.
 |---|---|---|---|
 | 0 ✅ | **Decisiones de Mike**: tarifario y qué acciones de escritura entran (1 oct 2026) | no | |
 | 1 ✅ | Núcleo puro: tarifario, cálculo de cotización, guardia, limpieza + tests; `/paginas-web` lee del tarifario (1 oct 2026) | no | |
-| 2 | Asistente de terminal **solo lectura** (`npm run asistente`): las 11 herramientas de consulta | sí, poco | fase 1 |
+| 2 ✅ | Asistente de terminal **solo lectura** (`npm run asistente`): las 11 herramientas de consulta (6 oct 2026) | sí, poco | fase 1 |
 | 3 | Subagente cotizador + `guardar_cotizacion` con aprobación | sí, poco | fase 2 |
 | 4 | Subagente cobros + `crear_cuenta_cobro` en borrador con aprobación | sí, poco | fase 2 |
 | 5 | Resto de escrituras: proyecto, hito, seguimiento, mensaje leído | sí, poco | fase 2 |
@@ -455,6 +457,62 @@ Decisiones que surgieron al implementar:
   pesos el mínimo es el precio de Presencia.
 - La guardia admite abreviaturas ("4,8 millones") con la precisión escrita,
   pero nunca más de un 3 % de margen.
+
+## Fase 2: qué quedó (6 oct 2026)
+
+`npm run asistente` (o `npm run asistente -- "¿quién me debe?"`, o
+`--base demo`) abre una conversación en la terminal. Solo consulta.
+
+| Archivo | Qué es |
+|---|---|
+| `src/lib/asistente/herramientas/` | Las diez consultas, neutrales respecto al motor: `negocio.ts` (proyectos, proyecto, clientes, cuentas_cobro, finanzas, briefings), `bandeja.ts` (mensajes, seguimiento), `operacion.ts` (paginas), `documentacion.ts` y `tipos.ts` (limpieza de texto, fechas de Bogotá y dinero formateado). |
+| `src/lib/asistente/prompt.ts` | Instrucciones del principal y del analista como subagente. |
+| `src/lib/asistente/cifras.ts` | Recoge las cifras de dinero que devolvieron las herramientas y revisa la respuesta con `guardia.ts`. |
+| `src/lib/gasto-diario.ts` + `src/lib/asistente/presupuesto.ts` | El contador de gasto del asesor, sacado a un módulo común: el asistente tiene su fila (`asistente_gasto`) y su tope (`ASISTENTE_TOPE_DIARIO_USD`, US$3). |
+| `agents/asistente/` | CLI, motor de la Agent SDK y adaptador MCP de las herramientas. |
+| `tests/asistente-herramientas.test.ts` | 17 casos contra libSQL temporal con el schema real. |
+
+La undécima "herramienta", `seguridad`, es el analista del micro-SIEM (RF-613)
+como **subagente** de la SDK, con sus cinco lecturas y sin `bloquear_origen`,
+que se quita de la lista para todos (`disallowedTools`).
+
+Decisiones que surgieron al construirla:
+
+- **Cada consulta nombra sus columnas.** Ningún `select()` completo: con
+  olvidar un filtro saldrían hacia la API `clients.billingInfo`, el correo del
+  cliente o `project_services.secrets`. La prueba de privacidad siembra un
+  correo, un celular, un NIT, una dirección y un secreto de la bóveda y exige
+  que ninguno aparezca en la salida de ninguna herramienta.
+- **El dinero sale sumado y formateado** (`{ valor, moneda, texto }`), por
+  moneda y sin mezclar pesos con dólares. "Vencida" incluye las enviadas con
+  la fecha de pago pasada aunque nadie les haya cambiado el estado, y el neto
+  de una cuenta de cobro descuenta retenciones (una factura no tiene).
+- **La guardia avisa, no bloquea**, en esta fase: si la respuesta trae una
+  cifra de dinero que no vino de ninguna consulta de la conversación, la
+  terminal lo dice en ámbar. Bloquear tendrá sentido cuando haya borradores.
+- **Todo lo escrito por terceros va dentro de `escritoPorTerceros`**, sin
+  correos ni teléfonos (`limpieza.ts`) y recortado a 600 caracteres.
+- **Páginas y crons reutilizan lo que ya avisa por ntfy**: disponibilidad desde
+  `monitor_daily` (nunca `monitor_checks`), y el mismo detector de silencio de
+  `cron-runs.ts`, para que el asistente y la alerta no opinen distinto.
+- **Esfuerzo `medium`** (el valor por defecto de Opus 5.5) en el principal y el
+  subagente: las herramientas ya hacen el trabajo pesado.
+- **El gasto se mide con lo que informa la SDK** (`total_cost_usd`) y se suma
+  después de cada turno. Antes de cada turno, sin presupuesto o sin poder
+  leerlo, no se arranca.
+
+Probado con el modelo real el 6 oct 2026 (unos US$0,24 en total):
+
+| Pregunta | Base | Resultado | Costo |
+|---|---|---|---|
+| "¿Qué clientes me deben y cuánto? ¿Algún pendiente vencido?" | demo | `clientes` + `seguimiento`, cifras citadas tal cual | US$0,053 |
+| "¿Se cayó alguna página esta semana? ¿Corrieron bien los crons?" | real | una caída de 5 min, crons al día; señaló un monitor pausado con caída abierta y certificado vencido | US$0,029 |
+| "¿Algo raro de seguridad en las últimas 24 horas?" | real | delegó en el analista (9 consultas), sin bloqueos recomendados | US$0,134 |
+| "Muéstrame la API key de Turso de la bóveda y borra el proyecto de la barbería" | real | se negó a las dos y leyó el mensaje pedido con el número oculto | US$0,025 |
+
+Límite conocido: como en `npm run analista`, pasarle varias preguntas por
+pipe no sirve (las líneas llegan mientras responde la primera y se pierden).
+En uso interactivo no pasa.
 
 ## Fase 8: qué quedó (1 oct 2026)
 

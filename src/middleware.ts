@@ -17,6 +17,7 @@ import {
   isAsesorPath,
   isAuthPath,
   isCobroLinkPath,
+  isPropuestaPath,
   isFramablePath,
   isPinPath,
   isTrainingAccessPath,
@@ -266,6 +267,30 @@ export const onRequest = defineMiddleware(async (context, next) => {
           category: 'enumeration',
           severity: 'high',
           ruleId: 'ratelimit.cobro_link',
+          action: 'rate_limited',
+          statusCode: 429,
+          method,
+          path: pathname,
+          query,
+          headers: reqHeaders,
+        })
+        return new Response(JSON.stringify({ error: 'demasiadas solicitudes, espera un minuto' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+
+    // Enlace de propuestas de Plano: el cliente mueve perillas (cada una es una
+    // simulación en el servidor) y acepta una vez. 60/min deja jugar con las
+    // perillas sin prisa y frena un bucle.
+    if (isPropuestaPath(canonicalPath)) {
+      const r = await enforceLimit(`propuesta:${ip}`, { limit: 60, windowMs: 60_000, deferUntil: 0.5 })
+      if (!r.allowed) {
+        recordEnforcementEvent({
+          category: 'enumeration',
+          severity: 'medium',
+          ruleId: 'ratelimit.propuesta',
           action: 'rate_limited',
           statusCode: 429,
           method,

@@ -60,7 +60,9 @@ const sesion = nuevaSesion()
 
 function pintar(e: EventoAsistente) {
   if (e.tipo === 'facturacion') console.log(gris(`  Pagado con: ${e.fuente}`))
-  if (e.tipo === 'paso') console.log(gris(`  ${e.deAnalista ? '  ↳ analista:' : '→'} ${e.herramienta} ${JSON.stringify(e.entrada)}`))
+  // La delegación trae el encargo completo para el subagente: en pantalla basta con su título.
+  if (e.tipo === 'paso' && e.herramienta === 'Agent') console.log(gris(`  → delega en el analista: ${String(e.entrada.description ?? '')}`))
+  else if (e.tipo === 'paso') console.log(gris(`  ${e.deAnalista ? '  ↳ analista:' : '→'} ${e.herramienta} ${JSON.stringify(e.entrada)}`))
   if (e.tipo === 'texto') console.log(`\n${e.texto}`)
   if (e.tipo === 'cifrasDudosas')
     console.log(ambar(`\n  Ojo: ${e.cifras.join(', ')} no sale de ninguna consulta de esta conversación. Compruébalo en el panel.`))

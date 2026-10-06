@@ -6,6 +6,7 @@ import {
 } from '../../../lib/payments'
 import { settlePaymentByReference, unsettlePaymentByReference } from '../../../lib/portal/settlement'
 import { notifyCobroPaid } from '../../../lib/cobros-notify'
+import { convertirPorReferencia } from '../../../lib/plano/conversion'
 
 // Receptor de eventos de Wompi (transaction.updated). Verifica el checksum
 // firmado con WOMPI_EVENTS_SECRET antes de tocar nada.
@@ -71,6 +72,9 @@ export const POST: APIRoute = async ({ request }) => {
       // Cobro de campo: el aviso al celular es el único enterado (no hay
       // factura ni portal detrás). No-op si el pago no es un cobro.
       await notifyCobroPaid(String(tx.reference))
+      // Anticipo de una propuesta de Plano: la convierte en proyecto. No-op si
+      // el pago no es un anticipo.
+      await convertirPorReferencia(String(tx.reference))
     } else if (result.statusAfter === 'voided') await unsettlePaymentByReference(String(tx.reference))
   }
 

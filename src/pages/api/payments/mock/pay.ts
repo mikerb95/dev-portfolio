@@ -11,7 +11,8 @@ import { enforceLimit } from '../../../../lib/security/ratelimit-durable'
 import { getPortalSession } from '../../../../lib/portal/session'
 import { settlePaymentByReference } from '../../../../lib/portal/settlement'
 import { notifyCobroPaid } from '../../../../lib/cobros-notify'
-import { invoices } from '../../../../db/schema'
+import { invoices, propuestas } from '../../../../db/schema'
+import { convertirPorReferencia } from '../../../../lib/plano/conversion'
 
 // "Pasarela" simulada para el modo demo (sin llaves Wompi configuradas).
 // Emite la secuencia real de eventos (pending → approved/declined) por el
@@ -55,7 +56,12 @@ export const POST: APIRoute = async (context) => {
     const login = (session?.user as { login?: string } | undefined)?.login
     const isAdmin = !!session && (!login || isAllowedLogin(login))
 
-    if (!isAdmin && !provesCobroLink(body.shortCode, payment) && !(await ownsInvoiceOfPayment(context, payment.invoiceId))) {
+    if (
+      !isAdmin &&
+      !provesCobroLink(body.shortCode, payment) &&
+      !(await provesPropuesta(body.propuestaToken, payment)) &&
+      !(await ownsInvoiceOfPayment(context, payment.invoiceId))
+    ) {
       return json(403, { error: 'simulación deshabilitada (requiere sesión admin o PAYMENTS_MOCK_ENABLED=true)' })
     }
   }
@@ -86,6 +92,7 @@ export const POST: APIRoute = async (context) => {
   if (final.applied && final.statusAfter === 'approved') {
     await settlePaymentByReference(reference)
     await notifyCobroPaid(reference)
+    await convertirPorReferencia(reference)
   }
 
   return json(200, { ok: true, status: final.statusAfter, steps: [pending, final] })
@@ -100,6 +107,21 @@ export const POST: APIRoute = async (context) => {
 function provesCobroLink(given: unknown, payment: { source: string; shortCode: string | null }): boolean {
   if (payment.source !== 'cobro' || !payment.shortCode || typeof given !== 'string') return false
   const a = Buffer.from(payment.shortCode, 'utf8')
+  const b = Buffer.from(given, 'utf8')
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
+/**
+ * ¿Quien pide simular presenta el token del enlace de ESTA propuesta? Mismo
+ * razonamiento que el código corto del cobro: el token solo viaja en el enlace
+ * que Mike le mandó al cliente, y el pago tiene que ser el anticipo de esa
+ * propuesta y no otro.
+ */
+async function provesPropuesta(given: unknown, payment: { id: number; source: string }): Promise<boolean> {
+  if (payment.source !== 'propuesta' || typeof given !== 'string' || given.length > 64) return false
+  const [p] = await db.select({ token: propuestas.token }).from(propuestas).where(eq(propuestas.anticipoPaymentId, payment.id)).limit(1)
+  if (!p) return false
+  const a = Buffer.from(p.token, 'utf8')
   const b = Buffer.from(given, 'utf8')
   return a.length === b.length && timingSafeEqual(a, b)
 }

@@ -54,6 +54,16 @@ export function isCobroLinkPath(pathname: string): boolean {
 }
 
 /**
+ * Enlace de una propuesta de Plano (/propuesta/<token>) y sus APIs (simular,
+ * aceptar, anticipo). El token tiene 128 bits, así que adivinarlo no es el
+ * riesgo; el límite frena a quien dispara simulaciones o aceptaciones en
+ * bucle, que recalculan la propuesta en el servidor en cada llamada.
+ */
+export function isPropuestaPath(pathname: string): boolean {
+  return pathname.startsWith('/propuesta/') || pathname.startsWith('/api/propuesta/')
+}
+
+/**
  * Canje del código de grupo del banco de capacitación. Mismo problema que los
  * links de cobro: el código son ocho caracteres de un alfabeto de 29 y es lo
  * único que separa a cualquiera del material restringido. Solo el endpoint de
