@@ -1,0 +1,119 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { listarPropuestas } from '../../../lib/plano/db'
+import { formatearMonto, type Moneda } from '../../../data/tarifario'
+import { formatFechaCorta } from '../../../lib/fecha-co'
+
+// Listado de propuestas de Plano (docs/plan-plano.md). Sin config ni
+// conversación en la consulta: el precio vive desnormalizado en la fila.
+
+const filas = await listarPropuestas()
+const isDemo = Astro.locals.demo === true
+
+const ESTADO: Record<string, { label: string; dot: string; text: string }> = {
+  borrador: { label: 'Borrador', dot: 'bg-ink-200', text: 'text-ink-200' },
+  enviada: { label: 'Enviada', dot: 'bg-cyan', text: 'text-cyan' },
+  aceptada: { label: 'Aceptada', dot: 'bg-lime', text: 'text-lime' },
+  convertida: { label: 'En proyecto', dot: 'bg-violet', text: 'text-violet' },
+  descartada: { label: 'Descartada', dot: 'bg-ink-400', text: 'text-ink-300' },
+}
+
+const enviadas = filas.filter((f) => f.estado !== 'borrador' && f.estado !== 'descartada' && f.enviadaEl).length
+const cerradas = filas.filter((f) => f.estado === 'aceptada' || f.estado === 'convertida')
+const conEnvio = filas.filter((f) => f.enviadaEl).length
+const tasa = conEnvio ? Math.round((cerradas.length / conEnvio) * 100) : null
+const cerradoCOP = cerradas.filter((f) => f.moneda === 'COP').reduce((t, f) => t + (f.precio ?? 0), 0)
+const iaTotal = filas.reduce((t, f) => t + (f.iaUsd ?? 0), 0)
+---
+
+<AdminLayout title="Plano · propuestas">
+  <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+    <p class="max-w-[60ch] text-[13.5px] text-ink-200 leading-relaxed">
+      Arma la propuesta a la medida: el precio se cierra con cada respuesta, salen tres versiones, el plan de
+      pagos con fechas hábiles, las condiciones y el mapa de contacto. El cliente la recibe en un enlace privado.
+    </p>
+    <div class="flex items-center gap-2">
+      <a href="/admin/plano/ajustes" class="h-9 px-4 inline-flex items-center rounded-full bg-white/[.03] border border-white/10 text-[13px] text-ink-100 hover:bg-white/[.06] transition-colors">
+        Reglas de pago
+      </a>
+      {!isDemo && (
+        <button id="nueva" class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold hover:bg-cyan-glow transition-colors">
+          Nueva propuesta
+        </button>
+      )}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+    <div class="glass rounded-2xl px-4 py-3">
+      <div class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-200">En la calle</div>
+      <div class="mt-1 text-[22px] font-medium tabular-nums">{enviadas}</div>
+    </div>
+    <div class="glass rounded-2xl px-4 py-3">
+      <div class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-200">Aceptación</div>
+      <div class="mt-1 text-[22px] font-medium tabular-nums">{tasa === null ? '-' : `${tasa} %`}</div>
+    </div>
+    <div class="glass rounded-2xl px-4 py-3">
+      <div class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-200">Cerrado</div>
+      <div class="mt-1 text-[22px] font-medium tabular-nums">{cerradoCOP ? formatearMonto(cerradoCOP, 'COP') : '-'}</div>
+    </div>
+    <div class="glass rounded-2xl px-4 py-3">
+      <div class="text-[10.5px] font-mono uppercase tracking-[.18em] text-ink-200">Gasto en IA</div>
+      <div class="mt-1 text-[22px] font-medium tabular-nums">US${iaTotal.toFixed(2)}</div>
+    </div>
+  </div>
+
+  {filas.length === 0 ? (
+    <div class="glass rounded-2xl p-8 text-center">
+      <p class="text-[15px] text-ink-50">Todavía no hay propuestas.</p>
+      <p class="mt-1 text-[13px] text-ink-200">Crea una y pega la conversación con el cliente: la IA arma el primer borrador.</p>
+    </div>
+  ) : (
+    <ul class="space-y-2">
+      {filas.map((f) => {
+        const e = ESTADO[f.estado] ?? ESTADO.borrador
+        return (
+          <li>
+            <a href={`/admin/plano/${f.id}`} class="group flex flex-wrap items-center gap-x-5 gap-y-1 rounded-2xl px-4 py-3 bg-white/[.02] border border-white/[.06] hover:bg-cyan/[.04] hover:border-cyan/20 transition-colors">
+              <span class="flex items-center gap-2 min-w-0 flex-1">
+                <span class:list={['w-2 h-2 rounded-full shrink-0', e.dot]}></span>
+                <span class="truncate text-[14px] text-ink-50 group-hover:text-cyan-glow transition-colors">{f.titulo}</span>
+              </span>
+              <span class:list={['text-[11px] font-mono', e.text]}>{e.label}</span>
+              <span class="text-[12px] font-mono text-ink-200 w-[130px] text-right tabular-nums">
+                {f.precio ? formatearMonto(f.precio, f.moneda as Moneda) : '-'}
+              </span>
+              <span class="text-[11px] font-mono text-ink-300 w-[70px] text-right">v{f.versionActual}</span>
+              <span class="text-[11px] font-mono text-ink-300 w-[110px] text-right">
+                {f.vistas > 0 ? `${f.vistas} ${f.vistas === 1 ? 'vista' : 'vistas'}` : f.enviadaEl ? 'sin abrir' : ''}
+              </span>
+              <span class="text-[11px] font-mono text-ink-300 w-[90px] text-right">{formatFechaCorta(f.actualizadaEl)}</span>
+            </a>
+          </li>
+        )
+      })}
+    </ul>
+  )}
+</AdminLayout>
+
+<script>
+  const btn = document.getElementById('nueva') as HTMLButtonElement | null
+  btn?.addEventListener('click', async () => {
+    btn.disabled = true
+    btn.textContent = 'Creando…'
+    try {
+      const r = await fetch('/api/admin/plano', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo: '' }),
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || 'no se pudo crear')
+      location.href = `/admin/plano/${d.id}`
+    } catch (e) {
+      btn.disabled = false
+      btn.textContent = 'Nueva propuesta'
+      alert(e instanceof Error ? e.message : 'no se pudo crear')
+    }
+  })
+</script>
