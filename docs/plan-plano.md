@@ -133,14 +133,14 @@ vigencia (15 días) se calcula, no se guarda.
 
 | Fase | Qué | Estado |
 |---|---|---|
-| 0 | Reglas de pago, calendario, incertidumbre, versiones y cláusulas como módulos puros con pruebas | pendiente |
-| 1 | Constructor en el panel, versiones congeladas con huella, PDF, ajustes | pendiente |
-| 2 | IA: del chat al plano (con citas verificadas) y el cliente difícil | pendiente |
-| 3 | Encaje con tu vida: meses de gasto cubiertos y carga semanal | pendiente |
-| 4 | Propuesta viva: enlace del cliente, perillas, diff, aceptación, anticipo | pendiente |
-| 5 | De sí a proyecto: conversión al aprobarse el anticipo | pendiente |
-| 6 | Aprende: horas reales y sugerencia de colchón por componente | pendiente |
-| 7 | Motion, `/docs`, nota en `/notes`, plan al día | pendiente |
+| 0 | Reglas de pago, calendario, incertidumbre, versiones y cláusulas como módulos puros con pruebas | ✅ 6 oct 2026 |
+| 1 | Constructor en el panel, versiones congeladas con huella, PDF, ajustes | ✅ 6 oct 2026 |
+| 2 | IA: del chat al plano (con citas verificadas) y el cliente difícil | ✅ 6 oct 2026 |
+| 3 | Encaje con tu vida: meses de gasto cubiertos y carga semanal | ✅ 6 oct 2026 |
+| 4 | Propuesta viva: enlace del cliente, perillas, diff, aceptación, anticipo | ✅ 6 oct 2026 |
+| 5 | De sí a proyecto: conversión al aprobarse el anticipo | ✅ 6 oct 2026 |
+| 6 | Aprende: horas reales y sugerencia de colchón por componente | ✅ 6 oct 2026 |
+| 7 | Motion, `/docs`, nota en `/notes`, plan al día | ✅ 6 oct 2026 |
 
 ## Decisiones tomadas
 
@@ -162,8 +162,47 @@ vigencia (15 días) se calcula, no se guarda.
 - **Solo en español por ahora.** Los montos pueden ir en USD; las cláusulas en
   inglés quedan pendientes.
 
+## Qué quedó (6 oct 2026)
+
+- **Migraciones** 0041 (tablas `propuestas`, `propuesta_versiones`,
+  `propuesta_horas`), 0042 (precio y moneda desnormalizados) y 0043 (la
+  configuración de cada versión, necesaria para recalcular las perillas desde
+  la versión enviada). Solo aditivas. Aplicadas por Mike en Turso (principal
+  y demo) el 6 oct 2026. Además, `payments.source` admite
+  `'propuesta'` (solo tipo de TypeScript, sin migración).
+- **Pruebas:** `tests/plano.test.ts` (lógica pura), `tests/plano-ia.test.ts`
+  (citas literales, guardia de cifras, vista del cliente sin datos internos,
+  huellas) y `tests/plano-db.test.ts` (flujo completo contra libSQL temporal
+  creada con las migraciones reales).
+- **Recorrido real** contra una base local (`.tmp/plano/`): crear, configurar,
+  dos versiones, enviar, PDF, perillas del cliente, aceptación, anticipo con la
+  pasarela simulada y conversión (cliente, proyecto, 4 hitos, 3 cuentas de
+  cobro en borrador, invitación al portal). Capturas del constructor y del
+  enlace del cliente en escritorio y móvil.
+- El constructor del panel sí se pudo capturar con Chromium y GPU real
+  (`--use-angle=gl-egl`), a diferencia de lo anotado en sep 2026 para otras
+  páginas del panel.
+
+### Decisiones que surgieron al implementar
+
+- **Las perillas se simulan en el servidor.** El navegador del cliente no
+  recibe la configuración ni las reglas (llevan horas, citas de la
+  conversación y el rango interno); cada perilla es un POST que recalcula desde
+  la versión enviada. Por eso cada versión guarda su configuración (0043).
+- **Aceptar sin cambios no crea versión.** Si el cliente no movió nada y la
+  fecha de inicio sigue vigente, se acepta la versión enviada tal cual; si
+  movió perillas o la fecha ya pasó, se congela una versión nueva marcada como
+  del cliente, con las fechas recalculadas desde hoy.
+- **Una subida de precio no es verde.** En "qué cambió", el precio va como
+  cambio neutro: verde y rojo se leen como agregado y quitado.
+- **Invitación al portal automática** al convertir, si hay correo: sale por
+  Resend como cualquier invitación del portal.
+- **Rutas reservadas:** `propuesta` entra en `RESERVED_ROOT_SEGMENTS` (compite
+  con el espacio de los PIN de presentación en la raíz).
+
 ## Pendiente
 
+- Primera corrida de la IA contra la API real (unos centavos por llamada).
 - Revisión de las cláusulas por un abogado.
 - Versión en inglés de la propuesta y de las cláusulas.
-- Aplicar la migración en Turso (principal y demo) si no se aplicó en la sesión.
+- USD: el anticipo en línea solo existe en pesos (Wompi no cobra en dólares).

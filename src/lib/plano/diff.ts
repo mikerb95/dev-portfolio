@@ -19,7 +19,9 @@ export function diferencias(antes: Snapshot, despues: Snapshot): Cambio[] {
 
   if (antes.precio !== despues.precio) {
     out.push({
-      tipo: despues.precio > antes.precio ? 'mas' : 'menos',
+      // 'cambio' y no 'mas'/'menos': el verde y el rojo se leen como
+      // "agregado" y "quitado", y una subida de precio no es una buena noticia.
+      tipo: 'cambio',
       texto: `El precio pasó de ${formatearMonto(antes.precio, antes.moneda)} a ${m(despues.precio)}.`,
     })
   }

@@ -2313,6 +2313,62 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-plano',
+    fase: 'Fase 51 · Cotizar sin improvisar',
+    nombre: 'Plano: propuestas a la medida',
+    rango: '6 oct 2026',
+    ghSince: '2026-10-06',
+    ghUntil: '2026-10-06',
+    resumen:
+      'Mike cotizaba cada proyecto desde cero. Plano arma la propuesta con un rango de precio que se cierra con cada respuesta, tres versiones, pagos por monto con fechas hábiles, cuotas con recargo, cláusulas y mapa de contacto. La IA lee la conversación sin poder escribir cifras, el cliente recibe su proyecto dibujado como un plano con perillas, y el anticipo pagado lo convierte solo en proyecto.',
+    historias: [
+      {
+        id: 'PF-PL-01', titulo: 'Como Mike, quiero armar una propuesta en la que el precio se ajuste a medida que la configuro',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['plano', 'pagos', 'fase-51'],
+        dod: [
+          ok('Constructor en /admin/plano con el mismo motor de precios del sitio; las preguntas cierran el rango sin salir de la tabla (RF-214).'),
+          ok('Reglas de pago por monto, cuotas con recargo comparado con la usura y fechas hábiles con quincenas y ciclos de empresa, editables en /admin/plano/ajustes (RF-215).'),
+          ok('Versiones congeladas con huella SHA-256, diferencias entre versiones y PDF.'),
+          ok('Recorrido completo con capturas reales del constructor contra una base local el 6 oct 2026.'),
+          ok('Migraciones 0041 a 0043 aplicadas en Turso, principal y demo.'),
+          pend('Aceptación de Mike con una propuesta real.'),
+        ],
+      },
+      {
+        id: 'PF-PL-02', titulo: 'Como Mike, quiero que la IA arme el borrador desde la conversación y revise la propuesta como un cliente difícil',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['plano', 'ia', 'fase-51'],
+        dod: [
+          ok('Salida estructurada sin campos de dinero; solo componentes de la tabla; citas verificadas como literales (RF-216).'),
+          ok('Hallazgos con cifras inventadas descartados por la guardia de cifras del asistente.'),
+          pend('Primera corrida contra la API real (requiere aprobar el gasto, unos centavos).'),
+        ],
+      },
+      {
+        id: 'PF-PL-03', titulo: 'Como cliente, quiero ver mi proyecto, ajustar lo que me dejen y aceptarlo desde un enlace',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['plano', 'motion', 'fase-51'],
+        dod: [
+          ok('El proyecto dibujado como un plano: habitaciones construidas o punteadas, que se construyen al tocarlas y mueven el precio (RF-217).'),
+          ok('Perillas recalculadas en el servidor desde la versión enviada; la vista no lleva citas, horas ni el rango interno.'),
+          ok('Aceptación con constancia y rechazo si el total no coincide con el que vio el cliente; anticipo idempotente con Wompi.'),
+          ok('Capturas en escritorio y móvil sin desborde.'),
+        ],
+      },
+      {
+        id: 'PF-PL-04', titulo: 'Como Mike, quiero que el anticipo pagado se convierta solo en proyecto',
+        tipo: 'tarea', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['plano', 'pagos', 'fase-51'],
+        dod: [
+          ok('Cliente, proyecto, hitos, cuentas de cobro en borrador e invitación al portal, una sola vez aunque el webhook se repita (RF-218).'),
+          ok('tests/plano-db.test.ts recorre el flujo completo contra libSQL temporal con las migraciones reales.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [

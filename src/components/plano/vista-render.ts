@@ -13,7 +13,7 @@ import { formatearMonto } from '../../data/tarifario'
 import { CANAL_LABEL, SEGUIMIENTO_LABEL } from '../../lib/plano/contacto'
 import { fechaCorta } from '../../lib/plano/fechas'
 import type { VistaCliente } from '../../lib/plano/publico'
-import { NIVEL_LABEL } from '../../lib/plano/tipos'
+import { cantidadConUnidad, NIVEL_LABEL } from '../../lib/plano/tipos'
 
 export const esc = (s: unknown): string =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
@@ -60,7 +60,7 @@ function repartir(piezas: Pieza[], r: Rect, out: { p: Pieza; r: Rect }[]) {
 
 /** Parte un nombre en hasta tres renglones que quepan en el ancho. */
 function renglones(nombre: string, ancho: number, size: number): string[] {
-  const max = Math.max(4, Math.floor(ancho / (size * 0.56)))
+  const max = Math.max(4, Math.floor(ancho / (size * 0.62)))
   const out: string[] = []
   let buf = ''
   for (const w of nombre.split(' ')) {
@@ -94,8 +94,11 @@ export function renderPlano(v: VistaCliente, puedeTocar: (id: string) => boolean
       const y = r.y + g / 2
       const w = Math.max(r.w - g, 8)
       const h = Math.max(r.h - g, 8)
-      const size = Math.min(13, Math.max(9, Math.min(w, h) / 6.5))
-      const lineas = renglones(p.nombre, w - 16, size)
+      // El monoespaciado mide 0,6 em por carácter: si la palabra más larga no
+      // cabe, se baja la letra hasta que quepa (con un piso legible).
+      const palabraMax = Math.max(...p.nombre.split(' ').map((x) => x.length))
+      const size = Math.max(7.5, Math.min(13, Math.min(w, h) / 6.5, (w - 14) / (palabraMax * 0.62)))
+      const lineas = renglones(p.nombre, w - 14, size)
       const ty = y + h / 2 - ((lineas.length - 1) * (size + 3)) / 2
       const tocar = puedeTocar(p.id)
       // Puerta: un arco en la esquina inferior izquierda de cada habitación
@@ -158,7 +161,7 @@ export function renderLineas(v: VistaCliente): string {
   const item = (l: VistaCliente['lineas'][number]) =>
     `<li class="pv-item ${l.incluida ? '' : 'pv-item--fuera'}">
       <span class="pv-item__dot pv-item__dot--${l.prioridad}" aria-hidden="true"></span>
-      <span class="pv-item__nombre">${esc(l.nombre)}${l.cantidad > 1 ? ` <span class="pv-sub">(${l.cantidad})</span>` : ''}</span>
+      <span class="pv-item__nombre">${esc(l.nombre)}${l.cantidad > 1 ? ` <span class="pv-sub">${esc(cantidadConUnidad(l.cantidad, l.unidad).trim())}</span>` : ''}</span>
       ${tocable(l.id) ? `<button type="button" class="pv-toggle" data-linea="${esc(l.id)}" role="switch" aria-checked="${l.incluida}" aria-label="${esc(l.nombre)}"><span></span></button>` : ''}
     </li>`
   return `

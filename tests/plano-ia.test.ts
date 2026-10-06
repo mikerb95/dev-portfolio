@@ -144,3 +144,11 @@ describe('huellas', () => {
     expect(esTokenValido('../../etc')).toBe(false)
   })
 })
+
+describe('cantidad con unidad', () => {
+  it('dice de qué son las unidades, sin el paréntesis de ejemplos', async () => {
+    const { cantidadConUnidad } = await import('../src/lib/plano/tipos')
+    expect(cantidadConUnidad(2, 'tipo de dato administrado (productos, citas, clientes...)')).toBe(' (2 × tipo de dato administrado)')
+    expect(cantidadConUnidad(1, 'sistema conectado')).toBe('')
+  })
+})

@@ -5,7 +5,7 @@ import { expect, recogerErrores, test } from './fixtures'
 // que no pinta.
 
 const PAGINAS = [
-  { path: '/', titulo: /Ingeniería de software con propósito/i },
+  { path: '/', titulo: /Tu página, tu app o tu sistema, a la medida/i },
   { path: '/lab', titulo: /Laboratorio/i },
   { path: '/status', titulo: /Estado de los/i },
   { path: '/security', titulo: /.+/ },

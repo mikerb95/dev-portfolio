@@ -442,7 +442,10 @@ export function montarConstructor(raiz: HTMLElement, d: DatosConstructor) {
     const el = $('#r-componentes', raiz)
     if (!el) return
     const calc = new Map((snap?.lineas ?? []).map((l) => [l.id, l]))
-    el.innerHTML = COMPONENTES.map((c) => {
+    // Activas primero (a lo ancho) y después, en cuadrícula, las que se pueden
+    // agregar: intercaladas dejaban huecos en la rejilla.
+    const orden = [...COMPONENTES].sort((a, b) => Number(!config.lineas.some((l) => l.id === a.id)) - Number(!config.lineas.some((l) => l.id === b.id)))
+    el.innerHTML = orden.map((c) => {
       const l = config.lineas.find((x) => x.id === c.id)
       const lc = calc.get(c.id)
       const forzada = (SIEMPRE_ESENCIALES as readonly string[]).includes(c.id)

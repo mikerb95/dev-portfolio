@@ -20,6 +20,17 @@ export const NIVEL_LABEL: Record<NivelVersion, string> = {
   completa: 'Completa',
 }
 
+/**
+ * "Panel de administración (2 tipos de dato administrado)". Un "(2)" a secas
+ * se leía como dos paneles, dos usuarios o un nivel 2 (lo señaló la revisión
+ * del cliente difícil en la primera corrida real, 6 oct 2026).
+ */
+export function cantidadConUnidad(cantidad: number, unidad: string | undefined): string {
+  if (cantidad <= 1) return ''
+  const corta = (unidad ?? 'unidades').replace(/\s*\(.*\)\s*$/, '')
+  return ` (${cantidad} × ${corta})`
+}
+
 export type LineaConfig = {
   id: string
   cantidad: number
@@ -77,6 +88,8 @@ export type ConfigPropuesta = {
 export type LineaCalculada = {
   id: string
   nombre: string
+  /** Qué cuenta como una unidad, si el componente se cobra por unidad. */
+  unidad?: string
   cantidad: number
   prioridad: Prioridad
   incluida: boolean

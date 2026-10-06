@@ -340,6 +340,9 @@ const enviada = p.estado !== 'borrador'
 
 <style is:global>
   .pl { --pl-borde: rgba(255, 255, 255, 0.07); }
+  /* Estos estilos no van en una capa de Tailwind, así que ganarían a la
+     utilidad `hidden` (p. ej. .pl-campos con display: grid). */
+  .pl .hidden { display: none !important; }
   .pl-grid { display: grid; gap: 1.25rem; }
   @media (min-width: 1100px) {
     .pl-grid { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }

@@ -1694,3 +1694,36 @@ export const propuestaHoras = sqliteTable('propuesta_horas', {
 }, (t) => ({
   componenteIdx: uniqueIndex('propuesta_horas_componente_idx').on(t.propuestaId, t.componenteId),
 }))
+
+// ── Asistente del panel (RF-210, fase 7) ────────────────────────────────────
+// Conversaciones de la caja "Pregunta o busca algo" del dashboard. Tabla
+// propia y no la del analista: el tope de gasto del analista se calcula
+// sumando su tabla, y el historial de /admin/analista la lista entera.
+// Mismo bucle (lib/analista/bucle.ts): una escritura propuesta deja la fila en
+// `esperando_aprobacion` hasta que Mike decide, aunque sea horas después.
+export const asistenteConversaciones = sqliteTable('asistente_conversaciones', {
+  id: text('id').primaryKey(),
+  creada: integer('creada', { mode: 'timestamp' }).notNull(),
+  actualizada: integer('actualizada', { mode: 'timestamp' }).notNull(),
+  estado: text('estado', { enum: ['corriendo', 'esperando_aprobacion', 'terminada', 'fallida'] }).notNull(),
+  // Primera pregunta: es el título de la conversación en "Recientes".
+  pregunta: text('pregunta').notNull(),
+  // Historial para la API de Claude, en JSON y solo por anexión.
+  mensajes: text('mensajes').notNull(),
+  // Escritura pendiente de aprobación (JSON) o null.
+  propuesta: text('propuesta'),
+  respuesta: text('respuesta'),
+  error: text('error'),
+  // Preguntas de Mike en la conversación (la primera y los seguimientos).
+  turnos: integer('turnos').notNull().default(1),
+  iteraciones: integer('iteraciones').notNull().default(0),
+  tokensEntrada: integer('tokens_entrada').notNull().default(0),
+  tokensSalida: integer('tokens_salida').notNull().default(0),
+  tokensCacheLectura: integer('tokens_cache_lectura').notNull().default(0),
+  tokensCacheEscritura: integer('tokens_cache_escritura').notNull().default(0),
+  costoUsd: real('costo_usd').notNull().default(0),
+}, (t) => ({
+  // "Recientes" lista por fecha y la purga barre por `creada`.
+  creadaIdx: index('asistente_conversaciones_creada_idx').on(t.creada),
+  actualizadaIdx: index('asistente_conversaciones_actualizada_idx').on(t.actualizada),
+}))

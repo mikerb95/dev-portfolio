@@ -17,6 +17,12 @@
 //
 // Módulo sin BD ni red: todo lo externo llega por `Dependencias`, para poder
 // probar cada rama con un modelo falso.
+//
+// Lo usan dos agentes: el analista (una sola herramienta que pausa, el
+// bloqueo) y el asistente del panel (sus escrituras, como crear una cuenta de
+// cobro). Lo propio de cada uno llega por `herramientasAprobacion`,
+// `prepararPropuesta` y `rechazo`; sin ellas, el comportamiento es el del
+// analista.
 
 import type Anthropic from '@anthropic-ai/sdk'
 import { costoUsd, sumarUso, USO_CERO, type Uso } from './costo'
@@ -32,8 +38,12 @@ export type EstadoEjecucion = 'corriendo' | 'esperando_aprobacion' | 'terminada'
 
 export type Propuesta = {
   toolUseId: string
+  /** Herramienta que espera la decisión. Ausente en filas del analista anteriores al asistente. */
+  herramienta?: string
   origen: string
   motivo: string
+  /** Lo que la pantalla enseña para decidir (ya calculado por el servidor, nunca por el modelo). */
+  vista?: unknown
   entrada: unknown
   /** Resultados ya calculados de las otras herramientas del mismo turno. */
   resultadosPrevios: ResultadoParam[]
@@ -59,11 +69,13 @@ export type EventoBucle =
   | { tipo: 'paso'; id: string; herramienta: string; entrada: Record<string, unknown> }
   | { tipo: 'dato'; herramienta: string; datos: unknown }
   | { tipo: 'texto'; texto: string }
-  | { tipo: 'aprobacion'; origen: string; motivo: string }
-  | { tipo: 'decision'; origen: string; aprobado: boolean }
+  | { tipo: 'aprobacion'; origen: string; motivo: string; herramienta?: string; vista?: unknown }
+  | { tipo: 'decision'; origen: string; aprobado: boolean; herramienta?: string }
   | { tipo: 'fin'; estado: EstadoEjecucion; iteraciones: number; costoUsd: number; error: string | null }
 
 export type ResultadoHerramienta = { ok: true; datos: unknown } | { ok: false; error: string }
+
+export type PropuestaPreparada = { ok: true; origen: string; motivo: string; vista?: unknown } | { ok: false; error: string }
 
 export type Dependencias = {
   llamarModelo: (mensajes: MensajeParam[]) => Promise<Mensaje>
@@ -75,7 +87,24 @@ export type Dependencias = {
   /** USD que quedan hoy. Si no se puede saber, debe lanzar: sin saberlo no se gasta. */
   presupuestoRestante: () => Promise<number>
   herramientaBloqueo: string
+  /** Herramientas que pausan el bucle. Por defecto, solo `herramientaBloqueo`. */
+  herramientasAprobacion?: string[]
+  /**
+   * Revisa una propuesta ya validada y arma lo que verá el humano. Por defecto,
+   * la regla del analista: el origen tiene que ser un alias visto en el análisis.
+   */
+  prepararPropuesta?: (nombre: string, entrada: unknown, seudonimos: Seudonimos) => Promise<PropuestaPreparada>
+  /** Lo que recibe el modelo cuando el humano no aprueba. */
+  rechazo?: (comentario: string | null) => string
 }
+
+async function propuestaDelAnalista(_nombre: string, entrada: unknown, seudonimos: Seudonimos): Promise<PropuestaPreparada> {
+  const e = (entrada ?? {}) as { origen?: string; motivo?: string }
+  if (!seudonimos.ip(String(e.origen))) return { ok: false, error: `"${e.origen}" no es un origen visto en este análisis.` }
+  return { ok: true, origen: String(e.origen), motivo: String(e.motivo) }
+}
+
+const RECHAZO_ANALISTA = () => 'El administrador rechazó el bloqueo. No lo vuelvas a proponer en este análisis.'
 
 export function nuevaEjecucion(id: string, pregunta: string): Ejecucion {
   return {
@@ -161,27 +190,41 @@ export async function avanzar(e: Ejecucion, deps: Dependencias): Promise<Ejecuci
     const usos = msg.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === 'tool_use')
     if (!usos.length) return terminar(e, deps, 'fallida', 'El modelo pidió herramientas sin nombrar ninguna.')
 
+    const aprobacion = new Set(deps.herramientasAprobacion ?? [deps.herramientaBloqueo])
+    const preparar = deps.prepararPropuesta ?? propuestaDelAnalista
     const resultados: ResultadoParam[] = []
     let propuesta: Propuesta | null = null
     for (const uso of usos) {
-      if (uso.name === deps.herramientaBloqueo) {
+      if (aprobacion.has(uso.name)) {
         const invalida = deps.validar(uso.name, uso.input)
-        const entrada = (uso.input ?? {}) as { origen?: string; motivo?: string }
         if (invalida) {
           resultados.push(aResultado(uso.id, { ok: false, error: invalida }))
-        } else if (!seudonimos.ip(String(entrada.origen))) {
-          resultados.push(aResultado(uso.id, { ok: false, error: `"${entrada.origen}" no es un origen visto en este análisis.` }))
-        } else if (propuesta) {
-          resultados.push(aResultado(uso.id, { ok: false, error: 'Propón un bloqueo a la vez y espera la decisión.' }))
-        } else {
-          propuesta = {
-            toolUseId: uso.id,
-            origen: String(entrada.origen),
-            motivo: String(entrada.motivo),
-            entrada: uso.input,
-            resultadosPrevios: [],
-            orden: usos.map((u) => u.id),
-          }
+          continue
+        }
+        if (propuesta) {
+          resultados.push(aResultado(uso.id, { ok: false, error: 'Propón un cambio a la vez y espera la decisión.' }))
+          continue
+        }
+        let preparada: PropuestaPreparada
+        try {
+          preparada = await preparar(uso.name, uso.input, seudonimos)
+        } catch (err) {
+          preparada = { ok: false, error: `No se pudo preparar la propuesta: ${err instanceof Error ? err.message : String(err)}` }
+        }
+        if (!preparada.ok) {
+          resultados.push(aResultado(uso.id, { ok: false, error: preparada.error }))
+          continue
+        }
+        propuesta = {
+          toolUseId: uso.id,
+          // El analista no la guardaba: sus filas viejas se siguen leyendo con `herramientaBloqueo`.
+          ...(uso.name !== deps.herramientaBloqueo ? { herramienta: uso.name } : {}),
+          origen: preparada.origen,
+          motivo: preparada.motivo,
+          ...(preparada.vista !== undefined ? { vista: preparada.vista } : {}),
+          entrada: uso.input,
+          resultadosPrevios: [],
+          orden: usos.map((u) => u.id),
         }
         continue
       }
@@ -197,7 +240,13 @@ export async function avanzar(e: Ejecucion, deps: Dependencias): Promise<Ejecuci
       e.propuesta = propuesta
       e.estado = 'esperando_aprobacion'
       await deps.guardar(e)
-      deps.emitir({ tipo: 'aprobacion', origen: propuesta.origen, motivo: propuesta.motivo })
+      deps.emitir({
+        tipo: 'aprobacion',
+        origen: propuesta.origen,
+        motivo: propuesta.motivo,
+        ...(propuesta.herramienta ? { herramienta: propuesta.herramienta } : {}),
+        ...(propuesta.vista !== undefined ? { vista: propuesta.vista } : {}),
+      })
       return e
     }
 
@@ -211,23 +260,26 @@ export async function avanzar(e: Ejecucion, deps: Dependencias): Promise<Ejecuci
  * el análisis. Quien llama debe haber reclamado la ejecución de forma atómica
  * (ejecuciones.ts), para que dos clics no la decidan dos veces.
  */
-export async function decidir(e: Ejecucion, aprobado: boolean, deps: Dependencias): Promise<Ejecucion> {
+export async function decidir(
+  e: Ejecucion,
+  aprobado: boolean,
+  deps: Dependencias,
+  comentario: string | null = null
+): Promise<Ejecucion> {
   const p = e.propuesta
   if (!p) throw new Error('La ejecución no tiene ninguna propuesta pendiente.')
   const seudonimos = Seudonimos.desde(e.seudonimos)
+  const nombre = p.herramienta ?? deps.herramientaBloqueo
 
   let resultado: ResultadoParam
   if (aprobado) {
-    const r = await deps.ejecutar(deps.herramientaBloqueo, p.entrada, seudonimos)
-    if (r.ok) deps.emitir({ tipo: 'dato', herramienta: deps.herramientaBloqueo, datos: r.datos })
+    const r = await deps.ejecutar(nombre, p.entrada, seudonimos)
+    if (r.ok) deps.emitir({ tipo: 'dato', herramienta: nombre, datos: r.datos })
     resultado = aResultado(p.toolUseId, r)
   } else {
-    resultado = aResultado(p.toolUseId, {
-      ok: false,
-      error: 'El administrador rechazó el bloqueo. No lo vuelvas a proponer en este análisis.',
-    })
+    resultado = aResultado(p.toolUseId, { ok: false, error: (deps.rechazo ?? RECHAZO_ANALISTA)(comentario) })
   }
-  deps.emitir({ tipo: 'decision', origen: p.origen, aprobado })
+  deps.emitir({ tipo: 'decision', origen: p.origen, aprobado, ...(p.herramienta ? { herramienta: p.herramienta } : {}) })
 
   e.mensajes.push({ role: 'user', content: enOrden(p.orden, [...p.resultadosPrevios, resultado]) })
   e.propuesta = null

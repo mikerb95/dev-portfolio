@@ -17,7 +17,7 @@ export type VistaCliente = {
   moneda: Snapshot['moneda']
   cliente: { nombre: string; empresa: string }
   base: Snapshot['base']
-  lineas: { id: string; nombre: string; cantidad: number; prioridad: Prioridad; incluida: boolean }[]
+  lineas: { id: string; nombre: string; unidad?: string; cantidad: number; prioridad: Prioridad; incluida: boolean }[]
   version: NivelVersion
   versiones: { nivel: NivelVersion; precio: number; sinIncluir: string[]; repetida: boolean }[]
   precio: number
@@ -39,7 +39,7 @@ export function vistaCliente(s: Snapshot): VistaCliente {
     moneda: s.moneda,
     cliente: { nombre: s.cliente.nombre, empresa: s.cliente.empresa },
     base: s.base,
-    lineas: s.lineas.map((l) => ({ id: l.id, nombre: l.nombre, cantidad: l.cantidad, prioridad: l.prioridad, incluida: l.incluida })),
+    lineas: s.lineas.map((l) => ({ id: l.id, nombre: l.nombre, unidad: l.unidad, cantidad: l.cantidad, prioridad: l.prioridad, incluida: l.incluida })),
     version: s.version,
     versiones: s.versiones.map((v) => ({ nivel: v.nivel, precio: v.precio, sinIncluir: v.sinIncluir, repetida: v.repetida })),
     precio: s.precio,

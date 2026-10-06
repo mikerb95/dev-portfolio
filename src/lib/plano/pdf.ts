@@ -14,7 +14,7 @@ import { formatearMonto } from '../../data/tarifario'
 import { sanitize } from '../cuenta-cobro-pdf'
 import { CANAL_LABEL, SEGUIMIENTO_LABEL } from './contacto'
 import { fechaCorta, fechaLarga } from './fechas'
-import { NIVEL_LABEL, type Snapshot } from './tipos'
+import { cantidadConUnidad, NIVEL_LABEL, type Snapshot } from './tipos'
 
 const INK = rgb(0.08, 0.08, 0.1)
 const MUTED = rgb(0.45, 0.45, 0.48)
@@ -127,7 +127,7 @@ export async function generarPdfPropuesta(input: PdfPropuestaInput): Promise<Uin
   seccion(`Qué incluye · versión ${NIVEL_LABEL[s.version].toLowerCase()}`)
   if (s.base) parrafo(`- Plan web ${s.base.nombre}: diseño, secciones, publicación y primer año de dominio y alojamiento.`)
   for (const l of s.lineas.filter((x) => x.incluida)) {
-    parrafo(`- ${l.nombre}${l.cantidad > 1 ? ` (${l.cantidad})` : ''}`)
+    parrafo(`- ${l.nombre}${cantidadConUnidad(l.cantidad, l.unidad)}`)
   }
   if (s.exclusiones.length) {
     y -= 6

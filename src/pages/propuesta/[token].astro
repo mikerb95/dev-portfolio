@@ -58,6 +58,9 @@ if (p) {
   }
 }
 if (!vista) Astro.response.status = 404
+// Aceptada, vencida o en proyecto: ya no hay nada que elegir. Sin esto, las
+// versiones y los interruptores seguirían en pantalla como si se pudieran tocar.
+if (vista && estado !== 'abierta') vista = { ...vista, perillas: { version: false, planPago: false, lineas: [] } }
 
 const v = vista
 const tocable = (id: string) => estado === 'abierta' && Boolean(v?.perillas.lineas.includes(id))

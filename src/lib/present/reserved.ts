@@ -73,6 +73,8 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   // proyecta). Pública e indexable, y ruta raíz: entra aquí por lo mismo.
   'presentacion-end',
   'projects',
+  // Enlace de las propuestas de Plano (/propuesta/<token>).
+  'propuesta',
   'remote',
   'security',
   'status',

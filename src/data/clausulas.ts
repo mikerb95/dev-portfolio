@@ -44,7 +44,7 @@ const enLetras = (n: number) => (palabras[n] ? `${palabras[n]} (${n})` : String(
 
 const TERCEROS: Record<string, string> = {
   pagos: 'la pasarela de pagos',
-  tienda: 'la pasarela de pagos y los envíos',
+  tienda: 'los envíos',
   reservas: 'los recordatorios por WhatsApp o mensaje de texto',
   facturacion: 'el proveedor de facturación electrónica',
   integracion: 'el sistema que se conecta',
@@ -86,8 +86,8 @@ export const CLAUSULAS: readonly Clausula[] = [
     aplica: siempre,
     formal: (c) =>
       `Se incluyen ${enLetras(ENTREGA.rondasCambios)} rondas de ajustes sobre cada entrega antes de la publicación. Una ronda agrupa en un solo envío todas las observaciones de EL CLIENTE sobre esa entrega. Las rondas adicionales se facturan a la tarifa vigente de ${formatearMonto(TARIFA_HORA[c.moneda], c.moneda)} por hora.`,
-    simple: () =>
-      `En cada entrega tienes ${ENTREGA.rondasCambios} rondas de cambios incluidas: me mandas todo lo que quieres ajustar en un solo mensaje y lo corrijo. Desde la ronda ${ENTREGA.rondasCambios + 1}, se cobra por hora.`,
+    simple: (c) =>
+      `En cada entrega tienes ${ENTREGA.rondasCambios} rondas de cambios incluidas: me mandas todo lo que quieres ajustar en un solo mensaje y lo corrijo. Desde la ronda ${ENTREGA.rondasCambios + 1}, se cobra por hora, a ${formatearMonto(TARIFA_HORA[c.moneda], c.moneda)} la hora.`,
   },
   {
     id: 'reloj-detenido',

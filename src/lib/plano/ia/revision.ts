@@ -11,7 +11,7 @@ import { formatearMonto } from '../../../data/tarifario'
 import { verificarCifras } from '../../asistente/guardia'
 import { CANAL_LABEL } from '../contacto'
 import { fechaCorta } from '../fechas'
-import { NIVEL_LABEL, type Snapshot } from '../tipos'
+import { cantidadConUnidad, NIVEL_LABEL, type Snapshot } from '../tipos'
 import type { Esquema } from './motor'
 
 export type SalidaRevision = {
@@ -72,12 +72,21 @@ export function propuestaEnTexto(s: Snapshot): string {
   l.push(`Versión propuesta: ${NIVEL_LABEL[s.version]}. Precio: ${m(s.precio)}.`)
   if (s.base) l.push(`Parte del plan web ${s.base.nombre}.`)
   l.push('Incluye:')
-  for (const x of s.lineas.filter((y) => y.incluida)) l.push(`- ${x.nombre}${x.cantidad > 1 ? ` (${x.cantidad})` : ''}`)
+  for (const x of s.lineas.filter((y) => y.incluida)) l.push(`- ${x.nombre}${cantidadConUnidad(x.cantidad, x.unidad)}`)
   const fuera = s.lineas.filter((y) => !y.incluida)
   if (fuera.length) l.push(`No entra en esta versión: ${fuera.map((x) => x.nombre).join(', ')}.`)
   if (s.exclusiones.length) l.push(`No incluye: ${s.exclusiones.join('; ')}.`)
   l.push('Pagos:')
   for (const p of s.plan.pagos) l.push(`- ${p.concepto}: ${m(p.monto)}, vence ${fechaCorta(p.vence)}`)
+  // Sin esta línea, la revisión leía como inconsistencia que el vencimiento no
+  // coincida con la fecha de la entrega (primera corrida real, 6 oct 2026).
+  if (s.plan.tipo === 'hitos') {
+    l.push(
+      s.cliente.tipo === 'empresa' && s.cliente.ciclo
+        ? 'Cada pago atado a una entrega se cobra cuando la entrega se cumple; la fecha de vencimiento sigue el ciclo de pagos de la empresa y se corre si la entrega se corre.'
+        : 'Cada pago atado a una entrega se cobra cuando la entrega se cumple y vence unos días hábiles después, en la quincena siguiente; si la entrega se corre, el pago se corre igual.',
+    )
+  }
   l.push('Cronograma:')
   for (const h of s.hitos) l.push(`- ${fechaCorta(h.fecha)}: ${h.nombre} (${h.entregable})`)
   l.push(`Comunicación: por ${CANAL_LABEL[s.contacto.canal]}, ${s.contacto.horario}.`)

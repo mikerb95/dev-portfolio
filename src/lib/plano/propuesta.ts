@@ -261,6 +261,7 @@ export function armarPropuesta(config: ConfigPropuesta, reglas: ReglasPlano, hoy
     const out: LineaCalculada = {
       id: l.id,
       nombre: def.nombre,
+      unidad: def.unidad,
       cantidad: l.cantidad,
       prioridad: l.prioridad,
       incluida: elegidas.includes(l),

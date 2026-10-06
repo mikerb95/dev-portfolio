@@ -13,7 +13,7 @@ export const wompiApiBase = (publicKey: string): string =>
 export const isValidTxId = (id: unknown): id is string =>
   typeof id === 'string' && /^[A-Za-z0-9-]{5,64}$/.test(id)
 
-export type PayOrigin = 'pay' | 'cobro' | 'portal'
+export type PayOrigin = 'pay' | 'cobro' | 'portal' | 'propuesta'
 
 export type PayResult = {
   status: PaymentStatus
@@ -48,7 +48,8 @@ export const methodLabel = (method: string | null): string | null =>
 const retryFor = (origin: PayOrigin): ResultView['retry'] =>
   origin === 'pay' ? { href: '/pay', label: 'Intentar de nuevo' }
     : origin === 'portal' ? { href: '/portal', label: 'Volver al portal' }
-    // Un cobro vive en el link que llegó por WhatsApp: no lo exponemos aquí.
+    // Un cobro vive en el link que llegó por WhatsApp, y el anticipo de una
+    // propuesta en su enlace privado: ninguno de los dos se expone aquí.
     : null
 
 export function resultView(r: Pick<PayResult, 'status' | 'origin' | 'method'>): ResultView {
