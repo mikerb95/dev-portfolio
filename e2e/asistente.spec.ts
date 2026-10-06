@@ -9,6 +9,9 @@ import { expect, recogerErrores, test } from './fixtures'
 // rutas, base y bucle reales; solo la API de Claude es falsa
 // (e2e/fake-anthropic.mjs). Dentro de /admin los clics van con force: true
 // (el panel no produce frames en headless, ver e2e/infra.spec.ts).
+// Esperas de 60 s en el primer paso de cada flujo: la primera petición a
+// /api/admin/asistente compila la ruta y el SDK en el servidor de desarrollo, y
+// en frío eso solo ya pasa de 20 s.
 
 const COOKIE = 'authjs.session-token'
 const CLIENTE = 'Cliente E2E Asistente'
@@ -58,8 +61,8 @@ test('una pregunta muestra los pasos, la respuesta y solo enlaces internos', asy
   await page.goto('/admin')
   await page.getByRole('button', { name: '¿Qué dominios vencen?' }).click({ force: true })
   const turno = page.locator('.turno').first()
-  await expect(turno.locator('.turno-pasos')).toContainText('Revisando qué dominios vencen', { timeout: 20_000 })
-  await expect(turno.locator('.turno-respuesta')).toContainText('dominios por vencer', { timeout: 20_000 })
+  await expect(turno.locator('.turno-pasos')).toContainText('Revisando qué dominios vencen', { timeout: 60_000 })
+  await expect(turno.locator('.turno-respuesta')).toContainText('dominios por vencer', { timeout: 60_000 })
   await expect(turno.locator('a.enlace', { hasText: 'Dominios' })).toHaveAttribute('href', '/admin/domains')
   // El enlace externo que "escribió" el modelo queda como texto plano.
   await expect(turno.locator('a', { hasText: 'afuera' })).toHaveCount(0)
@@ -74,7 +77,7 @@ test('crear una cuenta de cobro: tarjeta, aprobación y borrador en la base', as
   await page.locator('#asis-input').press('Enter')
 
   const tarjeta = page.locator('.turno-tarjeta')
-  await expect(tarjeta).toBeVisible({ timeout: 20_000 })
+  await expect(tarjeta).toBeVisible({ timeout: 60_000 })
   await expect(tarjeta.locator('.tc-cliente')).toHaveText(CLIENTE)
   await expect(tarjeta.locator('.tc-total')).toContainText('1.200.000')
   // El cliente de prueba no tiene NIT: la tarjeta lo dice en vez de inventarlo.
@@ -88,7 +91,7 @@ test('crear una cuenta de cobro: tarjeta, aprobación y borrador en la base', as
   await expect(page.locator('.asis-recientes')).toContainText('Espera tu decisión')
 
   await page.locator('.turno-tarjeta .boton-pri').click({ force: true })
-  await expect(page.locator('.turno-hecho')).toContainText('creada en borrador', { timeout: 20_000 })
+  await expect(page.locator('.turno-hecho')).toContainText('creada en borrador', { timeout: 60_000 })
   await expect(page.locator('.turno-respuesta').last()).toContainText('quedó en borrador')
 
   cuentas = await db.execute({ sql: `SELECT i.status, i.total_cents FROM invoices i JOIN clients c ON c.id = i.client_id WHERE c.name = ?`, args: [CLIENTE] })
@@ -102,9 +105,9 @@ test('descartar la propuesta no crea nada', async ({ page }) => {
   await page.goto('/admin')
   await page.locator('#asis-input').fill(`Crea una cuenta de cobro para ${CLIENTE}`)
   await page.locator('#asis-input').press('Enter')
-  await expect(page.locator('.turno-tarjeta')).toBeVisible({ timeout: 20_000 })
+  await expect(page.locator('.turno-tarjeta')).toBeVisible({ timeout: 60_000 })
   await page.getByRole('button', { name: 'Descartar' }).click({ force: true })
-  await expect(page.locator('.turno-respuesta').last()).toContainText('no la creo', { timeout: 20_000 })
+  await expect(page.locator('.turno-respuesta').last()).toContainText('no la creo', { timeout: 60_000 })
   const cuentas = await db.execute({ sql: 'SELECT count(*) n FROM invoices i JOIN clients c ON c.id = i.client_id WHERE c.name = ?', args: [CLIENTE] })
   expect(Number(cuentas.rows[0]!.n)).toBe(0)
 })
