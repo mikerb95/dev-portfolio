@@ -1,0 +1,521 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { jsonEnScript } from '../../../lib/json-script'
+import { calibrar } from '../../../lib/plano/aprende'
+import { cargarReglas, configDe, esEditable, horasDe, hoyCO, propuesta, snapshotDe, todasLasHoras, versiones } from '../../../lib/plano/db'
+import { diferencias } from '../../../lib/plano/diff'
+import { gastoMensualReciente, trabajosComprometidos } from '../../../lib/plano/encaje-db'
+import { serverEnv } from '../../../lib/env'
+import { formatFechaCorta } from '../../../lib/fecha-co'
+import type { DatosConstructor, Revision } from '../../../components/plano/constructor'
+
+// Constructor de una propuesta (docs/plan-plano.md). El servidor junta los
+// datos; el cálculo en vivo corre en el navegador con los mismos módulos puros
+// que usa el servidor al congelar.
+
+const id = Number(Astro.params.id)
+const p = Number.isInteger(id) ? await propuesta(id) : null
+if (!p) return Astro.redirect('/admin/plano')
+
+const isDemo = Astro.locals.demo === true
+const hoy = hoyCO()
+const [reglas, vs, gasto, otros, horas, todas] = await Promise.all([
+  cargarReglas(),
+  versiones(p.id),
+  gastoMensualReciente(hoy),
+  trabajosComprometidos(p.id),
+  horasDe(p.id),
+  todasLasHoras(),
+])
+
+// Diferencias de cada versión con la anterior, calculadas aquí: los snapshots
+// pesan varios KB y no hace falta mandarlos al navegador.
+const ordenadas = [...vs].sort((a, b) => a.version - b.version)
+const historial = ordenadas
+  .map((v, i) => ({
+    n: v.version,
+    huella: v.huella,
+    origen: v.origen,
+    fecha: formatFechaCorta(v.creadaEl),
+    cambios: i === 0 ? [] : diferencias(snapshotDe(ordenadas[i - 1]), snapshotDe(v)),
+  }))
+  .reverse()
+
+let revision: Revision | null = null
+try {
+  revision = p.revision ? (JSON.parse(p.revision) as Revision) : null
+} catch {
+  revision = null
+}
+
+const datos: DatosConstructor = {
+  id: p.id,
+  estado: p.estado,
+  token: p.token,
+  editable: esEditable(p),
+  demo: isDemo,
+  hoy,
+  config: configDe(p),
+  reglas,
+  versiones: historial,
+  encaje: { gastoMensual: gasto, otros },
+  conversacion: p.conversacion ?? '',
+  revision,
+  iaDisponible: !isDemo && Boolean(serverEnv('ANTHROPIC_API_KEY')),
+  iaUsd: p.iaUsd,
+  aceptacion:
+    p.aceptadaEl && p.aceptadaPor && p.aceptadaVersion
+      ? { nombre: p.aceptadaPor, documento: p.aceptadaDocumento ?? '', el: formatFechaCorta(p.aceptadaEl), version: p.aceptadaVersion, huella: p.aceptacionHuella ?? '' }
+      : null,
+  projectId: p.projectId,
+  horas: horas.map((h) => ({ componenteId: h.componenteId, estimadas: h.estimadas, reales: h.reales })),
+  calibraciones: calibrar(todas),
+}
+
+const ESTADO: Record<string, string> = {
+  borrador: 'Borrador',
+  enviada: 'Enviada',
+  aceptada: 'Aceptada',
+  convertida: 'En proyecto',
+  descartada: 'Descartada',
+}
+const enviada = p.estado !== 'borrador'
+---
+
+<AdminLayout title={p.titulo || 'Propuesta'}>
+  <div id="plano" class="pl">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <a href="/admin/plano" class="text-[12px] text-ink-300 hover:text-cyan transition-colors">← Propuestas</a>
+      <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+        <span class="pl-estado" data-estado={p.estado}>{ESTADO[p.estado]}</span>
+        <span class="text-ink-300">v{p.versionActual}</span>
+        {p.vistas > 0 && <span class="text-ink-200">· abierta {p.vistas} {p.vistas === 1 ? 'vez' : 'veces'}</span>}
+        <span id="p-guardado" class="pl-guardado"></span>
+      </div>
+    </div>
+
+    {datos.aceptacion && (
+      <div class="pl-aceptada mb-5">
+        <span class="pl-dot pl-dot--lime"></span>
+        <div>
+          <p class="text-[14px] text-ink-50">
+            Aceptada por <b>{datos.aceptacion.nombre}</b> ({datos.aceptacion.documento}) el {datos.aceptacion.el}, versión {datos.aceptacion.version}.
+          </p>
+          <p class="font-mono text-[10.5px] text-ink-300 break-all">Constancia {datos.aceptacion.huella}</p>
+          {p.projectId && (
+            <a href={`/admin/projects/${p.projectId}`} class="text-[12px] text-cyan hover:underline">Ver el proyecto creado →</a>
+          )}
+        </div>
+      </div>
+    )}
+
+    <div class="pl-grid">
+      <!-- ── Columna de configuración ─────────────────────────────────────── -->
+      <div class="pl-col">
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">01</span><h2>Del chat al plano</h2><span class="pl-ia">IA</span></header>
+          <p class="pl-sub mb-3">
+            Pega la conversación de WhatsApp (o la transcripción de la nota de voz). Claude arma el borrador: elige componentes de tu
+            tabla, cita la frase del cliente que originó cada uno y te dice qué preguntar. Nunca pone precios.
+          </p>
+          <textarea id="p-conversacion" rows="6" class="pl-input pl-mono" placeholder="[10:02] Cliente: Hola Mike, tengo una panadería y quiero vender por internet…"></textarea>
+          <div class="mt-3 flex flex-wrap items-center gap-3">
+            <button type="button" class="pl-btn pl-btn--ia" data-accion="ia-chat">Leer conversación</button>
+            {!datos.iaDisponible && <span class="pl-sub">{isDemo ? 'No disponible en la demo.' : 'Falta ANTHROPIC_API_KEY.'}</span>}
+          </div>
+          <div id="r-ia-chat" class="mt-3 space-y-2"></div>
+        </section>
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">02</span><h2>Cliente</h2></header>
+          <div class="pl-campos">
+            <label><span>Nombre</span><input class="pl-input" data-bind="cliente.nombre" autocomplete="off" /></label>
+            <label><span>Empresa</span><input class="pl-input" data-bind="cliente.empresa" autocomplete="off" /></label>
+            <label><span>Correo</span><input class="pl-input" type="email" data-bind="cliente.correo" autocomplete="off" /></label>
+            <label><span>Teléfono</span><input class="pl-input" data-bind="cliente.telefono" autocomplete="off" /></label>
+            <label><span>Cédula o NIT</span><input class="pl-input" data-bind="cliente.documento" autocomplete="off" /></label>
+            <div class="pl-campo">
+              <span>Quién paga</span>
+              <div class="pl-chips">
+                <button type="button" class="pl-chip" data-accion="set" data-ruta="cliente.tipo" data-valor="persona">Persona</button>
+                <button type="button" class="pl-chip" data-accion="set" data-ruta="cliente.tipo" data-valor="empresa">Empresa</button>
+              </div>
+            </div>
+          </div>
+          <div data-grupo="ciclo" class="pl-campos mt-3 hidden">
+            <label><span>Recibe cuentas hasta el día</span><input class="pl-input" type="number" min="1" max="28" data-bind="cliente.ciclo.corteDia" data-num /></label>
+            <label><span>Paga a (días después del corte)</span><input class="pl-input" type="number" min="0" max="120" data-bind="cliente.ciclo.diasPago" data-num /></label>
+          </div>
+          <div class="pl-campo mt-3">
+            <span>Moneda</span>
+            <div class="pl-chips">
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="moneda" data-valor="COP">Pesos (COP)</button>
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="moneda" data-valor="USD">Dólares (USD)</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">03</span><h2>Proyecto</h2></header>
+          <div class="space-y-3">
+            <label class="pl-campo"><span>Título</span><input class="pl-input" data-bind="titulo" placeholder="Tienda en línea para Panadería La Espiga" /></label>
+            <label class="pl-campo"><span>Lo que entendí <span class="pl-sub">(abre la propuesta del cliente)</span></span>
+              <textarea class="pl-input" rows="3" data-bind="resumen" placeholder="Necesitas vender tus productos por internet, cobrar con PSE y que tu equipo actualice el catálogo sin llamarte."></textarea>
+            </label>
+            <div class="pl-campo">
+              <span>Parte de un plan web</span>
+              <div class="pl-chips">
+                <button type="button" class="pl-chip" data-accion="set" data-ruta="base" data-valor="null">Ninguno</button>
+                <button type="button" class="pl-chip" data-accion="set" data-ruta="base" data-valor="presencia">Presencia</button>
+                <button type="button" class="pl-chip" data-accion="set" data-ruta="base" data-valor="negocio">Negocio</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">04</span><h2>Componentes</h2></header>
+          <p class="pl-sub mb-3">
+            Cada componente parte del rango de horas de tu tabla. Responder sus preguntas cierra el rango dentro de esa franja, nunca
+            fuera. La prioridad decide en qué versión entra.
+          </p>
+          <div id="r-componentes" class="pl-comps"></div>
+          <label class="pl-campo mt-4"><span>No incluye <span class="pl-sub">(una por línea)</span></span>
+            <textarea class="pl-input" rows="3" data-bind="exclusiones" data-lista="lineas" placeholder="Fotografía de productos&#10;Redacción de textos"></textarea>
+          </label>
+        </section>
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">05</span><h2>Pagos y fechas</h2></header>
+          <label class="pl-campo mb-3 max-w-[220px]"><span>Firma e inicio</span><input class="pl-input" type="date" data-bind="fechaInicio" /></label>
+          <div id="r-pagos" class="space-y-3"></div>
+        </section>
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">06</span><h2>Mapa de contacto</h2></header>
+          <div class="pl-campos">
+            <label><span>Contacto único</span><input class="pl-input" data-bind="contacto.contacto.nombre" /></label>
+            <label><span>Su rol</span><input class="pl-input" data-bind="contacto.contacto.rol" placeholder="Dueña" /></label>
+            <label><span>Teléfono</span><input class="pl-input" data-bind="contacto.contacto.telefono" /></label>
+            <label><span>Correo</span><input class="pl-input" data-bind="contacto.contacto.correo" /></label>
+          </div>
+          <label class="pl-check mt-3"><input type="checkbox" data-otra="decisor" /> Quien aprueba las entregas es otra persona</label>
+          <div data-grupo="decisor" class="pl-campos mt-2" class:list={[datos.config.contacto.decisor ? '' : 'hidden']}>
+            <label><span>Aprueba</span><input class="pl-input" data-bind="contacto.decisor.nombre" /></label>
+            <label><span>Rol</span><input class="pl-input" data-bind="contacto.decisor.rol" /></label>
+          </div>
+          <label class="pl-check mt-2"><input type="checkbox" data-otra="pagador" /> Quien paga es otra persona</label>
+          <div data-grupo="pagador" class="pl-campos mt-2" class:list={[datos.config.contacto.pagador ? '' : 'hidden']}>
+            <label><span>Paga</span><input class="pl-input" data-bind="contacto.pagador.nombre" /></label>
+            <label><span>Rol</span><input class="pl-input" data-bind="contacto.pagador.rol" placeholder="Tesorería" /></label>
+            <label><span>Correo</span><input class="pl-input" data-bind="contacto.pagador.correo" /></label>
+          </div>
+          <div class="pl-campo mt-4">
+            <span>Canal</span>
+            <div class="pl-chips">
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="contacto.canal" data-valor="whatsapp">WhatsApp</button>
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="contacto.canal" data-valor="correo">Correo</button>
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="contacto.canal" data-valor="llamada">Llamada</button>
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="contacto.canal" data-valor="portal">Portal</button>
+            </div>
+          </div>
+          <div class="pl-campos mt-3">
+            <label><span>Horario</span><input class="pl-input" data-bind="contacto.horario" /></label>
+            <label><span>Respondes en (horas hábiles)</span><input class="pl-input" type="number" min="1" max="120" data-bind="contacto.respuestaMikeHoras" data-num /></label>
+            <label><span>El cliente responde en (días hábiles)</span><input class="pl-input" type="number" min="1" max="30" data-bind="contacto.respuestaClienteDias" data-num /></label>
+            <label><span>Pausa tras (días sin respuesta)</span><input class="pl-input" type="number" min="7" max="120" data-bind="contacto.diasPausa" data-num /></label>
+          </div>
+          <div class="pl-campo mt-3">
+            <span>Seguimiento</span>
+            <div class="pl-chips">
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="contacto.seguimiento" data-valor="semanal">Semanal</button>
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="contacto.seguimiento" data-valor="quincenal">Quincenal</button>
+              <button type="button" class="pl-chip" data-accion="set" data-ruta="contacto.seguimiento" data-valor="por-hito">Por entrega</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">07</span><h2>Condiciones</h2></header>
+          <p class="pl-sub mb-3">Salen de tu biblioteca según lo que lleva el proyecto. El cliente lee la versión en cristiano; el PDF lleva la formal.</p>
+          <div id="r-clausulas" class="space-y-1.5"></div>
+        </section>
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">08</span><h2>El cliente difícil</h2><span class="pl-ia">IA</span></header>
+          <div id="r-revision" class="space-y-3"></div>
+          <button type="button" class="pl-btn pl-btn--ia mt-3" data-accion="ia-revision">Revisar como cliente difícil</button>
+        </section>
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">09</span><h2>Lo que el cliente puede mover</h2></header>
+          <p class="pl-sub mb-3">En su enlace, el cliente verá el precio cambiar al mover estas perillas. Las piezas sueltas se habilitan en cada componente.</p>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="pl-chip" data-accion="perilla" data-valor="version">Elegir entre las tres versiones</button>
+            <button type="button" class="pl-chip" data-accion="perilla" data-valor="planPago">Elegir la forma de pago</button>
+          </div>
+        </section>
+
+        {datos.aceptacion && (
+          <section class="pl-card">
+            <header class="pl-card__cab"><span class="pl-num">10</span><h2>Aprende</h2></header>
+            <div id="r-aprende" class="space-y-3"></div>
+          </section>
+        )}
+
+        <section class="pl-card">
+          <header class="pl-card__cab"><span class="pl-num">{datos.aceptacion ? '11' : '10'}</span><h2>Versiones</h2></header>
+          {historial.length === 0 ? (
+            <p class="pl-sub">Todavía no hay versiones congeladas. Guarda una para tener PDF y para que el cliente vea los cambios.</p>
+          ) : (
+            <ol class="space-y-3">
+              {historial.map((v) => (
+                <li class="pl-ver">
+                  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <b class="font-mono text-cyan">v{v.n}</b>
+                    <span class="text-[12px] text-ink-200">{v.fecha}{v.origen === 'cliente' ? ' · elegida por el cliente' : ''}</span>
+                    <a class="text-[12px] text-cyan hover:underline ml-auto" href={`/api/admin/plano/${p.id}/pdf?v=${v.n}`} target="_blank" rel="noopener">PDF</a>
+                  </div>
+                  <p class="font-mono text-[10px] text-ink-300 truncate">huella {v.huella}</p>
+                  {v.cambios.length > 0 && (
+                    <ul class="mt-1.5 space-y-0.5">
+                      {v.cambios.map((c) => (
+                        <li class:list={['text-[12.5px]', c.tipo === 'mas' ? 'text-lime' : c.tipo === 'menos' ? 'text-ember' : 'text-ink-100']}>{c.texto}</li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      </div>
+
+      <!-- ── Medidor (fijo a la derecha) ──────────────────────────────────── -->
+      <aside class="pl-lado">
+        <div class="pl-medidor glass">
+          <div id="r-medidor"></div>
+          <ul id="r-avisos" class="pl-avisos hidden"></ul>
+          <div class="pl-acciones">
+            {datos.editable && !isDemo && (
+              <>
+                <button type="button" class="pl-btn" data-accion="version">Guardar versión</button>
+                <button type="button" class="pl-btn pl-btn--primario" data-accion="enviar">{enviada ? 'Enviar cambios' : 'Enviar al cliente'}</button>
+              </>
+            )}
+            <a class="pl-btn" href={`/api/admin/plano/${p.id}/pdf${p.versionActual ? `?v=${p.versionActual}` : ''}`} target="_blank" rel="noopener">PDF</a>
+            {enviada && p.estado !== 'descartada' && (
+              <>
+                <button type="button" class="pl-btn" data-accion="copiar">Copiar enlace</button>
+                <a class="pl-btn" href={`/propuesta/${p.token}`} target="_blank" rel="noopener">Ver como cliente</a>
+              </>
+            )}
+            {!isDemo && datos.editable && <button type="button" class="pl-link pl-link--peligro" data-accion="descartar">Descartar</button>}
+            {!isDemo && p.estado === 'descartada' && <button type="button" class="pl-link" data-accion="reabrir">Reabrir</button>}
+          </div>
+        </div>
+        <div class="pl-medidor glass mt-3">
+          <header class="pl-card__cab pl-card__cab--mini"><h2>Encaje con tu vida</h2></header>
+          <div id="r-encaje"></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="pl-barra-movil">
+      <span id="p-precio-movil" class="tabular-nums"></span>
+      <a href="#r-medidor" class="text-[12px] text-cyan">Ver medidor</a>
+    </div>
+  </div>
+
+  <script is:inline type="application/json" id="plano-datos" set:html={jsonEnScript(datos)}></script>
+</AdminLayout>
+
+<script>
+  import { montarConstructor, type DatosConstructor } from '../../../components/plano/constructor'
+
+  const raiz = document.getElementById('plano')
+  const json = document.getElementById('plano-datos')?.textContent
+  if (raiz && json) montarConstructor(raiz, JSON.parse(json) as DatosConstructor)
+</script>
+
+<style is:global>
+  .pl { --pl-borde: rgba(255, 255, 255, 0.07); }
+  .pl-grid { display: grid; gap: 1.25rem; }
+  @media (min-width: 1100px) {
+    .pl-grid { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+    .pl-lado { position: sticky; top: 0; }
+  }
+  .pl-col { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+  .pl-card { border-radius: 1.1rem; padding: 1.25rem; background: rgba(255, 255, 255, 0.018); border: 1px solid var(--pl-borde); }
+  .pl-card__cab { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.9rem; }
+  .pl-card__cab h2 { font-size: 15px; font-weight: 500; color: var(--color-ink-50); letter-spacing: -0.01em; }
+  .pl-card__cab--mini { margin-bottom: 0.6rem; }
+  .pl-card__cab--mini h2 { font-size: 13px; }
+  .pl-num { font-family: var(--font-mono, ui-monospace); font-size: 10.5px; color: var(--color-cyan-dim); letter-spacing: 0.08em; }
+  .pl-ia { margin-left: auto; font-family: ui-monospace, monospace; font-size: 9.5px; letter-spacing: 0.16em; padding: 2px 8px; border-radius: 999px; color: var(--color-violet); background: rgba(167, 139, 255, 0.1); }
+  .pl-sub { font-size: 12px; color: var(--color-ink-200); line-height: 1.5; }
+  .pl-label { display: block; font-family: ui-monospace, monospace; font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-ink-200); margin-bottom: 0.3rem; }
+  .pl-mono { font-family: ui-monospace, monospace; font-size: 12px; }
+  .pl-input { width: 100%; border-radius: 0.65rem; padding: 0.55rem 0.75rem; font-size: 13.5px; color: var(--color-ink-50); background: rgba(0, 0, 0, 0.25); border: 1px solid var(--pl-borde); transition: border-color 0.15s, background 0.15s; }
+  .pl-input:focus { outline: none; border-color: rgba(0, 242, 255, 0.4); background: rgba(0, 242, 255, 0.03); }
+  .pl-input:disabled { opacity: 0.7; }
+  .pl-campos { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .pl-campos > label, .pl-campo { display: flex; flex-direction: column; gap: 0.35rem; }
+  .pl-campos > label > span, .pl-campo > span { font-size: 12px; color: var(--color-ink-100); }
+  .pl-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .pl-chip { font-size: 12.5px; padding: 0.35rem 0.8rem; border-radius: 999px; color: var(--color-ink-100); background: rgba(255, 255, 255, 0.03); border: 1px solid var(--pl-borde); transition: all 0.15s; text-align: left; }
+  .pl-chip:hover:not(:disabled) { border-color: rgba(0, 242, 255, 0.3); color: var(--color-ink-50); }
+  .pl-chip[data-activo='1'] { color: var(--color-ink-950); background: var(--color-cyan); border-color: var(--color-cyan); font-weight: 500; }
+  .pl-chip:disabled { opacity: 0.35; cursor: not-allowed; }
+  .pl-chip[data-activo='1']:disabled { opacity: 0.85; }
+  .pl-chips--grandes .pl-chip { padding: 0.5rem 1rem; font-size: 13px; }
+  .pl-check { display: flex; align-items: center; gap: 0.5rem; font-size: 12.5px; color: var(--color-ink-100); cursor: pointer; }
+  .pl-check input { accent-color: var(--color-cyan); }
+  .pl-btn { display: inline-flex; align-items: center; justify-content: center; height: 2.25rem; padding: 0 1rem; border-radius: 999px; font-size: 13px; color: var(--color-ink-50); background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.15s; }
+  .pl-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
+  .pl-btn:disabled { opacity: 0.5; cursor: progress; }
+  .pl-btn--primario { background: var(--color-cyan); color: var(--color-ink-950); border-color: var(--color-cyan); font-weight: 600; }
+  .pl-btn--primario:hover:not(:disabled) { background: var(--color-cyan-glow); }
+  .pl-btn--ia { color: var(--color-violet); border-color: rgba(167, 139, 255, 0.35); background: rgba(167, 139, 255, 0.08); }
+  .pl-btn--ia:hover:not(:disabled) { background: rgba(167, 139, 255, 0.16); }
+  .pl-link { font-size: 12px; color: var(--color-cyan); text-decoration: underline; text-underline-offset: 3px; }
+  .pl-link--peligro { color: var(--color-ink-200); }
+  .pl-link--peligro:hover { color: var(--color-ember); }
+  .pl-ok { font-size: 12.5px; color: var(--color-lime); }
+  .pl-aviso { font-size: 12.5px; color: #ffd27a; }
+  .pl-aviso a { text-decoration: underline; }
+  .pl-alerta { font-size: 12.5px; color: var(--color-ember); }
+  .pl-nota { font-size: 11.5px; color: var(--color-ink-200); margin-top: 0.4rem; }
+  .pl-estado { padding: 2px 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); color: var(--color-ink-100); }
+  .pl-estado[data-estado='enviada'] { color: var(--color-cyan); background: rgba(0, 242, 255, 0.08); }
+  .pl-estado[data-estado='aceptada'] { color: var(--color-lime); background: rgba(201, 255, 91, 0.08); }
+  .pl-estado[data-estado='convertida'] { color: var(--color-violet); background: rgba(167, 139, 255, 0.1); }
+  .pl-guardado { color: var(--color-ink-300); }
+  .pl-guardado[data-estado='pendiente'], .pl-guardado[data-estado='guardando'] { color: #ffd27a; }
+  .pl-guardado[data-estado='error'] { color: var(--color-ember); }
+  .pl-aceptada { display: flex; gap: 0.75rem; align-items: flex-start; border-radius: 1rem; padding: 0.9rem 1rem; background: rgba(201, 255, 91, 0.05); border: 1px solid rgba(201, 255, 91, 0.18); }
+
+  /* Componentes */
+  .pl-comps { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .pl-comp { border-radius: 0.85rem; border: 1px solid var(--pl-borde); background: rgba(255, 255, 255, 0.015); transition: border-color 0.2s, background 0.2s; }
+  .pl-comp--off { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.85rem; text-align: left; color: var(--color-ink-200); }
+  .pl-comp--off:hover:not(:disabled) { border-color: rgba(0, 242, 255, 0.25); background: rgba(0, 242, 255, 0.03); color: var(--color-ink-50); }
+  .pl-comp__mas { width: 1.25rem; height: 1.25rem; border-radius: 999px; display: grid; place-items: center; font-size: 14px; color: var(--color-cyan); background: rgba(0, 242, 255, 0.08); flex-shrink: 0; }
+  .pl-comp--on { grid-column: 1 / -1; padding: 0.75rem 0.85rem; background: rgba(0, 242, 255, 0.025); border-color: rgba(0, 242, 255, 0.14); }
+  .pl-comp--fuera { opacity: 0.6; }
+  .pl-comp__cab { display: flex; align-items: center; gap: 0.5rem; }
+  .pl-comp__titulo { flex: 1; display: flex; align-items: center; gap: 0.55rem; text-align: left; min-width: 0; }
+  .pl-comp__nombre { font-size: 13.5px; color: var(--color-ink-50); flex: 1; min-width: 0; }
+  .pl-comp--off .pl-comp__nombre { color: inherit; }
+  .pl-comp__horas { font-family: ui-monospace, monospace; font-size: 11px; color: var(--color-ink-200); white-space: nowrap; }
+  .pl-comp__preg { font-family: ui-monospace, monospace; font-size: 10.5px; color: var(--color-cyan-dim); padding: 1px 6px; border-radius: 999px; background: rgba(0, 242, 255, 0.07); }
+  .pl-x { color: var(--color-cyan-dim); font-family: ui-monospace, monospace; font-size: 12px; }
+  .pl-quitar { width: 1.6rem; height: 1.6rem; border-radius: 999px; color: var(--color-ink-200); font-size: 16px; line-height: 1; }
+  .pl-quitar:hover:not(:disabled) { color: var(--color-ember); background: rgba(255, 107, 61, 0.1); }
+  .pl-comp__cuerpo { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .pl-dot { width: 0.5rem; height: 0.5rem; border-radius: 999px; flex-shrink: 0; background: var(--color-ink-200); }
+  .pl-dot--esencial { background: var(--color-cyan); box-shadow: 0 0 10px rgba(0, 242, 255, 0.6); }
+  .pl-dot--recomendado { background: var(--color-lime); }
+  .pl-dot--extra { background: var(--color-violet); }
+  .pl-dot--lime { background: var(--color-lime); margin-top: 0.45rem; }
+  .pl-rango { position: relative; height: 4px; border-radius: 999px; margin-top: 0.55rem; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+  .pl-rango span { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: linear-gradient(90deg, var(--color-cyan-deep), var(--color-cyan)); transition: left 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .pl-fila { display: flex; flex-direction: column; gap: 0.35rem; }
+  .pl-fila__label { font-size: 12px; color: var(--color-ink-100); }
+  .pl-stepper { display: inline-flex; align-items: center; gap: 0.75rem; font-size: 14px; }
+  .pl-stepper button { width: 1.8rem; height: 1.8rem; border-radius: 999px; border: 1px solid var(--pl-borde); color: var(--color-ink-50); }
+  .pl-stepper button:hover:not(:disabled) { border-color: rgba(0, 242, 255, 0.35); }
+  .pl-cita { font-size: 13px; color: var(--color-ink-50); line-height: 1.5; padding: 0.6rem 0.75rem; border-radius: 0.65rem; background: rgba(167, 139, 255, 0.07); }
+  .pl-cita__label { display: block; font-family: ui-monospace, monospace; font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-violet); margin-bottom: 0.2rem; }
+  .pl-cita__razon { display: block; margin-top: 0.3rem; font-size: 11.5px; color: var(--color-ink-200); }
+
+  /* Pagos */
+  .pl-pagos { display: flex; flex-direction: column; gap: 0.15rem; }
+  .pl-pagos li { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto auto; gap: 0.75rem; align-items: baseline; padding: 0.55rem 0.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+  .pl-pagos__n { font-family: ui-monospace, monospace; font-size: 11px; color: var(--color-cyan-dim); }
+  .pl-pagos__concepto { font-size: 13px; color: var(--color-ink-50); display: flex; flex-direction: column; }
+  .pl-pagos__fecha { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--color-ink-200); }
+  .pl-pagos__monto { font-size: 13.5px; color: var(--color-ink-50); font-weight: 500; }
+  .pl-tiempo { position: relative; height: 92px; margin: 1.1rem 0.5rem 0.25rem; }
+  .pl-tiempo__eje { position: absolute; left: 0; right: 0; top: 46px; height: 1px; background: linear-gradient(90deg, rgba(0, 242, 255, 0.5), rgba(167, 139, 255, 0.4)); }
+  .pl-tiempo__hito { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+  .pl-tiempo__punto { position: absolute; top: 41px; width: 11px; height: 11px; border-radius: 999px; background: var(--color-ink-950); border: 2px solid var(--color-cyan); }
+  .pl-tiempo__txt { font-size: 10.5px; color: var(--color-ink-100); text-align: center; white-space: nowrap; display: flex; flex-direction: column; font-family: ui-monospace, monospace; }
+  .pl-tiempo__txt b { font-family: inherit; color: var(--color-ink-50); font-weight: 500; }
+  .pl-tiempo__hito--abajo .pl-tiempo__txt { margin-top: 60px; }
+  .pl-tiempo__pago { position: absolute; top: 43px; width: 7px; height: 7px; transform: translateX(-50%) rotate(45deg); background: var(--color-lime); }
+  .pl-leyenda { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+  .pl-leyenda__hito { display: inline-block; width: 8px; height: 8px; border-radius: 999px; border: 2px solid var(--color-cyan); }
+  .pl-leyenda__pago { display: inline-block; width: 6px; height: 6px; transform: rotate(45deg); background: var(--color-lime); }
+
+  /* Cláusulas */
+  .pl-clausula { border-radius: 0.7rem; padding: 0.55rem 0.7rem; background: rgba(255, 255, 255, 0.015); }
+  .pl-clausula--off .pl-clausula__titulo { color: var(--color-ink-300); text-decoration: line-through; }
+  .pl-clausula__cab { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
+  .pl-clausula__titulo { font-size: 13px; color: var(--color-ink-50); text-align: left; }
+  .pl-clausula__titulo:hover { color: var(--color-cyan-glow); }
+  .pl-motivo { font-size: 11px; color: var(--color-violet); }
+  .pl-clausula__textos { margin-top: 0.6rem; display: grid; gap: 0.75rem; font-size: 12.5px; color: var(--color-ink-100); line-height: 1.55; }
+  @media (min-width: 900px) { .pl-clausula__textos { grid-template-columns: 1fr 1fr; } }
+  .pl-formal { color: var(--color-ink-200); }
+  .pl-switch { position: relative; width: 30px; height: 17px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); flex-shrink: 0; transition: background 0.2s; }
+  .pl-switch span { position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 999px; background: var(--color-ink-100); transition: transform 0.2s; }
+  .pl-switch[aria-checked='true'] { background: rgba(0, 242, 255, 0.35); }
+  .pl-switch[aria-checked='true'] span { transform: translateX(13px); background: var(--color-cyan); }
+
+  /* Revisión e IA */
+  .pl-preguntas ul, .pl-rev ul { list-style: disc; padding-left: 1.1rem; font-size: 12.5px; color: var(--color-ink-100); display: flex; flex-direction: column; gap: 0.25rem; }
+  .pl-veredicto { font-size: 14px; color: var(--color-ink-50); line-height: 1.5; }
+  .pl-rev { display: flex; flex-direction: column; gap: 0.5rem; }
+  .pl-rev__item { font-size: 12.5px; color: var(--color-ink-100); line-height: 1.5; padding: 0.55rem 0.7rem; border-radius: 0.65rem; background: rgba(255, 255, 255, 0.02); }
+  .pl-rev__item b { color: var(--color-ink-50); font-weight: 500; }
+  .pl-rev__preg { color: var(--color-violet); margin-top: 0.2rem; }
+  .pl-horas { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .pl-horas label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 12.5px; color: var(--color-ink-100); }
+  .pl-horas input { width: 100%; border-radius: 0.6rem; padding: 0.45rem 0.65rem; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--pl-borde); color: var(--color-ink-50); }
+  .pl-ver { padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+
+  /* Medidor */
+  .pl-medidor { border-radius: 1.1rem; padding: 1.15rem; }
+  .pl-medidor__precio { display: flex; flex-direction: column; gap: 0.15rem; }
+  .pl-medidor__precio strong { font-size: 30px; font-weight: 500; letter-spacing: -0.03em; color: var(--color-ink-50); line-height: 1.1; }
+  .pl-medidor__total { font-size: 11.5px; color: var(--color-ink-200); }
+  .pl-cono { margin-top: 1rem; }
+  .pl-cono__pista { position: relative; height: 26px; border-radius: 8px; background: rgba(255, 255, 255, 0.03); overflow: hidden; }
+  .pl-cono__abierto { position: absolute; top: 9px; height: 8px; border-radius: 999px; background: repeating-linear-gradient(90deg, rgba(167, 139, 255, 0.28) 0 4px, transparent 4px 7px); transition: left 0.5s, width 0.5s; }
+  .pl-cono__cerrado { position: absolute; top: 6px; height: 14px; border-radius: 999px; background: linear-gradient(90deg, rgba(0, 242, 255, 0.35), rgba(0, 242, 255, 0.85)); box-shadow: 0 0 18px rgba(0, 242, 255, 0.35); transition: left 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .pl-cono__marca { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--color-ink-50); transition: left 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .pl-cono__ejes { display: flex; justify-content: space-between; margin-top: 0.3rem; font-family: ui-monospace, monospace; font-size: 10.5px; color: var(--color-ink-200); }
+  .pl-certeza { margin-top: 0.8rem; display: flex; flex-direction: column; gap: 0.35rem; }
+  .pl-certeza__barra { height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+  .pl-certeza__barra span { display: block; height: 100%; background: var(--color-lime); transition: width 0.5s; }
+  .pl-certeza__txt { font-size: 11.5px; color: var(--color-ink-200); }
+  .pl-certeza__txt b { color: var(--color-lime); font-weight: 500; }
+  .pl-versiones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; margin-top: 1rem; }
+  .pl-version { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.55rem 0.6rem; border-radius: 0.75rem; text-align: left; background: rgba(255, 255, 255, 0.025); border: 1px solid var(--pl-borde); transition: all 0.2s; }
+  .pl-version:hover:not(:disabled) { border-color: rgba(0, 242, 255, 0.3); }
+  .pl-version[data-activo='1'] { background: rgba(0, 242, 255, 0.08); border-color: rgba(0, 242, 255, 0.45); }
+  .pl-version[data-repetida='1'] { opacity: 0.45; }
+  .pl-version__nivel { font-size: 11px; color: var(--color-ink-100); }
+  .pl-version[data-activo='1'] .pl-version__nivel { color: var(--color-cyan); }
+  .pl-version__precio { font-size: 12.5px; color: var(--color-ink-50); }
+  .pl-version__sin { font-size: 10px; color: var(--color-ink-200); }
+  .pl-resumen-plan { display: flex; flex-direction: column; gap: 0.15rem; margin-top: 0.9rem; font-size: 11.5px; color: var(--color-ink-200); }
+  .pl-avisos { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.25rem; font-size: 12px; }
+  .pl-falta { color: #ffd27a; }
+  .pl-falta::before { content: '· '; }
+  .pl-aviso-li { color: var(--color-ink-200); }
+  .pl-aviso-li::before { content: '· '; }
+  .pl-acciones { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+  .pl-vacio { font-size: 13px; color: var(--color-ink-200); padding: 1.5rem 0; text-align: center; }
+  .pl-encaje__meses { display: flex; align-items: center; gap: 0.75rem; font-size: 12px; color: var(--color-ink-100); line-height: 1.35; }
+  .pl-encaje__meses strong { font-size: 30px; font-weight: 500; color: var(--color-lime); letter-spacing: -0.03em; }
+  .pl-carga { position: relative; display: flex; align-items: flex-end; gap: 3px; height: 64px; margin: 0.9rem 0 0.6rem; }
+  .pl-carga__col { flex: 1; height: 100%; display: flex; flex-direction: column-reverse; border-radius: 3px; overflow: hidden; background: rgba(255, 255, 255, 0.025); }
+  .pl-carga__ocupada { background: rgba(255, 255, 255, 0.22); }
+  .pl-carga__nueva { background: var(--color-cyan); opacity: 0.75; order: -1; }
+  .pl-carga__col--pasa .pl-carga__nueva { background: var(--color-ember); }
+  .pl-carga__tope { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed rgba(255, 255, 255, 0.35); }
+  .pl-barra-movil { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 1.1rem; background: rgba(8, 8, 12, 0.92); backdrop-filter: blur(16px); border-top: 1px solid rgba(255, 255, 255, 0.07); font-size: 15px; }
+  @media (min-width: 1100px) { .pl-barra-movil { display: none; } }
+</style>
