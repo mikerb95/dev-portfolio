@@ -41,8 +41,7 @@ export function crearTopeDiario(opciones: { clave: string; variable: string; por
 
   const topeDiarioUsd = () => {
     const v = Number(serverEnv(variable))
-    // Una variable vacía no es un tope de cero: Number('') es 0 y apagaría el agente sin querer.
-    return serverEnv(variable)?.trim() && Number.isFinite(v) && v >= 0 ? v : porDefectoUsd
+    return Number.isFinite(v) && v >= 0 ? v : porDefectoUsd
   }
 
   return {
