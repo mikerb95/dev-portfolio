@@ -2388,7 +2388,7 @@ export const ITERACIONES: Iteracion[] = [
           ok('Consultas nuevas del asistente: pagos recibidos, vencimientos y búsqueda en el panel, sin datos personales (RF-210).'),
           ok('Respuesta con pasos visibles y solo enlaces internos; conversaciones recientes que se pueden retomar.'),
           ok('Capturas en escritorio y móvil con GPU real.'),
-          pend('Primera corrida del panel contra la API real (requiere aprobar el gasto, unos centavos por pregunta).'),
+          ok('Probado con el modelo real contra la base demo: pagos, deudas y dominios con sus enlaces (unos US$0,03).'),
         ],
       },
       {
@@ -2400,7 +2400,7 @@ export const ITERACIONES: Iteracion[] = [
           ok('Nada se escribe sin "Aprobar"; "Pedir cambios" vuelve al modelo como indicación; la propuesta sobrevive a recargar.'),
           ok('Borrador creado con createCuentaCobro y auditado; emitirla sigue siendo un clic de Mike.'),
           ok('e2e/asistente.spec.ts recorre aprobar y descartar con la API de Claude falsa.'),
-          pend('Aplicar la migración 0044 en las bases de Turso.'),
+          ok('Migración 0044 aplicada en las dos bases; cuenta de cobro real creada y aprobada en la demo (US$0,032).'),
         ],
       },
     ],

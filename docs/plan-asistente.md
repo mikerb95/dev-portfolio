@@ -563,8 +563,21 @@ Decisiones que surgieron al construirlo:
   caído, la página carga igual (sin recientes, la caja solo busca).
 
 Probado con la API de Claude falsa (`e2e/asistente.spec.ts`, 5 casos) y con
-capturas reales en escritorio y móvil. **Pendiente**: aplicar la migración
-0044 en las dos bases de Turso y la primera corrida contra la API real.
+capturas reales en escritorio y móvil. Migración 0044 aplicada en las dos
+bases de Turso el 6 oct 2026.
+
+Probado con el modelo real el 6 oct 2026 contra la base demo
+(`scripts/asistente-prueba-panel.ts`, que borra al final lo que crea), unos
+US$0,06 en total:
+
+| Pregunta | Herramientas | Resultado | Costo |
+|---|---|---|---|
+| "¿Quién me pagó este mes y quién me debe todavía?" | pagos_recibidos, clientes, buscar_en_panel | nadie pagó en octubre; Altiplano debe $476.000 en dos cuentas vencidas; enlace a Facturas | US$0,023 |
+| "¿Qué dominios van a vencer pronto?" | vencimientos | ninguno en 60 días; ofreció ampliar el plazo; enlace a Dominios | US$0,008 |
+| "Cuenta de cobro para Cafetería Altiplano por $850.000, mantenimiento de octubre, que venza el 30" | clientes, proyectos, crear_cuenta_cobro | tarjeta con proyecto, periodo y vencimiento correctos; tras aprobar, CC-2026-001 en borrador; avisó que salió sin retenciones y qué falta para emitir | US$0,032 |
+
+Mike ya había usado la caja desde local antes de la prueba ("¿Quién me debe
+y cuánto?", US$0,044).
 
 ## Fase 8: qué quedó (1 oct 2026)
 
