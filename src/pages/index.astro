@@ -16,6 +16,11 @@ import { construirSenales } from '../lib/pulso-panel'
 import PulsoPanel from '../components/PulsoPanel.astro'
 import '../styles/portada.css'
 import { jsonEnScript } from '../lib/json-script'
+import { TRABAJOS_REALES } from '../data/trabajos-reales'
+
+// Mismo número que la burbuja (WhatsappFab.astro) y /contact: el botón
+// "Enviarle esto a Mike" del estimado abre WhatsApp con el resumen escrito.
+const WA_BASE = 'https://wa.me/573104641228'
 
 // Página única compartida por /  y /en (ver src/pages/en/index.astro, que
 // solo la reexporta): el locale sale de la URL real del request, no del
@@ -148,7 +153,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       </div>
 
       <!-- GitHub credentials -->
-      <div class="flex flex-wrap items-center gap-3 mb-11">
+      <div class="flex flex-wrap items-center gap-3 mb-9">
         <!-- Top 3 Colombia -->
         <a
           href="https://committers.top/colombia#mikerb95"
@@ -185,62 +190,172 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       </div>
 
       <!-- Headline -->
-      <h1 class="font-sans font-medium tracking-[-.035em] leading-[.94] text-[clamp(44px,8vw,120px)]">
+      <!-- Titular en Archivo condensada, color plano: el degradado gris y la
+           palabra en cursiva serif se fueron el 6 oct 2026 (RF-037). Habla
+           del cliente ("tu página") y no de la disciplina. -->
+      <h1 class="hero-titular font-display font-black tracking-[-.025em] leading-[.88] text-[clamp(46px,8.4vw,128px)]">
         {/* Los espacios entre spans son intencionales: al ser `block` no se
             ven, pero sin ellos el texto plano que extrae un buscador (o un
-            lector de pantalla) queda pegado - "Ingeniería desoftwarecon". */}
-        <span class="hero-line block text-mask">{t.hero.line1}</span>{' '}
-        {/* La cursiva serif tiene altura-x mucho menor que la sans a igual
-            font-size: sin subirla ~12% y cerrar su interlineado, la línea
-            del medio parece flotar suelta entre las otras dos. */}
-        <span class="hero-line block text-mask-cyan italic font-serif font-normal text-[1.12em] leading-[.86]">{t.hero.line2}</span>{' '}
-        <span class="hero-line block text-mask">{t.hero.line3}</span>
+            lector de pantalla) queda pegado - "tu appo tu sistema". */}
+        <span class="hero-line block">{t.hero.line1}</span>{' '}
+        <span class="hero-line block">{t.hero.line2}</span>{' '}
+        <span class="hero-line hero-acento block">{t.hero.line3}</span>
       </h1>
 
-      <div class="mt-10 grid md:grid-cols-12 gap-8 items-end">
-        <p class="md:col-span-6 text-[16px] md:text-[18px] text-ink-100 leading-relaxed max-w-xl">
-          {t.hero.lead}
-        </p>
-        <div class="md:col-span-3 space-y-2">
-          <div class="text-[10.5px] font-mono uppercase tracking-[.2em] text-ink-300">{t.hero.stackLabel}</div>
-          <div class="text-[14px] text-ink-50">{t.hero.stackLine1}</div>
-          <div class="text-[14px] text-ink-50">{t.hero.stackLine2}</div>
-        </div>
-        <!-- Botones magnéticos: se inclinan hacia el cursor al acercarse y el
-             texto se adelanta un poco más que la píldora, que es lo que da la
-             sensación de profundidad. El `data-magnetico` lo lee el script. -->
-        <div class="md:col-span-3 flex md:justify-end gap-3 flex-wrap">
-          {visibleProjects.length > 0 ? (
+      <div class="mt-10 lg:mt-12 grid lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+        <!-- Tres líneas de venta: qué puedes pedir, cómo se trabaja y la
+             prueba (clientes en línea, con enlace al sitio real). -->
+        <div class="lg:col-span-5 flex flex-col gap-8">
+          <ul class="space-y-4" data-ventas>
+            {t.hero.ventas.map((v) => (
+              <li class="hero-venta flex gap-3">
+                <span class="hero-venta-punto" aria-hidden="true"></span>
+                <div>
+                  <div class="text-[15px] font-semibold text-ink-50">{v.t}</div>
+                  <p class="text-[14.5px] text-ink-100 leading-relaxed">{v.d}</p>
+                </div>
+              </li>
+            ))}
+            <li class="hero-venta flex gap-3">
+              <span class="hero-venta-punto" aria-hidden="true"></span>
+              <div>
+                <div class="text-[15px] font-semibold text-ink-50">{t.hero.clientesLabel}</div>
+                <p class="text-[14.5px] text-ink-100 leading-relaxed flex flex-wrap gap-x-4 gap-y-1">
+                  {TRABAJOS_REALES.map((c) => (
+                    <a href={c.url} target="_blank" rel="noopener" class="hero-cliente inline-flex items-center gap-1.5 hover:text-ink-50 transition-colors">
+                      <span class="w-1.5 h-1.5 rounded-full shrink-0" style={`background:${c.tono}`} aria-hidden="true"></span>{c.nombre}
+                    </a>
+                  ))}
+                </p>
+              </div>
+            </li>
+          </ul>
+
+          <!-- Botones magnéticos: se inclinan hacia el cursor al acercarse y el
+               texto se adelanta un poco más que la píldora, que es lo que da la
+               sensación de profundidad. El `data-magnetico` lo lee el script. -->
+          <div class="flex gap-3 flex-wrap">
+            {visibleProjects.length > 0 ? (
+              <a
+                href="#proyectos"
+                data-magnetico
+                class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter] shadow-glow"
+              >
+                <span data-magnetico-texto class="inline-flex items-center gap-2">
+                  {t.hero.ctaProjects}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </span>
+              </a>
+            ) : (
+              <a
+                href={L('/certifications')}
+                data-magnetico
+                class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter]"
+              >
+                <span data-magnetico-texto class="inline-flex items-center gap-2">
+                  {t.hero.ctaCerts}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </span>
+              </a>
+            )}
             <a
-              href="#proyectos"
+              href={L('/contact')}
               data-magnetico
-              class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter] shadow-glow"
+              class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-ink-950/60 backdrop-blur-md text-ink-50 border border-white/10 hover:bg-white/[.06] transition-colors"
             >
-              <span data-magnetico-texto class="inline-flex items-center gap-2">
-                {t.hero.ctaProjects}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-              </span>
+              <span data-magnetico-texto class="inline-flex items-center">{t.hero.ctaContact}</span>
             </a>
-          ) : (
-            <a
-              href={L('/certifications')}
-              data-magnetico
-              class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter]"
-            >
-              <span data-magnetico-texto class="inline-flex items-center gap-2">
-                {t.hero.ctaCerts}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-              </span>
-            </a>
-          )}
-          <a
-            href={L('/contact')}
-            data-magnetico
-            class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-ink-950/60 backdrop-blur-md text-ink-50 border border-white/10 hover:bg-white/[.06] transition-colors"
-          >
-            <span data-magnetico-texto class="inline-flex items-center">{t.hero.ctaContact}</span>
-          </a>
+          </div>
         </div>
+
+        <!-- Cotizador del hero (RF-037): la persona escribe su idea y recibe,
+             sobre el terreno, lo que haría Mike, en cuánto tiempo y el rango
+             de precio. Es la primera vuelta del asesor de la burbuja (mismo
+             endpoint, misma guardia de cifras, mismo tope diario): "Seguir
+             preguntando" se la entrega a la burbuja con todo el estado.
+             Sin JS el formulario lleva a /contact: el estado del servidor es
+             una invitación a escribir, nunca una caja muerta. -->
+        <form
+          id="cotizador"
+          class="cotizador lg:col-span-7 glass-strong rounded-2xl p-5 md:p-6 relative"
+          action={L('/contact')}
+          method="get"
+          data-locale={locale}
+          data-wa-base={WA_BASE}
+          data-textos={JSON.stringify(t.cotizador)}
+          data-analytics="cotizador-hero"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="cotizador-chispa" aria-hidden="true"></span>
+            <label for="cotizador-input" class="text-[11px] font-mono uppercase tracking-[.24em] text-ink-100">{t.cotizador.titulo}</label>
+          </div>
+
+          <div class="cotizador-caja mt-4" data-cotizador-caja>
+            <textarea
+              id="cotizador-input"
+              name="q"
+              class="cotizador-input"
+              rows="2"
+              maxlength="500"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="cotizador-nota"
+            ></textarea>
+            <!-- Ejemplo que se escribe solo mientras la caja está vacía: le
+                 dice a la persona qué tan concreto puede ser. aria-hidden
+                 porque el label ya dice qué va aquí. -->
+            <div class="cotizador-ejemplo" aria-hidden="true" data-cotizador-ejemplo>{t.cotizador.ejemplos[0]}</div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between gap-4 flex-wrap">
+            <p id="cotizador-nota" class="text-[12.5px] text-ink-200 max-w-[28rem]">{t.cotizador.nota}</p>
+            <button
+              type="submit"
+              class="cotizador-enviar inline-flex items-center gap-2 h-11 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter] shadow-glow cursor-pointer disabled:opacity-50 disabled:cursor-default"
+              data-cotizador-enviar
+            >
+              {t.cotizador.enviar}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+          </div>
+          <noscript><p class="mt-3 text-[12.5px] text-ink-200">{t.cotizador.sinJs}</p></noscript>
+
+          <!-- Respuesta: aparece debajo del campo, dentro de la misma tarjeta,
+               y la tarjeta crece. aria-live para que un lector de pantalla
+               anuncie el estimado cuando llega. -->
+          <div class="cotizador-respuesta mt-5" data-cotizador-respuesta hidden aria-live="polite">
+            <div class="cotizador-pensando" data-cotizador-pensando hidden>
+              <span class="cotizador-pensando-puntos" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="text-[12.5px] font-mono uppercase tracking-[.18em] text-ink-100">{t.cotizador.pensando}</span>
+            </div>
+            <div class="cotizador-plan" data-cotizador-plan hidden>
+              <div class="text-[11px] font-mono uppercase tracking-[.24em] text-cyan">{t.cotizador.respuestaLabel}</div>
+              <p class="cotizador-texto mt-2.5" data-cotizador-texto></p>
+              <div class="cotizador-marca mt-2" data-cotizador-marca hidden>
+                <span class="cotizador-marca-punto" aria-hidden="true"></span>{t.cotizador.marca}
+              </div>
+              <div class="mt-5 flex gap-2.5 flex-wrap">
+                <a
+                  class="inline-flex items-center gap-2 h-11 px-5 text-[14px] font-medium rounded-full bg-[#25D366] text-[#062e16] hover:brightness-110 transition-[filter]"
+                  href={WA_BASE}
+                  target="_blank"
+                  rel="noopener"
+                  data-cotizador-wa
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2m0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+                  {t.cotizador.whatsapp}
+                </a>
+                <button type="button" class="inline-flex items-center h-11 px-5 text-[14px] font-medium rounded-full bg-ink-950/60 text-ink-50 border border-white/10 hover:bg-white/[.06] transition-colors cursor-pointer" data-cotizador-continuar>
+                  {t.cotizador.continuar}
+                </button>
+                <button type="button" class="inline-flex items-center h-11 px-4 text-[13px] text-ink-100 hover:text-ink-50 underline-offset-4 hover:underline cursor-pointer" data-cotizador-otra>
+                  {t.cotizador.otra}
+                </button>
+              </div>
+            </div>
+            <p class="cotizador-error text-[13.5px] text-ember" data-cotizador-error role="alert" hidden></p>
+          </div>
+        </form>
       </div>
 
     </div>

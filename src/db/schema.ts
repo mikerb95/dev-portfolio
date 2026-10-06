@@ -485,8 +485,9 @@ export const payments = sqliteTable('payments', {
   // para que los pagos de /pay y del portal sigan intactos.
   // Teléfono E.164 del pagador; es la llave del histórico en /mis-pagos.
   payerPhone: text('payer_phone'),
-  // De dónde nació el pago. 'pay' = checkout público, 'cobro' = link de campo.
-  source: text('source', { enum: ['pay', 'cobro', 'portal'] }).notNull().default('pay'),
+  // De dónde nació el pago. 'pay' = checkout público, 'cobro' = link de campo,
+  // 'propuesta' = anticipo de una propuesta de Plano (/propuesta/<token>).
+  source: text('source', { enum: ['pay', 'cobro', 'portal', 'propuesta'] }).notNull().default('pay'),
   // Código corto y no adivinable del link (/c/AB3K9F). Solo en cobros.
   shortCode: text('short_code').unique(),
   // Vencimiento del link: pasado, no se generan checkouts nuevos (un pago ya
@@ -1607,4 +1608,80 @@ export const asesorMensajes = sqliteTable('asesor_mensajes', {
 }, (t) => ({
   // Los dos sondeos piden "lo nuevo de esta conversación": (conversación, id > n).
   conversacionIdx: index('asesor_mensajes_conversacion_idx').on(t.conversacionId, t.id),
+}))
+
+// ── Plano: propuestas a la medida ───────────────────────────────────────────
+// Ver docs/plan-plano.md. Una propuesta guarda su configuración editable; cada
+// versión que se guarda o se envía queda congelada aparte, con su huella.
+export const propuestas = sqliteTable('propuestas', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Llave del enlace del cliente (/propuesta/<token>): 128 bits aleatorios en
+  // base64url. Es lo único que protege la propuesta, como el código de /c/.
+  token: text('token').notNull().unique(),
+  // Ficha del CRM, si ya existe. La conversión la llena si no.
+  clientId: integer('client_id').references(() => clients.id, { onDelete: 'set null' }),
+  titulo: text('titulo').notNull(),
+  estado: text('estado', { enum: ['borrador', 'enviada', 'aceptada', 'convertida', 'descartada'] }).notNull().default('borrador'),
+  // ConfigPropuesta en JSON (lib/plano/tipos.ts): lo que edita el constructor.
+  config: text('config').notNull(),
+  // Último número de versión congelada (0 = ninguna todavía).
+  versionActual: integer('version_actual').notNull().default(0),
+  // Conversación pegada para "del chat al plano". Privada: nunca sale al
+  // enlace del cliente ni al PDF.
+  conversacion: text('conversacion'),
+  // Última revisión de "el cliente difícil", en JSON.
+  revision: text('revision'),
+  // Gasto acumulado en la API de Claude por esta propuesta.
+  iaUsd: real('ia_usd').notNull().default(0),
+  // Enlace abierto por el cliente: primera vez y cuántas.
+  vistaPrimera: integer('vista_primera', { mode: 'timestamp' }),
+  vistas: integer('vistas').notNull().default(0),
+  // ── Aceptación ──────────────────────────────────────────────────────────
+  aceptadaVersion: integer('aceptada_version'),
+  aceptadaPor: text('aceptada_por'),
+  aceptadaDocumento: text('aceptada_documento'),
+  aceptadaEl: integer('aceptada_el', { mode: 'timestamp' }),
+  // SHA-256 de (huella de la versión + nombre + documento + instante). Es la
+  // constancia: cualquiera puede recalcularla con los datos guardados.
+  aceptacionHuella: text('aceptacion_huella'),
+  // Pago del anticipo (lib/payments.ts, idempotente).
+  anticipoPaymentId: integer('anticipo_payment_id').references(() => payments.id, { onDelete: 'set null' }),
+  // Proyecto creado al convertir.
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  enviadaEl: integer('enviada_el', { mode: 'timestamp' }),
+  creadaEl: integer('creada_el', { mode: 'timestamp' }).notNull(),
+  actualizadaEl: integer('actualizada_el', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  estadoIdx: index('propuestas_estado_idx').on(t.estado),
+}))
+
+export const propuestaVersiones = sqliteTable('propuesta_versiones', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  propuestaId: integer('propuesta_id').notNull().references(() => propuestas.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull(),
+  // Snapshot completo (lib/plano/tipos.ts): el resultado, no la fórmula.
+  // Cambiar el tarifario no reescribe una propuesta ya enviada.
+  snapshot: text('snapshot').notNull(),
+  // SHA-256 del snapshot canónico.
+  huella: text('huella').notNull(),
+  // Quién originó la versión: Mike en el panel o el cliente al elegir y aceptar.
+  origen: text('origen', { enum: ['panel', 'cliente'] }).notNull().default('panel'),
+  creadaEl: integer('creada_el', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  // Numerar dos veces igual sería tener dos "versión 3" distintas de un mismo
+  // acuerdo. El UNIQUE lo impide aunque dos guardados lleguen a la vez.
+  versionIdx: uniqueIndex('propuesta_versiones_version_idx').on(t.propuestaId, t.version),
+}))
+
+// Horas reales por componente de una propuesta convertida (fase "aprende").
+export const propuestaHoras = sqliteTable('propuesta_horas', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  propuestaId: integer('propuesta_id').notNull().references(() => propuestas.id, { onDelete: 'cascade' }),
+  componenteId: text('componente_id').notNull(),
+  // Techo estimado (sin colchón) copiado de la versión aceptada al anotar.
+  estimadas: real('estimadas').notNull(),
+  reales: real('reales').notNull(),
+  actualizadaEl: integer('actualizada_el', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  componenteIdx: uniqueIndex('propuesta_horas_componente_idx').on(t.propuestaId, t.componenteId),
 }))
