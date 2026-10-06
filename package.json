@@ -30,6 +30,7 @@
     "analista": "tsx agents/analista-siem/index.ts",
     "analista:copia": "node scripts/analista-copia.mjs",
     "analista:prueba-real": "tsx scripts/analista-prueba-real.ts",
+    "asistente": "tsx agents/asistente/index.ts",
     "medidor:build": "node scripts/build-medidor.mjs",
     "seo:indexnow": "node scripts/submit-indexnow.mjs",
     "og:generate": "node scripts/og/generate.mjs",
