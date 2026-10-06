@@ -415,6 +415,9 @@ export async function procesarCola(opts: { ahora?: Date; tope?: number } = {}): 
     UPDATE marketing_envios SET estado = 'omitido'
     WHERE estado = 'pendiente'
       AND suscriptor_id IN (SELECT id FROM marketing_suscriptores WHERE estado <> 'activo')`)
+  // Antes de mirar el horario: una campaña sin destinatarios (o con todos
+  // dados de baja) se cierra aunque sea domingo.
+  await cerrarCampanasTerminadas(ahora)
 
   const ventana = ventanaLegal(ahora)
   if (!ventana.abierta) {
