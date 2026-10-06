@@ -1,0 +1,13 @@
+# Entorno del vigía: contenedor en la nube de Anthropic con red cerrada por defecto.
+# Solo puede salir a lo que necesita la revisión; las herramientas web del agente
+# están apagadas aparte, porque esta red no las gobierna.
+name: vigia-repo-env
+config:
+  type: cloud
+  networking:
+    type: limited
+    allow_package_managers: true
+    allowed_hosts:
+      - github.com
+      - codebymike.net
+      - nodejs.org
