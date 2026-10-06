@@ -370,7 +370,7 @@ async function despacharLote(lote: string, secreto: string, ahora: Date): Promis
     if (c) campanas.set(id, c)
   }
   const correos = filas.map((f) =>
-    armarCorreo(campanas.get(f.campanaId)!, f.email, { web: urlBaja(f.suscriptorId, secreto), unClic: urlBajaUnClic(f.suscriptorId, secreto) })
+    armarCorreo(campanas.get(f.campanaId)!, f.email, { web: urlBaja(f.suscriptorId, secreto, f.campanaId), unClic: urlBajaUnClic(f.suscriptorId, secreto, f.campanaId) })
   )
   const res = await enviarLote(correos, `marketing-${lote}`)
   if (!res.ok) {

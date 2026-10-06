@@ -12,12 +12,14 @@ import { tokenBaja } from './tokens'
 export const remitenteMarketing = (): string =>
   serverEnv('MARKETING_EMAIL_FROM') ?? 'Mike de CodeByMike <novedades@codebymike.net>'
 
-export const urlBaja = (suscriptorId: number, secreto: string): string =>
-  `${SITE_URL}/novedades/baja?s=${suscriptorId}&t=${tokenBaja(suscriptorId, secreto)}`
+// `c` (la campaña) solo sirve para contar desde qué correo se dio de baja la
+// gente; el token no la cubre porque falsearla no le da nada a nadie.
+export const urlBaja = (suscriptorId: number, secreto: string, campanaId: number): string =>
+  `${SITE_URL}/novedades/baja?s=${suscriptorId}&t=${tokenBaja(suscriptorId, secreto)}&c=${campanaId}`
 
 /** Endpoint que recibe el POST de "baja con un clic" de Gmail y Yahoo (RFC 8058). */
-export const urlBajaUnClic = (suscriptorId: number, secreto: string): string =>
-  `${SITE_URL}/api/marketing/baja?s=${suscriptorId}&t=${tokenBaja(suscriptorId, secreto)}`
+export const urlBajaUnClic = (suscriptorId: number, secreto: string, campanaId: number): string =>
+  `${SITE_URL}/api/marketing/baja?s=${suscriptorId}&t=${tokenBaja(suscriptorId, secreto)}&c=${campanaId}`
 
 export type CorreoArmado = {
   from: string

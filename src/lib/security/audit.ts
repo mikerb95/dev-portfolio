@@ -11,7 +11,7 @@
 // Módulo puro: lo importan páginas públicas, crons y el panel.
 
 /** Categorías de rastro. Todo lo que no esté aquí se trata como amenaza. */
-export const AUDIT_CATEGORIES: string[] = ['admin_action', 'cobro', 'cuenta_cobro', 'computo', 'capacitacion', 'propuesta']
+export const AUDIT_CATEGORIES: string[] = ['admin_action', 'cobro', 'cuenta_cobro', 'computo', 'capacitacion', 'propuesta', 'marketing']
 
 export const isAuditCategory = (category: string): boolean => AUDIT_CATEGORIES.includes(category)
 
