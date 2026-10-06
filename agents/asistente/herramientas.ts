@@ -1,6 +1,6 @@
 // Adaptador de las herramientas del asistente (src/lib/asistente/herramientas)
 // a la Agent SDK, como servidor MCP en proceso. Aquí no se define ninguna
-// herramienta: la versión del panel (fase 7) usará las mismas definiciones.
+// herramienta: el panel (src/lib/asistente/motor-api.ts) usa las mismas definiciones.
 //
 // Importa `src/db`, que fija la URL de la base al importarse: se carga con
 // import() después de decidir contra qué base corre (ver index.ts).
@@ -19,7 +19,7 @@ export function crearServidorNegocio(observar?: Observador) {
   return createSdkMcpServer({
     name: SERVIDOR,
     version: '1.0.0',
-    // Son diez herramientas: cargarlas de entrada sale más barato que buscarlas en cada sesión.
+    // Son trece herramientas: cargarlas de entrada sale más barato que buscarlas en cada sesión.
     alwaysLoad: true,
     tools: HERRAMIENTAS.map((h) =>
       tool(

@@ -1,10 +1,11 @@
 // Catálogo de herramientas del asistente del panel (docs/plan-asistente.md).
 //
-// Fase 2: SOLO LECTURA. No hay ninguna herramienta que escriba en la base, y
-// una prueba lo comprueba (tests/asistente-herramientas.test.ts): las
-// escrituras llegan en las fases 3 a 5, cada una con su aprobación humana. La
-// seguridad no está aquí: la responde el analista del micro-SIEM como
-// subagente, con sus propias herramientas (agents/asistente/motor.ts).
+// Este catálogo es SOLO LECTURA, y una prueba lo comprueba
+// (tests/asistente-herramientas.test.ts): lo comparten la terminal y el panel.
+// Las escrituras viven aparte (src/lib/asistente/escrituras/) y solo las
+// expone el motor del panel, que se detiene a pedir aprobación antes de
+// ejecutar cada una. La seguridad no está aquí: en la terminal la responde el
+// analista del micro-SIEM como subagente (agents/asistente/motor.ts).
 //
 // Importa `src/db`: solo servidor.
 
@@ -12,15 +13,21 @@ import { HERRAMIENTAS_BANDEJA } from './bandeja'
 import { HERRAMIENTAS_DOCUMENTACION } from './documentacion'
 import { HERRAMIENTAS_NEGOCIO } from './negocio'
 import { HERRAMIENTAS_OPERACION } from './operacion'
+import { HERRAMIENTAS_PAGOS } from './pagos'
+import { HERRAMIENTAS_PANEL } from './panel'
+import { HERRAMIENTAS_VENCIMIENTOS } from './vencimientos'
 import { fallo, type Herramienta, type Resultado } from './tipos'
 
 export type { Herramienta, Resultado }
 
 export const HERRAMIENTAS: Herramienta[] = [
   ...HERRAMIENTAS_NEGOCIO,
+  ...HERRAMIENTAS_PAGOS,
+  ...HERRAMIENTAS_VENCIMIENTOS,
   ...HERRAMIENTAS_BANDEJA,
   ...HERRAMIENTAS_OPERACION,
   ...HERRAMIENTAS_DOCUMENTACION,
+  ...HERRAMIENTAS_PANEL,
 ]
 
 export const herramienta = (nombre: string) => HERRAMIENTAS.find((h) => h.nombre === nombre)
