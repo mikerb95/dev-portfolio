@@ -192,7 +192,7 @@ no-store`, token guardado solo como hash y rate limit por ruta.
 | 2 | Migración, encargos, bitácora de solicitudes y reuniones, consumo de cupos | ✅ 6 oct 2026 (falta aplicar 0045 en Turso) |
 | 3 | IA: pedido → alcance, clasificador, resumen de reunión | ✅ 6 oct 2026 (sin probar contra el modelo real: cuenta sin cupo hasta el 1 nov) |
 | 4 | Enlace del cliente y aprobación de adicionales | ✅ 6 oct 2026 (falta aplicar 0046 en Turso) |
-| 5 | Requisitos promovidos en `/docs`, nota en `/notes` | pendiente |
+| 5 | Requisitos promovidos en `/docs`, nota en `/notes` | ✅ 6 oct 2026 |
 
 ## Fase 0 entregada (6 oct 2026)
 
@@ -377,6 +377,15 @@ adicionales no lleven colchón y el nivel con que se cobran las reuniones.
   desarrollo con 61 caracteres (no 64), así que localmente no se puede cifrar
   (tampoco la bóveda). En producción manda la de Vercel. Sin clave válida el
   enlace funciona igual; solo no se puede volver a copiar.
+
+## Fase 5 entregada (6 oct 2026)
+
+- Nota `/notes/el-precio-pactado-no-se-toca` y `/en/notes/the-agreed-price-does-not-move`,
+  con su decisión en el frontmatter. Por OPSEC no publica tarifas, rutas del
+  panel ni los umbrales de los frenos del PIN.
+- RF-220 a RF-224 implementados en `src/data/documentacion.ts`; iteración
+  `pf-cotiza` (Fase 53, seis historias) en `src/data/iteraciones-portfolio.ts`,
+  con lo que falta marcado como pendiente.
 
 ## Pendientes de Mike
 
