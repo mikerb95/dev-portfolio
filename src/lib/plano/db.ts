@@ -177,7 +177,7 @@ export function snapshotDe(v: Pick<VersionPropuesta, 'snapshot'>): Snapshot {
  * El número sale de la última versión + 1 y el UNIQUE (propuesta, versión)
  * detiene a un segundo guardado simultáneo, que reintenta con el siguiente.
  */
-export async function congelarVersion(propuestaId: number, snapshot: Snapshot, origen: 'panel' | 'cliente'): Promise<VersionPropuesta> {
+export async function congelarVersion(propuestaId: number, snapshot: Snapshot, origen: 'panel' | 'cliente', config: ConfigPropuesta): Promise<VersionPropuesta> {
   const huella = huellaSnapshot(snapshot)
   for (let intento = 0; intento < 4; intento++) {
     const [ultima] = await db
@@ -191,7 +191,7 @@ export async function congelarVersion(propuestaId: number, snapshot: Snapshot, o
     try {
       const [fila] = await db
         .insert(propuestaVersiones)
-        .values({ propuestaId, version: n, snapshot: JSON.stringify(snapshot), huella, origen, creadaEl: new Date() })
+        .values({ propuestaId, version: n, snapshot: JSON.stringify(snapshot), huella, origen, config: JSON.stringify(config), creadaEl: new Date() })
         .returning()
       await db
         .update(propuestas)
@@ -209,8 +209,20 @@ export async function congelarVersion(propuestaId: number, snapshot: Snapshot, o
 export async function congelarDesdeConfig(p: Propuesta, config: ConfigPropuesta, origen: 'panel' | 'cliente'): Promise<{ version: VersionPropuesta; snapshot: Snapshot }> {
   const reglas = await cargarReglas()
   const snapshot = armarPropuesta(config, reglas, hoyCO())
-  const v = await congelarVersion(p.id, snapshot, origen)
+  const v = await congelarVersion(p.id, snapshot, origen, config)
   return { version: v, snapshot }
+}
+
+/** Configuración de una versión congelada (la de la propuesta si la versión es anterior a la columna). */
+export function configDeVersion(v: Pick<VersionPropuesta, 'config'>, p: Pick<Propuesta, 'config'>): ConfigPropuesta {
+  if (v.config) {
+    try {
+      return normalizarConfig(JSON.parse(v.config), hoyCO())
+    } catch {
+      // cae a la de la propuesta
+    }
+  }
+  return configDe(p)
 }
 
 export async function marcarEnviada(id: number): Promise<void> {

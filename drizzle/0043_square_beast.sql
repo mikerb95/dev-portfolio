@@ -1,0 +1,1 @@
+ALTER TABLE `propuesta_versiones` ADD `config` text;

@@ -1669,6 +1669,10 @@ export const propuestaVersiones = sqliteTable('propuesta_versiones', {
   snapshot: text('snapshot').notNull(),
   // SHA-256 del snapshot canónico.
   huella: text('huella').notNull(),
+  // Configuración de la que salió el snapshot. Hace falta para recalcular
+  // cuando el cliente mueve una perilla: el enlace parte de LA VERSIÓN ENVIADA,
+  // no del borrador que Mike pueda estar editando después.
+  config: text('config'),
   // Quién originó la versión: Mike en el panel o el cliente al elegir y aceptar.
   origen: text('origen', { enum: ['panel', 'cliente'] }).notNull().default('panel'),
   creadaEl: integer('creada_el', { mode: 'timestamp' }).notNull(),

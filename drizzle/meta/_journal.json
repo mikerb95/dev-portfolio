@@ -302,6 +302,13 @@
       "when": 1791290284773,
       "tag": "0042_absent_saracen",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "6",
+      "when": 1791291040920,
+      "tag": "0043_square_beast",
+      "breakpoints": true
     }
   ]
 }
