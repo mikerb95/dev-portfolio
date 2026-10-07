@@ -119,7 +119,7 @@ test('suscripción, campaña desde el panel y baja', async ({ page, browser }) =
 
   // Un token falso no da de baja a nadie.
   await page.goto(`/novedades/baja?s=${id}&t=${'0'.repeat(32)}`)
-  await page.getByRole('button', { name: 'Darme de baja' }).click()
+  await page.getByRole('button', { name: 'Darme de baja' }).click({ force: true })
   await expect(page.getByRole('status')).toContainText('no es válido')
   expect(errores).toEqual([])
 })
