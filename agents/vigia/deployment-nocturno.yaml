@@ -1,0 +1,38 @@
+# Corrida nocturna del vigía (fase 3). Cada disparo crea una sesión.
+# Se crea y queda PAUSADO hasta registrar el webhook en la Console: sin él, las
+# corridas no llegan al panel ni a cron_runs (ver docs/plan-managed-agents.md).
+name: vigia-nocturno
+agent: ./agent.md
+environment_id: ./environment.yaml
+schedule:
+  type: cron
+  # 4:30 a. m. en Bogotá: el informe está listo antes de empezar el día.
+  expression: "30 4 * * *"
+  timezone: America/Bogota
+budget:
+  type: limit
+  max_list_cost: {amount: "300", currency: USD}
+resources:
+  - type: memory_store
+    memory_store_id: ./memory_store.yaml
+    access: read_write
+    instructions: Léela al empezar y actualízala al terminar, como dicen tus instrucciones.
+initial_events:
+  - type: user.define_outcome
+    description: >-
+      Haz la revisión nocturna completa del repositorio según tus instrucciones
+      y deja informe.md e informe.json en /mnt/session/outputs/.
+    max_iterations: 2
+    rubric:
+      type: text
+      # Rúbrica inicial: ajustarla con lo que salga en las primeras noches.
+      content: |
+        1. Existen /mnt/session/outputs/informe.md y /mnt/session/outputs/informe.json.
+        2. informe.json es JSON válido con estado (verde, amarillo o rojo), resumen, hallazgos, revisado y no_revisado.
+        3. Cada hallazgo tiene id, prioridad (alta, media o baja), categoria, titulo, evidencia y arreglo, y ningún campo está vacío salvo arreglo cuando no hay arreglo posible.
+        4. Cada evidencia cita un comando ejecutado o un archivo con número de línea; ninguna cifra aparece sin fuente.
+        5. Las vulnerabilidades de dependencias dicen si llegan al runtime de producción o se quedan en build o desarrollo, y por qué.
+        6. Los hallazgos ya presentes en la memoria van marcados como "sigue abierto" en una línea, no explicados de nuevo.
+        7. informe.md empieza con un resumen de tres líneas que coincide con el estado y el resumen del JSON.
+        8. Ningún texto contiene valores de secretos, tokens o variables de entorno.
+        9. El texto está en español de Colombia con tuteo y sin rayas largas.

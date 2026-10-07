@@ -1,6 +1,6 @@
 # Plan: vigía del repo con Claude Managed Agents
 
-Estado: **fase 1 ✅** (6 oct 2026); fases 2 a 6 pendientes. Material del workshop de Managed
+Estado: **fases 1, 2 y 5 ✅, 3 lista y pausada, 4 preparada** (6 oct 2026). Material del workshop de Managed
 Agents de la comunidad Claude Bogotá (sábado 24 oct 2026; propuestas hasta el
 domingo 11 oct).
 
@@ -89,11 +89,64 @@ orden garantizado, y se **pierden** tras tres intentos fallidos. Por eso:
 | Fase | Qué | Estado |
 |---|---|---|
 | 1 | Agente + entorno con `ant apply`, corrida manual con tope, informe real | ✅ 6 oct 2026 |
-| 2 | Webhook `/api/managed/webhook` (firma con `client.beta.webhooks.unwrap`, dedupe por `webhook-id`), registro en `cron_runs`, costo en tabla nueva, informe a `/admin/lab/security` vía la ingesta existente, aviso ntfy | pendiente |
-| 3 | Deployment programado cada noche (`America/Bogota`, fuera de la franja 1-3 a. m.), con tope por corrida; kickoff con `user.define_outcome` y rúbrica para que el evaluador lo haga iterar hasta que el informe cumpla | pendiente |
-| 4 | Escritura con aprobación: token de GitHub en vault, MCP de GitHub en `always_ask` para abrir issues o PRs en borrador; aprobar o rechazar desde el panel (el webhook recibe `session.status_idled` con `requires_action`) | pendiente |
-| 5 | Memoria entre noches (memory store) para no repetir hallazgos ya reportados | pendiente |
-| 6 | Requisito en `src/data/documentacion.ts`, entrada en `src/data/automatizaciones.ts`, artículo en `/notes` después del workshop | pendiente |
+| 2 | Webhook `/api/managed/webhook` (firma con `client.beta.webhooks.unwrap`), estado leído de la API, corrida en `vigia_corridas` (migración 0048) y en `cron_runs`, aviso ntfy, sección `#vigia` en `/admin/lab/security` | ✅ código; falta registrar el endpoint |
+| 3 | Deployment `agents/vigia/deployment-nocturno.yaml`: 4:30 a. m. Bogotá, tope US$3, `user.define_outcome` con rúbrica de 9 criterios y `max_iterations: 2` | ✅ archivo; se aplica y queda pausado |
+| 4 | Escritura con aprobación: token de GitHub en vault, MCP de GitHub en `always_ask`; aprobar o rechazar desde el panel (`/api/admin/vigia/decision`) | preparada: falta el token |
+| 5 | Memory store `agents/vigia/memory_store.yaml` montado en el deployment; el prompt lleva `hallazgos.md` y `notas.md` | ✅ archivo |
+| 6 | RF-510 en `src/data/documentacion.ts` ✅; entrada en `CRONS` al activar el deployment; artículo en `/notes` después del workshop | parcial |
+
+## Fases 2 a 5: qué quedó (6 oct 2026)
+
+- **Webhook** (`src/pages/api/managed/webhook.ts`): sin `ANTHROPIC_WEBHOOK_SIGNING_KEY`
+  responde 503 y no procesa nada (un aviso sin verificar no se distingue de uno
+  inventado). Atiende `session.status_idled` y `session.status_terminated`;
+  ignora sesiones de otros agentes del workspace comparando con el ID de
+  `claude-lock.json`.
+- **Lógica pura** en `src/lib/vigia/informe.ts` (valida el informe.json con
+  Zod; un informe con otra forma cuenta como corrida fallida pero guarda el
+  .md) y `src/lib/vigia/desenlace.ts` (qué significa cada `stop_reason` y
+  cuándo anunciar: una sola vez por corrida aunque el aviso llegue duplicado,
+  y un `terminated` tardío no pisa el informe).
+- **`cron_runs`**: el `detail` es neutro ("informe entregado", "tope de gasto")
+  porque esa tabla la lee una página pública; los hallazgos solo viven en
+  `vigia_corridas` y en el panel.
+- **Aprobaciones**: `/api/admin/vigia/decision` solo confirma eventos que el
+  webhook registró como pendientes de esa corrida, y se audita como
+  `vigia.accion_aprobada` / `vigia.accion_rechazada` (categoría de rastro).
+- **Prompt v2**: lee y actualiza la memoria, y no valida arreglos a fondo (la
+  primera corrida casi llegó al tope por simular el `npm audit fix` completo).
+- **Tests**: `tests/vigia.test.ts` (10, con el informe real como fixture) y
+  `tests/vigia-sesion-db.test.ts` (6, libSQL temporal y cliente falso).
+
+## Para activar la corrida nocturna
+
+1. Aplicar la migración 0048 en las dos bases Turso (principal y demo).
+2. Console → Manage → Webhooks: endpoint `https://codebymike.net/api/managed/webhook`,
+   eventos `session.status_idled` y `session.status_terminated`. Guardar el
+   `whsec_` en Vercel (`dev-portfolio`) como `ANTHROPIC_WEBHOOK_SIGNING_KEY`.
+3. Desplegar (el webhook tiene que existir en producción antes del paso 4).
+4. Probar con una corrida manual: `ant beta:deployments run --deployment-id <depl_...>`
+   (ID en `claude-lock.json`) y comprobar que llega el push y aparece en el panel.
+5. Despausar: `ant beta:deployments unpause --deployment-id <depl_...>`.
+6. Añadir la entrada `vigia-nocturno` a `CRONS` en `src/data/automatizaciones.ts`
+   (`cadaMin: 1440`, con un origen nuevo para Anthropic). Va al final a
+   propósito: antes de despausar, el detector de silencio avisaría cada día que
+   el job "nunca apareció".
+
+## Fase 4: cómo se activa
+
+1. Token de GitHub de grano fino sobre `mikerb95/dev-portfolio`: Contents
+   (lectura y escritura), Issues y Pull requests. No va en el chat ni en el repo.
+2. Vault: `agents/vigia/vault.yaml` con `type: vault` y `display_name`, `ant apply`,
+   y la credencial con `ant beta:vaults:credentials create` (MCP de GitHub,
+   `https://api.githubcopilot.com/mcp/`).
+3. En `agent.md`: `mcp_servers: [{type: url, name: github, url: https://api.githubcopilot.com/mcp/}]`
+   y en `tools` un `{type: mcp_toolset, mcp_server_name: github}` **sin** cambiar
+   su política por defecto (`always_ask`). En el entorno, `allow_mcp_servers: true`.
+4. En el deployment: `vault_ids: [vlt_...]` y el recurso `github_repository`
+   con el token (el agente deja de clonar a mano).
+5. Quitar del prompt la línea "Fase 1: solo lectura" y pedirle que abra como
+   máximo un issue por hallazgo nuevo de prioridad alta.
 
 ## Pendiente del administrador
 
