@@ -53,6 +53,8 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   'logout',
   'mis-pagos',
   'notes',
+  // Suscripción y baja de los correos promocionales (docs/plan-marketing.md).
+  'novedades',
   'paginas-web',
   'pay',
   'platziconf',

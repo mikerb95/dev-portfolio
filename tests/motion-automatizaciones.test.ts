@@ -24,6 +24,7 @@ function bitacoraSana(hasta = AHORA): Corrida[] {
   const desde = hasta - 48 * H
   for (let t = desde; t <= hasta; t += 5 * MIN) out.push({ job: 'uptime-check', at: t, ok: true, ms: 900 })
   for (let t = desde; t <= hasta; t += 15 * MIN) out.push({ job: 'security-rollup', at: t, ok: true, ms: 400 })
+  for (let t = desde; t <= hasta; t += 60 * MIN) out.push({ job: 'marketing-envio', at: t, ok: true, ms: 300 })
   for (const c of CRONS) {
     const m = minutoDelDia(c.horario)
     if (m === null) continue
@@ -42,8 +43,12 @@ describe('partitura: carriles', () => {
     expect(uptime.horarios).toEqual([7 * 60])
     expect(carriles[0].job).toBe('uptime-check')
     expect(carriles[1].job).toBe('security-rollup')
-    // Los diarios quedan por hora declarada.
-    const diarios = carriles.slice(2).map((c) => c.horarios[0])
+    // Los frecuentes (sin hora del día: cada 5, 15, 60 min) van primero, del
+    // más denso al menos; los diarios después, por hora declarada.
+    const frecuentes = carriles.filter((c) => c.cadaMin < 1440)
+    expect(carriles.slice(0, frecuentes.length)).toEqual(frecuentes)
+    expect(frecuentes.map((c) => c.cadaMin)).toEqual([...frecuentes.map((c) => c.cadaMin)].sort((a, b) => a - b))
+    const diarios = carriles.slice(frecuentes.length).map((c) => c.horarios[0])
     expect(diarios).toEqual([...diarios].sort((a, b) => a - b))
   })
 

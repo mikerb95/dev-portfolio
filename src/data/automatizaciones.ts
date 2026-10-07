@@ -351,7 +351,7 @@ export const CRONS: readonly Cron[] = [
   },
   {
     job: 'marketing-envio',
-    horario: { es: 'cada hora', en: 'hourly' },
+    horario: { es: 'cada 60 min', en: 'every 60 min' },
     cadaMin: 60,
     origen: 'cron-job.org',
     hace: {
