@@ -9,15 +9,21 @@
     "./agents/vigia/agent.md": {
       "kind": "agent",
       "id": "agent_01VQEHvBqYrvnGc2CGSfdfgR",
-      "version": "1",
-      "hash": "7e2ad656e360e0f6be86b1b1ed075d09",
-      "remote_hash": "e06c89f7e63e2012b138378aa023a312"
+      "version": "2",
+      "hash": "421a1f04970e15ecb50fd8b73e878f93",
+      "remote_hash": "596c91621c6eb7d5be6104f5a7748109"
     },
     "./agents/vigia/environment.yaml": {
       "kind": "environment",
       "id": "env_01F5UhGfQe4GPNCwKY8PKRg6",
       "hash": "91ee8a6f4645122129e18973e937cd77",
       "remote_hash": "704b319a0cf4924470bcead1e724048e"
+    },
+    "./agents/vigia/memory_store.yaml": {
+      "kind": "memory_store",
+      "id": "memstore_0193a1KHJkLgrAZ83Q8vxnei",
+      "hash": "4c4011eaa1ff94041d04301ccf62372b",
+      "remote_hash": "4c4011eaa1ff94041d04301ccf62372b"
     }
   }
 }
