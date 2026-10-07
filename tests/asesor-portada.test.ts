@@ -98,3 +98,22 @@ describe('textos del hero', () => {
     }
   })
 })
+
+describe('portada: lo que destapó la prueba con el modelo real (6 oct 2026)', () => {
+  it('la portada no hereda la regla de "1 a 3 preguntas" y pide no anunciar el cálculo', async () => {
+    const { systemPrompt } = await import('../src/lib/asesor/prompt')
+    const portada = systemPrompt('es', 'inicio')
+    expect(portada).not.toContain('1 a 3 preguntas')
+    expect(portada).toContain('NO hagas ninguna pregunta antes del estimado')
+    expect(systemPrompt('es', 'paginas-web')).toContain('1 a 3 preguntas')
+  })
+
+  it('el voseo que se cuela se pasa a tuteo, sin tocar el inglés ni palabras legítimas', async () => {
+    const { sinVoseo } = await import('../src/lib/asesor/bucle')
+    expect(sinVoseo('Así le paso a Mike un estimado y él confirma todo con vos.', 'es')).toBe('Así le paso a Mike un estimado y él confirma todo contigo.')
+    expect(sinVoseo('¿Querés que te ayude? Contame qué necesitás, vos sabés.', 'es')).toBe('¿Quieres que te ayude? Cuéntame qué necesitas, tú sabes.')
+    expect(sinVoseo('Si sos dueño de un negocio, podés escribirle.', 'es')).toBe('Si eres dueño de un negocio, puedes escribirle.')
+    expect(sinVoseo('Botón SOS y votos de vosotros', 'es')).toBe('Botón SOS y votos de vosotros')
+    expect(sinVoseo('Can vos help?', 'en')).toBe('Can vos help?')
+  })
+})
