@@ -74,6 +74,8 @@ export const AUDIT_RULE_LABELS: Record<string, string> = {
   'analista.bloqueo_aprobado': 'Bloqueo propuesto por el analista, aprobado',
   'analista.bloqueo_rechazado': 'Bloqueo propuesto por el analista, rechazado',
   'analista.ip_revelada': 'IP real de un origen del analista revelada',
+  'vigia.accion_aprobada': 'Acción propuesta por el vigía del repo, aprobada',
+  'vigia.accion_rechazada': 'Acción propuesta por el vigía del repo, rechazada',
   'asesor.conversacion_tomada': 'Conversación del asesor público tomada por Mike',
   'plano.creada': 'Propuesta de Plano creada',
   'plano.enviada': 'Propuesta de Plano enviada al cliente',
