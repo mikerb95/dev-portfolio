@@ -20,6 +20,14 @@ test('el cotizador del hero hace la primera vuelta y "Seguir preguntando" la pas
   // clics de los demás specs expiran. El motion se verificó con capturas.
   await page.emulateMedia({ reducedMotion: 'reduce' })
 
+  // La API falsa responde en milisegundos con el servidor ya caliente, y el
+  // estado "pensando" pasaba antes de que el expect alcanzara a verlo: el test
+  // fallaba en caliente y pasaba en frío. Un retraso fijo lo hace observable.
+  await page.route('**/api/asesor', async (r) => {
+    if (r.request().method() === 'POST') await new Promise((ok) => setTimeout(ok, 800))
+    await r.continue()
+  })
+
   await page.goto('/')
   // Con varias portadas (terreno WebGL) abiertas en paralelo, headless deja de
   // producir frames y un clic normal espera "estable" sin fin: los clics van
