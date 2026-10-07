@@ -135,6 +135,46 @@ export function sinRayas(texto: string, locale: Locale): string {
     .replace(/\s*[—–]\s*/g, ', ')
 }
 
+// Voseo rioplatense que se cuela pese al prompt: pasó en la prueba con el
+// modelo real del 6 oct 2026 ("él confirma todo con vos"), sin que el
+// visitante lo usara. El prompt lo prohíbe, pero en un sitio colombiano una
+// sola forma así suena a otro país, así que se corrige también aquí, como las
+// rayas: un reemplazo fijo, sin otra llamada al modelo. Solo formas que no
+// existen en el tuteo, para no tocar palabras legítimas.
+const VOSEO: [string, string][] = [
+  ['con vos', 'contigo'],
+  ['vos', 'tú'],
+  ['podés', 'puedes'],
+  ['querés', 'quieres'],
+  ['tenés', 'tienes'],
+  ['sentís', 'sientes'],
+  ['decís', 'dices'],
+  ['sabés', 'sabes'],
+  ['necesitás', 'necesitas'],
+  ['pensás', 'piensas'],
+  ['contame', 'cuéntame'],
+  ['escribime', 'escríbeme'],
+  ['decime', 'dime'],
+  ['mirá', 'mira'],
+  ['fijate', 'fíjate'],
+]
+
+// \b de JS no entiende tildes ("podés" no tiene borde ASCII al final), así
+// que el borde es "ni antes ni después hay una letra", con Unicode.
+const REEMPLAZOS = VOSEO.map(([vos, tu]) => [new RegExp(`(?<!\\p{L})${vos}(?!\\p{L})`, 'giu'), tu] as const)
+// "sos" aparte y sin ignorar mayúsculas: "SOS" es otra cosa.
+const SOS = /(?<!\p{L})([Ss])os(?!\p{L})/gu
+
+/** Respeta la mayúscula inicial de la palabra reemplazada. */
+const comoEl = (original: string, nueva: string) => (/^\p{Lu}/u.test(original) ? nueva[0]!.toUpperCase() + nueva.slice(1) : nueva)
+
+export function sinVoseo(texto: string, locale: Locale): string {
+  if (locale !== 'es') return texto
+  let t = texto
+  for (const [re, tu] of REEMPLAZOS) t = t.replace(re, (m) => comoEl(m, tu))
+  return t.replace(SOS, (_m, s: string) => (s === 'S' ? 'Eres' : 'eres'))
+}
+
 function textoDe(m: Anthropic.Message): string {
   return m.content
     .filter((b): b is Anthropic.TextBlock => b.type === 'text')
@@ -195,7 +235,12 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
     const usos = r.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
     if (usos.length) {
       const dicho = textoDe(r)
-      if (dicho) previo.push(dicho)
+      // Lo escrito junto a calcular_precio se escribió ANTES de tener el
+      // resultado: es un anuncio ("déjame calcular") o, peor, un plazo
+      // adivinado que el cálculo contradice después (prueba con el modelo
+      // real del 6 oct 2026: prometió "1 a 2 semanas" y el cálculo era un
+      // proyecto de 3 a 6). La respuesta de verdad llega después del resultado.
+      if (dicho && !usos.some((u) => u.name === 'calcular_precio')) previo.push(dicho)
       mensajes.push({ role: 'assistant', content: r.content })
       const resultados: Anthropic.ToolResultBlockParam[] = usos.map((u) => {
         const salida = ejecutarHerramienta(u, e.locale, cotizaciones, calculos)
@@ -207,7 +252,7 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
       continue
     }
 
-    const texto = sinRayas([...previo, textoDe(r)].filter(Boolean).join('\n\n'), e.locale)
+    const texto = sinVoseo(sinRayas([...previo, textoDe(r)].filter(Boolean).join('\n\n'), e.locale), e.locale)
     if (!texto) return cerrar(RESPALDO[e.locale], 'vueltas')
     const g = verificarCifras(texto, permitidas(cotizaciones, e.locale))
     if (g.ok) return cerrar(texto, null)

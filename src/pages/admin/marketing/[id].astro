@@ -53,7 +53,7 @@ const datos = {
           <p class="ed-sub">
             {envios.enviado} enviados · {envios.pendiente + envios.enviando} pendientes · {envios.fallido} fallidos · {envios.omitido} omitidos · {envios.bajas} se dieron de baja desde este correo
           </p>
-          {campana.estado === 'enviando' && apertura && <p class="ed-sub">Fuera del horario legal: lo pendiente sale {apertura}.</p>}
+          {campana.estado === 'enviando' && apertura && <p class="ed-sub">Fuera del horario legal: lo pendiente sale el {apertura}</p>}
           {campana.ultimoError && <p class="ed-sub text-ember">Último error: {campana.ultimoError}</p>}
         </section>
       )}
@@ -207,7 +207,7 @@ const datos = {
 
   document.getElementById('ed-disparar')?.addEventListener('click', async () => {
     if (sucio && !(await guardar())) return
-    const cuando = datos.apertura ? `\n\nAhora está fuera del horario legal: empieza a salir ${datos.apertura}.` : ''
+    const cuando = datos.apertura ? `\n\nAhora está fuera del horario legal: empieza a salir el ${datos.apertura}` : ''
     if (!confirm(`¿Disparar "${c.asunto}" a ${datos.activos} suscriptor(es)? Ya no se podrá editar.${cuando}`)) return
     avisar('Disparando…')
     const r = await llamar(`/api/admin/marketing/campanas/${datos.id}`, 'POST', { accion: 'disparar' })

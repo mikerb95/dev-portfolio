@@ -113,7 +113,7 @@ const datos = d
           <section class="rounded-2xl glass p-5 md:p-6">
             <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-violet"></span><h2 class="text-base font-medium">Leer el pedido con IA</h2></div>
             <p class="mt-1 text-[12px] text-ink-300">Pega el mensaje, el correo o tus notas de la llamada. La IA propone entregables contables, lo que no incluye, supuestos y las preguntas para hacerle al cliente antes de cotizar. Se agrega al borrador; nada se borra y el precio lo sigue poniendo la tabla.</p>
-            <textarea id="ia-pedido" rows="4" class="input-base mt-3 w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Hola Mike, necesito que me ayudes con unas presentaciones para la junta y revisar unos contratos..."></textarea>
+            <textarea id="ia-pedido" data-dictado rows="4" class="input-base mt-3 w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Hola Mike, necesito que me ayudes con unas presentaciones para la junta y revisar unos contratos..."></textarea>
             <div class="mt-2 flex flex-wrap items-center gap-3">
               <button id="ia-alcance" class="h-8 px-3 rounded-full bg-violet/20 text-violet text-[12.5px] font-medium hover:bg-violet/30">Leer pedido con IA</button>
               <span id="ia-alcance-estado" class="text-[12px] font-mono" role="status" aria-live="polite"></span>
@@ -151,15 +151,15 @@ const datos = d
           <section class="rounded-2xl glass p-5 md:p-6 grid gap-4 sm:grid-cols-2">
             <label class="block">
               <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">No incluye (una por línea)</span>
-              <textarea data-campo="exclusiones" rows="5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Negociación directa con proveedores&#10;Trámites ante la DIAN"></textarea>
+              <textarea data-campo="exclusiones" data-dictado rows="5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="Negociación directa con proveedores&#10;Trámites ante la DIAN"></textarea>
             </label>
             <label class="block">
               <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Supuestos (uno por línea)</span>
-              <textarea data-campo="supuestos" rows="5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="El cliente entrega la información en los primeros 2 días"></textarea>
+              <textarea data-campo="supuestos" data-dictado rows="5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" placeholder="El cliente entrega la información en los primeros 2 días"></textarea>
             </label>
             <label class="block sm:col-span-2">
               <span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Notas privadas (no salen al cliente)</span>
-              <textarea data-campo="notas" rows="7" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea>
+              <textarea data-campo="notas" data-dictado rows="7" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea>
             </label>
           </section>
         </div>
@@ -336,7 +336,7 @@ const datos = d
               <label class="block sm:col-span-2"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Cuándo lo pidió</span><input name="pedidoEl" type="datetime-local" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
               <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Por dónde</span><select name="canal" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">{Object.entries(CANAL).map(([k, v]) => <option value={k}>{v}</option>)}</select></label>
               <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Es</span><select name="clasificacion" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">{Object.entries(CLASIF).map(([k, v]) => <option value={k}>{v.label}</option>)}</select></label>
-              <label class="block sm:col-span-4"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Qué pidió (tal cual)</span><textarea name="texto" rows="2" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea></label>
+              <label class="block sm:col-span-4"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Qué pidió (tal cual)</span><textarea name="texto" data-dictado rows="2" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea></label>
               <div data-si-adicional class="hidden sm:col-span-4 grid gap-3 sm:grid-cols-4">
                 <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Horas</span><input name="horas" type="number" min="0.5" step="0.5" class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
                 <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Nivel</span><select name="nivel" class="input-base w-full rounded-lg px-3 py-2 text-[13px]">{NIVELES.map((n) => <option value={n.id} selected={n.id === nivelEncargo}>{n.nombre}</option>)}</select></label>
@@ -353,7 +353,7 @@ const datos = d
               <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Fecha</span><input name="fecha" type="date" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
               <label class="block"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Minutos</span><input name="minutos" type="number" min="1" max="600" required class="input-base w-full rounded-lg px-3 py-2 text-[13px]" /></label>
               <p class="sm:col-span-2 self-end text-[11.5px] text-ink-300">Quedan {d.consumo.reuniones.restantes} incluidas. Si no cabe, nace el adicional solo.</p>
-              <label class="block sm:col-span-4"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Resumen: qué se acordó y qué quedó fuera</span><textarea name="resumen" rows="4" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea></label>
+              <label class="block sm:col-span-4"><span class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">Resumen: qué se acordó y qué quedó fuera</span><textarea name="resumen" data-dictado rows="4" class="input-base w-full rounded-lg px-3 py-2 text-[13px]"></textarea></label>
               <div class="sm:col-span-4 flex flex-wrap gap-2">
                 <button class="h-9 px-4 rounded-full bg-cyan text-ink-950 text-[13px] font-semibold">Anotar reunión</button>
                 <button type="button" id="ia-resumen" class="h-9 px-4 rounded-full bg-violet/20 text-violet text-[13px] font-medium hover:bg-violet/30" title="Escribe tus notas sueltas en el resumen y la IA las ordena">Ordenar con IA</button>
@@ -436,6 +436,9 @@ const datos = d
   import { cotizar, horasDe, ErrorCotiza, type Entregable } from '../../../lib/cotiza/motor'
   import type { ConfigEncargo } from '../../../lib/cotiza/encargo'
   import type { SnapshotEncargo } from '../../../lib/cotiza/db'
+  import { activarDictado } from '../../../lib/cotiza/dictado'
+
+  activarDictado()
 
   type Datos = {
     id: number

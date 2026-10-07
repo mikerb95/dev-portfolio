@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aplicarHeadersPrivados, endurecerPrivada } from '../src/lib/security/private-headers'
+import { aplicarHeadersBase, aplicarHeadersPrivados, endurecerPrivada } from '../src/lib/security/private-headers'
 
 describe('endurecerPrivada', () => {
   it('el 302 a /login sale con los headers de ruta privada', () => {
@@ -28,6 +28,16 @@ describe('endurecerPrivada', () => {
     expect(res.headers.get('Retry-After')).toBe('60')
     expect(res.headers.get('Cache-Control')).toBe('no-store')
     expect(await res.json()).toEqual({ error: 'no' })
+  })
+
+  it('el micrófono solo se abre cuando se pide (dictado de Cotiza)', () => {
+    const cerrado = new Headers()
+    aplicarHeadersBase(cerrado)
+    expect(cerrado.get('Permissions-Policy')).toContain('microphone=()')
+    const abierto = new Headers()
+    aplicarHeadersBase(abierto, { microfono: true })
+    expect(abierto.get('Permissions-Policy')).toContain('microphone=(self)')
+    expect(abierto.get('Permissions-Policy')).toContain('camera=()')
   })
 
   it('en rutas enmarcables omite X-Frame-Options y deja frame-ancestors self', () => {

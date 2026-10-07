@@ -780,7 +780,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const res = portalRespaldoMode ? await runInRespaldoContext(correr) : await correr()
   const resHeaders = new Headers(res.headers)
 
-  aplicarHeadersBase(resHeaders)
+  // El micrófono solo se abre en las páginas de Cotiza, para el dictado por voz
+  // de sus campos (src/lib/cotiza/dictado.ts). El resto del sitio lo sigue
+  // bloqueando: abrirlo en todo el sitio sería permiso de sobra para nada.
+  aplicarHeadersBase(resHeaders, {
+    microfono: esRutaDeCotiza(canonicalPath) && !canonicalPath.startsWith('/api/'),
+  })
 
   // Vistas de proyección. Dos excepciones a la CSP base, ambas necesarias:
   //

@@ -10,14 +10,14 @@ export const CSP_REPORTING = ' report-to csp-endpoint; report-uri /api/security/
 export const CONNECT_SRC_BASE = "connect-src 'self';"
 
 /** Headers que lleva toda respuesta del sitio, pública o privada. */
-export function aplicarHeadersBase(h: Headers): void {
+export function aplicarHeadersBase(h: Headers, { microfono = false }: { microfono?: boolean } = {}): void {
   h.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
   // Observabilidad continua de CSP (la política ya corre en ENFORCE; esto
   // solo reporta lo bloqueado) y permisos de navegador que el sitio no usa.
   h.set('Reporting-Endpoints', 'csp-endpoint="/api/security/csp-report"')
   h.set(
     'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()'
+    `camera=(), ${microfono ? 'microphone=(self)' : 'microphone=()'}, geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()`
   )
 }
 

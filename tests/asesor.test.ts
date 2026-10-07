@@ -308,6 +308,22 @@ describe('atender', () => {
     expect(r.whatsapp).toContain('Necesito una capacitación')
   })
 
+  it('descarta lo escrito junto a calcular_precio: se escribió antes de tener el resultado', async () => {
+    const { deps } = modelo([
+      respuesta(
+        [
+          { type: 'text', text: 'Te entrega la web en 1 a 2 semanas. Déjame calcular el presupuesto.' },
+          { type: 'tool_use', id: 'tu_c', name: 'calcular_precio', input: { tipo: 'capacitacion', personas: 30 } },
+        ],
+        'tool_use'
+      ),
+      texto('Para 30 personas son $1.400.000 COP.'),
+    ])
+    const r = await atender(entrada('Capacitación para 30'), deps)
+    expect(r.respaldo).toBeNull()
+    expect(r.texto).toBe('Para 30 personas son $1.400.000 COP.')
+  })
+
   it('devuelve el error de entrada al modelo para que corrija', async () => {
     const { deps, vistos } = modelo([
       herramienta('calcular_precio', { tipo: 'a_medida', componentes: [{ id: 'cohete' }] }),
