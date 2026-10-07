@@ -776,9 +776,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // permisos de navegador que este sitio no usa (portfolio + panel admin, sin
   // cámara/micrófono/geolocalización/pagos vía Payment Request API, etc.).
   resHeaders.set('Reporting-Endpoints', 'csp-endpoint="/api/security/csp-report"')
+  // El micrófono solo se abre en las páginas de Cotiza, para el dictado por voz
+  // de sus campos (src/lib/cotiza/dictado.ts). El resto del sitio lo sigue
+  // bloqueando: abrirlo en todo el sitio sería permiso de sobra para nada.
+  const microfono = esRutaDeCotiza(canonicalPath) && !canonicalPath.startsWith('/api/') ? 'microphone=(self)' : 'microphone=()'
   resHeaders.set(
     'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()'
+    `camera=(), ${microfono}, geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()`
   )
   const CSP_REPORTING = ' report-to csp-endpoint; report-uri /api/security/csp-report;'
 
