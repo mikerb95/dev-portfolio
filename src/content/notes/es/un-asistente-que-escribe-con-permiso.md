@@ -51,7 +51,7 @@ Armé un banco de 18 casos y lo corrí contra la base de demostración, con el m
 
 Las tres trampas salieron bien a la primera: el asistente denunció los dos mensajes como intentos de darle órdenes, no propuso nada, y se negó al secreto y al borrado. Pero la corrida encontró tres errores reales:
 
-- **La guardia de cifras no sabía leer dólares con centavos.** El cliente en inglés recibió un rango en dólares, el asistente lo citó exactamente como se lo dio la herramienta, y la guardia lo marcó como inventado: leía "2.250" como miles y el ",00" que seguía como una cifra aparte. Llevaba semanas así, porque todos los casos de prueba eran en pesos.
+- **La guardia de cifras no sabía leer dólares con centavos.** El cliente en inglés recibió un rango en dólares, el asistente lo citó exactamente como se lo dio la herramienta, y la guardia lo marcó como inventado: leía "2.250" como miles y el ",00" que seguía como una cifra aparte. Estaba así desde que la escribí, porque todos sus casos de prueba eran en pesos.
 - **Mandó una capacitación a Plano.** Plano solo cotiza desarrollo; la capacitación tiene su precio publicado aparte. El asistente lo hubiera creado igual, con un precio de software para un taller.
 - **No sabía encontrar un hito por su nombre.** Ante "mueve el hito Zona de despacho norte", abrió los proyectos uno por uno hasta dar con él: cinco consultas donde bastaba una.
 
