@@ -79,5 +79,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // Referencia desconocida: 200 igualmente (puede ser de otro entorno/proyecto).
-  return json(200, { ok: true, ...result })
+  // El cuerpo lleva el `ok` de applyGatewayEvent (false si la referencia no
+  // existe); la pasarela solo mira el status.
+  return json(200, result)
 }
