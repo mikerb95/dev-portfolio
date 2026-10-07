@@ -304,11 +304,12 @@ WhatsApp; no es un chat general gratis.
 - Corre en Vercel con la API de Claude (no la Agent SDK, que no cabe en una
   función), con transmisión en vivo como el analista.
 
-### Opcional (después)
+### Opcional (después) ✅ (6 oct 2026, en Plano en vez de briefings)
 
 Al tocar "Enviarle esto a Mike", guardar el resumen (sin datos personales)
-como cotización en borrador en `briefings` y avisar con ntfy, para llegar a
-WhatsApp con el desglose hecho.
+como cotización en borrador y avisar con ntfy, para llegar a WhatsApp con el
+desglose hecho. Entregado como propuesta en borrador en **Plano** (no en
+`briefings`): ver "Del asesor a Plano" más abajo.
 
 ## Arquitectura
 
@@ -740,8 +741,8 @@ Decisiones que surgieron al construirlo:
   US$0,05, más que el estimado inicial de US$0,02. Con el tope por defecto de
   US$1 alcanzan unas 170 preguntas al día. El prompt (~3.000 tokens) no llega
   al mínimo de caché de Haiku, así que no se abarata con caché.
-- **Pendiente**: guardar el resumen como cotización en borrador y avisar con
-  ntfy (el "Opcional (después)" de la capacidad 3).
+- ~~Pendiente: guardar el resumen como cotización en borrador y avisar con
+  ntfy.~~ Hecho el 6 oct 2026, en Plano (ver "Del asesor a Plano").
 
 ### Cerebro ampliado y contacto (2 oct 2026)
 
@@ -935,9 +936,57 @@ Decisiones:
 
 Verificación: `tests/asesor-portada.test.ts`, dos casos nuevos en
 `e2e/asesor-vivo.spec.ts` con la API falsa, y capturas en GPU real (escritorio,
-móvil, movimiento reducido, inglés). Pendiente: probar con la API real cuando
-Mike lo autorice (preguntas de `references/pruebas.md` de la skill chat-ia
-escritas como ideas de negocio, no como preguntas).
+móvil, movimiento reducido, inglés). Probado con la API real el 6 oct 2026:
+ver "Cotizador del hero con el modelo real".
+
+### Del asesor a Plano (6 oct 2026)
+
+Al tocar "Enviarle esto a Mike", la burbuja manda el token de su conversación
+con `navigator.sendBeacon` a `POST /api/asesor/enviado` (no detiene el enlace
+a WhatsApp) y `src/lib/asesor/propuesta.ts` deja la conversación como
+propuesta en borrador en Plano, con aviso por ntfy que abre la propuesta.
+
+- **La conversación sale de la base**, no del navegador: el token solo dice
+  cuál. Sin token válido y vigente (las conversaciones duran 48 h), nada.
+- **Una propuesta por conversación**: la marca es una fila de `app_settings`
+  (`asesor_propuesta_<id>`) que se reclama con su llave primaria antes de
+  crear. No una columna nueva en `propuestas`: sin la migración aplicada en
+  producción, esa columna habría roto todas las consultas de Plano.
+- **La IA de Plano no corre aquí**: un endpoint público que dispare lecturas
+  con Opus sería una forma de gastar a nombre de Mike. Él la lee con un clic.
+- Correos, teléfonos y documentos se tapan antes de guardar; el título es la
+  primera idea del visitante; en inglés, la propuesta queda en dólares.
+- Respuesta siempre 204 sin cuerpo, con límite propio de 10 por IP cada 10
+  minutos, y falla abierto.
+
+Verificación: `tests/asesor-propuesta.test.ts` (5 casos contra libSQL
+temporal: datos tapados, idempotencia con tres clics a la vez, USD, y la marca
+se suelta si falla) y un caso nuevo en `e2e/asesor-vivo.spec.ts` que toca el
+botón y encuentra la propuesta en la base.
+
+### Cotizador del hero con el modelo real (6 oct 2026)
+
+`scripts/asesor-prueba-portada.ts` corre 14 casos con `pagina: 'inicio'`
+contra la base demo (Haiku, unos US$0,04 la corrida). La primera corrida
+destapó tres cosas, corregidas:
+
+- **Voseo** ("él confirma todo con vos") sin que el visitante lo usara. El
+  prompt ya lo prohibía; ahora `sinVoseo` (en `bucle.ts`, junto a `sinRayas`)
+  lo pasa a tuteo con un reemplazo fijo, sin otra llamada al modelo.
+- **Preguntaba en vez de estimar** en 4 de 9 ideas de negocio: la regla
+  general de "1 a 3 preguntas" chocaba con el contexto de la portada, que va
+  al final, y el modelo seguía la general. En la portada esa regla se
+  reemplaza por la de no preguntar.
+- **Lo escrito junto a `calcular_precio` se sumaba a la respuesta**: anuncios
+  ("déjame calcular") y un plazo adivinado que el cálculo contradijo ("1 a 2
+  semanas" para un proyecto de 3 a 6). Ese texto se escribe antes de tener el
+  resultado, así que ahora se descarta; lo escrito junto a
+  `preparar_whatsapp` se sigue conservando.
+
+Tercera corrida: 12 de 14 sin problemas medibles, sin voseo ni narración. Los
+dos marcados ("una página para mi emprendimiento" y el restaurante con el
+teléfono) preguntan qué hace el negocio antes de estimar, que con tan poca
+información es defendible. Unos US$0,14 entre las tres corridas.
 
 ## Decisiones tomadas
 
@@ -959,7 +1008,8 @@ Todas del 1 oct 2026.
 
 ## Pendiente
 
-- El temario de la capacitación se escribió para 4 h; ahora son 8.
+- El temario de la capacitación se escribió para 4 h; ahora son 8. Borrador listo en
+  `docs/plan-capacitacion.md`, sin aplicar.
 Confirmado por Mike el 1 oct 2026, después de la fase 1:
 
 - "A medida" en USD: **US$1,500**.

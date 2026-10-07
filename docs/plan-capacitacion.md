@@ -81,6 +81,47 @@ HTML.
 cerrar la sesión y se teclea en un celular: sin O/0, sin I/1/l, sin S/5. Se
 normaliza al comparar, para no dar soporte telefónico por un guion.
 
+## Temario de 8 h (borrador, 6 oct 2026)
+
+La sesión pasó de 4 h a 8 h el 1 oct 2026 (con el precio nuevo), pero los
+módulos del programa publicado siguen siendo los cinco del taller de 4 h. Este
+es un borrador para que Mike lo revise; **no está aplicado**: el temario vive
+en la base (`training_programs.modules`, programa
+`ia-aplicada-al-trabajo-diario`) y se cambia desde el panel, en la ficha del
+programa.
+
+Criterio: las 4 h que se suman van a **práctica sobre material del propio
+equipo**, no a más teoría. Los objetivos publicados (`outcomes`) no cambian:
+los ocho módulos los cubren con más tiempo de práctica.
+
+| Bloque | Módulo | Tiempo |
+|---|---|---|
+| Mañana | 1. Qué hace y qué no hace un modelo de lenguaje | 45 min |
+| | 2. Instrucciones que funcionan, con práctica | 75 min |
+| | 3. Mapa de tareas del equipo | 45 min |
+| | 4. Documentos propios I: correos y respuestas a clientes | 75 min |
+| Tarde | 5. Documentos propios II: informes, actas y hojas de cálculo | 75 min |
+| | 6. Verificación y fuentes | 60 min |
+| | 7. Límites y datos sensibles | 45 min |
+| | 8. Cierre práctico: tres instrucciones propias y plan de la primera semana | 60 min |
+
+Son 480 minutos de contenido; en la sesión real se restan pausas y almuerzo
+de lo práctico de los módulos 4, 5 y 8, que son los que más se estiran o se
+encogen según el grupo.
+
+Para pegar en "Módulos del temario (uno por línea)", en la ficha del programa en el panel:
+
+```text
+Qué hace y qué no hace un modelo de lenguaje, sin metáforas engañosas (por qué responde con seguridad aunque no sepa)
+Instrucciones que funcionan: contexto, rol, formato de salida y ejemplos, con práctica sobre tareas del propio puesto
+Mapa de tareas del equipo: dónde la IA ahorra tiempo de verdad, dónde no, y cómo medir el ahorro
+Trabajo sobre documentos propios I: correos, respuestas a clientes y mensajes difíciles
+Trabajo sobre documentos propios II: informes, actas, resúmenes de reuniones y hojas de cálculo
+Verificación: cómo detectar una respuesta segura de sí misma y equivocada, y cómo pedirle fuentes que se puedan revisar
+Límites, datos sensibles y qué queda registrado al usar una herramienta externa (Ley 1581 y la política de la organización)
+Cierre práctico: cada persona sale con tres instrucciones propias probadas y un plan de uso para su primera semana
+```
+
 ## Fases
 
 ### Fase 1: banco, catálogo y acceso ✅ (8 ago 2026)

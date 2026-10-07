@@ -11,6 +11,10 @@ import { expect, ipDePrueba, recogerErrores, test } from './fixtures'
 // (e2e/fake-anthropic.mjs): "cuánto" la hace calcular un precio real.
 
 const COOKIE = 'authjs.session-token'
+// Clics forzados en todo el spec: con las portadas del cotizador del hero
+// (terreno WebGL) abiertas en paralelo, headless deja de producir frames y un
+// clic normal espera "estable" hasta expirar (ver e2e/cotizador-hero.spec.ts).
+// Lo que importa se comprueba con expect después de cada clic.
 const db = createClient({ url: E2E.mainDbUrl })
 
 async function panelDeMike(browser: Browser) {
@@ -39,10 +43,11 @@ test('el visitante pide un precio, Mike entra desde el panel y conversan en el m
   const errores = recogerErrores(page)
 
   await page.goto('/paginas-web')
-  await page.locator('#wa-fab').click()
+  await page.locator('#wa-fab').click({ force: true })
   const abrir = page.locator('#asesor-abrir')
   await expect(abrir).toBeEnabled()
-  await abrir.click()
+  await expect(abrir).toBeVisible()
+  await abrir.click({ force: true })
   await page.locator('#asesor-input').fill('¿Cuánto cuesta el plan Negocio?')
   await page.locator('#asesor-input').press('Enter')
 
@@ -96,18 +101,20 @@ test('el visitante pide un precio, Mike entra desde el panel y conversan en el m
   expect(Number(asesor.rows[0].n)).toBe(2)
 
   // Con el chat cerrado, la burbuja avisa que Mike escribió.
-  await page.locator('#asesor-cerrar').click()
+  await page.locator('#asesor-cerrar').click({ force: true })
   await mike.locator('#vivo-input').fill('Perfecto, te escribo por WhatsApp')
   await mike.locator('#vivo-enviar').click({ force: true })
   await expect(page.locator('#wa-fab')).toHaveAttribute('data-nuevo', '', { timeout: 25_000 })
-  await page.locator('#wa-fab').click()
+  await page.locator('#wa-fab').click({ force: true })
   await expect(page.locator('#wa-fab')).not.toHaveAttribute('data-nuevo', '')
   await expect(log.locator('.asesor-burbuja--mike').last()).toContainText('te escribo por WhatsApp')
 
   // Al recargar, la conversación con Mike sigue ahí.
   await page.reload()
-  await page.locator('#wa-fab').click()
-  await page.locator('#asesor-abrir').click()
+  await page.locator('#wa-fab').click({ force: true })
+  // El clic forzado no espera a que el menú se abra: se espera aquí.
+  await expect(page.locator('#asesor-abrir')).toBeVisible()
+  await page.locator('#asesor-abrir').click({ force: true })
   await expect(log.locator('.asesor-burbuja--mike')).toHaveCount(2)
 
   expect(errores).toEqual([])
@@ -124,14 +131,16 @@ test('al tocar "Enviarle esto a Mike", la conversación queda como propuesta en 
   // Otra página que la del caso anterior: corren en paralelo y aquel cuenta
   // las conversaciones de /paginas-web.
   await page.goto('/contact')
-  await page.locator('#wa-fab').click()
-  await page.locator('#asesor-abrir').click()
+  await page.locator('#wa-fab').click({ force: true })
+  // El clic forzado no espera a que el menú se abra: se espera aquí.
+  await expect(page.locator('#asesor-abrir')).toBeVisible()
+  await page.locator('#asesor-abrir').click({ force: true })
   await page.locator('#asesor-input').fill('Quiero avanzar con una tienda para mi marca, mi correo es ana@marca.co')
   await page.locator('#asesor-input').press('Enter')
 
   const boton = page.locator('#asesor-enviar-mike')
   await expect(boton).toBeVisible({ timeout: 20_000 })
-  await boton.click()
+  await boton.click({ force: true })
 
   // sendBeacon no espera: se mira la base hasta que aparezca.
   await expect
@@ -143,7 +152,7 @@ test('al tocar "Enviarle esto a Mike", la conversación queda como propuesta en 
   expect(String(rows[0].conversacion)).not.toContain('ana@marca.co')
 
   // Un segundo clic no crea otra.
-  await boton.click()
+  await boton.click({ force: true })
   await page.waitForTimeout(1500)
   const otra = await db.execute(`SELECT count(*) n FROM propuestas WHERE titulo LIKE 'Del asesor:%'`)
   expect(Number(otra.rows[0]!.n)).toBe(1)

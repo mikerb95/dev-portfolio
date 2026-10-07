@@ -2444,6 +2444,7 @@ export const ITERACIONES: Iteracion[] = [
         dod: [
           ok('Pedidos, reuniones y rondas anotados en una transacción con su adicional; recargo por la hora del pedido en Bogotá (RF-222).'),
           ok('Textos para WhatsApp de la propuesta, de cada adicional y de cada resumen de reunión.'),
+          ok('Dictado por voz en los campos largos con el reconocimiento del navegador; micrófono permitido solo en las páginas de Cotiza (tests/cotiza-dictado.test.ts, 12 casos).'),
           ok('tests/cotiza-encargos.test.ts (20 casos con el SQL real de las migraciones) y recorrido en el navegador con capturas.'),
           ok('Migraciones 0045 y 0046 aplicadas en Turso, principal y demo, el 6 oct 2026.'),
         ],

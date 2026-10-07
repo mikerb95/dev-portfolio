@@ -55,6 +55,11 @@ producción listos. Plan en `docs/plan-marketing.md`.
       `/emails/batch` de Resend, que solo se probó con un Resend falso en los
       tests. "Enviarme una prueba" usa el endpoint de un solo correo, así que
       no lo cubre.
+- [ ] **Artículo en `/notes`** sobre los correos promocionales (regla de
+      "cada etapa mayor termina con su artículo"). Material: las decisiones de
+      `docs/plan-marketing.md` (lista vacía por Ley 1581, horario de la Ley
+      2300, una por semana, idempotencia por lote, por qué no hay baja con un
+      clic de Gmail). Recordar el `decision` en el frontmatter, en es y en.
 
 ### ✅ Demo pública encendida (29 jul 2026)
 
@@ -478,9 +483,11 @@ Queda:
 
 - [ ] Decidir si completar un hito visible desde el asistente debe avisar al
       cliente (hoy sí, igual que desde el panel, y la tarjeta lo dice).
-- [ ] Asesor público: guardar el resumen como cotización en borrador y avisar
-      por ntfy.
+- [x] Asesor público: el resumen queda como propuesta en borrador en Plano
+      con aviso por ntfy al tocar "Enviarle esto a Mike" (6 oct 2026).
 - [ ] El temario de la capacitación se escribió para 4 h; ahora son 8.
+      Borrador de 8 módulos listo en `docs/plan-capacitacion.md` ("Temario
+      de 8 h"), sin aplicar: falta que Mike lo revise y lo pegue en el panel.
 
 ### SIEM multiproyecto (`docs/plan-siem-multiproyecto.md`)
 
@@ -507,13 +514,19 @@ esconden los errores nuevos entre los viejos.
 
 - [ ] Limpiarlos, empezando por el del webhook de pagos.
 
-### IA del Plano y del hero sin probar contra la API real (6 oct 2026)
+### IA del Plano y del hero contra la API real (6 oct 2026)
 
-- [ ] **Cotizador del hero** (RF-037): solo se ha visto con el guion de
-      `e2e/fake-anthropic.mjs`.
-- [ ] **Plano** (`/admin/plano` + `/propuesta/<token>`): primera corrida real
-      de la IA (Opus 5.5, centavos), revisión de las cláusulas por un abogado y
-      versión en inglés. Detalle en `docs/plan-plano.md`.
+- [x] **Cotizador del hero** (RF-037): probado con el modelo real
+      (`scripts/asesor-prueba-portada.ts`); destapó voseo, preguntas donde no
+      tocaban y texto previo al cálculo, corregidos. Ver
+      `docs/plan-asistente.md`.
+- [x] **Plano, del chat al plano**: corrió de verdad siete veces dentro del
+      banco de casos del asistente (`scripts/asistente-banco-casos.ts`), de una
+      panadería a un cliente en inglés en USD.
+- [ ] **Plano, el cliente difícil** (la revisión con IA): sigue sin corrida
+      real.
+- [ ] **Plano**: revisión de las cláusulas por un abogado y versión en inglés.
+      Detalle en `docs/plan-plano.md`.
 
 ### LAB - Fase 5: load testing con k6 ✅ (18 sep 2026)
 

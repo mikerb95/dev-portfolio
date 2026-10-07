@@ -59,6 +59,8 @@ test('el cotizador del hero hace la primera vuelta y "Seguir preguntando" la pas
   // Y sobrevive a una recarga, como cualquier conversación de la burbuja.
   await page.reload()
   await page.locator('#wa-fab').click({ force: true })
+  // El clic forzado no espera a que el menú se abra: se espera aquí.
+  await expect(page.locator('#asesor-abrir')).toBeVisible()
   await page.locator('#asesor-abrir').click({ force: true })
   await expect(log.locator('.asesor-burbuja--yo')).toContainText('restaurante')
 

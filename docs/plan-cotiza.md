@@ -394,6 +394,27 @@ adicionales no lleven colchón y el nivel con que se cobran las reuniones.
   `pf-cotiza` (Fase 53, seis historias) en `src/data/iteraciones-portfolio.ts`,
   con lo que falta marcado como pendiente.
 
+## Dictado por voz (6 oct 2026)
+
+Pedido de Mike: un micrófono para redactar. Botón "Dictar" debajo de los
+campos largos de la ficha (pedido para la IA, exclusiones, supuestos, notas
+privadas, qué pidió el cliente y resumen de reunión).
+
+- `src/lib/cotiza/dictado.ts`: reconocimiento de voz del navegador (Web Speech
+  API, `es-CO`), sin servicio de pago ni dependencias. Chrome, Edge y Safari;
+  en Firefox el botón no aparece. Escribe donde está el cursor, cuida espacios
+  y mayúsculas, y entiende "coma", "dos puntos", "punto" (solo al final de una
+  frase: "punto de venta" es una palabra), "nueva línea", "punto y aparte" y
+  "signo de pregunta". Se reanuda solo si Chrome lo corta tras un silencio; un
+  solo campo dicta a la vez.
+- **Privacidad:** en Chrome y Edge el audio lo transcriben Google o Microsoft.
+- **Permiso:** `Permissions-Policy` abre `microphone=(self)` solo en las páginas
+  de Cotiza (`esRutaDeCotiza`); el resto del sitio sigue en `microphone=()`.
+- Verificado: `tests/cotiza-dictado.test.ts` (12 casos) y un recorrido en el
+  navegador con un reconocimiento falso: el permiso por página, los botones,
+  el texto dictado con puntuación, detener y que el borrador detecte el cambio.
+  Encontró un error real (sin mayúscula después de un salto de línea), corregido.
+
 ## Pendientes de Mike
 
 1. Confirmar el reparto 60/70/80 entre los niveles operativo, analítico y
