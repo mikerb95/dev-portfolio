@@ -1,0 +1,25 @@
+# Práctica 3: que corra solo cada noche. Revisa la hora y la zona antes de aplicar.
+name: vigia-nocturno
+agent: ./agent.md
+environment_id: ./environment.yaml
+schedule:
+  type: cron
+  expression: "30 4 * * *"
+  timezone: America/Bogota
+# Tope por corrida en centavos de dólar: "150" = US$1,50.
+budget:
+  type: limit
+  max_list_cost: {amount: "150", currency: USD}
+initial_events:
+  - type: user.define_outcome
+    description: Haz la revisión completa del repositorio según tus instrucciones y deja informe.md e informe.json en /mnt/session/outputs/.
+    max_iterations: 2
+    rubric:
+      type: text
+      content: |
+        1. Existen informe.md e informe.json en /mnt/session/outputs/.
+        2. informe.json es JSON válido con estado, resumen, hallazgos, revisado y no_revisado.
+        3. Cada hallazgo tiene id, prioridad, categoria, titulo, evidencia y arreglo.
+        4. Cada evidencia cita un comando o un archivo con línea.
+        5. Las vulnerabilidades dicen si llegan a producción o se quedan en desarrollo.
+        6. Ningún texto contiene valores de secretos.

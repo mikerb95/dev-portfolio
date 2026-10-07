@@ -1,0 +1,7 @@
+# Memoria del vigía entre corridas (fase 5). La descripción la lee el agente.
+name: vigia-memoria
+description: >-
+  Memoria del vigía del repositorio de codebymike.net. hallazgos.md lleva los
+  hallazgos ya reportados (id estable, fecha de primera aparición, abierto o
+  cerrado) para no repetirlos cada noche; notas.md lleva lo aprendido del
+  entorno de la sesión. Nunca contiene secretos.

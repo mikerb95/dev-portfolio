@@ -1,5 +1,26 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { ultimasCorridasVigia, type Pendiente } from '../../../lib/vigia/sesion'
+import { leerInforme, porPrioridad } from '../../../lib/vigia/informe'
+
+// Vigía del repo (Managed Agents): última corrida que dejó el webhook. Si la
+// base no responde o la tabla no existe (demo), la sección no se pinta.
+const corridas = await ultimasCorridasVigia(5)
+const ultima = corridas[0]
+const informe = ultima ? leerInforme(ultima.informe) : null
+const pendientes: Pendiente[] = ultima?.pendientes ? JSON.parse(ultima.pendientes) : []
+const PUNTO: Record<string, string> = { verde: 'bg-emerald-400', amarillo: 'bg-amber-400', rojo: 'bg-red-400' }
+const PRIO: Record<string, string> = {
+  alta: 'bg-red-500/15 text-red-400 border-red-500/30',
+  media: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  baja: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
+}
+const DESENLACE: Record<string, string> = {
+  informe: 'Informe entregado', tope: 'Pausada por el tope de gasto', aprobacion: 'Esperando tu aprobación',
+  error: 'Falló sin informe', en_curso: 'En curso',
+}
+const usd = (c: number | null) => (c == null ? '-' : `US$${(c / 100).toFixed(2)}`)
+const fechaVigia = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' })
 ---
 
 <AdminLayout title="Seguridad & Accesibilidad">
@@ -11,6 +32,70 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
       o <span class="text-sky-400">aceptado</span> - la historia de "lo encontré y lo cerré", no un scan que se olvida.
     </p>
   </div>
+
+  {ultima && (
+    <section id="vigia" class="mb-8 rounded-xl bg-zinc-900/60 ring-1 ring-zinc-800 p-5">
+      <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+        <h2 class="flex items-center gap-2 text-zinc-100 font-medium">
+          <span class={`inline-block size-2.5 rounded-full ${PUNTO[ultima.estado ?? ''] ?? 'bg-zinc-500'}`} aria-hidden="true"></span>
+          Vigía del repo
+          {ultima.estado && <span class="text-xs uppercase tracking-wider text-zinc-400">{ultima.estado}</span>}
+        </h2>
+        <p class="text-xs text-zinc-500">
+          {DESENLACE[ultima.desenlace] ?? ultima.desenlace} · {fechaVigia.format(ultima.creada)} · {usd(ultima.costoCentavos)}
+          {ultima.activoSegundos != null && <> · {Math.round(ultima.activoSegundos / 60)} min</>}
+        </p>
+      </div>
+
+      {informe ? (
+        <>
+          <p class="text-sm text-zinc-300 leading-relaxed mb-4 max-w-3xl">{informe.resumen}</p>
+          <ul class="space-y-2 mb-4">
+            {porPrioridad(informe.hallazgos).map((h) => (
+              <li class="rounded-lg bg-zinc-950/50 px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class={`px-1.5 py-0.5 rounded border text-[10px] uppercase tracking-wider ${PRIO[h.prioridad]}`}>{h.prioridad}</span>
+                  <span class="text-[11px] font-mono text-zinc-500">{h.categoria}</span>
+                  <span class="text-sm text-zinc-200">{h.titulo}</span>
+                </div>
+                <p class="mt-1 text-xs text-zinc-400"><span class="text-zinc-500">Arreglo:</span> {h.arreglo}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        ultima.desenlace === 'informe' && <p class="text-sm text-amber-400 mb-4">El informe.json no tiene la forma acordada; el texto completo está abajo.</p>
+      )}
+
+      {pendientes.length > 0 && (
+        <div class="mb-4 space-y-2" data-vigia-sesion={ultima.sessionId}>
+          {pendientes.map((p) => (
+            <div class="rounded-lg bg-amber-500/10 px-3 py-2 text-sm">
+              <p class="text-amber-300">Quiere usar <span class="font-mono">{p.nombre}</span></p>
+              <pre class="mt-1 text-[11px] text-zinc-400 whitespace-pre-wrap break-all">{p.entrada}</pre>
+              <div class="mt-2 flex gap-2">
+                <button type="button" data-vigia-evento={p.eventId} data-aprobado="1" class="px-2.5 py-1 rounded-md border border-emerald-500/40 text-emerald-300 text-xs">Aprobar</button>
+                <button type="button" data-vigia-evento={p.eventId} data-aprobado="0" class="px-2.5 py-1 rounded-md border border-zinc-700 text-zinc-300 text-xs">Rechazar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {ultima.informeMd && (
+        <details class="text-sm">
+          <summary class="cursor-pointer text-zinc-400 hover:text-zinc-200">Informe completo</summary>
+          <pre class="mt-2 max-h-[32rem] overflow-auto rounded-lg bg-zinc-950/60 p-3 text-xs text-zinc-300 whitespace-pre-wrap">{ultima.informeMd}</pre>
+        </details>
+      )}
+
+      {corridas.length > 1 && (
+        <p class="mt-3 text-xs text-zinc-500">
+          Antes: {corridas.slice(1).map((c) => `${fechaVigia.format(c.creada)} ${c.estado ?? c.desenlace}`).join(' · ')}
+        </p>
+      )}
+    </section>
+  )}
 
   <div id="summary" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6"></div>
 
@@ -26,6 +111,27 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
     <p class="text-zinc-600 text-sm">Cargando hallazgos…</p>
   </div>
 </AdminLayout>
+
+<script>
+  // Aprobar o rechazar lo que pidió el vigía (fase 4). El rechazo puede llevar
+  // un motivo, que le llega al agente como resultado de la herramienta.
+  for (const b of document.querySelectorAll<HTMLButtonElement>('[data-vigia-evento]')) {
+    b.addEventListener('click', async () => {
+      const sessionId = b.closest<HTMLElement>('[data-vigia-sesion]')?.dataset.vigiaSesion
+      const aprobado = b.dataset.aprobado === '1'
+      const motivo = aprobado ? '' : (prompt('¿Por qué lo rechazas? (opcional, se lo dice al agente)') ?? '')
+      b.disabled = true
+      const r = await fetch('/api/admin/vigia/decision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, eventId: b.dataset.vigiaEvento, aprobado, motivo }),
+      })
+      const datos = await r.json().catch(() => ({}))
+      if (!r.ok) { alert(datos.error ?? 'No se pudo enviar la decisión.'); b.disabled = false; return }
+      location.reload()
+    })
+  }
+</script>
 
 <script>
   type Finding = {

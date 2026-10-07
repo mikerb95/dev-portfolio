@@ -1922,3 +1922,30 @@ export const marketingEnvios = sqliteTable('marketing_envios', {
   // El límite semanal busca "lo último enviado a esta persona".
   suscriptorEnviadoIdx: index('marketing_envios_suscriptor_enviado_idx').on(t.suscriptorId, t.enviado),
 }))
+
+// Corridas del vigía del repo (Claude Managed Agents, docs/plan-managed-agents.md).
+// Una fila por sesión; la escribe el webhook `/api/managed/webhook`, que llega
+// duplicado y sin orden, así que se hace upsert por `session_id` y `desenlace`
+// guarda en qué quedó para no anunciar dos veces la misma corrida.
+export const vigiaCorridas = sqliteTable('vigia_corridas', {
+  sessionId: text('session_id').primaryKey(),
+  // informe | tope | aprobacion | error | en_curso (ver lib/vigia/desenlace.ts)
+  desenlace: text('desenlace').notNull(),
+  // verde | amarillo | rojo; null si no hubo informe válido.
+  estado: text('estado'),
+  resumen: text('resumen'),
+  // informe.json validado entero (hallazgos, revisado, no_revisado).
+  informe: text('informe'),
+  // informe.md tal cual lo escribió el agente, para leerlo en el panel.
+  informeMd: text('informe_md'),
+  // Herramientas esperando aprobación: [{ eventId, nombre, entrada }].
+  pendientes: text('pendientes'),
+  // Gasto a precio de lista que reporta la sesión, en centavos de dólar.
+  costoCentavos: integer('costo_centavos'),
+  activoSegundos: integer('activo_segundos'),
+  creada: integer('creada', { mode: 'timestamp' }).notNull(),
+  actualizada: integer('actualizada', { mode: 'timestamp' }).notNull(),
+}, (t) => ({
+  // El panel pide las últimas N corridas.
+  creadaIdx: index('vigia_corridas_creada_idx').on(t.creada),
+}))
