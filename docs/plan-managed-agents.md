@@ -117,6 +117,14 @@ orden garantizado, y se **pierden** tras tres intentos fallidos. Por eso:
   primera corrida casi llegó al tope por simular el `npm audit fix` completo).
 - **Tests**: `tests/vigia.test.ts` (10, con el informe real como fixture) y
   `tests/vigia-sesion-db.test.ts` (6, libSQL temporal y cliente falso).
+- **Aplicado en Anthropic** (6 oct 2026): agente v2, memoria
+  `memstore_0193a1KHJkLgrAZ83Q8vxnei` y deployment
+  `depl_01LkirG8vctAohi2Jn282Jmk`, **pausado** a mano justo después de
+  crearse (nunca disparó). Gotcha: `ant apply` resuelve rutas en `agent` y
+  `environment_id`, pero no en `memory_store_id`; ahí va el `memstore_...`.
+- **Gotcha de `ant`**: el token OAuth se renueva solo, pero el renovado puede
+  salir sin scopes y la API responde 403 `scope requirement`. Se arregla con
+  `ant auth login`.
 
 ## Para activar la corrida nocturna
 
@@ -125,9 +133,9 @@ orden garantizado, y se **pierden** tras tres intentos fallidos. Por eso:
    eventos `session.status_idled` y `session.status_terminated`. Guardar el
    `whsec_` en Vercel (`dev-portfolio`) como `ANTHROPIC_WEBHOOK_SIGNING_KEY`.
 3. Desplegar (el webhook tiene que existir en producción antes del paso 4).
-4. Probar con una corrida manual: `ant beta:deployments run --deployment-id <depl_...>`
-   (ID en `claude-lock.json`) y comprobar que llega el push y aparece en el panel.
-5. Despausar: `ant beta:deployments unpause --deployment-id <depl_...>`.
+4. Probar con una corrida manual: `ant beta:deployments run --deployment-id depl_01LkirG8vctAohi2Jn282Jmk`
+   y comprobar que llega el push y aparece en el panel.
+5. Despausar: `ant beta:deployments unpause --deployment-id depl_01LkirG8vctAohi2Jn282Jmk`.
 6. Añadir la entrada `vigia-nocturno` a `CRONS` en `src/data/automatizaciones.ts`
    (`cadaMin: 1440`, con un origen nuevo para Anthropic). Va al final a
    propósito: antes de despausar, el detector de silencio avisaría cada día que

@@ -14,7 +14,9 @@ budget:
   max_list_cost: {amount: "300", currency: USD}
 resources:
   - type: memory_store
-    memory_store_id: ./memory_store.yaml
+    # ID y no ruta: `ant apply` no resuelve rutas en memory_store_id (sí en
+    # agent y environment_id). Es el de ./memory_store.yaml en claude-lock.json.
+    memory_store_id: memstore_0193a1KHJkLgrAZ83Q8vxnei
     access: read_write
     instructions: Léela al empezar y actualízala al terminar, como dicen tus instrucciones.
 initial_events:

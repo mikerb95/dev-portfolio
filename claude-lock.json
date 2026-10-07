@@ -13,6 +13,12 @@
       "hash": "421a1f04970e15ecb50fd8b73e878f93",
       "remote_hash": "596c91621c6eb7d5be6104f5a7748109"
     },
+    "./agents/vigia/deployment-nocturno.yaml": {
+      "kind": "deployment",
+      "id": "depl_01LkirG8vctAohi2Jn282Jmk",
+      "hash": "f60226c271756283d6411d5063c3756a",
+      "remote_hash": "f60226c271756283d6411d5063c3756a"
+    },
     "./agents/vigia/environment.yaml": {
       "kind": "environment",
       "id": "env_01F5UhGfQe4GPNCwKY8PKRg6",
