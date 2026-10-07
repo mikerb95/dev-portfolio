@@ -6,9 +6,9 @@ tags: [ia, arquitectura, seguridad, producto]
 lang: es
 translationOf: an-assistant-that-writes-with-permission
 decision:
-  problem: "Un asistente que solo responde ahorra poco: el trabajo está en cambiar cosas."
+  problem: "Un asistente que solo responde ahorra poco: el trabajo es cambiar cosas."
   rejected: "Dejarlo escribir solo y ofrecer un botón de deshacer"
-  chosen: "Que proponga cada cambio en una tarjeta con el antes y el después, armada por el servidor"
+  chosen: "Una tarjeta con el antes y el después, armada por el servidor"
 ---
 
 El asistente de mi panel empezó solo leyendo. Le preguntaba quién me debía, qué dominios vencían o si se había caído alguna página, y respondía con cifras sacadas de la base. Era útil, pero ahorraba poco: después de la respuesta, yo igual tenía que abrir la ficha del proyecto, buscar el hito, cambiar la fecha y anotar la llamada. Lo que me quitaba tiempo era escribir, no leer.

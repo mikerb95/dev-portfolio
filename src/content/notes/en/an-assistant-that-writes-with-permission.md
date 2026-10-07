@@ -6,9 +6,9 @@ tags: [ai, architecture, security, product]
 lang: en
 translationOf: un-asistente-que-escribe-con-permiso
 decision:
-  problem: "An assistant that only answers saves little: the work is in changing things."
-  rejected: "Letting it write on its own and offering an undo button"
-  chosen: "Have it propose each change on a card with before and after, built by the server"
+  problem: "An assistant that only answers saves little: the work is changing things."
+  rejected: "Let it write alone, with an undo button"
+  chosen: "A before-and-after card for each change, built by the server"
 ---
 
 My dashboard's assistant started out read-only. I'd ask who owed me money, which domains were expiring or whether a site had gone down, and it answered with figures pulled from the database. Useful, but it saved little: after the answer I still had to open the project, find the milestone, change the date and log the call. What cost me time was writing, not reading.
