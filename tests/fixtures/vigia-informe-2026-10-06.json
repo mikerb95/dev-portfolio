@@ -1,0 +1,82 @@
+{
+  "estado": "amarillo",
+  "resumen": "AMARILLO. Los 2863 tests pasan y el sitio publicado trae todos los headers que promete el middleware; nada de lo que reporta npm audit es explotable hoy en el runtime de Vercel. Lo que sí está mal: el deck de sustentación (/docs/presentacion) muestra 'NaN commits' en cuatro lugares, astro check tiene 22 errores y el 302 de /admin sale sin los headers endurecidos. Hay un npm audit fix sin cambios mayores, ya probado en una copia (tests, tipos y build en verde), que baja producción de 21 a 6 avisos, incluido el crítico de Astro.",
+  "hallazgos": [
+    {
+      "id": "deck-presentacion-commits-nan",
+      "prioridad": "alta",
+      "categoria": "otro",
+      "titulo": "El deck de sustentación muestra 'NaN commits' porque tres iteraciones no tienen commits",
+      "evidencia": "src/pages/docs/presentacion.astro:40 suma i.commits, que es opcional (src/data/iteraciones.ts:79). Faltan en pf-halloween (77979bc), pf-plano (64de4b9) y pf-dashboard-asistente (f218e76). astro check: ts(18048) en la línea 40. Evaluado con tsx: 52 iteraciones, 3 sin commits, suma = NaN. Se pinta en las líneas 89, 195, 478 y 598.",
+      "arreglo": "Usar a + (i.commits ?? 0) o completar commits en las tres entradas con git log; añadir un test que impida que la suma dé NaN."
+    },
+    {
+      "id": "dep-astro-ghsa-26w7-cxv4-gfx2",
+      "prioridad": "media",
+      "categoria": "dependencias",
+      "titulo": "astro 7.1.3 (crítico, RCE por AVIF vía sharp) y sharp 0.34.5 (3 altos): no llegan al runtime de Vercel",
+      "evidencia": "npm audit --omit=dev --json. astro.config.mjs usa vercel({ imageService: true }); en build y producción el servicio es @astrojs/vercel/build-image-service (node_modules/@astrojs/vercel/dist/image/shared.js:35), sin transform, y astro/dist/assets/endpoint/generic.js lanza 'not a local service' antes de procesar. Solo hay exposición en astro dev y con un AVIF que no sea propio. GHSA-376h-93r7-7g6f no aplica (no hay base configurado).",
+      "arreglo": "npm audit fix sin --force: astro 7.3.6, sharp 0.35.5, undici 6.29.0, devalue 5.9.4, mermaid 11.17.2, vitest 4.1.11. Simulado en /tmp: 2863 tests en verde, astro check sin errores nuevos, astro build OK; producción baja de 21 a 6 avisos."
+    },
+    {
+      "id": "headers-admin-redirect-sin-endurecer",
+      "prioridad": "media",
+      "categoria": "headers",
+      "titulo": "El 302 de /admin y los demás return tempranos del gate salen sin los headers endurecidos",
+      "evidencia": "curl -sSI https://codebymike.net/admin: 302 sin X-Robots-Tag, CSP, X-Frame-Options, nosniff ni Referrer-Policy; HSTS por defecto de Vercel sin includeSubDomains ni preload; Cache-Control public. Causa: return context.redirect en src/middleware.ts:699, antes del bloque de headers (770-853). Mismo patrón en las líneas 707 (403), 739 (503), 568 (401 del portal) y en demoDenied. En la práctica /admin no es indexable (robots.txt Disallow /admin, /login con meta noindex).",
+      "arreglo": "Sacar el bloque de headers privados a una función y aplicarla también a los return tempranos del gate; añadir un test que verifique los headers del redirect a /login."
+    },
+    {
+      "id": "dep-auth-core-0.37.4-bloqueado-por-auth-astro",
+      "prioridad": "baja",
+      "categoria": "dependencias",
+      "titulo": "@auth/core 0.37.4 (1 crítico, 1 alto, 1 moderado): ninguno aplica a esta configuración",
+      "evidencia": "GHSA-7rqj-j65f-68wh exige el proveedor de email (auth.config.ts solo usa GitHub y Credentials). GHSA-xmf8-cvqr-rfgj exige llamar getToken(), que no aparece en src/, auth.config.ts ni auth-astro. GHSA-x445-f3h2-j279 exige varios proveedores OAuth con vinculación de cuentas, y aquí hay uno solo. El peer de auth-astro@4.2.0 es @auth/core ^0.37.3.",
+      "arreglo": "No forzar 0.41.3 (legacy-peer-deps escondería el choque); subir cuando auth-astro acepte 0.41 y entonces quitar el issuer manual de auth.config.ts:23."
+    },
+    {
+      "id": "tipos-astro-check-22-errores",
+      "prioridad": "baja",
+      "categoria": "tipos",
+      "titulo": "astro check: 22 errores (12 en un script nuevo, 7 en tests, 1 en el webhook de pagos)",
+      "evidencia": "npx astro check: 22 errores, 0 warnings, 118 hints. Están en scripts/asistente-prueba-panel.ts (12, ts1375, commit 0d3b86e), tests/indexnow.test.ts:48,50,84 (5), @ts-expect-error sobrantes en tests/canonical-redirect.test.ts:2 y tests/presentacion-guion.test.ts:6, src/pages/en/notes/[slug].astro:20, y src/pages/api/payments/webhook.ts:82 (ts2783: el ok de result pisa el literal ok: true). Más el de presentacion.astro, que va en su propio hallazgo.",
+      "arreglo": "export {} en el script, tipar el spy de fetch, quitar los @ts-expect-error sobrantes y en el webhook usar { ...result, ok: true } o quitar el literal según la semántica que quieras."
+    },
+    {
+      "id": "headers-xfo-paginas-publicas",
+      "prioridad": "baja",
+      "categoria": "headers",
+      "titulo": "Las páginas públicas no envían X-Frame-Options (las cubre frame-ancestors de la CSP)",
+      "evidencia": "curl -sS -D - https://codebymike.net/ no trae X-Frame-Options; src/middleware.ts:833 solo lo pone en rutas privadas, y las públicas dependen de frame-ancestors 'none' (línea 869).",
+      "arreglo": "Opcional: X-Frame-Options DENY en las públicas no enmarcables, también en integrations/static-headers.mjs."
+    },
+    {
+      "id": "dep-resto-build-o-dev",
+      "prioridad": "baja",
+      "categoria": "dependencias",
+      "titulo": "El resto de avisos altos se queda en build, en desarrollo o no es alcanzable",
+      "evidencia": "npm audit --json y npm ls. Solo build: tar, brace-expansion (@vercel/nft), path-to-regexp (@vercel/routing-utils), js-yaml, smol-toml, svgo, postcss, nanoid, source-map-js. Runtime no alcanzable: undici (@vercel/blob solo usa fetch; el CRLF por type lo frena ALLOWED_MIME en src/lib/portal/documents.ts:174), ws (libsql:// va por HTTPS en Node), devalue (no hay actions ni server islands), dompurify/mermaid/katex (en el navegador, con contenido propio). Solo desarrollo: vitest, drizzle-kit/esbuild, fast-uri, browserslist, qs.",
+      "arreglo": "Cubierto en su mayoría por npm audit fix. No usar --force: bajaría @astrojs/vercel a 8.0.4 y drizzle-kit a 0.18.1."
+    }
+  ],
+  "revisado": [
+    "Node v22.22.0 cumple con >=22.12; npm ci --ignore-scripts bastó, sin repetir con scripts",
+    "npm test: 176 archivos y 2863 tests en verde (el stderr de asesor-vivo es el test de fail-open, esperado)",
+    "npm audit --json (32 avisos) y npm audit --omit=dev --json (21), cruzados con el código y con los avisos de github.com/advisories",
+    "Simulación de npm audit fix en /tmp: tests, astro check y astro build OK; producción baja de 21 a 6",
+    "Headers de / en producción: CSP, HSTS con preload, nosniff, Referrer-Policy y Permissions-Policy coinciden con src/middleware.ts; CDN-Cache-Control confirma que corre el middleware actual",
+    "/admin no indexable en la práctica: 302 a /login, robots.txt Disallow /admin, /login con meta noindex; /en/admin da 404",
+    "La revocación de sesiones admin sigue fallando cerrada con 503 (src/middleware.ts:726-752)",
+    "Migraciones 0043 a 0046 solo aditivas",
+    "git log de 7 días (158 commits) con un clon temporal --shallow-since; los cambios explican el NaN del deck y los errores del script del asistente"
+  ],
+  "no_revisado": [
+    "El clon --depth 50 solo cubre hoy; los 7 días se vieron con un clon temporal aparte y solo se revisaron a fondo los commits de dependencias, middleware, pagos y auth",
+    "Barrido de credenciales filtradas en el repo y el historial",
+    "Si astro check corre en los workflows de .github",
+    "Prueba en vivo de /_image en producción (la conclusión sale del código)",
+    "x-vercel-cache MISS persistente en / (una sola muestra)",
+    "GET /api/admin/ping devuelve 404 con header Location (rareza sin investigar)",
+    "e2e con Playwright, mutación con Stryker, axe y ZAP (ya los cubre el CI)"
+  ]
+}
