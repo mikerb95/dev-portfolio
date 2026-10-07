@@ -1,0 +1,12 @@
+# Contenedor en la nube de Anthropic con red cerrada por defecto.
+# Cambia el nombre (tiene que ser único en tu workspace) y el dominio de tu sitio.
+name: vigia-mi-repo-env
+config:
+  type: cloud
+  networking:
+    type: limited
+    # npm, PyPI y compañía.
+    allow_package_managers: true
+    allowed_hosts:
+      - github.com
+      - mi-sitio.com
