@@ -57,7 +57,7 @@ function enLinea(s: string, colorEnlace: string): string {
   out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
   // El texto ya está escapado, así que la URL capturada también: se valida
   // sobre la versión sin escapar y se vuelve a escapar para el atributo.
-  out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (todo, texto: string, url: string) => {
+  out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, texto: string, url: string) => {
     const real = urlSegura(url.replace(/&amp;/g, '&'))
     return real ? `<a href="${escapar(real)}" style="color:${colorEnlace};">${texto}</a>` : texto
   })
