@@ -93,7 +93,6 @@ test('suscripción, campaña desde el panel y baja', async ({ page, browser }) =
   await expect(panel).toHaveURL(/\/admin\/marketing\/\d+$/)
   const campanaId = Number(panel.url().split('/').pop())
   await expect(panel.locator('#ed-disparar')).toBeEnabled()
-  await panel.screenshot({ path: 'test-results/marketing-editor.png', fullPage: true })
 
   // 4. Dispara. Con Resend apagado el lote falla con un error legible y nada
   // queda colgado en 'enviando'.
@@ -122,8 +121,5 @@ test('suscripción, campaña desde el panel y baja', async ({ page, browser }) =
   await page.goto(`/novedades/baja?s=${id}&t=${'0'.repeat(32)}`)
   await page.getByRole('button', { name: 'Darme de baja' }).click()
   await expect(page.getByRole('status')).toContainText('no es válido')
-
-  await page.goto('/novedades')
-  await page.screenshot({ path: 'test-results/marketing-novedades.png', fullPage: true })
   expect(errores).toEqual([])
 })
