@@ -3,7 +3,8 @@
 > Estado al **29 jul 2026**, con lo añadido el **17 sep 2026** en §4 (tres e2e en
 > rojo heredados y los límites del simulador de infra) y la revisión del
 > **6 oct 2026** (variables de Vercel y monitores consultados de verdad, ítems
-> ya resueltos cerrados, pendientes del Plano y del hero). Este archivo es el
+> ya resueltos cerrados, pendientes del Plano y del hero), más el vigía del repo
+> con Managed Agents y sus arreglos (noche del 6 oct, PRs #4 y #5). Este archivo es el
 > inventario vivo de lo que falta:
 > acciones manuales (variables de entorno, altas en servicios externos,
 > verificaciones en producción) y trabajo de código todavía sin hacer. Lo ya
@@ -24,6 +25,7 @@ degrada en silencio** - ese es el diseño, pero conviene saber qué está apagad
 | Variable | Qué pasa sin ella | Prioridad |
 |---|---|---|
 | `PSI_API_KEY` | El analizador de sitios (`/lab/site-check`) pierde los datos de PageSpeed Insights. | Baja |
+| `ANTHROPIC_WEBHOOK_SIGNING_KEY` | El webhook del vigía (`/api/managed/webhook`) responde 503 y las corridas no llegan al panel ni a `cron_runs`. Es el `whsec_` que da la Console al registrar el endpoint. | Media (cuando se mergee #4) |
 
 Ya están puestas y verificadas: `ENCRYPTION_KEY`, `CRON_SECRET`, `NTFY_TOPIC`,
 `LAB_INGEST_TOKEN`, `COBRO_HISTORY_SECRET`, `SECURITY_IP_SALT`,
@@ -72,6 +74,41 @@ base de archivo, dos corridas seguidas.
       lee nadie.
 
 ## 2. Acciones manuales fuera del repo
+
+### 🟠 Vigía del repo con Managed Agents: activarlo (6 oct 2026)
+
+Código en el PR #4; agente, memoria y corrida nocturna ya aplicados en
+Anthropic, con la corrida **pausada** (`depl_01LkirG8vctAohi2Jn282Jmk`, nunca
+disparó). Detalle y orden exacto en `docs/plan-managed-agents.md`.
+
+- [ ] Revisar y mergear **#5 primero** (arreglos) y luego #4 (vigía).
+- [ ] Aplicar la migración `0048` (tabla `vigia_corridas`) en las dos bases Turso.
+- [ ] Console → Manage → Webhooks: `https://codebymike.net/api/managed/webhook`,
+      eventos `session.status_idled` y `session.status_terminated`; el `whsec_`
+      va a Vercel como `ANTHROPIC_WEBHOOK_SIGNING_KEY` (ver §1).
+- [ ] Ya en producción: corrida manual
+      (`ant beta:deployments run --deployment-id depl_01LkirG8vctAohi2Jn282Jmk`),
+      comprobar que llega el push y aparece en `/admin/lab/security#vigia`.
+- [ ] Despausar (`ant beta:deployments unpause --deployment-id depl_01LkirG8vctAohi2Jn282Jmk`).
+      Gasta hasta US$3 por noche.
+- [ ] Después de despausar: añadir `vigia-nocturno` a `CRONS` en
+      `src/data/automatizaciones.ts`. Antes no, o el detector de silencio avisa
+      cada día que el job "nunca apareció".
+- [ ] Fase 4 (abrir issues/PRs con aprobación): token de GitHub de grano fino
+      en el vault, nunca en el chat ni en el repo. Pasos en el plan.
+- Si `ant` responde 403 `scope requirement`: el token se renovó sin permisos,
+  `ant auth login` otra vez.
+
+### 🟠 Workshop de Managed Agents (sábado 24 oct 2026)
+
+- [ ] **Antes del domingo 11 oct:** mandar la propuesta al organizador por
+      privado. Texto listo en `docs/propuesta-workshop-managed-agents.md`.
+- [ ] Resolver con el organizador los créditos de API de los asistentes (es el
+      bloqueo principal) y confirmar duración (se supuso 3 h) y wifi.
+- [ ] Publicar `workshop/managed-agents/` como repo propio para compartirlo
+      antes del taller.
+- [ ] Ensayo completo el 22 o 23 oct (la API es beta).
+- [ ] Artículo en `/notes` después del taller.
 
 ### 🔴 SEO tras dar de baja `codebymike.tech` (decidido: no se renueva)
 
@@ -483,7 +520,7 @@ fallidos», once scrypt seguidos) rozaban los 5 s por defecto con la suite en
 paralelo. Los dos llevan ahora timeout explícito de 30 s. `npm test`: 170
 archivos, 2756 tests en verde.
 
-### Errores de `astro check` heredados
+### ✅ Errores de `astro check` heredados (corregidos en el PR #5, falta mergear)
 
 22 errores al 6 oct 2026, ninguno nuevo de esta revisión: 12 en
 `scripts/asistente-prueba-panel.ts`, 5 en `tests/indexnow.test.ts`, y uno en
@@ -492,7 +529,28 @@ archivos, 2756 tests en verde.
 `tests/presentacion-guion.test.ts`. No rompen el build (Vite no tipa), pero
 esconden los errores nuevos entre los viejos.
 
-- [ ] Limpiarlos, empezando por el del webhook de pagos.
+- [x] Limpiados en el PR #5 (0 errores) y `astro check` pasa a ser paso del
+      CI. Al entrar en el CI atrapó uno más que venía de `main`: un `as` de
+      TypeScript en un `<script define:vars>` de `/portal/cuenta` que tumbaba
+      todo el JavaScript de la página. También corregido en #5.
+
+### E2E en rojo en `main` (6 oct 2026)
+
+Las últimas cuatro corridas del CI de `main` fallan en el job E2E.
+
+- [ ] `e2e/public.spec.ts` › "/lab publica datos reales del laboratorio": falla
+      en `main` y en el PR #5, así que no viene de ese PR.
+- [ ] `e2e/cotizador-hero.spec.ts` › "un estimado con precio…": intermitente,
+      un 502 del asesor en el primer intento que pasa en el reintento.
+
+### `@auth/core` con un aviso crítico sin parche aplicable
+
+`npm audit` lo marca crítico (GHSA-7rqj-j65f-68wh), pero solo afecta al
+proveedor de email/magic link, que este sitio no usa. La versión parcheada
+(0.41.x) queda fuera del peer de `auth-astro@4.2.0`, y `legacy-peer-deps=true`
+en `.npmrc` escondería el choque.
+
+- [ ] Actualizar cuando `auth-astro` acepte `@auth/core` 0.41. No forzarlo.
 
 ### IA del Plano y del hero sin probar contra la API real (6 oct 2026)
 
