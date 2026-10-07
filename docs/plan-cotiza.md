@@ -189,10 +189,10 @@ no-store`, token guardado solo como hash y rate limit por ruta.
 |---|---|---|
 | 0 | Puerta con PIN, redirección de `/cotiza`, layout aislado, tests de que el PIN no abre nada más | ✅ 6 oct 2026 |
 | 1 | Motor puro de alcance, cupos, adicionales y precio (`src/lib/cotiza/`), con tests sin base de datos | ✅ 6 oct 2026 |
-| 2 | Migración, encargos, bitácora de solicitudes y reuniones, consumo de cupos | ✅ 6 oct 2026 (falta aplicar 0045 en Turso) |
-| 3 | IA: pedido → alcance, clasificador, resumen de reunión | ✅ 6 oct 2026 (sin probar contra el modelo real: cuenta sin cupo hasta el 1 nov) |
-| 4 | Enlace del cliente y aprobación de adicionales | pendiente |
-| 5 | Requisitos promovidos en `/docs`, nota en `/notes` | pendiente |
+| 2 | Migración, encargos, bitácora de solicitudes y reuniones, consumo de cupos | ✅ 6 oct 2026 (0045 aplicada en Turso) |
+| 3 | IA: pedido → alcance, clasificador, resumen de reunión | ✅ 6 oct 2026 (probada con el modelo real) |
+| 4 | Enlace del cliente y aprobación de adicionales | ✅ 6 oct 2026 (0046 aplicada en Turso) |
+| 5 | Requisitos promovidos en `/docs`, nota en `/notes` | ✅ 6 oct 2026 |
 
 ## Fase 0 entregada (6 oct 2026)
 
@@ -340,9 +340,59 @@ adicionales no lleven colchón y el nivel con que se cobran las reuniones.
   una API falsa con respuestas realistas: 4 entregables desde un pedido,
   $1.100.000 congelado, clasificación de un pedido de noche como adicional
   ($315.000 con recargo) y resumen con la línea de dinero inventado quitada.
-- **Sin probar contra Claude de verdad:** el 6 oct 2026 la cuenta de Anthropic
-  devolvió "You have reached your specified API usage limits" (hasta el 1 de
-  noviembre). Afecta también a Plano, al asistente y al asesor en producción.
+- **Probada con el modelo real** el 6 oct 2026, después de que Mike subió el
+  tope de gasto de la cuenta de Anthropic a US$50 al mes: alcance US$0,060,
+  clasificación US$0,027, resumen US$0,021. Del pedido salieron 4 entregables
+  con sus citas verificadas, 6 exclusiones y 6 preguntas; el pedido de noche se
+  clasificó como adicional citando la exclusión exacta.
+- **Ajuste tras la prueba real:** la IA inventó un supuesto ("una ronda de
+  ajustes por entregable") que contradecía los cupos y escribió supuestos
+  dirigidos a Mike ("recibes..."), cuando los lee el cliente. El prompt ahora
+  le prohíbe escribir sobre reuniones, rondas u horario (lo fijan los cupos) y
+  le pide tercera persona. Repetido con el modelo: corregido.
+
+## Fase 4 entregada (6 oct 2026)
+
+- **Migración `drizzle/0046_woozy_dark_phoenix.sql`**, solo `ADD COLUMN` y un
+  índice único: token del enlace (huella SHA-256 y copia cifrada), visitas,
+  constancia de aceptación y quién decidió cada adicional. **Pendiente:
+  aplicarla en Turso (principal y demo) después de la 0045.**
+- **`src/lib/cotiza/enlace.ts`:** el token (128 bits) se busca por su SHA-256 y
+  se guarda cifrado con la clave de la bóveda para que Mike lo vuelva a copiar;
+  nunca en claro. Generar uno nuevo mata el anterior. Reabrir la propuesta la
+  oculta del enlace hasta que se vuelva a congelar.
+- **`/acuerdo/<token>`** (pública, noindex, sin caché, 60 solicitudes por
+  minuto por IP, 404 bajo `/en`): propuesta, qué no incluye, cupos con lo
+  usado, valor y pagos, resúmenes de reunión con su plazo de corrección y los
+  adicionales por aprobar arriba de todo. Nunca las notas privadas ni los
+  pedidos internos.
+- **Aceptación del cliente:** nombre, cédula o NIT y casilla; vence a los 15
+  días del envío. La página manda la huella de la propuesta que mostró: si
+  Mike la cambió mientras tanto, no se acepta. Constancia SHA-256 recalculable.
+- **Adicionales:** el cliente aprueba o rechaza cada uno con su nombre; se
+  aprueba el monto que vio (va en el `WHERE`) y queda constancia. Lo que Mike
+  marca desde el panel queda como "marcado por ti".
+- **Avisos:** ntfy en cada aceptación y en cada decisión del cliente.
+- **Panel:** tarjeta "Enlace del cliente" (copiar, generar uno nuevo, veces que
+  se abrió, constancia de aceptación) y los textos para WhatsApp de la
+  propuesta y de cada adicional ya traen el enlace.
+- Verificado: `tests/cotiza-enlace.test.ts` (14 casos con el SQL real de 0045
+  y 0046) y un recorrido en el navegador: el cliente sin sesión acepta y
+  aprueba un adicional, Mike ve ambas constancias, el enlace no abre el panel,
+  token inventado y `/en/acuerdo` dan 404. Capturas en celular.
+- Hallazgo local: la `ENCRYPTION_KEY` del `.env` llega al servidor de
+  desarrollo con 61 caracteres (no 64), así que localmente no se puede cifrar
+  (tampoco la bóveda). En producción manda la de Vercel. Sin clave válida el
+  enlace funciona igual; solo no se puede volver a copiar.
+
+## Fase 5 entregada (6 oct 2026)
+
+- Nota `/notes/el-precio-pactado-no-se-toca` y `/en/notes/the-agreed-price-does-not-move`,
+  con su decisión en el frontmatter. Por OPSEC no publica tarifas, rutas del
+  panel ni los umbrales de los frenos del PIN.
+- RF-220 a RF-224 implementados en `src/data/documentacion.ts`; iteración
+  `pf-cotiza` (Fase 53, seis historias) en `src/data/iteraciones-portfolio.ts`,
+  con lo que falta marcado como pendiente.
 
 ## Pendientes de Mike
 
@@ -356,6 +406,6 @@ adicionales no lleven colchón y el nivel con que se cobran las reuniones.
    que el redondeo sube a $100.000).
 6. ¿Cobrar el anticipo con Wompi desde el enlace, como Plano, o solo por
    transferencia?
-7. Aplicar la migración 0045 en Turso (principal y demo).
-8. Subir o quitar el límite de uso de la cuenta de Anthropic (consola) y
-   probar la IA de Cotiza con el modelo real.
+7. ~~Aplicar las migraciones 0045 y 0046 en Turso~~: aplicadas en principal y demo el 6 oct 2026.
+8. ~~Límite de la cuenta de Anthropic~~: subido a US$50 al mes por Mike; IA de Cotiza y de Plano probadas con el modelo real el 6 oct 2026.
+9. Revisar la `ENCRYPTION_KEY` del `.env` local (llega con 61 caracteres).

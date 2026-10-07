@@ -80,6 +80,12 @@ export const GRUPOS_PANEL: GrupoPanel[] = [
         label: "Plano · propuestas",
       },
       {
+        href: "/admin/marketing",
+        claves: "correos promociones novedades campañas suscriptores boletín newsletter",
+        icon: "M4 4h16v16H4z M4 7l8 6 8-6 M15 17h3",
+        label: "Marketing · correos",
+      },
+      {
         href: "/admin/cotiza",
         claves: "consultoría logística comercio exterior compras operaciones alcance cupos pin",
         icon: "M9 11l3 3 8-8 M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9",

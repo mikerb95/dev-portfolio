@@ -1,0 +1,189 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { conteoSuscriptores, cupoDiario, enviadosHoy, listarCampanas, listarSuscriptores } from '../../../lib/marketing/db'
+import { proximaApertura, ventanaLegal } from '../../../lib/marketing/reglas'
+import { secretoMarketing } from '../../../lib/marketing/tokens'
+import { emailConfigured } from '../../../lib/email'
+import { formatterCO } from '../../../lib/fecha-co'
+
+// Correos promocionales (docs/plan-marketing.md). La lista solo tiene gente
+// que pidió entrar: no se importan clientes ni contactos (decisión del 6 oct
+// 2026), así que arranca vacía y la llenan /novedades, /contact y el portal.
+
+const isDemo = Astro.locals.demo === true
+const ahora = new Date()
+const [campanas, conteo, suscriptores, hoy] = await Promise.all([listarCampanas(), conteoSuscriptores(), listarSuscriptores(), enviadosHoy(ahora)])
+const tope = cupoDiario()
+const ventana = ventanaLegal(ahora)
+const apertura = ventana.abierta ? null : proximaApertura(ahora)
+const faltan = [!emailConfigured() && 'RESEND_API_KEY', !secretoMarketing() && 'MARKETING_SECRET'].filter(Boolean) as string[]
+
+const fmt = formatterCO({ weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+const fmtDia = formatterCO({ day: 'numeric', month: 'short', year: 'numeric' })
+
+const ETIQUETA_ESTADO = { borrador: 'Borrador', enviando: 'Enviando', enviada: 'Enviada', cancelada: 'Cancelada' } as const
+const ETIQUETA_ORIGEN = { formulario: '/novedades', contacto: '/contact', portal: 'Portal' } as const
+const ETIQUETA_SUS = { pendiente: 'Sin confirmar', activo: 'Activo', baja: 'De baja' } as const
+---
+
+<AdminLayout title="Marketing · novedades por correo">
+  <div class="mk space-y-5">
+    {faltan.length > 0 && (
+      <p class="mk-aviso">
+        Falta configurar {faltan.map((f, i) => <><code>{f}</code>{i < faltan.length - 1 ? ' y ' : ''}</>)}: sin eso no sale ninguna campaña.
+      </p>
+    )}
+
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="mk-card">
+        <span class="mk-k">Suscriptores activos</span>
+        <span class="mk-v">{conteo.activo}</span>
+        <span class="mk-sub">{conteo.pendiente} sin confirmar · {conteo.baja} de baja</span>
+      </div>
+      <div class="mk-card">
+        <span class="mk-k">Cupo de hoy</span>
+        <span class="mk-v">{hoy}<span class="mk-de"> / {tope}</span></span>
+        <span class="mk-sub">El resto del cupo gratis de Resend queda para el portal y las alertas.</span>
+      </div>
+      <div class="mk-card">
+        <span class="mk-k">Horario legal (Ley 2300)</span>
+        <span class:list={['mk-v mk-v--sm', ventana.abierta ? 'text-lime' : 'text-ink-100']}>
+          <span class:list={['mk-punto', ventana.abierta ? 'bg-lime' : 'bg-ink-300']}></span>
+          {ventana.abierta ? 'Abierto' : 'Cerrado'}
+        </span>
+        <span class="mk-sub">
+          {ventana.abierta ? 'L-V 7:00-19:00 · sáb 8:00-15:00' : `${ventana.motivo}. Abre ${fmt.format(apertura!)}.`}
+        </span>
+      </div>
+      <div class="mk-card">
+        <span class="mk-k">Ritmo</span>
+        <span class="mk-v mk-v--sm">1 por semana</span>
+        <span class="mk-sub">Nadie recibe dos promociones en menos de 7 días; la segunda espera su turno.</span>
+      </div>
+    </div>
+
+    <section class="mk-card">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <h2>Campañas</h2>
+        {!isDemo && (
+          <div class="flex flex-wrap gap-2">
+            <button id="mk-procesar" class="mk-btn mk-btn--sec">Enviar lo pendiente ahora</button>
+            <a href="/admin/marketing/nueva" class="mk-btn">Nueva campaña</a>
+          </div>
+        )}
+      </div>
+      <p id="mk-estado" class="mk-sub mb-2" role="status"></p>
+      {campanas.length === 0 ? (
+        <p class="mk-sub">Todavía no hay campañas.</p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="mk-tabla">
+            <thead>
+              <tr><th>Asunto</th><th>Estado</th><th>Enviados</th><th>Pendientes</th><th>Fallidos</th><th>Bajas</th><th>Fecha</th></tr>
+            </thead>
+            <tbody>
+              {campanas.map((c) => (
+                <tr>
+                  <td><a href={`/admin/marketing/${c.id}`} class="mk-link">{c.asunto}</a></td>
+                  <td><span class:list={['mk-chip', `mk-chip--${c.estado}`]}>{ETIQUETA_ESTADO[c.estado]}</span></td>
+                  <td>{c.envios.enviado}</td>
+                  <td>{c.envios.pendiente + c.envios.enviando}</td>
+                  <td class:list={[c.envios.fallido > 0 && 'text-ember']}>{c.envios.fallido}</td>
+                  <td>{c.envios.bajas}</td>
+                  <td class="mk-sub">{fmtDia.format(c.disparada ?? c.creada)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+
+    <section class="mk-card">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <h2>Suscriptores</h2>
+        <a href="/novedades" target="_blank" rel="noopener" class="mk-link text-[12px]">Ver el formulario público ↗</a>
+      </div>
+      {suscriptores.length === 0 ? (
+        <p class="mk-sub">Nadie se ha suscrito todavía. Entran por <code>/novedades</code>, por la casilla de <code>/contact</code> y por la cuenta del portal.</p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="mk-tabla">
+            <thead>
+              <tr><th>Correo</th><th>Nombre</th><th>Origen</th><th>Estado</th><th>Desde</th><th></th></tr>
+            </thead>
+            <tbody>
+              {suscriptores.map((s) => (
+                <tr>
+                  <td class="font-mono text-[12px]">{s.email}</td>
+                  <td>{s.nombre ?? '-'}</td>
+                  <td class="mk-sub">{ETIQUETA_ORIGEN[s.origen]}</td>
+                  <td><span class:list={['mk-chip', `mk-chip--${s.estado}`]}>{ETIQUETA_SUS[s.estado]}</span></td>
+                  <td class="mk-sub">{fmtDia.format(s.confirmado ?? s.creado)}</td>
+                  <td class="text-right">
+                    {!isDemo && s.estado !== 'baja' && (
+                      <button data-baja={s.id} data-email={s.email} class="mk-link text-[12px] hover:text-ember">Dar de baja</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  </div>
+</AdminLayout>
+
+<script>
+  const estado = document.getElementById('mk-estado')!
+  document.getElementById('mk-procesar')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget as HTMLButtonElement
+    btn.disabled = true
+    estado.textContent = 'Procesando la cola…'
+    try {
+      const r = await (await fetch('/api/admin/marketing/procesar', { method: 'POST' })).json()
+      estado.textContent = r.motivo
+        ? `${r.motivo}. Pendientes: ${r.pendientes}.`
+        : `Enviados ${r.enviados}${r.reintentados ? ` (+${r.reintentados} reintentados)` : ''}, fallidos ${r.fallidos}, pendientes ${r.pendientes}.`
+      if (r.enviados || r.fallidos) setTimeout(() => location.reload(), 1200)
+    } catch {
+      estado.textContent = 'No se pudo procesar la cola.'
+    } finally {
+      btn.disabled = false
+    }
+  })
+  for (const b of document.querySelectorAll<HTMLButtonElement>('[data-baja]')) {
+    b.addEventListener('click', async () => {
+      if (!confirm(`¿Dar de baja a ${b.dataset.email}? No volverá a recibir campañas.`)) return
+      const res = await fetch(`/api/admin/marketing/suscriptores/${b.dataset.baja}`, { method: 'DELETE' })
+      if (res.ok) location.reload()
+    })
+  }
+</script>
+
+<style is:global>
+  .mk-card { border-radius: 1.1rem; padding: 1.25rem; background: rgba(255, 255, 255, 0.018); border: 1px solid rgba(255, 255, 255, 0.07); display: flex; flex-direction: column; gap: 0.3rem; }
+  .mk-card h2 { font-size: 15px; font-weight: 500; color: var(--color-ink-50); }
+  .mk-k { font-size: 11px; font-family: ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.14em; color: var(--color-ink-300); }
+  .mk-v { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; color: var(--color-ink-50); display: flex; align-items: center; gap: 0.5rem; }
+  .mk-v--sm { font-size: 18px; }
+  .mk-de { font-size: 15px; color: var(--color-ink-300); }
+  .mk-punto { width: 0.5rem; height: 0.5rem; border-radius: 999px; }
+  .mk-sub { font-size: 12px; color: var(--color-ink-200); line-height: 1.5; }
+  .mk-aviso { border-radius: 0.9rem; padding: 0.75rem 1rem; font-size: 13px; color: var(--color-ember); background: rgba(255, 107, 61, 0.08); }
+  .mk-aviso code, .mk code { font-family: ui-monospace, monospace; font-size: 0.92em; color: var(--color-ink-50); }
+  .mk-btn { display: inline-flex; align-items: center; height: 2.25rem; padding: 0 1rem; border-radius: 999px; background: var(--color-cyan); color: var(--color-ink-950); font-size: 13px; font-weight: 600; }
+  .mk-btn:disabled { opacity: 0.4; }
+  .mk-btn--sec { background: rgba(255, 255, 255, 0.03); color: var(--color-ink-100); font-weight: 400; border: 1px solid rgba(255, 255, 255, 0.1); }
+  .mk-btn--sec:hover { background: rgba(255, 255, 255, 0.06); }
+  .mk-link { color: var(--color-ink-100); transition: color 0.15s; }
+  .mk-link:hover { color: var(--color-cyan); }
+  .mk-tabla { width: 100%; font-size: 13px; color: var(--color-ink-100); border-collapse: collapse; }
+  .mk-tabla th { text-align: left; font-size: 11px; font-weight: 400; font-family: ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-ink-300); padding: 0 0.75rem 0.5rem 0; }
+  .mk-tabla td { padding: 0.55rem 0.75rem 0.55rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+  .mk-chip { display: inline-block; font-size: 11px; padding: 0.1rem 0.55rem; border-radius: 999px; background: rgba(255, 255, 255, 0.05); color: var(--color-ink-100); }
+  .mk-chip--enviando, .mk-chip--pendiente { background: rgba(250, 204, 21, 0.1); color: rgb(253, 224, 71); }
+  .mk-chip--enviada, .mk-chip--activo { background: rgba(0, 242, 255, 0.08); color: var(--color-cyan); }
+  .mk-chip--cancelada, .mk-chip--baja { color: var(--color-ink-300); }
+</style>

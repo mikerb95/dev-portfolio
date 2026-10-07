@@ -5,13 +5,16 @@ import { getPrefs, MANDATORY_TYPES, NOTIFICATION_LABELS } from '../../lib/portal
 import { clientTeam } from '../../lib/portal/team'
 import { describeDevice } from '../../lib/device-info'
 import { formatDateTime, relativeTime } from '../../lib/portal/format'
+import { suscritoPorEmail } from '../../lib/marketing/db'
 
 const { user, client, sessionId } = Astro.locals.portal!
 
-const [sessions, prefs, team] = await Promise.all([
+const [sessions, prefs, team, novedades] = await Promise.all([
   listSessions(user.id),
   getPrefs(user.id),
   user.role === 'owner' ? clientTeam(client.id) : Promise.resolve([]),
+  // Fail-open: si la tabla de marketing no responde, la cuenta carga igual.
+  suscritoPorEmail(user.email).catch(() => false),
 ])
 
 const ROLE_LABELS: Record<string, string> = {
@@ -110,6 +113,20 @@ const prefRows = Object.entries(NOTIFICATION_LABELS).map(([type, label]) => ({
         ))}
       </div>
       <p id="pref-msg" class="hidden mt-3 text-[12px]" role="status" />
+    </section>
+
+    <!-- Novedades (marketing): aparte de los avisos porque no es lo mismo.
+         Los avisos son del servicio contratado; esto es publicidad y por eso
+         arranca desmarcado (Ley 1581: autorización previa y expresa). -->
+    <section class="glass rounded-2xl p-5">
+      <label class="flex items-center justify-between gap-3">
+        <span>
+          <span class="block text-[15px] font-medium text-ink-50">Novedades y promociones</span>
+          <span class="block text-[12px] text-ink-300 mt-1">Proyectos nuevos, promociones de los servicios y artículos técnicos. Máximo un correo por semana.</span>
+        </span>
+        <input id="novedades" type="checkbox" class="shrink-0 w-4 h-4 accent-cyan cursor-pointer" checked={novedades} />
+      </label>
+      <p id="novedades-msg" class="hidden mt-3 text-[12px]" role="status" />
     </section>
 
     <!-- Equipo (solo owner) -->
@@ -295,6 +312,18 @@ const prefRows = Object.entries(NOTIFICATION_LABELS).map(([type, label]) => ({
         flash(document.getElementById('pref-msg'), 'Preferencia guardada.')
       }
     })
+  })
+
+  // Novedades
+  const novedades = document.getElementById('novedades') as HTMLInputElement | null
+  novedades?.addEventListener('change', async () => {
+    const { ok, data } = await post('/api/portal/cuenta/novedades', { activo: novedades.checked })
+    if (!ok) {
+      novedades.checked = !novedades.checked
+      flash(document.getElementById('novedades-msg'), data.error ?? 'No se pudo guardar.', false)
+    } else {
+      flash(document.getElementById('novedades-msg'), novedades.checked ? 'Listo, te llegarán las novedades.' : 'Listo, ya no te llegarán.')
+    }
   })
 
   // Sesiones

@@ -4,8 +4,9 @@ import { transmitir } from '../../../../lib/analista/sse'
 import { continuarDecision, reclamarDecision } from '../../../../lib/asistente/motor-api'
 import { recordAdminEvent } from '../../../../lib/security/events'
 
-// Aprueba o rechaza la acción que propuso el asistente (hoy, crear una cuenta
-// de cobro en borrador) y transmite lo que sigue. La decisión puede llegar
+// Aprueba o rechaza la acción que propuso el asistente (una cuenta de cobro en
+// borrador, o un cambio en un proyecto, hito, seguimiento o mensaje) y
+// transmite lo que sigue. La decisión puede llegar
 // horas después: la conversación vive en la base. Protegido por el middleware
 // de /api/admin y vetado en modo demo.
 

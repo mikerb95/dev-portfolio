@@ -457,17 +457,14 @@ está publicado ("Traducir un sitio sin abrirle una puerta trasera").
 
 - [ ] Alta de la propiedad en inglés en Search Console y Bing (ver §2).
 
-### Asistente del panel - fases abiertas (`docs/plan-asistente.md`)
+### Asistente del panel (`docs/plan-asistente.md`)
 
-Hechas: 0, 1, 2, 4, 7 y 8. Faltan:
+Todas las fases cerradas el 6 oct 2026, incluido el banco de casos con el
+modelo real (`scripts/asistente-banco-casos.ts`) y su nota en `/notes`.
+Queda:
 
-- [ ] **Fase 3**: subagente cotizador + `guardar_cotizacion` con aprobación.
-- [ ] **Fase 5**: resto de escrituras (proyecto, hito, seguimiento, mensaje
-      leído).
-- [ ] **Fase 6**: pruebas adversariales y banco de casos con el modelo real
-      (~US$3 por corrida).
-- [ ] **Fase 9**: cierre (RF-210 a RF-212 a `implementado`, nota en `/notes`,
-      iteración).
+- [ ] Decidir si completar un hito visible desde el asistente debe avisar al
+      cliente (hoy sí, igual que desde el panel, y la tarjeta lo dice).
 - [ ] Asesor público: guardar el resumen como cotización en borrador y avisar
       por ntfy.
 - [ ] El temario de la capacitación se escribió para 4 h; ahora son 8.

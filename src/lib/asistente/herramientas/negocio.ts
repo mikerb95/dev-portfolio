@@ -91,9 +91,9 @@ const proyectosTool: Herramienta = {
 const proyectoTool: Herramienta = {
   nombre: 'proyecto',
   descripcion:
-    'Detalle de un proyecto: hitos, contactos (solo nombre y rol), decisiones de arquitectura, cotizaciones, cuentas de cobro y pendientes de seguimiento. Busca por id, slug o parte del título.',
+    'Detalle de un proyecto: hitos, contactos (solo nombre y rol), decisiones de arquitectura, cotizaciones, cuentas de cobro y pendientes de seguimiento. Busca por id, slug, parte del título del proyecto o parte del título de uno de sus hitos.',
   esquema: z.object({
-    buscar: z.string().min(1).max(80).describe('Id numérico, slug o parte del título del proyecto'),
+    buscar: z.string().min(1).max(80).describe('Id numérico, slug, parte del título del proyecto o de uno de sus hitos'),
   }),
   async ejecutar(args: { buscar: string }) {
     const termino = args.buscar.trim()
@@ -115,7 +115,21 @@ const proyectoTool: Herramienta = {
       })
       .from(projects)
       .leftJoin(clients, eq(projects.clientId, clients.id))
-      .where(id ? eq(projects.id, id) : or(eq(projects.slug, termino), like(projects.title, `%${termino}%`)))
+      .where(
+        id
+          ? eq(projects.id, id)
+          : or(
+              eq(projects.slug, termino),
+              like(projects.title, `%${termino}%`),
+              // Por el hito: "mueve el hito Zona de despacho norte" no dice de
+              // qué proyecto es, y sin esto el modelo abría los proyectos uno
+              // por uno (lo mostró el banco de casos de la fase 6).
+              inArray(
+                projects.id,
+                db.select({ id: projectMilestones.projectId }).from(projectMilestones).where(like(projectMilestones.title, `%${termino}%`))
+              )
+            )
+      )
       .limit(5)
 
     if (!candidatos.length) return fallo(`No hay ningún proyecto que coincida con "${termino}".`)
@@ -130,6 +144,8 @@ const proyectoTool: Herramienta = {
     const [hitos, contactos, adrs, cotizaciones, cuentas, pendientes] = await Promise.all([
       db
         .select({
+          // El id lo necesita actualizar_hito (panel); no dice nada del cliente.
+          id: projectMilestones.id,
           titulo: projectMilestones.title,
           estado: projectMilestones.status,
           vence: projectMilestones.dueAt,
@@ -167,7 +183,7 @@ const proyectoTool: Herramienta = {
         .orderBy(desc(invoices.createdAt))
         .limit(20),
       db
-        .select({ titulo: interactions.title, siguientePaso: interactions.nextAction, vence: interactions.dueDate })
+        .select({ id: interactions.id, titulo: interactions.title, siguientePaso: interactions.nextAction, vence: interactions.dueDate })
         .from(interactions)
         .where(and(eq(interactions.projectId, p.id), eq(interactions.done, false)))
         .orderBy(asc(interactions.dueDate))

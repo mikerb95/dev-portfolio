@@ -1,9 +1,8 @@
 import type { APIRoute } from 'astro'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../../../../db'
-import { projectMilestones, projects } from '../../../../db/schema'
-import { notifyClient } from '../../../../lib/portal/notifications'
-import { recordActivity } from '../../../../lib/portal/activity'
+import { projectMilestones } from '../../../../db/schema'
+import { actualizarHito, ESTADOS_HITO, type CambiosHito } from '../../../../lib/portal/hitos'
 import { parseFechaCalendario } from '../../../../lib/fecha-co'
 
 // Hitos del proyecto: lo que el cliente ve como línea de tiempo en su portal.
@@ -11,8 +10,6 @@ import { parseFechaCalendario } from '../../../../lib/fecha-co'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
-
-const STATUSES: readonly string[] = ['pendiente', 'en_curso', 'completado']
 
 /** Crea un hito. */
 export const POST: APIRoute = async ({ request }) => {
@@ -58,7 +55,8 @@ export const POST: APIRoute = async ({ request }) => {
 
 /**
  * Actualiza un hito. Completar uno visible avisa al cliente: es la clase de
- * novedad por la que abrió el portal.
+ * novedad por la que abrió el portal. La regla vive en lib/portal/hitos.ts,
+ * compartida con el asistente del dashboard.
  */
 export const PATCH: APIRoute = async ({ request }) => {
   let data: Record<string, unknown>
@@ -74,64 +72,26 @@ export const PATCH: APIRoute = async ({ request }) => {
   const [current] = await db.select().from(projectMilestones).where(eq(projectMilestones.id, id)).limit(1)
   if (!current) return json(404, { error: 'hito no encontrado' })
 
-  const patch: Record<string, unknown> = {}
+  const cambios: CambiosHito = {}
 
-  if (typeof data.title === 'string' && data.title.trim()) patch.title = data.title.trim().slice(0, 200)
-  if (typeof data.description === 'string') patch.description = data.description.slice(0, 1000) || null
-  if (typeof data.visibleToClient === 'boolean') patch.visibleToClient = data.visibleToClient
+  if (typeof data.title === 'string' && data.title.trim()) cambios.title = data.title.trim().slice(0, 200)
+  if (typeof data.description === 'string') cambios.description = data.description.slice(0, 1000) || null
+  if (typeof data.visibleToClient === 'boolean') cambios.visibleToClient = data.visibleToClient
 
   if (typeof data.dueAt === 'string') {
     const dueAt = parseFechaCalendario(data.dueAt)
     if (dueAt && Number.isNaN(dueAt.getTime())) return json(400, { error: 'fecha inválida' })
-    patch.dueAt = dueAt
+    cambios.dueAt = dueAt
   }
 
-  let justCompleted = false
   if (typeof data.status === 'string') {
-    if (!STATUSES.includes(data.status)) return json(400, { error: 'estado desconocido' })
-    patch.status = data.status
-    // `completedAt` lo pone el servidor, no el formulario: es un hecho, no una
-    // opinión editable.
-    patch.completedAt = data.status === 'completado' ? (current.completedAt ?? new Date()) : null
-    justCompleted = data.status === 'completado' && current.status !== 'completado'
+    if (!(ESTADOS_HITO as readonly string[]).includes(data.status)) return json(400, { error: 'estado desconocido' })
+    cambios.status = data.status as CambiosHito['status']
   }
 
-  if (Object.keys(patch).length === 0) return json(400, { error: 'nada que actualizar' })
+  if (Object.keys(cambios).length === 0) return json(400, { error: 'nada que actualizar' })
 
-  await db.update(projectMilestones).set(patch).where(eq(projectMilestones.id, id))
-
-  // Solo se avisa de lo que el cliente puede ver, y solo en la transición: un
-  // segundo PATCH sobre un hito ya completado no debe mandar otro correo.
-  const visible = (patch.visibleToClient as boolean | undefined) ?? current.visibleToClient
-  if (justCompleted && visible) {
-    const [project] = await db
-      .select({ clientId: projects.clientId, title: projects.title })
-      .from(projects)
-      .where(eq(projects.id, current.projectId))
-      .limit(1)
-
-    if (project?.clientId) {
-      const titulo = (patch.title as string) ?? current.title
-      await notifyClient({
-        clientId: project.clientId,
-        type: 'milestone',
-        title: `Hito completado · ${titulo}`,
-        body: `Avanzamos en ${project.title}. Puedes ver el detalle en tu portal.`,
-        href: '/portal',
-        emailCta: 'Ver el avance',
-      })
-      // Feed: la notificación es por persona y se marca leída; esto es el
-      // registro compartido que queda en la línea de tiempo del proyecto.
-      await recordActivity({
-        clientId: project.clientId,
-        projectId: current.projectId,
-        type: 'milestone',
-        title: `Hito completado · ${titulo}`,
-        href: '/portal',
-      })
-    }
-  }
-
+  await actualizarHito(current, cambios)
   return json(200, { ok: true })
 }
 

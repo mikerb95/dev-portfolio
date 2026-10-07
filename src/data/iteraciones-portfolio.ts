@@ -2344,7 +2344,7 @@ export const ITERACIONES: Iteracion[] = [
         dod: [
           ok('Salida estructurada sin campos de dinero; solo componentes de la tabla; citas verificadas como literales (RF-216).'),
           ok('Hallazgos con cifras inventadas descartados por la guardia de cifras del asistente.'),
-          pend('Primera corrida contra la API real (requiere aprobar el gasto, unos centavos).'),
+          ok('Probado con el modelo real el 6 oct 2026: conversación de una panadería a 6 componentes con sus 4 citas verificadas, exclusiones y preguntas útiles (US$0,06).'),
         ],
       },
       {
@@ -2401,6 +2401,130 @@ export const ITERACIONES: Iteracion[] = [
           ok('Borrador creado con createCuentaCobro y auditado; emitirla sigue siendo un clic de Mike.'),
           ok('e2e/asistente.spec.ts recorre aprobar y descartar con la API de Claude falsa.'),
           ok('Migración 0044 aplicada en las dos bases; cuenta de cobro real creada y aprobada en la demo (US$0,032).'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pf-cotiza',
+    fase: 'Fase 53 · El precio pactado no se toca',
+    nombre: 'Cotiza: consultoría con alcance controlado',
+    rango: '6 oct 2026',
+    ghSince: '2026-10-06',
+    ghUntil: '2026-10-06',
+    resumen:
+      'Los encargos de consultoría en logística empezaban pequeños y terminaban en reuniones y pedidos que nadie pagó. Cotiza fija el precio al inicio y nunca lo reabre: lo incluido son cupos que se descuentan, lo nuevo nace como adicional con su precio y el cliente lo aprueba desde su enlace con constancia. Entra con la sesión del panel o con un PIN que solo abre esta herramienta, y la IA ayuda a contar sin poder escribir cifras.',
+    historias: [
+      {
+        id: 'PF-CO-01', titulo: 'Como Mike, quiero entrar a Cotiza con un PIN sin que ese PIN abra el resto del panel',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'seguridad', 'fase-53'],
+        dod: [
+          ok('Rutas abiertas por el PIN con patrones anclados; cualquier otra de /admin va a /login (RF-220).'),
+          ok('Frenos por IP y general, falla cerrada, aviso por ntfy en cada entrada y PIN triviales rechazados.'),
+          ok('tests/cotiza-acceso.test.ts y tests/cotiza-pin-db.test.ts (30 casos) y recorrido real de 34 comprobaciones.'),
+          pend('Fijar el PIN en /admin/settings en producción.'),
+        ],
+      },
+      {
+        id: 'PF-CO-02', titulo: 'Como Mike, quiero cotizar por entregables contables con un precio que se congela',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'pagos', 'fase-53'],
+        dod: [
+          ok('Motor puro e isomorfo: horas por entregable, colchón, redondeo, tramos de pago de Plano, cupos y adicionales (RF-221).'),
+          ok('Al congelar, el servidor recalcula y guarda tarifas, cupos y reglas del día con huella SHA-256.'),
+          ok('tests/cotiza-motor.test.ts (29 casos con cifras a mano), en UTC, Bogotá y Tokio.'),
+          pend('Confirmar el reparto 60/70/80, las horas de revisión de documentos y el mínimo por encargo.'),
+        ],
+      },
+      {
+        id: 'PF-CO-03', titulo: 'Como Mike, quiero que la bitácora decida sola cuándo algo ya no cabe en lo pactado',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'fase-53'],
+        dod: [
+          ok('Pedidos, reuniones y rondas anotados en una transacción con su adicional; recargo por la hora del pedido en Bogotá (RF-222).'),
+          ok('Textos para WhatsApp de la propuesta, de cada adicional y de cada resumen de reunión.'),
+          ok('tests/cotiza-encargos.test.ts (20 casos con el SQL real de las migraciones) y recorrido en el navegador con capturas.'),
+          ok('Migraciones 0045 y 0046 aplicadas en Turso, principal y demo, el 6 oct 2026.'),
+        ],
+      },
+      {
+        id: 'PF-CO-04', titulo: 'Como Mike, quiero que la IA convierta el pedido en alcance, clasifique pedidos nuevos y ordene mis notas',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'ia', 'fase-53'],
+        dod: [
+          ok('Esquemas sin campos de dinero, citas literales verificadas y guardia que quita cifras que no venían en el texto (RF-223).'),
+          ok('tests/cotiza-ia.test.ts (14 casos) y recorrido contra una API falsa con citas y cifras inventadas a propósito.'),
+          ok('Probado con el modelo real el 6 oct 2026: 4 entregables con citas literales, un pedido de noche clasificado como adicional citando la exclusión y un resumen limpio (US$0,11 las tres consultas). Corregido el prompt para que los supuestos no contradigan los cupos ni se dirijan a Mike.'),
+        ],
+      },
+      {
+        id: 'PF-CO-05', titulo: 'Como cliente, quiero ver mi propuesta, aceptarla y aprobar adicionales desde un enlace',
+        tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'fase-53'],
+        dod: [
+          ok('Token de 128 bits guardado como huella y cifrado; aceptación con la huella de lo que se vio y monto en el WHERE (RF-224).'),
+          ok('Constancias SHA-256 recalculables y aviso por ntfy en cada decisión.'),
+          ok('tests/cotiza-enlace.test.ts (14 casos) y recorrido real en celular: acepta, aprueba y el enlace no abre el panel.'),
+        ],
+      },
+      {
+        id: 'PF-CO-06', titulo: 'Como lector, quiero entender cómo se cotiza consultoría sin que el alcance se descontrole',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['cotiza', 'notes', 'fase-53'],
+        dod: [
+          ok('Nota /notes/el-precio-pactado-no-se-toca en español e inglés, sin tarifas, rutas del panel ni umbrales de los frenos.'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pf-asistente-escribe',
+    fase: 'Fase 54 · Un asistente que escribe con permiso',
+    nombre: 'Escrituras del asistente, cotizar con Plano y banco de casos con el modelo real',
+    rango: '6 oct 2026',
+    ghSince: '2026-10-06',
+    ghUntil: '2026-10-06',
+    resumen:
+      'El asistente del dashboard pasa de crear solo cuentas de cobro a proponer cambios en proyectos, hitos, seguimiento y mensajes, y a dejar cotizaciones en Plano. Cada escritura muestra una tarjeta con el antes y el después que arma el servidor desde la base, y se vuelve a preparar al aprobar. Un banco de 18 casos contra la base demo con el modelo real encontró tres errores que la suite no veía: la guardia de cifras no leía dólares con centavos, una capacitación terminaba en Plano y un hito no se encontraba por su nombre.',
+    historias: [
+      {
+        id: 'PF-DA-03', titulo: 'Como Mike, quiero pedirle al asistente que cambie un proyecto, un hito, el seguimiento o los mensajes, y aprobarlo viendo el cambio',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'ia', 'fase-54'],
+        dod: [
+          ok('Cuatro escrituras con tarjeta común de antes y después (RF-210): proyecto, hito, seguimiento y mensajes leídos.'),
+          ok('Lo público del portafolio y la visibilidad de un hito no se tocan aunque el modelo los mande; las notas internas solo crecen.'),
+          ok('La regla de hitos que avisa al cliente pasó a un módulo compartido con el panel; la tarjeta lo dice antes de aprobar.'),
+          ok('tests/asistente-escrituras.test.ts (19 casos) y e2e de un mensaje marcado como leído con la API de Claude falsa.'),
+        ],
+      },
+      {
+        id: 'PF-DA-04', titulo: 'Como Mike, quiero pegarle lo que me escribió un cliente y encontrar la propuesta lista en Plano',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'plano', 'cotizar', 'fase-54'],
+        dod: [
+          ok('crear_propuesta deja el borrador en Plano y lo lee con su IA al aprobar, no al preparar (RF-211).'),
+          ok('Devuelve el rango del motor y las preguntas abiertas, sin el teléfono ni el correo que haya en la conversación.'),
+          ok('tests/asistente-propuesta.test.ts (4 casos) con la IA de Plano falsa, incluido el fallo de la IA.'),
+        ],
+      },
+      {
+        id: 'PF-DA-05', titulo: 'Como Mike, quiero saber qué hace el modelo real con preguntas reales antes de confiarle escrituras',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'ia', 'pruebas', 'fase-54'],
+        dod: [
+          ok('scripts/asistente-banco-casos.ts: 18 casos contra la base demo que se califican solos y dejan la demo como estaba.'),
+          ok('Primera corrida: 14 de 18; corregidos la guardia de dólares con centavos, la capacitación enviada a Plano y la búsqueda de un hito por nombre.'),
+          ok('Los casos afectados, repetidos: 6 de 6. Las tres trampas de terceros se denunciaron sin obedecerlas. Unos US$0,90 entre las tres corridas.'),
+        ],
+      },
+      {
+        id: 'PF-DA-06', titulo: 'Como lector, quiero entender cómo se le da permiso de escribir a un asistente sin perder el control',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'notes', 'fase-54'],
+        dod: [
+          ok('Nota /notes/un-asistente-que-escribe-con-permiso en español e inglés, sin rutas del panel ni detalles de las defensas.'),
         ],
       },
     ],

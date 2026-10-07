@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { TEXTO_CONSENTIMIENTO } from '../../lib/marketing/contenido'
+
+// Suscripción a las novedades (docs/plan-marketing.md). También es la página a
+// la que vuelve el enlace de confirmación (?estado=confirmado|invalido).
+// SSR y sin caché: el estado viene en la URL y no tiene sentido en la CDN.
+
+Astro.response.headers.set('Cache-Control', 'no-store')
+const estado = Astro.url.searchParams.get('estado')
+const avisos: Record<string, { tono: 'ok' | 'mal'; texto: string }> = {
+  confirmado: { tono: 'ok', texto: 'Listo, quedaste suscrito. El próximo correo de novedades te llega a ti.' },
+  invalido: { tono: 'mal', texto: 'Ese enlace ya se usó o caducó. Si quieres suscribirte, vuelve a escribir tu correo abajo.' },
+}
+const aviso = estado ? avisos[estado] : undefined
+---
+
+<BaseLayout title="Novedades · CodeByMike" description="Proyectos nuevos, promociones de los servicios y artículos técnicos de CodeByMike, en tu correo. Nunca más de un correo por semana.">
+  <div class="max-w-[720px] mx-auto px-6 pt-32 pb-24">
+    <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+      <span class="text-cyan">/novedades</span>
+      <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+    </div>
+    <h1 class="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-tight leading-[1.05] text-ink-50">Novedades por correo</h1>
+    <p class="mt-4 text-[15px] leading-relaxed text-ink-200 max-w-[56ch]">
+      Proyectos que acabo de entregar, promociones de mis servicios y los artículos técnicos nuevos. Pocas veces al mes y
+      <strong class="text-ink-50 font-medium">nunca más de un correo por semana</strong>. Te das de baja con un clic desde cualquiera de ellos.
+    </p>
+
+    {aviso && (
+      <p class:list={['mt-8 rounded-xl px-4 py-3 text-[14px]', aviso.tono === 'ok' ? 'bg-cyan/10 text-cyan' : 'bg-ember/10 text-ember']} role="status">
+        {aviso.texto}
+      </p>
+    )}
+
+    <form id="nv-form" class="mt-10 rounded-2xl glass p-6 md:p-7 grid gap-4">
+      <label class="grid gap-1.5">
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Nombre <span class="text-ink-300 normal-case tracking-normal">(opcional)</span></span>
+        <input name="nombre" maxlength="120" autocomplete="given-name" class="input-base w-full rounded-lg px-3 py-2.5 text-[14px]" />
+      </label>
+      <label class="grid gap-1.5">
+        <span class="text-[11px] font-mono uppercase tracking-wider text-ink-100">Correo</span>
+        <input name="email" type="email" required maxlength="200" autocomplete="email" class="input-base w-full rounded-lg px-3 py-2.5 text-[14px]" />
+      </label>
+      <label class="flex items-start gap-3 text-[13px] leading-relaxed text-ink-200 cursor-pointer">
+        <input name="acepto" type="checkbox" required class="mt-1 accent-cyan" />
+        <span>{TEXTO_CONSENTIMIENTO} Tus datos se tratan según la Ley 1581 de 2012.</span>
+      </label>
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <p id="nv-estado" class="text-[13px] font-mono text-ink-300" role="status"></p>
+        <button class="inline-flex items-center h-11 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all disabled:opacity-40">
+          Suscribirme
+        </button>
+      </div>
+    </form>
+  </div>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('nv-form') as HTMLFormElement
+  const estado = document.getElementById('nv-estado')!
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = form.querySelector('button')!
+    btn.disabled = true
+    estado.className = 'text-[13px] font-mono text-ink-300'
+    estado.textContent = 'Enviando…'
+    const fd = new FormData(form)
+    try {
+      const res = await fetch('/api/marketing/suscribir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: fd.get('nombre'), email: fd.get('email'), acepto: fd.get('acepto') === 'on', origen: 'formulario', locale: 'es' }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (res.ok) {
+        form.reset()
+        estado.className = 'text-[13px] font-mono text-cyan'
+        estado.textContent = 'Revisa tu correo: te mandé un enlace para confirmar.'
+      } else {
+        estado.className = 'text-[13px] font-mono text-ember'
+        estado.textContent = body.error ?? 'No se pudo registrar, intenta más tarde.'
+      }
+    } catch {
+      estado.className = 'text-[13px] font-mono text-ember'
+      estado.textContent = 'Sin conexión, intenta de nuevo.'
+    } finally {
+      btn.disabled = false
+    }
+  })
+</script>

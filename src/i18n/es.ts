@@ -1102,6 +1102,8 @@ const es = {
       messagePlaceholder: 'Cuéntame qué estás construyendo, dónde estás atascado, o qué necesitas.',
       tlsNote: 'Enviado sobre TLS',
       submitCta: 'Enviar mensaje',
+      newsletterLabel: 'Quiero recibir también novedades y promociones por correo (máximo una por semana, me doy de baja cuando quiera).',
+      newsletterStatus: 'Te llegará un correo para confirmar la suscripción a las novedades.',
       okShort: '✓ Ok',
       nameTooShort: '✗ Mínimo 2 caracteres',
       emailInvalid: '✗ Email inválido',

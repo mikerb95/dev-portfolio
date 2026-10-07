@@ -28,11 +28,19 @@ const MULTIPLICADOR: Record<string, number> = {
 
 // $ o US$ delante, o COP/USD/millones/mil/M/k detrás (al menos una marca).
 const PATRON =
-  /(US\$|COP\s?\$|\$)?\s?(\d{1,3}(?:[.,]\d{3})+|\d+(?:[.,]\d{1,2})?)(?:\s?(millones|millón|millon|mil|M|k)\b)?(?:\s?(COP|USD|pesos|dólares|dolares))?/gi
+  /(US\$|COP\s?\$|\$)?\s?(\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?:\s?(millones|millón|millon|mil|M|k)\b)?(?:\s?(COP|USD|pesos|dólares|dolares))?/gi
 
 /** Lee un número con separadores de miles o un decimal corto. Devuelve [valor, decimales]. */
 function leerNumero(crudo: string): [number, number] {
-  if (/^\d{1,3}([.,]\d{3})+$/.test(crudo)) return [Number(crudo.replace(/[.,]/g, '')), 0]
+  // Miles con centavos ("US$ 2.250,00" o "2,250.00"): sin este caso el patrón
+  // se quedaba con "2.250" y leía ",00" como una cifra aparte ("00 USD"), y
+  // la guardia marcaba como inventado el precio en dólares que la herramienta
+  // sí había dado. Lo destapó el banco de casos con el modelo real.
+  const mil = /^(\d{1,3}(?:[.,]\d{3})+)(?:[.,](\d{1,2}))?$/.exec(crudo)
+  if (mil) {
+    const dec = mil[2] ?? ''
+    return [Number(`${mil[1]!.replace(/[.,]/g, '')}.${dec || '0'}`), dec.length]
+  }
   const m = /^(\d+)(?:[.,](\d{1,2}))?$/.exec(crudo)
   if (!m) return [NaN, 0]
   const dec = m[2] ?? ''

@@ -9,7 +9,9 @@
 //
 // Solo navegador.
 
-export type Vista = {
+import type { VistaCambio } from '../../lib/asistente/escrituras/cambio'
+
+export type VistaCuenta = {
   tipo: 'cuenta_cobro'
   cliente: { id: number; nombre: string }
   proyecto: { id: number; titulo: string } | null
@@ -23,6 +25,8 @@ export type Vista = {
   neto: { texto: string }
   faltantesParaEmitir: string[]
 }
+
+export type Vista = VistaCuenta | VistaCambio
 
 export type Propuesta = { origen: string; motivo: string; herramienta?: string; vista?: Vista }
 
@@ -68,6 +72,11 @@ const PASOS: Record<string, (e: Record<string, unknown>) => string> = {
   paginas: () => 'Revisando páginas y crons',
   documentacion: (e) => `Consultando la documentación sobre «${cita(e.consulta)}»`,
   crear_cuenta_cobro: () => 'Creando la cuenta de cobro',
+  actualizar_proyecto: () => 'Guardando el cambio en el proyecto',
+  actualizar_hito: () => 'Guardando el cambio en el hito',
+  registrar_seguimiento: () => 'Anotando en el seguimiento',
+  marcar_mensaje_leido: () => 'Marcando los mensajes',
+  crear_propuesta: () => 'Creando la propuesta y leyéndola con la IA de Plano',
 }
 const pasoDe = (h: string, e: Record<string, unknown> = {}) => (PASOS[h] ?? (() => `Consultando ${h}`))(e)
 
@@ -153,6 +162,8 @@ export function crearHilo({ hilo, alCambiarId, alOcupar, pedirCambios }: Opcione
   let ocupado = false
   let actual: Turno | null = null
   let pendiente: Turno | null = null
+  /** La herramienta que se ejecuta si Mike aprueba: el paso que se pinta al hacer clic. */
+  let herramientaPendiente = 'crear_cuenta_cobro'
 
   const ocupar = (v: boolean) => {
     ocupado = v
@@ -206,7 +217,7 @@ export function crearHilo({ hilo, alCambiarId, alOcupar, pedirCambios }: Opcione
     t.respuesta.append(caja)
   }
 
-  function tarjetaCuenta(v: Vista): HTMLElement {
+  function tarjetaCuenta(v: VistaCuenta): HTMLElement {
     const c = el('div', 'tarjeta-cuenta')
     const cab = el('div', 'tc-cab')
     const tit = el('div')
@@ -256,13 +267,49 @@ export function crearHilo({ hilo, alCambiarId, alOcupar, pedirCambios }: Opcione
     return c
   }
 
+  /** Antes y después, campo por campo. Lo que sale del panel va arriba y en grande. */
+  function tarjetaCambio(v: VistaCambio): HTMLElement {
+    const c = el('div', 'tarjeta-cambio')
+    const cab = el('div', 'tm-cab')
+    cab.append(el('span', 'tc-rotulo', v.rotulo), el('h4', 'tm-titulo', v.titulo))
+    if (v.contexto) cab.append(el('span', 'tc-proyecto', v.contexto))
+    c.append(cab)
+
+    if (v.avisos.length) {
+      const a = el('div', 'tm-avisos')
+      a.setAttribute('role', 'note')
+      for (const x of v.avisos) a.append(el('p', '', x))
+      c.append(a)
+    }
+
+    const lista = el('dl', 'tm-cambios')
+    for (const x of v.cambios) {
+      const fila = el('div', 'tm-fila')
+      const valores = el('dd', 'tm-valores')
+      if (x.antes !== null) {
+        valores.append(el('s', 'tm-antes', x.antes))
+        const flecha = el('span', 'tm-flecha', '→')
+        flecha.setAttribute('aria-label', 'pasa a')
+        valores.append(flecha)
+      }
+      valores.append(el('span', x.despues === null ? 'tm-despues tm-vacio' : 'tm-despues', x.despues ?? 'vacío'))
+      fila.append(el('dt', '', x.campo), valores)
+      lista.append(fila)
+    }
+    c.append(lista)
+    return c
+  }
+
   function tarjeta(t: Turno, p: Propuesta, conBotones: boolean) {
     t.tarjeta?.remove()
     const caja = el('div', 'turno-tarjeta entra')
-    caja.append(p.vista?.tipo === 'cuenta_cobro' ? tarjetaCuenta(p.vista) : el('p', 'resp-p', `${p.origen}: ${p.motivo}`))
+    const v = p.vista
+    caja.append(
+      v?.tipo === 'cuenta_cobro' ? tarjetaCuenta(v) : v?.tipo === 'cambio' ? tarjetaCambio(v) : el('p', 'resp-p', `${p.origen}: ${p.motivo}`)
+    )
     const pie = el('div', 'tarjeta-pie')
     if (conBotones) {
-      pie.append(el('span', 'tarjeta-nota', 'Queda en borrador. Emitirla y enviarla sigue siendo tuyo.'))
+      pie.append(el('span', 'tarjeta-nota', v?.tipo === 'cambio' ? v.nota : 'Queda en borrador. Emitirla y enviarla sigue siendo tuyo.'))
       const acciones = el('div', 'tarjeta-acciones')
       const cambios = el('button', 'boton-sec', 'Pedir cambios')
       cambios.type = 'button'
@@ -270,7 +317,7 @@ export function crearHilo({ hilo, alCambiarId, alOcupar, pedirCambios }: Opcione
       const no = el('button', 'boton-sec', 'Descartar')
       no.type = 'button'
       no.addEventListener('click', () => decidir(false))
-      const si = el('button', 'boton-pri', 'Aprobar y crear')
+      const si = el('button', 'boton-pri', v?.tipo === 'cambio' ? v.boton : 'Aprobar y crear')
       si.type = 'button'
       si.addEventListener('click', () => decidir(true))
       acciones.append(cambios, no, si)
@@ -328,11 +375,15 @@ export function crearHilo({ hilo, alCambiarId, alOcupar, pedirCambios }: Opcione
             break
           case 'dato':
             t.pasos.querySelectorAll('.paso.activo').forEach((n) => n.classList.remove('activo'))
-            if (ev.herramienta === 'crear_cuenta_cobro' && ev.datos?.creada) {
+            if (ev.datos?.creada || ev.datos?.hecho) {
+              const enlace = String(ev.datos.enlace ?? '')
+              const texto = ev.datos.creada ? `${ev.datos.numero} creada en borrador` : String(ev.datos.resumen ?? 'Listo')
               const ok = el('div', 'turno-hecho entra')
-              const a = el('a', 'enlace', `${ev.datos.numero} creada en borrador →`)
-              a.href = String(ev.datos.enlace)
-              ok.append(a)
+              if (rutaSegura(enlace)) {
+                const a = el('a', 'enlace', `${texto} →`)
+                a.href = enlace
+                ok.append(a)
+              } else ok.append(el('span', '', texto))
               t.respuesta.append(ok)
             }
             pensando(t, true)
@@ -349,6 +400,7 @@ export function crearHilo({ hilo, alCambiarId, alOcupar, pedirCambios }: Opcione
             pensando(t, false)
             tarjeta(t, ev, true)
             pendiente = t
+            if (ev.herramienta) herramientaPendiente = ev.herramienta
             break
           case 'decision':
             break
@@ -397,7 +449,7 @@ export function crearHilo({ hilo, alCambiarId, alOcupar, pedirCambios }: Opcione
     const t = pendiente
     pendiente = null
     cerrarTarjeta(t, aprobado ? 'aprobada' : 'descartada')
-    if (aprobado) paso(t, 'crear_cuenta_cobro')
+    if (aprobado) paso(t, herramientaPendiente)
     await enviar('/api/admin/asistente/decision', { id, aprobado }, t)
   }
 
@@ -437,6 +489,7 @@ export function crearHilo({ hilo, alCambiarId, alOcupar, pedirCambios }: Opcione
       if (actual && e.propuesta) {
         tarjeta(actual, e.propuesta, e.estado === 'esperando_aprobacion')
         pendiente = e.estado === 'esperando_aprobacion' ? actual : null
+        if (e.propuesta.herramienta) herramientaPendiente = e.propuesta.herramienta
         pie(actual, e.estado, 0)
       }
       if (actual && e.estado === 'fallida' && e.error) avisar(actual, `${e.error} Para seguir, empieza una conversación nueva.`)
