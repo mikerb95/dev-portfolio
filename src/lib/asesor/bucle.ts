@@ -235,7 +235,12 @@ export async function atender(e: Entrada, deps: Dependencias): Promise<Respuesta
     const usos = r.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
     if (usos.length) {
       const dicho = textoDe(r)
-      if (dicho) previo.push(dicho)
+      // Lo escrito junto a calcular_precio se escribió ANTES de tener el
+      // resultado: es un anuncio ("déjame calcular") o, peor, un plazo
+      // adivinado que el cálculo contradice después (prueba con el modelo
+      // real del 6 oct 2026: prometió "1 a 2 semanas" y el cálculo era un
+      // proyecto de 3 a 6). La respuesta de verdad llega después del resultado.
+      if (dicho && !usos.some((u) => u.name === 'calcular_precio')) previo.push(dicho)
       mensajes.push({ role: 'assistant', content: r.content })
       const resultados: Anthropic.ToolResultBlockParam[] = usos.map((u) => {
         const salida = ejecutarHerramienta(u, e.locale, cotizaciones, calculos)

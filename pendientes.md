@@ -43,6 +43,19 @@ remitente del portal: entregada a `mikedrb@proton.me`.
       además hay que **quitarlo de esa lista** (resend.com → Emails →
       Suppressions) o Resend no le volverá a enviar.
 
+### Correos promocionales `/admin/marketing` (6 oct 2026, RF-225)
+
+Código, migración 0047 (aplicada en principal y demo) y `MARKETING_SECRET` en
+producción listos. Plan en `docs/plan-marketing.md`.
+
+- [ ] **Cron en cron-job.org**: `GET https://codebymike.net/api/cron/marketing-envio`
+      cada hora, con `Authorization: Bearer <CRON_SECRET>`. Sin él, una campaña
+      solo avanza con "Enviar lo pendiente ahora" del panel.
+- [ ] **Primera campaña real con 2+ suscriptores**: el envío por lotes usa
+      `/emails/batch` de Resend, que solo se probó con un Resend falso en los
+      tests. "Enviarme una prueba" usa el endpoint de un solo correo, así que
+      no lo cubre.
+
 ### ✅ Demo pública encendida (29 jul 2026)
 
 `TURSO_DEMO_URL` y `TURSO_DEMO_AUTH_TOKEN` subidas a **Production y Preview**
