@@ -439,6 +439,8 @@ export async function procesarCola(opts: { ahora?: Date; tope?: number } = {}): 
   // 2. Lotes nuevos, hasta agotar el cupo del día.
   const tope = opts.tope ?? cupoDiario()
   let cupo = cupoRestante(await enviadosHoy(ahora), tope)
+  // Bloquea lo enviado DESPUÉS de hace 7 días (estricto), igual que
+  // puedeRecibir: a los 7 días justos ya se puede.
   const semanaAtras = seg(new Date(ahora.getTime() - DIAS_ENTRE_ENVIOS * 86_400_000))
   while (cupo > 0) {
     const lote = randomBytes(9).toString('base64url')
@@ -456,7 +458,7 @@ export async function procesarCola(opts: { ahora?: Date; tope?: number } = {}): 
           AND NOT EXISTS (
             SELECT 1 FROM marketing_envios x
             WHERE x.suscriptor_id = e.suscriptor_id
-              AND (x.estado = 'enviando' OR (x.estado = 'enviado' AND x.enviado >= ${semanaAtras}))
+              AND (x.estado = 'enviando' OR (x.estado = 'enviado' AND x.enviado > ${semanaAtras}))
           )
         GROUP BY e.suscriptor_id
         ORDER BY MIN(e.id)
