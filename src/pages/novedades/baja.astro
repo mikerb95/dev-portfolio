@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+
+// Página del enlace "Darme de baja" de cada correo. No da de baja al abrirla:
+// los escáneres de enlaces de los correos corporativos abren todo, y darían de
+// baja a la gente sin que lo pidiera. La baja es el botón (POST).
+
+Astro.response.headers.set('Cache-Control', 'no-store, private')
+const q = Astro.url.searchParams
+const estado = q.get('estado')
+const s = q.get('s') ?? ''
+const t = q.get('t') ?? ''
+const c = q.get('c') ?? ''
+const accion = `/api/marketing/baja?s=${encodeURIComponent(s)}&t=${encodeURIComponent(t)}&c=${encodeURIComponent(c)}`
+const mensajes: Record<string, string> = {
+  hecho: 'Listo: no vas a recibir más correos de novedades. Los avisos del portal de clientes (si eres cliente) siguen llegando, porque esos no son publicidad.',
+  invalido: 'Ese enlace no es válido. Si sigues recibiendo correos que no quieres, responde a cualquiera de ellos y te saco de la lista a mano.',
+  error: 'Algo falló de mi lado. Intenta de nuevo en un rato o responde al correo y te saco a mano.',
+}
+---
+
+<BaseLayout title="Darse de baja · CodeByMike" noindex>
+  <div class="max-w-[620px] mx-auto px-6 pt-32 pb-24">
+    <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-semibold tracking-tight text-ink-50">Darse de baja de las novedades</h1>
+    {estado && mensajes[estado] ? (
+      <p class="mt-6 text-[15px] leading-relaxed text-ink-200" role="status">{mensajes[estado]}</p>
+    ) : s && t ? (
+      <form method="post" action={accion} class="mt-8 rounded-2xl glass p-6 grid gap-4">
+        <p class="text-[15px] leading-relaxed text-ink-200">Con este botón dejas de recibir los correos de novedades y promociones de CodeByMike.</p>
+        <button class="justify-self-start inline-flex items-center h-11 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-all">
+          Darme de baja
+        </button>
+      </form>
+    ) : (
+      <p class="mt-6 text-[15px] leading-relaxed text-ink-200">{mensajes.invalido}</p>
+    )}
+  </div>
+</BaseLayout>

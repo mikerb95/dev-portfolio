@@ -1073,6 +1073,8 @@ const en = {
       messagePlaceholder: "Tell me what you're building, where you're stuck, or what you need.",
       tlsNote: 'Sent over TLS',
       submitCta: 'Send message',
+      newsletterLabel: 'I also want to receive news and promotions by email (at most one a week, I can unsubscribe anytime).',
+      newsletterStatus: "You'll get an email to confirm your subscription to the news.",
       okShort: '✓ Ok',
       nameTooShort: '✗ Minimum 2 characters',
       emailInvalid: '✗ Invalid email',

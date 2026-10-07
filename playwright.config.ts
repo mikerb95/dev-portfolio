@@ -48,6 +48,7 @@ export const E2E = {
   /** Prefijo de los datos de la base "principal": jamás debe verse en la demo. */
   sentinel: 'CENTINELA-REAL ',
   authSecret: 'e2e-auth-secret-no-usado-en-produccion-0123456789',
+  marketingSecret: 'e2e-marketing-secret-no-usado-en-produccion',
   /** API de Claude falsa (e2e/fake-anthropic.mjs): el analista nunca gasta créditos en los e2e. */
   fakeAnthropicURL: `http://127.0.0.1:${FAKE_ANTHROPIC_PORT}`,
 }
@@ -126,6 +127,10 @@ export default defineConfig({
       // El asesor en vivo avisa por ntfy en cuanto da un precio: vacío, la
       // suite nunca le manda una notificación real al celular.
       NTFY_TOPIC: '',
+      // Marketing: secreto de baja conocido por el spec, y Resend apagado a
+      // propósito para que ninguna campaña de prueba salga a un buzón real.
+      MARKETING_SECRET: E2E.marketingSecret,
+      RESEND_API_KEY: '',
     },
   },
   ],

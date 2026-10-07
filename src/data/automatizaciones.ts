@@ -349,6 +349,20 @@ export const CRONS: readonly Cron[] = [
     },
     siFalla: { es: 'Se pierde el recordatorio del día.', en: "The day's reminder is lost." },
   },
+  {
+    job: 'marketing-envio',
+    horario: { es: 'cada 60 min', en: 'every 60 min' },
+    cadaMin: 60,
+    origen: 'cron-job.org',
+    hace: {
+      es: 'Envía por lotes los correos de novedades en cola, solo dentro del horario que permite la ley y sin pasar del cupo diario.',
+      en: 'Sends queued newsletter emails in batches, only within legally allowed hours and under the daily quota.',
+    },
+    siFalla: {
+      es: 'Una campaña disparada se queda a medio enviar hasta que alguien pulse "Enviar lo pendiente" en el panel.',
+      en: 'A launched campaign stays half-sent until someone presses "Send pending" in the panel.',
+    },
+  },
 ]
 
 /**

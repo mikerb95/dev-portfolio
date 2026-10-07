@@ -12,12 +12,10 @@ import { tokenBaja } from './tokens'
 export const remitenteMarketing = (): string =>
   serverEnv('MARKETING_EMAIL_FROM') ?? 'Mike de CodeByMike <novedades@codebymike.net>'
 
-export const urlBaja = (suscriptorId: number, secreto: string): string =>
-  `${SITE_URL}/novedades/baja?s=${suscriptorId}&t=${tokenBaja(suscriptorId, secreto)}`
-
-/** Endpoint que recibe el POST de "baja con un clic" de Gmail y Yahoo (RFC 8058). */
-export const urlBajaUnClic = (suscriptorId: number, secreto: string): string =>
-  `${SITE_URL}/api/marketing/baja?s=${suscriptorId}&t=${tokenBaja(suscriptorId, secreto)}`
+// `c` (la campaña) solo sirve para contar desde qué correo se dio de baja la
+// gente; el token no la cubre porque falsearla no le da nada a nadie.
+export const urlBaja = (suscriptorId: number, secreto: string, campanaId: number): string =>
+  `${SITE_URL}/novedades/baja?s=${suscriptorId}&t=${tokenBaja(suscriptorId, secreto)}&c=${campanaId}`
 
 export type CorreoArmado = {
   from: string
@@ -30,18 +28,23 @@ export type CorreoArmado = {
 }
 
 /** Correo listo para Resend. `baja` null = prueba al admin (sin enlace real). */
-export function armarCorreo(c: CampanaContenido, para: string, baja: { web: string; unClic: string } | null): CorreoArmado {
+export function armarCorreo(c: CampanaContenido, para: string, baja: string | null): CorreoArmado {
   const boton = c.botonTexto && urlSegura(c.botonUrl) ? { label: c.botonTexto, url: urlSegura(c.botonUrl)! } : undefined
-  const enlaceBaja = baja?.web ?? `${SITE_URL}/novedades`
+  const enlaceBaja = baja ?? `${SITE_URL}/novedades`
   const pie =
     `Recibes este correo porque te suscribiste a las novedades de CodeByMike.<br>` +
     `<a href="${escapeHtml(enlaceBaja)}" style="color:#6f6f7a;">Darme de baja</a> · ` +
     `<a href="${SITE_URL}" style="color:#9a9aa4;">codebymike.net</a>`
+  // List-Unsubscribe hace que Gmail y Outlook pinten su propio botón de
+  // "Cancelar suscripción" junto al remitente. Sin `List-Unsubscribe-Post`
+  // (la baja con un clic de RFC 8058) a propósito: ese POST llega de los
+  // servidores de Google como formulario y sin Origin, y el checkOrigin de
+  // Astro lo rechaza con 403 antes de llegar al endpoint. Apagar checkOrigin
+  // quitaría la protección CSRF de todo el sitio; Gmail solo exige el un-clic
+  // a quien envía más de 5.000 correos al día. El enlace abre la página de
+  // baja, que es un botón.
   const headers: Record<string, string> = {}
-  if (baja) {
-    headers['List-Unsubscribe'] = `<${baja.unClic}>`
-    headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
-  }
+  if (baja) headers['List-Unsubscribe'] = `<${baja}>`
   return {
     from: remitenteMarketing(),
     to: [para],

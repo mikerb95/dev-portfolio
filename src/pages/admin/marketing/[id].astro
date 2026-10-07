@@ -1,0 +1,248 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { jsonEnScript } from '../../../lib/json-script'
+import { conteoSuscriptores, listarCampanas, obtenerCampana } from '../../../lib/marketing/db'
+import { LIMITES } from '../../../lib/marketing/contenido'
+import { proximaApertura, ventanaLegal } from '../../../lib/marketing/reglas'
+import { formatterCO } from '../../../lib/fecha-co'
+
+// Editor de una campaña (o `nueva`). La vista previa se arma en el navegador
+// con las mismas funciones que usa el envío (contenido.ts + renderEmail), así
+// que lo que se ve es lo que sale.
+
+const nueva = Astro.params.id === 'nueva'
+const id = nueva ? null : Number(Astro.params.id)
+const campana = id ? await obtenerCampana(id) : null
+if (!nueva && !campana) return Astro.redirect('/admin/marketing')
+const conteo = await conteoSuscriptores()
+const envios = campana ? (await listarCampanas()).find((c) => c.id === campana.id)?.envios : undefined
+const editable = nueva || campana?.estado === 'borrador'
+const isDemo = Astro.locals.demo === true
+const ahora = new Date()
+const ventana = ventanaLegal(ahora)
+const fmt = formatterCO({ weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })
+const apertura = ventana.abierta ? null : fmt.format(proximaApertura(ahora))
+
+const datos = {
+  id,
+  editable: editable && !isDemo,
+  activos: conteo.activo,
+  apertura,
+  campana: {
+    asunto: campana?.asunto ?? '',
+    preheader: campana?.preheader ?? '',
+    titulo: campana?.titulo ?? '',
+    cuerpo: campana?.cuerpo ?? '',
+    botonTexto: campana?.botonTexto ?? '',
+    botonUrl: campana?.botonUrl ?? '',
+  },
+}
+---
+
+<AdminLayout title={nueva ? 'Nueva campaña' : `Campaña · ${campana!.asunto}`}>
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <a href="/admin/marketing" class="text-[12px] text-ink-300 hover:text-cyan transition-colors">← Marketing</a>
+    <span id="ed-estado" class="text-[12px] font-mono text-ink-300" role="status"></span>
+  </div>
+
+  <div id="editor" class="ed grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
+    <div class="space-y-4">
+      {campana && campana.estado !== 'borrador' && envios && (
+        <section class="ed-card">
+          <h2>{campana.estado === 'enviando' ? 'Enviándose' : campana.estado === 'enviada' ? 'Enviada' : 'Cancelada'}</h2>
+          <p class="ed-sub">
+            {envios.enviado} enviados · {envios.pendiente + envios.enviando} pendientes · {envios.fallido} fallidos · {envios.omitido} omitidos · {envios.bajas} se dieron de baja desde este correo
+          </p>
+          {campana.estado === 'enviando' && apertura && <p class="ed-sub">Fuera del horario legal: lo pendiente sale {apertura}.</p>}
+          {campana.ultimoError && <p class="ed-sub text-ember">Último error: {campana.ultimoError}</p>}
+        </section>
+      )}
+
+      <section class="ed-card">
+        <h2>Contenido</h2>
+        <div class="ed-campos">
+          <label><span>Asunto</span><input data-c="asunto" maxlength={LIMITES.asunto} /></label>
+          <label><span>Texto de vista previa <em>(lo que el buzón muestra junto al asunto)</em></span><input data-c="preheader" maxlength={LIMITES.preheader} /></label>
+          <label><span>Título dentro del correo</span><input data-c="titulo" maxlength={LIMITES.titulo} /></label>
+          <label>
+            <span>Texto <em>(línea en blanco = párrafo nuevo · **negrita** · [texto](https://enlace))</em></span>
+            <textarea data-c="cuerpo" rows="12" maxlength={LIMITES.cuerpo}></textarea>
+          </label>
+          <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+            <label><span>Botón <em>(opcional)</em></span><input data-c="botonTexto" maxlength={LIMITES.botonTexto} placeholder="Ver el proyecto" /></label>
+            <label><span>Enlace del botón</span><input data-c="botonUrl" maxlength={LIMITES.botonUrl} placeholder="https://codebymike.net/…" /></label>
+          </div>
+        </div>
+        <ul id="ed-errores" class="mt-3 space-y-1 text-[12.5px] text-ember"></ul>
+      </section>
+
+      {datos.editable && (
+        <section class="ed-card">
+          <h2>Acciones</h2>
+          <div class="flex flex-wrap gap-2 mt-1">
+            <button id="ed-guardar" class="ed-btn">Guardar borrador</button>
+            {!nueva && <button id="ed-prueba" class="ed-btn ed-btn--sec">Enviarme una prueba</button>}
+            {!nueva && <button id="ed-borrar" class="ed-btn ed-btn--sec ed-btn--peligro">Borrar</button>}
+          </div>
+          {!nueva && (
+            <div class="mt-4 pt-4 ed-sep">
+              <p class="ed-sub mb-3">
+                Al disparar, la campaña queda en cola para <strong class="text-ink-50 font-medium">{conteo.activo}</strong> suscriptor{conteo.activo === 1 ? '' : 'es'} activo{conteo.activo === 1 ? '' : 's'}.
+                Sale por lotes respetando el horario legal, el cupo diario y la regla de una por semana. Después ya no se puede editar.
+              </p>
+              <button id="ed-disparar" class="ed-btn" disabled={conteo.activo === 0}>Disparar campaña</button>
+              {conteo.activo === 0 && <p class="ed-sub mt-2">No hay suscriptores activos todavía.</p>}
+            </div>
+          )}
+        </section>
+      )}
+      {!isDemo && campana?.estado === 'enviando' && (
+        <section class="ed-card">
+          <button id="ed-cancelar" class="ed-btn ed-btn--sec ed-btn--peligro self-start">Cancelar lo que falta por enviar</button>
+        </section>
+      )}
+    </div>
+
+    <aside class="ed-card xl:sticky xl:top-0">
+      <div class="flex items-baseline justify-between gap-3">
+        <h2>Vista previa</h2>
+        <span class="ed-sub font-mono" id="ed-asunto-prev"></span>
+      </div>
+      <iframe id="ed-preview" title="Vista previa del correo" sandbox="" class="ed-frame"></iframe>
+    </aside>
+  </div>
+
+  <script is:inline type="application/json" id="ed-datos" set:html={jsonEnScript(datos)}></script>
+</AdminLayout>
+
+<script>
+  import { cuerpoAHtml, validarCampana, urlSegura, type CampanaContenido } from '../../../lib/marketing/contenido'
+  import { renderEmail, ACCENT } from '../../../lib/email'
+
+  type Datos = { id: number | null; editable: boolean; activos: number; apertura: string | null; campana: CampanaContenido }
+  const datos = JSON.parse(document.getElementById('ed-datos')!.textContent!) as Datos
+  const c: CampanaContenido = { ...datos.campana }
+  const raiz = document.getElementById('editor')!
+  const estado = document.getElementById('ed-estado')!
+  const campos = raiz.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-c]')
+  const esc = (s: string) => s.replace(/[&<>"]/g, (x) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[x]!)
+  const PIE = 'Recibes este correo porque te suscribiste a las novedades de CodeByMike.<br><a href="#" style="color:#6f6f7a;">Darme de baja</a> · <a href="#" style="color:#9a9aa4;">codebymike.net</a>'
+
+  for (const el of campos) {
+    const k = el.dataset.c as keyof CampanaContenido
+    el.value = (c[k] as string) ?? ''
+    el.disabled = !datos.editable
+    el.addEventListener('input', () => {
+      ;(c as Record<string, unknown>)[k] = el.value
+      pintar()
+      sucio = true
+    })
+  }
+  let sucio = false
+
+  let cuadro = 0
+  function pintar() {
+    cancelAnimationFrame(cuadro)
+    cuadro = requestAnimationFrame(() => {
+      const errores = validarCampana(c)
+      document.getElementById('ed-errores')!.innerHTML = errores.map((e) => `<li>${esc(e)}</li>`).join('')
+      const disparar = document.getElementById('ed-disparar') as HTMLButtonElement | null
+      if (disparar) disparar.disabled = errores.length > 0 || datos.activos === 0
+      document.getElementById('ed-asunto-prev')!.textContent = c.asunto || '(sin asunto)'
+      const boton = c.botonTexto && urlSegura(c.botonUrl) ? { label: c.botonTexto, url: urlSegura(c.botonUrl)! } : undefined
+      ;(document.getElementById('ed-preview') as HTMLIFrameElement).srcdoc = renderEmail({
+        preheader: c.preheader || c.asunto,
+        heading: c.titulo || 'Título del correo',
+        blocks: c.cuerpo.trim() ? cuerpoAHtml(c.cuerpo, ACCENT) : ['<span style="color:#9a9aa4;">El texto del correo aparece aquí.</span>'],
+        button: boton,
+        label: 'Novedades',
+        footer: PIE,
+      })
+    })
+  }
+  pintar()
+
+  const avisar = (texto: string, mal = false) => {
+    estado.textContent = texto
+    estado.className = `text-[12px] font-mono ${mal ? 'text-ember' : 'text-cyan'}`
+  }
+
+  async function llamar(url: string, metodo: string, cuerpo?: unknown) {
+    const res = await fetch(url, { method: metodo, headers: { 'Content-Type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined })
+    const body = await res.json().catch(() => ({}))
+    return { ok: res.ok, body }
+  }
+
+  async function guardar(): Promise<number | null> {
+    const r = datos.id
+      ? await llamar(`/api/admin/marketing/campanas/${datos.id}`, 'PUT', c)
+      : await llamar('/api/admin/marketing/campanas', 'POST', c)
+    if (!r.ok) {
+      avisar(r.body.errores?.join(' ') ?? r.body.error ?? 'No se pudo guardar', true)
+      return null
+    }
+    sucio = false
+    return r.body.id as number
+  }
+
+  document.getElementById('ed-guardar')?.addEventListener('click', async () => {
+    const id = await guardar()
+    if (!id) return
+    if (!datos.id) location.href = `/admin/marketing/${id}`
+    else avisar('Guardado')
+  })
+
+  document.getElementById('ed-prueba')?.addEventListener('click', async () => {
+    if (sucio && !(await guardar())) return
+    avisar('Enviando prueba…')
+    const r = await llamar(`/api/admin/marketing/campanas/${datos.id}`, 'POST', { accion: 'prueba' })
+    r.ok ? avisar(`Prueba enviada a ${r.body.para}`) : avisar(r.body.error ?? 'No se pudo enviar la prueba', true)
+  })
+
+  document.getElementById('ed-borrar')?.addEventListener('click', async () => {
+    if (!confirm('¿Borrar este borrador?')) return
+    const r = await llamar(`/api/admin/marketing/campanas/${datos.id}`, 'DELETE')
+    r.ok ? (location.href = '/admin/marketing') : avisar(r.body.error ?? 'No se pudo borrar', true)
+  })
+
+  document.getElementById('ed-disparar')?.addEventListener('click', async () => {
+    if (sucio && !(await guardar())) return
+    const cuando = datos.apertura ? `\n\nAhora está fuera del horario legal: empieza a salir ${datos.apertura}.` : ''
+    if (!confirm(`¿Disparar "${c.asunto}" a ${datos.activos} suscriptor(es)? Ya no se podrá editar.${cuando}`)) return
+    avisar('Disparando…')
+    const r = await llamar(`/api/admin/marketing/campanas/${datos.id}`, 'POST', { accion: 'disparar' })
+    if (!r.ok) return avisar(r.body.error ?? 'No se pudo disparar', true)
+    avisar(`En cola: ${r.body.encolados}. ${r.body.cola?.enviados ? `Ya salieron ${r.body.cola.enviados}.` : r.body.cola?.motivo ?? ''}`)
+    setTimeout(() => location.reload(), 1500)
+  })
+
+  document.getElementById('ed-cancelar')?.addEventListener('click', async () => {
+    if (!confirm('¿Cancelar lo que falta por enviar? Lo ya enviado no se puede deshacer.')) return
+    const r = await llamar(`/api/admin/marketing/campanas/${datos.id}`, 'POST', { accion: 'cancelar' })
+    r.ok ? location.reload() : avisar(r.body.error ?? 'No se pudo cancelar', true)
+  })
+
+  window.addEventListener('beforeunload', (e) => {
+    if (sucio && datos.editable) e.preventDefault()
+  })
+</script>
+
+<style is:global>
+  .ed-card { border-radius: 1.1rem; padding: 1.25rem; background: rgba(255, 255, 255, 0.018); border: 1px solid rgba(255, 255, 255, 0.07); display: flex; flex-direction: column; gap: 0.4rem; }
+  .ed-card h2 { font-size: 15px; font-weight: 500; color: var(--color-ink-50); }
+  .ed-sub { font-size: 12px; color: var(--color-ink-200); line-height: 1.5; }
+  .ed-campos { display: flex; flex-direction: column; gap: 0.85rem; margin-top: 0.4rem; }
+  .ed-campos label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 12px; color: var(--color-ink-100); }
+  .ed-campos em { font-style: normal; color: var(--color-ink-300); }
+  .ed input, .ed textarea { border-radius: 0.6rem; padding: 0.55rem 0.7rem; font-size: 13.5px; color: var(--color-ink-50); background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); }
+  .ed textarea { line-height: 1.55; resize: vertical; font-family: inherit; }
+  .ed input:focus, .ed textarea:focus { outline: none; border-color: color-mix(in oklab, var(--color-cyan) 55%, transparent); }
+  .ed input:disabled, .ed textarea:disabled { opacity: 0.7; }
+  .ed-btn { display: inline-flex; align-items: center; height: 2.25rem; padding: 0 1rem; border-radius: 999px; background: var(--color-cyan); color: var(--color-ink-950); font-size: 13px; font-weight: 600; }
+  .ed-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .ed-btn--sec { background: rgba(255, 255, 255, 0.03); color: var(--color-ink-100); font-weight: 400; border: 1px solid rgba(255, 255, 255, 0.1); }
+  .ed-btn--sec:hover { background: rgba(255, 255, 255, 0.06); }
+  .ed-btn--peligro:hover { color: var(--color-ember); background: rgba(255, 107, 61, 0.08); }
+  .ed-sep { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+  .ed-frame { width: 100%; height: min(78vh, 900px); border-radius: 0.8rem; background: #f4f4f6; margin-top: 0.4rem; }
+</style>

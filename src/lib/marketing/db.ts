@@ -9,7 +9,7 @@ import { isUniqueViolation } from '../db-unique'
 import { renderEmail, renderText, sendMail, SITE_URL } from '../email'
 import { serverEnv } from '../env'
 import { TEXTO_CONSENTIMIENTO, validarCampana, type CampanaContenido } from './contenido'
-import { armarCorreo, enviarLote, remitenteMarketing, urlBaja, urlBajaUnClic } from './envio'
+import { armarCorreo, enviarLote, remitenteMarketing, urlBaja } from './envio'
 import { CUPO_DIARIO_DEFECTO, DIAS_ENTRE_ENVIOS, TAMANO_LOTE, cupoRestante, inicioDiaCO, ventanaLegal } from './reglas'
 import { hashToken, nuevoTokenConfirmacion, secretoMarketing } from './tokens'
 
@@ -369,9 +369,7 @@ async function despacharLote(lote: string, secreto: string, ahora: Date): Promis
     const c = await obtenerCampana(id)
     if (c) campanas.set(id, c)
   }
-  const correos = filas.map((f) =>
-    armarCorreo(campanas.get(f.campanaId)!, f.email, { web: urlBaja(f.suscriptorId, secreto), unClic: urlBajaUnClic(f.suscriptorId, secreto) })
-  )
+  const correos = filas.map((f) => armarCorreo(campanas.get(f.campanaId)!, f.email, urlBaja(f.suscriptorId, secreto, f.campanaId)))
   const res = await enviarLote(correos, `marketing-${lote}`)
   if (!res.ok) {
     // Error de red o 5xx: las filas se quedan en 'enviando' y el próximo
@@ -441,6 +439,8 @@ export async function procesarCola(opts: { ahora?: Date; tope?: number } = {}): 
   // 2. Lotes nuevos, hasta agotar el cupo del día.
   const tope = opts.tope ?? cupoDiario()
   let cupo = cupoRestante(await enviadosHoy(ahora), tope)
+  // Bloquea lo enviado DESPUÉS de hace 7 días (estricto), igual que
+  // puedeRecibir: a los 7 días justos ya se puede.
   const semanaAtras = seg(new Date(ahora.getTime() - DIAS_ENTRE_ENVIOS * 86_400_000))
   while (cupo > 0) {
     const lote = randomBytes(9).toString('base64url')
@@ -458,7 +458,7 @@ export async function procesarCola(opts: { ahora?: Date; tope?: number } = {}): 
           AND NOT EXISTS (
             SELECT 1 FROM marketing_envios x
             WHERE x.suscriptor_id = e.suscriptor_id
-              AND (x.estado = 'enviando' OR (x.estado = 'enviado' AND x.enviado >= ${semanaAtras}))
+              AND (x.estado = 'enviando' OR (x.estado = 'enviado' AND x.enviado > ${semanaAtras}))
           )
         GROUP BY e.suscriptor_id
         ORDER BY MIN(e.id)

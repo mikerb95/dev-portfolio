@@ -174,6 +174,13 @@ const L = (path: string) => localizedHref(path, locale)
               ></textarea>
             </div>
 
+            <!-- Suscripción opcional a las novedades: desmarcada siempre. La Ley
+                 1581 pide un sí expreso, y una casilla premarcada no lo es. -->
+            <label class="md:col-span-2 flex items-start gap-2.5 text-[12px] leading-relaxed text-ink-200 cursor-pointer">
+              <input type="checkbox" name="novedades" class="mt-0.5 accent-cyan" />
+              <span>{c.form.newsletterLabel}</span>
+            </label>
+
             <div class="md:col-span-2 flex items-center justify-between gap-4 pt-2">
               <div class="flex items-center gap-2 text-[11px] font-mono text-ink-300">
                 <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="11" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -273,7 +280,8 @@ const L = (path: string) => localizedHref(path, locale)
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
-    const data = { ...Object.fromEntries(new FormData(form)), locale }
+    const { novedades, ...campos } = Object.fromEntries(new FormData(form))
+    const data = { ...campos, novedades: novedades === 'on', locale }
 
     try {
       const res = await fetch('/api/contact', {
@@ -287,7 +295,7 @@ const L = (path: string) => localizedHref(path, locale)
         Object.values(inputs).forEach(el => el.classList.remove('input-ok', 'input-bad'))
         Object.values(hints).forEach(el => { el.textContent = ''; })
         fieldCount.textContent = interpolate(cf.fieldCount, { n: 0, total: 3 })
-        status.textContent = cf.successStatus
+        status.textContent = data.novedades ? `${cf.successStatus} ${cf.newsletterStatus}` : cf.successStatus
         status.className = 'mt-4 text-[13px] font-mono text-cyan'
       } else {
         status.textContent = cf.errorStatus

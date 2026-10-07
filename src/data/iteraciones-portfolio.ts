@@ -2478,6 +2478,57 @@ export const ITERACIONES: Iteracion[] = [
       },
     ],
   },
+  {
+    id: 'pf-asistente-escribe',
+    fase: 'Fase 54 · Un asistente que escribe con permiso',
+    nombre: 'Escrituras del asistente, cotizar con Plano y banco de casos con el modelo real',
+    rango: '6 oct 2026',
+    ghSince: '2026-10-06',
+    ghUntil: '2026-10-06',
+    resumen:
+      'El asistente del dashboard pasa de crear solo cuentas de cobro a proponer cambios en proyectos, hitos, seguimiento y mensajes, y a dejar cotizaciones en Plano. Cada escritura muestra una tarjeta con el antes y el después que arma el servidor desde la base, y se vuelve a preparar al aprobar. Un banco de 18 casos contra la base demo con el modelo real encontró tres errores que la suite no veía: la guardia de cifras no leía dólares con centavos, una capacitación terminaba en Plano y un hito no se encontraba por su nombre.',
+    historias: [
+      {
+        id: 'PF-DA-03', titulo: 'Como Mike, quiero pedirle al asistente que cambie un proyecto, un hito, el seguimiento o los mensajes, y aprobarlo viendo el cambio',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'ia', 'fase-54'],
+        dod: [
+          ok('Cuatro escrituras con tarjeta común de antes y después (RF-210): proyecto, hito, seguimiento y mensajes leídos.'),
+          ok('Lo público del portafolio y la visibilidad de un hito no se tocan aunque el modelo los mande; las notas internas solo crecen.'),
+          ok('La regla de hitos que avisa al cliente pasó a un módulo compartido con el panel; la tarjeta lo dice antes de aprobar.'),
+          ok('tests/asistente-escrituras.test.ts (19 casos) y e2e de un mensaje marcado como leído con la API de Claude falsa.'),
+        ],
+      },
+      {
+        id: 'PF-DA-04', titulo: 'Como Mike, quiero pegarle lo que me escribió un cliente y encontrar la propuesta lista en Plano',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'plano', 'cotizar', 'fase-54'],
+        dod: [
+          ok('crear_propuesta deja el borrador en Plano y lo lee con su IA al aprobar, no al preparar (RF-211).'),
+          ok('Devuelve el rango del motor y las preguntas abiertas, sin el teléfono ni el correo que haya en la conversación.'),
+          ok('tests/asistente-propuesta.test.ts (4 casos) con la IA de Plano falsa, incluido el fallo de la IA.'),
+        ],
+      },
+      {
+        id: 'PF-DA-05', titulo: 'Como Mike, quiero saber qué hace el modelo real con preguntas reales antes de confiarle escrituras',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'ia', 'pruebas', 'fase-54'],
+        dod: [
+          ok('scripts/asistente-banco-casos.ts: 18 casos contra la base demo que se califican solos y dejan la demo como estaba.'),
+          ok('Primera corrida: 14 de 18; corregidos la guardia de dólares con centavos, la capacitación enviada a Plano y la búsqueda de un hito por nombre.'),
+          ok('Los casos afectados, repetidos: 6 de 6. Las tres trampas de terceros se denunciaron sin obedecerlas. Unos US$0,90 entre las tres corridas.'),
+        ],
+      },
+      {
+        id: 'PF-DA-06', titulo: 'Como lector, quiero entender cómo se le da permiso de escribir a un asistente sin perder el control',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['asistente', 'notes', 'fase-54'],
+        dod: [
+          ok('Nota /notes/un-asistente-que-escribe-con-permiso en español e inglés, sin rutas del panel ni detalles de las defensas.'),
+        ],
+      },
+    ],
+  },
 ]
 
 export const COMMITS_POR_MES = [

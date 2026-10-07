@@ -5,6 +5,9 @@ import { clientIp } from '../../lib/ratelimit'
 import { enforceLimit } from '../../lib/security/ratelimit-durable'
 import { sendPush } from '../../lib/notify'
 import { isLocale, type Locale } from '../../i18n'
+import { suscribirPublico } from '../../lib/marketing/db'
+import { normalizarEmail } from '../../lib/marketing/reglas'
+import { TEXTO_CONSENTIMIENTO, TEXTO_CONSENTIMIENTO_EN } from '../../lib/marketing/contenido'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_LEN = { name: 200, email: 200, subject: 200, body: 5000 }
@@ -86,6 +89,18 @@ export const POST: APIRoute = async ({ request }) => {
     `${typeof subject === 'string' && subject ? `${subject}\n` : ''}${preview}\n- ${email}`,
     { priority: 4, tags: 'envelope', click: 'https://codebymike.net/admin/messages' },
   ).catch(() => {})
+
+  // Casilla de novedades marcada: doble opt-in como en /novedades. Nunca
+  // tumba el envío del mensaje, que es lo que la persona vino a hacer.
+  const correoNovedades = data.novedades === true ? normalizarEmail(email) : null
+  if (correoNovedades) {
+    await suscribirPublico({
+      email: correoNovedades,
+      nombre: name,
+      origen: 'contacto',
+      texto: locale === 'en' ? TEXTO_CONSENTIMIENTO_EN : TEXTO_CONSENTIMIENTO,
+    }).catch((e) => console.error('[contact] suscripción a novedades', e))
+  }
 
   return json(201, { ok: true })
 }
