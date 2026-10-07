@@ -15,6 +15,11 @@ import { semillaDe } from '../../lib/motion/portadas'
 import DecisionCorta from '../../components/notes/DecisionCorta.astro'
 import { jsonEnScript } from '../../lib/json-script'
 
+// Sin props: todo sale del slug. Declararlo evita que Astro infiera los props
+// desde getStaticPaths (quedaban en `never`) y deja al cascarón /en usar
+// `<Note />` sin error de tipos.
+type Props = Record<string, never>
+
 export async function getStaticPaths() {
   const notes = await getNotes('es')
   return notes.map((note) => ({ params: { slug: noteSlug(note) } }))

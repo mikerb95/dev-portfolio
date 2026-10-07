@@ -45,7 +45,8 @@ describe('submitToIndexNow', () => {
     ])
 
     expect(r).toEqual({ ok: true, status: 200, submitted: 1 })
-    const [url, opts] = spy.mock.calls[0]
+    // El spy se declara sin parámetros; las llamadas reales sí los traen.
+    const [url, opts] = spy.mock.calls[0] as unknown as [string, RequestInit]
     expect(url).toBe('https://api.indexnow.org/indexnow')
     const body = JSON.parse((opts as RequestInit).body as string)
     expect(body.host).toBe('codebymike.net')
@@ -81,7 +82,7 @@ describe('submitSitemapToIndexNow', () => {
     const r = await submitSitemapToIndexNow('https://codebymike.net')
     expect(r).toEqual({ ok: true, status: 200, submitted: 1 })
     // Segunda llamada = POST a IndexNow con la URL del sitemap.
-    const body = JSON.parse((spy.mock.calls[1][1] as RequestInit).body as string)
+    const body = JSON.parse((spy.mock.calls[1] as unknown as [string, RequestInit])[1].body as string)
     expect(body.urlList).toEqual(['https://codebymike.net/'])
   })
 
