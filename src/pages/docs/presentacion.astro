@@ -20,6 +20,7 @@ import {
   ACTORES,
 } from '../../data/documentacion'
 import { ITERACIONES } from '../../data/iteraciones-portfolio'
+import { totalCommits } from '../../data/iteraciones'
 import { NIVELES_AUTORIDAD, ORDEN_NIVELES, RACI, LEYENDA_RACI, type RolRaci } from '../../data/gobernanza'
 import {
   NIVELES,
@@ -37,7 +38,7 @@ const rnfTotal = rnf.length
 const rnfImpl = rnf.filter((r) => r.estado === 'implementado').length
 const cuTotal = CASOS_DE_USO.length
 const historias = ITERACIONES.flatMap((i) => i.historias)
-const commitsTotal = ITERACIONES.reduce((a, i) => a + i.commits, 0)
+const commitsTotal = totalCommits(ITERACIONES)
 
 const nombreActor = (id: string) => ACTORES.find((a) => a.id === id)?.nombre ?? id
 
@@ -485,7 +486,7 @@ const NODOS_SIM = [
           <div class="ti-nombre">{it.nombre}</div>
           <div class="ti-meta">
             <span class="mono">{it.rango}</span>
-            <span class="ti-commits">{it.commits} commits</span>
+            {it.commits != null && <span class="ti-commits">{it.commits} commits</span>}
           </div>
         </div>
       ))}

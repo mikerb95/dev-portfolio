@@ -81,6 +81,15 @@ export interface Iteracion {
   historias: Historia[];
 }
 
+/**
+ * Suma de commits de las iteraciones que tienen conteo. Las iteraciones que
+ * comparten el mismo día no tienen un rango de git propio y van sin
+ * `commits`; sumarlas sin filtrar publicaba "NaN commits" en el deck.
+ */
+export function totalCommits(iteraciones: readonly Iteracion[]): number {
+  return iteraciones.reduce((total, it) => total + (it.commits ?? 0), 0);
+}
+
 // Helpers de DoD para reducir ruido al escribir.
 const ok = (texto: string): CriterioDoD => ({ texto, estado: "pass" });
 const pend = (texto: string): CriterioDoD => ({ texto, estado: "pend" });
