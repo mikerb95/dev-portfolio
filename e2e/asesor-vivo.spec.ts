@@ -113,3 +113,38 @@ test('el visitante pide un precio, Mike entra desde el panel y conversan en el m
   expect(errores).toEqual([])
   await mike.context().close()
 })
+
+test('al tocar "Enviarle esto a Mike", la conversación queda como propuesta en borrador en Plano', async ({ page }) => {
+  test.setTimeout(90_000)
+  await page.context().setExtraHTTPHeaders(ipDePrueba())
+  await db.execute(`DELETE FROM propuestas WHERE titulo LIKE 'Del asesor:%'`)
+  // El enlace abre WhatsApp: en la prueba no sale de la máquina.
+  await page.context().route(/wa\.me|whatsapp\.com/, (r) => r.abort())
+
+  // Otra página que la del caso anterior: corren en paralelo y aquel cuenta
+  // las conversaciones de /paginas-web.
+  await page.goto('/contact')
+  await page.locator('#wa-fab').click()
+  await page.locator('#asesor-abrir').click()
+  await page.locator('#asesor-input').fill('Quiero avanzar con una tienda para mi marca, mi correo es ana@marca.co')
+  await page.locator('#asesor-input').press('Enter')
+
+  const boton = page.locator('#asesor-enviar-mike')
+  await expect(boton).toBeVisible({ timeout: 20_000 })
+  await boton.click()
+
+  // sendBeacon no espera: se mira la base hasta que aparezca.
+  await expect
+    .poll(async () => (await db.execute(`SELECT titulo, estado, conversacion FROM propuestas WHERE titulo LIKE 'Del asesor:%'`)).rows, { timeout: 15_000 })
+    .toHaveLength(1)
+  const { rows } = await db.execute(`SELECT titulo, estado, conversacion FROM propuestas WHERE titulo LIKE 'Del asesor:%'`)
+  expect(rows[0]).toMatchObject({ estado: 'borrador' })
+  expect(String(rows[0].conversacion)).toContain('Cliente: Quiero avanzar con una tienda')
+  expect(String(rows[0].conversacion)).not.toContain('ana@marca.co')
+
+  // Un segundo clic no crea otra.
+  await boton.click()
+  await page.waitForTimeout(1500)
+  const otra = await db.execute(`SELECT count(*) n FROM propuestas WHERE titulo LIKE 'Del asesor:%'`)
+  expect(Number(otra.rows[0]!.n)).toBe(1)
+})

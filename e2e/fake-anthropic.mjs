@@ -55,10 +55,17 @@ function guionAsesor(mensajes) {
   const ultimo = mensajes.at(-1)
   const resultado = Array.isArray(ultimo?.content) ? ultimo.content.find((b) => b.type === 'tool_result') : null
   if (resultado) {
-    const r = JSON.parse(typeof resultado.content === 'string' ? resultado.content : resultado.content[0].text)
+    const crudo = typeof resultado.content === 'string' ? resultado.content : resultado.content[0].text
+    // El de preparar_whatsapp es una frase, no JSON: el botón ya está visible.
+    if (crudo.startsWith('Listo')) return { stop: 'end_turn', bloques: [texto('Listo: toca el botón para enviarle esto a Mike.')] }
+    const r = JSON.parse(crudo)
     return { stop: 'end_turn', bloques: [texto(`El plan ${r.plan} cuesta desde ${r.desde}.`)] }
   }
   const pregunta = typeof ultimo?.content === 'string' ? ultimo.content : ''
+  // "avanzar": prepara el WhatsApp (e2e/asesor-vivo.spec.ts, del asesor a Plano).
+  if (/avanzar/i.test(pregunta)) {
+    return { stop: 'tool_use', bloques: [uso(`toolu_asesor_${Date.now()}`, 'preparar_whatsapp', { necesidad: 'Una tienda en línea para mi marca de ropa' })] }
+  }
   if (/cu[aá]nto/i.test(pregunta)) {
     return { stop: 'tool_use', bloques: [uso(`toolu_asesor_${Date.now()}`, 'calcular_precio', { tipo: 'plan', plan: 'negocio' })] }
   }

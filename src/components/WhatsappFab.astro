@@ -1459,6 +1459,14 @@ const textos = JSON.stringify({
       }
     })
     ver.addEventListener('click', () => verVista(ver.getAttribute('aria-expanded') !== 'true'))
+    // Al seguir por WhatsApp, la conversación queda como propuesta en borrador
+    // en Plano (api/asesor/enviado.ts). sendBeacon no detiene el enlace: si no
+    // llega, la persona igual sigue a WhatsApp. Solo el token viaja: la
+    // conversación la lee el servidor de su base.
+    enviarMike.addEventListener('click', () => {
+      if (!estado.conversacion || !navigator.sendBeacon) return
+      navigator.sendBeacon('/api/asesor/enviado', new Blob([JSON.stringify({ t: estado.conversacion })], { type: 'application/json' }))
+    })
     cerrar.addEventListener('click', () => abrirChat(false))
     reiniciar.addEventListener('click', () => {
       estado = vacio()
