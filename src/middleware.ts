@@ -44,6 +44,7 @@ import {
 } from './lib/portal/respaldo'
 import { delocalizePath, isLocalizedPrivateRequest, untranslatedLocalizedTarget } from './i18n/routing'
 import { destinoCanonico } from './lib/canonical-host'
+import { aplicarHeadersBase, aplicarHeadersPrivados, CSP_REPORTING, endurecerPrivada } from './lib/security/private-headers'
 
 // Cookies del JWT de Auth.js a borrar cuando se revoca una sesión (dev y prod).
 const AUTH_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
@@ -509,6 +510,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     canonicalPath.startsWith('/api/cotiza/') ||
     isAcuerdoPath(canonicalPath)
   const isPrivate = isAdmin || isPrivateDeck || isPortal || isEscenario || isCotizaPuerta
+  // Toda salida temprana de una ruta privada (redirect al login, 401, 403,
+  // 503) pasa por aquí: sin esto salían sin los headers endurecidos, que solo
+  // se ponían al final del middleware.
+  const privada = (r: Response) => endurecerPrivada(r, { framable: isFramablePath(canonicalPath) })
 
   let portalDemoMode = false
   let portalRespaldoMode = false
@@ -531,7 +536,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     if (!portalSession) {
       const demo = resolvePortalDemoPass(context, pathname, method)
-      if (demo instanceof Response) return demo
+      if (demo instanceof Response) return privada(demo)
       if (demo) {
         // La sesión de demo (creada en /api/portal/demo) vive en la base de
         // demo: hay que re-resolverla DENTRO de ese contexto para encontrarla.
@@ -565,13 +570,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // Las APIs reciben 401 (su cliente es fetch, no un navegador); las páginas
       // van al login conservando el destino para volver tras autenticarse.
       if (pathname.startsWith('/api/')) {
-        return new Response(JSON.stringify({ error: 'sesión requerida' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        })
+        return privada(
+          new Response(JSON.stringify({ error: 'sesión requerida' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        )
       }
       const next = encodeURIComponent(pathname + context.url.search)
-      return context.redirect(`/portal/login?next=${next}`)
+      return privada(context.redirect(`/portal/login?next=${next}`))
     }
 
     // "Ver como cliente" (ver /admin/clients): solo lectura, sin excepciones -
@@ -586,9 +593,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // cookie a mano. Salir no es una escritura sobre los datos del cliente -
     // solo revoca la propia fila de sesión.
     if (portalSession.impersonatedBy && method !== 'GET' && method !== 'HEAD' && pathname !== '/api/portal/logout') {
-      return new Response(
-        JSON.stringify({ error: 'estás viendo este portal como el cliente: solo lectura' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      return privada(
+        new Response(
+          JSON.stringify({ error: 'estás viendo este portal como el cliente: solo lectura' }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        )
       )
     }
 
@@ -672,7 +681,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // Sin sesión, el pase de demo es la única alternativa: datos ficticios y
       // solo lectura. Nunca aplica al deck privado ni si ya hay sesión real.
       const demo = isAdmin ? resolveDemoPass(context, pathname, method) : false
-      if (demo instanceof Response) return demo
+      if (demo instanceof Response) return privada(demo)
       if (!demo) {
         // El deck vuelve a sí mismo tras el login; el panel pasa por /entrar.
         //
@@ -689,14 +698,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
         // y no un redirect: las llama un `fetch`, que no tiene adónde volver.
         if (esRutaDeCotiza(canonicalPath)) {
           if (pathname.startsWith('/api/')) {
-            return new Response(JSON.stringify({ error: 'sesión vencida, vuelve a entrar' }), {
-              status: 401,
-              headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-            })
+            return privada(
+              new Response(JSON.stringify({ error: 'sesión vencida, vuelve a entrar' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+              })
+            )
           }
-          return context.redirect(COTIZA_ENTRADA)
+          return privada(context.redirect(COTIZA_ENTRADA))
         }
-        return context.redirect(`/login?callbackUrl=${callbackUrl}`)
+        return privada(context.redirect(`/login?callbackUrl=${callbackUrl}`))
       }
       demoMode = true
       context.locals.demo = true
@@ -704,7 +715,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // Defensa en profundidad: revalida la allowlist en cada request.
       const login = (session?.user as { login?: string } | undefined)?.login
       if (!isAllowedLogin(login)) {
-        return new Response('Forbidden', { status: 403 })
+        return privada(new Response('Forbidden', { status: 403 }))
       }
 
       // Registro de dispositivo: identidad = `sid` del JWT si existe (sesiones
@@ -721,7 +732,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
         })
         if (revoked) {
           for (const name of AUTH_COOKIES) context.cookies.delete(name, { path: '/' })
-          return context.redirect('/entrar?revoked=1')
+          return privada(context.redirect('/entrar?revoked=1'))
         }
       } catch {
         // FAIL-CLOSED, a diferencia del resto de la seguridad del repo. Esto no
@@ -736,7 +747,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
         // funcionar con la base caída el día de la charla.
         if (!esRutaDeSustentacion(canonicalPath)) {
           const esApi = pathname.startsWith('/api/')
-          return new Response(
+          return privada(new Response(
             esApi
               ? JSON.stringify({ error: 'no se puede verificar la sesión ahora; intenta en un minuto' })
               : 'El panel no puede verificar tu sesión ahora mismo porque la base de datos no responde. Intenta de nuevo en un minuto.',
@@ -748,7 +759,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
                 'Cache-Control': 'no-store',
               },
             }
-          )
+          ))
         }
       }
 
@@ -769,18 +780,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const res = portalRespaldoMode ? await runInRespaldoContext(correr) : await correr()
   const resHeaders = new Headers(res.headers)
 
-  resHeaders.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
-
-  // FASE 6: observabilidad continua de CSP (la política ya corre en modo
-  // ENFORCE, esto solo reporta lo que el navegador ya bloqueó) y bloqueo de
-  // permisos de navegador que este sitio no usa (portfolio + panel admin, sin
-  // cámara/micrófono/geolocalización/pagos vía Payment Request API, etc.).
-  resHeaders.set('Reporting-Endpoints', 'csp-endpoint="/api/security/csp-report"')
-  resHeaders.set(
-    'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()'
-  )
-  const CSP_REPORTING = ' report-to csp-endpoint; report-uri /api/security/csp-report;'
+  aplicarHeadersBase(resHeaders)
 
   // Vistas de proyección. Dos excepciones a la CSP base, ambas necesarias:
   //
@@ -823,32 +823,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (isPrivate) {
     // La sustentación proyecta el portal dentro de un iframe servido por este
     // mismo origen. Solo esas rutas se relajan: /admin sigue con 'none'.
-    const framable = isFramablePath(canonicalPath)
-
-    // X-Frame-Options se OMITE en las rutas enmarcables en vez de ponerse en
-    // SAMEORIGIN. Es la cabecera vieja, no entiende 'self' de forma consistente
-    // entre navegadores, y dejarla en DENY junto a `frame-ancestors 'self'` es
-    // contradictorio: algunos aplican la más restrictiva y el iframe queda en
-    // blanco sin más pista que un aviso en consola. Manda la CSP.
-    if (!framable) resHeaders.set('X-Frame-Options', 'DENY')
-    // Nada privado en ninguna caché. Sin esto la respuesta salía con el
-    // `public, max-age=0, must-revalidate` que Vercel pone por defecto: un
-    // proxy compartido podía guardarla, y el navegador conservaba páginas del
-    // panel (o un secreto recién revelado) tras cerrar sesión. Se respeta lo
-    // que la ruta ya decidió si ya es no-store o private.
-    if (!/no-store|private/i.test(resHeaders.get('Cache-Control') ?? '')) {
-      resHeaders.set('Cache-Control', 'private, no-store')
-    }
-    resHeaders.set('X-Content-Type-Options', 'nosniff')
-    resHeaders.set('Referrer-Policy', 'no-referrer')
-    resHeaders.set('X-Robots-Tag', 'noindex, nofollow')
-    resHeaders.set(
-      'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; " +
-        connectSrc +
-        ` frame-ancestors ${framable ? "'self'" : "'none'"}; base-uri 'self'; form-action 'self';` +
-        CSP_REPORTING
-    )
+    aplicarHeadersPrivados(resHeaders, { framable: isFramablePath(canonicalPath), connectSrc })
     return new Response(res.body, { status: res.status, headers: resHeaders })
   }
 
