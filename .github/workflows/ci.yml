@@ -47,6 +47,12 @@ jobs:
       - name: Guion alineado con el mazo
         run: npm run guion:check
 
+      # Sin este paso los errores de tipos se acumulaban sin que nada fallara:
+      # el vigía del repo encontró 22 el 6 oct 2026, uno de ellos publicando
+      # "NaN commits" en el deck de la sustentación.
+      - name: Tipos (astro check)
+        run: npx astro check
+
       - name: Tests con cobertura
         run: npx vitest run --coverage --reporter=default --reporter=json --outputFile=vitest-report.json
 

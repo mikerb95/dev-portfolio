@@ -315,7 +315,10 @@ const prefRows = Object.entries(NOTIFICATION_LABELS).map(([type, label]) => ({
   })
 
   // Novedades
-  const novedades = document.getElementById('novedades') as HTMLInputElement | null
+  // Sin `as`: este <script> lleva define:vars, así que llega al navegador como
+  // JavaScript plano y una aserción de tipos es un error de sintaxis que tumba
+  // el script entero de la página.
+  const novedades = document.getElementById('novedades')
   novedades?.addEventListener('change', async () => {
     const { ok, data } = await post('/api/portal/cuenta/novedades', { activo: novedades.checked })
     if (!ok) {

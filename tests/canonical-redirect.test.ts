@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-// @ts-expect-error - integración en .mjs sin tipos
 import { inyectaRedirects } from '../integrations/canonical-redirect.mjs'
 import { HOST_CANONICO } from '../src/lib/canonical-host'
 

@@ -3,7 +3,7 @@ import { GUION_BEATS, GUION_INTRO, GUION_OUTRO } from '../src/data/guion-final'
 import { mazoPublicado, notaDeGlobal, notaDePunto } from '../src/lib/presentacion/guion'
 import { parsearActual, parsearForma } from '../src/lib/presentacion/estado'
 import type { Mazo } from '../src/lib/presentacion/mapa'
-// @ts-expect-error -- script .mjs sin tipos: lee la forma del bundle real.
+// Script .mjs: lee la forma del bundle real.
 import { leerMazo } from '../scripts/leer-mazo.mjs'
 
 const MAZO: Mazo = { intro: 2, beats: 19, outro: 1 }
