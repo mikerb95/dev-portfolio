@@ -17,6 +17,7 @@ import PulsoPanel from '../components/PulsoPanel.astro'
 import '../styles/portada.css'
 import { jsonEnScript } from '../lib/json-script'
 import { TRABAJOS_REALES } from '../data/trabajos-reales'
+import { serviciosHero } from '../lib/hero-servicios'
 
 // Mismo número que la burbuja (WhatsappFab.astro) y /contact: el botón
 // "Enviarle esto a Mike" del estimado abre WhatsApp con el resumen escrito.
@@ -61,6 +62,10 @@ const visibleProjects = await safeQuery(
   proyectosInstantanea,
   'home/proyectos-visibles',
 )
+
+// Cuadros del titular rotativo (RF-038), con las cifras ya puestas desde el
+// tarifario.
+const servicios = serviciosHero(locale, L, visibleProjects.length > 0)
 
 // Cinta del hero: cifras del propio sitio en lugar de la lista de tecnologías
 // que había antes. La lista era decorativa (los números /01../21 eran el índice
@@ -189,75 +194,96 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
         </a>
       </div>
 
-      <!-- Headline -->
-      <!-- Titular en Archivo condensada, color plano: el degradado gris y la
-           palabra en cursiva serif se fueron el 6 oct 2026 (RF-037). Habla
-           del cliente ("tu página") y no de la disciplina. -->
-      <h1 class="hero-titular font-display font-black tracking-[-.025em] leading-[.88] text-[clamp(46px,7.9vw,120px)]">
-        {/* Los espacios entre spans son intencionales: al ser `block` no se
-            ven, pero sin ellos el texto plano que extrae un buscador (o un
-            lector de pantalla) queda pegado - "tu appo tu sistema". */}
-        <span class="hero-line block">{t.hero.line1}</span>{' '}
-        <span class="hero-line block">{t.hero.line2}</span>{' '}
-        <span class="hero-line hero-acento block">{t.hero.line3}</span>
-      </h1>
+      <!-- Índice de servicios (RF-038): avanza solo, se detiene con el cursor,
+           con el foco dentro del hero o con el botón de pausa, y cada paso se
+           puede elegir. Es el control que pide WCAG 2.2.2 para cualquier cosa
+           que se mueva sola más de cinco segundos. -->
+      <div class="hero-indice mb-6 md:mb-8" role="group" aria-label={t.hero.indice} data-hero-indice>
+        {servicios.map((s, i) => (
+          <button type="button" class="hero-indice-paso" data-paso={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+            <span class="hero-indice-barra" aria-hidden="true"><span class="hero-indice-relleno" data-relleno></span></span>
+            <span class="hero-indice-texto">
+              <span class="hero-indice-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <span class="hero-indice-nombre">{s.etiqueta}</span>
+            </span>
+          </button>
+        ))}
+        <button
+          type="button"
+          class="hero-indice-pausa"
+          data-hero-pausa
+          aria-label={t.hero.pausar}
+          data-texto-pausar={t.hero.pausar}
+          data-texto-reanudar={t.hero.reanudar}
+          hidden
+        >
+          <svg class="hero-pausa-icono" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+          <svg class="hero-reanudar-icono" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5"/></svg>
+        </button>
+      </div>
+
+      <!-- Titular rotativo (RF-038). El h1 real es la frase entera, oculta a la
+           vista: los cuadros son la versión animada de lo mismo y van
+           aria-hidden, así un lector de pantalla no oye cinco titulares
+           cambiando ni un buscador ve solo el primero. Todos los cuadros están
+           apilados en la misma celda: la altura la fija el más alto y nada se
+           mueve debajo al rotar. Archivo condensada en color plano, acento
+           cian en la última línea (lo que el cliente se lleva). -->
+      <h1 class="sr-only">{t.hero.titulo}</h1>
+      <div class="hero-titular hero-pila font-display font-black tracking-[-.025em] leading-[.9] text-[clamp(44px,7.6vw,116px)]" aria-hidden="true" data-hero-titular>
+        {servicios.map((s, i) => (
+          <p class="hero-cuadro" data-cuadro={i} data-activo={i === 0 ? '' : undefined}>
+            <span class="hero-linea block" data-linea="0"><span class="hero-linea-texto block">{s.lineas[0]}</span></span>{' '}
+            <span class="hero-linea block" data-linea="1"><span class="hero-linea-texto hero-acento block">{s.lineas[1]}</span></span>
+          </p>
+        ))}
+      </div>
 
       <div class="mt-9 lg:mt-10 grid lg:grid-cols-12 gap-9 lg:gap-12 items-start">
-        <!-- Tres líneas de venta: qué puedes pedir, cómo se trabaja y la
-             prueba (clientes en línea, con enlace al sitio real). -->
+        <!-- Lo que acompaña a cada cuadro: un dato real (sale del tarifario,
+             no se escribe aquí) y su prueba. Los cuadros que no están a la
+             vista van inert: sus enlaces no reciben foco. -->
         <div class="lg:col-span-5 flex flex-col gap-8">
-          <ul class="space-y-4" data-ventas>
-            {t.hero.ventas.map((v) => (
-              <li class="hero-venta flex gap-3">
-                <span class="hero-venta-punto" aria-hidden="true"></span>
-                <div>
-                  <div class="text-[15px] font-semibold text-ink-50">{v.t}</div>
-                  <p class="text-[14.5px] text-ink-100 leading-relaxed">{v.d}</p>
+          <div class="hero-pila" data-hero-detalles>
+            {servicios.map((s, i) => (
+              <div class="hero-detalle" data-cuadro={i} data-activo={i === 0 ? '' : undefined} inert={i !== 0}>
+                <div class="hero-dato flex gap-3">
+                  <span class="hero-venta-punto" aria-hidden="true"></span>
+                  <span class="text-[15.5px] font-semibold text-ink-50 leading-snug">{s.dato}</span>
                 </div>
-              </li>
-            ))}
-            <li class="hero-venta flex gap-3">
-              <span class="hero-venta-punto" aria-hidden="true"></span>
-              <div>
-                <div class="text-[15px] font-semibold text-ink-50">{t.hero.clientesLabel}</div>
-                <p class="text-[14.5px] text-ink-100 leading-relaxed flex flex-wrap gap-x-4 gap-y-1">
-                  {TRABAJOS_REALES.map((c) => (
-                    <a href={c.url} target="_blank" rel="noopener" class="hero-cliente inline-flex items-center gap-1.5 hover:text-ink-50 transition-colors">
-                      <span class="w-1.5 h-1.5 rounded-full shrink-0" style={`background:${c.tono}`} aria-hidden="true"></span>{c.nombre}
-                    </a>
-                  ))}
-                </p>
+                {s.conClientes ? (
+                  <p class="hero-prueba mt-2.5 pl-[20px] text-[14.5px] text-ink-100 leading-relaxed flex flex-wrap gap-x-4 gap-y-1">
+                    <span class="text-ink-200">{t.hero.clientesLabel}</span>
+                    {TRABAJOS_REALES.map((c) => (
+                      <a href={c.url} target="_blank" rel="noopener" class="hero-cliente inline-flex items-center gap-1.5 hover:text-ink-50 transition-colors">
+                        <span class="w-1.5 h-1.5 rounded-full shrink-0" style={`background:${c.tono}`} aria-hidden="true"></span>{c.nombre}
+                      </a>
+                    ))}
+                  </p>
+                ) : (
+                  <p class="hero-prueba mt-2.5 pl-[20px] text-[14.5px] text-ink-100 leading-relaxed">{s.prueba}</p>
+                )}
               </div>
-            </li>
-          </ul>
+            ))}
+          </div>
 
           <!-- Botones magnéticos: se inclinan hacia el cursor al acercarse y el
                texto se adelanta un poco más que la píldora, que es lo que da la
-               sensación de profundidad. El `data-magnetico` lo lee el script. -->
+               sensación de profundidad. El principal cambia con el cuadro: su
+               texto y su destino salen de data-destinos. -->
           <div class="flex gap-3 flex-wrap">
-            {visibleProjects.length > 0 ? (
-              <a
-                href="#proyectos"
-                data-magnetico
-                class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter] shadow-glow"
-              >
-                <span data-magnetico-texto class="inline-flex items-center gap-2">
-                  {t.hero.ctaProjects}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </span>
-              </a>
-            ) : (
-              <a
-                href={L('/certifications')}
-                data-magnetico
-                class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter]"
-              >
-                <span data-magnetico-texto class="inline-flex items-center gap-2">
-                  {t.hero.ctaCerts}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </span>
-              </a>
-            )}
+            <a
+              href={servicios[0]!.destino.href}
+              data-magnetico
+              data-hero-cta
+              data-destinos={JSON.stringify(servicios.map((s) => ({ texto: s.enlace, ...s.destino })))}
+              class="inline-flex items-center h-12 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:brightness-110 transition-[filter] shadow-glow"
+            >
+              <span data-magnetico-texto class="inline-flex items-center gap-2">
+                <span class="hero-cta-ventana"><span class="block" data-hero-cta-texto>{servicios[0]!.enlace}</span></span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </span>
+            </a>
             <a
               href={L('/contact')}
               data-magnetico

@@ -76,6 +76,15 @@ export const CAPACITACION = {
 } as const
 
 /**
+ * Plazo típico de una app en las tiendas de Apple y Google, en semanas. Sale
+ * de las horas de `app-nativa` (80 a 160) más el panel y la publicación en
+ * las dos tiendas, que incluye la revisión de Apple. Lo publica el hero de la
+ * portada; el precio no, porque depende de lo que haga la app (lo da el
+ * cotizador).
+ */
+export const APP_NATIVA_SEMANAS: readonly [number, number] = [8, 14]
+
+/**
  * Lo que trae cada página web después del precio (decisiones de Mike, 2 oct
  * 2026). Se publica en las preguntas frecuentes de /paginas-web y lo dice el
  * asesor de la burbuja; tests/asistente-cotizacion.test.ts comprueba que el

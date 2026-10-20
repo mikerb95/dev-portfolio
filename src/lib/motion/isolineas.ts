@@ -16,6 +16,12 @@
 // barrido cruza el terreno de cerca a lejos: el mismo vocabulario de sondeo y
 // escaneo del resto del sitio.
 //
+// Relieves: cada servicio del titular rotativo del hero le da al terreno una
+// forma propia (terrazas, anillos, dos crestas, retícula, macizo), siempre
+// abstracta y a la derecha del texto. Se mezclan por peso en el shader, así
+// que el paso de uno a otro es una deformación continua del mismo suelo y no
+// un corte entre escenas.
+//
 // Sin dependencias: WebGL2 directo. Módulo solo de navegador.
 
 import { mezclar, multiplicar, perspectiva, rayoAlSuelo, vista, type Camara } from './camara'
@@ -32,8 +38,77 @@ uniform float uAvance;
 uniform float uAmplitud;
 uniform vec3 uPico;       // x, z, intensidad (0..1)
 uniform vec4 uPulsos[4];  // x, z, edad en segundos, intensidad
+uniform float uTiempo;
+// Peso de cada relieve (0..1), en el orden de RELIEVES. Durante un cambio hay
+// dos encendidos a la vez, uno subiendo y otro bajando.
+uniform float uRelieve[5];
 
 ${RUIDO}
+
+// Punto del suelo donde se levantan las formas: a la derecha del titular y por
+// encima de la tarjeta del cotizador en 16:9 (medido con rayoAlSuelo), donde
+// el terreno se ve sin velo.
+const vec2 CENTRO_RELIEVE = vec2(5.0, 13.0);
+
+// Escalones de altura con el borde suavizado: las curvas de nivel se juntan en
+// cada borde y dejan las mesetas limpias, que es lo que se lee como capas.
+float terrazas(float h) {
+  float s = h * 2.4 + 0.2;
+  return (floor(s) + smoothstep(0.3, 0.7, fract(s))) / 2.4;
+}
+
+// Superelipse (cuadrado de esquinas redondas): 0 en el centro, 1 en el borde.
+float superelipse(vec2 q) {
+  q = abs(q);
+  return pow(pow(q.x, 4.0) + pow(q.y, 4.0), 0.25);
+}
+
+float relieves(float h, vec2 xz) {
+  // Las formas crecen y se aplanan con el mismo factor que el ruido, para que
+  // al bajar con el scroll no queden flotando sobre un suelo ya plano.
+  float escala = uAmplitud / 1.15;
+  vec2 c = xz - CENTRO_RELIEVE;
+  float r = length(c);
+  float envolvente = exp(-dot(c, c) / 70.0);
+
+  // Las formas que dibujan algo bajan el ruido para que se lean; las terrazas
+  // no, porque transforman el ruido mismo.
+  float dibujan = uRelieve[1] + uRelieve[2] + uRelieve[3] + uRelieve[4];
+  h *= 1.0 - 0.5 * clamp(dibujan, 0.0, 1.0) * envolvente;
+
+  if (uRelieve[0] > 0.001) h = mix(h, terrazas(h), uRelieve[0]);
+
+  if (uRelieve[1] > 0.001) {
+    // Anillos que se abren desde un punto: lo que se aprende en un sitio y se
+    // va extendiendo.
+    float onda = sin(r * 2.1 - uTiempo * 1.5) * exp(-r * 0.11) * smoothstep(0.4, 2.0, r);
+    h += uRelieve[1] * escala * (0.5 * onda + 0.9 * exp(-r * r / 2.5));
+  }
+
+  if (uRelieve[2] > 0.001) {
+    // Dos crestas que se turnan para subir: una conversación.
+    float turno = 0.5 + 0.5 * sin(uTiempo * 1.2);
+    vec2 a = c - vec2(-2.6, 0.4);
+    vec2 b = c - vec2(2.6, -0.4);
+    float crestaA = exp(-(a.x * a.x / 1.6 + a.y * a.y / 5.0));
+    float crestaB = exp(-(b.x * b.x / 1.6 + b.y * b.y / 5.0));
+    h += uRelieve[2] * escala * 1.5 * (crestaA * (0.45 + 0.55 * turno) + crestaB * (1.0 - 0.55 * turno));
+  }
+
+  if (uRelieve[3] > 0.001) {
+    // Retícula de mesetas: bloques ordenados, como una página maquetada.
+    vec2 celda = fract(c / 2.6 + 0.5) - 0.5;
+    float bloque = 1.0 - smoothstep(0.3, 0.42, superelipse(celda));
+    h += uRelieve[3] * escala * 0.75 * bloque * envolvente;
+  }
+
+  if (uRelieve[4] > 0.001) {
+    // Un macizo alto y angosto, de esquinas redondas.
+    float d = superelipse(c / vec2(1.25, 1.9));
+    h += uRelieve[4] * escala * 2.3 * (1.0 - smoothstep(0.55, 1.15, d));
+  }
+  return h;
+}
 
 float terreno(vec2 xz) {
   vec2 p = vec2(xz.x, xz.y + uAvance) * 0.17;
@@ -41,7 +116,7 @@ float terreno(vec2 xz) {
   // redondas del fbm en crestas y valles alargados, que es lo que hace que las
   // curvas de nivel parezcan de un mapa y no de un ruido.
   vec2 w = vec2(ruido(p * 0.55 + vec2(3.1, 7.7)), ruido(p * 0.55 + vec2(8.3, 1.9)));
-  float h = fbm(p + w * 1.1) * uAmplitud;
+  float h = relieves(fbm(p + w * 1.1) * uAmplitud, xz);
 
   vec2 d = xz - uPico.xy;
   h += uPico.z * 1.05 * exp(-dot(d, d) / 1.4);
@@ -154,6 +229,12 @@ const VELOCIDAD = 0.55 // unidades de mundo por segundo
 const PERIODO_BARRIDO = 8.5
 const MAX_PULSOS = 4
 const ALTURA_PICO = 1.05
+/** Lo que tarda el terreno en pasar de un relieve a otro. */
+const DURACION_RELIEVE = 1.6
+
+/** Formas del terreno, en el orden de `uRelieve` del shader. */
+export const RELIEVES = ['terrazas', 'anillos', 'crestas', 'reticula', 'macizo'] as const
+export type Relieve = (typeof RELIEVES)[number]
 
 // Cámara en reposo y cámara "aplanada" (al final del scroll del hero): baja
 // hasta rozar el suelo y levanta la mirada al horizonte, así el terreno se
@@ -166,6 +247,8 @@ export type Isolineas = {
   aplanar: (t: number) => void
   /** Emite un pulso desde una coordenada de pantalla (px del cliente). */
   pulso: (clienteX: number, clienteY: number, intensidad?: number) => void
+  /** Lleva el terreno a un relieve (o al ruido solo, con null). */
+  relieve: (forma: Relieve | null) => void
   destruir: () => void
 }
 
@@ -261,6 +344,8 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
     lejos: u('uLejos'),
     ancho: u('uAncho'),
     brillo: u('uBrillo'),
+    tiempo: u('uTiempo'),
+    relieve: u('uRelieve'),
   }
 
   gl.useProgram(programa)
@@ -338,6 +423,21 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
 
   const pulsosUniform = new Float32Array(MAX_PULSOS * 4)
 
+  // Pesos actuales de cada relieve y el destino al que van. Se acercan con una
+  // curva suave en cada fotograma; con movimiento reducido saltan de una vez.
+  const pesos = new Float32Array(RELIEVES.length)
+  const destino = new Float32Array(RELIEVES.length)
+  const acercarPesos = (dt: number) => {
+    const k = Math.min(1, dt / DURACION_RELIEVE)
+    for (let i = 0; i < pesos.length; i++) {
+      const falta = destino[i] - pesos[i]
+      if (Math.abs(falta) < 0.002) pesos[i] = destino[i]
+      // Paso proporcional con piso: arranca con decisión y frena al llegar,
+      // sin la cola larga de una exponencial pura.
+      else pesos[i] += Math.sign(falta) * Math.min(Math.abs(falta), Math.max(Math.abs(falta) * k * 3.2, k * 0.35))
+    }
+  }
+
   const dibujar = (t: number) => {
     ajustarTam()
     gl!.viewport(0, 0, lienzo.width, lienzo.height)
@@ -359,6 +459,8 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
       pulsosUniform[i * 4 + 3] = p.intensidad
     })
     gl!.uniform4fv(U.pulsos, pulsosUniform)
+    gl!.uniform1f(U.tiempo, t)
+    gl!.uniform1fv(U.relieve, pesos)
 
     const fase = (t % PERIODO_BARRIDO) / PERIODO_BARRIDO
     // El barrido solo cruza en el primer 60% del ciclo; el resto del tiempo
@@ -399,6 +501,7 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
       pico.intensidad *= Math.exp(-dt * 2)
     }
 
+    acercarPesos(dt)
     while (pulsos.length && t - pulsos[0].t0 > 5.5) pulsos.shift()
     if (t > proximoLatido) {
       emitir(Math.random() * 1.4 - 0.7, -0.35 - Math.random() * 0.5, 0.55)
@@ -486,6 +589,15 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
     pulso(clienteX, clienteY, intensidad = 1) {
       const n = aNDC(clienteX, clienteY)
       emitir(n.x, n.y, intensidad)
+    },
+    relieve(forma) {
+      const i = forma ? RELIEVES.indexOf(forma) : -1
+      destino.fill(0)
+      if (i >= 0) destino[i] = 1
+      if (reducido) {
+        pesos.set(destino)
+        dibujar(14)
+      }
     },
     destruir() {
       parar()

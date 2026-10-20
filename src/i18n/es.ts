@@ -150,16 +150,64 @@ const es = {
       lab: 'lab',
     },
     hero: {
-      line1: 'Tu página, tu app',
-      line2: 'o tu sistema,',
-      line3: 'a la medida.',
-      // Tres líneas de venta en vez de un párrafo de ingeniería: qué puedes
-      // pedir, cómo se trabaja y la prueba (clientes en línea).
-      ventas: [
-        { t: 'Hecho para tu negocio', d: 'Páginas web, apps y software construidos desde cero para lo que necesitas, no una plantilla.' },
-        { t: 'Sin sorpresas', d: 'Precio claro antes de empezar, avances cada semana y un ingeniero al otro lado del WhatsApp.' },
+      // Titular rotativo por servicios (RF-038): un cuadro por línea de
+      // trabajo, cada uno con su dato y su prueba. Las cifras van como
+      // {marcadores} y las rellena src/lib/hero-servicios.ts desde el
+      // tarifario: aquí no se escribe ningún precio a mano.
+      // El h1 real es este (oculto a la vista): los cuadros son decoración
+      // animada y un buscador o un lector de pantalla necesita la frase entera.
+      titulo: 'Software a la medida, capacitación en IA, asesores con IA, páginas web y apps para tu negocio',
+      indice: 'Servicios',
+      pausar: 'Pausar la rotación',
+      reanudar: 'Reanudar la rotación',
+      servicios: [
+        {
+          id: 'software',
+          etiqueta: 'Software a la medida',
+          lineas: ['Del Excel a', 'un sistema propio.'],
+          dato: 'Precio cerrado antes de empezar · desde {minimo}',
+          prueba: 'Inventario, citas, cobros, facturación electrónica o un portal para tus clientes.',
+          enlace: 'Ver proyectos',
+          ejemplo: 'Un sistema para controlar el inventario de mi ferretería',
+        },
+        {
+          id: 'capacitacion',
+          etiqueta: 'Capacitación en IA',
+          lineas: ['Tu equipo, trabajando', 'con IA en un día.'],
+          dato: '{horas} horas prácticas · hasta {cupo} personas · {sesion}',
+          prueba: 'Primero los procesos de tu organización, después las herramientas.',
+          enlace: 'Ver la capacitación',
+          ejemplo: 'Una capacitación en IA para mi equipo de 12 personas',
+        },
+        {
+          id: 'asesor',
+          etiqueta: 'IA para tu negocio',
+          lineas: ['Una IA que atiende', 'a tus clientes.'],
+          dato: 'Responde con tus precios reales y te pasa el cliente por WhatsApp',
+          prueba: 'Pruébala: es el chat de la esquina de esta página.',
+          enlace: 'Probar el asesor',
+          ejemplo: 'Un chat con IA que responda las dudas de mi tienda',
+        },
+        {
+          id: 'web',
+          etiqueta: 'Páginas web',
+          lineas: ['Tu negocio en internet,', 'listo para vender.'],
+          dato: 'Desde {presencia} · {tiempoPresencia}',
+          prueba: '',
+          enlace: 'Ver planes y precios',
+          ejemplo: 'Una página para mi restaurante con el menú y pedidos por WhatsApp',
+        },
+        {
+          id: 'apps',
+          etiqueta: 'Apps móviles',
+          lineas: ['Tu app en la tienda', 'de Apple y Google.'],
+          dato: 'Android y iPhone · lista en {semanasApp} semanas',
+          prueba: 'Publicada a nombre de tu negocio, con un panel para administrarla.',
+          enlace: 'Cotizar mi app',
+          ejemplo: 'Una app para agendar citas en mi barbería',
+        },
       ],
-      clientesLabel: 'Ya en línea',
+      clientesLabel: 'En línea',
       ctaProjects: 'Ver proyectos',
       ctaCerts: 'Certificaciones',
       ctaContact: 'Hablemos',
