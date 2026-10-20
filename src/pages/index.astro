@@ -985,7 +985,9 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
               gsap.set(lineas(antes), { yPercent: 0 })
             },
           })
-          gsap.fromTo(lineas(i), { yPercent: 110 }, { yPercent: 0, duration: 0.95, ease: 'expo.out', stagger: 0.09, delay: 0.32 })
+          // El nuevo entra cuando el viejo ya salió (0,5 s + 0,07 de escalón):
+          // si se cruzan, las dos frases se leen una encima de otra.
+          gsap.fromTo(lineas(i), { yPercent: 110 }, { yPercent: 0, duration: 0.95, ease: 'expo.out', stagger: 0.09, delay: 0.6 })
           gsap.to(saleDet, {
             opacity: 0,
             y: -8,
@@ -996,7 +998,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
               gsap.set(saleDet, { opacity: 1, y: 0 })
             },
           })
-          gsap.fromTo(dets[i]!, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', delay: 0.42 })
+          gsap.fromTo(dets[i]!, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', delay: 0.65 })
           // El texto del botón rueda: sube el viejo, entra el nuevo desde abajo.
           gsap
             .timeline()
