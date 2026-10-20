@@ -82,11 +82,10 @@
 .hero-indice {
   display: flex;
   align-items: flex-end;
-  gap: 14px;
-  max-width: 820px;
+  gap: 22px;
 }
 .hero-indice-paso {
-  flex: 1 1 0;
+  flex: 0 1 auto;
   min-width: 0;
   padding: 6px 0 2px;
   text-align: left;

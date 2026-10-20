@@ -48,13 +48,18 @@ ${RUIDO}
 // Punto del suelo donde se levantan las formas: a la derecha del titular y por
 // encima de la tarjeta del cotizador en 16:9 (medido con rayoAlSuelo), donde
 // el terreno se ve sin velo.
-const vec2 CENTRO_RELIEVE = vec2(5.0, 13.0);
+const vec2 CENTRO_RELIEVE = vec2(6.0, 11.0);
 
 // Escalones de altura con el borde suavizado: las curvas de nivel se juntan en
-// cada borde y dejan las mesetas limpias, que es lo que se lee como capas.
+// cada borde y dejan las mesetas casi limpias, que es lo que se lee como capas.
+// Con DENSIDAD = 15 cada escalón (0,4) mide seis curvas exactas y el desfase
+// de media curva deja cada meseta ENTRE dos de ellas: una meseta justo sobre
+// una curva se pinta como una mancha sólida. El 12 % de pendiente que conserva
+// le deja alguna curva suelta encima, para que no se lea como un hueco.
 float terrazas(float h) {
-  float s = h * 2.4 + 0.2;
-  return (floor(s) + smoothstep(0.3, 0.7, fract(s))) / 2.4;
+  float s = h * 2.5;
+  float escalon = (floor(s) + smoothstep(0.32, 0.68, fract(s))) / 2.5 + 0.5 / 15.0;
+  return mix(escalon, h, 0.12);
 }
 
 // Superelipse (cuadrado de esquinas redondas): 0 en el centro, 1 en el borde.
@@ -81,18 +86,18 @@ float relieves(float h, vec2 xz) {
   if (uRelieve[1] > 0.001) {
     // Anillos que se abren desde un punto: lo que se aprende en un sitio y se
     // va extendiendo.
-    float onda = sin(r * 2.1 - uTiempo * 1.5) * exp(-r * 0.11) * smoothstep(0.4, 2.0, r);
-    h += uRelieve[1] * escala * (0.5 * onda + 0.9 * exp(-r * r / 2.5));
+    float onda = sin(r * 1.9 - uTiempo * 1.5) * exp(-r * 0.1) * smoothstep(0.4, 2.0, r);
+    h += uRelieve[1] * escala * (0.75 * onda + 1.2 * exp(-r * r / 2.5));
   }
 
   if (uRelieve[2] > 0.001) {
     // Dos crestas que se turnan para subir: una conversación.
     float turno = 0.5 + 0.5 * sin(uTiempo * 1.2);
-    vec2 a = c - vec2(-2.6, 0.4);
-    vec2 b = c - vec2(2.6, -0.4);
-    float crestaA = exp(-(a.x * a.x / 1.6 + a.y * a.y / 5.0));
-    float crestaB = exp(-(b.x * b.x / 1.6 + b.y * b.y / 5.0));
-    h += uRelieve[2] * escala * 1.5 * (crestaA * (0.45 + 0.55 * turno) + crestaB * (1.0 - 0.55 * turno));
+    vec2 a = c - vec2(-2.4, 0.6);
+    vec2 b = c - vec2(2.4, -0.6);
+    float crestaA = exp(-(a.x * a.x / 1.4 + a.y * a.y / 4.0));
+    float crestaB = exp(-(b.x * b.x / 1.4 + b.y * b.y / 4.0));
+    h += uRelieve[2] * escala * 2.4 * (crestaA * (0.35 + 0.65 * turno) + crestaB * (1.0 - 0.65 * turno));
   }
 
   if (uRelieve[3] > 0.001) {
