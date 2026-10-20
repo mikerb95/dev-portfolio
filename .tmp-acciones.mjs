@@ -20,6 +20,8 @@ console.log('foco en cotizador:', await page.evaluate(() => document.activeEleme
 page.on('framenavigated', (f) => f === page.mainFrame() && console.log('nav', f.url()))
 await page.waitForTimeout(3000)
 console.log('estado', await page.evaluate(() => ({ hidden: document.querySelector('[data-hero-pausa]').hidden, reducido: matchMedia('(prefers-reduced-motion: reduce)').matches })))
+await page.mouse.wheel(0, -3000)
+await page.waitForTimeout(1500)
 await page.locator('[data-paso="0"]').click({ force: true })
 await page.locator('[data-hero-pausa]').click({ force: true })
 await page.mouse.move(1400, 30)
