@@ -190,6 +190,13 @@ describe('paridad del diccionario es/en', () => {
         'fpBoard.motion.demo.cookie',
         'fpBoard.motion.demo.tor',
         'fpBoard.motion.demo.firefox',
+        // Titular rotativo de la portada: el id de cada cuadro es una clave
+        // (la usa src/lib/hero-servicios.ts), no un texto.
+        'home.hero.servicios[0].id',
+        'home.hero.servicios[1].id',
+        'home.hero.servicios[2].id',
+        'home.hero.servicios[3].id',
+        'home.hero.servicios[4].id',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal

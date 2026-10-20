@@ -75,9 +75,11 @@ describe('traspaso a la burbuja', () => {
 })
 
 describe('textos del hero', () => {
-  it('el titular habla del cliente, no de la disciplina, en los dos idiomas', () => {
-    expect(`${es.home.hero.line1} ${es.home.hero.line2} ${es.home.hero.line3}`).toBe('Tu página, tu app o tu sistema, a la medida.')
-    expect(en.home.hero.line1.toLowerCase()).toContain('your')
+  it('el titular habla del negocio del cliente, no de la disciplina, en los dos idiomas', () => {
+    // Desde el 19 oct 2026 rota por servicios (RF-038); la frase entera es el h1.
+    expect(es.home.hero.titulo).toContain('para tu negocio')
+    expect(en.home.hero.titulo).toContain('for your business')
+    expect(es.home.hero.servicios).toHaveLength(5)
   })
 
   it('los ejemplos del cotizador caben en el límite del asesor y no tienen voseo ni rayas', () => {
@@ -90,7 +92,7 @@ describe('textos del hero', () => {
     }
   })
 
-  it('la línea "Ya en línea" sale de los mismos clientes que la vitrina de /paginas-web', () => {
+  it('la línea "En línea" sale de los mismos clientes que la vitrina de /paginas-web', () => {
     expect(TRABAJOS_REALES).toHaveLength(3)
     for (const c of TRABAJOS_REALES) {
       expect(c.url.startsWith('https://')).toBe(true)
