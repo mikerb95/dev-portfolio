@@ -83,7 +83,12 @@ float relieves(float h, vec2 xz) {
   float dibujan = uRelieve[1] + uRelieve[2] + uRelieve[3] + uRelieve[4];
   h *= 1.0 - 0.6 * clamp(dibujan, 0.0, 1.0) * envolvente;
 
-  if (uRelieve[0] > 0.001) h = mix(h, terrazas(h * 1.35), uRelieve[0]);
+  if (uRelieve[0] > 0.001) {
+    // Un domo amplio cortado en escalones: capas apiladas, cada una sobre la
+    // anterior, como un sistema que se construye por partes.
+    float domo = escala * 1.9 * exp(-dot(c, c) / 9.0);
+    h = mix(h, terrazas(h * envolvente * 0.6 + domo), uRelieve[0]);
+  }
 
   if (uRelieve[1] > 0.001) {
     // Anillos que se abren desde un punto: lo que se aprende en un sitio y se
@@ -107,17 +112,18 @@ float relieves(float h, vec2 xz) {
   }
 
   if (uRelieve[3] > 0.001) {
-    // Retícula de mesetas bajas y ordenadas, como una página maquetada. La
-    // altura del bloque deja su tapa entre dos curvas (ver terrazas).
-    vec2 celda = fract(c / 3.0 + 0.5) - 0.5;
-    float bloque = 1.0 - smoothstep(0.3, 0.4, superelipse(celda));
-    h += uRelieve[3] * escala * (0.5 + 0.5 / 15.0) * bloque * envolvente;
+    // Retícula de colinas iguales y ordenadas, como una página maquetada. Va
+    // con cosenos suaves y no con bloques de borde duro: un borde vertical
+    // apila tantas curvas que en la distancia se vuelve un serrucho.
+    vec2 g = 0.5 + 0.5 * cos(c * 2.1);
+    float celdas = pow(g.x * g.y, 1.6);
+    h += uRelieve[3] * escala * 0.85 * celdas * envolvente;
   }
 
   if (uRelieve[4] > 0.001) {
     // Un macizo alto y angosto, de esquinas redondas.
     float d = superelipse(c / vec2(1.1, 1.6));
-    h += uRelieve[4] * escala * 2.1 * (1.0 - smoothstep(0.6, 1.1, d));
+    h += uRelieve[4] * escala * 2.1 * (1.0 - smoothstep(0.5, 1.2, d));
   }
   return h;
 }
