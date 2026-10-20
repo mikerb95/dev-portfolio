@@ -157,13 +157,19 @@
 .hero-indice-pausa[data-pausada] .hero-pausa-icono { display: none; }
 .hero-indice-pausa[data-pausada] .hero-reanudar-icono { display: block; }
 
-/* En el teléfono no caben cinco etiquetas: queda el número de cada paso y el
-   nombre solo del activo, que se lleva el espacio sobrante. */
+/* En el teléfono no caben cinco etiquetas: la fila lleva solo los números y
+   el nombre del paso activo baja a su propia línea, entero. */
 @media (max-width: 767px) {
-  .hero-indice { gap: 10px; }
-  .hero-indice-paso { flex: 0 0 34px; }
-  .hero-indice-paso[aria-pressed='true'] { flex: 1 1 auto; }
+  .hero-indice { position: relative; gap: 10px; padding-bottom: 24px; }
+  .hero-indice-paso { flex: 1 1 0; }
   .hero-indice-paso:not([aria-pressed='true']) .hero-indice-nombre { display: none; }
+  .hero-indice-paso[aria-pressed='true'] .hero-indice-nombre {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    color: var(--color-ink-50);
+  }
+  .hero-indice-pausa { align-self: flex-start; margin-top: -4px; }
 }
 
 /* Texto del botón principal: rueda hacia arriba al cambiar de cuadro. */
