@@ -77,99 +77,37 @@
 }
 .hero-linea-texto { will-change: transform; }
 
-/* Índice: un paso por servicio. La raya se llena con el tiempo del cuadro y
-   la etiqueta del activo se enciende. */
-.hero-indice {
-  display: flex;
-  align-items: flex-end;
-  gap: 22px;
-}
-.hero-indice-paso {
-  flex: 0 1 auto;
-  min-width: 0;
-  padding: 6px 0 2px;
-  text-align: left;
-  cursor: pointer;
-  color: var(--color-ink-200);
-  transition: color 0.35s ease;
-}
-.hero-indice-paso:hover,
-.hero-indice-paso[aria-pressed='true'] { color: var(--color-ink-50); }
-.hero-indice-paso:focus-visible {
-  outline: 2px solid var(--color-cyan);
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-.hero-indice-barra {
-  display: block;
-  height: 2px;
-  border-radius: 2px;
+/* Pausa de la rotación: invisible hasta que el teclado llega a ella, como un
+   enlace de salto. Con el ratón no hace falta: el cursor sobre el texto ya
+   detiene la rotación. */
+.hero-pausa {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.12);
-  transition: background 0.35s ease;
-}
-.hero-indice-paso:hover .hero-indice-barra { background: rgba(255, 255, 255, 0.24); }
-.hero-indice-relleno {
-  display: block;
-  height: 100%;
-  background: var(--color-cyan);
-  box-shadow: 0 0 10px rgba(0, 242, 255, 0.6);
-  transform-origin: left center;
-  transform: scaleX(0);
-}
-/* Sin JS (o con movimiento reducido) la raya del activo queda llena: marca
-   dónde se está sin fingir un tiempo que no corre. */
-.hero-indice-paso[aria-pressed='true'] .hero-indice-relleno { transform: scaleX(1); }
-.hero-indice[data-corriendo] .hero-indice-paso[aria-pressed='true'] .hero-indice-relleno { transform: scaleX(var(--progreso, 0)); }
-.hero-indice-texto {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 10px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  clip-path: inset(50%);
   white-space: nowrap;
 }
-.hero-indice-num { color: var(--color-ink-300); transition: color 0.35s ease; }
-.hero-indice-paso[aria-pressed='true'] .hero-indice-num { color: var(--color-cyan); }
-.hero-indice-nombre { overflow: hidden; text-overflow: ellipsis; }
-
-.hero-indice-pausa {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  margin-bottom: -2px;
+.hero-pausa[hidden] { display: none; }
+.hero-pausa:focus-visible {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  align-self: flex-start;
+  margin-bottom: 14px;
+  padding: 6px 14px;
   border-radius: 999px;
-  color: var(--color-ink-100);
-  background: rgba(18, 18, 22, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: color 0.25s ease, border-color 0.25s ease;
-}
-.hero-indice-pausa[hidden] { display: none; }
-.hero-indice-pausa:hover { color: var(--color-ink-50); border-color: rgba(0, 242, 255, 0.35); }
-.hero-indice-pausa:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 3px; }
-.hero-reanudar-icono { display: none; }
-.hero-indice-pausa[data-pausada] .hero-pausa-icono { display: none; }
-.hero-indice-pausa[data-pausada] .hero-reanudar-icono { display: block; }
-
-/* En el teléfono no caben cinco etiquetas: la fila lleva solo los números y
-   el nombre del paso activo baja a su propia línea, entero. */
-@media (max-width: 767px) {
-  .hero-indice { position: relative; gap: 10px; padding-bottom: 24px; }
-  .hero-indice-paso { flex: 1 1 0; }
-  .hero-indice-paso:not([aria-pressed='true']) .hero-indice-nombre { display: none; }
-  .hero-indice-paso[aria-pressed='true'] .hero-indice-nombre {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    color: var(--color-ink-50);
-  }
-  .hero-indice-pausa { align-self: flex-start; margin-top: -4px; }
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-50);
+  background: rgba(18, 18, 22, 0.8);
+  border: 1px solid rgba(0, 242, 255, 0.35);
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 3px;
 }
 
 /* Texto del botón principal: rueda hacia arriba al cambiar de cuadro. */

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { rellenar, serviciosHero } from '../src/lib/hero-servicios'
 import { crearRotacion } from '../src/lib/motion/rotacion'
-import { RELIEVES } from '../src/lib/motion/isolineas'
 import { APP_NATIVA_SEMANAS, CAPACITACION, PAQUETES_WEB, REGLAS, formatearMonto } from '../src/data/tarifario'
 
 // Titular rotativo de la portada (RF-038): los cuadros salen del diccionario
@@ -36,12 +35,6 @@ describe('cuadros del titular rotativo', () => {
       expect(cap).toContain(String(CAPACITACION.horas))
       expect(porId(lista, 'apps')).toContain(String(APP_NATIVA_SEMANAS[1]))
     }
-  })
-
-  it('cada cuadro pide un relieve distinto que el terreno conoce', () => {
-    const relieves = es.map((s) => s.relieve)
-    expect(new Set(relieves).size).toBe(relieves.length)
-    for (const r of relieves) expect(RELIEVES).toContain(r)
   })
 
   it('cada cuadro tiene dos líneas, botón y ejemplo para el cotizador', () => {

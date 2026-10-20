@@ -3,14 +3,12 @@
 // El diccionario trae el texto con {marcadores} y este módulo los rellena con
 // las cifras del tarifario: el precio que dice el hero es el mismo que cobra
 // el cotizador y que publica /paginas-web, y cambiarlo es tocar un solo
-// archivo. Cada cuadro sabe también qué relieve le pide al terreno y a dónde
-// lleva su botón.
+// archivo. Cada cuadro sabe también a dónde lleva su botón.
 //
 // Módulo PURO: lo usan la portada en el servidor y el contexto del asesor.
 
 import { getDictionary, type Locale } from '../i18n'
 import { APP_NATIVA_SEMANAS, CAPACITACION, PAQUETES_WEB, REGLAS, formatearMonto, type Moneda } from '../data/tarifario'
-import type { Relieve } from './motion/isolineas'
 
 export type ServicioId = 'software' | 'capacitacion' | 'asesor' | 'web' | 'apps'
 
@@ -29,18 +27,9 @@ export type ServicioHero = {
   prueba: string
   enlace: string
   ejemplo: string
-  relieve: Relieve
   destino: Destino
   /** El cuadro de páginas web muestra los clientes en línea en vez de una frase. */
   conClientes: boolean
-}
-
-const RELIEVE: Record<ServicioId, Relieve> = {
-  software: 'terrazas',
-  capacitacion: 'anillos',
-  asesor: 'crestas',
-  web: 'reticula',
-  apps: 'macizo',
 }
 
 /** Sustituye {clave} por su valor; un marcador sin valor se deja a la vista para que el test lo pille. */
@@ -95,7 +84,6 @@ export function serviciosHero(
       prueba: s.prueba,
       enlace: s.enlace,
       ejemplo: s.ejemplo,
-      relieve: RELIEVE[id],
       destino: destinos[id],
       conClientes: id === 'web',
     }

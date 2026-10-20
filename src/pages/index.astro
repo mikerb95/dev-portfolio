@@ -194,40 +194,18 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
         </a>
       </div>
 
-      <!-- Índice de servicios (RF-038): avanza solo, se detiene con el cursor,
-           con el foco dentro del hero o con el botón de pausa, y cada paso se
-           puede elegir. Es el control que pide WCAG 2.2.2 para cualquier cosa
-           que se mueva sola más de cinco segundos. -->
-      <div
-        class="hero-indice mb-6 md:mb-8"
-        role="group"
-        aria-label={t.hero.indice}
-        data-hero-indice
-        data-ejemplos={JSON.stringify(servicios.map((s) => s.ejemplo))}
-        data-relieves={JSON.stringify(servicios.map((s) => s.relieve))}
-      >
-        {servicios.map((s, i) => (
-          <button type="button" class="hero-indice-paso" data-paso={i} aria-pressed={i === 0 ? 'true' : 'false'}>
-            <span class="hero-indice-barra" aria-hidden="true"><span class="hero-indice-relleno" data-relleno></span></span>
-            <span class="hero-indice-texto">
-              <span class="hero-indice-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-              <span class="hero-indice-nombre">{s.etiqueta}</span>
-            </span>
-          </button>
-        ))}
-        <button
-          type="button"
-          class="hero-indice-pausa"
-          data-hero-pausa
-          aria-label={t.hero.pausar}
-          data-texto-pausar={t.hero.pausar}
-          data-texto-reanudar={t.hero.reanudar}
-          hidden
-        >
-          <svg class="hero-pausa-icono" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
-          <svg class="hero-reanudar-icono" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5"/></svg>
-        </button>
-      </div>
+      <!-- Pausa de la rotación (RF-038): WCAG 2.2.2 pide poder detener lo que
+           se mueve solo más de cinco segundos. No se ve con el ratón (con el
+           cursor sobre el texto la rotación ya se detiene); aparece al llegar
+           con el teclado, como un enlace de salto. -->
+      <button
+        type="button"
+        class="hero-pausa"
+        data-hero-pausa
+        data-texto-pausar={t.hero.pausar}
+        data-texto-reanudar={t.hero.reanudar}
+        hidden
+      >{t.hero.pausar}</button>
 
       <!-- Titular rotativo (RF-038). El h1 real es la frase entera, oculta a la
            vista: los cuadros son la versión animada de lo mismo y van
@@ -237,7 +215,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
            mueve debajo al rotar. Archivo condensada en color plano, acento
            cian en la última línea (lo que el cliente se lleva). -->
       <h1 class="sr-only">{t.hero.titulo}</h1>
-      <div class="hero-titular hero-pila font-display font-black tracking-[-.025em] leading-[.9] text-[clamp(44px,7.6vw,116px)]" aria-hidden="true" data-hero-titular>
+      <div class="hero-titular hero-pila font-display font-black tracking-[-.025em] leading-[.9] text-[clamp(44px,7.6vw,116px)]" aria-hidden="true" data-hero-titular data-ejemplos={JSON.stringify(servicios.map((s) => s.ejemplo))}>
         {servicios.map((s, i) => (
           <p class="hero-cuadro" data-cuadro={i} data-activo={i === 0 ? '' : undefined}>
             <span class="hero-linea block" data-linea="0"><span class="hero-linea-texto block">{s.lineas[0]}</span></span>{' '}
@@ -640,7 +618,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   import { initPageMotion, revealCards } from '../lib/motion-reveal'
-  import { montarIsolineas, type Isolineas, type Relieve } from '../lib/motion/isolineas'
+  import { montarIsolineas, type Isolineas } from '../lib/motion/isolineas'
   import { crearRotacion } from '../lib/motion/rotacion'
   import type { Destino } from '../lib/hero-servicios'
   import { pintarRespuesta } from '../lib/motion/palabras'
@@ -933,31 +911,29 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   // ── Titular rotativo por servicios (RF-038) ──
   // Cada cuadro cambia el titular línea por línea (sale por arriba, entra por
   // abajo, como un rótulo de placas), el dato y la prueba de la izquierda, el
-  // destino del botón principal, el ejemplo del cotizador y el relieve del
-  // terreno. El reloj vive en rotacion.ts; aquí solo se pinta.
+  // destino del botón principal y el ejemplo del cotizador. El reloj vive en
+  // rotacion.ts; aquí solo se pinta. Sin índice a la vista a propósito (la
+  // barra de pasos estorbaba sobre el titular). Con movimiento reducido no
+  // rota: queda el primer cuadro y el h1 nombra los cinco servicios.
   // Fail-open: si algo falla se queda el primer cuadro, que ya viene completo
   // del servidor.
   {
-    const indice = document.querySelector<HTMLElement>('[data-hero-indice]')
     const titular = document.querySelector<HTMLElement>('[data-hero-titular]')
     const detalles = document.querySelector<HTMLElement>('[data-hero-detalles]')
     const cta = document.querySelector<HTMLAnchorElement>('[data-hero-cta]')
     const ctaTexto = document.querySelector<HTMLElement>('[data-hero-cta-texto]')
     const pausa = document.querySelector<HTMLButtonElement>('[data-hero-pausa]')
-    if (hero && indice && titular && detalles && cta && ctaTexto && pausa) {
+    if (hero && titular && detalles && cta && ctaTexto && pausa) {
       try {
-        const pasos = [...indice.querySelectorAll<HTMLButtonElement>('[data-paso]')]
         const cuadros = [...titular.querySelectorAll<HTMLElement>('.hero-cuadro')]
         const dets = [...detalles.querySelectorAll<HTMLElement>('.hero-detalle')]
         const destinos = JSON.parse(cta.dataset.destinos ?? '[]') as (Destino & { texto: string })[]
-        const ejemplos = JSON.parse(indice.dataset.ejemplos ?? '[]') as string[]
-        const relieves = JSON.parse(indice.dataset.relieves ?? '[]') as Relieve[]
+        const ejemplos = JSON.parse(titular.dataset.ejemplos ?? '[]') as string[]
         const lineas = (i: number) => [...(cuadros[i]?.querySelectorAll<HTMLElement>('.hero-linea-texto') ?? [])]
         const rot = crearRotacion(cuadros.length, DURACION_CUADRO)
         let visible = 0
 
         const anunciar = (i: number) => {
-          terreno?.relieve(relieves[i] ?? null)
           document.dispatchEvent(new CustomEvent(EVENTO_SERVICIO, { detail: { ejemplo: ejemplos[i] } }))
         }
 
@@ -973,11 +949,10 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           if (i === visible || !cuadros[i]) return
           const antes = visible
           visible = i
-          pasos.forEach((p, k) => p.setAttribute('aria-pressed', k === i ? 'true' : 'false'))
 
-          // Un clic a mitad de un cambio no puede dejar dos cuadros a medio
-          // camino: se cortan las animaciones y todo lo que no es ni el que
-          // sale ni el que entra vuelve a su sitio, oculto.
+          // Un cambio que empieza antes de que termine el anterior no puede
+          // dejar dos cuadros a medio camino: se cortan las animaciones y todo
+          // lo que no es ni el que sale ni el que entra vuelve a su sitio.
           const todas = cuadros.flatMap((_, k) => lineas(k))
           gsap.killTweensOf([...todas, ...dets, ctaTexto])
           cuadros.forEach((c, k) => {
@@ -995,11 +970,6 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           dets[i]!.dataset.activo = ''
           ponerDestino(i)
           anunciar(i)
-
-          if (reducido) {
-            ctaTexto.textContent = destinos[i]?.texto ?? ''
-            return
-          }
 
           const sale = cuadros[antes]!
           const saleDet = dets[antes]!
@@ -1037,12 +1007,6 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
             .fromTo(ctaTexto, { yPercent: 110 }, { yPercent: 0, duration: 0.45, ease: 'expo.out' })
         }
 
-        pasos.forEach((p, k) =>
-          p.addEventListener('click', () => {
-            mostrar(rot.ir(k))
-          })
-        )
-
         // Los destinos que no navegan: abrir el chat de la burbuja (es la
         // prueba del cuadro "IA para tu negocio") o llevar al cotizador.
         cta.addEventListener('click', (ev) => {
@@ -1074,12 +1038,9 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           gsap.fromTo(lineas(0), { yPercent: 110 }, { yPercent: 0, duration: 1.05, ease: 'expo.out', stagger: 0.1, delay: 0.2 })
           gsap.fromTo(dets[0]!, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: 0.5 })
 
-          indice.dataset.corriendo = ''
           pausa.hidden = false
           const pintarPausa = () => {
-            const quieta = rot.pausadaPorUsuario
-            pausa.toggleAttribute('data-pausada', quieta)
-            pausa.setAttribute('aria-label', (quieta ? pausa.dataset.textoReanudar : pausa.dataset.textoPausar) ?? '')
+            pausa.textContent = (rot.pausadaPorUsuario ? pausa.dataset.textoReanudar : pausa.dataset.textoPausar) ?? ''
           }
           pausa.addEventListener('click', () => {
             if (rot.pausadaPorUsuario) rot.reanudar('usuario')
@@ -1089,7 +1050,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 
           // Se detiene mientras alguien lee (cursor sobre el texto) y mientras
           // el teclado anda por el hero: nada cambia bajo quien está leyendo.
-          const zonaTexto = [indice, titular, detalles.parentElement].filter(Boolean) as HTMLElement[]
+          const zonaTexto = [titular, detalles.parentElement].filter(Boolean) as HTMLElement[]
           zonaTexto.forEach((z) => {
             z.addEventListener('pointerenter', (e) => e.pointerType !== 'touch' && rot.pausar('cursor'))
             z.addEventListener('pointerleave', () => rot.reanudar('cursor'))
@@ -1106,7 +1067,6 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
           gsap.ticker.add((_t, dt) => {
             const nuevo = rot.avanzar(dt)
             if (nuevo !== null) mostrar(nuevo)
-            indice.style.setProperty('--progreso', String(rot.progreso))
           })
         }
       } catch (err) {

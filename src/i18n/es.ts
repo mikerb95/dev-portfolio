@@ -157,7 +157,6 @@ const es = {
       // El h1 real es este (oculto a la vista): los cuadros son decoración
       // animada y un buscador o un lector de pantalla necesita la frase entera.
       titulo: 'Software a la medida, capacitación en IA, asesores con IA, páginas web y apps para tu negocio',
-      indice: 'Servicios',
       pausar: 'Pausar la rotación',
       reanudar: 'Reanudar la rotación',
       servicios: [

@@ -152,7 +152,6 @@ const en = {
     },
     hero: {
       titulo: 'Custom software, AI training, AI assistants, websites and apps for your business',
-      indice: 'Services',
       pausar: 'Pause rotation',
       reanudar: 'Resume rotation',
       servicios: [
