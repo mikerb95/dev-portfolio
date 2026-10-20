@@ -156,14 +156,23 @@ const es = {
       // tarifario: aquí no se escribe ningún precio a mano.
       // El h1 real es este (oculto a la vista): los cuadros son decoración
       // animada y un buscador o un lector de pantalla necesita la frase entera.
-      titulo: 'Software a la medida, capacitación en IA, asesores con IA, páginas web y apps para tu negocio',
+      titulo: 'Páginas web, software a la medida, capacitación en IA, asesores con IA y apps para tu negocio',
       pausar: 'Pausar la rotación',
       reanudar: 'Reanudar la rotación',
       servicios: [
         {
+          id: 'web',
+          etiqueta: 'Páginas web',
+          lineas: ['Tu negocio en internet,', 'listo para vender.'],
+          dato: 'Desde {presencia} · {tiempoPresencia}',
+          prueba: '',
+          enlace: 'Ver planes y precios',
+          ejemplo: 'Una página para mi restaurante con el menú y pedidos por WhatsApp',
+        },
+        {
           id: 'software',
           etiqueta: 'Software a la medida',
-          lineas: ['Del Excel a', 'un sistema propio.'],
+          lineas: ['El software que', 'tu negocio necesita.'],
           dato: 'Precio cerrado antes de empezar · desde {minimo}',
           prueba: 'Inventario, citas, cobros, facturación electrónica o un portal para tus clientes.',
           enlace: 'Ver proyectos',
@@ -186,15 +195,6 @@ const es = {
           prueba: 'Pruébala: es el chat de la esquina de esta página.',
           enlace: 'Probar el asesor',
           ejemplo: 'Un chat con IA que responda las dudas de mi tienda',
-        },
-        {
-          id: 'web',
-          etiqueta: 'Páginas web',
-          lineas: ['Tu negocio en internet,', 'listo para vender.'],
-          dato: 'Desde {presencia} · {tiempoPresencia}',
-          prueba: '',
-          enlace: 'Ver planes y precios',
-          ejemplo: 'Una página para mi restaurante con el menú y pedidos por WhatsApp',
         },
         {
           id: 'apps',

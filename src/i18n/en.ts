@@ -151,14 +151,23 @@ const en = {
       lab: 'lab',
     },
     hero: {
-      titulo: 'Custom software, AI training, AI assistants, websites and apps for your business',
+      titulo: 'Websites, custom software, AI training, AI assistants and apps for your business',
       pausar: 'Pause rotation',
       reanudar: 'Resume rotation',
       servicios: [
         {
+          id: 'web',
+          etiqueta: 'Websites',
+          lineas: ['Your business online,', 'ready to sell.'],
+          dato: 'From {presencia} · {tiempoPresencia}',
+          prueba: '',
+          enlace: 'See plans and prices',
+          ejemplo: 'A website for my restaurant with the menu and WhatsApp orders',
+        },
+        {
           id: 'software',
           etiqueta: 'Custom software',
-          lineas: ['From spreadsheets', 'to your own system.'],
+          lineas: ['The software', 'your business needs.'],
           dato: 'Fixed price before we start · from {minimo}',
           prueba: 'Inventory, bookings, payments, e-invoicing or a portal for your customers.',
           enlace: 'View projects',
@@ -181,15 +190,6 @@ const en = {
           prueba: 'Try it: it’s the chat in the corner of this page.',
           enlace: 'Try the assistant',
           ejemplo: 'An AI chat that answers questions about my store',
-        },
-        {
-          id: 'web',
-          etiqueta: 'Websites',
-          lineas: ['Your business online,', 'ready to sell.'],
-          dato: 'From {presencia} · {tiempoPresencia}',
-          prueba: '',
-          enlace: 'See plans and prices',
-          ejemplo: 'A website for my restaurant with the menu and WhatsApp orders',
         },
         {
           id: 'apps',

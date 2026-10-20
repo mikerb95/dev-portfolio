@@ -11,7 +11,7 @@ describe('cuadros del titular rotativo', () => {
   const en = serviciosHero('en')
 
   it('los dos idiomas tienen los mismos cinco servicios, en el mismo orden', () => {
-    expect(es.map((s) => s.id)).toEqual(['software', 'capacitacion', 'asesor', 'web', 'apps'])
+    expect(es.map((s) => s.id)).toEqual(['web', 'software', 'capacitacion', 'asesor', 'apps'])
     expect(en.map((s) => s.id)).toEqual(es.map((s) => s.id))
   })
 
