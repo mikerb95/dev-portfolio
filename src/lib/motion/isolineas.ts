@@ -45,21 +45,21 @@ uniform float uRelieve[5];
 
 ${RUIDO}
 
-// Punto del suelo donde se levantan las formas: a la derecha del titular y por
+// Punto del suelo donde se centran las formas: a la derecha del titular y por
 // encima de la tarjeta del cotizador en 16:9 (medido con rayoAlSuelo), donde
 // el terreno se ve sin velo.
-const vec2 CENTRO_RELIEVE = vec2(6.0, 11.0);
+const vec2 CENTRO_RELIEVE = vec2(4.4, 10.0);
 
 // Escalones de altura con el borde suavizado: las curvas de nivel se juntan en
-// cada borde y dejan las mesetas casi limpias, que es lo que se lee como capas.
-// Con DENSIDAD = 15 cada escalón (0,4) mide seis curvas exactas y el desfase
+// cada borde y dejan bandas casi limpias, que es lo que se lee como estratos.
+// Con DENSIDAD = 15 cada escalón (0,2) mide tres curvas exactas y el desfase
 // de media curva deja cada meseta ENTRE dos de ellas: una meseta justo sobre
-// una curva se pinta como una mancha sólida. El 12 % de pendiente que conserva
+// una curva se pinta como una mancha sólida. El 10 % de pendiente que conserva
 // le deja alguna curva suelta encima, para que no se lea como un hueco.
 float terrazas(float h) {
-  float s = h * 2.5;
-  float escalon = (floor(s) + smoothstep(0.32, 0.68, fract(s))) / 2.5 + 0.5 / 15.0;
-  return mix(escalon, h, 0.12);
+  float s = h * 5.0;
+  float escalon = (floor(s) + smoothstep(0.25, 0.75, fract(s))) / 5.0 + 0.5 / 15.0;
+  return mix(escalon, h, 0.1);
 }
 
 // Superelipse (cuadrado de esquinas redondas): 0 en el centro, 1 en el borde.
@@ -74,14 +74,16 @@ float relieves(float h, vec2 xz) {
   float escala = uAmplitud / 1.15;
   vec2 c = xz - CENTRO_RELIEVE;
   float r = length(c);
-  float envolvente = exp(-dot(c, c) / 70.0);
+  // Hacia la izquierda (bajo el titular) las formas se apagan: ahí manda el
+  // texto. Hacia la derecha y al fondo siguen hasta el borde.
+  float envolvente = exp(-dot(c, c) / 90.0) * smoothstep(-7.0, -1.0, xz.x - 1.0);
 
   // Las formas que dibujan algo bajan el ruido para que se lean; las terrazas
   // no, porque transforman el ruido mismo.
   float dibujan = uRelieve[1] + uRelieve[2] + uRelieve[3] + uRelieve[4];
-  h *= 1.0 - 0.5 * clamp(dibujan, 0.0, 1.0) * envolvente;
+  h *= 1.0 - 0.6 * clamp(dibujan, 0.0, 1.0) * envolvente;
 
-  if (uRelieve[0] > 0.001) h = mix(h, terrazas(h), uRelieve[0]);
+  if (uRelieve[0] > 0.001) h = mix(h, terrazas(h * 1.35), uRelieve[0]);
 
   if (uRelieve[1] > 0.001) {
     // Anillos que se abren desde un punto: lo que se aprende en un sitio y se
@@ -91,26 +93,31 @@ float relieves(float h, vec2 xz) {
   }
 
   if (uRelieve[2] > 0.001) {
-    // Dos crestas que se turnan para subir: una conversación.
-    float turno = 0.5 + 0.5 * sin(uTiempo * 1.2);
-    vec2 a = c - vec2(-2.4, 0.6);
-    vec2 b = c - vec2(2.4, -0.6);
-    float crestaA = exp(-(a.x * a.x / 1.4 + a.y * a.y / 4.0));
-    float crestaB = exp(-(b.x * b.x / 1.4 + b.y * b.y / 4.0));
-    h += uRelieve[2] * escala * 2.4 * (crestaA * (0.35 + 0.65 * turno) + crestaB * (1.0 - 0.65 * turno));
+    // Dos fuentes de ondas que se turnan: cuando una habla la otra baja, y
+    // donde se cruzan sus anillos aparece el patrón de interferencia. Es la
+    // conversación entre el cliente y el asesor.
+    vec2 a = c - vec2(-1.9, -0.8);
+    vec2 b = c - vec2(1.9, 0.8);
+    float ra = length(a);
+    float rb = length(b);
+    float turno = 0.5 + 0.5 * sin(uTiempo * 0.9);
+    float va = (0.35 + 0.65 * turno) * (sin(ra * 2.2 - uTiempo * 1.7) * 0.42 * exp(-ra * 0.16) + exp(-ra * ra / 0.9));
+    float vb = (1.0 - 0.65 * turno) * (sin(rb * 2.2 - uTiempo * 1.7) * 0.42 * exp(-rb * 0.16) + exp(-rb * rb / 0.9));
+    h += uRelieve[2] * escala * 1.1 * (va + vb) * smoothstep(-8.0, -2.0, xz.x - 1.0);
   }
 
   if (uRelieve[3] > 0.001) {
-    // Retícula de mesetas: bloques ordenados, como una página maquetada.
-    vec2 celda = fract(c / 2.6 + 0.5) - 0.5;
-    float bloque = 1.0 - smoothstep(0.3, 0.42, superelipse(celda));
-    h += uRelieve[3] * escala * 0.75 * bloque * envolvente;
+    // Retícula de mesetas bajas y ordenadas, como una página maquetada. La
+    // altura del bloque deja su tapa entre dos curvas (ver terrazas).
+    vec2 celda = fract(c / 3.0 + 0.5) - 0.5;
+    float bloque = 1.0 - smoothstep(0.3, 0.4, superelipse(celda));
+    h += uRelieve[3] * escala * (0.5 + 0.5 / 15.0) * bloque * envolvente;
   }
 
   if (uRelieve[4] > 0.001) {
     // Un macizo alto y angosto, de esquinas redondas.
-    float d = superelipse(c / vec2(1.25, 1.9));
-    h += uRelieve[4] * escala * 2.3 * (1.0 - smoothstep(0.55, 1.15, d));
+    float d = superelipse(c / vec2(1.1, 1.6));
+    h += uRelieve[4] * escala * 2.1 * (1.0 - smoothstep(0.6, 1.1, d));
   }
   return h;
 }
