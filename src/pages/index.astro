@@ -198,7 +198,14 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
            con el foco dentro del hero o con el botón de pausa, y cada paso se
            puede elegir. Es el control que pide WCAG 2.2.2 para cualquier cosa
            que se mueva sola más de cinco segundos. -->
-      <div class="hero-indice mb-6 md:mb-8" role="group" aria-label={t.hero.indice} data-hero-indice>
+      <div
+        class="hero-indice mb-6 md:mb-8"
+        role="group"
+        aria-label={t.hero.indice}
+        data-hero-indice
+        data-ejemplos={JSON.stringify(servicios.map((s) => s.ejemplo))}
+        data-relieves={JSON.stringify(servicios.map((s) => s.relieve))}
+      >
         {servicios.map((s, i) => (
           <button type="button" class="hero-indice-paso" data-paso={i} aria-pressed={i === 0 ? 'true' : 'false'}>
             <span class="hero-indice-barra" aria-hidden="true"><span class="hero-indice-relleno" data-relleno></span></span>
@@ -633,7 +640,9 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   import { initPageMotion, revealCards } from '../lib/motion-reveal'
-  import { montarIsolineas, type Isolineas } from '../lib/motion/isolineas'
+  import { montarIsolineas, type Isolineas, type Relieve } from '../lib/motion/isolineas'
+  import { crearRotacion } from '../lib/motion/rotacion'
+  import type { Destino } from '../lib/hero-servicios'
   import { pintarRespuesta } from '../lib/motion/palabras'
   import { armarTraspaso, EVENTO_TRASPASO, type RespuestaAsesor } from '../lib/asesor/traspaso'
   import {
@@ -648,6 +657,13 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const hero = document.getElementById('hero')
+
+  // El titular rotativo avisa qué servicio está a la vista; el cotizador lo
+  // escucha para escribir un ejemplo de ese servicio.
+  const EVENTO_SERVICIO = 'hero:servicio'
+  // Tiempo de cada cuadro: dos líneas, un dato y una frase se leen en unos
+  // cinco segundos; el resto es margen para que no se sienta apurado.
+  const DURACION_CUADRO = 7000
 
   // Hora de Bogotá en la tarjeta de ubicación. Es un dato, no decoración: se
   // actualiza también con movimiento reducido. Un segundo exacto de desfase no
@@ -753,25 +769,38 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
         // Ejemplos que se escriben solos mientras la caja está vacía. Se
         // detienen al escribir o al enfocar (nada cambia bajo el cursor de
         // quien está leyendo) y con movimiento reducido queda el primero fijo.
+        // Con el titular rotativo (RF-038) el ejemplo deja de girar por su
+        // cuenta y sigue al cuadro a la vista: en el de capacitación se
+        // escribe una capacitación, en el de apps una app.
         const ejemplos = Array.isArray(t.ejemplos) && t.ejemplos.length ? t.ejemplos : [ejemplo.textContent ?? '']
         let girando = 0
+        let delCuadro: string | null = null
         const detenerEjemplos = () => window.clearTimeout(girando)
         const escribirEjemplo = (n: number) => {
-          const frase = ejemplos[n % ejemplos.length] ?? ''
+          const frase = delCuadro ?? ejemplos[n % ejemplos.length] ?? ''
           let i = 0
           const paso = () => {
             if (document.activeElement === input || input.value) return
             i++
             ejemplo.textContent = frase.slice(0, i)
             if (i < frase.length) girando = window.setTimeout(paso, 28 + Math.random() * 30)
-            else girando = window.setTimeout(() => escribirEjemplo(n + 1), 3200)
+            else if (!delCuadro) girando = window.setTimeout(() => escribirEjemplo(n + 1), 3200)
           }
-          girando = window.setTimeout(paso, 500)
+          girando = window.setTimeout(paso, delCuadro ? 250 : 500)
         }
         if (!reducido) escribirEjemplo(1)
+        document.addEventListener(EVENTO_SERVICIO, (ev) => {
+          const frase = (ev as CustomEvent<{ ejemplo?: string }>).detail?.ejemplo
+          if (!frase) return
+          delCuadro = frase
+          if (document.activeElement === input || input.value) return
+          detenerEjemplos()
+          if (reducido) ejemplo.textContent = frase
+          else escribirEjemplo(0)
+        })
         input.addEventListener('focus', () => {
           detenerEjemplos()
-          if (!input.value) ejemplo.textContent = ejemplos[0] ?? ''
+          if (!input.value) ejemplo.textContent = delCuadro ?? ejemplos[0] ?? ''
         })
         input.addEventListener('blur', () => {
           if (!reducido && !input.value) escribirEjemplo(1)
@@ -901,6 +930,191 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
     }
   }
 
+  // ── Titular rotativo por servicios (RF-038) ──
+  // Cada cuadro cambia el titular línea por línea (sale por arriba, entra por
+  // abajo, como un rótulo de placas), el dato y la prueba de la izquierda, el
+  // destino del botón principal, el ejemplo del cotizador y el relieve del
+  // terreno. El reloj vive en rotacion.ts; aquí solo se pinta.
+  // Fail-open: si algo falla se queda el primer cuadro, que ya viene completo
+  // del servidor.
+  {
+    const indice = document.querySelector<HTMLElement>('[data-hero-indice]')
+    const titular = document.querySelector<HTMLElement>('[data-hero-titular]')
+    const detalles = document.querySelector<HTMLElement>('[data-hero-detalles]')
+    const cta = document.querySelector<HTMLAnchorElement>('[data-hero-cta]')
+    const ctaTexto = document.querySelector<HTMLElement>('[data-hero-cta-texto]')
+    const pausa = document.querySelector<HTMLButtonElement>('[data-hero-pausa]')
+    if (hero && indice && titular && detalles && cta && ctaTexto && pausa) {
+      try {
+        const pasos = [...indice.querySelectorAll<HTMLButtonElement>('[data-paso]')]
+        const cuadros = [...titular.querySelectorAll<HTMLElement>('.hero-cuadro')]
+        const dets = [...detalles.querySelectorAll<HTMLElement>('.hero-detalle')]
+        const destinos = JSON.parse(cta.dataset.destinos ?? '[]') as (Destino & { texto: string })[]
+        const ejemplos = JSON.parse(indice.dataset.ejemplos ?? '[]') as string[]
+        const relieves = JSON.parse(indice.dataset.relieves ?? '[]') as Relieve[]
+        const lineas = (i: number) => [...(cuadros[i]?.querySelectorAll<HTMLElement>('.hero-linea-texto') ?? [])]
+        const rot = crearRotacion(cuadros.length, DURACION_CUADRO)
+        let visible = 0
+
+        const anunciar = (i: number) => {
+          terreno?.relieve(relieves[i] ?? null)
+          document.dispatchEvent(new CustomEvent(EVENTO_SERVICIO, { detail: { ejemplo: ejemplos[i] } }))
+        }
+
+        const ponerDestino = (i: number) => {
+          const d = destinos[i]
+          if (!d) return
+          cta.href = d.href
+          if (d.tipo === 'accion') cta.dataset.accion = d.accion
+          else delete cta.dataset.accion
+        }
+
+        const mostrar = (i: number) => {
+          if (i === visible || !cuadros[i]) return
+          const antes = visible
+          visible = i
+          pasos.forEach((p, k) => p.setAttribute('aria-pressed', k === i ? 'true' : 'false'))
+
+          // Un clic a mitad de un cambio no puede dejar dos cuadros a medio
+          // camino: se cortan las animaciones y todo lo que no es ni el que
+          // sale ni el que entra vuelve a su sitio, oculto.
+          const todas = cuadros.flatMap((_, k) => lineas(k))
+          gsap.killTweensOf([...todas, ...dets, ctaTexto])
+          cuadros.forEach((c, k) => {
+            delete c.dataset.saliendo
+            if (k !== i) delete c.dataset.activo
+          })
+          dets.forEach((d, k) => {
+            delete d.dataset.saliendo
+            d.inert = k !== i
+            if (k !== i) delete d.dataset.activo
+          })
+          gsap.set(todas, { yPercent: 0 })
+          gsap.set(dets, { opacity: 1, y: 0 })
+          cuadros[i].dataset.activo = ''
+          dets[i]!.dataset.activo = ''
+          ponerDestino(i)
+          anunciar(i)
+
+          if (reducido) {
+            ctaTexto.textContent = destinos[i]?.texto ?? ''
+            return
+          }
+
+          const sale = cuadros[antes]!
+          const saleDet = dets[antes]!
+          sale.dataset.saliendo = ''
+          saleDet.dataset.saliendo = ''
+          gsap.to(lineas(antes), {
+            yPercent: -110,
+            duration: 0.5,
+            ease: 'power3.in',
+            stagger: 0.07,
+            onComplete: () => {
+              delete sale.dataset.saliendo
+              gsap.set(lineas(antes), { yPercent: 0 })
+            },
+          })
+          gsap.fromTo(lineas(i), { yPercent: 110 }, { yPercent: 0, duration: 0.95, ease: 'expo.out', stagger: 0.09, delay: 0.32 })
+          gsap.to(saleDet, {
+            opacity: 0,
+            y: -8,
+            duration: 0.32,
+            ease: 'power2.in',
+            onComplete: () => {
+              delete saleDet.dataset.saliendo
+              gsap.set(saleDet, { opacity: 1, y: 0 })
+            },
+          })
+          gsap.fromTo(dets[i]!, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', delay: 0.42 })
+          // El texto del botón rueda: sube el viejo, entra el nuevo desde abajo.
+          gsap
+            .timeline()
+            .to(ctaTexto, { yPercent: -110, duration: 0.25, ease: 'power2.in' })
+            .add(() => {
+              ctaTexto.textContent = destinos[i]?.texto ?? ''
+            })
+            .fromTo(ctaTexto, { yPercent: 110 }, { yPercent: 0, duration: 0.45, ease: 'expo.out' })
+        }
+
+        pasos.forEach((p, k) =>
+          p.addEventListener('click', () => {
+            mostrar(rot.ir(k))
+          })
+        )
+
+        // Los destinos que no navegan: abrir el chat de la burbuja (es la
+        // prueba del cuadro "IA para tu negocio") o llevar al cotizador.
+        cta.addEventListener('click', (ev) => {
+          const accion = cta.dataset.accion
+          if (accion === 'asesor') {
+            const abrir = document.getElementById('asesor-abrir') as HTMLButtonElement | null
+            const fab = document.getElementById('wa-fab')
+            if (abrir && !abrir.disabled) {
+              ev.preventDefault()
+              abrir.click()
+            } else if (fab) {
+              ev.preventDefault()
+              fab.click()
+            }
+          } else if (accion === 'cotizador') {
+            const campo = document.getElementById('cotizador-input')
+            if (campo) {
+              ev.preventDefault()
+              campo.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'center' })
+              campo.focus({ preventScroll: true })
+            }
+          }
+        })
+
+        anunciar(0)
+
+        if (!reducido) {
+          // Entrada del primer cuadro: el mismo gesto de placa que los cambios.
+          gsap.fromTo(lineas(0), { yPercent: 110 }, { yPercent: 0, duration: 1.05, ease: 'expo.out', stagger: 0.1, delay: 0.2 })
+          gsap.fromTo(dets[0]!, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: 0.5 })
+
+          indice.dataset.corriendo = ''
+          pausa.hidden = false
+          const pintarPausa = () => {
+            const quieta = rot.pausadaPorUsuario
+            pausa.toggleAttribute('data-pausada', quieta)
+            pausa.setAttribute('aria-label', (quieta ? pausa.dataset.textoReanudar : pausa.dataset.textoPausar) ?? '')
+          }
+          pausa.addEventListener('click', () => {
+            if (rot.pausadaPorUsuario) rot.reanudar('usuario')
+            else rot.pausar('usuario')
+            pintarPausa()
+          })
+
+          // Se detiene mientras alguien lee (cursor sobre el texto) y mientras
+          // el teclado anda por el hero: nada cambia bajo quien está leyendo.
+          const zonaTexto = [indice, titular, detalles.parentElement].filter(Boolean) as HTMLElement[]
+          zonaTexto.forEach((z) => {
+            z.addEventListener('pointerenter', (e) => e.pointerType !== 'touch' && rot.pausar('cursor'))
+            z.addEventListener('pointerleave', () => rot.reanudar('cursor'))
+          })
+          hero.addEventListener('focusin', (e) => {
+            if ((e.target as HTMLElement).matches(':focus-visible')) rot.pausar('foco')
+          })
+          hero.addEventListener('focusout', (e) => {
+            if (!hero.contains(e.relatedTarget as Node | null)) rot.reanudar('foco')
+          })
+          new IntersectionObserver(([e]) => (e?.isIntersecting ? rot.reanudar('oculto') : rot.pausar('oculto'))).observe(titular)
+          document.addEventListener('visibilitychange', () => (document.hidden ? rot.pausar('oculto') : rot.reanudar('oculto')))
+
+          gsap.ticker.add((_t, dt) => {
+            const nuevo = rot.avanzar(dt)
+            if (nuevo !== null) mostrar(nuevo)
+            indice.style.setProperty('--progreso', String(rot.progreso))
+          })
+        }
+      } catch (err) {
+        console.warn('[hero] rotación deshabilitada', err)
+      }
+    }
+  }
+
   if (!reducido) {
     // Fail-open: cualquier excepción del motion devuelve la visibilidad de lo
     // que pudo quedar escondido (cards del bento, líneas de titulares) en vez
@@ -911,7 +1125,8 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       // El titular se aleja por capas al salir del hero: cada línea a su
       // velocidad, como planos a distinta profundidad sobre el terreno.
       if (hero) {
-        document.querySelectorAll<HTMLElement>('#hero .hero-line').forEach((linea, i) => {
+        document.querySelectorAll<HTMLElement>('#hero .hero-linea').forEach((linea) => {
+          const i = Number(linea.dataset.linea ?? 0)
           gsap.to(linea, {
             yPercent: -18 - i * 16,
             opacity: 0.15,

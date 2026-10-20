@@ -19,6 +19,7 @@
 import { getDictionary, type Locale } from '../../i18n'
 import { CAPACITACION, ENTREGA, HOSTING_ANUAL, PAQUETES_WEB, REGLAS, TARIFA_HORA, formatearMonto, type Moneda } from '../../data/tarifario'
 import { proyectosInstantanea, type ProyectoInstantanea } from '../fallback/instantanea'
+import { serviciosHero } from '../hero-servicios'
 
 /** Largo máximo de la descripción de cada proyecto en el prompt. */
 const MAX_DESCRIPCION = 220
@@ -85,8 +86,13 @@ export function conocimiento(locale: Locale): string {
   // El hero ya no lista el stack (desde el 6 oct 2026 le habla al cliente), pero
   // sigue siendo información pública del perfil: se mantiene aquí.
   const stack = 'TypeScript · React · Next.js · Astro · Node.js · PostgreSQL'
-  const titular = `${home.hero.line1} ${home.hero.line2} ${home.hero.line3}`
-  const promesas = home.hero.ventas.map((v) => `${v.t}: ${v.d}`).join(' ')
+  // El titular de la portada rota por servicios (RF-038): el asesor recibe la
+  // frase completa y cada cuadro con su dato, con las cifras ya puestas desde
+  // el tarifario.
+  const titular = home.hero.titulo
+  const promesas = serviciosHero(locale)
+    .map((s) => `${s.etiqueta}: ${s.lineas.join(' ')} (${s.dato}).`)
+    .join(' ')
 
   return es
     ? `# Quién es Mike
