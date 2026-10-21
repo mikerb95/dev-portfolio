@@ -11,6 +11,9 @@ import { DEFAULT_LOCALE, alternateUrls, delocalizePath, getDictionary, getLocale
 import { jsonEnScript } from '../lib/json-script'
 import { temporadaActual } from '../lib/temporada'
 import Fantasmas from '../components/Fantasmas.astro'
+// Mismo archivo que referencia el @font-face de global.css: Vite le da el mismo
+// hash, así que el preload y el CSS piden una sola descarga.
+import interLatinUrl from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
 
 interface Props {
   title: string
@@ -126,6 +129,10 @@ const fantasmas = temporadaActual() === 'halloween' && delocalizePath(Astro.url.
     {alt.en && <link rel="alternate" hreflang="en" href={new URL(alt.en, site).href} />}
     {alt.es && <link rel="alternate" hreflang="x-default" href={new URL(alt.es, site).href} />}
 
+    <!-- La letra del texto se descubría al terminar de leer global.css (28 KB);
+         con el preload baja en paralelo con el CSS. Solo el subconjunto latino:
+         los demás casi nunca se usan y precargarlos sería descargar de más. -->
+    <link rel="preload" href={interLatinUrl} as="font" type="font/woff2" crossorigin />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
