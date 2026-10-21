@@ -868,8 +868,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // respetar es la opción explícita de NO cachear (`no-store`/`private`), que
   // es como las rutas con datos personales se protegen del CDN compartido.
   //
-  // Ojo: ese arreglo NO bastó. El MISS permanente sigue vivo en producción; ver
-  // la nota de `CDN-Cache-Control` más abajo, que es lo que lo desambigua.
+  // Para comprobarlo desde fuera hay que pedir con GET: `curl -I` manda HEAD,
+  // que no entra en `isPublicPage`, y da MISS aunque el cache funcione. Con GET
+  // la portada da HIT y trae `CDN-Cache-Control` (verificado el 20 oct 2026).
   const prevCache = resHeaders.get('Cache-Control') ?? ''
   const optedOut = /no-store|private/i.test(prevCache)
   if (isPublicPage && res.status === 200 && !optedOut) {
@@ -880,11 +881,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // `s-maxage` y `stale-while-revalidate` del `Cache-Control` antes de
     // entregar la respuesta al navegador, así que desde fuera la cabecera se ve
     // idéntica esté funcionando o no: `public, max-age=0, must-revalidate`. El
-    // único indicador real es `x-vercel-cache`, y lleva dando MISS en 11 de 11
-    // peticiones seguidas a `/` desde la misma región, con la parte estática
-    // haciendo HIT al lado. `CDN-Cache-Control` sí llega al navegador sin
-    // tocar, así que si tras desplegar esto la respuesta no lo trae, lo que
-    // corre en producción no es este archivo.
+    // único indicador real es `x-vercel-cache`. `CDN-Cache-Control` sí llega al
+    // navegador sin tocar, así que si una respuesta GET pública no lo trae, lo
+    // que corre en producción no es este archivo.
     resHeaders.set('CDN-Cache-Control', politica)
   }
 
