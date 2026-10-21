@@ -10,13 +10,13 @@ aquí y en la sección de servicios del perfil.
 | Campo | Valor |
 | --- | --- |
 | Nombre | CodeByMike (el que usan el sitio y el logo; Google exige el nombre real de la marca, sin palabras clave añadidas) |
-| Categoría principal | Diseñador de sitios web |
-| Categorías adicionales | Empresa de software · Servicio de marketing en Internet |
+| Categoría principal | Diseñador web |
+| Categorías adicionales | Pendientes: Empresa de software · Servicio de marketing en Internet |
 | Tipo | Empresa de área de servicio: la dirección se usa para verificar y queda oculta |
-| Área de servicio | Bogotá, Medellín, Cali |
+| Área de servicio | Bogotá, Chía, Soacha, Mosquera, Funza, Cota y Cajicá (Google pide zonas a las que se pueda ir en persona) |
 | Teléfono | +57 310 464 1228 |
 | Sitio web | https://codebymike.net/paginas-web |
-| Horario | Lunes a sábado, 8:00 a. m. a 7:00 p. m. |
+| Horario | Lunes a viernes, 1:00 a 2:00 p. m. y 6:00 a 8:00 p. m.; sábado, 9:00 a. m. a 3:00 p. m. (configurado el 20 oct 2026) |
 | Logo | `docs/facebook/imagenes/perfil.png` |
 | Fotos | Las imágenes de casos y planes de `docs/facebook/imagenes/` |
 
