@@ -66,6 +66,7 @@
     "qrcode": "^1.5.4",
     "reveal.js": "^6.0.1",
     "tailwindcss": "^4.2.4",
+    "undici": "~6.25.0",
     "web-vitals": "^5.3.0"
   },
   "devDependencies": {
