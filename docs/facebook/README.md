@@ -80,7 +80,7 @@ desde Meta Business Suite.
 | 9 | vie 13 nov | `11-caso-toledo.png` | Caso: Toledo Producciones |
 | 10 | lun 16 nov | `10-google.png` | Busca tu negocio en Google |
 | 11 | mié 18 nov | `09-de-quien-es.png` | ¿De quién es la página? |
-| 12 | vie 20 nov | `12-como-se-paga.png` | Cuentas claras |
+| 12 | vie 20 nov | `12-como-se-paga.png` | Cuentas claras (en Borradores: Meta solo programa hasta 29 días adelante) |
 
 Los casos van alternados con los posts de venta para que la página no parezca
 un catálogo. Antes de publicar cada caso conviene avisarle al cliente (y, si
