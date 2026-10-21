@@ -3,7 +3,7 @@
 // Sin dependencias externas: usa fetch + node:tls.
 
 import tls from 'node:tls'
-import { assertPublicHost } from './ssrf-guard'
+import { agentePublico, assertPublicHost, lookupPublico } from './ssrf-guard'
 
 export type MonitorState = 'up' | 'degraded' | 'down' | 'unknown'
 
@@ -56,7 +56,10 @@ export async function probe(m: MonitorInput): Promise<CheckOutcome> {
         headers: { 'User-Agent': 'codebymike-monitor/1.0 (+https://codebymike.net)' },
         signal: controller.signal,
         redirect: 'manual',
-      })
+        // Fija la IP validada: sin esto, un DNS que cambia entre la validación
+        // y la conexión (rebinding) colaba un destino interno.
+        dispatcher: agentePublico(),
+      } as RequestInit)
       const location = res.headers.get('location')
       if (res.status < 300 || res.status >= 400 || !location) break
       if (salto >= MAX_SALTOS) throw new Error(`Demasiadas redirecciones (>${MAX_SALTOS})`)
@@ -131,7 +134,7 @@ function leerExpiracion(rawUrl: string): Promise<Date | null> {
       settled = true
       resolve(d)
     }
-    const socket = tls.connect({ host, port, servername: host, timeout: SSL_TIMEOUT_MS }, () => {
+    const socket = tls.connect({ host, port, servername: host, timeout: SSL_TIMEOUT_MS, lookup: lookupPublico }, () => {
       const cert = socket.getPeerCertificate()
       socket.end()
       const valid = cert && cert.valid_to ? new Date(cert.valid_to) : null

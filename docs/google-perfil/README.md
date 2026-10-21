@@ -35,7 +35,8 @@ del negocio, y los precios van en la sección de servicios.
 > con tienda en línea o reservas y pagos en línea. El primer año de dominio y
 > hosting va incluido.
 >
-> Atención remota en todo el país. Escríbeme por WhatsApp y te respondo el
+> Atención en Bogotá y alrededores, presencial o remota. También doy
+> capacitaciones en IA para equipos. Escríbeme por WhatsApp y te respondo el
 > mismo día.
 
 ## Servicios (con precio)

@@ -4,6 +4,8 @@ import { normalizeTarget, diagnosticSuite, type DiagnosticTarget } from '../src/
 // DNS mockeado: el default resuelve todo; cada test puede sobreescribir.
 vi.mock('node:dns/promises', () => ({
   default: {
+    // Lo usa el guardia anti-SSRF antes de cada salto; 127.x simula un destino interno.
+    lookup: vi.fn(async (host: string) => [{ address: host === 'interno.test' ? '127.0.0.1' : '76.76.21.21', family: 4 }]),
     resolve4: vi.fn(async () => ['76.76.21.21']),
     resolve6: vi.fn(async () => []),
     resolveCname: vi.fn(async () => []),
@@ -224,6 +226,38 @@ describe('sitemap.xml', () => {
 
     stubFetchRoutes({ 'https://example.com/sitemap.xml': () => new Response('x', { status: 404 }) })
     expect((await runTest('sitemap')).status).toBe('info')
+  })
+})
+
+describe('SSRF: redirecciones hacia la red interna', () => {
+  it('una 302 hacia 127.0.0.1 no se sigue y la prueba falla', async () => {
+    const pedidas: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string | URL) => {
+      pedidas.push(String(url))
+      return new Response(null, { status: 302, headers: { location: 'http://127.0.0.1:9001/2018-06-01/runtime/invocation/next' } })
+    }))
+    const r = await runTest('reachability')
+    expect(r.status).toBe('fail')
+    expect(pedidas.some((u) => u.includes('127.0.0.1'))).toBe(false)
+  })
+
+  it('una 302 hacia un host que resuelve a IP privada tampoco se sigue', async () => {
+    const pedidas: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string | URL) => {
+      pedidas.push(String(url))
+      return new Response(null, { status: 302, headers: { location: 'https://interno.test/' } })
+    }))
+    expect((await runTest('security-headers')).status).toBe('fail')
+    expect(pedidas.some((u) => u.includes('interno.test'))).toBe(false)
+  })
+
+  it('las redirecciones públicas sí se siguen y la URL final se informa', async () => {
+    stubFetchRoutes({
+      'https://example.com/': () => new Response(null, { status: 301, headers: { location: 'https://www.example.com/' } }),
+    }, () => new Response('ok', { status: 200 }))
+    const r = await runTest('reachability')
+    expect(r.status).toBe('pass')
+    expect(r.details?.join(' ')).toContain('https://www.example.com/')
   })
 })
 

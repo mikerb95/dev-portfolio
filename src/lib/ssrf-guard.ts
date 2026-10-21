@@ -92,7 +92,8 @@ export function lookupPublico(hostname: string, options: LookupOptions, callback
 }
 
 let agente: Agent | null = null
-const agentePublico = () => (agente ??= new Agent({ connect: { lookup: lookupPublico } }))
+/** Dispatcher de undici cuyas conexiones pasan por `lookupPublico`. Uno por instancia. */
+export const agentePublico = (): Agent => (agente ??= new Agent({ connect: { lookup: lookupPublico } }))
 
 export const MAX_SALTOS = 5
 
