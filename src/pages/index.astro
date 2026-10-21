@@ -85,6 +85,9 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 ---
 
 <BaseLayout title={t.title} description={t.description}>
+  <!-- La fuente del titular solo se descubría al terminar de leer el CSS; es
+       lo más grande del primer pantallazo, así que se pide de una vez. -->
+  <link rel="preload" slot="head" href="/fonts/archivo-titular.woff2" as="font" type="font/woff2" crossorigin />
   <script
     is:inline
     slot="head"

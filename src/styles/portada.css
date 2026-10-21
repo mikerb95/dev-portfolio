@@ -35,8 +35,24 @@
    Archivo condensada al 78 % de anchura: a 128 px la versión normal no cabe en
    tres líneas sobre la mitad izquierda del terreno. Color plano y no
    degradado: el blanco-a-gris era el gesto más repetido de las landings
-   generadas con IA. */
+   generadas con IA.
+
+   La familia es una copia fija de Archivo en ese único punto (anchura 78,
+   peso 900), sacada del mismo woff2 variable con fontTools: 14 KB frente a los
+   88 KB del archivo con todos los anchos y pesos, que es lo que el titular
+   esperaba para pintarse. Se precarga desde index.astro. Si algún día cambia
+   el ancho o el peso del titular, hay que regenerarla o se verá sintetizada. */
+@font-face {
+  font-family: 'Archivo Titular';
+  src: url('/fonts/archivo-titular.woff2') format('woff2');
+  font-weight: 900;
+  font-stretch: 78%;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 .hero-titular {
+  font-family: 'Archivo Titular', var(--font-display);
   font-stretch: 78%;
   color: #fff;
   text-wrap: balance;
