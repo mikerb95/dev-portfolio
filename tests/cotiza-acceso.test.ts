@@ -13,6 +13,7 @@ import {
   FALLOS_POR_IP,
   cierraLaPuerta,
   decidirIntento,
+  decidirReserva,
   esRutaDeCotiza,
   firmarAccesoCotiza,
   pinBienFormado,
@@ -147,6 +148,23 @@ describe('frenos', () => {
     expect(cierraLaPuerta(FALLOS_GLOBALES - 1)).toBe(false)
     expect(cierraLaPuerta(FALLOS_GLOBALES)).toBe(true)
     expect(cierraLaPuerta(FALLOS_GLOBALES + 1)).toBe(false)
+  })
+})
+
+describe('reserva del intento (carrera de ráfagas en paralelo)', () => {
+  it('deja verificar hasta el límite de cada contador, contando este intento', () => {
+    expect(decidirReserva({ fallosIp: FALLOS_POR_IP, globales: FALLOS_GLOBALES })).toEqual({ tipo: 'permitido' })
+  })
+
+  it('pasarse del total cierra, aunque la IP esté limpia', () => {
+    expect(decidirReserva({ fallosIp: 1, globales: FALLOS_GLOBALES + 1 })).toEqual({
+      tipo: 'puerta_cerrada',
+      reintentarEnSeg: CIERRE_MS / 1000,
+    })
+  })
+
+  it('pasarse en una IP la frena', () => {
+    expect(decidirReserva({ fallosIp: FALLOS_POR_IP + 1, globales: 3 })).toEqual({ tipo: 'ip_frenada' })
   })
 })
 

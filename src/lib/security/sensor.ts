@@ -27,6 +27,25 @@ function keepAlive(promise: Promise<unknown>, waitUntil: WaitUntil = vercelWaitU
   }
 }
 
+/**
+ * Regla con la que se registra un honeypot pedido por un NAVEGADOR. Se anota
+ * igual (sigue siendo un sondeo, o alguien curioso), pero nunca bloquea.
+ */
+export const HONEYPOT_NAVEGADOR = 'honeypot.navegador'
+
+/**
+ * ¿Lo pidió un navegador? Los modernos mandan `Sec-Fetch-Mode` en TODA petición
+ * y los escáneres no se molestan. Importa porque un navegador pide lo que otra
+ * página le dice: un `<img src="https://codebymike.net/wp-login.php">` en
+ * cualquier web hacía que quien la abriera (un cliente, yo mismo, o un salón
+ * entero tras el mismo wifi) quedara bloqueado en todo el sitio. Un escáner que
+ * finja la cabecera esquiva el bloqueo por honeypot, no el registro ni el
+ * bloqueo por severidad alta del cron.
+ */
+export function vieneDeNavegador(headers: Headers): boolean {
+  return headers.has('sec-fetch-mode')
+}
+
 export type ObserveInput = {
   method: string
   /** pathname sin query. */
@@ -59,6 +78,9 @@ export function observeRequest(
       userAgent: input.headers.get('user-agent'),
     })
     if (!classification) return null
+    if (classification.category === 'honeypot' && vieneDeNavegador(input.headers)) {
+      classification = { ...classification, severity: 'medium', ruleId: HONEYPOT_NAVEGADOR }
+    }
 
     const promise = recordSecurityEvent({
       classification,

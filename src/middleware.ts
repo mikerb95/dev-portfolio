@@ -12,7 +12,8 @@ import { accesoCotizaVigente } from './lib/cotiza/pin-db'
 import { maybeChaos } from './lib/chaos'
 import { clientIp, resolveDeviceSessionId } from './lib/device-info'
 import { recordSession } from './lib/device-sessions'
-import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
+import { HONEYPOT_NAVEGADOR, observeRequest, recordEnforcementEvent } from './lib/security/sensor'
+import { esIpPropia } from './lib/security/autoblock'
 import { agenteDeUserAgent } from './lib/aeo/agentes'
 import { contarSinEsperar, esRutaLlms } from './lib/aeo/conteo'
 import { isBlocked, blockIpEscalated } from './lib/security/blocklist'
@@ -215,7 +216,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   //      HTML falso): no delatamos la trampa en el primer contacto; a partir de
   //      la siguiente petición la IP cae en la blocklist (403 seco) para todo.
   //      Fail-open: si el escalado/insert falla, el request continúa igual.
-  if (threat?.category === 'honeypot' && ip) {
+  //      Dos excepciones: lo que pidió un navegador (otra web puede hacérselo
+  //      pedir, ver `vieneDeNavegador`) y las IPs de mis sesiones admin, que
+  //      ya me dejaron fuera una vez (incidente del 10 sep 2026).
+  if (threat?.category === 'honeypot' && threat.ruleId !== HONEYPOT_NAVEGADOR && ip && !(await esIpPropia(ip))) {
     await blockIpEscalated(
       { ip, reason: 'honeypot tocado', ruleId: 'honeypot.inline', source: 'auto' }
     ).catch(() => {})

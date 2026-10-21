@@ -79,7 +79,8 @@ export async function runAutoBlock(now = new Date(), options?: AutoBlockOptions)
   const rows = await db
     .select({
       ip: securityEvents.ip,
-      honeypot: sql<number>`coalesce(sum(case when ${securityEvents.category} = 'honeypot' and ${securityEvents.at} >= ${Math.floor(honeypotSince.getTime() / 1000)} then ${securityEvents.hits} else 0 end), 0)`,
+      // El honeypot pedido por un navegador no cuenta (ver HONEYPOT_NAVEGADOR en sensor.ts).
+      honeypot: sql<number>`coalesce(sum(case when ${securityEvents.category} = 'honeypot' and ${securityEvents.ruleId} <> 'honeypot.navegador' and ${securityEvents.at} >= ${Math.floor(honeypotSince.getTime() / 1000)} then ${securityEvents.hits} else 0 end), 0)`,
       high: sql<number>`coalesce(sum(case when ${securityEvents.severity} in ('high','critical') and ${securityEvents.at} >= ${Math.floor(highSince.getTime() / 1000)} then ${securityEvents.hits} else 0 end), 0)`,
     })
     .from(securityEvents)
@@ -251,6 +252,11 @@ export async function blockAllAttackerIps(
  * devuelve al menos `selfIp`. Aquí el fallo peligroso no es dejar pasar a un
  * atacante, es quedarme fuera de mi propio panel.
  */
+/** ¿Es esta IP de una sesión admin viva? Lo pregunta el bloqueo inline por honeypot. */
+export async function esIpPropia(ip: string): Promise<boolean> {
+  return (await ownIps()).has(ip)
+}
+
 async function ownIps(selfIp?: string | null): Promise<Set<string>> {
   const out = new Set<string>()
   if (selfIp) out.add(selfIp)

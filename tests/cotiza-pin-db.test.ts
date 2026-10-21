@@ -27,8 +27,10 @@ import {
   pinCorrecto,
   reabrirPuerta,
   registrarFallo,
+  reservarIntento,
+  devolverIntento,
 } from '../src/lib/cotiza/pin-db'
-import { CIERRE_MS, FALLOS_GLOBALES, VENTANA_IP_MS, firmarAccesoCotiza } from '../src/lib/cotiza/acceso'
+import { CIERRE_MS, FALLOS_GLOBALES, VENTANA_IP_MS, decidirReserva, firmarAccesoCotiza } from '../src/lib/cotiza/acceso'
 
 const SECRETO = 'un-secreto-de-prueba-suficientemente-largo'
 
@@ -116,6 +118,28 @@ describe('frenos', () => {
     let total = 0
     for (let i = 0; i < FALLOS_GLOBALES; i++) total = await registrarFallo(`10.0.0.${i}`)
     expect(total).toBe(FALLOS_GLOBALES)
+  })
+
+  it('una ráfaga en paralelo desde 30 IP solo deja verificar FALLOS_GLOBALES intentos', async () => {
+    // Antes los frenos se leían, se verificaba y luego se sumaba: las 30
+    // peticiones pasaban la revisión a la vez y las 30 llegaban a scrypt.
+    const reservas = await Promise.all(Array.from({ length: 30 }, (_, i) => reservarIntento(`10.1.0.${i}`)))
+    const permitidas = reservas.filter((r) => decidirReserva(r).tipo === 'permitido')
+    expect(permitidas).toHaveLength(FALLOS_GLOBALES)
+    expect(new Set(reservas.map((r) => r.globales)).size).toBe(30)
+  })
+
+  it('una ráfaga desde UNA IP solo deja verificar 5', async () => {
+    const reservas = await Promise.all(Array.from({ length: 8 }, () => reservarIntento('7.7.7.7')))
+    expect(reservas.filter((r) => decidirReserva(r).tipo === 'permitido')).toHaveLength(5)
+  })
+
+  it('devolver un intento acertado limpia la IP y lo resta del total', async () => {
+    await reservarIntento('2.2.2.2')
+    await reservarIntento('3.3.3.3')
+    await devolverIntento('3.3.3.3')
+    expect((await leerFrenos('3.3.3.3')).fallosIp).toBe(0)
+    expect(await registrarFallo('4.4.4.4')).toBe(2)
   })
 
   it('el cierre lo ve cualquier IP y se puede reabrir a mano', async () => {
