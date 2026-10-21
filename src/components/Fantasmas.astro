@@ -266,6 +266,13 @@ const SILUETA_B = CABEZA + COLA_B
   // que solo corre mientras el primer pantallazo está a la vista y la pestaña
   // visible. Lee la caja de cada fantasma (la deriva es CSS y no la conoce el
   // script) y escribe transform y opacity en su capa de reacción.
+  //
+  // Esa lectura no sale gratis: la deriva CSS ensucia el estilo en cada
+  // fotograma, así que getBoundingClientRect obliga a recalcular el layout de
+  // toda la portada ahí mismo. Por eso el bucle duerme cuando no hay puntero y
+  // todos están quietos: en un celular, donde no hay puntero, corría sin parar
+  // sin hacer nada y se llevaba más hilo principal que todo el resto de la
+  // portada junto (traza de Lighthouse móvil, 20 oct 2026).
   const capa = document.querySelector<HTMLElement>('.fantasmas')
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -320,6 +327,16 @@ const SILUETA_B = CABEZA + COLA_B
     let visible = true
     let raf = 0
     let anterior = performance.now()
+
+    // Con el bucle dormido nadie mira el reloj del tímido; un temporizador que
+    // se reinicia con cada movimiento hace la misma cuenta sin despertarlo.
+    let relojTimido = 0
+    const programarTimido = () => {
+      window.clearTimeout(relojTimido)
+      relojTimido = window.setTimeout(() => {
+        if (visible && !document.hidden) asomarTimido()
+      }, QUIETO_TIMIDO)
+    }
 
     const esconderTimido = () => timido?.classList.remove('asomado')
     const asomarTimido = () => {
@@ -397,7 +414,6 @@ const SILUETA_B = CABEZA + COLA_B
       })
 
       if (timido && timidoCuerpo) {
-        if (quieto > QUIETO_TIMIDO) asomarTimido()
         if (timido.classList.contains('asomado') && puntero.activo) {
           const caja = timido.getBoundingClientRect()
           const dx = caja.left + caja.width / 2 - puntero.x
@@ -408,8 +424,21 @@ const SILUETA_B = CABEZA + COLA_B
         }
       }
 
-      if (visible && !document.hidden) raf = requestAnimationFrame(paso)
+      if (visible && !document.hidden && (puntero.activo || !enReposo())) raf = requestAnimationFrame(paso)
     }
+
+    // Umbrales por debajo de lo que se nota en pantalla (décimas de píxel).
+    const enReposo = () =>
+      fantasmas.every(
+        (f) =>
+          Math.abs(f.x) < 0.3 &&
+          Math.abs(f.y) < 0.3 &&
+          Math.abs(f.vx) < 1 &&
+          Math.abs(f.vy) < 1 &&
+          Math.abs(f.alfa - 1) < 0.01 &&
+          Math.abs(f.ox) < 0.02 &&
+          Math.abs(f.oy) < 0.02,
+      )
 
     const arrancar = () => {
       if (raf || !visible || document.hidden) return
@@ -438,6 +467,7 @@ const SILUETA_B = CABEZA + COLA_B
           f.y += (Math.random() - 0.5) * 120
           f.vx = 0
           f.vy = 0
+          arrancar()
         }, 520)
         window.setTimeout(() => f.susto.classList.remove('asustado'), 1500)
       })
@@ -449,9 +479,20 @@ const SILUETA_B = CABEZA + COLA_B
       puntero.activo = true
       puntero.ultimoMov = performance.now()
       esconderTimido()
+      programarTimido()
+      arrancar()
+    }
+
+    // Un dedo no se queda "flotando" sobre la página como el ratón: al
+    // levantarlo no hay puntero que seguir, y sin esto un solo toque dejaba el
+    // bucle despierto para siempre.
+    const alSoltar = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') puntero.activo = false
     }
 
     window.addEventListener('pointermove', alMover, { passive: true })
+    window.addEventListener('pointerup', alSoltar, { passive: true })
+    window.addEventListener('pointercancel', alSoltar, { passive: true })
     window.addEventListener(
       'pointerdown',
       (e) => {
@@ -465,6 +506,7 @@ const SILUETA_B = CABEZA + COLA_B
       () => {
         puntero.ultimoMov = performance.now()
         esconderTimido()
+        programarTimido()
       },
       { passive: true },
     )
@@ -473,10 +515,13 @@ const SILUETA_B = CABEZA + COLA_B
 
     new IntersectionObserver(([entrada]) => {
       visible = entrada.isIntersecting
-      if (visible) arrancar()
-      else esconderTimido()
+      if (visible) {
+        arrancar()
+        programarTimido()
+      } else esconderTimido()
     }).observe(capa)
 
     arrancar()
+    programarTimido()
   }
 </script>
