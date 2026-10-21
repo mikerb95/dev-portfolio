@@ -573,6 +573,27 @@ export const webVitals = sqliteTable('web_vitals', {
   createdIdx: index('web_vitals_created_idx').on(t.createdAt),
 }))
 
+// AEO: cuántas veces leen el sitio los agentes de IA y cuántas visitas llegan
+// desde un asistente (ChatGPT, Perplexity...). Un contador por día y fuente,
+// no una fila por visita: el panel lee 30 días en unas decenas de filas, y
+// cada visita cuesta un upsert. Sin IP ni User-Agent: solo el id del agente
+// o del asistente, que sale de una lista fija (src/lib/aeo/agentes.ts).
+export const aeoDiario = sqliteTable('aeo_diario', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // 'YYYY-MM-DD' en UTC, la misma clave que monitor_daily.
+  dia: text('dia').notNull(),
+  tipo: text('tipo', { enum: ['bot', 'referido'] }).notNull(),
+  // Id de AGENTES_IA (tipo 'bot') o de ASISTENTES (tipo 'referido').
+  fuente: text('fuente').notNull(),
+  hits: integer('hits').notNull().default(0),
+  // Del total, cuántas fueron a llms.txt o llms-full.txt: la señal de que el
+  // agente vino a leer el mapa y no llegó a una página por casualidad.
+  hitsLlms: integer('hits_llms').notNull().default(0),
+}, (t) => ({
+  // UNIQUE: el upsert de cada visita suma sobre la fila del día.
+  diaTipoFuenteIdx: uniqueIndex('aeo_diario_dia_tipo_fuente_idx').on(t.dia, t.tipo, t.fuente),
+}))
+
 // Sesiones de administrador por dispositivo. La estrategia de auth es JWT
 // (stateless), así que este registro lo mantiene el middleware para poder
 // listar los dispositivos con sesión abierta y cerrarlos remotamente.

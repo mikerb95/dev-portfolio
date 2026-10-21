@@ -9,6 +9,7 @@ import TallerPasos from '../components/paginas-web/TallerPasos.astro'
 import TrabajosReales from '../components/paginas-web/TrabajosReales.astro'
 import { getDictionary, getLocaleFromUrl, interpolate } from '../i18n'
 import { jsonEnScript } from '../lib/json-script'
+import { NEGOCIO_ID, faqPageJsonLd, negocioJsonLd, ofertasWeb } from '../lib/aeo/jsonld'
 import { etiquetaDesde, PAQUETES_WEB } from '../data/tarifario'
 
 const locale = getLocaleFromUrl(Astro.url.pathname)
@@ -56,11 +57,14 @@ const faqs = pw.faqs
       '@context': 'https://schema.org',
       '@type': 'Service',
       serviceType: locale === 'en' ? 'Website design and development' : 'Diseño y desarrollo de páginas web',
-      provider: { '@type': 'Person', name: 'Mike', url: 'https://codebymike.net' },
+      provider: { '@id': NEGOCIO_ID },
       areaServed: { '@type': 'Country', name: 'Colombia' },
       description: pw.jsonLdDescription,
+      offers: ofertasWeb(locale, t),
     })}
   />
+  <script is:inline slot="head" type="application/ld+json" set:html={jsonEnScript(negocioJsonLd(locale, t))} />
+  <script is:inline slot="head" type="application/ld+json" set:html={jsonEnScript(faqPageJsonLd(faqs))} />
 
   <!-- ── Hero ── -->
   <!-- Dos columnas: la promesa a la izquierda y, a la derecha, el celular que la

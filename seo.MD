@@ -25,7 +25,7 @@ Todo lo crítico de la auditoría de abajo ya está implementado y verificado en
 - **Feed RSS** en `/rss.xml` (notas, con categorías y `lastBuildDate`) + `<link rel="alternate">` en el head - señal de frescura para crawlers y agregadores.
 - **`site.webmanifest` + `apple-touch-icon.png` + icon-192/512** generados desde el favicon SVG.
 - **IndexNow (automático)**: clave en `public/eec9c30b0348b882cba9349b7fb125f2.txt`, lógica en `src/lib/indexnow.ts` (con tests en `tests/indexnow.test.ts`). Se envía **solo, a diario** vía cron de Vercel `/api/cron/indexnow` (`30 8 * * *`, auth `CRON_SECRET`), que reenvía el sitemap a **Bing, Yandex, Seznam, Naver y Yep**. Disparo manual: `npm run seo:indexnow` o `PUT /api/cron/indexnow` (sesión admin). Google no usa IndexNow; su canal es Search Console.
-- **`llms.txt`** - mapa del sitio para crawlers de IA (ChatGPT, Perplexity, Claude), un canal de descubrimiento creciente.
+- **`llms.txt`** - mapa del sitio para crawlers de IA (ChatGPT, Perplexity, Claude), un canal de descubrimiento creciente. Desde el 20 oct 2026 se genera (ya no es un archivo a mano) y va con `llms-full.txt`: ver §17.
 - **Hallazgo #9 resuelto - thin content de `/log`**: la página es 100% client-side (feed de GitHub en tiempo real); un crawler solo veía encabezado + esqueletos de carga. Ahora lleva `noindex` y se excluyó de `STATIC_PATHS` en `sitemap.xml.ts`, así robots y sitemap quedan coherentes y no se anuncia thin content. `/status`, `/tools` y `/security` se verificaron server-rendered (indexables de verdad) y se dejan como están.
 - Fix de build: colisión de `const headers` en `middleware.ts` (renombrado a `reqHeaders` en el bloque de enforcement).
 - **`/docs` en el sitemap (ago 2026)**: la sección de documentación de ingeniería estaba indexable (sin `noindex`, permitida en `robots.txt`, con canonical correcto) pero no se anunciaba en ninguna parte: 26 páginas de contenido propio y estable que Google solo podía descubrir por enlaces internos. Ahora entran las 25 subpáginas públicas más la portada. La lista vive en `src/data/docs-paginas.ts`, que además es la fuente de las pestañas de `DocsNav`: antes el menú, el índice y el sitemap eran tres listas sueltas, y el diagrama de paquetes ya se había caído del índice sin que nadie lo notara. `tests/docs-paginas.test.ts` las cruza contra el disco y exige un motivo escrito por cada exclusión. Fuera se quedan `/docs/presentacion` (deck privado: 404 sin sesión) y `/docs/bpmn-imprimible` (mismo texto que `/docs/diagrama-bpmn`, sería contenido duplicado). IndexNow no necesitó cambios: reenvía el sitemap entero a diario.
@@ -37,7 +37,7 @@ Todo lo crítico de la auditoría de abajo ya está implementado y verificado en
    - Añadir propiedad de dominio `codebymike.net` (verificación por DNS TXT en el registrador; cubre www y subdominios).
    - Enviar `https://codebymike.net/sitemap.xml`.
    - Pedir indexación manual de `/`, `/notes` y las 5 notas (Inspección de URLs → Solicitar indexación).
-2. **Bing Webmaster Tools** → <https://www.bing.com/webmasters> - con "Importar desde Google Search Console" es un clic. Bing alimenta también a DuckDuckGo, Ecosia y Yahoo.
+2. **Bing Webmaster Tools** → <https://www.bing.com/webmasters> - con "Importar desde Google Search Console" es un clic. Bing alimenta también a DuckDuckGo, Ecosia y Yahoo. **Es el alta más importante para AEO**: la búsqueda de ChatGPT y la de Copilot salen del índice de Bing (§17).
 3. ~~Ejecutar `npm run seo:indexnow`~~ → **ya es automático** (cron diario `/api/cron/indexnow`). Solo asegúrate de que `CRON_SECRET` esté configurado en Vercel (ya lo está para los otros crons). Para publicar una nota y anunciarla al instante, `npm run seo:indexnow` sigue disponible.
 4. **Yandex Webmaster** (opcional) → <https://webmaster.yandex.com> si interesa ese mercado.
 5. Verificar que `www.codebymike.net` y los alias `*.vercel.app` redirigen 308 al dominio canónico (lo hace el propio sitio, en dos capas: `src/middleware.ts` y `integrations/canonical-redirect.mjs`; ver `docs/plan-dominio-net.md`).
@@ -325,3 +325,32 @@ Los enlaces a GitHub/LinkedIn/WhatsApp en `Footer.astro`/`Navbar.astro` - verifi
 | Accessibility | ~85-90 (contraste de textos pequeños) | 95+ |
 
 *Estimaciones basadas en inspección de código; ejecutar Lighthouse real contra producción para la línea base exacta.*
+
+---
+
+## 17. AEO: visibilidad en asistentes de IA ✅ (20 oct 2026, RF-039)
+
+Objetivo: que ChatGPT, Claude, Perplexity y Gemini conozcan el negocio, lo citen con datos correctos y lo recomienden cuando alguien pregunta por páginas web, software o capacitación en IA en Colombia.
+
+**Diagnóstico de partida.** Los bots de IA ya entraban (200 en producción con sus User-Agents; ni el micro-SIEM ni el WAF los frenan). Lo que fallaba era el mensaje: el `llms.txt` escrito a mano en julio presentaba a Mike solo como "Software Engineer con TypeScript", no decía qué vende ni cuánto cuesta y no listaba ninguna de las 23 notas; el JSON-LD tenía una Persona y dos Service sin precio; y no había forma de saber si algún asistente leía el sitio.
+
+**Decisión (Mike, 20 oct 2026): abrir todo**, también los bots de entrenamiento (GPTBot, ClaudeBot, Google-Extended, CCBot...). Un modelo que ya conoce el negocio de memoria lo nombra aunque no busque en la web.
+
+Lo implementado (todo en `src/lib/aeo/`):
+
+| Pieza | Qué hace | Por qué así |
+|---|---|---|
+| `/llms.txt` | Mapa para asistentes: resumen, **datos clave** (precios, plazos, garantía, pago, contacto), servicios, ingeniería y las notas en los dos idiomas | Generado desde el tarifario, los diccionarios y la colección de notas: ninguna cifra escrita a mano, así no vuelve a quedar viejo |
+| `/llms-full.txt` | Datos clave + FAQ de los dos servicios + el texto completo de las notas en español, con enlaces absolutos | Lo que un asistente usa para citar sin rastrear página por página |
+| `/robots.txt` | Grupo explícito con 15 agentes de IA, `Allow: /` | Generado: un bot con grupo propio ignora el de `*` (RFC 9309), así que el grupo repite cada Disallow. El test lo exige |
+| JSON-LD | `ProfessionalService` con `@id` fijo (`/#negocio`) y catálogo de ofertas con precio del tarifario (COP en español, USD en inglés); `FAQPage` en /paginas-web y /capacitacion-ia; los Service y la Persona apuntan al negocio | Responde "¿quién hace páginas web en Colombia y cuánto cobra?" con dato estructurado |
+| `/admin/aeo` | Lecturas de bots por agente (y cuántas a llms.txt) + visitas que llegan desde un asistente, 30 días | Tabla `aeo_diario` (migración 0049): un contador por día y fuente, sin IP ni User-Agent |
+
+**Límite conocido de la medición.** Las lecturas de bots son un piso: las páginas prerenderizadas (notas, /paginas-web, /docs) las sirve el CDN sin pasar por el middleware. Por eso `llms.txt` y `llms-full.txt` van por SSR: son la señal que más importa ("un agente vino a leer el mapa"). Las visitas desde asistentes sí son completas: las cuenta el navegador (`ReferidoIA.astro`) por `utm_source` o por el host del referrer, una vez por sesión.
+
+**Pendiente (manual, de Mike):**
+1. Alta en Bing Webmaster Tools (ver arriba). Sin eso, ChatGPT Search y Copilot dependen de que Bing encuentre el sitio solo.
+2. Aplicar la migración `drizzle/0049_flat_stryfe.sql` a las dos bases Turso; hasta entonces el contador falla en silencio (fail-open) y el panel sale vacío.
+
+**Lo que mueve la aguja de verdad** (igual que en SEO clásico): menciones en otros sitios (directorios de empresas en Colombia, Google Business Profile, LinkedIn, dev.to con `rel=canonical`) y notas que respondan preguntas concretas. Los asistentes citan lo que otros sitios confirman, no solo lo que el sitio dice de sí mismo.
+

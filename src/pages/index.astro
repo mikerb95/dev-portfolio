@@ -16,6 +16,7 @@ import { construirSenales } from '../lib/pulso-panel'
 import PulsoPanel from '../components/PulsoPanel.astro'
 import '../styles/portada.css'
 import { jsonEnScript } from '../lib/json-script'
+import { NEGOCIO_ID, PERSONA_ID, negocioJsonLd } from '../lib/aeo/jsonld'
 import { TRABAJOS_REALES } from '../data/trabajos-reales'
 import { serviciosHero } from '../lib/hero-servicios'
 
@@ -93,7 +94,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       '@type': 'Person',
       // @id estable para que el nodo Person sea el mismo en ES y EN y en
       // cualquier página que quiera referenciarlo, en vez de dos personas.
-      '@id': 'https://codebymike.net/#person',
+      '@id': PERSONA_ID,
       name: 'Mike',
       alternateName: 'CodeByMike',
       jobTitle: 'Software Engineer',
@@ -104,8 +105,10 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
       address: { '@type': 'PostalAddress', addressCountry: 'CO' },
       knowsAbout: ['TypeScript', 'React', 'Next.js', 'Astro', 'Node.js', 'PostgreSQL'],
       sameAs: ['https://github.com/mikerb95', 'https://www.linkedin.com/in/mdrb95/', 'https://www.facebook.com/codebymike'],
+      worksFor: { '@id': NEGOCIO_ID },
     })}
   />
+  <script is:inline slot="head" type="application/ld+json" set:html={jsonEnScript(negocioJsonLd(locale, getDictionary(locale)))} />
 
   <!-- ── HUD de diagnóstico: panel fijo que va marcando qué sección ha
        "pasado el chequeo" a medida que se hace scroll. Reutiliza la

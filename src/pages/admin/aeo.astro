@@ -1,0 +1,154 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { leerUltimosDias } from '../../lib/aeo/conteo'
+import { resumirPorFuente } from '../../lib/aeo/resumen'
+import { AGENTES_IA, ASISTENTES, type TipoAgente } from '../../lib/aeo/agentes'
+
+const DIAS = 30
+const ahora = new Date()
+const filas = await leerUltimosDias(DIAS, ahora)
+const bots = resumirPorFuente(filas, 'bot')
+const referidos = resumirPorFuente(filas, 'referido')
+
+const totalBots = bots.reduce((s, b) => s + b.hits, 0)
+const totalLlms = bots.reduce((s, b) => s + b.hitsLlms, 0)
+const totalReferidos = referidos.reduce((s, r) => s + r.hits, 0)
+
+const agente = (id: string) => AGENTES_IA.find((a) => a.id === id)
+const asistente = (id: string) => ASISTENTES.find((a) => a.id === id)
+
+const TIPO: Record<TipoAgente, { label: string; dot: string }> = {
+  entrenamiento: { label: 'entrenamiento', dot: 'bg-violet' },
+  busqueda: { label: 'búsqueda', dot: 'bg-cyan' },
+  usuario: { label: 'lo abrió una persona', dot: 'bg-lime' },
+}
+
+// Una columna por día, de la más vieja a la de hoy, con bots y referidos lado
+// a lado. Los dos van a escalas propias: 40 lecturas de bots al día y 2
+// visitas desde ChatGPT no se pueden comparar en la misma altura.
+const dias = Array.from({ length: DIAS }, (_, i) =>
+  new Date(ahora.getTime() - (DIAS - 1 - i) * 86_400_000).toISOString().slice(0, 10)
+)
+const porDia = (tipo: 'bot' | 'referido') =>
+  dias.map((d) => filas.filter((f) => f.dia === d && f.tipo === tipo).reduce((s, f) => s + f.hits, 0))
+const serieBots = porDia('bot')
+const serieRef = porDia('referido')
+const maxBots = Math.max(1, ...serieBots)
+const maxRef = Math.max(1, ...serieRef)
+
+const fmtDia = (d: string) =>
+  new Date(`${d}T12:00:00Z`).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+
+const PUBLICADO = [
+  { href: '/llms.txt', label: 'llms.txt', nota: 'mapa del sitio para asistentes, generado del tarifario, los diccionarios y las notas' },
+  { href: '/llms-full.txt', label: 'llms-full.txt', nota: 'texto completo de las notas y las preguntas frecuentes' },
+  { href: '/robots.txt', label: 'robots.txt', nota: `${AGENTES_IA.length} agentes de IA declarados y bienvenidos` },
+]
+---
+
+<AdminLayout title="Visibilidad en IA">
+  <p class="text-[12px] text-ink-200 max-w-2xl mb-6">
+    Cuántas veces leen el sitio los agentes de IA y cuántas visitas llegan desde un asistente, en los últimos {DIAS} días.
+    Las lecturas de bots son un <span class="text-ink-50">piso</span>: las páginas prerenderizadas (notas, /paginas-web, /docs)
+    y las que la CDN sirve desde caché no pasan por el servidor. Las visitas desde asistentes sí son completas: las cuenta el navegador.
+  </p>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Lecturas de bots</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium tracking-tight text-ink-50">{totalBots}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">De llms.txt</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium tracking-tight text-ink-50">{totalLlms}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Agentes distintos</div>
+      <div class="mt-2 text-2xl md:text-3xl font-medium tracking-tight text-ink-50">{bots.length}</div>
+    </div>
+    <div class="rounded-2xl glass p-5">
+      <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Visitas desde asistentes</div>
+      <div class={`mt-2 text-2xl md:text-3xl font-medium tracking-tight ${totalReferidos > 0 ? 'text-lime' : 'text-ink-50'}`}>{totalReferidos}</div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl glass p-5 mb-6">
+    <div class="flex items-center gap-4 text-[10.5px] font-mono text-ink-300 mb-4">
+      <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-cyan/70"></span>bots (máx. {maxBots}/día)</span>
+      <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-lime"></span>visitas desde asistentes (máx. {maxRef}/día)</span>
+    </div>
+    <div class="flex items-end gap-[3px] h-28" role="img" aria-label={`Actividad diaria de los últimos ${DIAS} días`}>
+      {dias.map((d, i) => (
+        <div class="flex-1 h-full flex items-end gap-px" title={`${fmtDia(d)}: ${serieBots[i]} bots · ${serieRef[i]} visitas`}>
+          <div class="flex-1 rounded-t-sm bg-cyan/70" style={`height:${(serieBots[i]! / maxBots) * 100}%`}></div>
+          <div class="flex-1 rounded-t-sm bg-lime" style={`height:${(serieRef[i]! / maxRef) * 100}%`}></div>
+        </div>
+      ))}
+    </div>
+    <div class="flex justify-between text-[10px] font-mono text-ink-400 mt-2">
+      <span>{fmtDia(dias[0]!)}</span><span>hoy</span>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4 mb-6">
+    <div class="rounded-2xl glass overflow-hidden">
+      <div class="px-5 pt-4 pb-2 text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Agentes de IA</div>
+      {bots.length === 0 && <p class="text-[12px] font-mono text-ink-300 px-5 pb-5">Todavía ningún agente pasó por el servidor.</p>}
+      <div class="divide-y divide-white/5">
+        {bots.map((b) => {
+          const a = agente(b.fuente)
+          const tipo = a ? TIPO[a.tipo] : null
+          return (
+            <div class="flex items-center gap-4 px-5 py-3">
+              <div class="flex-1 min-w-0">
+                <div class="text-[13.5px] text-ink-50 truncate">{a?.token ?? b.fuente}</div>
+                <div class="text-[10.5px] font-mono text-ink-300 mt-0.5 flex items-center gap-1.5">
+                  {tipo && <span class={`w-1.5 h-1.5 rounded-full ${tipo.dot}`}></span>}
+                  {a?.empresa}{tipo ? ` · ${tipo.label}` : ''} · último {fmtDia(b.ultimoDia)}
+                </div>
+              </div>
+              <div class="text-right shrink-0 font-mono">
+                <div class="text-[13px] text-ink-50">{b.hits}</div>
+                {b.hitsLlms > 0 && <div class="text-[10px] text-cyan">{b.hitsLlms} a llms.txt</div>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+
+    <div class="rounded-2xl glass overflow-hidden">
+      <div class="px-5 pt-4 pb-2 text-[10px] font-mono uppercase tracking-[.22em] text-ink-200">Visitas desde asistentes</div>
+      {referidos.length === 0 && (
+        <p class="text-[12px] font-mono text-ink-300 px-5 pb-5">Todavía ninguna visita llegó desde un asistente.</p>
+      )}
+      <div class="divide-y divide-white/5">
+        {referidos.map((r) => (
+          <div class="flex items-center gap-4 px-5 py-3">
+            <div class="flex-1 min-w-0">
+              <div class="text-[13.5px] text-ink-50 truncate">{asistente(r.fuente)?.nombre ?? r.fuente}</div>
+              <div class="text-[10.5px] font-mono text-ink-300 mt-0.5">último {fmtDia(r.ultimoDia)}</div>
+            </div>
+            <div class="text-[13px] font-mono text-lime shrink-0">{r.hits}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl glass p-5">
+    <div class="text-[10px] font-mono uppercase tracking-[.22em] text-ink-200 mb-3">Publicado</div>
+    <ul class="space-y-2 text-[12px]">
+      {PUBLICADO.map((p) => (
+        <li>
+          <a href={p.href} target="_blank" rel="noopener" class="font-mono text-cyan hover:underline">{p.label} ↗</a>
+          <span class="text-ink-300"> · {p.nota}</span>
+        </li>
+      ))}
+      <li class="text-ink-300">
+        <span class="font-mono text-ink-100">JSON-LD</span> · negocio con precios del tarifario en la portada y los servicios, y FAQ en
+        /paginas-web y /capacitacion-ia
+      </li>
+    </ul>
+  </div>
+</AdminLayout>

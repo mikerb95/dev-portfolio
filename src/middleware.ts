@@ -13,6 +13,8 @@ import { maybeChaos } from './lib/chaos'
 import { clientIp, resolveDeviceSessionId } from './lib/device-info'
 import { recordSession } from './lib/device-sessions'
 import { observeRequest, recordEnforcementEvent } from './lib/security/sensor'
+import { agenteDeUserAgent } from './lib/aeo/agentes'
+import { contarSinEsperar, esRutaLlms } from './lib/aeo/conteo'
 import { isBlocked, blockIpEscalated } from './lib/security/blocklist'
 import { enforceLimit } from './lib/security/ratelimit-durable'
 import {
@@ -174,6 +176,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const reqHeaders = context.request.headers
 
   const threat = observeRequest({ method, path: pathname, query, headers: reqHeaders })
+
+  // AEO: contar qué agentes de IA leen el sitio. Mismo patrón que el sensor:
+  // una regex en memoria para el resto del tráfico y la escritura sin esperar.
+  // Solo lecturas de contenido: /api no es algo que un asistente vaya a citar.
+  if ((method === 'GET' || method === 'HEAD') && !canonicalPath.startsWith('/api')) {
+    const agente = agenteDeUserAgent(reqHeaders.get('user-agent'))
+    if (agente) contarSinEsperar({ tipo: 'bot', fuente: agente.id, llms: esRutaLlms(canonicalPath) })
+  }
 
   // Enforcement de seguridad (FASE 1). Todo el bloque es fail-open: cualquier
   // fallo deja pasar el request (nunca tumbamos el sitio por el enforcement).

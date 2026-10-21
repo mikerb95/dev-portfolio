@@ -163,6 +163,12 @@ export const GRUPOS_PANEL: GrupoPanel[] = [
         label: "Cómputo",
       },
       {
+        href: "/admin/aeo",
+        claves: "aeo seo chatgpt perplexity claude bots llms visibilidad ia",
+        icon: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z",
+        label: "Visibilidad en IA",
+      },
+      {
         href: "/admin/cuentas-cobro",
         claves: "facturar cobrar cobro factura retenciones",
         icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M9 13h6 M9 17h4",

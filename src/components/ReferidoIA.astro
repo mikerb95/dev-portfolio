@@ -1,0 +1,33 @@
+---
+// AEO: avisa cuando la visita llegó desde un asistente de IA (ChatGPT,
+// Perplexity, Claude...). Corre en el navegador porque la mayoría de las
+// páginas públicas están prerenderizadas y no pasan por el servidor. No manda
+// el referrer ni la URL, solo el id del asistente, y una vez por sesión: el
+// utm_source sigue en la barra al recargar y contaría la misma visita dos veces.
+---
+
+<script>
+  import { asistenteDeVisita } from '../lib/aeo/agentes'
+
+  const asistente = asistenteDeVisita({
+    referrer: document.referrer,
+    utmSource: new URLSearchParams(location.search).get('utm_source'),
+  })
+  if (asistente) {
+    let repetida = false
+    try {
+      repetida = sessionStorage.getItem('aeo-referido') === asistente.id
+      sessionStorage.setItem('aeo-referido', asistente.id)
+    } catch {
+      // Sin sessionStorage (modo privado estricto) se cuenta igual.
+    }
+    if (!repetida) {
+      const body = JSON.stringify({ fuente: asistente.id })
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/aeo/referido', new Blob([body], { type: 'application/json' }))
+      } else {
+        fetch('/api/aeo/referido', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } })
+      }
+    }
+  }
+</script>

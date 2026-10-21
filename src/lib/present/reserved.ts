@@ -94,6 +94,7 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   'sitemap.xml',
   'rss.xml',
   'llms.txt',
+  'llms-full.txt',
   'videos',
   // Convenciones que un navegador o un bot piden sin que existan
   'well-known',
