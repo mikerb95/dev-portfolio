@@ -89,13 +89,15 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
   >
     <!-- Brand -->
     <a href={localizedHref('/', locale)} class="flex items-center gap-2 sm:gap-3 select-none min-w-0">
+      <!-- Copia local a 84 px (3x de 28): la de GitHub eran 34 KB de 460 px,
+           con redirección a otro dominio, para pintar un círculo en el menú. -->
       <img
-        src="https://github.com/mikerb95.png"
+        src="/assets/avatar-mike.webp"
         alt="Mike (@mikerb95)"
         width="28"
         height="28"
         loading="eager"
-        referrerpolicy="no-referrer"
+        decoding="async"
         class="w-7 h-7 shrink-0 rounded-full object-cover shadow-[0_0_18px_rgba(0,242,255,.5)]"
       />
       <span class="font-mono text-[11px] tracking-[.12em] sm:text-[12px] sm:tracking-[.2em] uppercase text-ink-50 truncate">
