@@ -7,6 +7,7 @@ import dns from 'node:dns/promises'
 import { fetchDomainExpiry, extractDomain, daysUntil } from './domains'
 import type { Locale } from '../i18n/config'
 import { serverEnv } from './env'
+import { fetchPublico, lookupPublico, type RespuestaPublica } from './ssrf-guard'
 
 export type DiagnosticStatus = 'pass' | 'warn' | 'fail' | 'info'
 
@@ -46,14 +47,16 @@ export function normalizeTarget(input?: string | null): DiagnosticTarget | null 
   }
 }
 
-async function fetchWithTimeout(
+// Todo sale por `fetchPublico`: el objetivo lo elige quien llama (el analizador
+// es público), así que cada redirección se valida y la conexión fija la IP.
+async function fetchConDestino(
   url: string,
-  init: RequestInit & { timeoutMs?: number } = {},
-): Promise<Response> {
+  init: Omit<RequestInit, 'redirect'> & { timeoutMs?: number; redirect?: 'follow' | 'manual' } = {},
+): Promise<RespuestaPublica> {
   const controller = new AbortController()
   const t = setTimeout(() => controller.abort(), init.timeoutMs ?? HTTP_TIMEOUT_MS)
   try {
-    return await fetch(url, {
+    return await fetchPublico(url, {
       ...init,
       signal: controller.signal,
       headers: { 'User-Agent': UA, ...(init.headers ?? {}) },
@@ -61,6 +64,13 @@ async function fetchWithTimeout(
   } finally {
     clearTimeout(t)
   }
+}
+
+async function fetchWithTimeout(
+  url: string,
+  init: Omit<RequestInit, 'redirect'> & { timeoutMs?: number; redirect?: 'follow' | 'manual' } = {},
+): Promise<Response> {
+  return (await fetchConDestino(url, init)).res
 }
 
 // Libera la conexión sin descargar todo el cuerpo.
@@ -268,7 +278,7 @@ function stringsFor(locale: Locale) {
 /** Disponibilidad HTTP: status, latencia hasta cabeceras, redirecciones y metadatos. */
 async function testReachability(t: DiagnosticTarget, L: Strings): Promise<Outcome> {
   const started = Date.now()
-  const res = await fetchWithTimeout(t.url, { redirect: 'follow' })
+  const { res, url: finalUrl, redirected } = await fetchConDestino(t.url, { redirect: 'follow' })
   const ttfb = Date.now() - started
   drain(res)
   const status: DiagnosticStatus = res.ok ? 'pass' : res.status >= 500 ? 'fail' : 'warn'
@@ -276,8 +286,8 @@ async function testReachability(t: DiagnosticTarget, L: Strings): Promise<Outcom
     status,
     summary: `HTTP ${res.status} · ${ttfb}ms`,
     details: [
-      L.finalUrl(res.url),
-      res.redirected ? L.redirected : L.notRedirected,
+      L.finalUrl(finalUrl),
+      redirected ? L.redirected : L.notRedirected,
       `Content-Type: ${res.headers.get('content-type') ?? '-'}`,
       L.server(res.headers.get('server') ?? '-'),
     ],
@@ -644,7 +654,7 @@ function inspectTls(rawUrl: string): Promise<TlsInfo | null> {
       settled = true
       resolve(v)
     }
-    const socket = tls.connect({ host, port, servername: host, timeout: TLS_TIMEOUT_MS }, () => {
+    const socket = tls.connect({ host, port, servername: host, timeout: TLS_TIMEOUT_MS, lookup: lookupPublico }, () => {
       const cert = socket.getPeerCertificate()
       const protocol = socket.getProtocol()
       socket.end()
