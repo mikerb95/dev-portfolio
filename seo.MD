@@ -350,7 +350,7 @@ Lo implementado (todo en `src/lib/aeo/`):
 
 **Pendiente (manual, de Mike):**
 1. Alta en Bing Webmaster Tools (ver arriba). Sin eso, ChatGPT Search y Copilot dependen de que Bing encuentre el sitio solo.
-2. Aplicar la migración `drizzle/0049_flat_stryfe.sql` a las dos bases Turso; hasta entonces el contador falla en silencio (fail-open) y el panel sale vacío.
+2. ~~Aplicar la migración `drizzle/0049_flat_stryfe.sql`~~ → aplicada en las dos bases Turso el 20 oct 2026 (junto con la 0048 del vigía, que también estaba pendiente).
 
 **Lo que mueve la aguja de verdad** (igual que en SEO clásico): menciones en otros sitios (directorios de empresas en Colombia, Google Business Profile, LinkedIn, dev.to con `rel=canonical`) y notas que respondan preguntas concretas. Los asistentes citan lo que otros sitios confirman, no solo lo que el sitio dice de sí mismo.
 
