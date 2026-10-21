@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: 'Archivo'; src: url('../../../node_modules/@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2') format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; }
+@font-face { font-family: 'Inter'; src: url('../../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'Mono'; src: url('../../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2') format('woff2'); font-weight: 100 800; }
+:root {
+  --bg: #0b0b0f; --bg2: #121216; --line: #24242f; --muted: #85858f; --ink: #e7e7ec; --soft: #c4c4cc;
+  --cyan: #00f2ff; --ember: #ff6b3d; --lime: #c9ff5b; --violet: #a78bff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #000; font-family: 'Inter', sans-serif; color: var(--ink); }
+.frame { position: relative; overflow: hidden; background: var(--bg); margin-bottom: 40px; --acc: var(--cyan); }
+.frame.ember { --acc: var(--ember); } .frame.lime { --acc: var(--lime); } .frame.violet { --acc: var(--violet); }
+
+/* Isolíneas de fondo: el mismo lenguaje de "terreno" de la portada del sitio. */
+.iso { position: absolute; inset: 0; pointer-events: none; }
+.iso svg { width: 100%; height: 100%; }
+.glow { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .22; background: var(--acc); pointer-events: none; }
+
+.display { font-family: 'Archivo'; font-stretch: 78%; font-weight: 800; letter-spacing: -0.01em; line-height: .92; text-transform: none; }
+.mono { font-family: 'Mono'; letter-spacing: .02em; }
+.acc { color: var(--acc); }
+
+/* ---------- Perfil ---------- */
+#perfil { width: 1080px; height: 1080px; display: grid; place-items: center; }
+#perfil .sym { width: 520px; height: 425px; position: relative; } #perfil .sym svg { width: 100%; height: 100%; }
+#perfil .ring { position: absolute; inset: 120px; border-radius: 50%; border: 2px solid #1c1c26; }
+
+/* ---------- Portada ---------- */
+#portada { width: 1640px; height: 624px; }
+#portada .copy { position: absolute; left: 285px; top: 76px; width: 600px; }
+#portada .tag { font-size: 19px; color: var(--muted); display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+#portada .tag i { width: 9px; height: 9px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 14px var(--acc); }
+#portada h1 { font-size: 84px; }
+#portada .sub { margin-top: 24px; font-size: 23px; color: var(--soft); line-height: 1.4; }
+#portada .sub b { color: var(--ink); font-weight: 600; }
+#portada .pie { position: absolute; left: 285px; bottom: 44px; font-size: 19px; color: var(--muted); display: flex; gap: 28px; }
+#portada .pie span b { color: var(--ink); font-weight: 500; }
+.browser { position: absolute; border-radius: 14px; overflow: hidden; background: #16161d; border: 1px solid #2e2e3a; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.browser .bar { height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 12px; background: #1c1c26; }
+.browser .bar i { width: 9px; height: 9px; border-radius: 50%; background: #3a3a48; }
+.browser .bar span { margin-left: 10px; font-family: 'Mono'; font-size: 12px; color: var(--muted); }
+.browser .shot { width: 100%; height: calc(100% - 30px); background-size: cover; background-position: top center; }
+
+/* ---------- Posts 4:5 ---------- */
+.post { width: 1080px; height: 1350px; padding: 84px 84px 0; }
+.post .top { display: flex; align-items: center; justify-content: space-between; font-size: 22px; color: var(--muted); position: relative; }
+.post .top .marca { display: flex; align-items: center; gap: 14px; color: var(--ink); font-weight: 600; }
+.post .top .marca svg { width: 40px; height: 33px; display: block; }
+.post .kicker { margin-top: 96px; font-size: 24px; color: var(--acc); display: flex; align-items: center; gap: 14px; position: relative; }
+.post .kicker i { width: 11px; height: 11px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 16px var(--acc); }
+.post h2 { margin-top: 30px; font-size: 128px; position: relative; }
+.post .lead { margin-top: 40px; font-size: 34px; line-height: 1.4; color: var(--soft); max-width: 860px; position: relative; }
+.post .cta { position: absolute; left: 84px; right: 84px; bottom: 74px; display: flex; align-items: center; justify-content: space-between; padding-top: 34px; border-top: 1px solid var(--line); font-size: 24px; color: var(--muted); }
+.post .cta .wa { display: flex; align-items: center; gap: 14px; color: var(--ink); font-weight: 600; font-size: 26px; }
+.post .cta .wa svg { width: 34px; height: 34px; }
+
+.lista { margin-top: 56px; display: grid; gap: 22px; position: relative; }
+.item { display: grid; grid-template-columns: 70px 1fr; gap: 6px 22px; padding: 30px 32px; border-radius: 22px; background: rgba(255,255,255,.035); border: 1px solid #1c1c26; }
+.item .n { font-family: 'Mono'; font-size: 24px; color: var(--acc); padding-top: 6px; }
+.item h3 { font-size: 36px; font-weight: 650; letter-spacing: -0.01em; }
+.item p { grid-column: 2; font-size: 26px; line-height: 1.4; color: var(--muted); }
+
+.planes { margin-top: 44px; display: grid; gap: 22px; position: relative; }
+.plan { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 20px; padding: 26px 34px; border-radius: 24px; background: rgba(255,255,255,.035); border: 1px solid #1c1c26; }
+.plan.dest { background: color-mix(in srgb, var(--acc) 9%, transparent); border-color: color-mix(in srgb, var(--acc) 40%, transparent); }
+.plan h3 { font-size: 44px; font-weight: 700; display: flex; align-items: center; gap: 14px; }
+.plan h3 i { width: 12px; height: 12px; border-radius: 50%; background: var(--acc); }
+.plan .precio { font-family: 'Archivo'; font-stretch: 80%; font-weight: 800; font-size: 54px; text-align: right; }
+.plan .precio small { display: block; font-family: 'Inter'; font-weight: 500; font-size: 20px; color: var(--muted); letter-spacing: 0; }
+.plan p { font-size: 25px; color: var(--muted); line-height: 1.35; }
+.plan .badge { font-family: 'Mono'; font-size: 18px; color: var(--acc); text-align: right; }
+
+.caso .browser { left: 84px; right: 84px; top: 610px; height: 560px; position: absolute; }
+.caso .browser .bar span { font-size: 18px; }
+.caso .browser .bar { height: 44px; } .caso .browser .bar i { width: 12px; height: 12px; }
+.caso .browser .shot { height: calc(100% - 44px); }
+.caso h2 { font-size: 104px; }
+.caso .chips { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; position: relative; }
+.chip { font-size: 22px; padding: 10px 20px; border-radius: 999px; background: rgba(255,255,255,.05); color: var(--soft); display: flex; align-items: center; gap: 10px; }
+.chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--acc)); }
+.caso .cta { background: var(--bg); }
+
+.grande { font-family: 'Archivo'; font-stretch: 75%; font-weight: 800; font-size: 300px; line-height: .85; color: var(--acc); position: relative; margin-top: 50px; }
+</style>
+</head>
+<body>
+
+<template id="tpl-iso">
+  <svg viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" stroke="#ffffff" stroke-opacity=".045" stroke-width=".18">
+    <path d="M-5 70 C 20 58, 35 80, 60 66 S 95 52, 110 60"/>
+    <path d="M-5 76 C 22 64, 37 86, 62 72 S 96 58, 110 66"/>
+    <path d="M-5 82 C 24 70, 39 92, 64 78 S 97 64, 110 72"/>
+    <path d="M-5 88 C 26 76, 41 98, 66 84 S 98 70, 110 78"/>
+    <path d="M-5 94 C 28 82, 43 104, 68 90 S 99 76, 110 84"/>
+    <path d="M-5 20 C 30 30, 50 8, 75 18 S 100 30, 110 24"/>
+    <path d="M-5 14 C 30 24, 50 2, 75 12 S 100 24, 110 18"/>
+    <path d="M-5 8 C 30 18, 50 -4, 75 6 S 100 18, 110 12"/>
+  </svg>
+</template>
+
+<template id="tpl-sym">
+  <svg viewBox="12 14 44 36"><path d="M17 45V20l9 13 9-13v25" fill="none" stroke="#e7e7ec" stroke-width="6.5"/><rect x="44.5" y="19" width="6.5" height="26" fill="#00f2ff" style="filter:drop-shadow(0 0 3px #00f2ff)"/></svg>
+</template>
+<template id="tpl-wa">
+  <svg viewBox="0 0 24 24" fill="#25d366"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.2-.3-.2-.5-.3Z"/></svg>
+</template>
+
+<!-- Perfil: solo el símbolo, centrado para el recorte circular de Facebook. -->
+<div class="frame" id="perfil">
+  <div class="glow" style="width:620px;height:620px;left:230px;top:230px;opacity:.16"></div>
+  <div class="ring"></div>
+  <div class="sym" data-sym></div>
+</div>
+
+<!-- Portada 1640x624: lo importante vive entre x=285 y x=1355 (zona que se ve en el celular). -->
+<div class="frame" id="portada">
+  <div class="iso" data-iso></div>
+  <div class="glow" style="width:520px;height:520px;left:1000px;top:60px;opacity:.13"></div>
+  <div class="copy">
+    <div class="tag mono"><i></i>Diseño de páginas web · Colombia</div>
+    <h1 class="display">Tu negocio necesita una página <span class="acc">que trabaje por ti.</span></h1>
+    <p class="sub">Yo la construyo, tú solo la usas. <b>Desde $650.000.</b></p>
+  </div>
+  <div class="pie mono"><span><b>codebymike.net</b></span><span>WhatsApp <b>310 464 1228</b></span></div>
+  <div class="browser" style="left:990px;top:70px;width:340px;height:420px;transform:rotate(-4deg)"><div class="bar"><i></i><i></i><i></i><span>dobleyo.cafe</span></div><div class="shot" style="background-image:url('../../../public/assets/trabajos/dobleyo.webp')"></div></div>
+  <div class="browser" style="left:1080px;top:130px;width:340px;height:420px;transform:rotate(3deg)"><div class="bar"><i></i><i></i><i></i><span>gorillazmotorbikes.com</span></div><div class="shot" style="background-image:url('../../../public/assets/trabajos/gorillaz-motorbikes-2026-10.webp')"></div></div>
+  <div class="browser" style="left:930px;top:200px;width:340px;height:380px;transform:rotate(-1deg)"><div class="bar"><i></i><i></i><i></i><span>toledoproducciones.org</span></div><div class="shot" style="background-image:url('../../../public/assets/trabajos/web-toledo-producciones.webp')"></div></div>
+</div>
+
+<div id="posts"></div>
+
+<script>
+const iso = document.getElementById('tpl-iso').innerHTML
+const sym = document.getElementById('tpl-sym').innerHTML
+const wa = document.getElementById('tpl-wa').innerHTML
+document.querySelectorAll('[data-iso]').forEach(n => n.innerHTML = iso)
+document.querySelectorAll('[data-sym]').forEach(n => n.innerHTML = sym)
+
+const cabecera = `<div class="iso">${iso}</div>
+  <div class="top"><div class="marca">${sym}CodeByMike</div><span class="mono">codebymike.net</span></div>`
+const cta = `<div class="cta"><div class="wa">${wa}Escríbeme: 310 464 1228</div><span class="mono">Respuesta el mismo día</span></div>`
+const casoCta = `<div class="cta"><div class="wa">${wa}¿El próximo es el tuyo?</div><span class="mono">310 464 1228</span></div>`
+const glow = (x, y) => `<div class="glow" style="width:640px;height:640px;left:${x}px;top:${y}px"></div>`
+
+const POSTS = [
+  { id: '01-presentacion', tono: '', html: `${glow(520, 760)}
+    <div class="kicker mono"><i></i>Hola, soy Mike</div>
+    <h2 class="display">Hago páginas web que te <span class="acc">consiguen clientes.</span></h2>
+    <p class="lead">Ingeniero de software en Colombia. Tú me cuentas qué haces, yo la construyo y la dejo en línea. Sin palabras raras, sin plantillas.</p>` },
+  { id: '02-para-ti', tono: 'violet', html: `${glow(600, -200)}
+    <div class="kicker mono"><i></i>¿Esto es para ti?</div>
+    <h2 class="display" style="font-size:104px">Si te reconoces aquí, <span class="acc">hablemos.</span></h2>
+    <div class="lista">
+      <div class="item"><span class="n">01</span><h3>Tienes un negocio local</h3><p>Te encuentran en redes, pero no tienes a dónde mandarlos.</p></div>
+      <div class="item"><span class="n">02</span><h3>Eres profesional independiente</h3><p>Te recomiendan, pero no hay nada online que dé confianza.</p></div>
+      <div class="item"><span class="n">03</span><h3>Estás emprendiendo</h3><p>Tienes la idea, pero no un lugar propio en internet.</p></div>
+      <div class="item"><span class="n">04</span><h3>Ya tienes una empresa</h3><p>Tu web se ve vieja o no vende.</p></div>
+    </div>` },
+  { id: '03-lo-que-consigues', tono: 'lime', html: `${glow(-200, 700)}
+    <div class="kicker mono"><i></i>Lo que consigues</div>
+    <h2 class="display" style="font-size:112px">Tu página trabaja <span class="acc">mientras tú atiendes.</span></h2>
+    <div class="lista">
+      <div class="item"><span class="n">→</span><h3>Apareces en Google</h3><p>Cuando alguien busca lo que ofreces, te encuentra a ti.</p></div>
+      <div class="item"><span class="n">→</span><h3>Te escriben por WhatsApp</h3><p>Un botón y el cliente te habla directo.</p></div>
+      <div class="item"><span class="n">→</span><h3>Tú no tocas nada técnico</h3><p>Dominio, diseño y publicación corren por mi cuenta.</p></div>
+    </div>` },
+  { id: '04-planes', tono: '', html: `${glow(560, -240)}
+    <div class="kicker mono"><i></i>Planes y precios</div>
+    <h2 class="display" style="font-size:100px">Precios claros, <span class="acc">sin letra pequeña.</span></h2>
+    <div class="planes">
+      <div class="plan"><h3><i></i>Presencia</h3><div class="precio">$650.000<small>lista en 3 a 5 días</small></div><p>Una página, tu dominio, WhatsApp y Google Maps.</p></div>
+      <div class="plan dest"><h3><i></i>Negocio</h3><div class="precio">$1.500.000<small>lista en 1 a 2 semanas</small></div><p>Varias secciones, catálogo y SEO local.</p><div class="badge">el más elegido</div></div>
+      <div class="plan"><h3><i></i>A medida</h3><div class="precio">desde $4.500.000<small>lista en 3 a 6 semanas</small></div><p>Tienda o reservas, con pagos en línea.</p></div>
+    </div>` },
+  { id: '05-caso-dobleyo', tono: 'ember', caso: { dominio: 'dobleyo.cafe', img: 'dobleyo.webp', dot: '#b45309' }, html: `${glow(600, 200)}
+    <div class="kicker mono"><i></i>Ya en línea · Café de especialidad</div>
+    <h2 class="display">DobleYo Café</h2>
+    <p class="lead" style="font-size:30px;margin-top:26px">Tienda en línea con suscripciones, regalos y la historia de cada lote, de la finca a la taza.</p>
+    <div class="chips"><span class="chip"><i></i>Tienda en línea</span><span class="chip"><i></i>Suscripciones</span><span class="chip"><i></i>Trazabilidad por lote</span></div>` },
+  { id: '06-como-funciona', tono: 'violet', html: `${glow(560, 760)}
+    <div class="kicker mono"><i></i>Cómo funciona</div>
+    <h2 class="display" style="font-size:112px">Tú pones la info, <span class="acc">yo pongo el resto.</span></h2>
+    <div class="lista">
+      <div class="item"><span class="n">01</span><h3>Me cuentas</h3><p>Qué haces y qué quieres lograr. No necesitas saber nada técnico.</p></div>
+      <div class="item"><span class="n">02</span><h3>Yo diseño</h3><p>Armo la página y te la muestro para ajustar. Dos rondas de cambios incluidas.</p></div>
+      <div class="item"><span class="n">03</span><h3>Publicamos</h3><p>Dominio y puesta en línea por mi cuenta. Tú la compartes.</p></div>
+    </div>` },
+  { id: '07-redes-y-web', tono: 'lime', html: `${glow(-240, 520)}
+    <div class="kicker mono"><i></i>Algo que poca gente te dice</div>
+    <h2 class="display" style="font-size:116px">Las redes te traen gente. <span class="acc">Tu página la vuelve cliente.</span></h2>
+    <p class="lead">En redes, quien te conoce tiene que buscar el precio entre los comentarios. En tu página encuentra qué vendes, cuánto cuesta y un botón para escribirte. Y el dominio es tuyo: no depende de que una app cambie las reglas.</p>` },
+  { id: '08-caso-gorillaz', tono: 'ember', caso: { dominio: 'gorillazmotorbikes.com', img: 'gorillaz-motorbikes-2026-10.webp', dot: '#ea580c' }, html: `${glow(600, 200)}
+    <div class="kicker mono"><i></i>Ya en línea · Taller de motos, Bogotá</div>
+    <h2 class="display">Gorillaz Motorbikes</h2>
+    <p class="lead" style="font-size:30px;margin-top:26px">Los servicios del taller, un club de clientes y la opción de agendar o ver el estado de la moto sin llamar.</p>
+    <div class="chips"><span class="chip"><i></i>Agenda de servicios</span><span class="chip"><i></i>Club de clientes</span><span class="chip"><i></i>Tienda</span></div>` },
+  { id: '09-de-quien-es', tono: '', html: `${glow(520, 700)}
+    <div class="kicker mono"><i></i>Pregunta frecuente</div>
+    <h2 class="display">¿De quién es la página?</h2>
+    <div class="grande">Tuya.</div>
+    <p class="lead">El dominio queda a tu nombre desde el principio, y el código y el diseño son tuyos cuando la pagas completa. Si un día quieres seguir con otra persona, te llevas todo.</p>` },
+  { id: '10-google', tono: 'violet', html: `${glow(600, -200)}
+    <div class="kicker mono"><i></i>Haz la prueba</div>
+    <h2 class="display" style="font-size:108px">Busca tu negocio en Google. <span class="acc">¿Qué aparece?</span></h2>
+    <div class="lista">
+      <div class="item"><span class="n">✕</span><h3>Nada, o tu competencia</h3><p>El cliente que te buscaba ya le está escribiendo a otro.</p></div>
+      <div class="item"><span class="n">✕</span><h3>Solo un perfil de red social</h3><p>Sin precios a la vista ni forma rápida de contactarte.</p></div>
+      <div class="item"><span class="n">✓</span><h3>Tu página, con tu WhatsApp</h3><p>Eso es lo que hace el plan Presencia, desde $650.000.</p></div>
+    </div>` },
+  { id: '11-caso-toledo', tono: 'ember', caso: { dominio: 'toledoproducciones.org', img: 'web-toledo-producciones.webp', dot: '#eab308' }, html: `${glow(600, 200)}
+    <div class="kicker mono"><i></i>Ya en línea · Productora de eventos, Bogotá</div>
+    <h2 class="display">Toledo Producciones</h2>
+    <p class="lead" style="font-size:30px;margin-top:26px">En español e inglés, con sus paquetes, la galería de eventos y un panel para que el equipo la actualice solo.</p>
+    <div class="chips"><span class="chip"><i></i>Bilingüe</span><span class="chip"><i></i>Paquetes con precio</span><span class="chip"><i></i>Panel propio</span></div>` },
+  { id: '12-como-se-paga', tono: 'lime', html: `${glow(560, 760)}
+    <div class="kicker mono"><i></i>Cuentas claras</div>
+    <h2 class="display" style="font-size:116px">Sin sorpresas <span class="acc">en la factura.</span></h2>
+    <div class="lista">
+      <div class="item"><span class="n">50%</span><h3>Para empezar</h3><p>Y el otro 50 % cuando tu página está lista.</p></div>
+      <div class="item"><span class="n">1 año</span><h3>Dominio y hosting incluidos</h3><p>Desde el segundo: $250.000 al año en Presencia.</p></div>
+      <div class="item"><span class="n">30 d</span><h3>Garantía</h3><p>Si algo no funciona como lo acordamos, lo arreglo sin costo.</p></div>
+    </div>` },
+]
+
+const cont = document.getElementById('posts')
+for (const p of POSTS) {
+  const el = document.createElement('div')
+  el.className = `frame post ${p.tono} ${p.caso ? 'caso' : ''}`
+  el.id = p.id
+  if (p.caso) el.style.setProperty('--dot', p.caso.dot)
+  el.innerHTML = cabecera + p.html + (p.caso
+    ? `<div class="browser"><div class="bar"><i></i><i></i><i></i><span>${p.caso.dominio}</span></div><div class="shot" style="background-image:url('../../../public/assets/trabajos/${p.caso.img}')"></div></div>` + casoCta
+    : cta)
+  cont.appendChild(el)
+}
+</script>
+</body>
+</html>
